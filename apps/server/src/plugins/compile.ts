@@ -23,7 +23,7 @@ export const compilePlugin = async (jsPath: string, outDir: string): Promise<{ h
     jsx: 'automatic',
     minify: true,
     splitting: false,
-    logLevel: 'silent'
+    logLevel: 'warning'
   });
 
   const hasCSS = await fs

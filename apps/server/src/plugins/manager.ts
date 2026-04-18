@@ -23,6 +23,7 @@ export class PluginManager {
   private readonly ttlMs: number;
   private readonly mem = new Map<string, CacheEntry>();
   private readonly inflight = new Map<string, Promise<PluginEntry | null>>();
+  private readonly failed = new Set<string>();
 
   constructor(plugins: Record<string, PluginSource>, cacheDir?: string, ttlMs?: number) {
     this.plugins = plugins;
@@ -37,6 +38,7 @@ export class PluginManager {
   register(name: string, source: PluginSource): void {
     this.plugins[name] = source;
     this.mem.delete(name);
+    this.failed.delete(name);
   }
 
   private pluginDir(name: string): string {
@@ -47,15 +49,23 @@ export class PluginManager {
     return Date.now() - compiledAt > this.ttlMs;
   }
 
-  private toEntry(name: string, hasJS: boolean, hasCSS: boolean): PluginEntry {
+  private toEntry(name: string, hasJS: boolean, cssUrl?: string): PluginEntry {
     return {
       name,
       js: hasJS ? `${this.urlPrefix}/${name}/index.js` : undefined,
-      css: hasCSS ? `${this.urlPrefix}/${name}/index.css` : undefined
+      css: cssUrl
     };
   }
 
+  private isWebUrl(s: string): boolean {
+    return s.startsWith('/') || s.startsWith('http://') || s.startsWith('https://');
+  }
+
   async prepare(name: string): Promise<PluginEntry | null> {
+    if (this.failed.has(name)) {
+      return null;
+    }
+
     const inflight = this.inflight.get(name);
     if (inflight !== undefined) {
       return inflight;
@@ -72,15 +82,28 @@ export class PluginManager {
 
     const cached = this.mem.get(name);
     if (cached && !this.isExpired(cached.compiledAt)) {
-      return cached.entry;
+      const jsOk = await this.fileExists(path.join(this.pluginDir(name), 'index.js'));
+      if (jsOk) {
+        return cached.entry;
+      }
+      // File was deleted from disk — drop memory cache and rebuild
+      console.warn(`[SSR] Plugin "${name}" cache invalidated: output file missing, rebuilding…`);
+      this.mem.delete(name);
     }
 
     const meta = await this.readMeta(name);
     if (meta && !this.isExpired(meta.compiledAt)) {
       const jsOk = await this.fileExists(path.join(this.pluginDir(name), 'index.js'));
       if (jsOk) {
-        const cssOk = await this.fileExists(path.join(this.pluginDir(name), 'index.css'));
-        const entry = this.toEntry(name, true, cssOk);
+        const sourceCss = source.css;
+        let cssUrl: string | undefined;
+        if (await this.fileExists(path.join(this.pluginDir(name), 'index.css'))) {
+          cssUrl = `${this.urlPrefix}/${name}/index.css`;
+        } else if (sourceCss && this.isWebUrl(sourceCss)) {
+          cssUrl = sourceCss;
+        }
+
+        const entry = this.toEntry(name, true, cssUrl);
         this.mem.set(name, { compiledAt: meta.compiledAt, entry });
         return entry;
       }
@@ -107,31 +130,45 @@ export class PluginManager {
       return { name };
     }
 
+    console.log(`[SSR] Plugin "${name}" building (${action}: ${jsPath})…`);
+
     try {
-      let hasCSS = false;
+      let cssUrl: string | undefined;
 
       if (action === 'compile') {
-        ({ hasCSS } = await compilePlugin(jsPath, dir));
-        if (!hasCSS && cssPath) {
-          await copyPlugin(cssPath, dir, 'index.css');
-          hasCSS = true;
+        const { hasCSS } = await compilePlugin(jsPath, dir);
+        if (hasCSS) {
+          cssUrl = `${this.urlPrefix}/${name}/index.css`;
+        } else if (cssPath) {
+          if (this.isWebUrl(cssPath)) {
+            cssUrl = cssPath;
+          } else {
+            await copyPlugin(cssPath, dir, 'index.css');
+            cssUrl = `${this.urlPrefix}/${name}/index.css`;
+          }
         }
       } else {
         await copyPlugin(jsPath, dir, 'index.js');
         if (cssPath) {
-          await copyPlugin(cssPath, dir, 'index.css');
-          hasCSS = true;
+          if (this.isWebUrl(cssPath)) {
+            cssUrl = cssPath;
+          } else {
+            await copyPlugin(cssPath, dir, 'index.css');
+            cssUrl = `${this.urlPrefix}/${name}/index.css`;
+          }
         }
       }
 
       const compiledAt = Date.now();
       await this.writeMeta(name, { compiledAt });
 
-      const entry = this.toEntry(name, true, hasCSS);
+      const entry = this.toEntry(name, true, cssUrl);
       this.mem.set(name, { compiledAt, entry });
+      console.log(`[SSR] Plugin "${name}" ready → ${entry.js}`);
       return entry;
     } catch (err) {
-      console.error(`[SSR] Plugin "${name}" build failed:`, err);
+      console.error(`[SSR] Plugin "${name}" build failed (js: ${source.js ?? 'none'}):`, err);
+      this.failed.add(name);
       return null;
     }
   }
@@ -159,15 +196,18 @@ export class PluginManager {
   async invalidate(name?: string): Promise<void> {
     if (name) {
       this.mem.delete(name);
+      this.failed.delete(name);
       await fs.rm(this.pluginDir(name), { recursive: true, force: true });
     } else {
       this.mem.clear();
+      this.failed.clear();
       await fs.rm(this.outputDir, { recursive: true, force: true });
     }
   }
 
   destroy(): void {
     this.mem.clear();
+    this.failed.clear();
   }
 
   private async readMeta(name: string): Promise<Meta | null> {

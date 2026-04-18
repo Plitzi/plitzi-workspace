@@ -55,13 +55,13 @@
     <script type="module">
       import { render } from '<%= locals.jsPath || '' %>';
       <% const activePlugins = (locals.plugins || []).filter(p => p.js); %>
-      <% const toIdentifier = name => '__plugin_' + name.replace(/[^a-zA-Z0-9_$]/g, '_'); %>
+      <% const toIdentifier = name => name.replace(/[^a-zA-Z0-9_$]/g, '_'); %>
       <% if (activePlugins.length > 0) { %>
       <% for (const plugin of activePlugins) { %>
-      import * as <%= toIdentifier(plugin.name) %> from '<%= plugin.js %>';
+      import { default as <%= toIdentifier(plugin.name) %> } from '<%= plugin.js %>';
       <% } %>
-      const __plitziBuilder = { <%- activePlugins.map(p => `...${toIdentifier(p.name)}`).join(', ') %> };
-      render('plitzi', <%- locals.offlineData || '{}' %>, __plitziBuilder, false, true);
+      const __plitziPlugins = { <%- activePlugins.map(p => toIdentifier(p.name)).join(', ') %> };
+      render('plitzi', <%- locals.offlineData || '{}' %>, __plitziPlugins, false, true);
       <% } else { %>
       render('plitzi', <%- locals.offlineData || '{}' %>, {}, false, true);
       <% } %>
