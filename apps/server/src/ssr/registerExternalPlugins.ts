@@ -19,23 +19,24 @@ const fetchManifest = async (resource: string): Promise<PluginManifest | null> =
 };
 
 const resolveAssetUrl = (resource: string, asset: PluginManifest['assets'][string]): string | null => {
-  if (asset.url) return asset.url;
-  if (asset.src) return `${resource}/${asset.src}`;
+  if (asset.url) {
+    return asset.url;
+  }
+
+  if (asset.src) {
+    return `${resource}/${asset.src}`;
+  }
+
   return null;
 };
 
-const findAsset = (
-  manifest: PluginManifest,
-  type: 'script' | 'style',
-  resource: string
-): string | undefined => {
+const findAsset = (manifest: PluginManifest, type: 'script' | 'style', resource: string): string | undefined => {
   const assets = Object.values(manifest.assets);
   const main = assets.find(a => a.type === type && a.isMain) ?? assets.find(a => a.type === type);
   return main ? (resolveAssetUrl(resource, main) ?? undefined) : undefined;
 };
 
-const isAbsoluteUrl = (url: string): boolean =>
-  url.startsWith('http://') || url.startsWith('https://');
+const isAbsoluteUrl = (url: string): boolean => url.startsWith('http://') || url.startsWith('https://');
 
 const registerPlugin = async (pluginManager: PluginManager, plugin: PluginRaw): Promise<string | null> => {
   if (!plugin.resource || !isAbsoluteUrl(plugin.resource)) {

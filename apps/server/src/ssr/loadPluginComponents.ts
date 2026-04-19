@@ -1,6 +1,5 @@
-import type { FC } from 'react';
-
 import type { PluginEntry } from '../types';
+import type { FC } from 'react';
 
 /** Module-level cache: absolute filePath → loaded React component. */
 const componentCache = new Map<string, FC>();
@@ -38,7 +37,7 @@ export const loadPluginComponents = async (
     entries
       .filter(e => e.filePath)
       .map(async e => {
-        const filePath = e.filePath!;
+        const filePath = e.filePath as string;
 
         // Permanently skipped — browser-only code or previous import failure
         if (failedImports.has(filePath)) {
@@ -54,7 +53,10 @@ export const loadPluginComponents = async (
             component = (mod.default ?? mod) as FC;
             componentCache.set(filePath, component);
           } catch (err) {
-            console.warn(`[SSR] Plugin "${e.keyName}" cannot be imported server-side, falling back to client rendering:`, (err as Error).message);
+            console.warn(
+              `[SSR] Plugin "${e.keyName}" cannot be imported server-side, falling back to client rendering:`,
+              (err as Error).message
+            );
             failedImports.add(filePath);
             return;
           }

@@ -69,9 +69,15 @@ export class PluginManager {
    * Accepts both the exact key (`plitziBuilder@1.0.0`) and the base name (`plitziBuilder`).
    */
   private resolveKey(name: string): string | null {
-    if (name in this.plugins) return name;
+    if (name in this.plugins) {
+      return name;
+    }
+
     const indexed = this.nameIndex.get(name);
-    if (indexed && indexed in this.plugins) return indexed;
+    if (indexed && indexed in this.plugins) {
+      return indexed;
+    }
+
     return null;
   }
 
@@ -138,7 +144,9 @@ export class PluginManager {
 
       if (sourceVersion && meta.version !== sourceVersion) {
         // Version changed — nuke disk cache so build() starts clean
-        console.log(`[SSR] Plugin "${key}" version changed (${meta.version ?? 'none'} → ${sourceVersion}), rebuilding…`);
+        console.log(
+          `[SSR] Plugin "${key}" version changed (${meta.version ?? 'none'} → ${sourceVersion}), rebuilding…`
+        );
         await fs.rm(this.pluginDir(key), { recursive: true, force: true });
       } else if (sourceVersion || !this.isExpired(meta.compiledAt)) {
         // Versioned plugins never expire; unversioned respect TTL
@@ -199,14 +207,19 @@ export class PluginManager {
         }
       } else if (action === 'download') {
         const jsRes = await fetch(jsPath);
-        if (!jsRes.ok) throw new Error(`HTTP ${jsRes.status} downloading ${jsPath}`);
-        await fs.writeFile(path.join(dir, 'index.js'), await jsRes.text());
+        if (!jsRes.ok) {
+          throw new Error(`HTTP ${jsRes.status} downloading ${jsPath}`);
+        }
 
+        await fs.writeFile(path.join(dir, 'index.js'), await jsRes.text());
         if (cssPath) {
           const isRemote = cssPath.startsWith('http://') || cssPath.startsWith('https://');
           if (isRemote) {
             const cssRes = await fetch(cssPath);
-            if (!cssRes.ok) throw new Error(`HTTP ${cssRes.status} downloading ${cssPath}`);
+            if (!cssRes.ok) {
+              throw new Error(`HTTP ${cssRes.status} downloading ${cssPath}`);
+            }
+
             await fs.writeFile(path.join(dir, 'index.css'), await cssRes.text());
           } else if (this.isWebUrl(cssPath)) {
             cssUrl = cssPath; // absolute local path — serve as-is
@@ -277,8 +290,12 @@ export class PluginManager {
       const key = `${name}@${version}`;
       this.mem.delete(key);
       this.failed.delete(key);
-      if (this.nameIndex.get(name) === key) this.nameIndex.delete(name);
+      if (this.nameIndex.get(name) === key) {
+        this.nameIndex.delete(name);
+      }
+
       await fs.rm(this.pluginDir(key), { recursive: true, force: true });
+
       return;
     }
 
@@ -287,10 +304,15 @@ export class PluginManager {
     const keysToEvict = new Set<string>();
     keysToEvict.add(name);
     for (const key of Object.keys(this.plugins)) {
-      if (key.startsWith(prefix)) keysToEvict.add(key);
+      if (key.startsWith(prefix)) {
+        keysToEvict.add(key);
+      }
     }
+
     for (const key of this.mem.keys()) {
-      if (key.startsWith(prefix)) keysToEvict.add(key);
+      if (key.startsWith(prefix)) {
+        keysToEvict.add(key);
+      }
     }
 
     for (const key of keysToEvict) {

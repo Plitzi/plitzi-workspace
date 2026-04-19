@@ -68,10 +68,7 @@ export const buildTransport = (
         handler as unknown as Parameters<typeof http2.createSecureServer>[1]
       );
     } else {
-      primary = http2.createServer(
-        {},
-        handler as unknown as Parameters<typeof http2.createServer>[1]
-      );
+      primary = http2.createServer({}, handler as unknown as Parameters<typeof http2.createServer>[1]);
     }
   } else if (config.tls) {
     primary = https.createServer(tlsOptions(config), handler as Parameters<typeof https.createServer>[1]);
