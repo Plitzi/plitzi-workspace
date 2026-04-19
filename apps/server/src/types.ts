@@ -17,6 +17,7 @@ export type SSRRequest = {
   protocol: 'http' | 'https';
   headers: SSRHeaders;
   query: Record<string, string>;
+  ctx: SSRContext;
 };
 
 export type SSRResponseHelpers = {
@@ -80,6 +81,7 @@ export type SSRTemplateProps = {
 };
 
 export type SSRUser = {
+  token: string; // e.g. JWT or opaque token from auth provider
   id: number;
   username: string;
   email: string;

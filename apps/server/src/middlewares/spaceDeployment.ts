@@ -1,11 +1,9 @@
-import type { SSRAdapters, SSRMiddleware, SSRContext } from '../types';
+import type { SSRAdapters, SSRMiddleware } from '../types';
 
 export const spaceDeploymentMiddleware = (adapters: SSRAdapters): SSRMiddleware => {
   return async (req, res, next) => {
-    const ctx = req as typeof req & SSRContext;
-
     const deployment = await adapters.getSpaceDeployment(req);
-    ctx.spaceDeployment = deployment;
+    req.ctx.spaceDeployment = deployment;
 
     const { spaceId = 1, error } = deployment;
     if (spaceId === null || error) {

@@ -28,5 +28,5 @@ export const parseRequest = (raw: IncomingMessage): SSRRequest => {
 
   const method = (headers[':method'] ?? raw.method ?? 'GET').toUpperCase();
 
-  return { method, path, search, url: rawUrl, hostname, protocol, headers, query };
+  return { method, path, search, url: rawUrl, hostname, protocol, headers, query, ctx: {} };
 };

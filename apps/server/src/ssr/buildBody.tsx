@@ -7,12 +7,11 @@ import { buildServerInfo } from '../helpers/buildServerInfo';
 import { escapeJson } from '../helpers/escapeJson';
 
 import type { PluginManager } from '../plugins/manager';
-import type { SSRRequest, SSRContext, SSRServerConfig, SSRTemplateFn } from '../types';
+import type { SSRRequest, SSRServerConfig, SSRTemplateFn } from '../types';
 import type { Environment } from '@plitzi/sdk-shared';
 
 export const buildBody = async (
   req: SSRRequest,
-  ctx: SSRContext,
   config: SSRServerConfig,
   spaceId: number,
   environment: string,
@@ -20,13 +19,8 @@ export const buildBody = async (
   renderFn: SSRTemplateFn,
   pluginManager?: PluginManager
 ): Promise<string> => {
-  const [offlineData, user] = await Promise.all([
-    config.adapters.getOfflineData(spaceId, environment, revision),
-    config.adapters.getUser?.(req)
-  ]);
-
-  const resolvedCtx: SSRContext = { ...ctx, user };
-  const server = buildServerInfo(req, resolvedCtx);
+  const offlineData = await config.adapters.getOfflineData(spaceId, environment, revision);
+  const server = buildServerInfo(req, req.ctx);
 
   const offlineDataStr = escapeJson(
     JSON.stringify({
@@ -40,13 +34,13 @@ export const buildBody = async (
   );
 
   const devMode = config.devMode ?? process.env.NODE_ENV !== 'production';
-  const reactVersion = config.reactVersion ?? '19';
+  const reactVersion = config.reactVersion ?? '19.2.0';
   const reactBase = `https://esm.sh/react@${reactVersion}`;
   const reactDomBase = `https://esm.sh/react-dom@${reactVersion}`;
   const devSuffix = devMode ? '?dev' : '';
 
-  const pluginNames = resolvedCtx.spaceDeployment?.pluginNames ?? [];
-  const pluginSources = resolvedCtx.spaceDeployment?.pluginSources;
+  const pluginNames = req.ctx.spaceDeployment?.pluginNames ?? [];
+  const pluginSources = req.ctx.spaceDeployment?.pluginSources;
 
   // Auto-register plugins defined inline in the deployment (e.g. downloaded from DB/CDN)
   // pluginNames contains base names; skip any plugin already covered there to avoid duplicates
@@ -79,12 +73,12 @@ export const buildBody = async (
       plugins={Object.keys(pluginComponents).length > 0 ? pluginComponents : undefined}
       offlineData={offlineData}
       server={server}
-      environment={(resolvedCtx.spaceDeployment?.environment ?? environment) as Environment}
+      environment={(req.ctx.spaceDeployment?.environment ?? environment) as Environment}
       sdkEnvironment={config.sdkEnvironment ?? 'production'}
     />
   ).trim();
 
-  const templatePlugins = entries.length > 0 ? entries : resolvedCtx.spaceDeployment?.templateProps?.plugins;
+  const templatePlugins = entries.length > 0 ? entries : req.ctx.spaceDeployment?.templateProps?.plugins;
 
   return renderFn({
     title: 'Plitzi App',
@@ -94,7 +88,7 @@ export const buildBody = async (
     reactJsx: `${reactBase}/jsx-runtime${devSuffix}`,
     reactDom: `${reactDomBase}${devSuffix}`,
     reactDomClient: `${reactDomBase}/client${devSuffix}`,
-    ...resolvedCtx.spaceDeployment?.templateProps,
+    ...req.ctx.spaceDeployment?.templateProps,
     plugins: templatePlugins,
     ssrOnly: config.ssrOnly === true,
     html,

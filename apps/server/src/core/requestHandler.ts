@@ -5,6 +5,7 @@ import { parseRequest } from './requestParser';
 import { serveStatic } from './staticFiles';
 import { buildResponseHelpers } from '../helpers/buildResponseHelpers';
 import { runMiddlewares } from '../helpers/runMiddlewares';
+import { authMiddleware } from '../middlewares/auth';
 import { basicAuthMiddleware } from '../middlewares/basicAuth';
 import { spaceDeploymentMiddleware } from '../middlewares/spaceDeployment';
 import { renderSSR } from '../ssr/render';
@@ -13,7 +14,7 @@ import type { Handler } from './transports';
 import type { RawResponse } from '../helpers/buildResponseHelpers';
 import type { TtlCache } from '../helpers/ttlCache';
 import type { PluginManager } from '../plugins/manager';
-import type { SSRServerConfig, SSRRequest, SSRContext, SSRTemplateFn } from '../types';
+import type { SSRServerConfig, SSRRequest, SSRTemplateFn } from '../types';
 import type { IncomingMessage } from 'node:http';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -83,15 +84,18 @@ const handleRequest = async (
     }
   }
 
-  const ctx: SSRContext = {};
-  const middlewares = [spaceDeploymentMiddleware(config.adapters), basicAuthMiddleware()];
+  const middlewares = [
+    spaceDeploymentMiddleware(config.adapters),
+    basicAuthMiddleware(),
+    authMiddleware(config.adapters)
+  ];
 
-  const stopped = await runMiddlewares(middlewares, req, res, ctx);
+  const stopped = await runMiddlewares(middlewares, req, res);
   if (stopped || res.status !== 200) {
     return;
   }
 
-  await renderSSR(req, res, ctx, config, renderFn, cache, pluginManager);
+  await renderSSR(req, res, config, renderFn, cache, pluginManager);
 };
 
 export const makeHandler = (

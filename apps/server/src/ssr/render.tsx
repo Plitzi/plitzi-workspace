@@ -2,19 +2,21 @@ import { buildBody } from './buildBody';
 
 import type { TtlCache } from '../helpers/ttlCache';
 import type { PluginManager } from '../plugins/manager';
-import type { SSRRequest, SSRResponseHelpers, SSRContext, SSRServerConfig, SSRTemplateFn } from '../types';
+import type { SSRRequest, SSRResponseHelpers, SSRServerConfig, SSRTemplateFn } from '../types';
+import type { Environment } from '@plitzi/sdk-shared';
 
 export const buildCacheKey = (
+  accessToken: string | undefined = 'anonymous',
   spaceId: number | string | null,
-  environment: string,
+  environment: Environment,
   revision: number,
   req: SSRRequest
-): string => `${spaceId ?? 1}\0${environment}\0${revision}\0${req.hostname}\0${req.path}\0${req.search}`;
+): string =>
+  `${accessToken}\0${spaceId ?? 1}\0${environment}\0${revision}\0${req.hostname}\0${req.path}\0${req.search}`;
 
 export const renderSSR = async (
   req: SSRRequest,
   res: SSRResponseHelpers,
-  ctx: SSRContext,
   config: SSRServerConfig,
   renderFn: SSRTemplateFn,
   cache?: TtlCache<string>,
@@ -24,10 +26,10 @@ export const renderSSR = async (
     environment = 'main',
     spaceId = 1,
     revision = 0
-  } = ctx.spaceDeployment as Exclude<typeof ctx.spaceDeployment, undefined>;
+  } = req.ctx.spaceDeployment as Exclude<typeof req.ctx.spaceDeployment, undefined>;
 
   if (cache) {
-    const cacheKey = buildCacheKey(spaceId, environment as string, revision, req);
+    const cacheKey = buildCacheKey(req.ctx.user?.token, spaceId, environment, revision, req);
     const cached = cache.get(cacheKey);
     if (cached) {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -38,7 +40,6 @@ export const renderSSR = async (
 
     const body = await buildBody(
       req,
-      ctx,
       config,
       spaceId as number,
       environment as string,
@@ -50,12 +51,12 @@ export const renderSSR = async (
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('X-Cache', 'MISS');
     res.send(body);
+
     return;
   }
 
   const body = await buildBody(
     req,
-    ctx,
     config,
     spaceId as number,
     environment as string,

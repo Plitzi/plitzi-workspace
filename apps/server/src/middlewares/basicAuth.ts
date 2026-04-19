@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 
-import type { SSRMiddleware, SSRContext } from '../types';
+import type { SSRMiddleware } from '../types';
 
 const authCache = new Map<string, number>();
 
@@ -22,8 +22,7 @@ export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddlewa
   const { realm = 'Restricted Area', cacheTtlMs = DEFAULT_CACHE_TTL_MS } = options;
 
   return async (req, res, next) => {
-    const ctx = req as typeof req & SSRContext;
-    const credential = ctx.spaceDeployment?.credential;
+    const credential = req.ctx.spaceDeployment?.credential;
 
     if (!credential || credential.provider !== 'ssr') {
       await next();
