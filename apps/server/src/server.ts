@@ -23,7 +23,8 @@ const server = createSSRServer({
   host: HOST,
   sdkEnvironment: (process.env.SDK_ENVIRONMENT ?? 'production') as 'production' | 'staging' | 'development',
   devMode: process.env.NODE_ENV !== 'production',
-  adapters
+  adapters,
+  httpVersion: 1
 });
 
 server.listen(PORT, HOST);
