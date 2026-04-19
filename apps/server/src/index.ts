@@ -22,5 +22,6 @@ export type {
   PluginEntry,
   CacheFilter,
   CacheManager,
-  SSRUser
+  SSRUser,
+  SSRServer
 } from './types';

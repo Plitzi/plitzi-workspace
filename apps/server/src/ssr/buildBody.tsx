@@ -14,7 +14,7 @@ export const buildBody = async (
   req: SSRRequest,
   config: SSRServerConfig,
   spaceId: number,
-  environment: string,
+  environment: Environment,
   revision: number,
   renderFn: SSRTemplateFn,
   pluginManager?: PluginManager
@@ -73,7 +73,7 @@ export const buildBody = async (
       plugins={Object.keys(pluginComponents).length > 0 ? pluginComponents : undefined}
       offlineData={offlineData}
       server={server}
-      environment={(req.ctx.spaceDeployment?.environment ?? environment) as Environment}
+      environment={req.ctx.spaceDeployment?.environment ?? environment}
       sdkEnvironment={config.sdkEnvironment ?? 'production'}
     />
   ).trim();

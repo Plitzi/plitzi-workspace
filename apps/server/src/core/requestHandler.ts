@@ -38,6 +38,7 @@ const handleRequest = async (
 
   if (req.path.startsWith('/.well-known/')) {
     res.send('Well-known route');
+
     return;
   }
 
@@ -61,6 +62,7 @@ const handleRequest = async (
     }
     res.setStatus(404);
     res.send('Not found');
+
     return;
   }
 
@@ -69,6 +71,7 @@ const handleRequest = async (
     await config.adapters.onLogout?.(req);
     res.setStatus(204);
     res.end();
+
     return;
   }
 
@@ -112,6 +115,7 @@ export const makeHandler = (
         if (!rawRes.headersSent) {
           rawRes.writeHead(500, { 'Content-Type': 'text/plain' });
         }
+
         rawRes.end('Internal Server Error');
       } catch {
         // stream already closed

@@ -26,12 +26,14 @@ export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddlewa
 
     if (!credential || credential.provider !== 'ssr') {
       await next();
+
       return;
     }
 
     const { data: credentials } = credential as { data: { type: 'basic' | 'token'; user: string; pass: string } };
     if (credentials.type !== 'basic') {
       await next();
+
       return;
     }
 
@@ -39,6 +41,7 @@ export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddlewa
     const authHeader = req.headers['authorization'];
     if (!authHeader || !authHeader.startsWith('Basic ')) {
       sendChallenge(res, hostname, realm);
+
       return;
     }
 
@@ -49,6 +52,7 @@ export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddlewa
       decoded = Buffer.from(token, 'base64').toString('utf8');
     } catch {
       sendChallenge(res, hostname, realm);
+
       return;
     }
 
@@ -61,14 +65,17 @@ export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddlewa
         await next();
         return;
       }
+
       authCache.delete(cacheKey);
       sendChallenge(res, hostname, realm);
+
       return;
     }
 
     const [user, pass] = decoded.split(':');
     if (!user || !pass || user !== credentials.user || pass !== credentials.pass) {
       sendChallenge(res, hostname, realm);
+
       return;
     }
 

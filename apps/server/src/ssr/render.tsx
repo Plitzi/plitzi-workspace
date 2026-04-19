@@ -22,12 +22,7 @@ export const renderSSR = async (
   cache?: TtlCache<string>,
   pluginManager?: PluginManager // optional — no plugins if not provided
 ): Promise<void> => {
-  const {
-    environment = 'main',
-    spaceId = 1,
-    revision = 0
-  } = req.ctx.spaceDeployment as Exclude<typeof req.ctx.spaceDeployment, undefined>;
-
+  const { environment = 'main', spaceId = 1, revision = 0 } = req.ctx.spaceDeployment || {};
   if (cache) {
     const cacheKey = buildCacheKey(req.ctx.user?.token, spaceId, environment, revision, req);
     const cached = cache.get(cacheKey);
@@ -35,18 +30,11 @@ export const renderSSR = async (
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.setHeader('X-Cache', 'HIT');
       res.send(cached);
+
       return;
     }
 
-    const body = await buildBody(
-      req,
-      config,
-      spaceId as number,
-      environment as string,
-      revision,
-      renderFn,
-      pluginManager
-    );
+    const body = await buildBody(req, config, spaceId as number, environment, revision, renderFn, pluginManager);
     cache.set(cacheKey, body);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('X-Cache', 'MISS');
@@ -55,15 +43,7 @@ export const renderSSR = async (
     return;
   }
 
-  const body = await buildBody(
-    req,
-    config,
-    spaceId as number,
-    environment as string,
-    revision,
-    renderFn,
-    pluginManager
-  );
+  const body = await buildBody(req, config, spaceId as number, environment, revision, renderFn, pluginManager);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(body);
 };

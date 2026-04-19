@@ -1,4 +1,4 @@
-import type { OfflineDataRaw, Environment, Server } from '@plitzi/sdk-shared';
+import type { OfflineDataRaw, Environment } from '@plitzi/sdk-shared';
 import type { IncomingHttpHeaders } from 'node:http';
 
 export type SSRHeaders = IncomingHttpHeaders & {
@@ -166,4 +166,9 @@ export type SSRContext = {
   user?: SSRUser;
 };
 
-export type { OfflineDataRaw, Server };
+export type SSRServer = {
+  listen: (port: number, host?: string) => void;
+  close: () => Promise<void>;
+  readonly cache: CacheManager | null;
+  readonly plugins: PluginRegistry;
+};

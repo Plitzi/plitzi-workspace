@@ -1,63 +1,12 @@
 import { makeHandler } from './requestHandler';
 import { buildTransport, protoLabel } from './transports';
+import buildCacheManager from '../helpers/buildCacheManager';
+import normalizePlugins, { normalizePluginSource } from '../helpers/normalizePlugins';
 import { TtlCache } from '../helpers/ttlCache';
 import { PluginManager } from '../plugins/manager';
 import { compileTemplate } from '../ssr/template';
 
-import type { CacheFilter, CacheManager, PluginRegistry, PluginSource, SSRServerConfig } from '../types';
-
-const DEFAULT_PLUGIN_VERSION = '1.0.0';
-
-const normalizePluginSource = (source: PluginSource): PluginSource => ({
-  ...source,
-  version: source.version ?? DEFAULT_PLUGIN_VERSION
-});
-
-const normalizePlugins = (plugins: Record<string, PluginSource>): Record<string, PluginSource> => {
-  const out: Record<string, PluginSource> = {};
-  for (const [name, source] of Object.entries(plugins)) {
-    const normalized = normalizePluginSource(source);
-    out[`${name}@${normalized.version}`] = normalized;
-  }
-
-  return out;
-};
-
-export type SSRServer = {
-  listen: (port: number, host?: string) => void;
-  close: () => Promise<void>;
-  readonly cache: CacheManager | null;
-  readonly plugins: PluginRegistry;
-};
-
-const buildCacheManager = (store: TtlCache<string>): CacheManager => ({
-  invalidate(filter?: CacheFilter): number {
-    if (!filter || Object.keys(filter).length === 0) {
-      const count = store.size;
-      store.clear();
-      return count;
-    }
-    return store.invalidateWhere(key => {
-      const [keySpaceId, keyEnvironment, , keyHostname] = key.split('\0');
-      if (filter.spaceId !== undefined && keySpaceId !== String(filter.spaceId)) {
-        return false;
-      }
-      if (filter.environment !== undefined && keyEnvironment !== filter.environment) {
-        return false;
-      }
-      if (filter.hostname !== undefined && keyHostname !== filter.hostname) {
-        return false;
-      }
-      return true;
-    });
-  },
-  clear() {
-    store.clear();
-  },
-  get size() {
-    return store.size;
-  }
-});
+import type { CacheManager, PluginRegistry, SSRServer, SSRServerConfig } from '../types';
 
 export const createSSRServer = (config: SSRServerConfig): SSRServer => {
   const version = config.httpVersion ?? 2;
