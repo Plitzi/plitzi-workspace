@@ -50,7 +50,7 @@
     "vite-plugin-dts": "^4.5.4"
   },
   "scripts": {
-    "dev": "node --import tsx --watch src/server.ts",
+    "dev": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx --watch src/server.ts",
     "build": "vite build",
     "lint": "TIMING=1 eslint ./src",
     "typecheck": "tsc -p tsconfig.app.json --noEmit"
