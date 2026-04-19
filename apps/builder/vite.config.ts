@@ -179,6 +179,10 @@ export default defineConfig(({ mode, command }) => {
         // 'react-dom/client': path.resolve(__dirname, '../../node_modules/react-dom'),
         '@pmodules': path.resolve('./src/modules'),
         '@pcomponents': path.resolve('./src/components'),
+        'decode-named-character-reference': path.resolve(
+          __dirname,
+          '../../node_modules/decode-named-character-reference/index.js'
+        ),
         // these 2 are used due zustand depending on use-sync-external-store and it is only CJS (xyflow depends on zustand)
         'use-sync-external-store/shim/with-selector.js': path.resolve(
           './src/patches/useSyncExternalStoreWithSelector.ts'
