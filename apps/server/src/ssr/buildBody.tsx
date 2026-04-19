@@ -1,6 +1,7 @@
 import { renderToString } from 'react-dom/server';
 
 import Component from './Component';
+import { loadPluginComponents } from './loadPluginComponents';
 import { registerExternalPlugins } from './registerExternalPlugins';
 import { buildServerInfo } from '../helpers/buildServerInfo';
 import { escapeJson } from '../helpers/escapeJson';
@@ -26,15 +27,6 @@ export const buildBody = async (
 
   const resolvedCtx: SSRContext = { ...ctx, user };
   const server = buildServerInfo(req, resolvedCtx);
-
-  const html = renderToString(
-    <Component
-      offlineData={offlineData}
-      server={server}
-      environment={(resolvedCtx.spaceDeployment?.environment ?? environment) as Environment}
-      sdkEnvironment={config.sdkEnvironment ?? 'production'}
-    />
-  ).trim();
 
   const offlineDataStr = escapeJson(
     JSON.stringify({
@@ -76,8 +68,23 @@ export const buildBody = async (
   const externalNamesFiltered = externalNames.filter(k => !pluginBaseNames.has(k.replace(/@[^@]*$/, '')));
 
   const allPluginNames = [...pluginNames, ...dynamicNames, ...externalNamesFiltered];
-  const plugins =
-    pluginManager && allPluginNames.length > 0 ? await pluginManager.getEntries(allPluginNames) : undefined;
+  const entries = pluginManager && allPluginNames.length > 0 ? await pluginManager.getEntries(allPluginNames) : [];
+
+  // Load plugin React components for server-side rendering.
+  // Results are cached in memory by filePath — subsequent requests skip the dynamic import().
+  const pluginComponents = await loadPluginComponents(entries, pluginManager?.getComponents());
+
+  const html = renderToString(
+    <Component
+      plugins={Object.keys(pluginComponents).length > 0 ? pluginComponents : undefined}
+      offlineData={offlineData}
+      server={server}
+      environment={(resolvedCtx.spaceDeployment?.environment ?? environment) as Environment}
+      sdkEnvironment={config.sdkEnvironment ?? 'production'}
+    />
+  ).trim();
+
+  const templatePlugins = entries.length > 0 ? entries : resolvedCtx.spaceDeployment?.templateProps?.plugins;
 
   return renderFn({
     title: 'Plitzi App',
@@ -88,7 +95,7 @@ export const buildBody = async (
     reactDom: `${reactDomBase}${devSuffix}`,
     reactDomClient: `${reactDomBase}/client${devSuffix}`,
     ...resolvedCtx.spaceDeployment?.templateProps,
-    plugins: plugins ?? resolvedCtx.spaceDeployment?.templateProps?.plugins,
+    plugins: templatePlugins,
     ssrOnly: config.ssrOnly === true,
     html,
     offlineData: offlineDataStr

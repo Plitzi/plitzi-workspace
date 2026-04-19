@@ -91,6 +91,7 @@ export class PluginManager {
       varName,
       keyName,
       js: hasJS ? `${this.urlPrefix}/${name}/index.js` : undefined,
+      filePath: hasJS ? path.join(this.outputDir, name, 'index.js') : undefined,
       css: cssUrl
     };
   }

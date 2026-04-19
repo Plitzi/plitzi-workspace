@@ -34,7 +34,14 @@ const findAsset = (
   return main ? (resolveAssetUrl(resource, main) ?? undefined) : undefined;
 };
 
+const isAbsoluteUrl = (url: string): boolean =>
+  url.startsWith('http://') || url.startsWith('https://');
+
 const registerPlugin = async (pluginManager: PluginManager, plugin: PluginRaw): Promise<string | null> => {
+  if (!plugin.resource || !isAbsoluteUrl(plugin.resource)) {
+    return null;
+  }
+
   const manifest = await fetchManifest(plugin.resource);
   if (!manifest) {
     return null;

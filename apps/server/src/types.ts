@@ -57,7 +57,10 @@ export type PluginEntry = {
   varName: string;
   /** SDK lookup key used as the object property (base name without @version). */
   keyName: string;
+  /** Browser-facing URL served by the SSR server (e.g. /sdk-plugins/name@ver/index.js). */
   js?: string;
+  /** Absolute filesystem path used for server-side dynamic import() during SSR. */
+  filePath?: string;
   css?: string;
 };
 
