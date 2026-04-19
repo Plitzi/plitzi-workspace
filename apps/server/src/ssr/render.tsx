@@ -19,8 +19,8 @@ export const renderSSR = async (
   res: SSRResponseHelpers,
   config: SSRServerConfig,
   renderFn: SSRTemplateFn,
-  cache?: TtlCache<string>,
-  pluginManager?: PluginManager // optional — no plugins if not provided
+  pluginManager: PluginManager,
+  cache?: TtlCache<string>
 ): Promise<void> => {
   const { environment = 'main', spaceId = 1, revision = 0 } = req.ctx.spaceDeployment || {};
   if (cache) {
