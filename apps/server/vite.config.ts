@@ -39,15 +39,24 @@ export default defineConfig({
     lib: {
       entry: {
         index: path.resolve(root, 'src/index.ts'),
-        server: path.resolve(root, 'src/server.ts')
+        server: path.resolve(root, 'src/standalone/server.ts')
       },
       formats: ['es']
     },
     rollupOptions: {
-      external: (id) => {
-        if (id.startsWith('node:') || id.startsWith('node/')) return true;
-        if (id === 'react' || id === 'react-dom' || id.startsWith('react-dom/') || id.startsWith('react/')) return true;
-        if (!id.startsWith('.') && !id.startsWith('/')) return true;
+      external: id => {
+        if (id.startsWith('node:') || id.startsWith('node/')) {
+          return true;
+        }
+
+        if (id === 'react' || id === 'react-dom' || id.startsWith('react-dom/') || id.startsWith('react/')) {
+          return true;
+        }
+
+        if (!id.startsWith('.') && !id.startsWith('/')) {
+          return true;
+        }
+
         return false;
       },
       output: {
