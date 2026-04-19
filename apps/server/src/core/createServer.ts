@@ -62,7 +62,7 @@ const buildCacheManager = (store: TtlCache<string>): CacheManager => ({
 export const createSSRServer = (config: SSRServerConfig): SSRServer => {
   const version = config.httpVersion ?? 2;
 
-  if (version >= 2 && !config.tls) {
+  if (version >= 3 && !config.tls) {
     throw new Error(`[SSR] httpVersion: ${version} requires a tls config with key and cert`);
   }
 
