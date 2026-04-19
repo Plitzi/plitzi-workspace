@@ -28,7 +28,7 @@ export const protoLabel = (version: number, hasTls: boolean): string => {
     return 'HTTP/2+3 (TLS)';
   }
   if (version >= 2) {
-    return 'HTTP/2 (TLS)';
+    return hasTls ? 'HTTP/2 (TLS)' : 'HTTP/2 (h2c)';
   }
   return hasTls ? 'HTTPS/1.1' : 'HTTP/1.1';
 };
@@ -62,10 +62,17 @@ export const buildTransport = (
       }
     })();
   } else if (version >= 2) {
-    primary = http2.createSecureServer(
-      { ...tlsOptions(config), allowHTTP1: true },
-      handler as unknown as Parameters<typeof http2.createSecureServer>[1]
-    );
+    if (config.tls) {
+      primary = http2.createSecureServer(
+        { ...tlsOptions(config), allowHTTP1: true },
+        handler as unknown as Parameters<typeof http2.createSecureServer>[1]
+      );
+    } else {
+      primary = http2.createServer(
+        {},
+        handler as unknown as Parameters<typeof http2.createServer>[1]
+      );
+    }
   } else if (config.tls) {
     primary = https.createServer(tlsOptions(config), handler as Parameters<typeof https.createServer>[1]);
   } else {
