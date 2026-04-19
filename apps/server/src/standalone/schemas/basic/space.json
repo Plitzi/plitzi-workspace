@@ -1,0 +1,617 @@
+{
+  "_id": "69dc22fc8336edc3e6080260",
+  "schema": {
+    "definition": {
+      "name": "",
+      "permanentUrl": ""
+    },
+    "flat": {
+      "655221a12565b83ac5060e20": {
+        "id": "655221a12565b83ac5060e20",
+        "definition": {
+          "label": "Page",
+          "type": "page",
+          "initialState": null,
+          "styleSelectors": {
+            "base": "page-Wvbn"
+          },
+          "bindings": null,
+          "interactions": null,
+          "parentId": null,
+          "rootId": "655221a12565b83ac5060e20",
+          "items": [
+            "6563055d8785677dc553a243",
+            "65522685a36203721330c610",
+            "65522c9aeb84a24efd5aa41e",
+            "655226d91b8fb407a49535d5"
+          ]
+        },
+        "attributes": {
+          "slug": "",
+          "default": true,
+          "name": "Home"
+        }
+      },
+      "65522685a36203721330c610": {
+        "id": "65522685a36203721330c610",
+        "attributes": {
+          "subType": "div"
+        },
+        "definition": {
+          "label": "Container",
+          "type": "container",
+          "description": "Group things together into groups, also nestable.",
+          "items": ["655226c2a62ab65a53302504"],
+          "bindings": [],
+          "styleSelectors": {
+            "base": "container-3H3f"
+          },
+          "initialState": {
+            "visibility": true
+          },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "655221a12565b83ac5060e20"
+        }
+      },
+      "655226c2a62ab65a53302504": {
+        "id": "655226c2a62ab65a53302504",
+        "attributes": {
+          "src": "https://cdn.plitzi.com/resources/img/favicon.svg",
+          "srcLink": "",
+          "linkTarget": "_blank"
+        },
+        "definition": {
+          "label": "Image",
+          "type": "image",
+          "description": "Use an URL to display an image.",
+          "bindings": [],
+          "styleSelectors": {
+            "base": "image-x78X"
+          },
+          "initialState": {
+            "visibility": true
+          },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "65522685a36203721330c610"
+        }
+      },
+      "655226d91b8fb407a49535d5": {
+        "id": "655226d91b8fb407a49535d5",
+        "attributes": {
+          "subType": "div"
+        },
+        "definition": {
+          "label": "Container",
+          "type": "container",
+          "description": "Group things together into groups, also nestable.",
+          "items": [
+            "655226eb3909162e573e6821",
+            "6552289be0053d3e506eafe5",
+            "6552289ffb0656367911f756",
+            "655228a1dd69eab43000db88"
+          ],
+          "bindings": [],
+          "styleSelectors": {
+            "base": "container-EiKe"
+          },
+          "initialState": {
+            "visibility": true
+          },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "655221a12565b83ac5060e20"
+        }
+      },
+      "655226eb3909162e573e6821": {
+        "id": "655226eb3909162e573e6821",
+        "attributes": {
+          "href": "#"
+        },
+        "definition": {
+          "label": "Link",
+          "type": "link",
+          "items": ["6552275b66777873650ec849", "6552272b9a426b713fa71696"],
+          "bindings": [],
+          "styleSelectors": {
+            "base": "button-link"
+          },
+          "initialState": {
+            "visibility": true
+          },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "655226d91b8fb407a49535d5"
+        }
+      },
+      "65522718eb21c10ef65bd282": {
+        "id": "65522718eb21c10ef65bd282",
+        "definition": {
+          "label": "Heading",
+          "type": "heading",
+          "initialState": {
+            "visibility": true,
+            "styleVariant": {
+              "heading": {
+                "base": "title"
+              }
+            }
+          },
+          "styleSelectors": {
+            "base": ""
+          },
+          "bindings": [],
+          "interactions": null,
+          "parentId": "6552275b66777873650ec849",
+          "rootId": "655221a12565b83ac5060e20",
+          "items": null
+        },
+        "attributes": {
+          "subType": "h1",
+          "content": "Docs"
+        }
+      },
+      "6552272b9a426b713fa71696": {
+        "id": "6552272b9a426b713fa71696",
+        "attributes": {
+          "content": "Find in-depth information about Plitzi features and API."
+        },
+        "definition": {
+          "label": "Paragraph",
+          "type": "paragraph",
+          "bindings": [],
+          "styleSelectors": {
+            "base": ""
+          },
+          "initialState": {
+            "visibility": true
+          },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "655226eb3909162e573e6821"
+        }
+      },
+      "6552275b66777873650ec849": {
+        "id": "6552275b66777873650ec849",
+        "attributes": {
+          "subType": "div"
+        },
+        "definition": {
+          "label": "Container",
+          "type": "container",
+          "description": "Group things together into groups, also nestable.",
+          "items": ["65522718eb21c10ef65bd282", "6552276ae96c8efa3e7448a5"],
+          "bindings": [],
+          "styleSelectors": {
+            "base": "title-container"
+          },
+          "initialState": {
+            "visibility": true
+          },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "655226eb3909162e573e6821"
+        }
+      },
+      "6552276ae96c8efa3e7448a5": {
+        "id": "6552276ae96c8efa3e7448a5",
+        "attributes": {
+          "icon": "fas fa-arrow-right",
+          "size": "fa-2x"
+        },
+        "definition": {
+          "label": "Font Awesome",
+          "type": "fontAwesome",
+          "bindings": [],
+          "styleSelectors": {
+            "base": "title-icon"
+          },
+          "initialState": {
+            "visibility": true
+          },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "6552275b66777873650ec849"
+        }
+      },
+      "6552289be0053d3e506eafe5": {
+        "id": "6552289be0053d3e506eafe5",
+        "attributes": {
+          "href": "#"
+        },
+        "definition": {
+          "label": "Link",
+          "type": "link",
+          "items": ["6552289b4170c0af2a657c55", "6552289ba69b22131cb4e70e"],
+          "bindings": [],
+          "styleSelectors": {
+            "base": "button-link"
+          },
+          "initialState": {
+            "visibility": true
+          },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "655226d91b8fb407a49535d5"
+        }
+      },
+      "6552289b7c1376a6e0085b40": {
+        "id": "6552289b7c1376a6e0085b40",
+        "definition": {
+          "label": "Heading",
+          "type": "heading",
+          "initialState": {
+            "visibility": true,
+            "styleVariant": {
+              "heading": {
+                "base": "title"
+              }
+            }
+          },
+          "styleSelectors": {
+            "base": ""
+          },
+          "bindings": [],
+          "interactions": null,
+          "parentId": "6552289b4170c0af2a657c55",
+          "rootId": "655221a12565b83ac5060e20",
+          "items": null
+        },
+        "attributes": {
+          "subType": "h1",
+          "content": "Learn"
+        }
+      },
+      "6552289bf49da7291e190c67": {
+        "id": "6552289bf49da7291e190c67",
+        "attributes": {
+          "icon": "fas fa-arrow-right",
+          "size": "fa-2x"
+        },
+        "definition": {
+          "label": "Font Awesome",
+          "type": "fontAwesome",
+          "bindings": [],
+          "styleSelectors": {
+            "base": "title-icon"
+          },
+          "initialState": {
+            "visibility": true
+          },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "6552289b4170c0af2a657c55"
+        }
+      },
+      "6552289b4170c0af2a657c55": {
+        "id": "6552289b4170c0af2a657c55",
+        "attributes": {
+          "subType": "div"
+        },
+        "definition": {
+          "label": "Container",
+          "type": "container",
+          "description": "Group things together into groups, also nestable.",
+          "items": ["6552289b7c1376a6e0085b40", "6552289bf49da7291e190c67"],
+          "bindings": [],
+          "styleSelectors": {
+            "base": "title-container"
+          },
+          "initialState": {
+            "visibility": true
+          },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "6552289be0053d3e506eafe5"
+        }
+      },
+      "6552289ba69b22131cb4e70e": {
+        "id": "6552289ba69b22131cb4e70e",
+        "attributes": {
+          "content": "Learn about Plitzi in an interactive course with quizzes!"
+        },
+        "definition": {
+          "label": "Paragraph",
+          "type": "paragraph",
+          "bindings": [],
+          "styleSelectors": {
+            "base": ""
+          },
+          "initialState": {
+            "visibility": true
+          },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "6552289be0053d3e506eafe5"
+        }
+      },
+      "6552289ffb0656367911f756": {
+        "id": "6552289ffb0656367911f756",
+        "attributes": {
+          "href": "#"
+        },
+        "definition": {
+          "label": "Link",
+          "type": "link",
+          "items": ["6552289fd543865a0abaf18e", "6552289f9894aa272c419962"],
+          "bindings": [],
+          "styleSelectors": {
+            "base": "button-link"
+          },
+          "initialState": {
+            "visibility": true
+          },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "655226d91b8fb407a49535d5"
+        }
+      },
+      "6552289f2b58c9089bf4c934": {
+        "id": "6552289f2b58c9089bf4c934",
+        "definition": {
+          "label": "Heading",
+          "type": "heading",
+          "initialState": {
+            "visibility": true,
+            "styleVariant": {
+              "heading": {
+                "base": "title"
+              }
+            }
+          },
+          "styleSelectors": {
+            "base": ""
+          },
+          "bindings": [],
+          "interactions": null,
+          "parentId": "6552289fd543865a0abaf18e",
+          "rootId": "655221a12565b83ac5060e20",
+          "items": null
+        },
+        "attributes": {
+          "subType": "h1",
+          "content": "Templates"
+        }
+      },
+      "6552289f6a9310d5606e97f8": {
+        "id": "6552289f6a9310d5606e97f8",
+        "attributes": {
+          "icon": "fas fa-arrow-right",
+          "size": "fa-2x"
+        },
+        "definition": {
+          "label": "Font Awesome",
+          "type": "fontAwesome",
+          "bindings": [],
+          "styleSelectors": {
+            "base": "title-icon"
+          },
+          "initialState": {
+            "visibility": true
+          },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "6552289fd543865a0abaf18e"
+        }
+      },
+      "6552289fd543865a0abaf18e": {
+        "id": "6552289fd543865a0abaf18e",
+        "attributes": {
+          "subType": "div"
+        },
+        "definition": {
+          "label": "Container",
+          "type": "container",
+          "description": "Group things together into groups, also nestable.",
+          "items": ["6552289f2b58c9089bf4c934", "6552289f6a9310d5606e97f8"],
+          "bindings": [],
+          "styleSelectors": {
+            "base": "title-container"
+          },
+          "initialState": {
+            "visibility": true
+          },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "6552289ffb0656367911f756"
+        }
+      },
+      "6552289f9894aa272c419962": {
+        "id": "6552289f9894aa272c419962",
+        "attributes": {
+          "content": "Explore the Plitzi playground"
+        },
+        "definition": {
+          "label": "Paragraph",
+          "type": "paragraph",
+          "bindings": [],
+          "styleSelectors": {
+            "base": ""
+          },
+          "initialState": {
+            "visibility": true
+          },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "6552289ffb0656367911f756"
+        }
+      },
+      "655228a1dd69eab43000db88": {
+        "id": "655228a1dd69eab43000db88",
+        "attributes": {
+          "href": "#"
+        },
+        "definition": {
+          "label": "Link",
+          "type": "link",
+          "items": ["655228a1ce3a46086e21e631", "655228a1dd9f2c8341b6b7da"],
+          "bindings": [],
+          "styleSelectors": {
+            "base": "button-link"
+          },
+          "initialState": {
+            "visibility": true
+          },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "655226d91b8fb407a49535d5"
+        }
+      },
+      "655228a19a0517faa5539a2f": {
+        "id": "655228a19a0517faa5539a2f",
+        "definition": {
+          "label": "Heading",
+          "type": "heading",
+          "initialState": {
+            "visibility": true,
+            "styleVariant": {
+              "heading": {
+                "base": "title"
+              }
+            }
+          },
+          "styleSelectors": {
+            "base": ""
+          },
+          "bindings": [],
+          "interactions": null,
+          "parentId": "655228a1ce3a46086e21e631",
+          "rootId": "655221a12565b83ac5060e20",
+          "items": null
+        },
+        "attributes": {
+          "subType": "h1",
+          "content": "Deploy"
+        }
+      },
+      "655228a133cc8640cceec58f": {
+        "id": "655228a133cc8640cceec58f",
+        "attributes": {
+          "icon": "fas fa-arrow-right",
+          "size": "fa-2x"
+        },
+        "definition": {
+          "label": "Font Awesome",
+          "type": "fontAwesome",
+          "bindings": [],
+          "styleSelectors": {
+            "base": "title-icon"
+          },
+          "initialState": {
+            "visibility": true
+          },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "655228a1ce3a46086e21e631"
+        }
+      },
+      "655228a1ce3a46086e21e631": {
+        "id": "655228a1ce3a46086e21e631",
+        "attributes": {
+          "subType": "div"
+        },
+        "definition": {
+          "label": "Container",
+          "type": "container",
+          "description": "Group things together into groups, also nestable.",
+          "items": ["655228a19a0517faa5539a2f", "655228a133cc8640cceec58f"],
+          "bindings": [],
+          "styleSelectors": {
+            "base": "title-container"
+          },
+          "initialState": {
+            "visibility": true
+          },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "655228a1dd69eab43000db88"
+        }
+      },
+      "655228a1dd9f2c8341b6b7da": {
+        "id": "655228a1dd9f2c8341b6b7da",
+        "attributes": {
+          "content": "Instantly deploy your Plitzi Space"
+        },
+        "definition": {
+          "label": "Paragraph",
+          "type": "paragraph",
+          "bindings": [],
+          "styleSelectors": {
+            "base": ""
+          },
+          "initialState": {
+            "visibility": true
+          },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "655228a1dd69eab43000db88"
+        }
+      },
+      "65522c9aeb84a24efd5aa41e": {
+        "id": "65522c9aeb84a24efd5aa41e",
+        "attributes": {
+          "subType": "div"
+        },
+        "definition": {
+          "label": "Container",
+          "type": "container",
+          "description": "Group things together into groups, also nestable.",
+          "items": ["65522cc49b57167ea7a2a076"],
+          "bindings": [],
+          "styleSelectors": {
+            "base": "container-Ljsd"
+          },
+          "initialState": {
+            "visibility": true
+          },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "655221a12565b83ac5060e20"
+        }
+      },
+      "65522cc49b57167ea7a2a076": {
+        "id": "65522cc49b57167ea7a2a076",
+        "definition": {
+          "label": "Heading",
+          "type": "heading",
+          "initialState": {
+            "visibility": true,
+            "styleVariant": {
+              "heading": {
+                "base": "lg"
+              }
+            }
+          },
+          "styleSelectors": {
+            "base": ""
+          },
+          "bindings": [],
+          "interactions": null,
+          "parentId": "65522c9aeb84a24efd5aa41e",
+          "rootId": "655221a12565b83ac5060e20",
+          "items": null
+        },
+        "attributes": {
+          "subType": "h1",
+          "content": "Welcome To Plitzi"
+        }
+      },
+      "6563055d8785677dc553a243": {
+        "id": "6563055d8785677dc553a243",
+        "definition": {
+          "label": "Container",
+          "type": "container",
+          "initialState": {
+            "visibility": true
+          },
+          "styleSelectors": {
+            "base": "bg-rectangles"
+          },
+          "bindings": [],
+          "interactions": null,
+          "parentId": "655221a12565b83ac5060e20",
+          "rootId": "655221a12565b83ac5060e20",
+          "items": []
+        },
+        "attributes": {
+          "subType": "div"
+        }
+      }
+    },
+    "variables": [],
+    "settings": {
+      "customCss": ".button-link:hover .title-icon {\n  transform: translateX(10px);\n  transition-property: transform;\n  transition-timing-function: cubic-bezier(0.4, 0.2, 1);\n  transition-duration: 150ms;\n}\n"
+    },
+    "pages": ["655221a12565b83ac5060e20"],
+    "pageFolders": []
+  },
+  "environment": "main",
+  "plugins": {},
+  "spaceId": 14,
+  "createdAt": "2026-04-12T22:55:56.650+0000",
+  "updatedAt": "2026-04-16T23:35:58.752+0000",
+  "settings": {},
+  "snapshot": null,
+  "version": 1
+}

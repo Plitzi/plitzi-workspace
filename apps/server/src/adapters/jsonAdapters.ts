@@ -25,9 +25,11 @@ export const createJsonAdapters = (config: JsonAdaptersConfig): SSRAdapters => {
         typeof config.offlineData === 'function'
           ? config.offlineData(spaceId, environment, revision)
           : config.offlineData;
+
       return Promise.resolve(readJson(filePath) as OfflineDataRaw);
     } catch (err: unknown) {
       console.error('[JsonAdapters] Failed to read offlineData:', (err as Error).message);
+
       return Promise.resolve(undefined);
     }
   };
@@ -53,6 +55,7 @@ export const createJsonAdapters = (config: JsonAdaptersConfig): SSRAdapters => {
     }
 
     const byHostname = deployment as Record<string, SSRSpaceDeployment | undefined>;
+
     return Promise.resolve(
       byHostname[req.hostname] ?? byHostname['*'] ?? { spaceId: 1, environment: 'main', revision: 0 }
     );

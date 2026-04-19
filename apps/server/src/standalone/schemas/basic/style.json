@@ -1,0 +1,307 @@
+{
+  "_id": "69dc22fc8336edc3e6080263",
+  "environment": "main",
+  "cache": ".plitzi__heading{color:var(--foreground);&[data-variant=\"lg\"],&.heading--lg{font-size:50px;}&[data-variant=\"title\"],&.heading--title{margin-bottom:0px;margin-top:0px;}}\n.plitzi__text{color:var(--foreground);}\n.plitzi__paragraph{color:var(--foreground);}\n.plitzi__fontAwesome{color:var(--foreground);}\n.page-Wvbn{flex-direction:column;align-items:center;justify-content:space-between;padding-left:100px;padding-right:100px;padding-bottom:100px;padding-top:100px;position:relative;min-width:100vw;min-height:100vh;background-image:radial-gradient(circle at 50% 50%,var(--background-inner) -30%,var(--background-outer) 100%);background-size:auto;background-position:0% 0%;background-repeat:no-repeat;background-attachment:scroll;background-clip:border-box;}\n.container-EiKe{display:flex;align-items:center;gap:40px;z-index:1;}\n.title-container{display:flex;align-items:center;}\n.title-icon{margin-left:10px;}\n.button-link{color:white;flex-basis:0px;flex-grow:1;flex-shrink:1;}\n.container-3H3f{width:75vw;height:75vh;position:absolute;}\n.image-x78X{width:100%;height:100%;opacity:0.45;}\n.container-Ljsd{z-index:1;color:white;margin-bottom:40px;}\n.bg-rectangles{top:0%;left:0%;bottom:0%;right:0%;position:fixed;background-image:linear-gradient(0deg,var(--grid-big) 1px, transparent 1px),linear-gradient(90deg,var(--grid-big) 1px, transparent 1px),linear-gradient(0deg,var(--grid-small) 1px, transparent 1px),linear-gradient(90deg,var(--grid-small) 1px, transparent 1px);background-size:100px 100px,100px 100px,10px 10px,10px 10px;background-position:0% 0%,0% 0%,0% 0%,0% 0%;background-repeat:repeat,repeat,repeat,repeat;background-attachment:scroll,scroll,scroll,scroll;background-clip:border-box,border-box,border-box,border-box;}\n@media (max-width: 64rem) and (min-width: 48rem) {.container-EiKe{flex-direction:column;min-height:auto;min-width:auto;flex-grow:1;flex-shrink:1;flex-basis:0%;align-items:flex-start;}\n.page-Wvbn{justify-content:flex-start;padding-top:60px;padding-bottom:60px;padding-right:60px;padding-left:60px;}\n.super-title{text-align:center;}}\n:root {\n    --foreground: #17171c;\n    --grid-big: #00000010;\n    --grid-small: #0000000A;\n    --background-outer: #dce6ff;\n    --background-inner: #ffffff;\n}\n\n@media (prefers-color-scheme: light) {\n  :root {\n    --foreground: #17171c;\n    --grid-big: #00000010;\n    --grid-small: #0000000A;\n    --background-outer: #dce6ff;\n    --background-inner: #ffffff;\n  }\n}\n\n@media (prefers-color-scheme: dark) {\n  :root {\n    --foreground: #fafafa;\n    --grid-big: #ffffff10;\n    --grid-small: #ffffff0A;\n    --background-outer: #000000;\n    --background-inner: #080866;\n  }\n}",
+  "spaceId": 14,
+  "platform": {
+    "desktop": {
+      "page-Wvbn": {
+        "name": "page-Wvbn",
+        "attributes": {
+          "base": {
+            "default": {
+              "flex-direction": "column",
+              "align-items": "center",
+              "justify-content": "space-between",
+              "padding-left": "100px",
+              "padding-right": "100px",
+              "padding-bottom": "100px",
+              "padding-top": "100px",
+              "position": "relative",
+              "min-width": "100vw",
+              "min-height": "100vh",
+              "background-image": "radial-gradient(circle at 50% 50%, var(--background-inner) -30%, var(--background-outer) 100%)",
+              "background-size": "auto",
+              "background-position": "0% 0%",
+              "background-repeat": "no-repeat",
+              "background-attachment": "scroll",
+              "background-clip": "border-box"
+            }
+          }
+        },
+        "cache": ".page-Wvbn{flex-direction:column;align-items:center;justify-content:space-between;padding-left:100px;padding-right:100px;padding-bottom:100px;padding-top:100px;position:relative;min-width:100vw;min-height:100vh;background-image:radial-gradient(circle at 50% 50%,var(--background-inner) -30%,var(--background-outer) 100%);background-size:auto;background-position:0% 0%;background-repeat:no-repeat;background-attachment:scroll;background-clip:border-box;}",
+        "type": "class"
+      },
+      "container-EiKe": {
+        "name": "container-EiKe",
+        "attributes": {
+          "base": {
+            "default": {
+              "display": "flex",
+              "align-items": "center",
+              "gap": "40px",
+              "z-index": "1"
+            }
+          }
+        },
+        "cache": ".container-EiKe{display:flex;align-items:center;gap:40px;z-index:1;}",
+        "type": "class"
+      },
+      "title-container": {
+        "name": "title-container",
+        "attributes": {
+          "base": {
+            "default": {
+              "display": "flex",
+              "align-items": "center"
+            }
+          }
+        },
+        "cache": ".title-container{display:flex;align-items:center;}",
+        "type": "class"
+      },
+      "title-icon": {
+        "name": "title-icon",
+        "attributes": {
+          "base": {
+            "default": {
+              "margin-left": "10px"
+            }
+          }
+        },
+        "cache": ".title-icon{margin-left:10px;}",
+        "type": "class"
+      },
+      "button-link": {
+        "name": "button-link",
+        "attributes": {
+          "base": {
+            "default": {
+              "color": "white",
+              "flex-basis": "0px",
+              "flex-grow": "1",
+              "flex-shrink": "1"
+            }
+          }
+        },
+        "cache": ".button-link{color:white;flex-basis:0px;flex-grow:1;flex-shrink:1;}",
+        "type": "class"
+      },
+      "container-3H3f": {
+        "name": "container-3H3f",
+        "attributes": {
+          "base": {
+            "default": {
+              "width": "75vw",
+              "height": "75vh",
+              "position": "absolute"
+            }
+          }
+        },
+        "cache": ".container-3H3f{width:75vw;height:75vh;position:absolute;}",
+        "type": "class"
+      },
+      "image-x78X": {
+        "name": "image-x78X",
+        "attributes": {
+          "base": {
+            "default": {
+              "width": "100%",
+              "height": "100%",
+              "opacity": "0.45"
+            }
+          }
+        },
+        "cache": ".image-x78X{width:100%;height:100%;opacity:0.45;}",
+        "type": "class"
+      },
+      "container-Ljsd": {
+        "name": "container-Ljsd",
+        "attributes": {
+          "base": {
+            "default": {
+              "z-index": "1",
+              "color": "white",
+              "margin-bottom": "40px"
+            }
+          }
+        },
+        "cache": ".container-Ljsd{z-index:1;color:white;margin-bottom:40px;}",
+        "type": "class"
+      },
+      "heading": {
+        "name": "heading",
+        "type": "element",
+        "attributes": {
+          "base": {
+            "default": {
+              "color": "var(--foreground)"
+            },
+            "variants": {
+              "lg": {
+                "default": {
+                  "font-size": "50px"
+                }
+              },
+              "title": {
+                "default": {
+                  "margin-bottom": "0px",
+                  "margin-top": "0px"
+                }
+              }
+            }
+          }
+        },
+        "componentType": "heading",
+        "cache": ".plitzi__heading{color:var(--foreground);&[data-variant=\"lg\"],&.heading--lg{font-size:50px;}&[data-variant=\"title\"],&.heading--title{margin-bottom:0px;margin-top:0px;}}"
+      },
+      "text": {
+        "name": "text",
+        "type": "element",
+        "attributes": {
+          "base": {
+            "default": {
+              "color": "var(--foreground)"
+            }
+          }
+        },
+        "componentType": "text",
+        "cache": ".plitzi__text{color:var(--foreground);}"
+      },
+      "paragraph": {
+        "name": "paragraph",
+        "type": "element",
+        "attributes": {
+          "base": {
+            "default": {
+              "color": "var(--foreground)"
+            }
+          }
+        },
+        "componentType": "paragraph",
+        "cache": ".plitzi__paragraph{color:var(--foreground);}"
+      },
+      "fontAwesome": {
+        "name": "fontAwesome",
+        "type": "element",
+        "attributes": {
+          "base": {
+            "default": {
+              "color": "var(--foreground)"
+            }
+          }
+        },
+        "componentType": "fontAwesome",
+        "cache": ".plitzi__fontAwesome{color:var(--foreground);}"
+      },
+      "bg-rectangles": {
+        "name": "bg-rectangles",
+        "type": "class",
+        "attributes": {
+          "base": {
+            "default": {
+              "top": "0%",
+              "left": "0%",
+              "bottom": "0%",
+              "right": "0%",
+              "position": "fixed",
+              "background-image": "linear-gradient(0deg, var(--grid-big) 1px, transparent 1px), linear-gradient(90deg, var(--grid-big) 1px, transparent 1px), linear-gradient(0deg, var(--grid-small) 1px, transparent 1px), linear-gradient(90deg, var(--grid-small) 1px, transparent 1px)",
+              "background-size": "100px 100px, 100px 100px, 10px 10px, 10px 10px",
+              "background-position": "0% 0%, 0% 0%, 0% 0%, 0% 0%",
+              "background-repeat": "repeat, repeat, repeat, repeat",
+              "background-attachment": "scroll, scroll, scroll, scroll",
+              "background-clip": "border-box, border-box, border-box, border-box"
+            }
+          }
+        },
+        "componentType": null,
+        "cache": ".bg-rectangles{top:0%;left:0%;bottom:0%;right:0%;position:fixed;background-image:linear-gradient(0deg,var(--grid-big) 1px, transparent 1px),linear-gradient(90deg,var(--grid-big) 1px, transparent 1px),linear-gradient(0deg,var(--grid-small) 1px, transparent 1px),linear-gradient(90deg,var(--grid-small) 1px, transparent 1px);background-size:100px 100px,100px 100px,10px 10px,10px 10px;background-position:0% 0%,0% 0%,0% 0%,0% 0%;background-repeat:repeat,repeat,repeat,repeat;background-attachment:scroll,scroll,scroll,scroll;background-clip:border-box,border-box,border-box,border-box;}"
+      }
+    },
+    "tablet": {
+      "container-EiKe": {
+        "name": "container-EiKe",
+        "attributes": {
+          "base": {
+            "default": {
+              "flex-direction": "column",
+              "min-height": "auto",
+              "min-width": "auto",
+              "flex-grow": "1",
+              "flex-shrink": "1",
+              "flex-basis": "0%",
+              "align-items": "flex-start"
+            }
+          }
+        },
+        "cache": ".container-EiKe{flex-direction:column;min-height:auto;min-width:auto;flex-grow:1;flex-shrink:1;flex-basis:0%;align-items:flex-start;}",
+        "type": "class"
+      },
+      "page-Wvbn": {
+        "name": "page-Wvbn",
+        "attributes": {
+          "base": {
+            "default": {
+              "justify-content": "flex-start",
+              "padding-top": "60px",
+              "padding-bottom": "60px",
+              "padding-right": "60px",
+              "padding-left": "60px"
+            }
+          }
+        },
+        "cache": ".page-Wvbn{justify-content:flex-start;padding-top:60px;padding-bottom:60px;padding-right:60px;padding-left:60px;}",
+        "type": "class"
+      },
+      "super-title": {
+        "name": "super-title",
+        "attributes": {
+          "base": {
+            "default": {
+              "text-align": "center"
+            }
+          }
+        },
+        "cache": ".super-title{text-align:center;}",
+        "type": "class"
+      }
+    },
+    "mobile": {}
+  },
+  "createdAt": "2026-04-13T12:10:26.965+0000",
+  "mode": "desktop-first",
+  "theme": {
+    "default": "system",
+    "schemes": ["light", "dark"]
+  },
+  "updatedAt": "2026-04-16T23:35:10.907+0000",
+  "variables": {
+    "color": {
+      "foreground": {
+        "light": "#17171c",
+        "dark": "#fafafa",
+        "default": "#17171c"
+      },
+      "grid-big": {
+        "light": "#00000010",
+        "dark": "#ffffff10",
+        "default": "#00000010"
+      },
+      "grid-small": {
+        "light": "#0000000A",
+        "dark": "#ffffff0A",
+        "default": "#0000000A"
+      },
+      "background-outer": {
+        "light": "#dce6ff",
+        "dark": "#000000",
+        "default": "#dce6ff"
+      },
+      "background-inner": {
+        "light": "#ffffff",
+        "dark": "#080866",
+        "default": "#ffffff"
+      }
+    }
+  }
+}
