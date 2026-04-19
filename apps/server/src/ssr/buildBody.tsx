@@ -17,7 +17,7 @@ export const buildBody = async (
   environment: Environment,
   revision: number,
   renderFn: SSRTemplateFn,
-  pluginManager?: PluginManager
+  pluginManager: PluginManager
 ): Promise<string> => {
   const offlineData = await config.adapters.getOfflineData(spaceId, environment, revision);
   const server = buildServerInfo(req, req.ctx);
@@ -46,7 +46,7 @@ export const buildBody = async (
   // pluginNames contains base names; skip any plugin already covered there to avoid duplicates
   const pluginBaseNames = new Set(pluginNames.map(n => n.replace(/@[^@]*$/, '')));
   const dynamicNames: string[] = [];
-  if (pluginManager && pluginSources) {
+  if (pluginSources) {
     for (const [pluginName, pluginSource] of Object.entries(pluginSources)) {
       const key = pluginManager.ensure(pluginName, pluginSource);
       if (!pluginBaseNames.has(pluginName)) {
@@ -58,15 +58,15 @@ export const buildBody = async (
   // Auto-register external plugins declared in the schema (offlineData.plugins)
   // Downloads JS/CSS from CDN once, caches to disk via PluginManager for subsequent requests
   const autoLoad = config.autoLoadSchemaPlugins !== false;
-  const externalNames = autoLoad && pluginManager ? await registerExternalPlugins(pluginManager, offlineData) : [];
+  const externalNames = autoLoad ? await registerExternalPlugins(pluginManager, offlineData) : [];
   const externalNamesFiltered = externalNames.filter(k => !pluginBaseNames.has(k.replace(/@[^@]*$/, '')));
 
   const allPluginNames = [...pluginNames, ...dynamicNames, ...externalNamesFiltered];
-  const entries = pluginManager && allPluginNames.length > 0 ? await pluginManager.getEntries(allPluginNames) : [];
+  const entries = allPluginNames.length > 0 ? await pluginManager.getEntries(allPluginNames) : [];
 
   // Load plugin React components for server-side rendering.
   // Results are cached in memory by filePath — subsequent requests skip the dynamic import().
-  const pluginComponents = await loadPluginComponents(entries, pluginManager?.getComponents());
+  const pluginComponents = await loadPluginComponents(entries, pluginManager.getComponents());
 
   const html = renderToString(
     <Component
