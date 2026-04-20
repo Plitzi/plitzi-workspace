@@ -46,7 +46,7 @@
     "react-router-dom": "^7.14.1",
     "swr": "^2.4.1",
     "twig": "^3.0.0",
-    "uuid": "^13.0.0",
+    "uuid": "^14.0.0",
     "zod": "^4.3.6"
   },
   "peerDependencies": {
