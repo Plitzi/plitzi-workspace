@@ -66,6 +66,20 @@ const handleRequest = async (
     return;
   }
 
+  const loginPath = config.loginPath === false ? null : (config.loginPath ?? '/auth/login');
+  if (loginPath && req.method === 'POST' && req.path === loginPath) {
+    const isLoggedIn = await config.adapters.onLogin?.(req);
+    if (isLoggedIn) {
+      res.setStatus(200);
+    } else {
+      res.setStatus(401);
+    }
+
+    res.end();
+
+    return;
+  }
+
   const logoutPath = config.logoutPath === false ? null : (config.logoutPath ?? '/auth/logout');
   if (logoutPath && req.method === 'POST' && req.path === logoutPath) {
     await config.adapters.onLogout?.(req);
@@ -90,7 +104,8 @@ const handleRequest = async (
   const middlewares = [
     spaceDeploymentMiddleware(config.adapters),
     basicAuthMiddleware(),
-    authMiddleware(config.adapters)
+    authMiddleware(config.adapters),
+    ...(config.middlewares || [])
   ];
 
   const stopped = await runMiddlewares(middlewares, req, res);

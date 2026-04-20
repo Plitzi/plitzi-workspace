@@ -110,6 +110,7 @@ export type SSRAdapters = {
   getOfflineData: (spaceId: number, environment: string, revision?: number) => Promise<OfflineDataRaw | undefined>;
   getSpaceDeployment: (req: SSRRequest) => Promise<SSRSpaceDeployment>;
   getUser?: (req: SSRRequest) => Promise<SSRUser | undefined>;
+  onLogin?: (req: SSRRequest) => Promise<boolean>;
   onLogout?: (req: SSRRequest) => Promise<void>;
 };
 
@@ -128,6 +129,8 @@ export type SSRServerConfig = {
   reactVersion?: string;
   devMode?: boolean;
   cacheTtlMs?: number;
+  loginPath?: string | false;
+  middlewares?: SSRMiddleware[];
   logoutPath?: string | false;
   templateFn?: SSRTemplateFn;
   plugins?: Record<string, PluginSource>;
