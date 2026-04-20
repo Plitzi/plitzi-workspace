@@ -23,7 +23,8 @@ export const createSSRServer = (config: SSRServerConfig): SSRServer => {
   const pluginManager = new PluginManager(
     normalizePlugins(config.plugins ?? {}),
     config.pluginsCacheDir,
-    config.pluginsTtlMs
+    config.pluginsTtlMs,
+    config.devMode
   );
 
   const plugins: PluginRegistry = {

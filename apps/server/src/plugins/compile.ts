@@ -12,7 +12,11 @@ const EXTERNAL = [
   '@plitzi/sdk-shared'
 ];
 
-export const compilePlugin = async (jsPath: string, outDir: string): Promise<{ hasCSS: boolean }> => {
+export const compilePlugin = async (
+  jsPath: string,
+  outDir: string,
+  devMode: boolean = false
+): Promise<{ hasCSS: boolean }> => {
   await esbuild.build({
     entryPoints: [jsPath],
     bundle: true,
@@ -21,7 +25,7 @@ export const compilePlugin = async (jsPath: string, outDir: string): Promise<{ h
     outdir: outDir,
     entryNames: 'index',
     jsx: 'automatic',
-    minify: true,
+    minify: !devMode,
     splitting: false,
     logLevel: 'warning'
   });

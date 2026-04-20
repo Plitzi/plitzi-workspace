@@ -26,11 +26,13 @@ export class PluginManager {
   private readonly failed = new Set<string>();
   /** Maps base plugin name → most recently registered effective key (may include @version) */
   private readonly nameIndex = new Map<string, string>();
+  private readonly devMode: boolean = false;
 
-  constructor(plugins: Record<string, PluginSource>, cacheDir?: string, ttlMs?: number) {
+  constructor(plugins: Record<string, PluginSource>, cacheDir?: string, ttlMs?: number, devMode: boolean = false) {
     this.plugins = plugins;
     this.outputDir = path.resolve(process.cwd(), cacheDir ?? DEFAULT_CACHE_DIR);
     this.ttlMs = ttlMs ?? DEFAULT_TTL_MS;
+    this.devMode = devMode;
     for (const key of Object.keys(plugins)) {
       const baseName = key.replace(/@[^@]*$/, '');
       this.nameIndex.set(baseName, key);
@@ -194,7 +196,7 @@ export class PluginManager {
       let cssUrl: string | undefined;
 
       if (action === 'compile') {
-        const { hasCSS } = await compilePlugin(jsPath, dir);
+        const { hasCSS } = await compilePlugin(jsPath, dir, this.devMode);
         if (hasCSS) {
           cssUrl = `${this.urlPrefix}/${name}/index.css`;
         } else if (cssPath) {
