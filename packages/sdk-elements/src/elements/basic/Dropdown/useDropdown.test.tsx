@@ -3,19 +3,18 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import useDropdown from './useDropdown';
 
-const createRect = (overrides: Partial<DOMRect> = {}): DOMRect =>
-  ({
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
-    width: 0,
-    height: 0,
-    x: 0,
-    y: 0,
-    toJSON: () => ({}),
-    ...overrides
-  }) as DOMRect;
+const createRect = (overrides: Partial<DOMRect> = {}): DOMRect => ({
+  top: 0,
+  left: 0,
+  bottom: 0,
+  right: 0,
+  width: 0,
+  height: 0,
+  x: 0,
+  y: 0,
+  toJSON: () => ({}),
+  ...overrides
+});
 
 const mockGetBoundingClientRect = (element: HTMLElement | null, rect: DOMRect) => {
   if (!element) {

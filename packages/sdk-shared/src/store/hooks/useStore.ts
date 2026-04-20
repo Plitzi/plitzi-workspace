@@ -278,7 +278,7 @@ function useStore<TState extends object>(
   arg?: PathOf<TState> | ReadonlyArray<PathOrFn<TState>> | ((state: TState) => PathOf<TState>),
   options: UseStoreOptions<any, any> = {}
 ): unknown {
-  const store = useResolvedStore(options.store as StoreApi<TState> | undefined, 'useStore');
+  const store = useResolvedStore(options.store, 'useStore');
 
   if (Array.isArray(arg)) {
     // eslint-disable-next-line react-hooks/rules-of-hooks

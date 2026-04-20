@@ -31,7 +31,7 @@ const StoreProvider = <TState extends object = any>({
   logger,
   children
 }: StoreProviderProps<TState>) => {
-  const parentStore = use(StoreContext) as StoreApi<TState> | undefined;
+  const parentStore = use<StoreApi<TState> | undefined>(StoreContext);
   const storeRef = useRef<StoreApi<TState>>(undefined);
   const storeState = useMemo(() => {
     let parentState = {} as TState;

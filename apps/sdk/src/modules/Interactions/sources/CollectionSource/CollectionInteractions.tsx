@@ -135,7 +135,7 @@ const CollectionInteractions = ({ children }: CollectionInteractionsProps) => {
         callback: handleAddCollectionRecord,
         preview: { success: '', collectionId: '', record: { id: '', status: '', values: {} } },
         params: params => {
-          const fields = get(collections, `${params.collectionId}.fields`, {}) as Collection['fields'];
+          const fields = get(collections, `${params.collectionId}.fields`, {});
 
           return {
             collectionId: {
@@ -185,7 +185,7 @@ const CollectionInteractions = ({ children }: CollectionInteractionsProps) => {
         callback: handleUpdateCollectionRecord,
         preview: { success: '', collectionId: '', record: { id: '', status: '', values: {} } },
         params: params => {
-          const fields = get(collections, `${params.collectionId}.fields`, {}) as Collection['fields'];
+          const fields = get(collections, `${params.collectionId}.fields`, {});
 
           return {
             collectionId: {
@@ -300,7 +300,7 @@ const CollectionInteractions = ({ children }: CollectionInteractionsProps) => {
             }
           }
         }
-      } as InteractionCallback<{ collectionId: string; recordId: string }>
+      } satisfies InteractionCallback<{ collectionId: string; recordId: string }>
     }),
     [
       collections,

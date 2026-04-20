@@ -15,7 +15,7 @@ import { StyleBindingsAllowed } from '@plitzi/sdk-shared/style/styleConstants';
 import BindingSelected from './BindingSelected';
 import BindingForm from './models/BindingForm';
 
-import type { Element, ElementBinding, BindingCategory, SourceMeta, BuilderState } from '@plitzi/sdk-shared';
+import type { Element, ElementBinding, BindingCategory, BuilderState } from '@plitzi/sdk-shared';
 
 const bindingCategories: BindingCategory[] = ['attributes', 'style', 'initialState'];
 
@@ -39,7 +39,7 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
       Object.values(getSourcesByElementId(flat, id))
         .filter(source => source.meta.source)
         .reduce((acum, source) => ({ ...acum, [source.meta.source as string]: source.meta }), {
-          '': { id: undefined, source: undefined, name: 'None', fields: () => [] } as SourceMeta
+          '': { id: undefined, source: undefined, name: 'None', fields: () => [] }
         }),
     [getSourcesByElementId, id, flat]
   );

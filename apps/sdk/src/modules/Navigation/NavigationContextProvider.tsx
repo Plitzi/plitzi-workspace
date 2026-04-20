@@ -112,12 +112,12 @@ const NavigationContextProvider = ({
   const routeParams = useMemo<RouteParams>(() => {
     const path = paths.find(path => path.pageId === currentPageId && !path.isRaw);
     if (!path) {
-      return get(pathMatch, 'params', {}) as PathMatch['params'];
+      return get(pathMatch, 'params', {});
     }
 
     return {
       ...getRouteParams(path.path).reduce((acum, param) => ({ ...acum, [param]: '' }), {}),
-      ...(get(pathMatch, 'params', {}) as PathMatch['params'])
+      ...get(pathMatch, 'params', {})
     };
   }, [paths, pathMatch, currentPageId]);
   const urlSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);

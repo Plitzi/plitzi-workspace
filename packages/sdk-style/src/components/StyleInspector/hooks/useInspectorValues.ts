@@ -96,7 +96,7 @@ const useInspectorValues = <TAsValue extends boolean>({
     keys.forEach(key => {
       let value: StyleValue | undefined;
       if (strictMode) {
-        value = get(attributes, key, get(defaultValues ?? ({} as Record<StyleCategory, StyleValue>), key));
+        value = get(attributes, key, get(defaultValues ?? {}, key));
       } else {
         value = get(
           attributes,
@@ -104,13 +104,9 @@ const useInspectorValues = <TAsValue extends boolean>({
           get(
             bindingData,
             key,
-            get(
-              inheritData,
-              `${key}.0.value`,
-              get(defaultValues ?? ({} as Record<StyleCategory, StyleValue>), key, baseDefaultValue[key])
-            )
+            get(inheritData, `${key}.0.value`, get(defaultValues ?? {}, key, baseDefaultValue[key]))
           )
-        ) as StyleValue | undefined;
+        );
       }
 
       if (replaceTokens && typeof value === 'string' && VARIABLE_REGEX.test(value)) {

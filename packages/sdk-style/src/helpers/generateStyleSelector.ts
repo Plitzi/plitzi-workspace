@@ -17,13 +17,7 @@ const generateStyleSelector = (
     type: selectorType,
     attributes: values,
     variables,
-    cache: processSelector({
-      name: selector,
-      type: selectorType,
-      attributes: values,
-      variables,
-      cache: ''
-    } as StyleItem)
+    cache: processSelector({ name: selector, type: selectorType, attributes: values, variables, cache: '' })
   };
 };
 

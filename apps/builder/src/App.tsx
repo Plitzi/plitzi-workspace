@@ -345,10 +345,7 @@ const App = (props: AppProps) => {
     () =>
       client && (
         <ApolloProvider client={client}>
-          <ComponentProvider
-            localCustomComponents={localComponents}
-            localComponents={sdkComponents as unknown as Record<string, ComponentPlugin>}
-          >
+          <ComponentProvider localCustomComponents={localComponents} localComponents={sdkComponents}>
             <ToastProvider>
               <AppMain
                 {...omit(props, ['children', 'server'])}

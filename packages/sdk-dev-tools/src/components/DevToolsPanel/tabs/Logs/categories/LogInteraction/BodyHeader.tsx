@@ -4,7 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { formatDate } from '@plitzi/sdk-shared/helpers';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
 
-import type { CommonState, Element } from '@plitzi/sdk-shared';
+import type { CommonState } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type BodyHeaderProps = {
@@ -91,7 +91,7 @@ const BodyHeader = ({ triggerName, startTime, endTime, duration, elementId }: Bo
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             >
-              {(element as Element | undefined)?.definition.label}
+              {element?.definition.label}
               {elementId && (
                 <span className="ml-1 font-mono text-[10px] text-zinc-400 dark:text-zinc-500">[{elementId}]</span>
               )}

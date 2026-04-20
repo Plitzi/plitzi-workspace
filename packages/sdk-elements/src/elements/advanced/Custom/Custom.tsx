@@ -42,7 +42,7 @@ const Custom = ({
   const { components } = use(ComponentContext);
   const settingsParsed = useMemo<Element['attributes'] | false>(() => {
     if (!settings) {
-      return {} as Element['attributes'];
+      return {};
     }
 
     try {
@@ -68,10 +68,14 @@ const Custom = ({
       .filter(asset => !!asset && asset.trim() !== '')
       .map(url => {
         if (url.endsWith('.js')) {
-          return { id: url, type: 'script', params: { src: url, type: 'text/javascript' } } as Asset;
+          const asset: Asset = { id: url, type: 'script', params: { src: url, type: 'text/javascript' } };
+
+          return asset;
         }
 
-        return { id: url, type: 'link', params: { href: url, rel: 'stylesheet', type: 'text/css' } } as Asset;
+        const asset: Asset = { id: url, type: 'link', params: { href: url, rel: 'stylesheet', type: 'text/css' } };
+
+        return asset;
       });
   }, [assets]);
 

@@ -55,7 +55,7 @@ const StepTransformers = ({ dataSourceFields }: StepTransformersProps) => {
 
   const handleChangeTransformerAction = useCallback(
     (index: number) => (option?: Exclude<Option, OptionGroup>) => {
-      const paramDefinitions = get(utility, `${option?.value}.params`, {}) as DataSourceUtilityParams;
+      const paramDefinitions = get(utility, `${option?.value}.params`, {} as DataSourceUtilityParams);
       const params = Object.keys(paramDefinitions).reduce(
         (acum, paramKey) => ({ ...acum, [paramKey]: paramDefinitions[paramKey].defaultValue }),
         {}
@@ -94,7 +94,7 @@ const StepTransformers = ({ dataSourceFields }: StepTransformersProps) => {
           <div className="flex flex-col gap-4">
             {value.map((transformer, i: number) => {
               const { action, params } = transformer;
-              const paramDefinitions = get(utility, `${action}.params`, {}) as DataSourceUtilityParams;
+              const paramDefinitions = get(utility, `${action}.params`, {} as DataSourceUtilityParams);
 
               return (
                 <div key={i} className="flex flex-col gap-4 rounded-sm border border-gray-300 p-2 dark:border-zinc-700">
@@ -112,11 +112,7 @@ const StepTransformers = ({ dataSourceFields }: StepTransformersProps) => {
                   </div>
                   {Object.keys(paramDefinitions).map(paramKey => {
                     const { label, description, type, defaultValue, options, disabled } = paramDefinitions[paramKey];
-                    const paramValue = get(
-                      params as Record<string, string | number | boolean | undefined>,
-                      paramKey,
-                      defaultValue
-                    );
+                    const paramValue = get(params, paramKey, defaultValue);
 
                     return (
                       <TransformerParam

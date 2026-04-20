@@ -80,7 +80,7 @@ const getComponentDefinition = (
 
     return componentDefinitions;
   } catch {
-    return {} as Record<string, ComponentDefinition>;
+    return {};
   }
 };
 
@@ -92,13 +92,13 @@ export const fetchPluginsManifests = async (manifests: string[]) => {
   const promises = manifests.map(pluginManifest => fetchManifest<PluginManifest>(pluginManifest));
   const responses = await Promise.allSettled(promises);
 
-  return responses.reduce((acum, response) => {
+  return responses.reduce<Record<string, PluginManifest>>((acum, response) => {
     if (response.status === 'fulfilled' && response.value) {
       return { ...acum, [get(response.value, 'root', '')]: response.value };
     }
 
     return acum;
-  }, {}) as Record<string, PluginManifest>;
+  }, {});
 };
 
 export const pluginParseDefinition = async (pluginsRaw: PluginRaw | PluginRaw[] = []) => {

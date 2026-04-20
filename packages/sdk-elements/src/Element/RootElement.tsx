@@ -80,7 +80,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   } = elementContext;
   const params = useMemo<Record<string, string | undefined | boolean>>(() => {
     if (!debugMode && (previewMode || !type || rootId !== baseElementId)) {
-      return {} as Record<string, string>;
+      return {};
     }
 
     return {

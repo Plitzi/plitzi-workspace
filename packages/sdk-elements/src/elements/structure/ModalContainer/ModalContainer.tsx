@@ -37,7 +37,7 @@ const ModalContainer = ({
   const {
     contexts: { InteractionsContext, DataSourceContext }
   } = usePlitziServiceContext();
-  const { interactionsManager } = use(InteractionsContext) as InteractionsContextValue;
+  const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
   const { useDataSource } = use(DataSourceContext);
   const [internalMetadata, setInternalMetadata] = useState<Record<string, unknown>>({});
 

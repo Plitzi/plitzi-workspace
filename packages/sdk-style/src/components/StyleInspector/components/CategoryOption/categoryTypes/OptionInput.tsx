@@ -9,14 +9,7 @@ export type OptionInputProps = {
 };
 
 const OptionInput = ({ value, className, onChange }: OptionInputProps) => {
-  return (
-    <Input
-      size="xs"
-      value={value as string}
-      onChange={onChange}
-      className={{ root: 'w-full min-w-0', input: className }}
-    />
-  );
+  return <Input size="xs" value={value} onChange={onChange} className={{ root: 'w-full min-w-0', input: className }} />;
 };
 
 export default OptionInput;

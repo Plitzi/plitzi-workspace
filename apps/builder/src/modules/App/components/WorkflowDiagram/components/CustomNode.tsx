@@ -35,7 +35,7 @@ const CustomNode = memo(({ id, data, selected = false }: CustomNodeProps) => {
   const { getEdges, setNodes } = useReactFlow();
   const { addToast } = useToast();
   const { showDialog } = useModal();
-  const config = accessLevelConfig[data.accessLevel as keyof typeof accessLevelConfig];
+  const config = accessLevelConfig[data.accessLevel];
 
   const handleClickRemove = useCallback(async () => {
     const edges = getEdges();

@@ -93,7 +93,7 @@ class InputEasing extends Component {
       i = 2;
     }
 
-    value = ([] as number[]).concat(value as number[]) as [number, number, number, number];
+    value = ([] as number[]).concat(value) as [number, number, number, number];
     const [x, y] = this.positionForEvent(e);
     value[i] = Number(this.inversex(x).toFixed(2));
     value[i + 1] = Number(this.inversey(y).toFixed(2));

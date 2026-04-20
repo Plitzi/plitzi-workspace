@@ -135,7 +135,7 @@ const PageInteractions = ({ children, previewMode = true }: PageInteractionsProp
             ]
           }
         }
-      } as InteractionCallback<{ key: string; type: string; value: string }>,
+      } satisfies InteractionCallback<{ key: string; type: string; value: string }>,
       clearState: {
         action: 'clearState',
         title: 'Clear Page State',
@@ -143,7 +143,7 @@ const PageInteractions = ({ children, previewMode = true }: PageInteractionsProp
         callback: handleClearStatePage,
         preview: {},
         params: {}
-      } as InteractionCallback
+      }
     }),
     [handleSetPageState, handleClearStatePage, handleNavigate, pageUrls]
   );

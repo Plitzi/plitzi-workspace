@@ -4,7 +4,7 @@ import https from 'node:https';
 
 import type { RawResponse } from '../helpers/buildResponseHelpers';
 import type { SSRServerConfig } from '../types';
-import type { IncomingMessage } from 'node:http';
+import type { IncomingMessage, RequestListener } from 'node:http';
 
 export type CloseableServer = {
   close: (cb?: (err?: Error) => void) => unknown;
@@ -50,7 +50,8 @@ export const buildTransport = (
 
     void (async () => {
       try {
-        const mod = (await import('node:http3' as string)) as unknown as H3Module;
+        // @ts-expect-error eslint-disable-line
+        const mod = (await import('node:http3')) as unknown as H3Module;
         h3 = mod.createServer(tlsOptions(config), handler);
         h3.listen(port, '0.0.0.0', () => {
           console.log(`[SSR] HTTP/3 (QUIC) listening on port ${port}`);
@@ -71,9 +72,9 @@ export const buildTransport = (
       primary = http2.createServer({}, handler as unknown as Parameters<typeof http2.createServer>[1]);
     }
   } else if (config.tls) {
-    primary = https.createServer(tlsOptions(config), handler as Parameters<typeof https.createServer>[1]);
+    primary = https.createServer(tlsOptions(config), handler as RequestListener);
   } else {
-    primary = http.createServer(handler as Parameters<typeof http.createServer>[0]);
+    primary = http.createServer(handler as RequestListener);
   }
 
   return { primary, h3 };

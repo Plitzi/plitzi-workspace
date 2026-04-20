@@ -92,7 +92,7 @@ export function getKeyDecoded(webKey: string, asWebId: true): number;
 export function getKeyDecoded<T = unknown>(webKey: string, asWebId?: false): T;
 export function getKeyDecoded<T = unknown>(webKey: string, asWebId?: boolean): T | number {
   if (!webKey) {
-    return 0 as T;
+    return 0;
   }
 
   let payload: T = {} as T;
@@ -101,7 +101,7 @@ export function getKeyDecoded<T = unknown>(webKey: string, asWebId?: boolean): T
     const json = typeof window !== 'undefined' ? window.atob(data) : Buffer.from(data, 'base64').toString();
     payload = JSON.parse(json) as T;
   } catch {
-    return 0 as T;
+    return 0;
   }
 
   return asWebId ? (get(payload, 'data.spaceId', 0) as number) : payload;

@@ -11,7 +11,6 @@ import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import type { BuilderState, RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
-import type { PathMatch } from 'react-router-dom';
 
 export type NavigationContextProviderProps = {
   children?: ReactNode;
@@ -43,12 +42,12 @@ const NavigationContextProvider = ({ previewMode = false, children }: Navigation
   const routeParams = useMemo<RouteParams>(() => {
     const path = paths.find(path => path.pageId === currentPageId && !path.isRaw);
     if (!path) {
-      return get(pathMatch, 'params', {}) as PathMatch['params'];
+      return get(pathMatch, 'params', {});
     }
 
     return {
       ...getRouteParams(path.path).reduce((acum, param) => ({ ...acum, [param]: '' }), {}),
-      ...(get(pathMatch, 'params', {}) as PathMatch['params'])
+      ...get(pathMatch, 'params', {})
     };
   }, [paths, pathMatch, currentPageId]);
   const urlSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);

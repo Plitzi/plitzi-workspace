@@ -127,7 +127,7 @@ const ParamBinding = ({ nodeId: nodeIdProp = '', id, value = '', onChange }: Par
       }
     }
 
-    return paths as Option[];
+    return paths;
   }, [node, previewData, nodeFullPath, dataSource]);
 
   return (

@@ -130,7 +130,7 @@ const BuilderProvider = ({
         }
 
         if (elementId) {
-          const canSelect = builderElementPermissions(element as Element, 'canSelect');
+          const canSelect = builderElementPermissions(element, 'canSelect');
           if (!canSelect) {
             return state;
           }

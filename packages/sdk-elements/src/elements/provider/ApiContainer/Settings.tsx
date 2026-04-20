@@ -63,7 +63,7 @@ const Settings = ({
   );
 
   const urlParams = useMemo(() => {
-    const slug: string = get(pageDefinitions, `${currentPageId}.attributes.slug`, '') as string;
+    const slug: string = get(pageDefinitions, `${currentPageId}.attributes.slug`, '');
 
     return [...slug.matchAll(/:[a-z0-9_-]+/gim)].map(match => match[0].slice(1));
   }, [pageDefinitions, currentPageId]);

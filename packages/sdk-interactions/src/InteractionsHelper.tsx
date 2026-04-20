@@ -217,11 +217,7 @@ const flowTrigger = async (
 ) => {
   const startTime = pConsole.getTime().valueOf();
   const { action, enabled, when } = triggerNode;
-  if (
-    !action ||
-    !enabled ||
-    (when && !QueryBuilderEvaluator(when, { ...globalParams, ...flowParams } as Record<string, RuleValue>))
-  ) {
+  if (!action || !enabled || (when && !QueryBuilderEvaluator(when, { ...globalParams, ...flowParams }))) {
     storeLog(triggerNode, startTime, {}, 'skipped');
 
     return;

@@ -32,7 +32,7 @@ const parseValue = (
   }
 
   if (value && isStyleObject(value as Partial<StyleObject>)) {
-    const newValue = { ...(value as StyleObject) } as StyleObject;
+    const newValue = { ...(value as StyleObject) };
     for (const k in value as StyleObject) {
       if (newValue[k as StyleCategory] === undefined) {
         delete newValue[k as StyleCategory];

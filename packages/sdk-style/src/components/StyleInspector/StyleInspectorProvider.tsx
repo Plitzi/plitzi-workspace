@@ -105,10 +105,10 @@ const StyleInspectorProvider = ({
   const getDefaultValue = useCallback(
     (key?: StyleCategory[] | StyleCategory): StyleValue | Record<StyleCategory, StyleValue> => {
       if (Array.isArray(key)) {
-        return key.reduce((acum, key) => ({ ...acum, [key]: get(baseDefaultValue, key) }), {}) as Record<
-          string,
-          StyleValue
-        >;
+        return key.reduce<Record<string, StyleValue>>(
+          (acum, key) => ({ ...acum, [key]: get(baseDefaultValue, key) }),
+          {}
+        );
       }
 
       if (!key) {

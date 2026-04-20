@@ -16,7 +16,7 @@ const setByPath = <T extends AnyObject>(obj: T, path: string | (string | number)
   const [first, ...rest] = keys;
   const key = isNaN(Number(first)) ? first : Number(first);
 
-  return { ...obj, [key]: rest.length ? setByPath((obj as AnyObject)[key] ?? {}, rest, value) : value } as T;
+  return { ...obj, [key]: rest.length ? setByPath((obj as AnyObject)[key] ?? {}, rest, value) : value };
 };
 
 export default setByPath;

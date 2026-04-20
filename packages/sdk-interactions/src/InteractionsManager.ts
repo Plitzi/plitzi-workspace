@@ -97,11 +97,7 @@ class InteractionsManager {
       return false;
     }
 
-    set(this.subscriptors, id, {
-      id,
-      triggers,
-      getAdditionalParams
-    } as Subscriptor<TParams>);
+    set(this.subscriptors, id, { id, triggers, getAdditionalParams });
     const callbackKeys = Object.keys(callbacks);
     if (callbackKeys.length > 0) {
       this.callbacksAvailables[id] = callbackKeys.reduce<Record<string, InteractionCallback<TParams>>>(
@@ -224,7 +220,7 @@ class InteractionsManager {
       routeParams,
       queryParams
     );
-    childManager.parentManager = this as InteractionsManager;
+    childManager.parentManager = this;
     this.childManagers.push(childManager);
 
     return childManager;

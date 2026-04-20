@@ -8,15 +8,7 @@ import { SegmentsActions } from '@pmodules/Segments/SegmentsReducer';
 
 import type { QueueItem, QueuePriority } from '../QueueContext';
 import type { SchemaReducerActions } from '@plitzi/sdk-schema/SchemaReducer';
-import type {
-  BuilderMutationsMap,
-  BuilderQueriesMap,
-  Element,
-  Schema,
-  SchemaVariable,
-  Segment,
-  Style
-} from '@plitzi/sdk-shared';
+import type { BuilderMutationsMap, BuilderQueriesMap, Element, Schema, Segment, Style } from '@plitzi/sdk-shared';
 import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { StyleReducerActions } from '@plitzi/sdk-style/StyleReducer';
 import type { SegmentsReducerActions } from '@pmodules/Segments/SegmentsReducer';
@@ -285,9 +277,7 @@ const useQueueManager = ({
         }
 
         case SegmentsActions.SEGMENTS_ADD_ELEMENT: {
-          const { data, to, dropPosition, initialItems, variables, segmentId } = item.action as typeof item.action & {
-            variables: SchemaVariable[];
-          };
+          const { data, to, dropPosition, initialItems, variables, segmentId } = item.action;
 
           return mutate('SegmentAddElement', {
             element: data,
@@ -482,10 +472,10 @@ const useQueueManager = ({
     ) => {
       switch (item.action.type) {
         case SchemaActions[item.action.type as keyof typeof SchemaActions]: {
-          item = item as QueueItem<Schema, SchemaReducerActions>;
-          item.dispatch({
+          const schemaItem = item as QueueItem<Schema, SchemaReducerActions>;
+          schemaItem.dispatch({
             type: SchemaActions.SCHEMA_UPDATE,
-            schema: item.prevState,
+            schema: schemaItem.prevState,
             queryFailed: true
           } as SchemaReducerActions);
 
@@ -493,10 +483,10 @@ const useQueueManager = ({
         }
 
         case StyleActions[item.action.type as keyof typeof StyleActions]: {
-          item = item as QueueItem<Style, StyleReducerActions>;
-          item.dispatch({
+          const styleItem = item as QueueItem<Style, StyleReducerActions>;
+          styleItem.dispatch({
             type: StyleActions.STYLE_UPDATE,
-            style: item.prevState,
+            style: styleItem.prevState,
             queryFailed: true
           } as StyleReducerActions);
 
@@ -504,11 +494,11 @@ const useQueueManager = ({
         }
 
         case SegmentsActions[item.action.type as keyof typeof SegmentsActions]: {
-          item = item as QueueItem<Record<string, Segment>, SegmentsReducerActions>;
-          const segmentId = (item.prevState as unknown as SegmentsReducerActions).segmentId;
-          item.dispatch({
+          const segmentsItem = item as QueueItem<Record<string, Segment>, SegmentsReducerActions>;
+          const segmentId = (segmentsItem.prevState as unknown as SegmentsReducerActions).segmentId;
+          segmentsItem.dispatch({
             type: SegmentsActions.SEGMENTS_UPDATE,
-            segment: item.prevState[segmentId],
+            segment: segmentsItem.prevState[segmentId],
             segmentId,
             queryFailed: true
           } as SegmentsReducerActions);

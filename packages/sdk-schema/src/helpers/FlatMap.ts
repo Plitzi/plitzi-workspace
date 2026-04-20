@@ -286,7 +286,7 @@ class FlatMap {
     if (
       !element ||
       (element.definition.type === 'page' && !removePage) ||
-      (removePage && (get(element, 'attributes.default', false) as boolean))
+      (removePage && get(element, 'attributes.default', false as boolean))
     ) {
       return false;
     }
@@ -388,7 +388,7 @@ class FlatMap {
         ids.push(element.id);
       }
 
-      element = get(this.flat, get(element, 'definition.parentId') as Element['id']) as Element | undefined;
+      element = get(this.flat, get(element, 'definition.parentId') as Element['id'], undefined);
     } while (element);
 
     return ids;

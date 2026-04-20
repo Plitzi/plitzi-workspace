@@ -13,7 +13,7 @@ export type OptionSelectProps = {
 
 const OptionSelect = ({ children, className, value, onChange }: OptionSelectProps) => {
   return (
-    <Select size="xs" value={value as string} onChange={onChange} className={clsx('w-full min-w-0', className)}>
+    <Select size="xs" value={value} onChange={onChange} className={clsx('w-full min-w-0', className)}>
       {children}
     </Select>
   );

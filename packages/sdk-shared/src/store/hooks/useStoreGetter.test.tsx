@@ -509,7 +509,7 @@ describe('useStoreGetter — edge cases', () => {
     renderHook(
       () => {
         const getValue = useStoreGetter<AppState>();
-        capturedGetValue = getValue as (...args: unknown[]) => unknown;
+        capturedGetValue = getValue;
       },
       { wrapper: makeWrapper(store) }
     );

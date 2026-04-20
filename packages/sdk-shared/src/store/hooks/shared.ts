@@ -86,7 +86,7 @@ export function useResolvedStore<TState extends object>(
   optionStore: StoreApi<TState> | undefined,
   hookName: string
 ): StoreApi<TState> {
-  const contextStore = use(StoreContext) as StoreApi<TState> | undefined;
+  const contextStore = use<StoreApi<TState> | undefined>(StoreContext);
   const store = optionStore ?? contextStore;
   if (!store) {
     throw new Error(`${hookName} must be used inside a StoreProvider`);

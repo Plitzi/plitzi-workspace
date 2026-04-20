@@ -13,6 +13,7 @@ export default tsEslint.config({
     }
   },
   rules: {
+    // "@typescript-eslint/no-unnecessary-type-assertion": "off",
     'import/order': [
       'error',
       {
@@ -21,7 +22,7 @@ export default tsEslint.config({
           { pattern: '@plitzi/sdk-*/**', group: 'internal' },
           { pattern: '@plitzi/sdk-*', group: 'internal' },
           { pattern: '@pmodules/**', group: 'internal' },
-          { pattern: '@pcomponents/**', group: 'internal' },
+          { pattern: '@pcomponents/**', group: 'internal' }
           // { pattern: '@icons/**', group: 'internal' },
           // { pattern: '@hooks/**', group: 'internal' },
           // { pattern: '@/**', group: 'internal' } // , position: 'before'

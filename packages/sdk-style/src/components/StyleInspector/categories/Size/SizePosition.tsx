@@ -22,7 +22,7 @@ const SizePosition = ({ value, onChange }: SizePositionProps) => {
         valueAux[1] = itemValue as string;
       }
 
-      onChange?.('object-position')(valueAux.join(' ') as StyleValue);
+      onChange?.('object-position')(valueAux.join(' '));
     },
     [onChange, valueParts]
   );

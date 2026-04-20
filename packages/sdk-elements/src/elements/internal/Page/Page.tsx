@@ -39,7 +39,7 @@ const Page = ({
     settings: { previewMode },
     contexts: { NavigationContext, InteractionsContext }
   } = usePlitziServiceContext();
-  const { interactionsManager } = use(InteractionsContext) as InteractionsContextValue;
+  const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
   const { Helmet, routeParams, queryParams } = use(NavigationContext);
 
   const layoutInternalProps = useMemo(

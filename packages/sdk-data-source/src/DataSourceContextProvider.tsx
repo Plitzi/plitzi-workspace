@@ -83,7 +83,7 @@ const DataSourceContextProvider = ({ children, environment = 'main' }: DataSourc
 
   const handleRemoveSource = useCallback(
     (id: string) => {
-      sourcesRef.current = omit(sourcesRef.current, id) as Record<string, Source>;
+      sourcesRef.current = omit(sourcesRef.current, id);
     },
     [sourcesRef]
   );

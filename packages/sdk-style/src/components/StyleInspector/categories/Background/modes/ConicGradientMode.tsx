@@ -23,7 +23,7 @@ const ConicGradientMode = ({ layer, onChange }: ConicGradientModeProps) => {
   const handlePositionXChange = useCallback(
     (value: unknown) => {
       const parts = layer.conicPosition.split(' ');
-      onChange?.({ ...layer, conicPosition: `${String(value as string | number)} ${parts[1] ?? '50%'}` });
+      onChange?.({ ...layer, conicPosition: `${String(value)} ${parts[1] ?? '50%'}` });
     },
     [layer, onChange]
   );
@@ -31,7 +31,7 @@ const ConicGradientMode = ({ layer, onChange }: ConicGradientModeProps) => {
   const handlePositionYChange = useCallback(
     (value: unknown) => {
       const parts = layer.conicPosition.split(' ');
-      onChange?.({ ...layer, conicPosition: `${parts[0] ?? '50%'} ${String(value as string | number)}` });
+      onChange?.({ ...layer, conicPosition: `${parts[0] ?? '50%'} ${String(value)}` });
     },
     [layer, onChange]
   );

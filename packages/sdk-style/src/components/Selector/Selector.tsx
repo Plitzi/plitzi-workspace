@@ -1,4 +1,3 @@
-// Packages
 import Button from '@plitzi/plitzi-ui/Button';
 import ContainerFloating, { useFloating } from '@plitzi/plitzi-ui/ContainerFloating';
 import { get, pick, omit } from '@plitzi/plitzi-ui/helpers';
@@ -12,7 +11,7 @@ import SelectorSuggestions from './SelectorSuggestions';
 import StyleManager from '../StyleManager';
 
 import type { StyleItem } from '@plitzi/sdk-shared';
-import type { ChangeEvent, CSSProperties, KeyboardEvent, MouseEvent, RefObject } from 'react';
+import type { ChangeEvent, CSSProperties, KeyboardEvent, MouseEvent } from 'react';
 
 export type SelectorValue = Pick<StyleItem, 'name' | 'type'>;
 
@@ -236,7 +235,7 @@ const Selector = ({
   const tagsToRender = tagComponent ? [tagComponent, ...tags] : tags;
 
   return (
-    <ContainerFloating ref={triggerRef as RefObject<HTMLDivElement>} className="w-full" open={open}>
+    <ContainerFloating ref={triggerRef} className="w-full" open={open}>
       <ContainerFloating.Trigger className="w-full">
         <div
           className={clsx(

@@ -61,7 +61,7 @@ const Form = ({
     contexts: { DataSourceContext, InteractionsContext }
   } = usePlitziServiceContext();
   const { useDataSource } = use(DataSourceContext);
-  const { interactionsManager } = use(InteractionsContext) as InteractionsContextValue;
+  const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
 
   const registerField = useCallback(
     (field: SourceField) => setFields(state => ({ ...state, [field.name]: field })),

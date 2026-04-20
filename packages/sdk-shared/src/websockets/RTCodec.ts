@@ -4,6 +4,10 @@
 import type { SubscriptionCollaborator } from '../types';
 
 export enum RTEventCloseCode {
+  NORMAL = 1000,
+  AWAY = 1001,
+  ABNORMAL = 1002,
+  UNSUPPORTED = 1003,
   UNKNOWN = 4000,
   NOT_AUTHORISED = 4001,
   INSTANCE_ID_NOT_FOUND = 4002,

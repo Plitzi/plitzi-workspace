@@ -134,7 +134,7 @@ abstract class AuthProvider<U = Record<string, unknown>> {
     }
 
     if (!this.cache) {
-      this.cache = {} as AuthProviderCache<U>;
+      this.cache = {};
     }
 
     this.cache[cacheKey] = cache;

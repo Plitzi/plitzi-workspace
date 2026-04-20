@@ -68,7 +68,7 @@ const CollectionContextProvider = ({ children, collections: collectionsProp }: C
     (collectionId: string) => {
       dispatchCollection({
         type: CollectionsActions.COLLECTIONS_REMOVE,
-        collections: omit(collectionsRef.current, [collectionId]) as Record<string, Collection>
+        collections: omit(collectionsRef.current, [collectionId])
       });
     },
     [dispatchCollection]

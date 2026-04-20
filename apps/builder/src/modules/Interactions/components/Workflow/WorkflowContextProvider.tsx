@@ -224,7 +224,7 @@ const WorkflowContextProvider = ({
 
   const setPreviewNode = useCallback((id: string, data?: ElementInteraction['preview']) => {
     if (!data) {
-      setPreviewData(state => omit(state, [id]) as Record<string, ElementInteraction['preview']>);
+      setPreviewData(state => omit(state, [id]));
     } else {
       setPreviewData(state => ({ ...state, [id]: data }));
     }

@@ -59,10 +59,7 @@ const MarketPlugins = () => {
       const plugins = edges.reduce<Record<string, MarketPlacePluginRaw>>(
         (acum, plugin) => ({
           ...acum,
-          [plugin.type]: {
-            ...plugin,
-            version: get(pluginsInstalled, `${plugin.type}.version`, '')
-          } as MarketPlacePluginRaw
+          [plugin.type]: { ...plugin, version: get(pluginsInstalled, `${plugin.type}.version`, '') }
         }),
         {}
       );

@@ -48,7 +48,7 @@ const NodeBody = ({ id = '', params, paramDefinitions, fields, onChange }: NodeB
                 key={param}
                 nodeId={id}
                 id={param}
-                value={get(params, param, '') as string | number | boolean}
+                value={get(params, param, '')}
                 fields={fields}
                 onChange={handleChange}
               />
@@ -61,7 +61,7 @@ const NodeBody = ({ id = '', params, paramDefinitions, fields, onChange }: NodeB
               id={param}
               nodeId={id}
               label={paramDefinition.label}
-              value={get(params, param, paramDefinition.defaultValue) as string | number | boolean}
+              value={get(params, param, paramDefinition.defaultValue)}
               type={paramDefinition.type}
               canBind={paramDefinition.canBind}
               onChange={handleChange}

@@ -98,7 +98,7 @@ const useCollectionContext = (
     setLoading(false);
 
     if (result) {
-      populateRecords(collection, result as { pageInfo: PageInfo; edges: CollectionRecord[] });
+      populateRecords(collection, result);
     }
   }, [collection, source, fetchRecords, queryCompiled, appendResults, cursor, limit, populateRecords]);
 

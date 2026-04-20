@@ -35,7 +35,7 @@ const DevToolsContextProvider = ({ children }: DevToolsContextProviderProps) => 
   );
 
   const handleRemoveProvider = useCallback(
-    (methodName: string) => setProviders(state => omit(state, [methodName]) as Record<string, ProviderCallback>),
+    (methodName: string) => setProviders(state => omit(state, [methodName])),
     []
   );
 

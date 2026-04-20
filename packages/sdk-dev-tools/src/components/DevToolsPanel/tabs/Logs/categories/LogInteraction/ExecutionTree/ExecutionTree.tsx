@@ -27,7 +27,7 @@ const ExecutionTree = ({ className, nodeId, nodes, selected, onSelect }: Executi
       const duration = `${getDurationMs(startTime, endTime)}ms`;
       const level = node.id === nodeId ? 0 : 1;
       tree.push({ id: node.id, action: node.action, title: node.title, status: auxNode.status, level, duration });
-      auxNode = get(nodes, node.afterNode) as Nodes[keyof Nodes] | undefined;
+      auxNode = get(nodes, node.afterNode);
     }
 
     return tree;

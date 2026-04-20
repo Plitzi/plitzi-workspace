@@ -160,7 +160,7 @@ export type UseStoreMultiOptions<
     | PathValue<TState, Paths[number]>
     | undefined = undefined
 > = Omit<StoreHookReactiveOptions<never, TState>, 'equalityFn'> & {
-  equalityFn?: (a: PathValues<TState, Paths>, b: PathValues<TState, Paths>) => boolean;
+  equalityFn?: (a: PathValues<TState, Paths> | undefined, b: PathValues<TState, Paths> | undefined) => boolean;
   defaultValue?: TDefaultValue;
   transformer?: (values: PathValues<TState, Paths>) => unknown;
 };

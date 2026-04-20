@@ -54,7 +54,7 @@ const ApiContainer = ({
     settings: { previewMode, debugMode },
     contexts: { DataSourceContext, NavigationContext, InteractionsContext }
   } = usePlitziServiceContext();
-  const { interactionsManager } = use(InteractionsContext) as InteractionsContextValue;
+  const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
   const { useDataSource } = use(DataSourceContext);
   const { routeParams, queryParams } = use(NavigationContext);
   const queryCompiled = useMemo(() => {

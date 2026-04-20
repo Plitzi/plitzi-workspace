@@ -33,28 +33,32 @@ const UndoableContextProducer = ({ children }: UndoableContextProducerProps) => 
     ) => {
       switch (item.action.type) {
         case SchemaActions[item.action.type as keyof typeof SchemaActions]: {
-          item = item as UndoableItem<Schema, SchemaReducerActions>;
-          item.dispatch({ type: SchemaActions.SCHEMA_UPDATE, schema: isUndo ? item.prevState : item.nextState });
-
+          const schemaItem = item as UndoableItem<Schema, SchemaReducerActions>;
+          schemaItem.dispatch({
+            type: SchemaActions.SCHEMA_UPDATE,
+            schema: isUndo ? schemaItem.prevState : schemaItem.nextState
+          });
           return;
         }
 
         case StyleActions[item.action.type as keyof typeof StyleActions]: {
-          item = item as UndoableItem<Style, StyleReducerActions>;
-          item.dispatch({ type: StyleActions.STYLE_UPDATE, style: isUndo ? item.prevState : item.nextState });
-
+          const styleItem = item as UndoableItem<Style, StyleReducerActions>;
+          styleItem.dispatch({
+            type: StyleActions.STYLE_UPDATE,
+            style: isUndo ? styleItem.prevState : styleItem.nextState
+          });
           return;
         }
 
         case SegmentsActions[item.action.type as keyof typeof SegmentsActions]: {
-          item = item as UndoableItem<Record<string, Segment>, SegmentsReducerActions>;
-          const segmentId = (item.prevState as unknown as SegmentsReducerActions).segmentId;
-          item.dispatch({
+          const segmentsItem = item as UndoableItem<Record<string, Segment>, SegmentsReducerActions>;
+          const segmentId = (segmentsItem.prevState as unknown as SegmentsReducerActions).segmentId;
+
+          segmentsItem.dispatch({
             type: SegmentsActions.SEGMENTS_UPDATE,
-            segment: isUndo ? item.prevState[segmentId] : item.nextState[segmentId],
+            segment: isUndo ? segmentsItem.prevState[segmentId] : segmentsItem.nextState[segmentId],
             segmentId
           });
-
           return;
         }
 

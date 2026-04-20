@@ -28,7 +28,7 @@ const RadialGradientMode = ({ layer, onChange }: RadialGradientModeProps) => {
   const handlePositionXChange = useCallback(
     (value: unknown) => {
       const parts = layer.radialPosition.split(' ');
-      onChange?.({ ...layer, radialPosition: `${String(value as string | number)} ${parts[1] ?? '50%'}` });
+      onChange?.({ ...layer, radialPosition: `${String(value)} ${parts[1] ?? '50%'}` });
     },
     [layer, onChange]
   );
@@ -36,7 +36,7 @@ const RadialGradientMode = ({ layer, onChange }: RadialGradientModeProps) => {
   const handlePositionYChange = useCallback(
     (value: unknown) => {
       const parts = layer.radialPosition.split(' ');
-      onChange?.({ ...layer, radialPosition: `${parts[0] ?? '50%'} ${String(value as string | number)}` });
+      onChange?.({ ...layer, radialPosition: `${parts[0] ?? '50%'} ${String(value)}` });
     },
     [layer, onChange]
   );

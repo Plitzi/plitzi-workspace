@@ -114,7 +114,7 @@ const NodeHeader = ({
         .map(nodeDefinition => {
           const { title, action, type, elementId } = nodeDefinition;
 
-          return { value: `${elementId}_${action}`, label: title, type, elementId } as Option;
+          return { value: `${elementId}_${action}`, label: title, type, elementId };
         });
     }
 

@@ -72,9 +72,7 @@ const NetworkSubscriptionsContextProvider = ({
 
   const unregisterCallback = useCallback(
     (type: RTEvent) => {
-      setMessageCallbacks(
-        state => omit(state, [`${type}.${instanceId}`]) as Record<RTEvent, Record<string, RTCallback>>
-      );
+      setMessageCallbacks(state => omit(state, [`${type}.${instanceId}`]));
     },
     [instanceId]
   );

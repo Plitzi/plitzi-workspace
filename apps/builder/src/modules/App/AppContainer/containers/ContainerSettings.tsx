@@ -109,7 +109,7 @@ const ContainerSettings = () => {
           <Select
             size="sm"
             name="tokenStorage"
-            value={tokenStorage as string}
+            value={tokenStorage}
             onChange={handleChange('tokenStorage')}
             label="Token Storage"
             placeholder="None"

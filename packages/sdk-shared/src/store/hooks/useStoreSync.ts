@@ -78,16 +78,14 @@ function useStoreSyncSingle<TState extends object, P extends PathOf<TState>>(
   const isFirstRender = !mountedRef.current;
   mountedRef.current = true;
 
-  const shouldSync =
-    enabled &&
-    (isFirstRender || (mode === 'sync' && !equalityFn(lastSyncedRef.current as PathValue<TState, P>, value)));
+  const shouldSync = enabled && (isFirstRender || (mode === 'sync' && !equalityFn(lastSyncedRef.current, value)));
 
   const runSync = (canPropagate = true) => {
     lastSyncedRef.current = value;
     if (isFullState) {
       store.setState(undefined, prev => ({ ...prev, ...value }), canPropagate);
     } else if (isDynamicPath) {
-      const resolvedPath = (path as (state: TState) => P)(store.getState());
+      const resolvedPath = path(store.getState());
       store.setState(resolvedPath, value as PathValue<TState, P>, canPropagate);
     } else {
       store.setState(path, value as PathValue<TState, P>, canPropagate);
@@ -141,10 +139,7 @@ function useStoreSync<TState extends object, P extends PathOf<TState>>(
   value: PathValue<TState, P> | TState | readonly unknown[],
   options: UseStoreSyncOptions<any, any> | UseStoreSyncMultiOptions<TState> = {}
 ): void {
-  const store = useResolvedStore(
-    (options as UseStoreSyncOptions<any, any>).store as StoreApi<TState> | undefined,
-    'useStoreSync'
-  );
+  const store = useResolvedStore((options as UseStoreSyncOptions<any, any>).store, 'useStoreSync');
 
   if (Array.isArray(pathOrPaths)) {
     // eslint-disable-next-line react-hooks/rules-of-hooks

@@ -1,6 +1,6 @@
 import type { Asset, ManifestAsset } from '@plitzi/sdk-shared';
 
-const manifestAssetToAsset = (baseSrc: string, { src, type, isMain }: ManifestAsset, settingsAsset = false) => {
+const manifestAssetToAsset = (baseSrc: string, { src, type, isMain }: ManifestAsset, settingsAsset = false): Asset => {
   const url = `${baseSrc}/${src}`;
   const urlEncoded = btoa(url);
   let asset: Asset | undefined = undefined;
@@ -19,7 +19,7 @@ const manifestAssetToAsset = (baseSrc: string, { src, type, isMain }: ManifestAs
     delete asset.isMain;
   }
 
-  return asset as Asset;
+  return asset;
 };
 
 export default manifestAssetToAsset;

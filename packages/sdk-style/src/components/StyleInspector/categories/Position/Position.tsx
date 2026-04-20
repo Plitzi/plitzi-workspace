@@ -106,7 +106,7 @@ const Position = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Pos
         <PositionFloat value={float} onChange={handleChange('float')} />
         <PositionClear value={clear} onChange={handleChange('clear')} />
         <CategorySection keys={['z-index']} label="Z-Index">
-          <CategoryOption onChange={handleChange('z-index')} type="input" value={zIndex as string} />
+          <CategoryOption onChange={handleChange('z-index')} type="input" value={zIndex} />
         </CategorySection>
       </div>
     </CategoryContainer>

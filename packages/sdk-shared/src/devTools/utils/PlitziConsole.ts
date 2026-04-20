@@ -1,8 +1,8 @@
 import { formatDate } from '../../helpers';
 import getByPath from '../../store/helpers/getByPath';
 
-import type { Log, LogInteraction, LogNavigation, LogStore, ProviderCallback } from '../../types/DevToolsTypes';
-import type { PathOf, StoreLogger } from '../../types/StoreTypes';
+import type { Log, LogInteraction, LogNavigation, ProviderCallback } from '../../types/DevToolsTypes';
+import type { StoreLogger } from '../../types/StoreTypes';
 
 type CallbackInternal = (
   logType: Log['logType'],
@@ -157,9 +157,9 @@ export const pConsole = new PlitziConsole();
 
 export function createStoreDevToolsLogger<TState extends object>(storeName = 'store'): StoreLogger<TState> {
   return ({ path, prev, next }) => {
-    const prevValue = path ? getByPath(prev, path as PathOf<TState>) : prev;
-    const nextValue = path ? getByPath(next, path as PathOf<TState>) : next;
-    pConsole.info('store', storeName, { storeName, path, prev: prevValue, next: nextValue } as LogStore['params']);
+    const prevValue = path ? getByPath(prev, path) : prev;
+    const nextValue = path ? getByPath(next, path) : next;
+    pConsole.info('store', storeName, { storeName, path, prev: prevValue, next: nextValue });
   };
 }
 

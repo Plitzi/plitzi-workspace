@@ -114,14 +114,12 @@ describe('StyleMap', () => {
 
     describe('invalid values', () => {
       it('rejects completely invalid value types', () => {
-        expect(
-          StyleMap.addSelector(style, 'desktop', 'x', 'class', undefined, 123 as unknown as StyleValue, paramsBase)
-        ).toBe(false);
+        expect(StyleMap.addSelector(style, 'desktop', 'x', 'class', undefined, 123, paramsBase)).toBe(false);
         expect(
           StyleMap.addSelector(style, 'desktop', 'y', 'class', undefined, [] as unknown as StyleValue, paramsBase)
         ).toBe(false);
         expect(
-          StyleMap.addSelector(style, 'desktop', 'z', 'class', undefined, 'string' as unknown as StyleValue, {
+          StyleMap.addSelector(style, 'desktop', 'z', 'class', undefined, 'string', {
             ...paramsBase,
             styleState: 'hover'
           })
@@ -215,7 +213,7 @@ describe('StyleMap', () => {
       it('fails for state: value is primitive but path is missing (should be object or undefined)', () => {
         const before = { ...style.platform.desktop };
         expect(
-          StyleMap.addSelector(style, 'desktop', 'badStatePrim', 'class', undefined, 'red' as unknown as StyleValue, {
+          StyleMap.addSelector(style, 'desktop', 'badStatePrim', 'class', undefined, 'red', {
             ...paramsBase,
             styleState: 'hover'
           })
@@ -227,7 +225,7 @@ describe('StyleMap', () => {
       it('fails for variant: value is primitive but path is missing (should be object or undefined)', () => {
         const before = { ...style.platform.desktop };
         expect(
-          StyleMap.addSelector(style, 'desktop', 'badVarPrim', 'class', undefined, 42 as unknown as StyleValue, {
+          StyleMap.addSelector(style, 'desktop', 'badVarPrim', 'class', undefined, 42, {
             ...paramsBase,
             styleVariant: 'primary'
           })
@@ -309,7 +307,7 @@ describe('StyleMap', () => {
       it('fails if value is a primitive but type is element (should be object)', () => {
         const before = { ...style.platform.desktop };
         expect(
-          StyleMap.addSelector(style, 'desktop', 'elPrim', 'element', undefined, 'red' as unknown as StyleValue, {
+          StyleMap.addSelector(style, 'desktop', 'elPrim', 'element', undefined, 'red', {
             ...paramsBase,
             componentType: 'button'
           })

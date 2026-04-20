@@ -5,7 +5,7 @@ import { use, useEffect, useMemo, useRef } from 'react';
 import { emptyObject, makeId } from '../../helpers';
 import DataSourceContext from '../DataSourceContext';
 
-import type { Source, SourceMeta } from '../../types';
+import type { SourceMeta } from '../../types';
 import type { Context } from 'react';
 
 export type UseDataSourceMode = 'write' | 'read';
@@ -72,7 +72,7 @@ function useDataSource<T = unknown, M extends UseDataSourceMode = 'read'>({
     return emptyObject;
   }
 
-  let sources = Object.values(getSources() as Record<string, Source>);
+  let sources = Object.values(getSources());
   if (sourceFilter.length) {
     sources = sources.filter(
       source => !sourceFilter.length || !source.meta.source || sourceFilter.includes(source.meta.source)

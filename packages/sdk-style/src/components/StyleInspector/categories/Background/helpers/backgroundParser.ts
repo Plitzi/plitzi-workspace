@@ -259,7 +259,7 @@ export function parseBackgroundLayers(values: BackgroundCSSValues): BackgroundLa
       repeat: repeatTokens[i] ?? DEFAULT_LAYER_PROPS.repeat,
       attachment: attachTokens[i] ?? DEFAULT_LAYER_PROPS.attachment,
       clip: clipTokens[i] ?? DEFAULT_LAYER_PROPS.clip
-    } as BackgroundLayer;
+    };
   });
 }
 

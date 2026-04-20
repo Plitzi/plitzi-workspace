@@ -35,7 +35,7 @@ const GradientStopBar = ({ stops, onChange }: GradientStopBarProps) => {
     return `linear-gradient(90deg, ${parts})`;
   }, [sortedStops]);
 
-  const selectedStop = stops.find(s => s.id === selectedId) ?? (stops[0] as GradientStop | undefined);
+  const selectedStop = (stops.find(s => s.id === selectedId) ?? stops[0]) as GradientStop | undefined;
 
   const handleBarClick = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {

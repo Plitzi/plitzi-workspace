@@ -33,7 +33,7 @@ const NodeHtml = ({ ref, className = '', subType = 'span', children, ...otherPro
       ref={ref}
       tag={subType}
       className={clsx(`plitzi-component__node-html plitzi-component__node-html-${subType}`, className)}
-      {...(otherPropsParsed as Record<string, unknown>)}
+      {...otherPropsParsed}
     >
       {children}
     </RootElement>

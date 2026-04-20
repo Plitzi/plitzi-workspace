@@ -39,7 +39,7 @@ export const getInitialItems = (
       result = { ...result, ...subItems.items };
     }
 
-    directItems[element.id] = pick(element, ['id', 'attributes', 'definition']) as Element;
+    directItems[element.id] = pick(element, ['id', 'attributes', 'definition']);
     result[element.id] = directItems[element.id];
   });
 

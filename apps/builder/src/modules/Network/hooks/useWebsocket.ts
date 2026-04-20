@@ -95,7 +95,7 @@ const useWebsocket = <T = unknown>({
 
     ws.onclose = e => {
       const { reason, code } = e as { reason: string; code: RTEventCloseCode };
-      if ((code as number) === 1000) {
+      if (code === RTEventCloseCode.NORMAL || code === RTEventCloseCode.AWAY) {
         return;
       }
 

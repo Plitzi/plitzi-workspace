@@ -334,12 +334,7 @@ describe('store enabled / options', () => {
         { wrapper: makeWrapper(store) }
       );
 
-      act(() =>
-        store.setState(
-          `schema.flat.${id}` as PathOf<AppState>,
-          { label: 'Updated', type: 'button' } as AppState['schema']['flat'][string]
-        )
-      );
+      act(() => store.setState(`schema.flat.${id}` as PathOf<AppState>, { label: 'Updated', type: 'button' }));
 
       expect(renderFn).toHaveBeenCalledTimes(2);
     });
@@ -357,12 +352,7 @@ describe('store enabled / options', () => {
       );
 
       // Change txt1, not btn1
-      act(() =>
-        store.setState(
-          'schema.flat.txt1' as PathOf<AppState>,
-          { label: 'Changed', type: 'text' } as AppState['schema']['flat'][string]
-        )
-      );
+      act(() => store.setState('schema.flat.txt1' as PathOf<AppState>, { label: 'Changed', type: 'text' }));
 
       expect(renderFn).toHaveBeenCalledTimes(1);
     });
@@ -477,10 +467,7 @@ describe('store enabled / options', () => {
       const { result } = renderHook(
         () => {
           renderFn();
-          return useStore([
-            'count' as PathOf<AppState>,
-            (s: AppState) => (s.meta.active ? 'user.name' : 'user.age') as PathOf<AppState>
-          ]);
+          return useStore(['count', (s: AppState) => (s.meta.active ? 'user.name' : 'user.age') as PathOf<AppState>]);
         },
         { wrapper: makeWrapper(store) }
       );

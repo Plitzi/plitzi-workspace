@@ -94,7 +94,7 @@ const SpaceContainerInternal = ({ children }: SpaceContainerInternalProps) => {
             when: params => params.autoDismiss
           }
         }
-      } as InteractionCallback<{
+      } satisfies InteractionCallback<{
         content: string;
         placement: string;
         appeareance: string;
