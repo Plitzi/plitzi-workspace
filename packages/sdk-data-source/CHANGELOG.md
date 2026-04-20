@@ -1,5 +1,21 @@
 # @plitzi/sdk-data-source
 
+## 0.30.0
+
+### Minor Changes
+
+- v0.30.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @plitzi/sdk-auth@0.30.0
+  - @plitzi/sdk-event-bridge@0.30.0
+  - @plitzi/sdk-navigation@0.30.0
+  - @plitzi/sdk-schema@0.30.0
+  - @plitzi/sdk-shared@0.30.0
+  - @plitzi/sdk-state@0.30.0
+
 ## 0.29.0
 
 ### Minor Changes
