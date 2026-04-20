@@ -36,54 +36,54 @@
       "dependsOn": ["^typecheck"],
       "cache": false
     },
-    "build-assets:dev": {
-      "dependsOn": ["^build-assets:dev"],
+    "build:dev": {
+      "dependsOn": ["^build:dev"],
       "cache": false,
       "outputs": ["dist/**"]
     },
-    "build-assets:dev-watch": {
+    "build:dev-watch": {
       "cache": false,
       "persistent": true,
       "outputs": ["dist/**"]
     },
-    "build-assets:dev-measure": {
-      "dependsOn": ["^build-assets:dev-measure"],
+    "build:dev-measure": {
+      "dependsOn": ["^build:dev-measure"],
       "cache": false,
       "outputs": ["dist/**"]
     },
-    "build-assets:dev-gzip": {
-      "dependsOn": ["^build-assets:dev-gzip"],
+    "build:dev-gzip": {
+      "dependsOn": ["^build:dev-gzip"],
       "cache": false,
       "outputs": ["dist/**"]
     },
-    "build-assets:dev-analyze": {
-      "dependsOn": ["^build-assets:dev-analyze"],
+    "build:dev-analyze": {
+      "dependsOn": ["^build:dev-analyze"],
       "cache": false,
       "outputs": ["dist/**"]
     },
-    "build-assets:prod": {
-      "dependsOn": ["^build-assets:prod"],
+    "build:prod": {
+      "dependsOn": ["^build:prod"],
       "cache": false,
       "outputs": ["dist/**"]
     },
-    "build-assets:prod-watch": {
+    "build:prod-watch": {
       "dependsOn": [],
       "cache": false,
       "persistent": true,
       "outputs": ["dist/**"]
     },
-    "build-assets:prod-measure": {
-      "dependsOn": ["^build-assets:prod-measure"],
+    "build:prod-measure": {
+      "dependsOn": ["^build:prod-measure"],
       "cache": false,
       "outputs": ["dist/**"]
     },
-    "build-assets:prod-gzip": {
-      "dependsOn": ["^build-assets:prod-gzip"],
+    "build:prod-gzip": {
+      "dependsOn": ["^build:prod-gzip"],
       "cache": false,
       "outputs": ["dist/**"]
     },
-    "build-assets:prod-analyze": {
-      "dependsOn": ["^build-assets:prod-analyze"],
+    "build:prod-analyze": {
+      "dependsOn": ["^build:prod-analyze"],
       "cache": false,
       "outputs": ["dist/**"]
     }

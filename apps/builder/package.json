@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-builder",
-  "version": "0.30.0",
+  "version": "0.30.1",
   "homepage": "./",
   "license": "GPLv3",
   "files": [
@@ -102,14 +102,14 @@
     "lint-style": "stylelint \"**/*.scss\" --custom-syntax postcss-scss",
     "lint-style:fix": "stylelint \"**/*.scss\" --custom-syntax postcss-scss --fix",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "build-assets:dev": "tsc -p tsconfig.app.json --noEmit && vite build --mode development",
-    "build-assets:dev-watch": "tsc -p tsconfig.app.json --noEmit && vite build --mode development --watch",
-    "build-assets:dev-gzip": "tsc -p tsconfig.app.json --noEmit && ONLY_GZIP=1 vite build --mode development",
-    "build-assets:dev-analyze": "tsc -p tsconfig.app.json --noEmit && ONLY_ANALYZE=1 vite build --mode development",
-    "build-assets:prod": "tsc -p tsconfig.app.json --noEmit && vite build",
-    "build-assets:prod-watch": "tsc -p tsconfig.app.json --noEmit && vite build --watch",
-    "build-assets:prod-gzip": "tsc -p tsconfig.app.json --noEmit && ONLY_GZIP=1 vite build",
-    "build-assets:prod-analyze": "tsc -p tsconfig.app.json --noEmit && ONLY_ANALYZE=1 vite build"
+    "build:dev": "tsc -p tsconfig.app.json --noEmit && vite build --mode development",
+    "build:dev-watch": "tsc -p tsconfig.app.json --noEmit && vite build --mode development --watch",
+    "build:dev-gzip": "tsc -p tsconfig.app.json --noEmit && ONLY_GZIP=1 vite build --mode development",
+    "build:dev-analyze": "tsc -p tsconfig.app.json --noEmit && ONLY_ANALYZE=1 vite build --mode development",
+    "build:prod": "tsc -p tsconfig.app.json --noEmit && vite build",
+    "build:prod-watch": "tsc -p tsconfig.app.json --noEmit && vite build --watch",
+    "build:prod-gzip": "tsc -p tsconfig.app.json --noEmit && ONLY_GZIP=1 vite build",
+    "build:prod-analyze": "tsc -p tsconfig.app.json --noEmit && ONLY_ANALYZE=1 vite build"
   },
   "eslintConfig": {
     "extends": "react-app"

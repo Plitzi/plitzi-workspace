@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-server",
-  "version": "0.30.0",
+  "version": "0.30.1",
   "license": "GPLv3",
   "files": [
     "dist"
@@ -51,7 +51,8 @@
   },
   "scripts": {
     "dev": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx --watch src/standalone/server.ts",
-    "build": "vite build",
+    "build:dev": "vite build --mode development",
+    "build:prod": "vite build",
     "lint": "TIMING=1 eslint ./src",
     "typecheck": "tsc -p tsconfig.app.json --noEmit"
   }

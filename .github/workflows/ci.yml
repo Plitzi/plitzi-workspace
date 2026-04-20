@@ -81,7 +81,7 @@ jobs:
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ github.sha }}
 
       - name: Yarn Build
-        run: yarn build-assets:prod
+        run: yarn build:prod
 
   lint:
     needs: build-packages
@@ -249,7 +249,7 @@ jobs:
   #         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ github.sha }}
 
   #     - name: Yarn Build
-  #       run: yarn workspace @plitzi/plitzi-${{matrix.package}} build-assets:prod-gzip
+  #       run: yarn workspace @plitzi/plitzi-${{matrix.package}} build:prod-gzip
 
   #     - name: Read package.json
   #       uses: tyankatsu0105/read-package-version-actions@v1

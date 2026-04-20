@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-shared",
-  "version": "0.30.0",
+  "version": "0.30.1",
   "license": "GPLv3",
   "publishConfig": {
     "access": "restricted",
@@ -1045,9 +1045,9 @@
     "lint": "eslint ./src",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "build-assets:dev": "tsc -p tsconfig.app.json && vite build --mode development --minify false && node ./scripts/generate-exports.mjs",
-    "build-assets:dev-watch": "tsc -p tsconfig.app.json && vite build --mode development --watch --minify false",
-    "build-assets:prod": "tsc -p tsconfig.app.json && vite build && node ./scripts/generate-exports.mjs"
+    "build:dev": "tsc -p tsconfig.app.json && vite build --mode development --minify false && node ./scripts/generate-exports.mjs",
+    "build:dev-watch": "tsc -p tsconfig.app.json && vite build --mode development --watch --minify false",
+    "build:prod": "tsc -p tsconfig.app.json && vite build && node ./scripts/generate-exports.mjs"
   },
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.5.18",
