@@ -1,4 +1,5 @@
 import IconGroup from '@plitzi/plitzi-ui/IconGroup';
+import clsx from 'clsx';
 import { useCallback, useMemo } from 'react';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
@@ -28,11 +29,15 @@ const OptionIconGroup = ({ items = [], onChange }: OptionIconGroupProps) => {
   );
 
   return (
-    <IconGroup className="w-full" gap={1} size="xs">
+    <IconGroup className="w-full px-1.5 py-1" gap={1} size="md">
       {itemsParsed.map((item, i) => (
         <IconGroup.Icon
           size={item.size}
-          className="cursor-pointer"
+          className={clsx('cursor-pointer rounded-sm p-0.5', {
+            'bg-zinc-300 dark:bg-zinc-800': item.active,
+            'text-xs': typeof item.icon === 'string',
+            'h-5 w-5': item.size !== 'custom'
+          })}
           active={item.active}
           key={i}
           onClick={handleChange(item.value)}

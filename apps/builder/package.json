@@ -22,7 +22,7 @@
     "@apollo/client": "^4.1.7",
     "@fortawesome/fontawesome-free": "^7.2.0",
     "@plitzi/plitzi-sdk": "workspace:*",
-    "@plitzi/plitzi-ui": "^1.5.17",
+    "@plitzi/plitzi-ui": "^1.5.18",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-collections": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
@@ -46,7 +46,7 @@
     "react-router-dom": "^7.14.1",
     "swr": "^2.4.1",
     "twig": "^3.0.0",
-    "uuid": "^13.0.0",
+    "uuid": "^14.0.0",
     "zod": "^4.3.6"
   },
   "peerDependencies": {
@@ -86,8 +86,8 @@
     "stylelint-order": "^8.1.1",
     "stylelint-scss": "^7.0.0",
     "terser": "^5.46.1",
-    "typescript": "^6.0.2",
-    "vite": "^8.0.8",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.9",
     "vite-plugin-dts": "^4.5.4",
     "vite-plugin-ejs": "^1.7.0",
     "vite-plugin-mkcert": "^2.0.0",

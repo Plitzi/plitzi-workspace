@@ -340,21 +340,21 @@
     "eslint": "^9.39.4",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
-    "typescript": "^6.0.2",
-    "vite": "^8.0.8"
+    "typescript": "^6.0.3",
+    "vite": "^8.0.9"
   },
   "peerDependencies": {
     "react": "^19",
     "react-dom": "^19"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.5.17",
+    "@plitzi/plitzi-ui": "^1.5.18",
     "@plitzi/sdk-data-source": "workspace:*",
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-style": "workspace:*",
-    "@uiw/react-json-view": "^2.0.0-alpha.41",
+    "@uiw/react-json-view": "^2.0.0-alpha.42",
     "clsx": "^2.1.1"
   }
 }
