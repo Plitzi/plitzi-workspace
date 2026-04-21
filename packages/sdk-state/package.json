@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-state",
-  "version": "0.30.2",
+  "version": "0.30.3",
   "license": "GPLv3",
   "publishConfig": {
     "access": "restricted",
