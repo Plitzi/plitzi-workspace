@@ -18,7 +18,7 @@ const PageStateSource = ({ children }: PageStateSourceProps) => {
   const { useDataSource } = use(DataSourceContext);
   const { currentPageId } = use(NavigationContext);
   const { useStore } = createStoreHook<BuilderState>();
-  const [pageDefinitions] = useStore('pageDefinitions');
+  const [pageDefinitions] = useStore('pageDefinitions', { defaultValue: {} });
   const { state } = use(StateManagerContext);
   const pages = useMemo(
     () =>

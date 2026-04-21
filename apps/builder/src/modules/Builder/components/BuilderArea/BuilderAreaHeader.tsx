@@ -146,7 +146,7 @@ const BuilderAreaHeader = ({
     <Flex
       items="center"
       gap={4}
-      className="h-10 min-h-10 rounded-tl-lg rounded-tr-lg border-b border-gray-200 bg-white pr-2 pl-4 dark:border-zinc-700 dark:bg-zinc-800"
+      className="h-10 min-h-10 rounded-tl-lg rounded-tr-lg border-b border-gray-200 bg-white px-4 dark:border-zinc-700 dark:bg-zinc-800"
     >
       <Flex items="center" gap={2}>
         <div
@@ -187,12 +187,14 @@ const BuilderAreaHeader = ({
       >
         <div className="mr-4 w-full truncate">{pageTitle}</div>
       </Flex>
-      <Icon
-        icon="fa-brands fa-nfc-symbol"
-        className="cursor-pointer"
-        title="Transform And Import"
-        onClick={handleClickTransform}
-      />
+      {!previewMode && (
+        <Icon
+          icon="fa-brands fa-nfc-symbol"
+          className="cursor-pointer"
+          title="Transform And Import"
+          onClick={handleClickTransform}
+        />
+      )}
       <div title="Theme" className="flex cursor-pointer" onClick={handleClickTheme}>
         {theme === 'system' && <Icon icon="fa-solid fa-desktop" />}
         {theme === 'dark' && <Icon icon="fa-solid fa-sun" />}
