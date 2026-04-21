@@ -44,7 +44,7 @@ const ContainerCollections = () => {
   }, [collectionId]);
 
   return (
-    <Card className="relative flex grow basis-0">
+    <Card className="relative flex grow basis-0" rounded="none">
       <Card.Body grow>
         {!updateMode && collection && (
           <CollectionContainer

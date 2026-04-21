@@ -91,7 +91,7 @@ const ContainerSettings = () => {
   );
 
   return (
-    <Card className="flex grow basis-0 flex-col">
+    <Card className="flex grow basis-0 flex-col" rounded="none">
       <Card.Body className="overflow-y-auto" grow>
         <div className="flex grow basis-0 flex-col gap-4 border-b border-gray-300 p-6">
           <Heading as="h4">User Settings</Heading>
