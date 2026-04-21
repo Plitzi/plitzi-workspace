@@ -77,7 +77,6 @@ const GradientStopHandle = ({ stop, selected, trackRef, onPositionChange, onSele
       }
 
       isCapturing.current = false;
-
       if (hasMoved.current && handleRef.current) {
         const pct = getPct(e.clientX);
         handleRef.current.style.left = `${pct}%`;

@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-shared",
-  "version": "0.30.1",
+  "version": "0.30.2",
   "license": "GPLv3",
   "publishConfig": {
     "access": "restricted",
@@ -1050,7 +1050,7 @@
     "build:prod": "tsc -p tsconfig.app.json && vite build && node ./scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.5.18",
+    "@plitzi/plitzi-ui": "^1.5.19",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "graphql-tag": "^2.12.6",
@@ -1077,7 +1077,7 @@
     "@types/react-dom": "^19.2.3",
     "@types/twig": "^1.12.17",
     "@vitejs/plugin-react": "^6.0.1",
-    "@vitest/coverage-v8": "^4.1.4",
+    "@vitest/coverage-v8": "^4.1.5",
     "babel-minify": "^0.5.2",
     "eslint": "^9.39.4",
     "eslint-config-airbnb": "^19.0.4",
@@ -1100,14 +1100,14 @@
     "prettier": "^3.8.3",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
-    "tailwindcss": "^4.2.3",
+    "tailwindcss": "^4.2.4",
     "terser": "^5.46.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.0",
     "vite": "^8.0.9",
     "vite-plugin-dts": "^4.5.4",
     "vite-plugin-react": "^4.0.1",
-    "vitest": "^4.1.4",
+    "vitest": "^4.1.5",
     "vitest-fetch-mock": "^0.4.5"
   }
 }

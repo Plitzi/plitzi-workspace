@@ -64,13 +64,24 @@ const GradientStopBar = ({ stops, onChange }: GradientStopBarProps) => {
     [onChange, selectedStop]
   );
 
+  const handleChangeTrack = useCallback(
+    (newStops: GradientStop[]) => {
+      onChange?.(newStops.sort((a, b) => stopPct(a.position) - stopPct(b.position)));
+    },
+    [onChange]
+  );
+
   const handlePositionChange = useCallback(
     (value: unknown) => {
       if (!selectedStop) {
         return;
       }
 
-      onChange?.(stopsRef.current.map(s => (s.id === selectedStop.id ? { ...s, position: String(value) } : s)));
+      onChange?.(
+        stopsRef.current
+          .map(s => (s.id === selectedStop.id ? { ...s, position: String(value) } : s))
+          .sort((a, b) => stopPct(a.position) - stopPct(b.position))
+      );
     },
     [onChange, selectedStop]
   );
@@ -96,7 +107,12 @@ const GradientStopBar = ({ stops, onChange }: GradientStopBarProps) => {
     <div className="flex flex-col gap-2">
       <GradientPreviewBar gradientCSS={gradientCSS} onClick={handleBarClick} />
       <div className="flex px-2">
-        <GradientStopTrack stops={stops} selectedId={selectedId} onChange={onChange} onSelect={setSelectedId} />
+        <GradientStopTrack
+          stops={stops}
+          selectedId={selectedId}
+          onChange={handleChangeTrack}
+          onSelect={setSelectedId}
+        />
       </div>
       {selectedStop && (
         <GradientStopEditor

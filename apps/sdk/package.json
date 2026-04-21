@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-sdk",
-  "version": "0.30.1",
+  "version": "0.30.2",
   "homepage": "./",
   "license": "GPLv3",
   "files": [
@@ -32,7 +32,7 @@
     "@auth0/auth0-react": "^2.16.2",
     "@dr.pogodin/react-helmet": "^3.1.1",
     "@fortawesome/fontawesome-free": "^7.2.0",
-    "@plitzi/plitzi-ui": "^1.5.18",
+    "@plitzi/plitzi-ui": "^1.5.19",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-collections": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
@@ -49,7 +49,7 @@
     "clsx": "^2.1.1",
     "graphql": "^16.13.2",
     "immer": "^11.1.4",
-    "react-router-dom": "^7.14.1",
+    "react-router-dom": "^7.14.2",
     "twig": "^3.0.0",
     "vite": "^8.0.9",
     "vite-plugin-dts": "^4.5.4",
@@ -78,12 +78,12 @@
     "@storybook/react-vite": "^10.3.5",
     "@storybook/react-webpack5": "^10.3.5",
     "@storybook/testing-library": "^0.2.2",
-    "@tailwindcss/postcss": "^4.2.3",
+    "@tailwindcss/postcss": "^4.2.4",
     "@types/ejs": "^3.1.5",
     "css-loader": "^7.1.4",
     "eslint": "^9.39.4",
     "eslint-plugin-import": "^2.32.0",
-    "flow-bin": "^0.309.0",
+    "flow-bin": "^0.310.0",
     "mini-css-extract-plugin": "^2.10.2",
     "postcss": "^8.5.10",
     "postcss-loader": "^8.2.1",
@@ -106,7 +106,7 @@
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-ejs": "^1.7.0",
     "vite-plugin-mkcert": "^2.0.0",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.5"
   },
   "scripts": {
     "start": "vite dev --mode development",

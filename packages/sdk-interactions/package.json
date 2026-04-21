@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-interactions",
-  "version": "0.30.1",
+  "version": "0.30.2",
   "license": "GPLv3",
   "publishConfig": {
     "access": "restricted",
@@ -94,7 +94,7 @@
     "vite": "^8.0.9"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.5.18",
+    "@plitzi/plitzi-ui": "^1.5.19",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",

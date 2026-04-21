@@ -29,9 +29,9 @@
     "ci:publish": "yarn workspaces foreach -A --topological-dev --exclude . exec yarn npm publish --tolerate-republish --access restricted && changeset tag"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.5.18",
+    "@plitzi/plitzi-ui": "^1.5.19",
     "@plitzi/sdk-shared": "workspace:*",
-    "react-router": "^7.14.1"
+    "react-router": "^7.14.2"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",
