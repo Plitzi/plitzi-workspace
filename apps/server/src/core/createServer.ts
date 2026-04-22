@@ -2,20 +2,18 @@ import { makeHandler } from './requestHandler';
 import { buildTransport, protoLabel } from './transports';
 import buildCacheManager from '../helpers/buildCacheManager';
 import normalizePlugins, { normalizePluginSource } from '../helpers/normalizePlugins';
-import { TtlCache } from '../helpers/ttlCache';
+import { DEFAULT_CACHE_TTL_MS, TtlCache } from '../helpers/ttlCache';
 import { PluginManager } from '../plugins/manager';
 import { compileTemplate } from '../ssr/template';
 
 import type { CacheManager, PluginRegistry, SSRServer, SSRServerConfig } from '../types';
 
 export const createSSRServer = (config: SSRServerConfig): SSRServer => {
-  const version = config.httpVersion ?? 2;
-
+  const { httpVersion: version = 2, cacheTtlMs: ttlMs = DEFAULT_CACHE_TTL_MS } = config;
   if (version >= 3 && !config.tls) {
     throw new Error(`[SSR] httpVersion: ${version} requires a tls config with key and cert`);
   }
 
-  const ttlMs = config.cacheTtlMs ?? 5 * 60 * 1000;
   const cacheStore = ttlMs !== 0 ? new TtlCache<string>(ttlMs) : undefined;
   const cache: CacheManager | null = cacheStore ? buildCacheManager(cacheStore) : null;
   const renderFn = config.templateFn ?? compileTemplate();

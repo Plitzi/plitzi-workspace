@@ -1,11 +1,13 @@
 type Entry<T> = { value: T; expiresAt: number };
 
+export const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 export class TtlCache<T> {
   private readonly store = new Map<string, Entry<T>>();
   private sweepTimer: ReturnType<typeof setInterval> | undefined;
 
   constructor(
-    private readonly ttlMs: number,
+    private readonly ttlMs: number = DEFAULT_CACHE_TTL_MS,
     private readonly maxSize = 500,
     sweepIntervalMs = ttlMs
   ) {

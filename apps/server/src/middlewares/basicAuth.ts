@@ -1,10 +1,10 @@
 import crypto from 'node:crypto';
 
+import { DEFAULT_CACHE_TTL_MS } from '../helpers/ttlCache';
+
 import type { SSRMiddleware } from '../types';
 
 const authCache = new Map<string, number>();
-
-const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const sendChallenge = (res: Parameters<SSRMiddleware>[1], domain: string, realm: string): void => {
   res.setHeader('WWW-Authenticate', `Basic realm="${realm} - ${domain}", charset="UTF-8"`);

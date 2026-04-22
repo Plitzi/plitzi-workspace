@@ -24,7 +24,19 @@ const getOfflineData = (): Promise<OfflineDataRaw | undefined> => {
 const getSpaceDeployment = (): Promise<SSRSpaceDeployment> => {
   console.warn('[SSR] getSpaceDeployment: using stub adapter — returning spaceId=1');
 
-  return Promise.resolve({ spaceId: 1, environment: 'main', revision: 0 });
+  return Promise.resolve({
+    spaceId: 1,
+    environment: 'main',
+    revision: 0
+    // credential: {
+    //   provider: 'ssr',
+    //   data: {
+    //     type: 'basic',
+    //     user: 'admin',
+    //     pass: 'admin'
+    //   }
+    // }
+  });
 };
 
 const adapters: SSRAdapters = { getOfflineData, getSpaceDeployment };

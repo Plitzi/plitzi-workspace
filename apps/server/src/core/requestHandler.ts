@@ -103,7 +103,7 @@ const handleRequest = async (
 
   const middlewares = [
     spaceDeploymentMiddleware(config.adapters),
-    basicAuthMiddleware(),
+    basicAuthMiddleware({ cacheTtlMs: config.cacheTtlMs }),
     authMiddleware(config.adapters),
     ...(config.middlewares || [])
   ];
