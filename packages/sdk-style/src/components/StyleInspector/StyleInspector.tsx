@@ -274,7 +274,9 @@ const StyleInspector = ({
                     { label: 'Hover', value: 'hover' },
                     { label: 'Focus', value: 'focus' },
                     { label: 'Active', value: 'active' },
-                    { label: 'Disabled', value: 'disabled' }
+                    { label: 'Disabled', value: 'disabled' },
+                    { label: 'checked', value: 'Checked' },
+                    { label: 'visited', value: 'Visited' }
                   ]}
                   placeholder="State"
                   size="xs"

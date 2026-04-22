@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-elements",
-  "version": "0.30.5",
+  "version": "0.30.6",
   "license": "GPLv3",
   "publishConfig": {
     "access": "restricted",

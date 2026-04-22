@@ -3,7 +3,7 @@ import type styleConstants from '../style/styleConstants';
 export type TagType = 'class' | 'element' | 'id';
 export type DisplayMode = 'desktop' | 'tablet' | 'mobile';
 export type StyleMode = 'mobile-first' | 'desktop-first';
-export type StyleState = 'hover' | 'active' | 'focus' | 'disabled';
+export type StyleState = 'hover' | 'active' | 'focus' | 'disabled' | 'checked' | 'visited';
 export type StyleValue = number | string;
 
 // ======== Themes/Variables ========
