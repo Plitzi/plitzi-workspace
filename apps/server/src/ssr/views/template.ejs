@@ -61,9 +61,9 @@
       import { default as <%= plugin.varName %> } from '<%= plugin.js %>';
       <% } %>
       const __plitziPlugins = { <%- activePlugins.map(p => `'${p.keyName}': ${p.varName}`).join(', ') %> };
-      render('plitzi', <%- locals.offlineData || '{}' %>, __plitziPlugins, false, true);
+      render('plitzi', <%- locals.offlineData || '{}' %>, __plitziPlugins, <%= locals.debugMode ? true : false %>, true);
       <% } else { %>
-      render('plitzi', <%- locals.offlineData || '{}' %>, {}, false, true);
+      render('plitzi', <%- locals.offlineData || '{}' %>, {}, <%= locals.debugMode ? true : false %>, true);
       <% } %>
     </script>
     <% } %>

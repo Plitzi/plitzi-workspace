@@ -17,7 +17,9 @@
     },
     "./plitzi-sdk.css": "./dist/plitzi-sdk.css",
     "./plitzi-sdk-devtools.css": "./dist/plitzi-sdk-devtools.css",
-    "./plitzi-sdk-vendor.js": "./dist/plitzi-sdk-vendor.js"
+    "./plitzi-sdk-vendor.js": "./dist/plitzi-sdk-vendor.js",
+    "./plitzi-sdk-dev-vendor.js": "./dist/plitzi-sdk-dev-vendor.js",
+    "./plitzi-sdk-dev-vendor.js.map": "./dist/plitzi-sdk-dev-vendor.js.map"
   },
   "repository": {
     "type": "https",

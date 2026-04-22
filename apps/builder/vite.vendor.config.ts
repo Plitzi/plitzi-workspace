@@ -11,9 +11,15 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
-      viteCompression({ algorithm: 'gzip', deleteOriginFile: onlyGzip, filter: /plitzi-builder-vendor.(js|css)$/ })
+      viteCompression({
+        algorithm: 'gzip',
+        deleteOriginFile: onlyGzip,
+        filter: devMode ? /plitzi-builder-dev-vendor.(js|css|js.map)$/ : /plitzi-builder-vendor.(js|css)$/
+      })
     ],
-
+    define: {
+      'process.env.NODE_ENV': devMode ? '"development"' : '"production"'
+    },
     build: {
       outDir: 'dist',
       cssCodeSplit: false,
@@ -23,7 +29,7 @@ export default defineConfig(({ mode }) => {
         preserveEntrySignatures: 'strict',
         output: {
           format: 'es',
-          entryFileNames: 'plitzi-builder-vendor.js',
+          entryFileNames: devMode ? 'plitzi-builder-dev-vendor.js' : 'plitzi-builder-vendor.js',
           inlineDynamicImports: true,
           manualChunks: undefined,
           chunkFileNames: undefined,
@@ -45,7 +51,7 @@ export default defineConfig(({ mode }) => {
           beautify: false // elimina espacios y sangrías
         }
       },
-      sourcemap: false,
+      sourcemap: devMode,
       emptyOutDir: false
     }
   };

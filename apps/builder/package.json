@@ -18,6 +18,17 @@
   "main": "dist/plitzi-builder.js",
   "module": "dist/plitzi-builder.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/plitzi-builder.js",
+      "default": "./dist/plitzi-builder.js"
+    },
+    "./plitzi-builder.css": "./dist/plitzi-builder.css",
+    "./plitzi-builder-vendor.js": "./dist/plitzi-builder-vendor.js",
+    "./plitzi-builder-dev-vendor.js": "./dist/plitzi-builder-dev-vendor.js",
+    "./plitzi-builder-dev-vendor.js.map": "./dist/plitzi-builder-dev-vendor.js.map"
+  },
   "dependencies": {
     "@apollo/client": "^4.1.7",
     "@fortawesome/fontawesome-free": "^7.2.0",

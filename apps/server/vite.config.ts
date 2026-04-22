@@ -25,49 +25,56 @@ const copyAssets = (): import('vite').Plugin => ({
   }
 });
 
-export default defineConfig({
-  plugins: [
-    react(),
-    dts({
-      include: ['src'],
-      tsconfigPath: './tsconfig.app.json',
-      insertTypesEntry: true
-    }),
-    copyAssets()
-  ],
-  build: {
-    lib: {
-      entry: {
-        index: path.resolve(root, 'src/index.ts'),
-        server: path.resolve(root, 'src/standalone/server.ts')
-      },
-      formats: ['es']
+export default defineConfig(({ mode }) => {
+  const devMode = mode !== 'production';
+
+  return {
+    plugins: [
+      react(),
+      dts({
+        include: ['src'],
+        tsconfigPath: './tsconfig.app.json',
+        insertTypesEntry: true
+      }),
+      copyAssets()
+    ],
+    define: {
+      'process.env.NODE_ENV': devMode ? '"development"' : '"production"'
     },
-    rollupOptions: {
-      external: id => {
-        if (id.startsWith('node:') || id.startsWith('node/')) {
-          return true;
-        }
-
-        if (id === 'react' || id === 'react-dom' || id.startsWith('react-dom/') || id.startsWith('react/')) {
-          return true;
-        }
-
-        if (!id.startsWith('.') && !id.startsWith('/')) {
-          return true;
-        }
-
-        return false;
+    build: {
+      lib: {
+        entry: {
+          index: path.resolve(root, 'src/index.ts'),
+          server: path.resolve(root, 'src/standalone/server.ts')
+        },
+        formats: ['es']
       },
-      output: {
-        preserveModules: true,
-        preserveModulesRoot: 'src',
-        format: 'es',
-        entryFileNames: '[name].js'
-      }
-    },
-    target: 'node20',
-    ssr: true,
-    minify: false
-  }
+      rollupOptions: {
+        external: id => {
+          if (id.startsWith('node:') || id.startsWith('node/')) {
+            return true;
+          }
+
+          if (id === 'react' || id === 'react-dom' || id.startsWith('react-dom/') || id.startsWith('react/')) {
+            return true;
+          }
+
+          if (!id.startsWith('.') && !id.startsWith('/')) {
+            return true;
+          }
+
+          return false;
+        },
+        output: {
+          preserveModules: true,
+          preserveModulesRoot: 'src',
+          format: 'es',
+          entryFileNames: '[name].js'
+        }
+      },
+      target: 'node20',
+      ssr: true,
+      minify: false
+    }
+  };
 });

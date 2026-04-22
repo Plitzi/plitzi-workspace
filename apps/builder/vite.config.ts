@@ -46,7 +46,7 @@ const packages = {
 
 // const importedPackages = new Set();
 
-function ejsPlugin(): Plugin {
+function ejsPlugin(devMode?: boolean): Plugin {
   return {
     name: 'vite-plugin-ejs-index',
 
@@ -60,10 +60,10 @@ function ejsPlugin(): Plugin {
             title: 'Plitzi SDK Builder',
             jsPath: '/plitzi-builder.js',
             cssPath: '/plitzi-builder.css',
-            react: '/plitzi-sdk-vendor.js',
-            reactJsx: '/plitzi-sdk-vendor.js',
-            reactDom: '/plitzi-sdk-vendor.js',
-            reactDomClient: '/plitzi-sdk-vendor.js',
+            react: devMode ? '/plitzi-builder-dev-vendor.js' : '/plitzi-builder-vendor.js',
+            reactJsx: devMode ? '/plitzi-builder-dev-vendor.js' : '/plitzi-builder-vendor.js',
+            reactDom: devMode ? '/plitzi-builder-dev-vendor.js' : '/plitzi-builder-vendor.js',
+            reactDomClient: devMode ? '/plitzi-builder-dev-vendor.js' : '/plitzi-builder-vendor.js',
             version: PACKAGE.version
           },
           { async: false }
@@ -96,7 +96,7 @@ export default defineConfig(({ mode, command }) => {
         reactDomClient: devMode ? '/src/vendor-entry.ts' : '/plitzi-builder-vendor.js',
         version: PACKAGE.version
       }),
-      command === 'build' && ejsPlugin(),
+      command === 'build' && ejsPlugin(devMode),
       !isWatch &&
         viteCompression({ algorithm: 'gzip', deleteOriginFile: onlyGzip, filter: /plitzi-builder.(js|css)$/ }),
       dts({
