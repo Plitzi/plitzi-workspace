@@ -7,7 +7,7 @@ import { createSSRServer } from '../core/createServer';
 import type { SSRAdapters, SSRSpaceDeployment } from '../types';
 import type { OfflineDataRaw, Schema, Style } from '@plitzi/sdk-shared';
 
-const PORT = parseInt(process.env.SSR_PORT ?? '3001', 10);
+const PORT = parseInt(process.env.SSR_PORT ?? '3002', 10);
 const HOST = process.env.SSR_HOST ?? '0.0.0.0';
 
 const getOfflineData = (): Promise<OfflineDataRaw | undefined> => {

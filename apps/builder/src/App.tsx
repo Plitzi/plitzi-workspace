@@ -56,21 +56,13 @@ import clsx from 'clsx';
 import { Kind, OperationTypeNode } from 'graphql';
 import { createClient } from 'graphql-ws';
 import { Children, isValidElement, useCallback, useEffect, useMemo } from 'react';
-import * as React from 'react';
-import * as JSXRuntime from 'react/jsx-runtime';
-import * as ReactDOM from 'react-dom';
-import * as ReactDOMClient from 'react-dom/client';
 import { BrowserRouter, useLocation } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
-import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
-import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
-import RootElement from '@plitzi/sdk-elements/Element/RootElement';
-import { createStoreDevToolsLogger, generateFacade, StoreProvider, ThemeProvider } from '@plitzi/sdk-shared';
+import { createStoreDevToolsLogger, StoreProvider, ThemeProvider } from '@plitzi/sdk-shared';
 import { createStripTypenameLink } from '@plitzi/sdk-shared/helpers/stripTypename';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
-import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import AppMain from '@pmodules/App/AppMain';
 import customFetch from '@pmodules/Network/helpers/customFetch';
 
@@ -148,24 +140,6 @@ const App = (props: AppProps) => {
     builderEnvironment = 'production',
     debugMode: debugModeProp = false
   } = props;
-  useMemo(
-    () =>
-      generateFacade({
-        react: React,
-        'react/jsx-runtime': JSXRuntime,
-        'react-dom': ReactDOM,
-        'react-dom/client': ReactDOMClient,
-        '@plitzi/plitzi-sdk': {
-          RootElement,
-          usePlitziServiceContext,
-          PlitziServiceProvider,
-          ComponentProvider,
-          withElement,
-          JsxManager
-        }
-      }),
-    []
-  );
   const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
   const [instanceId, setInstanceId] = useStorage(`web_${webId}_state.instanceId`, '', 'sessionStorage');
   const [debugMode, setDebugMode] = useStorage('builder-state.debugMode', false, 'localStorage', debugModeProp);

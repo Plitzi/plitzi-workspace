@@ -126,7 +126,6 @@ export type SSRServerConfig = {
   sdkEnvironment?: 'production' | 'staging' | 'development' | 'local';
   publicDir?: string;
   static?: Record<string, string>;
-  reactVersion?: string;
   devMode?: boolean;
   cacheTtlMs?: number;
   loginPath?: string | false;

@@ -9,5 +9,5 @@
       "@pcomponents/*": ["./src/components/*"]
     }
   },
-  "include": ["src", "vite.config.ts", "setupTests.ts"]
+  "include": ["src", "vite.config.ts", "vite.vendor.config.ts", "setupTests.ts"]
 }

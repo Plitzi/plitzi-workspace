@@ -23,9 +23,6 @@ const PACKAGE = require('./package.json') as {
   devDependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
 };
-const reactVersionRaw =
-  PACKAGE.dependencies?.react || PACKAGE.devDependencies?.react || PACKAGE.peerDependencies?.react;
-const reactVersion = reactVersionRaw?.replace(/^[^\d]*/, '');
 
 const baseUrl = new URL('.', import.meta.url);
 
@@ -49,7 +46,7 @@ const packages = {
 
 // const importedPackages = new Set();
 
-function ejsPlugin(devMode: boolean): Plugin {
+function ejsPlugin(): Plugin {
   return {
     name: 'vite-plugin-ejs-index',
 
@@ -63,16 +60,10 @@ function ejsPlugin(devMode: boolean): Plugin {
             title: 'Plitzi SDK Builder',
             jsPath: '/plitzi-builder.js',
             cssPath: '/plitzi-builder.css',
-            react: devMode ? `https://esm.sh/react@${reactVersion}?dev` : `https://esm.sh/react@${reactVersion}`,
-            reactJsx: devMode
-              ? `https://esm.sh/react@${reactVersion}/jsx-runtime?dev`
-              : `https://esm.sh/react@${reactVersion}/jsx-runtime`,
-            reactDom: devMode
-              ? `https://esm.sh/react-dom@${reactVersion}?dev`
-              : `https://esm.sh/react-dom@${reactVersion}`,
-            reactDomClient: devMode
-              ? `https://esm.sh/react-dom@${reactVersion}/client?dev`
-              : `https://esm.sh/react-dom@${reactVersion}/client`,
+            react: '/plitzi-sdk-vendor.js',
+            reactJsx: '/plitzi-sdk-vendor.js',
+            reactDom: '/plitzi-sdk-vendor.js',
+            reactDomClient: '/plitzi-sdk-vendor.js',
             version: PACKAGE.version
           },
           { async: false }
@@ -99,13 +90,13 @@ export default defineConfig(({ mode, command }) => {
         description: '',
         jsPath: devMode ? '/src/index.tsx' : '/plitzi-builder.js',
         cssPath: '/plitzi-builder.css',
-        react: devMode ? '/src/index-dev-hmr.ts' : `https://esm.sh/react@${reactVersion}`, // ?dev (esm.sh)
-        reactJsx: devMode ? '/src/index-dev-hmr.ts' : `https://esm.sh/react@${reactVersion}/jsx-runtime`, // ?dev (esm.sh)
-        reactDom: devMode ? '/src/index-dev-hmr.ts' : `https://esm.sh/react-dom@${reactVersion}`, // ?dev (esm.sh)
-        reactDomClient: devMode ? '/src/index-dev-hmr.ts' : `https://esm.sh/react-dom@${reactVersion}/client`, // ?dev (esm.sh)
+        react: devMode ? '/src/vendor-entry.ts' : '/plitzi-builder-vendor.js',
+        reactJsx: devMode ? '/src/vendor-entry.ts' : '/plitzi-builder-vendor.js',
+        reactDom: devMode ? '/src/vendor-entry.ts' : '/plitzi-builder-vendor.js',
+        reactDomClient: devMode ? '/src/vendor-entry.ts' : '/plitzi-builder-vendor.js',
         version: PACKAGE.version
       }),
-      command === 'build' && ejsPlugin(devMode),
+      command === 'build' && ejsPlugin(),
       !isWatch &&
         viteCompression({ algorithm: 'gzip', deleteOriginFile: onlyGzip, filter: /plitzi-builder.(js|css)$/ }),
       dts({

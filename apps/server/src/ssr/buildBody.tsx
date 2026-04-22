@@ -33,12 +33,6 @@ export const buildBody = async (
     })
   );
 
-  const devMode = config.devMode ?? process.env.NODE_ENV !== 'production';
-  const reactVersion = config.reactVersion ?? '19.2.0';
-  const reactBase = `https://esm.sh/react@${reactVersion}`;
-  const reactDomBase = `https://esm.sh/react-dom@${reactVersion}`;
-  const devSuffix = devMode ? '?dev' : '';
-
   const pluginNames = req.ctx.spaceDeployment?.pluginNames ?? [];
   const pluginSources = req.ctx.spaceDeployment?.pluginSources;
 
@@ -84,10 +78,10 @@ export const buildBody = async (
     title: 'Plitzi App',
     jsPath: '/sdk-assets/plitzi-sdk.js',
     cssPath: '/sdk-assets/plitzi-sdk.css',
-    react: `${reactBase}${devSuffix}`,
-    reactJsx: `${reactBase}/jsx-runtime${devSuffix}`,
-    reactDom: `${reactDomBase}${devSuffix}`,
-    reactDomClient: `${reactDomBase}/client${devSuffix}`,
+    react: '/sdk-assets/plitzi-sdk-vendor.js',
+    reactJsx: '/sdk-assets/plitzi-sdk-vendor.js',
+    reactDom: '/sdk-assets/plitzi-sdk-vendor.js',
+    reactDomClient: '/sdk-assets/plitzi-sdk-vendor.js',
     ...req.ctx.spaceDeployment?.templateProps,
     plugins: templatePlugins,
     ssrOnly: config.ssrOnly === true,

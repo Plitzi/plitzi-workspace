@@ -21,6 +21,8 @@
     "build:prod-measure": "turbo build:prod-measure --parallel --concurrency=20",
     "build:prod-gzip": "turbo build:prod-gzip",
     "build:prod-analyze": "turbo build:prod-analyze --parallel --concurrency=20",
+    "build-vendor:dev": "turbo build-vendor:dev",
+    "build-vendor:prod": "turbo build-vendor:prod",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "changeset": "changeset",

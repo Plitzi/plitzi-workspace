@@ -86,6 +86,16 @@
       "dependsOn": ["^build:prod-analyze"],
       "cache": false,
       "outputs": ["dist/**"]
+    },
+    "build-vendor:dev": {
+      "dependsOn": ["^build-vendor:dev"],
+      "cache": false,
+      "outputs": ["dist/**"]
+    },
+    "build-vendor:prod": {
+      "dependsOn": ["^build-vendor:prod"],
+      "cache": false,
+      "outputs": ["dist/**"]
     }
   }
 }

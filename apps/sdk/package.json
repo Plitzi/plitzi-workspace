@@ -15,7 +15,9 @@
       "import": "./dist/plitzi-sdk.js",
       "default": "./dist/plitzi-sdk.js"
     },
-    "./plitzi-sdk.css": "./dist/plitzi-sdk.css"
+    "./plitzi-sdk.css": "./dist/plitzi-sdk.css",
+    "./plitzi-sdk-devtools.css": "./dist/plitzi-sdk-devtools.css",
+    "./plitzi-sdk-vendor.js": "./dist/plitzi-sdk-vendor.js"
   },
   "repository": {
     "type": "https",
@@ -124,6 +126,8 @@
     "build:prod-watch": "tsc -p tsconfig.app.json --noEmit && vite build --watch",
     "build:prod-gzip": "tsc -p tsconfig.app.json --noEmit && ONLY_GZIP=1 vite build",
     "build:prod-analyze": "tsc -p tsconfig.app.json --noEmit && ONLY_ANALYZE=1 vite build",
+    "build-vendor:dev": "vite build --config vite.vendor.config.ts --mode development",
+    "build-vendor:prod": "vite build --config vite.vendor.config.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },

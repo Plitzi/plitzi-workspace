@@ -109,7 +109,9 @@
     "build:prod": "tsc -p tsconfig.app.json --noEmit && vite build",
     "build:prod-watch": "tsc -p tsconfig.app.json --noEmit && vite build --watch",
     "build:prod-gzip": "tsc -p tsconfig.app.json --noEmit && ONLY_GZIP=1 vite build",
-    "build:prod-analyze": "tsc -p tsconfig.app.json --noEmit && ONLY_ANALYZE=1 vite build"
+    "build:prod-analyze": "tsc -p tsconfig.app.json --noEmit && ONLY_ANALYZE=1 vite build",
+    "build-vendor:dev": "vite build --config vite.vendor.config.ts --mode development",
+    "build-vendor:prod": "vite build --config vite.vendor.config.ts"
   },
   "eslintConfig": {
     "extends": "react-app"
