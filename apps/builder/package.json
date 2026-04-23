@@ -33,7 +33,7 @@
     "@apollo/client": "^4.1.8",
     "@fortawesome/fontawesome-free": "^7.2.0",
     "@plitzi/plitzi-sdk": "workspace:*",
-    "@plitzi/plitzi-ui": "^1.5.21",
+    "@plitzi/plitzi-ui": "^1.5.22",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-collections": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
