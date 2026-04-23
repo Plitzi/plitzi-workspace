@@ -23,7 +23,7 @@ export const renderSSR = async (
   cache?: TtlCache<string>
 ): Promise<void> => {
   const { environment = 'main', spaceId = 1, revision = 0 } = req.ctx.spaceDeployment || {};
-  if (cache) {
+  if (cache && environment !== 'main') {
     const cacheKey = buildCacheKey(req.ctx.user?.token, spaceId, environment, revision, req);
     const cached = cache.get(cacheKey);
     if (cached) {
