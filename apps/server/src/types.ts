@@ -107,12 +107,28 @@ export type SSRSpaceDeployment = {
 
 export type SSRTemplateFn = (params: SSRTemplateProps & { html: string; offlineData: string }) => string;
 
+export type SSRRscData = {
+  /** Arbitrary server-side data returned by the getRscData adapter. SDK elements with runtime:'server' consume this. */
+  serverData?: unknown;
+  /** Per-element server data keyed by element id. */
+  elements?: Record<string, unknown>;
+};
+
 export type SSRAdapters = {
   getOfflineData: (spaceId: number, environment: string, revision?: number) => Promise<OfflineDataRaw | undefined>;
   getSpaceDeployment: (req: SSRRequest) => Promise<SSRSpaceDeployment>;
   getUser?: (req: SSRRequest) => Promise<SSRUser | undefined>;
   onLogin?: (req: SSRRequest) => Promise<boolean>;
   onLogout?: (req: SSRRequest) => Promise<void>;
+  /** Called by the RSC endpoint to fetch server-side data for server components. */
+  getRscData?: (req: SSRRequest, spaceId: number, environment: Environment, revision: number) => Promise<SSRRscData>;
+};
+
+export type SSRRscConfig = {
+  /** Whether the RSC endpoint is active. Defaults to true when adapters.getRscData is provided. */
+  enabled?: boolean;
+  /** URL path for the RSC endpoint. Defaults to '/_rsc'. */
+  path?: string;
 };
 
 export type SSRServerConfig = {
@@ -140,6 +156,8 @@ export type SSRServerConfig = {
   autoLoadSchemaPlugins?: boolean;
   /** Omit client-side JS from the rendered page — useful for verifying SSR HTML without hydration. Default: false. */
   ssrOnly?: boolean;
+  /** RSC (React Server Components) endpoint configuration. */
+  rsc?: SSRRscConfig;
   adapters: SSRAdapters;
 };
 

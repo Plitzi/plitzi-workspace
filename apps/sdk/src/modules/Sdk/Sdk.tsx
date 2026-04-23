@@ -15,6 +15,7 @@ import { ThemeContext } from '@plitzi/sdk-shared/theme';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
+import RscProvider from '@plitzi/sdk-elements/Element/RscProvider';
 
 import IframeMode from './renderModes/IframeMode';
 import RawMode from './renderModes/RawMode';
@@ -129,30 +130,36 @@ const Sdk = ({
 
   if (renderMode === 'raw' || renderMode === 'widget') {
     return (
-      <RawMode renderMode={renderMode} style={css} plitziContextValue={plitziContextValue} pageId={currentPageId} />
+      <RscProvider navigationKey={currentPageId}>
+        <RawMode renderMode={renderMode} style={css} plitziContextValue={plitziContextValue} pageId={currentPageId} />
+      </RscProvider>
     );
   }
 
   if (renderMode === 'shadow') {
     return (
-      <ShadowMode
-        sdkStylePath={sdkStylePath}
-        style={css}
-        plitziContextValue={plitziContextValue}
-        pageId={currentPageId}
-        assets={assets}
-      />
+      <RscProvider navigationKey={currentPageId}>
+        <ShadowMode
+          sdkStylePath={sdkStylePath}
+          style={css}
+          plitziContextValue={plitziContextValue}
+          pageId={currentPageId}
+          assets={assets}
+        />
+      </RscProvider>
     );
   }
 
   return (
-    <IframeMode
-      style={css}
-      plitziContextValue={plitziContextValue}
-      pageId={currentPageId}
-      assets={assets}
-      ref={iframeRef}
-    />
+    <RscProvider navigationKey={currentPageId}>
+      <IframeMode
+        style={css}
+        plitziContextValue={plitziContextValue}
+        pageId={currentPageId}
+        assets={assets}
+        ref={iframeRef}
+      />
+    </RscProvider>
   );
 };
 

@@ -54,6 +54,14 @@
       "types": "./dist/src/Element/RootElement.d.ts",
       "import": "./dist/src/Element/RootElement.mjs"
     },
+    "./Element/RscContext": {
+      "types": "./dist/src/Element/RscContext.d.ts",
+      "import": "./dist/src/Element/RscContext.mjs"
+    },
+    "./Element/RscProvider": {
+      "types": "./dist/src/Element/RscProvider.d.ts",
+      "import": "./dist/src/Element/RscProvider.mjs"
+    },
     "./Element/helpers/elementConstants": {
       "types": "./dist/src/Element/helpers/elementConstants.d.ts",
       "import": "./dist/src/Element/helpers/elementConstants.mjs"
@@ -113,6 +121,10 @@
     "./Element/hooks/useInternalItems": {
       "types": "./dist/src/Element/hooks/useInternalItems.d.ts",
       "import": "./dist/src/Element/hooks/useInternalItems.mjs"
+    },
+    "./Element/hooks/useRscData": {
+      "types": "./dist/src/Element/hooks/useRscData.d.ts",
+      "import": "./dist/src/Element/hooks/useRscData.mjs"
     },
     "./components/ElementAdvancedEditor": {
       "types": "./dist/src/components/ElementAdvancedEditor.d.ts",

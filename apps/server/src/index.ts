@@ -15,6 +15,8 @@ export type {
   SSRTemplateFn,
   SSRCredential,
   SSRHeaders,
+  SSRRscConfig,
+  SSRRscData,
   PluginSource,
   PluginSourceFile,
   PluginSourceComponent,

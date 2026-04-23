@@ -41,9 +41,21 @@ const useInternalItems = ({
       return undefined;
     }
 
+    const isServer = typeof window === 'undefined';
+
     // Process items
     const itemsParsed: ReactNode[] = (items ?? [])
-      .filter(itemId => !!(flat[itemId] as Element | undefined))
+      .filter(itemId => {
+        const el = flat[itemId] as Element | undefined;
+        if (!el) return false;
+        // In the builder (!previewMode) every element must be visible so it can be configured.
+        if (!previewMode) return true;
+        const runtime = el.definition.runtime ?? 'shared';
+        // During SSR, skip client-only elements.
+        if (isServer && runtime === 'client') return false;
+
+        return true;
+      })
       .map(itemId => {
         const { rootId, type } = get(flat, `${itemId}.definition`, {}) as Element['definition'];
         const finalRootId = get(plitziElementLayout, 'rootId', rootId);

@@ -8,6 +8,7 @@ import { runMiddlewares } from '../helpers/runMiddlewares';
 import { authMiddleware } from '../middlewares/auth';
 import { basicAuthMiddleware } from '../middlewares/basicAuth';
 import { spaceDeploymentMiddleware } from '../middlewares/spaceDeployment';
+import { handleRsc } from '../ssr/rsc/handleRsc';
 import { renderSSR } from '../ssr/render';
 
 import type { Handler } from './transports';
@@ -110,6 +111,14 @@ const handleRequest = async (
 
   const stopped = await runMiddlewares(middlewares, req, res);
   if (stopped || res.status !== 200) {
+    return;
+  }
+
+  const rscPath = config.rsc?.path ?? '/_rsc';
+  const rscEnabled = config.rsc?.enabled ?? !!config.adapters.getRscData;
+  if (rscEnabled && req.method === 'GET' && req.path === rscPath) {
+    await handleRsc(req, res, config, pluginManager);
+
     return;
   }
 
