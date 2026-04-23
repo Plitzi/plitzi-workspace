@@ -20,7 +20,7 @@ export type ParamBindingProps = {
 };
 
 const ParamBinding = ({ nodeId: nodeIdProp = '', id, value = '', onChange }: ParamBindingProps) => {
-  const { previewData, getNode, dataSource } = use(WorkflowContext);
+  const { previewData, getNode, dataSource, getPreviousNodes } = use(WorkflowContext);
   const nodeFullPath = useMemo(() => get(value.match(/(?<token>[a-zA-Z0-9-._]+)/gim), '0', ''), [value]);
   const [node, setNode] = useState<{ value: string; label: string } | undefined>(() => {
     const nodeValue = get(value.match(/(?<token>[a-zA-Z0-9-_]+)/gim), '0', '');
@@ -70,17 +70,10 @@ const ParamBinding = ({ nodeId: nodeIdProp = '', id, value = '', onChange }: Par
     [dataSource]
   );
 
-  const nodes = getNode();
-  const previewNodes = useMemo<Exclude<Option, OptionGroup>[]>(() => {
-    const nodePosition = Object.keys(previewData).findIndex(nodeIdAux => nodeIdAux === nodeIdProp);
-
-    return Object.keys(previewData)
-      .filter((nodeId, index) => nodeId !== nodeIdProp && (nodePosition === -1 || index < nodePosition))
-      .reduce<Exclude<Option, OptionGroup>[]>(
-        (acum, nodeId) => [...acum, { value: nodeId, label: get(nodes, `${nodeId}.title`, nodeId) }],
-        []
-      );
-  }, [previewData, nodeIdProp, nodes]);
+  const previewNodes = useMemo<Exclude<Option, OptionGroup>[]>(
+    () => getPreviousNodes(nodeIdProp, true).map(node => ({ value: node.id, label: get(node, 'title', node.id) })),
+    [getPreviousNodes, nodeIdProp]
+  );
 
   const finalNodes = useMemo<OptionGroup[]>(
     () => [

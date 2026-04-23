@@ -15,6 +15,7 @@ export type WorkflowContextValue = {
     (nodeId: string): ElementInteraction;
     (): Record<string, ElementInteraction>;
   };
+  getPreviousNodes: (nodeId: string, skipTrigger?: boolean) => ElementInteraction[];
   getDefinition: (
     type: ElementInteraction['type'],
     action: string,

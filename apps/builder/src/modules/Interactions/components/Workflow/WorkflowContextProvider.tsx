@@ -152,6 +152,29 @@ const WorkflowContextProvider = ({
     []
   ) as WorkflowContextValue['getNode'];
 
+  const getPreviousNodes = useCallback(
+    (nodeId: string, skipTrigger = false) => {
+      const result: ElementInteraction[] = [];
+      if (!nodeId) {
+        return result;
+      }
+
+      let current = nodes[nodeId] as ElementInteraction | undefined;
+      while (current && current.beforeNode) {
+        const prev = nodes[current.beforeNode] as ElementInteraction | undefined;
+        if (!prev || (skipTrigger && prev.type === 'trigger')) {
+          break;
+        }
+
+        result.push(prev);
+        current = prev;
+      }
+
+      return result;
+    },
+    [nodes]
+  );
+
   const getDefinition = useCallback(
     (type: ElementInteraction['type'], action: string, elementId: string = '') =>
       nodeDefinitions?.find(n => n.type === type && (!n.elementId || n.elementId === elementId) && n.action === action),
@@ -265,6 +288,7 @@ const WorkflowContextProvider = ({
       updateNode,
       removeNode,
       getNode,
+      getPreviousNodes,
       getDefinition,
       moveNode,
       setPreviewNode
@@ -279,6 +303,7 @@ const WorkflowContextProvider = ({
       updateNode,
       removeNode,
       getNode,
+      getPreviousNodes,
       getDefinition,
       moveNode,
       setPreviewNode
