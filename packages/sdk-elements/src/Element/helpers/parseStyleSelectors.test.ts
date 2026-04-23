@@ -227,5 +227,33 @@ describe('parseStyleSelectors', () => {
       const result = parseStyleSelectors(def);
       expect(result.base).toBe('plitzi__button button--primary form-button btn-primary');
     });
+
+    it('handles when nested styleSelectors', () => {
+      const def: Element['definition'] = {
+        label: 'Form Control',
+        type: 'formControl',
+        initialState: {
+          styleVariant: {
+            formControl: {
+              input: 'text-black'
+            }
+          }
+        },
+        styleSelectors: {
+          base: '',
+          label: '',
+          input: '',
+          error: ''
+        },
+        parentId: '6459d573b6dbe8c90cf84469',
+        rootId: '64599fe5e07288d4094abbed'
+      };
+
+      const result = parseStyleSelectors(def);
+      expect(result.base).toBe('plitzi__formControl');
+      expect(result.label).toBe('plitzi__formControl-label');
+      expect(result.error).toBe('plitzi__formControl-error');
+      expect(result.input).toBe('plitzi__formControl-input formControl-input--text-black');
+    });
   });
 });
