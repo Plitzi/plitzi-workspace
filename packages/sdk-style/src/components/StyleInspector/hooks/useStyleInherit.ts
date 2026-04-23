@@ -10,6 +10,7 @@ import type { BuilderState, Element, StyleState } from '@plitzi/sdk-shared';
 export type UseStyleInheritProps = {
   element?: Element;
   componentType?: string;
+  componentSubType?: string;
   selector?: string;
   styleSelector?: string;
   styleState?: StyleState;
@@ -19,6 +20,7 @@ export type UseStyleInheritProps = {
 const useStyleInherit = ({
   element,
   componentType,
+  componentSubType,
   selector,
   styleSelector = 'base',
   styleState,
@@ -36,6 +38,7 @@ const useStyleInherit = ({
     }
 
     return calculateInheriting(element, componentType, flat, platform, componentDefinitions.current, {
+      componentSubType,
       styleSelector,
       styleState,
       styleVariant,
@@ -43,7 +46,18 @@ const useStyleInherit = ({
       skipSelectors: selectorsToSkip,
       addSelectors: selectorsToInclude
     });
-  }, [selector, element, componentType, flat, platform, styleSelector, styleState, styleVariant, componentDefinitions]);
+  }, [
+    element,
+    styleSelector,
+    selector,
+    componentType,
+    flat,
+    platform,
+    componentDefinitions,
+    componentSubType,
+    styleState,
+    styleVariant
+  ]);
 
   return inheritData;
 };

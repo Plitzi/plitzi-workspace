@@ -34,9 +34,10 @@ import type {
 } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
 
-export type InspectorModeBasicProps = {
+export type InspectorProps = {
   selectors?: StyleItem[];
   componentType?: string;
+  componentSubType?: string;
   selector?: StyleItem;
   styleState?: StyleState;
   styleVariant?: string;
@@ -46,9 +47,10 @@ export type InspectorModeBasicProps = {
   mode?: 'element' | 'manager';
 };
 
-const InspectorModeBasic = ({
+const Inspector = ({
   selectors,
   componentType,
+  componentSubType,
   selector,
   styleState,
   styleVariant,
@@ -56,7 +58,7 @@ const InspectorModeBasic = ({
   element,
   displayMode,
   mode = 'element'
-}: InspectorModeBasicProps) => {
+}: InspectorProps) => {
   const { builderHandler } = use(BuilderContext);
   const [collapsedCache, setCollapsedCache] = useStorage<Record<string, boolean | undefined>>(
     `builder-state.styleInspector.${mode}.collapsedCache`,
@@ -67,6 +69,7 @@ const InspectorModeBasic = ({
   const inheritData = useStyleInherit({
     element,
     componentType,
+    componentSubType,
     selector: selector?.name,
     styleSelector,
     styleState,
@@ -239,4 +242,4 @@ const InspectorModeBasic = ({
   );
 };
 
-export default InspectorModeBasic;
+export default Inspector;

@@ -76,7 +76,7 @@ const BuilderArea = ({
     const cssVariables = schemaVariablesToCss(variables);
     const cacheParsed = processCssTokens(cache, variables);
 
-    return `:root{${cssVariables}}\n${styleFrame}\n${cacheParsed}\n${customCss}\n${externalStyle}`;
+    return `:root{${cssVariables}}\n${styleFrame}\n@layer plitzi-builder-runtime{${cacheParsed}\n${customCss}\n${externalStyle}}`;
   }, [customCss, cache, externalStyle, variables]);
   const [iframeActive, setIframeActive] = useState(!multiPagesMode);
   const ref = useRef<HTMLIFrameElement>(null);

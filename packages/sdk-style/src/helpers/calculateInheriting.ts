@@ -277,6 +277,7 @@ const calculateInheriting = (
   platform: Style['platform'],
   componentDefinitions: Record<string, ComponentDefinition> = {},
   params: {
+    componentSubType?: string;
     styleSelector?: string;
     styleState?: StyleState;
     styleVariant?: string;
@@ -286,6 +287,7 @@ const calculateInheriting = (
   } = {}
 ): InheritData => {
   const {
+    componentSubType,
     styleSelector = 'base',
     styleState,
     styleVariant,
@@ -344,7 +346,7 @@ const calculateInheriting = (
         });
       }
 
-      const defaultStyle = getDefaultStyle(componentType, undefined, styleSelector, componentDefinitions);
+      const defaultStyle = getDefaultStyle(componentType, componentSubType, styleSelector, componentDefinitions);
       if (defaultStyle) {
         metadata.tree.push({ ...defaultStyle, displayMode });
       }

@@ -160,7 +160,12 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     [debugMode, interactions]
   );
   const dataSourceRef = useRef({});
-  dataSourceRef.current = useElementDataSource({ id, bindings: definition.bindings, filterMode });
+  dataSourceRef.current = useElementDataSource({
+    id,
+    bindings: definition.bindings,
+    filterMode,
+    sources: filterMode === 'hard' ? ['variables'] : []
+  });
 
   const getAdditionalParams = useCallback(() => ({ dataSource: dataSourceRef.current }), [dataSourceRef]);
 

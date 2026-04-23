@@ -110,7 +110,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
     const cssVariables = schemaVariablesToCss(variablesParsed);
     const cacheParsed = processCssTokens(styleCache, variablesParsed);
 
-    return `:root{${cssVariables}}\n${styleFrame}\n${cacheParsed}\n${settings?.customCss ?? ''}`;
+    return `:root{${cssVariables}}\n${styleFrame}\n@layer plitzi-builder-runtime{${cacheParsed}\n${settings?.customCss ?? ''}}`;
   }, [settings?.customCss, styleCache, variablesParsed]);
 
   const { components } = use(ComponentContext);

@@ -27,6 +27,14 @@ const StyleManager = () => {
     [componentDefinitions, selector]
   );
 
+  const componentSubTypesAvailables = useMemo(
+    () =>
+      selector?.type === 'element'
+        ? Object.keys(get(componentDefinitions.current, `${selector.componentType}.defaultStyle.subTypes`, {}))
+        : [],
+    [componentDefinitions, selector]
+  );
+
   const styleSelectors = useMemo<Record<string, string> | undefined>(() => {
     if (!selector) {
       return undefined;
@@ -57,6 +65,7 @@ const StyleManager = () => {
               selectors={selectors}
               styleSelectors={styleSelectors}
               styleSelectorsAvailables={styleSelectorsAvailables}
+              componentSubTypesAvailables={componentSubTypesAvailables}
               allowStyleSelector={selector.type === 'element'}
               componentType={selector.componentType}
               value={selector.name}

@@ -26,6 +26,7 @@ export type StyleInspectorProps = {
   mode?: 'element' | 'manager';
   styleSelectors?: Record<string, string>;
   styleSelectorsAvailables?: string[];
+  componentSubTypesAvailables?: string[];
   allowStyleSelector?: boolean;
   allowStyleState?: boolean;
   allowStyleVariant?: boolean;
@@ -44,6 +45,7 @@ const StyleInspector = ({
   componentType,
   styleSelectors,
   styleSelectorsAvailables,
+  componentSubTypesAvailables,
   allowStyleSelector = true,
   allowStyleState = true,
   allowStyleVariant = true,
@@ -51,6 +53,7 @@ const StyleInspector = ({
   onRemoveVariant
 }: StyleInspectorProps) => {
   const { useStoreSync } = createStoreHook<BuilderState>();
+  const [componentSubType, setComponentSubType] = useState<string | undefined>(undefined);
   const [styleSelector, setStyleSelector] = useState('base');
   const [styleVariant, setStyleVariant] = useState<string | undefined>(undefined);
   const [styleState, setStyleState] = useState<StyleState | undefined>(undefined);
@@ -89,6 +92,7 @@ const StyleInspector = ({
     const selector = selectorNames[selectorNames.length - 1];
     onChange?.(selector ? selector : '');
     setStyleState(undefined);
+    setComponentSubType(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onChange, styleSelectors]);
 
@@ -103,11 +107,13 @@ const StyleInspector = ({
     }
     setStyleState(undefined);
     setStyleVariant(undefined);
+    setComponentSubType(undefined);
   }, [styleSelector]);
 
   useDidUpdateEffect(() => {
     setStyleState(undefined);
     setStyleVariant(undefined);
+    setComponentSubType(undefined);
   }, [value]);
 
   const handleAddSelector = useCallback(
@@ -179,6 +185,8 @@ const StyleInspector = ({
     [builderHandler, displayMode]
   );
 
+  const handleChangeComponentSubType = useCallback((value: string) => setComponentSubType(value), []);
+
   const handleChangeStyleSelector = useCallback((value: string) => {
     setStyleSelector(value);
   }, []);
@@ -222,6 +230,13 @@ const StyleInspector = ({
     ]
   );
 
+  const hasControls =
+    allowStyleSelector &&
+    (allowStyleVariant ||
+      allowStyleState ||
+      !!styleSelectorsAvailables?.length ||
+      !!componentSubTypesAvailables?.length);
+
   return (
     <div className="flex w-full grow flex-col gap-2">
       <div className="flex w-full flex-col gap-2 px-1">
@@ -238,9 +253,23 @@ const StyleInspector = ({
             onSelectorSelected={handleSelectSelector}
           />
         )}
-        {(allowStyleSelector || allowStyleState) && (
+        {hasControls && (
           <div className={clsx('flex w-full items-center gap-2', { 'mt-2': mode === 'manager' })}>
-            {allowStyleSelector && styleSelectorsAvailables && styleSelectorsAvailables.length > 1 && (
+            {!!componentSubTypesAvailables?.length && (
+              <Select
+                className="grow basis-0"
+                size="xs"
+                value={componentSubType}
+                onChange={handleChangeComponentSubType}
+              >
+                {componentSubTypesAvailables.map(subType => (
+                  <option key={subType} value={subType}>
+                    {subType}
+                  </option>
+                ))}
+              </Select>
+            )}
+            {styleSelectorsAvailables && styleSelectorsAvailables.length > 1 && (
               <Select className="grow basis-0" size="xs" onChange={handleChangeStyleSelector} value={styleSelector}>
                 {styleSelectorsAvailables.map(selectorKey => (
                   <option key={selectorKey} value={selectorKey}>

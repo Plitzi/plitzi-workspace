@@ -94,7 +94,7 @@ const useElementInternal = ({
   }
 
   const { state, setElementState } = useElementState({ bindings: element.definition.bindings, previewMode });
-  const dataSource = useElementDataSource({ id, bindings: element.definition.bindings });
+  const dataSource = useElementDataSource({ id, bindings: element.definition.bindings, sources: ['variables'] });
 
   const internalPropsParsed = useMemo(
     () => ({ ...getProps(element, internalProps, dataSource, state), setElementState }),

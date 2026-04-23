@@ -8,11 +8,12 @@ export type UseElementDataSourceProps = {
   id: string;
   bindings?: Record<string, ElementBinding[]>;
   filterMode?: UseDataSourceFilter;
+  sources?: string[];
 };
 
-const useElementDataSource = ({ id, bindings, filterMode }: UseElementDataSourceProps) => {
+const useElementDataSource = ({ id, bindings, sources: sourcesProp, filterMode }: UseElementDataSourceProps) => {
   const sourceFilter = useMemo(() => {
-    const sources = new Set<string>();
+    const sources = new Set<string>(sourcesProp ?? []);
     for (const bindingsGroup of Object.values(bindings ?? {})) {
       if (!Array.isArray(bindingsGroup)) {
         continue;
@@ -25,12 +26,8 @@ const useElementDataSource = ({ id, bindings, filterMode }: UseElementDataSource
       }
     }
 
-    if (filterMode === 'hard') {
-      sources.add('variables');
-    }
-
     return [...sources];
-  }, [bindings, filterMode]);
+  }, [bindings, sourcesProp]);
 
   return useDataSource({ id, mode: 'read', sourceFilter, filterMode });
 };
