@@ -26,7 +26,6 @@ const LayoutContainer = ({ ref, className = '', children, subType = 'div' }: Lay
   } = usePlitziServiceContext();
 
   const updateMask = useCallback((parent?: HTMLElement, child?: Element | null) => {
-    console.log('re-render');
     if (!parent || !child) {
       return;
     }
