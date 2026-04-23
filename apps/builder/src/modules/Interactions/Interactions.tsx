@@ -70,9 +70,9 @@ const Interactions = ({ className = '', id = '', interactions = emptyObject, onC
       <Workflow
         key={id}
         nodes={interactions}
-        onChange={handleWorkflowChange}
         direction="vertical"
         nodeDefinitions={nodeDefinitions}
+        onChange={handleWorkflowChange}
       />
     </div>
   );

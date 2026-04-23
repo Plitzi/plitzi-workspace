@@ -740,7 +740,7 @@
   "type": "module",
   "sideEffects": false,
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.5.19",
+    "@plitzi/plitzi-ui": "^1.5.20",
     "@plitzi/sdk-data-source": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
@@ -758,7 +758,7 @@
     "eslint": "^9.39.4",
     "react": "^19.2.5",
     "typescript": "^6.0.3",
-    "vite": "^8.0.9",
+    "vite": "^8.0.10",
     "vitest": "^4.1.5"
   }
 }

@@ -65,9 +65,9 @@ const delayTime: InteractionCallback<{
         formData?.append(key, value);
       });
 
-      const fetchOptions: RequestInit = { method, headers, body: formData, credentials };
-      if (method === 'get') {
-        delete fetchOptions.body;
+      const fetchOptions: RequestInit = { method, headers, credentials };
+      if (!method || method.toLowerCase() !== 'get') {
+        fetchOptions.body = formData;
       }
 
       const res = await fetch(url, fetchOptions);

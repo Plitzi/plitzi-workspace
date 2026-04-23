@@ -91,10 +91,10 @@
   "devDependencies": {
     "eslint": "^9.39.4",
     "typescript": "^6.0.3",
-    "vite": "^8.0.9"
+    "vite": "^8.0.10"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.5.19",
+    "@plitzi/plitzi-ui": "^1.5.20",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
