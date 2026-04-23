@@ -58,7 +58,7 @@ class InteractionsManager {
       set(this.interactionsRunning, `${subscriptorId}.${eventName}`, true);
 
       const getAdditionalParams = get(this.subscriptors, `${subscriptorId}.getAdditionalParams`, undefined);
-      let dataSource: unknown;
+      let dataSource: Record<string, unknown> | undefined;
       if (typeof getAdditionalParams === 'function') {
         ({ dataSource } = getAdditionalParams());
       }
@@ -74,11 +74,7 @@ class InteractionsManager {
             interactions,
             this.getCallbacksAvailables(),
             { [trigger.id]: params },
-            {
-              ...this.interactionsData,
-              ...(dataSource as Record<string, unknown>),
-              eventBridge: this.eventBridge
-            }
+            { ...this.interactionsData, ...dataSource }
           )
         )
       );

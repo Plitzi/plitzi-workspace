@@ -25,10 +25,12 @@ const useElementDataSource = ({ id, bindings, filterMode }: UseElementDataSource
       }
     }
 
-    sources.add('variables');
+    if (filterMode === 'hard') {
+      sources.add('variables');
+    }
 
     return [...sources];
-  }, [bindings]);
+  }, [bindings, filterMode]);
 
   return useDataSource({ id, mode: 'read', sourceFilter, filterMode });
 };
