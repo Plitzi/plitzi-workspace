@@ -42,21 +42,19 @@ const WorkflowFlow = ({
       <div className="mb-4 flex items-center justify-center rounded-full bg-gray-700 px-4 py-2 text-xs text-white">
         {triggerTitle}
       </div>
-      {
-        <WorkflowNode
-          type="trigger"
-          id={trigger.id}
-          action={trigger.action}
-          elementId={trigger.elementId}
-          title={trigger.title}
-          enabled={trigger.enabled}
-          params={trigger.params}
-          when={trigger.when}
-          preview={trigger.preview}
-          isOpened={nodesOpened[trigger.id]}
-          onOpened={handleNodeOpened}
-        />
-      }
+      <WorkflowNode
+        type="trigger"
+        id={trigger.id}
+        action={trigger.action}
+        elementId={trigger.elementId}
+        title={trigger.title}
+        enabled={trigger.enabled}
+        params={trigger.params}
+        when={trigger.when}
+        preview={trigger.preview}
+        isOpened={nodesOpened[trigger.id]}
+        onOpened={handleNodeOpened}
+      />
       <div className="my-4 flex items-center justify-center rounded-full bg-gray-700 px-4 py-2 text-xs text-white">
         {callbackTitle}
       </div>

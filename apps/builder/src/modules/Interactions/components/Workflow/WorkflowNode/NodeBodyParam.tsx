@@ -158,7 +158,7 @@ const NodeBodyParam = ({
         {!isBinding && type === 'codemirror-text' && (
           <CodeMirror
             label={finalLabel}
-            className="min-h-20 w-full"
+            className="min-h-25 w-full"
             value={value as string}
             theme="light"
             mode="text"
