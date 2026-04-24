@@ -47,12 +47,20 @@ const useInternalItems = ({
     const itemsParsed: ReactNode[] = (items ?? [])
       .filter(itemId => {
         const el = flat[itemId] as Element | undefined;
-        if (!el) return false;
+        if (!el) {
+          return false;
+        }
+
         // In the builder (!previewMode) every element must be visible so it can be configured.
-        if (!previewMode) return true;
+        if (!previewMode) {
+          return true;
+        }
+
         const runtime = el.definition.runtime ?? 'shared';
         // During SSR, skip client-only elements.
-        if (isServer && runtime === 'client') return false;
+        if (isServer && runtime === 'client') {
+          return false;
+        }
 
         return true;
       })

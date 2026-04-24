@@ -72,8 +72,25 @@ export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddlewa
       return;
     }
 
-    const [user, pass] = decoded.split(':');
-    if (!user || !pass || user !== credentials.user || pass !== credentials.pass) {
+    const colonIdx = decoded.indexOf(':');
+    if (colonIdx === -1) {
+      sendChallenge(res, hostname, realm);
+
+      return;
+    }
+
+    const user = decoded.slice(0, colonIdx);
+    const pass = decoded.slice(colonIdx + 1);
+
+    const expectedUser = Buffer.from(credentials.user);
+    const expectedPass = Buffer.from(credentials.pass);
+    const actualUser = Buffer.from(user);
+    const actualPass = Buffer.from(pass);
+
+    const userMatch = actualUser.length === expectedUser.length && crypto.timingSafeEqual(actualUser, expectedUser);
+    const passMatch = actualPass.length === expectedPass.length && crypto.timingSafeEqual(actualPass, expectedPass);
+
+    if (!userMatch || !passMatch) {
       sendChallenge(res, hostname, realm);
 
       return;

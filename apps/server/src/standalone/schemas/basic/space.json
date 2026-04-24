@@ -570,7 +570,8 @@
           "interactions": null,
           "parentId": "65522c9aeb84a24efd5aa41e",
           "rootId": "655221a12565b83ac5060e20",
-          "items": null
+          "items": null,
+          "runtime": "server"
         },
         "attributes": {
           "subType": "h1",
@@ -592,7 +593,8 @@
           "interactions": null,
           "parentId": "655221a12565b83ac5060e20",
           "rootId": "655221a12565b83ac5060e20",
-          "items": []
+          "items": [],
+          "runtime": "server"
         },
         "attributes": {
           "subType": "div"
@@ -602,6 +604,9 @@
     "variables": [],
     "settings": {
       "customCss": ".button-link:hover .title-icon {\n  transform: translateX(10px);\n  transition-property: transform;\n  transition-timing-function: cubic-bezier(0.4, 0.2, 1);\n  transition-duration: 150ms;\n}\n"
+    },
+    "rsc": {
+      "enabled": true
     },
     "pages": ["655221a12565b83ac5060e20"],
     "pageFolders": []

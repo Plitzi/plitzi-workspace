@@ -26,6 +26,7 @@ export const handleRsc = async (
   req: SSRRequest,
   res: SSRResponseHelpers,
   config: SSRServerConfig,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _pluginManager: PluginManager
 ): Promise<void> => {
   if (!config.adapters.getRscData) {
@@ -35,11 +36,17 @@ export const handleRsc = async (
     return;
   }
 
-  const { environment = 'main', spaceId = 1, revision = 0 } = req.ctx.spaceDeployment ?? {};
+  const { environment = 'main', spaceId, revision = 0 } = req.ctx.spaceDeployment ?? {};
+  if (typeof spaceId !== 'number') {
+    res.setStatus(400);
+    res.send(JSON.stringify({ error: 'Invalid space deployment' }));
+
+    return;
+  }
 
   let rscData: SSRRscData;
   try {
-    rscData = await config.adapters.getRscData(req, spaceId as number, environment as Environment, revision);
+    rscData = await config.adapters.getRscData(req, spaceId, environment, revision);
   } catch (err) {
     console.error('[RSC] getRscData error:', err);
     res.setStatus(500);
@@ -51,8 +58,8 @@ export const handleRsc = async (
   const payload: RscPayload = {
     version: 1,
     transport: 'json',
-    spaceId: spaceId as number,
-    environment: environment as Environment,
+    spaceId,
+    environment: environment,
     revision,
     ...rscData
   };

@@ -110,8 +110,6 @@ export type SSRTemplateFn = (params: SSRTemplateProps & { html: string; offlineD
 export type SSRRscData = {
   /** Arbitrary server-side data returned by the getRscData adapter. SDK elements with runtime:'server' consume this. */
   serverData?: unknown;
-  /** Per-element server data keyed by element id. */
-  elements?: Record<string, unknown>;
 };
 
 export type SSRAdapters = {

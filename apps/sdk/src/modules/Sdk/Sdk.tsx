@@ -1,6 +1,7 @@
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { use, useMemo, useRef, useCallback } from 'react';
 
+import RscProvider from '@plitzi/sdk-elements/Element/RscProvider';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
@@ -15,7 +16,6 @@ import { ThemeContext } from '@plitzi/sdk-shared/theme';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
-import RscProvider from '@plitzi/sdk-elements/Element/RscProvider';
 
 import IframeMode from './renderModes/IframeMode';
 import RawMode from './renderModes/RawMode';

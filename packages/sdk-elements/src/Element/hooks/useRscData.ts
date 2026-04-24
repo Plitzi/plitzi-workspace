@@ -11,7 +11,7 @@ import RscContext from '../RscContext';
 const useRscData = (elementId?: string) => {
   const { enabled, serverData, elements, refresh } = use(RscContext);
   const elementData = elementId !== undefined ? (elements?.[elementId] ?? null) : undefined;
-  const isServerElement = elementId !== undefined && elements !== undefined && elementId in (elements ?? {});
+  const isServerElement = elementId !== undefined && elements !== undefined && elementId in elements;
 
   return { enabled, serverData, elementData, isServerElement, refresh };
 };

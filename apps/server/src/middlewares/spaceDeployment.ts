@@ -5,8 +5,8 @@ export const spaceDeploymentMiddleware = (adapters: SSRAdapters): SSRMiddleware 
     const deployment = await adapters.getSpaceDeployment(req);
     req.ctx.spaceDeployment = deployment;
 
-    const { spaceId = 1, error } = deployment;
-    if (spaceId === null || error) {
+    const { spaceId, error } = deployment;
+    if (spaceId == null || error) {
       res.setStatus(error?.code ?? 404);
       res.send(error?.message ?? 'Space not found');
       return;

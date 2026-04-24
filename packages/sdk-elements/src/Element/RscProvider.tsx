@@ -50,10 +50,7 @@ const RscProvider = ({ children, rscPath: rscPathProp, navigationKey }: RscProvi
     }
   }, [enabled, fetch_, navigationKey]);
 
-  const getElementData = useCallback(
-    (id: string) => rscState.elements?.[id],
-    [rscState.elements]
-  );
+  const getElementData = useCallback((id: string) => rscState.elements?.[id], [rscState.elements]);
 
   const value = useMemo<RscContextValue>(
     () => ({ enabled, serverData: rscState.serverData, elements: rscState.elements, getElementData, refresh: fetch_ }),

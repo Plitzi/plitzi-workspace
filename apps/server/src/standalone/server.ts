@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import { createSSRServer } from '../core/createServer';
 
-import type { SSRAdapters, SSRSpaceDeployment } from '../types';
+import type { SSRAdapters, SSRRscData, SSRSpaceDeployment } from '../types';
 import type { OfflineDataRaw, Schema, Style } from '@plitzi/sdk-shared';
 
 const PORT = parseInt(process.env.SSR_PORT ?? '3002', 10);
@@ -39,7 +39,10 @@ const getSpaceDeployment = (): Promise<SSRSpaceDeployment> => {
   });
 };
 
-const adapters: SSRAdapters = { getOfflineData, getSpaceDeployment };
+// eslint-disable-next-line @typescript-eslint/require-await
+const getRscData = async (): Promise<SSRRscData> => ({ serverData: { timestamp: Date.now() } });
+
+const adapters: SSRAdapters = { getOfflineData, getSpaceDeployment, getRscData };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

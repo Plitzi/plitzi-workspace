@@ -8,8 +8,8 @@ import { runMiddlewares } from '../helpers/runMiddlewares';
 import { authMiddleware } from '../middlewares/auth';
 import { basicAuthMiddleware } from '../middlewares/basicAuth';
 import { spaceDeploymentMiddleware } from '../middlewares/spaceDeployment';
-import { handleRsc } from '../ssr/rsc/handleRsc';
 import { renderSSR } from '../ssr/render';
+import { handleRsc } from '../ssr/rsc/handleRsc';
 
 import type { Handler } from './transports';
 import type { RawResponse } from '../helpers/buildResponseHelpers';
@@ -37,17 +37,18 @@ const handleRequest = async (
     res.setHeader('Alt-Svc', `h3=":${port}"; ma=86400`);
   }
 
-  if (req.path.startsWith('/.well-known/')) {
-    res.send('Well-known route');
-
-    return;
-  }
-
   if (serveStatic(req, res, BUILTIN_PUBLIC_DIR)) {
     return;
   }
 
   if (config.publicDir && serveStatic(req, res, config.publicDir)) {
+    return;
+  }
+
+  if (req.path.startsWith('/.well-known/')) {
+    res.setStatus(404);
+    res.end();
+
     return;
   }
 
