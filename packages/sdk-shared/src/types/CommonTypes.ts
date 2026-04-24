@@ -1,4 +1,5 @@
 import type { User } from './AuthTypes';
+import type { SSRRscData } from './ServerTypes';
 
 export type ServerEnvironment = 'production' | 'staging' | 'development' | 'local';
 
@@ -22,6 +23,7 @@ export type Server<T extends Record<string, unknown> = Record<string, unknown>> 
     details?: User;
     accessToken?: string | Promise<string>;
   };
+  rscData?: SSRRscData;
 } & T;
 
 export type RenderMode = 'raw' | 'iframe' | 'shadow' | 'widget';

@@ -1,9 +1,10 @@
-import type { Server, SSRRequest, SSRContext } from '@plitzi/sdk-shared';
+import type { Server, SSRRequest, SSRServerConfig } from '@plitzi/sdk-shared';
 
-export const buildServerInfo = (req: SSRRequest, ctx?: SSRContext): Partial<Server> => {
+export const buildServerInfo = async (req: SSRRequest, config: SSRServerConfig): Promise<Partial<Server>> => {
   const accessToken = req.query['access-token'];
   const origin = `${req.protocol}://${req.hostname}`;
-  const user = ctx?.user;
+  const user = req.ctx.user;
+  const { environment = 'main', spaceId, revision = 0 } = req.ctx.spaceDeployment ?? {};
 
   return {
     basePath: '/',
@@ -16,6 +17,7 @@ export const buildServerInfo = (req: SSRRequest, ctx?: SSRContext): Partial<Serv
     } as Location,
     authenticated: !!user,
     skipAuth: !!accessToken,
-    user: user ? { details: user } : undefined
+    user: user ? { details: user } : undefined,
+    rscData: await config.adapters.getRscData?.(req, spaceId as number, environment, revision, user)
   };
 };

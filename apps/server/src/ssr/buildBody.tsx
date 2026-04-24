@@ -19,7 +19,7 @@ export const buildBody = async (
   pluginManager: PluginManager
 ): Promise<string> => {
   const offlineData = await config.adapters.getOfflineData(spaceId, environment, revision);
-  const server = buildServerInfo(req, req.ctx);
+  const server = await buildServerInfo(req, config);
 
   const offlineDataStr = escapeJson(
     JSON.stringify({

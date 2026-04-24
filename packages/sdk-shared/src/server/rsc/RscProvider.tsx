@@ -10,20 +10,21 @@ import type { ReactNode } from 'react';
 
 export type RscProviderProps = {
   children: ReactNode;
+  /** Initial RSC Data in SSR mode */
+  rscData?: SSRRscData;
   /** Override the RSC endpoint path. Falls back to schema.rsc.path then '/_rsc'. */
   rscPath?: string;
   /** Change this value on SPA navigation to trigger an RSC re-fetch (e.g. pass currentPageId). */
   navigationKey?: string;
 };
 
-const RscProvider = ({ children, rscPath: rscPathProp, navigationKey }: RscProviderProps) => {
+const RscProvider = ({ children, rscPath: rscPathProp, rscData, navigationKey }: RscProviderProps) => {
   const { useStore } = createStoreHook<CommonState>();
   const [schemaRsc] = useStore('schema.rsc', { mode: 'mount' });
+  const [rscState, setRscState] = useState<SSRRscData>(rscData ?? {});
 
   const enabled = schemaRsc?.enabled ?? false;
   const endpointPath = rscPathProp ?? schemaRsc?.path ?? '/_rsc';
-
-  const [rscState, setRscState] = useState<SSRRscData>({});
 
   const fetchRsc = useCallback(async () => {
     if (!enabled || typeof window === 'undefined') {
