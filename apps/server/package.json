@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-server",
-  "version": "0.30.9",
+  "version": "0.30.10",
   "license": "GPLv3",
   "files": [
     "dist"

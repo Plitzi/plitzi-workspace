@@ -140,6 +140,8 @@ export type SSRServerConfig = {
   autoLoadSchemaPlugins?: boolean;
   /** Omit client-side JS from the rendered page — useful for verifying SSR HTML without hydration. Default: false. */
   ssrOnly?: boolean;
+  /** Cache-buster appended as ?v=<assetVersion> to all default SDK asset URLs (jsPath, cssPath, react vendor). Compute from file mtime or package version at startup. */
+  assetVersion?: string;
   adapters: SSRAdapters;
 };
 
