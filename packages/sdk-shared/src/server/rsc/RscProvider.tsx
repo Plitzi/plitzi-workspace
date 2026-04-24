@@ -26,23 +26,33 @@ const RscProvider = ({ children, rscPath: rscPathProp, rscData, navigationKey }:
   const enabled = schemaRsc?.enabled ?? false;
   const endpointPath = rscPathProp ?? schemaRsc?.path ?? '/_rsc';
 
-  const fetchRsc = useCallback(async () => {
-    if (!enabled || typeof window === 'undefined') {
-      return;
-    }
-
-    try {
-      const res = await fetch(endpointPath, { headers: { Accept: 'application/json' } });
-      if (!res.ok) {
+  const fetchRsc = useCallback(
+    async (ids?: string[]) => {
+      if (!enabled || typeof window === 'undefined') {
         return;
       }
 
-      const data = (await res.json()) as SSRRscData;
-      setRscState({ serverData: data.serverData });
-    } catch {
-      // Network errors are silently ignored — RSC data is supplemental.
-    }
-  }, [enabled, endpointPath]);
+      try {
+        const url = ids?.length ? `${endpointPath}?ids=${ids.join(',')}` : endpointPath;
+        const res = await fetch(url, { headers: { Accept: 'application/json' } });
+        if (!res.ok) {
+          return;
+        }
+
+        const data = (await res.json()) as SSRRscData;
+        if (ids?.length) {
+          // Partial refresh: merge only the returned keys into existing serverData.
+          setRscState(prev => ({ serverData: { ...prev.serverData, ...data.serverData } }));
+        } else {
+          // Full refresh: replace serverData entirely.
+          setRscState({ serverData: data.serverData });
+        }
+      } catch {
+        // Network errors are silently ignored — RSC data is supplemental.
+      }
+    },
+    [enabled, endpointPath]
+  );
 
   // Fetch on mount and on every SPA navigation (navigationKey change).
   useEffect(() => {

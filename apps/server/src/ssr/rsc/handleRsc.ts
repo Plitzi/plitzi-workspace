@@ -43,9 +43,12 @@ export const handleRsc = async (
     return;
   }
 
+  const idsParam = req.query.ids;
+  const ids = idsParam ? idsParam.split(',').filter(Boolean) : undefined;
+
   let rscData: SSRRscData;
   try {
-    rscData = await config.adapters.getRscData(req, spaceId, environment, revision, req.ctx.user);
+    rscData = await config.adapters.getRscData(req, spaceId, environment, revision, req.ctx.user, ids);
   } catch (err) {
     console.error('[RSC] getRscData error:', err);
     res.setStatus(500);

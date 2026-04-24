@@ -7,8 +7,10 @@ export type RscContextValue = {
   enabled: boolean;
   /** Global server-side data returned by getRscData. */
   serverData?: SSRRscData['serverData'];
-  /** Re-fetch RSC data from the server (e.g. after SPA navigation). */
-  refresh?: () => Promise<void>;
+  /** Re-fetch RSC data from the server.
+   *  Pass `ids` to refresh only specific elements and merge into existing data.
+   *  Omit `ids` for a full refresh (replaces all serverData). */
+  refresh?: (ids?: string[]) => Promise<void>;
 };
 
 const RscContext = createContext<RscContextValue>({ enabled: false });

@@ -119,13 +119,16 @@ export type SSRAdapters = {
   getUser?: (req: SSRRequest) => Promise<SSRUser | undefined>;
   onLogin?: (req: SSRRequest) => Promise<boolean>;
   onLogout?: (req: SSRRequest) => Promise<void>;
-  /** Called by the RSC endpoint to fetch server-side data for server components. */
+  /** Called by the RSC endpoint to fetch server-side data for server components.
+   *  When `ids` is provided the adapter should return data only for those element IDs.
+   *  Omitting `ids` (initial SSR fetch or full refresh) must return data for all elements. */
   getRscData?: (
     req: SSRRequest,
     spaceId: number,
     environment: Environment,
     revision: number,
-    user: SSRUser | undefined
+    user: SSRUser | undefined,
+    ids?: string[]
   ) => Promise<SSRRscData>;
 };
 

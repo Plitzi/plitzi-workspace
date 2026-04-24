@@ -45,10 +45,11 @@ const getRscData = async (
   _spaceId: number,
   _environment: string,
   _revision: number,
-  user: SSRUser | undefined
+  user: SSRUser | undefined,
+  ids?: string[]
   // eslint-disable-next-line @typescript-eslint/require-await
-): Promise<SSRRscData> => ({
-  serverData: {
+): Promise<SSRRscData> => {
+  const all: Record<string, unknown> = {
     'rsc-server': {
       message: 'Hello from the Node.js SSR server!',
       renderedAt: new Date().toISOString(),
@@ -61,8 +62,12 @@ const getRscData = async (
       serverTimestamp: new Date().toISOString(),
       nodeVersion: process.version
     }
-  }
-});
+  };
+
+  const serverData = ids?.length ? Object.fromEntries(ids.filter(id => id in all).map(id => [id, all[id]])) : all;
+
+  return { serverData };
+};
 
 const adapters: SSRAdapters = { getOfflineData, getSpaceDeployment, getRscData };
 

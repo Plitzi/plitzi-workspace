@@ -62,6 +62,10 @@
       "types": "./dist/src/Element/RscProvider.d.ts",
       "import": "./dist/src/Element/RscProvider.mjs"
     },
+    "./Element/ServerStaticShell": {
+      "types": "./dist/src/Element/ServerStaticShell.d.ts",
+      "import": "./dist/src/Element/ServerStaticShell.mjs"
+    },
     "./Element/helpers/elementConstants": {
       "types": "./dist/src/Element/helpers/elementConstants.d.ts",
       "import": "./dist/src/Element/helpers/elementConstants.mjs"
