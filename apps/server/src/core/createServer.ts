@@ -43,7 +43,7 @@ export const createSSRServer = (config: SSRServerConfig): SSRServer => {
       const handler = makeHandler(config, port, renderFn, cacheStore, pluginManager);
       ({ primary, h3 } = buildTransport(config, handler, port));
       primary.listen(port, host, () => {
-        console.log(`[SSR] ${protoLabel(version, !!config.tls)} listening on ${host}:${port}`);
+        console.log(`[SSR] ${protoLabel(version, !!config.tls)} - listening on ${host}:${port}`);
       });
     },
     async close() {

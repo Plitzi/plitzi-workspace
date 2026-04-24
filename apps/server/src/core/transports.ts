@@ -27,9 +27,11 @@ export const protoLabel = (version: number, hasTls: boolean): string => {
   if (version >= 3) {
     return 'HTTP/2+3 (TLS)';
   }
+
   if (version >= 2) {
-    return hasTls ? 'HTTP/2 (TLS)' : 'HTTP/1.1';
+    return hasTls ? 'HTTP/2 (TLS)' : 'HTTP/1.1 - TLS Missing';
   }
+
   return hasTls ? 'HTTPS/1.1' : 'HTTP/1.1';
 };
 
