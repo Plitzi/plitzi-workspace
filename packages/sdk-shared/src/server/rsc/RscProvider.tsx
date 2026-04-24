@@ -46,9 +46,10 @@ const RscProvider = ({ children, rscPath: rscPathProp, rscData, navigationKey }:
 
   // Fetch on mount and on every SPA navigation (navigationKey change).
   useEffect(() => {
-    if (enabled) {
+    if (enabled && rscData === undefined) {
       void fetchRsc();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, fetchRsc, navigationKey]);
 
   const getElementData = useCallback((id: string) => rscState.serverData?.[id], [rscState.serverData]);

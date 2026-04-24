@@ -56,6 +56,10 @@ const getRscData = async (
       uptime: Math.round(process.uptime()),
       authenticated: !!user,
       userId: user?.id ?? null
+    },
+    'rsc-shared': {
+      serverTimestamp: new Date().toISOString(),
+      nodeVersion: process.version
     }
   }
 });
@@ -74,6 +78,7 @@ const server = createSSRServer({
     '/sdk-assets': path.resolve(process.cwd(), '../sdk/dist')
   },
   httpVersion: 1,
+  // ssrOnly: true,
   plugins: {
     serverInfo: { js: path.resolve(__dirname, 'plugins/ServerInfo.tsx'), action: 'compile' },
     clientInfo: { js: path.resolve(__dirname, 'plugins/ClientInfo.tsx'), action: 'compile' },

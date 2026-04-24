@@ -6,6 +6,7 @@
  * element id prop (serverData[id]).
  */
 import { useRscData } from '@plitzi/plitzi-sdk';
+import { useEffect, useState } from 'react';
 
 import { card, titleStyle, row, label } from './styles';
 
@@ -18,6 +19,12 @@ type ServerData = {
 
 const ServerInfo = () => {
   const { serverData, elementData } = useRscData<ServerData | null>();
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    setMessage('Server Component Hydrated, WRONG');
+  }, []);
+
   if (!serverData) {
     return (
       <div style={card('gray')}>
@@ -54,6 +61,10 @@ const ServerInfo = () => {
       <div style={row}>
         <span style={label}>Uptime</span>
         <span>{elementData.uptime}s</span>
+      </div>
+      <div style={row}>
+        <span style={label}>Client - Message</span>
+        <span>{message ? message : '-'}</span>
       </div>
     </div>
   );
