@@ -2,11 +2,11 @@
 import clsx from 'clsx';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
+import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
-import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';

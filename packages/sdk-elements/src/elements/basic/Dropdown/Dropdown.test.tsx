@@ -1,10 +1,11 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
-import { Dropdown } from './Dropdown';
-import ElementContext from '../../../Element/ElementContext';
+import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
 
-import type { ElementContextValue } from '../../../Element/ElementContext';
+import { Dropdown } from './Dropdown';
+
+import type { ElementContextValue } from '@plitzi/sdk-shared/elements/ElementContext';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element

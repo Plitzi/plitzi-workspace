@@ -2,8 +2,9 @@ import { render } from '@testing-library/react';
 import { createContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
+import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
+
 import { Page } from './Page';
-import ElementContext from '../../../Element/ElementContext';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element

@@ -5,7 +5,7 @@ import { createStoreHook } from '@plitzi/sdk-shared/store';
 import RscContext from './RscContext';
 
 import type { RscContextValue } from './RscContext';
-import type { CommonState } from '@plitzi/sdk-shared';
+import type { CommonState, SSRRscData } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type RscProviderProps = {
@@ -23,9 +23,9 @@ const RscProvider = ({ children, rscPath: rscPathProp, navigationKey }: RscProvi
   const enabled = schemaRsc?.enabled ?? false;
   const endpointPath = rscPathProp ?? schemaRsc?.path ?? '/_rsc';
 
-  const [rscState, setRscState] = useState<Pick<RscContextValue, 'serverData' | 'elements'>>({});
+  const [rscState, setRscState] = useState<SSRRscData>({});
 
-  const fetch_ = useCallback(async () => {
+  const fetchRsc = useCallback(async () => {
     if (!enabled || typeof window === 'undefined') {
       return;
     }
@@ -36,8 +36,8 @@ const RscProvider = ({ children, rscPath: rscPathProp, navigationKey }: RscProvi
         return;
       }
 
-      const data = (await res.json()) as { serverData?: unknown; elements?: Record<string, unknown> };
-      setRscState({ serverData: data.serverData, elements: data.elements });
+      const data = (await res.json()) as SSRRscData;
+      setRscState({ serverData: data.serverData });
     } catch {
       // Network errors are silently ignored — RSC data is supplemental.
     }
@@ -46,15 +46,20 @@ const RscProvider = ({ children, rscPath: rscPathProp, navigationKey }: RscProvi
   // Fetch on mount and on every SPA navigation (navigationKey change).
   useEffect(() => {
     if (enabled) {
-      void fetch_();
+      void fetchRsc();
     }
-  }, [enabled, fetch_, navigationKey]);
+  }, [enabled, fetchRsc, navigationKey]);
 
-  const getElementData = useCallback((id: string) => rscState.elements?.[id], [rscState.elements]);
+  const getElementData = useCallback((id: string) => rscState.serverData?.[id], [rscState.serverData]);
 
   const value = useMemo<RscContextValue>(
-    () => ({ enabled, serverData: rscState.serverData, elements: rscState.elements, getElementData, refresh: fetch_ }),
-    [enabled, rscState.serverData, rscState.elements, getElementData, fetch_]
+    () => ({
+      enabled,
+      serverData: rscState.serverData,
+      getElementData,
+      refresh: fetchRsc
+    }),
+    [enabled, rscState.serverData, getElementData, fetchRsc]
   );
 
   return <RscContext value={value}>{children}</RscContext>;

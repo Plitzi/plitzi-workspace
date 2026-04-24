@@ -3,6 +3,7 @@
 import clsx from 'clsx';
 import { use, useEffect } from 'react';
 
+import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import Label from './components/Label';
@@ -13,7 +14,6 @@ import Input from './inputs/Input';
 import Select from './inputs/Select';
 import Textarea from './inputs/Textarea';
 import withElement from '../../../Element/hocs/withElement';
-import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { FormContextValue } from '../Form';

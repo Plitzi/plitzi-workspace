@@ -1,5 +1,4 @@
-import type { SSRRequest, SSRContext } from '../types';
-import type { Server } from '@plitzi/sdk-shared';
+import type { Server, SSRRequest, SSRContext } from '@plitzi/sdk-shared';
 
 export const buildServerInfo = (req: SSRRequest, ctx?: SSRContext): Partial<Server> => {
   const accessToken = req.query['access-token'];

@@ -5,18 +5,17 @@ import clsx from 'clsx';
 import { useCallback, use, useMemo, useRef, useEffect } from 'react';
 
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
+import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
-import ElementContext from './ElementContext';
 import { interactionBasicTriggers, nativeEventsList } from './helpers/elementConstants';
 import parseStyle from './helpers/parseStyle';
 import useElementDataSource from './hooks/useElementDataSource';
 import useElementInteractions from './hooks/useElementInteractions';
 import useInternalClassName from './hooks/useInternalClassName';
 
-import type { ElementContextValue } from './ElementContext';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { InteractionCallback } from '@plitzi/sdk-shared';
+import type { ElementContextValue, InteractionCallback } from '@plitzi/sdk-shared';
 import type { Context, CSSProperties, FC, JSX, ReactNode, RefObject } from 'react';
 
 export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {

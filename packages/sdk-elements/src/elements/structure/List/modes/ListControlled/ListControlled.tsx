@@ -2,11 +2,11 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
+import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import ListControlledItem from './ListControlledItem';
-import useElement from '../../../../../Element/hooks/useElement';
 import RootElement from '../../../../../Element/RootElement';
 
 import type { SourceField } from '@plitzi/sdk-shared';

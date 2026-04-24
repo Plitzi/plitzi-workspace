@@ -98,6 +98,14 @@
       "types": "./dist/src/elements/ComponentContext.d.ts",
       "import": "./dist/src/elements/ComponentContext.mjs"
     },
+    "./elements/ElementContext": {
+      "types": "./dist/src/elements/ElementContext.d.ts",
+      "import": "./dist/src/elements/ElementContext.mjs"
+    },
+    "./elements/hooks/useElement": {
+      "types": "./dist/src/elements/hooks/useElement.d.ts",
+      "import": "./dist/src/elements/hooks/useElement.mjs"
+    },
     "./elements/index": {
       "types": "./dist/src/elements/index.d.ts",
       "import": "./dist/src/elements/index.mjs"
@@ -850,6 +858,26 @@
       "types": "./dist/src/segments/index.d.ts",
       "import": "./dist/src/segments/index.mjs"
     },
+    "./server": {
+      "types": "./dist/src/server/index.d.ts",
+      "import": "./dist/src/server/index.mjs"
+    },
+    "./server/hooks/useRscData": {
+      "types": "./dist/src/server/hooks/useRscData.d.ts",
+      "import": "./dist/src/server/hooks/useRscData.mjs"
+    },
+    "./server/index": {
+      "types": "./dist/src/server/index.d.ts",
+      "import": "./dist/src/server/index.mjs"
+    },
+    "./server/rsc/RscContext": {
+      "types": "./dist/src/server/rsc/RscContext.d.ts",
+      "import": "./dist/src/server/rsc/RscContext.mjs"
+    },
+    "./server/rsc/RscProvider": {
+      "types": "./dist/src/server/rsc/RscProvider.d.ts",
+      "import": "./dist/src/server/rsc/RscProvider.mjs"
+    },
     "./store": {
       "types": "./dist/src/store/index.d.ts",
       "import": "./dist/src/store/index.mjs"
@@ -1001,6 +1029,10 @@
     "./types/SegmentTypes": {
       "types": "./dist/src/types/SegmentTypes.d.ts",
       "import": "./dist/src/types/SegmentTypes.mjs"
+    },
+    "./types/ServerTypes": {
+      "types": "./dist/src/types/ServerTypes.d.ts",
+      "import": "./dist/src/types/ServerTypes.mjs"
     },
     "./types/SpaceTypes": {
       "types": "./dist/src/types/SpaceTypes.d.ts",

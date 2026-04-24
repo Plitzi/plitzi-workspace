@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { getMimeType, getCacheControl } from './mimeTypes';
 
-import type { SSRRequest, SSRResponseHelpers } from '../types';
+import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
 
 const buildEtag = (stat: fs.Stats): string => `"${stat.mtimeMs.toString(36)}-${stat.size.toString(36)}"`;
 

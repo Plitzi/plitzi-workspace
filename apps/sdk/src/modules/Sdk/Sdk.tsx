@@ -1,7 +1,6 @@
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { use, useMemo, useRef, useCallback } from 'react';
 
-import RscProvider from '@plitzi/sdk-elements/Element/RscProvider';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
@@ -11,6 +10,7 @@ import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import RscProvider from '@plitzi/sdk-shared/server/rsc/RscProvider';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
 import { ThemeContext } from '@plitzi/sdk-shared/theme';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';

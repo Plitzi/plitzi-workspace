@@ -7,8 +7,7 @@ import { buildServerInfo } from '../helpers/buildServerInfo';
 import { escapeJson } from '../helpers/escapeJson';
 
 import type { PluginManager } from '../plugins/manager';
-import type { SSRRequest, SSRServerConfig, SSRTemplateFn } from '../types';
-import type { Environment } from '@plitzi/sdk-shared';
+import type { Environment, SSRRequest, SSRServerConfig, SSRTemplateFn } from '@plitzi/sdk-shared';
 
 export const buildBody = async (
   req: SSRRequest,

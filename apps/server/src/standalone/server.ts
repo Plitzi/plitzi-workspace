@@ -4,8 +4,16 @@ import { fileURLToPath } from 'node:url';
 
 import { createSSRServer } from '../core/createServer';
 
-import type { SSRAdapters, SSRRscData, SSRSpaceDeployment } from '../types';
-import type { OfflineDataRaw, Schema, Style } from '@plitzi/sdk-shared';
+import type {
+  OfflineDataRaw,
+  Schema,
+  Style,
+  SSRAdapters,
+  SSRRequest,
+  SSRRscData,
+  SSRSpaceDeployment,
+  SSRUser
+} from '@plitzi/sdk-shared';
 
 const PORT = parseInt(process.env.SSR_PORT ?? '3002', 10);
 const HOST = process.env.SSR_HOST ?? '0.0.0.0';
@@ -27,20 +35,30 @@ const getSpaceDeployment = (): Promise<SSRSpaceDeployment> => {
   return Promise.resolve({
     spaceId: 1,
     environment: 'main',
-    revision: 0
-    // credential: {
-    //   provider: 'ssr',
-    //   data: {
-    //     type: 'basic',
-    //     user: 'admin',
-    //     pass: 'admin'
-    //   }
-    // }
+    revision: 0,
+    pluginNames: ['serverInfo', 'clientInfo', 'sharedInfo']
   });
 };
 
-// eslint-disable-next-line @typescript-eslint/require-await
-const getRscData = async (): Promise<SSRRscData> => ({ serverData: { timestamp: Date.now() } });
+const getRscData = async (
+  _req: SSRRequest,
+  _spaceId: number,
+  _environment: string,
+  _revision: number,
+  user: SSRUser | undefined
+  // eslint-disable-next-line @typescript-eslint/require-await
+): Promise<SSRRscData> => ({
+  serverData: {
+    'rsc-server': {
+      message: 'Hello from the Node.js SSR server!',
+      renderedAt: new Date().toISOString(),
+      nodeVersion: process.version,
+      uptime: Math.round(process.uptime()),
+      authenticated: !!user,
+      userId: user?.id ?? null
+    }
+  }
+});
 
 const adapters: SSRAdapters = { getOfflineData, getSpaceDeployment, getRscData };
 
@@ -56,6 +74,11 @@ const server = createSSRServer({
     '/sdk-assets': path.resolve(process.cwd(), '../sdk/dist')
   },
   httpVersion: 1,
+  plugins: {
+    serverInfo: { js: path.resolve(__dirname, 'plugins/ServerInfo.tsx'), action: 'compile' },
+    clientInfo: { js: path.resolve(__dirname, 'plugins/ClientInfo.tsx'), action: 'compile' },
+    sharedInfo: { js: path.resolve(__dirname, 'plugins/SharedInfo.tsx'), action: 'compile' }
+  },
   adapters
 });
 

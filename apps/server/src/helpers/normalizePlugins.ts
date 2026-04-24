@@ -1,4 +1,4 @@
-import type { PluginSource } from '../types';
+import type { PluginSource } from '@plitzi/sdk-shared';
 
 const DEFAULT_PLUGIN_VERSION = '1.0.0';
 

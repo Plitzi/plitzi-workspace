@@ -4,10 +4,11 @@ import { describe, it, expect, vi } from 'vitest';
 
 // import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
-import { CollectionContainer } from './CollectionContainer';
-import ElementContext from '../../../Element/ElementContext';
+import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
 
-import type { ElementContextValue } from '../../../Element/ElementContext';
+import { CollectionContainer } from './CollectionContainer';
+
+import type { ElementContextValue } from '@plitzi/sdk-shared';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element

@@ -1,4 +1,5 @@
-import type { OfflineDataRaw, Environment } from '@plitzi/sdk-shared';
+import type { Environment } from './CommonTypes';
+import type { OfflineDataRaw } from './SdkTypes';
 import type { IncomingHttpHeaders } from 'node:http';
 
 export type SSRHeaders = IncomingHttpHeaders & {
@@ -108,8 +109,8 @@ export type SSRSpaceDeployment = {
 export type SSRTemplateFn = (params: SSRTemplateProps & { html: string; offlineData: string }) => string;
 
 export type SSRRscData = {
-  /** Arbitrary server-side data returned by the getRscData adapter. SDK elements with runtime:'server' consume this. */
-  serverData?: unknown;
+  /** Per-element server data keyed by schema element ID. Each element reads its own slice via its id prop. */
+  serverData?: Record<string, unknown>;
 };
 
 export type SSRAdapters = {
@@ -119,7 +120,13 @@ export type SSRAdapters = {
   onLogin?: (req: SSRRequest) => Promise<boolean>;
   onLogout?: (req: SSRRequest) => Promise<void>;
   /** Called by the RSC endpoint to fetch server-side data for server components. */
-  getRscData?: (req: SSRRequest, spaceId: number, environment: Environment, revision: number) => Promise<SSRRscData>;
+  getRscData?: (
+    req: SSRRequest,
+    spaceId: number,
+    environment: Environment,
+    revision: number,
+    user: SSRUser | undefined
+  ) => Promise<SSRRscData>;
 };
 
 export type SSRRscConfig = {

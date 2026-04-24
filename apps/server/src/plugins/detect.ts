@@ -1,4 +1,4 @@
-import type { PluginAction, PluginSource, PluginSourceComponent } from '../types';
+import type { PluginAction, PluginSource, PluginSourceComponent } from '@plitzi/sdk-shared';
 
 export const isComponentSource = (source: PluginSource): source is PluginSourceComponent => 'component' in source;
 

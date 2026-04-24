@@ -15,7 +15,7 @@ import type { Handler } from './transports';
 import type { RawResponse } from '../helpers/buildResponseHelpers';
 import type { TtlCache } from '../helpers/ttlCache';
 import type { PluginManager } from '../plugins/manager';
-import type { SSRServerConfig, SSRRequest, SSRTemplateFn } from '../types';
+import type { SSRServerConfig, SSRRequest, SSRTemplateFn } from '@plitzi/sdk-shared';
 import type { IncomingMessage } from 'node:http';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

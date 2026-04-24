@@ -51,7 +51,6 @@ const useInternalItems = ({
           return false;
         }
 
-        // In the builder (!previewMode) every element must be visible so it can be configured.
         if (!previewMode) {
           return true;
         }

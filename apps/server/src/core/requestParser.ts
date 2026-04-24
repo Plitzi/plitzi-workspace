@@ -1,4 +1,4 @@
-import type { SSRRequest, SSRHeaders } from '../types';
+import type { SSRRequest, SSRHeaders } from '@plitzi/sdk-shared';
 import type { IncomingMessage } from 'node:http';
 
 export const parseRequest = (raw: IncomingMessage): SSRRequest => {

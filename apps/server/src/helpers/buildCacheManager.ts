@@ -1,5 +1,5 @@
-import type { CacheManager, CacheFilter } from '../types';
 import type { TtlCache } from './ttlCache';
+import type { CacheManager, CacheFilter } from '@plitzi/sdk-shared';
 
 const buildCacheManager = (store: TtlCache<string>): CacheManager => ({
   invalidate(filter?: CacheFilter): number {

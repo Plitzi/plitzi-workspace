@@ -1,4 +1,4 @@
-import type { SSRMiddleware, SSRRequest, SSRResponseHelpers, SSRContext } from '../types';
+import type { SSRMiddleware, SSRRequest, SSRResponseHelpers, SSRContext } from '@plitzi/sdk-shared';
 
 export const runMiddlewares = async (
   middlewares: SSRMiddleware[],

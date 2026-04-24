@@ -4,11 +4,11 @@ import clsx from 'clsx';
 import { produce } from 'immer';
 import { useCallback, useMemo, useState, use } from 'react';
 
+import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
-import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';

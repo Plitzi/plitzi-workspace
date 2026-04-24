@@ -2,8 +2,7 @@ import { buildBody } from './buildBody';
 
 import type { TtlCache } from '../helpers/ttlCache';
 import type { PluginManager } from '../plugins/manager';
-import type { SSRRequest, SSRResponseHelpers, SSRServerConfig, SSRTemplateFn } from '../types';
-import type { Environment } from '@plitzi/sdk-shared';
+import type { Environment, SSRRequest, SSRResponseHelpers, SSRServerConfig, SSRTemplateFn } from '@plitzi/sdk-shared';
 
 export const buildCacheKey = (
   accessToken: string | undefined = 'anonymous',

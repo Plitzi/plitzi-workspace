@@ -6,7 +6,7 @@ import { DEFAULT_CACHE_TTL_MS, TtlCache } from '../helpers/ttlCache';
 import { PluginManager } from '../plugins/manager';
 import { compileTemplate } from '../ssr/template';
 
-import type { CacheManager, PluginRegistry, SSRServer, SSRServerConfig } from '../types';
+import type { CacheManager, PluginRegistry, SSRServer, SSRServerConfig } from '@plitzi/sdk-shared';
 
 export const createSSRServer = (config: SSRServerConfig): SSRServer => {
   const { httpVersion: version = 2, cacheTtlMs: ttlMs = DEFAULT_CACHE_TTL_MS } = config;

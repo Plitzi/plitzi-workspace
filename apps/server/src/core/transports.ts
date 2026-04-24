@@ -3,7 +3,7 @@ import http2 from 'node:http2';
 import https from 'node:https';
 
 import type { RawResponse } from '../helpers/buildResponseHelpers';
-import type { SSRServerConfig } from '../types';
+import type { SSRServerConfig } from '@plitzi/sdk-shared';
 import type { IncomingMessage, RequestListener } from 'node:http';
 
 export type CloseableServer = {

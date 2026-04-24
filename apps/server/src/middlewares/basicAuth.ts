@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 
 import { DEFAULT_CACHE_TTL_MS } from '../helpers/ttlCache';
 
-import type { SSRMiddleware } from '../types';
+import type { SSRMiddleware } from '@plitzi/sdk-shared';
 
 const authCache = new Map<string, number>();
 

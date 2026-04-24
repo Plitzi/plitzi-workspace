@@ -2,10 +2,10 @@
 import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
+import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
-import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 import LayoutContainer from '../LayoutContainer';
 

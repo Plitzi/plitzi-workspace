@@ -1,7 +1,7 @@
 import { compressBody, selectEncoding } from './compress';
 
 import type { ContentEncoding } from './compress';
-import type { SSRResponseHelpers } from '../types';
+import type { SSRResponseHelpers } from '@plitzi/sdk-shared';
 
 export type RawResponse = {
   headersSent: boolean;

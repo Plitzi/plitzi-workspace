@@ -1,7 +1,6 @@
 import { readFileSync } from 'node:fs';
 
-import type { SSRAdapters, SSRRequest, SSRSpaceDeployment, SSRUser } from '../types';
-import type { OfflineDataRaw } from '@plitzi/sdk-shared';
+import type { OfflineDataRaw, SSRAdapters, SSRRequest, SSRSpaceDeployment, SSRUser } from '@plitzi/sdk-shared';
 
 export type JsonAdaptersConfig = {
   offlineData: string | ((spaceId: number, environment: string, revision?: number) => string);

@@ -1,6 +1,5 @@
 import type { PluginManager } from '../../plugins/manager';
-import type { SSRRequest, SSRResponseHelpers, SSRRscData, SSRServerConfig } from '../../types';
-import type { Environment } from '@plitzi/sdk-shared';
+import type { Environment, SSRRequest, SSRResponseHelpers, SSRRscData, SSRServerConfig } from '@plitzi/sdk-shared';
 
 /** Payload returned by the /_rsc endpoint. */
 type RscPayload = {
@@ -46,7 +45,7 @@ export const handleRsc = async (
 
   let rscData: SSRRscData;
   try {
-    rscData = await config.adapters.getRscData(req, spaceId, environment, revision);
+    rscData = await config.adapters.getRscData(req, spaceId, environment, revision, req.ctx.user);
   } catch (err) {
     console.error('[RSC] getRscData error:', err);
     res.setStatus(500);
