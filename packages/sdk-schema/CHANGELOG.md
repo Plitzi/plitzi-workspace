@@ -1,5 +1,14 @@
 # @plitzi/sdk-schema
 
+## 0.30.10
+
+### Patch Changes
+
+- v0.30.10
+- Updated dependencies
+  - @plitzi/sdk-shared@0.30.10
+  - @plitzi/sdk-style@0.30.10
+
 ## 0.30.9
 
 ### Patch Changes

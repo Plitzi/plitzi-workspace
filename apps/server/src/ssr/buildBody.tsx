@@ -73,15 +73,17 @@ export const buildBody = async (
   ).trim();
 
   const templatePlugins = entries.length > 0 ? entries : req.ctx.spaceDeployment?.templateProps?.plugins;
+  const v = config.assetVersion ? `?v=${config.assetVersion}` : '';
+  const vendorJs = (config.devMode ? '/sdk-assets/plitzi-sdk-dev-vendor.js' : '/sdk-assets/plitzi-sdk-vendor.js') + v;
 
   return renderFn({
     title: 'Plitzi App',
-    jsPath: '/sdk-assets/plitzi-sdk.js',
-    cssPath: '/sdk-assets/plitzi-sdk.css',
-    react: config.devMode ? '/sdk-assets/plitzi-sdk-dev-vendor.js' : '/sdk-assets/plitzi-sdk-vendor.js',
-    reactJsx: config.devMode ? '/sdk-assets/plitzi-sdk-dev-vendor.js' : '/sdk-assets/plitzi-sdk-vendor.js',
-    reactDom: config.devMode ? '/sdk-assets/plitzi-sdk-dev-vendor.js' : '/sdk-assets/plitzi-sdk-vendor.js',
-    reactDomClient: config.devMode ? '/sdk-assets/plitzi-sdk-dev-vendor.js' : '/sdk-assets/plitzi-sdk-vendor.js',
+    jsPath: `/sdk-assets/plitzi-sdk.js${v}`,
+    cssPath: `/sdk-assets/plitzi-sdk.css${v}`,
+    react: vendorJs,
+    reactJsx: vendorJs,
+    reactDom: vendorJs,
+    reactDomClient: vendorJs,
     ...req.ctx.spaceDeployment?.templateProps,
     plugins: templatePlugins,
     debugMode: config.devMode,

@@ -36,8 +36,12 @@ const parseStyleSelectors = (definition: Element['definition']) => {
         }
 
         const list = Array.isArray(variantsForSelector) ? variantsForSelector : [variantsForSelector];
-        if (sel === definition.type) {
+        if (sel === definition.type && styleSelector === 'base') {
           return list.map(v => `${sel}--${v}`).join(' ');
+        }
+
+        if (sel === definition.type && styleSelector !== 'base') {
+          return list.map(v => `${sel}-${styleSelector}--${v}`).join(' ');
         }
 
         return `${sel} ${list.map(v => `${sel}--${v}`).join(' ')}`;

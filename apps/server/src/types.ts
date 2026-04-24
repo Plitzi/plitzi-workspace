@@ -159,6 +159,8 @@ export type SSRServerConfig = {
   /** RSC (React Server Components) endpoint configuration. */
   rsc?: SSRRscConfig;
   adapters: SSRAdapters;
+  /** Cache-buster appended as ?v=<assetVersion> to all default SDK asset URLs (jsPath, cssPath, react vendor). Compute from file mtime or package version at startup. */
+  assetVersion?: string;
 };
 
 export type PluginRegistry = {
