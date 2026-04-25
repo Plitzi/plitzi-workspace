@@ -5,7 +5,7 @@
  * endpoint (available immediately because it's inlined in the SSR page), then
  * adds client-side data after the first useEffect fires post-hydration.
  */
-import { useRscData } from '@plitzi/plitzi-sdk';
+import { RootElement, useRscData } from '@plitzi/plitzi-sdk';
 import { useState, useEffect } from 'react';
 
 import { card, titleStyle, row, label } from './styles';
@@ -38,7 +38,7 @@ const SharedInfo = () => {
   const phase = isClient ? 'hydrated ✅' : 'SSR ⚡';
 
   return (
-    <div style={card(color)}>
+    <RootElement style={card(color)}>
       <div style={titleStyle(color)}>🔄 Shared Info — runtime: &quot;shared&quot; — {phase}</div>
 
       {elementData && (
@@ -70,7 +70,7 @@ const SharedInfo = () => {
           </div>
         </>
       )}
-    </div>
+    </RootElement>
   );
 };
 

@@ -5,6 +5,7 @@
  * out when typeof window === 'undefined'). It only renders in the browser.
  * Use it for anything that must access browser APIs.
  */
+import { RootElement } from '@plitzi/plitzi-sdk';
 import { useState, useEffect } from 'react';
 
 import { card, titleStyle, row, label } from './styles';
@@ -32,15 +33,15 @@ const ClientInfo = () => {
 
   if (!info) {
     return (
-      <div style={card('blue')}>
+      <RootElement style={card('blue')}>
         <div style={titleStyle('blue')}>🌐 Client Info — runtime: &quot;client&quot;</div>
         <span style={{ color: '#9ca3af' }}>⏳ Reading browser APIs…</span>
-      </div>
+      </RootElement>
     );
   }
 
   return (
-    <div style={card('blue')}>
+    <RootElement style={card('blue')}>
       <div style={titleStyle('blue')}>🌐 Client Info — runtime: &quot;client&quot;</div>
       <div style={row}>
         <span style={label}>User Agent</span>
@@ -62,7 +63,7 @@ const ClientInfo = () => {
         <span style={label}>Cookies</span>
         <span>{info.cookiesEnabled ? 'enabled ✅' : 'disabled ❌'}</span>
       </div>
-    </div>
+    </RootElement>
   );
 };
 
