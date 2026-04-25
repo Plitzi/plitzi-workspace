@@ -115,9 +115,11 @@ export const renderSSR = async (
     caches.offlineData,
     metrics
   );
+
   if (metrics) {
     applyMetrics(res, metrics, label);
   }
+
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(body);
 };
