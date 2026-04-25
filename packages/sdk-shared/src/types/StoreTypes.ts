@@ -21,19 +21,21 @@ export type PathOf<T, Seen = never> = T extends Primitive
             : K | `${K}.${PathOf<T[K], Seen | T>}`;
       }[keyof T & string];
 
-export type PathValue<T, P> = P extends `${infer K}.${infer Rest}`
-  ? K extends keyof T
-    ? T[K] extends Array<infer U>
-      ? Rest extends `${number}.${infer R}`
-        ? PathValue<U, R>
-        : Rest extends `${number}`
-          ? U
-          : never
-      : PathValue<T[K], Rest>
-    : never
-  : P extends keyof T
-    ? T[P]
-    : never;
+export type PathValue<T, P> = T extends undefined
+  ? undefined
+  : P extends `${infer K}.${infer Rest}`
+    ? K extends keyof NonNullable<T>
+      ? NonNullable<T>[K] extends Array<infer U>
+        ? Rest extends `${number}.${infer R}`
+          ? PathValue<U, R>
+          : Rest extends `${number}`
+            ? U
+            : never
+        : PathValue<NonNullable<T>[K], Rest>
+      : never
+    : P extends keyof NonNullable<T>
+      ? NonNullable<T>[P]
+      : never;
 
 export type PathSetter<TState extends object, P extends PathOf<TState>> = (
   value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)

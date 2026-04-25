@@ -14,6 +14,6 @@ export const buildRscCacheKey = (
   spaceId: number,
   environment: string,
   revision: number,
-  userId: string | undefined,
+  userId: string | number | undefined,
   idsParam: string | undefined
 ): string => `${spaceId}|${environment}|${revision}|${userId ?? 'anon'}|${idsParam ?? ''}`;
