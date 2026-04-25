@@ -7,10 +7,11 @@ import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import pluginSelector from '../helpers/pluginSelector';
 import ServerStaticShell from '../ServerStaticShell';
-// import PluginManager from '../PluginManager';
 
 import type { Element, ElementLayout, CommonState } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
+
+const isServer = typeof window === 'undefined';
 
 const useInternalItems = ({
   id,
@@ -26,30 +27,30 @@ const useInternalItems = ({
   previewMode?: boolean;
 }) => {
   const { useStore } = createStoreHook<CommonState>();
-  const [flat] = useStore('schema.flat', { mode: 'mount' });
+  const [[flat, rscEnabled]] = useStore(['schema.flat', 'schema.rsc.enabled'], { mode: 'mount' });
   const { components } = use(ComponentContext);
   const {
     contexts: { PluginsContext }
   } = usePlitziServiceContext();
   const { plugins } = use(PluginsContext);
-
   const { items } = definition;
+  const hasItems = plitziElementLayout || children || items?.length;
   // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/purity
   const layoutKeyIdentifier = useMemo(() => Math.round(Date.now()), [plitziElementLayout]);
 
   // Tracks whether the component has mounted on the client.
   // Starts false so the initial client render (hydration phase) matches the server output.
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(!hasItems || !rscEnabled);
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    if (hasItems && rscEnabled) {
+      setMounted(true);
+    }
+  }, [hasItems, rscEnabled]);
 
   return useMemo<ReactNode | undefined>(() => {
-    if (!plitziElementLayout && !children && (!items || items.length === 0)) {
+    if (!hasItems) {
       return undefined;
     }
-
-    const isServer = typeof window === 'undefined';
 
     // Process items
     const itemsParsed: ReactNode[] = (items ?? [])
@@ -59,7 +60,7 @@ const useInternalItems = ({
           return false;
         }
 
-        if (!previewMode) {
+        if (!previewMode || !rscEnabled) {
           return true;
         }
 
@@ -81,7 +82,7 @@ const useInternalItems = ({
         // In preview mode on the client, freeze server-runtime elements as static HTML.
         // RootElement adds data-plitzi-id to the server-rendered root so ServerStaticShell
         // can locate it. The plugin is never mounted; no useEffect runs.
-        if (runtime === 'server' && !isServer && previewMode) {
+        if (rscEnabled && runtime === 'server' && !isServer && previewMode) {
           return <ServerStaticShell key={itemId} id={itemId} />;
         }
 
@@ -117,7 +118,20 @@ const useInternalItems = ({
     }
 
     return itemsParsed.length === 1 ? itemsParsed[0] : itemsParsed;
-  }, [plitziElementLayout, children, items, id, flat, previewMode, layoutKeyIdentifier, components, plugins, mounted]);
+  }, [
+    hasItems,
+    items,
+    plitziElementLayout,
+    children,
+    flat,
+    previewMode,
+    rscEnabled,
+    mounted,
+    layoutKeyIdentifier,
+    components,
+    plugins,
+    id
+  ]);
 };
 
 export default useInternalItems;
