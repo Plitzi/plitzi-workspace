@@ -24,6 +24,7 @@ export const renderSSR = async (
   const devMode = config.devMode ?? false;
   const streaming = config.streaming ?? false;
   const label = `${req.method} ${req.path}`;
+  const metrics = devMode ? new RequestMetrics() : undefined;
 
   if (caches.html && environment !== 'main') {
     const cacheKey = buildHtmlCacheKey(req.ctx.user?.token, spaceId, environment, revision, req);
@@ -41,7 +42,6 @@ export const renderSSR = async (
     }
 
     if (streaming) {
-      const metrics = devMode ? new RequestMetrics() : undefined;
       res.setHeader('X-Cache', 'MISS');
       await streamBody(
         req,
@@ -61,7 +61,6 @@ export const renderSSR = async (
       return;
     }
 
-    const metrics = devMode ? new RequestMetrics() : undefined;
     const body = await buildBody(
       req,
       config,
@@ -73,10 +72,12 @@ export const renderSSR = async (
       caches.offlineData,
       metrics
     );
+
     caches.html.set(cacheKey, body);
     if (metrics) {
       applyMetrics(res, metrics, label);
     }
+
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('X-Cache', 'MISS');
     res.send(body);
@@ -85,7 +86,6 @@ export const renderSSR = async (
   }
 
   if (streaming) {
-    const metrics = devMode ? new RequestMetrics() : undefined;
     await streamBody(
       req,
       res,
@@ -104,7 +104,6 @@ export const renderSSR = async (
     return;
   }
 
-  const metrics = devMode ? new RequestMetrics() : undefined;
   const body = await buildBody(
     req,
     config,
