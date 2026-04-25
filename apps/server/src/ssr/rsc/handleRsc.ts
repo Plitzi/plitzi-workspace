@@ -1,3 +1,6 @@
+import { buildRscCacheKey, DEFAULT_TTL_MS } from '../../helpers/cache';
+
+import type { TtlCache } from '../../helpers/cache';
 import type { PluginManager } from '../../plugins/manager';
 import type { Environment, SSRRequest, SSRResponseHelpers, SSRRscData, SSRServerConfig } from '@plitzi/sdk-shared';
 
@@ -18,15 +21,18 @@ type RscPayload = {
  * client uses this payload to update server-driven portions of the page
  * without a full navigation.
  *
- * A future 'stream' transport will use the RSC wire protocol via
- * react-server-dom-esm (requires --conditions=react-server).
+ * Responses are cached server-side (TtlCache) and via Cache-Control headers:
+ * - main environment: no-store (development, always fresh)
+ * - Authenticated requests: Cache-Control: private, max-age=<ttl>
+ * - Unauthenticated requests: Cache-Control: public, max-age=<ttl>
  */
 export const handleRsc = async (
   req: SSRRequest,
   res: SSRResponseHelpers,
   config: SSRServerConfig,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _pluginManager: PluginManager
+  _pluginManager: PluginManager,
+  cache?: TtlCache<string>
 ): Promise<void> => {
   if (!config.adapters.getRscData) {
     res.setStatus(501);
@@ -46,6 +52,30 @@ export const handleRsc = async (
   const idsParam = req.query.ids;
   const ids = idsParam ? idsParam.split(',').filter(Boolean) : undefined;
 
+  const ttlMs = config.rsc?.cacheTtlMs ?? DEFAULT_TTL_MS.rsc;
+  const isAuthenticated = !!req.ctx.user;
+  const cacheControl =
+    environment === 'main'
+      ? 'no-store'
+      : isAuthenticated
+        ? `private, max-age=${Math.floor(ttlMs / 1000)}`
+        : `public, max-age=${Math.floor(ttlMs / 1000)}`;
+
+  // main is the development environment — never cache it.
+  const cacheKey =
+    environment !== 'main'
+      ? buildRscCacheKey(spaceId, environment, revision, req.ctx.user?.id, idsParam)
+      : undefined;
+  const cached = cacheKey ? cache?.get(cacheKey) : undefined;
+  if (cached) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Cache-Control', cacheControl);
+    res.setHeader('X-Cache', 'HIT');
+    res.send(cached);
+
+    return;
+  }
+
   let rscData: SSRRscData;
   try {
     rscData = await config.adapters.getRscData(req, spaceId, environment, revision, req.ctx.user, ids);
@@ -61,12 +91,18 @@ export const handleRsc = async (
     version: 1,
     transport: 'json',
     spaceId,
-    environment: environment,
+    environment,
     revision,
     ...rscData
   };
 
+  const payloadStr = JSON.stringify(payload);
+  if (cacheKey) {
+    cache?.set(cacheKey, payloadStr);
+  }
+
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-store');
-  res.send(JSON.stringify(payload));
+  res.setHeader('Cache-Control', cacheControl);
+  res.setHeader('X-Cache', 'MISS');
+  res.send(payloadStr);
 };

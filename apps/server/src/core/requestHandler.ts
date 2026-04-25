@@ -13,7 +13,7 @@ import { handleRsc } from '../ssr/rsc/handleRsc';
 
 import type { Handler } from './transports';
 import type { RawResponse } from '../helpers/buildResponseHelpers';
-import type { TtlCache } from '../helpers/ttlCache';
+import type { ServerCaches } from '../helpers/cache';
 import type { PluginManager } from '../plugins/manager';
 import type { SSRServerConfig, SSRRequest, SSRTemplateFn } from '@plitzi/sdk-shared';
 import type { IncomingMessage } from 'node:http';
@@ -27,7 +27,7 @@ const handleRequest = async (
   config: SSRServerConfig,
   port: number,
   renderFn: SSRTemplateFn,
-  cache: TtlCache<string> | undefined,
+  caches: ServerCaches,
   pluginManager: PluginManager
 ): Promise<void> => {
   const req = parseRequest(raw);
@@ -118,23 +118,23 @@ const handleRequest = async (
   const rscPath = config.rsc?.path ?? '/_rsc';
   const rscEnabled = config.rsc?.enabled ?? !!config.adapters.getRscData;
   if (rscEnabled && req.method === 'GET' && req.path === rscPath) {
-    await handleRsc(req, res, config, pluginManager);
+    await handleRsc(req, res, config, pluginManager, caches.rsc);
 
     return;
   }
 
-  await renderSSR(req, res, config, renderFn, pluginManager, cache);
+  await renderSSR(req, res, config, renderFn, pluginManager, caches.html);
 };
 
 export const makeHandler = (
   config: SSRServerConfig,
   port: number,
   renderFn: SSRTemplateFn,
-  cache: TtlCache<string> | undefined,
+  caches: ServerCaches,
   pluginManager: PluginManager
 ): Handler => {
   return (raw, rawRes) => {
-    handleRequest(raw, rawRes, config, port, renderFn, cache, pluginManager).catch((err: unknown) => {
+    handleRequest(raw, rawRes, config, port, renderFn, caches, pluginManager).catch((err: unknown) => {
       console.error('[SSR] Unhandled error:', err);
       try {
         if (!rawRes.headersSent) {

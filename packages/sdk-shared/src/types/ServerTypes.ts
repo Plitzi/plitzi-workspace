@@ -137,6 +137,8 @@ export type SSRRscConfig = {
   enabled?: boolean;
   /** URL path for the RSC endpoint. Defaults to '/_rsc'. */
   path?: string;
+  /** Server-side cache TTL for RSC responses in milliseconds. Defaults to 30 000. Set to 0 to disable. */
+  cacheTtlMs?: number;
 };
 
 export type SSRServerConfig = {

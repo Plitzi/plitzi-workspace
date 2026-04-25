@@ -18,8 +18,10 @@ export const buildBody = async (
   renderFn: SSRTemplateFn,
   pluginManager: PluginManager
 ): Promise<string> => {
-  const offlineData = await config.adapters.getOfflineData(spaceId, environment, revision);
-  const server = await buildServerInfo(req, config);
+  const [offlineData, server] = await Promise.all([
+    config.adapters.getOfflineData(spaceId, environment, revision),
+    buildServerInfo(req, config)
+  ]);
 
   const offlineDataStr = escapeJson(
     JSON.stringify({

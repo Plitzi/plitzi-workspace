@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 
-import { DEFAULT_CACHE_TTL_MS } from '../helpers/ttlCache';
+import { DEFAULT_TTL_MS } from '../helpers/cache';
 
 import type { SSRMiddleware } from '@plitzi/sdk-shared';
 
@@ -19,7 +19,7 @@ export type BasicAuthOptions = {
 };
 
 export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddleware => {
-  const { realm = 'Restricted Area', cacheTtlMs = DEFAULT_CACHE_TTL_MS } = options;
+  const { realm = 'Restricted Area', cacheTtlMs = DEFAULT_TTL_MS.auth } = options;
 
   return async (req, res, next) => {
     const credential = req.ctx.spaceDeployment?.credential;

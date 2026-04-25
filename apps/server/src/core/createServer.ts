@@ -1,21 +1,20 @@
 import { makeHandler } from './requestHandler';
 import { buildTransport, protoLabel } from './transports';
-import buildCacheManager from '../helpers/buildCacheManager';
+import { buildCacheManager, createServerCaches, DEFAULT_TTL_MS, destroyServerCaches } from '../helpers/cache';
 import normalizePlugins, { normalizePluginSource } from '../helpers/normalizePlugins';
-import { DEFAULT_CACHE_TTL_MS, TtlCache } from '../helpers/ttlCache';
 import { PluginManager } from '../plugins/manager';
 import { compileTemplate } from '../ssr/template';
 
 import type { CacheManager, PluginRegistry, SSRServer, SSRServerConfig } from '@plitzi/sdk-shared';
 
 export const createSSRServer = (config: SSRServerConfig): SSRServer => {
-  const { httpVersion: version = 2, cacheTtlMs: ttlMs = DEFAULT_CACHE_TTL_MS } = config;
+  const { httpVersion: version = 2, cacheTtlMs: htmlTtlMs = DEFAULT_TTL_MS.html } = config;
   if (version >= 3 && !config.tls) {
     throw new Error(`[SSR] httpVersion: ${version} requires a tls config with key and cert`);
   }
 
-  const cacheStore = ttlMs !== 0 ? new TtlCache<string>(ttlMs) : undefined;
-  const cache: CacheManager | null = cacheStore ? buildCacheManager(cacheStore) : null;
+  const caches = createServerCaches(htmlTtlMs, config.rsc?.cacheTtlMs ?? DEFAULT_TTL_MS.rsc);
+  const cache: CacheManager | null = caches.html ? buildCacheManager(caches.html) : null;
   const renderFn = config.templateFn ?? compileTemplate();
 
   const pluginManager = new PluginManager(
@@ -40,14 +39,14 @@ export const createSSRServer = (config: SSRServerConfig): SSRServer => {
     cache,
     plugins,
     listen(port: number, host = '0.0.0.0') {
-      const handler = makeHandler(config, port, renderFn, cacheStore, pluginManager);
+      const handler = makeHandler(config, port, renderFn, caches, pluginManager);
       ({ primary, h3 } = buildTransport(config, handler, port));
       primary.listen(port, host, () => {
         console.log(`[SSR] ${protoLabel(version, !!config.tls)} - listening on ${host}:${port}`);
       });
     },
     async close() {
-      cacheStore?.destroy();
+      destroyServerCaches(caches);
       pluginManager.destroy();
       const closeOne = (srv: typeof primary) =>
         new Promise<void>((resolve, reject) => {

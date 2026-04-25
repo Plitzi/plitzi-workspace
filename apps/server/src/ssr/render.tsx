@@ -1,17 +1,9 @@
+import { buildHtmlCacheKey } from '../helpers/cache';
 import { buildBody } from './buildBody';
 
-import type { TtlCache } from '../helpers/ttlCache';
+import type { TtlCache } from '../helpers/cache';
 import type { PluginManager } from '../plugins/manager';
 import type { Environment, SSRRequest, SSRResponseHelpers, SSRServerConfig, SSRTemplateFn } from '@plitzi/sdk-shared';
-
-export const buildCacheKey = (
-  accessToken: string | undefined = 'anonymous',
-  spaceId: number | string | null,
-  environment: Environment,
-  revision: number,
-  req: SSRRequest
-): string =>
-  `${accessToken}\0${spaceId ?? 1}\0${environment}\0${revision}\0${req.hostname}\0${req.path}\0${req.search}`;
 
 export const renderSSR = async (
   req: SSRRequest,
@@ -23,7 +15,7 @@ export const renderSSR = async (
 ): Promise<void> => {
   const { environment = 'main', spaceId = 1, revision = 0 } = req.ctx.spaceDeployment || {};
   if (cache && environment !== 'main') {
-    const cacheKey = buildCacheKey(req.ctx.user?.token, spaceId, environment, revision, req);
+    const cacheKey = buildHtmlCacheKey(req.ctx.user?.token, spaceId, environment, revision, req);
     const cached = cache.get(cacheKey);
     if (cached) {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
