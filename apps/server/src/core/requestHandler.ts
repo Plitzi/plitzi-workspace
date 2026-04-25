@@ -33,6 +33,24 @@ const handleRequest = async (
   const req = parseRequest(raw);
   const res = buildResponseHelpers(rawRes, req.headers['accept-encoding']);
 
+  // Reject null bytes immediately — they are never valid in a URL path.
+  if (req.path === '\0') {
+    res.setStatus(400);
+    res.end();
+
+    return;
+  }
+
+  // Security headers applied to every response.
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('X-DNS-Prefetch-Control', 'off');
+  const frameOptions = config.frameOptions === undefined ? 'DENY' : config.frameOptions;
+  if (frameOptions) {
+    res.setHeader('X-Frame-Options', frameOptions);
+    res.setHeader('Content-Security-Policy', `frame-ancestors '${frameOptions === 'DENY' ? 'none' : 'self'}'`);
+  }
+
   if ((config.httpVersion ?? 2) >= 3) {
     res.setHeader('Alt-Svc', `h3=":${port}"; ma=86400`);
   }

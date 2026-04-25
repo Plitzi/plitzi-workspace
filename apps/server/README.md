@@ -36,7 +36,7 @@ server.listen(3001);
 | `httpVersion` | `1 \| 2 \| 3` | `2` | HTTP protocol version. Falls back to the nearest available lower version. |
 | `tls` | `{ key, cert, minVersion? }` | — | TLS key and certificate. Required for versions 2 and 3; optional for version 1. |
 | `sdkEnvironment` | `'production' \| 'staging' \| 'development' \| 'local'` | `'production'` | SDK environment forwarded to the React component. |
-| `devMode` | `boolean` | `NODE_ENV !== 'production'` | Appends `?dev` to esm.sh CDN URLs for React. |
+| `devMode` | `boolean` | `NODE_ENV !== 'production'` | Enables development mode: appends `?dev` to esm.sh CDN URLs for React, and activates per-request timing metrics (see [Dev metrics](#dev-metrics)). |
 | `assetVersion` | `string` | — | Cache-buster appended as `?v=<assetVersion>` to all default SDK asset URLs. Compute from file mtime or package version at startup. |
 | `cacheTtlMs` | `number` | `300000` | TTL in milliseconds for the SSR render cache. Set to `0` to disable. |
 | `loginPath` | `string \| false` | `'/auth/login'` | Path for the built-in login endpoint. Set to `false` to disable it entirely. |
@@ -49,6 +49,7 @@ server.listen(3001);
 | `publicDir` | `string` | — | Absolute path to a directory served at the root URL level (e.g. `robots.txt`, `favicon.png`). Files are checked after the built-in public directory and before `static` prefix routes. |
 | `static` | `Record<string, string>` | — | URL prefix → filesystem path mappings for static file serving. |
 | `ssrOnly` | `boolean` | `false` | Omit client-side JS from the rendered page. Useful for verifying SSR HTML without hydration. |
+| `streaming` | `boolean` | `false` | Stream HTML to the browser incrementally to reduce TTFB. See [Streaming](#streaming). |
 | `middlewares` | `SSRMiddleware[]` | — | Array of custom middleware functions executed before the SSR renderer on every request (see [Custom middlewares](#custom-middlewares)). |
 | `rsc` | `SSRRscConfig` | — | React Server Components endpoint configuration (see [RSC](#react-server-components-rsc)). |
 | `adapters` | `SSRAdapters` | — | Required. Adapter callbacks for data fetching. |
@@ -79,7 +80,8 @@ type SSRAdapters = {
     spaceId: number,
     environment: Environment,
     revision: number,
-    user: SSRUser | undefined
+    user: SSRUser | undefined,
+    ids?: string[]  // present on partial refresh; absent for full fetch
   ) => Promise<SSRRscData>;
 };
 ```
@@ -89,7 +91,7 @@ type SSRAdapters = {
 - **`getUser`** *(optional)* — resolves the authenticated user from the inbound request (e.g. via a session cookie or `Authorization` header). Called in parallel with `getOfflineData` on every cache miss. The returned user is forwarded to the SDK as `authenticated: true` and `user.details`, which controls page-level access for guest vs. registered users. Return `undefined` for unauthenticated requests.
 - **`onLogin`** *(optional)* — called when `POST {loginPath}` is received. Responsible for establishing a session or issuing tokens. Return `true` if login succeeded; return `false` to respond with `401 Unauthorized`.
 - **`onLogout`** *(optional)* — called when `POST {logoutPath}` is received. Responsible for invalidating any server-side user session or cache entry. The server responds with `204 No Content` after the adapter resolves.
-- **`getRscData`** *(optional)* — called by the RSC endpoint (`/_rsc`) to fetch server-side data for schema elements with `runtime: 'server'`. Receives the full request, space context, and the resolved user so that authenticated operations can be performed. Return `{}` when there is no server data for the current request (see [RSC](#react-server-components-rsc)).
+- **`getRscData`** *(optional)* — called by the RSC endpoint (`/_rsc`) to fetch server-side data for schema elements with `runtime: 'server'`. Receives the full request, space context, and the resolved user so that authenticated operations can be performed. When `ids` is provided the adapter should return data only for those element IDs (partial refresh); omitting `ids` means a full fetch for all elements. Return `{}` when there is no server data for the current request (see [RSC](#react-server-components-rsc)).
 
 ## JSON adapters (offline mode)
 
@@ -167,7 +169,7 @@ Responses are compressed automatically based on the `Accept-Encoding` request he
 
 ## Render cache
 
-SSR output is cached in-memory per `(spaceId, environment, revision, hostname, path, search)`. The cache uses a 5-minute TTL by default.
+SSR output is cached in-memory per `(spaceId, environment, revision, hostname, path, search)`. The cache uses a 5-minute TTL by default. The `main` environment is always excluded from caching — it is the development environment and its schema changes frequently.
 
 ```ts
 createSSRServer({
@@ -181,6 +183,8 @@ createSSRServer({
   adapters: { ... }
 });
 ```
+
+Schema data (`getOfflineData`) is also cached under the same TTL, keyed by `(spaceId, environment, revision)`. This avoids repeated adapter calls on consecutive HTML cache misses for the same space version.
 
 Responses include an `X-Cache: HIT` or `X-Cache: MISS` header for observability. The cache is cleared and its sweep timer is stopped when `server.close()` is called.
 
@@ -418,7 +422,9 @@ Enable RSC at the top level of your schema:
 
 ### `getRscData` adapter
 
-Implement `getRscData` in your adapters to serve data from the `/_rsc` endpoint. `serverData` is a map keyed by schema element ID — each element reads only its own slice, so multiple `runtime:'server'` elements in the same schema can have independent data:
+Implement `getRscData` in your adapters to serve data from the `/_rsc` endpoint. `serverData` is a map keyed by schema element ID — each element reads only its own slice, so multiple `runtime:'server'` elements in the same schema can have independent data.
+
+When `ids` is provided the client is performing a **partial refresh** — only return data for those element IDs. When `ids` is absent, return data for all elements (full fetch):
 
 ```ts
 import type { SSRAdapters, SSRRscData, SSRUser } from '@plitzi/sdk-server';
@@ -428,7 +434,8 @@ const getRscData = async (
   spaceId: number,
   environment: string,
   revision: number,
-  user: SSRUser | undefined
+  user: SSRUser | undefined,
+  ids?: string[]
 ): Promise<SSRRscData> => {
   // Only serve data when the schema has RSC enabled
   const offlineData = await getOfflineData(spaceId, environment, revision);
@@ -439,22 +446,43 @@ const getRscData = async (
   // Authenticated operations are safe here — user is already resolved
   const profile = user ? await db.profiles.find(user.id) : null;
 
-  return {
-    serverData: {
-      // keys are the schema element IDs that have runtime:'server'
-      'my-profile-card': {
-        authenticated: !!user,
-        userId: user?.id ?? null,
-        profile
-      },
-      'my-stats-widget': {
-        totalOrders: await db.orders.countByUser(user?.id)
-      }
+  const all: Record<string, unknown> = {
+    // keys are the schema element IDs that have runtime:'server'
+    'my-profile-card': {
+      authenticated: !!user,
+      userId: user?.id ?? null,
+      profile
+    },
+    'my-stats-widget': {
+      totalOrders: await db.orders.countByUser(user?.id)
     }
   };
+
+  // Filter to requested IDs on partial refresh
+  const serverData = ids?.length
+    ? Object.fromEntries(ids.filter(id => id in all).map(id => [id, all[id]]))
+    : all;
+
+  return { serverData };
 };
 
 const adapters: SSRAdapters = { getOfflineData, getSpaceDeployment, getUser, getRscData };
+```
+
+### Partial refresh
+
+The `/_rsc` endpoint accepts an optional `?ids=elem1,elem2` query string. When present, the server calls `getRscData` with only those IDs and returns a partial payload. On the client the partial data is **merged** into the existing `serverData` state rather than replacing it, so unrelated elements are unaffected:
+
+```ts
+// From a plugin — refresh only this element's data
+const [{ refresh }] = useRscData();
+await refresh(['my-stats-widget']);
+
+// Refresh multiple elements at once
+await refresh(['my-profile-card', 'my-stats-widget']);
+
+// Full refresh (replaces all serverData)
+await refresh();
 ```
 
 ### `SSRRscData`
@@ -474,8 +502,9 @@ The server automatically registers `GET /_rsc` when `adapters.getRscData` is pro
 
 1. Reads `spaceId`, `environment`, and `revision` from the resolved `spaceDeployment` context.
 2. Reads the authenticated user from `ctx.user`.
-3. Calls `adapters.getRscData(req, spaceId, environment, revision, user)`.
-4. Returns a JSON payload:
+3. Reads optional `?ids=elem1,elem2` for partial refresh.
+4. Calls `adapters.getRscData(req, spaceId, environment, revision, user, ids?)`.
+5. Returns a JSON payload:
 
 ```json
 {
@@ -488,7 +517,9 @@ The server automatically registers `GET /_rsc` when `adapters.getRscData` is pro
 }
 ```
 
-Responses are sent with `Cache-Control: no-store`. The endpoint returns `400` if `spaceId` is missing or invalid, `500` if `getRscData` throws, and `501` if the adapter is not configured.
+**Cache-Control**: `no-store` for the `main` environment; `private, max-age=30` for other environments when `rsc.cacheTtlMs > 0`. Responses also include `X-Cache: HIT` or `X-Cache: MISS` for observability.
+
+The endpoint returns `400` if `spaceId` is missing or invalid, `500` if `getRscData` throws, and `501` if the adapter is not configured.
 
 ### RSC configuration
 
@@ -506,6 +537,7 @@ createSSRServer({
 |---|---|---|---|
 | `enabled` | `boolean` | `true` (when adapter provided) | Activate or deactivate the RSC endpoint. |
 | `path` | `string` | `'/_rsc'` | URL path for the RSC endpoint. |
+| `cacheTtlMs` | `number` | `30000` | TTL in milliseconds for the RSC response cache. Set to `0` to disable RSC caching. Ignored for the `main` environment. |
 
 ### Consuming RSC data in plugins
 
@@ -515,16 +547,22 @@ Schema elements with `runtime: 'server'` can read the server payload via the SDK
 import { useRscData } from '@plitzi/sdk-elements';
 
 const MyPlugin = () => {
-  const [{ loaded, serverData }] = useRscData();
+  const [{ loaded, serverData, refresh }] = useRscData();
 
   if (!loaded) return <p>Loading...</p>;
   if (!serverData) return null;
 
-  return <pre>{JSON.stringify(serverData, null, 2)}</pre>;
+  return (
+    <>
+      <pre>{JSON.stringify(serverData, null, 2)}</pre>
+      <button onClick={() => refresh()}>Refresh all</button>
+      <button onClick={() => refresh(['my-stats-widget'])}>Refresh this</button>
+    </>
+  );
 };
 ```
 
-The hook is backed by `RscProvider`, which fetches `/_rsc` once on mount and updates on navigation. The `loaded` boolean distinguishes "still fetching" from "fetched but returned no data".
+The hook is backed by `RscProvider`, which fetches `/_rsc` once on mount and updates on navigation. The `loaded` boolean distinguishes "still fetching" from "fetched but returned no data". `refresh(ids?)` re-fetches server data: when `ids` is provided only those elements are refreshed and their results are merged; omitting `ids` performs a full replace.
 
 ## User authentication
 
@@ -721,6 +759,8 @@ createSSRServer({ templateFn, adapters: { ... } });
 
 The function is called once per render (cache misses only). The built-in `template.ejs` is used as fallback when `templateFn` is not set.
 
+**Streaming compatibility**: when `streaming: true` the server calls `templateFn` with a sentinel placeholder (`<!--SSR_CONTENT-->`) in place of the React HTML, splits the output at that marker, and streams head and tail separately. Existing templates that interpolate `html` as-is are compatible without any changes.
+
 ## Template props
 
 Override or extend template variables per space by returning `templateProps` from `getSpaceDeployment`. Values are merged over the server defaults, with `html` and `offlineData` always computed by the server.
@@ -751,6 +791,52 @@ return {
 | `reactDomClient` | `string` | ReactDOM client ESM URL. |
 | `reactJsx` | `string` | React JSX runtime ESM URL. |
 | `ssrOnly` | `boolean` | When `true`, the client-side `<script>` block is omitted. |
+
+## Streaming
+
+Enable streaming to reduce TTFB by sending the `<head>` section to the browser before React finishes rendering:
+
+```ts
+createSSRServer({
+  streaming: true,
+  adapters: { ... }
+});
+```
+
+How it works:
+
+1. All async data (`getOfflineData`, `getRscData`, plugins) is fetched and prepared in parallel as usual.
+2. The page template is called with a sentinel placeholder in place of React HTML.
+3. The `<head>` section — including `<script>` and `<link>` tags — is flushed immediately. The browser starts loading JS and CSS while React is still rendering.
+4. React renders via `renderToPipeableStream` and streams its HTML chunks as they are produced.
+5. The closing tags are flushed when React finishes.
+
+**Cache hits** are unaffected — cached HTML is sent as a single compressed response as usual, since the full string is already available.
+
+**Compression**: streaming responses use chunked transfer encoding and skip Brotli/gzip compression. A `Content-Length` header cannot be set before the body is complete, so compression is intentionally bypassed for streaming responses.
+
+## Dev metrics
+
+When `devMode: true`, per-phase timing is instrumented on every render and reported in two ways:
+
+- A `Server-Timing` header is set on the response, visible in the browser's DevTools under **Network → Timing**.
+- A one-line summary is logged to stdout:
+
+```
+[SSR] GET / — schema=1ms rsc=0ms extPlugins=0ms plugins=0ms template=2ms react=16ms | total=19ms
+```
+
+| Phase | Description |
+|---|---|
+| `schema` | `getOfflineData` adapter call (or cache hit — skipped from log). |
+| `rsc` | `getRscData` + `getUser` resolution via `buildServerInfo`. |
+| `extPlugins` | Auto-loading plugins declared in the schema's `offlineData.plugins` list. |
+| `plugins` | Dynamic import and component loading for all active plugins. |
+| `template` | `templateFn` call — HTML string assembly. |
+| `react` | `renderToString` duration (buffered mode) or time until `onShellReady` (streaming). |
+| `total` | Wall-clock time from request entry to response headers flushed. |
+
+In production (`devMode: false`) timing instrumentation is skipped entirely — no `Server-Timing` header, no console output.
 
 ## Exported types
 

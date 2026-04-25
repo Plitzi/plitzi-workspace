@@ -1,10 +1,8 @@
 import crypto from 'node:crypto';
 
-import { DEFAULT_TTL_MS } from '../helpers/cache';
+import { DEFAULT_TTL_MS, TtlCache } from '../helpers/cache';
 
 import type { SSRMiddleware } from '@plitzi/sdk-shared';
-
-const authCache = new Map<string, number>();
 
 const sendChallenge = (res: Parameters<SSRMiddleware>[1], domain: string, realm: string): void => {
   res.setHeader('WWW-Authenticate', `Basic realm="${realm} - ${domain}", charset="UTF-8"`);
@@ -20,6 +18,9 @@ export type BasicAuthOptions = {
 
 export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddleware => {
   const { realm = 'Restricted Area', cacheTtlMs = DEFAULT_TTL_MS.auth } = options;
+  // Scoped TtlCache — bounded to 10 000 entries with automatic TTL eviction.
+  // Replaces the old module-level Map which grew unboundedly under token-flooding attacks.
+  const authCache = new TtlCache<true>(cacheTtlMs, 10_000);
 
   return async (req, res, next) => {
     const credential = req.ctx.spaceDeployment?.credential;
@@ -58,16 +59,9 @@ export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddlewa
 
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
     const cacheKey = `${hostname}:${tokenHash}`;
-    const now = Date.now();
-    const cachedAt = authCache.get(cacheKey);
-    if (cachedAt !== undefined) {
-      if (now - cachedAt < cacheTtlMs) {
-        await next();
-        return;
-      }
 
-      authCache.delete(cacheKey);
-      sendChallenge(res, hostname, realm);
+    if (authCache.get(cacheKey)) {
+      await next();
 
       return;
     }
@@ -96,7 +90,7 @@ export const basicAuthMiddleware = (options: BasicAuthOptions = {}): SSRMiddlewa
       return;
     }
 
-    authCache.set(cacheKey, now);
+    authCache.set(cacheKey, true);
 
     await next();
   };

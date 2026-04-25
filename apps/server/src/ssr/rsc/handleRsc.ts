@@ -30,7 +30,7 @@ export const handleRsc = async (
   req: SSRRequest,
   res: SSRResponseHelpers,
   config: SSRServerConfig,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   _pluginManager: PluginManager,
   cache?: TtlCache<string>
 ): Promise<void> => {
@@ -49,8 +49,16 @@ export const handleRsc = async (
     return;
   }
 
-  const idsParam = req.query.ids;
-  const ids = idsParam ? idsParam.split(',').filter(Boolean) : undefined;
+  const idsRaw = req.query.ids;
+  // Bound the ids array to prevent DoS via enormous query strings.
+  const ids = idsRaw
+    ? idsRaw
+        .split(',')
+        .filter(Boolean)
+        .slice(0, 50)
+        .map(id => id.slice(0, 128))
+    : undefined;
+  const idsParam = ids?.join(',');
 
   const ttlMs = config.rsc?.cacheTtlMs ?? DEFAULT_TTL_MS.rsc;
   const isAuthenticated = !!req.ctx.user;
@@ -63,9 +71,7 @@ export const handleRsc = async (
 
   // main is the development environment — never cache it.
   const cacheKey =
-    environment !== 'main'
-      ? buildRscCacheKey(spaceId, environment, revision, req.ctx.user?.id, idsParam)
-      : undefined;
+    environment !== 'main' ? buildRscCacheKey(spaceId, environment, revision, req.ctx.user?.id, idsParam) : undefined;
   const cached = cacheKey ? cache?.get(cacheKey) : undefined;
   if (cached) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');

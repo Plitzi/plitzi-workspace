@@ -31,7 +31,9 @@ const serveFile = (req: SSRRequest, res: SSRResponseHelpers, filePath: string, s
 export const serveStatic = (req: SSRRequest, res: SSRResponseHelpers, rootDir: string): boolean => {
   const relative = req.path.replace(/^\/+/, '');
   const filePath = path.resolve(rootDir, relative);
-  if (!filePath.startsWith(path.resolve(rootDir))) {
+  const resolvedRoot = path.resolve(rootDir);
+  // Require separator after root so '/app/static' never matches '/app/staticEvil/secret'.
+  if (filePath !== resolvedRoot && !filePath.startsWith(resolvedRoot + path.sep)) {
     res.setStatus(403);
     res.send('Forbidden');
     return true;

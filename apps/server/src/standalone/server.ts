@@ -83,6 +83,7 @@ const server = createSSRServer({
     '/sdk-assets': path.resolve(process.cwd(), '../sdk/dist')
   },
   httpVersion: 1,
+  // streaming: true,
   // ssrOnly: true,
   plugins: {
     serverInfo: { js: path.resolve(__dirname, 'plugins/ServerInfo.tsx'), action: 'compile' },
