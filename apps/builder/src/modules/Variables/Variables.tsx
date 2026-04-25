@@ -1,5 +1,5 @@
+import { ContainerTabs } from '@plitzi/plitzi-ui';
 import Flex from '@plitzi/plitzi-ui/Flex';
-import Heading from '@plitzi/plitzi-ui/Heading';
 import Input from '@plitzi/plitzi-ui/Input';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
@@ -12,7 +12,13 @@ import { createStoreHook } from '@plitzi/sdk-shared/store';
 import SchemaVariables from '@plitzi/sdk-variables/components/SchemaVariables';
 import StyleVariables from '@plitzi/sdk-variables/components/StyleVariables';
 
-import type { BuilderState, SchemaVariable, StyleVariableCategory, StyleVariableValue } from '@plitzi/sdk-shared';
+import type {
+  BuilderState,
+  SchemaVariable,
+  StyleVariableCategory,
+  StyleVariableGroup,
+  StyleVariableValue
+} from '@plitzi/sdk-shared';
 
 const Variables = () => {
   const { showDialog } = useModal();
@@ -35,6 +41,25 @@ const Variables = () => {
       ),
     [schemaVariables, filter]
   );
+
+  const styleVariablesFiltered = useMemo(() => {
+    const result = Object.entries(styleVariables).reduce(
+      (acc, [category, variables]) => {
+        const filtered = Object.entries(variables).filter(([name]) =>
+          name.toLowerCase().includes(filter.toLowerCase())
+        );
+
+        if (filtered.length > 0) {
+          acc[category as StyleVariableCategory] = Object.fromEntries(filtered);
+        }
+
+        return acc;
+      },
+      {} as Record<StyleVariableCategory, StyleVariableGroup>
+    );
+
+    return result;
+  }, [styleVariables, filter]);
 
   // Schema Variables
 
@@ -126,6 +151,8 @@ const Variables = () => {
     [builderHandler, showDialog]
   );
 
+  const tabs = [{ label: 'Schema Variables' }, { label: 'Style Variables' }];
+
   return (
     <div className="flex h-full w-full flex-col gap-2 p-2">
       <Flex gap={2} direction="column">
@@ -133,26 +160,28 @@ const Variables = () => {
           <Input.Icon icon="fa-solid fa-magnifying-glass" />
         </Input>
       </Flex>
-      <div className="min-h-px w-full bg-gray-300 dark:bg-zinc-700" />
-      <SchemaVariables
-        className="min-h-0 grow basis-0"
-        variables={variablesFiltered}
-        whenData={whenData}
-        onAdd={handleAddSchemaVariable}
-        onUpdate={handleUpdateSchemaVariable}
-        onRemove={handleRemoveSchemaVariable}
-      />
-      <div className="min-h-px w-full bg-gray-300 dark:bg-zinc-700" />
-      <div className="flex grow basis-0 flex-col pb-2">
-        <Heading as="h6">Style Variables</Heading>
-        <StyleVariables
-          className="min-h-0 grow basis-0"
-          variables={styleVariables}
-          onAdd={handleAddStyleVariable}
-          onUpdate={handleUpdateStyleVariable}
-          onRemove={handleRemoveStyleVariable}
-        />
-      </div>
+      <ContainerTabs className="h-full gap-4" size="xs">
+        <ContainerTabs.Tabs items={tabs} />
+        <ContainerTabs.TabContent className="h-full">
+          <SchemaVariables
+            className="min-h-0 grow basis-0"
+            variables={variablesFiltered}
+            whenData={whenData}
+            onAdd={handleAddSchemaVariable}
+            onUpdate={handleUpdateSchemaVariable}
+            onRemove={handleRemoveSchemaVariable}
+          />
+        </ContainerTabs.TabContent>
+        <ContainerTabs.TabContent>
+          <StyleVariables
+            className="min-h-0 grow basis-0"
+            variables={styleVariablesFiltered}
+            onAdd={handleAddStyleVariable}
+            onUpdate={handleUpdateStyleVariable}
+            onRemove={handleRemoveStyleVariable}
+          />
+        </ContainerTabs.TabContent>
+      </ContainerTabs>
     </div>
   );
 };

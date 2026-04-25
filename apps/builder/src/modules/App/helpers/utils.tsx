@@ -86,7 +86,7 @@ export const getPopups = ({
             <Variable />
           </Sidebar.Icon>
         ),
-        title: 'Space Variables',
+        title: 'Variables',
         width: 350,
         allowLeftSide: true,
         allowRightSide: false,
