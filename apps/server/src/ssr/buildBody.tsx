@@ -1,14 +1,12 @@
 import { renderToString } from 'react-dom/server';
 
 import Component from './Component';
-import { loadPluginComponents } from './loadPluginComponents';
-import { registerExternalPlugins } from './registerExternalPlugins';
-import { buildServerInfo } from '../helpers/buildServerInfo';
-import { escapeJson } from '../helpers/escapeJson';
+import { prepareRender } from './prepareRender';
 
+import type { TtlCache } from '../helpers/cache';
+import type { RequestMetrics } from '../helpers/metrics';
 import type { PluginManager } from '../plugins/manager';
-import type { SSRRequest, SSRServerConfig, SSRTemplateFn } from '../types';
-import type { Environment } from '@plitzi/sdk-shared';
+import type { Environment, SSRRequest, SSRServerConfig, SSRTemplateFn } from '@plitzi/sdk-shared';
 
 export const buildBody = async (
   req: SSRRequest,
@@ -17,78 +15,28 @@ export const buildBody = async (
   environment: Environment,
   revision: number,
   renderFn: SSRTemplateFn,
-  pluginManager: PluginManager
+  pluginManager: PluginManager,
+  offlineDataCache?: TtlCache<string>,
+  metrics?: RequestMetrics
 ): Promise<string> => {
-  const offlineData = await config.adapters.getOfflineData(spaceId, environment, revision);
-  const server = buildServerInfo(req, req.ctx);
-
-  const offlineDataStr = escapeJson(
-    JSON.stringify({
-      offlineData,
-      offlineMode: true,
-      environment,
-      renderMode: 'raw',
-      server,
-      sdkEnvironment: config.sdkEnvironment ?? 'production'
-    })
+  const prep = await prepareRender(
+    req,
+    config,
+    spaceId,
+    environment,
+    revision,
+    pluginManager,
+    offlineDataCache,
+    metrics
   );
 
-  const pluginNames = req.ctx.spaceDeployment?.pluginNames ?? [];
-  const pluginSources = req.ctx.spaceDeployment?.pluginSources;
+  const reactStart = metrics ? performance.now() : 0;
+  const html = renderToString(<Component {...prep.componentProps} />).trim();
+  metrics?.record('react', Math.round(performance.now() - reactStart));
 
-  // Auto-register plugins defined inline in the deployment (e.g. downloaded from DB/CDN)
-  // pluginNames contains base names; skip any plugin already covered there to avoid duplicates
-  const pluginBaseNames = new Set(pluginNames.map(n => n.replace(/@[^@]*$/, '')));
-  const dynamicNames: string[] = [];
-  if (pluginSources) {
-    for (const [pluginName, pluginSource] of Object.entries(pluginSources)) {
-      const key = pluginManager.ensure(pluginName, pluginSource);
-      if (!pluginBaseNames.has(pluginName)) {
-        dynamicNames.push(key);
-      }
-    }
-  }
+  const templateStart = metrics ? performance.now() : 0;
+  const body = renderFn({ ...prep.templateParams, html });
+  metrics?.record('template', Math.round(performance.now() - templateStart));
 
-  // Auto-register external plugins declared in the schema (offlineData.plugins)
-  // Downloads JS/CSS from CDN once, caches to disk via PluginManager for subsequent requests
-  const autoLoad = config.autoLoadSchemaPlugins !== false;
-  const externalNames = autoLoad ? await registerExternalPlugins(pluginManager, offlineData) : [];
-  const externalNamesFiltered = externalNames.filter(k => !pluginBaseNames.has(k.replace(/@[^@]*$/, '')));
-
-  const allPluginNames = [...pluginNames, ...dynamicNames, ...externalNamesFiltered];
-  const entries = allPluginNames.length > 0 ? await pluginManager.getEntries(allPluginNames) : [];
-
-  // Load plugin React components for server-side rendering.
-  // Results are cached in memory by filePath — subsequent requests skip the dynamic import().
-  const pluginComponents = await loadPluginComponents(entries, pluginManager.getComponents());
-
-  const html = renderToString(
-    <Component
-      plugins={Object.keys(pluginComponents).length > 0 ? pluginComponents : undefined}
-      offlineData={offlineData}
-      server={server}
-      environment={req.ctx.spaceDeployment?.environment ?? environment}
-      sdkEnvironment={config.sdkEnvironment ?? 'production'}
-    />
-  ).trim();
-
-  const templatePlugins = entries.length > 0 ? entries : req.ctx.spaceDeployment?.templateProps?.plugins;
-  const v = config.assetVersion ? `?v=${config.assetVersion}` : '';
-  const vendorJs = (config.devMode ? '/sdk-assets/plitzi-sdk-dev-vendor.js' : '/sdk-assets/plitzi-sdk-vendor.js') + v;
-
-  return renderFn({
-    title: 'Plitzi App',
-    jsPath: `/sdk-assets/plitzi-sdk.js${v}`,
-    cssPath: `/sdk-assets/plitzi-sdk.css${v}`,
-    react: vendorJs,
-    reactJsx: vendorJs,
-    reactDom: vendorJs,
-    reactDomClient: vendorJs,
-    ...req.ctx.spaceDeployment?.templateProps,
-    plugins: templatePlugins,
-    debugMode: config.devMode,
-    ssrOnly: config.ssrOnly === true,
-    html,
-    offlineData: offlineDataStr
-  });
+  return body;
 };

@@ -1,13 +1,13 @@
-type Entry<T> = { value: T; expiresAt: number };
+import { DEFAULT_TTL_MS } from './defaults';
 
-export const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+type Entry<T> = { value: T; expiresAt: number };
 
 export class TtlCache<T> {
   private readonly store = new Map<string, Entry<T>>();
   private sweepTimer: ReturnType<typeof setInterval> | undefined;
 
   constructor(
-    private readonly ttlMs: number = DEFAULT_CACHE_TTL_MS,
+    private readonly ttlMs: number = DEFAULT_TTL_MS.html,
     private readonly maxSize = 500,
     sweepIntervalMs = ttlMs
   ) {
@@ -17,13 +17,12 @@ export class TtlCache<T> {
 
   get(key: string): T | undefined {
     const entry = this.store.get(key);
-    if (!entry) {
-      return undefined;
-    }
+    if (!entry) return undefined;
     if (Date.now() > entry.expiresAt) {
       this.store.delete(key);
       return undefined;
     }
+
     return entry.value;
   }
 
@@ -31,6 +30,7 @@ export class TtlCache<T> {
     if (this.store.size >= this.maxSize) {
       this.store.delete(this.store.keys().next().value as string);
     }
+
     this.store.set(key, { value, expiresAt: Date.now() + this.ttlMs });
   }
 
@@ -46,6 +46,7 @@ export class TtlCache<T> {
         count++;
       }
     }
+
     return count;
   }
 
@@ -65,9 +66,7 @@ export class TtlCache<T> {
   private sweep(): void {
     const now = Date.now();
     for (const [key, entry] of this.store) {
-      if (now > entry.expiresAt) {
-        this.store.delete(key);
-      }
+      if (now > entry.expiresAt) this.store.delete(key);
     }
   }
 }

@@ -2,10 +2,10 @@ import { render } from '@testing-library/react';
 import { createContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
-import { ComponentContext } from '@plitzi/sdk-shared';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
 
 import { Custom } from './Custom';
-import ElementContext from '../../../Element/ElementContext';
 
 import type { ComponentContextValue } from '@plitzi/sdk-shared';
 

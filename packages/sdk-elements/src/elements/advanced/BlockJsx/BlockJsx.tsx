@@ -2,8 +2,9 @@ import { omit } from '@plitzi/plitzi-ui';
 import clsx from 'clsx';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 
+import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
+
 import withElement from '../../../Element/hocs/withElement';
-import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { ComponentPluginWithHOC } from '@plitzi/sdk-shared';

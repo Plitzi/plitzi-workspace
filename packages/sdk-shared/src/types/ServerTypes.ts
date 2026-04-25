@@ -1,4 +1,5 @@
-import type { OfflineDataRaw, Environment } from '@plitzi/sdk-shared';
+import type { Environment } from './CommonTypes';
+import type { OfflineDataRaw } from './SdkTypes';
 import type { IncomingHttpHeaders } from 'node:http';
 
 export type SSRHeaders = IncomingHttpHeaders & {
@@ -26,6 +27,7 @@ export type SSRResponseHelpers = {
   setHeader: (name: string, value: string) => void;
   setStatus: (code: number) => void;
   send: (body: string) => void;
+  write: (chunk: string | Buffer) => void;
   end: () => void;
 };
 
@@ -107,12 +109,37 @@ export type SSRSpaceDeployment = {
 
 export type SSRTemplateFn = (params: SSRTemplateProps & { html: string; offlineData: string }) => string;
 
+export type SSRRscData = {
+  /** Per-element server data keyed by schema element ID. Each element reads its own slice via its id prop. */
+  serverData?: Record<string, unknown>;
+};
+
 export type SSRAdapters = {
   getOfflineData: (spaceId: number, environment: string, revision?: number) => Promise<OfflineDataRaw | undefined>;
   getSpaceDeployment: (req: SSRRequest) => Promise<SSRSpaceDeployment>;
   getUser?: (req: SSRRequest) => Promise<SSRUser | undefined>;
   onLogin?: (req: SSRRequest) => Promise<boolean>;
   onLogout?: (req: SSRRequest) => Promise<void>;
+  /** Called by the RSC endpoint to fetch server-side data for server components.
+   *  When `ids` is provided the adapter should return data only for those element IDs.
+   *  Omitting `ids` (initial SSR fetch or full refresh) must return data for all elements. */
+  getRscData?: (
+    req: SSRRequest,
+    spaceId: number,
+    environment: Environment,
+    revision: number,
+    user: SSRUser | undefined,
+    ids?: string[]
+  ) => Promise<SSRRscData>;
+};
+
+export type SSRRscConfig = {
+  /** Whether the RSC endpoint is active. Defaults to true when adapters.getRscData is provided. */
+  enabled?: boolean;
+  /** URL path for the RSC endpoint. Defaults to '/_rsc'. */
+  path?: string;
+  /** Server-side cache TTL for RSC responses in milliseconds. Defaults to 30 000. Set to 0 to disable. */
+  cacheTtlMs?: number;
 };
 
 export type SSRServerConfig = {
@@ -140,9 +167,18 @@ export type SSRServerConfig = {
   autoLoadSchemaPlugins?: boolean;
   /** Omit client-side JS from the rendered page — useful for verifying SSR HTML without hydration. Default: false. */
   ssrOnly?: boolean;
+  /** Stream HTML to the client as React renders, reducing TTFB. Default: false. */
+  streaming?: boolean;
+  /** Controls iframe embedding via X-Frame-Options and CSP frame-ancestors.
+   *  'DENY' — no site may embed this server (default).
+   *  'SAMEORIGIN' — only the same origin may embed it.
+   *  false — no restriction; headers are omitted. */
+  frameOptions?: 'DENY' | 'SAMEORIGIN' | false;
+  /** RSC (React Server Components) endpoint configuration. */
+  rsc?: SSRRscConfig;
+  adapters: SSRAdapters;
   /** Cache-buster appended as ?v=<assetVersion> to all default SDK asset URLs (jsPath, cssPath, react vendor). Compute from file mtime or package version at startup. */
   assetVersion?: string;
-  adapters: SSRAdapters;
 };
 
 export type PluginRegistry = {

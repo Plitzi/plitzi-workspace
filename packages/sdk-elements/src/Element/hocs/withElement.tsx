@@ -5,13 +5,12 @@ import { omit } from '@plitzi/plitzi-ui/helpers/lodash';
 import { useMemo, useRef } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
+import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
-import ElementContext from '../ElementContext';
 import useElementInternal from '../hooks/useElementInternal';
 
-import type { ElementContextValue } from '../ElementContext';
-import type { InternalPropsSTG1 } from '@plitzi/sdk-shared';
+import type { ElementContextValue, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { FC, ReactNode } from 'react';
 
 export type WithElementProps<T> = {

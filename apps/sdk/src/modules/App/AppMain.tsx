@@ -124,6 +124,7 @@ const AppMain = ({
                                 environment={environment}
                                 isHydrating={isHydrating}
                                 sdkStylePath={styleUrl ? styleUrl : sdkStylePath}
+                                server={server}
                                 {...sdkProps}
                               />
                             </DevToolsContainer>

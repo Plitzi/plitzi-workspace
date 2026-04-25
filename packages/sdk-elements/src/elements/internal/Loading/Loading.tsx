@@ -1,8 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
 
+import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
+
 import withElement from '../../../Element/hocs/withElement';
-import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { RefObject } from 'react';

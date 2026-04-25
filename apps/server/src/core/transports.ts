@@ -3,7 +3,7 @@ import http2 from 'node:http2';
 import https from 'node:https';
 
 import type { RawResponse } from '../helpers/buildResponseHelpers';
-import type { SSRServerConfig } from '../types';
+import type { SSRServerConfig } from '@plitzi/sdk-shared';
 import type { IncomingMessage, RequestListener } from 'node:http';
 
 export type CloseableServer = {
@@ -27,9 +27,11 @@ export const protoLabel = (version: number, hasTls: boolean): string => {
   if (version >= 3) {
     return 'HTTP/2+3 (TLS)';
   }
+
   if (version >= 2) {
-    return hasTls ? 'HTTP/2 (TLS)' : 'HTTP/2 (h2c)';
+    return hasTls ? 'HTTP/2 (TLS)' : 'HTTP/1.1 - TLS Missing';
   }
+
   return hasTls ? 'HTTPS/1.1' : 'HTTP/1.1';
 };
 
@@ -69,7 +71,8 @@ export const buildTransport = (
         handler as unknown as Parameters<typeof http2.createSecureServer>[1]
       );
     } else {
-      primary = http2.createServer({}, handler as unknown as Parameters<typeof http2.createServer>[1]);
+      // Browsers don't support h2c; fall back to HTTP/1.1 for dev without TLS
+      primary = http.createServer(handler as RequestListener);
     }
   } else if (config.tls) {
     primary = https.createServer(tlsOptions(config), handler as RequestListener);

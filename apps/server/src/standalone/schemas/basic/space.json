@@ -23,6 +23,7 @@
             "6563055d8785677dc553a243",
             "65522685a36203721330c610",
             "65522c9aeb84a24efd5aa41e",
+            "rsc-section",
             "655226d91b8fb407a49535d5"
           ]
         },
@@ -570,11 +571,74 @@
           "interactions": null,
           "parentId": "65522c9aeb84a24efd5aa41e",
           "rootId": "655221a12565b83ac5060e20",
-          "items": null
+          "items": null,
+          "runtime": "server"
         },
         "attributes": {
           "subType": "h1",
           "content": "Welcome To Plitzi"
+        }
+      },
+      "rsc-section": {
+        "id": "rsc-section",
+        "attributes": { "subType": "div" },
+        "definition": {
+          "label": "RSC Examples",
+          "type": "container",
+          "items": ["rsc-server", "rsc-client", "rsc-shared"],
+          "bindings": [],
+          "styleSelectors": { "base": "rsc-section" },
+          "initialState": { "visibility": true },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "655221a12565b83ac5060e20"
+        }
+      },
+      "rsc-server": {
+        "id": "rsc-server",
+        "attributes": {},
+        "definition": {
+          "label": "Server Info",
+          "type": "serverInfo",
+          "items": [],
+          "bindings": [],
+          "styleSelectors": { "base": "" },
+          "initialState": { "visibility": true },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "rsc-section",
+          "runtime": "server",
+          "loadStrategy": "eager"
+        }
+      },
+      "rsc-client": {
+        "id": "rsc-client",
+        "attributes": {},
+        "definition": {
+          "label": "Client Info",
+          "type": "clientInfo",
+          "items": [],
+          "bindings": [],
+          "styleSelectors": { "base": "" },
+          "initialState": { "visibility": true },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "rsc-section",
+          "runtime": "client",
+          "loadStrategy": "lazy"
+        }
+      },
+      "rsc-shared": {
+        "id": "rsc-shared",
+        "attributes": {},
+        "definition": {
+          "label": "Shared Info",
+          "type": "sharedInfo",
+          "items": [],
+          "bindings": [],
+          "styleSelectors": { "base": "" },
+          "initialState": { "visibility": true },
+          "rootId": "655221a12565b83ac5060e20",
+          "parentId": "rsc-section",
+          "runtime": "shared",
+          "loadStrategy": "visible"
         }
       },
       "6563055d8785677dc553a243": {
@@ -592,7 +656,8 @@
           "interactions": null,
           "parentId": "655221a12565b83ac5060e20",
           "rootId": "655221a12565b83ac5060e20",
-          "items": []
+          "items": [],
+          "runtime": "server"
         },
         "attributes": {
           "subType": "div"
@@ -602,6 +667,9 @@
     "variables": [],
     "settings": {
       "customCss": ".button-link:hover .title-icon {\n  transform: translateX(10px);\n  transition-property: transform;\n  transition-timing-function: cubic-bezier(0.4, 0.2, 1);\n  transition-duration: 150ms;\n}\n"
+    },
+    "rsc": {
+      "enabled": true
     },
     "pages": ["655221a12565b83ac5060e20"],
     "pageFolders": []

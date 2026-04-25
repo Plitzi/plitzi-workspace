@@ -10,6 +10,7 @@ import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import RscProvider from '@plitzi/sdk-shared/server/rsc/RscProvider';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
 import { ThemeContext } from '@plitzi/sdk-shared/theme';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
@@ -23,7 +24,7 @@ import SdkPlugin from './SdkPlugin';
 // eslint-disable-next-line
 // @ts-ignore
 
-import type { Environment, RenderMode, SdkState } from '@plitzi/sdk-shared';
+import type { Environment, RenderMode, SdkState, Server } from '@plitzi/sdk-shared';
 
 export type SdkProps = {
   renderMode?: RenderMode;
@@ -33,6 +34,7 @@ export type SdkProps = {
   previewMode?: boolean;
   debugMode?: boolean;
   sdkStylePath?: string;
+  server?: Server;
 };
 
 const Sdk = ({
@@ -42,7 +44,8 @@ const Sdk = ({
   previewMode = true,
   isHydrating = false,
   debugMode = false,
-  sdkStylePath = './plitzi-sdk.css'
+  sdkStylePath = './plitzi-sdk.css',
+  server
 }: SdkProps) => {
   const { theme } = use(ThemeContext);
   const { currentPageId } = use(NavigationContext);
@@ -127,32 +130,30 @@ const Sdk = ({
     ]
   );
 
-  if (renderMode === 'raw' || renderMode === 'widget') {
-    return (
-      <RawMode renderMode={renderMode} style={css} plitziContextValue={plitziContextValue} pageId={currentPageId} />
-    );
-  }
-
-  if (renderMode === 'shadow') {
-    return (
-      <ShadowMode
-        sdkStylePath={sdkStylePath}
-        style={css}
-        plitziContextValue={plitziContextValue}
-        pageId={currentPageId}
-        assets={assets}
-      />
-    );
-  }
-
   return (
-    <IframeMode
-      style={css}
-      plitziContextValue={plitziContextValue}
-      pageId={currentPageId}
-      assets={assets}
-      ref={iframeRef}
-    />
+    <RscProvider navigationKey={currentPageId} rscData={server?.rscData}>
+      {(renderMode === 'raw' || renderMode === 'widget') && (
+        <RawMode renderMode={renderMode} style={css} plitziContextValue={plitziContextValue} pageId={currentPageId} />
+      )}
+      {renderMode === 'shadow' && (
+        <ShadowMode
+          sdkStylePath={sdkStylePath}
+          style={css}
+          plitziContextValue={plitziContextValue}
+          pageId={currentPageId}
+          assets={assets}
+        />
+      )}
+      {!['raw', 'widget', 'shadow'].includes(renderMode) && (
+        <IframeMode
+          style={css}
+          plitziContextValue={plitziContextValue}
+          pageId={currentPageId}
+          assets={assets}
+          ref={iframeRef}
+        />
+      )}
+    </RscProvider>
   );
 };
 

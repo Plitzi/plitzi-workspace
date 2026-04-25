@@ -3,11 +3,11 @@ import { createContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
+import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
 
 import { ApiContainer } from './ApiContainer';
-import ElementContext from '../../../Element/ElementContext';
 
-import type { ElementContextValue } from '../../../Element/ElementContext';
+import type { ElementContextValue } from '@plitzi/sdk-shared';
 import type { DataSourceContextValue } from '@plitzi/sdk-shared';
 
 vi.mock('../../../Element/hocs/withElement', () => ({

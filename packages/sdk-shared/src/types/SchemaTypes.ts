@@ -2,6 +2,18 @@ import type { InteractionCallback, InteractionCallbackParamValues, InteractionCa
 import type { Style } from './StyleTypes';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 
+// RSC
+export type ElementRuntime = 'server' | 'client' | 'shared';
+export type ElementLoadStrategy = 'eager' | 'lazy' | 'visible';
+
+export type SchemaRsc = {
+  enabled?: boolean;
+  /** Wire protocol for RSC updates. 'json' is the default (data-only). 'stream' uses the RSC wire format (requires react-server condition). */
+  transport?: 'json' | 'stream';
+  /** Path for the RSC endpoint. Defaults to '/_rsc'. */
+  path?: string;
+};
+
 // FlatMap
 export type DropPosition = 'top' | 'bottom' | 'left' | 'right' | 'inside' | 'custom';
 
@@ -56,6 +68,10 @@ export type ElementDefinition = {
     visibility?: boolean;
     [key: string]: unknown;
   };
+  /** Where this element is rendered. 'server' = SSR only, 'client' = browser only, 'shared' = both (default). */
+  runtime?: ElementRuntime;
+  /** Controls when the element is loaded/rendered. */
+  loadStrategy?: ElementLoadStrategy;
 };
 
 export type Element<TAttributes extends Record<string, unknown> = Omit<{ [key: string]: unknown }, 'subType'>> = {
@@ -94,6 +110,7 @@ export type Schema = {
     tokenPath?: string;
     expirationTimePath?: string;
   };
+  rsc?: SchemaRsc;
   pages: Element['id'][];
   pageFolders: PageFolder[];
 };
@@ -150,6 +167,7 @@ export type SchemaRaw = {
   flat: Element[];
   variables: SchemaVariable[];
   settings: Schema['settings'];
+  rsc?: Schema['rsc'];
   pages: Element['id'][];
   pageFolders: PageFolder[];
 };

@@ -19,3 +19,4 @@ export * from './SpaceTypes';
 export * from './DevToolsTypes';
 export * from './StoreTypes';
 export * from './ThemeTypes';
+export * from './ServerTypes';

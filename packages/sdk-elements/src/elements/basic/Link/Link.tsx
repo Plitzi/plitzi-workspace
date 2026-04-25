@@ -3,12 +3,12 @@ import clsx from 'clsx';
 import { useMemo, use } from 'react';
 
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
+import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import withElement from '../../../Element/hocs/withElement';
-import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { CommonState } from '@plitzi/sdk-shared';

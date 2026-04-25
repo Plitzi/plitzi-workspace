@@ -1,13 +1,14 @@
 import { compressBody, selectEncoding } from './compress';
 
 import type { ContentEncoding } from './compress';
-import type { SSRResponseHelpers } from '../types';
+import type { SSRResponseHelpers } from '@plitzi/sdk-shared';
 
 export type RawResponse = {
   headersSent: boolean;
   setHeader(name: string, value: string | number | readonly string[]): unknown;
   getHeaders(): Record<string, string | number | readonly string[]>;
   writeHead(statusCode: number, headers?: Record<string, string | number | readonly string[]>): unknown;
+  write(chunk: string | Buffer): unknown;
   end(chunk?: string | Buffer): unknown;
 };
 
@@ -44,6 +45,12 @@ export const buildResponseHelpers = (raw: RawResponse, acceptEncoding?: string):
     },
     send(body) {
       writeSend(body);
+    },
+    write(chunk) {
+      if (!raw.headersSent) {
+        raw.writeHead(statusCode);
+      }
+      raw.write(chunk);
     },
     end() {
       if (!raw.headersSent) {

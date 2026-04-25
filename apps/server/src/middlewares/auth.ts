@@ -1,4 +1,4 @@
-import type { SSRAdapters, SSRMiddleware, SSRRequest } from '../types';
+import type { SSRAdapters, SSRMiddleware, SSRRequest } from '@plitzi/sdk-shared';
 
 export const authMiddleware = (adapters: SSRAdapters): SSRMiddleware => {
   return async (req: SSRRequest, _res, next) => {

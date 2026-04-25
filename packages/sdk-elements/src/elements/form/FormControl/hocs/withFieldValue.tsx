@@ -2,10 +2,9 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo, useEffect } from 'react';
 
+import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import { getDisplayName } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-
-import useElement from '../../../../Element/hooks/useElement';
 
 import type { FieldValue } from '../../Form/Form';
 import type { ChangeEvent, FC, RefObject } from 'react';

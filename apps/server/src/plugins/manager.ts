@@ -5,7 +5,7 @@ import { compilePlugin } from './compile';
 import { copyPlugin } from './copy';
 import { detectAction, isComponentSource } from './detect';
 
-import type { PluginEntry, PluginSource } from '../types';
+import type { PluginEntry, PluginSource } from '@plitzi/sdk-shared';
 
 const META_FILE = 'meta.json';
 const DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000;

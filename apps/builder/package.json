@@ -30,10 +30,10 @@
     "./plitzi-builder-dev-vendor.js.map": "./dist/plitzi-builder-dev-vendor.js.map"
   },
   "dependencies": {
-    "@apollo/client": "^4.1.8",
+    "@apollo/client": "^4.1.9",
     "@fortawesome/fontawesome-free": "^7.2.0",
     "@plitzi/plitzi-sdk": "workspace:*",
-    "@plitzi/plitzi-ui": "^1.5.23",
+    "@plitzi/plitzi-ui": "^1.5.24",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-collections": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",

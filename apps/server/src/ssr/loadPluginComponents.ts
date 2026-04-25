@@ -1,4 +1,4 @@
-import type { PluginEntry } from '../types';
+import type { PluginEntry } from '@plitzi/sdk-shared';
 import type { FC } from 'react';
 
 /** Module-level cache: absolute filePath → loaded React component. */

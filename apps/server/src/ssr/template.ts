@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import ejs from 'ejs';
 
-import type { SSRTemplateFn, SSRTemplateProps } from '../types';
+import type { SSRTemplateFn, SSRTemplateProps } from '@plitzi/sdk-shared';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_TEMPLATE_PATH = path.resolve(__dirname, 'views/template.ejs');

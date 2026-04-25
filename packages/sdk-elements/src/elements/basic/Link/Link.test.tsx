@@ -3,9 +3,9 @@ import { createContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { StoreProvider } from '@plitzi/sdk-shared';
+import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
 
 import { Link } from './Link';
-import ElementContext from '../../../Element/ElementContext';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element

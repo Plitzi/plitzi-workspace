@@ -1,15 +1,17 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { isValidElement, use, useMemo } from 'react';
+import { isValidElement, use, useMemo, useState, useEffect } from 'react';
 
 import { usePlitziServiceContext } from '@plitzi/sdk-shared';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
 
 import pluginSelector from '../helpers/pluginSelector';
-// import PluginManager from '../PluginManager';
+import ServerStaticShell from '../ServerStaticShell';
 
 import type { Element, ElementLayout, CommonState } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
+
+const isServer = typeof window === 'undefined';
 
 const useInternalItems = ({
   id,
@@ -25,28 +27,64 @@ const useInternalItems = ({
   previewMode?: boolean;
 }) => {
   const { useStore } = createStoreHook<CommonState>();
-  const [flat] = useStore('schema.flat', { mode: 'mount' });
+  const [[flat, rscEnabled]] = useStore(['schema.flat', 'schema.rsc.enabled'], { mode: 'mount' });
   const { components } = use(ComponentContext);
   const {
     contexts: { PluginsContext }
   } = usePlitziServiceContext();
   const { plugins } = use(PluginsContext);
-
   const { items } = definition;
+  const hasItems = plitziElementLayout || children || items?.length;
   // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/purity
   const layoutKeyIdentifier = useMemo(() => Math.round(Date.now()), [plitziElementLayout]);
 
+  // Tracks whether the component has mounted on the client.
+  // Starts false so the initial client render (hydration phase) matches the server output.
+  const [mounted, setMounted] = useState(!hasItems || !rscEnabled);
+  useEffect(() => {
+    if (hasItems && rscEnabled) {
+      setMounted(true);
+    }
+  }, [hasItems, rscEnabled]);
+
   return useMemo<ReactNode | undefined>(() => {
-    if (!plitziElementLayout && !children && (!items || items.length === 0)) {
+    if (!hasItems) {
       return undefined;
     }
 
     // Process items
     const itemsParsed: ReactNode[] = (items ?? [])
-      .filter(itemId => !!(flat[itemId] as Element | undefined))
+      .filter(itemId => {
+        const el = flat[itemId] as Element | undefined;
+        if (!el) {
+          return false;
+        }
+
+        if (!previewMode || !rscEnabled) {
+          return true;
+        }
+
+        const runtime = el.definition.runtime ?? 'shared';
+        // Skip client-only elements on the server AND during the initial client render
+        // (hydration phase). This ensures the React tree matches the server HTML so
+        // hydrateRoot does not produce a mismatch. After the first effect fires (mounted=true)
+        // they are included and React mounts them normally.
+        if ((isServer || !mounted) && runtime === 'client') {
+          return false;
+        }
+
+        return true;
+      })
       .map(itemId => {
-        const { rootId, type } = get(flat, `${itemId}.definition`, {}) as Element['definition'];
+        const { rootId, type, runtime } = get(flat, `${itemId}.definition`, {}) as Element['definition'];
         const finalRootId = get(plitziElementLayout, 'rootId', rootId);
+
+        // In preview mode on the client, freeze server-runtime elements as static HTML.
+        // RootElement adds data-plitzi-id to the server-rendered root so ServerStaticShell
+        // can locate it. The plugin is never mounted; no useEffect runs.
+        if (rscEnabled && runtime === 'server' && !isServer && previewMode) {
+          return <ServerStaticShell key={itemId} id={itemId} />;
+        }
 
         return pluginSelector({
           key: !previewMode && plitziElementLayout ? `${itemId}_${layoutKeyIdentifier}` : itemId,
@@ -80,7 +118,20 @@ const useInternalItems = ({
     }
 
     return itemsParsed.length === 1 ? itemsParsed[0] : itemsParsed;
-  }, [plitziElementLayout, children, items, id, flat, previewMode, layoutKeyIdentifier, components, plugins]);
+  }, [
+    hasItems,
+    items,
+    plitziElementLayout,
+    children,
+    flat,
+    previewMode,
+    rscEnabled,
+    mounted,
+    layoutKeyIdentifier,
+    components,
+    plugins,
+    id
+  ]);
 };
 
 export default useInternalItems;
