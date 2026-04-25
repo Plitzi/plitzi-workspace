@@ -1,10 +1,10 @@
 import { buildBody } from './buildBody';
 import { streamBody } from './streamBody';
-import { buildHtmlCacheKey } from '../helpers/cache';
-import { RequestMetrics } from '../helpers/metrics';
+import { buildHtmlCacheKey } from '../../helpers/cache';
+import { RequestMetrics } from '../../helpers/metrics';
 
-import type { ServerCaches } from '../helpers/cache';
-import type { PluginManager } from '../plugins/manager';
+import type { ServerCaches } from '../../helpers/cache';
+import type { PluginManager } from '../../plugins/manager';
 import type { SSRRequest, SSRResponseHelpers, SSRServerConfig, SSRTemplateFn } from '@plitzi/sdk-shared';
 
 export const renderSSR = async (

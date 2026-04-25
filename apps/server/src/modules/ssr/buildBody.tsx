@@ -3,9 +3,9 @@ import { renderToString } from 'react-dom/server';
 import Component from './Component';
 import { prepareRender } from './prepareRender';
 
-import type { TtlCache } from '../helpers/cache';
-import type { RequestMetrics } from '../helpers/metrics';
-import type { PluginManager } from '../plugins/manager';
+import type { TtlCache } from '../../helpers/cache';
+import type { RequestMetrics } from '../../helpers/metrics';
+import type { PluginManager } from '../../plugins/manager';
 import type { Environment, SSRRequest, SSRServerConfig, SSRTemplateFn } from '@plitzi/sdk-shared';
 
 export const buildBody = async (

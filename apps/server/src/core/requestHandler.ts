@@ -8,15 +8,16 @@ import { runMiddlewares } from '../helpers/runMiddlewares';
 import { authMiddleware } from '../middlewares/auth';
 import { basicAuthMiddleware } from '../middlewares/basicAuth';
 import { spaceDeploymentMiddleware } from '../middlewares/spaceDeployment';
-import { renderSSR } from '../ssr/render';
-import { handleRsc } from '../ssr/rsc/handleRsc';
+import { handleMcp } from '../modules/mcp/handler';
+import { handleRsc } from '../modules/rsc/handler';
+import { renderSSR } from '../modules/ssr/handler';
 
 import type { Handler } from './transports';
 import type { RawResponse } from '../helpers/buildResponseHelpers';
 import type { ServerCaches } from '../helpers/cache';
 import type { PluginManager } from '../plugins/manager';
 import type { SSRServerConfig, SSRRequest, SSRTemplateFn } from '@plitzi/sdk-shared';
-import type { IncomingMessage } from 'node:http';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BUILTIN_PUBLIC_DIR = path.resolve(__dirname, '../public');
@@ -119,6 +120,12 @@ const handleRequest = async (
         }
       }
     }
+  }
+
+  const mcpPath = config.mcp?.path ?? '/mcp';
+  if (config.mcp && (config.mcp.enabled ?? true) && req.path.startsWith(mcpPath)) {
+    await handleMcp(raw, rawRes as unknown as ServerResponse, config.mcp);
+    return;
   }
 
   const middlewares = [

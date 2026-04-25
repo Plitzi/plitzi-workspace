@@ -2,8 +2,8 @@ import { makeHandler } from './requestHandler';
 import { buildTransport, protoLabel } from './transports';
 import { buildCacheManager, createServerCaches, DEFAULT_TTL_MS, destroyServerCaches } from '../helpers/cache';
 import normalizePlugins, { normalizePluginSource } from '../helpers/normalizePlugins';
+import { compileTemplate } from '../modules/ssr/template';
 import { PluginManager } from '../plugins/manager';
-import { compileTemplate } from '../ssr/template';
 
 import type { CacheManager, PluginRegistry, SSRServer, SSRServerConfig } from '@plitzi/sdk-shared';
 

@@ -5,9 +5,9 @@ import { renderToPipeableStream } from 'react-dom/server';
 import Component from './Component';
 import { prepareRender } from './prepareRender';
 
-import type { TtlCache } from '../helpers/cache';
-import type { RequestMetrics } from '../helpers/metrics';
-import type { PluginManager } from '../plugins/manager';
+import type { TtlCache } from '../../helpers/cache';
+import type { RequestMetrics } from '../../helpers/metrics';
+import type { PluginManager } from '../../plugins/manager';
 import type { Environment, SSRRequest, SSRResponseHelpers, SSRServerConfig, SSRTemplateFn } from '@plitzi/sdk-shared';
 
 // Placeholder injected into the template so we can split head/tail without parsing HTML.

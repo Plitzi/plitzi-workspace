@@ -1,4 +1,5 @@
 import type { Environment } from './CommonTypes';
+import type { McpServerConfig } from './McpTypes';
 import type { OfflineDataRaw } from './SdkTypes';
 import type { IncomingHttpHeaders } from 'node:http';
 
@@ -176,6 +177,8 @@ export type SSRServerConfig = {
   frameOptions?: 'DENY' | 'SAMEORIGIN' | false;
   /** RSC (React Server Components) endpoint configuration. */
   rsc?: SSRRscConfig;
+  /** MCP (Model Context Protocol) server configuration — exposes schema tools to Claude. */
+  mcp?: McpServerConfig;
   adapters: SSRAdapters;
   /** Cache-buster appended as ?v=<assetVersion> to all default SDK asset URLs (jsPath, cssPath, react vendor). Compute from file mtime or package version at startup. */
   assetVersion?: string;

@@ -26,10 +26,12 @@
   "type": "module",
   "sideEffects": false,
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@plitzi/plitzi-sdk": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "ejs": "^5.0.2",
-    "esbuild": "^0.28.0"
+    "esbuild": "^0.28.0",
+    "zod": "^4.3.6"
   },
   "peerDependencies": {
     "react": "^19",

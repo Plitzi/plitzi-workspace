@@ -1,4 +1,4 @@
-import type { PluginManager } from '../plugins/manager';
+import type { PluginManager } from '../../plugins/manager';
 import type { OfflineDataRaw, PluginManifest, PluginRaw, PluginSourceFile } from '@plitzi/sdk-shared';
 
 const fetchManifest = async (resource: string): Promise<PluginManifest | null> => {
