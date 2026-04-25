@@ -1,5 +1,5 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { isValidElement, use, useMemo, useState, useEffect } from 'react';
+import { isValidElement, use, useMemo, useSyncExternalStore } from 'react';
 
 import { usePlitziServiceContext } from '@plitzi/sdk-shared';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
@@ -12,6 +12,10 @@ import type { Element, ElementLayout, CommonState } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 const isServer = typeof window === 'undefined';
+
+const storeSubscriber = () => () => {};
+const snapshot = () => true;
+const serverSnapshot = () => false;
 
 const useInternalItems = ({
   id,
@@ -38,14 +42,10 @@ const useInternalItems = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/purity
   const layoutKeyIdentifier = useMemo(() => Math.round(Date.now()), [plitziElementLayout]);
 
-  // Tracks whether the component has mounted on the client.
-  // Starts false so the initial client render (hydration phase) matches the server output.
-  const [mounted, setMounted] = useState(!hasItems || !rscEnabled);
-  useEffect(() => {
-    if (hasItems && rscEnabled) {
-      setMounted(true);
-    }
-  }, [hasItems, rscEnabled]);
+  // useSyncExternalStore with getServerSnapshot: React uses the server snapshot during
+  // hydration (false → client elements excluded, matching server HTML), then transitions
+  // to the client snapshot (true) synchronously before the browser paints — no flicker.
+  const mounted = useSyncExternalStore(storeSubscriber, snapshot, serverSnapshot);
 
   return useMemo<ReactNode | undefined>(() => {
     if (!hasItems) {
@@ -65,11 +65,7 @@ const useInternalItems = ({
         }
 
         const runtime = el.definition.runtime ?? 'shared';
-        // Skip client-only elements on the server AND during the initial client render
-        // (hydration phase). This ensures the React tree matches the server HTML so
-        // hydrateRoot does not produce a mismatch. After the first effect fires (mounted=true)
-        // they are included and React mounts them normally.
-        if ((isServer || !mounted) && runtime === 'client') {
+        if (!mounted && runtime === 'client') {
           return false;
         }
 
