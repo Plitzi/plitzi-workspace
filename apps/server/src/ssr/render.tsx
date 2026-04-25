@@ -1,10 +1,11 @@
+import { buildBody } from './buildBody';
+import { streamBody } from './streamBody';
 import { buildHtmlCacheKey } from '../helpers/cache';
 import { RequestMetrics } from '../helpers/metrics';
-import { buildBody } from './buildBody';
 
 import type { ServerCaches } from '../helpers/cache';
 import type { PluginManager } from '../plugins/manager';
-import type { Environment, SSRRequest, SSRResponseHelpers, SSRServerConfig, SSRTemplateFn } from '@plitzi/sdk-shared';
+import type { SSRRequest, SSRResponseHelpers, SSRServerConfig, SSRTemplateFn } from '@plitzi/sdk-shared';
 
 const applyMetrics = (res: SSRResponseHelpers, metrics: RequestMetrics, label: string): void => {
   res.setHeader('Server-Timing', metrics.toServerTimingHeader());
@@ -21,6 +22,7 @@ export const renderSSR = async (
 ): Promise<void> => {
   const { environment = 'main', spaceId = 1, revision = 0 } = req.ctx.spaceDeployment || {};
   const devMode = config.devMode ?? false;
+  const streaming = config.streaming ?? false;
   const label = `${req.method} ${req.path}`;
 
   if (caches.html && environment !== 'main') {
@@ -38,10 +40,43 @@ export const renderSSR = async (
       return;
     }
 
+    if (streaming) {
+      const metrics = devMode ? new RequestMetrics() : undefined;
+      res.setHeader('X-Cache', 'MISS');
+      await streamBody(
+        req,
+        res,
+        config,
+        spaceId as number,
+        environment,
+        revision,
+        renderFn,
+        pluginManager,
+        caches.offlineData,
+        caches.html,
+        cacheKey,
+        metrics
+      );
+
+      return;
+    }
+
     const metrics = devMode ? new RequestMetrics() : undefined;
-    const body = await buildBody(req, config, spaceId as number, environment, revision, renderFn, pluginManager, caches.offlineData, metrics);
+    const body = await buildBody(
+      req,
+      config,
+      spaceId as number,
+      environment,
+      revision,
+      renderFn,
+      pluginManager,
+      caches.offlineData,
+      metrics
+    );
     caches.html.set(cacheKey, body);
-    if (metrics) applyMetrics(res, metrics, label);
+    if (metrics) {
+      applyMetrics(res, metrics, label);
+    }
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('X-Cache', 'MISS');
     res.send(body);
@@ -49,9 +84,41 @@ export const renderSSR = async (
     return;
   }
 
+  if (streaming) {
+    const metrics = devMode ? new RequestMetrics() : undefined;
+    await streamBody(
+      req,
+      res,
+      config,
+      spaceId as number,
+      environment,
+      revision,
+      renderFn,
+      pluginManager,
+      caches.offlineData,
+      undefined,
+      undefined,
+      metrics
+    );
+
+    return;
+  }
+
   const metrics = devMode ? new RequestMetrics() : undefined;
-  const body = await buildBody(req, config, spaceId as number, environment, revision, renderFn, pluginManager, caches.offlineData, metrics);
-  if (metrics) applyMetrics(res, metrics, label);
+  const body = await buildBody(
+    req,
+    config,
+    spaceId as number,
+    environment,
+    revision,
+    renderFn,
+    pluginManager,
+    caches.offlineData,
+    metrics
+  );
+  if (metrics) {
+    applyMetrics(res, metrics, label);
+  }
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(body);
 };

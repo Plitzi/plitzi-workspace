@@ -21,6 +21,10 @@ export class RequestMetrics {
     return [...this.phases.map(p => `${p.name};dur=${p.dur}`), `total;dur=${total}`].join(', ');
   }
 
+  record(name: string, dur: number): void {
+    this.phases.push({ name, dur });
+  }
+
   /** Logs a one-line summary to stdout (dev mode only). */
   log(label: string): void {
     const total = Math.round(performance.now() - this.start);

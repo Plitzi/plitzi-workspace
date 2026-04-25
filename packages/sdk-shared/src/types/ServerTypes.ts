@@ -27,6 +27,7 @@ export type SSRResponseHelpers = {
   setHeader: (name: string, value: string) => void;
   setStatus: (code: number) => void;
   send: (body: string) => void;
+  write: (chunk: string | Buffer) => void;
   end: () => void;
 };
 
@@ -166,6 +167,8 @@ export type SSRServerConfig = {
   autoLoadSchemaPlugins?: boolean;
   /** Omit client-side JS from the rendered page — useful for verifying SSR HTML without hydration. Default: false. */
   ssrOnly?: boolean;
+  /** Stream HTML to the client as React renders, reducing TTFB. Default: false. */
+  streaming?: boolean;
   /** RSC (React Server Components) endpoint configuration. */
   rsc?: SSRRscConfig;
   adapters: SSRAdapters;
