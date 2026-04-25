@@ -40,22 +40,22 @@ export const streamBody = async (
 
   // Render the template with a sentinel in place of React HTML, then split it.
   // This lets us flush <head> + scripts to the browser before React renders.
-  let t = metrics ? performance.now() : 0;
+  const templateStart = metrics ? performance.now() : 0;
   const fullTemplate = renderFn({ ...prep.templateParams, html: SSR_SENTINEL });
-  metrics?.record('template', Math.round(performance.now() - t));
+  metrics?.record('template', Math.round(performance.now() - templateStart));
 
   const sentinelIdx = fullTemplate.indexOf(SSR_SENTINEL);
   const head = sentinelIdx >= 0 ? fullTemplate.slice(0, sentinelIdx) : fullTemplate;
   const tail = sentinelIdx >= 0 ? fullTemplate.slice(sentinelIdx + SSR_SENTINEL.length) : '';
 
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-
   await new Promise<void>((resolve, reject) => {
-    const chunks: Buffer[] = [];
+    // Only accumulate chunks when caching is active — avoids holding the full
+    // React HTML in memory on uncached paths.
+    const chunks: Buffer[] | null = cacheKey && htmlCache ? [] : null;
 
     const writable = new Writable({
       write(chunk: Buffer, _enc, cb) {
-        chunks.push(chunk);
+        chunks?.push(chunk);
         res.write(chunk);
         cb();
       },
@@ -64,7 +64,7 @@ export const streamBody = async (
         res.write(tailBuf);
         res.end();
 
-        if (cacheKey && htmlCache) {
+        if (chunks && cacheKey && htmlCache) {
           htmlCache.set(cacheKey, head + Buffer.concat(chunks).toString('utf-8') + tail);
         }
 
@@ -73,10 +73,10 @@ export const streamBody = async (
       }
     });
 
-    t = metrics ? performance.now() : 0;
+    const reactStart = metrics ? performance.now() : 0;
     const { pipe } = renderToPipeableStream(<Component {...prep.componentProps} />, {
       onShellReady() {
-        metrics?.record('react', Math.round(performance.now() - t));
+        metrics?.record('react', Math.round(performance.now() - reactStart));
 
         // Flush headers + head HTML — browser starts loading scripts from here.
         if (metrics) {

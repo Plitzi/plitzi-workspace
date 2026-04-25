@@ -30,13 +30,13 @@ export const buildBody = async (
     metrics
   );
 
-  const html = await (metrics
-    ? metrics.measure('react', () => renderToString(<Component {...prep.componentProps} />).trim())
-    : Promise.resolve(renderToString(<Component {...prep.componentProps} />).trim()));
+  const reactStart = metrics ? performance.now() : 0;
+  const html = renderToString(<Component {...prep.componentProps} />).trim();
+  metrics?.record('react', Math.round(performance.now() - reactStart));
 
-  const t = metrics ? performance.now() : 0;
+  const templateStart = metrics ? performance.now() : 0;
   const body = renderFn({ ...prep.templateParams, html });
-  metrics?.record('template', Math.round(performance.now() - t));
+  metrics?.record('template', Math.round(performance.now() - templateStart));
 
   return body;
 };
