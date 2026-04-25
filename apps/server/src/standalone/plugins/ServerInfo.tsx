@@ -1,14 +1,14 @@
 /**
  * RSC example — runtime: 'server'
  *
- * This element is skipped during SSR client-side re-renders (useInternalItems
- * runtime filter). On mount it fetches /_rsc and reads its own slice via the
- * element id prop (serverData[id]).
+ * Rendered only on the server. RootElement adds data-plitzi-id to its root
+ * DOM node so ServerStaticShell can locate and freeze it during client hydration.
+ * The plugin is never mounted in the browser — no useEffect ever runs.
  */
-import { useRscData } from '@plitzi/plitzi-sdk';
-import { useEffect, useState } from 'react';
+import { RootElement, useRscData } from '@plitzi/plitzi-sdk';
+import { useEffect } from 'react';
 
-import { card, titleStyle, row, label } from './styles';
+import { titleStyle, row, label, card } from './styles';
 
 type ServerData = {
   message: string;
@@ -19,32 +19,31 @@ type ServerData = {
 
 const ServerInfo = () => {
   const { serverData, elementData } = useRscData<ServerData | null>();
-  const [message, setMessage] = useState('');
 
   useEffect(() => {
-    setMessage('Server Component Hydrated, WRONG');
+    console.log('Should not be triggered');
   }, []);
 
   if (!serverData) {
     return (
-      <div style={card('gray')}>
+      <RootElement style={card('gray')}>
         <div style={titleStyle('gray')}>🖥 Server Info — runtime: &quot;server&quot;</div>
         <span style={{ color: '#9ca3af' }}>⏳ Fetching from /_rsc…</span>
-      </div>
+      </RootElement>
     );
   }
 
   if (!elementData) {
     return (
-      <div style={card('red')}>
+      <RootElement style={card('red')}>
         <div style={titleStyle('red')}>🖥 Server Info — runtime: &quot;server&quot;</div>
         <span>❌ No data returned</span>
-      </div>
+      </RootElement>
     );
   }
 
   return (
-    <div style={card('green')}>
+    <RootElement style={card('green')}>
       <div style={titleStyle('green')}>🖥 Server Info — runtime: &quot;server&quot;</div>
       <div style={row}>
         <span style={label}>Message</span>
@@ -62,11 +61,7 @@ const ServerInfo = () => {
         <span style={label}>Uptime</span>
         <span>{elementData.uptime}s</span>
       </div>
-      <div style={row}>
-        <span style={label}>Client - Message</span>
-        <span>{message ? message : '-'}</span>
-      </div>
-    </div>
+    </RootElement>
   );
 };
 

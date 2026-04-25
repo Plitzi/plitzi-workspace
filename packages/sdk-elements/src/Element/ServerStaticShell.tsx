@@ -47,7 +47,7 @@ const ServerStaticShell = ({ id }: { id: string }) => {
       return null;
     }
 
-    const el = document.querySelector<HTMLElement>(`[data-plitzi-id="${id}"]`);
+    const el = document.querySelector<HTMLElement>(`[data-rsc-id="${id}"]`);
     if (!el) {
       return null;
     }
@@ -55,8 +55,8 @@ const ServerStaticShell = ({ id }: { id: string }) => {
     const attrs: Record<string, string> = {};
     for (let i = 0; i < el.attributes.length; i++) {
       const { name, value } = el.attributes[i];
-      // className and style are handled separately; data-plitzi-id is re-added explicitly
-      if (name !== 'class' && name !== 'style' && name !== 'data-plitzi-id') {
+      // className and style are handled separately; data-rsc-id is re-added explicitly
+      if (name !== 'class' && name !== 'style' && name !== 'data-rsc-id') {
         attrs[name] = value;
       }
     }
@@ -77,7 +77,7 @@ const ServerStaticShell = ({ id }: { id: string }) => {
   }
 
   return createElement(snapshot.tag, {
-    'data-plitzi-id': id,
+    'data-rsc-id': id,
     className: snapshot.className || undefined,
     style: snapshot.style,
     ...snapshot.attrs,

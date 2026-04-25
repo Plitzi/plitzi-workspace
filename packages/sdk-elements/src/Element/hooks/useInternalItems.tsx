@@ -78,26 +78,11 @@ const useInternalItems = ({
         const { rootId, type, runtime } = get(flat, `${itemId}.definition`, {}) as Element['definition'];
         const finalRootId = get(plitziElementLayout, 'rootId', rootId);
 
-        if (runtime === 'server') {
-          // On the client: capture the frozen server HTML; plugin never mounts so no useEffect runs.
-          if (!isServer) {
-            return <ServerStaticShell key={itemId} id={itemId} />;
-          }
-
-          // On the server: wrap in a marker div so ServerStaticShell can locate it via querySelector.
-
-          return (
-            <div key={itemId} data-plitzi-id={itemId}>
-              {pluginSelector({
-                key: itemId,
-                plitziElementLayout,
-                type,
-                internalProps: { id: itemId, rootId: finalRootId },
-                components: components.current,
-                plugins
-              })}
-            </div>
-          );
+        // In preview mode on the client, freeze server-runtime elements as static HTML.
+        // RootElement adds data-plitzi-id to the server-rendered root so ServerStaticShell
+        // can locate it. The plugin is never mounted; no useEffect runs.
+        if (runtime === 'server' && !isServer && previewMode) {
+          return <ServerStaticShell key={itemId} id={itemId} />;
         }
 
         return pluginSelector({

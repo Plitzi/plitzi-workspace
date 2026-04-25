@@ -71,12 +71,13 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     className: classNameInternalProp,
     attributes,
     definition,
-    definition: { interactions, type, label },
+    definition: { interactions, type, label, runtime },
     plitziElementLayout,
     style,
     elementState,
     setElementState
   } = elementContext;
+  const serverMarker = runtime === 'server' ? { 'data-rsc-id': id } : undefined;
   const params = useMemo<Record<string, string | undefined | boolean>>(() => {
     if (!debugMode && (previewMode || !type || rootId !== baseElementId)) {
       return {};
@@ -96,7 +97,14 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     | undefined;
   if (!InteractionsContext) {
     return (
-      <Tag ref={ref} style={{ ...style, ...styleParsed }} className={className} {...otherProps} {...params}>
+      <Tag
+        ref={ref}
+        style={{ ...style, ...styleParsed }}
+        className={className}
+        {...otherProps}
+        {...params}
+        {...serverMarker}
+      >
         {children}
       </Tag>
     );
@@ -207,6 +215,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
       {...otherProps}
       {...params}
       {...eventsAttached}
+      {...serverMarker}
     >
       {children}
     </Tag>
