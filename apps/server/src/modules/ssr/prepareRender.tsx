@@ -1,13 +1,13 @@
 import { loadPluginComponents } from './loadPluginComponents';
 import { registerExternalPlugins } from './registerExternalPlugins';
-import { buildServerInfo } from '../helpers/buildServerInfo';
-import { buildOfflineDataCacheKey } from '../helpers/cache';
-import { escapeJson } from '../helpers/escapeJson';
+import { buildServerInfo } from '../../helpers/buildServerInfo';
+import { buildOfflineDataCacheKey } from '../../helpers/cache';
+import { escapeJson } from '../../helpers/escapeJson';
 
 import type { ComponentProps } from './Component';
-import type { TtlCache } from '../helpers/cache';
-import type { RequestMetrics } from '../helpers/metrics';
-import type { PluginManager } from '../plugins/manager';
+import type { TtlCache } from '../../helpers/cache';
+import type { RequestMetrics } from '../../helpers/metrics';
+import type { PluginManager } from '../../plugins/manager';
 import type {
   Environment,
   OfflineDataRaw,

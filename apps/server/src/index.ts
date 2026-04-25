@@ -27,5 +27,11 @@ export type {
   PluginEntry,
   PluginRegistry,
   CacheFilter,
-  CacheManager
+  CacheManager,
+  McpAdapters,
+  McpElement,
+  McpPlugin,
+  McpSchema,
+  McpServerConfig,
+  McpSpace
 } from '@plitzi/sdk-shared';
