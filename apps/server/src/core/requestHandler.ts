@@ -123,7 +123,7 @@ const handleRequest = async (
     return;
   }
 
-  await renderSSR(req, res, config, renderFn, pluginManager, caches.html);
+  await renderSSR(req, res, config, renderFn, pluginManager, caches);
 };
 
 export const makeHandler = (

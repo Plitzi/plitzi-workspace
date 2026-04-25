@@ -1,13 +1,16 @@
 import { renderToString } from 'react-dom/server';
 
+import { buildOfflineDataCacheKey } from '../helpers/cache';
+import { buildServerInfo } from '../helpers/buildServerInfo';
+import { escapeJson } from '../helpers/escapeJson';
 import Component from './Component';
 import { loadPluginComponents } from './loadPluginComponents';
 import { registerExternalPlugins } from './registerExternalPlugins';
-import { buildServerInfo } from '../helpers/buildServerInfo';
-import { escapeJson } from '../helpers/escapeJson';
 
+import type { TtlCache } from '../helpers/cache';
+import type { RequestMetrics } from '../helpers/metrics';
 import type { PluginManager } from '../plugins/manager';
-import type { Environment, SSRRequest, SSRServerConfig, SSRTemplateFn } from '@plitzi/sdk-shared';
+import type { Environment, OfflineDataRaw, SSRRequest, SSRServerConfig, SSRTemplateFn } from '@plitzi/sdk-shared';
 
 export const buildBody = async (
   req: SSRRequest,
@@ -16,12 +19,27 @@ export const buildBody = async (
   environment: Environment,
   revision: number,
   renderFn: SSRTemplateFn,
-  pluginManager: PluginManager
+  pluginManager: PluginManager,
+  offlineDataCache?: TtlCache<string>,
+  metrics?: RequestMetrics
 ): Promise<string> => {
+  const m = <T,>(name: string, fn: () => T | Promise<T>): Promise<T> =>
+    metrics ? metrics.measure(name, fn) : Promise.resolve(fn()) as Promise<T>;
+
+  // offlineData is cached per spaceId|env|revision (skip main — schema changes frequently there).
+  const offlineCacheKey = environment !== 'main' ? buildOfflineDataCacheKey(spaceId, environment, revision) : undefined;
+  const cachedOfflineStr = offlineCacheKey ? offlineDataCache?.get(offlineCacheKey) : undefined;
+
   const [offlineData, server] = await Promise.all([
-    config.adapters.getOfflineData(spaceId, environment, revision),
-    buildServerInfo(req, config)
+    cachedOfflineStr
+      ? (JSON.parse(cachedOfflineStr) as OfflineDataRaw | undefined)
+      : m('schema', () => config.adapters.getOfflineData(spaceId, environment, revision)),
+    m('rsc', () => buildServerInfo(req, config))
   ]);
+
+  if (!cachedOfflineStr && offlineCacheKey && offlineData !== undefined) {
+    offlineDataCache?.set(offlineCacheKey, JSON.stringify(offlineData));
+  }
 
   const offlineDataStr = escapeJson(
     JSON.stringify({
@@ -37,8 +55,6 @@ export const buildBody = async (
   const pluginNames = req.ctx.spaceDeployment?.pluginNames ?? [];
   const pluginSources = req.ctx.spaceDeployment?.pluginSources;
 
-  // Auto-register plugins defined inline in the deployment (e.g. downloaded from DB/CDN)
-  // pluginNames contains base names; skip any plugin already covered there to avoid duplicates
   const pluginBaseNames = new Set(pluginNames.map(n => n.replace(/@[^@]*$/, '')));
   const dynamicNames: string[] = [];
   if (pluginSources) {
@@ -50,28 +66,28 @@ export const buildBody = async (
     }
   }
 
-  // Auto-register external plugins declared in the schema (offlineData.plugins)
-  // Downloads JS/CSS from CDN once, caches to disk via PluginManager for subsequent requests
   const autoLoad = config.autoLoadSchemaPlugins !== false;
-  const externalNames = autoLoad ? await registerExternalPlugins(pluginManager, offlineData) : [];
+  const externalNames = autoLoad
+    ? await m('extPlugins', () => registerExternalPlugins(pluginManager, offlineData))
+    : [];
   const externalNamesFiltered = externalNames.filter(k => !pluginBaseNames.has(k.replace(/@[^@]*$/, '')));
 
   const allPluginNames = [...pluginNames, ...dynamicNames, ...externalNamesFiltered];
   const entries = allPluginNames.length > 0 ? await pluginManager.getEntries(allPluginNames) : [];
 
-  // Load plugin React components for server-side rendering.
-  // Results are cached in memory by filePath — subsequent requests skip the dynamic import().
-  const pluginComponents = await loadPluginComponents(entries, pluginManager.getComponents());
+  const pluginComponents = await m('plugins', () => loadPluginComponents(entries, pluginManager.getComponents()));
 
-  const html = renderToString(
-    <Component
-      plugins={Object.keys(pluginComponents).length > 0 ? pluginComponents : undefined}
-      offlineData={offlineData}
-      server={server}
-      environment={req.ctx.spaceDeployment?.environment ?? environment}
-      sdkEnvironment={config.sdkEnvironment ?? 'production'}
-    />
-  ).trim();
+  const html = await m('react', () =>
+    renderToString(
+      <Component
+        plugins={Object.keys(pluginComponents).length > 0 ? pluginComponents : undefined}
+        offlineData={offlineData}
+        server={server}
+        environment={req.ctx.spaceDeployment?.environment ?? environment}
+        sdkEnvironment={config.sdkEnvironment ?? 'production'}
+      />
+    ).trim()
+  );
 
   const templatePlugins = entries.length > 0 ? entries : req.ctx.spaceDeployment?.templateProps?.plugins;
   const v = config.assetVersion ? `?v=${config.assetVersion}` : '';

@@ -7,6 +7,9 @@ export const buildHtmlCacheKey = (
 ): string =>
   `${accessToken}\0${spaceId ?? 1}\0${environment}\0${revision}\0${req.hostname}\0${req.path}\0${req.search}`;
 
+export const buildOfflineDataCacheKey = (spaceId: number, environment: string, revision: number): string =>
+  `${spaceId}|${environment}|${revision}`;
+
 export const buildRscCacheKey = (
   spaceId: number,
   environment: string,

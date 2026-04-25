@@ -1,9 +1,15 @@
 import { buildHtmlCacheKey } from '../helpers/cache';
+import { RequestMetrics } from '../helpers/metrics';
 import { buildBody } from './buildBody';
 
-import type { TtlCache } from '../helpers/cache';
+import type { ServerCaches } from '../helpers/cache';
 import type { PluginManager } from '../plugins/manager';
 import type { Environment, SSRRequest, SSRResponseHelpers, SSRServerConfig, SSRTemplateFn } from '@plitzi/sdk-shared';
+
+const applyMetrics = (res: SSRResponseHelpers, metrics: RequestMetrics, label: string): void => {
+  res.setHeader('Server-Timing', metrics.toServerTimingHeader());
+  metrics.log(label);
+};
 
 export const renderSSR = async (
   req: SSRRequest,
@@ -11,22 +17,31 @@ export const renderSSR = async (
   config: SSRServerConfig,
   renderFn: SSRTemplateFn,
   pluginManager: PluginManager,
-  cache?: TtlCache<string>
+  caches: ServerCaches
 ): Promise<void> => {
   const { environment = 'main', spaceId = 1, revision = 0 } = req.ctx.spaceDeployment || {};
-  if (cache && environment !== 'main') {
+  const devMode = config.devMode ?? false;
+  const label = `${req.method} ${req.path}`;
+
+  if (caches.html && environment !== 'main') {
     const cacheKey = buildHtmlCacheKey(req.ctx.user?.token, spaceId, environment, revision, req);
-    const cached = cache.get(cacheKey);
+    const cached = caches.html.get(cacheKey);
     if (cached) {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.setHeader('X-Cache', 'HIT');
+      if (devMode) {
+        res.setHeader('Server-Timing', 'html;desc="cache-hit";dur=0');
+      }
+
       res.send(cached);
 
       return;
     }
 
-    const body = await buildBody(req, config, spaceId as number, environment, revision, renderFn, pluginManager);
-    cache.set(cacheKey, body);
+    const metrics = devMode ? new RequestMetrics() : undefined;
+    const body = await buildBody(req, config, spaceId as number, environment, revision, renderFn, pluginManager, caches.offlineData, metrics);
+    caches.html.set(cacheKey, body);
+    if (metrics) applyMetrics(res, metrics, label);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('X-Cache', 'MISS');
     res.send(body);
@@ -34,7 +49,9 @@ export const renderSSR = async (
     return;
   }
 
-  const body = await buildBody(req, config, spaceId as number, environment, revision, renderFn, pluginManager);
+  const metrics = devMode ? new RequestMetrics() : undefined;
+  const body = await buildBody(req, config, spaceId as number, environment, revision, renderFn, pluginManager, caches.offlineData, metrics);
+  if (metrics) applyMetrics(res, metrics, label);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(body);
 };
