@@ -1,8 +1,9 @@
 import { useApolloClient } from '@apollo/client/react';
 import { get, cloneDeep } from '@plitzi/plitzi-ui/helpers';
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback, use } from 'react';
 
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
+import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { SdkQueries, SdkMutations } from '@plitzi/sdk-shared/network/graphql/sdk';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
@@ -16,7 +17,8 @@ import type {
   ServerEnvironment,
   SdkQueriesMap,
   SdkMutationsMap,
-  NetworkInternalContextValue
+  NetworkInternalContextValue,
+  ComponentPluginWithHOC
 } from '@plitzi/sdk-shared';
 import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { ReactNode } from 'react';
@@ -57,6 +59,7 @@ const NetworkContextProvider = ({
   const client = typeof window === 'undefined' && offlineDataAvailable ? undefined : useApolloClient();
   const [loading, setLoading] = useState(!(offlineMode && !!offlineData));
   const [error, setError] = useState<ReactNode | undefined>(undefined);
+  const { components } = use(ComponentContext);
   const [internalData, setInternalData] = useState<NetworkInternalContextValue>(() => {
     if (offlineDataAvailable && offlineDataType === 'json') {
       return { ...offlineData, plugins: {}, segments: {}, collections: {} };
@@ -185,7 +188,9 @@ const NetworkContextProvider = ({
 
       let plugins = {};
       if (Space.plugins.length > 0) {
-        plugins = await pluginParseDefinition(Space.plugins);
+        plugins = await pluginParseDefinition(
+          Space.plugins.filter(plugin => !(components.current[plugin.type] as undefined | ComponentPluginWithHOC))
+        );
       }
 
       setInternalData({
@@ -217,7 +222,9 @@ const NetworkContextProvider = ({
     let plugins = {};
     if (offlineData?.plugins && offlineData.plugins.length > 0) {
       // @todo: this one is not compact anymore, so we need to take the props that the sdk only requires assets, scope, module, settings, subPlugins
-      plugins = await pluginParseDefinition(offlineData.plugins);
+      plugins = await pluginParseDefinition(
+        offlineData.plugins.filter(plugin => !(components.current[plugin.type] as undefined | ComponentPluginWithHOC))
+      );
     }
 
     setInternalData(state => ({ ...state, plugins }));
