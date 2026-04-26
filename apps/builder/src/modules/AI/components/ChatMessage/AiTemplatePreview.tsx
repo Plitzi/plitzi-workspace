@@ -21,9 +21,10 @@ const AiTemplatePreview = ({ baseElementId, schema, style }: AiTemplatePreviewPr
         ...mainStyle,
         platform: {
           desktop: { ...mainStyle.platform.desktop, ...style.platform.desktop },
-          tablet: mainStyle.platform.tablet,
-          mobile: mainStyle.platform.mobile
-        }
+          tablet: { ...mainStyle.platform.desktop, ...style.platform.tablet },
+          mobile: { ...mainStyle.platform.desktop, ...style.platform.mobile }
+        },
+        cache: `${mainStyle.cache}${style.cache}`
       },
       pageDefinitions
     }),

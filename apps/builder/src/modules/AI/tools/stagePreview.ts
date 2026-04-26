@@ -1,6 +1,11 @@
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared';
+import generateStyleSelector from '@plitzi/sdk-style/helpers/generateStyleSelector';
+import { generateCache } from '@plitzi/sdk-style/StyleHelper';
+
+import getRootNode from '../helpers/getRootNode';
 
 import type { AiMessagePreview } from '../types';
+import type { Schema, Style, StyleItem } from '@plitzi/sdk-shared';
 
 // AI-friendly element description — no SDK internals required
 export type PreviewElement = {
@@ -29,19 +34,19 @@ export type StagePreviewResult = {
 
 type TemplatePreview = Extract<AiMessagePreview, { baseElementId: string }>;
 
-const buildCacheString = (className: string, styles: Record<string, string>) => {
-  const props = Object.entries(styles)
-    .map(([k, v]) => `${k}:${v}`)
-    .join(';');
-
-  return `.${className}{${props}}`;
-};
-
 // Transforms the AI's simple element description into the SDK's schema + style format.
 // AI provides intent; the frontend handles SDK internals.
 export const transformStagePreview = (args: StagePreviewArgs): TemplatePreview => {
-  const flat: Record<string, unknown> = {};
-  const desktop: Record<string, unknown> = {};
+  const flat: Schema['flat'] = {};
+  const desktop: Style['platform']['desktop'] = {};
+
+  if (args.elements.length > 0 && args.baseElementId) {
+    const { rootNode, rootStyle, rootStyleSelector } = getRootNode(undefined, { centered: true });
+    flat[rootNode.id] = { ...rootNode, definition: { ...rootNode.definition, items: [args.elements[0].id] } };
+    args.baseElementId = rootNode.id;
+    args.elements[0].parentId = rootNode.id;
+    desktop[rootStyleSelector] = rootStyle;
+  }
 
   for (const el of args.elements) {
     // Each element gets a unique, prefixed CSS class to avoid collisions with real elements
@@ -59,23 +64,18 @@ export const transformStagePreview = (args: StagePreviewArgs): TemplatePreview =
         bindings: {},
         interactions: {},
         initialState: { visibility: true },
-        items: el.children ?? []
+        items: el.children
       }
     };
 
     if (el.styles && Object.keys(el.styles).length > 0) {
-      desktop[className] = {
-        name: className,
-        type: 'class',
-        attributes: { base: { default: el.styles } },
-        cache: buildCacheString(className, el.styles)
-      };
+      desktop[className] = generateStyleSelector(className, 'class', { base: { default: el.styles } }, {}) as StyleItem;
     }
   }
 
   return {
     baseElementId: args.baseElementId,
-    schema: { flat: EMPTY_SCHEMA.schema['flat'] },
-    style: { platform: EMPTY_SCHEMA.style['platform'] }
+    schema: { flat },
+    style: { platform: EMPTY_SCHEMA.style['platform'], cache: generateCache({ platform: { desktop } } as Style) }
   };
 };

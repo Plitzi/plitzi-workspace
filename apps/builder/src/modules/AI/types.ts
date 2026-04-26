@@ -22,7 +22,12 @@ export type AiToolCall = {
 // baseElementId = proposed template preview, elements injected via StoreProvider overlay
 export type AiMessagePreview =
   | { elementId: string; baseElementId?: never }
-  | { baseElementId: string; elementId?: never; schema: Pick<Schema, 'flat'>; style: Pick<Style, 'platform'> };
+  | {
+      baseElementId: string;
+      elementId?: never;
+      schema: Pick<Schema, 'flat'>;
+      style: Pick<Style, 'platform' | 'cache'>;
+    };
 
 export type AiMessageAction = {
   id: string;
