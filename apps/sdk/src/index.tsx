@@ -29,7 +29,6 @@ if (import.meta.env.PROD) {
   void import('./assets/plitzi-sdk-devtools.scss');
 }
 
-import type { ElementContextValue } from '@plitzi/sdk-elements/Element/ElementContext';
 import type EventBridge from '@plitzi/sdk-event-bridge';
 import type InteractionsManager from '@plitzi/sdk-interactions/InteractionsManager';
 import type {
@@ -49,6 +48,7 @@ import type {
   StateManagerContextValue,
   PlitziServiceContextValue as BasePlitziServiceContextValue
 } from '@plitzi/sdk-shared';
+import type { ElementContextValue } from '@plitzi/sdk-shared/elements/ElementContext';
 import type { ReactNode } from 'react';
 
 let stateManager: StateManagerContextValue;
