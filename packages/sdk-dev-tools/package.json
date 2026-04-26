@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-dev-tools",
-  "version": "0.30.12",
+  "version": "0.30.13",
   "license": "GPLv3",
   "publishConfig": {
     "access": "restricted",
