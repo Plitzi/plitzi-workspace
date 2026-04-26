@@ -4,7 +4,7 @@ import { useCallback, use, useRef, useState } from 'react';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
-import type { AiContext, AiMessage, AiStreamEvent } from '../types';
+import type { AiAttachment, AiContext, AiMessage, AiStreamEvent, AiToolCall } from '../types';
 
 const useAiChat = () => {
   const { server, webKey } = use(NetworkContext);
@@ -12,10 +12,9 @@ const useAiChat = () => {
   const [conversationId, setConversationId] = useStorage<string>('builder-state.aiChat.conversationId', '');
   const [messages, setMessages] = useState<AiMessage[]>([]);
   const [streamingText, setStreamingText] = useState('');
+  const [liveTools, setLiveTools] = useState<AiToolCall[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [activeTools, setActiveTools] = useState<string[]>([]);
 
-  // Ref so initConversation can read the current id without being a dependency
   const conversationIdRef = useRef(conversationId);
   conversationIdRef.current = conversationId;
 
@@ -39,7 +38,7 @@ const useAiChat = () => {
   }, [networkQuery, setConversationId]);
 
   const sendMessage = useCallback(
-    async (message: string, context: AiContext) => {
+    async (message: string, context: AiContext, attachments: AiAttachment[] = []) => {
       if (!conversationId || isStreaming) {
         return;
       }
@@ -48,21 +47,26 @@ const useAiChat = () => {
         id: crypto.randomUUID(),
         role: 'user',
         content: message,
+        attachments: attachments.length > 0 ? attachments : undefined,
         createdAt: Date.now()
       };
       setMessages(prev => [...prev, userMessage]);
       setStreamingText('');
+      setLiveTools([]);
       setIsStreaming(true);
-      setActiveTools([]);
+
+      const serverAttachments = attachments.map(a => ({ type: a.type, mimeType: a.mimeType, data: a.data }));
 
       try {
         const res = await fetch(`${server.apiServer}/ai/chat`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${webKey}`
-          },
-          body: JSON.stringify({ conversationId, message, context })
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${webKey}` },
+          body: JSON.stringify({
+            conversationId,
+            message,
+            attachments: serverAttachments.length > 0 ? serverAttachments : undefined,
+            context
+          })
         });
 
         if (!res.ok || !res.body) {
@@ -94,12 +98,19 @@ const useAiChat = () => {
 
               if (event.type === 'chunk') {
                 setStreamingText(prev => prev + event.text);
+              } else if (event.type === 'tool_start') {
+                const toolId = crypto.randomUUID();
+                setLiveTools(prev => [...prev, { id: toolId, name: event.name, args: event.args, status: 'running' }]);
               } else if (event.type === 'tool') {
-                setActiveTools(prev => [...prev, event.name]);
+                setLiveTools(prev =>
+                  prev.map(t =>
+                    t.name === event.name && t.status === 'running' ? { ...t, result: event.result, status: 'done' } : t
+                  )
+                );
               } else if (event.type === 'done') {
-                setMessages(prev => [...prev, event.message]);
+                setMessages(prev => [...prev, { ...event.message, tools: liveToolsRef.current }]);
                 setStreamingText('');
-                setActiveTools([]);
+                setLiveTools([]);
               } else {
                 console.error('[AI] Stream error:', event.message);
               }
@@ -111,11 +122,16 @@ const useAiChat = () => {
       } finally {
         setIsStreaming(false);
         setStreamingText('');
-        setActiveTools([]);
+        setLiveTools([]);
       }
     },
+
     [conversationId, isStreaming, server.apiServer, webKey]
   );
+
+  // Keep a ref to liveTools so the 'done' handler can capture the final state
+  const liveToolsRef = useRef<AiToolCall[]>([]);
+  liveToolsRef.current = liveTools;
 
   const clearConversation = useCallback(async () => {
     const response = await networkQuery<{ conversationId: string }>('/ai/conversation', {}, 'post');
@@ -131,8 +147,8 @@ const useAiChat = () => {
     conversationId,
     messages,
     streamingText,
+    liveTools,
     isStreaming,
-    activeTools,
     initConversation,
     sendMessage,
     clearConversation
