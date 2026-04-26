@@ -12,6 +12,9 @@ import type { AiAttachment } from './types';
 import type { BuilderState } from '@plitzi/sdk-shared';
 import type { ChangeEvent, KeyboardEvent } from 'react';
 
+const isMac = typeof navigator !== 'undefined' && /mac/i.test(navigator.platform);
+const sendShortcutLabel = isMac ? '⌘↵' : 'Ctrl+Enter';
+
 const AiChat = () => {
   const { useStore } = createStoreHook<BuilderState>();
   const [elementSelected] = useStore('elementSelected');
@@ -23,8 +26,16 @@ const AiChat = () => {
   const [messageInput, setMessageInput] = useState('');
   const [attachments, setAttachments] = useState<AiAttachment[]>([]);
 
-  const { messages, streamingText, liveTools, isStreaming, initConversation, sendMessage, clearConversation } =
-    useAiChat();
+  const {
+    messages,
+    streamingText,
+    liveThinking,
+    liveTools,
+    isStreaming,
+    initConversation,
+    sendMessage,
+    clearConversation
+  } = useAiChat();
 
   const handleTranscript = useCallback((text: string) => {
     setMessageInput(prev => (prev ? `${prev} ${text}` : text));
@@ -78,7 +89,6 @@ const AiChat = () => {
       const reader = new FileReader();
       reader.onload = ev => {
         const result = ev.target?.result as string;
-        // result is "data:image/png;base64,xxxx"
         const [header, data] = result.split(',');
         const mimeType = header.split(':')[1].split(';')[0];
         setAttachments(prev => [...prev, { id: crypto.randomUUID(), type: 'image', mimeType, data, name: file.name }]);
@@ -86,7 +96,6 @@ const AiChat = () => {
       reader.readAsDataURL(file);
     });
 
-    // Reset so the same file can be re-selected
     e.target.value = '';
   }, []);
 
@@ -95,15 +104,15 @@ const AiChat = () => {
   }, []);
 
   return (
-    <div className="flex h-full w-full flex-col bg-zinc-950 font-mono text-zinc-100">
+    <div className="flex h-full w-full flex-col bg-white font-mono text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-2">
+      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-2 dark:border-zinc-800">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-violet-400">◆</span>
-          <span className="text-xs font-semibold text-zinc-300">AI Assistant</span>
+          <span className="text-sm text-violet-500 dark:text-violet-400">◆</span>
+          <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">AI Assistant</span>
         </div>
         <button
-          className="text-xs text-zinc-600 transition-colors hover:text-zinc-400"
+          className="text-xs text-zinc-400 transition-colors hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-400"
           onClick={clearConversation}
           disabled={isStreaming}
           title="New conversation"
@@ -113,13 +122,19 @@ const AiChat = () => {
       </div>
 
       {/* Chat area */}
-      <Chat ref={chatRef} messages={messages} streamingText={streamingText} liveTools={liveTools} />
+      <Chat
+        ref={chatRef}
+        messages={messages}
+        streamingText={streamingText}
+        liveThinking={liveThinking}
+        liveTools={liveTools}
+      />
 
       {/* Input area */}
-      <div className="flex flex-col gap-2 border-t border-zinc-800 bg-zinc-900 p-3">
+      <div className="flex flex-col gap-2 border-t border-gray-200 bg-gray-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
         {/* Voice visualizer */}
         {isListening && (
-          <div className="rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1">
+          <div className="rounded-md border border-gray-200 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-950">
             <VoiceVisualizer
               audioData={audioData}
               isRecording={isListening}
@@ -138,10 +153,10 @@ const AiChat = () => {
                 <img
                   src={`data:${a.mimeType};base64,${a.data}`}
                   alt={a.name}
-                  className="h-14 w-14 rounded border border-zinc-700 object-cover"
+                  className="h-14 w-14 rounded border border-gray-300 object-cover dark:border-zinc-700"
                 />
                 <button
-                  className="absolute -top-1 -right-1 hidden h-4 w-4 items-center justify-center rounded-full bg-zinc-800 text-xs text-zinc-300 group-hover:flex"
+                  className="absolute -top-1 -right-1 hidden h-4 w-4 items-center justify-center rounded-full bg-gray-200 text-xs text-zinc-700 group-hover:flex dark:bg-zinc-800 dark:text-zinc-300"
                   onClick={() => removeAttachment(a.id)}
                 >
                   ×
@@ -155,7 +170,7 @@ const AiChat = () => {
         <div className="flex items-end gap-2">
           {/* Image attach */}
           <button
-            className="shrink-0 rounded p-1.5 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300"
+            className="shrink-0 rounded p-1.5 text-zinc-400 transition-colors hover:bg-gray-200 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
             onClick={() => fileInputRef.current?.click()}
             title="Attach image"
             disabled={isStreaming}
@@ -173,13 +188,12 @@ const AiChat = () => {
           {/* Textarea */}
           <textarea
             ref={textareaRef}
-            className="min-h-9 flex-1 resize-none rounded bg-zinc-800 px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50"
-            placeholder={isListening ? 'Listening…' : 'Ask anything… (Ctrl+Enter to send)'}
+            className="min-h-9 flex-1 resize-none rounded border border-gray-200 bg-white px-3 py-2 text-xs text-zinc-800 placeholder-zinc-400 outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-600"
+            placeholder={isListening ? 'Listening…' : `Ask anything… (${sendShortcutLabel} to send)`}
             value={messageInput}
             rows={1}
             onChange={e => {
               setMessageInput(e.target.value);
-              // Auto-grow
               e.target.style.height = 'auto';
               e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
             }}
@@ -191,7 +205,9 @@ const AiChat = () => {
           {isVoiceSupported && (
             <button
               className={`shrink-0 rounded p-1.5 transition-colors ${
-                isListening ? 'bg-violet-600 text-white' : 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300'
+                isListening
+                  ? 'bg-violet-600 text-white'
+                  : 'text-zinc-400 hover:bg-gray-200 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300'
               }`}
               onClick={isListening ? stopVoice : () => void startVoice()}
               title={isListening ? 'Stop recording' : 'Voice input'}
@@ -208,7 +224,7 @@ const AiChat = () => {
             className="shrink-0 rounded bg-violet-600 p-1.5 text-white transition-colors hover:bg-violet-500 disabled:opacity-40"
             onClick={handleSend}
             disabled={(!messageInput.trim() && attachments.length === 0) || isStreaming}
-            title="Send (Ctrl+Enter)"
+            title={`Send (${sendShortcutLabel})`}
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />

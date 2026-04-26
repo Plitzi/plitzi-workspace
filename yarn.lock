@@ -3213,7 +3213,7 @@ __metadata:
     "@babel/preset-react": "npm:^7.28.5"
     "@fortawesome/fontawesome-free": "npm:^7.2.0"
     "@plitzi/plitzi-sdk": "workspace:*"
-    "@plitzi/plitzi-ui": "npm:^1.5.24"
+    "@plitzi/plitzi-ui": "npm:^1.5.25"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-collections": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
@@ -3239,14 +3239,14 @@ __metadata:
     graphql-ws: "npm:^6.0.8"
     immer: "npm:^11.1.4"
     jszip: "npm:^3.10.1"
-    postcss: "npm:^8.5.10"
+    postcss: "npm:^8.5.12"
     postcss-loader: "npm:^8.2.1"
     postcss-scss: "npm:^4.0.9"
     prettier: "npm:^3.8.3"
     prop-types: "npm:^15.8.1"
     react: "npm:19.2.5"
     react-dom: "npm:19.2.5"
-    react-hook-form: "npm:^7.73.1"
+    react-hook-form: "npm:^7.74.0"
     react-refresh: "npm:^0.18.0"
     react-router-dom: "npm:^7.14.2"
     react-test-renderer: "npm:^19.2.5"
@@ -3294,7 +3294,7 @@ __metadata:
     "@babel/preset-typescript": "npm:^7.28.5"
     "@dr.pogodin/react-helmet": "npm:^3.1.1"
     "@fortawesome/fontawesome-free": "npm:^7.2.0"
-    "@plitzi/plitzi-ui": "npm:^1.5.24"
+    "@plitzi/plitzi-ui": "npm:^1.5.25"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-collections": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
@@ -3324,7 +3324,7 @@ __metadata:
     graphql: "npm:^16.13.2"
     immer: "npm:^11.1.4"
     mini-css-extract-plugin: "npm:^2.10.2"
-    postcss: "npm:^8.5.10"
+    postcss: "npm:^8.5.12"
     postcss-loader: "npm:^8.2.1"
     postcss-scss: "npm:^4.0.9"
     prettier: "npm:^3.8.3"
@@ -3356,9 +3356,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-ui@npm:^1.5.24":
-  version: 1.5.24
-  resolution: "@plitzi/plitzi-ui@npm:1.5.24::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fplitzi-ui%2F1.5.24%2Fd932aad7462f1b38d25ec27083489f921c2a7836"
+"@plitzi/plitzi-ui@npm:^1.5.25":
+  version: 1.5.25
+  resolution: "@plitzi/plitzi-ui@npm:1.5.25::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fplitzi-ui%2F1.5.25%2F51751892d55b102c5f4ab84cb471f058b4f2d6b6"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.20.1"
     "@codemirror/commands": "npm:^6.10.3"
@@ -3379,7 +3379,7 @@ __metadata:
     immer: "npm:^11.1.4"
     react: "npm:^19.2.5"
     react-dom: "npm:^19.2.5"
-    react-hook-form: "npm:^7.73.1"
+    react-hook-form: "npm:^7.74.0"
     react-markdown: "npm:^10.1.0"
     react-syntax-highlighter: "npm:^16.1.1"
     react-toastify: "npm:^11.1.0"
@@ -3388,7 +3388,7 @@ __metadata:
     tinycolor2: "npm:^1.6.0"
     uuid: "npm:^14.0.0"
     zod: "npm:^4.3.6"
-  checksum: 10c0/96a43584a6d607ba21ee374d97142ef144733ec1875f012453591e3fa6b6836de4e75dee0617b542bdf08a394deb874b4bfbbabf50fa407b7adcc81eb9bde068
+  checksum: 10c0/b9badc605e2db1a529c0d652913a841565f91ecc62366dea30d14b5df1a6719c9d87f78c4ea6ed869f6cd22ad2decb2cfd26b37399c88311eb87254424dcf76b
   languageName: node
   linkType: hard
 
@@ -3397,7 +3397,7 @@ __metadata:
   resolution: "@plitzi/plitzi-workspace@workspace:."
   dependencies:
     "@changesets/cli": "npm:^2.31.0"
-    "@plitzi/plitzi-ui": "npm:^1.5.24"
+    "@plitzi/plitzi-ui": "npm:^1.5.25"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/react": "npm:^19.2.14"
     eslint: "npm:^9.39.4"
@@ -3411,7 +3411,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-auth@workspace:packages/sdk-auth"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.5.24"
+    "@plitzi/plitzi-ui": "npm:^1.5.25"
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
@@ -3426,7 +3426,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-collections@workspace:packages/sdk-collections"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.5.24"
+    "@plitzi/plitzi-ui": "npm:^1.5.25"
     "@plitzi/sdk-shared": "workspace:*"
     eslint: "npm:^9.39.4"
     immer: "npm:^11.1.4"
@@ -3455,7 +3455,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-dev-tools@workspace:packages/sdk-dev-tools"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.5.24"
+    "@plitzi/plitzi-ui": "npm:^1.5.25"
     "@plitzi/sdk-data-source": "workspace:*"
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
@@ -3478,7 +3478,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-elements@workspace:packages/sdk-elements"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.5.24"
+    "@plitzi/plitzi-ui": "npm:^1.5.25"
     "@plitzi/sdk-data-source": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
@@ -3514,7 +3514,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-interactions@workspace:packages/sdk-interactions"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.5.24"
+    "@plitzi/plitzi-ui": "npm:^1.5.25"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
@@ -3529,7 +3529,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-navigation@workspace:packages/sdk-navigation"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.5.24"
+    "@plitzi/plitzi-ui": "npm:^1.5.25"
     "@plitzi/sdk-shared": "workspace:*"
     eslint: "npm:^9.39.4"
     react: "npm:^19.2.5"
@@ -3561,7 +3561,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-schema@workspace:packages/sdk-schema"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.5.24"
+    "@plitzi/plitzi-ui": "npm:^1.5.25"
     "@plitzi/sdk-shared": "workspace:*"
     "@plitzi/sdk-style": "workspace:*"
     eslint: "npm:^9.39.4"
@@ -3611,7 +3611,7 @@ __metadata:
     "@babel/plugin-transform-react-jsx": "npm:^7.28.6"
     "@babel/preset-env": "npm:^7.29.2"
     "@eslint/js": "npm:^10.0.1"
-    "@plitzi/plitzi-ui": "npm:^1.5.24"
+    "@plitzi/plitzi-ui": "npm:^1.5.25"
     "@tailwindcss/forms": "npm:^0.5.11"
     "@testing-library/dom": "npm:^10.4.1"
     "@testing-library/react": "npm:^16.3.2"
@@ -3643,7 +3643,7 @@ __metadata:
     globals: "npm:^17.5.0"
     graphql-tag: "npm:^2.12.6"
     jsdom: "npm:^29.0.2"
-    postcss: "npm:^8.5.10"
+    postcss: "npm:^8.5.12"
     prettier: "npm:^3.8.3"
     react: "npm:^19.2.5"
     react-dom: "npm:^19.2.5"
@@ -3680,7 +3680,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-style@workspace:packages/sdk-style"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.5.24"
+    "@plitzi/plitzi-ui": "npm:^1.5.25"
     "@plitzi/sdk-plugins": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@plitzi/sdk-variables": "workspace:*"
@@ -3699,7 +3699,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-variables@workspace:packages/sdk-variables"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.5.24"
+    "@plitzi/plitzi-ui": "npm:^1.5.25"
     "@plitzi/sdk-shared": "workspace:*"
     clsx: "npm:^2.1.1"
     eslint: "npm:^9.39.4"
@@ -13510,6 +13510,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"postcss@npm:^8.5.12":
+  version: 8.5.12
+  resolution: "postcss@npm:8.5.12"
+  dependencies:
+    nanoid: "npm:^3.3.11"
+    picocolors: "npm:^1.1.1"
+    source-map-js: "npm:^1.2.1"
+  checksum: 10c0/5baebaf574c567bc1b3d61197f38af4ce5920b8f611c887fb6bc3dcc14af00253c169dbf19897bc889cce0b0d9818ab5eb4ea0caedf02b0bab10da8a43ce8c12
+  languageName: node
+  linkType: hard
+
 "powershell-utils@npm:^0.1.0":
   version: 0.1.0
   resolution: "powershell-utils@npm:0.1.0"
@@ -13844,12 +13855,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-hook-form@npm:^7.73.1":
-  version: 7.73.1
-  resolution: "react-hook-form@npm:7.73.1"
+"react-hook-form@npm:^7.74.0":
+  version: 7.74.0
+  resolution: "react-hook-form@npm:7.74.0"
   peerDependencies:
     react: ^16.8.0 || ^17 || ^18 || ^19
-  checksum: 10c0/42036e20863cfdadaac533fc176ab7d6d6c82ec20901c0a1a5ae1a36e015b5433eacb6b76a0217eb34f7c93ddeacb216640e2c3138a2b80fa399d7c115961fb9
+  checksum: 10c0/54d18c584aedea6db266a4981fb9de3df6bdf238996d2009a4dbf2e28b1fdd53b0644faba72fb55b087db7f93c6ea50753bc1a1691f43d1ba5f92861dc3fd096
   languageName: node
   linkType: hard
 

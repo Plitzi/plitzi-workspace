@@ -12,35 +12,52 @@ const useAiChat = () => {
   const [conversationId, setConversationId] = useStorage<string>('builder-state.aiChat.conversationId', '');
   const [messages, setMessages] = useState<AiMessage[]>([]);
   const [streamingText, setStreamingText] = useState('');
+  const [liveThinking, setLiveThinking] = useState('');
   const [liveTools, setLiveTools] = useState<AiToolCall[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
 
   const conversationIdRef = useRef(conversationId);
   conversationIdRef.current = conversationId;
 
+  // Only restores history from a stored conversation. If the ID is stale (404),
+  // clears storage so the next send will create a fresh conversation.
   const initConversation = useCallback(async () => {
     const storedId = conversationIdRef.current;
-    if (storedId) {
-      const history = await networkQuery<{ messages: AiMessage[] }>(`/ai/messages?conversationId=${storedId}`);
-      if (history) {
-        setMessages(history.messages);
-        return;
-      }
-    }
-
-    const response = await networkQuery<{ conversationId: string }>('/ai/conversation', {}, 'post');
-    if (!response?.conversationId) {
+    if (!storedId) {
       return;
     }
 
-    setMessages([]);
-    setConversationId(response.conversationId);
+    const history = await networkQuery<{ messages: AiMessage[] }>(`/ai/messages?conversationId=${storedId}`);
+    if (history) {
+      setMessages(history.messages);
+    } else {
+      setConversationId('');
+    }
   }, [networkQuery, setConversationId]);
+
+  // Refs so 'done' handler captures final state (closure issue)
+  const liveToolsRef = useRef<AiToolCall[]>([]);
+  liveToolsRef.current = liveTools;
+  const liveThinkingRef = useRef('');
+  liveThinkingRef.current = liveThinking;
 
   const sendMessage = useCallback(
     async (message: string, context: AiContext, attachments: AiAttachment[] = []) => {
-      if (!conversationId || isStreaming) {
+      if (isStreaming) {
         return;
+      }
+
+      // Create conversation lazily on first send
+      let activeConversationId = conversationIdRef.current;
+      if (!activeConversationId) {
+        const response = await networkQuery<{ conversationId: string }>('/ai/conversation', {}, 'post');
+        if (!response?.conversationId) {
+          return;
+        }
+
+        activeConversationId = response.conversationId;
+        setConversationId(activeConversationId);
+        conversationIdRef.current = activeConversationId;
       }
 
       const userMessage: AiMessage = {
@@ -52,17 +69,18 @@ const useAiChat = () => {
       };
       setMessages(prev => [...prev, userMessage]);
       setStreamingText('');
+      setLiveThinking('');
       setLiveTools([]);
       setIsStreaming(true);
 
       const serverAttachments = attachments.map(a => ({ type: a.type, mimeType: a.mimeType, data: a.data }));
 
       try {
-        const res = await fetch(`${server.apiServer}/ai/chat`, {
+        const res = await fetch(`${server.nodeServer}/ai/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${webKey}` },
           body: JSON.stringify({
-            conversationId,
+            conversationId: activeConversationId,
             message,
             attachments: serverAttachments.length > 0 ? serverAttachments : undefined,
             context
@@ -96,7 +114,9 @@ const useAiChat = () => {
             try {
               const event = JSON.parse(line.slice(6)) as AiStreamEvent;
 
-              if (event.type === 'chunk') {
+              if (event.type === 'thinking') {
+                setLiveThinking(prev => prev + event.text);
+              } else if (event.type === 'chunk') {
                 setStreamingText(prev => prev + event.text);
               } else if (event.type === 'tool_start') {
                 const toolId = crypto.randomUUID();
@@ -108,8 +128,12 @@ const useAiChat = () => {
                   )
                 );
               } else if (event.type === 'done') {
-                setMessages(prev => [...prev, { ...event.message, tools: liveToolsRef.current }]);
+                setMessages(prev => [
+                  ...prev,
+                  { ...event.message, thinking: liveThinkingRef.current || undefined, tools: liveToolsRef.current }
+                ]);
                 setStreamingText('');
+                setLiveThinking('');
                 setLiveTools([]);
               } else {
                 console.error('[AI] Stream error:', event.message);
@@ -122,31 +146,22 @@ const useAiChat = () => {
       } finally {
         setIsStreaming(false);
         setStreamingText('');
+        setLiveThinking('');
         setLiveTools([]);
       }
     },
-
-    [conversationId, isStreaming, server.apiServer, webKey]
+    [isStreaming, networkQuery, setConversationId, server.nodeServer, webKey]
   );
 
-  // Keep a ref to liveTools so the 'done' handler can capture the final state
-  const liveToolsRef = useRef<AiToolCall[]>([]);
-  liveToolsRef.current = liveTools;
-
-  const clearConversation = useCallback(async () => {
-    const response = await networkQuery<{ conversationId: string }>('/ai/conversation', {}, 'post');
-    if (!response?.conversationId) {
-      return;
-    }
-
+  const clearConversation = useCallback(() => {
     setMessages([]);
-    setConversationId(response.conversationId);
-  }, [networkQuery, setConversationId]);
+    setConversationId('');
+  }, [setConversationId]);
 
   return {
-    conversationId,
     messages,
     streamingText,
+    liveThinking,
     liveTools,
     isStreaming,
     initConversation,

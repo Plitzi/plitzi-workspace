@@ -16,10 +16,16 @@ export type AiToolCall = {
   status: 'running' | 'done';
 };
 
+export type AiMessagePreview = {
+  elementId: string;
+};
+
 export type AiMessage = {
   id: string;
   role: AiRole;
   content: string;
+  thinking?: string;
+  preview?: AiMessagePreview;
   attachments?: AiAttachment[];
   tools?: AiToolCall[];
   createdAt: number;
@@ -27,6 +33,7 @@ export type AiMessage = {
 
 export type AiStreamEvent =
   | { type: 'chunk'; text: string }
+  | { type: 'thinking'; text: string }
   | { type: 'tool_start'; name: string; args: Record<string, unknown> }
   | { type: 'tool'; name: string; args: Record<string, unknown>; result: unknown }
   | { type: 'done'; message: AiMessage }
