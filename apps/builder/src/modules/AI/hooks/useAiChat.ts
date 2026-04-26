@@ -4,9 +4,10 @@ import { useCallback, use, useRef, useState } from 'react';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
-import type { AiAttachment, AiContext, AiMessage, AiStreamEvent, AiToolCall } from '../types';
+import type { AiFrontendToolRunner } from '../tools';
+import type { AiAttachment, AiContext, AiMessage, AiMessagePreview, AiStreamEvent, AiToolCall } from '../types';
 
-const useAiChat = () => {
+const useAiChat = (runClientTool?: AiFrontendToolRunner) => {
   const { server, webKey } = use(NetworkContext);
   const { networkQuery } = useNetwork({ initLoading: false, server, webKey });
   const [conversationId, setConversationId] = useStorage<string>('builder-state.aiChat.conversationId', '');
@@ -40,6 +41,8 @@ const useAiChat = () => {
   liveToolsRef.current = liveTools;
   const liveThinkingRef = useRef('');
   liveThinkingRef.current = liveThinking;
+  // Preview staged by a client_tool handler; cleared once attached to the message
+  const pendingPreviewRef = useRef<Extract<AiMessagePreview, { baseElementId: string }> | undefined>(undefined);
 
   const sendMessage = useCallback(
     async (message: string, context: AiContext, attachments: AiAttachment[] = []) => {
@@ -127,10 +130,28 @@ const useAiChat = () => {
                     t.name === event.name && t.status === 'running' ? { ...t, result: event.result, status: 'done' } : t
                   )
                 );
+              } else if (event.type === 'client_tool') {
+                setLiveTools(prev => [...prev, { id: event.id, name: event.name, args: event.args, status: 'running' }]);
+                if (runClientTool) {
+                  const { toolResult, pendingPreview } = await runClientTool(event.name, event.args);
+                  if (pendingPreview) {
+                    pendingPreviewRef.current = pendingPreview;
+                  }
+                  setLiveTools(prev =>
+                    prev.map(t => (t.id === event.id ? { ...t, status: 'done', result: toolResult } : t))
+                  );
+                }
               } else if (event.type === 'done') {
+                const preview = pendingPreviewRef.current;
+                pendingPreviewRef.current = undefined;
                 setMessages(prev => [
                   ...prev,
-                  { ...event.message, thinking: liveThinkingRef.current || undefined, tools: liveToolsRef.current }
+                  {
+                    ...event.message,
+                    thinking: liveThinkingRef.current || undefined,
+                    tools: liveToolsRef.current,
+                    preview: event.message.preview ?? preview
+                  }
                 ]);
                 setStreamingText('');
                 setLiveThinking('');
@@ -148,9 +169,10 @@ const useAiChat = () => {
         setStreamingText('');
         setLiveThinking('');
         setLiveTools([]);
+        pendingPreviewRef.current = undefined;
       }
     },
-    [isStreaming, networkQuery, setConversationId, server.nodeServer, webKey]
+    [isStreaming, networkQuery, runClientTool, setConversationId, server.nodeServer, webKey]
   );
 
   const clearConversation = useCallback(() => {

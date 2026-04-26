@@ -1,14 +1,213 @@
+/* eslint-disable quotes */
 import { useRef, useState } from 'react';
 
-import Chat from './components/Chat';
+import AiChatHeader from './components/AiChatHeader';
+import Chat from './components/Chat/Chat';
+import ChatInput from './components/ChatInput/ChatInput';
+import { transformStagePreview } from './tools';
 
 import type { AiMessage, AiToolCall } from './types';
 
-const isMac = typeof navigator !== 'undefined' && /mac/i.test(navigator.platform);
-const sendShortcutLabel = isMac ? '⌘↵' : 'Ctrl+Enter';
-
 const now = Date.now();
 const t = (offsetMinutes: number) => now - offsetMinutes * 60 * 1000;
+
+// Proposed pricing section — same format the AI passes to stage_preview
+const PRICING_PREVIEW = transformStagePreview({
+  baseElementId: 'ap-pricing',
+  elements: [
+    {
+      id: 'ap-pricing',
+      type: 'container',
+      label: 'Pricing Section',
+      children: ['ap-c1', 'ap-c2', 'ap-c3'],
+      styles: { display: 'flex', gap: '12px', padding: '20px', 'background-color': '#f4f4f5', 'border-radius': '10px' }
+    },
+    // Starter
+    {
+      id: 'ap-c1',
+      type: 'container',
+      label: 'Starter',
+      parentId: 'ap-pricing',
+      children: ['ap-h1', 'ap-p1', 'ap-b1'],
+      styles: {
+        flex: '1',
+        border: '1px solid #e4e4e7',
+        'border-radius': '8px',
+        padding: '16px',
+        'background-color': '#ffffff',
+        display: 'flex',
+        'flex-direction': 'column',
+        gap: '8px'
+      }
+    },
+    {
+      id: 'ap-h1',
+      type: 'heading',
+      label: 'Plan',
+      parentId: 'ap-c1',
+      attributes: { content: 'Starter', subType: 'h3' },
+      styles: {
+        'font-size': '10px',
+        'font-weight': '700',
+        'text-transform': 'uppercase',
+        'letter-spacing': '0.08em',
+        color: '#71717a',
+        'font-family': 'system-ui'
+      }
+    },
+    {
+      id: 'ap-p1',
+      type: 'heading',
+      label: 'Price',
+      parentId: 'ap-c1',
+      attributes: { content: '$9/mo', subType: 'h2' },
+      styles: { 'font-size': '22px', 'font-weight': '800', color: '#18181b', 'font-family': 'system-ui' }
+    },
+    {
+      id: 'ap-b1',
+      type: 'button',
+      label: 'CTA',
+      parentId: 'ap-c1',
+      children: [],
+      attributes: { content: 'Get started', subType: 'button' },
+      styles: {
+        'margin-top': 'auto',
+        padding: '6px 12px',
+        'border-radius': '6px',
+        'font-size': '11px',
+        'font-family': 'system-ui',
+        'font-weight': '600',
+        'background-color': '#ffffff',
+        color: '#7c3aed',
+        border: '1px solid #7c3aed',
+        width: '100%'
+      }
+    },
+    // Pro (featured)
+    {
+      id: 'ap-c2',
+      type: 'container',
+      label: 'Pro',
+      parentId: 'ap-pricing',
+      children: ['ap-h2', 'ap-p2', 'ap-b2'],
+      styles: {
+        flex: '1',
+        border: '2px solid #7c3aed',
+        'border-radius': '8px',
+        padding: '16px',
+        'background-color': '#7c3aed',
+        color: '#ffffff',
+        display: 'flex',
+        'flex-direction': 'column',
+        gap: '8px'
+      }
+    },
+    {
+      id: 'ap-h2',
+      type: 'heading',
+      label: 'Plan',
+      parentId: 'ap-c2',
+      attributes: { content: 'Pro', subType: 'h3' },
+      styles: {
+        'font-size': '10px',
+        'font-weight': '700',
+        'text-transform': 'uppercase',
+        'letter-spacing': '0.08em',
+        color: '#ddd6fe',
+        'font-family': 'system-ui'
+      }
+    },
+    {
+      id: 'ap-p2',
+      type: 'heading',
+      label: 'Price',
+      parentId: 'ap-c2',
+      attributes: { content: '$29/mo', subType: 'h2' },
+      styles: { 'font-size': '22px', 'font-weight': '800', color: '#ffffff', 'font-family': 'system-ui' }
+    },
+    {
+      id: 'ap-b2',
+      type: 'button',
+      label: 'CTA',
+      parentId: 'ap-c2',
+      children: [],
+      attributes: { content: 'Get started', subType: 'button' },
+      styles: {
+        'margin-top': 'auto',
+        padding: '6px 12px',
+        'border-radius': '6px',
+        'font-size': '11px',
+        'font-family': 'system-ui',
+        'font-weight': '600',
+        'background-color': '#ffffff',
+        color: '#7c3aed',
+        border: 'none',
+        width: '100%'
+      }
+    },
+    // Enterprise
+    {
+      id: 'ap-c3',
+      type: 'container',
+      label: 'Enterprise',
+      parentId: 'ap-pricing',
+      children: ['ap-h3', 'ap-p3', 'ap-b3'],
+      styles: {
+        flex: '1',
+        border: '1px solid #e4e4e7',
+        'border-radius': '8px',
+        padding: '16px',
+        'background-color': '#ffffff',
+        display: 'flex',
+        'flex-direction': 'column',
+        gap: '8px'
+      }
+    },
+    {
+      id: 'ap-h3',
+      type: 'heading',
+      label: 'Plan',
+      parentId: 'ap-c3',
+      attributes: { content: 'Enterprise', subType: 'h3' },
+      styles: {
+        'font-size': '10px',
+        'font-weight': '700',
+        'text-transform': 'uppercase',
+        'letter-spacing': '0.08em',
+        color: '#71717a',
+        'font-family': 'system-ui'
+      }
+    },
+    {
+      id: 'ap-p3',
+      type: 'heading',
+      label: 'Price',
+      parentId: 'ap-c3',
+      attributes: { content: '$99/mo', subType: 'h2' },
+      styles: { 'font-size': '22px', 'font-weight': '800', color: '#18181b', 'font-family': 'system-ui' }
+    },
+    {
+      id: 'ap-b3',
+      type: 'button',
+      label: 'CTA',
+      parentId: 'ap-c3',
+      children: [],
+      attributes: { content: 'Contact sales', subType: 'button' },
+      styles: {
+        'margin-top': 'auto',
+        padding: '6px 12px',
+        'border-radius': '6px',
+        'font-size': '11px',
+        'font-family': 'system-ui',
+        'font-weight': '600',
+        'background-color': '#ffffff',
+        color: '#7c3aed',
+        border: '1px solid #7c3aed',
+        width: '100%'
+      }
+    }
+  ]
+});
 
 const MOCK_MESSAGES: AiMessage[] = [
   {
@@ -98,6 +297,85 @@ const MOCK_MESSAGES: AiMessage[] = [
       'Here are the global style variables defined in your space:\n\n| Variable | Value |\n|---|---|\n| `--color-primary` | `#7c3aed` |\n| `--color-surface` | `#ffffff` |\n| `--font-size-base` | `16px` |\n| `--spacing-md` | `16px` |\n| `--border-radius` | `8px` |\n\nWould you like me to use any of these in the hero section?',
     tools: [{ id: 't8', name: 'list_style_variables', args: {}, status: 'done', result: { count: 5 } }],
     createdAt: t(2)
+  },
+  // ── Approval / confirmation flow ────────────────────────────────────────────
+  {
+    id: '7',
+    role: 'user',
+    content: 'Add a pricing section with 3 tiers: Starter, Pro (highlighted), and Enterprise.',
+    createdAt: t(1.5)
+  },
+  {
+    id: '8',
+    role: 'assistant',
+    thinking:
+      'The user wants a 3-tier pricing section. I should design the layout first and show a preview before creating any elements. I will use stage_preview to render the proposal, then ask for confirmation. The featured "Pro" card will use the --color-primary variable for its background.',
+    content:
+      "Here's the pricing section I'm planning to build — **3 cards** inside a flex container using your `--color-primary` for the featured tier.\n\nThis will create **11 elements** across 2 nesting levels. Want me to proceed?",
+    tools: [
+      {
+        id: 't9',
+        name: 'stage_preview',
+        args: { baseElementId: 'ap-pricing', elementCount: 11 },
+        status: 'done',
+        result: { preview: 'ap-pricing' }
+      }
+    ],
+    preview: PRICING_PREVIEW,
+    actions: [
+      { id: 'approve', label: '✓ Create elements', variant: 'primary' },
+      { id: 'cancel', label: 'Cancel', variant: 'default' }
+    ],
+    createdAt: t(1)
+  },
+  {
+    id: '9',
+    role: 'user',
+    content: 'Looks great, go ahead!',
+    createdAt: t(0.7)
+  },
+  {
+    id: '10',
+    role: 'assistant',
+    content: 'Done! The pricing section is now live on the page.',
+    tools: [
+      {
+        id: 't10',
+        name: 'create_element',
+        args: { type: 'container', pageId: 'home', label: 'Pricing Section' },
+        status: 'done',
+        result: { elementId: 'pricing-1' }
+      },
+      {
+        id: 't11',
+        name: 'create_element',
+        args: { type: 'container', parentId: 'pricing-1', label: 'Starter Card' },
+        status: 'done',
+        result: { elementId: 'pricing-card-1' }
+      },
+      {
+        id: 't12',
+        name: 'create_element',
+        args: { type: 'container', parentId: 'pricing-1', label: 'Pro Card' },
+        status: 'done',
+        result: { elementId: 'pricing-card-2' }
+      },
+      {
+        id: 't13',
+        name: 'create_element',
+        args: { type: 'container', parentId: 'pricing-1', label: 'Enterprise Card' },
+        status: 'done',
+        result: { elementId: 'pricing-card-3' }
+      },
+      {
+        id: 't14',
+        name: 'apply_styles',
+        args: { elementId: 'pricing-1', variant: 'pricing-section' },
+        status: 'done'
+      }
+    ],
+    preview: { elementId: 'pricing-1' },
+    createdAt: t(0.3)
   }
 ];
 
@@ -112,15 +390,14 @@ const MOCK_LIVE_THINKING =
 const MOCK_STREAMING =
   'Updating the hero title font size and weight to make it stand out more. Using the `--color-primary` variable for the CTA button color…';
 
-// Cycles through 3 states: idle → streaming → idle
 type PreviewMode = 'history' | 'streaming' | 'empty';
+
+const cycleMode = (m: PreviewMode): PreviewMode =>
+  m === 'empty' ? 'history' : m === 'history' ? 'streaming' : 'empty';
 
 const AiChatPreview = () => {
   const chatRef = useRef<HTMLDivElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [mode, setMode] = useState<PreviewMode>('history');
-  const [messageInput, setMessageInput] = useState('');
 
   const messages = mode === 'empty' ? [] : MOCK_MESSAGES;
   const streamingText = mode === 'streaming' ? MOCK_STREAMING : '';
@@ -129,32 +406,19 @@ const AiChatPreview = () => {
 
   return (
     <div className="flex h-full w-full flex-col bg-white font-mono text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-2 dark:border-zinc-800">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-violet-500 dark:text-violet-400">◆</span>
-          <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">AI Assistant</span>
-          <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
-            preview
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
+      <AiChatHeader
+        onClear={() => setMode('empty')}
+        isStreaming={false}
+        badge="preview"
+        extra={
           <button
             className="text-xs text-zinc-400 transition-colors hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-400"
-            onClick={() => setMode(m => (m === 'empty' ? 'history' : m === 'history' ? 'streaming' : 'empty'))}
+            onClick={() => setMode(cycleMode)}
           >
-            cycle mode: {mode}
+            cycle: {mode}
           </button>
-          <button
-            className="text-xs text-zinc-400 transition-colors hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-400"
-            title="New conversation"
-          >
-            ✕ new
-          </button>
-        </div>
-      </div>
-
-      {/* Chat area */}
+        }
+      />
       <Chat
         ref={chatRef}
         messages={messages}
@@ -162,63 +426,14 @@ const AiChatPreview = () => {
         liveThinking={liveThinking}
         liveTools={liveTools}
       />
-
-      {/* Input area */}
-      <div className="flex flex-col gap-2 border-t border-gray-200 bg-gray-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
-        {/* Input row */}
-        <div className="flex items-end gap-2">
-          {/* Image attach */}
-          <button
-            className="shrink-0 rounded p-1.5 text-zinc-400 transition-colors hover:bg-gray-200 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
-            onClick={() => fileInputRef.current?.click()}
-            title="Attach image"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-              />
-            </svg>
-          </button>
-          <input ref={fileInputRef} type="file" accept="image/*" multiple hidden />
-
-          {/* Textarea */}
-          <textarea
-            ref={textareaRef}
-            className="min-h-9 flex-1 resize-none rounded border border-gray-200 bg-white px-3 py-2 text-xs text-zinc-800 placeholder-zinc-400 outline-none focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-600"
-            placeholder={`Ask anything… (${sendShortcutLabel} to send)`}
-            value={messageInput}
-            rows={1}
-            onChange={e => {
-              setMessageInput(e.target.value);
-              e.target.style.height = 'auto';
-              e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
-            }}
-          />
-
-          {/* Voice button */}
-          <button
-            className="shrink-0 rounded p-1.5 text-zinc-400 transition-colors hover:bg-gray-200 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
-            title="Voice input"
-          >
-            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 1a4 4 0 014 4v6a4 4 0 01-8 0V5a4 4 0 014-4zm0 2a2 2 0 00-2 2v6a2 2 0 004 0V5a2 2 0 00-2-2zm-7 9a7 7 0 0014 0h2a9 9 0 01-8 8.94V22h2v2H9v-2h2v-1.06A9 9 0 013 12h2z" />
-            </svg>
-          </button>
-
-          {/* Send button */}
-          <button
-            className="shrink-0 rounded bg-violet-600 p-1.5 text-white transition-colors hover:bg-violet-500 disabled:opacity-40"
-            disabled={!messageInput.trim()}
-            title={`Send (${sendShortcutLabel})`}
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
-            </svg>
-          </button>
-        </div>
-      </div>
+      <ChatInput
+        isStreaming={false}
+        isListening={false}
+        isVoiceSupported={false}
+        audioData={null}
+        onSend={() => {}}
+        onVoiceToggle={() => {}}
+      />
     </div>
   );
 };
