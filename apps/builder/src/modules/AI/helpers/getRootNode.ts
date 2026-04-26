@@ -23,10 +23,15 @@ const getRootNode = (parentNode?: Element, params = { centered: false }) => {
     base: {
       default: {
         display: 'flex',
+        overflow: 'auto',
         'flex-direction': 'column',
         'min-height': '100%',
         'min-width': '100%',
-        'max-width': '100%'
+        'max-width': '100%',
+        'padding-top': '4px',
+        'padding-bottom': '4px',
+        'padding-left': '4px',
+        'padding-right': '4px'
       }
     }
   };

@@ -1,4 +1,3 @@
-import ContainerAutoScale from '@plitzi/plitzi-ui/ContainerAutoScale';
 import { useMemo } from 'react';
 
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
@@ -33,9 +32,7 @@ const AiTemplatePreview = ({ baseElementId, schema, style }: AiTemplatePreviewPr
 
   return (
     <StoreProvider value={storeValue} logger={createStoreDevToolsLogger('ai-preview')}>
-      <ContainerAutoScale className="flex min-h-40 w-full items-center justify-center overflow-hidden bg-white dark:bg-zinc-950">
-        <BuilderAreaPreview id={baseElementId} className="h-full w-full" previewMode />
-      </ContainerAutoScale>
+      <BuilderAreaPreview id={baseElementId} className="aspect-video h-full w-full" previewMode />
     </StoreProvider>
   );
 };
