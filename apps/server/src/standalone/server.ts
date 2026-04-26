@@ -77,6 +77,7 @@ const __dirname = path.dirname(__filename);
 const server = createSSRServer({
   port: PORT,
   host: HOST,
+  frameOptions: 'SAMEORIGIN',
   sdkEnvironment: (process.env.SDK_ENVIRONMENT ?? 'production') as 'production' | 'staging' | 'development',
   devMode: process.env.NODE_ENV !== 'production',
   static: {
