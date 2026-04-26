@@ -3,7 +3,7 @@ import type { AiMessageAction } from '../../types';
 type ActionButtonsProps = { actions: AiMessageAction[] };
 
 const ActionButtons = ({ actions }: ActionButtonsProps) => (
-  <div className="flex gap-2 pl-2 pt-1">
+  <div className="flex gap-2 pt-1 pl-2">
     {actions.map(action => (
       <button
         key={action.id}

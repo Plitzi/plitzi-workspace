@@ -39,9 +39,7 @@ const Chat = ({ ref, messages = [], streamingText, liveThinking, liveTools = [] 
             </div>
           ))}
 
-          {hasLive && (
-            <LiveEntry streamingText={streamingText} liveThinking={liveThinking} liveTools={liveTools} />
-          )}
+          {hasLive && <LiveEntry streamingText={streamingText} liveThinking={liveThinking} liveTools={liveTools} />}
         </div>
       )}
     </div>

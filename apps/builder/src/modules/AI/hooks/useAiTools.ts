@@ -15,6 +15,7 @@ const useAiTools = (): AiFrontendToolRunner => {
   const { currentPageId } = use(NavigationContext);
 
   const runTool = useCallback(
+    // eslint-disable-next-line @typescript-eslint/require-await
     async (name: string, args: Record<string, unknown>): Promise<AiFrontendToolResult> => {
       switch (name) {
         case 'stage_preview': {
@@ -26,7 +27,7 @@ const useAiTools = (): AiFrontendToolRunner => {
         }
 
         case 'get_builder_context': {
-          const result = buildBuilderContext(schema, currentPageId, elementSelected as string | undefined);
+          const result = buildBuilderContext(schema, currentPageId, elementSelected);
           return { toolResult: result };
         }
 

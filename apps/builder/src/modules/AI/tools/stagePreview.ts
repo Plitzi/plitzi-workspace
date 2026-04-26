@@ -1,3 +1,5 @@
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared';
+
 import type { AiMessagePreview } from '../types';
 
 // AI-friendly element description — no SDK internals required
@@ -31,6 +33,7 @@ const buildCacheString = (className: string, styles: Record<string, string>) => 
   const props = Object.entries(styles)
     .map(([k, v]) => `${k}:${v}`)
     .join(';');
+
   return `.${className}{${props}}`;
 };
 
@@ -72,9 +75,7 @@ export const transformStagePreview = (args: StagePreviewArgs): TemplatePreview =
 
   return {
     baseElementId: args.baseElementId,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    schema: { flat } as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    style: { platform: { desktop, tablet: {}, mobile: {} } } as any
+    schema: { flat: EMPTY_SCHEMA.schema['flat'] },
+    style: { platform: EMPTY_SCHEMA.style['platform'] }
   };
 };

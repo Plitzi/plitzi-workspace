@@ -20,7 +20,7 @@ export const drawByLiveStream = ({
   animateCurrentPick,
   fullscreen
 }: {
-  audioData?: Uint8Array<ArrayBuffer>;
+  audioData?: Uint8Array<ArrayBuffer> | null;
   unit: number;
   index: RefObject<number>;
   index2: RefObject<number>;

@@ -13,10 +13,7 @@ export type AiFrontendToolResult = {
   pendingPreview?: Extract<AiMessagePreview, { baseElementId: string }>;
 };
 
-export type AiFrontendToolRunner = (
-  name: string,
-  args: Record<string, unknown>
-) => Promise<AiFrontendToolResult>;
+export type AiFrontendToolRunner = (name: string, args: Record<string, unknown>) => Promise<AiFrontendToolResult>;
 
 // Tool names the server should delegate to the client instead of handling server-side.
 // The server uses this list to emit 'client_tool' events instead of executing the tool.

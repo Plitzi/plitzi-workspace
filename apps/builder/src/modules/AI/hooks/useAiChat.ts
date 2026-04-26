@@ -131,7 +131,10 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner) => {
                   )
                 );
               } else if (event.type === 'client_tool') {
-                setLiveTools(prev => [...prev, { id: event.id, name: event.name, args: event.args, status: 'running' }]);
+                setLiveTools(prev => [
+                  ...prev,
+                  { id: event.id, name: event.name, args: event.args, status: 'running' }
+                ]);
                 if (runClientTool) {
                   const { toolResult, pendingPreview } = await runClientTool(event.name, event.args);
                   if (pendingPreview) {

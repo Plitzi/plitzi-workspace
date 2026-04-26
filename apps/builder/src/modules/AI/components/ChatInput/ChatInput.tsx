@@ -15,7 +15,7 @@ type ChatInputProps = {
   isStreaming: boolean;
   isListening: boolean;
   isVoiceSupported: boolean;
-  audioData: Uint8Array | null;
+  audioData: Uint8Array<ArrayBuffer> | null;
   onSend: (message: string, attachments: AiAttachment[]) => void;
   onVoiceToggle: () => void;
 };
@@ -35,7 +35,10 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
     }));
 
     const handleSend = useCallback(() => {
-      if ((!messageInput.trim() && attachments.length === 0) || isStreaming) return;
+      if ((!messageInput.trim() && attachments.length === 0) || isStreaming) {
+        return;
+      }
+
       const msg = messageInput;
       const atts = attachments;
       setMessageInput('');
@@ -45,7 +48,9 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
 
     const handleKeyDown = useCallback(
       (e: KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSend();
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+          handleSend();
+        }
       },
       [handleSend]
     );

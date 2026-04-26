@@ -8,7 +8,7 @@ import type { RefObject } from 'react';
 
 export type VoiceVisualizerProps = {
   className?: string;
-  audioData?: Uint8Array<ArrayBuffer>;
+  audioData?: Uint8Array<ArrayBuffer> | null;
   recordingPaused?: boolean;
   isRecording?: boolean;
   speed?: number;
