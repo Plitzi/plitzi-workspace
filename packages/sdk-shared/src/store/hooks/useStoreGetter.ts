@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
@@ -59,6 +60,7 @@ function useStoreGetter<TState extends object>(
 
           if (subPath !== undefined) {
             const subVal = getByPath(base as TState, subPath as PathOf<TState>);
+
             return subVal === undefined && callDefault !== undefined ? callDefault : subVal;
           }
 
@@ -73,15 +75,18 @@ function useStoreGetter<TState extends object>(
           const base = getByPath(state, resolvedBasePath as PathOf<TState>);
           if (subPath !== undefined) {
             const subVal = getByPath(base as TState, subPath as PathOf<TState>);
+
             return subVal === undefined && callDefault !== undefined ? callDefault : subVal;
           }
 
           const baseDefault = callDefault !== undefined ? callDefault : defaultValue;
+
           return base === undefined && baseDefault !== undefined ? baseDefault : base;
         }
 
         if (subPath !== undefined) {
           const val = getByPath(state, subPath as PathOf<TState>);
+
           return val === undefined && callDefault !== undefined ? callDefault : val;
         }
 

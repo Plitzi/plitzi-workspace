@@ -12,9 +12,17 @@ export const buildCacheManager = (store: TtlCache<string>): CacheManager => ({
 
     return store.invalidateWhere(key => {
       const [keySpaceId, keyEnvironment, , keyHostname] = key.split('\0');
-      if (filter.spaceId !== undefined && keySpaceId !== String(filter.spaceId)) return false;
-      if (filter.environment !== undefined && keyEnvironment !== filter.environment) return false;
-      if (filter.hostname !== undefined && keyHostname !== filter.hostname) return false;
+      if (filter.spaceId !== undefined && keySpaceId !== String(filter.spaceId)) {
+        return false;
+      }
+
+      if (filter.environment !== undefined && keyEnvironment !== filter.environment) {
+        return false;
+      }
+
+      if (filter.hostname !== undefined && keyHostname !== filter.hostname) {
+        return false;
+      }
 
       return true;
     });

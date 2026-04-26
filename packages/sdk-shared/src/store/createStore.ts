@@ -79,7 +79,7 @@ function createStore<TState extends object>(
       ? setByPath(prevState, path, resolvedValue)
       : typeof value === 'function'
         ? (value as (prev: TState) => TState)(prevState)
-        : { ...prevState, ...(value as TState) };
+        : { ...prevState, ...value };
 
     if (Object.is(nextState, prevState)) {
       return;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -30,7 +31,6 @@ export function makeSingleSnapshot<TState extends object>(
 ): () => unknown {
   return () => {
     const state = store.getState();
-
     if (typeof pathOrFn === 'function') {
       const val = getByPath(state, pathOrFn(state));
       return val === undefined ? defaultValue : val;
@@ -56,7 +56,6 @@ export function makeMultiSnapshot<TState extends object>(
   return () => {
     const state = store.getState();
     const paths = pathsRef.current;
-
     const next = paths.map((p, i) => {
       const resolvedPath = typeof p === 'function' ? p(state) : p;
       const val = getByPath(state, resolvedPath);
@@ -114,6 +113,7 @@ export function useMultiSubscribe<TState extends object>(
       }
 
       const unsubs = paths.map(p => store.subscribePath(p as PathOf<TState>, cb));
+
       return () => unsubs.forEach(u => u());
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -150,6 +150,7 @@ export function useMultiExternalStore(
     if (!enabled) {
       const snap = lastRef.current ?? getSnapshot();
       lastRef.current = snap;
+
       return snap;
     }
 

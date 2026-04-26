@@ -1,3 +1,4 @@
+import importPlugin from 'eslint-plugin-import';
 import tsEslint from 'typescript-eslint';
 
 import sharedConfig from '../../packages/sdk-shared/eslint.config.mjs';
@@ -11,6 +12,9 @@ export default tsEslint.config({
       },
       tsconfigRootDir: import.meta.dirname
     }
+  },
+  plugins: {
+    import: importPlugin
   },
   rules: {
     // "@typescript-eslint/no-unnecessary-type-assertion": "off",

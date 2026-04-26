@@ -48,7 +48,7 @@ export default tsEslint.config({
     ],
     '@typescript-eslint/no-unnecessary-type-arguments': 'off',
     '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: { attributes: false, arguments: false } }],
-    '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
+    '@typescript-eslint/no-confusing-void-expression': 'off', // ['error', { ignoreArrowShorthand: true, ignoreVoidOperator: true }],
     'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     'no-var': 'error',
     curly: 'error',

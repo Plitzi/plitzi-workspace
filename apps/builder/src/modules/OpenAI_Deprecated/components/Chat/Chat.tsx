@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import ChatMessage from './ChatMessage';
 
-import type { OpenAIMessage } from '@pmodules/OpenAI/types/openAI';
+import type { OpenAIMessage } from '@pmodules/OpenAI_Deprecated/types/openAI';
 import type { RefObject } from 'react';
 
 export type ChatProps = {

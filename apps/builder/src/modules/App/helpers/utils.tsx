@@ -3,10 +3,10 @@ import Variable from '@plitzi/plitzi-ui/icons/Variable';
 import Sidebar from '@plitzi/plitzi-ui/Sidebar';
 
 import StyleAdvanceEditor from '@plitzi/sdk-style/StyleAdvanceEditor';
+import AiChat from '@pmodules/AI';
 import BuilderTree from '@pmodules/Builder/components/BuilderTree';
 import Collections from '@pmodules/Collection/Collections';
 import Elements from '@pmodules/Elements';
-import OpenAIChat from '@pmodules/OpenAI/OpenAIChat';
 import Resources from '@pmodules/Resources';
 import Segments from '@pmodules/Segments';
 import StateManager from '@pmodules/StateManager/StateManager';
@@ -218,7 +218,7 @@ export const getPopups = ({
   if (featureFlag.assistanceAI) {
     left.push({
       id: 'assistant',
-      component: <OpenAIChat />,
+      component: <AiChat />,
       active: activeIds.includes('assistant'),
       settings: {
         icon: <Sidebar.Icon className="p-1" icon="fa-solid fa-star" title="Variables" />,

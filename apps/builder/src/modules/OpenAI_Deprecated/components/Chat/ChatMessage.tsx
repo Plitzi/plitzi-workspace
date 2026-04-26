@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import Message from './Message';
 
-import type { OpenAIMessage, OpenAIRole } from '@pmodules/OpenAI/types/openAI';
+import type { OpenAIMessage, OpenAIRole } from '@pmodules/OpenAI_Deprecated/types/openAI';
 
 export type ChatMessageProps = {
   id: string;

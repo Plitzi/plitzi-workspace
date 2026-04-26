@@ -1006,6 +1006,10 @@
       "types": "./dist/src/types/InteractionTypes.d.ts",
       "import": "./dist/src/types/InteractionTypes.mjs"
     },
+    "./types/McpTypes": {
+      "types": "./dist/src/types/McpTypes.d.ts",
+      "import": "./dist/src/types/McpTypes.mjs"
+    },
     "./types/NavigationTypes": {
       "types": "./dist/src/types/NavigationTypes.d.ts",
       "import": "./dist/src/types/NavigationTypes.mjs"

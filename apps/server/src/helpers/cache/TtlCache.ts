@@ -17,9 +17,13 @@ export class TtlCache<T> {
 
   get(key: string): T | undefined {
     const entry = this.store.get(key);
-    if (!entry) return undefined;
+    if (!entry) {
+      return undefined;
+    }
+
     if (Date.now() > entry.expiresAt) {
       this.store.delete(key);
+
       return undefined;
     }
 
@@ -66,7 +70,9 @@ export class TtlCache<T> {
   private sweep(): void {
     const now = Date.now();
     for (const [key, entry] of this.store) {
-      if (now > entry.expiresAt) this.store.delete(key);
+      if (now > entry.expiresAt) {
+        this.store.delete(key);
+      }
     }
   }
 }

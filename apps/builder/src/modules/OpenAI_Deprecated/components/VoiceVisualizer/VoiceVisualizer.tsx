@@ -24,7 +24,7 @@ export type VoiceVisualizerProps = {
 
 const VoiceVisualizer = ({
   ref,
-  className = 'h-[100px]',
+  className = 'h-25',
   audioData,
   recordingPaused = false,
   isRecording = false,

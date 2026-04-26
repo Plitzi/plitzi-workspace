@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import MessageHtml from './modes/MessageHtml';
 import MessageText from './modes/MessageText';
 
-import type { OpenAIContentType } from '@pmodules/OpenAI/types/openAI';
+import type { OpenAIContentType } from '@pmodules/OpenAI_Deprecated/types/openAI';
 
 export type MessageProps = {
   message: { type: OpenAIContentType; content: string }[];

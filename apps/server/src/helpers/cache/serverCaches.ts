@@ -8,10 +8,7 @@ export type ServerCaches = {
   offlineData: TtlCache<string> | undefined;
 };
 
-export const createServerCaches = (
-  htmlTtlMs = DEFAULT_TTL_MS.html,
-  rscTtlMs = DEFAULT_TTL_MS.rsc
-): ServerCaches => ({
+export const createServerCaches = (htmlTtlMs = DEFAULT_TTL_MS.html, rscTtlMs = DEFAULT_TTL_MS.rsc): ServerCaches => ({
   html: htmlTtlMs > 0 ? new TtlCache<string>(htmlTtlMs) : undefined,
   rsc: rscTtlMs > 0 ? new TtlCache<string>(rscTtlMs) : undefined,
   offlineData: htmlTtlMs > 0 ? new TtlCache<string>(htmlTtlMs) : undefined
