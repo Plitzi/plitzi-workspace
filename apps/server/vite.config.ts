@@ -15,6 +15,7 @@ const copyAssets = (): import('vite').Plugin => ({
   closeBundle() {
     const copies: [string, string][] = [
       [path.resolve(root, 'src/ssr/views'), path.resolve(root, 'dist/ssr/views')],
+      [path.resolve(root, 'src/modules/ssr/views'), path.resolve(root, 'dist/modules/ssr/views')],
       [path.resolve(root, 'public'), path.resolve(root, 'dist/public')]
     ];
     for (const [src, dest] of copies) {
