@@ -31,7 +31,7 @@ class StyleMap {
   constructor(props: StyleMapProps) {
     const { platform, variables } = props;
     if (!(platform as typeof platform | undefined)) {
-      throw new Error('Platform and Variables required');
+      throw new Error('Platform Required');
     }
 
     this.platform = platform;

@@ -170,11 +170,12 @@ export type SSRServerConfig = {
   ssrOnly?: boolean;
   /** Stream HTML to the client as React renders, reducing TTFB. Default: false. */
   streaming?: boolean;
-  /** Controls iframe embedding via X-Frame-Options and CSP frame-ancestors.
+  /** Controls iframe embedding via CSP frame-ancestors (and X-Frame-Options for legacy browsers).
    *  'DENY' — no site may embed this server (default).
    *  'SAMEORIGIN' — only the same origin may embed it.
+   *  string[] — explicit list of allowed origins, e.g. ['https://app.example.com', 'https://preview.example.com'].
    *  false — no restriction; headers are omitted. */
-  frameOptions?: 'DENY' | 'SAMEORIGIN' | false;
+  frameOptions?: 'DENY' | 'SAMEORIGIN' | string[] | false;
   /** RSC (React Server Components) endpoint configuration. */
   rsc?: SSRRscConfig;
   /** MCP (Model Context Protocol) server configuration — exposes schema tools to Claude. */

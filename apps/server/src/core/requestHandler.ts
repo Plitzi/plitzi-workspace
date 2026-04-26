@@ -48,8 +48,14 @@ const handleRequest = async (
   res.setHeader('X-DNS-Prefetch-Control', 'off');
   const frameOptions = config.frameOptions === undefined ? 'DENY' : config.frameOptions;
   if (frameOptions) {
-    res.setHeader('X-Frame-Options', frameOptions);
-    res.setHeader('Content-Security-Policy', `frame-ancestors '${frameOptions === 'DENY' ? 'none' : 'self'}'`);
+    if (Array.isArray(frameOptions)) {
+      // Multiple allowed origins: CSP supports a list, X-Frame-Options does not
+      res.setHeader('Content-Security-Policy', `frame-ancestors ${frameOptions.join(' ')}`);
+    } else {
+      // DENY / SAMEORIGIN: set both for broad browser compatibility
+      res.setHeader('X-Frame-Options', frameOptions);
+      res.setHeader('Content-Security-Policy', `frame-ancestors '${frameOptions === 'DENY' ? 'none' : 'self'}'`);
+    }
   }
 
   if ((config.httpVersion ?? 2) >= 3) {
