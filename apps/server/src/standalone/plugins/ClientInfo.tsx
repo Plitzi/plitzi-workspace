@@ -18,7 +18,8 @@ type BrowserInfo = {
   cookiesEnabled: boolean;
 };
 
-const ClientInfo = () => {
+const ClientInfo = (props: unknown) => {
+  console.log('client', props);
   const [info, setInfo] = useState<BrowserInfo | null>(null);
 
   useEffect(() => {

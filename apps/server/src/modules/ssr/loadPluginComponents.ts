@@ -1,4 +1,4 @@
-import type { PluginEntry } from '@plitzi/sdk-shared';
+import type { PluginEntry, SSRPlugin } from '@plitzi/sdk-shared';
 import type { FC } from 'react';
 
 /** Module-level cache: absolute filePath → loaded React component. */
@@ -22,13 +22,13 @@ const failedImports = new Set<string>();
 export const loadPluginComponents = async (
   entries: PluginEntry[],
   inlineComponents?: Record<string, unknown>
-): Promise<Record<string, FC>> => {
-  const result: Record<string, FC> = {};
+): Promise<Record<string, SSRPlugin>> => {
+  const result: Record<string, SSRPlugin> = {};
 
   // Merge component-source plugins provided directly by the PluginManager
   if (inlineComponents) {
     for (const [key, component] of Object.entries(inlineComponents)) {
-      result[key] = component as FC;
+      result[key] = { component: component as FC, props: {} };
     }
   }
 
@@ -58,11 +58,12 @@ export const loadPluginComponents = async (
               (err as Error).message
             );
             failedImports.add(filePath);
+
             return;
           }
         }
 
-        result[e.keyName] = component;
+        result[e.keyName] = { component, props: e.props };
       })
   );
 

@@ -55,7 +55,7 @@
     "start:dev": "TSX_TSCONFIG_PATH=tsconfig.app.json ALIAS_LOADER_DEBUG=1  node --import ./src/standalone/register-alias.mjs --import tsx --watch src/standalone/server.ts",
     "start": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx src/standalone/server.ts",
     "start:watch": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx --watch src/standalone/server.ts",
-    "start:inspect": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx --watch --inspect src/standalone/server.ts",
+    "start:inspect": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx --inspect src/standalone/server.ts",
     "build:dev": "vite build --mode development",
     "build:prod": "vite build",
     "lint": "TIMING=1 eslint ./src",

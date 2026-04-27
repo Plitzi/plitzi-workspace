@@ -56,7 +56,7 @@ let eventBridge: EventBridgeContextValue;
 export function render(
   widgetContainer: string,
   params = {} as PlitziSdkProps,
-  plugins: Record<string, ComponentPlugin> = {},
+  plugins: Record<string, { component: ComponentPlugin; props?: Record<string, unknown> }> = {},
   debugMode = false,
   ssrMode = false
 ) {
@@ -82,9 +82,16 @@ export function render(
         onInitStateManager={handleInitStateManager}
         onInitEventBridge={handleInitEventBridge}
       >
-        {pluginKeys.map(pluginType => (
-          <Sdk.Plugin key={pluginType} renderType={pluginType} component={plugins[pluginType]} />
-        ))}
+        {pluginKeys
+          .filter(pluginType => !!(plugins[pluginType].component as ComponentPlugin | undefined))
+          .map(pluginType => (
+            <Sdk.Plugin
+              key={pluginType}
+              renderType={pluginType}
+              component={plugins[pluginType].component}
+              {...plugins[pluginType].props}
+            />
+          ))}
       </App>
     );
   };

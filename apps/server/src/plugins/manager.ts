@@ -91,16 +91,18 @@ export class PluginManager {
     return Date.now() - compiledAt > this.ttlMs;
   }
 
-  private toEntry(name: string, hasJS: boolean, cssUrl?: string): PluginEntry {
+  private toEntry(name: string, hasJS: boolean, cssUrl?: string, props: Record<string, unknown> = {}): PluginEntry {
     const keyName = name.split('@')[0];
     const varName = keyName.split('-').join('_').split('.').join('_');
+
     return {
       name,
       varName,
       keyName,
       js: hasJS ? `${this.urlPrefix}/${name}/index.js` : undefined,
       filePath: hasJS ? path.join(this.outputDir, name, 'index.js') : undefined,
-      css: cssUrl
+      css: cssUrl,
+      props
     };
   }
 
@@ -126,7 +128,7 @@ export class PluginManager {
     }
 
     if (isComponentSource(source) && !source.js) {
-      return this.toEntry(key, false);
+      return this.toEntry(key, false, undefined, source.props);
     }
 
     const cached = this.mem.get(key);
@@ -162,8 +164,9 @@ export class PluginManager {
             cssUrl = sourceCss;
           }
 
-          const entry = this.toEntry(key, true, cssUrl);
+          const entry = this.toEntry(key, true, cssUrl, source.props);
           this.mem.set(key, { compiledAt: meta.compiledAt, entry });
+
           return entry;
         }
       }
@@ -171,6 +174,7 @@ export class PluginManager {
 
     const promise = this.build(key, source).finally(() => this.inflight.delete(key));
     this.inflight.set(key, promise);
+
     return promise;
   }
 
@@ -187,7 +191,7 @@ export class PluginManager {
       : (source.action ?? detectAction(source.js));
 
     if (!jsPath || !action) {
-      return this.toEntry(name, false);
+      return this.toEntry(name, false, undefined, source.props);
     }
 
     console.log(`[SSR] Plugin "${name}" building (${action}: ${jsPath})…`);
@@ -246,7 +250,7 @@ export class PluginManager {
       const compiledAt = Date.now();
       await this.writeMeta(name, { compiledAt, version: source.version });
 
-      const entry = this.toEntry(name, true, cssUrl);
+      const entry = this.toEntry(name, true, cssUrl, source.props);
       this.mem.set(name, { compiledAt, entry });
       console.log(`[SSR] Plugin "${name}" ready → ${entry.js}`);
       return entry;
@@ -263,6 +267,7 @@ export class PluginManager {
     }
 
     const results = await Promise.all(names.map(n => this.prepare(n)));
+
     return results.filter((e): e is PluginEntry => e !== null && e.js !== undefined);
   }
 

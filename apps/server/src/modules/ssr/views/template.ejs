@@ -60,7 +60,7 @@
       <% for (const plugin of activePlugins) { %>
       import { default as <%= plugin.varName %> } from '<%= plugin.js %>';
       <% } %>
-      const __plitziPlugins = { <%- activePlugins.map(p => `'${p.keyName}': ${p.varName}`).join(', ') %> };
+      const __plitziPlugins = { <%- activePlugins.map(p => `'${p.keyName}': {component: ${p.varName}, props: ${JSON.stringify(p.props)}}`).join(', ') %> };
       render('plitzi', <%- locals.offlineData || '{}' %>, __plitziPlugins, <%= locals.debugMode ? true : false %>, true);
       <% } else { %>
       render('plitzi', <%- locals.offlineData || '{}' %>, {}, <%= locals.debugMode ? true : false %>, true);

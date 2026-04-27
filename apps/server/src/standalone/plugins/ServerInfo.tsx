@@ -17,7 +17,8 @@ type ServerData = {
   uptime: number;
 };
 
-const ServerInfo = () => {
+const ServerInfo = (props: unknown) => {
+  console.log('server', props);
   const { serverData, elementData } = useRscData<ServerData | null>();
 
   useEffect(() => {

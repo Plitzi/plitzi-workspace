@@ -2,6 +2,7 @@ import type { Environment } from './CommonTypes';
 import type { McpServerConfig } from './McpTypes';
 import type { OfflineDataRaw } from './SdkTypes';
 import type { IncomingHttpHeaders } from 'node:http';
+import type { FC } from 'react';
 
 export type ServerEnvironment = 'development' | 'production' | 'staging' | 'local';
 
@@ -41,21 +42,23 @@ export type SSRCredential = {
 
 export type PluginAction = 'copy' | 'compile' | 'download';
 
-export type PluginSourceFile = {
+export type PluginSourceFile<T = Record<string, unknown>> = {
   js: string;
   css?: string;
   action?: PluginAction;
   version?: string;
+  props?: T;
 };
 
-export type PluginSourceComponent = {
+export type PluginSourceComponent<T = Record<string, unknown>> = {
   component: unknown;
   js?: string;
   css?: string;
   version?: string;
+  props?: T;
 };
 
-export type PluginSource = PluginSourceFile | PluginSourceComponent;
+export type PluginSource<T = Record<string, unknown>> = PluginSourceFile<T> | PluginSourceComponent<T>;
 
 export type PluginEntry = {
   name: string;
@@ -68,6 +71,7 @@ export type PluginEntry = {
   /** Absolute filesystem path used for server-side dynamic import() during SSR. */
   filePath?: string;
   css?: string;
+  props: Record<string, unknown>;
 };
 
 export type SSRTemplateProps = {
@@ -84,6 +88,11 @@ export type SSRTemplateProps = {
   /** When true the client-side <script> block is omitted — useful for inspecting raw SSR HTML. */
   ssrOnly?: boolean;
   debugMode?: boolean;
+};
+
+export type SSRPlugin = {
+  component: FC;
+  props: Record<string, unknown>;
 };
 
 export type SSRUser = {

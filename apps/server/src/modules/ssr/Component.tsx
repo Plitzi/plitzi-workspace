@@ -1,7 +1,6 @@
 import PlitziSdk from '@plitzi/plitzi-sdk';
 
-import type { OfflineDataRaw, Environment, RenderMode, Server } from '@plitzi/sdk-shared';
-import type { FC } from 'react';
+import type { OfflineDataRaw, Environment, RenderMode, Server, SSRPlugin } from '@plitzi/sdk-shared';
 
 export type ComponentProps = {
   server: Partial<Server>;
@@ -9,7 +8,7 @@ export type ComponentProps = {
   environment?: Environment;
   previewMode?: boolean;
   offlineData?: OfflineDataRaw;
-  plugins?: Record<string, FC>;
+  plugins?: Record<string, SSRPlugin>;
 };
 
 const Component = ({
@@ -30,7 +29,9 @@ const Component = ({
       offlineData={offlineData}
     >
       {plugins &&
-        Object.keys(plugins).map(key => <PlitziSdk.Plugin key={key} renderType={key} component={plugins[key]} />)}
+        Object.keys(plugins).map(key => (
+          <PlitziSdk.Plugin key={key} renderType={key} component={plugins[key].component} {...plugins[key].props} />
+        ))}
     </PlitziSdk>
   );
 };
