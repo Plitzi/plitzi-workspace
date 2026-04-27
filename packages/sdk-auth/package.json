@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-auth",
-  "version": "0.30.14",
+  "version": "0.30.15",
   "license": "GPLv3",
   "publishConfig": {
     "access": "restricted",
