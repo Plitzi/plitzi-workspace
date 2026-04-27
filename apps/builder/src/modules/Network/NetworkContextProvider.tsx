@@ -21,7 +21,6 @@ import type {
   Schema,
   BuilderNetworkContextValue,
   Environment,
-  ServerEnvironment,
   BuilderQueriesMap,
   BuilderMutationsMap,
   BuilderSubscriptionsMap,
@@ -38,7 +37,6 @@ export type NetworkContextProviderProps = {
   instanceId: string;
   server: Server;
   environment?: Environment;
-  builderEnvironment?: ServerEnvironment;
 };
 
 const NetworkContextProvider = ({
@@ -48,8 +46,7 @@ const NetworkContextProvider = ({
   userKey = '',
   instanceId,
   server,
-  environment = 'main',
-  builderEnvironment = 'production'
+  environment = 'main'
 }: NetworkContextProviderProps) => {
   const client = useApolloClient();
   const { addToast } = useToast();
@@ -258,8 +255,6 @@ const NetworkContextProvider = ({
       mutate,
       query,
       subscriptionManager,
-      sdkEnvironment: builderEnvironment,
-      builderEnvironment,
       webKey,
       instanceId,
       server,
@@ -267,7 +262,7 @@ const NetworkContextProvider = ({
       webId,
       environment
     }),
-    [mutate, query, subscriptionManager, builderEnvironment, webKey, instanceId, server, userKey, webId, environment]
+    [mutate, query, subscriptionManager, webKey, instanceId, server, userKey, webId, environment]
   );
 
   if (error) {

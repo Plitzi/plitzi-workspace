@@ -32,7 +32,7 @@ import BuilderAreaTracking from './BuilderAreaTracking';
 import styleFrame from '../../Assets/index-iframe.scss?inline';
 import BuilderCollaboratorArea from '../BuilderCollaborator/BuilderCollaboratorArea';
 
-import type { BuilderState, BuilderNetworkContextValue, ComponentPluginWithHOC, DisplayMode } from '@plitzi/sdk-shared';
+import type { BuilderState, ComponentPluginWithHOC, DisplayMode } from '@plitzi/sdk-shared';
 
 export type BuilderAreaProps = {
   className?: string;
@@ -84,7 +84,6 @@ const BuilderArea = ({
   const { supportRealTime, subscriptionsCollaborators } = use(BuilderSubscriptionsContext);
   const { currentPageId } = use(NavigationContext);
   const { rootRef } = use(ContainerRootContext);
-  const { sdkEnvironment, builderEnvironment } = use(NetworkContext) as BuilderNetworkContextValue;
 
   const getWindow = useCallback(() => {
     if (ref.current) {
@@ -110,8 +109,6 @@ const BuilderArea = ({
         debugMode,
         currentPageId,
         environment: 'main',
-        sdkEnvironment,
-        builderEnvironment,
         theme
       },
       root: { baseElementId },
@@ -132,18 +129,7 @@ const BuilderArea = ({
         BuilderContext
       }
     }),
-    [
-      previewMode,
-      debugMode,
-      currentPageId,
-      sdkEnvironment,
-      builderEnvironment,
-      theme,
-      baseElementId,
-      displayBorderComponents,
-      getWindow,
-      rootRef
-    ]
+    [previewMode, debugMode, currentPageId, theme, baseElementId, displayBorderComponents, getWindow, rootRef]
   );
 
   const baseElementValueMemo = useMemo(() => ({ id: baseElementId, rootId: baseElementId }), [baseElementId]);

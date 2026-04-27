@@ -71,7 +71,7 @@ import packageSettings from '../package.json';
 
 import './assets/index.scss';
 
-import type { ComponentPlugin, ComponentPluginFC, Server, ServerEnvironment } from '@plitzi/sdk-shared';
+import type { ComponentPlugin, ComponentPluginFC, Server } from '@plitzi/sdk-shared';
 import type { BuilderPluginProps } from '@pmodules/Builder/BuilderPlugin';
 import type { Client } from 'graphql-ws';
 import type { ReactNode } from 'react';
@@ -83,7 +83,6 @@ export type AppProps = {
   webKey: string;
   includeSubscriptions?: boolean;
   userKey?: string;
-  builderEnvironment?: ServerEnvironment;
   debugMode?: boolean;
 };
 
@@ -137,13 +136,12 @@ const App = (props: AppProps) => {
     includeSubscriptions = true,
     userKey = '',
     className = 'min-h-screen',
-    builderEnvironment = 'production',
     debugMode: debugModeProp = false
   } = props;
   const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
   const [instanceId, setInstanceId] = useStorage(`web_${webId}_state.instanceId`, '', 'sessionStorage');
   const [debugMode, setDebugMode] = useStorage('builder-state.debugMode', false, 'localStorage', debugModeProp);
-  const server = useMemo(() => getEnvironmentServer(builderEnvironment, serverProp), [builderEnvironment, serverProp]);
+  const server = useMemo(() => getEnvironmentServer(serverProp), [serverProp]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createContext } from 'react';
 
-import type { Environment, Server, ServerEnvironment } from '../types';
+import type { Environment, Server } from '../types';
 import type { ApolloClient, ApolloLink, FetchPolicy, Observable } from '@apollo/client/core';
 
 type NetworkContextValueBase<
@@ -26,7 +26,6 @@ type NetworkContextValueBase<
   userKey: string;
   webId: number;
   environment: Environment;
-  sdkEnvironment: ServerEnvironment;
 };
 
 export type NetworkContextValueBuilder<
@@ -34,7 +33,6 @@ export type NetworkContextValueBuilder<
   M extends Record<string, unknown> = Record<string, unknown>,
   S extends Record<string, unknown> = Record<string, unknown>
 > = NetworkContextValueBase<Q, M> & {
-  builderEnvironment: ServerEnvironment;
   instanceId: string;
   subscriptionManager: {
     subscribe: <T extends keyof S>(
@@ -74,9 +72,7 @@ const networkContextDefaultValue: NetworkContextValue = {
   server: {} as Server,
   userKey: '',
   webId: '',
-  environment: 'development',
-  sdkEnvironment: 'production',
-  builderEnvironment: 'development'
+  environment: 'development'
 } as unknown as NetworkContextValue;
 
 const NetworkContext = createContext<NetworkContextValue>(networkContextDefaultValue);

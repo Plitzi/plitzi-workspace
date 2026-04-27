@@ -14,7 +14,6 @@ import type {
   Environment,
   OfflineDataRaw,
   Server,
-  ServerEnvironment,
   SdkQueriesMap,
   SdkMutationsMap,
   NetworkInternalContextValue,
@@ -32,7 +31,6 @@ export type NetworkContextProviderProps = {
   userKey?: string;
   instanceId?: string;
   environment?: Environment;
-  sdkEnvironment?: ServerEnvironment;
   offlineMode?: boolean;
   offlineData?: OfflineDataRaw;
   offlineDataType?: 'json' | 'yaml';
@@ -48,7 +46,6 @@ const NetworkContextProvider = ({
   userKey = '',
   instanceId,
   environment = 'development',
-  sdkEnvironment = 'production',
   offlineMode = false,
   offlineData,
   offlineDataType = 'json',
@@ -248,8 +245,8 @@ const NetworkContextProvider = ({
   }, [offlineDataAvailable, offlineMode && offlineDataType, webKey, environment, debugMode]);
 
   const networkValue = useMemo<NetworkContextValue<SdkQueriesMap, SdkMutationsMap>>(
-    () => ({ query, mutate, webKey, webId, server, environment, instanceId, userKey, sdkEnvironment }),
-    [query, mutate, webKey, webId, server, environment, instanceId, userKey, sdkEnvironment]
+    () => ({ query, mutate, webKey, webId, server, environment, instanceId, userKey }),
+    [query, mutate, webKey, webId, server, environment, instanceId, userKey]
   );
 
   if (error) {

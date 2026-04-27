@@ -22,7 +22,7 @@ import App from './App';
 import packageSettings from '../package.json';
 
 import type { AppProps } from './App';
-import type { ComponentPlugin, RenderMode, Server, ServerEnvironment } from '@plitzi/sdk-shared';
+import type { ComponentPlugin, RenderMode, Server } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export function render(
@@ -69,7 +69,6 @@ export type PlitziBuilderProps = {
   server?: Partial<Server>;
   includeSubscriptions?: boolean;
   includeRealTime?: boolean;
-  builderEnvironment?: ServerEnvironment;
   renderMode?: RenderMode;
   externalStyle?: string;
   state?: object;

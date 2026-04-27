@@ -44,7 +44,6 @@ import type {
   OfflineDataRaw,
   RenderMode,
   Server,
-  ServerEnvironment,
   StateManagerContextValue,
   PlitziServiceContextValue as BasePlitziServiceContextValue
 } from '@plitzi/sdk-shared';
@@ -115,7 +114,6 @@ export type PlitziSdkProps = {
   webKey?: string;
   environment?: Environment;
   currentPageId?: string;
-  sdkEnvironment?: ServerEnvironment;
   server?: Partial<Server>;
   offlineMode?: boolean;
   offlineData?: OfflineDataRaw;

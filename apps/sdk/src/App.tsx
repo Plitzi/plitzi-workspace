@@ -38,7 +38,6 @@ import type {
   OfflineDataRaw,
   RenderMode,
   Server,
-  ServerEnvironment,
   StateManagerContextValue
 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
@@ -50,7 +49,6 @@ export type AppProps = {
   webKey?: string;
   environment?: Environment;
   currentPageId?: string;
-  sdkEnvironment?: ServerEnvironment;
   server?: Partial<Server>;
   offlineMode?: boolean;
   offlineData?: OfflineDataRaw;
@@ -85,14 +83,13 @@ const App = ({
   // Server
   server = undefined,
   // Extra
-  sdkEnvironment = 'production',
   renderMode = 'iframe',
   debugMode: debugModeProp = false,
   ...sdkProps
 }: AppProps) => {
   const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
   const [debugMode, setDebugMode] = useStorage(`web_${webId}_state.debugMode`, false, 'localStorage', debugModeProp);
-  const finalServer = useMemo(() => getEnvironmentServer(sdkEnvironment, server), [sdkEnvironment, server]);
+  const finalServer = useMemo(() => getEnvironmentServer(server), [server]);
   const client = useMemo<ApolloClient>(() => initClient(finalServer, webKey), [finalServer, webKey]);
 
   useEffect(() => {
@@ -174,7 +171,6 @@ const App = ({
                       renderMode={renderMode}
                       debugMode={debugMode}
                       webId={webId}
-                      sdkEnvironment={sdkEnvironment}
                       {...sdkProps}
                     />
                   </ComponentProvider>

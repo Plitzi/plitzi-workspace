@@ -1,8 +1,6 @@
 import type { User } from './AuthTypes';
 import type { SSRRscData } from './ServerTypes';
 
-export type ServerEnvironment = 'production' | 'staging' | 'development' | 'local';
-
 export type Environment = 'production' | 'staging' | 'development' | 'main';
 
 export type Server<T extends Record<string, unknown> = Record<string, unknown>> = {

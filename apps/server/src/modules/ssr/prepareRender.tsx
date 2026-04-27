@@ -51,14 +51,7 @@ export const prepareRender = async (
   }
 
   const offlineDataStr = escapeJson(
-    JSON.stringify({
-      offlineData,
-      offlineMode: true,
-      environment,
-      renderMode: 'raw',
-      server,
-      sdkEnvironment: config.sdkEnvironment ?? 'production'
-    })
+    JSON.stringify({ offlineData, offlineMode: true, environment, renderMode: 'raw', server })
   );
 
   const pluginNames = req.ctx.spaceDeployment?.pluginNames ?? [];
@@ -95,8 +88,7 @@ export const prepareRender = async (
       plugins: Object.keys(pluginComponents).length > 0 ? pluginComponents : undefined,
       offlineData,
       server,
-      environment: req.ctx.spaceDeployment?.environment ?? environment,
-      sdkEnvironment: config.sdkEnvironment ?? 'production'
+      environment: req.ctx.spaceDeployment?.environment ?? environment
     },
     entries,
     templateParams: {

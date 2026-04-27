@@ -1,82 +1,22 @@
-import type { Server, ServerEnvironment } from '@plitzi/sdk-shared';
+import type { Server } from '@plitzi/sdk-shared';
 
-const getConfig = (env: ServerEnvironment, server?: Partial<Server>) => {
-  switch (env) {
-    case 'production': {
-      return {
-        // Dashboard
-        apiServer: 'https://api.plitzi.com',
-        ssrServer: 'https://ssr.plitzi.com',
-        // SDK
-        basePath: '',
-        host: 'https://plitzi.com',
-        nodeServer: 'https://server.plitzi.com',
-        graphqlServer: 'https://server.plitzi.com/graphql',
-        websocketServer: 'wss://server.plitzi.com',
-        subscriptionServer: 'wss://server.plitzi.com/subscriptions',
-        // Others
-        location: undefined,
-        ...server
-      } as Server;
-    }
+export const getEnvironmentServer = (server?: Partial<Server>): Server => {
+  const config = {
+    // Dashboard
+    apiServer: 'https://api.plitzi.com',
+    ssrServer: 'https://ssr.plitzi.com',
+    // SDK
+    basePath: '',
+    host: 'https://plitzi.com',
+    nodeServer: 'https://server.plitzi.com',
+    graphqlServer: 'https://server.plitzi.com/graphql',
+    websocketServer: 'wss://server.plitzi.com',
+    subscriptionServer: 'wss://server.plitzi.com/subscriptions',
+    // Others
+    location: undefined,
+    ...server
+  };
 
-    case 'staging': {
-      return {
-        // Dashboard
-        apiServer: 'https://api-stg.plitzi.com',
-        ssrServer: 'https://ssr-stg.plitzi.com',
-        // SDK
-        basePath: '',
-        host: 'https://stg.plitzi.com',
-        nodeServer: 'https://server-stg.plitzi.com',
-        graphqlServer: 'https://server-stg.plitzi.com/graphql',
-        websocketServer: 'wss://server-stg.plitzi.com',
-        subscriptionServer: 'wss://server-stg.plitzi.com/subscriptions',
-        // Others
-        location: undefined,
-        ...server
-      } as Server;
-    }
-
-    case 'development': {
-      return {
-        // Dashboard
-        apiServer: 'https://api-dev.plitzi.com',
-        ssrServer: 'https://ssr-dev.plitzi.com',
-        // SDK
-        basePath: '',
-        host: 'https://dev.plitzi.com',
-        nodeServer: 'https://server-dev.plitzi.com',
-        graphqlServer: 'https://server-dev.plitzi.com/graphql',
-        websocketServer: 'wss://server-dev.plitzi.com',
-        subscriptionServer: 'wss://server-dev.plitzi.com/subscriptions',
-        // Others
-        location: undefined,
-        ...server
-      } as Server;
-    }
-
-    default:
-      return {
-        // Dashboard
-        apiServer: 'https://api.plitzi.local',
-        ssrServer: 'https://ssr.plitzi.local:4000',
-        // SDK
-        basePath: '',
-        host: 'https://app.plitzi.local',
-        nodeServer: 'https://server.plitzi.local:8888',
-        graphqlServer: 'https://server.plitzi.local:8888/graphql',
-        websocketServer: 'wss://server.plitzi.local:8888',
-        subscriptionServer: 'wss://server.plitzi.local:8888/subscriptions',
-        // Others
-        location: undefined,
-        ...server
-      } as Server;
-  }
-};
-
-export const getEnvironmentServer = (env: ServerEnvironment, server?: Partial<Server>): Server => {
-  const config = getConfig(env, server);
   if (config.basePath === '/') {
     config.basePath = '';
   } else if (config.basePath) {

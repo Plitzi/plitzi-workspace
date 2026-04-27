@@ -152,7 +152,7 @@ export type SSRServerConfig = {
     cert: Buffer | string;
     minVersion?: 'TLSv1' | 'TLSv1.1' | 'TLSv1.2' | 'TLSv1.3';
   };
-  sdkEnvironment?: 'production' | 'staging' | 'development' | 'local';
+  environment?: 'production' | 'staging' | 'development' | 'local';
   publicDir?: string;
   static?: Record<string, string>;
   devMode?: boolean;

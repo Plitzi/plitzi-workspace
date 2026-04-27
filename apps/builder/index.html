@@ -61,8 +61,17 @@
           environment: 'main',
           revision: 0,
           renderMode: 'raw',
-          builderEnvironment: 'local',
-          server: { basePath: '' },
+          server: {
+            basePath: '',
+            // Dashboard
+            apiServer: 'https://api.plitzi.local',
+            ssrServer: 'https://ssr.plitzi.local:4000',
+            // SDK
+            nodeServer: 'https://server.plitzi.local:8888',
+            graphqlServer: 'https://server.plitzi.local:8888/graphql',
+            websocketServer: 'wss://server.plitzi.local:8888',
+            subscriptionServer: 'wss://server.plitzi.local:8888/subscriptions'
+          },
           state: {}
         },
         {},

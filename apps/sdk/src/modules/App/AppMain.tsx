@@ -24,8 +24,7 @@ import type {
   RenderMode,
   StateManagerContextValue,
   EventBridgeContextValue,
-  OfflineDataRaw,
-  ServerEnvironment
+  OfflineDataRaw
 } from '@plitzi/sdk-shared';
 
 export type AppMainProps = {
@@ -33,7 +32,6 @@ export type AppMainProps = {
   webKey?: string;
   webId: number;
   environment?: Environment;
-  sdkEnvironment?: ServerEnvironment;
   currentPageId?: string;
   server: Server;
   isHydrating?: boolean;
@@ -61,7 +59,6 @@ const AppMain = ({
   // Server
   server,
   isHydrating = false,
-  sdkEnvironment = 'production',
   offlineMode = false,
   offlineData,
   offlineDataType = 'json',
@@ -87,7 +84,6 @@ const AppMain = ({
       offlineData={offlineData}
       offlineDataType={offlineDataType}
       environment={environment}
-      sdkEnvironment={sdkEnvironment}
       revision={revision}
       debugMode={debugMode}
     >

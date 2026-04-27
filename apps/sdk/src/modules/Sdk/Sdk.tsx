@@ -55,7 +55,6 @@ const Sdk = ({
   const { useStore } = createStoreHook<SdkState>();
   const [[schemaSettings, styleCache, segments]] = useStore(['schema.settings', 'style.cache', 'segments']);
   const { useDataSource } = use(DataSourceContext);
-  const { sdkEnvironment } = use(NetworkContext);
   const { variables } = useDataSource<Record<string, string>>({ id: '', mode: 'read' });
 
   const css = useMemo(() => {
@@ -89,7 +88,6 @@ const Sdk = ({
         currentPageId,
         renderMode,
         environment,
-        sdkEnvironment,
         ...schemaSettings,
         theme
       },
@@ -122,7 +120,6 @@ const Sdk = ({
       currentPageId,
       renderMode,
       environment,
-      sdkEnvironment,
       schemaSettings,
       theme,
       getWindow,
