@@ -3,6 +3,8 @@ import type { McpServerConfig } from './McpTypes';
 import type { OfflineDataRaw } from './SdkTypes';
 import type { IncomingHttpHeaders } from 'node:http';
 
+export type ServerEnvironment = 'development' | 'production' | 'staging' | 'local';
+
 export type SSRHeaders = IncomingHttpHeaders & {
   ':authority'?: string;
   ':method'?: string;
@@ -152,7 +154,7 @@ export type SSRServerConfig = {
     cert: Buffer | string;
     minVersion?: 'TLSv1' | 'TLSv1.1' | 'TLSv1.2' | 'TLSv1.3';
   };
-  environment?: 'production' | 'staging' | 'development' | 'local';
+  environment?: ServerEnvironment;
   publicDir?: string;
   static?: Record<string, string>;
   devMode?: boolean;
