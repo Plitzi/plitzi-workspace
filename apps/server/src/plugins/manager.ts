@@ -355,7 +355,7 @@ export class PluginManager {
     await fs.writeFile(path.join(this.pluginDir(name), META_FILE), JSON.stringify(meta), 'utf-8');
   }
 
-  private fileExists(p: string): Promise<boolean> {
+  private async fileExists(p: string): Promise<boolean> {
     return fs
       .access(p)
       .then(() => true)
