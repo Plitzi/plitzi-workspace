@@ -1,10 +1,10 @@
 import Markdown from '@plitzi/plitzi-ui/Markdown';
 
 import ActionButtons from './ActionButtons';
-import AiTemplatePreview from './AiTemplatePreview';
-import SdkElementPreview from './SdkElementPreview';
-import ThinkingBlock from './ThinkingBlock';
 import ToolCallGroup from '../ToolCallGroup';
+import AITemplatePreview from './components/AITemplatePreview';
+import SdkElementPreview from './components/SdkElementPreview';
+import ThinkingBlock from './ThinkingBlock';
 
 import type { AiMessage } from '../../types';
 
@@ -49,23 +49,10 @@ const ChatMessage = ({ role, content, thinking, preview, actions, attachments, t
         </div>
       )}
 
-      {preview?.elementId && (
-        <div className="mt-2 overflow-hidden rounded-md border border-gray-200 dark:border-zinc-700">
-          <div className="border-b border-gray-100 bg-gray-50 px-3 py-1 font-mono text-xs text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-500">
-            preview · {preview.elementId}
-          </div>
-          <SdkElementPreview elementId={preview.elementId} />
-        </div>
-      )}
+      {preview?.elementId && <SdkElementPreview elementId={preview.elementId} />}
 
       {preview?.baseElementId && (
-        <div className="mt-2 overflow-hidden rounded-md border border-violet-200 dark:border-violet-900/50">
-          <div className="flex items-center gap-2 border-b border-violet-100 bg-violet-50 px-3 py-1 font-mono text-xs text-violet-500 dark:border-violet-900/40 dark:bg-violet-950/30 dark:text-violet-400">
-            <span>◈</span>
-            <span>proposed · {preview.baseElementId}</span>
-          </div>
-          <AiTemplatePreview baseElementId={preview.baseElementId} schema={preview.schema} style={preview.style} />
-        </div>
+        <AITemplatePreview baseElementId={preview.baseElementId} schema={preview.schema} style={preview.style} />
       )}
 
       {actions && actions.length > 0 && <ActionButtons actions={actions} />}
