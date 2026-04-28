@@ -10,6 +10,7 @@ import { useCallback, use, useMemo, useState } from 'react';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
@@ -39,6 +40,7 @@ const Settings = ({
   credentials = 'same-origin',
   onUpdate
 }: SettingsProps) => {
+  const { theme } = use(ThemeContext);
   const { useStore } = createStoreHook<BuilderState>();
   const [pageDefinitions] = useStore('pageDefinitions');
   const [advancedSettings, setAdvancedSettings] = useState(false);
@@ -84,7 +86,7 @@ const Settings = ({
         <CodeMirror
           className="font-rubik min-h-6.5 basis-auto rounded-sm border border-gray-300 px-1 text-xs"
           value={query}
-          theme="light"
+          theme={theme === 'dark' ? 'dark' : 'light'}
           mode="text"
           autoComplete={queryParamsAutoComplete}
           lineWrapping
@@ -132,7 +134,13 @@ const Settings = ({
           <div className="my-2 h-px w-full border border-gray-300 bg-gray-300" />
           <div className="flex min-h-50 grow flex-col">
             <label>Mock Data (Build Mode)</label>
-            <CodeMirror value={mockData} theme="light" mode="json" lineWrapping onChange={handleChangeMockData} />
+            <CodeMirror
+              value={mockData}
+              theme={theme === 'dark' ? 'dark' : 'light'}
+              mode="json"
+              lineWrapping
+              onChange={handleChangeMockData}
+            />
           </div>
         </>
       )}

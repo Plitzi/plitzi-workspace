@@ -13,6 +13,7 @@ import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 
 import TransformActions from './TransformActions';
 import TransformLayout from './TransformLayout';
@@ -24,6 +25,7 @@ import type { BuilderState, Schema, Style } from '@plitzi/sdk-shared';
 import type { ClipboardEvent } from 'react';
 
 const Transform = () => {
+  const { theme } = use(ThemeContext);
   const editorRef = useRef<HTMLElement | null>(null);
   const { server, webKey } = use(NetworkContext);
   const { addToast } = useToast();
@@ -236,7 +238,7 @@ const Transform = () => {
                           'w-full': layoutMode === 'vertical'
                         })}
                         value={content}
-                        theme="dark"
+                        theme={theme === 'dark' ? 'dark' : 'light'}
                         mode={cmMode}
                         lineWrapping
                         onChange={handleChangeContent}
@@ -254,7 +256,7 @@ const Transform = () => {
                           'w-full': layoutMode === 'vertical'
                         })}
                         value={customCss}
-                        theme="dark"
+                        theme={theme === 'dark' ? 'dark' : 'light'}
                         lineWrapping
                         onChange={handleChangeCustomStyle}
                       />

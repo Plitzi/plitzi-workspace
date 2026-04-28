@@ -7,6 +7,7 @@ import { useCallback, use, useState } from 'react';
 
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 
 import ElementAdvancedEditor from '../../../components/ElementAdvancedEditor';
 
@@ -20,6 +21,7 @@ type SettingsProps = {
 };
 
 const Settings = ({ content = '', props: componentProps = '{}', onUpdate }: SettingsProps) => {
+  const { theme } = use(ThemeContext);
   const {
     contexts: { NetworkContext }
   } = usePlitziServiceContext();
@@ -94,7 +96,7 @@ const Settings = ({ content = '', props: componentProps = '{}', onUpdate }: Sett
             size="sm"
             className="min-h-40 p-0"
             value={componentProps}
-            theme="dark"
+            theme={theme === 'dark' ? 'dark' : 'light'}
             mode="json"
             lineWrapping
             onChange={handleChangeProps}

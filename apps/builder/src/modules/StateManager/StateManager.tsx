@@ -5,6 +5,7 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
 import { useCallback, use, useState } from 'react';
 
+import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
 export type StateManagerProps = {
@@ -12,6 +13,7 @@ export type StateManagerProps = {
 };
 
 const StateManager = ({ className = '' }: StateManagerProps) => {
+  const { theme } = use(ThemeContext);
   const { state, setState } = use(StateManagerContext);
   const [value, setValue] = useState(() => JSON.stringify(state, null, 2));
   const { addToast } = useToast();
@@ -37,7 +39,14 @@ const StateManager = ({ className = '' }: StateManagerProps) => {
 
   return (
     <div className={clsx('relative flex h-full w-full flex-col', className)}>
-      <CodeMirror className="h-full" value={value} theme="dark" lineWrapping onChange={handleChange} mode="json" />
+      <CodeMirror
+        className="h-full"
+        value={value}
+        theme={theme === 'dark' ? 'dark' : 'light'}
+        lineWrapping
+        onChange={handleChange}
+        mode="json"
+      />
       <div className="absolute top-3 right-3 flex">
         <Button
           intent="custom"

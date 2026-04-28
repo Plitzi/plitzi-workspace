@@ -1,6 +1,8 @@
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import clsx from 'clsx';
-import { useCallback, useMemo } from 'react';
+import { use, useCallback, useMemo } from 'react';
+
+import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 
 import { processSelectors } from '../../../../helpers';
 import CategoryContainer from '../../components/CategoryContainer';
@@ -14,6 +16,7 @@ export type VariablesProps = {
 };
 
 const RawStyle = ({ selectors, isCollapsed, onCollapse }: VariablesProps) => {
+  const { theme } = use(ThemeContext);
   const CMValue = useMemo(() => processSelectors(selectors ?? [], false).join('\n\n'), [selectors]);
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('rawStyle', isCollapsed), [onCollapse]);
@@ -26,7 +29,13 @@ const RawStyle = ({ selectors, isCollapsed, onCollapse }: VariablesProps) => {
       isCollapsed={isCollapsed}
       onCollapse={handleCollapse}
     >
-      <CodeMirror value={CMValue} className="h-full" theme="dark" lineWrapping readOnly />
+      <CodeMirror
+        value={CMValue}
+        className="h-full"
+        theme={theme === 'dark' ? 'dark' : 'light'}
+        lineWrapping
+        readOnly
+      />
     </CategoryContainer>
   );
 };

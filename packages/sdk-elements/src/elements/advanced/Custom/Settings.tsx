@@ -3,7 +3,9 @@ import Checkbox from '@plitzi/plitzi-ui/Checkbox';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import Input from '@plitzi/plitzi-ui/Input';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
-import { useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useState } from 'react';
+
+import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 
 import type { ChangeEvent } from 'react';
 
@@ -26,6 +28,7 @@ const Settings = ({
   pluginScope = '',
   onUpdate
 }: SettingsProps) => {
+  const { theme } = use(ThemeContext);
   const [jsonValid, setJsonValid] = useState(true);
 
   const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
@@ -85,7 +88,7 @@ const Settings = ({
         <CodeMirror
           className="min-h-62.5"
           value={settings}
-          theme="dark"
+          theme={theme === 'dark' ? 'dark' : 'light'}
           mode="json"
           size="xs"
           lineWrapping
