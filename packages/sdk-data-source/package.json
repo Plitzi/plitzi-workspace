@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-data-source",
-  "version": "0.30.15",
+  "version": "0.30.16",
   "license": "GPLv3",
   "publishConfig": {
     "access": "restricted",
