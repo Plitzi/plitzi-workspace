@@ -186,6 +186,15 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   useInteractions({ id, interactions, triggers, callbacks, getAdditionalParams });
 
   useEffect(() => {
+    if (!previewMode || !interactions || !Object.keys(interactions).length) {
+      return;
+    }
+
+    void interactionsManager.interactionTrigger(id, 'onLoad', {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     if (!debugMode) {
       return;
     }

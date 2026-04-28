@@ -31,7 +31,7 @@
     "ci:publish": "yarn workspaces foreach -A --topological-dev --exclude . exec yarn npm publish --tolerate-republish --access restricted && changeset tag"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.5.25",
+    "@plitzi/plitzi-ui": "^1.5.26",
     "@plitzi/sdk-shared": "workspace:*",
     "react-router": "^7.14.2"
   },
@@ -39,7 +39,7 @@
     "@changesets/cli": "^2.31.0",
     "@types/react": "^19.2.14",
     "eslint": "^9.39.4",
-    "prettier-plugin-tailwindcss": "^0.7.3",
+    "prettier-plugin-tailwindcss": "^0.8.0",
     "turbo": "^2.9.6"
   },
   "engines": {

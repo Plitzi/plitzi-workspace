@@ -1,3 +1,5 @@
+@use '@plitzi/plitzi-ui/Toast/Assets/index.scss' as Toast;
+
 @layer theme, base, plitzi-builder-base, plitzi-sdk-base, components, utilities, plitzi-builder-runtime, plitzi-sdk-runtime, plitzi-sdk-plugin;
 
 @layer plitzi-builder-base {
@@ -26,6 +28,8 @@
 }
 
 @layer plitzi-builder-runtime {
+  @include Toast.styles;
+
   $overlayZIndex: 750;
 
   .builder-iframe {

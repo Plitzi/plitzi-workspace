@@ -1,6 +1,13 @@
 import type { InteractionCallback } from '@plitzi/sdk-shared';
 
 export const interactionBasicTriggers: Record<string, InteractionCallback> = {
+  onLoad: {
+    action: 'onLoad',
+    title: 'On Load',
+    type: 'trigger',
+    preview: {},
+    params: {}
+  },
   onClick: {
     action: 'onClick',
     title: 'On Click',

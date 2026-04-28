@@ -12,8 +12,10 @@ const useElementState = ({ bindings, previewMode }: UseElementStateProps) => {
     const attributes = bindings?.attributes && Array.isArray(bindings.attributes) ? bindings.attributes : [];
 
     return {
-      stateBinded: initialState.map(binding => get(binding, 'toPath', '')),
-      attributesBinded: attributes.map(binding => get(binding, 'toPath', ''))
+      stateBinded: initialState.filter(binding => binding.enabled !== false).map(binding => get(binding, 'toPath', '')),
+      attributesBinded: attributes
+        .filter(binding => binding.enabled !== false)
+        .map(binding => get(binding, 'toPath', ''))
     };
   }, [bindings]);
 
