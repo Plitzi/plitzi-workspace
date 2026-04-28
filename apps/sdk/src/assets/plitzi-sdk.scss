@@ -4,7 +4,11 @@
 @layer theme, base, plitzi-sdk-base, components, utilities, plitzi-sdk-runtime, plitzi-sdk-plugin;
 
 @layer components {
-  @import '@fortawesome/fontawesome-free/css/all.min.css';
+  // @import '@fortawesome/fontawesome-free/css/all.min.css';
+  @import '@fortawesome/fontawesome-free/css/fontawesome.min.css';
+  @import '@fortawesome/fontawesome-free/css/solid.min.css';
+  @import '@fortawesome/fontawesome-free/css/regular.min.css';
+  @import '@fortawesome/fontawesome-free/css/brands.min.css';
 }
 
 @import './tailwind.css';
