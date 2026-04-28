@@ -5,10 +5,11 @@ import Select2 from '@plitzi/plitzi-ui/Select2';
 import Switch from '@plitzi/plitzi-ui/Switch';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import clsx from 'clsx';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { use, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 
 import ParamBinding from './ParamBinding';
 
@@ -44,6 +45,7 @@ const NodeBodyParam = ({
   fields,
   onChange
 }: NodeBodyParamProps) => {
+  const { theme } = use(ThemeContext);
   const type = useMemo(() => (typeof typeProp === 'function' ? typeProp(params) : typeProp), [params, typeProp]);
   const options = useMemo(
     () => (type === 'select' && typeof optionsProp === 'function' ? optionsProp(params) : optionsProp),
@@ -148,7 +150,7 @@ const NodeBodyParam = ({
             label={finalLabel}
             className="min-h-20 w-full"
             value={value as string}
-            theme="light"
+            theme={theme === 'dark' ? 'dark' : 'light'}
             mode="json"
             autoComplete={fieldsKeys}
             lineWrapping
@@ -160,7 +162,7 @@ const NodeBodyParam = ({
             label={finalLabel}
             className="min-h-25 w-full"
             value={value as string}
-            theme="light"
+            theme={theme === 'dark' ? 'dark' : 'light'}
             mode="text"
             autoComplete={fieldsKeys}
             lineWrapping

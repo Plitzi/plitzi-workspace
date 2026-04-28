@@ -8,11 +8,13 @@ import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
 import type { CommonState, StyleVariableCategory } from '@plitzi/sdk-shared';
 
 const StyleAdvanceEditor = () => {
+  const { theme } = use(ThemeContext);
   const { useStore } = createStoreHook<CommonState>();
   const [[customCssProp, styleVariables]] = useStore(['schema.settings.customCss', 'style.variables'], {
     defaultValue: ['', undefined]
@@ -73,7 +75,7 @@ const StyleAdvanceEditor = () => {
         className="h-full"
         value={customCss}
         autoComplete={variables}
-        theme="dark"
+        theme={theme === 'dark' ? 'dark' : 'light'}
         lineWrapping
         onChange={handleChange}
       />
