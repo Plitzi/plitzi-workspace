@@ -11,32 +11,27 @@ By contributing code, documentation, or any other material ("Contributions") to 
 By submitting a Contribution to any Plitzi repository, you grant **Plitzi** and the public a:
 
 - **Worldwide, perpetual, irrevocable, non-exclusive, royalty-free, fully paid license** to use, reproduce, modify, adapt, merge, publish, distribute, and create derivative works of your Contributions.
-- The right to include your Contributions in the Plitzi project under the **GNU General Public License v3 (GPLv3)** or **any later version** adopted by the project.
+- The right to include your Contributions in the Plitzi project under the **GNU Affero General Public License v3 (AGPLv3)** or **any later version** adopted by the project.
 
-Your Contributions will therefore be distributed as part of the Plitzi project under the terms of the **GPLv3 (or later)** license.
+Your Contributions will therefore be distributed as part of the Plitzi project under the terms of the **AGPLv3 (or later)** license.
 
 ---
 
-## 2. Copyright Assignment
+## 2. Copyright and Licensing of Contributions
 
-By submitting a Contribution, you **irrevocably assign to Plitzi all right, title, and interest**, including all **copyrights and related intellectual property rights**, in and to your Contribution.
+By submitting a Contribution, you agree that:
 
-This assignment includes, but is not limited to:
+- You retain ownership of your Contributions.
+- You grant Plitzi a **worldwide, perpetual, irrevocable, non-exclusive, royalty-free license** to use, reproduce, modify, adapt, publish, distribute, sublicense, and create derivative works from your Contributions.
 
-- The right for Plitzi to **own, use, modify, distribute, sublicense, commercialize, and relicense** the Contribution.
-- The right for Plitzi to distribute the project under **GPLv3 (or later)** or **any other license**, including proprietary or commercial licenses.
+This license allows Plitzi to:
 
-To the extent that any rights cannot be legally assigned under applicable law, you grant Plitzi a **perpetual, worldwide, irrevocable, royalty-free, transferable license** to exercise those rights.
+- Include your Contributions in the project under the **AGPLv3 (or later)** license.
+- Distribute the project under **other licenses**, including commercial or proprietary licenses.
 
-You also agree to **waive any moral rights**, to the extent permitted by law, that would otherwise limit Plitzi's ability to modify or distribute the Contribution.
+To the extent necessary to allow dual licensing, you also grant Plitzi the right to relicense your Contributions under different terms.
 
-Contributors acknowledge that:
-
-- Contributions are provided **voluntarily**.
-- Contributors **retain no ownership rights** in the Contribution once it is submitted and accepted into the project.
-- Contributors will **not receive compensation, royalties, or payments** for the Contribution.
-
-Plitzi may use the Contribution in **open-source, commercial, or proprietary distributions** of the project.
+You agree not to assert any claims that would prevent Plitzi from exercising these rights.
 
 ---
 
@@ -53,7 +48,7 @@ Contributions are provided **voluntarily**.
 You acknowledge that:
 
 - You will **not receive compensation, royalties, or payments** for your Contributions.
-- Your Contributions may be used in **commercial or non-commercial contexts** as permitted by the GPLv3 license.
+- Your Contributions will therefore be distributed as part of the Plitzi project under the terms of the **AGPLv3 (or later)** license.
 
 ---
 
@@ -84,6 +79,8 @@ All Contributions must comply with the Plitzi **Code of Conduct**, if one is pre
 ## 8. Acceptance of Terms
 
 Submitting a pull request, commit, issue, or any other Contribution constitutes your **full acceptance** of these terms.
+
+By submitting a pull request, you explicitly agree to these Contributor Terms of Service.
 
 If you do not agree with these terms, **do not submit Contributions** to Plitzi repositories.
 

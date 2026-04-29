@@ -1,8 +1,10 @@
 # Commercial License - Plitzi
 
-The source code of **Plitzi** is open for non-commercial use under the GPLv3.
+The source code of **Plitzi** is available under the GNU Affero General Public License v3 (AGPLv3).
 
-If you want to use Plitzi for commercial purposes, you must obtain a **Commercial License**.
+Commercial use is permitted under AGPLv3 **only if you fully comply with its requirements**, including making your complete source code publicly available.
+
+If you want to use Plitzi in a proprietary, closed-source, or commercial environment without complying with AGPLv3, you must obtain a commercial license.
 
 ---
 
@@ -33,3 +35,11 @@ Contact Plitzi at:
 🌐 Website: <YOUR_WEBSITE_HERE>
 
 We typically respond within 1–2 business days.
+
+---
+
+## Trademark Notice
+
+"Plitzi" is a trademark of Plitzi.
+
+You may not use the Plitzi name, logo, or branding for commercial purposes without explicit permission.

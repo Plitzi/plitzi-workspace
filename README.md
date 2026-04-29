@@ -52,6 +52,7 @@ Plitzi is an open-source **web application builder** designed to empower develop
 ---
 
 ## Getting Started
+
 1. **Clone the repository**
 
 ```bash
@@ -133,7 +134,19 @@ Join our community to discuss ideas, get help, or contribute:
 
 ## License
 
-This project is licensed under the [GNU Affero General Public License v3.0 (AGPL-3.0)](https://www.gnu.org/licenses/agpl-3.0.en.html). See the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
+
+If you want to use Plitzi in a proprietary or closed-source environment, a commercial license is required.
+
+Commercial licenses are designed for companies that want to:
+
+- Keep their code private
+- Build proprietary products
+- Avoid AGPL obligations
+
+If you want to use Plitzi in a proprietary or closed-source environment, you must obtain a commercial license.
+
+See [COMMERCIAL_LICENSE.md](./COMMERCIAL_LICENSE.md) for details.
 
 ---
 
@@ -143,7 +156,7 @@ Thanks to the open-source community and all contributors who help make Plitzi a 
 
 ---
 
-*Build and grow your web apps with Plitzi — freedom to create, freedom to share.*
+_Build and grow your web apps with Plitzi — freedom to create, freedom to share._
 
 ---
 
@@ -167,3 +180,11 @@ We sincerely thank all the contributors who have helped make Plitzi better. Your
 - [ ] **Performance Optimizations** -->
 
 See the [GitHub Projects](https://github.com/plitzi/plitzi-workspace/projects) for more details and ongoing issues.
+
+### Self-Hosting Notice
+
+Plitzi can be self-hosted using the open-source components provided in this repository.
+
+However, some features (such as advanced data management, cloud services, and certain backend capabilities) require additional services that are not included in this repository.
+
+The open-source version is fully functional for local development and customization, but production-grade deployments may require additional infrastructure.

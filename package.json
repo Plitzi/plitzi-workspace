@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/plitzi-workspace",
-  "license": "GPLv3",
+  "license": "AGPL-3.0",
   "private": true,
   "scripts": {
     "start": "turbo start --parallel",

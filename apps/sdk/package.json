@@ -2,7 +2,7 @@
   "name": "@plitzi/plitzi-sdk",
   "version": "0.30.16",
   "homepage": "./",
-  "license": "GPLv3",
+  "license": "AGPL-3.0",
   "files": [
     "dist"
   ],

@@ -1,7 +1,7 @@
 {
   "name": "@plitzi/sdk-variables",
   "version": "0.30.16",
-  "license": "GPLv3",
+  "license": "AGPL-3.0",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
