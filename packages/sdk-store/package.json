@@ -1,7 +1,7 @@
 {
   "name": "@plitzi/sdk-store",
   "version": "0.30.16",
-  "license": "AGPL-3.0",
+  "license": "Apache-2.0",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com/"
