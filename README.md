@@ -121,7 +121,7 @@ Join our community to discuss ideas, get help, or contribute:
 
 - **Discord:** [https://discord.gg/plitzi](https://discord.gg/plitzi)
 - **GitHub Discussions:** [https://github.com/plitzi/plitzi-workspace/discussions](https://github.com/plitzi/plitzi-workspace/discussions)
-- **Email:** contact@plitzi.org
+- **Email:** crodriguez@plitzi.com
 
 ### Getting Help
 
@@ -157,7 +157,7 @@ We sincerely thank all the contributors who have helped make Plitzi better. Your
 
 ## Roadmap ![Roadmap](https://img.shields.io/badge/-Roadmap-ff7043?style=flat-square&logo=roadmap&logoColor=white) WIP
 
-- [ ] **v1.0 Release:** Stable builder and SDK core
+- [ ] **v1.0 Release:** Stable Server, builder and SDK core
 <!-- - [ ] **Plugin Marketplace:** Community-driven extensions
 - [ ] **Cloud Deployment:** One-click deploy to Plitzi Cloud
 - [ ] **Improved Documentation:** More guides and API docs
