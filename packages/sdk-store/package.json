@@ -1,0 +1,47 @@
+{
+  "name": "@plitzi/sdk-store",
+  "version": "0.30.16",
+  "license": "AGPL-3.0",
+  "publishConfig": {
+    "access": "restricted",
+    "registry": "https://npm.pkg.github.com/"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.mjs"
+    }
+  },
+  "scripts": {
+    "lint": "eslint ./src",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest --coverage",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "build:dev": "tsc -p tsconfig.app.json && vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
+    "build:dev-watch": "tsc -p tsconfig.app.json && vite build --mode development --watch --minify false",
+    "build:prod": "tsc -p tsconfig.app.json && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "devDependencies": {
+    "eslint": "^9.39.4",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.10",
+    "vitest": "^4.1.5"
+  },
+  "peerDependencies": {
+    "react": "^19",
+    "react-dom": "^19"
+  },
+  "dependencies": {
+    "@plitzi/plitzi-ui": "^1.5.26",
+    "@plitzi/sdk-shared": "workspace:*"
+  }
+}

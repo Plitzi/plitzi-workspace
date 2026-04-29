@@ -3676,6 +3676,24 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@plitzi/sdk-store@workspace:packages/sdk-store":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/sdk-store@workspace:packages/sdk-store"
+  dependencies:
+    "@plitzi/plitzi-ui": "npm:^1.5.26"
+    "@plitzi/sdk-shared": "workspace:*"
+    eslint: "npm:^9.39.4"
+    react: "npm:^19.2.5"
+    react-dom: "npm:^19.2.5"
+    typescript: "npm:^6.0.3"
+    vite: "npm:^8.0.10"
+    vitest: "npm:^4.1.5"
+  peerDependencies:
+    react: ^19
+    react-dom: ^19
+  languageName: unknown
+  linkType: soft
+
 "@plitzi/sdk-style@workspace:*, @plitzi/sdk-style@workspace:packages/sdk-style":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-style@workspace:packages/sdk-style"
