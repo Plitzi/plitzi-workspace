@@ -1,8 +1,8 @@
 import { use, useMemo } from 'react';
 
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import StyleContext from './StyleContext';
 

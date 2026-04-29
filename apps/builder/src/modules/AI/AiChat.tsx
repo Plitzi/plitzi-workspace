@@ -1,7 +1,7 @@
 import { use, useCallback, useEffect, useRef } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import AiChatHeader from './components/AiChatHeader';
 import Chat from './components/Chat';

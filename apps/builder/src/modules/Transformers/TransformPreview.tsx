@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
-import { StoreProvider } from '@plitzi/sdk-shared/store';
+import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
 
 import type { Schema, Style } from '@plitzi/sdk-shared';

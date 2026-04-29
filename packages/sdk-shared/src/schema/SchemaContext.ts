@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-import type { SchemaContextValue } from '@plitzi/sdk-shared';
+import type { SchemaContextValue } from '../types';
 
 const schemaContextDefaultValue: SchemaContextValue = { definition: { rootId: '' } };
 

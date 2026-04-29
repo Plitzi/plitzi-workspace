@@ -7,8 +7,8 @@ import { useCallback, useMemo, useState, use } from 'react';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
 import type { CommonState, StyleVariableCategory } from '@plitzi/sdk-shared';

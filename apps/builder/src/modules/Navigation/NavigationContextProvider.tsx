@@ -7,7 +7,7 @@ import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import type { BuilderState, RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';

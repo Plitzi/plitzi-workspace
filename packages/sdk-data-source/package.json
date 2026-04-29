@@ -11,80 +11,80 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.mjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
     },
     "./DataSourceContextProvider": {
-      "types": "./dist/src/DataSourceContextProvider.d.ts",
-      "import": "./dist/src/DataSourceContextProvider.mjs"
+      "types": "./dist/DataSourceContextProvider.d.ts",
+      "import": "./dist/DataSourceContextProvider.mjs"
     },
     "./helpers/getBindingsDetails": {
-      "types": "./dist/src/helpers/getBindingsDetails.d.ts",
-      "import": "./dist/src/helpers/getBindingsDetails.mjs"
+      "types": "./dist/helpers/getBindingsDetails.d.ts",
+      "import": "./dist/helpers/getBindingsDetails.mjs"
     },
     "./index": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.mjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
     },
     "./sources/AuthSource": {
-      "types": "./dist/src/sources/AuthSource.d.ts",
-      "import": "./dist/src/sources/AuthSource.mjs"
+      "types": "./dist/sources/AuthSource.d.ts",
+      "import": "./dist/sources/AuthSource.mjs"
     },
     "./sources/NavigationSource": {
-      "types": "./dist/src/sources/NavigationSource.d.ts",
-      "import": "./dist/src/sources/NavigationSource.mjs"
+      "types": "./dist/sources/NavigationSource.d.ts",
+      "import": "./dist/sources/NavigationSource.mjs"
     },
     "./sources/PageStateSource": {
-      "types": "./dist/src/sources/PageStateSource.d.ts",
-      "import": "./dist/src/sources/PageStateSource.mjs"
+      "types": "./dist/sources/PageStateSource.d.ts",
+      "import": "./dist/sources/PageStateSource.mjs"
     },
     "./sources/VariablesSource": {
-      "types": "./dist/src/sources/VariablesSource.d.ts",
-      "import": "./dist/src/sources/VariablesSource.mjs"
+      "types": "./dist/sources/VariablesSource.d.ts",
+      "import": "./dist/sources/VariablesSource.mjs"
     },
     "./utility": {
-      "types": "./dist/src/utility/index.d.ts",
-      "import": "./dist/src/utility/index.mjs"
+      "types": "./dist/utility/index.d.ts",
+      "import": "./dist/utility/index.mjs"
     },
     "./utility/arrayMap": {
-      "types": "./dist/src/utility/arrayMap.d.ts",
-      "import": "./dist/src/utility/arrayMap.mjs"
+      "types": "./dist/utility/arrayMap.d.ts",
+      "import": "./dist/utility/arrayMap.mjs"
     },
     "./utility/capitalize": {
-      "types": "./dist/src/utility/capitalize.d.ts",
-      "import": "./dist/src/utility/capitalize.mjs"
+      "types": "./dist/utility/capitalize.d.ts",
+      "import": "./dist/utility/capitalize.mjs"
     },
     "./utility/dateConverter": {
-      "types": "./dist/src/utility/dateConverter.d.ts",
-      "import": "./dist/src/utility/dateConverter.mjs"
+      "types": "./dist/utility/dateConverter.d.ts",
+      "import": "./dist/utility/dateConverter.mjs"
     },
     "./utility/index": {
-      "types": "./dist/src/utility/index.d.ts",
-      "import": "./dist/src/utility/index.mjs"
+      "types": "./dist/utility/index.d.ts",
+      "import": "./dist/utility/index.mjs"
     },
     "./utility/staticValue": {
-      "types": "./dist/src/utility/staticValue.d.ts",
-      "import": "./dist/src/utility/staticValue.mjs"
+      "types": "./dist/utility/staticValue.d.ts",
+      "import": "./dist/utility/staticValue.mjs"
     },
     "./utility/stringToArray": {
-      "types": "./dist/src/utility/stringToArray.d.ts",
-      "import": "./dist/src/utility/stringToArray.mjs"
+      "types": "./dist/utility/stringToArray.d.ts",
+      "import": "./dist/utility/stringToArray.mjs"
     },
     "./utility/styleSelector": {
-      "types": "./dist/src/utility/styleSelector.d.ts",
-      "import": "./dist/src/utility/styleSelector.mjs"
+      "types": "./dist/utility/styleSelector.d.ts",
+      "import": "./dist/utility/styleSelector.mjs"
     },
     "./utility/twigTemplate": {
-      "types": "./dist/src/utility/twigTemplate.d.ts",
-      "import": "./dist/src/utility/twigTemplate.mjs"
+      "types": "./dist/utility/twigTemplate.d.ts",
+      "import": "./dist/utility/twigTemplate.mjs"
     }
   },
   "scripts": {
     "lint": "eslint ./src",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "build:dev": "tsc -p tsconfig.app.json && vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
-    "build:dev-watch": "tsc -p tsconfig.app.json && vite build --mode development --watch --minify false",
-    "build:prod": "tsc -p tsconfig.app.json && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
+    "build:dev": "vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
+    "build:dev-watch": "vite build --mode development --watch --minify false",
+    "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "type": "module",
   "sideEffects": false,
@@ -99,6 +99,7 @@
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
-    "@plitzi/sdk-state": "workspace:*"
+    "@plitzi/sdk-state": "workspace:*",
+    "@plitzi/sdk-store": "workspace:*"
   }
 }

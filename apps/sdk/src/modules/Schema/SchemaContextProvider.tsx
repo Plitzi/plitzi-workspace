@@ -3,7 +3,7 @@ import { useMemo, use } from 'react';
 
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import type { SdkState, Element, Schema } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';

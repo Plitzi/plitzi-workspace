@@ -6,7 +6,7 @@ import { useCallback, use, useMemo } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import SegmentForm from '@pmodules/Segments/models/SegmentForm';
 
 import OverlayButton from './OverlayButton';

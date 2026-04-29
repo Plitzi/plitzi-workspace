@@ -8,7 +8,7 @@ import { use, useCallback, useMemo, useState } from 'react';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import SchemaVariables from '@plitzi/sdk-variables/components/SchemaVariables';
 import StyleVariables from '@plitzi/sdk-variables/components/StyleVariables';
 

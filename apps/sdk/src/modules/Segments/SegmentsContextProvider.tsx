@@ -4,7 +4,7 @@ import { useMemo, use, useCallback, useState, useEffect } from 'react';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import type { SdkQueriesMap, NetworkContextValue, Segment, SdkState } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';

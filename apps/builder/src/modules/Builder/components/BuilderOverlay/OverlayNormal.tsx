@@ -5,7 +5,7 @@ import { produce } from 'immer';
 import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
 
 import OverlayButtonContainer from './OverlayButtonContainer';

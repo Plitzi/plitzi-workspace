@@ -7,7 +7,7 @@ import { useCallback, use, useEffect, useState, useTransition, useRef } from 're
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import Chat from './components/Chat';
 import VoiceVisualizer from './components/VoiceVisualizer';

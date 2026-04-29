@@ -3224,6 +3224,7 @@ __metadata:
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@plitzi/sdk-state": "workspace:*"
+    "@plitzi/sdk-store": "workspace:*"
     "@plitzi/sdk-style": "workspace:*"
     "@plitzi/sdk-variables": "workspace:*"
     "@tailwindcss/postcss": "npm:^4.2.4"
@@ -3306,6 +3307,7 @@ __metadata:
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@plitzi/sdk-state": "workspace:*"
+    "@plitzi/sdk-store": "workspace:*"
     "@plitzi/sdk-style": "workspace:*"
     "@plitzi/sdk-variables": "workspace:*"
     "@rollup/plugin-commonjs": "npm:^29.0.2"
@@ -3415,6 +3417,7 @@ __metadata:
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
+    "@plitzi/sdk-state": "workspace:*"
     eslint: "npm:^9.39.4"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.0.10"
@@ -3445,6 +3448,7 @@ __metadata:
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@plitzi/sdk-state": "workspace:*"
+    "@plitzi/sdk-store": "workspace:*"
     eslint: "npm:^9.39.4"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.0.10"
@@ -3460,6 +3464,7 @@ __metadata:
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
+    "@plitzi/sdk-store": "workspace:*"
     "@plitzi/sdk-style": "workspace:*"
     "@uiw/react-json-view": "npm:^2.0.0-alpha.42"
     clsx: "npm:^2.1.1"
@@ -3485,6 +3490,7 @@ __metadata:
     "@plitzi/sdk-interactions": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
+    "@plitzi/sdk-store": "workspace:*"
     clsx: "npm:^2.1.1"
     eslint: "npm:^9.39.4"
     immer: "npm:^11.1.4"
@@ -3612,6 +3618,7 @@ __metadata:
     "@babel/preset-env": "npm:^7.29.2"
     "@eslint/js": "npm:^10.0.1"
     "@plitzi/plitzi-ui": "npm:^1.5.26"
+    "@plitzi/sdk-store": "workspace:*"
     "@tailwindcss/forms": "npm:^0.5.11"
     "@testing-library/dom": "npm:^10.4.1"
     "@testing-library/react": "npm:^16.3.2"
@@ -3669,6 +3676,7 @@ __metadata:
   dependencies:
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
+    "@plitzi/sdk-store": "workspace:*"
     eslint: "npm:^9.39.4"
     immer: "npm:^11.1.4"
     typescript: "npm:^6.0.3"
@@ -3676,12 +3684,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/sdk-store@workspace:packages/sdk-store":
+"@plitzi/sdk-store@workspace:*, @plitzi/sdk-store@workspace:packages/sdk-store":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-store@workspace:packages/sdk-store"
   dependencies:
     "@plitzi/plitzi-ui": "npm:^1.5.26"
-    "@plitzi/sdk-shared": "workspace:*"
     eslint: "npm:^9.39.4"
     react: "npm:^19.2.5"
     react-dom: "npm:^19.2.5"

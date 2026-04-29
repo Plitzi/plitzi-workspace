@@ -17,7 +17,7 @@ type Options = {
 
 export function getEntries(options: Options = {}) {
   const root = options.root ?? path.resolve(process.cwd(), 'src');
-  const pattern = options.pattern ?? /index\.(ts|js|mjs)$/;
+  const pattern = options.pattern ?? /index\.(ts|tsx|js|mjs)$/;
 
   const entries: Record<string, string> = {};
 
@@ -49,10 +49,9 @@ export default defineConfig(({ mode, command }) => {
     plugins: [
       react(),
       dts({
-        // entryRoot: '.',
-        outDir: 'dist',
+        entryRoot: 'src',
         rollupTypes: false,
-        exclude: ['**/*.test.tsx', '**/*.stories.ts', '**/*.stories.tsx', 'vite.config.ts', 'setupTests.ts'],
+        exclude: ['**/*.test.(ts|tsx)', '**/*.stories.(ts|tsx)', 'vite.config.ts', 'setupTests.ts'],
         tsconfigPath: './tsconfig.app.json'
       }),
       // {
@@ -102,7 +101,7 @@ export default defineConfig(({ mode, command }) => {
       extensions: ['.js', '.ts', '.tsx', '.mjs']
     },
     build: {
-      outDir: 'dist/src',
+      // outDir: 'dist/src',
       lib: {
         entry: Object.values(getEntries()) // ['./src/index.ts'] // , './src/network/index.ts', './src/network/graphql/index.ts'
       },
@@ -123,21 +122,22 @@ export default defineConfig(({ mode, command }) => {
               'react/jsx-runtime': 'react/jsx-runtime' // tailwindcss: "tailwindcss",
             }
           }
-          // {
-          //   format: 'cjs',
-          //   exports: 'named',
-          //   preserveModules: true, // Keep module structure for tree-shaking
-          //   preserveModulesRoot: 'src', // Tell Rollup where to "root" the modules (under src)
-          //   entryFileNames: '[name].[format]',
-          //   chunkFileNames: '[name].[format]',
-          //   assetFileNames: '[name].[ext]', // assetFileNames: 'assets/[name][extname]',
-          //   globals: {
-          //     react: 'React',
-          //     'react-dom': 'ReactDOM',
-          //     'react/jsx-runtime': 'react/jsx-runtime' // tailwindcss: "tailwindcss",
-          //   }
-          // }
-        ]
+        ],
+        external: id => {
+          if (id.startsWith('node:') || id.startsWith('node/')) {
+            return true;
+          }
+
+          if (id === 'react' || id === 'react-dom' || id.startsWith('react-dom/') || id.startsWith('react/')) {
+            return true;
+          }
+
+          if (!id.startsWith('.') && !id.startsWith('/')) {
+            return true;
+          }
+
+          return false;
+        }
       },
       sourcemap: false,
       emptyOutDir: mode === 'production'

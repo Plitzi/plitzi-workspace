@@ -11,24 +11,24 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.mjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
     },
     "./NavigationContext": {
-      "types": "./dist/src/NavigationContext.d.ts",
-      "import": "./dist/src/NavigationContext.mjs"
+      "types": "./dist/NavigationContext.d.ts",
+      "import": "./dist/NavigationContext.mjs"
     },
     "./NavigationHelper": {
-      "types": "./dist/src/NavigationHelper.d.ts",
-      "import": "./dist/src/NavigationHelper.mjs"
+      "types": "./dist/NavigationHelper.d.ts",
+      "import": "./dist/NavigationHelper.mjs"
     },
     "./hooks/useNavigation": {
-      "types": "./dist/src/hooks/useNavigation.d.ts",
-      "import": "./dist/src/hooks/useNavigation.mjs"
+      "types": "./dist/hooks/useNavigation.d.ts",
+      "import": "./dist/hooks/useNavigation.mjs"
     },
     "./index": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.mjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
     }
   },
   "scripts": {
@@ -38,9 +38,9 @@
     "test:coverage": "vitest --coverage",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "build:dev": "tsc -p tsconfig.app.json && vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
-    "build:dev-watch": "tsc -p tsconfig.app.json && vite build --mode development --watch --minify false",
-    "build:prod": "tsc -p tsconfig.app.json && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
+    "build:dev": "vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
+    "build:dev-watch": "vite build --mode development --watch --minify false",
+    "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "type": "module",
   "sideEffects": false,

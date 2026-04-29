@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import AuthContext from './AuthContext';
 import useAuth from './hooks/useAuth';

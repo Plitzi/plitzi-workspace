@@ -4,7 +4,7 @@ import { throttle } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useEffect, useRef, useState } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import { processContainer } from './BuilderOverlayHelper';
 import OverlayNormal from './OverlayNormal';

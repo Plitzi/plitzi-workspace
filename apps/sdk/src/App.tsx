@@ -23,8 +23,9 @@ import AppMain from '@modules/App/AppMain';
 import sdkComponents from '@modules/Element';
 import SdkPlugin from '@modules/Sdk/SdkPlugin';
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
-import { createStoreDevToolsLogger, StoreProvider, ThemeProvider } from '@plitzi/sdk-shared';
+import { createStoreDevToolsLogger, ThemeProvider } from '@plitzi/sdk-shared';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
+import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 
 import { getEnvironmentServer } from './config';
 

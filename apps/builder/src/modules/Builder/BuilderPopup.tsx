@@ -3,9 +3,9 @@ import { useCallback, use } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
-import StoreProvider from '@plitzi/sdk-shared/store/StoreProvider';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
+import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 import Builder from '@pmodules/Builder';
 import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 

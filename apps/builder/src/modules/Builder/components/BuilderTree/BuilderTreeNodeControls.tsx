@@ -8,7 +8,7 @@ import { use, useCallback, useMemo } from 'react';
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import BuilderElementTools from '../BuilderElementTools';
 

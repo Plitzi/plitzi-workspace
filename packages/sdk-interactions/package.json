@@ -11,80 +11,80 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.mjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
     },
     "./InteractionsContext": {
-      "types": "./dist/src/InteractionsContext.d.ts",
-      "import": "./dist/src/InteractionsContext.mjs"
+      "types": "./dist/InteractionsContext.d.ts",
+      "import": "./dist/InteractionsContext.mjs"
     },
     "./InteractionsContextProvider": {
-      "types": "./dist/src/InteractionsContextProvider.d.ts",
-      "import": "./dist/src/InteractionsContextProvider.mjs"
+      "types": "./dist/InteractionsContextProvider.d.ts",
+      "import": "./dist/InteractionsContextProvider.mjs"
     },
     "./InteractionsHelper": {
-      "types": "./dist/src/InteractionsHelper.d.ts",
-      "import": "./dist/src/InteractionsHelper.mjs"
+      "types": "./dist/InteractionsHelper.d.ts",
+      "import": "./dist/InteractionsHelper.mjs"
     },
     "./InteractionsManager": {
-      "types": "./dist/src/InteractionsManager.d.ts",
-      "import": "./dist/src/InteractionsManager.mjs"
+      "types": "./dist/InteractionsManager.d.ts",
+      "import": "./dist/InteractionsManager.mjs"
     },
     "./hooks/useInteractions": {
-      "types": "./dist/src/hooks/useInteractions.d.ts",
-      "import": "./dist/src/hooks/useInteractions.mjs"
+      "types": "./dist/hooks/useInteractions.d.ts",
+      "import": "./dist/hooks/useInteractions.mjs"
     },
     "./index": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.mjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
     },
     "./sources": {
-      "types": "./dist/src/sources/index.d.ts",
-      "import": "./dist/src/sources/index.mjs"
+      "types": "./dist/sources/index.d.ts",
+      "import": "./dist/sources/index.mjs"
     },
     "./sources/AuthSource": {
-      "types": "./dist/src/sources/AuthSource/index.d.ts",
-      "import": "./dist/src/sources/AuthSource/index.mjs"
+      "types": "./dist/sources/AuthSource/index.d.ts",
+      "import": "./dist/sources/AuthSource/index.mjs"
     },
     "./sources/AuthSource/AuthInteractions": {
-      "types": "./dist/src/sources/AuthSource/AuthInteractions.d.ts",
-      "import": "./dist/src/sources/AuthSource/AuthInteractions.mjs"
+      "types": "./dist/sources/AuthSource/AuthInteractions.d.ts",
+      "import": "./dist/sources/AuthSource/AuthInteractions.mjs"
     },
     "./sources/AuthSource/index": {
-      "types": "./dist/src/sources/AuthSource/index.d.ts",
-      "import": "./dist/src/sources/AuthSource/index.mjs"
+      "types": "./dist/sources/AuthSource/index.d.ts",
+      "import": "./dist/sources/AuthSource/index.mjs"
     },
     "./sources/index": {
-      "types": "./dist/src/sources/index.d.ts",
-      "import": "./dist/src/sources/index.mjs"
+      "types": "./dist/sources/index.d.ts",
+      "import": "./dist/sources/index.mjs"
     },
     "./utility": {
-      "types": "./dist/src/utility/index.d.ts",
-      "import": "./dist/src/utility/index.mjs"
+      "types": "./dist/utility/index.d.ts",
+      "import": "./dist/utility/index.mjs"
     },
     "./utility/delayTime": {
-      "types": "./dist/src/utility/delayTime.d.ts",
-      "import": "./dist/src/utility/delayTime.mjs"
+      "types": "./dist/utility/delayTime.d.ts",
+      "import": "./dist/utility/delayTime.mjs"
     },
     "./utility/index": {
-      "types": "./dist/src/utility/index.d.ts",
-      "import": "./dist/src/utility/index.mjs"
+      "types": "./dist/utility/index.d.ts",
+      "import": "./dist/utility/index.mjs"
     },
     "./utility/twigTemplate": {
-      "types": "./dist/src/utility/twigTemplate.d.ts",
-      "import": "./dist/src/utility/twigTemplate.mjs"
+      "types": "./dist/utility/twigTemplate.d.ts",
+      "import": "./dist/utility/twigTemplate.mjs"
     },
     "./utility/webHook": {
-      "types": "./dist/src/utility/webHook.d.ts",
-      "import": "./dist/src/utility/webHook.mjs"
+      "types": "./dist/utility/webHook.d.ts",
+      "import": "./dist/utility/webHook.mjs"
     }
   },
   "scripts": {
     "lint": "eslint ./src",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "build:dev": "tsc -p tsconfig.app.json && vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
-    "build:dev-watch": "tsc -p tsconfig.app.json && vite build --mode development --watch --minify false",
-    "build:prod": "tsc -p tsconfig.app.json && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
+    "build:dev": "vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
+    "build:dev-watch": "vite build --mode development --watch --minify false",
+    "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "type": "module",
   "sideEffects": false,

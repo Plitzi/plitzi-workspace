@@ -11,716 +11,716 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.mjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
     },
     "./Component": {
-      "types": "./dist/src/Component/index.d.ts",
-      "import": "./dist/src/Component/index.mjs"
+      "types": "./dist/Component/index.d.ts",
+      "import": "./dist/Component/index.mjs"
     },
     "./Component/ComponentHelper": {
-      "types": "./dist/src/Component/ComponentHelper.d.ts",
-      "import": "./dist/src/Component/ComponentHelper.mjs"
+      "types": "./dist/Component/ComponentHelper.d.ts",
+      "import": "./dist/Component/ComponentHelper.mjs"
     },
     "./Component/ComponentProvider": {
-      "types": "./dist/src/Component/ComponentProvider.d.ts",
-      "import": "./dist/src/Component/ComponentProvider.mjs"
+      "types": "./dist/Component/ComponentProvider.d.ts",
+      "import": "./dist/Component/ComponentProvider.mjs"
     },
     "./Component/index": {
-      "types": "./dist/src/Component/index.d.ts",
-      "import": "./dist/src/Component/index.mjs"
+      "types": "./dist/Component/index.d.ts",
+      "import": "./dist/Component/index.mjs"
     },
     "./Element/JsxManager": {
-      "types": "./dist/src/Element/JsxManager.d.ts",
-      "import": "./dist/src/Element/JsxManager.mjs"
+      "types": "./dist/Element/JsxManager.d.ts",
+      "import": "./dist/Element/JsxManager.mjs"
     },
     "./Element/PluginManager": {
-      "types": "./dist/src/Element/PluginManager.d.ts",
-      "import": "./dist/src/Element/PluginManager.mjs"
+      "types": "./dist/Element/PluginManager.d.ts",
+      "import": "./dist/Element/PluginManager.mjs"
     },
     "./Element/PluginRemote": {
-      "types": "./dist/src/Element/PluginRemote.d.ts",
-      "import": "./dist/src/Element/PluginRemote.mjs"
+      "types": "./dist/Element/PluginRemote.d.ts",
+      "import": "./dist/Element/PluginRemote.mjs"
     },
     "./Element/ReplicaProvider": {
-      "types": "./dist/src/Element/ReplicaProvider.d.ts",
-      "import": "./dist/src/Element/ReplicaProvider.mjs"
+      "types": "./dist/Element/ReplicaProvider.d.ts",
+      "import": "./dist/Element/ReplicaProvider.mjs"
     },
     "./Element/RootElement": {
-      "types": "./dist/src/Element/RootElement.d.ts",
-      "import": "./dist/src/Element/RootElement.mjs"
+      "types": "./dist/Element/RootElement.d.ts",
+      "import": "./dist/Element/RootElement.mjs"
     },
     "./Element/ServerStaticShell": {
-      "types": "./dist/src/Element/ServerStaticShell.d.ts",
-      "import": "./dist/src/Element/ServerStaticShell.mjs"
+      "types": "./dist/Element/ServerStaticShell.d.ts",
+      "import": "./dist/Element/ServerStaticShell.mjs"
     },
     "./Element/helpers/elementConstants": {
-      "types": "./dist/src/Element/helpers/elementConstants.d.ts",
-      "import": "./dist/src/Element/helpers/elementConstants.mjs"
+      "types": "./dist/Element/helpers/elementConstants.d.ts",
+      "import": "./dist/Element/helpers/elementConstants.mjs"
     },
     "./Element/helpers/elementUtils": {
-      "types": "./dist/src/Element/helpers/elementUtils.d.ts",
-      "import": "./dist/src/Element/helpers/elementUtils.mjs"
+      "types": "./dist/Element/helpers/elementUtils.d.ts",
+      "import": "./dist/Element/helpers/elementUtils.mjs"
     },
     "./Element/helpers/getInteractions": {
-      "types": "./dist/src/Element/helpers/getInteractions.d.ts",
-      "import": "./dist/src/Element/helpers/getInteractions.mjs"
+      "types": "./dist/Element/helpers/getInteractions.d.ts",
+      "import": "./dist/Element/helpers/getInteractions.mjs"
     },
     "./Element/helpers/loadComponent": {
-      "types": "./dist/src/Element/helpers/loadComponent.d.ts",
-      "import": "./dist/src/Element/helpers/loadComponent.mjs"
+      "types": "./dist/Element/helpers/loadComponent.d.ts",
+      "import": "./dist/Element/helpers/loadComponent.mjs"
     },
     "./Element/helpers/parseStyle": {
-      "types": "./dist/src/Element/helpers/parseStyle.d.ts",
-      "import": "./dist/src/Element/helpers/parseStyle.mjs"
+      "types": "./dist/Element/helpers/parseStyle.d.ts",
+      "import": "./dist/Element/helpers/parseStyle.mjs"
     },
     "./Element/helpers/parseStyleSelectors": {
-      "types": "./dist/src/Element/helpers/parseStyleSelectors.d.ts",
-      "import": "./dist/src/Element/helpers/parseStyleSelectors.mjs"
+      "types": "./dist/Element/helpers/parseStyleSelectors.d.ts",
+      "import": "./dist/Element/helpers/parseStyleSelectors.mjs"
     },
     "./Element/helpers/pluginSelector": {
-      "types": "./dist/src/Element/helpers/pluginSelector.d.ts",
-      "import": "./dist/src/Element/helpers/pluginSelector.mjs"
+      "types": "./dist/Element/helpers/pluginSelector.d.ts",
+      "import": "./dist/Element/helpers/pluginSelector.mjs"
     },
     "./Element/hocs/withElement": {
-      "types": "./dist/src/Element/hocs/withElement.d.ts",
-      "import": "./dist/src/Element/hocs/withElement.mjs"
+      "types": "./dist/Element/hocs/withElement.d.ts",
+      "import": "./dist/Element/hocs/withElement.mjs"
     },
     "./Element/hooks/useElementDataSource": {
-      "types": "./dist/src/Element/hooks/useElementDataSource.d.ts",
-      "import": "./dist/src/Element/hooks/useElementDataSource.mjs"
+      "types": "./dist/Element/hooks/useElementDataSource.d.ts",
+      "import": "./dist/Element/hooks/useElementDataSource.mjs"
     },
     "./Element/hooks/useElementInteractions": {
-      "types": "./dist/src/Element/hooks/useElementInteractions.d.ts",
-      "import": "./dist/src/Element/hooks/useElementInteractions.mjs"
+      "types": "./dist/Element/hooks/useElementInteractions.d.ts",
+      "import": "./dist/Element/hooks/useElementInteractions.mjs"
     },
     "./Element/hooks/useElementInternal": {
-      "types": "./dist/src/Element/hooks/useElementInternal.d.ts",
-      "import": "./dist/src/Element/hooks/useElementInternal.mjs"
+      "types": "./dist/Element/hooks/useElementInternal.d.ts",
+      "import": "./dist/Element/hooks/useElementInternal.mjs"
     },
     "./Element/hooks/useElementState": {
-      "types": "./dist/src/Element/hooks/useElementState.d.ts",
-      "import": "./dist/src/Element/hooks/useElementState.mjs"
+      "types": "./dist/Element/hooks/useElementState.d.ts",
+      "import": "./dist/Element/hooks/useElementState.mjs"
     },
     "./Element/hooks/useInternalClassName": {
-      "types": "./dist/src/Element/hooks/useInternalClassName.d.ts",
-      "import": "./dist/src/Element/hooks/useInternalClassName.mjs"
+      "types": "./dist/Element/hooks/useInternalClassName.d.ts",
+      "import": "./dist/Element/hooks/useInternalClassName.mjs"
     },
     "./Element/hooks/useInternalItems": {
-      "types": "./dist/src/Element/hooks/useInternalItems.d.ts",
-      "import": "./dist/src/Element/hooks/useInternalItems.mjs"
+      "types": "./dist/Element/hooks/useInternalItems.d.ts",
+      "import": "./dist/Element/hooks/useInternalItems.mjs"
     },
     "./components/ElementAdvancedEditor": {
-      "types": "./dist/src/components/ElementAdvancedEditor.d.ts",
-      "import": "./dist/src/components/ElementAdvancedEditor.mjs"
+      "types": "./dist/components/ElementAdvancedEditor.d.ts",
+      "import": "./dist/components/ElementAdvancedEditor.mjs"
     },
     "./elements": {
-      "types": "./dist/src/elements/index.d.ts",
-      "import": "./dist/src/elements/index.mjs"
+      "types": "./dist/elements/index.d.ts",
+      "import": "./dist/elements/index.mjs"
     },
     "./elements/advanced/BlockHtml": {
-      "types": "./dist/src/elements/advanced/BlockHtml/index.d.ts",
-      "import": "./dist/src/elements/advanced/BlockHtml/index.mjs"
+      "types": "./dist/elements/advanced/BlockHtml/index.d.ts",
+      "import": "./dist/elements/advanced/BlockHtml/index.mjs"
     },
     "./elements/advanced/BlockHtml/BlockHtml": {
-      "types": "./dist/src/elements/advanced/BlockHtml/BlockHtml.d.ts",
-      "import": "./dist/src/elements/advanced/BlockHtml/BlockHtml.mjs"
+      "types": "./dist/elements/advanced/BlockHtml/BlockHtml.d.ts",
+      "import": "./dist/elements/advanced/BlockHtml/BlockHtml.mjs"
     },
     "./elements/advanced/BlockHtml/Settings": {
-      "types": "./dist/src/elements/advanced/BlockHtml/Settings.d.ts",
-      "import": "./dist/src/elements/advanced/BlockHtml/Settings.mjs"
+      "types": "./dist/elements/advanced/BlockHtml/Settings.d.ts",
+      "import": "./dist/elements/advanced/BlockHtml/Settings.mjs"
     },
     "./elements/advanced/BlockHtml/index": {
-      "types": "./dist/src/elements/advanced/BlockHtml/index.d.ts",
-      "import": "./dist/src/elements/advanced/BlockHtml/index.mjs"
+      "types": "./dist/elements/advanced/BlockHtml/index.d.ts",
+      "import": "./dist/elements/advanced/BlockHtml/index.mjs"
     },
     "./elements/advanced/BlockJsx": {
-      "types": "./dist/src/elements/advanced/BlockJsx/index.d.ts",
-      "import": "./dist/src/elements/advanced/BlockJsx/index.mjs"
+      "types": "./dist/elements/advanced/BlockJsx/index.d.ts",
+      "import": "./dist/elements/advanced/BlockJsx/index.mjs"
     },
     "./elements/advanced/BlockJsx/BlockJsx": {
-      "types": "./dist/src/elements/advanced/BlockJsx/BlockJsx.d.ts",
-      "import": "./dist/src/elements/advanced/BlockJsx/BlockJsx.mjs"
+      "types": "./dist/elements/advanced/BlockJsx/BlockJsx.d.ts",
+      "import": "./dist/elements/advanced/BlockJsx/BlockJsx.mjs"
     },
     "./elements/advanced/BlockJsx/Settings": {
-      "types": "./dist/src/elements/advanced/BlockJsx/Settings.d.ts",
-      "import": "./dist/src/elements/advanced/BlockJsx/Settings.mjs"
+      "types": "./dist/elements/advanced/BlockJsx/Settings.d.ts",
+      "import": "./dist/elements/advanced/BlockJsx/Settings.mjs"
     },
     "./elements/advanced/BlockJsx/index": {
-      "types": "./dist/src/elements/advanced/BlockJsx/index.d.ts",
-      "import": "./dist/src/elements/advanced/BlockJsx/index.mjs"
+      "types": "./dist/elements/advanced/BlockJsx/index.d.ts",
+      "import": "./dist/elements/advanced/BlockJsx/index.mjs"
     },
     "./elements/advanced/Custom": {
-      "types": "./dist/src/elements/advanced/Custom/index.d.ts",
-      "import": "./dist/src/elements/advanced/Custom/index.mjs"
+      "types": "./dist/elements/advanced/Custom/index.d.ts",
+      "import": "./dist/elements/advanced/Custom/index.mjs"
     },
     "./elements/advanced/Custom/Custom": {
-      "types": "./dist/src/elements/advanced/Custom/Custom.d.ts",
-      "import": "./dist/src/elements/advanced/Custom/Custom.mjs"
+      "types": "./dist/elements/advanced/Custom/Custom.d.ts",
+      "import": "./dist/elements/advanced/Custom/Custom.mjs"
     },
     "./elements/advanced/Custom/Settings": {
-      "types": "./dist/src/elements/advanced/Custom/Settings.d.ts",
-      "import": "./dist/src/elements/advanced/Custom/Settings.mjs"
+      "types": "./dist/elements/advanced/Custom/Settings.d.ts",
+      "import": "./dist/elements/advanced/Custom/Settings.mjs"
     },
     "./elements/advanced/Custom/index": {
-      "types": "./dist/src/elements/advanced/Custom/index.d.ts",
-      "import": "./dist/src/elements/advanced/Custom/index.mjs"
+      "types": "./dist/elements/advanced/Custom/index.d.ts",
+      "import": "./dist/elements/advanced/Custom/index.mjs"
     },
     "./elements/advanced/NodeHtml": {
-      "types": "./dist/src/elements/advanced/NodeHtml/index.d.ts",
-      "import": "./dist/src/elements/advanced/NodeHtml/index.mjs"
+      "types": "./dist/elements/advanced/NodeHtml/index.d.ts",
+      "import": "./dist/elements/advanced/NodeHtml/index.mjs"
     },
     "./elements/advanced/NodeHtml/NodeHtml": {
-      "types": "./dist/src/elements/advanced/NodeHtml/NodeHtml.d.ts",
-      "import": "./dist/src/elements/advanced/NodeHtml/NodeHtml.mjs"
+      "types": "./dist/elements/advanced/NodeHtml/NodeHtml.d.ts",
+      "import": "./dist/elements/advanced/NodeHtml/NodeHtml.mjs"
     },
     "./elements/advanced/NodeHtml/Settings": {
-      "types": "./dist/src/elements/advanced/NodeHtml/Settings.d.ts",
-      "import": "./dist/src/elements/advanced/NodeHtml/Settings.mjs"
+      "types": "./dist/elements/advanced/NodeHtml/Settings.d.ts",
+      "import": "./dist/elements/advanced/NodeHtml/Settings.mjs"
     },
     "./elements/advanced/NodeHtml/index": {
-      "types": "./dist/src/elements/advanced/NodeHtml/index.d.ts",
-      "import": "./dist/src/elements/advanced/NodeHtml/index.mjs"
+      "types": "./dist/elements/advanced/NodeHtml/index.d.ts",
+      "import": "./dist/elements/advanced/NodeHtml/index.mjs"
     },
     "./elements/advanced/PlitziSdk/Settings": {
-      "types": "./dist/src/elements/advanced/PlitziSdk/Settings.d.ts",
-      "import": "./dist/src/elements/advanced/PlitziSdk/Settings.mjs"
+      "types": "./dist/elements/advanced/PlitziSdk/Settings.d.ts",
+      "import": "./dist/elements/advanced/PlitziSdk/Settings.mjs"
     },
     "./elements/advanced/Reference": {
-      "types": "./dist/src/elements/advanced/Reference/index.d.ts",
-      "import": "./dist/src/elements/advanced/Reference/index.mjs"
+      "types": "./dist/elements/advanced/Reference/index.d.ts",
+      "import": "./dist/elements/advanced/Reference/index.mjs"
     },
     "./elements/advanced/Reference/Reference": {
-      "types": "./dist/src/elements/advanced/Reference/Reference.d.ts",
-      "import": "./dist/src/elements/advanced/Reference/Reference.mjs"
+      "types": "./dist/elements/advanced/Reference/Reference.d.ts",
+      "import": "./dist/elements/advanced/Reference/Reference.mjs"
     },
     "./elements/advanced/Reference/Settings": {
-      "types": "./dist/src/elements/advanced/Reference/Settings.d.ts",
-      "import": "./dist/src/elements/advanced/Reference/Settings.mjs"
+      "types": "./dist/elements/advanced/Reference/Settings.d.ts",
+      "import": "./dist/elements/advanced/Reference/Settings.mjs"
     },
     "./elements/advanced/Reference/index": {
-      "types": "./dist/src/elements/advanced/Reference/index.d.ts",
-      "import": "./dist/src/elements/advanced/Reference/index.mjs"
+      "types": "./dist/elements/advanced/Reference/index.d.ts",
+      "import": "./dist/elements/advanced/Reference/index.mjs"
     },
     "./elements/basic/Button": {
-      "types": "./dist/src/elements/basic/Button/index.d.ts",
-      "import": "./dist/src/elements/basic/Button/index.mjs"
+      "types": "./dist/elements/basic/Button/index.d.ts",
+      "import": "./dist/elements/basic/Button/index.mjs"
     },
     "./elements/basic/Button/Button": {
-      "types": "./dist/src/elements/basic/Button/Button.d.ts",
-      "import": "./dist/src/elements/basic/Button/Button.mjs"
+      "types": "./dist/elements/basic/Button/Button.d.ts",
+      "import": "./dist/elements/basic/Button/Button.mjs"
     },
     "./elements/basic/Button/Settings": {
-      "types": "./dist/src/elements/basic/Button/Settings.d.ts",
-      "import": "./dist/src/elements/basic/Button/Settings.mjs"
+      "types": "./dist/elements/basic/Button/Settings.d.ts",
+      "import": "./dist/elements/basic/Button/Settings.mjs"
     },
     "./elements/basic/Button/index": {
-      "types": "./dist/src/elements/basic/Button/index.d.ts",
-      "import": "./dist/src/elements/basic/Button/index.mjs"
+      "types": "./dist/elements/basic/Button/index.d.ts",
+      "import": "./dist/elements/basic/Button/index.mjs"
     },
     "./elements/basic/Dropdown": {
-      "types": "./dist/src/elements/basic/Dropdown/index.d.ts",
-      "import": "./dist/src/elements/basic/Dropdown/index.mjs"
+      "types": "./dist/elements/basic/Dropdown/index.d.ts",
+      "import": "./dist/elements/basic/Dropdown/index.mjs"
     },
     "./elements/basic/Dropdown/Dropdown": {
-      "types": "./dist/src/elements/basic/Dropdown/Dropdown.d.ts",
-      "import": "./dist/src/elements/basic/Dropdown/Dropdown.mjs"
+      "types": "./dist/elements/basic/Dropdown/Dropdown.d.ts",
+      "import": "./dist/elements/basic/Dropdown/Dropdown.mjs"
     },
     "./elements/basic/Dropdown/DropdownContext": {
-      "types": "./dist/src/elements/basic/Dropdown/DropdownContext.d.ts",
-      "import": "./dist/src/elements/basic/Dropdown/DropdownContext.mjs"
+      "types": "./dist/elements/basic/Dropdown/DropdownContext.d.ts",
+      "import": "./dist/elements/basic/Dropdown/DropdownContext.mjs"
     },
     "./elements/basic/Dropdown/DropdownPopup": {
-      "types": "./dist/src/elements/basic/Dropdown/DropdownPopup/index.d.ts",
-      "import": "./dist/src/elements/basic/Dropdown/DropdownPopup/index.mjs"
+      "types": "./dist/elements/basic/Dropdown/DropdownPopup/index.d.ts",
+      "import": "./dist/elements/basic/Dropdown/DropdownPopup/index.mjs"
     },
     "./elements/basic/Dropdown/DropdownPopup/DropdownPopup": {
-      "types": "./dist/src/elements/basic/Dropdown/DropdownPopup/DropdownPopup.d.ts",
-      "import": "./dist/src/elements/basic/Dropdown/DropdownPopup/DropdownPopup.mjs"
+      "types": "./dist/elements/basic/Dropdown/DropdownPopup/DropdownPopup.d.ts",
+      "import": "./dist/elements/basic/Dropdown/DropdownPopup/DropdownPopup.mjs"
     },
     "./elements/basic/Dropdown/DropdownPopup/index": {
-      "types": "./dist/src/elements/basic/Dropdown/DropdownPopup/index.d.ts",
-      "import": "./dist/src/elements/basic/Dropdown/DropdownPopup/index.mjs"
+      "types": "./dist/elements/basic/Dropdown/DropdownPopup/index.d.ts",
+      "import": "./dist/elements/basic/Dropdown/DropdownPopup/index.mjs"
     },
     "./elements/basic/Dropdown/Settings": {
-      "types": "./dist/src/elements/basic/Dropdown/Settings.d.ts",
-      "import": "./dist/src/elements/basic/Dropdown/Settings.mjs"
+      "types": "./dist/elements/basic/Dropdown/Settings.d.ts",
+      "import": "./dist/elements/basic/Dropdown/Settings.mjs"
     },
     "./elements/basic/Dropdown/index": {
-      "types": "./dist/src/elements/basic/Dropdown/index.d.ts",
-      "import": "./dist/src/elements/basic/Dropdown/index.mjs"
+      "types": "./dist/elements/basic/Dropdown/index.d.ts",
+      "import": "./dist/elements/basic/Dropdown/index.mjs"
     },
     "./elements/basic/Dropdown/useDropdown": {
-      "types": "./dist/src/elements/basic/Dropdown/useDropdown.d.ts",
-      "import": "./dist/src/elements/basic/Dropdown/useDropdown.mjs"
+      "types": "./dist/elements/basic/Dropdown/useDropdown.d.ts",
+      "import": "./dist/elements/basic/Dropdown/useDropdown.mjs"
     },
     "./elements/basic/Heading": {
-      "types": "./dist/src/elements/basic/Heading/index.d.ts",
-      "import": "./dist/src/elements/basic/Heading/index.mjs"
+      "types": "./dist/elements/basic/Heading/index.d.ts",
+      "import": "./dist/elements/basic/Heading/index.mjs"
     },
     "./elements/basic/Heading/Heading": {
-      "types": "./dist/src/elements/basic/Heading/Heading.d.ts",
-      "import": "./dist/src/elements/basic/Heading/Heading.mjs"
+      "types": "./dist/elements/basic/Heading/Heading.d.ts",
+      "import": "./dist/elements/basic/Heading/Heading.mjs"
     },
     "./elements/basic/Heading/Settings": {
-      "types": "./dist/src/elements/basic/Heading/Settings.d.ts",
-      "import": "./dist/src/elements/basic/Heading/Settings.mjs"
+      "types": "./dist/elements/basic/Heading/Settings.d.ts",
+      "import": "./dist/elements/basic/Heading/Settings.mjs"
     },
     "./elements/basic/Heading/index": {
-      "types": "./dist/src/elements/basic/Heading/index.d.ts",
-      "import": "./dist/src/elements/basic/Heading/index.mjs"
+      "types": "./dist/elements/basic/Heading/index.d.ts",
+      "import": "./dist/elements/basic/Heading/index.mjs"
     },
     "./elements/basic/Link": {
-      "types": "./dist/src/elements/basic/Link/index.d.ts",
-      "import": "./dist/src/elements/basic/Link/index.mjs"
+      "types": "./dist/elements/basic/Link/index.d.ts",
+      "import": "./dist/elements/basic/Link/index.mjs"
     },
     "./elements/basic/Link/Link": {
-      "types": "./dist/src/elements/basic/Link/Link.d.ts",
-      "import": "./dist/src/elements/basic/Link/Link.mjs"
+      "types": "./dist/elements/basic/Link/Link.d.ts",
+      "import": "./dist/elements/basic/Link/Link.mjs"
     },
     "./elements/basic/Link/Settings": {
-      "types": "./dist/src/elements/basic/Link/Settings.d.ts",
-      "import": "./dist/src/elements/basic/Link/Settings.mjs"
+      "types": "./dist/elements/basic/Link/Settings.d.ts",
+      "import": "./dist/elements/basic/Link/Settings.mjs"
     },
     "./elements/basic/Link/index": {
-      "types": "./dist/src/elements/basic/Link/index.d.ts",
-      "import": "./dist/src/elements/basic/Link/index.mjs"
+      "types": "./dist/elements/basic/Link/index.d.ts",
+      "import": "./dist/elements/basic/Link/index.mjs"
     },
     "./elements/basic/Markdown": {
-      "types": "./dist/src/elements/basic/Markdown/index.d.ts",
-      "import": "./dist/src/elements/basic/Markdown/index.mjs"
+      "types": "./dist/elements/basic/Markdown/index.d.ts",
+      "import": "./dist/elements/basic/Markdown/index.mjs"
     },
     "./elements/basic/Markdown/Markdown": {
-      "types": "./dist/src/elements/basic/Markdown/Markdown.d.ts",
-      "import": "./dist/src/elements/basic/Markdown/Markdown.mjs"
+      "types": "./dist/elements/basic/Markdown/Markdown.d.ts",
+      "import": "./dist/elements/basic/Markdown/Markdown.mjs"
     },
     "./elements/basic/Markdown/Settings": {
-      "types": "./dist/src/elements/basic/Markdown/Settings.d.ts",
-      "import": "./dist/src/elements/basic/Markdown/Settings.mjs"
+      "types": "./dist/elements/basic/Markdown/Settings.d.ts",
+      "import": "./dist/elements/basic/Markdown/Settings.mjs"
     },
     "./elements/basic/Markdown/index": {
-      "types": "./dist/src/elements/basic/Markdown/index.d.ts",
-      "import": "./dist/src/elements/basic/Markdown/index.mjs"
+      "types": "./dist/elements/basic/Markdown/index.d.ts",
+      "import": "./dist/elements/basic/Markdown/index.mjs"
     },
     "./elements/basic/Paragraph": {
-      "types": "./dist/src/elements/basic/Paragraph/index.d.ts",
-      "import": "./dist/src/elements/basic/Paragraph/index.mjs"
+      "types": "./dist/elements/basic/Paragraph/index.d.ts",
+      "import": "./dist/elements/basic/Paragraph/index.mjs"
     },
     "./elements/basic/Paragraph/Paragraph": {
-      "types": "./dist/src/elements/basic/Paragraph/Paragraph.d.ts",
-      "import": "./dist/src/elements/basic/Paragraph/Paragraph.mjs"
+      "types": "./dist/elements/basic/Paragraph/Paragraph.d.ts",
+      "import": "./dist/elements/basic/Paragraph/Paragraph.mjs"
     },
     "./elements/basic/Paragraph/Settings": {
-      "types": "./dist/src/elements/basic/Paragraph/Settings.d.ts",
-      "import": "./dist/src/elements/basic/Paragraph/Settings.mjs"
+      "types": "./dist/elements/basic/Paragraph/Settings.d.ts",
+      "import": "./dist/elements/basic/Paragraph/Settings.mjs"
     },
     "./elements/basic/Paragraph/index": {
-      "types": "./dist/src/elements/basic/Paragraph/index.d.ts",
-      "import": "./dist/src/elements/basic/Paragraph/index.mjs"
+      "types": "./dist/elements/basic/Paragraph/index.d.ts",
+      "import": "./dist/elements/basic/Paragraph/index.mjs"
     },
     "./elements/basic/Text": {
-      "types": "./dist/src/elements/basic/Text/index.d.ts",
-      "import": "./dist/src/elements/basic/Text/index.mjs"
+      "types": "./dist/elements/basic/Text/index.d.ts",
+      "import": "./dist/elements/basic/Text/index.mjs"
     },
     "./elements/basic/Text/Settings": {
-      "types": "./dist/src/elements/basic/Text/Settings.d.ts",
-      "import": "./dist/src/elements/basic/Text/Settings.mjs"
+      "types": "./dist/elements/basic/Text/Settings.d.ts",
+      "import": "./dist/elements/basic/Text/Settings.mjs"
     },
     "./elements/basic/Text/Text": {
-      "types": "./dist/src/elements/basic/Text/Text.d.ts",
-      "import": "./dist/src/elements/basic/Text/Text.mjs"
+      "types": "./dist/elements/basic/Text/Text.d.ts",
+      "import": "./dist/elements/basic/Text/Text.mjs"
     },
     "./elements/basic/Text/index": {
-      "types": "./dist/src/elements/basic/Text/index.d.ts",
-      "import": "./dist/src/elements/basic/Text/index.mjs"
+      "types": "./dist/elements/basic/Text/index.d.ts",
+      "import": "./dist/elements/basic/Text/index.mjs"
     },
     "./elements/form/Form": {
-      "types": "./dist/src/elements/form/Form/index.d.ts",
-      "import": "./dist/src/elements/form/Form/index.mjs"
+      "types": "./dist/elements/form/Form/index.d.ts",
+      "import": "./dist/elements/form/Form/index.mjs"
     },
     "./elements/form/Form/Form": {
-      "types": "./dist/src/elements/form/Form/Form.d.ts",
-      "import": "./dist/src/elements/form/Form/Form.mjs"
+      "types": "./dist/elements/form/Form/Form.d.ts",
+      "import": "./dist/elements/form/Form/Form.mjs"
     },
     "./elements/form/Form/Settings": {
-      "types": "./dist/src/elements/form/Form/Settings.d.ts",
-      "import": "./dist/src/elements/form/Form/Settings.mjs"
+      "types": "./dist/elements/form/Form/Settings.d.ts",
+      "import": "./dist/elements/form/Form/Settings.mjs"
     },
     "./elements/form/Form/index": {
-      "types": "./dist/src/elements/form/Form/index.d.ts",
-      "import": "./dist/src/elements/form/Form/index.mjs"
+      "types": "./dist/elements/form/Form/index.d.ts",
+      "import": "./dist/elements/form/Form/index.mjs"
     },
     "./elements/form/FormControl": {
-      "types": "./dist/src/elements/form/FormControl/index.d.ts",
-      "import": "./dist/src/elements/form/FormControl/index.mjs"
+      "types": "./dist/elements/form/FormControl/index.d.ts",
+      "import": "./dist/elements/form/FormControl/index.mjs"
     },
     "./elements/form/FormControl/FormControl": {
-      "types": "./dist/src/elements/form/FormControl/FormControl.d.ts",
-      "import": "./dist/src/elements/form/FormControl/FormControl.mjs"
+      "types": "./dist/elements/form/FormControl/FormControl.d.ts",
+      "import": "./dist/elements/form/FormControl/FormControl.mjs"
     },
     "./elements/form/FormControl/Settings": {
-      "types": "./dist/src/elements/form/FormControl/Settings.d.ts",
-      "import": "./dist/src/elements/form/FormControl/Settings.mjs"
+      "types": "./dist/elements/form/FormControl/Settings.d.ts",
+      "import": "./dist/elements/form/FormControl/Settings.mjs"
     },
     "./elements/form/FormControl/components/Label": {
-      "types": "./dist/src/elements/form/FormControl/components/Label.d.ts",
-      "import": "./dist/src/elements/form/FormControl/components/Label.mjs"
+      "types": "./dist/elements/form/FormControl/components/Label.d.ts",
+      "import": "./dist/elements/form/FormControl/components/Label.mjs"
     },
     "./elements/form/FormControl/hocs/withFieldValue": {
-      "types": "./dist/src/elements/form/FormControl/hocs/withFieldValue.d.ts",
-      "import": "./dist/src/elements/form/FormControl/hocs/withFieldValue.mjs"
+      "types": "./dist/elements/form/FormControl/hocs/withFieldValue.d.ts",
+      "import": "./dist/elements/form/FormControl/hocs/withFieldValue.mjs"
     },
     "./elements/form/FormControl/index": {
-      "types": "./dist/src/elements/form/FormControl/index.d.ts",
-      "import": "./dist/src/elements/form/FormControl/index.mjs"
+      "types": "./dist/elements/form/FormControl/index.d.ts",
+      "import": "./dist/elements/form/FormControl/index.mjs"
     },
     "./elements/form/FormControl/inputs/Checkbox": {
-      "types": "./dist/src/elements/form/FormControl/inputs/Checkbox.d.ts",
-      "import": "./dist/src/elements/form/FormControl/inputs/Checkbox.mjs"
+      "types": "./dist/elements/form/FormControl/inputs/Checkbox.d.ts",
+      "import": "./dist/elements/form/FormControl/inputs/Checkbox.mjs"
     },
     "./elements/form/FormControl/inputs/Hidden": {
-      "types": "./dist/src/elements/form/FormControl/inputs/Hidden.d.ts",
-      "import": "./dist/src/elements/form/FormControl/inputs/Hidden.mjs"
+      "types": "./dist/elements/form/FormControl/inputs/Hidden.d.ts",
+      "import": "./dist/elements/form/FormControl/inputs/Hidden.mjs"
     },
     "./elements/form/FormControl/inputs/Input": {
-      "types": "./dist/src/elements/form/FormControl/inputs/Input.d.ts",
-      "import": "./dist/src/elements/form/FormControl/inputs/Input.mjs"
+      "types": "./dist/elements/form/FormControl/inputs/Input.d.ts",
+      "import": "./dist/elements/form/FormControl/inputs/Input.mjs"
     },
     "./elements/form/FormControl/inputs/Select": {
-      "types": "./dist/src/elements/form/FormControl/inputs/Select.d.ts",
-      "import": "./dist/src/elements/form/FormControl/inputs/Select.mjs"
+      "types": "./dist/elements/form/FormControl/inputs/Select.d.ts",
+      "import": "./dist/elements/form/FormControl/inputs/Select.mjs"
     },
     "./elements/form/FormControl/inputs/Textarea": {
-      "types": "./dist/src/elements/form/FormControl/inputs/Textarea.d.ts",
-      "import": "./dist/src/elements/form/FormControl/inputs/Textarea.mjs"
+      "types": "./dist/elements/form/FormControl/inputs/Textarea.d.ts",
+      "import": "./dist/elements/form/FormControl/inputs/Textarea.mjs"
     },
     "./elements/index": {
-      "types": "./dist/src/elements/index.d.ts",
-      "import": "./dist/src/elements/index.mjs"
+      "types": "./dist/elements/index.d.ts",
+      "import": "./dist/elements/index.mjs"
     },
     "./elements/internal/LayoutContainer": {
-      "types": "./dist/src/elements/internal/LayoutContainer/index.d.ts",
-      "import": "./dist/src/elements/internal/LayoutContainer/index.mjs"
+      "types": "./dist/elements/internal/LayoutContainer/index.d.ts",
+      "import": "./dist/elements/internal/LayoutContainer/index.mjs"
     },
     "./elements/internal/LayoutContainer/LayoutContainer": {
-      "types": "./dist/src/elements/internal/LayoutContainer/LayoutContainer.d.ts",
-      "import": "./dist/src/elements/internal/LayoutContainer/LayoutContainer.mjs"
+      "types": "./dist/elements/internal/LayoutContainer/LayoutContainer.d.ts",
+      "import": "./dist/elements/internal/LayoutContainer/LayoutContainer.mjs"
     },
     "./elements/internal/LayoutContainer/Settings": {
-      "types": "./dist/src/elements/internal/LayoutContainer/Settings.d.ts",
-      "import": "./dist/src/elements/internal/LayoutContainer/Settings.mjs"
+      "types": "./dist/elements/internal/LayoutContainer/Settings.d.ts",
+      "import": "./dist/elements/internal/LayoutContainer/Settings.mjs"
     },
     "./elements/internal/LayoutContainer/index": {
-      "types": "./dist/src/elements/internal/LayoutContainer/index.d.ts",
-      "import": "./dist/src/elements/internal/LayoutContainer/index.mjs"
+      "types": "./dist/elements/internal/LayoutContainer/index.d.ts",
+      "import": "./dist/elements/internal/LayoutContainer/index.mjs"
     },
     "./elements/internal/Loading": {
-      "types": "./dist/src/elements/internal/Loading/index.d.ts",
-      "import": "./dist/src/elements/internal/Loading/index.mjs"
+      "types": "./dist/elements/internal/Loading/index.d.ts",
+      "import": "./dist/elements/internal/Loading/index.mjs"
     },
     "./elements/internal/Loading/Loading": {
-      "types": "./dist/src/elements/internal/Loading/Loading.d.ts",
-      "import": "./dist/src/elements/internal/Loading/Loading.mjs"
+      "types": "./dist/elements/internal/Loading/Loading.d.ts",
+      "import": "./dist/elements/internal/Loading/Loading.mjs"
     },
     "./elements/internal/Loading/index": {
-      "types": "./dist/src/elements/internal/Loading/index.d.ts",
-      "import": "./dist/src/elements/internal/Loading/index.mjs"
+      "types": "./dist/elements/internal/Loading/index.d.ts",
+      "import": "./dist/elements/internal/Loading/index.mjs"
     },
     "./elements/internal/NotFound": {
-      "types": "./dist/src/elements/internal/NotFound/index.d.ts",
-      "import": "./dist/src/elements/internal/NotFound/index.mjs"
+      "types": "./dist/elements/internal/NotFound/index.d.ts",
+      "import": "./dist/elements/internal/NotFound/index.mjs"
     },
     "./elements/internal/NotFound/NotFound": {
-      "types": "./dist/src/elements/internal/NotFound/NotFound.d.ts",
-      "import": "./dist/src/elements/internal/NotFound/NotFound.mjs"
+      "types": "./dist/elements/internal/NotFound/NotFound.d.ts",
+      "import": "./dist/elements/internal/NotFound/NotFound.mjs"
     },
     "./elements/internal/NotFound/index": {
-      "types": "./dist/src/elements/internal/NotFound/index.d.ts",
-      "import": "./dist/src/elements/internal/NotFound/index.mjs"
+      "types": "./dist/elements/internal/NotFound/index.d.ts",
+      "import": "./dist/elements/internal/NotFound/index.mjs"
     },
     "./elements/internal/Page": {
-      "types": "./dist/src/elements/internal/Page/index.d.ts",
-      "import": "./dist/src/elements/internal/Page/index.mjs"
+      "types": "./dist/elements/internal/Page/index.d.ts",
+      "import": "./dist/elements/internal/Page/index.mjs"
     },
     "./elements/internal/Page/Page": {
-      "types": "./dist/src/elements/internal/Page/Page.d.ts",
-      "import": "./dist/src/elements/internal/Page/Page.mjs"
+      "types": "./dist/elements/internal/Page/Page.d.ts",
+      "import": "./dist/elements/internal/Page/Page.mjs"
     },
     "./elements/internal/Page/Settings": {
-      "types": "./dist/src/elements/internal/Page/Settings.d.ts",
-      "import": "./dist/src/elements/internal/Page/Settings.mjs"
+      "types": "./dist/elements/internal/Page/Settings.d.ts",
+      "import": "./dist/elements/internal/Page/Settings.mjs"
     },
     "./elements/internal/Page/index": {
-      "types": "./dist/src/elements/internal/Page/index.d.ts",
-      "import": "./dist/src/elements/internal/Page/index.mjs"
+      "types": "./dist/elements/internal/Page/index.d.ts",
+      "import": "./dist/elements/internal/Page/index.mjs"
     },
     "./elements/media/FontAwesome": {
-      "types": "./dist/src/elements/media/FontAwesome/index.d.ts",
-      "import": "./dist/src/elements/media/FontAwesome/index.mjs"
+      "types": "./dist/elements/media/FontAwesome/index.d.ts",
+      "import": "./dist/elements/media/FontAwesome/index.mjs"
     },
     "./elements/media/FontAwesome/FontAwesome": {
-      "types": "./dist/src/elements/media/FontAwesome/FontAwesome.d.ts",
-      "import": "./dist/src/elements/media/FontAwesome/FontAwesome.mjs"
+      "types": "./dist/elements/media/FontAwesome/FontAwesome.d.ts",
+      "import": "./dist/elements/media/FontAwesome/FontAwesome.mjs"
     },
     "./elements/media/FontAwesome/Settings": {
-      "types": "./dist/src/elements/media/FontAwesome/Settings.d.ts",
-      "import": "./dist/src/elements/media/FontAwesome/Settings.mjs"
+      "types": "./dist/elements/media/FontAwesome/Settings.d.ts",
+      "import": "./dist/elements/media/FontAwesome/Settings.mjs"
     },
     "./elements/media/FontAwesome/index": {
-      "types": "./dist/src/elements/media/FontAwesome/index.d.ts",
-      "import": "./dist/src/elements/media/FontAwesome/index.mjs"
+      "types": "./dist/elements/media/FontAwesome/index.d.ts",
+      "import": "./dist/elements/media/FontAwesome/index.mjs"
     },
     "./elements/media/Image": {
-      "types": "./dist/src/elements/media/Image/index.d.ts",
-      "import": "./dist/src/elements/media/Image/index.mjs"
+      "types": "./dist/elements/media/Image/index.d.ts",
+      "import": "./dist/elements/media/Image/index.mjs"
     },
     "./elements/media/Image/Image": {
-      "types": "./dist/src/elements/media/Image/Image.d.ts",
-      "import": "./dist/src/elements/media/Image/Image.mjs"
+      "types": "./dist/elements/media/Image/Image.d.ts",
+      "import": "./dist/elements/media/Image/Image.mjs"
     },
     "./elements/media/Image/ImageHelper": {
-      "types": "./dist/src/elements/media/Image/ImageHelper.d.ts",
-      "import": "./dist/src/elements/media/Image/ImageHelper.mjs"
+      "types": "./dist/elements/media/Image/ImageHelper.d.ts",
+      "import": "./dist/elements/media/Image/ImageHelper.mjs"
     },
     "./elements/media/Image/Settings": {
-      "types": "./dist/src/elements/media/Image/Settings.d.ts",
-      "import": "./dist/src/elements/media/Image/Settings.mjs"
+      "types": "./dist/elements/media/Image/Settings.d.ts",
+      "import": "./dist/elements/media/Image/Settings.mjs"
     },
     "./elements/media/Image/index": {
-      "types": "./dist/src/elements/media/Image/index.d.ts",
-      "import": "./dist/src/elements/media/Image/index.mjs"
+      "types": "./dist/elements/media/Image/index.d.ts",
+      "import": "./dist/elements/media/Image/index.mjs"
     },
     "./elements/media/Video": {
-      "types": "./dist/src/elements/media/Video/index.d.ts",
-      "import": "./dist/src/elements/media/Video/index.mjs"
+      "types": "./dist/elements/media/Video/index.d.ts",
+      "import": "./dist/elements/media/Video/index.mjs"
     },
     "./elements/media/Video/Settings": {
-      "types": "./dist/src/elements/media/Video/Settings.d.ts",
-      "import": "./dist/src/elements/media/Video/Settings.mjs"
+      "types": "./dist/elements/media/Video/Settings.d.ts",
+      "import": "./dist/elements/media/Video/Settings.mjs"
     },
     "./elements/media/Video/Video": {
-      "types": "./dist/src/elements/media/Video/Video.d.ts",
-      "import": "./dist/src/elements/media/Video/Video.mjs"
+      "types": "./dist/elements/media/Video/Video.d.ts",
+      "import": "./dist/elements/media/Video/Video.mjs"
     },
     "./elements/media/Video/index": {
-      "types": "./dist/src/elements/media/Video/index.d.ts",
-      "import": "./dist/src/elements/media/Video/index.mjs"
+      "types": "./dist/elements/media/Video/index.d.ts",
+      "import": "./dist/elements/media/Video/index.mjs"
     },
     "./elements/provider/ApiContainer": {
-      "types": "./dist/src/elements/provider/ApiContainer/index.d.ts",
-      "import": "./dist/src/elements/provider/ApiContainer/index.mjs"
+      "types": "./dist/elements/provider/ApiContainer/index.d.ts",
+      "import": "./dist/elements/provider/ApiContainer/index.mjs"
     },
     "./elements/provider/ApiContainer/ApiContainer": {
-      "types": "./dist/src/elements/provider/ApiContainer/ApiContainer.d.ts",
-      "import": "./dist/src/elements/provider/ApiContainer/ApiContainer.mjs"
+      "types": "./dist/elements/provider/ApiContainer/ApiContainer.d.ts",
+      "import": "./dist/elements/provider/ApiContainer/ApiContainer.mjs"
     },
     "./elements/provider/ApiContainer/Settings": {
-      "types": "./dist/src/elements/provider/ApiContainer/Settings.d.ts",
-      "import": "./dist/src/elements/provider/ApiContainer/Settings.mjs"
+      "types": "./dist/elements/provider/ApiContainer/Settings.d.ts",
+      "import": "./dist/elements/provider/ApiContainer/Settings.mjs"
     },
     "./elements/provider/ApiContainer/hooks/useApi": {
-      "types": "./dist/src/elements/provider/ApiContainer/hooks/useApi.d.ts",
-      "import": "./dist/src/elements/provider/ApiContainer/hooks/useApi.mjs"
+      "types": "./dist/elements/provider/ApiContainer/hooks/useApi.d.ts",
+      "import": "./dist/elements/provider/ApiContainer/hooks/useApi.mjs"
     },
     "./elements/provider/ApiContainer/index": {
-      "types": "./dist/src/elements/provider/ApiContainer/index.d.ts",
-      "import": "./dist/src/elements/provider/ApiContainer/index.mjs"
+      "types": "./dist/elements/provider/ApiContainer/index.d.ts",
+      "import": "./dist/elements/provider/ApiContainer/index.mjs"
     },
     "./elements/provider/CollectionContainer": {
-      "types": "./dist/src/elements/provider/CollectionContainer/index.d.ts",
-      "import": "./dist/src/elements/provider/CollectionContainer/index.mjs"
+      "types": "./dist/elements/provider/CollectionContainer/index.d.ts",
+      "import": "./dist/elements/provider/CollectionContainer/index.mjs"
     },
     "./elements/provider/CollectionContainer/CollectionContainer": {
-      "types": "./dist/src/elements/provider/CollectionContainer/CollectionContainer.d.ts",
-      "import": "./dist/src/elements/provider/CollectionContainer/CollectionContainer.mjs"
+      "types": "./dist/elements/provider/CollectionContainer/CollectionContainer.d.ts",
+      "import": "./dist/elements/provider/CollectionContainer/CollectionContainer.mjs"
     },
     "./elements/provider/CollectionContainer/Settings": {
-      "types": "./dist/src/elements/provider/CollectionContainer/Settings.d.ts",
-      "import": "./dist/src/elements/provider/CollectionContainer/Settings.mjs"
+      "types": "./dist/elements/provider/CollectionContainer/Settings.d.ts",
+      "import": "./dist/elements/provider/CollectionContainer/Settings.mjs"
     },
     "./elements/provider/CollectionContainer/hooks/useCollectionContext": {
-      "types": "./dist/src/elements/provider/CollectionContainer/hooks/useCollectionContext.d.ts",
-      "import": "./dist/src/elements/provider/CollectionContainer/hooks/useCollectionContext.mjs"
+      "types": "./dist/elements/provider/CollectionContainer/hooks/useCollectionContext.d.ts",
+      "import": "./dist/elements/provider/CollectionContainer/hooks/useCollectionContext.mjs"
     },
     "./elements/provider/CollectionContainer/index": {
-      "types": "./dist/src/elements/provider/CollectionContainer/index.d.ts",
-      "import": "./dist/src/elements/provider/CollectionContainer/index.mjs"
+      "types": "./dist/elements/provider/CollectionContainer/index.d.ts",
+      "import": "./dist/elements/provider/CollectionContainer/index.mjs"
     },
     "./elements/settings": {
-      "types": "./dist/src/elements/settings.d.ts",
-      "import": "./dist/src/elements/settings.mjs"
+      "types": "./dist/elements/settings.d.ts",
+      "import": "./dist/elements/settings.mjs"
     },
     "./elements/structure/Container": {
-      "types": "./dist/src/elements/structure/Container/index.d.ts",
-      "import": "./dist/src/elements/structure/Container/index.mjs"
+      "types": "./dist/elements/structure/Container/index.d.ts",
+      "import": "./dist/elements/structure/Container/index.mjs"
     },
     "./elements/structure/Container/Container": {
-      "types": "./dist/src/elements/structure/Container/Container.d.ts",
-      "import": "./dist/src/elements/structure/Container/Container.mjs"
+      "types": "./dist/elements/structure/Container/Container.d.ts",
+      "import": "./dist/elements/structure/Container/Container.mjs"
     },
     "./elements/structure/Container/Settings": {
-      "types": "./dist/src/elements/structure/Container/Settings.d.ts",
-      "import": "./dist/src/elements/structure/Container/Settings.mjs"
+      "types": "./dist/elements/structure/Container/Settings.d.ts",
+      "import": "./dist/elements/structure/Container/Settings.mjs"
     },
     "./elements/structure/Container/index": {
-      "types": "./dist/src/elements/structure/Container/index.d.ts",
-      "import": "./dist/src/elements/structure/Container/index.mjs"
+      "types": "./dist/elements/structure/Container/index.d.ts",
+      "import": "./dist/elements/structure/Container/index.mjs"
     },
     "./elements/structure/DialogContainer": {
-      "types": "./dist/src/elements/structure/DialogContainer/index.d.ts",
-      "import": "./dist/src/elements/structure/DialogContainer/index.mjs"
+      "types": "./dist/elements/structure/DialogContainer/index.d.ts",
+      "import": "./dist/elements/structure/DialogContainer/index.mjs"
     },
     "./elements/structure/DialogContainer/DialogContainer": {
-      "types": "./dist/src/elements/structure/DialogContainer/DialogContainer.d.ts",
-      "import": "./dist/src/elements/structure/DialogContainer/DialogContainer.mjs"
+      "types": "./dist/elements/structure/DialogContainer/DialogContainer.d.ts",
+      "import": "./dist/elements/structure/DialogContainer/DialogContainer.mjs"
     },
     "./elements/structure/DialogContainer/Settings": {
-      "types": "./dist/src/elements/structure/DialogContainer/Settings.d.ts",
-      "import": "./dist/src/elements/structure/DialogContainer/Settings.mjs"
+      "types": "./dist/elements/structure/DialogContainer/Settings.d.ts",
+      "import": "./dist/elements/structure/DialogContainer/Settings.mjs"
     },
     "./elements/structure/DialogContainer/index": {
-      "types": "./dist/src/elements/structure/DialogContainer/index.d.ts",
-      "import": "./dist/src/elements/structure/DialogContainer/index.mjs"
+      "types": "./dist/elements/structure/DialogContainer/index.d.ts",
+      "import": "./dist/elements/structure/DialogContainer/index.mjs"
     },
     "./elements/structure/List": {
-      "types": "./dist/src/elements/structure/List/index.d.ts",
-      "import": "./dist/src/elements/structure/List/index.mjs"
+      "types": "./dist/elements/structure/List/index.d.ts",
+      "import": "./dist/elements/structure/List/index.mjs"
     },
     "./elements/structure/List/List": {
-      "types": "./dist/src/elements/structure/List/List.d.ts",
-      "import": "./dist/src/elements/structure/List/List.mjs"
+      "types": "./dist/elements/structure/List/List.d.ts",
+      "import": "./dist/elements/structure/List/List.mjs"
     },
     "./elements/structure/List/ListItem": {
-      "types": "./dist/src/elements/structure/List/ListItem/index.d.ts",
-      "import": "./dist/src/elements/structure/List/ListItem/index.mjs"
+      "types": "./dist/elements/structure/List/ListItem/index.d.ts",
+      "import": "./dist/elements/structure/List/ListItem/index.mjs"
     },
     "./elements/structure/List/ListItem/ListItem": {
-      "types": "./dist/src/elements/structure/List/ListItem/ListItem.d.ts",
-      "import": "./dist/src/elements/structure/List/ListItem/ListItem.mjs"
+      "types": "./dist/elements/structure/List/ListItem/ListItem.d.ts",
+      "import": "./dist/elements/structure/List/ListItem/ListItem.mjs"
     },
     "./elements/structure/List/ListItem/Settings": {
-      "types": "./dist/src/elements/structure/List/ListItem/Settings.d.ts",
-      "import": "./dist/src/elements/structure/List/ListItem/Settings.mjs"
+      "types": "./dist/elements/structure/List/ListItem/Settings.d.ts",
+      "import": "./dist/elements/structure/List/ListItem/Settings.mjs"
     },
     "./elements/structure/List/ListItem/index": {
-      "types": "./dist/src/elements/structure/List/ListItem/index.d.ts",
-      "import": "./dist/src/elements/structure/List/ListItem/index.mjs"
+      "types": "./dist/elements/structure/List/ListItem/index.d.ts",
+      "import": "./dist/elements/structure/List/ListItem/index.mjs"
     },
     "./elements/structure/List/Settings": {
-      "types": "./dist/src/elements/structure/List/Settings.d.ts",
-      "import": "./dist/src/elements/structure/List/Settings.mjs"
+      "types": "./dist/elements/structure/List/Settings.d.ts",
+      "import": "./dist/elements/structure/List/Settings.mjs"
     },
     "./elements/structure/List/index": {
-      "types": "./dist/src/elements/structure/List/index.d.ts",
-      "import": "./dist/src/elements/structure/List/index.mjs"
+      "types": "./dist/elements/structure/List/index.d.ts",
+      "import": "./dist/elements/structure/List/index.mjs"
     },
     "./elements/structure/List/modes/ListBasic": {
-      "types": "./dist/src/elements/structure/List/modes/ListBasic.d.ts",
-      "import": "./dist/src/elements/structure/List/modes/ListBasic.mjs"
+      "types": "./dist/elements/structure/List/modes/ListBasic.d.ts",
+      "import": "./dist/elements/structure/List/modes/ListBasic.mjs"
     },
     "./elements/structure/List/modes/ListControlled": {
-      "types": "./dist/src/elements/structure/List/modes/ListControlled/index.d.ts",
-      "import": "./dist/src/elements/structure/List/modes/ListControlled/index.mjs"
+      "types": "./dist/elements/structure/List/modes/ListControlled/index.d.ts",
+      "import": "./dist/elements/structure/List/modes/ListControlled/index.mjs"
     },
     "./elements/structure/List/modes/ListControlled/ListControlled": {
-      "types": "./dist/src/elements/structure/List/modes/ListControlled/ListControlled.d.ts",
-      "import": "./dist/src/elements/structure/List/modes/ListControlled/ListControlled.mjs"
+      "types": "./dist/elements/structure/List/modes/ListControlled/ListControlled.d.ts",
+      "import": "./dist/elements/structure/List/modes/ListControlled/ListControlled.mjs"
     },
     "./elements/structure/List/modes/ListControlled/ListControlledItem": {
-      "types": "./dist/src/elements/structure/List/modes/ListControlled/ListControlledItem.d.ts",
-      "import": "./dist/src/elements/structure/List/modes/ListControlled/ListControlledItem.mjs"
+      "types": "./dist/elements/structure/List/modes/ListControlled/ListControlledItem.d.ts",
+      "import": "./dist/elements/structure/List/modes/ListControlled/ListControlledItem.mjs"
     },
     "./elements/structure/List/modes/ListControlled/index": {
-      "types": "./dist/src/elements/structure/List/modes/ListControlled/index.d.ts",
-      "import": "./dist/src/elements/structure/List/modes/ListControlled/index.mjs"
+      "types": "./dist/elements/structure/List/modes/ListControlled/index.d.ts",
+      "import": "./dist/elements/structure/List/modes/ListControlled/index.mjs"
     },
     "./elements/structure/ModalContainer": {
-      "types": "./dist/src/elements/structure/ModalContainer/index.d.ts",
-      "import": "./dist/src/elements/structure/ModalContainer/index.mjs"
+      "types": "./dist/elements/structure/ModalContainer/index.d.ts",
+      "import": "./dist/elements/structure/ModalContainer/index.mjs"
     },
     "./elements/structure/ModalContainer/ModalContainer": {
-      "types": "./dist/src/elements/structure/ModalContainer/ModalContainer.d.ts",
-      "import": "./dist/src/elements/structure/ModalContainer/ModalContainer.mjs"
+      "types": "./dist/elements/structure/ModalContainer/ModalContainer.d.ts",
+      "import": "./dist/elements/structure/ModalContainer/ModalContainer.mjs"
     },
     "./elements/structure/ModalContainer/Settings": {
-      "types": "./dist/src/elements/structure/ModalContainer/Settings.d.ts",
-      "import": "./dist/src/elements/structure/ModalContainer/Settings.mjs"
+      "types": "./dist/elements/structure/ModalContainer/Settings.d.ts",
+      "import": "./dist/elements/structure/ModalContainer/Settings.mjs"
     },
     "./elements/structure/ModalContainer/index": {
-      "types": "./dist/src/elements/structure/ModalContainer/index.d.ts",
-      "import": "./dist/src/elements/structure/ModalContainer/index.mjs"
+      "types": "./dist/elements/structure/ModalContainer/index.d.ts",
+      "import": "./dist/elements/structure/ModalContainer/index.mjs"
     },
     "./elements/structure/TabContainer": {
-      "types": "./dist/src/elements/structure/TabContainer/index.d.ts",
-      "import": "./dist/src/elements/structure/TabContainer/index.mjs"
+      "types": "./dist/elements/structure/TabContainer/index.d.ts",
+      "import": "./dist/elements/structure/TabContainer/index.mjs"
     },
     "./elements/structure/TabContainer/Settings": {
-      "types": "./dist/src/elements/structure/TabContainer/Settings.d.ts",
-      "import": "./dist/src/elements/structure/TabContainer/Settings.mjs"
+      "types": "./dist/elements/structure/TabContainer/Settings.d.ts",
+      "import": "./dist/elements/structure/TabContainer/Settings.mjs"
     },
     "./elements/structure/TabContainer/TabContainer": {
-      "types": "./dist/src/elements/structure/TabContainer/TabContainer.d.ts",
-      "import": "./dist/src/elements/structure/TabContainer/TabContainer.mjs"
+      "types": "./dist/elements/structure/TabContainer/TabContainer.d.ts",
+      "import": "./dist/elements/structure/TabContainer/TabContainer.mjs"
     },
     "./elements/structure/TabContainer/TabContainerBody": {
-      "types": "./dist/src/elements/structure/TabContainer/TabContainerBody/index.d.ts",
-      "import": "./dist/src/elements/structure/TabContainer/TabContainerBody/index.mjs"
+      "types": "./dist/elements/structure/TabContainer/TabContainerBody/index.d.ts",
+      "import": "./dist/elements/structure/TabContainer/TabContainerBody/index.mjs"
     },
     "./elements/structure/TabContainer/TabContainerBody/Settings": {
-      "types": "./dist/src/elements/structure/TabContainer/TabContainerBody/Settings.d.ts",
-      "import": "./dist/src/elements/structure/TabContainer/TabContainerBody/Settings.mjs"
+      "types": "./dist/elements/structure/TabContainer/TabContainerBody/Settings.d.ts",
+      "import": "./dist/elements/structure/TabContainer/TabContainerBody/Settings.mjs"
     },
     "./elements/structure/TabContainer/TabContainerBody/TabContainerBody": {
-      "types": "./dist/src/elements/structure/TabContainer/TabContainerBody/TabContainerBody.d.ts",
-      "import": "./dist/src/elements/structure/TabContainer/TabContainerBody/TabContainerBody.mjs"
+      "types": "./dist/elements/structure/TabContainer/TabContainerBody/TabContainerBody.d.ts",
+      "import": "./dist/elements/structure/TabContainer/TabContainerBody/TabContainerBody.mjs"
     },
     "./elements/structure/TabContainer/TabContainerBody/index": {
-      "types": "./dist/src/elements/structure/TabContainer/TabContainerBody/index.d.ts",
-      "import": "./dist/src/elements/structure/TabContainer/TabContainerBody/index.mjs"
+      "types": "./dist/elements/structure/TabContainer/TabContainerBody/index.d.ts",
+      "import": "./dist/elements/structure/TabContainer/TabContainerBody/index.mjs"
     },
     "./elements/structure/TabContainer/TabContainerContext": {
-      "types": "./dist/src/elements/structure/TabContainer/TabContainerContext.d.ts",
-      "import": "./dist/src/elements/structure/TabContainer/TabContainerContext.mjs"
+      "types": "./dist/elements/structure/TabContainer/TabContainerContext.d.ts",
+      "import": "./dist/elements/structure/TabContainer/TabContainerContext.mjs"
     },
     "./elements/structure/TabContainer/TabContainerHeader": {
-      "types": "./dist/src/elements/structure/TabContainer/TabContainerHeader/index.d.ts",
-      "import": "./dist/src/elements/structure/TabContainer/TabContainerHeader/index.mjs"
+      "types": "./dist/elements/structure/TabContainer/TabContainerHeader/index.d.ts",
+      "import": "./dist/elements/structure/TabContainer/TabContainerHeader/index.mjs"
     },
     "./elements/structure/TabContainer/TabContainerHeader/Settings": {
-      "types": "./dist/src/elements/structure/TabContainer/TabContainerHeader/Settings.d.ts",
-      "import": "./dist/src/elements/structure/TabContainer/TabContainerHeader/Settings.mjs"
+      "types": "./dist/elements/structure/TabContainer/TabContainerHeader/Settings.d.ts",
+      "import": "./dist/elements/structure/TabContainer/TabContainerHeader/Settings.mjs"
     },
     "./elements/structure/TabContainer/TabContainerHeader/TabContainerHeader": {
-      "types": "./dist/src/elements/structure/TabContainer/TabContainerHeader/TabContainerHeader.d.ts",
-      "import": "./dist/src/elements/structure/TabContainer/TabContainerHeader/TabContainerHeader.mjs"
+      "types": "./dist/elements/structure/TabContainer/TabContainerHeader/TabContainerHeader.d.ts",
+      "import": "./dist/elements/structure/TabContainer/TabContainerHeader/TabContainerHeader.mjs"
     },
     "./elements/structure/TabContainer/TabContainerHeader/index": {
-      "types": "./dist/src/elements/structure/TabContainer/TabContainerHeader/index.d.ts",
-      "import": "./dist/src/elements/structure/TabContainer/TabContainerHeader/index.mjs"
+      "types": "./dist/elements/structure/TabContainer/TabContainerHeader/index.d.ts",
+      "import": "./dist/elements/structure/TabContainer/TabContainerHeader/index.mjs"
     },
     "./elements/structure/TabContainer/TabContainerItem": {
-      "types": "./dist/src/elements/structure/TabContainer/TabContainerItem/index.d.ts",
-      "import": "./dist/src/elements/structure/TabContainer/TabContainerItem/index.mjs"
+      "types": "./dist/elements/structure/TabContainer/TabContainerItem/index.d.ts",
+      "import": "./dist/elements/structure/TabContainer/TabContainerItem/index.mjs"
     },
     "./elements/structure/TabContainer/TabContainerItem/Settings": {
-      "types": "./dist/src/elements/structure/TabContainer/TabContainerItem/Settings.d.ts",
-      "import": "./dist/src/elements/structure/TabContainer/TabContainerItem/Settings.mjs"
+      "types": "./dist/elements/structure/TabContainer/TabContainerItem/Settings.d.ts",
+      "import": "./dist/elements/structure/TabContainer/TabContainerItem/Settings.mjs"
     },
     "./elements/structure/TabContainer/TabContainerItem/TabContainerItem": {
-      "types": "./dist/src/elements/structure/TabContainer/TabContainerItem/TabContainerItem.d.ts",
-      "import": "./dist/src/elements/structure/TabContainer/TabContainerItem/TabContainerItem.mjs"
+      "types": "./dist/elements/structure/TabContainer/TabContainerItem/TabContainerItem.d.ts",
+      "import": "./dist/elements/structure/TabContainer/TabContainerItem/TabContainerItem.mjs"
     },
     "./elements/structure/TabContainer/TabContainerItem/index": {
-      "types": "./dist/src/elements/structure/TabContainer/TabContainerItem/index.d.ts",
-      "import": "./dist/src/elements/structure/TabContainer/TabContainerItem/index.mjs"
+      "types": "./dist/elements/structure/TabContainer/TabContainerItem/index.d.ts",
+      "import": "./dist/elements/structure/TabContainer/TabContainerItem/index.mjs"
     },
     "./elements/structure/TabContainer/index": {
-      "types": "./dist/src/elements/structure/TabContainer/index.d.ts",
-      "import": "./dist/src/elements/structure/TabContainer/index.mjs"
+      "types": "./dist/elements/structure/TabContainer/index.d.ts",
+      "import": "./dist/elements/structure/TabContainer/index.mjs"
     },
     "./index": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.mjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
     }
   },
   "scripts": {
@@ -729,9 +729,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "build:dev": "tsc -p tsconfig.app.json && vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
-    "build:dev-watch": "tsc -p tsconfig.app.json && vite build --mode development --watch --minify false",
-    "build:prod": "tsc -p tsconfig.app.json && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
+    "build:dev": "vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
+    "build:dev-watch": "vite build --mode development --watch --minify false",
+    "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "type": "module",
   "sideEffects": false,
@@ -743,6 +743,7 @@
     "@plitzi/sdk-interactions": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
+    "@plitzi/sdk-store": "workspace:*",
     "clsx": "^2.1.1",
     "immer": "^11.1.4"
   },

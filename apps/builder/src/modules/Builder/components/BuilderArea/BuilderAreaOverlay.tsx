@@ -1,6 +1,6 @@
 import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import BuilderOverlay from '../BuilderOverlay';
 import BuilderOverlayDistance from '../BuilderOverlay/BuilderOverlayDistance';

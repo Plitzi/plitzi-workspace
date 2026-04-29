@@ -4,8 +4,8 @@ import { useCallback, use, useMemo } from 'react';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import type { BuilderState, SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';

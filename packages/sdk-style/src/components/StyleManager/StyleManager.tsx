@@ -2,7 +2,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import { useState, use, useMemo } from 'react';
 
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import ManagerSelector from './ManagerSelector';
 import StyleInspector from '../StyleInspector';

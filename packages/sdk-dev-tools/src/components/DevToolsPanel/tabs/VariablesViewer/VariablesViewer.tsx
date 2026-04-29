@@ -1,5 +1,5 @@
 import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import VariablesList from './VariablesList';
 import VariablesStyleList from './VariablesStyleList';

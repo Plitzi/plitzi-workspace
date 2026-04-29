@@ -1,6 +1,6 @@
 import ContainerAutoScale from '@plitzi/plitzi-ui/ContainerAutoScale';
 
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
 
 import type { BuilderState } from '@plitzi/sdk-shared';

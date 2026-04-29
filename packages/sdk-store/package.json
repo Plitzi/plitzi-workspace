@@ -9,12 +9,9 @@
   "files": [
     "dist"
   ],
-  "exports": {
-    ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.mjs"
-    }
-  },
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "lint": "eslint ./src",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
@@ -22,9 +19,9 @@
     "test:coverage": "vitest --coverage",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "build:dev": "tsc -p tsconfig.app.json && vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
-    "build:dev-watch": "tsc -p tsconfig.app.json && vite build --mode development --watch --minify false",
-    "build:prod": "tsc -p tsconfig.app.json && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
+    "build:dev": "vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
+    "build:dev-watch": "vite build --mode development --watch --minify false",
+    "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "type": "module",
   "sideEffects": false,
@@ -41,7 +38,71 @@
     "react-dom": "^19"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.5.26",
-    "@plitzi/sdk-shared": "workspace:*"
+    "@plitzi/plitzi-ui": "^1.5.26"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
+    },
+    "./StoreContext": {
+      "types": "./dist/StoreContext.d.ts",
+      "import": "./dist/StoreContext.mjs"
+    },
+    "./StoreProvider": {
+      "types": "./dist/StoreProvider.d.ts",
+      "import": "./dist/StoreProvider.mjs"
+    },
+    "./createStore": {
+      "types": "./dist/createStore.d.ts",
+      "import": "./dist/createStore.mjs"
+    },
+    "./helpers/getByPath": {
+      "types": "./dist/helpers/getByPath.d.ts",
+      "import": "./dist/helpers/getByPath.mjs"
+    },
+    "./helpers/isPathAffected": {
+      "types": "./dist/helpers/isPathAffected.d.ts",
+      "import": "./dist/helpers/isPathAffected.mjs"
+    },
+    "./helpers/setByPath": {
+      "types": "./dist/helpers/setByPath.d.ts",
+      "import": "./dist/helpers/setByPath.mjs"
+    },
+    "./helpers/shallowEqual": {
+      "types": "./dist/helpers/shallowEqual.d.ts",
+      "import": "./dist/helpers/shallowEqual.mjs"
+    },
+    "./helpers/useIsomorphicLayoutEffect": {
+      "types": "./dist/helpers/useIsomorphicLayoutEffect.d.ts",
+      "import": "./dist/helpers/useIsomorphicLayoutEffect.mjs"
+    },
+    "./hooks/shared": {
+      "types": "./dist/hooks/shared.d.ts",
+      "import": "./dist/hooks/shared.mjs"
+    },
+    "./hooks/useStore": {
+      "types": "./dist/hooks/useStore.d.ts",
+      "import": "./dist/hooks/useStore.mjs"
+    },
+    "./hooks/useStoreGetter": {
+      "types": "./dist/hooks/useStoreGetter.d.ts",
+      "import": "./dist/hooks/useStoreGetter.mjs"
+    },
+    "./hooks/useStoreSetter": {
+      "types": "./dist/hooks/useStoreSetter.d.ts",
+      "import": "./dist/hooks/useStoreSetter.mjs"
+    },
+    "./hooks/useStoreSync": {
+      "types": "./dist/hooks/useStoreSync.d.ts",
+      "import": "./dist/hooks/useStoreSync.mjs"
+    },
+    "./index": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
+    },
+    "./types/index": {
+      "types": "./dist/types/index.d.ts"
+    }
   }
 }

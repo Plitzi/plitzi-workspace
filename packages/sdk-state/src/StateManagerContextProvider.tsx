@@ -2,7 +2,7 @@ import { get, set } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import StateManagerContext from './StateManagerContext';
 

@@ -7,7 +7,7 @@ import { produce } from 'immer';
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import Selector from '../Selector';
 import Inspector from './Inspector';

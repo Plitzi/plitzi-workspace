@@ -11,48 +11,47 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.mjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
     },
     "./AuthContext": {
-      "types": "./dist/src/AuthContext.d.ts",
-      "import": "./dist/src/AuthContext.mjs"
+      "types": "./dist/AuthContext.d.ts",
+      "import": "./dist/AuthContext.mjs"
     },
     "./AuthContextProvider": {
-      "types": "./dist/src/AuthContextProvider.d.ts",
-      "import": "./dist/src/AuthContextProvider.mjs"
+      "types": "./dist/AuthContextProvider.d.ts",
+      "import": "./dist/AuthContextProvider.mjs"
     },
     "./AuthManager": {
-      "types": "./dist/src/AuthManager.d.ts",
-      "import": "./dist/src/AuthManager.mjs"
+      "import": "./dist/AuthManager.mjs"
     },
     "./AuthProvider": {
-      "types": "./dist/src/AuthProvider.d.ts",
-      "import": "./dist/src/AuthProvider.mjs"
+      "types": "./dist/AuthProvider.d.ts",
+      "import": "./dist/AuthProvider.mjs"
     },
     "./hooks/useAuth": {
-      "types": "./dist/src/hooks/useAuth/index.d.ts",
-      "import": "./dist/src/hooks/useAuth/index.mjs"
+      "types": "./dist/hooks/useAuth/index.d.ts",
+      "import": "./dist/hooks/useAuth/index.mjs"
     },
     "./hooks/useAuth/index": {
-      "types": "./dist/src/hooks/useAuth/index.d.ts",
-      "import": "./dist/src/hooks/useAuth/index.mjs"
+      "types": "./dist/hooks/useAuth/index.d.ts",
+      "import": "./dist/hooks/useAuth/index.mjs"
     },
     "./hooks/useAuth/useAuth": {
-      "types": "./dist/src/hooks/useAuth/useAuth.d.ts",
-      "import": "./dist/src/hooks/useAuth/useAuth.mjs"
+      "types": "./dist/hooks/useAuth/useAuth.d.ts",
+      "import": "./dist/hooks/useAuth/useAuth.mjs"
     },
     "./index": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.mjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
     },
     "./providers/Auth0Provider": {
-      "types": "./dist/src/providers/Auth0Provider.d.ts",
-      "import": "./dist/src/providers/Auth0Provider.mjs"
+      "types": "./dist/providers/Auth0Provider.d.ts",
+      "import": "./dist/providers/Auth0Provider.mjs"
     },
     "./providers/BasicAuthProvider": {
-      "types": "./dist/src/providers/BasicAuthProvider.d.ts",
-      "import": "./dist/src/providers/BasicAuthProvider.mjs"
+      "types": "./dist/providers/BasicAuthProvider.d.ts",
+      "import": "./dist/providers/BasicAuthProvider.mjs"
     }
   },
   "type": "module",
@@ -63,15 +62,16 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "build:dev": "tsc -p tsconfig.app.json && vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
-    "build:dev-watch": "tsc -p tsconfig.app.json && vite build --mode development --watch --minify false",
-    "build:prod": "tsc -p tsconfig.app.json && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
+    "build:dev": "vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
+    "build:dev-watch": "vite build --mode development --watch --minify false",
+    "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.5.26",
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
-    "@plitzi/sdk-shared": "workspace:*"
+    "@plitzi/sdk-shared": "workspace:*",
+    "@plitzi/sdk-state": "workspace:*"
   },
   "devDependencies": {
     "eslint": "^9.39.4",

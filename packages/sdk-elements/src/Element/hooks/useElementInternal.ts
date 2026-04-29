@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';
 import { processTwig, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import useElementDataSource from './useElementDataSource';
 import useElementState from './useElementState';

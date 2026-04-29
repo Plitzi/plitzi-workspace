@@ -11,9 +11,9 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import RscProvider from '@plitzi/sdk-shared/server/rsc/RscProvider';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
 import { ThemeContext } from '@plitzi/sdk-shared/theme';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 

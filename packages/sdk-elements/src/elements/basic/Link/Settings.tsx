@@ -5,7 +5,7 @@ import { useMemo, use, useCallback, useEffect } from 'react';
 
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import type { CommonState } from '@plitzi/sdk-shared';
 

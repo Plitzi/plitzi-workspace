@@ -9,8 +9,8 @@ import { useCallback, use, useEffect, useMemo, useState, Fragment } from 'react'
 
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { generateID } from '@plitzi/sdk-shared/helpers/utils';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
 import { StyleBindingsAllowed } from '@plitzi/sdk-shared/style/styleConstants';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import BindingSelected from './BindingSelected';
 import BindingForm from './models/BindingForm';

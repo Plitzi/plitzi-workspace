@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import RscContext from './RscContext';
 
 import type { RscContextValue } from './RscContext';
-import type { CommonState, SSRRscData } from '@plitzi/sdk-shared';
+import type { CommonState, SSRRscData } from '../../types';
 import type { ReactNode } from 'react';
 
 export type RscProviderProps = {

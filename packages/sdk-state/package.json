@@ -11,34 +11,35 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.mjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
     },
     "./StateManagerContext": {
-      "types": "./dist/src/StateManagerContext.d.ts",
-      "import": "./dist/src/StateManagerContext.mjs"
+      "types": "./dist/StateManagerContext.d.ts",
+      "import": "./dist/StateManagerContext.mjs"
     },
     "./StateManagerContextProvider": {
-      "types": "./dist/src/StateManagerContextProvider.d.ts",
-      "import": "./dist/src/StateManagerContextProvider.mjs"
+      "types": "./dist/StateManagerContextProvider.d.ts",
+      "import": "./dist/StateManagerContextProvider.mjs"
     },
     "./index": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.mjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
     }
   },
   "scripts": {
     "lint": "eslint ./src",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "build:dev": "tsc -p tsconfig.app.json && vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
-    "build:dev-watch": "tsc -p tsconfig.app.json && vite build --mode development --watch --minify false",
-    "build:prod": "tsc -p tsconfig.app.json && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
+    "build:dev": "vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
+    "build:dev-watch": "vite build --mode development --watch --minify false",
+    "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "type": "module",
   "sideEffects": false,
   "dependencies": {
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
+    "@plitzi/sdk-store": "workspace:*",
     "immer": "^11.1.4"
   },
   "devDependencies": {

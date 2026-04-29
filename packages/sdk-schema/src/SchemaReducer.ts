@@ -1,7 +1,7 @@
 import { get, set, has } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 
-import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
+import FlatMap from './helpers/FlatMap';
 
 import type { Element, PageFolder, Schema, SchemaVariable, DropPosition, Style } from '@plitzi/sdk-shared';
 

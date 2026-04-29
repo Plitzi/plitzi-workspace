@@ -9,7 +9,7 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import type {
   BuilderState,

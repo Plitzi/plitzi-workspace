@@ -11,32 +11,32 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.mjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
     },
     "./PluginHelper": {
-      "types": "./dist/src/PluginHelper.d.ts",
-      "import": "./dist/src/PluginHelper.mjs"
+      "types": "./dist/PluginHelper.d.ts",
+      "import": "./dist/PluginHelper.mjs"
     },
     "./PluginsContext": {
-      "types": "./dist/src/PluginsContext.d.ts",
-      "import": "./dist/src/PluginsContext.mjs"
+      "types": "./dist/PluginsContext.d.ts",
+      "import": "./dist/PluginsContext.mjs"
     },
     "./helpers/manifestAssetToAsset": {
-      "types": "./dist/src/helpers/manifestAssetToAsset.d.ts",
-      "import": "./dist/src/helpers/manifestAssetToAsset.mjs"
+      "types": "./dist/helpers/manifestAssetToAsset.d.ts",
+      "import": "./dist/helpers/manifestAssetToAsset.mjs"
     },
     "./index": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.mjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
     }
   },
   "scripts": {
     "lint": "eslint ./src",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "build:dev": "tsc -p tsconfig.app.json && vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
-    "build:dev-watch": "tsc -p tsconfig.app.json && vite build --mode development --watch --minify false",
-    "build:prod": "tsc -p tsconfig.app.json && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
+    "build:dev": "vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
+    "build:dev-watch": "vite build --mode development --watch --minify false",
+    "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "type": "module",
   "sideEffects": false,

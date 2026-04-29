@@ -1,8 +1,7 @@
 import { get, set } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 
-import { generateCache } from '@plitzi/sdk-style/StyleHelper';
-
+import { generateCache } from './StyleHelper';
 import StyleMap from './StyleMap';
 
 import type {

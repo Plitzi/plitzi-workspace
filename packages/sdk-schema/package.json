@@ -11,20 +11,20 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.mjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
     },
     "./SchemaReducer": {
-      "types": "./dist/src/SchemaReducer.d.ts",
-      "import": "./dist/src/SchemaReducer.mjs"
+      "types": "./dist/SchemaReducer.d.ts",
+      "import": "./dist/SchemaReducer.mjs"
     },
     "./helpers/FlatMap": {
-      "types": "./dist/src/helpers/FlatMap.d.ts",
-      "import": "./dist/src/helpers/FlatMap.mjs"
+      "types": "./dist/helpers/FlatMap.d.ts",
+      "import": "./dist/helpers/FlatMap.mjs"
     },
     "./index": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.mjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
     }
   },
   "type": "module",
@@ -35,9 +35,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "build:dev": "tsc -p tsconfig.app.json && vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
-    "build:dev-watch": "tsc -p tsconfig.app.json && vite build --mode development --watch --minify false",
-    "build:prod": "tsc -p tsconfig.app.json && vite build && node ../sdk-shared/scripts/generate-exports.mjs"
+    "build:dev": "vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
+    "build:dev-watch": "vite build --mode development --watch --minify false",
+    "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.5.26",

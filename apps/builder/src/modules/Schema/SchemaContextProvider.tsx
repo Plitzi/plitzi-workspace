@@ -13,7 +13,7 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 

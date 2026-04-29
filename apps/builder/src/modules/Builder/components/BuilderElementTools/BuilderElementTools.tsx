@@ -6,7 +6,7 @@ import { use, useMemo, useCallback, useRef } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import StyleInspector from '@plitzi/sdk-style/components/StyleInspector';
 import DataSourceBinding from '@pmodules/DataSource/DataSourceBinding';
 import Interactions from '@pmodules/Interactions/Interactions';

@@ -2,7 +2,8 @@ import ContainerAutoScale from '@plitzi/plitzi-ui/ContainerAutoScale';
 import { useMemo } from 'react';
 
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
-import { createStoreHook, StoreProvider } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
+import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
 
 import type { BuilderState, Schema, Style } from '@plitzi/sdk-shared';

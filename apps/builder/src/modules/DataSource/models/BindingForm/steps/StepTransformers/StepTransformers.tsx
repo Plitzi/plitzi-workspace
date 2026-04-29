@@ -7,7 +7,7 @@ import { produce } from 'immer';
 import { useCallback, useMemo, useRef } from 'react';
 
 import utility, { utilityOptions } from '@plitzi/sdk-data-source/utility';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import TransformerParam from './TransformerParam';
 

@@ -12,8 +12,8 @@ import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import TransformActions from './TransformActions';
 import TransformLayout from './TransformLayout';

@@ -2,7 +2,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useMemo } from 'react';
 
 import { formatDate } from '@plitzi/sdk-shared/helpers';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import type { CommonState } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';

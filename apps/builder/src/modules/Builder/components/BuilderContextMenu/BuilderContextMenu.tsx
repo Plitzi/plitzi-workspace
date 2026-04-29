@@ -6,7 +6,7 @@ import { memo, useCallback, use, useEffect, useLayoutEffect, useMemo, useRef, us
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import TemplateForm from '../../Models/TemplateForm';
 import BuilderElementTools from '../BuilderElementTools';

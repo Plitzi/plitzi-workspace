@@ -7,7 +7,7 @@ import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import { processPaste } from '@pmodules/Builder/BuilderHelper';
 
 import BuilderTreeNodeControls from './BuilderTreeNodeControls';

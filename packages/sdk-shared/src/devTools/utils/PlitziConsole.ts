@@ -1,8 +1,10 @@
+import getByPath from '@plitzi/sdk-store/helpers/getByPath';
+
 import { formatDate } from '../../helpers';
-import getByPath from '../../store/helpers/getByPath';
+// import getByPath from '../../store/helpers/getByPath';
 
 import type { Log, LogInteraction, LogNavigation, ProviderCallback } from '../../types/DevToolsTypes';
-import type { StoreLogger } from '../../types/StoreTypes';
+import type { StoreLogger } from '@plitzi/sdk-store';
 
 type CallbackInternal = (
   logType: Log['logType'],

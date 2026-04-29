@@ -1,7 +1,7 @@
 import { use, useCallback } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import { buildBuilderContext, transformStagePreview } from '../tools';
 

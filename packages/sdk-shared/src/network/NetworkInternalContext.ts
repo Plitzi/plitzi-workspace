@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-import type { OfflineData } from '@plitzi/sdk-shared';
+import type { OfflineData } from '../types';
 
 export type NetworkInternalContextValue = Omit<OfflineData, 'collections' | 'segments'> & {
   segments: NonNullable<OfflineData['segments']>;

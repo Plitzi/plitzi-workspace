@@ -3,7 +3,7 @@ import { useCallback, use, useMemo } from 'react';
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import type { CommonState, SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';

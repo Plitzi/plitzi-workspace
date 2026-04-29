@@ -2,7 +2,7 @@ import Select from '@plitzi/plitzi-ui/Select';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import { useCallback, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/sdk-shared/store';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
 import type { CommonState } from '@plitzi/sdk-shared';
