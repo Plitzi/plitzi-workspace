@@ -40,6 +40,8 @@ export type AiMessage = {
   role: AiRole;
   content?: string;
   thinking?: string;
+  thinkingDurationMs?: number;
+  irrelevant?: boolean;
   preview?: AiMessagePreview;
   actions?: AiMessageAction[];
   attachments?: AiAttachment[];

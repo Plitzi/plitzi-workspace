@@ -15,7 +15,7 @@ export type AiFrontendToolResult = {
 
 export type AiFrontendToolRunner = (name: string, args: Record<string, unknown>) => Promise<AiFrontendToolResult>;
 
-// Tool names the server should delegate to the client instead of handling server-side.
-// The server uses this list to emit 'client_tool' events instead of executing the tool.
-export const CLIENT_TOOL_NAMES = ['stage_preview', 'get_builder_context'] as const;
+// Tools the server delegates to the browser client via 'client_tool' SSE events.
+// get_builder_context executes server-side; only stage_preview needs client-side SDK access.
+export const CLIENT_TOOL_NAMES = ['stage_preview'] as const;
 export type ClientToolName = (typeof CLIENT_TOOL_NAMES)[number];

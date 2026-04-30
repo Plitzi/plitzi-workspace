@@ -43,6 +43,9 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner) => {
   liveThinkingRef.current = liveThinking;
   // Preview staged by a client_tool handler; cleared once attached to the message
   const pendingPreviewRef = useRef<Extract<AiMessagePreview, { baseElementId: string }> | undefined>(undefined);
+  // Thinking duration tracking: start on first 'thinking' event, stop on first 'chunk'
+  const thinkingStartRef = useRef<number | undefined>(undefined);
+  const thinkingDurationMsRef = useRef<number | undefined>(undefined);
 
   const sendMessage = useCallback(
     async (message: string, context: AiContext, attachments: AiAttachment[] = []) => {
@@ -118,8 +121,14 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner) => {
               const event = JSON.parse(line.slice(6)) as AiStreamEvent;
 
               if (event.type === 'thinking') {
+                if (!thinkingStartRef.current) {
+                  thinkingStartRef.current = Date.now();
+                }
                 setLiveThinking(prev => prev + event.text);
               } else if (event.type === 'chunk') {
+                if (thinkingStartRef.current && !thinkingDurationMsRef.current) {
+                  thinkingDurationMsRef.current = Date.now() - thinkingStartRef.current;
+                }
                 setStreamingText(prev => prev + event.text);
               } else if (event.type === 'tool_start') {
                 const toolId = crypto.randomUUID();
@@ -147,11 +156,19 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner) => {
               } else if (event.type === 'done') {
                 const preview = pendingPreviewRef.current;
                 pendingPreviewRef.current = undefined;
+                const thinkingText = liveThinkingRef.current || undefined;
+                const thinkingDurationMs =
+                  thinkingText && thinkingStartRef.current
+                    ? (thinkingDurationMsRef.current ?? Date.now() - thinkingStartRef.current)
+                    : undefined;
+                thinkingStartRef.current = undefined;
+                thinkingDurationMsRef.current = undefined;
                 setMessages(prev => [
                   ...prev,
                   {
                     ...event.message,
-                    thinking: liveThinkingRef.current || undefined,
+                    thinking: thinkingText,
+                    thinkingDurationMs,
                     tools: liveToolsRef.current,
                     preview: event.message.preview ?? preview
                   }
@@ -173,6 +190,8 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner) => {
         setLiveThinking('');
         setLiveTools([]);
         pendingPreviewRef.current = undefined;
+        thinkingStartRef.current = undefined;
+        thinkingDurationMsRef.current = undefined;
       }
     },
     [isStreaming, networkQuery, runClientTool, setConversationId, server.nodeServer, webKey]

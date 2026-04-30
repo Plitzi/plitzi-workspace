@@ -1,19 +1,11 @@
-import { use, useCallback } from 'react';
+import { useCallback } from 'react';
 
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
-
-import { buildBuilderContext, transformStagePreview } from '../tools';
+import { transformStagePreview } from '../tools';
 
 import type { StagePreviewArgs } from '../tools';
 import type { AiFrontendToolResult, AiFrontendToolRunner } from '../tools';
-import type { BuilderState } from '@plitzi/sdk-shared';
 
 const useAiTools = (): AiFrontendToolRunner => {
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[schema, elementSelected]] = useStore(['schema', 'elementSelected']);
-  const { currentPageId } = use(NavigationContext);
-
   const runTool = useCallback(
     // eslint-disable-next-line @typescript-eslint/require-await
     async (name: string, args: Record<string, unknown>): Promise<AiFrontendToolResult> => {
@@ -26,16 +18,11 @@ const useAiTools = (): AiFrontendToolRunner => {
           };
         }
 
-        case 'get_builder_context': {
-          const result = buildBuilderContext(schema, currentPageId, elementSelected);
-          return { toolResult: result };
-        }
-
         default:
           return { toolResult: { error: `Unknown client tool: ${name}` } };
       }
     },
-    [schema, elementSelected, currentPageId]
+    []
   );
 
   return runTool;

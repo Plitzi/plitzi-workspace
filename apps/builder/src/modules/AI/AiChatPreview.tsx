@@ -266,6 +266,7 @@ const MOCK_MESSAGES: AiMessage[] = [
     role: 'assistant',
     thinking:
       'The user wants dark violet background and centered content. I should set backgroundColor on the container element and then update alignItems and textAlign. I need to call update_element_style twice — once for the background color and once for the alignment. The hex #1e0a3c looks right for dark violet.',
+    thinkingDurationMs: 4200,
     content:
       'Done! I updated the hero container with a dark violet background (`#1e0a3c`) and set `align-items: center` + `text-align: center` on all children.\n\n```css\n.hero {\n  background: #1e0a3c;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  text-align: center;\n  padding: 80px 24px;\n}\n```',
     tools: [
@@ -310,6 +311,7 @@ const MOCK_MESSAGES: AiMessage[] = [
     role: 'assistant',
     thinking:
       'The user wants a 3-tier pricing section. I should design the layout first and show a preview before creating any elements. I will use stage_preview to render the proposal, then ask for confirmation. The featured "Pro" card will use the --color-primary variable for its background.',
+    thinkingDurationMs: 11800,
     content:
       "Here's the pricing section I'm planning to build — **3 cards** inside a flex container using your `--color-primary` for the featured tier.\n\nThis will create **11 elements** across 2 nesting levels. Want me to proceed?",
     tools: [
@@ -376,6 +378,20 @@ const MOCK_MESSAGES: AiMessage[] = [
     ],
     preview: { elementId: 'pricing-1' },
     createdAt: t(0.3)
+  },
+  {
+    id: '11',
+    role: 'user',
+    content: "What's a good recipe for pasta carbonara?",
+    createdAt: t(0.1)
+  },
+  {
+    id: '12',
+    role: 'assistant',
+    content:
+      "That's outside the scope of what I can help with here — I'm focused on your builder project. If you have questions about the pages, elements, or styles in your space, I'm ready to help!",
+    irrelevant: true,
+    createdAt: t(0.05)
   }
 ];
 

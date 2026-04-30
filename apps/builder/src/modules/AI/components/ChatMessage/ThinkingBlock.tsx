@@ -1,9 +1,19 @@
 import { useState } from 'react';
 
-type ThinkingBlockProps = { text: string };
+type ThinkingBlockProps = { text: string; durationMs?: number };
 
-const ThinkingBlock = ({ text }: ThinkingBlockProps) => {
+const formatDuration = (ms: number): string => {
+  if (ms < 1000) return 'a moment';
+  const totalSeconds = ms / 1000;
+  if (totalSeconds < 60) return `${Math.round(totalSeconds * 10) / 10}s`;
+  const m = Math.floor(totalSeconds / 60);
+  const s = Math.round(totalSeconds % 60);
+  return `${m}m ${s}s`;
+};
+
+const ThinkingBlock = ({ text, durationMs }: ThinkingBlockProps) => {
   const [open, setOpen] = useState(false);
+  const label = durationMs ? `Thought for ${formatDuration(durationMs)}` : 'Thought for a moment';
 
   return (
     <div className="mb-1">
@@ -12,7 +22,7 @@ const ThinkingBlock = ({ text }: ThinkingBlockProps) => {
         onClick={() => setOpen(o => !o)}
       >
         <span>💭</span>
-        <span>Thought for a moment</span>
+        <span>{label}</span>
         <span className="text-zinc-300 dark:text-zinc-600">{open ? '▲' : '▼'}</span>
       </button>
       {open && (
