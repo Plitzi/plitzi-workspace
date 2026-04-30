@@ -3,7 +3,11 @@
 @import '@plitzi/plitzi-ui/style.css';
 
 @layer components {
-  @import '@fortawesome/fontawesome-free/css/all.min.css';
+  // @import '@fortawesome/fontawesome-free/css/all.min.css';
+  @import '@fortawesome/fontawesome-free/css/fontawesome.min.css';
+  @import '@fortawesome/fontawesome-free/css/solid.min.css';
+  @import '@fortawesome/fontawesome-free/css/regular.min.css';
+  @import '@fortawesome/fontawesome-free/css/brands.min.css';
   @import '@xyflow/react/dist/style.css';
 }
 
