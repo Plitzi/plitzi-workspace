@@ -20,7 +20,7 @@
     "url": "https://github.com/plitzi/plitzi-workspace.git"
   },
   "publishConfig": {
-    "access": "restricted",
+    "access": "public",
     "registry": "https://npm.pkg.github.com/"
   },
   "type": "module",
