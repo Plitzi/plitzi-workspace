@@ -25,8 +25,8 @@ export const buildBuilderContext = (
   if (schema?.flat) {
     // Resolve layout ID from the page element's attributes so layout elements are included
     const layoutId =
-      currentPageId && typeof schema.flat[currentPageId]?.attributes?.layout === 'string'
-        ? (schema.flat[currentPageId].attributes.layout as string)
+      currentPageId && typeof schema.flat[currentPageId].attributes.layout === 'string'
+        ? schema.flat[currentPageId].attributes.layout
         : undefined;
 
     for (const el of Object.values(schema.flat)) {

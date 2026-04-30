@@ -10,7 +10,18 @@ import type { AiMessage } from '../../types';
 
 const formatTime = (ts: number) => new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-const ChatMessage = ({ role, content, thinking, thinkingDurationMs, irrelevant, preview, actions, attachments, tools, createdAt }: AiMessage) => {
+const ChatMessage = ({
+  role,
+  content,
+  thinking,
+  thinkingDurationMs,
+  irrelevant,
+  preview,
+  actions,
+  attachments,
+  tools,
+  createdAt
+}: AiMessage) => {
   const isUser = role === 'user';
 
   return (
@@ -22,9 +33,7 @@ const ChatMessage = ({ role, content, thinking, thinkingDurationMs, irrelevant, 
           <span className="font-mono text-xs font-semibold text-violet-500 dark:text-violet-400">◆ Assistant</span>
         )}
         <span className="font-mono text-xs text-zinc-400 dark:text-zinc-600">{formatTime(createdAt)}</span>
-        {irrelevant && (
-          <span className="font-mono text-xs text-amber-500 dark:text-amber-400">off-topic</span>
-        )}
+        {irrelevant && <span className="font-mono text-xs text-amber-500 dark:text-amber-400">off-topic</span>}
       </div>
 
       {attachments && attachments.length > 0 && (
