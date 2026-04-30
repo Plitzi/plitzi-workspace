@@ -1,4 +1,3 @@
-import { EMPTY_SCHEMA } from '@plitzi/sdk-shared';
 import generateStyleSelector from '@plitzi/sdk-style/helpers/generateStyleSelector';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
@@ -18,8 +17,11 @@ export type PreviewElement = {
   children?: string[];
   // Component-specific attributes (e.g. { content: 'Hello', subType: 'h2' })
   attributes?: Record<string, unknown>;
-  // CSS properties in kebab-case → value (e.g. { 'background-color': '#7c3aed' })
+  // CSS properties in kebab-case → value. Applied at desktop breakpoint (default).
   styles?: Record<string, string>;
+  // Per-breakpoint overrides. Only include properties that differ from the desktop value.
+  tablet?: Record<string, string>;
+  mobile?: Record<string, string>;
 };
 
 export type StagePreviewArgs = {
@@ -34,11 +36,21 @@ export type StagePreviewResult = {
 
 type TemplatePreview = Extract<AiMessagePreview, { baseElementId: string }>;
 
+const applyStyles = (
+  map: Style['platform']['desktop'],
+  className: string,
+  styles: Record<string, string>
+) => {
+  map[className] = generateStyleSelector(className, 'class', { base: { default: styles } }, {}) as StyleItem;
+};
+
 // Transforms the AI's simple element description into the SDK's schema + style format.
 // AI provides intent; the frontend handles SDK internals.
 export const transformStagePreview = (args: StagePreviewArgs): TemplatePreview => {
   const flat: Schema['flat'] = {};
   const desktop: Style['platform']['desktop'] = {};
+  const tablet: Style['platform']['tablet'] = {};
+  const mobile: Style['platform']['mobile'] = {};
 
   if (args.elements.length > 0 && args.baseElementId) {
     const { rootNode, rootStyle, rootStyleSelector } = getRootNode(undefined, { centered: true });
@@ -68,14 +80,16 @@ export const transformStagePreview = (args: StagePreviewArgs): TemplatePreview =
       }
     };
 
-    if (el.styles && Object.keys(el.styles).length > 0) {
-      desktop[className] = generateStyleSelector(className, 'class', { base: { default: el.styles } }, {}) as StyleItem;
-    }
+    if (el.styles && Object.keys(el.styles).length > 0) applyStyles(desktop, className, el.styles);
+    if (el.tablet && Object.keys(el.tablet).length > 0) applyStyles(tablet, className, el.tablet);
+    if (el.mobile && Object.keys(el.mobile).length > 0) applyStyles(mobile, className, el.mobile);
   }
+
+  const platform = { desktop, tablet, mobile };
 
   return {
     baseElementId: args.baseElementId,
     schema: { flat },
-    style: { platform: EMPTY_SCHEMA.style['platform'], cache: generateCache({ platform: { desktop } } as Style) }
+    style: { platform, cache: generateCache({ platform } as Style) }
   };
 };

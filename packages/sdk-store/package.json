@@ -38,7 +38,7 @@
     "react-dom": "^19"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.5.26"
+    "@plitzi/plitzi-ui": "^1.6.0"
   },
   "exports": {
     ".": {

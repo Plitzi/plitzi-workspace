@@ -31,7 +31,7 @@
     "@plitzi/sdk-shared": "workspace:*",
     "ejs": "^5.0.2",
     "esbuild": "^0.28.0",
-    "zod": "^4.3.6"
+    "zod": "^4.4.1"
   },
   "peerDependencies": {
     "react": "^19",
@@ -49,7 +49,7 @@
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "vite": "^8.0.10",
-    "vite-plugin-dts": "^4.5.4"
+    "vite-plugin-dts": "^5.0.0"
   },
   "scripts": {
     "start:dev": "TSX_TSCONFIG_PATH=tsconfig.app.json ALIAS_LOADER_DEBUG=1  node --import ./src/standalone/register-alias.mjs --import tsx --watch src/standalone/server.ts",

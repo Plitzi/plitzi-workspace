@@ -835,14 +835,14 @@
     "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.5.26",
+    "@plitzi/plitzi-ui": "^1.6.0",
     "@plitzi/sdk-plugins": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-variables": "workspace:*",
     "clsx": "^2.1.1",
     "immer": "^11.1.4",
     "prop-types": "^15.8.1",
-    "zod": "^4.3.6"
+    "zod": "^4.4.1"
   },
   "devDependencies": {
     "eslint": "^9.39.4",

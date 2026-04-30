@@ -20,7 +20,8 @@ const PRICING_PREVIEW = transformStagePreview({
       type: 'container',
       label: 'Pricing Section',
       children: ['ap-c1', 'ap-c2', 'ap-c3'],
-      styles: { display: 'flex', gap: '12px', padding: '20px', 'background-color': '#f4f4f5', 'border-radius': '10px' }
+      styles: { display: 'flex', 'flex-direction': 'row', gap: '12px', padding: '20px', 'background-color': '#f4f4f5', 'border-radius': '10px' },
+      mobile: { 'flex-direction': 'column' }
     },
     // Starter
     {
@@ -38,7 +39,8 @@ const PRICING_PREVIEW = transformStagePreview({
         display: 'flex',
         'flex-direction': 'column',
         gap: '8px'
-      }
+      },
+      mobile: { flex: 'none', width: '100%' }
     },
     {
       id: 'ap-h1',
@@ -47,8 +49,11 @@ const PRICING_PREVIEW = transformStagePreview({
       parentId: 'ap-c1',
       attributes: { content: 'Starter', subType: 'h3' },
       styles: {
+        'margin-top': '0',
+        'margin-bottom': '0',
         'font-size': '10px',
         'font-weight': '700',
+        'line-height': '1.2',
         'text-transform': 'uppercase',
         'letter-spacing': '0.08em',
         color: '#71717a',
@@ -61,7 +66,15 @@ const PRICING_PREVIEW = transformStagePreview({
       label: 'Price',
       parentId: 'ap-c1',
       attributes: { content: '$9/mo', subType: 'h2' },
-      styles: { 'font-size': '22px', 'font-weight': '800', color: '#18181b', 'font-family': 'system-ui' }
+      styles: {
+        'margin-top': '0',
+        'margin-bottom': '0',
+        'font-size': '22px',
+        'font-weight': '800',
+        'line-height': '1',
+        color: '#18181b',
+        'font-family': 'system-ui'
+      }
     },
     {
       id: 'ap-b1',
@@ -72,11 +85,15 @@ const PRICING_PREVIEW = transformStagePreview({
       attributes: { content: 'Get started', subType: 'button' },
       styles: {
         'margin-top': 'auto',
+        display: 'block',
         padding: '6px 12px',
         'border-radius': '6px',
         'font-size': '11px',
+        'line-height': '1.4',
         'font-family': 'system-ui',
         'font-weight': '600',
+        'text-align': 'center',
+        cursor: 'pointer',
         'background-color': '#ffffff',
         color: '#7c3aed',
         border: '1px solid #7c3aed',
@@ -100,7 +117,8 @@ const PRICING_PREVIEW = transformStagePreview({
         display: 'flex',
         'flex-direction': 'column',
         gap: '8px'
-      }
+      },
+      mobile: { flex: 'none', width: '100%' }
     },
     {
       id: 'ap-h2',
@@ -109,8 +127,11 @@ const PRICING_PREVIEW = transformStagePreview({
       parentId: 'ap-c2',
       attributes: { content: 'Pro', subType: 'h3' },
       styles: {
+        'margin-top': '0',
+        'margin-bottom': '0',
         'font-size': '10px',
         'font-weight': '700',
+        'line-height': '1.2',
         'text-transform': 'uppercase',
         'letter-spacing': '0.08em',
         color: '#ddd6fe',
@@ -123,7 +144,15 @@ const PRICING_PREVIEW = transformStagePreview({
       label: 'Price',
       parentId: 'ap-c2',
       attributes: { content: '$29/mo', subType: 'h2' },
-      styles: { 'font-size': '22px', 'font-weight': '800', color: '#ffffff', 'font-family': 'system-ui' }
+      styles: {
+        'margin-top': '0',
+        'margin-bottom': '0',
+        'font-size': '22px',
+        'font-weight': '800',
+        'line-height': '1',
+        color: '#ffffff',
+        'font-family': 'system-ui'
+      }
     },
     {
       id: 'ap-b2',
@@ -134,11 +163,15 @@ const PRICING_PREVIEW = transformStagePreview({
       attributes: { content: 'Get started', subType: 'button' },
       styles: {
         'margin-top': 'auto',
+        display: 'block',
         padding: '6px 12px',
         'border-radius': '6px',
         'font-size': '11px',
+        'line-height': '1.4',
         'font-family': 'system-ui',
         'font-weight': '600',
+        'text-align': 'center',
+        cursor: 'pointer',
         'background-color': '#ffffff',
         color: '#7c3aed',
         border: 'none',
@@ -161,7 +194,8 @@ const PRICING_PREVIEW = transformStagePreview({
         display: 'flex',
         'flex-direction': 'column',
         gap: '8px'
-      }
+      },
+      mobile: { flex: 'none', width: '100%' }
     },
     {
       id: 'ap-h3',
@@ -170,8 +204,11 @@ const PRICING_PREVIEW = transformStagePreview({
       parentId: 'ap-c3',
       attributes: { content: 'Enterprise', subType: 'h3' },
       styles: {
+        'margin-top': '0',
+        'margin-bottom': '0',
         'font-size': '10px',
         'font-weight': '700',
+        'line-height': '1.2',
         'text-transform': 'uppercase',
         'letter-spacing': '0.08em',
         color: '#71717a',
@@ -184,7 +221,15 @@ const PRICING_PREVIEW = transformStagePreview({
       label: 'Price',
       parentId: 'ap-c3',
       attributes: { content: '$99/mo', subType: 'h2' },
-      styles: { 'font-size': '22px', 'font-weight': '800', color: '#18181b', 'font-family': 'system-ui' }
+      styles: {
+        'margin-top': '0',
+        'margin-bottom': '0',
+        'font-size': '22px',
+        'font-weight': '800',
+        'line-height': '1',
+        color: '#18181b',
+        'font-family': 'system-ui'
+      }
     },
     {
       id: 'ap-b3',
@@ -195,11 +240,15 @@ const PRICING_PREVIEW = transformStagePreview({
       attributes: { content: 'Contact sales', subType: 'button' },
       styles: {
         'margin-top': 'auto',
+        display: 'block',
         padding: '6px 12px',
         'border-radius': '6px',
         'font-size': '11px',
+        'line-height': '1.4',
         'font-family': 'system-ui',
         'font-weight': '600',
+        'text-align': 'center',
+        cursor: 'pointer',
         'background-color': '#ffffff',
         color: '#7c3aed',
         border: '1px solid #7c3aed',
