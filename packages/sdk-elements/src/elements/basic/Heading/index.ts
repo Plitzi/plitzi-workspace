@@ -39,7 +39,7 @@ const Heading = Object.assign(BaseHeading, {
     defaultStyle: {
       name: 'Heading',
       displayMode: 'desktop',
-      style: {},
+      style: { base: { default: {} } },
       subTypes: {
         h1: {
           name: 'H1 Heading',

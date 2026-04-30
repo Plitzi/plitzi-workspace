@@ -44,7 +44,7 @@ const List = Object.assign(BaseList, {
     defaultStyle: {
       name: 'List',
       displayMode: 'desktop',
-      style: {},
+      style: { base: { default: {} } },
       subTypes: {
         ul: {
           name: 'List UL',

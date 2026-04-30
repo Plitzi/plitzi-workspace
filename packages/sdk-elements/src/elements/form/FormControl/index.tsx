@@ -102,7 +102,7 @@ const FormControl = Object.assign(BaseFormControl, {
     defaultStyle: {
       name: 'Form Control',
       displayMode: 'desktop',
-      style: {},
+      style: { base: { default: {} } },
       subTypes: {
         hidden: {
           name: 'Form Control Hidden',
