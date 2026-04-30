@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-plugins",
-  "version": "0.30.16",
+  "version": "0.30.17",
   "license": "AGPL-3.0",
   "publishConfig": {
     "access": "restricted",
