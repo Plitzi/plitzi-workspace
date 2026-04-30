@@ -50,7 +50,6 @@ export default defineConfig(({ mode, command }) => {
       react(),
       dts({
         entryRoot: 'src',
-        rollupTypes: false,
         exclude: ['**/*.test.(ts|tsx)', '**/*.stories.(ts|tsx)', 'vite.config.ts', 'setupTests.ts'],
         tsconfigPath: './tsconfig.app.json'
       }),
