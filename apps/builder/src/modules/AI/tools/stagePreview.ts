@@ -36,11 +36,7 @@ export type StagePreviewResult = {
 
 type TemplatePreview = Extract<AiMessagePreview, { baseElementId: string }>;
 
-const applyStyles = (
-  map: Style['platform']['desktop'],
-  className: string,
-  styles: Record<string, string>
-) => {
+const applyStyles = (map: Style['platform']['desktop'], className: string, styles: Record<string, string>) => {
   map[className] = generateStyleSelector(className, 'class', { base: { default: styles } }, {}) as StyleItem;
 };
 
@@ -80,9 +76,17 @@ export const transformStagePreview = (args: StagePreviewArgs): TemplatePreview =
       }
     };
 
-    if (el.styles && Object.keys(el.styles).length > 0) applyStyles(desktop, className, el.styles);
-    if (el.tablet && Object.keys(el.tablet).length > 0) applyStyles(tablet, className, el.tablet);
-    if (el.mobile && Object.keys(el.mobile).length > 0) applyStyles(mobile, className, el.mobile);
+    if (el.styles && Object.keys(el.styles).length > 0) {
+      applyStyles(desktop, className, el.styles);
+    }
+
+    if (el.tablet && Object.keys(el.tablet).length > 0) {
+      applyStyles(tablet, className, el.tablet);
+    }
+
+    if (el.mobile && Object.keys(el.mobile).length > 0) {
+      applyStyles(mobile, className, el.mobile);
+    }
   }
 
   const platform = { desktop, tablet, mobile };

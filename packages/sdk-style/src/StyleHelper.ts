@@ -91,7 +91,7 @@ export const generateCache = (style: Style) => {
       const prevKey = orderedKeys[i - 1] as DisplayMode | undefined;
       const nextWidth = prevKey ? (defaultWidth[prevKey] ?? prevKey) : undefined;
 
-      if (displayMode === 'desktop' || width === '0') {
+      if (displayMode === 'desktop') {
         cache.push(styleBlock);
       } else if (nextWidth) {
         cache.push(`@media (max-width: ${nextWidth}) and (min-width: ${width}) {${styleBlock}}`);

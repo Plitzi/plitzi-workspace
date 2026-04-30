@@ -1,5 +1,5 @@
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
 import { createStoreHook } from '@plitzi/sdk-store/createStore';
@@ -8,7 +8,7 @@ import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview'
 
 import AITemplateHeader from './AITemplateHeader';
 
-import type { BuilderState, Schema, Style } from '@plitzi/sdk-shared';
+import type { BuilderState, DisplayMode, Schema, Style } from '@plitzi/sdk-shared';
 
 export type AITemplatePreviewProps = {
   baseElementId: string;
@@ -20,6 +20,7 @@ const AITemplatePreview = ({ baseElementId, schema, style }: AITemplatePreviewPr
   const { existsPopup, addPopup } = usePopup();
   const { useStore } = createStoreHook<BuilderState>();
   const [[mainSchema, mainStyle, pageDefinitions]] = useStore(['schema', 'style', 'pageDefinitions']);
+  const [displayMode, setDisplayMode] = useState<DisplayMode>('desktop');
 
   const storeValue = useMemo(
     () => ({
@@ -49,7 +50,7 @@ const AITemplatePreview = ({ baseElementId, schema, style }: AITemplatePreviewPr
           icon: <i className="fa-brands fa-nfc-symbol text-base" />,
           title: 'Preview',
           height: 400,
-          width: 800,
+          width: 400,
           allowLeftSide: false,
           allowRightSide: false,
           placement: 'floating',
@@ -61,10 +62,18 @@ const AITemplatePreview = ({ baseElementId, schema, style }: AITemplatePreviewPr
 
   return (
     <div className="mt-2 overflow-hidden rounded-md border border-violet-200 dark:border-violet-900/50">
-      <AITemplateHeader baseElementId={baseElementId} onClick={handleClickExpand} />
-      <StoreProvider value={storeValue} logger={createStoreDevToolsLogger('ai-preview')}>
-        <BuilderAreaPreview id={baseElementId} className="aspect-video h-full w-full" previewMode />
-      </StoreProvider>
+      <AITemplateHeader
+        baseElementId={baseElementId}
+        displayMode={displayMode}
+        onDisplayMode={setDisplayMode}
+        onClick={handleClickExpand}
+      />
+
+      <div className="flex justify-center overflow-hidden bg-zinc-50 dark:bg-zinc-900">
+        <StoreProvider value={storeValue} logger={createStoreDevToolsLogger('ai-preview')}>
+          <BuilderAreaPreview id={baseElementId} className="aspect-video h-full w-full" previewMode />
+        </StoreProvider>
+      </div>
     </div>
   );
 };

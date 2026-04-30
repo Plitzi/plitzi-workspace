@@ -47,6 +47,7 @@
     "@plitzi/sdk-store": "workspace:*",
     "@plitzi/sdk-style": "workspace:*",
     "@plitzi/sdk-variables": "workspace:*",
+    "@tanstack/react-virtual": "^3.13.24",
     "@xyflow/react": "^12.10.2",
     "apollo-upload-client": "^19.0.0",
     "clsx": "^2.1.1",

@@ -12,6 +12,7 @@ const now = Date.now();
 const t = (offsetMinutes: number) => now - offsetMinutes * 60 * 1000;
 
 // Proposed pricing section — same format the AI passes to stage_preview
+// Desktop: 3 columns · Tablet: Starter+Pro top row, Enterprise full-width · Mobile: stacked
 const PRICING_PREVIEW = transformStagePreview({
   baseElementId: 'ap-pricing',
   elements: [
@@ -20,7 +21,17 @@ const PRICING_PREVIEW = transformStagePreview({
       type: 'container',
       label: 'Pricing Section',
       children: ['ap-c1', 'ap-c2', 'ap-c3'],
-      styles: { display: 'flex', 'flex-direction': 'row', gap: '12px', padding: '20px', 'background-color': '#f4f4f5', 'border-radius': '10px' },
+      styles: {
+        display: 'flex',
+        'flex-direction': 'row',
+        'flex-wrap': 'nowrap',
+        gap: '12px',
+        padding: '20px',
+        'background-color': '#f4f4f5',
+        'border-radius': '10px',
+        'align-items': 'stretch'
+      },
+      tablet: { 'flex-wrap': 'wrap' },
       mobile: { 'flex-direction': 'column' }
     },
     // Starter
@@ -32,31 +43,30 @@ const PRICING_PREVIEW = transformStagePreview({
       children: ['ap-h1', 'ap-p1', 'ap-b1'],
       styles: {
         flex: '1',
-        border: '1px solid #e4e4e7',
-        'border-radius': '8px',
-        padding: '16px',
-        'background-color': '#ffffff',
         display: 'flex',
         'flex-direction': 'column',
-        gap: '8px'
+        gap: '10px',
+        padding: '20px',
+        'background-color': '#ffffff',
+        'border-radius': '10px',
+        border: '1px solid #e4e4e7'
       },
+      tablet: { flex: '0 0 calc(50% - 6px)' },
       mobile: { flex: 'none', width: '100%' }
     },
     {
       id: 'ap-h1',
       type: 'heading',
-      label: 'Plan',
+      label: 'Plan name',
       parentId: 'ap-c1',
       attributes: { content: 'Starter', subType: 'h3' },
       styles: {
         'margin-top': '0',
         'margin-bottom': '0',
-        'font-size': '10px',
-        'font-weight': '700',
-        'line-height': '1.2',
-        'text-transform': 'uppercase',
-        'letter-spacing': '0.08em',
-        color: '#71717a',
+        'font-size': '14px',
+        'font-weight': '600',
+        'line-height': '1.3',
+        color: '#18181b',
         'font-family': 'system-ui'
       }
     },
@@ -65,11 +75,11 @@ const PRICING_PREVIEW = transformStagePreview({
       type: 'heading',
       label: 'Price',
       parentId: 'ap-c1',
-      attributes: { content: '$9/mo', subType: 'h2' },
+      attributes: { content: '$9 / mo', subType: 'h2' },
       styles: {
         'margin-top': '0',
         'margin-bottom': '0',
-        'font-size': '22px',
+        'font-size': '28px',
         'font-weight': '800',
         'line-height': '1',
         color: '#18181b',
@@ -81,22 +91,21 @@ const PRICING_PREVIEW = transformStagePreview({
       type: 'button',
       label: 'CTA',
       parentId: 'ap-c1',
-      children: [],
       attributes: { content: 'Get started', subType: 'button' },
       styles: {
         'margin-top': 'auto',
         display: 'block',
-        padding: '6px 12px',
+        padding: '8px 16px',
         'border-radius': '6px',
-        'font-size': '11px',
-        'line-height': '1.4',
-        'font-family': 'system-ui',
+        'font-size': '13px',
         'font-weight': '600',
+        'line-height': '1.4',
         'text-align': 'center',
         cursor: 'pointer',
-        'background-color': '#ffffff',
-        color: '#7c3aed',
-        border: '1px solid #7c3aed',
+        'font-family': 'system-ui',
+        'background-color': '#f4f4f5',
+        color: '#18181b',
+        border: '1px solid #e4e4e7',
         width: '100%'
       }
     },
@@ -109,32 +118,30 @@ const PRICING_PREVIEW = transformStagePreview({
       children: ['ap-h2', 'ap-p2', 'ap-b2'],
       styles: {
         flex: '1',
-        border: '2px solid #7c3aed',
-        'border-radius': '8px',
-        padding: '16px',
-        'background-color': '#7c3aed',
-        color: '#ffffff',
         display: 'flex',
         'flex-direction': 'column',
-        gap: '8px'
+        gap: '10px',
+        padding: '20px',
+        'background-color': '#7c3aed',
+        'border-radius': '10px',
+        border: '2px solid #7c3aed'
       },
+      tablet: { flex: '0 0 calc(50% - 6px)' },
       mobile: { flex: 'none', width: '100%' }
     },
     {
       id: 'ap-h2',
       type: 'heading',
-      label: 'Plan',
+      label: 'Plan name',
       parentId: 'ap-c2',
-      attributes: { content: 'Pro', subType: 'h3' },
+      attributes: { content: 'Pro ✦', subType: 'h3' },
       styles: {
         'margin-top': '0',
         'margin-bottom': '0',
-        'font-size': '10px',
-        'font-weight': '700',
-        'line-height': '1.2',
-        'text-transform': 'uppercase',
-        'letter-spacing': '0.08em',
-        color: '#ddd6fe',
+        'font-size': '14px',
+        'font-weight': '600',
+        'line-height': '1.3',
+        color: '#ede9fe',
         'font-family': 'system-ui'
       }
     },
@@ -143,11 +150,11 @@ const PRICING_PREVIEW = transformStagePreview({
       type: 'heading',
       label: 'Price',
       parentId: 'ap-c2',
-      attributes: { content: '$29/mo', subType: 'h2' },
+      attributes: { content: '$29 / mo', subType: 'h2' },
       styles: {
         'margin-top': '0',
         'margin-bottom': '0',
-        'font-size': '22px',
+        'font-size': '28px',
         'font-weight': '800',
         'line-height': '1',
         color: '#ffffff',
@@ -159,19 +166,18 @@ const PRICING_PREVIEW = transformStagePreview({
       type: 'button',
       label: 'CTA',
       parentId: 'ap-c2',
-      children: [],
       attributes: { content: 'Get started', subType: 'button' },
       styles: {
         'margin-top': 'auto',
         display: 'block',
-        padding: '6px 12px',
+        padding: '8px 16px',
         'border-radius': '6px',
-        'font-size': '11px',
-        'line-height': '1.4',
-        'font-family': 'system-ui',
+        'font-size': '13px',
         'font-weight': '600',
+        'line-height': '1.4',
         'text-align': 'center',
         cursor: 'pointer',
+        'font-family': 'system-ui',
         'background-color': '#ffffff',
         color: '#7c3aed',
         border: 'none',
@@ -187,73 +193,74 @@ const PRICING_PREVIEW = transformStagePreview({
       children: ['ap-h3', 'ap-p3', 'ap-b3'],
       styles: {
         flex: '1',
-        border: '1px solid #e4e4e7',
-        'border-radius': '8px',
-        padding: '16px',
-        'background-color': '#ffffff',
         display: 'flex',
         'flex-direction': 'column',
-        gap: '8px'
+        gap: '10px',
+        padding: '20px',
+        'background-color': '#ffffff',
+        'border-radius': '10px',
+        border: '1px solid #e4e4e7'
       },
-      mobile: { flex: 'none', width: '100%' }
+      tablet: { flex: '0 0 100%', 'flex-direction': 'row', 'align-items': 'center', gap: '16px' },
+      mobile: { flex: 'none', width: '100%', 'flex-direction': 'column' }
     },
     {
       id: 'ap-h3',
       type: 'heading',
-      label: 'Plan',
+      label: 'Plan name',
       parentId: 'ap-c3',
       attributes: { content: 'Enterprise', subType: 'h3' },
       styles: {
         'margin-top': '0',
         'margin-bottom': '0',
-        'font-size': '10px',
-        'font-weight': '700',
-        'line-height': '1.2',
-        'text-transform': 'uppercase',
-        'letter-spacing': '0.08em',
-        color: '#71717a',
+        'font-size': '14px',
+        'font-weight': '600',
+        'line-height': '1.3',
+        color: '#18181b',
         'font-family': 'system-ui'
-      }
+      },
+      tablet: { flex: '1' }
     },
     {
       id: 'ap-p3',
       type: 'heading',
       label: 'Price',
       parentId: 'ap-c3',
-      attributes: { content: '$99/mo', subType: 'h2' },
+      attributes: { content: 'Custom', subType: 'h2' },
       styles: {
         'margin-top': '0',
         'margin-bottom': '0',
-        'font-size': '22px',
+        'font-size': '28px',
         'font-weight': '800',
         'line-height': '1',
         color: '#18181b',
         'font-family': 'system-ui'
-      }
+      },
+      tablet: { 'font-size': '20px' }
     },
     {
       id: 'ap-b3',
       type: 'button',
       label: 'CTA',
       parentId: 'ap-c3',
-      children: [],
       attributes: { content: 'Contact sales', subType: 'button' },
       styles: {
         'margin-top': 'auto',
         display: 'block',
-        padding: '6px 12px',
+        padding: '8px 16px',
         'border-radius': '6px',
-        'font-size': '11px',
-        'line-height': '1.4',
-        'font-family': 'system-ui',
+        'font-size': '13px',
         'font-weight': '600',
+        'line-height': '1.4',
         'text-align': 'center',
         cursor: 'pointer',
-        'background-color': '#ffffff',
-        color: '#7c3aed',
-        border: '1px solid #7c3aed',
+        'font-family': 'system-ui',
+        'background-color': '#f4f4f5',
+        color: '#18181b',
+        border: '1px solid #e4e4e7',
         width: '100%'
-      }
+      },
+      tablet: { 'margin-top': '0', width: 'auto', 'white-space': 'nowrap' }
     }
   ]
 });
