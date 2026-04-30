@@ -1,7 +1,7 @@
 {
   "name": "@plitzi/plitzi-workspace",
   "license": "AGPL-3.0",
-  "private": true,
+  "private": false,
   "scripts": {
     "start": "turbo start --parallel",
     "start:debug": "turbo start:debug --parallel --concurrency=20",
