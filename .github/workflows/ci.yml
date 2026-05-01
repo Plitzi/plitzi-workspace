@@ -205,17 +205,13 @@ jobs:
         if: steps.cache-packages.outputs.cache-hit != 'true' || steps.cache-build.outputs.cache-hit != 'true'
         run: exit 1
 
-      # - name: Yarn Token
-      #   run: |
-      #     yarn config set 'npmScopes["plitzi"]["npmRegistryServer"]' "${{ matrix.registry.url }}"
-      #     yarn config set 'npmScopes["plitzi"]["npmAuthToken"]' "${{ secrets[matrix.registry.token] }}"
-      - name: Setup .npmrc
+      - name: Yarn Token
         run: |
-          echo "${{ matrix.registry.scope }}:${{ secrets[matrix.registry.token] }}" \
-            > $HOME/.npmrc
-          echo "registry=${{ matrix.registry.url }}" >> $HOME/.npmrc
+          sed -i "s|npmAuthToken:.*|npmAuthToken: \"${{ secrets[matrix.registry.token] }}\"|" .yarnrc.yml
+          sed -i "s|npmRegistryServer:.*|npmRegistryServer: \"${{ matrix.registry.url }}\"|" .yarnrc.yml
 
       - name: Publish packages
+        id: changesets
         uses: changesets/action@v1
         with:
           createGithubReleases: false
