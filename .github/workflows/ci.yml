@@ -208,8 +208,8 @@ jobs:
 
       - name: Yarn Token
         run: |
-          yarn config set 'npmScopes["plitzi"]["npmRegistryServer"]' "${{ matrix.registry.url }}"
-          yarn config set 'npmScopes["plitzi"]["npmAuthToken"]' "${{ secrets[matrix.registry.token] }}"
+          yarn config set 'npmRegistryServer' "${{ matrix.registry.url }}"
+          yarn config set 'npmAuthToken' "${{ secrets[matrix.registry.token] }}"
 
       - name: Publish packages
         id: changesets
