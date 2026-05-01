@@ -24,7 +24,13 @@ const AiChat = () => {
   const chatInputRef = useRef<ChatInputHandle | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  const { settings: providerSettings, models, modelsLoading, modelsError, updateSettings } = useAiProviderSettings(isSettingsOpen);
+  const {
+    settings: providerSettings,
+    models,
+    modelsLoading,
+    modelsError,
+    updateSettings
+  } = useAiProviderSettings(isSettingsOpen);
 
   const runClientTool = useAiTools();
   const {

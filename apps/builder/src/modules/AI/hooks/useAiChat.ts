@@ -5,7 +5,16 @@ import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
 import type { AiFrontendToolRunner } from '../tools';
-import type { AiAttachment, AiContext, AiMessage, AiMessagePreview, AiProviderSettings, AiStreamEvent, AiToolCall, AiUsage } from '../types';
+import type {
+  AiAttachment,
+  AiContext,
+  AiMessage,
+  AiMessagePreview,
+  AiProviderSettings,
+  AiStreamEvent,
+  AiToolCall,
+  AiUsage
+} from '../types';
 
 const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiProviderSettings) => {
   const { server, webKey } = use(NetworkContext);

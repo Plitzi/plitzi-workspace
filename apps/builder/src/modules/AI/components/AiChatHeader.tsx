@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
 import type { AiProviderSettings, AiUsage } from '../types';
+import type { ReactNode } from 'react';
 
 type AiChatHeaderProps = {
   onClear: () => void;
@@ -15,8 +15,14 @@ type AiChatHeaderProps = {
 };
 
 const usageColor = (pct: number) => {
-  if (pct >= 80) return 'bg-red-400 dark:bg-red-500';
-  if (pct >= 60) return 'bg-amber-400 dark:bg-amber-500';
+  if (pct >= 80) {
+    return 'bg-red-400 dark:bg-red-500';
+  }
+
+  if (pct >= 60) {
+    return 'bg-amber-400 dark:bg-amber-500';
+  }
+
   return 'bg-violet-400 dark:bg-violet-500';
 };
 

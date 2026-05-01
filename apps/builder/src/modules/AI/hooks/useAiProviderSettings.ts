@@ -2,7 +2,7 @@ import { use, useCallback, useEffect, useState } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
-import type { AiModelInfo, AiProviderSettings, AiProviderType } from '../types';
+import type { AiModelInfo, AiProviderSettings } from '../types';
 
 const STORAGE_KEY = 'builder-state.aiChat.providerSettings';
 
@@ -64,7 +64,7 @@ const useAiProviderSettings = (enabled = false) => {
     setSettings(prev => {
       const next = { ...prev, ...updates };
       // Reset model when switching providers — the previous model likely doesn't exist on the new one.
-      if ('provider' in updates && (updates.provider as AiProviderType | undefined) !== prev.provider) {
+      if ('provider' in updates && updates.provider !== prev.provider) {
         delete next.model;
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));

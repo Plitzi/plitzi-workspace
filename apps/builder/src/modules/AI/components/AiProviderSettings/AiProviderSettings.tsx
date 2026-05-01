@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
-import type { ChangeEvent } from 'react';
 import type { AiModelInfo, AiProviderSettings, AiProviderType } from '../../types';
+import type { ChangeEvent } from 'react';
 
 const PROVIDERS: { value: AiProviderType; label: string }[] = [
   { value: 'openai', label: 'OpenAI' },
@@ -79,7 +79,7 @@ const AiProviderSettings = ({ settings, models, modelsLoading, modelsError, onCh
             <select
               className={inputCls}
               value={provider ?? ''}
-              onChange={e => onChange({ provider: (e.target.value as AiProviderType) || undefined })}
+              onChange={e => onChange({ provider: (e.target.value || undefined) as AiProviderType | undefined })}
             >
               <option value="">Server default</option>
               {PROVIDERS.map(p => (
@@ -99,11 +99,7 @@ const AiProviderSettings = ({ settings, models, modelsLoading, modelsError, onCh
                 className={inputCls}
                 value={model ?? ''}
                 placeholder={
-                  modelsLoading
-                    ? 'Loading…'
-                    : provider === 'opencode'
-                      ? 'e.g. anthropic/claude-sonnet-4-6'
-                      : 'Default'
+                  modelsLoading ? 'Loading…' : provider === 'opencode' ? 'e.g. anthropic/claude-sonnet-4-6' : 'Default'
                 }
                 disabled={modelsLoading}
                 onChange={e => onChange({ model: e.target.value || undefined })}
