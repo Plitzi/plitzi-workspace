@@ -156,16 +156,16 @@ jobs:
   #       run: yarn test:ci
 
   publish:
-    # if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
-    needs: build-packages # lint
+    if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
+    needs: lint
     runs-on: ubuntu-latest
     strategy:
       matrix:
         registry:
-          # - name: github
-          #   url: https://npm.pkg.github.com/
-          #   token: NPM_AUTH_TOKEN
-          #   scope: '@plitzi'
+          - name: github
+            url: https://npm.pkg.github.com/
+            token: NPM_AUTH_TOKEN
+            scope: '@plitzi'
           - name: npm
             url: https://registry.npmjs.org/
             token: NPMJS_TOKEN
