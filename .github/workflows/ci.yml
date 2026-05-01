@@ -208,6 +208,8 @@ jobs:
       - name: Update .npmrc for @plitzi scope
         run: |
           echo "@plitzi:registry=${{ matrix.registry.url }}/" > .npmrc
+          REGISTRY_HOST=$(echo "${{ matrix.registry.url }}" | sed 's|https://||')
+          echo "//${REGISTRY_HOST}/:_authToken=${{ secrets[matrix.registry.token] }}" >> .npmrc
 
       - name: Yarn Token
         run: |
