@@ -5,9 +5,9 @@ import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
 import type { AiFrontendToolRunner } from '../tools';
-import type { AiAttachment, AiContext, AiMessage, AiMessagePreview, AiStreamEvent, AiToolCall } from '../types';
+import type { AiAttachment, AiContext, AiMessage, AiMessagePreview, AiProviderSettings, AiStreamEvent, AiToolCall, AiUsage } from '../types';
 
-const useAiChat = (runClientTool?: AiFrontendToolRunner) => {
+const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiProviderSettings) => {
   const { server, webKey } = use(NetworkContext);
   const { networkQuery } = useNetwork({ initLoading: false, server, webKey });
   const [conversationId, setConversationId] = useStorage<string>('builder-state.aiChat.conversationId', '');
@@ -16,9 +16,12 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner) => {
   const [liveThinking, setLiveThinking] = useState('');
   const [liveTools, setLiveTools] = useState<AiToolCall[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [usage, setUsage] = useState<AiUsage | undefined>();
 
   const conversationIdRef = useRef(conversationId);
   conversationIdRef.current = conversationId;
+  const providerSettingsRef = useRef(providerSettings);
+  providerSettingsRef.current = providerSettings;
 
   // Only restores history from a stored conversation. If the ID is stale (404),
   // clears storage so the next send will create a fresh conversation.
@@ -89,7 +92,8 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner) => {
             conversationId: activeConversationId,
             message,
             attachments: serverAttachments.length > 0 ? serverAttachments : undefined,
-            context
+            context,
+            ...providerSettingsRef.current
           })
         });
 
@@ -173,6 +177,9 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner) => {
                     preview: event.message.preview ?? preview
                   }
                 ]);
+                if (event.usage) {
+                  setUsage(event.usage);
+                }
                 setStreamingText('');
                 setLiveThinking('');
                 setLiveTools([]);
@@ -200,7 +207,40 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner) => {
   const clearConversation = useCallback(() => {
     setMessages([]);
     setConversationId('');
+    setUsage(undefined);
   }, [setConversationId]);
+
+  const compact = useCallback(async () => {
+    const id = conversationIdRef.current;
+    if (!id || isStreaming) {
+      return;
+    }
+
+    const res = await fetch(`${server.nodeServer}/ai/compact`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${webKey}` },
+      body: JSON.stringify({ conversationId: id, ...providerSettingsRef.current })
+    });
+    if (!res.ok) {
+      return;
+    }
+
+    const data = (await res.json()) as { message: AiMessage | null };
+    if (data.message) {
+      setMessages([data.message]);
+      setUsage(undefined);
+    }
+  }, [isStreaming, server.nodeServer, webKey]);
+
+  // Auto-compact when context usage reaches 90%.
+  const usedPercent = usage?.usedPercent ?? 0;
+  const prevUsedPercentRef = useRef(0);
+  if (usedPercent !== prevUsedPercentRef.current) {
+    prevUsedPercentRef.current = usedPercent;
+    if (usedPercent >= 90 && !isStreaming) {
+      void compact();
+    }
+  }
 
   return {
     messages,
@@ -208,9 +248,11 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner) => {
     liveThinking,
     liveTools,
     isStreaming,
+    usage,
     initConversation,
     sendMessage,
-    clearConversation
+    clearConversation,
+    compact
   };
 };
 

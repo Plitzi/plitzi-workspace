@@ -49,6 +49,14 @@ export type AiMessage = {
   createdAt: number;
 };
 
+export type AiUsage = {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  contextLimit: number;
+  usedPercent: number;
+};
+
 export type AiStreamEvent =
   | { type: 'chunk'; text: string }
   | { type: 'thinking'; text: string }
@@ -56,7 +64,7 @@ export type AiStreamEvent =
   | { type: 'tool'; name: string; args: Record<string, unknown>; result: unknown }
   // Server delegates execution to the client; client runs the handler and stores any side-effects
   | { type: 'client_tool'; id: string; name: string; args: Record<string, unknown> }
-  | { type: 'done'; message: AiMessage }
+  | { type: 'done'; message: AiMessage; usage?: AiUsage }
   | { type: 'error'; message: string };
 
 export type AiContext = {
@@ -64,4 +72,21 @@ export type AiContext = {
   environment?: string;
   currentPageId?: string;
   elementSelected?: string;
+};
+
+export type AiProviderType = 'openai' | 'anthropic' | 'ollama' | 'openrouter' | 'opencode';
+
+export type AiProviderSettings = {
+  provider?: AiProviderType;
+  apiKey?: string;
+  model?: string;
+  baseUrl?: string;
+};
+
+export type AiModelInfo = {
+  id: string;
+  name: string;
+  providerID?: string;
+  providerName?: string;
+  free?: boolean;
 };

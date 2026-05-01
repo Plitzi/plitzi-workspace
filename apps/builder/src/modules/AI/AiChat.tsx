@@ -1,12 +1,14 @@
-import { use, useCallback, useEffect, useRef } from 'react';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import AiChatHeader from './components/AiChatHeader';
+import AiProviderSettings from './components/AiProviderSettings/AiProviderSettings';
 import Chat from './components/Chat';
 import ChatInput from './components/ChatInput';
 import useAiChat from './hooks/useAiChat';
+import useAiProviderSettings from './hooks/useAiProviderSettings';
 import useAiTools from './hooks/useAiTools';
 import useVoice from './hooks/useVoice';
 
@@ -20,6 +22,9 @@ const AiChat = () => {
   const { currentPageId } = use(NavigationContext);
   const chatRef = useRef<HTMLDivElement | null>(null);
   const chatInputRef = useRef<ChatInputHandle | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  const { settings: providerSettings, models, modelsLoading, modelsError, updateSettings } = useAiProviderSettings(isSettingsOpen);
 
   const runClientTool = useAiTools();
   const {
@@ -28,10 +33,12 @@ const AiChat = () => {
     liveThinking,
     liveTools,
     isStreaming,
+    usage,
     initConversation,
     sendMessage,
-    clearConversation
-  } = useAiChat(runClientTool);
+    clearConversation,
+    compact
+  } = useAiChat(runClientTool, providerSettings);
 
   const handleTranscript = useCallback((text: string) => {
     chatInputRef.current?.appendText(text);
@@ -72,7 +79,27 @@ const AiChat = () => {
 
   return (
     <div className="flex h-full w-full flex-col bg-white font-mono text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100">
-      <AiChatHeader onClear={clearConversation} isStreaming={isStreaming} />
+      <AiChatHeader
+        onClear={clearConversation}
+        onCompact={compact}
+        isStreaming={isStreaming}
+        messageCount={messages.length}
+        providerSettings={providerSettings}
+        usage={usage}
+        isSettingsOpen={isSettingsOpen}
+        onSettingsToggle={() => setIsSettingsOpen(v => !v)}
+      />
+
+      {isSettingsOpen && (
+        <AiProviderSettings
+          settings={providerSettings}
+          models={models}
+          modelsLoading={modelsLoading}
+          modelsError={modelsError}
+          onChange={updateSettings}
+        />
+      )}
+
       <Chat
         ref={chatRef}
         messages={messages}
