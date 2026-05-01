@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-elements",
-  "version": "0.30.18",
+  "version": "0.30.19",
   "license": "AGPL-3.0",
   "publishConfig": {
     "access": "public",

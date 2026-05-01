@@ -1,5 +1,11 @@
 # @plitzi/sdk-store
 
+## 0.30.19
+
+### Patch Changes
+
+- v0.30.19
+
 ## 0.30.18
 
 ### Patch Changes
