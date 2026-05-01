@@ -39,7 +39,8 @@ jobs:
 
       - name: Yarn Token
         run: |
-          yarn config set 'npmScopes["plitzi"]["npmAuthToken"]' "${{ secrets.NPM_AUTH_TOKEN }}"
+          yarn config set --location project 'npmScopes["plitzi"]["npmRegistryServer"]' "https://npm.pkg.github.com/"
+          yarn config set --location project 'npmScopes["plitzi"]["npmAuthToken"]' "${{ secrets.NPM_AUTH_TOKEN }}"
 
       - name: Yarn Install
         if: steps.cache-packages.outputs.cache-hit != 'true'
@@ -205,16 +206,10 @@ jobs:
         if: steps.cache-packages.outputs.cache-hit != 'true' || steps.cache-build.outputs.cache-hit != 'true'
         run: exit 1
 
-      - name: Update .npmrc for @plitzi scope
-        run: |
-          echo "@plitzi:registry=${{ matrix.registry.url }}" > .npmrc
-          REGISTRY_HOST=$(echo "${{ matrix.registry.url }}" | sed 's|https://||')
-          echo "//${REGISTRY_HOST}/:_authToken=${{ secrets[matrix.registry.token] }}" >> .npmrc
-
       - name: Yarn Token
         run: |
-          yarn config set 'npmScopes["plitzi"]["npmRegistryServer"]' "${{ matrix.registry.url }}"
-          yarn config set 'npmScopes["plitzi"]["npmAuthToken"]' "${{ secrets[matrix.registry.token] }}"
+          yarn config set --location project 'npmScopes["plitzi"]["npmRegistryServer"]' "${{ matrix.registry.url }}"
+          yarn config set --location project 'npmScopes["plitzi"]["npmAuthToken"]' "${{ secrets[matrix.registry.token] }}"
 
       - name: Publish packages
         id: changesets
