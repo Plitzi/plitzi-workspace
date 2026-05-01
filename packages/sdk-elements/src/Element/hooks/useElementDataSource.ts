@@ -26,6 +26,10 @@ const useElementDataSource = ({ id, bindings, sources: sourcesProp, filterMode }
       }
     }
 
+    if (sources.size > 0 && !sources.has('variables')) {
+      sources.add('variables');
+    }
+
     return [...sources];
   }, [bindings, sourcesProp]);
 
