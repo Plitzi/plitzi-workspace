@@ -10,10 +10,6 @@
     "type": "https",
     "url": "https://github.com/plitzi/plitzi-workspace.git"
   },
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://npm.pkg.github.com/"
-  },
   "type": "module",
   "main": "dist/plitzi-builder.js",
   "module": "dist/plitzi-builder.js",

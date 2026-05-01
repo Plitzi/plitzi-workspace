@@ -19,10 +19,6 @@
     "type": "https",
     "url": "https://github.com/plitzi/plitzi-workspace.git"
   },
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://npm.pkg.github.com/"
-  },
   "type": "module",
   "sideEffects": false,
   "dependencies": {
