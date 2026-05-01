@@ -205,6 +205,10 @@ jobs:
         if: steps.cache-packages.outputs.cache-hit != 'true' || steps.cache-build.outputs.cache-hit != 'true'
         run: exit 1
 
+      - name: Update .npmrc for @plitzi scope
+        run: |
+          echo "@plitzi:registry=${{ matrix.registry.url }}/" > .npmrc
+
       - name: Yarn Token
         run: |
           yarn config set 'npmScopes["plitzi"]["npmRegistryServer"]' "${{ matrix.registry.url }}"
