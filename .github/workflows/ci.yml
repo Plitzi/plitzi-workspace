@@ -39,13 +39,11 @@ jobs:
 
       - name: Yarn Token
         run: |
-          echo "npmAuthToken: ${{ secrets.NPM_AUTH_TOKEN }}" >> $HOME/.yarnrc.yml
+          yarn config set 'npmScopes["plitzi"]["npmAuthToken"]' "${{ secrets.NPM_AUTH_TOKEN }}"
 
       - name: Yarn Install
         if: steps.cache-packages.outputs.cache-hit != 'true'
         run: yarn install --immutable
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
 
   build-packages:
     needs: packages
@@ -205,11 +203,12 @@ jobs:
 
       - name: Validate Cache
         if: steps.cache-packages.outputs.cache-hit != 'true' || steps.cache-build.outputs.cache-hit != 'true'
-        run: exit
+        run: exit 1
 
       - name: Yarn Token
         run: |
-          echo "npmAuthToken: ${{ secrets[matrix.registry.token] }}" >> .yarnrc.yml
+          yarn config set 'npmScopes["plitzi"]["npmRegistryServer"]' "${{ matrix.registry.url }}"
+          yarn config set 'npmScopes["plitzi"]["npmAuthToken"]' "${{ secrets[matrix.registry.token] }}"
 
       - name: Publish packages
         uses: changesets/action@v1
