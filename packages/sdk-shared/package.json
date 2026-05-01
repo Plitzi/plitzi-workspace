@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-shared",
-  "version": "0.30.17",
+  "version": "0.30.18",
   "license": "AGPL-3.0",
   "publishConfig": {
     "access": "public",
