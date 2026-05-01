@@ -62,7 +62,7 @@ const Chat = ({ ref, messages = [], streamingText, liveThinking, liveTools = [] 
     el.addEventListener('scroll', onScroll, { passive: true });
 
     return () => el.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [liveThinking]);
 
   // When totalSize grows (measurements settling), keep the user at the bottom.
   const prevTotalSize = useRef(0);

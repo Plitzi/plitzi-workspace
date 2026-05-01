@@ -207,8 +207,8 @@ jobs:
 
       - name: Yarn Token
         run: |
-          sed -i "s|npmAuthToken:.*|npmAuthToken: \"${{ secrets[matrix.registry.token] }}\"|" .yarnrc.yml
-          sed -i "s|npmRegistryServer:.*|npmRegistryServer: \"${{ matrix.registry.url }}\"|" .yarnrc.yml
+          yarn config set 'npmScopes["plitzi"]["npmRegistryServer"]' "${{ matrix.registry.url }}"
+          yarn config set 'npmScopes["plitzi"]["npmAuthToken"]' "${{ secrets[matrix.registry.token] }}"
 
       - name: Publish packages
         id: changesets

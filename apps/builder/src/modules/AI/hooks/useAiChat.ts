@@ -1,5 +1,6 @@
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { useCallback, use, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
@@ -51,8 +52,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
   // Refs so 'done' handler captures final state (closure issue)
   const liveToolsRef = useRef<AiToolCall[]>([]);
   liveToolsRef.current = liveTools;
-  const liveThinkingRef = useRef('');
-  liveThinkingRef.current = liveThinking;
+  const thinkingTextRef = useRef('');
   // Preview staged by a client_tool handler; cleared once attached to the message
   const pendingPreviewRef = useRef<Extract<AiMessagePreview, { baseElementId: string }> | undefined>(undefined);
   // Thinking duration tracking: start on first 'thinking' event, stop on first 'chunk'
@@ -88,6 +88,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
       setMessages(prev => [...prev, userMessage]);
       setStreamingText('');
       setLiveThinking('');
+      thinkingTextRef.current = '';
       setLiveTools([]);
       setIsStreaming(true);
 
@@ -137,7 +138,8 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                 if (!thinkingStartRef.current) {
                   thinkingStartRef.current = Date.now();
                 }
-                setLiveThinking(prev => prev + event.text);
+                thinkingTextRef.current += event.text;
+                flushSync(() => setLiveThinking(thinkingTextRef.current));
               } else if (event.type === 'chunk') {
                 if (thinkingStartRef.current && !thinkingDurationMsRef.current) {
                   thinkingDurationMsRef.current = Date.now() - thinkingStartRef.current;
@@ -169,7 +171,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
               } else if (event.type === 'done') {
                 const preview = pendingPreviewRef.current;
                 pendingPreviewRef.current = undefined;
-                const thinkingText = liveThinkingRef.current || undefined;
+                const thinkingText = thinkingTextRef.current || undefined;
                 const thinkingDurationMs =
                   thinkingText && thinkingStartRef.current
                     ? (thinkingDurationMsRef.current ?? Date.now() - thinkingStartRef.current)
@@ -191,6 +193,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                 }
                 setStreamingText('');
                 setLiveThinking('');
+                thinkingTextRef.current = '';
                 setLiveTools([]);
               } else {
                 console.error('[AI] Stream error:', event.message);
@@ -204,6 +207,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
         setIsStreaming(false);
         setStreamingText('');
         setLiveThinking('');
+        thinkingTextRef.current = '';
         setLiveTools([]);
         pendingPreviewRef.current = undefined;
         thinkingStartRef.current = undefined;
