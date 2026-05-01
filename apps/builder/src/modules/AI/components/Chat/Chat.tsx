@@ -11,6 +11,7 @@ import type { RefObject } from 'react';
 export type ChatProps = {
   ref?: RefObject<HTMLDivElement | null>;
   messages: AiMessage[];
+  isStreaming?: boolean;
   streamingText?: string;
   liveThinking?: string;
   liveTools?: AiToolCall[];
@@ -20,11 +21,11 @@ const PADDING = 12; // py-3
 
 const estimateSize = () => 160;
 
-const Chat = ({ ref, messages = [], streamingText, liveThinking, liveTools = [] }: ChatProps) => {
+const Chat = ({ ref, messages = [], isStreaming, streamingText, liveThinking, liveTools = [] }: ChatProps) => {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const isAtBottom = useRef(true);
 
-  const hasLive = !!(liveThinking || liveTools.length || streamingText);
+  const hasLive = isStreaming || !!(liveThinking || liveTools.length || streamingText);
   const count = messages.length + (hasLive ? 1 : 0);
 
   const getScrollElement = useCallback(() => scrollRef.current, []);
@@ -96,14 +97,10 @@ const Chat = ({ ref, messages = [], streamingText, liveThinking, liveTools = [] 
 
       {count > 0 && (
         <div style={{ height: totalSize, position: 'relative' }}>
-          <div
-            className="absolute left-1.25 w-px bg-gray-200 dark:bg-zinc-800"
-            style={{ top: PADDING + 2, bottom: PADDING + 2 }}
-          />
-
           {virtualItems.map(virtualRow => {
             const { index, start, key } = virtualRow;
             const isLive = index === messages.length;
+            const isLast = index === count - 1;
 
             return (
               <div
@@ -113,8 +110,18 @@ const Chat = ({ ref, messages = [], streamingText, liveThinking, liveTools = [] 
                 style={{ position: 'absolute', top: 0, transform: `translateY(${start}px)`, width: '100%' }}
                 className="relative flex gap-3 pb-4"
               >
+                {/* Per-item timeline line — bounded by this item's actual height, not totalSize */}
+                <div
+                  className={`pointer-events-none absolute left-1.25 w-px bg-gray-200 dark:bg-zinc-800 ${isLast ? 'h-3.5' : 'bottom-0'} top-0`}
+                />
+
                 {isLive ? (
-                  <LiveEntry streamingText={streamingText} liveThinking={liveThinking} liveTools={liveTools} />
+                  <LiveEntry
+                    isStreaming={isStreaming}
+                    streamingText={streamingText}
+                    liveThinking={liveThinking}
+                    liveTools={liveTools}
+                  />
                 ) : (
                   <>
                     <TimelineDot role={messages[index].role} />

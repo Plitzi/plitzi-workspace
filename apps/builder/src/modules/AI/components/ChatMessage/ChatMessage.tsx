@@ -16,6 +16,7 @@ const ChatMessage = ({
   thinking,
   thinkingDurationMs,
   irrelevant,
+  usage,
   preview,
   actions,
   attachments,
@@ -34,6 +35,12 @@ const ChatMessage = ({
         )}
         <span className="font-mono text-xs text-zinc-400 dark:text-zinc-600">{formatTime(createdAt)}</span>
         {irrelevant && <span className="font-mono text-xs text-amber-500 dark:text-amber-400">off-topic</span>}
+        {!isUser && usage && (
+          <span className="font-mono text-[10px] text-zinc-300 dark:text-zinc-700">
+            {usage.inputTokens.toLocaleString()} in · {usage.outputTokens.toLocaleString()} out
+            {usage.thinkingTokens ? ` · ${usage.thinkingTokens.toLocaleString()} thinking` : ''}
+          </span>
+        )}
       </div>
 
       {attachments && attachments.length > 0 && (

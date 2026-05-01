@@ -42,6 +42,7 @@ export type AiMessage = {
   thinking?: string;
   thinkingDurationMs?: number;
   irrelevant?: boolean;
+  usage?: AiUsage;
   preview?: AiMessagePreview;
   actions?: AiMessageAction[];
   attachments?: AiAttachment[];
@@ -53,6 +54,7 @@ export type AiUsage = {
   inputTokens: number;
   outputTokens: number;
   totalTokens: number;
+  thinkingTokens?: number;
   contextLimit: number;
   usedPercent: number;
 };

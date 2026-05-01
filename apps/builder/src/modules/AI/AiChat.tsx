@@ -109,6 +109,7 @@ const AiChat = () => {
       <Chat
         ref={chatRef}
         messages={messages}
+        isStreaming={isStreaming}
         streamingText={streamingText}
         liveThinking={liveThinking}
         liveTools={liveTools}
