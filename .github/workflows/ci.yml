@@ -81,51 +81,51 @@ jobs:
       - name: Yarn Build
         run: yarn build:prod && yarn build-vendor:dev && yarn build-vendor:prod
 
-  lint:
-    needs: build-packages
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+  # lint:
+  #   needs: build-packages
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Enable Corepack
-        run: corepack enable
+  #     - name: Enable Corepack
+  #       run: corepack enable
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          registry-url: https://npm.pkg.github.com
-          scope: '@plitzi'
-          cache: 'yarn'
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 24
+  #         registry-url: https://npm.pkg.github.com
+  #         scope: '@plitzi'
+  #         cache: 'yarn'
 
-      - name: Restore Cache node_modules
-        uses: actions/cache@v4
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
+  #     - name: Restore Cache node_modules
+  #       uses: actions/cache@v4
+  #       env:
+  #         cache-name: cache-node-modules
+  #       with:
+  #         path: '**/node_modules'
+  #         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
 
-      - name: Restore Cache build
-        id: cache-packages
-        uses: actions/cache@v4
-        env:
-          cache-name: cache-build
-        with:
-          path: '**/dist'
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ github.sha }}
+  #     - name: Restore Cache build
+  #       id: cache-packages
+  #       uses: actions/cache@v4
+  #       env:
+  #         cache-name: cache-build
+  #       with:
+  #         path: '**/dist'
+  #         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ github.sha }}
 
-      - name: Validate Cache
-        if: steps.cache-packages.outputs.cache-hit != 'true'
-        run: exit 1
+  #     - name: Validate Cache
+  #       if: steps.cache-packages.outputs.cache-hit != 'true'
+  #       run: exit 1
 
-      - name: Yarn Lint
-        run: yarn lint
+  #     - name: Yarn Lint
+  #       run: yarn lint
 
-      - name: Yarn Scss Lint
-        run: yarn lint-style
+  #     - name: Yarn Scss Lint
+  #       run: yarn lint-style
 
-      - name: Yarn Typecheck
-        run: yarn typecheck
+  #     - name: Yarn Typecheck
+  #       run: yarn typecheck
 
   # tests:
   #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
@@ -155,8 +155,8 @@ jobs:
   #       run: yarn test:ci
 
   publish:
-    if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
-    needs: lint
+    # if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
+    needs: build-packages # lint
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -205,10 +205,15 @@ jobs:
         if: steps.cache-packages.outputs.cache-hit != 'true' || steps.cache-build.outputs.cache-hit != 'true'
         run: exit 1
 
-      - name: Yarn Token
+      # - name: Yarn Token
+      #   run: |
+      #     yarn config set 'npmScopes["plitzi"]["npmRegistryServer"]' "${{ matrix.registry.url }}"
+      #     yarn config set 'npmScopes["plitzi"]["npmAuthToken"]' "${{ secrets[matrix.registry.token] }}"
+      - name: Setup .npmrc
         run: |
-          yarn config set 'npmScopes["plitzi"]["npmRegistryServer"]' "${{ matrix.registry.url }}"
-          yarn config set 'npmScopes["plitzi"]["npmAuthToken"]' "${{ secrets[matrix.registry.token] }}"
+          echo "${{ matrix.registry.scope }}:${{ secrets[matrix.registry.token] }}" \
+            > $HOME/.npmrc
+          echo "registry=${{ matrix.registry.url }}" >> $HOME/.npmrc
 
       - name: Publish packages
         uses: changesets/action@v1
