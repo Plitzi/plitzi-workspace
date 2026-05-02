@@ -36,9 +36,7 @@ const ChatMessage = ({
         )}
         <span className="font-mono text-xs text-zinc-400 dark:text-zinc-600">{formatTime(createdAt)}</span>
         {irrelevant && <span className="font-mono text-xs text-amber-500 dark:text-amber-400">off-topic</span>}
-        {!isUser && mode === 'plan' && (
-          <span className="font-mono text-xs text-blue-500 dark:text-blue-400">plan</span>
-        )}
+        {!isUser && mode === 'plan' && <span className="font-mono text-xs text-blue-500 dark:text-blue-400">plan</span>}
         {!isUser && usage && (
           <span className="font-mono text-[10px] text-zinc-300 dark:text-zinc-700">
             {usage.inputTokens.toLocaleString()} in · {usage.outputTokens.toLocaleString()} out

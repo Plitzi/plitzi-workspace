@@ -202,7 +202,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                 setLiveThinking('');
                 thinkingTextRef.current = '';
                 setLiveTools([]);
-              } else if (event.type === 'error') {
+              } else if (event.type === ('error' as string)) {
                 setError(event.message);
               }
             } catch {

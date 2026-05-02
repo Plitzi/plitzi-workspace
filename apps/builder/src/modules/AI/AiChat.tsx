@@ -1,8 +1,8 @@
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import AiChatHeader from './components/AiChatHeader';
 import AiProviderSettings from './components/AiProviderSettings/AiProviderSettings';
@@ -15,8 +15,8 @@ import useVoice from './hooks/useVoice';
 
 import type { ChatInputHandle } from './components/ChatInput';
 import type { AiAttachment } from './types';
-import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { BuilderState } from '@plitzi/sdk-shared';
+import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 
 const AiChat = () => {
   const { useStore } = createStoreHook<BuilderState>();

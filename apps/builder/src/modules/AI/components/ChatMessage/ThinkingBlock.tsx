@@ -33,7 +33,7 @@ const ThinkingBlock = ({ text, durationMs }: ThinkingBlockProps) => {
       </button>
       {open && (
         <div className="mt-0.5 ml-2 border-l-2 border-gray-200 pl-3 font-mono text-xs leading-relaxed text-zinc-400 italic dark:border-zinc-700 dark:text-zinc-500">
-          <span className="whitespace-pre-wrap wrap-break-word">{text}</span>
+          <span className="wrap-break-word whitespace-pre-wrap">{text}</span>
         </div>
       )}
     </div>
