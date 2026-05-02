@@ -3,7 +3,7 @@ import Variable from '@plitzi/plitzi-ui/icons/Variable';
 import Sidebar from '@plitzi/plitzi-ui/Sidebar';
 
 import StyleAdvanceEditor from '@plitzi/sdk-style/StyleAdvanceEditor';
-import AiChat from '@pmodules/AI'; // , { AiChatPreview }
+import AiChat from '@pmodules/AI';
 import BuilderTree from '@pmodules/Builder/components/BuilderTree';
 import Collections from '@pmodules/Collection/Collections';
 import Elements from '@pmodules/Elements';

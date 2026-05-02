@@ -15,7 +15,8 @@ import type {
   AiProviderSettings,
   AiStreamEvent,
   AiToolCall,
-  AiUsage
+  AiUsage,
+  ConversationSummary
 } from '../types';
 
 const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiProviderSettings) => {
@@ -30,6 +31,8 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
   const [isStreaming, setIsStreaming] = useState(false);
   const [usage, setUsage] = useState<AiUsage | undefined>();
   const [error, setError] = useState<string | undefined>();
+  const [quotaError, setQuotaError] = useState<string | undefined>();
+  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
 
   const conversationIdRef = useRef(conversationId);
   conversationIdRef.current = conversationId;
@@ -96,6 +99,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
       thinkingTextRef.current = '';
       setLiveTools([]);
       setError(undefined);
+      setQuotaError(undefined);
       setIsStreaming(true);
 
       const serverAttachments = attachments.map(a => ({ type: a.type, mimeType: a.mimeType, data: a.data }));
@@ -212,6 +216,8 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                 setLiveTools([]);
               } else if (event.type === ('error' as string)) {
                 setError(event.message);
+              } else if (event.type === 'quota_exceeded') {
+                setQuotaError(event.message || 'API quota exceeded — check your API key in settings');
               }
             } catch {
               // skip malformed events
@@ -236,7 +242,34 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
     setMessages([]);
     setConversationId('');
     setUsage(undefined);
+    setError(undefined);
+    setQuotaError(undefined);
   }, [setConversationId]);
+
+  const loadConversations = useCallback(async () => {
+    const res = await networkQuery<{ conversations: ConversationSummary[] }>('/ai/conversations');
+    if (res) {
+      setConversations(res.conversations);
+    }
+  }, [networkQuery]);
+
+  const loadConversation = useCallback(
+    async (id: string) => {
+      if (isStreaming) {
+        return;
+      }
+
+      const history = await networkQuery<{ messages: AiMessage[] }>(`/ai/messages?conversationId=${id}`);
+      if (history) {
+        setConversationId(id);
+        setMessages(history.messages);
+        setUsage(undefined);
+        setError(undefined);
+        setQuotaError(undefined);
+      }
+    },
+    [isStreaming, networkQuery, setConversationId]
+  );
 
   const compact = useCallback(async () => {
     const id = conversationIdRef.current;
@@ -278,11 +311,15 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
     isStreaming,
     usage,
     error,
+    quotaError,
+    conversations,
     mode,
     setMode,
     initConversation,
     sendMessage,
     clearConversation,
+    loadConversations,
+    loadConversation,
     compact
   };
 };

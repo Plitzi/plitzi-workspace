@@ -1,4 +1,6 @@
-import type { AiProviderSettings, AiUsage } from '../types';
+import { useEffect, useRef, useState } from 'react';
+
+import type { AiProviderSettings, AiUsage, ConversationSummary } from '../types';
 import type { ReactNode } from 'react';
 
 type AiChatHeaderProps = {
@@ -12,6 +14,9 @@ type AiChatHeaderProps = {
   usage?: AiUsage;
   isSettingsOpen?: boolean;
   onSettingsToggle?: () => void;
+  conversations?: ConversationSummary[];
+  onLoadConversations?: () => void;
+  onLoadConversation?: (id: string) => void;
 };
 
 const usageColor = (pct: number) => {
@@ -38,12 +43,41 @@ const AiChatHeader = ({
   providerSettings,
   usage,
   isSettingsOpen,
-  onSettingsToggle
+  onSettingsToggle,
+  conversations = [],
+  onLoadConversations,
+  onLoadConversation
 }: AiChatHeaderProps) => {
   const { provider, model } = providerSettings ?? {};
   const providerLabel = provider
     ? [provider, model ? model.split('/').pop() : undefined].filter(Boolean).join(' · ')
     : undefined;
+
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const historyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!historyOpen) {
+      return;
+    }
+
+    const handler = (e: MouseEvent) => {
+      if (historyRef.current && !historyRef.current.contains(e.target as Node)) {
+        setHistoryOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [historyOpen]);
+
+  const handleHistoryToggle = () => {
+    if (!historyOpen) {
+      onLoadConversations?.();
+    }
+
+    setHistoryOpen(v => !v);
+  };
 
   return (
     <div className="border-b border-gray-200 dark:border-zinc-800">
@@ -89,6 +123,46 @@ const AiChatHeader = ({
               ⊙ compact
             </button>
           )}
+
+          <div ref={historyRef} className="relative">
+            <button
+              className={`text-xs transition-colors ${
+                historyOpen
+                  ? 'text-violet-500 dark:text-violet-400'
+                  : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-400'
+              }`}
+              onClick={handleHistoryToggle}
+              title="Conversation history"
+            >
+              ☰ history
+            </button>
+
+            {historyOpen && (
+              <div className="absolute right-0 top-full z-50 mt-1 w-72 rounded border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+                {conversations.length === 0 ? (
+                  <div className="px-3 py-2 text-xs text-zinc-400 dark:text-zinc-600">No conversations yet</div>
+                ) : (
+                  conversations.map(c => (
+                    <button
+                      key={c.id}
+                      className="w-full border-b border-zinc-100 px-3 py-2 text-left last:border-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800"
+                      onClick={() => {
+                        onLoadConversation?.(c.id);
+                        setHistoryOpen(false);
+                      }}
+                    >
+                      <div className="truncate text-xs text-zinc-700 dark:text-zinc-300">
+                        {c.preview || '(empty conversation)'}
+                      </div>
+                      <div className="mt-0.5 font-mono text-[10px] text-zinc-400 dark:text-zinc-600">
+                        {c.messageCount} msgs · {new Date(c.updatedAt).toLocaleDateString()}
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
 
           <button
             className="text-xs text-zinc-400 transition-colors hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-400"

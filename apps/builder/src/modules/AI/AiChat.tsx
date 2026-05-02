@@ -1,5 +1,4 @@
 import { use, useCallback, useEffect, useRef, useState } from 'react';
-
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { createStoreHook } from '@plitzi/sdk-store/createStore';
@@ -17,6 +16,33 @@ import type { ChatInputHandle } from './components/ChatInput';
 import type { AiAttachment } from './types';
 import type { BuilderState } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+
+const formatRetryDelay = (ts: number): string => {
+  const ms = ts - Date.now();
+  if (ms <= 0) return 'now';
+  const totalSecs = Math.ceil(ms / 1000);
+  if (totalSecs < 60) return `in ${String(totalSecs)}s`;
+  const mins = Math.floor(totalSecs / 60);
+  const secs = totalSecs % 60;
+  if (mins < 60) return `in ${String(mins)}m ${String(secs)}s`;
+  return `at ${new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+};
+
+const QuotaCountdown = ({ retryAfter }: { retryAfter: number }) => {
+  const [label, setLabel] = useState(() => formatRetryDelay(retryAfter));
+
+  useEffect(() => {
+    setLabel(formatRetryDelay(retryAfter));
+    const id = setInterval(() => {
+      const next = formatRetryDelay(retryAfter);
+      setLabel(next);
+      if (next === 'now') clearInterval(id);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [retryAfter]);
+
+  return <span className="ml-2 opacity-75">· resets {label}</span>;
+};
 
 const AiChat = () => {
   const { useStore } = createStoreHook<BuilderState>();
@@ -44,11 +70,18 @@ const AiChat = () => {
     isStreaming,
     usage,
     error,
+    clearError,
+    quotaError,
+    clearQuotaError,
+    quotaRetryAfter,
+    conversations,
     mode,
     setMode,
     initConversation,
     sendMessage,
     clearConversation,
+    loadConversations,
+    loadConversation,
     compact
   } = useAiChat(runClientTool, providerSettings);
 
@@ -100,6 +133,9 @@ const AiChat = () => {
         usage={usage}
         isSettingsOpen={isSettingsOpen}
         onSettingsToggle={() => setIsSettingsOpen(v => !v)}
+        conversations={conversations}
+        onLoadConversations={loadConversations}
+        onLoadConversation={loadConversation}
       />
 
       {isSettingsOpen && (
@@ -120,9 +156,19 @@ const AiChat = () => {
         liveThinking={liveThinking}
         liveTools={liveTools}
       />
+      {quotaError && (
+        <div className="mx-3 mb-1 flex items-start gap-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 font-mono text-xs text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-400">
+          <span className="flex-1">
+            ⚠ {quotaError}
+            {quotaRetryAfter && <QuotaCountdown retryAfter={quotaRetryAfter} />}
+          </span>
+          <button onClick={clearQuotaError} className="shrink-0 opacity-50 hover:opacity-100">✕</button>
+        </div>
+      )}
       {error && (
-        <div className="mx-3 mb-1 rounded border border-red-200 bg-red-50 px-3 py-2 font-mono text-xs text-red-600 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400">
-          ⚠ {error}
+        <div className="mx-3 mb-1 flex items-start gap-2 rounded border border-red-200 bg-red-50 px-3 py-2 font-mono text-xs text-red-600 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400">
+          <span className="flex-1">⚠ {error}</span>
+          <button onClick={clearError} className="shrink-0 opacity-50 hover:opacity-100">✕</button>
         </div>
       )}
       <ChatInput
