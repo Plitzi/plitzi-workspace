@@ -15,27 +15,27 @@ const MODE_STYLES = {
     footer: 'bg-violet-50/70 dark:bg-violet-950/20',
     border: 'border-violet-200 dark:border-violet-800/50',
     accent: 'bg-violet-500 dark:bg-violet-600',
-    textarea: 'border-violet-100 dark:border-violet-900/60 focus:ring-violet-400 dark:focus:ring-violet-500',
+    textarea: 'border-violet-200 dark:border-violet-900/60 focus:ring-violet-400 dark:focus:ring-violet-500',
     sendBtn: 'bg-violet-600 hover:bg-violet-500 disabled:bg-violet-300 dark:disabled:bg-violet-900',
     iconBtn:
-      'text-violet-300 dark:text-violet-700 hover:bg-violet-100 hover:text-violet-600 dark:hover:bg-violet-900/50 dark:hover:text-violet-400',
+      'text-violet-400 dark:text-violet-600 hover:bg-violet-100 hover:text-violet-700 dark:hover:bg-violet-900/50 dark:hover:text-violet-400',
     voiceActive: 'bg-violet-600 text-white',
-    modeWrap: 'border-violet-200 dark:border-violet-800/60',
+    modeWrap: 'border-violet-300 dark:border-violet-800/60',
     modeActive: 'bg-violet-600 dark:bg-violet-500 text-white',
-    modeInactive: 'text-violet-300 dark:text-violet-700 hover:text-violet-500 dark:hover:text-violet-400'
+    modeInactive: 'text-violet-400 dark:text-violet-600 hover:text-violet-700 dark:hover:text-violet-400'
   },
   plan: {
-    footer: 'bg-amber-50/70 dark:bg-amber-950/20',
-    border: 'border-amber-200 dark:border-amber-800/50',
-    accent: 'bg-amber-500 dark:bg-amber-600',
-    textarea: 'border-amber-100 dark:border-amber-900/60 focus:ring-amber-400 dark:focus:ring-amber-500',
-    sendBtn: 'bg-amber-600 hover:bg-amber-500 disabled:bg-amber-200 dark:disabled:bg-amber-950',
+    footer: 'bg-sky-50/80 dark:bg-sky-950/20',
+    border: 'border-sky-200 dark:border-sky-800/50',
+    accent: 'bg-sky-500 dark:bg-sky-600',
+    textarea: 'border-sky-200 dark:border-sky-900/60 focus:ring-sky-400 dark:focus:ring-sky-500',
+    sendBtn: 'bg-sky-600 hover:bg-sky-500 disabled:bg-sky-300 dark:disabled:bg-sky-900',
     iconBtn:
-      'text-amber-300 dark:text-amber-800 hover:bg-amber-100 hover:text-amber-600 dark:hover:bg-amber-900/50 dark:hover:text-amber-400',
-    voiceActive: 'bg-amber-600 text-white',
-    modeWrap: 'border-amber-200 dark:border-amber-800/60',
-    modeActive: 'bg-amber-600 dark:bg-amber-500 text-white',
-    modeInactive: 'text-amber-300 dark:text-amber-800 hover:text-amber-500 dark:hover:text-amber-400'
+      'text-sky-500 dark:text-sky-600 hover:bg-sky-100 hover:text-sky-700 dark:hover:bg-sky-900/50 dark:hover:text-sky-400',
+    voiceActive: 'bg-sky-600 text-white',
+    modeWrap: 'border-sky-300 dark:border-sky-800/60',
+    modeActive: 'bg-sky-600 dark:bg-sky-500 text-white',
+    modeInactive: 'text-sky-500 dark:text-sky-600 hover:text-sky-700 dark:hover:text-sky-400'
   }
 } as const;
 
@@ -124,7 +124,7 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
               <VoiceVisualizer
                 audioData={audioData}
                 isRecording={isListening}
-                mainBarColor={mode === 'plan' ? '#f59e0b' : '#a78bfa'}
+                mainBarColor={mode === 'plan' ? '#0ea5e9' : '#a78bfa'}
                 backgroundColor="transparent"
                 className="h-8"
               />

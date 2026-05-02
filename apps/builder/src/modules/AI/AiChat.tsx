@@ -2,6 +2,7 @@ import { use, useCallback, useEffect, useRef, useState } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { createStoreHook } from '@plitzi/sdk-store/createStore';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
 import AiChatHeader from './components/AiChatHeader';
 import AiProviderSettings from './components/AiProviderSettings/AiProviderSettings';
@@ -14,12 +15,14 @@ import useVoice from './hooks/useVoice';
 
 import type { ChatInputHandle } from './components/ChatInput';
 import type { AiAttachment } from './types';
+import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { BuilderState } from '@plitzi/sdk-shared';
 
 const AiChat = () => {
   const { useStore } = createStoreHook<BuilderState>();
   const [elementSelected] = useStore('elementSelected');
   const { currentPageId } = use(NavigationContext);
+  const { environment } = use(NetworkContext) as BuilderNetworkContextValue;
   const chatRef = useRef<HTMLDivElement | null>(null);
   const chatInputRef = useRef<ChatInputHandle | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -73,9 +76,9 @@ const AiChat = () => {
 
   const handleSend = useCallback(
     (msg: string, atts: AiAttachment[]) => {
-      void sendMessage(msg, { currentPageId, elementSelected }, atts);
+      void sendMessage(msg, { currentPageId, elementSelected, environment }, atts);
     },
-    [sendMessage, currentPageId, elementSelected]
+    [sendMessage, currentPageId, elementSelected, environment]
   );
 
   const handleVoiceToggle = useCallback(() => {
