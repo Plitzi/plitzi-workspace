@@ -499,6 +499,7 @@ const AiChatPreview = () => {
         liveTools={liveTools}
       />
       <ChatInput
+        mode="build"
         isStreaming={false}
         isListening={false}
         isVoiceSupported={false}

@@ -48,12 +48,15 @@ type ChatInputProps = {
   audioData: Uint8Array<ArrayBuffer> | null;
   onSend: (message: string, attachments: AiAttachment[]) => void;
   onVoiceToggle: () => void;
-  mode: AiMode;
-  onModeChange: (mode: AiMode) => void;
+  mode?: AiMode;
+  onModeChange?: (mode: AiMode) => void;
 };
 
 const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
-  ({ isStreaming, isListening, isVoiceSupported, audioData, onSend, onVoiceToggle, mode, onModeChange }, ref) => {
+  (
+    { isStreaming, isListening, isVoiceSupported, audioData, onSend, onVoiceToggle, mode = 'build', onModeChange },
+    ref
+  ) => {
     const [messageInput, setMessageInput] = useState('');
     const [attachments, setAttachments] = useState<AiAttachment[]>([]);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -85,7 +88,7 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
           handleSend();
         } else if (e.altKey && e.code === 'KeyP') {
           e.preventDefault();
-          onModeChange(mode === 'plan' ? 'build' : 'plan');
+          onModeChange?.(mode === 'plan' ? 'build' : 'plan');
         }
       },
       [handleSend, mode, onModeChange]
@@ -191,7 +194,7 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
                 <button
                   key={m}
                   className={`px-2.5 py-1 capitalize transition-colors duration-200 ${mode === m ? ms.modeActive : ms.modeInactive}`}
-                  onClick={() => onModeChange(m)}
+                  onClick={() => onModeChange?.(m)}
                   disabled={isStreaming}
                   title={
                     m === 'plan'

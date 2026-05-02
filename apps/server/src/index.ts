@@ -1,5 +1,6 @@
 export { createSSRServer } from './core/createServer';
 export { createJsonAdapters } from './adapters/jsonAdapters';
+export { handleMcp } from './modules/mcp/handler';
 
 export type { JsonAdaptersConfig } from './adapters/jsonAdapters';
 
