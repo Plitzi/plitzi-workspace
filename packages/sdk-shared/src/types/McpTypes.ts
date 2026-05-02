@@ -258,10 +258,21 @@ export type McpAdapters = {
   ) => Promise<void>;
 };
 
+export type McpToolHandler = (args: Record<string, unknown>) => Promise<{
+  content: Array<{ type: 'text'; text: string }>;
+  isError?: boolean;
+}>;
+
+export type McpToolConfig = {
+  name: string;
+  description: string;
+  inputSchema: object; // Zod schema o objeto JSON
+  handler: McpToolHandler;
+};
+
 export type McpServerConfig = {
-  /** Whether the MCP endpoint is active. Defaults to true. */
-  enabled?: boolean;
-  /** URL path for the MCP endpoint. Defaults to '/mcp'. */
-  path?: string;
+  enabled?: boolean; // Whether the MCP endpoint is active. Defaults to true.
+  path?: string; // URL path for the MCP endpoint. Defaults to '/mcp'.
   adapters: McpAdapters;
+  tools?: McpToolConfig[];
 };

@@ -131,6 +131,7 @@ const handleRequest = async (
   const mcpPath = config.mcp?.path ?? '/mcp';
   if (config.mcp && (config.mcp.enabled ?? true) && req.path.startsWith(mcpPath)) {
     await handleMcp(raw, rawRes as unknown as ServerResponse, config.mcp);
+
     return;
   }
 

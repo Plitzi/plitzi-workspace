@@ -24,7 +24,7 @@ const readBody = (req: IncomingMessage): Promise<unknown> =>
 export const handleMcp = async (req: IncomingMessage, res: ServerResponse, config: McpServerConfig): Promise<void> => {
   // Each request gets its own stateless transport — no session state to manage.
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
-  const server = createMcpServer(config.adapters);
+  const server = createMcpServer(config.adapters, config.tools);
 
   await server.connect(transport);
 
