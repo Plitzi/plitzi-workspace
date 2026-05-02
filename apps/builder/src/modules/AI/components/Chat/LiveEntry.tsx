@@ -1,6 +1,5 @@
-import { useEffect, useRef } from 'react';
-
 import Markdown from '@plitzi/plitzi-ui/Markdown';
+import { useEffect, useRef } from 'react';
 
 import ToolCallGroup from '../ToolCallGroup';
 import TimelineDot from './TimelineDot';
@@ -30,21 +29,21 @@ const LiveEntry = ({ isStreaming, streamingText, liveThinking, liveTools = [] }:
         <span className="font-mono text-xs font-semibold text-violet-500 dark:text-violet-400">◆ Assistant</span>
 
         {isStreaming && !liveThinking && !streamingText && liveTools.length === 0 && (
-        <div className="flex items-center gap-1 pl-0.5">
-          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-300 dark:bg-zinc-600 [animation-delay:-0.3s]" />
-          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-300 dark:bg-zinc-600 [animation-delay:-0.15s]" />
-          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-300 dark:bg-zinc-600" />
-        </div>
-      )}
+          <div className="flex items-center gap-1 pl-0.5">
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-300 [animation-delay:-0.3s] dark:bg-zinc-600" />
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-300 [animation-delay:-0.15s] dark:bg-zinc-600" />
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-300 dark:bg-zinc-600" />
+          </div>
+        )}
 
-      {liveThinking && (
+        {liveThinking && (
           <div className="flex items-start gap-1.5">
             <span className="shrink-0 font-mono text-xs leading-4 text-zinc-400 italic dark:text-zinc-500">💭</span>
             <div
               ref={thinkingRef}
-              className="max-h-28 min-w-0 flex-1 overflow-y-auto font-mono text-xs leading-relaxed text-zinc-400 italic dark:text-zinc-500"
+              className="max-h-100 min-w-0 flex-1 overflow-y-auto font-mono text-xs leading-relaxed text-zinc-400 italic dark:text-zinc-500"
             >
-              <span className="whitespace-pre-wrap wrap-break-word">{liveThinking}</span>
+              <span className="wrap-break-word whitespace-pre-wrap">{liveThinking}</span>
               <span className="ml-0.5 inline-block h-3 w-0.5 animate-pulse bg-zinc-400 align-middle dark:bg-zinc-500" />
             </div>
           </div>

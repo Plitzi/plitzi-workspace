@@ -11,6 +11,7 @@ import type {
   AiContext,
   AiMessage,
   AiMessagePreview,
+  AiMode,
   AiProviderSettings,
   AiStreamEvent,
   AiToolCall,
@@ -21,15 +22,19 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
   const { server, webKey } = use(NetworkContext);
   const { networkQuery } = useNetwork({ initLoading: false, server, webKey });
   const [conversationId, setConversationId] = useStorage<string>('builder-state.aiChat.conversationId', '');
+  const [mode, setMode] = useStorage<AiMode>('builder-state.aiChat.mode', 'build');
   const [messages, setMessages] = useState<AiMessage[]>([]);
   const [streamingText, setStreamingText] = useState('');
   const [liveThinking, setLiveThinking] = useState('');
   const [liveTools, setLiveTools] = useState<AiToolCall[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [usage, setUsage] = useState<AiUsage | undefined>();
+  const [error, setError] = useState<string | undefined>();
 
   const conversationIdRef = useRef(conversationId);
   conversationIdRef.current = conversationId;
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
   const providerSettingsRef = useRef(providerSettings);
   providerSettingsRef.current = providerSettings;
 
@@ -90,6 +95,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
       setLiveThinking('');
       thinkingTextRef.current = '';
       setLiveTools([]);
+      setError(undefined);
       setIsStreaming(true);
 
       const serverAttachments = attachments.map(a => ({ type: a.type, mimeType: a.mimeType, data: a.data }));
@@ -103,6 +109,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
             message,
             attachments: serverAttachments.length > 0 ? serverAttachments : undefined,
             context,
+            mode: modeRef.current,
             ...providerSettingsRef.current
           })
         });
@@ -195,8 +202,8 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                 setLiveThinking('');
                 thinkingTextRef.current = '';
                 setLiveTools([]);
-              } else {
-                console.error('[AI] Stream error:', event.message);
+              } else if (event.type === 'error') {
+                setError(event.message);
               }
             } catch {
               // skip malformed events
@@ -262,6 +269,9 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
     liveTools,
     isStreaming,
     usage,
+    error,
+    mode,
+    setMode,
     initConversation,
     sendMessage,
     clearConversation,

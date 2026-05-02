@@ -40,6 +40,9 @@ const AiChat = () => {
     liveTools,
     isStreaming,
     usage,
+    error,
+    mode,
+    setMode,
     initConversation,
     sendMessage,
     clearConversation,
@@ -114,6 +117,11 @@ const AiChat = () => {
         liveThinking={liveThinking}
         liveTools={liveTools}
       />
+      {error && (
+        <div className="mx-3 mb-1 rounded border border-red-200 bg-red-50 px-3 py-2 font-mono text-xs text-red-600 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400">
+          ⚠ {error}
+        </div>
+      )}
       <ChatInput
         ref={chatInputRef}
         isStreaming={isStreaming}
@@ -122,6 +130,8 @@ const AiChat = () => {
         audioData={audioData}
         onSend={handleSend}
         onVoiceToggle={handleVoiceToggle}
+        mode={mode}
+        onModeChange={setMode}
       />
     </div>
   );

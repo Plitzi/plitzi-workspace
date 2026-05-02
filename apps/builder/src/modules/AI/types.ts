@@ -1,6 +1,7 @@
 import type { Schema, Style } from '@plitzi/sdk-shared';
 
 export type AiRole = 'user' | 'assistant';
+export type AiMode = 'plan' | 'build';
 
 export type AiAttachment = {
   id: string;
@@ -42,6 +43,7 @@ export type AiMessage = {
   thinking?: string;
   thinkingDurationMs?: number;
   irrelevant?: boolean;
+  mode?: AiMode;
   usage?: AiUsage;
   preview?: AiMessagePreview;
   actions?: AiMessageAction[];
