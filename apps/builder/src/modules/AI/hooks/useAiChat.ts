@@ -32,6 +32,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
   const [usage, setUsage] = useState<AiUsage | undefined>();
   const [error, setError] = useState<string | undefined>();
   const [quotaError, setQuotaError] = useState<string | undefined>();
+  const [quotaRetryAfter, setQuotaRetryAfter] = useState<number | undefined>();
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
 
   const conversationIdRef = useRef(conversationId);
@@ -73,6 +74,10 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
         return;
       }
 
+      if (quotaRetryAfter && Date.now() < quotaRetryAfter) {
+        return;
+      }
+
       // Create conversation lazily on first send
       let activeConversationId = conversationIdRef.current;
       if (!activeConversationId) {
@@ -100,6 +105,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
       setLiveTools([]);
       setError(undefined);
       setQuotaError(undefined);
+      setQuotaRetryAfter(undefined);
       setIsStreaming(true);
 
       const serverAttachments = attachments.map(a => ({ type: a.type, mimeType: a.mimeType, data: a.data }));
@@ -218,6 +224,9 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                 setError(event.message);
               } else if (event.type === 'quota_exceeded') {
                 setQuotaError(event.message || 'API quota exceeded — check your API key in settings');
+                if (event.retryAfter) {
+                  setQuotaRetryAfter(event.retryAfter);
+                }
               }
             } catch {
               // skip malformed events
@@ -235,7 +244,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
         thinkingDurationMsRef.current = undefined;
       }
     },
-    [isStreaming, networkQuery, runClientTool, setConversationId, server.nodeServer, webKey]
+    [isStreaming, quotaRetryAfter, networkQuery, runClientTool, setConversationId, server.nodeServer, webKey]
   );
 
   const clearConversation = useCallback(() => {
@@ -244,6 +253,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
     setUsage(undefined);
     setError(undefined);
     setQuotaError(undefined);
+    setQuotaRetryAfter(undefined);
   }, [setConversationId]);
 
   const loadConversations = useCallback(async () => {
@@ -266,6 +276,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
         setUsage(undefined);
         setError(undefined);
         setQuotaError(undefined);
+        setQuotaRetryAfter(undefined);
       }
     },
     [isStreaming, networkQuery, setConversationId]
@@ -311,7 +322,10 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
     isStreaming,
     usage,
     error,
+    clearError: () => setError(undefined),
     quotaError,
+    clearQuotaError: () => { setQuotaError(undefined); setQuotaRetryAfter(undefined); },
+    quotaRetryAfter,
     conversations,
     mode,
     setMode,
