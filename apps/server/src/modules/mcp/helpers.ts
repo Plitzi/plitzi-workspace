@@ -24,12 +24,13 @@ const displayModes = z.enum(['desktop', 'tablet', 'mobile']);
 const tagTypes = z.enum(['class', 'element', 'id']);
 const styleVariableCategories = z.nativeEnum(StyleVariableCategory);
 
-export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) => {
+export const registerBuiltInTools = (server: McpServer, adapters: Partial<McpAdapters>) => {
   server.registerTool(
     'list_spaces',
     { description: 'List all spaces available in the system', inputSchema: z.object({}) },
     async () => {
-      const spaces = await adapters.listSpaces();
+      const spaces = await adapters.listSpaces?.();
+
       return ok(spaces);
     }
   );
@@ -44,10 +45,11 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, environment }) => {
-      const schema = await adapters.getSchema(spaceId, environment);
+      const schema = await adapters.getSchema?.(spaceId, environment);
       if (!schema) {
         return err(`Schema not found for space ${spaceId} / ${environment}`);
       }
+
       return ok(schema);
     }
   );
@@ -59,10 +61,11 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       inputSchema: z.object({ spaceId: z.number(), environment: z.string() })
     },
     async ({ spaceId, environment }) => {
-      const schema = await adapters.getSchema(spaceId, environment);
+      const schema = await adapters.getSchema?.(spaceId, environment);
       if (!schema) {
         return err(`Schema not found for space ${spaceId} / ${environment}`);
       }
+
       const summary = Object.values(schema.elements).map(({ id, type, label, parentId, runtime }) => ({
         id,
         type,
@@ -70,6 +73,7 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
         parentId,
         runtime
       }));
+
       return ok(summary);
     }
   );
@@ -85,14 +89,16 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, environment, elementId }) => {
-      const schema = await adapters.getSchema(spaceId, environment);
+      const schema = await adapters.getSchema?.(spaceId, environment);
       if (!schema) {
         return err(`Schema not found for space ${spaceId} / ${environment}`);
       }
+
       const element = (schema.elements as Record<string, McpElement | undefined>)[elementId];
       if (!element) {
         return err(`Element ${elementId} not found`);
       }
+
       return ok(element);
     }
   );
@@ -113,13 +119,14 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, environment, type, label, props, runtime, parentId, position }) => {
-      const element = await adapters.createElement(
+      const element = await adapters.createElement?.(
         spaceId,
         environment,
         { type, label, props, runtime },
         parentId,
         position
       );
+
       return ok(element);
     }
   );
@@ -139,12 +146,13 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, environment, elementId, label, props, styles, runtime }) => {
-      const element = await adapters.updateElement(spaceId, environment, elementId, {
+      const element = await adapters.updateElement?.(spaceId, environment, elementId, {
         label,
         props,
         styles,
         runtime
       });
+
       return ok(element);
     }
   );
@@ -156,7 +164,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       inputSchema: z.object({ spaceId: z.number(), environment: z.string(), elementId: z.string() })
     },
     async ({ spaceId, environment, elementId }) => {
-      await adapters.deleteElement(spaceId, environment, elementId);
+      await adapters.deleteElement?.(spaceId, environment, elementId);
+
       return ok({ deleted: elementId });
     }
   );
@@ -168,7 +177,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       inputSchema: z.object({ spaceId: z.number(), environment: z.string() })
     },
     async ({ spaceId, environment }) => {
-      const result = await adapters.publishSchema(spaceId, environment);
+      const result = await adapters.publishSchema?.(spaceId, environment);
+
       return ok(result);
     }
   );
@@ -186,7 +196,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, environment, elementId, toParentId, dropPosition }) => {
-      const result = await adapters.moveElement(spaceId, environment, elementId, toParentId, dropPosition);
+      const result = await adapters.moveElement?.(spaceId, environment, elementId, toParentId, dropPosition);
+
       return ok(result);
     }
   );
@@ -198,7 +209,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       inputSchema: z.object({ spaceId: z.number(), environment: z.string(), name: z.string() })
     },
     async ({ spaceId, environment, name }) => {
-      const page = await adapters.createPage(spaceId, environment, name);
+      const page = await adapters.createPage?.(spaceId, environment, name);
+
       return ok(page);
     }
   );
@@ -210,7 +222,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       inputSchema: z.object({ spaceId: z.number(), environment: z.string(), pageId: z.string() })
     },
     async ({ spaceId, environment, pageId }) => {
-      await adapters.deletePage(spaceId, environment, pageId);
+      await adapters.deletePage?.(spaceId, environment, pageId);
+
       return ok({ deleted: pageId });
     }
   );
@@ -227,7 +240,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, environment, name, parentId }) => {
-      const folder = await adapters.createPageFolder(spaceId, environment, name, parentId);
+      const folder = await adapters.createPageFolder?.(spaceId, environment, name, parentId);
+
       return ok(folder);
     }
   );
@@ -246,7 +260,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, environment, id, name, slug, parentId }) => {
-      const folder = await adapters.updatePageFolder(spaceId, environment, id, { name, slug, parentId });
+      const folder = await adapters.updatePageFolder?.(spaceId, environment, id, { name, slug, parentId });
+
       return ok(folder);
     }
   );
@@ -258,7 +273,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       inputSchema: z.object({ spaceId: z.number(), environment: z.string(), id: z.string() })
     },
     async ({ spaceId, environment, id }) => {
-      await adapters.deletePageFolder(spaceId, environment, id);
+      await adapters.deletePageFolder?.(spaceId, environment, id);
+
       return ok({ deleted: id });
     }
   );
@@ -277,7 +293,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, environment, name, type, value, category }) => {
-      const variable = await adapters.createVariable(spaceId, environment, { name, type, value, category });
+      const variable = await adapters.createVariable?.(spaceId, environment, { name, type, value, category });
+
       return ok(variable);
     }
   );
@@ -296,7 +313,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, environment, name, type, value, category }) => {
-      const variable = await adapters.updateVariable(spaceId, environment, { name, type, value, category });
+      const variable = await adapters.updateVariable?.(spaceId, environment, { name, type, value, category });
+
       return ok(variable);
     }
   );
@@ -308,7 +326,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       inputSchema: z.object({ spaceId: z.number(), environment: z.string(), name: z.string() })
     },
     async ({ spaceId, environment, name }) => {
-      await adapters.deleteVariable(spaceId, environment, name);
+      await adapters.deleteVariable?.(spaceId, environment, name);
+
       return ok({ deleted: name });
     }
   );
@@ -326,7 +345,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, environment, category, name, value }) => {
-      const variable = await adapters.createStyleVariable(spaceId, environment, category, name, value);
+      const variable = await adapters.createStyleVariable?.(spaceId, environment, category, name, value);
+
       return ok(variable);
     }
   );
@@ -344,7 +364,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, environment, category, name, value }) => {
-      const variable = await adapters.updateStyleVariable(spaceId, environment, category, name, value);
+      const variable = await adapters.updateStyleVariable?.(spaceId, environment, category, name, value);
+
       return ok(variable);
     }
   );
@@ -361,7 +382,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, environment, category, name }) => {
-      await adapters.deleteStyleVariable(spaceId, environment, category, name);
+      await adapters.deleteStyleVariable?.(spaceId, environment, category, name);
+
       return ok({ deleted: name });
     }
   );
@@ -382,7 +404,7 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, environment, displayMode, selector, type, path, style, params }) => {
-      const selector_ = await adapters.createStyleSelector(
+      const selector_ = await adapters.createStyleSelector?.(
         spaceId,
         environment,
         displayMode,
@@ -392,6 +414,7 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
         style ?? undefined,
         params
       );
+
       return ok(selector_);
     }
   );
@@ -412,7 +435,7 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, environment, displayMode, selector, type, path, style, params }) => {
-      const selector_ = await adapters.updateStyleSelector(
+      const selector_ = await adapters.updateStyleSelector?.(
         spaceId,
         environment,
         displayMode,
@@ -422,6 +445,7 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
         style ?? undefined,
         params
       );
+
       return ok(selector_);
     }
   );
@@ -438,7 +462,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, environment, displayMode, selector }) => {
-      await adapters.deleteStyleSelector(spaceId, environment, displayMode, selector);
+      await adapters.deleteStyleSelector?.(spaceId, environment, displayMode, selector);
+
       return ok({ deleted: selector });
     }
   );
@@ -462,7 +487,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       inputSchema: z.object({ spaceId: z.number(), name: z.string(), description: z.string() })
     },
     async ({ spaceId, name, description }) => {
-      const segment = await adapters.createSegment(spaceId, name, description);
+      const segment = await adapters.createSegment?.(spaceId, name, description);
+
       return ok(segment);
     }
   );
@@ -479,7 +505,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, segmentId, name, description }) => {
-      const segment = await adapters.updateSegment(spaceId, segmentId, { name, description });
+      const segment = await adapters.updateSegment?.(spaceId, segmentId, { name, description });
+
       return ok(segment);
     }
   );
@@ -491,7 +518,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       inputSchema: z.object({ spaceId: z.number(), segmentId: z.string() })
     },
     async ({ spaceId, segmentId }) => {
-      await adapters.deleteSegment(spaceId, segmentId);
+      await adapters.deleteSegment?.(spaceId, segmentId);
+
       return ok({ deleted: segmentId });
     }
   );
@@ -510,12 +538,13 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, segmentId, elementType, elementLabel, elementProps, parentId }) => {
-      const element = await adapters.createSegmentElement(
+      const element = await adapters.createSegmentElement?.(
         spaceId,
         segmentId,
         { type: elementType, label: elementLabel, props: elementProps },
         parentId
       );
+
       return ok(element);
     }
   );
@@ -533,7 +562,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, segmentId, elementId, label, props }) => {
-      const element = await adapters.updateSegmentElement(spaceId, segmentId, elementId, { label, props });
+      const element = await adapters.updateSegmentElement?.(spaceId, segmentId, elementId, { label, props });
+
       return ok(element);
     }
   );
@@ -551,7 +581,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, segmentId, elementId, toParentId, dropPosition }) => {
-      const result = await adapters.moveSegmentElement(spaceId, segmentId, elementId, toParentId, dropPosition);
+      const result = await adapters.moveSegmentElement?.(spaceId, segmentId, elementId, toParentId, dropPosition);
+
       return ok(result);
     }
   );
@@ -563,7 +594,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       inputSchema: z.object({ spaceId: z.number(), segmentId: z.string(), elementId: z.string() })
     },
     async ({ spaceId, segmentId, elementId }) => {
-      await adapters.deleteSegmentElement(spaceId, segmentId, elementId);
+      await adapters.deleteSegmentElement?.(spaceId, segmentId, elementId);
+
       return ok({ deleted: elementId });
     }
   );
@@ -582,7 +614,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, segmentId, name, type, value, category }) => {
-      const variable = await adapters.createSegmentVariable(spaceId, segmentId, { name, type, value, category });
+      const variable = await adapters.createSegmentVariable?.(spaceId, segmentId, { name, type, value, category });
+
       return ok(variable);
     }
   );
@@ -601,7 +634,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, segmentId, name, type, value, category }) => {
-      const variable = await adapters.updateSegmentVariable(spaceId, segmentId, { name, type, value, category });
+      const variable = await adapters.updateSegmentVariable?.(spaceId, segmentId, { name, type, value, category });
+
       return ok(variable);
     }
   );
@@ -613,7 +647,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       inputSchema: z.object({ spaceId: z.number(), segmentId: z.string(), name: z.string() })
     },
     async ({ spaceId, segmentId, name }) => {
-      await adapters.deleteSegmentVariable(spaceId, segmentId, name);
+      await adapters.deleteSegmentVariable?.(spaceId, segmentId, name);
+
       return ok({ deleted: name });
     }
   );
@@ -631,7 +666,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, segmentId, category, name, value }) => {
-      const variable = await adapters.createSegmentStyleVariable(spaceId, segmentId, category, name, value);
+      const variable = await adapters.createSegmentStyleVariable?.(spaceId, segmentId, category, name, value);
+
       return ok(variable);
     }
   );
@@ -649,7 +685,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, segmentId, category, name, value }) => {
-      const variable = await adapters.updateSegmentStyleVariable(spaceId, segmentId, category, name, value);
+      const variable = await adapters.updateSegmentStyleVariable?.(spaceId, segmentId, category, name, value);
+
       return ok(variable);
     }
   );
@@ -666,7 +703,8 @@ export const registerBuiltInTools = (server: McpServer, adapters: McpAdapters) =
       })
     },
     async ({ spaceId, segmentId, category, name }) => {
-      await adapters.deleteSegmentStyleVariable(spaceId, segmentId, category, name);
+      await adapters.deleteSegmentStyleVariable?.(spaceId, segmentId, category, name);
+
       return ok({ deleted: name });
     }
   );

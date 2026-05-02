@@ -11,6 +11,7 @@ import type { AiMessage } from '../../types';
 const formatTime = (ts: number) => new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 const ChatMessage = ({
+  id,
   role,
   content,
   thinking,
@@ -27,7 +28,7 @@ const ChatMessage = ({
   const isUser = role === 'user';
 
   return (
-    <div className="flex flex-col gap-0.5">
+    <div className="flex flex-col gap-0.5" data-id={id}>
       <div className="flex items-center gap-2">
         {isUser ? (
           <span className="font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">▸ You</span>

@@ -258,10 +258,11 @@ export type McpAdapters = {
   ) => Promise<void>;
 };
 
-export type McpToolHandler = (args: Record<string, unknown>) => Promise<{
-  content: Array<{ type: 'text'; text: string }>;
-  isError?: boolean;
-}>;
+export type McpToolHandler = (
+  args: Record<string, unknown>
+) =>
+  | Promise<{ content: Array<{ type: 'text'; text: string }>; isError?: boolean }>
+  | { content: Array<{ type: 'text'; text: string }>; isError?: boolean };
 
 export type McpToolConfig = {
   name: string;

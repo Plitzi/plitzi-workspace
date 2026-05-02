@@ -36,6 +36,12 @@ export type AiMessageAction = {
   variant?: 'primary' | 'danger' | 'default';
 };
 
+export type AiMessageClientTool = {
+  id: string;
+  name: string;
+  args: Record<string, unknown>;
+};
+
 export type AiMessage = {
   id: string;
   role: AiRole;
@@ -49,6 +55,7 @@ export type AiMessage = {
   actions?: AiMessageAction[];
   attachments?: AiAttachment[];
   tools?: AiToolCall[];
+  clientTools?: AiMessageClientTool[];
   createdAt: number;
 };
 

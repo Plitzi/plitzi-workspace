@@ -185,16 +185,24 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                     : undefined;
                 thinkingStartRef.current = undefined;
                 thinkingDurationMsRef.current = undefined;
-                setMessages(prev => [
-                  ...prev,
-                  {
-                    ...event.message,
-                    thinking: thinkingText,
-                    thinkingDurationMs,
-                    tools: liveToolsRef.current,
-                    preview: event.message.preview ?? preview
-                  }
-                ]);
+                const messageWithPreview = {
+                  ...event.message,
+                  thinking: thinkingText,
+                  thinkingDurationMs,
+                  tools: liveToolsRef.current,
+                  preview: event.message.preview ?? preview
+                };
+                setMessages(prev => [...prev, messageWithPreview]);
+
+                // Save preview to server if present
+                if (preview && event.message.id) {
+                  networkQuery(
+                    '/ai/message',
+                    { conversationId: conversationIdRef.current, messageId: event.message.id, preview },
+                    'post'
+                  ).catch(() => {});
+                }
+
                 if (event.usage) {
                   setUsage(event.usage);
                 }
