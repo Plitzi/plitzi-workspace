@@ -138,7 +138,7 @@ const AiChatHeader = ({
             </button>
 
             {historyOpen && (
-              <div className="absolute right-0 top-full z-50 mt-1 w-72 rounded border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+              <div className="absolute top-full right-0 z-50 mt-1 w-72 rounded border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
                 {conversations.length === 0 ? (
                   <div className="px-3 py-2 text-xs text-zinc-400 dark:text-zinc-600">No conversations yet</div>
                 ) : (

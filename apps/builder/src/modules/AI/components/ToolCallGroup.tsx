@@ -12,7 +12,13 @@ type ToolCallGroupProps = {
 const ToolCallGroup = ({ tools, defaultOpen = false }: ToolCallGroupProps) => {
   const [open, setOpen] = useState(defaultOpen);
   const hasRunning = tools.some(t => t.status === 'running');
-  const label = hasRunning ? 'Running tools…' : `Used ${tools.length} tool${tools.length > 1 ? 's' : ''}`;
+  const errorCount = tools.filter(t => t.result && typeof t.result === 'object' && 'error' in t.result).length;
+  const successCount = tools.length - errorCount;
+  const label = hasRunning
+    ? 'Running tools…'
+    : errorCount > 0
+      ? `${successCount} succeeded, ${errorCount} failed`
+      : `Used ${tools.length} tool${tools.length > 1 ? 's' : ''}`;
 
   return (
     <div className="my-1">
@@ -22,6 +28,8 @@ const ToolCallGroup = ({ tools, defaultOpen = false }: ToolCallGroupProps) => {
       >
         {hasRunning ? (
           <span className="animate-spin text-amber-500 dark:text-amber-400">⚙</span>
+        ) : errorCount > 0 ? (
+          <span className="text-red-600 dark:text-red-400">✗</span>
         ) : (
           <span className="text-emerald-600 dark:text-emerald-400">✓</span>
         )}

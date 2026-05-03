@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import { useCallback, useMemo, useState } from 'react';
 
@@ -12,8 +14,8 @@ import type { BuilderState, DisplayMode, Schema, Style } from '@plitzi/sdk-share
 
 export type AITemplatePreviewProps = {
   baseElementId: string;
-  schema: Pick<Schema, 'flat'>;
-  style: Pick<Style, 'platform' | 'cache'>;
+  schema?: Pick<Schema, 'flat'>;
+  style?: Pick<Style, 'platform' | 'cache'>;
 };
 
 const AITemplatePreview = ({ baseElementId, schema, style }: AITemplatePreviewProps) => {
@@ -24,15 +26,18 @@ const AITemplatePreview = ({ baseElementId, schema, style }: AITemplatePreviewPr
 
   const storeValue = useMemo(
     () => ({
-      schema: { ...mainSchema, flat: { ...mainSchema.flat, ...schema.flat } },
+      schema: {
+        ...mainSchema,
+        flat: { ...mainSchema.flat, ...(schema?.flat ?? {}) }
+      },
       style: {
         ...mainStyle,
         platform: {
-          desktop: { ...mainStyle.platform.desktop, ...style.platform.desktop },
-          tablet: { ...mainStyle.platform.desktop, ...style.platform.tablet },
-          mobile: { ...mainStyle.platform.desktop, ...style.platform.mobile }
+          desktop: { ...mainStyle.platform.desktop, ...(style?.platform?.desktop ?? {}) },
+          tablet: { ...mainStyle.platform.tablet, ...(style?.platform?.tablet ?? {}) },
+          mobile: { ...mainStyle.platform.mobile, ...(style?.platform?.mobile ?? {}) }
         },
-        cache: `${mainStyle.cache}${style.cache}`
+        cache: `${mainStyle.cache}${style?.cache ?? ''}`
       },
       pageDefinitions
     }),

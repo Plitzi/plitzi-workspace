@@ -10,7 +10,6 @@ import type {
   AiAttachment,
   AiContext,
   AiMessage,
-  AiMessagePreview,
   AiMode,
   AiProviderSettings,
   AiStreamEvent,
@@ -62,8 +61,8 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
   const liveToolsRef = useRef<AiToolCall[]>([]);
   liveToolsRef.current = liveTools;
   const thinkingTextRef = useRef('');
-  // Preview staged by a client_tool handler; cleared once attached to the message
-  const pendingPreviewRef = useRef<Extract<AiMessagePreview, { baseElementId: string }> | undefined>(undefined);
+  // Preview reference (may be set by backend via client_tool)
+  const pendingPreviewRef = useRef<Record<string, unknown> | undefined>(undefined);
   // Thinking duration tracking: start on first 'thinking' event, stop on first 'chunk'
   const thinkingStartRef = useRef<number | undefined>(undefined);
   const thinkingDurationMsRef = useRef<number | undefined>(undefined);
@@ -163,14 +162,47 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                 }
                 setStreamingText(prev => prev + event.text);
               } else if (event.type === 'tool_start') {
-                const toolId = crypto.randomUUID();
-                setLiveTools(prev => [...prev, { id: toolId, name: event.name, args: event.args, status: 'running' }]);
+                // Deduplicate: skip if there's already a running tool with the same name
+                setLiveTools(prev => {
+                  const alreadyRunning = prev.some(t => t.name === event.name && t.status === 'running');
+                  if (alreadyRunning) {
+                    return prev;
+                  }
+
+                  const toolId = crypto.randomUUID();
+
+                  return [...prev, { id: toolId, name: event.name, args: event.args, status: 'running' }];
+                });
               } else if (event.type === 'tool') {
-                setLiveTools(prev =>
-                  prev.map(t =>
-                    t.name === event.name && t.status === 'running' ? { ...t, result: event.result, status: 'done' } : t
-                  )
-                );
+                // Extract preview from stage_preview result BEFORE setState
+                const result = event.result as Record<string, unknown>;
+                if (
+                  event.name === 'stage_preview' &&
+                  result &&
+                  typeof result === 'object' &&
+                  'baseElementId' in result
+                ) {
+                  pendingPreviewRef.current = result;
+                }
+                
+                setLiveTools(prev => {
+                  // Find the last (most recent) running tool with the same name to avoid duplicates
+                  let targetIdx = -1;
+                  for (let i = prev.length - 1; i >= 0; i--) {
+                    const t = prev[i];
+                    if (t.name === event.name && t.status === 'running') {
+                      targetIdx = i;
+                      break;
+                    }
+                  }
+                  if (targetIdx === -1) {
+                    return prev;
+                  }
+
+                  return prev.map((t, i) =>
+                    i === targetIdx ? { ...t, result: event.result, status: 'done' as const } : t
+                  );
+                });
               } else if (event.type === 'client_tool') {
                 setLiveTools(prev => [
                   ...prev,
@@ -178,7 +210,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                 ]);
                 if (runClientTool) {
                   const { toolResult, pendingPreview } = await runClientTool(event.name, event.args);
-                  if (pendingPreview) {
+                  if (pendingPreview && typeof pendingPreview === 'object' && 'baseElementId' in pendingPreview) {
                     pendingPreviewRef.current = pendingPreview;
                   }
                   setLiveTools(prev =>
@@ -199,7 +231,9 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                   ...event.message,
                   thinking: thinkingText,
                   thinkingDurationMs,
-                  tools: liveToolsRef.current.map(t => t.status === 'running' ? { ...t, status: 'done' as const } : t),
+                  tools: liveToolsRef.current.map(t =>
+                    t.status === 'running' ? { ...t, status: 'done' as const } : t
+                  ),
                   preview: event.message.preview ?? preview
                 };
                 setMessages(prev => [...prev, messageWithPreview]);
@@ -324,7 +358,10 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
     error,
     clearError: () => setError(undefined),
     quotaError,
-    clearQuotaError: () => { setQuotaError(undefined); setQuotaRetryAfter(undefined); },
+    clearQuotaError: () => {
+      setQuotaError(undefined);
+      setQuotaRetryAfter(undefined);
+    },
     quotaRetryAfter,
     conversations,
     mode,

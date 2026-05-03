@@ -6,9 +6,27 @@ import AITemplatePreview from './components/AITemplatePreview';
 import SdkElementPreview from './components/SdkElementPreview';
 import ThinkingBlock from './ThinkingBlock';
 
-import type { AiMessage } from '../../types';
+import type { AiMessage, AiMessagePreview } from '../../types';
+import type { Schema, Style } from '@plitzi/sdk-shared';
 
 const formatTime = (ts: number) => new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+// Type guard for baseElementId preview format
+const isBaseElementPreview = (
+  preview: AiMessagePreview | null
+): preview is {
+  baseElementId: string;
+  schema?: { flat: Record<string, unknown> };
+  style?: { platform?: unknown; cache?: string };
+  elements?: Array<Record<string, unknown>>;
+} => {
+  return preview !== null && typeof preview === 'object' && 'baseElementId' in preview && !('elementId' in preview);
+};
+
+// Type guard for elementId preview format
+const isElementPreview = (preview: AiMessagePreview | null): preview is { elementId: string } => {
+  return preview !== null && typeof preview === 'object' && 'elementId' in preview;
+};
 
 const ChatMessage = ({
   id,
@@ -71,10 +89,15 @@ const ChatMessage = ({
         </div>
       )}
 
-      {preview?.elementId && <SdkElementPreview elementId={preview.elementId} />}
+      {/* Render preview - handles both old format (elementId) and new format (baseElementId from backend) */}
+      {preview && isElementPreview(preview) && <SdkElementPreview elementId={preview.elementId} />}
 
-      {preview?.baseElementId && (
-        <AITemplatePreview baseElementId={preview.baseElementId} schema={preview.schema} style={preview.style} />
+      {preview && isBaseElementPreview(preview) && (
+        <AITemplatePreview
+          baseElementId={preview.baseElementId}
+          schema={preview.schema as Pick<Schema, 'flat'> | undefined}
+          style={preview.style as Pick<Style, 'platform' | 'cache'> | undefined}
+        />
       )}
 
       {actions && actions.length > 0 && <ActionButtons actions={actions} />}

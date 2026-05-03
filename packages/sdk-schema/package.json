@@ -18,6 +18,10 @@
       "types": "./dist/helpers/FlatMap.d.ts",
       "import": "./dist/helpers/FlatMap.mjs"
     },
+    "./helpers/schemaValidator": {
+      "types": "./dist/helpers/schemaValidator.d.ts",
+      "import": "./dist/helpers/schemaValidator.mjs"
+    },
     "./index": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"

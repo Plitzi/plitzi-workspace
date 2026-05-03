@@ -3,9 +3,11 @@
 import { get, set } from '@plitzi/plitzi-ui/helpers';
 
 import { generateID } from '@plitzi/sdk-shared/helpers/utils';
-import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
+import { EMPTY_SCHEMA, VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import calculateInheriting from '@plitzi/sdk-style/helpers/calculateInheriting';
+
+import { validateSchema, type SchemaValidationResult } from './schemaValidator';
 
 import type { Style, Element, Schema, DisplayMode, StyleItem, DropPosition, SchemaVariable } from '@plitzi/sdk-shared';
 
@@ -485,6 +487,25 @@ class FlatMap {
     return { elements, elementsStyle, variables };
   };
 
+  // Validation
+
+  validate = (): SchemaValidationResult => {
+    return validateSchema({ ...EMPTY_SCHEMA.schema, flat: this.flat, variables: this.variables });
+  };
+
+  isValid = (): boolean => {
+    return this.validate().valid;
+  };
+
+  assertValid = (context?: string): void => {
+    const result = validateSchema({ ...EMPTY_SCHEMA.schema, flat: this.flat, variables: this.variables });
+    if (!result.valid) {
+      const message = `Invalid schema${context ? ` (${context})` : ''}: ${result.errors.map(e => e.message).join('; ')}`;
+
+      throw new Error(message);
+    }
+  };
+
   // Semi - Static
 
   getElementVariables = (style: Style, elementId: Element['id'], flat = this.flat, variables = this.variables) => {
@@ -607,6 +628,25 @@ class FlatMap {
     const { flat, variables } = schema;
 
     return this.getInstance({ flat, variables }).getElementVariables(style, elementId);
+  };
+
+  // Validation - Static
+
+  static validate = (schema: Schema): SchemaValidationResult => {
+    return validateSchema(schema);
+  };
+
+  static isValid = (schema: Schema): boolean => {
+    return validateSchema(schema).valid;
+  };
+
+  static assertValid = (schema: Schema, context?: string): void => {
+    const result = validateSchema(schema);
+    if (!result.valid) {
+      const message = `Invalid schema${context ? ` (${context})` : ''}: ${result.errors.map(e => e.message).join('; ')}`;
+
+      throw new Error(message);
+    }
   };
 }
 

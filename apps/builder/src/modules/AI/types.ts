@@ -1,5 +1,3 @@
-import type { Schema, Style } from '@plitzi/sdk-shared';
-
 export type AiRole = 'user' | 'assistant';
 export type AiMode = 'plan' | 'build';
 
@@ -21,14 +19,21 @@ export type AiToolCall = {
 
 // elementId = element already in schema (post-creation)
 // baseElementId = proposed template preview, elements injected via StoreProvider overlay
+// Note: stage_preview is now processed in the backend, which validates schemas before sending
 export type AiMessagePreview =
   | { elementId: string; baseElementId?: never }
   | {
       baseElementId: string;
       elementId?: never;
-      schema: Pick<Schema, 'flat'>;
-      style: Pick<Style, 'platform' | 'cache'>;
-    };
+      schema?: { flat: Record<string, unknown> };
+      style?: { platform?: unknown; cache?: string };
+      elements?: Array<Record<string, unknown>>;
+      success?: boolean;
+      validationErrors?: Array<{ code: string; message: string; elementId?: string; details?: unknown }>;
+      validationWarnings?: Array<string>;
+      message?: string;
+    }
+  | Record<string, unknown>; // Backend may send a different format with validation errors
 
 export type AiMessageAction = {
   id: string;
