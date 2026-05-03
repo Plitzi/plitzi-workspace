@@ -118,7 +118,6 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
 
     return (
       <div className={`flex flex-col border-t transition-colors duration-200 ${ms.border} ${ms.footer}`}>
-        {/* Mode accent strip */}
         <div className={`h-0.5 transition-colors duration-200 ${ms.accent}`} />
 
         <div className="flex flex-col gap-2 p-3">

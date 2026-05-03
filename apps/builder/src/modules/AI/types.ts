@@ -1,5 +1,6 @@
 export type AiRole = 'user' | 'assistant';
 export type AiMode = 'plan' | 'build';
+export type AIToolStatus = 'running' | 'failed' | 'done';
 
 export type AiAttachment = {
   id: string;
@@ -8,8 +9,6 @@ export type AiAttachment = {
   data: string; // base64
   name: string;
 };
-
-export type AIToolStatus = 'running' | 'failed' | 'done';
 
 export type AiToolCall = {
   id: string;
