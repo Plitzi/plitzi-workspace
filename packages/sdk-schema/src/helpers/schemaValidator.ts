@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import type { Element, Schema } from '@plitzi/sdk-shared';
 
+export type SchemaValidationOptions = {
+  baseElementId?: string;
+};
+
 export type SchemaValidationError = {
   code: string;
   message: string;
@@ -359,7 +363,7 @@ const createValidator = (schema: Schema) => {
   };
 
   // 8. Detect orphaned elements (elements not reachable from any page)
-  const validateOrphanedElements = () => {
+  const validateOrphanedElements = (baseElementId?: string) => {
     const reachable = new Set<string>();
 
     // Mark all elements reachable from pages
@@ -375,13 +379,21 @@ const createValidator = (schema: Schema) => {
       }
     };
 
-    pages.forEach(pageId => {
-      markReachable(pageId);
-      const page = getElement(pageId);
-      if (page?.attributes?.layoutContainer) {
-        markReachable(page.attributes.layoutContainer as string);
+    if (!baseElementId) {
+      pages.forEach(pageId => {
+        markReachable(pageId);
+        const page = getElement(pageId);
+        if (page?.attributes?.layoutContainer) {
+          markReachable(page.attributes.layoutContainer as string);
+        }
+      });
+    } else if (baseElementId) {
+      markReachable(baseElementId);
+      const element = getElement(baseElementId);
+      if (element?.attributes?.layoutContainer) {
+        markReachable(element.attributes.layoutContainer as string);
       }
-    });
+    }
 
     // Check for orphans
     Object.keys(flat).forEach(elementId => {
@@ -430,7 +442,8 @@ const createValidator = (schema: Schema) => {
   };
 
   // Run all validations
-  const validate = (): SchemaValidationResult => {
+  const validate = (options?: SchemaValidationOptions): SchemaValidationResult => {
+    const { baseElementId } = options ?? {};
     if (!validateStructure()) {
       return { valid: false, errors, warnings };
     }
@@ -441,7 +454,7 @@ const createValidator = (schema: Schema) => {
     validatePages();
     validateRootConsistency();
     validatePageFolders();
-    validateOrphanedElements();
+    validateOrphanedElements(baseElementId);
     validateVariables();
 
     return {
@@ -455,13 +468,13 @@ const createValidator = (schema: Schema) => {
 };
 
 // Export the validator function
-export const validateSchema = (schema: Schema): SchemaValidationResult => {
-  return createValidator(schema).validate();
+export const validateSchema = (schema: Schema, options?: SchemaValidationOptions): SchemaValidationResult => {
+  return createValidator(schema).validate(options);
 };
 
 // Convenience function: throws if schema is invalid
-export const assertSchemaValid = (schema: Schema, context?: string): void => {
-  const result = validateSchema(schema);
+export const assertSchemaValid = (schema: Schema, options?: SchemaValidationOptions, context?: string): void => {
+  const result = validateSchema(schema, options);
   if (!result.valid) {
     const message = `Invalid schema${context ? ` (${context})` : ''}: ${result.errors.map(e => e.message).join('; ')}`;
     throw new Error(message);
@@ -469,6 +482,6 @@ export const assertSchemaValid = (schema: Schema, context?: string): void => {
 };
 
 // Convenience function: returns true if schema is valid
-export const isSchemaValid = (schema: Schema): boolean => {
-  return validateSchema(schema).valid;
+export const isSchemaValid = (schema: Schema, options?: SchemaValidationOptions): boolean => {
+  return validateSchema(schema, options).valid;
 };
