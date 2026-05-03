@@ -199,7 +199,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                   ...event.message,
                   thinking: thinkingText,
                   thinkingDurationMs,
-                  tools: liveToolsRef.current,
+                  tools: liveToolsRef.current.map(t => t.status === 'running' ? { ...t, status: 'done' as const } : t),
                   preview: event.message.preview ?? preview
                 };
                 setMessages(prev => [...prev, messageWithPreview]);
