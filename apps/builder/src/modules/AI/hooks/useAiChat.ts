@@ -175,7 +175,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                 });
               } else if (event.type === 'tool') {
                 // Extract preview from stage_preview result BEFORE setState
-                const result = event.result as Record<string, unknown>;
+                const result = event.result as Record<string, unknown> | undefined;
                 if (
                   event.name === 'stage_preview' &&
                   result &&
@@ -184,7 +184,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                 ) {
                   pendingPreviewRef.current = result;
                 }
-                
+
                 setLiveTools(prev => {
                   // Find the last (most recent) running tool with the same name to avoid duplicates
                   let targetIdx = -1;
