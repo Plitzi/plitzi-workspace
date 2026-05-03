@@ -1,7 +1,7 @@
 import Markdown from '@plitzi/plitzi-ui/Markdown';
 import { useEffect, useRef } from 'react';
 
-import ToolCallGroup from '../ToolCallGroup';
+import MessageTools from '../MessageTools';
 import TimelineDot from './TimelineDot';
 
 import type { AiToolCall } from '../../types';
@@ -49,7 +49,7 @@ const LiveEntry = ({ isStreaming, streamingText, liveThinking, liveTools = [] }:
           </div>
         )}
 
-        {liveTools.length > 0 && <ToolCallGroup tools={liveTools} defaultOpen />}
+        {liveTools.length > 0 && <MessageTools tools={liveTools} defaultOpen />}
 
         {streamingText && (
           <div className="pl-2 text-sm leading-relaxed text-zinc-700 dark:text-zinc-100">

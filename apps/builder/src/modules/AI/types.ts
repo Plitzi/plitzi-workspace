@@ -9,12 +9,14 @@ export type AiAttachment = {
   name: string;
 };
 
+export type AIToolStatus = 'running' | 'failed' | 'done';
+
 export type AiToolCall = {
   id: string;
   name: string;
   args?: Record<string, unknown>;
   result?: unknown;
-  status: 'running' | 'done';
+  status: AIToolStatus;
 };
 
 // elementId = element already in schema (post-creation)

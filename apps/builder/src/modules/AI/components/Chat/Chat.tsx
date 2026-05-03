@@ -110,19 +110,19 @@ const Chat = ({ ref, messages = [], isStreaming, streamingText, liveThinking, li
                 style={{ position: 'absolute', top: 0, transform: `translateY(${start}px)`, width: '100%' }}
                 className="relative flex gap-3 pb-4"
               >
-                {/* Per-item timeline line — bounded by this item's actual height, not totalSize */}
                 <div
                   className={`pointer-events-none absolute left-1.25 w-px bg-gray-200 dark:bg-zinc-800 ${isLast ? 'h-3.5' : 'bottom-0'} top-0`}
                 />
 
-                {isLive ? (
+                {isLive && (
                   <LiveEntry
                     isStreaming={isStreaming}
                     streamingText={streamingText}
                     liveThinking={liveThinking}
                     liveTools={liveTools}
                   />
-                ) : (
+                )}
+                {!isLive && (
                   <>
                     <TimelineDot role={messages[index].role} />
                     <div className="min-w-0 flex-1">

@@ -1,7 +1,7 @@
 import Markdown from '@plitzi/plitzi-ui/Markdown';
 
 import ActionButtons from './ActionButtons';
-import ToolCallGroup from '../ToolCallGroup';
+import MessageTools from '../MessageTools';
 import AITemplatePreview from './components/AITemplatePreview';
 import SdkElementPreview from './components/SdkElementPreview';
 import ThinkingBlock from './ThinkingBlock';
@@ -79,7 +79,7 @@ const ChatMessage = ({
 
       {thinking && <ThinkingBlock text={thinking} durationMs={thinkingDurationMs} />}
 
-      {tools && tools.length > 0 && <ToolCallGroup tools={tools} />}
+      {tools && tools.length > 0 && <MessageTools tools={tools} />}
 
       {content && (
         <div

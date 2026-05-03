@@ -1,6 +1,6 @@
-import type { AiToolCall } from '../types';
+import type { AiToolCall } from '../../types';
 
-const ToolCall = ({ name, args, status, result }: AiToolCall) => {
+const MessageTool = ({ name, args, status, result }: AiToolCall) => {
   const errorMsg =
     result && typeof result === 'object' && 'error' in result
       ? String((result as Record<string, unknown>).error)
@@ -35,4 +35,4 @@ const ToolCall = ({ name, args, status, result }: AiToolCall) => {
   );
 };
 
-export default ToolCall;
+export default MessageTool;
