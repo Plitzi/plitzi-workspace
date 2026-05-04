@@ -1,4 +1,4 @@
-import type { AiMessageAction } from '../../types';
+import type { AiMessageAction } from '../../../../types';
 
 type ActionButtonsProps = { actions: AiMessageAction[] };
 

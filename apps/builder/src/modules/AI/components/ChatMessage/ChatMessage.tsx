@@ -1,14 +1,14 @@
 import Markdown from '@plitzi/plitzi-ui/Markdown';
 import { useMemo, memo } from 'react';
 
-import MessageTools from '../../../MessageTools';
-import ActionButtons from '../../ActionButtons';
+import MessageTools from '../MessageTools';
+import ActionButtons from './components/ActionButtons';
+import AITemplatePreview from './components/AITemplatePreview';
+import ThinkingBlock from './components/ThinkingBlock';
 import getStagePreviewResult from './helpers/getStagePreviewResult';
 import { formatTime } from './helpers/utils';
-import AITemplatePreview from '../../components/AITemplatePreview';
-import ThinkingBlock from '../../ThinkingBlock';
 
-import type { AiMessage } from '../../../../types';
+import type { AiMessage } from '../../types';
 
 const ChatMessage = ({
   id,
