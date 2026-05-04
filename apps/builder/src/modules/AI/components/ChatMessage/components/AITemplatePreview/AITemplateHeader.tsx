@@ -11,16 +11,37 @@ export type AITemplateHeaderProps = {
   displayMode: DisplayMode;
   onDisplayMode: (mode: DisplayMode) => void;
   onClick: () => void;
+  showHtml?: boolean;
+  onToggleHtml?: () => void;
+  hasHtml?: boolean;
 };
 
-const AITemplateHeader = ({ baseElementId, displayMode, onDisplayMode, onClick }: AITemplateHeaderProps) => (
+const AITemplateHeader = ({
+  baseElementId,
+  displayMode,
+  onDisplayMode,
+  onClick,
+  showHtml,
+  onToggleHtml,
+  hasHtml
+}: AITemplateHeaderProps) => (
   <div className="flex items-center justify-between gap-2 border-b border-violet-100 bg-violet-50 px-3 py-1 font-mono text-xs text-violet-500 dark:border-violet-900/40 dark:bg-violet-950/30 dark:text-violet-400">
     <div className="flex items-center gap-1">
       <span>◈</span>
-      <span>proposed · {baseElementId}</span>
+      <span>{showHtml ? 'HTML Source' : `proposed · ${baseElementId}`}</span>
     </div>
 
     <div className="flex items-center gap-2">
+      {hasHtml && onToggleHtml && (
+        <button
+          onClick={onToggleHtml}
+          title={showHtml ? 'Show Preview' : 'Show HTML'}
+          className="cursor-pointer rounded px-1 py-0.5 text-violet-400 hover:text-violet-600 dark:text-violet-600 dark:hover:text-violet-400"
+        >
+          <i className={showHtml ? 'fa-solid fa-eye' : 'fa-solid fa-code'} />
+        </button>
+      )}
+
       <div className="flex items-center gap-1">
         {MODES.map(({ mode, icon }) => (
           <button

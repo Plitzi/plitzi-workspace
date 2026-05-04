@@ -23,6 +23,7 @@ import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/Netw
 const AiChat = () => {
   const { useStore } = createStoreHook<BuilderState>();
   const [elementSelected] = useStore('elementSelected');
+  const [theme] = useStore('theme');
   const { currentPageId } = use(NavigationContext);
   const { environment } = use(NetworkContext) as BuilderNetworkContextValue;
   const chatRef = useRef<HTMLDivElement | null>(null);
@@ -85,9 +86,9 @@ const AiChat = () => {
 
   const handleSend = useCallback(
     (msg: string, atts: AiAttachment[]) => {
-      void sendMessage(msg, { currentPageId, elementSelected, environment }, atts);
+      void sendMessage(msg, { currentPageId, elementSelected, environment, theme }, atts);
     },
-    [sendMessage, currentPageId, elementSelected, environment]
+    [sendMessage, currentPageId, elementSelected, environment, theme]
   );
 
   const handleVoiceToggle = useCallback(() => {

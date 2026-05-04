@@ -25,6 +25,28 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
   const [mode, setMode] = useStorage<AiMode>('builder-state.aiChat.mode', 'build');
   const [messages, setMessages] = useState<AiMessage[]>([]);
   const [streamingText, setStreamingText] = useState('');
+  const streamingTextRef = useRef('');
+  const streamingBufferRef = useRef('');
+  const streamingFlushRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const flushStreamingBuffer = useCallback(() => {
+    if (streamingBufferRef.current) {
+      streamingTextRef.current += streamingBufferRef.current;
+      streamingBufferRef.current = '';
+    }
+    // Flush any remaining text to state before clearing
+    if (streamingTextRef.current) {
+      flushSync(() => setStreamingText(streamingTextRef.current));
+    }
+    // Clear both ref and state
+    streamingTextRef.current = '';
+    flushSync(() => setStreamingText(''));
+    if (streamingFlushRef.current) {
+      clearInterval(streamingFlushRef.current);
+      streamingFlushRef.current = null;
+    }
+  }, []);
+
   const [liveThinking, setLiveThinking] = useState('');
   const [liveTools, setLiveTools] = useState<AiToolCall[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -61,8 +83,6 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
   const liveToolsRef = useRef<AiToolCall[]>([]);
   liveToolsRef.current = liveTools;
   const thinkingTextRef = useRef('');
-  // Preview reference (may be set by backend via client_tool)
-  const pendingPreviewRef = useRef<Record<string, unknown> | undefined>(undefined);
   // Thinking duration tracking: start on first 'thinking' event, stop on first 'chunk'
   const thinkingStartRef = useRef<number | undefined>(undefined);
   const thinkingDurationMsRef = useRef<number | undefined>(undefined);
@@ -98,7 +118,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
         createdAt: Date.now()
       };
       setMessages(prev => [...prev, userMessage]);
-      setStreamingText('');
+      flushStreamingBuffer();
       setLiveThinking('');
       thinkingTextRef.current = '';
       setLiveTools([]);
@@ -160,7 +180,16 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                 if (thinkingStartRef.current && !thinkingDurationMsRef.current) {
                   thinkingDurationMsRef.current = Date.now() - thinkingStartRef.current;
                 }
-                setStreamingText(prev => prev + event.text);
+                streamingBufferRef.current += event.text;
+                if (!streamingFlushRef.current) {
+                  streamingFlushRef.current = setInterval(() => {
+                    if (streamingBufferRef.current) {
+                      streamingTextRef.current += streamingBufferRef.current;
+                      flushSync(() => setStreamingText(streamingTextRef.current));
+                      streamingBufferRef.current = '';
+                    }
+                  }, 30);
+                }
               } else if (event.type === 'tool_start') {
                 // Deduplicate: skip if there's already a running tool with the same name
                 setLiveTools(prev => {
@@ -174,17 +203,6 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                   return [...prev, { id: toolId, name: event.name, args: event.args, status: 'running' }];
                 });
               } else if (event.type === 'tool') {
-                // Extract preview from stage_preview result BEFORE setState
-                const result = event.result as Record<string, unknown> | undefined;
-                if (
-                  event.name === 'stage_preview' &&
-                  result &&
-                  typeof result === 'object' &&
-                  'baseElementId' in result
-                ) {
-                  pendingPreviewRef.current = result;
-                }
-
                 setLiveTools(prev => {
                   // Find the last (most recent) running tool with the same name to avoid duplicates
                   let targetIdx = -1;
@@ -209,17 +227,12 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                   { id: event.id, name: event.name, args: event.args, status: 'running' }
                 ]);
                 if (runClientTool) {
-                  const { toolResult, pendingPreview } = await runClientTool(event.name, event.args);
-                  if (pendingPreview && typeof pendingPreview === 'object' && 'baseElementId' in pendingPreview) {
-                    pendingPreviewRef.current = pendingPreview;
-                  }
+                  const { toolResult } = await runClientTool(event.name, event.args);
                   setLiveTools(prev =>
                     prev.map(t => (t.id === event.id ? { ...t, status: 'done', result: toolResult } : t))
                   );
                 }
               } else if (event.type === 'done') {
-                const preview = pendingPreviewRef.current;
-                pendingPreviewRef.current = undefined;
                 const thinkingText = thinkingTextRef.current || undefined;
                 const thinkingDurationMs =
                   thinkingText && thinkingStartRef.current
@@ -227,21 +240,18 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                     : undefined;
                 thinkingStartRef.current = undefined;
                 thinkingDurationMsRef.current = undefined;
-                const messageWithPreview = {
+                const messageWithTools = {
                   ...event.message,
                   thinking: thinkingText,
                   thinkingDurationMs,
-                  tools: liveToolsRef.current.map(t =>
-                    t.status === 'running' ? { ...t, status: 'done' as const } : t
-                  ),
-                  preview: event.message.preview ?? preview
+                  tools: liveToolsRef.current.map(t => (t.status === 'running' ? { ...t, status: 'done' as const } : t))
                 };
-                setMessages(prev => [...prev, messageWithPreview]);
+                setMessages(prev => [...prev, messageWithTools]);
 
                 if (event.usage) {
                   setUsage(event.usage);
                 }
-                setStreamingText('');
+                flushStreamingBuffer();
                 setLiveThinking('');
                 thinkingTextRef.current = '';
                 setLiveTools([]);
@@ -260,11 +270,10 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
         }
       } finally {
         setIsStreaming(false);
-        setStreamingText('');
+        flushStreamingBuffer();
         setLiveThinking('');
         thinkingTextRef.current = '';
         setLiveTools([]);
-        pendingPreviewRef.current = undefined;
         thinkingStartRef.current = undefined;
         thinkingDurationMsRef.current = undefined;
       }

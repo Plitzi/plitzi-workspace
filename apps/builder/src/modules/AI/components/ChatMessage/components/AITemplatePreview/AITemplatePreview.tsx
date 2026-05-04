@@ -16,13 +16,15 @@ export type AITemplatePreviewProps = {
   baseElementId: string;
   schema?: Pick<Schema, 'flat'>;
   style?: Pick<Style, 'platform' | 'cache'>;
+  html?: string;
 };
 
-const AITemplatePreview = ({ baseElementId, schema, style }: AITemplatePreviewProps) => {
+const AITemplatePreview = ({ baseElementId, schema, style, html }: AITemplatePreviewProps) => {
   const { existsPopup, addPopup } = usePopup();
   const { useStore } = createStoreHook<BuilderState>();
   const [[mainSchema, mainStyle, pageDefinitions]] = useStore(['schema', 'style', 'pageDefinitions']);
   const [displayMode, setDisplayMode] = useState<DisplayMode>('desktop');
+  const [showHtml, setShowHtml] = useState(false);
 
   const storeValue = useMemo(
     () => ({
@@ -72,13 +74,22 @@ const AITemplatePreview = ({ baseElementId, schema, style }: AITemplatePreviewPr
         displayMode={displayMode}
         onDisplayMode={setDisplayMode}
         onClick={handleClickExpand}
+        showHtml={showHtml}
+        onToggleHtml={() => setShowHtml(prev => !prev)}
+        hasHtml={!!html}
       />
 
-      <div className="flex justify-center overflow-hidden bg-zinc-50 dark:bg-zinc-900">
-        <StoreProvider value={storeValue} logger={createStoreDevToolsLogger('ai-preview')}>
-          <BuilderAreaPreview id={baseElementId} className="aspect-video h-full w-full" previewMode />
-        </StoreProvider>
-      </div>
+      {showHtml && html ? (
+        <pre className="max-h-48 overflow-auto bg-zinc-900 p-3 text-[10px] text-zinc-300">
+          <code>{html}</code>
+        </pre>
+      ) : (
+        <div className="flex justify-center overflow-hidden bg-zinc-50 dark:bg-zinc-900">
+          <StoreProvider value={storeValue} logger={createStoreDevToolsLogger('ai-preview')}>
+            <BuilderAreaPreview id={baseElementId} className="aspect-video h-full w-full" previewMode />
+          </StoreProvider>
+        </div>
+      )}
     </div>
   );
 };

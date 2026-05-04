@@ -1,32 +1,14 @@
 import Markdown from '@plitzi/plitzi-ui/Markdown';
+import { useMemo, memo } from 'react';
 
-import ActionButtons from './ActionButtons';
-import MessageTools from '../MessageTools';
-import AITemplatePreview from './components/AITemplatePreview';
-import SdkElementPreview from './components/SdkElementPreview';
-import ThinkingBlock from './ThinkingBlock';
+import MessageTools from '../../../MessageTools';
+import ActionButtons from '../../ActionButtons';
+import getStagePreviewResult from './helpers/getStagePreviewResult';
+import { formatTime } from './helpers/utils';
+import AITemplatePreview from '../../components/AITemplatePreview';
+import ThinkingBlock from '../../ThinkingBlock';
 
-import type { AiMessage, AiMessagePreview } from '../../types';
-import type { Schema, Style } from '@plitzi/sdk-shared';
-
-const formatTime = (ts: number) => new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-// Type guard for baseElementId preview format
-const isBaseElementPreview = (
-  preview: AiMessagePreview | null
-): preview is {
-  baseElementId: string;
-  schema?: { flat: Record<string, unknown> };
-  style?: { platform?: unknown; cache?: string };
-  elements?: Array<Record<string, unknown>>;
-} => {
-  return preview !== null && typeof preview === 'object' && 'baseElementId' in preview && !('elementId' in preview);
-};
-
-// Type guard for elementId preview format
-const isElementPreview = (preview: AiMessagePreview | null): preview is { elementId: string } => {
-  return preview !== null && typeof preview === 'object' && 'elementId' in preview;
-};
+import type { AiMessage } from '../../../../types';
 
 const ChatMessage = ({
   id,
@@ -37,13 +19,13 @@ const ChatMessage = ({
   irrelevant,
   mode,
   usage,
-  preview,
   actions,
   attachments,
   tools,
   createdAt
 }: AiMessage) => {
   const isUser = role === 'user';
+  const preview = useMemo(() => getStagePreviewResult(tools), [tools]);
 
   return (
     <div className="flex flex-col gap-0.5" data-id={id}>
@@ -89,14 +71,12 @@ const ChatMessage = ({
         </div>
       )}
 
-      {/* Render preview - handles both old format (elementId) and new format (baseElementId from backend) */}
-      {preview && isElementPreview(preview) && <SdkElementPreview elementId={preview.elementId} />}
-
-      {preview && isBaseElementPreview(preview) && (
+      {preview && (
         <AITemplatePreview
           baseElementId={preview.baseElementId}
-          schema={preview.schema as Pick<Schema, 'flat'> | undefined}
-          style={preview.style as Pick<Style, 'platform' | 'cache'> | undefined}
+          schema={preview.schema}
+          style={preview.style}
+          html={preview.html}
         />
       )}
 
@@ -105,4 +85,5 @@ const ChatMessage = ({
   );
 };
 
-export default ChatMessage;
+const MemoizedChatMessage = memo(ChatMessage);
+export default MemoizedChatMessage;
