@@ -519,4 +519,310 @@ describe('schemaValidator', () => {
     const result = validateSchema(EMPTY_SCHEMA.schema);
     expect(result.valid).toBe(true);
   });
+
+  // Tests for baseElementId (useful for AI templates/previews)
+  describe('baseElementId option (AI templates/previews)', () => {
+    it('should validate valid template without pages when baseElementId provided', () => {
+      const schema: Schema = {
+        ...EMPTY_SCHEMA.schema,
+        flat: {
+          'footer': {
+            id: 'footer',
+            attributes: {},
+            definition: {
+              rootId: 'footer',
+              label: 'footer',
+              type: 'container',
+              styleSelectors: { base: 'footer' },
+              items: ['footer-text']
+            }
+          },
+          'footer-text': {
+            id: 'footer-text',
+            attributes: {},
+            definition: {
+              rootId: 'footer',
+              label: 'footer-text',
+              type: 'text',
+              styleSelectors: { base: 'footer-text' },
+              parentId: 'footer',
+              items: []
+            }
+          }
+        },
+        pages: [] // No pages needed when using baseElementId
+      };
+
+      const result = validateSchema(schema, { baseElementId: 'footer' });
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should detect orphan elements when baseElementId provided but some elements not reachable', () => {
+      const schema: Schema = {
+        ...EMPTY_SCHEMA.schema,
+        flat: {
+          'footer': createElement('footer', 'container', 'footer'),
+          'header': createElement('header', 'container', 'header'),
+          'unrelated': createElement('unrelated', 'container', 'unrelated')
+        },
+        pages: []
+      };
+
+      const result = validateSchema(schema, { baseElementId: 'footer' });
+      expect(result.valid).toBe(true); // Valid, but with warning about orphan
+      expect(result.warnings.some(w => w.code === 'ORPHANED_ELEMENT')).toBe(true);
+      expect(result.warnings.find(w => w.elementId === 'header')).toBeDefined();
+      expect(result.warnings.find(w => w.elementId === 'unrelated')).toBeDefined();
+    });
+
+    it('should validate template with nested children from baseElementId', () => {
+      const schema: Schema = {
+        ...EMPTY_SCHEMA.schema,
+        flat: {
+          'card': {
+            id: 'card',
+            attributes: {},
+            definition: {
+              rootId: 'card',
+              label: 'card',
+              type: 'container',
+              styleSelectors: { base: 'card' },
+              items: ['card-header', 'card-body']
+            }
+          },
+          'card-header': {
+            id: 'card-header',
+            attributes: {},
+            definition: {
+              rootId: 'card',
+              label: 'card-header',
+              type: 'container',
+              styleSelectors: { base: 'card-header' },
+              parentId: 'card',
+              items: ['card-title']
+            }
+          },
+          'card-title': {
+            id: 'card-title',
+            attributes: {},
+            definition: {
+              rootId: 'card',
+              label: 'card-title',
+              type: 'heading',
+              styleSelectors: { base: 'card-title' },
+              parentId: 'card-header'
+            }
+          },
+          'card-body': {
+            id: 'card-body',
+            attributes: {},
+            definition: {
+              rootId: 'card',
+              label: 'card-body',
+              type: 'container',
+              styleSelectors: { base: 'card-body' },
+              parentId: 'card',
+              items: ['card-text']
+            }
+          },
+          'card-text': {
+            id: 'card-text',
+            attributes: {},
+            definition: {
+              rootId: 'card',
+              label: 'card-text',
+              type: 'text',
+              styleSelectors: { base: 'card-text' },
+              parentId: 'card-body'
+            }
+          }
+        },
+        pages: []
+      };
+
+      const result = validateSchema(schema, { baseElementId: 'card' });
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should detect circular reference within template when baseElementId provided', () => {
+      const schema: Schema = {
+        ...EMPTY_SCHEMA.schema,
+        flat: {
+          'element-1': {
+            ...createElement('element-1', 'container', 'element-1'),
+            definition: {
+              ...createElement('element-1', 'container', 'element-1').definition,
+              items: ['element-2']
+            }
+          },
+          'element-2': {
+            ...createElement('element-2', 'container', 'element-1'),
+            definition: {
+              ...createElement('element-2', 'container', 'element-1').definition,
+              parentId: 'element-1',
+              items: ['element-1'] // Circular!
+            }
+          }
+        },
+        pages: []
+      };
+
+      const result = validateSchema(schema, { baseElementId: 'element-1' });
+      expect(result.valid).toBe(false);
+      expect(result.errors.some(e => e.code === 'CIRCULAR_REFERENCE')).toBe(true);
+    });
+
+    it('should detect parent-child mismatch within template when baseElementId provided', () => {
+      const schema: Schema = {
+        ...EMPTY_SCHEMA.schema,
+        flat: {
+          'parent': {
+            ...createElement('parent', 'container', 'parent'),
+            definition: {
+              ...createElement('parent', 'container', 'parent').definition,
+              items: ['child']
+            }
+          },
+          'child': {
+            ...createElement('child', 'text', 'parent'),
+            definition: {
+              ...createElement('child', 'text', 'parent').definition,
+              parentId: 'different-parent' // Mismatch!
+            }
+          }
+        },
+        pages: []
+      };
+
+      const result = validateSchema(schema, { baseElementId: 'parent' });
+      expect(result.valid).toBe(false);
+      expect(result.errors.some(e => e.code === 'PARENT_CHILD_MISMATCH')).toBe(true);
+    });
+
+    it('should detect non-existent baseElementId', () => {
+      const schema: Schema = {
+        ...EMPTY_SCHEMA.schema,
+        flat: {
+          'footer': createElement('footer', 'container', 'footer')
+        },
+        pages: []
+      };
+
+      const result = validateSchema(schema, { baseElementId: 'non-existent' });
+      expect(result.warnings.some(w => w.code === 'ORPHANED_ELEMENT')).toBe(true);
+      // The baseElementId doesn't exist, so footer becomes orphan
+      expect(result.warnings.find(w => w.elementId === 'footer')).toBeDefined();
+    });
+
+    it('should validate AI template preview with multiple elements', () => {
+      const schema: Schema = {
+        ...EMPTY_SCHEMA.schema,
+        flat: {
+          'hero': {
+            id: 'hero',
+            attributes: {},
+            definition: {
+              rootId: 'hero',
+              label: 'hero',
+              type: 'container',
+              styleSelectors: { base: 'hero' },
+              items: ['hero-title', 'hero-subtitle', 'hero-cta']
+            }
+          },
+          'hero-title': {
+            id: 'hero-title',
+            attributes: {},
+            definition: {
+              rootId: 'hero',
+              label: 'hero-title',
+              type: 'heading',
+              styleSelectors: { base: 'hero-title' },
+              parentId: 'hero'
+            }
+          },
+          'hero-subtitle': {
+            id: 'hero-subtitle',
+            attributes: {},
+            definition: {
+              rootId: 'hero',
+              label: 'hero-subtitle',
+              type: 'text',
+              styleSelectors: { base: 'hero-subtitle' },
+              parentId: 'hero'
+            }
+          },
+          'hero-cta': {
+            id: 'hero-cta',
+            attributes: {},
+            definition: {
+              rootId: 'hero',
+              label: 'hero-cta',
+              type: 'button',
+              styleSelectors: { base: 'hero-cta' },
+              parentId: 'hero'
+            }
+          }
+        },
+        pages: []
+      };
+
+      const result = validateSchema(schema, { baseElementId: 'hero' });
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+      expect(result.warnings).toHaveLength(0);
+    });
+
+    it('should allow template without pages when baseElementId provided', () => {
+      const schema: Schema = {
+        ...EMPTY_SCHEMA.schema,
+        flat: {
+          'template-root': {
+            id: 'template-root',
+            attributes: {},
+            definition: {
+              rootId: 'template-root',
+              label: 'Template Root',
+              type: 'container',
+              styleSelectors: { base: 'template-root' },
+              items: ['child-1', 'child-2']
+            }
+          },
+          'child-1': {
+            id: 'child-1',
+            attributes: {},
+            definition: {
+              rootId: 'template-root',
+              label: 'Child 1',
+              type: 'text',
+              styleSelectors: { base: 'child-1' },
+              parentId: 'template-root',
+              items: []
+            }
+          },
+          'child-2': {
+            id: 'child-2',
+            attributes: {},
+            definition: {
+              rootId: 'template-root',
+              label: 'Child 2',
+              type: 'container',
+              styleSelectors: { base: 'child-2' },
+              parentId: 'template-root',
+              items: []
+            }
+          }
+        },
+        pages: [], // Empty pages OK when baseElementId provided
+        variables: [],
+        settings: { customCss: '' },
+        pageFolders: [],
+        definition: { name: '', permanentUrl: '' }
+      };
+
+      const result = validateSchema(schema, { baseElementId: 'template-root' });
+      expect(result.valid).toBe(true);
+    });
+  });
 });
