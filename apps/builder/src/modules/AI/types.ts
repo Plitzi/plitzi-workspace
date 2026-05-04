@@ -82,8 +82,7 @@ export type AiStreamEvent =
   // Server delegates execution to the client; client runs the handler and stores any side-effects
   | { type: 'client_tool'; id: string; name: string; args: Record<string, unknown> }
   | { type: 'done'; message: AiMessage; usage?: AiUsage }
-  | { type: 'error'; message: string }
-  | { type: 'quota_exceeded'; message: string; retryAfter?: number };
+  | { type: 'error'; message: string; retryAfter?: number };
 
 export type ConversationSummary = {
   id: string;

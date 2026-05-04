@@ -238,15 +238,6 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                 };
                 setMessages(prev => [...prev, messageWithPreview]);
 
-                // Save preview to server if present
-                if (preview && event.message.id) {
-                  networkQuery(
-                    '/ai/message',
-                    { conversationId: conversationIdRef.current, messageId: event.message.id, preview },
-                    'post'
-                  ).catch(() => {});
-                }
-
                 if (event.usage) {
                   setUsage(event.usage);
                 }
@@ -254,12 +245,12 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                 setLiveThinking('');
                 thinkingTextRef.current = '';
                 setLiveTools([]);
-              } else if (event.type === ('error' as string)) {
-                setError(event.message);
-              } else if (event.type === 'quota_exceeded') {
-                setQuotaError(event.message || 'API quota exceeded — check your API key in settings');
-                if (event.retryAfter) {
+              } else if ('message' in event) {
+                if ('retryAfter' in event && event.retryAfter) {
+                  setQuotaError(event.message || 'Rate limit exceeded');
                   setQuotaRetryAfter(event.retryAfter);
+                } else {
+                  setError(event.message);
                 }
               }
             } catch {
