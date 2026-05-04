@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
+import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, use } from 'react';
 
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
+import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
@@ -20,6 +22,7 @@ export type AITemplatePreviewProps = {
 };
 
 const AITemplatePreview = ({ baseElementId, schema, style, html }: AITemplatePreviewProps) => {
+  const { theme } = use(ThemeContext);
   const { existsPopup, addPopup } = usePopup();
   const { useStore } = createStoreHook<BuilderState>();
   const [[mainSchema, mainStyle, pageDefinitions]] = useStore(['schema', 'style', 'pageDefinitions']);
@@ -80,9 +83,13 @@ const AITemplatePreview = ({ baseElementId, schema, style, html }: AITemplatePre
       />
 
       {showHtml && html ? (
-        <pre className="max-h-48 overflow-auto bg-zinc-900 p-3 text-[10px] text-zinc-300">
-          <code>{html}</code>
-        </pre>
+        <CodeMirror
+          value={html}
+          theme={theme === 'dark' ? 'dark' : 'light'}
+          size="xs"
+          className="h-full max-h-60 overflow-auto"
+          readOnly
+        />
       ) : (
         <div className="flex justify-center overflow-hidden bg-zinc-50 dark:bg-zinc-900">
           <StoreProvider value={storeValue} logger={createStoreDevToolsLogger('ai-preview')}>
