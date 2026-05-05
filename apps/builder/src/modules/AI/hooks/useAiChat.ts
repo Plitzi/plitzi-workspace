@@ -278,7 +278,16 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
         thinkingDurationMsRef.current = undefined;
       }
     },
-    [isStreaming, quotaRetryAfter, networkQuery, runClientTool, setConversationId, server.nodeServer, webKey]
+    [
+      isStreaming,
+      quotaRetryAfter,
+      flushStreamingBuffer,
+      networkQuery,
+      setConversationId,
+      server.nodeServer,
+      webKey,
+      runClientTool
+    ]
   );
 
   const clearConversation = useCallback(() => {

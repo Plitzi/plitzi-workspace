@@ -3,6 +3,7 @@ import { use, useCallback, useEffect, useRef, useState } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import AiChatHeader from './components/AiChatHeader';
@@ -23,7 +24,7 @@ import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/Netw
 const AiChat = () => {
   const { useStore } = createStoreHook<BuilderState>();
   const [elementSelected] = useStore('elementSelected');
-  const [theme] = useStore('theme');
+  const { theme } = use(ThemeContext);
   const { currentPageId } = use(NavigationContext);
   const { environment } = use(NetworkContext) as BuilderNetworkContextValue;
   const chatRef = useRef<HTMLDivElement | null>(null);

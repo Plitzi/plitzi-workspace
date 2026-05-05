@@ -1,3 +1,5 @@
+import type { Theme } from '@plitzi/sdk-shared';
+
 export type AiRole = 'user' | 'assistant';
 export type AiMode = 'plan' | 'build';
 export type AIToolStatus = 'running' | 'failed' | 'done';
@@ -98,6 +100,7 @@ export type AiContext = {
   environment?: string;
   currentPageId?: string;
   elementSelected?: string;
+  theme?: Theme;
 };
 
 export type AiProviderType = 'openai' | 'anthropic' | 'ollama' | 'openrouter' | 'opencode';
