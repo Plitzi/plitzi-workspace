@@ -53,7 +53,7 @@
     "react-dom": "^19"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.3",
+    "@plitzi/plitzi-ui": "^1.6.4",
     "@plitzi/sdk-shared": "workspace:*",
     "react-router": "^7.15.0",
     "react-router-dom": "^7.15.0"
