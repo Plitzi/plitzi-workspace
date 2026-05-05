@@ -36,7 +36,7 @@
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-store": "workspace:*",
-    "immer": "^11.1.4"
+    "immer": "^11.1.6"
   },
   "devDependencies": {
     "eslint": "^9.39.4",

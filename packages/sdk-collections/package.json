@@ -33,9 +33,9 @@
   "type": "module",
   "sideEffects": false,
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.2",
+    "@plitzi/plitzi-ui": "^1.6.3",
     "@plitzi/sdk-shared": "workspace:*",
-    "immer": "^11.1.4"
+    "immer": "^11.1.6"
   },
   "devDependencies": {
     "eslint": "^9.39.4",

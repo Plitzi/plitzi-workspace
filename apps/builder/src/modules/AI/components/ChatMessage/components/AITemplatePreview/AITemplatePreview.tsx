@@ -1,18 +1,15 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import { useCallback, useMemo, useState, use } from 'react';
 
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
 
 import AITemplateHeader from './AITemplateHeader';
 
-import type { BuilderState, DisplayMode, Schema, Style } from '@plitzi/sdk-shared';
+import type { DisplayMode, Schema, Style } from '@plitzi/sdk-shared';
 
 export type AITemplatePreviewProps = {
   baseElementId: string;
@@ -24,30 +21,10 @@ export type AITemplatePreviewProps = {
 const AITemplatePreview = ({ baseElementId, schema, style, html }: AITemplatePreviewProps) => {
   const { theme } = use(ThemeContext);
   const { existsPopup, addPopup } = usePopup();
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[mainSchema, mainStyle, pageDefinitions]] = useStore(['schema', 'style', 'pageDefinitions']);
   const [displayMode, setDisplayMode] = useState<DisplayMode>('desktop');
   const [showHtml, setShowHtml] = useState(false);
 
-  const storeValue = useMemo(
-    () => ({
-      schema: {
-        ...mainSchema,
-        flat: { ...mainSchema.flat, ...(schema?.flat ?? {}) }
-      },
-      style: {
-        ...mainStyle,
-        platform: {
-          desktop: { ...mainStyle.platform.desktop, ...(style?.platform?.desktop ?? {}) },
-          tablet: { ...mainStyle.platform.tablet, ...(style?.platform?.tablet ?? {}) },
-          mobile: { ...mainStyle.platform.mobile, ...(style?.platform?.mobile ?? {}) }
-        },
-        cache: `${mainStyle.cache}${style?.cache ?? ''}`
-      },
-      pageDefinitions
-    }),
-    [mainSchema, mainStyle, pageDefinitions, schema, style]
-  );
+  const storeValue = useMemo(() => ({ schema, style }), [schema, style]);
 
   const handleClickExpand = useCallback(() => {
     if (!existsPopup('transform')) {

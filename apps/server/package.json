@@ -27,7 +27,7 @@
     "@plitzi/sdk-shared": "workspace:*",
     "ejs": "^5.0.2",
     "esbuild": "^0.28.0",
-    "zod": "^4.4.1"
+    "zod": "^4.4.3"
   },
   "peerDependencies": {
     "react": "^19",
