@@ -43,6 +43,7 @@ Plitzi is an open-source **web application builder** designed to empower develop
 │  ├─ sdk-plugins/      # Plugin system
 │  ├─ sdk-shared/       # Shared utilities and types
 │  ├─ sdk-state/        # State management
+│  ├─ sdk-store/        # Global state store
 │  ├─ sdk-style/        # Styling system
 │  └─ sdk-variables/    # Variable management
 ├─ LICENSE              # AGPL-3.0 License
