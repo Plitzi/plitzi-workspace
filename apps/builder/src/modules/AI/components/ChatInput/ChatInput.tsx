@@ -1,3 +1,4 @@
+import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
 
 import VoiceVisualizer from '../VoiceVisualizer';
@@ -116,6 +117,16 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
       setAttachments(prev => prev.filter(a => a.id !== id));
     }, []);
 
+    const handleChange = useCallback((value: string) => {
+      setMessageInput(value);
+      if (!textareaRef.current) {
+        return;
+      }
+
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+    }, []);
+
     return (
       <div className={`flex flex-col border-t transition-colors duration-200 ${ms.border} ${ms.footer}`}>
         <div className={`h-0.5 transition-colors duration-200 ${ms.accent}`} />
@@ -157,20 +168,16 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
               </svg>
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" multiple hidden onChange={handleImageChange} />
-
-            <textarea
+            <TextArea
               ref={textareaRef}
-              className={`min-h-9 flex-1 resize-none rounded border bg-white/90 px-3 py-2 text-xs text-zinc-800 placeholder-zinc-400 transition-colors duration-200 outline-none focus:ring-1 disabled:opacity-50 dark:bg-zinc-900/80 dark:text-zinc-100 dark:placeholder-zinc-600 ${ms.textarea}`}
               placeholder={isListening ? 'Listening…' : `Ask anything… (${sendShortcutLabel} to send)`}
-              value={messageInput}
+              className={{ root: 'w-full', inputContainer: ms.textarea }}
               rows={1}
-              onChange={e => {
-                setMessageInput(e.target.value);
-                e.target.style.height = 'auto';
-                e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
-              }}
+              value={messageInput}
+              onChange={handleChange}
               onKeyDown={handleKeyDown}
               disabled={isStreaming}
+              size="xs"
             />
 
             {isVoiceSupported && (

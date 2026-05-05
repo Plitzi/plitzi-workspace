@@ -999,7 +999,7 @@
     "build:prod": "vite build && node ./scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.4",
+    "@plitzi/plitzi-ui": "^1.6.5",
     "@plitzi/sdk-store": "workspace:*",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",

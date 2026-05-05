@@ -29,7 +29,7 @@
     "@apollo/client": "^4.1.9",
     "@fortawesome/fontawesome-free": "^7.2.0",
     "@plitzi/plitzi-sdk": "workspace:*",
-    "@plitzi/plitzi-ui": "^1.6.4",
+    "@plitzi/plitzi-ui": "^1.6.5",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-collections": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
