@@ -1,3 +1,4 @@
+import Button from '@plitzi/plitzi-ui/Button';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
 
@@ -127,6 +128,10 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
     }, []);
 
+    const handleClickAddAttachment = useCallback(() => {
+      fileInputRef.current?.click();
+    }, []);
+
     return (
       <div className={`flex flex-col border-t transition-colors duration-200 ${ms.border} ${ms.footer}`}>
         <div className={`h-0.5 transition-colors duration-200 ${ms.accent}`} />
@@ -153,20 +158,23 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
           )}
 
           <div className="flex items-end gap-2">
-            <button
-              className={`shrink-0 rounded p-1.5 transition-colors ${ms.iconBtn}`}
-              onClick={() => fileInputRef.current?.click()}
+            <Button
+              className={`shrink-0 rounded p-1.5 transition-colors ${ms.iconBtn} border-none`}
+              intent="custom"
               title="Attach image"
               disabled={isStreaming}
+              onClick={handleClickAddAttachment}
             >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                />
-              </svg>
-            </button>
+              <Button.Icon>
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                  />
+                </svg>
+              </Button.Icon>
+            </Button>
             <input ref={fileInputRef} type="file" accept="image/*" multiple hidden onChange={handleImageChange} />
             <TextArea
               ref={textareaRef}
@@ -181,16 +189,19 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
             />
 
             {isVoiceSupported && (
-              <button
-                className={`shrink-0 rounded p-1.5 transition-colors ${isListening ? ms.voiceActive : ms.iconBtn}`}
-                onClick={onVoiceToggle}
+              <Button
+                className={`shrink-0 rounded p-1.5 transition-colors ${isListening ? ms.voiceActive : ms.iconBtn} border-none`}
+                intent="custom"
                 title={isListening ? 'Stop recording' : 'Voice input'}
                 disabled={isStreaming}
+                onClick={onVoiceToggle}
               >
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 1a4 4 0 014 4v6a4 4 0 01-8 0V5a4 4 0 014-4zm0 2a2 2 0 00-2 2v6a2 2 0 004 0V5a2 2 0 00-2-2zm-7 9a7 7 0 0014 0h2a9 9 0 01-8 8.94V22h2v2H9v-2h2v-1.06A9 9 0 013 12h2z" />
-                </svg>
-              </button>
+                <Button.Icon icon="fa-solid fa-microphone" size="xs">
+                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 1a4 4 0 014 4v6a4 4 0 01-8 0V5a4 4 0 014-4zm0 2a2 2 0 00-2 2v6a2 2 0 004 0V5a2 2 0 00-2-2zm-7 9a7 7 0 0014 0h2a9 9 0 01-8 8.94V22h2v2H9v-2h2v-1.06A9 9 0 013 12h2z" />
+                  </svg>
+                </Button.Icon>
+              </Button>
             )}
 
             <div
