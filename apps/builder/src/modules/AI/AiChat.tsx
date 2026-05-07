@@ -11,6 +11,7 @@ import AiProviderSettings from './components/AiProviderSettings/AiProviderSettin
 import Chat from './components/Chat';
 import ChatInput from './components/ChatInput';
 import QuotaCountdown from './components/QuotaCountdown';
+import AiChatContext from './contexts/AiChatContext';
 import useAiChat from './hooks/useAiChat';
 import useAiProviderSettings from './hooks/useAiProviderSettings';
 import useAiTools from './hooks/useAiTools';
@@ -79,15 +80,16 @@ const AiChat = () => {
     void initConversation();
   }, [initConversation]);
 
-  useEffect(() => {
-    if (chatRef.current) {
-      chatRef.current.scrollTop = chatRef.current.scrollHeight;
-    }
-  }, [messages, streamingText, liveTools]);
-
   const handleSend = useCallback(
     (msg: string, atts: AiAttachment[]) => {
       void sendMessage(msg, { currentPageId, elementSelected, environment, theme }, atts);
+    },
+    [sendMessage, currentPageId, elementSelected, environment, theme]
+  );
+
+  const handleApplySend = useCallback(
+    (msg: string) => {
+      void sendMessage(msg, { currentPageId, elementSelected, environment, theme }, []);
     },
     [sendMessage, currentPageId, elementSelected, environment, theme]
   );
@@ -103,7 +105,8 @@ const AiChat = () => {
   const handleClickSettingsToggle = useCallback(() => setIsSettingsOpen(state => !state), []);
 
   return (
-    <div className="flex h-full w-full flex-col bg-white font-mono text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100">
+    <AiChatContext.Provider value={{ onSendMessage: handleApplySend, elementSelected: elementSelected ?? undefined }}>
+      <div className="flex h-full w-full flex-col bg-white font-mono text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100">
       <AiChatHeader
         onClear={clearConversation}
         onCompact={compact}
@@ -165,7 +168,8 @@ const AiChat = () => {
         mode={mode}
         onModeChange={setMode}
       />
-    </div>
+      </div>
+    </AiChatContext.Provider>
   );
 };
 

@@ -1,5 +1,5 @@
 import Markdown from '@plitzi/plitzi-ui/Markdown';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import MessageTools from '../MessageTools';
 import TimelineDot from './TimelineDot';
@@ -15,12 +15,13 @@ type LiveEntryProps = {
 
 const LiveEntry = ({ isStreaming, streamingText, liveThinking, liveTools = [] }: LiveEntryProps) => {
   const thinkingRef = useRef<HTMLDivElement>(null);
+  const [thinkingOpen, setThinkingOpen] = useState(true);
 
   useEffect(() => {
-    if (thinkingRef.current) {
+    if (thinkingOpen && thinkingRef.current) {
       thinkingRef.current.scrollTop = thinkingRef.current.scrollHeight;
     }
-  }, [liveThinking]);
+  }, [liveThinking, thinkingOpen]);
 
   return (
     <div className="relative flex gap-3">
@@ -37,15 +38,25 @@ const LiveEntry = ({ isStreaming, streamingText, liveThinking, liveTools = [] }:
         )}
 
         {liveThinking && (
-          <div className="flex items-start gap-1.5">
-            <span className="shrink-0 font-mono text-xs leading-4 text-zinc-400 italic dark:text-zinc-500">💭</span>
-            <div
-              ref={thinkingRef}
-              className="max-h-100 min-w-0 flex-1 overflow-y-auto font-mono text-xs leading-relaxed text-zinc-400 italic dark:text-zinc-500"
+          <div className="mb-0.5">
+            <button
+              onClick={() => setThinkingOpen(o => !o)}
+              className="flex items-center gap-1.5 rounded px-2 py-0.5 font-mono text-xs text-zinc-400 transition-colors hover:bg-gray-100 dark:text-zinc-500 dark:hover:bg-zinc-800/60"
             >
-              <span className="wrap-break-word whitespace-pre-wrap">{liveThinking}</span>
-              <span className="ml-0.5 inline-block h-3 w-0.5 animate-pulse bg-zinc-400 align-middle dark:bg-zinc-500" />
-            </div>
+              <span>💭</span>
+              <span>Thinking...</span>
+              <span className="ml-0.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-400 dark:bg-zinc-500" />
+              <span className="text-zinc-300 dark:text-zinc-600">{thinkingOpen ? '▲' : '▼'}</span>
+            </button>
+            {thinkingOpen && (
+              <div
+                ref={thinkingRef}
+                className="ml-2 mt-0.5 max-h-40 overflow-y-auto border-l-2 border-gray-200 pl-3 font-mono text-xs leading-relaxed text-zinc-400 italic dark:border-zinc-700 dark:text-zinc-500"
+              >
+                <span className="wrap-break-word whitespace-pre-wrap">{liveThinking}</span>
+                <span className="ml-0.5 inline-block h-3 w-0.5 animate-pulse bg-zinc-400 align-middle dark:bg-zinc-500" />
+              </div>
+            )}
           </div>
         )}
 

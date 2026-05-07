@@ -1,4 +1,5 @@
 import type { DisplayMode } from '@plitzi/sdk-shared';
+import type { AiMode } from '@pmodules/AI/types';
 
 const MODES: { mode: DisplayMode; icon: string }[] = [
   { mode: 'desktop', icon: 'fa-solid fa-desktop' },
@@ -14,6 +15,7 @@ export type AITemplateHeaderProps = {
   showHtml?: boolean;
   onToggleHtml?: () => void;
   hasHtml?: boolean;
+  mode?: AiMode;
 };
 
 const AITemplateHeader = ({
@@ -23,12 +25,16 @@ const AITemplateHeader = ({
   onClick,
   showHtml,
   onToggleHtml,
-  hasHtml
+  hasHtml,
+  mode
 }: AITemplateHeaderProps) => (
   <div className="flex items-center justify-between gap-2 border-b border-violet-100 bg-violet-50 px-3 py-1 font-mono text-xs text-violet-500 dark:border-violet-900/40 dark:bg-violet-950/30 dark:text-violet-400">
-    <div className="flex items-center gap-1">
+    <div className="flex min-w-0 items-center gap-1.5">
       <span>◈</span>
-      <span>{showHtml ? 'HTML Source' : `proposed · ${baseElementId}`}</span>
+      <span className="truncate">{showHtml ? 'HTML Source' : `proposed · ${baseElementId}`}</span>
+      {mode === 'plan' && (
+        <span className="shrink-0 font-mono text-[9px] text-violet-400 dark:text-violet-600">plan · approval required</span>
+      )}
     </div>
 
     <div className="flex items-center gap-2">

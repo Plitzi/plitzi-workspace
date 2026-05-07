@@ -50,7 +50,7 @@ const Chat = ({ ref, messages = [], isStreaming, streamingText, liveThinking, li
   const totalSize = virtualizer.getTotalSize();
   const virtualItems = virtualizer.getVirtualItems();
 
-  // Track whether the user is near the bottom.
+  // Stable scroll listener — attach once on mount.
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) {
@@ -58,14 +58,35 @@ const Chat = ({ ref, messages = [], isStreaming, streamingText, liveThinking, li
     }
 
     const onScroll = () => {
-      isAtBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+      isAtBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 150;
     };
     el.addEventListener('scroll', onScroll, { passive: true });
 
     return () => el.removeEventListener('scroll', onScroll);
-  }, [liveThinking]);
+  }, []);
 
-  // When totalSize grows (measurements settling), keep the user at the bottom.
+  // When the user sends a new message, re-enable auto-scroll so streaming follows.
+  const prevMessagesLengthRef = useRef(messages.length);
+  useEffect(() => {
+    if (messages.length > prevMessagesLengthRef.current) {
+      const last = messages[messages.length - 1];
+      if (last?.role === 'user') {
+        isAtBottom.current = true;
+      }
+    }
+    prevMessagesLengthRef.current = messages.length;
+  }, [messages]);
+
+  // Scroll to bottom during streaming only when the user is already near the bottom.
+  useEffect(() => {
+    if (!isAtBottom.current || !scrollRef.current) {
+      return;
+    }
+
+    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [streamingText, liveThinking, liveTools]);
+
+  // When totalSize changes (virtualizer remeasuring settled items), keep the user at the bottom.
   const prevTotalSize = useRef(0);
   useEffect(() => {
     if (totalSize === prevTotalSize.current) {

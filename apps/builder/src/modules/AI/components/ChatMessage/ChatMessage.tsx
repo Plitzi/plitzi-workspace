@@ -3,9 +3,17 @@ import { useMemo, memo } from 'react';
 
 import MessageTools from '../MessageTools';
 import ActionButtons from './components/ActionButtons';
+import AIBrandPreview from './components/AIBrandPreview';
+import AIColorPalettePreview from './components/AIColorPalettePreview';
+import AIStyleGuidePreview from './components/AIStyleGuidePreview';
 import AITemplatePreview from './components/AITemplatePreview';
+import AIWireframePreview from './components/AIWireframePreview';
 import ThinkingBlock from './components/ThinkingBlock';
+import getBrandResult from './helpers/getBrandResult';
+import getColorPaletteResult from './helpers/getColorPaletteResult';
 import getStagePreviewResult from './helpers/getStagePreviewResult';
+import getStyleGuideResult from './helpers/getStyleGuideResult';
+import getWireframeResult from './helpers/getWireframeResult';
 import { formatTime } from './helpers/utils';
 
 import type { AiMessage } from '../../types';
@@ -26,6 +34,10 @@ const ChatMessage = ({
 }: AiMessage) => {
   const isUser = role === 'user';
   const preview = useMemo(() => getStagePreviewResult(tools), [tools]);
+  const wireframe = useMemo(() => getWireframeResult(tools), [tools]);
+  const colorPalette = useMemo(() => getColorPaletteResult(tools), [tools]);
+  const brand = useMemo(() => getBrandResult(tools), [tools]);
+  const styleGuide = useMemo(() => getStyleGuideResult(tools), [tools]);
 
   return (
     <div className="flex flex-col gap-0.5" data-id={id}>
@@ -71,12 +83,19 @@ const ChatMessage = ({
         </div>
       )}
 
+      {styleGuide && <AIStyleGuidePreview {...styleGuide} mode={mode} />}
+      {brand && <AIBrandPreview {...brand} mode={mode} />}
+      {colorPalette && <AIColorPalettePreview {...colorPalette} mode={mode} />}
+
+      {wireframe && <AIWireframePreview {...wireframe} mode={mode} />}
+
       {preview && (
         <AITemplatePreview
           baseElementId={preview.baseElementId}
           schema={preview.schema}
           style={preview.style}
           html={preview.html}
+          mode={mode}
         />
       )}
 
