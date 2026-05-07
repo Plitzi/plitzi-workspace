@@ -43,13 +43,13 @@ const ChatMessage = ({
     <div className="flex flex-col gap-0.5" data-id={id}>
       <div className="flex items-center gap-2">
         {isUser ? (
-          <span className="font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">▸ You</span>
+          <span className="font-mono text-xs font-semibold text-zinc-500 dark:text-zinc-400">▸ You</span>
         ) : (
-          <span className="font-mono text-xs font-semibold text-violet-500 dark:text-violet-400">◆ Assistant</span>
+          <span className="font-mono text-xs font-semibold text-orange-500 dark:text-orange-400">◆ Assistant</span>
         )}
         <span className="font-mono text-xs text-zinc-400 dark:text-zinc-600">{formatTime(createdAt)}</span>
         {irrelevant && <span className="font-mono text-xs text-amber-500 dark:text-amber-400">off-topic</span>}
-        {!isUser && mode === 'plan' && <span className="font-mono text-xs text-blue-500 dark:text-blue-400">plan</span>}
+        {!isUser && mode === 'plan' && <span className="font-mono text-xs text-sky-500 dark:text-sky-400">plan</span>}
         {!isUser && usage && (
           <span className="font-mono text-[10px] text-zinc-300 dark:text-zinc-700">
             {usage.inputTokens.toLocaleString()} in · {usage.outputTokens.toLocaleString()} out

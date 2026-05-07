@@ -59,24 +59,24 @@ const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typogr
   };
 
   return (
-    <div className="mt-2 overflow-hidden rounded-md border border-purple-200 text-xs dark:border-purple-900/50">
+    <div className="mt-2 overflow-hidden rounded-md border border-zinc-200 text-xs dark:border-zinc-700/60">
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 border-b border-purple-100 bg-purple-50 px-3 py-1 font-mono text-purple-600 dark:border-purple-900/40 dark:bg-purple-950/30 dark:text-purple-400">
+      <div className="flex items-center justify-between gap-2 border-b border-zinc-100 bg-zinc-50 px-3 py-1 font-mono text-zinc-600 dark:border-zinc-700/60 dark:bg-zinc-900 dark:text-zinc-400">
         <div className="flex items-center gap-1.5">
-          <span className="rounded border border-purple-300 px-1 text-[9px] uppercase tracking-wider dark:border-purple-700">brand</span>
+          <span className="rounded border border-zinc-300 px-1 text-[9px] uppercase tracking-wider dark:border-zinc-600">brand</span>
           <span className="font-medium">{name}</span>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          {mode === 'plan' && <span className="text-[9px] text-purple-400 dark:text-purple-600">plan</span>}
+          {mode === 'plan' && <span className="text-[9px] text-sky-500 dark:text-sky-600">plan</span>}
           {hasDark && (
-            <div className="flex overflow-hidden rounded border border-purple-200 dark:border-purple-800">
+            <div className="flex overflow-hidden rounded border border-zinc-200 dark:border-zinc-700">
               <button
                 onClick={() => setIsDark(false)}
-                className={`px-1.5 py-0.5 ${!isDark ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300' : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600'}`}
+                className={`px-1.5 py-0.5 ${!isDark ? 'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300' : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600'}`}
               >☀</button>
               <button
                 onClick={() => setIsDark(true)}
-                className={`px-1.5 py-0.5 ${isDark ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300' : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600'}`}
+                className={`px-1.5 py-0.5 ${isDark ? 'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300' : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600'}`}
               >☾</button>
             </div>
           )}
@@ -87,11 +87,11 @@ const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typogr
       <div className="bg-white dark:bg-zinc-950">
         {/* Hero strip — compact */}
         <div
-          className="px-4 py-3"
+          className="px-3 py-2"
           style={{ backgroundColor: activeColors.primary, color: needsWhiteText(activeColors.primary) ? '#fff' : '#111' }}
         >
           <div
-            className="text-base font-bold leading-tight tracking-tight"
+            className="text-sm font-bold leading-tight tracking-tight"
             style={{ fontFamily: typography?.heading.family, letterSpacing: typography?.heading.tracking ?? undefined }}
           >
             {name}
@@ -104,7 +104,7 @@ const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typogr
         </div>
 
         {/* Colors */}
-        <div className="px-3 pt-3">
+        <div className="px-3 pt-2">
           <div className="mb-1.5 font-mono text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Colors</div>
           <div className="flex flex-wrap gap-2">
             {colorEntries.map(([role, hex]) => (
@@ -115,7 +115,7 @@ const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typogr
                 title={`Copy ${hex}`}
               >
                 <div
-                  className="h-8 w-8 rounded-full border border-black/10 shadow-sm dark:border-white/10"
+                  className="h-6 w-6 rounded-full border border-black/10 shadow-sm dark:border-white/10"
                   style={{ backgroundColor: hex }}
                 />
                 <span className="font-mono text-[9px] text-zinc-500">{COLOR_LABELS[role] ?? role}</span>
@@ -130,7 +130,7 @@ const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typogr
 
         {/* Personality */}
         {personality.length > 0 && (
-          <div className="px-3 pt-2.5">
+          <div className="px-3 pt-2">
             <div className="mb-1 font-mono text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Personality</div>
             <div className="flex flex-wrap gap-1">
               {personality.map(trait => (
@@ -152,7 +152,7 @@ const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typogr
 
         {/* Typography */}
         {typography && (
-          <div className="px-3 pt-2.5">
+          <div className="px-3 pt-2">
             <div className="mb-1 font-mono text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Typography</div>
             <div
               className="rounded border border-zinc-100 p-2 dark:border-zinc-800"
@@ -176,7 +176,7 @@ const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typogr
 
         {/* Voice */}
         {voice && (
-          <div className="px-3 py-2.5 pt-2.5">
+          <div className="px-3 py-2.5 pt-2">
             <div className="mb-1 font-mono text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Voice & Tone</div>
             <p className="italic text-zinc-600 dark:text-zinc-400">"{voice.tone}"</p>
             {voice.keywords && voice.keywords.length > 0 && (
@@ -194,7 +194,7 @@ const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typogr
 
       {/* Confirmation panel */}
       {confirming && (
-        <div className="border-t border-purple-100 bg-purple-50/60 px-3 py-2 dark:border-purple-900/30 dark:bg-purple-950/20">
+        <div className="border-t border-zinc-100 bg-zinc-50 px-3 py-2 dark:border-zinc-700/60 dark:bg-zinc-900/60">
           <p className="mb-2 font-mono text-[10px] text-zinc-500 dark:text-zinc-400">
             Create {cssVars.length} style variable{cssVars.length !== 1 ? 's' : ''}:
           </p>
@@ -219,7 +219,7 @@ const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typogr
             </button>
             <button
               onClick={handleConfirm}
-              className="rounded bg-purple-600 px-2.5 py-1 font-mono text-white hover:bg-purple-700"
+              className="rounded bg-zinc-800 px-2.5 py-1 font-mono text-white hover:bg-zinc-700 dark:bg-zinc-200 dark:text-zinc-900 dark:hover:bg-zinc-100"
             >
               Confirm & Apply
             </button>
@@ -228,10 +228,10 @@ const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typogr
       )}
 
       {!confirming && (
-        <div className="flex items-center justify-end gap-2 border-t border-purple-100 bg-purple-50/50 px-3 py-1.5 dark:border-purple-900/30 dark:bg-purple-950/20">
+        <div className="flex items-center justify-end gap-2 border-t border-zinc-100 bg-zinc-50 px-3 py-1 dark:border-zinc-700/60 dark:bg-zinc-900/60">
           <button
             onClick={() => setConfirming(true)}
-            className="rounded border border-purple-300 px-2.5 py-1 font-mono text-purple-600 hover:bg-purple-100 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-950/40"
+            className="rounded border border-zinc-300 px-2.5 py-1 font-mono text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800"
           >
             Apply to Space
           </button>

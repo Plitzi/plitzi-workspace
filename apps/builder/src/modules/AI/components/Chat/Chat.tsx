@@ -110,7 +110,7 @@ const Chat = ({ ref, messages = [], isStreaming, streamingText, liveThinking, li
     <div ref={setRef} className="flex min-h-0 grow basis-0 flex-col overflow-y-auto px-4">
       {count === 0 && (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
-          <span className="text-3xl text-violet-500 dark:text-violet-400">◆</span>
+          <span className="text-3xl text-orange-500 dark:text-orange-400">◆</span>
           <p className="font-mono text-sm text-zinc-400 dark:text-zinc-500">Ask me anything about your space.</p>
           <p className="font-mono text-xs text-zinc-300 dark:text-zinc-700">Voice · Images · Tools</p>
         </div>
@@ -129,7 +129,7 @@ const Chat = ({ ref, messages = [], isStreaming, streamingText, liveThinking, li
                 ref={virtualizer.measureElement}
                 data-index={index}
                 style={{ position: 'absolute', top: 0, transform: `translateY(${start}px)`, width: '100%' }}
-                className="relative flex gap-3 pb-4"
+                className="relative flex gap-3 pb-2.5"
               >
                 <div
                   className={`pointer-events-none absolute left-1.25 w-px bg-gray-200 dark:bg-zinc-800 ${isLast ? 'h-3.5' : 'bottom-0'} top-0`}

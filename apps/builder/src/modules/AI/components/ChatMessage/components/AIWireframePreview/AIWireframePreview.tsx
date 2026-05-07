@@ -146,26 +146,26 @@ const AIWireframePreview = ({ baseElementId, name, description, schema, style, h
   }, [name, target, elementSelected, onSendMessage]);
 
   return (
-    <div className="mt-2 overflow-hidden rounded-md border border-blue-200 text-xs dark:border-blue-900/50">
+    <div className="mt-2 overflow-hidden rounded-md border border-zinc-200 text-xs dark:border-zinc-700/60">
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 border-b border-blue-100 bg-blue-50 px-3 py-1 font-mono text-blue-600 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-400">
+      <div className="flex items-center justify-between gap-2 border-b border-zinc-100 bg-zinc-50 px-3 py-1 font-mono text-zinc-600 dark:border-zinc-700/60 dark:bg-zinc-900 dark:text-zinc-400">
         <div className="flex min-w-0 items-center gap-1.5">
-          <span className="shrink-0 rounded border border-blue-300 px-1 text-[9px] uppercase tracking-wider dark:border-blue-700">wireframe</span>
+          <span className="shrink-0 rounded border border-zinc-300 px-1 text-[9px] uppercase tracking-wider dark:border-zinc-600">wireframe</span>
           <span className="truncate font-medium">{name}</span>
-          {description && <span className="hidden truncate text-blue-400 dark:text-blue-600 sm:block">{description}</span>}
+          {description && <span className="hidden truncate text-zinc-400 dark:text-zinc-600 sm:block">{description}</span>}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {mode === 'plan' && <span className="font-mono text-[9px] text-blue-400 dark:text-blue-600">plan</span>}
+          {mode === 'plan' && <span className="font-mono text-[9px] text-sky-500 dark:text-sky-600">plan</span>}
           {html && (
             <button
               onClick={() => setShowHtml(prev => !prev)}
               title={showHtml ? 'Show Wireframe' : 'Show HTML'}
-              className="cursor-pointer rounded px-1 py-0.5 text-blue-400 hover:text-blue-600 dark:text-blue-600 dark:hover:text-blue-400"
+              className="cursor-pointer rounded px-1 py-0.5 text-zinc-400 hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-400"
             >
               <i className={showHtml ? 'fa-solid fa-pen-ruler' : 'fa-solid fa-code'} />
             </button>
           )}
-          <button onClick={handleClickExpand} className="cursor-pointer text-blue-400 hover:text-blue-600 dark:text-blue-600 dark:hover:text-blue-400">
+          <button onClick={handleClickExpand} className="cursor-pointer text-zinc-400 hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-400">
             <i className="fa-solid fa-up-right-and-down-left-from-center" />
           </button>
         </div>
@@ -182,21 +182,21 @@ const AIWireframePreview = ({ baseElementId, name, description, schema, style, h
 
       {/* Confirmation panel */}
       {confirming && (
-        <div className="border-t border-blue-100 bg-blue-50/60 px-3 py-2 dark:border-blue-900/30 dark:bg-blue-950/20">
+        <div className="border-t border-zinc-100 bg-zinc-50 px-3 py-2 dark:border-zinc-700/60 dark:bg-zinc-900/60">
           <p className="mb-1.5 font-mono text-[10px] text-zinc-600 dark:text-zinc-300">
             Build <span className="font-semibold">"{name}"</span> on:
           </p>
           <div className="mb-2 flex gap-1">
             <button
               onClick={() => setTarget('page')}
-              className={`rounded border px-2 py-0.5 font-mono text-[10px] ${target === 'page' ? 'border-blue-400 bg-blue-100 text-blue-700 dark:border-blue-600 dark:bg-blue-900/40 dark:text-blue-300' : 'border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400'}`}
+              className={`rounded border px-2 py-0.5 font-mono text-[10px] ${target === 'page' ? 'border-zinc-400 bg-zinc-200 text-zinc-700 dark:border-zinc-500 dark:bg-zinc-700 dark:text-zinc-200' : 'border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400'}`}
             >
               Current Page
             </button>
             {elementSelected && (
               <button
                 onClick={() => setTarget('element')}
-                className={`rounded border px-2 py-0.5 font-mono text-[10px] ${target === 'element' ? 'border-blue-400 bg-blue-100 text-blue-700 dark:border-blue-600 dark:bg-blue-900/40 dark:text-blue-300' : 'border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400'}`}
+                className={`rounded border px-2 py-0.5 font-mono text-[10px] ${target === 'element' ? 'border-zinc-400 bg-zinc-200 text-zinc-700 dark:border-zinc-500 dark:bg-zinc-700 dark:text-zinc-200' : 'border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400'}`}
               >
                 Selected Element
               </button>
@@ -204,7 +204,7 @@ const AIWireframePreview = ({ baseElementId, name, description, schema, style, h
           </div>
           {target === 'element' && elementSelected && (
             <p className="mb-1.5 font-mono text-[10px] text-zinc-400 dark:text-zinc-600">
-              Will be added as children of <span className="text-blue-500">"{elementSelected}"</span>
+              Will be added as children of <span className="text-orange-500">"{elementSelected}"</span>
             </p>
           )}
           <div className="flex justify-end gap-2">
@@ -216,7 +216,7 @@ const AIWireframePreview = ({ baseElementId, name, description, schema, style, h
             </button>
             <button
               onClick={handleConfirm}
-              className="rounded bg-blue-600 px-2.5 py-1 font-mono text-white hover:bg-blue-700"
+              className="rounded bg-zinc-800 px-2.5 py-1 font-mono text-white hover:bg-zinc-700 dark:bg-zinc-200 dark:text-zinc-900 dark:hover:bg-zinc-100"
             >
               Confirm & Build
             </button>
@@ -225,10 +225,10 @@ const AIWireframePreview = ({ baseElementId, name, description, schema, style, h
       )}
 
       {!confirming && (
-        <div className="flex items-center justify-end gap-2 border-t border-blue-100 bg-blue-50/50 px-3 py-1.5 dark:border-blue-900/30 dark:bg-blue-950/20">
+        <div className="flex items-center justify-end gap-2 border-t border-zinc-100 bg-zinc-50 px-3 py-1 dark:border-zinc-700/60 dark:bg-zinc-900/60">
           <button
             onClick={() => setConfirming(true)}
-            className="rounded border border-blue-300 px-2.5 py-1 font-mono text-blue-600 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-950/40"
+            className="rounded border border-zinc-300 px-2.5 py-1 font-mono text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800"
           >
             Apply to Page
           </button>

@@ -61,7 +61,7 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode }: AITempl
   }, [baseElementId, target, elementSelected, onSendMessage]);
 
   return (
-    <div className="mt-2 overflow-hidden rounded-md border border-violet-200 text-xs dark:border-violet-900/50">
+    <div className="mt-2 overflow-hidden rounded-md border border-zinc-200 text-xs dark:border-zinc-700/60">
       <AITemplateHeader
         baseElementId={baseElementId}
         displayMode={displayMode}
@@ -91,19 +91,19 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode }: AITempl
 
       {/* Confirmation panel */}
       {confirming && (
-        <div className="border-t border-violet-100 bg-violet-50/60 px-3 py-2 dark:border-violet-900/30 dark:bg-violet-950/20">
+        <div className="border-t border-zinc-100 bg-zinc-50 px-3 py-2 dark:border-zinc-700/60 dark:bg-zinc-900/60">
           <p className="mb-1.5 font-mono text-[10px] text-zinc-600 dark:text-zinc-300">Apply layout to:</p>
           <div className="mb-2 flex gap-1">
             <button
               onClick={() => setTarget('page')}
-              className={`rounded border px-2 py-0.5 font-mono text-[10px] ${target === 'page' ? 'border-violet-400 bg-violet-100 text-violet-700 dark:border-violet-600 dark:bg-violet-900/40 dark:text-violet-300' : 'border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400'}`}
+              className={`rounded border px-2 py-0.5 font-mono text-[10px] ${target === 'page' ? 'border-zinc-400 bg-zinc-200 text-zinc-700 dark:border-zinc-500 dark:bg-zinc-700 dark:text-zinc-200' : 'border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400'}`}
             >
               Current Page
             </button>
             {elementSelected && (
               <button
                 onClick={() => setTarget('element')}
-                className={`rounded border px-2 py-0.5 font-mono text-[10px] ${target === 'element' ? 'border-violet-400 bg-violet-100 text-violet-700 dark:border-violet-600 dark:bg-violet-900/40 dark:text-violet-300' : 'border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400'}`}
+                className={`rounded border px-2 py-0.5 font-mono text-[10px] ${target === 'element' ? 'border-zinc-400 bg-zinc-200 text-zinc-700 dark:border-zinc-500 dark:bg-zinc-700 dark:text-zinc-200' : 'border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400'}`}
               >
                 Selected Element
               </button>
@@ -111,7 +111,7 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode }: AITempl
           </div>
           {target === 'element' && elementSelected && (
             <p className="mb-1.5 font-mono text-[10px] text-zinc-400 dark:text-zinc-600">
-              Will be added as children of <span className="text-violet-500">"{elementSelected}"</span>
+              Will be added as children of <span className="text-orange-500">"{elementSelected}"</span>
             </p>
           )}
           <p className="mb-2 font-mono text-[10px] text-zinc-400 dark:text-zinc-600">
@@ -126,7 +126,7 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode }: AITempl
             </button>
             <button
               onClick={handleConfirm}
-              className="rounded bg-violet-600 px-2.5 py-1 font-mono text-white hover:bg-violet-700"
+              className="rounded bg-zinc-800 px-2.5 py-1 font-mono text-white hover:bg-zinc-700 dark:bg-zinc-200 dark:text-zinc-900 dark:hover:bg-zinc-100"
             >
               Confirm & Apply
             </button>
@@ -135,10 +135,10 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode }: AITempl
       )}
 
       {!confirming && (
-        <div className="flex items-center justify-end border-t border-violet-100 bg-violet-50/50 px-3 py-1.5 dark:border-violet-900/30 dark:bg-violet-950/20">
+        <div className="flex items-center justify-end border-t border-zinc-100 bg-zinc-50 px-3 py-1 dark:border-zinc-700/60 dark:bg-zinc-900/60">
           <button
             onClick={() => setConfirming(true)}
-            className="rounded border border-violet-300 px-2.5 py-1 font-mono text-violet-600 hover:bg-violet-100 dark:border-violet-700 dark:text-violet-400 dark:hover:bg-violet-950/40"
+            className="rounded border border-zinc-300 px-2.5 py-1 font-mono text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800"
           >
             Apply to Page
           </button>

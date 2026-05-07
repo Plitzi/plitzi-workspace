@@ -1,5 +1,4 @@
 import TextArea from '@plitzi/plitzi-ui/TextArea';
-import clsx from 'clsx';
 import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
 
 import VoiceVisualizer from '../VoiceVisualizer';
@@ -81,12 +80,7 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
     }, []);
 
     return (
-      <div
-        className={clsx('m-2 flex flex-col rounded-lg border transition-colors duration-200', {
-          'border-violet-200 bg-violet-50/70 dark:border-violet-800/50 dark:bg-violet-950/20': mode === 'build',
-          'border-sky-200 bg-sky-50/80 dark:border-sky-800/50 dark:bg-sky-950/20': mode === 'plan'
-        })}
-      >
+      <div className="m-2 flex flex-col rounded-lg border border-zinc-200 bg-white dark:border-zinc-700/60 dark:bg-zinc-900/60">
         <div className="flex flex-col gap-2 p-3">
           {isListening && (
             <div className="rounded-md border border-gray-200 bg-white/80 px-2 py-1 dark:border-zinc-700 dark:bg-zinc-950/80">

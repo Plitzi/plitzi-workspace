@@ -28,12 +28,12 @@ const AITemplateHeader = ({
   hasHtml,
   mode
 }: AITemplateHeaderProps) => (
-  <div className="flex items-center justify-between gap-2 border-b border-violet-100 bg-violet-50 px-3 py-1 font-mono text-xs text-violet-500 dark:border-violet-900/40 dark:bg-violet-950/30 dark:text-violet-400">
+  <div className="flex items-center justify-between gap-2 border-b border-zinc-100 bg-zinc-50 px-3 py-1 font-mono text-xs text-zinc-600 dark:border-zinc-700/60 dark:bg-zinc-900 dark:text-zinc-400">
     <div className="flex min-w-0 items-center gap-1.5">
-      <span>◈</span>
-      <span className="truncate">{showHtml ? 'HTML Source' : `proposed · ${baseElementId}`}</span>
+      <span className="shrink-0 rounded border border-zinc-300 px-1 text-[9px] uppercase tracking-wider dark:border-zinc-600">preview</span>
+      <span className="truncate">{showHtml ? 'HTML Source' : baseElementId}</span>
       {mode === 'plan' && (
-        <span className="shrink-0 font-mono text-[9px] text-violet-400 dark:text-violet-600">plan · approval required</span>
+        <span className="shrink-0 font-mono text-[9px] text-sky-500 dark:text-sky-600">plan</span>
       )}
     </div>
 
@@ -42,22 +42,22 @@ const AITemplateHeader = ({
         <button
           onClick={onToggleHtml}
           title={showHtml ? 'Show Preview' : 'Show HTML'}
-          className="cursor-pointer rounded px-1 py-0.5 text-violet-400 hover:text-violet-600 dark:text-violet-600 dark:hover:text-violet-400"
+          className="cursor-pointer rounded px-1 py-0.5 text-zinc-400 hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-400"
         >
           <i className={showHtml ? 'fa-solid fa-eye' : 'fa-solid fa-code'} />
         </button>
       )}
 
       <div className="flex items-center gap-1">
-        {MODES.map(({ mode, icon }) => (
+        {MODES.map(({ mode: dm, icon }) => (
           <button
-            key={mode}
-            onClick={() => onDisplayMode(mode)}
-            title={mode}
+            key={dm}
+            onClick={() => onDisplayMode(dm)}
+            title={dm}
             className={`cursor-pointer rounded px-1 py-0.5 transition-colors ${
-              displayMode === mode
-                ? 'bg-violet-200 text-violet-700 dark:bg-violet-800/60 dark:text-violet-300'
-                : 'text-violet-400 hover:text-violet-600 dark:text-violet-600 dark:hover:text-violet-400'
+              displayMode === dm
+                ? 'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300'
+                : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-400'
             }`}
           >
             <i className={icon} />
@@ -65,7 +65,7 @@ const AITemplateHeader = ({
         ))}
       </div>
 
-      <button onClick={onClick} className="cursor-pointer">
+      <button onClick={onClick} className="cursor-pointer text-zinc-400 hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-400">
         <i className="fa-solid fa-up-right-and-down-left-from-center" />
       </button>
     </div>

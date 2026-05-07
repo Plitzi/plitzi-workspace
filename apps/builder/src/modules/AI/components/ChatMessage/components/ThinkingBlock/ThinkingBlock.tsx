@@ -24,7 +24,7 @@ const ThinkingBlock = ({ text, durationMs }: ThinkingBlockProps) => {
   return (
     <div className="mb-1">
       <button
-        className="flex items-center gap-1.5 rounded px-2 py-0.5 font-mono text-xs text-zinc-400 transition-colors hover:bg-gray-100 dark:text-zinc-500 dark:hover:bg-zinc-800/60"
+        className="flex items-center gap-1 rounded px-1.5 py-px font-mono text-xs text-zinc-400 transition-colors hover:bg-zinc-100 dark:text-zinc-500 dark:hover:bg-zinc-800/60"
         onClick={() => setOpen(o => !o)}
       >
         <span>💭</span>
@@ -32,7 +32,7 @@ const ThinkingBlock = ({ text, durationMs }: ThinkingBlockProps) => {
         <span className="text-zinc-300 dark:text-zinc-600">{open ? '▲' : '▼'}</span>
       </button>
       {open && (
-        <div className="mt-0.5 ml-2 border-l-2 border-gray-200 pl-3 font-mono text-xs leading-relaxed text-zinc-400 italic dark:border-zinc-700 dark:text-zinc-500">
+        <div className="mt-0.5 ml-2 border-l-2 border-zinc-200 pl-3 font-mono text-xs leading-snug text-zinc-400 italic dark:border-zinc-700 dark:text-zinc-500">
           <span className="wrap-break-word whitespace-pre-wrap">{text}</span>
         </div>
       )}

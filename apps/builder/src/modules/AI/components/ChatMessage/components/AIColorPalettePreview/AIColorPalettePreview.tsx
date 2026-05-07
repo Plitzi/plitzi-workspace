@@ -45,34 +45,34 @@ const AIColorPalettePreview = ({ name, description, colors, mode }: ColorPalette
   };
 
   return (
-    <div className="mt-2 overflow-hidden rounded-md border border-fuchsia-200 text-xs dark:border-fuchsia-900/50">
+    <div className="mt-2 overflow-hidden rounded-md border border-zinc-200 text-xs dark:border-zinc-700/60">
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 border-b border-fuchsia-100 bg-fuchsia-50 px-3 py-1 font-mono text-fuchsia-600 dark:border-fuchsia-900/40 dark:bg-fuchsia-950/30 dark:text-fuchsia-400">
+      <div className="flex items-center justify-between gap-2 border-b border-zinc-100 bg-zinc-50 px-3 py-1 font-mono text-zinc-600 dark:border-zinc-700/60 dark:bg-zinc-900 dark:text-zinc-400">
         <div className="flex min-w-0 items-center gap-1.5">
-          <span className="shrink-0 rounded border border-fuchsia-300 px-1 text-[9px] uppercase tracking-wider dark:border-fuchsia-700">
+          <span className="shrink-0 rounded border border-zinc-300 px-1 text-[9px] uppercase tracking-wider dark:border-zinc-600">
             palette
           </span>
           <span className="truncate font-medium">{name}</span>
           {description && (
-            <span className="hidden truncate text-fuchsia-400 dark:text-fuchsia-600 sm:block">{description}</span>
+            <span className="hidden truncate text-zinc-400 dark:text-zinc-600 sm:block">{description}</span>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           {mode === 'plan' && (
-            <span className="text-[9px] text-fuchsia-400 dark:text-fuchsia-600">plan</span>
+            <span className="text-[9px] text-sky-500 dark:text-sky-600">plan</span>
           )}
           {hasDark && (
-            <div className="flex overflow-hidden rounded border border-fuchsia-200 dark:border-fuchsia-800">
+            <div className="flex overflow-hidden rounded border border-zinc-200 dark:border-zinc-700">
               <button
                 onClick={() => setIsDark(false)}
-                className={`px-1.5 py-0.5 ${!isDark ? 'bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/50 dark:text-fuchsia-300' : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600'}`}
+                className={`px-1.5 py-0.5 ${!isDark ? 'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300' : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600'}`}
                 title="Light mode"
               >
                 ☀
               </button>
               <button
                 onClick={() => setIsDark(true)}
-                className={`px-1.5 py-0.5 ${isDark ? 'bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/50 dark:text-fuchsia-300' : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600'}`}
+                className={`px-1.5 py-0.5 ${isDark ? 'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300' : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600'}`}
                 title="Dark mode"
               >
                 ☾
@@ -83,12 +83,12 @@ const AIColorPalettePreview = ({ name, description, colors, mode }: ColorPalette
       </div>
 
       {/* Color list */}
-      <div className="divide-y divide-zinc-50 bg-white dark:divide-zinc-900 dark:bg-zinc-950">
+      <div className="divide-y divide-zinc-50 bg-white dark:divide-zinc-800/60 dark:bg-zinc-950">
         {sorted.map(c => {
           const hex = getHex(c);
           const isCopied = copied === hex;
           return (
-            <div key={c.name} className="flex items-center gap-2 px-3 py-1.5">
+            <div key={c.name} className="flex items-center gap-2 px-3 py-1">
               <button
                 onClick={() => copy(hex)}
                 className="h-4 w-4 shrink-0 cursor-pointer rounded-full border border-black/10 transition-transform hover:scale-110 dark:border-white/10"
@@ -134,7 +134,7 @@ const AIColorPalettePreview = ({ name, description, colors, mode }: ColorPalette
 
       {/* Confirmation panel */}
       {confirming && (
-        <div className="border-t border-fuchsia-100 bg-fuchsia-50/60 px-3 py-2 dark:border-fuchsia-900/30 dark:bg-fuchsia-950/20">
+        <div className="border-t border-zinc-100 bg-zinc-50 px-3 py-2 dark:border-zinc-700/60 dark:bg-zinc-900/60">
           <p className="mb-2 font-mono text-[10px] text-zinc-500 dark:text-zinc-400">
             Create {sorted.length} style variable{sorted.length !== 1 ? 's' : ''}:
           </p>
@@ -159,7 +159,7 @@ const AIColorPalettePreview = ({ name, description, colors, mode }: ColorPalette
             </button>
             <button
               onClick={handleConfirm}
-              className="rounded bg-fuchsia-600 px-2.5 py-1 font-mono text-white hover:bg-fuchsia-700"
+              className="rounded bg-zinc-800 px-2.5 py-1 font-mono text-white hover:bg-zinc-700 dark:bg-zinc-200 dark:text-zinc-900 dark:hover:bg-zinc-100"
             >
               Confirm & Apply
             </button>
@@ -168,10 +168,10 @@ const AIColorPalettePreview = ({ name, description, colors, mode }: ColorPalette
       )}
 
       {!confirming && (
-        <div className="flex items-center justify-end border-t border-fuchsia-100 bg-fuchsia-50/50 px-3 py-1.5 dark:border-fuchsia-900/30 dark:bg-fuchsia-950/20">
+        <div className="flex items-center justify-end border-t border-zinc-100 bg-zinc-50 px-3 py-1 dark:border-zinc-700/60 dark:bg-zinc-900/60">
           <button
             onClick={() => setConfirming(true)}
-            className="rounded border border-fuchsia-300 px-2.5 py-1 font-mono text-fuchsia-600 hover:bg-fuchsia-100 dark:border-fuchsia-700 dark:text-fuchsia-400 dark:hover:bg-fuchsia-950/40"
+            className="rounded border border-zinc-300 px-2.5 py-1 font-mono text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800"
           >
             Apply to Space
           </button>

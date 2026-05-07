@@ -130,8 +130,8 @@ const TokenRow = ({ tokens, label }: { tokens: NamedToken[]; label: string }) =>
   <div className="mb-2 flex flex-wrap gap-1.5">
     {tokens.map(({ name, value }) => (
       <div key={name} className="flex flex-col items-center gap-0.5">
-        <div className="flex h-6 items-end justify-center bg-zinc-200 dark:bg-zinc-700" style={{ width: 28 }} title={`${label}-${name}: ${value}`}>
-          <div className="w-full bg-indigo-400 dark:bg-indigo-600" style={{ height: Math.min(24, Math.max(3, parseInt(value) || 6)) }} />
+        <div className="flex h-6 items-end justify-center bg-zinc-100 dark:bg-zinc-800" style={{ width: 28 }} title={`${label}-${name}: ${value}`}>
+          <div className="w-full bg-zinc-400 dark:bg-zinc-500" style={{ height: Math.min(24, Math.max(3, parseInt(value) || 6)) }} />
         </div>
         <span className="font-mono text-[9px] text-zinc-500">{name}</span>
         <span className="font-mono text-[8px] text-zinc-400">{value}</span>
@@ -145,7 +145,7 @@ const RadiusRow = ({ tokens }: { tokens: NamedToken[] }) => (
     {tokens.map(({ name, value }) => (
       <div key={name} className="flex flex-col items-center gap-0.5">
         <div
-          className="h-6 w-6 border-2 border-indigo-400 bg-indigo-50 dark:border-indigo-600 dark:bg-indigo-950/30"
+          className="h-6 w-6 border-2 border-zinc-400 bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800/40"
           style={{ borderRadius: value }}
         />
         <span className="font-mono text-[9px] text-zinc-500">{name}</span>
@@ -254,27 +254,27 @@ const AIStyleGuidePreview = ({
   };
 
   return (
-    <div className="mt-2 overflow-hidden rounded-md border border-indigo-200 text-xs dark:border-indigo-900/50">
+    <div className="mt-2 overflow-hidden rounded-md border border-zinc-200 text-xs dark:border-zinc-700/60">
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 border-b border-indigo-100 bg-indigo-50 px-3 py-1 font-mono text-indigo-600 dark:border-indigo-900/40 dark:bg-indigo-950/30 dark:text-indigo-400">
+      <div className="flex items-center justify-between gap-2 border-b border-zinc-100 bg-zinc-50 px-3 py-1 font-mono text-zinc-600 dark:border-zinc-700/60 dark:bg-zinc-900 dark:text-zinc-400">
         <div className="flex min-w-0 items-center gap-1.5">
-          <span className="shrink-0 rounded border border-indigo-300 px-1 text-[9px] uppercase tracking-wider dark:border-indigo-700">style guide</span>
+          <span className="shrink-0 rounded border border-zinc-300 px-1 text-[9px] uppercase tracking-wider dark:border-zinc-600">style guide</span>
           <span className="truncate font-medium">{name}</span>
           {description && (
-            <span className="hidden truncate text-indigo-400 dark:text-indigo-600 sm:block">{description}</span>
+            <span className="hidden truncate text-zinc-400 dark:text-zinc-600 sm:block">{description}</span>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          {mode === 'plan' && <span className="text-[9px] text-indigo-400 dark:text-indigo-600">plan</span>}
+          {mode === 'plan' && <span className="text-[9px] text-sky-500 dark:text-sky-600">plan</span>}
           {hasDark && (
-            <div className="flex overflow-hidden rounded border border-indigo-200 dark:border-indigo-800">
+            <div className="flex overflow-hidden rounded border border-zinc-200 dark:border-zinc-700">
               <button
                 onClick={() => setIsDark(false)}
-                className={`px-1.5 py-0.5 ${!isDark ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600'}`}
+                className={`px-1.5 py-0.5 ${!isDark ? 'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300' : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600'}`}
               >☀</button>
               <button
                 onClick={() => setIsDark(true)}
-                className={`px-1.5 py-0.5 ${isDark ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600'}`}
+                className={`px-1.5 py-0.5 ${isDark ? 'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300' : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600'}`}
               >☾</button>
             </div>
           )}
@@ -344,7 +344,7 @@ const AIStyleGuidePreview = ({
 
       {/* Confirmation panel */}
       {confirming && (
-        <div className="border-t border-indigo-100 bg-indigo-50/60 px-3 py-2 dark:border-indigo-900/30 dark:bg-indigo-950/20">
+        <div className="border-t border-zinc-100 bg-zinc-50 px-3 py-2 dark:border-zinc-700/60 dark:bg-zinc-900/60">
           <p className="mb-2 font-mono text-[10px] text-zinc-500 dark:text-zinc-400">
             Create {cssVars.length} style variable{cssVars.length !== 1 ? 's' : ''}:
           </p>
@@ -369,7 +369,7 @@ const AIStyleGuidePreview = ({
             </button>
             <button
               onClick={handleConfirm}
-              className="rounded bg-indigo-600 px-2.5 py-1 font-mono text-white hover:bg-indigo-700"
+              className="rounded bg-zinc-800 px-2.5 py-1 font-mono text-white hover:bg-zinc-700 dark:bg-zinc-200 dark:text-zinc-900 dark:hover:bg-zinc-100"
             >
               Confirm & Apply
             </button>
@@ -378,10 +378,10 @@ const AIStyleGuidePreview = ({
       )}
 
       {!confirming && (
-        <div className="flex items-center justify-end gap-2 border-t border-indigo-100 bg-indigo-50/50 px-3 py-1.5 dark:border-indigo-900/30 dark:bg-indigo-950/20">
+        <div className="flex items-center justify-end gap-2 border-t border-zinc-100 bg-zinc-50 px-3 py-1 dark:border-zinc-700/60 dark:bg-zinc-900/60">
           <button
             onClick={() => setConfirming(true)}
-            className="rounded border border-indigo-300 px-2.5 py-1 font-mono text-indigo-600 hover:bg-indigo-100 dark:border-indigo-700 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
+            className="rounded border border-zinc-300 px-2.5 py-1 font-mono text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800"
           >
             Apply to Space
           </button>

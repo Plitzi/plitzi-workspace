@@ -10,6 +10,7 @@ import AiChatHeader from './components/AiChatHeader';
 import AiProviderSettings from './components/AiProviderSettings/AiProviderSettings';
 import Chat from './components/Chat';
 import ChatInput from './components/ChatInput';
+import HistoryPanel from './components/HistoryPanel';
 import QuotaCountdown from './components/QuotaCountdown';
 import AiChatContext from './contexts/AiChatContext';
 import useAiChat from './hooks/useAiChat';
@@ -31,6 +32,7 @@ const AiChat = () => {
   const chatRef = useRef<HTMLDivElement | null>(null);
   const chatInputRef = useRef<ChatInputHandle | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const {
     settings: providerSettings,
@@ -80,6 +82,23 @@ const AiChat = () => {
     void initConversation();
   }, [initConversation]);
 
+  const handleOpenHistory = useCallback(() => {
+    loadConversations?.();
+    setHistoryOpen(true);
+  }, [loadConversations]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        if (!historyOpen) loadConversations?.();
+        setHistoryOpen(v => !v);
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [historyOpen, loadConversations]);
+
   const handleSend = useCallback(
     (msg: string, atts: AiAttachment[]) => {
       void sendMessage(msg, { currentPageId, elementSelected, environment, theme }, atts);
@@ -104,70 +123,86 @@ const AiChat = () => {
 
   const handleClickSettingsToggle = useCallback(() => setIsSettingsOpen(state => !state), []);
 
+  const handleNewChat = useCallback(() => {
+    clearConversation();
+    setHistoryOpen(false);
+  }, [clearConversation]);
+
   return (
     <AiChatContext.Provider value={{ onSendMessage: handleApplySend, elementSelected: elementSelected ?? undefined }}>
-      <div className="flex h-full w-full flex-col bg-white font-mono text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100">
-      <AiChatHeader
-        onClear={clearConversation}
-        onCompact={compact}
-        isStreaming={isStreaming}
-        messageCount={messages.length}
-        providerSettings={providerSettings}
-        usage={usage}
-        isSettingsOpen={isSettingsOpen}
-        onSettingsToggle={handleClickSettingsToggle}
-        conversations={conversations}
-        onLoadConversations={loadConversations}
-        onLoadConversation={loadConversation}
-      />
-
-      {isSettingsOpen && (
-        <AiProviderSettings
-          settings={providerSettings}
-          models={models}
-          modelsLoading={modelsLoading}
-          modelsError={modelsError}
-          onChange={updateSettings}
+      <div className="relative flex h-full w-full flex-col bg-white font-mono text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100">
+        <AiChatHeader
+          onClear={clearConversation}
+          onCompact={compact}
+          isStreaming={isStreaming}
+          messageCount={messages.length}
+          providerSettings={providerSettings}
+          usage={usage}
+          isSettingsOpen={isSettingsOpen}
+          onSettingsToggle={handleClickSettingsToggle}
+          onHistoryOpen={handleOpenHistory}
+          mode={mode}
         />
-      )}
 
-      <Chat
-        ref={chatRef}
-        messages={messages}
-        isStreaming={isStreaming}
-        streamingText={streamingText}
-        liveThinking={liveThinking}
-        liveTools={liveTools}
-      />
-      {quotaError && (
-        <Alert
-          className="mx-3 mb-2 w-auto"
-          solid={false}
-          intent="warning"
-          closeable
-          size="xs"
-          onClick={clearQuotaError}
-        >
-          {quotaError}
-          {quotaRetryAfter && <QuotaCountdown retryAfter={quotaRetryAfter} />}
-        </Alert>
-      )}
-      {error && (
-        <Alert className="mx-3 mb-2 w-auto" solid={false} intent="error" closeable size="xs" onClick={clearError}>
-          {error}
-        </Alert>
-      )}
-      <ChatInput
-        ref={chatInputRef}
-        isStreaming={isStreaming}
-        isListening={isListening}
-        isVoiceSupported={isVoiceSupported}
-        audioData={audioData}
-        onSend={handleSend}
-        onVoiceToggle={handleVoiceToggle}
-        mode={mode}
-        onModeChange={setMode}
-      />
+        {isSettingsOpen && (
+          <AiProviderSettings
+            settings={providerSettings}
+            models={models}
+            modelsLoading={modelsLoading}
+            modelsError={modelsError}
+            onChange={updateSettings}
+          />
+        )}
+
+        <Chat
+          ref={chatRef}
+          messages={messages}
+          isStreaming={isStreaming}
+          streamingText={streamingText}
+          liveThinking={liveThinking}
+          liveTools={liveTools}
+        />
+
+        {quotaError && (
+          <Alert
+            className="mx-3 mb-2 w-auto"
+            solid={false}
+            intent="warning"
+            closeable
+            size="xs"
+            onClick={clearQuotaError}
+          >
+            {quotaError}
+            {quotaRetryAfter && <QuotaCountdown retryAfter={quotaRetryAfter} />}
+          </Alert>
+        )}
+
+        {error && (
+          <Alert className="mx-3 mb-2 w-auto" solid={false} intent="error" closeable size="xs" onClick={clearError}>
+            {error}
+          </Alert>
+        )}
+
+        <ChatInput
+          ref={chatInputRef}
+          isStreaming={isStreaming}
+          isListening={isListening}
+          isVoiceSupported={isVoiceSupported}
+          audioData={audioData}
+          onSend={handleSend}
+          onVoiceToggle={handleVoiceToggle}
+          mode={mode}
+          onModeChange={setMode}
+        />
+
+        {historyOpen && (
+          <HistoryPanel
+            conversations={conversations ?? []}
+            onClose={() => setHistoryOpen(false)}
+            onSelect={loadConversation}
+            onNew={handleNewChat}
+          />
+        )}
       </div>
     </AiChatContext.Provider>
   );

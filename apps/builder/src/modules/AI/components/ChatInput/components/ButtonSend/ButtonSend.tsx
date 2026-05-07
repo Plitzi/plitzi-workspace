@@ -25,8 +25,8 @@ const ButtonSend = ({
   return (
     <Button
       className={clsx('shrink-0 rounded border-none text-white transition-colors duration-200 disabled:opacity-40', {
-        'bg-violet-600 hover:bg-violet-500 disabled:bg-violet-300 dark:disabled:bg-violet-900': mode === 'build',
-        'bg-sky-600 hover:bg-sky-500 disabled:bg-sky-300 dark:disabled:bg-sky-900': mode === 'plan',
+        'bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 dark:disabled:bg-orange-900/60': mode === 'build',
+        'bg-sky-500 hover:bg-sky-600 disabled:bg-sky-300 dark:disabled:bg-sky-900/60': mode === 'plan',
         'cursor-pointer': !disabled,
         'cursor-not-allowed': disabled
       })}

@@ -1,6 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-
-import type { AiProviderSettings, AiUsage, ConversationSummary } from '../types';
+import type { AiMode, AiProviderSettings, AiUsage } from '../types';
 import type { ReactNode } from 'react';
 
 type AiChatHeaderProps = {
@@ -14,21 +12,14 @@ type AiChatHeaderProps = {
   usage?: AiUsage;
   isSettingsOpen?: boolean;
   onSettingsToggle?: () => void;
-  conversations?: ConversationSummary[];
-  onLoadConversations?: () => void;
-  onLoadConversation?: (id: string) => void;
+  onHistoryOpen?: () => void;
+  mode?: AiMode;
 };
 
 const usageColor = (pct: number) => {
-  if (pct >= 80) {
-    return 'bg-red-400 dark:bg-red-500';
-  }
-
-  if (pct >= 60) {
-    return 'bg-amber-400 dark:bg-amber-500';
-  }
-
-  return 'bg-violet-400 dark:bg-violet-500';
+  if (pct >= 80) return 'bg-red-400 dark:bg-red-500';
+  if (pct >= 60) return 'bg-amber-400 dark:bg-amber-500';
+  return 'bg-orange-400 dark:bg-orange-500';
 };
 
 const fmt = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
@@ -44,147 +35,89 @@ const AiChatHeader = ({
   usage,
   isSettingsOpen,
   onSettingsToggle,
-  conversations = [],
-  onLoadConversations,
-  onLoadConversation
+  onHistoryOpen,
+  mode
 }: AiChatHeaderProps) => {
   const { provider, model } = providerSettings ?? {};
-  const providerLabel = provider
-    ? [provider, model ? model.split('/').pop() : undefined].filter(Boolean).join(' · ')
-    : undefined;
+  const modelLabel = model ? model.split('/').pop() : undefined;
 
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const historyRef = useRef<HTMLDivElement>(null);
+  const accentDot = mode === 'plan' ? 'text-sky-500 dark:text-sky-400' : 'text-orange-500 dark:text-orange-400';
+  const modePill =
+    mode === 'plan'
+      ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400'
+      : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
 
-  useEffect(() => {
-    if (!historyOpen) {
-      return;
-    }
-
-    const handler = (e: MouseEvent) => {
-      if (historyRef.current && !historyRef.current.contains(e.target as Node)) {
-        setHistoryOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [historyOpen]);
-
-  const handleHistoryToggle = () => {
-    if (!historyOpen) {
-      onLoadConversations?.();
-    }
-
-    setHistoryOpen(v => !v);
-  };
+  const iconBtn =
+    'flex h-6 w-6 items-center justify-center rounded text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-40 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300';
 
   return (
-    <div className="border-b border-gray-200 dark:border-zinc-800">
-      <div className="flex items-center justify-between px-4 py-2">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-violet-500 dark:text-violet-400">◆</span>
-          <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">AI Assistant</span>
+    <div className="shrink-0 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="flex items-center justify-between gap-2 px-3 py-1.5">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className={accentDot}>◆</span>
+          <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">AI</span>
+          {mode && (
+            <span className={`shrink-0 rounded px-1.5 py-px font-mono text-[9px] uppercase tracking-widest ${modePill}`}>
+              {mode}
+            </span>
+          )}
           {badge && (
-            <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
+            <span className="shrink-0 rounded bg-amber-100 px-1.5 py-px text-[9px] text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
               {badge}
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-0.5">
           {extra}
 
-          {providerLabel && (
-            <span className="font-mono text-[10px] text-zinc-400 dark:text-zinc-600">{providerLabel}</span>
+          {modelLabel && (
+            <span
+              className="mr-1.5 shrink-0 font-mono text-[9px] text-zinc-400 dark:text-zinc-600"
+              title={[provider, model].filter(Boolean).join(' / ')}
+            >
+              {modelLabel}
+            </span>
           )}
 
           {onSettingsToggle && (
             <button
-              className={`text-xs transition-colors ${
-                isSettingsOpen
-                  ? 'text-violet-500 dark:text-violet-400'
-                  : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-400'
-              }`}
               onClick={onSettingsToggle}
               title="Provider settings"
+              className={`${iconBtn} ${isSettingsOpen ? 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300' : ''}`}
             >
-              <i className="fa-solid fa-sliders" />
+              <i className="fa-solid fa-sliders text-[11px]" />
             </button>
           )}
 
           {onCompact && messageCount >= 2 && (
-            <button
-              className="text-xs text-zinc-400 transition-colors hover:text-amber-500 dark:text-zinc-600 dark:hover:text-amber-400"
-              onClick={onCompact}
-              disabled={isStreaming}
-              title="Compact conversation (summarize to free context)"
-            >
-              ⊙ compact
+            <button onClick={onCompact} disabled={isStreaming} title="Compact conversation" className={iconBtn}>
+              <i className="fa-solid fa-compress text-[11px]" />
             </button>
           )}
 
-          <div ref={historyRef} className="relative">
-            <button
-              className={`text-xs transition-colors ${
-                historyOpen
-                  ? 'text-violet-500 dark:text-violet-400'
-                  : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-400'
-              }`}
-              onClick={handleHistoryToggle}
-              title="Conversation history"
-            >
-              ☰ history
+          {onHistoryOpen && (
+            <button onClick={onHistoryOpen} title="Conversation history (⌘K)" className={iconBtn}>
+              <i className="fa-solid fa-clock-rotate-left text-[11px]" />
             </button>
+          )}
 
-            {historyOpen && (
-              <div className="absolute top-full right-0 z-50 mt-1 w-72 rounded border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
-                {conversations.length === 0 ? (
-                  <div className="px-3 py-2 text-xs text-zinc-400 dark:text-zinc-600">No conversations yet</div>
-                ) : (
-                  conversations.map(c => (
-                    <button
-                      key={c.id}
-                      className="w-full border-b border-zinc-100 px-3 py-2 text-left last:border-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800"
-                      onClick={() => {
-                        onLoadConversation?.(c.id);
-                        setHistoryOpen(false);
-                      }}
-                    >
-                      <div className="truncate text-xs text-zinc-700 dark:text-zinc-300">
-                        {c.preview || '(empty conversation)'}
-                      </div>
-                      <div className="mt-0.5 font-mono text-[10px] text-zinc-400 dark:text-zinc-600">
-                        {c.messageCount} msgs · {new Date(c.updatedAt).toLocaleDateString()}
-                      </div>
-                    </button>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-
-          <button
-            className="text-xs text-zinc-400 transition-colors hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-400"
-            onClick={onClear}
-            disabled={isStreaming}
-            title="New conversation"
-          >
-            ✕ new
+          <button onClick={onClear} disabled={isStreaming} title="New conversation" className={iconBtn}>
+            <i className="fa-solid fa-plus text-[11px]" />
           </button>
         </div>
       </div>
 
       {usage && (
-        <div className="flex items-center gap-2 px-4 pb-1.5">
-          <div className="h-1 flex-1 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+        <div className="flex items-center gap-2 px-3 pb-1.5">
+          <div className="h-0.5 flex-1 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
             <div
               className={`h-full rounded-full transition-all ${usageColor(usage.usedPercent)}`}
               style={{ width: `${Math.min(usage.usedPercent, 100)}%` }}
             />
           </div>
-          <span className="shrink-0 font-mono text-[10px] text-zinc-400 dark:text-zinc-600">
-            {fmt(usage.inputTokens)} / {fmt(usage.contextLimit)}
+          <span className="shrink-0 font-mono text-[9px] text-zinc-400 dark:text-zinc-600">
+            {fmt(usage.inputTokens)}/{fmt(usage.contextLimit)}
           </span>
         </div>
       )}
