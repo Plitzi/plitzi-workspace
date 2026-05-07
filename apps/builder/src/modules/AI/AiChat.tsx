@@ -83,7 +83,7 @@ const AiChat = () => {
   }, [initConversation]);
 
   const handleOpenHistory = useCallback(() => {
-    loadConversations?.();
+    void loadConversations();
     setHistoryOpen(true);
   }, [loadConversations]);
 
@@ -91,7 +91,9 @@ const AiChat = () => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        if (!historyOpen) loadConversations?.();
+        if (!historyOpen) {
+          void loadConversations();
+        }
         setHistoryOpen(v => !v);
       }
     };
@@ -197,7 +199,7 @@ const AiChat = () => {
 
         {historyOpen && (
           <HistoryPanel
-            conversations={conversations ?? []}
+            conversations={conversations}
             onClose={() => setHistoryOpen(false)}
             onSelect={loadConversation}
             onNew={handleNewChat}

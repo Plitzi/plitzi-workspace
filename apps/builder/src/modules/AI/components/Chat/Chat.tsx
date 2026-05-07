@@ -70,7 +70,7 @@ const Chat = ({ ref, messages = [], isStreaming, streamingText, liveThinking, li
   useEffect(() => {
     if (messages.length > prevMessagesLengthRef.current) {
       const last = messages[messages.length - 1];
-      if (last?.role === 'user') {
+      if ((last as AiMessage | undefined)?.role === 'user') {
         isAtBottom.current = true;
       }
     }

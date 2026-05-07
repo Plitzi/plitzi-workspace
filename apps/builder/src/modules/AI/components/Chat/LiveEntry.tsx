@@ -51,7 +51,7 @@ const LiveEntry = ({ isStreaming, streamingText, liveThinking, liveTools = [] }:
             {thinkingOpen && (
               <div
                 ref={thinkingRef}
-                className="ml-2 mt-0.5 max-h-40 overflow-y-auto border-l-2 border-zinc-200 pl-3 font-mono text-xs leading-snug text-zinc-400 italic dark:border-zinc-700 dark:text-zinc-500"
+                className="mt-0.5 ml-2 max-h-40 overflow-y-auto border-l-2 border-zinc-200 pl-3 font-mono text-xs leading-snug text-zinc-400 italic dark:border-zinc-700 dark:text-zinc-500"
               >
                 <span className="wrap-break-word whitespace-pre-wrap">{liveThinking}</span>
                 <span className="ml-0.5 inline-block h-3 w-0.5 animate-pulse bg-zinc-400 align-middle dark:bg-zinc-500" />

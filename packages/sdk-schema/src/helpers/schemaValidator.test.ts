@@ -526,7 +526,7 @@ describe('schemaValidator', () => {
       const schema: Schema = {
         ...EMPTY_SCHEMA.schema,
         flat: {
-          'footer': {
+          footer: {
             id: 'footer',
             attributes: {},
             definition: {
@@ -562,9 +562,9 @@ describe('schemaValidator', () => {
       const schema: Schema = {
         ...EMPTY_SCHEMA.schema,
         flat: {
-          'footer': createElement('footer', 'container', 'footer'),
-          'header': createElement('header', 'container', 'header'),
-          'unrelated': createElement('unrelated', 'container', 'unrelated')
+          footer: createElement('footer', 'container', 'footer'),
+          header: createElement('header', 'container', 'header'),
+          unrelated: createElement('unrelated', 'container', 'unrelated')
         },
         pages: []
       };
@@ -580,7 +580,7 @@ describe('schemaValidator', () => {
       const schema: Schema = {
         ...EMPTY_SCHEMA.schema,
         flat: {
-          'card': {
+          card: {
             id: 'card',
             attributes: {},
             definition: {
@@ -678,14 +678,14 @@ describe('schemaValidator', () => {
       const schema: Schema = {
         ...EMPTY_SCHEMA.schema,
         flat: {
-          'parent': {
+          parent: {
             ...createElement('parent', 'container', 'parent'),
             definition: {
               ...createElement('parent', 'container', 'parent').definition,
               items: ['child']
             }
           },
-          'child': {
+          child: {
             ...createElement('child', 'text', 'parent'),
             definition: {
               ...createElement('child', 'text', 'parent').definition,
@@ -705,7 +705,7 @@ describe('schemaValidator', () => {
       const schema: Schema = {
         ...EMPTY_SCHEMA.schema,
         flat: {
-          'footer': createElement('footer', 'container', 'footer')
+          footer: createElement('footer', 'container', 'footer')
         },
         pages: []
       };
@@ -720,7 +720,7 @@ describe('schemaValidator', () => {
       const schema: Schema = {
         ...EMPTY_SCHEMA.schema,
         flat: {
-          'hero': {
+          hero: {
             id: 'hero',
             attributes: {},
             definition: {

@@ -2,11 +2,13 @@ import { useCallback, useState } from 'react';
 
 import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 
-import type { AiMode } from '@pmodules/AI/types';
 import type { BrandData } from '../../helpers/getBrandResult';
+import type { AiMode } from '@pmodules/AI/types';
 
 const needsWhiteText = (hex: string): boolean => {
-  if (hex.length < 7) return false;
+  if (hex.length < 7) {
+    return false;
+  }
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
@@ -14,21 +16,35 @@ const needsWhiteText = (hex: string): boolean => {
 };
 
 const COLOR_LABELS: Record<string, string> = {
-  primary: 'Primary', secondary: 'Secondary', accent: 'Accent',
-  background: 'Background', surface: 'Surface', text: 'Text'
+  primary: 'Primary',
+  secondary: 'Secondary',
+  accent: 'Accent',
+  background: 'Background',
+  surface: 'Surface',
+  text: 'Text'
 };
 
-const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typography, voice, mode }: BrandData & { mode?: AiMode }) => {
+const AIBrandPreview = ({
+  name,
+  tagline,
+  personality,
+  colors,
+  colorsDark,
+  typography,
+  voice,
+  mode
+}: BrandData & { mode?: AiMode }) => {
   const [confirming, setConfirming] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const { onSendMessage } = useAiChatContext();
 
-  const activeColors = (isDark && colorsDark)
-    ? { ...colors, ...Object.fromEntries(Object.entries(colorsDark).filter(([, v]) => v)) }
-    : colors;
+  const activeColors =
+    isDark && colorsDark
+      ? { ...colors, ...Object.fromEntries(Object.entries(colorsDark).filter(([, v]) => v)) }
+      : colors;
 
-  const colorEntries = Object.entries(activeColors).filter(([, hex]) => hex) as [string, string][];
+  const colorEntries = Object.entries(activeColors).filter(([, hex]) => hex);
   const bg = activeColors.background ?? (isDark ? '#0f172a' : '#ffffff');
   const fg = activeColors.text ?? (isDark ? '#f1f5f9' : '#0f172a');
   const hasDark = !!colorsDark;
@@ -41,10 +57,12 @@ const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typogr
 
   const cssVars = [
     ...colorEntries.map(([role, hex]) => ({ varName: `--brand-${role}`, value: hex, preview: hex })),
-    ...(typography ? [
-      { varName: '--brand-font-heading', value: typography.heading.family, preview: undefined },
-      { varName: '--brand-font-body', value: typography.body.family, preview: undefined }
-    ] : [])
+    ...(typography
+      ? [
+          { varName: '--brand-font-heading', value: typography.heading.family, preview: undefined },
+          { varName: '--brand-font-body', value: typography.body.family, preview: undefined }
+        ]
+      : [])
   ];
 
   const handleConfirm = () => {
@@ -63,7 +81,9 @@ const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typogr
       {/* Header */}
       <div className="flex items-center justify-between gap-2 border-b border-zinc-100 bg-zinc-50 px-3 py-1 font-mono text-zinc-600 dark:border-zinc-700/60 dark:bg-zinc-900 dark:text-zinc-400">
         <div className="flex items-center gap-1.5">
-          <span className="rounded border border-zinc-300 px-1 text-[9px] uppercase tracking-wider dark:border-zinc-600">brand</span>
+          <span className="rounded border border-zinc-300 px-1 text-[9px] tracking-wider uppercase dark:border-zinc-600">
+            brand
+          </span>
           <span className="font-medium">{name}</span>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
@@ -73,11 +93,15 @@ const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typogr
               <button
                 onClick={() => setIsDark(false)}
                 className={`px-1.5 py-0.5 ${!isDark ? 'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300' : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600'}`}
-              >☀</button>
+              >
+                ☀
+              </button>
               <button
                 onClick={() => setIsDark(true)}
                 className={`px-1.5 py-0.5 ${isDark ? 'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300' : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600'}`}
-              >☾</button>
+              >
+                ☾
+              </button>
             </div>
           )}
         </div>
@@ -88,10 +112,13 @@ const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typogr
         {/* Hero strip — compact */}
         <div
           className="px-3 py-2"
-          style={{ backgroundColor: activeColors.primary, color: needsWhiteText(activeColors.primary) ? '#fff' : '#111' }}
+          style={{
+            backgroundColor: activeColors.primary,
+            color: needsWhiteText(activeColors.primary) ? '#fff' : '#111'
+          }}
         >
           <div
-            className="text-sm font-bold leading-tight tracking-tight"
+            className="text-sm leading-tight font-bold tracking-tight"
             style={{ fontFamily: typography?.heading.family, letterSpacing: typography?.heading.tracking ?? undefined }}
           >
             {name}
@@ -105,13 +132,15 @@ const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typogr
 
         {/* Colors */}
         <div className="px-3 pt-2">
-          <div className="mb-1.5 font-mono text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Colors</div>
+          <div className="mb-1.5 font-mono text-[10px] tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
+            Colors
+          </div>
           <div className="flex flex-wrap gap-2">
             {colorEntries.map(([role, hex]) => (
               <button
                 key={role}
                 onClick={() => copy(hex)}
-                className="flex flex-col items-center gap-0.5 cursor-pointer"
+                className="flex cursor-pointer flex-col items-center gap-0.5"
                 title={`Copy ${hex}`}
               >
                 <div
@@ -119,10 +148,11 @@ const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typogr
                   style={{ backgroundColor: hex }}
                 />
                 <span className="font-mono text-[9px] text-zinc-500">{COLOR_LABELS[role] ?? role}</span>
-                {copied === hex
-                  ? <i className="fa-solid fa-check text-[9px] text-emerald-500" />
-                  : <span className="font-mono text-[8px] text-zinc-400">{hex.toUpperCase()}</span>
-                }
+                {copied === hex ? (
+                  <i className="fa-solid fa-check text-[9px] text-emerald-500" />
+                ) : (
+                  <span className="font-mono text-[8px] text-zinc-400">{hex.toUpperCase()}</span>
+                )}
               </button>
             ))}
           </div>
@@ -131,7 +161,9 @@ const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typogr
         {/* Personality */}
         {personality.length > 0 && (
           <div className="px-3 pt-2">
-            <div className="mb-1 font-mono text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Personality</div>
+            <div className="mb-1 font-mono text-[10px] tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
+              Personality
+            </div>
             <div className="flex flex-wrap gap-1">
               {personality.map(trait => (
                 <span
@@ -153,14 +185,19 @@ const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typogr
         {/* Typography */}
         {typography && (
           <div className="px-3 pt-2">
-            <div className="mb-1 font-mono text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Typography</div>
+            <div className="mb-1 font-mono text-[10px] tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
+              Typography
+            </div>
             <div
               className="rounded border border-zinc-100 p-2 dark:border-zinc-800"
               style={{ backgroundColor: bg, color: fg }}
             >
               <div
-                className="text-sm font-bold leading-snug"
-                style={{ fontFamily: typography.heading.family, letterSpacing: typography.heading.tracking ?? undefined }}
+                className="text-sm leading-snug font-bold"
+                style={{
+                  fontFamily: typography.heading.family,
+                  letterSpacing: typography.heading.tracking ?? undefined
+                }}
               >
                 {typography.heading.family}
               </div>
@@ -177,12 +214,17 @@ const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typogr
         {/* Voice */}
         {voice && (
           <div className="px-3 py-2.5 pt-2">
-            <div className="mb-1 font-mono text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Voice & Tone</div>
-            <p className="italic text-zinc-600 dark:text-zinc-400">"{voice.tone}"</p>
+            <div className="mb-1 font-mono text-[10px] tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
+              Voice & Tone
+            </div>
+            <p className="text-zinc-600 italic dark:text-zinc-400">"{voice.tone}"</p>
             {voice.keywords && voice.keywords.length > 0 && (
               <div className="mt-1 flex flex-wrap gap-1">
                 {voice.keywords.map(kw => (
-                  <span key={kw} className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                  <span
+                    key={kw}
+                    className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                  >
                     {kw}
                   </span>
                 ))}
@@ -201,10 +243,14 @@ const AIBrandPreview = ({ name, tagline, personality, colors, colorsDark, typogr
           <div className="mb-2 max-h-28 space-y-0.5 overflow-y-auto">
             {cssVars.map(({ varName, value, preview }) => (
               <div key={varName} className="flex items-center gap-2">
-                {preview
-                  ? <div className="h-3 w-3 shrink-0 rounded-sm border border-black/10" style={{ backgroundColor: preview }} />
-                  : <span className="h-3 w-3 shrink-0 text-center font-mono text-[8px] leading-3 text-zinc-400">Aa</span>
-                }
+                {preview ? (
+                  <div
+                    className="h-3 w-3 shrink-0 rounded-sm border border-black/10"
+                    style={{ backgroundColor: preview }}
+                  />
+                ) : (
+                  <span className="h-3 w-3 shrink-0 text-center font-mono text-[8px] leading-3 text-zinc-400">Aa</span>
+                )}
                 <span className="font-mono text-[10px] text-zinc-600 dark:text-zinc-300">{varName}</span>
                 <span className="ml-auto truncate font-mono text-[10px] text-zinc-400 dark:text-zinc-600">{value}</span>
               </div>

@@ -17,8 +17,12 @@ type AiChatHeaderProps = {
 };
 
 const usageColor = (pct: number) => {
-  if (pct >= 80) return 'bg-red-400 dark:bg-red-500';
-  if (pct >= 60) return 'bg-amber-400 dark:bg-amber-500';
+  if (pct >= 80) {
+    return 'bg-red-400 dark:bg-red-500';
+  }
+  if (pct >= 60) {
+    return 'bg-amber-400 dark:bg-amber-500';
+  }
   return 'bg-orange-400 dark:bg-orange-500';
 };
 
@@ -57,7 +61,9 @@ const AiChatHeader = ({
           <span className={accentDot}>◆</span>
           <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">AI</span>
           {mode && (
-            <span className={`shrink-0 rounded px-1.5 py-px font-mono text-[9px] uppercase tracking-widest ${modePill}`}>
+            <span
+              className={`shrink-0 rounded px-1.5 py-px font-mono text-[9px] tracking-widest uppercase ${modePill}`}
+            >
               {mode}
             </span>
           )}

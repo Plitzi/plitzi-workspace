@@ -48,8 +48,5 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ],
-  "resolutions": {
-    "@plitzi/plitzi-ui": "portal:/Users/Carlos/htdocs/plitzi-ui"
-  }
+  ]
 }

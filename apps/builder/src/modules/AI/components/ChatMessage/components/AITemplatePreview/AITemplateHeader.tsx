@@ -30,11 +30,11 @@ const AITemplateHeader = ({
 }: AITemplateHeaderProps) => (
   <div className="flex items-center justify-between gap-2 border-b border-zinc-100 bg-zinc-50 px-3 py-1 font-mono text-xs text-zinc-600 dark:border-zinc-700/60 dark:bg-zinc-900 dark:text-zinc-400">
     <div className="flex min-w-0 items-center gap-1.5">
-      <span className="shrink-0 rounded border border-zinc-300 px-1 text-[9px] uppercase tracking-wider dark:border-zinc-600">preview</span>
+      <span className="shrink-0 rounded border border-zinc-300 px-1 text-[9px] tracking-wider uppercase dark:border-zinc-600">
+        preview
+      </span>
       <span className="truncate">{showHtml ? 'HTML Source' : baseElementId}</span>
-      {mode === 'plan' && (
-        <span className="shrink-0 font-mono text-[9px] text-sky-500 dark:text-sky-600">plan</span>
-      )}
+      {mode === 'plan' && <span className="shrink-0 font-mono text-[9px] text-sky-500 dark:text-sky-600">plan</span>}
     </div>
 
     <div className="flex items-center gap-2">
@@ -65,7 +65,10 @@ const AITemplateHeader = ({
         ))}
       </div>
 
-      <button onClick={onClick} className="cursor-pointer text-zinc-400 hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-400">
+      <button
+        onClick={onClick}
+        className="cursor-pointer text-zinc-400 hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-400"
+      >
         <i className="fa-solid fa-up-right-and-down-left-from-center" />
       </button>
     </div>

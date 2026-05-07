@@ -5,14 +5,13 @@ import { useCallback, useMemo, useState, use } from 'react';
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 import StoreProvider from '@plitzi/sdk-store/StoreProvider';
-import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
-
 import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
+import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
 
 import AITemplateHeader from './AITemplateHeader';
 
-import type { AiMode } from '@pmodules/AI/types';
 import type { DisplayMode, Schema, Style } from '@plitzi/sdk-shared';
+import type { AiMode } from '@pmodules/AI/types';
 
 export type AITemplatePreviewProps = {
   baseElementId: string;
@@ -42,18 +41,23 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode }: AITempl
         </StoreProvider>,
         {
           icon: <i className="fa-brands fa-nfc-symbol text-base" />,
-          title: 'Preview', height: 400, width: 400,
-          allowLeftSide: false, allowRightSide: false,
-          placement: 'floating', resizeHandles: ['se']
+          title: 'Preview',
+          height: 400,
+          width: 400,
+          allowLeftSide: false,
+          allowRightSide: false,
+          placement: 'floating',
+          resizeHandles: ['se']
         }
       );
     }
   }, [addPopup, baseElementId, existsPopup, storeValue]);
 
   const handleConfirm = useCallback(() => {
-    const where = target === 'element' && elementSelected
-      ? `as children of the currently selected element (ID: "${elementSelected}")`
-      : 'on the current page';
+    const where =
+      target === 'element' && elementSelected
+        ? `as children of the currently selected element (ID: "${elementSelected}")`
+        : 'on the current page';
     onSendMessage(
       `The user has approved the proposed layout (element: ${baseElementId}). Please apply it ${where} permanently using the appropriate tool (createElement or applyToPage).`
     );

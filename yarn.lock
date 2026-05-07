@@ -3257,9 +3257,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-ui@portal:/Users/Carlos/htdocs/plitzi-ui::locator=%40plitzi%2Fplitzi-workspace%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@plitzi/plitzi-ui@portal:/Users/Carlos/htdocs/plitzi-ui::locator=%40plitzi%2Fplitzi-workspace%40workspace%3A."
+"@plitzi/plitzi-ui@npm:^1.6.5":
+  version: 1.6.5
+  resolution: "@plitzi/plitzi-ui@npm:1.6.5::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fplitzi-ui%2F1.6.5%2F94a49c9548e8039a2d102b6742277e36324281d4"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.20.1"
     "@codemirror/commands": "npm:^6.10.3"
@@ -3289,8 +3289,9 @@ __metadata:
     tinycolor2: "npm:^1.6.0"
     uuid: "npm:^14.0.0"
     zod: "npm:^4.4.3"
+  checksum: 10c0/f469701a025c4ac71cce8e48b26c0545b6f465b435aef7f7d8c9c39d9b889877d784acbf8abd07b6c63ad078a513bf75e0ef2b01b433aee00547bba4fa04a307
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@plitzi/plitzi-workspace@workspace:.":
   version: 0.0.0-use.local

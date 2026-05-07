@@ -5,21 +5,42 @@ import type { ConversationSummary } from '../types';
 const relativeTime = (dateStr: string): string => {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m`;
+  if (mins < 1) {
+    return 'just now';
+  }
+
+  if (mins < 60) {
+    return `${mins}m`;
+  }
+
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h`;
+  if (hrs < 24) {
+    return `${hrs}h`;
+  }
+
   const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}d`;
+  if (days < 7) {
+    return `${days}d`;
+  }
+
   return new Date(dateStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 };
 
 const getDateGroup = (dateStr: string): 'today' | 'yesterday' | 'week' | 'older' => {
   const diff = Date.now() - new Date(dateStr).getTime();
   const days = diff / 86400000;
-  if (days < 1) return 'today';
-  if (days < 2) return 'yesterday';
-  if (days < 7) return 'week';
+  if (days < 1) {
+    return 'today';
+  }
+
+  if (days < 2) {
+    return 'yesterday';
+  }
+
+  if (days < 7) {
+    return 'week';
+  }
+
   return 'older';
 };
 
@@ -48,14 +69,16 @@ const HistoryPanel = ({ conversations, onClose, onSelect, onNew }: HistoryPanelP
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        onClose();
+      }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
 
   const filtered = search.trim()
-    ? conversations.filter(c => c.preview?.toLowerCase().includes(search.toLowerCase()))
+    ? conversations.filter(c => c.preview.toLowerCase().includes(search.toLowerCase()))
     : conversations;
 
   const groups = (['today', 'yesterday', 'week', 'older'] as const)
@@ -126,7 +149,7 @@ const HistoryPanel = ({ conversations, onClose, onSelect, onNew }: HistoryPanelP
         ) : (
           groups.map(({ key, label, items }) => (
             <div key={key}>
-              <div className="px-4 pb-1 pt-3 font-mono text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-600">
+              <div className="px-4 pt-3 pb-1 font-mono text-[10px] tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
                 {label}
               </div>
               {items.map(c => (
