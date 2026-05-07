@@ -84,7 +84,7 @@
     "postcss-scss": "^4.0.9",
     "prettier": "^3.8.3",
     "prop-types": "^15.8.1",
-    "react": "19.2.5",
+    "react": "19.2.6",
     "react-dom": "19.2.5",
     "react-refresh": "^0.18.0",
     "react-test-renderer": "^19.2.5",
