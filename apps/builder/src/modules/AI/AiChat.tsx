@@ -125,6 +125,8 @@ const AiChat = () => {
 
   const handleClickSettingsToggle = useCallback(() => setIsSettingsOpen(state => !state), []);
 
+  const conversationTitle = messages.find(m => m.role === 'user')?.content?.slice(0, 60);
+
   const handleNewChat = useCallback(() => {
     clearConversation();
     setHistoryOpen(false);
@@ -144,6 +146,7 @@ const AiChat = () => {
           onSettingsToggle={handleClickSettingsToggle}
           onHistoryOpen={handleOpenHistory}
           mode={mode}
+          conversationTitle={conversationTitle}
         />
 
         {isSettingsOpen && (

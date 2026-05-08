@@ -1,9 +1,8 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import ChatMessage from '../ChatMessage';
 import LiveEntry from './LiveEntry';
-import TimelineDot from './TimelineDot';
 
 import type { AiMessage, AiToolCall } from '../../types';
 import type { RefObject } from 'react';
@@ -17,9 +16,9 @@ export type ChatProps = {
   liveTools?: AiToolCall[];
 };
 
-const PADDING = 12; // py-3
+const PADDING = 16;
 
-const estimateSize = () => 160;
+const estimateSize = () => 120;
 
 const Chat = ({ ref, messages = [], isStreaming, streamingText, liveThinking, liveTools = [] }: ChatProps) => {
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -28,10 +27,25 @@ const Chat = ({ ref, messages = [], isStreaming, streamingText, liveThinking, li
   const hasLive = isStreaming || !!(liveThinking || liveTools.length || streamingText);
   const count = messages.length + (hasLive ? 1 : 0);
 
+  // Compute incrementing version numbers for stage_preview and sketch_wireframe per message.
+  const previewVersions = useMemo(() => {
+    const map: Record<string, { stage: number; wireframe: number }> = {};
+    let stageCount = 0;
+    let wireframeCount = 0;
+    for (const msg of messages) {
+      const hasStage = msg.tools?.some(t => t.name === 'stage_preview' && t.status === 'done') ?? false;
+      const hasWire = msg.tools?.some(t => t.name === 'sketch_wireframe' && t.status === 'done') ?? false;
+      map[msg.id] = {
+        stage: hasStage ? ++stageCount : 0,
+        wireframe: hasWire ? ++wireframeCount : 0
+      };
+    }
+    return map;
+  }, [messages]);
+
   const getScrollElement = useCallback(() => scrollRef.current, []);
 
   const getItemKey = useCallback(
-    // Stable key per item — prevents DOM node recycling across different messages.
     (index: number) => (index === messages.length ? 'live' : messages[index].id),
     [messages]
   );
@@ -50,22 +64,16 @@ const Chat = ({ ref, messages = [], isStreaming, streamingText, liveThinking, li
   const totalSize = virtualizer.getTotalSize();
   const virtualItems = virtualizer.getVirtualItems();
 
-  // Stable scroll listener — attach once on mount.
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el) {
-      return;
-    }
-
+    if (!el) return;
     const onScroll = () => {
       isAtBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 150;
     };
     el.addEventListener('scroll', onScroll, { passive: true });
-
     return () => el.removeEventListener('scroll', onScroll);
   }, []);
 
-  // When the user sends a new message, re-enable auto-scroll so streaming follows.
   const prevMessagesLengthRef = useRef(messages.length);
   useEffect(() => {
     if (messages.length > prevMessagesLengthRef.current) {
@@ -77,22 +85,14 @@ const Chat = ({ ref, messages = [], isStreaming, streamingText, liveThinking, li
     prevMessagesLengthRef.current = messages.length;
   }, [messages]);
 
-  // Scroll to bottom during streaming only when the user is already near the bottom.
   useEffect(() => {
-    if (!isAtBottom.current || !scrollRef.current) {
-      return;
-    }
-
+    if (!isAtBottom.current || !scrollRef.current) return;
     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [streamingText, liveThinking, liveTools]);
 
-  // When totalSize changes (virtualizer remeasuring settled items), keep the user at the bottom.
   const prevTotalSize = useRef(0);
   useEffect(() => {
-    if (totalSize === prevTotalSize.current) {
-      return;
-    }
-
+    if (totalSize === prevTotalSize.current) return;
     prevTotalSize.current = totalSize;
     if (isAtBottom.current && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -101,13 +101,11 @@ const Chat = ({ ref, messages = [], isStreaming, streamingText, liveThinking, li
 
   const setRef = (el: HTMLDivElement | null) => {
     scrollRef.current = el;
-    if (ref) {
-      ref.current = el;
-    }
+    if (ref) ref.current = el;
   };
 
   return (
-    <div ref={setRef} className="flex min-h-0 grow basis-0 flex-col overflow-y-auto px-4">
+    <div ref={setRef} className="flex min-h-0 grow basis-0 flex-col overflow-y-auto px-3">
       {count === 0 && (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
           <span className="text-3xl text-orange-500 dark:text-orange-400">◆</span>
@@ -121,7 +119,8 @@ const Chat = ({ ref, messages = [], isStreaming, streamingText, liveThinking, li
           {virtualItems.map(virtualRow => {
             const { index, start, key } = virtualRow;
             const isLive = index === messages.length;
-            const isLast = index === count - 1;
+            const msg = !isLive ? messages[index] : undefined;
+            const versions = msg ? previewVersions[msg.id] : undefined;
 
             return (
               <div
@@ -129,12 +128,8 @@ const Chat = ({ ref, messages = [], isStreaming, streamingText, liveThinking, li
                 ref={virtualizer.measureElement}
                 data-index={index}
                 style={{ position: 'absolute', top: 0, transform: `translateY(${start}px)`, width: '100%' }}
-                className="relative flex gap-3 pb-2.5"
+                className="pb-4"
               >
-                <div
-                  className={`pointer-events-none absolute left-1.25 w-px bg-gray-200 dark:bg-zinc-800 ${isLast ? 'h-3.5' : 'bottom-0'} top-0`}
-                />
-
                 {isLive && (
                   <LiveEntry
                     isStreaming={isStreaming}
@@ -143,13 +138,12 @@ const Chat = ({ ref, messages = [], isStreaming, streamingText, liveThinking, li
                     liveTools={liveTools}
                   />
                 )}
-                {!isLive && (
-                  <>
-                    <TimelineDot role={messages[index].role} />
-                    <div className="min-w-0 flex-1">
-                      <ChatMessage {...messages[index]} />
-                    </div>
-                  </>
+                {msg && (
+                  <ChatMessage
+                    {...msg}
+                    stagePreviewVersion={versions?.stage}
+                    wireframeVersion={versions?.wireframe}
+                  />
                 )}
               </div>
             );

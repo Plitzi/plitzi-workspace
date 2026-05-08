@@ -19,9 +19,10 @@ export type AITemplatePreviewProps = {
   style?: Pick<Style, 'platform' | 'cache'>;
   html?: string;
   mode?: AiMode;
+  version?: number;
 };
 
-const AITemplatePreview = ({ baseElementId, schema, style, html, mode }: AITemplatePreviewProps) => {
+const AITemplatePreview = ({ baseElementId, schema, style, html, mode, version }: AITemplatePreviewProps) => {
   const { theme } = use(ThemeContext);
   const { existsPopup, addPopup } = usePopup();
   const { onSendMessage, elementSelected } = useAiChatContext();
@@ -75,6 +76,7 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode }: AITempl
         onToggleHtml={() => setShowHtml(prev => !prev)}
         hasHtml={!!html}
         mode={mode}
+        version={version}
       />
 
       {showHtml && html ? (

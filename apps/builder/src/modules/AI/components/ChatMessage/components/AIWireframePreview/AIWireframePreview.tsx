@@ -123,8 +123,9 @@ const AIWireframePreview = ({
   schema,
   style,
   html,
-  mode
-}: WireframeData & { mode?: AiMode }) => {
+  mode,
+  version
+}: WireframeData & { mode?: AiMode; version?: number }) => {
   const { theme } = use(ThemeContext);
   const { existsPopup, addPopup } = usePopup();
   const { onSendMessage, elementSelected } = useAiChatContext();
@@ -166,6 +167,11 @@ const AIWireframePreview = ({
           <span className="shrink-0 rounded border border-zinc-300 px-1 text-[9px] tracking-wider uppercase dark:border-zinc-600">
             wireframe
           </span>
+          {version ? (
+            <span className="shrink-0 rounded bg-zinc-200 px-1 font-mono text-[9px] text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">
+              v{version}
+            </span>
+          ) : null}
           <span className="truncate font-medium">{name}</span>
           {description && (
             <span className="hidden truncate text-zinc-400 sm:block dark:text-zinc-600">{description}</span>

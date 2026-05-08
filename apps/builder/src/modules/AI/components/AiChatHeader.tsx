@@ -14,6 +14,7 @@ type AiChatHeaderProps = {
   onSettingsToggle?: () => void;
   onHistoryOpen?: () => void;
   mode?: AiMode;
+  conversationTitle?: string;
 };
 
 const usageColor = (pct: number) => {
@@ -40,7 +41,8 @@ const AiChatHeader = ({
   isSettingsOpen,
   onSettingsToggle,
   onHistoryOpen,
-  mode
+  mode,
+  conversationTitle
 }: AiChatHeaderProps) => {
   const { provider, model } = providerSettings ?? {};
   const modelLabel = model ? model.split('/').pop() : undefined;
@@ -56,6 +58,11 @@ const AiChatHeader = ({
 
   return (
     <div className="shrink-0 border-b border-zinc-200 dark:border-zinc-800">
+      {conversationTitle && (
+        <div className="truncate px-3 pt-2 text-xs font-medium text-zinc-700 dark:text-zinc-200">
+          {conversationTitle}
+        </div>
+      )}
       <div className="flex items-center justify-between gap-2 px-3 py-1.5">
         <div className="flex min-w-0 items-center gap-1.5">
           <span className={accentDot}>◆</span>
