@@ -2,9 +2,10 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import clsx from 'clsx';
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 
+import { estimateSize, PADDING } from './helpers';
 import { useAiChatContext } from '../../contexts/AiChatContext';
 import ChatMessage from '../ChatMessage';
-import LiveEntry from './LiveEntry';
+import LiveEntry from './components/LiveEntry';
 
 import type { AiMessage, AiToolCall } from '../../types';
 import type { Ref } from 'react';
@@ -17,9 +18,6 @@ export type ChatProps = {
   liveThinking?: string;
   liveTools?: AiToolCall[];
 };
-
-const PADDING = 16;
-const estimateSize = () => 120;
 
 const Chat = ({ ref, messages = [], isStreaming, streamingText, liveThinking, liveTools = [] }: ChatProps) => {
   const { currentMode } = useAiChatContext();
@@ -69,6 +67,7 @@ const Chat = ({ ref, messages = [], isStreaming, streamingText, liveThinking, li
     const onScroll = () => {
       isAtBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 150;
     };
+
     el.addEventListener('scroll', onScroll, { passive: true });
 
     return () => el.removeEventListener('scroll', onScroll);
@@ -94,6 +93,7 @@ const Chat = ({ ref, messages = [], isStreaming, streamingText, liveThinking, li
     if (totalSize === prevTotalSize.current) {
       return;
     }
+
     prevTotalSize.current = totalSize;
     if (isAtBottom.current && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;

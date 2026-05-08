@@ -1,5 +1,7 @@
 import clsx from 'clsx';
 
+import { isMac } from '../../helpers';
+
 import type { AiAttachment, AiMode } from '@pmodules/AI/types';
 
 export type ButtonSendProps = {
@@ -9,8 +11,6 @@ export type ButtonSendProps = {
   disabled?: boolean;
   onClick?: () => void;
 };
-
-const isMac = typeof navigator !== 'undefined' && /mac/i.test(navigator.platform);
 
 const ButtonSend = ({
   mode,

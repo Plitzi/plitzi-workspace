@@ -1,13 +1,9 @@
 import clsx from 'clsx';
 
+import { MODES } from '../../helpers';
+
 import type { DisplayMode } from '@plitzi/sdk-shared';
 import type { AiMode } from '@pmodules/AI/types';
-
-const MODES: { mode: DisplayMode; icon: string }[] = [
-  { mode: 'desktop', icon: 'fa-solid fa-desktop' },
-  { mode: 'tablet', icon: 'fa-solid fa-tablet-screen-button' },
-  { mode: 'mobile', icon: 'fa-solid fa-mobile-screen' }
-];
 
 export type AITemplateHeaderProps = {
   baseElementId: string;

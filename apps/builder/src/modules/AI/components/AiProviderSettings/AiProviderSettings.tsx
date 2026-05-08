@@ -3,22 +3,10 @@ import Select from '@plitzi/plitzi-ui/Select';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import { useCallback, useMemo } from 'react';
 
+import { BASE_URL_PLACEHOLDER, PROVIDERS } from './helpers/constants';
 import groupModels from './helpers/groupModels';
 
 import type { AiModelInfo, AiProviderSettings, AiProviderType } from '../../types';
-
-const PROVIDERS: { value: AiProviderType; label: string }[] = [
-  { value: 'openai', label: 'OpenAI' },
-  { value: 'anthropic', label: 'Anthropic' },
-  { value: 'ollama', label: 'Ollama (local)' },
-  { value: 'openrouter', label: 'OpenRouter' },
-  { value: 'opencode', label: 'OpenCode' }
-];
-
-const BASE_URL_PLACEHOLDER: Partial<Record<AiProviderType, string>> = {
-  ollama: 'http://localhost:11434/v1',
-  opencode: 'http://localhost:4096'
-};
 
 export type AiProviderSettingsProps = {
   settings: AiProviderSettings;
@@ -38,6 +26,14 @@ const AiProviderSettings = ({ settings, models, modelsLoading, modelsError, onCh
     (value: string) => onChange({ provider: (value || undefined) as AiProviderType | undefined }),
     [onChange]
   );
+
+  const handleChangeModel = useCallback(
+    (opt: unknown) => onChange({ model: opt ? (opt as { value: string }).value : undefined }),
+    [onChange]
+  );
+
+  const handleChangeApiKey = useCallback((v: string) => onChange({ apiKey: v || undefined }), [onChange]);
+  const handleChangeBaseUrl = useCallback((v: string) => onChange({ baseUrl: v || undefined }), [onChange]);
 
   return (
     <div className="border-b border-violet-100 bg-violet-50/40 px-4 py-3 dark:border-violet-900/30 dark:bg-violet-950/20">
@@ -68,13 +64,12 @@ const AiProviderSettings = ({ settings, models, modelsLoading, modelsError, onCh
                 loading={modelsLoading}
                 placeholder={provider === 'opencode' ? 'e.g. anthropic/claude-sonnet-4-6' : 'Select a model'}
                 error={modelsError && !modelsLoading ? modelsError : undefined}
-                onChange={opt => onChange({ model: opt ? (opt as { value: string }).value : undefined })}
+                onChange={handleChangeModel}
               />
             </div>
           )}
         </div>
 
-        {/* API Key */}
         {needsKey && (
           <Input
             label={provider === 'opencode' ? 'Password (optional)' : 'API Key (optional)'}
@@ -84,11 +79,10 @@ const AiProviderSettings = ({ settings, models, modelsLoading, modelsError, onCh
             autoComplete="off"
             spellCheck={false}
             size="xs"
-            onChange={v => onChange({ apiKey: v || undefined })}
+            onChange={handleChangeApiKey}
           />
         )}
 
-        {/* Base URL */}
         {needsBaseUrl && (
           <Input
             label="Base URL (optional)"
@@ -98,7 +92,7 @@ const AiProviderSettings = ({ settings, models, modelsLoading, modelsError, onCh
             autoComplete="off"
             spellCheck={false}
             size="xs"
-            onChange={v => onChange({ baseUrl: v || undefined })}
+            onChange={handleChangeBaseUrl}
           />
         )}
       </div>

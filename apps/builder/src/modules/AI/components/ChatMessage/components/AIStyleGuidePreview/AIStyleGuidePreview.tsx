@@ -1,30 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
+import clsx from 'clsx';
 import { useCallback, useState } from 'react';
 
 import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 
+import { buildCssVars, needsWhiteText, sortedShades } from './helpers';
+
 import type { ColorScale, NamedToken, StyleGuideData } from '../../helpers/getStyleGuideResult';
 import type { AiMode } from '@pmodules/AI/types';
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-const needsWhiteText = (hex?: string): boolean => {
-  if (!hex || hex.length < 7) {
-    return false;
-  }
-
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-
-  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.55;
-};
-
-const SHADE_ORDER = ['50', '100', '200', '300', '400', '500', '600', '700', '800', '900', '950'];
-const sortedShades = (scale: ColorScale) =>
-  Object.entries(scale).sort(([a], [b]) => SHADE_ORDER.indexOf(a) - SHADE_ORDER.indexOf(b));
-
-// ── Sub-components ────────────────────────────────────────────────────────────
+export type AIStyleGuidePreviewProps = StyleGuideData & { mode?: AiMode };
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
   <div className="mb-1.5 font-mono text-[10px] tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
@@ -44,6 +29,7 @@ const ColorScaleRow = ({
   copied: string | null;
 }) => {
   const shades = sortedShades(scale);
+
   return (
     <div className="mb-2">
       <div className="mb-0.5 font-mono text-[10px] text-zinc-500 capitalize">{label}</div>
@@ -51,6 +37,7 @@ const ColorScaleRow = ({
         {shades.map(([shade, hex]) => {
           const white = needsWhiteText(hex);
           const isCopied = copied === hex;
+
           return (
             <button
               key={shade}
@@ -63,11 +50,7 @@ const ColorScaleRow = ({
                 className="absolute inset-0 flex flex-col items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
                 style={{ color: white ? '#fff' : '#000' }}
               >
-                {isCopied ? (
-                  <span className="text-[8px]">✓</span>
-                ) : (
-                  <span className="text-[8px] leading-none">{shade}</span>
-                )}
+                <span className="text-[8px]">{isCopied ? '✓' : shade}</span>
               </div>
             </button>
           );
@@ -89,6 +72,7 @@ const SemanticDots = ({ semantic }: { semantic: NonNullable<StyleGuideData['colo
     { label: 'Error', color: semantic.error, icon: '✕' },
     { label: 'Info', color: semantic.info, icon: 'i' }
   ].filter(i => i.color);
+
   if (items.length === 0) {
     return null;
   }
@@ -191,56 +175,6 @@ const ShadowRow = ({ tokens }: { tokens: NamedToken[] }) => (
   </div>
 );
 
-// ── CSS var builder ──────────────────────────────────────────────────────────
-
-type CssVar = { varName: string; value: string; preview?: string };
-
-const buildCssVars = (
-  colors: StyleGuideData['colors'],
-  typography: StyleGuideData['typography'],
-  spacing: StyleGuideData['spacing'],
-  borderRadius: StyleGuideData['borderRadius'],
-  shadows: StyleGuideData['shadows']
-): CssVar[] => {
-  const vars: CssVar[] = [];
-  const colorRoles = ['primary', 'secondary', 'accent', 'neutral'] as const;
-  for (const role of colorRoles) {
-    const scale = colors[role];
-    if (!scale) {
-      continue;
-    }
-    for (const [shade, hex] of sortedShades(scale)) {
-      vars.push({ varName: `--color-${role}-${shade}`, value: hex, preview: hex });
-    }
-  }
-  if (colors.semantic) {
-    const { success, warning, error, info } = colors.semantic;
-    if (success) {
-      vars.push({ varName: '--color-success', value: success, preview: success });
-    }
-    if (warning) {
-      vars.push({ varName: '--color-warning', value: warning, preview: warning });
-    }
-    if (error) {
-      vars.push({ varName: '--color-error', value: error, preview: error });
-    }
-    if (info) {
-      vars.push({ varName: '--color-info', value: info, preview: info });
-    }
-  }
-  if (typography) {
-    vars.push({ varName: '--font-heading', value: typography.fontFamily.heading });
-    vars.push({ varName: '--font-body', value: typography.fontFamily.body });
-    typography.scale?.forEach(s => vars.push({ varName: `--font-size-${s.name}`, value: s.size }));
-  }
-  spacing?.forEach(({ name, value }) => vars.push({ varName: `--spacing-${name}`, value }));
-  borderRadius?.forEach(({ name, value }) => vars.push({ varName: `--radius-${name}`, value }));
-  shadows?.forEach(({ name, value }) => vars.push({ varName: `--shadow-${name}`, value }));
-  return vars;
-};
-
-// ── Main component ────────────────────────────────────────────────────────────
-
 const AIStyleGuidePreview = ({
   name,
   description,
@@ -251,20 +185,28 @@ const AIStyleGuidePreview = ({
   borderRadius,
   shadows,
   mode
-}: StyleGuideData & { mode?: AiMode }) => {
+}: AIStyleGuidePreviewProps) => {
   const [open, setOpen] = useState<Record<string, boolean>>({ colors: true, typography: false, tokens: false });
   const [confirming, setConfirming] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const { onSendMessage } = useAiChatContext();
 
-  const toggle = (key: string) => setOpen(prev => ({ ...prev, [key]: !prev[key] }));
+  const handleToggleSection = useCallback(
+    (key: string) => setOpen(prev => ({ ...prev, [key]: !prev[key] })),
+    []
+  );
 
-  const copy = useCallback((hex: string) => {
+  const handleCopy = useCallback((hex: string) => {
     void navigator.clipboard.writeText(hex);
     setCopied(hex);
     setTimeout(() => setCopied(null), 1500);
   }, []);
+
+  const handleLightMode = useCallback(() => setIsDark(false), []);
+  const handleDarkMode = useCallback(() => setIsDark(true), []);
+  const handleStartConfirm = useCallback(() => setConfirming(true), []);
+  const handleCancel = useCallback(() => setConfirming(false), []);
 
   const activeColors =
     isDark && colorsDark
@@ -272,7 +214,6 @@ const AIStyleGuidePreview = ({
       : colors;
 
   const hasDark = !!colorsDark;
-
   const colorScaleRoles = ['primary', 'secondary', 'accent', 'neutral'] as const;
   const colorScales = colorScaleRoles
     .map(role => [role, activeColors[role]] as [string, ColorScale | undefined])
@@ -281,31 +222,34 @@ const AIStyleGuidePreview = ({
   const hasTokens = spacing || borderRadius || shadows;
   const cssVars = buildCssVars(colors, typography, spacing, borderRadius, shadows);
 
-  const handleConfirm = () => {
+  const handleConfirm = useCallback(() => {
     const scaleLines = colorScales
       .flatMap(([role, scale]) => sortedShades(scale).map(([shade, hex]) => `• ${role}-${shade}: ${hex}`))
       .join('\n');
     const parts = [`Color scales:\n${scaleLines}`];
+
     if (typography) {
       parts.push(
         `Typography:\n• heading font: ${typography.fontFamily.heading}\n• body font: ${typography.fontFamily.body}`
       );
     }
+
     if (spacing) {
       parts.push(`Spacing:\n${spacing.map(t => `• ${t.name}: ${t.value}`).join('\n')}`);
     }
+
     if (borderRadius) {
       parts.push(`Border radius:\n${borderRadius.map(t => `• ${t.name}: ${t.value}`).join('\n')}`);
     }
+
     onSendMessage(
       `Apply the "${name}" style guide to this space. Create CSS style variables using createStyleVariable for each design token:\n\n${parts.join('\n\n')}`
     );
     setConfirming(false);
-  };
+  }, [colorScales, typography, spacing, borderRadius, name, onSendMessage]);
 
   return (
     <div className="mt-2 overflow-hidden rounded-md border border-zinc-200 text-xs dark:border-zinc-700/60">
-      {/* Header */}
       <div className="flex items-center justify-between gap-2 border-b border-zinc-100 bg-zinc-50 px-3 py-1 font-mono text-zinc-600 dark:border-zinc-700/60 dark:bg-zinc-900 dark:text-zinc-400">
         <div className="flex min-w-0 items-center gap-1.5">
           <span className="shrink-0 rounded border border-zinc-300 px-1 text-[9px] tracking-wider uppercase dark:border-zinc-600">
@@ -321,14 +265,20 @@ const AIStyleGuidePreview = ({
           {hasDark && (
             <div className="flex overflow-hidden rounded border border-zinc-200 dark:border-zinc-700">
               <button
-                onClick={() => setIsDark(false)}
-                className={`px-1.5 py-0.5 ${!isDark ? 'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300' : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600'}`}
+                onClick={handleLightMode}
+                className={clsx('px-1.5 py-0.5', {
+                  'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300': !isDark,
+                  'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600': isDark
+                })}
               >
                 ☀
               </button>
               <button
-                onClick={() => setIsDark(true)}
-                className={`px-1.5 py-0.5 ${isDark ? 'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300' : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600'}`}
+                onClick={handleDarkMode}
+                className={clsx('px-1.5 py-0.5', {
+                  'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300': isDark,
+                  'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600': !isDark
+                })}
               >
                 ☾
               </button>
@@ -337,12 +287,10 @@ const AIStyleGuidePreview = ({
         </div>
       </div>
 
-      {/* Body */}
       <div className="bg-zinc-50 dark:bg-zinc-950">
-        {/* Colors */}
         <div className="border-b border-zinc-100 dark:border-zinc-800">
           <button
-            onClick={() => toggle('colors')}
+            onClick={() => handleToggleSection('colors')}
             className="flex w-full items-center justify-between px-3 py-1.5 text-left font-mono text-[10px] tracking-widest text-zinc-500 uppercase hover:bg-zinc-100 dark:text-zinc-500 dark:hover:bg-zinc-900"
           >
             Colors
@@ -351,18 +299,17 @@ const AIStyleGuidePreview = ({
           {open.colors && (
             <div className="px-3 pt-1 pb-2">
               {colorScales.map(([label, scale]) => (
-                <ColorScaleRow key={label} label={label} scale={scale} onCopy={copy} copied={copied} />
+                <ColorScaleRow key={label} label={label} scale={scale} onCopy={handleCopy} copied={copied} />
               ))}
               {colors.semantic && <SemanticDots semantic={colors.semantic} />}
             </div>
           )}
         </div>
 
-        {/* Typography */}
         {typography && (
           <div className="border-b border-zinc-100 dark:border-zinc-800">
             <button
-              onClick={() => toggle('typography')}
+              onClick={() => handleToggleSection('typography')}
               className="flex w-full items-center justify-between px-3 py-1.5 text-left font-mono text-[10px] tracking-widest text-zinc-500 uppercase hover:bg-zinc-100 dark:text-zinc-500 dark:hover:bg-zinc-900"
             >
               Typography
@@ -376,11 +323,10 @@ const AIStyleGuidePreview = ({
           </div>
         )}
 
-        {/* Tokens */}
         {hasTokens && (
           <div>
             <button
-              onClick={() => toggle('tokens')}
+              onClick={() => handleToggleSection('tokens')}
               className="flex w-full items-center justify-between px-3 py-1.5 text-left font-mono text-[10px] tracking-widest text-zinc-500 uppercase hover:bg-zinc-100 dark:text-zinc-500 dark:hover:bg-zinc-900"
             >
               Spacing · Radius · Shadows
@@ -412,7 +358,6 @@ const AIStyleGuidePreview = ({
         )}
       </div>
 
-      {/* Confirmation panel */}
       {confirming && (
         <div className="border-t border-zinc-100 bg-zinc-50 px-3 py-2 dark:border-zinc-700/60 dark:bg-zinc-900/60">
           <p className="mb-2 font-mono text-[10px] text-zinc-500 dark:text-zinc-400">
@@ -421,14 +366,13 @@ const AIStyleGuidePreview = ({
           <div className="mb-2 max-h-36 space-y-0.5 overflow-y-auto">
             {cssVars.map(({ varName, value, preview }) => (
               <div key={varName} className="flex items-center gap-2">
-                {preview ? (
+                {preview && (
                   <div
                     className="h-3 w-3 shrink-0 rounded-sm border border-black/10"
                     style={{ backgroundColor: preview }}
                   />
-                ) : (
-                  <span className="h-3 w-3 shrink-0" />
                 )}
+                {!preview && <span className="h-3 w-3 shrink-0" />}
                 <span className="font-mono text-[10px] text-zinc-600 dark:text-zinc-300">{varName}</span>
                 <span className="ml-auto truncate font-mono text-[10px] text-zinc-400 dark:text-zinc-600">{value}</span>
               </div>
@@ -436,7 +380,7 @@ const AIStyleGuidePreview = ({
           </div>
           <div className="flex justify-end gap-2">
             <button
-              onClick={() => setConfirming(false)}
+              onClick={handleCancel}
               className="rounded border border-zinc-200 px-2.5 py-1 font-mono text-zinc-500 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
             >
               Cancel
@@ -454,7 +398,7 @@ const AIStyleGuidePreview = ({
       {!confirming && (
         <div className="flex items-center justify-end gap-2 border-t border-zinc-100 bg-zinc-50 px-3 py-1 dark:border-zinc-700/60 dark:bg-zinc-900/60">
           <button
-            onClick={() => setConfirming(true)}
+            onClick={handleStartConfirm}
             className="rounded border border-zinc-300 px-2.5 py-1 font-mono text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800"
           >
             Apply to Space

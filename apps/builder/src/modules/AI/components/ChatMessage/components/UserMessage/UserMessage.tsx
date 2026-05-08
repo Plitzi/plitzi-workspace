@@ -2,7 +2,7 @@ import { formatTime } from '../../helpers/utils';
 
 import type { AiAttachment, AiMessage } from '../../../../types';
 
-type UserMessageProps = {
+export type UserMessageProps = {
   id: AiMessage['id'];
   content?: string;
   attachments?: AiAttachment[];

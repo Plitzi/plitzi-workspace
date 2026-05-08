@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import MessageTool from './MessageTool';
+import MessageTool from './components/MessageTool';
 
 import type { AiToolCall } from '../../types';
 

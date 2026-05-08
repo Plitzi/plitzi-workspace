@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import formatDuration from '@pmodules/AI/helpers/formatDuration';
 
@@ -6,12 +6,13 @@ export type ThinkingBlockProps = { text: string; durationMs?: number };
 
 const ThinkingBlock = ({ text, durationMs }: ThinkingBlockProps) => {
   const [open, setOpen] = useState(false);
+  const handleToggle = useCallback(() => setOpen(o => !o), []);
 
   return (
     <div className="mb-1">
       <button
         className="flex items-center gap-1.5 rounded px-1.5 py-px font-mono text-[10px] text-zinc-500 transition-colors hover:bg-neutral-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-        onClick={() => setOpen(o => !o)}
+        onClick={handleToggle}
       >
         <span className="text-sky-500 dark:text-sky-400">◈</span>
         <span>{durationMs ? `Thought for ${formatDuration(durationMs)}` : 'Thought for a moment'}</span>

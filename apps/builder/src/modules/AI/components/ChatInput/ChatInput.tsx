@@ -1,14 +1,13 @@
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, useImperativeHandle, useRef, useState } from 'react';
 
+import { isMac } from './helpers';
 import VoiceVisualizer from '../VoiceVisualizer';
-import AttachmentThumbnail from './AttachmentThumbnail';
+import AttachmentThumbnail from './components/AttachmentThumbnail';
 import ChatInputControls from './components/ChatInputControls';
 
 import type { AiAttachment, AiMode } from '../../types';
 import type { KeyboardEvent, Ref } from 'react';
-
-const isMac = typeof navigator !== 'undefined' && /mac/i.test(navigator.platform);
 
 export type ChatInputHandle = { appendText: (text: string) => void };
 

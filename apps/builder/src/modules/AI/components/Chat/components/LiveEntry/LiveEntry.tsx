@@ -2,12 +2,13 @@ import Markdown from '@plitzi/plitzi-ui/Markdown';
 import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 
-import { useAiChatContext } from '../../contexts/AiChatContext';
-import MessageTools from '../MessageTools';
+import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 
-import type { AiToolCall } from '../../types';
+import MessageTools from '../../../MessageTools';
 
-type LiveEntryProps = {
+import type { AiToolCall } from '@pmodules/AI/types';
+
+export type LiveEntryProps = {
   isStreaming?: boolean;
   streamingText?: string;
   liveThinking?: string;

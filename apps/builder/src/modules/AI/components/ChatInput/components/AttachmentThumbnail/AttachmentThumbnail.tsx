@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 
-import type { AiAttachment } from '../../types';
+import type { AiAttachment } from '@pmodules/AI/types';
 
-type AttachmentThumbnailProps = { attachment: AiAttachment; onRemove: (id: string) => void };
+export type AttachmentThumbnailProps = { attachment: AiAttachment; onRemove: (id: string) => void };
 
 const AttachmentThumbnail = ({ attachment, onRemove }: AttachmentThumbnailProps) => {
   const handleClick = useCallback(() => onRemove(attachment.id), [attachment.id, onRemove]);

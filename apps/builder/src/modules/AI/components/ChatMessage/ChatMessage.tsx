@@ -5,7 +5,7 @@ import UserMessage from './components/UserMessage';
 
 import type { AiMessage } from '../../types';
 
-type ChatMessageProps = AiMessage & { stagePreviewVersion?: number; wireframeVersion?: number };
+export type ChatMessageProps = AiMessage & { stagePreviewVersion?: number; wireframeVersion?: number };
 
 const ChatMessage = ({
   id,

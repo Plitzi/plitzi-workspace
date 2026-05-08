@@ -1,22 +1,18 @@
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
+import clsx from 'clsx';
 import { useCallback, useState, use } from 'react';
 
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 
+import { PLACEHOLDER } from './helpers';
+
 import type { WireframeData } from '../../helpers/getWireframeResult';
 import type { Element, Schema } from '@plitzi/sdk-shared';
 import type { AiMode } from '@pmodules/AI/types';
 
-const PLACEHOLDER: Record<string, string> = {
-  heading: '— heading —',
-  button: '[ button ]',
-  image: '▪ image',
-  link: '↗ link',
-  text: '— text —',
-  paragraph: '— text —'
-};
+export type AIWireframePreviewProps = WireframeData & { mode?: AiMode; version?: number };
 
 const WireframeBox = ({ id, flat, depth = 0 }: { id: string; flat: Schema['flat']; depth?: number }) => {
   const el = flat[id];
@@ -69,7 +65,7 @@ const WireframeBox = ({ id, flat, depth = 0 }: { id: string; flat: Schema['flat'
         {type} · {label}
       </span>
 
-      {isLeaf ? (
+      {isLeaf && (
         <div
           style={{
             display: 'flex',
@@ -89,9 +85,8 @@ const WireframeBox = ({ id, flat, depth = 0 }: { id: string; flat: Schema['flat'
         >
           {displayText}
         </div>
-      ) : (
-        children.map(cid => <WireframeBox key={cid} id={cid} flat={flat} depth={depth + 1} />)
       )}
+      {!isLeaf && children.map(cid => <WireframeBox key={cid} id={cid} flat={flat} depth={depth + 1} />)}
     </div>
   );
 };
@@ -103,6 +98,7 @@ const WireframeCanvas = ({
 }: Pick<WireframeData, 'baseElementId' | 'schema' | 'style'>) => {
   const flat = schema?.flat ?? {};
   const cssCache = style?.cache ?? '';
+
   return (
     <div
       className="relative h-full w-full overflow-auto"
@@ -114,8 +110,6 @@ const WireframeCanvas = ({
   );
 };
 
-// ── Main component ────────────────────────────────────────────────────────────
-
 const AIWireframePreview = ({
   baseElementId,
   name,
@@ -125,13 +119,19 @@ const AIWireframePreview = ({
   html,
   mode,
   version
-}: WireframeData & { mode?: AiMode; version?: number }) => {
+}: AIWireframePreviewProps) => {
   const { theme } = use(ThemeContext);
   const { existsPopup, addPopup } = usePopup();
   const { onSendMessage, elementSelected } = useAiChatContext();
   const [showHtml, setShowHtml] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [target, setTarget] = useState<'page' | 'element'>('page');
+
+  const handleToggleHtml = useCallback(() => setShowHtml(prev => !prev), []);
+  const handleStartConfirm = useCallback(() => setConfirming(true), []);
+  const handleCancel = useCallback(() => setConfirming(false), []);
+  const handleTargetPage = useCallback(() => setTarget('page'), []);
+  const handleTargetElement = useCallback(() => setTarget('element'), []);
 
   const handleClickExpand = useCallback(() => {
     if (!existsPopup('wireframe-preview')) {
@@ -161,17 +161,16 @@ const AIWireframePreview = ({
 
   return (
     <div className="mt-2 overflow-hidden rounded-md border border-zinc-200 text-xs dark:border-zinc-700/60">
-      {/* Header */}
       <div className="flex items-center justify-between gap-2 border-b border-zinc-100 bg-zinc-50 px-3 py-1 font-mono text-zinc-600 dark:border-zinc-700/60 dark:bg-zinc-900 dark:text-zinc-400">
         <div className="flex min-w-0 items-center gap-1.5">
           <span className="shrink-0 rounded border border-zinc-300 px-1 text-[9px] tracking-wider uppercase dark:border-zinc-600">
             wireframe
           </span>
-          {version ? (
+          {version && (
             <span className="shrink-0 rounded bg-zinc-200 px-1 font-mono text-[9px] text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">
               v{version}
             </span>
-          ) : null}
+          )}
           <span className="truncate font-medium">{name}</span>
           {description && (
             <span className="hidden truncate text-zinc-400 sm:block dark:text-zinc-600">{description}</span>
@@ -181,7 +180,7 @@ const AIWireframePreview = ({
           {mode === 'plan' && <span className="font-mono text-[9px] text-sky-500 dark:text-sky-600">plan</span>}
           {html && (
             <button
-              onClick={() => setShowHtml(prev => !prev)}
+              onClick={handleToggleHtml}
               title={showHtml ? 'Show Wireframe' : 'Show HTML'}
               className="cursor-pointer rounded px-1 py-0.5 text-zinc-400 hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-400"
             >
@@ -197,9 +196,8 @@ const AIWireframePreview = ({
         </div>
       </div>
 
-      {/* Body */}
       <div className="min-h-32 overflow-hidden bg-white dark:bg-zinc-950">
-        {showHtml && html ? (
+        {showHtml && html && (
           <CodeMirror
             value={html}
             theme={theme === 'dark' ? 'dark' : 'light'}
@@ -207,12 +205,10 @@ const AIWireframePreview = ({
             className="max-h-72 overflow-auto"
             readOnly
           />
-        ) : (
-          <WireframeCanvas baseElementId={baseElementId} schema={schema} style={style} />
         )}
+        {(!showHtml || !html) && <WireframeCanvas baseElementId={baseElementId} schema={schema} style={style} />}
       </div>
 
-      {/* Confirmation panel */}
       {confirming && (
         <div className="border-t border-zinc-100 bg-zinc-50 px-3 py-2 dark:border-zinc-700/60 dark:bg-zinc-900/60">
           <p className="mb-1.5 font-mono text-[10px] text-zinc-600 dark:text-zinc-300">
@@ -220,15 +216,25 @@ const AIWireframePreview = ({
           </p>
           <div className="mb-2 flex gap-1">
             <button
-              onClick={() => setTarget('page')}
-              className={`rounded border px-2 py-0.5 font-mono text-[10px] ${target === 'page' ? 'border-zinc-400 bg-zinc-200 text-zinc-700 dark:border-zinc-500 dark:bg-zinc-700 dark:text-zinc-200' : 'border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400'}`}
+              onClick={handleTargetPage}
+              className={clsx('rounded border px-2 py-0.5 font-mono text-[10px]', {
+                'border-zinc-400 bg-zinc-200 text-zinc-700 dark:border-zinc-500 dark:bg-zinc-700 dark:text-zinc-200':
+                  target === 'page',
+                'border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400':
+                  target !== 'page'
+              })}
             >
               Current Page
             </button>
             {elementSelected && (
               <button
-                onClick={() => setTarget('element')}
-                className={`rounded border px-2 py-0.5 font-mono text-[10px] ${target === 'element' ? 'border-zinc-400 bg-zinc-200 text-zinc-700 dark:border-zinc-500 dark:bg-zinc-700 dark:text-zinc-200' : 'border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400'}`}
+                onClick={handleTargetElement}
+                className={clsx('rounded border px-2 py-0.5 font-mono text-[10px]', {
+                  'border-zinc-400 bg-zinc-200 text-zinc-700 dark:border-zinc-500 dark:bg-zinc-700 dark:text-zinc-200':
+                    target === 'element',
+                  'border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400':
+                    target !== 'element'
+                })}
               >
                 Selected Element
               </button>
@@ -241,7 +247,7 @@ const AIWireframePreview = ({
           )}
           <div className="flex justify-end gap-2">
             <button
-              onClick={() => setConfirming(false)}
+              onClick={handleCancel}
               className="rounded border border-zinc-200 px-2.5 py-1 font-mono text-zinc-500 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
             >
               Cancel
@@ -259,7 +265,7 @@ const AIWireframePreview = ({
       {!confirming && (
         <div className="flex items-center justify-end gap-2 border-t border-zinc-100 bg-zinc-50 px-3 py-1 dark:border-zinc-700/60 dark:bg-zinc-900/60">
           <button
-            onClick={() => setConfirming(true)}
+            onClick={handleStartConfirm}
             className="rounded border border-zinc-300 px-2.5 py-1 font-mono text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800"
           >
             Apply to Page

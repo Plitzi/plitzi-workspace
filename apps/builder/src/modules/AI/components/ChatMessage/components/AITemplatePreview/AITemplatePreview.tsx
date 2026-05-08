@@ -8,7 +8,8 @@ import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
 
-import AITemplateHeader from './AITemplateHeader';
+import AITemplateHeader from './components/AITemplateHeader';
+import ConfirmPanel from './components/ConfirmPanel';
 
 import type { DisplayMode, Schema, Style } from '@plitzi/sdk-shared';
 import type { AiMode } from '@pmodules/AI/types';
@@ -32,6 +33,12 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode, version }
   const [target, setTarget] = useState<'page' | 'element'>('page');
 
   const storeValue = useMemo(() => ({ schema, style }), [schema, style]);
+
+  const handleToggleHtml = useCallback(() => setShowHtml(prev => !prev), []);
+  const handleStartConfirm = useCallback(() => setConfirming(true), []);
+  const handleCancel = useCallback(() => setConfirming(false), []);
+  const handleTargetPage = useCallback(() => setTarget('page'), []);
+  const handleTargetElement = useCallback(() => setTarget('element'), []);
 
   const handleClickExpand = useCallback(() => {
     if (!existsPopup('transform')) {
@@ -59,6 +66,7 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode, version }
       target === 'element' && elementSelected
         ? `as children of the currently selected element (ID: "${elementSelected}")`
         : 'on the current page';
+
     onSendMessage(
       `The user has approved the proposed layout (element: ${baseElementId}). Please apply it ${where} permanently using the appropriate tool (createElement or applyToPage).`
     );
@@ -73,13 +81,13 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode, version }
         onDisplayMode={setDisplayMode}
         onClick={handleClickExpand}
         showHtml={showHtml}
-        onToggleHtml={() => setShowHtml(prev => !prev)}
+        onToggleHtml={handleToggleHtml}
         hasHtml={!!html}
         mode={mode}
         version={version}
       />
 
-      {showHtml && html ? (
+      {showHtml && html && (
         <CodeMirror
           value={html}
           theme={theme === 'dark' ? 'dark' : 'light'}
@@ -87,7 +95,8 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode, version }
           className="h-full max-h-60 overflow-auto"
           readOnly
         />
-      ) : (
+      )}
+      {(!showHtml || !html) && (
         <div className="flex justify-center overflow-hidden bg-zinc-50 dark:bg-zinc-900">
           <StoreProvider value={storeValue} logger={createStoreDevToolsLogger('ai-preview')}>
             <BuilderAreaPreview id={baseElementId} className="aspect-video h-full w-full" previewMode />
@@ -95,61 +104,16 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode, version }
         </div>
       )}
 
-      {/* Confirmation panel */}
-      {confirming && (
-        <div className="border-t border-zinc-100 bg-zinc-50 px-3 py-2 dark:border-zinc-700/60 dark:bg-zinc-900/60">
-          <p className="mb-1.5 font-mono text-[10px] text-zinc-600 dark:text-zinc-300">Apply layout to:</p>
-          <div className="mb-2 flex gap-1">
-            <button
-              onClick={() => setTarget('page')}
-              className={`rounded border px-2 py-0.5 font-mono text-[10px] ${target === 'page' ? 'border-zinc-400 bg-zinc-200 text-zinc-700 dark:border-zinc-500 dark:bg-zinc-700 dark:text-zinc-200' : 'border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400'}`}
-            >
-              Current Page
-            </button>
-            {elementSelected && (
-              <button
-                onClick={() => setTarget('element')}
-                className={`rounded border px-2 py-0.5 font-mono text-[10px] ${target === 'element' ? 'border-zinc-400 bg-zinc-200 text-zinc-700 dark:border-zinc-500 dark:bg-zinc-700 dark:text-zinc-200' : 'border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400'}`}
-              >
-                Selected Element
-              </button>
-            )}
-          </div>
-          {target === 'element' && elementSelected && (
-            <p className="mb-1.5 font-mono text-[10px] text-zinc-400 dark:text-zinc-600">
-              Will be added as children of <span className="text-orange-500">"{elementSelected}"</span>
-            </p>
-          )}
-          <p className="mb-2 font-mono text-[10px] text-zinc-400 dark:text-zinc-600">
-            The AI will commit this proposed element permanently.
-          </p>
-          <div className="flex justify-end gap-2">
-            <button
-              onClick={() => setConfirming(false)}
-              className="rounded border border-zinc-200 px-2.5 py-1 font-mono text-zinc-500 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleConfirm}
-              className="rounded bg-zinc-800 px-2.5 py-1 font-mono text-white hover:bg-zinc-700 dark:bg-zinc-200 dark:text-zinc-900 dark:hover:bg-zinc-100"
-            >
-              Confirm & Apply
-            </button>
-          </div>
-        </div>
-      )}
-
-      {!confirming && (
-        <div className="flex items-center justify-end border-t border-zinc-100 bg-zinc-50 px-3 py-1 dark:border-zinc-700/60 dark:bg-zinc-900/60">
-          <button
-            onClick={() => setConfirming(true)}
-            className="rounded border border-zinc-300 px-2.5 py-1 font-mono text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800"
-          >
-            Apply to Page
-          </button>
-        </div>
-      )}
+      <ConfirmPanel
+        confirming={confirming}
+        target={target}
+        elementSelected={elementSelected}
+        onStartConfirm={handleStartConfirm}
+        onCancel={handleCancel}
+        onTargetPage={handleTargetPage}
+        onTargetElement={handleTargetElement}
+        onConfirm={handleConfirm}
+      />
     </div>
   );
 };

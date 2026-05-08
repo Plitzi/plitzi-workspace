@@ -1,8 +1,10 @@
 import clsx from 'clsx';
 
-import type { AiToolCall } from '../../types';
+import type { AiToolCall } from '@pmodules/AI/types';
 
-const MessageTool = ({ name, args, status, result }: AiToolCall) => {
+export type MessageToolProps = AiToolCall;
+
+const MessageTool = ({ name, args, status, result }: MessageToolProps) => {
   const errorMsg =
     result && typeof result === 'object' && 'error' in result
       ? String((result as Record<string, unknown>).error)

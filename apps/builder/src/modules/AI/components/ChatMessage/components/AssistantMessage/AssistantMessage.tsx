@@ -19,7 +19,7 @@ import ThinkingBlock from '../ThinkingBlock';
 
 import type { AiMessage, AiMode, AiToolCall } from '../../../../types';
 
-type AssistantMessageProps = {
+export type AssistantMessageProps = {
   id: AiMessage['id'];
   content?: string;
   thinking?: string;

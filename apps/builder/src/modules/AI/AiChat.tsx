@@ -7,7 +7,7 @@ import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import AiChatHeader from './components/AiChatHeader';
-import AiProviderSettings from './components/AiProviderSettings/AiProviderSettings';
+import AiProviderSettings from './components/AiProviderSettings';
 import Chat from './components/Chat';
 import ChatInput from './components/ChatInput';
 import HistoryPanel from './components/HistoryPanel';
@@ -23,8 +23,9 @@ import type { AiAttachment } from './types';
 import type { BuilderState } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 
+const { useStore } = createStoreHook<BuilderState>();
+
 const AiChat = () => {
-  const { useStore } = createStoreHook<BuilderState>();
   const [elementSelected] = useStore('elementSelected');
   const { theme } = use(ThemeContext);
   const { currentPageId } = use(NavigationContext);

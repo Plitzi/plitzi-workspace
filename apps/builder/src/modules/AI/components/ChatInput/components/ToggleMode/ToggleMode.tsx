@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import ToggleItem from './ToggleItem';
+import ToggleItem from './components/ToggleItem';
 
 import type { AiMode } from '@pmodules/AI/types';
 
