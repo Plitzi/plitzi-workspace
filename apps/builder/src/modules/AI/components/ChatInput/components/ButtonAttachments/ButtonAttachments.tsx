@@ -1,5 +1,3 @@
-import Button from '@plitzi/plitzi-ui/Button';
-import clsx from 'clsx';
 import { useCallback, useRef } from 'react';
 
 import type { AiAttachment, AiMode } from '@pmodules/AI/types';
@@ -12,17 +10,14 @@ export type ButtonAttachmentsProps = {
   onChange?: (attachments: AiAttachment[]) => void;
 };
 
-const ButtonAttachments = ({ attachments = [], mode, disabled = false, onChange }: ButtonAttachmentsProps) => {
+const ButtonAttachments = ({ attachments = [], disabled = false, onChange }: ButtonAttachmentsProps) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleClickAddAttachment = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
+  const handleClick = useCallback(() => fileInputRef.current?.click(), []);
 
-  const handleImageChange = useCallback(
+  const handleChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(e.target.files ?? []);
-      files.forEach(file => {
+      Array.from(e.target.files ?? []).forEach(file => {
         const reader = new FileReader();
         reader.onload = ev => {
           const result = ev.target?.result as string;
@@ -32,7 +27,6 @@ const ButtonAttachments = ({ attachments = [], mode, disabled = false, onChange 
         };
         reader.readAsDataURL(file);
       });
-
       e.target.value = '';
     },
     [attachments, onChange]
@@ -40,29 +34,21 @@ const ButtonAttachments = ({ attachments = [], mode, disabled = false, onChange 
 
   return (
     <>
-      <Button
-        className={clsx('shrink-0 rounded border-none p-1.5 transition-colors', {
-          'text-violet-400 hover:bg-violet-100 hover:text-violet-700 dark:text-violet-600 dark:hover:bg-violet-900/50 dark:hover:text-violet-400':
-            mode === 'build',
-          'text-sky-500 hover:bg-sky-100 hover:text-sky-700 dark:text-sky-600 dark:hover:bg-sky-900/50 dark:hover:text-sky-400':
-            mode === 'plan'
-        })}
-        intent="custom"
+      <button
+        className="grid h-7 w-7 place-items-center rounded-lg border-0 bg-transparent text-zinc-500 transition-colors duration-150 hover:bg-neutral-200 dark:text-zinc-400 dark:hover:bg-zinc-700"
         title="Attach image"
         disabled={disabled}
-        onClick={handleClickAddAttachment}
+        onClick={handleClick}
       >
-        <Button.Icon>
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-            />
-          </svg>
-        </Button.Icon>
-      </Button>
-      <input ref={fileInputRef} type="file" accept="image/*" multiple hidden onChange={handleImageChange} />
+        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+          />
+        </svg>
+      </button>
+      <input ref={fileInputRef} type="file" accept="image/*" multiple hidden onChange={handleChange} />
     </>
   );
 };

@@ -1,13 +1,14 @@
+import clsx from 'clsx';
+
+import { useAiChatContext } from '../contexts/AiChatContext';
+
 import type { AiMode, AiProviderSettings, AiUsage } from '../types';
-import type { ReactNode } from 'react';
 
 type AiChatHeaderProps = {
   onClear: () => void;
   onCompact?: () => void;
   isStreaming: boolean;
   messageCount?: number;
-  badge?: string;
-  extra?: ReactNode;
   providerSettings?: AiProviderSettings;
   usage?: AiUsage;
   isSettingsOpen?: boolean;
@@ -17,25 +18,16 @@ type AiChatHeaderProps = {
   conversationTitle?: string;
 };
 
-const usageColor = (pct: number) => {
-  if (pct >= 80) {
-    return 'bg-red-400 dark:bg-red-500';
-  }
-  if (pct >= 60) {
-    return 'bg-amber-400 dark:bg-amber-500';
-  }
-  return 'bg-orange-400 dark:bg-orange-500';
-};
-
 const fmt = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
+
+const iconBtn =
+  'w-6.5 h-6.5 grid place-items-center rounded-md border-0 cursor-pointer transition-colors disabled:opacity-35 bg-transparent text-zinc-500 dark:text-zinc-400 hover:bg-neutral-100 dark:hover:bg-zinc-800';
 
 const AiChatHeader = ({
   onClear,
   onCompact,
   isStreaming,
   messageCount = 0,
-  badge,
-  extra,
   providerSettings,
   usage,
   isSettingsOpen,
@@ -44,49 +36,68 @@ const AiChatHeader = ({
   mode,
   conversationTitle
 }: AiChatHeaderProps) => {
+  const { currentMode } = useAiChatContext();
   const { provider, model } = providerSettings ?? {};
   const modelLabel = model ? model.split('/').pop() : undefined;
 
-  const accentDot = mode === 'plan' ? 'text-sky-500 dark:text-sky-400' : 'text-orange-500 dark:text-orange-400';
-  const modePill =
-    mode === 'plan'
-      ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400'
-      : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
-
-  const iconBtn =
-    'flex h-6 w-6 items-center justify-center rounded text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-40 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300';
-
   return (
-    <div className="shrink-0 border-b border-zinc-200 dark:border-zinc-800">
-      {conversationTitle && (
-        <div className="truncate px-3 pt-2 text-xs font-medium text-zinc-700 dark:text-zinc-200">
-          {conversationTitle}
+    <div className="shrink-0 border-b border-neutral-200 bg-neutral-100 dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="flex items-center gap-2 px-3 py-2.5">
+        {/* Brand mark */}
+        <div
+          className={clsx(
+            'grid h-5.5 w-5.5 shrink-0 place-items-center rounded-[5px] border border-neutral-300 bg-neutral-50 font-mono text-[10px] font-bold dark:border-zinc-700 dark:bg-zinc-800',
+            {
+              'text-emerald-500 dark:text-emerald-400': currentMode === 'build',
+              'text-sky-500 dark:text-sky-400': currentMode === 'plan'
+            }
+          )}
+        >
+          P
         </div>
-      )}
-      <div className="flex items-center justify-between gap-2 px-3 py-1.5">
-        <div className="flex min-w-0 items-center gap-1.5">
-          <span className={accentDot}>◆</span>
-          <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">AI</span>
-          {mode && (
+
+        <span className="shrink-0 font-mono text-[11.5px] font-semibold text-zinc-900 dark:text-zinc-100">
+          Plitzi<span className="font-normal text-zinc-500 dark:text-zinc-400"> · Agent</span>
+        </span>
+
+        {onHistoryOpen ? (
+          <button
+            onClick={onHistoryOpen}
+            className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-neutral-300 bg-neutral-50 px-2 py-1.5 text-left transition-colors hover:border-neutral-400 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-zinc-600"
+          >
             <span
-              className={`shrink-0 rounded px-1.5 py-px font-mono text-[9px] tracking-widest uppercase ${modePill}`}
-            >
-              {mode}
+              className={clsx('h-1.5 w-1.5 shrink-0 rounded-full', {
+                'bg-emerald-500 dark:bg-emerald-400': currentMode === 'build',
+                'bg-sky-500 dark:bg-sky-400': currentMode === 'plan'
+              })}
+            />
+            <span className="min-w-0 flex-1 truncate text-[11.5px] font-medium text-zinc-900 dark:text-zinc-100">
+              {conversationTitle ?? 'New conversation'}
             </span>
-          )}
-          {badge && (
-            <span className="shrink-0 rounded bg-amber-100 px-1.5 py-px text-[9px] text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
-              {badge}
-            </span>
-          )}
-        </div>
+            {mode && (
+              <span
+                className={clsx('shrink-0 rounded border px-1.5 py-px font-mono text-[8px] tracking-wider uppercase', {
+                  'border-emerald-500/50 bg-emerald-500/10 text-emerald-500 dark:border-emerald-400/50 dark:bg-emerald-400/10 dark:text-emerald-400':
+                    currentMode === 'build',
+                  'border-sky-500/50 bg-sky-500/10 text-sky-500 dark:border-sky-400/50 dark:bg-sky-400/10 dark:text-sky-400':
+                    currentMode === 'plan'
+                })}
+              >
+                {mode}
+              </span>
+            )}
+            <kbd className="shrink-0 rounded border border-b-2 border-neutral-300 bg-neutral-100 px-1 py-px font-mono text-[8px] text-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400">
+              ⌘K
+            </kbd>
+          </button>
+        ) : (
+          <div className="flex-1" />
+        )}
 
-        <div className="flex items-center gap-0.5">
-          {extra}
-
+        <div className="flex shrink-0 items-center gap-0.5">
           {modelLabel && (
             <span
-              className="mr-1.5 shrink-0 font-mono text-[9px] text-zinc-400 dark:text-zinc-600"
+              className="mr-1 font-mono text-[9px] text-zinc-400 dark:text-zinc-600"
               title={[provider, model].filter(Boolean).join(' / ')}
             >
               {modelLabel}
@@ -97,39 +108,41 @@ const AiChatHeader = ({
             <button
               onClick={onSettingsToggle}
               title="Provider settings"
-              className={`${iconBtn} ${isSettingsOpen ? 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300' : ''}`}
+              className={clsx(
+                iconBtn,
+                isSettingsOpen && 'bg-neutral-50 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100'
+              )}
             >
-              <i className="fa-solid fa-sliders text-[11px]" />
+              <i className="fa-solid fa-sliders text-[10px]" />
             </button>
           )}
 
           {onCompact && messageCount >= 2 && (
             <button onClick={onCompact} disabled={isStreaming} title="Compact conversation" className={iconBtn}>
-              <i className="fa-solid fa-compress text-[11px]" />
-            </button>
-          )}
-
-          {onHistoryOpen && (
-            <button onClick={onHistoryOpen} title="Conversation history (⌘K)" className={iconBtn}>
-              <i className="fa-solid fa-clock-rotate-left text-[11px]" />
+              <i className="fa-solid fa-compress text-[10px]" />
             </button>
           )}
 
           <button onClick={onClear} disabled={isStreaming} title="New conversation" className={iconBtn}>
-            <i className="fa-solid fa-plus text-[11px]" />
+            <i className="fa-solid fa-plus text-[10px]" />
           </button>
         </div>
       </div>
 
       {usage && (
-        <div className="flex items-center gap-2 px-3 pb-1.5">
-          <div className="h-0.5 flex-1 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+        <div className="flex items-center gap-2 px-3 pb-2">
+          <div className="h-0.5 flex-1 overflow-hidden rounded-full bg-neutral-200 dark:bg-zinc-800">
             <div
-              className={`h-full rounded-full transition-all ${usageColor(usage.usedPercent)}`}
+              className={clsx('h-full rounded-full transition-all', {
+                'bg-pink-500 dark:bg-pink-400': usage.usedPercent >= 80,
+                'bg-yellow-500 dark:bg-yellow-400': usage.usedPercent >= 60 && usage.usedPercent < 80,
+                'bg-emerald-500 dark:bg-emerald-400': currentMode === 'build' && usage.usedPercent < 60,
+                'bg-sky-500 dark:bg-sky-400': currentMode === 'plan' && usage.usedPercent < 60
+              })}
               style={{ width: `${Math.min(usage.usedPercent, 100)}%` }}
             />
           </div>
-          <span className="shrink-0 font-mono text-[9px] text-zinc-400 dark:text-zinc-600">
+          <span className="shrink-0 font-mono text-[9px] text-zinc-500 dark:text-zinc-400">
             {fmt(usage.inputTokens)}/{fmt(usage.contextLimit)}
           </span>
         </div>

@@ -1,4 +1,3 @@
-import Button from '@plitzi/plitzi-ui/Button';
 import clsx from 'clsx';
 
 import type { AiAttachment, AiMode } from '@pmodules/AI/types';
@@ -23,25 +22,20 @@ const ButtonSend = ({
   const disabled = (!message.trim() && attachments.length === 0) || disabledProp;
 
   return (
-    <Button
-      className={clsx('shrink-0 rounded border-none text-white transition-colors duration-200 disabled:opacity-40', {
-        'bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 dark:disabled:bg-orange-900/60': mode === 'build',
-        'bg-sky-500 hover:bg-sky-600 disabled:bg-sky-300 dark:disabled:bg-sky-900/60': mode === 'plan',
-        'cursor-pointer': !disabled,
-        'cursor-not-allowed': disabled
+    <button
+      className={clsx('grid h-7 w-7 place-items-center rounded-lg border-0 transition-colors duration-200', {
+        'cursor-not-allowed bg-neutral-200 text-zinc-400 opacity-40 dark:bg-zinc-700 dark:text-zinc-600': disabled,
+        'cursor-pointer bg-emerald-500 text-white dark:bg-emerald-400': !disabled && mode === 'build',
+        'cursor-pointer bg-sky-500 text-white dark:bg-sky-400': !disabled && mode === 'plan'
       })}
-      size="xs"
-      intent="custom"
       disabled={disabled}
       title={`Send (${isMac ? '⌘↵' : 'Ctrl+Enter'})`}
       onClick={onClick}
     >
-      <Button.Icon>
-        <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
-        </svg>
-      </Button.Icon>
-    </Button>
+      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
+      </svg>
+    </button>
   );
 };
 

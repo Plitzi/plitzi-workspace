@@ -1,2 +1,5 @@
-export { default } from './Chat';
-export type { ChatProps } from './Chat';
+import Chat from './Chat';
+
+export * from './Chat';
+
+export default Chat;

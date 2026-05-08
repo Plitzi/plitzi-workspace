@@ -1,5 +1,5 @@
 import Alert from '@plitzi/plitzi-ui/Alert';
-import { use, useCallback, useEffect, useRef, useState } from 'react';
+import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
@@ -94,12 +94,17 @@ const AiChat = () => {
         if (!historyOpen) {
           void loadConversations();
         }
+
         setHistoryOpen(v => !v);
       }
     };
+
     document.addEventListener('keydown', handler);
+
     return () => document.removeEventListener('keydown', handler);
   }, [historyOpen, loadConversations]);
+
+  const handleClickHistory = useCallback(() => setHistoryOpen(false), []);
 
   const handleSend = useCallback(
     (msg: string, atts: AiAttachment[]) => {
@@ -122,19 +127,22 @@ const AiChat = () => {
       void startVoice();
     }
   }, [isListening, stopVoice, startVoice]);
-
-  const handleClickSettingsToggle = useCallback(() => setIsSettingsOpen(state => !state), []);
-
-  const conversationTitle = messages.find(m => m.role === 'user')?.content?.slice(0, 60);
-
+  const handleClickSettingsToggle = useCallback(() => setIsSettingsOpen(s => !s), []);
   const handleNewChat = useCallback(() => {
     clearConversation();
     setHistoryOpen(false);
   }, [clearConversation]);
 
+  const conversationTitle = messages.find(m => m.role === 'user')?.content?.slice(0, 60);
+
+  const aiChatContextValue = useMemo(
+    () => ({ onSendMessage: handleApplySend, elementSelected: elementSelected ?? undefined, currentMode: mode }),
+    [elementSelected, handleApplySend, mode]
+  );
+
   return (
-    <AiChatContext.Provider value={{ onSendMessage: handleApplySend, elementSelected: elementSelected ?? undefined }}>
-      <div className="relative flex h-full w-full flex-col bg-white font-mono text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100">
+    <AiChatContext value={aiChatContextValue}>
+      <div className="relative flex h-full w-full flex-col overflow-hidden bg-neutral-100 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
         <AiChatHeader
           onClear={clearConversation}
           onCompact={compact}
@@ -170,7 +178,7 @@ const AiChat = () => {
 
         {quotaError && (
           <Alert
-            className="mx-3 mb-2 w-auto"
+            className="mx-2 mb-2 w-auto"
             solid={false}
             intent="warning"
             closeable
@@ -183,7 +191,7 @@ const AiChat = () => {
         )}
 
         {error && (
-          <Alert className="mx-3 mb-2 w-auto" solid={false} intent="error" closeable size="xs" onClick={clearError}>
+          <Alert className="mx-2 mb-2 w-auto" solid={false} intent="error" closeable size="xs" onClick={clearError}>
             {error}
           </Alert>
         )}
@@ -203,13 +211,13 @@ const AiChat = () => {
         {historyOpen && (
           <HistoryPanel
             conversations={conversations}
-            onClose={() => setHistoryOpen(false)}
+            onClose={handleClickHistory}
             onSelect={loadConversation}
             onNew={handleNewChat}
           />
         )}
       </div>
-    </AiChatContext.Provider>
+    </AiChatContext>
   );
 };
 

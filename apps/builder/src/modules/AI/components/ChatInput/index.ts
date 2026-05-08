@@ -1,2 +1,5 @@
-export { default } from './ChatInput';
-export type { ChatInputHandle } from './ChatInput';
+import ChatInput from './ChatInput';
+
+export * from './ChatInput';
+
+export default ChatInput;

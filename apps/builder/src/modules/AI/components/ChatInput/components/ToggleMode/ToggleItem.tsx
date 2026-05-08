@@ -16,11 +16,14 @@ const ToggleItem = ({ mode, active = false, disabled = false, title, onClick }: 
 
   return (
     <button
-      className={clsx('cursor-pointer rounded px-2.5 py-0.5 capitalize transition-colors duration-200', {
-        'bg-orange-500 text-white dark:bg-orange-500 dark:text-white': active && mode === 'build',
-        'bg-sky-500 text-white dark:bg-sky-500 dark:text-white': active && mode === 'plan',
-        'text-zinc-400 dark:text-zinc-600': !active
-      })}
+      className={clsx(
+        'cursor-pointer rounded px-2.5 py-0.5 font-mono text-[10px] capitalize transition-colors duration-200 disabled:opacity-40',
+        {
+          'bg-transparent text-zinc-400 dark:text-zinc-600': !active,
+          'bg-emerald-500 text-white dark:bg-emerald-400': active && mode === 'build',
+          'bg-sky-500 text-white dark:bg-sky-400': active && mode === 'plan'
+        }
+      )}
       onClick={handleClick}
       disabled={disabled}
       title={title}
