@@ -1,5 +1,4 @@
-import clsx from 'clsx';
-
+import DisplayModeButton from './DisplayModeButton';
 import { MODES } from '../../helpers';
 
 import type { DisplayMode } from '@plitzi/sdk-shared';
@@ -55,17 +54,7 @@ const AITemplateHeader = ({
 
       <div className="flex items-center gap-1">
         {MODES.map(({ mode: dm, icon }) => (
-          <button
-            key={dm}
-            onClick={() => onDisplayMode(dm)}
-            title={dm}
-            className={clsx('cursor-pointer rounded px-1 py-0.5 transition-colors', {
-              'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300': displayMode === dm,
-              'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-400': displayMode !== dm
-            })}
-          >
-            <i className={icon} />
-          </button>
+          <DisplayModeButton key={dm} mode={dm} icon={icon} active={displayMode === dm} onDisplayMode={onDisplayMode} />
         ))}
       </div>
 

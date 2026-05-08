@@ -1,10 +1,9 @@
 import clsx from 'clsx';
 
-import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 import getDateGroup from '@pmodules/AI/helpers/getDateGroup';
-import relativeTime from '@pmodules/AI/helpers/relativeTime';
 
 import { GROUP_LABELS } from '../../helpers';
+import ConversationItem from './components/ConversationItem';
 
 import type { ConversationSummary } from '@pmodules/AI/types';
 
@@ -15,8 +14,6 @@ export type ConversationListProps = {
 };
 
 const ConversationList = ({ conversations, search, onSelect }: ConversationListProps) => {
-  const { currentMode } = useAiChatContext();
-
   const filtered = search.trim()
     ? conversations.filter(c => c.preview.toLowerCase().includes(search.toLowerCase()))
     : conversations;
@@ -47,22 +44,7 @@ const ConversationList = ({ conversations, search, onSelect }: ConversationListP
               {label}
             </div>
             {items.map(c => (
-              <button
-                key={c.id}
-                onClick={() => onSelect(c.id)}
-                className="group flex w-full items-center gap-3 px-4 py-2 text-left text-zinc-700 transition-colors hover:bg-neutral-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-              >
-                <span
-                  className={clsx('mt-px h-1.5 w-1.5 shrink-0 rounded-full', {
-                    'bg-emerald-500 dark:bg-emerald-400': currentMode === 'build',
-                    'bg-sky-500 dark:bg-sky-400': currentMode === 'plan'
-                  })}
-                />
-                <span className="min-w-0 flex-1 truncate text-[12px]">{c.preview || '(empty conversation)'}</span>
-                <span className="shrink-0 font-mono text-[9px] text-zinc-400 dark:text-zinc-600">
-                  {relativeTime(c.updatedAt)}
-                </span>
-              </button>
+              <ConversationItem key={c.id} conversation={c} onSelect={onSelect} />
             ))}
           </div>
         ))}

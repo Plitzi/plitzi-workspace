@@ -36,3 +36,5 @@ export const sortedColors = (colors: ColorItem[]) =>
 
 export const toVarName = (role: string | undefined, name: string) =>
   `--color-${(role ?? name).toLowerCase().replace(/\s+/g, '-')}`;
+
+export const getHex = (c: ColorItem, isDark: boolean) => (isDark && c.darkHex ? c.darkHex : c.hex);

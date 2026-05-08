@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 
 import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 
+import ColorScaleRow from './components/ColorScaleRow';
 import { buildCssVars, needsWhiteText, sortedShades } from './helpers';
 
 import type { ColorScale, NamedToken, StyleGuideData } from '../../helpers/getStyleGuideResult';
@@ -16,54 +17,6 @@ const SectionLabel = ({ children }: { children: React.ReactNode }) => (
     {children}
   </div>
 );
-
-const ColorScaleRow = ({
-  label,
-  scale,
-  onCopy,
-  copied
-}: {
-  label: string;
-  scale: ColorScale;
-  onCopy: (hex: string) => void;
-  copied: string | null;
-}) => {
-  const shades = sortedShades(scale);
-
-  return (
-    <div className="mb-2">
-      <div className="mb-0.5 font-mono text-[10px] text-zinc-500 capitalize">{label}</div>
-      <div className="flex gap-px overflow-hidden rounded">
-        {shades.map(([shade, hex]) => {
-          const white = needsWhiteText(hex);
-          const isCopied = copied === hex;
-
-          return (
-            <button
-              key={shade}
-              onClick={() => onCopy(hex)}
-              className="group relative flex-1 cursor-pointer"
-              style={{ backgroundColor: hex, height: 24 }}
-              title={`${label}-${shade}: ${hex}`}
-            >
-              <div
-                className="absolute inset-0 flex flex-col items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
-                style={{ color: white ? '#fff' : '#000' }}
-              >
-                <span className="text-[8px]">{isCopied ? '✓' : shade}</span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-      {shades.length > 0 && (
-        <div className="mt-0.5 font-mono text-[9px] text-zinc-400 dark:text-zinc-600">
-          500 → {shades.find(([s]) => s === '500')?.[1] ?? shades[Math.floor(shades.length / 2)]?.[1] ?? ''}
-        </div>
-      )}
-    </div>
-  );
-};
 
 const SemanticDots = ({ semantic }: { semantic: NonNullable<StyleGuideData['colors']['semantic']> }) => {
   const items = [
@@ -192,10 +145,7 @@ const AIStyleGuidePreview = ({
   const [copied, setCopied] = useState<string | null>(null);
   const { onSendMessage } = useAiChatContext();
 
-  const handleToggleSection = useCallback(
-    (key: string) => setOpen(prev => ({ ...prev, [key]: !prev[key] })),
-    []
-  );
+  const handleToggleSection = useCallback((key: string) => setOpen(prev => ({ ...prev, [key]: !prev[key] })), []);
 
   const handleCopy = useCallback((hex: string) => {
     void navigator.clipboard.writeText(hex);
@@ -207,6 +157,9 @@ const AIStyleGuidePreview = ({
   const handleDarkMode = useCallback(() => setIsDark(true), []);
   const handleStartConfirm = useCallback(() => setConfirming(true), []);
   const handleCancel = useCallback(() => setConfirming(false), []);
+  const handleToggleColors = useCallback(() => handleToggleSection('colors'), [handleToggleSection]);
+  const handleToggleTypography = useCallback(() => handleToggleSection('typography'), [handleToggleSection]);
+  const handleToggleTokens = useCallback(() => handleToggleSection('tokens'), [handleToggleSection]);
 
   const activeColors =
     isDark && colorsDark
@@ -290,7 +243,7 @@ const AIStyleGuidePreview = ({
       <div className="bg-zinc-50 dark:bg-zinc-950">
         <div className="border-b border-zinc-100 dark:border-zinc-800">
           <button
-            onClick={() => handleToggleSection('colors')}
+            onClick={handleToggleColors}
             className="flex w-full items-center justify-between px-3 py-1.5 text-left font-mono text-[10px] tracking-widest text-zinc-500 uppercase hover:bg-zinc-100 dark:text-zinc-500 dark:hover:bg-zinc-900"
           >
             Colors
@@ -309,7 +262,7 @@ const AIStyleGuidePreview = ({
         {typography && (
           <div className="border-b border-zinc-100 dark:border-zinc-800">
             <button
-              onClick={() => handleToggleSection('typography')}
+              onClick={handleToggleTypography}
               className="flex w-full items-center justify-between px-3 py-1.5 text-left font-mono text-[10px] tracking-widest text-zinc-500 uppercase hover:bg-zinc-100 dark:text-zinc-500 dark:hover:bg-zinc-900"
             >
               Typography
@@ -326,7 +279,7 @@ const AIStyleGuidePreview = ({
         {hasTokens && (
           <div>
             <button
-              onClick={() => handleToggleSection('tokens')}
+              onClick={handleToggleTokens}
               className="flex w-full items-center justify-between px-3 py-1.5 text-left font-mono text-[10px] tracking-widest text-zinc-500 uppercase hover:bg-zinc-100 dark:text-zinc-500 dark:hover:bg-zinc-900"
             >
               Spacing · Radius · Shadows

@@ -3,9 +3,11 @@ import { useCallback, useState } from 'react';
 
 import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 
-import { sortedColors, toVarName } from './helpers';
+import ColorPaletteRow from './components/ColorPaletteRow';
+import ColorStripItem from './components/ColorStripItem';
+import { getHex, sortedColors, toVarName } from './helpers';
 
-import type { ColorItem, ColorPaletteData } from '../../helpers/getColorPaletteResult';
+import type { ColorPaletteData } from '../../helpers/getColorPaletteResult';
 import type { AiMode } from '@pmodules/AI/types';
 
 export type AIColorPalettePreviewProps = ColorPaletteData & { mode?: AiMode };
@@ -18,7 +20,6 @@ const AIColorPalettePreview = ({ name, description, colors, mode }: AIColorPalet
 
   const sorted = sortedColors(colors);
   const hasDark = sorted.some(c => c.darkHex);
-  const getHex = (c: ColorItem) => (isDark && c.darkHex ? c.darkHex : c.hex);
 
   const handleCopy = useCallback((hex: string) => {
     void navigator.clipboard.writeText(hex);
@@ -27,17 +28,21 @@ const AIColorPalettePreview = ({ name, description, colors, mode }: AIColorPalet
   }, []);
 
   const handleLightMode = useCallback(() => setIsDark(false), []);
+
   const handleDarkMode = useCallback(() => setIsDark(true), []);
+
   const handleStartConfirm = useCallback(() => setConfirming(true), []);
+
   const handleCancel = useCallback(() => setConfirming(false), []);
 
   const handleConfirm = useCallback(() => {
-    const varList = sorted.map(c => `• ${c.role ?? c.name}: ${getHex(c)}`).join('\n');
+    const varList = sorted.map(c => `• ${c.role ?? c.name}: ${getHex(c, isDark)}`).join('\n');
+
     onSendMessage(
       `Apply the "${name}" color palette to this space. Create a style variable for each color using createStyleVariable:\n${varList}`
     );
     setConfirming(false);
-  }, [sorted, getHex, name, onSendMessage]);
+  }, [sorted, isDark, name, onSendMessage]);
 
   return (
     <div className="mt-2 overflow-hidden rounded-md border border-zinc-200 text-xs dark:border-zinc-700/60">
@@ -81,47 +86,20 @@ const AIColorPalettePreview = ({ name, description, colors, mode }: AIColorPalet
       </div>
 
       <div className="divide-y divide-zinc-50 bg-white dark:divide-zinc-800/60 dark:bg-zinc-950">
-        {sorted.map(c => {
-          const hex = getHex(c);
-          const isCopied = copied === hex;
-
-          return (
-            <div key={c.name} className="flex items-center gap-2 px-3 py-1">
-              <button
-                onClick={() => handleCopy(hex)}
-                className="h-4 w-4 shrink-0 cursor-pointer rounded-full border border-black/10 transition-transform hover:scale-110 dark:border-white/10"
-                style={{ backgroundColor: hex }}
-                title={`Copy ${hex}`}
-              />
-              <span className="flex-1 font-medium text-zinc-700 dark:text-zinc-300">{c.name}</span>
-              {c.role && <span className="font-mono text-[10px] text-zinc-400 dark:text-zinc-600">{c.role}</span>}
-              <button
-                onClick={() => handleCopy(hex)}
-                className="font-mono text-[10px] text-zinc-400 hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-400"
-              >
-                {hex.toUpperCase()}
-              </button>
-              <button
-                onClick={() => handleCopy(hex)}
-                className="w-3 shrink-0 text-center text-zinc-300 hover:text-zinc-500 dark:text-zinc-700 dark:hover:text-zinc-500"
-              >
-                {isCopied && <i className="fa-solid fa-check text-[10px] text-emerald-500" />}
-                {!isCopied && <i className="fa-regular fa-copy text-[10px]" />}
-              </button>
-            </div>
-          );
-        })}
+        {sorted.map(c => (
+          <ColorPaletteRow
+            key={c.name}
+            item={c}
+            hex={getHex(c, isDark)}
+            isCopied={copied === getHex(c, isDark)}
+            onCopy={handleCopy}
+          />
+        ))}
       </div>
 
       <div className="flex h-2" aria-hidden>
         {sorted.map(c => (
-          <button
-            key={c.name}
-            className="flex-1 cursor-pointer"
-            style={{ backgroundColor: getHex(c) }}
-            onClick={() => handleCopy(getHex(c))}
-            title={`Copy ${getHex(c)}`}
-          />
+          <ColorStripItem key={c.name} name={c.name} hex={getHex(c, isDark)} onCopy={handleCopy} />
         ))}
       </div>
 
@@ -132,7 +110,7 @@ const AIColorPalettePreview = ({ name, description, colors, mode }: AIColorPalet
           </p>
           <div className="mb-2 max-h-28 space-y-0.5 overflow-y-auto">
             {sorted.map(c => {
-              const hex = getHex(c);
+              const hex = getHex(c, isDark);
 
               return (
                 <div key={c.name} className="flex items-center gap-2">

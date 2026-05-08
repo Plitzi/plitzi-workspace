@@ -98,6 +98,8 @@ These are enforced by convention, not lint rules:
 
 **Before `return`**: leave one blank line when there is any code above it in the same block.
 
+**Around `useCallback`**: leave one blank line above and below every `useCallback` declaration when there is other code in the same block.
+
 ```ts
 // Correct
 if (condition) {
@@ -114,6 +116,27 @@ if (condition) {
 }
 const result = computeValue();
 return result;
+```
+
+```tsx
+// Correct
+const [open, setOpen] = useState(false);
+
+const handleToggle = useCallback(() => setOpen(o => !o), []);
+
+const handleConfirm = useCallback(() => {
+  doSomething();
+}, [doSomething]);
+
+return <div />;
+
+// Wrong — missing blank lines around useCallback
+const [open, setOpen] = useState(false);
+const handleToggle = useCallback(() => setOpen(o => !o), []);
+const handleConfirm = useCallback(() => {
+  doSomething();
+}, [doSomething]);
+return <div />;
 ```
 
 ## General Rules
@@ -211,6 +234,37 @@ ChatMessage/
 ```
 
 Exception: tiny sub-components (a few lines, self-contained, no logic) do not need their own folder unless they are reused in multiple places. Inline them or keep them in the same file only when they are trivial and unique to that parent.
+
+**No inline arrow functions in JSX event handlers.** Every event handler must be a named function defined with `useCallback`. Never pass an inline arrow function directly to a JSX prop — it creates a new function on every render and breaks memoization.
+
+```tsx
+// Correct
+const handleToggle = useCallback(() => setOpen(o => !o), []);
+<button onClick={handleToggle} />
+
+// Wrong — inline arrow, new reference every render
+<button onClick={() => setOpen(o => !o)} />
+<button onClick={() => onSelect(id)} />
+```
+
+When rendering a list with `.map()` and each item needs to capture its own value, extract the item into a sub-component that owns its `useCallback` internally:
+
+```tsx
+// Wrong — inline arrow capturing loop variable
+{items.map(item => (
+  <button key={item.id} onClick={() => onSelect(item.id)}>{item.label}</button>
+))}
+
+// Correct — sub-component owns the callback
+type SelectItemProps = { id: string; label: string; onSelect: (id: string) => void };
+const SelectItem = ({ id, label, onSelect }: SelectItemProps) => {
+  const handleClick = useCallback(() => onSelect(id), [id, onSelect]);
+  return <button onClick={handleClick}>{label}</button>;
+};
+
+{items.map(item => (
+  <SelectItem key={item.id} id={item.id} label={item.label} onSelect={onSelect} />
+))}
 
 **No helpers inside component files.** Extract helper functions, constants, and utilities to a separate file (e.g. `helpers.ts` or a dedicated `helpers/` folder) and import them. A component file should only contain the component itself and its direct types/props.
 
