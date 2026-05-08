@@ -1,3 +1,5 @@
+import clsx from 'clsx';
+
 import type { DisplayMode } from '@plitzi/sdk-shared';
 import type { AiMode } from '@pmodules/AI/types';
 
@@ -32,18 +34,16 @@ const AITemplateHeader = ({
 }: AITemplateHeaderProps) => (
   <div className="flex items-center justify-between gap-2 border-b border-zinc-100 bg-zinc-50 px-3 py-1 font-mono text-xs text-zinc-600 dark:border-zinc-700/60 dark:bg-zinc-900 dark:text-zinc-400">
     <div className="flex min-w-0 items-center gap-1.5">
-      <span className="shrink-0 rounded border border-zinc-300 px-1 text-[9px] uppercase tracking-wider dark:border-zinc-600">
+      <span className="shrink-0 rounded border border-zinc-300 px-1 text-[9px] tracking-wider uppercase dark:border-zinc-600">
         preview
       </span>
-      {version ? (
+      {version && (
         <span className="shrink-0 rounded bg-zinc-200 px-1 font-mono text-[9px] text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">
           v{version}
         </span>
-      ) : null}
-      <span className="truncate text-zinc-400 dark:text-zinc-600">{showHtml ? 'HTML Source' : baseElementId}</span>
-      {mode === 'plan' && (
-        <span className="shrink-0 font-mono text-[9px] text-sky-500 dark:text-sky-600">plan</span>
       )}
+      <span className="truncate text-zinc-400 dark:text-zinc-600">{showHtml ? 'HTML Source' : baseElementId}</span>
+      {mode === 'plan' && <span className="shrink-0 font-mono text-[9px] text-sky-500 dark:text-sky-600">plan</span>}
     </div>
 
     <div className="flex items-center gap-2">
@@ -63,11 +63,10 @@ const AITemplateHeader = ({
             key={dm}
             onClick={() => onDisplayMode(dm)}
             title={dm}
-            className={`cursor-pointer rounded px-1 py-0.5 transition-colors ${
-              displayMode === dm
-                ? 'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300'
-                : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-400'
-            }`}
+            className={clsx('cursor-pointer rounded px-1 py-0.5 transition-colors', {
+              'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300': displayMode === dm,
+              'text-zinc-400 hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-400': displayMode !== dm
+            })}
           >
             <i className={icon} />
           </button>

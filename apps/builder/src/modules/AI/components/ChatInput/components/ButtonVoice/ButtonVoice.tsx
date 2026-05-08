@@ -12,10 +12,12 @@ export type ButtonVoiceProps = {
 const ButtonVoice = ({ mode, disabled = false, isListening, onVoiceToggle }: ButtonVoiceProps) => (
   <button
     className={clsx(
-      'w-7 h-7 grid place-items-center rounded-lg border-0 transition-colors duration-150',
+      'grid h-7 w-7 place-items-center rounded-lg border-0 transition-colors duration-150',
       isListening
-        ? mode === 'build' ? 'bg-emerald-500 dark:bg-emerald-400 text-white' : 'bg-sky-500 dark:bg-sky-400 text-white'
-        : 'bg-transparent text-zinc-500 dark:text-zinc-400 hover:bg-neutral-200 dark:hover:bg-zinc-700'
+        ? mode === 'build'
+          ? 'bg-emerald-500 text-white dark:bg-emerald-400'
+          : 'bg-sky-500 text-white dark:bg-sky-400'
+        : 'bg-transparent text-zinc-500 hover:bg-neutral-200 dark:text-zinc-400 dark:hover:bg-zinc-700'
     )}
     title={isListening ? 'Stop recording' : 'Voice input'}
     disabled={disabled}
