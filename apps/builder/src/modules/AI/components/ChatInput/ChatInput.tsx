@@ -82,6 +82,9 @@ const ChatInput = ({
     setMessageInput('');
     setAttachments([]);
     setActiveSkills([]);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
     onSend(msg, atts, effort);
   }, [messageInput, attachments, activeSkills, skills, isStreaming, onSend, effort]);
 
@@ -195,7 +198,7 @@ const ChatInput = ({
             className={{
               root: 'w-full',
               inputContainer: 'border-none bg-transparent ring-0! dark:bg-transparent',
-              input: 'bg-transparent'
+              input: 'resize-none bg-transparent'
             }}
             rows={1}
             value={messageInput}

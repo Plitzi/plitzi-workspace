@@ -2,10 +2,10 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import clsx from 'clsx';
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 
+import LiveEntry from './components/LiveEntry';
 import { estimateSize, PADDING } from './helpers';
 import { useAiChatContext } from '../../contexts/AiChatContext';
 import ChatMessage from '../ChatMessage';
-import LiveEntry from './components/LiveEntry';
 
 import type { AiMessage, AiToolCall } from '../../types';
 import type { Ref } from 'react';
