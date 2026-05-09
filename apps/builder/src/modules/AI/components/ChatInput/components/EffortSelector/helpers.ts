@@ -9,6 +9,12 @@ export type EffortOption = {
 
 export const OPTIONS: EffortOption[] = [
   {
+    id: 'auto',
+    label: 'Auto',
+    desc: 'Model decides the best effort.',
+    meta: [['~', '?']]
+  },
+  {
     id: 'low',
     label: 'Low',
     desc: 'Fast responses, minimal reasoning.',
@@ -37,4 +43,4 @@ export const OPTIONS: EffortOption[] = [
   }
 ];
 
-export const BARS_FILLED: Record<AiEffort, number> = { low: 1, medium: 2, high: 3 };
+export const BARS_FILLED: Record<AiEffort, number> = { auto: 0, low: 1, medium: 2, high: 3 };

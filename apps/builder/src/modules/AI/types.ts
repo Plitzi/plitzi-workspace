@@ -2,7 +2,7 @@ import type { Theme } from '@plitzi/sdk-shared';
 
 export type AiRole = 'user' | 'assistant';
 export type AiMode = 'plan' | 'build';
-export type AiEffort = 'low' | 'medium' | 'high';
+export type AiEffort = 'auto' | 'low' | 'medium' | 'high';
 export type AIToolStatus = 'running' | 'failed' | 'done';
 
 export type AiAttachment = {

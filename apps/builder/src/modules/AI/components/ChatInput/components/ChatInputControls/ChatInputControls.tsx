@@ -56,6 +56,8 @@ const ChatInputControls = ({
   onClickSend
 }: ChatInputControlsProps) => {
   const modelContextLimit = models.find(m => m.id === currentModel)?.contextLimit;
+  const supportsThinking = models.find(m => m.id === currentModel)?.supportsThinking;
+  const effectiveEffort = !supportsThinking ? 'auto' : effort;
 
   return (
     <div className="flex items-center justify-between gap-1">
@@ -78,8 +80,8 @@ const ChatInputControls = ({
           onChange={onModelChange}
         />
         <EffortSelector
-          value={effort}
-          disabled={disabled || !models.find(m => m.id === currentModel)?.supportsThinking}
+          value={effectiveEffort}
+          disabled={disabled || !supportsThinking}
           onChange={onEffortChange}
         />
         <ToggleMode mode={mode} disabled={disabled} onModeChange={onModeChange} />
