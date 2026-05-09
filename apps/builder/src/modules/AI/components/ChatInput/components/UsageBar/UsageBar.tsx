@@ -35,11 +35,9 @@ const UsageBar = ({
   const isHigh = usedPercent >= 80 && usedPercent < 95;
   const isWarn = usedPercent >= 60 && usedPercent < 80;
   const arcOpacity = Math.max(0.5, Math.min(1, 0.5 + (usedPercent / 100) * 0.5));
-
   const tokenInfo = contextLimit
     ? `${(usage?.inputTokens ?? 0).toLocaleString()} / ${contextLimit.toLocaleString()} tokens · ${Math.round(usedPercent)}%`
     : 'Context usage';
-
   const pulseMode = isCritical || isHigh || isWarn ? 'segment' : usedPercent >= 30 ? 'segment' : 'none';
 
   if (showCompact) {
