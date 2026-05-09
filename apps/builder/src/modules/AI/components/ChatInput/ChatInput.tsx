@@ -1,4 +1,5 @@
 import TextArea from '@plitzi/plitzi-ui/TextArea';
+import clsx from 'clsx';
 import { useCallback, useImperativeHandle, useRef, useState } from 'react';
 
 import { isMac } from './helpers';
@@ -55,6 +56,7 @@ const ChatInput = ({
   const [skills, setSkills] = useState<AiSkill[]>(DEFAULT_SKILLS);
   const [skillsOpen, setSkillsOpen] = useState(false);
   const [activeSkills, setActiveSkills] = useState<string[]>([]);
+  const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useImperativeHandle(ref, () => ({
@@ -105,18 +107,32 @@ const ChatInput = ({
     textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
   }, []);
 
+  const handleFocus = useCallback(() => setIsFocused(true), []);
+
+  const handleBlur = useCallback(() => setIsFocused(false), []);
+
   const removeAttachment = useCallback((id: string) => setAttachments(prev => prev.filter(a => a.id !== id)), []);
+
   const handleChangeAttachments = useCallback((atts: AiAttachment[]) => setAttachments(atts), []);
+
   const handleToggleSkill = useCallback(
     (id: string) => setSkills(prev => prev.map(s => (s.id === id ? { ...s, enabled: !s.enabled } : s))),
     []
   );
+
   const removeActiveSkill = useCallback((id: string) => setActiveSkills(prev => prev.filter(i => i !== id)), []);
+
   const voiceColor = mode === 'build' ? '#10b981' : '#0ea5e9';
 
   return (
     <>
-      <div className="m-2 flex flex-col rounded-xl border border-neutral-300 bg-neutral-50 dark:border-zinc-700 dark:bg-zinc-800">
+      <div
+        className={clsx('m-2 flex flex-col rounded-xl border bg-neutral-50 dark:bg-zinc-800', {
+          'border-neutral-300 dark:border-zinc-700': !isFocused,
+          'border-emerald-500 ring-2 ring-emerald-500/20 dark:border-emerald-400': isFocused && mode === 'build',
+          'border-sky-500 ring-2 ring-sky-500/20 dark:border-sky-400': isFocused && mode === 'plan'
+        })}
+      >
         <div className="flex flex-col gap-2 p-3">
           {isListening && (
             <div className="rounded-lg border border-neutral-300 bg-neutral-200 px-2 py-1 dark:border-zinc-700 dark:bg-zinc-700">
@@ -185,6 +201,8 @@ const ChatInput = ({
             value={messageInput}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             disabled={isStreaming}
             size="xs"
           />
