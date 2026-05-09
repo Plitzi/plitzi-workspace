@@ -1,5 +1,7 @@
 import clsx from 'clsx';
 
+import KeyboardKey from '@pmodules/AI/components/KeyboardKey';
+import ModeLabel from '@pmodules/AI/components/ModeLabel';
 import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 
 import type { AiMode } from '@pmodules/AI/types';
@@ -27,21 +29,11 @@ const ConversationButton = ({ conversationTitle, mode, onHistoryOpen }: Conversa
       <span className="min-w-0 flex-1 truncate text-[11.5px] font-medium text-zinc-900 dark:text-zinc-100">
         {conversationTitle ?? 'New conversation'}
       </span>
-      {mode && (
-        <span
-          className={clsx('shrink-0 rounded border px-1.5 py-px font-mono text-[8px] tracking-wider uppercase', {
-            'border-emerald-500/50 bg-emerald-500/10 text-emerald-500 dark:border-emerald-400/50 dark:bg-emerald-400/10 dark:text-emerald-400':
-              currentMode === 'build',
-            'border-sky-500/50 bg-sky-500/10 text-sky-500 dark:border-sky-400/50 dark:bg-sky-400/10 dark:text-sky-400':
-              currentMode === 'plan'
-          })}
-        >
-          {mode}
-        </span>
-      )}
-      <kbd className="shrink-0 rounded border border-b-2 border-neutral-300 bg-neutral-100 px-1 py-px font-mono text-[8px] text-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400">
-        ⌘K
-      </kbd>
+      <ModeLabel mode={mode} />
+      <KeyboardKey
+        className="border-neutral-300 bg-neutral-100 text-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400"
+        char="K"
+      />
     </button>
   );
 };

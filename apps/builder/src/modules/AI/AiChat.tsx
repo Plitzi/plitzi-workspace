@@ -19,7 +19,7 @@ import useAiTools from './hooks/useAiTools';
 import useVoice from './hooks/useVoice';
 
 import type { ChatInputHandle } from './components/ChatInput';
-import type { AiAttachment } from './types';
+import type { AiAttachment, AiEffort } from './types';
 import type { BuilderState } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 
@@ -41,7 +41,7 @@ const AiChat = () => {
     modelsLoading,
     modelsError,
     updateSettings
-  } = useAiProviderSettings(isSettingsOpen);
+  } = useAiProviderSettings(true);
 
   const runClientTool = useAiTools();
   const {
@@ -56,6 +56,7 @@ const AiChat = () => {
     quotaError,
     clearQuotaError,
     quotaRetryAfter,
+    conversationId,
     conversations,
     mode,
     setMode,
@@ -108,8 +109,8 @@ const AiChat = () => {
   const handleClickHistory = useCallback(() => setHistoryOpen(false), []);
 
   const handleSend = useCallback(
-    (msg: string, atts: AiAttachment[]) => {
-      void sendMessage(msg, { currentPageId, elementSelected, environment, theme }, atts);
+    (msg: string, atts: AiAttachment[], effort: AiEffort) => {
+      void sendMessage(msg, { currentPageId, elementSelected, environment, theme }, atts, effort);
     },
     [sendMessage, currentPageId, elementSelected, environment, theme]
   );
@@ -149,7 +150,6 @@ const AiChat = () => {
           onCompact={compact}
           isStreaming={isStreaming}
           messageCount={messages.length}
-          providerSettings={providerSettings}
           usage={usage}
           isSettingsOpen={isSettingsOpen}
           onSettingsToggle={handleClickSettingsToggle}
@@ -203,8 +203,12 @@ const AiChat = () => {
           isListening={isListening}
           isVoiceSupported={isVoiceSupported}
           audioData={audioData}
+          models={models}
+          currentModel={providerSettings.model}
+          modelsLoading={modelsLoading}
           onSend={handleSend}
           onVoiceToggle={handleVoiceToggle}
+          onModelChange={m => updateSettings({ model: m })}
           mode={mode}
           onModeChange={setMode}
         />
@@ -212,6 +216,7 @@ const AiChat = () => {
         {historyOpen && (
           <HistoryPanel
             conversations={conversations}
+            currentConversationId={conversationId || undefined}
             onClose={handleClickHistory}
             onSelect={loadConversation}
             onNew={handleNewChat}

@@ -1,20 +1,33 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import getDateGroup from '@pmodules/AI/helpers/getDateGroup';
 
 import ConversationList from './components/ConversationList';
 import HistoryFooter from './components/HistoryFooter';
 import HistorySearch from './components/HistorySearch';
 
+import type { ConversationGroup, EnrichedConversation } from './types';
 import type { ConversationSummary } from '../../types';
 
 export type HistoryPanelProps = {
   conversations: ConversationSummary[];
+  currentConversationId?: string;
   onClose: () => void;
   onSelect: (id: string) => void;
   onNew: () => void;
 };
 
-const HistoryPanel = ({ conversations, onClose, onSelect, onNew }: HistoryPanelProps) => {
+const DATE_GROUP_LABELS: Record<string, string> = {
+  today: 'Today',
+  yesterday: 'Yesterday',
+  week: 'This week',
+  older: 'Earlier'
+};
+
+const HistoryPanel = ({ conversations, currentConversationId, onClose, onSelect, onNew }: HistoryPanelProps) => {
   const [search, setSearch] = useState('');
+  const [highlighted, setHighlighted] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
@@ -35,23 +48,87 @@ const HistoryPanel = ({ conversations, onClose, onSelect, onNew }: HistoryPanelP
     [onSelect, onClose]
   );
 
+  const groups = useMemo<ConversationGroup[]>(() => {
+    const q = search.trim().toLowerCase();
+    const filtered = q ? conversations.filter(c => c.preview.toLowerCase().includes(q)) : conversations;
+
+    const current = filtered.filter(c => c.id === currentConversationId);
+    const others = filtered.filter(c => c.id !== currentConversationId);
+
+    const result: ConversationGroup[] = [];
+    let rowIndex = 0;
+
+    const enrich = (items: ConversationSummary[], isCurrent: boolean): EnrichedConversation[] =>
+      items.map(c => ({ ...c, rowIndex: rowIndex++, isCurrent }));
+
+    if (current.length > 0) {
+      result.push({ key: 'current', label: 'Active', items: enrich(current, true) });
+    }
+
+    const dateGroups = (['today', 'yesterday', 'week', 'older'] as const)
+      .map(key => ({
+        key,
+        label: DATE_GROUP_LABELS[key],
+        items: enrich(
+          others.filter(c => getDateGroup(c.updatedAt) === key),
+          false
+        )
+      }))
+      .filter(g => g.items.length > 0);
+
+    return [...result, ...dateGroups];
+  }, [conversations, search, currentConversationId]);
+
+  const flatList = useMemo<EnrichedConversation[]>(() => groups.flatMap(g => g.items), [groups]);
+
+  useEffect(() => {
+    setHighlighted(0);
+  }, [search]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setHighlighted(h => Math.min(h + 1, flatList.length - 1));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setHighlighted(h => Math.max(h - 1, 0));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const item = flatList.at(highlighted);
+        if (item) {
+          handleSelect(item.id);
+        }
+      } else if (/^[1-9]$/.test(e.key) && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        const item = flatList.at(parseInt(e.key, 10) - 1);
+        if (item) {
+          handleSelect(item.id);
+        }
       }
     };
 
     document.addEventListener('keydown', handler);
 
     return () => document.removeEventListener('keydown', handler);
-  }, [onClose]);
+  }, [onClose, flatList, highlighted, handleSelect]);
 
   return (
-    <div className="absolute inset-0 z-40 flex flex-col bg-black/50 backdrop-blur-sm" onClick={handleClick}>
+    <div
+      ref={containerRef}
+      className="absolute inset-0 z-40 flex flex-col bg-black/50 backdrop-blur-sm"
+      onClick={handleClick}
+    >
       <div className="absolute inset-x-2 top-12 bottom-2 flex flex-col overflow-hidden rounded-xl border border-neutral-300 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
         <HistorySearch value={search} onChange={setSearch} onClear={handleClearSearch} />
-        <ConversationList conversations={conversations} search={search} onSelect={handleSelect} />
+        <ConversationList
+          groups={groups}
+          highlighted={highlighted}
+          onHighlight={setHighlighted}
+          onSelect={handleSelect}
+        />
         <HistoryFooter onNew={onNew} />
       </div>
     </div>

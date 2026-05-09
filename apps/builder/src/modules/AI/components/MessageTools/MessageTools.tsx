@@ -19,7 +19,7 @@ const MessageTools = ({ tools, defaultOpen = false }: MessageToolsProps) => {
   const handleClick = useCallback(() => setOpen(state => !state), []);
 
   return (
-    <div className="my-1">
+    <div className="flex flex-col">
       <button
         className="flex items-center gap-1.5 rounded px-2 py-0.5 font-mono text-[10px] text-zinc-500 transition-colors hover:bg-neutral-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
         onClick={handleClick}

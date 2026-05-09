@@ -2,6 +2,7 @@ import type { Theme } from '@plitzi/sdk-shared';
 
 export type AiRole = 'user' | 'assistant';
 export type AiMode = 'plan' | 'build';
+export type AiEffort = 'low' | 'medium' | 'high';
 export type AIToolStatus = 'running' | 'failed' | 'done';
 
 export type AiAttachment = {
@@ -118,4 +119,21 @@ export type AiModelInfo = {
   providerID?: string;
   providerName?: string;
   free?: boolean;
+};
+
+export type AiSkillSource = 'builtin' | 'team' | 'mine';
+export type AiSkillCategory = 'design' | 'content' | 'data' | 'performance' | 'integrations' | 'enterprise';
+
+export type AiSkill = {
+  id: string;
+  name: string;
+  slash: string;
+  source: AiSkillSource;
+  cat: AiSkillCategory;
+  desc: string;
+  enabled: boolean;
+  enterprise?: boolean;
+  runs?: number;
+  avg?: string;
+  lastUsed?: string;
 };

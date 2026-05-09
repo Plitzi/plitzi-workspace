@@ -9,7 +9,7 @@ const ThinkingBlock = ({ text, durationMs }: ThinkingBlockProps) => {
   const handleToggle = useCallback(() => setOpen(o => !o), []);
 
   return (
-    <div className="mb-1">
+    <div className="flex flex-col">
       <button
         className="flex items-center gap-1.5 rounded px-1.5 py-px font-mono text-[10px] text-zinc-500 transition-colors hover:bg-neutral-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
         onClick={handleToggle}

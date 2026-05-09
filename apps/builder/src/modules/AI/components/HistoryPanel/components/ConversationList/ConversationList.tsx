@@ -1,50 +1,44 @@
-import clsx from 'clsx';
-
-import getDateGroup from '@pmodules/AI/helpers/getDateGroup';
-
-import { GROUP_LABELS } from '../../helpers';
 import ConversationItem from './components/ConversationItem';
 
-import type { ConversationSummary } from '@pmodules/AI/types';
+import type { ConversationGroup } from '@pmodules/AI/components/HistoryPanel/types';
 
 export type ConversationListProps = {
-  conversations: ConversationSummary[];
-  search: string;
+  groups: ConversationGroup[];
+  highlighted: number;
+  onHighlight: (index: number) => void;
   onSelect: (id: string) => void;
 };
 
-const ConversationList = ({ conversations, search, onSelect }: ConversationListProps) => {
-  const filtered = search.trim()
-    ? conversations.filter(c => c.preview.toLowerCase().includes(search.toLowerCase()))
-    : conversations;
-
-  const groups = (['today', 'yesterday', 'week', 'older'] as const)
-    .map(key => ({ key, label: GROUP_LABELS[key], items: filtered.filter(c => getDateGroup(c.updatedAt) === key) }))
-    .filter(g => g.items.length > 0);
+const ConversationList = ({ groups, highlighted, onHighlight, onSelect }: ConversationListProps) => {
+  const isEmpty = groups.every(g => g.items.length === 0);
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
-      {groups.length === 0 && (
+      {isEmpty && (
         <div className="flex flex-col items-center justify-center gap-3 py-16">
-          <i
-            className={clsx('text-xl text-zinc-400 dark:text-zinc-600', {
-              'fa-solid fa-magnifying-glass': !!search,
-              'fa-regular fa-message': !search
-            })}
-          />
-          <span className="font-mono text-[11px] text-zinc-400 dark:text-zinc-600">
-            {search ? 'No matches found' : 'No conversations yet'}
-          </span>
+          <i className="fa-regular fa-message text-xl text-zinc-400 dark:text-zinc-600" />
+          <span className="font-mono text-[11px] text-zinc-400 dark:text-zinc-600">No conversations yet</span>
         </div>
       )}
-      {groups.length > 0 &&
+      {!isEmpty &&
         groups.map(({ key, label, items }) => (
           <div key={key}>
-            <div className="px-4 pt-3 pb-1 font-mono text-[9px] tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
-              {label}
+            <div className="flex items-center gap-2 px-4 pt-3 pb-1">
+              <span className="font-mono text-[9px] tracking-widest text-zinc-400 uppercase dark:text-zinc-600">
+                {label}
+              </span>
+              <span className="font-mono text-[9px] text-zinc-300 dark:text-zinc-700">{items.length}</span>
             </div>
             {items.map(c => (
-              <ConversationItem key={c.id} conversation={c} onSelect={onSelect} />
+              <ConversationItem
+                key={c.id}
+                conversation={c}
+                rowNum={c.rowIndex + 1}
+                isHighlighted={c.rowIndex === highlighted}
+                isCurrent={c.isCurrent}
+                onSelect={onSelect}
+                onHighlight={onHighlight}
+              />
             ))}
           </div>
         ))}

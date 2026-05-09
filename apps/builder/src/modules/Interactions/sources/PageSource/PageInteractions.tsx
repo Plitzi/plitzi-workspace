@@ -19,8 +19,9 @@ const PageInteractions = ({ children, previewMode = false }: PageInteractionsPro
   const { useInteractions } = use(InteractionsContext);
   const { navigate } = use(NavigationContext);
   const { useStore } = createStoreHook<BuilderState>();
-  const [[{ keepState, stateStorage }, pageIds, pageDefinitions]] = useStore([
-    'schema.settings',
+  const [[keepState, stateStorage, pageIds, pageDefinitions]] = useStore([
+    'schema.settings.keepState',
+    'schema.settings.stateStorage',
     'schema.pages',
     'pageDefinitions'
   ]);

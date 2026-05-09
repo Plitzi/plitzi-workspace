@@ -9,6 +9,7 @@ import type { AiFrontendToolRunner } from '../tools';
 import type {
   AiAttachment,
   AiContext,
+  AiEffort,
   AiMessage,
   AiMode,
   AiProviderSettings,
@@ -88,7 +89,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
   const thinkingDurationMsRef = useRef<number | undefined>(undefined);
 
   const sendMessage = useCallback(
-    async (message: string, context: AiContext, attachments: AiAttachment[] = []) => {
+    async (message: string, context: AiContext, attachments: AiAttachment[] = [], effort: AiEffort = 'medium') => {
       if (isStreaming) {
         return;
       }
@@ -139,6 +140,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
             attachments: serverAttachments.length > 0 ? serverAttachments : undefined,
             context,
             mode: modeRef.current,
+            effort,
             ...providerSettingsRef.current
           })
         });
@@ -372,6 +374,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
       setQuotaRetryAfter(undefined);
     },
     quotaRetryAfter,
+    conversationId,
     conversations,
     mode,
     setMode,
