@@ -7,7 +7,7 @@ import AttachmentThumbnail from './components/AttachmentThumbnail';
 import ChatInputControls from './components/ChatInputControls';
 import { DEFAULT_SKILLS, SkillsManager } from './components/SkillsManager';
 
-import type { AiAttachment, AiEffort, AiMode, AiModelInfo, AiSkill } from '../../types';
+import type { AiAttachment, AiEffort, AiMode, AiModelInfo, AiSkill, AiUsage } from '../../types';
 import type { KeyboardEvent, Ref } from 'react';
 
 export type ChatInputHandle = { appendText: (text: string) => void };
@@ -21,6 +21,9 @@ export type ChatInputProps = {
   models?: AiModelInfo[];
   currentModel?: string;
   modelsLoading?: boolean;
+  usage?: AiUsage;
+  messageCount?: number;
+  onCompact?: () => void;
   onSend: (message: string, attachments: AiAttachment[], effort: AiEffort) => void;
   onVoiceToggle: () => void;
   onModelChange?: (modelId: string) => void;
@@ -37,6 +40,9 @@ const ChatInput = ({
   models = [],
   currentModel,
   modelsLoading,
+  usage,
+  messageCount = 0,
+  onCompact,
   onSend,
   onVoiceToggle,
   onModelChange,
@@ -195,6 +201,9 @@ const ChatInput = ({
             disabled={isStreaming}
             isListening={isListening}
             attachments={attachments}
+            usage={usage}
+            messageCount={messageCount}
+            onCompact={onCompact}
             onVoiceToggle={onVoiceToggle}
             onAttachmentsChange={handleChangeAttachments}
             onModeChange={onModeChange}

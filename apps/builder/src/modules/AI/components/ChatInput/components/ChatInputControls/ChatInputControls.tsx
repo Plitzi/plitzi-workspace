@@ -4,8 +4,9 @@ import ButtonSend from '../ButtonSend';
 import EffortSelector from '../EffortSelector';
 import ModelSelector from '../ModelSelector';
 import { SkillsButton } from '../SkillsManager';
+import UsageBar from '../UsageBar';
 
-import type { AiAttachment, AiEffort, AiMode, AiModelInfo, AiSkill } from '@pmodules/AI/types';
+import type { AiAttachment, AiEffort, AiMode, AiModelInfo, AiSkill, AiUsage } from '@pmodules/AI/types';
 
 export type ChatInputControlsProps = {
   mode: AiMode;
@@ -19,6 +20,9 @@ export type ChatInputControlsProps = {
   isVoiceSupported: boolean;
   disabled?: boolean;
   isListening: boolean;
+  usage?: AiUsage;
+  messageCount?: number;
+  onCompact?: () => void;
   onVoiceToggle: () => void;
   onAttachmentsChange: (attachments: AiAttachment[]) => void;
   onModeChange?: (mode: AiMode) => void;
@@ -40,6 +44,9 @@ const ChatInputControls = ({
   modelsLoading,
   isVoiceSupported,
   isListening,
+  usage,
+  messageCount = 0,
+  onCompact,
   onVoiceToggle,
   onAttachmentsChange,
   onModeChange,
@@ -48,6 +55,8 @@ const ChatInputControls = ({
   onManageSkills,
   onClickSend
 }: ChatInputControlsProps) => {
+  const modelContextLimit = models.find(m => m.id === currentModel)?.contextLimit;
+
   return (
     <div className="flex items-center gap-1.5">
       <ButtonAttachments
@@ -79,6 +88,14 @@ const ChatInputControls = ({
       <ToggleMode mode={mode} disabled={disabled} onModeChange={onModeChange} />
 
       <div className="flex-1" />
+
+      <UsageBar
+        usage={usage}
+        modelContextLimit={modelContextLimit}
+        isStreaming={disabled}
+        messageCount={messageCount}
+        onCompact={onCompact}
+      />
 
       <ButtonSend mode={mode} message={message} attachments={attachments} disabled={disabled} onClick={onClickSend} />
     </div>

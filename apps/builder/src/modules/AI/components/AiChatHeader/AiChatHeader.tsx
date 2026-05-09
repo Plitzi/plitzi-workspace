@@ -1,16 +1,11 @@
 import ConversationButton from './components/ConversationButton';
 import HeaderActions from './components/HeaderActions';
-import UsageBar from './components/UsageBar';
 
-import type { AiMode, AiUsage } from '../../types';
+import type { AiMode } from '../../types';
 
 export type AiChatHeaderProps = {
   onClear: () => void;
-  onCompact?: () => void;
   isStreaming: boolean;
-  messageCount?: number;
-  usage?: AiUsage;
-  modelContextLimit?: number;
   isSettingsOpen?: boolean;
   onSettingsToggle?: () => void;
   onHistoryOpen?: () => void;
@@ -20,11 +15,7 @@ export type AiChatHeaderProps = {
 
 const AiChatHeader = ({
   onClear,
-  onCompact,
   isStreaming,
-  messageCount = 0,
-  usage,
-  modelContextLimit,
   isSettingsOpen,
   onSettingsToggle,
   onHistoryOpen,
@@ -46,8 +37,6 @@ const AiChatHeader = ({
           onClear={onClear}
         />
       </div>
-
-      <UsageBar usage={usage} modelContextLimit={modelContextLimit} onCompact={onCompact} isStreaming={isStreaming} messageCount={messageCount} />
     </div>
   );
 };

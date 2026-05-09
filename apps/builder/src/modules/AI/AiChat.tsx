@@ -147,11 +147,7 @@ const AiChat = () => {
       <div className="relative flex h-full w-full flex-col overflow-hidden bg-neutral-100 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
         <AiChatHeader
           onClear={clearConversation}
-          onCompact={compact}
           isStreaming={isStreaming}
-          messageCount={messages.length}
-          usage={usage}
-          modelContextLimit={models.find(m => m.id === providerSettings.model)?.contextLimit}
           isSettingsOpen={isSettingsOpen}
           onSettingsToggle={handleClickSettingsToggle}
           onHistoryOpen={handleOpenHistory}
@@ -207,6 +203,9 @@ const AiChat = () => {
           models={models}
           currentModel={providerSettings.model}
           modelsLoading={modelsLoading}
+          usage={usage}
+          messageCount={messages.length}
+          onCompact={compact}
           onSend={handleSend}
           onVoiceToggle={handleVoiceToggle}
           onModelChange={m => updateSettings({ model: m })}
