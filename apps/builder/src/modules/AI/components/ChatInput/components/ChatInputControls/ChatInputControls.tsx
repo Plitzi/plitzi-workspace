@@ -58,46 +58,42 @@ const ChatInputControls = ({
   const modelContextLimit = models.find(m => m.id === currentModel)?.contextLimit;
 
   return (
-    <div className="flex items-center gap-1.5">
-      <ButtonAttachments
-        mode={mode}
-        attachments={attachments}
-        disabled={disabled}
-        isListening={isListening}
-        isVoiceSupported={isVoiceSupported}
-        onChange={onAttachmentsChange}
-        onVoiceToggle={onVoiceToggle}
-      />
-
-      <SkillsButton skills={skills} disabled={disabled} onClick={onManageSkills} />
-
-      <ModelSelector
-        models={models}
-        currentModel={currentModel}
-        modelsLoading={modelsLoading}
-        disabled={disabled}
-        onChange={onModelChange}
-      />
-
-      <EffortSelector
-        value={effort}
-        disabled={disabled || !models.find(m => m.id === currentModel)?.supportsThinking}
-        onChange={onEffortChange}
-      />
-
-      <ToggleMode mode={mode} disabled={disabled} onModeChange={onModeChange} />
-
-      <div className="flex-1" />
-
-      <UsageBar
-        usage={usage}
-        modelContextLimit={modelContextLimit}
-        isStreaming={disabled}
-        messageCount={messageCount}
-        onCompact={onCompact}
-      />
-
-      <ButtonSend mode={mode} message={message} attachments={attachments} disabled={disabled} onClick={onClickSend} />
+    <div className="flex items-center justify-between gap-1">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <ButtonAttachments
+          mode={mode}
+          attachments={attachments}
+          disabled={disabled}
+          isListening={isListening}
+          isVoiceSupported={isVoiceSupported}
+          onChange={onAttachmentsChange}
+          onVoiceToggle={onVoiceToggle}
+        />
+        <SkillsButton skills={skills} disabled={disabled} onClick={onManageSkills} />
+        <ModelSelector
+          models={models}
+          currentModel={currentModel}
+          modelsLoading={modelsLoading}
+          disabled={disabled}
+          onChange={onModelChange}
+        />
+        <EffortSelector
+          value={effort}
+          disabled={disabled || !models.find(m => m.id === currentModel)?.supportsThinking}
+          onChange={onEffortChange}
+        />
+        <ToggleMode mode={mode} disabled={disabled} onModeChange={onModeChange} />
+      </div>
+      <div className="flex items-center gap-1.5">
+        <UsageBar
+          usage={usage}
+          modelContextLimit={modelContextLimit}
+          isStreaming={disabled}
+          messageCount={messageCount}
+          onCompact={onCompact}
+        />
+        <ButtonSend mode={mode} message={message} attachments={attachments} disabled={disabled} onClick={onClickSend} />
+      </div>
     </div>
   );
 };
