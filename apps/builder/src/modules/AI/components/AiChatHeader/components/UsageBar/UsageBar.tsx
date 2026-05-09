@@ -8,13 +8,15 @@ import type { AiUsage } from '@pmodules/AI/types';
 
 export type UsageBarProps = {
   usage?: AiUsage;
+  modelContextLimit?: number;
   onCompact?: () => void;
   isStreaming?: boolean;
   messageCount?: number;
 };
 
-const UsageBar = ({ usage, onCompact, isStreaming, messageCount = 0 }: UsageBarProps) => {
+const UsageBar = ({ usage, modelContextLimit, onCompact, isStreaming, messageCount = 0 }: UsageBarProps) => {
   const { currentMode } = useAiChatContext();
+  const contextLimit = usage?.contextLimit ?? modelContextLimit;
   const usedPercent = usage?.usedPercent ?? 0;
   const showCompact = onCompact && messageCount >= 2 && usedPercent >= 60;
   const isHigh = usedPercent >= 80;
@@ -23,7 +25,7 @@ const UsageBar = ({ usage, onCompact, isStreaming, messageCount = 0 }: UsageBarP
   return (
     <div className="flex items-center gap-2 px-3 pb-2">
       <span className="shrink-0 font-mono text-[9px] text-zinc-400 dark:text-zinc-500">
-        {usage ? `${fmt(usage.inputTokens)}/${fmt(usage.contextLimit)}` : '—'}
+        {contextLimit ? `${fmt(usage?.inputTokens ?? 0)}/${fmt(contextLimit)}` : '—'}
       </span>
       <div className="h-0.5 flex-1 overflow-hidden rounded-full bg-neutral-200 dark:bg-zinc-800">
         <div
@@ -43,7 +45,7 @@ const UsageBar = ({ usage, onCompact, isStreaming, messageCount = 0 }: UsageBarP
           'text-zinc-400 dark:text-zinc-500': !isHigh && !isWarn
         })}
       >
-        {usage ? `${Math.round(usedPercent)}%` : '—'}
+        {contextLimit ? `${Math.round(usedPercent)}%` : '—'}
       </span>
       {showCompact && (
         <button

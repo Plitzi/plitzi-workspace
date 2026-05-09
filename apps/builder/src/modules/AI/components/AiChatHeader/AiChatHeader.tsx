@@ -10,6 +10,7 @@ export type AiChatHeaderProps = {
   isStreaming: boolean;
   messageCount?: number;
   usage?: AiUsage;
+  modelContextLimit?: number;
   isSettingsOpen?: boolean;
   onSettingsToggle?: () => void;
   onHistoryOpen?: () => void;
@@ -23,6 +24,7 @@ const AiChatHeader = ({
   isStreaming,
   messageCount = 0,
   usage,
+  modelContextLimit,
   isSettingsOpen,
   onSettingsToggle,
   onHistoryOpen,
@@ -45,7 +47,7 @@ const AiChatHeader = ({
         />
       </div>
 
-      <UsageBar usage={usage} onCompact={onCompact} isStreaming={isStreaming} messageCount={messageCount} />
+      <UsageBar usage={usage} modelContextLimit={modelContextLimit} onCompact={onCompact} isStreaming={isStreaming} messageCount={messageCount} />
     </div>
   );
 };

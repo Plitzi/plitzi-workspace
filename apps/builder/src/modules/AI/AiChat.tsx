@@ -151,6 +151,7 @@ const AiChat = () => {
           isStreaming={isStreaming}
           messageCount={messages.length}
           usage={usage}
+          modelContextLimit={models.find(m => m.id === providerSettings.model)?.contextLimit}
           isSettingsOpen={isSettingsOpen}
           onSettingsToggle={handleClickSettingsToggle}
           onHistoryOpen={handleOpenHistory}
