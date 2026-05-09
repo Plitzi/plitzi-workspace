@@ -1,6 +1,10 @@
+import useDisclosure from '@plitzi/plitzi-ui/hooks/useDisclosure';
 import Input from '@plitzi/plitzi-ui/Input';
+import Modal from '@plitzi/plitzi-ui/Modal';
 import clsx from 'clsx';
 import { useCallback, useEffect, useRef, useState } from 'react';
+
+import KeyboardKey from '@pmodules/AI/components/KeyboardKey';
 
 import ModelOption from './components/ModelOption';
 
@@ -21,20 +25,15 @@ const ModelSelector = ({
   disabled = false,
   onChange
 }: ModelSelectorProps) => {
-  const [open, setOpen] = useState(false);
-  const [q, setQ] = useState('');
+  const [filter, setFilter] = useState('');
   const rootRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
-  const toggle = useCallback(() => {
-    setOpen(o => {
-      if (!o) {
-        setQ('');
-      }
-
-      return !o;
-    });
+  const handleModalClose = useCallback(() => {
+    setFilter('');
   }, []);
+
+  const [id, open, onOpen, onClose] = useDisclosure({ onClose: handleModalClose });
 
   useEffect(() => {
     if (!open) {
@@ -43,14 +42,42 @@ const ModelSelector = ({
 
     const handler = (e: MouseEvent) => {
       if (!rootRef.current?.contains(e.target as Node)) {
-        setOpen(false);
+        onOpen();
+      }
+    };
+
+    const handlerKeyboard = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        void onClose();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        // setHighlighted(h => Math.min(h + 1, flatList.length - 1));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        // setHighlighted(h => Math.max(h - 1, 0));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        // const item = flatList.at(highlighted);
+        // if (item) {
+        // onChange(item.id);
+        // }
+      } else if (/^[1-9]$/.test(e.key) && (e.metaKey || e.ctrlKey)) {
+        // e.preventDefault();
+        // const item = flatList.at(parseInt(e.key, 10) - 1);
+        // if (item) {
+        //   onChange(item.id);
+        // }
       }
     };
 
     document.addEventListener('mousedown', handler);
+    document.addEventListener('keydown', handlerKeyboard);
 
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('keydown', handlerKeyboard);
+    };
+  }, [onClose, onOpen, open]);
 
   useEffect(() => {
     if (open) {
@@ -58,18 +85,22 @@ const ModelSelector = ({
     }
   }, [open]);
 
-  const handleSearchChange = useCallback((value: string) => setQ(value), []);
+  const handleSearchChange = useCallback((value: string) => setFilter(value), []);
 
   const handleSelect = useCallback(
     (modelId: string) => {
       onChange(modelId);
-      setOpen(false);
+      onOpen();
     },
-    [onChange]
+    [onChange, onOpen]
   );
 
-  const lower = q.toLowerCase();
-  const filtered = q
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+  }, []);
+
+  const lower = filter.toLowerCase();
+  const filtered = filter
     ? models.filter(m => m.name.toLowerCase().includes(lower) || m.id.toLowerCase().includes(lower))
     : models;
   const displayLabel = currentModel?.split('/').pop() ?? 'model';
@@ -77,7 +108,7 @@ const ModelSelector = ({
   return (
     <div ref={rootRef} className="relative">
       <button
-        onClick={toggle}
+        onClick={onOpen}
         disabled={disabled}
         title="Change model"
         className={clsx(
@@ -96,26 +127,26 @@ const ModelSelector = ({
           />
         </svg>
         <span className="max-w-20 truncate font-medium text-zinc-700 dark:text-zinc-300">{displayLabel}</span>
-        <svg
-          className={clsx(
-            'h-2 w-2 shrink-0 text-zinc-400 transition-transform dark:text-zinc-600',
-            open && 'rotate-180'
-          )}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2.5}
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
       </button>
 
-      {open && (
-        <div className="absolute bottom-[calc(100%+6px)] left-0 z-50 flex w-72 flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+      <Modal onClick={handleClick} onClose={onClose} id={id} open={open} size="sm" className={{ card: 'w-145' }}>
+        <Modal.Header>
+          <Modal.HeaderIcon>
+            <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
+            </svg>
+          </Modal.HeaderIcon>
+          Models Available
+        </Modal.Header>
+        <Modal.Body className="p-0">
           <div className="shrink-0 border-b border-neutral-100 px-2 py-2 dark:border-zinc-800">
             <Input
               ref={searchRef}
-              value={q}
+              value={filter}
               onChange={handleSearchChange}
               placeholder="Search models…"
               size="xs"
@@ -131,7 +162,7 @@ const ModelSelector = ({
             </Input>
           </div>
 
-          <div className="max-h-56 overflow-y-auto">
+          <div className="h-75 overflow-y-auto">
             {modelsLoading && (
               <div className="px-3 py-4 text-center font-mono text-[10px] text-zinc-400 dark:text-zinc-600">
                 Loading…
@@ -140,7 +171,7 @@ const ModelSelector = ({
 
             {!modelsLoading && !filtered.length && (
               <div className="px-3 py-4 text-center font-mono text-[10px] text-zinc-400 dark:text-zinc-600">
-                {q ? 'No matches' : 'No models available'}
+                {filter ? 'No matches' : 'No models available'}
               </div>
             )}
 
@@ -150,13 +181,28 @@ const ModelSelector = ({
               ))}
           </div>
 
-          <div className="shrink-0 border-t border-neutral-100 px-2 py-1.5 dark:border-zinc-800">
+          <div className="flex shrink-0 items-center justify-between border-t border-neutral-100 px-2 py-1.5 dark:border-zinc-700">
+            <div className="flex items-center gap-3 font-mono text-[9px] text-zinc-400 dark:text-zinc-600">
+              <span className="flex items-center gap-1">
+                <KeyboardKey char="↑" commandChar={false} />
+                <KeyboardKey char="↓" commandChar={false} />
+                navigate
+              </span>
+              <span className="flex items-center gap-1">
+                <KeyboardKey char="↵" commandChar={false} />
+                select
+              </span>
+              <span className="flex items-center gap-1">
+                <KeyboardKey char="esc" commandChar={false} />
+                close
+              </span>
+            </div>
             <div className="font-mono text-[9px] text-zinc-400 dark:text-zinc-600">
               Configure API keys in <span className="text-zinc-500 dark:text-zinc-500">Settings → Provider</span>
             </div>
           </div>
-        </div>
-      )}
+        </Modal.Body>
+      </Modal>
     </div>
   );
 };

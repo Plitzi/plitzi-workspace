@@ -52,7 +52,6 @@ const SemanticDots = ({ semantic }: { semantic: NonNullable<StyleGuideData['colo
 
 const TypographyPreview = ({ typography }: { typography: NonNullable<StyleGuideData['typography']> }) => (
   <div className="mb-3">
-    <SectionLabel>Typography</SectionLabel>
     <div className="rounded border border-zinc-100 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-950">
       <div className="mb-1.5 flex gap-3 text-zinc-600 dark:text-zinc-400">
         <span>

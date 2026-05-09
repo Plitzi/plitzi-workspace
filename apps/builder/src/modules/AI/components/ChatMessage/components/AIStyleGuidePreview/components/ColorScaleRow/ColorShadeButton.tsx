@@ -17,12 +17,12 @@ const ColorShadeButton = ({ shade, hex, label, isCopied, onCopy }: ColorShadeBut
   return (
     <button
       onClick={handleClick}
-      className="group relative flex-1 cursor-pointer"
-      style={{ backgroundColor: hex, height: 24 }}
+      className="group relative h-5 flex-1 cursor-pointer"
+      style={{ backgroundColor: hex }}
       title={`${label}-${shade}: ${hex}`}
     >
       <div
-        className="absolute inset-0 flex flex-col items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
+        className="absolute inset-0 flex-col items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
         style={{ color: white ? '#fff' : '#000' }}
       >
         <span className="text-[8px]">{isCopied ? '✓' : shade}</span>

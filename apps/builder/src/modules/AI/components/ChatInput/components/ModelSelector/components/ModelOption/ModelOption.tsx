@@ -23,7 +23,7 @@ const ModelOption = ({ model, isActive, onSelect }: ModelOptionProps) => {
       onClick={handleClick}
       className={clsx(
         'flex w-full items-start gap-2.5 px-2 py-2 text-left transition-colors',
-        isActive ? 'bg-neutral-100 dark:bg-zinc-800' : 'hover:bg-neutral-50 dark:hover:bg-zinc-800'
+        isActive ? 'bg-neutral-100 dark:bg-zinc-700' : 'hover:bg-neutral-50 dark:hover:bg-zinc-700'
       )}
     >
       <div

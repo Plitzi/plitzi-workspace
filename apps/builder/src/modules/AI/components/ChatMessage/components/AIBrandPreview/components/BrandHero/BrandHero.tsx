@@ -11,7 +11,7 @@ export type BrandHeroProps = {
 
 const BrandHero = ({ name, tagline, primaryColor, typography }: BrandHeroProps) => (
   <div
-    className="px-3 py-2"
+    className="px-3 py-1"
     style={{
       backgroundColor: primaryColor,
       color: needsWhiteText(primaryColor) ? '#fff' : '#111'
