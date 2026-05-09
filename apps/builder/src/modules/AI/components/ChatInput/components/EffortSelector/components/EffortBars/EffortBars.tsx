@@ -20,7 +20,9 @@ const EffortBars = ({ effort, active = false }: EffortBarsProps) => {
           className={clsx(
             'w-0.5 rounded-sm transition-colors',
             i < filled
-              ? (active ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-zinc-400 dark:bg-zinc-500')
+              ? active
+                ? 'bg-emerald-500 dark:bg-emerald-400'
+                : 'bg-zinc-400 dark:bg-zinc-500'
               : 'bg-neutral-300 dark:bg-zinc-700'
           )}
           style={{ height: h }}

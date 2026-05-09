@@ -119,6 +119,8 @@ export type AiModelInfo = {
   providerID?: string;
   providerName?: string;
   free?: boolean;
+  contextLimit?: number;
+  supportsThinking?: boolean;
 };
 
 export type AiSkillSource = 'builtin' | 'team' | 'mine';

@@ -7,7 +7,7 @@ import { fmt } from '../../helpers';
 import type { AiUsage } from '@pmodules/AI/types';
 
 export type UsageBarProps = {
-  usage: AiUsage;
+  usage?: AiUsage;
   onCompact?: () => void;
   isStreaming?: boolean;
   messageCount?: number;
@@ -15,14 +15,15 @@ export type UsageBarProps = {
 
 const UsageBar = ({ usage, onCompact, isStreaming, messageCount = 0 }: UsageBarProps) => {
   const { currentMode } = useAiChatContext();
-  const showCompact = onCompact && messageCount >= 2 && usage.usedPercent >= 60;
-  const isHigh = usage.usedPercent >= 80;
-  const isWarn = usage.usedPercent >= 60 && usage.usedPercent < 80;
+  const usedPercent = usage?.usedPercent ?? 0;
+  const showCompact = onCompact && messageCount >= 2 && usedPercent >= 60;
+  const isHigh = usedPercent >= 80;
+  const isWarn = usedPercent >= 60 && usedPercent < 80;
 
   return (
     <div className="flex items-center gap-2 px-3 pb-2">
       <span className="shrink-0 font-mono text-[9px] text-zinc-400 dark:text-zinc-500">
-        {fmt(usage.inputTokens)}/{fmt(usage.contextLimit)}
+        {usage ? `${fmt(usage.inputTokens)}/${fmt(usage.contextLimit)}` : '—'}
       </span>
       <div className="h-0.5 flex-1 overflow-hidden rounded-full bg-neutral-200 dark:bg-zinc-800">
         <div
@@ -32,7 +33,7 @@ const UsageBar = ({ usage, onCompact, isStreaming, messageCount = 0 }: UsageBarP
             'bg-emerald-500 dark:bg-emerald-400': currentMode === 'build' && !isHigh && !isWarn,
             'bg-sky-500 dark:bg-sky-400': currentMode === 'plan' && !isHigh && !isWarn
           })}
-          style={{ width: `${Math.min(usage.usedPercent, 100)}%` }}
+          style={{ width: `${Math.min(usedPercent, 100)}%` }}
         />
       </div>
       <span
@@ -42,7 +43,7 @@ const UsageBar = ({ usage, onCompact, isStreaming, messageCount = 0 }: UsageBarP
           'text-zinc-400 dark:text-zinc-500': !isHigh && !isWarn
         })}
       >
-        {Math.round(usage.usedPercent)}%
+        {usage ? `${Math.round(usedPercent)}%` : '—'}
       </span>
       {showCompact && (
         <button

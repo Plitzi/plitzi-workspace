@@ -56,15 +56,27 @@ const ModelOption = ({ model, isActive, onSelect }: ModelOptionProps) => {
               {tag}
             </span>
           )}
+          {model.supportsThinking && (
+            <span className="rounded border border-violet-400/40 bg-violet-500/8 px-1.5 py-px font-mono text-[8.5px] tracking-wide text-violet-500 uppercase dark:border-violet-400/40 dark:text-violet-400">
+              thinking
+            </span>
+          )}
           {model.free && (
             <span className="rounded border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-px font-mono text-[8.5px] tracking-wide text-emerald-500 uppercase dark:border-emerald-400/40 dark:text-emerald-400">
               free
             </span>
           )}
         </div>
-        {model.providerName && (
-          <div className="mt-0.5 font-mono text-[9.5px] text-zinc-400 dark:text-zinc-600">{model.providerName}</div>
-        )}
+        <div className="mt-0.5 flex items-center gap-2">
+          {model.providerName && (
+            <span className="font-mono text-[9.5px] text-zinc-400 dark:text-zinc-600">{model.providerName}</span>
+          )}
+          {model.contextLimit && (
+            <span className="font-mono text-[9.5px] text-zinc-400 dark:text-zinc-600">
+              {(model.contextLimit / 1000).toFixed(0)}K ctx
+            </span>
+          )}
+        </div>
       </div>
 
       <svg

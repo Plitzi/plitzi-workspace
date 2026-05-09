@@ -45,7 +45,7 @@ const AiChatHeader = ({
         />
       </div>
 
-      {usage && <UsageBar usage={usage} onCompact={onCompact} isStreaming={isStreaming} messageCount={messageCount} />}
+      <UsageBar usage={usage} onCompact={onCompact} isStreaming={isStreaming} messageCount={messageCount} />
     </div>
   );
 };

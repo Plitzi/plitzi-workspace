@@ -70,7 +70,11 @@ const ChatInputControls = ({
         onChange={onModelChange}
       />
 
-      <EffortSelector value={effort} disabled={disabled} onChange={onEffortChange} />
+      <EffortSelector
+        value={effort}
+        disabled={disabled || !models.find(m => m.id === currentModel)?.supportsThinking}
+        onChange={onEffortChange}
+      />
 
       <ToggleMode mode={mode} disabled={disabled} onModeChange={onModeChange} />
 
