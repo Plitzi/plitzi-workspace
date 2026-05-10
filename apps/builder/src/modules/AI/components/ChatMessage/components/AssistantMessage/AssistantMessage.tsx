@@ -68,7 +68,18 @@ const AssistantMessage = ({
         <span className="font-medium text-zinc-900 dark:text-zinc-100">Plitzi</span>
         <span>{formatTime(createdAt)}</span>
         <ModeLabel mode={mode} />
-        {irrelevant && <span className="text-yellow-500 dark:text-yellow-400">off-topic</span>}
+        {irrelevant && (
+          <span className="flex items-center gap-1 rounded-md border border-yellow-500/50 bg-yellow-50 px-2 py-0.5 text-yellow-600 dark:border-yellow-400/30 dark:bg-yellow-900/20 dark:text-yellow-400">
+            <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+              <path
+                fillRule="evenodd"
+                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92A5.5 5.5 0 0014.5 17h-9a5.5 5.5 0 00-4.743 6.98l-5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span className="text-[10px] font-medium">off-topic</span>
+          </span>
+        )}
         {usage && (
           <span className="text-zinc-400 dark:text-zinc-600">
             {usage.inputTokens.toLocaleString()} in · {usage.outputTokens.toLocaleString()} out

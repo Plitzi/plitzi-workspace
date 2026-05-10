@@ -66,8 +66,8 @@ export type McpSegment = {
 };
 
 export type McpAdapters = {
-  /** Return all spaces the agent may access. */
-  listSpaces: () => Promise<McpSpace[]>;
+  /** Return the current space only (for security, never expose other spaces). */
+  listSpaces: (spaceId: number, environment: string) => Promise<McpSpace[]>;
   /** Return the full element tree for a space + environment. */
   getSchema: (spaceId: number, environment: string) => Promise<McpSchema | undefined>;
   /** Add a new element to the schema. Returns the created element with its generated ID. */
