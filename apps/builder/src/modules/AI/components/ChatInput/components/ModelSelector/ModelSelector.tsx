@@ -129,7 +129,7 @@ const ModelSelector = ({
         <span className="max-w-20 truncate font-medium text-zinc-700 dark:text-zinc-300">{displayLabel}</span>
       </button>
 
-      <Modal onClick={handleClick} onClose={onClose} id={id} open={open} size="sm" className={{ card: 'w-145' }}>
+      <Modal onClick={handleClick} onClose={onClose} id={id} open={open} size="sm" className={{ card: 'h-120 w-145' }}>
         <Modal.Header>
           <Modal.HeaderIcon>
             <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -162,7 +162,7 @@ const ModelSelector = ({
             </Input>
           </div>
 
-          <div className="h-75 overflow-y-auto">
+          <div className="flex grow basis-0 flex-col overflow-y-auto">
             {modelsLoading && (
               <div className="px-3 py-4 text-center font-mono text-[10px] text-zinc-400 dark:text-zinc-600">
                 Loading…

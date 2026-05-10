@@ -10,7 +10,6 @@ import AiChatHeader from './components/AiChatHeader';
 import AiProviderSettings from './components/AiProviderSettings';
 import Chat from './components/Chat';
 import ChatInput from './components/ChatInput';
-import HistoryPanel from './components/HistoryPanel';
 import QuotaCountdown from './components/QuotaCountdown';
 import AiChatContext from './contexts/AiChatContext';
 import useAiChat from './hooks/useAiChat';
@@ -33,7 +32,6 @@ const AiChat = () => {
   const chatRef = useRef<HTMLDivElement | null>(null);
   const chatInputRef = useRef<ChatInputHandle | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
 
   const {
     settings: providerSettings,
@@ -84,30 +82,6 @@ const AiChat = () => {
     void initConversation();
   }, [initConversation]);
 
-  const handleOpenHistory = useCallback(() => {
-    void loadConversations();
-    setHistoryOpen(true);
-  }, [loadConversations]);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        if (!historyOpen) {
-          void loadConversations();
-        }
-
-        setHistoryOpen(v => !v);
-      }
-    };
-
-    document.addEventListener('keydown', handler);
-
-    return () => document.removeEventListener('keydown', handler);
-  }, [historyOpen, loadConversations]);
-
-  const handleClickHistory = useCallback(() => setHistoryOpen(false), []);
-
   const handleSend = useCallback(
     (msg: string, atts: AiAttachment[], effort: AiEffort) => {
       void sendMessage(msg, { currentPageId, elementSelected, environment, theme }, atts, effort);
@@ -130,10 +104,6 @@ const AiChat = () => {
     }
   }, [isListening, stopVoice, startVoice]);
   const handleClickSettingsToggle = useCallback(() => setIsSettingsOpen(s => !s), []);
-  const handleNewChat = useCallback(() => {
-    clearConversation();
-    setHistoryOpen(false);
-  }, [clearConversation]);
 
   const conversationTitle = messages.find(m => m.role === 'user')?.content?.slice(0, 60);
 
@@ -150,9 +120,12 @@ const AiChat = () => {
           isStreaming={isStreaming}
           isSettingsOpen={isSettingsOpen}
           onSettingsToggle={handleClickSettingsToggle}
-          onHistoryOpen={handleOpenHistory}
           mode={mode}
           conversationTitle={conversationTitle}
+          conversations={conversations}
+          currentConversationId={conversationId}
+          onLoadConversations={loadConversations}
+          onLoadConversation={loadConversation}
         />
 
         {isSettingsOpen && (
@@ -212,16 +185,6 @@ const AiChat = () => {
           mode={mode}
           onModeChange={setMode}
         />
-
-        {historyOpen && (
-          <HistoryPanel
-            conversations={conversations}
-            currentConversationId={conversationId || undefined}
-            onClose={handleClickHistory}
-            onSelect={loadConversation}
-            onNew={handleNewChat}
-          />
-        )}
       </div>
     </AiChatContext>
   );

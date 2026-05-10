@@ -13,7 +13,7 @@ const ConversationList = ({ groups, highlighted, onHighlight, onSelect }: Conver
   const isEmpty = groups.every(g => g.items.length === 0);
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto">
+    <div className="flex min-h-0 grow basis-0 flex-col overflow-y-auto">
       {isEmpty && (
         <div className="flex flex-col items-center justify-center gap-3 py-16">
           <i className="fa-regular fa-message text-xl text-zinc-400 dark:text-zinc-600" />

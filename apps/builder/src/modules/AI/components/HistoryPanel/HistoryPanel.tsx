@@ -38,8 +38,6 @@ const HistoryPanel = ({ conversations, currentConversationId, onClose, onSelect,
     [onClose]
   );
 
-  const handleClearSearch = useCallback(() => setSearch(''), []);
-
   const handleSelect = useCallback(
     (id: string) => {
       onSelect(id);
@@ -116,21 +114,15 @@ const HistoryPanel = ({ conversations, currentConversationId, onClose, onSelect,
   }, [onClose, flatList, highlighted, handleSelect]);
 
   return (
-    <div
-      ref={containerRef}
-      className="absolute inset-0 z-40 flex flex-col bg-black/50 backdrop-blur-sm"
-      onClick={handleClick}
-    >
-      <div className="absolute inset-x-2 top-12 bottom-2 flex flex-col overflow-hidden rounded-xl border border-neutral-300 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
-        <HistorySearch value={search} onChange={setSearch} onClear={handleClearSearch} />
-        <ConversationList
-          groups={groups}
-          highlighted={highlighted}
-          onHighlight={setHighlighted}
-          onSelect={handleSelect}
-        />
-        <HistoryFooter onNew={onNew} />
-      </div>
+    <div ref={containerRef} className="flex grow basis-0 flex-col" onClick={handleClick}>
+      <HistorySearch value={search} onChange={setSearch} />
+      <ConversationList
+        groups={groups}
+        highlighted={highlighted}
+        onHighlight={setHighlighted}
+        onSelect={handleSelect}
+      />
+      <HistoryFooter onNew={onNew} />
     </div>
   );
 };

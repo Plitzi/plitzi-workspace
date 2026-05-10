@@ -6,10 +6,9 @@ import KeyboardKey from '@pmodules/AI/components/KeyboardKey';
 export type HistorySearchProps = {
   value: string;
   onChange: (value: string) => void;
-  onClear: () => void;
 };
 
-const HistorySearch = ({ value, onChange, onClear }: HistorySearchProps) => {
+const HistorySearch = ({ value, onChange }: HistorySearchProps) => {
   const searchRef = useRef<HTMLInputElement>(null);
 
   const handleChange = useCallback((value: string) => onChange(value), [onChange]);
@@ -21,25 +20,19 @@ const HistorySearch = ({ value, onChange, onClear }: HistorySearchProps) => {
   }, []);
 
   return (
-    <div className="shrink-0 px-3 pt-3 pb-2">
-      <div className="flex items-center gap-2 rounded-lg border border-neutral-300 bg-neutral-50 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800">
-        <Input
-          className="w-full"
-          ref={searchRef}
-          value={value}
-          onChange={handleChange}
-          placeholder="Search conversations…"
-          size="xs"
-        >
-          <Input.Icon icon="fa-solid fa-magnifying-glass" />
-        </Input>
-        {value && (
-          <button onClick={onClear} className="shrink-0 text-zinc-400 dark:text-zinc-600">
-            <i className="fa-solid fa-xmark text-[10px]" />
-          </button>
-        )}
-        {!value && <KeyboardKey char="K" />}
-      </div>
+    <div className="flex items-center gap-3 border-t border-neutral-200 bg-neutral-100 px-4 py-2.5 dark:border-zinc-800 dark:bg-zinc-950">
+      <Input
+        className="w-full"
+        ref={searchRef}
+        value={value}
+        onChange={handleChange}
+        placeholder="Search conversations…"
+        size="xs"
+        clearable
+      >
+        <Input.Icon icon="fa-solid fa-magnifying-glass" />
+      </Input>
+      <KeyboardKey char="K" />
     </div>
   );
 };
