@@ -3142,7 +3142,7 @@ __metadata:
     "@babel/preset-react": "npm:^7.28.5"
     "@fortawesome/fontawesome-free": "npm:^7.2.0"
     "@plitzi/plitzi-sdk": "workspace:*"
-    "@plitzi/plitzi-ui": "npm:^1.6.6"
+    "@plitzi/plitzi-ui": "npm:^1.6.7"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-collections": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
@@ -3186,7 +3186,7 @@ __metadata:
     sass-loader: "npm:^16.0.8"
     stylelint: "npm:^17.11.0"
     stylelint-order: "npm:^8.1.1"
-    stylelint-scss: "npm:^7.0.0"
+    stylelint-scss: "npm:^7.1.0"
     swr: "npm:^2.4.1"
     terser: "npm:^5.47.1"
     twig: "npm:^3.0.0"
@@ -3225,7 +3225,7 @@ __metadata:
     "@babel/preset-typescript": "npm:^7.28.5"
     "@dr.pogodin/react-helmet": "npm:^3.1.1"
     "@fortawesome/fontawesome-free": "npm:^7.2.0"
-    "@plitzi/plitzi-ui": "npm:^1.6.6"
+    "@plitzi/plitzi-ui": "npm:^1.6.7"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-collections": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
@@ -3271,7 +3271,7 @@ __metadata:
     storybook: "npm:^10.3.6"
     stylelint: "npm:^17.11.0"
     stylelint-order: "npm:^8.1.1"
-    stylelint-scss: "npm:^7.0.0"
+    stylelint-scss: "npm:^7.1.0"
     terser: "npm:^5.47.1"
     twig: "npm:^3.0.0"
     typescript: "npm:^6.0.3"
@@ -3288,9 +3288,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-ui@npm:^1.6.6":
-  version: 1.6.6
-  resolution: "@plitzi/plitzi-ui@npm:1.6.6::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fplitzi-ui%2F1.6.6%2Fd9ee1cfdba568086c3d2c74a861eefda28c7a63a"
+"@plitzi/plitzi-ui@npm:^1.6.7":
+  version: 1.6.7
+  resolution: "@plitzi/plitzi-ui@npm:1.6.7::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40plitzi%2Fplitzi-ui%2F1.6.7%2F8f8ad0ea5238948cef60110ea74cd167818bdd95"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.20.2"
     "@codemirror/commands": "npm:^6.10.3"
@@ -3316,11 +3316,11 @@ __metadata:
     react-syntax-highlighter: "npm:^16.1.1"
     react-toastify: "npm:^11.1.0"
     remark-gfm: "npm:^4.0.1"
-    tailwind-merge: "npm:^3.5.0"
+    tailwind-merge: "npm:^3.6.0"
     tinycolor2: "npm:^1.6.0"
     uuid: "npm:^14.0.0"
     zod: "npm:^4.4.3"
-  checksum: 10c0/1b7dda79fa53832aadbaf07261a72736f80e7667b249b1025c676f6caa4a23e78181a0e24065fd75068a8bec94cb5492cce3667f6a279714242c5c74ded06ad8
+  checksum: 10c0/5024dba0c1b61c6174955bf8ec7c36de462854cfd1380937c751c4329133f61da1505773c65fcb7090f4d7d94a4405c3fdd57ff81d6d6adf061f765eff9aaa57
   languageName: node
   linkType: hard
 
@@ -3329,13 +3329,13 @@ __metadata:
   resolution: "@plitzi/plitzi-workspace@workspace:."
   dependencies:
     "@changesets/cli": "npm:^2.31.0"
-    "@plitzi/plitzi-ui": "npm:^1.6.6"
+    "@plitzi/plitzi-ui": "npm:^1.6.7"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/react": "npm:^19.2.14"
     eslint: "npm:^9.39.4"
     prettier-plugin-tailwindcss: "npm:^0.8.0"
     react-router: "npm:^7.15.0"
-    turbo: "npm:^2.9.11"
+    turbo: "npm:^2.9.12"
   languageName: unknown
   linkType: soft
 
@@ -3343,7 +3343,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-auth@workspace:packages/sdk-auth"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.6"
+    "@plitzi/plitzi-ui": "npm:^1.6.7"
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
@@ -3359,7 +3359,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-collections@workspace:packages/sdk-collections"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.6"
+    "@plitzi/plitzi-ui": "npm:^1.6.7"
     "@plitzi/sdk-shared": "workspace:*"
     eslint: "npm:^9.39.4"
     immer: "npm:^11.1.8"
@@ -3389,7 +3389,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-dev-tools@workspace:packages/sdk-dev-tools"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.6"
+    "@plitzi/plitzi-ui": "npm:^1.6.7"
     "@plitzi/sdk-data-source": "workspace:*"
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
@@ -3413,7 +3413,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-elements@workspace:packages/sdk-elements"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.6"
+    "@plitzi/plitzi-ui": "npm:^1.6.7"
     "@plitzi/sdk-data-source": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
@@ -3450,7 +3450,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-interactions@workspace:packages/sdk-interactions"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.6"
+    "@plitzi/plitzi-ui": "npm:^1.6.7"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
@@ -3465,7 +3465,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-navigation@workspace:packages/sdk-navigation"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.6"
+    "@plitzi/plitzi-ui": "npm:^1.6.7"
     "@plitzi/sdk-shared": "workspace:*"
     eslint: "npm:^9.39.4"
     react: "npm:^19.2.6"
@@ -3497,7 +3497,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-schema@workspace:packages/sdk-schema"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.6"
+    "@plitzi/plitzi-ui": "npm:^1.6.7"
     "@plitzi/sdk-shared": "workspace:*"
     "@plitzi/sdk-style": "workspace:*"
     eslint: "npm:^9.39.4"
@@ -3547,7 +3547,7 @@ __metadata:
     "@babel/plugin-transform-react-jsx": "npm:^7.28.6"
     "@babel/preset-env": "npm:^7.29.5"
     "@eslint/js": "npm:^10.0.1"
-    "@plitzi/plitzi-ui": "npm:^1.6.6"
+    "@plitzi/plitzi-ui": "npm:^1.6.7"
     "@plitzi/sdk-store": "workspace:*"
     "@tailwindcss/forms": "npm:^0.5.11"
     "@testing-library/dom": "npm:^10.4.1"
@@ -3565,7 +3565,7 @@ __metadata:
     eslint: "npm:^9.39.4"
     eslint-config-airbnb: "npm:^19.0.4"
     eslint-config-prettier: "npm:^10.1.8"
-    eslint-config-turbo: "npm:^2.9.11"
+    eslint-config-turbo: "npm:^2.9.12"
     eslint-import-resolver-alias: "npm:^1.1.2"
     eslint-plugin-cypress: "npm:^6.4.1"
     eslint-plugin-flowtype: "npm:8.0.3"
@@ -3618,7 +3618,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-store@workspace:packages/sdk-store"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.6"
+    "@plitzi/plitzi-ui": "npm:^1.6.7"
     eslint: "npm:^9.39.4"
     react: "npm:^19.2.6"
     react-dom: "npm:^19.2.6"
@@ -3635,7 +3635,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-style@workspace:packages/sdk-style"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.6"
+    "@plitzi/plitzi-ui": "npm:^1.6.7"
     "@plitzi/sdk-plugins": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@plitzi/sdk-variables": "workspace:*"
@@ -3654,7 +3654,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-variables@workspace:packages/sdk-variables"
   dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.6"
+    "@plitzi/plitzi-ui": "npm:^1.6.7"
     "@plitzi/sdk-shared": "workspace:*"
     clsx: "npm:^2.1.1"
     eslint: "npm:^9.39.4"
@@ -4498,44 +4498,44 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@turbo/darwin-64@npm:2.9.11":
-  version: 2.9.11
-  resolution: "@turbo/darwin-64@npm:2.9.11"
+"@turbo/darwin-64@npm:2.9.12":
+  version: 2.9.12
+  resolution: "@turbo/darwin-64@npm:2.9.12"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@turbo/darwin-arm64@npm:2.9.11":
-  version: 2.9.11
-  resolution: "@turbo/darwin-arm64@npm:2.9.11"
+"@turbo/darwin-arm64@npm:2.9.12":
+  version: 2.9.12
+  resolution: "@turbo/darwin-arm64@npm:2.9.12"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@turbo/linux-64@npm:2.9.11":
-  version: 2.9.11
-  resolution: "@turbo/linux-64@npm:2.9.11"
+"@turbo/linux-64@npm:2.9.12":
+  version: 2.9.12
+  resolution: "@turbo/linux-64@npm:2.9.12"
   conditions: os=linux & cpu=x64
   languageName: node
   linkType: hard
 
-"@turbo/linux-arm64@npm:2.9.11":
-  version: 2.9.11
-  resolution: "@turbo/linux-arm64@npm:2.9.11"
+"@turbo/linux-arm64@npm:2.9.12":
+  version: 2.9.12
+  resolution: "@turbo/linux-arm64@npm:2.9.12"
   conditions: os=linux & cpu=arm64
   languageName: node
   linkType: hard
 
-"@turbo/windows-64@npm:2.9.11":
-  version: 2.9.11
-  resolution: "@turbo/windows-64@npm:2.9.11"
+"@turbo/windows-64@npm:2.9.12":
+  version: 2.9.12
+  resolution: "@turbo/windows-64@npm:2.9.12"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
-"@turbo/windows-arm64@npm:2.9.11":
-  version: 2.9.11
-  resolution: "@turbo/windows-arm64@npm:2.9.11"
+"@turbo/windows-arm64@npm:2.9.12":
+  version: 2.9.12
+  resolution: "@turbo/windows-arm64@npm:2.9.12"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
@@ -7344,7 +7344,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"css-tree@npm:^3.0.0, css-tree@npm:^3.0.1, css-tree@npm:^3.2.1":
+"css-tree@npm:^3.0.0, css-tree@npm:^3.2.1":
   version: 3.2.1
   resolution: "css-tree@npm:3.2.1"
   dependencies:
@@ -8503,15 +8503,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-config-turbo@npm:^2.9.11":
-  version: 2.9.11
-  resolution: "eslint-config-turbo@npm:2.9.11"
+"eslint-config-turbo@npm:^2.9.12":
+  version: 2.9.12
+  resolution: "eslint-config-turbo@npm:2.9.12"
   dependencies:
-    eslint-plugin-turbo: "npm:2.9.11"
+    eslint-plugin-turbo: "npm:2.9.12"
   peerDependencies:
     eslint: ">6.6.0"
     turbo: ">2.0.0"
-  checksum: 10c0/11bf6a215d96ca0972edd56a04fd5489a354be937ba54fad31c1b5e228372aad0a9d09321191ab5cea0d23a8567c069b22439fc1602919d8c5244a4b2227394f
+  checksum: 10c0/e92c87359f2bbadcbdf170c36e7a2431af23f9c971d7e4c9bfbad8d425e82a22bd5c79dfaea12d83b82ed2100805e7bbc587cb2e96e038e92e94f4776624db7d
   languageName: node
   linkType: hard
 
@@ -8738,15 +8738,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-turbo@npm:2.9.11":
-  version: 2.9.11
-  resolution: "eslint-plugin-turbo@npm:2.9.11"
+"eslint-plugin-turbo@npm:2.9.12":
+  version: 2.9.12
+  resolution: "eslint-plugin-turbo@npm:2.9.12"
   dependencies:
     dotenv: "npm:16.0.3"
   peerDependencies:
     eslint: ">6.6.0"
     turbo: ">2.0.0"
-  checksum: 10c0/9998ce96c380b84baa48c4ede7e3a43a5d1063f41b851b3d05b2160d739d3f98bf444a752bcae0f4c36f0f35177ed9d20f992cac39acef9a6d2ea24df9bfc202
+  checksum: 10c0/507ffb5e6146e81efc0697445a46401ed94e6666b5cbae8c1a9d4b88a10dfee2d95c5e60bc4619cf3d9e89d5322fd240953fffb171a0addb459f7dee46ebffd0
   languageName: node
   linkType: hard
 
@@ -11783,13 +11783,6 @@ __metadata:
   version: 2.27.1
   resolution: "mdn-data@npm:2.27.1"
   checksum: 10c0/eb8abf5d22e4d1e090346f5e81b67d23cef14c83940e445da5c44541ad874dc8fb9f6ca236e8258c3a489d9fb5884188a4d7d58773adb9089ac2c0b966796393
-  languageName: node
-  linkType: hard
-
-"mdn-data@npm:^2.25.0":
-  version: 2.28.0
-  resolution: "mdn-data@npm:2.28.0"
-  checksum: 10c0/5cab176947487cb20a72f89ac2e4610208d78788e414093e494af6b8d03fb30bc817d3de89d141a50c755a77c8ecc839f4add81dce2a644c33c0a492c837c437
   languageName: node
   linkType: hard
 
@@ -15216,21 +15209,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stylelint-scss@npm:^7.0.0":
-  version: 7.0.0
-  resolution: "stylelint-scss@npm:7.0.0"
+"stylelint-scss@npm:^7.1.0":
+  version: 7.1.0
+  resolution: "stylelint-scss@npm:7.1.0"
   dependencies:
-    css-tree: "npm:^3.0.1"
+    "@csstools/css-calc": "npm:^3.2.0"
+    "@csstools/css-parser-algorithms": "npm:^4.0.0"
+    "@csstools/css-syntax-patches-for-csstree": "npm:^1.1.3"
+    "@csstools/css-tokenizer": "npm:^4.0.0"
+    css-tree: "npm:^3.2.1"
     is-plain-object: "npm:^5.0.0"
     known-css-properties: "npm:^0.37.0"
-    mdn-data: "npm:^2.25.0"
     postcss-media-query-parser: "npm:^0.2.3"
     postcss-resolve-nested-selector: "npm:^0.1.6"
     postcss-selector-parser: "npm:^7.1.1"
     postcss-value-parser: "npm:^4.2.0"
   peerDependencies:
     stylelint: ^16.8.2 || ^17.0.0
-  checksum: 10c0/07d0f20c6bcb34b8b0b6bfb1d4367b4825b52a7eef7dde2adfbaec11ebc67242e6b99dccf70dfbef1eb0a9bf8712fe0ab49d183ff6e4cca9c7f89752f7e27027
+  checksum: 10c0/12e47ce0093d7d08aa2323fdea2bb632cbc39a1470772ca237a0325285af66eeea29c67b3fff7763bfcfcc437479541238b791ce126cd9928c0b73a5ae29b228
   languageName: node
   linkType: hard
 
@@ -15396,10 +15392,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tailwind-merge@npm:^3.5.0":
-  version: 3.5.0
-  resolution: "tailwind-merge@npm:3.5.0"
-  checksum: 10c0/4dc588f5b5296ba3f38e1ebb41f02b6d24a8c5bb45e44b33748c118fb4b5767dd0efc464431ca3e75404056b618b5f67bec3708158baa65fed8a2fc9201e0c53
+"tailwind-merge@npm:^3.6.0":
+  version: 3.6.0
+  resolution: "tailwind-merge@npm:3.6.0"
+  checksum: 10c0/a728d929f4786bcb48641db4228cc8c006a7545491783a658fb4d24d177dab960620991d17805a047309228de50ab949ca8d9e112c30183da0432367796ae186
   languageName: node
   linkType: hard
 
@@ -15749,16 +15745,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"turbo@npm:^2.9.11":
-  version: 2.9.11
-  resolution: "turbo@npm:2.9.11"
+"turbo@npm:^2.9.12":
+  version: 2.9.12
+  resolution: "turbo@npm:2.9.12"
   dependencies:
-    "@turbo/darwin-64": "npm:2.9.11"
-    "@turbo/darwin-arm64": "npm:2.9.11"
-    "@turbo/linux-64": "npm:2.9.11"
-    "@turbo/linux-arm64": "npm:2.9.11"
-    "@turbo/windows-64": "npm:2.9.11"
-    "@turbo/windows-arm64": "npm:2.9.11"
+    "@turbo/darwin-64": "npm:2.9.12"
+    "@turbo/darwin-arm64": "npm:2.9.12"
+    "@turbo/linux-64": "npm:2.9.12"
+    "@turbo/linux-arm64": "npm:2.9.12"
+    "@turbo/windows-64": "npm:2.9.12"
+    "@turbo/windows-arm64": "npm:2.9.12"
   dependenciesMeta:
     "@turbo/darwin-64":
       optional: true
@@ -15774,7 +15770,7 @@ __metadata:
       optional: true
   bin:
     turbo: bin/turbo
-  checksum: 10c0/cbb9e2cd6ee8ede75c2253a97735db7fc3460440ae30316d7bd783b4e92fdc3c7a1c2ea903af86aa5dc2839498209a238ed29b3bf4761d6a2a3f4d7590b5769a
+  checksum: 10c0/55844cdfaa12e96eb904334803146a93654020773681fcf8f1668074f00f77f4e35e2a156b6ae54dc53de227cb3e215985454e1317a0e2ba7552885314708ee8
   languageName: node
   linkType: hard
 
