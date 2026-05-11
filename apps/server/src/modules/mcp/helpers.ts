@@ -27,9 +27,15 @@ const styleVariableCategories = z.nativeEnum(StyleVariableCategory);
 export const registerBuiltInTools = (server: McpServer, adapters: Partial<McpAdapters>) => {
   server.registerTool(
     'list_spaces',
-    { description: 'List all spaces available in the system', inputSchema: z.object({}) },
-    async () => {
-      const spaces = await adapters.listSpaces?.();
+    {
+      description: 'List all spaces available in the system',
+      inputSchema: z.object({
+        spaceId: z.number().describe('Space ID'),
+        environment: z.string().describe('Environment name (e.g. main, production)')
+      })
+    },
+    async ({ spaceId, environment }) => {
+      const spaces = await adapters.listSpaces?.(spaceId, environment);
 
       return ok(spaces);
     }
