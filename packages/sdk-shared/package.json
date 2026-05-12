@@ -999,12 +999,14 @@
     "build:prod": "vite build && node ./scripts/generate-exports.mjs"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@plitzi/plitzi-ui": "^1.6.7",
     "@plitzi/sdk-store": "workspace:*",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "graphql-tag": "^2.12.6",
-    "twig": "^3.0.0"
+    "twig": "^3.0.0",
+    "zod": "^4.4.3"
   },
   "peerDependencies": {
     "react": "^19",

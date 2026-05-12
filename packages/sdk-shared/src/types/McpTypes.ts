@@ -1,4 +1,7 @@
-import type { PageFolder, SchemaVariable, DropPosition } from './SchemaTypes';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import type { Environment } from './CommonTypes';
+import type { PageFolder, SchemaVariable, DropPosition, Element, Schema } from './SchemaTypes';
 import type {
   DisplayMode,
   StyleCategory,
@@ -7,41 +10,14 @@ import type {
   StyleVariableValue,
   TagType
 } from './StyleTypes';
-
-export type McpSpace = {
-  id: number;
-  name: string;
-  environments?: string[];
-};
-
-export type McpElement = {
-  id: string;
-  type: string;
-  label: string;
-  parentId?: string;
-  props?: Record<string, unknown>;
-  styles?: Record<string, unknown>;
-  runtime?: 'server' | 'client' | 'shared';
-  children?: string[];
-};
-
-export type McpSchema = {
-  spaceId: number;
-  environment: string;
-  revision: number;
-  elements: Record<string, McpElement>;
-};
+import type { Theme } from './ThemeTypes';
+import type { ToolAnnotations } from '@modelcontextprotocol/sdk/types';
+import type { ZodObject } from 'zod';
 
 export type McpPlugin = {
   name: string;
   version?: string;
   description?: string;
-};
-
-export type McpPage = {
-  id: string;
-  name: string;
-  isDefault: boolean;
 };
 
 export type McpStyleVariable = {
@@ -66,208 +42,234 @@ export type McpSegment = {
 };
 
 export type McpAdapters = {
-  /** Return the current space only (for security, never expose other spaces). */
-  listSpaces: (spaceId: number, environment: string) => Promise<McpSpace[]>;
-  /** Return the full element tree for a space + environment. */
-  getSchema: (spaceId: number, environment: string) => Promise<McpSchema | undefined>;
-  /** Add a new element to the schema. Returns the created element with its generated ID. */
+  getBuilderContext: (
+    args: Record<string, unknown>,
+    ctx: McpContext
+  ) => Promise<
+    | {
+        currentPageId?: string;
+        selectedElementId?: string;
+        cssVariables: Record<string, { default: string; light?: string; dark?: string }> | undefined;
+        elementDefaults: any;
+        elements: { id: string; label: string; type: string; parentId?: string }[];
+        theme?: Exclude<Theme, 'system'>;
+      }
+    | undefined
+  >;
+  listSpaces: (
+    args: Record<string, unknown>,
+    ctx: McpContext
+  ) => Promise<{ id: string; name: string; permanentUrl: string; verified: boolean }[]>;
+  getSchema: (args: Record<string, unknown>, ctx: McpContext) => Promise<Schema | undefined>;
+  getPageSchema: (
+    args: { pageId?: string },
+    ctx: McpContext
+  ) => Promise<{ id: string; label: string; type: string; parentId: string | undefined }[] | undefined>;
   createElement: (
-    spaceId: number,
-    environment: string,
-    element: { type: string; label: string; props?: Record<string, unknown>; runtime?: 'server' | 'client' | 'shared' },
-    parentId?: string,
-    position?: number
-  ) => Promise<McpElement>;
-  /** Update an existing element's label, props, styles, or runtime. */
+    args: {
+      element: {
+        type: string;
+        label: string;
+        props?: Record<string, unknown>;
+        runtime?: 'server' | 'client' | 'shared';
+      };
+      parentId?: string;
+      position?: number;
+    },
+    ctx: McpContext
+  ) => Promise<Element>;
+  getElement: (args: { elementId: string }, ctx: McpContext) => Promise<Element | undefined>;
   updateElement: (
-    spaceId: number,
-    environment: string,
-    elementId: string,
-    updates: {
-      label?: string;
-      props?: Record<string, unknown>;
-      styles?: Record<string, unknown>;
-      runtime?: 'server' | 'client' | 'shared';
-    }
-  ) => Promise<McpElement>;
-  /** Remove an element and its descendants from the schema. */
-  deleteElement: (spaceId: number, environment: string, elementId: string) => Promise<void>;
-  /** Move an element to a different parent. */
+    args: {
+      elementId: string;
+      updates: {
+        label?: string;
+        props?: Record<string, unknown>;
+        styles?: Record<string, unknown>;
+        runtime?: 'server' | 'client' | 'shared';
+      };
+    },
+    ctx: McpContext
+  ) => Promise<Element>;
+  deleteElement: (args: { elementId: string }, ctx: McpContext) => Promise<void>;
   moveElement: (
-    spaceId: number,
-    environment: string,
-    elementId: string,
-    toParentId: string,
-    dropPosition?: DropPosition
+    args: { elementId: string; toParentId: string; dropPosition?: DropPosition },
+    ctx: McpContext
   ) => Promise<{ success: boolean }>;
-  /** Publish the current draft as a new revision. Returns the new revision number. */
-  publishSchema: (spaceId: number, environment: string) => Promise<{ revision: number }>;
-  /** Optional: list plugins registered in the system. */
-  listPlugins?: () => Promise<McpPlugin[]>;
-  /** Create a new page. */
-  createPage: (spaceId: number, environment: string, name: string) => Promise<McpPage>;
-  /** Delete a page by ID. */
-  deletePage: (spaceId: number, environment: string, pageId: string) => Promise<void>;
-  /** Create a new page folder. */
-  createPageFolder: (spaceId: number, environment: string, name: string, parentId?: string) => Promise<PageFolder>;
-  /** Update a page folder. */
+  publishSchema: (args: Record<string, unknown>, ctx: McpContext) => Promise<{ revision: number }>;
+  listPlugins?: (args: Record<string, unknown>, ctx: McpContext) => Promise<McpPlugin[]>;
+  createPage: (args: { name: string }, ctx: McpContext) => Promise<Element>;
+  deletePage: (args: { pageId: string }, ctx: McpContext) => Promise<void>;
+  createPageFolder: (args: { name: string; parentId?: string }, ctx: McpContext) => Promise<PageFolder>;
   updatePageFolder: (
-    spaceId: number,
-    environment: string,
-    id: string,
-    updates: Partial<Pick<PageFolder, 'name' | 'slug' | 'parentId'>>
+    args: { id: string; updates: Partial<Pick<PageFolder, 'name' | 'slug' | 'parentId'>> },
+    ctx: McpContext
   ) => Promise<PageFolder>;
-  /** Delete a page folder. */
-  deletePageFolder: (spaceId: number, environment: string, id: string) => Promise<void>;
-  /** Create a schema variable. */
+  deletePageFolder: (args: { id: string }, ctx: McpContext) => Promise<void>;
   createVariable: (
-    spaceId: number,
-    environment: string,
-    variable: Pick<SchemaVariable, 'name' | 'type' | 'value' | 'category'>
+    args: { variable: Pick<SchemaVariable, 'name' | 'type' | 'value' | 'category'> },
+    ctx: McpContext
   ) => Promise<SchemaVariable>;
-  /** Update a schema variable. */
   updateVariable: (
-    spaceId: number,
-    environment: string,
-    variable: Partial<SchemaVariable> & { name: string }
+    args: { variable: Partial<SchemaVariable> & { name: string } },
+    ctx: McpContext
   ) => Promise<SchemaVariable>;
-  /** Delete a schema variable. */
-  deleteVariable: (spaceId: number, environment: string, name: string) => Promise<void>;
-  /** Create a global style variable. */
+  deleteVariable: (args: { name: string }, ctx: McpContext) => Promise<void>;
   createStyleVariable: (
-    spaceId: number,
-    environment: string,
-    category: StyleVariableCategory,
-    name: string,
-    value: StyleVariableValue
+    args: { category: StyleVariableCategory; name: string; value: StyleVariableValue },
+    ctx: McpContext
   ) => Promise<McpStyleVariable>;
-  /** Update a global style variable. */
   updateStyleVariable: (
-    spaceId: number,
-    environment: string,
-    category: StyleVariableCategory,
-    name: string,
-    value: StyleVariableValue
+    args: { category: StyleVariableCategory; name: string; value: StyleVariableValue },
+    ctx: McpContext
   ) => Promise<McpStyleVariable>;
-  /** Delete a global style variable. */
-  deleteStyleVariable: (
-    spaceId: number,
-    environment: string,
-    category: StyleVariableCategory,
-    name: string
-  ) => Promise<void>;
-  /** Create a global style selector. */
+  deleteStyleVariable: (args: { category: StyleVariableCategory; name: string }, ctx: McpContext) => Promise<void>;
   createStyleSelector: (
-    spaceId: number,
-    environment: string,
-    displayMode: DisplayMode,
-    selector: string,
-    type: TagType,
-    path?: StyleCategory,
-    style?: StyleItem['attributes'],
-    params?: Record<string, unknown>
+    args: {
+      displayMode: DisplayMode;
+      selector: string;
+      type: TagType;
+      path?: StyleCategory;
+      style?: StyleItem['attributes'];
+      params?: Record<string, unknown>;
+    },
+    ctx: McpContext
   ) => Promise<McpStyleSelector>;
-  /** Update a global style selector. */
   updateStyleSelector: (
-    spaceId: number,
-    environment: string,
-    displayMode: DisplayMode,
-    selector: string,
-    type: TagType,
-    path?: StyleCategory,
-    style?: StyleItem['attributes'],
-    params?: Record<string, unknown>
+    args: {
+      displayMode: DisplayMode;
+      selector: string;
+      type: TagType;
+      path?: StyleCategory;
+      style?: StyleItem['attributes'];
+      params?: Record<string, unknown>;
+    },
+    ctx: McpContext
   ) => Promise<McpStyleSelector>;
-  /** Delete a global style selector. */
-  deleteStyleSelector: (
-    spaceId: number,
-    environment: string,
-    displayMode: DisplayMode,
-    selector: string
-  ) => Promise<void>;
-  /** Create a segment. */
-  createSegment: (spaceId: number, name: string, description: string) => Promise<McpSegment>;
-  /** Update a segment. */
+  deleteStyleSelector: (args: { displayMode: DisplayMode; selector: string }, ctx: McpContext) => Promise<void>;
+  createSegment: (args: { name: string; description: string }, ctx: McpContext) => Promise<McpSegment>;
   updateSegment: (
-    spaceId: number,
-    segmentId: string,
-    updates: { name?: string; description?: string }
+    args: { segmentId: string; updates: { name?: string; description?: string } },
+    ctx: McpContext
   ) => Promise<McpSegment>;
-  /** Delete a segment. */
-  deleteSegment: (spaceId: number, segmentId: string) => Promise<void>;
-  /** Add an element to a segment. */
+  deleteSegment: (args: { segmentId: string }, ctx: McpContext) => Promise<void>;
   createSegmentElement: (
-    spaceId: number,
-    segmentId: string,
-    element: { type: string; label: string; props?: Record<string, unknown> },
-    parentId: string
-  ) => Promise<McpElement>;
-  /** Update an element inside a segment. */
+    args: {
+      segmentId: string;
+      element: { type: string; label: string; props?: Record<string, unknown> };
+      parentId: string;
+    },
+    ctx: McpContext
+  ) => Promise<Element>;
   updateSegmentElement: (
-    spaceId: number,
-    segmentId: string,
-    elementId: string,
-    updates: { label?: string; props?: Record<string, unknown> }
-  ) => Promise<McpElement>;
-  /** Move an element inside a segment. */
+    args: { segmentId: string; elementId: string; updates: { label?: string; props?: Record<string, unknown> } },
+    ctx: McpContext
+  ) => Promise<Element>;
   moveSegmentElement: (
-    spaceId: number,
-    segmentId: string,
-    elementId: string,
-    toParentId: string,
-    dropPosition?: DropPosition
+    args: { segmentId: string; elementId: string; toParentId: string; dropPosition?: DropPosition },
+    ctx: McpContext
   ) => Promise<{ success: boolean }>;
-  /** Remove an element from a segment. */
-  deleteSegmentElement: (spaceId: number, segmentId: string, elementId: string) => Promise<void>;
-  /** Create a segment schema variable. */
+  deleteSegmentElement: (args: { segmentId: string; elementId: string }, ctx: McpContext) => Promise<void>;
   createSegmentVariable: (
-    spaceId: number,
-    segmentId: string,
-    variable: Pick<SchemaVariable, 'name' | 'type' | 'value' | 'category'>
+    args: { segmentId: string; variable: Pick<SchemaVariable, 'name' | 'type' | 'value' | 'category'> },
+    ctx: McpContext
   ) => Promise<SchemaVariable>;
-  /** Update a segment schema variable. */
   updateSegmentVariable: (
-    spaceId: number,
-    segmentId: string,
-    variable: Partial<SchemaVariable> & { name: string }
+    args: { segmentId: string; variable: Partial<SchemaVariable> & { name: string } },
+    ctx: McpContext
   ) => Promise<SchemaVariable>;
-  /** Delete a segment schema variable. */
-  deleteSegmentVariable: (spaceId: number, segmentId: string, name: string) => Promise<void>;
-  /** Create a segment style variable. */
+  deleteSegmentVariable: (args: { segmentId: string; name: string }, ctx: McpContext) => Promise<void>;
   createSegmentStyleVariable: (
-    spaceId: number,
-    segmentId: string,
-    category: StyleVariableCategory,
-    name: string,
-    value: StyleVariableValue
+    args: { segmentId: string; category: StyleVariableCategory; name: string; value: StyleVariableValue },
+    ctx: McpContext
   ) => Promise<McpStyleVariable>;
-  /** Update a segment style variable. */
   updateSegmentStyleVariable: (
-    spaceId: number,
-    segmentId: string,
-    category: StyleVariableCategory,
-    name: string,
-    value: StyleVariableValue
+    args: { segmentId: string; category: StyleVariableCategory; name: string; value: StyleVariableValue },
+    ctx: McpContext
   ) => Promise<McpStyleVariable>;
-  /** Delete a segment style variable. */
   deleteSegmentStyleVariable: (
-    spaceId: number,
-    segmentId: string,
-    category: StyleVariableCategory,
-    name: string
+    args: { segmentId: string; category: StyleVariableCategory; name: string },
+    ctx: McpContext
   ) => Promise<void>;
 };
 
+// Backend
+
+export type PromptRole = 'user' | 'assistant' | 'system';
+
+export type McpContext = {
+  // backend
+  userId: number;
+  spaceId: number;
+  environment: Environment;
+  pubSub?: unknown;
+  callbacks?: StreamCallbacks;
+  // frontend
+  currentPageId?: string;
+  elementSelected?: string;
+  theme?: 'light' | 'dark';
+};
+
+export type McpPromptHandlerResult = {
+  messages: { role: Exclude<PromptRole, 'system'>; content: { type: 'text'; text: string } }[];
+};
+
+export type McpPromptHandler = (
+  args: Record<string, any>,
+  ctx: McpContext
+) => Promise<McpPromptHandlerResult> | McpPromptHandlerResult;
+
+export type McpPromptConfig = {
+  name: string;
+  definition: {
+    title: string;
+    description: string;
+    argsSchema?: Record<string, any>;
+  };
+  handler: McpPromptHandler;
+};
+
+export type AiUsage = {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  thinkingTokens?: number;
+  contextLimit: number;
+  usedPercent: number;
+};
+
+export type ToolCallEvent = {
+  name: string;
+  args: Record<string, unknown>;
+  result: unknown;
+};
+
+export type StreamCallbacks = {
+  onChunk?: (text: string) => void;
+  onThinking?: (text: string) => void;
+  onUsage?: (usage: Omit<AiUsage, 'usedPercent' | 'contextLimit'> & { contextLimit?: number }) => void;
+  onToolStart?: (name: string, args: Record<string, unknown>) => void;
+  onToolCall?: (event: ToolCallEvent) => void;
+  // For tools processed in backend but need to send result to AI // @todo: review to see if will be deprecated
+  onTool?: (id: string, name: string, result: unknown, preview?: unknown) => void;
+};
+
 export type McpToolHandler = (
-  args: Record<string, unknown>
+  args: Record<string, any>,
+  ctx: McpContext
 ) =>
   | Promise<{ content: Array<{ type: 'text'; text: string }>; isError?: boolean }>
   | { content: Array<{ type: 'text'; text: string }>; isError?: boolean };
 
 export type McpToolConfig = {
   name: string;
-  description: string;
-  inputSchema: object; // Zod schema o objeto JSON
+  definition: {
+    title?: string;
+    description: string;
+    inputSchema?: ZodObject<any>;
+    outputSchema?: ZodObject<any>;
+    annotations?: ToolAnnotations;
+  };
   handler: McpToolHandler;
 };
 
@@ -276,4 +278,5 @@ export type McpServerConfig = {
   path?: string; // URL path for the MCP endpoint. Defaults to '/mcp'.
   adapters: McpAdapters;
   tools?: McpToolConfig[];
+  prompts?: McpPromptConfig[];
 };

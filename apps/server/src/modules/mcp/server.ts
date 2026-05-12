@@ -1,29 +1,29 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 
-import { registerBuiltInTools } from './helpers';
+import { registerBuiltInTools, wrapHandler } from './helpers';
+import PACKAGE from '../../../package.json' with { type: 'json' };
 
-import type { StreamableHTTPServerTransportOptions } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import type { AnySchema, ZodRawShapeCompat } from '@modelcontextprotocol/sdk/server/zod-compat';
-import type { McpAdapters, McpToolConfig } from '@plitzi/sdk-shared';
+import type { McpAdapters, McpToolConfig, McpPromptConfig, McpContext } from '@plitzi/sdk-shared';
 
 export const createMcpServer = (
   adapters: Partial<McpAdapters> = {},
+  context: McpContext,
   tools?: McpToolConfig[],
-  transportOptions?: StreamableHTTPServerTransportOptions
+  prompts?: McpPromptConfig[]
 ) => {
-  const transport = new StreamableHTTPServerTransport(transportOptions);
-  const server = new McpServer({ name: 'plitzi-schema-agent', version: '1.0.0' });
-  registerBuiltInTools(server, adapters);
+  const server = new McpServer({ name: 'plitzi-mcp', version: PACKAGE.version });
+  registerBuiltInTools(server, adapters, context);
   if (tools) {
     for (const tool of tools) {
-      server.registerTool(
-        tool.name,
-        { description: tool.description, inputSchema: tool.inputSchema as AnySchema | ZodRawShapeCompat | undefined },
-        tool.handler
-      );
+      server.registerTool(tool.name, tool.definition, wrapHandler(tool.handler, context));
     }
   }
 
-  return { transport, server };
+  if (prompts) {
+    for (const prompt of prompts) {
+      server.registerPrompt(prompt.name, prompt.definition, wrapHandler(prompt.handler, context));
+    }
+  }
+
+  return server;
 };
