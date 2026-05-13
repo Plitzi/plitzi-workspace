@@ -223,6 +223,13 @@ export type StreamCallbacks = {
 export type AiMode = 'plan' | 'build';
 export type ToolOperationType = 'read' | 'write' | 'admin';
 
+export type McpToolLifecycleHooks<T = unknown> = {
+  can?: (args: Record<string, unknown>, ctx?: McpContext) => boolean | Promise<boolean>;
+  before?: (args: Record<string, unknown>, ctx?: McpContext) => boolean | void | Promise<boolean> | Promise<void>;
+  after?: (args: Record<string, unknown>, result: T, ctx?: McpContext) => Promise<void>;
+  onError?: (args: Record<string, unknown>, error: Error, ctx?: McpContext) => Promise<void>;
+};
+
 export type McpToolDefinition = {
   name: string;
   description: string;
