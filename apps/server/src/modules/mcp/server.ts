@@ -3,16 +3,17 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 import { registerBuiltInTools, wrapHandler } from './helpers';
 import PACKAGE from '../../../package.json' with { type: 'json' };
 
-import type { McpAdapters, McpTool, McpPrompt, McpContext } from '@plitzi/sdk-shared';
+import type { McpAdapters, McpTool, McpPrompt, McpContext, McpToolLifecycleHooks } from '@plitzi/sdk-shared';
 
 export const createMcpServer = (
   adapters: Partial<McpAdapters> = {},
   context: McpContext,
   tools?: McpTool[],
-  prompts?: McpPrompt[]
+  prompts?: McpPrompt[],
+  hooks?: McpToolLifecycleHooks
 ) => {
   const server = new McpServer({ name: 'plitzi-mcp', version: PACKAGE.version });
-  registerBuiltInTools(server, adapters, context);
+  registerBuiltInTools(server, adapters, context, hooks);
   if (tools) {
     for (const tool of tools) {
       server.registerTool(tool.name, tool.definition, wrapHandler(tool.handler, context));

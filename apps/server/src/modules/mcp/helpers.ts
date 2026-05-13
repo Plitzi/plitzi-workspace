@@ -3,18 +3,32 @@ import { z } from 'zod';
 import * as tools from './tools';
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
-import type { AiMode, McpAdapters, McpContext, McpToolDefinition, ToolOperationType } from '@plitzi/sdk-shared';
+import type {
+  AiMode,
+  McpAdapters,
+  McpContext,
+  McpToolDefinition,
+  McpToolLifecycleHooks,
+  ToolOperationType
+} from '@plitzi/sdk-shared';
 
-export const wrapHandler = <T extends (args: Record<string, unknown>, ctx: McpContext) => unknown>(
+export const wrapHandler = <
+  T extends (args: Record<string, unknown>, ctx: McpContext, hooks?: McpToolLifecycleHooks) => unknown
+>(
   handler: T,
   ctx: McpContext
 ) => {
   return (args: Record<string, unknown>) => handler(args, ctx) as ReturnType<T>;
 };
 
-export const registerBuiltInTools = (server: McpServer, adapters: Partial<McpAdapters>, ctx: McpContext): void => {
+export const registerBuiltInTools = (
+  server: McpServer,
+  adapters: Partial<McpAdapters>,
+  ctx: McpContext,
+  hooks?: McpToolLifecycleHooks
+): void => {
   for (const toolFn of Object.values(tools)) {
-    const { name, description, inputSchema, execute } = toolFn(adapters, ctx);
+    const { name, description, inputSchema, execute } = toolFn(adapters, ctx, hooks);
     server.registerTool(name, { description, inputSchema }, execute);
   }
 };

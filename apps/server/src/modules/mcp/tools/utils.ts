@@ -13,10 +13,9 @@ export const createTool = <T extends keyof McpAdapters>(
   description: string,
   inputSchema: z.ZodObject,
   operationType: ToolOperationType,
-  executeFn: (args: Parameters<McpAdapters[T]>[0], adapters?: Partial<McpAdapters>, ctx?: McpContext) => unknown,
-  hooks?: McpToolLifecycleHooks
+  executeFn: (args: Parameters<McpAdapters[T]>[0], adapters?: Partial<McpAdapters>, ctx?: McpContext) => unknown
 ) => {
-  return (adapters?: Partial<McpAdapters>, ctx?: McpContext) => ({
+  return (adapters?: Partial<McpAdapters>, ctx?: McpContext, hooks?: McpToolLifecycleHooks) => ({
     name,
     description,
     operationType,
