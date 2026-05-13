@@ -3,13 +3,13 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 import { registerBuiltInTools, wrapHandler } from './helpers';
 import PACKAGE from '../../../package.json' with { type: 'json' };
 
-import type { McpAdapters, McpToolConfig, McpPromptConfig, McpContext } from '@plitzi/sdk-shared';
+import type { McpAdapters, McpTool, McpPrompt, McpContext } from '@plitzi/sdk-shared';
 
 export const createMcpServer = (
   adapters: Partial<McpAdapters> = {},
   context: McpContext,
-  tools?: McpToolConfig[],
-  prompts?: McpPromptConfig[]
+  tools?: McpTool[],
+  prompts?: McpPrompt[]
 ) => {
   const server = new McpServer({ name: 'plitzi-mcp', version: PACKAGE.version });
   registerBuiltInTools(server, adapters, context);

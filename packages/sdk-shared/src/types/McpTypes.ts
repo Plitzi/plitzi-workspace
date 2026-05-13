@@ -41,11 +41,11 @@ export type McpSegment = {
   definition: { name: string; description: string; baseElementId: string };
 };
 
+export type McpAdapter<T extends Record<string, any> = any, R = any> = (args: T, ctx: McpContext) => Promise<R>;
+
 export type McpAdapters = {
-  getBuilderContext: (
-    args: Record<string, unknown>,
-    ctx: McpContext
-  ) => Promise<
+  getBuilderContext: McpAdapter<
+    Record<string, unknown>,
     | {
         currentPageId?: string;
         selectedElementId?: string;
@@ -56,76 +56,48 @@ export type McpAdapters = {
       }
     | undefined
   >;
-  listSpaces: (
-    args: Record<string, unknown>,
-    ctx: McpContext
-  ) => Promise<{ id: string; name: string; permanentUrl: string; verified: boolean }[]>;
-  getSchema: (args: Record<string, unknown>, ctx: McpContext) => Promise<Schema | undefined>;
-  getPageSchema: (
-    args: { pageId?: string },
-    ctx: McpContext
-  ) => Promise<{ id: string; label: string; type: string; parentId: string | undefined }[] | undefined>;
-  createElement: (
-    args: {
-      element: {
-        type: string;
-        label: string;
-        props?: Record<string, unknown>;
-        runtime?: 'server' | 'client' | 'shared';
-      };
-      parentId?: string;
-      position?: number;
-    },
-    ctx: McpContext
-  ) => Promise<Element>;
-  getElement: (args: { elementId: string }, ctx: McpContext) => Promise<Element | undefined>;
-  updateElement: (
-    args: {
-      elementId: string;
-      updates: {
-        label?: string;
-        props?: Record<string, unknown>;
-        styles?: Record<string, unknown>;
-        runtime?: 'server' | 'client' | 'shared';
-      };
-    },
-    ctx: McpContext
-  ) => Promise<Element>;
-  deleteElement: (args: { elementId: string }, ctx: McpContext) => Promise<void>;
-  moveElement: (
-    args: { elementId: string; toParentId: string; dropPosition?: DropPosition },
-    ctx: McpContext
-  ) => Promise<{ success: boolean }>;
-  publishSchema: (args: Record<string, unknown>, ctx: McpContext) => Promise<{ revision: number }>;
-  listPlugins?: (args: Record<string, unknown>, ctx: McpContext) => Promise<McpPlugin[]>;
-  createPage: (args: { name: string }, ctx: McpContext) => Promise<Element>;
-  deletePage: (args: { pageId: string }, ctx: McpContext) => Promise<void>;
-  createPageFolder: (args: { name: string; parentId?: string }, ctx: McpContext) => Promise<PageFolder>;
-  updatePageFolder: (
-    args: { id: string; updates: Partial<Pick<PageFolder, 'name' | 'slug' | 'parentId'>> },
-    ctx: McpContext
-  ) => Promise<PageFolder>;
-  deletePageFolder: (args: { id: string }, ctx: McpContext) => Promise<void>;
-  createVariable: (
-    args: { variable: Pick<SchemaVariable, 'name' | 'type' | 'value' | 'category'> },
-    ctx: McpContext
-  ) => Promise<SchemaVariable>;
-  updateVariable: (
-    args: { variable: Partial<SchemaVariable> & { name: string } },
-    ctx: McpContext
-  ) => Promise<SchemaVariable>;
-  deleteVariable: (args: { name: string }, ctx: McpContext) => Promise<void>;
-  createStyleVariable: (
-    args: { category: StyleVariableCategory; name: string; value: StyleVariableValue },
-    ctx: McpContext
-  ) => Promise<McpStyleVariable>;
-  updateStyleVariable: (
-    args: { category: StyleVariableCategory; name: string; value: StyleVariableValue },
-    ctx: McpContext
-  ) => Promise<McpStyleVariable>;
-  deleteStyleVariable: (args: { category: StyleVariableCategory; name: string }, ctx: McpContext) => Promise<void>;
-  createStyleSelector: (
-    args: {
+  listSpaces: McpAdapter<
+    Record<string, unknown>,
+    { id: string; name: string; permanentUrl: string; verified: boolean }[]
+  >;
+  getSchema: McpAdapter<Record<string, unknown>, Schema | undefined>;
+  getPageSchema: McpAdapter<
+    { pageId?: string },
+    { id: string; label: string; type: string; parentId: string | undefined }[] | undefined
+  >;
+  createElement: McpAdapter<{ element: Element; parentId?: string; position?: number }, Element | undefined>;
+  getElement: McpAdapter<{ elementId: string }, Element | undefined>;
+  listElements: McpAdapter<Record<string, unknown>, Element[] | undefined>;
+  updateElement: McpAdapter<Element, Element>;
+  deleteElement: McpAdapter<{ elementId: string }, boolean>;
+  moveElement: McpAdapter<{ elementId: string; toParentId: string; dropPosition?: DropPosition }, boolean>;
+  publishSchema: McpAdapter<Record<string, unknown>, { revision: number }>;
+  listPlugins: McpAdapter<Record<string, unknown>, McpPlugin[]>;
+  createPage: McpAdapter<{ name: string }, Element>;
+  deletePage: McpAdapter<{ pageId: string }, boolean>;
+  createPageFolder: McpAdapter<{ name: string; parentId?: string }, PageFolder>;
+  updatePageFolder: McpAdapter<
+    { id: string; updates: Partial<Pick<PageFolder, 'name' | 'slug' | 'parentId'>> },
+    PageFolder
+  >;
+  deletePageFolder: McpAdapter<{ id: string }, boolean>;
+  createVariable: McpAdapter<
+    { variable: Pick<SchemaVariable, 'name' | 'type' | 'value' | 'category'> },
+    SchemaVariable
+  >;
+  updateVariable: McpAdapter<{ variable: Partial<SchemaVariable> & { name: string } }, SchemaVariable>;
+  deleteVariable: McpAdapter<{ name: string }, boolean>;
+  createStyleVariable: McpAdapter<
+    { category: StyleVariableCategory; name: string; value: StyleVariableValue },
+    McpStyleVariable
+  >;
+  updateStyleVariable: McpAdapter<
+    { category: StyleVariableCategory; name: string; value: StyleVariableValue },
+    McpStyleVariable
+  >;
+  deleteStyleVariable: McpAdapter<{ category: StyleVariableCategory; name: string }, boolean>;
+  createStyleSelector: McpAdapter<
+    {
       displayMode: DisplayMode;
       selector: string;
       type: TagType;
@@ -133,10 +105,10 @@ export type McpAdapters = {
       style?: StyleItem['attributes'];
       params?: Record<string, unknown>;
     },
-    ctx: McpContext
-  ) => Promise<McpStyleSelector>;
-  updateStyleSelector: (
-    args: {
+    McpStyleSelector
+  >;
+  updateStyleSelector: McpAdapter<
+    {
       displayMode: DisplayMode;
       selector: string;
       type: TagType;
@@ -144,53 +116,47 @@ export type McpAdapters = {
       style?: StyleItem['attributes'];
       params?: Record<string, unknown>;
     },
-    ctx: McpContext
-  ) => Promise<McpStyleSelector>;
-  deleteStyleSelector: (args: { displayMode: DisplayMode; selector: string }, ctx: McpContext) => Promise<void>;
-  createSegment: (args: { name: string; description: string }, ctx: McpContext) => Promise<McpSegment>;
-  updateSegment: (
-    args: { segmentId: string; updates: { name?: string; description?: string } },
-    ctx: McpContext
-  ) => Promise<McpSegment>;
-  deleteSegment: (args: { segmentId: string }, ctx: McpContext) => Promise<void>;
-  createSegmentElement: (
-    args: {
+    McpStyleSelector
+  >;
+  deleteStyleSelector: McpAdapter<{ displayMode: DisplayMode; selector: string }, boolean>;
+  createSegment: McpAdapter<{ name: string; description: string }, McpSegment>;
+  updateSegment: McpAdapter<{ segmentId: string; updates: { name?: string; description?: string } }, McpSegment>;
+  deleteSegment: McpAdapter<{ segmentId: string }, boolean>;
+  createSegmentElement: McpAdapter<
+    {
       segmentId: string;
       element: { type: string; label: string; props?: Record<string, unknown> };
       parentId: string;
     },
-    ctx: McpContext
-  ) => Promise<Element>;
-  updateSegmentElement: (
-    args: { segmentId: string; elementId: string; updates: { label?: string; props?: Record<string, unknown> } },
-    ctx: McpContext
-  ) => Promise<Element>;
-  moveSegmentElement: (
-    args: { segmentId: string; elementId: string; toParentId: string; dropPosition?: DropPosition },
-    ctx: McpContext
-  ) => Promise<{ success: boolean }>;
-  deleteSegmentElement: (args: { segmentId: string; elementId: string }, ctx: McpContext) => Promise<void>;
-  createSegmentVariable: (
-    args: { segmentId: string; variable: Pick<SchemaVariable, 'name' | 'type' | 'value' | 'category'> },
-    ctx: McpContext
-  ) => Promise<SchemaVariable>;
-  updateSegmentVariable: (
-    args: { segmentId: string; variable: Partial<SchemaVariable> & { name: string } },
-    ctx: McpContext
-  ) => Promise<SchemaVariable>;
-  deleteSegmentVariable: (args: { segmentId: string; name: string }, ctx: McpContext) => Promise<void>;
-  createSegmentStyleVariable: (
-    args: { segmentId: string; category: StyleVariableCategory; name: string; value: StyleVariableValue },
-    ctx: McpContext
-  ) => Promise<McpStyleVariable>;
-  updateSegmentStyleVariable: (
-    args: { segmentId: string; category: StyleVariableCategory; name: string; value: StyleVariableValue },
-    ctx: McpContext
-  ) => Promise<McpStyleVariable>;
-  deleteSegmentStyleVariable: (
-    args: { segmentId: string; category: StyleVariableCategory; name: string },
-    ctx: McpContext
-  ) => Promise<void>;
+    Element
+  >;
+  updateSegmentElement: McpAdapter<
+    { segmentId: string; elementId: string; updates: { label?: string; props?: Record<string, unknown> } },
+    Element
+  >;
+  moveSegmentElement: McpAdapter<
+    { segmentId: string; elementId: string; toParentId: string; dropPosition?: DropPosition },
+    boolean
+  >;
+  deleteSegmentElement: McpAdapter<{ segmentId: string; elementId: string }, boolean>;
+  createSegmentVariable: McpAdapter<
+    { segmentId: string; variable: Pick<SchemaVariable, 'name' | 'type' | 'value' | 'category'> },
+    SchemaVariable
+  >;
+  updateSegmentVariable: McpAdapter<
+    { segmentId: string; variable: Partial<SchemaVariable> & { name: string } },
+    SchemaVariable
+  >;
+  deleteSegmentVariable: McpAdapter<{ segmentId: string; name: string }, boolean>;
+  createSegmentStyleVariable: McpAdapter<
+    { segmentId: string; category: StyleVariableCategory; name: string; value: StyleVariableValue },
+    McpStyleVariable
+  >;
+  updateSegmentStyleVariable: McpAdapter<
+    { segmentId: string; category: StyleVariableCategory; name: string; value: StyleVariableValue },
+    McpStyleVariable
+  >;
+  deleteSegmentStyleVariable: McpAdapter<{ segmentId: string; category: StyleVariableCategory; name: string }, boolean>;
 };
 
 // Backend
@@ -219,7 +185,7 @@ export type McpPromptHandler = (
   ctx: McpContext
 ) => Promise<McpPromptHandlerResult> | McpPromptHandlerResult;
 
-export type McpPromptConfig = {
+export type McpPrompt = {
   name: string;
   definition: {
     title: string;
@@ -254,6 +220,18 @@ export type StreamCallbacks = {
   onTool?: (id: string, name: string, result: unknown, preview?: unknown) => void;
 };
 
+export type AiMode = 'plan' | 'build';
+export type ToolOperationType = 'read' | 'write' | 'admin';
+
+export type McpToolDefinition = {
+  name: string;
+  description: string;
+  shortDescription?: string;
+  parameters: Record<string, unknown>;
+  allowedModes: AiMode[];
+  operationType: ToolOperationType;
+};
+
 export type McpToolHandler = (
   args: Record<string, any>,
   ctx: McpContext
@@ -261,7 +239,7 @@ export type McpToolHandler = (
   | Promise<{ content: Array<{ type: 'text'; text: string }>; isError?: boolean }>
   | { content: Array<{ type: 'text'; text: string }>; isError?: boolean };
 
-export type McpToolConfig = {
+export type McpTool = {
   name: string;
   definition: {
     title?: string;
@@ -277,6 +255,6 @@ export type McpServerConfig = {
   enabled?: boolean; // Whether the MCP endpoint is active. Defaults to true.
   path?: string; // URL path for the MCP endpoint. Defaults to '/mcp'.
   adapters: McpAdapters;
-  tools?: McpToolConfig[];
-  prompts?: McpPromptConfig[];
+  tools?: McpTool[];
+  prompts?: McpPrompt[];
 };
