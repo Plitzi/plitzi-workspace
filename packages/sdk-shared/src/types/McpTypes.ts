@@ -224,10 +224,14 @@ export type AiMode = 'plan' | 'build';
 export type ToolOperationType = 'read' | 'write' | 'admin';
 
 export type McpToolLifecycleHooks<T = unknown> = {
-  can?: (args: Record<string, unknown>, ctx?: McpContext) => boolean | Promise<boolean>;
-  before?: (args: Record<string, unknown>, ctx?: McpContext) => boolean | void | Promise<boolean> | Promise<void>;
-  after?: (args: Record<string, unknown>, result: T, ctx?: McpContext) => Promise<void>;
-  onError?: (args: Record<string, unknown>, error: Error, ctx?: McpContext) => Promise<void>;
+  can?: (name: string, args: Record<string, unknown>, ctx?: McpContext) => boolean | Promise<boolean>;
+  before?: (
+    name: string,
+    args: Record<string, unknown>,
+    ctx?: McpContext
+  ) => boolean | undefined | Promise<boolean> | Promise<undefined>;
+  after?: (name: string, args: Record<string, unknown>, result: T, ctx?: McpContext) => void | Promise<void>;
+  onError?: (name: string, args: Record<string, unknown>, error: Error, ctx?: McpContext) => void | Promise<void>;
 };
 
 export type McpToolDefinition = {

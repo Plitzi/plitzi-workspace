@@ -21,12 +21,12 @@ export const createTool = <T extends keyof McpAdapters>(
     operationType,
     inputSchema,
     execute: async (args: Record<string, unknown>) => {
-      if (hooks?.can && !(await hooks.can(args, ctx))) {
+      if (hooks?.can && !(await hooks.can(name, args, ctx))) {
         return err('Tool execution denied');
       }
 
       if (hooks?.before) {
-        const result = await hooks.before(args, ctx);
+        const result = await hooks.before(name, args, ctx);
         if (result === false) {
           return err('Tool execution aborted by before hook');
         }
@@ -34,11 +34,11 @@ export const createTool = <T extends keyof McpAdapters>(
 
       try {
         const result = await executeFn(args, adapters, ctx);
-        await hooks?.after?.(args, result, ctx);
+        await hooks?.after?.(name, args, result, ctx);
 
         return ok(result);
       } catch (e) {
-        await hooks?.onError?.(args, e instanceof Error ? e : new Error(String(e)), ctx);
+        await hooks?.onError?.(name, args, e instanceof Error ? e : new Error(String(e)), ctx);
 
         return err(e instanceof Error ? e.message : String(e));
       }
