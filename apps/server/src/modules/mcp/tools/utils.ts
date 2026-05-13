@@ -11,9 +11,9 @@ export const createTool = <T extends keyof McpAdapters>(
   description: string,
   inputSchema: z.ZodObject,
   operationType: ToolOperationType,
-  executeFn: (args: Parameters<McpAdapters[T]>[0], adapters: Partial<McpAdapters>, ctx: McpContext) => unknown
+  executeFn: (args: Parameters<McpAdapters[T]>[0], adapters?: Partial<McpAdapters>, ctx?: McpContext) => unknown
 ) => {
-  return (adapters: Partial<McpAdapters>, ctx: McpContext) => ({
+  return (adapters?: Partial<McpAdapters>, ctx?: McpContext) => ({
     name,
     description,
     operationType,
@@ -33,10 +33,10 @@ export const createTool = <T extends keyof McpAdapters>(
 export const callAdapter = <T extends keyof McpAdapters>(
   adapterName: T,
   args: Parameters<McpAdapters[T]>[0],
-  adapters: Partial<McpAdapters>,
-  ctx: McpContext
+  adapters?: Partial<McpAdapters>,
+  ctx?: McpContext
 ): ReturnType<McpAdapters[T]> => {
-  const adapter = adapters[adapterName];
+  const adapter = adapters?.[adapterName];
   if (!adapter) {
     throw new Error(`Adapter ${adapterName} not available`);
   }

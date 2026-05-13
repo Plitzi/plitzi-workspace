@@ -91,19 +91,43 @@ const getAllowedModes = (operationType: ToolOperationType): AiMode[] => {
   return ['plan', 'build'];
 };
 
-export const getToolDefinitions = (adapters: McpAdapters, ctx: McpContext): McpToolDefinition[] => {
-  const definitions: McpToolDefinition[] = [];
-  for (const toolFn of Object.values(tools)) {
-    const { name, description, operationType, inputSchema } = toolFn(adapters, ctx);
-    definitions.push({
-      name: name.replace(/_/g, '_'),
-      shortDescription: description.split('.')[0],
-      description,
-      parameters: zodToJsonSchema(inputSchema),
-      allowedModes: getAllowedModes(operationType),
-      operationType
-    });
+export const getToolDefinition = (name: keyof typeof tools) => {
+  const toolFn = tools[name];
+  if (!(toolFn as typeof toolFn | undefined)) {
+    return undefined;
+  }
+
+  const definition = toolFn();
+  if (!(definition as typeof definition | undefined)) {
+    return undefined;
+  }
+
+  const { name: toolName, description, operationType, inputSchema } = definition;
+
+  return {
+    name: toolName.replace(/_/g, '_'),
+    shortDescription: description.split('.')[0],
+    description,
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes(operationType),
+    operationType
+  };
+};
+
+export const getToolDefinitions = (mode?: AiMode): McpToolDefinition[] => {
+  let definitions: McpToolDefinition[] = [];
+  for (const toolName of Object.keys(tools)) {
+    const definition = getToolDefinition(toolName as keyof typeof tools);
+    if (definition) {
+      definitions.push(definition);
+    }
+  }
+
+  if (mode) {
+    definitions = definitions.filter(definition => definition.allowedModes.includes(mode));
   }
 
   return definitions;
 };
+
+export const toolDefinitions = getToolDefinitions();
