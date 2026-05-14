@@ -11,12 +11,13 @@ import type { AiToolCall } from '@pmodules/AI/types';
 
 export type LiveEntryProps = {
   isStreaming?: boolean;
+  isBusy?: boolean;
   streamingText?: string;
   liveThinking?: string;
   liveTools?: AiToolCall[];
 };
 
-const LiveEntry = ({ isStreaming, streamingText, liveThinking, liveTools = [] }: LiveEntryProps) => {
+const LiveEntry = ({ isStreaming, isBusy, streamingText, liveThinking, liveTools = [] }: LiveEntryProps) => {
   const { currentMode } = useAiChatContext();
 
   return (
@@ -24,6 +25,7 @@ const LiveEntry = ({ isStreaming, streamingText, liveThinking, liveTools = [] }:
       <LiveHeader
         mode={currentMode}
         isStreaming={isStreaming}
+        isBusy={isBusy}
         liveThinking={liveThinking}
         streamingText={streamingText}
         liveTools={liveTools}

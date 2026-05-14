@@ -5,12 +5,13 @@ import type { AiMode, AiToolCall } from '@pmodules/AI/types';
 export type LiveHeaderProps = {
   mode: AiMode;
   isStreaming?: boolean;
+  isBusy?: boolean;
   liveThinking?: string;
   streamingText?: string;
   liveTools: AiToolCall[];
 };
 
-const LiveHeader = ({ mode, isStreaming, liveThinking, streamingText, liveTools }: LiveHeaderProps) => (
+const LiveHeader = ({ mode, isStreaming, isBusy, liveThinking, streamingText, liveTools }: LiveHeaderProps) => (
   <div className="flex items-center gap-1.5 font-mono text-[10px] text-zinc-500 dark:text-zinc-400">
     <span
       className={clsx('h-1.5 w-1.5 shrink-0 rounded-full', {
@@ -20,26 +21,32 @@ const LiveHeader = ({ mode, isStreaming, liveThinking, streamingText, liveTools 
     />
     <span className="font-medium text-zinc-900 dark:text-zinc-100">Plitzi</span>
     {isStreaming && !liveThinking && !streamingText && liveTools.length === 0 && (
-      <div className="ml-1 flex items-center gap-1">
-        <span
-          className={clsx('h-1 w-1 animate-bounce rounded-full [animation-delay:-0.3s]', {
-            'bg-emerald-500 dark:bg-emerald-400': mode === 'build',
-            'bg-sky-500 dark:bg-sky-400': mode === 'plan'
-          })}
-        />
-        <span
-          className={clsx('h-1 w-1 animate-bounce rounded-full [animation-delay:-0.15s]', {
-            'bg-emerald-500 dark:bg-emerald-400': mode === 'build',
-            'bg-sky-500 dark:bg-sky-400': mode === 'plan'
-          })}
-        />
-        <span
-          className={clsx('h-1 w-1 animate-bounce rounded-full', {
-            'bg-emerald-500 dark:bg-emerald-400': mode === 'build',
-            'bg-sky-500 dark:bg-sky-400': mode === 'plan'
-          })}
-        />
-      </div>
+      isBusy ? (
+        <span className="ml-1 animate-pulse text-zinc-400 dark:text-zinc-500">
+          Response may take a moment...
+        </span>
+      ) : (
+        <div className="ml-1 flex items-center gap-1">
+          <span
+            className={clsx('h-1 w-1 animate-bounce rounded-full [animation-delay:-0.3s]', {
+              'bg-emerald-500 dark:bg-emerald-400': mode === 'build',
+              'bg-sky-500 dark:bg-sky-400': mode === 'plan'
+            })}
+          />
+          <span
+            className={clsx('h-1 w-1 animate-bounce rounded-full [animation-delay:-0.15s]', {
+              'bg-emerald-500 dark:bg-emerald-400': mode === 'build',
+              'bg-sky-500 dark:bg-sky-400': mode === 'plan'
+            })}
+          />
+          <span
+            className={clsx('h-1 w-1 animate-bounce rounded-full', {
+              'bg-emerald-500 dark:bg-emerald-400': mode === 'build',
+              'bg-sky-500 dark:bg-sky-400': mode === 'plan'
+            })}
+          />
+        </div>
+      )
     )}
   </div>
 );

@@ -48,6 +48,7 @@ const AiChat = () => {
     liveThinking,
     liveTools,
     isStreaming,
+    isBusy,
     usage,
     error,
     clearError,
@@ -142,6 +143,7 @@ const AiChat = () => {
           ref={chatRef}
           messages={messages}
           isStreaming={isStreaming}
+          isBusy={isBusy}
           streamingText={streamingText}
           liveThinking={liveThinking}
           liveTools={liveTools}

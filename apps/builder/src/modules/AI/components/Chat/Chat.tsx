@@ -14,12 +14,13 @@ export type ChatProps = {
   ref?: Ref<HTMLDivElement>;
   messages: AiMessage[];
   isStreaming?: boolean;
+  isBusy?: boolean;
   streamingText?: string;
   liveThinking?: string;
   liveTools?: AiToolCall[];
 };
 
-const Chat = ({ ref, messages = [], isStreaming, streamingText, liveThinking, liveTools = [] }: ChatProps) => {
+const Chat = ({ ref, messages = [], isStreaming, isBusy, streamingText, liveThinking, liveTools = [] }: ChatProps) => {
   const { currentMode } = useAiChatContext();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const isAtBottom = useRef(true);
@@ -141,6 +142,7 @@ const Chat = ({ ref, messages = [], isStreaming, streamingText, liveThinking, li
                 {isLive && (
                   <LiveEntry
                     isStreaming={isStreaming}
+                    isBusy={isBusy}
                     streamingText={streamingText}
                     liveThinking={liveThinking}
                     liveTools={liveTools}

@@ -51,6 +51,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
   const [liveThinking, setLiveThinking] = useState('');
   const [liveTools, setLiveTools] = useState<AiToolCall[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
   const [usage, setUsage] = useState<AiUsage | undefined>();
   const [error, setError] = useState<string | undefined>();
   const [quotaError, setQuotaError] = useState<string | undefined>();
@@ -172,13 +173,17 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
             try {
               const event = JSON.parse(line.slice(6)) as AiStreamEvent;
 
-              if (event.type === 'thinking') {
+              if (event.type === 'busy') {
+                setIsBusy(true);
+              } else if (event.type === 'thinking') {
+                setIsBusy(false);
                 if (!thinkingStartRef.current) {
                   thinkingStartRef.current = Date.now();
                 }
                 thinkingTextRef.current += event.text;
                 flushSync(() => setLiveThinking(thinkingTextRef.current));
               } else if (event.type === 'chunk') {
+                setIsBusy(false);
                 if (thinkingStartRef.current && !thinkingDurationMsRef.current) {
                   thinkingDurationMsRef.current = Date.now() - thinkingStartRef.current;
                 }
@@ -235,6 +240,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                   );
                 }
               } else if (event.type === 'done') {
+                setIsBusy(false);
                 const thinkingText = thinkingTextRef.current || undefined;
                 const thinkingDurationMs =
                   thinkingText && thinkingStartRef.current
@@ -272,6 +278,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
         }
       } finally {
         setIsStreaming(false);
+        setIsBusy(false);
         flushStreamingBuffer();
         setLiveThinking('');
         thinkingTextRef.current = '';
@@ -365,6 +372,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
     liveThinking,
     liveTools,
     isStreaming,
+    isBusy,
     usage,
     error,
     clearError: () => setError(undefined),
