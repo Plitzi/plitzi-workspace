@@ -162,6 +162,8 @@ export type McpAdapters = {
 // Backend
 
 export type PromptRole = 'user' | 'assistant' | 'system';
+export type AiMode = 'plan' | 'build';
+export type ToolOperationType = 'read' | 'write' | 'admin';
 
 export type McpContext = {
   // backend
@@ -171,6 +173,7 @@ export type McpContext = {
   pubSub?: unknown;
   callbacks?: StreamCallbacks;
   // frontend
+  mode: AiMode;
   currentPageId?: string;
   elementSelected?: string;
   theme?: 'light' | 'dark';
@@ -216,12 +219,7 @@ export type StreamCallbacks = {
   onUsage?: (usage: Omit<AiUsage, 'usedPercent' | 'contextLimit'> & { contextLimit?: number }) => void;
   onToolStart?: (name: string, args: Record<string, unknown>) => void;
   onToolCall?: (event: ToolCallEvent) => void;
-  // For tools processed in backend but need to send result to AI // @todo: review to see if will be deprecated
-  onTool?: (id: string, name: string, result: unknown, preview?: unknown) => void;
 };
-
-export type AiMode = 'plan' | 'build';
-export type ToolOperationType = 'read' | 'write' | 'admin';
 
 export type McpToolLifecycleHooks<T = unknown> = {
   can?: (name: string, args: Record<string, unknown>, ctx?: McpContext) => boolean | Promise<boolean>;

@@ -52,7 +52,7 @@
     "immer": "^11.1.8",
     "jszip": "^3.10.1",
     "react-hook-form": "^7.75.0",
-    "react-router-dom": "^7.15.0",
+    "react-router-dom": "^7.15.1",
     "swr": "^2.4.1",
     "twig": "^3.0.0",
     "uuid": "^14.0.0",

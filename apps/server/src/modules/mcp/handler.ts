@@ -31,7 +31,7 @@ export const handleMcp = async (
   context?: McpContext
 ): Promise<void> => {
   if (!server) {
-    const ctx: McpContext = context ?? { userId: 0, spaceId: 0, environment: 'main' };
+    const ctx: McpContext = context ?? { userId: 0, spaceId: 0, environment: 'main', mode: 'plan' };
     server = createMcpServer(config.adapters, ctx, config.tools, config.prompts);
   }
 

@@ -32,7 +32,7 @@
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.6.7",
     "@plitzi/sdk-shared": "workspace:*",
-    "react-router": "^7.15.0"
+    "react-router": "^7.15.1"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",
