@@ -1029,7 +1029,7 @@
     "@types/react-dom": "^19.2.3",
     "@types/twig": "^1.12.17",
     "@vitejs/plugin-react": "^6.0.1",
-    "@vitest/coverage-v8": "^4.1.5",
+    "@vitest/coverage-v8": "^4.1.6",
     "babel-minify": "^0.5.2",
     "eslint": "^9.39.4",
     "eslint-config-airbnb": "^19.0.4",
@@ -1045,7 +1045,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
-    "eslint-plugin-storybook": "^10.3.6",
+    "eslint-plugin-storybook": "^10.4.0",
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
     "postcss": "^8.5.14",
@@ -1055,11 +1055,11 @@
     "tailwindcss": "^4.3.0",
     "terser": "^5.47.1",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.59.2",
-    "vite": "^8.0.11",
+    "typescript-eslint": "^8.59.3",
+    "vite": "^8.0.13",
     "vite-plugin-dts": "^5.0.0",
     "vite-plugin-react": "^4.0.1",
-    "vitest": "^4.1.5",
+    "vitest": "^4.1.6",
     "vitest-fetch-mock": "^0.4.5"
   }
 }
