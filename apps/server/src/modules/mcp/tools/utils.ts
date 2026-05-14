@@ -3,8 +3,14 @@
 import type { McpAdapters, McpContext, McpToolLifecycleHooks, ToolOperationType } from '@plitzi/sdk-shared';
 import type { z } from 'zod';
 
-const ok = (data: unknown) => ({ content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] });
-const err = (message: string) => ({ content: [{ type: 'text' as const, text: message }], isError: true as const });
+export const toolResponseOk = (data: unknown) => ({
+  content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }]
+});
+
+export const toolResponseErr = (message: string) => ({
+  content: [{ type: 'text' as const, text: message }],
+  isError: true as const
+});
 
 export type ToolLifecycleHooks<T = unknown> = McpToolLifecycleHooks<T>;
 
@@ -22,13 +28,13 @@ export const createTool = <T extends keyof McpAdapters>(
     inputSchema,
     execute: async (args: Record<string, unknown>) => {
       if (hooks?.can && !(await hooks.can(name, args, ctx))) {
-        return err('Tool execution denied');
+        return toolResponseErr('Tool execution denied');
       }
 
       if (hooks?.before) {
         const result = await hooks.before(name, args, ctx);
         if (result === false) {
-          return err('Tool execution aborted by before hook');
+          return toolResponseErr('Tool execution aborted by before hook');
         }
       }
 
@@ -36,11 +42,11 @@ export const createTool = <T extends keyof McpAdapters>(
         const result = await executeFn(args, adapters, ctx);
         await hooks?.after?.(name, args, result, ctx);
 
-        return ok(result);
+        return toolResponseOk(result);
       } catch (e) {
         await hooks?.onError?.(name, args, e instanceof Error ? e : new Error(String(e)), ctx);
 
-        return err(e instanceof Error ? e.message : String(e));
+        return toolResponseErr(e instanceof Error ? e.message : String(e));
       }
     }
   });
