@@ -901,6 +901,9 @@
       "types": "./dist/types/index.d.ts",
       "import": "./dist/types/index.mjs"
     },
+    "./types/AITypes": {
+      "types": "./dist/types/AITypes.d.ts"
+    },
     "./types/AuthTypes": {
       "types": "./dist/types/AuthTypes.d.ts"
     },

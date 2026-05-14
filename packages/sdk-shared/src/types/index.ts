@@ -21,3 +21,4 @@ export * from './StoreTypes';
 export * from './ThemeTypes';
 export * from './McpTypes';
 export * from './ServerTypes';
+export * from './AITypes';

@@ -1,11 +1,12 @@
 import { z } from 'zod';
 
-import { createTool, callAdapter } from '../../utils';
+import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
 
-const updateElementTool = createTool<'updateElement'>(
-  'update_element',
-  'Update an existing element — label, props, styles, or runtime',
-  z.object({
+const updateElementTool: McpToolAdapterDefinition = {
+  name: 'update_element',
+  adapterName: 'updateElement',
+  description: 'Update an existing element — label, props, styles, or runtime',
+  inputSchema: z.object({
     elementId: z.string(),
     updates: z.object({
       label: z.string().optional(),
@@ -14,8 +15,7 @@ const updateElementTool = createTool<'updateElement'>(
       runtime: z.enum(['server', 'client', 'shared']).optional()
     })
   }),
-  'write',
-  (args, adapters, ctx) => callAdapter('updateElement', args, adapters, ctx)
-);
+  operationType: 'write'
+};
 
 export default updateElementTool;

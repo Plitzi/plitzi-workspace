@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
-import { createTool, callAdapter } from '../../../utils';
+import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
 
-const deleteSegmentVariableTool = createTool<'deleteSegmentVariable'>(
-  'delete_segment_variable',
-  'Delete a segment schema variable',
-  z.object({ segmentId: z.string(), name: z.string() }),
-  'write',
-  (args, adapters, ctx) => callAdapter('deleteSegmentVariable', args, adapters, ctx)
-);
+const deleteSegmentVariableTool: McpToolAdapterDefinition = {
+  name: 'delete_segment_variable',
+  adapterName: 'deleteSegmentVariable',
+  description: 'Delete a segment schema variable',
+  inputSchema: z.object({ segmentId: z.string(), name: z.string() }),
+  operationType: 'write'
+};
 
 export default deleteSegmentVariableTool;

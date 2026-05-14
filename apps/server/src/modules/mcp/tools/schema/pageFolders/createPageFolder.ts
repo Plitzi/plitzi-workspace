@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
-import { createTool, callAdapter } from '../../utils';
+import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
 
-const createPageFolderTool = createTool<'createPageFolder'>(
-  'create_page_folder',
-  'Create a new page folder',
-  z.object({ name: z.string(), parentId: z.string().optional() }),
-  'write',
-  (args, adapters, ctx) => callAdapter('createPageFolder', args, adapters, ctx)
-);
+const createPageFolderTool: McpToolAdapterDefinition = {
+  name: 'create_page_folder',
+  adapterName: 'createPageFolder',
+  description: 'Create a new page folder',
+  inputSchema: z.object({ name: z.string(), parentId: z.string().optional() }),
+  operationType: 'write'
+};
 
 export default createPageFolderTool;

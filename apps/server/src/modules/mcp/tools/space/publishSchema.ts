@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
-import { createTool, callAdapter } from '../utils';
+import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
 
-const publishSchemaTool = createTool<'publishSchema'>(
-  'publish_schema',
-  'Publish the current draft schema as a new immutable revision',
-  z.object({}),
-  'admin',
-  (args, adapters, ctx) => callAdapter('publishSchema', args, adapters, ctx)
-);
+const publishSchemaTool: McpToolAdapterDefinition = {
+  name: 'publish_schema',
+  adapterName: 'publishSchema',
+  description: 'Publish the current draft schema as a new immutable revision',
+  inputSchema: z.object({}),
+  operationType: 'admin'
+};
 
 export default publishSchemaTool;

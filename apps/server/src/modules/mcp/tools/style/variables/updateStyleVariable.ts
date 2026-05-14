@@ -2,18 +2,18 @@ import { z } from 'zod';
 
 import { StyleVariableCategory } from '@plitzi/sdk-shared';
 
-import { createTool, callAdapter } from '../../utils';
+import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
 
-const updateStyleVariableTool = createTool<'updateStyleVariable'>(
-  'update_style_variable',
-  'Update a global style variable',
-  z.object({
+const updateStyleVariableTool: McpToolAdapterDefinition = {
+  name: 'update_style_variable',
+  adapterName: 'updateStyleVariable',
+  description: 'Update a global style variable',
+  inputSchema: z.object({
     category: z.nativeEnum(StyleVariableCategory),
     name: z.string(),
     value: z.union([z.string(), z.number(), z.record(z.string(), z.unknown())])
   }),
-  'write',
-  (args, adapters, ctx) => callAdapter('updateStyleVariable', args, adapters, ctx)
-);
+  operationType: 'write'
+};
 
 export default updateStyleVariableTool;

@@ -1,17 +1,17 @@
 import { z } from 'zod';
 
-import { createTool, callAdapter } from '../../utils';
+import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
 
-const moveElementTool = createTool<'moveElement'>(
-  'move_element',
-  'Move an element to a different parent',
-  z.object({
+const moveElementTool: McpToolAdapterDefinition = {
+  name: 'move_element',
+  adapterName: 'moveElement',
+  description: 'Move an element to a different parent',
+  inputSchema: z.object({
     elementId: z.string(),
     toParentId: z.string(),
     dropPosition: z.enum(['top', 'bottom', 'left', 'right', 'inside', 'custom']).optional()
   }),
-  'write',
-  (args, adapters, ctx) => callAdapter('moveElement', args, adapters, ctx)
-);
+  operationType: 'write'
+};
 
 export default moveElementTool;

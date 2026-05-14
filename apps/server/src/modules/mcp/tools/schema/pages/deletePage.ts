@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
-import { createTool, callAdapter } from '../../utils';
+import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
 
-const deletePageTool = createTool<'deletePage'>(
-  'delete_page',
-  'Delete a page by ID',
-  z.object({ pageId: z.string() }),
-  'write',
-  (args, adapters, ctx) => callAdapter('deletePage', args, adapters, ctx)
-);
+const deletePageTool: McpToolAdapterDefinition = {
+  name: 'delete_page',
+  adapterName: 'deletePage',
+  description: 'Delete a page by ID',
+  inputSchema: z.object({ pageId: z.string() }),
+  operationType: 'write'
+};
 
 export default deletePageTool;

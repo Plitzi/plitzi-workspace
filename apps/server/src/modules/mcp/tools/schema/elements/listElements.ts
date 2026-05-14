@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
-import { createTool, callAdapter } from '../../utils';
+import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
 
-const listElementsTool = createTool<'listElements'>(
-  'list_elements',
-  'List all element IDs, types and labels for a space and environment',
-  z.object({}),
-  'read',
-  (args, adapters, ctx) => callAdapter('listElements', args, adapters, ctx)
-);
+const listElementsTool: McpToolAdapterDefinition = {
+  name: 'list_elements',
+  adapterName: 'listElements',
+  description: 'List all element IDs, types and labels for a space and environment',
+  inputSchema: z.object({}),
+  operationType: 'read'
+};
 
 export default listElementsTool;

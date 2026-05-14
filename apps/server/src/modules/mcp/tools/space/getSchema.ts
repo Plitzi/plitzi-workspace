@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
-import { createTool, callAdapter } from '../utils';
+import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
 
-const getSchemaTool = createTool<'getSchema'>(
-  'get_schema',
-  'Get the full element tree for a space and environment',
-  z.object({}),
-  'read',
-  (args, adapters, ctx) => callAdapter('getSchema', args, adapters, ctx)
-);
+const getSchemaTool: McpToolAdapterDefinition = {
+  name: 'get_schema',
+  adapterName: 'getSchema',
+  description: 'Get the full element tree for a space and environment',
+  inputSchema: z.object({}),
+  operationType: 'read'
+};
 
 export default getSchemaTool;

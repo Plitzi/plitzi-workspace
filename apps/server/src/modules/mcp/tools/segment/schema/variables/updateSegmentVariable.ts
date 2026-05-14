@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { createTool, callAdapter } from '../../../utils';
+import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
 
 const variableTypesSchema = z.enum([
   'text',
@@ -15,10 +15,11 @@ const variableTypesSchema = z.enum([
   'switch'
 ]);
 
-const updateSegmentVariableTool = createTool<'updateSegmentVariable'>(
-  'update_segment_variable',
-  'Update a segment schema variable',
-  z.object({
+const updateSegmentVariableTool: McpToolAdapterDefinition = {
+  name: 'update_segment_variable',
+  adapterName: 'updateSegmentVariable',
+  description: 'Update a segment schema variable',
+  inputSchema: z.object({
     segmentId: z.string(),
     variable: z.object({
       name: z.string(),
@@ -27,8 +28,7 @@ const updateSegmentVariableTool = createTool<'updateSegmentVariable'>(
       category: z.string().optional()
     })
   }),
-  'write',
-  (args, adapters, ctx) => callAdapter('updateSegmentVariable', args, adapters, ctx)
-);
+  operationType: 'write'
+};
 
 export default updateSegmentVariableTool;

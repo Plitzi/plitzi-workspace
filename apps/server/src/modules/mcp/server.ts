@@ -1,28 +1,40 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 
-import { registerBuiltInTools, wrapHandler } from './helpers';
+import * as defaultTools from './tools';
 import PACKAGE from '../../../package.json' with { type: 'json' };
 
-import type { McpAdapters, McpTool, McpPrompt, McpContext, McpToolLifecycleHooks } from '@plitzi/sdk-shared';
+import type AIEngine from '../ai/AIEngine';
+import type { McpAdapters, McpTool, McpToolAdapterDefinition, McpPrompt } from '@plitzi/sdk-shared';
 
 export const createMcpServer = (
   adapters: Partial<McpAdapters> = {},
-  context: McpContext,
-  tools?: McpTool[],
-  prompts?: McpPrompt[],
-  hooks?: McpToolLifecycleHooks
+  engine: AIEngine,
+  tools?: (McpTool | McpToolAdapterDefinition)[],
+  prompts?: McpPrompt[]
 ) => {
   const server = new McpServer({ name: 'plitzi-mcp', version: PACKAGE.version });
-  registerBuiltInTools(server, adapters, context, hooks);
+  for (const tool of Object.values(defaultTools)) {
+    const { name, adapterName, description, inputSchema } = tool;
+    server.registerTool(name, { description, inputSchema }, engine.executeAdapter(adapterName, adapters));
+  }
+
   if (tools) {
     for (const tool of tools) {
-      server.registerTool(tool.name, tool.definition, wrapHandler(tool.handler, context));
+      if ('adapterName' in tool) {
+        server.registerTool(
+          tool.name,
+          { description: tool.description, inputSchema: tool.inputSchema },
+          engine.executeAdapter(tool.adapterName, adapters)
+        );
+      } else {
+        server.registerTool(tool.name, tool.definition, engine.executeTool(tool.name, tool.handler));
+      }
     }
   }
 
   if (prompts) {
     for (const prompt of prompts) {
-      server.registerPrompt(prompt.name, prompt.definition, wrapHandler(prompt.handler, context));
+      server.registerPrompt(prompt.name, prompt.definition, engine.executePrompt(prompt.name, prompt.handler));
     }
   }
 

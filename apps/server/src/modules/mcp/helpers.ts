@@ -2,36 +2,7 @@ import { z } from 'zod';
 
 import * as tools from './tools';
 
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
-import type {
-  AiMode,
-  McpAdapters,
-  McpContext,
-  McpToolDefinition,
-  McpToolLifecycleHooks,
-  ToolOperationType
-} from '@plitzi/sdk-shared';
-
-export const wrapHandler = <
-  T extends (args: Record<string, unknown>, ctx: McpContext, hooks?: McpToolLifecycleHooks) => unknown
->(
-  handler: T,
-  ctx: McpContext
-) => {
-  return (args: Record<string, unknown>) => handler(args, ctx) as ReturnType<T>;
-};
-
-export const registerBuiltInTools = (
-  server: McpServer,
-  adapters: Partial<McpAdapters>,
-  ctx: McpContext,
-  hooks?: McpToolLifecycleHooks
-): void => {
-  for (const toolFn of Object.values(tools)) {
-    const { name, description, inputSchema, execute } = toolFn(adapters, ctx, hooks);
-    server.registerTool(name, { description, inputSchema }, execute);
-  }
-};
+import type { AiMode, McpToolDefinition, ToolOperationType } from '@plitzi/sdk-shared';
 
 const zodToJsonSchema = (schema: unknown): Record<string, unknown> => {
   if (schema instanceof z.ZodObject) {
@@ -106,17 +77,19 @@ const getAllowedModes = (operationType: ToolOperationType): AiMode[] => {
 };
 
 export const getToolDefinition = (name: keyof typeof tools) => {
-  const toolFn = tools[name];
-  if (!(toolFn as typeof toolFn | undefined)) {
-    return undefined;
-  }
+  const tool = tools[name];
 
-  const definition = toolFn();
-  if (!(definition as typeof definition | undefined)) {
-    return undefined;
-  }
-
-  const { name: toolName, description, operationType, inputSchema } = definition;
+  const {
+    name: toolName,
+    description,
+    operationType,
+    inputSchema
+  } = tool as {
+    name: string;
+    description: string;
+    operationType: ToolOperationType;
+    inputSchema: z.ZodObject;
+  };
 
   return {
     name: toolName.replace(/_/g, '_'),
@@ -129,19 +102,12 @@ export const getToolDefinition = (name: keyof typeof tools) => {
 };
 
 export const getToolDefinitions = (mode?: AiMode): McpToolDefinition[] => {
-  let definitions: McpToolDefinition[] = [];
+  const definitions: McpToolDefinition[] = [];
   for (const toolName of Object.keys(tools)) {
-    const definition = getToolDefinition(toolName as keyof typeof tools);
-    if (definition) {
-      definitions.push(definition);
-    }
+    definitions.push(getToolDefinition(toolName as keyof typeof tools));
   }
 
-  if (mode) {
-    definitions = definitions.filter(definition => definition.allowedModes.includes(mode));
-  }
-
-  return definitions;
+  return mode ? definitions.filter(definition => definition.allowedModes.includes(mode)) : definitions;
 };
 
 export const toolDefinitions = getToolDefinitions();

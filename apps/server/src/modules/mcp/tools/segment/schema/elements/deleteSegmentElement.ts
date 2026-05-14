@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
-import { createTool, callAdapter } from '../../../utils';
+import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
 
-const deleteSegmentElementTool = createTool<'deleteSegmentElement'>(
-  'delete_segment_element',
-  'Remove an element from a segment',
-  z.object({ segmentId: z.string(), elementId: z.string() }),
-  'write',
-  (args, adapters, ctx) => callAdapter('deleteSegmentElement', args, adapters, ctx)
-);
+const deleteSegmentElementTool: McpToolAdapterDefinition = {
+  name: 'delete_segment_element',
+  adapterName: 'deleteSegmentElement',
+  description: 'Remove an element from a segment',
+  inputSchema: z.object({ segmentId: z.string(), elementId: z.string() }),
+  operationType: 'write'
+};
 
 export default deleteSegmentElementTool;

@@ -1,14 +1,15 @@
 import { z } from 'zod';
 
-import { createTool, callAdapter } from '../../utils';
+import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
 
 const displayModes = z.enum(['desktop', 'tablet', 'mobile']);
 const tagTypes = z.enum(['class', 'element', 'id']);
 
-const updateStyleSelectorTool = createTool<'updateStyleSelector'>(
-  'update_style_selector',
-  'Update a global style selector',
-  z.object({
+const updateStyleSelectorTool: McpToolAdapterDefinition = {
+  name: 'update_style_selector',
+  adapterName: 'updateStyleSelector',
+  description: 'Update a global style selector',
+  inputSchema: z.object({
     displayMode: displayModes,
     selector: z.string(),
     type: tagTypes,
@@ -16,8 +17,7 @@ const updateStyleSelectorTool = createTool<'updateStyleSelector'>(
     style: z.record(z.string(), z.record(z.string(), z.unknown())).optional(),
     params: z.record(z.string(), z.unknown()).optional()
   }),
-  'write',
-  (args, adapters, ctx) => callAdapter('updateStyleSelector', args, adapters, ctx)
-);
+  operationType: 'write'
+};
 
 export default updateStyleSelectorTool;

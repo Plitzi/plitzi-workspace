@@ -1,11 +1,12 @@
 import { z } from 'zod';
 
-import { createTool, callAdapter } from '../../utils';
+import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
 
-const createElementTool = createTool<'createElement'>(
-  'create_element',
-  'Add a new element to the schema. Returns the created element with its generated ID.',
-  z.object({
+const createElementTool: McpToolAdapterDefinition = {
+  name: 'create_element',
+  adapterName: 'createElement',
+  description: 'Add a new element to the schema. Returns the created element with its generated ID.',
+  inputSchema: z.object({
     element: z.object({
       type: z.string().describe('Component type (e.g. Container, Text, Button, Image)'),
       label: z.string().describe('Human-readable name for the element'),
@@ -15,8 +16,7 @@ const createElementTool = createTool<'createElement'>(
     parentId: z.string().optional().describe('Parent element ID; omit to place at root'),
     position: z.number().optional().describe('Zero-based insertion index within the parent')
   }),
-  'write',
-  (args, adapters, ctx) => callAdapter('createElement', args, adapters, ctx)
-);
+  operationType: 'write'
+};
 
 export default createElementTool;

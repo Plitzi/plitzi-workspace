@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
-import { createTool, callAdapter } from '../../utils';
+import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
 
-const deleteVariableTool = createTool<'deleteVariable'>(
-  'delete_variable',
-  'Delete a schema variable',
-  z.object({ name: z.string() }),
-  'write',
-  (args, adapters, ctx) => callAdapter('deleteVariable', args, adapters, ctx)
-);
+const deleteVariableTool: McpToolAdapterDefinition = {
+  name: 'delete_variable',
+  adapterName: 'deleteVariable',
+  description: 'Delete a schema variable',
+  inputSchema: z.object({ name: z.string() }),
+  operationType: 'write'
+};
 
 export default deleteVariableTool;

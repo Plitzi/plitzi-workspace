@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import type { Environment } from './CommonTypes';
+import type { AiContext, AiMode, AiUsage, PromptRole } from './AITypes';
 import type { PageFolder, SchemaVariable, DropPosition, Element, Schema } from './SchemaTypes';
 import type {
   DisplayMode,
@@ -12,7 +12,7 @@ import type {
 } from './StyleTypes';
 import type { Theme } from './ThemeTypes';
 import type { ToolAnnotations } from '@modelcontextprotocol/sdk/types';
-import type { ZodObject } from 'zod';
+import type { z, ZodObject } from 'zod';
 
 export type McpPlugin = {
   name: string;
@@ -41,7 +41,7 @@ export type McpSegment = {
   definition: { name: string; description: string; baseElementId: string };
 };
 
-export type McpAdapter<T extends Record<string, any> = any, R = any> = (args: T, ctx: McpContext) => Promise<R>;
+export type McpAdapter<T extends Record<string, any> = any, R = any> = (args: T, ctx: AiContext) => Promise<R>;
 
 export type McpAdapters = {
   getBuilderContext: McpAdapter<
@@ -161,32 +161,13 @@ export type McpAdapters = {
 
 // Backend
 
-export type PromptRole = 'user' | 'assistant' | 'system';
-export type AiMode = 'plan' | 'build';
 export type ToolOperationType = 'read' | 'write' | 'admin';
-
-export type McpContext = {
-  // backend
-  userId: number;
-  spaceId: number;
-  environment: Environment;
-  pubSub?: unknown;
-  callbacks?: StreamCallbacks;
-  // frontend
-  mode: AiMode;
-  currentPageId?: string;
-  elementSelected?: string;
-  theme?: 'light' | 'dark';
-};
 
 export type McpPromptHandlerResult = {
   messages: { role: Exclude<PromptRole, 'system'>; content: { type: 'text'; text: string } }[];
 };
 
-export type McpPromptHandler = (
-  args: Record<string, any>,
-  ctx: McpContext
-) => Promise<McpPromptHandlerResult> | McpPromptHandlerResult;
+export type McpPromptHandler = (args: Record<string, any>, ctx: AiContext) => Promise<McpPromptHandlerResult>;
 
 export type McpPrompt = {
   name: string;
@@ -198,15 +179,6 @@ export type McpPrompt = {
   handler: McpPromptHandler;
 };
 
-export type AiUsage = {
-  inputTokens: number;
-  outputTokens: number;
-  totalTokens: number;
-  thinkingTokens?: number;
-  contextLimit: number;
-  usedPercent: number;
-};
-
 export type ToolCallEvent = {
   name: string;
   args: Record<string, unknown>;
@@ -214,22 +186,24 @@ export type ToolCallEvent = {
 };
 
 export type StreamCallbacks = {
+  onLog?: (level: 'error' | 'info' | 'debug', content: string) => void;
   onChunk?: (text: string) => void;
   onThinking?: (text: string) => void;
   onUsage?: (usage: Omit<AiUsage, 'usedPercent' | 'contextLimit'> & { contextLimit?: number }) => void;
+  onBusy?: () => void;
   onToolStart?: (name: string, args: Record<string, unknown>) => void;
   onToolCall?: (event: ToolCallEvent) => void;
 };
 
 export type McpToolLifecycleHooks<T = unknown> = {
-  can?: (name: string, args: Record<string, unknown>, ctx?: McpContext) => boolean | Promise<boolean>;
+  can?: (name: string, args: Record<string, unknown>, ctx?: AiContext) => boolean | Promise<boolean>;
   before?: (
     name: string,
     args: Record<string, unknown>,
-    ctx?: McpContext
+    ctx?: AiContext
   ) => boolean | undefined | Promise<boolean> | Promise<undefined>;
-  after?: (name: string, args: Record<string, unknown>, result: T, ctx?: McpContext) => void | Promise<void>;
-  onError?: (name: string, args: Record<string, unknown>, error: Error, ctx?: McpContext) => void | Promise<void>;
+  after?: (name: string, args: Record<string, unknown>, result: T, ctx?: AiContext) => void | Promise<void>;
+  onError?: (name: string, args: Record<string, unknown>, error: Error, ctx?: AiContext) => void | Promise<void>;
 };
 
 export type McpToolDefinition = {
@@ -243,10 +217,8 @@ export type McpToolDefinition = {
 
 export type McpToolHandler = (
   args: Record<string, any>,
-  ctx: McpContext
-) =>
-  | Promise<{ content: Array<{ type: 'text'; text: string }>; isError?: boolean }>
-  | { content: Array<{ type: 'text'; text: string }>; isError?: boolean };
+  ctx: AiContext
+) => Promise<{ content: { type: 'text'; text: string }[]; isError?: true }>;
 
 export type McpTool = {
   name: string;
@@ -258,6 +230,15 @@ export type McpTool = {
     annotations?: ToolAnnotations;
   };
   handler: McpToolHandler;
+};
+
+// used for the default tools connected to adapters
+export type McpToolAdapterDefinition = {
+  name: string;
+  adapterName: keyof McpAdapters;
+  description: string;
+  inputSchema: z.ZodObject;
+  operationType: ToolOperationType;
 };
 
 export type McpServerConfig = {

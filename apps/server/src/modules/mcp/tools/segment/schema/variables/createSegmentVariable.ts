@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { createTool, callAdapter } from '../../../utils';
+import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
 
 const variableTypesSchema = z.enum([
   'text',
@@ -15,15 +15,15 @@ const variableTypesSchema = z.enum([
   'switch'
 ]);
 
-const createSegmentVariableTool = createTool<'createSegmentVariable'>(
-  'create_segment_variable',
-  'Create a segment schema variable',
-  z.object({
+const createSegmentVariableTool: McpToolAdapterDefinition = {
+  name: 'create_segment_variable',
+  adapterName: 'createSegmentVariable',
+  description: 'Create a segment schema variable',
+  inputSchema: z.object({
     segmentId: z.string(),
     variable: z.object({ name: z.string(), type: variableTypesSchema, value: z.string(), category: z.string() })
   }),
-  'write',
-  (args, adapters, ctx) => callAdapter('createSegmentVariable', args, adapters, ctx)
-);
+  operationType: 'write'
+};
 
 export default createSegmentVariableTool;

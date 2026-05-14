@@ -2,14 +2,14 @@ import { z } from 'zod';
 
 import { StyleVariableCategory } from '@plitzi/sdk-shared';
 
-import { createTool, callAdapter } from '../../../utils';
+import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
 
-const deleteSegmentStyleVariableTool = createTool<'deleteSegmentStyleVariable'>(
-  'delete_segment_style_variable',
-  'Delete a segment style variable',
-  z.object({ segmentId: z.string(), category: z.nativeEnum(StyleVariableCategory), name: z.string() }),
-  'write',
-  (args, adapters, ctx) => callAdapter('deleteSegmentStyleVariable', args, adapters, ctx)
-);
+const deleteSegmentStyleVariableTool: McpToolAdapterDefinition = {
+  name: 'delete_segment_style_variable',
+  adapterName: 'deleteSegmentStyleVariable',
+  description: 'Delete a segment style variable',
+  inputSchema: z.object({ segmentId: z.string(), category: z.nativeEnum(StyleVariableCategory), name: z.string() }),
+  operationType: 'write'
+};
 
 export default deleteSegmentStyleVariableTool;

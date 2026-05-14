@@ -1,18 +1,18 @@
 import { z } from 'zod';
 
-import { createTool, callAdapter } from '../../../utils';
+import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
 
-const moveSegmentElementTool = createTool<'moveSegmentElement'>(
-  'move_segment_element',
-  'Move an element inside a segment',
-  z.object({
+const moveSegmentElementTool: McpToolAdapterDefinition = {
+  name: 'move_segment_element',
+  adapterName: 'moveSegmentElement',
+  description: 'Move an element inside a segment',
+  inputSchema: z.object({
     segmentId: z.string(),
     elementId: z.string(),
     toParentId: z.string(),
     dropPosition: z.enum(['top', 'bottom', 'left', 'right', 'inside', 'custom']).optional()
   }),
-  'write',
-  (args, adapters, ctx) => callAdapter('moveSegmentElement', args, adapters, ctx)
-);
+  operationType: 'write'
+};
 
 export default moveSegmentElementTool;

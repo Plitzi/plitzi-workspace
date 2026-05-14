@@ -1,17 +1,17 @@
 import { z } from 'zod';
 
-import { createTool, callAdapter } from '../../../utils';
+import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
 
-const updateSegmentElementTool = createTool<'updateSegmentElement'>(
-  'update_segment_element',
-  'Update an element inside a segment',
-  z.object({
+const updateSegmentElementTool: McpToolAdapterDefinition = {
+  name: 'update_segment_element',
+  adapterName: 'updateSegmentElement',
+  description: 'Update an element inside a segment',
+  inputSchema: z.object({
     segmentId: z.string(),
     elementId: z.string(),
     updates: z.object({ label: z.string().optional(), props: z.record(z.string(), z.unknown()).optional() })
   }),
-  'write',
-  (args, adapters, ctx) => callAdapter('updateSegmentElement', args, adapters, ctx)
-);
+  operationType: 'write'
+};
 
 export default updateSegmentElementTool;

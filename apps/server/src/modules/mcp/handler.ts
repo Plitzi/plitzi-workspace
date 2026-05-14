@@ -1,9 +1,10 @@
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 
 import { createMcpServer } from './server';
+import AIEngine from '../ai/AIEngine';
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
-import type { McpServerConfig, McpContext } from '@plitzi/sdk-shared';
+import type { McpServerConfig, AiContext } from '@plitzi/sdk-shared';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
 export const readMcpBody = (req: IncomingMessage): Promise<unknown> =>
@@ -28,11 +29,12 @@ export const handleMcp = async (
   config: McpServerConfig,
   server?: McpServer,
   transport?: StreamableHTTPServerTransport,
-  context?: McpContext
+  context?: AiContext
 ): Promise<void> => {
   if (!server) {
-    const ctx: McpContext = context ?? { userId: 0, spaceId: 0, environment: 'main', mode: 'plan' };
-    server = createMcpServer(config.adapters, ctx, config.tools, config.prompts);
+    const ctx: AiContext = context ?? { userId: 0, spaceId: 0, environment: 'main', mode: 'plan' };
+    const engine = new AIEngine(ctx.mode, {}, ctx);
+    server = createMcpServer(config.adapters, engine, config.tools, config.prompts);
   }
 
   if (!transport) {

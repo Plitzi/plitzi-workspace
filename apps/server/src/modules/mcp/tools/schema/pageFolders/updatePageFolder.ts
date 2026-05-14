@@ -1,16 +1,16 @@
 import { z } from 'zod';
 
-import { createTool, callAdapter } from '../../utils';
+import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
 
-const updatePageFolderTool = createTool<'updatePageFolder'>(
-  'update_page_folder',
-  'Update a page folder',
-  z.object({
+const updatePageFolderTool: McpToolAdapterDefinition = {
+  name: 'update_page_folder',
+  adapterName: 'updatePageFolder',
+  description: 'Update a page folder',
+  inputSchema: z.object({
     id: z.string(),
     updates: z.object({ name: z.string().optional(), slug: z.string().optional(), parentId: z.string().optional() })
   }),
-  'write',
-  (args, adapters, ctx) => callAdapter('updatePageFolder', args, adapters, ctx)
-);
+  operationType: 'write'
+};
 
 export default updatePageFolderTool;
