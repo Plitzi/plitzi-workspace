@@ -79,11 +79,7 @@ const ChatInputControls = ({
           disabled={disabled}
           onChange={onModelChange}
         />
-        <EffortSelector
-          value={effectiveEffort}
-          disabled={disabled || !supportsThinking}
-          onChange={onEffortChange}
-        />
+        <EffortSelector value={effectiveEffort} disabled={disabled || !supportsThinking} onChange={onEffortChange} />
         <ToggleMode mode={mode} disabled={disabled} onModeChange={onModeChange} />
       </div>
       <div className="flex items-center gap-1.5">

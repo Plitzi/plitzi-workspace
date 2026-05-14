@@ -20,11 +20,12 @@ const LiveHeader = ({ mode, isStreaming, isBusy, liveThinking, streamingText, li
       })}
     />
     <span className="font-medium text-zinc-900 dark:text-zinc-100">Plitzi</span>
-    {isStreaming && !liveThinking && !streamingText && liveTools.length === 0 && (
-      isBusy ? (
-        <span className="ml-1 animate-pulse text-zinc-400 dark:text-zinc-500">
-          Response may take a moment...
-        </span>
+    {isStreaming &&
+      !liveThinking &&
+      !streamingText &&
+      liveTools.length === 0 &&
+      (isBusy ? (
+        <span className="ml-1 animate-pulse text-zinc-400 dark:text-zinc-500">Response may take a moment...</span>
       ) : (
         <div className="ml-1 flex items-center gap-1">
           <span
@@ -46,8 +47,7 @@ const LiveHeader = ({ mode, isStreaming, isBusy, liveThinking, streamingText, li
             })}
           />
         </div>
-      )
-    )}
+      ))}
   </div>
 );
 

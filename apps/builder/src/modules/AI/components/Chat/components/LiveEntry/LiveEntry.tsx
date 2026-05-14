@@ -1,8 +1,8 @@
 import Markdown from '@plitzi/plitzi-ui/Markdown';
 import clsx from 'clsx';
 
-import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 import ThinkingBlock from '@pmodules/AI/components/ChatMessage/components/ThinkingBlock';
+import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 
 import LiveHeader from './components/LiveHeader';
 import LiveThinking from './components/LiveThinking';
