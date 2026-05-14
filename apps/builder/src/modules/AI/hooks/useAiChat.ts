@@ -49,6 +49,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
   }, []);
 
   const [liveThinking, setLiveThinking] = useState('');
+  const [liveThinkingDoneMs, setLiveThinkingDoneMs] = useState<number | undefined>(undefined);
   const [liveTools, setLiveTools] = useState<AiToolCall[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
@@ -186,6 +187,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                 setIsBusy(false);
                 if (thinkingStartRef.current && !thinkingDurationMsRef.current) {
                   thinkingDurationMsRef.current = Date.now() - thinkingStartRef.current;
+                  setLiveThinkingDoneMs(thinkingDurationMsRef.current);
                 }
                 streamingBufferRef.current += event.text;
                 if (!streamingFlushRef.current) {
@@ -261,6 +263,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                 }
                 flushStreamingBuffer();
                 setLiveThinking('');
+                setLiveThinkingDoneMs(undefined);
                 thinkingTextRef.current = '';
                 setLiveTools([]);
               } else if ('message' in event) {
@@ -281,6 +284,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
         setIsBusy(false);
         flushStreamingBuffer();
         setLiveThinking('');
+        setLiveThinkingDoneMs(undefined);
         thinkingTextRef.current = '';
         setLiveTools([]);
         thinkingStartRef.current = undefined;
@@ -370,6 +374,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
     messages,
     streamingText,
     liveThinking,
+    liveThinkingDoneMs,
     liveTools,
     isStreaming,
     isBusy,

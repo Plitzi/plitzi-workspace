@@ -2,6 +2,7 @@ import Markdown from '@plitzi/plitzi-ui/Markdown';
 import clsx from 'clsx';
 
 import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
+import ThinkingBlock from '@pmodules/AI/components/ChatMessage/components/ThinkingBlock';
 
 import LiveHeader from './components/LiveHeader';
 import LiveThinking from './components/LiveThinking';
@@ -14,10 +15,18 @@ export type LiveEntryProps = {
   isBusy?: boolean;
   streamingText?: string;
   liveThinking?: string;
+  liveThinkingDoneMs?: number;
   liveTools?: AiToolCall[];
 };
 
-const LiveEntry = ({ isStreaming, isBusy, streamingText, liveThinking, liveTools = [] }: LiveEntryProps) => {
+const LiveEntry = ({
+  isStreaming,
+  isBusy,
+  streamingText,
+  liveThinking,
+  liveThinkingDoneMs,
+  liveTools = []
+}: LiveEntryProps) => {
   const { currentMode } = useAiChatContext();
 
   return (
@@ -30,7 +39,12 @@ const LiveEntry = ({ isStreaming, isBusy, streamingText, liveThinking, liveTools
         streamingText={streamingText}
         liveTools={liveTools}
       />
-      {liveThinking && <LiveThinking liveThinking={liveThinking} mode={currentMode} />}
+      {liveThinking && liveThinkingDoneMs !== undefined && (
+        <ThinkingBlock text={liveThinking} durationMs={liveThinkingDoneMs} />
+      )}
+      {liveThinking && liveThinkingDoneMs === undefined && (
+        <LiveThinking liveThinking={liveThinking} mode={currentMode} />
+      )}
       {liveTools.length > 0 && <MessageTools tools={liveTools} defaultOpen />}
       {streamingText && (
         <div className="text-[13px] leading-[1.6] text-zinc-900 dark:text-zinc-100">
