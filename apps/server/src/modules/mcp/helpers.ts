@@ -4,7 +4,7 @@ import * as tools from './tools';
 
 import type { AiMode, McpToolDefinition, ToolOperationType } from '@plitzi/sdk-shared';
 
-const zodToJsonSchema = (schema: unknown): Record<string, unknown> => {
+export const zodToJsonSchema = (schema: unknown): Record<string, unknown> => {
   if (schema instanceof z.ZodObject) {
     const properties: Record<string, unknown> = {};
     const required: string[] = [];
@@ -68,7 +68,7 @@ const zodToJsonSchema = (schema: unknown): Record<string, unknown> => {
   return {};
 };
 
-const getAllowedModes = (operationType: ToolOperationType): AiMode[] => {
+export const getAllowedModes = (operationType: ToolOperationType): AiMode[] => {
   if (operationType === 'write' || operationType === 'admin') {
     return ['build'];
   }

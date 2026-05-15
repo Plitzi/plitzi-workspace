@@ -9,7 +9,9 @@ export {
   handleMcp,
   createMcpServer,
   getToolDefinitions,
-  getToolDefinition
+  getToolDefinition,
+  zodToJsonSchema,
+  getAllowedModes
 } from './modules/mcp';
 export { AIEngine } from './modules/ai';
 
