@@ -218,7 +218,9 @@ export type McpToolDefinition = {
 export type McpToolHandler = (
   args: Record<string, any>,
   ctx: AiContext
-) => Promise<{ content: { type: 'text'; text: string }[]; isError?: true }>;
+) =>
+  | Promise<{ content: { type: 'text'; text: string }[]; isError?: true }>
+  | { content: { type: 'text'; text: string }[]; isError?: true };
 
 export type McpTool = {
   name: string;
