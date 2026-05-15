@@ -1,13 +1,27 @@
 import { z } from 'zod';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import { getAllowedModes, zodToJsonSchema } from '../../../helpers';
 
-const deleteElementTool: McpToolAdapterDefinition = {
+import type { McpTool } from '@plitzi/sdk-shared';
+
+const inputSchema = z.object({
+  elementId: z.string().describe('ID of the element to delete')
+});
+
+const deleteElementTool: McpTool = {
   name: 'delete_element',
   adapterName: 'deleteElement',
-  description: 'Remove an element and all its descendants from the schema',
-  inputSchema: z.object({ elementId: z.string() }),
-  operationType: 'write'
+  mcpDefinition: {
+    title: 'Delete Element',
+    description: 'Remove an element and all its descendants from the schema',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'Remove an element and all its descendants from the schema',
+    operationType: 'write',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('write')
+  }
 };
 
 export default deleteElementTool;

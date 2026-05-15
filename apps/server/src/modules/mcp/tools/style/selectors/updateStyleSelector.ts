@@ -1,23 +1,35 @@
 import { z } from 'zod';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import { getAllowedModes, zodToJsonSchema } from '../../../helpers';
+
+import type { McpTool } from '@plitzi/sdk-shared';
 
 const displayModes = z.enum(['desktop', 'tablet', 'mobile']);
 const tagTypes = z.enum(['class', 'element', 'id']);
 
-const updateStyleSelectorTool: McpToolAdapterDefinition = {
+const inputSchema = z.object({
+  displayMode: displayModes.describe('Display mode (desktop, tablet, mobile)'),
+  selector: z.string().describe('CSS selector'),
+  type: tagTypes.describe('Selector type (class, element, id)'),
+  path: z.string().optional().describe('Optional path filter'),
+  style: z.record(z.string(), z.record(z.string(), z.unknown())).optional().describe('Style properties'),
+  params: z.record(z.string(), z.unknown()).optional().describe('Additional parameters')
+});
+
+const updateStyleSelectorTool: McpTool = {
   name: 'update_style_selector',
   adapterName: 'updateStyleSelector',
-  description: 'Update a global style selector',
-  inputSchema: z.object({
-    displayMode: displayModes,
-    selector: z.string(),
-    type: tagTypes,
-    path: z.string().optional(),
-    style: z.record(z.string(), z.record(z.string(), z.unknown())).optional(),
-    params: z.record(z.string(), z.unknown()).optional()
-  }),
-  operationType: 'write'
+  mcpDefinition: {
+    title: 'Update Style Selector',
+    description: 'Update a global style selector',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'Update a global style selector',
+    operationType: 'write',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('write')
+  }
 };
 
 export default updateStyleSelectorTool;

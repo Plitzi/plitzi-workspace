@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import { getAllowedModes, zodToJsonSchema } from '../../../../helpers';
+
+import type { McpTool } from '@plitzi/sdk-shared';
 
 const variableTypesSchema = z.enum([
   'text',
@@ -15,20 +17,30 @@ const variableTypesSchema = z.enum([
   'switch'
 ]);
 
-const updateSegmentVariableTool: McpToolAdapterDefinition = {
+const inputSchema = z.object({
+  segmentId: z.string().describe('ID of the segment'),
+  variable: z.object({
+    name: z.string().describe('Variable name'),
+    type: variableTypesSchema.optional().describe('Variable type'),
+    value: z.string().optional().describe('Variable value'),
+    category: z.string().optional().describe('Variable category')
+  }).describe('Variable fields to update')
+});
+
+const updateSegmentVariableTool: McpTool = {
   name: 'update_segment_variable',
   adapterName: 'updateSegmentVariable',
-  description: 'Update a segment schema variable',
-  inputSchema: z.object({
-    segmentId: z.string(),
-    variable: z.object({
-      name: z.string(),
-      type: variableTypesSchema.optional(),
-      value: z.string().optional(),
-      category: z.string().optional()
-    })
-  }),
-  operationType: 'write'
+  mcpDefinition: {
+    title: 'Update Segment Variable',
+    description: 'Update a segment schema variable',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'Update a segment schema variable',
+    operationType: 'write',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('write')
+  }
 };
 
 export default updateSegmentVariableTool;

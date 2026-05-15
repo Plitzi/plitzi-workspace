@@ -1,13 +1,28 @@
 import { z } from 'zod';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import { getAllowedModes, zodToJsonSchema } from '../../helpers';
 
-const createSegmentTool: McpToolAdapterDefinition = {
+import type { McpTool } from '@plitzi/sdk-shared';
+
+const inputSchema = z.object({
+  name: z.string().describe('Name of the segment'),
+  description: z.string().describe('Description of the segment')
+});
+
+const createSegmentTool: McpTool = {
   name: 'create_segment',
   adapterName: 'createSegment',
-  description: 'Create a new segment',
-  inputSchema: z.object({ name: z.string(), description: z.string() }),
-  operationType: 'write'
+  mcpDefinition: {
+    title: 'Create Segment',
+    description: 'Create a new segment',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'Create a new segment',
+    operationType: 'write',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('write')
+  }
 };
 
 export default createSegmentTool;

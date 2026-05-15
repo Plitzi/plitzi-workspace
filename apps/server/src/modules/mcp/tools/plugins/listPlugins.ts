@@ -1,13 +1,25 @@
 import { z } from 'zod';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import { getAllowedModes, zodToJsonSchema } from '../../helpers';
 
-const listPluginsTool: McpToolAdapterDefinition = {
+import type { McpTool } from '@plitzi/sdk-shared';
+
+const inputSchema = z.object({});
+
+const listPluginsTool: McpTool = {
   name: 'list_plugins',
   adapterName: 'listPlugins',
-  description: 'List all plugins registered in the system',
-  inputSchema: z.object({}),
-  operationType: 'read'
+  mcpDefinition: {
+    title: 'List Plugins',
+    description: 'List all plugins registered in the system',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'List all plugins registered in the system',
+    operationType: 'read',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('read')
+  }
 };
 
 export default listPluginsTool;

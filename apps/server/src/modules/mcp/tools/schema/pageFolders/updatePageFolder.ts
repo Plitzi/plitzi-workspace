@@ -1,16 +1,32 @@
 import { z } from 'zod';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import { getAllowedModes, zodToJsonSchema } from '../../../helpers';
 
-const updatePageFolderTool: McpToolAdapterDefinition = {
+import type { McpTool } from '@plitzi/sdk-shared';
+
+const inputSchema = z.object({
+  id: z.string().describe('Page folder ID'),
+  updates: z.object({
+    name: z.string().optional().describe('New name for the folder'),
+    slug: z.string().optional().describe('New slug for the folder'),
+    parentId: z.string().optional().describe('New parent folder ID')
+  }).describe('Fields to update')
+});
+
+const updatePageFolderTool: McpTool = {
   name: 'update_page_folder',
   adapterName: 'updatePageFolder',
-  description: 'Update a page folder',
-  inputSchema: z.object({
-    id: z.string(),
-    updates: z.object({ name: z.string().optional(), slug: z.string().optional(), parentId: z.string().optional() })
-  }),
-  operationType: 'write'
+  mcpDefinition: {
+    title: 'Update Page Folder',
+    description: 'Update a page folder',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'Update a page folder',
+    operationType: 'write',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('write')
+  }
 };
 
 export default updatePageFolderTool;

@@ -12,7 +12,7 @@ import type {
 } from './StyleTypes';
 import type { Theme } from './ThemeTypes';
 import type { ToolAnnotations } from '@modelcontextprotocol/sdk/types';
-import type { z, ZodObject } from 'zod';
+import type { ZodObject } from 'zod';
 
 export type McpPlugin = {
   name: string;
@@ -206,15 +206,6 @@ export type McpToolLifecycleHooks<T = unknown> = {
   onError?: (name: string, args: Record<string, unknown>, error: Error, ctx?: AiContext) => void | Promise<void>;
 };
 
-export type McpToolDefinition = {
-  name: string;
-  description: string;
-  shortDescription?: string;
-  parameters: Record<string, unknown>;
-  allowedModes: AiMode[];
-  operationType: ToolOperationType;
-};
-
 export type McpToolHandler = (
   args: Record<string, any>,
   ctx: AiContext
@@ -224,24 +215,20 @@ export type McpToolHandler = (
 
 export type McpTool = {
   name: string;
-  definition: {
+  mcpDefinition: {
     title?: string;
     description: string;
     inputSchema?: ZodObject<any>;
     outputSchema?: ZodObject<any>;
     annotations?: ToolAnnotations;
   };
-  handler: McpToolHandler;
-};
-
-// used for the default tools connected to adapters
-export type McpToolAdapterDefinition = {
-  name: string;
-  adapterName: keyof McpAdapters;
-  description: string;
-  inputSchema: z.ZodObject;
-  operationType: ToolOperationType;
-};
+  definition: {
+    shortDescription?: string;
+    parameters: Record<string, unknown>;
+    allowedModes: AiMode[];
+    operationType: ToolOperationType;
+  };
+} & ({ adapterName: keyof McpAdapters } | { adapterName?: undefined; handler: McpToolHandler });
 
 export type McpServerConfig = {
   enabled?: boolean; // Whether the MCP endpoint is active. Defaults to true.

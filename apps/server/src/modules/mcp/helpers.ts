@@ -1,8 +1,6 @@
 import { z } from 'zod';
 
-import * as tools from './tools';
-
-import type { AiMode, McpToolDefinition, ToolOperationType } from '@plitzi/sdk-shared';
+import type { AiMode, ToolOperationType } from '@plitzi/sdk-shared';
 
 export const zodToJsonSchema = (schema: unknown): Record<string, unknown> => {
   if (schema instanceof z.ZodObject) {
@@ -76,38 +74,11 @@ export const getAllowedModes = (operationType: ToolOperationType): AiMode[] => {
   return ['plan', 'build'];
 };
 
-export const getToolDefinition = (name: keyof typeof tools) => {
-  const tool = tools[name];
+export const toolResponseOk = (data: unknown) => ({
+  content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }]
+});
 
-  const {
-    name: toolName,
-    description,
-    operationType,
-    inputSchema
-  } = tool as {
-    name: string;
-    description: string;
-    operationType: ToolOperationType;
-    inputSchema: z.ZodObject;
-  };
-
-  return {
-    name: toolName.replace(/_/g, '_'),
-    shortDescription: description.split('.')[0],
-    description,
-    parameters: zodToJsonSchema(inputSchema),
-    allowedModes: getAllowedModes(operationType),
-    operationType
-  };
-};
-
-export const getToolDefinitions = (mode?: AiMode): McpToolDefinition[] => {
-  const definitions: McpToolDefinition[] = [];
-  for (const toolName of Object.keys(tools)) {
-    definitions.push(getToolDefinition(toolName as keyof typeof tools));
-  }
-
-  return mode ? definitions.filter(definition => definition.allowedModes.includes(mode)) : definitions;
-};
-
-export const toolDefinitions = getToolDefinitions();
+export const toolResponseErr = (message: string) => ({
+  content: [{ type: 'text' as const, text: message }],
+  isError: true as const
+});

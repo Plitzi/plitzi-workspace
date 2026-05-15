@@ -1,17 +1,33 @@
 import { z } from 'zod';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import { getAllowedModes, zodToJsonSchema } from '../../../../helpers';
 
-const createSegmentElementTool: McpToolAdapterDefinition = {
+import type { McpTool } from '@plitzi/sdk-shared';
+
+const inputSchema = z.object({
+  segmentId: z.string().describe('ID of the segment'),
+  element: z.object({
+    type: z.string().describe('Component type'),
+    label: z.string().describe('Human-readable name for the element'),
+    props: z.record(z.string(), z.unknown()).optional().describe('Component props')
+  }).describe('Element to add'),
+  parentId: z.string().describe('Parent element ID')
+});
+
+const createSegmentElementTool: McpTool = {
   name: 'create_segment_element',
   adapterName: 'createSegmentElement',
-  description: 'Add an element to a segment',
-  inputSchema: z.object({
-    segmentId: z.string(),
-    element: z.object({ type: z.string(), label: z.string(), props: z.record(z.string(), z.unknown()).optional() }),
-    parentId: z.string()
-  }),
-  operationType: 'write'
+  mcpDefinition: {
+    title: 'Create Segment Element',
+    description: 'Add an element to a segment',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'Add an element to a segment',
+    operationType: 'write',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('write')
+  }
 };
 
 export default createSegmentElementTool;

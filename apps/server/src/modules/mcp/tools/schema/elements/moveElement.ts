@@ -1,17 +1,29 @@
 import { z } from 'zod';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import { getAllowedModes, zodToJsonSchema } from '../../../helpers';
 
-const moveElementTool: McpToolAdapterDefinition = {
+import type { McpTool } from '@plitzi/sdk-shared';
+
+const inputSchema = z.object({
+  elementId: z.string().describe('ID of the element to move'),
+  toParentId: z.string().describe('ID of the new parent element'),
+  dropPosition: z.enum(['top', 'bottom', 'left', 'right', 'inside', 'custom']).optional().describe('Position within the new parent')
+});
+
+const moveElementTool: McpTool = {
   name: 'move_element',
   adapterName: 'moveElement',
-  description: 'Move an element to a different parent',
-  inputSchema: z.object({
-    elementId: z.string(),
-    toParentId: z.string(),
-    dropPosition: z.enum(['top', 'bottom', 'left', 'right', 'inside', 'custom']).optional()
-  }),
-  operationType: 'write'
+  mcpDefinition: {
+    title: 'Move Element',
+    description: 'Move an element to a different parent',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'Move an element to a different parent',
+    operationType: 'write',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('write')
+  }
 };
 
 export default moveElementTool;

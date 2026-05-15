@@ -1,15 +1,31 @@
 import { z } from 'zod';
 
+import { getAllowedModes, zodToJsonSchema } from '../../../../helpers';
+
 import { StyleVariableCategory } from '@plitzi/sdk-shared';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import type { McpTool } from '@plitzi/sdk-shared';
 
-const deleteSegmentStyleVariableTool: McpToolAdapterDefinition = {
+const inputSchema = z.object({
+  segmentId: z.string().describe('ID of the segment'),
+  category: z.nativeEnum(StyleVariableCategory).describe('Variable category'),
+  name: z.string().describe('Variable name to delete')
+});
+
+const deleteSegmentStyleVariableTool: McpTool = {
   name: 'delete_segment_style_variable',
   adapterName: 'deleteSegmentStyleVariable',
-  description: 'Delete a segment style variable',
-  inputSchema: z.object({ segmentId: z.string(), category: z.nativeEnum(StyleVariableCategory), name: z.string() }),
-  operationType: 'write'
+  mcpDefinition: {
+    title: 'Delete Segment Style Variable',
+    description: 'Delete a segment style variable',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'Delete a segment style variable',
+    operationType: 'write',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('write')
+  }
 };
 
 export default deleteSegmentStyleVariableTool;

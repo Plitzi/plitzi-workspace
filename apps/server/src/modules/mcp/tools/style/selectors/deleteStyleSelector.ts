@@ -1,15 +1,30 @@
 import { z } from 'zod';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import { getAllowedModes, zodToJsonSchema } from '../../../helpers';
+
+import type { McpTool } from '@plitzi/sdk-shared';
 
 const displayModes = z.enum(['desktop', 'tablet', 'mobile']);
 
-const deleteStyleSelectorTool: McpToolAdapterDefinition = {
+const inputSchema = z.object({
+  displayMode: displayModes.describe('Display mode (desktop, tablet, mobile)'),
+  selector: z.string().describe('CSS selector to delete')
+});
+
+const deleteStyleSelectorTool: McpTool = {
   name: 'delete_style_selector',
   adapterName: 'deleteStyleSelector',
-  description: 'Delete a global style selector',
-  inputSchema: z.object({ displayMode: displayModes, selector: z.string() }),
-  operationType: 'write'
+  mcpDefinition: {
+    title: 'Delete Style Selector',
+    description: 'Delete a global style selector',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'Delete a global style selector',
+    operationType: 'write',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('write')
+  }
 };
 
 export default deleteStyleSelectorTool;

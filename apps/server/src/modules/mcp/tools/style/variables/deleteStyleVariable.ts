@@ -1,15 +1,30 @@
 import { z } from 'zod';
 
+import { getAllowedModes, zodToJsonSchema } from '../../../helpers';
+
 import { StyleVariableCategory } from '@plitzi/sdk-shared';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import type { McpTool } from '@plitzi/sdk-shared';
 
-const deleteStyleVariableTool: McpToolAdapterDefinition = {
+const inputSchema = z.object({
+  category: z.nativeEnum(StyleVariableCategory).describe('Variable category'),
+  name: z.string().describe('Variable name to delete')
+});
+
+const deleteStyleVariableTool: McpTool = {
   name: 'delete_style_variable',
   adapterName: 'deleteStyleVariable',
-  description: 'Delete a global style variable',
-  inputSchema: z.object({ category: z.nativeEnum(StyleVariableCategory), name: z.string() }),
-  operationType: 'write'
+  mcpDefinition: {
+    title: 'Delete Style Variable',
+    description: 'Delete a global style variable',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'Delete a global style variable',
+    operationType: 'write',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('write')
+  }
 };
 
 export default deleteStyleVariableTool;

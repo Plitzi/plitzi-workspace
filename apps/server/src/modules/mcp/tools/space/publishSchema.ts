@@ -1,13 +1,25 @@
 import { z } from 'zod';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import { getAllowedModes, zodToJsonSchema } from '../../helpers';
 
-const publishSchemaTool: McpToolAdapterDefinition = {
+import type { McpTool } from '@plitzi/sdk-shared';
+
+const inputSchema = z.object({});
+
+const publishSchemaTool: McpTool = {
   name: 'publish_schema',
   adapterName: 'publishSchema',
-  description: 'Publish the current draft schema as a new immutable revision',
-  inputSchema: z.object({}),
-  operationType: 'admin'
+  mcpDefinition: {
+    title: 'Publish Schema',
+    description: 'Publish the current draft schema as a new immutable revision',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'Publish the current draft schema as a new immutable revision',
+    operationType: 'admin',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('admin')
+  }
 };
 
 export default publishSchemaTool;

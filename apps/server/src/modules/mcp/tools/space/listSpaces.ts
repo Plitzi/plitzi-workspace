@@ -1,13 +1,25 @@
 import { z } from 'zod';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import { getAllowedModes, zodToJsonSchema } from '../../helpers';
 
-const listSpacesTool: McpToolAdapterDefinition = {
+import type { McpTool } from '@plitzi/sdk-shared';
+
+const inputSchema = z.object({});
+
+const listSpacesTool: McpTool = {
   name: 'list_spaces',
   adapterName: 'listSpaces',
-  description: 'List all spaces available in the user',
-  inputSchema: z.object({}),
-  operationType: 'read'
+  mcpDefinition: {
+    title: 'List Spaces',
+    description: 'List all spaces available in the user',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'List all spaces available in the user',
+    operationType: 'read',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('read')
+  }
 };
 
 export default listSpacesTool;

@@ -1,19 +1,31 @@
 import { z } from 'zod';
 
+import { getAllowedModes, zodToJsonSchema } from '../../../helpers';
+
 import { StyleVariableCategory } from '@plitzi/sdk-shared';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import type { McpTool } from '@plitzi/sdk-shared';
 
-const createStyleVariableTool: McpToolAdapterDefinition = {
+const inputSchema = z.object({
+  category: z.nativeEnum(StyleVariableCategory).describe('Variable category'),
+  name: z.string().describe('Variable name'),
+  value: z.union([z.string(), z.number(), z.record(z.string(), z.unknown())]).describe('Variable value')
+});
+
+const createStyleVariableTool: McpTool = {
   name: 'create_style_variable',
   adapterName: 'createStyleVariable',
-  description: 'Create a global style variable',
-  inputSchema: z.object({
-    category: z.nativeEnum(StyleVariableCategory),
-    name: z.string(),
-    value: z.union([z.string(), z.number(), z.record(z.string(), z.unknown())])
-  }),
-  operationType: 'write'
+  mcpDefinition: {
+    title: 'Create Style Variable',
+    description: 'Create a global style variable',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'Create a global style variable',
+    operationType: 'write',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('write')
+  }
 };
 
 export default createStyleVariableTool;

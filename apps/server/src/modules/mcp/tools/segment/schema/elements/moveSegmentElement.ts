@@ -1,18 +1,30 @@
 import { z } from 'zod';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import { getAllowedModes, zodToJsonSchema } from '../../../../helpers';
 
-const moveSegmentElementTool: McpToolAdapterDefinition = {
+import type { McpTool } from '@plitzi/sdk-shared';
+
+const inputSchema = z.object({
+  segmentId: z.string().describe('ID of the segment'),
+  elementId: z.string().describe('ID of the element to move'),
+  toParentId: z.string().describe('ID of the new parent element'),
+  dropPosition: z.enum(['top', 'bottom', 'left', 'right', 'inside', 'custom']).optional().describe('Position within the new parent')
+});
+
+const moveSegmentElementTool: McpTool = {
   name: 'move_segment_element',
   adapterName: 'moveSegmentElement',
-  description: 'Move an element inside a segment',
-  inputSchema: z.object({
-    segmentId: z.string(),
-    elementId: z.string(),
-    toParentId: z.string(),
-    dropPosition: z.enum(['top', 'bottom', 'left', 'right', 'inside', 'custom']).optional()
-  }),
-  operationType: 'write'
+  mcpDefinition: {
+    title: 'Move Segment Element',
+    description: 'Move an element inside a segment',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'Move an element inside a segment',
+    operationType: 'write',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('write')
+  }
 };
 
 export default moveSegmentElementTool;

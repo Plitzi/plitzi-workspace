@@ -1,13 +1,27 @@
 import { z } from 'zod';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import { getAllowedModes, zodToJsonSchema } from '../../../helpers';
 
-const getElementTool: McpToolAdapterDefinition = {
+import type { McpTool } from '@plitzi/sdk-shared';
+
+const inputSchema = z.object({
+  elementId: z.string().describe('Element ID')
+});
+
+const getElementTool: McpTool = {
   name: 'get_element',
   adapterName: 'getElement',
-  description: 'Get the full details of a single element by ID',
-  inputSchema: z.object({ elementId: z.string().describe('Element ID') }),
-  operationType: 'read'
+  mcpDefinition: {
+    title: 'Get Element',
+    description: 'Get the full details of a single element by ID',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'Get the full details of a single element by ID',
+    operationType: 'read',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('read')
+  }
 };
 
 export default getElementTool;

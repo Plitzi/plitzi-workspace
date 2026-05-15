@@ -1,13 +1,27 @@
 import { z } from 'zod';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import { getAllowedModes, zodToJsonSchema } from '../../../helpers';
 
-const deletePageTool: McpToolAdapterDefinition = {
+import type { McpTool } from '@plitzi/sdk-shared';
+
+const inputSchema = z.object({
+  pageId: z.string().describe('ID of the page to delete')
+});
+
+const deletePageTool: McpTool = {
   name: 'delete_page',
   adapterName: 'deletePage',
-  description: 'Delete a page by ID',
-  inputSchema: z.object({ pageId: z.string() }),
-  operationType: 'write'
+  mcpDefinition: {
+    title: 'Delete Page',
+    description: 'Delete a page by ID',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'Delete a page by ID',
+    operationType: 'write',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('write')
+  }
 };
 
 export default deletePageTool;

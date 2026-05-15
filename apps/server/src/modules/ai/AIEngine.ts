@@ -1,32 +1,40 @@
-import { getToolDefinitions } from '../mcp/helpers';
-import { toolResponseErr } from '../mcp/tools/utils';
+import { toolResponseErr } from '../mcp/helpers';
+import * as defaultTools from '../mcp/tools';
 
 import type {
   AiMode,
-  McpAdapter,
-  McpAdapters,
   AiContext,
   McpPromptHandler,
   McpToolHandler,
   McpToolLifecycleHooks,
-  StreamCallbacks
+  StreamCallbacks,
+  McpTool,
+  McpAdapters
 } from '@plitzi/sdk-shared';
 
-const toolModeMap = new Map(getToolDefinitions().map(t => [t.name, t.allowedModes]));
-
 class AIEngine implements McpToolLifecycleHooks {
+  private toolsAvailables = new Map<string, McpTool>();
+  private toolsAvailablesMap = new Map<string, AiMode[]>();
   constructor(
     private readonly mode: AiMode | undefined,
+    private readonly mcpAdapters: McpAdapters | undefined,
     public readonly callbacks: StreamCallbacks,
     public readonly ctx: AiContext
   ) {}
 
+  readonly setToolsAvailables = (tools: McpTool[]) => {
+    this.toolsAvailables = new Map([...Object.values(defaultTools), ...tools].map(t => [t.name, t]));
+    this.toolsAvailablesMap = new Map(
+      [...Object.values(defaultTools), ...tools].map(t => [t.name, t.definition.allowedModes])
+    );
+  };
+
   readonly can = (name: string): boolean => {
-    if (!this.mode || !toolModeMap.has(name)) {
+    if (!this.mode || !this.toolsAvailablesMap.has(name)) {
       return false;
     }
 
-    const allowedModes = toolModeMap.get(name);
+    const allowedModes = this.toolsAvailablesMap.get(name);
 
     return !allowedModes || allowedModes.includes(this.mode);
   };
@@ -43,8 +51,8 @@ class AIEngine implements McpToolLifecycleHooks {
     return Promise.resolve();
   };
 
-  readonly execute = (name: string, handlerFn: McpToolHandler) => async (args: Record<string, unknown>) => {
-    if (!toolModeMap.has(name)) {
+  readonly execute = (name: string) => async (args: Record<string, unknown>) => {
+    if (!this.toolsAvailables.has(name)) {
       this.callbacks.onLog?.('error', `tool rejected: '${name}' has no definition — possible security violation`);
 
       return { error: `Tool '${name}' is not defined and cannot be executed` };
@@ -60,9 +68,26 @@ class AIEngine implements McpToolLifecycleHooks {
       return { error: `Tool '${name}' execution was cancelled` };
     }
 
+    const tool = this.toolsAvailables.get(name);
+    if (!tool) {
+      this.callbacks.onLog?.('error', `unknown tool: ${name}`);
+
+      return toolResponseErr(`Unknown tool: ${name}`);
+    }
+
+    const handler =
+      'adapterName' in tool && tool.adapterName
+        ? (this.mcpAdapters?.[tool.adapterName] as unknown as McpToolHandler | undefined)
+        : tool.handler;
+    if (!handler) {
+      this.callbacks.onLog?.('error', `unknown tool: ${name}`);
+
+      return toolResponseErr(`Unknown tool: ${name}`);
+    }
+
     this.callbacks.onLog?.('debug', `tool exec: ${name} args=${JSON.stringify(args).slice(0, 200)}`);
     const t0 = Date.now();
-    const result = await handlerFn(args, this.ctx);
+    const result = await handler(args, this.ctx);
     this.callbacks.onLog?.(
       'debug',
       `tool done: ${name} ms=${Date.now() - t0} result=${JSON.stringify(result).slice(0, 200)}`
@@ -73,47 +98,8 @@ class AIEngine implements McpToolLifecycleHooks {
     return result;
   };
 
-  readonly executeAdapter =
-    (name: keyof McpAdapters, mcpAdapters: Partial<McpAdapters>) => async (args: Record<string, unknown>) => {
-      if (!toolModeMap.has(name)) {
-        this.callbacks.onLog?.('error', `tool rejected: '${name}' has no definition — possible security violation`);
-
-        return toolResponseErr(`Tool '${name}' is not defined and cannot be executed`);
-      }
-
-      if (!this.can(name)) {
-        this.callbacks.onLog?.('info', `tool blocked: '${name}' is not permitted in ${this.mode} mode`);
-
-        return toolResponseErr(`Tool '${name}' is not permitted in ${this.mode} mode`);
-      }
-
-      if (!this.before(name, args)) {
-        return toolResponseErr(`Tool '${name}' execution was cancelled`);
-      }
-
-      const handler = mcpAdapters[name] as McpAdapter | undefined;
-      if (!handler) {
-        this.callbacks.onLog?.('error', `unknown tool: ${name}`);
-
-        return toolResponseErr(`Unknown tool: ${name}`);
-      }
-
-      this.callbacks.onLog?.('debug', `tool exec: ${name} args=${JSON.stringify(args).slice(0, 200)}`);
-      const t0 = Date.now();
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const result = await handler(args, this.ctx);
-      this.callbacks.onLog?.(
-        'debug',
-        `tool done: ${name} ms=${Date.now() - t0} result=${JSON.stringify(result).slice(0, 200)}`
-      );
-
-      await this.after(name, args, result);
-
-      return result as ReturnType<McpToolHandler>;
-    };
-
   readonly executeTool = (name: string, handlerFn: McpToolHandler) => async (args: Record<string, unknown>) => {
-    if (!toolModeMap.has(name)) {
+    if (!this.toolsAvailables.has(name)) {
       this.callbacks.onLog?.('error', `tool rejected: '${name}' has no definition — possible security violation`);
 
       return toolResponseErr(`Tool '${name}' is not defined and cannot be executed`);

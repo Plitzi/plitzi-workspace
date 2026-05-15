@@ -1,13 +1,27 @@
 import { z } from 'zod';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import { getAllowedModes, zodToJsonSchema } from '../../../helpers';
 
-const deleteVariableTool: McpToolAdapterDefinition = {
+import type { McpTool } from '@plitzi/sdk-shared';
+
+const inputSchema = z.object({
+  name: z.string().describe('Name of the variable to delete')
+});
+
+const deleteVariableTool: McpTool = {
   name: 'delete_variable',
   adapterName: 'deleteVariable',
-  description: 'Delete a schema variable',
-  inputSchema: z.object({ name: z.string() }),
-  operationType: 'write'
+  mcpDefinition: {
+    title: 'Delete Variable',
+    description: 'Delete a schema variable',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'Delete a schema variable',
+    operationType: 'write',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('write')
+  }
 };
 
 export default deleteVariableTool;

@@ -1,13 +1,27 @@
 import { z } from 'zod';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import { getAllowedModes, zodToJsonSchema } from '../../../helpers';
 
-const createPageTool: McpToolAdapterDefinition = {
+import type { McpTool } from '@plitzi/sdk-shared';
+
+const inputSchema = z.object({
+  name: z.string().describe('Name of the page to create')
+});
+
+const createPageTool: McpTool = {
   name: 'create_page',
   adapterName: 'createPage',
-  description: 'Create a new page in the space',
-  inputSchema: z.object({ name: z.string() }),
-  operationType: 'write'
+  mcpDefinition: {
+    title: 'Create Page',
+    description: 'Create a new page in the space',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'Create a new page in the space',
+    operationType: 'write',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('write')
+  }
 };
 
 export default createPageTool;

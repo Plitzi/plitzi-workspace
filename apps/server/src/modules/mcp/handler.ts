@@ -33,7 +33,7 @@ export const handleMcp = async (
 ): Promise<void> => {
   if (!server) {
     const ctx: AiContext = context ?? { userId: 0, spaceId: 0, environment: 'main', mode: 'plan' };
-    const engine = new AIEngine(ctx.mode, {}, ctx);
+    const engine = new AIEngine(ctx.mode, config.adapters, {}, ctx);
     server = createMcpServer(config.adapters, engine, config.tools, config.prompts);
   }
 

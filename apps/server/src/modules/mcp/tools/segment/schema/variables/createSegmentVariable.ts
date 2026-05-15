@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import { getAllowedModes, zodToJsonSchema } from '../../../../helpers';
+
+import type { McpTool } from '@plitzi/sdk-shared';
 
 const variableTypesSchema = z.enum([
   'text',
@@ -15,15 +17,30 @@ const variableTypesSchema = z.enum([
   'switch'
 ]);
 
-const createSegmentVariableTool: McpToolAdapterDefinition = {
+const inputSchema = z.object({
+  segmentId: z.string().describe('ID of the segment'),
+  variable: z.object({
+    name: z.string().describe('Variable name'),
+    type: variableTypesSchema.describe('Variable type'),
+    value: z.string().describe('Variable default value'),
+    category: z.string().describe('Variable category')
+  }).describe('Variable to create')
+});
+
+const createSegmentVariableTool: McpTool = {
   name: 'create_segment_variable',
   adapterName: 'createSegmentVariable',
-  description: 'Create a segment schema variable',
-  inputSchema: z.object({
-    segmentId: z.string(),
-    variable: z.object({ name: z.string(), type: variableTypesSchema, value: z.string(), category: z.string() })
-  }),
-  operationType: 'write'
+  mcpDefinition: {
+    title: 'Create Segment Variable',
+    description: 'Create a segment schema variable',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'Create a segment schema variable',
+    operationType: 'write',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('write')
+  }
 };
 
 export default createSegmentVariableTool;

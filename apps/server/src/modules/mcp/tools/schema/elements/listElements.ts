@@ -1,13 +1,25 @@
 import { z } from 'zod';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import { getAllowedModes, zodToJsonSchema } from '../../../helpers';
 
-const listElementsTool: McpToolAdapterDefinition = {
+import type { McpTool } from '@plitzi/sdk-shared';
+
+const inputSchema = z.object({});
+
+const listElementsTool: McpTool = {
   name: 'list_elements',
   adapterName: 'listElements',
-  description: 'List all element IDs, types and labels for a space and environment',
-  inputSchema: z.object({}),
-  operationType: 'read'
+  mcpDefinition: {
+    title: 'List Elements',
+    description: 'List all element IDs, types and labels for a space and environment',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'List all element IDs, types and labels for a space and environment',
+    operationType: 'read',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('read')
+  }
 };
 
 export default listElementsTool;

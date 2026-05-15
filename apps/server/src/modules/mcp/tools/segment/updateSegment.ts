@@ -1,16 +1,31 @@
 import { z } from 'zod';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import { getAllowedModes, zodToJsonSchema } from '../../helpers';
 
-const updateSegmentTool: McpToolAdapterDefinition = {
+import type { McpTool } from '@plitzi/sdk-shared';
+
+const inputSchema = z.object({
+  segmentId: z.string().describe('ID of the segment to update'),
+  updates: z.object({
+    name: z.string().optional().describe('New name for the segment'),
+    description: z.string().optional().describe('New description for the segment')
+  }).describe('Fields to update')
+});
+
+const updateSegmentTool: McpTool = {
   name: 'update_segment',
   adapterName: 'updateSegment',
-  description: 'Update a segment',
-  inputSchema: z.object({
-    segmentId: z.string(),
-    updates: z.object({ name: z.string().optional(), description: z.string().optional() })
-  }),
-  operationType: 'write'
+  mcpDefinition: {
+    title: 'Update Segment',
+    description: 'Update a segment',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'Update a segment',
+    operationType: 'write',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('write')
+  }
 };
 
 export default updateSegmentTool;

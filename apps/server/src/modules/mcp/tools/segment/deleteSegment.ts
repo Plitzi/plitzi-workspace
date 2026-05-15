@@ -1,13 +1,27 @@
 import { z } from 'zod';
 
-import type { McpToolAdapterDefinition } from '@plitzi/sdk-shared';
+import { getAllowedModes, zodToJsonSchema } from '../../helpers';
 
-const deleteSegmentTool: McpToolAdapterDefinition = {
+import type { McpTool } from '@plitzi/sdk-shared';
+
+const inputSchema = z.object({
+  segmentId: z.string().describe('ID of the segment to delete')
+});
+
+const deleteSegmentTool: McpTool = {
   name: 'delete_segment',
   adapterName: 'deleteSegment',
-  description: 'Delete a segment',
-  inputSchema: z.object({ segmentId: z.string() }),
-  operationType: 'write'
+  mcpDefinition: {
+    title: 'Delete Segment',
+    description: 'Delete a segment',
+    inputSchema
+  },
+  definition: {
+    shortDescription: 'Delete a segment',
+    operationType: 'write',
+    parameters: zodToJsonSchema(inputSchema),
+    allowedModes: getAllowedModes('write')
+  }
 };
 
 export default deleteSegmentTool;
