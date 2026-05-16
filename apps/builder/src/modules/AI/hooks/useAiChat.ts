@@ -5,7 +5,6 @@ import { flushSync } from 'react-dom';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
-import type { AiFrontendToolRunner } from '../tools';
 import type {
   AiAttachment,
   AiContext,
@@ -19,7 +18,7 @@ import type {
   ConversationSummary
 } from '../types';
 
-const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiProviderSettings) => {
+const useAiChat = (providerSettings?: AiProviderSettings) => {
   const { server, webKey } = use(NetworkContext);
   const { networkQuery } = useNetwork({ initLoading: false, server, webKey });
   const [conversationId, setConversationId] = useStorage<string>('builder-state.aiChat.conversationId', '');
@@ -230,17 +229,6 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
                     i === targetIdx ? { ...t, result: event.result, status: 'done' as const } : t
                   );
                 });
-              } else if (event.type === 'client_tool') {
-                setLiveTools(prev => [
-                  ...prev,
-                  { id: event.id, name: event.name, args: event.args, status: 'running' }
-                ]);
-                if (runClientTool) {
-                  const { toolResult } = await runClientTool(event.name, event.args);
-                  setLiveTools(prev =>
-                    prev.map(t => (t.id === event.id ? { ...t, status: 'done', result: toolResult } : t))
-                  );
-                }
               } else if (event.type === 'done') {
                 setIsBusy(false);
                 const thinkingText = thinkingTextRef.current || undefined;
@@ -291,16 +279,7 @@ const useAiChat = (runClientTool?: AiFrontendToolRunner, providerSettings?: AiPr
         thinkingDurationMsRef.current = undefined;
       }
     },
-    [
-      isStreaming,
-      quotaRetryAfter,
-      flushStreamingBuffer,
-      networkQuery,
-      setConversationId,
-      server.nodeServer,
-      webKey,
-      runClientTool
-    ]
+    [isStreaming, quotaRetryAfter, flushStreamingBuffer, networkQuery, setConversationId, server.nodeServer, webKey]
   );
 
   const clearConversation = useCallback(() => {

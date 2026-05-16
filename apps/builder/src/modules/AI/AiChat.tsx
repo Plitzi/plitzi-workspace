@@ -14,7 +14,6 @@ import QuotaCountdown from './components/QuotaCountdown';
 import AiChatContext from './contexts/AiChatContext';
 import useAiChat from './hooks/useAiChat';
 import useAiProviderSettings from './hooks/useAiProviderSettings';
-import useAiTools from './hooks/useAiTools';
 import useVoice from './hooks/useVoice';
 
 import type { ChatInputHandle } from './components/ChatInput';
@@ -41,7 +40,6 @@ const AiChat = () => {
     updateSettings
   } = useAiProviderSettings(true);
 
-  const runClientTool = useAiTools();
   const {
     messages,
     streamingText,
@@ -66,7 +64,7 @@ const AiChat = () => {
     loadConversations,
     loadConversation,
     compact
-  } = useAiChat(runClientTool, providerSettings);
+  } = useAiChat(providerSettings);
 
   const handleTranscript = useCallback((text: string) => {
     chatInputRef.current?.appendText(text);
