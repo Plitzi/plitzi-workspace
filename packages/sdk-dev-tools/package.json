@@ -344,7 +344,7 @@
     "react-dom": "^19"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.7",
+    "@plitzi/plitzi-ui": "^1.6.8",
     "@plitzi/sdk-data-source": "workspace:*",
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",

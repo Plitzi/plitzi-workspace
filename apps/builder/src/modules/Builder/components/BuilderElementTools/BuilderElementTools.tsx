@@ -104,7 +104,7 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
 
   if (!element) {
     return (
-      <div className="m-3 w-full self-start rounded-sm border-2 border-dashed border-gray-300 p-3 text-center text-zinc-600 dark:border-zinc-600 dark:text-zinc-400">
+      <div className="m-3 self-stretch rounded-sm border-2 border-dashed border-gray-300 p-3 text-center text-zinc-600 dark:border-zinc-600 dark:text-zinc-400">
         Click on a component to select it
       </div>
     );
