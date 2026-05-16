@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { AiMode, ToolOperationType } from '@plitzi/sdk-shared';
+import type { AiContext, AiMode, McpAdapter, McpToolHandler, ToolOperationType } from '@plitzi/sdk-shared';
 
 export const zodToJsonSchema = (schema: unknown): Record<string, unknown> => {
   if (schema instanceof z.ZodObject) {
@@ -78,7 +78,22 @@ export const toolResponseOk = (data: unknown) => ({
   content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }]
 });
 
-export const toolResponseErr = (message: string) => ({
-  content: [{ type: 'text' as const, text: message }],
+export const toolResponseErr = (error: Error | string) => ({
+  content: [{ type: 'text' as const, text: error instanceof Error ? error.message : error }],
   isError: true as const
 });
+
+export const adapterWrapper = (adapterName: string, handler?: McpAdapter): McpToolHandler => {
+  return async (args: Record<string, unknown>, ctx: AiContext) => {
+    if (!handler) {
+      return toolResponseErr(`Adapter ${adapterName} not found`);
+    }
+
+    const result = await handler(args, ctx);
+    if ('error' in result) {
+      return toolResponseErr(result.error);
+    }
+
+    return toolResponseOk(result.data);
+  };
+};

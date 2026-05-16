@@ -41,7 +41,10 @@ export type McpSegment = {
   definition: { name: string; description: string; baseElementId: string };
 };
 
-export type McpAdapter<T extends Record<string, any> = any, R = any> = (args: T, ctx: AiContext) => Promise<R>;
+export type McpAdapter<T extends Record<string, any> = any, R = any> = (
+  args: T,
+  ctx: AiContext
+) => Promise<{ data: R } | { error: Error | string }>;
 
 export type McpAdapters = {
   getBuilderContext: McpAdapter<

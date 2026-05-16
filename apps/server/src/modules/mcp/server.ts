@@ -1,10 +1,11 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 
+import { adapterWrapper } from './helpers';
 import * as defaultTools from './tools';
 import PACKAGE from '../../../package.json' with { type: 'json' };
 
 import type AIEngine from '../ai/AIEngine';
-import type { McpAdapters, McpTool, McpPrompt, McpToolHandler } from '@plitzi/sdk-shared';
+import type { McpAdapters, McpTool, McpPrompt } from '@plitzi/sdk-shared';
 
 export const createMcpServer = (
   adapters: Partial<McpAdapters> = {},
@@ -21,7 +22,7 @@ export const createMcpServer = (
       server.registerTool(
         tool.name,
         tool.mcpDefinition,
-        engine.executeTool(tool.name, adapters[tool.adapterName] as unknown as McpToolHandler)
+        engine.executeTool(tool.name, adapterWrapper(tool.adapterName, adapters[tool.adapterName]))
       );
     } else if ('handler' in tool) {
       server.registerTool(tool.name, tool.mcpDefinition, engine.executeTool(tool.name, tool.handler));
