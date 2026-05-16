@@ -6,11 +6,13 @@ import type { McpTool } from '@plitzi/sdk-shared';
 
 const inputSchema = z.object({
   id: z.string().describe('Page folder ID'),
-  updates: z.object({
-    name: z.string().optional().describe('New name for the folder'),
-    slug: z.string().optional().describe('New slug for the folder'),
-    parentId: z.string().optional().describe('New parent folder ID')
-  }).describe('Fields to update')
+  updates: z
+    .object({
+      name: z.string().optional().describe('New name for the folder'),
+      slug: z.string().optional().describe('New slug for the folder'),
+      parentId: z.string().optional().describe('New parent folder ID')
+    })
+    .describe('Fields to update')
 });
 
 const updatePageFolderTool: McpTool = {

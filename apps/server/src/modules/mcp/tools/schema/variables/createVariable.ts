@@ -18,12 +18,14 @@ const variableTypesSchema = z.enum([
 ]);
 
 const inputSchema = z.object({
-  variable: z.object({
-    name: z.string().describe('Variable name'),
-    type: variableTypesSchema.describe('Variable type'),
-    value: z.string().describe('Variable default value'),
-    category: z.string().describe('Variable category')
-  }).describe('Variable to create')
+  variable: z
+    .object({
+      name: z.string().describe('Variable name'),
+      type: variableTypesSchema.describe('Variable type'),
+      value: z.string().describe('Variable default value'),
+      category: z.string().describe('Variable category')
+    })
+    .describe('Variable to create')
 });
 
 const createVariableTool: McpTool = {

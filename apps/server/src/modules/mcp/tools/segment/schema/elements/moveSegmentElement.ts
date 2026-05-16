@@ -8,7 +8,10 @@ const inputSchema = z.object({
   segmentId: z.string().describe('ID of the segment'),
   elementId: z.string().describe('ID of the element to move'),
   toParentId: z.string().describe('ID of the new parent element'),
-  dropPosition: z.enum(['top', 'bottom', 'left', 'right', 'inside', 'custom']).optional().describe('Position within the new parent')
+  dropPosition: z
+    .enum(['top', 'bottom', 'left', 'right', 'inside', 'custom'])
+    .optional()
+    .describe('Position within the new parent')
 });
 
 const moveSegmentElementTool: McpTool = {

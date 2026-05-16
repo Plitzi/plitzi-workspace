@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
-import { getAllowedModes, zodToJsonSchema } from '../../../helpers';
-
 import { StyleVariableCategory } from '@plitzi/sdk-shared';
+
+import { getAllowedModes, zodToJsonSchema } from '../../../helpers';
 
 import type { McpTool } from '@plitzi/sdk-shared';
 

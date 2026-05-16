@@ -6,11 +6,13 @@ import type { McpTool } from '@plitzi/sdk-shared';
 
 const inputSchema = z.object({
   segmentId: z.string().describe('ID of the segment'),
-  element: z.object({
-    type: z.string().describe('Component type'),
-    label: z.string().describe('Human-readable name for the element'),
-    props: z.record(z.string(), z.unknown()).optional().describe('Component props')
-  }).describe('Element to add'),
+  element: z
+    .object({
+      type: z.string().describe('Component type'),
+      label: z.string().describe('Human-readable name for the element'),
+      props: z.record(z.string(), z.unknown()).optional().describe('Component props')
+    })
+    .describe('Element to add'),
   parentId: z.string().describe('Parent element ID')
 });
 

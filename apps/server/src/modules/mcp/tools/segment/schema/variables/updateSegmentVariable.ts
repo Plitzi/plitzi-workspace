@@ -19,12 +19,14 @@ const variableTypesSchema = z.enum([
 
 const inputSchema = z.object({
   segmentId: z.string().describe('ID of the segment'),
-  variable: z.object({
-    name: z.string().describe('Variable name'),
-    type: variableTypesSchema.optional().describe('Variable type'),
-    value: z.string().optional().describe('Variable value'),
-    category: z.string().optional().describe('Variable category')
-  }).describe('Variable fields to update')
+  variable: z
+    .object({
+      name: z.string().describe('Variable name'),
+      type: variableTypesSchema.optional().describe('Variable type'),
+      value: z.string().optional().describe('Variable value'),
+      category: z.string().optional().describe('Variable category')
+    })
+    .describe('Variable fields to update')
 });
 
 const updateSegmentVariableTool: McpTool = {

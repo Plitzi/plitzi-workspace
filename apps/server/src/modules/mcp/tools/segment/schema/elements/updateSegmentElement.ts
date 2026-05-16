@@ -7,10 +7,12 @@ import type { McpTool } from '@plitzi/sdk-shared';
 const inputSchema = z.object({
   segmentId: z.string().describe('ID of the segment'),
   elementId: z.string().describe('ID of the element to update'),
-  updates: z.object({
-    label: z.string().optional().describe('New label for the element'),
-    props: z.record(z.string(), z.unknown()).optional().describe('New props for the element')
-  }).describe('Fields to update')
+  updates: z
+    .object({
+      label: z.string().optional().describe('New label for the element'),
+      props: z.record(z.string(), z.unknown()).optional().describe('New props for the element')
+    })
+    .describe('Fields to update')
 });
 
 const updateSegmentElementTool: McpTool = {

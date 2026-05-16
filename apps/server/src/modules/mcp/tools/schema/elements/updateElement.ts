@@ -6,12 +6,14 @@ import type { McpTool } from '@plitzi/sdk-shared';
 
 const inputSchema = z.object({
   elementId: z.string().describe('ID of the element to update'),
-  updates: z.object({
-    label: z.string().optional().describe('New label for the element'),
-    props: z.record(z.string(), z.unknown()).optional().describe('New props for the element'),
-    styles: z.record(z.string(), z.unknown()).optional().describe('New styles for the element'),
-    runtime: z.enum(['server', 'client', 'shared']).optional().describe('New rendering runtime')
-  }).describe('Fields to update')
+  updates: z
+    .object({
+      label: z.string().optional().describe('New label for the element'),
+      props: z.record(z.string(), z.unknown()).optional().describe('New props for the element'),
+      styles: z.record(z.string(), z.unknown()).optional().describe('New styles for the element'),
+      runtime: z.enum(['server', 'client', 'shared']).optional().describe('New rendering runtime')
+    })
+    .describe('Fields to update')
 });
 
 const updateElementTool: McpTool = {
