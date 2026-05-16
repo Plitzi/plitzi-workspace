@@ -202,8 +202,8 @@ export type McpToolLifecycleHooks = {
   onError?: (name: string, args: Record<string, unknown>, error: Error, ctx?: AiContext) => void | Promise<void>;
 };
 
-export type McpToolHandler = (
-  args: Record<string, any>,
+export type McpToolHandler<T extends Record<string, unknown> = any> = (
+  args: T,
   ctx: AiContext
 ) => Promise<McpToolHandlerResult> | McpToolHandlerResult;
 
