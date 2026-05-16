@@ -83,7 +83,8 @@ export const toolResponseErr = (error: Error | string) => ({
   isError: true as const
 });
 
-export const adapterWrapper = (adapterName: string, handler?: McpAdapter): McpToolHandler => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const adapterWrapper = (adapterName: string, handler?: McpAdapter<any, any>): McpToolHandler => {
   return async (args: Record<string, unknown>, ctx: AiContext) => {
     if (!handler) {
       return toolResponseErr(`Adapter ${adapterName} not found`);

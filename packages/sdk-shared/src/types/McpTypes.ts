@@ -41,14 +41,13 @@ export type McpSegment = {
   definition: { name: string; description: string; baseElementId: string };
 };
 
-export type McpAdapter<T extends Record<string, any> = any, R = any> = (
+export type McpAdapter<R = any, T extends Record<string, any> = Record<string, any>> = (
   args: T,
   ctx: AiContext
 ) => Promise<{ data: R } | { error: Error | string }>;
 
 export type McpAdapters = {
   getBuilderContext: McpAdapter<
-    Record<string, unknown>,
     | {
         currentPageId?: string;
         selectedElementId?: string;
@@ -59,47 +58,45 @@ export type McpAdapters = {
       }
     | undefined
   >;
-  listSpaces: McpAdapter<
-    Record<string, unknown>,
-    { id: string; name: string; permanentUrl: string; verified: boolean }[]
-  >;
-  getSchema: McpAdapter<Record<string, unknown>, Schema | undefined>;
+  listSpaces: McpAdapter<{ id: string; name: string; permanentUrl: string; verified: boolean }[]>;
+  getSchema: McpAdapter<Schema | undefined>;
   getPageSchema: McpAdapter<
-    { pageId?: string },
-    { id: string; label: string; type: string; parentId: string | undefined }[] | undefined
+    { id: string; label: string; type: string; parentId: string | undefined }[] | undefined,
+    { pageId?: string }
   >;
-  createElement: McpAdapter<{ element: Element; parentId?: string; position?: number }, Element | undefined>;
-  getElement: McpAdapter<{ elementId: string }, Element | undefined>;
-  listElements: McpAdapter<Record<string, unknown>, Element[] | undefined>;
+  createElement: McpAdapter<Element | undefined, { element: Element; parentId?: string; position?: number }>;
+  getElement: McpAdapter<Element | undefined, { elementId: string }>;
+  listElements: McpAdapter<Element[] | undefined, Record<string, unknown>>;
   updateElement: McpAdapter<Element, Element>;
-  deleteElement: McpAdapter<{ elementId: string }, boolean>;
-  moveElement: McpAdapter<{ elementId: string; toParentId: string; dropPosition?: DropPosition }, boolean>;
-  publishSchema: McpAdapter<Record<string, unknown>, { revision: number }>;
-  listPlugins: McpAdapter<Record<string, unknown>, McpPlugin[]>;
-  createPage: McpAdapter<{ name: string }, Element>;
-  deletePage: McpAdapter<{ pageId: string }, boolean>;
-  createPageFolder: McpAdapter<{ name: string; parentId?: string }, PageFolder>;
+  deleteElement: McpAdapter<boolean, { elementId: string }>;
+  moveElement: McpAdapter<boolean, { elementId: string; toParentId: string; dropPosition?: DropPosition }>;
+  publishSchema: McpAdapter<{ revision: number }>;
+  listPlugins: McpAdapter<McpPlugin[]>;
+  createPage: McpAdapter<Element, { name: string }>;
+  deletePage: McpAdapter<boolean, { pageId: string }>;
+  createPageFolder: McpAdapter<PageFolder, { name: string; parentId?: string }>;
   updatePageFolder: McpAdapter<
-    { id: string; updates: Partial<Pick<PageFolder, 'name' | 'slug' | 'parentId'>> },
-    PageFolder
+    PageFolder,
+    { id: string; updates: Partial<Pick<PageFolder, 'name' | 'slug' | 'parentId'>> }
   >;
-  deletePageFolder: McpAdapter<{ id: string }, boolean>;
+  deletePageFolder: McpAdapter<boolean, { id: string }>;
   createVariable: McpAdapter<
-    { variable: Pick<SchemaVariable, 'name' | 'type' | 'value' | 'category'> },
-    SchemaVariable
+    SchemaVariable,
+    { variable: Pick<SchemaVariable, 'name' | 'type' | 'value' | 'category'> }
   >;
-  updateVariable: McpAdapter<{ variable: Partial<SchemaVariable> & { name: string } }, SchemaVariable>;
-  deleteVariable: McpAdapter<{ name: string }, boolean>;
+  updateVariable: McpAdapter<SchemaVariable, { variable: Partial<SchemaVariable> & { name: string } }>;
+  deleteVariable: McpAdapter<boolean, { name: string }>;
   createStyleVariable: McpAdapter<
     { category: StyleVariableCategory; name: string; value: StyleVariableValue },
     McpStyleVariable
   >;
   updateStyleVariable: McpAdapter<
-    { category: StyleVariableCategory; name: string; value: StyleVariableValue },
-    McpStyleVariable
+    McpStyleVariable,
+    { category: StyleVariableCategory; name: string; value: StyleVariableValue }
   >;
-  deleteStyleVariable: McpAdapter<{ category: StyleVariableCategory; name: string }, boolean>;
+  deleteStyleVariable: McpAdapter<boolean, { category: StyleVariableCategory; name: string }>;
   createStyleSelector: McpAdapter<
+    McpStyleSelector,
     {
       displayMode: DisplayMode;
       selector: string;
@@ -107,10 +104,10 @@ export type McpAdapters = {
       path?: StyleCategory;
       style?: StyleItem['attributes'];
       params?: Record<string, unknown>;
-    },
-    McpStyleSelector
+    }
   >;
   updateStyleSelector: McpAdapter<
+    McpStyleSelector,
     {
       displayMode: DisplayMode;
       selector: string;
@@ -118,48 +115,47 @@ export type McpAdapters = {
       path?: StyleCategory;
       style?: StyleItem['attributes'];
       params?: Record<string, unknown>;
-    },
-    McpStyleSelector
+    }
   >;
-  deleteStyleSelector: McpAdapter<{ displayMode: DisplayMode; selector: string }, boolean>;
-  createSegment: McpAdapter<{ name: string; description: string }, McpSegment>;
-  updateSegment: McpAdapter<{ segmentId: string; updates: { name?: string; description?: string } }, McpSegment>;
-  deleteSegment: McpAdapter<{ segmentId: string }, boolean>;
+  deleteStyleSelector: McpAdapter<boolean, { displayMode: DisplayMode; selector: string }>;
+  createSegment: McpAdapter<McpSegment, { name: string; description: string }>;
+  updateSegment: McpAdapter<McpSegment, { segmentId: string; updates: { name?: string; description?: string } }>;
+  deleteSegment: McpAdapter<boolean, { segmentId: string }>;
   createSegmentElement: McpAdapter<
+    Element,
     {
       segmentId: string;
       element: { type: string; label: string; props?: Record<string, unknown> };
       parentId: string;
-    },
-    Element
+    }
   >;
   updateSegmentElement: McpAdapter<
-    { segmentId: string; elementId: string; updates: { label?: string; props?: Record<string, unknown> } },
-    Element
+    Element,
+    { segmentId: string; elementId: string; updates: { label?: string; props?: Record<string, unknown> } }
   >;
   moveSegmentElement: McpAdapter<
-    { segmentId: string; elementId: string; toParentId: string; dropPosition?: DropPosition },
-    boolean
+    boolean,
+    { segmentId: string; elementId: string; toParentId: string; dropPosition?: DropPosition }
   >;
-  deleteSegmentElement: McpAdapter<{ segmentId: string; elementId: string }, boolean>;
+  deleteSegmentElement: McpAdapter<boolean, { segmentId: string; elementId: string }>;
   createSegmentVariable: McpAdapter<
-    { segmentId: string; variable: Pick<SchemaVariable, 'name' | 'type' | 'value' | 'category'> },
-    SchemaVariable
+    SchemaVariable,
+    { segmentId: string; variable: Pick<SchemaVariable, 'name' | 'type' | 'value' | 'category'> }
   >;
   updateSegmentVariable: McpAdapter<
-    { segmentId: string; variable: Partial<SchemaVariable> & { name: string } },
-    SchemaVariable
+    SchemaVariable,
+    { segmentId: string; variable: Partial<SchemaVariable> & { name: string } }
   >;
-  deleteSegmentVariable: McpAdapter<{ segmentId: string; name: string }, boolean>;
+  deleteSegmentVariable: McpAdapter<boolean, { segmentId: string; name: string }>;
   createSegmentStyleVariable: McpAdapter<
-    { segmentId: string; category: StyleVariableCategory; name: string; value: StyleVariableValue },
-    McpStyleVariable
+    McpStyleVariable,
+    { segmentId: string; category: StyleVariableCategory; name: string; value: StyleVariableValue }
   >;
   updateSegmentStyleVariable: McpAdapter<
-    { segmentId: string; category: StyleVariableCategory; name: string; value: StyleVariableValue },
-    McpStyleVariable
+    McpStyleVariable,
+    { segmentId: string; category: StyleVariableCategory; name: string; value: StyleVariableValue }
   >;
-  deleteSegmentStyleVariable: McpAdapter<{ segmentId: string; category: StyleVariableCategory; name: string }, boolean>;
+  deleteSegmentStyleVariable: McpAdapter<boolean, { segmentId: string; category: StyleVariableCategory; name: string }>;
 };
 
 // Backend
