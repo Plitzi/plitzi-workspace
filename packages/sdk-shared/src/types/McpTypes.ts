@@ -227,7 +227,7 @@ export type McpTool = {
 export type McpServerConfig = {
   enabled?: boolean; // Whether the MCP endpoint is active. Defaults to true.
   path?: string; // URL path for the MCP endpoint. Defaults to '/mcp'.
-  adapters: McpAdapters;
+  adapters: Partial<McpAdapters>;
   tools?: McpTool[];
   prompts?: McpPrompt[];
 };

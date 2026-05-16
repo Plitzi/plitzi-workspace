@@ -18,7 +18,7 @@ class AIEngine implements McpToolLifecycleHooks {
   private toolsAvailablesMap = new Map<string, AiMode[]>();
   constructor(
     private readonly mode: AiMode | undefined,
-    private readonly mcpAdapters: McpAdapters | undefined,
+    private readonly mcpAdapters: Partial<McpAdapters> | undefined,
     public readonly callbacks: StreamCallbacks,
     public readonly ctx: AiContext
   ) {}
