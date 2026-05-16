@@ -25,7 +25,7 @@ export type AITemplatePreviewProps = {
 
 const AITemplatePreview = ({ baseElementId, schema, style, html, mode, version }: AITemplatePreviewProps) => {
   const { theme } = use(ThemeContext);
-  const { existsPopup, addPopup } = usePopup();
+  const { addPopup } = usePopup();
   const { onSendMessage, elementSelected } = useAiChatContext();
   const [displayMode, setDisplayMode] = useState<DisplayMode>('desktop');
   const [showHtml, setShowHtml] = useState(false);
@@ -41,25 +41,23 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode, version }
   const handleTargetElement = useCallback(() => setTarget('element'), []);
 
   const handleClickExpand = useCallback(() => {
-    if (!existsPopup('transform')) {
-      addPopup(
-        'transform',
-        <StoreProvider value={storeValue} logger={createStoreDevToolsLogger('ai-preview')}>
-          <BuilderAreaPreview id={baseElementId} className="aspect-video h-full w-full" previewMode />
-        </StoreProvider>,
-        {
-          icon: <i className="fa-brands fa-nfc-symbol text-base" />,
-          title: 'Preview',
-          height: 400,
-          width: 400,
-          allowLeftSide: false,
-          allowRightSide: false,
-          placement: 'floating',
-          resizeHandles: ['se']
-        }
-      );
-    }
-  }, [addPopup, baseElementId, existsPopup, storeValue]);
+    addPopup(
+      `transform-${Date.now()}`,
+      <StoreProvider value={storeValue} logger={createStoreDevToolsLogger('ai-preview')}>
+        <BuilderAreaPreview id={baseElementId} className="aspect-video h-full w-full" previewMode />
+      </StoreProvider>,
+      {
+        icon: <i className="fa-brands fa-nfc-symbol text-base" />,
+        title: 'Preview',
+        height: 400,
+        width: 400,
+        allowLeftSide: false,
+        allowRightSide: false,
+        placement: 'floating',
+        resizeHandles: ['se']
+      }
+    );
+  }, [addPopup, baseElementId, storeValue]);
 
   const handleConfirm = useCallback(() => {
     const where =
