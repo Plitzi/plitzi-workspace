@@ -9,7 +9,8 @@ import type {
   McpToolLifecycleHooks,
   StreamCallbacks,
   McpTool,
-  McpAdapters
+  McpAdapters,
+  McpToolHandlerResult
 } from '@plitzi/sdk-shared';
 
 class AIEngine implements McpToolLifecycleHooks {
@@ -45,8 +46,16 @@ class AIEngine implements McpToolLifecycleHooks {
     return true;
   };
 
-  readonly after = (name: string, args: Record<string, unknown>, result: unknown): Promise<void> => {
-    this.callbacks.onToolCall?.({ name, args, result });
+  readonly after = (name: string, args: Record<string, unknown>, result: McpToolHandlerResult): Promise<void> => {
+    let resultParsed: unknown = undefined;
+
+    try {
+      resultParsed = JSON.parse(result.content[0]?.text);
+    } catch {
+      // Nothing to do
+    }
+
+    this.callbacks.onToolCall?.({ name, args, result: resultParsed });
 
     return Promise.resolve();
   };

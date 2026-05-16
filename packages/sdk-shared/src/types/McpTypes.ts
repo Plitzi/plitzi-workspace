@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import type { AiContext, AiMode, AiUsage, PromptRole } from './AITypes';
+import type { AiContext, AiMode, PromptRole } from './AITypes';
 import type { PageFolder, SchemaVariable, DropPosition, Element, Schema } from './SchemaTypes';
 import type {
   DisplayMode,
@@ -179,39 +179,34 @@ export type McpPrompt = {
   handler: McpPromptHandler;
 };
 
+export type McpToolHandlerResult = { content: { type: 'text'; text: string }[]; isError?: true };
+
 export type ToolCallEvent = {
   name: string;
   args: Record<string, unknown>;
   result: unknown;
 };
 
-export type StreamCallbacks = {
-  onLog?: (level: 'error' | 'info' | 'debug', content: string) => void;
-  onChunk?: (text: string) => void;
-  onThinking?: (text: string) => void;
-  onUsage?: (usage: Omit<AiUsage, 'usedPercent' | 'contextLimit'> & { contextLimit?: number }) => void;
-  onBusy?: () => void;
-  onToolStart?: (name: string, args: Record<string, unknown>) => void;
-  onToolCall?: (event: ToolCallEvent) => void;
-};
-
-export type McpToolLifecycleHooks<T = unknown> = {
+export type McpToolLifecycleHooks = {
   can?: (name: string, args: Record<string, unknown>, ctx?: AiContext) => boolean | Promise<boolean>;
   before?: (
     name: string,
     args: Record<string, unknown>,
     ctx?: AiContext
   ) => boolean | undefined | Promise<boolean> | Promise<undefined>;
-  after?: (name: string, args: Record<string, unknown>, result: T, ctx?: AiContext) => void | Promise<void>;
+  after?: (
+    name: string,
+    args: Record<string, unknown>,
+    result: McpToolHandlerResult,
+    ctx?: AiContext
+  ) => void | Promise<void>;
   onError?: (name: string, args: Record<string, unknown>, error: Error, ctx?: AiContext) => void | Promise<void>;
 };
 
 export type McpToolHandler = (
   args: Record<string, any>,
   ctx: AiContext
-) =>
-  | Promise<{ content: { type: 'text'; text: string }[]; isError?: true }>
-  | { content: { type: 'text'; text: string }[]; isError?: true };
+) => Promise<McpToolHandlerResult> | McpToolHandlerResult;
 
 export type McpTool = {
   name: string;
