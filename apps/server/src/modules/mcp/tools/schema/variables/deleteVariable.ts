@@ -13,11 +13,15 @@ const deleteVariableTool: McpTool = {
   adapterName: 'deleteVariable',
   mcpDefinition: {
     title: 'Delete Variable',
-    description: 'Delete a schema variable',
+    description:
+      'Delete a schema variable.\n\n' +
+      '━━ REQUIRED INPUT ━━\n' +
+      'name: Name of the variable to delete\n\n' +
+      '━━ WARNING ━━\n' +
+      'This permanently removes the variable. Any elements using it will lose the reference.',
     inputSchema
   },
   definition: {
-    shortDescription: 'Delete a schema variable',
     operationType: 'write',
     parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('write')

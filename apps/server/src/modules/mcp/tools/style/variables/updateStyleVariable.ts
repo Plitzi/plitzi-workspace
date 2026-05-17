@@ -17,11 +17,15 @@ const updateStyleVariableTool: McpTool = {
   adapterName: 'updateStyleVariable',
   mcpDefinition: {
     title: 'Update Style Variable',
-    description: 'Update a global style variable',
+    description:
+      'Update an existing global style variable.\n\n' +
+      '━━ REQUIRED INPUT ━━\n' +
+      'category: Current category of the variable (color | spacing | typography | sizing | misc)\n' +
+      'name: Name of the variable to update\n' +
+      'value: New value for the variable',
     inputSchema
   },
   definition: {
-    shortDescription: 'Update a global style variable',
     operationType: 'write',
     parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('write')

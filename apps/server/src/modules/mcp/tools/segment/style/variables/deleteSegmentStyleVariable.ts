@@ -17,11 +17,15 @@ const deleteSegmentStyleVariableTool: McpTool = {
   adapterName: 'deleteSegmentStyleVariable',
   mcpDefinition: {
     title: 'Delete Segment Style Variable',
-    description: 'Delete a segment style variable',
+    description:
+      'Delete a style variable from a segment.\n\n' +
+      '━━ REQUIRED INPUT ━━\n' +
+      'segmentId: ID of the segment\n' +
+      'category: Variable category\n' +
+      'name: Variable name to delete',
     inputSchema
   },
   definition: {
-    shortDescription: 'Delete a segment style variable',
     operationType: 'write',
     parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('write')

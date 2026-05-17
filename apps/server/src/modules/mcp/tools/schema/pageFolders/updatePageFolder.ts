@@ -20,11 +20,17 @@ const updatePageFolderTool: McpTool = {
   adapterName: 'updatePageFolder',
   mcpDefinition: {
     title: 'Update Page Folder',
-    description: 'Update a page folder',
+    description:
+      'Update a page folder.\n\n' +
+      '━━ REQUIRED INPUT ━━\n' +
+      'id: Page folder ID to update\n\n' +
+      '━━ OPTIONAL UPDATES ━━\n' +
+      'updates.name: New name for the folder\n' +
+      'updates.slug: New slug for the folder\n' +
+      'updates.parentId: New parent folder ID',
     inputSchema
   },
   definition: {
-    shortDescription: 'Update a page folder',
     operationType: 'write',
     parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('write')

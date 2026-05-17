@@ -13,11 +13,15 @@ const deleteElementTool: McpTool = {
   adapterName: 'deleteElement',
   mcpDefinition: {
     title: 'Delete Element',
-    description: 'Remove an element and all its descendants from the schema',
+    description:
+      'Remove an element and all its descendants from the schema.\n\n' +
+      '━━ REQUIRED INPUT ━━\n' +
+      'elementId: ID of the element to delete\n\n' +
+      '━━ WARNING ━━\n' +
+      'This deletes the element and ALL its child elements. This action cannot be undone.',
     inputSchema
   },
   definition: {
-    shortDescription: 'Remove an element and all its descendants from the schema',
     operationType: 'write',
     parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('write')

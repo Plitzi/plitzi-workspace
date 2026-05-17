@@ -21,11 +21,19 @@ const updateStyleSelectorTool: McpTool = {
   adapterName: 'updateStyleSelector',
   mcpDefinition: {
     title: 'Update Style Selector',
-    description: 'Update a global style selector',
+    description:
+      'Update an existing global CSS style selector.\n\n' +
+      '━━ REQUIRED INPUT ━━\n' +
+      'displayMode: Display mode (desktop | tablet | mobile)\n' +
+      'selector: CSS selector to update\n' +
+      'type: Selector type (class | element | id)\n\n' +
+      '━━ OPTIONAL INPUT ━━\n' +
+      'path: Optional path filter\n' +
+      'style: New CSS properties\n' +
+      'params: Additional parameters',
     inputSchema
   },
   definition: {
-    shortDescription: 'Update a global style selector',
     operationType: 'write',
     parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('write')

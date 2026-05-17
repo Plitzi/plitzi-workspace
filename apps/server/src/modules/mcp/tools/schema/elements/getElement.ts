@@ -13,11 +13,15 @@ const getElementTool: McpTool = {
   adapterName: 'getElement',
   mcpDefinition: {
     title: 'Get Element',
-    description: 'Get the full details of a single element by ID',
+    description:
+      'Get the full details of a single element by ID.\n\n' +
+      '━━ REQUIRED INPUT ━━\n' +
+      'elementId: ID of the element to retrieve\n\n' +
+      '━━ OUTPUT ━━\n' +
+      'Returns the element with all its properties, props, and styles.',
     inputSchema
   },
   definition: {
-    shortDescription: 'Get the full details of a single element by ID',
     operationType: 'read',
     parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('read')

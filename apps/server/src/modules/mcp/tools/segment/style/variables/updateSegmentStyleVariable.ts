@@ -18,11 +18,16 @@ const updateSegmentStyleVariableTool: McpTool = {
   adapterName: 'updateSegmentStyleVariable',
   mcpDefinition: {
     title: 'Update Segment Style Variable',
-    description: 'Update a segment style variable',
+    description:
+      'Update a style variable inside a segment.\n\n' +
+      '━━ REQUIRED INPUT ━━\n' +
+      'segmentId: ID of the segment\n' +
+      'category: Variable category\n' +
+      'name: Variable name to update\n' +
+      'value: New value',
     inputSchema
   },
   definition: {
-    shortDescription: 'Update a segment style variable',
     operationType: 'write',
     parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('write')

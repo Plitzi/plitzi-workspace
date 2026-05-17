@@ -11,11 +11,15 @@ const listSpacesTool: McpTool = {
   adapterName: 'listSpaces',
   mcpDefinition: {
     title: 'List Spaces',
-    description: 'List all spaces available in the user',
+    description:
+      'List all spaces available for the current user.\n\n' +
+      '━━ INPUT ━━\n' +
+      'No input required — uses the authenticated user context.\n\n' +
+      '━━ OUTPUT ━━\n' +
+      'Returns an array of spaces with: id, name, description, createdAt.',
     inputSchema
   },
   definition: {
-    shortDescription: 'List all spaces available in the user',
     operationType: 'read',
     parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('read')

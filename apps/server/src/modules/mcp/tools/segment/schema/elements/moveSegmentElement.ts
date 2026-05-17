@@ -19,11 +19,17 @@ const moveSegmentElementTool: McpTool = {
   adapterName: 'moveSegmentElement',
   mcpDefinition: {
     title: 'Move Segment Element',
-    description: 'Move an element inside a segment',
+    description:
+      'Move an element inside a segment.\n\n' +
+      '━━ REQUIRED INPUT ━━\n' +
+      'segmentId: ID of the segment\n' +
+      'elementId: ID of the element to move\n' +
+      'toParentId: ID of the new parent element\n\n' +
+      '━━ OPTIONAL INPUT ━━\n' +
+      'dropPosition: Position (top | bottom | left | right | inside | custom)',
     inputSchema
   },
   definition: {
-    shortDescription: 'Move an element inside a segment',
     operationType: 'write',
     parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('write')

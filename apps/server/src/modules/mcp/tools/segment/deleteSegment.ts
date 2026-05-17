@@ -13,11 +13,15 @@ const deleteSegmentTool: McpTool = {
   adapterName: 'deleteSegment',
   mcpDefinition: {
     title: 'Delete Segment',
-    description: 'Delete a segment',
+    description:
+      'Delete a segment.\n\n' +
+      '━━ REQUIRED INPUT ━━\n' +
+      'segmentId: ID of the segment to delete\n\n' +
+      '━━ WARNING ━━\n' +
+      'This permanently removes the segment and all its contents.',
     inputSchema
   },
   definition: {
-    shortDescription: 'Delete a segment',
     operationType: 'write',
     parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('write')

@@ -11,11 +11,17 @@ const publishSchemaTool: McpTool = {
   adapterName: 'publishSchema',
   mcpDefinition: {
     title: 'Publish Schema',
-    description: 'Publish the current draft schema as a new immutable revision',
+    description:
+      'Publish the current draft schema as a new immutable revision.\n\n' +
+      '━━ INPUT ━━\n' +
+      'No input required — uses current space from context.\n\n' +
+      '━━ OUTPUT ━━\n' +
+      'Returns the new revision ID and timestamp.\n\n' +
+      '━━ WARNING ━━\n' +
+      'This creates a read-only snapshot. The draft remains editable.',
     inputSchema
   },
   definition: {
-    shortDescription: 'Publish the current draft schema as a new immutable revision',
     operationType: 'admin',
     parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('admin')

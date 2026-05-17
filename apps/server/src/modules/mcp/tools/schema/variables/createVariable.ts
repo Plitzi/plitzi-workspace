@@ -33,11 +33,16 @@ const createVariableTool: McpTool = {
   adapterName: 'createVariable',
   mcpDefinition: {
     title: 'Create Variable',
-    description: 'Create a schema variable',
+    description:
+      'Create a schema variable (a dynamic value that can be used in elements).\n\n' +
+      '━━ REQUIRED INPUT ━━\n' +
+      'variable.name: Variable name (used in templates as {{variable.name}})\n' +
+      'variable.type: Variable type (text | number | email | password | select | select2 | checkbox | textarea | color | switch)\n' +
+      'variable.value: Default value for the variable\n' +
+      'variable.category: Category to group the variable',
     inputSchema
   },
   definition: {
-    shortDescription: 'Create a schema variable',
     operationType: 'write',
     parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('write')

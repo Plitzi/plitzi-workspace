@@ -13,11 +13,15 @@ const deletePageTool: McpTool = {
   adapterName: 'deletePage',
   mcpDefinition: {
     title: 'Delete Page',
-    description: 'Delete a page by ID',
+    description:
+      'Delete a page by ID.\n\n' +
+      '━━ REQUIRED INPUT ━━\n' +
+      'pageId: ID of the page to delete\n\n' +
+      '━━ WARNING ━━\n' +
+      'This permanently removes the page and all its elements.',
     inputSchema
   },
   definition: {
-    shortDescription: 'Delete a page by ID',
     operationType: 'write',
     parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('write')

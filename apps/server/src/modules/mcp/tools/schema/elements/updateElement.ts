@@ -21,11 +21,18 @@ const updateElementTool: McpTool = {
   adapterName: 'updateElement',
   mcpDefinition: {
     title: 'Update Element',
-    description: 'Update an existing element — label, props, styles, or runtime',
+    description:
+      'Update an existing element.\n\n' +
+      '━━ REQUIRED INPUT ━━\n' +
+      'elementId: ID of the element to update\n\n' +
+      '━━ UPDATABLE FIELDS ━━\n' +
+      'updates.label: New label for the element\n' +
+      'updates.props: New props for the element\n' +
+      'updates.styles: New styles for the element\n' +
+      'updates.runtime: New rendering runtime (server | client | shared)',
     inputSchema
   },
   definition: {
-    shortDescription: 'Update an existing element',
     operationType: 'write',
     parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('write')

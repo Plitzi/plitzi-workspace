@@ -18,11 +18,16 @@ const createSegmentStyleVariableTool: McpTool = {
   adapterName: 'createSegmentStyleVariable',
   mcpDefinition: {
     title: 'Create Segment Style Variable',
-    description: 'Create a segment style variable',
+    description:
+      'Create a style variable inside a segment.\n\n' +
+      '━━ REQUIRED INPUT ━━\n' +
+      'segmentId: ID of the segment\n' +
+      'category: Variable category (color | spacing | typography | sizing | misc)\n' +
+      'name: Variable name\n' +
+      'value: Variable value',
     inputSchema
   },
   definition: {
-    shortDescription: 'Create a segment style variable',
     operationType: 'write',
     parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('write')

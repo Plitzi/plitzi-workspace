@@ -20,11 +20,17 @@ const updateSegmentElementTool: McpTool = {
   adapterName: 'updateSegmentElement',
   mcpDefinition: {
     title: 'Update Segment Element',
-    description: 'Update an element inside a segment',
+    description:
+      'Update an element inside a segment.\n\n' +
+      '━━ REQUIRED INPUT ━━\n' +
+      'segmentId: ID of the segment\n' +
+      'elementId: ID of the element to update\n\n' +
+      '━━ OPTIONAL UPDATES ━━\n' +
+      'updates.label: New label\n' +
+      'updates.props: New props',
     inputSchema
   },
   definition: {
-    shortDescription: 'Update an element inside a segment',
     operationType: 'write',
     parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('write')

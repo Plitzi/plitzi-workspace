@@ -14,11 +14,15 @@ const createPageFolderTool: McpTool = {
   adapterName: 'createPageFolder',
   mcpDefinition: {
     title: 'Create Page Folder',
-    description: 'Create a new page folder',
+    description:
+      'Create a new page folder to organize pages.\n\n' +
+      '━━ REQUIRED INPUT ━━\n' +
+      'name: Name of the page folder\n\n' +
+      '━━ OPTIONAL INPUT ━━\n' +
+      'parentId: Parent folder ID (omit for root level)',
     inputSchema
   },
   definition: {
-    shortDescription: 'Create a new page folder',
     operationType: 'write',
     parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('write')

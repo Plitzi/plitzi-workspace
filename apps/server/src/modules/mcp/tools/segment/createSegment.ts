@@ -14,11 +14,14 @@ const createSegmentTool: McpTool = {
   adapterName: 'createSegment',
   mcpDefinition: {
     title: 'Create Segment',
-    description: 'Create a new segment',
+    description:
+      'Create a new segment (a reusable component with its own schema and style).\n\n' +
+      '━━ REQUIRED INPUT ━━\n' +
+      'name: Name of the segment\n' +
+      'description: Description of what the segment does',
     inputSchema
   },
   definition: {
-    shortDescription: 'Create a new segment',
     operationType: 'write',
     parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('write')

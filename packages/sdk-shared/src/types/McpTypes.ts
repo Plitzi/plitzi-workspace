@@ -217,7 +217,6 @@ export type McpTool = {
     annotations?: ToolAnnotations;
   };
   definition: {
-    shortDescription?: string;
     parameters: Record<string, unknown>;
     allowedModes: AiMode[];
     operationType: ToolOperationType;

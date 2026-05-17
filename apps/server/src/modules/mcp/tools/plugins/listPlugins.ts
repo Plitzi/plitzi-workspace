@@ -11,11 +11,15 @@ const listPluginsTool: McpTool = {
   adapterName: 'listPlugins',
   mcpDefinition: {
     title: 'List Plugins',
-    description: 'List all plugins registered in the system',
+    description:
+      'List all plugins available in the system.\n\n' +
+      '━━ INPUT ━━\n' +
+      'No input required.\n\n' +
+      '━━ OUTPUT ━━\n' +
+      'Returns an array of plugins with: id, name, version, description.',
     inputSchema
   },
   definition: {
-    shortDescription: 'List all plugins registered in the system',
     operationType: 'read',
     parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('read')
