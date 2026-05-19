@@ -90,7 +90,7 @@
     "react-test-renderer": "^19.2.6",
     "sass": "^1.99.0",
     "sass-embedded": "^1.99.0",
-    "sass-loader": "^16.0.8",
+    "sass-loader": "^17.0.0",
     "stylelint": "^17.11.1",
     "stylelint-order": "^8.1.1",
     "stylelint-scss": "^7.1.1",
