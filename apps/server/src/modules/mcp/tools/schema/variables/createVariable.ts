@@ -33,13 +33,7 @@ const createVariableTool: McpTool = {
   adapterName: 'createVariable',
   mcpDefinition: {
     title: 'Create Variable',
-    description:
-      'Create a schema variable (a dynamic value that can be used in elements).\n\n' +
-      '━━ REQUIRED INPUT ━━\n' +
-      'variable.name: Variable name (used in templates as {{variable.name}})\n' +
-      'variable.type: Variable type (text | number | email | password | select | select2 | checkbox | textarea | color | switch)\n' +
-      'variable.value: Default value for the variable\n' +
-      'variable.category: Category to group the variable',
+    description: 'Create a schema variable (a dynamic value used in elements).',
     inputSchema
   },
   definition: {

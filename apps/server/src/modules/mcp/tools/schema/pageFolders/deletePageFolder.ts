@@ -13,12 +13,7 @@ const deletePageFolderTool: McpTool = {
   adapterName: 'deletePageFolder',
   mcpDefinition: {
     title: 'Delete Page Folder',
-    description:
-      'Delete a page folder.\n\n' +
-      '━━ REQUIRED INPUT ━━\n' +
-      'id: Page folder ID to delete\n\n' +
-      '━━ WARNING ━━\n' +
-      'This removes the folder but not the pages inside. Pages will be moved to root.',
+    description: 'Delete a page folder. Pages inside are moved to root.',
     inputSchema
   },
   definition: {

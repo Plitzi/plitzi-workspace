@@ -17,12 +17,7 @@ const updateStyleVariableTool: McpTool = {
   adapterName: 'updateStyleVariable',
   mcpDefinition: {
     title: 'Update Style Variable',
-    description:
-      'Update an existing global style variable.\n\n' +
-      '━━ REQUIRED INPUT ━━\n' +
-      'category: Current category of the variable (color | spacing | typography | sizing | misc)\n' +
-      'name: Name of the variable to update\n' +
-      'value: New value for the variable',
+    description: 'Update an existing global style variable.',
     inputSchema
   },
   definition: {

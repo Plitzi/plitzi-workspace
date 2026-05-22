@@ -21,13 +21,7 @@ const createSegmentElementTool: McpTool = {
   adapterName: 'createSegmentElement',
   mcpDefinition: {
     title: 'Create Segment Element',
-    description:
-      'Add an element to a segment.\n\n' +
-      '━━ REQUIRED INPUT ━━\n' +
-      'segmentId: ID of the segment\n' +
-      'element.type: Component type (e.g. Container, Text, Button)\n' +
-      'element.label: Human-readable name\n' +
-      'parentId: Parent element ID in the segment',
+    description: 'Add an element to a segment.',
     inputSchema
   },
   definition: {

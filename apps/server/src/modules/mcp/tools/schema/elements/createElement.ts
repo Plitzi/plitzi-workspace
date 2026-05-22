@@ -22,16 +22,7 @@ const createElementTool: McpTool = {
   adapterName: 'createElement',
   mcpDefinition: {
     title: 'Create Element',
-    description:
-      'Add a new element to the schema.\n\n' +
-      '━━ REQUIRED INPUT ━━\n' +
-      'element.type: Component type (e.g. Container, Text, Button, Image)\n' +
-      'element.label: Human-readable name for the element\n\n' +
-      '━━ OPTIONAL INPUT ━━\n' +
-      'parentId: Parent element ID; omit to place at root\n' +
-      'position: Zero-based insertion index within the parent\n\n' +
-      '━━ OUTPUT ━━\n' +
-      'Returns the created element with its generated ID.',
+    description: 'Add a new element to the schema. Returns the created element with its generated ID.',
     inputSchema
   },
   definition: {

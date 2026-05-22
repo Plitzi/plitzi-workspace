@@ -20,14 +20,7 @@ const updatePageFolderTool: McpTool = {
   adapterName: 'updatePageFolder',
   mcpDefinition: {
     title: 'Update Page Folder',
-    description:
-      'Update a page folder.\n\n' +
-      '━━ REQUIRED INPUT ━━\n' +
-      'id: Page folder ID to update\n\n' +
-      '━━ OPTIONAL UPDATES ━━\n' +
-      'updates.name: New name for the folder\n' +
-      'updates.slug: New slug for the folder\n' +
-      'updates.parentId: New parent folder ID',
+    description: 'Update a page folder name, slug, or parent.',
     inputSchema
   },
   definition: {

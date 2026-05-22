@@ -21,16 +21,7 @@ const createStyleSelectorTool: McpTool = {
   adapterName: 'createStyleSelector',
   mcpDefinition: {
     title: 'Create Style Selector',
-    description:
-      'Create a global CSS style selector.\n\n' +
-      '━━ REQUIRED INPUT ━━\n' +
-      'displayMode: Display mode (desktop | tablet | mobile)\n' +
-      'selector: CSS selector (e.g. ".btn", "div", "#header")\n' +
-      'type: Selector type (class | element | id)\n\n' +
-      '━━ OPTIONAL INPUT ━━\n' +
-      'path: Optional path filter to limit where the selector applies\n' +
-      'style: CSS properties to apply\n' +
-      'params: Additional parameters',
+    description: 'Create a global CSS style selector.',
     inputSchema
   },
   definition: {

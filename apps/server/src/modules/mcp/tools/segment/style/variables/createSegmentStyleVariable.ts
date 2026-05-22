@@ -18,13 +18,7 @@ const createSegmentStyleVariableTool: McpTool = {
   adapterName: 'createSegmentStyleVariable',
   mcpDefinition: {
     title: 'Create Segment Style Variable',
-    description:
-      'Create a style variable inside a segment.\n\n' +
-      '━━ REQUIRED INPUT ━━\n' +
-      'segmentId: ID of the segment\n' +
-      'category: Variable category (color | spacing | typography | sizing | misc)\n' +
-      'name: Variable name\n' +
-      'value: Variable value',
+    description: 'Create a style variable inside a segment.',
     inputSchema
   },
   definition: {

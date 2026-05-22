@@ -19,14 +19,7 @@ const moveSegmentElementTool: McpTool = {
   adapterName: 'moveSegmentElement',
   mcpDefinition: {
     title: 'Move Segment Element',
-    description:
-      'Move an element inside a segment.\n\n' +
-      '━━ REQUIRED INPUT ━━\n' +
-      'segmentId: ID of the segment\n' +
-      'elementId: ID of the element to move\n' +
-      'toParentId: ID of the new parent element\n\n' +
-      '━━ OPTIONAL INPUT ━━\n' +
-      'dropPosition: Position (top | bottom | left | right | inside | custom)',
+    description: 'Move an element inside a segment to a new position.',
     inputSchema
   },
   definition: {

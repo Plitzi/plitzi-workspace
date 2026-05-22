@@ -34,15 +34,7 @@ const updateSegmentVariableTool: McpTool = {
   adapterName: 'updateSegmentVariable',
   mcpDefinition: {
     title: 'Update Segment Variable',
-    description:
-      'Update a schema variable inside a segment.\n\n' +
-      '━━ REQUIRED INPUT ━━\n' +
-      'segmentId: ID of the segment\n' +
-      'variable.name: Name of the variable to update\n\n' +
-      '━━ OPTIONAL INPUT ━━\n' +
-      'variable.type: New type\n' +
-      'variable.value: New value\n' +
-      'variable.category: New category',
+    description: 'Update a schema variable inside a segment.',
     inputSchema
   },
   definition: {

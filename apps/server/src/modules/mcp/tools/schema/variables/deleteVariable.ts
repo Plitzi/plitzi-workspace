@@ -13,12 +13,7 @@ const deleteVariableTool: McpTool = {
   adapterName: 'deleteVariable',
   mcpDefinition: {
     title: 'Delete Variable',
-    description:
-      'Delete a schema variable.\n\n' +
-      '━━ REQUIRED INPUT ━━\n' +
-      'name: Name of the variable to delete\n\n' +
-      '━━ WARNING ━━\n' +
-      'This permanently removes the variable. Any elements using it will lose the reference.',
+    description: 'Delete a schema variable.',
     inputSchema
   },
   definition: {

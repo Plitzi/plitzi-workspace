@@ -18,13 +18,7 @@ const moveElementTool: McpTool = {
   adapterName: 'moveElement',
   mcpDefinition: {
     title: 'Move Element',
-    description:
-      'Move an element to a different parent or position.\n\n' +
-      '━━ REQUIRED INPUT ━━\n' +
-      'elementId: ID of the element to move\n' +
-      'toParentId: ID of the new parent element\n\n' +
-      '━━ OPTIONAL INPUT ━━\n' +
-      'dropPosition: Position within the new parent (top | bottom | left | right | inside | custom)',
+    description: 'Move an element to a different parent or position.',
     inputSchema
   },
   definition: {

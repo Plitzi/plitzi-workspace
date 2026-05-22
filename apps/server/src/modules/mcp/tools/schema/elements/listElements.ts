@@ -11,12 +11,7 @@ const listElementsTool: McpTool = {
   adapterName: 'listElements',
   mcpDefinition: {
     title: 'List Elements',
-    description:
-      'List all elements in the current space.\n\n' +
-      '━━ INPUT ━━\n' +
-      'No input required — uses the current space and environment from context.\n\n' +
-      '━━ OUTPUT ━━\n' +
-      'Returns an array of elements with: id, type, label, parentId.',
+    description: 'List all element IDs, types and labels for the current space.',
     inputSchema
   },
   definition: {

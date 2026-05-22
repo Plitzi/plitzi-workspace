@@ -16,13 +16,7 @@ const deleteStyleSelectorTool: McpTool = {
   adapterName: 'deleteStyleSelector',
   mcpDefinition: {
     title: 'Delete Style Selector',
-    description:
-      'Delete a global CSS style selector.\n\n' +
-      '━━ REQUIRED INPUT ━━\n' +
-      'displayMode: Display mode (desktop | tablet | mobile)\n' +
-      'selector: CSS selector to delete\n\n' +
-      '━━ WARNING ━━\n' +
-      'This removes the selector from all elements using it.',
+    description: 'Delete a global CSS style selector.',
     inputSchema
   },
   definition: {

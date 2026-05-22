@@ -13,12 +13,7 @@ const deleteSegmentTool: McpTool = {
   adapterName: 'deleteSegment',
   mcpDefinition: {
     title: 'Delete Segment',
-    description:
-      'Delete a segment.\n\n' +
-      '━━ REQUIRED INPUT ━━\n' +
-      'segmentId: ID of the segment to delete\n\n' +
-      '━━ WARNING ━━\n' +
-      'This permanently removes the segment and all its contents.',
+    description: 'Delete a segment.',
     inputSchema
   },
   definition: {

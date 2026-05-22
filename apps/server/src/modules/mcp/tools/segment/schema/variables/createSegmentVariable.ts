@@ -34,14 +34,7 @@ const createSegmentVariableTool: McpTool = {
   adapterName: 'createSegmentVariable',
   mcpDefinition: {
     title: 'Create Segment Variable',
-    description:
-      'Create a schema variable inside a segment.\n\n' +
-      '━━ REQUIRED INPUT ━━\n' +
-      'segmentId: ID of the segment\n' +
-      'variable.name: Variable name\n' +
-      'variable.type: Variable type (text | number | email | password | select | select2 | checkbox | textarea | color | switch)\n' +
-      'variable.value: Default value\n' +
-      'variable.category: Category to group the variable',
+    description: 'Create a schema variable inside a segment.',
     inputSchema
   },
   definition: {

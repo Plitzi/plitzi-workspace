@@ -33,14 +33,7 @@ const updateVariableTool: McpTool = {
   adapterName: 'updateVariable',
   mcpDefinition: {
     title: 'Update Variable',
-    description:
-      'Update an existing schema variable.\n\n' +
-      '━━ REQUIRED INPUT ━━\n' +
-      'variable.name: Name of the variable to update\n\n' +
-      '━━ OPTIONAL INPUT ━━\n' +
-      'variable.type: New variable type (text | number | email | password | select | select2 | checkbox | textarea | color | switch)\n' +
-      'variable.value: New default value\n' +
-      'variable.category: New category',
+    description: 'Update an existing schema variable.',
     inputSchema
   },
   definition: {

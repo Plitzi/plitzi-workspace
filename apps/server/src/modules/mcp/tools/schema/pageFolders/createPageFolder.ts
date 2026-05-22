@@ -14,12 +14,7 @@ const createPageFolderTool: McpTool = {
   adapterName: 'createPageFolder',
   mcpDefinition: {
     title: 'Create Page Folder',
-    description:
-      'Create a new page folder to organize pages.\n\n' +
-      '━━ REQUIRED INPUT ━━\n' +
-      'name: Name of the page folder\n\n' +
-      '━━ OPTIONAL INPUT ━━\n' +
-      'parentId: Parent folder ID (omit for root level)',
+    description: 'Create a new page folder to organize pages.',
     inputSchema
   },
   definition: {

@@ -11,12 +11,7 @@ const getSchemaTool: McpTool = {
   adapterName: 'getSchema',
   mcpDefinition: {
     title: 'Get Schema',
-    description:
-      'Get the full element tree for the current space and environment.\n\n' +
-      '━━ INPUT ━━\n' +
-      'No input required — uses current space and environment from context.\n\n' +
-      '━━ OUTPUT ━━\n' +
-      'Returns the complete schema: flat (all elements), variables, settings.',
+    description: 'Get the full element tree for the current space and environment.',
     inputSchema
   },
   definition: {

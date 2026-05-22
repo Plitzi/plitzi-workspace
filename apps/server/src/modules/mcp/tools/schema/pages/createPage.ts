@@ -13,12 +13,7 @@ const createPageTool: McpTool = {
   adapterName: 'createPage',
   mcpDefinition: {
     title: 'Create Page',
-    description:
-      'Create a new page in the space.\n\n' +
-      '━━ REQUIRED INPUT ━━\n' +
-      'name: Name of the new page\n\n' +
-      '━━ OUTPUT ━━\n' +
-      'Returns the created page with its generated ID.',
+    description: 'Create a new page in the space.',
     inputSchema
   },
   definition: {

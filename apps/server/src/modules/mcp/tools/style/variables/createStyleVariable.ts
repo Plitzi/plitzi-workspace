@@ -17,12 +17,7 @@ const createStyleVariableTool: McpTool = {
   adapterName: 'createStyleVariable',
   mcpDefinition: {
     title: 'Create Style Variable',
-    description:
-      'Create a global style variable (CSS custom property).\n\n' +
-      '━━ REQUIRED INPUT ━━\n' +
-      'category: Variable category (color | spacing | typography | sizing | misc)\n' +
-      'name: Variable name (e.g. "primary", "spacing-md", "font-base")\n' +
-      'value: Variable value (hex color, px value, font name, etc.)',
+    description: 'Create a global CSS style variable (custom property).',
     inputSchema
   },
   definition: {

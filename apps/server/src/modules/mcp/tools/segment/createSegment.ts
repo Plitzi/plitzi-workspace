@@ -14,11 +14,7 @@ const createSegmentTool: McpTool = {
   adapterName: 'createSegment',
   mcpDefinition: {
     title: 'Create Segment',
-    description:
-      'Create a new segment (a reusable component with its own schema and style).\n\n' +
-      '━━ REQUIRED INPUT ━━\n' +
-      'name: Name of the segment\n' +
-      'description: Description of what the segment does',
+    description: 'Create a new segment (a reusable component with its own schema and style).',
     inputSchema
   },
   definition: {

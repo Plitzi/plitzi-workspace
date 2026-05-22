@@ -11,12 +11,7 @@ const listPluginsTool: McpTool = {
   adapterName: 'listPlugins',
   mcpDefinition: {
     title: 'List Plugins',
-    description:
-      'List all plugins available in the system.\n\n' +
-      '━━ INPUT ━━\n' +
-      'No input required.\n\n' +
-      '━━ OUTPUT ━━\n' +
-      'Returns an array of plugins with: id, name, version, description.',
+    description: 'List all plugins available in the system.',
     inputSchema
   },
   definition: {
