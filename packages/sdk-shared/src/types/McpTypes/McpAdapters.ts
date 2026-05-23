@@ -20,7 +20,6 @@ export type McpAdapter<R = any, T extends Record<string, any> = Record<string, a
 
 export type McpAdaptersSchema = {
   getSchema: McpAdapter<Schema | undefined>;
-  publishSchema: McpAdapter<{ revision: number }>;
 };
 
 export type McpAdaptersPages = {
@@ -310,7 +309,7 @@ export type McpAdaptersResources = {
 export type McpAdaptersSpace = {
   listSpaces: McpAdapter<{ id: string; name: string; permanentUrl: string; verified: boolean }[]>;
   updateSpaceSettings: McpAdapter<Schema['settings'], { path?: string; value?: string | number | boolean }>;
-  publishSpace: McpAdapter;
+  publishSpace: McpAdapter<{ revision: number }>;
 };
 
 export type McpAdapters = {

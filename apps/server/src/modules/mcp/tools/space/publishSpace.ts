@@ -14,12 +14,12 @@ const outputSchema = z.object({
     .describe('The published schema revision')
 });
 
-const publishSchemaTool: McpTool = {
-  name: 'publish_schema',
-  adapterName: 'publishSchema',
+const publishSpaceTool: McpTool = {
+  name: 'publish_space',
+  adapterName: 'publishSpace',
   mcpDefinition: {
-    title: 'Publish Schema',
-    description: 'Publish the current draft schema as a new immutable revision.',
+    title: 'Publish Space',
+    description: 'Publish the current draft space as a new immutable revision.',
     inputSchema,
     outputSchema
   },
@@ -30,4 +30,4 @@ const publishSchemaTool: McpTool = {
   }
 };
 
-export default publishSchemaTool;
+export default publishSpaceTool;

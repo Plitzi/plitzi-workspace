@@ -1,8 +1,7 @@
-import getSchemaTool from './getSchema';
 import listSpacesTool from './listSpaces';
-import publishSchemaTool from './publishSchema';
+import publishSpaceTool from './publishSpace';
 
 export * from './schema';
 export * from './style';
 
-export { getSchemaTool, listSpacesTool, publishSchemaTool };
+export { listSpacesTool, publishSpaceTool };
