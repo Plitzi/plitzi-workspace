@@ -9,7 +9,7 @@ import type {
   StyleVariableValue,
   TagType
 } from '../..';
-import type { McpPlugin, McpSegment, McpStyleSelector, McpStyleVariable } from '../McpTypes';
+import type { McpPlugin, McpSegment, McpStyleVariable } from '../McpTypes';
 import type { DropPosition, Element, PageFolder, Schema, SchemaVariable } from '../SchemaTypes';
 import type { Theme } from '../ThemeTypes';
 
@@ -89,7 +89,7 @@ export type McpAdaptersStylesVariables = {
 
 export type McpAdaptersStylesSelectors = {
   createStyleSelector: McpAdapter<
-    McpStyleSelector,
+    StyleItem,
     {
       displayMode: DisplayMode;
       selector: string;
@@ -100,7 +100,7 @@ export type McpAdaptersStylesSelectors = {
     }
   >;
   updateStyleSelector: McpAdapter<
-    McpStyleSelector,
+    StyleItem,
     {
       displayMode: DisplayMode;
       selector: string;
@@ -162,7 +162,7 @@ export type McpAdaptersSegments = {
   >;
   deleteSegmentStyleVariable: McpAdapter<boolean, { segmentId: string; category: StyleVariableCategory; name: string }>;
   addSegmentStyleSelector: McpAdapter<
-    McpStyleSelector,
+    StyleItem,
     {
       segmentId: string;
       displayMode: DisplayMode;
@@ -174,14 +174,7 @@ export type McpAdaptersSegments = {
     }
   >;
   updateSegmentStyleSelector: McpAdapter<
-    {
-      displayMode: string;
-      selector: string;
-      type?: string;
-      path?: StyleCategory;
-      style?: StyleItem['attributes'];
-      params: Record<string, unknown>;
-    },
+    StyleItem,
     {
       segmentId: string;
       displayMode: DisplayMode;

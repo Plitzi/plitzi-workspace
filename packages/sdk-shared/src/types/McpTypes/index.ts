@@ -1,14 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { AiContext, AiMode, PromptRole } from '../AITypes';
-import type {
-  DisplayMode,
-  StyleCategory,
-  StyleItem,
-  StyleVariableCategory,
-  StyleVariableValue,
-  TagType
-} from '../StyleTypes';
+import type { StyleVariableCategory, StyleVariableValue } from '../StyleTypes';
 import type { McpAdapters } from './McpAdapters';
 import type { ToolAnnotations } from '@modelcontextprotocol/sdk/types';
 import type { ZodObject } from 'zod';
@@ -25,15 +18,6 @@ export type McpStyleVariable = {
   category: StyleVariableCategory;
   name: string;
   value: StyleVariableValue;
-};
-
-export type McpStyleSelector = {
-  displayMode: DisplayMode;
-  selector: string;
-  type: TagType;
-  path?: StyleCategory;
-  style?: StyleItem['attributes'];
-  params: Record<string, unknown>;
 };
 
 export type McpSegment = {
