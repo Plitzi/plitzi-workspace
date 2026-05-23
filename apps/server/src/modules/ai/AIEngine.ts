@@ -16,12 +16,16 @@ import type {
 class AIEngine implements McpToolLifecycleHooks {
   private toolsAvailables = new Map<string, McpTool>();
   private toolsAvailablesMap = new Map<string, AiMode[]>();
+  public ctx: AiContext;
+
   constructor(
     private readonly mode: AiMode | undefined,
     private readonly mcpAdapters: Partial<McpAdapters> | undefined,
     public readonly callbacks: StreamCallbacks,
-    public readonly ctx: AiContext
-  ) {}
+    ctx: Omit<AiContext, 'mode'>
+  ) {
+    this.ctx = { ...ctx, mode: mode || 'plan' };
+  }
 
   readonly setToolsAvailables = (tools: McpTool[]) => {
     this.toolsAvailables = new Map([...Object.values(defaultTools), ...tools].map(t => [t.name, t]));
