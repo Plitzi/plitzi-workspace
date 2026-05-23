@@ -7,4 +7,13 @@ import moveResourceTool from './moveResource';
 import publishSchemaTool from './publishSchema';
 import removeResourceTool from './removeResource';
 
-export { addResourceTool, getResourceTool, getResourcesTool, getSchemaTool, listSpacesTool, moveResourceTool, publishSchemaTool, removeResourceTool };
+export {
+  addResourceTool,
+  getResourceTool,
+  getResourcesTool,
+  getSchemaTool,
+  listSpacesTool,
+  moveResourceTool,
+  publishSchemaTool,
+  removeResourceTool
+};

@@ -41,7 +41,7 @@ const outputSchema = z.object({
 
 const createVariableTool: McpTool = {
   name: 'create_variable',
-  adapterName: 'createVariable',
+  adapterName: 'createSchemaVariable',
   mcpDefinition: {
     title: 'Create Variable',
     description: 'Create a schema variable (a dynamic value used in elements).',

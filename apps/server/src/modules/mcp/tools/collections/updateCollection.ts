@@ -23,10 +23,13 @@ const updateCollectionTool: McpTool = {
         .describe('Fields to update')
     }),
     outputSchema: z.object({
-      data: z.object({
-        id: z.string().describe('Collection ID'),
-        name: z.string().describe('Collection name')
-      }).catchall(z.unknown()).describe('The updated collection')
+      data: z
+        .object({
+          id: z.string().describe('Collection ID'),
+          name: z.string().describe('Collection name')
+        })
+        .catchall(z.unknown())
+        .describe('The updated collection')
     })
   },
   definition: {

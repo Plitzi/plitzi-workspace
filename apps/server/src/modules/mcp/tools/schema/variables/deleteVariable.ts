@@ -14,7 +14,7 @@ const outputSchema = z.object({
 
 const deleteVariableTool: McpTool = {
   name: 'delete_variable',
-  adapterName: 'deleteVariable',
+  adapterName: 'deleteSchemaVariable',
   mcpDefinition: {
     title: 'Delete Variable',
     description: 'Delete a schema variable.',

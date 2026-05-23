@@ -41,7 +41,7 @@ const outputSchema = z.object({
 
 const updateVariableTool: McpTool = {
   name: 'update_variable',
-  adapterName: 'updateVariable',
+  adapterName: 'updateSchemaVariable',
   mcpDefinition: {
     title: 'Update Variable',
     description: 'Update an existing schema variable.',

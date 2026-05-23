@@ -940,9 +940,6 @@
     "./types/McpTypes/index": {
       "types": "./dist/types/McpTypes/index.d.ts"
     },
-    "./types/McpTypes": {
-      "types": "./dist/types/McpTypes.d.ts"
-    },
     "./types/NavigationTypes": {
       "types": "./dist/types/NavigationTypes.d.ts"
     },
