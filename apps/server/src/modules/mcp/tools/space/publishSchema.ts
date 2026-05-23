@@ -24,9 +24,9 @@ const publishSchemaTool: McpTool = {
     outputSchema
   },
   definition: {
-    operationType: 'admin',
+    operationType: 'write',
     parameters: zodToJsonSchema(inputSchema),
-    allowedModes: getAllowedModes('admin')
+    allowedModes: getAllowedModes('write')
   }
 };
 

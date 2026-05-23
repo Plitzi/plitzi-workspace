@@ -4,7 +4,7 @@ import type { AiContext, AiMode, PromptRole } from '../AITypes';
 import type { StyleVariableCategory, StyleVariableValue } from '../StyleTypes';
 import type { McpAdapters } from './McpAdapters';
 import type { ToolAnnotations } from '@modelcontextprotocol/sdk/types';
-import type { ZodObject } from 'zod';
+import type { ZodType } from 'zod';
 
 export * from './McpAdapters';
 
@@ -28,7 +28,7 @@ export type McpSegment = {
 
 // Backend
 
-export type ToolOperationType = 'read' | 'write' | 'admin';
+export type ToolOperationType = 'read' | 'write';
 
 export type McpPromptHandlerResult = {
   messages: { role: Exclude<PromptRole, 'system'>; content: { type: 'text'; text: string } }[];
@@ -80,8 +80,8 @@ export type McpTool = {
   mcpDefinition: {
     title?: string;
     description: string;
-    inputSchema?: ZodObject<any>;
-    outputSchema?: ZodObject<any>;
+    inputSchema?: ZodType<any, any, any>;
+    outputSchema?: ZodType<any, any, any>;
     annotations?: ToolAnnotations;
   };
   definition: {

@@ -67,11 +67,7 @@ export const zodToJsonSchema = (schema: unknown): Record<string, unknown> => {
 };
 
 export const getAllowedModes = (operationType: ToolOperationType): AiMode[] => {
-  if (operationType === 'write' || operationType === 'admin') {
-    return ['build'];
-  }
-
-  return ['plan', 'build'];
+  return operationType === 'read' ? ['plan'] : ['plan', 'build'];
 };
 
 export const toolResponseOk = (data: unknown) => ({

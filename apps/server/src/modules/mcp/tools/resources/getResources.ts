@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { getAllowedModes, zodToJsonSchema } from '../../../helpers';
+import { getAllowedModes, zodToJsonSchema } from '../../helpers';
 
 import type { McpTool } from '@plitzi/sdk-shared';
 
