@@ -225,8 +225,8 @@ const ContainerSettings = () => {
               label="State Storage"
               placeholder="None"
             >
-              <option value="local">Local Storage</option>
-              <option value="session">Session Storage</option>
+              <option value="localStorage">Local Storage</option>
+              <option value="sessionStorage">Session Storage</option>
             </Select>
           )}
         </div>

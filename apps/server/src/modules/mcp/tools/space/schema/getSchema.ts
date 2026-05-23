@@ -8,7 +8,7 @@ const inputSchema = z.object({});
 
 const schemaVariableSchema = z.object({
   name: z.string().describe('Variable name'),
-  category: z.string().describe('Variable category'),
+  category: z.string().nullable().describe('Variable category'),
   type: z
     .enum(['text', 'number', 'email', 'password', 'select', 'select2', 'checkbox', 'textarea', 'color', 'switch'])
     .describe('Variable type'),
@@ -27,14 +27,14 @@ const pageFolderSchema = z.object({
 
 const elementSchema = z.object({
   id: z.string().describe('Element ID'),
-  attributes: z.record(z.string(), z.unknown()).describe('Element attributes'),
+  attributes: z.unknown().describe('Element attributes'),
   definition: z
     .object({
       rootId: z.string().describe('Root element ID'),
       label: z.string().describe('Element label'),
       type: z.string().describe('Element type'),
-      parentId: z.string().optional().describe('Parent element ID'),
-      items: z.array(z.string()).optional().describe('Child element IDs'),
+      parentId: z.string().nullable().optional().describe('Parent element ID'),
+      items: z.array(z.string()).nullable().optional().describe('Child element IDs'),
       styleSelectors: z.record(z.string(), z.string()).describe('Style selector map'),
       runtime: z.enum(['server', 'client', 'shared']).optional().describe('Rendering runtime'),
       loadStrategy: z.enum(['eager', 'lazy', 'visible']).optional().describe('Load strategy')
@@ -43,47 +43,46 @@ const elementSchema = z.object({
 });
 
 const outputSchema = z.object({
-  data: z
+  flat: z.record(z.string(), elementSchema).describe('Element map keyed by ID'),
+  definition: z
     .object({
-      flat: z.record(z.string(), elementSchema).describe('Element map keyed by ID'),
-      definition: z
-        .object({
-          name: z.string().describe('Schema name'),
-          permanentUrl: z.string().describe('Permanent URL')
-        })
-        .describe('Schema metadata'),
-      variables: z.array(schemaVariableSchema).describe('Schema variables'),
-      settings: z
-        .object({
-          customCss: z.string().describe('Custom CSS'),
-          keepState: z.boolean().optional().describe('Keep state across navigation'),
-          stateStorage: z.enum(['localStorage', 'sessionStorage']).optional().describe('State storage mechanism'),
-          userProvider: z.enum(['auth0', 'basic', 'custom', '']).optional().describe('User provider'),
-          auth0Domain: z.string().optional(),
-          auth0ClientId: z.string().optional(),
-          tokenStorage: z.enum(['localStorage', 'sessionStorage', '']).optional().describe('Token storage'),
-          loginUrl: z.string().optional(),
-          userUrl: z.string().optional(),
-          refreshUrl: z.string().optional(),
-          logoutUrl: z.string().optional(),
-          detailsPath: z.string().optional(),
-          tokenPath: z.string().optional(),
-          expirationTimePath: z.string().optional()
-        })
-        .describe('Schema settings'),
-      rsc: z
-        .object({
-          enabled: z.boolean().optional().describe('RSC enabled'),
-          transport: z.enum(['json', 'stream']).optional().describe('RSC transport protocol'),
-          path: z.string().optional().describe('RSC endpoint path')
-        })
-        .optional()
-        .describe('React Server Components config'),
-      pages: z.array(z.string()).describe('Page element IDs'),
-      pageFolders: z.array(pageFolderSchema).describe('Page folders')
+      name: z.string().describe('Schema name'),
+      permanentUrl: z.string().describe('Permanent URL')
     })
-    .nullable()
-    .describe('The full element tree, or null if not found')
+    .describe('Schema metadata'),
+  variables: z.array(schemaVariableSchema).describe('Schema variables'),
+  settings: z
+    .object({
+      customCss: z.string().describe('Custom CSS'),
+      keepState: z.boolean().optional().describe('Keep state across navigation'),
+      stateStorage: z
+        .enum(['localStorage', 'sessionStorage', ''])
+        .nullable()
+        .optional()
+        .describe('State storage mechanism'),
+      userProvider: z.enum(['auth0', 'basic', 'custom', '']).optional().describe('User provider'),
+      auth0Domain: z.string().optional(),
+      auth0ClientId: z.string().optional(),
+      tokenStorage: z.enum(['localStorage', 'sessionStorage', '']).optional().describe('Token storage'),
+      loginUrl: z.string().optional(),
+      userUrl: z.string().optional(),
+      refreshUrl: z.string().optional(),
+      logoutUrl: z.string().optional(),
+      detailsPath: z.string().optional(),
+      tokenPath: z.string().optional(),
+      expirationTimePath: z.string().optional()
+    })
+    .describe('Schema settings'),
+  rsc: z
+    .object({
+      enabled: z.boolean().optional().describe('RSC enabled'),
+      transport: z.enum(['json', 'stream']).optional().describe('RSC transport protocol'),
+      path: z.string().optional().describe('RSC endpoint path')
+    })
+    .optional()
+    .describe('React Server Components config'),
+  pages: z.array(z.string()).describe('Page element IDs'),
+  pageFolders: z.array(pageFolderSchema).describe('Page folders')
 });
 
 const getSchemaTool: McpTool = {

@@ -32,12 +32,12 @@ const StateManagerContextProvider = ({
   const [settings] = useStore('schema.settings');
 
   const getCache = useCallback(
-    (path?: string, defaultValue: Record<string, unknown> = {}, storeMode = '') => {
+    (path?: string, defaultValue: Record<string, unknown> = {}, storeMode?: 'localStorage' | 'sessionStorage') => {
       let serializedState: Record<string, unknown> | string | null = defaultValue;
       try {
-        if (storeMode === 'local') {
+        if (storeMode === 'localStorage') {
           serializedState = localStorage.getItem(storageId);
-        } else if (storeMode === 'session') {
+        } else if (storeMode === 'sessionStorage') {
           serializedState = sessionStorage.getItem(storageId);
         }
 
@@ -59,7 +59,7 @@ const StateManagerContextProvider = ({
 
   const [state, setState] = useState<Record<string, unknown>>(() => {
     const keepState: boolean = get(settings, 'keepState', false);
-    const storeMode: string = get(settings, 'stateStorage', '');
+    const storeMode: 'localStorage' | 'sessionStorage' | undefined = get(settings, 'stateStorage', undefined);
     if (keepState && storeMode) {
       return { ...(stateProp ?? {}), ...getCache('', {}, storeMode) };
     }
@@ -90,9 +90,9 @@ const StateManagerContextProvider = ({
 
       try {
         const serializedState = JSON.stringify(newState);
-        if (storeMode === 'local') {
+        if (storeMode === 'localStorage') {
           localStorage.setItem(storageId, serializedState);
-        } else if (storeMode === 'session') {
+        } else if (storeMode === 'sessionStorage') {
           sessionStorage.setItem(storageId, serializedState);
         }
       } catch {
@@ -107,10 +107,10 @@ const StateManagerContextProvider = ({
   const clearCache = useCallback(
     (storeMode = '') => {
       try {
-        if (storeMode === 'local') {
+        if (storeMode === 'localStorage') {
           localStorage.removeItem(storageId);
           setState({});
-        } else if (storeMode === 'session') {
+        } else if (storeMode === 'sessionStorage') {
           sessionStorage.removeItem(storageId);
           setState({});
         }
@@ -122,7 +122,7 @@ const StateManagerContextProvider = ({
   );
 
   const setStateByKey = useCallback(
-    (key: string, value: unknown, storeMode = '') => {
+    (key: string, value: unknown, storeMode?: 'localStorage' | 'sessionStorage') => {
       setState(state => {
         const newState = produce(state, draft => {
           set(draft, key, value);

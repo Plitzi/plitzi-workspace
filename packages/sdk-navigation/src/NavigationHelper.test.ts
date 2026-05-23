@@ -200,7 +200,7 @@ describe('Testing NavigationHelper', () => {
         unauthorizedPageRedirect: '64b9102cf6359d8ddeae853c',
         seoEnabled: true,
         keepState: true,
-        stateStorage: 'local',
+        stateStorage: 'localStorage',
         seoPageTitle: 'Home',
         seoPageDescription: ''
       }
@@ -233,7 +233,7 @@ describe('Testing NavigationHelper', () => {
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '64b9102cf6359d8ddeae853c',
         keepState: true,
-        stateStorage: 'local',
+        stateStorage: 'localStorage',
         folder: '6516b927960079dafdade5c6',
         seoEnabled: true,
         seoPageTitle: 'Plitzi - Space Builder',
