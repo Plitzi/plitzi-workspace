@@ -46,7 +46,11 @@ export type McpPrompt = {
   handler: McpPromptHandler;
 };
 
-export type McpToolHandlerResult = { content: { type: 'text'; text: string }[]; isError?: true };
+export type McpToolHandlerResult = {
+  content: { type: 'text'; text: string }[];
+  structuredContent?: Record<string, unknown>;
+  isError?: true;
+};
 
 export type ToolCallEvent = {
   name: string;

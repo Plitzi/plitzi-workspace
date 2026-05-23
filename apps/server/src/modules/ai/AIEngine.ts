@@ -50,7 +50,7 @@ class AIEngine implements McpToolLifecycleHooks {
     let resultParsed: unknown = undefined;
 
     try {
-      resultParsed = JSON.parse(result.content[0]?.text);
+      resultParsed = result.structuredContent || JSON.parse(result.content[0]?.text);
     } catch {
       // Nothing to do
     }

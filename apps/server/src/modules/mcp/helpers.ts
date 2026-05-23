@@ -1,6 +1,13 @@
 import { z } from 'zod';
 
-import type { AiContext, AiMode, McpAdapter, McpToolHandler, ToolOperationType } from '@plitzi/sdk-shared';
+import type {
+  AiContext,
+  AiMode,
+  McpAdapter,
+  McpToolHandler,
+  McpToolHandlerResult,
+  ToolOperationType
+} from '@plitzi/sdk-shared';
 
 export const zodToJsonSchema = (schema: unknown): Record<string, unknown> => {
   if (schema instanceof z.ZodObject) {
@@ -67,20 +74,28 @@ export const zodToJsonSchema = (schema: unknown): Record<string, unknown> => {
 };
 
 export const getAllowedModes = (operationType: ToolOperationType): AiMode[] => {
-  return operationType === 'read' ? ['plan'] : ['plan', 'build'];
+  return operationType === 'write' ? ['build'] : ['plan', 'build'];
 };
 
-export const toolResponseOk = (data: unknown) => ({
-  content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }]
-});
+export const toolResponseOk = (data: unknown, useStructuredContent = false): McpToolHandlerResult => {
+  const isStructured = useStructuredContent && typeof data === 'object' && data !== null && !Array.isArray(data);
+  if (isStructured) {
+    return { content: [], structuredContent: data as Record<string, unknown> };
+  }
 
-export const toolResponseErr = (error: Error | string) => ({
+  return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] };
+};
+
+export const toolResponseErr = (error: Error | string): McpToolHandlerResult => ({
   content: [{ type: 'text' as const, text: error instanceof Error ? error.message : error }],
   isError: true as const
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const adapterWrapper = (adapterName: string, handler?: McpAdapter<any, any>): McpToolHandler => {
+export const adapterWrapper = (
+  adapterName: string,
+  handler?: McpAdapter,
+  useStructuredContent = false
+): McpToolHandler => {
   return async (args: Record<string, unknown>, ctx: AiContext) => {
     if (!handler) {
       return toolResponseErr(`Adapter ${adapterName} not found`);
@@ -91,6 +106,6 @@ export const adapterWrapper = (adapterName: string, handler?: McpAdapter<any, an
       return toolResponseErr(result.error);
     }
 
-    return toolResponseOk(result.data);
+    return toolResponseOk(result.data, useStructuredContent);
   };
 };
