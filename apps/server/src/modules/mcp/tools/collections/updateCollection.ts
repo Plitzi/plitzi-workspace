@@ -18,9 +18,15 @@ const updateCollectionTool: McpTool = {
           namePlural: z.string().optional(),
           description: z.string().optional(),
           privacy: z.enum(['public', 'private']).optional(),
-          fields: z.record(z.any()).optional()
+          fields: z.record(z.string(), z.unknown()).optional()
         })
         .describe('Fields to update')
+    }),
+    outputSchema: z.object({
+      data: z.object({
+        id: z.string().describe('Collection ID'),
+        name: z.string().describe('Collection name')
+      }).catchall(z.unknown()).describe('The updated collection')
     })
   },
   definition: {
@@ -34,7 +40,7 @@ const updateCollectionTool: McpTool = {
             namePlural: z.string().optional(),
             description: z.string().optional(),
             privacy: z.enum(['public', 'private']).optional(),
-            fields: z.record(z.any()).optional()
+            fields: z.record(z.string(), z.unknown()).optional()
           })
           .describe('Fields to update')
       })

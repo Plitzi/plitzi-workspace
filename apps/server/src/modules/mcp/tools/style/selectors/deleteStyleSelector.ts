@@ -11,13 +11,18 @@ const inputSchema = z.object({
   selector: z.string().describe('CSS selector to delete')
 });
 
+const outputSchema = z.object({
+  data: z.literal(true).describe('Always true on successful deletion')
+});
+
 const deleteStyleSelectorTool: McpTool = {
   name: 'delete_style_selector',
   adapterName: 'deleteStyleSelector',
   mcpDefinition: {
     title: 'Delete Style Selector',
     description: 'Delete a global CSS style selector.',
-    inputSchema
+    inputSchema,
+    outputSchema
   },
   definition: {
     operationType: 'write',

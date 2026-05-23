@@ -12,8 +12,20 @@ const updateCollectionRecordTool: McpTool = {
     description: 'Update an existing record in a collection.',
     inputSchema: z.object({
       recordId: z.string().describe('Record ID'),
-      values: z.record(z.union([z.string(), z.number(), z.boolean()])).optional().describe('Record values'),
+      values: z
+        .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
+        .optional()
+        .describe('Record values'),
       status: z.enum(['draft', 'published', 'archived']).optional().describe('Record status')
+    }),
+    outputSchema: z.object({
+      data: z
+        .object({
+          id: z.string().describe('Record ID'),
+          collectionId: z.string().describe('Collection ID')
+        })
+        .catchall(z.unknown())
+        .describe('The updated record')
     })
   },
   definition: {
@@ -21,7 +33,10 @@ const updateCollectionRecordTool: McpTool = {
     parameters: zodToJsonSchema(
       z.object({
         recordId: z.string().describe('Record ID'),
-        values: z.record(z.union([z.string(), z.number(), z.boolean()])).optional().describe('Record values'),
+        values: z
+          .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
+          .optional()
+          .describe('Record values'),
         status: z.enum(['draft', 'published', 'archived']).optional().describe('Record status')
       })
     ),

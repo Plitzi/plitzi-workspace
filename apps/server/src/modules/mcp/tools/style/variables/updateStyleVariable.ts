@@ -12,13 +12,24 @@ const inputSchema = z.object({
   value: z.union([z.string(), z.number(), z.record(z.string(), z.unknown())]).describe('Variable value')
 });
 
+const outputSchema = z.object({
+  data: z
+    .object({
+      category: z.string().describe('Variable category'),
+      name: z.string().describe('Variable name'),
+      value: z.union([z.string(), z.number(), z.record(z.string(), z.string())]).describe('Variable value')
+    })
+    .describe('The updated style variable')
+});
+
 const updateStyleVariableTool: McpTool = {
   name: 'update_style_variable',
   adapterName: 'updateStyleVariable',
   mcpDefinition: {
     title: 'Update Style Variable',
     description: 'Update an existing global style variable.',
-    inputSchema
+    inputSchema,
+    outputSchema
   },
   definition: {
     operationType: 'write',

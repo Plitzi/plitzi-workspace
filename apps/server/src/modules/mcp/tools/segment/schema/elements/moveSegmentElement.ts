@@ -14,13 +14,18 @@ const inputSchema = z.object({
     .describe('Position within the new parent')
 });
 
+const outputSchema = z.object({
+  data: z.literal(true).describe('Always true on successful move')
+});
+
 const moveSegmentElementTool: McpTool = {
   name: 'move_segment_element',
   adapterName: 'moveSegmentElement',
   mcpDefinition: {
     title: 'Move Segment Element',
     description: 'Move an element inside a segment to a new position.',
-    inputSchema
+    inputSchema,
+    outputSchema
   },
   definition: {
     operationType: 'write',

@@ -13,13 +13,18 @@ const inputSchema = z.object({
     .describe('Position within the new parent')
 });
 
+const outputSchema = z.object({
+  data: z.literal(true).describe('Always true on successful move')
+});
+
 const moveElementTool: McpTool = {
   name: 'move_element',
   adapterName: 'moveElement',
   mcpDefinition: {
     title: 'Move Element',
     description: 'Move an element to a different parent or position.',
-    inputSchema
+    inputSchema,
+    outputSchema
   },
   definition: {
     operationType: 'write',

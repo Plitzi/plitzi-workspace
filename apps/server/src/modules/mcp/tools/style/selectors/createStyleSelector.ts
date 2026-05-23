@@ -16,13 +16,25 @@ const inputSchema = z.object({
   params: z.record(z.string(), z.unknown()).optional().describe('Additional parameters')
 });
 
+const outputSchema = z.object({
+  data: z
+    .object({
+      displayMode: z.string().describe('Display mode'),
+      selector: z.string().describe('CSS selector'),
+      type: z.string().describe('Selector type')
+    })
+    .catchall(z.unknown())
+    .describe('The created style selector')
+});
+
 const createStyleSelectorTool: McpTool = {
   name: 'create_style_selector',
   adapterName: 'createStyleSelector',
   mcpDefinition: {
     title: 'Create Style Selector',
     description: 'Create a global CSS style selector.',
-    inputSchema
+    inputSchema,
+    outputSchema
   },
   definition: {
     operationType: 'write',

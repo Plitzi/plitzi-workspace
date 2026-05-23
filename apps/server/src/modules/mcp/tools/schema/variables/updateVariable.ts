@@ -28,13 +28,25 @@ const inputSchema = z.object({
     .describe('Variable fields to update')
 });
 
+const outputSchema = z.object({
+  data: z
+    .object({
+      name: z.string().describe('Variable name'),
+      type: z.string().describe('Variable type'),
+      value: z.string().describe('Variable value'),
+      category: z.string().describe('Variable category')
+    })
+    .describe('The updated variable')
+});
+
 const updateVariableTool: McpTool = {
   name: 'update_variable',
   adapterName: 'updateVariable',
   mcpDefinition: {
     title: 'Update Variable',
     description: 'Update an existing schema variable.',
-    inputSchema
+    inputSchema,
+    outputSchema
   },
   definition: {
     operationType: 'write',

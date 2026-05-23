@@ -29,13 +29,25 @@ const inputSchema = z.object({
     .describe('Variable to create')
 });
 
+const outputSchema = z.object({
+  data: z
+    .object({
+      name: z.string().describe('Variable name'),
+      type: z.string().describe('Variable type'),
+      value: z.string().describe('Variable value'),
+      category: z.string().describe('Variable category')
+    })
+    .describe('The created segment variable')
+});
+
 const createSegmentVariableTool: McpTool = {
   name: 'create_segment_variable',
   adapterName: 'createSegmentVariable',
   mcpDefinition: {
     title: 'Create Segment Variable',
     description: 'Create a schema variable inside a segment.',
-    inputSchema
+    inputSchema,
+    outputSchema
   },
   definition: {
     operationType: 'write',

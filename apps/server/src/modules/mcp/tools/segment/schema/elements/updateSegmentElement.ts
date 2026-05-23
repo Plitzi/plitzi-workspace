@@ -15,13 +15,23 @@ const inputSchema = z.object({
     .describe('Fields to update')
 });
 
+const outputSchema = z.object({
+  data: z
+    .object({
+      id: z.string().describe('Element ID')
+    })
+    .catchall(z.unknown())
+    .describe('The updated segment element')
+});
+
 const updateSegmentElementTool: McpTool = {
   name: 'update_segment_element',
   adapterName: 'updateSegmentElement',
   mcpDefinition: {
     title: 'Update Segment Element',
     description: 'Update an element inside a segment.',
-    inputSchema
+    inputSchema,
+    outputSchema
   },
   definition: {
     operationType: 'write',

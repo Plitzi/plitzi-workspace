@@ -4,6 +4,23 @@ import { getAllowedModes, zodToJsonSchema } from '../../../helpers';
 
 import type { McpTool } from '@plitzi/sdk-shared';
 
+const elementSchema = z.object({
+  id: z.string().describe('Element ID'),
+  attributes: z.record(z.string(), z.unknown()).describe('Element attributes'),
+  definition: z
+    .object({
+      rootId: z.string().describe('Root element ID'),
+      label: z.string().describe('Element label'),
+      type: z.string().describe('Element type'),
+      parentId: z.string().optional().describe('Parent element ID'),
+      items: z.array(z.string()).optional().describe('Child element IDs'),
+      styleSelectors: z.record(z.string(), z.string()).describe('Style selector map'),
+      runtime: z.enum(['server', 'client', 'shared']).optional().describe('Rendering runtime'),
+      loadStrategy: z.enum(['eager', 'lazy', 'visible']).optional().describe('Load strategy')
+    })
+    .describe('Element definition')
+});
+
 const inputSchema = z.object({
   element: z
     .object({
@@ -17,13 +34,18 @@ const inputSchema = z.object({
   position: z.number().optional().describe('Zero-based insertion index within the parent')
 });
 
+const outputSchema = z.object({
+  data: elementSchema.describe('The created element')
+});
+
 const createElementTool: McpTool = {
   name: 'create_element',
   adapterName: 'createElement',
   mcpDefinition: {
     title: 'Create Element',
-    description: 'Add a new element to the schema. Returns the created element with its generated ID.',
-    inputSchema
+    description: 'Add a new element to the schema.',
+    inputSchema,
+    outputSchema
   },
   definition: {
     operationType: 'write',

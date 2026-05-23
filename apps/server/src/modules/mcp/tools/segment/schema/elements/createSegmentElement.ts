@@ -16,13 +16,23 @@ const inputSchema = z.object({
   parentId: z.string().describe('Parent element ID')
 });
 
+const outputSchema = z.object({
+  data: z
+    .object({
+      id: z.string().describe('Generated element ID')
+    })
+    .catchall(z.unknown())
+    .describe('The created segment element')
+});
+
 const createSegmentElementTool: McpTool = {
   name: 'create_segment_element',
   adapterName: 'createSegmentElement',
   mcpDefinition: {
     title: 'Create Segment Element',
     description: 'Add an element to a segment.',
-    inputSchema
+    inputSchema,
+    outputSchema
   },
   definition: {
     operationType: 'write',

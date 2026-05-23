@@ -12,13 +12,18 @@ const inputSchema = z.object({
   name: z.string().describe('Variable name to delete')
 });
 
+const outputSchema = z.object({
+  data: z.literal(true).describe('Always true on successful deletion')
+});
+
 const deleteSegmentStyleVariableTool: McpTool = {
   name: 'delete_segment_style_variable',
   adapterName: 'deleteSegmentStyleVariable',
   mcpDefinition: {
     title: 'Delete Segment Style Variable',
     description: 'Delete a style variable from a segment.',
-    inputSchema
+    inputSchema,
+    outputSchema
   },
   definition: {
     operationType: 'write',

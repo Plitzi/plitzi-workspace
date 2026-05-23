@@ -16,13 +16,25 @@ const inputSchema = z.object({
   params: z.record(z.string(), z.unknown()).optional().describe('Additional parameters')
 });
 
+const outputSchema = z.object({
+  data: z
+    .object({
+      displayMode: z.string().describe('Display mode'),
+      selector: z.string().describe('CSS selector'),
+      type: z.string().describe('Selector type')
+    })
+    .catchall(z.unknown())
+    .describe('The updated style selector')
+});
+
 const updateStyleSelectorTool: McpTool = {
   name: 'update_style_selector',
   adapterName: 'updateStyleSelector',
   mcpDefinition: {
     title: 'Update Style Selector',
     description: 'Update an existing global CSS style selector.',
-    inputSchema
+    inputSchema,
+    outputSchema
   },
   definition: {
     operationType: 'write',
