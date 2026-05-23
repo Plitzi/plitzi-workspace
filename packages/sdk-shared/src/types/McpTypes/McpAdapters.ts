@@ -2,6 +2,7 @@
 import type {
   AiContext,
   DisplayMode,
+  Resource,
   StyleCategory,
   StyleItem,
   StyleVariableCategory,
@@ -301,10 +302,17 @@ export type McpAdaptersStylesSelectors = {
 //   deleteCollectionRecord: McpAdapter<boolean, { collectionId: string; recordId: string }>;
 // };
 
-// export type McpAdaptersResources = {
-//   addTemplate: McpAdapter;
-//   getResources: McpAdapter;
-// };
+export type McpAdaptersResources = {
+  // addTemplate: McpAdapter;
+  getResources: McpAdapter;
+  getResource: McpAdapter<Resource | undefined, { identifier: string; cdnIdentifier: string }>;
+  addResource: McpAdapter<
+    Resource | undefined,
+    { url: string; cdnIdentifier: string; filename?: string; type?: string; prefix?: string; compression?: string }
+  >;
+  moveResource: McpAdapter<Resource | undefined, { identifier: string; cdnIdentifier: string; prefix: string }>;
+  removeResource: McpAdapter<{ id: string } | undefined, { identifier: string; cdnIdentifier: string }>;
+};
 
 export type McpAdaptersSpace = {
   listSpaces: McpAdapter<{ id: string; name: string; permanentUrl: string; verified: boolean }[]>;
@@ -335,5 +343,5 @@ export type McpAdapters = {
   // McpAdaptersSegments &
   // McpAdaptersPlugins &
   // McpAdaptersCollections &
-  // McpAdaptersResources &
+  McpAdaptersResources &
   McpAdaptersSpace;

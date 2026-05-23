@@ -1,4 +1,13 @@
-export { listSpacesTool, getSchemaTool, publishSchemaTool } from './space';
+export {
+  addResourceTool,
+  getResourceTool,
+  getResourcesTool,
+  getSchemaTool,
+  listSpacesTool,
+  moveResourceTool,
+  publishSchemaTool,
+  removeResourceTool
+} from './space';
 
 export {
   // elements
