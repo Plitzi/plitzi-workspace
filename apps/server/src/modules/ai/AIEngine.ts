@@ -106,6 +106,10 @@ class AIEngine implements McpToolLifecycleHooks {
       `tool done: ${name} ms=${Date.now() - t0} result=${JSON.stringify(result).slice(0, 200)}`
     );
 
+    if (result.isError) {
+      this.callbacks.onLog?.('error', `tool failed: ${name} error=${result.content[0]?.text ?? 'unknown'}`);
+    }
+
     await this.after(name, args, result);
 
     return result;
@@ -135,6 +139,10 @@ class AIEngine implements McpToolLifecycleHooks {
       'debug',
       `tool done: ${name} ms=${Date.now() - t0} result=${JSON.stringify(result).slice(0, 200)}`
     );
+
+    if (result.isError) {
+      this.callbacks.onLog?.('error', `tool failed: ${name} error=${result.content[0]?.text ?? 'unknown'}`);
+    }
 
     await this.after(name, args, result);
 
