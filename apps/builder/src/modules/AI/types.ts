@@ -1,9 +1,4 @@
-import type { Theme } from '@plitzi/sdk-shared';
-
-export type AiRole = 'user' | 'assistant';
-export type AiMode = 'plan' | 'build';
-export type AiEffort = 'auto' | 'low' | 'medium' | 'high';
-export type AIToolStatus = 'running' | 'failed' | 'done';
+import type { AiMode, AiRole, AIToolStatus, Theme } from '@plitzi/sdk-shared';
 
 export type AiAttachment = {
   id: string;

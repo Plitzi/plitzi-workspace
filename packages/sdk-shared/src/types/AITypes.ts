@@ -3,6 +3,9 @@ import type { ToolCallEvent } from './McpTypes';
 
 export type PromptRole = 'user' | 'assistant' | 'system';
 export type AiMode = 'plan' | 'build';
+export type AiRole = 'user' | 'assistant';
+export type AiEffort = 'auto' | 'low' | 'medium' | 'high';
+export type AIToolStatus = 'running' | 'failed' | 'done';
 
 export type AiUsage = {
   inputTokens: number;
