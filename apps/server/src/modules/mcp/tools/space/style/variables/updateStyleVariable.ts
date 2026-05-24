@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { StyleVariableCategory } from '@plitzi/sdk-shared';
 
-import { getAllowedModes, zodToJsonSchema } from '../../../../helpers';
+import { getAllowedModes } from '../../../../helpers';
 
 import type { McpTool } from '@plitzi/sdk-shared';
 
@@ -32,8 +32,6 @@ const updateStyleVariableTool: McpTool = {
     outputSchema
   },
   definition: {
-    operationType: 'write',
-    parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('write')
   }
 };

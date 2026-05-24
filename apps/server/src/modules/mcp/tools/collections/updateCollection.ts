@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { getAllowedModes, zodToJsonSchema } from '../../helpers';
+import { getAllowedModes } from '../../helpers';
 
 import type { McpTool } from '@plitzi/sdk-shared';
 
@@ -33,21 +33,6 @@ const updateCollectionTool: McpTool = {
     })
   },
   definition: {
-    operationType: 'write',
-    parameters: zodToJsonSchema(
-      z.object({
-        collectionId: z.string().describe('Collection ID'),
-        updates: z
-          .object({
-            name: z.string().optional(),
-            namePlural: z.string().optional(),
-            description: z.string().optional(),
-            privacy: z.enum(['public', 'private']).optional(),
-            fields: z.record(z.string(), z.unknown()).optional()
-          })
-          .describe('Fields to update')
-      })
-    ),
     allowedModes: getAllowedModes('write')
   }
 };

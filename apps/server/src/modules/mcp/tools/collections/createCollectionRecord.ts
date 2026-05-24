@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { getAllowedModes, zodToJsonSchema } from '../../helpers';
+import { getAllowedModes } from '../../helpers';
 
 import type { McpTool } from '@plitzi/sdk-shared';
 
@@ -26,14 +26,6 @@ const createCollectionRecordTool: McpTool = {
     })
   },
   definition: {
-    operationType: 'write',
-    parameters: zodToJsonSchema(
-      z.object({
-        collectionId: z.string().describe('Collection ID'),
-        values: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).describe('Record values'),
-        status: z.enum(['draft', 'published']).optional().describe('Record status')
-      })
-    ),
     allowedModes: getAllowedModes('write')
   }
 };

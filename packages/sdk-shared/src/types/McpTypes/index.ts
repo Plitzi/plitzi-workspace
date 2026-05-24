@@ -89,9 +89,7 @@ export type McpTool = {
     annotations?: ToolAnnotations;
   };
   definition: {
-    parameters: Record<string, unknown>;
     allowedModes: AiMode[];
-    operationType: ToolOperationType;
   };
 } & ({ adapterName: keyof McpAdapters } | { adapterName?: undefined; handler: McpToolHandler });
 

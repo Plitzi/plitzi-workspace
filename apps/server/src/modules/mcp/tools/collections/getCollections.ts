@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { getAllowedModes, zodToJsonSchema } from '../../helpers';
+import { getAllowedModes } from '../../helpers';
 
 import type { McpTool } from '@plitzi/sdk-shared';
 
@@ -16,8 +16,6 @@ const getCollectionsTool: McpTool = {
     })
   },
   definition: {
-    operationType: 'read',
-    parameters: zodToJsonSchema(z.object({})),
     allowedModes: getAllowedModes('read')
   }
 };

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { getAllowedModes, zodToJsonSchema } from '../../helpers';
+import { getAllowedModes } from '../../helpers';
 
 import type { McpTool } from '@plitzi/sdk-shared';
 
@@ -20,14 +20,6 @@ const getCollectionRecordsTool: McpTool = {
     })
   },
   definition: {
-    operationType: 'read',
-    parameters: zodToJsonSchema(
-      z.object({
-        collectionId: z.string().describe('Collection ID'),
-        filter: z.record(z.string(), z.unknown()).optional().describe('Filter criteria'),
-        limit: z.number().optional().describe('Limit number of results')
-      })
-    ),
     allowedModes: getAllowedModes('read')
   }
 };

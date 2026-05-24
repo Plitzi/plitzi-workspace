@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { getAllowedModes, zodToJsonSchema } from '../../../../helpers';
+import { getAllowedModes } from '../../../../helpers';
 
 import type { McpTool } from '@plitzi/sdk-shared';
 
@@ -47,8 +47,6 @@ const updateElementTool: McpTool = {
     outputSchema
   },
   definition: {
-    operationType: 'write',
-    parameters: zodToJsonSchema(inputSchema),
     allowedModes: getAllowedModes('write')
   }
 };
