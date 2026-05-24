@@ -64,6 +64,41 @@ class AIEngine implements McpToolLifecycleHooks {
     return Promise.resolve();
   };
 
+  private readonly validateToolInput = (
+    name: string,
+    args: Record<string, unknown>
+  ): { success: true; data: Record<string, unknown> } | { success: false; error: string } => {
+    const tool = this.toolsAvailables.get(name);
+    if (!tool || !tool.mcpDefinition.inputSchema) {
+      return { success: true, data: args };
+    }
+
+    const parsed = tool.mcpDefinition.inputSchema.safeParse(args);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.message };
+    }
+
+    return { success: true, data: parsed.data as Record<string, unknown> };
+  };
+
+  private readonly validateToolOutput = (name: string, result: McpToolHandlerResult): string | undefined => {
+    const tool = this.toolsAvailables.get(name);
+    if (!tool || !tool.mcpDefinition.outputSchema || result.isError) {
+      return undefined;
+    }
+
+    if (!result.structuredContent) {
+      return `Tool '${name}' has an output schema but no structured content was provided`;
+    }
+
+    const parsed = tool.mcpDefinition.outputSchema.safeParse(result.structuredContent);
+    if (!parsed.success) {
+      return parsed.error.message;
+    }
+
+    return undefined;
+  };
+
   readonly execute = (name: string) => async (args: Record<string, unknown>) => {
     if (!this.toolsAvailables.has(name)) {
       this.callbacks.onLog?.('error', `tool rejected: '${name}' has no definition — possible security violation`);
@@ -99,12 +134,29 @@ class AIEngine implements McpToolLifecycleHooks {
     }
 
     this.callbacks.onLog?.('debug', `tool exec: ${name} args=${JSON.stringify(args).slice(0, 200)}`);
+
+    const parsedArgs = this.validateToolInput(name, args);
+    if (!parsedArgs.success) {
+      this.callbacks.onLog?.('error', `tool validation error: ${name} error=${parsedArgs.error}`);
+      await this.after(name, args, toolResponseErr(parsedArgs.error));
+
+      return toolResponseErr(parsedArgs.error);
+    }
+
     const t0 = Date.now();
-    const result = await handler(args, this.ctx);
+    const result = await handler(parsedArgs.data, this.ctx);
     this.callbacks.onLog?.(
       'debug',
       `tool done: ${name} ms=${Date.now() - t0} result=${JSON.stringify(result).slice(0, 200)}`
     );
+
+    const outputError = this.validateToolOutput(name, result);
+    if (outputError) {
+      this.callbacks.onLog?.('error', `tool output validation error: ${name} error=${outputError}`);
+      await this.after(name, args, toolResponseErr(outputError));
+
+      return toolResponseErr(outputError);
+    }
 
     if (result.isError) {
       this.callbacks.onLog?.('error', `tool failed: ${name} error=${result.content[0]?.text ?? 'unknown'}`);
@@ -133,12 +185,29 @@ class AIEngine implements McpToolLifecycleHooks {
     }
 
     this.callbacks.onLog?.('debug', `tool exec: ${name} args=${JSON.stringify(args).slice(0, 200)}`);
+
+    const parsedArgs = this.validateToolInput(name, args);
+    if (!parsedArgs.success) {
+      this.callbacks.onLog?.('error', `tool validation error: ${name} error=${parsedArgs.error}`);
+      await this.after(name, args, toolResponseErr(parsedArgs.error));
+
+      return toolResponseErr(parsedArgs.error);
+    }
+
     const t0 = Date.now();
-    const result = await handlerFn(args, this.ctx);
+    const result = await handlerFn(parsedArgs.data, this.ctx);
     this.callbacks.onLog?.(
       'debug',
       `tool done: ${name} ms=${Date.now() - t0} result=${JSON.stringify(result).slice(0, 200)}`
     );
+
+    const outputError = this.validateToolOutput(name, result);
+    if (outputError) {
+      this.callbacks.onLog?.('error', `tool output validation error: ${name} error=${outputError}`);
+      await this.after(name, args, toolResponseErr(outputError));
+
+      return toolResponseErr(outputError);
+    }
 
     if (result.isError) {
       this.callbacks.onLog?.('error', `tool failed: ${name} error=${result.content[0]?.text ?? 'unknown'}`);
