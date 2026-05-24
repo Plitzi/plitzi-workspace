@@ -36,8 +36,11 @@ const elementSchema = z.object({
       parentId: z.string().nullable().optional().describe('Parent element ID'),
       items: z.array(z.string()).nullable().optional().describe('Child element IDs'),
       styleSelectors: z.record(z.string(), z.string()).describe('Style selector map'),
-      runtime: z.enum(['server', 'client', 'shared']).optional().describe('Rendering runtime'),
-      loadStrategy: z.enum(['eager', 'lazy', 'visible']).optional().describe('Load strategy')
+      bindings: z.unknown().nullable().optional().describe('Element data bindings'),
+      interactions: z.unknown().nullable().optional().describe('Element interactions'),
+      initialState: z.unknown().nullable().optional().describe('Element initial state'),
+      runtime: z.enum(['server', 'client', 'shared']).nullable().optional().describe('Rendering runtime'),
+      loadStrategy: z.enum(['eager', 'lazy', 'visible']).nullable().optional().describe('Load strategy')
     })
     .describe('Element definition')
 });
@@ -70,7 +73,9 @@ const outputSchema = z.object({
       logoutUrl: z.string().optional(),
       detailsPath: z.string().optional(),
       tokenPath: z.string().optional(),
-      expirationTimePath: z.string().optional()
+      refreshTokenPath: z.string().optional(),
+      expirationTimePath: z.string().optional(),
+      head: z.string().optional()
     })
     .describe('Schema settings'),
   rsc: z
