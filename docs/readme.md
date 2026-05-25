@@ -1,26 +1,12 @@
-# plitzi-workspace
+# Documentación
 
-for deployments you will need to run:
+Las guías del monorepo están organizadas por idioma:
 
-- `yarn changeset` and select the packages that will go into the release
-- `yarn changeset version` to bump the version of the packages
-- make a release in github
+| Idioma | Índice |
+|--------|--------|
+| Español | [README del repo](../README.es.md) · [docs/es/README.md](./es/README.md) |
+| English | [Repository README](../README.md) · [docs/en/README.md](./en/README.md) |
 
-# Note:
+Las notas que antes estaban en este archivo se movieron a [es/local-setup.md](./es/local-setup.md) y [en/local-setup.md](./en/local-setup.md) (hosts y HTTPS), y los pasos de publicación a [es/releases.md](./es/releases.md) y [en/releases.md](./en/releases.md).
 
-to work in this project you will have to update your hosts file with the next changes
-
-```
-127.0.0.1       plitzi.local
-::1             plitzi.local
-127.0.0.1       server.plitzi.local
-::1             server.plitzi.local
-127.0.0.1       ssr.plitzi.local
-::1             ssr.plitzi.local
-127.0.0.1       api.plitzi.local
-::1             api.plitzi.local
-127.0.0.1       app.plitzi.local
-::1             app.plitzi.local
-```
-
-and you will need to enable https in your local environment to support `crypto` and hostnames
+Documentos en la raíz con versión en español (`*.es.md`): [README.es.md](../README.es.md), [CONTRIBUTOR_TOS.es.md](../CONTRIBUTOR_TOS.es.md) y [COMMERCIAL_LICENSE.es.md](../COMMERCIAL_LICENSE.es.md).
