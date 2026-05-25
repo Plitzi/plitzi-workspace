@@ -79,11 +79,13 @@ export const getAllowedModes = (operationType: ToolOperationType): AiMode[] => {
 
 export const toolResponseOk = (data: unknown, useStructuredContent = false): McpToolHandlerResult => {
   const isStructured = useStructuredContent && typeof data === 'object' && data !== null && !Array.isArray(data);
+  const textContent = { type: 'text' as const, text: JSON.stringify(data, null, 2) };
   if (isStructured) {
-    return { content: [], structuredContent: data as Record<string, unknown> };
+    // We need to return both due that LLM are not compatible with structuredContent but MCP Inspector yes
+    return { content: [textContent], structuredContent: data as Record<string, unknown> };
   }
 
-  return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] };
+  return { content: [textContent] };
 };
 
 export const toolResponseErr = (error: Error | string): McpToolHandlerResult => ({
