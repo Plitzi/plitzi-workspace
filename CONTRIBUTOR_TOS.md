@@ -1,5 +1,7 @@
 # Plitzi Contributor Terms of Service (TOS)
 
+**Español:** [CONTRIBUTOR_TOS.es.md](./CONTRIBUTOR_TOS.es.md)
+
 Last Updated: 2026-03-07
 
 By contributing code, documentation, or any other material ("Contributions") to any Plitzi repository, you agree to the following terms:
