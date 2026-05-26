@@ -9,7 +9,7 @@ const deleteCollectionTool: McpTool = {
   adapterName: 'deleteCollection',
   mcpDefinition: {
     title: 'Delete Collection',
-    description: 'Delete a collection.',
+    description: 'Delete a collection and all its records permanently. This action cannot be undone.',
     inputSchema: z.object({
       collectionId: z.string().describe('Collection ID')
     }),

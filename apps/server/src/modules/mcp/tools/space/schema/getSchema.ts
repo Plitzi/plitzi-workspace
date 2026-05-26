@@ -95,7 +95,11 @@ const getSchemaTool: McpTool = {
   adapterName: 'getSchema',
   mcpDefinition: {
     title: 'Get Schema',
-    description: 'Get the full element tree for the current space and environment.',
+    description:
+      'Get the complete schema for the current space — all elements (flat map), pages, page folders, schema variables, and settings.\n\n' +
+      'Use to read the full page tree before making structural changes. ' +
+      'For a lighter element-only list use list_elements. ' +
+      'For current page context and CSS tokens use get_builder_context.',
     inputSchema,
     outputSchema
   },

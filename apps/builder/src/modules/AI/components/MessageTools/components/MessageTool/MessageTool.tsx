@@ -20,17 +20,19 @@ const MessageTool = ({ name, args, status, result }: MessageToolProps) => {
   return (
     <div className="flex min-w-0 items-center gap-2 py-0.5 pl-3 font-mono text-[10px]">
       <span className="shrink-0">
-        {status === 'running' && !errorMsg && (
-          <span className="animate-spin text-yellow-500 dark:text-yellow-400">⚙</span>
+        {status === 'running' && <span className="animate-spin text-yellow-500 dark:text-yellow-400">⚙</span>}
+        {status === 'interrupted' && <span className="text-amber-500 dark:text-amber-400">⚠</span>}
+        {(status === 'failed' || (status === 'done' && errorMsg)) && (
+          <span className="text-pink-500 dark:text-pink-400">✗</span>
         )}
-        {status !== 'running' && errorMsg && <span className="text-pink-500 dark:text-pink-400">✗</span>}
-        {status !== 'running' && !errorMsg && <span className="text-emerald-500 dark:text-emerald-400">✓</span>}
+        {status === 'done' && !errorMsg && <span className="text-emerald-500 dark:text-emerald-400">✓</span>}
       </span>
       <span
         className={clsx('shrink-0', {
-          'text-pink-500 dark:text-pink-400': errorMsg && status !== 'running',
-          'text-yellow-500 dark:text-yellow-400': !errorMsg && status === 'running',
-          'text-zinc-500 dark:text-zinc-400': !errorMsg && status !== 'running'
+          'text-pink-500 dark:text-pink-400': status === 'failed' || (status === 'done' && !!errorMsg),
+          'text-amber-500 dark:text-amber-400': status === 'interrupted',
+          'text-yellow-500 dark:text-yellow-400': status === 'running',
+          'text-zinc-500 dark:text-zinc-400': status === 'done' && !errorMsg
         })}
       >
         {name}

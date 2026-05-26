@@ -23,7 +23,7 @@ const inputSchema = z.object({
       name: z.string().describe('Variable name'),
       type: variableTypesSchema.optional().describe('Variable type'),
       value: z.string().optional().describe('Variable value'),
-      category: z.string().optional().describe('Variable category')
+      category: z.string().optional().describe('Grouping label shown in the builder UI')
     })
     .describe('Variable fields to update')
 });
@@ -44,7 +44,7 @@ const updateVariableTool: McpTool = {
   adapterName: 'updateSchemaVariable',
   mcpDefinition: {
     title: 'Update Variable',
-    description: 'Update an existing schema variable.',
+    description: 'Update an existing schema variable. Identified by name; only the provided fields are changed.',
     inputSchema,
     outputSchema
   },

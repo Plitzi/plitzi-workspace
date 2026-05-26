@@ -9,11 +9,13 @@ const createCollectionRecordTool: McpTool = {
   adapterName: 'createCollectionRecord',
   mcpDefinition: {
     title: 'Create Collection Record',
-    description: 'Create a new record in a collection.',
+    description: 'Create a new record in a collection. Pass field values matching the collection\'s field definitions.',
     inputSchema: z.object({
       collectionId: z.string().describe('Collection ID'),
-      values: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).describe('Record values'),
-      status: z.enum(['draft', 'published']).optional().describe('Record status')
+      values: z
+        .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
+        .describe('Field values keyed by field name — keys must match the collection field definitions (see get_collection)'),
+      status: z.enum(['draft', 'published']).optional().describe('Publication status; defaults to "draft"')
     }),
     outputSchema: z.object({
       data: z

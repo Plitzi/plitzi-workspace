@@ -1,7 +1,7 @@
 import type { Schema, Style } from '@plitzi/sdk-shared';
 import type { AiMessage } from '@pmodules/AI/types';
 
-type PreviewData = {
+export type PreviewData = {
   baseElementId: string;
   schema?: Pick<Schema, 'flat'>;
   style?: Pick<Style, 'platform' | 'cache'>;

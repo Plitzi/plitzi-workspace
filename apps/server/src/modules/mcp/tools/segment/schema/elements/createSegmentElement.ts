@@ -8,12 +8,12 @@ const inputSchema = z.object({
   segmentId: z.string().describe('ID of the segment'),
   element: z
     .object({
-      type: z.string().describe('Component type'),
+      type: z.string().describe('Element type identifier — same values as create_element. Get valid values from get_builder_context (elementDefaults keys).'),
       label: z.string().describe('Human-readable name for the element'),
       props: z.record(z.string(), z.unknown()).optional().describe('Component props')
     })
     .describe('Element to add'),
-  parentId: z.string().describe('Parent element ID')
+  parentId: z.string().describe('Parent element ID — use the segment baseElementId as the root parent, or any existing segment element ID')
 });
 
 const outputSchema = z.object({
@@ -30,7 +30,7 @@ const createSegmentElementTool: McpTool = {
   adapterName: 'createSegmentElement',
   mcpDefinition: {
     title: 'Create Segment Element',
-    description: 'Add an element to a segment.',
+    description: 'Add an element (component instance) to a segment schema.',
     inputSchema,
     outputSchema
   },

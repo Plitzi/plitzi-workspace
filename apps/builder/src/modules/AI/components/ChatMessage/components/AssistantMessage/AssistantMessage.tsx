@@ -1,10 +1,12 @@
 import Markdown from '@plitzi/plitzi-ui/Markdown';
 import clsx from 'clsx';
-import { useMemo } from 'react';
+import { Fragment, useMemo } from 'react';
 
 import ModeLabel from '@pmodules/AI/components/ModeLabel';
 
 import MessageTools from '../../../MessageTools';
+import ToolVisualRenderer from '../../../ToolVisualRenderer';
+import extractToolVisual, { VISUAL_TOOL_NAMES } from '../../helpers/extractToolVisual';
 import getBrandResult from '../../helpers/getBrandResult';
 import getColorPaletteResult from '../../helpers/getColorPaletteResult';
 import getStagePreviewResult from '../../helpers/getStagePreviewResult';
@@ -17,9 +19,17 @@ import AIColorPalettePreview from '../AIColorPalettePreview';
 import AIStyleGuidePreview from '../AIStyleGuidePreview';
 import AITemplatePreview from '../AITemplatePreview';
 import AIWireframePreview from '../AIWireframePreview';
+import ResourceStep from '../ResourceStep';
 import ThinkingBlock from '../ThinkingBlock';
 
-import type { AiMessage, AiMode, AiToolCall } from '../../../../types';
+import type { ToolVisual } from '../../helpers/extractToolVisual';
+import type { AiMessage, AiMessageStep, AiMode, AiToolCall } from '../../../../types';
+
+type GroupedStep =
+  | { type: 'thinking'; step: Extract<AiMessageStep, { type: 'thinking' }>; key: string }
+  | { type: 'tools'; tools: AiToolCall[]; key: string; visual?: ToolVisual }
+  | { type: 'resource'; step: Extract<AiMessageStep, { type: 'resource' }>; key: string }
+  | { type: 'text'; step: Extract<AiMessageStep, { type: 'text' }>; key: string };
 
 export type AssistantMessageProps = {
   id: AiMessage['id'];
@@ -31,6 +41,7 @@ export type AssistantMessageProps = {
   usage?: AiMessage['usage'];
   actions?: AiMessage['actions'];
   tools?: AiToolCall[];
+  steps?: AiMessageStep[];
   createdAt?: number;
   stagePreviewVersion?: number;
   wireframeVersion?: number;
@@ -46,15 +57,78 @@ const AssistantMessage = ({
   usage,
   actions,
   tools,
+  steps,
   createdAt,
   stagePreviewVersion,
   wireframeVersion
 }: AssistantMessageProps) => {
-  const preview = useMemo(() => getStagePreviewResult(tools), [tools]);
-  const wireframe = useMemo(() => getWireframeResult(tools), [tools]);
-  const colorPalette = useMemo(() => getColorPaletteResult(tools), [tools]);
-  const brand = useMemo(() => getBrandResult(tools), [tools]);
-  const styleGuide = useMemo(() => getStyleGuideResult(tools), [tools]);
+  const legacyVisuals = useMemo(() => {
+    if (steps) {
+      return null;
+    }
+
+    return {
+      preview: getStagePreviewResult(tools),
+      wireframe: getWireframeResult(tools),
+      colorPalette: getColorPaletteResult(tools),
+      brand: getBrandResult(tools),
+      styleGuide: getStyleGuideResult(tools)
+    };
+  }, [steps, tools]);
+
+  const groupedSteps = useMemo<GroupedStep[] | null>(() => {
+    if (!steps) {
+      return null;
+    }
+
+    const items: GroupedStep[] = [];
+    steps.forEach((step, i) => {
+      if (step.type === 'tool') {
+        const toolCall: AiToolCall = { id: step.id, name: step.name, args: step.args, result: step.result, status: step.status };
+        const isVisual = VISUAL_TOOL_NAMES.has(step.name);
+        const last = items[items.length - 1];
+        if (!isVisual && last?.type === 'tools' && !last.tools.some(t => VISUAL_TOOL_NAMES.has(t.name))) {
+          last.tools = [...last.tools, toolCall];
+        } else {
+          items.push({ type: 'tools', tools: [toolCall], key: step.id });
+        }
+      } else if (step.type === 'thinking') {
+        const last = items[items.length - 1];
+        if (last?.type === 'thinking') {
+          items[items.length - 1] = {
+            ...last,
+            step: {
+              type: 'thinking' as const,
+              text: last.step.text + '\n\n' + step.text,
+              durationMs: (last.step.durationMs ?? 0) + (step.durationMs ?? 0)
+            }
+          };
+        } else {
+          items.push({ type: 'thinking', step, key: `t-${i}` });
+        }
+      } else if (step.type === 'resource') {
+        items.push({ type: 'resource', step, key: `res-${i}` });
+      } else {
+        items.push({ type: 'text', step, key: `tx-${i}` });
+      }
+    });
+
+    const visuals = items.map(item => (item.type === 'tools' ? extractToolVisual(item.tools) : undefined));
+    let lastVisualIdx = -1;
+    visuals.forEach((v, i) => {
+      if (v) {
+        lastVisualIdx = i;
+      }
+    });
+
+    return items.map((item, i) => {
+      if (item.type !== 'tools' || i !== lastVisualIdx) {
+        return item;
+      }
+
+      return { ...item, visual: visuals[i] };
+    });
+  }, [steps]);
 
   return (
     <div className="flex flex-col gap-1.5" data-id={id}>
@@ -88,27 +162,61 @@ const AssistantMessage = ({
         )}
       </div>
 
-      {thinking && <ThinkingBlock text={thinking} durationMs={thinkingDurationMs} />}
-      {tools && tools.length > 0 && <MessageTools tools={tools} />}
+      {groupedSteps && groupedSteps.map(item => {
+        if (item.type === 'thinking') {
+          return <ThinkingBlock key={item.key} text={item.step.text} durationMs={item.step.durationMs} />;
+        }
+
+        if (item.type === 'resource') {
+          return <ResourceStep key={item.key} name={item.step.name} uri={item.step.uri} />;
+        }
+
+        if (item.type === 'tools') {
+          return (
+            <Fragment key={item.key}>
+              <MessageTools tools={item.tools} />
+              {item.visual && (
+                <ToolVisualRenderer
+                  visual={item.visual}
+                  mode={mode}
+                  stagePreviewVersion={stagePreviewVersion}
+                  wireframeVersion={wireframeVersion}
+                />
+              )}
+            </Fragment>
+          );
+        }
+
+        return (
+          <div key={item.key} className="text-[13px] leading-[1.6] text-zinc-900 dark:text-zinc-100">
+            <Markdown>{item.step.text}</Markdown>
+          </div>
+        );
+      })}
+      {legacyVisuals && (
+        <>
+          {thinking && <ThinkingBlock text={thinking} durationMs={thinkingDurationMs} />}
+          {tools && tools.length > 0 && <MessageTools tools={tools} />}
+          {legacyVisuals.styleGuide && <AIStyleGuidePreview {...legacyVisuals.styleGuide} mode={mode} />}
+          {legacyVisuals.brand && <AIBrandPreview {...legacyVisuals.brand} mode={mode} />}
+          {legacyVisuals.colorPalette && <AIColorPalettePreview {...legacyVisuals.colorPalette} mode={mode} />}
+          {legacyVisuals.wireframe && <AIWireframePreview {...legacyVisuals.wireframe} mode={mode} version={wireframeVersion} />}
+          {legacyVisuals.preview && (
+            <AITemplatePreview
+              baseElementId={legacyVisuals.preview.baseElementId}
+              schema={legacyVisuals.preview.schema}
+              style={legacyVisuals.preview.style}
+              html={legacyVisuals.preview.html}
+              mode={mode}
+              version={stagePreviewVersion}
+            />
+          )}
+        </>
+      )}
       {content && (
         <div className="text-[13px] leading-[1.6] text-zinc-900 dark:text-zinc-100">
           <Markdown>{content}</Markdown>
         </div>
-      )}
-
-      {styleGuide && <AIStyleGuidePreview {...styleGuide} mode={mode} />}
-      {brand && <AIBrandPreview {...brand} mode={mode} />}
-      {colorPalette && <AIColorPalettePreview {...colorPalette} mode={mode} />}
-      {wireframe && <AIWireframePreview {...wireframe} mode={mode} version={wireframeVersion} />}
-      {preview && (
-        <AITemplatePreview
-          baseElementId={preview.baseElementId}
-          schema={preview.schema}
-          style={preview.style}
-          html={preview.html}
-          mode={mode}
-          version={stagePreviewVersion}
-        />
       )}
       {actions && actions.length > 0 && <ActionButtons actions={actions} />}
     </div>

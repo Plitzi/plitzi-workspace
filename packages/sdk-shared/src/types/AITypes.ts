@@ -5,7 +5,7 @@ export type PromptRole = 'user' | 'assistant' | 'system';
 export type AiMode = 'plan' | 'build';
 export type AiRole = 'user' | 'assistant';
 export type AiEffort = 'auto' | 'low' | 'medium' | 'high';
-export type AIToolStatus = 'running' | 'failed' | 'done';
+export type AIToolStatus = 'running' | 'done' | 'failed' | 'interrupted';
 
 export type AiUsage = {
   inputTokens: number;
@@ -22,8 +22,10 @@ export type StreamCallbacks = {
   onThinking?: (text: string) => void;
   onUsage?: (usage: Omit<AiUsage, 'usedPercent' | 'contextLimit'> & { contextLimit?: number }) => void;
   onBusy?: () => void;
-  onToolStart?: (name: string, args: Record<string, unknown>) => void;
-  onToolCall?: (event: ToolCallEvent) => void;
+  onBeforeTool?: (name: string, args: Record<string, unknown>) => void;
+  onToolSuccess?: (event: ToolCallEvent) => void;
+  onToolError?: (event: ToolCallEvent) => void;
+  onResourceRead?: (name: string, uri: string) => void;
 };
 
 export type AiContext = {

@@ -46,8 +46,17 @@ export type McpPrompt = {
   handler: McpPromptHandler;
 };
 
+export type McpResource = {
+  uri: string;
+  name: string;
+  description: string;
+  mimeType: string;
+  content: string;
+};
+
 export type McpToolHandlerResult = {
   content: { type: 'text'; text: string }[];
+  data?: unknown;
   structuredContent?: Record<string, unknown>;
   isError?: true;
 };
@@ -99,4 +108,5 @@ export type McpServerConfig = {
   adapters: Partial<McpAdapters>;
   tools?: McpTool[];
   prompts?: McpPrompt[];
+  resources?: McpResource[];
 };

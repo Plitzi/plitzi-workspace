@@ -1,5 +1,5 @@
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
-import { useCallback, use, useRef, useState } from 'react';
+import { useCallback, use, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
@@ -9,14 +9,23 @@ import type {
   AiAttachment,
   AiContext,
   AiEffort,
+  AiLiveStep,
   AiMessage,
+  AiMessageStep,
   AiMode,
   AiProviderSettings,
   AiStreamEvent,
-  AiToolCall,
   AiUsage,
   ConversationSummary
 } from '../types';
+
+type QueueEntry = {
+  localId: string;
+  message: string;
+  context: AiContext;
+  attachments: AiAttachment[];
+  effort: AiEffort;
+};
 
 const useAiChat = (providerSettings?: AiProviderSettings) => {
   const { server, webKey } = use(NetworkContext);
@@ -28,17 +37,21 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
   const streamingTextRef = useRef('');
   const streamingBufferRef = useRef('');
   const streamingFlushRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [pendingQueue, setPendingQueue] = useState<QueueEntry[]>([]);
+  const pendingQueueRef = useRef<QueueEntry[]>([]);
+  pendingQueueRef.current = pendingQueue;
+  const executeSendRef = useRef<((entry: QueueEntry) => Promise<void>) | null>(null);
 
   const flushStreamingBuffer = useCallback(() => {
     if (streamingBufferRef.current) {
       streamingTextRef.current += streamingBufferRef.current;
       streamingBufferRef.current = '';
     }
-    // Flush any remaining text to state before clearing
+
     if (streamingTextRef.current) {
       flushSync(() => setStreamingText(streamingTextRef.current));
     }
-    // Clear both ref and state
+
     streamingTextRef.current = '';
     flushSync(() => setStreamingText(''));
     if (streamingFlushRef.current) {
@@ -47,9 +60,26 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
     }
   }, []);
 
-  const [liveThinking, setLiveThinking] = useState('');
-  const [liveThinkingDoneMs, setLiveThinkingDoneMs] = useState<number | undefined>(undefined);
-  const [liveTools, setLiveTools] = useState<AiToolCall[]>([]);
+  const captureAndClearStreamingText = useCallback((): string => {
+    if (streamingBufferRef.current) {
+      streamingTextRef.current += streamingBufferRef.current;
+      streamingBufferRef.current = '';
+    }
+
+    const captured = streamingTextRef.current;
+    streamingTextRef.current = '';
+    flushSync(() => setStreamingText(''));
+    if (streamingFlushRef.current) {
+      clearInterval(streamingFlushRef.current);
+      streamingFlushRef.current = null;
+    }
+
+    return captured;
+  }, []);
+
+  const [liveSteps, setLiveSteps] = useState<AiLiveStep[]>([]);
+  const liveStepsRef = useRef<AiLiveStep[]>([]);
+  liveStepsRef.current = liveSteps;
   const [isStreaming, setIsStreaming] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [usage, setUsage] = useState<AiUsage | undefined>();
@@ -65,8 +95,6 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
   const providerSettingsRef = useRef(providerSettings);
   providerSettingsRef.current = providerSettings;
 
-  // Only restores history from a stored conversation. If the ID is stale (404),
-  // clears storage so the next send will create a fresh conversation.
   const initConversation = useCallback(async () => {
     const storedId = conversationIdRef.current;
     if (!storedId) {
@@ -81,67 +109,41 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
     }
   }, [networkQuery, setConversationId]);
 
-  // Refs so 'done' handler captures final state (closure issue)
-  const liveToolsRef = useRef<AiToolCall[]>([]);
-  liveToolsRef.current = liveTools;
-  const thinkingTextRef = useRef('');
-  // Thinking duration tracking: start on first 'thinking' event, stop on first 'chunk'
-  const thinkingStartRef = useRef<number | undefined>(undefined);
-  const thinkingDurationMsRef = useRef<number | undefined>(undefined);
-
-  const sendMessage = useCallback(
-    async (message: string, context: AiContext, attachments: AiAttachment[] = [], effort: AiEffort = 'medium') => {
-      if (isStreaming) {
-        return;
-      }
-
-      if (quotaRetryAfter && Date.now() < quotaRetryAfter) {
-        return;
-      }
-
-      // Create conversation lazily on first send
-      let activeConversationId = conversationIdRef.current;
-      if (!activeConversationId) {
-        const response = await networkQuery<{ conversationId: string }>('/ai/conversation', {}, 'post');
-        if (!response?.conversationId) {
-          return;
-        }
-
-        activeConversationId = response.conversationId;
-        setConversationId(activeConversationId);
-        conversationIdRef.current = activeConversationId;
-      }
-
-      const userMessage: AiMessage = {
-        id: crypto.randomUUID(),
-        role: 'user',
-        content: message,
-        attachments: attachments.length > 0 ? attachments : undefined,
-        createdAt: Date.now()
-      };
-      setMessages(prev => [...prev, userMessage]);
+  const executeSend = useCallback(
+    async (entry: QueueEntry) => {
+      setMessages(prev => prev.map(m => m.id === entry.localId && m.queued ? { ...m, queued: undefined } : m));
+      setIsStreaming(true);
       flushStreamingBuffer();
-      setLiveThinking('');
-      thinkingTextRef.current = '';
-      setLiveTools([]);
+      setLiveSteps([]);
       setError(undefined);
       setQuotaError(undefined);
       setQuotaRetryAfter(undefined);
-      setIsStreaming(true);
-
-      const serverAttachments = attachments.map(a => ({ type: a.type, mimeType: a.mimeType, data: a.data }));
 
       try {
+        let activeConversationId = conversationIdRef.current;
+        if (!activeConversationId) {
+          const response = await networkQuery<{ conversationId: string }>('/ai/conversation', {}, 'post');
+          if (!response?.conversationId) {
+            return;
+          }
+
+          activeConversationId = response.conversationId;
+          setConversationId(activeConversationId);
+          conversationIdRef.current = activeConversationId;
+        }
+
+        const serverAttachments = entry.attachments.map(a => ({ type: a.type, mimeType: a.mimeType, data: a.data }));
+
         const res = await fetch(`${server.nodeServer}/ai/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${webKey}` },
           body: JSON.stringify({
             conversationId: activeConversationId,
-            message,
+            message: entry.message,
             attachments: serverAttachments.length > 0 ? serverAttachments : undefined,
-            context,
+            context: entry.context,
             mode: modeRef.current,
-            effort,
+            effort: entry.effort,
             ...providerSettingsRef.current
           })
         });
@@ -177,17 +179,36 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
                 setIsBusy(true);
               } else if (event.type === 'thinking') {
                 setIsBusy(false);
-                if (!thinkingStartRef.current) {
-                  thinkingStartRef.current = Date.now();
+                const lastLiveStep = liveStepsRef.current[liveStepsRef.current.length - 1];
+                const isAppending = lastLiveStep?.type === 'thinking' && !lastLiveStep.done;
+
+                if (isAppending) {
+                  setLiveSteps(prev => {
+                    const last = prev[prev.length - 1];
+                    if (last && last.type === 'thinking' && !last.done) {
+                      return [...prev.slice(0, -1), { ...last, text: last.text + event.text }];
+                    }
+
+                    return prev;
+                  });
+                } else {
+                  const committed = captureAndClearStreamingText();
+                  setLiveSteps(prev => {
+                    const withText = committed ? [...prev, { type: 'text' as const, text: committed }] : prev;
+
+                    return [...withText, { type: 'thinking', text: event.text, done: false, startMs: Date.now() }];
+                  });
                 }
-                thinkingTextRef.current += event.text;
-                flushSync(() => setLiveThinking(thinkingTextRef.current));
               } else if (event.type === 'chunk') {
                 setIsBusy(false);
-                if (thinkingStartRef.current && !thinkingDurationMsRef.current) {
-                  thinkingDurationMsRef.current = Date.now() - thinkingStartRef.current;
-                  setLiveThinkingDoneMs(thinkingDurationMsRef.current);
-                }
+                setLiveSteps(prev => {
+                  const last = prev[prev.length - 1];
+                  if (last && last.type === 'thinking' && !last.done) {
+                    return [...prev.slice(0, -1), { ...last, done: true, durationMs: Date.now() - last.startMs }];
+                  }
+
+                  return prev;
+                });
                 streamingBufferRef.current += event.text;
                 if (!streamingFlushRef.current) {
                   streamingFlushRef.current = setInterval(() => {
@@ -199,61 +220,91 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
                   }, 30);
                 }
               } else if (event.type === 'tool_start') {
-                // Deduplicate: skip if there's already a running tool with the same name
-                setLiveTools(prev => {
-                  const alreadyRunning = prev.some(t => t.name === event.name && t.status === 'running');
+                const committedText = captureAndClearStreamingText();
+                setLiveSteps(prev => {
+                  const last = prev[prev.length - 1];
+                  const withThinkingClosed =
+                    last && last.type === 'thinking' && !last.done
+                      ? [...prev.slice(0, -1), { ...last, done: true, durationMs: Date.now() - last.startMs }]
+                      : prev;
+                  const withText = committedText
+                    ? [...withThinkingClosed, { type: 'text' as const, text: committedText }]
+                    : withThinkingClosed;
+                  const alreadyRunning = withText.some(
+                    s => s.type === 'tool' && s.name === event.name && s.status === 'running'
+                  );
+
                   if (alreadyRunning) {
-                    return prev;
+                    return withText;
                   }
 
-                  const toolId = crypto.randomUUID();
-
-                  return [...prev, { id: toolId, name: event.name, args: event.args, status: 'running' }];
+                  return [
+                    ...withText,
+                    { type: 'tool', id: crypto.randomUUID(), name: event.name, args: event.args, status: 'running' }
+                  ];
                 });
+              } else if (event.type === 'resource_read') {
+                setLiveSteps(prev => [...prev, { type: 'resource', name: event.name, uri: event.uri }]);
               } else if (event.type === 'tool') {
-                setLiveTools(prev => {
-                  // Find the last (most recent) running tool with the same name to avoid duplicates
+                setLiveSteps(prev => {
                   let targetIdx = -1;
                   for (let i = prev.length - 1; i >= 0; i--) {
-                    const t = prev[i];
-                    if (t.name === event.name && t.status === 'running') {
+                    const s = prev[i];
+                    if (s.type === 'tool' && s.name === event.name && s.status === 'running') {
                       targetIdx = i;
                       break;
                     }
                   }
+
                   if (targetIdx === -1) {
                     return prev;
                   }
 
-                  return prev.map((t, i) =>
-                    i === targetIdx ? { ...t, result: event.result, status: 'done' as const } : t
+                  return prev.map((s, i) =>
+                    i === targetIdx ? { ...s, result: event.result, status: event.status } : s
                   );
                 });
               } else if (event.type === 'done') {
                 setIsBusy(false);
-                const thinkingText = thinkingTextRef.current || undefined;
-                const thinkingDurationMs =
-                  thinkingText && thinkingStartRef.current
-                    ? (thinkingDurationMsRef.current ?? Date.now() - thinkingStartRef.current)
-                    : undefined;
-                thinkingStartRef.current = undefined;
-                thinkingDurationMsRef.current = undefined;
-                const messageWithTools = {
-                  ...event.message,
-                  thinking: thinkingText,
-                  thinkingDurationMs,
-                  tools: liveToolsRef.current.map(t => (t.status === 'running' ? { ...t, status: 'done' as const } : t))
-                };
-                setMessages(prev => [...prev, messageWithTools]);
+                captureAndClearStreamingText();
+                const currentSteps = liveStepsRef.current;
+                const steps: AiMessageStep[] = currentSteps.map(s => {
+                  if (s.type === 'thinking') {
+                    return { type: 'thinking', text: s.text, durationMs: s.durationMs };
+                  }
+
+                  if (s.type === 'tool') {
+                    return {
+                      type: 'tool',
+                      id: s.id,
+                      name: s.name,
+                      args: s.args,
+                      result: s.result,
+                      status: s.status === 'running' ? ('interrupted' as const) : s.status
+                    };
+                  }
+
+                  if (s.type === 'resource') {
+                    return { type: 'resource', name: s.name, uri: s.uri };
+                  }
+
+                  return { type: 'text', text: s.text };
+                });
+                setMessages(prev => {
+                  const firstQueuedIdx = prev.findIndex(m => m.queued);
+                  const msg = { ...event.message, steps };
+                  if (firstQueuedIdx === -1) {
+                    return [...prev, msg];
+                  }
+
+                  return [...prev.slice(0, firstQueuedIdx), msg, ...prev.slice(firstQueuedIdx)];
+                });
 
                 if (event.usage) {
                   setUsage(event.usage);
                 }
-                flushStreamingBuffer();
-                setLiveThinking('');
-                setLiveThinkingDoneMs(undefined);
-                thinkingTextRef.current = '';
-                setLiveTools([]);
+
+                setLiveSteps([]);
               } else if ('message' in event) {
                 if ('retryAfter' in event && event.retryAfter) {
                   setQuotaError(event.message || 'Rate limit exceeded');
@@ -267,24 +318,76 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
             }
           }
         }
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
         setIsStreaming(false);
         setIsBusy(false);
         flushStreamingBuffer();
-        setLiveThinking('');
-        setLiveThinkingDoneMs(undefined);
-        thinkingTextRef.current = '';
-        setLiveTools([]);
-        thinkingStartRef.current = undefined;
-        thinkingDurationMsRef.current = undefined;
+        setLiveSteps([]);
+
+        const queue = pendingQueueRef.current;
+        if (queue.length > 0) {
+          const [next, ...rest] = queue;
+          pendingQueueRef.current = rest;
+          setPendingQueue([...rest]);
+          setTimeout(() => { void executeSendRef.current?.(next); }, 0);
+        }
       }
     },
-    [isStreaming, quotaRetryAfter, flushStreamingBuffer, networkQuery, setConversationId, server.nodeServer, webKey]
+    [captureAndClearStreamingText, flushStreamingBuffer, networkQuery, setConversationId, server.nodeServer, webKey]
+  );
+
+  executeSendRef.current = executeSend;
+
+  const sendMessage = useCallback(
+    async (message: string, context: AiContext, attachments: AiAttachment[] = [], effort: AiEffort = 'medium') => {
+      if (quotaRetryAfter && Date.now() < quotaRetryAfter) {
+        return;
+      }
+
+      if (isStreaming) {
+        const localId = crypto.randomUUID();
+        setMessages(prev => [
+          ...prev,
+          {
+            id: localId,
+            role: 'user',
+            content: message,
+            attachments: attachments.length > 0 ? attachments : undefined,
+            queued: true,
+            createdAt: Date.now()
+          }
+        ]);
+        const entry: QueueEntry = { localId, message, context, attachments, effort };
+        setPendingQueue(prev => [...prev, entry]);
+        pendingQueueRef.current = [...pendingQueueRef.current, entry];
+
+        return;
+      }
+
+      const localId = crypto.randomUUID();
+      setMessages(prev => [
+        ...prev,
+        {
+          id: localId,
+          role: 'user',
+          content: message,
+          attachments: attachments.length > 0 ? attachments : undefined,
+          createdAt: Date.now()
+        }
+      ]);
+
+      await executeSend({ localId, message, context, attachments, effort });
+    },
+    [isStreaming, quotaRetryAfter, executeSend]
   );
 
   const clearConversation = useCallback(() => {
     setMessages([]);
     setConversationId('');
+    setPendingQueue([]);
+    pendingQueueRef.current = [];
     setUsage(undefined);
     setError(undefined);
     setQuotaError(undefined);
@@ -308,6 +411,8 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
       if (history) {
         setConversationId(id);
         setMessages(history.messages);
+        setPendingQueue([]);
+        pendingQueueRef.current = [];
         setUsage(undefined);
         setError(undefined);
         setQuotaError(undefined);
@@ -339,22 +444,19 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
     }
   }, [isStreaming, server.nodeServer, webKey]);
 
-  // Auto-compact when context usage reaches 90%.
   const usedPercent = usage?.usedPercent ?? 0;
-  const prevUsedPercentRef = useRef(0);
-  if (usedPercent !== prevUsedPercentRef.current) {
-    prevUsedPercentRef.current = usedPercent;
-    if (usedPercent >= 90 && !isStreaming) {
+  const compactedAtRef = useRef(0);
+  useEffect(() => {
+    if (usedPercent >= 90 && !isStreaming && usedPercent !== compactedAtRef.current) {
+      compactedAtRef.current = usedPercent;
       void compact();
     }
-  }
+  }, [usedPercent, isStreaming, compact]);
 
   return {
     messages,
     streamingText,
-    liveThinking,
-    liveThinkingDoneMs,
-    liveTools,
+    liveSteps,
     isStreaming,
     isBusy,
     usage,
@@ -368,6 +470,7 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
     quotaRetryAfter,
     conversationId,
     conversations,
+    pendingQueue,
     mode,
     setMode,
     initConversation,

@@ -18,7 +18,7 @@ const deleteSegmentVariableTool: McpTool = {
   adapterName: 'deleteSegmentVariable',
   mcpDefinition: {
     title: 'Delete Segment Variable',
-    description: 'Delete a schema variable from a segment.',
+    description: 'Delete a schema variable from a segment. Any element bindings referencing this variable will break.',
     inputSchema,
     outputSchema
   },

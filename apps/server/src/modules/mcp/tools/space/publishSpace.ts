@@ -19,7 +19,7 @@ const publishSpaceTool: McpTool = {
   adapterName: 'publishSpace',
   mcpDefinition: {
     title: 'Publish Space',
-    description: 'Publish the current draft space as a new immutable revision.',
+    description: 'Publish the current main environment — creates an immutable revision and deploys it to production.',
     inputSchema,
     outputSchema
   },

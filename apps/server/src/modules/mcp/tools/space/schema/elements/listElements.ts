@@ -32,7 +32,10 @@ const listElementsTool: McpTool = {
   adapterName: 'listElements',
   mcpDefinition: {
     title: 'List Elements',
-    description: 'List all elements in the space.',
+    description:
+      'List all elements in the space as a flat array.\n\n' +
+      'Lighter than get_schema — returns only elements without variables, settings, pages, or folders. ' +
+      'Use when you need to scan all elements by type or label.',
     inputSchema,
     outputSchema
   },

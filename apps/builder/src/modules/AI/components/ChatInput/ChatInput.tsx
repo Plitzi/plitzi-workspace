@@ -1,14 +1,15 @@
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import clsx from 'clsx';
-import { useCallback, useImperativeHandle, useRef, useState } from 'react';
+import { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 import { isMac } from './helpers';
+import useMessageHistory from './hooks/useMessageHistory';
 import VoiceVisualizer from '../VoiceVisualizer';
 import AttachmentThumbnail from './components/AttachmentThumbnail';
 import ChatInputControls from './components/ChatInputControls';
 import { DEFAULT_SKILLS, SkillsManager } from './components/SkillsManager';
 
-import type { AiAttachment, AiEffort, AiMode, AiModelInfo, AiSkill, AiUsage } from '../../types';
+import type { AiAttachment, AiEffort, AiMessage, AiMode, AiModelInfo, AiSkill, AiUsage } from '../../types';
 import type { KeyboardEvent, Ref } from 'react';
 
 export type ChatInputHandle = { appendText: (text: string) => void };
@@ -19,6 +20,7 @@ export type ChatInputProps = {
   isListening: boolean;
   isVoiceSupported: boolean;
   audioData: Uint8Array<ArrayBuffer> | null;
+  messages?: AiMessage[];
   models?: AiModelInfo[];
   currentModel?: string;
   modelsLoading?: boolean;
@@ -38,6 +40,7 @@ const ChatInput = ({
   isListening,
   isVoiceSupported,
   audioData,
+  messages = [],
   models = [],
   currentModel,
   modelsLoading,
@@ -58,6 +61,7 @@ const ChatInput = ({
   const [activeSkills, setActiveSkills] = useState<string[]>([]);
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const { navigatePrev, navigateNext, reset } = useMessageHistory(messages);
 
   useImperativeHandle(ref, () => ({
     appendText: (text: string) => {
@@ -66,8 +70,17 @@ const ChatInput = ({
     }
   }));
 
+  useEffect(() => {
+    if (!textareaRef.current) {
+      return;
+    }
+
+    textareaRef.current.style.height = 'auto';
+    textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+  }, [messageInput]);
+
   const handleClickSend = useCallback(() => {
-    if ((!messageInput.trim() && attachments.length === 0) || isStreaming) {
+    if (!messageInput.trim() && attachments.length === 0) {
       return;
     }
 
@@ -79,6 +92,7 @@ const ChatInput = ({
 
     const msg = activeSkillTags ? `${activeSkillTags} ${messageInput}` : messageInput;
     const atts = attachments;
+    reset();
     setMessageInput('');
     setAttachments([]);
     setActiveSkills([]);
@@ -86,29 +100,66 @@ const ChatInput = ({
       textareaRef.current.style.height = 'auto';
     }
     onSend(msg, atts, effort);
-  }, [messageInput, attachments, activeSkills, skills, isStreaming, onSend, effort]);
+  }, [messageInput, attachments, activeSkills, skills, reset, onSend, effort]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         handleClickSend();
-      } else if (e.altKey && e.code === 'KeyP') {
+
+        return;
+      }
+
+      if (e.altKey && e.code === 'KeyP') {
         e.preventDefault();
         onModeChange?.(mode === 'plan' ? 'build' : 'plan');
+
+        return;
+      }
+
+      const textarea = textareaRef.current;
+      if (!textarea) {
+        return;
+      }
+
+      if (e.key === 'ArrowUp' && textarea.selectionStart === 0 && textarea.selectionEnd === 0) {
+        const prev = navigatePrev(messageInput);
+        if (prev !== null) {
+          e.preventDefault();
+          setMessageInput(prev);
+          requestAnimationFrame(() => {
+            if (textareaRef.current) {
+              textareaRef.current.setSelectionRange(prev.length, prev.length);
+            }
+          });
+        }
+
+        return;
+      }
+
+      if (e.key === 'ArrowDown' && textarea.selectionStart === messageInput.length) {
+        const next = navigateNext();
+        if (next !== null) {
+          e.preventDefault();
+          setMessageInput(next);
+          requestAnimationFrame(() => {
+            if (textareaRef.current) {
+              textareaRef.current.setSelectionRange(next.length, next.length);
+            }
+          });
+        }
       }
     },
-    [handleClickSend, mode, onModeChange]
+    [handleClickSend, mode, onModeChange, messageInput, navigatePrev, navigateNext]
   );
 
-  const handleChange = useCallback((value: string) => {
-    setMessageInput(value);
-    if (!textareaRef.current) {
-      return;
-    }
-
-    textareaRef.current.style.height = 'auto';
-    textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
-  }, []);
+  const handleChange = useCallback(
+    (value: string) => {
+      reset();
+      setMessageInput(value);
+    },
+    [reset]
+  );
 
   const handleFocus = useCallback(() => setIsFocused(true), []);
 
@@ -206,7 +257,6 @@ const ChatInput = ({
             onKeyDown={handleKeyDown}
             onFocus={handleFocus}
             onBlur={handleBlur}
-            disabled={isStreaming}
             size="xs"
           />
 
@@ -219,7 +269,7 @@ const ChatInput = ({
             currentModel={currentModel}
             modelsLoading={modelsLoading}
             isVoiceSupported={isVoiceSupported}
-            disabled={isStreaming}
+            isStreaming={isStreaming}
             isListening={isListening}
             attachments={attachments}
             usage={usage}

@@ -12,7 +12,16 @@ const getCollectionsTool: McpTool = {
     description: 'Get all collections for the current space.',
     inputSchema: z.object({}),
     outputSchema: z.object({
-      data: z.array(z.record(z.string(), z.unknown())).describe('Array of collections in the space')
+      data: z
+        .array(
+          z
+            .object({
+              id: z.string().describe('Collection ID'),
+              name: z.string().describe('Collection name')
+            })
+            .catchall(z.unknown())
+        )
+        .describe('Array of collections in the space')
     })
   },
   definition: {

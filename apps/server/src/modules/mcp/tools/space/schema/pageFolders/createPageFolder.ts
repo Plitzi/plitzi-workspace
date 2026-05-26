@@ -6,7 +6,7 @@ import type { McpTool } from '@plitzi/sdk-shared';
 
 const inputSchema = z.object({
   name: z.string().describe('Name of the page folder'),
-  parentId: z.string().optional().describe('Parent folder ID')
+  parentId: z.string().optional().describe('Parent folder ID — omit to create a top-level folder')
 });
 
 const outputSchema = z.object({

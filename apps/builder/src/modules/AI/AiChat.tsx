@@ -43,9 +43,7 @@ const AiChat = () => {
   const {
     messages,
     streamingText,
-    liveThinking,
-    liveThinkingDoneMs,
-    liveTools,
+    liveSteps,
     isStreaming,
     isBusy,
     usage,
@@ -144,9 +142,7 @@ const AiChat = () => {
           isStreaming={isStreaming}
           isBusy={isBusy}
           streamingText={streamingText}
-          liveThinking={liveThinking}
-          liveThinkingDoneMs={liveThinkingDoneMs}
-          liveTools={liveTools}
+          liveSteps={liveSteps}
         />
 
         {quotaError && (
@@ -172,6 +168,7 @@ const AiChat = () => {
         <ChatInput
           ref={chatInputRef}
           isStreaming={isStreaming}
+          messages={messages}
           isListening={isListening}
           isVoiceSupported={isVoiceSupported}
           audioData={audioData}

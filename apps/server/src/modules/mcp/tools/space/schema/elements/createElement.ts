@@ -24,7 +24,7 @@ const elementSchema = z.object({
 const inputSchema = z.object({
   element: z
     .object({
-      type: z.string().describe('Component type (e.g. Container, Text, Button, Image)'),
+      type: z.string().describe('Element type identifier — determines which component renders this element. Get valid values from get_builder_context (elementDefaults keys) or by inspecting existing elements via get_schema.'),
       label: z.string().describe('Human-readable name for the element'),
       props: z.record(z.string(), z.unknown()).optional().describe('Component props/attributes'),
       runtime: z.enum(['server', 'client', 'shared']).optional().describe('Rendering runtime')
@@ -43,7 +43,7 @@ const createElementTool: McpTool = {
   adapterName: 'createElement',
   mcpDefinition: {
     title: 'Create Element',
-    description: 'Add a new element to the schema.',
+    description: 'Add a new element (component instance) to the schema.',
     inputSchema,
     outputSchema
   },

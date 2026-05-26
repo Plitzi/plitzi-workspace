@@ -34,7 +34,7 @@ const getElementTool: McpTool = {
   adapterName: 'getElement',
   mcpDefinition: {
     title: 'Get Element',
-    description: 'Get the full details of a single element by ID.',
+    description: 'Get the full details of a single element by ID — attributes, definition, style selectors, bindings, and interactions. Lighter than get_schema when you only need one element.',
     inputSchema,
     outputSchema
   },

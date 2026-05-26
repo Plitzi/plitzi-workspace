@@ -14,18 +14,20 @@ const ChatMessage = ({
   thinking,
   thinkingDurationMs,
   irrelevant,
+  queued,
   mode,
   usage,
   actions,
   attachments,
   tools,
+  steps,
   createdAt,
   stagePreviewVersion,
   wireframeVersion
 }: ChatMessageProps) => {
   if (role === 'user') {
     return (
-      <UserMessage id={id} content={content} attachments={attachments} createdAt={createdAt} irrelevant={irrelevant} />
+      <UserMessage id={id} content={content} attachments={attachments} createdAt={createdAt} irrelevant={irrelevant} queued={queued} />
     );
   }
 
@@ -40,6 +42,7 @@ const ChatMessage = ({
       usage={usage}
       actions={actions}
       tools={tools}
+      steps={steps}
       createdAt={createdAt}
       stagePreviewVersion={stagePreviewVersion}
       wireframeVersion={wireframeVersion}

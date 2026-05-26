@@ -7,7 +7,11 @@ import { getAllowedModes } from '../../../../helpers';
 import type { McpTool } from '@plitzi/sdk-shared';
 
 const inputSchema = z.object({
-  category: z.nativeEnum(StyleVariableCategory).describe('Variable category'),
+  category: z
+    .nativeEnum(StyleVariableCategory)
+    .describe(
+      'Token category: "color", "spacing", "shadow", or "custom"'
+    ),
   name: z.string().describe('Variable name to delete')
 });
 
@@ -20,7 +24,7 @@ const deleteStyleVariableTool: McpTool = {
   adapterName: 'deleteStyleVariable',
   mcpDefinition: {
     title: 'Delete Style Variable',
-    description: 'Delete a global style variable.',
+    description: 'Delete a global CSS design token. Any style rules referencing this token will lose its value.',
     inputSchema,
     outputSchema
   },

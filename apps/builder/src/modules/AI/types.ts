@@ -16,6 +16,18 @@ export type AiToolCall = {
   status: AIToolStatus;
 };
 
+export type AiLiveStep =
+  | { type: 'thinking'; text: string; done: boolean; durationMs?: number; startMs: number }
+  | { type: 'tool'; id: string; name: string; args?: Record<string, unknown>; result?: unknown; status: AIToolStatus }
+  | { type: 'resource'; name: string; uri: string }
+  | { type: 'text'; text: string };
+
+export type AiMessageStep =
+  | { type: 'thinking'; text: string; durationMs?: number }
+  | { type: 'tool'; id: string; name: string; args?: Record<string, unknown>; result?: unknown; status: AIToolStatus }
+  | { type: 'resource'; name: string; uri: string }
+  | { type: 'text'; text: string };
+
 // elementId = element already in schema (post-creation)
 // baseElementId = proposed template preview, elements injected via StoreProvider overlay
 // Note: stage_preview is now processed in the backend, which validates schemas before sending
@@ -53,12 +65,14 @@ export type AiMessage = {
   thinking?: string;
   thinkingDurationMs?: number;
   irrelevant?: boolean;
+  queued?: boolean;
   mode?: AiMode;
   usage?: AiUsage;
   preview?: AiMessagePreview;
   actions?: AiMessageAction[];
   attachments?: AiAttachment[];
   tools?: AiToolCall[];
+  steps?: AiMessageStep[];
   clientTools?: AiMessageClientTool[];
   createdAt: number;
 };
@@ -76,7 +90,8 @@ export type AiStreamEvent =
   | { type: 'chunk'; text: string }
   | { type: 'thinking'; text: string }
   | { type: 'tool_start'; name: string; args: Record<string, unknown> }
-  | { type: 'tool'; name: string; args: Record<string, unknown>; result: unknown }
+  | { type: 'tool'; name: string; args: Record<string, unknown>; result: unknown; status: 'done' | 'failed' }
+  | { type: 'resource_read'; name: string; uri: string }
   | { type: 'busy' }
   | { type: 'done'; message: AiMessage; usage?: AiUsage }
   | { type: 'error'; message: string; retryAfter?: number };

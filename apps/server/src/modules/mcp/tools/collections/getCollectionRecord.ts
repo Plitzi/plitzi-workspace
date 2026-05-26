@@ -14,7 +14,16 @@ const getCollectionRecordTool: McpTool = {
       recordId: z.string().describe('Record ID')
     }),
     outputSchema: z.object({
-      data: z.record(z.string(), z.unknown()).nullable().describe('The record object, or null if not found')
+      data: z
+        .object({
+          id: z.string().describe('Record ID'),
+          collectionId: z.string().describe('Collection ID'),
+          values: z.record(z.string(), z.unknown()).describe('Field values keyed by field name'),
+          status: z.enum(['draft', 'published', 'archived']).describe('Publication status')
+        })
+        .catchall(z.unknown())
+        .nullable()
+        .describe('The record, or null if not found')
     })
   },
   definition: {
