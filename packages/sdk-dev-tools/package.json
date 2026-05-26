@@ -337,7 +337,7 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "typescript": "^6.0.3",
-    "vite": "^8.0.13"
+    "vite": "^8.0.14"
   },
   "peerDependencies": {
     "react": "^19",
@@ -351,7 +351,7 @@
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-store": "workspace:*",
     "@plitzi/sdk-style": "workspace:*",
-    "@uiw/react-json-view": "^2.0.0-alpha.42",
+    "@uiw/react-json-view": "^2.0.0-alpha.43",
     "clsx": "^2.1.1"
   }
 }
