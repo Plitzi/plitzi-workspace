@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 
-import type { AiLiveStep, AiMessageStep, AiStreamEvent } from '../types';
+import type { AiLiveStep, AiStreamEvent } from '../types';
 
 type ThinkingEvent = Extract<AiStreamEvent, { type: 'thinking' }>;
 type ToolStartEvent = Extract<AiStreamEvent, { type: 'tool_start' }>;
@@ -101,32 +101,7 @@ const useLiveSteps = (capture: () => string) => {
     setLiveSteps(prev => [...prev, { type: 'resource', name: event.name, uri: event.uri }]);
   }, []);
 
-  const snapshotAsMessageSteps = useCallback((): AiMessageStep[] => {
-    return stepsRef.current.map(s => {
-      if (s.type === 'thinking') {
-        return { type: 'thinking', text: s.text, durationMs: s.durationMs };
-      }
-
-      if (s.type === 'tool') {
-        return {
-          type: 'tool',
-          id: s.id,
-          name: s.name,
-          args: s.args,
-          result: s.result,
-          status: s.status === 'running' ? ('interrupted' as const) : s.status
-        };
-      }
-
-      if (s.type === 'resource') {
-        return { type: 'resource', name: s.name, uri: s.uri };
-      }
-
-      return { type: 'text', text: s.text };
-    });
-  }, []);
-
-  return { liveSteps, clear, onThinking, onChunk, onToolStart, onTool, onResourceRead, snapshotAsMessageSteps };
+  return { liveSteps, clear, onThinking, onChunk, onToolStart, onTool, onResourceRead };
 };
 
 export default useLiveSteps;

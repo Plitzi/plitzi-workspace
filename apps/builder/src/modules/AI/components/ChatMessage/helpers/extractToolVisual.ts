@@ -15,6 +15,7 @@ export const VISUAL_TOOL_NAMES = new Set([
 ]);
 
 export type ToolVisual =
+  | { type: 'render_element'; data: { elementId: string } }
   | { type: 'stage_preview'; data: PreviewData }
   | { type: 'wireframe'; data: WireframeData }
   | { type: 'color_palette'; data: ColorPaletteData }
@@ -28,7 +29,13 @@ const extractToolVisual = (tools: AiToolCall[]): ToolVisual | undefined => {
       continue;
     }
 
-    if (t.name === 'render_element' || t.name === 'stage_preview') {
+    if (t.name === 'render_element') {
+      const result = t.result as { baseElementId: string };
+
+      return { type: 'render_element', data: { elementId: result.baseElementId } };
+    }
+
+    if (t.name === 'stage_preview') {
       const result = t.result as Omit<PreviewData, 'html'>;
 
       return { type: 'stage_preview', data: { ...result, html: t.args?.html as string | undefined } };

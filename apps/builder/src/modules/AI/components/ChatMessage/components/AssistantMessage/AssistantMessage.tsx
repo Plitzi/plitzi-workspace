@@ -7,18 +7,8 @@ import ModeLabel from '@pmodules/AI/components/ModeLabel';
 import MessageTools from '../../../MessageTools';
 import ToolVisualRenderer from '../../../ToolVisualRenderer';
 import extractToolVisual, { VISUAL_TOOL_NAMES } from '../../helpers/extractToolVisual';
-import getBrandResult from '../../helpers/getBrandResult';
-import getColorPaletteResult from '../../helpers/getColorPaletteResult';
-import getStagePreviewResult from '../../helpers/getStagePreviewResult';
-import getStyleGuideResult from '../../helpers/getStyleGuideResult';
-import getWireframeResult from '../../helpers/getWireframeResult';
 import { formatTime } from '../../helpers/utils';
 import ActionButtons from '../ActionButtons';
-import AIBrandPreview from '../AIBrandPreview';
-import AIColorPalettePreview from '../AIColorPalettePreview';
-import AIStyleGuidePreview from '../AIStyleGuidePreview';
-import AITemplatePreview from '../AITemplatePreview';
-import AIWireframePreview from '../AIWireframePreview';
 import ResourceStep from '../ResourceStep';
 import ThinkingBlock from '../ThinkingBlock';
 
@@ -34,13 +24,10 @@ type GroupedStep =
 export type AssistantMessageProps = {
   id: AiMessage['id'];
   content?: string;
-  thinking?: string;
-  thinkingDurationMs?: number;
   irrelevant?: boolean;
   mode?: AiMode;
   usage?: AiMessage['usage'];
   actions?: AiMessage['actions'];
-  tools?: AiToolCall[];
   steps?: AiMessageStep[];
   createdAt?: number;
   stagePreviewVersion?: number;
@@ -50,32 +37,15 @@ export type AssistantMessageProps = {
 const AssistantMessage = ({
   id,
   content,
-  thinking,
-  thinkingDurationMs,
   irrelevant,
   mode = 'build',
   usage,
   actions,
-  tools,
   steps,
   createdAt,
   stagePreviewVersion,
   wireframeVersion
 }: AssistantMessageProps) => {
-  const legacyVisuals = useMemo(() => {
-    if (steps) {
-      return null;
-    }
-
-    return {
-      preview: getStagePreviewResult(tools),
-      wireframe: getWireframeResult(tools),
-      colorPalette: getColorPaletteResult(tools),
-      brand: getBrandResult(tools),
-      styleGuide: getStyleGuideResult(tools)
-    };
-  }, [steps, tools]);
-
   const groupedSteps = useMemo<GroupedStep[] | null>(() => {
     if (!steps) {
       return null;
@@ -200,33 +170,13 @@ const AssistantMessage = ({
             </div>
           );
         })}
-      {legacyVisuals && (
-        <>
-          {thinking && <ThinkingBlock text={thinking} durationMs={thinkingDurationMs} />}
-          {tools && tools.length > 0 && <MessageTools tools={tools} />}
-          {legacyVisuals.styleGuide && <AIStyleGuidePreview {...legacyVisuals.styleGuide} mode={mode} />}
-          {legacyVisuals.brand && <AIBrandPreview {...legacyVisuals.brand} mode={mode} />}
-          {legacyVisuals.colorPalette && <AIColorPalettePreview {...legacyVisuals.colorPalette} mode={mode} />}
-          {legacyVisuals.wireframe && (
-            <AIWireframePreview {...legacyVisuals.wireframe} mode={mode} version={wireframeVersion} />
-          )}
-          {legacyVisuals.preview && (
-            <AITemplatePreview
-              baseElementId={legacyVisuals.preview.baseElementId}
-              schema={legacyVisuals.preview.schema}
-              style={legacyVisuals.preview.style}
-              html={legacyVisuals.preview.html}
-              mode={mode}
-              version={stagePreviewVersion}
-            />
-          )}
-        </>
-      )}
-      {content && (
+
+      {!steps?.length && content && (
         <div className="text-[13px] leading-[1.6] text-zinc-900 dark:text-zinc-100">
           <Markdown>{content}</Markdown>
         </div>
       )}
+
       {actions && actions.length > 0 && <ActionButtons actions={actions} />}
     </div>
   );

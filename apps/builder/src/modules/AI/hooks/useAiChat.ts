@@ -66,8 +66,7 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
     onChunk,
     onToolStart,
     onTool,
-    onResourceRead,
-    snapshotAsMessageSteps
+    onResourceRead
   } = useLiveSteps(captureStreaming);
 
   const initConversation = useCallback(async () => {
@@ -143,16 +142,14 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
             onTool(event);
           } else if (event.type === 'done') {
             setIsBusy(false);
-            captureStreaming();
-            const steps = snapshotAsMessageSteps();
+            flushStreaming();
             setMessages(prev => {
               const firstQueuedIdx = prev.findIndex(m => m.queued);
-              const msg = { ...event.message, steps };
               if (firstQueuedIdx === -1) {
-                return [...prev, msg];
+                return [...prev, event.message];
               }
 
-              return [...prev.slice(0, firstQueuedIdx), msg, ...prev.slice(firstQueuedIdx)];
+              return [...prev.slice(0, firstQueuedIdx), event.message, ...prev.slice(firstQueuedIdx)];
             });
 
             if (event.usage) {
@@ -201,8 +198,6 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
       onResourceRead,
       onTool,
       appendChunk,
-      captureStreaming,
-      snapshotAsMessageSteps,
       accumulateUsage,
       setQuotaLimitError,
       setError

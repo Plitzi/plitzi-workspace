@@ -11,15 +11,12 @@ const ChatMessage = ({
   id,
   role,
   content,
-  thinking,
-  thinkingDurationMs,
   irrelevant,
   queued,
   mode,
   usage,
   actions,
   attachments,
-  tools,
   steps,
   createdAt,
   stagePreviewVersion,
@@ -42,13 +39,10 @@ const ChatMessage = ({
     <AssistantMessage
       id={id}
       content={content}
-      thinking={thinking}
-      thinkingDurationMs={thinkingDurationMs}
       irrelevant={irrelevant}
       mode={mode}
       usage={usage}
       actions={actions}
-      tools={tools}
       steps={steps}
       createdAt={createdAt}
       stagePreviewVersion={stagePreviewVersion}

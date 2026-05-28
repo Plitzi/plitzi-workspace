@@ -3,6 +3,7 @@ import AIColorPalettePreview from '@pmodules/AI/components/ChatMessage/component
 import AIStyleGuidePreview from '@pmodules/AI/components/ChatMessage/components/AIStyleGuidePreview';
 import AITemplatePreview from '@pmodules/AI/components/ChatMessage/components/AITemplatePreview';
 import AIWireframePreview from '@pmodules/AI/components/ChatMessage/components/AIWireframePreview';
+import SdkElementPreview from '@pmodules/AI/components/ChatMessage/components/SdkElementPreview';
 
 import type { ToolVisual } from '@pmodules/AI/components/ChatMessage/helpers/extractToolVisual';
 import type { AiMode } from '@pmodules/AI/types';
@@ -29,6 +30,10 @@ const ToolVisualRenderer = ({ visual, mode, stagePreviewVersion, wireframeVersio
 
   if (visual.type === 'wireframe') {
     return <AIWireframePreview {...visual.data} mode={mode} version={wireframeVersion} />;
+  }
+
+  if (visual.type === 'render_element') {
+    return <SdkElementPreview elementId={visual.data.elementId} />;
   }
 
   return (
