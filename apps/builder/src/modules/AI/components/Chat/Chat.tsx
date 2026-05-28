@@ -7,27 +7,14 @@ import { estimateSize, PADDING } from './helpers';
 import { useAiChatContext } from '../../contexts/AiChatContext';
 import ChatMessage from '../ChatMessage';
 
-import type { AiLiveStep, AiMessage } from '../../types';
 import type { Ref } from 'react';
 
 export type ChatProps = {
   ref?: Ref<HTMLDivElement>;
-  messages: AiMessage[];
-  isStreaming?: boolean;
-  isBusy?: boolean;
-  streamingText?: string;
-  liveSteps?: AiLiveStep[];
 };
 
-const Chat = ({
-  ref,
-  messages = [],
-  isStreaming,
-  isBusy,
-  streamingText,
-  liveSteps = []
-}: ChatProps) => {
-  const { currentMode } = useAiChatContext();
+const Chat = ({ ref }: ChatProps) => {
+  const { currentMode, messages, isStreaming, isBusy, streamingText, liveSteps } = useAiChatContext();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const isAtBottom = useRef(true);
   useImperativeHandle(ref, () => scrollRef.current as HTMLDivElement, []);

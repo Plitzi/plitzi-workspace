@@ -4,7 +4,11 @@ import type { AiMessage } from '@pmodules/AI/types';
 
 const useMessageHistory = (messages: AiMessage[]) => {
   const userMessages = useMemo(
-    () => messages.filter(m => m.role === 'user').map(m => m.content ?? '').filter(Boolean),
+    () =>
+      messages
+        .filter(m => m.role === 'user')
+        .map(m => m.content ?? '')
+        .filter(Boolean),
     [messages]
   );
 

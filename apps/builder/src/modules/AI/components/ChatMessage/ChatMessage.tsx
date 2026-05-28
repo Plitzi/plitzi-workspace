@@ -27,7 +27,14 @@ const ChatMessage = ({
 }: ChatMessageProps) => {
   if (role === 'user') {
     return (
-      <UserMessage id={id} content={content} attachments={attachments} createdAt={createdAt} irrelevant={irrelevant} queued={queued} />
+      <UserMessage
+        id={id}
+        content={content}
+        attachments={attachments}
+        createdAt={createdAt}
+        irrelevant={irrelevant}
+        queued={queued}
+      />
     );
   }
 

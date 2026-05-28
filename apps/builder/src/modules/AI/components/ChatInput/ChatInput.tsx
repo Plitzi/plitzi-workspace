@@ -2,57 +2,43 @@ import TextArea from '@plitzi/plitzi-ui/TextArea';
 import clsx from 'clsx';
 import { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
-import { isMac } from './helpers';
-import useMessageHistory from './hooks/useMessageHistory';
 import VoiceVisualizer from '../VoiceVisualizer';
 import AttachmentThumbnail from './components/AttachmentThumbnail';
 import ChatInputControls from './components/ChatInputControls';
 import { DEFAULT_SKILLS, SkillsManager } from './components/SkillsManager';
+import { isMac } from './helpers';
+import useMessageHistory from './hooks/useMessageHistory';
+import { useAiChatContext } from '../../contexts/AiChatContext';
 
-import type { AiAttachment, AiEffort, AiMessage, AiMode, AiModelInfo, AiSkill, AiUsage } from '../../types';
+import type { AiAttachment, AiEffort, AiModelInfo, AiSkill } from '../../types';
 import type { KeyboardEvent, Ref } from 'react';
 
 export type ChatInputHandle = { appendText: (text: string) => void };
 
 export type ChatInputProps = {
   ref?: Ref<ChatInputHandle>;
-  isStreaming: boolean;
   isListening: boolean;
   isVoiceSupported: boolean;
   audioData: Uint8Array<ArrayBuffer> | null;
-  messages?: AiMessage[];
   models?: AiModelInfo[];
   currentModel?: string;
   modelsLoading?: boolean;
-  usage?: AiUsage;
-  messageCount?: number;
-  onCompact?: () => void;
-  onSend: (message: string, attachments: AiAttachment[], effort: AiEffort) => void;
   onVoiceToggle: () => void;
   onModelChange?: (modelId: string) => void;
-  mode?: AiMode;
-  onModeChange?: (mode: AiMode) => void;
 };
 
 const ChatInput = ({
   ref,
-  isStreaming,
   isListening,
   isVoiceSupported,
   audioData,
-  messages = [],
   models = [],
   currentModel,
   modelsLoading,
-  usage,
-  messageCount = 0,
-  onCompact,
-  onSend,
   onVoiceToggle,
-  onModelChange,
-  mode = 'build',
-  onModeChange
+  onModelChange
 }: ChatInputProps) => {
+  const { isStreaming, messages, usage, mode, setMode: onModeChange, compact: onCompact, onSend } = useAiChatContext();
   const [messageInput, setMessageInput] = useState('');
   const [attachments, setAttachments] = useState<AiAttachment[]>([]);
   const [effort, setEffort] = useState<AiEffort>('medium');
@@ -112,7 +98,7 @@ const ChatInput = ({
 
       if (e.altKey && e.code === 'KeyP') {
         e.preventDefault();
-        onModeChange?.(mode === 'plan' ? 'build' : 'plan');
+        onModeChange(mode === 'plan' ? 'build' : 'plan');
 
         return;
       }
@@ -273,7 +259,7 @@ const ChatInput = ({
             isListening={isListening}
             attachments={attachments}
             usage={usage}
-            messageCount={messageCount}
+            messageCount={messages.length}
             onCompact={onCompact}
             onVoiceToggle={onVoiceToggle}
             onAttachmentsChange={handleChangeAttachments}

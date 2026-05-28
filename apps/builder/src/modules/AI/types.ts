@@ -1,5 +1,7 @@
 import type { AiMode, AiRole, AIToolStatus, Theme } from '@plitzi/sdk-shared';
 
+export type { AiEffort, AiMode } from '@plitzi/sdk-shared';
+
 export type AiAttachment = {
   id: string;
   type: 'image';
@@ -66,6 +68,7 @@ export type AiMessage = {
   thinkingDurationMs?: number;
   irrelevant?: boolean;
   queued?: boolean;
+  compactionSummary?: boolean;
   mode?: AiMode;
   usage?: AiUsage;
   preview?: AiMessagePreview;

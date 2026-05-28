@@ -35,16 +35,22 @@ const LiveEntry = ({ isStreaming, isBusy, streamingText, liveSteps = [] }: LiveE
     const items: GroupedStep[] = [];
     liveSteps.forEach((step, i) => {
       if (step.type === 'tool') {
-        const toolCall: AiToolCall = { id: step.id, name: step.name, args: step.args, result: step.result, status: step.status };
+        const toolCall: AiToolCall = {
+          id: step.id,
+          name: step.name,
+          args: step.args,
+          result: step.result,
+          status: step.status
+        };
         const isVisual = VISUAL_TOOL_NAMES.has(step.name);
-        const last = items[items.length - 1];
+        const last = items.at(-1);
         if (!isVisual && last?.type === 'tools' && !last.tools.some(t => VISUAL_TOOL_NAMES.has(t.name))) {
           last.tools = [...last.tools, toolCall];
         } else {
           items.push({ type: 'tools', tools: [toolCall], key: step.id });
         }
       } else if (step.type === 'thinking') {
-        const last = items[items.length - 1];
+        const last = items.at(-1);
         if (last?.type === 'thinking') {
           items[items.length - 1] = {
             ...last,

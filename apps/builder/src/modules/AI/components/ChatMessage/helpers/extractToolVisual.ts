@@ -1,10 +1,9 @@
-import type { AiToolCall } from '@pmodules/AI/types';
-
 import type { BrandData } from './getBrandResult';
 import type { ColorPaletteData } from './getColorPaletteResult';
 import type { PreviewData } from './getStagePreviewResult';
 import type { StyleGuideData } from './getStyleGuideResult';
 import type { WireframeData } from './getWireframeResult';
+import type { AiToolCall } from '@pmodules/AI/types';
 
 export const VISUAL_TOOL_NAMES = new Set([
   'render_element',

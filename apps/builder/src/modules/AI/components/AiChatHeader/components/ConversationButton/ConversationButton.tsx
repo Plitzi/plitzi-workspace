@@ -8,47 +8,36 @@ import KeyboardKey from '@pmodules/AI/components/KeyboardKey';
 import ModeLabel from '@pmodules/AI/components/ModeLabel';
 import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 
-import type { AiMode, ConversationSummary } from '@pmodules/AI/types';
-
-export type ConversationButtonProps = {
-  conversationTitle?: string;
-  mode?: AiMode;
-  conversations?: ConversationSummary[];
-  currentConversationId?: string;
-  onLoadConversations?: () => Promise<void>;
-  onLoadConversation?: (id: string) => Promise<void>;
-  onClear?: () => void;
-};
-
-const ConversationButton = ({
-  conversationTitle,
-  mode,
-  conversations = [],
-  currentConversationId,
-  onLoadConversations,
-  onLoadConversation,
-  onClear
-}: ConversationButtonProps) => {
-  const { currentMode } = useAiChatContext();
+const ConversationButton = () => {
+  const {
+    currentMode,
+    conversationTitle,
+    mode,
+    conversations,
+    conversationId,
+    loadConversations,
+    loadConversation,
+    clearConversation
+  } = useAiChatContext();
 
   const handleModalOpen = useCallback(() => {
-    void onLoadConversations?.();
-  }, [onLoadConversations]);
+    void loadConversations();
+  }, [loadConversations]);
 
   const [id, open, onOpen, onClose] = useDisclosure({ onOpen: handleModalOpen });
 
   const handleSelect = useCallback(
-    (conversationId: string) => {
-      void onLoadConversation?.(conversationId);
+    (selectedId: string) => {
+      void loadConversation(selectedId);
       void onClose();
     },
-    [onLoadConversation, onClose]
+    [loadConversation, onClose]
   );
 
   const handleNew = useCallback(() => {
-    onClear?.();
+    clearConversation();
     void onClose();
-  }, [onClear, onClose]);
+  }, [clearConversation, onClose]);
 
   const handleClose = useCallback(() => {
     void onClose();
@@ -69,7 +58,7 @@ const ConversationButton = ({
     document.addEventListener('keydown', handler);
 
     return () => document.removeEventListener('keydown', handler);
-  }, [onClose, onLoadConversation, onLoadConversations, onOpen, open]);
+  }, [onClose, onOpen, open]);
 
   return (
     <>
@@ -108,7 +97,7 @@ const ConversationButton = ({
         <Modal.Body className="p-0">
           <HistoryPanel
             conversations={conversations}
-            currentConversationId={currentConversationId}
+            currentConversationId={conversationId}
             onClose={handleClose}
             onSelect={handleSelect}
             onNew={handleNew}

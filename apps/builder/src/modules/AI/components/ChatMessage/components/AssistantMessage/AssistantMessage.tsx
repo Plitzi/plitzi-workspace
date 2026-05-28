@@ -22,8 +22,8 @@ import AIWireframePreview from '../AIWireframePreview';
 import ResourceStep from '../ResourceStep';
 import ThinkingBlock from '../ThinkingBlock';
 
-import type { ToolVisual } from '../../helpers/extractToolVisual';
 import type { AiMessage, AiMessageStep, AiMode, AiToolCall } from '../../../../types';
+import type { ToolVisual } from '../../helpers/extractToolVisual';
 
 type GroupedStep =
   | { type: 'thinking'; step: Extract<AiMessageStep, { type: 'thinking' }>; key: string }
@@ -84,16 +84,22 @@ const AssistantMessage = ({
     const items: GroupedStep[] = [];
     steps.forEach((step, i) => {
       if (step.type === 'tool') {
-        const toolCall: AiToolCall = { id: step.id, name: step.name, args: step.args, result: step.result, status: step.status };
+        const toolCall: AiToolCall = {
+          id: step.id,
+          name: step.name,
+          args: step.args,
+          result: step.result,
+          status: step.status
+        };
         const isVisual = VISUAL_TOOL_NAMES.has(step.name);
-        const last = items[items.length - 1];
+        const last = items.at(-1);
         if (!isVisual && last?.type === 'tools' && !last.tools.some(t => VISUAL_TOOL_NAMES.has(t.name))) {
           last.tools = [...last.tools, toolCall];
         } else {
           items.push({ type: 'tools', tools: [toolCall], key: step.id });
         }
       } else if (step.type === 'thinking') {
-        const last = items[items.length - 1];
+        const last = items.at(-1);
         if (last?.type === 'thinking') {
           items[items.length - 1] = {
             ...last,
@@ -162,37 +168,38 @@ const AssistantMessage = ({
         )}
       </div>
 
-      {groupedSteps && groupedSteps.map(item => {
-        if (item.type === 'thinking') {
-          return <ThinkingBlock key={item.key} text={item.step.text} durationMs={item.step.durationMs} />;
-        }
+      {groupedSteps &&
+        groupedSteps.map(item => {
+          if (item.type === 'thinking') {
+            return <ThinkingBlock key={item.key} text={item.step.text} durationMs={item.step.durationMs} />;
+          }
 
-        if (item.type === 'resource') {
-          return <ResourceStep key={item.key} name={item.step.name} uri={item.step.uri} />;
-        }
+          if (item.type === 'resource') {
+            return <ResourceStep key={item.key} name={item.step.name} uri={item.step.uri} />;
+          }
 
-        if (item.type === 'tools') {
+          if (item.type === 'tools') {
+            return (
+              <Fragment key={item.key}>
+                <MessageTools tools={item.tools} />
+                {item.visual && (
+                  <ToolVisualRenderer
+                    visual={item.visual}
+                    mode={mode}
+                    stagePreviewVersion={stagePreviewVersion}
+                    wireframeVersion={wireframeVersion}
+                  />
+                )}
+              </Fragment>
+            );
+          }
+
           return (
-            <Fragment key={item.key}>
-              <MessageTools tools={item.tools} />
-              {item.visual && (
-                <ToolVisualRenderer
-                  visual={item.visual}
-                  mode={mode}
-                  stagePreviewVersion={stagePreviewVersion}
-                  wireframeVersion={wireframeVersion}
-                />
-              )}
-            </Fragment>
+            <div key={item.key} className="text-[13px] leading-[1.6] text-zinc-900 dark:text-zinc-100">
+              <Markdown>{item.step.text}</Markdown>
+            </div>
           );
-        }
-
-        return (
-          <div key={item.key} className="text-[13px] leading-[1.6] text-zinc-900 dark:text-zinc-100">
-            <Markdown>{item.step.text}</Markdown>
-          </div>
-        );
-      })}
+        })}
       {legacyVisuals && (
         <>
           {thinking && <ThinkingBlock text={thinking} durationMs={thinkingDurationMs} />}
@@ -200,7 +207,9 @@ const AssistantMessage = ({
           {legacyVisuals.styleGuide && <AIStyleGuidePreview {...legacyVisuals.styleGuide} mode={mode} />}
           {legacyVisuals.brand && <AIBrandPreview {...legacyVisuals.brand} mode={mode} />}
           {legacyVisuals.colorPalette && <AIColorPalettePreview {...legacyVisuals.colorPalette} mode={mode} />}
-          {legacyVisuals.wireframe && <AIWireframePreview {...legacyVisuals.wireframe} mode={mode} version={wireframeVersion} />}
+          {legacyVisuals.wireframe && (
+            <AIWireframePreview {...legacyVisuals.wireframe} mode={mode} version={wireframeVersion} />
+          )}
           {legacyVisuals.preview && (
             <AITemplatePreview
               baseElementId={legacyVisuals.preview.baseElementId}

@@ -1,23 +1,17 @@
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
-import { useCallback, use, useEffect, useRef, useState } from 'react';
-import { flushSync } from 'react-dom';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
 
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
-import type {
-  AiAttachment,
-  AiContext,
-  AiEffort,
-  AiLiveStep,
-  AiMessage,
-  AiMessageStep,
-  AiMode,
-  AiProviderSettings,
-  AiStreamEvent,
-  AiUsage,
-  ConversationSummary
-} from '../types';
+import useAiErrors from './useAiErrors';
+import useAiUsage from './useAiUsage';
+import useLiveSteps from './useLiveSteps';
+import useStreamingText from './useStreamingText';
+import { parseAiStream } from '../helpers/parseAiStream';
+
+import type { AiAttachment, AiContext, AiMessage, AiProviderSettings, ConversationSummary } from '../types';
+import type { AiEffort, AiMode } from '@plitzi/sdk-shared';
 
 type QueueEntry = {
   localId: string;
@@ -33,60 +27,13 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
   const [conversationId, setConversationId] = useStorage<string>('builder-state.aiChat.conversationId', '');
   const [mode, setMode] = useStorage<AiMode>('builder-state.aiChat.mode', 'build');
   const [messages, setMessages] = useState<AiMessage[]>([]);
-  const [streamingText, setStreamingText] = useState('');
-  const streamingTextRef = useRef('');
-  const streamingBufferRef = useRef('');
-  const streamingFlushRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
   const [pendingQueue, setPendingQueue] = useState<QueueEntry[]>([]);
   const pendingQueueRef = useRef<QueueEntry[]>([]);
   pendingQueueRef.current = pendingQueue;
   const executeSendRef = useRef<((entry: QueueEntry) => Promise<void>) | null>(null);
-
-  const flushStreamingBuffer = useCallback(() => {
-    if (streamingBufferRef.current) {
-      streamingTextRef.current += streamingBufferRef.current;
-      streamingBufferRef.current = '';
-    }
-
-    if (streamingTextRef.current) {
-      flushSync(() => setStreamingText(streamingTextRef.current));
-    }
-
-    streamingTextRef.current = '';
-    flushSync(() => setStreamingText(''));
-    if (streamingFlushRef.current) {
-      clearInterval(streamingFlushRef.current);
-      streamingFlushRef.current = null;
-    }
-  }, []);
-
-  const captureAndClearStreamingText = useCallback((): string => {
-    if (streamingBufferRef.current) {
-      streamingTextRef.current += streamingBufferRef.current;
-      streamingBufferRef.current = '';
-    }
-
-    const captured = streamingTextRef.current;
-    streamingTextRef.current = '';
-    flushSync(() => setStreamingText(''));
-    if (streamingFlushRef.current) {
-      clearInterval(streamingFlushRef.current);
-      streamingFlushRef.current = null;
-    }
-
-    return captured;
-  }, []);
-
-  const [liveSteps, setLiveSteps] = useState<AiLiveStep[]>([]);
-  const liveStepsRef = useRef<AiLiveStep[]>([]);
-  liveStepsRef.current = liveSteps;
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [isBusy, setIsBusy] = useState(false);
-  const [usage, setUsage] = useState<AiUsage | undefined>();
-  const [error, setError] = useState<string | undefined>();
-  const [quotaError, setQuotaError] = useState<string | undefined>();
-  const [quotaRetryAfter, setQuotaRetryAfter] = useState<number | undefined>();
-  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
 
   const conversationIdRef = useRef(conversationId);
   conversationIdRef.current = conversationId;
@@ -94,6 +41,34 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
   modeRef.current = mode;
   const providerSettingsRef = useRef(providerSettings);
   providerSettingsRef.current = providerSettings;
+
+  const { streamingText, appendChunk, flush: flushStreaming, capture: captureStreaming } = useStreamingText();
+  const {
+    usage,
+    accumulate: accumulateUsage,
+    reset: resetUsage,
+    loadFromMessages: loadUsageFromMessages
+  } = useAiUsage();
+  const {
+    error,
+    setError,
+    quotaError,
+    quotaRetryAfter,
+    clearError,
+    clearQuotaError,
+    clearAll: clearErrors,
+    setQuotaLimitError
+  } = useAiErrors();
+  const {
+    liveSteps,
+    clear: clearLiveSteps,
+    onThinking,
+    onChunk,
+    onToolStart,
+    onTool,
+    onResourceRead,
+    snapshotAsMessageSteps
+  } = useLiveSteps(captureStreaming);
 
   const initConversation = useCallback(async () => {
     const storedId = conversationIdRef.current;
@@ -104,20 +79,19 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
     const history = await networkQuery<{ messages: AiMessage[] }>(`/ai/messages?conversationId=${storedId}`);
     if (history) {
       setMessages(history.messages);
+      loadUsageFromMessages(history.messages);
     } else {
       setConversationId('');
     }
-  }, [networkQuery, setConversationId]);
+  }, [networkQuery, setConversationId, loadUsageFromMessages]);
 
   const executeSend = useCallback(
     async (entry: QueueEntry) => {
-      setMessages(prev => prev.map(m => m.id === entry.localId && m.queued ? { ...m, queued: undefined } : m));
+      setMessages(prev => prev.map(m => (m.id === entry.localId && m.queued ? { ...m, queued: undefined } : m)));
       setIsStreaming(true);
-      flushStreamingBuffer();
-      setLiveSteps([]);
-      setError(undefined);
-      setQuotaError(undefined);
-      setQuotaRetryAfter(undefined);
+      flushStreaming();
+      clearLiveSteps();
+      clearErrors();
 
       try {
         let activeConversationId = conversationIdRef.current;
@@ -133,7 +107,6 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
         }
 
         const serverAttachments = entry.attachments.map(a => ({ type: a.type, mimeType: a.mimeType, data: a.data }));
-
         const res = await fetch(`${server.nodeServer}/ai/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${webKey}` },
@@ -152,169 +125,46 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
           throw new Error(`HTTP ${res.status}`);
         }
 
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
+        for await (const event of parseAiStream(res.body.getReader())) {
+          if (event.type === 'busy') {
+            setIsBusy(true);
+          } else if (event.type === 'thinking') {
+            setIsBusy(false);
+            onThinking(event);
+          } else if (event.type === 'chunk') {
+            setIsBusy(false);
+            onChunk();
+            appendChunk(event.text);
+          } else if (event.type === 'tool_start') {
+            onToolStart(event);
+          } else if (event.type === 'resource_read') {
+            onResourceRead(event);
+          } else if (event.type === 'tool') {
+            onTool(event);
+          } else if (event.type === 'done') {
+            setIsBusy(false);
+            captureStreaming();
+            const steps = snapshotAsMessageSteps();
+            setMessages(prev => {
+              const firstQueuedIdx = prev.findIndex(m => m.queued);
+              const msg = { ...event.message, steps };
+              if (firstQueuedIdx === -1) {
+                return [...prev, msg];
+              }
 
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) {
-            break;
-          }
+              return [...prev.slice(0, firstQueuedIdx), msg, ...prev.slice(firstQueuedIdx)];
+            });
 
-          buffer += decoder.decode(value, { stream: true });
-          const parts = buffer.split('\n\n');
-          buffer = parts.pop() ?? '';
-
-          for (const part of parts) {
-            const line = part.trim();
-            if (!line.startsWith('data: ')) {
-              continue;
+            if (event.usage) {
+              accumulateUsage(event.usage);
             }
 
-            try {
-              const event = JSON.parse(line.slice(6)) as AiStreamEvent;
-
-              if (event.type === 'busy') {
-                setIsBusy(true);
-              } else if (event.type === 'thinking') {
-                setIsBusy(false);
-                const lastLiveStep = liveStepsRef.current[liveStepsRef.current.length - 1];
-                const isAppending = lastLiveStep?.type === 'thinking' && !lastLiveStep.done;
-
-                if (isAppending) {
-                  setLiveSteps(prev => {
-                    const last = prev[prev.length - 1];
-                    if (last && last.type === 'thinking' && !last.done) {
-                      return [...prev.slice(0, -1), { ...last, text: last.text + event.text }];
-                    }
-
-                    return prev;
-                  });
-                } else {
-                  const committed = captureAndClearStreamingText();
-                  setLiveSteps(prev => {
-                    const withText = committed ? [...prev, { type: 'text' as const, text: committed }] : prev;
-
-                    return [...withText, { type: 'thinking', text: event.text, done: false, startMs: Date.now() }];
-                  });
-                }
-              } else if (event.type === 'chunk') {
-                setIsBusy(false);
-                setLiveSteps(prev => {
-                  const last = prev[prev.length - 1];
-                  if (last && last.type === 'thinking' && !last.done) {
-                    return [...prev.slice(0, -1), { ...last, done: true, durationMs: Date.now() - last.startMs }];
-                  }
-
-                  return prev;
-                });
-                streamingBufferRef.current += event.text;
-                if (!streamingFlushRef.current) {
-                  streamingFlushRef.current = setInterval(() => {
-                    if (streamingBufferRef.current) {
-                      streamingTextRef.current += streamingBufferRef.current;
-                      flushSync(() => setStreamingText(streamingTextRef.current));
-                      streamingBufferRef.current = '';
-                    }
-                  }, 30);
-                }
-              } else if (event.type === 'tool_start') {
-                const committedText = captureAndClearStreamingText();
-                setLiveSteps(prev => {
-                  const last = prev[prev.length - 1];
-                  const withThinkingClosed =
-                    last && last.type === 'thinking' && !last.done
-                      ? [...prev.slice(0, -1), { ...last, done: true, durationMs: Date.now() - last.startMs }]
-                      : prev;
-                  const withText = committedText
-                    ? [...withThinkingClosed, { type: 'text' as const, text: committedText }]
-                    : withThinkingClosed;
-                  const alreadyRunning = withText.some(
-                    s => s.type === 'tool' && s.name === event.name && s.status === 'running'
-                  );
-
-                  if (alreadyRunning) {
-                    return withText;
-                  }
-
-                  return [
-                    ...withText,
-                    { type: 'tool', id: crypto.randomUUID(), name: event.name, args: event.args, status: 'running' }
-                  ];
-                });
-              } else if (event.type === 'resource_read') {
-                setLiveSteps(prev => [...prev, { type: 'resource', name: event.name, uri: event.uri }]);
-              } else if (event.type === 'tool') {
-                setLiveSteps(prev => {
-                  let targetIdx = -1;
-                  for (let i = prev.length - 1; i >= 0; i--) {
-                    const s = prev[i];
-                    if (s.type === 'tool' && s.name === event.name && s.status === 'running') {
-                      targetIdx = i;
-                      break;
-                    }
-                  }
-
-                  if (targetIdx === -1) {
-                    return prev;
-                  }
-
-                  return prev.map((s, i) =>
-                    i === targetIdx ? { ...s, result: event.result, status: event.status } : s
-                  );
-                });
-              } else if (event.type === 'done') {
-                setIsBusy(false);
-                captureAndClearStreamingText();
-                const currentSteps = liveStepsRef.current;
-                const steps: AiMessageStep[] = currentSteps.map(s => {
-                  if (s.type === 'thinking') {
-                    return { type: 'thinking', text: s.text, durationMs: s.durationMs };
-                  }
-
-                  if (s.type === 'tool') {
-                    return {
-                      type: 'tool',
-                      id: s.id,
-                      name: s.name,
-                      args: s.args,
-                      result: s.result,
-                      status: s.status === 'running' ? ('interrupted' as const) : s.status
-                    };
-                  }
-
-                  if (s.type === 'resource') {
-                    return { type: 'resource', name: s.name, uri: s.uri };
-                  }
-
-                  return { type: 'text', text: s.text };
-                });
-                setMessages(prev => {
-                  const firstQueuedIdx = prev.findIndex(m => m.queued);
-                  const msg = { ...event.message, steps };
-                  if (firstQueuedIdx === -1) {
-                    return [...prev, msg];
-                  }
-
-                  return [...prev.slice(0, firstQueuedIdx), msg, ...prev.slice(firstQueuedIdx)];
-                });
-
-                if (event.usage) {
-                  setUsage(event.usage);
-                }
-
-                setLiveSteps([]);
-              } else if ('message' in event) {
-                if ('retryAfter' in event && event.retryAfter) {
-                  setQuotaError(event.message || 'Rate limit exceeded');
-                  setQuotaRetryAfter(event.retryAfter);
-                } else {
-                  setError(event.message);
-                }
-              }
-            } catch {
-              // skip malformed events
+            clearLiveSteps();
+          } else {
+            if (event.retryAfter) {
+              setQuotaLimitError(event.message || 'Rate limit exceeded', event.retryAfter);
+            } else {
+              setError(event.message);
             }
           }
         }
@@ -323,19 +173,40 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
       } finally {
         setIsStreaming(false);
         setIsBusy(false);
-        flushStreamingBuffer();
-        setLiveSteps([]);
+        flushStreaming();
+        clearLiveSteps();
 
         const queue = pendingQueueRef.current;
         if (queue.length > 0) {
           const [next, ...rest] = queue;
           pendingQueueRef.current = rest;
           setPendingQueue([...rest]);
-          setTimeout(() => { void executeSendRef.current?.(next); }, 0);
+          setTimeout(() => {
+            void executeSendRef.current?.(next);
+          }, 0);
         }
       }
     },
-    [captureAndClearStreamingText, flushStreamingBuffer, networkQuery, setConversationId, server.nodeServer, webKey]
+    [
+      flushStreaming,
+      clearLiveSteps,
+      clearErrors,
+      networkQuery,
+      setConversationId,
+      server.nodeServer,
+      webKey,
+      onThinking,
+      onChunk,
+      onToolStart,
+      onResourceRead,
+      onTool,
+      appendChunk,
+      captureStreaming,
+      snapshotAsMessageSteps,
+      accumulateUsage,
+      setQuotaLimitError,
+      setError
+    ]
   );
 
   executeSendRef.current = executeSend;
@@ -388,11 +259,9 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
     setConversationId('');
     setPendingQueue([]);
     pendingQueueRef.current = [];
-    setUsage(undefined);
-    setError(undefined);
-    setQuotaError(undefined);
-    setQuotaRetryAfter(undefined);
-  }, [setConversationId]);
+    resetUsage();
+    clearErrors();
+  }, [setConversationId, clearErrors, resetUsage]);
 
   const loadConversations = useCallback(async () => {
     const res = await networkQuery<{ conversations: ConversationSummary[] }>('/ai/conversations');
@@ -413,13 +282,11 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
         setMessages(history.messages);
         setPendingQueue([]);
         pendingQueueRef.current = [];
-        setUsage(undefined);
-        setError(undefined);
-        setQuotaError(undefined);
-        setQuotaRetryAfter(undefined);
+        loadUsageFromMessages(history.messages);
+        clearErrors();
       }
     },
-    [isStreaming, networkQuery, setConversationId]
+    [isStreaming, networkQuery, setConversationId, clearErrors, loadUsageFromMessages]
   );
 
   const compact = useCallback(async () => {
@@ -440,9 +307,9 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
     const data = (await res.json()) as { message: AiMessage | null };
     if (data.message) {
       setMessages([data.message]);
-      setUsage(undefined);
+      resetUsage();
     }
-  }, [isStreaming, server.nodeServer, webKey]);
+  }, [isStreaming, server.nodeServer, webKey, resetUsage]);
 
   const usedPercent = usage?.usedPercent ?? 0;
   const compactedAtRef = useRef(0);
@@ -461,12 +328,9 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
     isBusy,
     usage,
     error,
-    clearError: () => setError(undefined),
+    clearError,
     quotaError,
-    clearQuotaError: () => {
-      setQuotaError(undefined);
-      setQuotaRetryAfter(undefined);
-    },
+    clearQuotaError,
     quotaRetryAfter,
     conversationId,
     conversations,

@@ -31,20 +31,16 @@ const ToolVisualRenderer = ({ visual, mode, stagePreviewVersion, wireframeVersio
     return <AIWireframePreview {...visual.data} mode={mode} version={wireframeVersion} />;
   }
 
-  if (visual.type === 'stage_preview') {
-    return (
-      <AITemplatePreview
-        baseElementId={visual.data.baseElementId}
-        schema={visual.data.schema}
-        style={visual.data.style}
-        html={visual.data.html}
-        mode={mode}
-        version={stagePreviewVersion}
-      />
-    );
-  }
-
-  return null;
+  return (
+    <AITemplatePreview
+      baseElementId={visual.data.baseElementId}
+      schema={visual.data.schema}
+      style={visual.data.style}
+      html={visual.data.html}
+      mode={mode}
+      version={stagePreviewVersion}
+    />
+  );
 };
 
 export default ToolVisualRenderer;
