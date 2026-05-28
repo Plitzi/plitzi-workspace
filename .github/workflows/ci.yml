@@ -6,6 +6,11 @@ name: ci
 on:
   release:
     types: [published]
+  pull_request:
+    branches:
+      - develop
+      - staging
+      - main
   push:
     branches:
       - develop
