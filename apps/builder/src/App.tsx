@@ -56,7 +56,7 @@ import clsx from 'clsx';
 import { Kind, OperationTypeNode } from 'graphql';
 import { createClient } from 'graphql-ws';
 import { Children, isValidElement, useCallback, useEffect, useMemo } from 'react';
-import { BrowserRouter, useLocation } from 'react-router-dom';
+import { BrowserRouter, useInRouterContext } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
@@ -76,6 +76,16 @@ import type { ComponentPlugin, ComponentPluginFC, Server } from '@plitzi/sdk-sha
 import type { BuilderPluginProps } from '@pmodules/Builder/BuilderPlugin';
 import type { Client } from 'graphql-ws';
 import type { ReactNode } from 'react';
+
+const AppRouter = ({ basename, children }: { basename: string; children: ReactNode }) => {
+  const inRouter = useInRouterContext();
+
+  if (inRouter) {
+    return children;
+  }
+
+  return <BrowserRouter basename={basename}>{children}</BrowserRouter>;
+};
 
 export type AppProps = {
   children?: ReactNode;
@@ -159,6 +169,10 @@ const App = (props: AppProps) => {
     }
 
     window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [handleKeyDown, debugModeProp]);
 
   useEffect(() => {
@@ -167,15 +181,6 @@ const App = (props: AppProps) => {
       'background: linear-gradient(60deg, #01d0e2 0%, #4422ee 100%);\n  color: white;\n  display: block;\n  line-height: 25px;\n  height: 25px;\n  padding: 5px;'
     );
   }, []);
-
-  let hasBrowserRouter = false as boolean;
-  try {
-    // This logic is used to identify if the builder is inside another app with react-router, for example in the SDK
-    useLocation();
-    hasBrowserRouter = true;
-  } catch {
-    hasBrowserRouter = false;
-  }
 
   useEffect(() => {
     const instanceId = uuidv4();
@@ -341,8 +346,7 @@ const App = (props: AppProps) => {
       <ThemeProvider storageKey="builder-state.theme">
         <Provider components={components}>
           <ContainerRoot className={clsx('plitzi-builder flex items-stretch', className)}>
-            {!hasBrowserRouter && <BrowserRouter basename={server.basePath ?? ''}>{childrenParsed}</BrowserRouter>}
-            {hasBrowserRouter && childrenParsed}
+            <AppRouter basename={server.basePath ?? ''}>{childrenParsed}</AppRouter>
           </ContainerRoot>
         </Provider>
       </ThemeProvider>

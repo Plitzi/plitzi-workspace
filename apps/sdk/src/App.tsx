@@ -115,6 +115,10 @@ const App = ({
     }
 
     window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [handleKeyDown, debugModeProp]);
 
   const localCustomComponents = useMemo(() => {

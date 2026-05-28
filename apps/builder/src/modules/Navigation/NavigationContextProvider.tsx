@@ -1,6 +1,6 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, use, useCallback, useRef } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
@@ -22,7 +22,8 @@ const NavigationContextProvider = ({ previewMode = false, children }: Navigation
   const [[pageFolders, pageDefinitions]] = useStore(['schema.pageFolders', 'pageDefinitions']);
   const { server } = use(NetworkContext);
   const { authenticated } = use(AuthContext);
-  const { queryParams, hostname, location } = useNavigation({ server });
+  const { queryParams, hostname } = useNavigation({ server });
+  const { pathname, search } = useLocation();
   const navigate = useNavigate();
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
@@ -33,8 +34,8 @@ const NavigationContextProvider = ({ previewMode = false, children }: Navigation
   );
 
   const matchResult = useMemo(
-    () => matchRoutePath(paths, location.pathname, authenticated),
-    [paths, location.pathname, authenticated]
+    () => matchRoutePath(paths, pathname, authenticated),
+    [paths, pathname, authenticated]
   );
 
   const { action, pageId: currentPageId, pathMatch } = matchResult;
@@ -50,7 +51,7 @@ const NavigationContextProvider = ({ previewMode = false, children }: Navigation
       ...get(pathMatch, 'params', {})
     };
   }, [paths, pathMatch, currentPageId]);
-  const urlSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const urlSearchParams = useMemo(() => new URLSearchParams(search), [search]);
 
   const handleNavigate = useCallback(
     (url: string, isExternal: boolean = false) => {

@@ -27,7 +27,10 @@
     "changeset": "changeset",
     "generate-tarballs": "yarn workspaces foreach -A exec yarn pack",
     "check-tgz": "yarn generate-tarballs && bash -c 'for tgz in packages/*/*.tgz apps/*/*.tgz; do echo \"---- $tgz ----\"; if tar -xOzf \"$tgz\" package/package.json | grep -q \"workspace:*\"; then echo \"⚠️  Contiene workspace:*\"; else echo \"✅ No workspace:*\"; fi; done'",
-    "ci:publish": "yarn workspaces foreach -A --topological-dev --exclude . exec yarn npm publish --tolerate-republish --access public && changeset tag"
+    "ci:publish": "yarn workspaces foreach -A --topological-dev --exclude . exec yarn npm publish --tolerate-republish --access public && changeset tag",
+    "react:doctor": "react-doctor --verbose --full",
+    "react:doctor:diff": "react-doctor -y --diff main --fail-on error",
+    "react:doctor:ci": "react-doctor -y --diff main --fail-on error --annotations"
   },
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.6.9",
@@ -39,6 +42,7 @@
     "@types/react": "^19.2.15",
     "eslint": "^9.39.4",
     "prettier-plugin-tailwindcss": "^0.8.0",
+    "react-doctor": "^0.2.6",
     "turbo": "^2.9.14"
   },
   "engines": {

@@ -1,7 +1,7 @@
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo, useRef, useEffect } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
@@ -28,38 +28,85 @@ export type NavigationContextProviderProps = {
   previewMode?: boolean;
 };
 
-const NavigationContextProvider = ({
+type MatchResult = {
+  action: { type: NavigationStatus; path?: string };
+  pathMatch?: PathMatch;
+  pageId?: string;
+};
+
+const NavigationContextProviderWidget = ({
   children,
-  renderMode = 'iframe',
   currentPageId: currentPageIdProp,
   previewMode = true
 }: NavigationContextProviderProps) => {
   const { server } = use(NetworkContext);
   const { useStore } = createStoreHook<BuilderState>();
   const [[pageFolders, pageDefinitions]] = useStore(['schema.pageFolders', 'pageDefinitions']);
-  const { queryParams, hostname, location } = useNavigation({ server });
+  const { queryParams } = useNavigation({ server });
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
   const { authenticated } = use(AuthContext);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const navigate = renderMode !== 'widget' ? useNavigate() : undefined;
 
   const paths = useMemo(
     () => getPaths(pageDefinitions, pageFolders, authenticated, server.basePath, previewMode),
     [pageDefinitions, pageFolders, authenticated, server.basePath, previewMode]
   );
 
-  const matchResult = useMemo<{
-    action: { type: NavigationStatus; path?: string };
-    pathMatch?: PathMatch;
-    pageId?: string;
-  }>(() => {
-    if (renderMode === 'widget') {
-      return { action: { type: 'normal', path: '' }, pageId: currentPageIdProp };
+  const currentPageId = currentPageIdProp ?? '';
+  const action = { type: 'normal' as const, path: '' };
+
+  useEffect(() => {
+    pConsole.info(
+      'navigation',
+      <span>
+        Navigated to page{' '}
+        <b>{get(pageDefinitions, `${currentPageId}.attributes.name`, currentPageId ? currentPageId : 'Unknown')}</b>
+      </span>,
+      { status: action.type, elementId: currentPageId }
+    );
+  }, [action.type, currentPageId, pageDefinitions]);
+
+  const routeParams = useMemo<RouteParams>(() => {
+    const path = paths.find(path => path.pageId === currentPageId && !path.isRaw);
+    if (!path) {
+      return {};
     }
 
-    return matchRoutePath(paths, location.pathname, authenticated);
-  }, [paths, location.pathname, authenticated, renderMode, currentPageIdProp]);
+    return getRouteParams(path.path).reduce((acum, param) => ({ ...acum, [param]: '' }), {});
+  }, [paths, currentPageId]);
+  const urlSearchParams = useMemo(() => new URLSearchParams(''), []);
+  const navigationValue = useMemo<NavigationContextValue>(
+    () => ({ urlSearchParams, routeParams, queryParams, currentPageId }) as NavigationContextValue,
+    [urlSearchParams, routeParams, queryParams, currentPageId]
+  );
+
+  return <NavigationContext value={navigationValue}>{children}</NavigationContext>;
+};
+
+const NavigationContextProviderRouted = ({
+  children,
+  currentPageId: currentPageIdProp,
+  previewMode = true
+}: NavigationContextProviderProps) => {
+  const { server } = use(NetworkContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [[pageFolders, pageDefinitions]] = useStore(['schema.pageFolders', 'pageDefinitions']);
+  const { queryParams, hostname } = useNavigation({ server });
+  const { pathname, search } = useLocation();
+  const pageDefinitionsRef = useRef(pageDefinitions);
+  pageDefinitionsRef.current = pageDefinitions;
+  const { authenticated } = use(AuthContext);
+  const navigate = useNavigate();
+
+  const paths = useMemo(
+    () => getPaths(pageDefinitions, pageFolders, authenticated, server.basePath, previewMode),
+    [pageDefinitions, pageFolders, authenticated, server.basePath, previewMode]
+  );
+
+  const matchResult = useMemo<MatchResult>(
+    () => matchRoutePath(paths, pathname, authenticated),
+    [paths, pathname, authenticated]
+  );
 
   const { action, pageId = '', pathMatch } = matchResult;
   const currentPageId = currentPageIdProp || pageId;
@@ -85,26 +132,26 @@ const NavigationContextProvider = ({
 
       const page = get(pageDefinitionsRef, `current.${url}`, undefined);
       if (!page) {
-        void navigate?.(url);
+        void navigate(url);
 
         return;
       }
 
       const slug = get(page, 'attributes.slug');
       if (slug || slug === '') {
-        void navigate?.(slug);
+        void navigate(slug);
 
         return;
       }
 
       const isHome = get(page, 'attributes.default');
       if (isHome) {
-        void navigate?.('/');
+        void navigate('/');
 
         return;
       }
 
-      void navigate?.(`/${url}`);
+      void navigate(`/${url}`);
     },
     [navigate]
   );
@@ -120,13 +167,9 @@ const NavigationContextProvider = ({
       ...get(pathMatch, 'params', {})
     };
   }, [paths, pathMatch, currentPageId]);
-  const urlSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
-  const navigationValue = useMemo<NavigationContextValue>(() => {
-    if (renderMode === 'widget') {
-      return { urlSearchParams, routeParams, queryParams, currentPageId } as NavigationContextValue;
-    }
-
-    return {
+  const urlSearchParams = useMemo(() => new URLSearchParams(search), [search]);
+  const navigationValue = useMemo<NavigationContextValue>(
+    () => ({
       navigate: handleNavigate,
       urlSearchParams,
       routeParams,
@@ -134,18 +177,15 @@ const NavigationContextProvider = ({
       hostname,
       currentPageId,
       Helmet
-    };
-  }, [renderMode, handleNavigate, urlSearchParams, routeParams, queryParams, hostname, currentPageId]);
+    }),
+    [handleNavigate, urlSearchParams, routeParams, queryParams, hostname, currentPageId]
+  );
 
   if (action.type === 'notFound') {
-    // @todo: In the future this should navigate to page 404
-    // return <Navigate to="/not-found" replace />;
     return 'Not Found';
   }
 
   if (action.type === 'accessDenied') {
-    // @todo: In the future this should navigate to page 403
-    // return <Navigate to="/unauthorized" replace />;
     return 'Access Denied';
   }
 
@@ -154,6 +194,14 @@ const NavigationContextProvider = ({
   }
 
   return <NavigationContext value={navigationValue}>{children}</NavigationContext>;
+};
+
+const NavigationContextProvider = (props: NavigationContextProviderProps) => {
+  if (props.renderMode === 'widget') {
+    return <NavigationContextProviderWidget {...props} />;
+  }
+
+  return <NavigationContextProviderRouted {...props} />;
 };
 
 export default NavigationContextProvider;

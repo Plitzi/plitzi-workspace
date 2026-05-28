@@ -128,6 +128,9 @@ jobs:
       - name: Yarn Typecheck
         run: yarn typecheck
 
+      - name: React Doctor (changed files)
+        run: yarn react:doctor:ci
+
   # tests:
   #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
   #   needs: lint

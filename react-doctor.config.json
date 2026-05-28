@@ -1,0 +1,83 @@
+{
+  "failOn": "error",
+  "deadCode": false,
+  "ignore": {
+    "tags": ["design", "migration-hint", "test-noise"]
+  },
+  "rules": {
+    "react-doctor/rules-of-hooks": "error",
+    "react-doctor/effect-needs-cleanup": "error",
+    "react-doctor/no-mutable-in-deps": "error",
+
+    "react-doctor/only-export-components": "warn",
+    "react-doctor/exhaustive-deps": "warn",
+    "react-doctor/alt-text": "warn",
+    "react-doctor/click-events-have-key-events": "warn",
+    "react-doctor/no-static-element-interactions": "warn",
+    "react-doctor/control-has-associated-label": "warn",
+    "react-doctor/label-has-associated-control": "warn",
+    "react-doctor/no-array-index-key": "warn",
+    "react-doctor/no-array-index-as-key": "warn",
+    "react-doctor/no-danger": "warn",
+    "react-doctor/no-autofocus": "warn",
+    "react-doctor/jsx-no-target-blank": "warn",
+    "react-doctor/no-noninteractive-element-interactions": "warn",
+    "react-doctor/mouse-events-have-key-events": "warn",
+
+    "react-doctor/no-generic-handler-names": "off",
+    "react-doctor/button-has-type": "off",
+    "react-doctor/prefer-use-effect-event": "off",
+    "react-doctor/no-barrel-import": "off",
+    "react-doctor/no-giant-component": "off",
+    "react-doctor/no-many-boolean-props": "off",
+    "react-doctor/no-tiny-text": "off",
+    "react-doctor/anchor-ambiguous-text": "off",
+    "react-doctor/no-inline-exhaustive-style": "off",
+    "react-doctor/jsx-no-jsx-as-prop": "off",
+    "react-doctor/no-render-prop-children": "off",
+    "react-doctor/no-flush-sync": "off",
+    "react-doctor/no-react19-deprecated-apis": "off",
+    "react-doctor/no-pass-data-to-parent": "off",
+    "react-doctor/no-prop-callback-in-effect": "off",
+    "react-doctor/advanced-event-handler-refs": "off",
+    "react-doctor/async-await-in-loop": "off",
+    "react-doctor/no-dynamic-import-path": "off",
+    "react-doctor/jsx-pascal-case": "off",
+    "react-doctor/rendering-hydration-no-flicker": "off",
+
+    "react-doctor/js-combine-iterations": "off",
+    "react-doctor/js-flatmap-filter": "off",
+    "react-doctor/js-set-map-lookups": "off",
+    "react-doctor/js-tosorted-immutable": "off",
+    "react-doctor/no-usememo-simple-expression": "off",
+
+    "react-doctor/rerender-memo-with-default-value": "off",
+    "react-doctor/rerender-state-only-in-handlers": "off",
+    "react-doctor/rerender-memo-before-early-return": "off",
+    "react-doctor/rerender-lazy-state-init": "off",
+
+    "react-doctor/prefer-useReducer": "off",
+    "react-doctor/no-cascading-set-state": "off",
+    "react-doctor/no-chain-state-updates": "off",
+    "react-doctor/no-derived-state": "off",
+    "react-doctor/no-derived-state-effect": "off",
+    "react-doctor/no-derived-useState": "off",
+    "react-doctor/no-event-handler": "off",
+    "react-doctor/no-adjust-state-on-prop-change": "off",
+    "react-doctor/no-reset-all-state-on-prop-change": "off",
+    "react-doctor/no-initialize-state": "off",
+    "react-doctor/no-fetch-in-effect": "off",
+    "react-doctor/no-effect-chain": "off"
+  },
+  "surfaces": {
+    "ciFailure": {
+      "excludeTags": ["design", "migration-hint", "test-noise"]
+    },
+    "prComment": {
+      "excludeTags": ["design", "migration-hint", "test-noise"]
+    },
+    "score": {
+      "excludeTags": ["design", "migration-hint", "test-noise"]
+    }
+  }
+}
