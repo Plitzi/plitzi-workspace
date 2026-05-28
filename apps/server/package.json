@@ -38,6 +38,7 @@
     "@types/node": "^25.9.1",
     "@types/react": "^19.2.15",
     "@vitejs/plugin-react": "^6.0.2",
+    "@vitest/coverage-v8": "^4.1.7",
     "eslint": "^9.39.4",
     "eslint-plugin-import": "^2.32.0",
     "react": "^19.2.6",
@@ -45,7 +46,8 @@
     "tsx": "^4.22.3",
     "typescript": "^6.0.3",
     "vite": "^8.0.14",
-    "vite-plugin-dts": "^5.0.1"
+    "vite-plugin-dts": "^5.0.1",
+    "vitest": "^4.1.7"
   },
   "scripts": {
     "start:dev": "TSX_TSCONFIG_PATH=tsconfig.app.json ALIAS_LOADER_DEBUG=1  node --import ./src/standalone/register-alias.mjs --import tsx --watch src/standalone/server.ts",
@@ -55,6 +57,8 @@
     "build:dev": "vite build --mode development",
     "build:prod": "vite build",
     "lint": "TIMING=1 eslint ./src",
-    "typecheck": "tsc -p tsconfig.app.json --noEmit"
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   }
 }
