@@ -78,7 +78,7 @@
     "cypress": "15.16.0",
     "eslint": "^9.39.4",
     "eslint-plugin-import": "^2.32.0",
-    "flow-bin": "^0.314.0",
+    "flow-bin": "^0.315.0",
     "postcss": "^8.5.15",
     "postcss-loader": "^8.2.1",
     "postcss-scss": "^4.0.9",
