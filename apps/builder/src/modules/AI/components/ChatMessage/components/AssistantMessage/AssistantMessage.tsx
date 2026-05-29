@@ -89,20 +89,17 @@ const AssistantMessage = ({
       }
     });
 
-    const visuals = items.map(item => (item.type === 'tools' ? extractToolVisual(item.tools) : undefined));
-    let lastVisualIdx = -1;
-    visuals.forEach((v, i) => {
-      if (v) {
-        lastVisualIdx = i;
-      }
-    });
-
-    return items.map((item, i) => {
-      if (item.type !== 'tools' || i !== lastVisualIdx) {
+    return items.map(item => {
+      if (item.type !== 'tools') {
         return item;
       }
 
-      return { ...item, visual: visuals[i] };
+      const visual = extractToolVisual(item.tools);
+      if (!visual) {
+        return item;
+      }
+
+      return { ...item, visual };
     });
   }, [steps]);
 
