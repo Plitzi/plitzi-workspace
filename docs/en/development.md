@@ -55,18 +55,7 @@ Full rules live in [claude.md](../../claude.md) at the repository root. Highligh
 
 Code identifiers and comments are in **English**; team discussion may be in Spanish.
 
-## Linking packages locally
-
-To link the SDK into the builder during development (Yarn workspaces):
-
-```bash
-# From apps/builder — prefer workspace:* in package.json when possible
-yarn link ../sdk -r
-# To unlink
-yarn unlink ../sdk
-```
-
-Within the monorepo, dependencies already use `workspace:*`; linking is mainly for testing against an external checkout.
+Yarn workspaces resolve `workspace:*` dependencies automatically in dev mode — no manual package linking is required.
 
 ## Contributing
 

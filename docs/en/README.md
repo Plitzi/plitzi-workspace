@@ -5,7 +5,7 @@ Guides for working with the `plitzi-workspace` monorepo.
 | Guide | Description |
 |-------|-------------|
 | [Getting started](./getting-started.md) | Clone, install dependencies, and run apps |
-| [Local setup](./local-setup.md) | Hosts file, HTTPS, and local hostnames |
+| [Local setup](./local-setup.md) | Dev servers for contributors; optional local hosts/HTTPS for maintainers |
 | [Repository structure](./repository-structure.md) | Apps and packages layout |
 | [Development](./development.md) | Stack, commands, and contribution workflow |
 | [Releases](./releases.md) | Versioning and publishing with Changesets |

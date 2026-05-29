@@ -55,18 +55,7 @@ Las reglas completas están en [claude.md](../../claude.md) (inglés) en la raí
 
 Identificadores y comentarios en el código van en **inglés**; la conversación del equipo puede ser en español.
 
-## Enlazar paquetes en local
-
-Para enlazar el SDK con el builder durante el desarrollo (workspaces de Yarn):
-
-```bash
-# Desde apps/builder — preferir workspace:* en package.json cuando sea posible
-yarn link ../sdk -r
-# Para desenlazar
-yarn unlink ../sdk
-```
-
-Dentro del monorepo las dependencias ya usan `workspace:*`; el link sirve sobre todo para probar contra otro checkout externo.
+Los workspaces de Yarn resuelven las dependencias `workspace:*` automáticamente en modo dev — no hace falta enlazar paquetes a mano.
 
 ## Contribuir
 

@@ -5,7 +5,7 @@ Guías para trabajar con el monorepo `plitzi-workspace`.
 | Guía | Descripción |
 |------|-------------|
 | [Primeros pasos](./getting-started.md) | Clonar, instalar dependencias y ejecutar las apps |
-| [Configuración local](./local-setup.md) | Archivo hosts, HTTPS y dominios locales |
+| [Configuración local](./local-setup.md) | Servidores dev para contribuidores; hosts/HTTPS local opcional para maintainers |
 | [Estructura del repositorio](./repository-structure.md) | Organización de apps y paquetes |
 | [Desarrollo](./development.md) | Stack, comandos y flujo de contribución |
 | [Publicaciones](./releases.md) | Versionado y publicación con Changesets |

@@ -47,7 +47,7 @@ yarn storybook     # UI components (port 6006)
 
 ## Local environment
 
-For hostnames such as `app.plitzi.local` and HTTPS (required for `crypto` and custom domains), see [Local setup](./local-setup.md).
+By default, `yarn start` uses the shared **development servers** (see [Local setup](./local-setup.md)). Custom hostnames and local HTTPS are only required for maintainers running the full stack on their machine.
 
 ## Published packages
 
