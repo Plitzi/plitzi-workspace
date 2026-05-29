@@ -17,7 +17,7 @@ const deleteVariableTool: McpTool = {
   adapterName: 'deleteSchemaVariable',
   mcpDefinition: {
     title: 'Delete Variable',
-    description: 'Delete a schema variable.',
+    description: 'Delete a schema variable. Any element bindings referencing this variable will break.',
     inputSchema,
     outputSchema
   },

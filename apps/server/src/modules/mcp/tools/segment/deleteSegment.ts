@@ -17,7 +17,7 @@ const deleteSegmentTool: McpTool = {
   adapterName: 'deleteSegment',
   mcpDefinition: {
     title: 'Delete Segment',
-    description: 'Delete a segment.',
+    description: 'Delete a segment and its entire isolated schema and style. This action cannot be undone.',
     inputSchema,
     outputSchema
   },

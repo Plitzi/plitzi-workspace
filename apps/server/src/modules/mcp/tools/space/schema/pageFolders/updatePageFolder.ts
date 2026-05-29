@@ -31,7 +31,7 @@ const updatePageFolderTool: McpTool = {
   adapterName: 'updatePageFolder',
   mcpDefinition: {
     title: 'Update Page Folder',
-    description: 'Update a page folder.',
+    description: 'Rename a page folder or move it to a different parent folder.',
     inputSchema,
     outputSchema
   },

@@ -17,7 +17,7 @@ const deletePageTool: McpTool = {
   adapterName: 'deletePage',
   mcpDefinition: {
     title: 'Delete Page',
-    description: 'Delete a page by ID.',
+    description: 'Delete a page and all its child elements. This action cannot be undone.',
     inputSchema,
     outputSchema
   },

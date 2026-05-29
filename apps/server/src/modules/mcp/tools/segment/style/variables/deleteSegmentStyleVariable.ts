@@ -8,8 +8,8 @@ import type { McpTool } from '@plitzi/sdk-shared';
 
 const inputSchema = z.object({
   segmentId: z.string().describe('ID of the segment'),
-  category: z.nativeEnum(StyleVariableCategory).describe('Variable category'),
-  name: z.string().describe('Variable name to delete')
+  category: z.nativeEnum(StyleVariableCategory).describe('Token category: "color", "spacing", "shadow", or "custom"'),
+  name: z.string().describe('Token name to delete')
 });
 
 const outputSchema = z.object({
@@ -21,7 +21,7 @@ const deleteSegmentStyleVariableTool: McpTool = {
   adapterName: 'deleteSegmentStyleVariable',
   mcpDefinition: {
     title: 'Delete Segment Style Variable',
-    description: 'Delete a style variable from a segment.',
+    description: 'Delete a scoped CSS design token from a segment. Any style rules inside the segment referencing this token will lose its value.',
     inputSchema,
     outputSchema
   },

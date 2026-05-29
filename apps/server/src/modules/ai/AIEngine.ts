@@ -27,11 +27,14 @@ class AIEngine implements McpToolLifecycleHooks {
     this.ctx = { ...ctx, mode: mode || 'plan' };
   }
 
+  readonly readResource = (name: string, uri: string): void => {
+    this.callbacks.onResourceRead?.(name, uri);
+  };
+
   readonly setToolsAvailables = (tools: McpTool[]) => {
-    this.toolsAvailables = new Map([...Object.values(defaultTools), ...tools].map(t => [t.name, t]));
-    this.toolsAvailablesMap = new Map(
-      [...Object.values(defaultTools), ...tools].map(t => [t.name, t.definition.allowedModes])
-    );
+    const all = [...Object.values(defaultTools), ...tools];
+    this.toolsAvailables = new Map(all.map(t => [t.name, t]));
+    this.toolsAvailablesMap = new Map(all.map(t => [t.name, t.definition.allowedModes]));
   };
 
   readonly can = (name: string): boolean => {
@@ -44,22 +47,48 @@ class AIEngine implements McpToolLifecycleHooks {
     return !allowedModes || allowedModes.includes(this.mode);
   };
 
-  readonly before = (name: string, args: Record<string, unknown>): boolean => {
-    this.callbacks.onToolStart?.(name, args);
+  readonly before = async (name: string, args: Record<string, unknown>): Promise<boolean> => {
+    this.callbacks.onBeforeTool?.(name, args);
+
+    if (!this.toolsAvailables.has(name)) {
+      this.callbacks.onLog?.('error', `tool rejected: '${name}' has no definition — possible security violation`);
+      await this.after(name, args, toolResponseErr(`Tool '${name}' is not defined and cannot be executed`));
+
+      return false;
+    }
+
+    if (!this.can(name)) {
+      this.callbacks.onLog?.('info', `tool blocked: '${name}' is not permitted in ${this.mode} mode`);
+      await this.after(name, args, toolResponseErr(`Tool '${name}' is not permitted in ${this.mode} mode`));
+
+      return false;
+    }
 
     return true;
   };
 
   readonly after = (name: string, args: Record<string, unknown>, result: McpToolHandlerResult): Promise<void> => {
-    let resultParsed: unknown = undefined;
+    let resultParsed: unknown;
 
-    try {
-      resultParsed = result.structuredContent || JSON.parse(result.content[0]?.text);
-    } catch {
-      // Nothing to do
+    if (result.data !== undefined) {
+      resultParsed = result.data;
+    } else {
+      try {
+        resultParsed = JSON.parse(result.content[0]?.text ?? '');
+      } catch {
+        // ignore
+      }
     }
 
-    this.callbacks.onToolCall?.({ name, args, result: resultParsed });
+    if (result.isError) {
+      this.callbacks.onToolError?.({
+        name,
+        args,
+        result: resultParsed ?? { error: result.content[0]?.text ?? 'Tool failed' }
+      });
+    } else {
+      this.callbacks.onToolSuccess?.({ name, args, result: resultParsed });
+    }
 
     return Promise.resolve();
   };
@@ -87,11 +116,11 @@ class AIEngine implements McpToolLifecycleHooks {
       return undefined;
     }
 
-    if (!result.structuredContent) {
-      return `Tool '${name}' has an output schema but no structured content was provided`;
+    if (result.data === undefined) {
+      return `Tool '${name}' has an output schema but no data was returned`;
     }
 
-    const parsed = tool.mcpDefinition.outputSchema.safeParse(result.structuredContent);
+    const parsed = tool.mcpDefinition.outputSchema.safeParse(result.data);
     if (!parsed.success) {
       return parsed.error.message;
     }
@@ -99,48 +128,18 @@ class AIEngine implements McpToolLifecycleHooks {
     return undefined;
   };
 
-  readonly execute = (name: string) => async (args: Record<string, unknown>) => {
-    if (!this.toolsAvailables.has(name)) {
-      this.callbacks.onLog?.('error', `tool rejected: '${name}' has no definition — possible security violation`);
-
-      return { error: `Tool '${name}' is not defined and cannot be executed` };
-    }
-
-    if (!this.can(name)) {
-      this.callbacks.onLog?.('info', `tool blocked: '${name}' is not permitted in ${this.mode} mode`);
-
-      return { error: `Tool '${name}' is not permitted in ${this.mode} mode` };
-    }
-
-    if (!this.before(name, args)) {
-      return { error: `Tool '${name}' execution was cancelled` };
-    }
-
-    const tool = this.toolsAvailables.get(name);
-    if (!tool) {
-      this.callbacks.onLog?.('error', `unknown tool: ${name}`);
-
-      return toolResponseErr(`Unknown tool: ${name}`);
-    }
-
-    const handler =
-      'adapterName' in tool && tool.adapterName
-        ? (this.mcpAdapters?.[tool.adapterName] as unknown as McpToolHandler | undefined)
-        : tool.handler;
-    if (!handler) {
-      this.callbacks.onLog?.('error', `unknown tool: ${name}`);
-
-      return toolResponseErr(`Unknown tool: ${name}`);
-    }
-
-    this.callbacks.onLog?.('debug', `tool exec: ${name} args=${JSON.stringify(args).slice(0, 200)}`);
-
+  private readonly runPipeline = async (
+    name: string,
+    args: Record<string, unknown>,
+    handler: McpToolHandler
+  ): Promise<McpToolHandlerResult> => {
     const parsedArgs = this.validateToolInput(name, args);
     if (!parsedArgs.success) {
       this.callbacks.onLog?.('error', `tool validation error: ${name} error=${parsedArgs.error}`);
-      await this.after(name, args, toolResponseErr(parsedArgs.error));
+      const err = toolResponseErr(parsedArgs.error);
+      await this.after(name, args, err);
 
-      return toolResponseErr(parsedArgs.error);
+      return err;
     }
 
     const t0 = Date.now();
@@ -153,9 +152,20 @@ class AIEngine implements McpToolLifecycleHooks {
     const outputError = this.validateToolOutput(name, result);
     if (outputError) {
       this.callbacks.onLog?.('error', `tool output validation error: ${name} error=${outputError}`);
-      await this.after(name, args, toolResponseErr(outputError));
+      const err = toolResponseErr(outputError);
+      await this.after(name, args, err);
 
-      return toolResponseErr(outputError);
+      return err;
+    }
+
+    const tool = this.toolsAvailables.get(name);
+    if (
+      !result.isError &&
+      tool?.mcpDefinition.outputSchema &&
+      typeof result.data === 'object' &&
+      result.data !== null
+    ) {
+      result.structuredContent = result.data as Record<string, unknown>;
     }
 
     if (result.isError) {
@@ -167,56 +177,43 @@ class AIEngine implements McpToolLifecycleHooks {
     return result;
   };
 
-  readonly executeTool = (name: string, handlerFn: McpToolHandler) => async (args: Record<string, unknown>) => {
-    if (!this.toolsAvailables.has(name)) {
-      this.callbacks.onLog?.('error', `tool rejected: '${name}' has no definition — possible security violation`);
+  readonly execute =
+    (name: string, handlerFn?: McpToolHandler) =>
+    async (args: Record<string, unknown>): Promise<McpToolHandlerResult> => {
+      const allowed = await this.before(name, args);
+      if (!allowed) {
+        return toolResponseErr(`Tool '${name}' execution was blocked`);
+      }
 
-      return toolResponseErr(`Tool '${name}' is not defined and cannot be executed`);
-    }
+      let handler: McpToolHandler | undefined = handlerFn;
 
-    if (!this.can(name)) {
-      this.callbacks.onLog?.('info', `tool blocked: '${name}' is not permitted in ${this.mode} mode`);
+      if (!handler) {
+        const tool = this.toolsAvailables.get(name);
+        if (!tool) {
+          const err = toolResponseErr(`Tool '${name}' is not defined and cannot be executed`);
+          await this.after(name, args, err);
 
-      return toolResponseErr(`Tool '${name}' is not permitted in ${this.mode} mode`);
-    }
+          return err;
+        }
 
-    if (!this.before(name, args)) {
-      return toolResponseErr(`Tool '${name}' execution was cancelled`);
-    }
+        handler =
+          'adapterName' in tool && tool.adapterName
+            ? (this.mcpAdapters?.[tool.adapterName] as unknown as McpToolHandler | undefined)
+            : tool.handler;
 
-    this.callbacks.onLog?.('debug', `tool exec: ${name} args=${JSON.stringify(args).slice(0, 200)}`);
+        if (!handler) {
+          this.callbacks.onLog?.('error', `no handler registered for tool: ${name}`);
+          const err = toolResponseErr(`Tool '${name}' has no handler`);
+          await this.after(name, args, err);
 
-    const parsedArgs = this.validateToolInput(name, args);
-    if (!parsedArgs.success) {
-      this.callbacks.onLog?.('error', `tool validation error: ${name} error=${parsedArgs.error}`);
-      await this.after(name, args, toolResponseErr(parsedArgs.error));
+          return err;
+        }
+      }
 
-      return toolResponseErr(parsedArgs.error);
-    }
+      this.callbacks.onLog?.('debug', `tool exec: ${name} args=${JSON.stringify(args).slice(0, 200)}`);
 
-    const t0 = Date.now();
-    const result = await handlerFn(parsedArgs.data, this.ctx);
-    this.callbacks.onLog?.(
-      'debug',
-      `tool done: ${name} ms=${Date.now() - t0} result=${JSON.stringify(result).slice(0, 200)}`
-    );
-
-    const outputError = this.validateToolOutput(name, result);
-    if (outputError) {
-      this.callbacks.onLog?.('error', `tool output validation error: ${name} error=${outputError}`);
-      await this.after(name, args, toolResponseErr(outputError));
-
-      return toolResponseErr(outputError);
-    }
-
-    if (result.isError) {
-      this.callbacks.onLog?.('error', `tool failed: ${name} error=${result.content[0]?.text ?? 'unknown'}`);
-    }
-
-    await this.after(name, args, result);
-
-    return result;
-  };
+      return this.runPipeline(name, args, handler);
+    };
 
   readonly executePrompt = (_name: string, handlerFn: McpPromptHandler) => async (args: Record<string, unknown>) => {
     return handlerFn(args, this.ctx);

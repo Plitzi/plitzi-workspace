@@ -18,7 +18,7 @@ export type ChatInputControlsProps = {
   currentModel?: string;
   modelsLoading?: boolean;
   isVoiceSupported: boolean;
-  disabled?: boolean;
+  isStreaming?: boolean;
   isListening: boolean;
   usage?: AiUsage;
   messageCount?: number;
@@ -36,7 +36,7 @@ const ChatInputControls = ({
   mode,
   effort,
   message = '',
-  disabled = false,
+  isStreaming = false,
   attachments,
   skills,
   models,
@@ -65,32 +65,30 @@ const ChatInputControls = ({
         <ButtonAttachments
           mode={mode}
           attachments={attachments}
-          disabled={disabled}
           isListening={isListening}
           isVoiceSupported={isVoiceSupported}
           onChange={onAttachmentsChange}
           onVoiceToggle={onVoiceToggle}
         />
-        <SkillsButton skills={skills} disabled={disabled} onClick={onManageSkills} />
+        <SkillsButton skills={skills} onClick={onManageSkills} />
         <ModelSelector
           models={models}
           currentModel={currentModel}
           modelsLoading={modelsLoading}
-          disabled={disabled}
           onChange={onModelChange}
         />
-        <EffortSelector value={effectiveEffort} disabled={disabled || !supportsThinking} onChange={onEffortChange} />
-        <ToggleMode mode={mode} disabled={disabled} onModeChange={onModeChange} />
+        <EffortSelector value={effectiveEffort} disabled={!supportsThinking} onChange={onEffortChange} />
+        <ToggleMode mode={mode} onModeChange={onModeChange} />
       </div>
       <div className="flex items-center gap-1.5">
         <UsageBar
           usage={usage}
           modelContextLimit={modelContextLimit}
-          isStreaming={disabled}
+          isStreaming={isStreaming}
           messageCount={messageCount}
           onCompact={onCompact}
         />
-        <ButtonSend mode={mode} message={message} attachments={attachments} disabled={disabled} onClick={onClickSend} />
+        <ButtonSend mode={mode} message={message} attachments={attachments} onClick={onClickSend} />
       </div>
     </div>
   );

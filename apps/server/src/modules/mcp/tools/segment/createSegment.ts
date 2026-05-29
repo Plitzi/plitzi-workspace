@@ -30,7 +30,10 @@ const createSegmentTool: McpTool = {
   adapterName: 'createSegment',
   mcpDefinition: {
     title: 'Create Segment',
-    description: 'Create a new segment (a reusable component with its own schema and style).',
+    description:
+      'Create a new segment — a reusable UI template with its own isolated schema and style.\n\n' +
+      'After creating, use create_segment_element to add elements inside it. ' +
+      'The output includes baseElementId — the root element ID for the segment.',
     inputSchema,
     outputSchema
   },

@@ -23,7 +23,7 @@ const inputSchema = z.object({
       name: z.string().describe('Variable name'),
       type: variableTypesSchema.describe('Variable type'),
       value: z.string().describe('Variable default value'),
-      category: z.string().describe('Variable category')
+      category: z.string().describe('Grouping label shown in the builder UI (e.g. "Colors", "Typography", "Layout")')
     })
     .describe('Variable to create')
 });
@@ -34,7 +34,7 @@ const outputSchema = z.object({
       name: z.string().describe('Variable name'),
       type: z.string().describe('Variable type'),
       value: z.string().describe('Variable value'),
-      category: z.string().describe('Variable category')
+      category: z.string().describe('Grouping label shown in the builder UI (e.g. "Colors", "Typography", "Layout")')
     })
     .describe('The created variable')
 });
@@ -44,7 +44,10 @@ const createVariableTool: McpTool = {
   adapterName: 'createSchemaVariable',
   mcpDefinition: {
     title: 'Create Variable',
-    description: 'Create a schema variable (a dynamic value used in elements).',
+    description:
+      'Create a space-level schema variable — a typed, named value that elements can reference via data bindings.\n\n' +
+      'Use category to group related variables in the builder UI (e.g. "Colors", "Typography"). ' +
+      'All values are stored as strings regardless of type.',
     inputSchema,
     outputSchema
   },

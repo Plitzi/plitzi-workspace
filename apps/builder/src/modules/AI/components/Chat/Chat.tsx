@@ -7,36 +7,19 @@ import { estimateSize, PADDING } from './helpers';
 import { useAiChatContext } from '../../contexts/AiChatContext';
 import ChatMessage from '../ChatMessage';
 
-import type { AiMessage, AiToolCall } from '../../types';
 import type { Ref } from 'react';
 
 export type ChatProps = {
   ref?: Ref<HTMLDivElement>;
-  messages: AiMessage[];
-  isStreaming?: boolean;
-  isBusy?: boolean;
-  streamingText?: string;
-  liveThinking?: string;
-  liveThinkingDoneMs?: number;
-  liveTools?: AiToolCall[];
 };
 
-const Chat = ({
-  ref,
-  messages = [],
-  isStreaming,
-  isBusy,
-  streamingText,
-  liveThinking,
-  liveThinkingDoneMs,
-  liveTools = []
-}: ChatProps) => {
-  const { currentMode } = useAiChatContext();
+const Chat = ({ ref }: ChatProps) => {
+  const { currentMode, messages, isStreaming, isBusy, streamingText, liveSteps } = useAiChatContext();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const isAtBottom = useRef(true);
   useImperativeHandle(ref, () => scrollRef.current as HTMLDivElement, []);
 
-  const hasLive = isStreaming || !!(liveThinking || liveTools.length || streamingText);
+  const hasLive = isStreaming || !!(liveSteps.length || streamingText);
   const count = messages.length + (hasLive ? 1 : 0);
 
   const previewVersions = useMemo(() => {
@@ -44,8 +27,10 @@ const Chat = ({
     let stageCount = 0;
     let wireframeCount = 0;
     for (const msg of messages) {
-      const hasStage = msg.tools?.some(t => t.name === 'stage_preview' && t.status === 'done') ?? false;
-      const hasWire = msg.tools?.some(t => t.name === 'sketch_wireframe' && t.status === 'done') ?? false;
+      const hasStage =
+        msg.steps?.some(s => s.type === 'tool' && s.name === 'stage_preview' && s.status === 'done') ?? false;
+      const hasWire =
+        msg.steps?.some(s => s.type === 'tool' && s.name === 'sketch_wireframe' && s.status === 'done') ?? false;
       map[msg.id] = { stage: hasStage ? ++stageCount : 0, wireframe: hasWire ? ++wireframeCount : 0 };
     }
 
@@ -97,7 +82,7 @@ const Chat = ({
     if (isAtBottom.current && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [streamingText, liveThinking, liveTools]);
+  }, [streamingText, liveSteps]);
 
   const prevTotalSize = useRef(0);
   useEffect(() => {
@@ -154,9 +139,7 @@ const Chat = ({
                     isStreaming={isStreaming}
                     isBusy={isBusy}
                     streamingText={streamingText}
-                    liveThinking={liveThinking}
-                    liveThinkingDoneMs={liveThinkingDoneMs}
-                    liveTools={liveTools}
+                    liveSteps={liveSteps}
                   />
                 )}
                 {msg && (

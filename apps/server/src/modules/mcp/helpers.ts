@@ -77,15 +77,12 @@ export const getAllowedModes = (operationType: ToolOperationType): AiMode[] => {
   return operationType === 'write' ? ['build'] : ['plan', 'build'];
 };
 
-export const toolResponseOk = (data: unknown, useStructuredContent = false): McpToolHandlerResult => {
-  const isStructured = useStructuredContent && typeof data === 'object' && data !== null && !Array.isArray(data);
-  const textContent = { type: 'text' as const, text: JSON.stringify(data, null, 2) };
-  if (isStructured) {
-    // We need to return both due that LLM are not compatible with structuredContent but MCP Inspector yes
-    return { content: [textContent], structuredContent: data as Record<string, unknown> };
-  }
-
-  return { content: [textContent] };
+export const toolResponseOk = (data: unknown, agentMessage?: string): McpToolHandlerResult => {
+  // data is stored for the frontend renderer (via onToolSuccess) and never sent directly to the AI agent.
+  // agentMessage controls what the agent reads — a brief confirmation for visual tools,
+  // or the full JSON serialization when omitted (for info tools the agent must read).
+  const text = agentMessage ?? JSON.stringify(data, null, 2);
+  return { content: [{ type: 'text' as const, text }], data };
 };
 
 export const toolResponseErr = (error: Error | string): McpToolHandlerResult => ({
@@ -93,11 +90,7 @@ export const toolResponseErr = (error: Error | string): McpToolHandlerResult => 
   isError: true as const
 });
 
-export const adapterWrapper = (
-  adapterName: string,
-  handler?: McpAdapter,
-  useStructuredContent = false
-): McpToolHandler => {
+export const adapterWrapper = (adapterName: string, handler?: McpAdapter): McpToolHandler => {
   return async (args: Record<string, unknown>, ctx: AiContext) => {
     if (!handler) {
       return toolResponseErr(`Adapter ${adapterName} not found`);
@@ -108,6 +101,6 @@ export const adapterWrapper = (
       return toolResponseErr(result.error);
     }
 
-    return toolResponseOk(result.data, useStructuredContent);
+    return toolResponseOk(result.data);
   };
 };

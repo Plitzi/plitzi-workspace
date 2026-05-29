@@ -9,14 +9,14 @@ const updateCollectionRecordTool: McpTool = {
   adapterName: 'updateCollectionRecord',
   mcpDefinition: {
     title: 'Update Collection Record',
-    description: 'Update an existing record in a collection.',
+    description: 'Update an existing collection record. Only the provided values and status are changed.',
     inputSchema: z.object({
       recordId: z.string().describe('Record ID'),
       values: z
         .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
         .optional()
-        .describe('Record values'),
-      status: z.enum(['draft', 'published', 'archived']).optional().describe('Record status')
+        .describe('Field values to update, keyed by field name. Only the provided fields are changed.'),
+      status: z.enum(['draft', 'published', 'archived']).optional().describe('Publication status: "draft", "published", or "archived"')
     }),
     outputSchema: z.object({
       data: z

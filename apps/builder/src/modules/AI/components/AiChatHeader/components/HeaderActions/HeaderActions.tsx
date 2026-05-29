@@ -1,13 +1,14 @@
 import clsx from 'clsx';
 
+import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
+
 export type HeaderActionsProps = {
   isSettingsOpen?: boolean;
   onSettingsToggle?: () => void;
-  isStreaming: boolean;
-  onClear: () => void;
 };
 
-const HeaderActions = ({ isSettingsOpen, onSettingsToggle, isStreaming, onClear }: HeaderActionsProps) => {
+const HeaderActions = ({ isSettingsOpen, onSettingsToggle }: HeaderActionsProps) => {
+  const { isStreaming, clearConversation: onClear } = useAiChatContext();
   return (
     <div className="flex shrink-0 items-center gap-0.5">
       {onSettingsToggle && (

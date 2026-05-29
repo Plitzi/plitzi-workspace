@@ -1,17 +1,16 @@
 import clsx from 'clsx';
 
-import type { AiMode, AiToolCall } from '@pmodules/AI/types';
+import type { AiLiveStep, AiMode } from '@pmodules/AI/types';
 
 export type LiveHeaderProps = {
   mode: AiMode;
   isStreaming?: boolean;
   isBusy?: boolean;
-  liveThinking?: string;
+  liveSteps: AiLiveStep[];
   streamingText?: string;
-  liveTools: AiToolCall[];
 };
 
-const LiveHeader = ({ mode, isStreaming, isBusy, liveThinking, streamingText, liveTools }: LiveHeaderProps) => (
+const LiveHeader = ({ mode, isStreaming, isBusy, liveSteps, streamingText }: LiveHeaderProps) => (
   <div className="flex items-center gap-1.5 font-mono text-[10px] text-zinc-500 dark:text-zinc-400">
     <span
       className={clsx('h-1.5 w-1.5 shrink-0 rounded-full', {
@@ -21,9 +20,8 @@ const LiveHeader = ({ mode, isStreaming, isBusy, liveThinking, streamingText, li
     />
     <span className="font-medium text-zinc-900 dark:text-zinc-100">Plitzi</span>
     {isStreaming &&
-      !liveThinking &&
+      !liveSteps.length &&
       !streamingText &&
-      liveTools.length === 0 &&
       (isBusy ? (
         <span className="ml-1 animate-pulse text-zinc-400 dark:text-zinc-500">Response may take a moment...</span>
       ) : (

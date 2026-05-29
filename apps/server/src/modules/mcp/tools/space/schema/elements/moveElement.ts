@@ -10,7 +10,7 @@ const inputSchema = z.object({
   dropPosition: z
     .enum(['top', 'bottom', 'left', 'right', 'inside', 'custom'])
     .optional()
-    .describe('Position within the new parent')
+    .describe('Where to drop relative to the target parent: "inside" appends as last child (default), "top"/"bottom" inserts before/after siblings')
 });
 
 const outputSchema = z.object({
@@ -22,7 +22,7 @@ const moveElementTool: McpTool = {
   adapterName: 'moveElement',
   mcpDefinition: {
     title: 'Move Element',
-    description: 'Move an element to a different parent or position.',
+    description: 'Move an element to a different parent or reorder it within its current parent.',
     inputSchema,
     outputSchema
   },

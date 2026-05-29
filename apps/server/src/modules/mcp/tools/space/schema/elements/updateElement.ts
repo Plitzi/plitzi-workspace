@@ -27,7 +27,7 @@ const inputSchema = z.object({
     .object({
       label: z.string().optional().describe('New label for the element'),
       props: z.record(z.string(), z.unknown()).optional().describe('New props for the element'),
-      styles: z.record(z.string(), z.unknown()).optional().describe('New styles for the element'),
+      styles: z.record(z.string(), z.unknown()).optional().describe('Style attribute overrides keyed by sub-selector slot (e.g. { base: { color: "#fff" } }). Rarely needed — prefer update_style_selector to modify styles.'),
       runtime: z.enum(['server', 'client', 'shared']).optional().describe('New rendering runtime')
     })
     .describe('Fields to update')
@@ -42,7 +42,7 @@ const updateElementTool: McpTool = {
   adapterName: 'updateElement',
   mcpDefinition: {
     title: 'Update Element',
-    description: 'Update an existing element.',
+    description: 'Update an existing element — label, props, or rendering runtime.',
     inputSchema,
     outputSchema
   },

@@ -8,15 +8,28 @@ export type UserMessageProps = {
   attachments?: AiAttachment[];
   createdAt?: number;
   irrelevant?: boolean;
+  queued?: boolean;
 };
 
-const UserMessage = ({ id, content, attachments, createdAt, irrelevant }: UserMessageProps) => (
+const UserMessage = ({ id, content, attachments, createdAt, irrelevant, queued }: UserMessageProps) => (
   <div className="flex flex-col gap-1.5" data-id={id}>
     <div className="flex items-center gap-1.5 font-mono text-[10px] text-zinc-500 dark:text-zinc-400">
       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-linear-to-br from-pink-500 to-sky-500" />
       <span className="font-medium text-zinc-900 dark:text-zinc-100">You</span>
       <span>{formatTime(createdAt)}</span>
       {irrelevant && <span className="text-yellow-500 dark:text-yellow-400">off-topic</span>}
+      {queued && (
+        <span className="flex items-center gap-1 rounded-md border border-zinc-400/40 bg-zinc-100 px-2 py-0.5 text-zinc-500 dark:border-zinc-600/40 dark:bg-zinc-800 dark:text-zinc-400">
+          <svg className="h-2.5 w-2.5 animate-pulse" viewBox="0 0 16 16" fill="currentColor">
+            <path
+              fillRule="evenodd"
+              d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-3.5a.5.5 0 0 1 .5.5v3.25l2 1.15a.5.5 0 0 1-.5.866L7.75 9.1A.5.5 0 0 1 7.5 8.65V5a.5.5 0 0 1 .5-.5Z"
+              clipRule="evenodd"
+            />
+          </svg>
+          <span className="text-[10px] font-medium">queued</span>
+        </span>
+      )}
     </div>
     {irrelevant && (
       <div className="flex items-center gap-2 rounded-lg border border-yellow-500/50 bg-yellow-50 px-3 py-2 dark:border-yellow-400/30 dark:bg-yellow-900/20">

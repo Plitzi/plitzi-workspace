@@ -34,7 +34,7 @@ const createPageTool: McpTool = {
   adapterName: 'createPage',
   mcpDefinition: {
     title: 'Create Page',
-    description: 'Create a new page in the space.',
+    description: 'Create a new page in the space. Returns the page element — use its id to add child elements via create_element.',
     inputSchema,
     outputSchema
   },
