@@ -1,7 +1,8 @@
 export const schemaVariableResource = {
   uri: 'plitzi://docs/schema-variable',
   name: 'Plitzi Docs: Schema Variable',
-  description: 'A space-level dynamic variable in Plitzi — typed values that can be injected into elements via bindings.',
+  description:
+    'A space-level dynamic variable in Plitzi — typed values that can be injected into elements via bindings.',
   mimeType: 'text/markdown',
   content: `# Schema Variable
 

@@ -8,7 +8,7 @@ const compactElementSchema = z.object({
   id: z.string().describe('Element ID'),
   label: z.string().describe('Element label'),
   type: z.string().describe('Element type'),
-  parentId: z.string().optional().describe('Parent element ID'),
+  parentId: z.string().nullish().describe('Parent element ID (null for root elements)'),
   items: z.array(z.string()).optional().describe('Child element IDs')
 });
 

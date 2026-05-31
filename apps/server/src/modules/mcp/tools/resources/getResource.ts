@@ -20,9 +20,7 @@ const inputSchema = z.object({
   cdnIdentifier: z.string().describe('CDN identifier')
 });
 
-const outputSchema = z.object({
-  data: resourceSchema.nullable().describe('The resource metadata, or null if not found')
-});
+const outputSchema = resourceSchema.nullable().describe('The resource metadata, or null if not found');
 
 const getResourceTool: McpTool = {
   name: 'get_resource',

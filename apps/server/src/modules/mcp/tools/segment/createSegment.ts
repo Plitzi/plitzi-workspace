@@ -9,21 +9,19 @@ const inputSchema = z.object({
   description: z.string().describe('Description of the segment')
 });
 
-const outputSchema = z.object({
-  data: z
-    .object({
-      identifier: z.string().describe('Segment identifier'),
-      definition: z
-        .object({
-          name: z.string().describe('Segment name'),
-          description: z.string().describe('Segment description'),
-          baseElementId: z.string().describe('Root element ID')
-        })
-        .describe('Segment definition'),
-      id: z.string().optional().describe('Segment ID')
-    })
-    .describe('The created segment')
-});
+const outputSchema = z
+  .object({
+    identifier: z.string().describe('Segment identifier'),
+    definition: z
+      .object({
+        name: z.string().describe('Segment name'),
+        description: z.string().describe('Segment description'),
+        baseElementId: z.string().describe('Root element ID')
+      })
+      .describe('Segment definition'),
+    id: z.string().optional().describe('Segment ID')
+  })
+  .describe('The created segment');
 
 const createSegmentTool: McpTool = {
   name: 'create_segment',

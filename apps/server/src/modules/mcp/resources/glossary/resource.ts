@@ -1,7 +1,8 @@
 export const resourceResource = {
   uri: 'plitzi://docs/resource',
   name: 'Plitzi Docs: Resource',
-  description: 'A CDN-stored file in a Plitzi space — images, videos, documents, plugins, and templates uploaded to cloud storage.',
+  description:
+    'A CDN-stored file in a Plitzi space — images, videos, documents, plugins, and templates uploaded to cloud storage.',
   mimeType: 'text/markdown',
   content: `# Resource
 

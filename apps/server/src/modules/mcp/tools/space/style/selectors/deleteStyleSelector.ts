@@ -11,16 +11,15 @@ const inputSchema = z.object({
   selector: z.string().describe('CSS selector string to remove (e.g. ".hero-banner")')
 });
 
-const outputSchema = z.object({
-  data: z.literal(true).describe('Always true on successful deletion')
-});
+const outputSchema = z.literal(true).describe('Always true on successful deletion');
 
 const deleteStyleSelectorTool: McpTool = {
   name: 'delete_style_selector',
   adapterName: 'deleteStyleSelector',
   mcpDefinition: {
     title: 'Delete Style Selector',
-    description: 'Delete a CSS selector from the space style for the specified display mode. Only removes from that mode — other breakpoints are unaffected.',
+    description:
+      'Delete a CSS selector from the space style for the specified display mode. Only removes from that mode — other breakpoints are unaffected.',
     inputSchema,
     outputSchema
   },

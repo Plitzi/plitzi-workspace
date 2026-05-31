@@ -1,32 +1,39 @@
-import type { AiMode, AiRole, AIToolStatus, Theme } from '@plitzi/sdk-shared';
+import type {
+  AiMessageAttachment,
+  AiMessageStep,
+  AiMode,
+  AiProviderType,
+  AiRole,
+  AiToolCall,
+  AIToolStatus,
+  AiUsage,
+  Theme
+} from '@plitzi/sdk-shared';
 
-export type { AiEffort, AiMode } from '@plitzi/sdk-shared';
+export type {
+  AiEffort,
+  AiMode,
+  AiMessageStep,
+  AiProviderType,
+  AiToolCall,
+  AiUsage,
+  ConversationSummary
+} from '@plitzi/sdk-shared';
 
-export type AiAttachment = {
-  id: string;
-  type: 'image';
-  mimeType: string;
-  data: string; // base64
-  name: string;
-};
-
-export type AiToolCall = {
-  id: string;
-  name: string;
-  args?: Record<string, unknown>;
-  result?: unknown;
-  status: AIToolStatus;
-};
+// Frontend attachment adds an id + display name on top of the shared wire shape.
+export type AiAttachment = AiMessageAttachment & { id: string; name: string };
 
 export type AiLiveStep =
   | { type: 'thinking'; text: string; done: boolean; durationMs?: number; startMs: number }
-  | { type: 'tool'; id: string; name: string; args?: Record<string, unknown>; result?: unknown; status: AIToolStatus }
-  | { type: 'resource'; name: string; uri: string }
-  | { type: 'text'; text: string };
-
-export type AiMessageStep =
-  | { type: 'thinking'; text: string; durationMs?: number }
-  | { type: 'tool'; id: string; name: string; args?: Record<string, unknown>; result?: unknown; status: AIToolStatus }
+  | {
+      type: 'tool';
+      id: string;
+      name: string;
+      args?: Record<string, unknown>;
+      result?: unknown;
+      error?: string;
+      status: AIToolStatus;
+    }
   | { type: 'resource'; name: string; uri: string }
   | { type: 'text'; text: string };
 
@@ -80,33 +87,15 @@ export type AiMessage = {
   createdAt: number;
 };
 
-export type AiUsage = {
-  inputTokens: number;
-  outputTokens: number;
-  totalTokens: number;
-  thinkingTokens?: number;
-  contextLimit: number;
-  usedPercent: number;
-};
-
 export type AiStreamEvent =
   | { type: 'chunk'; text: string }
   | { type: 'thinking'; text: string }
   | { type: 'tool_start'; name: string; args: Record<string, unknown> }
-  | { type: 'tool'; name: string; args: Record<string, unknown>; result: unknown; status: 'done' | 'failed' }
+  | { type: 'tool'; name: string; args: Record<string, unknown>; result: unknown; error?: string; status: 'done' | 'failed' }
   | { type: 'resource_read'; name: string; uri: string }
   | { type: 'busy' }
   | { type: 'done'; message: AiMessage; usage?: AiUsage }
   | { type: 'error'; message: string; retryAfter?: number };
-
-export type ConversationSummary = {
-  id: string;
-  spaceId: number;
-  messageCount: number;
-  preview: string;
-  createdAt: string;
-  updatedAt: string;
-};
 
 export type AiContext = {
   spaceId?: number;
@@ -115,8 +104,6 @@ export type AiContext = {
   elementSelected?: string;
   theme?: Theme;
 };
-
-export type AiProviderType = 'openai' | 'anthropic' | 'ollama' | 'openrouter' | 'opencode';
 
 export type AiProviderSettings = {
   provider?: AiProviderType;

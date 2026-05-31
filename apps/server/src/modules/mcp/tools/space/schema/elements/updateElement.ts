@@ -14,7 +14,6 @@ const elementSchema = z.object({
       type: z.string().describe('Element type'),
       parentId: z.string().optional().describe('Parent element ID'),
       items: z.array(z.string()).optional().describe('Child element IDs'),
-      styleSelectors: z.record(z.string(), z.string()).describe('Style selector map'),
       runtime: z.enum(['server', 'client', 'shared']).optional().describe('Rendering runtime'),
       loadStrategy: z.enum(['eager', 'lazy', 'visible']).optional().describe('Load strategy')
     })
@@ -27,15 +26,18 @@ const inputSchema = z.object({
     .object({
       label: z.string().optional().describe('New label for the element'),
       props: z.record(z.string(), z.unknown()).optional().describe('New props for the element'),
-      styles: z.record(z.string(), z.unknown()).optional().describe('Style attribute overrides keyed by sub-selector slot (e.g. { base: { color: "#fff" } }). Rarely needed — prefer update_style_selector to modify styles.'),
+      styles: z
+        .record(z.string(), z.unknown())
+        .optional()
+        .describe(
+          'Style attribute overrides keyed by sub-selector slot (e.g. { base: { color: "#fff" } }). Rarely needed — prefer update_style_selector to modify styles.'
+        ),
       runtime: z.enum(['server', 'client', 'shared']).optional().describe('New rendering runtime')
     })
     .describe('Fields to update')
 });
 
-const outputSchema = z.object({
-  data: elementSchema.describe('The updated element')
-});
+const outputSchema = elementSchema.describe('The updated element');
 
 const updateElementTool: McpTool = {
   name: 'update_element',

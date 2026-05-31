@@ -9,9 +9,7 @@ const inputSchema = z.object({
   elementId: z.string().describe('ID of the element to remove')
 });
 
-const outputSchema = z.object({
-  data: z.literal(true).describe('Always true on successful deletion')
-});
+const outputSchema = z.literal(true).describe('Always true on successful deletion');
 
 const deleteSegmentElementTool: McpTool = {
   name: 'delete_segment_element',

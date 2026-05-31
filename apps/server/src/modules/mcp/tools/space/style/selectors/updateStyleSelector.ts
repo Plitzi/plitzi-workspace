@@ -29,16 +29,14 @@ const inputSchema = z.object({
   params: z.record(z.string(), z.unknown()).optional().describe('Advanced adapter parameters — omit in most cases')
 });
 
-const outputSchema = z.object({
-  data: z
-    .object({
-      displayMode: z.string().describe('Display mode'),
-      selector: z.string().describe('CSS selector'),
-      type: z.string().describe('Selector type')
-    })
-    .catchall(z.unknown())
-    .describe('The updated style selector')
-});
+const outputSchema = z
+  .object({
+    displayMode: z.string().describe('Display mode'),
+    selector: z.string().describe('CSS selector'),
+    type: z.string().describe('Selector type')
+  })
+  .catchall(z.unknown())
+  .describe('The updated style selector');
 
 const updateStyleSelectorTool: McpTool = {
   name: 'update_style_selector',

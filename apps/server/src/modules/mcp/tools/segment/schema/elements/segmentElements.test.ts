@@ -20,7 +20,7 @@ describe('createSegmentElementTool', () => {
   describe('inputSchema', () => {
     it('accepts required fields', () => {
       expect(
-        createSegmentElementTool.mcpDefinition.inputSchema.safeParse({
+        createSegmentElementTool.mcpDefinition.inputSchema?.safeParse({
           segmentId: 'seg-1',
           element: { type: 'div', label: 'Box' },
           parentId: 'root-1'
@@ -30,7 +30,7 @@ describe('createSegmentElementTool', () => {
 
     it('rejects missing segmentId', () => {
       expect(
-        createSegmentElementTool.mcpDefinition.inputSchema.safeParse({
+        createSegmentElementTool.mcpDefinition.inputSchema?.safeParse({
           element: { type: 'div', label: 'Box' },
           parentId: 'root-1'
         }).success
@@ -39,7 +39,7 @@ describe('createSegmentElementTool', () => {
 
     it('rejects missing parentId', () => {
       expect(
-        createSegmentElementTool.mcpDefinition.inputSchema.safeParse({
+        createSegmentElementTool.mcpDefinition.inputSchema?.safeParse({
           segmentId: 'seg-1',
           element: { type: 'div', label: 'Box' }
         }).success
@@ -48,7 +48,7 @@ describe('createSegmentElementTool', () => {
 
     it('rejects element missing type', () => {
       expect(
-        createSegmentElementTool.mcpDefinition.inputSchema.safeParse({
+        createSegmentElementTool.mcpDefinition.inputSchema?.safeParse({
           segmentId: 'seg-1',
           element: { label: 'Box' },
           parentId: 'root-1'
@@ -59,9 +59,7 @@ describe('createSegmentElementTool', () => {
 
   describe('outputSchema', () => {
     it('validates created segment element', () => {
-      expect(
-        createSegmentElementTool.mcpDefinition.outputSchema.safeParse({ data: { id: 'sel-1' } }).success
-      ).toBe(true);
+      expect(createSegmentElementTool.mcpDefinition.outputSchema?.safeParse({ id: 'sel-1' }).success).toBe(true);
     });
   });
 });
@@ -79,7 +77,7 @@ describe('updateSegmentElementTool', () => {
   describe('inputSchema', () => {
     it('accepts segmentId, elementId and updates', () => {
       expect(
-        updateSegmentElementTool.mcpDefinition.inputSchema.safeParse({
+        updateSegmentElementTool.mcpDefinition.inputSchema?.safeParse({
           segmentId: 'seg-1',
           elementId: 'el-1',
           updates: { label: 'New Label' }
@@ -89,7 +87,7 @@ describe('updateSegmentElementTool', () => {
 
     it('rejects missing elementId', () => {
       expect(
-        updateSegmentElementTool.mcpDefinition.inputSchema.safeParse({
+        updateSegmentElementTool.mcpDefinition.inputSchema?.safeParse({
           segmentId: 'seg-1',
           updates: { label: 'New' }
         }).success
@@ -99,9 +97,7 @@ describe('updateSegmentElementTool', () => {
 
   describe('outputSchema', () => {
     it('validates updated segment element', () => {
-      expect(
-        updateSegmentElementTool.mcpDefinition.outputSchema.safeParse({ data: { id: 'el-1' } }).success
-      ).toBe(true);
+      expect(updateSegmentElementTool.mcpDefinition.outputSchema?.safeParse({ id: 'el-1' }).success).toBe(true);
     });
   });
 });
@@ -119,20 +115,18 @@ describe('deleteSegmentElementTool', () => {
   describe('inputSchema', () => {
     it('accepts segmentId and elementId', () => {
       expect(
-        deleteSegmentElementTool.mcpDefinition.inputSchema.safeParse({ segmentId: 'seg-1', elementId: 'el-1' }).success
+        deleteSegmentElementTool.mcpDefinition.inputSchema?.safeParse({ segmentId: 'seg-1', elementId: 'el-1' }).success
       ).toBe(true);
     });
 
     it('rejects missing elementId', () => {
-      expect(
-        deleteSegmentElementTool.mcpDefinition.inputSchema.safeParse({ segmentId: 'seg-1' }).success
-      ).toBe(false);
+      expect(deleteSegmentElementTool.mcpDefinition.inputSchema?.safeParse({ segmentId: 'seg-1' }).success).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates data: true', () => {
-      expect(deleteSegmentElementTool.mcpDefinition.outputSchema.safeParse({ data: true }).success).toBe(true);
+      expect(deleteSegmentElementTool.mcpDefinition.outputSchema?.safeParse(true).success).toBe(true);
     });
   });
 });
@@ -150,7 +144,7 @@ describe('moveSegmentElementTool', () => {
   describe('inputSchema', () => {
     it('accepts required fields', () => {
       expect(
-        moveSegmentElementTool.mcpDefinition.inputSchema.safeParse({
+        moveSegmentElementTool.mcpDefinition.inputSchema?.safeParse({
           segmentId: 'seg-1',
           elementId: 'el-1',
           toParentId: 'root-1'
@@ -160,7 +154,7 @@ describe('moveSegmentElementTool', () => {
 
     it('accepts optional dropPosition', () => {
       expect(
-        moveSegmentElementTool.mcpDefinition.inputSchema.safeParse({
+        moveSegmentElementTool.mcpDefinition.inputSchema?.safeParse({
           segmentId: 'seg-1',
           elementId: 'el-1',
           toParentId: 'root-1',
@@ -171,7 +165,7 @@ describe('moveSegmentElementTool', () => {
 
     it('rejects invalid dropPosition', () => {
       expect(
-        moveSegmentElementTool.mcpDefinition.inputSchema.safeParse({
+        moveSegmentElementTool.mcpDefinition.inputSchema?.safeParse({
           segmentId: 'seg-1',
           elementId: 'el-1',
           toParentId: 'root-1',
@@ -183,7 +177,7 @@ describe('moveSegmentElementTool', () => {
 
   describe('outputSchema', () => {
     it('validates data: true', () => {
-      expect(moveSegmentElementTool.mcpDefinition.outputSchema.safeParse({ data: true }).success).toBe(true);
+      expect(moveSegmentElementTool.mcpDefinition.outputSchema?.safeParse(true).success).toBe(true);
     });
   });
 });

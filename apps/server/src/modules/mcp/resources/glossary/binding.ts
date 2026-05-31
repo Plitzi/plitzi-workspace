@@ -1,7 +1,8 @@
 export const bindingResource = {
   uri: 'plitzi://docs/binding',
   name: 'Plitzi Docs: Binding',
-  description: 'Data bindings in Plitzi — connections that dynamically drive element attributes, style, or state from data sources.',
+  description:
+    'Data bindings in Plitzi — connections that dynamically drive element attributes, style, or state from data sources.',
   mimeType: 'text/markdown',
   content: `# Binding
 

@@ -5,7 +5,7 @@ export const elementDefinitionSchema = z
     rootId: z.string().describe('Root element ID'),
     label: z.string().describe('Element label'),
     type: z.string().describe('Element type'),
-    parentId: z.string().optional().describe('Parent element ID'),
+    parentId: z.string().nullish().describe('Parent element ID (null for root elements)'),
     items: z.array(z.string()).optional().describe('Child element IDs'),
     runtime: z.enum(['server', 'client', 'shared']).optional().describe('Rendering runtime'),
     loadStrategy: z.enum(['eager', 'lazy', 'visible']).optional().describe('Load strategy')
@@ -22,7 +22,7 @@ export const pageFolderSchema = z.object({
   id: z.string().describe('Folder ID'),
   name: z.string().describe('Folder name'),
   slug: z.string().describe('Folder slug'),
-  parentId: z.string().optional().describe('Parent folder ID')
+  parentId: z.string().nullish().describe('Parent folder ID (null for root folders)')
 });
 
 export const schemaVariableSchema = z.object({

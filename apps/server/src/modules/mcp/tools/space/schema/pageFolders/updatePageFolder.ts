@@ -15,16 +15,14 @@ const inputSchema = z.object({
     .describe('Fields to update')
 });
 
-const outputSchema = z.object({
-  data: z
-    .object({
-      id: z.string().describe('Folder ID'),
-      name: z.string().describe('Folder name'),
-      slug: z.string().describe('Folder slug'),
-      parentId: z.string().optional().describe('Parent folder ID')
-    })
-    .describe('The updated page folder')
-});
+const outputSchema = z
+  .object({
+    id: z.string().describe('Folder ID'),
+    name: z.string().describe('Folder name'),
+    slug: z.string().describe('Folder slug'),
+    parentId: z.string().optional().describe('Parent folder ID')
+  })
+  .describe('The updated page folder');
 
 const updatePageFolderTool: McpTool = {
   name: 'update_page_folder',

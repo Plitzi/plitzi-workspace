@@ -1,70 +1,50 @@
 import { describe, it, expect } from 'vitest';
 
-import listSpacesTool from './listSpaces';
-import publishSpaceTool from './publishSpace';
+import getSpaceSettingsTool from './schema/getSpaceSettings';
+import updateSpaceSettingsTool from './schema/updateSpaceSettings';
 
-describe('listSpacesTool', () => {
+describe('getSpaceSettingsTool', () => {
   it('has correct name and adapterName', () => {
-    expect(listSpacesTool.name).toBe('list_spaces');
-    expect(listSpacesTool.adapterName).toBe('listSpaces');
+    expect(getSpaceSettingsTool.name).toBe('get_space_settings');
+    expect(getSpaceSettingsTool.adapterName).toBe('getSpaceSettings');
   });
 
   it('allows plan and build modes (read)', () => {
-    expect(listSpacesTool.definition.allowedModes).toEqual(['plan', 'build']);
+    expect(getSpaceSettingsTool.definition.allowedModes).toEqual(['plan', 'build']);
   });
 
   describe('inputSchema', () => {
     it('accepts empty object', () => {
-      expect(listSpacesTool.mcpDefinition.inputSchema.safeParse({}).success).toBe(true);
-    });
-  });
-
-  describe('outputSchema', () => {
-    it('validates a list of spaces', () => {
-      const result = listSpacesTool.mcpDefinition.outputSchema.safeParse({
-        data: [{ id: 'sp-1', name: 'My Space', permanentUrl: 'https://example.com', verified: true }]
-      });
-
-      expect(result.success).toBe(true);
-    });
-
-    it('validates an empty list', () => {
-      const result = listSpacesTool.mcpDefinition.outputSchema.safeParse({ data: [] });
-
-      expect(result.success).toBe(true);
-    });
-
-    it('rejects missing data field', () => {
-      expect(listSpacesTool.mcpDefinition.outputSchema.safeParse({}).success).toBe(false);
+      expect(getSpaceSettingsTool.mcpDefinition.inputSchema?.safeParse({}).success).toBe(true);
     });
   });
 });
 
-describe('publishSpaceTool', () => {
+describe('updateSpaceSettingsTool', () => {
   it('has correct name and adapterName', () => {
-    expect(publishSpaceTool.name).toBe('publish_space');
-    expect(publishSpaceTool.adapterName).toBe('publishSpace');
+    expect(updateSpaceSettingsTool.name).toBe('update_space_settings');
+    expect(updateSpaceSettingsTool.adapterName).toBe('updateSpaceSettings');
   });
 
   it('allows only build mode (write)', () => {
-    expect(publishSpaceTool.definition.allowedModes).toEqual(['build']);
+    expect(updateSpaceSettingsTool.definition.allowedModes).toEqual(['build']);
   });
 
   describe('inputSchema', () => {
-    it('accepts empty object', () => {
-      expect(publishSpaceTool.mcpDefinition.inputSchema.safeParse({}).success).toBe(true);
-    });
-  });
-
-  describe('outputSchema', () => {
-    it('validates a revision number', () => {
-      const result = publishSpaceTool.mcpDefinition.outputSchema.safeParse({ data: { revision: 42 } });
-
-      expect(result.success).toBe(true);
+    it('accepts empty object (all fields optional)', () => {
+      expect(updateSpaceSettingsTool.mcpDefinition.inputSchema?.safeParse({}).success).toBe(true);
     });
 
-    it('rejects missing revision', () => {
-      expect(publishSpaceTool.mcpDefinition.outputSchema.safeParse({ data: {} }).success).toBe(false);
+    it('accepts path and string value', () => {
+      expect(
+        updateSpaceSettingsTool.mcpDefinition.inputSchema?.safeParse({ path: 'customCss', value: 'body {}' }).success
+      ).toBe(true);
+    });
+
+    it('accepts boolean value', () => {
+      expect(
+        updateSpaceSettingsTool.mcpDefinition.inputSchema?.safeParse({ path: 'keepState', value: true }).success
+      ).toBe(true);
     });
   });
 });

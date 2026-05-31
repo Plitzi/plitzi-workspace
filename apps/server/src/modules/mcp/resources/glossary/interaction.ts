@@ -1,7 +1,8 @@
 export const interactionResource = {
   uri: 'plitzi://docs/interaction',
   name: 'Plitzi Docs: Interaction',
-  description: 'Event-driven action handlers in Plitzi — connect user events (click, change, submit) to platform actions.',
+  description:
+    'Event-driven action handlers in Plitzi — connect user events (click, change, submit) to platform actions.',
   mimeType: 'text/markdown',
   content: `# Interaction
 

@@ -1,3 +1,4 @@
+import MessageActions from './components/MessageActions';
 import { formatTime } from '../../helpers/utils';
 
 import type { AiAttachment, AiMessage } from '../../../../types';
@@ -12,7 +13,7 @@ export type UserMessageProps = {
 };
 
 const UserMessage = ({ id, content, attachments, createdAt, irrelevant, queued }: UserMessageProps) => (
-  <div className="flex flex-col gap-1.5" data-id={id}>
+  <div className="group flex flex-col gap-1.5" data-id={id}>
     <div className="flex items-center gap-1.5 font-mono text-[10px] text-zinc-500 dark:text-zinc-400">
       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-linear-to-br from-pink-500 to-sky-500" />
       <span className="font-medium text-zinc-900 dark:text-zinc-100">You</span>
@@ -64,6 +65,7 @@ const UserMessage = ({ id, content, attachments, createdAt, irrelevant, queued }
             <p className="m-0 whitespace-pre-wrap">{content}</p>
           </div>
         )}
+        {content && !queued && <MessageActions messageId={id} content={content} />}
       </>
     )}
   </div>

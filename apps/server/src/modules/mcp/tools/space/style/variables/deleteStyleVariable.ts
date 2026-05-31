@@ -7,17 +7,11 @@ import { getAllowedModes } from '../../../../helpers';
 import type { McpTool } from '@plitzi/sdk-shared';
 
 const inputSchema = z.object({
-  category: z
-    .nativeEnum(StyleVariableCategory)
-    .describe(
-      'Token category: "color", "spacing", "shadow", or "custom"'
-    ),
+  category: z.nativeEnum(StyleVariableCategory).describe('Token category: "color", "spacing", "shadow", or "custom"'),
   name: z.string().describe('Variable name to delete')
 });
 
-const outputSchema = z.object({
-  data: z.literal(true).describe('Always true on successful deletion')
-});
+const outputSchema = z.literal(true).describe('Always true on successful deletion');
 
 const deleteStyleVariableTool: McpTool = {
   name: 'delete_style_variable',

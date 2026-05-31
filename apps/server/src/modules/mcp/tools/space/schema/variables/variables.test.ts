@@ -18,12 +18,12 @@ describe('createVariableTool', () => {
 
   describe('inputSchema', () => {
     it('accepts a valid variable', () => {
-      expect(createVariableTool.mcpDefinition.inputSchema.safeParse({ variable: validVariable }).success).toBe(true);
+      expect(createVariableTool.mcpDefinition.inputSchema?.safeParse({ variable: validVariable }).success).toBe(true);
     });
 
     it('rejects invalid type', () => {
       expect(
-        createVariableTool.mcpDefinition.inputSchema.safeParse({
+        createVariableTool.mcpDefinition.inputSchema?.safeParse({
           variable: { ...validVariable, type: 'invalid' }
         }).success
       ).toBe(false);
@@ -31,7 +31,7 @@ describe('createVariableTool', () => {
 
     it('rejects missing variable.name', () => {
       expect(
-        createVariableTool.mcpDefinition.inputSchema.safeParse({
+        createVariableTool.mcpDefinition.inputSchema?.safeParse({
           variable: { type: 'text', value: 'x', category: 'General' }
         }).success
       ).toBe(false);
@@ -40,7 +40,7 @@ describe('createVariableTool', () => {
 
   describe('outputSchema', () => {
     it('validates created variable', () => {
-      expect(createVariableTool.mcpDefinition.outputSchema.safeParse({ data: validVariable }).success).toBe(true);
+      expect(createVariableTool.mcpDefinition.outputSchema?.safeParse(validVariable).success).toBe(true);
     });
   });
 });
@@ -58,22 +58,22 @@ describe('updateVariableTool', () => {
   describe('inputSchema', () => {
     it('accepts variable name with partial update fields', () => {
       expect(
-        updateVariableTool.mcpDefinition.inputSchema.safeParse({
+        updateVariableTool.mcpDefinition.inputSchema?.safeParse({
           variable: { name: 'primaryColor', value: '#000' }
         }).success
       ).toBe(true);
     });
 
     it('rejects missing variable.name', () => {
-      expect(
-        updateVariableTool.mcpDefinition.inputSchema.safeParse({ variable: { value: '#000' } }).success
-      ).toBe(false);
+      expect(updateVariableTool.mcpDefinition.inputSchema?.safeParse({ variable: { value: '#000' } }).success).toBe(
+        false
+      );
     });
   });
 
   describe('outputSchema', () => {
     it('validates updated variable', () => {
-      expect(updateVariableTool.mcpDefinition.outputSchema.safeParse({ data: validVariable }).success).toBe(true);
+      expect(updateVariableTool.mcpDefinition.outputSchema?.safeParse(validVariable).success).toBe(true);
     });
   });
 });
@@ -90,17 +90,17 @@ describe('deleteVariableTool', () => {
 
   describe('inputSchema', () => {
     it('accepts variable name', () => {
-      expect(deleteVariableTool.mcpDefinition.inputSchema.safeParse({ name: 'primaryColor' }).success).toBe(true);
+      expect(deleteVariableTool.mcpDefinition.inputSchema?.safeParse({ name: 'primaryColor' }).success).toBe(true);
     });
 
     it('rejects missing name', () => {
-      expect(deleteVariableTool.mcpDefinition.inputSchema.safeParse({}).success).toBe(false);
+      expect(deleteVariableTool.mcpDefinition.inputSchema?.safeParse({}).success).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates data: true', () => {
-      expect(deleteVariableTool.mcpDefinition.outputSchema.safeParse({ data: true }).success).toBe(true);
+      expect(deleteVariableTool.mcpDefinition.outputSchema?.safeParse(true).success).toBe(true);
     });
   });
 });

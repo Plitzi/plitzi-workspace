@@ -29,16 +29,14 @@ const inputSchema = z.object({
     .describe('Variable to create')
 });
 
-const outputSchema = z.object({
-  data: z
-    .object({
-      name: z.string().describe('Variable name'),
-      type: z.string().describe('Variable type'),
-      value: z.string().describe('Variable value'),
-      category: z.string().describe('Grouping label shown in the builder UI (e.g. "Colors", "Layout")')
-    })
-    .describe('The created segment variable')
-});
+const outputSchema = z
+  .object({
+    name: z.string().describe('Variable name'),
+    type: z.string().describe('Variable type'),
+    value: z.string().describe('Variable value'),
+    category: z.string().describe('Grouping label shown in the builder UI (e.g. "Colors", "Layout")')
+  })
+  .describe('The created segment variable');
 
 const createSegmentVariableTool: McpTool = {
   name: 'create_segment_variable',

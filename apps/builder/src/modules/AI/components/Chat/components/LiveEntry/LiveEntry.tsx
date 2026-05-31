@@ -95,38 +95,39 @@ const LiveEntry = ({ isStreaming, isBusy, streamingText, liveSteps = [] }: LiveE
         streamingText={streamingText}
       />
       {groupedSteps.map(item => {
-        if (item.type === 'thinking') {
-          if (item.step.done) {
-            return <ThinkingBlock key={item.key} text={item.step.text} durationMs={item.step.durationMs} />;
-          }
-
-          return <LiveThinking key={item.key} liveThinking={item.step.text} mode={currentMode} />;
-        }
-
-        if (item.type === 'resource') {
-          return <ResourceStep key={item.key} name={item.step.name} uri={item.step.uri} />;
-        }
-
-        if (item.type === 'tools') {
-          return (
-            <Fragment key={item.key}>
+        let content = null;
+        if (item.type === 'thinking' && item.step.done) {
+          content = <ThinkingBlock text={item.step.text} durationMs={item.step.durationMs} />;
+        } else if (item.type === 'thinking') {
+          content = <LiveThinking liveThinking={item.step.text} mode={currentMode} />;
+        } else if (item.type === 'resource') {
+          content = <ResourceStep name={item.step.name} uri={item.step.uri} />;
+        } else if (item.type === 'tools') {
+          content = (
+            <Fragment>
               <MessageTools tools={item.tools} defaultOpen={item.tools.some(t => t.status === 'running')} />
               {item.visual && <ToolVisualRenderer visual={item.visual} mode={currentMode} />}
             </Fragment>
           );
+        } else {
+          content = (
+            <div className="text-[13px] leading-[1.6] text-zinc-900 dark:text-zinc-100">
+              <Markdown>{item.step.text}</Markdown>
+            </div>
+          );
         }
 
         return (
-          <div key={item.key} className="text-[13px] leading-[1.6] text-zinc-900 dark:text-zinc-100">
-            <Markdown>{item.step.text}</Markdown>
+          <div key={item.key} className="animate-fade-in-up">
+            {content}
           </div>
         );
       })}
       {streamingText && (
-        <div className="text-[13px] leading-[1.6] text-zinc-900 dark:text-zinc-100">
+        <div className="animate-fade-in text-[13px] leading-[1.6] text-zinc-900 dark:text-zinc-100">
           <Markdown>{streamingText}</Markdown>
           <span
-            className={clsx('ml-0.5 inline-block h-4 w-0.5 animate-pulse align-middle', {
+            className={clsx('ml-0.5 inline-block h-4 w-0.5 animate-blink align-middle', {
               'bg-emerald-500 dark:bg-emerald-400': currentMode === 'build',
               'bg-sky-500 dark:bg-sky-400': currentMode === 'plan'
             })}

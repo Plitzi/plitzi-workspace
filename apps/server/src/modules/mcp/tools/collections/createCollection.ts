@@ -17,18 +17,21 @@ const createCollectionTool: McpTool = {
       name: z.string().describe('Singular collection name (e.g. "Product")'),
       namePlural: z.string().describe('Plural collection name (e.g. "Products")'),
       description: z.string().optional().describe('Short description of what this collection stores'),
-      privacy: z.enum(['public', 'private']).optional().describe('"public" allows unauthenticated reads; "private" requires auth'),
-      fields: z.record(z.string(), z.unknown()).describe('Field definitions keyed by field name — each value is a field config object')
+      privacy: z
+        .enum(['public', 'private'])
+        .optional()
+        .describe('"public" allows unauthenticated reads; "private" requires auth'),
+      fields: z
+        .record(z.string(), z.unknown())
+        .describe('Field definitions keyed by field name — each value is a field config object')
     }),
-    outputSchema: z.object({
-      data: z
-        .object({
-          id: z.string().describe('Collection ID'),
-          name: z.string().describe('Collection name')
-        })
-        .catchall(z.unknown())
-        .describe('The created collection')
-    })
+    outputSchema: z
+      .object({
+        id: z.string().describe('Collection ID'),
+        name: z.string().describe('Collection name')
+      })
+      .catchall(z.unknown())
+      .describe('The created collection')
   },
   definition: {
     allowedModes: getAllowedModes('write')

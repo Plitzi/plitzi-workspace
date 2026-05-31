@@ -1,6 +1,3 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
-import type { McpResource } from '@plitzi/sdk-shared';
-
 import { bindingResource } from './glossary/binding';
 import { collectionResource } from './glossary/collection';
 import { displayModeResource } from './glossary/displayMode';
@@ -14,13 +11,16 @@ import { schemaResource } from './glossary/schema';
 import { schemaVariableResource } from './glossary/schemaVariable';
 import { segmentResource } from './glossary/segment';
 import { spaceResource } from './glossary/space';
-import { styleSelectorResource } from './glossary/styleSelector';
 import { styleResource } from './glossary/style';
+import { styleSelectorResource } from './glossary/styleSelector';
 import { styleVariableResource } from './glossary/styleVariable';
 import { workflowDataResource } from './workflows/data';
 import { workflowElementsResource } from './workflows/elements';
 import { workflowSegmentsResource } from './workflows/segments';
 import { workflowStylesResource } from './workflows/styles';
+
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
+import type { McpResource } from '@plitzi/sdk-shared';
 
 const glossaryResources = [
   schemaResource,
@@ -61,3 +61,12 @@ export const registerResources = (
     });
   }
 };
+
+// Shared registry so the same docs are reachable both as native MCP resources (OpenCode) and as
+// the read_resource / list_resources tools (every provider).
+export const allResources: McpResource[] = [...glossaryResources, ...workflowResources];
+
+export const getResourceList = (): { uri: string; name: string; description: string }[] =>
+  allResources.map(({ uri, name, description }) => ({ uri, name, description }));
+
+export const getResourceByUri = (uri: string): McpResource | undefined => allResources.find(r => r.uri === uri);

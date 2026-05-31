@@ -18,9 +18,10 @@ const { useStore } = createStoreHook<BuilderState>();
 export type AiChatProviderProps = {
   children: ReactNode;
   providerSettings?: AiProviderSettings;
+  prefillInput?: (text: string) => void;
 };
 
-const AiChatProvider = ({ children, providerSettings }: AiChatProviderProps) => {
+const AiChatProvider = ({ children, providerSettings, prefillInput }: AiChatProviderProps) => {
   const [elementSelected] = useStore('elementSelected');
   const { theme } = use(ThemeContext);
   const { currentPageId } = use(NavigationContext);
@@ -44,15 +45,39 @@ const AiChatProvider = ({ children, providerSettings }: AiChatProviderProps) => 
     setMode,
     initConversation,
     sendMessage,
+    stopGeneration,
     clearConversation,
     loadConversations,
     loadConversation,
+    forkConversation,
     compact
   } = useAiChat(providerSettings);
 
   useEffect(() => {
     void initConversation();
   }, [initConversation]);
+
+  const forkFromMessage = useCallback(
+    async (messageId: string, content: string) => {
+      const newId = await forkConversation(messageId);
+      if (newId) {
+        await loadConversation(newId);
+      }
+
+      prefillInput?.(content);
+    },
+    [forkConversation, loadConversation, prefillInput]
+  );
+
+  const newChatFromMessage = useCallback(
+    (content: string) => {
+      clearConversation();
+      prefillInput?.(content);
+    },
+    [clearConversation, prefillInput]
+  );
+
+  const prefill = useCallback((text: string) => prefillInput?.(text), [prefillInput]);
 
   const onSend = useCallback(
     (msg: string, attachments: AiAttachment[], effort: AiEffort) => {
@@ -92,9 +117,13 @@ const AiChatProvider = ({ children, providerSettings }: AiChatProviderProps) => 
       onSend,
       onSendMessage,
       setMode,
+      stopGeneration,
       clearConversation,
       loadConversations,
       loadConversation,
+      forkFromMessage,
+      newChatFromMessage,
+      prefillInput: prefill,
       compact
     }),
     [
@@ -117,9 +146,13 @@ const AiChatProvider = ({ children, providerSettings }: AiChatProviderProps) => 
       onSend,
       onSendMessage,
       setMode,
+      stopGeneration,
       clearConversation,
       loadConversations,
       loadConversation,
+      forkFromMessage,
+      newChatFromMessage,
+      prefill,
       compact
     ]
   );

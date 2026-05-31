@@ -13,9 +13,7 @@ const deleteCollectionRecordTool: McpTool = {
     inputSchema: z.object({
       recordId: z.string().describe('Record ID')
     }),
-    outputSchema: z.object({
-      data: z.literal(true).describe('Always true on successful deletion')
-    })
+    outputSchema: z.literal(true).describe('Always true on successful deletion')
   },
   definition: {
     allowedModes: getAllowedModes('write')

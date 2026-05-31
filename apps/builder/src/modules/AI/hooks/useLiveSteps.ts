@@ -93,7 +93,9 @@ const useLiveSteps = (capture: () => string) => {
         return prev;
       }
 
-      return prev.map((s, i) => (i === targetIdx ? { ...s, result: event.result, status: event.status } : s));
+      return prev.map((s, i) =>
+        i === targetIdx ? { ...s, result: event.result, error: event.error, status: event.status } : s
+      );
     });
   }, []);
 

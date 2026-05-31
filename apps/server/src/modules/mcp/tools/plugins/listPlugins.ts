@@ -6,17 +6,15 @@ import type { McpTool } from '@plitzi/sdk-shared';
 
 const inputSchema = z.object({});
 
-const outputSchema = z.object({
-  data: z
-    .array(
-      z.object({
-        name: z.string().describe('Plugin name'),
-        version: z.string().optional().describe('Plugin version'),
-        description: z.string().optional().describe('Plugin description')
-      })
-    )
-    .describe('Array of available plugins')
-});
+const outputSchema = z
+  .array(
+    z.object({
+      name: z.string().describe('Plugin name'),
+      version: z.string().optional().describe('Plugin version'),
+      description: z.string().optional().describe('Plugin description')
+    })
+  )
+  .describe('Array of available plugins');
 
 const listPluginsTool: McpTool = {
   name: 'list_plugins',

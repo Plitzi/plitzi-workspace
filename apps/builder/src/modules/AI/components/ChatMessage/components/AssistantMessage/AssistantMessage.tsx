@@ -4,6 +4,7 @@ import { Fragment, useMemo } from 'react';
 
 import ModeLabel from '@pmodules/AI/components/ModeLabel';
 
+import CopyButton from '../../../CopyButton';
 import MessageTools from '../../../MessageTools';
 import ToolVisualRenderer from '../../../ToolVisualRenderer';
 import extractToolVisual, { VISUAL_TOOL_NAMES } from '../../helpers/extractToolVisual';
@@ -104,7 +105,7 @@ const AssistantMessage = ({
   }, [steps]);
 
   return (
-    <div className="flex flex-col gap-1.5" data-id={id}>
+    <div className="group flex flex-col gap-1.5" data-id={id}>
       <div className="flex items-center gap-1.5 font-mono text-[10px] text-zinc-500 dark:text-zinc-400">
         <span
           className={clsx('h-1.5 w-1.5 shrink-0 rounded-full', {
@@ -175,6 +176,12 @@ const AssistantMessage = ({
       )}
 
       {actions && actions.length > 0 && <ActionButtons actions={actions} />}
+
+      {!irrelevant && content && (
+        <div className="pl-1 opacity-0 transition-opacity group-hover:opacity-100">
+          <CopyButton text={content} title="Copy response" className="font-mono text-[10px]" />
+        </div>
+      )}
     </div>
   );
 };

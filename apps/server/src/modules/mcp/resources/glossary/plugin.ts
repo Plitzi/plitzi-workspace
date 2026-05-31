@@ -1,7 +1,8 @@
 export const pluginResource = {
   uri: 'plitzi://docs/plugin',
   name: 'Plitzi Docs: Plugin',
-  description: 'An external UI component definition in Plitzi — a packaged React component with manifest, assets, and builder constraints.',
+  description:
+    'An external UI component definition in Plitzi — a packaged React component with manifest, assets, and builder constraints.',
   mimeType: 'text/markdown',
   content: `# Plugin
 

@@ -17,13 +17,11 @@ const resourceSchema = z.object({
   updated_at: z.number().describe('Unix timestamp of last update')
 });
 
-const outputSchema = z.object({
-  data: z
-    .object({
-      resources: z.array(resourceSchema).describe('List of resources for the current space')
-    })
-    .describe('Resources list')
-});
+const outputSchema = z
+  .object({
+    resources: z.array(resourceSchema).describe('List of resources for the current space')
+  })
+  .describe('Resources list');
 
 const getResourcesTool: McpTool = {
   name: 'get_resources',

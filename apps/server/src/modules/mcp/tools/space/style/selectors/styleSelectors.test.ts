@@ -19,7 +19,7 @@ describe('createStyleSelectorTool', () => {
   describe('inputSchema', () => {
     it('accepts required fields', () => {
       expect(
-        createStyleSelectorTool.mcpDefinition.inputSchema.safeParse({
+        createStyleSelectorTool.mcpDefinition.inputSchema?.safeParse({
           displayMode: 'desktop',
           selector: '.hero',
           type: 'class'
@@ -29,7 +29,7 @@ describe('createStyleSelectorTool', () => {
 
     it('accepts all optional fields', () => {
       expect(
-        createStyleSelectorTool.mcpDefinition.inputSchema.safeParse({
+        createStyleSelectorTool.mcpDefinition.inputSchema?.safeParse({
           displayMode: 'mobile',
           selector: 'button',
           type: 'element',
@@ -40,7 +40,7 @@ describe('createStyleSelectorTool', () => {
 
     it('rejects invalid displayMode', () => {
       expect(
-        createStyleSelectorTool.mcpDefinition.inputSchema.safeParse({
+        createStyleSelectorTool.mcpDefinition.inputSchema?.safeParse({
           displayMode: 'widescreen',
           selector: '.hero',
           type: 'class'
@@ -50,7 +50,7 @@ describe('createStyleSelectorTool', () => {
 
     it('rejects invalid type', () => {
       expect(
-        createStyleSelectorTool.mcpDefinition.inputSchema.safeParse({
+        createStyleSelectorTool.mcpDefinition.inputSchema?.safeParse({
           displayMode: 'desktop',
           selector: '.hero',
           type: 'attribute'
@@ -60,14 +60,14 @@ describe('createStyleSelectorTool', () => {
 
     it('rejects missing selector', () => {
       expect(
-        createStyleSelectorTool.mcpDefinition.inputSchema.safeParse({ displayMode: 'desktop', type: 'class' }).success
+        createStyleSelectorTool.mcpDefinition.inputSchema?.safeParse({ displayMode: 'desktop', type: 'class' }).success
       ).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates created selector', () => {
-      expect(createStyleSelectorTool.mcpDefinition.outputSchema.safeParse({ data: validSelector }).success).toBe(true);
+      expect(createStyleSelectorTool.mcpDefinition.outputSchema?.safeParse(validSelector).success).toBe(true);
     });
   });
 });
@@ -85,7 +85,7 @@ describe('updateStyleSelectorTool', () => {
   describe('inputSchema', () => {
     it('accepts required fields', () => {
       expect(
-        updateStyleSelectorTool.mcpDefinition.inputSchema.safeParse({
+        updateStyleSelectorTool.mcpDefinition.inputSchema?.safeParse({
           displayMode: 'desktop',
           selector: '.hero',
           type: 'class'
@@ -95,7 +95,7 @@ describe('updateStyleSelectorTool', () => {
 
     it('accepts optional path and style', () => {
       expect(
-        updateStyleSelectorTool.mcpDefinition.inputSchema.safeParse({
+        updateStyleSelectorTool.mcpDefinition.inputSchema?.safeParse({
           displayMode: 'tablet',
           selector: '.hero',
           type: 'class',
@@ -107,7 +107,7 @@ describe('updateStyleSelectorTool', () => {
 
     it('rejects invalid displayMode', () => {
       expect(
-        updateStyleSelectorTool.mcpDefinition.inputSchema.safeParse({
+        updateStyleSelectorTool.mcpDefinition.inputSchema?.safeParse({
           displayMode: 'xl',
           selector: '.hero',
           type: 'class'
@@ -118,7 +118,7 @@ describe('updateStyleSelectorTool', () => {
 
   describe('outputSchema', () => {
     it('validates updated selector', () => {
-      expect(updateStyleSelectorTool.mcpDefinition.outputSchema.safeParse({ data: validSelector }).success).toBe(true);
+      expect(updateStyleSelectorTool.mcpDefinition.outputSchema?.safeParse(validSelector).success).toBe(true);
     });
   });
 });
@@ -136,26 +136,27 @@ describe('deleteStyleSelectorTool', () => {
   describe('inputSchema', () => {
     it('accepts displayMode and selector', () => {
       expect(
-        deleteStyleSelectorTool.mcpDefinition.inputSchema.safeParse({ displayMode: 'desktop', selector: '.hero' }).success
+        deleteStyleSelectorTool.mcpDefinition.inputSchema?.safeParse({ displayMode: 'desktop', selector: '.hero' })
+          .success
       ).toBe(true);
     });
 
     it('rejects missing selector', () => {
-      expect(
-        deleteStyleSelectorTool.mcpDefinition.inputSchema.safeParse({ displayMode: 'desktop' }).success
-      ).toBe(false);
+      expect(deleteStyleSelectorTool.mcpDefinition.inputSchema?.safeParse({ displayMode: 'desktop' }).success).toBe(
+        false
+      );
     });
 
     it('rejects invalid displayMode', () => {
       expect(
-        deleteStyleSelectorTool.mcpDefinition.inputSchema.safeParse({ displayMode: '4k', selector: '.x' }).success
+        deleteStyleSelectorTool.mcpDefinition.inputSchema?.safeParse({ displayMode: '4k', selector: '.x' }).success
       ).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates data: true', () => {
-      expect(deleteStyleSelectorTool.mcpDefinition.outputSchema.safeParse({ data: true }).success).toBe(true);
+      expect(deleteStyleSelectorTool.mcpDefinition.outputSchema?.safeParse(true).success).toBe(true);
     });
   });
 });

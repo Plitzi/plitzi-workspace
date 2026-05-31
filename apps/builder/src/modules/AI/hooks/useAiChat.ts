@@ -34,6 +34,7 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
   const pendingQueueRef = useRef<QueueEntry[]>([]);
   pendingQueueRef.current = pendingQueue;
   const executeSendRef = useRef<((entry: QueueEntry) => Promise<void>) | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const conversationIdRef = useRef(conversationId);
   conversationIdRef.current = conversationId;
@@ -105,13 +106,18 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
           conversationIdRef.current = activeConversationId;
         }
 
+        const controller = new AbortController();
+        abortRef.current = controller;
+
         const serverAttachments = entry.attachments.map(a => ({ type: a.type, mimeType: a.mimeType, data: a.data }));
         const res = await fetch(`${server.nodeServer}/ai/chat`, {
           method: 'POST',
+          signal: controller.signal,
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${webKey}` },
           body: JSON.stringify({
             conversationId: activeConversationId,
             message: entry.message,
+            messageId: entry.localId,
             attachments: serverAttachments.length > 0 ? serverAttachments : undefined,
             context: entry.context,
             mode: modeRef.current,
@@ -166,8 +172,12 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
           }
         }
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        // Stopping the generation aborts the fetch — that is intentional, not an error.
+        if (!(err instanceof DOMException && err.name === 'AbortError')) {
+          setError(err instanceof Error ? err.message : 'Unknown error');
+        }
       } finally {
+        abortRef.current = null;
         setIsStreaming(false);
         setIsBusy(false);
         flushStreaming();
@@ -249,6 +259,13 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
     [isStreaming, quotaRetryAfter, executeSend]
   );
 
+  const stopGeneration = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setPendingQueue([]);
+    pendingQueueRef.current = [];
+  }, []);
+
   const clearConversation = useCallback(() => {
     setMessages([]);
     setConversationId('');
@@ -282,6 +299,24 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
       }
     },
     [isStreaming, networkQuery, setConversationId, clearErrors, loadUsageFromMessages]
+  );
+
+  const forkConversation = useCallback(
+    async (messageId: string): Promise<string | null> => {
+      const sourceId = conversationIdRef.current;
+      if (!sourceId || isStreaming) {
+        return null;
+      }
+
+      const res = await networkQuery<{ conversationId: string }>(
+        '/ai/conversation/fork',
+        { conversationId: sourceId, messageId },
+        'post'
+      );
+
+      return res?.conversationId ?? null;
+    },
+    [isStreaming, networkQuery]
   );
 
   const compact = useCallback(async () => {
@@ -334,9 +369,11 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
     setMode,
     initConversation,
     sendMessage,
+    stopGeneration,
     clearConversation,
     loadConversations,
     loadConversation,
+    forkConversation,
     compact
   };
 };

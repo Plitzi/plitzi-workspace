@@ -1,7 +1,8 @@
 export const styleSelectorResource = {
   uri: 'plitzi://docs/style-selector',
   name: 'Plitzi Docs: Style Selector',
-  description: 'A CSS selector entry in the Plitzi style system — holds all visual rules for one selector across states and variants.',
+  description:
+    'A CSS selector entry in the Plitzi style system — holds all visual rules for one selector across states and variants.',
   mimeType: 'text/markdown',
   content: `# Style Selector (StyleItem)
 

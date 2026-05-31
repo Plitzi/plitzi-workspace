@@ -4,28 +4,21 @@ import { getAllowedModes } from '../../../../helpers';
 
 import type { McpTool } from '@plitzi/sdk-shared';
 
-const inputSchema = z.object({});
+const inputSchema = z.object({
+  rootId: z.string().optional().describe('Filter to elements belonging to a specific page (by page element ID)'),
+  parentId: z.string().optional().describe('Filter to direct children of a specific element'),
+  type: z.string().optional().describe('Filter by element type (e.g. "button", "box", "text")')
+});
 
-const elementSchema = z.object({
+const compactElementSchema = z.object({
   id: z.string().describe('Element ID'),
-  attributes: z.record(z.string(), z.unknown()).describe('Element attributes'),
-  definition: z
-    .object({
-      rootId: z.string().describe('Root element ID'),
-      label: z.string().describe('Element label'),
-      type: z.string().describe('Element type'),
-      parentId: z.string().optional().describe('Parent element ID'),
-      items: z.array(z.string()).optional().describe('Child element IDs'),
-      styleSelectors: z.record(z.string(), z.string()).describe('Style selector map'),
-      runtime: z.enum(['server', 'client', 'shared']).optional().describe('Rendering runtime'),
-      loadStrategy: z.enum(['eager', 'lazy', 'visible']).optional().describe('Load strategy')
-    })
-    .describe('Element definition')
+  label: z.string().describe('Element label'),
+  type: z.string().describe('Element type'),
+  parentId: z.string().nullish().describe('Parent element ID (null for root elements)'),
+  items: z.array(z.string()).optional().describe('Child element IDs')
 });
 
-const outputSchema = z.object({
-  data: z.array(elementSchema).describe('Array of all elements in the space')
-});
+const outputSchema = z.array(compactElementSchema).describe('Matching elements as compact summaries');
 
 const listElementsTool: McpTool = {
   name: 'list_elements',
@@ -33,9 +26,10 @@ const listElementsTool: McpTool = {
   mcpDefinition: {
     title: 'List Elements',
     description:
-      'List all elements in the space as a flat array.\n\n' +
-      'Lighter than get_schema — returns only elements without variables, settings, pages, or folders. ' +
-      'Use when you need to scan all elements by type or label.',
+      'List elements in the space as compact summaries (id, label, type, parentId, items).\n\n' +
+      'Use rootId to scope to a specific page, parentId to get direct children of an element, ' +
+      'or type to find all elements of a certain kind. Filters combine with AND logic. ' +
+      'Use get_element for the full details of a specific element.',
     inputSchema,
     outputSchema
   },

@@ -29,19 +29,17 @@ describe('getResourcesTool', () => {
 
   describe('inputSchema', () => {
     it('accepts empty object', () => {
-      expect(getResourcesTool.mcpDefinition.inputSchema.safeParse({}).success).toBe(true);
+      expect(getResourcesTool.mcpDefinition.inputSchema?.safeParse({}).success).toBe(true);
     });
   });
 
   describe('outputSchema', () => {
     it('validates a list of resources', () => {
-      expect(
-        getResourcesTool.mcpDefinition.outputSchema.safeParse({ data: { resources: [validResource] } }).success
-      ).toBe(true);
+      expect(getResourcesTool.mcpDefinition.outputSchema?.safeParse({ resources: [validResource] }).success).toBe(true);
     });
 
     it('validates empty resources list', () => {
-      expect(getResourcesTool.mcpDefinition.outputSchema.safeParse({ data: { resources: [] } }).success).toBe(true);
+      expect(getResourcesTool.mcpDefinition.outputSchema?.safeParse({ resources: [] }).success).toBe(true);
     });
   });
 });
@@ -59,22 +57,25 @@ describe('getResourceTool', () => {
   describe('inputSchema', () => {
     it('accepts identifier and cdnIdentifier', () => {
       expect(
-        getResourceTool.mcpDefinition.inputSchema.safeParse({ identifier: 'images/hero.jpg', cdnIdentifier: 'cdn-1' }).success
+        getResourceTool.mcpDefinition.inputSchema?.safeParse({ identifier: 'images/hero.jpg', cdnIdentifier: 'cdn-1' })
+          .success
       ).toBe(true);
     });
 
     it('rejects missing cdnIdentifier', () => {
-      expect(getResourceTool.mcpDefinition.inputSchema.safeParse({ identifier: 'images/hero.jpg' }).success).toBe(false);
+      expect(getResourceTool.mcpDefinition.inputSchema?.safeParse({ identifier: 'images/hero.jpg' }).success).toBe(
+        false
+      );
     });
   });
 
   describe('outputSchema', () => {
     it('validates a found resource', () => {
-      expect(getResourceTool.mcpDefinition.outputSchema.safeParse({ data: validResource }).success).toBe(true);
+      expect(getResourceTool.mcpDefinition.outputSchema?.safeParse(validResource).success).toBe(true);
     });
 
     it('validates null (not found)', () => {
-      expect(getResourceTool.mcpDefinition.outputSchema.safeParse({ data: null }).success).toBe(true);
+      expect(getResourceTool.mcpDefinition.outputSchema?.safeParse(null).success).toBe(true);
     });
   });
 });
@@ -92,7 +93,7 @@ describe('addResourceTool', () => {
   describe('inputSchema', () => {
     it('accepts required fields', () => {
       expect(
-        addResourceTool.mcpDefinition.inputSchema.safeParse({
+        addResourceTool.mcpDefinition.inputSchema?.safeParse({
           url: 'https://example.com/image.jpg',
           cdnIdentifier: 'cdn-1'
         }).success
@@ -101,7 +102,7 @@ describe('addResourceTool', () => {
 
     it('accepts all optional fields', () => {
       expect(
-        addResourceTool.mcpDefinition.inputSchema.safeParse({
+        addResourceTool.mcpDefinition.inputSchema?.safeParse({
           url: 'https://example.com/image.jpg',
           cdnIdentifier: 'cdn-1',
           filename: 'custom-name.jpg',
@@ -114,14 +115,14 @@ describe('addResourceTool', () => {
 
     it('rejects missing cdnIdentifier', () => {
       expect(
-        addResourceTool.mcpDefinition.inputSchema.safeParse({ url: 'https://example.com/image.jpg' }).success
+        addResourceTool.mcpDefinition.inputSchema?.safeParse({ url: 'https://example.com/image.jpg' }).success
       ).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates uploaded resource', () => {
-      expect(addResourceTool.mcpDefinition.outputSchema.safeParse({ data: validResource }).success).toBe(true);
+      expect(addResourceTool.mcpDefinition.outputSchema?.safeParse(validResource).success).toBe(true);
     });
   });
 });
@@ -139,7 +140,7 @@ describe('moveResourceTool', () => {
   describe('inputSchema', () => {
     it('accepts required fields', () => {
       expect(
-        moveResourceTool.mcpDefinition.inputSchema.safeParse({
+        moveResourceTool.mcpDefinition.inputSchema?.safeParse({
           identifier: 'images/hero.jpg',
           cdnIdentifier: 'cdn-1',
           prefix: 'archive/'
@@ -149,7 +150,7 @@ describe('moveResourceTool', () => {
 
     it('rejects missing prefix', () => {
       expect(
-        moveResourceTool.mcpDefinition.inputSchema.safeParse({
+        moveResourceTool.mcpDefinition.inputSchema?.safeParse({
           identifier: 'images/hero.jpg',
           cdnIdentifier: 'cdn-1'
         }).success
@@ -159,7 +160,7 @@ describe('moveResourceTool', () => {
 
   describe('outputSchema', () => {
     it('validates moved resource', () => {
-      expect(moveResourceTool.mcpDefinition.outputSchema.safeParse({ data: validResource }).success).toBe(true);
+      expect(moveResourceTool.mcpDefinition.outputSchema?.safeParse(validResource).success).toBe(true);
     });
   });
 });
@@ -177,22 +178,25 @@ describe('removeResourceTool', () => {
   describe('inputSchema', () => {
     it('accepts identifier and cdnIdentifier', () => {
       expect(
-        removeResourceTool.mcpDefinition.inputSchema.safeParse({ identifier: 'images/hero.jpg', cdnIdentifier: 'cdn-1' }).success
+        removeResourceTool.mcpDefinition.inputSchema?.safeParse({
+          identifier: 'images/hero.jpg',
+          cdnIdentifier: 'cdn-1'
+        }).success
       ).toBe(true);
     });
 
     it('rejects missing identifier', () => {
-      expect(removeResourceTool.mcpDefinition.inputSchema.safeParse({ cdnIdentifier: 'cdn-1' }).success).toBe(false);
+      expect(removeResourceTool.mcpDefinition.inputSchema?.safeParse({ cdnIdentifier: 'cdn-1' }).success).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates deleted resource confirmation', () => {
-      expect(removeResourceTool.mcpDefinition.outputSchema.safeParse({ data: { id: 'images/hero.jpg' } }).success).toBe(true);
+      expect(removeResourceTool.mcpDefinition.outputSchema?.safeParse({ id: 'images/hero.jpg' }).success).toBe(true);
     });
 
     it('rejects missing id', () => {
-      expect(removeResourceTool.mcpDefinition.outputSchema.safeParse({ data: {} }).success).toBe(false);
+      expect(removeResourceTool.mcpDefinition.outputSchema?.safeParse({}).success).toBe(false);
     });
   });
 });

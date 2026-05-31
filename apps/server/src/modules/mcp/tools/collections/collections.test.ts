@@ -31,17 +31,17 @@ describe('getCollectionsTool', () => {
 
   describe('inputSchema', () => {
     it('accepts empty object', () => {
-      expect(getCollectionsTool.mcpDefinition.inputSchema.safeParse({}).success).toBe(true);
+      expect(getCollectionsTool.mcpDefinition.inputSchema?.safeParse({}).success).toBe(true);
     });
   });
 
   describe('outputSchema', () => {
     it('validates a list of collections', () => {
-      expect(getCollectionsTool.mcpDefinition.outputSchema.safeParse({ data: [validCollection] }).success).toBe(true);
+      expect(getCollectionsTool.mcpDefinition.outputSchema?.safeParse([validCollection]).success).toBe(true);
     });
 
     it('validates empty list', () => {
-      expect(getCollectionsTool.mcpDefinition.outputSchema.safeParse({ data: [] }).success).toBe(true);
+      expect(getCollectionsTool.mcpDefinition.outputSchema?.safeParse([]).success).toBe(true);
     });
   });
 });
@@ -58,21 +58,21 @@ describe('getCollectionTool', () => {
 
   describe('inputSchema', () => {
     it('accepts collectionId', () => {
-      expect(getCollectionTool.mcpDefinition.inputSchema.safeParse({ collectionId: 'col-1' }).success).toBe(true);
+      expect(getCollectionTool.mcpDefinition.inputSchema?.safeParse({ collectionId: 'col-1' }).success).toBe(true);
     });
 
     it('rejects missing collectionId', () => {
-      expect(getCollectionTool.mcpDefinition.inputSchema.safeParse({}).success).toBe(false);
+      expect(getCollectionTool.mcpDefinition.inputSchema?.safeParse({}).success).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates a collection', () => {
-      expect(getCollectionTool.mcpDefinition.outputSchema.safeParse({ data: validCollection }).success).toBe(true);
+      expect(getCollectionTool.mcpDefinition.outputSchema?.safeParse(validCollection).success).toBe(true);
     });
 
     it('validates null (not found)', () => {
-      expect(getCollectionTool.mcpDefinition.outputSchema.safeParse({ data: null }).success).toBe(true);
+      expect(getCollectionTool.mcpDefinition.outputSchema?.safeParse(null).success).toBe(true);
     });
   });
 });
@@ -90,7 +90,7 @@ describe('createCollectionTool', () => {
   describe('inputSchema', () => {
     it('accepts required fields', () => {
       expect(
-        createCollectionTool.mcpDefinition.inputSchema.safeParse({
+        createCollectionTool.mcpDefinition.inputSchema?.safeParse({
           name: 'Product',
           namePlural: 'Products',
           fields: { title: { type: 'text' } }
@@ -100,7 +100,7 @@ describe('createCollectionTool', () => {
 
     it('accepts all optional fields', () => {
       expect(
-        createCollectionTool.mcpDefinition.inputSchema.safeParse({
+        createCollectionTool.mcpDefinition.inputSchema?.safeParse({
           name: 'Product',
           namePlural: 'Products',
           description: 'Product catalog',
@@ -112,7 +112,7 @@ describe('createCollectionTool', () => {
 
     it('rejects invalid privacy', () => {
       expect(
-        createCollectionTool.mcpDefinition.inputSchema.safeParse({
+        createCollectionTool.mcpDefinition.inputSchema?.safeParse({
           name: 'P',
           namePlural: 'Ps',
           fields: {},
@@ -123,14 +123,14 @@ describe('createCollectionTool', () => {
 
     it('rejects missing name', () => {
       expect(
-        createCollectionTool.mcpDefinition.inputSchema.safeParse({ namePlural: 'Products', fields: {} }).success
+        createCollectionTool.mcpDefinition.inputSchema?.safeParse({ namePlural: 'Products', fields: {} }).success
       ).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates created collection', () => {
-      expect(createCollectionTool.mcpDefinition.outputSchema.safeParse({ data: validCollection }).success).toBe(true);
+      expect(createCollectionTool.mcpDefinition.outputSchema?.safeParse(validCollection).success).toBe(true);
     });
   });
 });
@@ -148,7 +148,7 @@ describe('updateCollectionTool', () => {
   describe('inputSchema', () => {
     it('accepts collectionId with partial updates', () => {
       expect(
-        updateCollectionTool.mcpDefinition.inputSchema.safeParse({
+        updateCollectionTool.mcpDefinition.inputSchema?.safeParse({
           collectionId: 'col-1',
           updates: { name: 'Item' }
         }).success
@@ -156,15 +156,15 @@ describe('updateCollectionTool', () => {
     });
 
     it('rejects missing collectionId', () => {
-      expect(
-        updateCollectionTool.mcpDefinition.inputSchema.safeParse({ updates: { name: 'Item' } }).success
-      ).toBe(false);
+      expect(updateCollectionTool.mcpDefinition.inputSchema?.safeParse({ updates: { name: 'Item' } }).success).toBe(
+        false
+      );
     });
   });
 
   describe('outputSchema', () => {
     it('validates updated collection', () => {
-      expect(updateCollectionTool.mcpDefinition.outputSchema.safeParse({ data: validCollection }).success).toBe(true);
+      expect(updateCollectionTool.mcpDefinition.outputSchema?.safeParse(validCollection).success).toBe(true);
     });
   });
 });
@@ -181,17 +181,17 @@ describe('deleteCollectionTool', () => {
 
   describe('inputSchema', () => {
     it('accepts collectionId', () => {
-      expect(deleteCollectionTool.mcpDefinition.inputSchema.safeParse({ collectionId: 'col-1' }).success).toBe(true);
+      expect(deleteCollectionTool.mcpDefinition.inputSchema?.safeParse({ collectionId: 'col-1' }).success).toBe(true);
     });
 
     it('rejects missing collectionId', () => {
-      expect(deleteCollectionTool.mcpDefinition.inputSchema.safeParse({}).success).toBe(false);
+      expect(deleteCollectionTool.mcpDefinition.inputSchema?.safeParse({}).success).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates data: true', () => {
-      expect(deleteCollectionTool.mcpDefinition.outputSchema.safeParse({ data: true }).success).toBe(true);
+      expect(deleteCollectionTool.mcpDefinition.outputSchema?.safeParse(true).success).toBe(true);
     });
   });
 });
@@ -208,17 +208,19 @@ describe('getCollectionRecordsTool', () => {
 
   describe('inputSchema', () => {
     it('accepts collectionId', () => {
-      expect(getCollectionRecordsTool.mcpDefinition.inputSchema.safeParse({ collectionId: 'col-1' }).success).toBe(true);
+      expect(getCollectionRecordsTool.mcpDefinition.inputSchema?.safeParse({ collectionId: 'col-1' }).success).toBe(
+        true
+      );
     });
 
     it('rejects missing collectionId', () => {
-      expect(getCollectionRecordsTool.mcpDefinition.inputSchema.safeParse({}).success).toBe(false);
+      expect(getCollectionRecordsTool.mcpDefinition.inputSchema?.safeParse({}).success).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates a list of records', () => {
-      expect(getCollectionRecordsTool.mcpDefinition.outputSchema.safeParse({ data: [validRecord] }).success).toBe(true);
+      expect(getCollectionRecordsTool.mcpDefinition.outputSchema?.safeParse([validRecord]).success).toBe(true);
     });
   });
 });
@@ -235,21 +237,21 @@ describe('getCollectionRecordTool', () => {
 
   describe('inputSchema', () => {
     it('accepts recordId', () => {
-      expect(getCollectionRecordTool.mcpDefinition.inputSchema.safeParse({ recordId: 'rec-1' }).success).toBe(true);
+      expect(getCollectionRecordTool.mcpDefinition.inputSchema?.safeParse({ recordId: 'rec-1' }).success).toBe(true);
     });
 
     it('rejects missing recordId', () => {
-      expect(getCollectionRecordTool.mcpDefinition.inputSchema.safeParse({}).success).toBe(false);
+      expect(getCollectionRecordTool.mcpDefinition.inputSchema?.safeParse({}).success).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates a found record', () => {
-      expect(getCollectionRecordTool.mcpDefinition.outputSchema.safeParse({ data: validRecord }).success).toBe(true);
+      expect(getCollectionRecordTool.mcpDefinition.outputSchema?.safeParse(validRecord).success).toBe(true);
     });
 
     it('validates null (not found)', () => {
-      expect(getCollectionRecordTool.mcpDefinition.outputSchema.safeParse({ data: null }).success).toBe(true);
+      expect(getCollectionRecordTool.mcpDefinition.outputSchema?.safeParse(null).success).toBe(true);
     });
   });
 });
@@ -267,7 +269,7 @@ describe('createCollectionRecordTool', () => {
   describe('inputSchema', () => {
     it('accepts collectionId and values', () => {
       expect(
-        createCollectionRecordTool.mcpDefinition.inputSchema.safeParse({
+        createCollectionRecordTool.mcpDefinition.inputSchema?.safeParse({
           collectionId: 'col-1',
           values: { title: 'My Product', price: 99 }
         }).success
@@ -276,7 +278,7 @@ describe('createCollectionRecordTool', () => {
 
     it('accepts optional status', () => {
       expect(
-        createCollectionRecordTool.mcpDefinition.inputSchema.safeParse({
+        createCollectionRecordTool.mcpDefinition.inputSchema?.safeParse({
           collectionId: 'col-1',
           values: { title: 'x' },
           status: 'published'
@@ -286,7 +288,7 @@ describe('createCollectionRecordTool', () => {
 
     it('rejects invalid status', () => {
       expect(
-        createCollectionRecordTool.mcpDefinition.inputSchema.safeParse({
+        createCollectionRecordTool.mcpDefinition.inputSchema?.safeParse({
           collectionId: 'col-1',
           values: { title: 'x' },
           status: 'pending'
@@ -297,7 +299,7 @@ describe('createCollectionRecordTool', () => {
 
   describe('outputSchema', () => {
     it('validates created record', () => {
-      expect(createCollectionRecordTool.mcpDefinition.outputSchema.safeParse({ data: validRecord }).success).toBe(true);
+      expect(createCollectionRecordTool.mcpDefinition.outputSchema?.safeParse(validRecord).success).toBe(true);
     });
   });
 });
@@ -315,7 +317,7 @@ describe('updateCollectionRecordTool', () => {
   describe('inputSchema', () => {
     it('accepts recordId with optional fields', () => {
       expect(
-        updateCollectionRecordTool.mcpDefinition.inputSchema.safeParse({
+        updateCollectionRecordTool.mcpDefinition.inputSchema?.safeParse({
           recordId: 'rec-1',
           values: { title: 'Updated' },
           status: 'published'
@@ -324,14 +326,12 @@ describe('updateCollectionRecordTool', () => {
     });
 
     it('accepts recordId only', () => {
-      expect(
-        updateCollectionRecordTool.mcpDefinition.inputSchema.safeParse({ recordId: 'rec-1' }).success
-      ).toBe(true);
+      expect(updateCollectionRecordTool.mcpDefinition.inputSchema?.safeParse({ recordId: 'rec-1' }).success).toBe(true);
     });
 
     it('rejects invalid status', () => {
       expect(
-        updateCollectionRecordTool.mcpDefinition.inputSchema.safeParse({
+        updateCollectionRecordTool.mcpDefinition.inputSchema?.safeParse({
           recordId: 'rec-1',
           status: 'pending'
         }).success
@@ -341,7 +341,7 @@ describe('updateCollectionRecordTool', () => {
 
   describe('outputSchema', () => {
     it('validates updated record', () => {
-      expect(updateCollectionRecordTool.mcpDefinition.outputSchema.safeParse({ data: validRecord }).success).toBe(true);
+      expect(updateCollectionRecordTool.mcpDefinition.outputSchema?.safeParse(validRecord).success).toBe(true);
     });
   });
 });
@@ -358,17 +358,17 @@ describe('deleteCollectionRecordTool', () => {
 
   describe('inputSchema', () => {
     it('accepts recordId', () => {
-      expect(deleteCollectionRecordTool.mcpDefinition.inputSchema.safeParse({ recordId: 'rec-1' }).success).toBe(true);
+      expect(deleteCollectionRecordTool.mcpDefinition.inputSchema?.safeParse({ recordId: 'rec-1' }).success).toBe(true);
     });
 
     it('rejects missing recordId', () => {
-      expect(deleteCollectionRecordTool.mcpDefinition.inputSchema.safeParse({}).success).toBe(false);
+      expect(deleteCollectionRecordTool.mcpDefinition.inputSchema?.safeParse({}).success).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates data: true', () => {
-      expect(deleteCollectionRecordTool.mcpDefinition.outputSchema.safeParse({ data: true }).success).toBe(true);
+      expect(deleteCollectionRecordTool.mcpDefinition.outputSchema?.safeParse(true).success).toBe(true);
     });
   });
 });

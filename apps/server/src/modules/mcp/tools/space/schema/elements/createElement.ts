@@ -14,7 +14,6 @@ const elementSchema = z.object({
       type: z.string().describe('Element type'),
       parentId: z.string().optional().describe('Parent element ID'),
       items: z.array(z.string()).optional().describe('Child element IDs'),
-      styleSelectors: z.record(z.string(), z.string()).describe('Style selector map'),
       runtime: z.enum(['server', 'client', 'shared']).optional().describe('Rendering runtime'),
       loadStrategy: z.enum(['eager', 'lazy', 'visible']).optional().describe('Load strategy')
     })
@@ -24,7 +23,11 @@ const elementSchema = z.object({
 const inputSchema = z.object({
   element: z
     .object({
-      type: z.string().describe('Element type identifier — determines which component renders this element. Get valid values from get_builder_context (elementDefaults keys) or by inspecting existing elements via get_schema.'),
+      type: z
+        .string()
+        .describe(
+          'Element type identifier — determines which component renders this element. Get valid values from get_builder_context (elementDefaults keys) or by inspecting existing elements via get_schema.'
+        ),
       label: z.string().describe('Human-readable name for the element'),
       props: z.record(z.string(), z.unknown()).optional().describe('Component props/attributes'),
       runtime: z.enum(['server', 'client', 'shared']).optional().describe('Rendering runtime')
@@ -34,9 +37,7 @@ const inputSchema = z.object({
   position: z.number().optional().describe('Zero-based insertion index within the parent')
 });
 
-const outputSchema = z.object({
-  data: elementSchema.describe('The created element')
-});
+const outputSchema = elementSchema.describe('The created element');
 
 const createElementTool: McpTool = {
   name: 'create_element',

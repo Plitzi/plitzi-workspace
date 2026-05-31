@@ -26,23 +26,23 @@ describe('createPageTool', () => {
 
   describe('inputSchema', () => {
     it('accepts a page name', () => {
-      expect(createPageTool.mcpDefinition.inputSchema.safeParse({ name: 'About' }).success).toBe(true);
+      expect(createPageTool.mcpDefinition.inputSchema?.safeParse({ name: 'About' }).success).toBe(true);
     });
 
     it('rejects missing name', () => {
-      expect(createPageTool.mcpDefinition.inputSchema.safeParse({}).success).toBe(false);
+      expect(createPageTool.mcpDefinition.inputSchema?.safeParse({}).success).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates a created page element', () => {
-      expect(createPageTool.mcpDefinition.outputSchema.safeParse({ data: validPageElement }).success).toBe(true);
+      expect(createPageTool.mcpDefinition.outputSchema?.safeParse(validPageElement).success).toBe(true);
     });
 
     it('rejects missing definition', () => {
-      expect(
-        createPageTool.mcpDefinition.outputSchema.safeParse({ data: { id: 'page-1', attributes: {} } }).success
-      ).toBe(false);
+      expect(createPageTool.mcpDefinition.outputSchema?.safeParse({ id: 'page-1', attributes: {} }).success).toBe(
+        false
+      );
     });
   });
 });
@@ -59,17 +59,17 @@ describe('deletePageTool', () => {
 
   describe('inputSchema', () => {
     it('accepts pageId', () => {
-      expect(deletePageTool.mcpDefinition.inputSchema.safeParse({ pageId: 'page-1' }).success).toBe(true);
+      expect(deletePageTool.mcpDefinition.inputSchema?.safeParse({ pageId: 'page-1' }).success).toBe(true);
     });
 
     it('rejects missing pageId', () => {
-      expect(deletePageTool.mcpDefinition.inputSchema.safeParse({}).success).toBe(false);
+      expect(deletePageTool.mcpDefinition.inputSchema?.safeParse({}).success).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates data: true', () => {
-      expect(deletePageTool.mcpDefinition.outputSchema.safeParse({ data: true }).success).toBe(true);
+      expect(deletePageTool.mcpDefinition.outputSchema?.safeParse(true).success).toBe(true);
     });
   });
 });

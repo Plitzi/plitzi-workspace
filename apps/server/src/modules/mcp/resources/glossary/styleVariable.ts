@@ -1,7 +1,8 @@
 export const styleVariableResource = {
   uri: 'plitzi://docs/style-variable',
   name: 'Plitzi Docs: Style Variable',
-  description: 'Design tokens in the Plitzi style system — reusable values for colors, spacing, shadows, and custom properties.',
+  description:
+    'Design tokens in the Plitzi style system — reusable values for colors, spacing, shadows, and custom properties.',
   mimeType: 'text/markdown',
   content: `# Style Variable
 

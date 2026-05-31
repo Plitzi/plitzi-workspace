@@ -9,7 +9,9 @@ export type MessageToolsProps = { tools: AiToolCall[]; defaultOpen?: boolean };
 const MessageTools = ({ tools, defaultOpen = false }: MessageToolsProps) => {
   const [open, setOpen] = useState(defaultOpen);
   const hasRunning = tools.some(t => t.status === 'running');
-  const errorCount = tools.filter(t => t.result && typeof t.result === 'object' && 'error' in t.result).length;
+  const errorCount = tools.filter(
+    t => t.status === 'failed' || !!t.error || (t.result && typeof t.result === 'object' && 'error' in t.result)
+  ).length;
   const label = hasRunning
     ? 'Running tools…'
     : errorCount > 0
@@ -31,7 +33,7 @@ const MessageTools = ({ tools, defaultOpen = false }: MessageToolsProps) => {
         <span className="text-zinc-400 dark:text-zinc-600">{open ? '▲' : '▼'}</span>
       </button>
       {open && (
-        <div className="mt-0.5 ml-2 border-l-2 border-neutral-300 dark:border-zinc-700">
+        <div className="animate-fade-in mt-0.5 ml-2 border-l-2 border-neutral-300 dark:border-zinc-700">
           {tools.map(t => (
             <MessageTool key={t.id} {...t} />
           ))}

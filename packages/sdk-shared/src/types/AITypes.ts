@@ -6,6 +6,7 @@ export type AiMode = 'plan' | 'build';
 export type AiRole = 'user' | 'assistant';
 export type AiEffort = 'auto' | 'low' | 'medium' | 'high';
 export type AIToolStatus = 'running' | 'done' | 'failed' | 'interrupted';
+export type AiProviderType = 'openai' | 'anthropic' | 'ollama' | 'openrouter' | 'opencode';
 
 export type AiUsage = {
   inputTokens: number;
@@ -14,6 +15,44 @@ export type AiUsage = {
   thinkingTokens?: number;
   contextLimit: number;
   usedPercent: number;
+};
+
+export type AiMessageAttachment = {
+  type: 'image';
+  mimeType: string;
+  data: string;
+};
+
+export type AiToolCall = {
+  id: string;
+  name: string;
+  args?: Record<string, unknown>;
+  result?: unknown;
+  error?: string;
+  status: AIToolStatus;
+};
+
+export type AiMessageStep =
+  | { type: 'thinking'; text: string; durationMs?: number }
+  | {
+      type: 'tool';
+      id: string;
+      name: string;
+      args?: Record<string, unknown>;
+      result?: unknown;
+      error?: string;
+      status: AIToolStatus;
+    }
+  | { type: 'resource'; name: string; uri: string }
+  | { type: 'text'; text: string };
+
+export type ConversationSummary = {
+  id: string;
+  spaceId: number;
+  messageCount: number;
+  preview: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type StreamCallbacks = {

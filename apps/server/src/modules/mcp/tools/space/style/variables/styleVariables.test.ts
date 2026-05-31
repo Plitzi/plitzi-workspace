@@ -19,13 +19,17 @@ describe('createStyleVariableTool', () => {
   describe('inputSchema', () => {
     it('accepts category, name, and string value', () => {
       expect(
-        createStyleVariableTool.mcpDefinition.inputSchema.safeParse({ category: 'color', name: 'primary', value: '#3b82f6' }).success
+        createStyleVariableTool.mcpDefinition.inputSchema?.safeParse({
+          category: 'color',
+          name: 'primary',
+          value: '#3b82f6'
+        }).success
       ).toBe(true);
     });
 
     it('accepts theme-aware object value', () => {
       expect(
-        createStyleVariableTool.mcpDefinition.inputSchema.safeParse({
+        createStyleVariableTool.mcpDefinition.inputSchema?.safeParse({
           category: 'color',
           name: 'primary',
           value: { light: '#3b82f6', dark: '#60a5fa', default: '#3b82f6' }
@@ -35,26 +39,28 @@ describe('createStyleVariableTool', () => {
 
     it('accepts spacing category', () => {
       expect(
-        createStyleVariableTool.mcpDefinition.inputSchema.safeParse({ category: 'spacing', name: 'md', value: '16px' }).success
+        createStyleVariableTool.mcpDefinition.inputSchema?.safeParse({ category: 'spacing', name: 'md', value: '16px' })
+          .success
       ).toBe(true);
     });
 
     it('rejects invalid category', () => {
       expect(
-        createStyleVariableTool.mcpDefinition.inputSchema.safeParse({ category: 'unknown', name: 'x', value: '#000' }).success
+        createStyleVariableTool.mcpDefinition.inputSchema?.safeParse({ category: 'unknown', name: 'x', value: '#000' })
+          .success
       ).toBe(false);
     });
 
     it('rejects missing name', () => {
       expect(
-        createStyleVariableTool.mcpDefinition.inputSchema.safeParse({ category: 'color', value: '#000' }).success
+        createStyleVariableTool.mcpDefinition.inputSchema?.safeParse({ category: 'color', value: '#000' }).success
       ).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates created style variable', () => {
-      expect(createStyleVariableTool.mcpDefinition.outputSchema.safeParse({ data: validStyleVariable }).success).toBe(true);
+      expect(createStyleVariableTool.mcpDefinition.outputSchema?.safeParse(validStyleVariable).success).toBe(true);
     });
   });
 });
@@ -72,7 +78,7 @@ describe('updateStyleVariableTool', () => {
   describe('inputSchema', () => {
     it('accepts required fields', () => {
       expect(
-        updateStyleVariableTool.mcpDefinition.inputSchema.safeParse({
+        updateStyleVariableTool.mcpDefinition.inputSchema?.safeParse({
           category: 'color',
           name: 'primary',
           value: '#60a5fa'
@@ -82,14 +88,14 @@ describe('updateStyleVariableTool', () => {
 
     it('rejects missing name', () => {
       expect(
-        updateStyleVariableTool.mcpDefinition.inputSchema.safeParse({ category: 'color', value: '#000' }).success
+        updateStyleVariableTool.mcpDefinition.inputSchema?.safeParse({ category: 'color', value: '#000' }).success
       ).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates updated style variable', () => {
-      expect(updateStyleVariableTool.mcpDefinition.outputSchema.safeParse({ data: validStyleVariable }).success).toBe(true);
+      expect(updateStyleVariableTool.mcpDefinition.outputSchema?.safeParse(validStyleVariable).success).toBe(true);
     });
   });
 });
@@ -107,26 +113,24 @@ describe('deleteStyleVariableTool', () => {
   describe('inputSchema', () => {
     it('accepts category and name', () => {
       expect(
-        deleteStyleVariableTool.mcpDefinition.inputSchema.safeParse({ category: 'color', name: 'primary' }).success
+        deleteStyleVariableTool.mcpDefinition.inputSchema?.safeParse({ category: 'color', name: 'primary' }).success
       ).toBe(true);
     });
 
     it('rejects missing name', () => {
-      expect(
-        deleteStyleVariableTool.mcpDefinition.inputSchema.safeParse({ category: 'color' }).success
-      ).toBe(false);
+      expect(deleteStyleVariableTool.mcpDefinition.inputSchema?.safeParse({ category: 'color' }).success).toBe(false);
     });
 
     it('rejects invalid category', () => {
-      expect(
-        deleteStyleVariableTool.mcpDefinition.inputSchema.safeParse({ category: 'bad', name: 'x' }).success
-      ).toBe(false);
+      expect(deleteStyleVariableTool.mcpDefinition.inputSchema?.safeParse({ category: 'bad', name: 'x' }).success).toBe(
+        false
+      );
     });
   });
 
   describe('outputSchema', () => {
     it('validates data: true', () => {
-      expect(deleteStyleVariableTool.mcpDefinition.outputSchema.safeParse({ data: true }).success).toBe(true);
+      expect(deleteStyleVariableTool.mcpDefinition.outputSchema?.safeParse(true).success).toBe(true);
     });
   });
 });

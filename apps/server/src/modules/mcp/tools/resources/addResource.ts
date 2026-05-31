@@ -17,16 +17,18 @@ const resourceSchema = z.object({
 
 const inputSchema = z.object({
   url: z.string().describe('Source URL to fetch and upload as a resource'),
-  cdnIdentifier: z.string().describe('CDN identifier to upload to — call get_resources first and use the cdnIdentifier from an existing resource of the same type (images share one CDN, plugins another)'),
+  cdnIdentifier: z
+    .string()
+    .describe(
+      'CDN identifier to upload to — call get_resources first and use the cdnIdentifier from an existing resource of the same type (images share one CDN, plugins another)'
+    ),
   filename: z.string().optional().describe('Override filename (defaults from URL)'),
   type: z.string().optional().describe('Resource type hint: "plugin", "template", or leave blank for auto-detect'),
   prefix: z.string().optional().describe('Subfolder prefix within the resource folder'),
   compression: z.string().optional().describe('Compression encoding (e.g. "gzip", "br")')
 });
 
-const outputSchema = z.object({
-  data: resourceSchema.describe('The uploaded resource metadata')
-});
+const outputSchema = resourceSchema.describe('The uploaded resource metadata');
 
 const addResourceTool: McpTool = {
   name: 'add_resource',

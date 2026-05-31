@@ -9,7 +9,9 @@ export type ButtonSendProps = {
   message?: string;
   attachments?: AiAttachment[];
   disabled?: boolean;
+  isStreaming?: boolean;
   onClick?: () => void;
+  onStop?: () => void;
 };
 
 const ButtonSend = ({
@@ -17,8 +19,22 @@ const ButtonSend = ({
   message = '',
   attachments = [],
   disabled: disabledProp = false,
-  onClick
+  isStreaming = false,
+  onClick,
+  onStop
 }: ButtonSendProps) => {
+  if (isStreaming) {
+    return (
+      <button
+        className="grid h-7 w-7 cursor-pointer place-items-center rounded-lg border-0 bg-zinc-700 text-white transition-colors duration-200 hover:bg-zinc-600 dark:bg-zinc-600 dark:hover:bg-zinc-500"
+        title="Stop generating"
+        onClick={onStop}
+      >
+        <span className="h-2.5 w-2.5 rounded-xs bg-current" />
+      </button>
+    );
+  }
+
   const disabled = (!message.trim() && attachments.length === 0) || disabledProp;
 
   return (

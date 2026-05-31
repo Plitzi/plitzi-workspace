@@ -15,18 +15,20 @@ const inputSchema = z.object({
   name: z.string().describe('Token name — used as the CSS variable key (e.g. "primary", "md", "card")'),
   value: z
     .union([z.string(), z.number(), z.record(z.string(), z.unknown())])
-    .describe('Token value. Use a plain string/number for a fixed value, or { light: "...", dark: "...", default: "..." } for theme-aware values')
+    .describe(
+      'Token value. Use a plain string/number for a fixed value, or { light: "...", dark: "...", default: "..." } for theme-aware values'
+    )
 });
 
-const outputSchema = z.object({
-  data: z
-    .object({
-      category: z.string().describe('Token category: "color", "spacing", "shadow", or "custom"'),
-      name: z.string().describe('Token name'),
-      value: z.union([z.string(), z.number(), z.record(z.string(), z.string())]).describe('Token value — plain value or theme-aware { light, dark, default } object')
-    })
-    .describe('The created style variable')
-});
+const outputSchema = z
+  .object({
+    category: z.string().describe('Token category: "color", "spacing", "shadow", or "custom"'),
+    name: z.string().describe('Token name'),
+    value: z
+      .union([z.string(), z.number(), z.record(z.string(), z.string())])
+      .describe('Token value — plain value or theme-aware { light, dark, default } object')
+  })
+  .describe('The created style variable');
 
 const createStyleVariableTool: McpTool = {
   name: 'create_style_variable',

@@ -21,9 +21,7 @@ const inputSchema = z.object({
   prefix: z.string().describe('New subfolder prefix to move the resource into')
 });
 
-const outputSchema = z.object({
-  data: resourceSchema.describe('The moved resource metadata at its new path')
-});
+const outputSchema = resourceSchema.describe('The moved resource metadata at its new path');
 
 const moveResourceTool: McpTool = {
   name: 'move_resource',

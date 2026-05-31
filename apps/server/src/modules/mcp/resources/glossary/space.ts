@@ -1,7 +1,8 @@
 export const spaceResource = {
   uri: 'plitzi://docs/space',
   name: 'Plitzi Docs: Space',
-  description: 'A Plitzi project workspace — the top-level container for schema, style, plugins, segments, collections, and deployments.',
+  description:
+    'A Plitzi project workspace — the top-level container for schema, style, plugins, segments, collections, and deployments.',
   mimeType: 'text/markdown',
   content: `# Space
 

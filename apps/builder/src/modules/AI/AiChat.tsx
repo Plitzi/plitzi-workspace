@@ -24,6 +24,10 @@ const AiChat = () => {
     chatInputRef.current?.appendText(text);
   }, []);
 
+  const prefillInput = useCallback((text: string) => {
+    chatInputRef.current?.setText(text);
+  }, []);
+
   const {
     start: startVoice,
     stop: stopVoice,
@@ -43,7 +47,7 @@ const AiChat = () => {
   const handleSettingsToggle = useCallback(() => setIsSettingsOpen(s => !s), []);
 
   return (
-    <AiChatProvider providerSettings={providerSettings}>
+    <AiChatProvider providerSettings={providerSettings} prefillInput={prefillInput}>
       <AiChatContent
         chatInputRef={chatInputRef}
         chatRef={chatRef}

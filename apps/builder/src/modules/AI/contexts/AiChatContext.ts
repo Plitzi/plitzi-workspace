@@ -22,11 +22,15 @@ export type AiChatContextValue = {
   onSend: (message: string, attachments: AiAttachment[], effort: AiEffort) => void;
   onSendMessage: (message: string) => void;
   setMode: (mode: AiMode) => void;
+  stopGeneration: () => void;
   clearError: () => void;
   clearQuotaError: () => void;
   clearConversation: () => void;
   loadConversations: () => Promise<void>;
   loadConversation: (id: string) => Promise<void>;
+  forkFromMessage: (messageId: string, content: string) => Promise<void>;
+  newChatFromMessage: (content: string) => void;
+  prefillInput: (text: string) => void;
   compact: () => Promise<void>;
 };
 
@@ -49,11 +53,15 @@ const AiChatContext = createContext<AiChatContextValue>({
   onSend: () => {},
   onSendMessage: () => {},
   setMode: () => {},
+  stopGeneration: () => {},
   clearError: () => {},
   clearQuotaError: () => {},
   clearConversation: () => {},
   loadConversations: async () => {},
   loadConversation: async () => {},
+  forkFromMessage: async () => {},
+  newChatFromMessage: () => {},
+  prefillInput: () => {},
   compact: async () => {}
 });
 

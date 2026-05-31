@@ -13,18 +13,16 @@ const getCollectionTool: McpTool = {
     inputSchema: z.object({
       collectionId: z.string().describe('Collection ID')
     }),
-    outputSchema: z.object({
-      data: z
-        .object({
-          id: z.string().describe('Collection ID'),
-          name: z.string().describe('Collection name'),
-          namePlural: z.string().describe('Plural collection name'),
-          fields: z.record(z.string(), z.unknown()).describe('Field definitions keyed by field name')
-        })
-        .catchall(z.unknown())
-        .nullable()
-        .describe('The collection object, or null if not found')
-    })
+    outputSchema: z
+      .object({
+        id: z.string().describe('Collection ID'),
+        name: z.string().describe('Collection name'),
+        namePlural: z.string().describe('Plural collection name'),
+        fields: z.record(z.string(), z.unknown()).describe('Field definitions keyed by field name')
+      })
+      .catchall(z.unknown())
+      .nullable()
+      .describe('The collection object, or null if not found')
   },
   definition: {
     allowedModes: getAllowedModes('read')

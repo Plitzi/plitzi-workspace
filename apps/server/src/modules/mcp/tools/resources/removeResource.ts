@@ -9,13 +9,11 @@ const inputSchema = z.object({
   cdnIdentifier: z.string().describe('CDN identifier')
 });
 
-const outputSchema = z.object({
-  data: z
-    .object({
-      id: z.string().describe('The deleted resource identifier')
-    })
-    .describe('Deleted resource confirmation')
-});
+const outputSchema = z
+  .object({
+    id: z.string().describe('The deleted resource identifier')
+  })
+  .describe('Deleted resource confirmation');
 
 const removeResourceTool: McpTool = {
   name: 'remove_resource',

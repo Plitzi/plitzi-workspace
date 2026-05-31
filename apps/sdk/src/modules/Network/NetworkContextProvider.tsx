@@ -112,7 +112,7 @@ const NetworkContextProvider = ({
       let result: ApolloClient.MutateResult<SdkMutationsMap[T]> | undefined;
       // let abortHandler;
       try {
-        result = await client?.mutate({
+        result = await client?.mutate<SdkMutationsMap[T]>({
           mutation: SdkMutations[mutationKey],
           variables: includeEnvironment ? { environment, ...variables } : variables,
           context: {

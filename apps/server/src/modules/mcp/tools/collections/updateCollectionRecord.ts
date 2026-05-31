@@ -16,17 +16,18 @@ const updateCollectionRecordTool: McpTool = {
         .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
         .optional()
         .describe('Field values to update, keyed by field name. Only the provided fields are changed.'),
-      status: z.enum(['draft', 'published', 'archived']).optional().describe('Publication status: "draft", "published", or "archived"')
+      status: z
+        .enum(['draft', 'published', 'archived'])
+        .optional()
+        .describe('Publication status: "draft", "published", or "archived"')
     }),
-    outputSchema: z.object({
-      data: z
-        .object({
-          id: z.string().describe('Record ID'),
-          collectionId: z.string().describe('Collection ID')
-        })
-        .catchall(z.unknown())
-        .describe('The updated record')
-    })
+    outputSchema: z
+      .object({
+        id: z.string().describe('Record ID'),
+        collectionId: z.string().describe('Collection ID')
+      })
+      .catchall(z.unknown())
+      .describe('The updated record')
   },
   definition: {
     allowedModes: getAllowedModes('write')

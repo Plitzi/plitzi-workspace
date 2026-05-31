@@ -11,12 +11,12 @@ const inputSchema = z.object({
   dropPosition: z
     .enum(['top', 'bottom', 'left', 'right', 'inside', 'custom'])
     .optional()
-    .describe('Where to drop relative to the target parent: "inside" appends as last child (default), "top"/"bottom" inserts before/after siblings')
+    .describe(
+      'Where to drop relative to the target parent: "inside" appends as last child (default), "top"/"bottom" inserts before/after siblings'
+    )
 });
 
-const outputSchema = z.object({
-  data: z.literal(true).describe('Always true on successful move')
-});
+const outputSchema = z.literal(true).describe('Always true on successful move');
 
 const moveSegmentElementTool: McpTool = {
   name: 'move_segment_element',

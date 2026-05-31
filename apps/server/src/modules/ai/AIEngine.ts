@@ -1,5 +1,4 @@
 import { toolResponseErr } from '../mcp/helpers';
-import * as defaultTools from '../mcp/tools';
 
 import type {
   AiMode,
@@ -9,7 +8,6 @@ import type {
   McpToolLifecycleHooks,
   StreamCallbacks,
   McpTool,
-  McpAdapters,
   McpToolHandlerResult
 } from '@plitzi/sdk-shared';
 
@@ -20,7 +18,6 @@ class AIEngine implements McpToolLifecycleHooks {
 
   constructor(
     private readonly mode: AiMode | undefined,
-    private readonly mcpAdapters: Partial<McpAdapters> | undefined,
     public readonly callbacks: StreamCallbacks,
     ctx: Omit<AiContext, 'mode'>
   ) {
@@ -32,9 +29,8 @@ class AIEngine implements McpToolLifecycleHooks {
   };
 
   readonly setToolsAvailables = (tools: McpTool[]) => {
-    const all = [...Object.values(defaultTools), ...tools];
-    this.toolsAvailables = new Map(all.map(t => [t.name, t]));
-    this.toolsAvailablesMap = new Map(all.map(t => [t.name, t.definition.allowedModes]));
+    this.toolsAvailables = new Map(tools.map(t => [t.name, t]));
+    this.toolsAvailablesMap = new Map(tools.map(t => [t.name, t.definition.allowedModes]));
   };
 
   readonly can = (name: string): boolean => {
@@ -116,8 +112,10 @@ class AIEngine implements McpToolLifecycleHooks {
       return undefined;
     }
 
+    // A successful "not found" / empty result (undefined) is valid — adapters signal real
+    // failures via the { error } branch, which surfaces as result.isError above.
     if (result.data === undefined) {
-      return `Tool '${name}' has an output schema but no data was returned`;
+      return undefined;
     }
 
     const parsed = tool.mcpDefinition.outputSchema.safeParse(result.data);
@@ -149,13 +147,11 @@ class AIEngine implements McpToolLifecycleHooks {
       `tool done: ${name} ms=${Date.now() - t0} result=${JSON.stringify(result).slice(0, 200)}`
     );
 
+    // Output validation is advisory: the adapter's real data is the source of truth, so schema drift
+    // is logged for developers to tighten the schema but never denies the model the result.
     const outputError = this.validateToolOutput(name, result);
     if (outputError) {
-      this.callbacks.onLog?.('error', `tool output validation error: ${name} error=${outputError}`);
-      const err = toolResponseErr(outputError);
-      await this.after(name, args, err);
-
-      return err;
+      this.callbacks.onLog?.('info', `tool output schema drift: ${name} — ${outputError}`);
     }
 
     const tool = this.toolsAvailables.get(name);
@@ -185,29 +181,13 @@ class AIEngine implements McpToolLifecycleHooks {
         return toolResponseErr(`Tool '${name}' execution was blocked`);
       }
 
-      let handler: McpToolHandler | undefined = handlerFn;
-
+      const handler = handlerFn ?? this.toolsAvailables.get(name)?.handler;
       if (!handler) {
-        const tool = this.toolsAvailables.get(name);
-        if (!tool) {
-          const err = toolResponseErr(`Tool '${name}' is not defined and cannot be executed`);
-          await this.after(name, args, err);
+        this.callbacks.onLog?.('error', `no handler registered for tool: ${name}`);
+        const err = toolResponseErr(`Tool '${name}' has no handler`);
+        await this.after(name, args, err);
 
-          return err;
-        }
-
-        handler =
-          'adapterName' in tool && tool.adapterName
-            ? (this.mcpAdapters?.[tool.adapterName] as unknown as McpToolHandler | undefined)
-            : tool.handler;
-
-        if (!handler) {
-          this.callbacks.onLog?.('error', `no handler registered for tool: ${name}`);
-          const err = toolResponseErr(`Tool '${name}' has no handler`);
-          await this.after(name, args, err);
-
-          return err;
-        }
+        return err;
       }
 
       this.callbacks.onLog?.('debug', `tool exec: ${name} args=${JSON.stringify(args).slice(0, 200)}`);

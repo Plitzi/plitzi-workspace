@@ -14,21 +14,19 @@ const inputSchema = z.object({
     .describe('Fields to update')
 });
 
-const outputSchema = z.object({
-  data: z
-    .object({
-      identifier: z.string().describe('Segment identifier'),
-      definition: z
-        .object({
-          name: z.string().describe('Segment name'),
-          description: z.string().describe('Segment description'),
-          baseElementId: z.string().describe('Root element ID')
-        })
-        .describe('Segment definition'),
-      id: z.string().optional().describe('Segment ID')
-    })
-    .describe('The updated segment')
-});
+const outputSchema = z
+  .object({
+    identifier: z.string().describe('Segment identifier'),
+    definition: z
+      .object({
+        name: z.string().describe('Segment name'),
+        description: z.string().describe('Segment description'),
+        baseElementId: z.string().describe('Root element ID')
+      })
+      .describe('Segment definition'),
+    id: z.string().optional().describe('Segment ID')
+  })
+  .describe('The updated segment');
 
 const updateSegmentTool: McpTool = {
   name: 'update_segment',

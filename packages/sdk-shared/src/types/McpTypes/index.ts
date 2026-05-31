@@ -88,6 +88,9 @@ export type McpToolHandler<T extends Record<string, unknown> = any> = (
   ctx: AiContext
 ) => Promise<McpToolHandlerResult> | McpToolHandlerResult;
 
+// A tool declares its data dependency via adapterName (resolved against the runtime adapters) and/or
+// carries a direct handler. bindTools() turns every tool into one with a guaranteed handler, so the
+// MCP server, the providers and any standalone caller all execute tools the exact same way.
 export type McpTool = {
   name: string;
   mcpDefinition: {
@@ -100,7 +103,9 @@ export type McpTool = {
   definition: {
     allowedModes: AiMode[];
   };
-} & ({ adapterName: keyof McpAdapters } | { adapterName?: undefined; handler: McpToolHandler });
+  adapterName?: keyof McpAdapters;
+  handler?: McpToolHandler;
+};
 
 export type McpServerConfig = {
   enabled?: boolean; // Whether the MCP endpoint is active. Defaults to true.

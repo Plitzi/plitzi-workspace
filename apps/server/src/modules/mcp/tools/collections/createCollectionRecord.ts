@@ -9,23 +9,24 @@ const createCollectionRecordTool: McpTool = {
   adapterName: 'createCollectionRecord',
   mcpDefinition: {
     title: 'Create Collection Record',
-    description: 'Create a new record in a collection. Pass field values matching the collection\'s field definitions.',
+    // eslint-disable-next-line quotes
+    description: "Create a new record in a collection. Pass field values matching the collection's field definitions.",
     inputSchema: z.object({
       collectionId: z.string().describe('Collection ID'),
       values: z
         .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
-        .describe('Field values keyed by field name — keys must match the collection field definitions (see get_collection)'),
+        .describe(
+          'Field values keyed by field name — keys must match the collection field definitions (see get_collection)'
+        ),
       status: z.enum(['draft', 'published']).optional().describe('Publication status; defaults to "draft"')
     }),
-    outputSchema: z.object({
-      data: z
-        .object({
-          id: z.string().describe('Record ID'),
-          collectionId: z.string().describe('Collection ID')
-        })
-        .catchall(z.unknown())
-        .describe('The created record')
-    })
+    outputSchema: z
+      .object({
+        id: z.string().describe('Record ID'),
+        collectionId: z.string().describe('Collection ID')
+      })
+      .catchall(z.unknown())
+      .describe('The created record')
   },
   definition: {
     allowedModes: getAllowedModes('write')

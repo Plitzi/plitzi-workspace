@@ -28,16 +28,14 @@ const inputSchema = z.object({
     .describe('Variable to create')
 });
 
-const outputSchema = z.object({
-  data: z
-    .object({
-      name: z.string().describe('Variable name'),
-      type: z.string().describe('Variable type'),
-      value: z.string().describe('Variable value'),
-      category: z.string().describe('Grouping label shown in the builder UI (e.g. "Colors", "Typography", "Layout")')
-    })
-    .describe('The created variable')
-});
+const outputSchema = z
+  .object({
+    name: z.string().describe('Variable name'),
+    type: z.string().describe('Variable type'),
+    value: z.string().describe('Variable value'),
+    category: z.string().describe('Grouping label shown in the builder UI (e.g. "Colors", "Typography", "Layout")')
+  })
+  .describe('The created variable');
 
 const createVariableTool: McpTool = {
   name: 'create_variable',

@@ -19,21 +19,33 @@ export type McpAdapter<R = any, T extends Record<string, any> = Record<string, a
 ) => Promise<{ data: R } | { error: Error | string }>;
 
 export type McpAdaptersSchema = {
-  getSchema: McpAdapter<Schema | undefined>;
+  applyPreview: McpAdapter<
+    { baseElementId: string; targetParentId: string; elementCount: number },
+    {
+      schema: { flat: Record<string, Element> };
+      style?: Record<string, unknown>;
+      baseElementId: string;
+      targetParentId: string;
+      dropPosition?: DropPosition;
+    }
+  >;
 };
 
 export type McpAdaptersPages = {
-  getPage: McpAdapter<
-    { id: string; label: string; type: string; parentId: string | undefined }[] | undefined,
-    { pageId?: string }
-  >;
+  getPage: McpAdapter<{ page: Element; elementIds: string[] } | undefined, { pageId: string }>;
+  getPages: McpAdapter<Element[]>;
+  getPageBySlug: McpAdapter<Element | undefined, { slug: string }>;
   createPage: McpAdapter<Element, { name: string }>;
-  updatePage: McpAdapter<Element, { name: string }>;
+  updatePage: McpAdapter<
+    Element,
+    { pageId: string; updates: { name?: string; slug?: string; default?: boolean; folder?: string } }
+  >;
   deletePage: McpAdapter<boolean, { pageId: string }>;
 };
 
 export type McpAdaptersPageFolders = {
-  getPageFolder: McpAdapter<PageFolder | undefined, { folderId?: string }>;
+  getPageFolder: McpAdapter<PageFolder | undefined, { folderId: string }>;
+  getPageFolders: McpAdapter<PageFolder[]>;
   createPageFolder: McpAdapter<PageFolder, { name: string; parentId?: string }>;
   updatePageFolder: McpAdapter<
     PageFolder,
@@ -45,14 +57,23 @@ export type McpAdaptersPageFolders = {
 export type McpAdaptersElements = {
   createElement: McpAdapter<Element | undefined, { element: Element; parentId?: string; position?: number }>;
   getElement: McpAdapter<Element | undefined, { elementId: string }>;
-  listElements: McpAdapter<Element[] | undefined, Record<string, unknown>>;
+  getElements: McpAdapter<Element[], { pageId?: string; type?: string; parentId?: string }>;
+  listElements: McpAdapter<
+    { id: string; label: string; type: string; parentId?: string; items?: string[] }[],
+    { rootId?: string; parentId?: string; type?: string }
+  >;
   updateElement: McpAdapter<Element, Element>;
   deleteElement: McpAdapter<boolean, { elementId: string }>;
   moveElement: McpAdapter<boolean, { elementId: string; toParentId: string; dropPosition?: DropPosition }>;
-  cloneElement: McpAdapter;
+  cloneElement: McpAdapter<
+    { id: string; label: string; type: string; parentId?: string; items?: string[] }[],
+    { elementId: string; to: string; dropPosition: DropPosition }
+  >;
 };
 
 export type McpAdaptersSchemaVariables = {
+  getVariable: McpAdapter<SchemaVariable | undefined, { name: string }>;
+  getVariables: McpAdapter<SchemaVariable[]>;
   createSchemaVariable: McpAdapter<
     SchemaVariable,
     { variable: Pick<SchemaVariable, 'name' | 'type' | 'value' | 'category'> }
@@ -62,14 +83,9 @@ export type McpAdaptersSchemaVariables = {
 };
 
 export type McpAdaptersStyles = {
-  getStyle: McpAdapter<
-    { platform: string; variables: Record<string, unknown>[]; cache: Record<string, unknown> } | undefined,
-    { environment: string }
-  >;
-  getStyles: McpAdapter<
-    { platform: string; variables: Record<string, unknown>[]; cache: Record<string, unknown> }[],
-    { environment?: string }
-  >;
+  getStyleVariables: McpAdapter<Record<string, Record<string, StyleVariableValue>>>;
+  getStyleVariable: McpAdapter<StyleVariableValue | undefined, { category: StyleVariableCategory; name: string }>;
+  getStyleSelectors: McpAdapter<Record<string, string[]>, { displayMode?: string }>;
   updateStyle: McpAdapter;
   updateStyleSettings: McpAdapter;
 };
@@ -116,14 +132,8 @@ export type McpAdaptersSegments = {
   createSegment: McpAdapter<McpSegment, { name: string; description: string }>;
   updateSegment: McpAdapter<McpSegment, { segmentId: string; updates: { name?: string; description?: string } }>;
   deleteSegment: McpAdapter<boolean, { segmentId: string }>;
-  getSegment: McpAdapter<
-    Record<string, unknown> | undefined,
-    { segmentId?: string; identifier?: string; environment: string }
-  >;
-  getSegments: McpAdapter<
-    Record<string, unknown>,
-    { environment: string; filter?: Record<string, unknown>; cursor?: string; limit?: number }
-  >;
+  getSegment: McpAdapter<Record<string, unknown> | undefined, { segmentId?: string; identifier?: string }>;
+  getSegments: McpAdapter<Record<string, unknown>[], { cursor?: string; limit?: number }>;
   createSegmentElement: McpAdapter<
     Element,
     {
@@ -272,13 +282,13 @@ export type McpAdaptersPlugins = {
   listPlugins: McpAdapter<McpPlugin[]>;
   addPlugin: McpAdapter<
     { type: string; resource: string; settings: Record<string, unknown> },
-    { environment: string; pluginType: string; resource: string; override?: boolean }
+    { pluginType: string; resource: string; override?: boolean }
   >;
   updatePlugin: McpAdapter<
     { type: string; resource: string; settings: Record<string, unknown> },
-    { environment: string; pluginType: string; resource: string }
+    { pluginType: string; resource: string }
   >;
-  removePlugin: McpAdapter<boolean, { environment: string; pluginType: string }>;
+  removePlugin: McpAdapter<boolean, { pluginType: string }>;
 };
 
 export type McpAdaptersCollections = {
@@ -307,9 +317,8 @@ export type McpAdaptersResources = {
 };
 
 export type McpAdaptersSpace = {
-  listSpaces: McpAdapter<{ id: string; name: string; permanentUrl: string; verified: boolean }[]>;
+  getSpaceSettings: McpAdapter<Schema['settings'] | undefined>;
   updateSpaceSettings: McpAdapter<Schema['settings'], { path?: string; value?: string | number | boolean }>;
-  publishSpace: McpAdapter<{ revision: number }>;
 };
 
 export type McpAdapters = {

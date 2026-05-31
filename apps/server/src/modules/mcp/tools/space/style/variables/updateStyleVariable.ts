@@ -15,18 +15,18 @@ const inputSchema = z.object({
   name: z.string().describe('Token name to update'),
   value: z
     .union([z.string(), z.number(), z.record(z.string(), z.unknown())])
-    .describe('New token value. Use a plain string/number for a fixed value, or { light: "...", dark: "...", default: "..." } for theme-aware values')
+    .describe(
+      'New token value. Use a plain string/number for a fixed value, or { light: "...", dark: "...", default: "..." } for theme-aware values'
+    )
 });
 
-const outputSchema = z.object({
-  data: z
-    .object({
-      category: z.string().describe('Variable category'),
-      name: z.string().describe('Variable name'),
-      value: z.union([z.string(), z.number(), z.record(z.string(), z.string())]).describe('Variable value')
-    })
-    .describe('The updated style variable')
-});
+const outputSchema = z
+  .object({
+    category: z.string().describe('Variable category'),
+    name: z.string().describe('Variable name'),
+    value: z.union([z.string(), z.number(), z.record(z.string(), z.string())]).describe('Variable value')
+  })
+  .describe('The updated style variable');
 
 const updateStyleVariableTool: McpTool = {
   name: 'update_style_variable',

@@ -30,34 +30,34 @@ describe('createElementTool', () => {
 
   describe('inputSchema', () => {
     it('accepts minimal element (type + label)', () => {
-      const result = createElementTool.mcpDefinition.inputSchema.safeParse({
+      const result = createElementTool.mcpDefinition.inputSchema?.safeParse({
         element: { type: 'div', label: 'Box' }
       });
 
-      expect(result.success).toBe(true);
+      expect(result?.success).toBe(true);
     });
 
     it('accepts full input with all optional fields', () => {
-      const result = createElementTool.mcpDefinition.inputSchema.safeParse({
+      const result = createElementTool.mcpDefinition.inputSchema?.safeParse({
         element: { type: 'div', label: 'Box', props: { class: 'hero' }, runtime: 'client' },
         parentId: 'page-1',
         position: 0
       });
 
-      expect(result.success).toBe(true);
+      expect(result?.success).toBe(true);
     });
 
     it('rejects element missing type', () => {
-      expect(createElementTool.mcpDefinition.inputSchema.safeParse({ element: { label: 'Box' } }).success).toBe(false);
+      expect(createElementTool.mcpDefinition.inputSchema?.safeParse({ element: { label: 'Box' } }).success).toBe(false);
     });
 
     it('rejects element missing label', () => {
-      expect(createElementTool.mcpDefinition.inputSchema.safeParse({ element: { type: 'div' } }).success).toBe(false);
+      expect(createElementTool.mcpDefinition.inputSchema?.safeParse({ element: { type: 'div' } }).success).toBe(false);
     });
 
     it('rejects invalid runtime value', () => {
       expect(
-        createElementTool.mcpDefinition.inputSchema.safeParse({
+        createElementTool.mcpDefinition.inputSchema?.safeParse({
           element: { type: 'div', label: 'Box', runtime: 'worker' }
         }).success
       ).toBe(false);
@@ -66,7 +66,7 @@ describe('createElementTool', () => {
 
   describe('outputSchema', () => {
     it('validates a created element', () => {
-      expect(createElementTool.mcpDefinition.outputSchema.safeParse({ data: validElement }).success).toBe(true);
+      expect(createElementTool.mcpDefinition.outputSchema?.safeParse(validElement).success).toBe(true);
     });
   });
 });
@@ -83,17 +83,17 @@ describe('updateElementTool', () => {
 
   describe('inputSchema', () => {
     it('accepts elementId with partial updates', () => {
-      const result = updateElementTool.mcpDefinition.inputSchema.safeParse({
+      const result = updateElementTool.mcpDefinition.inputSchema?.safeParse({
         elementId: 'el-1',
         updates: { label: 'New Label' }
       });
 
-      expect(result.success).toBe(true);
+      expect(result?.success).toBe(true);
     });
 
     it('accepts runtime update', () => {
       expect(
-        updateElementTool.mcpDefinition.inputSchema.safeParse({
+        updateElementTool.mcpDefinition.inputSchema?.safeParse({
           elementId: 'el-1',
           updates: { runtime: 'server' }
         }).success
@@ -101,19 +101,17 @@ describe('updateElementTool', () => {
     });
 
     it('rejects missing elementId', () => {
-      expect(
-        updateElementTool.mcpDefinition.inputSchema.safeParse({ updates: { label: 'New' } }).success
-      ).toBe(false);
+      expect(updateElementTool.mcpDefinition.inputSchema?.safeParse({ updates: { label: 'New' } }).success).toBe(false);
     });
 
     it('rejects missing updates', () => {
-      expect(updateElementTool.mcpDefinition.inputSchema.safeParse({ elementId: 'el-1' }).success).toBe(false);
+      expect(updateElementTool.mcpDefinition.inputSchema?.safeParse({ elementId: 'el-1' }).success).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates updated element', () => {
-      expect(updateElementTool.mcpDefinition.outputSchema.safeParse({ data: validElement }).success).toBe(true);
+      expect(updateElementTool.mcpDefinition.outputSchema?.safeParse(validElement).success).toBe(true);
     });
   });
 });
@@ -130,21 +128,21 @@ describe('deleteElementTool', () => {
 
   describe('inputSchema', () => {
     it('accepts elementId', () => {
-      expect(deleteElementTool.mcpDefinition.inputSchema.safeParse({ elementId: 'el-1' }).success).toBe(true);
+      expect(deleteElementTool.mcpDefinition.inputSchema?.safeParse({ elementId: 'el-1' }).success).toBe(true);
     });
 
     it('rejects missing elementId', () => {
-      expect(deleteElementTool.mcpDefinition.inputSchema.safeParse({}).success).toBe(false);
+      expect(deleteElementTool.mcpDefinition.inputSchema?.safeParse({}).success).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates data: true', () => {
-      expect(deleteElementTool.mcpDefinition.outputSchema.safeParse({ data: true }).success).toBe(true);
+      expect(deleteElementTool.mcpDefinition.outputSchema?.safeParse(true).success).toBe(true);
     });
 
     it('rejects data: false', () => {
-      expect(deleteElementTool.mcpDefinition.outputSchema.safeParse({ data: false }).success).toBe(false);
+      expect(deleteElementTool.mcpDefinition.outputSchema?.safeParse(false).success).toBe(false);
     });
   });
 });
@@ -161,21 +159,21 @@ describe('getElementTool', () => {
 
   describe('inputSchema', () => {
     it('accepts elementId', () => {
-      expect(getElementTool.mcpDefinition.inputSchema.safeParse({ elementId: 'el-1' }).success).toBe(true);
+      expect(getElementTool.mcpDefinition.inputSchema?.safeParse({ elementId: 'el-1' }).success).toBe(true);
     });
 
     it('rejects missing elementId', () => {
-      expect(getElementTool.mcpDefinition.inputSchema.safeParse({}).success).toBe(false);
+      expect(getElementTool.mcpDefinition.inputSchema?.safeParse({}).success).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates a found element', () => {
-      expect(getElementTool.mcpDefinition.outputSchema.safeParse({ data: validElement }).success).toBe(true);
+      expect(getElementTool.mcpDefinition.outputSchema?.safeParse(validElement).success).toBe(true);
     });
 
     it('validates null (not found)', () => {
-      expect(getElementTool.mcpDefinition.outputSchema.safeParse({ data: null }).success).toBe(true);
+      expect(getElementTool.mcpDefinition.outputSchema?.safeParse(null).success).toBe(true);
     });
   });
 });
@@ -191,18 +189,45 @@ describe('listElementsTool', () => {
   });
 
   describe('inputSchema', () => {
-    it('accepts empty object', () => {
-      expect(listElementsTool.mcpDefinition.inputSchema.safeParse({}).success).toBe(true);
+    it('accepts empty object (all filters optional)', () => {
+      expect(listElementsTool.mcpDefinition.inputSchema?.safeParse({}).success).toBe(true);
+    });
+
+    it('accepts rootId filter', () => {
+      expect(listElementsTool.mcpDefinition.inputSchema?.safeParse({ rootId: 'page-1' }).success).toBe(true);
+    });
+
+    it('accepts parentId filter', () => {
+      expect(listElementsTool.mcpDefinition.inputSchema?.safeParse({ parentId: 'el-1' }).success).toBe(true);
+    });
+
+    it('accepts type filter', () => {
+      expect(listElementsTool.mcpDefinition.inputSchema?.safeParse({ type: 'button' }).success).toBe(true);
+    });
+
+    it('accepts all filters combined', () => {
+      expect(
+        listElementsTool.mcpDefinition.inputSchema?.safeParse({ rootId: 'page-1', parentId: 'el-1', type: 'div' })
+          .success
+      ).toBe(true);
     });
   });
 
   describe('outputSchema', () => {
-    it('validates an array of elements', () => {
-      expect(listElementsTool.mcpDefinition.outputSchema.safeParse({ data: [validElement] }).success).toBe(true);
+    it('validates an array of compact elements', () => {
+      const compact = { id: 'el-1', label: 'Hero Section', type: 'div' };
+
+      expect(listElementsTool.mcpDefinition.outputSchema?.safeParse([compact]).success).toBe(true);
+    });
+
+    it('accepts optional parentId and items', () => {
+      const compact = { id: 'el-1', label: 'Hero Section', type: 'div', parentId: 'page-1', items: ['el-2'] };
+
+      expect(listElementsTool.mcpDefinition.outputSchema?.safeParse([compact]).success).toBe(true);
     });
 
     it('validates an empty array', () => {
-      expect(listElementsTool.mcpDefinition.outputSchema.safeParse({ data: [] }).success).toBe(true);
+      expect(listElementsTool.mcpDefinition.outputSchema?.safeParse([]).success).toBe(true);
     });
   });
 });
@@ -220,13 +245,13 @@ describe('moveElementTool', () => {
   describe('inputSchema', () => {
     it('accepts required fields', () => {
       expect(
-        moveElementTool.mcpDefinition.inputSchema.safeParse({ elementId: 'el-1', toParentId: 'page-1' }).success
+        moveElementTool.mcpDefinition.inputSchema?.safeParse({ elementId: 'el-1', toParentId: 'page-1' }).success
       ).toBe(true);
     });
 
     it('accepts with optional dropPosition', () => {
       expect(
-        moveElementTool.mcpDefinition.inputSchema.safeParse({
+        moveElementTool.mcpDefinition.inputSchema?.safeParse({
           elementId: 'el-1',
           toParentId: 'page-1',
           dropPosition: 'inside'
@@ -236,7 +261,7 @@ describe('moveElementTool', () => {
 
     it('rejects invalid dropPosition', () => {
       expect(
-        moveElementTool.mcpDefinition.inputSchema.safeParse({
+        moveElementTool.mcpDefinition.inputSchema?.safeParse({
           elementId: 'el-1',
           toParentId: 'page-1',
           dropPosition: 'center'
@@ -245,13 +270,13 @@ describe('moveElementTool', () => {
     });
 
     it('rejects missing toParentId', () => {
-      expect(moveElementTool.mcpDefinition.inputSchema.safeParse({ elementId: 'el-1' }).success).toBe(false);
+      expect(moveElementTool.mcpDefinition.inputSchema?.safeParse({ elementId: 'el-1' }).success).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates data: true', () => {
-      expect(moveElementTool.mcpDefinition.outputSchema.safeParse({ data: true }).success).toBe(true);
+      expect(moveElementTool.mcpDefinition.outputSchema?.safeParse(true).success).toBe(true);
     });
   });
 });

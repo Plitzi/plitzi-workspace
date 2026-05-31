@@ -1,5 +1,6 @@
 import createStyleSelectorTool from './createStyleSelector';
 import deleteStyleSelectorTool from './deleteStyleSelector';
+import getStyleSelectorsTool from './getStyleSelectors';
 import updateStyleSelectorTool from './updateStyleSelector';
 
-export { createStyleSelectorTool, updateStyleSelectorTool, deleteStyleSelectorTool };
+export { getStyleSelectorsTool, createStyleSelectorTool, updateStyleSelectorTool, deleteStyleSelectorTool };

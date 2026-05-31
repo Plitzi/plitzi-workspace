@@ -9,16 +9,14 @@ const inputSchema = z.object({
   parentId: z.string().optional().describe('Parent folder ID — omit to create a top-level folder')
 });
 
-const outputSchema = z.object({
-  data: z
-    .object({
-      id: z.string().describe('Folder ID'),
-      name: z.string().describe('Folder name'),
-      slug: z.string().describe('Folder slug'),
-      parentId: z.string().optional().describe('Parent folder ID')
-    })
-    .describe('The created page folder')
-});
+const outputSchema = z
+  .object({
+    id: z.string().describe('Folder ID'),
+    name: z.string().describe('Folder name'),
+    slug: z.string().describe('Folder slug'),
+    parentId: z.string().optional().describe('Parent folder ID')
+  })
+  .describe('The created page folder');
 
 const createPageFolderTool: McpTool = {
   name: 'create_page_folder',

@@ -4,6 +4,8 @@ import type {
   AiContext,
   AiMode,
   McpAdapter,
+  McpAdapters,
+  McpTool,
   McpToolHandler,
   McpToolHandlerResult,
   ToolOperationType
@@ -81,7 +83,8 @@ export const toolResponseOk = (data: unknown, agentMessage?: string): McpToolHan
   // data is stored for the frontend renderer (via onToolSuccess) and never sent directly to the AI agent.
   // agentMessage controls what the agent reads — a brief confirmation for visual tools,
   // or the full JSON serialization when omitted (for info tools the agent must read).
-  const text = agentMessage ?? JSON.stringify(data, null, 2);
+  const text = agentMessage ?? JSON.stringify(data ?? null, null, 2);
+
   return { content: [{ type: 'text' as const, text }], data };
 };
 
@@ -89,6 +92,30 @@ export const toolResponseErr = (error: Error | string): McpToolHandlerResult => 
   content: [{ type: 'text' as const, text: error instanceof Error ? error.message : error }],
   isError: true as const
 });
+
+// A tool is usable when it has a direct handler or its declared adapter is registered.
+export const isToolActive = (tool: McpTool, adapters: Partial<McpAdapters>): boolean =>
+  Boolean(tool.handler || (tool.adapterName && adapters[tool.adapterName]));
+
+// Resolve the single execution path for a tool: its own handler, or the adapter wrapped as a handler.
+export const resolveToolHandler = (tool: McpTool, adapters: Partial<McpAdapters>): McpToolHandler | undefined => {
+  if (tool.handler) {
+    return tool.handler;
+  }
+
+  if (tool.adapterName) {
+    return adapterWrapper(tool.adapterName, adapters[tool.adapterName] as McpAdapter | undefined);
+  }
+
+  return undefined;
+};
+
+// Bind a list of tools against the runtime adapters: keeps only usable tools and gives each a
+// guaranteed handler, so every consumer (MCP server, providers, direct callers) runs them identically.
+export const bindTools = (tools: McpTool[], adapters: Partial<McpAdapters>): McpTool[] =>
+  tools
+    .filter(tool => isToolActive(tool, adapters))
+    .map(tool => ({ ...tool, handler: resolveToolHandler(tool, adapters) }));
 
 export const adapterWrapper = (adapterName: string, handler?: McpAdapter): McpToolHandler => {
   return async (args: Record<string, unknown>, ctx: AiContext) => {

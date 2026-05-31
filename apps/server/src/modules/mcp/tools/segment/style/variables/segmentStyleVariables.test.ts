@@ -19,7 +19,7 @@ describe('createSegmentStyleVariableTool', () => {
   describe('inputSchema', () => {
     it('accepts segmentId, category, name, and value', () => {
       expect(
-        createSegmentStyleVariableTool.mcpDefinition.inputSchema.safeParse({
+        createSegmentStyleVariableTool.mcpDefinition.inputSchema?.safeParse({
           segmentId: 'seg-1',
           category: 'color',
           name: 'accent',
@@ -30,7 +30,7 @@ describe('createSegmentStyleVariableTool', () => {
 
     it('accepts theme-aware object value', () => {
       expect(
-        createSegmentStyleVariableTool.mcpDefinition.inputSchema.safeParse({
+        createSegmentStyleVariableTool.mcpDefinition.inputSchema?.safeParse({
           segmentId: 'seg-1',
           category: 'color',
           name: 'bg',
@@ -41,7 +41,7 @@ describe('createSegmentStyleVariableTool', () => {
 
     it('rejects invalid category', () => {
       expect(
-        createSegmentStyleVariableTool.mcpDefinition.inputSchema.safeParse({
+        createSegmentStyleVariableTool.mcpDefinition.inputSchema?.safeParse({
           segmentId: 'seg-1',
           category: 'gradient',
           name: 'x',
@@ -52,7 +52,7 @@ describe('createSegmentStyleVariableTool', () => {
 
     it('rejects missing segmentId', () => {
       expect(
-        createSegmentStyleVariableTool.mcpDefinition.inputSchema.safeParse({
+        createSegmentStyleVariableTool.mcpDefinition.inputSchema?.safeParse({
           category: 'color',
           name: 'x',
           value: '#000'
@@ -63,9 +63,7 @@ describe('createSegmentStyleVariableTool', () => {
 
   describe('outputSchema', () => {
     it('validates created style variable', () => {
-      expect(
-        createSegmentStyleVariableTool.mcpDefinition.outputSchema.safeParse({ data: validStyleVar }).success
-      ).toBe(true);
+      expect(createSegmentStyleVariableTool.mcpDefinition.outputSchema?.safeParse(validStyleVar).success).toBe(true);
     });
   });
 });
@@ -83,7 +81,7 @@ describe('updateSegmentStyleVariableTool', () => {
   describe('inputSchema', () => {
     it('accepts required fields', () => {
       expect(
-        updateSegmentStyleVariableTool.mcpDefinition.inputSchema.safeParse({
+        updateSegmentStyleVariableTool.mcpDefinition.inputSchema?.safeParse({
           segmentId: 'seg-1',
           category: 'color',
           name: 'accent',
@@ -94,7 +92,7 @@ describe('updateSegmentStyleVariableTool', () => {
 
     it('rejects invalid category', () => {
       expect(
-        updateSegmentStyleVariableTool.mcpDefinition.inputSchema.safeParse({
+        updateSegmentStyleVariableTool.mcpDefinition.inputSchema?.safeParse({
           segmentId: 'seg-1',
           category: 'font',
           name: 'x',
@@ -106,9 +104,7 @@ describe('updateSegmentStyleVariableTool', () => {
 
   describe('outputSchema', () => {
     it('validates updated style variable', () => {
-      expect(
-        updateSegmentStyleVariableTool.mcpDefinition.outputSchema.safeParse({ data: validStyleVar }).success
-      ).toBe(true);
+      expect(updateSegmentStyleVariableTool.mcpDefinition.outputSchema?.safeParse(validStyleVar).success).toBe(true);
     });
   });
 });
@@ -126,7 +122,7 @@ describe('deleteSegmentStyleVariableTool', () => {
   describe('inputSchema', () => {
     it('accepts segmentId, category and name', () => {
       expect(
-        deleteSegmentStyleVariableTool.mcpDefinition.inputSchema.safeParse({
+        deleteSegmentStyleVariableTool.mcpDefinition.inputSchema?.safeParse({
           segmentId: 'seg-1',
           category: 'color',
           name: 'accent'
@@ -136,7 +132,7 @@ describe('deleteSegmentStyleVariableTool', () => {
 
     it('rejects missing name', () => {
       expect(
-        deleteSegmentStyleVariableTool.mcpDefinition.inputSchema.safeParse({
+        deleteSegmentStyleVariableTool.mcpDefinition.inputSchema?.safeParse({
           segmentId: 'seg-1',
           category: 'color'
         }).success
@@ -146,7 +142,7 @@ describe('deleteSegmentStyleVariableTool', () => {
 
   describe('outputSchema', () => {
     it('validates data: true', () => {
-      expect(deleteSegmentStyleVariableTool.mcpDefinition.outputSchema.safeParse({ data: true }).success).toBe(true);
+      expect(deleteSegmentStyleVariableTool.mcpDefinition.outputSchema?.safeParse(true).success).toBe(true);
     });
   });
 });

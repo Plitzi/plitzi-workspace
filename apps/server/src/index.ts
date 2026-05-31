@@ -8,7 +8,10 @@ export {
   handleMcp,
   createMcpServer,
   zodToJsonSchema,
-  getAllowedModes
+  getAllowedModes,
+  bindTools,
+  isToolActive,
+  resolveToolHandler
 } from './modules/mcp';
 export { AIEngine } from './modules/ai';
 

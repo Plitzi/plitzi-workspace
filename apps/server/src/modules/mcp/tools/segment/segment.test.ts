@@ -22,26 +22,25 @@ describe('createSegmentTool', () => {
   describe('inputSchema', () => {
     it('accepts name and description', () => {
       expect(
-        createSegmentTool.mcpDefinition.inputSchema.safeParse({ name: 'Hero Card', description: 'A hero block' }).success
+        createSegmentTool.mcpDefinition.inputSchema?.safeParse({ name: 'Hero Card', description: 'A hero block' })
+          .success
       ).toBe(true);
     });
 
     it('rejects missing name', () => {
-      expect(
-        createSegmentTool.mcpDefinition.inputSchema.safeParse({ description: 'A hero block' }).success
-      ).toBe(false);
+      expect(createSegmentTool.mcpDefinition.inputSchema?.safeParse({ description: 'A hero block' }).success).toBe(
+        false
+      );
     });
 
     it('rejects missing description', () => {
-      expect(
-        createSegmentTool.mcpDefinition.inputSchema.safeParse({ name: 'Hero Card' }).success
-      ).toBe(false);
+      expect(createSegmentTool.mcpDefinition.inputSchema?.safeParse({ name: 'Hero Card' }).success).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates a created segment', () => {
-      expect(createSegmentTool.mcpDefinition.outputSchema.safeParse({ data: validSegment }).success).toBe(true);
+      expect(createSegmentTool.mcpDefinition.outputSchema?.safeParse(validSegment).success).toBe(true);
     });
   });
 });
@@ -59,7 +58,7 @@ describe('updateSegmentTool', () => {
   describe('inputSchema', () => {
     it('accepts segmentId and partial updates', () => {
       expect(
-        updateSegmentTool.mcpDefinition.inputSchema.safeParse({
+        updateSegmentTool.mcpDefinition.inputSchema?.safeParse({
           segmentId: 'seg-1',
           updates: { name: 'Updated Hero' }
         }).success
@@ -67,19 +66,17 @@ describe('updateSegmentTool', () => {
     });
 
     it('rejects missing segmentId', () => {
-      expect(
-        updateSegmentTool.mcpDefinition.inputSchema.safeParse({ updates: { name: 'New' } }).success
-      ).toBe(false);
+      expect(updateSegmentTool.mcpDefinition.inputSchema?.safeParse({ updates: { name: 'New' } }).success).toBe(false);
     });
 
     it('rejects missing updates', () => {
-      expect(updateSegmentTool.mcpDefinition.inputSchema.safeParse({ segmentId: 'seg-1' }).success).toBe(false);
+      expect(updateSegmentTool.mcpDefinition.inputSchema?.safeParse({ segmentId: 'seg-1' }).success).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates an updated segment', () => {
-      expect(updateSegmentTool.mcpDefinition.outputSchema.safeParse({ data: validSegment }).success).toBe(true);
+      expect(updateSegmentTool.mcpDefinition.outputSchema?.safeParse(validSegment).success).toBe(true);
     });
   });
 });
@@ -96,17 +93,17 @@ describe('deleteSegmentTool', () => {
 
   describe('inputSchema', () => {
     it('accepts segmentId', () => {
-      expect(deleteSegmentTool.mcpDefinition.inputSchema.safeParse({ segmentId: 'seg-1' }).success).toBe(true);
+      expect(deleteSegmentTool.mcpDefinition.inputSchema?.safeParse({ segmentId: 'seg-1' }).success).toBe(true);
     });
 
     it('rejects missing segmentId', () => {
-      expect(deleteSegmentTool.mcpDefinition.inputSchema.safeParse({}).success).toBe(false);
+      expect(deleteSegmentTool.mcpDefinition.inputSchema?.safeParse({}).success).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates data: true', () => {
-      expect(deleteSegmentTool.mcpDefinition.outputSchema.safeParse({ data: true }).success).toBe(true);
+      expect(deleteSegmentTool.mcpDefinition.outputSchema?.safeParse(true).success).toBe(true);
     });
   });
 });

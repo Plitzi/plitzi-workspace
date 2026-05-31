@@ -29,23 +29,22 @@ const inputSchema = z.object({
     .describe('Variable fields to update')
 });
 
-const outputSchema = z.object({
-  data: z
-    .object({
-      name: z.string().describe('Variable name'),
-      type: z.string().describe('Variable type'),
-      value: z.string().describe('Variable value'),
-      category: z.string().describe('Grouping label shown in the builder UI')
-    })
-    .describe('The updated segment variable')
-});
+const outputSchema = z
+  .object({
+    name: z.string().describe('Variable name'),
+    type: z.string().describe('Variable type'),
+    value: z.string().describe('Variable value'),
+    category: z.string().describe('Grouping label shown in the builder UI')
+  })
+  .describe('The updated segment variable');
 
 const updateSegmentVariableTool: McpTool = {
   name: 'update_segment_variable',
   adapterName: 'updateSegmentVariable',
   mcpDefinition: {
     title: 'Update Segment Variable',
-    description: 'Update an existing schema variable inside a segment. Identified by name; only the provided fields are changed.',
+    description:
+      'Update an existing schema variable inside a segment. Identified by name; only the provided fields are changed.',
     inputSchema,
     outputSchema
   },

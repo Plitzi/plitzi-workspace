@@ -13,8 +13,15 @@ export type ChatProps = {
   ref?: Ref<HTMLDivElement>;
 };
 
+const EXAMPLE_PROMPTS = [
+  'Create a hero section with a headline and a call-to-action button',
+  'Add a contact form to this page',
+  'Make this page look more modern and professional',
+  'Change the color palette to something fresh'
+];
+
 const Chat = ({ ref }: ChatProps) => {
-  const { currentMode, messages, isStreaming, isBusy, streamingText, liveSteps } = useAiChatContext();
+  const { currentMode, messages, isStreaming, isBusy, streamingText, liveSteps, prefillInput } = useAiChatContext();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const isAtBottom = useRef(true);
   useImperativeHandle(ref, () => scrollRef.current as HTMLDivElement, []);
@@ -116,6 +123,20 @@ const Chat = ({ ref }: ChatProps) => {
             Ask me anything about your space.
           </p>
           <p className="font-mono text-[10px] text-zinc-400 dark:text-zinc-600">Voice · Images · Tools</p>
+
+          <div className="mt-3 flex w-full max-w-xs flex-col gap-1.5">
+            {EXAMPLE_PROMPTS.map((prompt, i) => (
+              <button
+                key={prompt}
+                type="button"
+                onClick={() => prefillInput(prompt)}
+                style={{ animationDelay: `${i * 60}ms` }}
+                className="animate-fade-in-up rounded-lg border border-neutral-300 bg-neutral-50 px-3 py-2 text-left text-[11px] leading-snug text-zinc-600 transition-colors hover:border-neutral-400 hover:bg-neutral-100 dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

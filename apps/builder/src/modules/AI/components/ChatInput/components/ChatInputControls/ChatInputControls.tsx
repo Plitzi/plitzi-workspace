@@ -30,6 +30,7 @@ export type ChatInputControlsProps = {
   onModelChange: (modelId: string) => void;
   onManageSkills: () => void;
   onClickSend?: () => void;
+  onStop?: () => void;
 };
 
 const ChatInputControls = ({
@@ -53,7 +54,8 @@ const ChatInputControls = ({
   onEffortChange,
   onModelChange,
   onManageSkills,
-  onClickSend
+  onClickSend,
+  onStop
 }: ChatInputControlsProps) => {
   const modelContextLimit = models.find(m => m.id === currentModel)?.contextLimit;
   const supportsThinking = models.find(m => m.id === currentModel)?.supportsThinking;
@@ -88,7 +90,14 @@ const ChatInputControls = ({
           messageCount={messageCount}
           onCompact={onCompact}
         />
-        <ButtonSend mode={mode} message={message} attachments={attachments} onClick={onClickSend} />
+        <ButtonSend
+          mode={mode}
+          message={message}
+          attachments={attachments}
+          isStreaming={isStreaming}
+          onClick={onClickSend}
+          onStop={onStop}
+        />
       </div>
     </div>
   );

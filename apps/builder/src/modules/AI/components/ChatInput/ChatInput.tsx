@@ -13,7 +13,7 @@ import { useAiChatContext } from '../../contexts/AiChatContext';
 import type { AiAttachment, AiEffort, AiModelInfo, AiSkill } from '../../types';
 import type { KeyboardEvent, Ref } from 'react';
 
-export type ChatInputHandle = { appendText: (text: string) => void };
+export type ChatInputHandle = { appendText: (text: string) => void; setText: (text: string) => void };
 
 export type ChatInputProps = {
   ref?: Ref<ChatInputHandle>;
@@ -38,7 +38,16 @@ const ChatInput = ({
   onVoiceToggle,
   onModelChange
 }: ChatInputProps) => {
-  const { isStreaming, messages, usage, mode, setMode: onModeChange, compact: onCompact, onSend } = useAiChatContext();
+  const {
+    isStreaming,
+    messages,
+    usage,
+    mode,
+    setMode: onModeChange,
+    compact: onCompact,
+    onSend,
+    stopGeneration
+  } = useAiChatContext();
   const [messageInput, setMessageInput] = useState('');
   const [attachments, setAttachments] = useState<AiAttachment[]>([]);
   const [effort, setEffort] = useState<AiEffort>('medium');
@@ -52,6 +61,10 @@ const ChatInput = ({
   useImperativeHandle(ref, () => ({
     appendText: (text: string) => {
       setMessageInput(prev => (prev ? `${prev} ${text}` : text));
+      textareaRef.current?.focus();
+    },
+    setText: (text: string) => {
+      setMessageInput(text);
       textareaRef.current?.focus();
     }
   }));
@@ -268,6 +281,7 @@ const ChatInput = ({
             onModelChange={onModelChange ?? (() => undefined)}
             onManageSkills={() => setSkillsOpen(true)}
             onClickSend={handleClickSend}
+            onStop={stopGeneration}
           />
         </div>
       </div>

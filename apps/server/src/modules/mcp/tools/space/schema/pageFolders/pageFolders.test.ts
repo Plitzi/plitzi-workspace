@@ -18,17 +18,17 @@ describe('createPageFolderTool', () => {
 
   describe('inputSchema', () => {
     it('accepts a folder name', () => {
-      expect(createPageFolderTool.mcpDefinition.inputSchema.safeParse({ name: 'Blog' }).success).toBe(true);
+      expect(createPageFolderTool.mcpDefinition.inputSchema?.safeParse({ name: 'Blog' }).success).toBe(true);
     });
 
     it('rejects missing name', () => {
-      expect(createPageFolderTool.mcpDefinition.inputSchema.safeParse({}).success).toBe(false);
+      expect(createPageFolderTool.mcpDefinition.inputSchema?.safeParse({}).success).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates created folder', () => {
-      expect(createPageFolderTool.mcpDefinition.outputSchema.safeParse({ data: validFolder }).success).toBe(true);
+      expect(createPageFolderTool.mcpDefinition.outputSchema?.safeParse(validFolder).success).toBe(true);
     });
   });
 });
@@ -46,22 +46,24 @@ describe('updatePageFolderTool', () => {
   describe('inputSchema', () => {
     it('accepts id with partial updates', () => {
       expect(
-        updatePageFolderTool.mcpDefinition.inputSchema.safeParse({ id: 'folder-1', updates: { name: 'News' } }).success
+        updatePageFolderTool.mcpDefinition.inputSchema?.safeParse({ id: 'folder-1', updates: { name: 'News' } }).success
       ).toBe(true);
     });
 
     it('rejects missing id', () => {
-      expect(updatePageFolderTool.mcpDefinition.inputSchema.safeParse({ updates: { name: 'News' } }).success).toBe(false);
+      expect(updatePageFolderTool.mcpDefinition.inputSchema?.safeParse({ updates: { name: 'News' } }).success).toBe(
+        false
+      );
     });
 
     it('rejects missing updates', () => {
-      expect(updatePageFolderTool.mcpDefinition.inputSchema.safeParse({ id: 'folder-1' }).success).toBe(false);
+      expect(updatePageFolderTool.mcpDefinition.inputSchema?.safeParse({ id: 'folder-1' }).success).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates updated folder', () => {
-      expect(updatePageFolderTool.mcpDefinition.outputSchema.safeParse({ data: validFolder }).success).toBe(true);
+      expect(updatePageFolderTool.mcpDefinition.outputSchema?.safeParse(validFolder).success).toBe(true);
     });
   });
 });
@@ -78,17 +80,17 @@ describe('deletePageFolderTool', () => {
 
   describe('inputSchema', () => {
     it('accepts folder id', () => {
-      expect(deletePageFolderTool.mcpDefinition.inputSchema.safeParse({ id: 'folder-1' }).success).toBe(true);
+      expect(deletePageFolderTool.mcpDefinition.inputSchema?.safeParse({ id: 'folder-1' }).success).toBe(true);
     });
 
     it('rejects missing id', () => {
-      expect(deletePageFolderTool.mcpDefinition.inputSchema.safeParse({}).success).toBe(false);
+      expect(deletePageFolderTool.mcpDefinition.inputSchema?.safeParse({}).success).toBe(false);
     });
   });
 
   describe('outputSchema', () => {
     it('validates data: true', () => {
-      expect(deletePageFolderTool.mcpDefinition.outputSchema.safeParse({ data: true }).success).toBe(true);
+      expect(deletePageFolderTool.mcpDefinition.outputSchema?.safeParse(true).success).toBe(true);
     });
   });
 });
