@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 
+import type { AiQuestion } from '../components/ChatInput/components/QuestionInput';
 import type { AiAttachment, AiLiveStep, AiMessage, AiMode, AiUsage, ConversationSummary } from '../types';
 import type { AiEffort } from '@plitzi/sdk-shared';
 
@@ -15,6 +16,7 @@ export type AiChatContextValue = {
   quotaRetryAfter: number | undefined;
   conversationId: string;
   conversations: ConversationSummary[];
+  pendingQuestion: AiQuestion[] | null;
   mode: AiMode;
   currentMode: AiMode;
   conversationTitle: string | undefined;
@@ -46,6 +48,7 @@ const AiChatContext = createContext<AiChatContextValue>({
   quotaRetryAfter: undefined,
   conversationId: '',
   conversations: [],
+  pendingQuestion: null,
   mode: 'build',
   currentMode: 'build',
   conversationTitle: undefined,

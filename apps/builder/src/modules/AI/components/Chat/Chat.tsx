@@ -35,7 +35,7 @@ const Chat = ({ ref }: ChatProps) => {
     let wireframeCount = 0;
     for (const msg of messages) {
       const hasStage =
-        msg.steps?.some(s => s.type === 'tool' && s.name === 'stage_preview' && s.status === 'done') ?? false;
+        msg.steps?.some(s => s.type === 'tool' && s.name === 'preview_concept' && s.status === 'done') ?? false;
       const hasWire =
         msg.steps?.some(s => s.type === 'tool' && s.name === 'sketch_wireframe' && s.status === 'done') ?? false;
       map[msg.id] = { stage: hasStage ? ++stageCount : 0, wireframe: hasWire ? ++wireframeCount : 0 };

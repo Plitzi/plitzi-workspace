@@ -30,7 +30,7 @@ const applyPreviewTool: McpTool = {
   mcpDefinition: {
     title: 'Apply Preview',
     description:
-      'Insert a preview (from stage_preview or sketch_wireframe) into the actual space schema.\n\n' +
+      'Insert a preview (from preview_concept or sketch_wireframe) into the actual space schema.\n\n' +
       'Takes the schema and style from a previous preview result and writes them to the space. ' +
       'Use targetParentId to specify which existing element the preview should be inserted into ' +
       '(e.g. the current page ID). Optionally merges the preview style into the space style.',

@@ -6,6 +6,7 @@ import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import AiChatContext from './AiChatContext';
+import { getPendingQuestion } from '../components/ChatInput/components/QuestionInput';
 import useAiChat from '../hooks/useAiChat';
 
 import type { AiAttachment, AiProviderSettings } from '../types';
@@ -94,6 +95,7 @@ const AiChatProvider = ({ children, providerSettings, prefillInput }: AiChatProv
   );
 
   const conversationTitle = messages.find(m => m.role === 'user')?.content?.slice(0, 60);
+  const pendingQuestion = useMemo(() => getPendingQuestion(messages, isStreaming), [messages, isStreaming]);
 
   const value = useMemo(
     () => ({
@@ -110,6 +112,7 @@ const AiChatProvider = ({ children, providerSettings, prefillInput }: AiChatProv
       quotaRetryAfter,
       conversationId,
       conversations,
+      pendingQuestion,
       mode,
       currentMode: mode,
       conversationTitle,
@@ -140,6 +143,7 @@ const AiChatProvider = ({ children, providerSettings, prefillInput }: AiChatProv
       quotaRetryAfter,
       conversationId,
       conversations,
+      pendingQuestion,
       mode,
       conversationTitle,
       elementSelected,

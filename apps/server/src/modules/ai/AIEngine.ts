@@ -155,13 +155,13 @@ class AIEngine implements McpToolLifecycleHooks {
     }
 
     const tool = this.toolsAvailables.get(name);
-    if (
-      !result.isError &&
-      tool?.mcpDefinition.outputSchema &&
-      typeof result.data === 'object' &&
-      result.data !== null
-    ) {
-      result.structuredContent = result.data as Record<string, unknown>;
+    if (!result.isError && tool?.mcpDefinition.outputSchema && result.data !== undefined && result.data !== null) {
+      // structuredContent must be a JSON object per the MCP spec, so arrays and primitives are
+      // wrapped in { data } — otherwise external clients (MCP Inspector) reject the result.
+      result.structuredContent =
+        typeof result.data === 'object' && !Array.isArray(result.data)
+          ? (result.data as Record<string, unknown>)
+          : { data: result.data };
     }
 
     if (result.isError) {

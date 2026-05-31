@@ -31,8 +31,16 @@ export type McpAdaptersSchema = {
   >;
 };
 
+export type PageElementSummary = {
+  id: string;
+  label: string;
+  type: string;
+  parentId: string | null;
+  attributes: Record<string, unknown>;
+};
+
 export type McpAdaptersPages = {
-  getPage: McpAdapter<{ page: Element; elementIds: string[] } | undefined, { pageId: string }>;
+  getPage: McpAdapter<{ page: Element; elements: PageElementSummary[] } | undefined, { pageId: string }>;
   getPages: McpAdapter<Element[]>;
   getPageBySlug: McpAdapter<Element | undefined, { slug: string }>;
   createPage: McpAdapter<Element, { name: string }>;

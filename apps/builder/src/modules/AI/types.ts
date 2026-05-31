@@ -39,7 +39,7 @@ export type AiLiveStep =
 
 // elementId = element already in schema (post-creation)
 // baseElementId = proposed template preview, elements injected via StoreProvider overlay
-// Note: stage_preview is now processed in the backend, which validates schemas before sending
+// Note: preview_concept is now processed in the backend, which validates schemas before sending
 export type AiMessagePreview =
   | { elementId: string; baseElementId?: never }
   | {
@@ -91,7 +91,14 @@ export type AiStreamEvent =
   | { type: 'chunk'; text: string }
   | { type: 'thinking'; text: string }
   | { type: 'tool_start'; name: string; args: Record<string, unknown> }
-  | { type: 'tool'; name: string; args: Record<string, unknown>; result: unknown; error?: string; status: 'done' | 'failed' }
+  | {
+      type: 'tool';
+      name: string;
+      args: Record<string, unknown>;
+      result: unknown;
+      error?: string;
+      status: 'done' | 'failed';
+    }
   | { type: 'resource_read'; name: string; uri: string }
   | { type: 'busy' }
   | { type: 'done'; message: AiMessage; usage?: AiUsage }

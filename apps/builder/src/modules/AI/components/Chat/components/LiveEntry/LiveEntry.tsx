@@ -127,7 +127,7 @@ const LiveEntry = ({ isStreaming, isBusy, streamingText, liveSteps = [] }: LiveE
         <div className="animate-fade-in text-[13px] leading-[1.6] text-zinc-900 dark:text-zinc-100">
           <Markdown>{streamingText}</Markdown>
           <span
-            className={clsx('ml-0.5 inline-block h-4 w-0.5 animate-blink align-middle', {
+            className={clsx('animate-blink ml-0.5 inline-block h-4 w-0.5 align-middle', {
               'bg-emerald-500 dark:bg-emerald-400': currentMode === 'build',
               'bg-sky-500 dark:bg-sky-400': currentMode === 'plan'
             })}

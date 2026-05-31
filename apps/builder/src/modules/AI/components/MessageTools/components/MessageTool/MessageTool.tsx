@@ -21,7 +21,11 @@ const MessageTool = ({ name, args, status, result, error }: MessageToolProps) =>
   const hasResult = result !== undefined && result !== null && !errorMsg;
   const canExpand = hasArgs || hasResult;
 
-  const details = JSON.stringify({ tool: name, ...(hasArgs ? { args } : {}), ...(hasResult ? { result } : {}) }, null, 2);
+  const details = JSON.stringify(
+    { tool: name, ...(hasArgs ? { args } : {}), ...(hasResult ? { result } : {}) },
+    null,
+    2
+  );
 
   const handleCopy = useCallback(() => {
     void navigator.clipboard.writeText(details).then(() => {
@@ -58,9 +62,12 @@ const MessageTool = ({ name, args, status, result, error }: MessageToolProps) =>
         </span>
         {canExpand && (
           <span
-            className={clsx('shrink-0 text-zinc-400 transition-transform group-hover:text-zinc-600 dark:text-zinc-600 dark:group-hover:text-zinc-400', {
-              'rotate-90': expanded
-            })}
+            className={clsx(
+              'shrink-0 text-zinc-400 transition-transform group-hover:text-zinc-600 dark:text-zinc-600 dark:group-hover:text-zinc-400',
+              {
+                'rotate-90': expanded
+              }
+            )}
           >
             ›
           </span>
@@ -68,7 +75,9 @@ const MessageTool = ({ name, args, status, result, error }: MessageToolProps) =>
       </button>
 
       {errorMsg && (
-        <div className="mt-0.5 whitespace-pre-wrap wrap-break-word pl-5 text-pink-500 dark:text-pink-400">{errorMsg}</div>
+        <div className="mt-0.5 pl-5 wrap-break-word whitespace-pre-wrap text-pink-500 dark:text-pink-400">
+          {errorMsg}
+        </div>
       )}
 
       {expanded && canExpand && (

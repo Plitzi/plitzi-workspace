@@ -32,8 +32,10 @@ const ToolVisualRenderer = ({ visual, mode, stagePreviewVersion, wireframeVersio
     return <AIWireframePreview {...visual.data} mode={mode} version={wireframeVersion} />;
   }
 
-  if (visual.type === 'render_element') {
-    return <SdkElementPreview elementId={visual.data.elementId} />;
+  if (visual.type === 'preview_element') {
+    return (
+      <SdkElementPreview elementId={visual.data.elementId} schema={visual.data.schema} style={visual.data.style} />
+    );
   }
 
   return (

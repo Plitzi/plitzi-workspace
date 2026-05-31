@@ -5,6 +5,7 @@ import AiChatHeader from '../AiChatHeader';
 import AiProviderSettings from '../AiProviderSettings';
 import Chat from '../Chat';
 import ChatInput from '../ChatInput';
+import QuestionInput from '../ChatInput/components/QuestionInput';
 import QuotaCountdown from '../QuotaCountdown';
 
 import type { AiModelInfo, AiProviderSettings as AiProviderSettingsConfig } from '../../types';
@@ -46,7 +47,16 @@ const AiChatContent = ({
   onModelChange,
   onSettingsChange
 }: AiChatContentProps) => {
-  const { error, clearError, quotaError, clearQuotaError, quotaRetryAfter } = useAiChatContext();
+  const {
+    error,
+    clearError,
+    quotaError,
+    clearQuotaError,
+    quotaRetryAfter,
+    pendingQuestion,
+    onSendMessage,
+    isStreaming
+  } = useAiChatContext();
 
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden bg-neutral-100 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
@@ -84,17 +94,21 @@ const AiChatContent = ({
         </Alert>
       )}
 
-      <ChatInput
-        ref={chatInputRef}
-        isListening={isListening}
-        isVoiceSupported={isVoiceSupported}
-        audioData={audioData}
-        models={models}
-        currentModel={currentModel}
-        modelsLoading={modelsLoading}
-        onVoiceToggle={onVoiceToggle}
-        onModelChange={onModelChange}
-      />
+      {pendingQuestion && <QuestionInput questions={pendingQuestion} disabled={isStreaming} onSubmit={onSendMessage} />}
+
+      {!pendingQuestion && (
+        <ChatInput
+          ref={chatInputRef}
+          isListening={isListening}
+          isVoiceSupported={isVoiceSupported}
+          audioData={audioData}
+          models={models}
+          currentModel={currentModel}
+          modelsLoading={modelsLoading}
+          onVoiceToggle={onVoiceToggle}
+          onModelChange={onModelChange}
+        />
+      )}
     </div>
   );
 };

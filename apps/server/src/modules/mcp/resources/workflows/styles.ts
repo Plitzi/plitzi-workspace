@@ -81,8 +81,8 @@ Only the overriding properties need to be included in each breakpoint call.
 
 ## Preview and inspect current styles
 
-- To see how a saved element currently looks: use \`render_element\` — it returns its schema+style for display.
+- To see how a saved element currently looks: use \`preview_element\` — it returns its schema+style for display.
 - The \`style.platform\` in the response is keyed by displayMode, then by selector, and shows the actual CSS rules applied.
-- \`get_schema\` does not include style data — use \`render_element\` to read an element's live styles.
+- \`get_schema\` does not include style data — use \`preview_element\` to read an element's live styles.
 `
 };

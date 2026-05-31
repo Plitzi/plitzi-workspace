@@ -154,7 +154,7 @@ const AIWireframePreview = ({
         ? `as children of the currently selected element (ID: "${elementSelected}")`
         : 'on the current page';
     onSendMessage(
-      `The wireframe "${name}" has been approved. Please build this layout ${where} using the sketch_wireframe result and the appropriate tools (stage_preview or createElement).`
+      `The wireframe "${name}" has been approved. Please build this layout ${where} using the sketch_wireframe result and the appropriate tools (preview_concept or createElement).`
     );
     setConfirming(false);
   }, [name, target, elementSelected, onSendMessage]);

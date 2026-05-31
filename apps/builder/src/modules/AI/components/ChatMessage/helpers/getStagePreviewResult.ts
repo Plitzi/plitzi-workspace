@@ -14,7 +14,7 @@ const getStagePreviewResult = (tools?: AiMessage['tools']): PreviewData | undefi
     return undefined;
   }
 
-  const stagePreviewTool = tools.findLast(t => t.name === 'stage_preview' && t.status === 'done');
+  const stagePreviewTool = tools.findLast(t => t.name === 'preview_concept' && t.status === 'done');
   if (!stagePreviewTool?.result) {
     return undefined;
   }

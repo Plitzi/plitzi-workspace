@@ -9,13 +9,25 @@ const inputSchema = z.object({
   pageId: z.string().describe('ID of the page to retrieve')
 });
 
+const pageElementSchema = z.object({
+  id: z.string().describe('Element ID'),
+  label: z.string().describe('Human-readable element label'),
+  type: z.string().describe('Element type (e.g. "button", "text", "box")'),
+  parentId: z.string().nullable().describe('Parent element ID, or null for root elements'),
+  attributes: z
+    .record(z.string(), z.unknown())
+    .describe('Element attributes/props — includes its current content, text, classes, etc.')
+});
+
 const outputSchema = z
   .object({
     page: elementSchema.describe('The page element with its attributes (slug, name, default, folder)'),
-    elementIds: z.array(z.string()).describe('IDs of all elements belonging to this page')
+    elements: z
+      .array(pageElementSchema)
+      .describe('Every element on the page with its label, type, parent and current attributes')
   })
   .nullable()
-  .describe('Page info and element IDs, or null if not found');
+  .describe('Page info and its elements, or null if not found');
 
 const getPageTool: McpTool = {
   name: 'get_page',
@@ -23,9 +35,9 @@ const getPageTool: McpTool = {
   mcpDefinition: {
     title: 'Get Page',
     description:
-      'Get a page by ID — returns the page element and the IDs of all its elements.\n\n' +
-      'To inspect specific elements use list_elements with rootId set to the pageId, ' +
-      'or get_element for a single element. Use get_pages to find available page IDs.',
+      'Get a page by ID — returns the page element and every element on it (id, label, type, parentId and ' +
+      'current attributes). Usually enough to find an element and read or change its content/props without ' +
+      'further calls. Use get_pages to find available page IDs; get_element only for one element in isolation.',
     inputSchema,
     outputSchema
   },

@@ -26,7 +26,13 @@ const MessageActions = ({ messageId, content }: MessageActionsProps) => {
     <div className="flex items-center gap-1 pl-1 font-mono text-[10px] opacity-0 transition-opacity group-hover:opacity-100">
       <CopyButton text={content} title="Copy message" />
 
-      <button type="button" className={buttonClass} onClick={handleFork} disabled={isStreaming} title="Fork from here (keep context)">
+      <button
+        type="button"
+        className={buttonClass}
+        onClick={handleFork}
+        disabled={isStreaming}
+        title="Fork from here (keep context)"
+      >
         <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
           <circle cx="4" cy="3.5" r="1.5" />
           <circle cx="4" cy="12.5" r="1.5" />
@@ -36,7 +42,13 @@ const MessageActions = ({ messageId, content }: MessageActionsProps) => {
         <span>fork</span>
       </button>
 
-      <button type="button" className={buttonClass} onClick={handleNewChat} disabled={isStreaming} title="New chat from this message">
+      <button
+        type="button"
+        className={buttonClass}
+        onClick={handleNewChat}
+        disabled={isStreaming}
+        title="New chat from this message"
+      >
         <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h9A1.5 1.5 0 0 1 14 4.5v5A1.5 1.5 0 0 1 12.5 11H6l-3 2.5V11H3.5A1.5 1.5 0 0 1 2 9.5z" />
           <path d="M8 5.5v3M6.5 7h3" />

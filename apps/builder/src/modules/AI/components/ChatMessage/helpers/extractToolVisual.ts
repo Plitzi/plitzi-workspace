@@ -3,11 +3,20 @@ import type { ColorPaletteData } from './getColorPaletteResult';
 import type { PreviewData } from './getStagePreviewResult';
 import type { StyleGuideData } from './getStyleGuideResult';
 import type { WireframeData } from './getWireframeResult';
+import type { Schema, Style } from '@plitzi/sdk-shared';
 import type { AiToolCall } from '@pmodules/AI/types';
 
+type RenderElementData = {
+  elementId: string;
+  schema?: Pick<Schema, 'flat'>;
+  style?: Pick<Style, 'platform' | 'cache'>;
+};
+
+// ask_question is intentionally NOT here: it is answered in the input-area slot (QuestionInput),
+// not rendered inline in the transcript.
 export const VISUAL_TOOL_NAMES = new Set([
-  'render_element',
-  'stage_preview',
+  'preview_element',
+  'preview_concept',
   'sketch_wireframe',
   'design_color_palette',
   'design_brand_identity',
@@ -15,8 +24,8 @@ export const VISUAL_TOOL_NAMES = new Set([
 ]);
 
 export type ToolVisual =
-  | { type: 'render_element'; data: { elementId: string } }
-  | { type: 'stage_preview'; data: PreviewData }
+  | { type: 'preview_element'; data: RenderElementData }
+  | { type: 'preview_concept'; data: PreviewData }
   | { type: 'wireframe'; data: WireframeData }
   | { type: 'color_palette'; data: ColorPaletteData }
   | { type: 'brand'; data: BrandData }
@@ -29,16 +38,30 @@ const extractToolVisual = (tools: AiToolCall[]): ToolVisual | undefined => {
       continue;
     }
 
-    if (t.name === 'render_element') {
-      const result = t.result as { baseElementId: string };
+    if (t.name === 'preview_element') {
+      const result = t.result as {
+        baseElementId: string;
+        schema?: Pick<Schema, 'flat'>;
+        style?: Pick<Style, 'platform' | 'cache'>;
+      };
+      // Only overlay the rendered schema when the agent proposed overrides; otherwise render the
+      // live element so unsaved edits still show.
+      const hasOverrides = !!(t.args && 'overrides' in t.args && t.args.overrides);
 
-      return { type: 'render_element', data: { elementId: result.baseElementId } };
+      return {
+        type: 'preview_element',
+        data: {
+          elementId: result.baseElementId,
+          schema: hasOverrides ? result.schema : undefined,
+          style: hasOverrides ? result.style : undefined
+        }
+      };
     }
 
-    if (t.name === 'stage_preview') {
+    if (t.name === 'preview_concept') {
       const result = t.result as Omit<PreviewData, 'html'>;
 
-      return { type: 'stage_preview', data: { ...result, html: t.args?.html as string | undefined } };
+      return { type: 'preview_concept', data: { ...result, html: t.args?.html as string | undefined } };
     }
 
     if (t.name === 'sketch_wireframe') {
