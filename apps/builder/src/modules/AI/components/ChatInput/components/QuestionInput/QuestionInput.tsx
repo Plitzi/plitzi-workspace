@@ -1,4 +1,6 @@
-import clsx from 'clsx';
+import Button from '@plitzi/plitzi-ui/Button';
+import Checkbox from '@plitzi/plitzi-ui/Checkbox';
+import Input from '@plitzi/plitzi-ui/Input';
 import { useCallback, useMemo, useState } from 'react';
 
 import type { AiQuestion } from './helpers';
@@ -13,26 +15,27 @@ export type QuestionInputProps = {
 const optionValue = (option: { label: string; value?: string }) => option.value ?? option.label;
 
 const QuestionInput = ({ questions, disabled = false, onSubmit }: QuestionInputProps) => {
+  const hasAnyOptions = useMemo(() => questions.some(q => (q.options?.length ?? 0) > 0), [questions]);
   const [selected, setSelected] = useState<Record<number, string[]>>({});
   const [custom, setCustom] = useState('');
+  // Free-form questions (no options) show the input directly; otherwise it stays hidden behind "Other".
+  const [showCustom, setShowCustom] = useState(!hasAnyOptions);
 
   const single = questions.length === 1 && !questions[0].multiSelect;
+  const allSelected = useMemo(() => questions.every((_, i) => (selected[i] ?? []).length > 0), [questions, selected]);
 
-  const toggle = useCallback(
-    (qIndex: number, value: string, multi: boolean) => {
-      setSelected(prev => {
-        const current = prev[qIndex] ?? [];
-        if (!multi) {
-          return { ...prev, [qIndex]: [value] };
-        }
+  const toggle = useCallback((qIndex: number, value: string, multi: boolean) => {
+    setSelected(prev => {
+      const current = prev[qIndex] ?? [];
+      if (!multi) {
+        return { ...prev, [qIndex]: [value] };
+      }
 
-        const next = current.includes(value) ? current.filter(v => v !== value) : [...current, value];
+      const next = current.includes(value) ? current.filter(v => v !== value) : [...current, value];
 
-        return { ...prev, [qIndex]: next };
-      });
-    },
-    [setSelected]
-  );
+      return { ...prev, [qIndex]: next };
+    });
+  }, []);
 
   const buildAnswer = useCallback((): string => {
     const trimmed = custom.trim();
@@ -62,8 +65,8 @@ const QuestionInput = ({ questions, disabled = false, onSubmit }: QuestionInputP
       return true;
     }
 
-    return questions.every((_, i) => (selected[i] ?? []).length > 0);
-  }, [questions, selected, custom]);
+    return allSelected;
+  }, [allSelected, custom]);
 
   const handleSubmit = useCallback(() => {
     const answer = buildAnswer();
@@ -97,57 +100,132 @@ const QuestionInput = ({ questions, disabled = false, onSubmit }: QuestionInputP
     [handleSubmit]
   );
 
-  return (
-    <div className="flex flex-col gap-2 border-t border-neutral-300 bg-neutral-100 px-3 py-2.5 dark:border-zinc-700 dark:bg-zinc-900">
-      {questions.map((q, i) => (
-        <div key={`${i}-${q.question}`} className="flex flex-col gap-1.5">
-          <p className="text-[12px] font-medium text-zinc-800 dark:text-zinc-200">{q.question}</p>
-          {q.options && q.options.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {q.options.map(option => {
-                const value = optionValue(option);
-                const active = (selected[i] ?? []).includes(value);
+  // Empty input losing focus → the user changed their mind, collapse it back to the "Other…" option.
+  const handleBlur = useCallback(() => {
+    if (!custom.trim() && hasAnyOptions) {
+      setShowCustom(false);
+    }
+  }, [custom, hasAnyOptions]);
 
-                return (
-                  <button
-                    key={value}
+  return (
+    <div className="border-t border-neutral-300 bg-neutral-100 px-3 py-3 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="overflow-hidden rounded-xl border border-violet-300/60 bg-white shadow-sm dark:border-violet-500/30 dark:bg-zinc-950">
+        <div className="flex items-center gap-1.5 border-b border-neutral-200 px-3 py-1.5 dark:border-zinc-800">
+          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-linear-to-br from-pink-500 to-sky-500" />
+          <span className="font-mono text-[10px] font-medium tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+            {questions.length > 1 ? `${questions.length} questions` : 'Needs your input'}
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-3 px-3 py-2.5">
+          {questions.map((q, i) => {
+            const values = selected[i] ?? [];
+
+            return (
+              <div key={`${i}-${q.question}`} className="flex flex-col gap-1.5">
+                <div className="flex items-baseline gap-1.5">
+                  {questions.length > 1 && (
+                    <span className="font-mono text-[11px] text-zinc-400 dark:text-zinc-600">{i + 1}.</span>
+                  )}
+                  <p className="text-[13px] leading-snug font-medium text-zinc-800 dark:text-zinc-100">{q.question}</p>
+                  {q.multiSelect && (
+                    <span className="font-mono text-[9px] tracking-wide text-zinc-400 dark:text-zinc-600">
+                      select all that apply
+                    </span>
+                  )}
+                </div>
+
+                {q.multiSelect && q.options && q.options.length > 0 && (
+                  <div className="flex flex-col gap-1">
+                    {q.options.map(option => {
+                      const value = optionValue(option);
+
+                      return (
+                        <Checkbox
+                          key={value}
+                          label={option.label}
+                          checked={values.includes(value)}
+                          disabled={disabled}
+                          size="sm"
+                          onChange={() => toggle(i, value, true)}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+
+                {!q.multiSelect && q.options && q.options.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {q.options.map(option => {
+                      const value = optionValue(option);
+
+                      return (
+                        <Button
+                          key={value}
+                          type="button"
+                          size="xs"
+                          intent={values.includes(value) ? 'primary' : 'secondary'}
+                          disabled={disabled}
+                          onClick={() => handleOptionClick(i, value, false)}
+                        >
+                          {option.label}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {!showCustom && (
+            <div className="flex items-center gap-2 pt-0.5">
+              <Button type="button" size="xs" intent="secondary" disabled={disabled} onClick={() => setShowCustom(true)}>
+                Other…
+              </Button>
+              {!single && (
+                <div className="ml-auto">
+                  <Button
                     type="button"
-                    disabled={disabled}
-                    onClick={() => handleOptionClick(i, value, !!q.multiSelect)}
-                    className={clsx(
-                      'rounded border px-2.5 py-1 text-[12px] transition-colors disabled:cursor-not-allowed disabled:opacity-40',
-                      active
-                        ? 'border-violet-500 bg-violet-600 text-white dark:border-violet-400 dark:bg-violet-500'
-                        : 'border-zinc-300 text-zinc-700 hover:bg-zinc-200 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800'
-                    )}
+                    size="sm"
+                    intent="primary"
+                    disabled={disabled || !allSelected}
+                    onClick={handleSubmit}
                   >
-                    {option.label}
-                  </button>
-                );
-              })}
+                    Send
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {showCustom && (
+            <div className="flex items-center gap-2 pt-0.5">
+              <div className="min-w-0 flex-1">
+                <Input
+                  value={custom}
+                  disabled={disabled}
+                  autoFocus
+                  size="sm"
+                  placeholder="Type your answer…"
+                  onChange={setCustom}
+                  onKeyDown={handleKeyDown}
+                  onBlur={handleBlur}
+                />
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                intent="primary"
+                disabled={disabled || !canSubmit}
+                onMouseDown={e => e.preventDefault()}
+                onClick={handleSubmit}
+              >
+                Send
+              </Button>
             </div>
           )}
         </div>
-      ))}
-
-      <div className="flex items-center gap-2">
-        <input
-          type="text"
-          value={custom}
-          disabled={disabled}
-          onChange={e => setCustom(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Other — type your answer…"
-          className="min-w-0 flex-1 rounded border border-neutral-300 bg-white px-2.5 py-1.5 text-[12.5px] text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-violet-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
-        />
-        <button
-          type="button"
-          disabled={disabled || !canSubmit}
-          onClick={handleSubmit}
-          className="shrink-0 rounded-lg bg-violet-600 px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-violet-500"
-        >
-          Send
-        </button>
       </div>
     </div>
   );
