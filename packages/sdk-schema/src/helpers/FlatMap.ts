@@ -432,7 +432,7 @@ class FlatMap {
   };
 
   flatAsTemplate = (style: Style, elementId: Element['id'], excludeRoot = false) => {
-    const elementsStyle: Style = EMPTY_STYLE_SCHEMA;
+    const elementsStyle: Style = { ...EMPTY_STYLE_SCHEMA, platform: { desktop: {}, tablet: {}, mobile: {} } };
     let variables: SchemaVariable[] = [];
     if (!elementId) {
       return { elements: { acum: {}, item: undefined }, elementsStyle, variables };
@@ -453,7 +453,7 @@ class FlatMap {
       set(elements.acum, `${id}.definition.rootId`, elements.item?.id);
       const calculatedStyle = calculateInheriting(
         element,
-        undefined,
+        element.definition.type,
         this.flat,
         style.platform,
         {},

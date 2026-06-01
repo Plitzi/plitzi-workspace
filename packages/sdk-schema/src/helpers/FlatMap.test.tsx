@@ -4,6 +4,7 @@ import { describe, it, expect } from 'vitest';
 import FlatMap from './FlatMap';
 import schema1 from '../tests/fixtures/json/schema1.json';
 import styleSchema1 from '../tests/fixtures/json/styleSchema1.json';
+import styleSchema2 from '../tests/fixtures/json/styleSchema2.json';
 
 import type { DropPosition, Schema, Style } from '@plitzi/sdk-shared';
 
@@ -902,6 +903,191 @@ describe('Testing FlatMap', () => {
           value: 'purple'
         }
       ]
+    });
+  });
+
+  it('flatAsTemplate - non-container element', () => {
+    const instance = new FlatMap({
+      flat: cloneDeep(schema1.flat) as Schema['flat'],
+      variables: cloneDeep(schema1.variables) as Schema['variables']
+    });
+    const { elements, elementsStyle, variables } = instance.flatAsTemplate(
+      styleSchema1 as Style,
+      '669b33dcf636e501810d3d1d'
+    );
+    expect({ elements, elementsStyle, variables }).toStrictEqual({
+      elements: {
+        acum: {
+          id_0d3d1d: {
+            id: 'id_0d3d1d',
+            attributes: {
+              content: 'Heading',
+              subType: 'h1'
+            },
+            definition: {
+              label: 'Nice Heading',
+              type: 'heading',
+              bindings: {},
+              styleSelectors: {
+                base: 'heading-rdGM'
+              },
+              initialState: {
+                visibility: true
+              },
+              rootId: 'id_0d3d1d',
+              parentId: null
+            }
+          }
+        },
+        item: {
+          id: 'id_0d3d1d',
+          attributes: {
+            content: 'Heading',
+            subType: 'h1'
+          },
+          definition: {
+            label: 'Nice Heading',
+            type: 'heading',
+            bindings: {},
+            styleSelectors: {
+              base: 'heading-rdGM'
+            },
+            initialState: {
+              visibility: true
+            },
+            rootId: 'id_0d3d1d',
+            parentId: null
+          }
+        }
+      },
+      elementsStyle: {
+        cache: '',
+        mode: 'desktop-first',
+        platform: {
+          desktop: {
+            'heading-rdGM': {
+              name: 'heading-rdGM',
+              type: 'class',
+              attributes: {
+                base: {
+                  default: {
+                    'background-color': 'var(--primaryColor)',
+                    color: 'var(--fancyVariableColor)'
+                  }
+                }
+              },
+              cache: '.heading-rdGM{color:var(--fancyVariableColor);background-color:var(--primaryColor);}'
+            }
+          },
+          mobile: {},
+          tablet: {}
+        },
+        variables: {},
+        theme: {
+          default: 'system',
+          schemes: ['light', 'dark']
+        }
+      },
+      variables: [
+        {
+          name: 'fancyVariableColor',
+          category: '',
+          type: 'color',
+          value: 'green',
+          subValues: [
+            {
+              when: {
+                id: '1109c974-3bd1-49cc-85ac-1b7826c887e0',
+                combinator: 'and',
+                rules: [
+                  {
+                    id: '7ec37a9f-9e85-4413-b16e-f42ac439407e',
+                    field: 'queryParams.test',
+                    operator: '=',
+                    value: 'test',
+                    enabled: true
+                  }
+                ]
+              },
+              value: 'red'
+            },
+            {
+              value: 'orange',
+              when: {
+                id: 'b29c4db6-2b5f-42e1-9799-5ce0ccb90ab0',
+                combinator: 'and',
+                rules: [
+                  {
+                    id: '1273f0b3-7361-464f-8d63-ae93ac39c79a',
+                    field: 'queryParams.test',
+                    operator: '=',
+                    value: 'test2',
+                    enabled: true
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          category: '',
+          name: 'primaryColor',
+          subValues: [],
+          type: 'text',
+          value: 'purple'
+        }
+      ]
+    });
+  });
+
+  it('flatAsTemplate - copies global element styles (type element)', () => {
+    const instance = new FlatMap({
+      flat: cloneDeep(schema1.flat) as Schema['flat'],
+      variables: cloneDeep(schema1.variables) as Schema['variables']
+    });
+    const { elementsStyle, variables } = instance.flatAsTemplate(styleSchema2 as Style, '669b33dcf636e501810d3d1d');
+    expect({ elementsStyle, variables }).toStrictEqual({
+      elementsStyle: {
+        cache: '',
+        mode: 'desktop-first',
+        platform: {
+          desktop: {
+            'heading-rdGM': {
+              name: 'heading-rdGM',
+              type: 'class',
+              attributes: {
+                base: {
+                  default: {
+                    'font-weight': 'bold'
+                  }
+                }
+              },
+              cache: '.heading-rdGM{font-weight:bold;}'
+            },
+            heading: {
+              name: 'heading',
+              type: 'element',
+              componentType: 'heading',
+              attributes: {
+                base: {
+                  default: {
+                    'font-size': '24px'
+                  }
+                }
+              },
+              cache: 'heading{font-size:24px;}'
+            }
+          },
+          mobile: {},
+          tablet: {}
+        },
+        variables: {},
+        theme: {
+          default: 'system',
+          schemes: ['light', 'dark']
+        }
+      },
+      variables: []
     });
   });
 
