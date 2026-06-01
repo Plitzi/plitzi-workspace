@@ -48,9 +48,9 @@ const QuestionInput = ({ questions, disabled = false, onSubmit }: QuestionInputP
       .filter(Boolean);
 
     if (lines.length === 1 && questions.length === 1 && !trimmed) {
-      const onlyValue = ((selected[0] as string[] | undefined) ?? [])[0];
+      const vals = (selected[0] as string[] | undefined) ?? [];
 
-      return onlyValue ? onlyValue : lines[0];
+      return vals.length === 1 ? vals[0] : lines[0];
     }
 
     if (trimmed) {
