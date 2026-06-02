@@ -2,6 +2,8 @@
 
 Turborepo monorepo that contains all Plitzi frontend apps and shared packages.
 
+Human-readable guides: [docs/en/](./docs/en/README.md) · [docs/es/](./docs/es/README.md). This file is the full contributor convention reference.
+
 ## Stack
 
 - **Language**: TypeScript + React 19

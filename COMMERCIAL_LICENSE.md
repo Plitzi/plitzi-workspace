@@ -1,5 +1,7 @@
 # Commercial License - Plitzi
 
+**Español:** [COMMERCIAL_LICENSE.es.md](./COMMERCIAL_LICENSE.es.md)
+
 The source code of **Plitzi** is available under the GNU Affero General Public License v3 (AGPLv3).
 
 Commercial use is permitted under AGPLv3 **only if you fully comply with its requirements**, including making your complete source code publicly available.

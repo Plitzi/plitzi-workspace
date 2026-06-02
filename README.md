@@ -3,8 +3,10 @@
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPLv3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0.en.html)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/plitzi/plitzi-workspace/ci.yml?branch=main)](https://github.com/plitzi/plitzi-workspace/actions)
 [![Coverage Status](https://img.shields.io/coveralls/github/plitzi/plitzi-workspace/main.svg?style=flat)](https://coveralls.io/github/plitzi/plitzi-workspace?branch=main)
-[![npm version](https://img.shields.io/npm/v/@plitzi/sdk.svg)](https://www.npmjs.com/package/@plitzi/sdk)
+[![npm version](https://img.shields.io/npm/v/@plitzi/plitzi-sdk.svg)](https://www.npmjs.com/package/@plitzi/plitzi-sdk)
 [![Community Chat](https://img.shields.io/badge/chat-on%20discord-7289da.svg)](https://discord.gg/plitzi)
+
+**Español:** [README.es.md](./README.es.md)
 
 ---
 
@@ -19,7 +21,7 @@ Plitzi is an open-source **web application builder** designed to empower develop
 - 🔧 **Modular SDK & Builder:** Fully open and extensible toolkit to design and customize web apps.
 - 🌐 **Cloud & Self-Hosting:** Deploy on official Plitzi cloud or your own infrastructure.
 - 🤝 **Community-Driven:** Contributions and improvements are encouraged and welcomed.
-- 📚 **Comprehensive Documentation:** Clear guides and examples to get started quickly.
+- 📚 **Documentation:** Guides in [English](./docs/en/README.md) and [Spanish](./docs/es/README.md).
 - 🛠 **Developer Tools:** Built-in debugging and dev utilities for rapid iteration.
 
 ---
@@ -34,6 +36,7 @@ Plitzi is an open-source **web application builder** designed to empower develop
 │  ├─ server/           # SSR/RSC/MCP Server
 ├─ packages/
 │  ├─ sdk-auth/         # Authentication SDK components
+│  ├─ sdk-collections/  # Collections
 │  ├─ sdk-data-source/  # Data source integrations
 │  ├─ sdk-dev-tools/    # Developer utilities
 │  ├─ sdk-elements/     # UI elements and components
@@ -41,14 +44,33 @@ Plitzi is an open-source **web application builder** designed to empower develop
 │  ├─ sdk-interactions/ # User interaction handlers
 │  ├─ sdk-navigation/   # Navigation components
 │  ├─ sdk-plugins/      # Plugin system
+│  ├─ sdk-schema/       # Schema utilities
 │  ├─ sdk-shared/       # Shared utilities and types
 │  ├─ sdk-state/        # State management
 │  ├─ sdk-store/        # Global state store
 │  ├─ sdk-style/        # Styling system
 │  └─ sdk-variables/    # Variable management
+├─ docs/
+│  ├─ en/               # English documentation
+│  └─ es/               # Spanish documentation
 ├─ LICENSE              # AGPL-3.0 License
-├─ README.md            # This file
+├─ README.md / README.es.md
+├─ claude.md
+├─ CODE_OF_CONDUCT.md
+├─ CONTRIBUTOR_TOS.md / CONTRIBUTOR_TOS.es.md
+└─ COMMERCIAL_LICENSE.md / COMMERCIAL_LICENSE.es.md
 ```
+
+---
+
+## Documentation
+
+| Language | Guide                                    |
+| -------- | ---------------------------------------- |
+| English  | [docs/en/README.md](./docs/en/README.md) |
+| Español  | [docs/es/README.md](./docs/es/README.md) |
+
+Quick links: [Getting started (EN)](./docs/en/getting-started.md) · [Primeros pasos (ES)](./docs/es/getting-started.md) · [Local setup](./docs/en/local-setup.md) · [Configuración local](./docs/es/local-setup.md)
 
 ---
 
@@ -61,21 +83,21 @@ git clone https://github.com/plitzi/plitzi-workspace.git
 cd plitzi-workspace
 ```
 
-2. **Install dependencies**
+2. **Install dependencies** (Yarn 4)
 
 ```bash
-npm install
+yarn install
 ```
 
-3. **Run the builder locally**
+3. **Run apps locally**
 
 ```bash
-npm run dev
+yarn start
 ```
 
-4. **Explore the SDK and contribute**
+4. **Explore and contribute**
 
-Check the `apps/sdk` and `apps/builder` folders for source code and examples.
+See [docs/en/getting-started.md](./docs/en/getting-started.md) or [docs/es/getting-started.md](./docs/es/getting-started.md). Source lives under `apps/sdk`, `apps/builder`, and `apps/server`.
 
 ---
 
@@ -97,7 +119,7 @@ const app = new PlitziApp({
 app.start();
 ``` -->
 
-For more details, see the [documentation](https://github.com/plitzi/plitzi-workspace/wiki) and the `apps/sdk` or `apps/builder` folder.
+For more details, see [docs/en/](./docs/en/README.md), [docs/es/](./docs/es/README.md), or the [GitHub wiki](https://github.com/plitzi/plitzi-workspace/wiki).
 
 ---
 
@@ -105,7 +127,7 @@ For more details, see the [documentation](https://github.com/plitzi/plitzi-works
 
 We welcome contributions from everyone! To keep the project healthy and collaborative, please follow these guidelines:
 
-- Read the [Code of Conduct](https://github.com/plitzi/plitzi-workspace/blob/main/CODE_OF_CONDUCT.md).
+- Read the [Code of Conduct](./CODE_OF_CONDUCT.md).
 - Open issues for bugs, features, or questions before submitting PRs.
 - Fork the repository and create feature branches.
 - Write clear, descriptive commit messages.
@@ -127,7 +149,8 @@ Join our community to discuss ideas, get help, or contribute:
 
 ### Getting Help
 
-- **Browse the [Wiki](https://github.com/plitzi/plitzi-workspace/wiki)** for guides and FAQs.
+- **Read the docs:** [English](./docs/en/README.md) · [Español](./docs/es/README.md)
+- **Browse the [Wiki](https://github.com/plitzi/plitzi-workspace/wiki)** for additional guides and FAQs.
 - **Open a [GitHub Issue](https://github.com/plitzi/plitzi-workspace/issues)** for bugs or feature requests.
 - **Ask questions in [Discussions](https://github.com/plitzi/plitzi-workspace/discussions)** or on [Discord](https://discord.gg/plitzi).
 
@@ -137,17 +160,9 @@ Join our community to discuss ideas, get help, or contribute:
 
 This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
 
-If you want to use Plitzi in a proprietary or closed-source environment, a commercial license is required.
+Commercial licenses are designed for companies that want to keep their code private, build proprietary products, or avoid AGPL obligations. If you need that, you must obtain a commercial license.
 
-Commercial licenses are designed for companies that want to:
-
-- Keep their code private
-- Build proprietary products
-- Avoid AGPL obligations
-
-If you want to use Plitzi in a proprietary or closed-source environment, you must obtain a commercial license.
-
-See [COMMERCIAL_LICENSE.md](./COMMERCIAL_LICENSE.md) for details.
+See [COMMERCIAL_LICENSE.md](./COMMERCIAL_LICENSE.md) ([español](./COMMERCIAL_LICENSE.es.md)) for details.
 
 ---
 
