@@ -58,7 +58,7 @@ export type ElementDefinition = {
   type: string;
   parentId?: Element['id'];
   items?: Element['id'][];
-  styleSelectors: { base: string } & Omit<Record<string, string>, 'base'>;
+  styleSelectors: { base: string; [selector: string]: string };
   bindings?: Partial<Record<BindingCategory, ElementBinding[]>>;
   interactions?: Record<string, ElementInteraction>;
   initialState?: {
@@ -74,19 +74,24 @@ export type ElementDefinition = {
   loadStrategy?: ElementLoadStrategy;
 };
 
-export type Element<TAttributes extends Record<string, unknown> = Omit<{ [key: string]: unknown }, 'subType'>> = {
+export type Element<TAttributes extends Record<string, unknown> = Record<string, unknown>> = {
   id: string;
   attributes: TAttributes & { subType?: string };
   definition: ElementDefinition;
 };
 
-export type SchemaVariable = {
+type SchemaVariableBase<TType extends string, TValue> = {
   name: string;
   category: string;
-  type: 'text' | 'number' | 'email' | 'password' | 'select' | 'select2' | 'checkbox' | 'textarea' | 'color' | 'switch';
-  value: string;
-  subValues: { when: RuleGroup; value: string }[];
+  type: TType;
+  value: TValue;
+  subValues: { when: RuleGroup; value: TValue }[];
 };
+
+export type SchemaVariable =
+  | SchemaVariableBase<'number', number>
+  | SchemaVariableBase<'checkbox' | 'switch', boolean>
+  | SchemaVariableBase<'text' | 'email' | 'password' | 'select' | 'select2' | 'textarea' | 'color', string>;
 
 export type PageFolder = { id: string; name: string; slug: string; parentId?: PageFolder['id'] };
 
