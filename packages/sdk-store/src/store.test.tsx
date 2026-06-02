@@ -309,6 +309,51 @@ describe('store enabled / options', () => {
     });
   });
 
+  describe('useStore: switching arg shape between renders', () => {
+    // The typed overloads intentionally forbid a value that is sometimes a path and
+    // sometimes an array of paths; this cast exercises that runtime scenario, which
+    // is what would break the hook order if the implementation branched on the arg.
+    const useStoreDynamic = useStore as unknown as (
+      arg: PathOf<AppState> | ReadonlyArray<PathOf<AppState>>
+    ) => [unknown, ...unknown[]];
+
+    it('keeps a stable hook order when arg switches single path → array → single path', () => {
+      const store = makeStore();
+      let arg: PathOf<AppState> | ReadonlyArray<PathOf<AppState>> = 'count';
+
+      const { result, rerender } = renderHook(() => useStoreDynamic(arg), { wrapper: makeWrapper(store) });
+
+      expect(result.current[0]).toBe(0);
+
+      arg = ['count', 'user.name'];
+      rerender();
+      expect(result.current[0]).toEqual([0, 'Alice']);
+
+      arg = 'user.name';
+      rerender();
+      expect(result.current[0]).toBe('Alice');
+    });
+
+    it('keeps reacting to updates after the arg shape changes', () => {
+      const store = makeStore();
+      let arg: PathOf<AppState> | ReadonlyArray<PathOf<AppState>> = 'count';
+
+      const { result, rerender } = renderHook(() => useStoreDynamic(arg), { wrapper: makeWrapper(store) });
+
+      arg = ['count', 'user.name'];
+      rerender();
+
+      act(() => store.setState('user.name', 'Bob'));
+      expect(result.current[0]).toEqual([0, 'Bob']);
+
+      arg = 'count';
+      rerender();
+
+      act(() => store.setState('count', 42));
+      expect(result.current[0]).toBe(42);
+    });
+  });
+
   describe('useStore: dynamic paths', () => {
     it('reads the correct value for a dynamic path', () => {
       const store = makeStore();

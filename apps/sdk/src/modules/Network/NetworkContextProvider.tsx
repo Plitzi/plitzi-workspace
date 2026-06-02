@@ -1,4 +1,4 @@
-import { useApolloClient } from '@apollo/client/react';
+import { getApolloContext } from '@apollo/client/react';
 import { get, cloneDeep } from '@plitzi/plitzi-ui/helpers';
 import { useEffect, useMemo, useState, useCallback, use } from 'react';
 
@@ -52,8 +52,7 @@ const NetworkContextProvider = ({
   debugMode = false
 }: NetworkContextProviderProps) => {
   const offlineDataAvailable = offlineMode && !!offlineData && !!offlineData.schema;
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const client = typeof window === 'undefined' && offlineDataAvailable ? undefined : useApolloClient();
+  const client = use(getApolloContext()).client;
   const [loading, setLoading] = useState(!(offlineMode && !!offlineData));
   const [error, setError] = useState<ReactNode | undefined>(undefined);
   const { components } = use(ComponentContext);

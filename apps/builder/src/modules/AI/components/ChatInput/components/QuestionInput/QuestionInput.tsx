@@ -100,6 +100,10 @@ const QuestionInput = ({ questions, disabled = false, onSubmit }: QuestionInputP
     [handleSubmit]
   );
 
+  const handleClickOther = useCallback(() => {
+    setShowCustom(true);
+  }, []);
+
   // Empty input losing focus → the user changed their mind, collapse it back to the "Other…" option.
   const handleBlur = useCallback(() => {
     if (!custom.trim() && hasAnyOptions) {
@@ -180,7 +184,7 @@ const QuestionInput = ({ questions, disabled = false, onSubmit }: QuestionInputP
 
           {!showCustom && (
             <div className="flex items-center gap-2 pt-0.5">
-              <Button type="button" size="xs" intent="secondary" disabled={disabled} onClick={() => setShowCustom(true)}>
+              <Button type="button" size="xs" intent="secondary" disabled={disabled} onClick={handleClickOther}>
                 Other…
               </Button>
               {!single && (

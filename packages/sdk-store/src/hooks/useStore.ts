@@ -34,6 +34,8 @@ import type {
 export { defaultMultiEqualityFn } from './shared';
 export type { MultiPathReturn, UseStoreOptions, UseStoreMultiOptions, UseStoreReturn };
 
+const EMPTY_PATHS: ReadonlyArray<never> = [];
+
 function useSingleStore<TState extends object>(
   store: StoreApi<TState>,
   pathOrFn: PathOf<TState> | ((state: TState) => PathOf<TState>) | undefined,
@@ -279,14 +281,24 @@ function useStore<TState extends object>(
   options: UseStoreOptions<any, any> = {}
 ): unknown {
   const store = useResolvedStore(options.store, 'useStore');
+  const isMulti = Array.isArray(arg);
 
-  if (Array.isArray(arg)) {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useMultiStore(store, arg as ReadonlyArray<PathOrFn<TState>>, options);
-  }
+  // Both branches always run to keep the hook order stable when a call site
+  // switches between a single path and an array of paths. The inactive branch is
+  // disabled so it never subscribes nor runs a transformer over the wrong shape.
+  const singleResult = useSingleStore(
+    store,
+    isMulti ? undefined : (arg as PathOf<TState> | ((state: TState) => PathOf<TState>) | undefined),
+    isMulti ? { ...options, enabled: false, transformer: undefined } : options
+  );
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  return useSingleStore(store, arg as PathOf<TState> | ((state: TState) => PathOf<TState>) | undefined, options);
+  const multiResult = useMultiStore(
+    store,
+    isMulti ? (arg as ReadonlyArray<PathOrFn<TState>>) : EMPTY_PATHS,
+    isMulti ? options : { ...options, enabled: false, transformer: undefined }
+  );
+
+  return isMulti ? multiResult : singleResult;
 }
 
 export type { PathSetters, PathValues };
