@@ -44,13 +44,17 @@ import type {
 
 function createStore<TState extends object>(
   initializer: Partial<TState> | ((set: SetState<TState>, get: GetState<TState>) => Partial<TState>),
-  storeOptions?: { logger?: StoreLogger<TState> }
+  storeOptions?: { logger?: StoreLogger<TState>; parent?: StoreApi<TState> }
 ): StoreApi<TState> {
-  let state: TState;
+  let state = {} as TState;
   const listeners = new Set<Listener>();
   const pathListeners = new Map<Path, Set<Listener>>();
+  const parent = storeOptions?.parent;
 
-  const getState: GetState<TState> = () => state;
+  // Live scope chain: reads resolve through the parent and own keys shadow inherited ones.
+  const getState: GetState<TState> = () => (parent ? { ...parent.getState(), ...state } : state);
+
+  const ownsRootKey = (path: Path): boolean => path.split('.')[0] in (state as Record<string, unknown>);
 
   const setState: SetState<TState> = <P extends PathOf<TState>>(
     path: P | undefined,
@@ -61,6 +65,13 @@ function createStore<TState extends object>(
       | ((prev: TState) => TState),
     canPropagate: boolean = true
   ) => {
+    // Writes target the nearest scope that owns the path; inherited paths delegate to the parent.
+    if (path && parent && !ownsRootKey(path) && path.split('.')[0] in (parent.getState() as Record<string, unknown>)) {
+      parent.setState(path, value as PathValue<TState, P>, canPropagate);
+
+      return;
+    }
+
     const prevState = state;
 
     const resolvedValue = path
@@ -124,7 +135,29 @@ function createStore<TState extends object>(
 
   state = (typeof initializer === 'function' ? initializer(setState, getState) : initializer) as TState;
 
-  const api: StoreApi<TState> = { getState, setState, subscribe, subscribePath };
+  // Forward parent changes to this scope's consumers; shadowed (owned) paths are ignored, and
+  // consumer-level equality filters out no-op wakeups for inherited paths that did not change.
+  let parentUnsub: (() => void) | undefined;
+  if (parent) {
+    parentUnsub = parent.subscribe(() => {
+      listeners.forEach(l => l());
+      pathListeners.forEach((set, candidate) => {
+        if (ownsRootKey(candidate)) {
+          return;
+        }
+
+        set.forEach(l => l());
+      });
+    });
+  }
+
+  const destroy = () => {
+    parentUnsub?.();
+    listeners.clear();
+    pathListeners.clear();
+  };
+
+  const api: StoreApi<TState> = { getState, setState, subscribe, subscribePath, destroy };
 
   if (import.meta.env.MODE === 'test') {
     (api as StoreApiInternal<TState>).listeners = listeners;

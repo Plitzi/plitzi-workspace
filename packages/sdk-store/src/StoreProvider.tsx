@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { pick } from '@plitzi/plitzi-ui/helpers/lodash';
-import { use, useMemo, useRef } from 'react';
+import { use, useEffect, useMemo, useRef } from 'react';
 
 import createStore from './createStore';
 import useStoreSync from './hooks/useStoreSync';
@@ -15,8 +14,15 @@ export type StoreProviderProps<TState extends object = any> = {
   store?: StoreApi<TState>;
   path?: string;
   value?: Partial<TState> | ((state: TState) => TState);
-  /** true = inherit all parent keys, string[] = inherit only listed keys */
-  inherit?: boolean | ReadonlyArray<keyof TState>;
+  /**
+   * How this scope derives from the parent store:
+   * - `'snapshot'`: copy parent keys once at init; isolated thereafter (writes stay local, parent updates do
+   *   not propagate). Use for draft/diverge editors.
+   * - `'live'`: live scope chain — reads fall through to the parent, own keys shadow inherited ones, and writes
+   *   delegate to the owning scope. Parent updates propagate.
+   * - `undefined` (default): no inheritance.
+   */
+  inherit?: 'snapshot' | 'live';
   autoSync?: boolean;
   logger?: StoreLogger<TState>;
   children?: ReactNode;
@@ -26,23 +32,16 @@ const StoreProvider = <TState extends object = any>({
   store,
   path,
   value,
-  inherit = false,
+  inherit,
   autoSync = true,
   logger,
   children
 }: StoreProviderProps<TState>) => {
   const parentStore = use<StoreApi<TState> | undefined>(StoreContext);
   const storeRef = useRef<StoreApi<TState>>(undefined);
+  const liveChain = inherit === 'live';
   const storeState = useMemo(() => {
-    let parentState = {} as TState;
-    if (inherit && parentStore) {
-      const fullState = parentStore.getState();
-      if (inherit === true) {
-        parentState = fullState;
-      } else if (Array.isArray(inherit)) {
-        parentState = pick(fullState as Record<keyof TState, unknown>, inherit);
-      }
-    }
+    const parentState = inherit === 'snapshot' && parentStore ? parentStore.getState() : ({} as TState);
 
     return typeof value === 'function' ? value(parentState) : { ...parentState, ...value };
   }, [inherit, parentStore, value]);
@@ -51,9 +50,21 @@ const StoreProvider = <TState extends object = any>({
     if (store) {
       storeRef.current = store;
     } else {
-      storeRef.current = createStore<TState>(() => storeState, { logger });
+      storeRef.current = createStore<TState>(() => storeState, {
+        logger,
+        parent: liveChain ? parentStore : undefined
+      });
     }
   }
+
+  useEffect(
+    () => () => {
+      if (liveChain && !store) {
+        storeRef.current?.destroy?.();
+      }
+    },
+    [liveChain, store]
+  );
 
   const syncEnabled = !!value && autoSync;
 

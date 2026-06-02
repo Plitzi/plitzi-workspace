@@ -16,6 +16,8 @@ import type {
   PostCallbackNode
 } from '@plitzi/sdk-shared';
 
+const MAX_TWIG_RESOLUTION_PASSES = 5;
+
 const processParams = (
   type: InteractionCallback['type'],
   params: Record<string, unknown>,
@@ -30,10 +32,21 @@ const processParams = (
   return Object.keys(params).reduce((acum, param) => {
     let value = params[param];
     if (type !== 'trigger') {
-      let timeout = 5;
-      while (typeof value === 'string' && hasValidToken(value) && timeout > 0) {
+      let passes = MAX_TWIG_RESOLUTION_PASSES;
+      while (typeof value === 'string' && hasValidToken(value) && passes > 0) {
         value = processTwig(value, { ...flowValues, ...globalValues }, false, true);
-        timeout--;
+        passes--;
+      }
+
+      if (typeof value === 'string' && hasValidToken(value)) {
+        pConsole.warning(
+          'interactions',
+          <span>
+            Twig token resolution exceeded {MAX_TWIG_RESOLUTION_PASSES} passes for <b>{param}</b>, leaving unresolved
+            tokens
+          </span>,
+          { param, value }
+        );
       }
     }
 
@@ -69,44 +82,56 @@ const processNode = async (
     ...globalParams,
     ...processParams(type, params, flowParams, globalParams, action)
   };
-  switch (type) {
-    case 'callback':
-    case 'globalCallback': {
-      if (!elementId) {
-        return { status: 'failed', result, postCallbacks, whenParams };
+  try {
+    switch (type) {
+      case 'callback':
+      case 'globalCallback': {
+        if (!elementId) {
+          return { status: 'failed', result, postCallbacks, whenParams };
+        }
+
+        const receptorCallback = get(callbacksAvailables, `${elementId}.${action}`) as InteractionCallback | undefined;
+        if (!receptorCallback) {
+          return { status: 'failed', result, postCallbacks, whenParams };
+        }
+
+        const { callback, postCallback } = receptorCallback;
+        if (callback) {
+          result = await callback(paramsToCallback);
+        }
+
+        if (postCallback) {
+          postCallbacks.push({ id, callback: postCallback, params: { ...paramsToCallback, [id]: result } });
+        }
+
+        break;
       }
 
-      const receptorCallback = get(callbacksAvailables, `${elementId}.${action}`) as InteractionCallback | undefined;
-      if (!receptorCallback) {
-        return { status: 'failed', result, postCallbacks, whenParams };
+      case 'utility': {
+        const { callback, postCallback } = get(utility, action, {}) as InteractionCallback;
+        if (callback) {
+          result = await callback(paramsToCallback);
+        }
+
+        if (postCallback) {
+          postCallbacks.push({ id, callback: postCallback, params: { ...paramsToCallback, [id]: result } });
+        }
+
+        break;
       }
 
-      const { callback, postCallback } = receptorCallback;
-      if (callback) {
-        result = await callback(paramsToCallback);
-      }
-
-      if (postCallback) {
-        postCallbacks.push({ id, callback: postCallback, params: { ...paramsToCallback, [id]: result } });
-      }
-
-      break;
+      default:
     }
+  } catch (e: unknown) {
+    pConsole.danger(
+      'interactions',
+      <span>
+        Interaction node failed <b>{action}</b>
+      </span>,
+      { error: e instanceof Error ? e.message : String(e), node }
+    );
 
-    case 'utility': {
-      const { callback, postCallback } = get(utility, action, {}) as InteractionCallback;
-      if (callback) {
-        result = await callback(paramsToCallback);
-      }
-
-      if (postCallback) {
-        postCallbacks.push({ id, callback: postCallback, params: { ...paramsToCallback, [id]: result } });
-      }
-
-      break;
-    }
-
-    default:
+    return { status: 'failed', result, postCallbacks, whenParams };
   }
 
   return { status: 'success', result, postCallbacks, whenParams };

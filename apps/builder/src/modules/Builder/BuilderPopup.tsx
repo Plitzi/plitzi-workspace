@@ -47,7 +47,7 @@ const BuilderPopup = ({ previewMode = false, segmentIdentifier = '' }: BuilderPo
 
   return (
     <div className="flex w-full grow">
-      <StoreProvider value={generateStoreState} inherit logger={createStoreDevToolsLogger('segment')}>
+      <StoreProvider value={generateStoreState} inherit="snapshot" logger={createStoreDevToolsLogger('segment')}>
         <BuilderProvider
           schemaName={definition.name}
           baseElementId={definition.baseElementId}

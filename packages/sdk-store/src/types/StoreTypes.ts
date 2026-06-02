@@ -97,6 +97,7 @@ export type StoreApi<T> = {
   setState: SetState<T>;
   subscribe: (listener: Listener) => () => void;
   subscribePath: <P extends PathOf<T>>(path: P, listener: Listener) => () => void;
+  destroy?: () => void;
 };
 
 export type StoreApiInternal<T> = StoreApi<T> & {

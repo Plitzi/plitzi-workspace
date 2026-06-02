@@ -4033,6 +4033,7 @@ __metadata:
     eslint: "npm:^9.39.4"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.0.14"
+    vitest: "npm:^4.1.7"
   languageName: unknown
   linkType: soft
 

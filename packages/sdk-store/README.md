@@ -28,7 +28,17 @@ helpers/
 const store = createStore<MyState>({ count: 0, user: { name: 'Alice' } });
 // or with an initializer function:
 const store = createStore<MyState>((setState, getState) => ({ count: 0 }));
+
+// Scoped store: reads fall through to a parent store (see "Scoped stores" below)
+const child = createStore<MyState>({ record }, { parent: rootStore });
+
+// With a devtools logger
+const store = createStore<MyState>({ count: 0 }, { logger: myLogger });
 ```
+
+`StoreApi` exposes `getState`, `setState`, `subscribe`, `subscribePath`, and `destroy?()`. Call
+`destroy()` to detach a scoped store from its parent and clear its listeners (prevents leaks for
+short-lived scopes like list items). `StoreProvider` calls it automatically on unmount.
 
 ## `StoreProvider`
 
@@ -39,14 +49,68 @@ Wraps children with a store context. Creates a new store by default; pass `store
   <App />
 </StoreProvider>
 
-// Inherit specific keys from parent store
-<StoreProvider inherit={['schema', 'style']} value={{ extra: true }}>
+// Inherit from the parent — two modes via the `inherit` prop:
+<StoreProvider inherit="snapshot" value={{ extra: true }}>   {/* copy once at init, isolated */}
+  <Child />
+</StoreProvider>
+<StoreProvider inherit="live" value={{ record }}>            {/* live scope chain (see below) */}
   <Child />
 </StoreProvider>
 
 // Sync a sub-path from parent props
 <StoreProvider path="schema.flat" value={flatMap}>
   <Child />
+</StoreProvider>
+```
+
+> **`inherit` modes:** `'snapshot'` copies parent keys **once** at init — isolated thereafter: writes stay
+> local and parent updates do **not** propagate (use for draft/diverge editors). `'live'` keeps a **live
+> link** — inherited keys stay in sync and writes delegate to the owning scope.
+
+## Scoped stores (live scope chain)
+
+A store can have a `parent`. Reads resolve through the chain and writes target the owning scope. This
+lets nested scopes (e.g. a list item providing its own `record`) shadow shared/global state while still
+reading it live — without prop-drilling or N value-contexts.
+
+```ts
+const root = createStore<S>({ user: { name: 'Alice' }, theme: 'dark' });
+const item = createStore<S>({ record }, { parent: root });
+```
+
+**Semantics**
+
+- **Read fall-through** — a key not owned by the scope resolves from the nearest ancestor that owns it.
+  ```ts
+  item.getState().record; // own
+  item.getState().user;   // inherited from root (live)
+  ```
+- **Shadowing** — a key the scope owns hides the parent's value (reads and subscriptions).
+  ```ts
+  const item = createStore<S>({ theme: 'light' }, { parent: root });
+  item.getState().theme; // 'light' (shadows root's 'dark')
+  root.getState().theme; // 'dark' (untouched)
+  ```
+- **Write delegation** — `setState(path)` writes to the nearest scope that owns the path's root key; if
+  nobody owns it, it writes locally. Root-key granularity.
+  ```ts
+  item.setState('user.name', 'Bob'); // delegates to root → visible to all scopes under root
+  item.setState('record', next);     // stays local to the item scope
+  ```
+- **Multi-level subscriptions** — consumers of a scope re-render when an inherited key changes in any
+  ancestor; shadowed keys are ignored. Equality still filters no-op updates.
+- **Cleanup** — call `store.destroy()` (or let `<StoreProvider inherit="live">` do it on unmount) to detach
+  from the parent and avoid listener leaks for short-lived scopes.
+
+Via `StoreProvider` (the common case):
+
+```tsx
+<StoreProvider value={{ user, theme: 'dark' }}>          {/* root scope */}
+  <StoreProvider inherit="live" value={{ record }}>       {/* item scope */}
+    {/* useStore('user')   → inherited, live   */}
+    {/* useStore('record') → own               */}
+    <ItemView />
+  </StoreProvider>
 </StoreProvider>
 ```
 
@@ -176,7 +240,7 @@ All types live in `src/types/StoreTypes.ts`:
 | `PathSetter<T, P>` | Setter function for a single path |
 | `PathSetters<T, Paths>` | Tuple of setters for an array of paths |
 | `MultiPathReturn<T, Paths>` | `[values, ...setters]` tuple |
-| `StoreApi<T>` | `{ getState, setState, subscribe, subscribePath }` |
+| `StoreApi<T>` | `{ getState, setState, subscribe, subscribePath, destroy? }` |
 | `SetState<T>` | Full `setState` overload signature |
 | `UseStoreOptions` | Options for `useStore` (mode, enabled, equalityFn, defaultValue, transformer) |
 | `UseStoreMultiOptions` | Options for multi-path `useStore` |

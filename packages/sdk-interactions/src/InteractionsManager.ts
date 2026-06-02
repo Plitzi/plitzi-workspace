@@ -57,29 +57,31 @@ class InteractionsManager {
 
       set(this.interactionsRunning, `${subscriptorId}.${eventName}`, true);
 
-      const getAdditionalParams = get(this.subscriptors, `${subscriptorId}.getAdditionalParams`, undefined);
-      let dataSource: Record<string, unknown> | undefined;
-      if (typeof getAdditionalParams === 'function') {
-        ({ dataSource } = getAdditionalParams());
-      }
+      try {
+        const getAdditionalParams = get(this.subscriptors, `${subscriptorId}.getAdditionalParams`, undefined);
+        let dataSource: Record<string, unknown> | undefined;
+        if (typeof getAdditionalParams === 'function') {
+          ({ dataSource } = getAdditionalParams());
+        }
 
-      const triggersToRun = Object.values(interactions).filter(
-        (node: ElementInteraction) => node.type === 'trigger' && node.action === eventName && node.enabled
-      );
+        const triggersToRun = Object.values(interactions).filter(
+          (node: ElementInteraction) => node.type === 'trigger' && node.action === eventName && node.enabled
+        );
 
-      await Promise.all(
-        triggersToRun.map(trigger =>
-          flowTrigger(
-            trigger,
-            interactions,
-            this.getCallbacksAvailables(),
-            { [trigger.id]: params },
-            { ...this.interactionsData, ...dataSource }
+        await Promise.all(
+          triggersToRun.map(trigger =>
+            flowTrigger(
+              trigger,
+              interactions,
+              this.getCallbacksAvailables(),
+              { [trigger.id]: params },
+              { ...this.interactionsData, ...dataSource }
+            )
           )
-        )
-      );
-
-      set(this.interactionsRunning, `${subscriptorId}.${eventName}`, false);
+        );
+      } finally {
+        set(this.interactionsRunning, `${subscriptorId}.${eventName}`, false);
+      }
     };
 
   subscribe<TParams extends Record<string, unknown> = Record<string, unknown>>(

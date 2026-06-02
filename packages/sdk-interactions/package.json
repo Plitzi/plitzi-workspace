@@ -78,6 +78,8 @@
   "scripts": {
     "lint": "eslint ./src",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "build:dev": "vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
     "build:dev-watch": "vite build --mode development --watch --minify false",
     "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
@@ -87,7 +89,8 @@
   "devDependencies": {
     "eslint": "^9.39.4",
     "typescript": "^6.0.3",
-    "vite": "^8.0.14"
+    "vite": "^8.0.14",
+    "vitest": "^4.1.7"
   },
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.6.9",
