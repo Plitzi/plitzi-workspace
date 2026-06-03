@@ -4,6 +4,7 @@
 import { use, useEffect, useMemo, useRef } from 'react';
 
 import createStore from './createStore';
+import { getStoreHistory } from './history/createStoreHistory';
 import useStoreSync from './hooks/useStoreSync';
 import { StoreContext } from './StoreContext';
 
@@ -25,6 +26,10 @@ export type StoreProviderProps<TState extends object = any> = {
   inherit?: 'snapshot' | 'live';
   autoSync?: boolean;
   logger?: StoreLogger<TState>;
+  // Start recording the action log / time-travel history for this store as soon as the provider mounts —
+  // independent of any consumer (e.g. devtools). `true` tracks the whole store; a path string scopes it to that
+  // subtree root (e.g. `'schema'`). Enable on the root store (commonly gated on `debugMode`).
+  history?: boolean | string;
   children?: ReactNode;
 };
 
@@ -35,6 +40,7 @@ const StoreProvider = <TState extends object = any>({
   inherit,
   autoSync = true,
   logger,
+  history,
   children
 }: StoreProviderProps<TState>) => {
   const parentStore = use<StoreApi<TState> | undefined>(StoreContext);
@@ -55,6 +61,12 @@ const StoreProvider = <TState extends object = any>({
         parent: liveChain ? parentStore : undefined
       });
     }
+  }
+
+  // Eagerly attach history so it records from mount, regardless of whether a consumer (devtools) is open.
+  // Idempotent per store instance.
+  if (history) {
+    getStoreHistory(storeRef.current, typeof history === 'string' ? { path: history } : undefined);
   }
 
   useEffect(

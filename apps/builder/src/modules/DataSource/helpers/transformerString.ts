@@ -2,7 +2,7 @@
 
 import { get } from '@plitzi/plitzi-ui/helpers';
 
-import utility from '@plitzi/sdk-data-source/utility';
+import utility from '@plitzi/sdk-elements/dataSource/utility';
 
 const transformerString = (
   transformers: {

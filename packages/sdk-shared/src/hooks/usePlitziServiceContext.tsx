@@ -7,7 +7,6 @@ import type { NetworkContextValue } from '../network';
 import type {
   CollectionContextValue,
   ComponentContextValue,
-  DataSourceContextValue,
   EventBridgeContextValue,
   InteractionsContextValue,
   NavigationContextValue,
@@ -33,7 +32,6 @@ export type PlitziServiceContextValue<TEventBridge = any, TInteractions = any> =
   };
   customContexts: Record<string, Context<any>>;
   contexts: {
-    DataSourceContext: Context<DataSourceContextValue>;
     SegmentsContext: Context<SegmentsContextValue>;
     NavigationContext: Context<NavigationContextValue>;
     CollectionContext: Context<CollectionContextValue>;

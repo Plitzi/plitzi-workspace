@@ -2,7 +2,7 @@ import { get, set, camelCase } from '@plitzi/plitzi-ui';
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import { produce } from 'immer';
 
-import utility from '../utility';
+import utility from './utility';
 
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { BindingCategory, Element, ElementBinding } from '@plitzi/sdk-shared';

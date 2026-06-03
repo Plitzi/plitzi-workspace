@@ -5,9 +5,9 @@ import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import { get, upperFirst } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { produce } from 'immer';
-import { useCallback, use, useEffect, useMemo, useState, Fragment } from 'react';
+import { useCallback, useEffect, useMemo, useState, Fragment } from 'react';
 
-import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
+import getSourcesByElementId from '@plitzi/sdk-elements/dataSource/getSourcesByElementId';
 import { generateID } from '@plitzi/sdk-shared/helpers/utils';
 import { StyleBindingsAllowed } from '@plitzi/sdk-shared/style/styleConstants';
 import { createStoreHook } from '@plitzi/sdk-store/createStore';
@@ -28,20 +28,19 @@ export type DataSourceBindingProps = {
 
 const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceBindingProps) => {
   const { useStore } = createStoreHook<BuilderState>();
-  const [flat] = useStore('schema.flat');
-  const { getSourcesByElementId } = use(DataSourceContext);
+  const [[flat, sourcesRegistry]] = useStore(['schema.flat', 'sources']);
   const { attributes, definition } = element;
   const [bindingFormValues, setBindingFormValues] = useState<Record<keyof typeof attributes, ElementBinding | null>>(
     () => Object.keys(attributes).reduce((acum, key) => ({ ...acum, [key]: null }), {})
   );
   const sources = useMemo(
     () =>
-      Object.values(getSourcesByElementId(flat, id))
+      Object.values(getSourcesByElementId(sourcesRegistry, flat, id))
         .filter(source => source.meta.source)
         .reduce((acum, source) => ({ ...acum, [source.meta.source as string]: source.meta }), {
           '': { id: undefined, source: undefined, name: 'None', fields: () => [] }
         }),
-    [getSourcesByElementId, id, flat]
+    [sourcesRegistry, id, flat]
   );
 
   useEffect(() => {

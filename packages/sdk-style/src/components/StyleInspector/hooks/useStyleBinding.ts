@@ -1,14 +1,16 @@
 import { get, set } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
-import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
-import type { Element, StyleCategory, StyleValue } from '@plitzi/sdk-shared';
+import type { CommonState, Element, StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 export type UseStyleBindingProps = { element?: Element };
 
 const useStyleBinding = ({ element }: UseStyleBindingProps) => {
-  const dataSource = useDataSource<Record<string, unknown>>({ id: '', mode: 'read' });
+  const { useStore } = createStoreHook<CommonState>();
+  const [dataSource] = useStore('runtime.sources', { defaultValue: emptyObject });
   const attributes = useMemo(() => {
     const metadata: Partial<Record<StyleCategory, StyleValue>> = {};
     if (!element) {

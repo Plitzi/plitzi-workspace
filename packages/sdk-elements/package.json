@@ -110,6 +110,86 @@
       "types": "./dist/components/ElementAdvancedEditor.d.ts",
       "import": "./dist/components/ElementAdvancedEditor.mjs"
     },
+    "./dataSource": {
+      "types": "./dist/dataSource/index.d.ts",
+      "import": "./dist/dataSource/index.mjs"
+    },
+    "./dataSource/DataSourceProvider": {
+      "types": "./dist/dataSource/DataSourceProvider.d.ts",
+      "import": "./dist/dataSource/DataSourceProvider.mjs"
+    },
+    "./dataSource/GlobalSources": {
+      "types": "./dist/dataSource/GlobalSources.d.ts",
+      "import": "./dist/dataSource/GlobalSources.mjs"
+    },
+    "./dataSource/getBindingsDetails": {
+      "types": "./dist/dataSource/getBindingsDetails.d.ts",
+      "import": "./dist/dataSource/getBindingsDetails.mjs"
+    },
+    "./dataSource/getSourcesByElementId": {
+      "types": "./dist/dataSource/getSourcesByElementId.d.ts",
+      "import": "./dist/dataSource/getSourcesByElementId.mjs"
+    },
+    "./dataSource/index": {
+      "types": "./dist/dataSource/index.d.ts",
+      "import": "./dist/dataSource/index.mjs"
+    },
+    "./dataSource/sources/AuthSource": {
+      "types": "./dist/dataSource/sources/AuthSource.d.ts",
+      "import": "./dist/dataSource/sources/AuthSource.mjs"
+    },
+    "./dataSource/sources/NavigationSource": {
+      "types": "./dist/dataSource/sources/NavigationSource.d.ts",
+      "import": "./dist/dataSource/sources/NavigationSource.mjs"
+    },
+    "./dataSource/sources/PageStateSource": {
+      "types": "./dist/dataSource/sources/PageStateSource.d.ts",
+      "import": "./dist/dataSource/sources/PageStateSource.mjs"
+    },
+    "./dataSource/sources/VariablesSource": {
+      "types": "./dist/dataSource/sources/VariablesSource.d.ts",
+      "import": "./dist/dataSource/sources/VariablesSource.mjs"
+    },
+    "./dataSource/useGlobalSources": {
+      "types": "./dist/dataSource/useGlobalSources.d.ts",
+      "import": "./dist/dataSource/useGlobalSources.mjs"
+    },
+    "./dataSource/utility": {
+      "types": "./dist/dataSource/utility/index.d.ts",
+      "import": "./dist/dataSource/utility/index.mjs"
+    },
+    "./dataSource/utility/arrayMap": {
+      "types": "./dist/dataSource/utility/arrayMap.d.ts",
+      "import": "./dist/dataSource/utility/arrayMap.mjs"
+    },
+    "./dataSource/utility/capitalize": {
+      "types": "./dist/dataSource/utility/capitalize.d.ts",
+      "import": "./dist/dataSource/utility/capitalize.mjs"
+    },
+    "./dataSource/utility/dateConverter": {
+      "types": "./dist/dataSource/utility/dateConverter.d.ts",
+      "import": "./dist/dataSource/utility/dateConverter.mjs"
+    },
+    "./dataSource/utility/index": {
+      "types": "./dist/dataSource/utility/index.d.ts",
+      "import": "./dist/dataSource/utility/index.mjs"
+    },
+    "./dataSource/utility/staticValue": {
+      "types": "./dist/dataSource/utility/staticValue.d.ts",
+      "import": "./dist/dataSource/utility/staticValue.mjs"
+    },
+    "./dataSource/utility/stringToArray": {
+      "types": "./dist/dataSource/utility/stringToArray.d.ts",
+      "import": "./dist/dataSource/utility/stringToArray.mjs"
+    },
+    "./dataSource/utility/styleSelector": {
+      "types": "./dist/dataSource/utility/styleSelector.d.ts",
+      "import": "./dist/dataSource/utility/styleSelector.mjs"
+    },
+    "./dataSource/utility/twigTemplate": {
+      "types": "./dist/dataSource/utility/twigTemplate.d.ts",
+      "import": "./dist/dataSource/utility/twigTemplate.mjs"
+    },
     "./elements": {
       "types": "./dist/elements/index.d.ts",
       "import": "./dist/elements/index.mjs"
@@ -733,12 +813,14 @@
   "sideEffects": false,
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.6.9",
-    "@plitzi/sdk-data-source": "workspace:*",
+    "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
     "@plitzi/sdk-interactions": "workspace:*",
+    "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
+    "@plitzi/sdk-state": "workspace:*",
     "@plitzi/sdk-store": "workspace:*",
     "clsx": "^2.1.1",
     "immer": "^11.1.8"

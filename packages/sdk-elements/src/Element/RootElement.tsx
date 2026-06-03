@@ -6,16 +6,17 @@ import { useCallback, use, useMemo, useRef, useEffect } from 'react';
 
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import { interactionBasicTriggers, nativeEventsList } from './helpers/elementConstants';
 import parseStyle from './helpers/parseStyle';
-import useElementDataSource from './hooks/useElementDataSource';
 import useElementInteractions from './hooks/useElementInteractions';
 import useInternalClassName from './hooks/useInternalClassName';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { ElementContextValue, InteractionCallback } from '@plitzi/sdk-shared';
+import type { CommonState, ElementContextValue, InteractionCallback } from '@plitzi/sdk-shared';
 import type { Context, CSSProperties, FC, JSX, ReactNode, RefObject } from 'react';
 
 export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {
@@ -162,17 +163,13 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
       }, {});
   }, [id, interactions, otherProps, previewMode, processEvent]);
 
-  const filterMode = useMemo(
-    () => (!debugMode && (!interactions || !Object.keys(interactions).length) ? 'hard' : 'soft'),
-    [debugMode, interactions]
-  );
-  const dataSourceRef = useRef({});
-  dataSourceRef.current = useElementDataSource({
-    id,
-    bindings: definition.bindings,
-    filterMode,
-    sources: filterMode === 'hard' ? ['variables'] : []
-  });
+  // Interactions can reference any source by name at runtime, so when present (or in debug) we hand the rule
+  // engine the whole `runtime.sources` slice; otherwise the dataSource is unused, so we skip the subscription.
+  const needsDataSource = debugMode || !!(interactions && Object.keys(interactions).length);
+  const { useStore } = createStoreHook<CommonState>();
+  const [runtimeSources] = useStore('runtime.sources', { enabled: needsDataSource, defaultValue: emptyObject });
+  const dataSourceRef = useRef<Record<string, unknown>>({});
+  dataSourceRef.current = runtimeSources;
 
   const getAdditionalParams = useCallback(() => ({ dataSource: dataSourceRef.current }), [dataSourceRef]);
 

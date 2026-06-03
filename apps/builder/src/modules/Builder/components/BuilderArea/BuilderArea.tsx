@@ -10,7 +10,6 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
-import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
@@ -59,6 +58,7 @@ const BuilderArea = ({
 }: BuilderAreaProps) => {
   const { useStore } = createStoreHook<BuilderState>();
   const [cache] = useStore('style.cache');
+  const [variablesValue] = useStore('runtime.sources.variables', { defaultValue: {} });
   const trackingContainerRef = useRef<HTMLDivElement | null>(null);
   const { assets } = use(PluginsContext);
   const {
@@ -69,9 +69,8 @@ const BuilderArea = ({
     builderGetBaseElement
   } = use(BuilderContext);
   const { displayBorderComponents, zoom } = use(AppContext);
-  const { useDataSource } = use(DataSourceContext);
   // @todo: variables should be only related to styles
-  const { variables } = useDataSource<Record<string, string>>({ id: '', mode: 'read' });
+  const variables = variablesValue as Record<string, string>;
   const css = useMemo(() => {
     const cssVariables = schemaVariablesToCss(variables);
     const cacheParsed = processCssTokens(cache, variables);
@@ -122,7 +121,6 @@ const BuilderArea = ({
         NetworkContext,
         PluginsContext,
         NavigationContext,
-        DataSourceContext,
         StateManagerContext,
         InteractionsContext,
         EventBridgeContext,

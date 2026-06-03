@@ -53,6 +53,34 @@
       "types": "./dist/createStore.d.ts",
       "import": "./dist/createStore.mjs"
     },
+    "./createStore/createStore": {
+      "types": "./dist/createStore/createStore.d.ts",
+      "import": "./dist/createStore/createStore.mjs"
+    },
+    "./createStore/helpers/createGetPath": {
+      "types": "./dist/createStore/helpers/createGetPath.d.ts",
+      "import": "./dist/createStore/helpers/createGetPath.mjs"
+    },
+    "./createStore/helpers/createGetState": {
+      "types": "./dist/createStore/helpers/createGetState.d.ts",
+      "import": "./dist/createStore/helpers/createGetState.mjs"
+    },
+    "./createStore/helpers/createSetState": {
+      "types": "./dist/createStore/helpers/createSetState.d.ts",
+      "import": "./dist/createStore/helpers/createSetState.mjs"
+    },
+    "./createStore/helpers/deepMerge": {
+      "types": "./dist/createStore/helpers/deepMerge.d.ts",
+      "import": "./dist/createStore/helpers/deepMerge.mjs"
+    },
+    "./createStore/helpers/forwardParentChanges": {
+      "types": "./dist/createStore/helpers/forwardParentChanges.d.ts",
+      "import": "./dist/createStore/helpers/forwardParentChanges.mjs"
+    },
+    "./createStore/index": {
+      "types": "./dist/createStore/index.d.ts",
+      "import": "./dist/createStore/index.mjs"
+    },
     "./helpers/getByPath": {
       "types": "./dist/helpers/getByPath.d.ts",
       "import": "./dist/helpers/getByPath.mjs"
@@ -72,6 +100,22 @@
     "./helpers/useIsomorphicLayoutEffect": {
       "types": "./dist/helpers/useIsomorphicLayoutEffect.d.ts",
       "import": "./dist/helpers/useIsomorphicLayoutEffect.mjs"
+    },
+    "./history": {
+      "types": "./dist/history/index.d.ts",
+      "import": "./dist/history/index.mjs"
+    },
+    "./history/createStoreHistory": {
+      "types": "./dist/history/createStoreHistory.d.ts",
+      "import": "./dist/history/createStoreHistory.mjs"
+    },
+    "./history/index": {
+      "types": "./dist/history/index.d.ts",
+      "import": "./dist/history/index.mjs"
+    },
+    "./history/useStoreHistory": {
+      "types": "./dist/history/useStoreHistory.d.ts",
+      "import": "./dist/history/useStoreHistory.mjs"
     },
     "./hooks/shared": {
       "types": "./dist/hooks/shared.d.ts",

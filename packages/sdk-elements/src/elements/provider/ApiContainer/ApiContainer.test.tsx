@@ -2,13 +2,12 @@ import { render } from '@testing-library/react';
 import { createContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
-import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
+import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 
 import { ApiContainer } from './ApiContainer';
 
 import type { ElementContextValue } from '@plitzi/sdk-shared';
-import type { DataSourceContextValue } from '@plitzi/sdk-shared';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
@@ -19,8 +18,7 @@ vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
     settings: { previewMode: true },
     contexts: {
       InteractionsContext: createContext({ useInteractions: () => ({}) }),
-      NavigationContext: createContext({}),
-      DataSourceContext
+      NavigationContext: createContext({})
     }
   })
 }));
@@ -28,11 +26,7 @@ vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
 describe('ApiContainer Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
-      <DataSourceContext
-        value={
-          { useDataSource: () => [createContext({})], getSources: () => ({}) } as unknown as DataSourceContextValue
-        }
-      >
+      <StoreProvider value={{}}>
         <ElementContext
           value={
             {
@@ -46,7 +40,7 @@ describe('ApiContainer Tests', () => {
         >
           <ApiContainer />
         </ElementContext>
-      </DataSourceContext>
+      </StoreProvider>
     );
 
     expect(baseElement).toBeTruthy();

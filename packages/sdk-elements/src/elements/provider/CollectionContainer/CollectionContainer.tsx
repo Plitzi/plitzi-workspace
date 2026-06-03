@@ -1,9 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import { useCallback, use, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
+import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 
 import useCollectionContext from './hooks/useCollectionContext';
 import withElement from '../../../Element/hocs/withElement';
@@ -37,11 +39,9 @@ const CollectionContainer = ({
     definition: { label = 'Collection Container' }
   } = useElement();
   const {
-    settings: { previewMode },
-    contexts: { DataSourceContext }
+    settings: { previewMode }
   } = usePlitziServiceContext();
   const { loading, collection, fetch } = useCollectionContext({ source, limit, query, singleRecord, previewMode });
-  const { useDataSource } = use(DataSourceContext);
 
   const sourceFields = useCallback(() => {
     const fields: SourceField[] = [];
@@ -63,10 +63,9 @@ const CollectionContainer = ({
     return fields;
   }, [collection, singleRecord]);
 
-  const [CollectionContext] = useDataSource({
+  useRegisterSource({
     id,
     source: `collectionContainer_${id}`,
-    mode: 'write',
     name: label ? label : `Collection - ${collection?.name || id}`,
     fields: sourceFields
   });
@@ -97,7 +96,11 @@ const CollectionContainer = ({
       })}
     >
       {!collection && <div className="collection-container__message">Source Not Selected</div>}
-      {collection && !loading && <CollectionContext value={collection}>{children}</CollectionContext>}
+      {collection && !loading && (
+        <StoreProvider inherit="live" value={{ runtime: { sources: { [`collectionContainer_${id}`]: collection } } }}>
+          {children}
+        </StoreProvider>
+      )}
     </RootElement>
   );
 };

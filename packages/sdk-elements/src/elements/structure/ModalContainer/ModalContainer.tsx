@@ -2,9 +2,11 @@
 import clsx from 'clsx';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
+import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
@@ -35,10 +37,9 @@ const ModalContainer = ({
     setElementState
   } = useElement();
   const {
-    contexts: { InteractionsContext, DataSourceContext }
+    contexts: { InteractionsContext }
   } = usePlitziServiceContext();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
-  const { useDataSource } = use(DataSourceContext);
   const [internalMetadata, setInternalMetadata] = useState<Record<string, unknown>>({});
 
   const handleOpenModal = useCallback(
@@ -133,10 +134,9 @@ const ModalContainer = ({
     [internalMetadata]
   );
 
-  const [ModalContext] = useDataSource({
+  useRegisterSource({
     id,
     source: `modalContainer_${id}`,
-    mode: 'write',
     name: label ? label : `Modal - ${id}`,
     fields: sourceFields
   });
@@ -164,7 +164,12 @@ const ModalContainer = ({
           />
         </div>
         <div className={clsx('modal-container__body', styleSelectors.bodyContainer)}>
-          <ModalContext value={internalMetadata}>{children}</ModalContext>
+          <StoreProvider
+            inherit="live"
+            value={{ runtime: { sources: { [`modalContainer_${id}`]: internalMetadata } } }}
+          >
+            {children}
+          </StoreProvider>
         </div>
       </div>
     </RootElement>

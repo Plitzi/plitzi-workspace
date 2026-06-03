@@ -1,10 +1,10 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { useCallback, use, useMemo, useEffect } from 'react';
+import { useCallback, useMemo, useEffect } from 'react';
 
-import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import { getDisplayName } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import type { FieldValue } from '../../Form/Form';
 import type { ChangeEvent, FC, RefObject } from 'react';
@@ -30,22 +30,23 @@ export type WithFieldValueProps<T> = {
 
 const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
   const WithFieldValueComponent = (props: WithFieldValueProps<T>) => {
-    const { id } = useElement();
     const { ref, name = '', subType = 'text', defaultValue = '', required = true, previewError = false } = props;
     const {
-      settings: { previewMode },
-      contexts: { DataSourceContext }
+      settings: { previewMode }
     } = usePlitziServiceContext();
-    const { useDataSource } = use(DataSourceContext);
-    const { form } = useDataSource<
-      | {
-          setFieldValue: (name: string, value: FieldValue | null) => void;
-          setFieldError: (name: string, error: string) => void;
-          errors: Record<string, string>;
-          values: Record<string, string | boolean | number>;
-        }
-      | undefined
-    >({ id, mode: 'read' });
+    const { useStore } = createStoreHook<{
+      runtime?: {
+        sources?: {
+          form?: {
+            setFieldValue: (name: string, value: FieldValue | null) => void;
+            setFieldError: (name: string, error: string) => void;
+            errors: Record<string, string>;
+            values: Record<string, string | boolean | number>;
+          };
+        };
+      };
+    }>();
+    const [form] = useStore('runtime.sources.form');
     if (!form) {
       return <WrappedComponent {...props} />;
     }

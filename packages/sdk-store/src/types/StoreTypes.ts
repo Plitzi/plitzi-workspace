@@ -79,7 +79,9 @@ export type StoreHookReactiveOptions<T, TState extends object = object> = StoreH
 
 export type StoreLogger<T> = (event: { path: PathOf<T> | undefined; prev: T; next: T }) => void;
 
-export type Listener = () => void;
+// The changed path is forwarded so scope-chain listeners can skip wakes for paths a parent change doesn't touch.
+// Consumer listeners (React `onStoreChange`) simply ignore the argument.
+export type Listener = (changedPath?: Path) => void;
 
 export type SetState<T> = {
   (path: undefined, value: T | ((prev: T) => T), canPropagate?: boolean): void;
@@ -94,15 +96,22 @@ export type GetState<T> = () => T;
 
 export type StoreApi<T> = {
   getState: GetState<T>;
+  // Resolves a single path through the scope chain without materializing the full merged state — own value
+  // shadows the parent's, except where both are objects (then the subtree at that path is deep-merged).
+  getPath: <P extends PathOf<T>>(path: P) => PathValue<T, P> | undefined;
   setState: SetState<T>;
   subscribe: (listener: Listener) => () => void;
   subscribePath: <P extends PathOf<T>>(path: P, listener: Listener) => () => void;
+  subscribeHistory: (listener: Listener) => () => void;
   destroy?: () => void;
 };
 
 export type StoreApiInternal<T> = StoreApi<T> & {
   listeners: Set<Listener>;
   pathListeners: Map<string, Set<Listener>>;
+  historyListeners: Set<Listener>;
+  // Test-only metric: number of times `getState` recomputed the full deep-merge (cache miss).
+  getMergeCount?: () => number;
 };
 
 export type PathOrFn<TState extends object> = PathOf<TState> | ((state: TState) => PathOf<TState>);

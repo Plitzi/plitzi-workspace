@@ -80,22 +80,33 @@ const item = createStore<S>({ record }, { parent: root });
 
 **Semantics**
 
-- **Read fall-through** — a key not owned by the scope resolves from the nearest ancestor that owns it.
+- **Read fall-through (deep-merge)** — `getState()` deep-merges the chain: own values win, but nested
+  object branches are **merged**, not replaced, so a scope can contribute a sub-key without clobbering the
+  parent's siblings under the same branch.
   ```ts
   item.getState().record; // own
   item.getState().user;   // inherited from root (live)
+
+  // deep-merge of a shared branch:
+  const root = createStore<S>({ runtime: { sources: { variables: { a: 1 } } } });
+  const item = createStore<S>({ runtime: { sources: { record } } }, { parent: root });
+  item.getState().runtime.sources; // { variables: { a: 1 }, record } ← merged, not shadowed
   ```
-- **Shadowing** — a key the scope owns hides the parent's value (reads and subscriptions).
+- **Shadowing** — a scope's own **leaf** value hides the parent's at that path (reads and subscriptions);
+  sibling leaves under a shared object branch are preserved (see deep-merge above).
   ```ts
   const item = createStore<S>({ theme: 'light' }, { parent: root });
   item.getState().theme; // 'light' (shadows root's 'dark')
   root.getState().theme; // 'dark' (untouched)
   ```
-- **Write delegation** — `setState(path)` writes to the nearest scope that owns the path's root key; if
-  nobody owns it, it writes locally. Root-key granularity.
+- **Write delegation (recursive to owner / root)** — `setState(path)` walks up to the nearest scope that
+  owns the path; if no ancestor owns it, it delegates all the way to the **root**. So a deeply-nested scope
+  can write a shared branch (e.g. `runtime.sources.*`) and it lands at the root without any scope having to
+  pre-seed that branch.
   ```ts
-  item.setState('user.name', 'Bob'); // delegates to root → visible to all scopes under root
-  item.setState('record', next);     // stays local to the item scope
+  item.setState('user.name', 'Bob');             // delegates to the scope that owns `user`
+  item.setState('runtime.sources.x', v);          // delegates to root even if no ancestor seeded `runtime`
+  item.setState('record', next);                  // stays local to the item scope (it owns `record`)
   ```
 - **Multi-level subscriptions** — consumers of a scope re-render when an inherited key changes in any
   ancestor; shadowed keys are ignored. Equality still filters no-op updates.

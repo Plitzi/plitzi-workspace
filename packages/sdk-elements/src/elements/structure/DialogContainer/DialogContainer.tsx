@@ -2,9 +2,11 @@
 import clsx from 'clsx';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
+import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
@@ -41,10 +43,9 @@ const DialogContainer = ({
     elementState
   } = useElement();
   const {
-    contexts: { InteractionsContext, DataSourceContext }
+    contexts: { InteractionsContext }
   } = usePlitziServiceContext();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
-  const { useDataSource } = use(DataSourceContext);
   const [internalMetadata, setInternalMetadata] = useState<Record<string, unknown>>({});
   const [processing, setProcessing] = useState(false);
 
@@ -180,10 +181,9 @@ const DialogContainer = ({
     }, []);
   }, [internalMetadata]);
 
-  const [DialogContianerContext] = useDataSource({
+  useRegisterSource({
     id,
     source: `dialogContainer_${id}`,
-    mode: 'write',
     name: label ? label : `Dialog - ${id}`,
     fields: sourceFields
   });
@@ -207,7 +207,12 @@ const DialogContainer = ({
           <i className="fa-solid fa-xmark" title="Close" onClick={void handleClickCancel} />
         </div>
         <div className={clsx('dialog-container__body', styleSelectors.body)}>
-          <DialogContianerContext value={internalMetadata}>{children}</DialogContianerContext>
+          <StoreProvider
+            inherit="live"
+            value={{ runtime: { sources: { [`dialogContainer_${id}`]: internalMetadata } } }}
+          >
+            {children}
+          </StoreProvider>
         </div>
         <div className={clsx('dialog-container__footer', styleSelectors.footerContainer)}>
           <button

@@ -33,6 +33,7 @@
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-collections": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
+    "@plitzi/sdk-elements": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
     "@plitzi/sdk-interactions": "workspace:*",
     "@plitzi/sdk-navigation": "workspace:*",

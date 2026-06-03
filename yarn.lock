@@ -3721,6 +3721,7 @@ __metadata:
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-collections": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
+    "@plitzi/sdk-elements": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
     "@plitzi/sdk-interactions": "workspace:*"
     "@plitzi/sdk-navigation": "workspace:*"
@@ -3943,29 +3944,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/sdk-data-source@workspace:*, @plitzi/sdk-data-source@workspace:packages/sdk-data-source":
-  version: 0.0.0-use.local
-  resolution: "@plitzi/sdk-data-source@workspace:packages/sdk-data-source"
-  dependencies:
-    "@plitzi/sdk-auth": "workspace:*"
-    "@plitzi/sdk-event-bridge": "workspace:*"
-    "@plitzi/sdk-navigation": "workspace:*"
-    "@plitzi/sdk-schema": "workspace:*"
-    "@plitzi/sdk-shared": "workspace:*"
-    "@plitzi/sdk-state": "workspace:*"
-    "@plitzi/sdk-store": "workspace:*"
-    eslint: "npm:^9.39.4"
-    typescript: "npm:^6.0.3"
-    vite: "npm:^8.0.14"
-  languageName: unknown
-  linkType: soft
-
 "@plitzi/sdk-dev-tools@workspace:*, @plitzi/sdk-dev-tools@workspace:packages/sdk-dev-tools":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-dev-tools@workspace:packages/sdk-dev-tools"
   dependencies:
     "@plitzi/plitzi-ui": "npm:^1.6.9"
-    "@plitzi/sdk-data-source": "workspace:*"
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
@@ -3989,12 +3972,14 @@ __metadata:
   resolution: "@plitzi/sdk-elements@workspace:packages/sdk-elements"
   dependencies:
     "@plitzi/plitzi-ui": "npm:^1.6.9"
-    "@plitzi/sdk-data-source": "workspace:*"
+    "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
     "@plitzi/sdk-interactions": "workspace:*"
+    "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
+    "@plitzi/sdk-state": "workspace:*"
     "@plitzi/sdk-store": "workspace:*"
     clsx: "npm:^2.1.1"
     eslint: "npm:^9.39.4"

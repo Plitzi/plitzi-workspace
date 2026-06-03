@@ -1,10 +1,12 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import { useCallback, use, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
+import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 
 import ListControlledItem from './ListControlledItem';
 import RootElement from '../../../../../Element/RootElement';
@@ -25,10 +27,8 @@ const ListControlled = ({ ref, className = '', children, items = [] }: ListContr
     definition: { label }
   } = useElement();
   const {
-    settings: { previewMode },
-    contexts: { DataSourceContext }
+    settings: { previewMode }
   } = usePlitziServiceContext();
-  const { useDataSource } = use(DataSourceContext);
   const finalItems = useMemo(() => {
     if (Array.isArray(items)) {
       return items;
@@ -48,10 +48,9 @@ const ListControlled = ({ ref, className = '', children, items = [] }: ListContr
 
   const listContextValue = useMemo(() => ({ items: finalItems }), [finalItems]);
 
-  const [ListContext, listContextId] = useDataSource({
+  useRegisterSource({
     id,
     source: `list_${id}`,
-    mode: 'write',
     name: label ? label : `List - ${id}`,
     fields: sourceFields
   });
@@ -63,7 +62,7 @@ const ListControlled = ({ ref, className = '', children, items = [] }: ListContr
         'controlled-list--build-mode': !previewMode
       })}
     >
-      <ListContext value={listContextValue}>
+      <StoreProvider inherit="live" value={{ runtime: { sources: { [`list_${id}`]: listContextValue } } }}>
         {finalItems.map((item, i) => {
           if (!children || (Array.isArray(children) && children.length === 0)) {
             return (
@@ -79,13 +78,13 @@ const ListControlled = ({ ref, className = '', children, items = [] }: ListContr
               itemCount={i + 1}
               isTemplate={i !== 0 && !previewMode}
               record={item}
-              listContextId={listContextId}
+              source={`list_${id}`}
             >
               {children}
             </ListControlledItem>
           );
         })}
-      </ListContext>
+      </StoreProvider>
       {!previewMode && finalItems.length === 0 && (
         <div className="controlled-list controlled-list--empty">This list does not contain any items</div>
       )}

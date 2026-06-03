@@ -1,4 +1,3 @@
-import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
 import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import VariablesList from './VariablesList';
@@ -8,8 +7,11 @@ import type { CommonState } from '@plitzi/sdk-shared';
 
 const VariablesViewer = () => {
   const { useStore } = createStoreHook<CommonState>();
-  const [[variables, styleVariables]] = useStore(['schema.variables', 'style.variables']);
-  const { variables: variablesParsed } = useDataSource<Record<string, string>>({ id: '', mode: 'read' });
+  const [[variables, styleVariables, variablesParsed]] = useStore([
+    'schema.variables',
+    'style.variables',
+    'runtime.sources.variables'
+  ]);
 
   return (
     <div className="flex w-full flex-col gap-4 overflow-y-auto p-3">
@@ -18,7 +20,7 @@ const VariablesViewer = () => {
           <i className="fa-solid fa-code" />
           Schema Variables
         </div>
-        <VariablesList variables={variables} variablesParsed={variablesParsed} />
+        <VariablesList variables={variables} variablesParsed={variablesParsed as Record<string, string>} />
       </section>
 
       <section className="flex flex-col gap-1.5">

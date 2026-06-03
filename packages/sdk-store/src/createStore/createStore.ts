@@ -2,13 +2,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 
-import getByPath from './helpers/getByPath';
-import isPathAffected from './helpers/isPathAffected';
-import setByPath from './helpers/setByPath';
-import useStoreBase from './hooks/useStore';
-import useStoreGetterBase from './hooks/useStoreGetter';
-import useStoreSetterBase from './hooks/useStoreSetter';
-import useStoreSyncBase from './hooks/useStoreSync';
+import useStoreBase from '../hooks/useStore';
+import useStoreGetterBase from '../hooks/useStoreGetter';
+import useStoreSetterBase from '../hooks/useStoreSetter';
+import useStoreSyncBase from '../hooks/useStoreSync';
+import { createGetPath } from './helpers/createGetPath';
+import { createGetState } from './helpers/createGetState';
+import { createSetState } from './helpers/createSetState';
+import { forwardParentChanges } from './helpers/forwardParentChanges';
 
 import type {
   GetState,
@@ -40,7 +41,7 @@ import type {
   UseStoreSetterOptions,
   UseStoreSyncMultiOptions,
   UseStoreSyncOptions
-} from './types';
+} from '../types';
 
 function createStore<TState extends object>(
   initializer: Partial<TState> | ((set: SetState<TState>, get: GetState<TState>) => Partial<TState>),
@@ -49,75 +50,27 @@ function createStore<TState extends object>(
   let state = {} as TState;
   const listeners = new Set<Listener>();
   const pathListeners = new Map<Path, Set<Listener>>();
+  const historyListeners = new Set<Listener>();
   const parent = storeOptions?.parent;
+  const getOwnState = () => state;
 
-  // Live scope chain: reads resolve through the parent and own keys shadow inherited ones.
-  const getState: GetState<TState> = () => (parent ? { ...parent.getState(), ...state } : state);
-
-  const ownsRootKey = (path: Path): boolean => path.split('.')[0] in (state as Record<string, unknown>);
-
-  const setState: SetState<TState> = <P extends PathOf<TState>>(
-    path: P | undefined,
-    value:
-      | PathValue<TState, P>
-      | ((prev: PathValue<TState, P>) => PathValue<TState, P>)
-      | TState
-      | ((prev: TState) => TState),
-    canPropagate: boolean = true
-  ) => {
-    // Writes target the nearest scope that owns the path; inherited paths delegate to the parent.
-    if (path && parent && !ownsRootKey(path) && path.split('.')[0] in (parent.getState() as Record<string, unknown>)) {
-      parent.setState(path, value as PathValue<TState, P>, canPropagate);
-
-      return;
-    }
-
-    const prevState = state;
-
-    const resolvedValue = path
-      ? typeof value === 'function'
-        ? (value as (prev: PathValue<TState, P>) => PathValue<TState, P>)(
-            getByPath(prevState, path) as PathValue<TState, P>
-          )
-        : value
-      : undefined;
-
-    if (path && Object.is(getByPath(prevState, path), resolvedValue)) {
-      return;
-    }
-
-    const nextState: TState = path
-      ? setByPath(prevState, path, resolvedValue)
-      : typeof value === 'function'
-        ? (value as (prev: TState) => TState)(prevState)
-        : { ...prevState, ...value };
-
-    if (Object.is(nextState, prevState)) {
-      return;
-    }
-
-    state = nextState;
-    storeOptions?.logger?.({ path, prev: prevState, next: state });
-    if (!canPropagate) {
-      return;
-    }
-
-    listeners.forEach(l => l());
-    pathListeners.forEach((set, candidate) => {
-      if (path && !isPathAffected(path, candidate)) {
-        return;
-      }
-
-      const prev = getByPath(prevState, candidate as PathOf<TState>);
-      const next = getByPath(state, candidate as PathOf<TState>);
-      if (!Object.is(prev, next)) {
-        set.forEach(l => l());
-      }
-    });
-  };
+  const { getState, getMergeCount } = createGetState<TState>(getOwnState, parent);
+  const getPath = createGetPath<TState>(getOwnState, parent, getState);
+  const setState = createSetState<TState>({
+    getOwnState,
+    setOwnState: next => {
+      state = next;
+    },
+    parent,
+    listeners,
+    pathListeners,
+    historyListeners,
+    logger: storeOptions?.logger
+  });
 
   const subscribe = (listener: Listener): (() => void) => {
     listeners.add(listener);
+
     return () => listeners.delete(listener);
   };
 
@@ -133,35 +86,33 @@ function createStore<TState extends object>(
     return () => set.delete(listener);
   };
 
+  const subscribeHistory = (listener: Listener): (() => void) => {
+    historyListeners.add(listener);
+
+    return () => historyListeners.delete(listener);
+  };
+
   state = (typeof initializer === 'function' ? initializer(setState, getState) : initializer) as TState;
 
-  // Forward parent changes to this scope's consumers; shadowed (owned) paths are ignored, and
-  // consumer-level equality filters out no-op wakeups for inherited paths that did not change.
-  let parentUnsub: (() => void) | undefined;
-  if (parent) {
-    parentUnsub = parent.subscribe(() => {
-      listeners.forEach(l => l());
-      pathListeners.forEach((set, candidate) => {
-        if (ownsRootKey(candidate)) {
-          return;
-        }
-
-        set.forEach(l => l());
-      });
-    });
-  }
+  // Handle to stop listening to the parent, kept so `destroy()` can detach this scope (otherwise the parent
+  // holds a reference to this scope's forwarder forever — a leak for short-lived scopes like list items).
+  // Undefined for root stores, which have no parent to listen to.
+  const parentUnsub = parent ? forwardParentChanges(parent, listeners, pathListeners, historyListeners) : undefined;
 
   const destroy = () => {
     parentUnsub?.();
     listeners.clear();
     pathListeners.clear();
+    historyListeners.clear();
   };
 
-  const api: StoreApi<TState> = { getState, setState, subscribe, subscribePath, destroy };
+  const api: StoreApi<TState> = { getState, getPath, setState, subscribe, subscribePath, subscribeHistory, destroy };
 
   if (import.meta.env.MODE === 'test') {
     (api as StoreApiInternal<TState>).listeners = listeners;
     (api as StoreApiInternal<TState>).pathListeners = pathListeners;
+    (api as StoreApiInternal<TState>).historyListeners = historyListeners;
+    (api as StoreApiInternal<TState>).getMergeCount = getMergeCount;
   }
 
   return api;

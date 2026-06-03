@@ -158,8 +158,8 @@ const App = ({
         };
 
   return (
-    <StoreProvider logger={createStoreDevToolsLogger('sdk')}>
-      <ThemeProvider defaultTheme="system">
+    <StoreProvider logger={createStoreDevToolsLogger('sdk')} value={{ segments: {} }} history={debugMode}>
+      <ThemeProvider>
         <Provider components={components}>
           <ContainerRoot className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
             <HelmetProvider>

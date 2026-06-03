@@ -30,18 +30,18 @@ export function makeSingleSnapshot<TState extends object>(
   defaultValue?: unknown
 ): () => unknown {
   return () => {
-    const state = store.getState();
+    if (typeof pathOrFn === 'string') {
+      const val = store.getPath(pathOrFn);
+      return val === undefined ? defaultValue : val;
+    }
+
     if (typeof pathOrFn === 'function') {
+      const state = store.getState();
       const val = getByPath(state, pathOrFn(state));
       return val === undefined ? defaultValue : val;
     }
 
-    if (typeof pathOrFn === 'string') {
-      const val = getByPath(state, pathOrFn);
-      return val === undefined ? defaultValue : val;
-    }
-
-    return state;
+    return store.getState();
   };
 }
 
@@ -54,11 +54,11 @@ export function makeMultiSnapshot<TState extends object>(
   const { equalityFn = defaultMultiEqualityFn, defaultValue } = options;
 
   return () => {
-    const state = store.getState();
     const paths = pathsRef.current;
+    const needsState = paths.some(p => typeof p === 'function');
+    const state = needsState ? store.getState() : (undefined as unknown as TState);
     const next = paths.map((p, i) => {
-      const resolvedPath = typeof p === 'function' ? p(state) : p;
-      const val = getByPath(state, resolvedPath);
+      const val = typeof p === 'function' ? getByPath(state, p(state)) : store.getPath(p);
       if (val !== undefined || defaultValue === undefined) {
         return val;
       }

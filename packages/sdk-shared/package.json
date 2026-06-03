@@ -50,10 +50,6 @@
       "types": "./dist/dataSource/index.d.ts",
       "import": "./dist/dataSource/index.mjs"
     },
-    "./dataSource/DataSourceContext": {
-      "types": "./dist/dataSource/DataSourceContext.d.ts",
-      "import": "./dist/dataSource/DataSourceContext.mjs"
-    },
     "./dataSource/hooks": {
       "types": "./dist/dataSource/hooks/index.d.ts",
       "import": "./dist/dataSource/hooks/index.mjs"
@@ -65,6 +61,10 @@
     "./dataSource/hooks/useDataSource": {
       "types": "./dist/dataSource/hooks/useDataSource.d.ts",
       "import": "./dist/dataSource/hooks/useDataSource.mjs"
+    },
+    "./dataSource/hooks/useRegisterSource": {
+      "types": "./dist/dataSource/hooks/useRegisterSource.d.ts",
+      "import": "./dist/dataSource/hooks/useRegisterSource.mjs"
     },
     "./dataSource/index": {
       "types": "./dist/dataSource/index.d.ts",
@@ -948,9 +948,6 @@
     },
     "./types/ResourceTypes": {
       "types": "./dist/types/ResourceTypes.d.ts"
-    },
-    "./types/SchemaTypes": {
-      "types": "./dist/types/SchemaTypes.d.ts"
     },
     "./types/SdkTypes": {
       "types": "./dist/types/SdkTypes.d.ts"

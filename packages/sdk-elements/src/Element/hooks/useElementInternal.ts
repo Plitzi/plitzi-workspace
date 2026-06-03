@@ -1,20 +1,20 @@
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
-import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';
 import { processTwig, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import useElementDataSource from './useElementDataSource';
 import useElementState from './useElementState';
 import useInternalItems from './useInternalItems';
+import getBindingsDetails from '../../dataSource/getBindingsDetails';
 import parseStyleSelectors from '../helpers/parseStyleSelectors';
 
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { CommonState, Element, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
-const getProps = (
+export const getProps = (
   element: Element,
   internalProps: InternalPropsSTG1,
   dataSource = {} as Record<string, unknown>,
@@ -94,7 +94,7 @@ const useElementInternal = ({
   }
 
   const { state, setElementState } = useElementState({ bindings: element.definition.bindings, previewMode });
-  const dataSource = useElementDataSource({ id, bindings: element.definition.bindings, sources: ['variables'] });
+  const dataSource = useElementDataSource({ bindings: element.definition.bindings, sources: ['variables'] });
 
   const internalPropsParsed = useMemo(
     () => ({ ...getProps(element, internalProps, dataSource, state), setElementState }),

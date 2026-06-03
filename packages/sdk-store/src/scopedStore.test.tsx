@@ -54,13 +54,37 @@ describe('scoped store: live chain (createStore)', () => {
     expect(parent.getState().c).toBeUndefined();
   });
 
-  it('writes brand-new keys (owned by nobody) to the current scope', () => {
+  it('delegates writes of keys it does not own up to the root', () => {
     const { parent, child } = makeChain();
 
     child.setState('z', 7);
 
-    expect(child.getState().z).toBe(7);
-    expect(parent.getState().z).toBeUndefined();
+    expect(parent.getState().z).toBe(7); // unowned key delegated to root
+    expect(child.getState().z).toBe(7); // visible through the chain
+  });
+
+  it('deep-merges nested slices instead of shadowing the whole branch', () => {
+    type N = { runtime?: { sources?: Record<string, unknown> } };
+    const parent = createStore<N>({ runtime: { sources: { variables: { a: 1 } } } });
+    const child = createStore<N>({ runtime: { sources: { record: { b: 2 } } } }, { parent });
+
+    // Child contributes `runtime.sources.record` without clobbering the parent's `runtime.sources.variables`.
+    expect(child.getState().runtime?.sources).toEqual({ variables: { a: 1 }, record: { b: 2 } });
+    expect(parent.getState().runtime?.sources).toEqual({ variables: { a: 1 } });
+  });
+
+  it('delegates a deeply-nested write to a root that never seeded the branch (no seeding)', () => {
+    type N = { runtime?: { sources?: { variables?: Record<string, unknown>; collection?: Record<string, unknown> } } };
+    const root = createStore<N>({});
+    const mid = createStore<N>({ runtime: { sources: { collection: { items: [] } } } }, { parent: root });
+    const leaf = createStore<N>({}, { parent: mid });
+
+    leaf.setState('runtime.sources.variables', { a: 1 });
+
+    // Nobody between leaf and root owns `runtime`, so the write delegates all the way to the root, and the
+    // chain still deep-merges the mid scope's own `runtime.sources.collection` on read.
+    expect(root.getState().runtime?.sources).toEqual({ variables: { a: 1 } });
+    expect(leaf.getState().runtime?.sources).toEqual({ collection: { items: [] }, variables: { a: 1 } });
   });
 
   it('wakes child subscribers when the parent changes an inherited key', () => {
@@ -77,16 +101,15 @@ describe('scoped store: live chain (createStore)', () => {
     expect(child.getState().a).toBe(10);
   });
 
-  it('does not wake a child path listener for a shadowed key', () => {
+  it('keeps the shadowed value when the parent changes a key the child owns', () => {
     const parent = createStore<S>({ a: 1, b: 2 });
     const child = createStore<S>({ a: 100, c: 9 }, { parent });
-    const pathListener = vi.fn();
-    child.subscribePath('a', pathListener);
 
     parent.setState('a', 10);
 
-    expect(pathListener).not.toHaveBeenCalled();
-    expect(child.getState().a).toBe(100); // still shadowed
+    // Child owns `a`, so its resolved value stays shadowed regardless of the parent change (consumer-level
+    // equality turns the wake-up into a no-op).
+    expect(child.getState().a).toBe(100);
   });
 
   it('unlinks from the parent on destroy', () => {

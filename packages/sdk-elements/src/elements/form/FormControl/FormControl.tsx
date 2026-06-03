@@ -1,10 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
 /* eslint-disable react-hooks/rules-of-hooks */
 import clsx from 'clsx';
-import { use, useEffect } from 'react';
+import { useEffect } from 'react';
 
 import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import Label from './components/Label';
 import withFieldValue from './hocs/withFieldValue';
@@ -63,11 +64,10 @@ const FormControl = ({
     definition: { styleSelectors }
   } = useElement();
   const {
-    settings: { previewMode },
-    contexts: { DataSourceContext }
+    settings: { previewMode }
   } = usePlitziServiceContext();
-  const { useDataSource } = use(DataSourceContext);
-  const { form } = useDataSource<FormContextValue | undefined>({ id, mode: 'read' });
+  const { useStore } = createStoreHook<{ runtime?: { sources?: { form?: FormContextValue } } }>();
+  const [form] = useStore('runtime.sources.form');
   if (!form && !previewMode) {
     return (
       <RootElement
