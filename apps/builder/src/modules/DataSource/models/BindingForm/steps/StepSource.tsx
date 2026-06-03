@@ -2,6 +2,7 @@ import ErrorMessage from '@plitzi/plitzi-ui/ErrorMessage';
 import Form from '@plitzi/plitzi-ui/Form';
 import Heading from '@plitzi/plitzi-ui/Heading';
 import { get } from '@plitzi/plitzi-ui/helpers';
+import { useMemo } from 'react';
 
 import type { SourceMeta } from '@plitzi/sdk-shared';
 
@@ -10,6 +11,11 @@ export type StepSourceProps = {
 };
 
 const StepSource = ({ sources }: StepSourceProps) => {
+  const sourcesWithNone = useMemo<Record<string, SourceMeta>>(
+    () => ({ '': { id: undefined, source: undefined, name: 'None', fields: () => [] }, ...sources }),
+    [sources]
+  );
+
   return (
     <Form.Custom
       name="source"
@@ -17,8 +23,8 @@ const StepSource = ({ sources }: StepSourceProps) => {
         <div className="flex flex-col gap-2" ref={ref}>
           <Heading as="h5">Sources</Heading>
           <div className="flex flex-col">
-            {Object.keys(sources).map((srcKey, i) => {
-              const name = get(sources[srcKey], 'name', '');
+            {Object.keys(sourcesWithNone).map((srcKey, i) => {
+              const name = get(sourcesWithNone[srcKey], 'name', '');
 
               return (
                 <div

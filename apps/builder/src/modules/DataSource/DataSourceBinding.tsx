@@ -28,19 +28,17 @@ export type DataSourceBindingProps = {
 
 const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceBindingProps) => {
   const { useStore } = createStoreHook<BuilderState>();
-  const [[flat, sourcesRegistry]] = useStore(['schema.flat', 'sources']);
+  const [[flat, sourcesDefinition]] = useStore(['schema.flat', 'sources']);
   const { attributes, definition } = element;
   const [bindingFormValues, setBindingFormValues] = useState<Record<keyof typeof attributes, ElementBinding | null>>(
     () => Object.keys(attributes).reduce((acum, key) => ({ ...acum, [key]: null }), {})
   );
   const sources = useMemo(
     () =>
-      Object.values(getSourcesByElementId(sourcesRegistry, flat, id))
+      Object.values(getSourcesByElementId(sourcesDefinition, flat, id))
         .filter(source => source.meta.source)
-        .reduce((acum, source) => ({ ...acum, [source.meta.source as string]: source.meta }), {
-          '': { id: undefined, source: undefined, name: 'None', fields: () => [] }
-        }),
-    [sourcesRegistry, id, flat]
+        .reduce((acum, source) => ({ ...acum, [source.meta.source as string]: source.meta }), {}),
+    [sourcesDefinition, id, flat]
   );
 
   useEffect(() => {
