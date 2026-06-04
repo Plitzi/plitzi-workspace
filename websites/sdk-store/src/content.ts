@@ -289,17 +289,31 @@ export type ComparisonRow = {
 };
 
 // Capability comparison (facts, not perf). Columns after the leading feature label.
-export const COMPARISON_COLUMNS = ['@plitzi/sdk-store', 'Zustand', 'Redux Toolkit', 'Jotai', 'Context'];
+export const COMPARISON_COLUMNS = [
+  '@plitzi/sdk-store',
+  'Zustand',
+  'Redux Toolkit',
+  'Jotai',
+  'MobX',
+  'Valtio',
+  'Context'
+];
 
+// Order of values matches COMPARISON_COLUMNS.
 export const COMPARISON_ROWS: ComparisonRow[] = [
-  { feature: 'Native dot-path subscriptions', values: ['yes', 'selectors', 'selectors', 'atoms', 'no'] },
-  { feature: 'Scoped / live child stores', values: ['yes', 'no', 'no', 'partial', 'manual'] },
-  { feature: 'Built-in time-travel / action log', values: ['yes', 'middleware', 'devtools', 'no', 'no'] },
-  { feature: 'Type-safe paths end-to-end', values: ['yes', 'no', 'no', 'no', 'no'] },
-  { feature: 'No actions / reducers', values: ['yes', 'yes', 'no', 'yes', 'yes'] },
-  { feature: 'Provider optional', values: ['yes', 'yes', 'no', 'partial', 'no'] },
-  { feature: 'Fine-grained by default', values: ['yes', 'opt-in', 'opt-in', 'yes', 'no'] },
-  { feature: 'SSR-ready', values: ['yes', 'yes', 'yes', 'yes', 'yes'] }
+  { feature: 'Native dot-path subscriptions', values: ['yes', 'selectors', 'selectors', 'atoms', 'tracked', 'proxy', 'no'] },
+  { feature: 'Type-safe paths end-to-end', values: ['yes', 'no', 'no', 'no', 'no', 'no', 'no'] },
+  { feature: 'Scoped / live child stores', values: ['yes', 'no', 'no', 'partial', 'no', 'no', 'manual'] },
+  { feature: 'Built-in time-travel / action log', values: ['yes', 'middleware', 'devtools', 'no', 'spy', 'util', 'no'] },
+  { feature: 'Single immutable tree (snapshots)', values: ['yes', 'yes', 'yes', 'no', 'no', 'no', 'yes'] },
+  { feature: 'Plain objects (no proxy / classes)', values: ['yes', 'yes', 'yes', 'yes', 'no', 'no', 'yes'] },
+  { feature: 'Multi-path read in one hook', values: ['yes', 'manual', 'manual', 'manual', 'auto', 'auto', 'no'] },
+  { feature: 'Dynamic / computed paths', values: ['yes', 'selectors', 'selectors', 'derived', 'computed', 'derive', 'no'] },
+  { feature: 'Memoized derived values', values: ['yes', 'selectors', 'reselect', 'derived', 'computed', 'derive', 'no'] },
+  { feature: 'No actions / reducers', values: ['yes', 'yes', 'no', 'yes', 'yes', 'yes', 'yes'] },
+  { feature: 'Provider optional', values: ['yes', 'yes', 'no', 'partial', 'yes', 'yes', 'no'] },
+  { feature: 'Fine-grained by default', values: ['yes', 'opt-in', 'opt-in', 'yes', 'yes', 'yes', 'no'] },
+  { feature: 'SSR-ready', values: ['yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes'] }
 ];
 
 export type EcosystemPackage = {

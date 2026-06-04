@@ -1,6 +1,6 @@
-import { makeFlat, makeNested, NAIVE, setLeaf, work } from './shared';
+import { DEEP_MAP_TARGET, makeFlat, makeItemMap, makeNested, NAIVE, setLeaf, work } from './shared';
 
-import type { Sample, NestedState, StoreAdapter } from './shared';
+import type { DeepMapState, Sample, NestedState, StoreAdapter } from './shared';
 
 // Baseline (not a library): a store that notifies every subscriber on any change — what you get from React Context,
 // or from any store subscribed to whole state instead of a path/selector.
@@ -82,4 +82,54 @@ const churn = (updates: number): Sample => {
   return { name: NAIVE, wakes, ms: performance.now() - start };
 };
 
-export const naiveAdapter: StoreAdapter = { wide, hot, nested, churn };
+// Baseline: notify every subscriber on any change, immutable map copy per write.
+const deepMap = (items: number, updates: number): Sample => {
+  let state: DeepMapState = makeItemMap(items);
+  const listeners: Array<() => void> = [];
+  let wakes = 0;
+  for (let i = 0; i < items; i++) {
+    listeners.push(() => {
+      wakes++;
+      work(wakes);
+    });
+  }
+
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    const prev = state.items[DEEP_MAP_TARGET];
+    state = {
+      items: { ...state.items, [DEEP_MAP_TARGET]: { ...prev, meta: { ...prev.meta, n: j + 1 } } }
+    };
+    for (const listener of listeners) {
+      listener();
+    }
+  }
+
+  return { name: NAIVE, wakes, ms: performance.now() - start };
+};
+
+const fanout = (keys: number, rounds: number): Sample => {
+  const state = makeFlat(keys);
+  const listeners: Array<() => void> = [];
+  let wakes = 0;
+  for (let i = 0; i < keys; i++) {
+    listeners.push(() => {
+      wakes++;
+      work(wakes);
+    });
+  }
+
+  const start = performance.now();
+  for (let r = 0; r < rounds; r++) {
+    for (let i = 0; i < keys; i++) {
+      state[`k${i}`] = r + 1;
+      for (const listener of listeners) {
+        listener();
+      }
+    }
+  }
+
+  return { name: NAIVE, wakes, ms: performance.now() - start };
+};
+
+export const naiveAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout };

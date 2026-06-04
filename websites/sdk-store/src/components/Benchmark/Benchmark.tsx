@@ -11,7 +11,7 @@ const Benchmark = () => (
         subtitle="Other stores can be fine-grained — with selectors or atoms. sdk-store is path-scoped out of the box, and ships scoped stores and time-travel that most don't."
       />
 
-      <div className="mt-12 grid gap-8 lg:grid-cols-2">
+      <div className="mt-12 space-y-8">
         <ComparisonTable />
         <BenchmarkRunner />
       </div>
@@ -36,11 +36,12 @@ const Benchmark = () => (
 
       <p className="mx-auto mt-6 max-w-3xl text-center text-xs leading-relaxed text-zinc-600">
         Each number is the <strong className="text-zinc-500">median of several reps</strong> (a single pass swings
-        with GC/JIT — that’s why benchmarks feel noisy). No store wins them all: Jotai’s atoms dominate <em>wide</em>{' '}
-        fan-out because they never copy siblings; on <em>nested</em> and <em>churn</em> Zustand often edges ahead; on a{' '}
-        <em>hot</em> value they’re about even. sdk-store stays competitive across every shape — and is the only one
-        here that keeps a single immutable tree (consistent snapshots &amp; time-travel) with typed dot-paths and
-        scoped stores. Numbers vary by machine.
+        with GC/JIT — that’s why benchmarks feel noisy). No store wins them all, and that’s the point: proxy and atom
+        stores (Valtio, MobX, Jotai) skip the copy entirely on a <em>normalized map</em> edit, while every immutable
+        store — sdk-store, Zustand, Redux — pays to copy the changed container; on <em>hot</em> and <em>fan-out</em>{' '}
+        notification throughput decides it. sdk-store stays top-tier across every shape — and is the only one here that
+        keeps a single immutable tree (consistent snapshots &amp; time-travel) with typed dot-paths and scoped stores.
+        Numbers vary by machine.
       </p>
     </div>
   </section>

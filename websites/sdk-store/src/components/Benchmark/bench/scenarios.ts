@@ -1,12 +1,23 @@
 import { jotaiAdapter } from './jotaiStore';
+import { mobxAdapter } from './mobxStore';
 import { naiveAdapter } from './naiveStore';
+import { reduxAdapter } from './reduxStore';
 import { sdkAdapter } from './sdkStore';
 import { guardSink, resetSink } from './shared';
+import { valtioAdapter } from './valtioStore';
 import { zustandAdapter } from './zustandStore';
 
 import type { BenchmarkResult, LibResult, Sample, StoreAdapter } from './shared';
 
-const ADAPTERS: StoreAdapter[] = [sdkAdapter, zustandAdapter, jotaiAdapter, naiveAdapter];
+const ADAPTERS: StoreAdapter[] = [
+  sdkAdapter,
+  zustandAdapter,
+  jotaiAdapter,
+  reduxAdapter,
+  mobxAdapter,
+  valtioAdapter,
+  naiveAdapter
+];
 
 type ScenarioConfig = {
   id: string;
@@ -44,6 +55,21 @@ const SCENARIOS: ScenarioConfig[] = [
     description: 'Raw per-update throughput: tiny store, a single subscriber, a flood of writes.',
     warmup: adapter => void adapter.churn(2000),
     run: adapter => adapter.churn(10000)
+  },
+  {
+    id: 'deepMap',
+    label: 'Normalized map · 2,000 items, update 1 nested leaf',
+    description:
+      'The real shape of app state (an entities map). Immutable stores copy the whole map per edit; atom and proxy stores touch only the item.',
+    warmup: adapter => void adapter.deepMap(500, 20),
+    run: adapter => adapter.deepMap(2000, 100)
+  },
+  {
+    id: 'fanout',
+    label: 'Fan-out · 100 keys × 20 rounds, one watcher each',
+    description: 'A broad write burst: every key changes and wakes its own watcher. Tests write + dispatch volume.',
+    warmup: adapter => void adapter.fanout(40, 5),
+    run: adapter => adapter.fanout(100, 20)
   }
 ];
 

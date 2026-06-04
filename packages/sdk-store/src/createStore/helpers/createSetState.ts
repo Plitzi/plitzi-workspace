@@ -1,94 +1,105 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
+import { UNCHANGED, writeByPath, writeResult } from './writeByPath';
 import getByPath from '../../helpers/getByPath';
 import parsePath from '../../helpers/parsePath';
 import setByPath from '../../helpers/setByPath';
 
-import type { Listener, Path, PathOf, PathValue, SetState, StoreApi, StoreLogger } from '../../types';
+import type PathTrie from './PathTrie';
+import type { Listener, PathOf, PathValue, SetState, StoreApi, StoreLogger } from '../../types';
 
 export type SetStateDeps<TState extends object> = {
   getOwnState: () => TState;
+  getOwnSnapshot: () => TState;
   setOwnState: (next: TState) => void;
+  mutateOwnKey: (key: string, value: unknown) => void;
   parent: StoreApi<TState> | undefined;
-  listeners: Set<Listener>;
-  historyListeners?: Set<Listener>;
-  pathListeners: Map<Path, Set<Listener>>;
+  listeners: Listener[];
+  historyListeners?: Listener[];
+  pathListeners: PathTrie;
   logger?: StoreLogger<TState>;
 };
 
-// Wakes subscribers after a local write: full-state listeners always; a path listener only if the changed path
-// can affect it AND its resolved value actually changed.
-//
-// For a known changed `path` the affected subscribers are resolved by direct lookup instead of scanning every
-// registered path: the changed path itself and each of its ancestors (whose containing object's identity changed
-// via the immutable write) are O(depth) Map gets, and descendants are scanned only when the new value is a
-// container that could hold them. This keeps an update O(depth) for the common leaf write rather than O(subscribers).
-function notifyChange<TState extends object>(
-  path: Path | undefined,
-  newValue: unknown,
-  prevState: TState,
-  nextState: TState,
-  listeners: Set<Listener>,
-  pathListeners: Map<Path, Set<Listener>>,
-  historyListeners: Set<Listener> | undefined,
-  canPropagate: boolean
-): void {
-  historyListeners?.forEach(l => l(path));
-  if (!canPropagate) {
-    return;
+const notifyListeners = (arr: Listener[], path: string | undefined) => {
+  for (let i = 0; i < arr.length; i++) {
+    arr[i](path);
   }
+};
 
-  listeners.forEach(l => l(path));
-
-  if (pathListeners.size === 0) {
-    return;
-  }
-
-  // Full-state replace (undefined) or an exotic non-string path: any registered path may have changed, so fall
-  // back to checking each against the new state.
-  if (typeof path !== 'string') {
-    pathListeners.forEach((set, candidate) => {
-      const prev = getByPath(prevState, candidate as PathOf<TState>);
-      const next = getByPath(nextState, candidate as PathOf<TState>);
-      if (!Object.is(prev, next)) {
-        set.forEach(l => l(path));
-      }
-    });
-
-    return;
-  }
-
-  // Exact path + ancestors: their value (or containing object's identity) changed, so wake without re-checking.
-  let prefix = '';
-  for (const part of parsePath(path)) {
-    prefix = prefix ? `${prefix}.${part}` : part;
-    const set = pathListeners.get(prefix);
-    if (set) {
-      set.forEach(l => l(path));
-    }
-  }
-
-  // Descendants only exist to wake when the new value (already resolved by the caller) is a container.
-  if (typeof newValue === 'object' && newValue !== null) {
-    const descendantPrefix = `${path}.`;
-    pathListeners.forEach((set, candidate) => {
-      if (!candidate.startsWith(descendantPrefix)) {
-        return;
-      }
-
-      const prev = getByPath(prevState, candidate as PathOf<TState>);
-      const next = getByPath(nextState, candidate as PathOf<TState>);
-      if (!Object.is(prev, next)) {
-        set.forEach(l => l(path));
-      }
-    });
-  }
-}
-
-// Builds `setState`: resolves the value, writes immutably, and notifies. Writes target the nearest scope that
-// owns the exact path; otherwise they delegate up the chain (reaching the root for shared/global paths). Scoped
-// values are seeded as own state via StoreProvider, not setState.
 export function createSetState<TState extends object>(deps: SetStateDeps<TState>): SetState<TState> {
-  const { getOwnState, setOwnState, parent, listeners, pathListeners, historyListeners, logger } = deps;
+  const {
+    getOwnState,
+    getOwnSnapshot,
+    setOwnState,
+    mutateOwnKey,
+    parent,
+    listeners,
+    pathListeners,
+    historyListeners,
+    logger
+  } = deps;
 
+  // --- Cold path: fallback (non-string paths, plain-object merge) ---
+  const handleFallback = <P extends PathOf<TState>>(
+    path: P | undefined,
+    value:
+      | PathValue<TState, P>
+      | ((prev: PathValue<TState, P>) => PathValue<TState, P>)
+      | TState
+      | ((prev: TState) => TState),
+    prevState: TState,
+    canPropagate: boolean
+  ): void => {
+    const prevValue: unknown = path ? getByPath(prevState, path) : undefined;
+
+    const resolvedValue = path
+      ? typeof value === 'function'
+        ? (value as (prev: PathValue<TState, P>) => PathValue<TState, P>)(prevValue as PathValue<TState, P>)
+        : value
+      : undefined;
+
+    if (path && prevValue === resolvedValue) {
+      return;
+    }
+
+    const nextState: TState = path
+      ? setByPath(prevState, path, resolvedValue)
+      : typeof value === 'function'
+        ? (value as (prev: TState) => TState)(prevState)
+        : { ...prevState, ...value };
+
+    if (nextState === prevState) {
+      return;
+    }
+
+    setOwnState(nextState);
+    logger?.({ path, prev: prevState, next: nextState });
+
+    if (historyListeners) {
+      notifyListeners(historyListeners, path);
+    }
+
+    if (canPropagate) {
+      for (let i = 0; i < listeners.length; i++) {
+        listeners[i](path);
+      }
+
+      if (pathListeners.size > 0) {
+        pathListeners.forEach((arr, candidate) => {
+          const prev = getByPath(prevState, candidate as PathOf<TState>);
+          const next = getByPath(nextState, candidate as PathOf<TState>);
+          if (prev !== next) {
+            for (let i = 0; i < arr.length; i++) {
+              arr[i](path);
+            }
+          }
+        });
+      }
+    }
+  };
+
+  // --- setState — dispatcher + hot paths inline (both single and multi-segment),
+  //     so V8 can inline the whole thing into the benchmark loop ---
   const setState: SetState<TState> = <P extends PathOf<TState>>(
     path: P | undefined,
     value:
@@ -100,37 +111,136 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
   ) => {
     const prevState = getOwnState();
 
-    if (path && parent && getByPath(prevState, path) === undefined) {
-      parent.setState(path, value as PathValue<TState, P>, canPropagate);
+    if (parent && path) {
+      const prevValue: unknown = getByPath(prevState, path);
+
+      if (prevValue === undefined) {
+        parent.setState(path, value as PathValue<TState, P>, canPropagate);
+
+        return;
+      }
+    }
+
+    if (typeof path === 'string') {
+      if (path.indexOf('.') === -1) {
+        // --- Single-segment hot path: mutate the live state in place (O(1), no top-level spread) ---
+        const prevValue: unknown = (prevState as Record<string, unknown>)[path];
+        const resolvedValue =
+          typeof value === 'function'
+            ? (value as (prev: PathValue<TState, P>) => PathValue<TState, P>)(prevValue as PathValue<TState, P>)
+            : value;
+
+        if (prevValue === resolvedValue) {
+          return;
+        }
+
+        // The logger needs distinct prev/next snapshots; take the pre-mutation one before committing.
+        const loggerPrev = logger ? getOwnSnapshot() : undefined;
+
+        mutateOwnKey(path, resolvedValue);
+        if (logger) {
+          logger({ path, prev: loggerPrev as TState, next: getOwnSnapshot() });
+        }
+
+        if (historyListeners) {
+          notifyListeners(historyListeners, path);
+        }
+
+        if (canPropagate) {
+          for (let i = 0; i < listeners.length; i++) {
+            listeners[i](path);
+          }
+
+          const arr = pathListeners.direct.get(path);
+          if (arr) {
+            for (let i = 0; i < arr.length; i++) {
+              arr[i](path);
+            }
+          }
+
+          if (typeof resolvedValue === 'object' && resolvedValue !== null) {
+            const descendants = pathListeners.getDescendants(path);
+            if (descendants) {
+              const offset = path.length + 1;
+              for (const descendant of descendants) {
+                const arr = pathListeners.direct.get(descendant);
+                if (arr) {
+                  const relative = descendant.slice(offset);
+                  const prev = getByPath(prevValue, relative as never);
+                  const next = getByPath(resolvedValue, relative as never);
+                  if (prev !== next) {
+                    for (let i = 0; i < arr.length; i++) {
+                      arr[i](path);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        return;
+      }
+
+      // --- Multi-segment hot path (immutable structural-sharing write) ---
+      const segments = parsePath(path);
+      const result = writeByPath(prevState, path, segments, value, typeof value === 'function');
+      if (result === UNCHANGED) {
+        return;
+      }
+
+      const resolvedValue = writeResult.resolved;
+      const nextState = result as TState;
+
+      setOwnState(nextState);
+      logger?.({ path, prev: prevState, next: nextState });
+
+      if (historyListeners) {
+        notifyListeners(historyListeners, path);
+      }
+
+      if (canPropagate) {
+        for (let i = 0; i < listeners.length; i++) {
+          listeners[i](path);
+        }
+
+        if (pathListeners.size > 0) {
+          const prefixes = pathListeners.getPrefixes(path);
+          if (prefixes) {
+            for (let i = 0; i < prefixes.length; i++) {
+              const arr = pathListeners.direct.get(prefixes[i]);
+              if (arr) {
+                for (let j = 0; j < arr.length; j++) {
+                  arr[j](path);
+                }
+              }
+            }
+          }
+
+          if (typeof resolvedValue === 'object' && resolvedValue !== null) {
+            const descendants = pathListeners.getDescendants(path);
+            if (descendants) {
+              for (const descendant of descendants) {
+                const arr = pathListeners.direct.get(descendant);
+                if (arr) {
+                  const prev = getByPath(prevState, descendant as PathOf<TState>);
+                  const next = getByPath(nextState, descendant as PathOf<TState>);
+                  if (prev !== next) {
+                    for (let i = 0; i < arr.length; i++) {
+                      arr[i](path);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
 
       return;
     }
 
-    const resolvedValue = path
-      ? typeof value === 'function'
-        ? (value as (prev: PathValue<TState, P>) => PathValue<TState, P>)(
-            getByPath(prevState, path) as PathValue<TState, P>
-          )
-        : value
-      : undefined;
-
-    if (path && Object.is(getByPath(prevState, path), resolvedValue)) {
-      return;
-    }
-
-    const nextState: TState = path
-      ? setByPath(prevState, path, resolvedValue)
-      : typeof value === 'function'
-        ? (value as (prev: TState) => TState)(prevState)
-        : { ...prevState, ...value };
-
-    if (Object.is(nextState, prevState)) {
-      return;
-    }
-
-    setOwnState(nextState);
-    logger?.({ path, prev: prevState, next: nextState });
-    notifyChange(path, resolvedValue, prevState, nextState, listeners, pathListeners, historyListeners, canPropagate);
+    handleFallback(path, value, prevState, canPropagate);
   };
 
   return setState;

@@ -367,12 +367,12 @@ describe('useStoreGetter — getValue stability', () => {
 // ─── Memory / cleanup (no subscriptions) ─────────────────────────────────────
 
 describe('useStoreGetter — memory / cleanup (no subscriptions)', () => {
-  it('store.listeners.size is 0 after mounting useStoreGetter()', () => {
+  it('store.listeners.length is 0 after mounting useStoreGetter()', () => {
     const store = makeStore() as StoreApiInternal<AppState>;
 
     renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
 
-    expect(store.listeners.size).toBe(0);
+    expect(store.listeners.length).toBe(0);
   });
 
   it('store.pathListeners has no entry for base path after mounting useStoreGetter("count")', () => {
@@ -383,27 +383,27 @@ describe('useStoreGetter — memory / cleanup (no subscriptions)', () => {
     expect(store.pathListeners.has('count')).toBe(false);
   });
 
-  it('store.listeners.size remains 0 after unmounting', () => {
+  it('store.listeners.length remains 0 after unmounting', () => {
     const store = makeStore() as StoreApiInternal<AppState>;
 
     const { unmount } = renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
 
     unmount();
 
-    expect(store.listeners.size).toBe(0);
+    expect(store.listeners.length).toBe(0);
   });
 
-  it('mounting 500 useStoreGetter hooks → store.listeners.size stays 0', () => {
+  it('mounting 500 useStoreGetter hooks → store.listeners.length stays 0', () => {
     const store = makeStore() as StoreApiInternal<AppState>;
 
     const hooks = Array.from({ length: 500 }, () =>
       renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) })
     );
 
-    expect(store.listeners.size).toBe(0);
+    expect(store.listeners.length).toBe(0);
 
     hooks.forEach(h => h.unmount());
-    expect(store.listeners.size).toBe(0);
+    expect(store.listeners.length).toBe(0);
   });
 
   it('pathListeners stays empty after 500 scoped hooks mount and unmount', () => {
@@ -490,7 +490,7 @@ describe('useStoreGetter — edge cases', () => {
       rerender();
     }
 
-    expect(store.listeners.size).toBe(0);
+    expect(store.listeners.length).toBe(0);
     expect(store.pathListeners.size).toBe(0);
   });
 
@@ -681,7 +681,7 @@ describe('useStoreGetter — array paths', () => {
       wrapper: makeWrapper(store)
     });
 
-    expect(store.listeners.size).toBe(0);
+    expect(store.listeners.length).toBe(0);
     expect(store.pathListeners.size).toBe(0);
   });
 

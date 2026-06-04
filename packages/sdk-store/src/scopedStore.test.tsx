@@ -114,11 +114,11 @@ describe('scoped store: live chain (createStore)', () => {
 
   it('unlinks from the parent on destroy', () => {
     const { parent, child } = makeChain();
-    const before = (parent as StoreApiInternal<S>).listeners.size;
+    const before = (parent as StoreApiInternal<S>).listeners.length;
 
     child.destroy?.();
 
-    expect((parent as StoreApiInternal<S>).listeners.size).toBe(before - 1);
+    expect((parent as StoreApiInternal<S>).listeners.length).toBe(before - 1);
 
     const listener = vi.fn();
     child.subscribe(listener);

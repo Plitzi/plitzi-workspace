@@ -23,7 +23,7 @@ const BenchmarkRunner = () => {
     <div className="flex flex-col rounded-2xl border border-ink-700 bg-ink-900/50 p-6">
       <h3 className="text-sm font-semibold text-white">Live benchmark</h3>
       <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-        Four workloads, four stores, run in your browser. Each wake does the same small render-sized work, so time
+        Six workloads, seven stores, run in your browser. Each wake does the same small render-sized work, so time
         tracks both how many subscribers wake and how much the store has to copy.
       </p>
 
@@ -37,7 +37,7 @@ const BenchmarkRunner = () => {
 
       {result && (
         <>
-          <div className="mt-5 space-y-4">
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {result.scenarios.map(scenario => (
               <ScenarioBlock
                 key={scenario.id}

@@ -19,21 +19,31 @@ export type BenchmarkResult = {
   scenarios: ScenarioResult[];
 };
 
-// Each store implements the same four workloads; the orchestrator runs each one repeatedly and aggregates.
+// Each store implements the same workloads; the orchestrator runs each one repeatedly and aggregates.
 export type StoreAdapter = {
   wide: (keys: number, updates: number) => Sample;
   hot: (subscribers: number, updates: number) => Sample;
   nested: (updates: number) => Sample;
   churn: (updates: number) => Sample;
+  // Heavy / realistic: a normalized map of `items`, each watched, update one item's nested leaf `updates` times.
+  deepMap: (items: number, updates: number) => Sample;
+  // Heavy: `keys` values each with its own subscriber, update every key once per round for `rounds` rounds.
+  fanout: (keys: number, rounds: number) => Sample;
 };
 
 export const SDK = '@plitzi/sdk-store';
 export const ZUSTAND = 'Zustand';
 export const JOTAI = 'Jotai';
+export const REDUX = 'Redux Toolkit';
+export const MOBX = 'MobX';
+export const VALTIO = 'Valtio';
 export const NAIVE = 'Notify-all baseline';
 
 export type FlatState = Record<string, number>;
 export type NestedState = { a: { b: { c: { d: { e: { leaf: number } } } } } };
+
+export type Item = { value: number; meta: { tag: string; n: number } };
+export type DeepMapState = { items: Record<string, Item> };
 
 // Stand-in for the work a woken subscriber actually does (a small component render). A trivial counter would
 // understate the win — fine-grained subscriptions exist so uninterested subscribers never run this. Every store
@@ -78,3 +88,15 @@ export const setLeaf = (state: NestedState, value: number): NestedState => ({
     b: { ...state.a.b, c: { ...state.a.b.c, d: { ...state.a.b.c.d, e: { ...state.a.b.c.d.e, leaf: value } } } }
   }
 });
+
+export const makeItemMap = (items: number): DeepMapState => {
+  const map: Record<string, Item> = {};
+  for (let i = 0; i < items; i++) {
+    map[`i${i}`] = { value: 0, meta: { tag: 'el', n: 0 } };
+  }
+
+  return { items: map };
+};
+
+// The key whose nested leaf the deepMap workload updates (the rest are untouched siblings that must be preserved).
+export const DEEP_MAP_TARGET = 'i0';

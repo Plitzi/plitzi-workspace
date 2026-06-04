@@ -1,6 +1,5 @@
-import isPathAffected from '../../helpers/isPathAffected';
-
-import type { Listener, Path, StoreApi } from '../../types';
+import type PathTrie from './PathTrie';
+import type { Listener, StoreApi } from '../../types';
 
 // Subscribes this scope to its parent and forwards changes to local consumers, scoped by the changed path:
 // full-state subscribers always wake (the merged snapshot changed), but a path listener only wakes if the
@@ -9,19 +8,21 @@ import type { Listener, Path, StoreApi } from '../../types';
 // same value). Returns the unsubscribe handle so the scope can detach on `destroy()`.
 export function forwardParentChanges<TState extends object>(
   parent: StoreApi<TState>,
-  listeners: Set<Listener>,
-  pathListeners: Map<Path, Set<Listener>>,
-  historyListeners: Set<Listener>
+  listeners: Listener[],
+  pathListeners: PathTrie,
+  historyListeners: Listener[]
 ): () => void {
   return parent.subscribe(changedPath => {
-    listeners.forEach(l => l(changedPath));
-    pathListeners.forEach((set, candidate) => {
-      if (changedPath && !isPathAffected(changedPath, candidate)) {
-        return;
-      }
+    for (let i = 0; i < listeners.length; i++) {
+      listeners[i](changedPath);
+    }
 
-      set.forEach(l => l(changedPath));
-    });
-    historyListeners.forEach(l => l(changedPath));
+    if (pathListeners.size > 0) {
+      pathListeners.forEachAffected(changedPath, listener => listener(changedPath));
+    }
+
+    for (let i = 0; i < historyListeners.length; i++) {
+      historyListeners[i](changedPath);
+    }
   });
 }

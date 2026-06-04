@@ -57,6 +57,10 @@
       "types": "./dist/createStore/createStore.d.ts",
       "import": "./dist/createStore/createStore.mjs"
     },
+    "./createStore/helpers/PathTrie": {
+      "types": "./dist/createStore/helpers/PathTrie.d.ts",
+      "import": "./dist/createStore/helpers/PathTrie.mjs"
+    },
     "./createStore/helpers/createGetPath": {
       "types": "./dist/createStore/helpers/createGetPath.d.ts",
       "import": "./dist/createStore/helpers/createGetPath.mjs"

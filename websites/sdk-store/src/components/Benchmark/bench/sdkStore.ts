@@ -1,8 +1,8 @@
 import { createStore } from '@plitzi/sdk-store';
 
-import { makeFlat, makeNested, SDK, work } from './shared';
+import { DEEP_MAP_TARGET, makeFlat, makeItemMap, makeNested, SDK, work } from './shared';
 
-import type { FlatState, Sample, NestedState, StoreAdapter } from './shared';
+import type { DeepMapState, FlatState, Sample, NestedState, StoreAdapter } from './shared';
 
 const wide = (keys: number, updates: number): Sample => {
   const store = createStore<FlatState>(makeFlat(keys));
@@ -72,4 +72,42 @@ const churn = (updates: number): Sample => {
   return { name: SDK, wakes, ms: performance.now() - start };
 };
 
-export const sdkAdapter: StoreAdapter = { wide, hot, nested, churn };
+const deepMap = (items: number, updates: number): Sample => {
+  const store = createStore<DeepMapState>(makeItemMap(items));
+  let wakes = 0;
+  for (let i = 0; i < items; i++) {
+    store.subscribePath(`items.i${i}.meta.n`, () => {
+      wakes++;
+      work(wakes);
+    });
+  }
+
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    store.setState(`items.${DEEP_MAP_TARGET}.meta.n`, j + 1);
+  }
+
+  return { name: SDK, wakes, ms: performance.now() - start };
+};
+
+const fanout = (keys: number, rounds: number): Sample => {
+  const store = createStore<FlatState>(makeFlat(keys));
+  let wakes = 0;
+  for (let i = 0; i < keys; i++) {
+    store.subscribePath(`k${i}`, () => {
+      wakes++;
+      work(wakes);
+    });
+  }
+
+  const start = performance.now();
+  for (let r = 0; r < rounds; r++) {
+    for (let i = 0; i < keys; i++) {
+      store.setState(`k${i}`, r + 1);
+    }
+  }
+
+  return { name: SDK, wakes, ms: performance.now() - start };
+};
+
+export const sdkAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout };

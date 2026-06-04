@@ -136,6 +136,31 @@ describe('store', () => {
 
       expect(listener).not.toHaveBeenCalled();
     });
+
+    it('should wake a descendant listener when a single-segment object write changes its value', () => {
+      const store = createTestStore();
+      const nameListener = vi.fn();
+      const ageListener = vi.fn();
+
+      store.subscribePath('user.name', nameListener);
+      store.subscribePath('user.age', ageListener);
+
+      store.setState('user', { name: 'Pedro', age: store.getState().user.age });
+
+      expect(store.getState().user.name).toBe('Pedro');
+      expect(nameListener).toHaveBeenCalledTimes(1);
+      expect(ageListener).not.toHaveBeenCalled();
+    });
+
+    it('should not mutate a snapshot taken before a single-segment write', () => {
+      const store = createTestStore();
+      const prev = store.getState();
+
+      store.setState('count', 99);
+
+      expect(prev.count).toBe(0); // immutability of the handed-out snapshot
+      expect(store.getState().count).toBe(99);
+    });
   });
 });
 
@@ -1269,11 +1294,11 @@ describe('performance', () => {
         unsubs.push(store.subscribe(vi.fn()));
       }
 
-      expect(store.listeners.size).toBe(1000);
+      expect(store.listeners.length).toBe(1000);
 
       unsubs.forEach(u => u());
 
-      expect(store.listeners.size).toBe(0);
+      expect(store.listeners.length).toBe(0);
     });
 
     it('no acumula path listeners: subscribePath → unsub limpia correctamente', () => {
@@ -1284,11 +1309,11 @@ describe('performance', () => {
         unsubs.push(store.subscribePath('user.name', vi.fn()));
       }
 
-      expect(store.pathListeners.get('user.name')?.size).toBe(1000);
+      expect(store.pathListeners.get('user.name')?.length).toBe(1000);
 
       unsubs.forEach(u => u());
 
-      expect(store.pathListeners.get('user.name')?.size).toBe(0);
+      expect(store.pathListeners.get('user.name')).toBeUndefined();
     });
 
     it('setState masivo no genera entradas en pathListeners', () => {
@@ -1318,8 +1343,8 @@ describe('performance', () => {
 
       unsubs.forEach(u => u());
 
-      store.pathListeners.forEach(set => {
-        expect(set.size).toBe(0);
+      store.pathListeners.forEach(arr => {
+        expect(arr.length).toBe(0);
       });
     });
 

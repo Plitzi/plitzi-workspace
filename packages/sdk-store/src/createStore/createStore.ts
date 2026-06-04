@@ -10,6 +10,7 @@ import { createGetPath } from './helpers/createGetPath';
 import { createGetState } from './helpers/createGetState';
 import { createSetState } from './helpers/createSetState';
 import { forwardParentChanges } from './helpers/forwardParentChanges';
+import PathTrie from './helpers/PathTrie';
 
 import type {
   GetState,
@@ -19,7 +20,6 @@ import type {
   GetValueFromBaseWithDefaultFn,
   Listener,
   MultiPathReturn,
-  Path,
   PathOf,
   PathOrFn,
   PathOrFnSetters,
@@ -47,19 +47,38 @@ function createStore<TState extends object>(
   initializer: Partial<TState> | ((set: SetState<TState>, get: GetState<TState>) => Partial<TState>),
   storeOptions?: { logger?: StoreLogger<TState>; parent?: StoreApi<TState> }
 ): StoreApi<TState> {
+  // `state` is the live, private working copy. Single-segment writes mutate it in place (O(1) instead of an
+  // O(width) top-level spread); it is NEVER handed out. `ownSnapshot` is the immutable view returned by
+  // `getState`: cloned lazily and cached, invalidated on every change so its reference doubles as the change
+  // signal. Because the snapshot is always a distinct clone, in-place mutation of `state` can never corrupt a
+  // snapshot a consumer already holds.
   let state = {} as TState;
-  const listeners = new Set<Listener>();
-  const pathListeners = new Map<Path, Set<Listener>>();
-  const historyListeners = new Set<Listener>();
+  let ownSnapshot: TState | undefined;
+  const listeners: Listener[] = [];
+  const pathListeners = new PathTrie();
+  const historyListeners: Listener[] = [];
   const parent = storeOptions?.parent;
   const getOwnState = () => state;
+  const getOwnSnapshot = (): TState => {
+    if (ownSnapshot === undefined) {
+      ownSnapshot = { ...state };
+    }
 
-  const { getState, getMergeCount } = createGetState<TState>(getOwnState, parent);
+    return ownSnapshot;
+  };
+
+  const { getState, getMergeCount } = createGetState<TState>(getOwnSnapshot, parent);
   const getPath = createGetPath<TState>(getOwnState, parent, getState);
   const setState = createSetState<TState>({
     getOwnState,
+    getOwnSnapshot,
     setOwnState: next => {
       state = next;
+      ownSnapshot = undefined;
+    },
+    mutateOwnKey: (key, value) => {
+      (state as Record<string, unknown>)[key] = value;
+      ownSnapshot = undefined;
     },
     parent,
     listeners,
@@ -69,27 +88,34 @@ function createStore<TState extends object>(
   });
 
   const subscribe = (listener: Listener): (() => void) => {
-    listeners.add(listener);
+    listeners.push(listener);
 
-    return () => listeners.delete(listener);
+    return () => {
+      const idx = listeners.indexOf(listener);
+      if (idx !== -1) {
+        const last = listeners.pop();
+        if (idx < listeners.length) {
+          listeners[idx] = last as Listener;
+        }
+      }
+    };
   };
 
-  const subscribePath = <P extends PathOf<TState>>(path: P, listener: Listener): (() => void) => {
-    let set = pathListeners.get(path);
-    if (!set) {
-      set = new Set();
-      pathListeners.set(path, set);
-    }
-
-    set.add(listener);
-
-    return () => set.delete(listener);
-  };
+  const subscribePath = <P extends PathOf<TState>>(path: P, listener: Listener): (() => void) =>
+    pathListeners.add(path, listener);
 
   const subscribeHistory = (listener: Listener): (() => void) => {
-    historyListeners.add(listener);
+    historyListeners.push(listener);
 
-    return () => historyListeners.delete(listener);
+    return () => {
+      const idx = historyListeners.indexOf(listener);
+      if (idx !== -1) {
+        const last = historyListeners.pop();
+        if (idx < historyListeners.length) {
+          historyListeners[idx] = last as Listener;
+        }
+      }
+    };
   };
 
   state = (typeof initializer === 'function' ? initializer(setState, getState) : initializer) as TState;
@@ -111,9 +137,9 @@ function createStore<TState extends object>(
   const destroy = () => {
     parentUnsub?.();
     parentUnsub = undefined;
-    listeners.clear();
+    listeners.length = 0;
     pathListeners.clear();
-    historyListeners.clear();
+    historyListeners.length = 0;
   };
 
   const api: StoreApi<TState> = {
