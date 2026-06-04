@@ -97,16 +97,35 @@ function createStore<TState extends object>(
   // Handle to stop listening to the parent, kept so `destroy()` can detach this scope (otherwise the parent
   // holds a reference to this scope's forwarder forever — a leak for short-lived scopes like list items).
   // Undefined for root stores, which have no parent to listen to.
-  const parentUnsub = parent ? forwardParentChanges(parent, listeners, pathListeners, historyListeners) : undefined;
+  let parentUnsub = parent ? forwardParentChanges(parent, listeners, pathListeners, historyListeners) : undefined;
+
+  // Re-establish the parent forwarding after a `destroy()`. Needed because React StrictMode runs a mount →
+  // unmount → remount cycle that reuses this same store instance: the simulated unmount calls `destroy()`
+  // (detaching the link), and on remount the scope must reconnect or it silently stops seeing parent changes.
+  const reconnect = () => {
+    if (parent && !parentUnsub) {
+      parentUnsub = forwardParentChanges(parent, listeners, pathListeners, historyListeners);
+    }
+  };
 
   const destroy = () => {
     parentUnsub?.();
+    parentUnsub = undefined;
     listeners.clear();
     pathListeners.clear();
     historyListeners.clear();
   };
 
-  const api: StoreApi<TState> = { getState, getPath, setState, subscribe, subscribePath, subscribeHistory, destroy };
+  const api: StoreApi<TState> = {
+    getState,
+    getPath,
+    setState,
+    subscribe,
+    subscribePath,
+    subscribeHistory,
+    destroy,
+    reconnect
+  };
 
   if (import.meta.env.MODE === 'test') {
     (api as StoreApiInternal<TState>).listeners = listeners;

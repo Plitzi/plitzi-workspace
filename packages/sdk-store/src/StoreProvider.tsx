@@ -69,14 +69,20 @@ const StoreProvider = <TState extends object = any>({
     getStoreHistory(storeRef.current, typeof history === 'string' ? { path: history } : undefined);
   }
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    // Re-attach the parent link on (re)mount. StrictMode runs mount → unmount → remount reusing the same store
+    // instance, and the cleanup below detaches it on the simulated unmount; without this the live scope would
+    // stop receiving parent updates in dev.
+    if (liveChain && !store) {
+      storeRef.current?.reconnect?.();
+    }
+
+    return () => {
       if (liveChain && !store) {
         storeRef.current?.destroy?.();
       }
-    },
-    [liveChain, store]
-  );
+    };
+  }, [liveChain, store]);
 
   const syncEnabled = !!value && autoSync;
 

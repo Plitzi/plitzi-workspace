@@ -104,6 +104,10 @@ export type StoreApi<T> = {
   subscribePath: <P extends PathOf<T>>(path: P, listener: Listener) => () => void;
   subscribeHistory: (listener: Listener) => () => void;
   destroy?: () => void;
+  // Re-attaches a scoped store's parent subscription after a `destroy()` (no-op for root stores or when already
+  // attached). Lets a provider survive React StrictMode's mount → unmount → remount, which reuses the store
+  // instance: without it, the simulated unmount detaches the live parent link and it is never restored.
+  reconnect?: () => void;
 };
 
 export type StoreApiInternal<T> = StoreApi<T> & {
