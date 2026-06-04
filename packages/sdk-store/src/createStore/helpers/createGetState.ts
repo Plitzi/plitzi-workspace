@@ -2,11 +2,9 @@ import { deepMerge } from './deepMerge';
 
 import type { GetState, StoreApi } from '../../types';
 
-// Builds the chain-aware `getState`: deep-merges own state over the parent's, memoized so snapshots stay
-// referentially stable between changes (required by useSyncExternalStore). Re-merges only when own OR parent
-// state changes. `getOwnSnapshot` returns an immutable view of own state whose reference changes on every
-// change, which is exactly the memoization key used here. `getMergeCount` exposes how many merges actually ran
-// (test-only metric).
+// Chain-aware `getState`: deep-merges own state over the parent's, memoized on the own/parent snapshot references
+// so it stays referentially stable between changes (required by useSyncExternalStore) and re-merges only when one
+// of them changes. `getMergeCount` is a test-only metric.
 export function createGetState<TState extends object>(
   getOwnSnapshot: () => TState,
   parent: StoreApi<TState> | undefined

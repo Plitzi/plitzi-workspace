@@ -43,29 +43,39 @@ import type {
   UseStoreSyncOptions
 } from '../types';
 
+// Appends `listener` to `arr` and returns an unsubscribe that removes it with a swap-pop (O(1), order-agnostic).
+const addListener = (arr: Listener[], listener: Listener): (() => void) => {
+  arr.push(listener);
+
+  return () => {
+    const idx = arr.indexOf(listener);
+    if (idx === -1) {
+      return;
+    }
+
+    const last = arr.pop() as Listener;
+    if (idx < arr.length) {
+      arr[idx] = last;
+    }
+  };
+};
+
 function createStore<TState extends object>(
   initializer: Partial<TState> | ((set: SetState<TState>, get: GetState<TState>) => Partial<TState>),
   storeOptions?: { logger?: StoreLogger<TState>; parent?: StoreApi<TState> }
 ): StoreApi<TState> {
-  // `state` is the live, private working copy. Single-segment writes mutate it in place (O(1) instead of an
-  // O(width) top-level spread); it is NEVER handed out. `ownSnapshot` is the immutable view returned by
-  // `getState`: cloned lazily and cached, invalidated on every change so its reference doubles as the change
-  // signal. Because the snapshot is always a distinct clone, in-place mutation of `state` can never corrupt a
-  // snapshot a consumer already holds.
+  // `state` is the live, private working copy and is never handed out. `ownSnapshot` is the immutable view
+  // `getState` returns: a lazy `{ ...state }` clone, cleared on every change so its reference doubles as the change
+  // signal. Because every snapshot is a distinct clone, mutating `state` in place can't corrupt one a consumer holds.
   let state = {} as TState;
   let ownSnapshot: TState | undefined;
   const listeners: Listener[] = [];
-  const pathListeners = new PathTrie();
   const historyListeners: Listener[] = [];
+  const pathListeners = new PathTrie();
   const parent = storeOptions?.parent;
-  const getOwnState = () => state;
-  const getOwnSnapshot = (): TState => {
-    if (ownSnapshot === undefined) {
-      ownSnapshot = { ...state };
-    }
 
-    return ownSnapshot;
-  };
+  const getOwnState = () => state;
+  const getOwnSnapshot = (): TState => (ownSnapshot ??= { ...state });
 
   const { getState, getMergeCount } = createGetState<TState>(getOwnSnapshot, parent);
   const getPath = createGetPath<TState>(getOwnState, parent, getState);
@@ -87,47 +97,16 @@ function createStore<TState extends object>(
     logger: storeOptions?.logger
   });
 
-  const subscribe = (listener: Listener): (() => void) => {
-    listeners.push(listener);
-
-    return () => {
-      const idx = listeners.indexOf(listener);
-      if (idx !== -1) {
-        const last = listeners.pop();
-        if (idx < listeners.length) {
-          listeners[idx] = last as Listener;
-        }
-      }
-    };
-  };
-
-  const subscribePath = <P extends PathOf<TState>>(path: P, listener: Listener): (() => void) =>
-    pathListeners.add(path, listener);
-
-  const subscribeHistory = (listener: Listener): (() => void) => {
-    historyListeners.push(listener);
-
-    return () => {
-      const idx = historyListeners.indexOf(listener);
-      if (idx !== -1) {
-        const last = historyListeners.pop();
-        if (idx < historyListeners.length) {
-          historyListeners[idx] = last as Listener;
-        }
-      }
-    };
-  };
+  const subscribe = (listener: Listener) => addListener(listeners, listener);
+  const subscribeHistory = (listener: Listener) => addListener(historyListeners, listener);
+  const subscribePath = <P extends PathOf<TState>>(path: P, listener: Listener) => pathListeners.add(path, listener);
 
   state = (typeof initializer === 'function' ? initializer(setState, getState) : initializer) as TState;
 
-  // Handle to stop listening to the parent, kept so `destroy()` can detach this scope (otherwise the parent
-  // holds a reference to this scope's forwarder forever — a leak for short-lived scopes like list items).
-  // Undefined for root stores, which have no parent to listen to.
+  // Detaching this handle on `destroy()` stops the parent from holding this scope's forwarder forever (a leak for
+  // short-lived scopes). `reconnect` re-attaches it after the destroy → remount cycle React StrictMode simulates.
   let parentUnsub = parent ? forwardParentChanges(parent, listeners, pathListeners, historyListeners) : undefined;
 
-  // Re-establish the parent forwarding after a `destroy()`. Needed because React StrictMode runs a mount →
-  // unmount → remount cycle that reuses this same store instance: the simulated unmount calls `destroy()`
-  // (detaching the link), and on remount the scope must reconnect or it silently stops seeing parent changes.
   const reconnect = () => {
     if (parent && !parentUnsub) {
       parentUnsub = forwardParentChanges(parent, listeners, pathListeners, historyListeners);

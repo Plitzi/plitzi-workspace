@@ -1,9 +1,8 @@
 export const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-// Deep merge that overlays `override` onto `base` while preserving references for untouched subtrees, so the
-// scope chain can combine values at any depth (e.g. parent's `runtime.sources.variables` + child's
-// `runtime.sources.record`) without one clobbering the other.
+// Overlays `override` onto `base`, recursing into plain objects so the scope chain can combine values at any depth
+// without one side clobbering the other. Untouched subtrees keep their reference.
 export const deepMerge = (base: unknown, override: unknown): unknown => {
   if (!isPlainObject(base) || !isPlainObject(override)) {
     return override;

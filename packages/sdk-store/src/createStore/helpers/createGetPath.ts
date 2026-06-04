@@ -1,16 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
-// Deferred generic `PathValue<TState, P>` can't be resolved by the type-aware lint, so `=== undefined` guards on
-// path reads are flagged as "always true" — same reason this rule is disabled in `hooks/shared.ts`.
 
 import { isPlainObject } from './deepMerge';
 import getByPath from '../../helpers/getByPath';
 
 import type { GetState, PathOf, PathValue, StoreApi } from '../../types';
 
-// Resolves a single path through the chain without building the full merged state. Most reads from a nested
-// scope are for a path the scope does not own (e.g. globals) → we walk straight to the owner. Only when both this
-// scope and the chain contribute an object at the exact path do we fall back to the memoized full merge (rarer,
-// e.g. reading a whole `runtime.sources` slice) so the result stays referentially stable.
+// Resolves a single path through the scope chain without materializing the full merged state: walk straight to the
+// owner. Only when this scope AND the chain both contribute an object at the path do we fall back to the memoized
+// full merge, so the result stays referentially stable.
 export function createGetPath<TState extends object>(
   getOwnState: () => TState,
   parent: StoreApi<TState> | undefined,

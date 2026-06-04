@@ -380,7 +380,7 @@ describe('useStoreGetter — memory / cleanup (no subscriptions)', () => {
 
     renderHook(() => useStoreGetter<AppState, 'count'>('count'), { wrapper: makeWrapper(store) });
 
-    expect(store.pathListeners.has('count')).toBe(false);
+    expect(store.pathListeners.direct.has('count')).toBe(false);
   });
 
   it('store.listeners.length remains 0 after unmounting', () => {

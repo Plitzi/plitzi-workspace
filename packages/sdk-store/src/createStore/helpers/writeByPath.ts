@@ -1,23 +1,12 @@
-// Immutable structural-sharing writer for multi-segment paths, fused with the prev read and the equality check.
-//
-// Two implementations behind one entry point:
-//   1. A per-path compiled writer (`new Function`) that emits literal-key spreads — the same shape V8 optimizes
-//      for a hand-written `{ ...s.a, b: { ...s.a.b, … } }`. ~3x faster than the generic walk because literal
-//      property access and literal-key object literals hit V8's fast object-clone path, which a dynamic
-//      `obj[key]` / `{ ...base, [key]: v }` cannot.
-//   2. A recursive fallback (`writeSpine`) used when codegen is unavailable (e.g. a Content-Security-Policy
-//      without `unsafe-eval`, where `new Function` throws). Correct, just slower.
-//
-// Safety of the codegen: the body is built only from path segments. Segments matching `IDENT_RE` are emitted as
-// literal `.prop` access / bare object keys; every other segment is `JSON.stringify`-ed into a string literal
-// used as a bracket key — so a hostile segment like `"]; doEvil(); //` becomes the inert string key
-// `"\"]; doEvil(); //"`, never executable. Injection is impossible by construction.
+// Immutable structural-sharing writer for multi-segment paths. Two implementations behind one entry point: a
+// per-path compiled writer (`new Function`) that emits literal-key spreads V8 clones on its fast path, and a
+// recursive fallback for when `new Function` is blocked (a CSP without `unsafe-eval`). The codegen is injection-safe
+// by construction — see `access`/`literalKey`.
 
-// Sentinel returned when the leaf value is unchanged, so callers can early-out without allocating.
 export const UNCHANGED: unique symbol = Symbol('unchanged');
 
-// The resolved leaf value is written here so callers read it without a per-write wrapper allocation. Safe under
-// re-entrant setState: it is read synchronously right after the write, before any notification runs.
+// The resolved leaf value is parked here so callers read it without a per-write wrapper allocation; read
+// synchronously after the write, before any notification runs.
 export const writeResult: { resolved: unknown } = { resolved: undefined };
 
 type CompiledWriter = (
@@ -65,6 +54,8 @@ const recursiveStep = (
   return next;
 };
 
+// Identifier segments become literal `.prop` access / bare object keys; anything else is `JSON.stringify`-ed into an
+// inert string literal, so a hostile segment like `"]; doEvil(); //` can never become executable code.
 const IDENT_RE = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
 const access = (segment: string): string => (IDENT_RE.test(segment) ? `.${segment}` : `[${JSON.stringify(segment)}]`);
 const literalKey = (segment: string): string => (IDENT_RE.test(segment) ? segment : JSON.stringify(segment));

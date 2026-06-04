@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
-import { UNCHANGED, writeByPath, writeResult } from './writeByPath';
+import { UNCHANGED, writeByPath } from './writeByPath';
 import getByPath from '../../helpers/getByPath';
 import parsePath from '../../helpers/parsePath';
 import setByPath from '../../helpers/setByPath';
@@ -20,7 +20,7 @@ export type SetStateDeps<TState extends object> = {
   logger?: StoreLogger<TState>;
 };
 
-const notifyListeners = (arr: Listener[], path: string | undefined) => {
+const notify = (arr: Listener[], path: string | undefined): void => {
   for (let i = 0; i < arr.length; i++) {
     arr[i](path);
   }
@@ -39,7 +39,46 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     logger
   } = deps;
 
-  // --- Cold path: fallback (non-string paths, plain-object merge) ---
+  // Wakes listeners at `changedPath` and every ancestor: the write put a new reference at each level of the spine.
+  const wakeAncestors = (changedPath: string, segments: readonly string[]): void => {
+    let prefix = '';
+    for (let i = 0; i < segments.length; i++) {
+      prefix = prefix ? `${prefix}.${segments[i]}` : segments[i];
+      const arr = pathListeners.direct.get(prefix);
+      if (arr) {
+        notify(arr, changedPath);
+      }
+    }
+  };
+
+  // Wakes listeners below `changedPath` whose own value actually changed, so a sibling edit doesn't wake them.
+  // `relativeFrom` is where each descendant's path relative to `prevBase`/`nextBase` starts.
+  const wakeChangedDescendants = (
+    changedPath: string,
+    prevBase: unknown,
+    nextBase: unknown,
+    relativeFrom: number
+  ): void => {
+    const descendants = pathListeners.getDescendants(changedPath);
+    if (!descendants) {
+      return;
+    }
+
+    for (const descendant of descendants) {
+      const arr = pathListeners.direct.get(descendant);
+      if (!arr) {
+        continue;
+      }
+
+      const relative = descendant.slice(relativeFrom);
+      if (getByPath(prevBase, relative as never) !== getByPath(nextBase, relative as never)) {
+        notify(arr, changedPath);
+      }
+    }
+  };
+
+  // Cold path: non-string paths and whole-state merges. With no single changed path to walk, it wakes by diffing
+  // every registered path.
   const handleFallback = <P extends PathOf<TState>>(
     path: P | undefined,
     value:
@@ -51,7 +90,6 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     canPropagate: boolean
   ): void => {
     const prevValue: unknown = path ? getByPath(prevState, path) : undefined;
-
     const resolvedValue = path
       ? typeof value === 'function'
         ? (value as (prev: PathValue<TState, P>) => PathValue<TState, P>)(prevValue as PathValue<TState, P>)
@@ -76,30 +114,24 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     logger?.({ path, prev: prevState, next: nextState });
 
     if (historyListeners) {
-      notifyListeners(historyListeners, path);
+      notify(historyListeners, path);
     }
 
-    if (canPropagate) {
-      for (let i = 0; i < listeners.length; i++) {
-        listeners[i](path);
-      }
+    if (!canPropagate) {
+      return;
+    }
 
-      if (pathListeners.size > 0) {
-        pathListeners.forEach((arr, candidate) => {
-          const prev = getByPath(prevState, candidate as PathOf<TState>);
-          const next = getByPath(nextState, candidate as PathOf<TState>);
-          if (prev !== next) {
-            for (let i = 0; i < arr.length; i++) {
-              arr[i](path);
-            }
-          }
-        });
-      }
+    notify(listeners, path);
+
+    if (pathListeners.size > 0) {
+      pathListeners.direct.forEach((arr, candidate) => {
+        if (getByPath(prevState, candidate as PathOf<TState>) !== getByPath(nextState, candidate as PathOf<TState>)) {
+          notify(arr, path);
+        }
+      });
     }
   };
 
-  // --- setState — dispatcher + hot paths inline (both single and multi-segment),
-  //     so V8 can inline the whole thing into the benchmark loop ---
   const setState: SetState<TState> = <P extends PathOf<TState>>(
     path: P | undefined,
     value:
@@ -111,136 +143,75 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
   ) => {
     const prevState = getOwnState();
 
-    if (parent && path) {
-      const prevValue: unknown = getByPath(prevState, path);
+    // A nested scope that doesn't own the path delegates to the parent that does.
+    if (parent && path && getByPath(prevState, path) === undefined) {
+      parent.setState(path, value as PathValue<TState, P>, canPropagate);
 
-      if (prevValue === undefined) {
-        parent.setState(path, value as PathValue<TState, P>, canPropagate);
-
-        return;
-      }
+      return;
     }
 
-    if (typeof path === 'string') {
-      if (path.indexOf('.') === -1) {
-        // --- Single-segment hot path: mutate the live state in place (O(1), no top-level spread) ---
-        const prevValue: unknown = (prevState as Record<string, unknown>)[path];
-        const resolvedValue =
-          typeof value === 'function'
-            ? (value as (prev: PathValue<TState, P>) => PathValue<TState, P>)(prevValue as PathValue<TState, P>)
-            : value;
+    if (typeof path !== 'string') {
+      handleFallback(path, value, prevState, canPropagate);
 
-        if (prevValue === resolvedValue) {
-          return;
-        }
+      return;
+    }
 
-        // The logger needs distinct prev/next snapshots; take the pre-mutation one before committing.
-        const loggerPrev = logger ? getOwnSnapshot() : undefined;
+    const singleSegment = path.indexOf('.') === -1;
 
-        mutateOwnKey(path, resolvedValue);
-        if (logger) {
-          logger({ path, prev: loggerPrev as TState, next: getOwnSnapshot() });
-        }
+    if (singleSegment) {
+      // Mutate the live state in place (O(1), no top-level spread). Safe: snapshots are distinct clones, and this
+      // rebinds a key rather than mutating any object already handed out.
+      const prevValue: unknown = (prevState as Record<string, unknown>)[path];
+      const resolvedValue =
+        typeof value === 'function'
+          ? (value as (prev: PathValue<TState, P>) => PathValue<TState, P>)(prevValue as PathValue<TState, P>)
+          : value;
 
-        if (historyListeners) {
-          notifyListeners(historyListeners, path);
-        }
-
-        if (canPropagate) {
-          for (let i = 0; i < listeners.length; i++) {
-            listeners[i](path);
-          }
-
-          const arr = pathListeners.direct.get(path);
-          if (arr) {
-            for (let i = 0; i < arr.length; i++) {
-              arr[i](path);
-            }
-          }
-
-          if (typeof resolvedValue === 'object' && resolvedValue !== null) {
-            const descendants = pathListeners.getDescendants(path);
-            if (descendants) {
-              const offset = path.length + 1;
-              for (const descendant of descendants) {
-                const arr = pathListeners.direct.get(descendant);
-                if (arr) {
-                  const relative = descendant.slice(offset);
-                  const prev = getByPath(prevValue, relative as never);
-                  const next = getByPath(resolvedValue, relative as never);
-                  if (prev !== next) {
-                    for (let i = 0; i < arr.length; i++) {
-                      arr[i](path);
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-
+      if (prevValue === resolvedValue) {
         return;
       }
 
-      // --- Multi-segment hot path (immutable structural-sharing write) ---
-      const segments = parsePath(path);
-      const result = writeByPath(prevState, path, segments, value, typeof value === 'function');
-      if (result === UNCHANGED) {
-        return;
-      }
-
-      const resolvedValue = writeResult.resolved;
-      const nextState = result as TState;
-
-      setOwnState(nextState);
-      logger?.({ path, prev: prevState, next: nextState });
+      const loggerPrev = logger ? getOwnSnapshot() : undefined;
+      mutateOwnKey(path, resolvedValue);
+      logger?.({ path, prev: loggerPrev as TState, next: getOwnSnapshot() });
 
       if (historyListeners) {
-        notifyListeners(historyListeners, path);
+        notify(historyListeners, path);
       }
 
       if (canPropagate) {
-        for (let i = 0; i < listeners.length; i++) {
-          listeners[i](path);
+        notify(listeners, path);
+        const exact = pathListeners.direct.get(path);
+        if (exact) {
+          notify(exact, path);
         }
 
-        if (pathListeners.size > 0) {
-          const prefixes = pathListeners.getPrefixes(path);
-          if (prefixes) {
-            for (let i = 0; i < prefixes.length; i++) {
-              const arr = pathListeners.direct.get(prefixes[i]);
-              if (arr) {
-                for (let j = 0; j < arr.length; j++) {
-                  arr[j](path);
-                }
-              }
-            }
-          }
-
-          if (typeof resolvedValue === 'object' && resolvedValue !== null) {
-            const descendants = pathListeners.getDescendants(path);
-            if (descendants) {
-              for (const descendant of descendants) {
-                const arr = pathListeners.direct.get(descendant);
-                if (arr) {
-                  const prev = getByPath(prevState, descendant as PathOf<TState>);
-                  const next = getByPath(nextState, descendant as PathOf<TState>);
-                  if (prev !== next) {
-                    for (let i = 0; i < arr.length; i++) {
-                      arr[i](path);
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+        wakeChangedDescendants(path, prevValue, resolvedValue, path.length + 1);
       }
 
       return;
     }
 
-    handleFallback(path, value, prevState, canPropagate);
+    // Multi-segment: immutable structural-sharing write that shares untouched subtrees.
+    const segments = parsePath(path);
+    const result = writeByPath(prevState, path, segments, value, typeof value === 'function');
+    if (result === UNCHANGED) {
+      return;
+    }
+
+    const nextState = result as TState;
+    setOwnState(nextState);
+    logger?.({ path, prev: prevState, next: nextState });
+
+    if (historyListeners) {
+      notify(historyListeners, path);
+    }
+
+    if (canPropagate) {
+      notify(listeners, path);
+      wakeAncestors(path, segments);
+      wakeChangedDescendants(path, prevState, nextState, 0);
+    }
   };
 
   return setState;

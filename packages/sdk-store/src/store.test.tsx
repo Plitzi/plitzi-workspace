@@ -1309,11 +1309,11 @@ describe('performance', () => {
         unsubs.push(store.subscribePath('user.name', vi.fn()));
       }
 
-      expect(store.pathListeners.get('user.name')?.length).toBe(1000);
+      expect(store.pathListeners.direct.get('user.name')?.length).toBe(1000);
 
       unsubs.forEach(u => u());
 
-      expect(store.pathListeners.get('user.name')).toBeUndefined();
+      expect(store.pathListeners.direct.get('user.name')).toBeUndefined();
     });
 
     it('setState masivo no genera entradas en pathListeners', () => {
@@ -1343,7 +1343,7 @@ describe('performance', () => {
 
       unsubs.forEach(u => u());
 
-      store.pathListeners.forEach(arr => {
+      store.pathListeners.direct.forEach(arr => {
         expect(arr.length).toBe(0);
       });
     });
