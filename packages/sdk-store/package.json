@@ -89,6 +89,10 @@
       "types": "./dist/helpers/isPathAffected.d.ts",
       "import": "./dist/helpers/isPathAffected.mjs"
     },
+    "./helpers/parsePath": {
+      "types": "./dist/helpers/parsePath.d.ts",
+      "import": "./dist/helpers/parsePath.mjs"
+    },
     "./helpers/setByPath": {
       "types": "./dist/helpers/setByPath.d.ts",
       "import": "./dist/helpers/setByPath.mjs"
