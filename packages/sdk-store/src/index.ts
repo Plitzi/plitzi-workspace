@@ -13,3 +13,5 @@ export * from './createStore/hooks/useStoreSetter';
 export * from './types';
 
 export { createStore, StoreProvider, useStoreSetter };
+
+export { setCodegenEnabled } from './createStore/helpers/writeByPath';

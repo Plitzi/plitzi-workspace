@@ -8,11 +8,18 @@ import Hero from './components/Hero';
 import LiveDemo from './components/LiveDemo';
 import Nav from './components/Nav';
 import RealWorld from './components/RealWorld';
+import useMeta from './useMeta';
 import { useHashRoute } from './useHashRoute';
 
 const App = () => {
   const hash = useHashRoute();
   const isDocs = hash.startsWith('#/docs');
+
+  useMeta({
+    title: 'A tiny, type-safe React store',
+    description:
+      'Path-based subscriptions, scoped stores, and time-travel. Fine-grained by default — O(depth) updates that scale to millions of items. Built on useSyncExternalStore.'
+  });
 
   return (
     <div className="min-h-screen">

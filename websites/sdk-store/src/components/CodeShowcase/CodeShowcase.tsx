@@ -35,7 +35,7 @@ const CodeShowcase = () => {
             ))}
           </div>
 
-          <CodeBlock code={activeSample.code} />
+          <CodeBlock code={activeSample.code} demoId={activeSample.demoId ?? activeSample.id} />
         </div>
       </div>
     </section>

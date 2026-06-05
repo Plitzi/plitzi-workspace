@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { __setCodegenEnabled, UNCHANGED, writeByPath } from './writeByPath';
+import { setCodegenEnabled, UNCHANGED, writeByPath } from './writeByPath';
 import parsePath from '../../helpers/parsePath';
 
 // `writeByPath` has two interchangeable implementations: a `new Function` codegen (fast path) and a recursive
@@ -9,13 +9,13 @@ import parsePath from '../../helpers/parsePath';
 const write = (root: unknown, path: string, value: unknown, isFn = false) =>
   writeByPath(root, path, parsePath(path), value, isFn);
 
-afterEach(() => __setCodegenEnabled(undefined));
+afterEach(() => setCodegenEnabled(undefined));
 
 describe.each([
   ['codegen', true],
   ['recursive fallback', false]
 ])('writeByPath (%s)', (_label, enabled) => {
-  const setup = () => __setCodegenEnabled(enabled);
+  const setup = () => setCodegenEnabled(enabled);
 
   it('writes a deep leaf with structural sharing', () => {
     setup();

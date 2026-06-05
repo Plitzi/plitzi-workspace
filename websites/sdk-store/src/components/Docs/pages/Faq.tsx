@@ -95,6 +95,25 @@ const Faq = () => (
       Notifying is O(depth of the path), not O(number of subscribers), so thousands of watchers on the same tree stay
       cheap. See the <a href="#benchmarks">Benchmarks</a> on the landing page.
     </p>
+
+    <h2>My CSP blocks <code>new Function</code> — what now?</h2>
+    <p>
+      The store auto-detects the block on first use and falls back to a recursive writer with identical behaviour — you
+      don’t need to do anything.
+    </p>
+    <p>
+      To skip even the one-time probe, call <code>setCodegenEnabled(false)</code> before any write:
+    </p>
+    <CodeBlock
+      language="ts"
+      code={`import { setCodegenEnabled } from '@plitzi/sdk-store';
+
+setCodegenEnabled(false); // recursive writer only, no new Function`}
+    />
+    <p>
+      <code>setCodegenEnabled(undefined)</code> restores auto-detection. <code>setCodegenEnabled(true)</code> forces
+      codegen (testing only).
+    </p>
   </Prose>
 );
 

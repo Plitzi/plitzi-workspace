@@ -3,7 +3,7 @@
 A lightweight, type-safe React store built on `useSyncExternalStore`. You subscribe to **dot-notation paths** and re-render only when that exact value changes — no selectors, no reducers, no action types. On top of that core it ships scoped stores, time-travel, derived values, an entity adapter, and a middleware pipeline (logger / persist / history).
 
 ```bash
-npm install @plitzi/sdk-store   # peer deps: react@^19, react-dom@^19
+npm install @plitzi/sdk-store   # peer deps: react@^18 || ^19, react-dom@^18 || ^19
 ```
 
 ```ts
@@ -456,6 +456,27 @@ function HistoryPanel() {
 ```
 
 `<StoreProvider history>` (or `history="schema"` to scope it to a subtree) starts recording from mount.
+
+## CSP & `new Function`
+
+By default `@plitzi/sdk-store` uses a compiled codegen path (`new Function`) for structural-sharing writes, which is orders of magnitude faster than the recursive fallback for deep paths. When a strict [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) blocks `new Function`, the store auto-detects the error at first use and falls back to a recursive writer with identical behaviour — you **don't need to do anything** for CSP environments to work.
+
+If you want to avoid even the one-time probe, force the recursive fallback directly:
+
+```ts
+import { setCodegenEnabled } from '@plitzi/sdk-store';
+
+// Skip codegen probe, go straight to recursive writer (no new Function)
+setCodegenEnabled(false);
+```
+
+| Value | Behaviour |
+|---|---|
+| `undefined` (default) | Auto-detect: probe `new Function` once; cache result. |
+| `false` | Bypass probe entirely — recursive writer only. Safe for strict CSP. |
+| `true` | Force codegen even if probe fails (testing only). |
+
+Call `setCodegenEnabled(undefined)` to restore auto-detection.
 
 ## Performance
 

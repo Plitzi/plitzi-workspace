@@ -98,8 +98,15 @@ const isCodegenAvailable = (): boolean => {
   return codegenAvailable;
 };
 
-// Test-only: force the codegen path on/off (`undefined` restores probing) so the CSP fallback can be exercised.
-export const __setCodegenEnabled = (enabled: boolean | undefined): void => {
+/**
+ * Force the codegen path on/off.
+ *
+ * - `undefined` (default) — auto-detection: probes `new Function` at first use; if CSP blocks it, falls back
+ *   to the recursive writer automatically.
+ * - `false` — skip auto-detection and go directly to the recursive fallback (no `new Function`).
+ * - `true` — force codegen even if the probe fails (useful for testing).
+ */
+export const setCodegenEnabled = (enabled: boolean | undefined): void => {
   codegenForced = enabled;
 };
 

@@ -96,6 +96,7 @@ export type CodeSample = {
   id: string;
   label: string;
   code: string;
+  demoId?: string;
 };
 
 export const CODE_SAMPLES: CodeSample[] = [

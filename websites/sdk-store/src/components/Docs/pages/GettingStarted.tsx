@@ -111,6 +111,15 @@ const off = store.subscribePath('count', () => render());`}
         <a href="#/docs/api">API reference</a> — every function and its signatures.
       </li>
       <li>
+        <a href="#/docs/guides-forms">Patterns: Forms</a> — controlled fields, validation, dynamic arrays, dirty detection.
+      </li>
+      <li>
+        <a href="#/docs/guides-data-fetching">Patterns: Data Fetching</a> — async resources, race conditions, mutations.
+      </li>
+      <li>
+        <a href="#/docs/guides-nextjs">Patterns: Next.js</a> — App Router, server hydration, cookies, Server Actions.
+      </li>
+      <li>
         <a href="#/docs/testing">Testing</a> — how to test stores, hooks and components.
       </li>
       <li>

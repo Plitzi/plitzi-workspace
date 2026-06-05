@@ -1,6 +1,6 @@
 import { afterEach, describe, it, expect } from 'vitest';
 
-import { __setCodegenEnabled, UNCHANGED, writeByPath } from './writeByPath';
+import { setCodegenEnabled, UNCHANGED, writeByPath } from './writeByPath';
 import parsePath from '../../helpers/parsePath';
 
 // The writer has two interchangeable backends — a `new Function` codegen and a recursive fallback. The contract is
@@ -8,7 +8,7 @@ import parsePath from '../../helpers/parsePath';
 // invariants (immutability, structural sharing, array preservation) that are easy to break when touching the writer.
 
 const writeWith = (enabled: boolean, root: unknown, path: string, value: unknown, isFn: boolean) => {
-  __setCodegenEnabled(enabled);
+  setCodegenEnabled(enabled);
 
   return writeByPath(root, path, parsePath(path), value, isFn);
 };
@@ -30,7 +30,7 @@ const writeBoth = (root: unknown, path: string, value: unknown, isFn = false): u
   return viaCodegen;
 };
 
-afterEach(() => __setCodegenEnabled(undefined));
+afterEach(() => setCodegenEnabled(undefined));
 
 describe('writeByPath — codegen and recursive agree', () => {
   const paths = ['a', 'a.b', 'a.b.c', 'a.b.c.d.e', 'user.profile.name', 'x.y', 'deep.one.two.three.four.five'];
