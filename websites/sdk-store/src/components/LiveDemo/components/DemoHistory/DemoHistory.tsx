@@ -14,7 +14,7 @@ const DemoHistory = () => {
   );
 
   return (
-    <div className="flex min-w-0 flex-col">
+    <div className="flex min-w-0 flex-col grow basis-0">
       <div className="flex items-center gap-1.5">
         <button
           onClick={undo}
@@ -41,7 +41,7 @@ const DemoHistory = () => {
         </button>
       </div>
 
-      <div className="mt-3 max-h-72 space-y-0.5 overflow-y-auto rounded-lg border border-ink-700 bg-ink-950 p-1.5">
+      <div className="mt-3 basis-0 grow flex flex-col space-y-0.5 overflow-y-auto rounded-lg border border-ink-700 bg-ink-950 p-1.5">
         {ordered.map(({ entry, originalIndex }) => (
           <DemoHistoryEntry
             key={originalIndex}
