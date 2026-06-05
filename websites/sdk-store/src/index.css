@@ -32,8 +32,36 @@ body {
   @apply bg-ink-950 font-sans text-zinc-300 antialiased;
 }
 
+/* Anchored sections clear the sticky nav (h-16) when jumped to. */
+section[id] {
+  scroll-margin-top: 4.5rem;
+}
+
 ::selection {
   @apply bg-brand-500/30 text-white;
+}
+
+/* Dark, slim scrollbars to match the surface. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a38 transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2a38;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3a4a;
+  background-clip: content-box;
 }
 
 @keyframes float-grid {

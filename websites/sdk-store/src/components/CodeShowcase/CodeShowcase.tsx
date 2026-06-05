@@ -15,7 +15,7 @@ const CodeShowcase = () => {
 
   return (
     <section id="api" className="border-y border-ink-800 bg-ink-900/30">
-      <div className="mx-auto max-w-6xl px-5 py-24">
+      <div className="mx-auto max-w-6xl px-5 py-20">
         <SectionHeading
           eyebrow="The API"
           title="Four hooks. Infinite precision."

@@ -2,7 +2,7 @@ import { FEATURES } from '../../content';
 import SectionHeading from '../SectionHeading';
 
 const FeatureGrid = () => (
-  <section id="features" className="mx-auto max-w-6xl px-5 py-24">
+  <section id="features" className="mx-auto max-w-6xl px-5 py-20">
     <SectionHeading
       eyebrow="Why sdk-store"
       title="State that gets out of your way"

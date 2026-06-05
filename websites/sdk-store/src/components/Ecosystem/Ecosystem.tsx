@@ -3,7 +3,7 @@ import SectionHeading from '../SectionHeading';
 
 const Ecosystem = () => (
   <section id="ecosystem" className="border-t border-ink-800 bg-ink-900/30">
-    <div className="mx-auto max-w-6xl px-5 py-24">
+    <div className="mx-auto max-w-6xl px-5 py-20">
       <SectionHeading
         eyebrow="Part of a bigger picture"
         title="The state core of the Plitzi SDK"

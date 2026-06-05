@@ -66,16 +66,23 @@ const Hero = () => {
           </p>
 
           <div className="mt-6 flex flex-wrap gap-2">
-            {['Path subscriptions', 'Scoped stores', 'Derived values', 'Persistence', 'Time-travel', 'Middleware'].map(
-              pill => (
-                <span
-                  key={pill}
-                  className="border-ink-700 bg-ink-900/60 rounded-full border px-3 py-1 text-xs font-medium text-zinc-400"
-                >
-                  {pill}
-                </span>
-              )
-            )}
+            {[
+              'Path subscriptions',
+              'Scoped stores',
+              'Derived values',
+              'Async / Suspense',
+              'Persistence',
+              'Time-travel',
+              'Middleware',
+              'Batching'
+            ].map(pill => (
+              <span
+                key={pill}
+                className="border-ink-700 bg-ink-900/60 rounded-full border px-3 py-1 text-xs font-medium text-zinc-400"
+              >
+                {pill}
+              </span>
+            ))}
           </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">

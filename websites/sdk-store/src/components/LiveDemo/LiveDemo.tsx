@@ -1,9 +1,12 @@
+import { useState } from 'react';
+
 import { StoreProvider } from '@plitzi/sdk-store';
 
 import SectionHeading from '../SectionHeading';
+import Segmented from '../Segmented';
+import ComputedDemo from './components/ComputedDemo';
 import DemoControls from './components/DemoControls';
 import DemoHistory from './components/DemoHistory';
-import ComputedDemo from './components/ComputedDemo';
 import DemoPanel from './components/DemoPanel';
 import DemoStateView from './components/DemoStateView';
 import DerivedDemo from './components/DerivedDemo';
@@ -24,57 +27,70 @@ import {
 } from './demoCode';
 import { DEMO_INITIAL_STATE } from './demoStore';
 
-const LiveDemo = () => (
-  <section id="demo" className="mx-auto max-w-6xl px-5 py-24">
-    <SectionHeading
-      eyebrow="Live, in your browser"
-      title="Mutate state. Travel through time."
-      subtitle="This is the real @plitzi/sdk-store running on this page — every panel shares one store. Change a value, watch it sync, derive, record, and inherit live. Hit “Code” on any panel for the exact store wiring."
-    />
+import type { ComponentType } from 'react';
 
-    <div className="mt-12 overflow-hidden rounded-2xl border border-ink-700 bg-ink-900/40">
-      <StoreProvider value={DEMO_INITIAL_STATE} autoSync={false}>
-        <div className="grid gap-px bg-ink-700 md:grid-cols-3">
-          <DemoPanel title="Controls · root scope" code={CONTROLS_CODE}>
-            <DemoControls />
-          </DemoPanel>
-          <DemoPanel title="State" code={STATE_CODE}>
-            <DemoStateView />
-          </DemoPanel>
-          <DemoPanel title="History · time-travel" code={HISTORY_CODE}>
-            <DemoHistory />
-          </DemoPanel>
-        </div>
+type Panel = { id: string; label: string; title: string; code: string; Component: ComponentType };
 
-        <div className="grid gap-px border-t border-ink-700 bg-ink-700 md:grid-cols-2">
-          <DemoPanel title="useStoreSync · external → store" code={SYNC_CODE}>
-            <SyncDemo />
-          </DemoPanel>
-          <DemoPanel title="useStore · transformer & multi-path" code={DERIVED_CODE}>
-            <DerivedDemo />
-          </DemoPanel>
-          <DemoPanel title="createDerived · shared computed" code={COMPUTED_CODE}>
-            <ComputedDemo />
-          </DemoPanel>
-          <DemoPanel title="useStoreGetter · read on demand" code={GETTER_CODE}>
-            <GetterDemo />
-          </DemoPanel>
-          <DemoPanel title="useStoreSetter · write, no re-render" code={SETTER_CODE}>
-            <SetterDemo />
-          </DemoPanel>
-        </div>
+const PANELS: Panel[] = [
+  { id: 'sync', label: 'Sync', title: 'useStoreSync · external → store', code: SYNC_CODE, Component: SyncDemo },
+  {
+    id: 'multi',
+    label: 'Multi-path',
+    title: 'useStore · transformer & multi-path',
+    code: DERIVED_CODE,
+    Component: DerivedDemo
+  },
+  { id: 'derived', label: 'Derived', title: 'createDerived · shared computed', code: COMPUTED_CODE, Component: ComputedDemo },
+  { id: 'getter', label: 'Getter', title: 'useStoreGetter · read on demand', code: GETTER_CODE, Component: GetterDemo },
+  { id: 'setter', label: 'Setter', title: 'useStoreSetter · write, no re-render', code: SETTER_CODE, Component: SetterDemo },
+  { id: 'scoped', label: 'Scoped', title: 'Scoped store · live vs snapshot', code: SCOPED_CODE, Component: ScopedDemo }
+];
 
-        <DemoPanel title="Scoped store · live vs snapshot" code={SCOPED_CODE} className="border-t border-ink-700">
-          <ScopedDemo />
-        </DemoPanel>
-      </StoreProvider>
-    </div>
+const LiveDemo = () => {
+  const [activeId, setActiveId] = useState(PANELS[0].id);
+  const active = PANELS.find(panel => panel.id === activeId) ?? PANELS[0];
+  const ActivePanel = active.Component;
 
-    <p className="mt-5 text-center text-sm text-zinc-500">
-      The History panel is the same primitive that powers the{' '}
-      <span className="text-brand-300">sdk-dev-tools</span> History tab.
-    </p>
-  </section>
-);
+  return (
+    <section id="demo" className="mx-auto max-w-6xl px-5 py-20">
+      <SectionHeading
+        eyebrow="Live, in your browser"
+        title="Mutate state. Travel through time."
+        subtitle="The real @plitzi/sdk-store running on this page — every panel shares one store. Change a value and watch it sync, derive, record and inherit. Hit “Code” on any panel for the exact wiring."
+      />
+
+      <div className="mt-10 overflow-hidden rounded-2xl border border-ink-700 bg-ink-900/40">
+        <StoreProvider value={DEMO_INITIAL_STATE} autoSync={false}>
+          <div className="grid gap-px bg-ink-700 md:grid-cols-3">
+            <DemoPanel title="Controls · root scope" code={CONTROLS_CODE}>
+              <DemoControls />
+            </DemoPanel>
+            <DemoPanel title="State" code={STATE_CODE}>
+              <DemoStateView />
+            </DemoPanel>
+            <DemoPanel title="History · time-travel" code={HISTORY_CODE}>
+              <DemoHistory />
+            </DemoPanel>
+          </div>
+
+          <div className="border-t border-ink-700 bg-ink-900/60 px-4 py-4">
+            <div className="flex justify-center">
+              <Segmented options={PANELS} value={activeId} onChange={setActiveId} />
+            </div>
+          </div>
+
+          <DemoPanel key={active.id} title={active.title} code={active.code} className="border-t border-ink-700">
+            <ActivePanel />
+          </DemoPanel>
+        </StoreProvider>
+      </div>
+
+      <p className="mt-5 text-center text-sm text-zinc-500">
+        The History panel is the same primitive that powers the{' '}
+        <span className="text-brand-300">sdk-dev-tools</span> History tab.
+      </p>
+    </section>
+  );
+};
 
 export default LiveDemo;
