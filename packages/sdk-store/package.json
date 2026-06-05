@@ -30,11 +30,8 @@
     "vitest": "^4.1.7"
   },
   "peerDependencies": {
-    "react": "^19",
-    "react-dom": "^19"
-  },
-  "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.9"
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
   },
   "exports": {
     ".": {
@@ -69,17 +66,9 @@
       "types": "./dist/async/index.d.ts",
       "import": "./dist/async/index.mjs"
     },
-    "./async/useAsync": {
-      "types": "./dist/async/useAsync.d.ts",
-      "import": "./dist/async/useAsync.mjs"
-    },
-    "./async/useAsyncValue": {
-      "types": "./dist/async/useAsyncValue.d.ts",
-      "import": "./dist/async/useAsyncValue.mjs"
-    },
     "./createStore": {
-      "types": "./dist/createStore.d.ts",
-      "import": "./dist/createStore.mjs"
+      "types": "./dist/createStore/index.d.ts",
+      "import": "./dist/createStore/index.mjs"
     },
     "./createStore/createStore": {
       "types": "./dist/createStore/createStore.d.ts",
@@ -157,10 +146,6 @@
       "types": "./dist/derived/index.d.ts",
       "import": "./dist/derived/index.mjs"
     },
-    "./derived/useDerived": {
-      "types": "./dist/derived/useDerived.d.ts",
-      "import": "./dist/derived/useDerived.mjs"
-    },
     "./entities": {
       "types": "./dist/entities/index.d.ts",
       "import": "./dist/entities/index.mjs"
@@ -201,10 +186,6 @@
       "types": "./dist/history/index.d.ts",
       "import": "./dist/history/index.mjs"
     },
-    "./history/createStoreHistory": {
-      "types": "./dist/history/createStoreHistory.d.ts",
-      "import": "./dist/history/createStoreHistory.mjs"
-    },
     "./history/hooks/useStoreHistory": {
       "types": "./dist/history/hooks/useStoreHistory.d.ts",
       "import": "./dist/history/hooks/useStoreHistory.mjs"
@@ -212,34 +193,6 @@
     "./history/index": {
       "types": "./dist/history/index.d.ts",
       "import": "./dist/history/index.mjs"
-    },
-    "./history/storeHistory": {
-      "types": "./dist/history/storeHistory.d.ts",
-      "import": "./dist/history/storeHistory.mjs"
-    },
-    "./history/useStoreHistory": {
-      "types": "./dist/history/useStoreHistory.d.ts",
-      "import": "./dist/history/useStoreHistory.mjs"
-    },
-    "./hooks/shared": {
-      "types": "./dist/hooks/shared.d.ts",
-      "import": "./dist/hooks/shared.mjs"
-    },
-    "./hooks/useStore": {
-      "types": "./dist/hooks/useStore.d.ts",
-      "import": "./dist/hooks/useStore.mjs"
-    },
-    "./hooks/useStoreGetter": {
-      "types": "./dist/hooks/useStoreGetter.d.ts",
-      "import": "./dist/hooks/useStoreGetter.mjs"
-    },
-    "./hooks/useStoreSetter": {
-      "types": "./dist/hooks/useStoreSetter.d.ts",
-      "import": "./dist/hooks/useStoreSetter.mjs"
-    },
-    "./hooks/useStoreSync": {
-      "types": "./dist/hooks/useStoreSync.d.ts",
-      "import": "./dist/hooks/useStoreSync.mjs"
     },
     "./index": {
       "types": "./dist/index.d.ts",
@@ -253,10 +206,6 @@
       "types": "./dist/middleware/cascade.d.ts",
       "import": "./dist/middleware/cascade.mjs"
     },
-    "./middleware/history": {
-      "types": "./dist/middleware/history.d.ts",
-      "import": "./dist/middleware/history.mjs"
-    },
     "./middleware/historyMiddleware": {
       "types": "./dist/middleware/historyMiddleware.d.ts",
       "import": "./dist/middleware/historyMiddleware.mjs"
@@ -265,17 +214,9 @@
       "types": "./dist/middleware/index.d.ts",
       "import": "./dist/middleware/index.mjs"
     },
-    "./middleware/logger": {
-      "types": "./dist/middleware/logger.d.ts",
-      "import": "./dist/middleware/logger.mjs"
-    },
     "./middleware/loggerMiddleware": {
       "types": "./dist/middleware/loggerMiddleware.d.ts",
       "import": "./dist/middleware/loggerMiddleware.mjs"
-    },
-    "./middleware/persist": {
-      "types": "./dist/middleware/persist.d.ts",
-      "import": "./dist/middleware/persist.mjs"
     },
     "./middleware/persistMiddleware": {
       "types": "./dist/middleware/persistMiddleware.d.ts",

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { use, useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useContext, useCallback, useMemo, useSyncExternalStore } from 'react';
 
 import getByPath from '../../helpers/getByPath';
 import { StoreContext } from '../../StoreContext';
@@ -85,7 +85,7 @@ export function useResolvedStore<TState extends object>(
   optionStore: StoreApi<TState> | undefined,
   hookName: string
 ): StoreApi<TState> {
-  const contextStore = use<StoreApi<TState> | undefined>(StoreContext);
+  const contextStore = useContext(StoreContext) as StoreApi<TState> | undefined;
   const store = optionStore ?? contextStore;
   if (!store) {
     throw new Error(`${hookName} must be used inside a StoreProvider`);

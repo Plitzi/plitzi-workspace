@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
-import { createElement, use } from 'react';
+import { createElement, useContext } from 'react';
 import { describe, it, expect } from 'vitest';
 
 import { cascade } from './middleware/cascade';
@@ -11,7 +11,7 @@ import type { ReactNode } from 'react';
 
 type S = { n: number };
 
-const useInnerStore = () => use(StoreContext) as StoreApi<S>;
+const useInnerStore = () => useContext(StoreContext) as StoreApi<S>;
 
 describe('StoreProvider — middleware inheritance', () => {
   it('a cascade() middleware set on the root is inherited by a nested provider', () => {

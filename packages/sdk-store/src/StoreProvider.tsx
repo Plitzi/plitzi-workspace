@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { createContext, use, useEffect, useMemo, useRef } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef } from 'react';
 
 import createStore from './createStore';
 import useStoreSync from './createStore/hooks/useStoreSync';
@@ -46,8 +46,8 @@ const StoreProvider = <TState extends object = any>({
   middlewares,
   children
 }: StoreProviderProps<TState>) => {
-  const parentStore = use<StoreApi<TState> | undefined>(StoreContext);
-  const inheritedMiddlewares = use(StoreMiddlewareContext) as StoreMiddleware<TState>[] | undefined;
+  const parentStore = useContext(StoreContext) as StoreApi<TState> | undefined;
+  const inheritedMiddlewares = useContext(StoreMiddlewareContext) as StoreMiddleware<TState>[] | undefined;
   const storeRef = useRef<StoreApi<TState>>(undefined);
   const liveChain = inherit === 'live';
   const storeState = useMemo(() => {

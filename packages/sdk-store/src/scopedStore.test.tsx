@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
-import { createElement, use } from 'react';
+import { createElement, useContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
 import createStore, { createStoreHook } from './createStore';
@@ -135,7 +135,7 @@ describe('scoped store: StoreProvider inherit modes', () => {
 
   const makeWrapper = (innerProps: InnerProps, onParent: (store: StoreApi<S>) => void = () => {}) => {
     const Capture = ({ children }: { children: ReactNode }) => {
-      onParent(use(StoreContext) as StoreApi<S>);
+      onParent(useContext(StoreContext) as StoreApi<S>);
 
       return children;
     };
