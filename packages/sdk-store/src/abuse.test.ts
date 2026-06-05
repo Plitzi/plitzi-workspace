@@ -1,8 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 import createStore from './createStore';
-
-import type { StoreChange } from './types';
 
 // Edge cases and abuse: a user who doesn't read the docs and pokes the store in ways it wasn't designed for. The
 // store must never crash or corrupt unrelated state.
@@ -146,80 +144,107 @@ describe('createStore — abuse & edge cases', () => {
   });
 });
 
-describe('createStore — batch abuse', () => {
-  it('resets batch depth even when the batched fn throws, so later writes still notify', () => {
-    const store = createStore<State>(initial());
-    let wakes = 0;
-    store.subscribe(() => wakes++);
+describe('store survival — attacks that should not crash or corrupt', () => {
+  it('does not infinite-loop when a listener writes to a new key on each call (self-terminating via unsub)', () => {
+    const store = createStore<Record<string, number>>({});
+    let callCount = 0;
+    const maxCalls = 1000;
 
-    expect(() =>
-      store.batch(() => {
-        store.setState('count', 1);
-        throw new Error('mid-batch');
-      })
-    ).toThrow('mid-batch');
-
-    const wakesAfterThrow = wakes;
-    store.setState('count', 2);
-
-    expect(wakesAfterThrow).toBe(1); // the partial batch still flushed once
-    expect(wakes).toBe(2); // and the store is not stuck in a batch
-  });
-
-  it('handles deeply nested batches, flushing once at the outermost', () => {
-    const store = createStore<State>(initial());
-    let wakes = 0;
-    store.subscribe(() => wakes++);
-
-    store.batch(() => {
-      store.setState('count', 1);
-      store.batch(() => {
-        store.setState('count', 2);
-        store.batch(() => store.setState('user.age', 99));
-      });
+    const unsub = store.subscribe(() => {
+      callCount++;
+      if (callCount < maxCalls) {
+        store.setState(String(callCount) as never, callCount as never);
+      } else {
+        unsub();
+      }
     });
 
-    expect(wakes).toBe(1);
-    expect(store.getState().count).toBe(2);
-    expect(store.getState().user.age).toBe(99);
-  });
-});
+    store.setState('start' as never, 0 as never);
 
-describe('scope chain — change forwarding to a child observer', () => {
-  it('forwards a parent change to a child store change listener with merged state', () => {
-    const parent = createStore<State>(initial());
-    const child = createStore<State>({ count: 100 }, { parent });
-
-    const changes: StoreChange<State>[] = [];
-    child.subscribeChange(change => changes.push(change));
-
-    parent.setState('user.name', 'Grace');
-
-    expect(changes.length).toBeGreaterThanOrEqual(1);
-    const last = changes[changes.length - 1];
-    expect(last.next.user.name).toBe('Grace');
-    expect(last.next.count).toBe(100); // child's own key still shadows
+    // Exactly maxCalls because: initialization triggers 1, plus each of the (maxCalls-1) recursive
+    // writes triggers one more. The unsub at maxCutsIt stops any further notification.
+    expect(callCount).toBe(maxCalls);
   });
 
-  it('delegates a write of a non-owned key up to the parent', () => {
-    const parent = createStore<State>(initial());
-    const child = createStore<State>({ count: 100 }, { parent });
+  it('terminates after 2 calls when a listener writes back the original value (value oscillates once)', () => {
+    const store = createStore<State>(initial());
 
-    child.setState('user.name', 'Linus');
+    let callCount = 0;
+    store.subscribePath('count', () => {
+      callCount++;
+      // Write back the original value — this is a real change (1 → 0),
+      // but the second write (0 → 0) is deduplicated
+      store.setState('count', 0);
+    });
 
-    expect(parent.getState().user.name).toBe('Linus');
-    expect(child.getState().user.name).toBe('Linus');
+    store.setState('count', 1);
+
+    // Listener fires: 0→1 (mutation), then 1→0 (recursive write), then 0→0 deduped → stops
+    expect(callCount).toBe(2);
   });
 
-  it('does not notify a destroyed child of later parent changes', () => {
-    const parent = createStore<State>(initial());
-    const child = createStore<State>({ count: 100 }, { parent });
-    const listener = vi.fn();
-    child.subscribe(listener);
+  it('survives writing through a frozen intermediate object', () => {
+    const store = createStore<Record<string, unknown>>({});
+    store.setState('a' as never, Object.freeze({ b: { c: 1 } }) as never);
 
-    child.destroy?.();
-    parent.setState('user.age', 50);
+    // Write through the frozen node — it should clone, not mutate in place
+    expect(() => store.setState('a.b.c' as never, 2 as never)).not.toThrow();
 
-    expect(listener).not.toHaveBeenCalled();
+    expect(store.getState()).toEqual({ a: { b: { c: 2 } } });
+  });
+
+  it('survives a very deep state tree without stack overflow', () => {
+    const store = createStore<Record<string, unknown>>({});
+    const path = new Array(100)
+      .fill(null)
+      .map((_, i) => `lvl${i}`)
+      .join('.');
+
+    expect(() => store.setState(path as never, 'deep' as never)).not.toThrow();
+    expect(store.getState()).toBeDefined();
+
+    const deepValue = new Array(100)
+      .fill(null)
+      .reduce<Record<string, unknown>>((obj, _, i) => obj[`lvl${i}`] as Record<string, unknown>, store.getState());
+    expect(deepValue).toBe('deep');
+  });
+
+  it('survives reading back a very deep state tree (100 levels) without stack overflow', () => {
+    const store = createStore<Record<string, unknown>>({});
+    const path = new Array(100)
+      .fill(null)
+      .map((_, i) => `lvl${i}`)
+      .join('.');
+
+    store.setState(path as never, 'deep' as never);
+
+    expect(() => store.getPath(path as never)).not.toThrow();
+    expect(store.getPath(path as never)).toBe('deep');
+  });
+
+  it('does not leak memory when subscribing and unsubscribing many unique paths', () => {
+    const store = createStore<Record<string, number>>({});
+    const unsubs: (() => void)[] = [];
+    const count = 1000;
+
+    for (let i = 0; i < count; i++) {
+      unsubs.push(store.subscribePath(String(i) as never, () => {}));
+    }
+
+    // Assert they all fire
+    let total = 0;
+    const unsub2 = store.subscribePath('999' as never, () => total++);
+    store.setState('999' as never, 1 as never);
+    expect(total).toBe(1);
+    unsub2();
+
+    // Unsubscribe all
+    for (const unsub of unsubs) {
+      unsub();
+    }
+
+    // After unsubscription, no more notifications
+    store.setState('999' as never, 2 as never);
+    expect(total).toBe(1);
   });
 });

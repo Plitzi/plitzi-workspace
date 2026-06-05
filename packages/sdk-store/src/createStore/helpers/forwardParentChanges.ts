@@ -12,8 +12,18 @@ export function forwardParentChanges<TState extends object>(
   pathListeners: PathTrie,
   changeListeners: Subscribers<ChangeListener<TState>>,
   getState: GetState<TState>
-): () => void {
-  return parent.subscribe(changedPath => {
+): { unsubscribe: () => void; seedBaseline: () => void } {
+  // The parent has already committed by the time a change forwards, so the pre-change merged state can't be
+  // recomputed on demand — it must be captured beforehand. Seeding lazily (only once a change listener exists,
+  // via `seedBaseline`) keeps getPath-only scopes from ever materializing the full merge, which is their whole
+  // point. From there it rolls forward on every forwarded change, giving listeners a real `prev` distinct from `next`.
+  let prevMerged: TState | undefined;
+
+  const seedBaseline = (): void => {
+    prevMerged ??= getState();
+  };
+
+  const unsubscribe = parent.subscribe(changedPath => {
     listeners.forEach(listener => listener(changedPath));
 
     if (pathListeners.size > 0) {
@@ -21,9 +31,12 @@ export function forwardParentChanges<TState extends object>(
     }
 
     if (changeListeners.length > 0) {
-      const merged = getState();
-      const change = { path: changedPath as PathOf<TState> | undefined, prev: merged, next: merged };
+      const next = getState();
+      const change = { path: changedPath as PathOf<TState> | undefined, prev: prevMerged ?? next, next };
+      prevMerged = next;
       changeListeners.forEach(listener => listener(change));
     }
   });
+
+  return { unsubscribe, seedBaseline };
 }

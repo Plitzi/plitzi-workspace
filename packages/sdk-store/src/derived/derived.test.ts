@@ -98,4 +98,11 @@ describe('createDerived', () => {
 
     expect(spy).not.toHaveBeenCalled();
   });
+
+  it('handles non-existent dependency paths gracefully', () => {
+    const store = createStore<CartState>({ items: {} });
+    const derived = createDerived(store, ['items.missing.thing' as never], ([val]) => val);
+
+    expect(derived.get()).toBeUndefined();
+  });
 });

@@ -121,4 +121,28 @@ describe('createAsync', () => {
 
     expect(notifications).toBe(0);
   });
+
+  it('latest-call-wins: a failing latest run suppresses an earlier success (design intent)', async () => {
+    const store = createStore<State>(initial());
+    const first = deferred<number>();
+    const second = deferred<number>();
+    const gates = [first, second];
+    let call = 0;
+    const resource = createAsync(store, 'value', () => gates[call++].promise);
+
+    const run1 = resource.run(); // slow, will succeed
+    const run2 = resource.run(); // fast, will fail
+
+    second.reject(new Error('second failed'));
+    await expect(run2).rejects.toThrow('second failed');
+
+    // At this point run2 has failed. Now resolve run1 — the older request.
+    first.resolve(42);
+    await run1;
+
+    // "The latest call wins": run2 was called second, so its error state persists.
+    // The earlier run1's success is ignored even though it resolved after run2.
+    expect(store.getState().value).toBe(0);
+    expect(resource.get().status).toBe('error');
+  });
 });

@@ -97,4 +97,53 @@ describe('createEntityAdapter — edge cases', () => {
     expect(adapter.selectTotal({})).toBe(0);
     expect(adapter.selectAll({})).toEqual([]);
   });
+
+  it('setAll with an empty array produces an empty map', () => {
+    const adapter = createEntityAdapter<Item>();
+    const map = items(a, b);
+    const next = adapter.setAll([])(map);
+
+    expect(Object.keys(next)).toHaveLength(0);
+  });
+
+  it('removeOne from an empty map returns the same reference', () => {
+    const adapter = createEntityAdapter<Item>();
+    const map: EntityMap<Item> = {};
+
+    expect(adapter.removeOne(1)(map)).toBe(map);
+  });
+
+  it('updateMany with all non-existing ids returns the same reference', () => {
+    const adapter = createEntityAdapter<Item>();
+    const map = items(a);
+
+    const next = adapter.updateMany([
+      { id: 99, changes: { name: 'x' } },
+      { id: 100, changes: { name: 'y' } }
+    ])(map);
+
+    expect(next).toBe(map);
+  });
+
+  it('addOne does not mutate the original map', () => {
+    const adapter = createEntityAdapter<Item>();
+    const map = items(a, b);
+
+    const next = adapter.addOne(c)(map);
+
+    expect(Object.keys(map)).toHaveLength(2);
+    expect(Object.keys(next)).toHaveLength(3);
+    expect(map['3']).toBeUndefined();
+    expect(next['3']).toEqual(c);
+  });
+
+  it('removeOne does not mutate the original map', () => {
+    const adapter = createEntityAdapter<Item>();
+    const map = items(a, b);
+
+    const next = adapter.removeOne(1)(map);
+
+    expect(Object.keys(map)).toHaveLength(2);
+    expect(Object.keys(next)).toHaveLength(1);
+  });
 });

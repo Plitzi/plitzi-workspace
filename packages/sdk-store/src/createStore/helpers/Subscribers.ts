@@ -56,9 +56,29 @@ class Subscribers<F extends AnyListener> {
     try {
       const { items } = this;
       // Snapshot the count: a listener added during this pass isn't called until the next notify (and a removed one
-      // is a tombstone we call as a no-op), matching the React/Redux subscription contract.
-      for (let i = 0, n = items.length; i < n; i++) {
-        cb(items[i]);
+      // is a tombstone we call as a no-op). A throwing listener can't starve its siblings — the inner `for` stays a
+      // tight walk and the `try` only re-enters on a throw — and the first error is re-raised once the pass ends.
+      const n = items.length;
+      let i = 0;
+      let error: unknown;
+      let thrown = false;
+      while (i < n) {
+        try {
+          for (; i < n; i++) {
+            cb(items[i]);
+          }
+        } catch (err) {
+          if (!thrown) {
+            thrown = true;
+            error = err;
+          }
+
+          i++;
+        }
+      }
+
+      if (thrown) {
+        throw error;
       }
     } finally {
       this.end();
@@ -66,8 +86,21 @@ class Subscribers<F extends AnyListener> {
   }
 
   clear(): void {
+    // Clearing from inside a listener (e.g. `store.destroy()` mid-notification) must not truncate the array the
+    // active loop is walking, nor reset `notifying` out from under the `begin`/`end` pair. Tombstone every slot
+    // instead: remaining listeners become no-ops and the outermost `end()` compacts them away.
+    if (this.notifying > 0) {
+      const { items } = this;
+      for (let i = 0, n = items.length; i < n; i++) {
+        items[i] = TOMBSTONE as F;
+      }
+
+      this.dead = items.length;
+
+      return;
+    }
+
     this.items.length = 0;
-    this.notifying = 0;
     this.dead = 0;
   }
 

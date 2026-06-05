@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 import createStore from './createStore';
 
@@ -94,5 +94,64 @@ describe('notify safety — mutating subscribers mid-notification', () => {
     const off = store.subscribe(() => {});
     off(); // a normal swap-pop removal must still work afterwards
     expect(() => store.setState('n', 2)).toThrow();
+  });
+
+  it('runs every listener even when an earlier one throws, then re-raises the error', () => {
+    const store = createStore<State>({ n: 0 });
+    const order: string[] = [];
+
+    store.subscribe(() => {
+      order.push('a');
+      throw new Error('a blew up');
+    });
+    store.subscribe(() => order.push('b'));
+
+    // A throwing listener does not starve the next one, and the error still surfaces to the caller.
+    expect(() => store.setState('n', 1)).toThrow('a blew up');
+    expect(order).toEqual(['a', 'b']);
+  });
+
+  it('store.destroy() from inside a listener does not crash and tombstones the rest', () => {
+    const store = createStore<State>({ n: 0 });
+
+    let destroyRan = false;
+    store.subscribe(() => {
+      if (!destroyRan) {
+        destroyRan = true;
+        store.destroy?.();
+      }
+    });
+    const afterDestroy = vi.fn();
+    store.subscribe(afterDestroy);
+
+    // clear() during notification tombstones the remaining slots instead of truncating the array the loop walks,
+    // so the pass finishes cleanly and the torn-down listener never fires.
+    expect(() => store.setState('n', 1)).not.toThrow();
+    expect(afterDestroy).not.toHaveBeenCalled();
+  });
+
+  it('keeps the notify counter consistent after destroy() from inside a listener', () => {
+    const store = createStore<State>({ n: 0 });
+
+    let destroyRan = false;
+    store.subscribe(() => {
+      if (!destroyRan) {
+        destroyRan = true;
+        store.destroy?.();
+      }
+    });
+
+    store.setState('n', 1);
+
+    // Had clear() reset `notifying` mid-pass, end() would have driven it negative and later removals during a
+    // notify would swap-pop instead of tombstone. A fresh subscribe + write must still fire exactly once.
+    const reSub = vi.fn();
+    const unsub = store.subscribe(reSub);
+
+    store.setState('n', 2);
+
+    expect(reSub).toHaveBeenCalledTimes(1);
+
+    unsub();
   });
 });

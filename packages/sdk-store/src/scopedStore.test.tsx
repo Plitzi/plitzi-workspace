@@ -5,7 +5,7 @@ import { describe, it, expect, vi } from 'vitest';
 import createStore, { createStoreHook } from './createStore';
 import StoreProvider, { StoreContext } from './StoreProvider';
 
-import type { StoreApi, StoreApiInternal } from './types';
+import type { StoreApi, StoreApiInternal, StoreChange } from './types';
 import type { ReactNode } from 'react';
 
 type S = { a: number; b: number; c: number; z?: number };
@@ -184,5 +184,35 @@ describe('scoped store: StoreProvider inherit modes', () => {
     act(() => parentStore.setState('a', 99));
 
     expect(result.current[0]).toBe(1); // isolated — parent update does NOT propagate
+  });
+});
+
+describe('scoped store — change forwarding', () => {
+  it('forwards a parent change with a prev distinct from next, reflecting the merged state', () => {
+    const parent = createStore<S>({ a: 1, b: 2, c: 3 });
+    const child = createStore<S>({ c: 9 }, { parent });
+
+    const changes: StoreChange<S>[] = [];
+    child.subscribeChange(change => changes.push(change));
+
+    parent.setState('a', 42);
+
+    expect(changes).toHaveLength(1);
+    const last = changes[0];
+    expect(last.prev).not.toBe(last.next);
+    expect(last.prev.a).toBe(1); // pre-change merged state
+    expect(last.next.a).toBe(42); // post-change merged state
+    expect(last.next.c).toBe(9); // child's own key still shadows in the merged next
+  });
+
+  it('keeps a child-owned key local when writing undefined (no leak to parent)', () => {
+    type T = { count: number; user: { name: string | undefined; age: number } };
+    const parent = createStore<T>({ count: 0, user: { name: 'Ada', age: 36 } });
+    const child = createStore<T>({ count: 100, user: { name: undefined, age: 0 } }, { parent });
+
+    child.setState('user.name', undefined as never);
+
+    expect(child.getState().user.name).toBeUndefined();
+    expect(parent.getState().user.name).toBe('Ada');
   });
 });

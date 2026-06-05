@@ -10,6 +10,49 @@ import type PathTrie from './PathTrie';
 import type Subscribers from './Subscribers';
 import type { ChangeListener, Listener, PathOf, PathValue, SetState, StoreApi, WriteInterceptor } from '../../types';
 
+// Calls every listener even if some throw: the inner `for` stays a tight loop and the `try` only re-enters on the
+// rare throw, so the no-error path pays nothing. The first thrown error is re-raised after all have run — one bad
+// listener can neither starve its siblings nor silently swallow a real error.
+const notifyAll = <A>(items: ArrayLike<(arg: A) => void>, arg: A, count: number): void => {
+  let i = 0;
+  let error: unknown;
+  let thrown = false;
+  while (i < count) {
+    try {
+      for (; i < count; i++) {
+        items[i](arg);
+      }
+    } catch (err) {
+      if (!thrown) {
+        thrown = true;
+        error = err;
+      }
+
+      i++;
+    }
+  }
+
+  if (thrown) {
+    throw error;
+  }
+};
+
+// A scope "owns" a path when every segment exists as an own property down its local state — distinct from the leaf
+// value merely being `undefined`. A child holding an explicit `undefined` still owns the key (the write stays local),
+// while a path the child never declared delegates up to the parent that does.
+const ownsPath = (state: object, segments: readonly string[]): boolean => {
+  let current: unknown = state;
+  for (let i = 0, n = segments.length; i < n; i++) {
+    if (current === null || typeof current !== 'object' || !Object.hasOwn(current, segments[i])) {
+      return false;
+    }
+
+    current = (current as Record<string, unknown>)[segments[i]];
+  }
+
+  return true;
+};
+
 export type SetStateDeps<TState extends object> = {
   getOwnState: () => TState;
   getOwnSnapshot: () => TState;
@@ -78,9 +121,7 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     // array — the loop stays a tight indexed walk.
     subs.begin();
     try {
-      for (let i = 0, n = items.length; i < n; i++) {
-        items[i](path);
-      }
+      notifyAll(items, path, items.length);
     } finally {
       subs.end();
     }
@@ -95,9 +136,7 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       if (batchDepth === 0 && pendingListeners.size > 0) {
         const woken = [...pendingListeners];
         pendingListeners.clear();
-        for (let i = 0; i < woken.length; i++) {
-          woken[i](undefined);
-        }
+        notifyAll(woken, undefined, woken.length);
       }
     }
   };
@@ -107,9 +146,7 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     const { items } = changeListeners;
     changeListeners.begin();
     try {
-      for (let i = 0, n = items.length; i < n; i++) {
-        items[i](change);
-      }
+      notifyAll(items, change, items.length);
     } finally {
       changeListeners.end();
     }
@@ -237,11 +274,17 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
   ) => {
     const prevState = getOwnState();
 
-    // A nested scope that doesn't own the path delegates to the parent that does.
-    if (parent && path && getByPath(prevState, path) === undefined) {
-      parent.setState(path, value as PathValue<TState, P>, canPropagate);
+    // A nested scope that doesn't own the path delegates to the parent that does. Ownership is structural (the key
+    // chain exists locally), not value-based — so writing an explicit `undefined` to a key the child owns stays
+    // local instead of leaking up to the parent.
+    if (parent && typeof path === 'string') {
+      const dot = path.indexOf('.');
+      const owns = dot === -1 ? Object.hasOwn(prevState, path) : ownsPath(prevState, parsePath(path));
+      if (!owns) {
+        parent.setState(path, value as PathValue<TState, P>, canPropagate);
 
-      return;
+        return;
+      }
     }
 
     if (typeof path !== 'string') {

@@ -85,26 +85,35 @@ function createStore<TState extends object>(
   });
 
   const subscribe = (listener: Listener) => listeners.add(listener);
-  const subscribeChange = (listener: ChangeListener<TState>) => changeListeners.add(listener);
+  const subscribeChange = (listener: ChangeListener<TState>) => {
+    // Capturing the pre-change merged baseline only when a change listener actually exists keeps getPath-only
+    // scopes from ever materializing the full merge.
+    forwarder?.seedBaseline();
+
+    return changeListeners.add(listener);
+  };
   const subscribePath = <P extends PathOf<TState>>(path: P, listener: Listener) => pathListeners.add(path, listener);
 
   state = (typeof initializer === 'function' ? initializer(setState, getState) : initializer) as TState;
 
   // Detaching this handle on `destroy()` stops the parent from holding this scope's forwarder forever (a leak for
   // short-lived scopes). `reconnect` re-attaches it after the destroy → remount cycle React StrictMode simulates.
-  let parentUnsub = parent
+  let forwarder = parent
     ? forwardParentChanges(parent, listeners, pathListeners, changeListeners, getState)
     : undefined;
 
   const reconnect = () => {
-    if (parent && !parentUnsub) {
-      parentUnsub = forwardParentChanges(parent, listeners, pathListeners, changeListeners, getState);
+    if (parent && !forwarder) {
+      forwarder = forwardParentChanges(parent, listeners, pathListeners, changeListeners, getState);
+      if (changeListeners.length > 0) {
+        forwarder.seedBaseline();
+      }
     }
   };
 
   const destroy = () => {
-    parentUnsub?.();
-    parentUnsub = undefined;
+    forwarder?.unsubscribe();
+    forwarder = undefined;
     listeners.clear();
     pathListeners.clear();
     changeListeners.clear();
