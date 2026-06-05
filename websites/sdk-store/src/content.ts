@@ -161,7 +161,7 @@ const [name, setName] = useStore('user.name'); // typed as string`
 
 // Add middlewares (persist, logger, time-travel) when the
 // provider creates the store:
-<StoreProvider value={initial} middlewares={[persist({ key: 'app' }), history()]}>
+<StoreProvider value={initial} middlewares={[persistMiddleware({ key: 'app' }), historyMiddleware()]}>
   <App />
 </StoreProvider>`
   },
@@ -367,16 +367,16 @@ createEntityAdapter<Row>({ selectId: r => r.key, sortComparer: byName });`
   {
     id: 'middleware',
     label: 'Middleware',
-    code: `import { createStore, logger, persist, history } from '@plitzi/sdk-store';
+    code: `import { createStore, loggerMiddleware, persistMiddleware, historyMiddleware } from '@plitzi/sdk-store';
 
 // logger, persist and time-travel are all middlewares on ONE
 // substrate (subscribeChange). Put persist first so it hydrates
 // before the others observe.
 const store = createStore<State>(initial, {
   middlewares: [
-    persist({ key: 'app', partialize: s => ({ user: s.user }), debounce: 200 }),
-    history(),                              // getStoreHistory(store) for undo/redo
-    logger({ filter: c => c.path !== 'mouse' })
+    persistMiddleware({ key: 'app', partialize: s => ({ user: s.user }), debounce: 200 }),
+    historyMiddleware(),                    // getStoreHistory(store) for undo/redo
+    loggerMiddleware({ filter: c => c.path !== 'mouse' })
   ]
 });
 

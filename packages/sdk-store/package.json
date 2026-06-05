@@ -253,6 +253,10 @@
       "types": "./dist/middleware/history.d.ts",
       "import": "./dist/middleware/history.mjs"
     },
+    "./middleware/historyMiddleware": {
+      "types": "./dist/middleware/historyMiddleware.d.ts",
+      "import": "./dist/middleware/historyMiddleware.mjs"
+    },
     "./middleware/index": {
       "types": "./dist/middleware/index.d.ts",
       "import": "./dist/middleware/index.mjs"
@@ -261,12 +265,32 @@
       "types": "./dist/middleware/logger.d.ts",
       "import": "./dist/middleware/logger.mjs"
     },
+    "./middleware/loggerMiddleware": {
+      "types": "./dist/middleware/loggerMiddleware.d.ts",
+      "import": "./dist/middleware/loggerMiddleware.mjs"
+    },
     "./middleware/persist": {
       "types": "./dist/middleware/persist.d.ts",
       "import": "./dist/middleware/persist.mjs"
     },
+    "./middleware/persistMiddleware": {
+      "types": "./dist/middleware/persistMiddleware.d.ts",
+      "import": "./dist/middleware/persistMiddleware.mjs"
+    },
+    "./middleware/reduxDevToolsMiddleware": {
+      "types": "./dist/middleware/reduxDevToolsMiddleware.d.ts",
+      "import": "./dist/middleware/reduxDevToolsMiddleware.mjs"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/types/index.mjs"
+    },
+    "./types/StoreTypes": {
+      "import": "./dist/types/StoreTypes.mjs"
+    },
     "./types/index": {
-      "types": "./dist/types/index.d.ts"
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/types/index.mjs"
     }
   }
 }

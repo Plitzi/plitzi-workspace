@@ -63,7 +63,7 @@ import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider'
 import { createStoreDevToolsLogger, ThemeProvider, type BuilderState } from '@plitzi/sdk-shared';
 import { createStripTypenameLink } from '@plitzi/sdk-shared/helpers/stripTypename';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
-import { history as historyMw, logger as loggerMw } from '@plitzi/sdk-store';
+import { historyMiddleware as historyMw, loggerMiddleware as loggerMw } from '@plitzi/sdk-store';
 import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 import AppMain from '@pmodules/App/AppMain';
 import customFetch from '@pmodules/Network/helpers/customFetch';

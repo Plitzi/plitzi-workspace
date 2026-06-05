@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState, use } from 'react';
 
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
-import { logger as loggerMw } from '@plitzi/sdk-store';
+import { loggerMiddleware as loggerMw } from '@plitzi/sdk-store';
 import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';

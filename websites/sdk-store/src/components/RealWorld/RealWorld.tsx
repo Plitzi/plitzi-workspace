@@ -3,8 +3,10 @@ import { useState } from 'react';
 import AsyncDemo from '../AsyncDemo';
 import BatchDemo from '../BatchDemo';
 import CartDemo from '../CartDemo';
+import DevToolsDemo from '../DevToolsDemo';
 import DraftDemo from '../DraftDemo';
 import EntitiesDemo from '../EntitiesDemo';
+import InterceptDemo from '../InterceptDemo';
 import MiddlewareDemo from '../MiddlewareDemo';
 import PersistDemo from '../PersistDemo';
 import SectionHeading from '../SectionHeading';
@@ -22,6 +24,8 @@ const EXAMPLES: Example[] = [
   { id: 'async', label: 'Async + Suspense', Component: AsyncDemo },
   { id: 'batch', label: 'Batched updates', Component: BatchDemo },
   { id: 'middleware', label: 'Middleware', Component: MiddlewareDemo },
+  { id: 'intercept', label: 'Interceptors', Component: InterceptDemo },
+  { id: 'devtools', label: 'Redux DevTools', Component: DevToolsDemo },
   { id: 'persist', label: 'Persistence', Component: PersistDemo },
   { id: 'draft', label: 'Draft editor', Component: DraftDemo }
 ];

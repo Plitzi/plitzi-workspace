@@ -3,7 +3,7 @@ import { createElement, use } from 'react';
 import { describe, it, expect } from 'vitest';
 
 import { cascade } from './middleware/cascade';
-import { logger } from './middleware/logger';
+import { loggerMiddleware } from './middleware/loggerMiddleware';
 import StoreProvider, { StoreContext } from './StoreProvider';
 
 import type { StoreApi } from './types';
@@ -19,7 +19,11 @@ describe('StoreProvider — middleware inheritance', () => {
     const wrapper = ({ children }: { children: ReactNode }) =>
       createElement(
         StoreProvider<S>,
-        { value: { n: 0 }, autoSync: false, middlewares: [cascade(logger<S>(change => paths.push(change.path)))] },
+        {
+          value: { n: 0 },
+          autoSync: false,
+          middlewares: [cascade(loggerMiddleware<S>(change => paths.push(change.path)))]
+        },
         createElement(StoreProvider<S>, { value: { n: 0 }, autoSync: false }, children)
       );
 
@@ -34,7 +38,7 @@ describe('StoreProvider — middleware inheritance', () => {
     const wrapper = ({ children }: { children: ReactNode }) =>
       createElement(
         StoreProvider<S>,
-        { value: { n: 0 }, autoSync: false, middlewares: [logger<S>(change => paths.push(change.path))] },
+        { value: { n: 0 }, autoSync: false, middlewares: [loggerMiddleware<S>(change => paths.push(change.path))] },
         createElement(StoreProvider<S>, { value: { n: 0 }, autoSync: false }, children)
       );
 

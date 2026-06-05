@@ -86,7 +86,24 @@ export type StoreChange<T> = { path: PathOf<T> | undefined; prev: T; next: T };
 // Observer of committed changes — the substrate logger, history and persist all ride on. Returned by a middleware.
 export type ChangeListener<T> = (change: StoreChange<T>) => void;
 
+// Returned from a `beforeChange` interceptor to abort the write entirely: nothing is committed, no observers fire.
+export const CANCEL: unique symbol = Symbol('@plitzi/sdk-store/cancel');
+
+// The write a `beforeChange` interceptor sees before it commits. `value` is the resolved value about to be written
+// at `path` (the leaf value, or the whole next state when `path` is undefined); `prev` is the current value there.
+export type WriteContext<T> = {
+  path: PathOf<T> | undefined;
+  value: unknown;
+  prev: unknown;
+};
+
+// Runs before a write commits. Return a value to REPLACE what gets written, `CANCEL` to abort it, or nothing to let
+// it through unchanged. Interceptors from several middlewares run in array order, each seeing the previous result.
+export type WriteInterceptor<T> = (context: WriteContext<T>) => unknown;
+
 export type StoreMiddlewareHandlers<T> = {
+  // Intercept/transform/cancel a write before it commits. Runs before `onChange` and before subscribers wake.
+  beforeChange?: WriteInterceptor<T>;
   onChange?: ChangeListener<T>;
 };
 
@@ -135,6 +152,7 @@ export type StoreApiInternal<T> = StoreApi<T> & {
   listeners: Subscribers<Listener>;
   pathListeners: PathTrie;
   changeListeners: Subscribers<ChangeListener<T>>;
+  interceptors: WriteInterceptor<T>[];
   // Test-only metric: number of times `getState` recomputed the full deep-merge (cache miss).
   getMergeCount?: () => number;
 };

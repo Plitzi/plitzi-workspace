@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import { cascade, history, logger, persist, StoreProvider } from '@plitzi/sdk-store';
+import { cascade, historyMiddleware, loggerMiddleware, persistMiddleware, StoreProvider } from '@plitzi/sdk-store';
 
 import ExampleCard from '../ExampleCard';
 import CascadeChild from './components/CascadeChild';
@@ -26,7 +26,11 @@ const MiddlewareDemo = () => {
 
   // persist first so it hydrates before the others observe. The logger is cascade()'d, so nested providers inherit it.
   const middlewares = useMemo(
-    () => [persist<MiddlewareState>({ key: PERSIST_KEY }), cascade(logger<MiddlewareState>(sink)), history<MiddlewareState>()],
+    () => [
+      persistMiddleware<MiddlewareState>({ key: PERSIST_KEY }),
+      cascade(loggerMiddleware<MiddlewareState>(sink)),
+      historyMiddleware<MiddlewareState>()
+    ],
     [sink]
   );
 

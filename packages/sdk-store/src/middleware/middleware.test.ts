@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 
-import { history } from './history';
-import { logger } from './logger';
-import { persist } from './persist';
+import { historyMiddleware } from './historyMiddleware';
+import { loggerMiddleware } from './loggerMiddleware';
+import { persistMiddleware } from './persistMiddleware';
 import createStore from '../createStore/createStore';
 import { getStoreHistory } from '../history/createStoreHistory';
 
-import type { PersistStorage } from './persist';
+import type { PersistStorage } from './persistMiddleware';
 import type { StoreChange } from '../types';
 
 const memoryStorage = () => {
@@ -30,7 +30,7 @@ const initial = (): AppState => ({ count: 0, ui: { open: false } });
 describe('logger middleware', () => {
   it('reports each committed change with prev/next snapshots', () => {
     const changes: StoreChange<AppState>[] = [];
-    const store = createStore<AppState>(initial(), { middlewares: [logger({ sink: c => changes.push(c) })] });
+    const store = createStore<AppState>(initial(), { middlewares: [loggerMiddleware({ sink: c => changes.push(c) })] });
 
     store.setState('count', 1);
 
@@ -42,7 +42,7 @@ describe('logger middleware', () => {
   it('honours a filter', () => {
     const changes: StoreChange<AppState>[] = [];
     const store = createStore<AppState>(initial(), {
-      middlewares: [logger({ filter: c => c.path === 'count', sink: c => changes.push(c) })]
+      middlewares: [loggerMiddleware({ filter: c => c.path === 'count', sink: c => changes.push(c) })]
     });
 
     store.setState('ui.open', true);
@@ -53,7 +53,7 @@ describe('logger middleware', () => {
 
   it('accepts a bare sink function', () => {
     const changes: StoreChange<AppState>[] = [];
-    const store = createStore<AppState>(initial(), { middlewares: [logger(c => changes.push(c))] });
+    const store = createStore<AppState>(initial(), { middlewares: [loggerMiddleware(c => changes.push(c))] });
 
     store.setState('count', 1);
 
@@ -64,7 +64,7 @@ describe('logger middleware', () => {
 describe('persist middleware', () => {
   it('writes committed state to storage', () => {
     const { storage, data } = memoryStorage();
-    const store = createStore<AppState>(initial(), { middlewares: [persist({ key: 'app', storage })] });
+    const store = createStore<AppState>(initial(), { middlewares: [persistMiddleware({ key: 'app', storage })] });
 
     store.setState('count', 7);
 
@@ -73,9 +73,12 @@ describe('persist middleware', () => {
 
   it('rehydrates a new store from storage', () => {
     const { storage } = memoryStorage();
-    createStore<AppState>(initial(), { middlewares: [persist({ key: 'app', storage })] }).setState('count', 9);
+    createStore<AppState>(initial(), { middlewares: [persistMiddleware({ key: 'app', storage })] }).setState(
+      'count',
+      9
+    );
 
-    const restored = createStore<AppState>(initial(), { middlewares: [persist({ key: 'app', storage })] });
+    const restored = createStore<AppState>(initial(), { middlewares: [persistMiddleware({ key: 'app', storage })] });
 
     expect(restored.getState().count).toBe(9);
   });
@@ -83,7 +86,7 @@ describe('persist middleware', () => {
   it('persists only the partialized slice', () => {
     const { storage, data } = memoryStorage();
     const store = createStore<AppState>(initial(), {
-      middlewares: [persist({ key: 'app', storage, partialize: s => ({ count: s.count }) })]
+      middlewares: [persistMiddleware({ key: 'app', storage, partialize: s => ({ count: s.count }) })]
     });
 
     store.setState('ui.open', true);
@@ -97,7 +100,7 @@ describe('persist middleware', () => {
 
     const store = createStore<AppState>(initial(), {
       middlewares: [
-        persist<AppState>({
+        persistMiddleware<AppState>({
           key: 'app',
           storage,
           version: 1,
@@ -113,7 +116,7 @@ describe('persist middleware', () => {
     const { storage, data } = memoryStorage();
     data.set('app', '{not json');
 
-    const store = createStore<AppState>(initial(), { middlewares: [persist({ key: 'app', storage })] });
+    const store = createStore<AppState>(initial(), { middlewares: [persistMiddleware({ key: 'app', storage })] });
 
     expect(store.getState().count).toBe(0);
     expect(data.has('app')).toBe(false);
@@ -127,7 +130,7 @@ describe('persist middleware', () => {
       const { storage, data } = memoryStorage();
       const spy = vi.spyOn(storage, 'setItem');
       const store = createStore<AppState>(initial(), {
-        middlewares: [persist({ key: 'app', storage, debounce: 50 })]
+        middlewares: [persistMiddleware({ key: 'app', storage, debounce: 50 })]
       });
 
       store.setState('count', 1);
@@ -145,7 +148,7 @@ describe('persist middleware', () => {
 
 describe('history middleware', () => {
   it('records an action log retrievable via getStoreHistory', () => {
-    const store = createStore<AppState>(initial(), { middlewares: [history()] });
+    const store = createStore<AppState>(initial(), { middlewares: [historyMiddleware()] });
 
     store.setState('count', 1);
     store.setState('count', 2);
@@ -159,11 +162,17 @@ describe('history middleware', () => {
 describe('middleware ordering', () => {
   it('a persist placed first hydrates before later middlewares observe', () => {
     const { storage } = memoryStorage();
-    createStore<AppState>(initial(), { middlewares: [persist({ key: 'app', storage })] }).setState('count', 4);
+    createStore<AppState>(initial(), { middlewares: [persistMiddleware({ key: 'app', storage })] }).setState(
+      'count',
+      4
+    );
 
     const seen: (number | undefined)[] = [];
     const store = createStore<AppState>(initial(), {
-      middlewares: [persist({ key: 'app', storage }), logger({ sink: c => seen.push(c.next.count) })]
+      middlewares: [
+        persistMiddleware({ key: 'app', storage }),
+        loggerMiddleware({ sink: c => seen.push(c.next.count) })
+      ]
     });
 
     expect(store.getState().count).toBe(4); // hydrated

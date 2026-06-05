@@ -1,11 +1,11 @@
-export const PERSIST_CODE = `import { createStore, createStoreHook, persist } from '@plitzi/sdk-store';
+export const PERSIST_CODE = `import { createStore, createStoreHook, persistMiddleware } from '@plitzi/sdk-store';
 
 type State = { clicks: number; note: string };
 
 // persist is a middleware: it hydrates from storage on creation
 // and mirrors every change back (debounced). SSR-safe.
 const store = createStore<State>({ clicks: 0, note: '' }, {
-  middlewares: [persist({ key: 'demo', debounce: 150 })]
+  middlewares: [persistMiddleware({ key: 'demo', debounce: 150 })]
 });
 
 const { useStore } = createStoreHook<State>();

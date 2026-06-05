@@ -25,7 +25,7 @@ import SdkPlugin from '@modules/Sdk/SdkPlugin';
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
 import { createStoreDevToolsLogger, ThemeProvider, type SdkState } from '@plitzi/sdk-shared';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
-import { history as historyMw, logger as loggerMw } from '@plitzi/sdk-store';
+import { historyMiddleware as historyMw, loggerMiddleware as loggerMw } from '@plitzi/sdk-store';
 import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 
 import { getEnvironmentServer } from './config';

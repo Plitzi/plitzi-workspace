@@ -31,7 +31,7 @@ function Counter() {
 | `useStoreSync` | Mirror an external value (props) **into** the store. |
 | `createDerived` / `useDerived` | A memoized value computed from store paths (reselect-style). |
 | `createEntityAdapter` | CRUD updaters + selectors for a normalized `Record<id, T>` map. |
-| `logger` / `persist` / `history` | Middlewares: log, persist to storage, record time-travel. |
+| `loggerMiddleware` / `persistMiddleware` / `historyMiddleware` / `reduxDevToolsMiddleware` | Middlewares: log, persist to storage, record time-travel, connect to Redux DevTools. |
 | `createStoreHistory` / `useStoreHistory` | Undo / redo / jump-to-snapshot action log. |
 
 ## Architecture
@@ -53,7 +53,7 @@ history/                 createStoreHistory + useStoreHistory (time-travel)
 helpers/                 getByPath, setByPath, parsePath, shallowEqual…
 ```
 
-> **One change substrate.** Every committed write flows through `store.subscribeChange((change) => …)` where `change` is `{ path, prev, next }`. `logger`, `persist`, and `history` are all just observers on this channel — and so is any middleware you write. It costs nothing on the hot path when no observer is attached.
+> **One change substrate.** Every committed write flows through `store.subscribeChange((change) => …)` where `change` is `{ path, prev, next }`. `loggerMiddleware`, `persistMiddleware`, and `historyMiddleware` are all just observers on this channel — and so is any middleware you write. It costs nothing on the hot path when no observer is attached. Writes can also be **intercepted** before they commit via a middleware's `beforeChange` to transform or cancel them — see [Intercepting writes](#intercepting-writes-beforechange).
 
 ## `createStore`
 
@@ -65,9 +65,9 @@ const store = createStore<MyState>((setState, getState) => ({ count: 0 }));
 // Scoped store: reads fall through to a parent store (see "Scoped stores" below)
 const child = createStore<MyState>({ record }, { parent: rootStore });
 
-// With middlewares (logger / persist / history / your own)
+// With middlewares (loggerMiddleware / persistMiddleware / historyMiddleware / your own)
 const store = createStore<MyState>({ count: 0 }, {
-  middlewares: [persist({ key: 'app' }), history(), logger()]
+  middlewares: [persistMiddleware({ key: 'app' }), historyMiddleware(), loggerMiddleware()]
 });
 ```
 
@@ -330,18 +330,18 @@ createEntityAdapter<Row>({ selectId: r => r.key, sortComparer: (a, b) => a.name.
 
 Ops: `addOne/addMany` (ignore existing), `setOne/setMany/setAll` (replace), `updateOne/updateMany` (merge changes), `upsertOne/upsertMany` (add or merge), `removeOne/removeMany/removeAll`. Each returns the **same map reference** when nothing changed, so the store skips the write.
 
-## Middleware (`logger` / `persist` / `history`)
+## Middleware (`loggerMiddleware` / `persistMiddleware` / `historyMiddleware`)
 
-**What it's for:** cross-cutting side effects on every committed change, centralized in one place. A middleware is `(api) => { onChange? } | void`; its setup body runs once after creation (so it can hydrate), and `onChange` observes each `{ path, prev, next }`. logger, persist, and history are built-in middlewares; write your own the same way. Middlewares are per-store — in a scope chain, attach them where the writes you care about commit (shared keys delegate to the owning scope).
+**What it's for:** cross-cutting logic on every write, centralized in one place. A middleware is `(api) => { beforeChange?, onChange? } | void`; its setup body runs once after creation (so it can hydrate). It can do two things: **intercept** a write before it commits (`beforeChange`) and **observe** a write after it commits (`onChange`, the `{ path, prev, next }` change). logger, persist, and history are built-in observers; write your own the same way. Middlewares are per-store — in a scope chain, attach them where the writes you care about commit (shared keys delegate to the owning scope, so the owning scope's interceptors run).
 
 ```ts
-import { createStore, logger, persist, history } from '@plitzi/sdk-store';
+import { createStore, loggerMiddleware, persistMiddleware, historyMiddleware } from '@plitzi/sdk-store';
 
 const store = createStore<State>(initial, {
   middlewares: [
-    persist({ key: 'app' }), // put persist FIRST so it hydrates before others observe
-    history(),
-    logger()
+    persistMiddleware({ key: 'app' }), // put persist FIRST so it hydrates before others observe
+    historyMiddleware(),
+    loggerMiddleware()
   ]
 });
 
@@ -354,12 +354,40 @@ const analytics: StoreMiddleware<State> = api => ({
 const off = store.subscribeChange(({ path, prev, next }) => {});
 ```
 
-### `persist`
+### Intercepting writes (`beforeChange`)
+
+`onChange` only **observes** committed changes — it can't stop or rewrite them. A middleware's `beforeChange` runs **before** the write commits and can transform the value, or cancel the write entirely by returning `CANCEL`. Returning `undefined` lets the value through unchanged. It's just another middleware, so you write your own the same way you'd write a logger.
+
+```ts
+import { createStore, CANCEL } from '@plitzi/sdk-store';
+
+const guard: StoreMiddleware<State> = () => ({
+  beforeChange: ({ path, value, prev }) => {
+    if (path === 'role' && !isAdmin) {
+      return CANCEL; // block the write — nothing commits, no observer fires
+    }
+
+    if (path === 'ui.size') {
+      return Math.min(value as number, 100); // clamp before it commits
+    }
+
+    return undefined; // let everything else through unchanged
+  }
+});
+
+const store = createStore<State>(initial, { middlewares: [guard] });
+```
+
+`beforeChange` receives a `WriteContext`: `{ path, value, prev }` — the changed `path` (`undefined` for a whole-state write, where `value` is the full next state), the resolved `value` about to be written (function setters are already applied, so you see the concrete value), and the current `prev` at that path.
+
+When several middlewares declare a `beforeChange`, they run in **middleware order**, each seeing the previous one's result — so an earlier one can transform a value and a later one can still cancel it. Like every middleware, they run on the store that commits the write (in a scope chain, a write delegated to the owning scope runs that scope's interceptors).
+
+### `persistMiddleware`
 
 Mirrors the store to a key/value storage and rehydrates on creation.
 
 ```ts
-persist<State>({
+persistMiddleware<State>({
   key: 'app',
   storage,                              // default: localStorage, no-op on SSR. Any { getItem, setItem, removeItem }
   partialize: s => ({ user: s.user }),  // persist only part of the state
@@ -370,18 +398,42 @@ persist<State>({
 });
 ```
 
-### `logger`
+### `loggerMiddleware`
 
 ```ts
-logger<State>({
+loggerMiddleware<State>({
   filter: change => change.path !== 'mouse', // log only some changes
   sink: change => console.log(change.path, change.next) // default sink is console.log
 });
 ```
 
-## Time-travel (`history`)
+### `reduxDevToolsMiddleware`
 
-Records an action log you can undo / redo / jump through. Attach it via the `history()` middleware (or `getStoreHistory(store)`), read it with `useStoreHistory`.
+Mirrors the store to the [Redux DevTools](https://github.com/reduxjs/redux-devtools) browser extension: every committed change is sent as an action (labelled by the changed path) and time-travel from the DevTools UI (jump / rollback) is written back into the store. It's a **no-op** when the extension isn't installed (production, SSR, browsers without it), so it's safe to leave wired in.
+
+```ts
+import { createStore, reduxDevToolsMiddleware } from '@plitzi/sdk-store';
+
+const store = createStore<State>(initial, {
+  middlewares: [reduxDevToolsMiddleware({ name: 'my-app' })]
+});
+
+store.setState('count', 1);         // → action "count" in DevTools
+store.setState('user.name', 'Bob'); // → action "user.name"
+```
+
+```ts
+reduxDevToolsMiddleware<State>({
+  name: 'my-app',                              // instance name in the DevTools dropdown (default 'sdk-store')
+  action: change => `set:${change.path}`       // how to label each action (default: the changed path)
+});
+```
+
+Intended for the root store; like `persist`/`history` it's per-store and not cascaded.
+
+## Time-travel (`historyMiddleware`)
+
+Records an action log you can undo / redo / jump through. Attach it via the `historyMiddleware()` middleware (or `getStoreHistory(store)`), read it with `useStoreHistory`.
 
 ```tsx
 import { useStoreHistory } from '@plitzi/sdk-store';
@@ -413,8 +465,6 @@ Notification is `O(depth)` — a few `Map` lookups for the changed path's prefix
 
 All types live in `src/types/StoreTypes.ts`:
 
-All types live in `src/types/StoreTypes.ts`:
-
 | Type | Description |
 |---|---|
 | `PathOf<T>` | Union of all valid dot-paths in `T` |
@@ -426,7 +476,10 @@ All types live in `src/types/StoreTypes.ts`:
 | `MultiPathReturn<T, Paths>` | `[values, ...setters]` tuple |
 | `StoreApi<T>` | `{ getState, getPath, setState, subscribe, subscribePath, subscribeChange, destroy? }` |
 | `StoreChange<T>` | `{ path, prev, next }` — payload of `subscribeChange` / middleware `onChange` |
-| `StoreMiddleware<T>` | `(api) => { onChange? } \| void` — a middleware factory |
+| `StoreMiddleware<T>` | `(api) => { beforeChange?, onChange? } \| void` — a middleware factory |
+| `WriteContext<T>` | `{ path, value, prev }` — payload of a `beforeChange` interceptor |
+| `WriteInterceptor<T>` | `(ctx: WriteContext<T>) => unknown` — return a value, `CANCEL`, or `undefined` |
+| `CANCEL` | Sentinel an interceptor returns to abort a write |
 | `Derived<R>` | `{ get, subscribe, destroy }` — a `createDerived` handle |
 | `EntityAdapter<T>` | CRUD updaters + selectors from `createEntityAdapter` |
 | `EntityUpdater<T>` | `(map) => map` — an immutable entity-map update for `setState` |

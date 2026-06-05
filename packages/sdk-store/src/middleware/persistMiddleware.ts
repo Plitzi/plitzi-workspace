@@ -33,7 +33,7 @@ type Envelope = { version: number; state: unknown };
 
 // Mirrors the store to a key/value storage and rehydrates from it on creation. Put it first in the `middlewares`
 // array so it hydrates before logger/history observe anything.
-export const persist = <TState extends object>(options: PersistOptions<TState>): StoreMiddleware<TState> => {
+export const persistMiddleware = <TState extends object>(options: PersistOptions<TState>): StoreMiddleware<TState> => {
   const { key, storage = defaultStorage(), partialize, version = 0, migrate, merge, debounce = 0 } = options;
 
   const write = (api: StoreApi<TState>): void => {

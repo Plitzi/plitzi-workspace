@@ -1,10 +1,10 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
 
-import { logger } from './logger';
-import { persist } from './persist';
+import { loggerMiddleware } from './loggerMiddleware';
+import { persistMiddleware } from './persistMiddleware';
 import createStore from '../createStore/createStore';
 
-import type { PersistStorage } from './persist';
+import type { PersistStorage } from './persistMiddleware';
 
 type State = { count: number; ui: { open: boolean } };
 const initial = (): State => ({ count: 0, ui: { open: false } });
@@ -32,7 +32,7 @@ describe('persist middleware — edge cases', () => {
   it('drops a corrupt payload and keeps the initial state', () => {
     const { storage, data } = memoryStorage();
     data.set('app', '{ not valid json');
-    const store = createStore<State>(initial(), { middlewares: [persist<State>({ key: 'app', storage })] });
+    const store = createStore<State>(initial(), { middlewares: [persistMiddleware<State>({ key: 'app', storage })] });
 
     expect(store.getState()).toEqual(initial());
     expect(data.has('app')).toBe(false);
@@ -44,7 +44,7 @@ describe('persist middleware — edge cases', () => {
 
     const store = createStore<State>(initial(), {
       middlewares: [
-        persist<State>({
+        persistMiddleware<State>({
           key: 'app',
           storage,
           version: 1,
@@ -60,7 +60,9 @@ describe('persist middleware — edge cases', () => {
     const { storage, data } = memoryStorage();
     seed(data, 'app', { version: 5, state: { count: 7 } });
 
-    const store = createStore<State>(initial(), { middlewares: [persist<State>({ key: 'app', storage, version: 1 })] });
+    const store = createStore<State>(initial(), {
+      middlewares: [persistMiddleware<State>({ key: 'app', storage, version: 1 })]
+    });
 
     expect(store.getState().count).toBe(7);
   });
@@ -68,7 +70,7 @@ describe('persist middleware — edge cases', () => {
   it('persists only the partialized slice', () => {
     const { storage, data } = memoryStorage();
     const store = createStore<State>(initial(), {
-      middlewares: [persist<State>({ key: 'app', storage, partialize: state => ({ count: state.count }) })]
+      middlewares: [persistMiddleware<State>({ key: 'app', storage, partialize: state => ({ count: state.count }) })]
     });
 
     store.setState('count', 3);
@@ -83,7 +85,7 @@ describe('persist middleware — edge cases', () => {
 
     const store = createStore<State>(initial(), {
       middlewares: [
-        persist<State>({
+        persistMiddleware<State>({
           key: 'app',
           storage,
           merge: (persisted, current) => ({ count: (persisted.count ?? 0) + current.count })
@@ -98,7 +100,7 @@ describe('persist middleware — edge cases', () => {
     vi.useFakeTimers();
     const { storage, data, writes } = memoryStorage();
     const store = createStore<State>(initial(), {
-      middlewares: [persist<State>({ key: 'app', storage, debounce: 50 })]
+      middlewares: [persistMiddleware<State>({ key: 'app', storage, debounce: 50 })]
     });
 
     store.setState('count', 1);
@@ -117,7 +119,7 @@ describe('persist middleware — edge cases', () => {
 describe('logger middleware — edge cases', () => {
   it('logs to console.log by default', () => {
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const store = createStore<State>(initial(), { middlewares: [logger<State>()] });
+    const store = createStore<State>(initial(), { middlewares: [loggerMiddleware<State>()] });
 
     store.setState('count', 1);
 
@@ -128,7 +130,7 @@ describe('logger middleware — edge cases', () => {
   it('skips changes filtered out', () => {
     const sink = vi.fn();
     const store = createStore<State>(initial(), {
-      middlewares: [logger<State>({ filter: change => change.path !== 'count', sink })]
+      middlewares: [loggerMiddleware<State>({ filter: change => change.path !== 'count', sink })]
     });
 
     store.setState('count', 1);

@@ -1,7 +1,9 @@
-export { logger } from './logger';
-export { persist } from './persist';
-export { history } from './history';
+export { loggerMiddleware } from './loggerMiddleware';
+export { persistMiddleware } from './persistMiddleware';
+export { historyMiddleware } from './historyMiddleware';
+export { reduxDevToolsMiddleware } from './reduxDevToolsMiddleware';
 export { cascade } from './cascade';
 
-export type { LoggerOptions } from './logger';
-export type { PersistOptions, PersistStorage } from './persist';
+export type { LoggerOptions } from './loggerMiddleware';
+export type { PersistOptions, PersistStorage } from './persistMiddleware';
+export type { ReduxDevToolsOptions } from './reduxDevToolsMiddleware';

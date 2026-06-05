@@ -1,4 +1,4 @@
-export const MIDDLEWARE_CODE = `import { StoreProvider, logger, persist, history, cascade } from '@plitzi/sdk-store';
+export const MIDDLEWARE_CODE = `import { StoreProvider, loggerMiddleware, persistMiddleware, historyMiddleware, cascade } from '@plitzi/sdk-store';
 
 type State = { count: number; user: { name: string } };
 
@@ -7,9 +7,9 @@ type State = { count: number; user: { name: string } };
 // before the others observe. cascade() makes a middleware flow
 // down to nested providers — set the logger once at the root.
 const middlewares = [
-  persist<State>({ key: 'app' }),          // save to / restore from storage
-  cascade(logger<State>(change => feed(change))), // log every change, inherited by children
-  history<State>()                          // record snapshots for undo/redo
+  persistMiddleware<State>({ key: 'app' }),          // save to / restore from storage
+  cascade(loggerMiddleware<State>(change => feed(change))), // log every change, inherited by children
+  historyMiddleware<State>()                          // record snapshots for undo/redo
 ];
 
 function App() {

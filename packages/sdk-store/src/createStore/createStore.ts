@@ -42,7 +42,8 @@ import type {
   UseStoreOptions,
   UseStoreSetterOptions,
   UseStoreSyncMultiOptions,
-  UseStoreSyncOptions
+  UseStoreSyncOptions,
+  WriteInterceptor
 } from '../types';
 
 function createStore<TState extends object>(
@@ -57,6 +58,7 @@ function createStore<TState extends object>(
   const listeners = new Subscribers<Listener>();
   const changeListeners = new Subscribers<ChangeListener<TState>>();
   const pathListeners = new PathTrie();
+  const interceptors: WriteInterceptor<TState>[] = [];
   const parent = storeOptions?.parent;
 
   const getOwnState = () => state;
@@ -78,7 +80,8 @@ function createStore<TState extends object>(
     parent,
     listeners,
     pathListeners,
-    changeListeners
+    changeListeners,
+    interceptors
   });
 
   const subscribe = (listener: Listener) => listeners.add(listener);
@@ -124,6 +127,12 @@ function createStore<TState extends object>(
   if (storeOptions?.middlewares) {
     for (const middleware of storeOptions.middlewares) {
       const handlers = middleware(api);
+      // A middleware's `beforeChange` rides the same interceptor array `setState` consults before each commit, in
+      // middleware order — each one sees the previous one's result (transform), or `CANCEL` to block the write.
+      if (handlers?.beforeChange) {
+        interceptors.push(handlers.beforeChange);
+      }
+
       if (handlers?.onChange) {
         subscribeChange(handlers.onChange);
       }
@@ -134,6 +143,7 @@ function createStore<TState extends object>(
     (api as StoreApiInternal<TState>).listeners = listeners;
     (api as StoreApiInternal<TState>).pathListeners = pathListeners;
     (api as StoreApiInternal<TState>).changeListeners = changeListeners;
+    (api as StoreApiInternal<TState>).interceptors = interceptors;
     (api as StoreApiInternal<TState>).getMergeCount = getMergeCount;
   }
 

@@ -11,9 +11,9 @@ const defaultSink = <TState extends object>(change: StoreChange<TState>): void =
   console.log('[store]', change.path ?? '(root)', change.next);
 };
 
-// Logs every committed change. Pass a sink function for the common case (`logger(myLogFn)`), `{ filter, sink }` for
-// more control, or nothing to log to the console.
-export const logger = <TState extends object>(
+// Logs every committed change. Pass a sink function for the common case (`loggerMiddleware(myLogFn)`),
+// `{ filter, sink }` for more control, or nothing to log to the console.
+export const loggerMiddleware = <TState extends object>(
   options: LoggerOptions<TState> | ((change: StoreChange<TState>) => void) = {}
 ): StoreMiddleware<TState> => {
   const { filter, sink = defaultSink } = typeof options === 'function' ? { filter: undefined, sink: options } : options;

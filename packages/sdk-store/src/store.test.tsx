@@ -8,7 +8,7 @@ import createStore, { createStoreHook } from './createStore';
 import useStore from './createStore/hooks/useStore';
 import getByPath from './helpers/getByPath';
 import setByPath from './helpers/setByPath';
-import { logger as loggerMiddleware } from './middleware/logger';
+import { loggerMiddleware } from './middleware/loggerMiddleware';
 import { StoreContext } from './StoreProvider';
 
 import type { PathOf, StoreApi, StoreApiInternal, StoreChange } from './types';

@@ -4,10 +4,11 @@ import { UNCHANGED, writeByPath } from './writeByPath';
 import getByPath from '../../helpers/getByPath';
 import parsePath from '../../helpers/parsePath';
 import setByPath from '../../helpers/setByPath';
+import { CANCEL } from '../../types';
 
 import type PathTrie from './PathTrie';
 import type Subscribers from './Subscribers';
-import type { ChangeListener, Listener, PathOf, PathValue, SetState, StoreApi } from '../../types';
+import type { ChangeListener, Listener, PathOf, PathValue, SetState, StoreApi, WriteInterceptor } from '../../types';
 
 export type SetStateDeps<TState extends object> = {
   getOwnState: () => TState;
@@ -18,6 +19,7 @@ export type SetStateDeps<TState extends object> = {
   listeners: Subscribers<Listener>;
   changeListeners: Subscribers<ChangeListener<TState>>;
   pathListeners: PathTrie;
+  interceptors: WriteInterceptor<TState>[];
 };
 
 export type SetStateApi<TState extends object> = {
@@ -26,8 +28,35 @@ export type SetStateApi<TState extends object> = {
 };
 
 export function createSetState<TState extends object>(deps: SetStateDeps<TState>): SetStateApi<TState> {
-  const { getOwnState, getOwnSnapshot, setOwnState, mutateOwnKey, parent, listeners, pathListeners, changeListeners } =
-    deps;
+  const {
+    getOwnState,
+    getOwnSnapshot,
+    setOwnState,
+    mutateOwnKey,
+    parent,
+    listeners,
+    pathListeners,
+    changeListeners,
+    interceptors
+  } = deps;
+
+  // Runs the registered interceptors in order, each seeing the previous one's result. Returns the final value to
+  // write, or `CANCEL` if any interceptor aborted. An interceptor returning `undefined` leaves the value unchanged.
+  const runInterceptors = (path: PathOf<TState> | undefined, value: unknown, prev: unknown): unknown => {
+    let current = value;
+    for (let i = 0, n = interceptors.length; i < n; i++) {
+      const result = interceptors[i]({ path, value: current, prev });
+      if (result === CANCEL) {
+        return CANCEL;
+      }
+
+      if (result !== undefined) {
+        current = result;
+      }
+    }
+
+    return current;
+  };
 
   // Inside `batch(fn)` writes still apply immediately (reads see them), but listener wakes are buffered here and
   // fired once at the end, deduplicated — so N writes touching the same subscriber re-render it once. The single
@@ -137,21 +166,41 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     canPropagate: boolean
   ): void => {
     const prevValue: unknown = path ? getByPath(prevState, path) : undefined;
-    const resolvedValue = path
+    let resolvedValue: unknown = path
       ? typeof value === 'function'
         ? (value as (prev: PathValue<TState, P>) => PathValue<TState, P>)(prevValue as PathValue<TState, P>)
         : value
       : undefined;
 
+    if (path && interceptors.length > 0) {
+      const intercepted = runInterceptors(path, resolvedValue, prevValue);
+      if (intercepted === CANCEL) {
+        return;
+      }
+
+      resolvedValue = intercepted;
+    }
+
     if (path && prevValue === resolvedValue) {
       return;
     }
 
-    const nextState: TState = path
-      ? setByPath(prevState, path, resolvedValue)
+    let nextState: TState = path
+      ? setByPath(prevState, path, resolvedValue as PathValue<TState, P>)
       : typeof value === 'function'
         ? (value as (prev: TState) => TState)(prevState)
         : { ...prevState, ...value };
+
+    // A whole-state write (`path === undefined`) intercepts the full next state, so a permission/validation
+    // middleware can reject or replace the entire replacement.
+    if (!path && interceptors.length > 0) {
+      const intercepted = runInterceptors(undefined, nextState, prevState);
+      if (intercepted === CANCEL) {
+        return;
+      }
+
+      nextState = intercepted as TState;
+    }
 
     if (nextState === prevState) {
       return;
@@ -207,17 +256,27 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       // Mutate the live state in place (O(1), no top-level spread). Safe: snapshots are distinct clones, and this
       // rebinds a key rather than mutating any object already handed out.
       const prevValue: unknown = (prevState as Record<string, unknown>)[path];
-      const resolvedValue =
+      const resolvedValue: unknown =
         typeof value === 'function'
           ? (value as (prev: PathValue<TState, P>) => PathValue<TState, P>)(prevValue as PathValue<TState, P>)
           : value;
 
-      if (prevValue === resolvedValue) {
+      let finalValue = resolvedValue;
+      if (interceptors.length > 0) {
+        const intercepted = runInterceptors(path, resolvedValue, prevValue);
+        if (intercepted === CANCEL) {
+          return;
+        }
+
+        finalValue = intercepted;
+      }
+
+      if (prevValue === finalValue) {
         return;
       }
 
       const prevSnapshot = changeListeners.length > 0 ? getOwnSnapshot() : undefined;
-      mutateOwnKey(path, resolvedValue);
+      mutateOwnKey(path, finalValue);
       if (prevSnapshot !== undefined) {
         emitChange(path, prevSnapshot, getOwnSnapshot());
       }
@@ -229,7 +288,7 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
           notify(exact, path);
         }
 
-        wakeChangedDescendants(path, prevValue, resolvedValue, path.length + 1);
+        wakeChangedDescendants(path, prevValue, finalValue, path.length + 1);
       }
 
       return;
@@ -237,12 +296,30 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
 
     // Multi-segment: immutable structural-sharing write that shares untouched subtrees.
     const segments = parsePath(path);
-    const result = writeByPath(prevState, path, segments, value, typeof value === 'function');
+    let result: TState | typeof UNCHANGED;
+    if (interceptors.length > 0) {
+      // Resolve the leaf up front so interceptors see a concrete value, then write the (possibly transformed) result
+      // as a plain value rather than re-running a setter function.
+      const prevValue: unknown = getByPath(prevState, path);
+      const resolvedValue: unknown =
+        typeof value === 'function'
+          ? (value as (prev: PathValue<TState, P>) => PathValue<TState, P>)(prevValue as PathValue<TState, P>)
+          : value;
+      const intercepted = runInterceptors(path, resolvedValue, prevValue);
+      if (intercepted === CANCEL) {
+        return;
+      }
+
+      result = writeByPath(prevState, path, segments, intercepted, false) as TState | typeof UNCHANGED;
+    } else {
+      result = writeByPath(prevState, path, segments, value, typeof value === 'function') as TState | typeof UNCHANGED;
+    }
+
     if (result === UNCHANGED) {
       return;
     }
 
-    const nextState = result as TState;
+    const nextState = result;
     setOwnState(nextState);
     if (changeListeners.length > 0) {
       emitChange(path, prevState, nextState);
