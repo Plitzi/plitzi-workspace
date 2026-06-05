@@ -33,8 +33,8 @@ const Hero = () => {
 
   return (
     <section id="top" className="relative overflow-hidden">
-      <div className="bg-grid absolute inset-0 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
-      <div className="aura absolute left-1/2 top-0 -z-10 h-120 w-205 -translate-x-1/2 rounded-full opacity-25 blur-[120px]" />
+      <div className="bg-grid absolute inset-0 mask-[radial-gradient(ellipse_at_top,black,transparent_70%)]" />
+      <div className="aura absolute top-0 left-1/2 -z-10 h-120 w-205 -translate-x-1/2 rounded-full opacity-25 blur-[120px]" />
 
       <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 py-20 lg:grid-cols-2 lg:py-28">
         <div>
@@ -42,26 +42,27 @@ const Hero = () => {
             href={NPM_URL}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 rounded-full border border-ink-600 bg-ink-800/60 px-3 py-1 text-xs font-medium text-zinc-300 transition hover:border-brand-500"
+            className="border-ink-600 bg-ink-800/60 hover:border-brand-500 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium text-zinc-300 transition"
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />
+            <span className="bg-brand-400 h-1.5 w-1.5 rounded-full" />
             Part of the Plitzi SDK · MIT licensed
           </a>
 
-          <h1 className="mt-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
+          <h1 className="mt-6 text-4xl leading-[1.05] font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
             The type-safe
             <br />
             <span className="text-gradient">React store</span>
           </h1>
 
           <p className="mt-6 max-w-lg text-lg leading-relaxed text-zinc-400">
-            Subscribe to a <code className="rounded bg-ink-800 px-1.5 py-0.5 font-mono text-sm text-brand-300">
-              dot-path
-            </code> and re-render only when it changes. Scoped stores, time-travel, derived values, persistence and a
-            middleware pipeline — zero boilerplate, end-to-end typed, on React’s own{' '}
-            <code className="rounded bg-ink-800 px-1.5 py-0.5 font-mono text-sm text-brand-300">
+            Subscribe to a{' '}
+            <code className="bg-ink-800 text-brand-300 rounded px-1.5 py-0.5 font-mono text-sm">dot-path</code> and
+            re-render only when it changes. Scoped stores, time-travel, derived values, persistence and a middleware
+            pipeline — zero boilerplate, end-to-end typed, on React’s own{' '}
+            <code className="bg-ink-800 text-brand-300 rounded px-1.5 py-0.5 font-mono text-sm">
               useSyncExternalStore
-            </code>.
+            </code>
+            .
           </p>
 
           <div className="mt-6 flex flex-wrap gap-2">
@@ -69,7 +70,7 @@ const Hero = () => {
               pill => (
                 <span
                   key={pill}
-                  className="rounded-full border border-ink-700 bg-ink-900/60 px-3 py-1 text-xs font-medium text-zinc-400"
+                  className="border-ink-700 bg-ink-900/60 rounded-full border px-3 py-1 text-xs font-medium text-zinc-400"
                 >
                   {pill}
                 </span>
@@ -80,17 +81,17 @@ const Hero = () => {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <button
               onClick={handleCopyInstall}
-              className="group flex items-center gap-3 rounded-xl border border-ink-600 bg-ink-900 px-4 py-3 font-mono text-sm text-zinc-200 transition hover:border-brand-500"
+              className="group border-ink-600 bg-ink-900 hover:border-brand-500 flex items-center gap-3 rounded-xl border px-4 py-3 font-mono text-sm text-zinc-200 transition"
             >
               <span className="text-brand-400">$</span>
               {INSTALL_COMMAND}
-              <span className="ml-1 text-xs text-zinc-500 group-hover:text-brand-300">
+              <span className="group-hover:text-brand-300 ml-1 text-xs text-zinc-500">
                 {copied ? 'copied!' : 'copy'}
               </span>
             </button>
             <a
               href="#demo"
-              className="rounded-xl bg-brand-600 px-5 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-brand-900/40 transition hover:bg-brand-500"
+              className="bg-brand-600 shadow-brand-900/40 hover:bg-brand-500 rounded-xl px-5 py-3 text-center text-sm font-semibold text-white shadow-lg transition"
             >
               See it live →
             </a>
