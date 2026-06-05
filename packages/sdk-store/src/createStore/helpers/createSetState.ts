@@ -6,6 +6,7 @@ import parsePath from '../../helpers/parsePath';
 import setByPath from '../../helpers/setByPath';
 
 import type PathTrie from './PathTrie';
+import type Subscribers from './Subscribers';
 import type { ChangeListener, Listener, PathOf, PathValue, SetState, StoreApi } from '../../types';
 
 export type SetStateDeps<TState extends object> = {
@@ -14,8 +15,8 @@ export type SetStateDeps<TState extends object> = {
   setOwnState: (next: TState) => void;
   mutateOwnKey: (key: string, value: unknown) => void;
   parent: StoreApi<TState> | undefined;
-  listeners: Listener[];
-  changeListeners: ChangeListener<TState>[];
+  listeners: Subscribers<Listener>;
+  changeListeners: Subscribers<ChangeListener<TState>>;
   pathListeners: PathTrie;
 };
 
@@ -34,17 +35,25 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
   let batchDepth = 0;
   const pendingListeners = new Set<Listener>();
 
-  const notify = (arr: Listener[], path: string | undefined): void => {
+  const notify = (subs: Subscribers<Listener>, path: string | undefined): void => {
+    const { items } = subs;
     if (batchDepth > 0) {
-      for (let i = 0; i < arr.length; i++) {
-        pendingListeners.add(arr[i]);
+      for (let i = 0, n = items.length; i < n; i++) {
+        pendingListeners.add(items[i]);
       }
 
       return;
     }
 
-    for (let i = 0; i < arr.length; i++) {
-      arr[i](path);
+    // `begin`/`end` make a listener that unsubscribes mid-notify safe (tombstone + compact) without copying the
+    // array — the loop stays a tight indexed walk.
+    subs.begin();
+    try {
+      for (let i = 0, n = items.length; i < n; i++) {
+        items[i](path);
+      }
+    } finally {
+      subs.end();
     }
   };
 
@@ -65,8 +74,15 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
   };
 
   const emitChange = (path: PathOf<TState> | undefined, prev: TState, next: TState): void => {
-    for (let i = 0; i < changeListeners.length; i++) {
-      changeListeners[i]({ path, prev, next });
+    const change = { path, prev, next };
+    const { items } = changeListeners;
+    changeListeners.begin();
+    try {
+      for (let i = 0, n = items.length; i < n; i++) {
+        items[i](change);
+      }
+    } finally {
+      changeListeners.end();
     }
   };
 

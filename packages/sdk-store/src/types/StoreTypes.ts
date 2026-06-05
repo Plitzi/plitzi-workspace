@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 
 import type PathTrie from '../createStore/helpers/PathTrie';
+import type Subscribers from '../createStore/helpers/Subscribers';
 
 export type Path = string;
 
@@ -131,9 +132,9 @@ export type StoreApi<T> = {
 };
 
 export type StoreApiInternal<T> = StoreApi<T> & {
-  listeners: Listener[];
+  listeners: Subscribers<Listener>;
   pathListeners: PathTrie;
-  changeListeners: ChangeListener<T>[];
+  changeListeners: Subscribers<ChangeListener<T>>;
   // Test-only metric: number of times `getState` recomputed the full deep-merge (cache miss).
   getMergeCount?: () => number;
 };

@@ -6,6 +6,15 @@ export const UNCHANGED: unique symbol = Symbol('unchanged');
 
 type CompiledWriter = (root: unknown, value: unknown, isFn: boolean) => Record<string, unknown> | null;
 
+// Numeric segments address array indices; the recursive writer keeps an existing array an array (codegen, which
+// spreads into an object literal, can't preserve that — see `getCompiled`).
+const isIndexSegment = (segment: string): boolean => /^\d+$/.test(segment);
+
+const clone = (base: Record<string, unknown>): Record<string, unknown> =>
+  // A plain spread/slice + assignment clones faster than `{ ...base, [key]: v }`: a computed key in an object
+  // literal forces V8 off its fast clone path.
+  Array.isArray(base) ? (base.slice() as unknown as Record<string, unknown>) : { ...base };
+
 const recursiveStep = (
   node: unknown,
   segments: readonly string[],
@@ -23,9 +32,7 @@ const recursiveStep = (
       return UNCHANGED;
     }
 
-    // A plain spread + assignment clones faster than `{ ...base, [key]: resolved }`: a computed key inside an
-    // object literal forces V8 off its fast object-clone path.
-    const next = { ...base };
+    const next = clone(base);
     next[key] = resolved;
 
     return next;
@@ -36,7 +43,7 @@ const recursiveStep = (
     return UNCHANGED;
   }
 
-  const next = { ...base };
+  const next = clone(base);
   next[key] = child;
 
   return next;
@@ -104,12 +111,19 @@ const getCompiled = (path: string, segments: readonly string[]): CompiledWriter 
     return undefined;
   }
 
-  let fn = cache.get(path);
-  if (fn) {
-    return fn;
+  // Cache hit first: a compiled (and therefore array-free) path skips the per-segment scan below entirely.
+  const cached = cache.get(path);
+  if (cached) {
+    return cached;
   }
 
-  fn = compile(segments);
+  // The codegen spreads each container into an object literal, which would turn an array into a plain object. Paths
+  // with a numeric segment touch an array, so fall back to the array-preserving recursive writer (never cached).
+  if (segments.some(isIndexSegment)) {
+    return undefined;
+  }
+
+  const fn = compile(segments);
   if (cache.size >= MAX_CACHED) {
     cache.delete(cache.keys().next().value as string);
   }

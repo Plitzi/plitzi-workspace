@@ -7,6 +7,7 @@ import { createGetState } from './helpers/createGetState';
 import { createSetState } from './helpers/createSetState';
 import { forwardParentChanges } from './helpers/forwardParentChanges';
 import PathTrie from './helpers/PathTrie';
+import Subscribers from './helpers/Subscribers';
 import useStoreBase from './hooks/useStore';
 import useStoreGetterBase from './hooks/useStoreGetter';
 import useStoreSetterBase from './hooks/useStoreSetter';
@@ -44,23 +45,6 @@ import type {
   UseStoreSyncOptions
 } from '../types';
 
-// Appends `listener` to `arr` and returns an unsubscribe that removes it with a swap-pop (O(1), order-agnostic).
-const addListener = <T>(arr: T[], listener: T): (() => void) => {
-  arr.push(listener);
-
-  return () => {
-    const idx = arr.indexOf(listener);
-    if (idx === -1) {
-      return;
-    }
-
-    const last = arr.pop() as T;
-    if (idx < arr.length) {
-      arr[idx] = last;
-    }
-  };
-};
-
 function createStore<TState extends object>(
   initializer: Partial<TState> | ((set: SetState<TState>, get: GetState<TState>) => Partial<TState>),
   storeOptions?: { parent?: StoreApi<TState>; middlewares?: StoreMiddleware<TState>[] }
@@ -70,8 +54,8 @@ function createStore<TState extends object>(
   // signal. Because every snapshot is a distinct clone, mutating `state` in place can't corrupt one a consumer holds.
   let state = {} as TState;
   let ownSnapshot: TState | undefined;
-  const listeners: Listener[] = [];
-  const changeListeners: ChangeListener<TState>[] = [];
+  const listeners = new Subscribers<Listener>();
+  const changeListeners = new Subscribers<ChangeListener<TState>>();
   const pathListeners = new PathTrie();
   const parent = storeOptions?.parent;
 
@@ -97,8 +81,8 @@ function createStore<TState extends object>(
     changeListeners
   });
 
-  const subscribe = (listener: Listener) => addListener(listeners, listener);
-  const subscribeChange = (listener: ChangeListener<TState>) => addListener(changeListeners, listener);
+  const subscribe = (listener: Listener) => listeners.add(listener);
+  const subscribeChange = (listener: ChangeListener<TState>) => changeListeners.add(listener);
   const subscribePath = <P extends PathOf<TState>>(path: P, listener: Listener) => pathListeners.add(path, listener);
 
   state = (typeof initializer === 'function' ? initializer(setState, getState) : initializer) as TState;
@@ -118,9 +102,9 @@ function createStore<TState extends object>(
   const destroy = () => {
     parentUnsub?.();
     parentUnsub = undefined;
-    listeners.length = 0;
+    listeners.clear();
     pathListeners.clear();
-    changeListeners.length = 0;
+    changeListeners.clear();
   };
 
   const api: StoreApi<TState> = {

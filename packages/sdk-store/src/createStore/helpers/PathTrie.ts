@@ -1,3 +1,4 @@
+import Subscribers from './Subscribers';
 import parsePath from '../../helpers/parsePath';
 
 import type { Listener, Path } from '../../types';
@@ -15,50 +16,40 @@ const eachPrefix = (segments: readonly string[], count: number, cb: (prefix: str
 // prefix of a registered path to the registered paths beneath it, so a write can find listeners inside the subtree
 // it replaced without scanning. Ancestor listeners need no index — a write walks its own short prefix chain.
 class PathTrie {
-  readonly direct = new Map<string, Listener[]>();
+  readonly direct = new Map<string, Subscribers<Listener>>();
   private readonly descendants = new Map<string, Set<string>>();
   size = 0;
 
   add(path: string, listener: Listener): () => void {
-    let arr = this.direct.get(path);
-    if (!arr) {
-      arr = [];
-      this.direct.set(path, arr);
+    let subs = this.direct.get(path);
+    const segments = parsePath(path);
+    if (!subs) {
+      subs = new Subscribers<Listener>();
+      this.direct.set(path, subs);
       this.size++;
+      eachPrefix(segments, segments.length - 1, prefix => {
+        let set = this.descendants.get(prefix);
+        if (!set) {
+          set = new Set();
+          this.descendants.set(prefix, set);
+        }
+
+        set.add(path);
+      });
     }
 
-    arr.push(listener);
+    subs.add(listener);
 
-    const segments = parsePath(path);
-    eachPrefix(segments, segments.length - 1, prefix => {
-      let set = this.descendants.get(prefix);
-      if (!set) {
-        set = new Set();
-        this.descendants.set(prefix, set);
-      }
-
-      set.add(path);
-    });
-
-    return () => this.remove(path, arr, listener, segments);
+    return () => this.remove(path, subs, listener, segments);
   }
 
-  private remove(path: string, arr: Listener[], listener: Listener, segments: readonly string[]): void {
-    if (this.direct.get(path) !== arr) {
+  private remove(path: string, subs: Subscribers<Listener>, listener: Listener, segments: readonly string[]): void {
+    if (this.direct.get(path) !== subs) {
       return;
     }
 
-    const idx = arr.indexOf(listener);
-    if (idx === -1) {
-      return;
-    }
-
-    const last = arr.pop() as Listener;
-    if (idx < arr.length) {
-      arr[idx] = last;
-    }
-
-    if (arr.length > 0) {
+    subs.remove(listener);
+    if (subs.length > 0) {
       return;
     }
 
@@ -84,11 +75,9 @@ class PathTrie {
   // precise diff to the caller (parent→scope forwarding has no before/after to compare). A non-string path means a
   // full-state change, so wake everyone.
   forEachAffected(changedPath: Path | undefined, cb: (listener: Listener) => void): void {
-    const wake = (arr: Listener[] | undefined): void => {
-      if (arr) {
-        for (let i = 0; i < arr.length; i++) {
-          cb(arr[i]);
-        }
+    const wake = (subs: Subscribers<Listener> | undefined): void => {
+      if (subs) {
+        subs.forEach(cb);
       }
     };
 
