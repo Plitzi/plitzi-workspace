@@ -117,6 +117,20 @@ function Derived() {
   return <span>{upper} — {combined}</span>;
 }`;
 
+export const COMPUTED_CODE = `import { createDerived, useDerived } from '@plitzi/sdk-store';
+
+// A value computed FROM the store, memoized + shared across
+// consumers. Recomputes only when a dependency path changes,
+// and wakes subscribers only when the RESULT changes.
+const doubled = createDerived(store, ['count'], ([count]) => count * 2);
+
+function Computed() {
+  const value = useDerived(doubled); // re-renders only when count*2 changes
+
+  // Editing user.name or theme does NOT recompute this.
+  return <span>count × 2 = {value}</span>;
+}`;
+
 export const SCOPED_CODE = `import { StoreProvider } from '@plitzi/sdk-store';
 
 // Both children seed their own \`theme\` (autoSync={false} so the

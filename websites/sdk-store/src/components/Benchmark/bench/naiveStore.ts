@@ -1,4 +1,15 @@
-import { DEEP_MAP_TARGET, makeFlat, makeItemMap, makeNested, NAIVE, setLeaf, work } from './shared';
+import {
+  DEEP_MAP_TARGET,
+  makeFlat,
+  makeItemMap,
+  makeNested,
+  makeSumValues,
+  NAIVE,
+  setLeaf,
+  sumValues,
+  SUM_TARGET,
+  work
+} from './shared';
 
 import type { DeepMapState, Sample, NestedState, StoreAdapter } from './shared';
 
@@ -132,4 +143,23 @@ const fanout = (keys: number, rounds: number): Sample => {
   return { name: NAIVE, wakes, ms: performance.now() - start };
 };
 
-export const naiveAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout };
+// Baseline: no memoization — recompute the derived on every change whether or not it mattered.
+const derived = (values: number, updates: number): Sample => {
+  const state = makeSumValues(values);
+  let wakes = 0;
+  const listener = () => {
+    sumValues(state.values);
+    wakes++;
+    work(wakes);
+  };
+
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    state.values[SUM_TARGET] = j + 1;
+    listener();
+  }
+
+  return { name: NAIVE, wakes, ms: performance.now() - start };
+};
+
+export const naiveAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived };

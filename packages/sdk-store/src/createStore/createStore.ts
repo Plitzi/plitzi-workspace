@@ -13,6 +13,7 @@ import { forwardParentChanges } from './helpers/forwardParentChanges';
 import PathTrie from './helpers/PathTrie';
 
 import type {
+  ChangeListener,
   GetState,
   GetterTuple,
   GetValueFn,
@@ -34,7 +35,7 @@ import type {
   SetStateFn,
   StoreApi,
   StoreApiInternal,
-  StoreLogger,
+  StoreMiddleware,
   UseStoreGetterOptions,
   UseStoreMultiOptions,
   UseStoreOptions,
@@ -44,7 +45,7 @@ import type {
 } from '../types';
 
 // Appends `listener` to `arr` and returns an unsubscribe that removes it with a swap-pop (O(1), order-agnostic).
-const addListener = (arr: Listener[], listener: Listener): (() => void) => {
+const addListener = <T>(arr: T[], listener: T): (() => void) => {
   arr.push(listener);
 
   return () => {
@@ -53,7 +54,7 @@ const addListener = (arr: Listener[], listener: Listener): (() => void) => {
       return;
     }
 
-    const last = arr.pop() as Listener;
+    const last = arr.pop() as T;
     if (idx < arr.length) {
       arr[idx] = last;
     }
@@ -62,7 +63,7 @@ const addListener = (arr: Listener[], listener: Listener): (() => void) => {
 
 function createStore<TState extends object>(
   initializer: Partial<TState> | ((set: SetState<TState>, get: GetState<TState>) => Partial<TState>),
-  storeOptions?: { logger?: StoreLogger<TState>; parent?: StoreApi<TState> }
+  storeOptions?: { parent?: StoreApi<TState>; middlewares?: StoreMiddleware<TState>[] }
 ): StoreApi<TState> {
   // `state` is the live, private working copy and is never handed out. `ownSnapshot` is the immutable view
   // `getState` returns: a lazy `{ ...state }` clone, cleared on every change so its reference doubles as the change
@@ -70,7 +71,7 @@ function createStore<TState extends object>(
   let state = {} as TState;
   let ownSnapshot: TState | undefined;
   const listeners: Listener[] = [];
-  const historyListeners: Listener[] = [];
+  const changeListeners: ChangeListener<TState>[] = [];
   const pathListeners = new PathTrie();
   const parent = storeOptions?.parent;
 
@@ -93,23 +94,24 @@ function createStore<TState extends object>(
     parent,
     listeners,
     pathListeners,
-    historyListeners,
-    logger: storeOptions?.logger
+    changeListeners
   });
 
   const subscribe = (listener: Listener) => addListener(listeners, listener);
-  const subscribeHistory = (listener: Listener) => addListener(historyListeners, listener);
+  const subscribeChange = (listener: ChangeListener<TState>) => addListener(changeListeners, listener);
   const subscribePath = <P extends PathOf<TState>>(path: P, listener: Listener) => pathListeners.add(path, listener);
 
   state = (typeof initializer === 'function' ? initializer(setState, getState) : initializer) as TState;
 
   // Detaching this handle on `destroy()` stops the parent from holding this scope's forwarder forever (a leak for
   // short-lived scopes). `reconnect` re-attaches it after the destroy → remount cycle React StrictMode simulates.
-  let parentUnsub = parent ? forwardParentChanges(parent, listeners, pathListeners, historyListeners) : undefined;
+  let parentUnsub = parent
+    ? forwardParentChanges(parent, listeners, pathListeners, changeListeners, getState)
+    : undefined;
 
   const reconnect = () => {
     if (parent && !parentUnsub) {
-      parentUnsub = forwardParentChanges(parent, listeners, pathListeners, historyListeners);
+      parentUnsub = forwardParentChanges(parent, listeners, pathListeners, changeListeners, getState);
     }
   };
 
@@ -118,7 +120,7 @@ function createStore<TState extends object>(
     parentUnsub = undefined;
     listeners.length = 0;
     pathListeners.clear();
-    historyListeners.length = 0;
+    changeListeners.length = 0;
   };
 
   const api: StoreApi<TState> = {
@@ -127,15 +129,26 @@ function createStore<TState extends object>(
     setState,
     subscribe,
     subscribePath,
-    subscribeHistory,
+    subscribeChange,
     destroy,
     reconnect
   };
 
+  // Middlewares (logger, persist, history, custom) all ride the one `subscribeChange` substrate. Their setup runs
+  // once here, after the store exists, so a middleware body can hydrate via `api.setState`.
+  if (storeOptions?.middlewares) {
+    for (const middleware of storeOptions.middlewares) {
+      const handlers = middleware(api);
+      if (handlers?.onChange) {
+        subscribeChange(handlers.onChange);
+      }
+    }
+  }
+
   if (import.meta.env.MODE === 'test') {
     (api as StoreApiInternal<TState>).listeners = listeners;
     (api as StoreApiInternal<TState>).pathListeners = pathListeners;
-    (api as StoreApiInternal<TState>).historyListeners = historyListeners;
+    (api as StoreApiInternal<TState>).changeListeners = changeListeners;
     (api as StoreApiInternal<TState>).getMergeCount = getMergeCount;
   }
 

@@ -79,7 +79,22 @@ export type StoreHookReactiveOptions<T, TState extends object = object> = StoreH
   equalityFn?: (a: T, b: T) => boolean;
 };
 
-export type StoreLogger<T> = (event: { path: PathOf<T> | undefined; prev: T; next: T }) => void;
+// A committed write: the changed path (undefined for a full-state replace) and the own-state snapshots around it.
+export type StoreChange<T> = { path: PathOf<T> | undefined; prev: T; next: T };
+
+export type StoreLogger<T> = (change: StoreChange<T>) => void;
+
+// Observer of committed changes — the substrate logger, history and persist all ride on. Returned by a middleware.
+export type ChangeListener<T> = (change: StoreChange<T>) => void;
+
+export type StoreMiddlewareHandlers<T> = {
+  onChange?: ChangeListener<T>;
+};
+
+// Set up once after the store is created (the body may hydrate via `api.setState`). Returns the change handler to
+// register, or nothing for a pure side-effect middleware.
+// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+export type StoreMiddleware<T extends object> = (api: StoreApi<T>) => StoreMiddlewareHandlers<T> | void;
 
 // The changed path is forwarded so scope-chain listeners can skip wakes for paths a parent change doesn't touch.
 // Consumer listeners (React `onStoreChange`) simply ignore the argument.
@@ -104,7 +119,8 @@ export type StoreApi<T> = {
   setState: SetState<T>;
   subscribe: (listener: Listener) => () => void;
   subscribePath: <P extends PathOf<T>>(path: P, listener: Listener) => () => void;
-  subscribeHistory: (listener: Listener) => () => void;
+  // Observe every committed change with its before/after snapshots. The substrate for logger, history and persist.
+  subscribeChange: (listener: ChangeListener<T>) => () => void;
   destroy?: () => void;
   // Re-attaches a scoped store's parent subscription after a `destroy()` (no-op for root stores or when already
   // attached). Lets a provider survive React StrictMode's mount → unmount → remount, which reuses the store
@@ -115,7 +131,7 @@ export type StoreApi<T> = {
 export type StoreApiInternal<T> = StoreApi<T> & {
   listeners: Listener[];
   pathListeners: PathTrie;
-  historyListeners: Listener[];
+  changeListeners: ChangeListener<T>[];
   // Test-only metric: number of times `getState` recomputed the full deep-merge (cache miss).
   getMergeCount?: () => number;
 };

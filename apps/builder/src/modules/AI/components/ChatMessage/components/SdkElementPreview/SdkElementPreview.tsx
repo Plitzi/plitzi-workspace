@@ -2,6 +2,7 @@ import ContainerAutoScale from '@plitzi/plitzi-ui/ContainerAutoScale';
 import { useMemo } from 'react';
 
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
+import { logger as loggerMw } from '@plitzi/sdk-store';
 import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
@@ -40,7 +41,10 @@ const SdkElementPreview = ({ elementId, schema, style }: SdkElementPreviewProps)
   let preview = <BuilderAreaPreview id={elementId} className="h-full w-full" previewMode />;
   if (hasOverlay) {
     preview = (
-      <StoreProvider value={overlayValue} logger={createStoreDevToolsLogger('ai-preview')}>
+      <StoreProvider<BuilderState>
+        value={overlayValue as Partial<BuilderState>}
+        middlewares={[loggerMw(createStoreDevToolsLogger<BuilderState>('ai-preview'))]}
+      >
         {preview}
       </StoreProvider>
     );

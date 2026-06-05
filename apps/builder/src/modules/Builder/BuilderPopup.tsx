@@ -4,6 +4,7 @@ import { useCallback, use } from 'react';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
+import { logger as loggerMw } from '@plitzi/sdk-store';
 import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 import Builder from '@pmodules/Builder';
@@ -47,7 +48,11 @@ const BuilderPopup = ({ previewMode = false, segmentIdentifier = '' }: BuilderPo
 
   return (
     <div className="flex w-full grow">
-      <StoreProvider value={generateStoreState} inherit="snapshot" logger={createStoreDevToolsLogger('segment')}>
+      <StoreProvider<BuilderState>
+        value={generateStoreState}
+        inherit="snapshot"
+        middlewares={[loggerMw(createStoreDevToolsLogger<BuilderState>('segment'))]}
+      >
         <BuilderProvider
           schemaName={definition.name}
           baseElementId={definition.baseElementId}

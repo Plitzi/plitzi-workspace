@@ -1,8 +1,18 @@
 import { configureStore } from '@reduxjs/toolkit';
 
-import { DEEP_MAP_TARGET, makeFlat, makeItemMap, makeNested, REDUX, work } from './shared';
+import {
+  DEEP_MAP_TARGET,
+  makeFlat,
+  makeItemMap,
+  makeNested,
+  makeSumValues,
+  REDUX,
+  sumValues,
+  SUM_TARGET,
+  work
+} from './shared';
 
-import type { DeepMapState, FlatState, NestedState, Sample, StoreAdapter } from './shared';
+import type { DeepMapState, FlatState, NestedState, Sample, StoreAdapter, SumState } from './shared';
 import type { Reducer, Store } from '@reduxjs/toolkit';
 
 // Redux used the realistic fine-grained way (what react-redux's useSelector does): one selector per watched value,
@@ -188,4 +198,30 @@ const fanout = (keys: number, rounds: number): Sample => {
   return { name: REDUX, wakes, ms: performance.now() - start };
 };
 
-export const reduxAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout };
+const derived = (values: number, updates: number): Sample => {
+  const store = makeStore<SumState>((state = makeSumValues(values), action: SetAction) => {
+    if (action.type === 'set') {
+      return { values: { ...state.values, [action.key]: action.value } };
+    }
+
+    return state;
+  });
+  let wakes = 0;
+  subscribeSelector(
+    store,
+    state => sumValues(state.values),
+    () => {
+      wakes++;
+      work(wakes);
+    }
+  );
+
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    store.dispatch({ type: 'set', key: SUM_TARGET, value: j + 1 });
+  }
+
+  return { name: REDUX, wakes, ms: performance.now() - start };
+};
+
+export const reduxAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived };

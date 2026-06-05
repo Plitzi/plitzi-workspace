@@ -19,6 +19,10 @@ export type BenchmarkResult = {
   scenarios: ScenarioResult[];
 };
 
+// Worker protocol: the UI posts a request, the worker streams one message per finished scenario then `done`.
+export type BenchmarkRequest = { reps: number };
+export type BenchmarkWorkerMessage = { type: 'scenario'; scenario: ScenarioResult } | { type: 'done' };
+
 // Each store implements the same workloads; the orchestrator runs each one repeatedly and aggregates.
 export type StoreAdapter = {
   wide: (keys: number, updates: number) => Sample;
@@ -29,6 +33,9 @@ export type StoreAdapter = {
   deepMap: (items: number, updates: number) => Sample;
   // Heavy: `keys` values each with its own subscriber, update every key once per round for `rounds` rounds.
   fanout: (keys: number, rounds: number) => Sample;
+  // A memoized derived value (sum over `values` inputs) with one subscriber; update one input `updates` times. Tests
+  // each store's computed/selector machinery — the value recomputes per edit and wakes only when the result changes.
+  derived: (values: number, updates: number) => Sample;
 };
 
 export const SDK = '@plitzi/sdk-store';
@@ -100,3 +107,26 @@ export const makeItemMap = (items: number): DeepMapState => {
 
 // The key whose nested leaf the deepMap workload updates (the rest are untouched siblings that must be preserved).
 export const DEEP_MAP_TARGET = 'i0';
+
+export type SumState = { values: Record<string, number> };
+
+export const makeSumValues = (n: number): SumState => {
+  const values: Record<string, number> = {};
+  for (let i = 0; i < n; i++) {
+    values[`k${i}`] = 0;
+  }
+
+  return { values };
+};
+
+export const sumValues = (values: Record<string, number>): number => {
+  let sum = 0;
+  for (const key in values) {
+    sum += values[key];
+  }
+
+  return sum;
+};
+
+// The input the derived workload updates each iteration.
+export const SUM_TARGET = 'k0';

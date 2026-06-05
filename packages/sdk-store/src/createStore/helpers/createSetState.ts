@@ -6,7 +6,7 @@ import parsePath from '../../helpers/parsePath';
 import setByPath from '../../helpers/setByPath';
 
 import type PathTrie from './PathTrie';
-import type { Listener, PathOf, PathValue, SetState, StoreApi, StoreLogger } from '../../types';
+import type { ChangeListener, Listener, PathOf, PathValue, SetState, StoreApi } from '../../types';
 
 export type SetStateDeps<TState extends object> = {
   getOwnState: () => TState;
@@ -15,9 +15,8 @@ export type SetStateDeps<TState extends object> = {
   mutateOwnKey: (key: string, value: unknown) => void;
   parent: StoreApi<TState> | undefined;
   listeners: Listener[];
-  historyListeners?: Listener[];
+  changeListeners: ChangeListener<TState>[];
   pathListeners: PathTrie;
-  logger?: StoreLogger<TState>;
 };
 
 const notify = (arr: Listener[], path: string | undefined): void => {
@@ -27,17 +26,14 @@ const notify = (arr: Listener[], path: string | undefined): void => {
 };
 
 export function createSetState<TState extends object>(deps: SetStateDeps<TState>): SetState<TState> {
-  const {
-    getOwnState,
-    getOwnSnapshot,
-    setOwnState,
-    mutateOwnKey,
-    parent,
-    listeners,
-    pathListeners,
-    historyListeners,
-    logger
-  } = deps;
+  const { getOwnState, getOwnSnapshot, setOwnState, mutateOwnKey, parent, listeners, pathListeners, changeListeners } =
+    deps;
+
+  const emitChange = (path: PathOf<TState> | undefined, prev: TState, next: TState): void => {
+    for (let i = 0; i < changeListeners.length; i++) {
+      changeListeners[i]({ path, prev, next });
+    }
+  };
 
   // Wakes listeners at `changedPath` and every ancestor: the write put a new reference at each level of the spine.
   const wakeAncestors = (changedPath: string, segments: readonly string[]): void => {
@@ -111,10 +107,8 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     }
 
     setOwnState(nextState);
-    logger?.({ path, prev: prevState, next: nextState });
-
-    if (historyListeners) {
-      notify(historyListeners, path);
+    if (changeListeners.length > 0) {
+      emitChange(path, prevState, nextState);
     }
 
     if (!canPropagate) {
@@ -171,12 +165,10 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
         return;
       }
 
-      const loggerPrev = logger ? getOwnSnapshot() : undefined;
+      const prevSnapshot = changeListeners.length > 0 ? getOwnSnapshot() : undefined;
       mutateOwnKey(path, resolvedValue);
-      logger?.({ path, prev: loggerPrev as TState, next: getOwnSnapshot() });
-
-      if (historyListeners) {
-        notify(historyListeners, path);
+      if (prevSnapshot !== undefined) {
+        emitChange(path, prevSnapshot, getOwnSnapshot());
       }
 
       if (canPropagate) {
@@ -201,10 +193,8 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
 
     const nextState = result as TState;
     setOwnState(nextState);
-    logger?.({ path, prev: prevState, next: nextState });
-
-    if (historyListeners) {
-      notify(historyListeners, path);
+    if (changeListeners.length > 0) {
+      emitChange(path, prevState, nextState);
     }
 
     if (canPropagate) {

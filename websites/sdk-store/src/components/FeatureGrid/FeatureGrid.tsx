@@ -13,9 +13,9 @@ const FeatureGrid = () => (
       {FEATURES.map(feature => (
         <div
           key={feature.title}
-          className="group rounded-2xl border border-ink-700 bg-ink-900/50 p-6 transition hover:border-brand-600/60 hover:bg-ink-850"
+          className="card group rounded-2xl border border-ink-700 bg-ink-900/50 p-6 hover:bg-ink-850"
         >
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-ink-600 bg-ink-800 text-xl transition group-hover:border-brand-500/60">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-ink-600 bg-linear-to-br from-ink-800 to-ink-700 text-xl transition group-hover:border-brand-500/60 group-hover:from-brand-900/40">
             {feature.icon}
           </div>
           <h3 className="mt-5 text-base font-semibold text-white">{feature.title}</h3>

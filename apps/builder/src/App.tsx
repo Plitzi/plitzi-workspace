@@ -60,9 +60,10 @@ import { BrowserRouter, useLocation } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
-import { createStoreDevToolsLogger, ThemeProvider } from '@plitzi/sdk-shared';
+import { createStoreDevToolsLogger, ThemeProvider, type BuilderState } from '@plitzi/sdk-shared';
 import { createStripTypenameLink } from '@plitzi/sdk-shared/helpers/stripTypename';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
+import { history as historyMw, logger as loggerMw } from '@plitzi/sdk-store';
 import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 import AppMain from '@pmodules/App/AppMain';
 import customFetch from '@pmodules/Network/helpers/customFetch';
@@ -337,7 +338,13 @@ const App = (props: AppProps) => {
   const storeValue = useMemo(() => ({ styleSelector: 'base' }), []);
 
   return (
-    <StoreProvider value={storeValue} logger={createStoreDevToolsLogger('builder')} history={debugMode}>
+    <StoreProvider<BuilderState>
+      value={storeValue}
+      middlewares={[
+        loggerMw(createStoreDevToolsLogger<BuilderState>('builder')),
+        ...(debugMode ? [historyMw<BuilderState>()] : [])
+      ]}
+    >
       <ThemeProvider storageKey="builder-state.theme">
         <Provider components={components}>
           <ContainerRoot className={clsx('plitzi-builder flex items-stretch', className)}>

@@ -34,7 +34,7 @@ const Hero = () => {
   return (
     <section id="top" className="relative overflow-hidden">
       <div className="bg-grid absolute inset-0 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
-      <div className="absolute left-1/2 top-0 -z-10 h-[480px] w-[820px] -translate-x-1/2 rounded-full bg-brand-700/20 blur-[120px]" />
+      <div className="aura absolute left-1/2 top-0 -z-10 h-120 w-205 -translate-x-1/2 rounded-full opacity-25 blur-[120px]" />
 
       <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 py-20 lg:grid-cols-2 lg:py-28">
         <div>
@@ -49,19 +49,33 @@ const Hero = () => {
           </a>
 
           <h1 className="mt-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
-            A tiny, type-safe
+            The type-safe
             <br />
-            <span className="bg-gradient-to-r from-brand-300 via-brand-400 to-brand-600 bg-clip-text text-transparent">
-              React store
-            </span>
+            <span className="text-gradient">React store</span>
           </h1>
 
           <p className="mt-6 max-w-lg text-lg leading-relaxed text-zinc-400">
-            Built on <code className="rounded bg-ink-800 px-1.5 py-0.5 font-mono text-sm text-brand-300">
+            Subscribe to a <code className="rounded bg-ink-800 px-1.5 py-0.5 font-mono text-sm text-brand-300">
+              dot-path
+            </code> and re-render only when it changes. Scoped stores, time-travel, derived values, persistence and a
+            middleware pipeline — zero boilerplate, end-to-end typed, on React’s own{' '}
+            <code className="rounded bg-ink-800 px-1.5 py-0.5 font-mono text-sm text-brand-300">
               useSyncExternalStore
-            </code>. Path-based subscriptions, scoped stores, and time-travel — with zero boilerplate and end-to-end
-            type safety.
+            </code>.
           </p>
+
+          <div className="mt-6 flex flex-wrap gap-2">
+            {['Path subscriptions', 'Scoped stores', 'Derived values', 'Persistence', 'Time-travel', 'Middleware'].map(
+              pill => (
+                <span
+                  key={pill}
+                  className="rounded-full border border-ink-700 bg-ink-900/60 px-3 py-1 text-xs font-medium text-zinc-400"
+                >
+                  {pill}
+                </span>
+              )
+            )}
+          </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <button

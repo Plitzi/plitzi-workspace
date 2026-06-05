@@ -3,6 +3,7 @@ import { StoreProvider } from '@plitzi/sdk-store';
 import SectionHeading from '../SectionHeading';
 import DemoControls from './components/DemoControls';
 import DemoHistory from './components/DemoHistory';
+import ComputedDemo from './components/ComputedDemo';
 import DemoPanel from './components/DemoPanel';
 import DemoStateView from './components/DemoStateView';
 import DerivedDemo from './components/DerivedDemo';
@@ -11,6 +12,7 @@ import ScopedDemo from './components/ScopedDemo';
 import SetterDemo from './components/SetterDemo';
 import SyncDemo from './components/SyncDemo';
 import {
+  COMPUTED_CODE,
   CONTROLS_CODE,
   DERIVED_CODE,
   GETTER_CODE,
@@ -48,8 +50,11 @@ const LiveDemo = () => (
           <DemoPanel title="useStoreSync · external → store" code={SYNC_CODE}>
             <SyncDemo />
           </DemoPanel>
-          <DemoPanel title="useStore · derived & multi-path" code={DERIVED_CODE}>
+          <DemoPanel title="useStore · transformer & multi-path" code={DERIVED_CODE}>
             <DerivedDemo />
+          </DemoPanel>
+          <DemoPanel title="createDerived · shared computed" code={COMPUTED_CODE}>
+            <ComputedDemo />
           </DemoPanel>
           <DemoPanel title="useStoreGetter · read on demand" code={GETTER_CODE}>
             <GetterDemo />

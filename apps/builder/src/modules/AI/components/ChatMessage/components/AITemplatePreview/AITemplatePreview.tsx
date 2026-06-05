@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState, use } from 'react';
 
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
+import { logger as loggerMw } from '@plitzi/sdk-store';
 import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
@@ -11,7 +12,7 @@ import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview'
 import AITemplateHeader from './components/AITemplateHeader';
 import ConfirmPanel from './components/ConfirmPanel';
 
-import type { DisplayMode, Schema, Style } from '@plitzi/sdk-shared';
+import type { BuilderState, DisplayMode, Schema, Style } from '@plitzi/sdk-shared';
 import type { AiMode } from '@pmodules/AI/types';
 
 export type AITemplatePreviewProps = {
@@ -43,7 +44,10 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode, version }
   const handleClickExpand = useCallback(() => {
     addPopup(
       `transform-${Date.now()}`,
-      <StoreProvider value={storeValue} logger={createStoreDevToolsLogger('ai-preview')}>
+      <StoreProvider<BuilderState>
+        value={storeValue as Partial<BuilderState>}
+        middlewares={[loggerMw(createStoreDevToolsLogger<BuilderState>('ai-preview'))]}
+      >
         <BuilderAreaPreview id={baseElementId} className="aspect-video h-full w-full" previewMode />
       </StoreProvider>,
       {
@@ -96,7 +100,10 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode, version }
       )}
       {(!showHtml || !html) && (
         <div className="flex justify-center overflow-hidden bg-zinc-50 dark:bg-zinc-900">
-          <StoreProvider value={storeValue} logger={createStoreDevToolsLogger('ai-preview')}>
+          <StoreProvider<BuilderState>
+            value={storeValue as Partial<BuilderState>}
+            middlewares={[loggerMw(createStoreDevToolsLogger<BuilderState>('ai-preview'))]}
+          >
             <BuilderAreaPreview id={baseElementId} className="aspect-video h-full w-full" previewMode />
           </StoreProvider>
         </div>

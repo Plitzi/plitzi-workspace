@@ -8,9 +8,10 @@ import createStore, { createStoreHook } from './createStore';
 import getByPath from './helpers/getByPath';
 import setByPath from './helpers/setByPath';
 import useStore from './hooks/useStore';
+import { logger as loggerMiddleware } from './middleware/logger';
 import { StoreContext } from './StoreProvider';
 
-import type { PathOf, StoreApi, StoreApiInternal } from './types';
+import type { PathOf, StoreApi, StoreApiInternal, StoreChange } from './types';
 import type { ReactNode } from 'react';
 
 type State = {
@@ -2341,11 +2342,14 @@ describe('defaultValue', () => {
   });
 });
 
-describe('createStore — logger', () => {
+describe('logger middleware', () => {
   type LogState = { count: number; user: { name: string } };
 
-  const makeLogStore = (logger?: Parameters<typeof createStore<LogState>>[1]) =>
-    createStore<LogState>(() => ({ count: 0, user: { name: 'Alice' } }), logger);
+  const makeLogStore = (options?: { logger?: (change: StoreChange<LogState>) => void }) =>
+    createStore<LogState>(
+      () => ({ count: 0, user: { name: 'Alice' } }),
+      options?.logger ? { middlewares: [loggerMiddleware(options.logger)] } : undefined
+    );
 
   it('fires with correct path, prev, and next on path setState', () => {
     const logger = vi.fn();

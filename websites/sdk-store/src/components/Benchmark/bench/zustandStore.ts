@@ -1,9 +1,20 @@
 import { subscribeWithSelector } from 'zustand/middleware';
 import { createStore } from 'zustand/vanilla';
 
-import { DEEP_MAP_TARGET, makeFlat, makeItemMap, makeNested, setLeaf, work, ZUSTAND } from './shared';
+import {
+  DEEP_MAP_TARGET,
+  makeFlat,
+  makeItemMap,
+  makeNested,
+  makeSumValues,
+  setLeaf,
+  sumValues,
+  SUM_TARGET,
+  work,
+  ZUSTAND
+} from './shared';
 
-import type { DeepMapState, FlatState, Sample, NestedState, StoreAdapter } from './shared';
+import type { DeepMapState, FlatState, Sample, NestedState, StoreAdapter, SumState } from './shared';
 
 // Zustand used the fine-grained way: subscribeWithSelector, one selector per watched value.
 const wide = (keys: number, updates: number): Sample => {
@@ -140,4 +151,23 @@ const fanout = (keys: number, rounds: number): Sample => {
   return { name: ZUSTAND, wakes, ms: performance.now() - start };
 };
 
-export const zustandAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout };
+const derived = (values: number, updates: number): Sample => {
+  const store = createStore<SumState>()(subscribeWithSelector(() => makeSumValues(values)));
+  let wakes = 0;
+  store.subscribe(
+    state => sumValues(state.values), // selector recomputes per change; wakes only when the result changes
+    () => {
+      wakes++;
+      work(wakes);
+    }
+  );
+
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    store.setState(state => ({ values: { ...state.values, [SUM_TARGET]: j + 1 } }));
+  }
+
+  return { name: ZUSTAND, wakes, ms: performance.now() - start };
+};
+
+export const zustandAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived };

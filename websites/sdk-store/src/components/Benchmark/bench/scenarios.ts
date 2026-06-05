@@ -7,7 +7,7 @@ import { guardSink, resetSink } from './shared';
 import { valtioAdapter } from './valtioStore';
 import { zustandAdapter } from './zustandStore';
 
-import type { BenchmarkResult, LibResult, Sample, StoreAdapter } from './shared';
+import type { BenchmarkResult, LibResult, Sample, ScenarioResult, StoreAdapter } from './shared';
 
 const ADAPTERS: StoreAdapter[] = [
   sdkAdapter,
@@ -70,6 +70,14 @@ const SCENARIOS: ScenarioConfig[] = [
     description: 'A broad write burst: every key changes and wakes its own watcher. Tests write + dispatch volume.',
     warmup: adapter => void adapter.fanout(40, 5),
     run: adapter => adapter.fanout(100, 20)
+  },
+  {
+    id: 'derived',
+    label: 'Derived · sum of 2,000 inputs, update 1 input ×200',
+    description:
+      'A memoized computed value (reselect / Jotai derived atom / MobX computed / sdk createDerived). One input changes each tick, the derived recomputes and its single subscriber wakes only when the result changes.',
+    warmup: adapter => void adapter.derived(500, 20),
+    run: adapter => adapter.derived(2000, 200)
   }
 ];
 
@@ -110,4 +118,27 @@ export function runBenchmark(reps = 5): BenchmarkResult {
   guardSink();
 
   return { scenarios };
+}
+
+// Same workloads, but emits each scenario as it finishes so a worker can stream progress to the UI. Warms every
+// store first (so JIT compilation doesn't skew the first timed scenario), then measures one scenario at a time.
+export function runBenchmarkStreaming(reps: number, onScenario: (scenario: ScenarioResult) => void): void {
+  resetSink();
+
+  for (const scenario of SCENARIOS) {
+    for (const adapter of ADAPTERS) {
+      scenario.warmup(adapter);
+    }
+  }
+
+  for (const scenario of SCENARIOS) {
+    onScenario({
+      id: scenario.id,
+      label: scenario.label,
+      description: scenario.description,
+      results: ADAPTERS.map(adapter => measure(() => scenario.run(adapter), reps))
+    });
+  }
+
+  guardSink();
 }

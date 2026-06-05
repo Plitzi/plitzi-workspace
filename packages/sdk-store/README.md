@@ -1,6 +1,38 @@
-# Store
+# @plitzi/sdk-store
 
-A lightweight React store built on `useSyncExternalStore`. Provides path-based subscriptions, multi-path reads, snapshot getters, and sync helpers — all type-safe with dot-notation paths.
+A lightweight, type-safe React store built on `useSyncExternalStore`. You subscribe to **dot-notation paths** and re-render only when that exact value changes — no selectors, no reducers, no action types. On top of that core it ships scoped stores, time-travel, derived values, an entity adapter, and a middleware pipeline (logger / persist / history).
+
+```bash
+npm install @plitzi/sdk-store   # peer deps: react@^19, react-dom@^19
+```
+
+```ts
+import { createStoreHook } from '@plitzi/sdk-store';
+
+type State = { count: number; user: { name: string } };
+const { useStore } = createStoreHook<State>();
+
+function Counter() {
+  const [count, setCount] = useStore('count'); // typed as number
+  return <button onClick={() => setCount(n => n + 1)}>{count}</button>;
+}
+```
+
+## What each piece is for
+
+| Import | What it's for |
+|---|---|
+| `createStore` | Create a vanilla store (no React needed). |
+| `createStoreHook<T>()` | Bind your state type once → fully-typed `useStore*` hooks. |
+| `StoreProvider` | Put a store on React context; optionally scope/sync/record it. |
+| `useStore` | Subscribe + write a path (or paths). Re-renders on change only. |
+| `useStoreSetter` | A stable setter — write without subscribing/re-rendering. |
+| `useStoreGetter` | A stable getter — read current values in callbacks, no re-render. |
+| `useStoreSync` | Mirror an external value (props) **into** the store. |
+| `createDerived` / `useDerived` | A memoized value computed from store paths (reselect-style). |
+| `createEntityAdapter` | CRUD updaters + selectors for a normalized `Record<id, T>` map. |
+| `logger` / `persist` / `history` | Middlewares: log, persist to storage, record time-travel. |
+| `createStoreHistory` / `useStoreHistory` | Undo / redo / jump-to-snapshot action log. |
 
 ## Architecture
 
@@ -9,18 +41,19 @@ StoreContext.ts          context object (no deps → no cycles)
 createStore.ts           factory + createStoreHook
 StoreProvider.tsx        context provider with optional sync
 hooks/
-  shared.ts              snapshot factories, subscription helpers, useResolvedStore
   useStore.ts            subscribe + read
   useStoreSync.ts        sync external value into the store (write-only)
   useStoreGetter.ts      non-reactive snapshot getter
   useStoreSetter.ts      fire-and-forget setter
-helpers/
-  getByPath.ts           read nested value by dot-path
-  setByPath.ts           immutable write at dot-path
-  isPathAffected.ts      ancestor/descendant path check
-  shallowEqual.ts        shallow object comparison
-  useIsomorphicLayoutEffect.ts  useLayoutEffect (client) / useEffect (server)
+  shared.ts              snapshot factories, subscription helpers
+derived/                 createDerived + useDerived (memoized computed values)
+entities/                createEntityAdapter (normalized-map CRUD + selectors)
+middleware/              logger / persist / history (all on subscribeChange)
+history/                 createStoreHistory + useStoreHistory (time-travel)
+helpers/                 getByPath, setByPath, parsePath, shallowEqual…
 ```
+
+> **One change substrate.** Every committed write flows through `store.subscribeChange((change) => …)` where `change` is `{ path, prev, next }`. `logger`, `persist`, and `history` are all just observers on this channel — and so is any middleware you write. It costs nothing on the hot path when no observer is attached.
 
 ## `createStore`
 
@@ -32,13 +65,15 @@ const store = createStore<MyState>((setState, getState) => ({ count: 0 }));
 // Scoped store: reads fall through to a parent store (see "Scoped stores" below)
 const child = createStore<MyState>({ record }, { parent: rootStore });
 
-// With a devtools logger
-const store = createStore<MyState>({ count: 0 }, { logger: myLogger });
+// With middlewares (logger / persist / history / your own)
+const store = createStore<MyState>({ count: 0 }, {
+  middlewares: [persist({ key: 'app' }), history(), logger()]
+});
 ```
 
-`StoreApi` exposes `getState`, `setState`, `subscribe`, `subscribePath`, and `destroy?()`. Call
-`destroy()` to detach a scoped store from its parent and clear its listeners (prevents leaks for
-short-lived scopes like list items). `StoreProvider` calls it automatically on unmount.
+`StoreApi` exposes `getState`, `getPath`, `setState`, `subscribe`, `subscribePath`, `subscribeChange`,
+and `destroy?()`. Call `destroy()` to detach a scoped store from its parent and clear its listeners
+(prevents leaks for short-lived scopes like list items). `StoreProvider` calls it automatically on unmount.
 
 ## `StoreProvider`
 
@@ -238,7 +273,145 @@ Factory that binds `TState` at the module level, giving fully-typed hooks withou
 const { useStore, useStoreSync, useStoreGetter, useStoreSetter } = createStoreHook<MyState>();
 ```
 
+## `createDerived` / `useDerived`
+
+**What it's for:** a value *computed* from store paths — totals, filtered lists, formatted strings. It computes once, memoizes, and only wakes subscribers when the **result** changes (a dependency edit that doesn't affect the output costs nothing downstream). Think reselect / Jotai derived atoms / MobX `computed`, shared across every consumer instead of recomputed per component.
+
+```ts
+import { createDerived, useDerived } from '@plitzi/sdk-store';
+
+const total = createDerived(
+  store,
+  ['items'],                                    // dependency paths (typed)
+  ([items]) => Object.values(items).reduce((s, i) => s + i.qty * i.price, 0)
+);
+
+total.get();                                    // current value (recomputed lazily if a dep changed)
+const off = total.subscribe(() => render());    // wakes only when `total` changes
+total.destroy();                                // detach from the store
+
+// React — the computation is shared, not repeated per component:
+function CartTotal() {
+  const value = useDerived(total);
+  return <span>${value}</span>;
+}
+
+// Multiple deps + custom equality (skip object-identity churn):
+const ids = createDerived(store, ['items'], ([m]) => Object.keys(m), {
+  equalityFn: (a, b) => a.length === b.length && a.every((x, i) => x === b[i])
+});
+```
+
+> Use `createDerived` for a value shared across components; reach for `useStore('path', { transformer })` when the transform is local to one component.
+
+## `createEntityAdapter`
+
+**What it's for:** the boilerplate around a normalized `Record<id, entity>` map. Write ops return **immutable updaters** you hand straight to `setState`; selectors read a map. (It doesn't change the cost of an immutable map write — see [Performance](#performance) — it just removes the hand-rolled spread/merge.)
+
+```ts
+import { createEntityAdapter } from '@plitzi/sdk-store';
+
+type Todo = { id: string; text: string; done: boolean };
+const todos = createEntityAdapter<Todo>(); // selectId defaults to `e => e.id`
+
+store.setState('todos', todos.addMany([a, b]));
+store.setState('todos', todos.updateOne({ id: 'a', changes: { done: true } })); // shallow-merge
+store.setState('todos', todos.upsertOne(c));
+store.setState('todos', todos.removeOne('b'));
+
+const map = store.getPath('todos');
+todos.selectAll(map);       // Todo[]
+todos.selectById(map, 'a'); // Todo | undefined
+todos.selectTotal(map);     // number
+
+// Custom id field + sort order for selectAll / selectIds:
+createEntityAdapter<Row>({ selectId: r => r.key, sortComparer: (a, b) => a.name.localeCompare(b.name) });
+```
+
+Ops: `addOne/addMany` (ignore existing), `setOne/setMany/setAll` (replace), `updateOne/updateMany` (merge changes), `upsertOne/upsertMany` (add or merge), `removeOne/removeMany/removeAll`. Each returns the **same map reference** when nothing changed, so the store skips the write.
+
+## Middleware (`logger` / `persist` / `history`)
+
+**What it's for:** cross-cutting side effects on every committed change, centralized in one place. A middleware is `(api) => { onChange? } | void`; its setup body runs once after creation (so it can hydrate), and `onChange` observes each `{ path, prev, next }`. logger, persist, and history are built-in middlewares; write your own the same way. Middlewares are per-store — in a scope chain, attach them where the writes you care about commit (shared keys delegate to the owning scope).
+
+```ts
+import { createStore, logger, persist, history } from '@plitzi/sdk-store';
+
+const store = createStore<State>(initial, {
+  middlewares: [
+    persist({ key: 'app' }), // put persist FIRST so it hydrates before others observe
+    history(),
+    logger()
+  ]
+});
+
+// Write your own — an observer of every committed change:
+const analytics: StoreMiddleware<State> = api => ({
+  onChange: ({ path, prev, next }) => track('store.change', { path })
+});
+
+// Or subscribe imperatively to the same substrate:
+const off = store.subscribeChange(({ path, prev, next }) => {});
+```
+
+### `persist`
+
+Mirrors the store to a key/value storage and rehydrates on creation.
+
+```ts
+persist<State>({
+  key: 'app',
+  storage,                              // default: localStorage, no-op on SSR. Any { getItem, setItem, removeItem }
+  partialize: s => ({ user: s.user }),  // persist only part of the state
+  version: 2,                           // bump when the shape changes…
+  migrate: (old, v) => ({ user: old }), // …and map an older payload forward
+  merge: (persisted, current) => ({ ...current, ...persisted }),
+  debounce: 200                         // coalesce rapid writes (ms); 0 = write synchronously
+});
+```
+
+### `logger`
+
+```ts
+logger<State>({
+  filter: change => change.path !== 'mouse', // log only some changes
+  sink: change => console.log(change.path, change.next) // default sink is console.log
+});
+```
+
+## Time-travel (`history`)
+
+Records an action log you can undo / redo / jump through. Attach it via the `history()` middleware (or `getStoreHistory(store)`), read it with `useStoreHistory`.
+
+```tsx
+import { useStoreHistory } from '@plitzi/sdk-store';
+
+function HistoryPanel() {
+  const { entries, index, canUndo, canRedo, undo, redo, travelTo } = useStoreHistory<State>();
+
+  return (
+    <>
+      <button disabled={!canUndo} onClick={undo}>Undo</button>
+      <button disabled={!canRedo} onClick={redo}>Redo</button>
+      {entries.map((entry, i) => (
+        <button key={i} onClick={() => travelTo(i)} data-active={i === index}>
+          {entry.path} = {String(entry.value)}
+        </button>
+      ))}
+    </>
+  );
+}
+```
+
+`<StoreProvider history>` (or `history="schema"` to scope it to a subtree) starts recording from mount.
+
+## Performance
+
+Notification is `O(depth)` — a few `Map` lookups for the changed path's prefixes — **regardless of how many subscribers exist**, so a million watchers cost the same as one for an unrelated change. The *write* copies the containers on the changed path (immutable structural sharing, the same cost Redux / Zustand / Jotai pay), so model state as a **tree / normalized map** to keep each write touching a small path. Single-segment writes mutate the live working copy in place (O(1)); snapshots from `getState()` are always distinct clones, so they stay immutable for React.
+
 ## Types
+
+All types live in `src/types/StoreTypes.ts`:
 
 All types live in `src/types/StoreTypes.ts`:
 
@@ -251,7 +424,12 @@ All types live in `src/types/StoreTypes.ts`:
 | `PathSetter<T, P>` | Setter function for a single path |
 | `PathSetters<T, Paths>` | Tuple of setters for an array of paths |
 | `MultiPathReturn<T, Paths>` | `[values, ...setters]` tuple |
-| `StoreApi<T>` | `{ getState, setState, subscribe, subscribePath, destroy? }` |
+| `StoreApi<T>` | `{ getState, getPath, setState, subscribe, subscribePath, subscribeChange, destroy? }` |
+| `StoreChange<T>` | `{ path, prev, next }` — payload of `subscribeChange` / middleware `onChange` |
+| `StoreMiddleware<T>` | `(api) => { onChange? } \| void` — a middleware factory |
+| `Derived<R>` | `{ get, subscribe, destroy }` — a `createDerived` handle |
+| `EntityAdapter<T>` | CRUD updaters + selectors from `createEntityAdapter` |
+| `EntityUpdater<T>` | `(map) => map` — an immutable entity-map update for `setState` |
 | `SetState<T>` | Full `setState` overload signature |
 | `UseStoreOptions` | Options for `useStore` (mode, enabled, equalityFn, defaultValue, transformer) |
 | `UseStoreMultiOptions` | Options for multi-path `useStore` |

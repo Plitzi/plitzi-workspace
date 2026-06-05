@@ -67,10 +67,10 @@ export type StoreHistoryOptions = {
   shouldRecord?: (changedPath: Path | undefined) => boolean;
 };
 
-// Records store snapshots for an action log + time-travel, built entirely on the store's own
-// `subscribe`/`getState`/`setState` — no core changes. Time-travel restores a snapshot via a full-state replace.
-// Note: it reliably restores state the store OWNS (e.g. builder edits); slices continuously re-synced from
-// external sources via `useStoreSync` (e.g. `runtime.*`) reconcile to their live value on the next render.
+// Records store snapshots for an action log + time-travel, riding the store's `subscribeChange` substrate (the same
+// one logger and persist use). Time-travel restores a snapshot via a full-state replace. Note: it reliably restores
+// state the store OWNS (e.g. builder edits); slices continuously re-synced from external sources via `useStoreSync`
+// (e.g. `runtime.*`) reconcile to their live value on the next render.
 export function createStoreHistory<TState extends object>(
   store: StoreApi<TState>,
   options: StoreHistoryOptions = {}
@@ -98,7 +98,7 @@ export function createStoreHistory<TState extends object>(
     listeners.forEach(l => l());
   };
 
-  const unsubscribe = store.subscribeHistory(changedPath => {
+  const unsubscribe = store.subscribeChange(({ path: changedPath }) => {
     if (traveling || (shouldRecord && !shouldRecord(changedPath))) {
       return;
     }

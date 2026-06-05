@@ -81,9 +81,41 @@
       "types": "./dist/createStore/helpers/forwardParentChanges.d.ts",
       "import": "./dist/createStore/helpers/forwardParentChanges.mjs"
     },
+    "./createStore/helpers/writeByPath": {
+      "types": "./dist/createStore/helpers/writeByPath.d.ts",
+      "import": "./dist/createStore/helpers/writeByPath.mjs"
+    },
     "./createStore/index": {
       "types": "./dist/createStore/index.d.ts",
       "import": "./dist/createStore/index.mjs"
+    },
+    "./derived": {
+      "types": "./dist/derived/index.d.ts",
+      "import": "./dist/derived/index.mjs"
+    },
+    "./derived/createDerived": {
+      "types": "./dist/derived/createDerived.d.ts",
+      "import": "./dist/derived/createDerived.mjs"
+    },
+    "./derived/index": {
+      "types": "./dist/derived/index.d.ts",
+      "import": "./dist/derived/index.mjs"
+    },
+    "./derived/useDerived": {
+      "types": "./dist/derived/useDerived.d.ts",
+      "import": "./dist/derived/useDerived.mjs"
+    },
+    "./entities": {
+      "types": "./dist/entities/index.d.ts",
+      "import": "./dist/entities/index.mjs"
+    },
+    "./entities/createEntityAdapter": {
+      "types": "./dist/entities/createEntityAdapter.d.ts",
+      "import": "./dist/entities/createEntityAdapter.mjs"
+    },
+    "./entities/index": {
+      "types": "./dist/entities/index.d.ts",
+      "import": "./dist/entities/index.mjs"
     },
     "./helpers/getByPath": {
       "types": "./dist/helpers/getByPath.d.ts",
@@ -148,6 +180,30 @@
     "./index": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
+    },
+    "./middleware": {
+      "types": "./dist/middleware/index.d.ts",
+      "import": "./dist/middleware/index.mjs"
+    },
+    "./middleware/cascade": {
+      "types": "./dist/middleware/cascade.d.ts",
+      "import": "./dist/middleware/cascade.mjs"
+    },
+    "./middleware/history": {
+      "types": "./dist/middleware/history.d.ts",
+      "import": "./dist/middleware/history.mjs"
+    },
+    "./middleware/index": {
+      "types": "./dist/middleware/index.d.ts",
+      "import": "./dist/middleware/index.mjs"
+    },
+    "./middleware/logger": {
+      "types": "./dist/middleware/logger.d.ts",
+      "import": "./dist/middleware/logger.mjs"
+    },
+    "./middleware/persist": {
+      "types": "./dist/middleware/persist.d.ts",
+      "import": "./dist/middleware/persist.mjs"
     },
     "./types/index": {
       "types": "./dist/types/index.d.ts"

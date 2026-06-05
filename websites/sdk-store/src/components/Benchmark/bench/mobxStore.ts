@@ -1,8 +1,18 @@
-import { configure, observable, reaction } from 'mobx';
+import { computed, configure, observable, reaction } from 'mobx';
 
-import { DEEP_MAP_TARGET, makeFlat, makeItemMap, makeNested, MOBX, work } from './shared';
+import {
+  DEEP_MAP_TARGET,
+  makeFlat,
+  makeItemMap,
+  makeNested,
+  makeSumValues,
+  MOBX,
+  sumValues,
+  SUM_TARGET,
+  work
+} from './shared';
 
-import type { DeepMapState, FlatState, NestedState, Sample, StoreAdapter } from './shared';
+import type { DeepMapState, FlatState, NestedState, Sample, StoreAdapter, SumState } from './shared';
 
 // MobX, fine-grained by design: one `reaction` per watched value re-runs only when that value changes. State is a
 // deeply observable object mutated in place (no immutable copy) — its strength on writes, paid for with proxy
@@ -136,4 +146,25 @@ const fanout = (keys: number, rounds: number): Sample => {
   return { name: MOBX, wakes, ms: performance.now() - start };
 };
 
-export const mobxAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout };
+// A real `computed` recomputes lazily and caches; the reaction wakes only when its value changes.
+const derived = (values: number, updates: number): Sample => {
+  const state = observable<SumState>(makeSumValues(values));
+  const total = computed(() => sumValues(state.values));
+  let wakes = 0;
+  reaction(
+    () => total.get(),
+    () => {
+      wakes++;
+      work(wakes);
+    }
+  );
+
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    state.values[SUM_TARGET] = j + 1;
+  }
+
+  return { name: MOBX, wakes, ms: performance.now() - start };
+};
+
+export const mobxAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived };

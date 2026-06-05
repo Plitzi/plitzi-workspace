@@ -118,4 +118,30 @@ const fanout = (keys: number, rounds: number): Sample => {
   return { name: JOTAI, wakes, ms: performance.now() - start };
 };
 
-export const jotaiAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout };
+// A derived atom summing N primitive atoms — recomputes when any dependency atom changes.
+const derived = (values: number, updates: number): Sample => {
+  const store = createStore();
+  const cells = Array.from({ length: values }, () => atom(0));
+  const sumAtom = atom(get => {
+    let sum = 0;
+    for (const cell of cells) {
+      sum += get(cell);
+    }
+
+    return sum;
+  });
+  let wakes = 0;
+  store.sub(sumAtom, () => {
+    wakes++;
+    work(wakes);
+  });
+
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    store.set(cells[0], j + 1);
+  }
+
+  return { name: JOTAI, wakes, ms: performance.now() - start };
+};
+
+export const jotaiAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived };

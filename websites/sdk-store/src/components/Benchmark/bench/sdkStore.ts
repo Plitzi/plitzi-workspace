@@ -1,8 +1,18 @@
-import { createStore } from '@plitzi/sdk-store';
+import { createDerived, createStore } from '@plitzi/sdk-store';
 
-import { DEEP_MAP_TARGET, makeFlat, makeItemMap, makeNested, SDK, work } from './shared';
+import {
+  DEEP_MAP_TARGET,
+  makeFlat,
+  makeItemMap,
+  makeNested,
+  makeSumValues,
+  SDK,
+  sumValues,
+  SUM_TARGET,
+  work
+} from './shared';
 
-import type { DeepMapState, FlatState, Sample, NestedState, StoreAdapter } from './shared';
+import type { DeepMapState, FlatState, Sample, NestedState, StoreAdapter, SumState } from './shared';
 
 const wide = (keys: number, updates: number): Sample => {
   const store = createStore<FlatState>(makeFlat(keys));
@@ -110,4 +120,21 @@ const fanout = (keys: number, rounds: number): Sample => {
   return { name: SDK, wakes, ms: performance.now() - start };
 };
 
-export const sdkAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout };
+const derived = (values: number, updates: number): Sample => {
+  const store = createStore<SumState>(makeSumValues(values));
+  const total = createDerived(store, ['values'], ([v]) => sumValues(v));
+  let wakes = 0;
+  total.subscribe(() => {
+    wakes++;
+    work(wakes);
+  });
+
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    store.setState(`values.${SUM_TARGET}`, j + 1);
+  }
+
+  return { name: SDK, wakes, ms: performance.now() - start };
+};
+
+export const sdkAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived };

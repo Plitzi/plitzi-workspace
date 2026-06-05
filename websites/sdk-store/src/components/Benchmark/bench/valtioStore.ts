@@ -1,9 +1,19 @@
 import { proxy, subscribe } from 'valtio/vanilla';
 import { subscribeKey } from 'valtio/vanilla/utils';
 
-import { DEEP_MAP_TARGET, makeFlat, makeItemMap, makeNested, VALTIO, work } from './shared';
+import {
+  DEEP_MAP_TARGET,
+  makeFlat,
+  makeItemMap,
+  makeNested,
+  makeSumValues,
+  sumValues,
+  SUM_TARGET,
+  VALTIO,
+  work
+} from './shared';
 
-import type { DeepMapState, FlatState, NestedState, Sample, StoreAdapter } from './shared';
+import type { DeepMapState, FlatState, NestedState, Sample, StoreAdapter, SumState } from './shared';
 
 // Valtio, proxy-based fine-grained: `subscribeKey` watches one property, `subscribe` watches one nested node.
 // State is mutated in place through the proxy (no immutable copy). `notifyInSync` = true makes wakes synchronous
@@ -142,4 +152,30 @@ const fanout = (keys: number, rounds: number): Sample => {
   return { name: VALTIO, wakes, ms: performance.now() - start };
 };
 
-export const valtioAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout };
+// Valtio has no vanilla memoized computed, so recompute the sum on each (synchronous) change and wake when it shifts.
+const derived = (values: number, updates: number): Sample => {
+  const state = proxy<SumState>(makeSumValues(values));
+  let wakes = 0;
+  let last = sumValues(state.values);
+  subscribe(
+    state,
+    () => {
+      const next = sumValues(state.values);
+      if (next !== last) {
+        last = next;
+        wakes++;
+        work(wakes);
+      }
+    },
+    true
+  );
+
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    state.values[SUM_TARGET] = j + 1;
+  }
+
+  return { name: VALTIO, wakes, ms: performance.now() - start };
+};
+
+export const valtioAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived };

@@ -59,6 +59,24 @@ export const FEATURES: Feature[] = [
     title: 'SSR-ready',
     description:
       'Isomorphic layout effects and snapshot getters make it safe on the server. Works with React 19 and streaming out of the box.'
+  },
+  {
+    icon: '🧮',
+    title: 'Derived & computed values',
+    description:
+      'createDerived computes a value from store paths once, memoized, and only wakes subscribers when the result changes. The store’s answer to reselect / Jotai derived atoms — shared across every consumer.'
+  },
+  {
+    icon: '🔌',
+    title: 'Middleware pipeline',
+    description:
+      'logger, persist and time-travel are all middlewares riding one subscribeChange substrate. Add your own with a single (api) => { onChange } — zero cost on the hot path when none are attached.'
+  },
+  {
+    icon: '🗂️',
+    title: 'Normalized entity adapter',
+    description:
+      'createEntityAdapter gives CRUD updaters (addOne, upsertMany, removeOne…) and selectors for a Record<id, entity> map — RTK’s entity ergonomics, dropped straight into setState.'
   }
 ];
 
@@ -129,9 +147,9 @@ const [name, setName] = useStore('user.name'); // typed as string`
   <Editor />
 </StoreProvider>
 
-// Record the action log / time-travel from mount,
-// independent of any devtools consumer:
-<StoreProvider value={initial} history>
+// Add middlewares (persist, logger, time-travel) when the
+// provider creates the store:
+<StoreProvider value={initial} middlewares={[persist({ key: 'app' }), history()]}>
   <App />
 </StoreProvider>`
   },
@@ -278,6 +296,86 @@ function HistoryPanel() {
     </>
   );
 }`
+  },
+  {
+    id: 'derived',
+    label: 'Derived',
+    code: `import { createDerived, useDerived } from '@plitzi/sdk-store';
+
+// What it's for: compute a value FROM the store once, memoized.
+// It recomputes only when a dependency path changes, and only
+// wakes subscribers when the RESULT changes (reselect / computed).
+const total = createDerived(
+  store,
+  ['items'],                                   // dependency paths (typed)
+  ([items]) => Object.values(items)            // compute(values)
+    .reduce((sum, i) => sum + i.qty * i.price, 0)
+);
+
+total.get();                                   // 0 — current value
+const off = total.subscribe(() => render());   // wakes only when total changes
+
+// In React — the computation is SHARED across every consumer:
+function CartTotal() {
+  const value = useDerived(total);
+  return <span>\${value}</span>;
+}
+
+// Multiple deps + custom equality:
+const ids = createDerived(store, ['items'], ([m]) => Object.keys(m), {
+  equalityFn: (a, b) => a.length === b.length && a.every((x, i) => x === b[i])
+});`
+  },
+  {
+    id: 'entities',
+    label: 'Entities',
+    code: `import { createEntityAdapter } from '@plitzi/sdk-store';
+
+type Todo = { id: string; text: string; done: boolean };
+
+// What it's for: CRUD + selectors for a normalized Record<id, T>
+// map, without hand-rolling the spread/merge boilerplate.
+const todos = createEntityAdapter<Todo>();
+
+// Each op returns an immutable updater — hand it to setState:
+store.setState('todos', todos.addMany([t1, t2]));
+store.setState('todos', todos.updateOne({ id: '1', changes: { done: true } }));
+store.setState('todos', todos.upsertOne(t3));
+store.setState('todos', todos.removeOne('2'));
+
+// Selectors read a map:
+const map = store.getPath('todos');
+todos.selectAll(map);        // Todo[]
+todos.selectById(map, '1');  // Todo | undefined
+todos.selectTotal(map);      // number
+
+// Custom id + sort order:
+createEntityAdapter<Row>({ selectId: r => r.key, sortComparer: byName });`
+  },
+  {
+    id: 'middleware',
+    label: 'Middleware',
+    code: `import { createStore, logger, persist, history } from '@plitzi/sdk-store';
+
+// logger, persist and time-travel are all middlewares on ONE
+// substrate (subscribeChange). Put persist first so it hydrates
+// before the others observe.
+const store = createStore<State>(initial, {
+  middlewares: [
+    persist({ key: 'app', partialize: s => ({ user: s.user }), debounce: 200 }),
+    history(),                              // getStoreHistory(store) for undo/redo
+    logger({ filter: c => c.path !== 'mouse' })
+  ]
+});
+
+// Write your own — an observer of every committed change:
+const analytics = (api) => ({
+  onChange: ({ path, prev, next }) => track('store', { path }),
+});
+createStore<State>(initial, { middlewares: [analytics] });
+
+// Or subscribe imperatively to the same substrate:
+store.subscribeChange(({ path, prev, next }) => {});`
   }
 ];
 
@@ -305,6 +403,9 @@ export const COMPARISON_ROWS: ComparisonRow[] = [
   { feature: 'Type-safe paths end-to-end', values: ['yes', 'no', 'no', 'no', 'no', 'no', 'no'] },
   { feature: 'Scoped / live child stores', values: ['yes', 'no', 'no', 'partial', 'no', 'no', 'manual'] },
   { feature: 'Built-in time-travel / action log', values: ['yes', 'middleware', 'devtools', 'no', 'spy', 'util', 'no'] },
+  { feature: 'Composable middleware', values: ['yes', 'yes', 'yes', 'no', 'no', 'no', 'no'] },
+  { feature: 'Built-in persistence', values: ['yes', 'middleware', 'redux-persist', 'util', 'manual', 'util', 'no'] },
+  { feature: 'Normalized entity adapter', values: ['yes', 'no', 'yes', 'no', 'no', 'no', 'no'] },
   { feature: 'Single immutable tree (snapshots)', values: ['yes', 'yes', 'yes', 'no', 'no', 'no', 'yes'] },
   { feature: 'Plain objects (no proxy / classes)', values: ['yes', 'yes', 'yes', 'yes', 'no', 'no', 'yes'] },
   { feature: 'Multi-path read in one hook', values: ['yes', 'manual', 'manual', 'manual', 'auto', 'auto', 'no'] },
