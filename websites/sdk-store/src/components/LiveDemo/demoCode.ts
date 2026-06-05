@@ -32,7 +32,10 @@ function StateView() {
   return <pre>{JSON.stringify(state, null, 2)}</pre>;
 }`;
 
-export const HISTORY_CODE = `import { useStoreHistory } from '@plitzi/sdk-store';
+export const HISTORY_CODE = `import { historyMiddleware, useStoreHistory } from '@plitzi/sdk-store';
+
+// Enable recording on the store — useStoreHistory just reads it.
+const store = createStore<State>(initial, { middlewares: [historyMiddleware()] });
 
 function History() {
   const { entries, index, canUndo, canRedo, undo, redo, travelTo } =

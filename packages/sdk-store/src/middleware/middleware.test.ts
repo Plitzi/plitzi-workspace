@@ -1,10 +1,8 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 
-import { historyMiddleware } from './historyMiddleware';
 import { loggerMiddleware } from './loggerMiddleware';
 import { persistMiddleware } from './persistMiddleware';
 import createStore from '../createStore/createStore';
-import { getStoreHistory } from '../history/createStoreHistory';
 
 import type { PersistStorage } from './persistMiddleware';
 import type { StoreChange } from '../types';
@@ -143,19 +141,6 @@ describe('persist middleware', () => {
       expect(spy).toHaveBeenCalledTimes(1);
       expect(readStored(data, 'app').state.count).toBe(3);
     });
-  });
-});
-
-describe('history middleware', () => {
-  it('records an action log retrievable via getStoreHistory', () => {
-    const store = createStore<AppState>(initial(), { middlewares: [historyMiddleware()] });
-
-    store.setState('count', 1);
-    store.setState('count', 2);
-
-    const snapshot = getStoreHistory(store).getSnapshot();
-    expect(snapshot.entries).toHaveLength(3); // initial + two edits
-    expect(snapshot.entries.at(-1)?.state.count).toBe(2);
   });
 });
 

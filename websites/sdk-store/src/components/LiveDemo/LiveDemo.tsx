@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { StoreProvider } from '@plitzi/sdk-store';
+import { historyMiddleware, StoreProvider } from '@plitzi/sdk-store';
 
 import SectionHeading from '../SectionHeading';
 import Segmented from '../Segmented';
@@ -27,7 +27,11 @@ import {
 } from './demoCode';
 import { DEMO_INITIAL_STATE } from './demoStore';
 
+import type { DemoState } from './demoStore';
 import type { ComponentType } from 'react';
+
+// `useStoreHistory` (in DemoHistory) reads the history this records; without the middleware the panel would be empty.
+const middlewares = [historyMiddleware<DemoState>()];
 
 type Panel = { id: string; label: string; title: string; code: string; Component: ComponentType };
 
@@ -40,9 +44,21 @@ const PANELS: Panel[] = [
     code: DERIVED_CODE,
     Component: DerivedDemo
   },
-  { id: 'derived', label: 'Derived', title: 'createDerived · shared computed', code: COMPUTED_CODE, Component: ComputedDemo },
+  {
+    id: 'derived',
+    label: 'Derived',
+    title: 'createDerived · shared computed',
+    code: COMPUTED_CODE,
+    Component: ComputedDemo
+  },
   { id: 'getter', label: 'Getter', title: 'useStoreGetter · read on demand', code: GETTER_CODE, Component: GetterDemo },
-  { id: 'setter', label: 'Setter', title: 'useStoreSetter · write, no re-render', code: SETTER_CODE, Component: SetterDemo },
+  {
+    id: 'setter',
+    label: 'Setter',
+    title: 'useStoreSetter · write, no re-render',
+    code: SETTER_CODE,
+    Component: SetterDemo
+  },
   { id: 'scoped', label: 'Scoped', title: 'Scoped store · live vs snapshot', code: SCOPED_CODE, Component: ScopedDemo }
 ];
 
@@ -59,9 +75,9 @@ const LiveDemo = () => {
         subtitle="The real @plitzi/sdk-store running on this page — every panel shares one store. Change a value and watch it sync, derive, record and inherit. Hit “Code” on any panel for the exact wiring."
       />
 
-      <div className="mt-10 overflow-hidden rounded-2xl border border-ink-700 bg-ink-900/40">
-        <StoreProvider value={DEMO_INITIAL_STATE} autoSync={false}>
-          <div className="grid gap-px bg-ink-700 md:grid-cols-3">
+      <div className="border-ink-700 bg-ink-900/40 mt-10 overflow-hidden rounded-2xl border">
+        <StoreProvider<DemoState> value={DEMO_INITIAL_STATE} autoSync={false} middlewares={middlewares}>
+          <div className="bg-ink-700 grid gap-px md:grid-cols-3">
             <DemoPanel title="Controls · root scope" code={CONTROLS_CODE}>
               <DemoControls />
             </DemoPanel>
@@ -73,21 +89,21 @@ const LiveDemo = () => {
             </DemoPanel>
           </div>
 
-          <div className="border-t border-ink-700 bg-ink-900/60 px-4 py-4">
+          <div className="border-ink-700 bg-ink-900/60 border-t px-4 py-4">
             <div className="flex justify-center">
               <Segmented options={PANELS} value={activeId} onChange={setActiveId} />
             </div>
           </div>
 
-          <DemoPanel key={active.id} title={active.title} code={active.code} className="border-t border-ink-700">
+          <DemoPanel key={active.id} title={active.title} code={active.code} className="border-ink-700 border-t">
             <ActivePanel />
           </DemoPanel>
         </StoreProvider>
       </div>
 
       <p className="mt-5 text-center text-sm text-zinc-500">
-        The History panel is the same primitive that powers the{' '}
-        <span className="text-brand-300">sdk-dev-tools</span> History tab.
+        The History panel is the same primitive that powers the <span className="text-brand-300">sdk-dev-tools</span>{' '}
+        History tab.
       </p>
     </section>
   );

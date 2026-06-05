@@ -213,6 +213,10 @@
       "types": "./dist/history/index.d.ts",
       "import": "./dist/history/index.mjs"
     },
+    "./history/storeHistory": {
+      "types": "./dist/history/storeHistory.d.ts",
+      "import": "./dist/history/storeHistory.mjs"
+    },
     "./history/useStoreHistory": {
       "types": "./dist/history/useStoreHistory.d.ts",
       "import": "./dist/history/useStoreHistory.mjs"

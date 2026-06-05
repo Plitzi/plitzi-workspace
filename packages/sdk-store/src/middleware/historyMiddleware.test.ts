@@ -1,18 +1,29 @@
 import { describe, it, expect, vi } from 'vitest';
 
+import { getStoreHistory, historyMiddleware } from './historyMiddleware';
 import createStore from '../createStore';
-import { createStoreHistory, getStoreHistory } from './createStoreHistory';
+
+import type { StoreHistory, StoreHistoryOptions } from './historyMiddleware';
+import type { StoreApi } from '../types';
 
 type S = { count: number; label: string };
 
-const make = () => {
-  const store = createStore<S>({ count: 0, label: 'a' });
-  const history = createStoreHistory(store);
+const enableHistory = <T extends object>(store: StoreApi<T>): StoreHistory<T> => {
+  const history = getStoreHistory<T>(store);
+  if (!history) {
+    throw new Error('history not registered');
+  }
 
-  return { store, history };
+  return history;
 };
 
-describe('createStoreHistory: action log', () => {
+const make = (options?: StoreHistoryOptions) => {
+  const store = createStore<S>({ count: 0, label: 'a' }, { middlewares: [historyMiddleware<S>(options)] });
+
+  return { store, history: enableHistory(store) };
+};
+
+describe('historyMiddleware: action log', () => {
   it('starts with the initial snapshot', () => {
     const { history } = make();
     const snap = history.getSnapshot();
@@ -51,8 +62,12 @@ describe('createStoreHistory: action log', () => {
   });
 
   it('honors `shouldRecord` to skip noisy paths', () => {
-    const store = createStore<{ a: number; runtime: { x: number } }>({ a: 0, runtime: { x: 0 } });
-    const history = createStoreHistory(store, { shouldRecord: path => !path?.startsWith('runtime.') });
+    type Noisy = { a: number; runtime: { x: number } };
+    const store = createStore<Noisy>(
+      { a: 0, runtime: { x: 0 } },
+      { middlewares: [historyMiddleware<Noisy>({ shouldRecord: path => !path?.startsWith('runtime.') })] }
+    );
+    const history = enableHistory(store);
 
     store.setState('runtime.x', 1);
     store.setState('a', 1);
@@ -63,8 +78,7 @@ describe('createStoreHistory: action log', () => {
   });
 
   it('caps the log at `limit` (ring buffer)', () => {
-    const store = createStore<S>({ count: 0, label: 'a' });
-    const history = createStoreHistory(store, { limit: 3 });
+    const { store, history } = make({ limit: 3 });
 
     for (let i = 1; i <= 10; i++) {
       store.setState('count', i);
@@ -74,7 +88,7 @@ describe('createStoreHistory: action log', () => {
   });
 });
 
-describe('createStoreHistory: time-travel', () => {
+describe('historyMiddleware: time-travel', () => {
   it('undo/redo move the index and restore the store state', () => {
     const { store, history } = make();
 
@@ -136,9 +150,15 @@ describe('createStoreHistory: time-travel', () => {
 });
 
 describe('getStoreHistory', () => {
-  it('returns the same history instance per store', () => {
-    const store = createStore<S>({ count: 0, label: 'a' });
+  it('returns the same registered history instance per store', () => {
+    const store = createStore<S>({ count: 0, label: 'a' }, { middlewares: [historyMiddleware<S>()] });
 
     expect(getStoreHistory(store)).toBe(getStoreHistory(store));
+  });
+
+  it('returns undefined for a store with no historyMiddleware', () => {
+    const store = createStore<S>({ count: 0, label: 'a' });
+
+    expect(getStoreHistory(store)).toBeUndefined();
   });
 });

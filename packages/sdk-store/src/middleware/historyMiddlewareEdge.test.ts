@@ -1,15 +1,32 @@
 import { describe, it, expect } from 'vitest';
 
-import { createStoreHistory, getStoreHistory } from './createStoreHistory';
+import { getStoreHistory, historyMiddleware } from './historyMiddleware';
 import createStore from '../createStore/createStore';
+
+import type { StoreHistory, StoreHistoryOptions } from './historyMiddleware';
+import type { StoreApi } from '../types';
 
 type S = { count: number; schema: { title: string }; other: number };
 const initial = (): S => ({ count: 0, schema: { title: 'a' }, other: 1 });
 
-describe('createStoreHistory — edge cases', () => {
+const enableHistory = <T extends object>(store: StoreApi<T>): StoreHistory<T> => {
+  const history = getStoreHistory<T>(store);
+  if (!history) {
+    throw new Error('history not registered');
+  }
+
+  return history;
+};
+
+const make = (options?: StoreHistoryOptions) => {
+  const store = createStore<S>(initial(), { middlewares: [historyMiddleware<S>(options)] });
+
+  return { store, history: enableHistory(store) };
+};
+
+describe('historyMiddleware — edge cases', () => {
   it('caps the log at `limit` (ring buffer, oldest dropped)', () => {
-    const store = createStore<S>(initial());
-    const history = createStoreHistory(store, { limit: 3 });
+    const { store, history } = make({ limit: 3 });
 
     for (let i = 1; i <= 5; i++) {
       store.setState('count', i);
@@ -20,8 +37,7 @@ describe('createStoreHistory — edge cases', () => {
   });
 
   it('discards the redo branch when a new change follows an undo', () => {
-    const store = createStore<S>(initial());
-    const history = createStoreHistory(store);
+    const { store, history } = make();
 
     store.setState('count', 1);
     store.setState('count', 2);
@@ -35,8 +51,7 @@ describe('createStoreHistory — edge cases', () => {
   });
 
   it('ignores out-of-range travelTo targets', () => {
-    const store = createStore<S>(initial());
-    const history = createStoreHistory(store);
+    const { store, history } = make();
     store.setState('count', 1);
 
     history.travelTo(-1);
@@ -47,8 +62,7 @@ describe('createStoreHistory — edge cases', () => {
   });
 
   it('respects a shouldRecord filter', () => {
-    const store = createStore<S>(initial());
-    const history = createStoreHistory(store, { shouldRecord: changed => changed !== 'count' });
+    const { store, history } = make({ shouldRecord: changed => changed !== 'count' });
 
     store.setState('count', 1);
     expect(history.getSnapshot().entries.length).toBe(1);
@@ -58,8 +72,7 @@ describe('createStoreHistory — edge cases', () => {
   });
 
   it('scopes recording and restoration to a root path', () => {
-    const store = createStore<S>(initial());
-    const history = createStoreHistory(store, { path: 'schema' });
+    const { store, history } = make({ path: 'schema' });
 
     store.setState('other', 50); // outside the scope → not recorded
     expect(history.getSnapshot().entries.length).toBe(1);
@@ -73,8 +86,9 @@ describe('createStoreHistory — edge cases', () => {
   });
 
   it('refines a coarse change to the exact leaf path and value', () => {
-    const store = createStore<{ a: { b: { c: number } } }>({ a: { b: { c: 1 } } });
-    const history = createStoreHistory(store);
+    type Deep = { a: { b: { c: number } } };
+    const store = createStore<Deep>({ a: { b: { c: 1 } } }, { middlewares: [historyMiddleware<Deep>()] });
+    const history = enableHistory(store);
 
     store.setState('a', { b: { c: 2 } });
 
@@ -84,10 +98,9 @@ describe('createStoreHistory — edge cases', () => {
     expect(last.value).toBe(2);
   });
 
-  it('stops recording after destroy', () => {
-    const store = createStore<S>(initial());
-    const history = createStoreHistory(store);
-    history.destroy();
+  it('stops recording once the store is destroyed', () => {
+    const { store, history } = make();
+    store.destroy?.();
 
     store.setState('count', 1);
     expect(history.getSnapshot().entries.length).toBe(1);
@@ -96,7 +109,7 @@ describe('createStoreHistory — edge cases', () => {
 
 describe('getStoreHistory', () => {
   it('returns one shared instance per store', () => {
-    const store = createStore<S>(initial());
+    const store = createStore<S>(initial(), { middlewares: [historyMiddleware<S>()] });
 
     expect(getStoreHistory(store)).toBe(getStoreHistory(store));
   });

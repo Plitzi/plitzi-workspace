@@ -32,7 +32,7 @@ function Counter() {
 | `createDerived` / `useDerived` | A memoized value computed from store paths (reselect-style). |
 | `createEntityAdapter` | CRUD updaters + selectors for a normalized `Record<id, T>` map. |
 | `loggerMiddleware` / `persistMiddleware` / `historyMiddleware` / `reduxDevToolsMiddleware` | Middlewares: log, persist to storage, record time-travel, connect to Redux DevTools. |
-| `createStoreHistory` / `useStoreHistory` | Undo / redo / jump-to-snapshot action log. |
+| `getStoreHistory` / `useStoreHistory` | Undo / redo / jump-to-snapshot action log (enabled by `historyMiddleware`). |
 
 ## Architecture
 
@@ -49,7 +49,7 @@ hooks/
 derived/                 createDerived + useDerived (memoized computed values)
 entities/                createEntityAdapter (normalized-map CRUD + selectors)
 middleware/              logger / persist / history (all on subscribeChange)
-history/                 createStoreHistory + useStoreHistory (time-travel)
+history/                 getStoreHistory + useStoreHistory (time-travel, enabled by historyMiddleware)
 helpers/                 getByPath, setByPath, parsePath, shallowEqual…
 ```
 
@@ -433,7 +433,7 @@ Intended for the root store; like `persist`/`history` it's per-store and not cas
 
 ## Time-travel (`historyMiddleware`)
 
-Records an action log you can undo / redo / jump through. Attach it via the `historyMiddleware()` middleware (or `getStoreHistory(store)`), read it with `useStoreHistory`.
+Records an action log you can undo / redo / jump through. Enable it by adding `historyMiddleware()` to the store; read it reactively with `useStoreHistory`, or imperatively with `getStoreHistory(store)` (which returns the handle the middleware registered, or `undefined` when it isn't enabled). Without the middleware, `useStoreHistory` returns an empty, no-op view.
 
 ```tsx
 import { useStoreHistory } from '@plitzi/sdk-store';

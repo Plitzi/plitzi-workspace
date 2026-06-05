@@ -290,7 +290,10 @@ item.setState('record', next);        // stays local
   {
     id: 'history',
     label: 'Time-travel',
-    code: `import { useStoreHistory } from '@plitzi/sdk-store';
+    code: `import { historyMiddleware, useStoreHistory } from '@plitzi/sdk-store';
+
+// Add the middleware once; useStoreHistory reads what it records.
+const store = createStore<State>(initial, { middlewares: [historyMiddleware()] });
 
 function HistoryPanel() {
   const { entries, index, canUndo, canRedo, undo, redo, travelTo } =
@@ -489,10 +492,16 @@ export const COMPARISON_COLUMNS = [
 
 // Order of values matches COMPARISON_COLUMNS.
 export const COMPARISON_ROWS: ComparisonRow[] = [
-  { feature: 'Native dot-path subscriptions', values: ['yes', 'selectors', 'selectors', 'atoms', 'tracked', 'proxy', 'no'] },
+  {
+    feature: 'Native dot-path subscriptions',
+    values: ['yes', 'selectors', 'selectors', 'atoms', 'tracked', 'proxy', 'no']
+  },
   { feature: 'Type-safe paths end-to-end', values: ['yes', 'no', 'no', 'no', 'no', 'no', 'no'] },
   { feature: 'Scoped / live child stores', values: ['yes', 'no', 'no', 'partial', 'no', 'no', 'manual'] },
-  { feature: 'Built-in time-travel / action log', values: ['yes', 'middleware', 'devtools', 'no', 'spy', 'util', 'no'] },
+  {
+    feature: 'Built-in time-travel / action log',
+    values: ['yes', 'middleware', 'devtools', 'no', 'spy', 'util', 'no']
+  },
   { feature: 'Composable middleware', values: ['yes', 'yes', 'yes', 'no', 'no', 'no', 'no'] },
   { feature: 'Built-in persistence', values: ['yes', 'middleware', 'redux-persist', 'util', 'manual', 'util', 'no'] },
   { feature: 'Normalized entity adapter', values: ['yes', 'no', 'yes', 'no', 'no', 'no', 'no'] },
@@ -501,8 +510,14 @@ export const COMPARISON_ROWS: ComparisonRow[] = [
   { feature: 'Single immutable tree (snapshots)', values: ['yes', 'yes', 'yes', 'no', 'no', 'no', 'yes'] },
   { feature: 'Plain objects (no proxy / classes)', values: ['yes', 'yes', 'yes', 'yes', 'no', 'no', 'yes'] },
   { feature: 'Multi-path read in one hook', values: ['yes', 'manual', 'manual', 'manual', 'auto', 'auto', 'no'] },
-  { feature: 'Dynamic / computed paths', values: ['yes', 'selectors', 'selectors', 'derived', 'computed', 'derive', 'no'] },
-  { feature: 'Memoized derived values', values: ['yes', 'selectors', 'reselect', 'derived', 'computed', 'derive', 'no'] },
+  {
+    feature: 'Dynamic / computed paths',
+    values: ['yes', 'selectors', 'selectors', 'derived', 'computed', 'derive', 'no']
+  },
+  {
+    feature: 'Memoized derived values',
+    values: ['yes', 'selectors', 'reselect', 'derived', 'computed', 'derive', 'no']
+  },
   { feature: 'No actions / reducers', values: ['yes', 'yes', 'no', 'yes', 'yes', 'yes', 'yes'] },
   { feature: 'Provider optional', values: ['yes', 'yes', 'no', 'partial', 'yes', 'yes', 'no'] },
   { feature: 'Fine-grained by default', values: ['yes', 'opt-in', 'opt-in', 'yes', 'yes', 'yes', 'no'] },

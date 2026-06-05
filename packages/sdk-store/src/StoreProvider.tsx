@@ -31,8 +31,8 @@ export type StoreProviderProps<TState extends object = any> = {
   inherit?: 'snapshot' | 'live';
   autoSync?: boolean;
   // Store middlewares applied when this provider creates the store: `loggerMiddleware()`, `persistMiddleware()`,
-  // `historyMiddleware()`, or your own. (`useStoreHistory` also attaches history lazily, so `historyMiddleware()` is
-  // only needed to record from mount.)
+  // `historyMiddleware()`, or your own. History is only recorded when `historyMiddleware()` is added — `useStoreHistory`
+  // then reads it (without it, the hook returns an empty, no-op view).
   middlewares?: StoreMiddleware<TState>[];
   children?: ReactNode;
 };
