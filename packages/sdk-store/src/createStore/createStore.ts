@@ -80,7 +80,7 @@ function createStore<TState extends object>(
 
   const { getState, getMergeCount } = createGetState<TState>(getOwnSnapshot, parent);
   const getPath = createGetPath<TState>(getOwnState, parent, getState);
-  const setState = createSetState<TState>({
+  const { setState, batch } = createSetState<TState>({
     getOwnState,
     getOwnSnapshot,
     setOwnState: next => {
@@ -127,6 +127,7 @@ function createStore<TState extends object>(
     getState,
     getPath,
     setState,
+    batch,
     subscribe,
     subscribePath,
     subscribeChange,

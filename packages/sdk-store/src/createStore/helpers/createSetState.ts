@@ -19,15 +19,50 @@ export type SetStateDeps<TState extends object> = {
   pathListeners: PathTrie;
 };
 
-const notify = (arr: Listener[], path: string | undefined): void => {
-  for (let i = 0; i < arr.length; i++) {
-    arr[i](path);
-  }
+export type SetStateApi<TState extends object> = {
+  setState: SetState<TState>;
+  batch: <R>(fn: () => R) => R;
 };
 
-export function createSetState<TState extends object>(deps: SetStateDeps<TState>): SetState<TState> {
+export function createSetState<TState extends object>(deps: SetStateDeps<TState>): SetStateApi<TState> {
   const { getOwnState, getOwnSnapshot, setOwnState, mutateOwnKey, parent, listeners, pathListeners, changeListeners } =
     deps;
+
+  // Inside `batch(fn)` writes still apply immediately (reads see them), but listener wakes are buffered here and
+  // fired once at the end, deduplicated — so N writes touching the same subscriber re-render it once. The single
+  // `batchDepth` check per `notify` keeps the un-batched hot path free.
+  let batchDepth = 0;
+  const pendingListeners = new Set<Listener>();
+
+  const notify = (arr: Listener[], path: string | undefined): void => {
+    if (batchDepth > 0) {
+      for (let i = 0; i < arr.length; i++) {
+        pendingListeners.add(arr[i]);
+      }
+
+      return;
+    }
+
+    for (let i = 0; i < arr.length; i++) {
+      arr[i](path);
+    }
+  };
+
+  const batch = <R>(fn: () => R): R => {
+    batchDepth++;
+    try {
+      return fn();
+    } finally {
+      batchDepth--;
+      if (batchDepth === 0 && pendingListeners.size > 0) {
+        const woken = [...pendingListeners];
+        pendingListeners.clear();
+        for (let i = 0; i < woken.length; i++) {
+          woken[i](undefined);
+        }
+      }
+    }
+  };
 
   const emitChange = (path: PathOf<TState> | undefined, prev: TState, next: TState): void => {
     for (let i = 0; i < changeListeners.length; i++) {
@@ -204,5 +239,5 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     }
   };
 
-  return setState;
+  return { setState, batch };
 }

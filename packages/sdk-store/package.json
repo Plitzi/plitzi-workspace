@@ -49,6 +49,26 @@
       "types": "./dist/StoreProvider.d.ts",
       "import": "./dist/StoreProvider.mjs"
     },
+    "./async": {
+      "types": "./dist/async/index.d.ts",
+      "import": "./dist/async/index.mjs"
+    },
+    "./async/createAsync": {
+      "types": "./dist/async/createAsync.d.ts",
+      "import": "./dist/async/createAsync.mjs"
+    },
+    "./async/index": {
+      "types": "./dist/async/index.d.ts",
+      "import": "./dist/async/index.mjs"
+    },
+    "./async/useAsync": {
+      "types": "./dist/async/useAsync.d.ts",
+      "import": "./dist/async/useAsync.mjs"
+    },
+    "./async/useAsyncValue": {
+      "types": "./dist/async/useAsyncValue.d.ts",
+      "import": "./dist/async/useAsyncValue.mjs"
+    },
     "./createStore": {
       "types": "./dist/createStore.d.ts",
       "import": "./dist/createStore.mjs"

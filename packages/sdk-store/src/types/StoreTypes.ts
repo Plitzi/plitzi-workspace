@@ -117,6 +117,10 @@ export type StoreApi<T> = {
   // shadows the parent's, except where both are objects (then the subtree at that path is deep-merged).
   getPath: <P extends PathOf<T>>(path: P) => PathValue<T, P> | undefined;
   setState: SetState<T>;
+  // Runs `fn`, coalescing every `setState` inside it into one wake pass: subscribers re-render once at the end
+  // instead of once per write (reads inside `fn` still see each write immediately). Change observers — logger,
+  // history, persist — keep firing per write. Nestable: only the outermost `batch` flushes.
+  batch: <R>(fn: () => R) => R;
   subscribe: (listener: Listener) => () => void;
   subscribePath: <P extends PathOf<T>>(path: P, listener: Listener) => () => void;
   // Observe every committed change with its before/after snapshots. The substrate for logger, history and persist.

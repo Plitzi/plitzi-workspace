@@ -2,6 +2,7 @@ import createStore from './createStore';
 import useStoreSetter from './hooks/useStoreSetter';
 import StoreProvider from './StoreProvider';
 
+export * from './async';
 export * from './createStore';
 export * from './derived';
 export * from './entities';

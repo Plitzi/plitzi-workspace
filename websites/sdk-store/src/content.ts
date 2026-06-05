@@ -77,6 +77,18 @@ export const FEATURES: Feature[] = [
     title: 'Normalized entity adapter',
     description:
       'createEntityAdapter gives CRUD updaters (addOne, upsertMany, removeOne…) and selectors for a Record<id, entity> map — RTK’s entity ergonomics, dropped straight into setState.'
+  },
+  {
+    icon: '⚡',
+    title: 'Batched updates',
+    description:
+      'store.batch(fn) coalesces many writes into one wake pass — subscribers, derived values and listeners fire once at the end, not once per write. Reads inside the batch still see each change immediately.'
+  },
+  {
+    icon: '🔄',
+    title: 'Async & Suspense',
+    description:
+      'createAsync runs a fetch and lands the result straight in the store, so path subscriptions, derived values and persistence all see it. useAsync for inline loading/error UI, useAsyncValue to suspend.'
   }
 ];
 
@@ -376,6 +388,84 @@ createStore<State>(initial, { middlewares: [analytics] });
 
 // Or subscribe imperatively to the same substrate:
 store.subscribeChange(({ path, prev, next }) => {});`
+  },
+  {
+    id: 'batch',
+    label: 'Batch',
+    code: `import { createStore } from '@plitzi/sdk-store';
+
+const store = createStore<State>(initial);
+
+// Without batch: 3 writes → 3 separate notification passes.
+store.setState('user.firstName', 'Ada');
+store.setState('user.lastName', 'Lovelace');
+store.setState('user.age', 36);
+
+// With batch: 3 writes → ONE wake pass. Every path subscriber,
+// derived value and middleware fires once, at the very end.
+const result = store.batch(() => {
+  store.setState('user.firstName', 'Grace');
+  store.setState('user.lastName', 'Hopper');
+  store.setState('user.age', 85);
+
+  return store.getState().user;        // batch returns fn's value
+});
+
+// Reads inside the batch see each write immediately:
+store.batch(() => {
+  store.setState('count', 1);
+  store.getState().count;              // 1
+  store.setState('count', c => c + 10);
+  store.getState().count;              // 11
+});
+
+// Nestable — only the OUTERMOST batch flushes. Change observers
+// (logger / history / persist) still see each write, so undo
+// stays granular and persistence debounces as usual.`
+  },
+  {
+    id: 'async',
+    label: 'Async',
+    code: `import { createAsync, useAsync, useAsyncValue } from '@plitzi/sdk-store';
+
+type State = { user: User | null };
+
+// Bind a fetch to a store path. The resolved value is WRITTEN to
+// state.user — so path subscriptions, derived values and persist
+// all see it. Status (idle/pending/success/error) lives on the
+// resource. { immediate } kicks off the fetch right away.
+const userResource = createAsync(
+  store,
+  'user',
+  (id: string) => fetch(\`/api/users/\${id}\`).then(r => r.json()),
+  { immediate: ['42'] }
+);
+
+userResource.run('99');   // re-fetch — the latest call wins
+userResource.get();       // { status, data, error, isLoading }
+
+// Inline loading / error UI (no Suspense):
+function Profile() {
+  const { status, data, error } = useAsync(userResource);
+  if (status === 'pending') return <Spinner />;
+  if (status === 'error')   return <ErrorView err={error} />;
+
+  return <span>{data?.name}</span>;
+}
+
+// Or suspend — throws the promise while pending, the error to the
+// nearest boundary on failure, returns the value when it's ready:
+function ProfileName() {
+  const user = useAsyncValue(userResource);
+
+  return <span>{user.name}</span>;
+}
+
+<ErrorBoundary>
+  <Suspense fallback={<Spinner />}>
+    <ProfileName />
+  </Suspense>
+</ErrorBoundary>`
   }
 ];
 
@@ -406,6 +496,8 @@ export const COMPARISON_ROWS: ComparisonRow[] = [
   { feature: 'Composable middleware', values: ['yes', 'yes', 'yes', 'no', 'no', 'no', 'no'] },
   { feature: 'Built-in persistence', values: ['yes', 'middleware', 'redux-persist', 'util', 'manual', 'util', 'no'] },
   { feature: 'Normalized entity adapter', values: ['yes', 'no', 'yes', 'no', 'no', 'no', 'no'] },
+  { feature: 'Batched updates (store-level)', values: ['yes', 'react', 'react', 'react', 'action', 'auto', 'react'] },
+  { feature: 'Async + Suspense built-in', values: ['yes', 'manual', 'rtk-query', 'atoms', 'manual', 'util', 'no'] },
   { feature: 'Single immutable tree (snapshots)', values: ['yes', 'yes', 'yes', 'no', 'no', 'no', 'yes'] },
   { feature: 'Plain objects (no proxy / classes)', values: ['yes', 'yes', 'yes', 'yes', 'no', 'no', 'yes'] },
   { feature: 'Multi-path read in one hook', values: ['yes', 'manual', 'manual', 'manual', 'auto', 'auto', 'no'] },
