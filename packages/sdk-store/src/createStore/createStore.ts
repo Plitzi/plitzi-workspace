@@ -2,15 +2,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 
-import useStoreBase from '../hooks/useStore';
-import useStoreGetterBase from '../hooks/useStoreGetter';
-import useStoreSetterBase from '../hooks/useStoreSetter';
-import useStoreSyncBase from '../hooks/useStoreSync';
 import { createGetPath } from './helpers/createGetPath';
 import { createGetState } from './helpers/createGetState';
 import { createSetState } from './helpers/createSetState';
 import { forwardParentChanges } from './helpers/forwardParentChanges';
 import PathTrie from './helpers/PathTrie';
+import useStoreBase from './hooks/useStore';
+import useStoreGetterBase from './hooks/useStoreGetter';
+import useStoreSetterBase from './hooks/useStoreSetter';
+import useStoreSyncBase from './hooks/useStoreSync';
 
 import type {
   ChangeListener,

@@ -2,10 +2,10 @@ import { renderHook, act } from '@testing-library/react';
 import { createElement, useState } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
-import createStore, { createStoreHook } from '../createStore';
-import { StoreContext } from '../StoreProvider';
+import createStore, { createStoreHook } from '..';
+import { StoreContext } from '../../StoreProvider';
 
-import type { StoreApi } from '../types';
+import type { StoreApi } from '../../types';
 import type { ReactNode } from 'react';
 
 type SyncState = {

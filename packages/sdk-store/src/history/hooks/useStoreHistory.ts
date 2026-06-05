@@ -1,9 +1,9 @@
 import { useSyncExternalStore } from 'react';
 
-import { getStoreHistory } from './createStoreHistory';
-import { useResolvedStore } from '../hooks/shared';
+import { useResolvedStore } from '../../createStore/hooks/shared';
+import { getStoreHistory } from '../createStoreHistory';
 
-import type { HistorySnapshot, StoreHistoryOptions } from './createStoreHistory';
+import type { HistorySnapshot, StoreHistoryOptions } from '../createStoreHistory';
 
 export type UseStoreHistoryReturn<TState> = HistorySnapshot<TState> & {
   undo: () => void;

@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
-import type { AsyncResource, AsyncSnapshot } from './createAsync';
+import type { AsyncResource, AsyncSnapshot } from '../createAsync';
 
 // Reactive status of an async resource for inline loading/error UI: re-renders on status changes and when the
 // resolved value at the store path changes. The fetch itself is shared across every consumer of the resource.

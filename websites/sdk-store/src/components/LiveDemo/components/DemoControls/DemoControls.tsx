@@ -31,7 +31,7 @@ const DemoControls = () => {
           >
             −
           </button>
-          <span className="min-w-[3rem] text-center font-mono text-2xl font-bold text-white">{count}</span>
+          <span className="min-w-12 text-center font-mono text-2xl font-bold text-white">{count}</span>
           <button
             onClick={handleIncrement}
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-ink-600 bg-ink-800 text-lg text-zinc-300 transition hover:border-brand-500 hover:text-white"

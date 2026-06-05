@@ -57,6 +57,14 @@
       "types": "./dist/async/createAsync.d.ts",
       "import": "./dist/async/createAsync.mjs"
     },
+    "./async/hooks/useAsync": {
+      "types": "./dist/async/hooks/useAsync.d.ts",
+      "import": "./dist/async/hooks/useAsync.mjs"
+    },
+    "./async/hooks/useAsyncValue": {
+      "types": "./dist/async/hooks/useAsyncValue.d.ts",
+      "import": "./dist/async/hooks/useAsyncValue.mjs"
+    },
     "./async/index": {
       "types": "./dist/async/index.d.ts",
       "import": "./dist/async/index.mjs"
@@ -105,6 +113,26 @@
       "types": "./dist/createStore/helpers/writeByPath.d.ts",
       "import": "./dist/createStore/helpers/writeByPath.mjs"
     },
+    "./createStore/hooks/shared": {
+      "types": "./dist/createStore/hooks/shared.d.ts",
+      "import": "./dist/createStore/hooks/shared.mjs"
+    },
+    "./createStore/hooks/useStore": {
+      "types": "./dist/createStore/hooks/useStore.d.ts",
+      "import": "./dist/createStore/hooks/useStore.mjs"
+    },
+    "./createStore/hooks/useStoreGetter": {
+      "types": "./dist/createStore/hooks/useStoreGetter.d.ts",
+      "import": "./dist/createStore/hooks/useStoreGetter.mjs"
+    },
+    "./createStore/hooks/useStoreSetter": {
+      "types": "./dist/createStore/hooks/useStoreSetter.d.ts",
+      "import": "./dist/createStore/hooks/useStoreSetter.mjs"
+    },
+    "./createStore/hooks/useStoreSync": {
+      "types": "./dist/createStore/hooks/useStoreSync.d.ts",
+      "import": "./dist/createStore/hooks/useStoreSync.mjs"
+    },
     "./createStore/index": {
       "types": "./dist/createStore/index.d.ts",
       "import": "./dist/createStore/index.mjs"
@@ -116,6 +144,10 @@
     "./derived/createDerived": {
       "types": "./dist/derived/createDerived.d.ts",
       "import": "./dist/derived/createDerived.mjs"
+    },
+    "./derived/hooks/useDerived": {
+      "types": "./dist/derived/hooks/useDerived.d.ts",
+      "import": "./dist/derived/hooks/useDerived.mjs"
     },
     "./derived/index": {
       "types": "./dist/derived/index.d.ts",
@@ -168,6 +200,10 @@
     "./history/createStoreHistory": {
       "types": "./dist/history/createStoreHistory.d.ts",
       "import": "./dist/history/createStoreHistory.mjs"
+    },
+    "./history/hooks/useStoreHistory": {
+      "types": "./dist/history/hooks/useStoreHistory.d.ts",
+      "import": "./dist/history/hooks/useStoreHistory.mjs"
     },
     "./history/index": {
       "types": "./dist/history/index.d.ts",

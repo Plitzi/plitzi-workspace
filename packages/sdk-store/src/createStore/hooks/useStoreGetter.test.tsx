@@ -2,11 +2,11 @@ import { renderHook, act } from '@testing-library/react';
 import { createElement, useCallback } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
-import createStore, { createStoreHook } from '../createStore';
+import createStore, { createStoreHook } from '..';
 import useStoreGetter from './useStoreGetter';
-import { StoreContext } from '../StoreProvider';
+import { StoreContext } from '../../StoreProvider';
 
-import type { StoreApi, StoreApiInternal } from '../types';
+import type { StoreApi, StoreApiInternal } from '../../types';
 import type { ReactNode } from 'react';
 
 type AppState = {

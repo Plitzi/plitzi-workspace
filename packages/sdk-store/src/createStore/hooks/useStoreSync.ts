@@ -3,8 +3,8 @@
 import { useRef } from 'react';
 
 import { useResolvedStore } from './shared';
-import shallowEqual from '../helpers/shallowEqual';
-import useIsomorphicLayoutEffect from '../helpers/useIsomorphicLayoutEffect';
+import shallowEqual from '../../helpers/shallowEqual';
+import useIsomorphicLayoutEffect from '../../helpers/useIsomorphicLayoutEffect';
 
 import type {
   PathOf,
@@ -14,7 +14,7 @@ import type {
   StoreApi,
   UseStoreSyncMultiOptions,
   UseStoreSyncOptions
-} from '../types';
+} from '../../types';
 
 export type { UseStoreSyncOptions, UseStoreSyncMultiOptions };
 

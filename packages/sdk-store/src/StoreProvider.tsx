@@ -4,7 +4,7 @@
 import { createContext, use, useEffect, useMemo, useRef } from 'react';
 
 import createStore from './createStore';
-import useStoreSync from './hooks/useStoreSync';
+import useStoreSync from './createStore/hooks/useStoreSync';
 import { StoreContext } from './StoreContext';
 
 import type { StoreApi, StoreMiddleware } from './types';

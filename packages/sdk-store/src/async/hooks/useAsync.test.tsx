@@ -2,12 +2,12 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import { Component, Suspense, createElement } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
-import { createAsync } from './createAsync';
+import { createAsync } from '../createAsync';
 import { useAsync } from './useAsync';
 import { useAsyncValue } from './useAsyncValue';
-import createStore from '../createStore/createStore';
+import createStore from '../../createStore/createStore';
 
-import type { AsyncResource } from './createAsync';
+import type { AsyncResource } from '../createAsync';
 import type { ReactNode } from 'react';
 
 type State = { value: number };

@@ -5,9 +5,9 @@ import { createElement } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import createStore, { createStoreHook } from './createStore';
+import useStore from './createStore/hooks/useStore';
 import getByPath from './helpers/getByPath';
 import setByPath from './helpers/setByPath';
-import useStore from './hooks/useStore';
 import { logger as loggerMiddleware } from './middleware/logger';
 import { StoreContext } from './StoreProvider';
 

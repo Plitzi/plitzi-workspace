@@ -1,6 +1,6 @@
 import { useAsync } from './useAsync';
 
-import type { AsyncResource } from './createAsync';
+import type { AsyncResource } from '../createAsync';
 
 // Suspense-friendly read: throws the in-flight promise while pending (the component suspends) and re-throws the
 // error on failure (an error boundary catches it). Once resolved it returns the value — same reference the store

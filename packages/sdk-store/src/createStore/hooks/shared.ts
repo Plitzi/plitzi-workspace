@@ -4,10 +4,10 @@
 
 import { use, useCallback, useMemo, useSyncExternalStore } from 'react';
 
-import getByPath from '../helpers/getByPath';
-import { StoreContext } from '../StoreContext';
+import getByPath from '../../helpers/getByPath';
+import { StoreContext } from '../../StoreContext';
 
-import type { PathOf, PathOrFn, StoreApi, SyncMode } from '../types';
+import type { PathOf, PathOrFn, StoreApi, SyncMode } from '../../types';
 import type { RefObject } from 'react';
 
 export const defaultMultiEqualityFn = (a: unknown[], b: unknown[]): boolean => {

@@ -1,5 +1,5 @@
 import createStore from './createStore';
-import useStoreSetter from './hooks/useStoreSetter';
+import useStoreSetter from './createStore/hooks/useStoreSetter';
 import StoreProvider from './StoreProvider';
 
 export * from './async';
@@ -9,7 +9,7 @@ export * from './entities';
 export * from './history';
 export * from './middleware';
 export * from './StoreProvider';
-export * from './hooks/useStoreSetter';
+export * from './createStore/hooks/useStoreSetter';
 export * from './types';
 
 export { createStore, StoreProvider, useStoreSetter };

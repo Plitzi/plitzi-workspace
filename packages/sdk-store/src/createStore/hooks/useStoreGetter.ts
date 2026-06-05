@@ -5,7 +5,7 @@
 import { useMemo } from 'react';
 
 import { useResolvedStore } from './shared';
-import getByPath from '../helpers/getByPath';
+import getByPath from '../../helpers/getByPath';
 
 import type {
   GetterTuple,
@@ -15,7 +15,7 @@ import type {
   PathOf,
   PathValue,
   UseStoreGetterOptions
-} from '../types';
+} from '../../types';
 
 export type { GetValueFn, GetValueFromBaseFn, GetValueFromBaseWithDefaultFn, GetterTuple, UseStoreGetterOptions };
 

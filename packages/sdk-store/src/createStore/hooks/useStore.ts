@@ -11,7 +11,7 @@ import {
   useMultiSubscribe,
   useResolvedStore
 } from './shared';
-import shallowEqual from '../helpers/shallowEqual';
+import shallowEqual from '../../helpers/shallowEqual';
 
 import type {
   __NoDefault,
@@ -29,7 +29,7 @@ import type {
   UseStoreMultiOptions,
   UseStoreOptions,
   UseStoreReturn
-} from '../types';
+} from '../../types';
 
 export { defaultMultiEqualityFn } from './shared';
 export type { MultiPathReturn, UseStoreOptions, UseStoreMultiOptions, UseStoreReturn };

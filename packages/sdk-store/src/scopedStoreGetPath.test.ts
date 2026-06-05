@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import createStore from './createStore';
-import { makeSingleSnapshot } from './hooks/shared';
+import { makeSingleSnapshot } from './createStore/hooks/shared';
 
 import type { StoreApiInternal } from './types';
 

@@ -5,7 +5,7 @@ import { useCallback } from 'react';
 
 import { useResolvedStore } from './shared';
 
-import type { PathOf, PathValue, SetFromBaseFn, SetStateFn, UseStoreSetterOptions } from '../types';
+import type { PathOf, PathValue, SetFromBaseFn, SetStateFn, UseStoreSetterOptions } from '../../types';
 
 export type { SetFromBaseFn, SetStateFn, UseStoreSetterOptions };
 
