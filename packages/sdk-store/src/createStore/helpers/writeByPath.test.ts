@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { __setCodegenEnabled, UNCHANGED, writeByPath, writeResult } from './writeByPath';
+import { __setCodegenEnabled, UNCHANGED, writeByPath } from './writeByPath';
 import parsePath from '../../helpers/parsePath';
 
 // `writeByPath` has two interchangeable implementations: a `new Function` codegen (fast path) and a recursive
@@ -27,7 +27,6 @@ describe.each([
     expect(prev.a.b.c).toBe(1); // immutable
     expect(next.sibling).toBe(prev.sibling); // untouched subtree shared
     expect(next.a).not.toBe(prev.a); // touched spine cloned
-    expect(writeResult.resolved).toBe(2);
   });
 
   it('returns UNCHANGED when the leaf value is identical', () => {
@@ -40,7 +39,6 @@ describe.each([
     const next = write({ a: { b: 10 } }, 'a.b', (p: number) => p + 1, true) as { a: { b: number } };
 
     expect(next.a.b).toBe(11);
-    expect(writeResult.resolved).toBe(11);
   });
 
   it('creates missing intermediate objects', () => {

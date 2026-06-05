@@ -1,6 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { Component, Suspense, createElement } from 'react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 import { createAsync } from './createAsync';
 import { useAsync } from './useAsync';
@@ -61,8 +61,8 @@ describe('useAsync', () => {
     render(createElement(StatusView, { resource }));
     expect(screen.getByText('idle:0')).toBeTruthy();
 
-    void resource.run(10);
-    await waitFor(() => expect(screen.getByText('success:20')).toBeTruthy());
+    await act(() => resource.run(10));
+    expect(screen.getByText('success:20')).toBeTruthy();
   });
 });
 
@@ -90,6 +90,9 @@ describe('useAsyncValue', () => {
     const gate = deferred<number>();
     const resource = createAsync(store, 'value', () => gate.promise, { immediate: [] });
 
+    // React logs caught boundary errors to console.error; the failure here is expected, so keep it out of the output.
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
     render(
       createElement(
         Boundary,
@@ -104,5 +107,7 @@ describe('useAsyncValue', () => {
 
     gate.reject(new Error('failed'));
     await waitFor(() => expect(screen.getByText('error:failed')).toBeTruthy());
+
+    consoleError.mockRestore();
   });
 });

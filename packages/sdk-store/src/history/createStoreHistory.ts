@@ -67,10 +67,9 @@ export type StoreHistoryOptions = {
   shouldRecord?: (changedPath: Path | undefined) => boolean;
 };
 
-// Records store snapshots for an action log + time-travel, riding the store's `subscribeChange` substrate (the same
-// one logger and persist use). Time-travel restores a snapshot via a full-state replace. Note: it reliably restores
-// state the store OWNS (e.g. builder edits); slices continuously re-synced from external sources via `useStoreSync`
-// (e.g. `runtime.*`) reconcile to their live value on the next render.
+// Records store snapshots for an action log + time-travel on the `subscribeChange` substrate (shared with logger and
+// persist). Time-travel restores via a full-state replace — reliable for state the store OWNS; slices re-synced from
+// outside via `useStoreSync` reconcile to their live value on the next render.
 export function createStoreHistory<TState extends object>(
   store: StoreApi<TState>,
   options: StoreHistoryOptions = {}
@@ -113,9 +112,8 @@ export function createStoreHistory<TState extends object>(
     const prevState = base[base.length - 1].state;
     const newState = store.getState();
 
-    // Producers sync whole slices (e.g. `useStoreSync('schema', …)`), so `changedPath` is coarse. Refine it to the
-    // exact leaf that changed (and capture its new value) for a meaningful action log. Best-effort: the diff must
-    // never break recording, so any failure (deep/odd state) falls back to the coarse path.
+    // `changedPath` can be coarse (a whole-slice sync). Refine it to the exact changed leaf for the action log;
+    // best-effort, so any diff failure falls back to the coarse path rather than dropping the record.
     let path = changedPath ?? rootPath;
     let value: unknown;
     const diffPath = (changedPath ?? rootPath) as PathOf<TState> | undefined;
@@ -144,8 +142,7 @@ export function createStoreHistory<TState extends object>(
 
     const restored = entries[target].state;
     traveling = true;
-    // Function form forces a replace (the object form would merge over the current state). When scoped to a
-    // root path, restore only that subtree and leave the rest of the store as-is.
+    // Function form forces a replace (object form would merge). Scoped history restores only its subtree.
     if (rootPath) {
       const subtree = getByPath(restored, rootPath as PathOf<TState>);
       store.setState(rootPath as PathOf<TState>, () => subtree as never);

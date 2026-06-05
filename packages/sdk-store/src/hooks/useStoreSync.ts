@@ -38,9 +38,12 @@ function useStoreSyncMulti<TState extends object>(
 
   const runSync = () => {
     lastSyncedRef.current = values;
-    paths.forEach((p, i) => {
-      const resolvedPath = typeof p === 'function' ? p(store.getState()) : p;
-      store.setState(resolvedPath, values[i] as PathValue<TState, PathOf<TState>>);
+    // One wake pass for the whole multi-path sync instead of one per path.
+    store.batch(() => {
+      paths.forEach((p, i) => {
+        const resolvedPath = typeof p === 'function' ? p(store.getState()) : p;
+        store.setState(resolvedPath, values[i] as PathValue<TState, PathOf<TState>>);
+      });
     });
   };
 
