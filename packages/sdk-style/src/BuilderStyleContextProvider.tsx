@@ -3,9 +3,9 @@ import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMidd
 import React, { useCallback, use, useEffect, useMemo } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import StyleContext from './StyleContext';
 import { makeSelector } from './StyleHelper';

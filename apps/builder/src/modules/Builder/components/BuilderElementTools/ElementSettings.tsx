@@ -9,6 +9,7 @@ import { defaultElementsSettings } from '@plitzi/sdk-elements/elements/settings'
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
@@ -19,7 +20,6 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { ThemeContext } from '@plitzi/sdk-shared/theme';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import AppContext from '@pmodules/App/AppContext';
 
 import type { CommonState, ComponentPlugin } from '@plitzi/sdk-shared';

@@ -1,4 +1,4 @@
-import type { HistoryEntry } from '@plitzi/sdk-store/history';
+import type { HistoryEntry } from '@plitzi/nexus/history';
 
 export const formatTime = (timestamp: number) =>
   new Date(timestamp).toLocaleTimeString(undefined, { hour12: false }) +

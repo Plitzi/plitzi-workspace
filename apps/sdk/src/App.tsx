@@ -1,5 +1,7 @@
 import { ApolloProvider } from '@apollo/client/react';
 import { HelmetProvider } from '@dr.pogodin/react-helmet';
+import { historyMiddleware as historyMw, loggerMiddleware as loggerMw } from '@plitzi/nexus';
+import StoreProvider from '@plitzi/nexus/StoreProvider';
 import { buttonTheme } from '@plitzi/plitzi-ui/Button';
 import { containerCollapsableTheme } from '@plitzi/plitzi-ui/ContainerCollapsable';
 import { containerResizableTheme } from '@plitzi/plitzi-ui/ContainerResizable';
@@ -25,8 +27,6 @@ import SdkPlugin from '@modules/Sdk/SdkPlugin';
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
 import { createStoreDevToolsLogger, ThemeProvider, type SdkState } from '@plitzi/sdk-shared';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
-import { historyMiddleware as historyMw, loggerMiddleware as loggerMw } from '@plitzi/sdk-store';
-import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 
 import { getEnvironmentServer } from './config';
 

@@ -2,10 +2,10 @@ import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import { useCallback, useMemo, useState, use } from 'react';
 
+import { loggerMiddleware as loggerMw } from '@plitzi/nexus';
+import StoreProvider from '@plitzi/nexus/StoreProvider';
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
-import { loggerMiddleware as loggerMw } from '@plitzi/sdk-store';
-import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
 

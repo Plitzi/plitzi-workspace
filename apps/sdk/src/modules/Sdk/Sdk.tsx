@@ -1,3 +1,4 @@
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { use, useMemo, useRef, useCallback } from 'react';
 
@@ -12,7 +13,6 @@ import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import RscProvider from '@plitzi/sdk-shared/server/rsc/RscProvider';
 import { ThemeContext } from '@plitzi/sdk-shared/theme';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 

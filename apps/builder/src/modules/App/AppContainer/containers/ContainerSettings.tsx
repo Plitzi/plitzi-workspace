@@ -7,7 +7,7 @@ import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, use, useState } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
+import { createStoreHook } from '@plitzi/nexus/createStore';
 
 import type { BuilderState } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';

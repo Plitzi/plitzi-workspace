@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { useMemo } from 'react';
 
-import StoreProvider from '@plitzi/sdk-store/StoreProvider';
+import StoreProvider from '@plitzi/nexus/StoreProvider';
 
 import ReplicaProvider from '../../../../../Element/ReplicaProvider';
 

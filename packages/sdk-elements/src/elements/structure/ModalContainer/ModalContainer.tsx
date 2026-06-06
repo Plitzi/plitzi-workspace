@@ -2,11 +2,11 @@
 import clsx from 'clsx';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
+import StoreProvider from '@plitzi/nexus/StoreProvider';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';

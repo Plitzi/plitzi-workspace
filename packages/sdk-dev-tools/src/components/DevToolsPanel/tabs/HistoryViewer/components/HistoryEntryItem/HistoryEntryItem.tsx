@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { formatTime, previewValue } from '../../helpers';
 
-import type { Path } from '@plitzi/sdk-store';
+import type { Path } from '@plitzi/nexus';
 
 export type HistoryEntryItemProps = {
   index: number;

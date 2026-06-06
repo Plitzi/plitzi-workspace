@@ -3700,6 +3700,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@plitzi/nexus@workspace:*, @plitzi/nexus@workspace:packages/nexus":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/nexus@workspace:packages/nexus"
+  dependencies:
+    eslint: "npm:^9.39.4"
+    react: "npm:^19.2.6"
+    react-dom: "npm:^19.2.6"
+    typescript: "npm:^6.0.3"
+    vite: "npm:^8.0.14"
+    vitest: "npm:^4.1.7"
+  peerDependencies:
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
+  languageName: unknown
+  linkType: soft
+
 "@plitzi/plitzi-builder@workspace:apps/builder":
   version: 0.0.0-use.local
   resolution: "@plitzi/plitzi-builder@workspace:apps/builder"
@@ -3716,6 +3732,7 @@ __metadata:
     "@babel/preset-env": "npm:^7.29.7"
     "@babel/preset-react": "npm:^7.29.7"
     "@fortawesome/fontawesome-free": "npm:^7.2.0"
+    "@plitzi/nexus": "workspace:*"
     "@plitzi/plitzi-sdk": "workspace:*"
     "@plitzi/plitzi-ui": "npm:^1.6.9"
     "@plitzi/sdk-auth": "workspace:*"
@@ -3729,7 +3746,6 @@ __metadata:
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@plitzi/sdk-state": "workspace:*"
-    "@plitzi/sdk-store": "workspace:*"
     "@plitzi/sdk-style": "workspace:*"
     "@plitzi/sdk-variables": "workspace:*"
     "@tailwindcss/postcss": "npm:^4.3.0"
@@ -3801,6 +3817,7 @@ __metadata:
     "@babel/preset-typescript": "npm:^7.29.7"
     "@dr.pogodin/react-helmet": "npm:^3.2.2"
     "@fortawesome/fontawesome-free": "npm:^7.2.0"
+    "@plitzi/nexus": "workspace:*"
     "@plitzi/plitzi-ui": "npm:^1.6.9"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-collections": "workspace:*"
@@ -3813,7 +3830,6 @@ __metadata:
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@plitzi/sdk-state": "workspace:*"
-    "@plitzi/sdk-store": "workspace:*"
     "@plitzi/sdk-style": "workspace:*"
     "@plitzi/sdk-variables": "workspace:*"
     "@rollup/plugin-commonjs": "npm:^29.0.2"
@@ -3948,11 +3964,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-dev-tools@workspace:packages/sdk-dev-tools"
   dependencies:
+    "@plitzi/nexus": "workspace:*"
     "@plitzi/plitzi-ui": "npm:^1.6.9"
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
-    "@plitzi/sdk-store": "workspace:*"
     "@plitzi/sdk-style": "workspace:*"
     "@uiw/react-json-view": "npm:^2.0.0-alpha.43"
     clsx: "npm:^2.1.1"
@@ -3971,6 +3987,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-elements@workspace:packages/sdk-elements"
   dependencies:
+    "@plitzi/nexus": "workspace:*"
     "@plitzi/plitzi-ui": "npm:^1.6.9"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
@@ -3980,7 +3997,6 @@ __metadata:
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@plitzi/sdk-state": "workspace:*"
-    "@plitzi/sdk-store": "workspace:*"
     clsx: "npm:^2.1.1"
     eslint: "npm:^9.39.4"
     immer: "npm:^11.1.8"
@@ -4111,8 +4127,8 @@ __metadata:
     "@babel/preset-env": "npm:^7.29.7"
     "@eslint/js": "npm:^10.0.1"
     "@modelcontextprotocol/sdk": "npm:^1.29.0"
+    "@plitzi/nexus": "workspace:*"
     "@plitzi/plitzi-ui": "npm:^1.6.9"
-    "@plitzi/sdk-store": "workspace:*"
     "@tailwindcss/forms": "npm:^0.5.11"
     "@testing-library/dom": "npm:^10.4.1"
     "@testing-library/react": "npm:^16.3.2"
@@ -4169,29 +4185,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-state@workspace:packages/sdk-state"
   dependencies:
+    "@plitzi/nexus": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
-    "@plitzi/sdk-store": "workspace:*"
     eslint: "npm:^9.39.4"
     immer: "npm:^11.1.8"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.0.14"
-  languageName: unknown
-  linkType: soft
-
-"@plitzi/sdk-store@workspace:*, @plitzi/sdk-store@workspace:packages/sdk-store":
-  version: 0.0.0-use.local
-  resolution: "@plitzi/sdk-store@workspace:packages/sdk-store"
-  dependencies:
-    eslint: "npm:^9.39.4"
-    react: "npm:^19.2.6"
-    react-dom: "npm:^19.2.6"
-    typescript: "npm:^6.0.3"
-    vite: "npm:^8.0.14"
-    vitest: "npm:^4.1.7"
-  peerDependencies:
-    react: ^18.0.0 || ^19.0.0
-    react-dom: ^18.0.0 || ^19.0.0
   languageName: unknown
   linkType: soft
 

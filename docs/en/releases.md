@@ -36,7 +36,7 @@ Ensures packed `package.json` files do not still contain unresolved `workspace:*
 
 ## Changelogs
 
-Each publishable app/package keeps a `CHANGELOG.md` updated by Changesets (for example `apps/sdk/CHANGELOG.md`, `packages/sdk-store/CHANGELOG.md`).
+Each publishable app/package keeps a `CHANGELOG.md` updated by Changesets (for example `apps/sdk/CHANGELOG.md`, `packages/nexus/CHANGELOG.md`).
 
 ## See also
 

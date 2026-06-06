@@ -1,10 +1,10 @@
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo } from 'react';
 
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import type { SdkState, InteractionCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';

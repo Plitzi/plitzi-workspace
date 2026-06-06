@@ -11,6 +11,7 @@ import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
@@ -19,7 +20,6 @@ import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziService
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';

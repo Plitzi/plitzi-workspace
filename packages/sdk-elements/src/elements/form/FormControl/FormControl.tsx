@@ -3,9 +3,9 @@
 import clsx from 'clsx';
 import { useEffect } from 'react';
 
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import Label from './components/Label';
 import withFieldValue from './hocs/withFieldValue';

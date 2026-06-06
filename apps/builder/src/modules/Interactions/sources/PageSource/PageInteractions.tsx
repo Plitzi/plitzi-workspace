@@ -3,8 +3,8 @@ import { useCallback, use, useMemo } from 'react';
 
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import type { BuilderState, InteractionCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';

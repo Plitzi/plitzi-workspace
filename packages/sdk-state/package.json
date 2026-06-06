@@ -33,9 +33,9 @@
   "type": "module",
   "sideEffects": false,
   "dependencies": {
+    "@plitzi/nexus": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
-    "@plitzi/sdk-store": "workspace:*",
     "immer": "^11.1.8"
   },
   "devDependencies": {

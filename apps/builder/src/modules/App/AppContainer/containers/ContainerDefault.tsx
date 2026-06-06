@@ -1,7 +1,7 @@
 import { PopupSidePanel } from '@plitzi/plitzi-ui/Popup';
 import { useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import Builder from '@pmodules/Builder';
 
 import type { BuilderState } from '@plitzi/sdk-shared';

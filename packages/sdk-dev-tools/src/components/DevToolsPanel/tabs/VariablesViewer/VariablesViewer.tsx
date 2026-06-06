@@ -1,4 +1,4 @@
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
+import { createStoreHook } from '@plitzi/nexus/createStore';
 
 import VariablesList from './VariablesList';
 import VariablesStyleList from './VariablesStyleList';

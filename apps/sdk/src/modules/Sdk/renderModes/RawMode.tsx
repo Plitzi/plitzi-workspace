@@ -1,10 +1,10 @@
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, memo } from 'react';
 
 import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
 import { Page } from '@plitzi/sdk-elements/elements';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import SpaceContainer from '../../Space/SpaceContainer';
 import MadeInPlitzi from '../components/MadeInPlitzi';

@@ -1,9 +1,9 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { isValidElement, use, useMemo, useSyncExternalStore } from 'react';
 
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import { usePlitziServiceContext } from '@plitzi/sdk-shared';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import pluginSelector from '../helpers/pluginSelector';
 import ServerStaticShell from '../ServerStaticShell';

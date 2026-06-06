@@ -2,8 +2,8 @@ import { render } from '@testing-library/react';
 import { createContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
+import StoreProvider from '@plitzi/nexus/StoreProvider';
 import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
-import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 
 import { Link } from './Link';
 

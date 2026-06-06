@@ -3,7 +3,7 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { useCallback, use, memo } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
+import { createStoreHook } from '@plitzi/nexus/createStore';
 
 import type { BuilderState } from '@plitzi/sdk-shared';
 

@@ -4,8 +4,8 @@ import { useState, useMemo } from 'react';
 
 import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import StateManagerContextProvider from '@plitzi/sdk-state/StateManagerContextProvider';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
 
 import AppContainer from './AppContainer';

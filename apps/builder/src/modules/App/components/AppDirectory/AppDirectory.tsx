@@ -2,7 +2,7 @@ import Flex from '@plitzi/plitzi-ui/Flex';
 import { use, useMemo } from 'react';
 
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
+import { createStoreHook } from '@plitzi/nexus/createStore';
 
 import Directory from './Directory';
 import DirectoryHeader from './DirectoryHeader';

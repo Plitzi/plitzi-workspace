@@ -60,11 +60,11 @@ import { BrowserRouter, useLocation } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
+import { historyMiddleware as historyMw, loggerMiddleware as loggerMw } from '@plitzi/nexus';
+import StoreProvider from '@plitzi/nexus/StoreProvider';
 import { createStoreDevToolsLogger, ThemeProvider, type BuilderState } from '@plitzi/sdk-shared';
 import { createStripTypenameLink } from '@plitzi/sdk-shared/helpers/stripTypename';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
-import { historyMiddleware as historyMw, loggerMiddleware as loggerMw } from '@plitzi/sdk-store';
-import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 import AppMain from '@pmodules/App/AppMain';
 import customFetch from '@pmodules/Network/helpers/customFetch';
 

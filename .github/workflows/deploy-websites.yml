@@ -19,7 +19,7 @@ on:
         default: all
         options:
           - all
-          - sdk-store
+          - nexus
 
 permissions:
   contents: read
@@ -74,7 +74,7 @@ jobs:
         run: npm ci
 
       - name: Pin @plitzi packages to the latest published release
-        run: npm install @plitzi/sdk-store@latest --no-save --no-audit --no-fund
+        run: npm install @plitzi/nexus@latest --no-save --no-audit --no-fund
 
       - name: Build against published packages
         env:

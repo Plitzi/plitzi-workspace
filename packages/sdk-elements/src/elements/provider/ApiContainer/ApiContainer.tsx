@@ -5,12 +5,12 @@ import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import clsx from 'clsx';
 import { useCallback, use, useEffect, useMemo } from 'react';
 
+import StoreProvider from '@plitzi/nexus/StoreProvider';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 
 import useApi from './hooks/useApi';
 import withElement from '../../../Element/hocs/withElement';

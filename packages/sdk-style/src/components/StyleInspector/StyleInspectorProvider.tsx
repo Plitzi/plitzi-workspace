@@ -3,9 +3,9 @@
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useMemo } from 'react';
 
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import { baseDefaultValue } from '@plitzi/sdk-shared';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import useStyleBinding from './hooks/useStyleBinding';
 import StyleInspectorContext from './StyleInspectorContext';

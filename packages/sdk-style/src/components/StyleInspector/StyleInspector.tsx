@@ -6,8 +6,8 @@ import { clsx } from 'clsx';
 import { produce } from 'immer';
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
 
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import Selector from '../Selector';
 import Inspector from './Inspector';

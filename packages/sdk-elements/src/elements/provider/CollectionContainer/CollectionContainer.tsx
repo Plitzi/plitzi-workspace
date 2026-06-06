@@ -2,10 +2,10 @@
 import clsx from 'clsx';
 import { useCallback, useMemo } from 'react';
 
+import StoreProvider from '@plitzi/nexus/StoreProvider';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 
 import useCollectionContext from './hooks/useCollectionContext';
 import withElement from '../../../Element/hocs/withElement';
