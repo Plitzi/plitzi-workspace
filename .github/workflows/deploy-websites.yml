@@ -119,6 +119,8 @@ jobs:
           printf '<!doctype html><meta charset="utf-8"><title>Plitzi websites</title><h1>Plitzi websites</h1><ul>\n%b</ul>\n' "$links" > _site/index.html
 
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
