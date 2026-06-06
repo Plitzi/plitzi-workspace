@@ -11,7 +11,8 @@ export function forwardParentChanges<TState extends object>(
   pathListeners: PathTrie,
   changeListeners: Subscribers<ChangeListener<TState>>,
   getState: GetState<TState>,
-  reportError: StoreErrorReporter<TState>
+  reportError: StoreErrorReporter<TState>,
+  invalidate: () => void
 ): { unsubscribe: () => void; seedBaseline: () => void } {
   // The parent has already committed by the time a change forwards, so the pre-change merged state must be captured
   // beforehand. Seeding lazily (only once a change listener exists) keeps getPath-only scopes from ever materializing
@@ -23,6 +24,11 @@ export function forwardParentChanges<TState extends object>(
   };
 
   const unsubscribe = parent.subscribe(changedPath => {
+    // The parent (or an ancestor) committed: invalidate this scope's cached path reads before any listener — which
+    // may read getPath — runs. The cascade reaches deeper scopes through this scope's own listeners below (each
+    // child's forwarder is one of them), so a propagating change needs no extra downward signal.
+    invalidate();
+
     const path = changedPath as PathOf<TState> | undefined;
     listeners.forEach(
       listener => listener(changedPath),

@@ -1,3 +1,5 @@
+import { createObservable } from '../helpers/createObservable';
+
 import type { PathOf, PathValues, StoreApi } from '../types';
 
 export type Derived<R> = {
@@ -22,48 +24,38 @@ export function createDerived<TState extends object, const Paths extends readonl
   options: DerivedOptions<R> = {}
 ): Derived<R> {
   const equalityFn = options.equalityFn ?? Object.is;
-  const listeners = new Set<() => void>();
-
-  let value: R;
-  let computed = false;
-
-  const recompute = (): R => {
-    value = compute(deps.map(path => store.getPath(path)) as PathValues<TState, Paths>);
-    computed = true;
-
-    return value;
-  };
-
-  const get = (): R => (computed ? value : recompute());
+  const observable = createObservable<R>(() =>
+    compute(deps.map(path => store.getPath(path)) as PathValues<TState, Paths>)
+  );
 
   const onDependencyChange = (): void => {
     // With no subscribers, just invalidate and recompute on the next `get`. Otherwise recompute now to learn whether
     // the result changed, and wake subscribers only if it did.
-    if (listeners.size === 0) {
-      computed = false;
+    if (!observable.hasListeners()) {
+      observable.invalidate();
 
       return;
     }
 
-    const prev = value;
-    if (!equalityFn(prev, recompute())) {
-      listeners.forEach(listener => listener());
+    const prev = observable.get();
+    observable.invalidate();
+    if (!equalityFn(prev, observable.get())) {
+      observable.notify();
     }
   };
 
   const unsubscribes = deps.map(path => store.subscribePath(path, onDependencyChange));
 
   return {
-    get,
+    get: observable.get,
     subscribe: listener => {
-      get();
-      listeners.add(listener);
+      observable.get();
 
-      return () => listeners.delete(listener);
+      return observable.subscribe(listener);
     },
     destroy: () => {
       unsubscribes.forEach(unsubscribe => unsubscribe());
-      listeners.clear();
+      observable.destroy();
     }
   };
 }

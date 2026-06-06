@@ -9,7 +9,9 @@
     "build:published": "tsc --noEmit -p tsconfig.publish.json && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "bench": "vite-node src/components/Benchmark/bench/cli.ts"
+    "bench": "vite-node src/components/Benchmark/bench/cli.ts",
+    "bench:nested": "vite-node src/components/Benchmark/bench/nestedCli.ts",
+    "bench:react": "vite-node src/components/Benchmark/bench/reactCli.ts"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.12.0",

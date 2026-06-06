@@ -2,11 +2,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 
-import { createGetPath } from './helpers/createGetPath';
-import { createGetState } from './helpers/createGetState';
+import { createChainReads } from './helpers/createChainReads';
 import { createSetState } from './helpers/createSetState';
 import { forwardParentChanges } from './helpers/forwardParentChanges';
 import PathTrie from './helpers/PathTrie';
+import { createScopeClaims } from './helpers/scopeCollisions';
 import Subscribers from './helpers/Subscribers';
 import useStoreBase from './hooks/useStore';
 import useStoreGetterBase from './hooks/useStoreGetter';
@@ -47,6 +47,13 @@ import type {
   UseStoreSyncOptions,
   WriteInterceptor
 } from '../types';
+import type { ScopeClaims } from './helpers/scopeCollisions';
+
+// Identifies each scope for dev-only sibling-collision detection.
+let scopeIdSeq = 0;
+
+// A parent exposes its claims registry to children through this dev-only shape (kept off the public StoreApi).
+type WithScopeClaims = { scopeClaims?: ScopeClaims };
 
 function createStore<TState extends object>(
   initializer: Partial<TState> | ((set: SetState<TState>, get: GetState<TState>) => Partial<TState>),
@@ -60,9 +67,16 @@ function createStore<TState extends object>(
   const listeners = new Subscribers<Listener>();
   const changeListeners = new Subscribers<ChangeListener<TState>>();
   const pathListeners = new PathTrie();
+  // Scoped children register here to be told of this store's silent (`canPropagate: false`) commits, which skip the
+  // normal subscriber wakes. The event only invalidates cached reads downstream; it never re-renders anyone.
+  const invalidateListeners = new Subscribers<() => void>();
+  const invalidateDescendants = (): void => {
+    invalidateListeners.forEach(cb => cb());
+  };
   const interceptors: WriteInterceptor<TState>[] = [];
   const errorHandlers: StoreErrorHandler<TState>[] = [];
   const parent = storeOptions?.parent;
+  const scopeId = ++scopeIdSeq;
 
   // A middleware handler or subscriber that throws is routed here: to every `onError` handler (a logger records it),
   // or re-thrown when none are registered so the failure is never silently swallowed.
@@ -80,17 +94,28 @@ function createStore<TState extends object>(
   const getOwnState = () => state;
   const getOwnSnapshot = (): TState => (ownSnapshot ??= { ...state });
 
-  const { getState, getMergeCount } = createGetState<TState>(getOwnSnapshot, parent);
-  const getPath = createGetPath<TState>(getOwnState, parent, getState);
+  const {
+    getState,
+    getPath,
+    invalidate: invalidateReads,
+    setActive: setReadCacheActive,
+    getMergeCount
+  } = createChainReads<TState>(getOwnState, getOwnSnapshot, parent);
+  // A scoped store starts detached (no subscribers yet) — so its read caches are inactive until it attaches.
+  if (parent) {
+    setReadCacheActive(false);
+  }
   const { setState, batch } = createSetState<TState>({
     getOwnState,
     getOwnSnapshot,
     setOwnState: next => {
       state = next;
       ownSnapshot = undefined;
+      invalidateReads();
     },
     mutateOwnKey: (key, value) => {
       (state as Record<string, unknown>)[key] = value;
+      invalidateReads();
       ownSnapshot = undefined;
     },
     parent,
@@ -98,42 +123,123 @@ function createStore<TState extends object>(
     pathListeners,
     changeListeners,
     interceptors,
-    reportError
+    reportError,
+    invalidateDescendants,
+    onDelegateToParent:
+      import.meta.env.MODE !== 'production' && parent
+        ? path => (parent as WithScopeClaims).scopeClaims?.claimDelegatedWrite(path, scopeId)
+        : undefined
   });
 
-  const subscribe = (listener: Listener) => listeners.add(listener);
-  const subscribeChange = (listener: ChangeListener<TState>) => {
-    // Capturing the pre-change merged baseline only when a change listener actually exists keeps getPath-only
-    // scopes from ever materializing the full merge.
-    forwarder?.seedBaseline();
-
-    return changeListeners.add(listener);
+  // A silent ancestor commit can't reach us through `subscribe`, so the parent tells us directly: invalidate our
+  // cached reads and relay the event to our own scoped children.
+  const onSilentAncestorChange = (): void => {
+    invalidateReads();
+    invalidateDescendants();
   };
-  const subscribePath = <P extends PathOf<TState>>(path: P, listener: Listener) => pathListeners.add(path, listener);
 
-  state = (typeof initializer === 'function' ? initializer(setState, getState) : initializer) as TState;
+  // Lazy attachment: a scoped store only subscribes to its parent's changes while something actually watches them.
+  // A child's forwarder is itself a `parent.subscribe`, so it shows up in `listeners` — meaning a non-empty
+  // `listeners`/`pathListeners`/`changeListeners` already captures "a direct subscriber, or a descendant via its
+  // forwarder". Attaching/detaching on that boolean therefore connects exactly the branches from a subscriber up to
+  // the root, and a write cascades only down those (O(depth-to-subscriber)) instead of every scope (O(total)). The
+  // root has no parent and is never attached.
+  let forwarder: { unsubscribe: () => void; seedBaseline: () => void } | undefined;
+  let invalidateUnsub: (() => void) | undefined;
+  // `destroy()` tears the scope down for good — it won't silently re-attach on a later subscribe; only `reconnect()`
+  // (the StrictMode remount path) revives it.
+  let destroyed = false;
 
-  // Detaching this handle on `destroy()` stops the parent from holding this scope's forwarder forever (a leak for
-  // short-lived scopes). `reconnect` re-attaches it after the destroy → remount cycle React StrictMode simulates.
-  let forwarder = parent
-    ? forwardParentChanges(parent, listeners, pathListeners, changeListeners, getState, reportError)
-    : undefined;
+  const hasInterest = (): boolean => listeners.length > 0 || pathListeners.size > 0 || changeListeners.length > 0;
 
-  const reconnect = () => {
-    if (parent && !forwarder) {
-      forwarder = forwardParentChanges(parent, listeners, pathListeners, changeListeners, getState, reportError);
-      if (changeListeners.length > 0) {
-        forwarder.seedBaseline();
-      }
+  const attach = (): void => {
+    if (forwarder || !parent) {
+      return;
+    }
+
+    // The parent may have changed while detached, so invalidate cached reads and resume caching on attach.
+    invalidateReads();
+    setReadCacheActive(true);
+    forwarder = forwardParentChanges(
+      parent,
+      listeners,
+      pathListeners,
+      changeListeners,
+      getState,
+      reportError,
+      invalidateReads
+    );
+    invalidateUnsub = parent.subscribeInvalidate?.(onSilentAncestorChange);
+    if (changeListeners.length > 0) {
+      forwarder.seedBaseline();
     }
   };
 
-  const destroy = () => {
-    forwarder?.unsubscribe();
+  const detach = (): void => {
+    if (!forwarder) {
+      return;
+    }
+
+    forwarder.unsubscribe();
     forwarder = undefined;
+    invalidateUnsub?.();
+    invalidateUnsub = undefined;
+    setReadCacheActive(false);
+  };
+
+  // Re-evaluated whenever a subscriber is added or removed. Because a child's forwarder is a `parent.subscribe`,
+  // (de)attaching here ripples up the chain through each parent's own `subscribe`/unsubscribe automatically.
+  const syncAttachment = (): void => {
+    if (!parent) {
+      return;
+    }
+
+    if (!destroyed && hasInterest()) {
+      attach();
+    } else {
+      detach();
+    }
+  };
+
+  // Every subscription drives lazy attachment: adding the first subscriber attaches this scope to its parent, and
+  // removing the last detaches it (see `syncAttachment`). `tracked` wraps a raw unsubscribe with that bookkeeping.
+  const tracked = (unsubscribe: () => void): (() => void) => {
+    syncAttachment();
+
+    return () => {
+      unsubscribe();
+      syncAttachment();
+    };
+  };
+
+  const subscribe = (listener: Listener) => tracked(listeners.add(listener));
+  const subscribePath = <P extends PathOf<TState>>(path: P, listener: Listener) =>
+    tracked(pathListeners.add(path, listener));
+  const subscribeChange = (listener: ChangeListener<TState>) => {
+    const untrack = tracked(changeListeners.add(listener));
+    // Capturing the pre-change merged baseline only when a change listener actually exists keeps getPath-only scopes
+    // from ever materializing the full merge.
+    forwarder?.seedBaseline();
+
+    return untrack;
+  };
+
+  state = (typeof initializer === 'function' ? initializer(setState, getState) : initializer) as TState;
+
+  // `reconnect` re-attaches after the destroy → remount cycle React StrictMode simulates: it just re-evaluates
+  // interest, since the remounted consumers re-subscribe and drive attachment.
+  const reconnect = () => {
+    destroyed = false;
+    syncAttachment();
+  };
+
+  const destroy = () => {
+    destroyed = true;
+    detach();
     listeners.clear();
     pathListeners.clear();
     changeListeners.clear();
+    invalidateListeners.clear();
   };
 
   const api: StoreApi<TState> = {
@@ -145,7 +251,8 @@ function createStore<TState extends object>(
     subscribePath,
     subscribeChange,
     destroy,
-    reconnect
+    reconnect,
+    subscribeInvalidate: listener => invalidateListeners.add(listener)
   };
 
   // Middlewares (logger, persist, history, custom) all ride the one `subscribeChange` substrate. Their setup runs
@@ -167,6 +274,12 @@ function createStore<TState extends object>(
         errorHandlers.push(handlers.onError);
       }
     }
+  }
+
+  // Dev-only sibling-collision detection: expose this scope's claims registry so its children can report the unowned
+  // paths they delegate up, flagging two siblings that clobber the same parent path. Stripped in production.
+  if (import.meta.env.MODE !== 'production') {
+    (api as WithScopeClaims).scopeClaims = createScopeClaims();
   }
 
   if (import.meta.env.MODE === 'test') {

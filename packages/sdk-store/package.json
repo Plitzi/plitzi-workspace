@@ -82,6 +82,10 @@
       "types": "./dist/createStore/helpers/Subscribers.d.ts",
       "import": "./dist/createStore/helpers/Subscribers.mjs"
     },
+    "./createStore/helpers/createChainReads": {
+      "types": "./dist/createStore/helpers/createChainReads.d.ts",
+      "import": "./dist/createStore/helpers/createChainReads.mjs"
+    },
     "./createStore/helpers/createGetPath": {
       "types": "./dist/createStore/helpers/createGetPath.d.ts",
       "import": "./dist/createStore/helpers/createGetPath.mjs"
@@ -101,6 +105,10 @@
     "./createStore/helpers/forwardParentChanges": {
       "types": "./dist/createStore/helpers/forwardParentChanges.d.ts",
       "import": "./dist/createStore/helpers/forwardParentChanges.mjs"
+    },
+    "./createStore/helpers/scopeCollisions": {
+      "types": "./dist/createStore/helpers/scopeCollisions.d.ts",
+      "import": "./dist/createStore/helpers/scopeCollisions.mjs"
     },
     "./createStore/helpers/writeByPath": {
       "types": "./dist/createStore/helpers/writeByPath.d.ts",
@@ -157,6 +165,10 @@
     "./entities/index": {
       "types": "./dist/entities/index.d.ts",
       "import": "./dist/entities/index.mjs"
+    },
+    "./helpers/createObservable": {
+      "types": "./dist/helpers/createObservable.d.ts",
+      "import": "./dist/helpers/createObservable.mjs"
     },
     "./helpers/getByPath": {
       "types": "./dist/helpers/getByPath.d.ts",

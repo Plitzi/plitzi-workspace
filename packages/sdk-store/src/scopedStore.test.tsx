@@ -114,14 +114,20 @@ describe('scoped store: live chain (createStore)', () => {
 
   it('unlinks from the parent on destroy', () => {
     const { parent, child } = makeChain();
-    const before = (parent as StoreApiInternal<S>).listeners.length;
+    // A scoped store attaches to its parent lazily — only once it has a subscriber.
+    const detached = (parent as StoreApiInternal<S>).listeners.length;
+    const unsubscribe = child.subscribe(vi.fn());
+    const attached = (parent as StoreApiInternal<S>).listeners.length;
 
+    expect(attached).toBe(detached + 1);
+
+    unsubscribe();
     child.destroy?.();
 
-    expect((parent as StoreApiInternal<S>).listeners.length).toBe(before - 1);
+    expect((parent as StoreApiInternal<S>).listeners.length).toBe(detached);
 
     const listener = vi.fn();
-    child.subscribe(listener);
+    child.subscribe(listener); // does not revive a destroyed scope (only reconnect does)
     parent.setState('a', 123);
 
     expect(listener).not.toHaveBeenCalled();

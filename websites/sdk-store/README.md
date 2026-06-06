@@ -28,13 +28,25 @@ npm run preview  # serve the production build locally
 The store benchmark (same code as the site's "How it compares" section) can run in the terminal:
 
 ```bash
-npm run bench    # vite-node runs the real stores against four workloads and prints a table
+npm run bench         # vite-node runs the real stores against four workloads and prints a table
+npm run bench:nested  # scope-chain scaling: cost of N nested <StoreProvider> scopes by depth
+npm run bench:react   # nested <StoreProvider> vs nested React context (jsdom render benchmark)
 ```
 
-It compares `@plitzi/sdk-store`, Zustand, Jotai and a notify-all baseline across `wide`, `hot`, `nested` and
+`bench` compares `@plitzi/sdk-store`, Zustand, Jotai and a notify-all baseline across `wide`, `hot`, `nested` and
 `churn` scenarios. The per-store implementations live in `src/components/Benchmark/bench/` (one file each:
 `sdkStore.ts`, `zustandStore.ts`, `jotaiStore.ts`, `naiveStore.ts`), composed by `bench/scenarios.ts` and shared
 by both the CLI (`bench/cli.ts`) and the browser widget.
+
+`bench:nested` (`bench/nestedScope.ts` + `bench/nestedCli.ts`) models the case of hundreds/thousands of nested
+providers — a chain of live-scoped stores — and isolates the three depth-dependent costs (leaf reads of an ancestor
+source, root writes that cascade to a deep leaf, and mount), pitting the live chain against disconnected scopes.
+
+`bench:react` (`bench/reactBench.tsx` + `bench/reactCli.ts`) actually renders the deep tree under jsdom three ways —
+nested React context, nested `<StoreProvider inherit="live">`, and disconnected `<StoreProvider>` — and reports
+mount/update time plus how many components re-render per update, the decisive number when replacing nested context.
+It can run thanks to `resolve.dedupe: ['react', 'react-dom']` in `vite.config.ts` (sdk-store source and react-dom
+must share one React copy).
 
 ## Deploy
 

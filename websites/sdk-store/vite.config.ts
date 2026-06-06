@@ -16,9 +16,16 @@ const storeSrc = fileURLToPath(new URL('../../packages/sdk-store/src', import.me
 export default defineConfig({
   base,
   resolve: {
+    // sdk-store source lives outside this app, so without deduping it would import the workspace-root copy of React
+    // while react-dom uses this app's copy — two React instances, null hooks. Force a single copy.
+    dedupe: ['react', 'react-dom'],
     alias: usePublished
       ? []
       : [
+          {
+            find: /^@plitzi\/sdk-store\/createStore\/hooks\/useStore$/,
+            replacement: `${storeSrc}/createStore/hooks/useStore.ts`
+          },
           { find: /^@plitzi\/sdk-store\/history$/, replacement: `${storeSrc}/history/index.ts` },
           { find: /^@plitzi\/sdk-store$/, replacement: `${storeSrc}/index.ts` }
         ]

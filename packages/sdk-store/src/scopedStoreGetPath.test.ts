@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 
 import createStore from './createStore';
 import { makeSingleSnapshot } from './createStore/hooks/shared';
+import { getStoreHistory, historyMiddleware } from './middleware/historyMiddleware';
 
 import type { StoreApiInternal } from './types';
 
@@ -42,6 +43,155 @@ describe('scoped store: getPath resolves a single path through the chain', () =>
     const leaf = createStore<S>({}, { parent: mid });
 
     expect(leaf.getPath('a')).toBe(1);
+  });
+});
+
+describe('scoped store: getPath memoizes fall-through reads and invalidates on change', () => {
+  it('returns a fresh value after an ancestor write (cache invalidated by version)', () => {
+    const parent = createStore<S>({ a: 1, nested: { x: 1, y: 2 } });
+    const child = createStore<S>({}, { parent });
+
+    expect(child.getPath('a')).toBe(1);
+    expect(child.getPath('a')).toBe(1); // served from cache, same value
+
+    parent.setState('a', 7);
+
+    expect(child.getPath('a')).toBe(7);
+  });
+
+  it('returns a fresh value after the scope starts shadowing the path (own write)', () => {
+    const parent = createStore<S>({ a: 1, nested: { x: 1, y: 2 } });
+    const child = createStore<S>({ a: 1 }, { parent });
+
+    expect(child.getPath('a')).toBe(1);
+
+    child.setState('a', 42);
+
+    expect(child.getPath('a')).toBe(42);
+  });
+
+  it('propagates an ancestor write through multiple cached levels', () => {
+    const parent = createStore<S>({ a: 1, nested: { x: 1, y: 2 } });
+    const mid = createStore<S>({}, { parent });
+    const leaf = createStore<S>({}, { parent: mid });
+
+    expect(leaf.getPath('a')).toBe(1);
+    expect(mid.getPath('a')).toBe(1);
+
+    parent.setState('a', 99);
+
+    expect(leaf.getPath('a')).toBe(99);
+    expect(mid.getPath('a')).toBe(99);
+  });
+
+  it('bumps version so a non-propagating ancestor write is still observed on the next read', () => {
+    const parent = createStore<S>({ a: 1, nested: { x: 1, y: 2 } });
+    const child = createStore<S>({}, { parent });
+
+    expect(child.getPath('a')).toBe(1);
+
+    parent.setState('a', 5, false); // canPropagate=false: silent, but the parent's own version still bumps
+
+    expect(child.getPath('a')).toBe(5);
+  });
+
+  it('invalidates a deep leaf after a silent write two levels up (invalidate channel cascades)', () => {
+    const root = createStore<S>({ a: 1, nested: { x: 1, y: 2 } });
+    const mid = createStore<S>({}, { parent: root });
+    const leaf = createStore<S>({}, { parent: mid });
+
+    expect(leaf.getPath('a')).toBe(1);
+
+    root.setState('a', 9, false); // silent: mid's forwarder never fires, the invalidate channel must carry it down
+
+    expect(leaf.getPath('a')).toBe(9);
+  });
+
+  it('reflects parent undo and redo through a live child read', () => {
+    const parent = createStore<S>({ a: 1, nested: { x: 1, y: 2 } }, { middlewares: [historyMiddleware()] });
+    const child = createStore<S>({}, { parent });
+
+    expect(child.getPath('a')).toBe(1);
+    parent.setState('a', 2);
+    parent.setState('a', 3);
+    expect(child.getPath('a')).toBe(3);
+
+    const history = getStoreHistory(parent);
+    history?.undo();
+    expect(child.getPath('a')).toBe(2); // back
+
+    history?.undo();
+    expect(child.getPath('a')).toBe(1);
+
+    history?.redo();
+    expect(child.getPath('a')).toBe(2); // forward
+  });
+
+  it('keeps multiple sibling scopes sharing one parent independently fresh', () => {
+    const parent = createStore<S>({ a: 1, nested: { x: 1, y: 2 } });
+    const first = createStore<S>({}, { parent });
+    const second = createStore<S>({}, { parent });
+
+    expect(first.getPath('a')).toBe(1);
+    expect(second.getPath('a')).toBe(1);
+
+    parent.setState('a', 50);
+
+    expect(first.getPath('a')).toBe(50);
+    expect(second.getPath('a')).toBe(50);
+
+    parent.setState('a', 7, false); // silent reaches every registered sibling
+
+    expect(first.getPath('a')).toBe(7);
+    expect(second.getPath('a')).toBe(7);
+  });
+});
+
+describe('scoped store: dev-only sibling collision detection', () => {
+  const spyOnWarn = () => vi.spyOn(console, 'warn').mockImplementation(() => {});
+  let warn: ReturnType<typeof spyOnWarn>;
+
+  beforeEach(() => {
+    warn = spyOnWarn();
+  });
+
+  afterEach(() => {
+    warn.mockRestore();
+  });
+
+  it('warns when two sibling scopes delegate a write to the same parent path', () => {
+    const parent = createStore<S>({ a: 1, nested: { x: 1, y: 2 } });
+    const first = createStore<S>({}, { parent });
+    const second = createStore<S>({}, { parent });
+
+    first.setState('a', 10); // delegates to parent (not owned locally)
+    expect(warn).not.toHaveBeenCalled();
+
+    second.setState('a', 20); // same delegated path from a different sibling
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"a"'));
+  });
+
+  it('does not warn when one scope delegates the same path repeatedly', () => {
+    const parent = createStore<S>({ a: 1, nested: { x: 1, y: 2 } });
+    const child = createStore<S>({}, { parent });
+
+    child.setState('a', 1);
+    child.setState('a', 2);
+    child.setState('a', 3);
+
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('does not warn when siblings declare the same key but never delegate (the List pattern)', () => {
+    const parent = createStore<S>({ nested: { x: 1, y: 2 } });
+    const first = createStore<S>({ a: 1 }, { parent });
+    const second = createStore<S>({ a: 2 }, { parent });
+
+    first.setState('a', 11); // owned locally — stays in its own scope
+    second.setState('a', 22);
+
+    expect(warn).not.toHaveBeenCalled();
   });
 });
 

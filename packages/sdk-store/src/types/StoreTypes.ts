@@ -164,6 +164,12 @@ export type StoreApi<T> = {
   // attached). Lets a provider survive React StrictMode's mount → unmount → remount, which reuses the store
   // instance: without it, the simulated unmount detaches the live parent link and it is never restored.
   reconnect?: () => void;
+  // Subscribe to cache-invalidation events from this store's silent (`canPropagate: false`) commits. Those writes
+  // deliberately skip subscriber wakes, so a scoped child can't learn of them through `subscribe` — but it must
+  // still invalidate cached reads. The child registers here; the event then cascades down the chain. Propagating
+  // changes need no such channel — they already reach children through `subscribe`. Optional: absent on stores that
+  // predate it, in which case silent ancestor writes simply aren't cache-invalidated downstream.
+  subscribeInvalidate?: (listener: () => void) => () => void;
 };
 
 export type StoreApiInternal<T> = StoreApi<T> & {

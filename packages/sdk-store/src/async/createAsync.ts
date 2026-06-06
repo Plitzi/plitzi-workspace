@@ -1,3 +1,5 @@
+import { createObservable } from '../helpers/createObservable';
+
 import type { PathOf, PathValue, StoreApi } from '../types';
 
 export type AsyncStatus = 'idle' | 'pending' | 'success' | 'error';
@@ -40,30 +42,26 @@ export function createAsync<TState extends object, P extends PathOf<TState>, Arg
 ): AsyncResource<PathValue<TState, P>, Args> {
   type T = PathValue<TState, P>;
 
-  const listeners = new Set<() => void>();
   let status: AsyncStatus = 'idle';
   let error: unknown;
   let current: Promise<T> | undefined;
   let settled: Promise<void> | undefined;
 
-  // `dirty` is raised on any status change or store write to the path; `get` rebuilds the snapshot only then, so it
-  // returns a stable reference between changes and can back `useSyncExternalStore` directly.
-  let dirty = true;
-  let snapshot: AsyncSnapshot<T> | undefined;
+  // The snapshot is rebuilt only when invalidated (a status change or a store write to the path), so `get` returns a
+  // stable reference between changes and can back `useSyncExternalStore` directly.
+  const observable = createObservable<AsyncSnapshot<T>>(() => ({
+    status,
+    data: store.getPath(path),
+    error,
+    isLoading: status === 'pending'
+  }));
 
   const emit = (): void => {
-    dirty = true;
-    listeners.forEach(listener => listener());
+    observable.invalidate();
+    observable.notify();
   };
 
-  const get = (): AsyncSnapshot<T> => {
-    if (dirty || !snapshot) {
-      snapshot = { status, data: store.getPath(path), error, isLoading: status === 'pending' };
-      dirty = false;
-    }
-
-    return snapshot;
-  };
+  const get = observable.get;
 
   const run = (...args: Args): Promise<T> => {
     status = 'pending';
@@ -114,15 +112,11 @@ export function createAsync<TState extends object, P extends PathOf<TState>, Arg
   return {
     get,
     run,
-    subscribe: listener => {
-      listeners.add(listener);
-
-      return () => listeners.delete(listener);
-    },
+    subscribe: observable.subscribe,
     suspend: () => settled,
     destroy: () => {
       unsubscribePath();
-      listeners.clear();
+      observable.destroy();
     }
   };
 }

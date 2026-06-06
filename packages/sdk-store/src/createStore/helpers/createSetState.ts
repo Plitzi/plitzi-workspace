@@ -73,6 +73,12 @@ export type SetStateDeps<TState extends object> = {
   pathListeners: PathTrie;
   interceptors: WriteInterceptor<TState>[];
   reportError: StoreErrorReporter<TState>;
+  // Invalidate scoped descendants' cached reads after a silent (`canPropagate: false`) commit — those writes skip
+  // subscriber wakes, so the change can't reach descendants through `notify`.
+  invalidateDescendants: () => void;
+  // Dev-only: a write this scope doesn't own is delegated to the parent. Reported so sibling scopes delegating the
+  // same path can be flagged. Undefined in production.
+  onDelegateToParent?: (path: string) => void;
 };
 
 export type SetStateApi<TState extends object> = {
@@ -91,7 +97,9 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     pathListeners,
     changeListeners,
     interceptors,
-    reportError
+    reportError,
+    invalidateDescendants,
+    onDelegateToParent
   } = deps;
 
   // Runs interceptors in order, each seeing the previous one's result. Returns the final value, or `CANCEL` if any
@@ -276,6 +284,8 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     }
 
     if (!canPropagate) {
+      invalidateDescendants();
+
       return;
     }
 
@@ -312,6 +322,7 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       const dot = path.indexOf('.');
       const owns = dot === -1 ? Object.hasOwn(prevState, path) : ownsPath(prevState, parsePath(path));
       if (!owns) {
+        onDelegateToParent?.(path);
         parent.setState(path, value as PathValue<TState, P>, canPropagate);
 
         return;
@@ -363,6 +374,8 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
         }
 
         wakeChangedDescendants(path, prevValue, finalValue, path.length + 1);
+      } else {
+        invalidateDescendants();
       }
 
       return;
@@ -403,6 +416,8 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       notify(listeners, path);
       wakeAncestors(path, segments);
       wakeChangedDescendants(path, prevState, nextState, 0);
+    } else {
+      invalidateDescendants();
     }
   };
 

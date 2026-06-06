@@ -1,16 +1,11 @@
 /* eslint-disable no-console */
+import { BOLD, DIM, GREEN, RESET, padStart } from './benchShared';
 import { runBenchmark } from './scenarios';
 
 // Terminal runner for the store benchmark. Run with: `npm run bench` (uses vite-node so the `@plitzi/sdk-store`
 // source alias and import.meta.env resolve exactly like the website does).
 
-const GREEN = '\x1b[32m';
-const DIM = '\x1b[2m';
-const BOLD = '\x1b[1m';
-const RESET = '\x1b[0m';
-
 const padEnd = (value: string, width: number) => value.padEnd(width);
-const padStart = (value: string, width: number) => value.padStart(width);
 
 const reps = Number(process.env.BENCH_REPS) || 9;
 const { scenarios } = runBenchmark(reps);
