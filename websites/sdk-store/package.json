@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "build:published": "tsc --noEmit -p tsconfig.publish.json && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "bench": "vite-node src/components/Benchmark/bench/cli.ts"

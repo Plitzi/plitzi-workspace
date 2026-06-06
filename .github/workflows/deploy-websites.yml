@@ -1,18 +1,25 @@
-# Builds every standalone site under websites/ and deploys them to GitHub Pages on each published release.
+# Builds standalone sites under websites/ and deploys them to GitHub Pages. Manual only: pick a site (or "all") from
+# the run dialog. The build resolves @plitzi packages from the latest published npm release — never the dev symlink —
+# so the public demo reflects exactly what consumers install (set VITE_USE_PUBLISHED=true; the site honors it).
 #
-# GitHub Pages serves a single site per repo, so we can't deploy each website on its own. Instead the `build` job
-# fans out over websites/* with a matrix (built in parallel, each under its own sub-path), and the `deploy` job
-# stitches all the build artifacts into one `_site/` and publishes it once.
+# GitHub Pages serves a single site per repo, so the `deploy` job stitches every built site into one `_site/` and
+# publishes it once. Selecting a single site deploys only that one.
 #
-# Convention for a new site: drop a folder in websites/ that is a standalone Vite app with its own package-lock.json,
-# a `build` script, and a base path driven by the VITE_BASE env var. The matrix discovers it automatically — no edit
-# to this workflow needed. Each site is served at https://<org>.github.io/plitzi-workspace/<folder>/.
+# Convention for a new site: drop a standalone Vite app in websites/ with its own package-lock.json, a `build` script
+# (and an optional `build:published` script for published-package resolution), and a base path driven by VITE_BASE.
+# The matrix discovers it automatically — only add it to the `site` choice list below to make it selectable.
 name: deploy-websites
 
 on:
-  release:
-    types: [published]
   workflow_dispatch:
+    inputs:
+      site:
+        description: Website to build and deploy
+        type: choice
+        default: all
+        options:
+          - all
+          - sdk-store
 
 permissions:
   contents: read
@@ -34,10 +41,16 @@ jobs:
 
       - id: find
         name: Discover websites
+        env:
+          SELECTED: ${{ inputs.site }}
         run: |
-          sites=$(find websites -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort | jq -R . | jq -sc .)
+          found=$(find websites -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
+          if [ "$SELECTED" != "all" ]; then
+            found=$(printf '%s\n' "$found" | grep -Fx "$SELECTED")
+          fi
+          sites=$(printf '%s\n' "$found" | jq -R . | jq -sc .)
           echo "sites=$sites" >> "$GITHUB_OUTPUT"
-          echo "Found sites: $sites"
+          echo "Building sites: $sites"
 
   build:
     needs: discover
@@ -60,10 +73,19 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Build
-        run: npm run build
+      - name: Pin @plitzi packages to the latest published release
+        run: npm install @plitzi/sdk-store@latest --no-save --no-audit --no-fund
+
+      - name: Build against published packages
         env:
           VITE_BASE: /plitzi-workspace/${{ matrix.site }}/
+          VITE_USE_PUBLISHED: 'true'
+        run: |
+          if node -e "process.exit(require('./package.json').scripts['build:published'] ? 0 : 1)"; then
+            npm run build:published
+          else
+            npm run build
+          fi
 
       - uses: actions/upload-artifact@v4
         with:

@@ -5,9 +5,7 @@ import { useCallback, useState } from 'react';
 import SchemaVariable from './SchemaVariable';
 import SchemaVariableForm from '../../models/SchemaVariableForm';
 
-import type { schemaVariableFormSchema } from '../../models/SchemaVariableForm';
 import type { Environment, QueryParams, RouteParams, SchemaVariable as TSchemaVariable } from '@plitzi/sdk-shared';
-import type { z } from 'zod';
 
 export type SchemaVariablesProps = {
   className?: string;
@@ -27,15 +25,15 @@ const SchemaVariables = ({ className, variables, whenData, onAdd, onUpdate, onRe
   const [newVariable, setNewVariable] = useState<TSchemaVariable>();
 
   const handleClickAddVariable = useCallback(
-    (values: z.infer<typeof schemaVariableFormSchema>) => {
-      onAdd?.(values as TSchemaVariable);
+    (values: TSchemaVariable) => {
+      onAdd?.(values);
       setNewVariable(undefined);
     },
     [onAdd]
   );
 
   const handleUpdate = useCallback(
-    (name: string, values: Omit<TSchemaVariable, 'name'>) => onUpdate?.({ ...values, name }),
+    (name: string, values: Omit<TSchemaVariable, 'name'>) => onUpdate?.({ ...values, name } as TSchemaVariable),
     [onUpdate]
   );
 
@@ -59,7 +57,7 @@ const SchemaVariables = ({ className, variables, whenData, onAdd, onUpdate, onRe
               name={name}
               category={category}
               type={type}
-              value={value}
+              value={String(value)}
               subValues={subValues}
               whenData={whenData}
               onChange={handleUpdate}
