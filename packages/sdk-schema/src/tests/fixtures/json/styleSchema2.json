@@ -1,0 +1,39 @@
+{
+  "platform": {
+    "desktop": {
+      "heading-rdGM": {
+        "name": "heading-rdGM",
+        "type": "class",
+        "attributes": {
+          "base": {
+            "default": {
+              "font-weight": "bold"
+            }
+          }
+        },
+        "cache": ".heading-rdGM{font-weight:bold;}"
+      },
+      "heading": {
+        "name": "heading",
+        "type": "element",
+        "componentType": "heading",
+        "attributes": {
+          "base": {
+            "default": {
+              "font-size": "24px"
+            }
+          }
+        },
+        "cache": "heading{font-size:24px;}"
+      }
+    },
+    "tablet": {},
+    "mobile": {}
+  },
+  "theme": {
+    "default": "system",
+    "schemes": ["light", "dark"]
+  },
+  "variables": {},
+  "cache": ""
+}
