@@ -1,3 +1,4 @@
+import Logo from '../Logo';
 import { INSTALL_COMMAND, NPM_URL, REPO_URL, STORE_DIR_URL } from '../../content';
 
 const Footer = () => (
@@ -5,9 +6,7 @@ const Footer = () => (
     <div className="mx-auto flex max-w-6xl flex-col gap-8 px-5 py-14 sm:flex-row sm:items-start sm:justify-between">
       <div className="max-w-sm">
         <div className="flex items-center gap-2.5 font-semibold text-white">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-700 text-sm font-bold text-white">
-            P
-          </span>
+          <Logo size={32} />
           @plitzi/nexus
         </div>
         <p className="mt-4 text-sm leading-relaxed text-zinc-500">

@@ -43,6 +43,12 @@ export const FEATURES: Feature[] = [
       'Nested scopes shadow shared state while reading it live. Reads fall through the chain, writes target the owning scope — no prop-drilling.'
   },
   {
+    icon: '🧭',
+    title: 'Reach any store by id',
+    description:
+      'Name a provider with id and any descendant can target it — useStore(path, { storeId }), useStoreById(id), or store.id — even across a disconnected provider that would otherwise shadow it. Context-scoped registry, no globals to clean up.'
+  },
+  {
     icon: '⏪',
     title: 'Time-travel & action log',
     description:
@@ -287,6 +293,42 @@ item.setState('record', next);        // stays local
     <DraftEditor />
   </StoreProvider>
 </StoreProvider>`
+  },
+  {
+    id: 'byid',
+    label: 'Stores by id',
+    code: `import { StoreProvider, createStoreHook, useStoreById } from '@plitzi/nexus';
+
+const { useStore, useStoreGetter, useStoreSetter } = createStoreHook<State>();
+
+// Name a store with \`id\` — any descendant can reach it by that id, even
+// across a "disconnected" (inherit-less) provider that would shadow it.
+<StoreProvider id="root" value={rootState}>
+  <StoreProvider inherit="live" value={{ panel }}>
+    <StoreProvider value={{ local: 1 }}>      {/* disconnected — no inherit */}
+      <Leaf />
+    </StoreProvider>
+  </StoreProvider>
+</StoreProvider>;
+
+function Leaf() {
+  // Reactive read + write from the named ancestor, past the disconnect:
+  const [theme, setTheme] = useStore('theme', { storeId: 'root' });
+
+  // The { storeId } option works on every hook:
+  const getUser = useStoreGetter('user', { storeId: 'root' }); // imperative read
+  const setUser = useStoreSetter('user', { storeId: 'root' }); // imperative write
+
+  // Or grab the whole StoreApi imperatively (getState / getPath / setState):
+  const rootStore = useStoreById<State>('root');
+  rootStore.id;                    // 'root'
+  rootStore.getPath('user.name');
+
+  // No id → the nearest provider's store.
+  const nearest = useStoreById<State>();
+
+  return <button onClick={() => setTheme('dark')}>{theme}</button>;
+}`
   },
   {
     id: 'history',

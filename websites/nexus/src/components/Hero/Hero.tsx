@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 
 import { INSTALL_COMMAND, NPM_URL, REPO_URL } from '../../content';
 import CodeBlock from '../CodeBlock';
+import Logo from '../Logo';
 
 const HERO_SNIPPET = `import { createStoreHook } from '@plitzi/nexus';
 
@@ -38,6 +39,8 @@ const Hero = () => {
 
       <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 py-20 lg:grid-cols-2 lg:py-28">
         <div>
+          <Logo size={64} className="mb-6 drop-shadow-[0_8px_24px_rgba(124,58,237,0.45)]" />
+
           <a
             href={NPM_URL}
             target="_blank"

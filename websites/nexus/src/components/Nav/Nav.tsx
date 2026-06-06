@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 
 import { DOCS_HOME } from '../Docs';
+import Logo from '../Logo';
+import ThemeToggle from '../ThemeToggle';
 import { NAV_LINKS, NPM_URL, REPO_URL } from '../../content';
 import { useHashRoute } from '../../useHashRoute';
 
@@ -37,12 +39,8 @@ const Nav = () => {
     <header className="border-ink-700/60 bg-ink-950/70 sticky top-0 z-50 border-b backdrop-blur-xl">
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
         <a href="#top" className="flex items-center gap-2.5 font-semibold text-white">
-          <span className="from-brand-400 to-brand-700 flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br text-sm font-bold text-white shadow-lg">
-            P
-          </span>
-          <span className="text-sm">
-            @plitzi/nexus
-          </span>
+          <Logo size={32} className="drop-shadow-md" />
+          <span className="text-sm">@plitzi/nexus</span>
         </a>
 
         <div className="hidden items-center gap-1 md:flex">
@@ -74,6 +72,7 @@ const Nav = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <a
             href={NPM_URL}
             target="_blank"

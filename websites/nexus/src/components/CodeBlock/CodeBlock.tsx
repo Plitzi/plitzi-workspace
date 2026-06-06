@@ -2,6 +2,7 @@ import { Highlight, themes } from 'prism-react-renderer';
 import { useCallback, useState } from 'react';
 
 import StackblitzPlayground from '../StackblitzPlayground';
+import { useTheme } from '../../useTheme';
 
 export type CodeBlockProps = {
   code: string;
@@ -11,6 +12,8 @@ export type CodeBlockProps = {
 
 const CodeBlock = ({ code, language = 'tsx', demoId }: CodeBlockProps) => {
   const [copied, setCopied] = useState(false);
+  const theme = useTheme();
+  const prismTheme = theme === 'light' ? themes.nightOwlLight : themes.nightOwl;
 
   const handleCopy = useCallback(() => {
     navigator.clipboard
@@ -33,7 +36,7 @@ const CodeBlock = ({ code, language = 'tsx', demoId }: CodeBlockProps) => {
             {copied ? 'Copied!' : 'Copy'}
           </button>
         </div>
-        <Highlight theme={themes.nightOwl} code={code.trim()} language={language}>
+        <Highlight theme={prismTheme} code={code.trim()} language={language}>
           {({ className, style, tokens, getLineProps, getTokenProps }) => (
             <pre
               className={`${className} overflow-x-auto p-4 text-[13px] leading-relaxed`}

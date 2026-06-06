@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./logo.svg" alt="@plitzi/nexus" width="640" />
+</p>
+
 # @plitzi/nexus
 
 A lightweight, type-safe React store built on `useSyncExternalStore`. You subscribe to **dot-notation paths** and re-render only when that exact value changes — no selectors, no reducers, no action types. On top of that core it ships scoped stores, time-travel, derived values, an entity adapter, and a middleware pipeline (logger / persist / history).

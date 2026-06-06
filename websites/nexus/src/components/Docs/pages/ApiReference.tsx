@@ -160,17 +160,59 @@ const [el] = useStore(\`items.\${id}\` as PathOf<State>, { defaultValue: {} });`
           </td>
           <td>A stable setter — write without subscribing (no re-render on change).</td>
         </tr>
+        <tr>
+          <td>
+            <code>useStoreById(id?)</code>
+          </td>
+          <td>
+            Get a named ancestor store’s <code>StoreApi</code> by <code>id</code> (reachable across disconnected
+            providers). See <em>Named stores</em> below.
+          </td>
+        </tr>
       </tbody>
     </table>
+    <p>
+      Every reactive/imperative hook also accepts <code>{'{ store }'}</code> or <code>{'{ storeId }'}</code> in its
+      options to target a specific store instead of the nearest provider — see <em>Named stores</em>.
+    </p>
 
     <h2>StoreProvider</h2>
     <CodeBlock
       code={`<StoreProvider value={initial}>...</StoreProvider>          // create a store
 <StoreProvider store={existingStore}>...</StoreProvider>     // provide one
+<StoreProvider id="root" value={initial}>...</StoreProvider>  // name it (reach by id)
 <StoreProvider path="schema" value={slice}>...</StoreProvider> // sync a sub-path from props
 <StoreProvider inherit="live" value={{...}}>...</StoreProvider> // scoped child (live | snapshot)
 <StoreProvider value={initial} middlewares={[persistMiddleware({ key: 'app' })]}>...</StoreProvider>`}
     />
+
+    <h2>Named stores (id / storeId)</h2>
+    <p>
+      Give a provider an <code>id</code> and any descendant can target that store — even across a{' '}
+      <em>disconnected</em> (<code>inherit</code>-less) provider that would otherwise shadow it. The id lives in a
+      context-scoped registry, so it stops resolving the moment its provider unmounts — no globals, nothing to clean up.
+    </p>
+    <CodeBlock
+      code={`<StoreProvider id="root" value={rootState}>
+  <StoreProvider value={{ local: 1 }}>   {/* disconnected — no inherit */}
+    <Leaf />
+  </StoreProvider>
+</StoreProvider>
+
+// The { storeId } option works on every hook — resolved past the disconnect:
+const [theme, setTheme] = useStore('theme', { storeId: 'root' }); // reactive
+const getUser = useStoreGetter('user', { storeId: 'root' });      // imperative read
+const setUser = useStoreSetter('user', { storeId: 'root' });      // imperative write
+
+// useStoreById(id?) returns the raw StoreApi (getState / getPath / setState).
+// With no id, it returns the nearest provider's store.
+const rootStore = useStoreById<State>('root');
+rootStore.id; // 'root' — the identity is also set on the store (logging/devtools)`}
+    />
+    <p>
+      An explicit <code>store</code> option still wins over <code>storeId</code>. Registering an id that shadows an
+      ancestor with the same id logs a warning in development (stripped in production); the nearer store wins.
+    </p>
 
     <h2>Derived values</h2>
     <CodeBlock

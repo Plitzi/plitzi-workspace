@@ -24,6 +24,74 @@
   --color-ink-600: #2a2a38;
 }
 
+:root {
+  color-scheme: dark;
+}
+
+/*
+ * Light theme. Every Tailwind v4 color utility resolves through `var(--color-*)`, so flipping the whole site is just
+ * a matter of redefining those tokens under `.light` — dark stays the default, no per-component `dark:`/`light:`
+ * variants needed. We remap the surface scale (ink), the text scale (zinc + white), and the brand shades used as
+ * accent TEXT (200–400) so they stay legible on a light background.
+ */
+html.light {
+  color-scheme: light;
+
+  --color-ink-950: #ffffff;
+  --color-ink-900: #f7f7fb;
+  --color-ink-850: #f1f1f7;
+  --color-ink-800: #ebebf2;
+  --color-ink-700: #e1e1ea;
+  --color-ink-600: #d2d2de;
+
+  --color-white: #14141b;
+  --color-zinc-100: #1b1b22;
+  --color-zinc-200: #26262e;
+  --color-zinc-300: #3b3b46;
+  --color-zinc-400: #55555f;
+  --color-zinc-500: #6e6e79;
+  --color-zinc-600: #8c8c97;
+  --color-zinc-700: #a6a6b0;
+
+  --color-brand-200: #7c3aed;
+  --color-brand-300: #6d28d9;
+  --color-brand-400: #5b21b6;
+
+  /* Status accents are used as TEXT on light tinted panels; darken them for contrast. Their bg tints use the 900/950
+     shades (not these), so remapping 200–400 is safe. */
+  --color-red-400: #dc2626;
+  --color-emerald-200: #047857;
+  --color-emerald-300: #059669;
+  --color-emerald-400: #059669;
+  --color-amber-400: #b45309;
+}
+
+/*
+ * On a solid brand background, label text must stay white in light mode too (the `--color-white` token above flips to
+ * near-black for headings). `:is()` keeps specificity at one class, still above `.text-white`. Translucent brand
+ * surfaces such as bg-brand-500 at 10% alpha are a different class and intentionally not matched.
+ */
+html.light :is(.bg-brand-400, .bg-brand-500, .bg-brand-600, .bg-brand-700, .bg-brand-900) {
+  color: #fff;
+}
+
+html.light .text-gradient {
+  background-image: linear-gradient(110deg, #7c3aed, #6d28d9, #4c1d95, #6d28d9, #7c3aed);
+}
+
+/* The toggle shows the icon for the theme you'd switch TO: a sun while dark, a moon while light. */
+.theme-icon-moon {
+  display: none;
+}
+
+html.light .theme-icon-moon {
+  display: block;
+}
+
+html.light .theme-icon-sun {
+  display: none;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -131,4 +199,29 @@ section[id] {
 /* Soft conic aura behind hero / CTA blocks. */
 .aura {
   background: conic-gradient(from 180deg at 50% 50%, #7c3aed33, #4c1d9533, #8b5cf633, #7c3aed33);
+}
+
+/* Light-theme tweaks for the hardcoded decorative surfaces above. */
+html.light * {
+  scrollbar-color: #c9c9d4 transparent;
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: #c9c9d4;
+  background-clip: content-box;
+}
+
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #b3b3c0;
+  background-clip: content-box;
+}
+
+html.light .bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(124, 58, 237, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(124, 58, 237, 0.06) 1px, transparent 1px);
+}
+
+html.light .glow {
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.12), 0 20px 50px -24px rgba(124, 58, 237, 0.3);
 }

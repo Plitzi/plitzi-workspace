@@ -4,8 +4,20 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="color-scheme" content="dark light" />
     <meta name="theme-color" content="#7c3aed" />
+
+    <!-- Apply the saved theme before paint so there is no flash of the wrong palette. Dark is the default. -->
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem('nexus-theme') || 'dark';
+          var root = document.documentElement;
+          root.classList.toggle('light', theme === 'light');
+          root.classList.toggle('dark', theme === 'dark');
+        } catch (e) {}
+      })();
+    </script>
 
     <title>@plitzi/nexus — A tiny, type-safe React store</title>
     <meta
