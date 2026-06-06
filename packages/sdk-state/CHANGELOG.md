@@ -1,5 +1,15 @@
 # @plitzi/sdk-state
 
+## 0.31.1
+
+### Patch Changes
+
+- v0.31.1
+- Updated dependencies
+  - @plitzi/nexus@0.31.1
+  - @plitzi/sdk-schema@0.31.1
+  - @plitzi/sdk-shared@0.31.1
+
 ## 0.31.0
 
 ### Minor Changes
