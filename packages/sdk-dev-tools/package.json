@@ -94,6 +94,46 @@
       "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/index.mjs"
     },
+    "./components/DevToolsPanel/tabs/HistoryViewer": {
+      "types": "./dist/components/DevToolsPanel/tabs/HistoryViewer/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/HistoryViewer/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/HistoryViewer/HistoryViewer": {
+      "types": "./dist/components/DevToolsPanel/tabs/HistoryViewer/HistoryViewer.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/HistoryViewer/HistoryViewer.mjs"
+    },
+    "./components/DevToolsPanel/tabs/HistoryViewer/components/HistoryEntryItem": {
+      "types": "./dist/components/DevToolsPanel/tabs/HistoryViewer/components/HistoryEntryItem/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/HistoryViewer/components/HistoryEntryItem/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/HistoryViewer/components/HistoryEntryItem/HistoryEntryItem": {
+      "types": "./dist/components/DevToolsPanel/tabs/HistoryViewer/components/HistoryEntryItem/HistoryEntryItem.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/HistoryViewer/components/HistoryEntryItem/HistoryEntryItem.mjs"
+    },
+    "./components/DevToolsPanel/tabs/HistoryViewer/components/HistoryEntryItem/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/HistoryViewer/components/HistoryEntryItem/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/HistoryViewer/components/HistoryEntryItem/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/HistoryViewer/components/HistoryToolbar": {
+      "types": "./dist/components/DevToolsPanel/tabs/HistoryViewer/components/HistoryToolbar/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/HistoryViewer/components/HistoryToolbar/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/HistoryViewer/components/HistoryToolbar/HistoryToolbar": {
+      "types": "./dist/components/DevToolsPanel/tabs/HistoryViewer/components/HistoryToolbar/HistoryToolbar.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/HistoryViewer/components/HistoryToolbar/HistoryToolbar.mjs"
+    },
+    "./components/DevToolsPanel/tabs/HistoryViewer/components/HistoryToolbar/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/HistoryViewer/components/HistoryToolbar/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/HistoryViewer/components/HistoryToolbar/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/HistoryViewer/helpers": {
+      "types": "./dist/components/DevToolsPanel/tabs/HistoryViewer/helpers.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/HistoryViewer/helpers.mjs"
+    },
+    "./components/DevToolsPanel/tabs/HistoryViewer/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/HistoryViewer/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/HistoryViewer/index.mjs"
+    },
     "./components/DevToolsPanel/tabs/Logs": {
       "types": "./dist/components/DevToolsPanel/tabs/Logs/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/Logs/index.mjs"
@@ -274,6 +314,18 @@
       "types": "./dist/components/DevToolsPanel/tabs/PluginsViewer/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/PluginsViewer/index.mjs"
     },
+    "./components/DevToolsPanel/tabs/StoreViewer": {
+      "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/StoreViewer/StoreViewer": {
+      "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/StoreViewer.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/StoreViewer.mjs"
+    },
+    "./components/DevToolsPanel/tabs/StoreViewer/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/index.mjs"
+    },
     "./components/DevToolsPanel/tabs/VariablesViewer": {
       "types": "./dist/components/DevToolsPanel/tabs/VariablesViewer/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/VariablesViewer/index.mjs"
@@ -345,7 +397,6 @@
   },
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.6.9",
-    "@plitzi/sdk-data-source": "workspace:*",
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",

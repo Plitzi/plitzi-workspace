@@ -1,5 +1,5 @@
-import useDataSource from './useDataSource';
+import useRegisterSource from './useRegisterSource';
 
-export * from './useDataSource';
+export * from './useRegisterSource';
 
-export { useDataSource };
+export { useRegisterSource };

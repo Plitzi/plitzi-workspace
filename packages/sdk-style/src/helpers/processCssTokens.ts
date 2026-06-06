@@ -5,7 +5,7 @@ interface TokenMap {
 }
 
 const processCssTokens = <T extends TokenMap>(
-  cache: string,
+  cache: string = '',
   variables: T = {} as T,
   opts: { missing?: string } = { missing: '' }
 ) => {

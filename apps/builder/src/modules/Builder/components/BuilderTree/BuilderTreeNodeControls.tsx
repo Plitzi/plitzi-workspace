@@ -5,9 +5,9 @@ import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import clsx from 'clsx';
 import { use, useCallback, useMemo } from 'react';
 
-import getBindingsDetails from '@plitzi/sdk-data-source/helpers/getBindingsDetails';
+import getBindingsDetails from '@plitzi/sdk-elements/dataSource/getBindingsDetails';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import BuilderElementTools from '../BuilderElementTools';
@@ -29,7 +29,7 @@ const BuilderTreeNodeControls = ({ id, hovered, selected }: BuilderTreeNodeContr
   const { showDialog } = useModal();
   const { builderHandler, builderElementPermissions, builderSetElementVisibility } = use(BuilderContext);
 
-  const dataSource = useDataSource({ id, mode: 'read' });
+  const [dataSource] = useStore('runtime.sources', { defaultValue: emptyObject });
   const { canDelete } = useMemo(() => {
     if (!element) {
       return { canDelete: false };

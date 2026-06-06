@@ -53,7 +53,7 @@ const SchemaVariableForm = ({
   onClose
 }: SchemaVariableFormProps) => {
   const form = useForm({
-    defaultValues: { name, value, category, type, subValues },
+    defaultValues: { name, value: String(value), category, type, subValues },
     config: { schema: schemaVariableFormSchema }
   });
 

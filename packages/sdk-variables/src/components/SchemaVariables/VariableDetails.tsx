@@ -32,7 +32,7 @@ const VariableDetails = ({ name, subValues = [], type = 'text' }: VariableDetail
             <div key={index} className="flex w-full flex-col rounded-sm border border-gray-300 text-xs">
               <div className="flex items-center gap-1 px-1 py-0.5">
                 <div className="font-bold">Value:</div>
-                <VariableValue className="text-xs" value={subValue.value} type={type} />
+                <VariableValue className="text-xs" value={String(subValue.value)} type={type} />
               </div>
               <div className="flex gap-1 border-t border-gray-300 px-1 py-0.5">
                 <div className="font-bold">When:</div>

@@ -1,11 +1,11 @@
 import clsx from 'clsx';
-import { useMemo, use } from 'react';
+import { useMemo } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 
 import ReplicaProvider from '../../../../../Element/ReplicaProvider';
 
-import type { Context, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 export type ListControlledItemProps<T = unknown> = {
   children: ReactNode;
@@ -13,7 +13,7 @@ export type ListControlledItemProps<T = unknown> = {
   isTemplate: boolean;
   itemCount: number;
   record: T;
-  listContextId: string;
+  source: string;
 };
 
 const ListControlledItem = ({
@@ -22,25 +22,18 @@ const ListControlledItem = ({
   isTemplate = false,
   itemCount = 0,
   record,
-  listContextId = ''
+  source = ''
 }: ListControlledItemProps) => {
-  const {
-    contexts: { DataSourceContext }
-  } = usePlitziServiceContext();
-  const { getSources } = use(DataSourceContext);
   const dataSourceValue = useMemo(() => ({ item: record, index: `${itemCount}` }), [record, itemCount]);
-  const ListContext = useMemo(
-    () => getSources(listContextId)?.context as Context<typeof dataSourceValue> | undefined,
-    [listContextId, getSources]
-  );
 
   if (isTemplate) {
     return (
       <div className={clsx('plitzi-component__controlled-list-item', className)}>
         <div className="controlled-list-item__counter">{`List Item - ${itemCount}`}</div>
         <ReplicaProvider>
-          {ListContext && <ListContext value={dataSourceValue}>{children}</ListContext>}
-          {!ListContext && 'This element can be only inside a List'}
+          <StoreProvider inherit="live" value={{ runtime: { sources: { [source]: dataSourceValue } } }}>
+            {children}
+          </StoreProvider>
         </ReplicaProvider>
       </div>
     );
@@ -48,8 +41,9 @@ const ListControlledItem = ({
 
   return (
     <ReplicaProvider>
-      {ListContext && <ListContext value={dataSourceValue}>{children}</ListContext>}
-      {!ListContext && 'This element can be only inside a List'}
+      <StoreProvider inherit="live" value={{ runtime: { sources: { [source]: dataSourceValue } } }}>
+        {children}
+      </StoreProvider>
     </ReplicaProvider>
   );
 };

@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 
+import type PathTrie from '../createStore/helpers/PathTrie';
+import type Subscribers from '../createStore/helpers/Subscribers';
+
 export type Path = string;
 
 export type Primitive = string | number | boolean | null | undefined | symbol | bigint;
@@ -77,9 +80,59 @@ export type StoreHookReactiveOptions<T, TState extends object = object> = StoreH
   equalityFn?: (a: T, b: T) => boolean;
 };
 
-export type StoreLogger<T> = (event: { path: PathOf<T> | undefined; prev: T; next: T }) => void;
+// A committed write: the changed path (undefined for a full-state replace) and the own-state snapshots around it.
+export type StoreChange<T> = { path: PathOf<T> | undefined; prev: T; next: T };
 
-export type Listener = () => void;
+// Observer of committed changes — the substrate logger, history and persist all ride on. Returned by a middleware.
+export type ChangeListener<T> = (change: StoreChange<T>) => void;
+
+// Returned from a `beforeChange` interceptor to abort the write entirely: nothing is committed, no observers fire.
+export const CANCEL: unique symbol = Symbol('@plitzi/sdk-store/cancel');
+
+// The write a `beforeChange` interceptor sees before it commits. `value` is the resolved value about to be written
+// at `path` (the leaf value, or the whole next state when `path` is undefined); `prev` is the current value there.
+export type WriteContext<T> = {
+  path: PathOf<T> | undefined;
+  value: unknown;
+  prev: unknown;
+};
+
+// Runs before a write commits. Return a value to REPLACE what gets written, `CANCEL` to abort it, or nothing to let
+// it through unchanged. Interceptors from several middlewares run in array order, each seeing the previous result.
+export type WriteInterceptor<T> = (context: WriteContext<T>) => unknown;
+
+// A failure thrown by any middleware handler or subscriber during a write, surfaced to every registered `onError`.
+export type StoreError<T> = {
+  error: unknown;
+  phase: 'beforeChange' | 'onChange' | 'notify';
+  path: PathOf<T> | undefined;
+};
+
+export type StoreErrorHandler<T> = (failure: StoreError<T>) => void;
+
+// Routes a failure to the registered `onError` handlers, or re-throws it when none exist so it is never swallowed.
+export type StoreErrorReporter<T> = (
+  error: unknown,
+  phase: StoreError<T>['phase'],
+  path: PathOf<T> | undefined
+) => void;
+
+export type StoreMiddlewareHandlers<T> = {
+  // Intercept/transform/cancel a write before it commits. Runs before `onChange` and before subscribers wake.
+  beforeChange?: WriteInterceptor<T>;
+  onChange?: ChangeListener<T>;
+  // Notified when another handler or subscriber throws, so a logger can record the failure instead of it being lost.
+  onError?: StoreErrorHandler<T>;
+};
+
+// Set up once after the store is created (the body may hydrate via `api.setState`). Returns the change handler to
+// register, or nothing for a pure side-effect middleware.
+// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+export type StoreMiddleware<T extends object> = (api: StoreApi<T>) => StoreMiddlewareHandlers<T> | void;
+
+// The changed path is forwarded so scope-chain listeners can skip wakes for paths a parent change doesn't touch.
+// Consumer listeners (React `onStoreChange`) simply ignore the argument.
+export type Listener = (changedPath?: Path) => void;
 
 export type SetState<T> = {
   (path: undefined, value: T | ((prev: T) => T), canPropagate?: boolean): void;
@@ -94,15 +147,33 @@ export type GetState<T> = () => T;
 
 export type StoreApi<T> = {
   getState: GetState<T>;
+  // Resolves a single path through the scope chain without materializing the full merged state — own value
+  // shadows the parent's, except where both are objects (then the subtree at that path is deep-merged).
+  getPath: <P extends PathOf<T>>(path: P) => PathValue<T, P> | undefined;
   setState: SetState<T>;
+  // Runs `fn`, coalescing every `setState` inside it into one wake pass: subscribers re-render once at the end
+  // instead of once per write (reads inside `fn` still see each write immediately). Change observers — logger,
+  // history, persist — keep firing per write. Nestable: only the outermost `batch` flushes.
+  batch: <R>(fn: () => R) => R;
   subscribe: (listener: Listener) => () => void;
   subscribePath: <P extends PathOf<T>>(path: P, listener: Listener) => () => void;
+  // Observe every committed change with its before/after snapshots. The substrate for logger, history and persist.
+  subscribeChange: (listener: ChangeListener<T>) => () => void;
   destroy?: () => void;
+  // Re-attaches a scoped store's parent subscription after a `destroy()` (no-op for root stores or when already
+  // attached). Lets a provider survive React StrictMode's mount → unmount → remount, which reuses the store
+  // instance: without it, the simulated unmount detaches the live parent link and it is never restored.
+  reconnect?: () => void;
 };
 
 export type StoreApiInternal<T> = StoreApi<T> & {
-  listeners: Set<Listener>;
-  pathListeners: Map<string, Set<Listener>>;
+  listeners: Subscribers<Listener>;
+  pathListeners: PathTrie;
+  changeListeners: Subscribers<ChangeListener<T>>;
+  interceptors: WriteInterceptor<T>[];
+  errorHandlers: StoreErrorHandler<T>[];
+  // Test-only metric: number of times `getState` recomputed the full deep-merge (cache miss).
+  getMergeCount?: () => number;
 };
 
 export type PathOrFn<TState extends object> = PathOf<TState> | ((state: TState) => PathOf<TState>);

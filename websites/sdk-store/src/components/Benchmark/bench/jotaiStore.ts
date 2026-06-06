@@ -1,0 +1,147 @@
+import { atom, createStore } from 'jotai/vanilla';
+
+import { JOTAI, makeNested, setLeaf, work } from './shared';
+
+import type { Item, Sample, StoreAdapter } from './shared';
+
+// Jotai: one primitive atom per independent value; updating an atom only notifies its own subscribers.
+const wide = (keys: number, updates: number): Sample => {
+  const store = createStore();
+  const atoms = Array.from({ length: keys }, () => atom(0));
+  let wakes = 0;
+  for (const cell of atoms) {
+    store.sub(cell, () => {
+      wakes++;
+      work(wakes);
+    });
+  }
+
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    store.set(atoms[0], j + 1);
+  }
+
+  return { name: JOTAI, wakes, ms: performance.now() - start };
+};
+
+const hot = (subscribers: number, updates: number): Sample => {
+  const store = createStore();
+  const cell = atom(0);
+  let wakes = 0;
+  for (let i = 0; i < subscribers; i++) {
+    store.sub(cell, () => {
+      wakes++;
+      work(wakes);
+    });
+  }
+
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    store.set(cell, j + 1);
+  }
+
+  return { name: JOTAI, wakes, ms: performance.now() - start };
+};
+
+const nested = (updates: number): Sample => {
+  const store = createStore();
+  const cell = atom(makeNested());
+  let wakes = 0;
+  store.sub(cell, () => {
+    wakes++;
+    work(wakes);
+  });
+
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    store.set(cell, prev => setLeaf(prev, j + 1));
+  }
+
+  return { name: JOTAI, wakes, ms: performance.now() - start };
+};
+
+const churn = (updates: number): Sample => {
+  const store = createStore();
+  const cell = atom(0);
+  let wakes = 0;
+  store.sub(cell, () => {
+    wakes++;
+    work(wakes);
+  });
+
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    store.set(cell, j + 1);
+  }
+
+  return { name: JOTAI, wakes, ms: performance.now() - start };
+};
+
+// One atom per item — updating an item never touches the others (no normalized-map copy).
+const deepMap = (items: number, updates: number): Sample => {
+  const store = createStore();
+  const atoms = Array.from({ length: items }, () => atom<Item>({ value: 0, meta: { tag: 'el', n: 0 } }));
+  let wakes = 0;
+  for (const cell of atoms) {
+    store.sub(cell, () => {
+      wakes++;
+      work(wakes);
+    });
+  }
+
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    store.set(atoms[0], prev => ({ ...prev, meta: { ...prev.meta, n: j + 1 } }));
+  }
+
+  return { name: JOTAI, wakes, ms: performance.now() - start };
+};
+
+const fanout = (keys: number, rounds: number): Sample => {
+  const store = createStore();
+  const atoms = Array.from({ length: keys }, () => atom(0));
+  let wakes = 0;
+  for (const cell of atoms) {
+    store.sub(cell, () => {
+      wakes++;
+      work(wakes);
+    });
+  }
+
+  const start = performance.now();
+  for (let r = 0; r < rounds; r++) {
+    for (let i = 0; i < keys; i++) {
+      store.set(atoms[i], r + 1);
+    }
+  }
+
+  return { name: JOTAI, wakes, ms: performance.now() - start };
+};
+
+// A derived atom summing N primitive atoms — recomputes when any dependency atom changes.
+const derived = (values: number, updates: number): Sample => {
+  const store = createStore();
+  const cells = Array.from({ length: values }, () => atom(0));
+  const sumAtom = atom(get => {
+    let sum = 0;
+    for (const cell of cells) {
+      sum += get(cell);
+    }
+
+    return sum;
+  });
+  let wakes = 0;
+  store.sub(sumAtom, () => {
+    wakes++;
+    work(wakes);
+  });
+
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    store.set(cells[0], j + 1);
+  }
+
+  return { name: JOTAI, wakes, ms: performance.now() - start };
+};
+
+export const jotaiAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived };

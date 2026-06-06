@@ -4,9 +4,11 @@ import clsx from 'clsx';
 import { produce } from 'immer';
 import { useCallback, useMemo, useState, use } from 'react';
 
+import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
@@ -58,9 +60,8 @@ const Form = ({
   } = useElement();
   const {
     settings: { previewMode },
-    contexts: { DataSourceContext, InteractionsContext }
+    contexts: { InteractionsContext }
   } = usePlitziServiceContext();
-  const { useDataSource } = use(DataSourceContext);
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
 
   const registerField = useCallback(
@@ -165,10 +166,9 @@ const Form = ({
     () => ({ fields, errors, values, registerField, unregisterField, getField, setFieldValue, setFieldError }),
     [fields, errors, values, registerField, unregisterField, getField, setFieldValue, setFieldError]
   );
-  const [FormContext] = useDataSource({
+  useRegisterSource({
     id,
     source: 'form',
-    mode: 'write',
     name: label ? label : `Form - ${id}`,
     fields: sourceFields
   });
@@ -302,7 +302,9 @@ const Form = ({
       onReset={handleReset}
       action={actionUrl}
     >
-      <FormContext value={contextValue}>{children}</FormContext>
+      <StoreProvider inherit="live" value={{ runtime: { sources: { form: contextValue } } }}>
+        {children}
+      </StoreProvider>
     </RootElement>
   );
 };

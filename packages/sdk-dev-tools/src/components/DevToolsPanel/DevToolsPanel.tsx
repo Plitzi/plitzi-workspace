@@ -1,4 +1,5 @@
 import ContainerResizable from '@plitzi/plitzi-ui/ContainerResizable';
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import clsx from 'clsx';
 import { useCallback, useMemo, useState, use, useRef } from 'react';
 
@@ -21,7 +22,7 @@ export type DevToolsPanelProps = {
 };
 
 const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientation }: DevToolsPanelProps) => {
-  const [tabSelected, setTabSelected] = useState('logs');
+  const [tabSelected, setTabSelected] = useStorage('plitzi-sdk.dev-tools.tab', 'logs');
   const { currentPageId } = use(NavigationContext);
   const [elementSelected, setElementSelected] = useState<string | undefined>();
   const resizeHandles = useMemo<ResizeHandle[]>(() => (orientation === 'vertical' ? ['w'] : ['n']), [orientation]);
@@ -29,7 +30,7 @@ const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientatio
     typeof document !== 'undefined' ? (document.querySelector('.plitzi-sdk') as HTMLElement) : null
   );
 
-  const handleTabSelect = useCallback((tabIndex: string) => setTabSelected(tabIndex), []);
+  const handleTabSelect = useCallback((tabIndex: string) => setTabSelected(tabIndex), [setTabSelected]);
   const handleSelectElement = useCallback((id?: string) => setElementSelected(id), [setElementSelected]);
 
   return (
@@ -54,7 +55,7 @@ const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientatio
           onTabSelect={handleTabSelect}
           tabSelected={tabSelected}
         />
-        {['dataSources', 'elements'].includes(tabSelected) && (
+        {['store', 'elements'].includes(tabSelected) && (
           <DevToolsSubHeader
             elementSelected={elementSelected}
             onSelectElement={handleSelectElement}

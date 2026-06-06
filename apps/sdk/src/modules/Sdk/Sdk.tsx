@@ -6,7 +6,6 @@ import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
-import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
@@ -54,8 +53,8 @@ const Sdk = ({
   const { rootRef } = use(ContainerRootContext);
   const { useStore } = createStoreHook<SdkState>();
   const [[schemaSettings, styleCache, segments]] = useStore(['schema.settings', 'style.cache', 'segments']);
-  const { useDataSource } = use(DataSourceContext);
-  const { variables } = useDataSource<Record<string, string>>({ id: '', mode: 'read' });
+  const [variablesValue] = useStore('runtime.sources.variables', { defaultValue: {} });
+  const variables = variablesValue as Record<string, string>;
 
   const css = useMemo(() => {
     const segmentsCss = Object.values(segments).map(segment => segment.style.cache);
@@ -107,7 +106,6 @@ const Sdk = ({
         NetworkContext,
         PluginsContext,
         NavigationContext,
-        DataSourceContext,
         StateManagerContext,
         EventBridgeContext,
         InteractionsContext

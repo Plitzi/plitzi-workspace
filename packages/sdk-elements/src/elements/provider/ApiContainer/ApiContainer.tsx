@@ -5,10 +5,12 @@ import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import clsx from 'clsx';
 import { useCallback, use, useEffect, useMemo } from 'react';
 
+import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 
 import useApi from './hooks/useApi';
 import withElement from '../../../Element/hocs/withElement';
@@ -52,10 +54,9 @@ const ApiContainer = ({
   } = useElement();
   const {
     settings: { previewMode, debugMode },
-    contexts: { DataSourceContext, NavigationContext, InteractionsContext }
+    contexts: { NavigationContext, InteractionsContext }
   } = usePlitziServiceContext();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
-  const { useDataSource } = use(DataSourceContext);
   const { routeParams, queryParams } = use(NavigationContext);
   const queryCompiled = useMemo(() => {
     if (!query) {
@@ -147,10 +148,9 @@ const ApiContainer = ({
     [data]
   );
 
-  const [ApiContainerContext] = useDataSource({
+  useRegisterSource({
     id,
     source: `apiContainer_${id}`,
-    mode: 'write',
     name: label ? label : `API - ${id}`,
     fields: sourceFields
   });
@@ -196,7 +196,9 @@ const ApiContainer = ({
       interactionTriggers={interactionTriggers}
       interactionCallbacks={interactionCallbacks}
     >
-      <ApiContainerContext value={data}>{!isLoading && children}</ApiContainerContext>
+      <StoreProvider inherit="live" value={{ runtime: { sources: { [`apiContainer_${id}`]: data } } }}>
+        {!isLoading && children}
+      </StoreProvider>
     </RootElement>
   );
 };

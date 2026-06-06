@@ -7,14 +7,13 @@ import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
-import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
+import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
-import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
@@ -69,7 +68,6 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
         CollectionContext,
         ComponentContext,
         PluginsContext,
-        DataSourceContext,
         NetworkContext,
         NavigationContext,
         StateManagerContext,
@@ -134,7 +132,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
       style={{ colorScheme: theme === 'system' ? 'light' : theme }}
     >
       <PlitziServiceProvider value={plitziContextValue}>
-        <DataSourceContextProvider>
+        <GlobalSources>
           <InteractionsBuilderContextProvider>
             <div
               className={clsx('builder-iframe', {
@@ -147,7 +145,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
               {Plugin}
             </div>
           </InteractionsBuilderContextProvider>
-        </DataSourceContextProvider>
+        </GlobalSources>
       </PlitziServiceProvider>
     </ContainerFrame>
   );

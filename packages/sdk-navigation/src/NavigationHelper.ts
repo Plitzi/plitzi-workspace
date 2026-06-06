@@ -113,8 +113,8 @@ const isPageAuthored = (accessLevel?: NavigationAccessLevel, authenticated?: boo
 };
 
 const getPaths = (
-  pages: Record<string, Element>,
-  pageFolders: PageFolder[],
+  pages: Record<string, Element> = {},
+  pageFolders: PageFolder[] = [],
   authenticated?: boolean,
   basePath: string = '',
   previewMode: boolean = true,

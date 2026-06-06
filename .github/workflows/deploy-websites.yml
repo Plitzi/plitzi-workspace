@@ -1,0 +1,128 @@
+# Builds standalone sites under websites/ and deploys them to GitHub Pages. Manual only: pick a site (or "all") from
+# the run dialog. The build resolves @plitzi packages from the latest published npm release — never the dev symlink —
+# so the public demo reflects exactly what consumers install (set VITE_USE_PUBLISHED=true; the site honors it).
+#
+# GitHub Pages serves a single site per repo, so the `deploy` job stitches every built site into one `_site/` and
+# publishes it once. Selecting a single site deploys only that one.
+#
+# Convention for a new site: drop a standalone Vite app in websites/ with its own package-lock.json, a `build` script
+# (and an optional `build:published` script for published-package resolution), and a base path driven by VITE_BASE.
+# The matrix discovers it automatically — only add it to the `site` choice list below to make it selectable.
+name: deploy-websites
+
+on:
+  workflow_dispatch:
+    inputs:
+      site:
+        description: Website to build and deploy
+        type: choice
+        default: all
+        options:
+          - all
+          - sdk-store
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment; let an in-progress run finish rather than cancelling a live publish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      sites: ${{ steps.find.outputs.sites }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: find
+        name: Discover websites
+        env:
+          SELECTED: ${{ inputs.site }}
+        run: |
+          found=$(find websites -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
+          if [ "$SELECTED" != "all" ]; then
+            found=$(printf '%s\n' "$found" | grep -Fx "$SELECTED")
+          fi
+          sites=$(printf '%s\n' "$found" | jq -R . | jq -sc .)
+          echo "sites=$sites" >> "$GITHUB_OUTPUT"
+          echo "Building sites: $sites"
+
+  build:
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        site: ${{ fromJSON(needs.discover.outputs.sites) }}
+    defaults:
+      run:
+        working-directory: websites/${{ matrix.site }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: websites/${{ matrix.site }}/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Pin @plitzi packages to the latest published release
+        run: npm install @plitzi/sdk-store@latest --no-save --no-audit --no-fund
+
+      - name: Build against published packages
+        env:
+          VITE_BASE: /plitzi-workspace/${{ matrix.site }}/
+          VITE_USE_PUBLISHED: 'true'
+        run: |
+          if node -e "process.exit(require('./package.json').scripts['build:published'] ? 0 : 1)"; then
+            npm run build:published
+          else
+            npm run build
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-${{ matrix.site }}
+          path: websites/${{ matrix.site }}/dist
+          retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: _artifacts
+          pattern: site-*
+
+      - name: Assemble sites
+        run: |
+          mkdir -p _site
+          links=""
+          for dir in _artifacts/site-*/; do
+            name=${dir#_artifacts/site-}
+            name=${name%/}
+            mkdir -p "_site/$name"
+            cp -r "$dir." "_site/$name/"
+            links="$links    <li><a href=\"./$name/\">$name</a></li>\n"
+          done
+          printf '<!doctype html><meta charset="utf-8"><title>Plitzi websites</title><h1>Plitzi websites</h1><ul>\n%b</ul>\n' "$links" > _site/index.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

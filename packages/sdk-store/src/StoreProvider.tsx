@@ -1,14 +1,20 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { use, useEffect, useMemo, useRef } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef } from 'react';
 
 import createStore from './createStore';
-import useStoreSync from './hooks/useStoreSync';
+import useStoreSync from './createStore/hooks/useStoreSync';
 import { StoreContext } from './StoreContext';
 
-import type { StoreApi, StoreLogger } from './types';
+import type { StoreApi, StoreMiddleware } from './types';
 import type { ReactNode } from 'react';
+
+// Middlewares marked with `cascade()` flow down to nested providers through this context, so a logger set once at the
+// root is inherited by every child store instead of being repeated in each provider.
+const StoreMiddlewareContext = createContext<StoreMiddleware<any>[] | undefined>(undefined);
+
+const cascades = (middleware: StoreMiddleware<any>): boolean => (middleware as { cascade?: boolean }).cascade === true;
 
 export type StoreProviderProps<TState extends object = any> = {
   store?: StoreApi<TState>;
@@ -24,7 +30,10 @@ export type StoreProviderProps<TState extends object = any> = {
    */
   inherit?: 'snapshot' | 'live';
   autoSync?: boolean;
-  logger?: StoreLogger<TState>;
+  // Store middlewares applied when this provider creates the store: `loggerMiddleware()`, `persistMiddleware()`,
+  // `historyMiddleware()`, or your own. History is only recorded when `historyMiddleware()` is added — `useStoreHistory`
+  // then reads it (without it, the hook returns an empty, no-op view).
+  middlewares?: StoreMiddleware<TState>[];
   children?: ReactNode;
 };
 
@@ -34,10 +43,11 @@ const StoreProvider = <TState extends object = any>({
   value,
   inherit,
   autoSync = true,
-  logger,
+  middlewares,
   children
 }: StoreProviderProps<TState>) => {
-  const parentStore = use<StoreApi<TState> | undefined>(StoreContext);
+  const parentStore = useContext(StoreContext) as StoreApi<TState> | undefined;
+  const inheritedMiddlewares = useContext(StoreMiddlewareContext) as StoreMiddleware<TState>[] | undefined;
   const storeRef = useRef<StoreApi<TState>>(undefined);
   const liveChain = inherit === 'live';
   const storeState = useMemo(() => {
@@ -46,25 +56,39 @@ const StoreProvider = <TState extends object = any>({
     return typeof value === 'function' ? value(parentState) : { ...parentState, ...value };
   }, [inherit, parentStore, value]);
 
+  // This store gets the cascaded middlewares from ancestor providers plus its own. The set this provider hands to its
+  // descendants is the inherited cascade plus its own `cascade()`-marked middlewares.
+  const ownMiddlewares = middlewares ?? [];
+  const storeMiddlewares = inheritedMiddlewares ? [...inheritedMiddlewares, ...ownMiddlewares] : ownMiddlewares;
+  const cascadedMiddlewares = useMemo(
+    () => [...(inheritedMiddlewares ?? []), ...ownMiddlewares.filter(cascades)],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [inheritedMiddlewares, middlewares]
+  );
+
   if (!storeRef.current) {
-    if (store) {
-      storeRef.current = store;
-    } else {
-      storeRef.current = createStore<TState>(() => storeState, {
-        logger,
-        parent: liveChain ? parentStore : undefined
+    storeRef.current =
+      store ??
+      createStore<TState>(() => storeState, {
+        parent: liveChain ? parentStore : undefined,
+        middlewares: storeMiddlewares.length > 0 ? storeMiddlewares : undefined
       });
-    }
   }
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    // Re-attach the parent link on (re)mount. StrictMode runs mount → unmount → remount reusing the same store
+    // instance, and the cleanup below detaches it on the simulated unmount; without this the live scope would
+    // stop receiving parent updates in dev.
+    if (liveChain && !store) {
+      storeRef.current?.reconnect?.();
+    }
+
+    return () => {
       if (liveChain && !store) {
         storeRef.current?.destroy?.();
       }
-    },
-    [liveChain, store]
-  );
+    };
+  }, [liveChain, store]);
 
   const syncEnabled = !!value && autoSync;
 
@@ -77,7 +101,11 @@ const StoreProvider = <TState extends object = any>({
     store: storeRef.current
   });
 
-  return <StoreContext value={storeRef.current}>{children}</StoreContext>;
+  return (
+    <StoreMiddlewareContext value={cascadedMiddlewares.length > 0 ? cascadedMiddlewares : undefined}>
+      <StoreContext value={storeRef.current}>{children}</StoreContext>
+    </StoreMiddlewareContext>
+  );
 };
 
 export { StoreContext };

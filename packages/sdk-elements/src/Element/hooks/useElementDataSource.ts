@@ -1,19 +1,20 @@
 import { useMemo } from 'react';
 
-import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
-import type { ElementBinding, UseDataSourceFilter } from '@plitzi/sdk-shared';
+import type { CommonState, ElementBinding } from '@plitzi/sdk-shared';
 
 export type UseElementDataSourceProps = {
-  id: string;
   bindings?: Record<string, ElementBinding[]>;
-  filterMode?: UseDataSourceFilter;
   sources?: string[];
 };
 
-const useElementDataSource = ({ id, bindings, sources: sourcesProp, filterMode }: UseElementDataSourceProps) => {
-  const sourceFilter = useMemo(() => {
-    const sources = new Set<string>(sourcesProp ?? []);
+// Source VALUES live under `runtime.sources.*` (globals + scoped), combined by the store's deep-merge scope
+// chain. We subscribe only to the sources the element's bindings reference, so the element re-renders only when
+// one of its own sources changes — not on unrelated source updates.
+const useElementDataSource = ({ bindings, sources: sourcesProp }: UseElementDataSourceProps) => {
+  const sourceNames = useMemo(() => {
+    const names = new Set<string>(sourcesProp ?? []);
     for (const bindingsGroup of Object.values(bindings ?? {})) {
       if (!Array.isArray(bindingsGroup)) {
         continue;
@@ -21,19 +22,30 @@ const useElementDataSource = ({ id, bindings, sources: sourcesProp, filterMode }
 
       for (const { source } of bindingsGroup) {
         if (source) {
-          sources.add(source);
+          names.add(source);
         }
       }
     }
 
-    if (sources.size > 0 && !sources.has('variables')) {
-      sources.add('variables');
+    if (names.size > 0 && !names.has('variables')) {
+      names.add('variables');
     }
 
-    return [...sources];
+    return [...names];
   }, [bindings, sourcesProp]);
 
-  return useDataSource({ id, mode: 'read', sourceFilter, filterMode });
+  const paths = useMemo(() => sourceNames.map(name => `runtime.sources.${name}` as const), [sourceNames]);
+  const { useStore } = createStoreHook<CommonState>();
+  const [values] = useStore(paths);
+
+  return useMemo(() => {
+    const map: Record<string, unknown> = {};
+    sourceNames.forEach((name, index) => {
+      map[name] = values[index];
+    });
+
+    return map;
+  }, [sourceNames, values]);
 };
 
 export default useElementDataSource;

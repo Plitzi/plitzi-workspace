@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://plitzi.github.io/plitzi-workspace/sitemap.xml

@@ -2,15 +2,15 @@
 
 import { get, set, omit } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
-import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
 import { generateID } from '@plitzi/sdk-shared/helpers/utils';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import WorkflowContext from './WorkflowContext';
 
 import type { WorkflowContextValue } from './WorkflowContext';
-import type { ElementInteraction, InteractionCallback, Source, SourceField } from '@plitzi/sdk-shared';
+import type { BuilderState, ElementInteraction, InteractionCallback, Source, SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type WorkflowContextProviderProps = {
@@ -30,7 +30,8 @@ const WorkflowContextProvider = ({
   setFlowId,
   onChange
 }: WorkflowContextProviderProps) => {
-  const { getSources } = use(DataSourceContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [sourcesRegistry] = useStore('sources');
   const [previewData, setPreviewData] = useState<Record<string, ElementInteraction['preview']>>({});
   const [dataSourceContent, setDataSourceContent] = useState<Record<string, SourceField[]>>({});
   const nodesRef = useRef(nodes);
@@ -255,10 +256,10 @@ const WorkflowContextProvider = ({
 
   const dataSource = useMemo<Record<string, Source['meta']>>(
     () =>
-      Object.values((getSources as typeof getSources | undefined)?.() ?? {})
+      Object.values(sourcesRegistry ?? {})
         .filter(source => source.meta.source)
         .reduce((acum, source) => ({ ...acum, [source.meta.source as string]: source.meta }), {}),
-    [getSources]
+    [sourcesRegistry]
   );
 
   const loadSources = useCallback(async () => {

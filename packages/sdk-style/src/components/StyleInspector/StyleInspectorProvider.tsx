@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
-import { useCallback, use, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { baseDefaultValue } from '@plitzi/sdk-shared';
-import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import useStyleBinding from './hooks/useStyleBinding';
 import StyleInspectorContext from './StyleInspectorContext';
@@ -12,6 +13,7 @@ import StyleInspectorContext from './StyleInspectorContext';
 import type { SetValues } from './StyleInspectorContext';
 import type { InheritData } from '../../helpers';
 import type {
+  CommonState,
   DisplayMode,
   Element,
   StyleBlock,
@@ -49,8 +51,8 @@ const StyleInspectorProvider = ({
   onChange
 }: StyleInspectorProviderProps) => {
   const bindingData = useStyleBinding({ element });
-  const { useDataSource } = use(DataSourceContext);
-  const { variables: schemaVariables } = useDataSource<Record<string, unknown>>({ id: '', mode: 'read' });
+  const { useStore } = createStoreHook<CommonState>();
+  const [schemaVariables] = useStore('runtime.sources.variables', { defaultValue: emptyObject });
 
   const getValues = useCallback(() => {
     let attributes: Partial<Record<StyleCategory, StyleValue>> | undefined = undefined;

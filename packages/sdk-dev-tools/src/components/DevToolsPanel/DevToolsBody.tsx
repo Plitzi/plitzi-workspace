@@ -3,10 +3,11 @@ import { use } from 'react';
 
 import DevToolsContext from '@plitzi/sdk-shared/devTools/DevToolsContext';
 
-import DataSourceViewer from './tabs/DataSourceViewer';
 import ElementsViewer from './tabs/ElementsViewer';
+import HistoryViewer from './tabs/HistoryViewer';
 import Logs from './tabs/Logs';
 import PluginsViewer from './tabs/PluginsViewer/PluginsViewer';
+import StoreViewer from './tabs/StoreViewer';
 import VariablesViewer from './tabs/VariablesViewer';
 
 export type DevToolsBodyProps = {
@@ -24,7 +25,8 @@ const DevToolsBody = ({ className, tabSelected, orientation, elementSelected, on
     <div className={clsx('flex h-full w-full grow overflow-auto bg-white dark:bg-zinc-900', className)}>
       <div className="flex w-full flex-col">
         {tabSelected === 'logs' && <Logs items={logs} orientation={orientation} onClear={clearLogs} />}
-        {tabSelected === 'dataSources' && <DataSourceViewer elementSelected={elementSelected} />}
+        {tabSelected === 'store' && <StoreViewer elementSelected={elementSelected} />}
+        {tabSelected === 'history' && <HistoryViewer />}
         {tabSelected === 'variables' && <VariablesViewer />}
         {tabSelected === 'elements' && (
           <ElementsViewer elementSelected={elementSelected} onSelectElement={onSelectElement} />

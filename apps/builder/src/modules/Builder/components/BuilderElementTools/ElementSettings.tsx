@@ -12,8 +12,6 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
-import DataSourceContext from '@plitzi/sdk-shared/dataSource/DataSourceContext';
-import useDataSource from '@plitzi/sdk-shared/dataSource/hooks/useDataSource';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -21,9 +19,10 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { ThemeContext } from '@plitzi/sdk-shared/theme';
 import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
+import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import AppContext from '@pmodules/App/AppContext';
 
-import type { ComponentPlugin } from '@plitzi/sdk-shared';
+import type { CommonState, ComponentPlugin } from '@plitzi/sdk-shared';
 import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import type { FC } from 'react';
 
@@ -76,7 +75,6 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
         NetworkContext,
         PluginsContext,
         NavigationContext,
-        DataSourceContext,
         StateManagerContext,
         SegmentsContext,
         EventBridgeContext,
@@ -88,7 +86,9 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Settings = (Plugin?.pluginSettings ?? defaultElementsSettings[type]) as FC<any> | undefined;
-  const { variables } = useDataSource<Record<string, string>>({ id, sourceFilter: ['variables'], mode: 'read' });
+  const { useStore } = createStoreHook<CommonState>();
+  const [runtimeVariables] = useStore('runtime.sources.variables', { defaultValue: emptyObject });
+  const variables = runtimeVariables as Record<string, string>;
 
   const children = useMemo(
     () => (

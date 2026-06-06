@@ -5,6 +5,7 @@ import { describe, it, expect, vi } from 'vitest';
 // import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
+import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 
 import { CollectionContainer } from './CollectionContainer';
 
@@ -19,8 +20,7 @@ vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
     settings: { previewMode: true },
     contexts: {
       NavigationContext: createContext({}),
-      CollectionContext: createContext({}),
-      DataSourceContext: createContext({ useDataSource: () => [] })
+      CollectionContext: createContext({})
     }
   })
 }));
@@ -28,20 +28,20 @@ vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
 describe('CollectionContainer Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
-      // <PlitziServiceProvider>
-      <ElementContext
-        value={
-          {
-            id: '',
-            rootId: '',
-            plitziJsxSkipHOC: false,
-            definition: { label: 'Collection Container' }
-          } as ElementContextValue
-        }
-      >
-        <CollectionContainer />
-      </ElementContext>
-      // </PlitziServiceProvider>
+      <StoreProvider value={{}}>
+        <ElementContext
+          value={
+            {
+              id: '',
+              rootId: '',
+              plitziJsxSkipHOC: false,
+              definition: { label: 'Collection Container' }
+            } as ElementContextValue
+          }
+        >
+          <CollectionContainer />
+        </ElementContext>
+      </StoreProvider>
     );
 
     expect(baseElement).toBeTruthy();

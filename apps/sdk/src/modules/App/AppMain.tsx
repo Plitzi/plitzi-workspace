@@ -9,8 +9,8 @@ import SchemaContextProvider from '@modules/Schema/SchemaContextProvider';
 import Sdk from '@modules/Sdk';
 import SegmentsContextProvider from '@modules/Segments/SegmentsContextProvider';
 import AuthContextProvider from '@plitzi/sdk-auth/AuthContextProvider';
-import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
 import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
+import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
 import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
 import StateManagerContextProvider from '@plitzi/sdk-state/StateManagerContextProvider';
 import SdkStyleContextProvider from '@plitzi/sdk-style/SdkStyleContextProvider';
@@ -105,7 +105,7 @@ const AppMain = ({
                       previewMode={previewMode}
                     >
                       <StateManagerContextProvider webId={webId} state={state} onInit={onInitStateManager}>
-                        <DataSourceContextProvider environment={environment}>
+                        <GlobalSources environment={environment}>
                           <InteractionsSdkContextProvider previewMode={previewMode}>
                             <DevToolsContainer
                               enabled={debugMode}
@@ -125,7 +125,7 @@ const AppMain = ({
                               />
                             </DevToolsContainer>
                           </InteractionsSdkContextProvider>
-                        </DataSourceContextProvider>
+                        </GlobalSources>
                       </StateManagerContextProvider>
                     </NavigationContextProvider>
                   </AuthContextProvider>

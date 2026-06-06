@@ -2,8 +2,8 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { PopupProvider } from '@plitzi/plitzi-ui/Popup';
 import { useState, useMemo } from 'react';
 
-import DataSourceContextProvider from '@plitzi/sdk-data-source/DataSourceContextProvider';
 import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
+import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
 import StateManagerContextProvider from '@plitzi/sdk-state/StateManagerContextProvider';
 import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
@@ -99,7 +99,7 @@ const AppMain = ({
         debugMode={debugMode}
       >
         <StateManagerContextProvider webId={webId} state={state}>
-          <DataSourceContextProvider environment={environment}>
+          <GlobalSources environment={environment}>
             <InteractionsBuilderContextProvider previewMode={previewMode}>
               <PopupProvider renderLeftPopup={false} renderRightPopup={false} renderFloatingPopup={!previewMode}>
                 <DevToolsContainer innerClassName="flex" enabled={debugMode}>
@@ -107,7 +107,7 @@ const AppMain = ({
                 </DevToolsContainer>
               </PopupProvider>
             </InteractionsBuilderContextProvider>
-          </DataSourceContextProvider>
+          </GlobalSources>
         </StateManagerContextProvider>
       </AppProvider>
     ),

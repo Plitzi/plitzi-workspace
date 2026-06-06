@@ -5,7 +5,8 @@ import type { Orientation } from '../../DevToolsContainer';
 
 const TABS = [
   { id: 'logs', label: 'Logs', icon: 'fa-solid fa-terminal' },
-  { id: 'dataSources', label: 'Sources', icon: 'fa-solid fa-database' },
+  { id: 'store', label: 'Store', icon: 'fa-solid fa-database' },
+  { id: 'history', label: 'History', icon: 'fa-solid fa-clock-rotate-left' },
   { id: 'elements', label: 'Elements', icon: 'fa-solid fa-layer-group' },
   { id: 'variables', label: 'Variables', icon: 'fa-solid fa-code' },
   { id: 'plugins', label: 'Plugins', icon: 'fa-solid fa-puzzle-piece' }
