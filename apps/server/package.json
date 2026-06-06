@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-server",
-  "version": "0.30.19",
+  "version": "0.31.0",
   "license": "AGPL-3.0",
   "files": [
     "dist"
