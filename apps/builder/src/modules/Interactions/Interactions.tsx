@@ -2,13 +2,14 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { useCallback, use, useMemo, useEffect, useState } from 'react';
 
+import { createStoreHook } from '@plitzi/nexus';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import utility from '@plitzi/sdk-interactions/utility/index';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import Workflow from './components/Workflow';
 
-import type { Element, InteractionCallback } from '@plitzi/sdk-shared';
+import type { Element, InteractionCallback, Source, BuilderState } from '@plitzi/sdk-shared';
 
 export type InteractionsProps = {
   className?: string;
@@ -18,6 +19,8 @@ export type InteractionsProps = {
 };
 
 const Interactions = ({ className = '', id = '', interactions = emptyObject, onChange }: InteractionsProps) => {
+  const { useStore } = createStoreHook<BuilderState>();
+  const [sourcesRegistry] = useStore('sources');
   const { interactionsManager } = use(InteractionsContext);
   const [reRender, setRerender] = useState(0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -65,12 +68,21 @@ const Interactions = ({ className = '', id = '', interactions = emptyObject, onC
     });
   }, [interactionsManager]);
 
+  const dataSource = useMemo<Record<string, Source['meta']>>(
+    () =>
+      Object.values(sourcesRegistry ?? {})
+        .filter(source => source.meta.source)
+        .reduce((acum, source) => ({ ...acum, [source.meta.source as string]: source.meta }), {}),
+    [sourcesRegistry]
+  );
+
   return (
     <div className={clsx('flex grow flex-col', className)}>
       <Workflow
         key={id}
         nodes={interactions}
         direction="vertical"
+        dataSource={dataSource}
         nodeDefinitions={nodeDefinitions}
         onChange={handleWorkflowChange}
       />

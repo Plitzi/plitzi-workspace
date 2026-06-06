@@ -4,19 +4,19 @@ import { get, set, omit } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import { generateID } from '@plitzi/sdk-shared/helpers/utils';
 
 import WorkflowContext from './WorkflowContext';
 
 import type { WorkflowContextValue } from './WorkflowContext';
-import type { BuilderState, ElementInteraction, InteractionCallback, Source, SourceField } from '@plitzi/sdk-shared';
+import type { ElementInteraction, InteractionCallback, Source, SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type WorkflowContextProviderProps = {
   children: ReactNode;
   nodes: Record<string, ElementInteraction>;
   direction: 'horizontal' | 'vertical';
+  dataSource?: Record<string, Source['meta']>;
   nodeDefinitions?: InteractionCallback[];
   onChange: (nodes: Record<string, ElementInteraction>, debounced?: boolean) => void;
   setFlowId: (flowId: string) => void;
@@ -26,12 +26,11 @@ const WorkflowContextProvider = ({
   children,
   nodes,
   direction = 'horizontal',
+  dataSource = {},
   nodeDefinitions,
   setFlowId,
   onChange
 }: WorkflowContextProviderProps) => {
-  const { useStore } = createStoreHook<BuilderState>();
-  const [sourcesRegistry] = useStore('sources');
   const [previewData, setPreviewData] = useState<Record<string, ElementInteraction['preview']>>({});
   const [dataSourceContent, setDataSourceContent] = useState<Record<string, SourceField[]>>({});
   const nodesRef = useRef(nodes);
@@ -253,14 +252,6 @@ const WorkflowContextProvider = ({
       setPreviewData(state => ({ ...state, [id]: data }));
     }
   }, []);
-
-  const dataSource = useMemo<Record<string, Source['meta']>>(
-    () =>
-      Object.values(sourcesRegistry ?? {})
-        .filter(source => source.meta.source)
-        .reduce((acum, source) => ({ ...acum, [source.meta.source as string]: source.meta }), {}),
-    [sourcesRegistry]
-  );
 
   const loadSources = useCallback(async () => {
     const sourcesLoaded = await Object.keys(dataSource).reduce(async (acum, sourceKey) => {
