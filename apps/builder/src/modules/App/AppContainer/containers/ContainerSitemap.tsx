@@ -2,8 +2,8 @@ import Card from '@plitzi/plitzi-ui/Card';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { use, useCallback, useMemo } from 'react';
 
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import WorkflowDiagram from '@pmodules/App/components/WorkflowDiagram';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
 import PageForm from '@pmodules/App/models/PageForm';

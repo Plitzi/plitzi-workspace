@@ -2,11 +2,11 @@
 import clsx from 'clsx';
 import { useMemo, use } from 'react';
 
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';

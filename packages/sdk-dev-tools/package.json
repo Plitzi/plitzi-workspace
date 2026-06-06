@@ -396,11 +396,11 @@
     "react-dom": "^19"
   },
   "dependencies": {
+    "@plitzi/nexus": "workspace:*",
     "@plitzi/plitzi-ui": "^1.6.9",
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
-    "@plitzi/sdk-store": "workspace:*",
     "@plitzi/sdk-style": "workspace:*",
     "@uiw/react-json-view": "^2.0.0-alpha.43",
     "clsx": "^2.1.1"

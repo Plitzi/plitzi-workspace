@@ -4,8 +4,8 @@ import { describe, it, expect, vi } from 'vitest';
 
 // import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
+import StoreProvider from '@plitzi/nexus/StoreProvider';
 import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
-import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 
 import { CollectionContainer } from './CollectionContainer';
 

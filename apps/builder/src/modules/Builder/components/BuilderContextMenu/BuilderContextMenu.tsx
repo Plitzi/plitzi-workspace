@@ -4,9 +4,9 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import { memo, useCallback, use, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import TemplateForm from '../../Models/TemplateForm';
 import BuilderElementTools from '../BuilderElementTools';

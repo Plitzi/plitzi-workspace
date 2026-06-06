@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 
+import { loggerMiddleware as loggerMw } from '@plitzi/nexus';
+import StoreProvider from '@plitzi/nexus/StoreProvider';
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
-import { loggerMiddleware as loggerMw } from '@plitzi/sdk-store';
-import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
 
 import type { BuilderState, Schema, Style } from '@plitzi/sdk-shared';

@@ -46,7 +46,7 @@ Plitzi es un **constructor de aplicaciones web** de código abierto pensado para
 │  ├─ sdk-schema/       # Utilidades de esquema
 │  ├─ sdk-shared/       # Utilidades y tipos compartidos
 │  ├─ sdk-state/        # Gestión de estado
-│  ├─ sdk-store/        # Store global
+│  ├─ nexus/        # Store global (Nexus)
 │  ├─ sdk-style/        # Sistema de estilos
 │  └─ sdk-variables/    # Variables
 ├─ docs/

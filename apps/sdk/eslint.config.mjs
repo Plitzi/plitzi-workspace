@@ -18,8 +18,8 @@ export default tsEslint.config({
       {
         groups: ['builtin', 'external', 'internal', ['parent', 'sibling', 'index'], 'type'],
         pathGroups: [
-          { pattern: '@plitzi/sdk-*/**', group: 'internal' },
-          { pattern: '@plitzi/sdk-*', group: 'internal' },
+          { pattern: '@plitzi/+(sdk-*|nexus)/**', group: 'internal' },
+          { pattern: '@plitzi/+(sdk-*|nexus)', group: 'internal' },
           { pattern: '@modules/**', group: 'internal' },
           { pattern: '@components/**', group: 'internal' }
           // { pattern: '@icons/**', group: 'internal' },

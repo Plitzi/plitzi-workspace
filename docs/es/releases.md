@@ -36,7 +36,7 @@ Comprueba que los `package.json` empaquetados no conserven referencias `workspac
 
 ## Changelogs
 
-Cada app/paquete publicable mantiene un `CHANGELOG.md` actualizado por Changesets (por ejemplo `apps/sdk/CHANGELOG.md`, `packages/sdk-store/CHANGELOG.md`).
+Cada app/paquete publicable mantiene un `CHANGELOG.md` actualizado por Changesets (por ejemplo `apps/sdk/CHANGELOG.md`, `packages/nexus/CHANGELOG.md`).
 
 ## Ver también
 

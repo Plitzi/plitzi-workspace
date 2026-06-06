@@ -2,8 +2,8 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import { useCallback, use, useMemo } from 'react';
 
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
 import type { CommonState, Element, Schema, Segment, SegmentsContextValue } from '@plitzi/sdk-shared';

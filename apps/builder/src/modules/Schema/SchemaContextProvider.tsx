@@ -5,6 +5,7 @@ import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMidd
 import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
 import { useMemo, useCallback, use, useEffect } from 'react';
 
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
@@ -13,7 +14,6 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 

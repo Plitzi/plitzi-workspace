@@ -27,7 +27,7 @@ const PACKAGE = require('./package.json') as {
 const baseUrl = new URL('.', import.meta.url);
 
 const packages = {
-  '@plitzi/sdk-store': path.resolve(baseUrl.pathname, '../../packages/sdk-store/src'),
+  '@plitzi/nexus': path.resolve(baseUrl.pathname, '../../packages/nexus/src'),
   '@plitzi/sdk-auth': path.resolve(baseUrl.pathname, '../../packages/sdk-auth/src'),
   '@plitzi/sdk-dev-tools': path.resolve(baseUrl.pathname, '../../packages/sdk-dev-tools/src'),
   '@plitzi/sdk-elements': path.resolve(baseUrl.pathname, '../../packages/sdk-elements/src'),

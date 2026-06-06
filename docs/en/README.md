@@ -17,7 +17,7 @@ Some packages maintain their own README next to the source:
 | Package | Path |
 |---------|------|
 | SSR server | [apps/server/README.md](../../apps/server/README.md) |
-| Store | [packages/sdk-store/README.md](../../packages/sdk-store/README.md) |
+| Store (Nexus) | [packages/nexus/README.md](../../packages/nexus/README.md) |
 
 ## Other languages
 

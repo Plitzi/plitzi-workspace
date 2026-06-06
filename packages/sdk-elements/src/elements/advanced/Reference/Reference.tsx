@@ -4,10 +4,10 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { useCallback, use, useEffect, useMemo, useState, useRef } from 'react';
 
+import { createStoreHook } from '@plitzi/nexus/createStore';
+import StoreProvider from '@plitzi/nexus/StoreProvider';
 import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
-import StoreProvider from '@plitzi/sdk-store/StoreProvider';
 
 import withElement from '../../../Element/hocs/withElement';
 import PluginManager from '../../../Element/PluginManager';

@@ -1,9 +1,9 @@
 import { use, useCallback, useEffect, useMemo } from 'react';
 
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import AiChatContext from './AiChatContext';
 import { getPendingQuestion } from '../components/ChatInput/components/QuestionInput';

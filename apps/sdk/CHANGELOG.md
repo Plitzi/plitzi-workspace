@@ -20,7 +20,7 @@
   - @plitzi/sdk-schema@0.31.0
   - @plitzi/sdk-shared@0.31.0
   - @plitzi/sdk-state@0.31.0
-  - @plitzi/sdk-store@0.31.0
+  - @plitzi/nexus@0.31.0
   - @plitzi/sdk-style@0.31.0
   - @plitzi/sdk-variables@0.31.0
 
@@ -41,7 +41,7 @@
   - @plitzi/sdk-schema@0.30.19
   - @plitzi/sdk-shared@0.30.19
   - @plitzi/sdk-state@0.30.19
-  - @plitzi/sdk-store@0.30.19
+  - @plitzi/nexus@0.30.19
   - @plitzi/sdk-style@0.30.19
   - @plitzi/sdk-variables@0.30.19
 
@@ -62,7 +62,7 @@
   - @plitzi/sdk-schema@0.30.18
   - @plitzi/sdk-shared@0.30.18
   - @plitzi/sdk-state@0.30.18
-  - @plitzi/sdk-store@0.30.18
+  - @plitzi/nexus@0.30.18
   - @plitzi/sdk-style@0.30.18
   - @plitzi/sdk-variables@0.30.18
 
@@ -83,7 +83,7 @@
   - @plitzi/sdk-schema@0.30.17
   - @plitzi/sdk-shared@0.30.17
   - @plitzi/sdk-state@0.30.17
-  - @plitzi/sdk-store@0.30.17
+  - @plitzi/nexus@0.30.17
   - @plitzi/sdk-style@0.30.17
   - @plitzi/sdk-variables@0.30.17
 

@@ -1,10 +1,10 @@
-import getByPath from '@plitzi/sdk-store/helpers/getByPath';
+import getByPath from '@plitzi/nexus/helpers/getByPath';
 
 import { formatDate } from '../../helpers';
 // import getByPath from '../../store/helpers/getByPath';
 
 import type { Log, LogInteraction, LogNavigation, ProviderCallback } from '../../types/DevToolsTypes';
-import type { ChangeListener } from '@plitzi/sdk-store';
+import type { ChangeListener } from '@plitzi/nexus';
 
 type CallbackInternal = (
   logType: Log['logType'],

@@ -4,11 +4,11 @@ import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
 import { get, debounce } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useMemo, useState, use } from 'react';
 
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
 import type { CommonState, StyleVariableCategory } from '@plitzi/sdk-shared';

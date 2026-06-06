@@ -6,7 +6,7 @@ export const elementDefinitionSchema = z
     label: z.string().describe('Element label'),
     type: z.string().describe('Element type'),
     parentId: z.string().nullish().describe('Parent element ID (null for root elements)'),
-    items: z.array(z.string()).nullable().describe('Child element IDs'),
+    items: z.array(z.string()).optional().nullable().describe('Child element IDs'),
     runtime: z.enum(['server', 'client', 'shared']).optional().describe('Rendering runtime'),
     loadStrategy: z.enum(['eager', 'lazy', 'visible']).optional().describe('Load strategy')
   })

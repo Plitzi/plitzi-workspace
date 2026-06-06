@@ -7,7 +7,7 @@ import WorkflowContextProvider from './WorkflowContextProvider';
 import WorkflowFlow from './WorkflowFlow';
 import WorkflowHeader from './WorkflowHeader';
 
-import type { ElementInteraction, InteractionCallback } from '@plitzi/sdk-shared';
+import type { ElementInteraction, InteractionCallback, Source } from '@plitzi/sdk-shared';
 
 export type WorkflowProps = {
   nodes?: Record<string, ElementInteraction>;
@@ -15,6 +15,7 @@ export type WorkflowProps = {
   callbackTitle?: string;
   nodeDefinitions?: InteractionCallback[];
   direction?: 'horizontal' | 'vertical';
+  dataSource?: Record<string, Source['meta']>;
   onChange?: (nodes: Record<string, ElementInteraction>) => void;
 };
 
@@ -24,6 +25,7 @@ const Workflow = ({
   callbackTitle = 'Do this...',
   nodeDefinitions,
   direction = 'vertical',
+  dataSource = {},
   onChange
 }: WorkflowProps) => {
   const [nodes, setNodes] = useState(() => {
@@ -94,10 +96,11 @@ const Workflow = ({
     >
       <WorkflowContextProvider
         nodes={nodes}
-        onChange={handleChange}
         direction={direction}
-        setFlowId={setFlowId}
         nodeDefinitions={nodeDefinitions}
+        dataSource={dataSource}
+        setFlowId={setFlowId}
+        onChange={handleChange}
       >
         <WorkflowHeader flows={flows} flowId={flowId} setFlowId={setFlowId} />
         {flow && (

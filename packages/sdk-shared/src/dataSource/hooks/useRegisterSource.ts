@@ -1,7 +1,7 @@
 import { omit } from '@plitzi/plitzi-ui/helpers';
 import { useEffect, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
+import { createStoreHook } from '@plitzi/nexus/createStore';
 
 import { makeId } from '../../helpers';
 

@@ -4,6 +4,7 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { produce } from 'immer';
 import { useCallback, use, useMemo, useState, useEffect } from 'react';
 
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { EventBridgeTypesPerModule } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
@@ -13,7 +14,6 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { isInViewport } from '@plitzi/sdk-shared/helpers/utils';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { RTEvent } from '@plitzi/sdk-shared/websockets/RTCodec';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 import { getInitialItems } from '@pmodules/Elements/ElementHelper';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';

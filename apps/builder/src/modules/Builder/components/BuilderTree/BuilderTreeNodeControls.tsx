@@ -5,10 +5,10 @@ import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import clsx from 'clsx';
 import { use, useCallback, useMemo } from 'react';
 
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import getBindingsDetails from '@plitzi/sdk-elements/dataSource/getBindingsDetails';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import { createStoreHook } from '@plitzi/sdk-store/createStore';
 
 import BuilderElementTools from '../BuilderElementTools';
 

@@ -17,7 +17,7 @@ Algunos paquetes mantienen su propio README junto al código (en inglés):
 | Paquete | Ruta |
 |---------|------|
 | Servidor SSR | [apps/server/README.md](../../apps/server/README.md) |
-| Store | [packages/sdk-store/README.md](../../packages/sdk-store/README.md) |
+| Store (Nexus) | [packages/nexus/README.md](../../packages/nexus/README.md) |
 
 ## Otros idiomas
 

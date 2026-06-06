@@ -20,7 +20,7 @@ plitzi-workspace/
 │   ├── sdk-schema/
 │   ├── sdk-shared/      # Shared ESLint, TSConfig, types, utilities
 │   ├── sdk-state/
-│   ├── sdk-store/     # React store (useSyncExternalStore)
+│   ├── nexus/     # React store — Nexus (useSyncExternalStore)
 │   ├── sdk-style/
 │   └── sdk-variables/
 ├── docs/
@@ -52,5 +52,5 @@ Packages under `packages/sdk-*` are workspace libraries imported by apps and by 
 |-------|----------|
 | Monorepo guides | `docs/en/` or `docs/es/` |
 | SSR server API | `apps/server/README.md` |
-| Store API | `packages/sdk-store/README.md` |
+| Store API (Nexus) | `packages/nexus/README.md` |
 | Code conventions | `claude.md` |
