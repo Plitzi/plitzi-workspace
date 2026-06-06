@@ -122,6 +122,10 @@
       "types": "./dist/createStore/hooks/useStore.d.ts",
       "import": "./dist/createStore/hooks/useStore.mjs"
     },
+    "./createStore/hooks/useStoreById": {
+      "types": "./dist/createStore/hooks/useStoreById.d.ts",
+      "import": "./dist/createStore/hooks/useStoreById.mjs"
+    },
     "./createStore/hooks/useStoreGetter": {
       "types": "./dist/createStore/hooks/useStoreGetter.d.ts",
       "import": "./dist/createStore/hooks/useStoreGetter.mjs"

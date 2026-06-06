@@ -71,7 +71,10 @@ export type PathSetters<TState extends object, Paths extends ReadonlyArray<PathO
 export type SyncMode = 'mount' | 'sync';
 
 export type StoreHookBaseOptions<TState extends object = object> = {
+  // Target a specific store instead of the nearest provider: pass `store` directly, or `storeId` to resolve a named
+  // ancestor store from the registry (reachable even across a disconnected provider). `store` wins if both are given.
   store?: StoreApi<TState>;
+  storeId?: string;
 };
 
 export type StoreHookReactiveOptions<T, TState extends object = object> = StoreHookBaseOptions<TState> & {
@@ -146,6 +149,9 @@ export type SetState<T> = {
 export type GetState<T> = () => T;
 
 export type StoreApi<T> = {
+  // Optional identity for this store. Set via `createStore(init, { id })` or the `<StoreProvider id>` prop; lets a
+  // descendant target this store by id (see the `storeId` hook option) and aids logging/devtools.
+  id?: string;
   getState: GetState<T>;
   // Resolves a single path through the scope chain without materializing the full merged state — own value
   // shadows the parent's, except where both are objects (then the subtree at that path is deep-merged).

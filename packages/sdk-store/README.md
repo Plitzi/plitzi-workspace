@@ -28,6 +28,7 @@ function Counter() {
 | `useStore` | Subscribe + write a path (or paths). Re-renders on change only. |
 | `useStoreSetter` | A stable setter — write without subscribing/re-rendering. |
 | `useStoreGetter` | A stable getter — read current values in callbacks, no re-render. |
+| `useStoreById` | Get a named ancestor store's `StoreApi` by `id` (reachable across disconnected providers). |
 | `useStoreSync` | Mirror an external value (props) **into** the store. |
 | `createDerived` / `useDerived` | A memoized value computed from store paths (reselect-style). |
 | `createEntityAdapter` | CRUD updaters + selectors for a normalized `Record<id, T>` map. |
@@ -69,11 +70,15 @@ const child = createStore<MyState>({ record }, { parent: rootStore });
 const store = createStore<MyState>({ count: 0 }, {
   middlewares: [persistMiddleware({ key: 'app' }), historyMiddleware(), loggerMiddleware()]
 });
+
+// With an id, so descendants can target it by id (see "Named stores" below)
+const store = createStore<MyState>({ count: 0 }, { id: 'root' });
 ```
 
 `StoreApi` exposes `getState`, `getPath`, `setState`, `subscribe`, `subscribePath`, `subscribeChange`,
-and `destroy?()`. Call `destroy()` to detach a scoped store from its parent and clear its listeners
-(prevents leaks for short-lived scopes like list items). `StoreProvider` calls it automatically on unmount.
+`destroy?()`, and an optional `id`. Call `destroy()` to detach a scoped store from its parent and clear its
+listeners (prevents leaks for short-lived scopes like list items). `StoreProvider` calls it automatically on
+unmount.
 
 ## `StoreProvider`
 
@@ -95,6 +100,11 @@ Wraps children with a store context. Creates a new store by default; pass `store
 // Sync a sub-path from parent props
 <StoreProvider path="schema.flat" value={flatMap}>
   <Child />
+</StoreProvider>
+
+// Name it so descendants can reach it by id, even past a disconnected provider (see "Named stores")
+<StoreProvider id="root" value={builderState}>
+  <App />
 </StoreProvider>
 ```
 
@@ -160,6 +170,45 @@ Via `StoreProvider` (the common case):
 </StoreProvider>
 ```
 
+## Named stores & reaching ancestors (`id` / `storeId` / `useStoreById`)
+
+Give a store an **`id`** and any descendant can target it — even across a **disconnected** (`inherit`-less)
+provider that would otherwise shadow it. The id lives in a parallel registry propagated by context
+*independently of `inherit`*, so it never breaks the scope chain and costs nothing per provider unless used.
+
+```tsx
+<StoreProvider id="root" value={builderState}>
+  ...
+  <StoreProvider value={{ local: 1 }}>        {/* disconnected — no inherit */}
+    <Leaf />
+  </StoreProvider>
+</StoreProvider>
+```
+
+```ts
+// inside Leaf — reach the named root store past the disconnected provider:
+const [theme, setTheme] = useStore('theme', { storeId: 'root' }); // reactive read + write
+const getUser = useStoreGetter('user', { storeId: 'root' });      // imperative read
+const setUser = useStoreSetter('user', { storeId: 'root' });      // imperative write
+
+// the raw StoreApi — for createDerived / batch / subscribe / passing around:
+const rootStore = useStoreById('root');
+rootStore.batch(() => { ... });
+const itemCount = createDerived(rootStore, ['items'], ([items]) => items.length);
+```
+
+- **`storeId` option** — available on every hook (`useStore`, `useStoreGetter`, `useStoreSetter`,
+  `useStoreSync`). Resolves the nearest ancestor store registered under that id. An explicit `store` option
+  still wins over `storeId`.
+- **`useStoreById(id?)`** — returns the raw `StoreApi`. With no `id`, returns the nearest provider's store.
+  Use it when you need the store object itself (`createDerived`/`createAsync`, `batch`, `subscribe`); the
+  options above only read/write *through* it.
+- **`store.id`** — the identity is also set on the store, handy for logging/devtools.
+- **Lifecycle** — registration is context-scoped: an id stops resolving the moment its provider unmounts.
+  There is no global registry, so nothing to clean up and no leaks.
+- **Duplicate ids (dev)** — registering an id that shadows an ancestor with the same id logs a warning in
+  development (stripped in production); the nearer store wins. Sibling subtrees may reuse an id freely.
+
 ## `useStore`
 
 Subscribe to store values. Triggers re-render only when the selected value changes.
@@ -198,6 +247,7 @@ const [derived] = useStore(['user.name', 'count'], {
 useStore('user.name', { enabled: false });       // unsubscribed
 useStore('user.name', { mode: 'mount' });        // read once on mount
 useStore('user.name', { store: myStore });       // explicit store
+useStore('user.name', { storeId: 'root' });      // a named ancestor store (see "Named stores")
 useStore('user.name', { equalityFn: Object.is }); // custom equality
 ```
 

@@ -144,7 +144,8 @@ function useStoreSync<TState extends object, P extends PathOf<TState>>(
   value: PathValue<TState, P> | TState | readonly unknown[],
   options: UseStoreSyncOptions<any, any> | UseStoreSyncMultiOptions<TState> = {}
 ): void {
-  const store = useResolvedStore((options as UseStoreSyncOptions<any, any>).store, 'useStoreSync');
+  const syncOptions = options as UseStoreSyncOptions<any, any>;
+  const store = useResolvedStore(syncOptions.store, 'useStoreSync', syncOptions.storeId);
 
   if (Array.isArray(pathOrPaths)) {
     // eslint-disable-next-line react-hooks/rules-of-hooks

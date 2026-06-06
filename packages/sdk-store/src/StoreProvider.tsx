@@ -5,8 +5,9 @@ import { createContext, useContext, useEffect, useMemo, useRef } from 'react';
 
 import createStore from './createStore';
 import useStoreSync from './createStore/hooks/useStoreSync';
-import { StoreContext } from './StoreContext';
+import { findStoreInRegistry, StoreContext, StoreRegistryContext } from './StoreContext';
 
+import type { StoreRegistry } from './StoreContext';
 import type { StoreApi, StoreMiddleware } from './types';
 import type { ReactNode } from 'react';
 
@@ -18,6 +19,9 @@ const cascades = (middleware: StoreMiddleware<any>): boolean => (middleware as {
 
 export type StoreProviderProps<TState extends object = any> = {
   store?: StoreApi<TState>;
+  // Names this store so descendants can reach it by id — `useStore(path, { storeId })` — even across a disconnected
+  // (`inherit`-less) provider in between. Identity also shows up on the store (`store.id`) for logging/devtools.
+  id?: string;
   path?: string;
   value?: Partial<TState> | ((state: TState) => TState);
   /**
@@ -39,6 +43,7 @@ export type StoreProviderProps<TState extends object = any> = {
 
 const StoreProvider = <TState extends object = any>({
   store,
+  id,
   path,
   value,
   inherit,
@@ -48,6 +53,7 @@ const StoreProvider = <TState extends object = any>({
 }: StoreProviderProps<TState>) => {
   const parentStore = useContext(StoreContext) as StoreApi<TState> | undefined;
   const inheritedMiddlewares = useContext(StoreMiddlewareContext) as StoreMiddleware<TState>[] | undefined;
+  const parentRegistry = useContext(StoreRegistryContext);
   const storeRef = useRef<StoreApi<TState>>(undefined);
   const liveChain = inherit === 'live';
   const storeState = useMemo(() => {
@@ -70,10 +76,38 @@ const StoreProvider = <TState extends object = any>({
     storeRef.current =
       store ??
       createStore<TState>(() => storeState, {
+        id,
         parent: liveChain ? parentStore : undefined,
         middlewares: storeMiddlewares.length > 0 ? storeMiddlewares : undefined
       });
   }
+
+  // Register this store under `id` in the parallel registry, regardless of `inherit`, so a descendant can reach it
+  // by id even past a disconnected provider. A linked-list node (no Map copy) keeps each provider O(1).
+  const registry = useMemo<StoreRegistry | undefined>(
+    () => (id ? { id, store: storeRef.current as StoreApi<TState>, parent: parentRegistry } : parentRegistry),
+    [id, parentRegistry]
+  );
+
+  // Dev-only guard: a duplicate `id` that shadows an ancestor with the same id is almost always a mistake — a
+  // descendant's `{ storeId }` / `useStoreById` would silently resolve to the nearer one. `warnedDuplicateRef` keeps
+  // it to a single warning per instance (StrictMode remounts reuse the same instance). Stripped in production.
+  const warnedDuplicateRef = useRef(false);
+  useEffect(() => {
+    if (
+      import.meta.env.MODE !== 'production' &&
+      id &&
+      !warnedDuplicateRef.current &&
+      findStoreInRegistry(parentRegistry, id)
+    ) {
+      warnedDuplicateRef.current = true;
+      console.warn(
+        `@plitzi/sdk-store: duplicate StoreProvider id "${id}" — it shadows an ancestor provider with the same id, ` +
+          `so a descendant's { storeId: "${id}" } or useStoreById("${id}") resolves to this (nearer) store. Use a ` +
+          'distinct id, or remove one of the providers.'
+      );
+    }
+  }, [id, parentRegistry]);
 
   useEffect(() => {
     // Re-attach the parent link on (re)mount. StrictMode runs mount → unmount → remount reusing the same store
@@ -103,11 +137,13 @@ const StoreProvider = <TState extends object = any>({
 
   return (
     <StoreMiddlewareContext value={cascadedMiddlewares.length > 0 ? cascadedMiddlewares : undefined}>
-      <StoreContext value={storeRef.current}>{children}</StoreContext>
+      <StoreRegistryContext value={registry}>
+        <StoreContext value={storeRef.current}>{children}</StoreContext>
+      </StoreRegistryContext>
     </StoreMiddlewareContext>
   );
 };
 
-export { StoreContext };
+export { StoreContext, StoreRegistryContext };
 
 export default StoreProvider;

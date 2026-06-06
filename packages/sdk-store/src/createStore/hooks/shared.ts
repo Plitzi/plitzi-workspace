@@ -5,7 +5,7 @@
 import { useContext, useCallback, useMemo, useSyncExternalStore } from 'react';
 
 import getByPath from '../../helpers/getByPath';
-import { StoreContext } from '../../StoreContext';
+import { findStoreInRegistry, StoreContext, StoreRegistryContext } from '../../StoreContext';
 
 import type { PathOf, PathOrFn, StoreApi, SyncMode } from '../../types';
 import type { RefObject } from 'react';
@@ -83,15 +83,32 @@ export function makeMultiSnapshot<TState extends object>(
 
 export function useResolvedStore<TState extends object>(
   optionStore: StoreApi<TState> | undefined,
-  hookName: string
+  hookName: string,
+  storeId?: string
 ): StoreApi<TState> {
   const contextStore = useContext(StoreContext) as StoreApi<TState> | undefined;
-  const store = optionStore ?? contextStore;
-  if (!store) {
+  const registry = useContext(StoreRegistryContext);
+
+  // An explicit `store` wins; then a `storeId` resolved from the registry (reachable across disconnected providers);
+  // otherwise the nearest provider's store.
+  if (optionStore) {
+    return optionStore;
+  }
+
+  if (storeId !== undefined) {
+    const byId = findStoreInRegistry(registry, storeId) as StoreApi<TState> | undefined;
+    if (!byId) {
+      throw new Error(`${hookName}: no store registered with id "${storeId}" in any ancestor StoreProvider`);
+    }
+
+    return byId;
+  }
+
+  if (!contextStore) {
     throw new Error(`${hookName} must be used inside a StoreProvider`);
   }
 
-  return store;
+  return contextStore;
 }
 
 export function useMultiSubscribe<TState extends object>(

@@ -57,7 +57,7 @@ type WithScopeClaims = { scopeClaims?: ScopeClaims };
 
 function createStore<TState extends object>(
   initializer: Partial<TState> | ((set: SetState<TState>, get: GetState<TState>) => Partial<TState>),
-  storeOptions?: { parent?: StoreApi<TState>; middlewares?: StoreMiddleware<TState>[] }
+  storeOptions?: { id?: string; parent?: StoreApi<TState>; middlewares?: StoreMiddleware<TState>[] }
 ): StoreApi<TState> {
   // `state` is the live, private working copy and is never handed out. `ownSnapshot` is the immutable view
   // `getState` returns: a lazy `{ ...state }` clone, cleared on every change so its reference doubles as the change
@@ -243,6 +243,7 @@ function createStore<TState extends object>(
   };
 
   const api: StoreApi<TState> = {
+    id: storeOptions?.id,
     getState,
     getPath,
     setState,

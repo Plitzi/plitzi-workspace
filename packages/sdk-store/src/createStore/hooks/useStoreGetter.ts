@@ -45,7 +45,7 @@ function useStoreGetter<TState extends object>(
   const resolvedOptions: UseStoreGetterOptions<TState, any> | undefined =
     typeof arg === 'object' && !Array.isArray(arg) ? (arg as UseStoreGetterOptions<TState, any>) : options;
 
-  const store = useResolvedStore(resolvedOptions?.store, 'useStoreGetter');
+  const store = useResolvedStore(resolvedOptions?.store, 'useStoreGetter', resolvedOptions?.storeId);
   const { defaultValue } = resolvedOptions ?? {};
   const entriesKey = resolvedEntries?.map(e => (typeof e === 'function' ? e.toString() : e)).join('|');
 

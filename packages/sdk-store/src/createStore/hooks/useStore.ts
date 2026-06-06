@@ -280,7 +280,7 @@ function useStore<TState extends object>(
   arg?: PathOf<TState> | ReadonlyArray<PathOrFn<TState>> | ((state: TState) => PathOf<TState>),
   options: UseStoreOptions<any, any> = {}
 ): unknown {
-  const store = useResolvedStore(options.store, 'useStore');
+  const store = useResolvedStore(options.store, 'useStore', options.storeId);
   const isMulti = Array.isArray(arg);
 
   // Both branches always run to keep the hook order stable when a call site

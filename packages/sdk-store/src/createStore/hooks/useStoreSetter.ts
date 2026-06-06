@@ -23,7 +23,7 @@ function useStoreSetter<TState extends object>(
   const resolvedBasePath = typeof arg === 'string' ? arg : undefined;
   const resolvedOptions = typeof arg === 'object' ? arg : options;
 
-  const store = useResolvedStore(resolvedOptions?.store, 'useStoreSetter');
+  const store = useResolvedStore(resolvedOptions?.store, 'useStoreSetter', resolvedOptions?.storeId);
 
   return useCallback(
     (subPath: string | undefined, value: unknown) => {
