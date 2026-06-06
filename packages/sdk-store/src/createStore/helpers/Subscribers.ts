@@ -51,13 +51,12 @@ class Subscribers<F extends AnyListener> {
     }
   }
 
-  forEach(cb: (listener: F) => void): void {
+  // A throwing listener can't starve its siblings: the inner `for` stays a tight walk and the `try` only re-enters on
+  // a throw. The first error goes to `onError` (so a logger can record it) or is re-raised when none is given.
+  forEach(cb: (listener: F) => void, onError?: (error: unknown) => void): void {
     this.begin();
     try {
       const { items } = this;
-      // Snapshot the count: a listener added during this pass isn't called until the next notify (and a removed one
-      // is a tombstone we call as a no-op). A throwing listener can't starve its siblings — the inner `for` stays a
-      // tight walk and the `try` only re-enters on a throw — and the first error is re-raised once the pass ends.
       const n = items.length;
       let i = 0;
       let error: unknown;
@@ -78,7 +77,11 @@ class Subscribers<F extends AnyListener> {
       }
 
       if (thrown) {
-        throw error;
+        if (onError) {
+          onError(error);
+        } else {
+          throw error;
+        }
       }
     } finally {
       this.end();

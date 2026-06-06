@@ -81,7 +81,9 @@ function useStoreSyncSingle<TState extends object, P extends PathOf<TState>>(
   const isFirstRender = !mountedRef.current;
   mountedRef.current = true;
 
-  const shouldSync = enabled && (isFirstRender || (mode === 'sync' && !equalityFn(lastSyncedRef.current, value)));
+  const lastSynced = lastSyncedRef.current;
+  const shouldSync =
+    enabled && (isFirstRender || (mode === 'sync' && (lastSynced === undefined || !equalityFn(lastSynced, value))));
 
   const runSync = (canPropagate = true) => {
     lastSyncedRef.current = value;

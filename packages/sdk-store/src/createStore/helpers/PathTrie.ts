@@ -74,10 +74,14 @@ class PathTrie {
   // subtree now holds a new reference) and its descendants. Conservative: it wakes all candidates and leaves the
   // precise diff to the caller (parent→scope forwarding has no before/after to compare). A non-string path means a
   // full-state change, so wake everyone.
-  forEachAffected(changedPath: Path | undefined, cb: (listener: Listener) => void): void {
+  forEachAffected(
+    changedPath: Path | undefined,
+    cb: (listener: Listener) => void,
+    onError?: (error: unknown) => void
+  ): void {
     const wake = (subs: Subscribers<Listener> | undefined): void => {
       if (subs) {
-        subs.forEach(cb);
+        subs.forEach(cb, onError);
       }
     };
 

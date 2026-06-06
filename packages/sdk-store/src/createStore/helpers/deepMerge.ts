@@ -10,6 +10,12 @@ export const deepMerge = (base: unknown, override: unknown): unknown => {
 
   const result: Record<string, unknown> = { ...base };
   for (const key of Object.keys(override)) {
+    // An own-enumerable `__proto__` (e.g. from `JSON.parse`) would assign through the prototype setter and poison the
+    // merged object's prototype — skip it.
+    if (key === '__proto__') {
+      continue;
+    }
+
     result[key] = key in base ? deepMerge(base[key], override[key]) : override[key];
   }
 

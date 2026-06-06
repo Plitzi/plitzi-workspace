@@ -36,6 +36,8 @@ import type {
   SetStateFn,
   StoreApi,
   StoreApiInternal,
+  StoreErrorHandler,
+  StoreErrorReporter,
   StoreMiddleware,
   UseStoreGetterOptions,
   UseStoreMultiOptions,
@@ -59,7 +61,21 @@ function createStore<TState extends object>(
   const changeListeners = new Subscribers<ChangeListener<TState>>();
   const pathListeners = new PathTrie();
   const interceptors: WriteInterceptor<TState>[] = [];
+  const errorHandlers: StoreErrorHandler<TState>[] = [];
   const parent = storeOptions?.parent;
+
+  // A middleware handler or subscriber that throws is routed here: to every `onError` handler (a logger records it),
+  // or re-thrown when none are registered so the failure is never silently swallowed.
+  const reportError: StoreErrorReporter<TState> = (error, phase, path) => {
+    if (errorHandlers.length === 0) {
+      throw error;
+    }
+
+    const failure = { error, phase, path };
+    for (let i = 0, n = errorHandlers.length; i < n; i++) {
+      errorHandlers[i](failure);
+    }
+  };
 
   const getOwnState = () => state;
   const getOwnSnapshot = (): TState => (ownSnapshot ??= { ...state });
@@ -81,7 +97,8 @@ function createStore<TState extends object>(
     listeners,
     pathListeners,
     changeListeners,
-    interceptors
+    interceptors,
+    reportError
   });
 
   const subscribe = (listener: Listener) => listeners.add(listener);
@@ -99,12 +116,12 @@ function createStore<TState extends object>(
   // Detaching this handle on `destroy()` stops the parent from holding this scope's forwarder forever (a leak for
   // short-lived scopes). `reconnect` re-attaches it after the destroy → remount cycle React StrictMode simulates.
   let forwarder = parent
-    ? forwardParentChanges(parent, listeners, pathListeners, changeListeners, getState)
+    ? forwardParentChanges(parent, listeners, pathListeners, changeListeners, getState, reportError)
     : undefined;
 
   const reconnect = () => {
     if (parent && !forwarder) {
-      forwarder = forwardParentChanges(parent, listeners, pathListeners, changeListeners, getState);
+      forwarder = forwardParentChanges(parent, listeners, pathListeners, changeListeners, getState, reportError);
       if (changeListeners.length > 0) {
         forwarder.seedBaseline();
       }
@@ -145,6 +162,10 @@ function createStore<TState extends object>(
       if (handlers?.onChange) {
         subscribeChange(handlers.onChange);
       }
+
+      if (handlers?.onError) {
+        errorHandlers.push(handlers.onError);
+      }
     }
   }
 
@@ -153,6 +174,7 @@ function createStore<TState extends object>(
     (api as StoreApiInternal<TState>).pathListeners = pathListeners;
     (api as StoreApiInternal<TState>).changeListeners = changeListeners;
     (api as StoreApiInternal<TState>).interceptors = interceptors;
+    (api as StoreApiInternal<TState>).errorHandlers = errorHandlers;
     (api as StoreApiInternal<TState>).getMergeCount = getMergeCount;
   }
 

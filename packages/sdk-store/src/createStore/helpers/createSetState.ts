@@ -8,23 +8,31 @@ import { CANCEL } from '../../types';
 
 import type PathTrie from './PathTrie';
 import type Subscribers from './Subscribers';
-import type { ChangeListener, Listener, PathOf, PathValue, SetState, StoreApi, WriteInterceptor } from '../../types';
+import type {
+  ChangeListener,
+  Listener,
+  PathOf,
+  PathValue,
+  SetState,
+  StoreApi,
+  StoreErrorReporter,
+  WriteInterceptor
+} from '../../types';
 
-// Calls every listener even if some throw: the inner `for` stays a tight loop and the `try` only re-enters on the
-// rare throw, so the no-error path pays nothing. The first thrown error is re-raised after all have run — one bad
-// listener can neither starve its siblings nor silently swallow a real error.
-const notifyAll = <A>(items: ArrayLike<(arg: A) => void>, arg: A, count: number): void => {
+const NO_ERROR: unique symbol = Symbol('no-error');
+
+// Runs every callback even if some throw (the `try` only re-enters on a throw, so the no-error path pays nothing) and
+// returns the first error, or `NO_ERROR`, for the caller to route.
+const runIsolated = <A>(items: ArrayLike<(arg: A) => void>, arg: A, count: number): unknown => {
   let i = 0;
-  let error: unknown;
-  let thrown = false;
+  let error: unknown = NO_ERROR;
   while (i < count) {
     try {
       for (; i < count; i++) {
         items[i](arg);
       }
     } catch (err) {
-      if (!thrown) {
-        thrown = true;
+      if (error === NO_ERROR) {
         error = err;
       }
 
@@ -32,14 +40,15 @@ const notifyAll = <A>(items: ArrayLike<(arg: A) => void>, arg: A, count: number)
     }
   }
 
-  if (thrown) {
-    throw error;
-  }
+  return error;
 };
 
-// A scope "owns" a path when every segment exists as an own property down its local state — distinct from the leaf
-// value merely being `undefined`. A child holding an explicit `undefined` still owns the key (the write stays local),
-// while a path the child never declared delegates up to the parent that does.
+// `obj['__proto__'] = x` hits the prototype setter rather than creating an own property, so a `__proto__` path segment
+// would swap a state object's prototype and inject phantom keys.
+const PROTO_KEY = '__proto__';
+
+// Structural ownership: every segment exists as an own property locally, so an explicit `undefined` the child owns
+// stays local while a path it never declared delegates to the parent.
 const ownsPath = (state: object, segments: readonly string[]): boolean => {
   let current: unknown = state;
   for (let i = 0, n = segments.length; i < n; i++) {
@@ -63,6 +72,7 @@ export type SetStateDeps<TState extends object> = {
   changeListeners: Subscribers<ChangeListener<TState>>;
   pathListeners: PathTrie;
   interceptors: WriteInterceptor<TState>[];
+  reportError: StoreErrorReporter<TState>;
 };
 
 export type SetStateApi<TState extends object> = {
@@ -80,15 +90,24 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     listeners,
     pathListeners,
     changeListeners,
-    interceptors
+    interceptors,
+    reportError
   } = deps;
 
-  // Runs the registered interceptors in order, each seeing the previous one's result. Returns the final value to
-  // write, or `CANCEL` if any interceptor aborted. An interceptor returning `undefined` leaves the value unchanged.
+  // Runs interceptors in order, each seeing the previous one's result. Returns the final value, or `CANCEL` if any
+  // aborted; a thrown interceptor is reported and fails the write closed (its validation outcome is unknown).
   const runInterceptors = (path: PathOf<TState> | undefined, value: unknown, prev: unknown): unknown => {
     let current = value;
     for (let i = 0, n = interceptors.length; i < n; i++) {
-      const result = interceptors[i]({ path, value: current, prev });
+      let result: unknown;
+      try {
+        result = interceptors[i]({ path, value: current, prev });
+      } catch (err) {
+        reportError(err, 'beforeChange', path);
+
+        return CANCEL;
+      }
+
       if (result === CANCEL) {
         return CANCEL;
       }
@@ -117,11 +136,13 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       return;
     }
 
-    // `begin`/`end` make a listener that unsubscribes mid-notify safe (tombstone + compact) without copying the
-    // array — the loop stays a tight indexed walk.
+    // `begin`/`end` keep a listener that unsubscribes mid-notify safe (tombstone + compact) without copying the array.
     subs.begin();
     try {
-      notifyAll(items, path, items.length);
+      const err = runIsolated(items, path, items.length);
+      if (err !== NO_ERROR) {
+        reportError(err, 'notify', path as PathOf<TState> | undefined);
+      }
     } finally {
       subs.end();
     }
@@ -136,7 +157,10 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       if (batchDepth === 0 && pendingListeners.size > 0) {
         const woken = [...pendingListeners];
         pendingListeners.clear();
-        notifyAll(woken, undefined, woken.length);
+        const err = runIsolated(woken, undefined, woken.length);
+        if (err !== NO_ERROR) {
+          reportError(err, 'notify', undefined);
+        }
       }
     }
   };
@@ -146,7 +170,10 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     const { items } = changeListeners;
     changeListeners.begin();
     try {
-      notifyAll(items, change, items.length);
+      const err = runIsolated(items, change, items.length);
+      if (err !== NO_ERROR) {
+        reportError(err, 'onChange', path);
+      }
     } finally {
       changeListeners.end();
     }
@@ -274,9 +301,13 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
   ) => {
     const prevState = getOwnState();
 
-    // A nested scope that doesn't own the path delegates to the parent that does. Ownership is structural (the key
-    // chain exists locally), not value-based — so writing an explicit `undefined` to a key the child owns stays
-    // local instead of leaking up to the parent.
+    // Reject prototype-pollution paths before any write. The cheap substring gate keeps normal paths a single scan.
+    if (typeof path === 'string' && path.indexOf(PROTO_KEY) !== -1 && parsePath(path).indexOf(PROTO_KEY) !== -1) {
+      throw new Error(`@plitzi/sdk-store: refused to write to unsafe path "${path}" (\`__proto__\` segment)`);
+    }
+
+    // A scope that doesn't structurally own the path delegates to the parent — so an explicit `undefined` on a key the
+    // child owns stays local instead of leaking upward.
     if (parent && typeof path === 'string') {
       const dot = path.indexOf('.');
       const owns = dot === -1 ? Object.hasOwn(prevState, path) : ownsPath(prevState, parsePath(path));

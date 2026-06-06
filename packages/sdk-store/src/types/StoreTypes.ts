@@ -101,10 +101,28 @@ export type WriteContext<T> = {
 // it through unchanged. Interceptors from several middlewares run in array order, each seeing the previous result.
 export type WriteInterceptor<T> = (context: WriteContext<T>) => unknown;
 
+// A failure thrown by any middleware handler or subscriber during a write, surfaced to every registered `onError`.
+export type StoreError<T> = {
+  error: unknown;
+  phase: 'beforeChange' | 'onChange' | 'notify';
+  path: PathOf<T> | undefined;
+};
+
+export type StoreErrorHandler<T> = (failure: StoreError<T>) => void;
+
+// Routes a failure to the registered `onError` handlers, or re-throws it when none exist so it is never swallowed.
+export type StoreErrorReporter<T> = (
+  error: unknown,
+  phase: StoreError<T>['phase'],
+  path: PathOf<T> | undefined
+) => void;
+
 export type StoreMiddlewareHandlers<T> = {
   // Intercept/transform/cancel a write before it commits. Runs before `onChange` and before subscribers wake.
   beforeChange?: WriteInterceptor<T>;
   onChange?: ChangeListener<T>;
+  // Notified when another handler or subscriber throws, so a logger can record the failure instead of it being lost.
+  onError?: StoreErrorHandler<T>;
 };
 
 // Set up once after the store is created (the body may hydrate via `api.setState`). Returns the change handler to
@@ -153,6 +171,7 @@ export type StoreApiInternal<T> = StoreApi<T> & {
   pathListeners: PathTrie;
   changeListeners: Subscribers<ChangeListener<T>>;
   interceptors: WriteInterceptor<T>[];
+  errorHandlers: StoreErrorHandler<T>[];
   // Test-only metric: number of times `getState` recomputed the full deep-merge (cache miss).
   getMergeCount?: () => number;
 };
