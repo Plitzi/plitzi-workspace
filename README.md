@@ -37,7 +37,6 @@ Plitzi is an open-source **web application builder** designed to empower develop
 ├─ packages/
 │  ├─ sdk-auth/         # Authentication SDK components
 │  ├─ sdk-collections/  # Collections
-│  ├─ sdk-data-source/  # Data source integrations
 │  ├─ sdk-dev-tools/    # Developer utilities
 │  ├─ sdk-elements/     # UI elements and components
 │  ├─ sdk-event-bridge/ # Event handling bridge

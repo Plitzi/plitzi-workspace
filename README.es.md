@@ -37,7 +37,6 @@ Plitzi es un **constructor de aplicaciones web** de código abierto pensado para
 ├─ packages/
 │  ├─ sdk-auth/         # Autenticación
 │  ├─ sdk-collections/  # Colecciones
-│  ├─ sdk-data-source/  # Fuentes de datos
 │  ├─ sdk-dev-tools/    # Utilidades de desarrollo
 │  ├─ sdk-elements/     # Elementos y componentes UI
 │  ├─ sdk-event-bridge/ # Puente de eventos

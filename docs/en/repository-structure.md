@@ -11,7 +11,6 @@ plitzi-workspace/
 ├── packages/
 │   ├── sdk-auth/
 │   ├── sdk-collections/
-│   ├── sdk-data-source/
 │   ├── sdk-dev-tools/
 │   ├── sdk-elements/
 │   ├── sdk-event-bridge/

@@ -45,7 +45,6 @@ packages/
   sdk-store/        # State management library
   sdk-auth/
   sdk-collections/
-  sdk-data-source/
   sdk-dev-tools/
   sdk-elements/
   sdk-event-bridge/

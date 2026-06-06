@@ -10,7 +10,6 @@ const root = path.resolve(process.cwd());
 
 const packages = {
   '@plitzi/sdk-auth': path.join(root, '../../packages/sdk-auth/src'),
-  '@plitzi/sdk-data-source': path.join(root, '../../packages/sdk-data-source/src'),
   '@plitzi/sdk-dev-tools': path.join(root, '../../packages/sdk-dev-tools/src'),
   '@plitzi/sdk-elements': path.join(root, '../../packages/sdk-elements/src'),
   '@plitzi/sdk-event-bridge': path.join(root, '../../packages/sdk-event-bridge/src'),
