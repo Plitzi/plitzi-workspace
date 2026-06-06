@@ -1,7 +1,7 @@
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import clsx from 'clsx';
 import { useMemo, use, useCallback } from 'react';
 
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 import ElementDetails from './ElementDetails';

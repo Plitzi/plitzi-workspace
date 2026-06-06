@@ -1,10 +1,10 @@
 import { PopupProvider, PopupSidePanel } from '@plitzi/plitzi-ui/Popup';
 import { useCallback, use } from 'react';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { loggerMiddleware as loggerMw } from '@plitzi/nexus';
 import { createStoreHook } from '@plitzi/nexus/createStore';
 import StoreProvider from '@plitzi/nexus/StoreProvider';
+import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import Builder from '@pmodules/Builder';

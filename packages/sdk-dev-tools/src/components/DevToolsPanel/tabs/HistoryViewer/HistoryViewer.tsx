@@ -1,5 +1,6 @@
-import { useStoreHistory } from '@plitzi/nexus/history';
 import { useCallback, useMemo, useState } from 'react';
+
+import { useStoreHistory } from '@plitzi/nexus/history';
 
 import HistoryEntryItem from './components/HistoryEntryItem';
 import HistoryToolbar from './components/HistoryToolbar';

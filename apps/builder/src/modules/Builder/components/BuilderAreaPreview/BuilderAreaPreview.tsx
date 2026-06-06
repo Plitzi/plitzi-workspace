@@ -7,11 +7,11 @@ import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';

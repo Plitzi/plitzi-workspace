@@ -7,8 +7,8 @@ import clsx from 'clsx';
 import { produce } from 'immer';
 import { useCallback, useEffect, useMemo, useState, Fragment } from 'react';
 
-import getSourcesByElementId from '@plitzi/sdk-elements/dataSource/getSourcesByElementId';
 import { createStoreHook } from '@plitzi/nexus/createStore';
+import getSourcesByElementId from '@plitzi/sdk-elements/dataSource/getSourcesByElementId';
 import { generateID } from '@plitzi/sdk-shared/helpers/utils';
 import { StyleBindingsAllowed } from '@plitzi/sdk-shared/style/styleConstants';
 

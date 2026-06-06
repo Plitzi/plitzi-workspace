@@ -1,7 +1,7 @@
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { use, useMemo, useRef, useCallback } from 'react';
 
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
