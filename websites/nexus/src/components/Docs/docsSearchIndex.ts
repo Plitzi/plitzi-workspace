@@ -72,6 +72,19 @@ export const DOCS_SEARCH_INDEX: DocSearchEntry[] = [
       'Data fetching patterns: createAsync with Suspense, race-condition handling, dependent queries, and mutations (POST/PUT/DELETE).'
   },
   {
+    slug: 'frameworks-rsc-ssr',
+    label: 'RSC / SSR',
+    keywords: [
+      'RSC', 'SSR', 'server component', 'server-side rendering', 'hydration',
+      'createServerSnapshot', 'isServerSnapshot', 'stripServerFlag',
+      'server data', 'seeding', 'middleware hydration', 'deferHydrate',
+      'noopStorage', 'use client', 'rsc subpath', 'framework',
+      'no use client', 'boundary'
+    ],
+    description:
+      'RSC and SSR patterns: server snapshot markers, seeding data from Server Components, middleware hydration deferral, and the @plitzi/nexus/rsc subpath.'
+  },
+  {
     slug: 'guides-nextjs',
     label: 'Next.js',
     keywords: [

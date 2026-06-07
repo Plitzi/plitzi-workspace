@@ -11,6 +11,7 @@ import GuidesForms from './pages/GuidesForms';
 import Migration from './pages/Migration';
 import Testing from './pages/Testing';
 import NextJs from './pages/frameworks/NextJs';
+import RscSsr from './pages/frameworks/RscSsr';
 
 import type { ComponentType } from 'react';
 
@@ -84,6 +85,20 @@ const PAGES: DocPage[] = [
       { id: 'race-conditions', label: 'Race conditions' },
       { id: 'dependent-queries', label: 'Dependent queries' },
       { id: 'mutation', label: 'Mutations' }
+    ]
+  },
+  {
+    slug: 'frameworks-rsc-ssr',
+    label: 'RSC / SSR',
+    Component: RscSsr,
+    group: 'Frameworks',
+    sections: [
+      { id: 'ssr-safety', label: 'SSR safety' },
+      { id: 'seeding', label: 'Seeding from server' },
+      { id: 'server-snapshot', label: 'createServerSnapshot' },
+      { id: 'middleware-hydration', label: 'Middleware hydration' },
+      { id: 'subpath', label: 'RSC subpath' },
+      { id: 'no-use-client', label: 'No use client' }
     ]
   },
   {

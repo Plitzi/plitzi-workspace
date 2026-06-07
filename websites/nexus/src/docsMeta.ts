@@ -11,6 +11,11 @@ export const DOCS_META: Record<string, PageMeta> = {
     description:
       'Full API reference for createStore, createStoreHook, useStore, StoreProvider, createDerived, createAsync, createEntityAdapter, middleware, and type utilities — every signature in one place.'
   },
+  'frameworks-rsc-ssr': {
+    title: 'RSC / SSR',
+    description:
+      'RSC and SSR patterns with @plitzi/nexus: server snapshot markers, seeding data from Server Components, middleware hydration deferral, and the @plitzi/nexus/rsc subpath.'
+  },
   'guides-forms': {
     title: 'Patterns: Forms',
     description:
