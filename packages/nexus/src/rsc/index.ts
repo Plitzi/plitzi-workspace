@@ -11,10 +11,8 @@ type WithSsrFlag<T> = T & { readonly [SSR_FLAG]: true };
  * Usage in a Server Component (App Router):
  *
  * ```tsx
- * import { createServerSnapshot, StoreProvider } from '@plitzi/nexus/rsc';
- * // or from the main entry:
- * import { StoreProvider } from '@plitzi/nexus';
  * import { createServerSnapshot } from '@plitzi/nexus/rsc';
+ * import { StoreProvider } from '@plitzi/nexus';
  *
  * export default async function Page() {
  *   const data = await fetch('https://api.example.com/user');

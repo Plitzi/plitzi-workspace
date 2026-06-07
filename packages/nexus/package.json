@@ -240,8 +240,8 @@
       "import": "./dist/next/index.mjs"
     },
     "./rsc": {
-      "types": "./dist/rsc.d.ts",
-      "import": "./dist/rsc.mjs"
+      "types": "./dist/rsc/index.d.ts",
+      "import": "./dist/rsc/index.mjs"
     },
     "./types": {
       "types": "./dist/types/index.d.ts",

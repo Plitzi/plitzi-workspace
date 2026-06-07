@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { createServerSnapshot, isServerSnapshot, stripServerFlag } from './rsc';
+import { createServerSnapshot, isServerSnapshot, stripServerFlag } from './index';
 
 describe('createServerSnapshot', () => {
   it('adds the SSR flag to a plain object', () => {
