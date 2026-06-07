@@ -48,7 +48,7 @@ const Hero = () => {
             className="border-ink-600 bg-ink-800/60 hover:border-brand-500 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium text-zinc-300 transition"
           >
             <span className="bg-brand-400 h-1.5 w-1.5 rounded-full" />
-            MIT licensed
+            APACHE 2.0 licensed
           </a>
 
           <h1 className="mt-6 text-4xl leading-[1.05] font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
