@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-interactions",
-  "version": "0.31.1",
+  "version": "0.31.2",
   "license": "AGPL-3.0",
   "files": [
     "dist"
