@@ -1,4 +1,4 @@
-export const REPO_URL = 'https://github.com/Plitzi/plitzi-workspace';
+export const REPO_URL = 'https://github.com/Plitzi/plitzi-workspace/tree/main/packages/nexus';
 export const STORE_DIR_URL = 'https://github.com/Plitzi/plitzi-workspace/tree/main/packages/nexus';
 export const NPM_URL = 'https://www.npmjs.com/package/@plitzi/nexus';
 export const INSTALL_COMMAND = 'npm install @plitzi/nexus';
