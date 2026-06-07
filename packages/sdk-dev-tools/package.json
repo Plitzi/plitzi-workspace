@@ -46,18 +46,6 @@
       "types": "./dist/components/DevToolsPanel/index.d.ts",
       "import": "./dist/components/DevToolsPanel/index.mjs"
     },
-    "./components/DevToolsPanel/tabs/DataSourceViewer": {
-      "types": "./dist/components/DevToolsPanel/tabs/DataSourceViewer/index.d.ts",
-      "import": "./dist/components/DevToolsPanel/tabs/DataSourceViewer/index.mjs"
-    },
-    "./components/DevToolsPanel/tabs/DataSourceViewer/DataSourceViewer": {
-      "types": "./dist/components/DevToolsPanel/tabs/DataSourceViewer/DataSourceViewer.d.ts",
-      "import": "./dist/components/DevToolsPanel/tabs/DataSourceViewer/DataSourceViewer.mjs"
-    },
-    "./components/DevToolsPanel/tabs/DataSourceViewer/index": {
-      "types": "./dist/components/DevToolsPanel/tabs/DataSourceViewer/index.d.ts",
-      "import": "./dist/components/DevToolsPanel/tabs/DataSourceViewer/index.mjs"
-    },
     "./components/DevToolsPanel/tabs/ElementsViewer": {
       "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/index.mjs"

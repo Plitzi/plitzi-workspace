@@ -58,10 +58,6 @@
       "types": "./dist/dataSource/hooks/index.d.ts",
       "import": "./dist/dataSource/hooks/index.mjs"
     },
-    "./dataSource/hooks/useDataSource": {
-      "types": "./dist/dataSource/hooks/useDataSource.d.ts",
-      "import": "./dist/dataSource/hooks/useDataSource.mjs"
-    },
     "./dataSource/hooks/useRegisterSource": {
       "types": "./dist/dataSource/hooks/useRegisterSource.d.ts",
       "import": "./dist/dataSource/hooks/useRegisterSource.mjs"

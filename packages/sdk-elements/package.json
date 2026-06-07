@@ -114,10 +114,6 @@
       "types": "./dist/dataSource/index.d.ts",
       "import": "./dist/dataSource/index.mjs"
     },
-    "./dataSource/DataSourceProvider": {
-      "types": "./dist/dataSource/DataSourceProvider.d.ts",
-      "import": "./dist/dataSource/DataSourceProvider.mjs"
-    },
     "./dataSource/GlobalSources": {
       "types": "./dist/dataSource/GlobalSources.d.ts",
       "import": "./dist/dataSource/GlobalSources.mjs"
@@ -133,26 +129,6 @@
     "./dataSource/index": {
       "types": "./dist/dataSource/index.d.ts",
       "import": "./dist/dataSource/index.mjs"
-    },
-    "./dataSource/sources/AuthSource": {
-      "types": "./dist/dataSource/sources/AuthSource.d.ts",
-      "import": "./dist/dataSource/sources/AuthSource.mjs"
-    },
-    "./dataSource/sources/NavigationSource": {
-      "types": "./dist/dataSource/sources/NavigationSource.d.ts",
-      "import": "./dist/dataSource/sources/NavigationSource.mjs"
-    },
-    "./dataSource/sources/PageStateSource": {
-      "types": "./dist/dataSource/sources/PageStateSource.d.ts",
-      "import": "./dist/dataSource/sources/PageStateSource.mjs"
-    },
-    "./dataSource/sources/VariablesSource": {
-      "types": "./dist/dataSource/sources/VariablesSource.d.ts",
-      "import": "./dist/dataSource/sources/VariablesSource.mjs"
-    },
-    "./dataSource/useGlobalSources": {
-      "types": "./dist/dataSource/useGlobalSources.d.ts",
-      "import": "./dist/dataSource/useGlobalSources.mjs"
     },
     "./dataSource/utility": {
       "types": "./dist/dataSource/utility/index.d.ts",
