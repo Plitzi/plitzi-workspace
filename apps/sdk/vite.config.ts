@@ -198,7 +198,8 @@ export default defineConfig(({ mode, command }) => {
           'react-dom/client',
           'react-dom/server',
           'react/jsx-runtime',
-          'react/jsx-dev-runtime'
+          'react/jsx-dev-runtime',
+          'react/compiler-runtime'
         ],
         output: [
           {

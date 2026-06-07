@@ -198,6 +198,7 @@ export default defineConfig(({ mode, command }) => {
           'react-dom/server',
           'react/jsx-runtime',
           'react/jsx-dev-runtime',
+          'react/compiler-runtime',
           '@plitzi/plitzi-sdk'
         ],
         output: [
