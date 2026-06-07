@@ -526,8 +526,71 @@ function ProfileName() {
 <ErrorBoundary>
   <Suspense fallback={<Spinner />}>
     <ProfileName />
-  </Suspense>
+      </Suspense>
 </ErrorBoundary>`
+  },
+  {
+    id: 'rsc-snapshot',
+    label: 'RSC snapshot',
+    category: 'advanced',
+    code: `import { createServerSnapshot, isServerSnapshot } from '@plitzi/nexus/rsc';
+import { StoreProvider } from '@plitzi/nexus';
+
+// In a Server Component — mark the data so the client knows
+// where it came from:
+const data = { user: { name: 'Alice' }, count: 42 };
+const snapshot = createServerSnapshot(data);
+
+isServerSnapshot(snapshot); // true
+
+// The flag is non-enumerable — invisible in JSON / spread:
+JSON.stringify(snapshot);   // '{"user":{"name":"Alice"},"count":42}'
+{ ...snapshot }             // { user: { name: 'Alice' }, count: 42 }
+
+// StoreProvider strips the flag automatically:
+<StoreProvider value={snapshot}>
+  <App />
+</StoreProvider>
+
+// On the client, data reads normally — the flag is gone.`
+  },
+  {
+    id: 'rsc-seed',
+    label: 'Server seeding',
+    category: 'advanced',
+    code: `// app/page.tsx — Server Component
+import { createServerSnapshot } from '@plitzi/nexus/rsc';
+import { StoreProvider } from '@plitzi/nexus';
+import { Dashboard } from './Dashboard';
+
+export default async function Page() {
+  const [user, orders] = await Promise.all([
+    fetch('https://api.example.com/me').then(r => r.json()),
+    fetch('https://api.example.com/orders').then(r => r.json()),
+  ]);
+
+  return (
+    <StoreProvider value={createServerSnapshot({ user, orders })}>
+      <Dashboard />
+    </StoreProvider>
+  );
+}
+
+// app/Dashboard.tsx — Client Component
+'use client';
+import { useStore } from '@plitzi/nexus';
+
+export function Dashboard() {
+  const [user] = useStore('user');
+  const [orders] = useStore('orders');
+
+  return (
+    <div>
+      <h1>Welcome, {user.name}</h1>
+      <ul>{orders.map(o => <li key={o.id}>{o.title}</li>)}</ul>
+    </div>
+  );
+}`
   }
 ];
 
