@@ -43,11 +43,14 @@ export const persistMiddleware = <TState extends object>(options: PersistOptions
   };
 
   return api => {
-    hydrate(api, key, storage, version, migrate, merge);
-
     let timer: ReturnType<typeof setTimeout> | undefined;
 
     return {
+      // Hydration runs after React mount (or synchronously in standalone usage)
+      // to prevent hydration mismatches between SSR and client.
+      hydrate: store => {
+        hydrate(store, key, storage, version, migrate, merge);
+      },
       onChange: () => {
         if (debounce <= 0) {
           write(api);

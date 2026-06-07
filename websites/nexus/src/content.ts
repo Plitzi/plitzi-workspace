@@ -103,12 +103,14 @@ export type CodeSample = {
   label: string;
   code: string;
   demoId?: string;
+  category: 'basic' | 'advanced';
 };
 
 export const CODE_SAMPLES: CodeSample[] = [
   {
     id: 'create',
     label: 'createStore',
+    category: 'basic',
     code: `import { createStore } from '@plitzi/nexus';
 
 type State = {
@@ -136,6 +138,7 @@ const unsub = store.subscribePath('count', () => render());`
   {
     id: 'hook',
     label: 'createStoreHook',
+    category: 'basic',
     code: `import { createStoreHook } from '@plitzi/nexus';
 
 // Bind your state type ONCE at module level — every hook is
@@ -149,6 +152,7 @@ const [name, setName] = useStore('user.name'); // typed as string`
   {
     id: 'provider',
     label: 'StoreProvider',
+    category: 'basic',
     code: `import { StoreProvider } from '@plitzi/nexus';
 
 // Wrap your tree — creates a store from the initial value.
@@ -175,6 +179,7 @@ const [name, setName] = useStore('user.name'); // typed as string`
   {
     id: 'usestore',
     label: 'useStore',
+    category: 'basic',
     code: `const { useStore } = createStoreHook<State>();
 
 function Profile() {
@@ -201,6 +206,7 @@ function Profile() {
   {
     id: 'usestoresync',
     label: 'useStoreSync',
+    category: 'basic',
     code: `const { useStoreSync } = createStoreHook<State>();
 
 function Bridge({ schema, style }: Props) {
@@ -223,6 +229,7 @@ function Bridge({ schema, style }: Props) {
   {
     id: 'usestoregetter',
     label: 'useStoreGetter',
+    category: 'basic',
     code: `const { useStoreGetter } = createStoreHook<State>();
 
 function Handlers() {
@@ -246,6 +253,7 @@ function Handlers() {
   {
     id: 'usestoresetter',
     label: 'useStoreSetter',
+    category: 'basic',
     code: `const { useStoreSetter } = createStoreHook<State>();
 
 function Toolbar() {
@@ -267,6 +275,7 @@ function Toolbar() {
   {
     id: 'scoped',
     label: 'Scoped stores',
+    category: 'advanced',
     code: `import { StoreProvider } from '@plitzi/nexus';
 
 // inherit="live" — a live link to the parent. Reads fall
@@ -297,6 +306,7 @@ item.setState('record', next);        // stays local
   {
     id: 'byid',
     label: 'Stores by id',
+    category: 'advanced',
     code: `import { StoreProvider, createStoreHook, useStoreById } from '@plitzi/nexus';
 
 const { useStore, useStoreGetter, useStoreSetter } = createStoreHook<State>();
@@ -333,6 +343,7 @@ function Leaf() {
   {
     id: 'history',
     label: 'Time-travel',
+    category: 'advanced',
     code: `import { historyMiddleware, useStoreHistory } from '@plitzi/nexus';
 
 // Add the middleware once; useStoreHistory reads what it records.
@@ -358,6 +369,7 @@ function HistoryPanel() {
   {
     id: 'derived',
     label: 'Derived',
+    category: 'advanced',
     code: `import { createDerived, useDerived } from '@plitzi/nexus';
 
 // What it's for: compute a value FROM the store once, memoized.
@@ -387,6 +399,7 @@ const ids = createDerived(store, ['items'], ([m]) => Object.keys(m), {
   {
     id: 'entities',
     label: 'Entities',
+    category: 'advanced',
     code: `import { createEntityAdapter } from '@plitzi/nexus';
 
 type Todo = { id: string; text: string; done: boolean };
@@ -413,6 +426,7 @@ createEntityAdapter<Row>({ selectId: r => r.key, sortComparer: byName });`
   {
     id: 'middleware',
     label: 'Middleware',
+    category: 'advanced',
     code: `import { createStore, loggerMiddleware, persistMiddleware, historyMiddleware } from '@plitzi/nexus';
 
 // logger, persist and time-travel are all middlewares on ONE
@@ -438,6 +452,7 @@ store.subscribeChange(({ path, prev, next }) => {});`
   {
     id: 'batch',
     label: 'Batch',
+    category: 'advanced',
     code: `import { createStore } from '@plitzi/nexus';
 
 const store = createStore<State>(initial);
@@ -472,6 +487,7 @@ store.batch(() => {
   {
     id: 'async',
     label: 'Async',
+    category: 'advanced',
     code: `import { createAsync, useAsync, useAsyncValue } from '@plitzi/nexus';
 
 type State = { user: User | null };

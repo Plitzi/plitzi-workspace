@@ -24,7 +24,7 @@ export const DOCS_META: Record<string, PageMeta> = {
   'guides-nextjs': {
     title: 'Patterns: Next.js',
     description:
-      'Next.js integration with @plitzi/nexus: App Router with server/client boundaries, hydration from server components, cookie persistence, and Server Actions with optimistic updates.'
+      'Next.js integration with @plitzi/nexus: App Router with server/client boundaries, createServerSnapshot for RSC data handoff, cookie persistence, Server Actions with bindServerAction for optimistic updates and revalidation.'
   },
   migration: {
     title: 'Migration',

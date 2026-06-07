@@ -69,3 +69,45 @@ describe.each([
     expect(next.list['0']['a-b']).toBe(9);
   });
 });
+
+describe('writeByPath SSR behaviour', () => {
+  afterEach(() => {
+    setCodegenEnabled(undefined);
+  });
+
+  it('disables codegen when window is undefined (SSR)', () => {
+    // Simulate SSR: delete global window
+    const originalWindow: Window & typeof globalThis = globalThis.window;
+    delete (globalThis as { window?: unknown }).window;
+
+    setCodegenEnabled(undefined); // reset to auto-detect
+    const obj = { a: { b: 1 } };
+    const result = writeByPath(obj, 'a.b', ['a', 'b'], 2, false) as { a: { b: number } };
+
+    expect(result.a.b).toBe(2);
+    // Should have used the recursive fallback, which produces a correct result
+
+    globalThis.window = originalWindow;
+  });
+
+  it('still uses codegen when window exists (browser)', () => {
+    setCodegenEnabled(true);
+    const obj = { a: { b: 1 } };
+    const result = writeByPath(obj, 'a.b', ['a', 'b'], 2, false) as { a: { b: number } };
+
+    expect(result.a.b).toBe(2);
+  });
+
+  it('respects explicit setCodegenEnabled(true) even when window is undefined', () => {
+    const originalWindow: Window & typeof globalThis = globalThis.window;
+    delete (globalThis as { window?: unknown }).window;
+
+    setCodegenEnabled(true); // force codegen
+    const obj = { a: { b: 1 } };
+    const result = writeByPath(obj, 'a.b', ['a', 'b'], 2, false) as { a: { b: number } };
+
+    expect(result.a.b).toBe(2);
+
+    globalThis.window = originalWindow;
+  });
+});

@@ -55,9 +55,19 @@ let scopeIdSeq = 0;
 // A parent exposes its claims registry to children through this dev-only shape (kept off the public StoreApi).
 type WithScopeClaims = { scopeClaims?: ScopeClaims };
 
+export type CreateStoreOptions<TState extends object> = {
+  id?: string;
+  parent?: StoreApi<TState>;
+  middlewares?: StoreMiddleware<TState>[];
+  /** When true, hydrate handlers are collected but NOT run during creation.
+   *  Call `store.hydrate()` manually (StoreProvider does this in a useEffect).
+   *  Defaults to false (backward-compatible: standalone usage hydrates synchronously). */
+  deferHydrate?: boolean;
+};
+
 function createStore<TState extends object>(
   initializer: Partial<TState> | ((set: SetState<TState>, get: GetState<TState>) => Partial<TState>),
-  storeOptions?: { id?: string; parent?: StoreApi<TState>; middlewares?: StoreMiddleware<TState>[] }
+  storeOptions?: CreateStoreOptions<TState>
 ): StoreApi<TState> {
   // `state` is the live, private working copy and is never handed out. `ownSnapshot` is the immutable view
   // `getState` returns: a lazy `{ ...state }` clone, cleared on every change so its reference doubles as the change
@@ -75,6 +85,7 @@ function createStore<TState extends object>(
   };
   const interceptors: WriteInterceptor<TState>[] = [];
   const errorHandlers: StoreErrorHandler<TState>[] = [];
+  const hydrateHandlers: Array<() => void> = [];
   const parent = storeOptions?.parent;
   const scopeId = ++scopeIdSeq;
 
@@ -253,7 +264,12 @@ function createStore<TState extends object>(
     subscribeChange,
     destroy,
     reconnect,
-    subscribeInvalidate: listener => invalidateListeners.add(listener)
+    subscribeInvalidate: listener => invalidateListeners.add(listener),
+    hydrate: () => {
+      for (const hydrate of hydrateHandlers) {
+        hydrate();
+      }
+    }
   };
 
   // Middlewares (logger, persist, history, custom) all ride the one `subscribeChange` substrate. Their setup runs
@@ -273,6 +289,18 @@ function createStore<TState extends object>(
 
       if (handlers?.onError) {
         errorHandlers.push(handlers.onError);
+      }
+
+      // Hydrate handlers run inline during the middleware loop for standalone usage
+      // (preserving order: persistMiddleware placed first hydrates before logger registers).
+      // For StoreProvider usage (deferHydrate: true), they're collected and run after mount.
+      const hydrateFn = handlers?.hydrate;
+      if (hydrateFn) {
+        if (storeOptions.deferHydrate) {
+          hydrateHandlers.push(() => hydrateFn(api));
+        } else {
+          hydrateFn(api);
+        }
       }
     }
   }

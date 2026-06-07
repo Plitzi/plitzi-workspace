@@ -126,6 +126,9 @@ export type StoreMiddlewareHandlers<T> = {
   onChange?: ChangeListener<T>;
   // Notified when another handler or subscriber throws, so a logger can record the failure instead of it being lost.
   onError?: StoreErrorHandler<T>;
+  // Runs after React hydration (client-side) to restore persisted state. In SSR this is deferred and never runs,
+  // preventing hydration mismatches. For standalone (non-Provider) usage, it runs synchronously during createStore.
+  hydrate?: (api: StoreApi<T>) => void;
 };
 
 // Set up once after the store is created (the body may hydrate via `api.setState`). Returns the change handler to
@@ -176,6 +179,9 @@ export type StoreApi<T> = {
   // changes need no such channel — they already reach children through `subscribe`. Optional: absent on stores that
   // predate it, in which case silent ancestor writes simply aren't cache-invalidated downstream.
   subscribeInvalidate?: (listener: () => void) => () => void;
+  // Runs middleware hydrate handlers (e.g., restore persisted state from localStorage). Called automatically
+  // after mount by StoreProvider; can be called manually for standalone stores.
+  hydrate?: () => void;
 };
 
 export type StoreApiInternal<T> = StoreApi<T> & {

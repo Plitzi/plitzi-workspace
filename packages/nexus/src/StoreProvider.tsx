@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useMemo, useRef } from 'react';
 
 import createStore from './createStore';
 import useStoreSync from './createStore/hooks/useStoreSync';
+import { isServerSnapshot, stripServerFlag } from './rsc';
 import { findStoreInRegistry, StoreContext, StoreRegistryContext } from './StoreContext';
 
 import type { StoreRegistry } from './StoreContext';
@@ -58,8 +59,9 @@ const StoreProvider = <TState extends object = any>({
   const liveChain = inherit === 'live';
   const storeState = useMemo(() => {
     const parentState = inherit === 'snapshot' && parentStore ? parentStore.getState() : ({} as TState);
+    const merged = typeof value === 'function' ? value(parentState) : { ...parentState, ...value };
 
-    return typeof value === 'function' ? value(parentState) : { ...parentState, ...value };
+    return isServerSnapshot(merged) ? stripServerFlag(merged) : merged;
   }, [inherit, parentStore, value]);
 
   // This store gets the cascaded middlewares from ancestor providers plus its own. The set this provider hands to its
@@ -78,7 +80,8 @@ const StoreProvider = <TState extends object = any>({
       createStore<TState>(() => storeState, {
         id,
         parent: liveChain ? parentStore : undefined,
-        middlewares: storeMiddlewares.length > 0 ? storeMiddlewares : undefined
+        middlewares: storeMiddlewares.length > 0 ? storeMiddlewares : undefined,
+        deferHydrate: true
       });
   }
 
@@ -123,6 +126,16 @@ const StoreProvider = <TState extends object = any>({
       }
     };
   }, [liveChain, store]);
+
+  // Hydrate middlewares (e.g., restore persisted state) after mount. This runs after React hydration is complete,
+  // so persistMiddleware reading from localStorage can't cause a hydration mismatch.
+  const hydratedRef = useRef(false);
+  useEffect(() => {
+    if (!hydratedRef.current && storeRef.current?.hydrate) {
+      storeRef.current.hydrate();
+      hydratedRef.current = true;
+    }
+  }, []);
 
   const syncEnabled = !!value && autoSync;
 

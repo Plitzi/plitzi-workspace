@@ -86,6 +86,13 @@ const isCodegenAvailable = (): boolean => {
     return codegenForced;
   }
 
+  // SSR / Edge runtimes: `new Function` may be blocked by CSP and provides no
+  // benefit since writes are one-shot per request. The recursive fallback is
+  // already proven (browsers with CSP use it), so skip the probe entirely.
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
   if (codegenAvailable === undefined) {
     try {
       compile(['x', 'y'])({ x: {} }, 1, false);

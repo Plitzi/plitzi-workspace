@@ -235,6 +235,14 @@
       "types": "./dist/middleware/reduxDevToolsMiddleware.d.ts",
       "import": "./dist/middleware/reduxDevToolsMiddleware.mjs"
     },
+    "./next": {
+      "types": "./dist/next/index.d.ts",
+      "import": "./dist/next/index.mjs"
+    },
+    "./rsc": {
+      "types": "./dist/rsc.d.ts",
+      "import": "./dist/rsc.mjs"
+    },
     "./types": {
       "types": "./dist/types/index.d.ts",
       "import": "./dist/types/index.mjs"

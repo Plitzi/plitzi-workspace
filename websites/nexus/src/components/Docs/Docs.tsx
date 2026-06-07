@@ -8,13 +8,17 @@ import Faq from './pages/Faq';
 import GettingStarted from './pages/GettingStarted';
 import GuidesDataFetching from './pages/GuidesDataFetching';
 import GuidesForms from './pages/GuidesForms';
-import GuidesNextJs from './pages/GuidesNextJs';
 import Migration from './pages/Migration';
 import Testing from './pages/Testing';
+import NextJs from './pages/frameworks/NextJs';
 
 import type { ComponentType } from 'react';
 
-type DocPageSection = { id: string; label: string };
+type DocPageSection = {
+  id: string;
+  label: string;
+  children?: { id: string; label: string }[];
+};
 
 type DocPage = {
   slug: string;
@@ -26,7 +30,38 @@ type DocPage = {
 
 const PAGES: DocPage[] = [
   { slug: 'getting-started', label: 'Getting Started', Component: GettingStarted },
-  { slug: 'api', label: 'API Reference', Component: ApiReference },
+  {
+    slug: 'api',
+    label: 'API Reference',
+    Component: ApiReference,
+    sections: [
+      {
+        id: 'basic',
+        label: 'Basic',
+        children: [
+          { id: 'create-store', label: 'createStore' },
+          { id: 'store-api', label: 'StoreApi' },
+          { id: 'create-store-hook', label: 'createStoreHook' },
+          { id: 'use-store', label: 'useStore' },
+          { id: 'use-store-sync', label: 'useStoreSync / Getter / Setter' },
+          { id: 'store-provider', label: 'StoreProvider' },
+          { id: 'key-types', label: 'Key types' }
+        ]
+      },
+      {
+        id: 'advanced',
+        label: 'Advanced Cases',
+        children: [
+          { id: 'named-stores', label: 'Named stores' },
+          { id: 'derived-values', label: 'Derived values' },
+          { id: 'async-suspense', label: 'Async & Suspense' },
+          { id: 'entity-adapter', label: 'Entity adapter' },
+          { id: 'middleware', label: 'Middleware' },
+          { id: 'time-travel', label: 'Time-travel / history' }
+        ]
+      }
+    ]
+  },
   {
     slug: 'guides-forms',
     label: 'Forms',
@@ -54,13 +89,15 @@ const PAGES: DocPage[] = [
   {
     slug: 'guides-nextjs',
     label: 'Next.js',
-    Component: GuidesNextJs,
-    group: 'Patterns',
+    Component: NextJs,
+    group: 'Frameworks',
     sections: [
       { id: 'app-router', label: 'App Router' },
       { id: 'server-data', label: 'Hydrating from server' },
+      { id: 'server-snapshot', label: 'Server snapshot' },
       { id: 'persistence', label: 'Client persistence' },
-      { id: 'server-actions', label: 'Server Actions' }
+      { id: 'server-actions', label: 'Server Actions' },
+      { id: 'bind-action', label: 'bindServerAction' }
     ]
   },
   {
@@ -144,8 +181,8 @@ const Docs = ({ hash }: { hash: string }) => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    setVisibleSection(undefined);
-  }, [active.slug]);
+    setVisibleSection(anchor ?? active.sections?.[0]?.id);
+  }, [active.slug, anchor]);
 
   // Scroll spy: IntersectionObserver marca la sección visible en el sidebar.
   useEffect(() => {
@@ -154,7 +191,7 @@ const Docs = ({ hash }: { hash: string }) => {
       return;
     }
 
-    const ids = sections.map(s => s.id);
+    const ids = sections.flatMap(s => [s.id, ...(s.children ?? []).map(c => c.id)]);
     const elements = ids.map(id => document.getElementById(id)).filter(Boolean) as HTMLElement[];
 
     if (elements.length === 0) {
@@ -255,18 +292,38 @@ const Docs = ({ hash }: { hash: string }) => {
                 {page.slug === active.slug && page.sections && (
                   <div className="ml-2 mt-0.5 flex flex-col gap-0.5 border-l border-ink-700 pl-2">
                     {page.sections.map(section => (
-                      <a
-                        key={section.id}
-                        href={`#/docs/${page.slug}?anchor=${section.id}`}
-                        aria-current={section.id === visibleSection ? 'true' : undefined}
-                        className={
-                          section.id === visibleSection
-                            ? 'rounded px-2 py-1 text-xs font-medium text-brand-300'
-                            : 'rounded px-2 py-1 text-xs font-medium text-zinc-500 transition hover:bg-ink-900 hover:text-zinc-300'
-                        }
-                      >
-                        {section.label}
-                      </a>
+                      <div key={section.id}>
+                        <a
+                          href={`#/docs/${page.slug}?anchor=${section.id}`}
+                          aria-current={section.id === visibleSection ? 'true' : undefined}
+                          className={
+                            section.id === visibleSection
+                              ? 'rounded px-2 py-1 text-xs font-medium text-brand-300'
+                              : 'rounded px-2 py-1 text-xs font-medium text-zinc-500 transition hover:bg-ink-900 hover:text-zinc-300'
+                          }
+                        >
+                          {section.label}
+                        </a>
+
+                        {section.children && (
+                          <div className="ml-3 flex flex-col gap-0.5 border-l border-ink-800 pl-2">
+                            {section.children.map(child => (
+                              <a
+                                key={child.id}
+                                href={`#/docs/${page.slug}?anchor=${child.id}`}
+                                aria-current={child.id === visibleSection ? 'true' : undefined}
+                                className={
+                                  child.id === visibleSection
+                                    ? 'rounded px-2 py-0.5 text-[11px] font-medium text-brand-200'
+                                    : 'rounded px-2 py-0.5 text-[11px] font-medium text-zinc-600 transition hover:text-zinc-400'
+                                }
+                              >
+                                {child.label}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 )}
@@ -314,18 +371,38 @@ const Docs = ({ hash }: { hash: string }) => {
                             {isActive && page.sections && (
                               <div className="ml-2 mt-0.5 flex flex-col gap-0.5 border-l border-ink-800 pl-2">
                                 {page.sections.map(section => (
-                                  <a
-                                    key={section.id}
-                                    href={`#/docs/${page.slug}?anchor=${section.id}`}
-                                    aria-current={section.id === visibleSection ? 'true' : undefined}
-                                    className={
-                                      section.id === visibleSection
-                                        ? 'rounded px-2 py-1 text-xs font-medium text-brand-200'
-                                        : 'rounded px-2 py-1 text-xs font-medium text-zinc-600 transition hover:text-zinc-400'
-                                    }
-                                  >
-                                    {section.label}
-                                  </a>
+                                  <div key={section.id}>
+                                    <a
+                                      href={`#/docs/${page.slug}?anchor=${section.id}`}
+                                      aria-current={section.id === visibleSection ? 'true' : undefined}
+                                      className={
+                                        section.id === visibleSection
+                                          ? 'rounded px-2 py-1 text-xs font-medium text-brand-200'
+                                          : 'rounded px-2 py-1 text-xs font-medium text-zinc-600 transition hover:text-zinc-400'
+                                      }
+                                    >
+                                      {section.label}
+                                    </a>
+
+                                    {section.children && (
+                                      <div className="ml-3 flex flex-col gap-0.5 border-l border-ink-800 pl-2">
+                                        {section.children.map(child => (
+                                          <a
+                                            key={child.id}
+                                            href={`#/docs/${page.slug}?anchor=${child.id}`}
+                                            aria-current={child.id === visibleSection ? 'true' : undefined}
+                                            className={
+                                              child.id === visibleSection
+                                                ? 'rounded px-2 py-0.5 text-[11px] font-medium text-brand-200'
+                                                : 'rounded px-2 py-0.5 text-[11px] font-medium text-zinc-600 transition hover:text-zinc-400'
+                                            }
+                                          >
+                                            {child.label}
+                                          </a>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
                                 ))}
                               </div>
                             )}

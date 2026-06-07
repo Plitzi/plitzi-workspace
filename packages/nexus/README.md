@@ -4,7 +4,7 @@
 
 # @plitzi/nexus
 
-A lightweight, type-safe React store built on `useSyncExternalStore`. You subscribe to **dot-notation paths** and re-render only when that exact value changes — no selectors, no reducers, no action types. On top of that core it ships scoped stores, time-travel, derived values, an entity adapter, and a middleware pipeline (logger / persist / history).
+A lightweight, type-safe React store built on `useSyncExternalStore`. You subscribe to **dot-notation paths** and re-render only when that exact value changes — no selectors, no reducers, no action types. On top of that core it ships scoped stores, time-travel, derived values, an entity adapter, and a middleware pipeline (logger / persist / history). Fully compatible with SSR, React Server Components, and Next.js App Router.
 
 ```bash
 npm install @plitzi/nexus   # peer deps: react@^18 || ^19, react-dom@^18 || ^19
@@ -37,6 +37,10 @@ function Counter() {
 | `createDerived` / `useDerived` | A memoized value computed from store paths (reselect-style). |
 | `createEntityAdapter` | CRUD updaters + selectors for a normalized `Record<id, T>` map. |
 | `loggerMiddleware` / `persistMiddleware` / `historyMiddleware` / `reduxDevToolsMiddleware` | Middlewares: log, persist to storage, record time-travel, connect to Redux DevTools. |
+| `setCodegenEnabled` | Force on/off the `new Function` codegen path (auto-detects CSP/SSR). |
+| `createServerSnapshot` | Mark server-fetched data for RSC → Client handoff. |
+| `isServerSnapshot` | Check if a value has the SSR marker flag. |
+| `bindServerAction` | Optimistic updates + revalidation for Next.js Server Actions. |
 | `getStoreHistory` / `useStoreHistory` | Undo / redo / jump-to-snapshot action log (enabled by `historyMiddleware`). |
 
 ## Architecture
@@ -531,6 +535,194 @@ setCodegenEnabled(false);
 | `true` | Force codegen even if probe fails (testing only). |
 
 Call `setCodegenEnabled(undefined)` to restore auto-detection.
+
+## Server Components & SSR
+
+Nexus supports React Server Components (App Router) and server-side rendering (Pages Router) with no additional setup.
+
+### Auto-detected SSR safety
+
+When a store is created on the server (`typeof window === 'undefined'`), Nexus automatically:
+
+- **Disables codegen** — `new Function` is never called, so a strict Content-Security-Policy won't break SSR. Falls back to the recursive writer with identical behaviour.
+- **Disables localStorage** — `persistMiddleware` falls back to a no-op storage so `getItem`/`setItem` never throw.
+- **Defers hydration** — `StoreProvider` runs `persistMiddleware` hydration in a `useEffect` after React hydration, preventing hydration mismatches.
+
+You don't need to configure anything for SSR to work.
+
+### Server Components → Client data handoff
+
+Wrap server-fetched data with `createServerSnapshot` to mark it as coming from the server:
+
+```tsx
+// app/page.tsx — Server Component (App Router)
+import { StoreProvider } from '@plitzi/nexus';
+import { createServerSnapshot } from '@plitzi/nexus/rsc';
+
+export default async function Page() {
+  const posts = await fetch('https://api.example.com/posts').then(r => r.json());
+
+  return (
+    <StoreProvider value={createServerSnapshot({ posts })}>
+      <ClientContent />
+    </StoreProvider>
+  );
+}
+```
+
+```tsx
+// app/ClientContent.tsx — Client Component
+'use client';
+const { useStore } = createStoreHook<{ posts: Post[] }>();
+
+function ClientContent() {
+  const [posts] = useStore('posts');
+  // posts is available without a loading state — it was already fetched on the server
+}
+```
+
+The SSR flag is a non-enumerable Symbol — invisible in spread/JSON. Using `createServerSnapshot` is optional; plain objects work too.
+
+### `rsc` subpath exports
+
+| Import | What it's for |
+|---|---|
+| `createServerSnapshot` | Mark data as server-fetched (type-level marker) |
+| `isServerSnapshot` | Check if a value has the SSR flag |
+| `stripServerFlag` | Remove the SSR flag from a value |
+
+Import from `@plitzi/nexus/rsc` or from the main entry.
+
+### App Router — full pattern
+
+```tsx
+// app/providers.tsx
+'use client';
+import { StoreProvider, createServerSnapshot } from '@plitzi/nexus';
+import type { ReactNode } from 'react';
+
+type AppState = {
+  user: { name: string; email: string } | null;
+  theme: 'light' | 'dark';
+  posts: Array<{ id: string; title: string }>;
+};
+
+export function AppProviders({
+  children,
+  initialState
+}: {
+  children: ReactNode;
+  initialState: AppState;
+}) {
+  return (
+    <StoreProvider value={createServerSnapshot(initialState)}>
+      {children}
+    </StoreProvider>
+  );
+}
+
+// app/layout.tsx — Server Component
+import { AppProviders } from './providers';
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const user = await getServerSession();
+  return (
+    <html>
+      <body>
+        <AppProviders initialState={{ user, theme: 'light', posts: [] }}>
+          {children}
+        </AppProviders>
+      </body>
+    </html>
+  );
+}
+
+// app/dashboard/page.tsx — Server Component
+export default async function DashboardPage() {
+  const posts = await db.posts.findMany();
+  return <DashboardClient posts={posts} />;
+}
+
+// app/dashboard/DashboardClient.tsx — Client Component
+'use client';
+import { useStoreSync, createStoreHook } from '@plitzi/nexus';
+
+type State = { posts: Array<{ id: string; title: string }> };
+const { useStore } = createStoreHook<State>();
+
+export function DashboardClient({ posts }: { posts: State['posts'] }) {
+  // Sync server data on mount — avoids overwriting user edits on re-renders
+  useStoreSync('posts', posts, { mode: 'mount' });
+  const [localPosts] = useStore('posts');
+
+  return (
+    <div>
+      {localPosts.map(post => <div key={post.id}>{post.title}</div>)}
+    </div>
+  );
+}
+```
+
+### Pages Router — full pattern
+
+```tsx
+// pages/dashboard.tsx
+import { createStoreHook, StoreProvider } from '@plitzi/nexus';
+import type { InferGetServerSidePropsType } from 'next';
+
+type State = { count: number; user: { name: string } };
+
+export const getServerSideProps = async () => {
+  const user = await api.getUser();
+  return { props: { user } };
+};
+
+export default function DashboardPage({
+  user
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  return (
+    <StoreProvider value={{ user, count: 0 }}>
+      <Dashboard />
+    </StoreProvider>
+  );
+}
+
+// components/Dashboard.tsx
+'use client';
+const { useStore } = createStoreHook<State>();
+
+function Dashboard() {
+  const [user] = useStore('user');
+  const [count, setCount] = useStore('count');
+  return <div>...</div>;
+}
+```
+
+### Server Actions (`@plitzi/nexus/next`)
+
+The `@plitzi/nexus/next` subpath exports a `bindServerAction` helper for optimistic updates
+with automatic revalidation:
+
+```tsx
+'use client';
+import { useStore } from '@plitzi/nexus';
+import { bindServerAction } from '@plitzi/nexus/next';
+
+function Likes({ store, updateLikes }: { store: StoreApi<State>; updateLikes: ServerAction }) {
+  const [likes, setLikes] = useStore('likes');
+  const syncLikes = bindServerAction(store, 'likes', updateLikes, { revalidatePath: '/dashboard' });
+
+  return <button onClick={() => syncLikes(n => n + 1)}>{likes}</button>;
+}
+```
+
+| Import | What it's for |
+|---|---|
+| `bindServerAction` | Optimistic update + rollback + revalidation for Next.js Server Actions |
+| `ServerActionResult` | Return type of `bindServerAction` |
+
+This module dynamically imports from `next/cache` — it only works within Next.js App Router.
+It is **not** a peer dependency, just a compatibility layer.
 
 ## Performance
 

@@ -1,5 +1,5 @@
-import CodeBlock from '../../CodeBlock';
-import Prose from '../Prose';
+import CodeBlock from '../../../CodeBlock';
+import Prose from '../../Prose';
 
 const GuidesNextJs = () => (
   <Prose>
@@ -106,6 +106,74 @@ function DashboardClient() {
       demoId="nextjs-hydrate"
     />
 
+    <h2 id="server-snapshot">Marking server data with createServerSnapshot</h2>
+    <p>
+      When server data flows through <code>StoreProvider</code>, wrap it with <code>createServerSnapshot</code> to mark
+      it as server-originated. The flag is a non-enumerable Symbol — invisible in spread and JSON — and is automatically
+      stripped by <code>StoreProvider</code>. Use it to distinguish "this came from the server" from "this was set on the
+      client."
+    </p>
+    <CodeBlock
+      code={`// app/providers.tsx
+'use client';
+import { StoreProvider, createServerSnapshot } from '@plitzi/nexus';
+
+export function AppProviders({ children, initialState }) {
+  return (
+    <StoreProvider value={createServerSnapshot(initialState)}>
+      {children}
+    </StoreProvider>
+  );
+}
+
+// app/layout.tsx — Server Component
+import { AppProviders } from './providers';
+import { createServerSnapshot } from '@plitzi/nexus/rsc';
+
+export default async function RootLayout({ children }) {
+  const user = await getServerSession();
+  return (
+    <html>
+      <body>
+        <AppProviders initialState={{ user, theme: 'light', posts: [] }}>
+          {children}
+        </AppProviders>
+      </body>
+    </html>
+  );
+}
+
+// app/dashboard/page.tsx — Server Component fetches fresh data
+export default async function DashboardPage() {
+  const posts = await db.posts.findMany();
+  return <DashboardClient posts={posts} />;
+}
+
+// app/dashboard/DashboardClient.tsx — Client Component
+'use client';
+import { useStoreSync, createStoreHook } from '@plitzi/nexus';
+
+const { useStore } = createStoreHook();
+
+export function DashboardClient({ posts }) {
+  useStoreSync('posts', posts, { mode: 'mount' });
+  const [localPosts] = useStore('posts');
+
+  return <div>{localPosts.map(p => <div key={p.id}>{p.title}</div>)}</div>;
+}`}
+      demoId="nextjs-snapshot"
+    />
+
+    <h3>Subpath exports</h3>
+    <p>
+      SSR/RSC utilities are available under the <code>@plitzi/nexus/rsc</code> subpath:
+    </p>
+    <ul>
+      <li><code>createServerSnapshot</code> — mark data as server-fetched</li>
+      <li><code>isServerSnapshot</code> — check if a value has the SSR flag</li>
+      <li><code>stripServerFlag</code> — remove the SSR flag from a value</li>
+    </ul>
+
     <h2 id="persistence">Client persistence with cookies</h2>
     <p>
       Use the <code>persistMiddleware</code> with a custom storage adapter that reads/writes cookies (or localStorage on
@@ -151,6 +219,8 @@ export function StoreProviders({ children, initialState }) {
       optimistic updates, write optimistically to the store and revert on error — the granular path subscription means
       only the affected component updates.
     </p>
+
+    <h3>Manual optimistic updates</h3>
     <CodeBlock
       code={`// app/actions.ts
 'use server';
@@ -193,6 +263,28 @@ function ProfileForm() {
   );
 }`}
       demoId="nextjs-actions"
+    />
+
+    <h2 id="bind-action">bindServerAction helper</h2>
+    <p>
+      The <code>@plitzi/nexus/next</code> subpath provides a <code>bindServerAction</code> helper that handles
+      optimistic updates, rollback on error, and automatic <code>revalidatePath</code>/<code>revalidateTag</code>
+      in a single call:
+    </p>
+    <CodeBlock
+      code={`'use client';
+import { useStore } from '@plitzi/nexus';
+import { bindServerAction } from '@plitzi/nexus/next';
+
+function Likes({ store, updateLikes }) {
+  const [likes, setLikes] = useStore('likes');
+  const syncLikes = bindServerAction(store, 'likes', updateLikes, {
+    revalidatePath: '/dashboard'
+  });
+
+  return <button onClick={() => syncLikes(n => n + 1)}>{likes}</button>;
+}`}
+      demoId="nextjs-bind-action"
     />
   </Prose>
 );

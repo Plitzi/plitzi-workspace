@@ -8,7 +8,27 @@ const ApiReference = () => (
       <code>P</code> is a dot-path of <code>T</code> and <code>PathValue&lt;T, P&gt;</code> is the value at that path.
     </p>
 
-    <h2>createStore</h2>
+    <div className="not-prose mb-6 flex gap-2">
+      <a
+        href="#/docs/api?anchor=basic"
+        className="rounded-lg bg-brand-600/10 px-4 py-2 text-sm font-medium text-brand-400 transition hover:bg-brand-600/20"
+      >
+        ← Basic
+      </a>
+      <a
+        href="#/docs/api?anchor=advanced"
+        className="rounded-lg bg-ink-800 px-4 py-2 text-sm font-medium text-zinc-300 transition hover:bg-ink-700"
+      >
+        Advanced Cases →
+      </a>
+    </div>
+
+    <h2 id="basic">Basic</h2>
+    <p className="text-sm text-zinc-500 -mt-4 mb-6">
+      The core APIs you'll use every day. Everything else builds on these.
+    </p>
+
+    <h2 id="create-store">createStore</h2>
     <CodeBlock
       code={`createStore<T>(
   initial: Partial<T> | ((set, get) => Partial<T>),
@@ -21,7 +41,7 @@ const ApiReference = () => (
       persist / history / your own.
     </p>
 
-    <h3>StoreApi&lt;T&gt;</h3>
+    <h3 id="store-api">StoreApi&lt;T&gt;</h3>
     <table>
       <thead>
         <tr>
@@ -110,14 +130,14 @@ const ApiReference = () => (
       </tbody>
     </table>
 
-    <h2>createStoreHook</h2>
+    <h2 id="create-store-hook">createStoreHook</h2>
     <p>Binds your state type once and returns the four typed hooks. Call it at module level and export the result.</p>
     <CodeBlock
       code={`const { useStore, useStoreSync, useStoreGetter, useStoreSetter } =
   createStoreHook<T>();`}
     />
 
-    <h3>useStore</h3>
+    <h3 id="use-store">useStore</h3>
     <CodeBlock
       code={`// Single path → [value, setValue]
 const [name, setName] = useStore('user.name');
@@ -133,7 +153,7 @@ const [upper] = useStore('user.name', { transformer: v => v.toUpperCase() });
 const [el] = useStore(\`items.\${id}\` as PathOf<State>, { defaultValue: {} });`}
     />
 
-    <h3>useStoreSync · useStoreGetter · useStoreSetter</h3>
+    <h3 id="use-store-sync">useStoreSync · useStoreGetter · useStoreSetter</h3>
     <table>
       <thead>
         <tr>
@@ -176,7 +196,7 @@ const [el] = useStore(\`items.\${id}\` as PathOf<State>, { defaultValue: {} });`
       options to target a specific store instead of the nearest provider — see <em>Named stores</em>.
     </p>
 
-    <h2>StoreProvider</h2>
+    <h2 id="store-provider">StoreProvider</h2>
     <CodeBlock
       code={`<StoreProvider value={initial}>...</StoreProvider>          // create a store
 <StoreProvider store={existingStore}>...</StoreProvider>     // provide one
@@ -186,7 +206,60 @@ const [el] = useStore(\`items.\${id}\` as PathOf<State>, { defaultValue: {} });`
 <StoreProvider value={initial} middlewares={[persistMiddleware({ key: 'app' })]}>...</StoreProvider>`}
     />
 
-    <h2>Named stores (id / storeId)</h2>
+    <h2 id="key-types">Key types</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Shape</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <code>PathOf&lt;T&gt;</code>
+          </td>
+          <td>Union of all valid dot-paths in T.</td>
+        </tr>
+        <tr>
+          <td>
+            <code>PathValue&lt;T, P&gt;</code>
+          </td>
+          <td>Value type at path P.</td>
+        </tr>
+        <tr>
+          <td>
+            <code>StoreChange&lt;T&gt;</code>
+          </td>
+          <td>
+            <code>&#123; path, prev, next &#125;</code> — onChange / subscribeChange payload.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <code>WriteContext&lt;T&gt;</code>
+          </td>
+          <td>
+            <code>&#123; path, value, prev &#125;</code> — beforeChange payload.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <code>StoreMiddleware&lt;T&gt;</code>
+          </td>
+          <td>
+            <code>(api) =&gt; &#123; beforeChange?, onChange? &#125; | void</code>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 id="advanced">Advanced Cases</h2>
+    <p className="text-sm text-zinc-500 -mt-4 mb-6">
+      Patterns for complex scenarios — scoped stores, derived state, async data, entity management, and custom middleware.
+    </p>
+
+    <h2 id="named-stores">Named stores (id / storeId)</h2>
     <p>
       Give a provider an <code>id</code> and any descendant can target that store — even across a{' '}
       <em>disconnected</em> (<code>inherit</code>-less) provider that would otherwise shadow it. The id lives in a
@@ -214,7 +287,7 @@ rootStore.id; // 'root' — the identity is also set on the store (logging/devto
       ancestor with the same id logs a warning in development (stripped in production); the nearer store wins.
     </p>
 
-    <h2>Derived values</h2>
+    <h2 id="derived-values">Derived values</h2>
     <CodeBlock
       code={`createDerived(store, deps: Path[], compute, { equalityFn? })
   → { get, subscribe, destroy }
@@ -226,7 +299,7 @@ useDerived(derived) // reactive, re-renders only when the result changes`}
       a dep changes; only wakes subscribers when the <em>result</em> changes.
     </p>
 
-    <h2>Async &amp; Suspense</h2>
+    <h2 id="async-suspense">Async &amp; Suspense</h2>
     <CodeBlock
       code={`createAsync(store, path, fetcher, { immediate? })
   → { get, run, subscribe, suspend, destroy }
@@ -239,7 +312,7 @@ useAsyncValue(resource)  // Suspense: throws the promise / error, returns data`}
       subscriptions, derived values and persistence all see it.
     </p>
 
-    <h2>Entity adapter</h2>
+    <h2 id="entity-adapter">Entity adapter</h2>
     <CodeBlock
       code={`const adapter = createEntityAdapter<Item>({ selectId, sortComparer });
 
@@ -252,7 +325,7 @@ store.setState('items', adapter.removeOne(id));
 adapter.selectAll(map); adapter.selectById(map, id); adapter.selectTotal(map);`}
     />
 
-    <h2>Middleware</h2>
+    <h2 id="middleware">Middleware</h2>
     <p>
       A middleware is <code>(api) =&gt; &#123; beforeChange?, onChange? &#125; | void</code>. <code>onChange</code>{' '}
       observes each committed <code>&#123; path, prev, next &#125;</code>; <code>beforeChange</code> runs before a write
@@ -320,7 +393,7 @@ const guard = api => ({
 createStore(initial, { middlewares: [guard] });`}
     />
 
-    <h2>Time-travel / history</h2>
+    <h2 id="time-travel">Time-travel / history</h2>
     <CodeBlock
       code={`createStore(initial, { middlewares: [historyMiddleware({ limit, path, shouldRecord })] });
 
@@ -335,54 +408,6 @@ const history = getStoreHistory(store);`}
       History is only recorded when <code>historyMiddleware()</code> is on the store. Without it,{' '}
       <code>useStoreHistory</code> returns an empty, no-op view (and warns in development).
     </p>
-
-    <h2>Key types</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Shape</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>
-            <code>PathOf&lt;T&gt;</code>
-          </td>
-          <td>Union of all valid dot-paths in T.</td>
-        </tr>
-        <tr>
-          <td>
-            <code>PathValue&lt;T, P&gt;</code>
-          </td>
-          <td>Value type at path P.</td>
-        </tr>
-        <tr>
-          <td>
-            <code>StoreChange&lt;T&gt;</code>
-          </td>
-          <td>
-            <code>&#123; path, prev, next &#125;</code> — onChange / subscribeChange payload.
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <code>WriteContext&lt;T&gt;</code>
-          </td>
-          <td>
-            <code>&#123; path, value, prev &#125;</code> — beforeChange payload.
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <code>StoreMiddleware&lt;T&gt;</code>
-          </td>
-          <td>
-            <code>(api) =&gt; &#123; beforeChange?, onChange? &#125; | void</code>
-          </td>
-        </tr>
-      </tbody>
-    </table>
   </Prose>
 );
 

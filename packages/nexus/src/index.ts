@@ -17,3 +17,4 @@ export * from './types';
 export { createStore, StoreProvider, useStoreById, useStoreSetter };
 
 export { setCodegenEnabled } from './createStore/helpers/writeByPath';
+export { createServerSnapshot, isServerSnapshot } from './rsc';
