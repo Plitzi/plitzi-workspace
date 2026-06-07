@@ -239,8 +239,11 @@
       "types": "./dist/next/index.d.ts",
       "import": "./dist/next/index.mjs"
     },
-    "./rsc": {
-      "types": "./dist/rsc/index.d.ts",
+    "./next/index": {
+      "types": "./dist/next/index.d.ts",
+      "import": "./dist/next/index.mjs"
+    },
+    "./rsc/index": {
       "import": "./dist/rsc/index.mjs"
     },
     "./types": {
