@@ -76,7 +76,7 @@
     "@babel/preset-react": "^7.29.7",
     "@tailwindcss/postcss": "^4.3.0",
     "css-loader": "^7.1.4",
-    "cypress": "15.16.0",
+    "cypress": "15.17.0",
     "eslint": "^9.39.4",
     "eslint-plugin-import": "^2.32.0",
     "flow-bin": "^0.314.0",
