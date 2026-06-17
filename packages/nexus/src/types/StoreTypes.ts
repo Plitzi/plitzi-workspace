@@ -190,6 +190,7 @@ export type StoreApiInternal<T> = StoreApi<T> & {
   changeListeners: Subscribers<ChangeListener<T>>;
   interceptors: WriteInterceptor<T>[];
   errorHandlers: StoreErrorHandler<T>[];
+  invalidateListeners: Subscribers<() => void>;
   // Test-only metric: number of times `getState` recomputed the full deep-merge (cache miss).
   getMergeCount?: () => number;
 };

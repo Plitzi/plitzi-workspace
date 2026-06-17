@@ -244,6 +244,7 @@ function createStore<TState extends object>(
   const reconnect = () => {
     destroyed = false;
     if (parent) {
+      invalidateUnsub?.();
       invalidateUnsub = parent.subscribeInvalidate?.(onSilentAncestorChange);
     }
 
@@ -324,6 +325,7 @@ function createStore<TState extends object>(
     (api as StoreApiInternal<TState>).changeListeners = changeListeners;
     (api as StoreApiInternal<TState>).interceptors = interceptors;
     (api as StoreApiInternal<TState>).errorHandlers = errorHandlers;
+    (api as StoreApiInternal<TState>).invalidateListeners = invalidateListeners;
     (api as StoreApiInternal<TState>).getMergeCount = getMergeCount;
   }
 

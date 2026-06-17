@@ -189,6 +189,36 @@ describe('scoped store: getPath memoizes fall-through reads and invalidates on c
     // Child should see the new value
     expect(child.getPath('a')).toBe(99);
   });
+
+  it('does not accumulate invalidate subscriptions when reconnect is called multiple times', () => {
+    // If `reconnect()` is called multiple times without an intervening `destroy()`, it should not
+    // accumulate multiple subscriptions to `subscribeInvalidate`. Each call should replace the previous one.
+    const parent = createStore<S>({ a: 1, nested: { x: 1, y: 2 } });
+    const child = createStore<S>({}, { parent });
+
+    // Populate cache
+    expect(child.getPath('a')).toBe(1);
+
+    // Call reconnect multiple times (simulating edge cases or bugs in consumer code)
+    child.reconnect?.();
+    child.reconnect?.();
+    child.reconnect?.();
+
+    // Re-populate cache
+    expect(child.getPath('a')).toBe(1);
+
+    // Silent parent write should trigger invalidation exactly once
+    parent.setState('a', 99, false);
+
+    // Child should see the new value (if subscriptions accumulated, this would still work,
+    // but we'd be doing extra work)
+    expect(child.getPath('a')).toBe(99);
+
+    // Verify that the parent's invalidateListeners count is reasonable (should be 1, not 3+)
+    const parentInternal = parent as StoreApiInternal<unknown>;
+    const listenerCount = parentInternal.invalidateListeners.length;
+    expect(listenerCount).toBe(1);
+  });
 });
 
 describe('scoped store: dev-only sibling collision detection', () => {

@@ -11,8 +11,7 @@ import { bindServerAction } from './index';
 
 type State = { count: number; user: { name: string } };
 
-const createTestStore = () =>
-  createStore<State>({ count: 0, user: { name: 'Alice' } });
+const createTestStore = () => createStore<State>({ count: 0, user: { name: 'Alice' } });
 
 describe('bindServerAction', () => {
   it('performs an optimistic update with a value', async () => {
