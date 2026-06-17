@@ -165,6 +165,30 @@ describe('scoped store: getPath memoizes fall-through reads and invalidates on c
 
     expect(child.getPath('a')).toBe(99);
   });
+
+  it('invalidates child cache after a silent parent write following destroy/reconnect cycle', () => {
+    // After a `destroy()` → `reconnect()` cycle (React StrictMode), the child's `subscribeInvalidate`
+    // subscription must be re-established. Otherwise, silent parent writes (`canPropagate: false`)
+    // won't invalidate the child's cache, causing stale reads.
+    const parent = createStore<S>({ a: 1, nested: { x: 1, y: 2 } });
+    const child = createStore<S>({}, { parent });
+
+    // Populate cache
+    expect(child.getPath('a')).toBe(1);
+
+    // Simulate StrictMode: destroy then reconnect
+    child.destroy?.();
+    child.reconnect?.();
+
+    // Re-populate cache after reconnect
+    expect(child.getPath('a')).toBe(1);
+
+    // Silent parent write
+    parent.setState('a', 99, false);
+
+    // Child should see the new value
+    expect(child.getPath('a')).toBe(99);
+  });
 });
 
 describe('scoped store: dev-only sibling collision detection', () => {

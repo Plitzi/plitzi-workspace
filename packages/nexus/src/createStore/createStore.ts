@@ -238,10 +238,15 @@ function createStore<TState extends object>(
 
   state = (typeof initializer === 'function' ? initializer(setState, getState) : initializer) as TState;
 
-  // `reconnect` re-attaches after the destroy → remount cycle React StrictMode simulates: it just re-evaluates
-  // interest, since the remounted consumers re-subscribe and drive attachment.
+  // `reconnect` re-attaches after the destroy → remount cycle React StrictMode simulates: it re-evaluates
+  // interest (remounted consumers re-subscribe and drive attachment) and re-establishes the invalidation
+  // subscription that `destroy()` tore down.
   const reconnect = () => {
     destroyed = false;
+    if (parent) {
+      invalidateUnsub = parent.subscribeInvalidate?.(onSilentAncestorChange);
+    }
+
     syncAttachment();
   };
 
