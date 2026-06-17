@@ -12,8 +12,9 @@ export type GetPath<TState extends object> = <P extends PathOf<TState>>(path: P)
 //   - `getPath` resolves a single path without materializing that merge — straight to the owner.
 // Both are O(depth) the first time (they walk the parent chain) and both are memoized so repeats are O(1). They
 // share one invalidation substrate: the store calls `invalidate()` from the change events it already emits (own
-// commit, forwarded ancestor change, silent ancestor change), and both caches drop together. `setActive(false)`
-// turns caching off for a detached scope — one that receives no invalidations — so it always resolves fresh.
+// commit, forwarded ancestor change, silent ancestor change), and both caches drop together. The cache is always
+// used — even when detached — to ensure referential stability for `useSyncExternalStore` which calls `getSnapshot()`
+// multiple times per render.
 export type ChainReads<TState extends object> = {
   getState: GetState<TState>;
   getPath: GetPath<TState>;
@@ -40,7 +41,6 @@ export function createChainReads<TState extends object>(
 
   const parentStore = parent;
 
-  let active = true;
   let stateDirty = true;
   let pathDirty = false;
   let merged: TState | undefined;
@@ -54,12 +54,6 @@ export function createChainReads<TState extends object>(
   };
 
   const getState: GetState<TState> = () => {
-    // Detached: no invalidations arrive, so the cache can't be trusted — merge fresh every time. (A detached scope
-    // has no reactive consumer; any caller's own equality check absorbs the new reference.)
-    if (!active) {
-      return mergeNow();
-    }
-
     if (stateDirty || merged === undefined) {
       merged = mergeNow();
       stateDirty = false;
@@ -85,10 +79,6 @@ export function createChainReads<TState extends object>(
   };
 
   const getPath: GetPath<TState> = <P extends PathOf<TState>>(path: P): PathValue<TState, P> | undefined => {
-    if (!active) {
-      return resolve(path);
-    }
-
     if (pathDirty) {
       pathCache.clear();
       pathDirty = false;
@@ -109,14 +99,11 @@ export function createChainReads<TState extends object>(
       stateDirty = true;
       pathDirty = true;
     },
-    setActive: next => {
-      active = next;
-      if (!next) {
-        pathCache.clear();
-        merged = undefined;
-        stateDirty = true;
-        pathDirty = false;
-      }
+    setActive: () => {
+      pathCache.clear();
+      merged = undefined;
+      stateDirty = true;
+      pathDirty = false;
     },
     getMergeCount: () => mergeCount
   };

@@ -1,10 +1,15 @@
+import { renderHook } from '@testing-library/react';
+import { createElement } from 'react';
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 
-import createStore from './createStore';
+import createStore, { createStoreHook } from './createStore';
 import { makeSingleSnapshot } from './createStore/hooks/shared';
 import { getStoreHistory, historyMiddleware } from './middleware/historyMiddleware';
+import StoreProvider from './StoreProvider';
 
 import type { StoreApiInternal } from './types';
+import type { ReactNode } from 'react';
+import type { MockInstance } from 'vitest';
 
 // Coverage + micro-benchmark for `getPath` (single-path chain resolution). Kept out of the large
 // `scopedStore.test.tsx`. The win is avoiding the full-state deep-merge for reads of a path the scope does not
@@ -145,6 +150,21 @@ describe('scoped store: getPath memoizes fall-through reads and invalidates on c
     expect(first.getPath('a')).toBe(7);
     expect(second.getPath('a')).toBe(7);
   });
+
+  it('invalidates detached child cache after a propagating parent write (single-segment path)', () => {
+    // Without calling `invalidateDescendants()` in the `canPropagate=true` branch of single-segment writes
+    // in createSetState.ts, a detached scoped child would not see the parent's change because its cache
+    // would never be invalidated. The child only receives invalidation events via `subscribeInvalidate`,
+    // not via the normal `subscribe` channel (which requires the child to be attached).
+    const parent = createStore<S>({ a: 1, nested: { x: 1, y: 2 } });
+    const child = createStore<S>({}, { parent });
+
+    expect(child.getPath('a')).toBe(1);
+
+    parent.setState('a', 99);
+
+    expect(child.getPath('a')).toBe(99);
+  });
 });
 
 describe('scoped store: dev-only sibling collision detection', () => {
@@ -211,5 +231,106 @@ describe('scoped store: getPath avoids full-merge materialization (benchmark)', 
     // Path-scoped resolution walks straight to the owner → 0 full-state merges in the child scope.
     // Before getPath, each read went through `getByPath(getState(), path)` → 50 merges (one per change).
     expect((child as StoreApiInternal<S>).getMergeCount?.()).toBe(0);
+  });
+});
+
+describe('scoped store: referential stability when detached', () => {
+  type NestedState = { runtime: { sources: Record<string, unknown> } };
+
+  describe('getPath must return the same reference on consecutive calls even when detached', () => {
+    it('returns the same object reference on every getPath call when detached (both-objects-merge branch)', () => {
+      const parent = createStore<NestedState>({ runtime: { sources: { variables: { a: 1 } } } });
+      const child = createStore<NestedState>({ runtime: { sources: { record: { b: 2 } } } }, { parent });
+
+      expect((child as StoreApiInternal<NestedState>).listeners.length).toBe(0);
+
+      const first = child.getPath('runtime.sources');
+      const second = child.getPath('runtime.sources');
+      const third = child.getPath('runtime.sources');
+
+      expect(first).toBe(second);
+      expect(second).toBe(third);
+    });
+
+    it('returns the same object reference on every getState call when detached', () => {
+      const parent = createStore<NestedState>({ runtime: { sources: { variables: { a: 1 } } } });
+      const child = createStore<NestedState>({ runtime: { sources: { record: { b: 2 } } } }, { parent });
+
+      expect((child as StoreApiInternal<NestedState>).listeners.length).toBe(0);
+
+      const first = child.getState();
+      const second = child.getState();
+      const third = child.getState();
+
+      expect(first).toBe(second);
+      expect(second).toBe(third);
+    });
+
+    it('returns the same reference on consecutive calls when attached (cache works)', () => {
+      const parent = createStore<NestedState>({ runtime: { sources: { variables: { a: 1 } } } });
+      const child = createStore<NestedState>({ runtime: { sources: { record: { b: 2 } } } }, { parent });
+
+      const unsubscribe = child.subscribe(vi.fn());
+
+      const first = child.getPath('runtime.sources');
+      const second = child.getPath('runtime.sources');
+      const third = child.getPath('runtime.sources');
+
+      expect(first).toBe(second);
+      expect(second).toBe(third);
+
+      unsubscribe();
+    });
+
+    it('invalidates cached reads after a parent write while detached', () => {
+      const parent = createStore<NestedState>({ runtime: { sources: { variables: { a: 1 } } } });
+      const child = createStore<NestedState>({ runtime: { sources: { record: { b: 2 } } } }, { parent });
+
+      const before = child.getPath('runtime.sources');
+
+      parent.setState('runtime.sources.variables', { a: 99 });
+
+      const after = child.getPath('runtime.sources');
+
+      expect(after).not.toBe(before);
+      expect((after as Record<string, unknown>).variables).toEqual({ a: 99 });
+    });
+  });
+
+  describe('useStore hook must not trigger infinite loop warning with scoped stores', () => {
+    let consoleErrorSpy: MockInstance<typeof console.error>;
+
+    beforeEach(() => {
+      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('does not warn about getSnapshot caching when reading a merged path from a scoped store', () => {
+      type S = { runtime: { sources: Record<string, unknown> } };
+      const { useStore } = createStoreHook<S>();
+
+      const wrapper = ({ children }: { children: ReactNode }) =>
+        createElement(
+          StoreProvider<S>,
+          { value: { runtime: { sources: { parentSource: { x: 1 } } } } },
+          createElement(
+            StoreProvider<S>,
+            { inherit: 'live', value: { runtime: { sources: { childSource: { y: 2 } } } } },
+            children
+          )
+        );
+
+      renderHook(() => useStore('runtime.sources', { defaultValue: {} }), { wrapper });
+
+      const errorCalls = consoleErrorSpy.mock.calls;
+      const hasInfiniteLoopWarning = errorCalls.some((call: Parameters<typeof console.error>) =>
+        call.some((arg: unknown) => typeof arg === 'string' && arg.includes('getSnapshot should be cached'))
+      );
+
+      expect(hasInfiniteLoopWarning).toBe(false);
+    });
   });
 });

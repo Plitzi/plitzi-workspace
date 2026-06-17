@@ -283,9 +283,9 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       emitChange(path, prevState, nextState);
     }
 
-    if (!canPropagate) {
-      invalidateDescendants();
+    invalidateDescendants();
 
+    if (!canPropagate) {
       return;
     }
 
@@ -374,6 +374,7 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
         }
 
         wakeChangedDescendants(path, prevValue, finalValue, path.length + 1);
+        invalidateDescendants();
       } else {
         invalidateDescendants();
       }
@@ -416,6 +417,7 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       notify(listeners, path);
       wakeAncestors(path, segments);
       wakeChangedDescendants(path, prevState, nextState, 0);
+      invalidateDescendants();
     } else {
       invalidateDescendants();
     }

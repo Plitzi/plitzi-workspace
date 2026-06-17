@@ -112,10 +112,33 @@ function createStore<TState extends object>(
     setActive: setReadCacheActive,
     getMergeCount
   } = createChainReads<TState>(getOwnState, getOwnSnapshot, parent);
+
+  // A silent ancestor commit can't reach us through `subscribe`, so the parent tells us directly: invalidate our
+  // cached reads and relay the event to our own scoped children.
+  const onSilentAncestorChange = (): void => {
+    invalidateReads();
+    invalidateDescendants();
+  };
+
+  // Lazy attachment: a scoped store only subscribes to its parent's changes while something actually watches them.
+  // A child's forwarder is itself a `parent.subscribe`, so it shows up in `listeners` — meaning a non-empty
+  // `listeners`/`pathListeners`/`changeListeners` already captures "a direct subscriber, or a descendant via its
+  // forwarder". Attaching/detaching on that boolean therefore connects exactly the branches from a subscriber up to
+  // the root, and a write cascades only down those (O(depth-to-subscriber)) instead of every scope (O(total)). The
+  // root has no parent and is never attached.
+  let forwarder: { unsubscribe: () => void; seedBaseline: () => void } | undefined;
+  let invalidateUnsub: (() => void) | undefined;
+  // `destroy()` tears the scope down for good — it won't silently re-attach on a later subscribe; only `reconnect()`
+  // (the StrictMode remount path) revives it.
+  let destroyed = false;
+
   // A scoped store starts detached (no subscribers yet) — so its read caches are inactive until it attaches.
+  // However, we still subscribe to invalidation events to keep the cache correct even when detached.
   if (parent) {
     setReadCacheActive(false);
+    invalidateUnsub = parent.subscribeInvalidate?.(onSilentAncestorChange);
   }
+
   const { setState, batch } = createSetState<TState>({
     getOwnState,
     getOwnSnapshot,
@@ -142,25 +165,6 @@ function createStore<TState extends object>(
         : undefined
   });
 
-  // A silent ancestor commit can't reach us through `subscribe`, so the parent tells us directly: invalidate our
-  // cached reads and relay the event to our own scoped children.
-  const onSilentAncestorChange = (): void => {
-    invalidateReads();
-    invalidateDescendants();
-  };
-
-  // Lazy attachment: a scoped store only subscribes to its parent's changes while something actually watches them.
-  // A child's forwarder is itself a `parent.subscribe`, so it shows up in `listeners` — meaning a non-empty
-  // `listeners`/`pathListeners`/`changeListeners` already captures "a direct subscriber, or a descendant via its
-  // forwarder". Attaching/detaching on that boolean therefore connects exactly the branches from a subscriber up to
-  // the root, and a write cascades only down those (O(depth-to-subscriber)) instead of every scope (O(total)). The
-  // root has no parent and is never attached.
-  let forwarder: { unsubscribe: () => void; seedBaseline: () => void } | undefined;
-  let invalidateUnsub: (() => void) | undefined;
-  // `destroy()` tears the scope down for good — it won't silently re-attach on a later subscribe; only `reconnect()`
-  // (the StrictMode remount path) revives it.
-  let destroyed = false;
-
   const hasInterest = (): boolean => listeners.length > 0 || pathListeners.size > 0 || changeListeners.length > 0;
 
   const attach = (): void => {
@@ -180,7 +184,6 @@ function createStore<TState extends object>(
       reportError,
       invalidateReads
     );
-    invalidateUnsub = parent.subscribeInvalidate?.(onSilentAncestorChange);
     if (changeListeners.length > 0) {
       forwarder.seedBaseline();
     }
@@ -193,8 +196,6 @@ function createStore<TState extends object>(
 
     forwarder.unsubscribe();
     forwarder = undefined;
-    invalidateUnsub?.();
-    invalidateUnsub = undefined;
     setReadCacheActive(false);
   };
 
@@ -251,6 +252,7 @@ function createStore<TState extends object>(
     pathListeners.clear();
     changeListeners.clear();
     invalidateListeners.clear();
+    invalidateUnsub?.();
   };
 
   const api: StoreApi<TState> = {
