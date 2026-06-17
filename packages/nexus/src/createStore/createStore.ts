@@ -81,6 +81,10 @@ function createStore<TState extends object>(
   // normal subscriber wakes. The event only invalidates cached reads downstream; it never re-renders anyone.
   const invalidateListeners = new Subscribers<() => void>();
   const invalidateDescendants = (): void => {
+    if (invalidateListeners.length === 0) {
+      return;
+    }
+
     invalidateListeners.forEach(cb => cb());
   };
   const interceptors: WriteInterceptor<TState>[] = [];

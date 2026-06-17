@@ -145,4 +145,32 @@ describe('createAsync', () => {
     expect(store.getState().value).toBe(0);
     expect(resource.get().status).toBe('error');
   });
+
+  it('does not double-notify subscribers when the async resource resolves', async () => {
+    const store = createStore<State>(initial());
+    const gate = deferred<number>();
+    const resource = createAsync(store, 'value', () => gate.promise);
+
+    const notifications: { status: string; data: number }[] = [];
+    resource.subscribe(() => {
+      const snap = resource.get();
+      notifications.push({ status: snap.status, data: snap.data ?? 0 });
+    });
+
+    notifications.length = 0; // clear any subscription-time seed
+    const runPromise = resource.run();
+    await Promise.resolve(); // flush microtask so 'pending' fires
+
+    // Should be exactly 1: 'pending'
+    expect(notifications).toHaveLength(1);
+    expect(notifications[0]).toEqual({ status: 'pending', data: 0 });
+    notifications.length = 0;
+
+    gate.resolve(42);
+    await runPromise;
+
+    // Should be exactly 1: 'success' (not 2 — subscribePath callback + explicit emit)
+    expect(notifications).toHaveLength(1);
+    expect(notifications[0]).toEqual({ status: 'success', data: 42 });
+  });
 });

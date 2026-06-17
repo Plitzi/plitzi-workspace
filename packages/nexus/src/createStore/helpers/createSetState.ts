@@ -144,7 +144,10 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       return;
     }
 
-    // `begin`/`end` keep a listener that unsubscribes mid-notify safe (tombstone + compact) without copying the array.
+    if (items.length === 0) {
+      return;
+    }
+
     subs.begin();
     try {
       const err = runIsolated(items, path, items.length);
@@ -368,12 +371,14 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
 
       if (canPropagate) {
         notify(listeners, path);
-        const exact = pathListeners.direct.get(path);
-        if (exact) {
-          notify(exact, path);
-        }
+        if (pathListeners.size > 0) {
+          const exact = pathListeners.direct.get(path);
+          if (exact) {
+            notify(exact, path);
+          }
 
-        wakeChangedDescendants(path, prevValue, finalValue, path.length + 1);
+          wakeChangedDescendants(path, prevValue, finalValue, path.length + 1);
+        }
       }
 
       invalidateDescendants();
@@ -414,8 +419,10 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
 
     if (canPropagate) {
       notify(listeners, path);
-      wakeAncestors(path, segments);
-      wakeChangedDescendants(path, prevState, nextState, 0);
+      if (pathListeners.size > 0) {
+        wakeAncestors(path, segments);
+        wakeChangedDescendants(path, prevState, nextState, 0);
+      }
     }
 
     invalidateDescendants();

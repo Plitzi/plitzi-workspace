@@ -81,8 +81,14 @@ export function createAsync<TState extends object, P extends PathOf<TState>, Arg
           current = undefined;
           settled = undefined;
           status = 'success';
+          const prevData = store.getPath(path);
           store.setState(path, data);
-          emit();
+          // subscribePath fires emit() when setState actually writes.
+          // When the value is unchanged, setState is a no-op — emit
+          // manually so subscribers still see the status change.
+          if (Object.is(prevData, data)) {
+            emit();
+          }
         }
 
         return data;
