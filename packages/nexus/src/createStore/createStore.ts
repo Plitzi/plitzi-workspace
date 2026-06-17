@@ -109,7 +109,7 @@ function createStore<TState extends object>(
     getState,
     getPath,
     invalidate: invalidateReads,
-    setActive: setReadCacheActive,
+    resetCache,
     getMergeCount
   } = createChainReads<TState>(getOwnState, getOwnSnapshot, parent);
 
@@ -132,10 +132,10 @@ function createStore<TState extends object>(
   // (the StrictMode remount path) revives it.
   let destroyed = false;
 
-  // A scoped store starts detached (no subscribers yet) — so its read caches are inactive until it attaches.
-  // However, we still subscribe to invalidation events to keep the cache correct even when detached.
+  // A scoped store starts detached (no subscribers yet). We subscribe to invalidation events immediately
+  // to keep the cache correct even when detached, ensuring referential stability for useSyncExternalStore.
   if (parent) {
-    setReadCacheActive(false);
+    resetCache();
     invalidateUnsub = parent.subscribeInvalidate?.(onSilentAncestorChange);
   }
 
@@ -174,7 +174,7 @@ function createStore<TState extends object>(
 
     // The parent may have changed while detached, so invalidate cached reads and resume caching on attach.
     invalidateReads();
-    setReadCacheActive(true);
+    resetCache();
     forwarder = forwardParentChanges(
       parent,
       listeners,
@@ -196,7 +196,7 @@ function createStore<TState extends object>(
 
     forwarder.unsubscribe();
     forwarder = undefined;
-    setReadCacheActive(false);
+    resetCache();
   };
 
   // Re-evaluated whenever a subscriber is added or removed. Because a child's forwarder is a `parent.subscribe`,

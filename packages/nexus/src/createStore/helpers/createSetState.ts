@@ -73,8 +73,8 @@ export type SetStateDeps<TState extends object> = {
   pathListeners: PathTrie;
   interceptors: WriteInterceptor<TState>[];
   reportError: StoreErrorReporter<TState>;
-  // Invalidate scoped descendants' cached reads after a silent (`canPropagate: false`) commit — those writes skip
-  // subscriber wakes, so the change can't reach descendants through `notify`.
+  // Invalidate scoped descendants' cached reads after every commit. Detached scopes don't receive
+  // subscriber notifications, so they rely on this invalidation channel to keep their cache correct.
   invalidateDescendants: () => void;
   // Dev-only: a write this scope doesn't own is delegated to the parent. Reported so sibling scopes delegating the
   // same path can be flagged. Undefined in production.
@@ -374,10 +374,9 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
         }
 
         wakeChangedDescendants(path, prevValue, finalValue, path.length + 1);
-        invalidateDescendants();
-      } else {
-        invalidateDescendants();
       }
+
+      invalidateDescendants();
 
       return;
     }
@@ -417,10 +416,9 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       notify(listeners, path);
       wakeAncestors(path, segments);
       wakeChangedDescendants(path, prevState, nextState, 0);
-      invalidateDescendants();
-    } else {
-      invalidateDescendants();
     }
+
+    invalidateDescendants();
   };
 
   return { setState, batch };

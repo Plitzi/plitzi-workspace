@@ -13,13 +13,12 @@ export type GetPath<TState extends object> = <P extends PathOf<TState>>(path: P)
 // Both are O(depth) the first time (they walk the parent chain) and both are memoized so repeats are O(1). They
 // share one invalidation substrate: the store calls `invalidate()` from the change events it already emits (own
 // commit, forwarded ancestor change, silent ancestor change), and both caches drop together. The cache is always
-// used — even when detached — to ensure referential stability for `useSyncExternalStore` which calls `getSnapshot()`
-// multiple times per render.
+// used to ensure referential stability for `useSyncExternalStore` which calls `getSnapshot()` multiple times per render.
 export type ChainReads<TState extends object> = {
   getState: GetState<TState>;
   getPath: GetPath<TState>;
   invalidate: () => void;
-  setActive: (active: boolean) => void;
+  resetCache: () => void;
   getMergeCount: () => number;
 };
 
@@ -34,7 +33,7 @@ export function createChainReads<TState extends object>(
       getState: getOwnSnapshot,
       getPath: path => getByPath(getOwnState(), path),
       invalidate: () => {},
-      setActive: () => {},
+      resetCache: () => {},
       getMergeCount: () => 0
     };
   }
@@ -99,7 +98,7 @@ export function createChainReads<TState extends object>(
       stateDirty = true;
       pathDirty = true;
     },
-    setActive: () => {
+    resetCache: () => {
       pathCache.clear();
       merged = undefined;
       stateDirty = true;
