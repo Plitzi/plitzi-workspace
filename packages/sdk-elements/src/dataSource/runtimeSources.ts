@@ -12,24 +12,19 @@ type SourcePath = `runtime.sources.${string}`;
 export const useSourceSync = (path: SourcePath, value: Record<string, unknown>): void => {
   const { useStoreSync } = createStoreHook<CommonState>();
 
-  (useStoreSync as unknown as (p: string, v: unknown) => void)(path, value);
+  useStoreSync(path, value);
 };
 
-export const useSourcesValues = (paths: ReadonlyArray<SourcePath>): unknown[] => {
+export const useSourcesValues = (paths: SourcePath[]): unknown[] => {
   const { useStore } = createStoreHook<CommonState>();
-  const [values] = (useStore as unknown as (p: readonly string[]) => [unknown[]])(paths);
+  const [values] = useStore(paths);
 
   return values;
 };
 
-export const useSourceValue = (
-  path: SourcePath,
-  defaultValue: Record<string, unknown> = {}
-): Record<string, unknown> => {
+export const useSourceValue = (path: SourcePath, defaultValue = {}): Record<string, unknown> => {
   const { useStore } = createStoreHook<CommonState>();
-  const [value] = (
-    useStore as unknown as (p: string, o: { defaultValue: Record<string, unknown> }) => [Record<string, unknown>]
-  )(path, { defaultValue });
+  const [value] = useStore(path, { defaultValue });
 
   return value;
 };
