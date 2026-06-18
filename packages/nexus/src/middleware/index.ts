@@ -5,5 +5,5 @@ export { reduxDevToolsMiddleware } from './reduxDevToolsMiddleware';
 export { cascade } from './cascade';
 
 export type { LoggerOptions } from './loggerMiddleware';
-export type { PersistOptions, PersistStorage } from './persistMiddleware';
+export type { PersistOptions, PersistStorage, PersistTarget, PersistTargetOption } from './persistMiddleware';
 export type { ReduxDevToolsOptions } from './reduxDevToolsMiddleware';

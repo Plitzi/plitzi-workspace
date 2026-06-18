@@ -2,7 +2,7 @@ import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo } from 'react';
 
 import { createStoreHook } from '@plitzi/nexus/createStore';
-import useRuntimeState from '@plitzi/sdk-elements/runtimeState/useRuntimeState';
+import { writeRuntimeStateKey } from '@plitzi/sdk-elements/runtimeState/writeRuntimeStateKey';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
@@ -15,11 +15,18 @@ export type PageInteractionsProps = {
 };
 
 const PageInteractions = ({ children, previewMode = true }: PageInteractionsProps) => {
-  const { setStateByKey, clearState } = useRuntimeState();
   const { useInteractions } = use(InteractionsContext);
   const { navigate } = use(NavigationContext);
   const { useStore } = createStoreHook<SdkState>();
   const [[pageIds, pageDefinitions]] = useStore(['schema.pages', 'pageDefinitions']);
+  const [, setRuntimeState] = useStore('runtime.state');
+
+  const setStateByKey = useCallback(
+    (key: string, value: unknown) => setRuntimeState(prev => writeRuntimeStateKey(prev, key, value)),
+    [setRuntimeState]
+  );
+
+  const clearState = useCallback(() => setRuntimeState({}), [setRuntimeState]);
 
   const handleSetPageState = useCallback(
     (params: InteractionCallbackParamValues<{ key: string; type: string; value: string | boolean | number }>) => {

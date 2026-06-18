@@ -25,6 +25,7 @@ import SdkPlugin from '@modules/Sdk/SdkPlugin';
 import { historyMiddleware as historyMw, loggerMiddleware as loggerMw } from '@plitzi/nexus';
 import StoreProvider from '@plitzi/nexus/StoreProvider';
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
+import { runtimeStatePersist } from '@plitzi/sdk-elements/runtimeState/runtimeStatePersist';
 import { createStoreDevToolsLogger, ThemeProvider, type SdkState } from '@plitzi/sdk-shared';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 
@@ -163,6 +164,7 @@ const App = ({
       value={{ segments: {} }}
       middlewares={[
         loggerMw(createStoreDevToolsLogger<SdkState>('sdk')),
+        runtimeStatePersist<SdkState>(webId),
         ...(debugMode ? [historyMw<SdkState>()] : [])
       ]}
     >

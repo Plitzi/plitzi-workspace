@@ -227,6 +227,10 @@
       "types": "./dist/middleware/index.d.ts",
       "import": "./dist/middleware/index.mjs"
     },
+    "./middleware/isDisabled": {
+      "types": "./dist/middleware/isDisabled.d.ts",
+      "import": "./dist/middleware/isDisabled.mjs"
+    },
     "./middleware/loggerMiddleware": {
       "types": "./dist/middleware/loggerMiddleware.d.ts",
       "import": "./dist/middleware/loggerMiddleware.mjs"
@@ -238,6 +242,10 @@
     "./middleware/reduxDevToolsMiddleware": {
       "types": "./dist/middleware/reduxDevToolsMiddleware.d.ts",
       "import": "./dist/middleware/reduxDevToolsMiddleware.mjs"
+    },
+    "./middleware/withEnabled": {
+      "types": "./dist/middleware/withEnabled.d.ts",
+      "import": "./dist/middleware/withEnabled.mjs"
     },
     "./next": {
       "types": "./dist/next/index.d.ts",

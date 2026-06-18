@@ -5,7 +5,7 @@ import { useState, useMemo } from 'react';
 import { createStoreHook } from '@plitzi/nexus/createStore';
 import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
-import RuntimeStateProvider from '@plitzi/sdk-elements/runtimeState/RuntimeStateProvider';
+import useRuntimeStateManager from '@plitzi/sdk-elements/runtimeState/useRuntimeStateManager';
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
 
 import AppContainer from './AppContainer';
@@ -54,6 +54,7 @@ const AppMain = ({
   const [mobilePreview, setMobilePreview] = useState(false);
   const { useStoreSync } = createStoreHook<BuilderState>();
   useStoreSync('displayMode', displayMode);
+  useRuntimeStateManager({ state });
 
   const appValueMemo = useMemo(
     () => ({
@@ -98,17 +99,15 @@ const AppMain = ({
         previewMode={previewMode}
         debugMode={debugMode}
       >
-        <RuntimeStateProvider webId={webId} state={state}>
-          <GlobalSources environment={environment}>
-            <InteractionsBuilderContextProvider previewMode={previewMode}>
-              <PopupProvider renderLeftPopup={false} renderRightPopup={false} renderFloatingPopup={!previewMode}>
-                <DevToolsContainer innerClassName="flex" enabled={debugMode}>
-                  <AppContainer externalStyle={externalStyle} />
-                </DevToolsContainer>
-              </PopupProvider>
-            </InteractionsBuilderContextProvider>
-          </GlobalSources>
-        </RuntimeStateProvider>
+        <GlobalSources environment={environment}>
+          <InteractionsBuilderContextProvider previewMode={previewMode}>
+            <PopupProvider renderLeftPopup={false} renderRightPopup={false} renderFloatingPopup={!previewMode}>
+              <DevToolsContainer innerClassName="flex" enabled={debugMode}>
+                <AppContainer externalStyle={externalStyle} />
+              </DevToolsContainer>
+            </PopupProvider>
+          </InteractionsBuilderContextProvider>
+        </GlobalSources>
       </AppProvider>
     ),
     [
@@ -122,7 +121,6 @@ const AppMain = ({
       includeRealTime,
       previewMode,
       debugMode,
-      state,
       externalStyle
     ]
   );

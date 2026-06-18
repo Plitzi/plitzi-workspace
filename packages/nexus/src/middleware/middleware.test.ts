@@ -144,6 +144,174 @@ describe('persist middleware', () => {
   });
 });
 
+describe('enabled control', () => {
+  it('skips a middleware entirely when enabled is false (no observers, no hydrate)', () => {
+    const { storage, data } = memoryStorage();
+    data.set('app', JSON.stringify({ version: 0, state: { count: 9, ui: { open: false } } }));
+    const changes: StoreChange<AppState>[] = [];
+    const store = createStore<AppState>(initial(), {
+      middlewares: [
+        persistMiddleware({ key: 'app', storage, enabled: false }),
+        loggerMiddleware({ sink: c => changes.push(c), enabled: false })
+      ]
+    });
+
+    expect(store.getState().count).toBe(0); // never hydrated
+    store.setState('count', 1);
+
+    expect(changes).toEqual([]); // logger never observed
+    expect(readStored(data, 'app').state.count).toBe(9); // persist never wrote
+  });
+
+  it('resolves a predicate against initial state at setup', () => {
+    const off: StoreChange<AppState>[] = [];
+    const offStore = createStore<AppState>(initial(), {
+      middlewares: [loggerMiddleware({ sink: c => off.push(c), enabled: s => s.ui.open })]
+    });
+
+    offStore.setState('count', 1);
+    offStore.setState('ui.open', true);
+    expect(off).toHaveLength(0); // predicate was false at setup → middleware never registered
+
+    const on: StoreChange<AppState>[] = [];
+    const onStore = createStore<AppState>(
+      { count: 0, ui: { open: true } },
+      { middlewares: [loggerMiddleware({ sink: c => on.push(c), enabled: s => s.ui.open })] }
+    );
+
+    onStore.setState('count', 1);
+    expect(on.map(c => c.path)).toEqual(['count']);
+  });
+});
+
+describe('persist storage targets', () => {
+  afterEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+
+  it('defaults to localStorage and supports sessionStorage', () => {
+    createStore<AppState>(initial(), { middlewares: [persistMiddleware({ key: 'local-app' })] }).setState('count', 1);
+    createStore<AppState>(initial(), {
+      middlewares: [persistMiddleware({ key: 'session-app', storage: 'session' })]
+    }).setState('count', 2);
+
+    const parse = (raw: string | null) => JSON.parse(raw ?? 'null') as StoredEnvelope;
+    expect(parse(localStorage.getItem('local-app')).state.count).toBe(1);
+    expect(sessionStorage.getItem('local-app')).toBeNull();
+    expect(parse(sessionStorage.getItem('session-app')).state.count).toBe(2);
+  });
+
+  it('resolves the target from state when storage is a function', () => {
+    type Toggled = AppState & { useSession: boolean };
+    const store = createStore<Toggled>(
+      { ...initial(), useSession: false },
+      { middlewares: [persistMiddleware<Toggled>({ key: 'dyn', storage: s => (s.useSession ? 'session' : 'local') })] }
+    );
+
+    store.setState('count', 1);
+    expect(localStorage.getItem('dyn')).not.toBeNull();
+    expect(sessionStorage.getItem('dyn')).toBeNull();
+
+    store.setState('useSession', true);
+    store.setState('count', 2);
+    expect(sessionStorage.getItem('dyn')).not.toBeNull();
+  });
+
+  it('skips the write when the resolver returns false', () => {
+    type Gated = AppState & { persistOn: boolean };
+    const store = createStore<Gated>(
+      { ...initial(), persistOn: false },
+      { middlewares: [persistMiddleware<Gated>({ key: 'gated', storage: s => (s.persistOn ? 'local' : false) })] }
+    );
+
+    store.setState('count', 1);
+    expect(localStorage.getItem('gated')).toBeNull();
+
+    store.setState('persistOn', true);
+    store.setState('count', 2);
+    expect(localStorage.getItem('gated')).not.toBeNull();
+  });
+
+  it('skips persistence when the chosen storage is unavailable', () => {
+    const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      get() {
+        throw new Error('blocked');
+      }
+    });
+
+    try {
+      const changes: StoreChange<AppState>[] = [];
+      const store = createStore<AppState>(initial(), {
+        middlewares: [persistMiddleware({ key: 'app' }), loggerMiddleware({ sink: c => changes.push(c) })]
+      });
+
+      expect(() => store.setState('count', 1)).not.toThrow();
+      expect(changes.map(c => c.path)).toEqual(['count']); // store still works, only persist skipped
+    } finally {
+      if (descriptor) {
+        Object.defineProperty(globalThis, 'localStorage', descriptor);
+      }
+    }
+  });
+});
+
+describe('persist path fragments', () => {
+  it('persists and rehydrates only the selected paths', () => {
+    const { storage, data } = memoryStorage();
+    const store = createStore<AppState>(initial(), {
+      middlewares: [persistMiddleware<AppState>({ key: 'app', storage, paths: ['count'] })]
+    });
+
+    store.setState('count', 6);
+    store.setState('ui.open', true);
+
+    expect(readStored(data, 'app').state).toEqual({ count: 6 });
+
+    const restored = createStore<AppState>(initial(), {
+      middlewares: [persistMiddleware<AppState>({ key: 'app', storage, paths: ['count'] })]
+    });
+
+    expect(restored.getState()).toEqual({ count: 6, ui: { open: false } }); // ui left at its initial value
+  });
+
+  it('hydrates once a late-arriving storage resolver becomes available', async () => {
+    const { storage, data } = memoryStorage();
+    data.set('app', JSON.stringify({ version: 0, state: { count: 8 } }));
+    type Gated = AppState & { ready: boolean };
+    const store = createStore<Gated>(
+      { ...initial(), ready: false },
+      {
+        middlewares: [
+          persistMiddleware<Gated>({ key: 'app', paths: ['count'], storage: s => (s.ready ? storage : false) })
+        ]
+      }
+    );
+
+    expect(store.getState().count).toBe(0); // storage gated off at mount → not hydrated
+
+    store.setState('ready', true);
+    await Promise.resolve(); // flush the deferred restore
+
+    expect(store.getState().count).toBe(8);
+  });
+
+  it('does not write on changes outside the persisted paths', () => {
+    const { storage, data } = memoryStorage();
+    const store = createStore<AppState>(initial(), {
+      middlewares: [persistMiddleware<AppState>({ key: 'app', storage, paths: ['count'] })]
+    });
+
+    store.setState('count', 5);
+    const afterCount = data.get('app');
+
+    store.setState('ui.open', true); // unrelated subtree must not trigger a write
+    expect(data.get('app')).toBe(afterCount);
+  });
+});
+
 describe('middleware ordering', () => {
   it('a persist placed first hydrates before later middlewares observe', () => {
     const { storage } = memoryStorage();

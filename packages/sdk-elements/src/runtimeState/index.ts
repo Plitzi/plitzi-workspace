@@ -1,7 +1,7 @@
-import RuntimeStateProvider from './RuntimeStateProvider';
-import useRuntimeState from './useRuntimeState';
+import useRuntimeStateManager from './useRuntimeStateManager';
 
-export * from './RuntimeStateProvider';
-export * from './useRuntimeState';
+export * from './useRuntimeStateManager';
+export * from './runtimeStatePersist';
+export * from './writeRuntimeStateKey';
 
-export { RuntimeStateProvider, useRuntimeState };
+export { useRuntimeStateManager };

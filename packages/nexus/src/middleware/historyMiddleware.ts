@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { isDisabled } from './isDisabled';
 import { isPlainObject } from '../createStore/helpers/deepMerge';
 import getByPath from '../helpers/getByPath';
 import isPathAffected from '../helpers/isPathAffected';
 
-import type { ChangeListener, Path, PathOf, StoreApi, StoreMiddleware } from '../types';
+import type { ChangeListener, MiddlewareOptions, Path, PathOf, StoreApi, StoreMiddleware } from '../types';
 
 export type HistoryEntry<TState> = {
   // The precise leaf path that changed for this entry; undefined for the initial snapshot or a full-state replace.
@@ -31,7 +32,7 @@ export type StoreHistory<TState> = {
   clear: () => void;
 };
 
-export type StoreHistoryOptions = {
+export type StoreHistoryOptions<TState extends object = object> = MiddlewareOptions<TState> & {
   // Max entries kept (ring buffer, oldest dropped first). Default 100.
   limit?: number;
   // Scope the history to a subtree root (e.g. `'schema'`): only changes affecting it are recorded, and
@@ -72,7 +73,7 @@ const findChangedLeaf = (prev: unknown, next: unknown, depth = 12): { path: stri
 // `useStoreSync` reconcile to their live value on the next render.
 function createHistoryRecorder<TState extends object>(
   store: StoreApi<TState>,
-  options: StoreHistoryOptions = {}
+  options: StoreHistoryOptions<TState> = {}
 ): { handle: StoreHistory<TState>; record: ChangeListener<TState> } {
   const limit = options.limit ?? 100;
   const rootPath = options.path;
@@ -187,8 +188,16 @@ export function getStoreHistory<TState extends object>(store: StoreApi<TState>):
 // Records the action log / time-travel history from store creation. Recording rides the middleware's `onChange` (the
 // shared `subscribeChange` substrate logger and persist use); the handle is registered so a devtools panel or
 // `useStoreHistory` can retrieve it with `getStoreHistory(store)`. History is only recorded when this is added.
-export const historyMiddleware = <TState extends object>(options?: StoreHistoryOptions): StoreMiddleware<TState> => {
+export const historyMiddleware = <TState extends object>(
+  options?: StoreHistoryOptions<TState>
+): StoreMiddleware<TState> => {
+  const enabled = options?.enabled;
+
   return api => {
+    if (isDisabled(enabled, api.getState())) {
+      return;
+    }
+
     const { handle, record } = createHistoryRecorder(api, options);
     registry.set(api, handle);
 

@@ -138,6 +138,12 @@ export type StoreMiddlewareHandlers<T> = {
 // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 export type StoreMiddleware<T extends object> = (api: StoreApi<T>) => StoreMiddlewareHandlers<T> | void;
 
+// Shared base for every built-in middleware's options. `enabled` false (or a predicate that resolves false at setup)
+// skips the middleware entirely — no hydrate, no observers.
+export type MiddlewareOptions<T extends object> = {
+  enabled?: boolean | ((state: T) => boolean);
+};
+
 // The changed path is forwarded so scope-chain listeners can skip wakes for paths a parent change doesn't touch.
 // Consumer listeners (React `onStoreChange`) simply ignore the argument.
 export type Listener = (changedPath?: Path) => void;

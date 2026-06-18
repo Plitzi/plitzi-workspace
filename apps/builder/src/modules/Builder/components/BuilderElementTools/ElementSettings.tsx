@@ -5,7 +5,7 @@ import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
 import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
-import { useSourceValue } from '@plitzi/sdk-elements/dataSource';
+import { createStoreHook } from '@plitzi/nexus/createStore';
 import { defaultElementsSettings } from '@plitzi/sdk-elements/elements/settings';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
@@ -21,7 +21,7 @@ import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { ThemeContext } from '@plitzi/sdk-shared/theme';
 import AppContext from '@pmodules/App/AppContext';
 
-import type { ComponentPlugin } from '@plitzi/sdk-shared';
+import type { BuilderState, ComponentPlugin } from '@plitzi/sdk-shared';
 import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import type { FC } from 'react';
 
@@ -33,6 +33,7 @@ export type ElementSettingsProps = {
 };
 
 const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleChange }: ElementSettingsProps) => {
+  const { useStore } = createStoreHook<BuilderState>();
   const { previewMode, displayBorderComponents } = use(AppContext);
   const { getComponent } = use(ComponentContext);
   const { theme } = use(ThemeContext);
@@ -84,7 +85,8 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Settings = (Plugin?.pluginSettings ?? defaultElementsSettings[type]) as FC<any> | undefined;
-  const variables = useSourceValue('runtime.sources.variables', emptyObject) as Record<string, string>;
+  const [variablesSource = emptyObject] = useStore('runtime.sources.variables');
+  const variables = variablesSource as Record<string, string>;
 
   const children = useMemo(
     () => (
