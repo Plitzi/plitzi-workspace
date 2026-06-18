@@ -1,6 +1,6 @@
 import { afterEach, describe, it, expect } from 'vitest';
 
-import { setCodegenEnabled, UNCHANGED, writeByPath } from './writeByPath';
+import { materialize, setCodegenEnabled, UNCHANGED, writeByPath } from './writeByPath';
 import parsePath from '../../helpers/parsePath';
 
 // The writer has two interchangeable backends — a `new Function` codegen and a recursive fallback. The contract is
@@ -25,7 +25,7 @@ const writeBoth = (root: unknown, path: string, value: unknown, isFn = false): u
     return UNCHANGED;
   }
 
-  expect(viaCodegen).toEqual(viaRecursive);
+  expect(viaCodegen).toEqual(materialize(viaRecursive));
 
   return viaCodegen;
 };
@@ -139,7 +139,7 @@ describe('writeByPath — differential fuzz (codegen vs recursive)', () => {
       if (viaCodegen === UNCHANGED || viaRecursive === UNCHANGED) {
         expect(viaCodegen).toBe(viaRecursive);
       } else {
-        expect(viaCodegen).toEqual(viaRecursive);
+        expect(viaCodegen).toEqual(materialize(viaRecursive));
       }
     }
   });

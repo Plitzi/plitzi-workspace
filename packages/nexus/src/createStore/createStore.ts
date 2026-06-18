@@ -8,6 +8,7 @@ import { forwardParentChanges } from './helpers/forwardParentChanges';
 import PathTrie from './helpers/PathTrie';
 import { createScopeClaims } from './helpers/scopeCollisions';
 import Subscribers from './helpers/Subscribers';
+import { materialize } from './helpers/writeByPath';
 import useStoreBase from './hooks/useStore';
 import useStoreGetterBase from './hooks/useStoreGetter';
 import useStoreSetterBase from './hooks/useStoreSetter';
@@ -107,7 +108,17 @@ function createStore<TState extends object>(
   };
 
   const getOwnState = () => state;
-  const getOwnSnapshot = (): TState => (ownSnapshot ??= { ...state });
+  const getOwnSnapshot = (): TState => {
+    if (ownSnapshot !== undefined) {
+      return ownSnapshot;
+    }
+
+    const flat = materialize(state);
+    // materialize returns the input as-is for plain objects. We need a distinct snapshot reference (so React's
+    // useSyncExternalStore sees a change on mutation). Clone only when materialize is a no-op.
+    ownSnapshot = flat === state ? { ...state } : flat;
+    return ownSnapshot;
+  };
 
   const {
     getState,

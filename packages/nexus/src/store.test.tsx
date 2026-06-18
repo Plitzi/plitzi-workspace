@@ -87,6 +87,230 @@ describe('store', () => {
     });
   });
 
+  describe('lazy path auto-detection', () => {
+    it('preserves all keys after multiple writes under the same wide parent', () => {
+      type WideKeys = { items: Record<string, number> };
+      const store = createStore<WideKeys>(() => {
+        const items: Record<string, number> = {};
+        for (let i = 0; i < 10; i++) {
+          items[`k${i}`] = i;
+        }
+        return { items };
+      });
+
+      store.setState('items.k0', 99);
+      expect(store.getState().items.k0).toBe(99);
+      expect(store.getState().items.k1).toBe(1);
+
+      store.setState('items.k1', 88);
+      expect(store.getState().items.k0).toBe(99);
+      expect(store.getState().items.k1).toBe(88);
+      expect(store.getState().items.k9).toBe(9);
+
+      store.setState('items.k5', 55);
+      expect(store.getState().items.k5).toBe(55);
+      expect(Object.keys(store.getState().items)).toHaveLength(10);
+    });
+
+    it('preserves all keys after writing to a deeply nested path under a wide parent', () => {
+      type WideItems = { items: Record<string, { name: string }> };
+      const store = createStore<WideItems>(() => {
+        const items: Record<string, { name: string }> = {};
+        for (let i = 0; i < 10; i++) {
+          items[`k${i}`] = { name: `item-${i}` };
+        }
+        return { items };
+      });
+
+      store.setState('items.k0.name', 'changed-0');
+      expect(store.getState().items.k0.name).toBe('changed-0');
+      expect(store.getState().items.k1.name).toBe('item-1');
+
+      store.setState('items.k1.name', 'changed-1');
+      expect(store.getState().items.k0.name).toBe('changed-0');
+      expect(store.getState().items.k1.name).toBe('changed-1');
+      expect(store.getState().items.k2.name).toBe('item-2');
+      expect(Object.keys(store.getState().items)).toHaveLength(10);
+    });
+
+    it('preserves all keys with updater functions on subsequent writes', () => {
+      type WideKeys = { items: Record<string, number> };
+      const store = createStore<WideKeys>(() => {
+        const items: Record<string, number> = {};
+        for (let i = 0; i < 8; i++) {
+          items[`k${i}`] = i;
+        }
+        return { items };
+      });
+
+      store.setState('items.k0', 99);
+      store.setState('items.k1', prev => prev + 10);
+      store.setState('items.k2', prev => prev * 2);
+
+      expect(store.getState().items.k0).toBe(99);
+      expect(store.getState().items.k1).toBe(11);
+      expect(store.getState().items.k2).toBe(4);
+      expect(store.getState().items.k3).toBe(3);
+      expect(Object.keys(store.getState().items)).toHaveLength(8);
+    });
+
+    it('stays on codegen when the first child level has few keys', () => {
+      type NestedState = { a: { b: { c: number; d: string } }; other: number };
+      const store = createStore<NestedState>(() => ({ a: { b: { c: 1, d: 'x' } }, other: 0 }));
+
+      store.setState('a.b.c', 99);
+      expect(store.getState().a.b.c).toBe(99);
+      expect(store.getState().a.b.d).toBe('x');
+
+      for (let i = 0; i < 10; i++) {
+        store.setState('a.b.c', i);
+      }
+
+      expect(store.getState().a.b.c).toBe(9);
+      expect(store.getState().a.b.d).toBe('x');
+      expect(store.getState().other).toBe(0);
+    });
+
+    it('returns plain objects from getState() when using codegen', () => {
+      type NestedState = { a: { b: { c: number; d: string } }; other: number };
+      const store = createStore<NestedState>(() => ({ a: { b: { c: 1, d: 'x' } }, other: 0 }));
+
+      store.setState('a.b.c', 99);
+
+      const state = store.getState();
+      expect(Object.getPrototypeOf(state)).toBe(Object.prototype);
+      expect(Object.getPrototypeOf(state.a)).toBe(Object.prototype);
+      expect(Object.getPrototypeOf(state.a.b)).toBe(Object.prototype);
+    });
+
+    it('handles independent wide and narrow paths under the same root', () => {
+      type MixedState = { wide: Record<string, number>; nested: { x: { y: number } } };
+      const store = createStore<MixedState>(() => ({
+        wide: { k0: 0, k1: 1, k2: 2, k3: 3, k4: 4, k5: 5 },
+        nested: { x: { y: 10 } }
+      }));
+
+      store.setState('wide.k0', 99);
+      store.setState('nested.x.y', 42);
+
+      expect(store.getState().wide.k0).toBe(99);
+      expect(store.getState().wide.k1).toBe(1);
+      expect(store.getState().nested.x.y).toBe(42);
+
+      store.setState('wide.k1', 88);
+      store.setState('nested.x.y', 100);
+
+      expect(store.getState().wide.k0).toBe(99);
+      expect(store.getState().wide.k1).toBe(88);
+      expect(store.getState().nested.x.y).toBe(100);
+      expect(Object.keys(store.getState().wide)).toHaveLength(6);
+    });
+
+    it('getState() returns a flat plain object after lazy writes', () => {
+      type WideKeys = { items: Record<string, number> };
+      const store = createStore<WideKeys>(() => {
+        const items: Record<string, number> = {};
+        for (let i = 0; i < 10; i++) {
+          items[`k${i}`] = i;
+        }
+        return { items };
+      });
+
+      store.setState('items.k0', 99);
+      store.setState('items.k1', 88);
+
+      const state = store.getState();
+      expect(Object.getPrototypeOf(state)).toBe(Object.prototype);
+      expect(Object.getPrototypeOf(state.items)).toBe(Object.prototype);
+      expect(Object.keys(state.items).sort()).toEqual(['k0', 'k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7', 'k8', 'k9']);
+
+      expect({ ...state.items }).toMatchObject({
+        k0: 99,
+        k1: 88,
+        k2: 2,
+        k3: 3,
+        k4: 4,
+        k5: 5,
+        k6: 6,
+        k7: 7,
+        k8: 8,
+        k9: 9
+      });
+
+      const keys: string[] = [];
+      for (const key in state.items) {
+        keys.push(key);
+      }
+      expect(keys).toEqual(Object.keys(state.items));
+    });
+
+    it('supports JSON.stringify after lazy writes', () => {
+      type WideKeys = { items: Record<string, number> };
+      const store = createStore<WideKeys>(() => {
+        const items: Record<string, number> = {};
+        for (let i = 0; i < 5; i++) {
+          items[`k${i}`] = i;
+        }
+        return { items };
+      });
+
+      store.setState('items.k0', 99);
+      store.setState('items.k1', 88);
+
+      const json = JSON.stringify(store.getState());
+      expect(json).toBe(JSON.stringify({ items: { k0: 99, k1: 88, k2: 2, k3: 3, k4: 4 } }));
+    });
+
+    it('supports structural sharing across writes to different keys under the same wide parent', () => {
+      type WideItems = { items: Record<string, { name: string }> };
+      const store = createStore<WideItems>(() => {
+        const items: Record<string, { name: string }> = {};
+        for (let i = 0; i < 10; i++) {
+          items[`k${i}`] = { name: `n${i}` };
+        }
+        return { items };
+      });
+
+      store.setState('items.k0', { name: 'n0-changed' });
+      const afterFirst = store.getState();
+
+      store.setState('items.k1', { name: 'n1-changed' });
+      const afterSecond = store.getState();
+
+      expect(afterSecond.items.k0).toEqual(afterFirst.items.k0);
+      expect(afterSecond.items.k2).toBe(afterFirst.items.k2);
+      expect(afterSecond.items.k3).toBe(afterFirst.items.k3);
+      expect(afterSecond.items.k9).toBe(afterFirst.items.k9);
+    });
+
+    it('stays on codegen when the first child level has exactly 5 keys', () => {
+      type WideKeys = { items: Record<string, number> };
+      const store = createStore<WideKeys>(() => ({ items: { k0: 0, k1: 1, k2: 2, k3: 3, k4: 4 } }));
+
+      store.setState('items.k0', 99);
+      store.setState('items.k1', 88);
+
+      expect(store.getState().items.k0).toBe(99);
+      expect(store.getState().items.k1).toBe(88);
+      expect(Object.keys(store.getState().items)).toHaveLength(5);
+    });
+
+    it('switches to lazy when the first child level has 6 keys (above threshold)', () => {
+      type WideKeys = { items: Record<string, number> };
+      const store = createStore<WideKeys>(() => ({
+        items: { k0: 0, k1: 1, k2: 2, k3: 3, k4: 4, k5: 5 }
+      }));
+
+      store.setState('items.k0', 99);
+      store.setState('items.k1', 88);
+
+      expect(store.getState().items.k0).toBe(99);
+      expect(store.getState().items.k1).toBe(88);
+      expect(store.getState().items.k5).toBe(5);
+      expect(Object.keys(store.getState().items)).toHaveLength(6);
+    });
+  });
+
   describe('subscribe', () => {
     it('should notify listeners on change', () => {
       const store = createTestStore();
