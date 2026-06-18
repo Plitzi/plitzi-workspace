@@ -1,4 +1,5 @@
 export { createEntityAdapter } from './createEntityAdapter';
+export { createEntityStore } from './createEntityStore';
 
 export type {
   EntityAdapter,
@@ -8,3 +9,4 @@ export type {
   EntityUpdate,
   EntityUpdater
 } from './createEntityAdapter';
+export type { EntityStore, EntityStoreOptions, EntityChangeListener } from './createEntityStore';

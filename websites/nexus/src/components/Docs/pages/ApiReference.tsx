@@ -324,6 +324,39 @@ store.setState('items', adapter.removeOne(id));
 // Selectors over the Record<id, Item> map:
 adapter.selectAll(map); adapter.selectById(map, id); adapter.selectTotal(map);`}
     />
+    <p>
+      The adapter only removes boilerplate — every write still copies the whole map (O(n)). For a large entity map with
+      frequent per-item updates, reach for <code>createEntityStore</code> below instead.
+    </p>
+
+    <h2 id="entity-store">Entity store</h2>
+    <p>
+      A standalone reactive collection for normalized data: a per-id store where a single-item write is{' '}
+      <strong>O(1)</strong> and wakes only that item&apos;s watchers — nexus&apos;s answer to the atom/proxy stores. Use
+      it instead of <code>setState(&apos;items.&lt;id&gt;...&apos;)</code> when the map is large and edits are frequent.
+    </p>
+    <CodeBlock
+      code={`const items = createEntityStore<Item>(seed, { selectId, sortComparer });
+
+// O(1) writes — only the touched id's watchers wake:
+items.setOne(item);
+items.updateOne(id, { name: 'New' });
+items.removeOne(id);
+items.batch(() => { items.updateMany(updates); items.addMany(more); });
+
+// React hooks live on the store object (one exported symbol):
+const item = items.useOne(id);   // re-renders only when THIS id changes
+const ids = items.useIds();      // re-renders only on add/remove
+const all = items.useAll();      // re-renders on any change
+
+// Non-reactive reads + manual subscriptions also available:
+items.getOne(id); items.getAll(); items.getIds(); items.has(id); items.size();
+const off = items.subscribeOne(id, listener);`}
+    />
+    <p>
+      Render large lists with <code>useIds()</code> for the row order and a per-row <code>useOne(id)</code> — editing one
+      row then re-renders only that row, not the list.
+    </p>
 
     <h2 id="middleware">Middleware</h2>
     <p>

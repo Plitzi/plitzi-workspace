@@ -57,6 +57,7 @@ const PAGES: DocPage[] = [
           { id: 'derived-values', label: 'Derived values' },
           { id: 'async-suspense', label: 'Async & Suspense' },
           { id: 'entity-adapter', label: 'Entity adapter' },
+          { id: 'entity-store', label: 'Entity store' },
           { id: 'middleware', label: 'Middleware' },
           { id: 'time-travel', label: 'Time-travel / history' }
         ]

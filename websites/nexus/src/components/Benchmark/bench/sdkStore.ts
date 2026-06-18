@@ -1,18 +1,10 @@
-import { createDerived, createStore } from '@plitzi/nexus';
+import { createDerived, createEntityStore, createStore } from '@plitzi/nexus';
 
-import {
-  DEEP_MAP_TARGET,
-  makeFlat,
-  makeItemMap,
-  makeNested,
-  makeSumValues,
-  SDK,
-  sumValues,
-  SUM_TARGET,
-  work
-} from './shared';
+import { DEEP_MAP_TARGET, makeFlat, makeNested, makeSumValues, SDK, sumValues, SUM_TARGET, work } from './shared';
 
-import type { DeepMapState, FlatState, Sample, NestedState, StoreAdapter, SumState } from './shared';
+import type { FlatState, Item, Sample, NestedState, StoreAdapter, SumState } from './shared';
+
+type EntityItem = Item & { id: string };
 
 const wide = (keys: number, updates: number): Sample => {
   const store = createStore<FlatState>(makeFlat(keys));
@@ -82,11 +74,18 @@ const churn = (updates: number): Sample => {
   return { name: SDK, wakes, ms: performance.now() - start };
 };
 
+// Normalized data is what `createEntityStore` is for: a per-id reactive collection where a single-item write is O(1)
+// and wakes only that item's watcher — instead of `setState` copying the whole 2,000-entry map on every edit.
 const deepMap = (items: number, updates: number): Sample => {
-  const store = createStore<DeepMapState>(makeItemMap(items));
+  const seed: EntityItem[] = [];
+  for (let i = 0; i < items; i++) {
+    seed.push({ id: `i${i}`, value: 0, meta: { tag: 'el', n: 0 } });
+  }
+
+  const store = createEntityStore<EntityItem>(seed);
   let wakes = 0;
   for (let i = 0; i < items; i++) {
-    store.subscribePath(`items.i${i}.meta.n`, () => {
+    store.subscribeOne(`i${i}`, () => {
       wakes++;
       work(wakes);
     });
@@ -94,7 +93,7 @@ const deepMap = (items: number, updates: number): Sample => {
 
   const start = performance.now();
   for (let j = 0; j < updates; j++) {
-    store.setState(`items.${DEEP_MAP_TARGET}.meta.n`, j + 1);
+    store.updateOne(DEEP_MAP_TARGET, { meta: { tag: 'el', n: j + 1 } });
   }
 
   return { name: SDK, wakes, ms: performance.now() - start };
