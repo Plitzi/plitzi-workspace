@@ -12,13 +12,15 @@ export type PathOf<T, Seen = never> = T extends Primitive
   ? never
   : T extends Seen
     ? never
-    : {
-        [K in keyof T & string]-?: T[K] extends Primitive
-          ? K
-          : T[K] extends Array<infer U>
-            ? K | `${K}.${number}` | `${K}.${number}.${PathOf<U, Seen | T>}`
-            : K | `${K}.${PathOf<T[K], Seen | T>}`;
-      }[keyof T & string];
+    : [string] extends [keyof T & string]
+      ? string
+      : {
+          [K in keyof T & string]-?: T[K] extends Primitive
+            ? K
+            : NonNullable<T[K]> extends Array<infer U>
+              ? K | `${K}.${number}` | `${K}.${number}.${PathOf<U, Seen | T>}`
+              : K | `${K}.${PathOf<NonNullable<T[K]>, Seen | T>}`;
+        }[keyof T & string];
 
 export type PathValue<T, P> = T extends undefined
   ? undefined

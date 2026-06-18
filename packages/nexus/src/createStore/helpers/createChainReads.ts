@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-
 import { deepMerge, isPlainObject } from './deepMerge';
 import getByPath from '../../helpers/getByPath';
 

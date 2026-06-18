@@ -37,7 +37,11 @@ export function bindServerAction<TState extends object, P extends PathOf<TState>
 
   return async valueOrFn => {
     const prev = store.getPath(path) as PathValue<TState, P>;
-    const next = typeof valueOrFn === 'function' ? valueOrFn(prev) : valueOrFn;
+    const next =
+      typeof valueOrFn === 'function'
+        ? // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+          (valueOrFn as (prev: PathValue<TState, P>) => PathValue<TState, P>)(prev)
+        : valueOrFn;
 
     // Optimistic update
     store.setState(path, next);

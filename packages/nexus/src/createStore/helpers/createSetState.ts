@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-
 import { UNCHANGED, writeByPath } from './writeByPath';
 import getByPath from '../../helpers/getByPath';
 import parsePath from '../../helpers/parsePath';
