@@ -2,6 +2,7 @@ import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { use, useMemo, useRef, useCallback } from 'react';
 
 import { createStoreHook } from '@plitzi/nexus/createStore';
+import { useSourceValue } from '@plitzi/sdk-elements/dataSource';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
@@ -12,7 +13,6 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import RscProvider from '@plitzi/sdk-shared/server/rsc/RscProvider';
 import { ThemeContext } from '@plitzi/sdk-shared/theme';
-import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 
@@ -53,8 +53,7 @@ const Sdk = ({
   const { rootRef } = use(ContainerRootContext);
   const { useStore } = createStoreHook<SdkState>();
   const [[schemaSettings, styleCache, segments]] = useStore(['schema.settings', 'style.cache', 'segments']);
-  const [variablesValue] = useStore('runtime.sources.variables', { defaultValue: {} });
-  const variables = variablesValue as Record<string, string>;
+  const variables = useSourceValue('runtime.sources.variables') as Record<string, string>;
 
   const css = useMemo(() => {
     const segmentsCss = Object.values(segments).map(segment => segment.style.cache);
@@ -106,7 +105,6 @@ const Sdk = ({
         NetworkContext,
         PluginsContext,
         NavigationContext,
-        StateManagerContext,
         EventBridgeContext,
         InteractionsContext
       }

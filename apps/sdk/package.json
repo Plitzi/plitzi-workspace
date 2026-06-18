@@ -44,7 +44,6 @@
     "@plitzi/sdk-plugins": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
-    "@plitzi/sdk-state": "workspace:*",
     "@plitzi/sdk-style": "workspace:*",
     "@plitzi/sdk-variables": "workspace:*",
     "clsx": "^2.1.1",

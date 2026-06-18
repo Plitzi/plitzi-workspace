@@ -5,7 +5,7 @@ import { useState, useMemo } from 'react';
 import { createStoreHook } from '@plitzi/nexus/createStore';
 import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
-import StateManagerContextProvider from '@plitzi/sdk-state/StateManagerContextProvider';
+import RuntimeStateProvider from '@plitzi/sdk-elements/runtimeState/RuntimeStateProvider';
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
 
 import AppContainer from './AppContainer';
@@ -98,7 +98,7 @@ const AppMain = ({
         previewMode={previewMode}
         debugMode={debugMode}
       >
-        <StateManagerContextProvider webId={webId} state={state}>
+        <RuntimeStateProvider webId={webId} state={state}>
           <GlobalSources environment={environment}>
             <InteractionsBuilderContextProvider previewMode={previewMode}>
               <PopupProvider renderLeftPopup={false} renderRightPopup={false} renderFloatingPopup={!previewMode}>
@@ -108,7 +108,7 @@ const AppMain = ({
               </PopupProvider>
             </InteractionsBuilderContextProvider>
           </GlobalSources>
-        </StateManagerContextProvider>
+        </RuntimeStateProvider>
       </AppProvider>
     ),
     [

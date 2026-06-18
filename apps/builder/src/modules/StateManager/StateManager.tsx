@@ -5,8 +5,8 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
 import { useCallback, use, useState } from 'react';
 
+import useRuntimeState from '@plitzi/sdk-elements/runtimeState/useRuntimeState';
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
-import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
 export type StateManagerProps = {
   className?: string;
@@ -14,7 +14,7 @@ export type StateManagerProps = {
 
 const StateManager = ({ className = '' }: StateManagerProps) => {
   const { theme } = use(ThemeContext);
-  const { state, setState } = use(StateManagerContext);
+  const { state, setState } = useRuntimeState();
   const [value, setValue] = useState(() => JSON.stringify(state, null, 2));
   const { addToast } = useToast();
 

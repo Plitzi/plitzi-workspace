@@ -130,6 +130,9 @@
       "types": "./dist/dataSource/index.d.ts",
       "import": "./dist/dataSource/index.mjs"
     },
+    "./dataSource/runtimeSources": {
+      "import": "./dist/dataSource/runtimeSources.mjs"
+    },
     "./dataSource/utility": {
       "types": "./dist/dataSource/utility/index.d.ts",
       "import": "./dist/dataSource/utility/index.mjs"
@@ -773,6 +776,22 @@
     "./index": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
+    },
+    "./runtimeState": {
+      "types": "./dist/runtimeState/index.d.ts",
+      "import": "./dist/runtimeState/index.mjs"
+    },
+    "./runtimeState/RuntimeStateProvider": {
+      "types": "./dist/runtimeState/RuntimeStateProvider.d.ts",
+      "import": "./dist/runtimeState/RuntimeStateProvider.mjs"
+    },
+    "./runtimeState/index": {
+      "types": "./dist/runtimeState/index.d.ts",
+      "import": "./dist/runtimeState/index.mjs"
+    },
+    "./runtimeState/useRuntimeState": {
+      "types": "./dist/runtimeState/useRuntimeState.d.ts",
+      "import": "./dist/runtimeState/useRuntimeState.mjs"
     }
   },
   "scripts": {
@@ -797,7 +816,6 @@
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
-    "@plitzi/sdk-state": "workspace:*",
     "clsx": "^2.1.1",
     "immer": "^11.1.8"
   },

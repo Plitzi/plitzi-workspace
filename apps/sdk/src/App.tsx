@@ -40,7 +40,7 @@ import type {
   OfflineDataRaw,
   RenderMode,
   Server,
-  StateManagerContextValue
+  RuntimeStateInstance
 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
@@ -61,7 +61,7 @@ export type AppProps = {
   previewMode?: boolean;
   externalStyle?: string;
   state?: Record<string, unknown>;
-  onInitStateManager?: (instance: StateManagerContextValue) => void;
+  onInitStateManager?: (instance: RuntimeStateInstance) => void;
   onInitEventBridge?: (instance: EventBridgeContextValue) => void;
 };
 

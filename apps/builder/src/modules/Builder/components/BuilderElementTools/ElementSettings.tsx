@@ -5,7 +5,7 @@ import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
 import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { useSourceValue } from '@plitzi/sdk-elements/dataSource';
 import { defaultElementsSettings } from '@plitzi/sdk-elements/elements/settings';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
@@ -19,10 +19,9 @@ import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziService
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { ThemeContext } from '@plitzi/sdk-shared/theme';
-import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import AppContext from '@pmodules/App/AppContext';
 
-import type { CommonState, ComponentPlugin } from '@plitzi/sdk-shared';
+import type { ComponentPlugin } from '@plitzi/sdk-shared';
 import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import type { FC } from 'react';
 
@@ -75,7 +74,6 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
         NetworkContext,
         PluginsContext,
         NavigationContext,
-        StateManagerContext,
         SegmentsContext,
         EventBridgeContext,
         InteractionsContext
@@ -86,9 +84,7 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Settings = (Plugin?.pluginSettings ?? defaultElementsSettings[type]) as FC<any> | undefined;
-  const { useStore } = createStoreHook<CommonState>();
-  const [runtimeVariables] = useStore('runtime.sources.variables', { defaultValue: emptyObject });
-  const variables = runtimeVariables as Record<string, string>;
+  const variables = useSourceValue('runtime.sources.variables', emptyObject) as Record<string, string>;
 
   const children = useMemo(
     () => (

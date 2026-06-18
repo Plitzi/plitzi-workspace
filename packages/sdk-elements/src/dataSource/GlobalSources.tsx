@@ -7,7 +7,8 @@ import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
-import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
+
+import { useSourceSync } from './runtimeSources';
 
 import type { CommonState, SchemaVariable, SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
@@ -17,9 +18,9 @@ export type GlobalSourcesProps = {
   environment?: string;
 };
 
-// Mounts the global data sources at the right tree depth (under the Navigation/Auth/StateManager providers).
+// Mounts the global data sources at the right tree depth (under the Navigation/Auth/RuntimeState providers).
 const GlobalSources = ({ children, environment = 'main' }: GlobalSourcesProps) => {
-  const { useStore, useStoreSync } = createStoreHook<CommonState>();
+  const { useStore } = createStoreHook<CommonState>();
   const { routeParams, queryParams, hostname, currentPageId } = use(NavigationContext);
 
   // --- variables ---
@@ -46,7 +47,7 @@ const GlobalSources = ({ children, environment = 'main' }: GlobalSourcesProps) =
     [variablesValue]
   );
   useRegisterSource({ id: 'global', source: 'variables', name: 'Variables', fields: variablesFields });
-  useStoreSync('runtime.sources.variables', variablesValue);
+  useSourceSync('runtime.sources.variables', variablesValue);
 
   // --- navigation ---
   const navigationValue = useMemo(() => ({ routeParams, queryParams }), [routeParams, queryParams]);
@@ -55,7 +56,7 @@ const GlobalSources = ({ children, environment = 'main' }: GlobalSourcesProps) =
     [routeParams, queryParams]
   );
   useRegisterSource({ id: 'global', source: 'navigation', name: 'Navigation', fields: navigationFields });
-  useStoreSync('runtime.sources.navigation', navigationValue);
+  useSourceSync('runtime.sources.navigation', navigationValue);
 
   // --- auth ---
   const { user, authenticated } = use(AuthContext);
@@ -103,10 +104,18 @@ const GlobalSources = ({ children, environment = 'main' }: GlobalSourcesProps) =
     [authValue]
   );
   useRegisterSource({ id: 'global', source: 'auth', name: 'Auth State', fields: authFields });
-  useStoreSync('runtime.sources.auth', authValue);
+  useSourceSync('runtime.sources.auth', authValue);
 
-  // --- page ---
-  const { state } = use(StateManagerContext);
+  // --- state (canonical runtime/application state, the former `@plitzi/sdk-state`) ---
+  const [state = {}] = useStore('runtime.state');
+  const stateFields = useCallback(
+    () => getPathsFromObeject(state).map(path => ({ path, name: `state.${path}` })),
+    [state]
+  );
+  useRegisterSource({ id: 'global', source: 'state', name: 'State', fields: stateFields });
+  useSourceSync('runtime.sources.state', state);
+
+  // --- page (deprecated alias of `state`; carries the runtime state plus `currentPageId`) ---
   const [pageDefinitions = {}] = useStore('pageDefinitions');
   const pages = useMemo(
     () =>
@@ -124,7 +133,7 @@ const GlobalSources = ({ children, environment = 'main' }: GlobalSourcesProps) =
     return [...fields, currentPageField];
   }, [state, pages]);
   useRegisterSource({ id: 'global', source: 'page', name: 'Page', fields: pageFields });
-  useStoreSync('runtime.sources.page', pageValue);
+  useSourceSync('runtime.sources.page', pageValue);
 
   return children;
 };

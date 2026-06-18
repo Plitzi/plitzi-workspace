@@ -11,8 +11,8 @@ import SegmentsContextProvider from '@modules/Segments/SegmentsContextProvider';
 import AuthContextProvider from '@plitzi/sdk-auth/AuthContextProvider';
 import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
+import RuntimeStateProvider from '@plitzi/sdk-elements/runtimeState/RuntimeStateProvider';
 import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
-import StateManagerContextProvider from '@plitzi/sdk-state/StateManagerContextProvider';
 import SdkStyleContextProvider from '@plitzi/sdk-style/SdkStyleContextProvider';
 
 import devtoolsCssUrl from '../../assets/plitzi-sdk-devtools.scss?url';
@@ -22,7 +22,7 @@ import type {
   Environment,
   Server,
   RenderMode,
-  StateManagerContextValue,
+  RuntimeStateInstance,
   EventBridgeContextValue,
   OfflineDataRaw
 } from '@plitzi/sdk-shared';
@@ -45,7 +45,7 @@ export type AppMainProps = {
   previewMode?: boolean;
   debugMode?: boolean;
   state?: Record<string, unknown>;
-  onInitStateManager?: (instance: StateManagerContextValue) => void;
+  onInitStateManager?: (instance: RuntimeStateInstance) => void;
   onInitEventBridge?: (instance: EventBridgeContextValue) => void;
 };
 
@@ -104,7 +104,7 @@ const AppMain = ({
                       currentPageId={currentPageId}
                       previewMode={previewMode}
                     >
-                      <StateManagerContextProvider webId={webId} state={state} onInit={onInitStateManager}>
+                      <RuntimeStateProvider webId={webId} state={state} onInit={onInitStateManager}>
                         <GlobalSources environment={environment}>
                           <InteractionsSdkContextProvider previewMode={previewMode}>
                             <DevToolsContainer
@@ -126,7 +126,7 @@ const AppMain = ({
                             </DevToolsContainer>
                           </InteractionsSdkContextProvider>
                         </GlobalSources>
-                      </StateManagerContextProvider>
+                      </RuntimeStateProvider>
                     </NavigationContextProvider>
                   </AuthContextProvider>
                 </SegmentsContextProvider>

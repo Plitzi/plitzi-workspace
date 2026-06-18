@@ -44,13 +44,13 @@ import type {
   OfflineDataRaw,
   RenderMode,
   Server,
-  StateManagerContextValue,
+  RuntimeStateInstance,
   PlitziServiceContextValue as BasePlitziServiceContextValue
 } from '@plitzi/sdk-shared';
 import type { ElementContextValue } from '@plitzi/sdk-shared/elements/ElementContext';
 import type { ReactNode } from 'react';
 
-let stateManager: StateManagerContextValue;
+let stateManager: RuntimeStateInstance;
 let eventBridge: EventBridgeContextValue;
 
 export function render(
@@ -66,7 +66,7 @@ export function render(
       disableReactDevTools();
     }
 
-    const handleInitStateManager = useCallback((instance: StateManagerContextValue) => {
+    const handleInitStateManager = useCallback((instance: RuntimeStateInstance) => {
       stateManager = instance;
     }, []);
 

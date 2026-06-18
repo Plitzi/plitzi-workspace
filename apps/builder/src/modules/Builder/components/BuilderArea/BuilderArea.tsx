@@ -5,6 +5,7 @@ import clsx from 'clsx';
 import { memo, useCallback, use, useMemo, useRef, useState } from 'react';
 
 import { createStoreHook } from '@plitzi/nexus/createStore';
+import { useSourceValue } from '@plitzi/sdk-elements/dataSource';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
@@ -15,7 +16,6 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
-import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
@@ -58,7 +58,7 @@ const BuilderArea = ({
 }: BuilderAreaProps) => {
   const { useStore } = createStoreHook<BuilderState>();
   const [cache] = useStore('style.cache');
-  const [variablesValue] = useStore('runtime.sources.variables', { defaultValue: {} });
+  const variablesValue = useSourceValue('runtime.sources.variables');
   const trackingContainerRef = useRef<HTMLDivElement | null>(null);
   const { assets } = use(PluginsContext);
   const {
@@ -121,7 +121,6 @@ const BuilderArea = ({
         NetworkContext,
         PluginsContext,
         NavigationContext,
-        StateManagerContext,
         InteractionsContext,
         EventBridgeContext,
         BuilderContext

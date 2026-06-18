@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { useSourcesValues } from '../../dataSource/runtimeSources';
 
-import type { CommonState, ElementBinding } from '@plitzi/sdk-shared';
+import type { ElementBinding } from '@plitzi/sdk-shared';
 
 export type UseElementDataSourceProps = {
   bindings?: Record<string, ElementBinding[]>;
@@ -35,8 +35,7 @@ const useElementDataSource = ({ bindings, sources: sourcesProp }: UseElementData
   }, [bindings, sourcesProp]);
 
   const paths = useMemo(() => sourceNames.map(name => `runtime.sources.${name}` as const), [sourceNames]);
-  const { useStore } = createStoreHook<CommonState>();
-  const [values] = useStore(paths);
+  const values = useSourcesValues(paths);
 
   return useMemo(() => {
     const map: Record<string, unknown> = {};
