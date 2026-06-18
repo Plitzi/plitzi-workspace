@@ -190,25 +190,19 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     }
   };
 
-  // Wakes listeners at `changedPath` and every ancestor: the write put a new reference at each level of the spine.
+  // Wakes listeners at every ancestor of the changed path: uses the trie to walk segments without allocating prefix
+  // strings.
   const wakeAncestors = (changedPath: string, segments: readonly string[]): void => {
-    let prefix = '';
-    for (let i = 0; i < segments.length; i++) {
-      prefix = prefix ? `${prefix}.${segments[i]}` : segments[i];
-      const arr = pathListeners.direct.get(prefix);
-      if (arr) {
-        notify(arr, changedPath);
-      }
-    }
+    pathListeners.walkAncestors(segments, subs => notify(subs, changedPath));
   };
 
-  // Wakes listeners below `changedPath` whose own value actually changed, so a sibling edit doesn't wake them.
-  // `relativeFrom` is where each descendant's path relative to `prevBase`/`nextBase` starts.
+  // Wakes descendants whose own value changed, so a sibling edit doesn't wake them. Works with cached segment
+  // arrays from `parsePath` instead of string slices — base is at `segmentOffset` depth from each descendant.
   const wakeChangedDescendants = (
     changedPath: string,
     prevBase: unknown,
     nextBase: unknown,
-    relativeFrom: number
+    segmentOffset: number
   ): void => {
     const descendants = pathListeners.getDescendants(changedPath);
     if (!descendants) {
@@ -221,7 +215,7 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
         continue;
       }
 
-      const relative = descendant.slice(relativeFrom);
+      const relative = parsePath(descendant).slice(segmentOffset);
       if (getByPath(prevBase, relative as never) !== getByPath(nextBase, relative as never)) {
         notify(arr, changedPath);
       }
@@ -377,7 +371,7 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
             notify(exact, path);
           }
 
-          wakeChangedDescendants(path, prevValue, finalValue, path.length + 1);
+          wakeChangedDescendants(path, prevValue, finalValue, 1);
         }
       }
 
@@ -412,6 +406,7 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     }
 
     const nextState = result;
+
     setOwnState(nextState);
     if (changeListeners.length > 0) {
       emitChange(path, prevState, nextState);

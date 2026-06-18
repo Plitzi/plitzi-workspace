@@ -78,6 +78,22 @@ const SCENARIOS: ScenarioConfig[] = [
       'A memoized computed value (reselect / Jotai derived atom / MobX computed / sdk createDerived). One input changes each tick, the derived recomputes and its single subscriber wakes only when the result changes.',
     warmup: adapter => void adapter.derived(500, 20),
     run: adapter => adapter.derived(2000, 200)
+  },
+  {
+    id: 'liveFeed',
+    label: 'Live feed · 2,000 rows, 500 streamed updates',
+    description:
+      'A live dashboard / data feed: 500 writes land on many distinct rows across a large collection, each row watched. Fine-grained stores touch one row; a single immutable tree copies the whole collection on every write.',
+    warmup: adapter => void adapter.liveFeed(500, 100),
+    run: adapter => adapter.liveFeed(2000, 500)
+  },
+  {
+    id: 'selection',
+    label: 'Selection · 2,000 rows, move selection 200×',
+    description:
+      'Moving the current selection in a large list or editor. A per-item flag wakes only the two affected rows (O(1)); a central selectedId with one selector per row re-checks every row on each move (O(rows)).',
+    warmup: adapter => void adapter.selection(500, 50),
+    run: adapter => adapter.selection(2000, 200)
   }
 ];
 

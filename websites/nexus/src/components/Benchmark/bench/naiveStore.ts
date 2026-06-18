@@ -3,15 +3,17 @@ import {
   makeFlat,
   makeItemMap,
   makeNested,
+  makeRowMap,
   makeSumValues,
   NAIVE,
   setLeaf,
+  stridedIndices,
   sumValues,
   SUM_TARGET,
   work
 } from './shared';
 
-import type { DeepMapState, Sample, NestedState, StoreAdapter } from './shared';
+import type { DeepMapState, Row, Sample, NestedState, StoreAdapter } from './shared';
 
 // Baseline (not a library): a store that notifies every subscriber on any change — what you get from React Context,
 // or from any store subscribed to whole state instead of a path/selector.
@@ -162,4 +164,52 @@ const derived = (values: number, updates: number): Sample => {
   return { name: NAIVE, wakes, ms: performance.now() - start };
 };
 
-export const naiveAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived };
+// Baseline: copy the whole map per write and notify every subscriber, whatever changed.
+const liveFeed = (items: number, updates: number): Sample => {
+  let state: Record<string, Row> = makeRowMap(items);
+  const listeners: Array<() => void> = [];
+  let wakes = 0;
+  for (let i = 0; i < items; i++) {
+    listeners.push(() => {
+      wakes++;
+      work(wakes);
+    });
+  }
+
+  const plan = stridedIndices(items, updates);
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    const key = `r${plan[j]}`;
+    state = { ...state, [key]: { ...state[key], value: j + 1 } };
+    for (const listener of listeners) {
+      listener();
+    }
+  }
+
+  return { name: NAIVE, wakes, ms: performance.now() - start };
+};
+
+// Baseline: a central selectedId; every subscriber wakes on every move.
+const selection = (items: number, moves: number): Sample => {
+  const state = { selectedId: 'r0' };
+  const listeners: Array<() => void> = [];
+  let wakes = 0;
+  for (let i = 0; i < items; i++) {
+    listeners.push(() => {
+      wakes++;
+      work(wakes);
+    });
+  }
+
+  const start = performance.now();
+  for (let m = 1; m <= moves; m++) {
+    state.selectedId = `r${m % items}`;
+    for (const listener of listeners) {
+      listener();
+    }
+  }
+
+  return { name: NAIVE, wakes, ms: performance.now() - start };
+};
+
+export const naiveAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived, liveFeed, selection };

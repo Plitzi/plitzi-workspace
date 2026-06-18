@@ -6,15 +6,17 @@ import {
   makeFlat,
   makeItemMap,
   makeNested,
+  makeRowMap,
   makeSumValues,
   setLeaf,
+  stridedIndices,
   sumValues,
   SUM_TARGET,
   work,
   ZUSTAND
 } from './shared';
 
-import type { DeepMapState, FlatState, Sample, NestedState, StoreAdapter, SumState } from './shared';
+import type { DeepMapState, FlatState, Row, Sample, NestedState, StoreAdapter, SumState } from './shared';
 
 // Zustand used the fine-grained way: subscribeWithSelector, one selector per watched value.
 const wide = (keys: number, updates: number): Sample => {
@@ -170,4 +172,52 @@ const derived = (values: number, updates: number): Sample => {
   return { name: ZUSTAND, wakes, ms: performance.now() - start };
 };
 
-export const zustandAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived };
+// Streaming feed — one immutable map; each write copies the whole map (O(items)), one selector per row.
+const liveFeed = (items: number, updates: number): Sample => {
+  const store = createStore<Record<string, Row>>()(subscribeWithSelector(() => makeRowMap(items)));
+  let wakes = 0;
+  for (let i = 0; i < items; i++) {
+    const key = `r${i}`;
+    store.subscribe(
+      state => state[key].value,
+      () => {
+        wakes++;
+        work(wakes);
+      }
+    );
+  }
+
+  const plan = stridedIndices(items, updates);
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    const key = `r${plan[j]}`;
+    store.setState(state => ({ [key]: { ...state[key], value: j + 1 } }));
+  }
+
+  return { name: ZUSTAND, wakes, ms: performance.now() - start };
+};
+
+// Selection — central selectedId, one selector per row; every selector re-runs on each move (O(items)), two flip.
+const selection = (items: number, moves: number): Sample => {
+  const store = createStore<{ selectedId: string }>()(subscribeWithSelector(() => ({ selectedId: 'r0' })));
+  let wakes = 0;
+  for (let i = 0; i < items; i++) {
+    const id = `r${i}`;
+    store.subscribe(
+      state => state.selectedId === id,
+      () => {
+        wakes++;
+        work(wakes);
+      }
+    );
+  }
+
+  const start = performance.now();
+  for (let m = 1; m <= moves; m++) {
+    store.setState({ selectedId: `r${m % items}` });
+  }
+
+  return { name: ZUSTAND, wakes, ms: performance.now() - start };
+};
+
+export const zustandAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived, liveFeed, selection };

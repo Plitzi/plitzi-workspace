@@ -159,6 +159,10 @@
       "types": "./dist/entities/createEntityAdapter.d.ts",
       "import": "./dist/entities/createEntityAdapter.mjs"
     },
+    "./entities/createEntityStore": {
+      "types": "./dist/entities/createEntityStore.d.ts",
+      "import": "./dist/entities/createEntityStore.mjs"
+    },
     "./entities/index": {
       "types": "./dist/entities/index.d.ts",
       "import": "./dist/entities/index.mjs"

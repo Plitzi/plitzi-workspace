@@ -1,32 +1,34 @@
-export const ENTITIES_CODE = `import { createEntityAdapter, createStoreHook } from '@plitzi/nexus';
+export const ENTITIES_CODE = `import { createEntityStore } from '@plitzi/nexus';
 
 type Task = { id: string; text: string; done: boolean };
-type State = { tasks: Record<string, Task> };
 
-// One adapter gives CRUD updaters + selectors for the normalized map.
-const tasks = createEntityAdapter<Task>();
-const { useStore, useStoreSetter } = createStoreHook<State>();
+// One reactive collection — O(1) per-item writes, hooks on the store object.
+const tasks = createEntityStore<Task>(seed);
 
 function TaskList() {
-  const [map] = useStore('tasks');
-  const setState = useStoreSetter();
+  const ids = tasks.useIds(); // re-renders only on add/remove
 
-  const add = (text: string) =>
-    setState('tasks', tasks.addOne({ id: uid(), text, done: false }));
-  const toggle = (id: string, done: boolean) =>
-    setState('tasks', tasks.updateOne({ id, changes: { done: !done } }));
-  const remove = (id: string) => setState('tasks', tasks.removeOne(id));
+  const add = (text: string) => tasks.setOne({ id: uid(), text, done: false });
 
   return (
     <ul>
-      {tasks.selectAll(map).map(t => (
-        <li key={t.id}>
-          <input type="checkbox" checked={t.done} onChange={() => toggle(t.id, t.done)} />
-          {t.text}
-          <button onClick={() => remove(t.id)}>remove</button>
-        </li>
-      ))}
-      {/* tasks.selectTotal(map) → count */}
+      {ids.map(id => <TaskRow key={id} id={id} />)}
     </ul>
+  );
+}
+
+function TaskRow({ id }: { id: string }) {
+  const task = tasks.useOne(id); // re-renders only when THIS task changes
+  if (!task) return null;
+
+  const toggle = () => tasks.updateOne(id, { done: !task.done });
+  const remove = () => tasks.removeOne(id);
+
+  return (
+    <li>
+      <input type="checkbox" checked={task.done} onChange={toggle} />
+      {task.text}
+      <button onClick={remove}>remove</button>
+    </li>
   );
 }`;

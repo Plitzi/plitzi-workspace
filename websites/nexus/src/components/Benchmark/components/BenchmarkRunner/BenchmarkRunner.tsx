@@ -69,7 +69,7 @@ const BenchmarkRunner = () => {
         </span>
       </div>
       <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-        Seven workloads, seven stores, run on a background thread so the page never freezes — results stream in as each
+        Nine workloads, seven stores, run on a background thread so the page never freezes — results stream in as each
         finishes. Each wake does the same small render-sized work, so time tracks both how many subscribers wake and how
         much the store has to copy.
       </p>

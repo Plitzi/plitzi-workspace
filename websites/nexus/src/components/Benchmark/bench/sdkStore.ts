@@ -1,18 +1,22 @@
-import { createDerived, createStore } from '@plitzi/nexus';
+import { createDerived, createEntityStore, createStore } from '@plitzi/nexus';
 
 import {
   DEEP_MAP_TARGET,
   makeFlat,
-  makeItemMap,
   makeNested,
+  makeRowArray,
+  makeSelRowArray,
   makeSumValues,
   SDK,
+  stridedIndices,
   sumValues,
   SUM_TARGET,
   work
 } from './shared';
 
-import type { DeepMapState, FlatState, Sample, NestedState, StoreAdapter, SumState } from './shared';
+import type { FlatState, Item, Row, Sample, NestedState, SelRow, StoreAdapter, SumState } from './shared';
+
+type EntityItem = Item & { id: string };
 
 const wide = (keys: number, updates: number): Sample => {
   const store = createStore<FlatState>(makeFlat(keys));
@@ -82,11 +86,18 @@ const churn = (updates: number): Sample => {
   return { name: SDK, wakes, ms: performance.now() - start };
 };
 
+// Normalized data is what `createEntityStore` is for: a per-id reactive collection where a single-item write is O(1)
+// and wakes only that item's watcher — instead of `setState` copying the whole 2,000-entry map on every edit.
 const deepMap = (items: number, updates: number): Sample => {
-  const store = createStore<DeepMapState>(makeItemMap(items));
+  const seed: EntityItem[] = [];
+  for (let i = 0; i < items; i++) {
+    seed.push({ id: `i${i}`, value: 0, meta: { tag: 'el', n: 0 } });
+  }
+
+  const store = createEntityStore<EntityItem>(seed);
   let wakes = 0;
   for (let i = 0; i < items; i++) {
-    store.subscribePath(`items.i${i}.meta.n`, () => {
+    store.subscribeOne(`i${i}`, () => {
       wakes++;
       work(wakes);
     });
@@ -94,7 +105,7 @@ const deepMap = (items: number, updates: number): Sample => {
 
   const start = performance.now();
   for (let j = 0; j < updates; j++) {
-    store.setState(`items.${DEEP_MAP_TARGET}.meta.n`, j + 1);
+    store.updateOne(DEEP_MAP_TARGET, { meta: { tag: 'el', n: j + 1 } });
   }
 
   return { name: SDK, wakes, ms: performance.now() - start };
@@ -137,4 +148,49 @@ const derived = (values: number, updates: number): Sample => {
   return { name: SDK, wakes, ms: performance.now() - start };
 };
 
-export const sdkAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived };
+// Streaming feed — createEntityStore: each write touches one row (O(1)) and wakes only that row's watcher.
+const liveFeed = (items: number, updates: number): Sample => {
+  const store = createEntityStore<Row>(makeRowArray(items));
+  let wakes = 0;
+  for (let i = 0; i < items; i++) {
+    store.subscribeOne(`r${i}`, () => {
+      wakes++;
+      work(wakes);
+    });
+  }
+
+  const plan = stridedIndices(items, updates);
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    store.updateOne(`r${plan[j]}`, { value: j + 1 });
+  }
+
+  return { name: SDK, wakes, ms: performance.now() - start };
+};
+
+// Selection — a per-item `selected` flag on createEntityStore: a move flips exactly two rows, waking only those two.
+const selection = (items: number, moves: number): Sample => {
+  const store = createEntityStore<SelRow>(makeSelRowArray(items));
+  let wakes = 0;
+  for (let i = 0; i < items; i++) {
+    store.subscribeOne(`r${i}`, () => {
+      wakes++;
+      work(wakes);
+    });
+  }
+
+  let current = 0;
+  const start = performance.now();
+  for (let m = 1; m <= moves; m++) {
+    const next = m % items;
+    store.batch(() => {
+      store.updateOne(`r${current}`, { selected: false });
+      store.updateOne(`r${next}`, { selected: true });
+    });
+    current = next;
+  }
+
+  return { name: SDK, wakes, ms: performance.now() - start };
+};
+
+export const sdkAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived, liveFeed, selection };

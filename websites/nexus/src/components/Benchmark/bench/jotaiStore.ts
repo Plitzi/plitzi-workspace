@@ -1,6 +1,6 @@
 import { atom, createStore } from 'jotai/vanilla';
 
-import { JOTAI, makeNested, setLeaf, work } from './shared';
+import { JOTAI, makeNested, setLeaf, stridedIndices, work } from './shared';
 
 import type { Item, Sample, StoreAdapter } from './shared';
 
@@ -144,4 +144,49 @@ const derived = (values: number, updates: number): Sample => {
   return { name: JOTAI, wakes, ms: performance.now() - start };
 };
 
-export const jotaiAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived };
+// Streaming feed — one atom per row; a write notifies only that atom's subscriber.
+const liveFeed = (items: number, updates: number): Sample => {
+  const store = createStore();
+  const atoms = Array.from({ length: items }, () => atom(0));
+  let wakes = 0;
+  for (const cell of atoms) {
+    store.sub(cell, () => {
+      wakes++;
+      work(wakes);
+    });
+  }
+
+  const plan = stridedIndices(items, updates);
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    store.set(atoms[plan[j]], j + 1);
+  }
+
+  return { name: JOTAI, wakes, ms: performance.now() - start };
+};
+
+// Selection — one boolean atom per row; a move sets exactly two atoms.
+const selection = (items: number, moves: number): Sample => {
+  const store = createStore();
+  const flags = Array.from({ length: items }, (_, i) => atom(i === 0));
+  let wakes = 0;
+  for (const cell of flags) {
+    store.sub(cell, () => {
+      wakes++;
+      work(wakes);
+    });
+  }
+
+  let current = 0;
+  const start = performance.now();
+  for (let m = 1; m <= moves; m++) {
+    const next = m % items;
+    store.set(flags[current], false);
+    store.set(flags[next], true);
+    current = next;
+  }
+
+  return { name: JOTAI, wakes, ms: performance.now() - start };
+};
+
+export const jotaiAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived, liveFeed, selection };

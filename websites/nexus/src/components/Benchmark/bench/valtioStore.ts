@@ -6,14 +6,17 @@ import {
   makeFlat,
   makeItemMap,
   makeNested,
+  makeRowArray,
+  makeSelRowArray,
   makeSumValues,
+  stridedIndices,
   sumValues,
   SUM_TARGET,
   VALTIO,
   work
 } from './shared';
 
-import type { DeepMapState, FlatState, NestedState, Sample, StoreAdapter, SumState } from './shared';
+import type { DeepMapState, FlatState, NestedState, Row, Sample, SelRow, StoreAdapter, SumState } from './shared';
 
 // Valtio, proxy-based fine-grained: `subscribeKey` watches one property, `subscribe` watches one nested node.
 // State is mutated in place through the proxy (no immutable copy). `notifyInSync` = true makes wakes synchronous
@@ -178,4 +181,57 @@ const derived = (values: number, updates: number): Sample => {
   return { name: VALTIO, wakes, ms: performance.now() - start };
 };
 
-export const valtioAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived };
+// Streaming feed — proxy rows mutated in place; subscribeKey watches one row's value, no map copy.
+const liveFeed = (items: number, updates: number): Sample => {
+  const state = proxy<Row[]>(makeRowArray(items));
+  let wakes = 0;
+  for (let i = 0; i < items; i++) {
+    subscribeKey(
+      state[i],
+      'value',
+      () => {
+        wakes++;
+        work(wakes);
+      },
+      true
+    );
+  }
+
+  const plan = stridedIndices(items, updates);
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    state[plan[j]].value = j + 1;
+  }
+
+  return { name: VALTIO, wakes, ms: performance.now() - start };
+};
+
+// Selection — a per-row `selected` flag mutated in place; a move flips exactly two.
+const selection = (items: number, moves: number): Sample => {
+  const state = proxy<SelRow[]>(makeSelRowArray(items));
+  let wakes = 0;
+  for (let i = 0; i < items; i++) {
+    subscribeKey(
+      state[i],
+      'selected',
+      () => {
+        wakes++;
+        work(wakes);
+      },
+      true
+    );
+  }
+
+  let current = 0;
+  const start = performance.now();
+  for (let m = 1; m <= moves; m++) {
+    const next = m % items;
+    state[current].selected = false;
+    state[next].selected = true;
+    current = next;
+  }
+
+  return { name: VALTIO, wakes, ms: performance.now() - start };
+};
+
+export const valtioAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived, liveFeed, selection };

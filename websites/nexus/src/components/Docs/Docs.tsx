@@ -4,6 +4,7 @@ import { DOCS_META } from '../../docsMeta';
 import useMeta from '../../useMeta';
 import { DOCS_SEARCH_INDEX } from './docsSearchIndex';
 import ApiReference from './pages/ApiReference';
+import ChoosingApi from './pages/ChoosingApi';
 import Faq from './pages/Faq';
 import GettingStarted from './pages/GettingStarted';
 import GuidesDataFetching from './pages/GuidesDataFetching';
@@ -32,6 +33,20 @@ type DocPage = {
 const PAGES: DocPage[] = [
   { slug: 'getting-started', label: 'Getting Started', Component: GettingStarted },
   {
+    slug: 'choosing',
+    label: 'Choosing the right API',
+    Component: ChoosingApi,
+    sections: [
+      { id: 'reading', label: 'Reading state' },
+      { id: 'writing', label: 'Writing state' },
+      { id: 'collections', label: 'Collections & maps' },
+      { id: 'multiple-stores', label: 'Multiple stores' },
+      { id: 'async', label: 'Async data' },
+      { id: 'cross-cutting', label: 'Cross-cutting concerns' },
+      { id: 'cheatsheet', label: 'Cheat sheet' }
+    ]
+  },
+  {
     slug: 'api',
     label: 'API Reference',
     Component: ApiReference,
@@ -57,6 +72,7 @@ const PAGES: DocPage[] = [
           { id: 'derived-values', label: 'Derived values' },
           { id: 'async-suspense', label: 'Async & Suspense' },
           { id: 'entity-adapter', label: 'Entity adapter' },
+          { id: 'entity-store', label: 'Entity store' },
           { id: 'middleware', label: 'Middleware' },
           { id: 'time-travel', label: 'Time-travel / history' }
         ]
