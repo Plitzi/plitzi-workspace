@@ -204,13 +204,13 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     pathListeners.walkAncestors(segments, subs => notify(subs, changedPath));
   };
 
-  // Wakes listeners below `changedPath` whose own value actually changed, so a sibling edit doesn't wake them.
-  // `relativeFrom` is where each descendant's path relative to `prevBase`/`nextBase` starts.
+  // Wakes descendants whose own value changed, so a sibling edit doesn't wake them. Works with cached segment
+  // arrays from `parsePath` instead of string slices — base is at `segmentOffset` depth from each descendant.
   const wakeChangedDescendants = (
     changedPath: string,
     prevBase: unknown,
     nextBase: unknown,
-    relativeFrom: number
+    segmentOffset: number
   ): void => {
     const descendants = pathListeners.getDescendants(changedPath);
     if (!descendants) {
@@ -223,7 +223,7 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
         continue;
       }
 
-      const relative = descendant.slice(relativeFrom);
+      const relative = parsePath(descendant).slice(segmentOffset);
       if (getByPath(prevBase, relative as never) !== getByPath(nextBase, relative as never)) {
         notify(arr, changedPath);
       }
@@ -379,7 +379,7 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
             notify(exact, path);
           }
 
-          wakeChangedDescendants(path, prevValue, finalValue, path.length + 1);
+          wakeChangedDescendants(path, prevValue, finalValue, 1);
         }
       }
 

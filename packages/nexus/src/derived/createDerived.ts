@@ -17,20 +17,28 @@ export type DerivedOptions<R> = {
 // A memoized value computed from store paths — the store's answer to reselect / Jotai derived atoms / MobX computed.
 // It recomputes only when one of its `deps` changes and only notifies subscribers when the *result* changes, so a
 // dependency edit that doesn't affect the output costs nothing downstream. Define `total` once, read it everywhere.
+// The compute function receives the changed path as a second argument so callers can write incremental updates
+// (e.g., O(1) delta recompute instead of O(n) full sum) by storing previous values in a closure.
 export function createDerived<TState extends object, const Paths extends readonly PathOf<TState>[], R>(
   store: StoreApi<TState>,
   deps: Paths,
-  compute: (values: PathValues<TState, Paths>) => R,
+  compute: (values: PathValues<TState, Paths>, changedPath?: string) => R,
   options: DerivedOptions<R> = {}
 ): Derived<R> {
   const equalityFn = options.equalityFn ?? Object.is;
-  const observable = createObservable<R>(() =>
-    compute(deps.map(path => store.getPath(path)) as PathValues<TState, Paths>)
-  );
+  let lastChangedPath: string | undefined;
 
-  const onDependencyChange = (): void => {
-    // With no subscribers, just invalidate and recompute on the next `get`. Otherwise recompute now to learn whether
-    // the result changed, and wake subscribers only if it did.
+  const observable = createObservable<R>(() => {
+    const path = lastChangedPath;
+
+    lastChangedPath = undefined;
+
+    return compute(deps.map(p => store.getPath(p)) as PathValues<TState, Paths>, path);
+  });
+
+  const onDependencyChange = (changedPath?: string): void => {
+    lastChangedPath = changedPath;
+
     if (!observable.hasListeners()) {
       observable.invalidate();
 

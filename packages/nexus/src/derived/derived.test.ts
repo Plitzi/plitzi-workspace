@@ -105,4 +105,61 @@ describe('createDerived', () => {
 
     expect(derived.get()).toBeUndefined();
   });
+
+  it('passes the changed path to compute for incremental updates', () => {
+    const store = createStore<{ values: Record<string, number> }>({
+      values: { k0: 1, k1: 2, k2: 3 }
+    });
+
+    let prevSum = 0;
+    let prevValues: Record<string, number> | null = null;
+    let iterationCount = 0;
+
+    const total = createDerived(store, ['values'], ([values], changedPath) => {
+      if (prevValues && changedPath) {
+        const key = changedPath.split('.').pop() as string;
+        iterationCount++;
+        const delta = values[key] - prevValues[key];
+        prevValues = values;
+
+        return (prevSum += delta);
+      }
+
+      prevValues = values;
+      prevSum = Object.values(values).reduce((a: number, b: number) => a + b, 0);
+
+      // First compute iterates all values; incremental updates only touch one key.
+      iterationCount = Object.keys(values).length;
+
+      return prevSum;
+    });
+
+    expect(total.get()).toBe(6);
+    expect(iterationCount).toBe(3);
+
+    store.setState('values.k1', 10);
+
+    // changedPath = 'values.k1' → O(1) delta, not O(3)
+    expect(total.get()).toBe(14);
+    expect(iterationCount).toBe(4);
+    expect(iterationCount).toBeLessThan(6);
+  });
+
+  it('changedPath is undefined on the initial compute', () => {
+    const store = createStore<{ count: number }>({ count: 0 });
+    const initialPaths: (string | undefined)[] = [];
+
+    const derived = createDerived(store, ['count'], ([value], changedPath) => {
+      initialPaths.push(changedPath);
+
+      return value;
+    });
+
+    derived.get();
+    store.setState('count', 1);
+    derived.get();
+
+    expect(initialPaths[0]).toBeUndefined();
+    expect(initialPaths[1]).toBe('count');
+  });
 });
