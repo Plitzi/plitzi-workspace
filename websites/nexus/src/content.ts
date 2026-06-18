@@ -9,6 +9,7 @@ export type NavLink = {
 };
 
 export const NAV_LINKS: NavLink[] = [
+  { label: 'Use cases', href: '#use-cases' },
   { label: 'Features', href: '#features' },
   { label: 'API', href: '#api' },
   { label: 'Live Demo', href: '#demo' },
@@ -17,8 +18,57 @@ export const NAV_LINKS: NavLink[] = [
   { label: 'Ecosystem', href: '#ecosystem' }
 ];
 
+// Task-oriented decision band: "I want to… → reach for X". Each links to the matching axis of the
+// "Choosing the right API" docs page so a reader (or an AI) lands on the right primitive, not the first one they find.
+export type UseCase = {
+  job: string;
+  tool: string;
+  blurb: string;
+  anchor: string;
+};
+
+export const USE_CASES: UseCase[] = [
+  {
+    job: 'Read a value and re-render',
+    tool: 'useStore(path)',
+    blurb: 'Subscribe to one dot-path. Reading in a callback instead? useStoreGetter — no re-render.',
+    anchor: 'reading'
+  },
+  {
+    job: 'Write without subscribing',
+    tool: 'useStoreSetter()',
+    blurb: 'A stable, write-only setter for toolbars and handlers. Mirroring a prop in? useStoreSync.',
+    anchor: 'writing'
+  },
+  {
+    job: 'A big map of items, edited often',
+    tool: 'createEntityStore',
+    blurb: 'O(1) per-item updates, per-row reactivity. The adapter still copies the whole map (O(n)).',
+    anchor: 'collections'
+  },
+  {
+    job: 'Share state across a subtree',
+    tool: 'scoped inherit="live"',
+    blurb: 'Read parent state live, keep local state local. Need a named ancestor? { storeId }.',
+    anchor: 'multiple-stores'
+  },
+  {
+    job: 'A memoized computed value',
+    tool: 'createDerived',
+    blurb: 'Computed once, shared, wakes consumers only when the result changes — reselect-style.',
+    anchor: 'reading'
+  },
+  {
+    job: 'Fetch into the store',
+    tool: 'createAsync',
+    blurb: 'Race-safe fetch landed on a path. useAsync for inline UI, useAsyncValue to suspend.',
+    anchor: 'async'
+  }
+];
+
 export type Feature = {
   icon: string;
+  group: string;
   title: string;
   description: string;
 };
@@ -26,75 +76,87 @@ export type Feature = {
 export const FEATURES: Feature[] = [
   {
     icon: '🎯',
+    group: 'Core',
     title: 'Path-based subscriptions',
     description:
       'Subscribe to a single dot-path and re-render only when that exact value changes — no selector boilerplate. Notifying is O(depth), not O(subscribers), so it scales to millions of watchers.'
   },
   {
     icon: '🛡️',
+    group: 'Core',
     title: 'Fully type-safe',
     description:
       'Dot-notation paths are checked against your state type. PathOf<T> and PathValue<T, P> give you autocomplete and compile-time safety end to end.'
   },
   {
+    icon: '🪶',
+    group: 'Core',
+    title: 'Tiny & zero-config',
+    description:
+      'Built on React’s own useSyncExternalStore. No providers required for a plain store, no reducers, no actions — just state and paths.'
+  },
+  {
+    icon: '⚡',
+    group: 'Core',
+    title: 'Batched updates',
+    description:
+      'store.batch(fn) coalesces many writes into one wake pass — subscribers, derived values and listeners fire once at the end, not once per write. Reads inside the batch still see each change immediately.'
+  },
+  {
     icon: '🪆',
+    group: 'Composition & scale',
     title: 'Scoped stores',
     description:
       'Nested scopes shadow shared state while reading it live. Reads fall through the chain, writes target the owning scope — no prop-drilling.'
   },
   {
     icon: '🧭',
+    group: 'Composition & scale',
     title: 'Reach any store by id',
     description:
       'Name a provider with id and any descendant can target it — useStore(path, { storeId }), useStoreById(id), or store.id — even across a disconnected provider that would otherwise shadow it. Context-scoped registry, no globals to clean up.'
   },
   {
-    icon: '⏪',
-    title: 'Time-travel & action log',
-    description:
-      'Opt-in history records every change and lets you undo, redo, and jump to any snapshot — built entirely on the store seams, zero core changes.'
-  },
-  {
-    icon: '🪶',
-    title: 'Tiny & zero-config',
-    description:
-      'Built on React’s own useSyncExternalStore. No providers required for a plain store, no reducers, no actions — just state and paths.'
-  },
-  {
-    icon: '🌐',
-    title: 'SSR-ready',
-    description:
-      'Isomorphic layout effects and snapshot getters make it safe on the server. Works with React 19 and streaming out of the box.'
-  },
-  {
     icon: '🧮',
+    group: 'Composition & scale',
     title: 'Derived & computed values',
     description:
       'createDerived computes a value from store paths once, memoized, and only wakes subscribers when the result changes. The store’s answer to reselect / Jotai derived atoms — shared across every consumer.'
   },
   {
-    icon: '🔌',
-    title: 'Middleware pipeline',
-    description:
-      'logger, persist and time-travel are all middlewares riding one subscribeChange substrate. Add your own with a single (api) => { onChange } — zero cost on the hot path when none are attached.'
-  },
-  {
     icon: '🗂️',
-    title: 'Normalized entity adapter',
+    group: 'Data & async',
+    title: 'Normalized entities',
     description:
-      'createEntityAdapter gives CRUD updaters (addOne, upsertMany, removeOne…) and selectors for a Record<id, entity> map — RTK’s entity ergonomics, dropped straight into setState.'
-  },
-  {
-    icon: '⚡',
-    title: 'Batched updates',
-    description:
-      'store.batch(fn) coalesces many writes into one wake pass — subscribers, derived values and listeners fire once at the end, not once per write. Reads inside the batch still see each change immediately.'
+      'Two tools for entity maps: createEntityAdapter for ergonomic CRUD updaters on the immutable tree, and createEntityStore for O(1) per-item updates with per-row reactivity — pick by size and edit frequency.'
   },
   {
     icon: '🔄',
+    group: 'Data & async',
     title: 'Async & Suspense',
     description:
       'createAsync runs a fetch and lands the result straight in the store, so path subscriptions, derived values and persistence all see it. useAsync for inline loading/error UI, useAsyncValue to suspend.'
+  },
+  {
+    icon: '🌐',
+    group: 'Data & async',
+    title: 'SSR-ready',
+    description:
+      'Isomorphic layout effects and snapshot getters make it safe on the server. Works with React 19 and streaming out of the box.'
+  },
+  {
+    icon: '⏪',
+    group: 'Tooling',
+    title: 'Time-travel & action log',
+    description:
+      'Opt-in history records every change and lets you undo, redo, and jump to any snapshot — built entirely on the store seams, zero core changes.'
+  },
+  {
+    icon: '🔌',
+    group: 'Tooling',
+    title: 'Middleware pipeline',
+    description:
+      'logger, persist and time-travel are all middlewares riding one subscribeChange substrate. Add your own with a single (api) => { onChange } — zero cost on the hot path when none are attached.'
   }
 ];
 

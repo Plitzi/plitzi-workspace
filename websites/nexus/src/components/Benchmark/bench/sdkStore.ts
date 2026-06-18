@@ -1,8 +1,20 @@
 import { createDerived, createEntityStore, createStore } from '@plitzi/nexus';
 
-import { DEEP_MAP_TARGET, makeFlat, makeNested, makeSumValues, SDK, sumValues, SUM_TARGET, work } from './shared';
+import {
+  DEEP_MAP_TARGET,
+  makeFlat,
+  makeNested,
+  makeRowArray,
+  makeSelRowArray,
+  makeSumValues,
+  SDK,
+  stridedIndices,
+  sumValues,
+  SUM_TARGET,
+  work
+} from './shared';
 
-import type { FlatState, Item, Sample, NestedState, StoreAdapter, SumState } from './shared';
+import type { FlatState, Item, Row, Sample, NestedState, SelRow, StoreAdapter, SumState } from './shared';
 
 type EntityItem = Item & { id: string };
 
@@ -136,4 +148,49 @@ const derived = (values: number, updates: number): Sample => {
   return { name: SDK, wakes, ms: performance.now() - start };
 };
 
-export const sdkAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived };
+// Streaming feed — createEntityStore: each write touches one row (O(1)) and wakes only that row's watcher.
+const liveFeed = (items: number, updates: number): Sample => {
+  const store = createEntityStore<Row>(makeRowArray(items));
+  let wakes = 0;
+  for (let i = 0; i < items; i++) {
+    store.subscribeOne(`r${i}`, () => {
+      wakes++;
+      work(wakes);
+    });
+  }
+
+  const plan = stridedIndices(items, updates);
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    store.updateOne(`r${plan[j]}`, { value: j + 1 });
+  }
+
+  return { name: SDK, wakes, ms: performance.now() - start };
+};
+
+// Selection — a per-item `selected` flag on createEntityStore: a move flips exactly two rows, waking only those two.
+const selection = (items: number, moves: number): Sample => {
+  const store = createEntityStore<SelRow>(makeSelRowArray(items));
+  let wakes = 0;
+  for (let i = 0; i < items; i++) {
+    store.subscribeOne(`r${i}`, () => {
+      wakes++;
+      work(wakes);
+    });
+  }
+
+  let current = 0;
+  const start = performance.now();
+  for (let m = 1; m <= moves; m++) {
+    const next = m % items;
+    store.batch(() => {
+      store.updateOne(`r${current}`, { selected: false });
+      store.updateOne(`r${next}`, { selected: true });
+    });
+    current = next;
+  }
+
+  return { name: SDK, wakes, ms: performance.now() - start };
+};
+
+export const sdkAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived, liveFeed, selection };

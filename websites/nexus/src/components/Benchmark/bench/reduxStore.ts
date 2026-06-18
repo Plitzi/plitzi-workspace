@@ -5,14 +5,16 @@ import {
   makeFlat,
   makeItemMap,
   makeNested,
+  makeRowMap,
   makeSumValues,
   REDUX,
+  stridedIndices,
   sumValues,
   SUM_TARGET,
   work
 } from './shared';
 
-import type { DeepMapState, FlatState, NestedState, Sample, StoreAdapter, SumState } from './shared';
+import type { DeepMapState, FlatState, NestedState, Row, Sample, StoreAdapter, SumState } from './shared';
 import type { Reducer, Store } from '@reduxjs/toolkit';
 
 // Redux used the realistic fine-grained way (what react-redux's useSelector does): one selector per watched value,
@@ -224,4 +226,67 @@ const derived = (values: number, updates: number): Sample => {
   return { name: REDUX, wakes, ms: performance.now() - start };
 };
 
-export const reduxAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived };
+// Streaming feed — reducer copies the whole map per dispatch; one selector per row re-runs on every dispatch.
+const liveFeed = (items: number, updates: number): Sample => {
+  const store = makeStore<Record<string, Row>>((state = makeRowMap(items), action: SetAction) => {
+    if (action.type === 'set') {
+      const prev = state[action.key];
+
+      return { ...state, [action.key]: { ...prev, value: action.value } };
+    }
+
+    return state;
+  });
+  let wakes = 0;
+  for (let i = 0; i < items; i++) {
+    const key = `r${i}`;
+    subscribeSelector(
+      store,
+      state => state[key].value,
+      () => {
+        wakes++;
+        work(wakes);
+      }
+    );
+  }
+
+  const plan = stridedIndices(items, updates);
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    store.dispatch({ type: 'set', key: `r${plan[j]}`, value: j + 1 });
+  }
+
+  return { name: REDUX, wakes, ms: performance.now() - start };
+};
+
+// Selection — central selectedId; every row's selector re-evaluates on each dispatch (O(items)), two flip.
+const selection = (items: number, moves: number): Sample => {
+  const store = makeStore<{ selectedId: string }>((state = { selectedId: 'r0' }, action: SetAction) => {
+    if (action.type === 'set') {
+      return { selectedId: action.key };
+    }
+
+    return state;
+  });
+  let wakes = 0;
+  for (let i = 0; i < items; i++) {
+    const id = `r${i}`;
+    subscribeSelector(
+      store,
+      state => state.selectedId === id,
+      () => {
+        wakes++;
+        work(wakes);
+      }
+    );
+  }
+
+  const start = performance.now();
+  for (let m = 1; m <= moves; m++) {
+    store.dispatch({ type: 'set', key: `r${m % items}`, value: 0 });
+  }
+
+  return { name: REDUX, wakes, ms: performance.now() - start };
+};
+
+export const reduxAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived, liveFeed, selection };

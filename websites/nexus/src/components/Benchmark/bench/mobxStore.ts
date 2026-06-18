@@ -5,14 +5,17 @@ import {
   makeFlat,
   makeItemMap,
   makeNested,
+  makeRowArray,
+  makeSelRowArray,
   makeSumValues,
   MOBX,
+  stridedIndices,
   sumValues,
   SUM_TARGET,
   work
 } from './shared';
 
-import type { DeepMapState, FlatState, NestedState, Sample, StoreAdapter, SumState } from './shared';
+import type { DeepMapState, FlatState, NestedState, Row, Sample, SelRow, StoreAdapter, SumState } from './shared';
 
 // MobX, fine-grained by design: one `reaction` per watched value re-runs only when that value changes. State is a
 // deeply observable object mutated in place (no immutable copy) — its strength on writes, paid for with proxy
@@ -167,4 +170,53 @@ const derived = (values: number, updates: number): Sample => {
   return { name: MOBX, wakes, ms: performance.now() - start };
 };
 
-export const mobxAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived };
+// Streaming feed — deeply observable rows mutated in place; one reaction per row re-runs only for its own value.
+const liveFeed = (items: number, updates: number): Sample => {
+  const state = observable<Row[]>(makeRowArray(items));
+  let wakes = 0;
+  for (let i = 0; i < items; i++) {
+    reaction(
+      () => state[i].value,
+      () => {
+        wakes++;
+        work(wakes);
+      }
+    );
+  }
+
+  const plan = stridedIndices(items, updates);
+  const start = performance.now();
+  for (let j = 0; j < updates; j++) {
+    state[plan[j]].value = j + 1;
+  }
+
+  return { name: MOBX, wakes, ms: performance.now() - start };
+};
+
+// Selection — a per-row `selected` flag; only the two reactions whose value changed re-run.
+const selection = (items: number, moves: number): Sample => {
+  const state = observable<SelRow[]>(makeSelRowArray(items));
+  let wakes = 0;
+  for (let i = 0; i < items; i++) {
+    reaction(
+      () => state[i].selected,
+      () => {
+        wakes++;
+        work(wakes);
+      }
+    );
+  }
+
+  let current = 0;
+  const start = performance.now();
+  for (let m = 1; m <= moves; m++) {
+    const next = m % items;
+    state[current].selected = false;
+    state[next].selected = true;
+    current = next;
+  }
+
+  return { name: MOBX, wakes, ms: performance.now() - start };
+};
+
+export const mobxAdapter: StoreAdapter = { wide, hot, nested, churn, deepMap, fanout, derived, liveFeed, selection };

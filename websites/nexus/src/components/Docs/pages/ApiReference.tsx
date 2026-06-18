@@ -1,6 +1,14 @@
 import CodeBlock from '../../CodeBlock';
 import Prose from '../Prose';
 
+// Deep-links a section to the matching axis of the "Choosing the right API" guide, so a reader unsure which export to
+// use lands on the decision (and the common wrong choice) rather than guessing from the signature.
+const GuideLink = ({ anchor, label }: { anchor: string; label: string }) => (
+  <p className="text-sm text-zinc-500">
+    Which one should I use? → <a href={`#/docs/choosing?anchor=${anchor}`}>Choosing the right API: {label}</a>
+  </p>
+);
+
 const ApiReference = () => (
   <Prose>
     <p>
@@ -131,6 +139,7 @@ const ApiReference = () => (
     </table>
 
     <h2 id="create-store-hook">createStoreHook</h2>
+    <GuideLink anchor="reading" label="Reading state" />
     <p>Binds your state type once and returns the four typed hooks. Call it at module level and export the result.</p>
     <CodeBlock
       code={`const { useStore, useStoreSync, useStoreGetter, useStoreSetter } =
@@ -260,6 +269,7 @@ const [el] = useStore(\`items.\${id}\` as PathOf<State>, { defaultValue: {} });`
     </p>
 
     <h2 id="named-stores">Named stores (id / storeId)</h2>
+    <GuideLink anchor="multiple-stores" label="Multiple stores" />
     <p>
       Give a provider an <code>id</code> and any descendant can target that store — even across a{' '}
       <em>disconnected</em> (<code>inherit</code>-less) provider that would otherwise shadow it. The id lives in a
@@ -288,6 +298,7 @@ rootStore.id; // 'root' — the identity is also set on the store (logging/devto
     </p>
 
     <h2 id="derived-values">Derived values</h2>
+    <GuideLink anchor="reading" label="Reading state" />
     <CodeBlock
       code={`createDerived(store, deps: Path[], compute, { equalityFn? })
   → { get, subscribe, destroy }
@@ -300,6 +311,7 @@ useDerived(derived) // reactive, re-renders only when the result changes`}
     </p>
 
     <h2 id="async-suspense">Async &amp; Suspense</h2>
+    <GuideLink anchor="async" label="Async data" />
     <CodeBlock
       code={`createAsync(store, path, fetcher, { immediate? })
   → { get, run, subscribe, suspend, destroy }
@@ -313,6 +325,7 @@ useAsyncValue(resource)  // Suspense: throws the promise / error, returns data`}
     </p>
 
     <h2 id="entity-adapter">Entity adapter</h2>
+    <GuideLink anchor="collections" label="Collections & maps" />
     <CodeBlock
       code={`const adapter = createEntityAdapter<Item>({ selectId, sortComparer });
 
@@ -330,6 +343,7 @@ adapter.selectAll(map); adapter.selectById(map, id); adapter.selectTotal(map);`}
     </p>
 
     <h2 id="entity-store">Entity store</h2>
+    <GuideLink anchor="collections" label="Collections & maps" />
     <p>
       A standalone reactive collection for normalized data: a per-id store where a single-item write is{' '}
       <strong>O(1)</strong> and wakes only that item&apos;s watchers — nexus&apos;s answer to the atom/proxy stores. Use
@@ -359,6 +373,7 @@ const off = items.subscribeOne(id, listener);`}
     </p>
 
     <h2 id="middleware">Middleware</h2>
+    <GuideLink anchor="cross-cutting" label="Cross-cutting concerns" />
     <p>
       A middleware is <code>(api) =&gt; &#123; beforeChange?, onChange? &#125; | void</code>. <code>onChange</code>{' '}
       observes each committed <code>&#123; path, prev, next &#125;</code>; <code>beforeChange</code> runs before a write

@@ -18,6 +18,20 @@ export const DOCS_SEARCH_INDEX: DocSearchEntry[] = [
       'Installation, first store, typed hooks with createStoreHook, wrapping your tree with StoreProvider, reading and writing state.'
   },
   {
+    slug: 'choosing',
+    label: 'Choosing the right API',
+    keywords: [
+      'which', 'choose', 'decision', 'when to use', 'vs', 'difference', 'use case',
+      'useStore', 'useStoreGetter', 'useStoreSetter', 'useStoreSync', 'transformer',
+      'createDerived', 'useDerived', 'createEntityAdapter', 'createEntityStore',
+      'normalized', 'collection', 'map', 'entities', 'scoped', 'storeId', 'inherit',
+      'live', 'snapshot', 'useAsync', 'useAsyncValue', 'middleware', 'subscribeChange',
+      'beforeChange', 'reactive', 'non-reactive', 'getter', 'setter', 'best practice'
+    ],
+    description:
+      'A decision guide: which nexus API to use for reading, writing, collections, multiple stores, async, and cross-cutting concerns — with the common wrong choices and what they cost.'
+  },
+  {
     slug: 'api',
     label: 'API Reference',
     keywords: [

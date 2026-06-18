@@ -6,6 +6,11 @@ export const DOCS_META: Record<string, PageMeta> = {
     description:
       'Install @plitzi/nexus, create your first store with createStoreHook, wrap your tree with StoreProvider, and read/write by dot-path — all fully type-safe.'
   },
+  choosing: {
+    title: 'Choosing the right API',
+    description:
+      'A decision guide for @plitzi/nexus: which API to use for reading, writing, collections, multiple stores, async, and cross-cutting concerns — useStore vs useStoreGetter, createEntityAdapter vs createEntityStore, scoped vs storeId, useAsync vs useAsyncValue, middleware vs subscribeChange — with the common wrong choices and what they cost.'
+  },
   api: {
     title: 'API Reference',
     description:

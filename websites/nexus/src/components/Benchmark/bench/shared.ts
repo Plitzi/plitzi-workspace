@@ -36,6 +36,14 @@ export type StoreAdapter = {
   // A memoized derived value (sum over `values` inputs) with one subscriber; update one input `updates` times. Tests
   // each store's computed/selector machinery — the value recomputes per edit and wakes only when the result changes.
   derived: (values: number, updates: number) => Sample;
+  // Real-world streaming: a large collection of `items` rows, each watched, with `updates` writes spread across many
+  // distinct rows (a live dashboard / data feed). Tests targeted-update throughput at scale — fine-grained stores
+  // touch one row, a single immutable tree copies the whole collection on every write.
+  liveFeed: (items: number, updates: number) => Sample;
+  // Real-world selection: `items` rows, move the current selection `moves` times. Only the deselected and newly
+  // selected rows should react. Per-item reactive stores flip two flags (O(1)); a central `selectedId` + one selector
+  // per row re-evaluates every selector on each move (O(items)).
+  selection: (items: number, moves: number) => Sample;
 };
 
 export const SDK = '@plitzi/nexus';
@@ -51,6 +59,38 @@ export type NestedState = { a: { b: { c: { d: { e: { leaf: number } } } } } };
 
 export type Item = { value: number; meta: { tag: string; n: number } };
 export type DeepMapState = { items: Record<string, Item> };
+
+// Live-feed + selection workloads — a flat collection of rows addressed by id.
+export type Row = { id: string; value: number };
+export type SelRow = { id: string; selected: boolean };
+
+export const makeRowArray = (n: number): Row[] => Array.from({ length: n }, (_, i) => ({ id: `r${i}`, value: 0 }));
+
+export const makeRowMap = (n: number): Record<string, Row> => {
+  const map: Record<string, Row> = {};
+  for (let i = 0; i < n; i++) {
+    map[`r${i}`] = { id: `r${i}`, value: 0 };
+  }
+
+  return map;
+};
+
+export const makeSelRowArray = (n: number): SelRow[] =>
+  Array.from({ length: n }, (_, i) => ({ id: `r${i}`, selected: i === 0 }));
+
+// Distinct, well-spread row indices for a streaming workload, computed once so every library updates the exact same
+// rows in the same order — a fair fight. A fixed prime stride walks the whole collection without repeating until it
+// wraps.
+export const stridedIndices = (items: number, count: number): number[] => {
+  const out = new Array<number>(count);
+  let idx = 0;
+  for (let i = 0; i < count; i++) {
+    idx = (idx + 40503) % items;
+    out[i] = idx;
+  }
+
+  return out;
+};
 
 // Stand-in for the work a woken subscriber actually does (a small component render). A trivial counter would
 // understate the win — fine-grained subscriptions exist so uninterested subscribers never run this. Every store
