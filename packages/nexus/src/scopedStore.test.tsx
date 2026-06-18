@@ -222,3 +222,44 @@ describe('scoped store — change forwarding', () => {
     expect(parent.getState().user.name).toBe('Ada');
   });
 });
+
+// Regression: the lazy-clone writer (writeRecursive) turns the root into an `Object.create` prototype chain after
+// enough multi-segment writes flip `hasLazyRoot`. A scoped store decides ownership with `Object.hasOwn`, which only
+// sees own properties — so any owned top-level subtree that the lazy writes never touched reads as "not owned" and
+// the write is wrongly delegated to the parent, corrupting both scopes.
+describe('scoped store — lazy writer ownership regression', () => {
+  type L = { big: Record<string, number>; other: { x: number } };
+
+  const seed = (): L => ({ big: { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7 }, other: { x: 0 } });
+
+  it('keeps writes to an owned subtree local after lazy writes to a different subtree', () => {
+    const parent = createStore<L>({ ...seed(), other: { x: 100 } });
+    const child = createStore<L>({ ...seed(), other: { x: 999 } }, { parent });
+
+    // `big` has >5 keys, so the first writes mark it lazy and flip `hasLazyRoot`, making the root a prototype chain.
+    child.setState('big.a', 11);
+    child.setState('big.b', 22);
+    child.setState('big.c', 33);
+
+    // `other` is owned by the child but was never touched by a lazy write, so it now lives on the prototype.
+    child.setState('other.x', 555);
+
+    expect(child.getState().other.x).toBe(555); // write must stay in the child
+    expect(parent.getState().other.x).toBe(100); // parent must not be clobbered
+  });
+
+  it('keeps single-segment writes to an owned key local after the root goes lazy', () => {
+    type S2 = { big: Record<string, number>; flag: boolean };
+    const parent = createStore<S2>({ big: { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7 }, flag: false });
+    const child = createStore<S2>({ big: { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7 }, flag: true }, { parent });
+
+    child.setState('big.a', 11);
+    child.setState('big.b', 22);
+    child.setState('big.c', 33);
+
+    child.setState('flag', false);
+
+    expect(child.getState().flag).toBe(false);
+    expect(parent.getState().flag).toBe(false); // parent's own `flag` stays untouched
+  });
+});

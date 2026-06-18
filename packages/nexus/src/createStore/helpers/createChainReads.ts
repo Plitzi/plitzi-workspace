@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
 import { deepMerge, isPlainObject } from './deepMerge';
-import { materialize } from './writeByPath';
 import getByPath from '../../helpers/getByPath';
 
 import type { GetState, PathOf, PathValue, StoreApi } from '../../types';
@@ -30,15 +29,9 @@ export function createChainReads<TState extends object>(
 ): ChainReads<TState> {
   if (!parent) {
     // A root store is its own state — no merge, no fall-through, nothing to invalidate.
-    // Reads use getOwnSnapshot (the cached, recursively-materialized flat view) instead of materializing from the
-    // live state, so the materialization cost is paid once per write (in getOwnSnapshot) rather than once per read.
-    const readValue = <P extends PathOf<TState>>(path: P): PathValue<TState, P> | undefined => {
-      return getByPath(getOwnSnapshot(), path);
-    };
-
     return {
       getState: getOwnSnapshot,
-      getPath: readValue,
+      getPath: path => getByPath(getOwnState(), path),
       invalidate: () => {},
       resetCache: () => {},
       getMergeCount: () => 0
@@ -69,8 +62,7 @@ export function createChainReads<TState extends object>(
   };
 
   const resolve = <P extends PathOf<TState>>(path: P): PathValue<TState, P> | undefined => {
-    const ownValue = materialize(getByPath(getOwnState(), path));
-
+    const ownValue = getByPath(getOwnState(), path);
     if (ownValue === undefined) {
       return parentStore.getPath(path);
     }

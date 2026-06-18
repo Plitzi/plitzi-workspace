@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
-import { UNCHANGED, writeByPath, writeRecursive } from './writeByPath';
+import { UNCHANGED, writeByPath } from './writeByPath';
 import getByPath from '../../helpers/getByPath';
 import parsePath from '../../helpers/parsePath';
 import setByPath from '../../helpers/setByPath';
@@ -101,14 +101,6 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     invalidateDescendants,
     onDelegateToParent
   } = deps;
-
-  // Tracks paths where the first child level has many keys, switching subsequent writes from
-  // codegen (O(keys) spread) to writeRecursive (O(1) Object.create) at every depth level.
-  const lazyPaths = new Set<string>();
-  // Once writeRecursive is used, the root becomes a lazy prototype chain. Codegen on a lazy root
-  // only sees own keys — sibling paths would lose inherited keys. This flag forces ALL subsequent
-  // multi-segment writes through writeRecursive, keeping the tree self-consistent.
-  let hasLazyRoot = false;
 
   // Runs interceptors in order, each seeing the previous one's result. Returns the final value, or `CANCEL` if any
   // aborted; a thrown interceptor is reported and fails the write closed (its validation outcome is unknown).
@@ -404,30 +396,9 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
         return;
       }
 
-      // When the root is a lazy chain (writeRecursive was used before), codegen on a sibling
-      // path would lose inherited keys — it only sees own keys via `{...spread}`. Once hasLazyRoot
-      // is true, every multi-segment write uses writeRecursive.
-      if (hasLazyRoot || lazyPaths.has(segments[0])) {
-        if (!hasLazyRoot) {
-          hasLazyRoot = true;
-        }
-
-        result = writeRecursive(prevState, segments, intercepted, false) as TState | typeof UNCHANGED;
-      } else {
-        result = writeByPath(prevState, path, segments, intercepted, false) as TState | typeof UNCHANGED;
-      }
+      result = writeByPath(prevState, path, segments, intercepted, false) as TState | typeof UNCHANGED;
     } else {
-      if (hasLazyRoot || lazyPaths.has(segments[0])) {
-        if (!hasLazyRoot) {
-          hasLazyRoot = true;
-        }
-
-        result = writeRecursive(prevState, segments, value, typeof value === 'function') as TState | typeof UNCHANGED;
-      } else {
-        result = writeByPath(prevState, path, segments, value, typeof value === 'function') as
-          | TState
-          | typeof UNCHANGED;
-      }
+      result = writeByPath(prevState, path, segments, value, typeof value === 'function') as TState | typeof UNCHANGED;
     }
 
     if (result === UNCHANGED) {
@@ -435,15 +406,6 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     }
 
     const nextState = result;
-    // After the first codegen write, check whether the first child level has many keys. If so, mark
-    // the prefix (segments[0]) so every path under it uses writeRecursive — preventing codegen from
-    // spreading lazy prototypal chains (which only see own keys).
-    if (segments.length > 0 && !lazyPaths.has(segments[0])) {
-      const raw = (nextState as Record<string, unknown>)[segments[0]];
-      if (raw && typeof raw === 'object' && Object.keys(raw).length > 5) {
-        lazyPaths.add(segments[0]);
-      }
-    }
 
     setOwnState(nextState);
     if (changeListeners.length > 0) {

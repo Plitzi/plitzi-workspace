@@ -1,101 +1,53 @@
 // Immutable structural-sharing writer for multi-segment paths. A per-path compiled writer (`new Function`) emits
 // literal-key spreads V8 clones on its fast path; a recursive fallback covers environments where a strict CSP
 // blocks `new Function`. The codegen is injection-safe by construction — see `access`/`literalKey`.
-//
-// Auto-detection: after the first write to any given root object, subsequent writes to that object use
-// `Object.create` (lazy clone) at every depth level, deferring the flat-object copy until `materialize()`.
-// This makes burst writes to large objects O(1) per level instead of O(keys), while the codegen first write
-// keeps deeply nested small-object paths (the "nested" benchmark) fast via inline spreads.
 
 export const UNCHANGED: unique symbol = Symbol('unchanged');
 
 type CompiledWriter = (root: unknown, value: unknown, isFn: boolean) => Record<string, unknown> | null;
 
-// Creates a shallow lazy clone: the result has `key` as own property and inherits everything else from `base`. The
-// caller must `materialize()` the result before handing it to user code that expects a plain object.
-const lazyProp = (base: Record<string, unknown>, key: string, value: unknown): Record<string, unknown> => {
-  const obj = Object.create(base) as Record<string, unknown>;
-  obj[key] = value;
+// Numeric segments address array indices; the recursive writer keeps an existing array an array (codegen, which
+// spreads into an object literal, can't preserve that — see `getCompiled`).
+const isIndexSegment = (segment: string): boolean => /^\d+$/.test(segment);
 
-  return obj;
-};
+const clone = (base: Record<string, unknown>): Record<string, unknown> =>
+  // A plain spread/slice + assignment clones faster than `{ ...base, [key]: v }`: a computed key in an object
+  // literal forces V8 off its fast clone path.
+  Array.isArray(base) ? (base.slice() as unknown as Record<string, unknown>) : { ...base };
 
-// Recursively flattens a lazy prototype chain into a plain object. For plain objects (Object.prototype proto),
-// primitives, and arrays, returns the input as-is — no allocation. Only flattens when the object has a non-standard
-// prototype (lazy chain). Nested values are also recursively materialized so that any part of the materialized tree
-// is compatible with `Object.keys()` and `toEqual`.
-export const materialize = <T>(value: T): T => {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    return value;
-  }
-
-  const proto = Object.getPrototypeOf(value) as object | null;
-  if (proto === Object.prototype || proto === null) {
-    return value;
-  }
-
-  const result: Record<string, unknown> = {};
-  let current: object | null = value;
-  while (current && current !== Object.prototype) {
-    const keys = Object.keys(current);
-    for (let i = 0, len = keys.length; i < len; i++) {
-      const key = keys[i];
-      if (!(key in result)) {
-        result[key] = materialize((current as Record<string, unknown>)[key]);
-      }
-    }
-
-    current = Object.getPrototypeOf(current) as object | null;
-  }
-
-  return result as unknown as T;
-};
-
-// Iterative lazy-prop writer. Replaces the recursiveStep / codegen for tracked objects: walks the segments once
-// to collect base references, then builds the result back up with `Object.create` at every level (no spreads).
-// This avoids function-call overhead (no recursion) and makes every level O(1).
-const writeRecursive = (
-  root: unknown,
+const recursiveStep = (
+  node: unknown,
   segments: readonly string[],
+  index: number,
   value: unknown,
   isFn: boolean
 ): Record<string, unknown> | typeof UNCHANGED => {
-  const len = segments.length;
-  const bases: unknown[] = new Array(len);
+  const key = segments[index];
+  const base = typeof node === 'object' && node !== null ? (node as Record<string, unknown>) : {};
 
-  let current: unknown = root;
-  for (let i = 0; i < len; i++) {
-    bases[i] = current;
-    current =
-      typeof current === 'object' && current !== null ? (current as Record<string, unknown>)[segments[i]] : undefined;
+  if (index === segments.length - 1) {
+    const prev = base[key];
+    const resolved = isFn ? (value as (p: unknown) => unknown)(prev) : value;
+    if (prev === resolved) {
+      return UNCHANGED;
+    }
+
+    const next = clone(base);
+    next[key] = resolved;
+
+    return next;
   }
 
-  const prevLeaf = current;
-  const resolved = isFn ? (value as (p: unknown) => unknown)(prevLeaf) : value;
-  if (prevLeaf === resolved) {
+  const child = recursiveStep(base[key], segments, index + 1, value, isFn);
+  if (child === UNCHANGED) {
     return UNCHANGED;
   }
 
-  let child = resolved;
-  for (let i = len - 1; i >= 0; i--) {
-    const raw = bases[i];
-    if (Array.isArray(raw)) {
-      const next = raw.slice();
-      next[segments[i] as unknown as number] = child;
-      child = next;
-    } else {
-      const base = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {};
+  const next = clone(base);
+  next[key] = child;
 
-      child = lazyProp(base, segments[i], child);
-    }
-  }
-
-  return child as Record<string, unknown>;
+  return next;
 };
-
-// Numeric segments address array indices; codegen, which spreads into an object literal, can't preserve array-ness
-// (the recursive writer can, and does, because it uses `Object.create` which keeps the base's type).
-const isIndexSegment = (segment: string): boolean => /^\d+$/.test(segment);
 
 // Identifier segments become literal `.prop` access / bare keys; anything else is `JSON.stringify`-ed into an inert
 // string literal, so a hostile segment can never become executable code.
@@ -132,6 +84,13 @@ let codegenForced: boolean | undefined;
 const isCodegenAvailable = (): boolean => {
   if (codegenForced !== undefined) {
     return codegenForced;
+  }
+
+  // SSR / Edge runtimes: `new Function` may be blocked by CSP and provides no
+  // benefit since writes are one-shot per request. The recursive fallback is
+  // already proven (browsers with CSP use it), so skip the probe entirely.
+  if (typeof window === 'undefined') {
+    return false;
   }
 
   if (codegenAvailable === undefined) {
@@ -203,9 +162,5 @@ export const writeByPath = (
     return next === null ? UNCHANGED : next;
   }
 
-  return writeRecursive(root, segments, value, isFn);
+  return recursiveStep(root, segments, 0, value, isFn);
 };
-
-// Iterative lazy-prop writer, exported for store-level auto-detection (createSetState uses it after the first
-// codegen write to the same root, turning subsequent writes into O(1) Object.create per level).
-export { writeRecursive };
