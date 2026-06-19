@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
+import { afterEach, describe, it, expect } from 'vitest';
 
 import { loggerMiddleware } from './loggerMiddleware';
 import { persistMiddleware } from './persistMiddleware';
@@ -118,29 +118,6 @@ describe('persist middleware', () => {
 
     expect(store.getState().count).toBe(0);
     expect(data.has('app')).toBe(false);
-  });
-
-  describe('with debounce', () => {
-    beforeEach(() => vi.useFakeTimers());
-    afterEach(() => vi.useRealTimers());
-
-    it('coalesces rapid writes into a single storage write', () => {
-      const { storage, data } = memoryStorage();
-      const spy = vi.spyOn(storage, 'setItem');
-      const store = createStore<AppState>(initial(), {
-        middlewares: [persistMiddleware({ key: 'app', storage, debounce: 50 })]
-      });
-
-      store.setState('count', 1);
-      store.setState('count', 2);
-      store.setState('count', 3);
-      expect(spy).not.toHaveBeenCalled();
-
-      vi.advanceTimersByTime(50);
-
-      expect(spy).toHaveBeenCalledTimes(1);
-      expect(readStored(data, 'app').state.count).toBe(3);
-    });
   });
 });
 

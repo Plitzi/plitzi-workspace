@@ -95,25 +95,6 @@ describe('persist middleware — edge cases', () => {
 
     expect(store.getState().count).toBe(9);
   });
-
-  it('coalesces rapid writes when debounced', () => {
-    vi.useFakeTimers();
-    const { storage, data, writes } = memoryStorage();
-    const store = createStore<State>(initial(), {
-      middlewares: [persistMiddleware<State>({ key: 'app', storage, debounce: 50 })]
-    });
-
-    store.setState('count', 1);
-    store.setState('count', 2);
-    store.setState('count', 3);
-    expect(writes()).toBe(0);
-
-    vi.advanceTimersByTime(50);
-
-    expect(writes()).toBe(1);
-    const saved = JSON.parse(data.get('app') ?? 'null') as { state: State };
-    expect(saved.state.count).toBe(3);
-  });
 });
 
 describe('logger middleware — edge cases', () => {

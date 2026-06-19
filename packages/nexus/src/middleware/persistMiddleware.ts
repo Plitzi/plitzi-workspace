@@ -26,8 +26,6 @@ export type PersistOptions<TState extends object> = MiddlewareOptions<TState> & 
   migrate?: (persisted: unknown, version: number) => unknown;
   // Not used in `paths` mode, where each path is restored at its own location.
   merge?: (persisted: Partial<TState>, current: TState) => Partial<TState>;
-  // Coalesce rapid writes; 0 (default) writes synchronously.
-  debounce?: number;
 };
 
 const resolveStorage = (target: PersistTarget = 'local'): PersistStorage | undefined => {
@@ -48,7 +46,7 @@ type Envelope = { version: number; state: unknown };
 // Mirrors the store to a key/value storage and rehydrates on creation. Place it first in `middlewares` so it hydrates
 // before logger/history observe anything.
 export const persistMiddleware = <TState extends object>(options: PersistOptions<TState>): StoreMiddleware<TState> => {
-  const { key, storage: target, paths, partialize, version = 0, migrate, merge, debounce = 0, enabled } = options;
+  const { key, storage: target, paths, partialize, version = 0, migrate, merge, enabled } = options;
   const dynamicTarget = typeof target === 'function' ? target : undefined;
   const staticStorage = typeof target === 'function' ? undefined : resolveStorage(target);
 
@@ -101,12 +99,12 @@ export const persistMiddleware = <TState extends object>(options: PersistOptions
       return;
     }
 
-    let timer: ReturnType<typeof setTimeout> | undefined;
     let hydrated = false;
 
-    // Restore once, as soon as a storage is resolvable. A dynamic `storage` can be unavailable at mount (e.g. a
-    // setting that picks or gates it loads after the store) — `onChange` then retries off the commit stack until it
-    // can, so a late-arriving setting doesn't permanently miss hydration.
+    // Restore once a storage is resolvable. A dynamic `storage` can be unavailable at mount (a setting that picks or
+    // gates it loads after the store), so `onChange` — which runs after each commit — retries until it can. Restoring
+    // there is safe to do synchronously: nexus change-listeners are depth-counted, so the restore's own write nests
+    // cleanly without needing to defer.
     const restore = (): void => {
       if (hydrated) {
         return;
@@ -123,26 +121,13 @@ export const persistMiddleware = <TState extends object>(options: PersistOptions
 
     return {
       // Runs after React mount (or synchronously standalone) to avoid SSR/client hydration mismatches.
-      hydrate: () => restore(),
+      hydrate: restore,
       onChange: change => {
-        // Storage may have just become resolvable (a gating setting loaded); restore off the commit stack to avoid
-        // a re-entrant write. The sync guard keeps this from scheduling work when storage stays unavailable.
-        if (!hydrated && storageFor(api.getState())) {
-          queueMicrotask(restore);
-        }
+        restore();
 
-        if (!affectsPersisted(change.path)) {
-          return;
-        }
-
-        if (debounce <= 0) {
+        if (affectsPersisted(change.path)) {
           write(api);
-
-          return;
         }
-
-        clearTimeout(timer);
-        timer = setTimeout(() => write(api), debounce);
       }
     };
   };
