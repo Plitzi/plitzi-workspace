@@ -130,9 +130,6 @@
       "types": "./dist/dataSource/index.d.ts",
       "import": "./dist/dataSource/index.mjs"
     },
-    "./dataSource/runtimeSources": {
-      "import": "./dist/dataSource/runtimeSources.mjs"
-    },
     "./dataSource/utility": {
       "types": "./dist/dataSource/utility/index.d.ts",
       "import": "./dist/dataSource/utility/index.mjs"

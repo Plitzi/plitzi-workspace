@@ -243,10 +243,6 @@
       "types": "./dist/middleware/reduxDevToolsMiddleware.d.ts",
       "import": "./dist/middleware/reduxDevToolsMiddleware.mjs"
     },
-    "./middleware/withEnabled": {
-      "types": "./dist/middleware/withEnabled.d.ts",
-      "import": "./dist/middleware/withEnabled.mjs"
-    },
     "./next": {
       "types": "./dist/next/index.d.ts",
       "import": "./dist/next/index.mjs"
