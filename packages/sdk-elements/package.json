@@ -776,34 +776,6 @@
     "./index": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
-    },
-    "./runtimeState": {
-      "types": "./dist/runtimeState/index.d.ts",
-      "import": "./dist/runtimeState/index.mjs"
-    },
-    "./runtimeState/RuntimeStateProvider": {
-      "types": "./dist/runtimeState/RuntimeStateProvider.d.ts",
-      "import": "./dist/runtimeState/RuntimeStateProvider.mjs"
-    },
-    "./runtimeState/index": {
-      "types": "./dist/runtimeState/index.d.ts",
-      "import": "./dist/runtimeState/index.mjs"
-    },
-    "./runtimeState/runtimeStatePersist": {
-      "types": "./dist/runtimeState/runtimeStatePersist.d.ts",
-      "import": "./dist/runtimeState/runtimeStatePersist.mjs"
-    },
-    "./runtimeState/useRuntimeState": {
-      "types": "./dist/runtimeState/useRuntimeState.d.ts",
-      "import": "./dist/runtimeState/useRuntimeState.mjs"
-    },
-    "./runtimeState/useRuntimeStateManager": {
-      "types": "./dist/runtimeState/useRuntimeStateManager.d.ts",
-      "import": "./dist/runtimeState/useRuntimeStateManager.mjs"
-    },
-    "./runtimeState/writeRuntimeStateKey": {
-      "types": "./dist/runtimeState/writeRuntimeStateKey.d.ts",
-      "import": "./dist/runtimeState/writeRuntimeStateKey.mjs"
     }
   },
   "scripts": {
