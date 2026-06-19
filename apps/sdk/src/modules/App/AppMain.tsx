@@ -24,7 +24,6 @@ import type {
   Environment,
   Server,
   RenderMode,
-  RuntimeState,
   RuntimeStateInstance,
   EventBridgeContextValue,
   OfflineDataRaw,
@@ -79,20 +78,19 @@ const AppMain = ({
 }: AppMainProps) => {
   const store = use(StoreContext) as StoreApi<SdkState> | undefined;
 
-  // Expose the imperative runtime-state handle to the host (consumed by `getStateManager()`). `runtime.state` is a
-  // plain store subkey, so it's read/written straight through the nexus store API.
+  // Expose the imperative runtime-state handle to the host (consumed by `getStateManager()`). A nexus base-path view
+  // binds every read/write to `runtime.state`, so call sites concatenate nothing and the updater form type-checks.
+  const runtimeState = useMemo(() => store?.withBase('runtime.state'), [store]);
   const stateManager = useMemo<RuntimeStateInstance>(
     () => ({
       get state() {
-        return store?.getState().runtime?.state ?? {};
+        return runtimeState?.getState() ?? {};
       },
-      // `runtime.state?` is optional, so the path's value type excludes the updater form; the cast keeps the public
-      // setter signature while the store applies an updater function correctly at runtime.
-      setState: value => store?.setState('runtime.state', value as RuntimeState),
-      setStateByKey: (key, value) => store?.setState(`runtime.state.${key}`, value),
-      clearState: () => store?.setState('runtime.state', {})
+      setState: value => runtimeState?.setState(undefined, value),
+      setStateByKey: (key, value) => runtimeState?.setState(key, value),
+      clearState: () => runtimeState?.setState(undefined, {})
     }),
-    [store]
+    [runtimeState]
   );
 
   useEffect(() => {

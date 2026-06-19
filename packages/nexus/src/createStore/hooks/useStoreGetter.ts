@@ -67,21 +67,28 @@ function useStoreGetter<TState extends object>(
         });
       }
 
-      return (subPath?: string, callDefault?: unknown): any => {
-        const state = store.getState();
+      if (resolvedBasePath !== undefined) {
+        const bound = store.withBase(resolvedBasePath as PathOf<TState>) as {
+          getState: () => unknown;
+          getPath: (subPath: string) => unknown;
+        };
 
-        if (resolvedBasePath !== undefined) {
-          const base = getByPath(state, resolvedBasePath as PathOf<TState>);
+        return (subPath?: string, callDefault?: unknown): any => {
           if (subPath !== undefined) {
-            const subVal = getByPath(base as TState, subPath as PathOf<TState>);
+            const subVal = bound.getPath(subPath);
 
             return subVal === undefined && callDefault !== undefined ? callDefault : subVal;
           }
 
+          const base = bound.getState();
           const baseDefault = callDefault !== undefined ? callDefault : defaultValue;
 
           return base === undefined && baseDefault !== undefined ? baseDefault : base;
-        }
+        };
+      }
+
+      return (subPath?: string, callDefault?: unknown): any => {
+        const state = store.getState();
 
         if (subPath !== undefined) {
           const val = getByPath(state, subPath as PathOf<TState>);

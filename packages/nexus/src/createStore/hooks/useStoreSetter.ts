@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 
-import { useCallback } from 'react';
+import { useMemo } from 'react';
 
 import { useResolvedStore } from './shared';
 
@@ -25,16 +24,9 @@ function useStoreSetter<TState extends object>(
 
   const store = useResolvedStore(resolvedOptions?.store, 'useStoreSetter', resolvedOptions?.storeId);
 
-  return useCallback(
-    (subPath: string | undefined, value: unknown) => {
-      if (resolvedBasePath === undefined) {
-        store.setState(subPath as PathOf<TState>, value as any);
-      } else if (subPath === undefined) {
-        store.setState(resolvedBasePath as PathOf<TState>, value as any);
-      } else {
-        store.setState(`${resolvedBasePath}.${subPath}` as PathOf<TState>, value as any);
-      }
-    },
+  return useMemo(
+    () =>
+      resolvedBasePath === undefined ? store.setState : store.withBase(resolvedBasePath as PathOf<TState>).setState,
     [store, resolvedBasePath]
   );
 }

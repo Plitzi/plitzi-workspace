@@ -159,6 +159,22 @@ export type SetState<T> = {
 
 export type GetState<T> = () => T;
 
+// An imperative view of the store bound to a base path: every read/write/subscribe is transparently prefixed with
+// `basePath`, so callers concatenate nothing. `getState()` returns the value at the base; `setState(undefined, v)`
+// replaces it; `setState(subPath, v)` writes `${basePath}.${subPath}`. The base type is taken `NonNullable`, so the
+// setter's updater form (`prev => next`) type-checks even when the base path is optional in the parent state.
+export type BoundStore<TBase> = {
+  getState: () => TBase | undefined;
+  getPath: TBase extends object
+    ? <SubP extends PathOf<TBase>>(subPath: SubP) => PathValue<TBase, SubP> | undefined
+    : () => TBase | undefined;
+  setState: SetFromBaseFn<TBase>;
+  subscribe: (listener: Listener) => () => void;
+  subscribePath: TBase extends object
+    ? <SubP extends PathOf<TBase>>(subPath: SubP, listener: Listener) => () => void
+    : (listener: Listener) => () => void;
+};
+
 export type StoreApi<T> = {
   // Optional identity for this store. Set via `createStore(init, { id })` or the `<StoreProvider id>` prop; lets a
   // descendant target this store by id (see the `storeId` hook option) and aids logging/devtools.
@@ -168,6 +184,9 @@ export type StoreApi<T> = {
   // shadows the parent's, except where both are objects (then the subtree at that path is deep-merged).
   getPath: <P extends PathOf<T>>(path: P) => PathValue<T, P> | undefined;
   setState: SetState<T>;
+  // Project an imperative view bound to `basePath` (see `BoundStore`): reads, writes and subscriptions are prefixed
+  // with it, removing the repeated `${basePath}.${key}` concatenation at call sites.
+  withBase: <P extends PathOf<T>>(basePath: P) => BoundStore<NonNullable<PathValue<T, P>>>;
   // Runs `fn`, coalescing every `setState` inside it into one wake pass: subscribers re-render once at the end
   // instead of once per write (reads inside `fn` still see each write immediately). Change observers — logger,
   // history, persist — keep firing per write. Nestable: only the outermost `batch` flushes.

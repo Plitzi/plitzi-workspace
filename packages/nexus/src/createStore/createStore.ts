@@ -265,11 +265,22 @@ function createStore<TState extends object>(
     invalidateUnsub?.();
   };
 
+  const withBase = (basePath: string): any => ({
+    getState: () => getPath(basePath as PathOf<TState>),
+    getPath: (subPath: string) => getPath(`${basePath}.${subPath}` as PathOf<TState>),
+    setState: (subPath: string | undefined, value: unknown) =>
+      setState((subPath === undefined ? basePath : `${basePath}.${subPath}`) as PathOf<TState>, value as any),
+    subscribe: (listener: Listener) => subscribePath(basePath as PathOf<TState>, listener),
+    subscribePath: (subPath: string, listener: Listener) =>
+      subscribePath(`${basePath}.${subPath}` as PathOf<TState>, listener)
+  });
+
   const api: StoreApi<TState> = {
     id: storeOptions?.id,
     getState,
     getPath,
     setState,
+    withBase,
     batch,
     subscribe,
     subscribePath,
