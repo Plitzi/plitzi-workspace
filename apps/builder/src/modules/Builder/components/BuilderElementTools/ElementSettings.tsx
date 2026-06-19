@@ -85,8 +85,7 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Settings = (Plugin?.pluginSettings ?? defaultElementsSettings[type]) as FC<any> | undefined;
-  const [variablesSource = emptyObject] = useStore('runtime.sources.variables');
-  const variables = variablesSource as Record<string, string>;
+  const [variables = emptyObject] = useStore('runtime.sources.variables');
 
   const children = useMemo(
     () => (

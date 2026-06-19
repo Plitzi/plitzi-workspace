@@ -53,8 +53,7 @@ const Sdk = ({
   const { rootRef } = use(ContainerRootContext);
   const { useStore } = createStoreHook<SdkState>();
   const [[schemaSettings, styleCache, segments]] = useStore(['schema.settings', 'style.cache', 'segments']);
-  const [variablesSource = emptyObject] = useStore('runtime.sources.variables');
-  const variables = variablesSource as Record<string, string>;
+  const [variables = emptyObject] = useStore('runtime.sources.variables');
 
   const css = useMemo(() => {
     const segmentsCss = Object.values(segments).map(segment => segment.style.cache);
