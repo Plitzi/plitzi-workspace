@@ -12,7 +12,6 @@ import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
@@ -58,7 +57,8 @@ const BuilderArea = ({
 }: BuilderAreaProps) => {
   const { useStore } = createStoreHook<BuilderState>();
   const [cache] = useStore('style.cache');
-  const [variablesValue = emptyObject] = useStore('runtime.sources.variables');
+  // @todo: variables should be only related to styles
+  const [variables] = useStore('runtime.sources.variables');
   const trackingContainerRef = useRef<HTMLDivElement | null>(null);
   const { assets } = use(PluginsContext);
   const {
@@ -69,11 +69,9 @@ const BuilderArea = ({
     builderGetBaseElement
   } = use(BuilderContext);
   const { displayBorderComponents, zoom } = use(AppContext);
-  // @todo: variables should be only related to styles
-  const variables = variablesValue as Record<string, string>;
   const css = useMemo(() => {
-    const cssVariables = schemaVariablesToCss(variables);
-    const cacheParsed = processCssTokens(cache, variables);
+    const cssVariables = schemaVariablesToCss(variables as Record<string, string>);
+    const cacheParsed = processCssTokens(cache, variables as Record<string, string>);
 
     return `:root{${cssVariables}}\n${styleFrame}\n@layer plitzi-builder-runtime{${cacheParsed}\n${customCss}\n${externalStyle}}`;
   }, [customCss, cache, externalStyle, variables]);
