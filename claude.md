@@ -52,7 +52,6 @@ packages/
   sdk-navigation/
   sdk-plugins/
   sdk-schema/
-  sdk-state/
   sdk-style/
   sdk-variables/
 ```

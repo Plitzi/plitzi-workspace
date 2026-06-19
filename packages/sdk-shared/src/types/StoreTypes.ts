@@ -25,7 +25,7 @@ export type CommonState = {
   segments: Record<string, Segment>;
   // Runtime: real source DATA, all under `runtime.sources.*` — globals (typed) plus scoped per-instance sources
   // (dynamic keys), combined by the store's deep-merge scope chain. `runtime.state` holds the user/application state
-  // (writable at runtime via interactions — the former `@plitzi/sdk-state`), separate from source values.
+  // (writable at runtime via interactions), separate from source values.
   runtime?: { sources: RuntimeSourceValues & Record<string, unknown>; state?: Record<string, unknown> };
   // Data-source REGISTRY (authoring metadata: which sources exist + their fields). Only definitions for
   // enumeration + the builder editor — NOT the real values (those are in `runtime.sources`).

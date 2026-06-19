@@ -17,7 +17,6 @@
   - @plitzi/sdk-plugins@0.31.2
   - @plitzi/sdk-schema@0.31.2
   - @plitzi/sdk-shared@0.31.2
-  - @plitzi/sdk-state@0.31.2
   - @plitzi/sdk-style@0.31.2
   - @plitzi/sdk-variables@0.31.2
 
@@ -38,7 +37,6 @@
   - @plitzi/sdk-plugins@0.31.1
   - @plitzi/sdk-schema@0.31.1
   - @plitzi/sdk-shared@0.31.1
-  - @plitzi/sdk-state@0.31.1
   - @plitzi/sdk-style@0.31.1
   - @plitzi/sdk-variables@0.31.1
 
@@ -61,7 +59,6 @@
   - @plitzi/sdk-plugins@0.31.0
   - @plitzi/sdk-schema@0.31.0
   - @plitzi/sdk-shared@0.31.0
-  - @plitzi/sdk-state@0.31.0
   - @plitzi/nexus@0.31.0
   - @plitzi/sdk-style@0.31.0
   - @plitzi/sdk-variables@0.31.0
@@ -82,7 +79,6 @@
   - @plitzi/sdk-plugins@0.30.19
   - @plitzi/sdk-schema@0.30.19
   - @plitzi/sdk-shared@0.30.19
-  - @plitzi/sdk-state@0.30.19
   - @plitzi/nexus@0.30.19
   - @plitzi/sdk-style@0.30.19
   - @plitzi/sdk-variables@0.30.19
@@ -103,7 +99,6 @@
   - @plitzi/sdk-plugins@0.30.18
   - @plitzi/sdk-schema@0.30.18
   - @plitzi/sdk-shared@0.30.18
-  - @plitzi/sdk-state@0.30.18
   - @plitzi/nexus@0.30.18
   - @plitzi/sdk-style@0.30.18
   - @plitzi/sdk-variables@0.30.18
@@ -124,7 +119,6 @@
   - @plitzi/sdk-plugins@0.30.17
   - @plitzi/sdk-schema@0.30.17
   - @plitzi/sdk-shared@0.30.17
-  - @plitzi/sdk-state@0.30.17
   - @plitzi/nexus@0.30.17
   - @plitzi/sdk-style@0.30.17
   - @plitzi/sdk-variables@0.30.17
@@ -145,7 +139,6 @@
   - @plitzi/sdk-plugins@0.30.16
   - @plitzi/sdk-schema@0.30.16
   - @plitzi/sdk-shared@0.30.16
-  - @plitzi/sdk-state@0.30.16
   - @plitzi/sdk-style@0.30.16
   - @plitzi/sdk-variables@0.30.16
 
@@ -165,7 +158,6 @@
   - @plitzi/sdk-plugins@0.30.15
   - @plitzi/sdk-schema@0.30.15
   - @plitzi/sdk-shared@0.30.15
-  - @plitzi/sdk-state@0.30.15
   - @plitzi/sdk-style@0.30.15
   - @plitzi/sdk-variables@0.30.15
 
@@ -185,7 +177,6 @@
   - @plitzi/sdk-plugins@0.30.14
   - @plitzi/sdk-schema@0.30.14
   - @plitzi/sdk-shared@0.30.14
-  - @plitzi/sdk-state@0.30.14
   - @plitzi/sdk-style@0.30.14
   - @plitzi/sdk-variables@0.30.14
 
@@ -205,7 +196,6 @@
   - @plitzi/sdk-plugins@0.30.13
   - @plitzi/sdk-schema@0.30.13
   - @plitzi/sdk-shared@0.30.13
-  - @plitzi/sdk-state@0.30.13
   - @plitzi/sdk-style@0.30.13
   - @plitzi/sdk-variables@0.30.13
 
@@ -225,7 +215,6 @@
   - @plitzi/sdk-plugins@0.30.12
   - @plitzi/sdk-schema@0.30.12
   - @plitzi/sdk-shared@0.30.12
-  - @plitzi/sdk-state@0.30.12
   - @plitzi/sdk-style@0.30.12
   - @plitzi/sdk-variables@0.30.12
 
@@ -245,7 +234,6 @@
   - @plitzi/sdk-plugins@0.30.11
   - @plitzi/sdk-schema@0.30.11
   - @plitzi/sdk-shared@0.30.11
-  - @plitzi/sdk-state@0.30.11
   - @plitzi/sdk-style@0.30.11
   - @plitzi/sdk-variables@0.30.11
 
@@ -265,7 +253,6 @@
   - @plitzi/sdk-plugins@0.30.10
   - @plitzi/sdk-schema@0.30.10
   - @plitzi/sdk-shared@0.30.10
-  - @plitzi/sdk-state@0.30.10
   - @plitzi/sdk-style@0.30.10
   - @plitzi/sdk-variables@0.30.10
 
@@ -285,7 +272,6 @@
   - @plitzi/sdk-plugins@0.30.9
   - @plitzi/sdk-schema@0.30.9
   - @plitzi/sdk-shared@0.30.9
-  - @plitzi/sdk-state@0.30.9
   - @plitzi/sdk-style@0.30.9
   - @plitzi/sdk-variables@0.30.9
 
@@ -305,7 +291,6 @@
   - @plitzi/sdk-plugins@0.30.8
   - @plitzi/sdk-schema@0.30.8
   - @plitzi/sdk-shared@0.30.8
-  - @plitzi/sdk-state@0.30.8
   - @plitzi/sdk-style@0.30.8
   - @plitzi/sdk-variables@0.30.8
 
@@ -325,7 +310,6 @@
   - @plitzi/sdk-plugins@0.30.7
   - @plitzi/sdk-schema@0.30.7
   - @plitzi/sdk-shared@0.30.7
-  - @plitzi/sdk-state@0.30.7
   - @plitzi/sdk-style@0.30.7
   - @plitzi/sdk-variables@0.30.7
 
@@ -346,7 +330,6 @@
   - @plitzi/sdk-navigation@0.30.6
   - @plitzi/sdk-plugins@0.30.6
   - @plitzi/sdk-schema@0.30.6
-  - @plitzi/sdk-state@0.30.6
   - @plitzi/sdk-variables@0.30.6
 
 ## 0.30.5
@@ -365,7 +348,6 @@
   - @plitzi/sdk-plugins@0.30.5
   - @plitzi/sdk-schema@0.30.5
   - @plitzi/sdk-shared@0.30.5
-  - @plitzi/sdk-state@0.30.5
   - @plitzi/sdk-style@0.30.5
   - @plitzi/sdk-variables@0.30.5
 
@@ -385,7 +367,6 @@
   - @plitzi/sdk-plugins@0.30.4
   - @plitzi/sdk-schema@0.30.4
   - @plitzi/sdk-shared@0.30.4
-  - @plitzi/sdk-state@0.30.4
   - @plitzi/sdk-style@0.30.4
   - @plitzi/sdk-variables@0.30.4
 
@@ -405,7 +386,6 @@
   - @plitzi/sdk-plugins@0.30.3
   - @plitzi/sdk-schema@0.30.3
   - @plitzi/sdk-shared@0.30.3
-  - @plitzi/sdk-state@0.30.3
   - @plitzi/sdk-style@0.30.3
   - @plitzi/sdk-variables@0.30.3
 
@@ -427,7 +407,6 @@
   - @plitzi/sdk-auth@0.30.2
   - @plitzi/sdk-event-bridge@0.30.2
   - @plitzi/sdk-plugins@0.30.2
-  - @plitzi/sdk-state@0.30.2
 
 ## 0.30.1
 
@@ -445,7 +424,6 @@
   - @plitzi/sdk-plugins@0.30.1
   - @plitzi/sdk-schema@0.30.1
   - @plitzi/sdk-shared@0.30.1
-  - @plitzi/sdk-state@0.30.1
   - @plitzi/sdk-style@0.30.1
   - @plitzi/sdk-auth@0.30.1
 
@@ -468,7 +446,6 @@
   - @plitzi/sdk-plugins@0.30.0
   - @plitzi/sdk-schema@0.30.0
   - @plitzi/sdk-shared@0.30.0
-  - @plitzi/sdk-state@0.30.0
   - @plitzi/sdk-style@0.30.0
   - @plitzi/sdk-variables@0.30.0
 
@@ -491,7 +468,6 @@
   - @plitzi/sdk-plugins@0.29.0
   - @plitzi/sdk-schema@0.29.0
   - @plitzi/sdk-shared@0.29.0
-  - @plitzi/sdk-state@0.29.0
   - @plitzi/sdk-style@0.29.0
   - @plitzi/sdk-variables@0.29.0
 
@@ -511,7 +487,6 @@
   - @plitzi/sdk-navigation@0.28.14
   - @plitzi/sdk-plugins@0.28.14
   - @plitzi/sdk-schema@0.28.14
-  - @plitzi/sdk-state@0.28.14
   - @plitzi/sdk-style@0.28.14
   - @plitzi/sdk-variables@0.28.14
 
@@ -530,7 +505,6 @@
   - @plitzi/sdk-plugins@0.28.13
   - @plitzi/sdk-schema@0.28.13
   - @plitzi/sdk-shared@0.28.13
-  - @plitzi/sdk-state@0.28.13
   - @plitzi/sdk-style@0.28.13
   - @plitzi/sdk-variables@0.28.13
 
@@ -549,7 +523,6 @@
   - @plitzi/sdk-plugins@0.28.12
   - @plitzi/sdk-schema@0.28.12
   - @plitzi/sdk-shared@0.28.12
-  - @plitzi/sdk-state@0.28.12
   - @plitzi/sdk-style@0.28.12
   - @plitzi/sdk-variables@0.28.12
 
@@ -568,7 +541,6 @@
   - @plitzi/sdk-plugins@0.28.11
   - @plitzi/sdk-schema@0.28.11
   - @plitzi/sdk-shared@0.28.11
-  - @plitzi/sdk-state@0.28.11
   - @plitzi/sdk-style@0.28.11
   - @plitzi/sdk-variables@0.28.11
 
@@ -587,7 +559,6 @@
   - @plitzi/sdk-plugins@0.28.10
   - @plitzi/sdk-schema@0.28.10
   - @plitzi/sdk-shared@0.28.10
-  - @plitzi/sdk-state@0.28.10
   - @plitzi/sdk-style@0.28.10
   - @plitzi/sdk-variables@0.28.10
 
@@ -606,7 +577,6 @@
   - @plitzi/sdk-plugins@0.28.9
   - @plitzi/sdk-schema@0.28.9
   - @plitzi/sdk-shared@0.28.9
-  - @plitzi/sdk-state@0.28.9
   - @plitzi/sdk-style@0.28.9
   - @plitzi/sdk-variables@0.28.9
 
@@ -625,7 +595,6 @@
   - @plitzi/sdk-plugins@0.28.8
   - @plitzi/sdk-schema@0.28.8
   - @plitzi/sdk-shared@0.28.8
-  - @plitzi/sdk-state@0.28.8
   - @plitzi/sdk-style@0.28.8
   - @plitzi/sdk-variables@0.28.8
 
@@ -644,7 +613,6 @@
   - @plitzi/sdk-plugins@0.28.7
   - @plitzi/sdk-schema@0.28.7
   - @plitzi/sdk-shared@0.28.7
-  - @plitzi/sdk-state@0.28.7
   - @plitzi/sdk-style@0.28.7
   - @plitzi/sdk-variables@0.28.7
 
@@ -663,7 +631,6 @@
   - @plitzi/sdk-plugins@0.28.6
   - @plitzi/sdk-schema@0.28.6
   - @plitzi/sdk-shared@0.28.6
-  - @plitzi/sdk-state@0.28.6
   - @plitzi/sdk-style@0.28.6
   - @plitzi/sdk-variables@0.28.6
 
@@ -682,7 +649,6 @@
   - @plitzi/sdk-plugins@0.28.5
   - @plitzi/sdk-schema@0.28.5
   - @plitzi/sdk-shared@0.28.5
-  - @plitzi/sdk-state@0.28.5
   - @plitzi/sdk-style@0.28.5
   - @plitzi/sdk-variables@0.28.5
 
@@ -701,7 +667,6 @@
   - @plitzi/sdk-plugins@0.28.4
   - @plitzi/sdk-schema@0.28.4
   - @plitzi/sdk-shared@0.28.4
-  - @plitzi/sdk-state@0.28.4
   - @plitzi/sdk-style@0.28.4
   - @plitzi/sdk-variables@0.28.4
 
@@ -720,7 +685,6 @@
   - @plitzi/sdk-plugins@0.28.3
   - @plitzi/sdk-schema@0.28.3
   - @plitzi/sdk-shared@0.28.3
-  - @plitzi/sdk-state@0.28.3
   - @plitzi/sdk-style@0.28.3
   - @plitzi/sdk-variables@0.28.3
 
@@ -739,7 +703,6 @@
   - @plitzi/sdk-plugins@0.28.2
   - @plitzi/sdk-schema@0.28.2
   - @plitzi/sdk-shared@0.28.2
-  - @plitzi/sdk-state@0.28.2
   - @plitzi/sdk-style@0.28.2
   - @plitzi/sdk-variables@0.28.2
 
@@ -758,7 +721,6 @@
   - @plitzi/sdk-plugins@0.28.1
   - @plitzi/sdk-schema@0.28.1
   - @plitzi/sdk-shared@0.28.1
-  - @plitzi/sdk-state@0.28.1
   - @plitzi/sdk-style@0.28.1
   - @plitzi/sdk-variables@0.28.1
 
@@ -780,7 +742,6 @@
   - @plitzi/sdk-plugins@0.28.0
   - @plitzi/sdk-schema@0.28.0
   - @plitzi/sdk-shared@0.28.0
-  - @plitzi/sdk-state@0.28.0
   - @plitzi/sdk-style@0.28.0
   - @plitzi/sdk-variables@0.28.0
 
@@ -799,7 +760,6 @@
   - @plitzi/sdk-navigation@0.27.23
   - @plitzi/sdk-plugins@0.27.23
   - @plitzi/sdk-schema@0.27.23
-  - @plitzi/sdk-state@0.27.23
   - @plitzi/sdk-style@0.27.23
   - @plitzi/sdk-variables@0.27.23
 
@@ -818,7 +778,6 @@
   - @plitzi/sdk-plugins@0.27.22
   - @plitzi/sdk-schema@0.27.22
   - @plitzi/sdk-shared@0.27.22
-  - @plitzi/sdk-state@0.27.22
   - @plitzi/sdk-style@0.27.22
   - @plitzi/sdk-variables@0.27.22
 
@@ -837,7 +796,6 @@
   - @plitzi/sdk-plugins@0.27.21
   - @plitzi/sdk-schema@0.27.21
   - @plitzi/sdk-shared@0.27.21
-  - @plitzi/sdk-state@0.27.21
   - @plitzi/sdk-style@0.27.21
   - @plitzi/sdk-variables@0.27.21
 
@@ -856,7 +814,6 @@
   - @plitzi/sdk-plugins@0.27.20
   - @plitzi/sdk-schema@0.27.20
   - @plitzi/sdk-shared@0.27.20
-  - @plitzi/sdk-state@0.27.20
   - @plitzi/sdk-style@0.27.20
   - @plitzi/sdk-variables@0.27.20
 
@@ -875,7 +832,6 @@
   - @plitzi/sdk-plugins@0.27.19
   - @plitzi/sdk-schema@0.27.19
   - @plitzi/sdk-shared@0.27.19
-  - @plitzi/sdk-state@0.27.19
   - @plitzi/sdk-style@0.27.19
   - @plitzi/sdk-variables@0.27.19
 
@@ -894,7 +850,6 @@
   - @plitzi/sdk-plugins@0.27.18
   - @plitzi/sdk-schema@0.27.18
   - @plitzi/sdk-shared@0.27.18
-  - @plitzi/sdk-state@0.27.18
   - @plitzi/sdk-style@0.27.18
   - @plitzi/sdk-variables@0.27.18
 
@@ -915,7 +870,6 @@
   - @plitzi/sdk-navigation@0.27.17
   - @plitzi/sdk-plugins@0.27.17
   - @plitzi/sdk-schema@0.27.17
-  - @plitzi/sdk-state@0.27.17
 
 ## 0.27.16
 
@@ -932,7 +886,6 @@
   - @plitzi/sdk-navigation@0.27.16
   - @plitzi/sdk-plugins@0.27.16
   - @plitzi/sdk-schema@0.27.16
-  - @plitzi/sdk-state@0.27.16
   - @plitzi/sdk-style@0.27.16
   - @plitzi/sdk-variables@0.27.16
 
@@ -951,7 +904,6 @@
   - @plitzi/sdk-plugins@0.27.15
   - @plitzi/sdk-schema@0.27.15
   - @plitzi/sdk-shared@0.27.15
-  - @plitzi/sdk-state@0.27.15
   - @plitzi/sdk-style@0.27.15
   - @plitzi/sdk-variables@0.27.15
 
@@ -970,7 +922,6 @@
   - @plitzi/sdk-plugins@0.27.14
   - @plitzi/sdk-schema@0.27.14
   - @plitzi/sdk-shared@0.27.14
-  - @plitzi/sdk-state@0.27.14
   - @plitzi/sdk-style@0.27.14
   - @plitzi/sdk-variables@0.27.14
 
@@ -989,7 +940,6 @@
   - @plitzi/sdk-plugins@0.27.13
   - @plitzi/sdk-schema@0.27.13
   - @plitzi/sdk-shared@0.27.13
-  - @plitzi/sdk-state@0.27.13
   - @plitzi/sdk-style@0.27.13
   - @plitzi/sdk-variables@0.27.13
 
@@ -1008,7 +958,6 @@
   - @plitzi/sdk-plugins@0.27.12
   - @plitzi/sdk-schema@0.27.12
   - @plitzi/sdk-shared@0.27.12
-  - @plitzi/sdk-state@0.27.12
   - @plitzi/sdk-style@0.27.12
   - @plitzi/sdk-variables@0.27.12
 
@@ -1028,7 +977,6 @@
   - @plitzi/sdk-plugins@0.27.11
   - @plitzi/sdk-schema@0.27.11
   - @plitzi/sdk-shared@0.27.11
-  - @plitzi/sdk-state@0.27.11
   - @plitzi/sdk-variables@0.27.11
 
 ## 0.27.10
@@ -1046,7 +994,6 @@
   - @plitzi/sdk-plugins@0.27.10
   - @plitzi/sdk-schema@0.27.10
   - @plitzi/sdk-shared@0.27.10
-  - @plitzi/sdk-state@0.27.10
   - @plitzi/sdk-style@0.27.10
   - @plitzi/sdk-variables@0.27.10
 
@@ -1065,7 +1012,6 @@
   - @plitzi/sdk-plugins@0.27.9
   - @plitzi/sdk-schema@0.27.9
   - @plitzi/sdk-shared@0.27.9
-  - @plitzi/sdk-state@0.27.9
   - @plitzi/sdk-style@0.27.9
   - @plitzi/sdk-variables@0.27.9
 
@@ -1084,7 +1030,6 @@
   - @plitzi/sdk-navigation@0.27.8
   - @plitzi/sdk-plugins@0.27.8
   - @plitzi/sdk-schema@0.27.8
-  - @plitzi/sdk-state@0.27.8
   - @plitzi/sdk-style@0.27.8
   - @plitzi/sdk-variables@0.27.8
 
@@ -1103,7 +1048,6 @@
   - @plitzi/sdk-plugins@0.27.7
   - @plitzi/sdk-schema@0.27.7
   - @plitzi/sdk-shared@0.27.7
-  - @plitzi/sdk-state@0.27.7
   - @plitzi/sdk-style@0.27.7
   - @plitzi/sdk-variables@0.27.7
 
@@ -1122,7 +1066,6 @@
   - @plitzi/sdk-plugins@0.27.6
   - @plitzi/sdk-schema@0.27.6
   - @plitzi/sdk-shared@0.27.6
-  - @plitzi/sdk-state@0.27.6
   - @plitzi/sdk-style@0.27.6
   - @plitzi/sdk-variables@0.27.6
 
@@ -1141,7 +1084,6 @@
   - @plitzi/sdk-plugins@0.27.5
   - @plitzi/sdk-schema@0.27.5
   - @plitzi/sdk-shared@0.27.5
-  - @plitzi/sdk-state@0.27.5
   - @plitzi/sdk-style@0.27.5
   - @plitzi/sdk-variables@0.27.5
 
@@ -1160,7 +1102,6 @@
   - @plitzi/sdk-plugins@0.27.4
   - @plitzi/sdk-schema@0.27.4
   - @plitzi/sdk-shared@0.27.4
-  - @plitzi/sdk-state@0.27.4
   - @plitzi/sdk-style@0.27.4
   - @plitzi/sdk-variables@0.27.4
 
@@ -1179,7 +1120,6 @@
   - @plitzi/sdk-plugins@0.27.3
   - @plitzi/sdk-schema@0.27.3
   - @plitzi/sdk-shared@0.27.3
-  - @plitzi/sdk-state@0.27.3
   - @plitzi/sdk-style@0.27.3
   - @plitzi/sdk-variables@0.27.3
 
@@ -1198,7 +1138,6 @@
   - @plitzi/sdk-plugins@0.27.2
   - @plitzi/sdk-schema@0.27.2
   - @plitzi/sdk-shared@0.27.2
-  - @plitzi/sdk-state@0.27.2
   - @plitzi/sdk-style@0.27.2
   - @plitzi/sdk-variables@0.27.2
 
@@ -1217,7 +1156,6 @@
   - @plitzi/sdk-interactions@0.27.1
   - @plitzi/sdk-plugins@0.27.1
   - @plitzi/sdk-schema@0.27.1
-  - @plitzi/sdk-state@0.27.1
   - @plitzi/sdk-style@0.27.1
   - @plitzi/sdk-variables@0.27.1
 
@@ -1239,7 +1177,6 @@
   - @plitzi/sdk-plugins@0.27.0
   - @plitzi/sdk-schema@0.27.0
   - @plitzi/sdk-shared@0.27.0
-  - @plitzi/sdk-state@0.27.0
   - @plitzi/sdk-style@0.27.0
   - @plitzi/sdk-variables@0.27.0
 
@@ -1258,7 +1195,6 @@
   - @plitzi/sdk-plugins@0.26.5
   - @plitzi/sdk-schema@0.26.5
   - @plitzi/sdk-shared@0.26.5
-  - @plitzi/sdk-state@0.26.5
   - @plitzi/sdk-style@0.26.5
   - @plitzi/sdk-auth@0.26.5
 
@@ -1277,7 +1213,6 @@
   - @plitzi/sdk-plugins@0.26.4
   - @plitzi/sdk-schema@0.26.4
   - @plitzi/sdk-shared@0.26.4
-  - @plitzi/sdk-state@0.26.4
   - @plitzi/sdk-style@0.26.4
   - @plitzi/sdk-variables@0.26.4
 
@@ -1296,7 +1231,6 @@
   - @plitzi/sdk-plugins@0.26.3
   - @plitzi/sdk-schema@0.26.3
   - @plitzi/sdk-shared@0.26.3
-  - @plitzi/sdk-state@0.26.3
   - @plitzi/sdk-style@0.26.3
   - @plitzi/sdk-variables@0.26.3
 
@@ -1315,7 +1249,6 @@
   - @plitzi/sdk-plugins@0.26.2
   - @plitzi/sdk-schema@0.26.2
   - @plitzi/sdk-shared@0.26.2
-  - @plitzi/sdk-state@0.26.2
   - @plitzi/sdk-style@0.26.2
   - @plitzi/sdk-auth@0.26.2
 
@@ -1334,7 +1267,6 @@
   - @plitzi/sdk-plugins@0.26.1
   - @plitzi/sdk-schema@0.26.1
   - @plitzi/sdk-shared@0.26.1
-  - @plitzi/sdk-state@0.26.1
   - @plitzi/sdk-style@0.26.1
   - @plitzi/sdk-variables@0.26.1
 
@@ -1356,7 +1288,6 @@
   - @plitzi/sdk-plugins@0.26.0
   - @plitzi/sdk-schema@0.26.0
   - @plitzi/sdk-shared@0.26.0
-  - @plitzi/sdk-state@0.26.0
   - @plitzi/sdk-style@0.26.0
   - @plitzi/sdk-variables@0.26.0
 
@@ -1375,7 +1306,6 @@
   - @plitzi/sdk-plugins@0.25.12
   - @plitzi/sdk-schema@0.25.12
   - @plitzi/sdk-shared@0.25.12
-  - @plitzi/sdk-state@0.25.12
   - @plitzi/sdk-style@0.25.12
   - @plitzi/sdk-variables@0.25.12
 
@@ -1394,7 +1324,6 @@
   - @plitzi/sdk-plugins@0.25.11
   - @plitzi/sdk-schema@0.25.11
   - @plitzi/sdk-shared@0.25.11
-  - @plitzi/sdk-state@0.25.11
   - @plitzi/sdk-style@0.25.11
   - @plitzi/sdk-variables@0.25.11
 
@@ -1413,7 +1342,6 @@
   - @plitzi/sdk-plugins@0.25.10
   - @plitzi/sdk-schema@0.25.10
   - @plitzi/sdk-shared@0.25.10
-  - @plitzi/sdk-state@0.25.10
   - @plitzi/sdk-style@0.25.10
   - @plitzi/sdk-variables@0.25.10
 
@@ -1432,7 +1360,6 @@
   - @plitzi/sdk-plugins@0.25.9
   - @plitzi/sdk-schema@0.25.9
   - @plitzi/sdk-shared@0.25.9
-  - @plitzi/sdk-state@0.25.9
   - @plitzi/sdk-style@0.25.9
   - @plitzi/sdk-variables@0.25.9
 
@@ -1451,7 +1378,6 @@
   - @plitzi/sdk-plugins@0.25.8
   - @plitzi/sdk-schema@0.25.8
   - @plitzi/sdk-shared@0.25.8
-  - @plitzi/sdk-state@0.25.8
   - @plitzi/sdk-style@0.25.8
   - @plitzi/sdk-variables@0.25.8
 
@@ -1470,7 +1396,6 @@
   - @plitzi/sdk-plugins@0.25.7
   - @plitzi/sdk-schema@0.25.7
   - @plitzi/sdk-shared@0.25.7
-  - @plitzi/sdk-state@0.25.7
   - @plitzi/sdk-style@0.25.7
   - @plitzi/sdk-variables@0.25.7
 
@@ -1490,7 +1415,6 @@
   - @plitzi/sdk-plugins@0.25.6
   - @plitzi/sdk-schema@0.25.6
   - @plitzi/sdk-shared@0.25.6
-  - @plitzi/sdk-state@0.25.6
   - @plitzi/sdk-style@0.25.6
 
 ## 0.25.5
@@ -1508,7 +1432,6 @@
   - @plitzi/sdk-plugins@0.25.5
   - @plitzi/sdk-schema@0.25.5
   - @plitzi/sdk-shared@0.25.5
-  - @plitzi/sdk-state@0.25.5
   - @plitzi/sdk-style@0.25.5
   - @plitzi/sdk-variables@0.25.5
 
@@ -1527,7 +1450,6 @@
   - @plitzi/sdk-plugins@0.25.4
   - @plitzi/sdk-schema@0.25.4
   - @plitzi/sdk-shared@0.25.4
-  - @plitzi/sdk-state@0.25.4
   - @plitzi/sdk-style@0.25.4
   - @plitzi/sdk-auth@0.25.4
 
@@ -1546,7 +1468,6 @@
   - @plitzi/sdk-plugins@0.25.3
   - @plitzi/sdk-schema@0.25.3
   - @plitzi/sdk-shared@0.25.3
-  - @plitzi/sdk-state@0.25.3
   - @plitzi/sdk-style@0.25.3
   - @plitzi/sdk-variables@0.25.3
 
@@ -1566,7 +1487,6 @@
   - @plitzi/sdk-event-bridge@0.25.2
   - @plitzi/sdk-interactions@0.25.2
   - @plitzi/sdk-plugins@0.25.2
-  - @plitzi/sdk-state@0.25.2
   - @plitzi/sdk-variables@0.25.2
 
 ## 0.25.1
@@ -1584,7 +1504,6 @@
   - @plitzi/sdk-plugins@0.25.1
   - @plitzi/sdk-schema@0.25.1
   - @plitzi/sdk-shared@0.25.1
-  - @plitzi/sdk-state@0.25.1
   - @plitzi/sdk-style@0.25.1
   - @plitzi/sdk-auth@0.25.1
 
@@ -1606,7 +1525,6 @@
   - @plitzi/sdk-plugins@0.25.0
   - @plitzi/sdk-schema@0.25.0
   - @plitzi/sdk-shared@0.25.0
-  - @plitzi/sdk-state@0.25.0
   - @plitzi/sdk-style@0.25.0
   - @plitzi/sdk-variables@0.25.0
 
@@ -1625,7 +1543,6 @@
   - @plitzi/sdk-plugins@0.24.12
   - @plitzi/sdk-schema@0.24.12
   - @plitzi/sdk-shared@0.24.12
-  - @plitzi/sdk-state@0.24.12
   - @plitzi/sdk-style@0.24.12
   - @plitzi/sdk-auth@0.24.12
 
@@ -1644,7 +1561,6 @@
   - @plitzi/sdk-plugins@0.24.11
   - @plitzi/sdk-schema@0.24.11
   - @plitzi/sdk-shared@0.24.11
-  - @plitzi/sdk-state@0.24.11
   - @plitzi/sdk-style@0.24.11
   - @plitzi/sdk-variables@0.24.11
 
@@ -1663,7 +1579,6 @@
   - @plitzi/sdk-plugins@0.24.10
   - @plitzi/sdk-schema@0.24.10
   - @plitzi/sdk-shared@0.24.10
-  - @plitzi/sdk-state@0.24.10
   - @plitzi/sdk-style@0.24.10
   - @plitzi/sdk-variables@0.24.10
 
@@ -1682,7 +1597,6 @@
   - @plitzi/sdk-navigation@0.24.9
   - @plitzi/sdk-plugins@0.24.9
   - @plitzi/sdk-schema@0.24.9
-  - @plitzi/sdk-state@0.24.9
   - @plitzi/sdk-style@0.24.9
   - @plitzi/sdk-variables@0.24.9
 
@@ -1701,7 +1615,6 @@
   - @plitzi/sdk-plugins@0.24.8
   - @plitzi/sdk-schema@0.24.8
   - @plitzi/sdk-shared@0.24.8
-  - @plitzi/sdk-state@0.24.8
   - @plitzi/sdk-style@0.24.8
   - @plitzi/sdk-auth@0.24.8
 
@@ -1720,7 +1633,6 @@
   - @plitzi/sdk-plugins@0.24.7
   - @plitzi/sdk-schema@0.24.7
   - @plitzi/sdk-shared@0.24.7
-  - @plitzi/sdk-state@0.24.7
   - @plitzi/sdk-style@0.24.7
   - @plitzi/sdk-variables@0.24.7
 
@@ -1740,7 +1652,6 @@
   - @plitzi/sdk-plugins@0.24.6
   - @plitzi/sdk-schema@0.24.6
   - @plitzi/sdk-shared@0.24.6
-  - @plitzi/sdk-state@0.24.6
   - @plitzi/sdk-variables@0.24.6
 
 ## 0.24.5
@@ -1758,7 +1669,6 @@
   - @plitzi/sdk-plugins@0.24.5
   - @plitzi/sdk-schema@0.24.5
   - @plitzi/sdk-shared@0.24.5
-  - @plitzi/sdk-state@0.24.5
   - @plitzi/sdk-style@0.24.5
   - @plitzi/sdk-auth@0.24.5
 
@@ -1777,7 +1687,6 @@
   - @plitzi/sdk-plugins@0.24.4
   - @plitzi/sdk-schema@0.24.4
   - @plitzi/sdk-shared@0.24.4
-  - @plitzi/sdk-state@0.24.4
   - @plitzi/sdk-style@0.24.4
   - @plitzi/sdk-auth@0.24.4
 
@@ -1798,7 +1707,6 @@
   - @plitzi/sdk-navigation@0.24.3
   - @plitzi/sdk-plugins@0.24.3
   - @plitzi/sdk-shared@0.24.3
-  - @plitzi/sdk-state@0.24.3
 
 ## 0.24.2
 
@@ -1815,7 +1723,6 @@
   - @plitzi/sdk-plugins@0.24.2
   - @plitzi/sdk-schema@0.24.2
   - @plitzi/sdk-shared@0.24.2
-  - @plitzi/sdk-state@0.24.2
   - @plitzi/sdk-style@0.24.2
   - @plitzi/sdk-variables@0.24.2
 
@@ -1834,7 +1741,6 @@
   - @plitzi/sdk-plugins@0.24.1
   - @plitzi/sdk-schema@0.24.1
   - @plitzi/sdk-shared@0.24.1
-  - @plitzi/sdk-state@0.24.1
   - @plitzi/sdk-style@0.24.1
   - @plitzi/sdk-variables@0.24.1
 
@@ -1856,7 +1762,6 @@
   - @plitzi/sdk-plugins@0.24.0
   - @plitzi/sdk-schema@0.24.0
   - @plitzi/sdk-shared@0.24.0
-  - @plitzi/sdk-state@0.24.0
   - @plitzi/sdk-style@0.24.0
   - @plitzi/sdk-variables@0.24.0
 
@@ -1875,7 +1780,6 @@
   - @plitzi/sdk-plugins@0.23.24
   - @plitzi/sdk-schema@0.23.24
   - @plitzi/sdk-shared@0.23.24
-  - @plitzi/sdk-state@0.23.24
   - @plitzi/sdk-style@0.23.24
   - @plitzi/sdk-variables@0.23.24
 
@@ -1894,7 +1798,6 @@
   - @plitzi/sdk-plugins@0.23.23
   - @plitzi/sdk-schema@0.23.23
   - @plitzi/sdk-shared@0.23.23
-  - @plitzi/sdk-state@0.23.23
   - @plitzi/sdk-style@0.23.23
   - @plitzi/sdk-variables@0.23.23
 
@@ -1913,7 +1816,6 @@
   - @plitzi/sdk-plugins@0.23.22
   - @plitzi/sdk-schema@0.23.22
   - @plitzi/sdk-shared@0.23.22
-  - @plitzi/sdk-state@0.23.22
   - @plitzi/sdk-style@0.23.22
   - @plitzi/sdk-variables@0.23.22
 
@@ -1932,7 +1834,6 @@
   - @plitzi/sdk-plugins@0.23.21
   - @plitzi/sdk-schema@0.23.21
   - @plitzi/sdk-shared@0.23.21
-  - @plitzi/sdk-state@0.23.21
   - @plitzi/sdk-style@0.23.21
   - @plitzi/sdk-variables@0.23.21
 
@@ -1951,7 +1852,6 @@
   - @plitzi/sdk-plugins@0.23.20
   - @plitzi/sdk-schema@0.23.20
   - @plitzi/sdk-shared@0.23.20
-  - @plitzi/sdk-state@0.23.20
   - @plitzi/sdk-style@0.23.20
   - @plitzi/sdk-variables@0.23.20
 
@@ -1970,7 +1870,6 @@
   - @plitzi/sdk-plugins@0.23.19
   - @plitzi/sdk-schema@0.23.19
   - @plitzi/sdk-shared@0.23.19
-  - @plitzi/sdk-state@0.23.19
   - @plitzi/sdk-style@0.23.19
   - @plitzi/sdk-variables@0.23.19
 
@@ -1989,7 +1888,6 @@
   - @plitzi/sdk-plugins@0.23.18
   - @plitzi/sdk-schema@0.23.18
   - @plitzi/sdk-shared@0.23.18
-  - @plitzi/sdk-state@0.23.18
   - @plitzi/sdk-style@0.23.18
   - @plitzi/sdk-variables@0.23.18
 
@@ -2008,7 +1906,6 @@
   - @plitzi/sdk-plugins@0.23.17
   - @plitzi/sdk-schema@0.23.17
   - @plitzi/sdk-shared@0.23.17
-  - @plitzi/sdk-state@0.23.17
   - @plitzi/sdk-style@0.23.17
   - @plitzi/sdk-variables@0.23.17
 
@@ -2027,7 +1924,6 @@
   - @plitzi/sdk-plugins@0.23.16
   - @plitzi/sdk-schema@0.23.16
   - @plitzi/sdk-shared@0.23.16
-  - @plitzi/sdk-state@0.23.16
   - @plitzi/sdk-style@0.23.16
   - @plitzi/sdk-variables@0.23.16
 
@@ -2046,7 +1942,6 @@
   - @plitzi/sdk-plugins@0.23.15
   - @plitzi/sdk-schema@0.23.15
   - @plitzi/sdk-shared@0.23.15
-  - @plitzi/sdk-state@0.23.15
   - @plitzi/sdk-style@0.23.15
   - @plitzi/sdk-variables@0.23.15
 
@@ -2065,7 +1960,6 @@
   - @plitzi/sdk-plugins@0.23.14
   - @plitzi/sdk-schema@0.23.14
   - @plitzi/sdk-shared@0.23.14
-  - @plitzi/sdk-state@0.23.14
   - @plitzi/sdk-style@0.23.14
   - @plitzi/sdk-auth@0.23.14
 
@@ -2084,7 +1978,6 @@
   - @plitzi/sdk-plugins@0.23.13
   - @plitzi/sdk-schema@0.23.13
   - @plitzi/sdk-shared@0.23.13
-  - @plitzi/sdk-state@0.23.13
   - @plitzi/sdk-style@0.23.13
   - @plitzi/sdk-variables@0.23.13
 
@@ -2103,7 +1996,6 @@
   - @plitzi/sdk-plugins@0.23.12
   - @plitzi/sdk-schema@0.23.12
   - @plitzi/sdk-shared@0.23.12
-  - @plitzi/sdk-state@0.23.12
   - @plitzi/sdk-style@0.23.12
   - @plitzi/sdk-variables@0.23.12
 
@@ -2122,7 +2014,6 @@
   - @plitzi/sdk-plugins@0.23.11
   - @plitzi/sdk-schema@0.23.11
   - @plitzi/sdk-shared@0.23.11
-  - @plitzi/sdk-state@0.23.11
   - @plitzi/sdk-style@0.23.11
   - @plitzi/sdk-variables@0.23.11
 
@@ -2141,7 +2032,6 @@
   - @plitzi/sdk-plugins@0.23.10
   - @plitzi/sdk-schema@0.23.10
   - @plitzi/sdk-shared@0.23.10
-  - @plitzi/sdk-state@0.23.10
   - @plitzi/sdk-style@0.23.10
   - @plitzi/sdk-variables@0.23.10
 
@@ -2160,7 +2050,6 @@
   - @plitzi/sdk-plugins@0.23.9
   - @plitzi/sdk-schema@0.23.9
   - @plitzi/sdk-shared@0.23.9
-  - @plitzi/sdk-state@0.23.9
   - @plitzi/sdk-style@0.23.9
   - @plitzi/sdk-variables@0.23.9
 
@@ -2179,7 +2068,6 @@
   - @plitzi/sdk-plugins@0.23.8
   - @plitzi/sdk-schema@0.23.8
   - @plitzi/sdk-shared@0.23.8
-  - @plitzi/sdk-state@0.23.8
   - @plitzi/sdk-style@0.23.8
   - @plitzi/sdk-variables@0.23.8
 
@@ -2198,7 +2086,6 @@
   - @plitzi/sdk-navigation@0.23.7
   - @plitzi/sdk-plugins@0.23.7
   - @plitzi/sdk-schema@0.23.7
-  - @plitzi/sdk-state@0.23.7
   - @plitzi/sdk-style@0.23.7
   - @plitzi/sdk-variables@0.23.7
 
@@ -2217,7 +2104,6 @@
   - @plitzi/sdk-plugins@0.23.6
   - @plitzi/sdk-schema@0.23.6
   - @plitzi/sdk-shared@0.23.6
-  - @plitzi/sdk-state@0.23.6
   - @plitzi/sdk-style@0.23.6
   - @plitzi/sdk-variables@0.23.6
 
@@ -2236,7 +2122,6 @@
   - @plitzi/sdk-plugins@0.23.5
   - @plitzi/sdk-schema@0.23.5
   - @plitzi/sdk-shared@0.23.5
-  - @plitzi/sdk-state@0.23.5
   - @plitzi/sdk-style@0.23.5
   - @plitzi/sdk-variables@0.23.5
 
@@ -2255,7 +2140,6 @@
   - @plitzi/sdk-plugins@0.23.4
   - @plitzi/sdk-schema@0.23.4
   - @plitzi/sdk-shared@0.23.4
-  - @plitzi/sdk-state@0.23.4
   - @plitzi/sdk-style@0.23.4
   - @plitzi/sdk-variables@0.23.4
 
@@ -2272,7 +2156,6 @@
   - @plitzi/sdk-elements@0.23.3
   - @plitzi/sdk-plugins@0.23.3
   - @plitzi/sdk-shared@0.23.3
-  - @plitzi/sdk-state@0.23.3
   - @plitzi/sdk-auth@0.23.3
 
 ## 0.23.2
@@ -2289,7 +2172,6 @@
   - @plitzi/sdk-navigation@0.23.2
   - @plitzi/sdk-plugins@0.23.2
   - @plitzi/sdk-shared@0.23.2
-  - @plitzi/sdk-state@0.23.2
 
 ## 0.23.1
 
@@ -2305,7 +2187,6 @@
   - @plitzi/sdk-navigation@0.23.1
   - @plitzi/sdk-plugins@0.23.1
   - @plitzi/sdk-shared@0.23.1
-  - @plitzi/sdk-state@0.23.1
 
 ## 0.23.0
 
@@ -2324,7 +2205,6 @@
   - @plitzi/sdk-navigation@0.23.0
   - @plitzi/sdk-plugins@0.23.0
   - @plitzi/sdk-shared@0.23.0
-  - @plitzi/sdk-state@0.23.0
 
 ## 0.22.20
 
@@ -2340,7 +2220,6 @@
   - @plitzi/sdk-navigation@0.22.20
   - @plitzi/sdk-plugins@0.22.20
   - @plitzi/sdk-shared@0.22.20
-  - @plitzi/sdk-state@0.22.20
 
 ## 0.22.19
 
@@ -2356,7 +2235,6 @@
   - @plitzi/sdk-navigation@0.22.19
   - @plitzi/sdk-plugins@0.22.19
   - @plitzi/sdk-shared@0.22.19
-  - @plitzi/sdk-state@0.22.19
 
 ## 0.22.18
 
@@ -2372,7 +2250,6 @@
   - @plitzi/sdk-navigation@0.22.18
   - @plitzi/sdk-plugins@0.22.18
   - @plitzi/sdk-shared@0.22.18
-  - @plitzi/sdk-state@0.22.18
 
 ## 0.22.17
 
@@ -2388,7 +2265,6 @@
   - @plitzi/sdk-interactions@0.22.17
   - @plitzi/sdk-navigation@0.22.17
   - @plitzi/sdk-plugins@0.22.17
-  - @plitzi/sdk-state@0.22.17
 
 ## 0.22.16
 
@@ -2404,7 +2280,6 @@
   - @plitzi/sdk-navigation@0.22.16
   - @plitzi/sdk-plugins@0.22.16
   - @plitzi/sdk-shared@0.22.16
-  - @plitzi/sdk-state@0.22.16
 
 ## 0.22.15
 
@@ -2420,7 +2295,6 @@
   - @plitzi/sdk-navigation@0.22.15
   - @plitzi/sdk-plugins@0.22.15
   - @plitzi/sdk-shared@0.22.15
-  - @plitzi/sdk-state@0.22.15
 
 ## 0.22.14
 
@@ -2436,7 +2310,6 @@
   - @plitzi/sdk-navigation@0.22.14
   - @plitzi/sdk-plugins@0.22.14
   - @plitzi/sdk-shared@0.22.14
-  - @plitzi/sdk-state@0.22.14
 
 ## 0.22.13
 
@@ -2452,7 +2325,6 @@
   - @plitzi/sdk-navigation@0.22.13
   - @plitzi/sdk-plugins@0.22.13
   - @plitzi/sdk-shared@0.22.13
-  - @plitzi/sdk-state@0.22.13
 
 ## 0.22.12
 
@@ -2467,7 +2339,6 @@
   - @plitzi/sdk-elements@0.22.12
   - @plitzi/sdk-plugins@0.22.12
   - @plitzi/sdk-shared@0.22.12
-  - @plitzi/sdk-state@0.22.12
   - @plitzi/sdk-auth@0.22.12
 
 ## 0.22.11
@@ -2484,7 +2355,6 @@
   - @plitzi/sdk-navigation@0.22.11
   - @plitzi/sdk-plugins@0.22.11
   - @plitzi/sdk-shared@0.22.11
-  - @plitzi/sdk-state@0.22.11
 
 ## 0.22.10
 
@@ -2500,7 +2370,6 @@
   - @plitzi/sdk-interactions@0.22.10
   - @plitzi/sdk-navigation@0.22.10
   - @plitzi/sdk-plugins@0.22.10
-  - @plitzi/sdk-state@0.22.10
 
 ## 0.22.9
 
