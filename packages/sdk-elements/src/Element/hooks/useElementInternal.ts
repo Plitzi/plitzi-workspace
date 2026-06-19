@@ -37,13 +37,16 @@ export const getProps = (
   // Variables
   const { variables } = dataSource;
   if (variables && Object.keys(variables).length > 0) {
-    attributes = Object.keys(attributes).reduce((acum, key) => {
-      if (typeof attributes[key] === 'string' && hasValidToken(attributes[key])) {
-        return { ...acum, [key]: processTwig(attributes[key], variables as Record<string, unknown>, true) };
-      }
+    const interpolated: Element['attributes'] = {};
+    for (const key of Object.keys(attributes)) {
+      const value = attributes[key];
+      interpolated[key] =
+        typeof value === 'string' && hasValidToken(value)
+          ? processTwig(value, variables as Record<string, unknown>, true)
+          : value;
+    }
 
-      return { ...acum, [key]: attributes[key] };
-    }, {});
+    attributes = interpolated;
   }
 
   // State

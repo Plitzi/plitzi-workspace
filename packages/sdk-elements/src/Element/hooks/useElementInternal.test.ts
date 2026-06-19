@@ -61,4 +61,41 @@ describe('getProps (element resolution)', () => {
 
     expect(result.attributes.text).toBe('bound');
   });
+
+  it('injects attributes carried on internalProps over the element attributes', () => {
+    const result = getProps(makeElement(undefined, { text: 'base', color: 'red' }), {
+      ...internal,
+      attributes: { color: 'blue' }
+    });
+
+    expect(result.attributes.text).toBe('base');
+    expect(result.attributes.color).toBe('blue');
+  });
+
+  it('overrides rootId from plitziElementLayout when present', () => {
+    const result = getProps(makeElement(undefined, { text: 'hi' }), {
+      ...internal,
+      plitziElementLayout: {
+        rootId: 'layoutRoot',
+        containerId: 'c1',
+        referenceId: 'r1',
+        type: 'layout',
+        bodyChildren: undefined
+      }
+    });
+
+    expect(result.rootId).toBe('layoutRoot');
+  });
+
+  it('merges state.styleSelectors into the definition styleSelectors and keeps them out of attributes', () => {
+    const result = getProps(
+      makeElement(undefined, { text: 'hi' }),
+      internal,
+      {},
+      { styleSelectors: { hover: 'hovered' } }
+    );
+
+    expect(result.definition.styleSelectors.hover).toContain('hovered');
+    expect(result.attributes.styleSelectors).toBeUndefined();
+  });
 });

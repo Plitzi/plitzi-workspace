@@ -1,0 +1,3 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Element pipeline (golden) > renders a Text element through withElement + RootElement 1`] = `"<div class="plitzi-component__text plitzi__text el1-base">Hello World</div>"`;

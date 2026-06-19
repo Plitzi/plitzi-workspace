@@ -1,4 +1,4 @@
-import { set, omit } from '@plitzi/plitzi-ui/helpers';
+import { set } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 import { useCallback, useMemo, useRef } from 'react';
 
@@ -40,14 +40,8 @@ const useElementInteractions = ({ attributes, definition, setElementState }: Use
       }
 
       const { key } = params;
-      let { value } = params;
-      value = sanityValue(value as string | number | boolean);
-      let newState = {};
-      if (typeof value === 'undefined') {
-        newState = omit(prevState, [key as string]);
-      } else {
-        newState = produce(prevState, draft => set(draft, key as string, value));
-      }
+      const value = sanityValue(params.value as string | number | boolean);
+      const newState = produce(prevState, draft => set(draft, key as string, value));
 
       if (setElementState(newState)) {
         prevStateRef.current = newState;

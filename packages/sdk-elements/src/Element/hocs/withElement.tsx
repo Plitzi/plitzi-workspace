@@ -1,5 +1,3 @@
-/* eslint-disable react-hooks/rules-of-hooks */
-
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
 import { omit } from '@plitzi/plitzi-ui/helpers/lodash';
 import { useMemo, useRef } from 'react';
@@ -22,24 +20,29 @@ export type WithElementProps<T> = {
 } & T;
 
 const withElement = <T extends object>(WrappedComponent: FC<T>) => {
-  const WithElementComponent = (props: WithElementProps<T>) => {
-    const ref = useRef<HTMLElement>(undefined);
+  // Manual-render path (JSX manager): skips the heavy resolution pipeline and only exposes element identity.
+  const SkipHocElement = (props: WithElementProps<T>) => {
     const { id, rootId } = props.internalProps;
-    const contextValueSkipHOC = useMemo<ElementContextValue<'skipHOC'>>(
+    const contextValue = useMemo<ElementContextValue<'skipHOC'>>(
       () => ({ id, rootId, plitziJsxSkipHOC: true }),
       [id, rootId]
     );
-    if (props.plitziJsxSkipHOC) {
-      return useMemo(
-        () => (
-          <ElementContext value={contextValueSkipHOC}>
-            <WrappedComponent {...props} internalProps={props.internalProps} />
-          </ElementContext>
-        ),
-        [contextValueSkipHOC, props]
-      );
-    }
 
+    return useMemo(
+      () => (
+        <ElementContext value={contextValue}>
+          <WrappedComponent {...props} internalProps={props.internalProps} />
+        </ElementContext>
+      ),
+      [contextValue, props]
+    );
+  };
+
+  // Pre-render phase: resolve the element's data (schema, bindings, state, styleSelectors) and inject it as the
+  // element context the wrapped component consumes.
+  const FullElement = (props: WithElementProps<T>) => {
+    const ref = useRef<HTMLElement>(undefined);
+    const { id, rootId } = props.internalProps;
     const {
       settings: { previewMode },
       root: { baseElementId }
@@ -91,6 +94,9 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       );
     }, [internalProps.attributes, props, customProps, children, contextValue]);
   };
+
+  const WithElementComponent = (props: WithElementProps<T>) =>
+    props.plitziJsxSkipHOC ? <SkipHocElement {...props} /> : <FullElement {...props} />;
 
   WithElementComponent.displayName = `withElement(${WrappedComponent.displayName || WrappedComponent.name})`;
 
