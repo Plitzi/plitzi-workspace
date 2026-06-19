@@ -168,7 +168,7 @@ const App = ({
         };
 
   return (
-    <StoreProvider<SdkState>
+    <StoreProvider
       value={storeValue}
       middlewares={[
         loggerMw(createStoreDevToolsLogger<SdkState>('sdk')),
