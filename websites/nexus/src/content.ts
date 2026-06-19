@@ -496,7 +496,7 @@ createEntityAdapter<Row>({ selectId: r => r.key, sortComparer: byName });`
 // before the others observe.
 const store = createStore<State>(initial, {
   middlewares: [
-    persistMiddleware({ key: 'app', partialize: s => ({ user: s.user }), debounce: 200 }),
+    persistMiddleware({ key: 'app', partialize: s => ({ user: s.user }) }),
     historyMiddleware(),                    // getStoreHistory(store) for undo/redo
     loggerMiddleware({ filter: c => c.path !== 'mouse' })
   ]
@@ -544,7 +544,7 @@ store.batch(() => {
 
 // Nestable — only the OUTERMOST batch flushes. Change observers
 // (logger / history / persist) still see each write, so undo
-// stays granular and persistence debounces as usual.`
+// stays granular and persistence mirrors every commit.`
   },
   {
     id: 'async',

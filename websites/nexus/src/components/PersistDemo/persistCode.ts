@@ -3,9 +3,9 @@ export const PERSIST_CODE = `import { createStore, createStoreHook, persistMiddl
 type State = { clicks: number; note: string };
 
 // persist is a middleware: it hydrates from storage on creation
-// and mirrors every change back (debounced). SSR-safe.
+// and mirrors every change back. SSR-safe.
 const store = createStore<State>({ clicks: 0, note: '' }, {
-  middlewares: [persistMiddleware({ key: 'demo', debounce: 150 })]
+  middlewares: [persistMiddleware({ key: 'demo' })]
 });
 
 const { useStore } = createStoreHook<State>();

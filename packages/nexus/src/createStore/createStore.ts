@@ -266,8 +266,16 @@ function createStore<TState extends object>(
   };
 
   const withBase = (basePath: string): any => ({
-    getState: () => getPath(basePath as PathOf<TState>),
-    getPath: (subPath: string) => getPath(`${basePath}.${subPath}` as PathOf<TState>),
+    getState: (defaultValue?: unknown) => {
+      const value = getPath(basePath as PathOf<TState>);
+
+      return value === undefined && defaultValue !== undefined ? defaultValue : value;
+    },
+    getPath: (subPath: string, defaultValue?: unknown) => {
+      const value = getPath(`${basePath}.${subPath}` as PathOf<TState>);
+
+      return value === undefined && defaultValue !== undefined ? defaultValue : value;
+    },
     setState: (subPath: string | undefined, value: unknown) =>
       setState((subPath === undefined ? basePath : `${basePath}.${subPath}`) as PathOf<TState>, value as any),
     subscribe: (listener: Listener) => subscribePath(basePath as PathOf<TState>, listener),

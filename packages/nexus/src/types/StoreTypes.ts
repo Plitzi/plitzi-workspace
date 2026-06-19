@@ -162,12 +162,23 @@ export type GetState<T> = () => T;
 // An imperative view of the store bound to a base path: every read/write/subscribe is transparently prefixed with
 // `basePath`, so callers concatenate nothing. `getState()` returns the value at the base; `setState(undefined, v)`
 // replaces it; `setState(subPath, v)` writes `${basePath}.${subPath}`. The base type is taken `NonNullable`, so the
-// setter's updater form (`prev => next`) type-checks even when the base path is optional in the parent state.
+// setter's updater form (`prev => next`) type-checks even when the base path is optional in the parent state. Both
+// `getState` and `getPath` accept an optional `defaultValue` returned when the read resolves to `undefined`, sparing
+// the caller a trailing `?? fallback`.
 export type BoundStore<TBase> = {
-  getState: () => TBase | undefined;
+  getState: {
+    (): TBase | undefined;
+    <D>(defaultValue: D): NonNullable<TBase> | D;
+  };
   getPath: TBase extends object
-    ? <SubP extends PathOf<TBase>>(subPath: SubP) => PathValue<TBase, SubP> | undefined
-    : () => TBase | undefined;
+    ? {
+        <SubP extends PathOf<TBase>>(subPath: SubP): PathValue<TBase, SubP> | undefined;
+        <SubP extends PathOf<TBase>, D>(subPath: SubP, defaultValue: D): NonNullable<PathValue<TBase, SubP>> | D;
+      }
+    : {
+        (): TBase | undefined;
+        <D>(defaultValue: D): NonNullable<TBase> | D;
+      };
   setState: SetFromBaseFn<TBase>;
   subscribe: (listener: Listener) => () => void;
   subscribePath: TBase extends object

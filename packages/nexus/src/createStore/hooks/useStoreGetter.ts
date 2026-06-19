@@ -69,21 +69,18 @@ function useStoreGetter<TState extends object>(
 
       if (resolvedBasePath !== undefined) {
         const bound = store.withBase(resolvedBasePath as PathOf<TState>) as {
-          getState: () => unknown;
-          getPath: (subPath: string) => unknown;
+          getState: (defaultValue?: unknown) => unknown;
+          getPath: (subPath: string, defaultValue?: unknown) => unknown;
         };
 
         return (subPath?: string, callDefault?: unknown): any => {
           if (subPath !== undefined) {
-            const subVal = bound.getPath(subPath);
-
-            return subVal === undefined && callDefault !== undefined ? callDefault : subVal;
+            return callDefault !== undefined ? bound.getPath(subPath, callDefault) : bound.getPath(subPath);
           }
 
-          const base = bound.getState();
           const baseDefault = callDefault !== undefined ? callDefault : defaultValue;
 
-          return base === undefined && baseDefault !== undefined ? baseDefault : base;
+          return baseDefault !== undefined ? bound.getState(baseDefault) : bound.getState();
         };
       }
 

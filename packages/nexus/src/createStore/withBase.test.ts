@@ -15,6 +15,21 @@ describe('store.withBase', () => {
     expect(base.getPath('missing')).toBeUndefined();
   });
 
+  it('returns the defaultValue when the base or a sub-path is undefined', () => {
+    const store = createStore<S>({ count: 0 });
+    const base = store.withBase('runtime.state');
+
+    expect(base.getState({ fallback: true })).toEqual({ fallback: true });
+    expect(base.getPath('a', 42)).toBe(42);
+  });
+
+  it('ignores the defaultValue when the value exists', () => {
+    const base = makeStore().withBase('runtime.state');
+
+    expect(base.getState({ fallback: true })).toEqual({ a: 1 });
+    expect(base.getPath('a', 42)).toBe(1);
+  });
+
   it('replaces the base with a value or an updater', () => {
     const store = makeStore();
     const base = store.withBase('runtime.state');

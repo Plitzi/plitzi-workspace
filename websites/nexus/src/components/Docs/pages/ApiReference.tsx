@@ -90,6 +90,18 @@ const ApiReference = () => (
         </tr>
         <tr>
           <td>
+            <code>withBase</code>
+          </td>
+          <td>
+            <code>(base: P) =&gt; BoundStore&lt;PathValue&lt;T, P&gt;&gt;</code>
+          </td>
+          <td>
+            An imperative view bound to <code>base</code> — reads/writes/subscriptions are prefixed with it. See{' '}
+            <a href="#/docs/api?anchor=with-base">withBase</a>.
+          </td>
+        </tr>
+        <tr>
+          <td>
             <code>batch</code>
           </td>
           <td>
@@ -137,6 +149,33 @@ const ApiReference = () => (
         </tr>
       </tbody>
     </table>
+
+    <h2 id="with-base">withBase</h2>
+    <p>
+      When you read, write and subscribe under one path repeatedly, <code>withBase</code> projects an imperative view
+      bound to that base. Every member is transparently prefixed, so call sites concatenate nothing and the boilerplate{' '}
+      <code>{'`${base}.${key}`'}</code> disappears. The base type is taken <code>NonNullable</code>, so the updater form{' '}
+      (<code>prev =&gt; next</code>) type-checks even when the base path is optional in the parent state — no cast needed.
+    </p>
+    <CodeBlock
+      code={`const runtime = store.withBase('runtime.state');
+
+runtime.getState();              // → value at runtime.state
+runtime.getState({});            // → that value, or {} when undefined (no trailing ?? {})
+runtime.getPath('user.name');    // → runtime.state.user.name
+runtime.getPath('count', 0);     // → that value, or 0 when undefined
+
+runtime.setState(undefined, v);  // replace runtime.state (value or prev => next)
+runtime.setState('count', 1);    // write runtime.state.count
+
+const off = runtime.subscribe(fn);          // any change under runtime.state
+const off2 = runtime.subscribePath('count', fn); // only runtime.state.count`}
+    />
+    <p>
+      Both <code>getState</code> and <code>getPath</code> accept an optional <code>defaultValue</code> returned when the
+      read resolves to <code>undefined</code> — sparing the trailing <code>?? fallback</code>. The same base-path
+      projection powers the <code>basePath</code> argument of <code>useStoreGetter</code> / <code>useStoreSetter</code>.
+    </p>
 
     <h2 id="create-store-hook">createStoreHook</h2>
     <GuideLink anchor="reading" label="Reading state" />
@@ -400,7 +439,7 @@ const off = items.subscribeOne(id, listener);`}
             <code>persistMiddleware(opts)</code>
           </td>
           <td>
-            Mirror to storage + rehydrate. <code>key, storage, partialize, version, migrate, merge, debounce</code>.
+            Mirror to storage + rehydrate. <code>key, storage, partialize, version, migrate, merge</code>.
           </td>
         </tr>
         <tr>
