@@ -233,6 +233,41 @@ describe('persist storage targets', () => {
       }
     }
   });
+
+  it('is a safe no-op in SSR (no Web Storage)', () => {
+    const localDesc = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+    const sessionDesc = Object.getOwnPropertyDescriptor(globalThis, 'sessionStorage');
+    // Simulate a server environment: no Web Storage at all.
+    Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: undefined });
+    Object.defineProperty(globalThis, 'sessionStorage', { configurable: true, value: undefined });
+
+    try {
+      const changes: StoreChange<AppState>[] = [];
+      // Static target: the middleware skips itself entirely.
+      const staticStore = createStore<AppState>(initial(), {
+        middlewares: [persistMiddleware({ key: 'a' }), loggerMiddleware({ sink: c => changes.push(c) })]
+      });
+      staticStore.hydrate?.();
+      expect(() => staticStore.setState('count', 1)).not.toThrow();
+
+      // Dynamic target: registers, but hydrate and writes no-op because the storage never resolves.
+      const dynamicStore = createStore<AppState>(initial(), {
+        middlewares: [persistMiddleware<AppState>({ key: 'b', paths: ['count'], storage: () => 'local' })]
+      });
+      dynamicStore.hydrate?.();
+      expect(() => dynamicStore.setState('count', 2)).not.toThrow();
+
+      expect(changes.map(c => c.path)).toEqual(['count']); // store still works
+    } finally {
+      if (localDesc) {
+        Object.defineProperty(globalThis, 'localStorage', localDesc);
+      }
+
+      if (sessionDesc) {
+        Object.defineProperty(globalThis, 'sessionStorage', sessionDesc);
+      }
+    }
+  });
 });
 
 describe('persist path fragments', () => {

@@ -34,9 +34,10 @@ const resolveStorage = (target: PersistTarget = 'local'): PersistStorage | undef
   }
 
   try {
+    // SSR / non-browser: `globalThis.*Storage` is `undefined`, so the caller skips persistence. Accessing it can also
+    // throw (sandboxed iframes, some privacy modes) rather than being undefined, hence the try/catch.
     return target === 'session' ? globalThis.sessionStorage : globalThis.localStorage;
   } catch {
-    // Reading `*Storage` can throw (privacy modes) rather than being undefined.
     return undefined;
   }
 };
