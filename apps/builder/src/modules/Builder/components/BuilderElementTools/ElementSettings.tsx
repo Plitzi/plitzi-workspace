@@ -19,10 +19,9 @@ import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziService
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { ThemeContext } from '@plitzi/sdk-shared/theme';
-import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import AppContext from '@pmodules/App/AppContext';
 
-import type { CommonState, ComponentPlugin } from '@plitzi/sdk-shared';
+import type { BuilderState, ComponentPlugin } from '@plitzi/sdk-shared';
 import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import type { FC } from 'react';
 
@@ -34,6 +33,7 @@ export type ElementSettingsProps = {
 };
 
 const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleChange }: ElementSettingsProps) => {
+  const { useStore } = createStoreHook<BuilderState>();
   const { previewMode, displayBorderComponents } = use(AppContext);
   const { getComponent } = use(ComponentContext);
   const { theme } = use(ThemeContext);
@@ -75,7 +75,6 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
         NetworkContext,
         PluginsContext,
         NavigationContext,
-        StateManagerContext,
         SegmentsContext,
         EventBridgeContext,
         InteractionsContext
@@ -86,9 +85,7 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Settings = (Plugin?.pluginSettings ?? defaultElementsSettings[type]) as FC<any> | undefined;
-  const { useStore } = createStoreHook<CommonState>();
-  const [runtimeVariables] = useStore('runtime.sources.variables', { defaultValue: emptyObject });
-  const variables = runtimeVariables as Record<string, string>;
+  const [variables = emptyObject] = useStore('runtime.sources.variables');
 
   const children = useMemo(
     () => (

@@ -52,7 +52,7 @@ const StyleInspectorProvider = ({
 }: StyleInspectorProviderProps) => {
   const bindingData = useStyleBinding({ element });
   const { useStore } = createStoreHook<CommonState>();
-  const [schemaVariables] = useStore('runtime.sources.variables', { defaultValue: emptyObject });
+  const [schemaVariables = emptyObject] = useStore('runtime.sources.variables');
 
   const getValues = useCallback(() => {
     let attributes: Partial<Record<StyleCategory, StyleValue>> | undefined = undefined;

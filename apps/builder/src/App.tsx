@@ -65,6 +65,7 @@ import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider'
 import { createStoreDevToolsLogger, ThemeProvider, type BuilderState } from '@plitzi/sdk-shared';
 import { createStripTypenameLink } from '@plitzi/sdk-shared/helpers/stripTypename';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
+import { runtimeStatePersist } from '@plitzi/sdk-shared/state/runtimeStatePersist';
 import AppMain from '@pmodules/App/AppMain';
 import customFetch from '@pmodules/Network/helpers/customFetch';
 
@@ -342,6 +343,7 @@ const App = (props: AppProps) => {
       value={storeValue}
       middlewares={[
         loggerMw(createStoreDevToolsLogger<BuilderState>('builder')),
+        runtimeStatePersist<BuilderState>(webId),
         ...(debugMode ? [historyMw<BuilderState>()] : [])
       ]}
     >

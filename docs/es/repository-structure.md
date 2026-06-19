@@ -19,7 +19,6 @@ plitzi-workspace/
 │   ├── sdk-plugins/
 │   ├── sdk-schema/
 │   ├── sdk-shared/      # ESLint, TSConfig, tipos y utilidades compartidas
-│   ├── sdk-state/
 │   ├── nexus/     # Store React — Nexus (useSyncExternalStore)
 │   ├── sdk-style/
 │   └── sdk-variables/

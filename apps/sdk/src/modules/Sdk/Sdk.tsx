@@ -8,11 +8,11 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import RscProvider from '@plitzi/sdk-shared/server/rsc/RscProvider';
 import { ThemeContext } from '@plitzi/sdk-shared/theme';
-import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 
@@ -53,8 +53,7 @@ const Sdk = ({
   const { rootRef } = use(ContainerRootContext);
   const { useStore } = createStoreHook<SdkState>();
   const [[schemaSettings, styleCache, segments]] = useStore(['schema.settings', 'style.cache', 'segments']);
-  const [variablesValue] = useStore('runtime.sources.variables', { defaultValue: {} });
-  const variables = variablesValue as Record<string, string>;
+  const [variables = emptyObject] = useStore('runtime.sources.variables');
 
   const css = useMemo(() => {
     const segmentsCss = Object.values(segments).map(segment => segment.style.cache);
@@ -106,7 +105,6 @@ const Sdk = ({
         NetworkContext,
         PluginsContext,
         NavigationContext,
-        StateManagerContext,
         EventBridgeContext,
         InteractionsContext
       }

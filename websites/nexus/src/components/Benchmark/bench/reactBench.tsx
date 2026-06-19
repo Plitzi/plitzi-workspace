@@ -101,7 +101,7 @@ const mountContext = (container: HTMLElement, depth: number): Controller => {
 // ── store (live chain) ──────────────────────────────────────────────────────────────────────────────────────────
 
 const StoreLeaf = ({ counter, path }: { counter: Counter; path: SourcePath }) => {
-  const [source] = useStore<ScopeState, SourcePath>(path, { defaultValue: undefined });
+  const [source = undefined] = useStore<ScopeState, SourcePath>(path);
   counter.renders++;
 
   return <span>{source?.value ?? 0}</span>;

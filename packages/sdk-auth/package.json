@@ -66,8 +66,7 @@
     "@plitzi/plitzi-ui": "^1.6.9",
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
-    "@plitzi/sdk-shared": "workspace:*",
-    "@plitzi/sdk-state": "workspace:*"
+    "@plitzi/sdk-shared": "workspace:*"
   },
   "devDependencies": {
     "eslint": "^9.39.4",

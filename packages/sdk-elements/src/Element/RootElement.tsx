@@ -167,7 +167,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   // engine the whole `runtime.sources` slice; otherwise the dataSource is unused, so we skip the subscription.
   const needsDataSource = debugMode || !!(interactions && Object.keys(interactions).length);
   const { useStore } = createStoreHook<CommonState>();
-  const [runtimeSources] = useStore('runtime.sources', { enabled: needsDataSource, defaultValue: emptyObject });
+  const [runtimeSources = emptyObject] = useStore('runtime.sources', { enabled: needsDataSource });
   const dataSourceRef = useRef<Record<string, unknown>>({});
   dataSourceRef.current = runtimeSources;
 

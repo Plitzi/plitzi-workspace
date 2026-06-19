@@ -5,7 +5,6 @@ import { useState, useMemo } from 'react';
 import { createStoreHook } from '@plitzi/nexus/createStore';
 import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
-import StateManagerContextProvider from '@plitzi/sdk-state/StateManagerContextProvider';
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
 
 import AppContainer from './AppContainer';
@@ -41,7 +40,6 @@ const AppMain = ({
   includeSubscriptions = true,
   includeRealTime = true,
   externalStyle = '',
-  state,
   debugMode = false
 }: AppMainProps) => {
   const [previewMode, setPreviewMode] = useState(false);
@@ -98,17 +96,15 @@ const AppMain = ({
         previewMode={previewMode}
         debugMode={debugMode}
       >
-        <StateManagerContextProvider webId={webId} state={state}>
-          <GlobalSources environment={environment}>
-            <InteractionsBuilderContextProvider previewMode={previewMode}>
-              <PopupProvider renderLeftPopup={false} renderRightPopup={false} renderFloatingPopup={!previewMode}>
-                <DevToolsContainer innerClassName="flex" enabled={debugMode}>
-                  <AppContainer externalStyle={externalStyle} />
-                </DevToolsContainer>
-              </PopupProvider>
-            </InteractionsBuilderContextProvider>
-          </GlobalSources>
-        </StateManagerContextProvider>
+        <GlobalSources environment={environment}>
+          <InteractionsBuilderContextProvider previewMode={previewMode}>
+            <PopupProvider renderLeftPopup={false} renderRightPopup={false} renderFloatingPopup={!previewMode}>
+              <DevToolsContainer innerClassName="flex" enabled={debugMode}>
+                <AppContainer externalStyle={externalStyle} />
+              </DevToolsContainer>
+            </PopupProvider>
+          </InteractionsBuilderContextProvider>
+        </GlobalSources>
       </AppProvider>
     ),
     [
@@ -122,7 +118,6 @@ const AppMain = ({
       includeRealTime,
       previewMode,
       debugMode,
-      state,
       externalStyle
     ]
   );

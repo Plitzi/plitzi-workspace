@@ -2,10 +2,11 @@ import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo } from 'react';
 
 import { createStoreHook } from '@plitzi/nexus/createStore';
+import { StoreContext } from '@plitzi/nexus/StoreContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
 
+import type { StoreApi } from '@plitzi/nexus';
 import type { BuilderState, InteractionCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
@@ -15,16 +16,11 @@ export type PageInteractionsProps = {
 };
 
 const PageInteractions = ({ children, previewMode = false }: PageInteractionsProps) => {
-  const { setStateByKey, clearCache } = use(StateManagerContext);
   const { useInteractions } = use(InteractionsContext);
   const { navigate } = use(NavigationContext);
+  const store = use(StoreContext) as StoreApi<BuilderState> | undefined;
   const { useStore } = createStoreHook<BuilderState>();
-  const [[keepState, stateStorage, pageIds, pageDefinitions]] = useStore([
-    'schema.settings.keepState',
-    'schema.settings.stateStorage',
-    'schema.pages',
-    'pageDefinitions'
-  ]);
+  const [[pageIds, pageDefinitions]] = useStore(['schema.pages', 'pageDefinitions']);
 
   const handleSetPageState = useCallback(
     (params: InteractionCallbackParamValues<{ key: string; type: string; value: string | boolean | number }>) => {
@@ -36,22 +32,14 @@ const PageInteractions = ({ children, previewMode = false }: PageInteractionsPro
         value = parseInt(value as string, 10);
       }
 
-      if (keepState && stateStorage) {
-        setStateByKey(key, value, stateStorage);
-
-        return;
-      }
-
-      setStateByKey(key, value);
+      store?.setState(`runtime.state.${key}`, value);
     },
-    [setStateByKey, keepState, stateStorage]
+    [store]
   );
 
   const handleClearStatePage = useCallback(() => {
-    if (keepState && stateStorage) {
-      clearCache(stateStorage);
-    }
-  }, [clearCache, keepState, stateStorage]);
+    store?.setState('runtime.state', {});
+  }, [store]);
 
   const pageUrls = useMemo(() => {
     const pages = pick(pageDefinitions, pageIds);

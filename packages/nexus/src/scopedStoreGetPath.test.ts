@@ -377,7 +377,7 @@ describe('scoped store: referential stability when detached', () => {
           )
         );
 
-      renderHook(() => useStore('runtime.sources', { defaultValue: {} }), { wrapper });
+      renderHook(() => useStore('runtime.sources'), { wrapper });
 
       const errorCalls = consoleErrorSpy.mock.calls;
       const hasInfiniteLoopWarning = errorCalls.some((call: Parameters<typeof console.error>) =>

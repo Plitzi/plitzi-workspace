@@ -20,7 +20,7 @@ export type BuilderPopupProps = {
 const BuilderPopup = ({ previewMode = false, segmentIdentifier = '' }: BuilderPopupProps) => {
   const { eventBridge } = use(EventBridgeContext);
   const { useStore } = createStoreHook<BuilderState>();
-  const [segment] = useStore(`segments.${segmentIdentifier}`, { defaultValue: undefined });
+  const [segment = undefined] = useStore(`segments.${segmentIdentifier}`);
 
   const generateStoreState = useCallback(
     (currentState: BuilderState) => ({

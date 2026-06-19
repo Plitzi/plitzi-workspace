@@ -227,6 +227,10 @@
       "types": "./dist/middleware/index.d.ts",
       "import": "./dist/middleware/index.mjs"
     },
+    "./middleware/isDisabled": {
+      "types": "./dist/middleware/isDisabled.d.ts",
+      "import": "./dist/middleware/isDisabled.mjs"
+    },
     "./middleware/loggerMiddleware": {
       "types": "./dist/middleware/loggerMiddleware.d.ts",
       "import": "./dist/middleware/loggerMiddleware.mjs"

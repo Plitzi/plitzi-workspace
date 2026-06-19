@@ -34,8 +34,8 @@ const useElementDataSource = ({ bindings, sources: sourcesProp }: UseElementData
     return [...names];
   }, [bindings, sourcesProp]);
 
-  const paths = useMemo(() => sourceNames.map(name => `runtime.sources.${name}` as const), [sourceNames]);
   const { useStore } = createStoreHook<CommonState>();
+  const paths = useMemo(() => sourceNames.map(name => `runtime.sources.${name}` as const), [sourceNames]);
   const [values] = useStore(paths);
 
   return useMemo(() => {

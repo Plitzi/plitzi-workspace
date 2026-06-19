@@ -14,7 +14,7 @@ import { markdownTheme } from '@plitzi/plitzi-ui/Markdown';
 import Provider from '@plitzi/plitzi-ui/Provider';
 import { textTheme } from '@plitzi/plitzi-ui/Text';
 import clsx from 'clsx';
-import { useEffect, Children, isValidElement, useMemo, useCallback, Fragment } from 'react';
+import { useEffect, Children, isValidElement, useMemo, useCallback, useRef, Fragment } from 'react';
 import { StaticRouter } from 'react-router';
 import { BrowserRouter } from 'react-router-dom';
 
@@ -27,6 +27,7 @@ import StoreProvider from '@plitzi/nexus/StoreProvider';
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
 import { createStoreDevToolsLogger, ThemeProvider, type SdkState } from '@plitzi/sdk-shared';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
+import { runtimeStatePersist } from '@plitzi/sdk-shared/state/runtimeStatePersist';
 
 import { getEnvironmentServer } from './config';
 
@@ -40,7 +41,7 @@ import type {
   OfflineDataRaw,
   RenderMode,
   Server,
-  StateManagerContextValue
+  RuntimeStateInstance
 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
@@ -61,7 +62,7 @@ export type AppProps = {
   previewMode?: boolean;
   externalStyle?: string;
   state?: Record<string, unknown>;
-  onInitStateManager?: (instance: StateManagerContextValue) => void;
+  onInitStateManager?: (instance: RuntimeStateInstance) => void;
   onInitEventBridge?: (instance: EventBridgeContextValue) => void;
 };
 
@@ -87,9 +88,17 @@ const App = ({
   // Extra
   renderMode = 'iframe',
   debugMode: debugModeProp = false,
+  state,
   ...sdkProps
 }: AppProps) => {
   const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
+  // Initialize `runtime.state` once at the root from the host-provided initial state; persist/interactions own it
+  // afterwards. Captured at mount (stable value → no re-sync that would reset the sibling `runtime.sources`).
+  const initialState = useRef(state).current;
+  const storeValue = useMemo<Partial<SdkState>>(
+    () => ({ segments: {}, runtime: { sources: {}, state: initialState ?? {} } }),
+    [initialState]
+  );
   const [debugMode, setDebugMode] = useStorage(`web_${webId}_state.debugMode`, false, 'localStorage', debugModeProp);
   const finalServer = useMemo(() => getEnvironmentServer(server), [server]);
   const client = useMemo<ApolloClient>(() => initClient(finalServer, webKey), [finalServer, webKey]);
@@ -159,10 +168,11 @@ const App = ({
         };
 
   return (
-    <StoreProvider<SdkState>
-      value={{ segments: {} }}
+    <StoreProvider
+      value={storeValue}
       middlewares={[
         loggerMw(createStoreDevToolsLogger<SdkState>('sdk')),
+        runtimeStatePersist<SdkState>(webId),
         ...(debugMode ? [historyMw<SdkState>()] : [])
       ]}
     >

@@ -1,4 +1,6 @@
-import type { StoreChange, StoreMiddleware } from '../types';
+import { isDisabled } from './isDisabled';
+
+import type { MiddlewareOptions, StoreChange, StoreMiddleware } from '../types';
 
 // The slice of the Redux DevTools extension protocol this middleware uses. Typed locally so the package needs no
 // extension typings — the extension is feature-detected at runtime and everything is a no-op without it.
@@ -18,7 +20,7 @@ type DevToolsExtension = {
   connect: (options?: { name?: string }) => DevToolsConnection;
 };
 
-export type ReduxDevToolsOptions<TState extends object> = {
+export type ReduxDevToolsOptions<TState extends object> = MiddlewareOptions<TState> & {
   // Instance name shown in the DevTools dropdown. Defaults to `nexus`.
   name?: string;
   // Labels each committed change as an action; defaults to the changed path (`SET_STATE` for a whole-state write).
@@ -40,7 +42,13 @@ const getExtension = (): DevToolsExtension | undefined => {
 export const reduxDevToolsMiddleware = <TState extends object>(
   options: ReduxDevToolsOptions<TState> = {}
 ): StoreMiddleware<TState> => {
+  const { enabled } = options;
+
   return api => {
+    if (isDisabled(enabled, api.getState())) {
+      return;
+    }
+
     const extension = getExtension();
     if (!extension) {
       return;

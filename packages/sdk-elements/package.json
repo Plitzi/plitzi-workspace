@@ -797,7 +797,6 @@
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
-    "@plitzi/sdk-state": "workspace:*",
     "clsx": "^2.1.1",
     "immer": "^11.1.8"
   },

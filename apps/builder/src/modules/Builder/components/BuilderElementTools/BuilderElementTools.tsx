@@ -28,9 +28,10 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
   const { useStore } = createStoreHook<BuilderState>();
   const [[selector, elementSelected], setSelector] = useStore(['selector', 'elementSelected']);
   const [displayMode] = useStore('displayMode');
-  const [[selectors, element]] = useStore([`style.platform.${displayMode}`, `schema.flat.${elementSelected}`], {
-    defaultValue: [undefined, undefined]
-  });
+  const [[selectors = undefined, element = undefined]] = useStore([
+    `style.platform.${displayMode}`,
+    `schema.flat.${elementSelected}`
+  ]);
   const { componentDefinitions } = use(ComponentContext);
   const attributes = useMemo(() => get(element, 'attributes', {} as Element['attributes']), [element]);
   const definition = useMemo(() => get(element, 'definition', {} as Element['definition']), [element]);

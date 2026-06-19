@@ -8,7 +8,7 @@ export const PERSIST_INITIAL: PersistState = { clicks: 0, note: '' };
 // A real store wired with the persist middleware. It hydrates from localStorage the moment this module loads, and
 // mirrors every change back — so the values survive a page reload.
 export const persistStore = createStore<PersistState>(PERSIST_INITIAL, {
-  middlewares: [persistMiddleware({ key: STORAGE_KEY, debounce: 150 })]
+  middlewares: [persistMiddleware({ key: STORAGE_KEY })]
 });
 
 export const resetPersist = () => persistStore.setState(undefined, PERSIST_INITIAL);

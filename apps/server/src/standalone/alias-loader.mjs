@@ -18,7 +18,6 @@ const packages = {
   '@plitzi/sdk-plugins': path.join(root, '../../packages/sdk-plugins/src'),
   '@plitzi/sdk-schema': path.join(root, '../../packages/sdk-schema/src'),
   '@plitzi/sdk-shared': path.join(root, '../../packages/sdk-shared/src'),
-  '@plitzi/sdk-state': path.join(root, '../../packages/sdk-state/src'),
   '@plitzi/sdk-style': path.join(root, '../../packages/sdk-style/src'),
   '@plitzi/sdk-variables': path.join(root, '../../packages/sdk-variables/src'),
   '@plitzi/nexus': path.join(root, '../../packages/nexus/src'),

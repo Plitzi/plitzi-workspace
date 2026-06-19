@@ -12,7 +12,6 @@ import type {
   NavigationContextValue,
   PluginsContextValue,
   SegmentsContextValue,
-  StateManagerContextValue,
   Theme
 } from '../types';
 import type { Context, ReactNode, RefObject } from 'react';
@@ -36,7 +35,6 @@ export type PlitziServiceContextValue<TEventBridge = any, TInteractions = any> =
     NavigationContext: Context<NavigationContextValue>;
     CollectionContext: Context<CollectionContextValue>;
     ComponentContext: Context<ComponentContextValue>;
-    StateManagerContext: Context<StateManagerContextValue>;
     EventBridgeContext: Context<EventBridgeContextValue<TEventBridge>>;
     PluginsContext: Context<PluginsContextValue>;
     InteractionsContext: Context<InteractionsContextValue<TInteractions>>;

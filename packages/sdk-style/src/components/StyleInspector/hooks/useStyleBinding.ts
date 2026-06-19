@@ -10,7 +10,7 @@ export type UseStyleBindingProps = { element?: Element };
 
 const useStyleBinding = ({ element }: UseStyleBindingProps) => {
   const { useStore } = createStoreHook<CommonState>();
-  const [dataSource] = useStore('runtime.sources', { defaultValue: emptyObject });
+  const [dataSource = emptyObject] = useStore('runtime.sources');
   const attributes = useMemo(() => {
     const metadata: Partial<Record<StyleCategory, StyleValue>> = {};
     if (!element) {

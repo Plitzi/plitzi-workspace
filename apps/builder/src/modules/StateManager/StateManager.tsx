@@ -5,8 +5,11 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
 import { useCallback, use, useState } from 'react';
 
+import { createStoreHook } from '@plitzi/nexus/createStore';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
-import StateManagerContext from '@plitzi/sdk-state/StateManagerContext';
+
+import type { BuilderState } from '@plitzi/sdk-shared';
 
 export type StateManagerProps = {
   className?: string;
@@ -14,7 +17,8 @@ export type StateManagerProps = {
 
 const StateManager = ({ className = '' }: StateManagerProps) => {
   const { theme } = use(ThemeContext);
-  const { state, setState } = use(StateManagerContext);
+  const { useStore } = createStoreHook<BuilderState>();
+  const [state = emptyObject, setState] = useStore('runtime.state');
   const [value, setValue] = useState(() => JSON.stringify(state, null, 2));
   const { addToast } = useToast();
 

@@ -12,7 +12,6 @@ import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import BuilderElementTools from '../BuilderElementTools';
 
-import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { BuilderState } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
@@ -24,12 +23,12 @@ export type BuilderTreeNodeControlsProps = {
 
 const BuilderTreeNodeControls = ({ id, hovered, selected }: BuilderTreeNodeControlsProps) => {
   const { useStore } = createStoreHook<BuilderState>();
-  const [element] = useStore(`schema.flat.${id}`, { defaultValue: undefined });
+  const [element = undefined] = useStore(`schema.flat.${id}`);
   const { existsPopup, addPopup } = usePopup();
   const { showDialog } = useModal();
   const { builderHandler, builderElementPermissions, builderSetElementVisibility } = use(BuilderContext);
 
-  const [dataSource] = useStore('runtime.sources', { defaultValue: emptyObject });
+  const [dataSource = emptyObject] = useStore('runtime.sources');
   const { canDelete } = useMemo(() => {
     if (!element) {
       return { canDelete: false };
@@ -54,7 +53,7 @@ const BuilderTreeNodeControls = ({ id, hovered, selected }: BuilderTreeNodeContr
       return false;
     }
 
-    const bindingData = getBindingsDetails(dataSource as Record<string, RuleValue>, element);
+    const bindingData = getBindingsDetails(dataSource, element);
 
     return get(bindingData, 'definition.initialState.visibility', true);
   }, [dataSource, element]);

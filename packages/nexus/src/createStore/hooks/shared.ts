@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -26,19 +25,17 @@ export const defaultMultiEqualityFn = (a: unknown[], b: unknown[]): boolean => {
 
 export function makeSingleSnapshot<TState extends object>(
   store: StoreApi<TState>,
-  pathOrFn: PathOf<TState> | ((state: TState) => PathOf<TState>) | undefined,
-  defaultValue?: unknown
+  pathOrFn: PathOf<TState> | ((state: TState) => PathOf<TState>) | undefined
 ): () => unknown {
   return () => {
     if (typeof pathOrFn === 'string') {
-      const val = store.getPath(pathOrFn);
-      return val === undefined ? defaultValue : val;
+      return store.getPath(pathOrFn);
     }
 
     if (typeof pathOrFn === 'function') {
       const state = store.getState();
-      const val = getByPath(state, pathOrFn(state));
-      return val === undefined ? defaultValue : val;
+
+      return getByPath(state, pathOrFn(state));
     }
 
     return store.getState();
@@ -49,27 +46,15 @@ export function makeMultiSnapshot<TState extends object>(
   store: StoreApi<TState>,
   pathsRef: RefObject<ReadonlyArray<PathOrFn<TState>>>,
   lastRef: RefObject<unknown[] | null>,
-  options: { equalityFn?: (a: unknown[], b: unknown[]) => boolean; defaultValue?: unknown } = {}
+  options: { equalityFn?: (a: unknown[], b: unknown[]) => boolean } = {}
 ): () => unknown[] {
-  const { equalityFn = defaultMultiEqualityFn, defaultValue } = options;
+  const { equalityFn = defaultMultiEqualityFn } = options;
 
   return () => {
     const paths = pathsRef.current;
     const needsState = paths.some(p => typeof p === 'function');
     const state = needsState ? store.getState() : (undefined as unknown as TState);
-    const next = paths.map((p, i) => {
-      const val = typeof p === 'function' ? getByPath(state, p(state)) : store.getPath(p);
-      if (val !== undefined || defaultValue === undefined) {
-        return val;
-      }
-
-      if (Array.isArray(defaultValue)) {
-        const def = (defaultValue as unknown[])[i];
-        return def !== undefined ? def : val;
-      }
-
-      return defaultValue;
-    });
+    const next = paths.map(p => (typeof p === 'function' ? getByPath(state, p(state)) : store.getPath(p)));
 
     const prev = lastRef.current;
     if (prev !== null && equalityFn(prev, next)) {

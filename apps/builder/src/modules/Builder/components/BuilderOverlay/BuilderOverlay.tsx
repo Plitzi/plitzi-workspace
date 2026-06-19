@@ -38,7 +38,7 @@ const BuilderOverlay = ({
   collaboratorName = ''
 }: BuilderOverlayProps) => {
   const { useStore } = createStoreHook<BuilderState>();
-  const [element] = useStore(`schema.flat.${id}`, { defaultValue: undefined });
+  const [element = undefined] = useStore(`schema.flat.${id}`);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const rootContainerRef = useRef<HTMLDivElement | null>(null);
   const [container, setContainer] = useState({

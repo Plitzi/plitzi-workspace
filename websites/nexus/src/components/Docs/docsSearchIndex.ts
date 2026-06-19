@@ -37,6 +37,7 @@ export const DOCS_SEARCH_INDEX: DocSearchEntry[] = [
     keywords: [
       'createStore', 'StoreApi', 'getState', 'getPath', 'setState', 'subscribe',
       'subscribePath', 'subscribeChange', 'destroy', 'createStoreHook',
+      'withBase', 'BoundStore', 'base path', 'bound store', 'defaultValue',
       'useStore', 'useStoreSync', 'useStoreGetter', 'useStoreSetter',
       'useStoreById', 'storeId', 'store id', 'named store', 'by id',
       'registry', 'disconnected provider', 'reach ancestor',

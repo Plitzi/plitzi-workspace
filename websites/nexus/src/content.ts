@@ -259,8 +259,8 @@ function Profile() {
     transformer: value => value.toUpperCase()
   });
 
-  // With a default value
-  const [el] = useStore(\`schema.flat.\${id}\` as PathOf<State>, { defaultValue: {} });
+  // With a fallback — a destructuring default (use a hoisted const for objects)
+  const [el = {}] = useStore(\`schema.flat.\${id}\` as PathOf<State>);
 
   return <input value={name} onChange={e => setName(e.target.value)} />;
 }`
@@ -496,7 +496,7 @@ createEntityAdapter<Row>({ selectId: r => r.key, sortComparer: byName });`
 // before the others observe.
 const store = createStore<State>(initial, {
   middlewares: [
-    persistMiddleware({ key: 'app', partialize: s => ({ user: s.user }), debounce: 200 }),
+    persistMiddleware({ key: 'app', partialize: s => ({ user: s.user }) }),
     historyMiddleware(),                    // getStoreHistory(store) for undo/redo
     loggerMiddleware({ filter: c => c.path !== 'mouse' })
   ]
@@ -544,7 +544,7 @@ store.batch(() => {
 
 // Nestable — only the OUTERMOST batch flushes. Change observers
 // (logger / history / persist) still see each write, so undo
-// stays granular and persistence debounces as usual.`
+// stays granular and persistence mirrors every commit.`
   },
   {
     id: 'async',

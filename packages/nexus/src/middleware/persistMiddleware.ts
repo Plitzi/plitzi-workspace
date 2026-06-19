@@ -1,4 +1,8 @@
-import type { StoreApi, StoreMiddleware } from '../types';
+import { isDisabled } from './isDisabled';
+import getByPath from '../helpers/getByPath';
+import isPathAffected from '../helpers/isPathAffected';
+
+import type { MiddlewareOptions, PathOf, StoreApi, StoreMiddleware } from '../types';
 
 export type PersistStorage = {
   getItem: (key: string) => string | null;
@@ -6,60 +10,125 @@ export type PersistStorage = {
   removeItem: (key: string) => void;
 };
 
-export type PersistOptions<TState extends object> = {
+export type PersistTarget = PersistStorage | 'local' | 'session';
+
+// A fixed target, or a resolver read per operation so the destination — or whether to persist at all (`false`) —
+// can depend on state.
+export type PersistTargetOption<TState extends object> = PersistTarget | ((state: TState) => PersistTarget | false);
+
+export type PersistOptions<TState extends object> = MiddlewareOptions<TState> & {
   key: string;
-  // Where to read/write. Defaults to `localStorage`, or a no-op when it isn't available (SSR).
-  storage?: PersistStorage;
-  // Persist only part of the state (e.g. drop ephemeral UI flags).
+  storage?: PersistTargetOption<TState>;
+  // Persist only these subtrees and rehydrate each in place. Takes precedence over `partialize`.
+  paths?: ReadonlyArray<PathOf<TState>>;
   partialize?: (state: TState) => Partial<TState>;
-  // Bump when the persisted shape changes; `migrate` turns an older payload into the current shape.
   version?: number;
-  migrate?: (persisted: unknown, version: number) => Partial<TState>;
-  // How to fold the persisted value into the freshly created state. Defaults to a shallow overlay.
+  migrate?: (persisted: unknown, version: number) => unknown;
+  // Not used in `paths` mode, where each path is restored at its own location.
   merge?: (persisted: Partial<TState>, current: TState) => Partial<TState>;
-  // Coalesce rapid writes; 0 (default) writes synchronously on every change.
-  debounce?: number;
 };
 
-const noopStorage: PersistStorage = {
-  getItem: () => null,
-  setItem: () => {},
-  removeItem: () => {}
-};
+const resolveStorage = (target: PersistTarget = 'local'): PersistStorage | undefined => {
+  if (typeof target !== 'string') {
+    return target;
+  }
 
-const defaultStorage = (): PersistStorage => (typeof localStorage !== 'undefined' ? localStorage : noopStorage);
+  try {
+    // SSR / non-browser: `globalThis.*Storage` is `undefined`, so the caller skips persistence. Accessing it can also
+    // throw (sandboxed iframes, some privacy modes) rather than being undefined, hence the try/catch.
+    return target === 'session' ? globalThis.sessionStorage : globalThis.localStorage;
+  } catch {
+    return undefined;
+  }
+};
 
 type Envelope = { version: number; state: unknown };
 
-// Mirrors the store to a key/value storage and rehydrates from it on creation. Put it first in the `middlewares`
-// array so it hydrates before logger/history observe anything.
+// Mirrors the store to a key/value storage and rehydrates on creation. Place it first in `middlewares` so it hydrates
+// before logger/history observe anything.
 export const persistMiddleware = <TState extends object>(options: PersistOptions<TState>): StoreMiddleware<TState> => {
-  const { key, storage = defaultStorage(), partialize, version = 0, migrate, merge, debounce = 0 } = options;
+  const { key, storage: target, paths, partialize, version = 0, migrate, merge, enabled } = options;
+  const dynamicTarget = typeof target === 'function' ? target : undefined;
+  const staticStorage = typeof target === 'function' ? undefined : resolveStorage(target);
+
+  // A fixed target that isn't reachable skips the whole middleware; a dynamic one is resolved per operation instead.
+  if (!dynamicTarget && !staticStorage) {
+    return () => undefined;
+  }
+
+  const storageFor = (state: TState): PersistStorage | undefined => {
+    if (!dynamicTarget) {
+      return staticStorage;
+    }
+
+    const resolved = dynamicTarget(state);
+
+    return resolved ? resolveStorage(resolved) : undefined;
+  };
+
+  const buildPayload = (state: TState): unknown => {
+    if (paths) {
+      const fragment: Record<string, unknown> = {};
+      for (const path of paths) {
+        fragment[path] = getByPath(state, path);
+      }
+
+      return fragment;
+    }
+
+    return partialize ? partialize(state) : state;
+  };
 
   const write = (api: StoreApi<TState>): void => {
     const state = api.getState();
-    const payload: Envelope = { version, state: partialize ? partialize(state) : state };
+    const storage = storageFor(state);
+    if (!storage) {
+      return;
+    }
+
+    const payload: Envelope = { version, state: buildPayload(state) };
     storage.setItem(key, JSON.stringify(payload));
   };
 
+  // `onChange` observes EVERY committed change. In `paths` mode, only persisted subtrees matter — writing on
+  // unrelated changes is wasteful and, worse, can clobber the stored value with a not-yet-hydrated one during boot.
+  const affectsPersisted = (changedPath: PathOf<TState> | undefined): boolean =>
+    !paths || paths.some(path => isPathAffected(changedPath, path));
+
   return api => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
+    if (isDisabled(enabled, api.getState())) {
+      return;
+    }
+
+    let hydrated = false;
+
+    // Restore once a storage is resolvable. A dynamic `storage` can be unavailable at mount (a setting that picks or
+    // gates it loads after the store), so `onChange` — which runs after each commit — retries until it can. Restoring
+    // there is safe to do synchronously: nexus change-listeners are depth-counted, so the restore's own write nests
+    // cleanly without needing to defer.
+    const restore = (): void => {
+      if (hydrated) {
+        return;
+      }
+
+      const storage = storageFor(api.getState());
+      if (!storage) {
+        return;
+      }
+
+      hydrated = true;
+      hydrate(api, key, storage, version, paths, migrate, merge);
+    };
 
     return {
-      // Hydration runs after React mount (or synchronously in standalone usage)
-      // to prevent hydration mismatches between SSR and client.
-      hydrate: store => {
-        hydrate(store, key, storage, version, migrate, merge);
-      },
-      onChange: () => {
-        if (debounce <= 0) {
+      // Runs after React mount (or synchronously standalone) to avoid SSR/client hydration mismatches.
+      hydrate: restore,
+      onChange: change => {
+        restore();
+
+        if (affectsPersisted(change.path)) {
           write(api);
-
-          return;
         }
-
-        clearTimeout(timer);
-        timer = setTimeout(() => write(api), debounce);
       }
     };
   };
@@ -68,12 +137,13 @@ export const persistMiddleware = <TState extends object>(options: PersistOptions
 function hydrate<TState extends object>(
   api: StoreApi<TState>,
   key: string,
-  storage: PersistStorage,
+  storage: PersistStorage | undefined,
   version: number,
+  paths: PersistOptions<TState>['paths'],
   migrate: PersistOptions<TState>['migrate'],
   merge: PersistOptions<TState>['merge']
 ): void {
-  const raw = storage.getItem(key);
+  const raw = storage?.getItem(key);
   if (!raw) {
     return;
   }
@@ -81,15 +151,25 @@ function hydrate<TState extends object>(
   try {
     const envelope = JSON.parse(raw) as Envelope;
     const persisted =
-      envelope.version !== version && migrate
-        ? migrate(envelope.state, envelope.version)
-        : (envelope.state as Partial<TState>);
+      envelope.version !== version && migrate ? migrate(envelope.state, envelope.version) : envelope.state;
 
-    // A full-state `setState` shallow-merges a partial over the current state at runtime; the type just demands the
-    // whole shape, so cast.
-    api.setState(undefined, (merge ? merge(persisted, api.getState()) : persisted) as TState);
+    if (paths) {
+      const fragment = persisted as Record<string, unknown>;
+      api.batch(() => {
+        for (const path of paths) {
+          if (path in fragment) {
+            api.setState(path, fragment[path] as never);
+          }
+        }
+      });
+
+      return;
+    }
+
+    // A full-state `setState` shallow-merges the partial at runtime; the type demands the whole shape, so cast.
+    const next = persisted as Partial<TState>;
+    api.setState(undefined, (merge ? merge(next, api.getState()) : next) as TState);
   } catch {
-    // Corrupt or incompatible payload: drop it and keep the initial state.
-    storage.removeItem(key);
+    storage?.removeItem(key);
   }
 }
