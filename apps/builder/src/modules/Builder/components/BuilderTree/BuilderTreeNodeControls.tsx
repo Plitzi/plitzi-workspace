@@ -12,7 +12,6 @@ import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import BuilderElementTools from '../BuilderElementTools';
 
-import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { BuilderState } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
@@ -54,7 +53,7 @@ const BuilderTreeNodeControls = ({ id, hovered, selected }: BuilderTreeNodeContr
       return false;
     }
 
-    const bindingData = getBindingsDetails(dataSource as Record<string, RuleValue>, element);
+    const bindingData = getBindingsDetails(dataSource, element);
 
     return get(bindingData, 'definition.initialState.visibility', true);
   }, [dataSource, element]);

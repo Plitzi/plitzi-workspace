@@ -16,10 +16,7 @@ import type { CommonState, StyleVariableCategory } from '@plitzi/sdk-shared';
 const StyleAdvanceEditor = () => {
   const { theme } = use(ThemeContext);
   const { useStore } = createStoreHook<CommonState>();
-  const [[customCssProp = '', styleVariables = undefined]] = useStore([
-    'schema.settings.customCss',
-    'style.variables'
-  ]);
+  const [[customCssProp = '', styleVariables = undefined]] = useStore(['schema.settings.customCss', 'style.variables']);
   const { schemaUpdateSettings } = use(SchemaContext);
   const [customCss, setCustomCss] = useState(() => {
     if (typeof customCssProp !== 'string') {

@@ -1,7 +1,7 @@
 import { persistMiddleware } from '@plitzi/nexus';
 
-import type { PathOf, StoreMiddleware } from '@plitzi/nexus';
 import type { CommonState } from '../types';
+import type { PathOf, StoreMiddleware } from '@plitzi/nexus';
 
 // Persists `runtime.state` to local/session storage (keyed per web), gated reactively by `schema.settings`: while
 // `keepState` is off the storage resolver returns `false` and persist skips entirely. `schema` is typed required but
