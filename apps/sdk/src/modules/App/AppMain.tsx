@@ -1,4 +1,5 @@
 import clsx from 'clsx';
+import { use, useEffect, useMemo } from 'react';
 
 import CollectionContextProvider from '@modules/Collection/CollectionContextProvider';
 import InteractionsSdkContextProvider from '@modules/Interactions/InteractionsSdkContextProvider';
@@ -8,23 +9,26 @@ import PluginsContextProvider from '@modules/Plugins/PluginsContextProvider';
 import SchemaContextProvider from '@modules/Schema/SchemaContextProvider';
 import Sdk from '@modules/Sdk';
 import SegmentsContextProvider from '@modules/Segments/SegmentsContextProvider';
+import { StoreContext } from '@plitzi/nexus/StoreContext';
 import AuthContextProvider from '@plitzi/sdk-auth/AuthContextProvider';
 import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
-import useRuntimeStateManager from '@plitzi/sdk-elements/runtimeState/useRuntimeStateManager';
 import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
 import SdkStyleContextProvider from '@plitzi/sdk-style/SdkStyleContextProvider';
 
 import devtoolsCssUrl from '../../assets/plitzi-sdk-devtools.scss?url';
 import styleUrl from '../../assets/plitzi-sdk.scss?url';
 
+import type { StoreApi } from '@plitzi/nexus';
 import type {
   Environment,
   Server,
   RenderMode,
+  RuntimeState,
   RuntimeStateInstance,
   EventBridgeContextValue,
-  OfflineDataRaw
+  OfflineDataRaw,
+  SdkState
 } from '@plitzi/sdk-shared';
 
 export type AppMainProps = {
@@ -69,12 +73,31 @@ const AppMain = ({
   sdkDevToolsStylePath = './plitzi-sdk-devtools.css',
   previewMode = true,
   debugMode = false,
-  state,
   onInitEventBridge,
   onInitStateManager,
   ...sdkProps
 }: AppMainProps) => {
-  useRuntimeStateManager({ state, onInit: onInitStateManager });
+  const store = use(StoreContext) as StoreApi<SdkState> | undefined;
+
+  // Expose the imperative runtime-state handle to the host (consumed by `getStateManager()`). `runtime.state` is a
+  // plain store subkey, so it's read/written straight through the nexus store API.
+  const stateManager = useMemo<RuntimeStateInstance>(
+    () => ({
+      get state() {
+        return store?.getState().runtime?.state ?? {};
+      },
+      // `runtime.state?` is optional, so the path's value type excludes the updater form; the cast keeps the public
+      // setter signature while the store applies an updater function correctly at runtime.
+      setState: value => store?.setState('runtime.state', value as RuntimeState),
+      setStateByKey: (key, value) => store?.setState(`runtime.state.${key}`, value),
+      clearState: () => store?.setState('runtime.state', {})
+    }),
+    [store]
+  );
+
+  useEffect(() => {
+    onInitStateManager?.(stateManager);
+  }, [onInitStateManager, stateManager]);
 
   return (
     <NetworkContextProvider

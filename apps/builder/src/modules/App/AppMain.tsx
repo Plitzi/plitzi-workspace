@@ -5,7 +5,6 @@ import { useState, useMemo } from 'react';
 import { createStoreHook } from '@plitzi/nexus/createStore';
 import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
-import useRuntimeStateManager from '@plitzi/sdk-elements/runtimeState/useRuntimeStateManager';
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
 
 import AppContainer from './AppContainer';
@@ -41,7 +40,6 @@ const AppMain = ({
   includeSubscriptions = true,
   includeRealTime = true,
   externalStyle = '',
-  state,
   debugMode = false
 }: AppMainProps) => {
   const [previewMode, setPreviewMode] = useState(false);
@@ -54,7 +52,6 @@ const AppMain = ({
   const [mobilePreview, setMobilePreview] = useState(false);
   const { useStoreSync } = createStoreHook<BuilderState>();
   useStoreSync('displayMode', displayMode);
-  useRuntimeStateManager({ state });
 
   const appValueMemo = useMemo(
     () => ({

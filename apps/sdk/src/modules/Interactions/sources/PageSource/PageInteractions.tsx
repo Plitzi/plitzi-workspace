@@ -2,10 +2,11 @@ import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo } from 'react';
 
 import { createStoreHook } from '@plitzi/nexus/createStore';
-import { writeRuntimeStateKey } from '@plitzi/sdk-elements/runtimeState/writeRuntimeStateKey';
+import { StoreContext } from '@plitzi/nexus/StoreContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
+import type { StoreApi } from '@plitzi/nexus';
 import type { SdkState, InteractionCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
@@ -17,16 +18,9 @@ export type PageInteractionsProps = {
 const PageInteractions = ({ children, previewMode = true }: PageInteractionsProps) => {
   const { useInteractions } = use(InteractionsContext);
   const { navigate } = use(NavigationContext);
+  const store = use(StoreContext) as StoreApi<SdkState> | undefined;
   const { useStore } = createStoreHook<SdkState>();
   const [[pageIds, pageDefinitions]] = useStore(['schema.pages', 'pageDefinitions']);
-  const [, setRuntimeState] = useStore('runtime.state');
-
-  const setStateByKey = useCallback(
-    (key: string, value: unknown) => setRuntimeState(prev => writeRuntimeStateKey(prev, key, value)),
-    [setRuntimeState]
-  );
-
-  const clearState = useCallback(() => setRuntimeState({}), [setRuntimeState]);
 
   const handleSetPageState = useCallback(
     (params: InteractionCallbackParamValues<{ key: string; type: string; value: string | boolean | number }>) => {
@@ -38,14 +32,14 @@ const PageInteractions = ({ children, previewMode = true }: PageInteractionsProp
         value = parseInt(value as string, 10);
       }
 
-      setStateByKey(key, value);
+      store?.setState(`runtime.state.${key}`, value);
     },
-    [setStateByKey]
+    [store]
   );
 
   const handleClearStatePage = useCallback(() => {
-    clearState();
-  }, [clearState]);
+    store?.setState('runtime.state', {});
+  }, [store]);
 
   const pageUrls = useMemo(() => {
     const pages = pick(pageDefinitions, pageIds);
