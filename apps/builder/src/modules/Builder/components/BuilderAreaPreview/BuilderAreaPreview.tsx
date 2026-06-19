@@ -43,10 +43,12 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
   const { displayBorderComponents } = use(AppContext);
   const { theme } = use(BuilderContext);
   const { useStore } = createStoreHook<BuilderState>();
-  const [[settings, variables, element, styleCache]] = useStore(
-    ['schema.settings', 'schema.variables', `schema.flat.${id}`, 'style.cache'],
-    { defaultValue: [undefined, undefined, undefined, ''] }
-  );
+  const [[settings = undefined, variables = undefined, element = undefined, styleCache = '']] = useStore([
+    'schema.settings',
+    'schema.variables',
+    `schema.flat.${id}`,
+    'style.cache'
+  ]);
 
   const getWindow = useCallback(() => {
     if (typeof window !== 'undefined') {

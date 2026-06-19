@@ -19,13 +19,11 @@ import type {
   GetterTuple,
   GetValueFn,
   GetValueFromBaseFn,
-  GetValueFromBaseWithDefaultFn,
   Listener,
   MultiPathReturn,
   PathOf,
   PathOrFn,
   PathOrFnSetters,
-  PathOrFnValue,
   PathOrFnValues,
   PathSetters,
   PathSetter,
@@ -360,28 +358,9 @@ export const createStoreHook = <TState extends object>() => {
 
   function useStore<P extends PathOf<TState>>(
     path: P,
-    options: Omit<UseStoreOptions<PathValue<TState, P>, TState>, 'defaultValue'> & {
-      defaultValue: undefined;
-      transformer?: never;
-    }
-  ): [
-    PathValue<TState, P> | undefined,
-    (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
-  ];
-
-  function useStore<P extends PathOf<TState>>(
-    path: P,
-    options?: UseStoreOptions<PathValue<TState, P>, TState> & { defaultValue?: never; transformer?: never }
+    options?: UseStoreOptions<PathValue<TState, P>, TState> & { transformer?: never }
   ): [
     PathValue<TState, P>,
-    (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
-  ];
-
-  function useStore<P extends PathOf<TState>, D>(
-    path: P,
-    options: UseStoreOptions<PathValue<TState, P>, TState> & { defaultValue: D; transformer?: never }
-  ): [
-    NonNullable<PathValue<TState, P>> | D,
     (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
   ];
 
@@ -392,21 +371,8 @@ export const createStoreHook = <TState extends object>() => {
 
   function useStore<P extends PathOf<TState>>(
     pathFn: (state: TState) => P,
-    options: Omit<UseStoreOptions<PathValue<TState, P>, TState>, 'defaultValue'> & {
-      defaultValue: undefined;
-      transformer?: never;
-    }
-  ): [PathValue<TState, P> | undefined, PathSetter<TState, P>];
-
-  function useStore<P extends PathOf<TState>>(
-    pathFn: (state: TState) => P,
-    options?: UseStoreOptions<PathValue<TState, P>, TState> & { defaultValue?: never; transformer?: never }
+    options?: UseStoreOptions<PathValue<TState, P>, TState> & { transformer?: never }
   ): [PathValue<TState, P>, PathSetter<TState, P>];
-
-  function useStore<P extends PathOf<TState>, D>(
-    pathFn: (state: TState) => P,
-    options: UseStoreOptions<PathValue<TState, P>, TState> & { defaultValue: D; transformer?: never }
-  ): [NonNullable<PathValue<TState, P>> | D, PathSetter<TState, P>];
 
   function useStore<P extends PathOf<TState>, TResult>(
     pathFn: (state: TState) => P,
@@ -415,29 +381,8 @@ export const createStoreHook = <TState extends object>() => {
 
   function useStore<const Paths extends ReadonlyArray<PathOf<TState>>>(
     paths: Paths,
-    options?: Omit<UseStoreMultiOptions<TState, Paths>, 'defaultValue' | 'transformer'>
+    options?: Omit<UseStoreMultiOptions<TState, Paths>, 'transformer'>
   ): MultiPathReturn<TState, Paths>;
-
-  function useStore<const Paths extends ReadonlyArray<PathOf<TState>>>(
-    paths: Paths,
-    options: UseStoreMultiOptions<TState, Paths> & { defaultValue: undefined; transformer?: never }
-  ): MultiPathReturn<TState, Paths, undefined>;
-
-  function useStore<
-    const Paths extends ReadonlyArray<PathOf<TState>>,
-    const TDefaultValue extends readonly (PathValue<TState, Paths[number]> | undefined)[]
-  >(
-    paths: Paths,
-    options: UseStoreMultiOptions<TState, Paths, TDefaultValue> & { defaultValue: TDefaultValue; transformer?: never }
-  ): MultiPathReturn<TState, Paths, TDefaultValue>;
-
-  function useStore<
-    const Paths extends ReadonlyArray<PathOf<TState>>,
-    TDefaultValue extends PathValue<TState, Paths[number]>
-  >(
-    paths: Paths,
-    options: UseStoreMultiOptions<TState, Paths, TDefaultValue> & { defaultValue: TDefaultValue; transformer?: never }
-  ): MultiPathReturn<TState, Paths, TDefaultValue>;
 
   function useStore<const Paths extends ReadonlyArray<PathOf<TState>>, TResult>(
     paths: Paths,
@@ -446,40 +391,12 @@ export const createStoreHook = <TState extends object>() => {
 
   function useStore<const Entries extends ReadonlyArray<PathOrFn<TState>>>(
     paths: Entries,
-    options?: Omit<UseStoreMultiOptions<TState, any>, 'defaultValue' | 'transformer'> & { transformer?: never }
+    options?: Omit<UseStoreMultiOptions<TState, any>, 'transformer'> & { transformer?: never }
   ): [PathOrFnValues<TState, Entries>, ...PathOrFnSetters<TState, Entries>];
-
-  function useStore<const Entries extends ReadonlyArray<PathOrFn<TState>>>(
-    paths: Entries,
-    options: Omit<UseStoreMultiOptions<TState, any>, 'defaultValue' | 'transformer'> & {
-      defaultValue: undefined;
-      transformer?: never;
-    }
-  ): [{ [I in keyof Entries]: PathOrFnValue<TState, Entries[I]> | undefined }, ...PathOrFnSetters<TState, Entries>];
-
-  function useStore<
-    const Entries extends ReadonlyArray<PathOrFn<TState>>,
-    const TDefaultValue extends readonly unknown[]
-  >(
-    paths: Entries,
-    options: Omit<UseStoreMultiOptions<TState, any>, 'defaultValue' | 'transformer'> & {
-      defaultValue: TDefaultValue;
-      transformer?: never;
-    }
-  ): [
-    {
-      [I in keyof Entries]: I extends keyof TDefaultValue
-        ? TDefaultValue[I] extends undefined
-          ? PathOrFnValue<TState, Entries[I]> | undefined
-          : NonNullable<PathOrFnValue<TState, Entries[I]>> | TDefaultValue[I]
-        : PathOrFnValue<TState, Entries[I]>;
-    },
-    ...PathOrFnSetters<TState, Entries>
-  ];
 
   function useStore<const Entries extends ReadonlyArray<PathOrFn<TState>>, TResult>(
     paths: Entries,
-    options: Omit<UseStoreMultiOptions<TState, any>, 'defaultValue' | 'transformer'> & {
+    options: Omit<UseStoreMultiOptions<TState, any>, 'transformer'> & {
       transformer: (values: PathOrFnValues<TState, Entries>) => TResult;
     }
   ): [TResult, ...PathOrFnSetters<TState, Entries>];
@@ -522,11 +439,6 @@ export const createStoreHook = <TState extends object>() => {
     basePath: P,
     options?: UseStoreGetterOptions<TState>
   ): GetValueFromBaseFn<PathValue<TState, P>>;
-
-  function useStoreGetter<P extends PathOf<TState>, D>(
-    basePath: P,
-    options: UseStoreGetterOptions<TState, D> & { defaultValue: D }
-  ): GetValueFromBaseWithDefaultFn<PathValue<TState, P>, D>;
 
   function useStoreGetter<const Entries extends ReadonlyArray<PathOf<TState> | ((state: TState) => unknown)>>(
     entries: Entries,

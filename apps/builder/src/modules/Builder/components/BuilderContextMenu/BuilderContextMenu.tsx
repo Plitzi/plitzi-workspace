@@ -26,7 +26,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   const { useStore, useStoreGetter } = createStoreHook<BuilderState>();
   const [getSchema, getElement, getStyle] = useStoreGetter(['schema', 'schema.flat', 'style']);
   const [[elementSelected, setSelected]] = useStore(['elementSelected', 'setSelected']);
-  const [element] = useStore(`schema.flat.${elementSelected}`, { defaultValue: undefined });
+  const [element = undefined] = useStore(`schema.flat.${elementSelected}`);
   const { showModal } = useModal();
   const { existsPopup, addPopup } = usePopup();
   const ref = useRef<HTMLDivElement>(null);

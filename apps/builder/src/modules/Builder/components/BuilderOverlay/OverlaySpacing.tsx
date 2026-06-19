@@ -26,7 +26,7 @@ const OverlaySpacing = ({
   zoom = 1
 }: OverlaySpacingProps) => {
   const { useStore } = createStoreHook<BuilderState>();
-  const [element] = useStore(`schema.flat.${id}`, { defaultValue: undefined });
+  const [element = undefined] = useStore(`schema.flat.${id}`);
   const { eventBridge } = use(EventBridgeContext);
   const [rawStyle, setRawStyle] = useState<Partial<CSSStyleDeclaration> | undefined>({});
 

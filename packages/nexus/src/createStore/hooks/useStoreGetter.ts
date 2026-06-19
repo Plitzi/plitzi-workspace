@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import { useMemo } from 'react';
 
@@ -8,7 +7,6 @@ import getByPath from '../../helpers/getByPath';
 
 import type {
   GetterTuple,
-  GetValueFromBaseWithDefaultFn,
   GetValueFromBaseFn,
   GetValueFn,
   PathOf,
@@ -16,7 +14,7 @@ import type {
   UseStoreGetterOptions
 } from '../../types';
 
-export type { GetValueFn, GetValueFromBaseFn, GetValueFromBaseWithDefaultFn, GetterTuple, UseStoreGetterOptions };
+export type { GetValueFn, GetValueFromBaseFn, GetterTuple, UseStoreGetterOptions };
 
 function useStoreGetter<TState extends object>(options?: UseStoreGetterOptions<TState>): GetValueFn<TState>;
 
@@ -25,11 +23,6 @@ function useStoreGetter<TState extends object, P extends PathOf<TState>>(
   options?: UseStoreGetterOptions<TState>
 ): GetValueFromBaseFn<PathValue<TState, P>>;
 
-function useStoreGetter<TState extends object, P extends PathOf<TState>, D>(
-  basePath: P,
-  options: UseStoreGetterOptions<TState, D> & { defaultValue: D }
-): GetValueFromBaseWithDefaultFn<PathValue<TState, P>, D>;
-
 function useStoreGetter<
   TState extends object,
   const Entries extends ReadonlyArray<PathOf<TState> | ((state: TState) => unknown)>
@@ -37,15 +30,14 @@ function useStoreGetter<
 
 function useStoreGetter<TState extends object>(
   arg?: string | readonly (string | ((state: TState) => unknown))[] | UseStoreGetterOptions<TState>,
-  options?: UseStoreGetterOptions<TState, any>
+  options?: UseStoreGetterOptions<TState>
 ): any {
   const resolvedBasePath = typeof arg === 'string' ? arg : undefined;
   const resolvedEntries = Array.isArray(arg) ? (arg as readonly (string | ((state: TState) => unknown))[]) : undefined;
-  const resolvedOptions: UseStoreGetterOptions<TState, any> | undefined =
-    typeof arg === 'object' && !Array.isArray(arg) ? (arg as UseStoreGetterOptions<TState, any>) : options;
+  const resolvedOptions: UseStoreGetterOptions<TState> | undefined =
+    typeof arg === 'object' && !Array.isArray(arg) ? (arg as UseStoreGetterOptions<TState>) : options;
 
   const store = useResolvedStore(resolvedOptions?.store, 'useStoreGetter', resolvedOptions?.storeId);
-  const { defaultValue } = resolvedOptions ?? {};
   const entriesKey = resolvedEntries?.map(e => (typeof e === 'function' ? e.toString() : e)).join('|');
 
   return useMemo(
@@ -78,9 +70,7 @@ function useStoreGetter<TState extends object>(
             return callDefault !== undefined ? bound.getPath(subPath, callDefault) : bound.getPath(subPath);
           }
 
-          const baseDefault = callDefault !== undefined ? callDefault : defaultValue;
-
-          return baseDefault !== undefined ? bound.getState(baseDefault) : bound.getState();
+          return callDefault !== undefined ? bound.getState(callDefault) : bound.getState();
         };
       }
 
@@ -97,7 +87,7 @@ function useStoreGetter<TState extends object>(
       };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, resolvedBasePath, entriesKey, defaultValue]
+    [store, resolvedBasePath, entriesKey]
   );
 }
 

@@ -196,9 +196,9 @@ const [[name, count], setName, setCount] = useStore(['user.name', 'count']);
 // Dynamic path from current state
 const [v] = useStore(s => \`style.\${s.mode}\` as PathOf<State>);
 
-// Transformer (memoized) + default value
+// Transformer (memoized); fallback via a destructuring default
 const [upper] = useStore('user.name', { transformer: v => v.toUpperCase() });
-const [el] = useStore(\`items.\${id}\` as PathOf<State>, { defaultValue: {} });`}
+const [el = {}] = useStore(\`items.\${id}\` as PathOf<State>);`}
     />
 
     <h3 id="use-store-sync">useStoreSync · useStoreGetter · useStoreSetter</h3>

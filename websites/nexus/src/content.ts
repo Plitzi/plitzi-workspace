@@ -259,8 +259,8 @@ function Profile() {
     transformer: value => value.toUpperCase()
   });
 
-  // With a default value
-  const [el] = useStore(\`schema.flat.\${id}\` as PathOf<State>, { defaultValue: {} });
+  // With a fallback — a destructuring default (use a hoisted const for objects)
+  const [el = {}] = useStore(\`schema.flat.\${id}\` as PathOf<State>);
 
   return <input value={name} onChange={e => setName(e.target.value)} />;
 }`

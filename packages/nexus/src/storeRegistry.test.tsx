@@ -33,7 +33,14 @@ describe('store registry: reach an ancestor store by id across a disconnected pr
   });
 
   it('the nearest (disconnected) store cannot see the root key', () => {
-    const { result } = renderHook(() => useStore('a', { defaultValue: -1 })[0], { wrapper });
+    const { result } = renderHook(
+      () => {
+        const [a = -1] = useStore('a');
+
+        return a;
+      },
+      { wrapper }
+    );
 
     expect(result.current).toBe(-1);
   });

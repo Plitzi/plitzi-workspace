@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 
 import type PathTrie from '../createStore/helpers/PathTrie';
@@ -42,28 +41,8 @@ export type PathSetter<TState extends object, P extends PathOf<TState>> = (
   value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)
 ) => void;
 
-export type __NoDefault = { __noDefault: true };
-
-type NumericIndex<I> = I extends `${infer N extends number}` ? N : I extends number ? I : never;
-
-export type PathValues<
-  TState extends object,
-  Paths extends ReadonlyArray<PathOf<TState>>,
-  DefaultValue = __NoDefault
-> = {
-  [I in keyof Paths]: Paths[I] extends PathOf<TState>
-    ? [DefaultValue] extends [__NoDefault]
-      ? PathValue<TState, Paths[I]>
-      : DefaultValue extends readonly any[]
-        ? NumericIndex<I> extends infer NI
-          ? NI extends keyof DefaultValue
-            ? DefaultValue[NI] extends undefined
-              ? PathValue<TState, Paths[I]> | undefined
-              : NonNullable<PathValue<TState, Paths[I]>> | DefaultValue[NI]
-            : PathValue<TState, Paths[I]>
-          : never
-        : NonNullable<PathValue<TState, Paths[I]>> | DefaultValue
-    : never;
+export type PathValues<TState extends object, Paths extends ReadonlyArray<PathOf<TState>>> = {
+  [I in keyof Paths]: Paths[I] extends PathOf<TState> ? PathValue<TState, Paths[I]> : never;
 };
 
 export type PathSetters<TState extends object, Paths extends ReadonlyArray<PathOf<TState>>> = {
@@ -261,11 +240,10 @@ export type PathOrFnSetters<TState extends object, Entries extends ReadonlyArray
   [I in keyof Entries]: PathOrFnSetter<TState, Entries[I]>;
 };
 
-export type MultiPathReturn<
-  TState extends object,
-  Paths extends ReadonlyArray<PathOf<TState>>,
-  TDefaultValue = __NoDefault
-> = [PathValues<TState, Paths, TDefaultValue>, ...PathSetters<TState, Paths>];
+export type MultiPathReturn<TState extends object, Paths extends ReadonlyArray<PathOf<TState>>> = [
+  PathValues<TState, Paths>,
+  ...PathSetters<TState, Paths>
+];
 
 export type UseStoreReturn<TState extends object, TArg> =
   TArg extends PathOf<TState>
@@ -275,20 +253,14 @@ export type UseStoreReturn<TState extends object, TArg> =
       : [TState, StoreApi<TState>['setState']];
 
 export type UseStoreOptions<T, TState extends object = object> = StoreHookReactiveOptions<T, TState> & {
-  defaultValue?: NonNullable<T>;
   transformer?: (value: T) => unknown;
 };
 
-export type UseStoreMultiOptions<
-  TState extends object,
-  Paths extends ReadonlyArray<PathOf<TState>>,
-  TDefaultValue extends
-    | readonly (PathValue<TState, Paths[number]> | undefined)[]
-    | PathValue<TState, Paths[number]>
-    | undefined = undefined
-> = Omit<StoreHookReactiveOptions<never, TState>, 'equalityFn'> & {
+export type UseStoreMultiOptions<TState extends object, Paths extends ReadonlyArray<PathOf<TState>>> = Omit<
+  StoreHookReactiveOptions<never, TState>,
+  'equalityFn'
+> & {
   equalityFn?: (a: PathValues<TState, Paths>, b: PathValues<TState, Paths>) => boolean;
-  defaultValue?: TDefaultValue;
   transformer?: (values: PathValues<TState, Paths>) => unknown;
 };
 
@@ -319,18 +291,6 @@ export type GetValueFromBaseFn<TBase> = TBase extends object
     }
   : () => TBase;
 
-export type GetValueFromBaseWithDefaultFn<TBase, D> = TBase extends object
-  ? {
-      (): NonNullable<TBase> | D;
-      <SubP extends PathOf<NonNullable<TBase>>>(path: SubP): PathValue<NonNullable<TBase>, SubP>;
-      <SubP extends PathOf<NonNullable<TBase>>, D2>(
-        path: SubP,
-        defaultValue: D2
-      ): NonNullable<PathValue<NonNullable<TBase>, SubP>> | D2;
-      <D2>(path: undefined, defaultValue: D2): NonNullable<TBase> | D2;
-    }
-  : () => NonNullable<TBase> | D;
-
 type EntryGetter<TState extends object, Entry> =
   Entry extends PathOf<TState>
     ? GetValueFromBaseFn<PathValue<TState, Entry>>
@@ -347,9 +307,7 @@ export type GetterTuple<
   [K in keyof Entries]: EntryGetter<TState, Entries[K]>;
 };
 
-export type UseStoreGetterOptions<TState extends object = object, D = __NoDefault> = StoreHookBaseOptions<TState> & {
-  defaultValue?: D;
-};
+export type UseStoreGetterOptions<TState extends object = object> = StoreHookBaseOptions<TState>;
 
 export type SetStateFn<TState extends object> = {
   (path: undefined, value: TState | ((prev: TState) => TState)): void;
