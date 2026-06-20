@@ -2,8 +2,10 @@ import AsteroidsCanvas from './AsteroidsCanvas';
 import BreakoutCanvas from './BreakoutCanvas';
 import Game2048 from './Game2048';
 import { type GameStats } from './heroStore';
+import MoleHunt from './MoleHunt';
 import PongCanvas from './PongCanvas';
 import SpaceInvaders from './SpaceInvaders';
+import TicTacToe from './TicTacToe';
 
 import type { ComponentType } from 'react';
 
@@ -76,6 +78,22 @@ export const GAMES: GameDef[] = [
     name: '2048',
     Component: Game2048,
     feature: 'time-travel',
+    hideScoreboard: true,
+    stats: []
+  },
+  {
+    id: 'tictactoe',
+    name: 'Tic-Tac-Toe',
+    Component: TicTacToe,
+    feature: 'derived values',
+    hideScoreboard: true,
+    stats: []
+  },
+  {
+    id: 'molehunt',
+    name: 'Mole Hunt',
+    Component: MoleHunt,
+    feature: 'entity store',
     hideScoreboard: true,
     stats: []
   }

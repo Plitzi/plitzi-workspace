@@ -1,4 +1,4 @@
-import { type PointerEvent, useCallback, useRef } from 'react';
+import { type KeyboardEvent, type PointerEvent, useCallback, useRef } from 'react';
 
 import { type Dir, move, spawn, tileCount, tileStyle } from './game2048Logic';
 import { useDebug, useRenderCount } from './heroDebug';
@@ -42,6 +42,15 @@ const Board2048 = () => {
     [board, score, moves, set]
   );
 
+  const onKeyDown = (e: KeyboardEvent) => {
+    const map: Record<string, Dir> = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' };
+    const dir = map[e.key];
+    if (dir) {
+      e.preventDefault();
+      apply(dir);
+    }
+  };
+
   const onPointerDown = (e: PointerEvent) => {
     start.current = { x: e.clientX, y: e.clientY };
   };
@@ -81,9 +90,11 @@ const Board2048 = () => {
       </div>
 
       <div
+        tabIndex={0}
+        onKeyDown={onKeyDown}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
-        className="border-ink-700/70 bg-ink-950/60 grid grid-cols-4 gap-2 rounded-2xl border p-2.5 backdrop-blur-md"
+        className="border-ink-700/70 focus:border-brand-500 bg-ink-950/60 grid grid-cols-4 gap-2 rounded-2xl border p-2.5 backdrop-blur-md outline-none"
       >
         {board.map((value, i) => (
           <div

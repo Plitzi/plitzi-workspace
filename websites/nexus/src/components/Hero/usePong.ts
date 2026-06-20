@@ -53,8 +53,8 @@ const usePong = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: GamePu
     const serve = (toLeft: boolean) => {
       ball.x = width / 2;
       ball.y = height / 2;
-      // Gentle serve; rallies speed it up gradually (capped in bounceOff).
-      const sp = 3.4;
+      // Brisk serve; rallies and a slow creep speed it up so points actually happen.
+      const sp = 4.4;
       ball.vx = (toLeft ? -1 : 1) * sp;
       ball.vy = rand(-2, 2);
       state.level = 0;
@@ -113,6 +113,13 @@ const usePong = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: GamePu
 
       // CPU is deliberately imperfect so points actually happen.
       right.y = clampPaddle(right.y + (ball.y + rand(-26, 26) - right.y) * 0.072);
+
+      // Slow creep so rallies can't last forever — speeds up ~1.6× per 30s, capped.
+      const sp = Math.hypot(ball.vx, ball.vy);
+      if (sp > 0 && sp < 12) {
+        ball.vx *= 1.0006;
+        ball.vy *= 1.0006;
+      }
 
       ball.x += ball.vx;
       ball.y += ball.vy;

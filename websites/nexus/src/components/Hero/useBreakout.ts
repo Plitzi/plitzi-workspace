@@ -9,6 +9,7 @@ type Brick = { x: number; y: number; w: number; h: number; alive: boolean; hue: 
 type PowerKind = 'wide' | 'slow' | 'life';
 type Power = { x: number; y: number; kind: PowerKind };
 type Particle = { x: number; y: number; vx: number; vy: number; life: number; hue: number };
+type Floater = { x: number; y: number; text: string; life: number };
 type Star = { x: number; y: number; r: number; spd: number };
 
 const PADDLE_W = 96;
@@ -40,6 +41,7 @@ const useBreakout = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: Ga
     const bricks: Brick[] = [];
     const powers: Power[] = [];
     const particles: Particle[] = [];
+    const floaters: Floater[] = [];
     const pointer = { x: 0, active: false, lastMove: 0 };
     const paddle = { x: 0, y: 0 };
     const ball = { x: 0, y: 0, vx: 0, vy: 0 };
@@ -62,8 +64,8 @@ const useBreakout = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: Ga
     const launchBall = () => {
       ball.x = paddle.x;
       ball.y = paddle.y - 18;
-      // Gentler opening: slower base speed, a small bump per level.
-      const sp = 2.8 + state.level * 0.35;
+      // Opening speed — brisk enough for a big screen, ramps per level.
+      const sp = 3.8 + state.level * 0.4;
       ball.vx = rand(-1, 1) * sp * 0.5;
       ball.vy = -sp;
     };
@@ -181,11 +183,13 @@ const useBreakout = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: Ga
         ) {
           brick.alive = false;
           ball.vy *= -1;
-          state.score += 10 * state.level;
+          const gain = 10 * state.level;
+          state.score += gain;
           state.hits += 1;
           state.best = Math.max(state.best, state.score);
           sfx.hit();
           burst(ball.x, ball.y, brick.hue, 10);
+          floaters.push({ x: ball.x, y: ball.y, text: `+${gain}`, life: 1 });
           publish({ score: state.score, hits: state.hits, best: state.best });
           if (powers.length < 2 && Math.random() < 0.14) {
             powers.push({
@@ -339,6 +343,22 @@ const useBreakout = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: Ga
         }
       }
 
+      // Floating score popups.
+      ctx.font = 'bold 12px monospace';
+      ctx.textAlign = 'center';
+      for (let f = floaters.length - 1; f >= 0; f -= 1) {
+        const fl = floaters[f];
+        fl.y -= 0.6;
+        fl.life -= 0.02;
+        ctx.globalAlpha = Math.max(0, fl.life);
+        ctx.fillStyle = '#a7f3d0';
+        ctx.fillText(fl.text, fl.x, fl.y);
+        if (fl.life <= 0) {
+          floaters.splice(f, 1);
+        }
+      }
+
+      ctx.textAlign = 'start';
       ctx.globalAlpha = 1;
       ctx.restore();
     };

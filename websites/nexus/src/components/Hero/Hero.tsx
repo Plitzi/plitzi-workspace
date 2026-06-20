@@ -80,25 +80,25 @@ const Hero = () => {
 
       <StoreProvider value={HERO_INITIAL} middlewares={HERO_MIDDLEWARES}>
         {/* Full-bleed backdrop, but the playable area is shifted off the right edge so it reads as a centered, framed
-            playfield instead of hugging the logs. */}
-        <div className="absolute inset-y-0 right-0 w-full lg:right-12 lg:w-[52%]">
+            playfield. It stops short of the bottom so the controls sit in a clear strip below it, not over the game. */}
+        <div className="absolute top-0 right-0 bottom-24 w-full lg:right-12 lg:w-[52%]">
           <ActiveGame key={gameId} />
           {/* Subtle side rails marking where the play area ends. */}
           <span className="pointer-events-none absolute inset-y-10 left-0 w-px bg-linear-to-b from-transparent via-brand-500/25 to-transparent" />
           <span className="pointer-events-none absolute inset-y-10 right-0 w-px bg-linear-to-b from-transparent via-brand-500/25 to-transparent" />
         </div>
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-ink-950 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-ink-950 to-transparent" />
 
         {/* Scoreboard centered over the play area (canvas games only — 2048 carries its own). */}
         {!active.hideScoreboard && (
-          <div className="pointer-events-none absolute top-18 right-0 z-10 flex w-full justify-center lg:right-12 lg:w-[52%]">
+          <div className="pointer-events-none absolute top-16 right-0 z-10 flex w-full justify-center lg:right-12 lg:w-[52%]">
             <Scoreboard stats={active.stats} />
           </div>
         )}
 
-        {/* Game switcher + the feature each game showcases + mute, at the foot of the play area. */}
-        <div className="pointer-events-none absolute right-0 bottom-8 z-10 flex w-full flex-col items-center gap-3 lg:right-12 lg:w-[52%]">
+        {/* Game switcher + the feature each game showcases + toggles, in the clear strip below the play area. */}
+        <div className="pointer-events-none absolute right-0 bottom-4 z-10 flex w-full flex-col items-center gap-3 lg:right-12 lg:w-[52%]">
           <GameSwitcher games={GAMES} active={gameId} onSelect={setGameId} />
           <div className="pointer-events-auto flex items-center gap-2">
             <p className="mr-1 font-mono text-[11px] text-zinc-500">

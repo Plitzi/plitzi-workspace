@@ -7,9 +7,11 @@ import { resumeAudio, sfx } from './heroSfx';
 
 type Rock = { x: number; y: number; vx: number; vy: number; r: number; angle: number; spin: number; verts: number[] };
 type Bolt = { x: number; y: number; vx: number; vy: number; life: number };
+type Saucer = { x: number; y: number; vx: number; vy: number; kind: 'cross' | 'hunter'; bornAt: number };
 type PowerKind = 'rapid' | 'triple' | 'shield';
 type Power = { x: number; y: number; vx: number; vy: number; kind: PowerKind };
 type Particle = { x: number; y: number; vx: number; vy: number; life: number; hue: number };
+type Floater = { x: number; y: number; text: string; life: number };
 type Star = { x: number; y: number; r: number; spd: number };
 
 const POWER_COLORS: Record<PowerKind, string> = { rapid: '#fbbf24', triple: '#34d399', shield: '#60a5fa' };
@@ -49,8 +51,16 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
     const stars: Star[] = [];
     const rocks: Rock[] = [];
     const bolts: Bolt[] = [];
+    const enemyBolts: Bolt[] = [];
     const powers: Power[] = [];
     const particles: Particle[] = [];
+    const floaters: Floater[] = [];
+    const saucers: Saucer[] = [];
+    let nextSaucerAt = 0;
+
+    const addFloater = (x: number, y: number, text: string) => {
+      floaters.push({ x, y, text, life: 1 });
+    };
     const pointer = { x: 0, y: 0, active: false, lastMove: 0 };
     const ship = { x: 0, y: 0, vx: 0, vy: 0, heading: -Math.PI / 2, thrust: 0 };
     const state = { score: 0, level: 1, lives: 3, hits: 0, best: 0 };
@@ -62,8 +72,6 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
     let raf = 0;
     let lastFrame = 0;
     let respawnAt = 0;
-    let aimRock: Rock | undefined;
-    let aimUntil = 0;
 
     const seedStars = () => {
       stars.length = 0;
@@ -89,11 +97,30 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
       });
     };
 
+    // Enemy saucers: flying UFOs that cross the field and fire aimed shots. Shoot them for a bonus; their shots cost a
+    // life. More appear — and more at once — as the level climbs.
+    const maxSaucers = () => Math.min(4, 1 + Math.floor((state.level + 1) / 2));
+
+    const spawnSaucer = () => {
+      // Roughly half are hunters (which chase the ship), from the very first level.
+      const hunter = Math.random() < 0.5;
+      const fromLeft = Math.random() < 0.5;
+      saucers.push({
+        x: fromLeft ? -30 : width + 30,
+        y: rand(50, height * 0.5),
+        vx: (fromLeft ? 1 : -1) * (hunter ? 1 : 1.4),
+        vy: 0,
+        kind: hunter ? 'hunter' : 'cross',
+        bornAt: performance.now()
+      });
+    };
+
     const buildWave = () => {
       rocks.length = 0;
       bolts.length = 0;
+      enemyBolts.length = 0;
       powers.length = 0;
-      const count = 3 + state.level;
+      const count = 4 + state.level;
       for (let i = 0; i < count; i += 1) {
         const edge = Math.random() < 0.5;
         spawnRock(edge ? rand(0, width) : 0, edge ? 0 : rand(0, height), rand(34, 46));
@@ -143,6 +170,8 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
       state.score = 0;
       state.level = 1;
       state.lives = 3;
+      saucers.length = 0;
+      enemyBolts.length = 0;
       publish({ best: state.best, score: 0, level: 1, lives: 3 });
       buildWave();
     };
@@ -184,14 +213,26 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
         return;
       }
 
-      // Truly nearest rock — the turret tracks it every frame so shots always converge on what's closest.
-      let nearest = rocks[0];
-      let nd = Infinity;
+      // Nearest target among rocks AND saucers — the turret tracks it every frame so shots converge on what's closest,
+      // and the autopilot flies toward it (or strafes when right on top of it).
+      let nearX = ship.x;
+      let nearY = ship.y - 1;
+      let nearDist = Infinity;
       for (const rock of rocks) {
         const d = Math.hypot(rock.x - ship.x, rock.y - ship.y);
-        if (d < nd) {
-          nd = d;
-          nearest = rock;
+        if (d < nearDist) {
+          nearDist = d;
+          nearX = rock.x;
+          nearY = rock.y;
+        }
+      }
+
+      for (const s of saucers) {
+        const d = Math.hypot(s.x - ship.x, s.y - ship.y);
+        if (d < nearDist) {
+          nearDist = d;
+          nearX = s.x;
+          nearY = s.y;
         }
       }
 
@@ -202,24 +243,34 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
       let ty: number;
       let accel: number;
       if (autopilot) {
-        // Commit to one rock for a short window so the AI locks on instead of switching between equidistant rocks.
-        if (!aimRock || !rocks.includes(aimRock) || now > aimUntil) {
-          aimRock = nearest;
-          aimUntil = now + 700;
+        // First priority: dodge an incoming enemy shot that's actually heading at the ship.
+        let dodge: Bolt | undefined;
+        for (const eb of enemyBolts) {
+          const dx = ship.x - eb.x;
+          const dy = ship.y - eb.y;
+          if (Math.hypot(dx, dy) < 140 && dx * eb.vx + dy * eb.vy > 0) {
+            dodge = eb;
+            break;
+          }
         }
 
-        const dist = Math.hypot(aimRock.x - ship.x, aimRock.y - ship.y);
-        if (dist < 120) {
-          // Strafe around it rather than reversing — much calmer than a flip-flop.
-          const ang = Math.atan2(aimRock.y - ship.y, aimRock.x - ship.x) + Math.PI / 2;
+        if (dodge) {
+          // Sidestep perpendicular to the shot's path.
+          const ang = Math.atan2(dodge.vy, dodge.vx) + Math.PI / 2;
+          tx = ship.x + Math.cos(ang) * 160;
+          ty = ship.y + Math.sin(ang) * 160;
+          accel = 0.0055;
+        } else if (nearDist < 120) {
+          // Strafe around the target rather than reversing — much calmer than a flip-flop.
+          const ang = Math.atan2(nearY - ship.y, nearX - ship.x) + Math.PI / 2;
           tx = ship.x + Math.cos(ang) * 180;
           ty = ship.y + Math.sin(ang) * 180;
+          accel = 0.0035;
         } else {
-          tx = aimRock.x;
-          ty = aimRock.y;
+          tx = nearX;
+          ty = nearY;
+          accel = 0.0035;
         }
-
-        accel = 0.0035;
       } else {
         tx = pointer.x;
         ty = pointer.y;
@@ -243,7 +294,7 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
 
       // The hull turns to aim at the nearest rock (turret). Because the cannon fires along the heading, shots converge
       // on the nearest rock instead of zig-zagging with the ship's drift.
-      const desired = Math.atan2(nearest.y - ship.y, nearest.x - ship.x);
+      const desired = Math.atan2(nearY - ship.y, nearX - ship.x);
       let diff = desired - ship.heading;
       while (diff > Math.PI) {
         diff -= Math.PI * 2;
@@ -316,16 +367,19 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
           continue;
         }
 
+        let consumed = false;
         for (let r = rocks.length - 1; r >= 0; r -= 1) {
           const rock = rocks[r];
           if (Math.hypot(rock.x - bolt.x, rock.y - bolt.y) < rock.r) {
             bolts.splice(b, 1);
             rocks.splice(r, 1);
-            state.score += Math.round(60 - rock.r);
+            const gain = Math.round(60 - rock.r);
+            state.score += gain;
             state.hits += 1;
             state.best = Math.max(state.best, state.score);
             sfx.explode();
             burst(rock.x, rock.y, 258, 12);
+            addFloater(rock.x, rock.y, `+${gain}`);
             if (rock.r > 22) {
               spawnRock(rock.x, rock.y, rock.r * 0.58);
               spawnRock(rock.x, rock.y, rock.r * 0.58);
@@ -340,8 +394,84 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
             }
 
             publish({ score: state.score, hits: state.hits, best: state.best });
+            consumed = true;
             break;
           }
+        }
+
+        if (!consumed) {
+          for (let s = saucers.length - 1; s >= 0; s -= 1) {
+            const uf = saucers[s];
+            if (Math.hypot(uf.x - bolt.x, uf.y - bolt.y) < 16) {
+              bolts.splice(b, 1);
+              saucers.splice(s, 1);
+              state.score += 150;
+              state.hits += 1;
+              state.best = Math.max(state.best, state.score);
+              sfx.explode();
+              burst(uf.x, uf.y, 50, 18);
+              addFloater(uf.x, uf.y, '+150');
+              publish({ score: state.score, hits: state.hits, best: state.best });
+              break;
+            }
+          }
+        }
+      }
+
+      // Saucers: 'cross' flies straight across; 'hunter' steers toward the ship and lingers. Both fire aimed shots.
+      for (let s = saucers.length - 1; s >= 0; s -= 1) {
+        const uf = saucers[s];
+        if (uf.kind === 'hunter') {
+          uf.vx += (ship.x - uf.x) * 0.0007;
+          uf.vy += (ship.y - uf.y) * 0.0007;
+          uf.vx *= 0.97;
+          uf.vy *= 0.97;
+          const sp = Math.hypot(uf.vx, uf.vy);
+          if (sp > 2.4) {
+            uf.vx = (uf.vx / sp) * 2.4;
+            uf.vy = (uf.vy / sp) * 2.4;
+          }
+
+          uf.x += uf.vx;
+          uf.y += uf.vy;
+          if (now - uf.bornAt > 14000) {
+            saucers.splice(s, 1);
+            continue;
+          }
+        } else {
+          uf.x += uf.vx;
+          if (uf.x < -50 || uf.x > width + 50) {
+            saucers.splice(s, 1);
+            continue;
+          }
+        }
+
+        if (Math.random() < (uf.kind === 'hunter' ? 0.016 : 0.011)) {
+          const a = Math.atan2(ship.y - uf.y, ship.x - uf.x);
+          enemyBolts.push({ x: uf.x, y: uf.y, vx: Math.cos(a) * 3, vy: Math.sin(a) * 3, life: 1 });
+          sfx.shoot();
+        }
+      }
+
+      if (saucers.length < maxSaucers() && now > nextSaucerAt) {
+        spawnSaucer();
+        // Spawns come faster at higher levels so the pressure builds.
+        nextSaucerAt = now + Math.max(2200, rand(4000, 7500) - state.level * 350);
+      }
+
+      for (let e = enemyBolts.length - 1; e >= 0; e -= 1) {
+        const eb = enemyBolts[e];
+        eb.x += eb.vx;
+        eb.y += eb.vy;
+        eb.life -= 0.008;
+        if (eb.life <= 0 || eb.x < -10 || eb.x > width + 10 || eb.y < -10 || eb.y > height + 10) {
+          enemyBolts.splice(e, 1);
+          continue;
+        }
+
+        if (!invulnerable && Math.hypot(eb.x - ship.x, eb.y - ship.y) < SHIP_R) {
+          enemyBolts.splice(e, 1);
+          loseLife();
         }
       }
 
@@ -419,6 +549,55 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
       for (const bolt of bolts) {
         ctx.beginPath();
         ctx.arc(bolt.x, bolt.y, 2.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Enemy ships — two distinct designs.
+      ctx.shadowBlur = 12;
+      ctx.lineWidth = 1.6;
+      for (const uf of saucers) {
+        if (uf.kind === 'cross') {
+          // Classic UFO: a magenta saucer with a glass dome.
+          ctx.shadowColor = '#f0abfc';
+          ctx.fillStyle = 'rgba(240, 171, 252, 0.25)';
+          ctx.strokeStyle = '#f0abfc';
+          ctx.beginPath();
+          ctx.ellipse(uf.x, uf.y, 16, 6, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.ellipse(uf.x, uf.y - 4, 7, 5, 0, Math.PI, 0);
+          ctx.stroke();
+        } else {
+          // Hunter: an angular red interceptor pointing the way it's heading, with swept wings and a hot core.
+          const heading = Math.atan2(uf.vy, uf.vx) || 0;
+          ctx.save();
+          ctx.translate(uf.x, uf.y);
+          ctx.rotate(heading);
+          ctx.shadowColor = '#f87171';
+          ctx.fillStyle = 'rgba(248, 113, 113, 0.3)';
+          ctx.strokeStyle = '#fca5a5';
+          ctx.beginPath();
+          ctx.moveTo(16, 0);
+          ctx.lineTo(-6, 9);
+          ctx.lineTo(-12, 0);
+          ctx.lineTo(-6, -9);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#fde68a';
+          ctx.beginPath();
+          ctx.arc(-2, 0, 2.4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      ctx.shadowColor = '#fca5a5';
+      ctx.fillStyle = '#fca5a5';
+      for (const eb of enemyBolts) {
+        ctx.beginPath();
+        ctx.arc(eb.x, eb.y, 2.6, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -505,6 +684,22 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
         }
       }
 
+      // Floating score popups.
+      ctx.font = 'bold 12px monospace';
+      ctx.textAlign = 'center';
+      for (let f = floaters.length - 1; f >= 0; f -= 1) {
+        const fl = floaters[f];
+        fl.y -= 0.6;
+        fl.life -= 0.02;
+        ctx.globalAlpha = Math.max(0, fl.life);
+        ctx.fillStyle = '#a7f3d0';
+        ctx.fillText(fl.text, fl.x, fl.y);
+        if (fl.life <= 0) {
+          floaters.splice(f, 1);
+        }
+      }
+
+      ctx.textAlign = 'start';
       ctx.globalAlpha = 1;
       ctx.restore();
 
@@ -543,6 +738,7 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
     const observer = new ResizeObserver(resize);
     observer.observe(canvas);
     resize();
+    nextSaucerAt = performance.now() + 3500;
     publish({ score: 0, level: 1, lives: 3, hits: 0, best: 0 });
     canvas.addEventListener('pointermove', onMove);
     canvas.addEventListener('pointerleave', onLeave);

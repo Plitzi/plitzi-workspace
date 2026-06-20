@@ -92,6 +92,7 @@ type Bullet = { x: number; y: number; vx: number };
 type PowerKind = 'rapid' | 'spread' | 'shield' | 'life';
 type Power = { x: number; y: number; kind: PowerKind };
 type Particle = { x: number; y: number; vx: number; vy: number; life: number; hue: number };
+type Floater = { x: number; y: number; text: string; life: number };
 type Star = { x: number; y: number; r: number; spd: number };
 type BunkerCell = { x: number; y: number; alive: boolean };
 
@@ -129,6 +130,7 @@ const useSpaceInvaders = (canvasRef: RefObject<HTMLCanvasElement | null>, publis
     const bullets: Bullet[] = [];
     const bombs: Bomb[] = [];
     const powers: Power[] = [];
+    const floaters: Floater[] = [];
     const bunkers: BunkerCell[] = [];
     const particles: Particle[] = [];
     const pointer = { x: 0, active: false, lastMove: 0 };
@@ -185,6 +187,56 @@ const useSpaceInvaders = (canvasRef: RefObject<HTMLCanvasElement | null>, publis
       // Gradual ramp: a gentle opening wave that speeds up a little each level.
       speed = 0.22 + state.level * 0.055;
       marchFrame = 0;
+      buildBunkers();
+    };
+
+    // Four destructible bunkers above the player — classic Invaders cover. Built as a grid of small cells with an
+    // arch notch; every hit (enemy bomb or your own fire) erodes a cluster of cells.
+    const buildBunkers = () => {
+      bunkers.length = 0;
+      const count = 4;
+      const cols = 9;
+      const rows = 5;
+      const bw = cols * BUNKER_CELL;
+      const spacing = (width - count * bw) / (count + 1);
+      const by = player.y - 94;
+      for (let b = 0; b < count; b += 1) {
+        const bx = spacing + b * (bw + spacing);
+        for (let r = 0; r < rows; r += 1) {
+          for (let c = 0; c < cols; c += 1) {
+            if (r >= rows - 2 && c >= 3 && c <= 5) {
+              continue;
+            }
+
+            bunkers.push({ x: bx + c * BUNKER_CELL, y: by + r * BUNKER_CELL, alive: true });
+          }
+        }
+      }
+    };
+
+    // Player fire is blocked by a bunker (no pass-through) but doesn't erode it — the cannon fires too fast, it would
+    // shred its own cover in seconds. Only enemy bombs erode the bunkers.
+    const bunkerBlocks = (x: number, y: number): boolean =>
+      bunkers.some(c => c.alive && x >= c.x && x <= c.x + BUNKER_CELL && y >= c.y && y <= c.y + BUNKER_CELL);
+
+    const damageBunker = (x: number, y: number): boolean => {
+      for (const cell of bunkers) {
+        if (cell.alive && x >= cell.x && x <= cell.x + BUNKER_CELL && y >= cell.y && y <= cell.y + BUNKER_CELL) {
+          for (const other of bunkers) {
+            if (
+              other.alive &&
+              Math.abs(other.x - cell.x) <= BUNKER_CELL &&
+              Math.abs(other.y - cell.y) <= BUNKER_CELL
+            ) {
+              other.alive = false;
+            }
+          }
+
+          return true;
+        }
+      }
+
+      return false;
     };
 
     const resize = () => {
@@ -209,6 +261,10 @@ const useSpaceInvaders = (canvasRef: RefObject<HTMLCanvasElement | null>, publis
         const s = rand(0.6, 3.2);
         particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1, hue });
       }
+    };
+
+    const addFloater = (x: number, y: number, text: string) => {
+      floaters.push({ x, y, text, life: 1 });
     };
 
     const aliveInvaders = () => invaders.filter(i => i.alive);
@@ -374,10 +430,18 @@ const useSpaceInvaders = (canvasRef: RefObject<HTMLCanvasElement | null>, publis
           const bx = shooter.x + SPRITE_W / 2;
           const by = shooter.y + SPRITE_H;
           if (shooter.kind === 'squid') {
-            const a = Math.atan2(player.y - by, player.x - bx);
-            bombs.push({ x: bx, y: by, vx: Math.cos(a) * 1.7, vy: 3.8 + state.level * 0.12, kind: 'squid' });
+            // Aimed at the player with a little spread — threatening, but not perfect, so you can dodge.
+            const speed = 3.6 + state.level * 0.12;
+            const a = Math.atan2(player.y - by, player.x - bx) + rand(-0.13, 0.13);
+            bombs.push({ x: bx, y: by, vx: Math.cos(a) * speed, vy: Math.max(2, Math.sin(a) * speed), kind: 'squid' });
           } else if (shooter.kind === 'crab') {
-            bombs.push({ x: bx, y: by, vx: 0, vy: 3.1, kind: 'crab' });
+            // Crabs sometimes take a loose aim, otherwise fire straight.
+            if (Math.random() < 0.4) {
+              const a = Math.atan2(player.y - by, player.x - bx) + rand(-0.3, 0.3);
+              bombs.push({ x: bx, y: by, vx: Math.cos(a) * 3, vy: Math.max(2, Math.sin(a) * 3), kind: 'crab' });
+            } else {
+              bombs.push({ x: bx, y: by, vx: 0, vy: 3.1, kind: 'crab' });
+            }
           } else {
             bombs.push({ x: bx, y: by, vx: 0, vy: 2.3, kind: 'octopus' });
           }
@@ -420,6 +484,11 @@ const useSpaceInvaders = (canvasRef: RefObject<HTMLCanvasElement | null>, publis
           continue;
         }
 
+        if (bunkerBlocks(bullet.x, bullet.y)) {
+          bullets.splice(b, 1);
+          continue;
+        }
+
         for (const inv of alive) {
           if (
             inv.alive &&
@@ -430,10 +499,12 @@ const useSpaceInvaders = (canvasRef: RefObject<HTMLCanvasElement | null>, publis
           ) {
             inv.alive = false;
             bullets.splice(b, 1);
-            state.score += inv.points * state.level;
+            const gain = inv.points * state.level;
+            state.score += gain;
             state.hits += 1;
             state.best = Math.max(state.best, state.score);
             burst(inv.x + SPRITE_W / 2, inv.y + SPRITE_H / 2, inv.hue, 14);
+            addFloater(inv.x + SPRITE_W / 2, inv.y, `+${gain}`);
             sfx.hit();
             publish({ score: state.score, hits: state.hits, best: state.best });
             if (powers.length < 2 && Math.random() < 0.16) {
@@ -455,6 +526,11 @@ const useSpaceInvaders = (canvasRef: RefObject<HTMLCanvasElement | null>, publis
         bomb.x += bomb.vx;
         bomb.y += bomb.vy;
         if (bomb.y > height || bomb.x < 0 || bomb.x > width) {
+          bombs.splice(b, 1);
+          continue;
+        }
+
+        if (damageBunker(bomb.x, bomb.y)) {
           bombs.splice(b, 1);
           continue;
         }
@@ -532,6 +608,17 @@ const useSpaceInvaders = (canvasRef: RefObject<HTMLCanvasElement | null>, publis
         drawSprite(SPRITES[inv.kind][marchFrame], inv.x, inv.y, color);
       }
 
+      // Bunkers.
+      ctx.shadowColor = '#4ade80';
+      ctx.shadowBlur = 4;
+      ctx.fillStyle = '#4ade80';
+      for (const cell of bunkers) {
+        if (cell.alive) {
+          ctx.fillRect(cell.x, cell.y, BUNKER_CELL, BUNKER_CELL);
+        }
+      }
+
+      ctx.shadowBlur = 8;
       ctx.shadowColor = '#c4b5fd';
       ctx.fillStyle = '#ddd6fe';
       for (const bullet of bullets) {
@@ -629,6 +716,22 @@ const useSpaceInvaders = (canvasRef: RefObject<HTMLCanvasElement | null>, publis
         }
       }
 
+      // Floating score popups.
+      ctx.font = 'bold 12px monospace';
+      ctx.textAlign = 'center';
+      for (let f = floaters.length - 1; f >= 0; f -= 1) {
+        const fl = floaters[f];
+        fl.y -= 0.6;
+        fl.life -= 0.02;
+        ctx.globalAlpha = Math.max(0, fl.life);
+        ctx.fillStyle = '#a7f3d0';
+        ctx.fillText(fl.text, fl.x, fl.y);
+        if (fl.life <= 0) {
+          floaters.splice(f, 1);
+        }
+      }
+
+      ctx.textAlign = 'start';
       ctx.globalAlpha = 1;
       ctx.restore();
 
