@@ -1,5 +1,5 @@
 import { createEntityStore } from '@plitzi/nexus';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useDebug, useRenderCount } from './heroDebug';
 import { pushLog } from './heroLog';
@@ -8,37 +8,46 @@ import { sfx } from './heroSfx';
 import type { EntityStore } from '@plitzi/nexus';
 
 // Mole Hunt showcases `createEntityStore`: each tile is an entity in a normalized collection. Activating or clearing
-// one wakes only that tile's `useOne` subscriber — O(1) — so with debug on you can watch a single tile's render count
-// tick while its 19 neighbours stay frozen. Reactivity proven, not claimed.
-type MoleCell = { id: string; active: boolean; until: number };
+// one wakes only that tile's `useOne` subscriber — O(1). `Cell` is `memo`'d so a parent render (score/timer ticking)
+// never touches it; with debug on you can watch a single tile's render count climb while its 19 neighbours stay
+// frozen. Reactivity proven, not claimed.
+type MoleKind = 'mole' | 'bomb';
+type MoleCell = { id: string; active: boolean; until: number; kind: MoleKind };
 
 const GRID = 20;
 const GAME_SECONDS = 30;
 
 const makeCells = (): MoleCell[] =>
-  Array.from({ length: GRID }, (_, i) => ({ id: String(i), active: false, until: 0 }));
+  Array.from({ length: GRID }, (_, i) => ({ id: String(i), active: false, until: 0, kind: 'mole' }));
 
-const Cell = ({ store, id, onHit }: { store: EntityStore<MoleCell>; id: string; onHit: (id: string) => void }) => {
-  const cell = store.useOne(id);
-  const debug = useDebug();
-  const renders = useRenderCount();
-  const active = cell?.active ?? false;
+const Cell = memo(
+  ({ store, id, onHit }: { store: EntityStore<MoleCell>; id: string; onHit: (id: string) => void }) => {
+    const cell = store.useOne(id);
+    const debug = useDebug();
+    const renders = useRenderCount();
+    const active = cell?.active ?? false;
+    const bomb = cell?.kind === 'bomb';
 
-  return (
-    <button
-      type="button"
-      onClick={() => active && onHit(id)}
-      className={`relative flex aspect-square items-center justify-center rounded-lg border text-xl transition ${
-        active
-          ? 'mole-pop border-brand-400 bg-brand-500/30 text-brand-100 shadow-[0_0_16px_rgba(139,92,246,0.5)]'
-          : 'border-ink-700 bg-ink-800/40'
-      }`}
-    >
-      {active && <span>◎</span>}
-      {debug && <span className="absolute right-1 bottom-0.5 font-mono text-[8px] text-emerald-400">{renders}</span>}
-    </button>
-  );
-};
+    let surface = 'border-ink-700 bg-ink-800/40';
+    if (active) {
+      surface = bomb
+        ? 'mole-pop border-red-400 bg-red-500/25 text-red-200 shadow-[0_0_16px_rgba(248,113,113,0.5)]'
+        : 'mole-pop border-brand-400 bg-brand-500/30 text-brand-100 shadow-[0_0_16px_rgba(139,92,246,0.5)]';
+    }
+
+    return (
+      <button
+        type="button"
+        onClick={() => active && onHit(id)}
+        className={`relative flex aspect-square items-center justify-center rounded-lg border text-xl transition ${surface}`}
+      >
+        {active && <span>{bomb ? '✸' : '◎'}</span>}
+        {debug && <span className="absolute right-1 bottom-0.5 font-mono text-[8px] text-emerald-400">{renders}</span>}
+      </button>
+    );
+  }
+);
+Cell.displayName = 'MoleCell';
 
 const MoleHunt = () => {
   const [store] = useState(() => createEntityStore<MoleCell>(makeCells()));
@@ -72,10 +81,18 @@ const MoleHunt = () => {
 
   const hit = useCallback(
     (id: string) => {
+      const cell = store.getOne(id);
       store.updateOne(id, { active: false, until: 0 });
-      scoreRef.current += 1;
+      if (cell?.kind === 'bomb') {
+        // Clicking a bomb costs you points.
+        scoreRef.current = Math.max(0, scoreRef.current - 3);
+        sfx.hurt();
+      } else {
+        scoreRef.current += 1;
+        sfx.hit();
+      }
+
       setScore(scoreRef.current);
-      sfx.hit();
       pushLog(`mole[${id}]`, false);
     },
     [store]
@@ -133,7 +150,9 @@ const MoleHunt = () => {
         const idle = store.getAll().filter(cell => !cell.active);
         if (idle.length) {
           const cell = idle[Math.floor(Math.random() * idle.length)];
-          store.updateOne(cell.id, { active: true, until: now + moleLife });
+          // ~22% of spawns are bombs — don't whack those.
+          const kind: MoleKind = Math.random() < 0.22 ? 'bomb' : 'mole';
+          store.updateOne(cell.id, { active: true, until: now + moleLife, kind });
           pushLog(`mole[${cell.id}]`, true);
         }
       }
@@ -184,7 +203,10 @@ const MoleHunt = () => {
         )}
       </div>
 
-      <p className="mt-3 font-mono text-[10px] text-zinc-600">each tile is a Nexus entity · useOne wakes only its own</p>
+      <p className="mt-3 font-mono text-[10px] text-zinc-600">
+        <span className="text-brand-300">◎</span> hit · <span className="text-red-400">✸</span> bomb (−3, avoid) ·
+        each tile is a Nexus entity
+      </p>
       </div>
     </div>
   );
