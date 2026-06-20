@@ -3,15 +3,16 @@ import { type GameDef } from './heroGames';
 export type ArcadeMenuProps = {
   games: GameDef[];
   onPlay: (id: string) => void;
+  onPurge: () => void;
 };
 
 // The landing state of the hero: a cabinet-style game picker instead of an auto-running game. Each card names the
 // Nexus capability its game puts on display, so the arcade reads as a feature tour. Picking one boots that game.
-const ArcadeMenu = ({ games, onPlay }: ArcadeMenuProps) => (
+const ArcadeMenu = ({ games, onPlay, onPurge }: ArcadeMenuProps) => (
   <div className="pointer-events-auto flex h-full w-full flex-col items-center justify-center px-6 py-8">
     <div className="mb-1 flex items-center gap-2">
       <span className="live-dot bg-brand-400 h-1.5 w-1.5 rounded-full" />
-      <span className="font-mono text-[11px] tracking-[0.3em] text-brand-300 uppercase">Nexus Arcade</span>
+      <span className="text-brand-300 font-mono text-[11px] tracking-[0.3em] uppercase">Nexus Arcade</span>
     </div>
     <p className="mb-6 text-center text-sm text-zinc-500">Pick a cabinet — every game runs on one Nexus store</p>
 
@@ -35,6 +36,15 @@ const ArcadeMenu = ({ games, onPlay }: ArcadeMenuProps) => (
         </button>
       ))}
     </div>
+
+    <button
+      type="button"
+      onClick={onPurge}
+      title="Wipe every saved game and setting"
+      className="mt-6 font-mono text-[11px] text-zinc-600 transition hover:text-rose-300"
+    >
+      purge all saved data
+    </button>
   </div>
 );
 

@@ -1,6 +1,7 @@
 import { type Derived, StoreProvider, createDerived, useDerived } from '@plitzi/nexus';
 import { useEffect, useMemo, useState } from 'react';
 
+import { persistKey, purgeSave } from './arcadePersist';
 import { useDebug, useRenderCount } from './heroDebug';
 import { sfx } from './heroSfx';
 import {
@@ -85,7 +86,7 @@ const Board = () => {
             onClick={() => play(i)}
             className={`flex aspect-square items-center justify-center rounded-lg border font-mono text-3xl font-bold transition ${
               value === 1 ? 'text-brand-300' : value === 2 ? 'text-cyan-300' : 'text-zinc-600'
-            } ${value === 0 && turn === 1 && !over ? 'border-ink-700 bg-ink-800/40 hover:border-brand-500' : 'border-transparent bg-ink-800/40'} ${
+            } ${value === 0 && turn === 1 && !over ? 'border-ink-700 bg-ink-800/40 hover:border-brand-500' : 'bg-ink-800/40 border-transparent'} ${
               line?.includes(i) ? 'tile-win border-brand-500' : ''
             }`}
           >
@@ -94,15 +95,29 @@ const Board = () => {
         ))}
       </div>
 
-      <button
-        type="button"
-        onClick={() => set(undefined, freshTTT())}
-        className={`border-ink-600 bg-ink-800 hover:border-brand-500 hover:text-white mt-3 w-full rounded-lg border py-2 font-mono text-xs text-zinc-300 transition ${
-          over ? 'attention border-brand-500 text-white' : ''
-        }`}
-      >
-        new game
-      </button>
+      <div className="mt-3 flex gap-2">
+        <button
+          type="button"
+          onClick={() => set(undefined, freshTTT())}
+          className={`border-ink-600 bg-ink-800 hover:border-brand-500 flex-1 rounded-lg border py-2 font-mono text-xs text-zinc-300 transition hover:text-white ${
+            over ? 'attention border-brand-500 text-white' : ''
+          }`}
+        >
+          new game
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            purgeSave(persistKey('tictactoe'));
+            set(undefined, freshTTT());
+            sfx.undo();
+          }}
+          title="Delete this game's save"
+          className="border-ink-700 rounded-lg border px-2 py-2 font-mono text-[10px] text-zinc-500 transition hover:border-rose-500 hover:text-rose-300"
+        >
+          clear save
+        </button>
+      </div>
     </div>
   );
 };

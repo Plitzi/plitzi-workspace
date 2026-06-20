@@ -2,6 +2,7 @@ import { StoreProvider, loggerMiddleware } from '@plitzi/nexus';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { setControl, toggleControl, useControl } from './arcadeControls';
+import { purgeArcadeData } from './arcadePersist';
 import { GAMES } from './heroGames';
 import { useArcadeKeys } from './heroKeys';
 import { pushLog } from './heroLog';
@@ -101,6 +102,13 @@ const Arcade = () => {
   const toggleDebug = useCallback(() => toggleControl('debug'), []);
   const toggleAutoIdle = useCallback(() => toggleControl('autoIdle'), []);
 
+  // Wipes every persisted store (settings, scores, saved games, the reactor) and reloads.
+  const purgeData = useCallback(() => {
+    if (window.confirm('Clear all saved arcade data — settings, scores and saved games?')) {
+      purgeArcadeData();
+    }
+  }, []);
+
   // Canvas games run through the shared GameCanvas host; self-contained games render their own component. Keyed by id so
   // switching cabinets remounts the engine.
   const gameNode =
@@ -111,7 +119,7 @@ const Arcade = () => {
       <div ref={rootRef} className="relative h-full w-full">
         {/* Playfield, stopping short of the bottom so the switcher + toggles sit in a clear strip below it. */}
         <div className="absolute inset-x-0 top-0 bottom-24">
-          {playing ? gameNode : <ArcadeMenu games={GAMES} onPlay={handlePlay} />}
+          {playing ? gameNode : <ArcadeMenu games={GAMES} onPlay={handlePlay} onPurge={purgeData} />}
           {/* Subtle side rails marking where the play area ends. */}
           <span className="via-brand-500/25 pointer-events-none absolute inset-y-10 left-0 w-px bg-linear-to-b from-transparent to-transparent" />
           <span className="via-brand-500/25 pointer-events-none absolute inset-y-10 right-0 w-px bg-linear-to-b from-transparent to-transparent" />

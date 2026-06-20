@@ -1,8 +1,10 @@
+import { useStoreHistory } from '@plitzi/nexus';
 import { type KeyboardEvent, type PointerEvent, useCallback, useEffect, useRef } from 'react';
 
+import { persistKey, purgeSave } from './arcadePersist';
 import { type Dir, move, spawn, tileCount, tileStyle } from './game2048Logic';
+import { type Game2048State, make2048Initial, use2048, use2048Setter } from './game2048Store';
 import { useDebug, useRenderCount } from './heroDebug';
-import { make2048Initial, use2048, use2048Setter } from './game2048Store';
 import { sfx } from './heroSfx';
 import TimeTravelBar from './TimeTravelBar';
 
@@ -26,8 +28,17 @@ const Board2048 = () => {
   const [score] = use2048('game.score');
   const [moves] = use2048('game.moves');
   const set = use2048Setter();
+  const { clear } = useStoreHistory<Game2048State>();
   const start = useRef<{ x: number; y: number } | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
+
+  // Per-game purge: wipes only this board's save (and its time-travel log), leaving the other games untouched.
+  const clearSave = useCallback(() => {
+    purgeSave(persistKey('2048'));
+    set('game', make2048Initial().game);
+    clear();
+    sfx.undo();
+  }, [set, clear]);
 
   // Grab focus on mount so the arrow keys drive the board immediately, without a click first.
   useEffect(() => {
@@ -89,9 +100,17 @@ const Board2048 = () => {
         <button
           type="button"
           onClick={() => set('game', make2048Initial().game)}
-          className="border-ink-600 bg-ink-800 hover:border-brand-500 hover:text-white ml-auto rounded-lg border px-3 py-1.5 font-mono text-xs text-zinc-300 transition"
+          className="border-ink-600 bg-ink-800 hover:border-brand-500 ml-auto rounded-lg border px-3 py-1.5 font-mono text-xs text-zinc-300 transition hover:text-white"
         >
           new game
+        </button>
+        <button
+          type="button"
+          onClick={clearSave}
+          title="Delete this game's save"
+          className="border-ink-700 rounded-lg border px-2 py-1.5 font-mono text-[10px] text-zinc-500 transition hover:border-rose-500 hover:text-rose-300"
+        >
+          clear save
         </button>
       </div>
 

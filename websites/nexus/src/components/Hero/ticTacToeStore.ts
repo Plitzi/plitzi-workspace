@@ -1,5 +1,6 @@
 import { createStore, createStoreHook, loggerMiddleware } from '@plitzi/nexus';
 
+import { arcadePersist } from './arcadePersist';
 import { pushLog } from './heroLog';
 
 // Tic-tac-toe in a dedicated store. Its showcase is `createDerived`: the winner is a single memoized value computed
@@ -82,7 +83,10 @@ export const freshTTT = (): TTTState => ({ board: new Array(9).fill(0), turn: 1 
 
 export const createTTTStore = () =>
   createStore<TTTState>(freshTTT(), {
-    middlewares: [loggerMiddleware<TTTState>(change => pushLog(change.path ?? '(root)', change.next))]
+    middlewares: [
+      arcadePersist<TTTState>('tictactoe'),
+      loggerMiddleware<TTTState>(change => pushLog(change.path ?? '(root)', change.next))
+    ]
   });
 
 export const { useStore: useTTT, useStoreSetter: useTTTSetter } = createStoreHook<TTTState>();

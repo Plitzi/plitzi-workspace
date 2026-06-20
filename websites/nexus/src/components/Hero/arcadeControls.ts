@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 
 import { createStore, loggerMiddleware } from '@plitzi/nexus';
 
+import { arcadePersist } from './arcadePersist';
 import { pushLog } from './heroLog';
 
 // One Nexus store backs every global arcade toggle. Flipping pause / perf / debug / mute / auto-idle is a real store
@@ -19,7 +20,12 @@ export type ArcadeControls = {
 const INITIAL: ArcadeControls = { paused: false, lowPerf: false, debug: false, muted: false, autoIdle: false };
 
 export const controlsStore = createStore<ArcadeControls>(INITIAL, {
-  middlewares: [loggerMiddleware<ArcadeControls>(change => pushLog(change.path ?? '(root)', change.next))]
+  middlewares: [
+    // Persist the durable preferences (sound, perf, debug, auto-idle) but not the transient `paused` flag, so a refresh
+    // keeps your settings without resuming into a paused game.
+    arcadePersist<ArcadeControls>('controls', ['muted', 'lowPerf', 'debug', 'autoIdle']),
+    loggerMiddleware<ArcadeControls>(change => pushLog(change.path ?? '(root)', change.next))
+  ]
 });
 
 // Nexus's path-value generics don't simplify against a generic `K extends keyof T`, so the by-path facade is reached
