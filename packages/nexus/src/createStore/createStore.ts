@@ -263,29 +263,51 @@ function createStore<TState extends object>(
     invalidateUnsub?.();
   };
 
-  const withBase = (basePath: string): any => ({
-    getState: (defaultValue?: unknown) => {
-      const value = getPath(basePath as PathOf<TState>);
+  const withBase = (basePath: string): any => {
+    const boundSet = (subPath: string | undefined, value: unknown) =>
+      setState((subPath === undefined ? basePath : `${basePath}.${subPath}`) as PathOf<TState>, value as any);
 
-      return value === undefined && defaultValue !== undefined ? defaultValue : value;
-    },
-    getPath: (subPath: string, defaultValue?: unknown) => {
-      const value = getPath(`${basePath}.${subPath}` as PathOf<TState>);
+    return {
+      getState: (defaultValue?: unknown) => {
+        const value = getPath(basePath as PathOf<TState>);
 
-      return value === undefined && defaultValue !== undefined ? defaultValue : value;
-    },
-    setState: (subPath: string | undefined, value: unknown) =>
-      setState((subPath === undefined ? basePath : `${basePath}.${subPath}`) as PathOf<TState>, value as any),
-    subscribe: (listener: Listener) => subscribePath(basePath as PathOf<TState>, listener),
-    subscribePath: (subPath: string, listener: Listener) =>
-      subscribePath(`${basePath}.${subPath}` as PathOf<TState>, listener)
-  });
+        return value === undefined && defaultValue !== undefined ? defaultValue : value;
+      },
+      getPath: (subPath: string, defaultValue?: unknown) => {
+        const value = getPath(`${basePath}.${subPath}` as PathOf<TState>);
+
+        return value === undefined && defaultValue !== undefined ? defaultValue : value;
+      },
+      setState: boundSet,
+      subscribe: (listener: Listener) => subscribePath(basePath as PathOf<TState>, listener),
+      subscribePath: (subPath: string, listener: Listener) =>
+        subscribePath(`${basePath}.${subPath}` as PathOf<TState>, listener),
+      get: (subPath?: string) =>
+        getPath((subPath === undefined ? basePath : `${basePath}.${subPath}`) as PathOf<TState>),
+      set: boundSet,
+      watch: (subPathOrListener: string | Listener, listener?: Listener) =>
+        typeof subPathOrListener === 'function'
+          ? subscribePath(basePath as PathOf<TState>, subPathOrListener)
+          : subscribePath(`${basePath}.${subPathOrListener}` as PathOf<TState>, listener as Listener)
+    };
+  };
+
+  // The three-verb ergonomic facade. Thin aliases over the methods above — no behavior of their own — so the
+  // performance-tuned read/write/subscribe paths stay the single source of truth.
+  const get = ((path?: PathOf<TState>) => (path === undefined ? getState() : getPath(path))) as StoreApi<TState>['get'];
+  const watch = ((pathOrListener: PathOf<TState> | Listener, listener?: Listener) =>
+    typeof pathOrListener === 'function'
+      ? subscribe(pathOrListener)
+      : subscribePath(pathOrListener, listener as Listener)) as StoreApi<TState>['watch'];
 
   const api: StoreApi<TState> = {
     id: storeOptions?.id,
     getState,
     getPath,
     setState,
+    get,
+    set: setState,
+    watch,
     withBase,
     batch,
     subscribe,

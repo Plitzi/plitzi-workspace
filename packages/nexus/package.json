@@ -47,6 +47,14 @@
       "types": "./dist/StoreProvider.d.ts",
       "import": "./dist/StoreProvider.mjs"
     },
+    "./advanced": {
+      "types": "./dist/advanced/index.d.ts",
+      "import": "./dist/advanced/index.mjs"
+    },
+    "./advanced/index": {
+      "types": "./dist/advanced/index.d.ts",
+      "import": "./dist/advanced/index.mjs"
+    },
     "./async": {
       "types": "./dist/async/index.d.ts",
       "import": "./dist/async/index.mjs"

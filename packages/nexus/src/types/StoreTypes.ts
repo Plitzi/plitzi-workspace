@@ -163,6 +163,21 @@ export type BoundStore<TBase> = {
   subscribePath: TBase extends object
     ? <SubP extends PathOf<TBase>>(subPath: SubP, listener: Listener) => () => void
     : (listener: Listener) => () => void;
+  // Ergonomic facade mirroring the root store's `get`/`set`/`watch`, prefixed with `basePath`. The verbose
+  // `getState`/`getPath`/`subscribe`/`subscribePath` above stay for the default-value overloads.
+  get: TBase extends object
+    ? {
+        (): TBase | undefined;
+        <SubP extends PathOf<TBase>>(subPath: SubP): PathValue<TBase, SubP> | undefined;
+      }
+    : () => TBase | undefined;
+  set: SetFromBaseFn<TBase>;
+  watch: TBase extends object
+    ? {
+        (listener: Listener): () => void;
+        <SubP extends PathOf<TBase>>(subPath: SubP, listener: Listener): () => void;
+      }
+    : (listener: Listener) => () => void;
 };
 
 export type StoreApi<T> = {
@@ -174,6 +189,19 @@ export type StoreApi<T> = {
   // shadows the parent's, except where both are objects (then the subtree at that path is deep-merged).
   getPath: <P extends PathOf<T>>(path: P) => PathValue<T, P> | undefined;
   setState: SetState<T>;
+  // The three-verb ergonomic facade — the API most consumers learn. `get`/`set`/`watch` are thin aliases over
+  // `getState`/`getPath`/`setState`/`subscribe`/`subscribePath`, which stay for advanced reads (default values) and
+  // back-compat. `get()` returns the whole state; `get(path)` resolves one path. `watch(cb)` observes every change;
+  // `watch(path, cb)` observes one path. Both `watch` forms return an unsubscribe function.
+  get: {
+    (): T;
+    <P extends PathOf<T>>(path: P): PathValue<T, P> | undefined;
+  };
+  set: SetState<T>;
+  watch: {
+    (listener: Listener): () => void;
+    <P extends PathOf<T>>(path: P, listener: Listener): () => void;
+  };
   // Project an imperative view bound to `basePath` (see `BoundStore`): reads, writes and subscriptions are prefixed
   // with it, removing the repeated `${basePath}.${key}` concatenation at call sites.
   withBase: <P extends PathOf<T>>(basePath: P) => BoundStore<NonNullable<PathValue<T, P>>>;

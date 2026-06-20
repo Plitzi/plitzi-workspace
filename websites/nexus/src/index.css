@@ -201,6 +201,114 @@ section[id] {
   background: conic-gradient(from 180deg at 50% 50%, #7c3aed33, #4c1d9533, #8b5cf633, #7c3aed33);
 }
 
+/* Film-grain overlay: a tiled fractal-noise SVG at very low opacity. Dithers the large dark gradients in the hero so
+   they don't band on wide/dim displays. Purely decorative, never captures pointer events. */
+.bg-noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Smooth, bandless radial wash for the hero backdrop — a single soft brand glow over the near-black surface. */
+.hero-wash {
+  background:
+    radial-gradient(120% 90% at 18% 8%, rgba(124, 58, 237, 0.16), transparent 55%),
+    radial-gradient(90% 80% at 100% 100%, rgba(91, 33, 182, 0.14), transparent 50%);
+}
+
+/* Fades the left edge of the right-docked play area into the backdrop, so the full-bleed game has no hard seam where
+   it meets the hero copy. */
+.hero-mask {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 16%);
+  mask-image: linear-gradient(to right, transparent 0, #000 16%);
+}
+
+/* Scroll-reveal: elements start shifted + transparent, then `.is-visible` (set by useReveal) eases them in. A
+   `--reveal-delay` custom property lets a parent stagger its children. Reduced-motion users get `.is-visible` set
+   synchronously and never see the offset. */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* A node that just re-rendered: a quick brand-tinted pulse ring. Re-triggered by remounting via a React key. */
+@keyframes node-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.55), 0 0 0 1px rgba(139, 92, 246, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgba(139, 92, 246, 0), 0 0 0 1px rgba(139, 92, 246, 0);
+  }
+}
+
+.node-pulse {
+  animation: node-pulse 0.7s ease-out;
+}
+
+/* The connector line from a watched node lighting up as data flows down the path. */
+@keyframes flow-dash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.flow-line {
+  stroke-dasharray: 5 7;
+  animation: flow-dash 0.8s linear infinite;
+}
+
+/* Count-up numbers fade/scale in when their badge resolves. */
+@keyframes stat-pop {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.stat-pop {
+  animation: stat-pop 0.4s ease-out;
+}
+
+/* Soft pulsing dot used on live badges. */
+@keyframes live-ping {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.65);
+  }
+}
+
+.live-dot {
+  animation: live-ping 1.8s ease-in-out infinite;
+}
+
 /* Light-theme tweaks for the hardcoded decorative surfaces above. */
 html.light * {
   scrollbar-color: #c9c9d4 transparent;

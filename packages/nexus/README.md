@@ -22,26 +22,51 @@ function Counter() {
 }
 ```
 
+## The whole imperative API in three verbs
+
+Outside React, a store speaks three words. `get`, `set` and `watch` are typed against your state and cover the common case — the longer `getState` / `getPath` / `subscribePath` names stay for advanced reads (default values) and back-compat.
+
+```ts
+import { createStore } from '@plitzi/nexus';
+
+const store = createStore<State>({ count: 0, user: { name: 'Carlos' } });
+
+store.get('user.name');                 // 'Carlos'  (one path, no full merge)
+store.get();                            // entire state
+store.set('user.name', 'Ada');          // typed dot-path write
+store.set('count', n => n + 1);         // updater form
+const off = store.watch('user.name', name => render(name)); // fires only for this path
+```
+
 ## What each piece is for
+
+### Core — the 90%
 
 | Import | What it's for |
 |---|---|
-| `createStore` | Create a vanilla store (no React needed). |
+| `createStore` | Create a vanilla store (no React needed). Exposes `get` / `set` / `watch`. |
 | `createStoreHook<T>()` | Bind your state type once → fully-typed `useStore*` hooks. |
 | `StoreProvider` | Put a store on React context; optionally scope/sync/record it. |
 | `useStore` | Subscribe + write a path (or paths). Re-renders on change only. |
+
+### Advanced — reach for it when you need it
+
+Also importable from the focused `@plitzi/nexus/advanced` entry point, which keeps root autocomplete on the Core.
+
+| Import | What it's for |
+|---|---|
 | `useStoreSetter` | A stable setter — write without subscribing/re-rendering. |
 | `useStoreGetter` | A stable getter — read current values in callbacks, no re-render. |
 | `useStoreById` | Get a named ancestor store's `StoreApi` by `id` (reachable across disconnected providers). |
 | `useStoreSync` | Mirror an external value (props) **into** the store. |
 | `createDerived` / `useDerived` | A memoized value computed from store paths (reselect-style). |
-| `createEntityAdapter` | CRUD updaters + selectors for a normalized `Record<id, T>` map. |
+| `createEntityAdapter` / `createEntityStore` | CRUD + selectors for a normalized `Record<id, T>` map; the store variant adds O(1) per-item updates. |
+| `createAsync` / `useAsync` / `useAsyncValue` | Race-safe fetch landed on a path; inline UI or Suspense. |
 | `loggerMiddleware` / `persistMiddleware` / `historyMiddleware` / `reduxDevToolsMiddleware` | Middlewares: log, persist to storage, record time-travel, connect to Redux DevTools. |
-| `setCodegenEnabled` | Force on/off the `new Function` codegen path (auto-detects CSP/SSR). |
-| `createServerSnapshot` | Mark server-fetched data for RSC → Client handoff. |
-| `isServerSnapshot` | Check if a value has the SSR marker flag. |
-| `bindServerAction` | Optimistic updates + revalidation for Next.js Server Actions. |
 | `getStoreHistory` / `useStoreHistory` | Undo / redo / jump-to-snapshot action log (enabled by `historyMiddleware`). |
+| `setCodegenEnabled` | Force on/off the `new Function` codegen path (auto-detects CSP/SSR). |
+| `createServerSnapshot` / `isServerSnapshot` | Mark server-fetched data for RSC → Client handoff, and check the marker. |
+| `bindServerAction` | Optimistic updates + revalidation for Next.js Server Actions. |
 
 ## Architecture
 
