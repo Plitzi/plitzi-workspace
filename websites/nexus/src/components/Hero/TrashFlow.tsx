@@ -223,10 +223,170 @@ const ShopCard = ({
   );
 };
 
+const RING_R = 52;
+const RING_C = 2 * Math.PI * RING_R;
+
+const SummaryStat = ({
+  icon,
+  label,
+  value,
+  color
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  color: string;
+}): ReactNode => (
+  <div className="border-ink-700/70 bg-ink-900/50 flex flex-col gap-3 rounded-2xl border p-5">
+    <span style={{ color }}>{icon}</span>
+    <span className="text-[10px] tracking-[0.22em] text-zinc-500 uppercase">{label}</span>
+    <span className="font-mono text-3xl font-bold tabular-nums" style={{ color }}>
+      {value}
+    </span>
+    <span className="h-0.5 w-full rounded-full" style={{ backgroundColor: `${color}55` }} />
+  </div>
+);
+
+const RunSummary = ({ api }: { api: RefObject<TrashFlowApi | null> }): ReactNode => {
+  const [phase] = useTrashState('hud.phase');
+  const [run] = useTrashState('hud.run');
+  const [level] = useTrashState('hud.level');
+  const [cleared] = useTrashState('hud.cleared');
+  const [collected] = useTrashState('hud.runCollected');
+  const [runPoints] = useTrashState('hud.runPoints');
+  const [cleanedPct] = useTrashState('hud.runCleanedPct');
+  const [doubled] = useTrashState('hud.runDoubled');
+  const [allTime] = useTrashState('hud.allTimePoints');
+
+  if (phase !== 'summary') {
+    return null;
+  }
+
+  return (
+    <div className="bg-ink-950/90 pointer-events-auto absolute inset-0 z-20 flex flex-col justify-center gap-8 overflow-auto p-8 backdrop-blur-sm sm:p-12">
+      <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-6">
+        <div>
+          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 font-mono text-[11px] tracking-[0.2em] text-emerald-300 uppercase">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Run {run} Complete
+          </span>
+          <h3 className="mt-3 text-6xl leading-[0.95] font-extrabold tracking-tight">
+            {cleared ? (
+              <>
+                <span className="text-white">RUN</span>
+                <br />
+                <span className="text-gradient">CLEARED!</span>
+              </>
+            ) : (
+              <>
+                <span className="text-white">BATTERY</span>
+                <br />
+                <span className="text-rose-500">DEAD!</span>
+              </>
+            )}
+          </h3>
+          <span className="mt-3 inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.2em] text-rose-400 uppercase">
+            <span className="h-1.5 w-1.5 rounded-full bg-rose-500" /> Session ended
+          </span>
+        </div>
+        <div className="relative h-40 w-40 shrink-0">
+          <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
+            <circle cx="60" cy="60" r={RING_R} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="10" />
+            <circle
+              cx="60"
+              cy="60"
+              r={RING_R}
+              fill="none"
+              stroke="#34d399"
+              strokeWidth="10"
+              strokeLinecap="round"
+              strokeDasharray={RING_C}
+              strokeDashoffset={RING_C * (1 - cleanedPct / 100)}
+            />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="font-mono text-3xl font-bold text-emerald-300">{cleanedPct}%</span>
+            <span className="text-[10px] tracking-[0.2em] text-zinc-500 uppercase">Cleaned</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-4 sm:grid-cols-3">
+        <SummaryStat
+          color="#fbbf24"
+          label="Level reached"
+          value={`${Math.min(level, LEVEL_CAP)} / ${LEVEL_CAP}`}
+          icon={
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M6 4h12v3a6 6 0 0 1-12 0V4Z" />
+              <path d="M6 6H3v1a3 3 0 0 0 3 3M18 6h3v1a3 3 0 0 1-3 3" />
+              <path d="M9 18h6M10 14.5V18M14 14.5V18M8 21h8" />
+            </svg>
+          }
+        />
+        <SummaryStat
+          color="#22d3ee"
+          label="Trash collected"
+          value={collected.toLocaleString()}
+          icon={
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13h10l1-13M10 11v6M14 11v6" />
+            </svg>
+          }
+        />
+        <SummaryStat
+          color="#34d399"
+          label="Points earned"
+          value={`+${runPoints.toLocaleString()}`}
+          icon={
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+              <path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5L12 3Z" />
+            </svg>
+          }
+        />
+      </div>
+
+      <div className="border-brand-500/30 bg-brand-500/5 mx-auto flex w-full max-w-5xl items-center justify-between rounded-2xl border-l-4 px-6 py-4">
+        <div className="flex flex-col">
+          <span className="text-[10px] tracking-[0.22em] text-zinc-500 uppercase">All-time</span>
+          <span className="text-lg font-bold text-white">Total Points</span>
+        </div>
+        <span className="text-brand-200 font-mono text-4xl font-bold tabular-nums">
+          {allTime.toLocaleString()}
+          <span className="ml-1 text-base text-zinc-500">PTS</span>
+        </span>
+      </div>
+
+      <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-center gap-4">
+        <button
+          type="button"
+          onClick={() => api.current?.toShop()}
+          className="bg-brand-600 hover:bg-brand-500 attention rounded-xl px-10 py-3.5 text-sm font-bold tracking-wide text-white uppercase transition"
+        >
+          Continue to upgrades
+        </button>
+        <button
+          type="button"
+          onClick={() => api.current?.claimDouble()}
+          disabled={doubled}
+          className={`flex items-center gap-2 rounded-xl px-8 py-3.5 text-sm font-bold tracking-wide uppercase transition ${
+            doubled
+              ? 'bg-ink-800 cursor-not-allowed text-zinc-600'
+              : 'border-brand-500/30 bg-ink-900/70 hover:bg-ink-800 border text-zinc-200'
+          }`}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7L8 5Z" />
+          </svg>
+          {doubled ? 'Claimed' : 'Claim 2x'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const Shop = ({ api }: { api: RefObject<TrashFlowApi | null> }): ReactNode => {
   const [phase] = useTrashState('hud.phase');
   const [points] = useTrashState('hud.points');
-  const [cleared] = useTrashState('hud.cleared');
   const [stats] = useTrashState('stats');
 
   if (phase !== 'shop') {
@@ -237,13 +397,7 @@ const Shop = ({ api }: { api: RefObject<TrashFlowApi | null> }): ReactNode => {
     <div className="bg-ink-950/85 pointer-events-auto absolute inset-0 z-20 flex flex-col items-center justify-center gap-7 overflow-auto p-8 backdrop-blur-sm">
       <div className="flex w-full max-w-5xl flex-wrap items-end justify-between gap-4">
         <div>
-          <span
-            className={`font-mono text-[11px] tracking-[0.25em] uppercase ${
-              cleared ? 'text-emerald-300' : 'text-amber-400'
-            }`}
-          >
-            {cleared ? 'Level cleared' : 'Battery drained'}
-          </span>
+          <span className="font-mono text-[11px] tracking-[0.25em] text-emerald-300 uppercase">Spend your haul</span>
           <h3 className="text-4xl font-extrabold tracking-tight text-white">
             Upgrade <span className="text-gradient">Shop</span>
           </h3>
@@ -268,10 +422,10 @@ const Shop = ({ api }: { api: RefObject<TrashFlowApi | null> }): ReactNode => {
 
       <button
         type="button"
-        onClick={() => api.current?.next()}
+        onClick={() => api.current?.newRun()}
         className="bg-brand-600 hover:bg-brand-500 attention rounded-xl px-10 py-3.5 text-sm font-bold tracking-wide text-white uppercase transition"
       >
-        {cleared ? 'Next level ▸' : 'Retry level ▸'}
+        Start new run ▸
       </button>
     </div>
   );
@@ -305,6 +459,7 @@ const TrashFlowStage = ({ store }: { store: EntityStore<Scrap> }) => {
       <PointsHud />
       <LevelTower panelRef={levelRef} />
       <BatteryBar panelRef={batteryRef} />
+      <RunSummary api={apiRef} />
       <Shop api={apiRef} />
     </div>
   );

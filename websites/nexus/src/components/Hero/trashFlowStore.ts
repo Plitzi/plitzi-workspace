@@ -10,6 +10,8 @@ export type StatKey = 'battery' | 'pipe' | 'air' | 'radius' | 'value';
 
 export type TrashStats = Record<StatKey, number>;
 
+export type TrashPhase = 'playing' | 'summary' | 'shop';
+
 export type TrashHud = {
   points: number;
   value: number;
@@ -18,7 +20,13 @@ export type TrashHud = {
   cleared: boolean;
   batteryPct: number;
   remaining: number;
-  phase: 'playing' | 'shop';
+  phase: TrashPhase;
+  run: number;
+  runPoints: number;
+  runCollected: number;
+  runCleanedPct: number;
+  runDoubled: boolean;
+  allTimePoints: number;
 };
 
 export type TrashFlowState = {
@@ -27,7 +35,22 @@ export type TrashFlowState = {
 };
 
 export const makeTrashFlowInitial = (): TrashFlowState => ({
-  hud: { points: 0, value: 0, level: 1, levelPct: 0, cleared: false, batteryPct: 100, remaining: 0, phase: 'playing' },
+  hud: {
+    points: 0,
+    value: 0,
+    level: 1,
+    levelPct: 0,
+    cleared: false,
+    batteryPct: 100,
+    remaining: 0,
+    phase: 'playing',
+    run: 1,
+    runPoints: 0,
+    runCollected: 0,
+    runCleanedPct: 0,
+    runDoubled: false,
+    allTimePoints: 0
+  },
   stats: { battery: 1, pipe: 1, air: 1, radius: 1, value: 1 }
 });
 

@@ -1,23 +1,26 @@
-import AsteroidsCanvas from './AsteroidsCanvas';
-import BreakoutCanvas from './BreakoutCanvas';
 import Game2048 from './Game2048';
-import { type GameStats } from './heroStore';
+import { type GamePublish, type GameStats } from './heroStore';
 import MoleHunt from './MoleHunt';
-import PongCanvas from './PongCanvas';
-import SpaceInvaders from './SpaceInvaders';
 import TicTacToe from './TicTacToe';
 import TrashFlow from './TrashFlow';
+import useAsteroids from './useAsteroids';
+import useBreakout from './useBreakout';
+import usePong from './usePong';
+import useSpaceInvaders from './useSpaceInvaders';
 
-import type { ComponentType } from 'react';
+import type { ComponentType, RefObject } from 'react';
 
 export type StatConfig = { label: string; key: keyof GameStats };
 
 export type PowerInfo = { letter: string; color: string; label: string };
 
-export type GameDef = {
+// A canvas engine hook: it owns the rAF loop and draws into the canvas, publishing scoreboard stats to the shared store.
+// Hosted by GameCanvas. Self-contained games (their own store/DOM) provide a `Component` instead.
+export type CanvasEngine = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: GamePublish) => void;
+
+type GameBase = {
   id: string;
   name: string;
-  Component: ComponentType;
   // The Nexus capability this game puts on display — shown next to the switcher to tie the arcade to the product.
   feature: string;
   // Cabinet art for the arcade menu: a glyph and a one-line hook.
@@ -30,13 +33,15 @@ export type GameDef = {
   hideScoreboard?: boolean;
 };
 
+export type GameDef = GameBase & ({ engine: CanvasEngine } | { Component: ComponentType });
+
 // Every game is one canvas engine writing to the shared Nexus store. Each declares which store paths its scoreboard
 // should surface, so the same four cells relabel themselves per game without any special-casing.
 export const GAMES: GameDef[] = [
   {
     id: 'invaders',
     name: 'Invaders',
-    Component: SpaceInvaders,
+    engine: useSpaceInvaders,
     feature: 'path subscriptions',
     icon: '🛸',
     tagline: 'Hold the line against the swarm',
@@ -56,7 +61,7 @@ export const GAMES: GameDef[] = [
   {
     id: 'breakout',
     name: 'Breakout',
-    Component: BreakoutCanvas,
+    engine: useBreakout,
     feature: 'logger middleware',
     icon: '🧱',
     tagline: 'Chip through every brick',
@@ -76,7 +81,7 @@ export const GAMES: GameDef[] = [
   {
     id: 'pong',
     name: 'Pong',
-    Component: PongCanvas,
+    engine: usePong,
     feature: 'fine-grained re-renders',
     icon: '🏓',
     tagline: 'Out-rally the machine',
@@ -90,7 +95,7 @@ export const GAMES: GameDef[] = [
   {
     id: 'asteroids',
     name: 'Asteroids',
-    Component: AsteroidsCanvas,
+    engine: useAsteroids,
     feature: 'high-frequency writes',
     icon: '☄️',
     tagline: 'Drift, dodge and blast',

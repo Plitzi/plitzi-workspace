@@ -2,6 +2,7 @@ import { type RefObject, useEffect } from 'react';
 
 import { leadPoint } from './heroAim';
 import { IDLE_MS, isIdleAutoplay } from './heroAutoplay';
+import { getGameContext, sizeCanvas } from './heroCanvas';
 import { keyAxisX, keyAxisY } from './heroKeys';
 import { isPaused } from './heroPause';
 import { minFrameMs } from './heroPerf';
@@ -46,7 +47,7 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
       return;
     }
 
-    const ctx = canvas.getContext('2d');
+    const ctx = getGameContext(canvas);
     if (!ctx) {
       return;
     }
@@ -147,13 +148,9 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
     };
 
     const resize = () => {
-      const rect = canvas.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      width = rect.width;
-      height = rect.height;
-      canvas.width = Math.round(width * dpr);
-      canvas.height = Math.round(height * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const size = sizeCanvas(canvas, ctx);
+      width = size.width;
+      height = size.height;
       ship.x = ship.x || width / 2;
       ship.y = ship.y || height / 2;
       seedStars();

@@ -1,5 +1,6 @@
 import { type RefObject, useEffect } from 'react';
 
+import { getGameContext, sizeCanvas } from './heroCanvas';
 import { keyAxisX, keyAxisY } from './heroKeys';
 import { isPaused } from './heroPause';
 import { minFrameMs } from './heroPerf';
@@ -24,12 +25,18 @@ export type Scrap = { id: string; x: number; y: number; hue: number; sides: numb
 
 type Particle = { x: number; y: number; vx: number; vy: number; life: number; hue: number };
 
-export type TrashFlowApi = { buy: (key: StatKey) => boolean; next: () => void };
+export type TrashFlowApi = {
+  buy: (key: StatKey) => boolean;
+  toShop: () => void;
+  claimDouble: () => void;
+  newRun: () => void;
+};
 
 // A huge confetti world far larger than the viewport; early levels are zoomed in on a corner of it and each level zooms
 // OUT to reveal more, while the camera pans whenever the vacuum nears an edge — so the map always feels vast.
 const WORLD_W = 2800;
 const WORLD_H = 1900;
+const LEVEL_CAP = 10;
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 
@@ -48,7 +55,7 @@ const useTrashFlow = (
       return;
     }
 
-    const ctx = canvas.getContext('2d');
+    const ctx = getGameContext(canvas);
     if (!ctx) {
       return;
     }
@@ -77,7 +84,13 @@ const useTrashFlow = (
       target: levelTarget(1),
       batteryMs: 0,
       batteryMax: 1,
-      phase: 'playing' as 'playing' | 'shop'
+      phase: 'playing' as 'playing' | 'summary' | 'shop',
+      run: 0,
+      runPoints: 0,
+      runCollected: 0,
+      runSpawned: 0,
+      runDoubled: false,
+      allTimePoints: 0
     };
 
     const value = () => valuePerScrap(stats.value);
@@ -92,14 +105,33 @@ const useTrashFlow = (
       rot: rand(0, Math.PI * 2)
     });
 
+    const fieldCount = () => Math.min(1600, 560 + game.level * 130);
+
     const spawnField = () => {
       scraps.length = 0;
-      const count = Math.min(1600, 600 + game.level * 160);
+      const count = fieldCount();
       for (let i = 0; i < count; i += 1) {
         scraps.push(makeScrap());
       }
 
+      game.runSpawned += count;
       store.setAll(scraps);
+    };
+
+    // Tops the field back up to the current level's density (used when a level is cleared mid-round).
+    const refillField = () => {
+      const target = fieldCount();
+      const added: Scrap[] = [];
+      while (scraps.length < target) {
+        const s = makeScrap();
+        scraps.push(s);
+        added.push(s);
+      }
+
+      if (added.length) {
+        game.runSpawned += added.length;
+        store.addMany(added);
+      }
     };
 
     const pushHud = () => {
@@ -111,20 +143,61 @@ const useTrashFlow = (
         cleared: game.cleared,
         remaining: scraps.length,
         batteryPct: Math.max(0, Math.round((game.batteryMs / game.batteryMax) * 100)),
-        phase: game.phase
+        phase: game.phase,
+        run: game.run,
+        runPoints: game.runPoints,
+        runCollected: game.runCollected,
+        runCleanedPct: game.runSpawned ? Math.min(100, Math.round((game.runCollected / game.runSpawned) * 100)) : 0,
+        runDoubled: game.runDoubled,
+        allTimePoints: game.allTimePoints
       });
     };
 
-    const startLevel = () => {
+    // A round always starts at level 1 on a fresh battery; upgrades carry over from the shop. Better upgrades let you
+    // climb further (toward level 10) before the battery runs out.
+    const startRound = () => {
       game.phase = 'playing';
+      game.run += 1;
+      game.level = 1;
       game.levelEarned = 0;
       game.cleared = false;
-      game.target = levelTarget(game.level);
+      game.target = levelTarget(1);
       game.batteryMax = batterySeconds(stats.battery) * 1000;
       game.batteryMs = game.batteryMax;
+      game.runPoints = 0;
+      game.runCollected = 0;
+      game.runSpawned = 0;
+      game.runDoubled = false;
       vac.x = WORLD_W / 2;
       vac.y = WORLD_H / 2;
       spawnField();
+      pushHud();
+    };
+
+    // The run is over: freeze play and show the results card. Battery-out keeps `cleared` false; clearing level 10 sets
+    // it true so the summary reads "run complete" instead of "battery dead".
+    const endRun = () => {
+      game.phase = 'summary';
+      sfx.power();
+      pushHud();
+    };
+
+    // Clearing a level's target mid-round bumps the level, tops up the field and refunds a slice of battery — so a fast
+    // clear extends the run. Clearing level 10 ends the round.
+    const advanceLevel = () => {
+      if (game.level >= LEVEL_CAP) {
+        game.cleared = true;
+        endRun();
+
+        return;
+      }
+
+      game.level += 1;
+      game.levelEarned = 0;
+      game.target = levelTarget(game.level);
+      game.batteryMs = Math.min(game.batteryMax, game.batteryMs + game.batteryMax * 0.3);
+      refillField();
+      sfx.power();
       pushHud();
     };
 
@@ -145,14 +218,27 @@ const useTrashFlow = (
 
         return true;
       },
-      next: () => {
-        // Advance only if you actually hit the level's target; a battery-out run replays the same level.
-        if (game.cleared) {
-          game.level += 1;
+      toShop: () => {
+        if (game.phase !== 'summary') {
+          return;
         }
 
-        startLevel();
-      }
+        game.phase = 'shop';
+        pushHud();
+      },
+      claimDouble: () => {
+        if (game.phase !== 'summary' || game.runDoubled || game.runPoints <= 0) {
+          return;
+        }
+
+        game.points += game.runPoints;
+        game.allTimePoints += game.runPoints;
+        game.runPoints *= 2;
+        game.runDoubled = true;
+        sfx.power();
+        pushHud();
+      },
+      newRun: startRound
     };
 
     const burst = (x: number, y: number, hue: number) => {
@@ -167,7 +253,7 @@ const useTrashFlow = (
       const dt = Math.min(60, now - lastNow);
       lastNow = now;
 
-      if (game.phase === 'shop') {
+      if (game.phase !== 'playing') {
         return;
       }
 
@@ -205,16 +291,20 @@ const useTrashFlow = (
       cursor.x = Math.max(0, Math.min(viewW, cursor.x));
       cursor.y = Math.max(0, Math.min(viewH, cursor.y));
 
-      // Vacuum trails the cursor: catch-up speed scales with the gap — gentle when it's right under the cursor, quicker
-      // the further it has fallen behind (capped so it stays smooth).
+      // The vacuum is NOT the cursor — it chases it at its own speed, so there is always a visible trailing gap. Speed is
+      // a slow constant base plus a term that grows with the gap, so a far-flung cursor gets caught quickly while a
+      // nearby one is followed lazily. `min(gap, …)` stops it overshooting once it arrives.
       const tgtX = cam.x + cursor.x / sc;
       const tgtY = cam.y + cursor.y / sc;
       const gx = tgtX - vac.x;
       const gy = tgtY - vac.y;
       const gap = Math.hypot(gx, gy);
-      const frac = Math.min(0.1, 0.014 + gap * 0.00045);
-      vac.x += gx * frac;
-      vac.y += gy * frac;
+      if (gap > 0.001) {
+        const speed = Math.min(gap, 2.6 + gap * 0.07);
+        vac.x += (gx / gap) * speed;
+        vac.y += (gy / gap) * speed;
+      }
+
       vac.x = Math.max(0, Math.min(WORLD_W, vac.x));
       vac.y = Math.max(0, Math.min(WORLD_H, vac.y));
 
@@ -265,6 +355,9 @@ const useTrashFlow = (
             const v = value();
             game.points += v;
             game.levelEarned += v;
+            game.runPoints += v;
+            game.allTimePoints += v;
+            game.runCollected += 1;
             burst(s.x, s.y, s.hue);
             removed.push(s.id);
             scraps.splice(i, 1);
@@ -274,14 +367,13 @@ const useTrashFlow = (
         }
       }
 
-      // Hitting the level's points target clears it and opens the shop early.
-      if (!game.cleared && game.levelEarned >= game.target) {
-        game.cleared = true;
-        game.phase = 'shop';
-        sfx.power();
-        pushHud();
-
-        return;
+      // Hitting the level's target climbs to the next level mid-run (capped at 10) — better upgrades mean more levels per
+      // run before the battery dies.
+      if (game.levelEarned >= game.target) {
+        advanceLevel();
+        if (game.phase !== 'playing') {
+          return;
+        }
       }
 
       if (removed.length) {
@@ -293,12 +385,11 @@ const useTrashFlow = (
         store.updateMany(updates);
       }
 
-      // Battery drains the level clock; empty → the upgrade shop.
+      // Battery drains the run clock; empty → the run ends and the results card shows.
       game.batteryMs -= dt;
       if (game.batteryMs <= 0) {
         game.batteryMs = 0;
-        game.phase = 'shop';
-        pushHud();
+        endRun();
 
         return;
       }
@@ -453,13 +544,9 @@ const useTrashFlow = (
     };
 
     const resize = () => {
-      const rect = canvas.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      viewW = rect.width;
-      viewH = rect.height;
-      canvas.width = Math.round(viewW * dpr);
-      canvas.height = Math.round(viewH * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const size = sizeCanvas(canvas, ctx);
+      viewW = size.width;
+      viewH = size.height;
       cursor.x = cursor.x || viewW / 2;
       cursor.y = cursor.y || viewH / 2;
     };
@@ -479,7 +566,7 @@ const useTrashFlow = (
     const observer = new ResizeObserver(resize);
     observer.observe(canvas);
     resize();
-    startLevel();
+    startRound();
     canvas.addEventListener('pointermove', onMove);
     canvas.addEventListener('pointerleave', onLeave);
     raf = requestAnimationFrame(draw);
