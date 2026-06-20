@@ -1,12 +1,16 @@
 import { type RefObject, useEffect } from 'react';
 
 import { IDLE_MS, isIdleAutoplay } from './heroAutoplay';
+import { keyAxisX } from './heroKeys';
+import { isPaused } from './heroPause';
 import { minFrameMs } from './heroPerf';
 import { type GamePublish } from './heroStore';
 import { resumeAudio, sfx } from './heroSfx';
+import { isHeroVisible } from './heroVisibility';
 
 type Brick = { x: number; y: number; w: number; h: number; alive: boolean; hue: number };
-type PowerKind = 'wide' | 'slow' | 'life';
+type Ball = { x: number; y: number; vx: number; vy: number };
+type PowerKind = 'wide' | 'slow' | 'multi' | 'life';
 type Power = { x: number; y: number; kind: PowerKind };
 type Particle = { x: number; y: number; vx: number; vy: number; life: number; hue: number };
 type Floater = { x: number; y: number; text: string; life: number };
@@ -15,9 +19,14 @@ type Star = { x: number; y: number; r: number; spd: number };
 const PADDLE_W = 96;
 const PADDLE_H = 12;
 const BALL_R = 6;
-const POWER_COLORS: Record<PowerKind, string> = { wide: '#34d399', slow: '#60a5fa', life: '#f472b6' };
-const POWER_LETTER: Record<PowerKind, string> = { wide: 'W', slow: 'S', life: '+' };
-const POWER_KINDS: PowerKind[] = ['wide', 'slow', 'wide', 'slow', 'life'];
+const POWER_COLORS: Record<PowerKind, string> = {
+  wide: '#34d399',
+  slow: '#60a5fa',
+  multi: '#fbbf24',
+  life: '#f472b6'
+};
+const POWER_LETTER: Record<PowerKind, string> = { wide: 'W', slow: 'S', multi: '3', life: '+' };
+const POWER_KINDS: PowerKind[] = ['wide', 'slow', 'multi', 'wide', 'multi', 'slow', 'life'];
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 
@@ -44,7 +53,7 @@ const useBreakout = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: Ga
     const floaters: Floater[] = [];
     const pointer = { x: 0, active: false, lastMove: 0 };
     const paddle = { x: 0, y: 0 };
-    const ball = { x: 0, y: 0, vx: 0, vy: 0 };
+    const balls: Ball[] = [];
     const state = { score: 0, level: 1, lives: 3, hits: 0, best: 0 };
     let raf = 0;
     let shake = 0;
@@ -62,12 +71,10 @@ const useBreakout = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: Ga
     };
 
     const launchBall = () => {
-      ball.x = paddle.x;
-      ball.y = paddle.y - 18;
-      // Opening speed — brisk enough for a big screen, ramps per level.
-      const sp = 3.8 + state.level * 0.4;
-      ball.vx = rand(-1, 1) * sp * 0.5;
-      ball.vy = -sp;
+      balls.length = 0;
+      // Gentle opening speed with a soft per-level ramp, so early levels stay comfortable.
+      const sp = 3.4 + state.level * 0.25;
+      balls.push({ x: paddle.x, y: paddle.y - 18, vx: rand(-1, 1) * sp * 0.5, vy: -sp });
     };
 
     const buildLevel = () => {
@@ -128,7 +135,35 @@ const useBreakout = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: Ga
       buildLevel();
     };
 
+    const spawnMulti = () => {
+      // Split each live ball into a small fan — the multiball power-up.
+      const seeds = balls.slice(0, 3);
+      for (const seed of seeds) {
+        if (balls.length >= 6) {
+          break;
+        }
+
+        const sp = Math.max(3.4, Math.hypot(seed.vx, seed.vy));
+        for (const a of [-0.5, 0.5]) {
+          if (balls.length >= 6) {
+            break;
+          }
+
+          balls.push({
+            x: seed.x,
+            y: seed.y,
+            vx: Math.sin(a) * sp + seed.vx * 0.4,
+            vy: -Math.abs(Math.cos(a) * sp)
+          });
+        }
+      }
+    };
+
     const update = (now: number) => {
+      if (isPaused()) {
+        return;
+      }
+
       const alive = bricks.filter(b => b.alive);
       if (!alive.length) {
         state.level += 1;
@@ -140,66 +175,88 @@ const useBreakout = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: Ga
 
       const pw = paddleWidth(now);
 
-      // Autopilot tracks the ball with a touch of lag; the cursor takes over instantly.
+      // Autopilot tracks the lowest descending ball (the most urgent one) with a touch of lag; the cursor takes over
+      // instantly.
       const autopilot = !pointer.active || (isIdleAutoplay() && now - pointer.lastMove > IDLE_MS);
-      const target = autopilot ? ball.x : pointer.x;
-      paddle.x += (target - paddle.x) * (autopilot ? 0.1 : 0.25);
+      let chase = balls[0];
+      for (const b of balls) {
+        if (b.vy > 0 && (!chase || b.y > chase.y)) {
+          chase = b;
+        }
+      }
+
+      const ax = keyAxisX();
+      if (ax !== 0) {
+        // Keyboard (←/→ or A/D) drives the paddle directly.
+        paddle.x += ax * 9;
+      } else {
+        const target = autopilot ? (chase?.x ?? paddle.x) : pointer.x;
+        paddle.x += (target - paddle.x) * (autopilot ? 0.1 : 0.25);
+      }
+
       paddle.x = Math.max(pw / 2, Math.min(width - pw / 2, paddle.x));
 
-      ball.x += ball.vx;
-      ball.y += ball.vy;
+      for (let i = balls.length - 1; i >= 0; i -= 1) {
+        const ball = balls[i];
+        ball.x += ball.vx;
+        ball.y += ball.vy;
 
-      if (ball.x < BALL_R || ball.x > width - BALL_R) {
-        ball.vx *= -1;
-        ball.x = Math.max(BALL_R, Math.min(width - BALL_R, ball.x));
-      }
+        if (ball.x < BALL_R || ball.x > width - BALL_R) {
+          ball.vx *= -1;
+          ball.x = Math.max(BALL_R, Math.min(width - BALL_R, ball.x));
+        }
 
-      if (ball.y < BALL_R) {
-        ball.vy *= -1;
-        ball.y = BALL_R;
-      }
-
-      if (
-        ball.vy > 0 &&
-        ball.y + BALL_R > paddle.y &&
-        ball.y < paddle.y + PADDLE_H &&
-        ball.x > paddle.x - pw / 2 &&
-        ball.x < paddle.x + pw / 2
-      ) {
-        const offset = (ball.x - paddle.x) / (pw / 2);
-        const sp = Math.hypot(ball.vx, ball.vy);
-        ball.vx = offset * sp * 0.8;
-        ball.vy = -Math.abs(Math.sqrt(Math.max(1, sp * sp - ball.vx * ball.vx)));
-        ball.y = paddle.y - BALL_R;
-        sfx.bounce();
-      }
-
-      for (const brick of alive) {
-        if (
-          ball.x > brick.x &&
-          ball.x < brick.x + brick.w &&
-          ball.y - BALL_R < brick.y + brick.h &&
-          ball.y + BALL_R > brick.y
-        ) {
-          brick.alive = false;
+        if (ball.y < BALL_R) {
           ball.vy *= -1;
-          const gain = 10 * state.level;
-          state.score += gain;
-          state.hits += 1;
-          state.best = Math.max(state.best, state.score);
-          sfx.hit();
-          burst(ball.x, ball.y, brick.hue, 10);
-          floaters.push({ x: ball.x, y: ball.y, text: `+${gain}`, life: 1 });
-          publish({ score: state.score, hits: state.hits, best: state.best });
-          if (powers.length < 2 && Math.random() < 0.14) {
-            powers.push({
-              x: brick.x + brick.w / 2,
-              y: brick.y,
-              kind: POWER_KINDS[Math.floor(rand(0, POWER_KINDS.length))]
-            });
-          }
+          ball.y = BALL_R;
+        }
 
-          break;
+        if (
+          ball.vy > 0 &&
+          ball.y + BALL_R > paddle.y &&
+          ball.y < paddle.y + PADDLE_H &&
+          ball.x > paddle.x - pw / 2 &&
+          ball.x < paddle.x + pw / 2
+        ) {
+          const offset = (ball.x - paddle.x) / (pw / 2);
+          const sp = Math.hypot(ball.vx, ball.vy);
+          ball.vx = offset * sp * 0.8;
+          ball.vy = -Math.abs(Math.sqrt(Math.max(1, sp * sp - ball.vx * ball.vx)));
+          ball.y = paddle.y - BALL_R;
+          sfx.bounce();
+        }
+
+        for (const brick of alive) {
+          if (
+            ball.x > brick.x &&
+            ball.x < brick.x + brick.w &&
+            ball.y - BALL_R < brick.y + brick.h &&
+            ball.y + BALL_R > brick.y
+          ) {
+            brick.alive = false;
+            ball.vy *= -1;
+            const gain = 10 * state.level;
+            state.score += gain;
+            state.hits += 1;
+            state.best = Math.max(state.best, state.score);
+            sfx.hit();
+            burst(ball.x, ball.y, brick.hue, 10);
+            floaters.push({ x: ball.x, y: ball.y, text: `+${gain}`, life: 1 });
+            publish({ score: state.score, hits: state.hits, best: state.best });
+            if (powers.length < 2 && Math.random() < 0.14) {
+              powers.push({
+                x: brick.x + brick.w / 2,
+                y: brick.y,
+                kind: POWER_KINDS[Math.floor(rand(0, POWER_KINDS.length))]
+              });
+            }
+
+            break;
+          }
+        }
+
+        if (ball.y > height + 20) {
+          balls.splice(i, 1);
         }
       }
 
@@ -217,8 +274,12 @@ const useBreakout = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: Ga
           if (power.kind === 'wide') {
             wideUntil = now + 8000;
           } else if (power.kind === 'slow') {
-            ball.vx *= 0.62;
-            ball.vy *= 0.62;
+            for (const ball of balls) {
+              ball.vx *= 0.62;
+              ball.vy *= 0.62;
+            }
+          } else if (power.kind === 'multi') {
+            spawnMulti();
           } else {
             state.lives = Math.min(5, state.lives + 1);
             publish({ lives: state.lives });
@@ -229,7 +290,8 @@ const useBreakout = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: Ga
         }
       }
 
-      if (ball.y > height + 20) {
+      // A life is only lost when the last ball drains off the bottom.
+      if (!balls.length) {
         state.lives -= 1;
         shake = 12;
         sfx.hurt();
@@ -246,6 +308,12 @@ const useBreakout = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: Ga
 
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw);
+      // While paused or scrolled off screen, skip BOTH physics and rendering: the canvas keeps its last frame and the
+      // GPU goes idle.
+      if (isPaused() || !isHeroVisible()) {
+        return;
+      }
+
       // Physics every tick (constant speed); only rendering is throttled in low-performance mode.
       update(now);
       if (now - lastFrame < minFrameMs()) {
@@ -300,9 +368,11 @@ const useBreakout = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: Ga
 
       ctx.shadowColor = '#ede9fe';
       ctx.fillStyle = '#fff';
-      ctx.beginPath();
-      ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI * 2);
-      ctx.fill();
+      for (const ball of balls) {
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       // Falling power-ups.
       ctx.font = 'bold 11px monospace';

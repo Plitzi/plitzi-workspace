@@ -2,6 +2,7 @@ import { createEntityStore } from '@plitzi/nexus';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useDebug, useRenderCount } from './heroDebug';
+import { isPaused } from './heroPause';
 import { pushLog } from './heroLog';
 import { sfx } from './heroSfx';
 
@@ -105,6 +106,10 @@ const MoleHunt = () => {
     }
 
     const timer = window.setInterval(() => {
+      if (isPaused()) {
+        return;
+      }
+
       setTimeLeft(v => {
         if (v <= 1) {
           setRunning(false);
@@ -127,6 +132,10 @@ const MoleHunt = () => {
     }
 
     const loop = window.setInterval(() => {
+      if (isPaused()) {
+        return;
+      }
+
       const now = performance.now();
       let activeCount = 0;
       for (const cell of store.getAll()) {

@@ -6,10 +6,13 @@ import MoleHunt from './MoleHunt';
 import PongCanvas from './PongCanvas';
 import SpaceInvaders from './SpaceInvaders';
 import TicTacToe from './TicTacToe';
+import TrashFlow from './TrashFlow';
 
 import type { ComponentType } from 'react';
 
 export type StatConfig = { label: string; key: keyof GameStats };
+
+export type PowerInfo = { letter: string; color: string; label: string };
 
 export type GameDef = {
   id: string;
@@ -17,7 +20,12 @@ export type GameDef = {
   Component: ComponentType;
   // The Nexus capability this game puts on display — shown next to the switcher to tie the arcade to the product.
   feature: string;
+  // Cabinet art for the arcade menu: a glyph and a one-line hook.
+  icon: string;
+  tagline: string;
   stats: StatConfig[];
+  // Drives the on-screen power-up legend; only games that drop power-ups define it.
+  powerups?: PowerInfo[];
   // Self-contained games (their own store) opt out of the shared top scoreboard.
   hideScoreboard?: boolean;
 };
@@ -30,11 +38,19 @@ export const GAMES: GameDef[] = [
     name: 'Invaders',
     Component: SpaceInvaders,
     feature: 'path subscriptions',
+    icon: '🛸',
+    tagline: 'Hold the line against the swarm',
     stats: [
       { label: 'Score', key: 'score' },
       { label: 'Wave', key: 'level' },
       { label: 'Lives', key: 'lives' },
       { label: 'Best', key: 'best' }
+    ],
+    powerups: [
+      { letter: 'R', color: '#fbbf24', label: 'Rapid fire' },
+      { letter: 'S', color: '#34d399', label: '3-way spread' },
+      { letter: '◇', color: '#60a5fa', label: 'Shield' },
+      { letter: '+', color: '#f472b6', label: 'Extra life' }
     ]
   },
   {
@@ -42,11 +58,19 @@ export const GAMES: GameDef[] = [
     name: 'Breakout',
     Component: BreakoutCanvas,
     feature: 'logger middleware',
+    icon: '🧱',
+    tagline: 'Chip through every brick',
     stats: [
       { label: 'Score', key: 'score' },
       { label: 'Level', key: 'level' },
       { label: 'Lives', key: 'lives' },
       { label: 'Best', key: 'best' }
+    ],
+    powerups: [
+      { letter: 'W', color: '#34d399', label: 'Wider paddle' },
+      { letter: 'S', color: '#60a5fa', label: 'Slow ball' },
+      { letter: '3', color: '#fbbf24', label: 'Multiball' },
+      { letter: '+', color: '#f472b6', label: 'Extra life' }
     ]
   },
   {
@@ -54,6 +78,8 @@ export const GAMES: GameDef[] = [
     name: 'Pong',
     Component: PongCanvas,
     feature: 'fine-grained re-renders',
+    icon: '🏓',
+    tagline: 'Out-rally the machine',
     stats: [
       { label: 'Score', key: 'score' },
       { label: 'Rally', key: 'level' },
@@ -66,11 +92,18 @@ export const GAMES: GameDef[] = [
     name: 'Asteroids',
     Component: AsteroidsCanvas,
     feature: 'high-frequency writes',
+    icon: '☄️',
+    tagline: 'Drift, dodge and blast',
     stats: [
       { label: 'Score', key: 'score' },
       { label: 'Wave', key: 'level' },
       { label: 'Lives', key: 'lives' },
       { label: 'Best', key: 'best' }
+    ],
+    powerups: [
+      { letter: 'R', color: '#fbbf24', label: 'Rapid fire' },
+      { letter: '3', color: '#34d399', label: 'Triple shot' },
+      { letter: '◇', color: '#60a5fa', label: 'Shield' }
     ]
   },
   {
@@ -78,6 +111,8 @@ export const GAMES: GameDef[] = [
     name: '2048',
     Component: Game2048,
     feature: 'time-travel',
+    icon: '🔢',
+    tagline: 'Merge tiles, rewind time',
     hideScoreboard: true,
     stats: []
   },
@@ -86,6 +121,8 @@ export const GAMES: GameDef[] = [
     name: 'Tic-Tac-Toe',
     Component: TicTacToe,
     feature: 'derived values',
+    icon: '⭕',
+    tagline: 'Outsmart the unbeatable grid',
     hideScoreboard: true,
     stats: []
   },
@@ -94,6 +131,18 @@ export const GAMES: GameDef[] = [
     name: 'Mole Hunt',
     Component: MoleHunt,
     feature: 'entity store',
+    icon: '🎯',
+    tagline: 'Whack moles, dodge bombs',
+    hideScoreboard: true,
+    stats: []
+  },
+  {
+    id: 'trashflow',
+    name: 'Trash Flow',
+    Component: TrashFlow,
+    feature: 'entity store at scale',
+    icon: '🧹',
+    tagline: 'Vacuum a huge confetti map',
     hideScoreboard: true,
     stats: []
   }

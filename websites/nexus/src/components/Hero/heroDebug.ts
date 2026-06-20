@@ -1,30 +1,15 @@
-import { useEffect, useReducer, useRef } from 'react';
+import { useRef } from 'react';
 
-// A global debug flag. When on, interactive panels surface their own render counts — visible proof that Nexus wakes
-// only the components whose path changed, instead of re-rendering the whole tree.
-let debug = false;
-const listeners = new Set<() => void>();
+import { getControl, setControl, useControl } from './arcadeControls';
 
-export const setDebug = (value: boolean) => {
-  debug = value;
-  listeners.forEach(listener => listener());
-};
+// The debug flag is part of the Nexus controls store. When on, interactive panels surface their own render counts —
+// visible proof that Nexus wakes only the components whose path changed, instead of re-rendering the whole tree.
+export const setDebug = (value: boolean) => setControl('debug', value);
 
-export const isDebug = () => debug;
+export const isDebug = () => getControl('debug');
 
 // Subscribes a component to the debug flag so it re-renders when toggled.
-export const useDebug = (): boolean => {
-  const [, force] = useReducer((c: number) => c + 1, 0);
-  useEffect(() => {
-    listeners.add(force);
-
-    return () => {
-      listeners.delete(force);
-    };
-  }, []);
-
-  return debug;
-};
+export const useDebug = (): boolean => useControl('debug');
 
 // Counts how many times the calling component has rendered. Incremented every render; the value persists across
 // renders via a ref.

@@ -1,9 +1,12 @@
 import { type RefObject, useEffect } from 'react';
 
 import { IDLE_MS, isIdleAutoplay } from './heroAutoplay';
+import { keyAxisY } from './heroKeys';
+import { isPaused } from './heroPause';
 import { minFrameMs } from './heroPerf';
 import { type GamePublish } from './heroStore';
 import { resumeAudio, sfx } from './heroSfx';
+import { isHeroVisible } from './heroVisibility';
 
 type Particle = { x: number; y: number; vx: number; vy: number; life: number; hue: number };
 type Star = { x: number; y: number; r: number; spd: number };
@@ -53,8 +56,8 @@ const usePong = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: GamePu
     const serve = (toLeft: boolean) => {
       ball.x = width / 2;
       ball.y = height / 2;
-      // Brisk serve; rallies and a slow creep speed it up so points actually happen.
-      const sp = 4.4;
+      // Relaxed serve; rallies and a gentle creep ease it up so points still happen without feeling frantic.
+      const sp = 3.4;
       ball.vx = (toLeft ? -1 : 1) * sp;
       ball.vy = rand(-2, 2);
       state.level = 0;
@@ -96,7 +99,7 @@ const usePong = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: GamePu
 
     const bounceOff = (paddleY: number, towardRight: boolean) => {
       const offset = (ball.y - paddleY) / (PADDLE_H / 2);
-      const sp = Math.min(10, Math.hypot(ball.vx, ball.vy) + 0.35);
+      const sp = Math.min(8, Math.hypot(ball.vx, ball.vy) + 0.2);
       ball.vx = (towardRight ? 1 : -1) * Math.abs(sp * 0.86);
       ball.vy = offset * sp * 0.7;
       state.level += 1;
@@ -106,19 +109,29 @@ const usePong = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: GamePu
     };
 
     const update = (now: number) => {
-      // Player drives the left paddle; autopilot tracks the ball with lag when idle.
-      const autopilot = !pointer.active || (isIdleAutoplay() && now - pointer.lastMove > IDLE_MS);
-      const leftTarget = autopilot ? ball.y : pointer.y;
-      left.y = clampPaddle(left.y + (leftTarget - left.y) * (autopilot ? 0.085 : 0.3));
+      if (isPaused()) {
+        return;
+      }
+
+      // Keyboard (↑/↓ or W/S) drives the left paddle directly; otherwise the cursor, and autopilot tracks the ball
+      // with lag when idle.
+      const ay = keyAxisY();
+      if (ay !== 0) {
+        left.y = clampPaddle(left.y + ay * 7);
+      } else {
+        const autopilot = !pointer.active || (isIdleAutoplay() && now - pointer.lastMove > IDLE_MS);
+        const leftTarget = autopilot ? ball.y : pointer.y;
+        left.y = clampPaddle(left.y + (leftTarget - left.y) * (autopilot ? 0.085 : 0.3));
+      }
 
       // CPU is deliberately imperfect so points actually happen.
       right.y = clampPaddle(right.y + (ball.y + rand(-26, 26) - right.y) * 0.072);
 
-      // Slow creep so rallies can't last forever — speeds up ~1.6× per 30s, capped.
+      // Very slow creep so rallies can't last forever, but the ramp stays gentle.
       const sp = Math.hypot(ball.vx, ball.vy);
-      if (sp > 0 && sp < 12) {
-        ball.vx *= 1.0006;
-        ball.vy *= 1.0006;
+      if (sp > 0 && sp < 9) {
+        ball.vx *= 1.0003;
+        ball.vy *= 1.0003;
       }
 
       ball.x += ball.vx;
@@ -170,6 +183,12 @@ const usePong = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: GamePu
 
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw);
+      // While paused or scrolled off screen, skip BOTH physics and rendering: the canvas keeps its last frame and the
+      // GPU goes idle.
+      if (isPaused() || !isHeroVisible()) {
+        return;
+      }
+
       // Physics every tick (constant speed); only rendering is throttled in low-performance mode.
       update(now);
       if (now - lastFrame < minFrameMs()) {

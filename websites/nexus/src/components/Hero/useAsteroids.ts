@@ -1,13 +1,20 @@
 import { type RefObject, useEffect } from 'react';
 
+import { leadPoint } from './heroAim';
 import { IDLE_MS, isIdleAutoplay } from './heroAutoplay';
+import { keyAxisX, keyAxisY } from './heroKeys';
+import { isPaused } from './heroPause';
 import { minFrameMs } from './heroPerf';
 import { type GamePublish } from './heroStore';
 import { resumeAudio, sfx } from './heroSfx';
+import { isHeroVisible } from './heroVisibility';
 
-type Rock = { x: number; y: number; vx: number; vy: number; r: number; angle: number; spin: number; verts: number[] };
+const BOLT_SPEED = 6.5;
+
+type Rock ={ x: number; y: number; vx: number; vy: number; r: number; angle: number; spin: number; verts: number[] };
 type Bolt = { x: number; y: number; vx: number; vy: number; life: number };
-type Saucer = { x: number; y: number; vx: number; vy: number; kind: 'cross' | 'hunter'; bornAt: number };
+type SaucerKind = 'cross' | 'hunter' | 'weaver' | 'sniper';
+type Saucer = { x: number; y: number; vx: number; vy: number; kind: SaucerKind; bornAt: number; phase: number };
 type PowerKind = 'rapid' | 'triple' | 'shield';
 type Power = { x: number; y: number; vx: number; vy: number; kind: PowerKind };
 type Particle = { x: number; y: number; vx: number; vy: number; life: number; hue: number };
@@ -84,7 +91,7 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
     const spawnRock = (x: number, y: number, r: number) => {
       const a = rand(0, Math.PI * 2);
       // Gradual: gentle drift early, a small bump per level so aiming stays fair.
-      const sp = rand(0.22, 0.6) * (1 + state.level * 0.08);
+      const sp = rand(0.2, 0.52) * (1 + state.level * 0.06);
       rocks.push({
         x,
         y,
@@ -97,21 +104,25 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
       });
     };
 
-    // Enemy saucers: flying UFOs that cross the field and fire aimed shots. Shoot them for a bonus; their shots cost a
-    // life. More appear — and more at once — as the level climbs.
-    const maxSaucers = () => Math.min(4, 1 + Math.floor((state.level + 1) / 2));
+    // Enemy saucers: four distinct designs. 'cross' flies straight, 'hunter' chases, 'weaver' bobs in a sine path,
+    // 'sniper' hangs back and fires precise lead shots. Shoot them for a bonus; their shots cost a life. More appear —
+    // and more at once — as the level climbs.
+    const SAUCER_KINDS: SaucerKind[] = ['cross', 'hunter', 'weaver', 'sniper'];
+    const maxSaucers = () => Math.min(6, 2 + Math.floor(state.level / 2));
 
     const spawnSaucer = () => {
-      // Roughly half are hunters (which chase the ship), from the very first level.
-      const hunter = Math.random() < 0.5;
+      const kind = SAUCER_KINDS[Math.floor(rand(0, SAUCER_KINDS.length))];
       const fromLeft = Math.random() < 0.5;
+      const dirX = fromLeft ? 1 : -1;
+      const speed = kind === 'weaver' ? 1.7 : kind === 'sniper' ? 0.5 : kind === 'hunter' ? 1 : 1.4;
       saucers.push({
         x: fromLeft ? -30 : width + 30,
         y: rand(50, height * 0.5),
-        vx: (fromLeft ? 1 : -1) * (hunter ? 1 : 1.4),
+        vx: dirX * speed,
         vy: 0,
-        kind: hunter ? 'hunter' : 'cross',
-        bornAt: performance.now()
+        kind,
+        bornAt: performance.now(),
+        phase: rand(0, Math.PI * 2)
       });
     };
 
@@ -120,10 +131,18 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
       bolts.length = 0;
       enemyBolts.length = 0;
       powers.length = 0;
+      // Centre the ship and ring the rocks around it, so the wave opens with the ship in the middle of the chaos.
+      ship.x = width / 2;
+      ship.y = height / 2;
+      ship.vx = 0;
+      ship.vy = 0;
+      const safe = 150;
+      const reach = Math.min(width, height) * 0.46;
       const count = 4 + state.level;
       for (let i = 0; i < count; i += 1) {
-        const edge = Math.random() < 0.5;
-        spawnRock(edge ? rand(0, width) : 0, edge ? 0 : rand(0, height), rand(34, 46));
+        const ang = rand(0, Math.PI * 2);
+        const radius = rand(safe, Math.max(safe + 40, reach));
+        spawnRock(width / 2 + Math.cos(ang) * radius, height / 2 + Math.sin(ang) * radius, rand(34, 46));
       }
     };
 
@@ -200,6 +219,10 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
     };
 
     const update = (now: number) => {
+      if (isPaused()) {
+        return;
+      }
+
       // Frozen during the respawn countdown.
       if (now < respawnAt) {
         return;
@@ -214,9 +237,12 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
       }
 
       // Nearest target among rocks AND saucers — the turret tracks it every frame so shots converge on what's closest,
-      // and the autopilot flies toward it (or strafes when right on top of it).
+      // and the autopilot flies toward it (or strafes when right on top of it). We also capture its velocity so the
+      // cannon can lead a moving target instead of firing where it used to be.
       let nearX = ship.x;
       let nearY = ship.y - 1;
+      let nearVx = 0;
+      let nearVy = 0;
       let nearDist = Infinity;
       for (const rock of rocks) {
         const d = Math.hypot(rock.x - ship.x, rock.y - ship.y);
@@ -224,6 +250,8 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
           nearDist = d;
           nearX = rock.x;
           nearY = rock.y;
+          nearVx = rock.vx;
+          nearVy = rock.vy;
         }
       }
 
@@ -233,56 +261,81 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
           nearDist = d;
           nearX = s.x;
           nearY = s.y;
+          nearVx = s.vx;
+          nearVy = s.vy;
         }
       }
+
+      // Vectorial intercept: aim at where the target will be when a bolt reaches it, not its current position.
+      const aim = leadPoint(ship.x, ship.y, nearX, nearY, nearVx, nearVy, BOLT_SPEED);
+
+      // Keyboard flight overrides everything: rotate with ←/→ (A/D), thrust with ↑ (W), brake with ↓ (S).
+      const kx = keyAxisX();
+      const ky = keyAxisY();
+      const keyboard = kx !== 0 || ky !== 0;
 
       // Player controls whenever the cursor is over the play area — even held still. The AI only flies once the cursor
       // leaves, unless the idle-autoplay flag is on (attract mode).
-      const autopilot = !pointer.active || (isIdleAutoplay() && now - pointer.lastMove > IDLE_MS);
-      let tx: number;
-      let ty: number;
-      let accel: number;
-      if (autopilot) {
-        // First priority: dodge an incoming enemy shot that's actually heading at the ship.
-        let dodge: Bolt | undefined;
-        for (const eb of enemyBolts) {
-          const dx = ship.x - eb.x;
-          const dy = ship.y - eb.y;
-          if (Math.hypot(dx, dy) < 140 && dx * eb.vx + dy * eb.vy > 0) {
-            dodge = eb;
-            break;
-          }
+      const autopilot = !keyboard && (!pointer.active || (isIdleAutoplay() && now - pointer.lastMove > IDLE_MS));
+      if (keyboard) {
+        ship.heading += kx * 0.07;
+        if (ky < 0) {
+          ship.vx += Math.cos(ship.heading) * 0.09;
+          ship.vy += Math.sin(ship.heading) * 0.09;
+        } else if (ky > 0) {
+          ship.vx *= 0.95;
+          ship.vy *= 0.95;
         }
 
-        if (dodge) {
-          // Sidestep perpendicular to the shot's path.
-          const ang = Math.atan2(dodge.vy, dodge.vx) + Math.PI / 2;
-          tx = ship.x + Math.cos(ang) * 160;
-          ty = ship.y + Math.sin(ang) * 160;
-          accel = 0.0055;
-        } else if (nearDist < 120) {
-          // Strafe around the target rather than reversing — much calmer than a flip-flop.
-          const ang = Math.atan2(nearY - ship.y, nearX - ship.x) + Math.PI / 2;
-          tx = ship.x + Math.cos(ang) * 180;
-          ty = ship.y + Math.sin(ang) * 180;
-          accel = 0.0035;
-        } else {
-          tx = nearX;
-          ty = nearY;
-          accel = 0.0035;
-        }
+        ship.vx *= 0.99;
+        ship.vy *= 0.99;
       } else {
-        tx = pointer.x;
-        ty = pointer.y;
-        accel = 0.0045;
+        let tx: number;
+        let ty: number;
+        let accel: number;
+        if (autopilot) {
+          // First priority: dodge an incoming enemy shot that's actually heading at the ship.
+          let dodge: Bolt | undefined;
+          for (const eb of enemyBolts) {
+            const dx = ship.x - eb.x;
+            const dy = ship.y - eb.y;
+            if (Math.hypot(dx, dy) < 140 && dx * eb.vx + dy * eb.vy > 0) {
+              dodge = eb;
+              break;
+            }
+          }
+
+          if (dodge) {
+            // Sidestep perpendicular to the shot's path.
+            const ang = Math.atan2(dodge.vy, dodge.vx) + Math.PI / 2;
+            tx = ship.x + Math.cos(ang) * 160;
+            ty = ship.y + Math.sin(ang) * 160;
+            accel = 0.0045;
+          } else if (nearDist < 120) {
+            // Strafe around the target rather than reversing — much calmer than a flip-flop.
+            const ang = Math.atan2(nearY - ship.y, nearX - ship.x) + Math.PI / 2;
+            tx = ship.x + Math.cos(ang) * 180;
+            ty = ship.y + Math.sin(ang) * 180;
+            accel = 0.003;
+          } else {
+            tx = nearX;
+            ty = nearY;
+            accel = 0.003;
+          }
+        } else {
+          tx = pointer.x;
+          ty = pointer.y;
+          accel = 0.0038;
+        }
+
+        // Momentum: the destination is the cursor (or the AI's target); the ship eases over, it never snaps.
+        ship.vx = (ship.vx + (tx - ship.x) * accel) * 0.9;
+        ship.vy = (ship.vy + (ty - ship.y) * accel) * 0.9;
       }
 
-      // Momentum: the destination is the cursor (or the AI's target); the ship eases over, it never snaps. Capped low
-      // so following the cursor feels controlled, not twitchy.
-      ship.vx = (ship.vx + (tx - ship.x) * accel) * 0.9;
-      ship.vy = (ship.vy + (ty - ship.y) * accel) * 0.9;
+      // Slower top speed than before so the ship feels weightier and easier to control.
       const speed = Math.hypot(ship.vx, ship.vy);
-      const maxV = autopilot ? 2.8 : 3.6;
+      const maxV = autopilot ? 2.0 : 2.5;
       if (speed > maxV) {
         ship.vx = (ship.vx / speed) * maxV;
         ship.vy = (ship.vy / speed) * maxV;
@@ -292,9 +345,9 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
       ship.y = Math.max(SHIP_R, Math.min(height - SHIP_R, ship.y + ship.vy));
       ship.thrust = Math.min(1, speed / 2);
 
-      // The hull turns to aim at the nearest rock (turret). Because the cannon fires along the heading, shots converge
-      // on the nearest rock instead of zig-zagging with the ship's drift.
-      const desired = Math.atan2(nearY - ship.y, nearX - ship.x);
+      // The hull turns to the lead point (turret) — unless the player is steering by keyboard, which sets heading
+      // directly. Because the cannon fires along the heading, shots converge on where the target is heading.
+      const desired = keyboard ? ship.heading : Math.atan2(aim.y - ship.y, aim.x - ship.x);
       let diff = desired - ship.heading;
       while (diff > Math.PI) {
         diff -= Math.PI * 2;
@@ -312,8 +365,8 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
           bolts.push({
             x: ship.x + Math.cos(a) * SHIP_R,
             y: ship.y + Math.sin(a) * SHIP_R,
-            vx: Math.cos(a) * 6.5,
-            vy: Math.sin(a) * 6.5,
+            vx: Math.cos(a) * BOLT_SPEED,
+            vy: Math.sin(a) * BOLT_SPEED,
             life: 1
           });
         if (triple) {
@@ -418,7 +471,8 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
         }
       }
 
-      // Saucers: 'cross' flies straight across; 'hunter' steers toward the ship and lingers. Both fire aimed shots.
+      // Four enemy behaviours: 'hunter' chases and lingers; 'weaver' bobs in a sine path; 'sniper' hangs mid-field and
+      // fires precise lead shots; 'cross' flies straight across. Each fires differently.
       for (let s = saucers.length - 1; s >= 0; s -= 1) {
         const uf = saucers[s];
         if (uf.kind === 'hunter') {
@@ -438,6 +492,22 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
             saucers.splice(s, 1);
             continue;
           }
+        } else if (uf.kind === 'weaver') {
+          uf.phase += 0.06;
+          uf.x += uf.vx;
+          uf.y += Math.sin(uf.phase) * 2.4;
+          if (uf.x < -50 || uf.x > width + 50) {
+            saucers.splice(s, 1);
+            continue;
+          }
+        } else if (uf.kind === 'sniper') {
+          // Drifts slowly and eases toward a mid-field hover, then leaves after a while.
+          uf.x += uf.vx;
+          uf.y += (height * 0.32 - uf.y) * 0.012;
+          if (now - uf.bornAt > 16000 || uf.x < -50 || uf.x > width + 50) {
+            saucers.splice(s, 1);
+            continue;
+          }
         } else {
           uf.x += uf.vx;
           if (uf.x < -50 || uf.x > width + 50) {
@@ -446,7 +516,26 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
           }
         }
 
-        if (Math.random() < (uf.kind === 'hunter' ? 0.016 : 0.011)) {
+        if (uf.kind === 'sniper') {
+          // Rare, precise: lead the ship and fire a faster bolt right at the intercept.
+          if (Math.random() < 0.013) {
+            const sniperSpeed = 4.4;
+            const pt = leadPoint(uf.x, uf.y, ship.x, ship.y, ship.vx, ship.vy, sniperSpeed);
+            const a = Math.atan2(pt.y - uf.y, pt.x - uf.x);
+            enemyBolts.push({ x: uf.x, y: uf.y, vx: Math.cos(a) * sniperSpeed, vy: Math.sin(a) * sniperSpeed, life: 1 });
+            sfx.shoot();
+          }
+        } else if (uf.kind === 'weaver') {
+          // Frequent two-shot spread.
+          if (Math.random() < 0.02) {
+            const a = Math.atan2(ship.y - uf.y, ship.x - uf.x);
+            for (const off of [-0.16, 0.16]) {
+              enemyBolts.push({ x: uf.x, y: uf.y, vx: Math.cos(a + off) * 3.2, vy: Math.sin(a + off) * 3.2, life: 1 });
+            }
+
+            sfx.shoot();
+          }
+        } else if (Math.random() < (uf.kind === 'hunter' ? 0.016 : 0.011)) {
           const a = Math.atan2(ship.y - uf.y, ship.x - uf.x);
           enemyBolts.push({ x: uf.x, y: uf.y, vx: Math.cos(a) * 3, vy: Math.sin(a) * 3, life: 1 });
           sfx.shoot();
@@ -487,6 +576,12 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
 
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw);
+      // While paused or scrolled off screen, skip BOTH physics and rendering: the canvas keeps its last frame and the
+      // GPU goes idle.
+      if (isPaused() || !isHeroVisible()) {
+        return;
+      }
+
       // Physics every tick (constant speed); only rendering is throttled in low-performance mode.
       update(now);
       if (now - lastFrame < minFrameMs()) {
@@ -552,7 +647,7 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
         ctx.fill();
       }
 
-      // Enemy ships — two distinct designs.
+      // Enemy ships — four distinct designs.
       ctx.shadowBlur = 12;
       ctx.lineWidth = 1.6;
       for (const uf of saucers) {
@@ -568,7 +663,7 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
           ctx.beginPath();
           ctx.ellipse(uf.x, uf.y - 4, 7, 5, 0, Math.PI, 0);
           ctx.stroke();
-        } else {
+        } else if (uf.kind === 'hunter') {
           // Hunter: an angular red interceptor pointing the way it's heading, with swept wings and a hot core.
           const heading = Math.atan2(uf.vy, uf.vx) || 0;
           ctx.save();
@@ -589,6 +684,57 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
           ctx.beginPath();
           ctx.arc(-2, 0, 2.4, 0, Math.PI * 2);
           ctx.fill();
+          ctx.restore();
+        } else if (uf.kind === 'weaver') {
+          // Weaver: a teal diamond drone with a glowing core, bobbing as it crosses.
+          ctx.save();
+          ctx.translate(uf.x, uf.y);
+          ctx.shadowColor = '#5eead4';
+          ctx.fillStyle = 'rgba(94, 234, 212, 0.25)';
+          ctx.strokeStyle = '#5eead4';
+          ctx.beginPath();
+          ctx.moveTo(0, -11);
+          ctx.lineTo(13, 0);
+          ctx.lineTo(0, 11);
+          ctx.lineTo(-13, 0);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#99f6e4';
+          ctx.beginPath();
+          ctx.arc(0, 0, 2.6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        } else {
+          // Sniper: an amber hexagonal turret with a barrel trained on the ship.
+          const a = Math.atan2(ship.y - uf.y, ship.x - uf.x);
+          ctx.save();
+          ctx.translate(uf.x, uf.y);
+          ctx.shadowColor = '#fbbf24';
+          ctx.fillStyle = 'rgba(251, 191, 36, 0.22)';
+          ctx.strokeStyle = '#fbbf24';
+          ctx.beginPath();
+          for (let i = 0; i < 6; i += 1) {
+            const ang = (i / 6) * Math.PI * 2;
+            const px = Math.cos(ang) * 12;
+            const py = Math.sin(ang) * 12;
+            if (i === 0) {
+              ctx.moveTo(px, py);
+            } else {
+              ctx.lineTo(px, py);
+            }
+          }
+
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.strokeStyle = '#fde68a';
+          ctx.lineWidth = 2.6;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(Math.cos(a) * 17, Math.sin(a) * 17);
+          ctx.stroke();
+          ctx.lineWidth = 1.6;
           ctx.restore();
         }
       }

@@ -1,13 +1,10 @@
-// Global performance mode shared by every game loop. Low mode caps the canvas to ~30fps (skips frames in the rAF
-// loop), roughly halving CPU/GPU use on weaker machines; normal mode runs uncapped (60fps). The engines read
-// `minFrameMs()` each frame; the hero UI flips it.
-let low = false;
+import { getControl, setControl } from './arcadeControls';
 
-export const setLowPerf = (value: boolean) => {
-  low = value;
-};
+// Performance mode is the `lowPerf` flag on the Nexus controls store. Low mode caps the canvas to ~30fps (skips frames
+// in the rAF loop); normal mode runs uncapped (60fps). Engines read `minFrameMs()` each frame.
+export const setLowPerf = (value: boolean) => setControl('lowPerf', value);
 
-export const isLowPerf = () => low;
+export const isLowPerf = () => getControl('lowPerf');
 
 // Minimum milliseconds between rendered frames. 0 = uncapped (one render per rAF tick).
-export const minFrameMs = () => (low ? 1000 / 30 : 0);
+export const minFrameMs = () => (getControl('lowPerf') ? 1000 / 30 : 0);

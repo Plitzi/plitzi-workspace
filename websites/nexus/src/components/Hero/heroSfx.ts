@@ -1,8 +1,9 @@
+import { getControl, setControl } from './arcadeControls';
+
 // Tiny zero-asset sound bank built on the Web Audio API — short synthesized blips for the arcade. The context is
 // created lazily and resumed on the first user gesture (browsers require it), so nothing plays until the visitor
-// interacts. A module-level mute flag is toggled from the hero UI.
+// interacts. The mute flag lives on the Nexus controls store like every other toggle.
 let ctx: AudioContext | null = null;
-let muted = false;
 
 const ensure = (): AudioContext | null => {
   if (typeof window === 'undefined') {
@@ -28,14 +29,12 @@ export const resumeAudio = () => {
   }
 };
 
-export const setMuted = (value: boolean) => {
-  muted = value;
-};
+export const setMuted = (value: boolean) => setControl('muted', value);
 
-export const isMuted = () => muted;
+export const isMuted = () => getControl('muted');
 
 const tone = (freq: number, dur: number, type: OscillatorType, vol: number, slideTo?: number) => {
-  if (muted) {
+  if (getControl('muted')) {
     return;
   }
 

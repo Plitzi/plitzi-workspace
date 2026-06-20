@@ -42,7 +42,7 @@ const DockPanel = () => {
   const slide: CSSProperties = { transform: open ? 'translateX(0)' : `translateX(${width}px)` };
 
   return (
-    <div className="pointer-events-none absolute inset-y-0 right-0 z-20 hidden lg:block">
+    <div className="pointer-events-none absolute inset-y-0 right-0 z-50 hidden lg:block">
       <div
         className="pointer-events-auto flex h-full items-stretch transition-transform duration-300 ease-out"
         style={slide}

@@ -1,9 +1,14 @@
 import { type RefObject, useEffect } from 'react';
 
 import { IDLE_MS, isIdleAutoplay } from './heroAutoplay';
+import { keyAxisX } from './heroKeys';
+import { isPaused } from './heroPause';
 import { minFrameMs } from './heroPerf';
 import { type GamePublish } from './heroStore';
 import { resumeAudio, sfx } from './heroSfx';
+import { isHeroVisible } from './heroVisibility';
+
+const BULLET_SPEED = 7.5;
 
 // Three classic 11×8 invader species, two march frames each — drawn as glowing cells for a neon-vector look.
 const CRAB_A = [
@@ -185,7 +190,7 @@ const useSpaceInvaders = (canvasRef: RefObject<HTMLCanvasElement | null>, publis
 
       dir = 1;
       // Gradual ramp: a gentle opening wave that speeds up a little each level.
-      speed = 0.22 + state.level * 0.055;
+      speed = 0.18 + state.level * 0.04;
       marchFrame = 0;
       buildBunkers();
     };
@@ -299,6 +304,10 @@ const useSpaceInvaders = (canvasRef: RefObject<HTMLCanvasElement | null>, publis
     };
 
     const update = (now: number) => {
+      if (isPaused()) {
+        return;
+      }
+
       // Frozen during the respawn countdown — the swarm and its bombs hold while the player waits to re-enter.
       if (now < respawnAt) {
         return;
@@ -323,8 +332,12 @@ const useSpaceInvaders = (canvasRef: RefObject<HTMLCanvasElement | null>, publis
       // Autopilot until the visitor takes over. Stable by design: hover under the nearest column (no row-to-row target
       // jumps), dodge only the single nearest incoming bomb, and ignore sub-pixel corrections — that combination is
       // what removes the left-right flicker.
-      const autopilot = !pointer.active || (isIdleAutoplay() && now - pointer.lastMove > IDLE_MS);
-      if (autopilot) {
+      const ax = keyAxisX();
+      const autopilot = ax === 0 && (!pointer.active || (isIdleAutoplay() && now - pointer.lastMove > IDLE_MS));
+      if (ax !== 0) {
+        // Keyboard (←/→ or A/D) moves the cannon directly.
+        player.x += ax * 6;
+      } else if (autopilot) {
         let threat: Bomb | undefined;
         let threatDist = Infinity;
         for (const bomb of bombs) {
@@ -359,7 +372,11 @@ const useSpaceInvaders = (canvasRef: RefObject<HTMLCanvasElement | null>, publis
               }
             }
 
-            target = near.x + SPRITE_W / 2;
+            // Lead the shot: the bullet flies straight up at BULLET_SPEED, so by the time it reaches the swarm's row the
+            // target has marched sideways. Aim where it WILL be — flight time × the swarm's horizontal velocity.
+            const stepRamp = speed * (1 + (1 - alive.length / invaders.length) * 1.0);
+            const flightFrames = Math.max(0, (player.y - near.y) / BULLET_SPEED);
+            target = near.x + SPRITE_W / 2 + dir * stepRamp * flightFrames;
           }
         }
 
@@ -477,7 +494,7 @@ const useSpaceInvaders = (canvasRef: RefObject<HTMLCanvasElement | null>, publis
 
       for (let b = bullets.length - 1; b >= 0; b -= 1) {
         const bullet = bullets[b];
-        bullet.y -= 7.5;
+        bullet.y -= BULLET_SPEED;
         bullet.x += bullet.vx;
         if (bullet.y < 0 || bullet.x < 0 || bullet.x > width) {
           bullets.splice(b, 1);
@@ -561,6 +578,12 @@ const useSpaceInvaders = (canvasRef: RefObject<HTMLCanvasElement | null>, publis
 
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw);
+      // While paused or scrolled off screen, skip BOTH physics and rendering: the canvas keeps its last frame and the
+      // GPU goes idle.
+      if (isPaused() || !isHeroVisible()) {
+        return;
+      }
+
       // Physics steps every tick so motion speed is identical in 30/60fps mode; only the (expensive) rendering is
       // throttled in low-performance mode.
       update(now);

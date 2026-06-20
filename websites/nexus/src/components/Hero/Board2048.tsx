@@ -1,4 +1,4 @@
-import { type KeyboardEvent, type PointerEvent, useCallback, useRef } from 'react';
+import { type KeyboardEvent, type PointerEvent, useCallback, useEffect, useRef } from 'react';
 
 import { type Dir, move, spawn, tileCount, tileStyle } from './game2048Logic';
 import { useDebug, useRenderCount } from './heroDebug';
@@ -27,6 +27,12 @@ const Board2048 = () => {
   const [moves] = use2048('game.moves');
   const set = use2048Setter();
   const start = useRef<{ x: number; y: number } | null>(null);
+  const boardRef = useRef<HTMLDivElement>(null);
+
+  // Grab focus on mount so the arrow keys drive the board immediately, without a click first.
+  useEffect(() => {
+    boardRef.current?.focus();
+  }, []);
 
   // One write per move — the whole `game` object — so the history log gets exactly one snapshot per move.
   const apply = useCallback(
@@ -90,6 +96,7 @@ const Board2048 = () => {
       </div>
 
       <div
+        ref={boardRef}
         tabIndex={0}
         onKeyDown={onKeyDown}
         onPointerDown={onPointerDown}
