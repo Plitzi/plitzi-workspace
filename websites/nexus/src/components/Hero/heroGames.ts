@@ -1,6 +1,7 @@
 import Game2048 from './Game2048';
 import { type GamePublish, type GameStats } from './heroStore';
 import MoleHunt from './MoleHunt';
+import NexusReactor from './NexusReactor';
 import TicTacToe from './TicTacToe';
 import TrashFlow from './TrashFlow';
 import useAsteroids from './useAsteroids';
@@ -148,6 +149,16 @@ export const GAMES: GameDef[] = [
     feature: 'entity store at scale',
     icon: '🧹',
     tagline: 'Vacuum a huge confetti map',
+    hideScoreboard: true,
+    stats: []
+  },
+  {
+    id: 'reactor',
+    name: 'Reactor',
+    Component: NexusReactor,
+    feature: 'persist · derived · entity store · async',
+    icon: '⚛️',
+    tagline: 'Forge an idle energy empire',
     hideScoreboard: true,
     stats: []
   }

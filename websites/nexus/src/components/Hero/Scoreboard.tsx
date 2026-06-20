@@ -6,7 +6,7 @@ const Hearts = ({ count }: { count: number }) => {
   const lives = Math.max(0, Math.min(6, count));
 
   return (
-    <span key={count} className="stat-pop flex items-center gap-0.5 text-base leading-none">
+    <span key={count} className="stat-pop flex h-7 items-center gap-0.5 text-base leading-none">
       {Array.from({ length: lives }, (_, i) => (
         <span key={i} className="text-brand-300 drop-shadow-[0_0_4px_rgba(167,139,250,0.6)]">
           ♥

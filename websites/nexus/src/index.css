@@ -149,7 +149,9 @@ section[id] {
 }
 
 .glow {
-  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.15), 0 20px 60px -20px rgba(124, 58, 237, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(124, 58, 237, 0.15),
+    0 20px 60px -20px rgba(124, 58, 237, 0.45);
 }
 
 /* Slowly drifting gradient for the hero headline. */
@@ -171,7 +173,10 @@ section[id] {
 /* A feature/card surface that lifts and lights its top edge on hover. */
 .card {
   position: relative;
-  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .card::before {
@@ -181,7 +186,9 @@ section[id] {
   border-radius: inherit;
   padding: 1px;
   background: linear-gradient(120deg, transparent, rgba(139, 92, 246, 0.5), transparent);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   opacity: 0;
@@ -232,7 +239,9 @@ section[id] {
 .reveal {
   opacity: 0;
   transform: translateY(18px);
-  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  transition:
+    opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
   transition-delay: var(--reveal-delay, 0ms);
   will-change: opacity, transform;
 }
@@ -253,10 +262,14 @@ section[id] {
 /* A node that just re-rendered: a quick brand-tinted pulse ring. Re-triggered by remounting via a React key. */
 @keyframes node-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.55), 0 0 0 1px rgba(139, 92, 246, 0.6);
+    box-shadow:
+      0 0 0 0 rgba(139, 92, 246, 0.55),
+      0 0 0 1px rgba(139, 92, 246, 0.6);
   }
   100% {
-    box-shadow: 0 0 0 14px rgba(139, 92, 246, 0), 0 0 0 1px rgba(139, 92, 246, 0);
+    box-shadow:
+      0 0 0 14px rgba(139, 92, 246, 0),
+      0 0 0 1px rgba(139, 92, 246, 0);
   }
 }
 
@@ -340,6 +353,144 @@ section[id] {
   animation: mole-pop 0.12s ease-out;
 }
 
+/* Floating "+N" energy gain that rises and fades when you tap the reactor core. */
+@keyframes energy-rise {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -46px) scale(1.25);
+  }
+}
+
+.energy-rise {
+  animation: energy-rise 0.8s ease-out forwards;
+}
+
+/* Critical tap: a bigger, golden "+N" that leaps and fades. */
+@keyframes crit-pop {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -64px) scale(1.9);
+  }
+}
+
+.crit-pop {
+  animation: crit-pop 0.9s ease-out forwards;
+}
+
+/* Achievement / welcome toast sliding in from the side. */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(28px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.toast-in {
+  animation: toast-in 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Full-field flash when a boost ignites. */
+@keyframes screen-flash {
+  0% {
+    opacity: 0;
+  }
+  22% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.screen-flash {
+  animation: screen-flash 0.55s ease-out forwards;
+}
+
+/* Expanding shockwave ring for the meltdown. */
+@keyframes burst-ring {
+  from {
+    opacity: 0.85;
+    transform: translate(-50%, -50%) scale(0.15);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(3.6);
+  }
+}
+
+.burst-ring {
+  animation: burst-ring 0.75s ease-out forwards;
+}
+
+/* Ambient energy motes drifting up behind the core. */
+@keyframes drift-up {
+  0% {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  25% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(-118px);
+    opacity: 0;
+  }
+}
+
+.drift-up {
+  animation: drift-up linear infinite;
+}
+
+/* A surge orb drifting across the reactor: fades in, floats by its per-orb --dx/--dy vector, fades out. */
+@keyframes orb-travel {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  14% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px))) scale(0.85);
+  }
+}
+
+.orb-travel {
+  animation: orb-travel var(--ttl, 6500ms) ease-in-out forwards;
+}
+
+/* Slow counter-rotating reactor rings. */
+@keyframes reactor-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.reactor-spin {
+  animation: reactor-spin 14s linear infinite;
+}
+
+.reactor-spin-rev {
+  animation: reactor-spin 9s linear infinite reverse;
+}
+
 /* Soft pulsing dot used on live badges. */
 @keyframes live-ping {
   0%,
@@ -379,5 +530,7 @@ html.light .bg-grid {
 }
 
 html.light .glow {
-  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.12), 0 20px 50px -24px rgba(124, 58, 237, 0.3);
+  box-shadow:
+    0 0 0 1px rgba(124, 58, 237, 0.12),
+    0 20px 50px -24px rgba(124, 58, 237, 0.3);
 }
