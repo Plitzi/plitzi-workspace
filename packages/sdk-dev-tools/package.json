@@ -374,10 +374,10 @@
   "sideEffects": false,
   "devDependencies": {
     "eslint": "^9.39.4",
-    "react": "^19.2.6",
-    "react-dom": "^19.2.6",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "typescript": "^6.0.3",
-    "vite": "^8.0.14"
+    "vite": "^8.0.16"
   },
   "peerDependencies": {
     "react": "^19",
@@ -385,7 +385,7 @@
   },
   "dependencies": {
     "@plitzi/nexus": "workspace:*",
-    "@plitzi/plitzi-ui": "^1.6.9",
+    "@plitzi/plitzi-ui": "^1.6.10",
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
