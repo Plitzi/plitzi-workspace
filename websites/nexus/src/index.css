@@ -193,6 +193,8 @@ section[id] {
   mask-composite: exclude;
   opacity: 0;
   transition: opacity 0.25s ease;
+  /* Purely a decorative gradient border — it must never sit between the pointer and the card's own buttons/links. */
+  pointer-events: none;
 }
 
 .card:hover {
