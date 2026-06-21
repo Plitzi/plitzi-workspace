@@ -23,6 +23,7 @@ import {
   autoTapRate,
   boostActive,
   boostDuration,
+  bulkModuleCost,
   clickPower,
   coreMultiplier,
   createOrbStore,
@@ -35,6 +36,7 @@ import {
   emptyUpgrades,
   fmt,
   initialAchievements,
+  maxAffordable,
   meltdownReward,
   milestoneMult,
   moduleCost,
@@ -50,15 +52,32 @@ const TICK_MS = 250;
 const MAX_ORBS = 4;
 const MELTDOWN_FLOOR = 10000;
 const AMBIENT = Array.from({ length: 9 }, (_, i) => i);
+const CONFETTI = Array.from({ length: 20 }, (_, i) => i);
+const CONFETTI_COLORS = ['#a78bfa', '#fbbf24', '#34d399', '#fb7185', '#22d3ee', '#f472b6'];
+
+// Tap combos: chaining taps within COMBO_MS ramps a multiplier; hitting FRENZY_AT in one chain ignites a Frenzy surge.
+const COMBO_MS = 1400;
+const FRENZY_AT = 28;
+const FRENZY_MS = 8000;
+const comboMult = (combo: number): number => 1 + Math.min(combo, 40) * 0.05;
+
+// Random world events.
+const EVENT_FIRST_MS = 35000;
+const EVENT_EVERY_MS = 50000;
 
 type Tab = 'reactors' | 'talents' | 'trophies';
+type BuyQty = 1 | 10 | 'max';
+const BUY_QTYS: BuyQty[] = [1, 10, 'max'];
 type Pop = { id: number; x: number; y: number; text: string; crit: boolean };
 type Toast = { id: number; icon: string; title: string; sub: string };
+type Surge = { until: number; mult: number; label: string; color: string };
 
 const ORB_WEIGHTS: { kind: OrbKind; weight: number }[] = [
-  { kind: 'energy', weight: 68 },
-  { kind: 'boost', weight: 24 },
-  { kind: 'core', weight: 8 }
+  { kind: 'energy', weight: 58 },
+  { kind: 'boost', weight: 20 },
+  { kind: 'core', weight: 7 },
+  { kind: 'jackpot', weight: 7 },
+  { kind: 'frenzy', weight: 8 }
 ];
 
 const pickKind = (): OrbKind => {
@@ -85,25 +104,36 @@ const makeOrb = (now: number): Orb => ({
 });
 
 // The core + orbs + floating numbers all live in one "field" so taps and orb catches share the same coordinate space —
-// catching an energy orb floats a "+N" exactly like tapping the core does.
+// catching an energy orb floats a "+N" exactly like tapping the core does. Rapid tapping builds a combo that ramps tap
+// power and, at the top, ignites a Frenzy.
 const ReactorField = ({
   store,
   orbs,
   highlight,
-  onCatch
+  surge,
+  onCatch,
+  onFrenzy
 }: {
   store: StoreApi<ReactorState>;
   orbs: EntityStore<Orb>;
   highlight: boolean;
+  surge: Surge | null;
   onCatch: (orb: Orb) => string;
+  onFrenzy: () => void;
 }) => {
   const [energy] = useReactor('energy');
   const [boostUntil] = useReactor('boostUntil');
   const orbList = orbs.useAll();
   const [pops, setPops] = useState<Pop[]>([]);
+  const [combo, setCombo] = useState({ count: 0, pct: 0 });
   const popId = useRef(0);
+  const comboRef = useRef(0);
+  const comboUntil = useRef(0);
   const fieldRef = useRef<HTMLDivElement>(null);
   const boosted = boostActive(boostUntil);
+  const surging = !!surge && Date.now() < surge.until;
+  const glow = surging ? surge.color : boosted ? '#fb7185' : '#7c3aed';
+  const hot = boosted || surging || combo.count >= 12;
 
   const addPop = useCallback((x: number, y: number, text: string, crit: boolean) => {
     const id = popId.current++;
@@ -111,12 +141,35 @@ const ReactorField = ({
     window.setTimeout(() => setPops(prev => prev.filter(p => p.id !== id)), 900);
   }, []);
 
+  // Decay the combo: drop it when its window lapses and keep the meter UI in sync.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      const now = Date.now();
+      if (comboRef.current > 0 && now > comboUntil.current) {
+        comboRef.current = 0;
+      }
+
+      const pct = comboRef.current > 0 ? Math.max(0, (comboUntil.current - now) / COMBO_MS) : 0;
+      setCombo(prev =>
+        prev.count === comboRef.current && prev.pct === 0 && pct === 0 ? prev : { count: comboRef.current, pct }
+      );
+    }, 100);
+
+    return () => window.clearInterval(id);
+  }, []);
+
   const charge = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
       resumeAudio();
+      const now = Date.now();
+      comboRef.current = now < comboUntil.current ? comboRef.current + 1 : 1;
+      comboUntil.current = now + COMBO_MS;
+
       const crit = Math.random() < CRIT_CHANCE;
       const power =
-        clickPower(store.get('cores') ?? 0, store.get('upgrades') ?? emptyUpgrades()) * (crit ? CRIT_MULT : 1);
+        clickPower(store.get('cores') ?? 0, store.get('upgrades') ?? emptyUpgrades()) *
+        (crit ? CRIT_MULT : 1) *
+        comboMult(comboRef.current);
       store.batch(() => {
         store.set('energy', value => value + power);
         store.set('lifetime', value => value + power);
@@ -133,8 +186,14 @@ const ReactorField = ({
         const y = ((e.clientY - rect.top) / rect.height) * 100;
         addPop(x, y, `${crit ? 'CRIT ' : ''}+${fmt(power)}`, crit);
       }
+
+      if (comboRef.current >= FRENZY_AT) {
+        comboRef.current = 0;
+        comboUntil.current = 0;
+        onFrenzy();
+      }
     },
-    [store, addPop]
+    [store, addPop, onFrenzy]
   );
 
   const catchOrb = useCallback(
@@ -184,11 +243,26 @@ const ReactorField = ({
         );
       })}
 
+      {/* Combo meter — appears while a tap chain is alive. */}
+      {combo.count > 1 && (
+        <div className="pointer-events-none absolute top-2 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-1">
+          <span className="font-mono text-sm font-bold text-amber-300 drop-shadow">×{combo.count} combo</span>
+          <span className="bg-ink-800/80 h-1 w-24 overflow-hidden rounded-full">
+            <span
+              className="block h-full rounded-full bg-amber-400 transition-[width] duration-100 ease-linear"
+              style={{ width: `${combo.pct * 100}%` }}
+            />
+          </span>
+        </div>
+      )}
+
       <button
         type="button"
         onClick={charge}
         aria-label="Charge the reactor"
-        className={`group relative h-32 w-32 shrink-0 cursor-pointer rounded-full select-none ${highlight ? 'attention' : ''}`}
+        className={`group relative h-32 w-32 shrink-0 cursor-pointer rounded-full transition-transform select-none ${
+          highlight ? 'attention' : ''
+        } ${hot ? 'scale-105' : ''}`}
       >
         <span className="reactor-spin border-brand-500/30 absolute inset-0 rounded-full border-2 border-dashed" />
         <span className="reactor-spin-rev border-brand-400/20 absolute inset-3 rounded-full border-2 border-dotted" />
@@ -196,9 +270,7 @@ const ReactorField = ({
           className="absolute inset-6 rounded-full transition-transform duration-150 group-active:scale-90"
           style={{
             background: 'radial-gradient(circle at 38% 32%, #ede9fe, #a78bfa 38%, #7c3aed 68%, #4c1d95 100%)',
-            boxShadow: boosted
-              ? '0 0 70px 14px rgba(251,113,133,0.65), inset 0 0 28px rgba(255,255,255,0.4)'
-              : '0 0 52px 8px rgba(124,58,237,0.55), inset 0 0 28px rgba(255,255,255,0.35)'
+            boxShadow: `0 0 ${hot ? 80 : 52}px ${hot ? 16 : 8}px ${glow}${hot ? 'b0' : '8c'}, inset 0 0 28px rgba(255,255,255,0.36)`
           }}
         />
         <span className="absolute inset-0 flex flex-col items-center justify-center">
@@ -226,15 +298,18 @@ const ReactorField = ({
   );
 };
 
-const Hud = ({ output }: { output: Derived<number> }) => {
+const Hud = ({ output, surge }: { output: Derived<number>; surge: Surge | null }) => {
   const [energy] = useReactor('energy');
   const [lifetime] = useReactor('lifetime');
   const [cores] = useReactor('cores');
   const [boostUntil] = useReactor('boostUntil');
   const base = useDerived(output);
   const boosted = boostActive(boostUntil);
-  const perSec = base * (boosted ? BOOST_FACTOR : 1);
-  const boostLeft = boosted ? Math.ceil((boostUntil - Date.now()) / 1000) : 0;
+  const now = Date.now();
+  const surging = !!surge && now < surge.until;
+  const perSec = base * (boosted ? BOOST_FACTOR : 1) * (surging ? surge.mult : 1);
+  const boostLeft = boosted ? Math.ceil((boostUntil - now) / 1000) : 0;
+  const surgeLeft = surging ? Math.ceil((surge.until - now) / 1000) : 0;
 
   // Left-aligned and kept clear of the top-right, where the arcade's pause / exit buttons live.
   return (
@@ -252,13 +327,21 @@ const Hud = ({ output }: { output: Derived<number> }) => {
             🔥 {BOOST_FACTOR}× · {boostLeft}s
           </span>
         )}
+        {surging && (
+          <span
+            className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold"
+            style={{ color: surge.color, borderColor: `${surge.color}88`, backgroundColor: `${surge.color}22` }}
+          >
+            {surge.label} {surge.mult}× · {surgeLeft}s
+          </span>
+        )}
       </div>
     </header>
   );
 };
 
 const OrbLegend = () => (
-  <div className="border-ink-700/70 bg-ink-900/50 flex items-center justify-around gap-2 rounded-lg border px-2 py-1.5">
+  <div className="border-ink-700/70 bg-ink-900/50 flex flex-wrap items-center justify-start gap-x-3 gap-y-1 self-start rounded-lg border px-2 py-1.5">
     {(Object.keys(ORB_META) as OrbKind[]).map(kind => {
       const meta = ORB_META[kind];
 
@@ -280,17 +363,21 @@ const OrbLegend = () => (
 const ModuleRow = ({
   def,
   energy,
+  qty,
   highlight,
   onBuy
 }: {
   def: ModuleDef;
   energy: number;
+  qty: BuyQty;
   highlight: boolean;
-  onBuy: (def: ModuleDef) => void;
+  onBuy: (def: ModuleDef, count: number) => void;
 }) => {
   // Fine-grained: this row subscribes to its own module path, so buying another reactor wakes only its own count.
   const [owned] = useReactor(`modules.${def.key}`);
-  const cost = moduleCost(def, owned);
+  // `max` buys as many as energy allows (at least show the price of one); fixed amounts always show their full price.
+  const count = qty === 'max' ? Math.max(1, maxAffordable(def, owned, energy)) : qty;
+  const cost = bulkModuleCost(def, owned, count);
   const affordable = energy >= cost;
   const mult = milestoneMult(owned);
   const toNext = MILESTONE - (owned % MILESTONE);
@@ -298,7 +385,7 @@ const ModuleRow = ({
   return (
     <button
       type="button"
-      onClick={() => onBuy(def)}
+      onClick={() => onBuy(def, count)}
       disabled={!affordable}
       className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition ${
         affordable
@@ -328,21 +415,28 @@ const ModuleRow = ({
           +{fmt(def.rate * mult)}/s each · ×2 in {toNext}
         </div>
       </div>
-      <span className={`shrink-0 font-mono text-xs font-bold ${affordable ? 'text-brand-200' : 'text-zinc-500'}`}>
-        {fmt(cost)}
-      </span>
+      <div className="flex shrink-0 flex-col items-end">
+        <span className={`font-mono text-xs font-bold ${affordable ? 'text-brand-200' : 'text-zinc-500'}`}>
+          {fmt(cost)}
+        </span>
+        {count > 1 && <span className="font-mono text-[9px] text-zinc-500">buy {count}</span>}
+      </div>
     </button>
   );
 };
 
 const ReactorsPanel = ({
   store,
+  qty,
+  setQty,
   highlight,
   onBuy
 }: {
   store: StoreApi<ReactorState>;
+  qty: BuyQty;
+  setQty: (qty: BuyQty) => void;
   highlight: boolean;
-  onBuy: (def: ModuleDef) => void;
+  onBuy: (def: ModuleDef, count: number) => void;
 }) => {
   const [energy] = useReactor('energy');
   const [lifetime] = useReactor('lifetime');
@@ -353,11 +447,27 @@ const ReactorsPanel = ({
 
   return (
     <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-end gap-1">
+        <span className="mr-auto font-mono text-[10px] text-zinc-500">buy amount</span>
+        {BUY_QTYS.map(option => (
+          <button
+            key={option}
+            type="button"
+            onClick={() => setQty(option)}
+            className={`rounded-md px-2 py-0.5 font-mono text-[11px] font-bold transition ${
+              qty === option ? 'bg-brand-600 text-white' : 'bg-ink-800/60 text-zinc-400 hover:text-white'
+            }`}
+          >
+            {option === 'max' ? 'Max' : `×${option}`}
+          </button>
+        ))}
+      </div>
       {visible.map(def => (
         <ModuleRow
           key={def.key}
           def={def}
           energy={energy}
+          qty={qty}
           highlight={highlight && def.key === cheapest?.key}
           onBuy={onBuy}
         />
@@ -569,18 +679,46 @@ const NexusReactor = () => {
   const overdrive = useMemo(() => createReactorOverdrive(store, output), [store, output]);
 
   const [tab, setTab] = useState<Tab>('reactors');
+  const [buyQty, setBuyQty] = useState<BuyQty>(1);
   const [highlight, setHighlight] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [offline, setOffline] = useState(0);
   const [flash, setFlash] = useState(0);
   const [burst, setBurst] = useState(0);
+  const [shaking, setShaking] = useState(false);
+  const [confetti, setConfetti] = useState<{ id: number; color: string } | null>(null);
+  const [surge, setSurge] = useState<Surge | null>(null);
   const toastId = useRef(0);
+  const confettiId = useRef(0);
+  const surgeRef = useRef<Surge | null>(null);
 
   const pushToast = useCallback((icon: string, title: string, sub: string) => {
     const id = toastId.current++;
     setToasts(prev => [...prev, { id, icon, title, sub }]);
     window.setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3600);
   }, []);
+
+  const shakeScreen = useCallback(() => {
+    setShaking(true);
+    window.setTimeout(() => setShaking(false), 420);
+  }, []);
+
+  const popConfetti = useCallback((color: string) => {
+    setConfetti({ id: confettiId.current++, color });
+  }, []);
+
+  // A timed production surge (Frenzy, Solar Flare…). The ref drives the tick; the state drives the HUD badge. Display is
+  // gated everywhere by `until > now`, so a stale object just reads as inactive — no cleanup needed.
+  const triggerSurge = useCallback(
+    (mult: number, ms: number, label: string, color: string) => {
+      const next: Surge = { until: Date.now() + ms, mult, label, color };
+      surgeRef.current = next;
+      setSurge(next);
+      setFlash(Date.now());
+      shakeScreen();
+    },
+    [shakeScreen]
+  );
 
   // Mirror the active tutorial step's highlight target so the relevant control can pulse.
   useEffect(() => {
@@ -643,11 +781,12 @@ const NexusReactor = () => {
         pushToast(def.icon, 'Trophy unlocked', def.name);
       }
 
+      popConfetti('#fbbf24');
       sfx.power();
     }, 900);
 
     return () => window.clearInterval(id);
-  }, [store, pushToast]);
+  }, [store, pushToast, popConfetti]);
 
   // Production tick: module output (tripled while boosted) plus the auto-tapper talent, paused with the arcade.
   useEffect(() => {
@@ -660,6 +799,10 @@ const NexusReactor = () => {
       let gain = output.get() * dt;
       if (boostActive(store.get('boostUntil') ?? 0)) {
         gain *= BOOST_FACTOR;
+      }
+
+      if (surgeRef.current && Date.now() < surgeRef.current.until) {
+        gain *= surgeRef.current.mult;
       }
 
       const auto = autoTapRate(store.get('upgrades') ?? emptyUpgrades());
@@ -707,17 +850,56 @@ const NexusReactor = () => {
     return () => window.clearInterval(id);
   }, [orbs, store]);
 
+  // Random world events keep an idle session lively: a Solar Flare surge, an investor's grant, or a meteor shower.
+  useEffect(() => {
+    const fire = () => {
+      if (isPaused() || (store.get('lifetime') ?? 0) < 50) {
+        return;
+      }
+
+      const roll = Math.random();
+      if (roll < 0.4) {
+        triggerSurge(3, 12000, 'SOLAR FLARE', '#fbbf24');
+        pushToast('☀', 'Solar flare!', '3× production for 12s');
+      } else if (roll < 0.7) {
+        const reward = Math.max(200, Math.round(output.get() * 60));
+        store.batch(() => {
+          store.set('energy', e => e + reward);
+          store.set('lifetime', e => e + reward);
+        });
+        popConfetti('#34d399');
+        pushToast('💰', 'Investor!', `+${fmt(reward)} energy`);
+      } else {
+        const now = Date.now();
+        orbs.addMany(Array.from({ length: 5 }, () => makeOrb(now)));
+        pushToast('🌠', 'Meteor shower!', 'orbs incoming');
+      }
+    };
+
+    let timer = 0;
+    const loop = () => {
+      fire();
+      timer = window.setTimeout(loop, EVENT_EVERY_MS);
+    };
+    const first = window.setTimeout(loop, EVENT_FIRST_MS);
+
+    return () => {
+      window.clearTimeout(first);
+      window.clearTimeout(timer);
+    };
+  }, [store, output, orbs, triggerSurge, pushToast, popConfetti]);
+
   const buy = useCallback(
-    (def: ModuleDef) => {
+    (def: ModuleDef, count: number) => {
       const owned = store.get('modules')?.[def.key] ?? 0;
-      const cost = moduleCost(def, owned);
-      if ((store.get('energy') ?? 0) < cost) {
+      const cost = bulkModuleCost(def, owned, count);
+      if (count < 1 || (store.get('energy') ?? 0) < cost) {
         return;
       }
 
       store.batch(() => {
         store.set('energy', value => value - cost);
-        store.set(`modules.${def.key}`, value => value + 1);
+        store.set(`modules.${def.key}`, value => value + count);
         if (store.get('tutorial') === 1) {
           store.set('tutorial', 2);
         }
@@ -748,6 +930,12 @@ const NexusReactor = () => {
     [store]
   );
 
+  const igniteFrenzy = useCallback(() => {
+    triggerSurge(5, FRENZY_MS, 'FRENZY!', '#fb7185');
+    popConfetti('#fb7185');
+    pushToast('🌟', 'Frenzy!', 'combo ignited 5× production');
+  }, [triggerSurge, popConfetti, pushToast]);
+
   // Returns the float text so the field can pop it where the orb was caught.
   const catchOrb = useCallback(
     (orb: Orb): string => {
@@ -759,10 +947,17 @@ const NexusReactor = () => {
           store.set('energy', value => value + reward);
           store.set('lifetime', value => value + reward);
           text = `+${fmt(reward)}`;
+        } else if (orb.kind === 'jackpot') {
+          const reward = Math.max(1000, Math.round(output.get() * 25 * 20));
+          store.set('energy', value => value + reward);
+          store.set('lifetime', value => value + reward);
+          text = `💎 +${fmt(reward)}`;
         } else if (orb.kind === 'boost') {
           const dur = boostDuration(store.get('upgrades') ?? emptyUpgrades());
           store.set('boostUntil', Math.max(store.get('boostUntil') ?? 0, now) + dur);
           text = `🔥 ${BOOST_FACTOR}×`;
+        } else if (orb.kind === 'frenzy') {
+          text = '🌟 FRENZY';
         } else {
           store.set('cores', value => value + 1);
           text = '+1 ◆';
@@ -775,13 +970,17 @@ const NexusReactor = () => {
       orbs.removeOne(orb.id);
       if (orb.kind === 'boost') {
         setFlash(now);
+      } else if (orb.kind === 'jackpot') {
+        popConfetti('#38bdf8');
+      } else if (orb.kind === 'frenzy') {
+        igniteFrenzy();
       }
 
       sfx.power();
 
       return text;
     },
-    [store, output, orbs]
+    [store, output, orbs, popConfetti, igniteFrenzy]
   );
 
   const runOverdrive = useCallback(() => {
@@ -809,9 +1008,11 @@ const NexusReactor = () => {
     });
     orbs.removeAll();
     setBurst(Date.now());
+    popConfetti('#fbbf24');
+    shakeScreen();
     setTab('talents');
     sfx.power();
-  }, [store, orbs]);
+  }, [store, orbs, popConfetti, shakeScreen]);
 
   const reset = useCallback(() => {
     clearReactorSave();
@@ -851,6 +1052,24 @@ const NexusReactor = () => {
             className="burst-ring pointer-events-none absolute top-1/2 left-1/2 z-40 h-40 w-40 rounded-full border-4 border-amber-300/70"
           />
         )}
+        {confetti && (
+          <div key={confetti.id} className="pointer-events-none absolute inset-0 z-40 overflow-hidden">
+            {CONFETTI.map(i => (
+              <span
+                key={i}
+                className="confetti-bit absolute top-1/2 left-1/2 h-2 w-2 rounded-[1px]"
+                style={
+                  {
+                    backgroundColor: i % 3 === 0 ? confetti.color : CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+                    '--tx': `${(Math.random() * 2 - 1) * 220}px`,
+                    '--ty': `${(Math.random() * 2 - 1) * 160 - 30}px`,
+                    '--rot': `${Math.random() * 720 - 360}deg`
+                  } as CSSProperties
+                }
+              />
+            ))}
+          </div>
+        )}
 
         <div className="pointer-events-none absolute top-12 right-3 z-40 flex flex-col gap-1.5">
           {toasts.map(toast => (
@@ -885,10 +1104,17 @@ const NexusReactor = () => {
           </div>
         )}
 
-        <div className="relative flex min-h-0 flex-1 flex-col gap-2">
-          <Hud output={output} />
-          <ReactorField store={store} orbs={orbs} highlight={highlight === 'core'} onCatch={catchOrb} />
+        <div className={`relative flex min-h-0 flex-1 flex-col gap-2 ${shaking ? 'shake' : ''}`}>
+          <Hud output={output} surge={surge} />
           <OrbLegend />
+          <ReactorField
+            store={store}
+            orbs={orbs}
+            highlight={highlight === 'core'}
+            surge={surge}
+            onCatch={catchOrb}
+            onFrenzy={igniteFrenzy}
+          />
           <Actions
             overdrive={overdrive}
             highlight={highlight === 'overdrive' ? 'overdrive' : highlight === 'meltdown' ? 'meltdown' : null}
@@ -914,7 +1140,15 @@ const NexusReactor = () => {
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-            {tab === 'reactors' && <ReactorsPanel store={store} highlight={highlight === 'shop'} onBuy={buy} />}
+            {tab === 'reactors' && (
+              <ReactorsPanel
+                store={store}
+                qty={buyQty}
+                setQty={setBuyQty}
+                highlight={highlight === 'shop'}
+                onBuy={buy}
+              />
+            )}
             {tab === 'talents' && <TalentsPanel onBuy={buyUpgrade} />}
             {tab === 'trophies' && <TrophiesPanel />}
           </div>

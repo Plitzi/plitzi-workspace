@@ -188,6 +188,33 @@ export const OFFLINE_RATE = 0.5;
 
 export const moduleCost = (def: ModuleDef, owned: number): number => Math.round(def.baseCost * COST_GROWTH ** owned);
 
+// Total cost to buy `count` of a reactor starting from `owned` (each step gets pricier).
+export const bulkModuleCost = (def: ModuleDef, owned: number, count: number): number => {
+  let total = 0;
+  for (let i = 0; i < count; i++) {
+    total += moduleCost(def, owned + i);
+  }
+
+  return total;
+};
+
+// How many of a reactor `energy` can buy at once, starting from `owned`.
+export const maxAffordable = (def: ModuleDef, owned: number, energy: number): number => {
+  let count = 0;
+  let spent = 0;
+  while (true) {
+    const next = spent + moduleCost(def, owned + count);
+    if (next > energy) {
+      break;
+    }
+
+    spent = next;
+    count++;
+  }
+
+  return count;
+};
+
 export const upgradeCost = (def: UpgradeDef, level: number): number => def.baseCost * (level + 1);
 
 export const milestoneTier = (owned: number): number => Math.floor(owned / MILESTONE);
@@ -216,7 +243,7 @@ export const achievementMultiplier = (map: EntityMap<Achievement>): number =>
   1 + 0.03 * unlockedAchievements(map).length;
 
 export const clickPower = (cores: number, upgrades: Record<UpgradeKey, number>): number =>
-  (1 + cores) * coreMultiplier(cores) * tapMultiplier(upgrades);
+  coreMultiplier(cores) * tapMultiplier(upgrades);
 
 // Energy produced per second: module output × core × yield talent × trophy bonus. NOT including the timed boost, which
 // is layered on where it's read so the steady-state derived value stays stable.
@@ -366,21 +393,23 @@ export const createReactorOverdrive = (
 
 // Surge orbs live in their own entity store (not the persisted game state): ephemeral, spawned and expired on a timer,
 // each an independent reactive entity rendered with `useAll`.
-export type OrbKind = 'energy' | 'boost' | 'core';
+export type OrbKind = 'energy' | 'boost' | 'core' | 'jackpot' | 'frenzy';
 
 export type Orb = { id: string; kind: OrbKind; x: number; y: number; dx: number; dy: number; bornAt: number };
 
 export const ORB_TTL = 6500;
 
 export const ORB_META: Record<OrbKind, { icon: string; color: string; label: string; effect: string }> = {
-  energy: { icon: '⚡', color: '#fbbf24', label: 'Energy surge', effect: '+25s of energy' },
+  energy: { icon: '⚡', color: '#fbbf24', label: 'Energy surge', effect: '+25s energy' },
   boost: {
     icon: '🔥',
     color: '#fb7185',
     label: 'Overboost',
-    effect: `${BOOST_FACTOR}× output for ${BOOST_MS / 1000}s`
+    effect: `${BOOST_FACTOR}× for ${BOOST_MS / 1000}s`
   },
-  core: { icon: '◆', color: '#c4b5fd', label: 'Spare core', effect: '+1 core' }
+  core: { icon: '◆', color: '#c4b5fd', label: 'Spare core', effect: '+1 core' },
+  jackpot: { icon: '💎', color: '#38bdf8', label: 'Jackpot', effect: 'huge energy' },
+  frenzy: { icon: '🌟', color: '#f59e0b', label: 'Frenzy', effect: '5× frenzy' }
 };
 
 export const createOrbStore = (): EntityStore<Orb> => createEntityStore<Orb>([]);
