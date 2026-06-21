@@ -214,7 +214,7 @@ store.get("user.name")
 ### Write
 
 ```ts
-store.set("user.name", "Carlos")
+store.set("user.name", "Ada")
 ```
 
 ### Watch

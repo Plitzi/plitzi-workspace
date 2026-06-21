@@ -29,6 +29,9 @@ const POWER_COLORS: Record<PowerKind, string> = {
 const POWER_LETTER: Record<PowerKind, string> = { wide: 'W', slow: 'S', multi: '3', life: '+' };
 const POWER_KINDS: PowerKind[] = ['wide', 'slow', 'multi', 'wide', 'multi', 'slow', 'life'];
 
+// Lives start at — and are capped at — this. The life power-up never pushes past it.
+const MAX_LIVES = 3;
+
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 
 const useBreakout = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: GamePublish) => {
@@ -55,8 +58,9 @@ const useBreakout = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: Ga
     const pointer = { x: 0, active: false, lastMove: 0 };
     const paddle = { x: 0, y: 0 };
     const balls: Ball[] = [];
-    const state = { score: 0, level: 1, lives: 3, hits: 0, best: 0 };
+    const state = { score: 0, level: 1, lives: MAX_LIVES, hits: 0, best: 0 };
     let raf = 0;
+    let idleTimer = 0;
     let shake = 0;
     let lastFrame = 0;
     let wideUntil = 0;
@@ -127,8 +131,8 @@ const useBreakout = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: Ga
       state.best = Math.max(state.best, state.score);
       state.score = 0;
       state.level = 1;
-      state.lives = 3;
-      publish({ best: state.best, score: 0, level: 1, lives: 3 });
+      state.lives = MAX_LIVES;
+      publish({ best: state.best, score: 0, level: 1, lives: MAX_LIVES });
       buildLevel();
     };
 
@@ -277,8 +281,9 @@ const useBreakout = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: Ga
             }
           } else if (power.kind === 'multi') {
             spawnMulti();
-          } else {
-            state.lives = Math.min(5, state.lives + 1);
+          } else if (state.lives < MAX_LIVES) {
+            // Already at the life cap → the power-up is simply ignored.
+            state.lives += 1;
             publish({ lives: state.lives });
           }
 
@@ -304,12 +309,18 @@ const useBreakout = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: Ga
     };
 
     const draw = (now: number) => {
-      raf = requestAnimationFrame(draw);
-      // While paused or scrolled off screen, skip BOTH physics and rendering: the canvas keeps its last frame and the
-      // GPU goes idle.
+      // While paused or scrolled off screen there is nothing to animate, so drop to a low-frequency poll instead of a
+      // 60fps no-op spin — no physics, no repaint, GPU idle — and resume the moment play returns.
       if (isPaused() || !isHeroVisible()) {
+        idleTimer = window.setTimeout(() => {
+          idleTimer = 0;
+          raf = requestAnimationFrame(draw);
+        }, 200);
+
         return;
       }
+
+      raf = requestAnimationFrame(draw);
 
       // Physics every tick (constant speed); only rendering is throttled in low-performance mode.
       update(now);
@@ -445,13 +456,14 @@ const useBreakout = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: Ga
     const observer = new ResizeObserver(resize);
     observer.observe(canvas);
     resize();
-    publish({ score: 0, level: 1, lives: 3, hits: 0, best: 0 });
+    publish({ score: 0, level: 1, lives: MAX_LIVES, hits: 0, best: 0 });
     canvas.addEventListener('pointermove', onMove);
     canvas.addEventListener('pointerleave', onLeave);
     raf = requestAnimationFrame(draw);
 
     return () => {
       cancelAnimationFrame(raf);
+      window.clearTimeout(idleTimer);
       observer.disconnect();
       canvas.removeEventListener('pointermove', onMove);
       canvas.removeEventListener('pointerleave', onLeave);

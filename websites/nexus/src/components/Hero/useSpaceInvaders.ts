@@ -153,6 +153,7 @@ const useSpaceInvaders = (canvasRef: RefObject<HTMLCanvasElement | null>, publis
     let invulnUntil = 0;
     let shake = 0;
     let raf = 0;
+    let idleTimer = 0;
     let lastFrame = 0;
     let respawnAt = 0;
 
@@ -229,11 +230,7 @@ const useSpaceInvaders = (canvasRef: RefObject<HTMLCanvasElement | null>, publis
       for (const cell of bunkers) {
         if (cell.alive && x >= cell.x && x <= cell.x + BUNKER_CELL && y >= cell.y && y <= cell.y + BUNKER_CELL) {
           for (const other of bunkers) {
-            if (
-              other.alive &&
-              Math.abs(other.x - cell.x) <= BUNKER_CELL &&
-              Math.abs(other.y - cell.y) <= BUNKER_CELL
-            ) {
+            if (other.alive && Math.abs(other.x - cell.x) <= BUNKER_CELL && Math.abs(other.y - cell.y) <= BUNKER_CELL) {
               other.alive = false;
             }
           }
@@ -574,12 +571,18 @@ const useSpaceInvaders = (canvasRef: RefObject<HTMLCanvasElement | null>, publis
     };
 
     const draw = (now: number) => {
-      raf = requestAnimationFrame(draw);
-      // While paused or scrolled off screen, skip BOTH physics and rendering: the canvas keeps its last frame and the
-      // GPU goes idle.
+      // While paused or scrolled off screen there is nothing to animate, so drop to a low-frequency poll instead of a
+      // 60fps no-op spin — no physics, no repaint, GPU idle — and resume the moment play returns.
       if (isPaused() || !isHeroVisible()) {
+        idleTimer = window.setTimeout(() => {
+          idleTimer = 0;
+          raf = requestAnimationFrame(draw);
+        }, 200);
+
         return;
       }
+
+      raf = requestAnimationFrame(draw);
 
       // Physics steps every tick so motion speed is identical in 30/60fps mode; only the (expensive) rendering is
       // throttled in low-performance mode.
@@ -799,6 +802,7 @@ const useSpaceInvaders = (canvasRef: RefObject<HTMLCanvasElement | null>, publis
 
     return () => {
       cancelAnimationFrame(raf);
+      window.clearTimeout(idleTimer);
       observer.disconnect();
       canvas.removeEventListener('pointermove', onMove);
       canvas.removeEventListener('pointerleave', onLeave);

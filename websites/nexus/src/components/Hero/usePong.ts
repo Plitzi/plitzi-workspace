@@ -43,6 +43,7 @@ const usePong = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: GamePu
     const ball = { x: 0, y: 0, vx: 0, vy: 0 };
     const state = { score: 0, level: 0, lives: 3, hits: 0, best: 0 };
     let raf = 0;
+    let idleTimer = 0;
     let shake = 0;
     let lastFrame = 0;
 
@@ -179,12 +180,18 @@ const usePong = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: GamePu
     };
 
     const draw = (now: number) => {
-      raf = requestAnimationFrame(draw);
-      // While paused or scrolled off screen, skip BOTH physics and rendering: the canvas keeps its last frame and the
-      // GPU goes idle.
+      // While paused or scrolled off screen there is nothing to animate, so drop to a low-frequency poll instead of a
+      // 60fps no-op spin — no physics, no repaint, GPU idle — and resume the moment play returns.
       if (isPaused() || !isHeroVisible()) {
+        idleTimer = window.setTimeout(() => {
+          idleTimer = 0;
+          raf = requestAnimationFrame(draw);
+        }, 200);
+
         return;
       }
+
+      raf = requestAnimationFrame(draw);
 
       // Physics every tick (constant speed); only rendering is throttled in low-performance mode.
       update(now);
@@ -266,7 +273,6 @@ const usePong = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: GamePu
 
       ctx.globalAlpha = 1;
       ctx.restore();
-
     };
 
     const onMove = (e: PointerEvent) => {
@@ -291,6 +297,7 @@ const usePong = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: GamePu
 
     return () => {
       cancelAnimationFrame(raf);
+      window.clearTimeout(idleTimer);
       observer.disconnect();
       canvas.removeEventListener('pointermove', onMove);
       canvas.removeEventListener('pointerleave', onLeave);

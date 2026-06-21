@@ -12,7 +12,7 @@ import { isHeroVisible } from './heroVisibility';
 
 const BOLT_SPEED = 6.5;
 
-type Rock ={ x: number; y: number; vx: number; vy: number; r: number; angle: number; spin: number; verts: number[] };
+type Rock = { x: number; y: number; vx: number; vy: number; r: number; angle: number; spin: number; verts: number[] };
 type Bolt = { x: number; y: number; vx: number; vy: number; life: number };
 type SaucerKind = 'cross' | 'hunter' | 'weaver' | 'sniper';
 type Saucer = { x: number; y: number; vx: number; vy: number; kind: SaucerKind; bornAt: number; phase: number };
@@ -78,6 +78,7 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
     let tripleUntil = 0;
     let shake = 0;
     let raf = 0;
+    let idleTimer = 0;
     let lastFrame = 0;
     let respawnAt = 0;
 
@@ -519,7 +520,13 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
             const sniperSpeed = 4.4;
             const pt = leadPoint(uf.x, uf.y, ship.x, ship.y, ship.vx, ship.vy, sniperSpeed);
             const a = Math.atan2(pt.y - uf.y, pt.x - uf.x);
-            enemyBolts.push({ x: uf.x, y: uf.y, vx: Math.cos(a) * sniperSpeed, vy: Math.sin(a) * sniperSpeed, life: 1 });
+            enemyBolts.push({
+              x: uf.x,
+              y: uf.y,
+              vx: Math.cos(a) * sniperSpeed,
+              vy: Math.sin(a) * sniperSpeed,
+              life: 1
+            });
             sfx.shoot();
           }
         } else if (uf.kind === 'weaver') {
@@ -572,12 +579,18 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
     };
 
     const draw = (now: number) => {
-      raf = requestAnimationFrame(draw);
-      // While paused or scrolled off screen, skip BOTH physics and rendering: the canvas keeps its last frame and the
-      // GPU goes idle.
+      // While paused or scrolled off screen there is nothing to animate, so drop to a low-frequency poll instead of a
+      // 60fps no-op spin — no physics, no repaint, GPU idle — and resume the moment play returns.
       if (isPaused() || !isHeroVisible()) {
+        idleTimer = window.setTimeout(() => {
+          idleTimer = 0;
+          raf = requestAnimationFrame(draw);
+        }, 200);
+
         return;
       }
+
+      raf = requestAnimationFrame(draw);
 
       // Physics every tick (constant speed); only rendering is throttled in low-performance mode.
       update(now);
@@ -889,6 +902,7 @@ const useAsteroids = (canvasRef: RefObject<HTMLCanvasElement | null>, publish: G
 
     return () => {
       cancelAnimationFrame(raf);
+      window.clearTimeout(idleTimer);
       observer.disconnect();
       canvas.removeEventListener('pointermove', onMove);
       canvas.removeEventListener('pointerleave', onLeave);

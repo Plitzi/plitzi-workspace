@@ -8,6 +8,7 @@ import Hero from './components/Hero';
 import LiveDemo from './components/LiveDemo';
 import Nav from './components/Nav';
 import StateTree from './components/StateTree';
+import UseCases from './components/UseCases';
 import useMeta from './useMeta';
 import { useHashRoute } from './useHashRoute';
 
@@ -39,6 +40,7 @@ const App = () => {
         <CoreApi />
         <StateTree />
         <LiveDemo />
+        <UseCases />
         <FeatureGrid />
         <Benchmark />
         <Ecosystem />

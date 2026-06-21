@@ -19,6 +19,7 @@ export const NAV_LINKS: NavLink[] = [
   { label: 'Core API', href: '#core-api' },
   { label: 'Mental model', href: '#mental-model' },
   { label: 'Live Demo', href: '#demo' },
+  { label: 'Use cases', href: '#use-cases' },
   { label: 'Features', href: '#features' },
   { label: 'Benchmarks', href: '#benchmarks' },
   { label: 'Ecosystem', href: '#ecosystem' }

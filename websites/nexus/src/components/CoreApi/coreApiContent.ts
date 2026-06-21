@@ -14,7 +14,7 @@ export const CORE_VERBS: CoreVerb[] = [
     signature: 'store.get(path?)',
     tagline: 'Read any node',
     description: 'Resolve a single path without materializing the whole tree. No path returns the full state.',
-    code: "store.get('user.profile.name')\n// → 'Carlos'\n\nstore.get() // → entire state"
+    code: "store.get('user.profile.name')\n// → 'Ada'\n\nstore.get() // → entire state"
   },
   {
     verb: 'set',

@@ -75,6 +75,7 @@ const useTrashFlow = (
     let viewW = 0;
     let viewH = 0;
     let raf = 0;
+    let idleTimer = 0;
     let lastFrame = 0;
     let lastNow = performance.now();
     let nextId = 0;
@@ -186,6 +187,7 @@ const useTrashFlow = (
       vac.vy = 0;
       spawnField();
       pushHud();
+      wake();
     };
 
     // The run is over: freeze play and show the results card. Battery-out keeps `cleared` false; clearing level 10 sets
@@ -445,15 +447,32 @@ const useTrashFlow = (
       ctx.fill();
     };
 
+    // The loop only runs the rAF (and touches the GPU) while you're actually playing. When paused, scrolled off screen,
+    // or sitting on the run-summary / shop UI, there is nothing to animate — so it drops to a low-frequency timer poll
+    // instead of a 60fps spin, and resumes the moment play returns.
+    const shouldRun = () => !isPaused() && isHeroVisible() && game.phase === 'playing';
+
+    const wake = () => {
+      if (idleTimer) {
+        window.clearTimeout(idleTimer);
+        idleTimer = 0;
+        lastNow = performance.now();
+        raf = requestAnimationFrame(draw);
+      }
+    };
+
     const draw = (now: number) => {
-      raf = requestAnimationFrame(draw);
-      // While paused or scrolled off screen, freeze everything — no physics, no repaint, GPU idle.
-      if (isPaused() || !isHeroVisible()) {
-        lastNow = now;
+      if (!shouldRun()) {
+        lastNow = performance.now();
+        idleTimer = window.setTimeout(() => {
+          idleTimer = 0;
+          raf = requestAnimationFrame(draw);
+        }, 200);
 
         return;
       }
 
+      raf = requestAnimationFrame(draw);
       update(now);
 
       if (now - lastFrame < minFrameMs()) {
@@ -663,6 +682,7 @@ const useTrashFlow = (
 
     return () => {
       cancelAnimationFrame(raf);
+      window.clearTimeout(idleTimer);
       observer.disconnect();
       canvas.removeEventListener('pointermove', onMove);
       canvas.removeEventListener('pointerleave', onLeave);

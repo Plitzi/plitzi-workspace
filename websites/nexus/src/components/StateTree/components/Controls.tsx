@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { useDemoSetter } from '../stateTreeStore';
 
-const NAMES = ['Carlos', 'Ada', 'Linus', 'Grace', 'Rich'];
+const NAMES = ['Ada', 'Linus', 'Grace', 'Rich', 'Alan'];
 const THEMES = ['dark', 'light'];
 
 const Controls = () => {
@@ -34,14 +34,14 @@ const Controls = () => {
         <button
           type="button"
           onClick={renameUser}
-          className="border-ink-600 bg-ink-800 hover:border-brand-500 hover:text-white rounded-lg border px-3 py-2 text-left font-mono text-[11px] text-zinc-300 transition"
+          className="border-ink-600 bg-ink-800 hover:border-brand-500 rounded-lg border px-3 py-2 text-left font-mono text-[11px] text-zinc-300 transition hover:text-white"
         >
           <span className="text-brand-400">set</span>(<span className="text-emerald-300">'user.profile.name'</span>, …)
         </button>
         <button
           type="button"
           onClick={toggleTheme}
-          className="border-ink-600 bg-ink-800 hover:border-brand-500 hover:text-white rounded-lg border px-3 py-2 text-left font-mono text-[11px] text-zinc-300 transition"
+          className="border-ink-600 bg-ink-800 hover:border-brand-500 rounded-lg border px-3 py-2 text-left font-mono text-[11px] text-zinc-300 transition hover:text-white"
         >
           <span className="text-brand-400">set</span>(<span className="text-emerald-300">'user.settings.theme'</span>,
           …)
@@ -49,7 +49,7 @@ const Controls = () => {
         <button
           type="button"
           onClick={addToCart}
-          className="border-ink-600 bg-ink-800 hover:border-brand-500 hover:text-white rounded-lg border px-3 py-2 text-left font-mono text-[11px] text-zinc-300 transition"
+          className="border-ink-600 bg-ink-800 hover:border-brand-500 rounded-lg border px-3 py-2 text-left font-mono text-[11px] text-zinc-300 transition hover:text-white"
         >
           <span className="text-brand-400">set</span>(<span className="text-emerald-300">'cart.items'</span>, n =&gt; n
           + 1)

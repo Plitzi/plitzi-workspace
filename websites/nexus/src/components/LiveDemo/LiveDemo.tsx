@@ -35,15 +35,24 @@ const middlewares = [historyMiddleware<DemoState>()];
 
 type Panel = { id: string; label: string; title: string; code: string; Component: ComponentType };
 
+// Ordered easiest → most advanced so a newcomer meets the everyday hooks first (read, write, read-on-demand) and only
+// then the power tools (computed graph, external sync, scoped stores). The first tab is what opens by default.
 const PANELS: Panel[] = [
-  { id: 'sync', label: 'Sync', title: 'useStoreSync · external → store', code: SYNC_CODE, Component: SyncDemo },
   {
     id: 'multi',
-    label: 'Multi-path',
-    title: 'useStore · transformer & multi-path',
+    label: 'Read',
+    title: 'useStore · read & re-render by path',
     code: DERIVED_CODE,
     Component: DerivedDemo
   },
+  {
+    id: 'setter',
+    label: 'Write',
+    title: 'useStoreSetter · write, no re-render',
+    code: SETTER_CODE,
+    Component: SetterDemo
+  },
+  { id: 'getter', label: 'Getter', title: 'useStoreGetter · read on demand', code: GETTER_CODE, Component: GetterDemo },
   {
     id: 'derived',
     label: 'Derived',
@@ -51,14 +60,7 @@ const PANELS: Panel[] = [
     code: COMPUTED_CODE,
     Component: ComputedDemo
   },
-  { id: 'getter', label: 'Getter', title: 'useStoreGetter · read on demand', code: GETTER_CODE, Component: GetterDemo },
-  {
-    id: 'setter',
-    label: 'Setter',
-    title: 'useStoreSetter · write, no re-render',
-    code: SETTER_CODE,
-    Component: SetterDemo
-  },
+  { id: 'sync', label: 'Sync', title: 'useStoreSync · external → store', code: SYNC_CODE, Component: SyncDemo },
   { id: 'scoped', label: 'Scoped', title: 'Scoped store · live vs snapshot', code: SCOPED_CODE, Component: ScopedDemo }
 ];
 

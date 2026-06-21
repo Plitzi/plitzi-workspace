@@ -18,7 +18,7 @@ export type LeafPath =
 
 export const DEMO_INITIAL: DemoState = {
   user: {
-    profile: { name: 'Carlos', email: 'carlos@plitzi.com' },
+    profile: { name: 'Ada', email: 'ada@example.com' },
     settings: { theme: 'dark', language: 'en' }
   },
   cart: { items: 2, total: 38 }
