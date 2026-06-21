@@ -25,7 +25,6 @@ export type TrashHud = {
   runPoints: number;
   runCollected: number;
   runCleanedPct: number;
-  runDoubled: boolean;
   allTimePoints: number;
 };
 
@@ -48,30 +47,38 @@ export const makeTrashFlowInitial = (): TrashFlowState => ({
     runPoints: 0,
     runCollected: 0,
     runCleanedPct: 0,
-    runDoubled: false,
     allTimePoints: 0
   },
   stats: { battery: 1, pipe: 1, air: 1, radius: 1, value: 1 }
 });
 
 // Derived stat values from upgrade levels. One source of truth shared by the engine and the upgrade shop.
-export const valuePerScrap = (lvl: number) => 6 + lvl * 4;
-export const batterySeconds = (lvl: number) => 16 + lvl * 4;
+export const valuePerScrap = (lvl: number) => 8 + lvl * 5;
+export const batterySeconds = (lvl: number) => 18 + lvl * 5;
 export const pipeCapacity = (lvl: number) => 4 + lvl * 2;
 // Per-frame fraction a scrap eases toward the vacuum. Deliberately slow at level 1 so the pull is gentle, and clearly
 // faster with every Air Speed upgrade — the skill, made visible.
 export const airPull = (lvl: number) => 0.012 + lvl * 0.016;
 export const suctionRadius = (lvl: number) => 90 + lvl * 24;
 
-// Points needed to clear a level. Earnings are capped by this (the level ends when you hit it), so costs are tuned
-// against it: a level's haul buys you roughly one upgrade.
-export const levelTarget = (lvl: number) => Math.round(240 * lvl ** 1.3);
+// Progression is tuned for a long climb: reaching level 10 should be a couple hours of play, not a 30-minute sprint.
+// The target haul rises every level while the battery drains faster and the level-clear refund shrinks, so each level
+// is clearly harder than the last and you only push deeper by re-investing many runs' worth of upgrades.
+export const levelTarget = (lvl: number) => 250 + 200 * (lvl - 1);
 
-// Costs scale with the upgrade level so a stat gets pricier the more you pump it, but each stays affordable against a
-// level's target haul — purchases actually happen instead of every button being greyed out.
-const COST_BASE: Record<StatKey, number> = { battery: 200, pipe: 280, air: 240, radius: 260, value: 360 };
+// Battery drains faster on deeper levels — the run clock tightens sharply as you climb.
+export const drainMultiplier = (lvl: number) => 1 + (lvl - 1) * 0.12;
 
-export const upgradeCost = (key: StatKey, lvl: number) => Math.round(COST_BASE[key] * lvl ** 1.4);
+// Fraction of a full battery refunded when a level is cleared. Generous early, almost nothing late.
+export const advanceRefund = (lvl: number) => Math.max(0.04, 0.3 - (lvl - 1) * 0.03);
+
+// Costs are tuned against a round's haul: a round should bank roughly one or two upgrades' worth, and the cost grows
+// faster (exponential) than a run's yield, so deeper upgrades take ~2 rounds to save for. The base sits just under a
+// first run's haul so the very first shop visit can always afford something instead of every button being greyed out.
+const COST_BASE: Record<StatKey, number> = { battery: 240, pipe: 300, air: 280, radius: 290, value: 340 };
+const COST_GROWTH = 1.55;
+
+export const upgradeCost = (key: StatKey, lvl: number) => Math.round(COST_BASE[key] * COST_GROWTH ** (lvl - 1));
 
 export const { useStore: useTrashFlow, useStoreSetter: useTrashSetter } = createStoreHook<TrashFlowState>();
 

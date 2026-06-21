@@ -35,7 +35,16 @@ const HEX_CLIP = 'polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0% 50%)';
 
 // Hand-drawn SVG icons, themed to the arcade — no emojis.
 const Icon = ({ kind }: { kind: StatKey }) => {
-  const common = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  const common = {
+    width: 22,
+    height: 22,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.8,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const
+  };
   switch (kind) {
     case 'battery':
       return (
@@ -98,58 +107,82 @@ const LevelTower = ({ panelRef }: { panelRef: RefObject<HTMLDivElement | null> }
   const [level] = useTrashState('hud.level');
   const [pct] = useTrashState('hud.levelPct');
   const filled = Math.round((pct / 100) * LEVEL_CAP);
+  const tint = LEVEL_COLORS[Math.min(level, LEVEL_CAP) - 1];
 
   return (
     <div
       ref={panelRef}
-      className="border-ink-700/70 bg-ink-900/60 pointer-events-none absolute top-14 right-4 flex flex-col items-center gap-2 rounded-2xl border px-3 py-3 backdrop-blur-md transition-opacity duration-200"
+      className="bg-ink-950/75 pointer-events-none absolute top-14 right-4 flex flex-col items-center gap-2.5 rounded-2xl border-2 px-4 py-4 backdrop-blur-md transition-opacity duration-200"
+      style={{ borderColor: `${tint}88`, boxShadow: `0 0 28px ${tint}44, inset 0 0 18px ${tint}22` }}
     >
-      <span className="text-[9px] tracking-[0.24em] text-emerald-300 uppercase drop-shadow-[0_0_6px_rgba(52,211,153,0.6)]">
+      <span
+        className="text-[10px] font-bold tracking-[0.3em] uppercase"
+        style={{ color: tint, textShadow: `0 0 10px ${tint}cc` }}
+      >
         Level
       </span>
-      <span className="font-mono text-lg leading-none font-bold text-white">
-        {Math.min(level, LEVEL_CAP)} / {LEVEL_CAP}
+      <span
+        className="font-mono text-4xl leading-none font-extrabold text-white tabular-nums"
+        style={{ textShadow: `0 0 16px ${tint}` }}
+      >
+        {Math.min(level, LEVEL_CAP)}
       </span>
+      <span className="-mt-1 font-mono text-[10px] font-semibold text-zinc-500">of {LEVEL_CAP}</span>
       <div className="mt-1 flex flex-col-reverse gap-1.5">
         {LEVEL_COLORS.map((color, i) => (
           <span
             key={i}
-            className="h-4 w-9"
+            className="h-4 w-11 transition-all"
             style={{
               clipPath: HEX_CLIP,
               backgroundColor: i < filled ? color : 'rgba(255,255,255,0.06)',
-              boxShadow: i < filled ? `0 0 8px ${color}99` : 'none'
+              boxShadow: i < filled ? `0 0 12px ${color}` : 'none'
             }}
           />
         ))}
       </div>
-      <span className="font-mono text-[11px] font-semibold text-zinc-500">{pct}%</span>
+      <span className="font-mono text-xs font-bold" style={{ color: tint }}>
+        {pct}%
+      </span>
     </div>
   );
 };
 
 const BatteryBar = ({ panelRef }: { panelRef: RefObject<HTMLDivElement | null> }) => {
   const [pct] = useTrashState('hud.batteryPct');
-  const segments = 20;
+  const segments = 24;
   const filled = Math.round((pct / 100) * segments);
   const color = pct <= 20 ? '#f87171' : pct <= 45 ? '#fbbf24' : '#34d399';
+  const critical = pct <= 20;
 
   return (
     <div
       ref={panelRef}
-      className="border-ink-700/70 bg-ink-950/70 pointer-events-none absolute bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2.5 rounded-2xl border px-4 py-3 shadow-[inset_0_1px_8px_rgba(0,0,0,0.5)] backdrop-blur-md transition-opacity duration-200"
+      className={`bg-ink-950/80 pointer-events-none absolute bottom-6 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 rounded-2xl border-2 px-6 py-4 backdrop-blur-md transition-opacity duration-200 ${
+        critical ? 'attention' : ''
+      }`}
+      style={{ borderColor: `${color}99`, boxShadow: `0 0 30px ${color}55, inset 0 2px 12px rgba(0,0,0,0.6)` }}
     >
-      <span className="text-brand-300">
-        <Icon kind="battery" />
-      </span>
-      <div className="flex gap-1.5">
+      <div className="flex w-full items-center justify-between">
+        <span className="flex items-center gap-2 text-[10px] font-bold tracking-[0.3em] uppercase" style={{ color }}>
+          <Icon kind="battery" />
+          Battery
+        </span>
+        <span
+          className="font-mono text-base font-extrabold tabular-nums"
+          style={{ color, textShadow: `0 0 10px ${color}` }}
+        >
+          {pct}%
+        </span>
+      </div>
+      <div className="flex gap-1">
         {Array.from({ length: segments }, (_, i) => (
           <span
             key={i}
-            className="h-6 w-2.5 rounded-sm transition-colors"
+            className="h-7 w-2.5 rounded-sm transition-colors"
             style={
               i < filled
-                ? { backgroundColor: color, boxShadow: `0 0 7px ${color}aa` }
+                ? { backgroundColor: color, boxShadow: `0 0 9px ${color}` }
                 : { backgroundColor: 'rgba(255,255,255,0.05)' }
             }
           />
@@ -255,7 +288,6 @@ const RunSummary = ({ api }: { api: RefObject<TrashFlowApi | null> }): ReactNode
   const [collected] = useTrashState('hud.runCollected');
   const [runPoints] = useTrashState('hud.runPoints');
   const [cleanedPct] = useTrashState('hud.runCleanedPct');
-  const [doubled] = useTrashState('hud.runDoubled');
   const [allTime] = useTrashState('hud.allTimePoints');
 
   if (phase !== 'summary') {
@@ -363,21 +395,6 @@ const RunSummary = ({ api }: { api: RefObject<TrashFlowApi | null> }): ReactNode
           className="bg-brand-600 hover:bg-brand-500 attention rounded-xl px-10 py-3.5 text-sm font-bold tracking-wide text-white uppercase transition"
         >
           Continue to upgrades
-        </button>
-        <button
-          type="button"
-          onClick={() => api.current?.claimDouble()}
-          disabled={doubled}
-          className={`flex items-center gap-2 rounded-xl px-8 py-3.5 text-sm font-bold tracking-wide uppercase transition ${
-            doubled
-              ? 'bg-ink-800 cursor-not-allowed text-zinc-600'
-              : 'border-brand-500/30 bg-ink-900/70 hover:bg-ink-800 border text-zinc-200'
-          }`}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M8 5v14l11-7L8 5Z" />
-          </svg>
-          {doubled ? 'Claimed' : 'Claim 2x'}
         </button>
       </div>
     </div>
