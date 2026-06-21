@@ -1,5 +1,5 @@
 import Benchmark from './components/Benchmark';
-import CodeShowcase from './components/CodeShowcase';
+import CoreApi from './components/CoreApi';
 import Docs from './components/Docs';
 import Ecosystem from './components/Ecosystem';
 import FeatureGrid from './components/FeatureGrid';
@@ -7,7 +7,7 @@ import Footer from './components/Footer';
 import Hero from './components/Hero';
 import LiveDemo from './components/LiveDemo';
 import Nav from './components/Nav';
-import RealWorld from './components/RealWorld';
+import StateTree from './components/StateTree';
 import UseCases from './components/UseCases';
 import useMeta from './useMeta';
 import { useHashRoute } from './useHashRoute';
@@ -17,28 +17,34 @@ const App = () => {
   const isDocs = hash.startsWith('#/docs');
 
   useMeta({
-    title: 'A tiny, type-safe React store',
+    title: 'Reactive state you query by path',
     description:
-      'Path-based subscriptions, scoped stores, and time-travel. Fine-grained by default — O(depth) updates that scale to millions of items. Built on useSyncExternalStore.'
+      'Nexus treats state as a navigable tree: get, set and watch any value by its dot-path, re-rendering only the exact node that changed. Typed end to end, scoped stores, derived graph, time-travel — on useSyncExternalStore.'
   });
+
+  if (isDocs) {
+    return (
+      <div className="min-h-screen">
+        <Nav />
+        <Docs hash={hash} />
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
       <Nav />
-      {isDocs ? (
-        <Docs hash={hash} />
-      ) : (
-        <main>
-          <Hero />
-          <UseCases />
-          <FeatureGrid />
-          <CodeShowcase />
-          <LiveDemo />
-          <RealWorld />
-          <Benchmark />
-          <Ecosystem />
-        </main>
-      )}
+      <main>
+        <Hero />
+        <CoreApi />
+        <StateTree />
+        <LiveDemo />
+        <UseCases />
+        <FeatureGrid />
+        <Benchmark />
+        <Ecosystem />
+      </main>
       <Footer />
     </div>
   );
