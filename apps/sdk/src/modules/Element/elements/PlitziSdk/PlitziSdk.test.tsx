@@ -1,12 +1,13 @@
+import { createEntityStore } from '@plitzi/nexus/entities';
 import { render } from '@testing-library/react';
 import { createContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
-import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
+import { ElementStoreContext } from '@plitzi/sdk-shared/elements/ElementStore';
 
 import { PlitziSdk } from './PlitziSdk';
 
-import type { ElementContextValue } from '@plitzi/sdk-shared/elements/ElementContext';
+import type { ElementStoreEntry } from '@plitzi/sdk-shared/elements/ElementStore';
 
 vi.mock('@modules/Element', () => ({ default: {} }));
 
@@ -23,12 +24,20 @@ vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
 
 describe('PlitziSdk', () => {
   it('should render successfully', () => {
+    const store = createEntityStore<ElementStoreEntry>([
+      {
+        id: 'sdk',
+        rootId: 'root',
+        attributes: {},
+        definition: { label: 'Button' },
+        elementState: {},
+        setElementState: () => true
+      } as ElementStoreEntry
+    ]);
     const { baseElement } = render(
-      <ElementContext
-        value={{ id: '', rootId: '', plitziJsxSkipHOC: false, definition: { label: 'Button' } } as ElementContextValue}
-      >
-        <PlitziSdk />
-      </ElementContext>
+      <ElementStoreContext value={store}>
+        <PlitziSdk id="sdk" />
+      </ElementStoreContext>
     );
 
     expect(baseElement).toBeTruthy();

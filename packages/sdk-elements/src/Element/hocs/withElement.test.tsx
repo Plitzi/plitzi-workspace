@@ -2,12 +2,13 @@ import { render } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
+import { ElementStoreProvider } from '@plitzi/sdk-shared/elements/ElementStore';
 import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 
 import withElement from './withElement';
 
 import type { Element, ElementContextValue } from '@plitzi/sdk-shared';
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 
 const setElementState = vi.fn();
 
@@ -41,13 +42,13 @@ vi.mock('../hooks/useElementInternal', () => ({
   })
 }));
 
-type ProbeProps = { text?: string; customX?: string; extraX?: string; children?: ReactNode };
+type ProbeProps = { id: string; text?: string; customX?: string; extraX?: string; children?: ReactNode };
 
 const captured: { props?: ProbeProps; ctx?: ElementContextValue } = {};
 
 const Probe = (props: ProbeProps) => {
   captured.props = props;
-  captured.ctx = useElement();
+  captured.ctx = useElement(props.id);
 
   return (
     <div data-testid="probe">
@@ -59,6 +60,8 @@ const Probe = (props: ProbeProps) => {
 
 const Wrapped = withElement(Probe);
 
+const renderWrapped = (ui: ReactElement) => render(<ElementStoreProvider>{ui}</ElementStoreProvider>);
+
 describe('withElement', () => {
   beforeEach(() => {
     captured.props = undefined;
@@ -67,7 +70,7 @@ describe('withElement', () => {
   });
 
   it('injects element attributes, extraProps and customProps into the wrapped component', () => {
-    render(<Wrapped internalProps={{ id: 'el1', rootId: 'root' }} extraProps={{ extraX: 'EX' }} />);
+    renderWrapped(<Wrapped internalProps={{ id: 'el1', rootId: 'root' }} extraProps={{ extraX: 'EX' }} />);
 
     expect(captured.props?.text).toBe('hello');
     expect(captured.props?.extraX).toBe('EX');
@@ -75,7 +78,7 @@ describe('withElement', () => {
   });
 
   it('provides the full element context (identity + resolved data + setElementState)', () => {
-    render(<Wrapped internalProps={{ id: 'el1', rootId: 'root' }} />);
+    renderWrapped(<Wrapped internalProps={{ id: 'el1', rootId: 'root' }} />);
 
     expect(captured.ctx?.id).toBe('el1');
     expect(captured.ctx?.rootId).toBe('root');
@@ -87,7 +90,7 @@ describe('withElement', () => {
   });
 
   it('registers a `${id}_setState` callback on the element event bridge', () => {
-    render(<Wrapped internalProps={{ id: 'el1', rootId: 'root' }} />);
+    renderWrapped(<Wrapped internalProps={{ id: 'el1', rootId: 'root' }} />);
 
     const [channel, callbacks] = vi.mocked(useEventBridge).mock.calls[0];
 
@@ -96,7 +99,7 @@ describe('withElement', () => {
   });
 
   it('passes resolved children through to the wrapped component', () => {
-    const { getByText } = render(
+    const { getByText } = renderWrapped(
       <Wrapped internalProps={{ id: 'el1', rootId: 'root' }}>
         <span>child-node</span>
       </Wrapped>
@@ -106,7 +109,7 @@ describe('withElement', () => {
   });
 
   it('short-circuits the heavy path under plitziJsxSkipHOC and only exposes identity context', () => {
-    render(<Wrapped internalProps={{ id: 'el1', rootId: 'root' }} plitziJsxSkipHOC />);
+    renderWrapped(<Wrapped internalProps={{ id: 'el1', rootId: 'root' }} plitziJsxSkipHOC />);
 
     expect(captured.ctx?.id).toBe('el1');
     expect(captured.ctx?.rootId).toBe('root');

@@ -3,7 +3,6 @@ import Contenteditable from '@plitzi/plitzi-ui/ContentEditable';
 import clsx from 'clsx';
 import { useMemo, use, useCallback } from 'react';
 
-import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
@@ -12,13 +11,13 @@ import RootElement from '../../../Element/RootElement';
 import type { RefObject } from 'react';
 
 export type ParagraphProps = {
+  id: string;
   ref?: RefObject<HTMLElement>;
   content?: string | number;
   className?: string;
 };
 
-const Paragraph = ({ ref, content = 'Paragraph', className = '' }: ParagraphProps) => {
-  const { id } = useElement();
+const Paragraph = ({ id, ref, content = 'Paragraph', className = '' }: ParagraphProps) => {
   const {
     settings: { previewMode },
     contexts: { BuilderContext }
@@ -46,7 +45,12 @@ const Paragraph = ({ ref, content = 'Paragraph', className = '' }: ParagraphProp
   );
 
   return (
-    <RootElement ref={ref} tag={!previewMode ? 'div' : 'p'} className={clsx('plitzi-component__paragraph', className)}>
+    <RootElement
+      id={id}
+      ref={ref}
+      tag={!previewMode ? 'div' : 'p'}
+      className={clsx('plitzi-component__paragraph', className)}
+    >
       {previewMode && finalContent}
       {!previewMode && (
         <Contenteditable className="" value={finalContent} onChange={handleChange} openMode="doubleClick" />

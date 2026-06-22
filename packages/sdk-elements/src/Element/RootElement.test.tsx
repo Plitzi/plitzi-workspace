@@ -2,12 +2,13 @@ import { render } from '@testing-library/react';
 import { createContext } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import { createEntityStore } from '@plitzi/nexus/entities';
 import StoreProvider from '@plitzi/nexus/StoreProvider';
-import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
+import { ElementStoreContext } from '@plitzi/sdk-shared/elements/ElementStore';
 
 import RootElement from './RootElement';
 
-import type { ElementContextValue } from '@plitzi/sdk-shared';
+import type { ElementContextValue, ElementStoreEntry } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 type ServiceContext = {
@@ -41,14 +42,19 @@ const renderRoot = (
   contextValue: ElementContextValue | ElementContextValue<'skipHOC'>,
   rootProps: Record<string, unknown> = {},
   children: ReactNode = 'child'
-) =>
-  render(
+) => {
+  const store = createEntityStore<ElementStoreEntry>([contextValue]);
+
+  return render(
     <StoreProvider value={{ runtime: { sources: {} } }}>
-      <ElementContext value={contextValue}>
-        <RootElement {...rootProps}>{children}</RootElement>
-      </ElementContext>
+      <ElementStoreContext value={store}>
+        <RootElement id={contextValue.id} {...rootProps}>
+          {children}
+        </RootElement>
+      </ElementStoreContext>
     </StoreProvider>
   );
+};
 
 describe('RootElement', () => {
   beforeEach(() => {

@@ -13,14 +13,15 @@ import RootElement from '../../../Element/RootElement';
 import type { ReactNode, RefObject } from 'react';
 
 export type LayoutContainerProps = {
+  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
   children?: ReactNode;
   subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
 };
 
-const LayoutContainer = ({ ref, className = '', children, subType = 'div' }: LayoutContainerProps) => {
-  const { plitziElementLayout } = useElement();
+const LayoutContainer = ({ id, ref, className = '', children, subType = 'div' }: LayoutContainerProps) => {
+  const { plitziElementLayout } = useElement(id);
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
@@ -75,7 +76,7 @@ const LayoutContainer = ({ ref, className = '', children, subType = 'div' }: Lay
   }, [plitziElementLayout, previewMode, ref, updateMask]);
 
   return (
-    <RootElement ref={ref} tag={subType} className={clsx('plitzi-component__layout-container', className)}>
+    <RootElement id={id} ref={ref} tag={subType} className={clsx('plitzi-component__layout-container', className)}>
       {children}
     </RootElement>
   );

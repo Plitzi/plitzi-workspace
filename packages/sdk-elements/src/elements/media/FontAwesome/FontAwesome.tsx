@@ -9,6 +9,7 @@ import RootElement from '../../../Element/RootElement';
 import type { RefObject } from 'react';
 
 export type FontAwesomeProps = {
+  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
   icon?: string;
@@ -17,6 +18,7 @@ export type FontAwesomeProps = {
 };
 
 const FontAwesome = ({
+  id,
   ref,
   className = '',
   icon = 'fas fa-flag',
@@ -29,7 +31,11 @@ const FontAwesome = ({
 
   if (!previewMode) {
     return (
-      <RootElement ref={ref} className={clsx('plitzi-component__fontawesome fontawesome--edit-mode', className)}>
+      <RootElement
+        id={id}
+        ref={ref}
+        className={clsx('plitzi-component__fontawesome fontawesome--edit-mode', className)}
+      >
         <i className={clsx(icon, size, iconAnimation)} />
       </RootElement>
     );
@@ -37,6 +43,7 @@ const FontAwesome = ({
 
   return (
     <RootElement
+      id={id}
       ref={ref}
       tag="i"
       className={clsx('plitzi-component__fontawesome', className, icon, size, iconAnimation)}

@@ -22,6 +22,7 @@ import type { SourceField, InteractionCallback } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ApiContainerProps = {
+  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
   children?: ReactNode;
@@ -36,6 +37,7 @@ export type ApiContainerProps = {
 };
 
 const ApiContainer = ({
+  id,
   ref,
   className = '',
   children,
@@ -49,9 +51,8 @@ const ApiContainer = ({
   credentials = 'same-origin'
 }: ApiContainerProps) => {
   const {
-    id,
     definition: { label = 'Api Container' }
-  } = useElement();
+  } = useElement(id);
   const {
     settings: { previewMode, debugMode },
     contexts: { NavigationContext, InteractionsContext }
@@ -190,6 +191,7 @@ const ApiContainer = ({
 
   return (
     <RootElement
+      id={id}
       ref={ref}
       tag={subType}
       className={clsx('plitzi-component__api-container', className)}

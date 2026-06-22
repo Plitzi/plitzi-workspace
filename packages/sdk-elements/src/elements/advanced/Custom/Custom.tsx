@@ -14,6 +14,7 @@ import type { Asset, ComponentPluginWithHOC, Element } from '@plitzi/sdk-shared'
 import type { RefObject } from 'react';
 
 export type CustomProps = {
+  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
   renderType?: string;
@@ -25,6 +26,7 @@ export type CustomProps = {
 };
 
 const Custom = ({
+  id,
   ref,
   className = '',
   renderType = '',
@@ -34,7 +36,7 @@ const Custom = ({
   assets = '',
   scriptUrl = ''
 }: CustomProps) => {
-  const { id, rootId } = useElement();
+  const { rootId } = useElement(id);
   const {
     contexts: { PluginsContext }
   } = usePlitziServiceContext();
@@ -103,7 +105,7 @@ const Custom = ({
   }
 
   return (
-    <RootElement ref={ref} className={clsx('plitzi-component__custom', className)}>
+    <RootElement id={id} ref={ref} className={clsx('plitzi-component__custom', className)}>
       {renderType && !settingsMalformed && (
         <span>
           Custom Component <b>{renderType}</b> Not Found

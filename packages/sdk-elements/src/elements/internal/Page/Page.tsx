@@ -2,7 +2,6 @@
 import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
-import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
@@ -14,6 +13,7 @@ import type { InteractionCallback } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type PageProps = {
+  id: string;
   ref?: RefObject<HTMLElement>;
   seoEnabled?: boolean;
   seoPageTitle?: string;
@@ -25,6 +25,7 @@ export type PageProps = {
 };
 
 const Page = ({
+  id,
   ref,
   seoEnabled = false,
   seoPageTitle = 'Title',
@@ -34,7 +35,6 @@ const Page = ({
   layoutContainer = '',
   children
 }: PageProps) => {
-  const { id } = useElement();
   const {
     settings: { previewMode },
     contexts: { NavigationContext, InteractionsContext }
@@ -80,6 +80,7 @@ const Page = ({
 
   return (
     <RootElement
+      id={id}
       ref={ref}
       className={clsx('plitzi-component__page', className)}
       interactionTriggers={interactionTriggers}

@@ -15,6 +15,7 @@ import type { CommonState } from '@plitzi/sdk-shared';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 export type LinkProps = {
+  id: string;
   ref?: RefObject<HTMLElement>;
   children?: ReactNode;
   className?: string;
@@ -23,8 +24,8 @@ export type LinkProps = {
   mode?: 'page' | 'internal' | 'external';
 };
 
-const Link = ({ ref, children, className = '', href = '#', target = 'self', mode = 'page' }: LinkProps) => {
-  const { style } = useElement();
+const Link = ({ id, ref, children, className = '', href = '#', target = 'self', mode = 'page' }: LinkProps) => {
+  const { style } = useElement(id);
   const {
     settings: { previewMode },
     contexts: { NavigationContext }
@@ -84,7 +85,7 @@ const Link = ({ ref, children, className = '', href = '#', target = 'self', mode
   }, [ref, style, target, className, previewMode, url]);
 
   return (
-    <RootElement tag="a" {...propsMemo} onClick={handleClick}>
+    <RootElement id={id} tag="a" {...propsMemo} onClick={handleClick}>
       {children}
     </RootElement>
   );

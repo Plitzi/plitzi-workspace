@@ -7,6 +7,7 @@ import withElement from '../../../Element/hocs/withElement';
 import type { ReactNode, RefObject } from 'react';
 
 export type ListProps<T = unknown> = {
+  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
   subType?: 'ul' | 'ol';
@@ -15,11 +16,11 @@ export type ListProps<T = unknown> = {
   source?: 'none' | 'controlled';
 };
 
-const List = ({ ref, className = '', subType = 'ul', children, items = [], source = 'none' }: ListProps) => {
+const List = ({ id, ref, className = '', subType = 'ul', children, items = [], source = 'none' }: ListProps) => {
   switch (source) {
     case 'controlled':
       return (
-        <ListControlled ref={ref} className={className} items={items}>
+        <ListControlled id={id} ref={ref} className={className} items={items}>
           {children}
         </ListControlled>
       );
@@ -27,7 +28,7 @@ const List = ({ ref, className = '', subType = 'ul', children, items = [], sourc
     case 'none':
     default:
       return (
-        <ListBasic ref={ref} className={className} subType={subType}>
+        <ListBasic id={id} ref={ref} className={className} subType={subType}>
           {children}
         </ListBasic>
       );

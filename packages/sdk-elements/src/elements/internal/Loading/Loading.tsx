@@ -9,17 +9,18 @@ import RootElement from '../../../Element/RootElement';
 import type { RefObject } from 'react';
 
 export type LoadingProps = {
+  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
 };
 
-const Loading = ({ ref, className = '' }: LoadingProps) => {
+const Loading = ({ id, ref, className = '' }: LoadingProps) => {
   const {
     definition: { label }
-  } = useElement();
+  } = useElement(id);
 
   return (
-    <RootElement ref={ref} className={clsx('plitzi-component__loading', className)}>
+    <RootElement id={id} ref={ref} className={clsx('plitzi-component__loading', className)}>
       <span>
         <b>{label}</b> Loading...
       </span>

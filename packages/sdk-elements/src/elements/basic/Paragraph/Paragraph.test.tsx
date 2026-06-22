@@ -1,9 +1,8 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
-import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
-
 import { Paragraph } from './Paragraph';
+import { ElementStoreSeed } from '../../../testUtils/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
@@ -19,9 +18,9 @@ vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
 describe('Paragraph Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
-      <ElementContext value={{ id: '', rootId: '', plitziJsxSkipHOC: true }}>
-        <Paragraph />
-      </ElementContext>
+      <ElementStoreSeed entries={[{ id: '', rootId: '', plitziJsxSkipHOC: true }]}>
+        <Paragraph id="" />
+      </ElementStoreSeed>
     );
 
     expect(baseElement).toBeTruthy();

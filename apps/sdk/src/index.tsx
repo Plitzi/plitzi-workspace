@@ -15,7 +15,6 @@ import PluginRemote from '@plitzi/sdk-elements/Element/PluginRemote';
 import ReplicaProvider from '@plitzi/sdk-elements/Element/ReplicaProvider';
 import RootElement from '@plitzi/sdk-elements/Element/RootElement';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
 import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import { disableReactDevTools } from '@plitzi/sdk-shared/helpers/security';
 import baseUsePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -47,7 +46,7 @@ import type {
   RuntimeStateInstance,
   PlitziServiceContextValue as BasePlitziServiceContextValue
 } from '@plitzi/sdk-shared';
-import type { ElementContextValue } from '@plitzi/sdk-shared/elements/ElementContext';
+import type { ElementContextValue } from '@plitzi/sdk-shared/elements/ElementStore';
 import type { ReactNode } from 'react';
 
 let stateManager: RuntimeStateInstance;
@@ -182,8 +181,7 @@ export {
   PluginRemote,
   ReplicaProvider,
   useElement,
-  useRscData,
-  ElementContext
+  useRscData
 };
 
 export type {

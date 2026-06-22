@@ -10,14 +10,15 @@ import RootElement from '../../../Element/RootElement';
 import type { RefObject } from 'react';
 
 export type NotFoundProps = {
+  id: string;
   ref?: RefObject<HTMLElement | null>;
   className?: string;
 };
 
-const NotFound = ({ ref, className = '' }: NotFoundProps) => {
+const NotFound = ({ id, ref, className = '' }: NotFoundProps) => {
   const {
     definition: { label }
-  } = useElement();
+  } = useElement(id);
   const {
     settings: { isHydrating, previewMode }
   } = usePlitziServiceContext();
@@ -26,7 +27,7 @@ const NotFound = ({ ref, className = '' }: NotFoundProps) => {
   }
 
   return (
-    <RootElement ref={ref} className={clsx('plitzi-component__not-found', className)}>
+    <RootElement id={id} ref={ref} className={clsx('plitzi-component__not-found', className)}>
       <span>
         {label && (
           <>

@@ -94,6 +94,10 @@
       "types": "./dist/elements/ElementContext.d.ts",
       "import": "./dist/elements/ElementContext.mjs"
     },
+    "./elements/ElementStore": {
+      "types": "./dist/elements/ElementStore.d.ts",
+      "import": "./dist/elements/ElementStore.mjs"
+    },
     "./elements/hooks/useElement": {
       "types": "./dist/elements/hooks/useElement.d.ts",
       "import": "./dist/elements/hooks/useElement.mjs"

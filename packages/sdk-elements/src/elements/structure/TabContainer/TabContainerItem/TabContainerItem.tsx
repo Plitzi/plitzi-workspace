@@ -8,6 +8,7 @@ import RootElement from '../../../../Element/RootElement';
 import type { Dispatch, RefObject, SetStateAction, ReactNode } from 'react';
 
 export type TabContainerItemProps = {
+  id: string;
   ref: RefObject<HTMLElement>;
   className: string;
   children: ReactNode;
@@ -19,6 +20,7 @@ export type TabContainerItemProps = {
 };
 
 const TabContainerItem = ({
+  id,
   className = '',
   children,
   ref,
@@ -37,6 +39,7 @@ const TabContainerItem = ({
 
   return (
     <RootElement
+      id={id}
       ref={ref}
       onClick={handleClick}
       className={clsx('plitzi-component__tab-container-item', className, {

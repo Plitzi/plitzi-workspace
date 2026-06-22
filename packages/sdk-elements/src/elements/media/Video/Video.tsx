@@ -9,6 +9,7 @@ import RootElement from '../../../Element/RootElement';
 import type { RefObject } from 'react';
 
 export type VideoProps = {
+  id: string;
   ref?: RefObject<HTMLElement>;
   src?: string;
   autoPlay?: boolean;
@@ -19,6 +20,7 @@ export type VideoProps = {
 };
 
 const Video = ({
+  id,
   ref,
   src,
   autoPlay = false,
@@ -33,7 +35,7 @@ const Video = ({
 
   if (!previewMode) {
     return (
-      <RootElement ref={ref} className={clsx('plitzi-component__video video--edit-mode', className)}>
+      <RootElement id={id} ref={ref} className={clsx('plitzi-component__video video--edit-mode', className)}>
         <video src={src} autoPlay={autoPlay} playsInline={playsInline} loop={loop} muted={muted}>
           <track kind="captions" />
         </video>
@@ -43,6 +45,7 @@ const Video = ({
 
   return (
     <RootElement
+      id={id}
       tag="video"
       draggable={false}
       ref={ref}

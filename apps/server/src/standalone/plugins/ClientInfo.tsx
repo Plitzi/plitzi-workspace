@@ -18,7 +18,7 @@ type BrowserInfo = {
   cookiesEnabled: boolean;
 };
 
-const ClientInfo = () => {
+const ClientInfo = ({ id }: { id: string }) => {
   // console.log('client', props);
   const [info, setInfo] = useState<BrowserInfo | null>(null);
 
@@ -34,7 +34,7 @@ const ClientInfo = () => {
 
   if (!info) {
     return (
-      <RootElement style={card('blue')}>
+      <RootElement id={id} style={card('blue')}>
         <div style={titleStyle('blue')}>🌐 Client Info — runtime: &quot;client&quot;</div>
         <span style={{ color: '#9ca3af' }}>⏳ Reading browser APIs…</span>
       </RootElement>
@@ -42,7 +42,7 @@ const ClientInfo = () => {
   }
 
   return (
-    <RootElement style={card('blue')}>
+    <RootElement id={id} style={card('blue')}>
       <div style={titleStyle('blue')}>🌐 Client Info — runtime: &quot;client&quot;</div>
       <div style={row}>
         <span style={label}>User Agent</span>

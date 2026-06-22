@@ -10,7 +10,7 @@ const meta = {
   // }
   tags: ['autodocs'],
   argTypes: {},
-  args: {}
+  args: { id: 'sdk' }
 } satisfies Meta<typeof PlitziSdk>;
 
 export default meta;

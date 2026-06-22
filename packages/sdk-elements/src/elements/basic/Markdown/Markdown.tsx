@@ -10,18 +10,20 @@ import RootElement from '../../../Element/RootElement';
 import type { RefObject } from 'react';
 
 export type MarkdownProps = {
+  id: string;
   ref: RefObject<HTMLElement>;
   className: string;
   content: string;
 };
 
-const Markdown = ({ ref, content = 'Markdown', className = '' }: MarkdownProps) => {
+const Markdown = ({ id, ref, content = 'Markdown', className = '' }: MarkdownProps) => {
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
 
   return (
     <RootElement
+      id={id}
       ref={ref}
       className={clsx(
         'plitzi-component__markdown',

@@ -3,7 +3,6 @@ import Contenteditable from '@plitzi/plitzi-ui/ContentEditable';
 import clsx from 'clsx';
 import { useMemo, use, useCallback } from 'react';
 
-import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
@@ -12,13 +11,13 @@ import RootElement from '../../../Element/RootElement';
 import type { RefObject } from 'react';
 
 export type TextProps = {
+  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
   content?: string | number;
 };
 
-const Text = ({ ref, content = 'Text', className = '' }: TextProps) => {
-  const { id } = useElement();
+const Text = ({ id, ref, content = 'Text', className = '' }: TextProps) => {
   const {
     settings: { previewMode },
     contexts: { BuilderContext }
@@ -46,7 +45,7 @@ const Text = ({ ref, content = 'Text', className = '' }: TextProps) => {
   );
 
   return (
-    <RootElement ref={ref} className={clsx('plitzi-component__text', className)}>
+    <RootElement id={id} ref={ref} className={clsx('plitzi-component__text', className)}>
       {previewMode && finalContent}
       {!previewMode && (
         <Contenteditable

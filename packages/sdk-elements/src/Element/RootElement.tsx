@@ -4,7 +4,7 @@ import { useCallback, use, useMemo, useRef, useEffect } from 'react';
 
 import { createStoreHook } from '@plitzi/nexus/createStore';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
-import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
+import { useElementData } from '@plitzi/sdk-shared/elements/ElementStore';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
@@ -18,6 +18,7 @@ import type { CommonState, ElementContextValue, InteractionCallback } from '@pli
 import type { Context, CSSProperties, FC, JSX, ReactNode, RefObject } from 'react';
 
 export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {
+  id: string;
   ref?: RefObject<HTMLElement | null>;
   children?: ReactNode;
   tag?: T;
@@ -256,6 +257,7 @@ const RootElementResolved = (props: ResolvedProps) => {
 };
 
 const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
+  id,
   ref,
   children,
   tag = 'div' as T,
@@ -267,12 +269,11 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
 }: RootElementProps<T>) => {
   const styleParsed = useMemo(() => parseStyle(styleProp), [styleProp]);
   const Tag = tag as unknown as ElementTag | undefined;
-  const elementContext = use(ElementContext);
-  if (!(elementContext as ElementContextValue | undefined)) {
-    throw new Error('This element can be rendered only under withElement HOC or inside ElementContext');
+  const elementContext = useElementData(id);
+  if (!elementContext) {
+    throw new Error(`This element can be rendered only under withElement HOC (id: ${id})`);
   }
 
-  const { id } = elementContext;
   if (!Tag) {
     throw new Error(`One of these parameters [tag] is missing in elementId: ${id}`);
   }

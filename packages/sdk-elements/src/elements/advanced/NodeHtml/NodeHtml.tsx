@@ -9,13 +9,15 @@ import RootElement from '../../../Element/RootElement';
 import type { ReactNode, RefObject, JSX, HTMLAttributes } from 'react';
 
 export type NodeHtmlProps<T extends keyof JSX.IntrinsicElements = 'span'> = {
+  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
   subType?: T;
   children?: ReactNode;
 } & Omit<HTMLAttributes<T>, 'class'>;
 
-const NodeHtml = ({ ref, className = '', subType = 'span', children, ...otherProps }: NodeHtmlProps) => {
+// `id` is destructured out so it never reaches `otherProps`, which is spread onto the DOM node.
+const NodeHtml = ({ id, ref, className = '', subType = 'span', children, ...otherProps }: NodeHtmlProps) => {
   const otherPropsMemo = useValueMemo(otherProps);
   const otherPropsParsed = useMemo(
     () =>
@@ -30,6 +32,7 @@ const NodeHtml = ({ ref, className = '', subType = 'span', children, ...otherPro
 
   return (
     <RootElement
+      id={id}
       ref={ref}
       tag={subType}
       className={clsx(`plitzi-component__node-html plitzi-component__node-html-${subType}`, className)}

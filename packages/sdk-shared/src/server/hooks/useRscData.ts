@@ -2,7 +2,6 @@
 
 import { use } from 'react';
 
-import { useElement } from '../../elements';
 import RscContext from '../rsc/RscContext';
 
 /**
@@ -11,8 +10,7 @@ import RscContext from '../rsc/RscContext';
  * element but carries no extra payload — the distinction matters for callers
  * that want to know whether the key was present at all.
  */
-const useRscData = <T>() => {
-  const { id } = useElement();
+const useRscData = <T>(id: string) => {
   const { enabled, serverData, refresh } = use(RscContext);
   const elementData: T | null | undefined = id ? ((serverData?.[id] as T) ?? null) : undefined;
 

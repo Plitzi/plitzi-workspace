@@ -2,14 +2,10 @@ import { render } from '@testing-library/react';
 import { createContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
-// import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-
 import StoreProvider from '@plitzi/nexus/StoreProvider';
-import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
 
 import { CollectionContainer } from './CollectionContainer';
-
-import type { ElementContextValue } from '@plitzi/sdk-shared';
+import { ElementStoreSeed, elementEntry } from '../../../testUtils/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
@@ -29,18 +25,9 @@ describe('CollectionContainer Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
       <StoreProvider value={{}}>
-        <ElementContext
-          value={
-            {
-              id: '',
-              rootId: '',
-              plitziJsxSkipHOC: false,
-              definition: { label: 'Collection Container' }
-            } as ElementContextValue
-          }
-        >
-          <CollectionContainer />
-        </ElementContext>
+        <ElementStoreSeed entries={[elementEntry('collection')]}>
+          <CollectionContainer id="collection" />
+        </ElementStoreSeed>
       </StoreProvider>
     );
 

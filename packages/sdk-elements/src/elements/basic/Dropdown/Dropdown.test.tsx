@@ -1,11 +1,8 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
-import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
-
 import { Dropdown } from './Dropdown';
-
-import type { ElementContextValue } from '@plitzi/sdk-shared/elements/ElementContext';
+import { ElementStoreSeed, elementEntry } from '../../../testUtils/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
@@ -22,19 +19,9 @@ vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
 describe('Dropdown Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
-      <ElementContext
-        value={
-          {
-            id: '',
-            rootId: '',
-            plitziJsxSkipHOC: false,
-            definition: { styleSelectors: { base: '' } },
-            setElementState: () => {}
-          } as ElementContextValue
-        }
-      >
-        <Dropdown />
-      </ElementContext>
+      <ElementStoreSeed entries={[elementEntry('')]}>
+        <Dropdown id="" />
+      </ElementStoreSeed>
     );
 
     expect(baseElement).toBeTruthy();

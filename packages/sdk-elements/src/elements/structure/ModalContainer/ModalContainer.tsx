@@ -16,6 +16,7 @@ import type { SourceField, InteractionCallbackParamValues, InteractionCallback }
 import type { ReactNode, RefObject } from 'react';
 
 export type ModalContainerProps = {
+  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
   children?: ReactNode;
@@ -24,6 +25,7 @@ export type ModalContainerProps = {
 };
 
 const ModalContainer = ({
+  id,
   ref,
   className = '',
   children,
@@ -31,11 +33,10 @@ const ModalContainer = ({
   autoHideAfterClick = true
 }: ModalContainerProps) => {
   const {
-    id,
     definition: { styleSelectors, label = 'Modal' },
     elementState,
     setElementState
-  } = useElement();
+  } = useElement(id);
   const {
     contexts: { InteractionsContext }
   } = usePlitziServiceContext();
@@ -143,6 +144,7 @@ const ModalContainer = ({
 
   return (
     <RootElement
+      id={id}
       ref={ref}
       className={clsx('plitzi-component__modal-container', className)}
       interactionTriggers={interactionTriggers}

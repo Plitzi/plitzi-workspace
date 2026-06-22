@@ -11,6 +11,7 @@ import type { ComponentPluginWithHOC } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type BlockJsxProps = {
+  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
   props?: string;
@@ -18,13 +19,14 @@ export type BlockJsxProps = {
 };
 
 const BlockJsx = ({
+  id,
   ref,
   className = '',
   props: componentProps = '{}',
   contentCache = '',
   ...otherProps
 }: BlockJsxProps) => {
-  const { id, rootId, plitziElementLayout } = useElement();
+  const { rootId, plitziElementLayout } = useElement(id);
   const [JsxModule, setJsxModule] = useState<{ default: ComponentPluginWithHOC<typeof otherProps> }>();
   const [renderError, setRenderError] = useState<string>();
   const internalPropsTruncated = useMemo(
@@ -87,6 +89,7 @@ const BlockJsx = ({
 
   return (
     <RootElement
+      id={id}
       ref={ref}
       className={clsx('plitzi-component__block-jsx', className, {
         'block-jsx--empty': contentCache === '' || !contentCache || !JsxModule

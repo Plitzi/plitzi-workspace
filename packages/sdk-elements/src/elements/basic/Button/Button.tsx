@@ -11,6 +11,7 @@ import RootElement from '../../../Element/RootElement';
 import type { ReactNode, RefObject } from 'react';
 
 export type ButtonProps = {
+  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
   children?: ReactNode;
@@ -21,6 +22,7 @@ export type ButtonProps = {
 };
 
 const Button = ({
+  id,
   ref,
   className = '',
   children,
@@ -31,7 +33,7 @@ const Button = ({
 }: ButtonProps) => {
   const {
     definition: { label }
-  } = useElement();
+  } = useElement(id);
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
@@ -39,6 +41,7 @@ const Button = ({
 
   return (
     <RootElement
+      id={id}
       ref={ref}
       tag="button"
       type={previewMode ? subType : 'button'}

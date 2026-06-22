@@ -1,45 +1,47 @@
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
 import { omit } from '@plitzi/plitzi-ui/helpers/lodash';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
-import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
+import { useElementStore } from '@plitzi/sdk-shared/elements/ElementStore';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import useElementInternal from '../hooks/useElementInternal';
 
-import type { ElementContextValue, InternalPropsSTG1 } from '@plitzi/sdk-shared';
+import type { InternalPropsSTG1 } from '@plitzi/sdk-shared';
+import type { ElementStoreEntry } from '@plitzi/sdk-shared/elements/ElementStore';
 import type { FC, ReactNode } from 'react';
 
+// `id` is injected by the HOC from `internalProps`, so callers never pass it: omit it from the wrapped props.
 export type WithElementProps<T> = {
   plitziJsxSkipHOC?: boolean;
   internalProps: InternalPropsSTG1;
   className?: string;
   children?: ReactNode;
   extraProps?: Record<string, unknown>;
-} & T;
+} & Omit<T, 'id'>;
 
 const withElement = <T extends object>(WrappedComponent: FC<T>) => {
-  // Manual-render path (JSX manager): skips the heavy resolution pipeline and only exposes element identity.
+  // Manual-render path (JSX manager): publishes only element identity to the store and injects `id`, no resolution.
   const SkipHocElement = (props: WithElementProps<T>) => {
     const { id, rootId } = props.internalProps;
-    const contextValue = useMemo<ElementContextValue<'skipHOC'>>(
-      () => ({ id, rootId, plitziJsxSkipHOC: true }),
-      [id, rootId]
-    );
+    const store = useElementStore();
+    const entry = useMemo<ElementStoreEntry>(() => ({ id, rootId, plitziJsxSkipHOC: true }), [id, rootId]);
+    store.setOne(entry);
 
-    return useMemo(
-      () => (
-        <ElementContext value={contextValue}>
-          <WrappedComponent {...props} internalProps={props.internalProps} />
-        </ElementContext>
-      ),
-      [contextValue, props]
-    );
+    useEffect(() => () => store.removeOne(id), [store, id]);
+
+    return useMemo(() => {
+      const wrappedProps = { ...props, id } as unknown as T;
+
+      return <WrappedComponent {...wrappedProps} />;
+    }, [id, props]);
   };
 
-  // Pre-render phase: resolve the element's data (schema, bindings, state, styleSelectors) and inject it as the
-  // element context the wrapped component consumes.
+  // Pre-render phase: resolve the element's data and publish it to the element store keyed by id. The wrapped component
+  // receives the resolved attributes as props (plugin contract) plus its `id`; it reads the rest by id from the store.
+  // Publishing happens in render so a descendant's `useElementData(id)` reads it on first paint; on mount nobody is
+  // subscribed yet, on update the subscriber wakes and re-renders.
   const FullElement = (props: WithElementProps<T>) => {
     const ref = useRef<HTMLElement>(undefined);
     const { id, rootId } = props.internalProps;
@@ -59,19 +61,15 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     const eventCallbacks = useMemo(() => ({ [`${id}_setState`]: setElementState }), [id, setElementState]);
     useEventBridge('element', eventCallbacks);
 
-    const contextValue = useMemo(
-      () => ({
-        id,
-        rootId,
-        attributes,
-        definition,
-        plitziElementLayout,
-        style,
-        elementState,
-        setElementState
-      }),
+    const elementData = useMemo<ElementStoreEntry>(
+      () => ({ id, rootId, attributes, definition, plitziElementLayout, style, elementState, setElementState }),
       [attributes, definition, elementState, id, plitziElementLayout, rootId, style, setElementState]
     );
+
+    const store = useElementStore();
+    store.setOne(elementData);
+
+    useEffect(() => () => store.removeOne(id), [store, id]);
 
     return useMemo(() => {
       let wrappedProps = {
@@ -79,7 +77,8 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
         ...props.extraProps,
         ...customProps,
         // Props injected via other elements
-        ...omit(props, ['plitziJsxSkipHOC', 'internalProps', 'className', 'children', 'extraProps'])
+        ...omit(props, ['plitziJsxSkipHOC', 'internalProps', 'className', 'children', 'extraProps']),
+        id
       } as T;
       if (children) {
         wrappedProps = { ...wrappedProps, children };
@@ -87,12 +86,10 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
 
       return (
         <ErrorBoundary>
-          <ElementContext value={contextValue}>
-            <WrappedComponent {...wrappedProps} ref={ref} />
-          </ElementContext>
+          <WrappedComponent {...wrappedProps} ref={ref} />
         </ErrorBoundary>
       );
-    }, [internalProps.attributes, props, customProps, children, contextValue]);
+    }, [internalProps.attributes, props, customProps, children, id]);
   };
 
   const WithElementComponent = (props: WithElementProps<T>) =>

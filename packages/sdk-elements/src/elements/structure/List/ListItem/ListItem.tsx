@@ -7,14 +7,15 @@ import RootElement from '../../../../Element/RootElement';
 import type { ReactNode, RefObject } from 'react';
 
 export type ListItemProps = {
+  id: string;
   ref: RefObject<HTMLElement>;
   className: string;
   children: ReactNode;
 };
 
-const ListItem = ({ ref, className = '', children }: ListItemProps) => {
+const ListItem = ({ id, ref, className = '', children }: ListItemProps) => {
   return (
-    <RootElement tag="li" ref={ref} className={clsx('plitzi-component__list-item', className)}>
+    <RootElement id={id} tag="li" ref={ref} className={clsx('plitzi-component__list-item', className)}>
       {children}
     </RootElement>
   );

@@ -9,12 +9,13 @@ import TabContainerContext from '../TabContainerContext';
 import type { ReactElement, ReactNode, RefObject } from 'react';
 
 export type TabContainerHeaderProps = {
+  id: string;
   ref: RefObject<HTMLElement>;
   className: string;
   children: ReactNode;
 };
 
-const TabContainerHeader = ({ ref, className = '', children }: TabContainerHeaderProps) => {
+const TabContainerHeader = ({ id, ref, className = '', children }: TabContainerHeaderProps) => {
   const { tabSelected, onSelect } = use(TabContainerContext);
 
   const { childrenParsed } = useMemo(() => {
@@ -43,7 +44,7 @@ const TabContainerHeader = ({ ref, className = '', children }: TabContainerHeade
   }, [children, onSelect, tabSelected]);
 
   return (
-    <RootElement ref={ref} className={clsx('plitzi-component__tab-container-header', className)}>
+    <RootElement id={id} ref={ref} className={clsx('plitzi-component__tab-container-header', className)}>
       {childrenParsed}
     </RootElement>
   );

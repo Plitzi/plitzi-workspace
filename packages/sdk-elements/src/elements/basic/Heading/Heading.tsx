@@ -3,7 +3,6 @@ import Contenteditable from '@plitzi/plitzi-ui/ContentEditable';
 import clsx from 'clsx';
 import { useMemo, use, useCallback } from 'react';
 
-import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
@@ -12,14 +11,14 @@ import RootElement from '../../../Element/RootElement';
 import type { RefObject } from 'react';
 
 export type HeadingProps = {
+  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
   content?: string;
   subType?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 };
 
-const Heading = ({ ref, className = '', content = 'Heading', subType = 'h1' }: HeadingProps) => {
-  const { id } = useElement();
+const Heading = ({ id, ref, className = '', content = 'Heading', subType = 'h1' }: HeadingProps) => {
   const {
     settings: { previewMode },
     contexts: { BuilderContext }
@@ -45,6 +44,7 @@ const Heading = ({ ref, className = '', content = 'Heading', subType = 'h1' }: H
 
   return (
     <RootElement
+      id={id}
       ref={ref}
       tag={!previewMode ? 'div' : subType}
       className={clsx('plitzi-component__heading', { [`plitzi-component__heading-${subType}`]: subType }, className)}

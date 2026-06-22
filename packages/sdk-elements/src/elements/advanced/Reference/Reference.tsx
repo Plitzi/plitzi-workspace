@@ -17,6 +17,7 @@ import type { Element, Schema, Segment, ElementLayoutType, CommonState } from '@
 import type { ReactNode, RefObject } from 'react';
 
 export type ReferenceProps = {
+  id: string;
   ref: RefObject<HTMLElement>;
   children: ReactNode;
   className: string;
@@ -26,6 +27,7 @@ export type ReferenceProps = {
 };
 
 const Reference = ({
+  id,
   ref,
   children,
   className = '',
@@ -34,9 +36,8 @@ const Reference = ({
   referenceContainer = ''
 }: ReferenceProps) => {
   const {
-    id,
     definition: { rootId, styleSelectors }
-  } = useElement();
+  } = useElement(id);
   const {
     settings: { previewMode, environment },
     contexts: { SegmentsContext }
@@ -165,6 +166,7 @@ const Reference = ({
   if (!reference) {
     return (
       <RootElement
+        id={id}
         ref={ref}
         className={clsx('plitzi-component__reference', className, {
           'reference--build-mode': !previewMode
@@ -195,6 +197,7 @@ const Reference = ({
 
   return (
     <RootElement
+      id={id}
       ref={ref}
       className={clsx('plitzi-component__reference', className, {
         'reference--build-mode': !previewMode

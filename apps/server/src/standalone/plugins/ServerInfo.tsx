@@ -17,9 +17,9 @@ type ServerData = {
   uptime: number;
 };
 
-const ServerInfo = () => {
+const ServerInfo = ({ id }: { id: string }) => {
   // console.log('server', props);
-  const { serverData, elementData } = useRscData<ServerData | null>();
+  const { serverData, elementData } = useRscData<ServerData | null>(id);
 
   useEffect(() => {
     console.log('Should not be triggered');
@@ -27,7 +27,7 @@ const ServerInfo = () => {
 
   if (!serverData) {
     return (
-      <RootElement style={card('gray')}>
+      <RootElement id={id} style={card('gray')}>
         <div style={titleStyle('gray')}>🖥 Server Info — runtime: &quot;server&quot;</div>
         <span style={{ color: '#9ca3af' }}>⏳ Fetching from /_rsc…</span>
       </RootElement>
@@ -36,7 +36,7 @@ const ServerInfo = () => {
 
   if (!elementData) {
     return (
-      <RootElement style={card('red')}>
+      <RootElement id={id} style={card('red')}>
         <div style={titleStyle('red')}>🖥 Server Info — runtime: &quot;server&quot;</div>
         <span>❌ No data returned</span>
       </RootElement>
@@ -44,7 +44,7 @@ const ServerInfo = () => {
   }
 
   return (
-    <RootElement style={card('green')}>
+    <RootElement id={id} style={card('green')}>
       <div style={titleStyle('green')}>🖥 Server Info — runtime: &quot;server&quot;</div>
       <div style={row}>
         <span style={label}>Message</span>

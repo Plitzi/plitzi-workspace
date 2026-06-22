@@ -21,9 +21,9 @@ type ClientData = {
   timezone: string;
 };
 
-const SharedInfo = () => {
+const SharedInfo = ({ id }: { id: string }) => {
   // console.log('shared', props);
-  const { elementData } = useRscData<SharedServerData | null>();
+  const { elementData } = useRscData<SharedServerData | null>(id);
   const [clientData, setClientData] = useState<ClientData | null>(null);
 
   useEffect(() => {
@@ -39,7 +39,7 @@ const SharedInfo = () => {
   const phase = isClient ? 'hydrated ✅' : 'SSR ⚡';
 
   return (
-    <RootElement style={card(color)}>
+    <RootElement id={id} style={card(color)}>
       <div style={titleStyle(color)}>🔄 Shared Info — runtime: &quot;shared&quot; — {phase}</div>
 
       {elementData && (

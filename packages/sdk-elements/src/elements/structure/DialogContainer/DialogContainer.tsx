@@ -16,6 +16,7 @@ import type { SourceField, InteractionCallback, InteractionCallbackParamValues }
 import type { ReactNode, RefObject } from 'react';
 
 export type DialogContainerProps = {
+  id: string;
   ref: RefObject<HTMLElement>;
   className: string;
   children: ReactNode;
@@ -27,6 +28,7 @@ export type DialogContainerProps = {
 };
 
 const DialogContainer = ({
+  id,
   ref,
   className = '',
   children,
@@ -37,11 +39,10 @@ const DialogContainer = ({
   autoHideAfterClick = true
 }: DialogContainerProps) => {
   const {
-    id,
     setElementState,
     definition: { styleSelectors, label = 'Dialog' },
     elementState
-  } = useElement();
+  } = useElement(id);
   const {
     contexts: { InteractionsContext }
   } = usePlitziServiceContext();
@@ -190,6 +191,7 @@ const DialogContainer = ({
 
   return (
     <RootElement
+      id={id}
       ref={ref}
       className={clsx('plitzi-component__dialog-container', className)}
       interactionTriggers={interactionTriggers}
