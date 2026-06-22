@@ -1,4 +1,4 @@
-import { useStoreHistory } from '@plitzi/nexus';
+import { useStoreHistory } from '@plitzi/nexus/react';
 import { type KeyboardEvent, type PointerEvent, useCallback, useEffect, useRef } from 'react';
 
 import { persistKey, purgeSave } from './arcadePersist';

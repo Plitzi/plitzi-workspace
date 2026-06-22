@@ -1,16 +1,29 @@
-# Vue example (core only, no React)
+# Vue example
 
-There is no `@plitzi/nexus/vue` integration yet, so this example talks to the agnostic core directly. That is the
-point: [`useNexus.ts`](./useNexus.ts) imports **only** `@plitzi/nexus` and bridges `store.subscribe` /
-`store.getState` into a Vue `ref`. No React is pulled into the bundle.
+Uses the first-class Vue integration, `@plitzi/nexus/vue` — provide/inject + composables that return Vue refs.
+
+- [`store.ts`](./store.ts) — creates the agnostic store (`@plitzi/nexus`) and the typed composables
+  (`createStoreComposable<AppState>()`).
+- [`App.vue`](./App.vue) — `provideStore(store)`, then `useStore('count')` (two-way, works with `v-model`) and
+  `useStoreValue('user.name')` (read-only).
 
 ```ts
 import { createStore } from '@plitzi/nexus';
-import { useNexus } from './useNexus';
+import { provideStore, useStore } from '@plitzi/nexus/vue';
 
 const store = createStore(() => ({ count: 0 }));
-const count = useNexus(store, s => s.count);
-// store.set('count', 1) → `count.value` updates
+provideStore(store);
+
+const count = useStore('count', { store }); // WritableComputedRef — count.value++ writes to the store
 ```
 
-A dedicated `@plitzi/nexus/vue` composable can later wrap exactly this pattern.
+| Composable | Returns |
+|---|---|
+| `provideStore(store)` / `injectStore()` | Provide/inject a store (the `<StoreProvider>` equivalent). |
+| `useStore(path, opts?)` | `WritableComputedRef` — two-way binding. |
+| `useStoreValue(path?, opts?)` | Read-only `Ref` (whole state when no path). |
+| `createStoreComposable<State>()` | Typed `{ useStore, useStoreValue, useStoreState }`. |
+| `useEntity` / `useEntityOne` / `useEntityIds` / `useEntityAll` | Reactive entity-store views. |
+| `useDerived(derived)` | Reactive `createDerived` value. |
+| `useAsync(resource)` | Reactive async snapshot (`status` / `data` / `error`). |
+| `useStoreHistory(opts?)` | Reactive undo/redo view (needs `historyMiddleware()`). |

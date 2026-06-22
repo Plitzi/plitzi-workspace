@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
-import { historyMiddleware, StoreProvider } from '@plitzi/nexus';
+import { historyMiddleware } from '@plitzi/nexus';
+import { StoreProvider } from '@plitzi/nexus/react';
 
 import SectionHeading from '../SectionHeading';
 import Segmented from '../Segmented';

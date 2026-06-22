@@ -1,4 +1,4 @@
-import { useStoreHistory } from '@plitzi/nexus';
+import { useStoreHistory } from '@plitzi/nexus/react';
 
 import { type Game2048State } from './game2048Store';
 import { sfx } from './heroSfx';

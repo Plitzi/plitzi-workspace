@@ -28,11 +28,24 @@
     "react-dom": "^19.2.7",
     "typescript": "^6.0.3",
     "vite": "^8.0.16",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.9",
+    "vue": "^3.5.13"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
-    "react-dom": "^18.0.0 || ^19.0.0"
+    "react-dom": "^18.0.0 || ^19.0.0",
+    "vue": "^3.4.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    }
   },
   "exports": {
     ".": {
@@ -292,6 +305,38 @@
     "./types/index": {
       "types": "./dist/types/index.d.ts",
       "import": "./dist/types/index.mjs"
+    },
+    "./vue": {
+      "types": "./dist/vue/index.d.ts",
+      "import": "./dist/vue/index.mjs"
+    },
+    "./vue/index": {
+      "types": "./dist/vue/index.d.ts",
+      "import": "./dist/vue/index.mjs"
+    },
+    "./vue/injection": {
+      "types": "./dist/vue/injection.d.ts",
+      "import": "./dist/vue/injection.mjs"
+    },
+    "./vue/useAsync": {
+      "types": "./dist/vue/useAsync.d.ts",
+      "import": "./dist/vue/useAsync.mjs"
+    },
+    "./vue/useDerived": {
+      "types": "./dist/vue/useDerived.d.ts",
+      "import": "./dist/vue/useDerived.mjs"
+    },
+    "./vue/useEntity": {
+      "types": "./dist/vue/useEntity.d.ts",
+      "import": "./dist/vue/useEntity.mjs"
+    },
+    "./vue/useStore": {
+      "types": "./dist/vue/useStore.d.ts",
+      "import": "./dist/vue/useStore.mjs"
+    },
+    "./vue/useStoreHistory": {
+      "types": "./dist/vue/useStoreHistory.d.ts",
+      "import": "./dist/vue/useStoreHistory.mjs"
     }
   }
 }

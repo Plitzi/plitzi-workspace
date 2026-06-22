@@ -1,6 +1,7 @@
 import { Suspense, use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { createAsync, StoreContext } from '@plitzi/nexus';
+import { createAsync } from '@plitzi/nexus';
+import { StoreContext } from '@plitzi/nexus/react';
 
 import { fetchQuote } from '../../asyncStore';
 import AsyncErrorBoundary from '../AsyncErrorBoundary';

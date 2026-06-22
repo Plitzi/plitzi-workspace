@@ -1,4 +1,4 @@
-import { createStoreHook } from '@plitzi/nexus';
+import { createStoreHook } from '@plitzi/nexus/react';
 
 export type Quote = { id: number; text: string; author: string };
 export type AsyncDemoState = { quote: Quote | null };

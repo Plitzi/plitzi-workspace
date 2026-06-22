@@ -1,4 +1,4 @@
-import { createStoreHook } from '@plitzi/nexus';
+import { createStoreHook } from '@plitzi/nexus/react';
 
 export type DevToolsState = { count: number; user: { name: string } };
 

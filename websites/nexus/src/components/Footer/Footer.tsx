@@ -10,7 +10,7 @@ const Footer = () => (
           @plitzi/nexus
         </div>
         <p className="mt-4 text-sm leading-relaxed text-zinc-500">
-          A tiny, type-safe React store built on useSyncExternalStore. Open source under the MIT license.
+          A tiny, framework-agnostic state core with React & Vue bindings, built on useSyncExternalStore. Open source under the MIT license.
         </p>
         <code className="mt-4 inline-block rounded-lg border border-ink-700 bg-ink-900 px-3 py-1.5 font-mono text-xs text-zinc-400">
           {INSTALL_COMMAND}

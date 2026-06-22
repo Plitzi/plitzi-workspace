@@ -1,4 +1,4 @@
-import { StoreProvider } from '@plitzi/nexus';
+import { StoreProvider } from '@plitzi/nexus/react';
 import { useState } from 'react';
 
 import Controls from './components/Controls';

@@ -14,10 +14,11 @@ The **package root is the framework-agnostic core** (zero React). Framework bind
 |---|---|
 | `@plitzi/nexus` | **Agnostic core** — `createStore`, imperative `get/set/watch`, middlewares, async/derived/entities. Zero React. |
 | `@plitzi/nexus/react` | React bindings — `StoreProvider`, `createStoreHook`, `useStore`, `useStoreHistory`, `useEntity`, … |
+| `@plitzi/nexus/vue` | Vue 3 bindings — `provideStore`, `useStore` (writable ref), `useStoreValue`, `useEntity`, `useStoreHistory`, … |
 | `@plitzi/nexus/next` | Next.js App Router helpers (`bindServerAction`). |
 
-Use any framework by talking to the root directly (`store.subscribe` / `store.getState`) — see the Vue and Svelte
-[examples](./examples). For Astro, see [docs/integrations/astro.md](./docs/integrations/astro.md).
+Any other framework works by talking to the root directly (`store.subscribe` / `store.getState`) — see the Svelte
+[example](./examples/svelte). For Astro, see [docs/integrations/astro.md](./docs/integrations/astro.md).
 
 ```bash
 npm install @plitzi/nexus   # React bindings peer deps: react@^18 || ^19, react-dom@^18 || ^19

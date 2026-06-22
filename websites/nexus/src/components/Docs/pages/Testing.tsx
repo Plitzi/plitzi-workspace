@@ -41,7 +41,7 @@ it('writes a path and notifies only that path', () => {
     </p>
     <CodeBlock
       code={`import { render, screen, fireEvent } from '@testing-library/react';
-import { StoreProvider } from '@plitzi/nexus';
+import { StoreProvider } from '@plitzi/nexus/react';
 import { useStore } from './store'; // createStoreHook<State>()
 
 function Counter() {
@@ -69,7 +69,8 @@ it('increments on click', () => {
     <CodeBlock
       code={`import { renderHook, act } from '@testing-library/react';
 import { createElement } from 'react';
-import { createStore, StoreProvider } from '@plitzi/nexus';
+import { createStore } from '@plitzi/nexus';
+import { StoreProvider } from '@plitzi/nexus/react';
 import { useStore } from './store';
 
 it('re-renders when its path changes', () => {

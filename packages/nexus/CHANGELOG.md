@@ -11,6 +11,9 @@
   level.
 - Removed the Vite-only `import.meta.env.MODE`; dev/prod/test detection now uses `process.env.NODE_ENV`, so the
   dev-only warnings behave identically under webpack, esbuild, Rollup, Bun, raw Node and Vite/Astro.
+- Added a first-class **Vue 3 integration** at `@plitzi/nexus/vue`: `provideStore` / `injectStore`, `useStore`
+  (writable ref / `v-model`), `useStoreValue`, `createStoreComposable`, `useEntity*`, `useDerived`, `useAsync`, and
+  `useStoreHistory`. `vue` is an optional peer dependency (`^3.4`).
 - Added runnable examples (`examples/`) and integration docs (`docs/integrations/`) for React, Next.js, Astro 6 (LTS),
   Astro 7, Vue and Svelte.
 

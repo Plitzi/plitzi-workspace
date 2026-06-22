@@ -10,8 +10,8 @@ integration yet, directly via `store.subscribe` / `store.getState`).
 | [next](./next) | `@plitzi/nexus/react` + `@plitzi/nexus/next` | RSC server snapshot + server action |
 | [astro-6](./astro-6) | `@plitzi/nexus/react` + `@plitzi/nexus` | Astro **6 LTS** islands: Provider-in-island + cross-island singleton |
 | [astro-7](./astro-7) | `@plitzi/nexus/react` + `@plitzi/nexus` | Astro **7** (Vite 8 / Rust compiler): same two patterns |
-| [vue](./vue) | `@plitzi/nexus` | Core consumed directly from a Vue composable (no React) |
+| [vue](./vue) | `@plitzi/nexus` + `@plitzi/nexus/vue` | First-class Vue 3 integration (provide/inject + composables) |
 | [svelte](./svelte) | `@plitzi/nexus` | Core consumed directly via the Svelte store contract (no React) |
 
-The **vue** and **svelte** examples deliberately import only `@plitzi/nexus` — they are the proof that the core
-carries no React dependency.
+The **svelte** example deliberately imports only `@plitzi/nexus` — proof that the core carries no UI-framework
+dependency. The **vue** example uses the dedicated `@plitzi/nexus/vue` bindings.

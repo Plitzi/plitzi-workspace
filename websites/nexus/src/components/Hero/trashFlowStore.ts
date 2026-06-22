@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus';
+import { createStoreHook } from '@plitzi/nexus/react';
 
 // Trash Flow keeps its gameplay readouts (points, value, level, battery, phase) and the upgrade levels in one Nexus
 // store, streamed to the log panel through a logger sink. The huge confetti field lives in a separate

@@ -1,4 +1,4 @@
-import { StoreProvider } from '@plitzi/nexus';
+import { StoreProvider } from '@plitzi/nexus/react';
 import { useCallback, useState } from 'react';
 
 import { useDraftSetter } from '../../draftStore';

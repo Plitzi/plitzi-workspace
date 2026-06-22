@@ -397,10 +397,10 @@ items.updateOne(id, { name: 'New' });
 items.removeOne(id);
 items.batch(() => { items.updateMany(updates); items.addMany(more); });
 
-// React hooks live on the store object (one exported symbol):
-const item = items.useOne(id);   // re-renders only when THIS id changes
-const ids = items.useIds();      // re-renders only on add/remove
-const all = items.useAll();      // re-renders on any change
+// React bindings come from @plitzi/nexus/react:
+const item = useEntityOne(items, id);  // re-renders only when THIS id changes
+const ids = useEntityIds(items);       // re-renders only on add/remove
+const all = useEntityAll(items);       // re-renders on any change
 
 // Non-reactive reads + manual subscriptions also available:
 items.getOne(id); items.getAll(); items.getIds(); items.has(id); items.size();

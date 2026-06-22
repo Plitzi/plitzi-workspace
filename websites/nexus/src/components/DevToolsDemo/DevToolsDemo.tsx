@@ -1,4 +1,5 @@
-import { reduxDevToolsMiddleware, StoreProvider } from '@plitzi/nexus';
+import { reduxDevToolsMiddleware } from '@plitzi/nexus';
+import { StoreProvider } from '@plitzi/nexus/react';
 
 import ExampleCard from '../ExampleCard';
 import DevToolsBody from './components/DevToolsBody';

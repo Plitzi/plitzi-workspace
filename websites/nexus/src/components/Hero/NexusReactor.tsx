@@ -1,4 +1,4 @@
-import { StoreProvider, useAsync, useDerived } from '@plitzi/nexus';
+import { StoreProvider, useAsync, useDerived, useEntityAll } from '@plitzi/nexus/react';
 import { type CSSProperties, type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { isPaused } from './heroPause';
@@ -123,7 +123,7 @@ const ReactorField = ({
 }) => {
   const [energy] = useReactor('energy');
   const [boostUntil] = useReactor('boostUntil');
-  const orbList = orbs.useAll();
+  const orbList = useEntityAll(orbs);
   const [pops, setPops] = useState<Pop[]>([]);
   const [combo, setCombo] = useState({ count: 0, pct: 0 });
   const popId = useRef(0);

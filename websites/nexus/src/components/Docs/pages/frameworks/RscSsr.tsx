@@ -32,7 +32,7 @@ const RscSsr = () => (
     <CodeBlock
       code={`// Server Component — fetches data, seeds the provider
 import { createServerSnapshot } from '@plitzi/nexus/rsc';
-import { StoreProvider } from '@plitzi/nexus';
+import { StoreProvider } from '@plitzi/nexus/react';
 
 async function Page() {
   const data = await fetch('https://api.example.com/user');
@@ -47,7 +47,7 @@ async function Page() {
 
 // Client Component — reads the seeded data
 'use client';
-import { useStore } from '@plitzi/nexus';
+import { useStore } from '@plitzi/nexus/react';
 
 function Profile() {
   const [user] = useStore('user');
@@ -148,7 +148,7 @@ import { createServerSnapshot } from '@plitzi/nexus/rsc';
 // ✅ Client boundary in YOUR code
 // app/providers.tsx
 'use client';
-import { StoreProvider, createStoreHook } from '@plitzi/nexus';
+import { StoreProvider, createStoreHook } from '@plitzi/nexus/react';
 export const { useStore } = createStoreHook<AppState>();
 // ...`}
     />

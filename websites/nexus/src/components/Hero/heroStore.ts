@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus';
+import { createStoreHook } from '@plitzi/nexus/react';
 
 // The whole arcade lives in one Nexus store, shared across every game. Each engine runs physics in refs (per-frame
 // sprite positions don't belong in a store) and publishes only discrete events — a hit, a level, a lost life — by

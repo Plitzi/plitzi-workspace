@@ -1,4 +1,5 @@
-export const ASYNC_CODE = `import { createAsync, useAsyncValue, StoreContext } from '@plitzi/nexus';
+export const ASYNC_CODE = `import { createAsync } from '@plitzi/nexus';
+import { useAsyncValue, StoreContext } from '@plitzi/nexus/react';
 import { Suspense, use, useMemo } from 'react';
 
 type Quote = { id: number; text: string; author: string };

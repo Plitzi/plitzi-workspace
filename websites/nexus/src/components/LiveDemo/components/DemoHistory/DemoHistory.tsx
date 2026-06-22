@@ -1,4 +1,4 @@
-import { useStoreHistory } from '@plitzi/nexus';
+import { useStoreHistory } from '@plitzi/nexus/react';
 import { useMemo } from 'react';
 
 import DemoHistoryEntry from '../DemoHistoryEntry';

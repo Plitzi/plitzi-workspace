@@ -1,4 +1,4 @@
-export const BATCH_CODE = `import { createStoreHook, StoreContext } from '@plitzi/nexus';
+export const BATCH_CODE = `import { createStoreHook, StoreContext } from '@plitzi/nexus/react';
 import { use, useRef } from 'react';
 
 type State = { firstName: string; lastName: string; age: number; city: string };

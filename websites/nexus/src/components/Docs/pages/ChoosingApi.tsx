@@ -207,8 +207,8 @@ store.setState('todos', adapter.updateOne({ id, changes: { done: true } }));
 // O(1) per edit — a per-id reactive collection; only that row re-renders:
 const todos = createEntityStore<Todo>(seed);
 todos.updateOne(id, { done: true });
-const ids = todos.useIds();          // list re-renders only on add/remove
-const todo = todos.useOne(id);       // a row re-renders only when ITS todo changes`}
+const ids = useEntityIds(todos);     // list re-renders only on add/remove
+const todo = useEntityOne(todos, id); // a row re-renders only when ITS todo changes`}
     />
 
     <h2 id="multiple-stores">More than one store</h2>

@@ -1,4 +1,5 @@
-import { type Derived, StoreProvider, createDerived, useDerived } from '@plitzi/nexus';
+import { type Derived, createDerived } from '@plitzi/nexus';
+import { StoreProvider, useDerived } from '@plitzi/nexus/react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { persistKey, purgeSave } from './arcadePersist';

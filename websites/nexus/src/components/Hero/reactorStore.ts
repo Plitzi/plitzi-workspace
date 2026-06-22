@@ -1,15 +1,5 @@
-import {
-  CANCEL,
-  createAsync,
-  createDerived,
-  createEntityAdapter,
-  createEntityStore,
-  createStore,
-  createStoreHook,
-  loggerMiddleware,
-  persistMiddleware,
-  reduxDevToolsMiddleware
-} from '@plitzi/nexus';
+import { CANCEL, createAsync, createDerived, createEntityAdapter, createEntityStore, createStore, loggerMiddleware, persistMiddleware, reduxDevToolsMiddleware } from '@plitzi/nexus';
+import { createStoreHook } from '@plitzi/nexus/react';
 
 import { pushLog } from './heroLog';
 
