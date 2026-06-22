@@ -34,9 +34,9 @@
       "types": "./dist/Element/JsxManager.d.ts",
       "import": "./dist/Element/JsxManager.mjs"
     },
-    "./Element/PlitziServiceProvider": {
-      "types": "./dist/Element/PlitziServiceProvider.d.ts",
-      "import": "./dist/Element/PlitziServiceProvider.mjs"
+    "./Element/PlitziElementsProvider": {
+      "types": "./dist/Element/PlitziElementsProvider.d.ts",
+      "import": "./dist/Element/PlitziElementsProvider.mjs"
     },
     "./Element/PluginManager": {
       "types": "./dist/Element/PluginManager.d.ts",
@@ -57,10 +57,6 @@
     "./Element/RootElementInteractive": {
       "types": "./dist/Element/RootElementInteractive.d.ts",
       "import": "./dist/Element/RootElementInteractive.mjs"
-    },
-    "./Element/RootElementResolved": {
-      "types": "./dist/Element/RootElementResolved.d.ts",
-      "import": "./dist/Element/RootElementResolved.mjs"
     },
     "./Element/ServerStaticShell": {
       "types": "./dist/Element/ServerStaticShell.d.ts",
@@ -85,6 +81,10 @@
     "./Element/helpers/loadComponent": {
       "types": "./dist/Element/helpers/loadComponent.d.ts",
       "import": "./dist/Element/helpers/loadComponent.mjs"
+    },
+    "./Element/helpers/omitKeys": {
+      "types": "./dist/Element/helpers/omitKeys.d.ts",
+      "import": "./dist/Element/helpers/omitKeys.mjs"
     },
     "./Element/helpers/parseStyle": {
       "types": "./dist/Element/helpers/parseStyle.d.ts",

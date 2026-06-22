@@ -1,7 +1,7 @@
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 import { memo, useMemo } from 'react';
 
-import { PlitziServiceProvider } from '@plitzi/sdk-elements/Element/PlitziServiceProvider';
+import { PlitziElementsProvider } from '@plitzi/sdk-elements/Element/PlitziElementsProvider';
 import { Page } from '@plitzi/sdk-elements/elements';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
@@ -26,9 +26,9 @@ const IframeMode = ({ pageId = '', style = '', plitziContextValue, assets = empt
   return (
     <ContainerFrame ref={ref} id="i-sdk" css={style} assets={assets} className="w-full grow">
       <SpaceContainer>
-        <PlitziServiceProvider value={plitziContextValue}>
+        <PlitziElementsProvider value={plitziContextValue}>
           {pageId && <Page key={pageId} internalProps={pageValueMemo} />}
-        </PlitziServiceProvider>
+        </PlitziElementsProvider>
         <MadeInPlitzi pageId={pageId} />
       </SpaceContainer>
     </ContainerFrame>

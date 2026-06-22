@@ -4,7 +4,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { memo, useCallback, use, useMemo, useRef, useState } from 'react';
 
-import { PlitziServiceProvider } from '@plitzi/sdk-elements/Element/PlitziServiceProvider';
+import { PlitziElementsProvider } from '@plitzi/sdk-elements/Element/PlitziElementsProvider';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
@@ -186,9 +186,9 @@ const BuilderArea = ({
                   previewMode={previewMode}
                 >
                   <SpaceContainer>
-                    <PlitziServiceProvider value={plitziContextValue}>
+                    <PlitziElementsProvider value={plitziContextValue}>
                       <Plugin key={baseElementId} internalProps={baseElementValueMemo} />
-                    </PlitziServiceProvider>
+                    </PlitziElementsProvider>
                   </SpaceContainer>
 
                   {!previewMode && (

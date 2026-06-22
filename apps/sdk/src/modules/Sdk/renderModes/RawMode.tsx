@@ -1,7 +1,7 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, memo } from 'react';
 
-import { PlitziServiceProvider } from '@plitzi/sdk-elements/Element/PlitziServiceProvider';
+import { PlitziElementsProvider } from '@plitzi/sdk-elements/Element/PlitziElementsProvider';
 import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
 import { Page } from '@plitzi/sdk-elements/elements';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
@@ -36,10 +36,10 @@ const RawMode = ({ pageId = '', style = '', plitziContextValue, renderMode = 'ra
       <style type="text/css" rel="stylesheet" data-id="plitzi-runtime-style">
         {style}
       </style>
-      <PlitziServiceProvider value={plitziContextValue}>
+      <PlitziElementsProvider value={plitziContextValue}>
         {pageId && renderMode !== 'widget' && <Page key={pageId} internalProps={pageValueMemo} />}
         {pageId && renderMode === 'widget' && <PluginManager key={pageId} type={type} internalProps={pageValueMemo} />}
-      </PlitziServiceProvider>
+      </PlitziElementsProvider>
       <MadeInPlitzi pageId={pageId} />
     </SpaceContainer>
   );

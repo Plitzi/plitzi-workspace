@@ -1,4 +1,4 @@
-import { get, omit } from '@plitzi/plitzi-ui/helpers';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
 import { processTwig, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
@@ -8,6 +8,7 @@ import useElementDataSource from './useElementDataSource';
 import useElementState from './useElementState';
 import useInternalItems from './useInternalItems';
 import getBindingsDetails from '../../dataSource/getBindingsDetails';
+import { omitKeys } from '../helpers/omitKeys';
 import parseStyleSelectors from '../helpers/parseStyleSelectors';
 
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
@@ -50,7 +51,7 @@ export const getProps = (
   }
 
   // State
-  attributes = { ...attributes, ...omit(state, ['visibility', 'styleSelectors']) };
+  attributes = { ...attributes, ...omitKeys(state, ['visibility', 'styleSelectors']) };
   definition = {
     ...definition,
     styleSelectors: {
@@ -68,7 +69,7 @@ export const getProps = (
     rootId: get(plitziElementLayout, 'rootId', rootId),
     attributes: {
       ...attributes,
-      ...omit(internalProps, ['id', 'rootId', 'attributes', 'definition', 'plitziElementLayout'])
+      ...omitKeys(internalProps, ['id', 'rootId', 'attributes', 'definition', 'plitziElementLayout'])
     },
     definition,
     elementState: { ...definition.initialState, ...state },
@@ -105,7 +106,7 @@ const useElementInternal = ({
 
   return {
     internalProps: internalPropsParsed,
-    customProps: omit(internalPropsParsed, [
+    customProps: omitKeys(internalPropsParsed, [
       'id',
       'rootId',
       'plitziElementLayout',

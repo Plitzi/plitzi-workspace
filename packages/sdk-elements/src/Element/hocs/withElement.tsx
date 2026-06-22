@@ -1,11 +1,11 @@
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
-import { omit } from '@plitzi/plitzi-ui/helpers/lodash';
 import { useMemo, useRef } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import { usePublishElement } from '../ElementStore';
+import { omitKeys } from '../helpers/omitKeys';
 import useElementInternal from '../hooks/useElementInternal';
 
 import type { ElementStoreEntry } from '../ElementStore';
@@ -71,7 +71,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
         ...props.extraProps,
         ...customProps,
         // Props injected via other elements
-        ...omit(props, ['plitziJsxSkipHOC', 'internalProps', 'className', 'children', 'extraProps']),
+        ...omitKeys(props, ['plitziJsxSkipHOC', 'internalProps', 'className', 'children', 'extraProps']),
         id
       } as T;
       if (children) {

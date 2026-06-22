@@ -1,9 +1,9 @@
-import { get } from '@plitzi/plitzi-ui/helpers';
-import { memo, useCallback, use, useMemo } from 'react';
+import { memo, use, useMemo } from 'react';
 
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
+import { getRemoteSettings } from './helpers/pluginSelector';
 import PluginRemote from './PluginRemote';
 import NotFound from '../elements/internal/NotFound/NotFound';
 
@@ -31,26 +31,11 @@ const JsxManager = ({
   const { components } = use(ComponentContext);
   const { plugins } = use(PluginsContext);
 
-  const getParentPlugin = useCallback(
-    (subPlugin: string) => Object.values(plugins).find(plugin => plugin.subPlugins.find(type => type === subPlugin)),
-    [plugins]
-  );
-
   let Plugin = type ? components.current[type] : undefined;
-  const remoteSettings = useMemo(() => {
-    const pluginDefinition = (type ? plugins[type] : undefined) ?? getParentPlugin(type);
-    if (Plugin || !pluginDefinition) {
-      return undefined;
-    }
-
-    const pluginAssets = get(pluginDefinition, 'assets', []).filter(asset => asset.type === 'script');
-    const { scope } = pluginDefinition;
-
-    return {
-      url: pluginAssets.find(asset => asset.isMain)?.params.src ?? get(pluginAssets, '0.params.src', ''),
-      scope
-    };
-  }, [Plugin, getParentPlugin, plugins, type]);
+  const remoteSettings = useMemo(
+    () => (Plugin ? undefined : getRemoteSettings({ type, plugins })),
+    [Plugin, plugins, type]
+  );
 
   if (!type) {
     return null;

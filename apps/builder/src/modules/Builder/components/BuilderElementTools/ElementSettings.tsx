@@ -5,7 +5,7 @@ import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
 import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
-import { PlitziServiceProvider } from '@plitzi/sdk-elements/Element/PlitziServiceProvider';
+import { PlitziElementsProvider } from '@plitzi/sdk-elements/Element/PlitziElementsProvider';
 import { defaultElementsSettings } from '@plitzi/sdk-elements/elements/settings';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
@@ -88,7 +88,7 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
 
   const children = useMemo(
     () => (
-      <PlitziServiceProvider value={plitziContextValue}>
+      <PlitziElementsProvider value={plitziContextValue}>
         <ErrorBoundary>
           {Settings && (
             <div className={clsx('flex h-full flex-col', { dark: theme === 'dark' })}>
@@ -100,7 +100,7 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
           )}
           {!Settings && <div className="element-tools--empty">Settings not available.</div>}
         </ErrorBoundary>
-      </PlitziServiceProvider>
+      </PlitziElementsProvider>
     ),
     [plitziContextValue, Settings, theme, attributes, id, variables, handleChange]
   );

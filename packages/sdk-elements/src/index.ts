@@ -1,5 +1,5 @@
 import JsxManager from './Element/JsxManager';
-import PlitziServiceProvider from './Element/PlitziServiceProvider';
+import PlitziElementsProvider from './Element/PlitziElementsProvider';
 import * as elements from './elements';
 import * as elementSettings from './elements/settings';
 
@@ -37,4 +37,4 @@ export const defaultElements = {
   collectionContainer: elements.CollectionContainer
 };
 
-export { elements, elementSettings, JsxManager, PlitziServiceProvider };
+export { elements, elementSettings, JsxManager, PlitziElementsProvider };

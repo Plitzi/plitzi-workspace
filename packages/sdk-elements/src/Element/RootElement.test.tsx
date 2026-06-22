@@ -8,7 +8,7 @@ import StoreProvider from '@plitzi/nexus/StoreProvider';
 import { ElementStoreContext } from './ElementStore';
 import RootElement from './RootElement';
 
-import type { ElementContextValue, ElementStoreEntry } from './ElementStore';
+import type { ElementContextValue, ElementStoreEntry, SkipHocElementContextValue } from './ElementStore';
 import type { ReactNode } from 'react';
 
 type ServiceContext = {
@@ -39,7 +39,7 @@ const fullContext = (overrides: Partial<ElementContextValue> = {}): ElementConte
 });
 
 const renderRoot = (
-  contextValue: ElementContextValue | ElementContextValue<'skipHOC'>,
+  contextValue: ElementContextValue | SkipHocElementContextValue,
   rootProps: Record<string, unknown> = {},
   children: ReactNode = 'child'
 ) => {

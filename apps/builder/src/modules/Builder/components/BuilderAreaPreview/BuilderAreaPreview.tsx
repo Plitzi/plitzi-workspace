@@ -8,7 +8,7 @@ import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
-import { PlitziServiceProvider } from '@plitzi/sdk-elements/Element/PlitziServiceProvider';
+import { PlitziElementsProvider } from '@plitzi/sdk-elements/Element/PlitziElementsProvider';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
@@ -128,7 +128,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
       css={css}
       style={{ colorScheme: theme === 'system' ? 'light' : theme }}
     >
-      <PlitziServiceProvider value={plitziContextValue}>
+      <PlitziElementsProvider value={plitziContextValue}>
         <GlobalSources>
           <InteractionsBuilderContextProvider>
             <div
@@ -143,7 +143,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
             </div>
           </InteractionsBuilderContextProvider>
         </GlobalSources>
-      </PlitziServiceProvider>
+      </PlitziElementsProvider>
     </ContainerFrame>
   );
 };

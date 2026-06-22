@@ -1,7 +1,7 @@
 import ContainerShadow from '@plitzi/plitzi-ui/ContainerShadow';
 import { memo, useMemo } from 'react';
 
-import { PlitziServiceProvider } from '@plitzi/sdk-elements/Element/PlitziServiceProvider';
+import { PlitziElementsProvider } from '@plitzi/sdk-elements/Element/PlitziElementsProvider';
 import { Page } from '@plitzi/sdk-elements/elements';
 
 import SpaceContainer from '../../Space/SpaceContainer';
@@ -31,9 +31,9 @@ const ShadowMode = ({ pageId = '', sdkStylePath = '', style = '', plitziContextV
       <ContainerShadow.Content>
         <SpaceContainer>
           <style dangerouslySetInnerHTML={{ __html: style }} />
-          <PlitziServiceProvider value={plitziContextValue}>
+          <PlitziElementsProvider value={plitziContextValue}>
             {pageId && <Page key={pageId} internalProps={pageValueMemo} />}
-          </PlitziServiceProvider>
+          </PlitziElementsProvider>
           <MadeInPlitzi pageId={pageId} />
         </SpaceContainer>
       </ContainerShadow.Content>
