@@ -3,13 +3,13 @@
 import { throttle } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useEffect, useRef, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import { processContainer } from './BuilderOverlayHelper';
 import OverlayNormal from './OverlayNormal';
 
-import type { BuilderState, DisplayMode, Element, EventBridgeEvent } from '@plitzi/sdk-shared';
+import type { DisplayMode, Element, EventBridgeEvent } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type BuilderOverlayProps = {
@@ -37,8 +37,7 @@ const BuilderOverlay = ({
   color,
   collaboratorName = ''
 }: BuilderOverlayProps) => {
-  const { useStore } = createStoreHook<BuilderState>();
-  const [element = undefined] = useStore(`schema.flat.${id}`);
+  const [element = undefined] = useBuilderStore(`schema.flat.${id}`);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const rootContainerRef = useRef<HTMLDivElement | null>(null);
   const [container, setContainer] = useState({

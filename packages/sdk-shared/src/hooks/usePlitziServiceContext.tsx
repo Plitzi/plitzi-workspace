@@ -2,8 +2,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, use } from 'react';
 
-import { ElementStoreProvider } from '../elements/ElementStore';
-
 import type { BuilderContextValue } from '../builder';
 import type { NetworkContextValue } from '../network';
 import type {
@@ -64,11 +62,7 @@ const usePlitziServiceContext = <TEventBridge = any, TInteractions = any>() => {
 const PlitziServiceProvider = (props: { children?: ReactNode; value: PlitziServiceContextValue }) => {
   const { children, value } = props;
 
-  return (
-    <PlitziServiceContext value={value}>
-      <ElementStoreProvider>{children}</ElementStoreProvider>
-    </PlitziServiceContext>
-  );
+  return <PlitziServiceContext value={value}>{children}</PlitziServiceContext>;
 };
 
 export { PlitziServiceProvider, PlitziServiceContext };

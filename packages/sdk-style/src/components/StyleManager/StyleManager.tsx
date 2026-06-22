@@ -1,21 +1,20 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useState, use, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import ManagerSelector from './ManagerSelector';
 import StyleInspector from '../StyleInspector';
 
-import type { BuilderState, StyleItem } from '@plitzi/sdk-shared';
+import type { StyleItem } from '@plitzi/sdk-shared';
 
 const StyleManager = () => {
   const { componentDefinitions } = use(ComponentContext);
   const [selector, setSelector] = useState<StyleItem | undefined>(undefined);
 
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[flat, displayMode]] = useStore(['schema.flat', 'displayMode']);
-  const [selectors] = useStore(`style.platform.${displayMode}`);
+  const [[flat, displayMode]] = useBuilderStore(['schema.flat', 'displayMode']);
+  const [selectors] = useBuilderStore(`style.platform.${displayMode}`);
 
   const flatList = useMemo(() => Object.values(flat), [flat]);
 

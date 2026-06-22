@@ -1,13 +1,13 @@
-import { createEntityStore } from '@plitzi/nexus/entities';
 import { render } from '@testing-library/react';
 import { createContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
-import { ElementStoreContext } from '@plitzi/sdk-shared/elements/ElementStore';
+import { createEntityStore } from '@plitzi/nexus/entities';
+import { ElementStoreContext } from '@plitzi/sdk-elements/Element/ElementStore';
 
 import { PlitziSdk } from './PlitziSdk';
 
-import type { ElementStoreEntry } from '@plitzi/sdk-shared/elements/ElementStore';
+import type { ElementStoreEntry } from '@plitzi/sdk-elements/Element/ElementStore';
 
 vi.mock('@modules/Element', () => ({ default: {} }));
 

@@ -26,9 +26,17 @@
       "types": "./dist/Component/index.d.ts",
       "import": "./dist/Component/index.mjs"
     },
+    "./Element/ElementStore": {
+      "types": "./dist/Element/ElementStore.d.ts",
+      "import": "./dist/Element/ElementStore.mjs"
+    },
     "./Element/JsxManager": {
       "types": "./dist/Element/JsxManager.d.ts",
       "import": "./dist/Element/JsxManager.mjs"
+    },
+    "./Element/PlitziServiceProvider": {
+      "types": "./dist/Element/PlitziServiceProvider.d.ts",
+      "import": "./dist/Element/PlitziServiceProvider.mjs"
     },
     "./Element/PluginManager": {
       "types": "./dist/Element/PluginManager.d.ts",
@@ -46,9 +54,21 @@
       "types": "./dist/Element/RootElement.d.ts",
       "import": "./dist/Element/RootElement.mjs"
     },
+    "./Element/RootElementInteractive": {
+      "types": "./dist/Element/RootElementInteractive.d.ts",
+      "import": "./dist/Element/RootElementInteractive.mjs"
+    },
+    "./Element/RootElementResolved": {
+      "types": "./dist/Element/RootElementResolved.d.ts",
+      "import": "./dist/Element/RootElementResolved.mjs"
+    },
     "./Element/ServerStaticShell": {
       "types": "./dist/Element/ServerStaticShell.d.ts",
       "import": "./dist/Element/ServerStaticShell.mjs"
+    },
+    "./Element/StaticTag": {
+      "types": "./dist/Element/StaticTag.d.ts",
+      "import": "./dist/Element/StaticTag.mjs"
     },
     "./Element/helpers/elementConstants": {
       "types": "./dist/Element/helpers/elementConstants.d.ts",
@@ -81,6 +101,10 @@
     "./Element/hocs/withElement": {
       "types": "./dist/Element/hocs/withElement.d.ts",
       "import": "./dist/Element/hocs/withElement.mjs"
+    },
+    "./Element/hooks/useElement": {
+      "types": "./dist/Element/hooks/useElement.d.ts",
+      "import": "./dist/Element/hooks/useElement.mjs"
     },
     "./Element/hooks/useElementDataSource": {
       "types": "./dist/Element/hooks/useElementDataSource.d.ts",

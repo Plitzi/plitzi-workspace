@@ -4,16 +4,16 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { useCallback, use, useEffect, useMemo, useState, useRef } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import StoreProvider from '@plitzi/nexus/StoreProvider';
-import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import PluginManager from '../../../Element/PluginManager';
 import RootElement from '../../../Element/RootElement';
 
-import type { Element, Schema, Segment, ElementLayoutType, CommonState } from '@plitzi/sdk-shared';
+import type { Element, Schema, Segment, ElementLayoutType } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ReferenceProps = {
@@ -42,8 +42,7 @@ const Reference = ({
     settings: { previewMode, environment },
     contexts: { SegmentsContext }
   } = usePlitziServiceContext();
-  const { useStore } = createStoreHook<CommonState>();
-  const [[mainSchema, segments]] = useStore(['schema', 'segments']);
+  const [[mainSchema, segments]] = useCommonStore(['schema', 'segments']);
   const { segmentGet } = use(SegmentsContext);
 
   const schemaRef = useRef(mainSchema);

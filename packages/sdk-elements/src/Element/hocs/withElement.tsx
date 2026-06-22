@@ -1,15 +1,15 @@
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
 import { omit } from '@plitzi/plitzi-ui/helpers/lodash';
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo, useRef } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
-import { useElementStore } from '@plitzi/sdk-shared/elements/ElementStore';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
+import { usePublishElement } from '../ElementStore';
 import useElementInternal from '../hooks/useElementInternal';
 
+import type { ElementStoreEntry } from '../ElementStore';
 import type { InternalPropsSTG1 } from '@plitzi/sdk-shared';
-import type { ElementStoreEntry } from '@plitzi/sdk-shared/elements/ElementStore';
 import type { FC, ReactNode } from 'react';
 
 // `id` is injected by the HOC from `internalProps`, so callers never pass it: omit it from the wrapped props.
@@ -25,11 +25,8 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
   // Manual-render path (JSX manager): publishes only element identity to the store and injects `id`, no resolution.
   const SkipHocElement = (props: WithElementProps<T>) => {
     const { id, rootId } = props.internalProps;
-    const store = useElementStore();
     const entry = useMemo<ElementStoreEntry>(() => ({ id, rootId, plitziJsxSkipHOC: true }), [id, rootId]);
-    store.setOne(entry);
-
-    useEffect(() => () => store.removeOne(id), [store, id]);
+    usePublishElement(entry);
 
     return useMemo(() => {
       const wrappedProps = { ...props, id } as unknown as T;
@@ -66,10 +63,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       [attributes, definition, elementState, id, plitziElementLayout, rootId, style, setElementState]
     );
 
-    const store = useElementStore();
-    store.setOne(elementData);
-
-    useEffect(() => () => store.removeOne(id), [store, id]);
+    usePublishElement(elementData);
 
     return useMemo(() => {
       let wrappedProps = {

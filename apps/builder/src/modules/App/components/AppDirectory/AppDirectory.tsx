@@ -1,18 +1,15 @@
 import Flex from '@plitzi/plitzi-ui/Flex';
 import { use, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import Directory from './Directory';
 import DirectoryHeader from './DirectoryHeader';
 
-import type { BuilderState } from '@plitzi/sdk-shared';
-
 const AppDirectory = () => {
   const { currentPageId } = use(NavigationContext);
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[flat, pageFolders]] = useStore(['schema.flat', 'schema.pageFolders']);
+  const [[flat, pageFolders]] = useBuilderStore(['schema.flat', 'schema.pageFolders']);
   const elements = useMemo(
     () =>
       Object.values(flat)

@@ -1,19 +1,18 @@
 import { useCallback, use, useEffect, useMemo, useRef } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import BuilderBreadcrumbItem from './BuilderBreadcrumbItem';
 
-import type { BuilderState, Element } from '@plitzi/sdk-shared';
+import type { Element } from '@plitzi/sdk-shared';
 
 export type BuilderBreadcrumbProps = {
   limit?: number;
 };
 
 const BuilderBreadcrumb = ({ limit = Infinity }: BuilderBreadcrumbProps) => {
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[flat, elementHovered, setHovered, elementSelected, setSelected]] = useStore([
+  const [[flat, elementHovered, setHovered, elementSelected, setSelected]] = useBuilderStore([
     'schema.flat',
     'elementHovered',
     'setHovered',

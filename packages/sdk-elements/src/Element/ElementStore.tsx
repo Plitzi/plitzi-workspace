@@ -1,10 +1,10 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, use, useCallback, useState, useSyncExternalStore } from 'react';
+import { createContext, use, useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 
 import { createEntityStore } from '@plitzi/nexus/entities';
 
-import type { Element, ElementLayout } from '../types';
 import type { EntityStore } from '@plitzi/nexus/entities';
+import type { Element, ElementLayout } from '@plitzi/sdk-shared';
 import type { CSSProperties, ReactNode } from 'react';
 
 // Resolved, per-instance element data. Historically carried by one React context provider per element
@@ -54,6 +54,17 @@ const useElementStore = (): EntityStore<ElementStoreEntry> => {
   return store;
 };
 
+// Publish side (`withElement`): writes the resolved entry to the store during render so a descendant's
+// `useElementData(id)` reads it on first paint, and removes it on unmount. The write runs every render (cheap, the
+// entry is memoized upstream); the cleanup is keyed by id.
+const usePublishElement = (entry: ElementStoreEntry): void => {
+  const store = useElementStore();
+  const { id } = entry;
+  store.setOne(entry);
+
+  useEffect(() => () => store.removeOne(id), [store, id]);
+};
+
 // Reactive read of one element's resolved data; re-renders only when that element changes, never for a sibling.
 // Reads through `useSyncExternalStore` (tearing-safe); yields `undefined` when the id is not yet published.
 const useElementData = <T extends 'skipHOC' | 'full' = 'full'>(id: string): ElementContextValue<T> | undefined => {
@@ -65,4 +76,4 @@ const useElementData = <T extends 'skipHOC' | 'full' = 'full'>(id: string): Elem
   return data as ElementContextValue<T> | undefined;
 };
 
-export { ElementStoreContext, ElementStoreProvider, useElementStore, useElementData };
+export { ElementStoreContext, ElementStoreProvider, useElementStore, usePublishElement, useElementData };

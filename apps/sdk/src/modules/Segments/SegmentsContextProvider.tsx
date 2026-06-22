@@ -1,12 +1,12 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, use, useCallback, useState, useEffect } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import { useSdkStoreGetter, useSdkStoreSync } from '@plitzi/sdk-shared/store';
 
-import type { SdkQueriesMap, NetworkContextValue, Segment, SdkState } from '@plitzi/sdk-shared';
+import type { SdkQueriesMap, NetworkContextValue, Segment } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type SegmentsContextProviderProps = {
@@ -20,9 +20,8 @@ const SegmentsContextProvider = ({ children }: SegmentsContextProviderProps) => 
 
   const [segments, setSegments] = useState(segmentsPropMemo);
 
-  const { useStoreSync, useStoreGetter } = createStoreHook<SdkState>();
-  useStoreSync('segments', segments);
-  const getSegment = useStoreGetter('segments');
+  useSdkStoreSync('segments', segments);
+  const getSegment = useSdkStoreGetter('segments');
 
   useEffect(() => {
     setSegments(segmentsPropMemo);

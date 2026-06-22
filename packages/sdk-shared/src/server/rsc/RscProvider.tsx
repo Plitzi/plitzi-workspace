@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
-
 import RscContext from './RscContext';
+import { useCommonStore } from '../../store';
 
 import type { RscContextValue } from './RscContext';
-import type { CommonState, SSRRscData } from '../../types';
+import type { SSRRscData } from '../../types';
 import type { ReactNode } from 'react';
 
 export type RscProviderProps = {
@@ -19,8 +18,7 @@ export type RscProviderProps = {
 };
 
 const RscProvider = ({ children, rscPath: rscPathProp, rscData, navigationKey }: RscProviderProps) => {
-  const { useStore } = createStoreHook<CommonState>();
-  const [schemaRsc] = useStore('schema.rsc', { mode: 'mount' });
+  const [schemaRsc] = useCommonStore('schema.rsc', { mode: 'mount' });
   const [rscState, setRscState] = useState<SSRRscData>(rscData ?? {});
 
   const enabled = schemaRsc?.enabled ?? false;

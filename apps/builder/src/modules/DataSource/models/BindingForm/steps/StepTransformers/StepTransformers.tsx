@@ -6,14 +6,14 @@ import Select2 from '@plitzi/plitzi-ui/Select2';
 import { produce } from 'immer';
 import { useCallback, useMemo, useRef } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import utility, { utilityOptions } from '@plitzi/sdk-elements/dataSource/utility';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import TransformerParam from './TransformerParam';
 
 import type { BindingSchema } from '../../BindingForm';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
-import type { BuilderState, DataSourceUtilityParams, DisplayMode, SourceField } from '@plitzi/sdk-shared';
+import type { DataSourceUtilityParams, DisplayMode, SourceField } from '@plitzi/sdk-shared';
 
 export type StepTransformersProps = {
   dataSourceFields?: Record<string, SourceField[]>;
@@ -25,8 +25,7 @@ const StepTransformers = ({ dataSourceFields }: StepTransformersProps) => {
   const watchTransformers = useFormWatch(form, 'transformers');
   const watchTransformersRef = useRef(watchTransformers);
   watchTransformersRef.current = watchTransformers;
-  const { useStore } = createStoreHook<BuilderState>();
-  const [stylePlatform] = useStore('style.platform');
+  const [stylePlatform] = useBuilderStore('style.platform');
   const styleSelectors = useMemo(() => {
     return (Object.keys(stylePlatform) as DisplayMode[]).map(displayMode => ({
       label: displayMode,

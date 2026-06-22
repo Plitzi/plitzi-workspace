@@ -4,19 +4,21 @@ import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
 import { get, debounce } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useMemo, useState, use } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
-import type { CommonState, StyleVariableCategory } from '@plitzi/sdk-shared';
+import type { StyleVariableCategory } from '@plitzi/sdk-shared';
 
 const StyleAdvanceEditor = () => {
   const { theme } = use(ThemeContext);
-  const { useStore } = createStoreHook<CommonState>();
-  const [[customCssProp = '', styleVariables = undefined]] = useStore(['schema.settings.customCss', 'style.variables']);
+  const [[customCssProp = '', styleVariables = undefined]] = useCommonStore([
+    'schema.settings.customCss',
+    'style.variables'
+  ]);
   const { schemaUpdateSettings } = use(SchemaContext);
   const [customCss, setCustomCss] = useState(() => {
     if (typeof customCssProp !== 'string') {

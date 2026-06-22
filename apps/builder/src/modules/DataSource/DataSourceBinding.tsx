@@ -7,15 +7,15 @@ import clsx from 'clsx';
 import { produce } from 'immer';
 import { useCallback, useEffect, useMemo, useState, Fragment } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import getSourcesByElementId from '@plitzi/sdk-elements/dataSource/getSourcesByElementId';
 import { generateID } from '@plitzi/sdk-shared/helpers/utils';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { StyleBindingsAllowed } from '@plitzi/sdk-shared/style/styleConstants';
 
 import BindingSelected from './BindingSelected';
 import BindingForm from './models/BindingForm';
 
-import type { Element, ElementBinding, BindingCategory, BuilderState } from '@plitzi/sdk-shared';
+import type { Element, ElementBinding, BindingCategory } from '@plitzi/sdk-shared';
 
 const bindingCategories: BindingCategory[] = ['attributes', 'style', 'initialState'];
 
@@ -27,8 +27,7 @@ export type DataSourceBindingProps = {
 };
 
 const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceBindingProps) => {
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[flat, sourcesDefinition]] = useStore(['schema.flat', 'sources']);
+  const [[flat, sourcesDefinition]] = useBuilderStore(['schema.flat', 'sources']);
   const { attributes, definition } = element;
   const [bindingFormValues, setBindingFormValues] = useState<Record<keyof typeof attributes, ElementBinding | null>>(
     () => Object.keys(attributes).reduce((acum, key) => ({ ...acum, [key]: null }), {})

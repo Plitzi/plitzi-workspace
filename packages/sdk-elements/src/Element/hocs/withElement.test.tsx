@@ -2,12 +2,13 @@ import { render } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
-import { ElementStoreProvider } from '@plitzi/sdk-shared/elements/ElementStore';
-import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 
+import { ElementStoreProvider } from '../ElementStore';
 import withElement from './withElement';
+import useElement from '../hooks/useElement';
 
-import type { Element, ElementContextValue } from '@plitzi/sdk-shared';
+import type { ElementContextValue } from '../ElementStore';
+import type { Element } from '@plitzi/sdk-shared';
 import type { ReactElement, ReactNode } from 'react';
 
 const setElementState = vi.fn();

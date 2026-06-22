@@ -4,20 +4,21 @@ import { useCallback } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 
 // This one it is important due that there its a circular import, so we need to import ComponentProvider in a specific order
-// eslint-disable-next-line import/order
-import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
+
 import sdkComponents from '@modules/Element';
 import Sdk from '@modules/Sdk';
+import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
+import useElement from '@plitzi/sdk-elements/Element/hooks/useElement';
 import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
+import { PlitziServiceProvider } from '@plitzi/sdk-elements/Element/PlitziServiceProvider';
 import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
 import PluginRemote from '@plitzi/sdk-elements/Element/PluginRemote';
 import ReplicaProvider from '@plitzi/sdk-elements/Element/ReplicaProvider';
 import RootElement from '@plitzi/sdk-elements/Element/RootElement';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import { disableReactDevTools } from '@plitzi/sdk-shared/helpers/security';
-import baseUsePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import baseUsePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import useRscData from '@plitzi/sdk-shared/server/hooks/useRscData';
 
 import App from './App';
@@ -28,6 +29,7 @@ if (import.meta.env.PROD) {
   void import('./assets/plitzi-sdk-devtools.scss');
 }
 
+import type { ElementContextValue } from '@plitzi/sdk-elements/Element/ElementStore';
 import type EventBridge from '@plitzi/sdk-event-bridge';
 import type InteractionsManager from '@plitzi/sdk-interactions/InteractionsManager';
 import type {
@@ -46,7 +48,6 @@ import type {
   RuntimeStateInstance,
   PlitziServiceContextValue as BasePlitziServiceContextValue
 } from '@plitzi/sdk-shared';
-import type { ElementContextValue } from '@plitzi/sdk-shared/elements/ElementStore';
 import type { ReactNode } from 'react';
 
 let stateManager: RuntimeStateInstance;

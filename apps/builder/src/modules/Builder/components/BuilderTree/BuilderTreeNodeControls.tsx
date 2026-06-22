@@ -5,14 +5,13 @@ import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import clsx from 'clsx';
 import { use, useCallback, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import getBindingsDetails from '@plitzi/sdk-elements/dataSource/getBindingsDetails';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import BuilderElementTools from '../BuilderElementTools';
 
-import type { BuilderState } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 export type BuilderTreeNodeControlsProps = {
@@ -22,13 +21,12 @@ export type BuilderTreeNodeControlsProps = {
 };
 
 const BuilderTreeNodeControls = ({ id, hovered, selected }: BuilderTreeNodeControlsProps) => {
-  const { useStore } = createStoreHook<BuilderState>();
-  const [element = undefined] = useStore(`schema.flat.${id}`);
+  const [element = undefined] = useBuilderStore(`schema.flat.${id}`);
   const { existsPopup, addPopup } = usePopup();
   const { showDialog } = useModal();
   const { builderHandler, builderElementPermissions, builderSetElementVisibility } = use(BuilderContext);
 
-  const [dataSource = emptyObject] = useStore('runtime.sources');
+  const [dataSource = emptyObject] = useBuilderStore('runtime.sources');
   const { canDelete } = useMemo(() => {
     if (!element) {
       return { canDelete: false };

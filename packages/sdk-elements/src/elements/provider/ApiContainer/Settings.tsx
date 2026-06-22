@@ -7,14 +7,13 @@ import Select from '@plitzi/plitzi-ui/Select';
 import Switch from '@plitzi/plitzi-ui/Switch';
 import { useCallback, use, useMemo, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { BuilderState } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
 
 type SettingsProps = {
@@ -41,8 +40,7 @@ const Settings = ({
   onUpdate
 }: SettingsProps) => {
   const { theme } = use(ThemeContext);
-  const { useStore } = createStoreHook<BuilderState>();
-  const [pageDefinitions] = useStore('pageDefinitions');
+  const [pageDefinitions] = useBuilderStore('pageDefinitions');
   const [advancedSettings, setAdvancedSettings] = useState(false);
   const { routeParams, queryParams, currentPageId } = use(NavigationContext);
 

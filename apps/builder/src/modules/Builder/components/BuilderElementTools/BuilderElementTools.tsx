@@ -4,9 +4,9 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import clsx from 'clsx';
 import { use, useMemo, useCallback, useRef } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import StyleInspector from '@plitzi/sdk-style/components/StyleInspector';
 import DataSourceBinding from '@pmodules/DataSource/DataSourceBinding';
 import Interactions from '@pmodules/Interactions/Interactions';
@@ -16,7 +16,7 @@ import ElementDefinitionSettings from './ElementDefinitionSettings';
 import ElementSettings from './ElementSettings';
 import ToolsList from '../ToolsList';
 
-import type { Element, BuilderState } from '@plitzi/sdk-shared';
+import type { Element } from '@plitzi/sdk-shared';
 
 export type BuilderElementToolsProps = {
   initialTab?: string;
@@ -25,10 +25,9 @@ export type BuilderElementToolsProps = {
 const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps) => {
   const [selected, setSelected] = useStorage('builder-state.elementTools.tabSelected', initialTab);
   const { builderHandler } = use(BuilderContext);
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[selector, elementSelected], setSelector] = useStore(['selector', 'elementSelected']);
-  const [displayMode] = useStore('displayMode');
-  const [[selectors = undefined, element = undefined]] = useStore([
+  const [[selector, elementSelected], setSelector] = useBuilderStore(['selector', 'elementSelected']);
+  const [displayMode] = useBuilderStore('displayMode');
+  const [[selectors = undefined, element = undefined]] = useBuilderStore([
     `style.platform.${displayMode}`,
     `schema.flat.${elementSelected}`
   ]);

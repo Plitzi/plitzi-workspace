@@ -1,8 +1,8 @@
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import { processTwig, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import useElementDataSource from './useElementDataSource';
 import useElementState from './useElementState';
@@ -11,7 +11,7 @@ import getBindingsDetails from '../../dataSource/getBindingsDetails';
 import parseStyleSelectors from '../helpers/parseStyleSelectors';
 
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { CommonState, Element, InternalPropsSTG1 } from '@plitzi/sdk-shared';
+import type { Element, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export const getProps = (
@@ -89,9 +89,8 @@ const useElementInternal = ({
   previewMode = false,
   baseElementId
 }: UseElementInternalProps) => {
-  const { useStore } = createStoreHook<CommonState>();
   const { id } = internalProps;
-  const [element] = useStore(`schema.flat.${id}`);
+  const [element] = useCommonStore(`schema.flat.${id}`);
   if (!(element as Element | undefined)) {
     throw new Error(`Element ${id} not found, Page ${baseElementId}`);
   }

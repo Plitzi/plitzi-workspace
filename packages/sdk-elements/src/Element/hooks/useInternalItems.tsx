@@ -1,14 +1,14 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { isValidElement, use, useMemo, useRef, useSyncExternalStore } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import { usePlitziServiceContext } from '@plitzi/sdk-shared';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import pluginSelector from '../helpers/pluginSelector';
 import ServerStaticShell from '../ServerStaticShell';
 
-import type { Element, ElementLayout, CommonState } from '@plitzi/sdk-shared';
+import type { Element, ElementLayout } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 const isServer = typeof window === 'undefined';
@@ -30,8 +30,7 @@ const useInternalItems = ({
   children: ReactNode | ReactNode[];
   previewMode?: boolean;
 }) => {
-  const { useStore } = createStoreHook<CommonState>();
-  const [[flat, rscEnabled]] = useStore(['schema.flat', 'schema.rsc.enabled'], { mode: 'mount' });
+  const [[flat, rscEnabled]] = useCommonStore(['schema.flat', 'schema.rsc.enabled'], { mode: 'mount' });
   const { components } = use(ComponentContext);
   const {
     contexts: { PluginsContext }

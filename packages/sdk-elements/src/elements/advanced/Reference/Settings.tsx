@@ -2,11 +2,11 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import { useCallback, use, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
-import type { CommonState, Element, Schema, Segment, SegmentsContextValue } from '@plitzi/sdk-shared';
+import type { Element, Schema, Segment, SegmentsContextValue } from '@plitzi/sdk-shared';
 
 type SettingsProps = {
   referenceType?: 'element' | 'segment' | '';
@@ -24,8 +24,7 @@ const Settings = ({
   const {
     contexts: { SegmentsContext }
   } = usePlitziServiceContext();
-  const { useStore } = createStoreHook<CommonState>();
-  const [[schema, segments]] = useStore(['schema', 'segments']);
+  const [[schema, segments]] = useCommonStore(['schema', 'segments']);
   const { segmentGet, segmentsFetch } = use(SegmentsContext) as SegmentsContextValue<'builder'>;
 
   const handleChangeReferenceType = useCallback(

@@ -6,11 +6,11 @@ import { useCallback, useMemo, useState, use } from 'react';
 
 import StoreProvider from '@plitzi/nexus/StoreProvider';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
-import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';

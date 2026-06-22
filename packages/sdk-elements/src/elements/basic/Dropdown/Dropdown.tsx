@@ -2,12 +2,12 @@
 import clsx from 'clsx';
 import { useCallback, useMemo, useRef } from 'react';
 
-import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import DropdownContext from './DropdownContext';
 import useDropdown from './useDropdown';
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { MouseEvent, ReactNode, RefObject } from 'react';

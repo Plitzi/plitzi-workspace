@@ -1,9 +1,9 @@
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 import { memo, useMemo } from 'react';
 
+import { PlitziServiceProvider } from '@plitzi/sdk-elements/Element/PlitziServiceProvider';
 import { Page } from '@plitzi/sdk-elements/elements';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import SpaceContainer from '../../Space/SpaceContainer';
 import MadeInPlitzi from '../components/MadeInPlitzi';

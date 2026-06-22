@@ -5,20 +5,14 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { use, useCallback, useMemo, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import SchemaVariables from '@plitzi/sdk-variables/components/SchemaVariables';
 import StyleVariables from '@plitzi/sdk-variables/components/StyleVariables';
 
-import type {
-  BuilderState,
-  SchemaVariable,
-  StyleVariableCategory,
-  StyleVariableGroup,
-  StyleVariableValue
-} from '@plitzi/sdk-shared';
+import type { SchemaVariable, StyleVariableCategory, StyleVariableGroup, StyleVariableValue } from '@plitzi/sdk-shared';
 
 const Variables = () => {
   const { showDialog } = useModal();
@@ -31,8 +25,7 @@ const Variables = () => {
     () => ({ routeParams, queryParams, hostname, environment }),
     [routeParams, queryParams, hostname, environment]
   );
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[schemaVariables, styleVariables]] = useStore(['schema.variables', 'style.variables']);
+  const [[schemaVariables, styleVariables]] = useBuilderStore(['schema.variables', 'style.variables']);
 
   const variablesFiltered = useMemo(
     () =>

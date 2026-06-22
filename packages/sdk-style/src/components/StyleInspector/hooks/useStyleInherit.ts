@@ -1,11 +1,11 @@
 import { use, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import calculateInheriting from '../../../helpers/calculateInheriting';
 
-import type { BuilderState, Element, StyleState } from '@plitzi/sdk-shared';
+import type { Element, StyleState } from '@plitzi/sdk-shared';
 
 export type UseStyleInheritProps = {
   element?: Element;
@@ -26,8 +26,7 @@ const useStyleInherit = ({
   styleState,
   styleVariant
 }: UseStyleInheritProps) => {
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[flat, platform]] = useStore(['schema.flat', 'style.platform']);
+  const [[flat, platform]] = useBuilderStore(['schema.flat', 'style.platform']);
   const { componentDefinitions } = use(ComponentContext);
   const inheritData = useMemo(() => {
     const selectorsToSkip: string[] = [];

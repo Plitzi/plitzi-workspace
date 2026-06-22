@@ -4,22 +4,20 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Input from '@plitzi/plitzi-ui/Input';
 import { useCallback, use, useEffect, useState, useTransition, useRef } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import Chat from './components/Chat';
 import VoiceVisualizer from './components/VoiceVisualizer';
 import useMediaRecorder from './hooks/useMediaRecorder';
 
 import type { OpenAIMessage } from './types/openAI';
-import type { BuilderState } from '@plitzi/sdk-shared';
 import type { KeyboardEvent } from 'react';
 
 const OpenAIChat = () => {
-  const { useStore } = createStoreHook<BuilderState>();
-  const [elementSelected] = useStore('elementSelected');
+  const [elementSelected] = useBuilderStore('elementSelected');
   const chatRef = useRef<HTMLDivElement | null>(null);
   const { server, webKey } = use(NetworkContext);
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });

@@ -4,11 +4,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { createEntityStore } from '@plitzi/nexus/entities';
 import StoreProvider from '@plitzi/nexus/StoreProvider';
-import { ElementStoreContext } from '@plitzi/sdk-shared/elements/ElementStore';
 
+import { ElementStoreContext } from './ElementStore';
 import RootElement from './RootElement';
 
-import type { ElementContextValue, ElementStoreEntry } from '@plitzi/sdk-shared';
+import type { ElementContextValue, ElementStoreEntry } from './ElementStore';
 import type { ReactNode } from 'react';
 
 type ServiceContext = {

@@ -3,24 +3,23 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import Tree from '@plitzi/plitzi-ui/Tree';
 import { useCallback, use, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
 import { processPaste } from '@pmodules/Builder/BuilderHelper';
 
 import BuilderTreeNodeControls from './BuilderTreeNodeControls';
 import { recursiveMap } from './utils';
 
 import type { DropPosition, TreeChangeState } from '@plitzi/plitzi-ui/Tree';
-import type { BuilderState, Element } from '@plitzi/sdk-shared';
+import type { Element } from '@plitzi/sdk-shared';
 import type { ClipboardEvent } from 'react';
 
 const BuilderTree = () => {
-  const { useStore, useStoreGetter } = createStoreHook<BuilderState>();
-  const [getSchema, getElement, getStyle] = useStoreGetter(['schema', 'schema.flat', 'style']);
-  const [[flat, elementHovered, setHoverElement, elementSelected, setSelectElement]] = useStore([
+  const [getSchema, getElement, getStyle] = useBuilderStoreGetter(['schema', 'schema.flat', 'style']);
+  const [[flat, elementHovered, setHoverElement, elementSelected, setSelectElement]] = useBuilderStore([
     'schema.flat',
     'elementHovered',
     'setHovered',

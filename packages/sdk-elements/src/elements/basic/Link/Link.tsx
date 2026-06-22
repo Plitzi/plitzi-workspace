@@ -2,16 +2,15 @@
 import clsx from 'clsx';
 import { useMemo, use } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
-import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { CommonState } from '@plitzi/sdk-shared';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 export type LinkProps = {
@@ -31,8 +30,7 @@ const Link = ({ id, ref, children, className = '', href = '#', target = 'self', 
     contexts: { NavigationContext }
   } = usePlitziServiceContext();
   const { navigate, routeParams, queryParams } = use(NavigationContext);
-  const { useStore } = createStoreHook<CommonState>();
-  const [[pageDefinitions, pageFolders]] = useStore(['pageDefinitions', 'schema.pageFolders']);
+  const [[pageDefinitions, pageFolders]] = useCommonStore(['pageDefinitions', 'schema.pageFolders']);
 
   const url = useMemo(() => {
     if (mode === 'external') {

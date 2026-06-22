@@ -6,15 +6,13 @@ import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, use, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
-import type { BuilderState } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
 
 const ContainerSettings = () => {
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[settingsProp, styleMode]] = useStore(['schema.settings', 'style.mode']);
+  const [[settingsProp, styleMode]] = useBuilderStore(['schema.settings', 'style.mode']);
   const { eventBridge } = use(EventBridgeContext);
 
   const [settings, setSettings] = useState(settingsProp);

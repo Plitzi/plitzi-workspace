@@ -4,9 +4,9 @@ import { bench, vi, afterEach } from 'vitest';
 
 import StoreProvider from '@plitzi/nexus/StoreProvider';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { ElementStoreProvider } from '@plitzi/sdk-shared/elements/ElementStore';
 import { PlitziServiceContext } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
+import { ElementStoreProvider } from './ElementStore';
 import Text from '../elements/basic/Text/Text';
 import Container from '../elements/structure/Container/Container';
 

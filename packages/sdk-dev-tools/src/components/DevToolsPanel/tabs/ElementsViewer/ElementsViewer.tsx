@@ -1,13 +1,13 @@
 import clsx from 'clsx';
 import { useMemo, use, useCallback } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import ElementDetails from './ElementDetails';
 import ElementsList from './ElementsList';
 
-import type { CommonState, Element } from '@plitzi/sdk-shared';
+import type { Element } from '@plitzi/sdk-shared';
 
 export type ElementsViewerProps = {
   className?: string;
@@ -17,8 +17,7 @@ export type ElementsViewerProps = {
 
 const ElementsViewer = ({ className, elementSelected, onSelectElement }: ElementsViewerProps) => {
   const { currentPageId } = use(NavigationContext);
-  const { useStore } = createStoreHook<CommonState>();
-  const [flat] = useStore('schema.flat');
+  const [flat] = useCommonStore('schema.flat');
   const elements = useMemo<Element[]>(
     () => Object.values(flat).filter(element => element.definition.rootId === currentPageId),
     [flat, currentPageId]

@@ -4,7 +4,6 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { produce } from 'immer';
 import { useCallback, use, useMemo, useState, useEffect } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { EventBridgeTypesPerModule } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
@@ -13,6 +12,7 @@ import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { isInViewport } from '@plitzi/sdk-shared/helpers/utils';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { useBuilderStore, useBuilderStoreGetter, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 import { RTEvent } from '@plitzi/sdk-shared/websockets/RTCodec';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 import { getInitialItems } from '@pmodules/Elements/ElementHelper';
@@ -30,8 +30,7 @@ import type {
   BuilderNetworkContextValue,
   StyleThemeMode,
   BuilderQueriesMap,
-  BuilderMutationsMap,
-  BuilderState
+  BuilderMutationsMap
 } from '@plitzi/sdk-shared';
 
 export type BuilderProviderProps = {
@@ -59,13 +58,12 @@ const BuilderProvider = ({
   const [theme, setTheme] = useStorage<StyleThemeMode>('builder-state.theme-builder', 'light', 'localStorage');
   const { baseElementId } = baseContext;
   const [multiPagesMode, setMultiPagesMode] = useState(false);
-  const { useStore, useStoreSync, useStoreGetter } = createStoreHook<BuilderState>();
-  const [[pages, elementHovered, elementSelected], , setElementHovered, setElementSelected] = useStore([
+  const [[pages, elementHovered, elementSelected], , setElementHovered, setElementSelected] = useBuilderStore([
     'schema.pages',
     'elementHovered',
     'elementSelected'
   ]);
-  const [getElement, getElementSelected] = useStoreGetter(['schema.flat', 'elementSelected']);
+  const [getElement, getElementSelected] = useBuilderStoreGetter(['schema.flat', 'elementSelected']);
 
   // Builder Methods
 
@@ -491,7 +489,7 @@ const BuilderProvider = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseElementId, mode]);
 
-  useStoreSync(
+  useBuilderStoreSync(
     ['elementHovered', 'setHovered', 'elementSelected', 'setSelected'],
     [elementHovered, () => setHovered, elementSelected, () => setSelected]
   );

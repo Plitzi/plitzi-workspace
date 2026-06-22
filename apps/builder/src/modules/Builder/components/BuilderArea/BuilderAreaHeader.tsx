@@ -9,15 +9,15 @@ import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import Transform from '@pmodules/Transformers/Transform';
 
 import BuilderElementTools from '../BuilderElementTools';
 
-import type { BuilderState, Element } from '@plitzi/sdk-shared';
+import type { Element } from '@plitzi/sdk-shared';
 
 export type BuilderAreaHeaderProps = {
   baseElementId: string;
@@ -34,8 +34,7 @@ const BuilderAreaHeader = ({
   headerTitle = '',
   previewMode = false
 }: BuilderAreaHeaderProps) => {
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[pageFolders, definition, pageDefinitions, elementSelected, setSelected]] = useStore([
+  const [[pageFolders, definition, pageDefinitions, elementSelected, setSelected]] = useBuilderStore([
     'schema.pageFolders',
     'schema.definition',
     'pageDefinitions',

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 
 import { createEntityStore } from '@plitzi/nexus/entities';
-import { ElementStoreContext } from '@plitzi/sdk-shared/elements/ElementStore';
 
-import type { ElementStoreEntry } from '@plitzi/sdk-shared/elements/ElementStore';
+import { ElementStoreContext } from '../Element/ElementStore';
+
+import type { ElementStoreEntry } from '../Element/ElementStore';
 import type { ReactNode } from 'react';
 
 // Test helper: builds a resolved element entry with sensible defaults so a component rendered with a mocked
