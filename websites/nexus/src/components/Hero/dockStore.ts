@@ -1,4 +1,5 @@
-import { createStore, createStoreHook, persistMiddleware } from '@plitzi/nexus';
+import { createStore, persistMiddleware } from '@plitzi/nexus';
+import { createStoreHook } from '@plitzi/nexus/react';
 
 // The log dock's open/width preferences, persisted with `persistMiddleware` — so a refresh keeps your panel exactly
 // as you left it. Another Nexus capability, used for real.

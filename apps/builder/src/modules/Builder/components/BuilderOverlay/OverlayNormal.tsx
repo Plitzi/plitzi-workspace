@@ -4,7 +4,7 @@ import clsx from 'clsx';
 import { produce } from 'immer';
 import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
 

@@ -6,7 +6,7 @@ import { clsx } from 'clsx';
 import { produce } from 'immer';
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 
 import Selector from '../Selector';

@@ -15,14 +15,14 @@ export type NavLink = {
   href: string;
 };
 
+// Kept deliberately short so the bar never overflows: the most load-bearing sections only. Every section is still
+// reachable by scrolling; this is just the quick-jump set.
 export const NAV_LINKS: NavLink[] = [
   { label: 'Core API', href: '#core-api' },
-  { label: 'Mental model', href: '#mental-model' },
   { label: 'Live Demo', href: '#demo' },
-  { label: 'Use cases', href: '#use-cases' },
   { label: 'Features', href: '#features' },
-  { label: 'Benchmarks', href: '#benchmarks' },
-  { label: 'Ecosystem', href: '#ecosystem' }
+  { label: 'Frameworks', href: '#frameworks' },
+  { label: 'Benchmarks', href: '#benchmarks' }
 ];
 
 // Task-oriented decision band: "I want to… → reach for X". Each links to the matching axis of the
@@ -208,7 +208,7 @@ const unsub = store.subscribePath('count', () => render());`
     id: 'hook',
     label: 'createStoreHook',
     category: 'basic',
-    code: `import { createStoreHook } from '@plitzi/nexus';
+    code: `import { createStoreHook } from '@plitzi/nexus/react';
 
 // Bind your state type ONCE at module level — every hook is
 // fully typed without repeating the generic at each call site.
@@ -222,7 +222,7 @@ const [name, setName] = useStore('user.name'); // typed as string`
     id: 'provider',
     label: 'StoreProvider',
     category: 'basic',
-    code: `import { StoreProvider } from '@plitzi/nexus';
+    code: `import { StoreProvider } from '@plitzi/nexus/react';
 
 // Wrap your tree — creates a store from the initial value.
 <StoreProvider value={{ count: 0, user: { name: 'Alice' } }}>
@@ -345,7 +345,7 @@ function Toolbar() {
     id: 'scoped',
     label: 'Scoped stores',
     category: 'advanced',
-    code: `import { StoreProvider } from '@plitzi/nexus';
+    code: `import { StoreProvider } from '@plitzi/nexus/react';
 
 // inherit="live" — a live link to the parent. Reads fall
 // through, parent updates propagate, writes delegate up to
@@ -376,7 +376,7 @@ item.setState('record', next);        // stays local
     id: 'byid',
     label: 'Stores by id',
     category: 'advanced',
-    code: `import { StoreProvider, createStoreHook, useStoreById } from '@plitzi/nexus';
+    code: `import { StoreProvider, createStoreHook, useStoreById } from '@plitzi/nexus/react';
 
 const { useStore, useStoreGetter, useStoreSetter } = createStoreHook<State>();
 
@@ -413,7 +413,8 @@ function Leaf() {
     id: 'history',
     label: 'Time-travel',
     category: 'advanced',
-    code: `import { historyMiddleware, useStoreHistory } from '@plitzi/nexus';
+    code: `import { historyMiddleware } from '@plitzi/nexus';
+import { useStoreHistory } from '@plitzi/nexus/react';
 
 // Add the middleware once; useStoreHistory reads what it records.
 const store = createStore<State>(initial, { middlewares: [historyMiddleware()] });
@@ -439,7 +440,8 @@ function HistoryPanel() {
     id: 'derived',
     label: 'Derived',
     category: 'advanced',
-    code: `import { createDerived, useDerived } from '@plitzi/nexus';
+    code: `import { createDerived } from '@plitzi/nexus';
+import { useDerived } from '@plitzi/nexus/react';
 
 // What it's for: compute a value FROM the store once, memoized.
 // It recomputes only when a dependency path changes, and only
@@ -557,7 +559,8 @@ store.batch(() => {
     id: 'async',
     label: 'Async',
     category: 'advanced',
-    code: `import { createAsync, useAsync, useAsyncValue } from '@plitzi/nexus';
+    code: `import { createAsync } from '@plitzi/nexus';
+import { useAsync, useAsyncValue } from '@plitzi/nexus/react';
 
 type State = { user: User | null };
 
@@ -603,7 +606,7 @@ function ProfileName() {
     label: 'RSC snapshot',
     category: 'advanced',
     code: `import { createServerSnapshot, isServerSnapshot } from '@plitzi/nexus/rsc';
-import { StoreProvider } from '@plitzi/nexus';
+import { StoreProvider } from '@plitzi/nexus/react';
 
 // In a Server Component — mark the data so the client knows
 // where it came from:
@@ -629,7 +632,7 @@ JSON.stringify(snapshot);   // '{"user":{"name":"Alice"},"count":42}'
     category: 'advanced',
     code: `// app/page.tsx — Server Component
 import { createServerSnapshot } from '@plitzi/nexus/rsc';
-import { StoreProvider } from '@plitzi/nexus';
+import { StoreProvider } from '@plitzi/nexus/react';
 import { Dashboard } from './Dashboard';
 
 export default async function Page() {
@@ -647,7 +650,7 @@ export default async function Page() {
 
 // app/Dashboard.tsx — Client Component
 'use client';
-import { useStore } from '@plitzi/nexus';
+import { useStore } from '@plitzi/nexus/react';
 
 export function Dashboard() {
   const [user] = useStore('user');
@@ -715,6 +718,68 @@ export const COMPARISON_ROWS: ComparisonRow[] = [
   { feature: 'SSR-ready', values: ['yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes'] }
 ];
 
+// Supported frameworks band. The root `@plitzi/nexus` is the agnostic core; each framework binds to it through its
+// own entry (or, where there is no dedicated binding yet, the core's `subscribe` / `getState` directly).
+export type Framework = {
+  icon: string;
+  name: string;
+  entry: string;
+  status: 'Core' | 'Stable' | 'Via core';
+  blurb: string;
+  doc: string;
+};
+
+export const FRAMEWORKS: Framework[] = [
+  {
+    icon: '📦',
+    name: 'Core (any framework)',
+    entry: '@plitzi/nexus',
+    status: 'Core',
+    blurb: 'The agnostic store: createStore + imperative get/set/watch, middlewares, entities. Zero UI dependency.',
+    doc: '#/docs/getting-started?fw=core'
+  },
+  {
+    icon: '⚛️',
+    name: 'React',
+    entry: '@plitzi/nexus/react',
+    status: 'Stable',
+    blurb: 'StoreProvider + createStoreHook, path-scoped useStore, useStoreHistory, useEntity. React 18 & 19.',
+    doc: '#/docs/getting-started?fw=react'
+  },
+  {
+    icon: '🟢',
+    name: 'Vue 3',
+    entry: '@plitzi/nexus/vue',
+    status: 'Stable',
+    blurb: 'provide/inject + composables returning refs: useStore (writable, v-model), useStoreValue, useEntity.',
+    doc: '#/docs/getting-started?fw=vue'
+  },
+  {
+    icon: '▲',
+    name: 'Next.js',
+    entry: '@plitzi/nexus/next',
+    status: 'Stable',
+    blurb: 'App Router: createServerSnapshot for RSC → client handoff, bindServerAction for optimistic Server Actions.',
+    doc: '#/docs/getting-started?fw=next'
+  },
+  {
+    icon: '🚀',
+    name: 'Astro',
+    entry: '@plitzi/nexus/react',
+    status: 'Stable',
+    blurb: 'Islands (6 LTS & 7): Provider inside one island, or a module singleton shared across islands.',
+    doc: '#/docs/getting-started?fw=astro'
+  },
+  {
+    icon: '🔥',
+    name: 'Svelte',
+    entry: '@plitzi/nexus',
+    status: 'Via core',
+    blurb: "Adapt the core to Svelte's store contract ({ subscribe }) in a few lines — no React pulled in.",
+    doc: '#/docs/getting-started?fw=svelte'
+  }
+];
+
 export type EcosystemPackage = {
   name: string;
   tagline: string;
@@ -726,7 +791,7 @@ export const ECOSYSTEM: EcosystemPackage[] = [
   {
     name: '@plitzi/nexus',
     tagline: 'The state core',
-    description: 'The type-safe React store you are reading about — the foundation the rest of the SDK builds on.',
+    description: 'The framework-agnostic state core you are reading about — agnostic root, with first-class @plitzi/nexus/react and @plitzi/nexus/vue bindings. The foundation the rest of the SDK builds on.',
     href: STORE_DIR_URL
   },
   {

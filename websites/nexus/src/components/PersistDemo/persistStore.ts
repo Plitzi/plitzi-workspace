@@ -1,4 +1,5 @@
-import { createStore, createStoreHook, persistMiddleware } from '@plitzi/nexus';
+import { createStore, persistMiddleware } from '@plitzi/nexus';
+import { createStoreHook } from '@plitzi/nexus/react';
 
 export type PersistState = { clicks: number; note: string };
 

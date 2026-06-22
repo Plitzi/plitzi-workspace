@@ -1,0 +1,19 @@
+---
+// Astro 7 page. Note the two independent islands `SharedCounter`: each is its own React root, yet both stay in sync
+// because they read the same module singleton (`appStore`). `ProviderCounter` is an isolated island with local state.
+import SharedCounter from '../components/SharedCounter.tsx';
+import ProviderCounter from '../components/ProviderCounter.tsx';
+---
+
+<html lang="en">
+  <body>
+    <h1>Nexus + Astro 7</h1>
+
+    <h2>Cross-island (shared singleton)</h2>
+    <SharedCounter label="Island A" client:load />
+    <SharedCounter label="Island B" client:visible />
+
+    <h2>Isolated island (Provider)</h2>
+    <ProviderCounter client:idle />
+  </body>
+</html>

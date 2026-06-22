@@ -1,4 +1,5 @@
-import { StoreProvider, historyMiddleware, loggerMiddleware } from '@plitzi/nexus';
+import { historyMiddleware, loggerMiddleware } from '@plitzi/nexus';
+import { StoreProvider } from '@plitzi/nexus/react';
 import { useState } from 'react';
 
 import { arcadePersist } from './arcadePersist';

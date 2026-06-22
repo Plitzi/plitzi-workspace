@@ -1,7 +1,7 @@
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import { processTwig, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import useElementDataSource from './useElementDataSource';

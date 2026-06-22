@@ -2,7 +2,7 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { PopupProvider } from '@plitzi/plitzi-ui/Popup';
 import { useState, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';

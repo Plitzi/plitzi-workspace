@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { useEntityOne } from '@plitzi/nexus/react';
 
 import { tasksStore } from '../../entitiesStore';
 
@@ -7,7 +8,7 @@ type TaskRowProps = { id: string };
 // Subscribes to a single task via `useOne(id)`, so toggling another row never re-renders this one. The render badge
 // makes that visible: only the row you touch ticks up.
 const TaskRow = ({ id }: TaskRowProps) => {
-  const task = tasksStore.useOne(id);
+  const task = useEntityOne(tasksStore, id);
   const renders = useRef(0);
   renders.current++;
 

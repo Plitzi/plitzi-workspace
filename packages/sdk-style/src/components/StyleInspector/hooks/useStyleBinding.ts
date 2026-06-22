@@ -1,7 +1,7 @@
 import { get, set } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import type { CommonState, Element, StyleCategory, StyleValue } from '@plitzi/sdk-shared';

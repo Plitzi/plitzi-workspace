@@ -1,4 +1,4 @@
-import { useAsyncValue } from '@plitzi/nexus';
+import { useAsyncValue } from '@plitzi/nexus/react';
 
 import type { Quote } from '../../asyncStore';
 import type { AsyncResource } from '@plitzi/nexus';

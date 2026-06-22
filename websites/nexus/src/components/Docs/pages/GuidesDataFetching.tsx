@@ -15,7 +15,8 @@ const GuidesDataFetching = () => (
       creation; otherwise call <code>resource.run(args)</code> manually.
     </p>
     <CodeBlock
-      code={`import { createAsync, useAsync } from '@plitzi/nexus';
+      code={`import { createAsync } from '@plitzi/nexus';
+import { useAsync } from '@plitzi/nexus/react';
 
 type State = { user: User | null };
 const store = createStore<State>({ user: null });
@@ -38,7 +39,7 @@ function Profile() {
 }
 
 // Or suspend — same hook, different semantics:
-import { useAsyncValue } from '@plitzi/nexus';
+import { useAsyncValue } from '@plitzi/nexus/react';
 
 function ProfileName() {
   const user = useAsyncValue(userResource);  // throws while pending

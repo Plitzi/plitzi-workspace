@@ -1,4 +1,5 @@
-export const PERSIST_CODE = `import { createStore, createStoreHook, persistMiddleware } from '@plitzi/nexus';
+export const PERSIST_CODE = `import { createStore, persistMiddleware } from '@plitzi/nexus';
+import { createStoreHook } from '@plitzi/nexus/react';
 
 type State = { clicks: number; note: string };
 

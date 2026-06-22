@@ -2,8 +2,8 @@ import ContainerAutoScale from '@plitzi/plitzi-ui/ContainerAutoScale';
 import { useMemo } from 'react';
 
 import { loggerMiddleware as loggerMw } from '@plitzi/nexus';
-import { createStoreHook } from '@plitzi/nexus/createStore';
-import StoreProvider from '@plitzi/nexus/StoreProvider';
+import { createStoreHook } from '@plitzi/nexus/react';
+import { StoreProvider } from '@plitzi/nexus/react';
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
 

@@ -4,7 +4,7 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import clsx from 'clsx';
 import { use, useMemo, useCallback, useRef } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import StyleInspector from '@plitzi/sdk-style/components/StyleInspector';

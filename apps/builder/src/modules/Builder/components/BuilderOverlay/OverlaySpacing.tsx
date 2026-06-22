@@ -2,7 +2,7 @@
 
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 
 import type { BuilderState, EventBridgeEvent } from '@plitzi/sdk-shared';

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 
 import type { CommonState, ElementBinding } from '@plitzi/sdk-shared';
 

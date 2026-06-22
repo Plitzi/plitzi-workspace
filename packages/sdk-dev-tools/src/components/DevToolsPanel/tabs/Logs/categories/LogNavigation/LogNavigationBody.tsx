@@ -1,7 +1,7 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import { formatDate } from '@plitzi/sdk-shared/helpers';
 
 import type { CommonState } from '@plitzi/sdk-shared';

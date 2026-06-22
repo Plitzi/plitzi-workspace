@@ -2,8 +2,8 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { StrictMode } from 'react';
 import { describe, it, expect } from 'vitest';
 
-import { createStoreHook } from './createStore';
-import StoreProvider from './StoreProvider';
+import { createStoreHook } from './react';
+import StoreProvider from './react/StoreProvider';
 
 // Regression: a live scope must keep receiving parent updates after React StrictMode's mount → unmount → remount
 // cycle. StrictMode reuses the same store instance, so the provider's unmount `destroy()` detaches the parent

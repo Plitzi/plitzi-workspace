@@ -1,7 +1,7 @@
 import Flex from '@plitzi/plitzi-ui/Flex';
 import { use, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 
 import Directory from './Directory';

@@ -22,11 +22,9 @@ export default defineConfig({
     alias: usePublished
       ? []
       : [
-          {
-            find: /^@plitzi\/nexus\/createStore\/hooks\/useStore$/,
-            replacement: `${storeSrc}/createStore/hooks/useStore.ts`
-          },
-          { find: /^@plitzi\/nexus\/history$/, replacement: `${storeSrc}/history/index.ts` },
+          // Subpaths (`/react`, `/vue`, `/next`, `/rsc`, deep module paths) map straight into the source tree; the
+          // exact root maps to the agnostic core entry. Prefix rule must come before the exact-root rule.
+          { find: /^@plitzi\/nexus\/(.*)$/, replacement: `${storeSrc}/$1` },
           { find: /^@plitzi\/nexus$/, replacement: `${storeSrc}/index.ts` }
         ]
   },

@@ -1,5 +1,3 @@
-import { useCallback, useSyncExternalStore } from 'react';
-
 import Subscribers from '../createStore/helpers/Subscribers';
 
 import type { EntityId } from './createEntityAdapter';
@@ -22,8 +20,8 @@ export type EntityStoreOptions<T> = {
 // so a consumer holding an old entity reference stays valid, while the live `Map` is never handed out — reads return
 // cached snapshot arrays that stay referentially stable between changes for `useSyncExternalStore`.
 //
-// The React hooks (`useOne`/`useIds`/`useAll`) ride on the store object itself (Zustand-style) so the whole feature is
-// one exported symbol.
+// This is the framework-agnostic primitive: it exposes `getOne/getAll/getIds` + `subscribe*` only. React bindings
+// (`useEntity` / `useEntityOne` / `useEntityIds` / `useEntityAll`) live in `@plitzi/nexus/react` and ride on these.
 export type EntityStore<T> = {
   selectId: (entity: T) => EntityId;
 
@@ -56,13 +54,6 @@ export type EntityStore<T> = {
   subscribeIds: (listener: EntityChangeListener) => () => void;
   // Wakes on any change to any entity.
   subscribeAll: (listener: EntityChangeListener) => () => void;
-
-  // Subscribes to a single entity by id; re-renders only when that entity changes, never for a sibling.
-  useOne: (id: EntityId) => T | undefined;
-  // Subscribes to the set of ids; re-renders only on add/remove, not on a value change.
-  useIds: () => string[];
-  // Subscribes to the whole collection; re-renders on any change. Prefer `useIds` + per-row `useOne` for large lists.
-  useAll: () => T[];
 
   destroy: () => void;
 };
@@ -277,16 +268,6 @@ export function createEntityStore<T>(
     subscribeOne,
     subscribeIds,
     subscribeAll,
-
-    useOne: (id: EntityId): T | undefined => {
-      const key = String(id);
-      const subscribe = useCallback((listener: () => void) => subscribeOne(key, listener), [key]);
-      const getSnapshot = useCallback(() => entities.get(key), [key]);
-
-      return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-    },
-    useIds: (): string[] => useSyncExternalStore(subscribeIds, getIds, getIds),
-    useAll: (): T[] => useSyncExternalStore(subscribeAll, getAll, getAll),
 
     destroy: () => {
       entities.clear();

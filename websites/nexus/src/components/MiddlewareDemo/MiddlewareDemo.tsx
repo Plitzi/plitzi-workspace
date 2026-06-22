@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import { cascade, historyMiddleware, loggerMiddleware, persistMiddleware, StoreProvider } from '@plitzi/nexus';
+import { cascade, historyMiddleware, loggerMiddleware, persistMiddleware } from '@plitzi/nexus';
+import { StoreProvider } from '@plitzi/nexus/react';
 
 import ExampleCard from '../ExampleCard';
 import CascadeChild from './components/CascadeChild';

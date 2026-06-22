@@ -9,7 +9,7 @@ import PluginsContextProvider from '@modules/Plugins/PluginsContextProvider';
 import SchemaContextProvider from '@modules/Schema/SchemaContextProvider';
 import Sdk from '@modules/Sdk';
 import SegmentsContextProvider from '@modules/Segments/SegmentsContextProvider';
-import { StoreContext } from '@plitzi/nexus/StoreContext';
+import { StoreContext } from '@plitzi/nexus/react';
 import AuthContextProvider from '@plitzi/sdk-auth/AuthContextProvider';
 import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';

@@ -1,4 +1,4 @@
-import { createStoreHook } from '@plitzi/nexus';
+import { createStoreHook } from '@plitzi/nexus/react';
 
 export type BatchState = { firstName: string; lastName: string; age: number; city: string };
 

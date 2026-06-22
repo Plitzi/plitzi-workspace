@@ -1,4 +1,5 @@
-import { CANCEL, createStoreHook } from '@plitzi/nexus';
+import { CANCEL } from '@plitzi/nexus';
+import { createStoreHook } from '@plitzi/nexus/react';
 
 import type { StoreMiddleware } from '@plitzi/nexus';
 

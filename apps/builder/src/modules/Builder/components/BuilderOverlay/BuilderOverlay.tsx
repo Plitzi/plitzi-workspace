@@ -3,7 +3,7 @@
 import { throttle } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useEffect, useRef, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 
 import { processContainer } from './BuilderOverlayHelper';

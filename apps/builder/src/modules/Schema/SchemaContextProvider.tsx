@@ -5,7 +5,7 @@ import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMidd
 import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
 import { useMemo, useCallback, use, useEffect } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';

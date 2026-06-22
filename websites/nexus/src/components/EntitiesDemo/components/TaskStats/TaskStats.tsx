@@ -1,9 +1,10 @@
 import { tasksStore } from '../../entitiesStore';
+import { useEntityAll } from '@plitzi/nexus/react';
 
 // Reads the whole collection via `useAll`, so this footer re-renders on any change (count + remaining). The list rows
 // above stay isolated through `useOne`.
 const TaskStats = () => {
-  const all = tasksStore.useAll();
+  const all = useEntityAll(tasksStore);
   const remaining = all.filter(task => !task.done).length;
 
   return (

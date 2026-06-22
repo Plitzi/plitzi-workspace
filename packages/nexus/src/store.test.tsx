@@ -4,12 +4,13 @@ import { renderHook, act } from '@testing-library/react';
 import { createElement } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import createStore, { createStoreHook } from './createStore';
-import useStore from './createStore/hooks/useStore';
+import createStore from './createStore';
 import getByPath from './helpers/getByPath';
 import setByPath from './helpers/setByPath';
 import { loggerMiddleware } from './middleware/loggerMiddleware';
-import { StoreContext } from './StoreProvider';
+import { createStoreHook } from './react';
+import useStore from './react/hooks/useStore';
+import { StoreContext } from './react/StoreProvider';
 
 import type { PathOf, StoreApi, StoreApiInternal, StoreChange } from './types';
 import type { ReactNode } from 'react';

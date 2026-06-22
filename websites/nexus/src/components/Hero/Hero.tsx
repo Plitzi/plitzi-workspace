@@ -46,9 +46,9 @@ const Hero = () => {
           </h1>
 
           <p className="mt-6 max-w-lg text-lg leading-relaxed text-zinc-300/90">
-            Reach any value by its path — get it, set it, watch it — and re-render only what changed. One model from a
-            vanilla store to React. This whole arcade is <span className="text-white">a single Nexus store</span>: the
-            scoreboard reads it, the logger streams every write.
+            Reach any value by its path — get it, set it, watch it — and re-render only what changed. One agnostic core,
+            first-class bindings for <span className="text-white">React and Vue</span>. This whole arcade is a single
+            Nexus store: the scoreboard reads it, the logger streams every write.
           </p>
 
           <div className="pointer-events-auto mt-9 flex flex-col gap-4 sm:flex-row sm:items-center">

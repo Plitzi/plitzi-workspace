@@ -1,6 +1,6 @@
 import { use } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import InteractionsContextProvider from '@plitzi/sdk-interactions/InteractionsContextProvider';
 import AuthInteractions from '@plitzi/sdk-interactions/sources/AuthSource/AuthInteractions';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';

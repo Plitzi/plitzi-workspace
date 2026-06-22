@@ -3,7 +3,7 @@ import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import { useCallback, useMemo, useState, use } from 'react';
 
 import { loggerMiddleware as loggerMw } from '@plitzi/nexus';
-import StoreProvider from '@plitzi/nexus/StoreProvider';
+import { StoreProvider } from '@plitzi/nexus/react';
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
