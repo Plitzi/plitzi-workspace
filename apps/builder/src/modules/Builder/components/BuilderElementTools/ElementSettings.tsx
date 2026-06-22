@@ -5,7 +5,7 @@ import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
 import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import { defaultElementsSettings } from '@plitzi/sdk-elements/elements/settings';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';

@@ -3,7 +3,7 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
 import { use, useRef, useCallback, useMemo, useEffect, useImperativeHandle } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';

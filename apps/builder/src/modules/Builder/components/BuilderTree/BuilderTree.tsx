@@ -3,7 +3,7 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import Tree from '@plitzi/plitzi-ui/Tree';
 import { useCallback, use, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';

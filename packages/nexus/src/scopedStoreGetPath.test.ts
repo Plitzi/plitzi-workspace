@@ -2,10 +2,11 @@ import { renderHook } from '@testing-library/react';
 import { createElement } from 'react';
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 
-import createStore, { createStoreHook } from './createStore';
-import { makeSingleSnapshot } from './createStore/hooks/shared';
+import createStore from './createStore';
 import { getStoreHistory, historyMiddleware } from './middleware/historyMiddleware';
-import StoreProvider from './StoreProvider';
+import { createStoreHook } from './react';
+import { makeSingleSnapshot } from './react/hooks/shared';
+import StoreProvider from './react/StoreProvider';
 
 import type { StoreApiInternal } from './types';
 import type { ReactNode } from 'react';

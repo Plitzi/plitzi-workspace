@@ -2,7 +2,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import React, { useCallback, use, useEffect, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';

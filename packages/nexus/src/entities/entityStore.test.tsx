@@ -2,6 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { createEntityStore } from './createEntityStore';
+import { useEntityOne, useEntityIds, useEntityAll } from '../react/hooks/useEntity';
 
 type Item = { id: string; value: number; tag?: string };
 
@@ -205,12 +206,12 @@ describe('createEntityStore — React hooks', () => {
     const a = renderHook(() => {
       aRenders++;
 
-      return store.useOne('a');
+      return useEntityOne(store, 'a');
     });
     renderHook(() => {
       bRenders++;
 
-      return store.useOne('b');
+      return useEntityOne(store, 'b');
     });
 
     const aBaseline = aRenders;
@@ -230,7 +231,7 @@ describe('createEntityStore — React hooks', () => {
     const { result } = renderHook(() => {
       renders++;
 
-      return store.useIds();
+      return useEntityIds(store);
     });
 
     const baseline = renders;
@@ -245,7 +246,7 @@ describe('createEntityStore — React hooks', () => {
   it('useEntities re-renders on any change', () => {
     const store = createEntityStore<Item>(seed());
 
-    const { result } = renderHook(() => store.useAll());
+    const { result } = renderHook(() => useEntityAll(store));
 
     act(() => store.updateOne('a', { value: 100 }));
     expect(result.current.find(item => item.id === 'a')).toEqual({ id: 'a', value: 100 });

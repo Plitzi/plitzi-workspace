@@ -5,7 +5,7 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
 import { useCallback, use, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 

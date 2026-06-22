@@ -2,7 +2,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import { useCallback, use, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';

@@ -7,7 +7,7 @@ import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';

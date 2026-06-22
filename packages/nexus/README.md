@@ -4,14 +4,28 @@
 
 # @plitzi/nexus
 
-A lightweight, type-safe React store built on `useSyncExternalStore`. You subscribe to **dot-notation paths** and re-render only when that exact value changes — no selectors, no reducers, no action types. On top of that core it ships scoped stores, time-travel, derived values, an entity adapter, and a middleware pipeline (logger / persist / history). Fully compatible with SSR, React Server Components, and Next.js App Router.
+A lightweight, type-safe state store with a **framework-agnostic core** and first-class React bindings, built on `useSyncExternalStore`. You subscribe to **dot-notation paths** and re-render only when that exact value changes — no selectors, no reducers, no action types. On top of that core it ships scoped stores, time-travel, derived values, an entity adapter, and a middleware pipeline (logger / persist / history). Fully compatible with SSR, React Server Components, Next.js App Router, and Astro (6 LTS & 7) islands.
+
+## Entry points
+
+The **package root is the framework-agnostic core** (zero React). Framework bindings live in their own entries.
+
+| Import | What it is |
+|---|---|
+| `@plitzi/nexus` | **Agnostic core** — `createStore`, imperative `get/set/watch`, middlewares, async/derived/entities. Zero React. |
+| `@plitzi/nexus/react` | React bindings — `StoreProvider`, `createStoreHook`, `useStore`, `useStoreHistory`, `useEntity`, … |
+| `@plitzi/nexus/next` | Next.js App Router helpers (`bindServerAction`). |
+
+Use any framework by talking to the root directly (`store.subscribe` / `store.getState`) — see the Vue and Svelte
+[examples](./examples). For Astro, see [docs/integrations/astro.md](./docs/integrations/astro.md).
 
 ```bash
-npm install @plitzi/nexus   # peer deps: react@^18 || ^19, react-dom@^18 || ^19
+npm install @plitzi/nexus   # React bindings peer deps: react@^18 || ^19, react-dom@^18 || ^19
 ```
 
 ```ts
-import { createStoreHook } from '@plitzi/nexus';
+// React: hooks come from the /react entry
+import { createStoreHook } from '@plitzi/nexus/react';
 
 type State = { count: number; user: { name: string } };
 const { useStore } = createStoreHook<State>();

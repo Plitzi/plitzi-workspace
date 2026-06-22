@@ -4,7 +4,7 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Input from '@plitzi/plitzi-ui/Input';
 import { useCallback, use, useEffect, useState, useTransition, useRef } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';

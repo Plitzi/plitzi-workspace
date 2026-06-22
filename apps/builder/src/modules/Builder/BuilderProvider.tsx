@@ -4,7 +4,7 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { produce } from 'immer';
 import { useCallback, use, useMemo, useState, useEffect } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { EventBridgeTypesPerModule } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';

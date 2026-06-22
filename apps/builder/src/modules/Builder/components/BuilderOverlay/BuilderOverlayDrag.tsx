@@ -2,7 +2,7 @@ import { debounce } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { memo, use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 
 import type { BuilderState, DropPosition, Element as PlitziElement } from '@plitzi/sdk-shared';

@@ -2,7 +2,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, use, useCallback, useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';

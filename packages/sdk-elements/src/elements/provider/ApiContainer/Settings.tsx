@@ -7,7 +7,7 @@ import Select from '@plitzi/plitzi-ui/Select';
 import Switch from '@plitzi/plitzi-ui/Switch';
 import { useCallback, use, useMemo, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';

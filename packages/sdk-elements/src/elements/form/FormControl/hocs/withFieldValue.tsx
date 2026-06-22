@@ -2,7 +2,7 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useMemo, useEffect } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import { getDisplayName } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 

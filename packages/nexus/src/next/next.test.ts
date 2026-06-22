@@ -6,8 +6,8 @@ vi.mock('next/cache', () => ({
   revalidateTag: vi.fn()
 }));
 
-import createStore from '../createStore';
 import { bindServerAction } from './index';
+import createStore from '../createStore';
 
 type State = { count: number; user: { name: string } };
 

@@ -1,7 +1,7 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, use, useCallback, useState, useEffect } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';

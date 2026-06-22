@@ -1,7 +1,7 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useState, use, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 import ManagerSelector from './ManagerSelector';

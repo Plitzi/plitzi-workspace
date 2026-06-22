@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest';
 
 import { cascade } from './middleware/cascade';
 import { loggerMiddleware } from './middleware/loggerMiddleware';
-import StoreProvider, { StoreContext } from './StoreProvider';
+import StoreProvider, { StoreContext } from './react/StoreProvider';
 
 import type { StoreApi } from './types';
 import type { ReactNode } from 'react';

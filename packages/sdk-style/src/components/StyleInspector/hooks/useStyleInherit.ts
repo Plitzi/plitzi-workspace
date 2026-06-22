@@ -1,6 +1,6 @@
 import { use, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/createStore';
+import { createStoreHook } from '@plitzi/nexus/react';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 import calculateInheriting from '../../../helpers/calculateInheriting';

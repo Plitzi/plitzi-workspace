@@ -2,7 +2,7 @@
 import clsx from 'clsx';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
-import StoreProvider from '@plitzi/nexus/StoreProvider';
+import { StoreProvider } from '@plitzi/nexus/react';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';

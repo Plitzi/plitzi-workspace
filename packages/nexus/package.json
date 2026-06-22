@@ -39,14 +39,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
     },
-    "./StoreContext": {
-      "types": "./dist/StoreContext.d.ts",
-      "import": "./dist/StoreContext.mjs"
-    },
-    "./StoreProvider": {
-      "types": "./dist/StoreProvider.d.ts",
-      "import": "./dist/StoreProvider.mjs"
-    },
     "./advanced": {
       "types": "./dist/advanced/index.d.ts",
       "import": "./dist/advanced/index.mjs"
@@ -62,14 +54,6 @@
     "./async/createAsync": {
       "types": "./dist/async/createAsync.d.ts",
       "import": "./dist/async/createAsync.mjs"
-    },
-    "./async/hooks/useAsync": {
-      "types": "./dist/async/hooks/useAsync.d.ts",
-      "import": "./dist/async/hooks/useAsync.mjs"
-    },
-    "./async/hooks/useAsyncValue": {
-      "types": "./dist/async/hooks/useAsyncValue.d.ts",
-      "import": "./dist/async/hooks/useAsyncValue.mjs"
     },
     "./async/index": {
       "types": "./dist/async/index.d.ts",
@@ -115,30 +99,6 @@
       "types": "./dist/createStore/helpers/writeByPath.d.ts",
       "import": "./dist/createStore/helpers/writeByPath.mjs"
     },
-    "./createStore/hooks/shared": {
-      "types": "./dist/createStore/hooks/shared.d.ts",
-      "import": "./dist/createStore/hooks/shared.mjs"
-    },
-    "./createStore/hooks/useStore": {
-      "types": "./dist/createStore/hooks/useStore.d.ts",
-      "import": "./dist/createStore/hooks/useStore.mjs"
-    },
-    "./createStore/hooks/useStoreById": {
-      "types": "./dist/createStore/hooks/useStoreById.d.ts",
-      "import": "./dist/createStore/hooks/useStoreById.mjs"
-    },
-    "./createStore/hooks/useStoreGetter": {
-      "types": "./dist/createStore/hooks/useStoreGetter.d.ts",
-      "import": "./dist/createStore/hooks/useStoreGetter.mjs"
-    },
-    "./createStore/hooks/useStoreSetter": {
-      "types": "./dist/createStore/hooks/useStoreSetter.d.ts",
-      "import": "./dist/createStore/hooks/useStoreSetter.mjs"
-    },
-    "./createStore/hooks/useStoreSync": {
-      "types": "./dist/createStore/hooks/useStoreSync.d.ts",
-      "import": "./dist/createStore/hooks/useStoreSync.mjs"
-    },
     "./createStore/index": {
       "types": "./dist/createStore/index.d.ts",
       "import": "./dist/createStore/index.mjs"
@@ -150,10 +110,6 @@
     "./derived/createDerived": {
       "types": "./dist/derived/createDerived.d.ts",
       "import": "./dist/derived/createDerived.mjs"
-    },
-    "./derived/hooks/useDerived": {
-      "types": "./dist/derived/hooks/useDerived.d.ts",
-      "import": "./dist/derived/hooks/useDerived.mjs"
     },
     "./derived/index": {
       "types": "./dist/derived/index.d.ts",
@@ -174,6 +130,10 @@
     "./entities/index": {
       "types": "./dist/entities/index.d.ts",
       "import": "./dist/entities/index.mjs"
+    },
+    "./env": {
+      "types": "./dist/env.d.ts",
+      "import": "./dist/env.mjs"
     },
     "./helpers/createObservable": {
       "types": "./dist/helpers/createObservable.d.ts",
@@ -199,17 +159,9 @@
       "types": "./dist/helpers/shallowEqual.d.ts",
       "import": "./dist/helpers/shallowEqual.mjs"
     },
-    "./helpers/useIsomorphicLayoutEffect": {
-      "types": "./dist/helpers/useIsomorphicLayoutEffect.d.ts",
-      "import": "./dist/helpers/useIsomorphicLayoutEffect.mjs"
-    },
     "./history": {
       "types": "./dist/history/index.d.ts",
       "import": "./dist/history/index.mjs"
-    },
-    "./history/hooks/useStoreHistory": {
-      "types": "./dist/history/hooks/useStoreHistory.d.ts",
-      "import": "./dist/history/hooks/useStoreHistory.mjs"
     },
     "./history/index": {
       "types": "./dist/history/index.d.ts",
@@ -258,6 +210,74 @@
     "./next/index": {
       "types": "./dist/next/index.d.ts",
       "import": "./dist/next/index.mjs"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.mjs"
+    },
+    "./react/StoreContext": {
+      "types": "./dist/react/StoreContext.d.ts",
+      "import": "./dist/react/StoreContext.mjs"
+    },
+    "./react/StoreProvider": {
+      "types": "./dist/react/StoreProvider.d.ts",
+      "import": "./dist/react/StoreProvider.mjs"
+    },
+    "./react/createStoreHook": {
+      "types": "./dist/react/createStoreHook.d.ts",
+      "import": "./dist/react/createStoreHook.mjs"
+    },
+    "./react/hooks/shared": {
+      "types": "./dist/react/hooks/shared.d.ts",
+      "import": "./dist/react/hooks/shared.mjs"
+    },
+    "./react/hooks/useAsync": {
+      "types": "./dist/react/hooks/useAsync.d.ts",
+      "import": "./dist/react/hooks/useAsync.mjs"
+    },
+    "./react/hooks/useAsyncValue": {
+      "types": "./dist/react/hooks/useAsyncValue.d.ts",
+      "import": "./dist/react/hooks/useAsyncValue.mjs"
+    },
+    "./react/hooks/useDerived": {
+      "types": "./dist/react/hooks/useDerived.d.ts",
+      "import": "./dist/react/hooks/useDerived.mjs"
+    },
+    "./react/hooks/useEntity": {
+      "types": "./dist/react/hooks/useEntity.d.ts",
+      "import": "./dist/react/hooks/useEntity.mjs"
+    },
+    "./react/hooks/useStore": {
+      "types": "./dist/react/hooks/useStore.d.ts",
+      "import": "./dist/react/hooks/useStore.mjs"
+    },
+    "./react/hooks/useStoreById": {
+      "types": "./dist/react/hooks/useStoreById.d.ts",
+      "import": "./dist/react/hooks/useStoreById.mjs"
+    },
+    "./react/hooks/useStoreGetter": {
+      "types": "./dist/react/hooks/useStoreGetter.d.ts",
+      "import": "./dist/react/hooks/useStoreGetter.mjs"
+    },
+    "./react/hooks/useStoreHistory": {
+      "types": "./dist/react/hooks/useStoreHistory.d.ts",
+      "import": "./dist/react/hooks/useStoreHistory.mjs"
+    },
+    "./react/hooks/useStoreSetter": {
+      "types": "./dist/react/hooks/useStoreSetter.d.ts",
+      "import": "./dist/react/hooks/useStoreSetter.mjs"
+    },
+    "./react/hooks/useStoreSync": {
+      "types": "./dist/react/hooks/useStoreSync.d.ts",
+      "import": "./dist/react/hooks/useStoreSync.mjs"
+    },
+    "./react/index": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.mjs"
+    },
+    "./react/useIsomorphicLayoutEffect": {
+      "types": "./dist/react/useIsomorphicLayoutEffect.d.ts",
+      "import": "./dist/react/useIsomorphicLayoutEffect.mjs"
     },
     "./rsc/index": {
       "import": "./dist/rsc/index.mjs"

@@ -2,7 +2,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { useCallback, use, useMemo, useEffect, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus';
+import { createStoreHook } from '@plitzi/nexus/react';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import utility from '@plitzi/sdk-interactions/utility/index';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
