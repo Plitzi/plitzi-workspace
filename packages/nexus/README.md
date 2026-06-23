@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./logo.svg" alt="@plitzi/nexus" width="640" />
+  <img src="./logo.svg" alt="@plitzi/nexus — one store, every framework" width="640" />
 </p>
 
 # @plitzi/nexus
@@ -13,9 +13,11 @@ The **package root is the framework-agnostic core** (zero React). Framework bind
 | Import | What it is |
 |---|---|
 | `@plitzi/nexus` | **Agnostic core** — `createStore`, imperative `get/set/watch`, middlewares, async/derived/entities. Zero React. |
-| `@plitzi/nexus/react` | React bindings — `StoreProvider`, `createStoreHook`, `useStore`, `useStoreHistory`, `useEntity`, … |
+| `@plitzi/nexus/advanced` | The opt-in add-ons (`async`, `derived`, `entities`, `history`, `middleware`) re-exported in one place, kept off the root so root autocomplete stays focused on the core. |
+| `@plitzi/nexus/react` | React bindings — `StoreProvider`, `createStoreHook`, `useStore`, `useStoreHistory`, `useEntity`, `useAsync`, `useDerived`, … |
 | `@plitzi/nexus/vue` | Vue 3 bindings — `provideStore`, `useStore` (writable ref), `useStoreValue`, `useEntity`, `useStoreHistory`, … |
 | `@plitzi/nexus/next` | Next.js App Router helpers (`bindServerAction`). |
+| `@plitzi/nexus/rsc` | Server Component → Client handoff markers (`createServerSnapshot`, `isServerSnapshot`, `stripServerFlag`). Also re-exported from the root. |
 
 Any other framework works by talking to the root directly (`store.subscribe` / `store.getState`) — see the Svelte
 [example](./examples/svelte). For Astro, see [docs/integrations/astro.md](./docs/integrations/astro.md).
@@ -85,21 +87,27 @@ Also importable from the focused `@plitzi/nexus/advanced` entry point, which kee
 
 ## Architecture
 
+The package root is the **framework-agnostic core**; React, Vue, and Next bindings are physically separate
+entries that depend on it (never the other way round), so the core ships zero framework code.
+
 ```
-StoreContext.ts          context object (no deps → no cycles)
-createStore.ts           factory + createStoreHook
-StoreProvider.tsx        context provider with optional sync
-hooks/
-  useStore.ts            subscribe + read
-  useStoreSync.ts        sync external value into the store (write-only)
-  useStoreGetter.ts      non-reactive snapshot getter
-  useStoreSetter.ts      fire-and-forget setter
-  shared.ts              snapshot factories, subscription helpers
-derived/                 createDerived + useDerived (memoized computed values)
-entities/                createEntityAdapter (normalized-map CRUD + selectors)
-middleware/              logger / persist / history (all on subscribeChange)
-history/                 getStoreHistory + useStoreHistory (time-travel, enabled by historyMiddleware)
-helpers/                 getByPath, setByPath, parsePath, shallowEqual…
+src/
+  index.ts               agnostic core barrel (createStore, middlewares, async/derived/entities, rsc)
+  createStore/           store factory + scope chain / write engine
+    createStore.ts         factory (get/set/watch + getState/setState/subscribe…)
+    helpers/               writeByPath (codegen), deepMerge, scope reads, PathTrie, Subscribers…
+  derived/               createDerived (memoized computed values)
+  entities/              createEntityAdapter (map CRUD) + createEntityStore (reactive O(1) per item)
+  async/                 createAsync (race-safe fetch landed on a path)
+  middleware/            logger / persist / history / reduxDevTools / cascade (all on subscribeChange)
+  history/               getStoreHistory (time-travel handle, enabled by historyMiddleware)
+  rsc/                   createServerSnapshot / isServerSnapshot / stripServerFlag
+  helpers/               getByPath, setByPath, parsePath, shallowEqual, isPathAffected…
+  types/                 StoreTypes.ts — every public type
+  advanced/              curated barrel re-exporting async + derived + entities + history + middleware
+  react/                 StoreProvider, StoreContext, createStoreHook, hooks/* (useStore, useEntity, useAsync…)
+  vue/                   provideStore/injectStore + composables (useStore, useEntity, useDerived, useAsync…)
+  next/                  bindServerAction (App Router server actions)
 ```
 
 > **One change substrate.** Every committed write flows through `store.subscribeChange((change) => …)` where `change` is `{ path, prev, next }`. `loggerMiddleware`, `persistMiddleware`, and `historyMiddleware` are all just observers on this channel — and so is any middleware you write. It costs nothing on the hot path when no observer is attached. Writes can also be **intercepted** before they commit via a middleware's `beforeChange` to transform or cancel them — see [Intercepting writes](#intercepting-writes-beforechange).
@@ -268,8 +276,8 @@ const [state, setState] = useStore();
 // Single path
 const [name, setName] = useStore('user.name');
 
-// With default value
-const [el, setEl] = useStore(`schema.flat.${id}` as PathOf<MyState>, { defaultValue: {} });
+// Fallback for a possibly-undefined value — destructure a default (no `defaultValue` option):
+const [el = {}] = useStore(`schema.flat.${id}` as PathOf<MyState>);
 
 // Dynamic path (function resolves the path string at runtime)
 const [val, setVal] = useStore(s => `style.platform.${s.displayMode}` as PathOf<MyState>);
@@ -428,6 +436,73 @@ createEntityAdapter<Row>({ selectId: r => r.key, sortComparer: (a, b) => a.name.
 
 Ops: `addOne/addMany` (ignore existing), `setOne/setMany/setAll` (replace), `updateOne/updateMany` (merge changes), `upsertOne/upsertMany` (add or merge), `removeOne/removeMany/removeAll`. Each returns the **same map reference** when nothing changed, so the store skips the write.
 
+## `createEntityStore` (reactive, O(1) per item)
+
+**What it's for:** the same normalized collection, but as a **standalone reactive store** that notifies *per item*. Where `createEntityAdapter` lives inside a `StoreApi` path (one map, one subscription — every consumer wakes when any item changes), `createEntityStore` lets a row subscribe to **just its own id**, so editing one item re-renders only that row, not the list. Use it for large lists / tables where the adapter's whole-map churn shows up.
+
+```ts
+import { createEntityStore } from '@plitzi/nexus';
+
+const todos = createEntityStore<Todo>({ selectId: t => t.id });
+
+todos.setMany([a, b, c]);
+todos.updateOne('a', { done: true });
+todos.removeOne('b');
+
+todos.getOne('a');                              // Todo | undefined
+todos.getIds();                                 // string[]
+todos.getAll();                                 // Todo[]
+const off = todos.subscribeOne('a', render);    // wakes ONLY when item 'a' changes
+```
+
+React — subscribe at the granularity you actually render at:
+
+```tsx
+import { useEntity, useEntityIds, useEntityOne } from '@plitzi/nexus/react';
+
+function List() {
+  const ids = useEntityIds(todos);              // re-renders only on add/remove
+  return ids.map(id => <Row key={id} id={id} />);
+}
+
+function Row({ id }: { id: string }) {
+  const todo = useEntityOne(todos, id);         // re-renders only when THIS item changes
+  return <li>{todo?.text}</li>;
+}
+
+// Or the bound shape: const { useOne, useIds, useAll } = useEntity(todos);
+```
+
+## `createAsync` / `useAsync` (race-safe fetch)
+
+**What it's for:** a fetch whose result lands on a store path, with status tracking and last-write-wins race safety, shared across every consumer. Read it inline (loading / error UI) with `useAsync`, or unwrap the value (Suspense) with `useAsyncValue`.
+
+```ts
+import { createAsync } from '@plitzi/nexus';
+
+const user = createAsync(store, 'user', async (id: string) => fetchUser(id));
+user.run('42');                                 // kicks off; a newer run() supersedes an in-flight one
+user.get();                                     // { status, data, error }
+```
+
+```tsx
+import { useAsync, useAsyncValue } from '@plitzi/nexus/react';
+
+function Profile() {
+  const { status, data, error } = useAsync(user); // re-renders on status / value change
+  if (status === 'pending') { return <Spinner />; }
+
+  return <span>{data?.name}</span>;
+}
+
+// Suspense form — throws the promise while pending, returns the value when settled:
+function ProfileSuspense() {
+  const data = useAsyncValue(user);
+
+  return <span>{data.name}</span>;
+}
+```
+
 ## Middleware (`loggerMiddleware` / `persistMiddleware` / `historyMiddleware`)
 
 **What it's for:** cross-cutting logic on every write, centralized in one place. A middleware is `(api) => { beforeChange?, onChange? } | void`; its setup body runs once after creation (so it can hydrate). It can do two things: **intercept** a write before it commits (`beforeChange`) and **observe** a write after it commits (`onChange`, the `{ path, prev, next }` change). logger, persist, and history are built-in observers; write your own the same way. Middlewares are per-store — in a scope chain, attach them where the writes you care about commit (shared keys delegate to the owning scope, so the owning scope's interceptors run).
@@ -451,6 +526,23 @@ const analytics: StoreMiddleware<State> = api => ({
 // Or subscribe imperatively to the same substrate:
 const off = store.subscribeChange(({ path, prev, next }) => {});
 ```
+
+### `cascade` — share a middleware with nested scopes
+
+Middlewares are per-store, so a nested `StoreProvider` (or scoped `createStore`) doesn't inherit the parent's
+middlewares by default. Wrap one in `cascade()` to have every descending store get its **own instance** of it —
+set a logger or analytics sink once at the root instead of repeating it in each child.
+
+```ts
+import { createStore, cascade, loggerMiddleware } from '@plitzi/nexus';
+
+const root = createStore<State>(initial, {
+  middlewares: [cascade(loggerMiddleware())] // child scopes log too, each with its own instance
+});
+```
+
+Storage- or recorder-bound middlewares (`persistMiddleware`, `historyMiddleware`) are deliberately **not**
+cascaded — they're per-store by nature (one storage key, one recorder). Only mark them if you really mean it.
 
 ### Intercepting writes (`beforeChange`)
 
@@ -764,6 +856,38 @@ function Likes({ store, updateLikes }: { store: StoreApi<State>; updateLikes: Se
 This module dynamically imports from `next/cache` — it only works within Next.js App Router.
 It is **not** a peer dependency, just a compatibility layer.
 
+## Vue 3 (`@plitzi/nexus/vue`)
+
+The same agnostic core, bound to Vue's reactivity via `provide`/`inject` and composables that return refs.
+Provide a store at a parent, then bind a path two-ways with `useStore` (write through `ref.value` or `v-model`),
+or read-only with `useStoreValue`.
+
+```vue
+<!-- App.vue -->
+<script setup lang="ts">
+import { provideStore } from '@plitzi/nexus/vue';
+
+type State = { count: number; user: { name: string } };
+provideStore<State>({ count: 0, user: { name: 'Ada' } });
+</script>
+
+<!-- Counter.vue -->
+<script setup lang="ts">
+import { useStore, useStoreValue } from '@plitzi/nexus/vue';
+
+const count = useStore<State, 'count'>('count'); // WritableComputedRef — re-renders only on change
+const name = useStoreValue<State, 'user.name'>('user.name'); // read-only ref
+</script>
+
+<template>
+  <button @click="count++">{{ name }}: {{ count }}</button>
+</template>
+```
+
+`createStoreComposable<State>()` mirrors React's `createStoreHook` — it returns `useStore` / `useStoreValue` /
+`useStoreState` already bound to `State`. Vue also ships `useEntity`, `useDerived`, `useAsync`, and
+`useStoreHistory` composables matching their React counterparts.
+
 ## Performance
 
 Notification is `O(depth)` — a few `Map` lookups for the changed path's prefixes — **regardless of how many subscribers exist**, so a million watchers cost the same as one for an unrelated change. The *write* copies the containers on the changed path (immutable structural sharing, the same cost Redux / Zustand / Jotai pay), so model state as a **tree / normalized map** to keep each write touching a small path. Single-segment writes mutate the live working copy in place (O(1)); snapshots from `getState()` are always distinct clones, so they stay immutable for React.
@@ -791,7 +915,7 @@ All types live in `src/types/StoreTypes.ts`:
 | `EntityAdapter<T>` | CRUD updaters + selectors from `createEntityAdapter` |
 | `EntityUpdater<T>` | `(map) => map` — an immutable entity-map update for `setState` |
 | `SetState<T>` | Full `setState` overload signature |
-| `UseStoreOptions` | Options for `useStore` (mode, enabled, equalityFn, defaultValue, transformer) |
+| `UseStoreOptions` | Options for `useStore` (mode, enabled, equalityFn, transformer, store, storeId) |
 | `UseStoreMultiOptions` | Options for multi-path `useStore` |
 | `UseStoreSyncOptions` | Options for `useStoreSync` (mode, enabled, syncStrategy) |
 | `UseStoreSyncMultiOptions` | Options for multi-path `useStoreSync` |
