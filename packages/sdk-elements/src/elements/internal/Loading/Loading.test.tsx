@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { Loading } from './Loading';
-import { ElementStoreSeed, elementEntry } from '../../../testUtils/elementTestUtils';
+import { ElementContextSeed, elementEntry } from '../../../testUtils/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
@@ -19,9 +19,9 @@ vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
 describe('Loading Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
-      <ElementStoreSeed entries={[elementEntry('loading')]}>
+      <ElementContextSeed value={elementEntry('loading')}>
         <Loading id="loading" />
-      </ElementStoreSeed>
+      </ElementContextSeed>
     );
 
     expect(baseElement).toBeTruthy();

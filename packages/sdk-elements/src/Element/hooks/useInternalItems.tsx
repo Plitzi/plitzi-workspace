@@ -108,12 +108,10 @@ const useInternalItems = ({
     }
 
     // Process Children
-    if (children && isValidElement(children)) {
-      if (Array.isArray(children)) {
-        itemsParsed.push(...children);
-      } else {
-        itemsParsed.push(children);
-      }
+    if (Array.isArray(children)) {
+      itemsParsed.push(...children.filter(isValidElement));
+    } else if (isValidElement(children)) {
+      itemsParsed.push(children);
     }
 
     if (!items) {

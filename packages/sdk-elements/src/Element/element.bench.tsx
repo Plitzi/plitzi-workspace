@@ -6,7 +6,6 @@ import { StoreProvider } from '@plitzi/nexus/react';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceContext } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
-import { ElementStoreProvider } from './ElementStore';
 import Text from '../elements/basic/Text/Text';
 import Container from '../elements/structure/Container/Container';
 
@@ -73,11 +72,9 @@ const nestedSchema = (depth: number): Record<string, Element> => {
 const renderTree = (flat: Record<string, Element>): ReactNode => (
   <StoreProvider value={{ schema: { flat }, runtime: { sources: {} } }}>
     <PlitziServiceContext value={serviceValue}>
-      <ElementStoreProvider>
-        <ComponentContext value={components}>
-          <Container internalProps={{ id: 'root', rootId: 'root' }} />
-        </ComponentContext>
-      </ElementStoreProvider>
+      <ComponentContext value={components}>
+        <Container internalProps={{ id: 'root', rootId: 'root' }} />
+      </ComponentContext>
     </PlitziServiceContext>
   </StoreProvider>
 );

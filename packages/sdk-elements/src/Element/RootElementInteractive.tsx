@@ -62,11 +62,6 @@ const RootElementInteractive = ({
         originalCallback(e);
       }
 
-      // Interactions Code here
-      if (!propagateEvent) {
-        e.preventDefault();
-      }
-
       void interactionsManager.interactionTrigger(id, actionName, { event: e });
     },
     [interactionsManager]

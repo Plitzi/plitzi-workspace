@@ -29,7 +29,7 @@ if (import.meta.env.PROD) {
   void import('./assets/plitzi-sdk-devtools.scss');
 }
 
-import type { ElementContextValue } from '@plitzi/sdk-elements/Element/ElementStore';
+import type { ElementContextValue } from '@plitzi/sdk-elements/Element/ElementContext';
 import type EventBridge from '@plitzi/sdk-event-bridge';
 import type InteractionsManager from '@plitzi/sdk-interactions/InteractionsManager';
 import type {

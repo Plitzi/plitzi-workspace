@@ -1,5 +1,29 @@
 {
   "files.associations": {
     "*.ejs": "html"
+  },
+
+  "files.watcherExclude": {
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/coverage/**": true,
+    "**/.yarn/**": true,
+    "**/node_modules/**": true
+  },
+  "search.exclude": {
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/coverage/**": true,
+    "**/.yarn/**": true
+  },
+  "files.exclude": {
+    "**/.yarn/cache": true,
+    "**/.pnp.*": true
+  },
+
+  "typescript.tsserver.watchOptions": {
+    "watchFile": "useFsEvents",
+    "watchDirectory": "useFsEvents",
+    "fallbackPolling": "dynamicPriority"
   }
 }

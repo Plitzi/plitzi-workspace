@@ -5,7 +5,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { StoreProvider } from '@plitzi/nexus/react';
 
 import { ApiContainer } from './ApiContainer';
-import { ElementStoreSeed, elementEntry } from '../../../testUtils/elementTestUtils';
+import { ElementContextSeed, elementEntry } from '../../../testUtils/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
@@ -26,9 +26,9 @@ describe('ApiContainer Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
       <StoreProvider value={{}}>
-        <ElementStoreSeed entries={[elementEntry('')]}>
+        <ElementContextSeed value={elementEntry('')}>
           <ApiContainer id="" />
-        </ElementStoreSeed>
+        </ElementContextSeed>
       </StoreProvider>
     );
 

@@ -7,16 +7,10 @@ export type UseElementStateProps = { bindings?: Partial<Element['definition']['b
 
 const useElementState = ({ bindings, previewMode }: UseElementStateProps) => {
   const [state, setState] = useState<Record<string, unknown>>({});
-  const cache = useMemo(() => {
-    const initialState = bindings?.initialState && Array.isArray(bindings.initialState) ? bindings.initialState : [];
+  const attributesBinded = useMemo(() => {
     const attributes = bindings?.attributes && Array.isArray(bindings.attributes) ? bindings.attributes : [];
 
-    return {
-      stateBinded: initialState.filter(binding => binding.enabled !== false).map(binding => get(binding, 'toPath', '')),
-      attributesBinded: attributes
-        .filter(binding => binding.enabled !== false)
-        .map(binding => get(binding, 'toPath', ''))
-    };
+    return attributes.filter(binding => binding.enabled !== false).map(binding => get(binding, 'toPath', ''));
   }, [bindings]);
 
   const setElementState = useCallback(
@@ -31,8 +25,8 @@ const useElementState = ({ bindings, previewMode }: UseElementStateProps) => {
         }
 
         let next = typeof value === 'function' ? value(prev as T) : value;
-        if (cache.attributesBinded.length) {
-          next = omit(next, cache.attributesBinded) as T;
+        if (attributesBinded.length) {
+          next = omit(next, attributesBinded) as T;
         }
 
         return next;
@@ -40,10 +34,10 @@ const useElementState = ({ bindings, previewMode }: UseElementStateProps) => {
 
       return true;
     },
-    [cache, previewMode]
+    [attributesBinded, previewMode]
   );
 
-  return { state, setState, setElementState };
+  return { state, setElementState };
 };
 
 export default useElementState;

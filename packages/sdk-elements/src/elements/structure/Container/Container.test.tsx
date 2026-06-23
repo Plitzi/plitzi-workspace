@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { Container } from './Container';
-import { ElementStoreSeed } from '../../../testUtils/elementTestUtils';
+import { ElementContextSeed } from '../../../testUtils/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
@@ -18,9 +18,9 @@ vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
 describe('Container Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
-      <ElementStoreSeed entries={[{ id: '', rootId: '', plitziJsxSkipHOC: true }]}>
+      <ElementContextSeed value={{ id: '', rootId: '', plitziJsxSkipHOC: true }}>
         <Container id="" />
-      </ElementStoreSeed>
+      </ElementContextSeed>
     );
 
     expect(baseElement).toBeTruthy();

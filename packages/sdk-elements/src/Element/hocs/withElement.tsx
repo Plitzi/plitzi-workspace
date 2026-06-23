@@ -4,11 +4,11 @@ import { useMemo, useRef } from 'react';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
-import { usePublishElement } from '../ElementStore';
+import { ElementContext } from '../ElementContext';
 import { omitKeys } from '../helpers/omitKeys';
 import useElementInternal from '../hooks/useElementInternal';
 
-import type { ElementStoreEntry } from '../ElementStore';
+import type { ElementContextValue } from '../ElementContext';
 import type { InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { FC, ReactNode } from 'react';
 
@@ -22,23 +22,28 @@ export type WithElementProps<T> = {
 } & Omit<T, 'id'>;
 
 const withElement = <T extends object>(WrappedComponent: FC<T>) => {
-  // Manual-render path (JSX manager): publishes only element identity to the store and injects `id`, no resolution.
+  // Manual-render path (JSX manager): provides only element identity through the context; no resolution. The skip
+  // entry lacks the resolved fields, so it is cast — `RootElement` branches on `plitziJsxSkipHOC` before reading them.
   const SkipHocElement = (props: WithElementProps<T>) => {
     const { id, rootId } = props.internalProps;
-    const entry = useMemo<ElementStoreEntry>(() => ({ id, rootId, plitziJsxSkipHOC: true }), [id, rootId]);
-    usePublishElement(entry);
+    const entry = useMemo<ElementContextValue>(
+      () => ({ id, rootId, plitziJsxSkipHOC: true }) as ElementContextValue,
+      [id, rootId]
+    );
 
-    return useMemo(() => {
+    const content = useMemo(() => {
       const wrappedProps = { ...props, id } as unknown as T;
 
       return <WrappedComponent {...wrappedProps} />;
     }, [id, props]);
+
+    return <ElementContext value={entry}>{content}</ElementContext>;
   };
 
-  // Pre-render phase: resolve the element's data and publish it to the element store keyed by id. The wrapped component
-  // receives the resolved attributes as props (plugin contract) plus its `id`; it reads the rest by id from the store.
-  // Publishing happens in render so a descendant's `useElementData(id)` reads it on first paint; on mount nobody is
-  // subscribed yet, on update the subscriber wakes and re-renders.
+  // Pre-render phase: resolve the element's data and provide it to its subtree through `ElementContext`. The wrapped
+  // component receives the resolved attributes as props (plugin contract) plus its `id`; everything else it reads from
+  // the ambient context via `useElement()`. The context value propagates top-down with this element's own re-render,
+  // so descendants read fresh data in the same pass — no `id` prop, no store subscription notified mid-render.
   const FullElement = (props: WithElementProps<T>) => {
     const ref = useRef<HTMLElement>(undefined);
     const { id, rootId } = props.internalProps;
@@ -58,14 +63,12 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     const eventCallbacks = useMemo(() => ({ [`${id}_setState`]: setElementState }), [id, setElementState]);
     useEventBridge('element', eventCallbacks);
 
-    const elementData = useMemo<ElementStoreEntry>(
+    const elementData = useMemo<ElementContextValue>(
       () => ({ id, rootId, attributes, definition, plitziElementLayout, style, elementState, setElementState }),
       [attributes, definition, elementState, id, plitziElementLayout, rootId, style, setElementState]
     );
 
-    usePublishElement(elementData);
-
-    return useMemo(() => {
+    const content = useMemo(() => {
       let wrappedProps = {
         ...internalProps.attributes,
         ...props.extraProps,
@@ -84,6 +87,8 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
         </ErrorBoundary>
       );
     }, [internalProps.attributes, props, customProps, children, id]);
+
+    return <ElementContext value={elementData}>{content}</ElementContext>;
   };
 
   const WithElementComponent = (props: WithElementProps<T>) =>

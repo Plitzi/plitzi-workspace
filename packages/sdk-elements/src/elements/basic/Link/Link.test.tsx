@@ -5,7 +5,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { StoreProvider } from '@plitzi/nexus/react';
 
 import { Link } from './Link';
-import { ElementStoreSeed } from '../../../testUtils/elementTestUtils';
+import { ElementContextSeed } from '../../../testUtils/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
@@ -24,9 +24,9 @@ describe('Link Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
       <StoreProvider>
-        <ElementStoreSeed entries={[{ id: '', rootId: '', plitziJsxSkipHOC: true }]}>
+        <ElementContextSeed value={{ id: '', rootId: '', plitziJsxSkipHOC: true }}>
           <Link id="" />
-        </ElementStoreSeed>
+        </ElementContextSeed>
       </StoreProvider>
     );
 

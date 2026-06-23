@@ -6,7 +6,6 @@ import { StoreProvider } from '@plitzi/nexus/react';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceContext } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
-import { ElementStoreProvider } from './ElementStore';
 import Text from '../elements/basic/Text/Text';
 
 import type { ComponentContextValue, Element, PlitziServiceContextValue } from '@plitzi/sdk-shared';
@@ -40,11 +39,9 @@ const renderTree = (children: ReactNode) =>
   render(
     <StoreProvider value={{ schema: { flat: { el1: element } }, runtime: { sources: {} } }}>
       <PlitziServiceContext value={serviceValue}>
-        <ElementStoreProvider>
-          <ComponentContext value={{ components: { current: {} } } as unknown as ComponentContextValue}>
-            {children}
-          </ComponentContext>
-        </ElementStoreProvider>
+        <ComponentContext value={{ components: { current: {} } } as unknown as ComponentContextValue}>
+          {children}
+        </ComponentContext>
       </PlitziServiceContext>
     </StoreProvider>
   );

@@ -3,11 +3,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 
-import { ElementStoreProvider } from '../ElementStore';
 import withElement from './withElement';
 import useElement from '../hooks/useElement';
 
-import type { ElementContextValue } from '../ElementStore';
+import type { ElementContextValue } from '../ElementContext';
 import type { Element } from '@plitzi/sdk-shared';
 import type { ReactElement, ReactNode } from 'react';
 
@@ -61,7 +60,7 @@ const Probe = (props: ProbeProps) => {
 
 const Wrapped = withElement(Probe);
 
-const renderWrapped = (ui: ReactElement) => render(<ElementStoreProvider>{ui}</ElementStoreProvider>);
+const renderWrapped = (ui: ReactElement) => render(ui);
 
 describe('withElement', () => {
   beforeEach(() => {

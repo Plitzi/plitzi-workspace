@@ -6,7 +6,6 @@ import * as ReactDOM from 'react-dom';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
-import ComponentProvider from '../../Component/ComponentProvider';
 import RootElement from '../RootElement';
 
 import type { ComponentPlugin } from '@plitzi/sdk-shared';
@@ -17,7 +16,7 @@ type PlitziModuleLegacy = {
     args: { window: Window; document: Document; Navigator: Navigator; navigator: Window['navigator'] } | undefined,
     externals: Record<string, object>
   ) => Promise<{ default: ComponentPlugin } & ComponentPlugin>;
-  ComponentProvider: typeof ComponentProvider;
+  ComponentProvider: typeof import('../../Component/ComponentProvider').default;
   ComponentContext: typeof ComponentContext;
   usePlitziServiceContext: typeof usePlitziServiceContext;
   RootElement: typeof RootElement;
@@ -40,6 +39,9 @@ export const generatePluginModule = async (url: string, asESM = true, pluginScop
         /* @vite-ignore */ /* webpackIgnore: true */ URL.createObjectURL(moduleBlob)
       )) as PlitziModule;
     } else {
+      // Loaded lazily so the concrete element catalog (ComponentProvider → package index → every element) stays out
+      // of the HOC's static init chain, breaking the withElement ↔ loadComponent ↔ ComponentProvider TDZ cycle.
+      const { default: ComponentProvider } = await import('../../Component/ComponentProvider');
       const plitziModules: PlitziModuleLegacy = {
         default: undefined, // we dont need default export, normally should be PlitziSdk
         ComponentProvider,

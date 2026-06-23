@@ -1,8 +1,7 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 
 import { generatePluginModule } from './elementUtils';
-import { nestedInject } from '../../Component';
-import NotFound from '../../elements/internal/NotFound/NotFound';
+import { nestedInject } from '../../Component/ComponentHelper';
 import withElement from '../hocs/withElement';
 
 import type { PlitziModule } from './elementUtils';
@@ -40,15 +39,20 @@ const loadComponent = (
 
     const entry = remoteModuleCache.get(cacheKey);
     const Module = await entry?.promise;
+    // Loaded lazily to keep the concrete element catalog out of the HOC's static init chain (avoids the
+    // withElement → loadComponent → NotFound → withElement TDZ cycle); only needed when a remote load fails.
+    const loadNotFound = async () => ({
+      default: (await import('../../elements/internal/NotFound/NotFound')).default as ComponentPluginWithHOC
+    });
     if (!Module) {
-      return { default: NotFound as ComponentPluginWithHOC };
+      return loadNotFound();
     }
 
     const { type, pluginSettings } = get(Module, 'default', {} as ComponentPlugin);
     const { version, initialItems, plugins } = Module;
 
     if (!type) {
-      return { default: NotFound as ComponentPluginWithHOC };
+      return loadNotFound();
     }
 
     let plitziComponent: ComponentPlugin | ComponentPluginWithHOC = Module.default;

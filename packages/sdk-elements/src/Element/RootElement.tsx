@@ -29,7 +29,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
 }: RootElementProps<T>) => {
   const styleParsed = useMemo(() => parseStyle(styleProp), [styleProp]);
   const Tag = tag as unknown as ElementTag | undefined;
-  const elementContext = useElement(id);
+  const elementContext = useElement();
   const serviceContext = usePlitziServiceContext();
 
   const params = useMemo<DebugParams>(() => {
@@ -83,7 +83,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     definition: { runtime },
     style
   } = elementContext;
-  const serverMarker = runtime === 'server' ? { 'data-rsc-id': id } : undefined;
+  const serverMarker = runtime === 'server' ? { 'data-rsc-id': elementContext.id } : undefined;
 
   if (!InteractionsContext) {
     return (

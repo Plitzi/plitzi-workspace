@@ -147,4 +147,23 @@ describe('useInternalItems', () => {
     expect(container.querySelector('[data-plugin="text"]')).not.toBeNull();
     expect(container.querySelector('[data-child]')).not.toBeNull();
   });
+
+  it('appends each valid element of a children array and skips invalid entries', () => {
+    const { container } = renderItems(
+      {
+        id: 'host',
+        definition: def(['a']),
+        children: [
+          createElement('span', { key: 'c1', 'data-child': '1' }),
+          null,
+          createElement('span', { key: 'c2', 'data-child': '2' })
+        ],
+        previewMode: true
+      },
+      { schema: { flat: { a: el('a', 'text') } } }
+    );
+
+    expect(container.querySelector('[data-plugin="text"]')).not.toBeNull();
+    expect([...container.querySelectorAll('[data-child]')].map(n => n.getAttribute('data-child'))).toEqual(['1', '2']);
+  });
 });

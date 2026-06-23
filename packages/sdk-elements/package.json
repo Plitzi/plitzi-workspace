@@ -26,9 +26,9 @@
       "types": "./dist/Component/index.d.ts",
       "import": "./dist/Component/index.mjs"
     },
-    "./Element/ElementStore": {
-      "types": "./dist/Element/ElementStore.d.ts",
-      "import": "./dist/Element/ElementStore.mjs"
+    "./Element/ElementContext": {
+      "types": "./dist/Element/ElementContext.d.ts",
+      "import": "./dist/Element/ElementContext.mjs"
     },
     "./Element/JsxManager": {
       "types": "./dist/Element/JsxManager.d.ts",
