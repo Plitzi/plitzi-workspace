@@ -14,7 +14,6 @@ import type { Asset, ComponentPluginWithHOC, Element } from '@plitzi/sdk-shared'
 import type { RefObject } from 'react';
 
 export type CustomProps = {
-  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
   renderType?: string;
@@ -26,7 +25,6 @@ export type CustomProps = {
 };
 
 const Custom = ({
-  id,
   ref,
   className = '',
   renderType = '',
@@ -36,7 +34,7 @@ const Custom = ({
   assets = '',
   scriptUrl = ''
 }: CustomProps) => {
-  const { rootId } = useElement();
+  const { id, rootId } = useElement();
   const {
     contexts: { PluginsContext }
   } = usePlitziServiceContext();

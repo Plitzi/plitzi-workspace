@@ -10,13 +10,12 @@ import RootElement from '../../../Element/RootElement';
 import type { RefObject } from 'react';
 
 export type BlockHtmlProps = {
-  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
   content?: string;
 };
 
-const BlockHtml = ({ id, ref, content = '', className = '' }: BlockHtmlProps) => {
+const BlockHtml = ({ ref, content = '', className = '' }: BlockHtmlProps) => {
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
@@ -95,7 +94,6 @@ const BlockHtml = ({ id, ref, content = '', className = '' }: BlockHtmlProps) =>
 
   return (
     <RootElement
-      id={id}
       ref={ref}
       className={clsx('plitzi-component__block-html', className, {
         'block-html--empty': content === '' || !content

@@ -11,7 +11,7 @@ export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {
   interactionTriggers?: Record<string, InteractionCallback>;
   interactionCallbacks?: Record<string, InteractionCallback>;
   style?: string | CSSProperties;
-} & Omit<Partial<JSX.IntrinsicElements[T]>, 'ref' | 'style'>;
+} & Omit<Partial<JSX.IntrinsicElements[T]>, 'ref' | 'style' | 'id'>;
 
 export type ElementTag = FC<{ [key: string]: unknown }>;
 
