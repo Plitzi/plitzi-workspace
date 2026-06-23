@@ -857,10 +857,6 @@
       "types": "./dist/server/index.d.ts",
       "import": "./dist/server/index.mjs"
     },
-    "./server/hooks/useRscData": {
-      "types": "./dist/server/hooks/useRscData.d.ts",
-      "import": "./dist/server/hooks/useRscData.mjs"
-    },
     "./server/index": {
       "types": "./dist/server/index.d.ts",
       "import": "./dist/server/index.mjs"

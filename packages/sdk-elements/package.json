@@ -130,6 +130,10 @@
       "types": "./dist/Element/hooks/useInternalItems.d.ts",
       "import": "./dist/Element/hooks/useInternalItems.mjs"
     },
+    "./Element/hooks/useRscData": {
+      "types": "./dist/Element/hooks/useRscData.d.ts",
+      "import": "./dist/Element/hooks/useRscData.mjs"
+    },
     "./components/ElementAdvancedEditor": {
       "types": "./dist/components/ElementAdvancedEditor.d.ts",
       "import": "./dist/components/ElementAdvancedEditor.mjs"

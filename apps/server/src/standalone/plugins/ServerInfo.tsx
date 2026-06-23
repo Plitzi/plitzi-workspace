@@ -17,9 +17,8 @@ type ServerData = {
   uptime: number;
 };
 
-const ServerInfo = ({ id }: { id: string }) => {
-  // console.log('server', props);
-  const { serverData, elementData } = useRscData<ServerData | null>(id);
+const ServerInfo = () => {
+  const { serverData, elementData } = useRscData<ServerData | null>();
 
   useEffect(() => {
     console.log('Should not be triggered');

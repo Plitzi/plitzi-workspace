@@ -10,6 +10,7 @@ import Sdk from '@modules/Sdk';
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
 import useElement from '@plitzi/sdk-elements/Element/hooks/useElement';
+import useRscData from '@plitzi/sdk-elements/Element/hooks/useRscData';
 import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
 import { PlitziElementsProvider } from '@plitzi/sdk-elements/Element/PlitziElementsProvider';
 import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
@@ -19,7 +20,6 @@ import RootElement from '@plitzi/sdk-elements/Element/RootElement';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { disableReactDevTools } from '@plitzi/sdk-shared/helpers/security';
 import baseUsePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import useRscData from '@plitzi/sdk-shared/server/hooks/useRscData';
 
 import App from './App';
 

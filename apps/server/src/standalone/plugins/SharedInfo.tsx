@@ -21,9 +21,8 @@ type ClientData = {
   timezone: string;
 };
 
-const SharedInfo = ({ id }: { id: string }) => {
-  // console.log('shared', props);
-  const { elementData } = useRscData<SharedServerData | null>(id);
+const SharedInfo = () => {
+  const { elementData } = useRscData<SharedServerData | null>();
   const [clientData, setClientData] = useState<ClientData | null>(null);
 
   useEffect(() => {
