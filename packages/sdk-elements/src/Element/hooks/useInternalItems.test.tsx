@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import { createElement } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
-import StoreProvider from '@plitzi/nexus/StoreProvider';
+import { StoreProvider } from '@plitzi/nexus/react';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 import useInternalItems from './useInternalItems';

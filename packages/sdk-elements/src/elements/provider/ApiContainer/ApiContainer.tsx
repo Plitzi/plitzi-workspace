@@ -5,7 +5,7 @@ import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import clsx from 'clsx';
 import { useCallback, use, useEffect, useMemo } from 'react';
 
-import StoreProvider from '@plitzi/nexus/StoreProvider';
+import { StoreProvider } from '@plitzi/nexus/react';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';

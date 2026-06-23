@@ -1,6 +1,6 @@
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 
-import { StoreContext } from '@plitzi/nexus';
+import { StoreContext } from '@plitzi/nexus/react';
 
 import { PEOPLE, useBatchStore } from '../../batchStore';
 

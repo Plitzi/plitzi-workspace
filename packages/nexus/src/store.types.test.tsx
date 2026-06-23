@@ -39,8 +39,9 @@ import { renderHook } from '@testing-library/react';
 import { createElement } from 'react';
 import { describe, it, expectTypeOf } from 'vitest';
 
-import createStore, { createStoreHook } from './createStore';
-import { StoreContext } from './StoreProvider';
+import createStore from './createStore';
+import { createStoreHook } from './react';
+import { StoreContext } from './react/StoreProvider';
 
 import type { StoreApi } from './types';
 import type { ReactNode } from 'react';

@@ -32,7 +32,8 @@ function StateView() {
   return <pre>{JSON.stringify(state, null, 2)}</pre>;
 }`;
 
-export const HISTORY_CODE = `import { historyMiddleware, useStoreHistory } from '@plitzi/nexus';
+export const HISTORY_CODE = `import { historyMiddleware } from '@plitzi/nexus';
+import { useStoreHistory } from '@plitzi/nexus/react';
 
 // Enable recording on the store — useStoreHistory just reads it.
 const store = createStore<State>(initial, { middlewares: [historyMiddleware()] });
@@ -120,7 +121,8 @@ function Derived() {
   return <span>{upper} — {combined}</span>;
 }`;
 
-export const COMPUTED_CODE = `import { createDerived, useDerived } from '@plitzi/nexus';
+export const COMPUTED_CODE = `import { createDerived } from '@plitzi/nexus';
+import { useDerived } from '@plitzi/nexus/react';
 
 // A value computed FROM the store, memoized + shared across
 // consumers. Recomputes only when a dependency path changes,
@@ -134,7 +136,7 @@ function Computed() {
   return <span>count × 2 = {value}</span>;
 }`;
 
-export const SCOPED_CODE = `import { StoreProvider } from '@plitzi/nexus';
+export const SCOPED_CODE = `import { StoreProvider } from '@plitzi/nexus/react';
 
 // Both children seed their own \`theme\` (autoSync={false} so the
 // local write sticks). 'live' inherits user.name & count from the

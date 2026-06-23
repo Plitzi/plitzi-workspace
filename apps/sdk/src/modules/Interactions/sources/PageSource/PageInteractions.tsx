@@ -1,7 +1,7 @@
 import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo } from 'react';
 
-import { StoreContext } from '@plitzi/nexus/StoreContext';
+import { StoreContext } from '@plitzi/nexus/react';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { useSdkStore } from '@plitzi/sdk-shared/store';

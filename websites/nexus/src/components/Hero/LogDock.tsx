@@ -1,4 +1,4 @@
-import { StoreProvider } from '@plitzi/nexus';
+import { StoreProvider } from '@plitzi/nexus/react';
 import { type CSSProperties, type PointerEvent, useCallback, useRef, useState } from 'react';
 
 import { createDockStore, useDock, useDockSetter } from './dockStore';

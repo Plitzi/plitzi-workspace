@@ -4,8 +4,9 @@ import { createContext, useContext, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 
-import { createStore, StoreProvider } from '@plitzi/nexus';
-import useStore from '@plitzi/nexus/createStore/hooks/useStore';
+import { createStore } from '@plitzi/nexus';
+import { StoreProvider } from '@plitzi/nexus/react';
+import { useStore } from '@plitzi/nexus/react';
 
 import { medianBy } from './benchShared';
 

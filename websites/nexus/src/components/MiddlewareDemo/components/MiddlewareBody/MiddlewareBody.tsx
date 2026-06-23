@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { useStoreHistory } from '@plitzi/nexus';
+import { useStoreHistory } from '@plitzi/nexus/react';
 
 import { PERSIST_KEY, useMwStore } from '../../middlewareStore';
 

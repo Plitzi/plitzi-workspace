@@ -1,6 +1,7 @@
 import { use, useEffect, useMemo, useRef } from 'react';
 
-import { createDerived, StoreContext, useDerived } from '@plitzi/nexus';
+import { createDerived } from '@plitzi/nexus';
+import { StoreContext, useDerived } from '@plitzi/nexus/react';
 
 import type { DemoState } from '../../demoStore';
 import type { StoreApi } from '@plitzi/nexus';

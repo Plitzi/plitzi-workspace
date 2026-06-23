@@ -3,7 +3,7 @@ import { createContext } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { createEntityStore } from '@plitzi/nexus/entities';
-import StoreProvider from '@plitzi/nexus/StoreProvider';
+import { StoreProvider } from '@plitzi/nexus/react';
 
 import { ElementStoreContext } from './ElementStore';
 import RootElement from './RootElement';

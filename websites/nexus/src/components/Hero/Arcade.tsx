@@ -1,4 +1,5 @@
-import { StoreProvider, loggerMiddleware } from '@plitzi/nexus';
+import { loggerMiddleware } from '@plitzi/nexus';
+import { StoreProvider } from '@plitzi/nexus/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { setControl, toggleControl, useControl } from './arcadeControls';

@@ -12,10 +12,12 @@ export const DOCS_SEARCH_INDEX: DocSearchEntry[] = [
     keywords: [
       'install', 'setup', 'quickstart', 'createStoreHook', 'StoreProvider',
       'useStore', 'first store', 'type-safe', 'dot path', 'subscription',
-      'initial state', 'create store', 'typescript'
+      'initial state', 'create store', 'typescript',
+      'react', 'vue', 'next.js', 'nextjs', 'astro', 'svelte', 'framework',
+      'agnostic', 'integration', 'provideStore', 'createStoreComposable', 'vanilla'
     ],
     description:
-      'Installation, first store, typed hooks with createStoreHook, wrapping your tree with StoreProvider, reading and writing state.'
+      'Installation and a first store per framework — agnostic core, React, Vue, Next.js, Astro, Svelte. Typed hooks/composables, providers, reading and writing state.'
   },
   {
     slug: 'choosing',

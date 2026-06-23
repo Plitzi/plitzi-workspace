@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { createElement } from 'react';
 import { describe, it, expect } from 'vitest';
 
-import StoreProvider from '@plitzi/nexus/StoreProvider';
+import { StoreProvider } from '@plitzi/nexus/react';
 
 import useElementDataSource from './useElementDataSource';
 

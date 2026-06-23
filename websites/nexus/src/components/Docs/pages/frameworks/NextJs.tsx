@@ -26,7 +26,7 @@ export type AppState = {
 // app/providers.tsx — 'use client' boundary
 'use client';
 
-import { createStoreHook, StoreProvider } from '@plitzi/nexus';
+import { createStoreHook, StoreProvider } from '@plitzi/nexus/react';
 
 export const { useStore, useStoreGetter, useStoreSetter } =
   createStoreHook<AppState>();
@@ -116,7 +116,8 @@ function DashboardClient() {
     <CodeBlock
       code={`// app/providers.tsx
 'use client';
-import { StoreProvider, createServerSnapshot } from '@plitzi/nexus';
+import { createServerSnapshot } from '@plitzi/nexus';
+import { StoreProvider } from '@plitzi/nexus/react';
 
 export function AppProviders({ children, initialState }) {
   return (
@@ -151,7 +152,7 @@ export default async function DashboardPage() {
 
 // app/dashboard/DashboardClient.tsx — Client Component
 'use client';
-import { useStoreSync, createStoreHook } from '@plitzi/nexus';
+import { useStoreSync, createStoreHook } from '@plitzi/nexus/react';
 
 const { useStore } = createStoreHook();
 
@@ -273,7 +274,7 @@ function ProfileForm() {
     </p>
     <CodeBlock
       code={`'use client';
-import { useStore } from '@plitzi/nexus';
+import { useStore } from '@plitzi/nexus/react';
 import { bindServerAction } from '@plitzi/nexus/next';
 
 function Likes({ store, updateLikes }) {

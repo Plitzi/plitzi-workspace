@@ -1,31 +1,46 @@
-// Public surface, organized into two tiers. CORE is what most consumers learn: create a store, provide it, and read
-// or write by path with `useStore` (hook) or `store.get` / `store.set` / `store.watch` (imperative). ADVANCED — the
-// opt-in add-ons (entities, async, derived, history, middleware) and the escape-hatch hooks — is also re-exported
-// here for back-compat, but the curated `@plitzi/nexus/advanced` entry point exposes the same symbols with a smaller,
-// focused autocomplete. Nothing is removed from the root: importing from the root keeps working everywhere.
+// Package root = the framework-agnostic core. Zero React: create a store and read/write/subscribe imperatively
+// (`store.get` / `store.set` / `store.watch`), compose middlewares, and use the async/derived/entities primitives.
+//
+// React bindings (Provider + hooks) live in `@plitzi/nexus/react`; Next.js helpers in `@plitzi/nexus/next`.
 
-import createStore from './createStore';
-import useStoreById from './createStore/hooks/useStoreById';
-import useStoreSetter from './createStore/hooks/useStoreSetter';
-import StoreProvider from './StoreProvider';
+export { default as createStore } from './createStore/createStore';
+export { setCodegenEnabled } from './createStore/helpers/writeByPath';
 
-// --- Core ---
-export * from './createStore';
-export * from './StoreProvider';
+export { createAsync } from './async/createAsync';
+export { createDerived } from './derived/createDerived';
+
+export { createEntityAdapter } from './entities/createEntityAdapter';
+export { createEntityStore } from './entities/createEntityStore';
+
+export { loggerMiddleware } from './middleware/loggerMiddleware';
+export { persistMiddleware } from './middleware/persistMiddleware';
+export { historyMiddleware } from './middleware/historyMiddleware';
+export { reduxDevToolsMiddleware } from './middleware/reduxDevToolsMiddleware';
+export { cascade } from './middleware/cascade';
+export { getStoreHistory } from './middleware/historyMiddleware';
+
+export { createServerSnapshot, isServerSnapshot } from './rsc';
+
 export * from './types';
 
-export { createStore, StoreProvider };
-
-// --- Advanced (also available, with a smaller surface, from '@plitzi/nexus/advanced') ---
-export * from './async';
-export * from './derived';
-export * from './entities';
-export * from './history';
-export * from './middleware';
-export * from './createStore/hooks/useStoreSetter';
-export * from './createStore/hooks/useStoreById';
-
-export { useStoreById, useStoreSetter };
-
-export { setCodegenEnabled } from './createStore/helpers/writeByPath';
-export { createServerSnapshot, isServerSnapshot } from './rsc';
+export type { CreateStoreOptions } from './createStore/createStore';
+export type { AsyncOptions, AsyncResource, AsyncSnapshot, AsyncStatus } from './async/createAsync';
+export type { Derived, DerivedOptions } from './derived/createDerived';
+export type {
+  EntityAdapter,
+  EntityAdapterOptions,
+  EntityId,
+  EntityMap,
+  EntityUpdate,
+  EntityUpdater
+} from './entities/createEntityAdapter';
+export type { EntityStore, EntityStoreOptions, EntityChangeListener } from './entities/createEntityStore';
+export type { LoggerOptions } from './middleware/loggerMiddleware';
+export type {
+  PersistOptions,
+  PersistStorage,
+  PersistTarget,
+  PersistTargetOption
+} from './middleware/persistMiddleware';
+export type { ReduxDevToolsOptions } from './middleware/reduxDevToolsMiddleware';
+export type { HistoryEntry, HistorySnapshot, StoreHistory, StoreHistoryOptions } from './middleware/historyMiddleware';

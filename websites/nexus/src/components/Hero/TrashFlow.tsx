@@ -1,4 +1,5 @@
-import { StoreProvider, createEntityStore, loggerMiddleware } from '@plitzi/nexus';
+import { createEntityStore, loggerMiddleware } from '@plitzi/nexus';
+import { StoreProvider } from '@plitzi/nexus/react';
 import { useEffect, useRef, useState } from 'react';
 
 import { pushLog } from './heroLog';

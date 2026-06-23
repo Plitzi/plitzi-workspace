@@ -1,12 +1,13 @@
 export const ENTITIES_CODE = `import { createEntityStore } from '@plitzi/nexus';
+import { useEntityOne, useEntityIds } from '@plitzi/nexus/react';
 
 type Task = { id: string; text: string; done: boolean };
 
-// One reactive collection — O(1) per-item writes, hooks on the store object.
+// One agnostic reactive collection — O(1) per-item writes. React bindings live in @plitzi/nexus/react.
 const tasks = createEntityStore<Task>(seed);
 
 function TaskList() {
-  const ids = tasks.useIds(); // re-renders only on add/remove
+  const ids = useEntityIds(tasks); // re-renders only on add/remove
 
   const add = (text: string) => tasks.setOne({ id: uid(), text, done: false });
 
@@ -18,7 +19,7 @@ function TaskList() {
 }
 
 function TaskRow({ id }: { id: string }) {
-  const task = tasks.useOne(id); // re-renders only when THIS task changes
+  const task = useEntityOne(tasks, id); // re-renders only when THIS task changes
   if (!task) return null;
 
   const toggle = () => tasks.updateOne(id, { done: !task.done });

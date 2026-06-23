@@ -1,4 +1,4 @@
-import { StoreProvider } from '@plitzi/nexus';
+import { StoreProvider } from '@plitzi/nexus/react';
 
 import ExampleCard from '../ExampleCard';
 import TodoBody from './components/TodoBody';

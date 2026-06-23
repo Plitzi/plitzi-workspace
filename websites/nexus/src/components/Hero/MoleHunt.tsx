@@ -1,4 +1,5 @@
 import { createEntityStore } from '@plitzi/nexus';
+import { useEntityIds, useEntityOne } from '@plitzi/nexus/react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useDebug, useRenderCount } from './heroDebug';
@@ -22,7 +23,7 @@ const makeCells = (): MoleCell[] =>
   Array.from({ length: GRID }, (_, i) => ({ id: String(i), active: false, until: 0, kind: 'mole' }));
 
 const Cell = memo(({ store, id, onHit }: { store: EntityStore<MoleCell>; id: string; onHit: (id: string) => void }) => {
-  const cell = store.useOne(id);
+  const cell = useEntityOne(store, id);
   const debug = useDebug();
   const renders = useRenderCount();
   const active = cell?.active ?? false;
@@ -50,7 +51,7 @@ Cell.displayName = 'MoleCell';
 
 const MoleHunt = () => {
   const [store] = useState(() => createEntityStore<MoleCell>(makeCells()));
-  const ids = store.useIds();
+  const ids = useEntityIds(store);
   const [score, setScore] = useState(0);
   const [misses, setMisses] = useState(0);
   const [timeLeft, setTimeLeft] = useState(GAME_SECONDS);

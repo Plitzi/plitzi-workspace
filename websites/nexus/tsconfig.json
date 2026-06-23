@@ -13,7 +13,12 @@
     "jsx": "react-jsx",
     "paths": {
       "@plitzi/nexus": ["../../packages/nexus/src/index.ts"],
-      "@plitzi/nexus/history": ["../../packages/nexus/src/history/index.ts"]
+      "@plitzi/nexus/react": ["../../packages/nexus/src/react/index.ts"],
+      "@plitzi/nexus/vue": ["../../packages/nexus/src/vue/index.ts"],
+      "@plitzi/nexus/next": ["../../packages/nexus/src/next/index.ts"],
+      "@plitzi/nexus/rsc": ["../../packages/nexus/src/rsc/index.ts"],
+      "@plitzi/nexus/history": ["../../packages/nexus/src/history/index.ts"],
+      "@plitzi/nexus/*": ["../../packages/nexus/src/*"]
     },
     "strict": true,
     "noUnusedLocals": true,

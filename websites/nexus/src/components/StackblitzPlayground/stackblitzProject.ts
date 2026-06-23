@@ -36,7 +36,7 @@ export const buildProject = (
 ): Project => {
   const appCode = demoCode.includes('export default')
     ? demoCode
-    : `import { createStoreHook, StoreProvider } from '@plitzi/nexus';
+    : `import { createStoreHook, StoreProvider } from '@plitzi/nexus/react';
 
 type State = {
   count: number;

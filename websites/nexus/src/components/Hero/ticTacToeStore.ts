@@ -1,4 +1,5 @@
-import { createStore, createStoreHook, loggerMiddleware } from '@plitzi/nexus';
+import { createStore, loggerMiddleware } from '@plitzi/nexus';
+import { createStoreHook } from '@plitzi/nexus/react';
 
 import { arcadePersist } from './arcadePersist';
 import { pushLog } from './heroLog';

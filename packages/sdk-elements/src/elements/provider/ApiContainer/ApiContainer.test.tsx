@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import { createContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
-import StoreProvider from '@plitzi/nexus/StoreProvider';
+import { StoreProvider } from '@plitzi/nexus/react';
 
 import { ApiContainer } from './ApiContainer';
 import { ElementStoreSeed, elementEntry } from '../../../testUtils/elementTestUtils';

@@ -11,29 +11,49 @@ const Nav = () => {
   const hash = useHashRoute();
   const onDocs = hash.startsWith('#/docs');
 
+  // Re-attach the scrollspy on every route change. The landing sections unmount while the Docs view is shown and
+  // remount as brand-new DOM nodes on return; an observer created once would keep watching the stale (detached) nodes
+  // and freeze `activeId`. The `requestAnimationFrame` lets the freshly remounted sections lay out before we observe.
   useEffect(() => {
-    const sections = NAV_LINKS.map(link => document.getElementById(link.href.slice(1))).filter(
-      (el): el is HTMLElement => el !== null
-    );
+    let observer: IntersectionObserver | undefined;
+    const attach = () => {
+      if (hash.startsWith('#/docs')) {
+        return;
+      }
 
-    const observer = new IntersectionObserver(
-      entries => {
-        const visible = entries
-          .filter(entry => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+      const sections = NAV_LINKS.map(link => document.getElementById(link.href.slice(1))).filter(
+        (el): el is HTMLElement => el !== null
+      );
 
-        if (visible[0]) {
-          setActiveId(visible[0].target.id);
-        }
-      },
-      // Mark a section active once its middle band crosses the viewport center.
-      { rootMargin: '-45% 0px -45% 0px', threshold: [0, 0.5, 1] }
-    );
+      if (sections.length === 0) {
+        return;
+      }
 
-    sections.forEach(section => observer.observe(section));
+      const io = new IntersectionObserver(
+        entries => {
+          const visible = entries
+            .filter(entry => entry.isIntersecting)
+            .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
 
-    return () => observer.disconnect();
-  }, []);
+          if (visible[0]) {
+            setActiveId(visible[0].target.id);
+          }
+        },
+        // Mark a section active once its middle band crosses the viewport center.
+        { rootMargin: '-45% 0px -45% 0px', threshold: [0, 0.5, 1] }
+      );
+
+      sections.forEach(section => io.observe(section));
+      observer = io;
+    };
+
+    const raf = requestAnimationFrame(attach);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      observer?.disconnect();
+    };
+  }, [hash]);
 
   return (
     <header className="border-ink-700/60 bg-ink-950/70 sticky top-0 z-50 border-b backdrop-blur-xl">
@@ -43,7 +63,7 @@ const Nav = () => {
           <span className="text-sm">@plitzi/nexus</span>
         </a>
 
-        <div className="hidden items-center gap-1 md:flex">
+        <div className="hidden items-center gap-0.5 whitespace-nowrap lg:flex">
           {NAV_LINKS.map(link => (
             <a
               key={link.href}
@@ -51,33 +71,35 @@ const Nav = () => {
               aria-current={!onDocs && activeId === link.href.slice(1) ? 'true' : undefined}
               className={
                 !onDocs && activeId === link.href.slice(1)
-                  ? 'bg-ink-800 rounded-lg px-3 py-1.5 text-sm font-medium text-white'
-                  : 'rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-400 transition hover:text-white'
+                  ? 'bg-ink-800 rounded-lg px-2.5 py-1.5 text-sm font-medium text-white'
+                  : 'rounded-lg px-2.5 py-1.5 text-sm font-medium text-zinc-400 transition hover:text-white'
               }
             >
               {link.label}
             </a>
           ))}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Docs stays in the always-visible cluster (from sm) so tablets keep it even when the quick-jump links above
+              collapse below lg. */}
           <a
             href={DOCS_HOME}
             aria-current={onDocs ? 'true' : undefined}
             className={
               onDocs
-                ? 'bg-ink-800 rounded-lg px-3 py-1.5 text-sm font-medium text-white'
-                : 'rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-400 transition hover:text-white'
+                ? 'bg-ink-800 hidden rounded-lg px-2.5 py-1.5 text-sm font-medium text-white sm:block'
+                : 'hidden rounded-lg px-2.5 py-1.5 text-sm font-medium text-zinc-400 transition hover:text-white sm:block'
             }
           >
             Docs
           </a>
-        </div>
-
-        <div className="flex items-center gap-2">
           <ThemeToggle />
           <a
             href={NPM_URL}
             target="_blank"
             rel="noreferrer"
-            className="hidden rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-400 transition hover:text-white sm:block"
+            className="hidden rounded-lg px-2.5 py-1.5 text-sm font-medium text-zinc-400 transition hover:text-white sm:block"
           >
             npm
           </a>

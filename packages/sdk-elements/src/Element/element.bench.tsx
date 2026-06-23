@@ -2,7 +2,7 @@ import { render, cleanup } from '@testing-library/react';
 import { createContext } from 'react';
 import { bench, vi, afterEach } from 'vitest';
 
-import StoreProvider from '@plitzi/nexus/StoreProvider';
+import { StoreProvider } from '@plitzi/nexus/react';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceContext } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 

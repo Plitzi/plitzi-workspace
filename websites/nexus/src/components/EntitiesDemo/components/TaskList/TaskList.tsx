@@ -1,11 +1,12 @@
 import { useCallback, useRef, useState } from 'react';
+import { useEntityIds } from '@plitzi/nexus/react';
 
 import TaskRow from '../TaskRow';
 import TaskStats from '../TaskStats';
 import { tasksStore } from '../../entitiesStore';
 
 const TaskList = () => {
-  const ids = tasksStore.useIds();
+  const ids = useEntityIds(tasksStore);
   const [text, setText] = useState('');
   const nextId = useRef(4);
 

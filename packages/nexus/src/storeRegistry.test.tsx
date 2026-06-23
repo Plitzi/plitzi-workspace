@@ -2,10 +2,10 @@ import { renderHook, render, act } from '@testing-library/react';
 import { createElement, useContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
-import { createStoreHook } from './createStore';
-import useStoreById from './createStore/hooks/useStoreById';
-import { findStoreInRegistry, StoreRegistryContext } from './StoreContext';
-import StoreProvider from './StoreProvider';
+import { createStoreHook } from './react';
+import useStoreById from './react/hooks/useStoreById';
+import { findStoreInRegistry, StoreRegistryContext } from './react/StoreContext';
+import StoreProvider from './react/StoreProvider';
 
 import type { ReactNode } from 'react';
 

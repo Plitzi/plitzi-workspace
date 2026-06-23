@@ -1,4 +1,5 @@
-export const MIDDLEWARE_CODE = `import { StoreProvider, loggerMiddleware, persistMiddleware, historyMiddleware, cascade } from '@plitzi/nexus';
+export const MIDDLEWARE_CODE = `import { loggerMiddleware, persistMiddleware, historyMiddleware, cascade } from '@plitzi/nexus';
+import { StoreProvider } from '@plitzi/nexus/react';
 
 type State = { count: number; user: { name: string } };
 
