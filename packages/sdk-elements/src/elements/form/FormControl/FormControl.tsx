@@ -63,7 +63,7 @@ const FormControl = ({
   const {
     rootId,
     definition: { styleSelectors }
-  } = useElement(id);
+  } = useElement();
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();

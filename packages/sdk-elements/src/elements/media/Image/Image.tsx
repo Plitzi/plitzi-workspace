@@ -42,7 +42,7 @@ const Image = ({
 
   if (!previewMode) {
     return (
-      <RootElement id={id} ref={ref} className={clsx('plitzi-component__image image--edit-mode', className)}>
+      <RootElement ref={ref} className={clsx('plitzi-component__image image--edit-mode', className)}>
         <img
           draggable={false}
           src={src}

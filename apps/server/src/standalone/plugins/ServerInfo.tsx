@@ -27,7 +27,7 @@ const ServerInfo = ({ id }: { id: string }) => {
 
   if (!serverData) {
     return (
-      <RootElement id={id} style={card('gray')}>
+      <RootElement style={card('gray')}>
         <div style={titleStyle('gray')}>🖥 Server Info — runtime: &quot;server&quot;</div>
         <span style={{ color: '#9ca3af' }}>⏳ Fetching from /_rsc…</span>
       </RootElement>
@@ -36,7 +36,7 @@ const ServerInfo = ({ id }: { id: string }) => {
 
   if (!elementData) {
     return (
-      <RootElement id={id} style={card('red')}>
+      <RootElement style={card('red')}>
         <div style={titleStyle('red')}>🖥 Server Info — runtime: &quot;server&quot;</div>
         <span>❌ No data returned</span>
       </RootElement>
@@ -44,7 +44,7 @@ const ServerInfo = ({ id }: { id: string }) => {
   }
 
   return (
-    <RootElement id={id} style={card('green')}>
+    <RootElement style={card('green')}>
       <div style={titleStyle('green')}>🖥 Server Info — runtime: &quot;server&quot;</div>
       <div style={row}>
         <span style={label}>Message</span>

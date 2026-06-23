@@ -58,7 +58,7 @@ const Form = ({
   const {
     definition: { label = 'Form' },
     setElementState
-  } = useElement(id);
+  } = useElement();
   const {
     settings: { previewMode },
     contexts: { InteractionsContext }

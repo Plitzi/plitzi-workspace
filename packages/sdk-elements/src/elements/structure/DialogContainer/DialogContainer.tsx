@@ -42,7 +42,7 @@ const DialogContainer = ({
     setElementState,
     definition: { styleSelectors, label = 'Dialog' },
     elementState
-  } = useElement(id);
+  } = useElement();
   const {
     contexts: { InteractionsContext }
   } = usePlitziServiceContext();

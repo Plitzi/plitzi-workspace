@@ -38,7 +38,7 @@ const CollectionContainer = ({
 }: CollectionContainerProps) => {
   const {
     definition: { label = 'Collection Container' }
-  } = useElement(id);
+  } = useElement();
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();

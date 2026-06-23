@@ -4,7 +4,6 @@ import type { InteractionCallback } from '@plitzi/sdk-shared';
 import type { Context, CSSProperties, FC, JSX, ReactNode, RefObject } from 'react';
 
 export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {
-  id?: string;
   ref?: RefObject<HTMLElement | null>;
   children?: ReactNode;
   tag?: T;

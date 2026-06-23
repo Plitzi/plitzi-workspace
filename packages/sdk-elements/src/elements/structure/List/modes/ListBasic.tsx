@@ -12,9 +12,9 @@ export type ListBasicProps = {
   children?: ReactNode;
 };
 
-const ListBasic = ({ id, ref, className = '', subType = 'ul', children }: ListBasicProps) => {
+const ListBasic = ({ ref, className = '', subType = 'ul', children }: ListBasicProps) => {
   return (
-    <RootElement id={id} ref={ref} tag={subType} className={clsx('plitzi-component__list', className)}>
+    <RootElement ref={ref} tag={subType} className={clsx('plitzi-component__list', className)}>
       {children}
     </RootElement>
   );

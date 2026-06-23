@@ -17,7 +17,6 @@ import type { Context, JSX } from 'react';
 // optional `InteractionsContext`, which would otherwise force conditional hooks here. The service-context fields are
 // read only past the `plitziJsxSkipHOC` branch so the manual-render fast-path never depends on a full context.
 const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
-  id,
   ref,
   children,
   tag = 'div' as T,
@@ -58,7 +57,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   }, [elementContext, serviceContext]);
 
   if (!Tag) {
-    throw new Error(`One of these parameters [tag] is missing in elementId: ${id}`);
+    throw new Error(`One of these parameters [tag] is missing in elementId: ${elementContext.id}`);
   }
 
   if (elementContext.plitziJsxSkipHOC) {

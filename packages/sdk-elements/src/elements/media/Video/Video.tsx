@@ -35,7 +35,7 @@ const Video = ({
 
   if (!previewMode) {
     return (
-      <RootElement id={id} ref={ref} className={clsx('plitzi-component__video video--edit-mode', className)}>
+      <RootElement ref={ref} className={clsx('plitzi-component__video video--edit-mode', className)}>
         <video src={src} autoPlay={autoPlay} playsInline={playsInline} loop={loop} muted={muted}>
           <track kind="captions" />
         </video>

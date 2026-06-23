@@ -13,9 +13,9 @@ export type ListItemProps = {
   children: ReactNode;
 };
 
-const ListItem = ({ id, ref, className = '', children }: ListItemProps) => {
+const ListItem = ({ ref, className = '', children }: ListItemProps) => {
   return (
-    <RootElement id={id} tag="li" ref={ref} className={clsx('plitzi-component__list-item', className)}>
+    <RootElement tag="li" ref={ref} className={clsx('plitzi-component__list-item', className)}>
       {children}
     </RootElement>
   );

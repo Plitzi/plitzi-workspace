@@ -36,7 +36,7 @@ const Custom = ({
   assets = '',
   scriptUrl = ''
 }: CustomProps) => {
-  const { rootId } = useElement(id);
+  const { rootId } = useElement();
   const {
     contexts: { PluginsContext }
   } = usePlitziServiceContext();
@@ -105,7 +105,7 @@ const Custom = ({
   }
 
   return (
-    <RootElement id={id} ref={ref} className={clsx('plitzi-component__custom', className)}>
+    <RootElement ref={ref} className={clsx('plitzi-component__custom', className)}>
       {renderType && !settingsMalformed && (
         <span>
           Custom Component <b>{renderType}</b> Not Found

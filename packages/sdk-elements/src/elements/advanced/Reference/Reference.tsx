@@ -37,7 +37,7 @@ const Reference = ({
 }: ReferenceProps) => {
   const {
     definition: { rootId, styleSelectors }
-  } = useElement(id);
+  } = useElement();
   const {
     settings: { previewMode, environment },
     contexts: { SegmentsContext }

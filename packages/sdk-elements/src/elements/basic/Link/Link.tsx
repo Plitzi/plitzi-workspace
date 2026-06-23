@@ -23,8 +23,8 @@ export type LinkProps = {
   mode?: 'page' | 'internal' | 'external';
 };
 
-const Link = ({ id, ref, children, className = '', href = '#', target = 'self', mode = 'page' }: LinkProps) => {
-  const { style } = useElement(id);
+const Link = ({ ref, children, className = '', href = '#', target = 'self', mode = 'page' }: LinkProps) => {
+  const { style } = useElement();
   const {
     settings: { previewMode },
     contexts: { NavigationContext }
@@ -83,7 +83,7 @@ const Link = ({ id, ref, children, className = '', href = '#', target = 'self', 
   }, [ref, style, target, className, previewMode, url]);
 
   return (
-    <RootElement id={id} tag="a" {...propsMemo} onClick={handleClick}>
+    <RootElement tag="a" {...propsMemo} onClick={handleClick}>
       {children}
     </RootElement>
   );

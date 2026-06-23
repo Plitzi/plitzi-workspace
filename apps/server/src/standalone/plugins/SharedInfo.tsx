@@ -39,7 +39,7 @@ const SharedInfo = ({ id }: { id: string }) => {
   const phase = isClient ? 'hydrated ✅' : 'SSR ⚡';
 
   return (
-    <RootElement id={id} style={card(color)}>
+    <RootElement style={card(color)}>
       <div style={titleStyle(color)}>🔄 Shared Info — runtime: &quot;shared&quot; — {phase}</div>
 
       {elementData && (

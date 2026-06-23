@@ -25,7 +25,7 @@ const BlockJsx = ({
   contentCache = '',
   ...otherProps
 }: BlockJsxProps) => {
-  const { rootId, plitziElementLayout } = useElement(id);
+  const { rootId, plitziElementLayout } = useElement();
   const [JsxModule, setJsxModule] = useState<{ default: ComponentPluginWithHOC<typeof otherProps> }>();
   const [renderError, setRenderError] = useState<string>();
   const internalPropsTruncated = useMemo(

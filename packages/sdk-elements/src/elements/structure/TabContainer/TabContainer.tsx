@@ -15,12 +15,12 @@ export type TabContainerProps = {
   children?: ReactNode;
 };
 
-const TabContainer = ({ id, ref, className = '', children }: TabContainerProps) => {
+const TabContainer = ({ ref, className = '', children }: TabContainerProps) => {
   const [tabSelected, setTabSelected] = useState(0);
   const tabContainerContextValue = useMemo(() => ({ tabSelected, onSelect: setTabSelected }), [tabSelected]);
 
   return (
-    <RootElement id={id} ref={ref} className={clsx('plitzi-component__tab-container', className)}>
+    <RootElement ref={ref} className={clsx('plitzi-component__tab-container', className)}>
       <TabContainerContext value={tabContainerContextValue}>{children}</TabContainerContext>
     </RootElement>
   );

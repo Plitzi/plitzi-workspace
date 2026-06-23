@@ -44,7 +44,7 @@ const Dropdown = ({
   const {
     setElementState,
     definition: { styleSelectors }
-  } = useElement(id);
+  } = useElement();
   const {
     settings: { previewMode },
     utils: { getWindow }

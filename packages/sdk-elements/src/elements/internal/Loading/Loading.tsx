@@ -13,13 +13,13 @@ export type LoadingProps = {
   className?: string;
 };
 
-const Loading = ({ id, ref, className = '' }: LoadingProps) => {
+const Loading = ({ ref, className = '' }: LoadingProps) => {
   const {
     definition: { label }
-  } = useElement(id);
+  } = useElement();
 
   return (
-    <RootElement id={id} ref={ref} className={clsx('plitzi-component__loading', className)}>
+    <RootElement ref={ref} className={clsx('plitzi-component__loading', className)}>
       <span>
         <b>{label}</b> Loading...
       </span>

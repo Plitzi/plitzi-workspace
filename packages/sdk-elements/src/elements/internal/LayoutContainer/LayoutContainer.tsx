@@ -20,8 +20,8 @@ export type LayoutContainerProps = {
   subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
 };
 
-const LayoutContainer = ({ id, ref, className = '', children, subType = 'div' }: LayoutContainerProps) => {
-  const { plitziElementLayout } = useElement(id);
+const LayoutContainer = ({ ref, className = '', children, subType = 'div' }: LayoutContainerProps) => {
+  const { plitziElementLayout } = useElement();
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
@@ -76,7 +76,7 @@ const LayoutContainer = ({ id, ref, className = '', children, subType = 'div' }:
   }, [plitziElementLayout, previewMode, ref, updateMask]);
 
   return (
-    <RootElement id={id} ref={ref} tag={subType} className={clsx('plitzi-component__layout-container', className)}>
+    <RootElement ref={ref} tag={subType} className={clsx('plitzi-component__layout-container', className)}>
       {children}
     </RootElement>
   );

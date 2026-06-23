@@ -33,7 +33,7 @@ const Button = ({
 }: ButtonProps) => {
   const {
     definition: { label }
-  } = useElement(id);
+  } = useElement();
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();

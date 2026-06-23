@@ -36,7 +36,7 @@ const ModalContainer = ({
     definition: { styleSelectors, label = 'Modal' },
     elementState,
     setElementState
-  } = useElement(id);
+  } = useElement();
   const {
     contexts: { InteractionsContext }
   } = usePlitziServiceContext();

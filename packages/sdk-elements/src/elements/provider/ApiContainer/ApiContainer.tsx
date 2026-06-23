@@ -52,7 +52,7 @@ const ApiContainer = ({
 }: ApiContainerProps) => {
   const {
     definition: { label = 'Api Container' }
-  } = useElement(id);
+  } = useElement();
   const {
     settings: { previewMode, debugMode },
     contexts: { NavigationContext, InteractionsContext }

@@ -48,7 +48,7 @@ const captured: { props?: ProbeProps; ctx?: ElementContextValue } = {};
 
 const Probe = (props: ProbeProps) => {
   captured.props = props;
-  captured.ctx = useElement(props.id);
+  captured.ctx = useElement();
 
   return (
     <div data-testid="probe">

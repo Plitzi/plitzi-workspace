@@ -15,10 +15,10 @@ export type NotFoundProps = {
   className?: string;
 };
 
-const NotFound = ({ id, ref, className = '' }: NotFoundProps) => {
+const NotFound = ({ ref, className = '' }: NotFoundProps) => {
   const {
     definition: { label }
-  } = useElement(id);
+  } = useElement();
   const {
     settings: { isHydrating, previewMode }
   } = usePlitziServiceContext();
@@ -27,7 +27,7 @@ const NotFound = ({ id, ref, className = '' }: NotFoundProps) => {
   }
 
   return (
-    <RootElement id={id} ref={ref} className={clsx('plitzi-component__not-found', className)}>
+    <RootElement ref={ref} className={clsx('plitzi-component__not-found', className)}>
       <span>
         {label && (
           <>
