@@ -5,7 +5,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { StoreProvider } from '@plitzi/nexus/react';
 
 import { Link } from './Link';
-import { ElementContextSeed } from '../../../testUtils/elementTestUtils';
+import { ElementContext } from '../../../Element/ElementContext';
+import { skipHocEntry } from '../../../testUtils/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
@@ -24,9 +25,9 @@ describe('Link Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
       <StoreProvider>
-        <ElementContextSeed value={{ id: '', rootId: '', plitziJsxSkipHOC: true }}>
+        <ElementContext value={skipHocEntry()}>
           <Link />
-        </ElementContextSeed>
+        </ElementContext>
       </StoreProvider>
     );
 

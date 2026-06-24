@@ -3,7 +3,8 @@ import { createContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { Page } from './Page';
-import { ElementContextSeed } from '../../../testUtils/elementTestUtils';
+import { ElementContext } from '../../../Element/ElementContext';
+import { skipHocEntry } from '../../../testUtils/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
@@ -25,9 +26,9 @@ vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
 describe('Page Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
-      <ElementContextSeed value={{ id: '', rootId: '', plitziJsxSkipHOC: true }}>
+      <ElementContext value={skipHocEntry()}>
         <Page />
-      </ElementContextSeed>
+      </ElementContext>
     );
 
     expect(baseElement).toBeTruthy();

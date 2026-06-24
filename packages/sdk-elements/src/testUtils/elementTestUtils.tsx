@@ -1,7 +1,4 @@
-import { ElementContext } from '../Element/ElementContext';
-
-import type { ElementContextEntry, ElementContextValue } from '../Element/ElementContext';
-import type { ReactNode } from 'react';
+import type { ElementContextValue } from '../Element/ElementContext';
 
 // Test helper: builds a resolved element entry with sensible defaults so a component rendered with a mocked
 // `withElement` (identity) still finds its data through `useElement()` / `RootElement`.
@@ -15,10 +12,7 @@ const elementEntry = (id: string, overrides: Partial<ElementContextValue> = {}):
   ...overrides
 });
 
-// Provides a single element's resolved data through `ElementContext`, for tests that render a component with a mocked
-// `withElement` (identity). Tests that exercise the real `withElement` render without this — it provides its own.
-const ElementContextSeed = ({ value, children }: { value: ElementContextEntry; children: ReactNode }) => (
-  <ElementContext value={value as ElementContextValue}>{children}</ElementContext>
-);
+// Shorthand for skip-HOC context entries (manual-render path)
+const skipHocEntry = (id = ''): ElementContextValue => elementEntry(id, { plitziJsxSkipHOC: true });
 
-export { elementEntry, ElementContextSeed };
+export { elementEntry, skipHocEntry };

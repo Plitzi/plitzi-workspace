@@ -2,7 +2,8 @@ import { render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { NotFound } from './NotFound';
-import { ElementContextSeed, elementEntry } from '../../../testUtils/elementTestUtils';
+import { ElementContext } from '../../../Element/ElementContext';
+import { elementEntry } from '../../../testUtils/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
@@ -10,7 +11,7 @@ vi.mock('../../../Element/hocs/withElement', () => ({
 
 vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
   default: () => ({
-    settings: { previewMode: true },
+    settings: { previewMode: true, isHydrating: false },
     contexts: {}
   })
 }));
@@ -18,9 +19,9 @@ vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
 describe('NotFound Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
-      <ElementContextSeed value={elementEntry('not-found')}>
+      <ElementContext value={elementEntry('not-found')}>
         <NotFound />
-      </ElementContextSeed>
+      </ElementContext>
     );
 
     expect(baseElement).toBeTruthy();
