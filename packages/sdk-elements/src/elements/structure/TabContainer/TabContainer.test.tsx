@@ -19,7 +19,7 @@ describe('TabContainer Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
       <ElementContextSeed value={{ id: '', rootId: '', plitziJsxSkipHOC: true }}>
-        <TabContainer id="" />
+        <TabContainer />
       </ElementContextSeed>
     );
 

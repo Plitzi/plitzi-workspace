@@ -26,7 +26,7 @@ describe('CollectionContainer Tests', () => {
     const { baseElement } = render(
       <StoreProvider value={{}}>
         <ElementContextSeed value={elementEntry('collection')}>
-          <CollectionContainer id="collection" />
+          <CollectionContainer />
         </ElementContextSeed>
       </StoreProvider>
     );

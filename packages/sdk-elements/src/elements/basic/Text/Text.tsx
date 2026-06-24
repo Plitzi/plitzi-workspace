@@ -6,18 +6,19 @@ import { useMemo, use, useCallback } from 'react';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { RefObject } from 'react';
 
 export type TextProps = {
-  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
   content?: string | number;
 };
 
-const Text = ({ id, ref, content = 'Text', className = '' }: TextProps) => {
+const Text = ({ ref, content = 'Text', className = '' }: TextProps) => {
+  const { id } = useElement();
   const {
     settings: { previewMode },
     contexts: { BuilderContext }

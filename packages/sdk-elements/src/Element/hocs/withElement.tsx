@@ -12,7 +12,7 @@ import type { ElementContextValue } from '../ElementContext';
 import type { InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { FC, ReactNode } from 'react';
 
-// `id` is injected by the HOC from `internalProps`, so callers never pass it: omit it from the wrapped props.
+// `id` is no longer passed as a prop; components read it from `useElement()` context instead.
 export type WithElementProps<T> = {
   plitziJsxSkipHOC?: boolean;
   internalProps: InternalPropsSTG1;
@@ -32,18 +32,18 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     );
 
     const content = useMemo(() => {
-      const wrappedProps = { ...props, id } as unknown as T;
+      const wrappedProps = { ...props } as unknown as T;
 
       return <WrappedComponent {...wrappedProps} />;
-    }, [id, props]);
+    }, [props]);
 
     return <ElementContext value={entry}>{content}</ElementContext>;
   };
 
   // Pre-render phase: resolve the element's data and provide it to its subtree through `ElementContext`. The wrapped
-  // component receives the resolved attributes as props (plugin contract) plus its `id`; everything else it reads from
+  // component receives the resolved attributes as props (plugin contract); everything else it reads from
   // the ambient context via `useElement()`. The context value propagates top-down with this element's own re-render,
-  // so descendants read fresh data in the same pass — no `id` prop, no store subscription notified mid-render.
+  // so descendants read fresh data in the same pass — no store subscription notified mid-render.
   const FullElement = (props: WithElementProps<T>) => {
     const ref = useRef<HTMLElement>(undefined);
     const { id, rootId } = props.internalProps;
@@ -74,8 +74,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
         ...props.extraProps,
         ...customProps,
         // Props injected via other elements
-        ...omitKeys(props, ['plitziJsxSkipHOC', 'internalProps', 'className', 'children', 'extraProps']),
-        id
+        ...omitKeys(props, ['plitziJsxSkipHOC', 'internalProps', 'className', 'children', 'extraProps'])
       } as T;
       if (children) {
         wrappedProps = { ...wrappedProps, children };
@@ -86,7 +85,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
           <WrappedComponent {...wrappedProps} ref={ref} />
         </ErrorBoundary>
       );
-    }, [internalProps.attributes, props, customProps, children, id]);
+    }, [internalProps.attributes, props, customProps, children]);
 
     return <ElementContext value={elementData}>{content}</ElementContext>;
   };

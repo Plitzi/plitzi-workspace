@@ -9,7 +9,6 @@ import RootElement from '../../../Element/RootElement';
 import type { ReactNode, RefObject } from 'react';
 
 export type TabContainerProps = {
-  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
   children?: ReactNode;

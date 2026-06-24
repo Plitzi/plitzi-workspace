@@ -25,7 +25,7 @@ describe('Link Tests', () => {
     const { baseElement } = render(
       <StoreProvider>
         <ElementContextSeed value={{ id: '', rootId: '', plitziJsxSkipHOC: true }}>
-          <Link id="" />
+          <Link />
         </ElementContextSeed>
       </StoreProvider>
     );

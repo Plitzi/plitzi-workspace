@@ -20,7 +20,7 @@ describe('Button Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
       <ElementContextSeed value={elementEntry('btn', { definition: { label: 'Button' } as never })}>
-        <Button id="btn" />
+        <Button />
       </ElementContextSeed>
     );
 

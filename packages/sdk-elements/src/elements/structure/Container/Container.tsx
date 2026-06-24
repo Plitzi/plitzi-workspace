@@ -7,7 +7,6 @@ import RootElement from '../../../Element/RootElement';
 import type { ReactNode, RefObject } from 'react';
 
 export type ContainerProps = {
-  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
   subType?:
@@ -27,10 +26,9 @@ export type ContainerProps = {
   children?: ReactNode;
 };
 
-const Container = ({ id, ref, className = '', subType = 'div', children }: ContainerProps) => {
+const Container = ({ ref, className = '', subType = 'div', children }: ContainerProps) => {
   return (
     <RootElement
-      id={id}
       ref={ref}
       tag={subType}
       className={clsx(`plitzi-component__container plitzi-component__container-${subType}`, className)}

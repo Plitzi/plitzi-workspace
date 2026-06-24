@@ -27,7 +27,7 @@ describe('ApiContainer Tests', () => {
     const { baseElement } = render(
       <StoreProvider value={{}}>
         <ElementContextSeed value={elementEntry('')}>
-          <ApiContainer id="" />
+          <ApiContainer />
         </ElementContextSeed>
       </StoreProvider>
     );

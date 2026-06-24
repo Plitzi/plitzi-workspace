@@ -26,7 +26,7 @@ describe('Page Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
       <ElementContextSeed value={{ id: '', rootId: '', plitziJsxSkipHOC: true }}>
-        <Page id="" />
+        <Page />
       </ElementContextSeed>
     );
 

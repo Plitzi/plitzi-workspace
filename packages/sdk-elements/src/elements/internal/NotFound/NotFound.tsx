@@ -10,7 +10,6 @@ import RootElement from '../../../Element/RootElement';
 import type { RefObject } from 'react';
 
 export type NotFoundProps = {
-  id: string;
   ref?: RefObject<HTMLElement | null>;
   className?: string;
 };

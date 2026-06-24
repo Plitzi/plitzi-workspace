@@ -15,15 +15,15 @@ import type { SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ListControlledProps<T = unknown> = {
-  id: string;
   ref?: RefObject<HTMLElement>;
   className: string;
   children: ReactNode;
   items: T[];
 };
 
-const ListControlled = ({ id, ref, className = '', children, items = [] }: ListControlledProps) => {
+const ListControlled = ({ ref, className = '', children, items = [] }: ListControlledProps) => {
   const {
+    id,
     definition: { label }
   } = useElement();
   const {
@@ -57,7 +57,6 @@ const ListControlled = ({ id, ref, className = '', children, items = [] }: ListC
 
   return (
     <RootElement
-      id={id}
       ref={ref}
       className={clsx('plitzi-component__controlled-list', className, {
         'controlled-list--build-mode': !previewMode

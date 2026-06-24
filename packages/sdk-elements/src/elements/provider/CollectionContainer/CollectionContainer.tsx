@@ -16,7 +16,6 @@ import type { InteractionCallback, SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type CollectionContainerProps = {
-  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
   source?: string;
@@ -27,7 +26,6 @@ export type CollectionContainerProps = {
 };
 
 const CollectionContainer = ({
-  id,
   ref,
   className = '',
   source = '',
@@ -37,6 +35,7 @@ const CollectionContainer = ({
   singleRecord = false
 }: CollectionContainerProps) => {
   const {
+    id,
     definition: { label = 'Collection Container' }
   } = useElement();
   const {
@@ -90,7 +89,6 @@ const CollectionContainer = ({
 
   return (
     <RootElement
-      id={id}
       ref={ref}
       interactionCallbacks={interactionCallbacks}
       className={clsx('plitzi-component__collection-container', className, {

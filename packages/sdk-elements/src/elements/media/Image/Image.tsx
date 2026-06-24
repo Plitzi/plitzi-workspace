@@ -11,7 +11,6 @@ import RootElement from '../../../Element/RootElement';
 import type { RefObject, SyntheticEvent } from 'react';
 
 export type ImageProps = {
-  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
   src?: string;
@@ -23,7 +22,6 @@ export type ImageProps = {
 const fallback = getFallbackSVGBase64();
 
 const Image = ({
-  id,
   ref,
   className = '',
   src = 'https://cdn.plitzi.com/resources/img/placeholder-img.svg',
@@ -57,7 +55,6 @@ const Image = ({
 
   return (
     <RootElement
-      id={id}
       tag="img"
       draggable={false}
       ref={ref}

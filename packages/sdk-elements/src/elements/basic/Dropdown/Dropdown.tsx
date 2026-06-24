@@ -13,7 +13,6 @@ import RootElement from '../../../Element/RootElement';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 export type DropdownProps = {
-  id: string;
   ref?: RefObject<HTMLDivElement | null>;
   children?: ReactNode;
   className?: string;
@@ -28,7 +27,6 @@ export type DropdownProps = {
 };
 
 const Dropdown = ({
-  id,
   ref,
   children,
   className = '',
@@ -93,7 +91,6 @@ const Dropdown = ({
 
   return (
     <RootElement
-      id={id}
       ref={ref}
       className={clsx('plitzi-component__dropdown', className, { 'container--empty--skip': !previewMode && !children })}
       onClick={handleClick}

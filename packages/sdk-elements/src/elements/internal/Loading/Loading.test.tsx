@@ -20,7 +20,7 @@ describe('Loading Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
       <ElementContextSeed value={elementEntry('loading')}>
-        <Loading id="loading" />
+        <Loading />
       </ElementContextSeed>
     );
 

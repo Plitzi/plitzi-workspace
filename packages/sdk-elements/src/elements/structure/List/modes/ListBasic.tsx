@@ -5,7 +5,6 @@ import RootElement from '../../../../Element/RootElement';
 import type { ReactNode, RefObject } from 'react';
 
 export type ListBasicProps = {
-  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
   subType?: 'ul' | 'ol';

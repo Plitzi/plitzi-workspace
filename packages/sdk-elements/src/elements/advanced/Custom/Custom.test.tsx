@@ -27,7 +27,7 @@ describe('Custom Tests', () => {
     const { baseElement } = render(
       <ComponentContext value={{ components: { current: {} } } as ComponentContextValue}>
         <ElementContextSeed value={{ id: '', rootId: '', plitziJsxSkipHOC: true }}>
-          <Custom id="" />
+          <Custom />
         </ElementContextSeed>
       </ComponentContext>
     );

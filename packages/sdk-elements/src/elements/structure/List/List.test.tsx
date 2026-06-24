@@ -19,7 +19,7 @@ describe('List Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
       <ElementContextSeed value={{ id: '', rootId: '', plitziJsxSkipHOC: true }}>
-        <List id="" />
+        <List />
       </ElementContextSeed>
     );
 

@@ -9,7 +9,6 @@ import RootElement from '../../../Element/RootElement';
 import type { RefObject } from 'react';
 
 export type VideoProps = {
-  id: string;
   ref?: RefObject<HTMLElement>;
   src?: string;
   autoPlay?: boolean;
@@ -20,7 +19,6 @@ export type VideoProps = {
 };
 
 const Video = ({
-  id,
   ref,
   src,
   autoPlay = false,
@@ -45,7 +43,6 @@ const Video = ({
 
   return (
     <RootElement
-      id={id}
       tag="video"
       draggable={false}
       ref={ref}

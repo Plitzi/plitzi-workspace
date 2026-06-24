@@ -14,7 +14,6 @@ import RootElement from '../../../Element/RootElement';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 export type LinkProps = {
-  id: string;
   ref?: RefObject<HTMLElement>;
   children?: ReactNode;
   className?: string;

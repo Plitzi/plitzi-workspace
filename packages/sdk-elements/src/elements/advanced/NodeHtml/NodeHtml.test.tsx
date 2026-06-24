@@ -19,7 +19,7 @@ describe('NodeHtml Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
       <ElementContextSeed value={{ id: '', rootId: '', plitziJsxSkipHOC: true }}>
-        <NodeHtml id="" />
+        <NodeHtml />
       </ElementContextSeed>
     );
 

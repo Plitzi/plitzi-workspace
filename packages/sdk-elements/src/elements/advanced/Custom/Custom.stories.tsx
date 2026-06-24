@@ -15,7 +15,7 @@ const meta = {
   // }
   tags: ['autodocs'],
   argTypes: {},
-  args: { id: 'story' }
+  args: {}
 } satisfies Meta<typeof Custom>;
 
 export default meta;

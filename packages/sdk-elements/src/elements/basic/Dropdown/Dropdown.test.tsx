@@ -21,7 +21,7 @@ describe('Dropdown Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
       <ElementContextSeed value={elementEntry('')}>
-        <Dropdown id="" />
+        <Dropdown />
       </ElementContextSeed>
     );
 

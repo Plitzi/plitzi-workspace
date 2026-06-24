@@ -18,7 +18,6 @@ import type { SourceField, InteractionCallback, InteractionCallbackParamValues }
 import type { ReactNode, RefObject, SyntheticEvent } from 'react';
 
 export type FormProps = {
-  id: string;
   ref: RefObject<HTMLElement>;
   className: string;
   children: ReactNode;
@@ -44,7 +43,6 @@ export type FormContextValue = {
 };
 
 const Form = ({
-  id,
   ref,
   className = '',
   children,
@@ -56,6 +54,7 @@ const Form = ({
 }: FormProps) => {
   const [fields, setFields] = useState<Record<string, SourceField>>({});
   const {
+    id,
     definition: { label = 'Form' },
     setElementState
   } = useElement();
@@ -293,7 +292,6 @@ const Form = ({
 
   return (
     <RootElement
-      id={id}
       tag="form"
       ref={ref}
       method={method}

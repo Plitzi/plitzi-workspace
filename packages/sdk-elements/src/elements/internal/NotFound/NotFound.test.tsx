@@ -19,7 +19,7 @@ describe('NotFound Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
       <ElementContextSeed value={elementEntry('not-found')}>
-        <NotFound id="not-found" />
+        <NotFound />
       </ElementContextSeed>
     );
 

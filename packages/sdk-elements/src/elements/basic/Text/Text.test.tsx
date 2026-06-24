@@ -19,7 +19,7 @@ describe('Text Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
       <ElementContextSeed value={{ id: '', rootId: '', plitziJsxSkipHOC: true }}>
-        <Text id="" />
+        <Text />
       </ElementContextSeed>
     );
 

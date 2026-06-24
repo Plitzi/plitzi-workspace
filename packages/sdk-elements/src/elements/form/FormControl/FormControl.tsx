@@ -21,7 +21,6 @@ import type { FormContextValue } from '../Form';
 import type { ChangeEvent, RefObject } from 'react';
 
 export type FormControlProps = {
-  id: string;
   ref: RefObject<HTMLElement>;
   className: string;
   subType: 'text' | 'number' | 'email' | 'password' | 'time' | 'checkbox' | 'switch' | 'select' | 'textarea' | 'hidden';
@@ -42,7 +41,6 @@ export type FormControlProps = {
 };
 
 const FormControl = ({
-  id,
   ref,
   className = '',
   subType = 'text',
@@ -61,6 +59,7 @@ const FormControl = ({
   handleValidate
 }: FormControlProps) => {
   const {
+    id,
     rootId,
     definition: { styleSelectors }
   } = useElement();
@@ -72,7 +71,6 @@ const FormControl = ({
   if (!form && !previewMode) {
     return (
       <RootElement
-        id={id}
         ref={ref}
         className={clsx('plitzi-component__form-input', { 'form-input--out-of-context': !previewMode }, className)}
       >
@@ -102,7 +100,6 @@ const FormControl = ({
 
   return (
     <RootElement
-      id={id}
       ref={ref}
       className={clsx(
         'plitzi-component__form-control',

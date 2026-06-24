@@ -9,7 +9,6 @@ import TabContainerContext from '../TabContainerContext';
 import type { ReactElement, ReactNode, RefObject } from 'react';
 
 export type TabContainerHeaderProps = {
-  id: string;
   ref: RefObject<HTMLElement>;
   className: string;
   children: ReactNode;

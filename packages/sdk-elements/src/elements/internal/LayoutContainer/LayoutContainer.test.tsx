@@ -19,7 +19,7 @@ describe('LayoutContainer Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
       <ElementContextSeed value={{ id: '', rootId: '', plitziJsxSkipHOC: true }}>
-        <LayoutContainer id="" />
+        <LayoutContainer />
       </ElementContextSeed>
     );
 
