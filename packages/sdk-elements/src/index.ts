@@ -1,3 +1,4 @@
+import useRscData from './Element/hooks/useRscData';
 import JsxManager from './Element/JsxManager';
 import PlitziElementsProvider from './Element/PlitziElementsProvider';
 import * as elements from './elements';
@@ -5,10 +6,6 @@ import * as elementSettings from './elements/settings';
 
 export * from './elements';
 export * from './elements/settings';
-
-// Re-exported so the bundler includes it in the build graph (it is only imported by apps via its subpath, which would
-// otherwise leave it out of the emitted modules — preserveModules only emits files reachable from an index).
-export { default as useRscData } from './Element/hooks/useRscData';
 
 export const defaultElements = {
   dropdown: elements.Dropdown,
@@ -41,4 +38,4 @@ export const defaultElements = {
   collectionContainer: elements.CollectionContainer
 };
 
-export { elements, elementSettings, JsxManager, PlitziElementsProvider };
+export { useRscData, elements, elementSettings, JsxManager, PlitziElementsProvider };

@@ -15,7 +15,6 @@ export type NodeHtmlProps<T extends keyof JSX.IntrinsicElements = 'span'> = {
   children?: ReactNode;
 } & Omit<HTMLAttributes<T>, 'class'>;
 
-// `id` is destructured out so it never reaches `otherProps`, which is spread onto the DOM node.
 const NodeHtml = ({ ref, className = '', subType = 'span', children, ...otherProps }: NodeHtmlProps) => {
   const otherPropsMemo = useValueMemo(otherProps);
   const otherPropsParsed = useMemo(
