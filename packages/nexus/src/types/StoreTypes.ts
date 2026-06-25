@@ -184,6 +184,12 @@ export type StoreApi<T> = {
   // Optional identity for this store. Set via `createStore(init, { id })` or the `<StoreProvider id>` prop; lets a
   // descendant target this store by id (see the `storeId` hook option) and aids logging/devtools.
   id?: string;
+  // Stable identity derived from this scope's POSITION in the provider tree: the `/`-joined chain of ancestor
+  // `<StoreProvider segment>` values down to this one. Unlike `id` (an authoring name that collides when the same
+  // element renders in many places), `scopePath` is unique per instance — two scopes sharing an `id` at different
+  // tree positions get distinct paths. Use it to key per-instance persistence/devtools/SSR-hydration. In React read
+  // it off the nearest store via `useStoreById().scopePath` (no dedicated hook).
+  scopePath?: string;
   getState: GetState<T>;
   // Resolves a single path through the scope chain without materializing the full merged state — own value
   // shadows the parent's, except where both are objects (then the subtree at that path is deep-merged).

@@ -1,6 +1,8 @@
 import { render } from '@testing-library/react';
+import { createElement } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import { StoreProvider, useStoreById } from '@plitzi/nexus/react';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 
 import withElement from './withElement';
@@ -17,6 +19,21 @@ const definition: Element['definition'] = {
   label: 'L',
   type: 'text',
   styleSelectors: { base: 'el1' }
+};
+
+// `withElement` reads `schema.flat.<id>` to resolve the element and decide whether it needs a state scope; this text
+// element has no interactions, so it stays non-scoped (local-state path).
+const element: Element = { id: 'el1', attributes: {}, definition };
+
+// Same text type but carrying an interaction → stateful → gets a scope. Only the presence of an interaction matters
+// for gating, so a minimal fixture cast to the full type keeps the test focused.
+const interactions = { onClick: { type: 'trigger', action: 'onClick', enabled: true } } as unknown as NonNullable<
+  Element['definition']['interactions']
+>;
+const interactiveElement: Element = {
+  id: 'el2',
+  attributes: {},
+  definition: { ...definition, interactions }
 };
 
 vi.mock('@plitzi/sdk-event-bridge/hooks/useEventBridge', () => ({ default: vi.fn() }));
@@ -44,11 +61,14 @@ vi.mock('../hooks/useElementInternal', () => ({
 
 type ProbeProps = { id?: string; text?: string; customX?: string; extraX?: string; children?: ReactNode };
 
-const captured: { props?: ProbeProps; ctx?: ElementContextValue } = {};
+const captured: { props?: ProbeProps; ctx?: ElementContextValue; scopePath?: string } = {};
 
 const Probe = (props: ProbeProps) => {
   captured.props = props;
   captured.ctx = useElement();
+  // The nearest store's `scopePath` is the element id only when `withElement` mounted a per-element scope (segment=id);
+  // otherwise it resolves to the root store's empty path.
+  captured.scopePath = useStoreById().scopePath;
 
   return (
     <div data-testid="probe">
@@ -59,8 +79,10 @@ const Probe = (props: ProbeProps) => {
 };
 
 const Wrapped = withElement(Probe);
+const WrappedStateful = withElement(Probe, { stateful: true });
 
-const renderWrapped = (ui: ReactElement) => render(ui);
+const renderWrapped = (ui: ReactElement) =>
+  render(createElement(StoreProvider, { value: { schema: { flat: { el1: element, el2: interactiveElement } } } }, ui));
 
 describe('withElement', () => {
   beforeEach(() => {
@@ -115,5 +137,23 @@ describe('withElement', () => {
     expect(captured.ctx?.rootId).toBe('root');
     expect((captured.ctx as { plitziJsxSkipHOC?: boolean }).plitziJsxSkipHOC).toBe(true);
     expect(useEventBridge).not.toHaveBeenCalled();
+  });
+
+  it('does NOT mount a state scope for a plain element (no interactions, not stateful)', () => {
+    renderWrapped(<Wrapped internalProps={{ id: 'el1', rootId: 'root' }} />);
+
+    expect(captured.scopePath).toBe('');
+  });
+
+  it('mounts a state scope when the component is declared stateful, even without interactions', () => {
+    renderWrapped(<WrappedStateful internalProps={{ id: 'el1', rootId: 'root' }} />);
+
+    expect(captured.scopePath).toBe('el1');
+  });
+
+  it('mounts a state scope when the element carries interactions', () => {
+    renderWrapped(<Wrapped internalProps={{ id: 'el2', rootId: 'root' }} />);
+
+    expect(captured.scopePath).toBe('el2');
   });
 });

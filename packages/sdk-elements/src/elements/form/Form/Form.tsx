@@ -309,6 +309,6 @@ const Form = ({
   );
 };
 
-export default withElement(Form);
+export default withElement(Form, { stateful: true });
 
 export { Form };

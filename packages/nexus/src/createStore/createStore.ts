@@ -33,7 +33,13 @@ type WithScopeClaims = { scopeClaims?: ScopeClaims };
 
 export type CreateStoreOptions<TState extends object> = {
   id?: string;
+  // Position-derived identity for this scope (see `StoreApi.scopePath`). `StoreProvider` computes it from the
+  // ancestor `segment` chain and passes it here; standalone stores may set it directly.
+  scopePath?: string;
   parent?: StoreApi<TState>;
+  // Top-level keys this scope owns EXCLUSIVELY: when seeded they fully shadow the parent (no deep-merge / fall-through)
+  // so a per-instance slice stays isolated from an ancestor that uses the same key. Only meaningful with a `parent`.
+  exclusive?: ReadonlyArray<string>;
   middlewares?: StoreMiddleware<TState>[];
   /** When true, hydrate handlers are collected but NOT run during creation.
    *  Call `store.hydrate()` manually (StoreProvider does this in a useEffect).
@@ -91,7 +97,7 @@ function createStore<TState extends object>(
     invalidate: invalidateReads,
     resetCache,
     getMergeCount
-  } = createChainReads<TState>(getOwnState, getOwnSnapshot, parent);
+  } = createChainReads<TState>(getOwnState, getOwnSnapshot, parent, storeOptions?.exclusive);
 
   // A silent ancestor commit can't reach us through `subscribe`, so the parent tells us directly: invalidate our
   // cached reads and relay the event to our own scoped children.
@@ -278,6 +284,7 @@ function createStore<TState extends object>(
 
   const api: StoreApi<TState> = {
     id: storeOptions?.id,
+    scopePath: storeOptions?.scopePath,
     getState,
     getPath,
     setState,

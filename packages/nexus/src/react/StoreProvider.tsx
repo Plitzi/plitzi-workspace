@@ -24,6 +24,15 @@ export type StoreProviderProps<TState extends object = any> = {
   // Names this store so descendants can reach it by id — `useStore(path, { storeId })` — even across a disconnected
   // (`inherit`-less) provider in between. Identity also shows up on the store (`store.id`) for logging/devtools.
   id?: string;
+  // Contributes one segment to the position-derived `scopePath` (see `StoreApi.scopePath`): the child path is the
+  // parent path joined with this segment by `/`. Omit it for structural/wrapper providers that should not add an
+  // addressable instance — they forward the parent path unchanged. Among siblings a `segment` must be unique to keep
+  // paths collision-free (for a repeated subtree, fold the row key/index in, e.g. `segment={`${id}#${index}`}`).
+  segment?: string;
+  // Top-level keys this scope owns EXCLUSIVELY (only with `inherit="live"`): a seeded key here fully shadows the
+  // parent — no deep-merge, no fall-through — keeping a per-instance slice (e.g. an element's `state`) isolated from
+  // an ancestor scope that uses the same key. Keys not seeded by this provider are still inherited normally.
+  isolate?: ReadonlyArray<string>;
   path?: string;
   value?: Partial<TState> | ((state: TState) => TState);
   /**
@@ -46,6 +55,8 @@ export type StoreProviderProps<TState extends object = any> = {
 const StoreProvider = <TState extends object = any>({
   store,
   id,
+  segment,
+  isolate,
   path,
   value,
   inherit,
@@ -56,6 +67,14 @@ const StoreProvider = <TState extends object = any>({
   const parentStore = useContext(StoreContext) as StoreApi<TState> | undefined;
   const inheritedMiddlewares = useContext(StoreMiddlewareContext) as StoreMiddleware<TState>[] | undefined;
   const parentRegistry = useContext(StoreRegistryContext);
+  // The parent scope path travels on the parent store itself (`store.scopePath`) — no separate context. A
+  // `segment`-less provider is transparent: it forwards the parent path so structural wrappers don't pollute the
+  // addressable identity. With a `segment`, this scope's path extends the parent's by one `/`-joined step.
+  const parentScopePath = parentStore?.scopePath ?? '';
+  const scopePath = useMemo(
+    () => (segment === undefined ? parentScopePath : parentScopePath ? `${parentScopePath}/${segment}` : segment),
+    [parentScopePath, segment]
+  );
   const storeRef = useRef<StoreApi<TState>>(undefined);
   const liveChain = inherit === 'live';
   const storeState = useMemo(() => {
@@ -80,6 +99,8 @@ const StoreProvider = <TState extends object = any>({
       store ??
       createStore<TState>(() => storeState, {
         id,
+        scopePath,
+        exclusive: liveChain ? isolate : undefined,
         parent: liveChain ? parentStore : undefined,
         middlewares: storeMiddlewares.length > 0 ? storeMiddlewares : undefined,
         deferHydrate: true

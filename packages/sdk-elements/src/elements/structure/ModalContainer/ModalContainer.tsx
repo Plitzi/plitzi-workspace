@@ -176,6 +176,6 @@ const ModalContainer = ({
   );
 };
 
-export default withElement(ModalContainer);
+export default withElement(ModalContainer, { stateful: true });
 
 export { ModalContainer };

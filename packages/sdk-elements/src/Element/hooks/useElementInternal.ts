@@ -2,7 +2,6 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
 import { processTwig, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import useElementDataSource from './useElementDataSource';
 import useElementState from './useElementState';
@@ -78,25 +77,24 @@ export const getProps = (
 };
 
 export type UseElementInternalProps = {
+  // The resolved element is read once by `withElement` (which also decides `scoped`) and threaded in, so the element
+  // is subscribed to a single time per instance instead of again here.
+  element: Element;
+  scoped: boolean;
   children?: ReactNode;
   internalProps: InternalPropsSTG1;
   previewMode?: boolean;
-  baseElementId?: string;
 };
 
 const useElementInternal = ({
+  element,
+  scoped,
   children,
   internalProps,
-  previewMode = false,
-  baseElementId
+  previewMode = false
 }: UseElementInternalProps) => {
   const { id } = internalProps;
-  const [element] = useCommonStore(`schema.flat.${id}`);
-  if (!(element as Element | undefined)) {
-    throw new Error(`Element ${id} not found, Page ${baseElementId}`);
-  }
-
-  const { state, setElementState } = useElementState({ bindings: element.definition.bindings, previewMode });
+  const { state, setElementState } = useElementState({ bindings: element.definition.bindings, previewMode, scoped });
   const dataSource = useElementDataSource({ bindings: element.definition.bindings, sources: ['variables'] });
 
   const internalPropsParsed = useMemo(
