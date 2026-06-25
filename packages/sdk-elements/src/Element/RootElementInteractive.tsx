@@ -11,13 +11,38 @@ import useElementInteractions from './hooks/useElementInteractions';
 import useInternalClassName from './hooks/useInternalClassName';
 import StaticTag from './StaticTag';
 
-import type { InteractiveProps } from './RootElement';
+import type { ElementContextValue } from './ElementContext';
+import type { DebugParams } from './RootElement';
+import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
+import type { InteractionCallback } from '@plitzi/sdk-shared';
+import type { Context, CSSProperties, JSX, ReactNode, RefObject } from 'react';
+
+export type ResolvedProps = {
+  elementContext: ElementContextValue;
+  tag: keyof JSX.IntrinsicElements;
+  refProp?: RefObject<HTMLElement | null>;
+  styleParsed?: CSSProperties;
+  className: string;
+  interactionTriggers?: Record<string, InteractionCallback>;
+  interactionCallbacks?: Record<string, InteractionCallback>;
+  otherProps: Record<string, unknown>;
+  children?: ReactNode;
+};
+
+export type RootElementInteractiveProps = ResolvedProps & {
+  InteractionsContext: Context<InteractionsContextValue>;
+  previewMode: boolean;
+  debugMode: boolean;
+  baseElementId?: string;
+  params: DebugParams;
+  serverMarker?: { 'data-rsc-id': string };
+};
 
 // Post-render phase, interactions branch: wires native events + the interaction rule engine and computes the
 // element's internal class names. Only mounted when an InteractionsContext is present so its hooks run unconditionally.
 const RootElementInteractive = ({
   elementContext,
-  Tag,
+  tag,
   refProp,
   styleParsed,
   className,
@@ -31,7 +56,7 @@ const RootElementInteractive = ({
   baseElementId,
   params,
   serverMarker
-}: InteractiveProps) => {
+}: RootElementInteractiveProps) => {
   const {
     id,
     className: classNameInternalProp,
@@ -136,7 +161,7 @@ const RootElementInteractive = ({
 
   return (
     <StaticTag
-      Tag={Tag}
+      tag={tag}
       refProp={refProp}
       style={{ ...style, ...styleParsed }}
       className={clsx(classNameInternalProp, classNameInternal)}
