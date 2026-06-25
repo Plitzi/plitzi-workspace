@@ -36,6 +36,8 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   const styleParsed = useMemo(() => parseStyle(styleProp), [styleProp]);
   const elementContext = useElement();
   const serviceContext = usePlitziServiceContext();
+  const previewMode = serviceContext.settings.previewMode ?? true;
+  const debugMode = Boolean(serviceContext.settings.debugMode);
 
   const params = useMemo<DebugParams>(() => {
     if (elementContext.plitziJsxSkipHOC) {
@@ -47,8 +49,6 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
       rootId,
       definition: { type, label }
     } = elementContext;
-    const previewMode = serviceContext.settings.previewMode ?? true;
-    const debugMode = Boolean(serviceContext.settings.debugMode);
     if (!debugMode && (previewMode || !type || rootId !== serviceContext.root.baseElementId)) {
       return {};
     }
@@ -60,7 +60,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
       'data-type': type ? type : 'unknown',
       'data-root-render-element': true
     };
-  }, [elementContext, serviceContext]);
+  }, [elementContext, serviceContext, previewMode, debugMode]);
 
   if (elementContext.plitziJsxSkipHOC) {
     return (
@@ -71,12 +71,9 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   }
 
   const {
-    settings,
     root: { baseElementId },
     contexts
   } = serviceContext;
-  const previewMode = settings.previewMode ?? true;
-  const debugMode = Boolean(settings.debugMode);
   // The service-context type declares InteractionsContext as required, but interaction-less trees (SSR, tests) omit
   // it, so we narrow to nullable to keep the static-tag fallback below.
   const InteractionsContext = contexts.InteractionsContext as Context<InteractionsContextValue> | undefined;
