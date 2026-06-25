@@ -1,9 +1,9 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, memo } from 'react';
 
-import { PlitziElementsProvider } from '@plitzi/sdk-elements/Element/PlitziElementsProvider';
 import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
 import { Page } from '@plitzi/sdk-elements/elements';
+import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import SpaceContainer from '../../Space/SpaceContainer';
@@ -36,10 +36,10 @@ const RawMode = ({ pageId = '', style = '', plitziContextValue, renderMode = 'ra
       <style type="text/css" rel="stylesheet" data-id="plitzi-runtime-style">
         {style}
       </style>
-      <PlitziElementsProvider value={plitziContextValue}>
+      <PlitziServiceProvider value={plitziContextValue}>
         {pageId && renderMode !== 'widget' && <Page key={pageId} internalProps={pageValueMemo} />}
         {pageId && renderMode === 'widget' && <PluginManager key={pageId} type={type} internalProps={pageValueMemo} />}
-      </PlitziElementsProvider>
+      </PlitziServiceProvider>
       <MadeInPlitzi pageId={pageId} />
     </SpaceContainer>
   );
