@@ -10,7 +10,7 @@ import { ElementContext } from '../ElementContext';
 import { omitKeys } from '../helpers/omitKeys';
 import useElementInternal from '../hooks/useElementInternal';
 
-import type { ElementContextValue, SkipHocElementContextValue } from '../ElementContext';
+import type { ElementContextValue } from '../ElementContext';
 import type { CommonState, Element, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { FC, ReactNode } from 'react';
 
@@ -52,7 +52,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>, options: WithEle
 
   const SkipHocElement = (props: WithElementProps<T>) => {
     const { id, rootId } = props.internalProps;
-    const entry = useMemo<SkipHocElementContextValue>(() => ({ id, rootId, plitziJsxSkipHOC: true }), [id, rootId]);
+    const entry = useMemo<ElementContextValue<'skipHOC'>>(() => ({ id, rootId, plitziJsxSkipHOC: true }), [id, rootId]);
 
     return (
       <ElementContext value={entry}>
