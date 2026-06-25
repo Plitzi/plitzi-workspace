@@ -34,7 +34,7 @@ describe('PlitziSdk', () => {
     } as ElementContextValue;
     const { baseElement } = render(
       <ElementContext value={value}>
-        <PlitziSdk id="sdk" />
+        <PlitziSdk />
       </ElementContext>
     );
 
