@@ -11,7 +11,7 @@ import useElementInteractions from './hooks/useElementInteractions';
 import useInternalClassName from './hooks/useInternalClassName';
 import StaticTag from './StaticTag';
 
-import type { InteractiveProps } from './RootElement.types';
+import type { InteractiveProps } from './RootElement';
 
 // Post-render phase, interactions branch: wires native events + the interaction rule engine and computes the
 // element's internal class names. Only mounted when an InteractionsContext is present so its hooks run unconditionally.

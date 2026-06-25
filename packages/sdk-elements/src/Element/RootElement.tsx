@@ -7,15 +7,46 @@ import useElement from './hooks/useElement';
 import RootElementInteractive from './RootElementInteractive';
 import StaticTag from './StaticTag';
 
-import type { DebugParams, ElementTag, RootElementProps } from './RootElement.types';
+import type { ElementContextValue } from './ElementContext';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { Context, JSX } from 'react';
+import type { InteractionCallback } from '@plitzi/sdk-shared';
+import type { Context, CSSProperties, FC, JSX, ReactNode, RefObject } from 'react';
 
-// Entry + post-render phase: resolves the element's data (`useElement`), the service context and the debug params,
-// then renders the manual-render static tag (`plitziJsxSkipHOC`, used by BlockJsx), the interaction-less static tag,
-// or the interactive variant. The interactions wiring lives in `RootElementInteractive` because it depends on the
-// optional `InteractionsContext`, which would otherwise force conditional hooks here. The service-context fields are
-// read only past the `plitziJsxSkipHOC` branch so the manual-render fast-path never depends on a full context.
+export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {
+  ref?: RefObject<HTMLElement | null>;
+  children?: ReactNode;
+  tag?: T;
+  className?: string;
+  interactionTriggers?: Record<string, InteractionCallback>;
+  interactionCallbacks?: Record<string, InteractionCallback>;
+  style?: string | CSSProperties;
+} & Omit<Partial<JSX.IntrinsicElements[T]>, 'ref' | 'style' | 'id'>;
+
+export type ElementTag = FC<{ [key: string]: unknown }>;
+
+export type DebugParams = Record<string, string | undefined | boolean>;
+
+export type ResolvedProps = {
+  elementContext: ElementContextValue;
+  Tag: ElementTag;
+  refProp?: RefObject<HTMLElement | null>;
+  styleParsed?: CSSProperties;
+  className: string;
+  interactionTriggers?: Record<string, InteractionCallback>;
+  interactionCallbacks?: Record<string, InteractionCallback>;
+  otherProps: Record<string, unknown>;
+  children?: ReactNode;
+};
+
+export type InteractiveProps = ResolvedProps & {
+  InteractionsContext: Context<InteractionsContextValue>;
+  previewMode: boolean;
+  debugMode: boolean;
+  baseElementId?: string;
+  params: DebugParams;
+  serverMarker?: { 'data-rsc-id': string };
+};
+
 const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   ref,
   children,
