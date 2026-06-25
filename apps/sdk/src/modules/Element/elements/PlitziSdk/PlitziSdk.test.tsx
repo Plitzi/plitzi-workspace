@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import { createContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
-import { ElementContext } from '@plitzi/sdk-elements/Element/ElementContext';
+import ElementContext from '@plitzi/sdk-elements/Element/ElementContext';
 
 import { PlitziSdk } from './PlitziSdk';
 

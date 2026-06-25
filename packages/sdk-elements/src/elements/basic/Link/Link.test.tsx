@@ -5,7 +5,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { StoreProvider } from '@plitzi/nexus/react';
 
 import { Link } from './Link';
-import { ElementContext } from '../../../Element/ElementContext';
+import ElementContext from '../../../Element/ElementContext';
 import { skipHocEntry } from '../../../testUtils/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({

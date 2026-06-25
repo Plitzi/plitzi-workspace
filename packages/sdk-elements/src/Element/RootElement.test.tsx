@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 
-import { ElementContext } from './ElementContext';
+import ElementContext from './ElementContext';
 import RootElement from './RootElement';
 
 import type { ElementContextValue } from './ElementContext';

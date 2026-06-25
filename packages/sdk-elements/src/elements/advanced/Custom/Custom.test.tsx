@@ -5,7 +5,7 @@ import { describe, it, expect, vi } from 'vitest';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 import { Custom } from './Custom';
-import { ElementContext } from '../../../Element/ElementContext';
+import ElementContext from '../../../Element/ElementContext';
 import { skipHocEntry } from '../../../testUtils/elementTestUtils';
 
 import type { ComponentContextValue } from '@plitzi/sdk-shared';

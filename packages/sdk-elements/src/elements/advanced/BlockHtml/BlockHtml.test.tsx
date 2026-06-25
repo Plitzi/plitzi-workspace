@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { BlockHtml } from './BlockHtml';
-import { ElementContext } from '../../../Element/ElementContext';
+import ElementContext from '../../../Element/ElementContext';
 import { skipHocEntry } from '../../../testUtils/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({

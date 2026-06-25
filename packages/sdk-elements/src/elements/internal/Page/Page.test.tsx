@@ -3,7 +3,7 @@ import { createContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { Page } from './Page';
-import { ElementContext } from '../../../Element/ElementContext';
+import ElementContext from '../../../Element/ElementContext';
 import { skipHocEntry } from '../../../testUtils/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
