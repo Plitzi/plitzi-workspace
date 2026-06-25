@@ -1,6 +1,5 @@
 import useRscData from './Element/hooks/useRscData';
 import JsxManager from './Element/JsxManager';
-import PlitziElementsProvider from './Element/PlitziElementsProvider';
 import * as elements from './elements';
 import * as elementSettings from './elements/settings';
 
@@ -38,4 +37,4 @@ export const defaultElements = {
   collectionContainer: elements.CollectionContainer
 };
 
-export { useRscData, elements, elementSettings, JsxManager, PlitziElementsProvider };
+export { useRscData, elements, elementSettings, JsxManager };
