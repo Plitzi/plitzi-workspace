@@ -1,5 +1,5 @@
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { useStoreById } from '@plitzi/nexus/react';
 import { useCommonStore, useCommonStoreSetter } from '@plitzi/sdk-shared/store';
@@ -66,20 +66,16 @@ const useElementState = ({ id, bindings, previewMode }: UseElementStateProps) =>
     [attributesBinded, path, previewMode, setState]
   );
 
-  // Only replicas (a non-empty `scopePath` — e.g. list rows) churn through many short-lived slices, so only they need
-  // unmount cleanup to keep the shared store from accumulating stale entries. A plain element lives as long as its
-  // page, so it skips the effect entirely and stays at the no-store floor. `path` rides a ref so the cleanup clears
-  // exactly the slice the element used.
-  const pathRef = useRef(path);
-  pathRef.current = path;
-  const cleanupSlice = previewMode && !!scopePath;
+  // Only replicas (a non-empty `scopePath` — e.g. list rows) churn through many short-lived slices, so only they clear
+  // theirs on unmount to keep the shared store from accumulating stale entries. A plain element lives as long as its
+  // page, so it skips the effect entirely and stays at the no-store floor.
   useEffect(() => {
-    if (!cleanupSlice) {
+    if (!previewMode || !scopePath) {
       return undefined;
     }
 
-    return () => setState(pathRef.current, undefined);
-  }, [cleanupSlice, setState]);
+    return () => setState(path, undefined);
+  }, [previewMode, scopePath, path, setState]);
 
   return { state, setElementState };
 };

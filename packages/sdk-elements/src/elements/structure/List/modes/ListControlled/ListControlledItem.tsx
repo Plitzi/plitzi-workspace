@@ -31,30 +31,24 @@ const ListControlledItem = ({
   // record→id bookkeeping, so the segment never collides across sibling lists.
   const segment = useId();
 
-  if (isTemplate) {
-    return (
-      <div className={clsx('plitzi-component__controlled-list-item', className)}>
-        <div className="controlled-list-item__counter">{`List Item - ${itemCount}`}</div>
-        <ReplicaProvider>
-          <StoreProvider
-            inherit="live"
-            segment={segment}
-            value={{ runtime: { sources: { [source]: dataSourceValue } } }}
-          >
-            {children}
-          </StoreProvider>
-        </ReplicaProvider>
-      </div>
-    );
-  }
-
-  return (
+  const scopedRow = (
     <ReplicaProvider>
       <StoreProvider inherit="live" segment={segment} value={{ runtime: { sources: { [source]: dataSourceValue } } }}>
         {children}
       </StoreProvider>
     </ReplicaProvider>
   );
+
+  if (isTemplate) {
+    return (
+      <div className={clsx('plitzi-component__controlled-list-item', className)}>
+        <div className="controlled-list-item__counter">{`List Item - ${itemCount}`}</div>
+        {scopedRow}
+      </div>
+    );
+  }
+
+  return scopedRow;
 };
 
 export default ListControlledItem;
