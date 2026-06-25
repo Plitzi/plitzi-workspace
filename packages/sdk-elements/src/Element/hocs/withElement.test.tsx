@@ -42,7 +42,7 @@ vi.mock('../hooks/useElementInternal', () => ({
   })
 }));
 
-type ProbeProps = { id: string; text?: string; customX?: string; extraX?: string; children?: ReactNode };
+type ProbeProps = { id?: string; text?: string; customX?: string; extraX?: string; children?: ReactNode };
 
 const captured: { props?: ProbeProps; ctx?: ElementContextValue } = {};
 
