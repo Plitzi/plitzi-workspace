@@ -11,14 +11,13 @@ import type { Environment } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type PlitziSdkProps = {
-  id: string;
   ref?: RefObject<HTMLElement>;
   className?: string;
   spaceKey?: string;
   environment?: Environment;
 };
 
-const PlitziSdk = ({ id, ref, className, spaceKey, environment = 'main' }: PlitziSdkProps) => {
+const PlitziSdk = ({ ref, className, spaceKey, environment = 'main' }: PlitziSdkProps) => {
   const {
     settings: { previewMode },
     contexts: { NetworkContext }
@@ -27,7 +26,6 @@ const PlitziSdk = ({ id, ref, className, spaceKey, environment = 'main' }: Plitz
 
   return (
     <RootElement
-      id={id}
       ref={ref}
       className={clsx('plitzi-component__plitzi-sdk', className, { 'with__plitzi-sdk': !previewMode })}
     >
