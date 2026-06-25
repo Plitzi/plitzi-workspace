@@ -34,9 +34,7 @@ export type ElementContextValue = ElementContextIdentity & {
   ) => boolean;
 };
 
-export type ElementContextEntry = ElementContextValue | SkipHocElementContextValue;
-
-const ElementContext = createContext<ElementContextValue | undefined>(undefined);
+const ElementContext = createContext<ElementContextValue | SkipHocElementContextValue | undefined>(undefined);
 ElementContext.displayName = 'ElementContext';
 
 export { ElementContext };

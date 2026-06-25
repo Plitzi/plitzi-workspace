@@ -8,36 +8,30 @@ import { ElementContext } from '../ElementContext';
 import { omitKeys } from '../helpers/omitKeys';
 import useElementInternal from '../hooks/useElementInternal';
 
-import type { ElementContextValue } from '../ElementContext';
+import type { ElementContextValue, SkipHocElementContextValue } from '../ElementContext';
 import type { InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { FC, ReactNode } from 'react';
 
-// `id` is no longer passed as a prop; components read it from `useElement()` context instead.
 export type WithElementProps<T> = {
   plitziJsxSkipHOC?: boolean;
   internalProps: InternalPropsSTG1;
   className?: string;
   children?: ReactNode;
   extraProps?: Record<string, unknown>;
-} & Omit<T, 'id'>;
+} & T;
 
 const withElement = <T extends object>(WrappedComponent: FC<T>) => {
   // Manual-render path (JSX manager): provides only element identity through the context; no resolution. The skip
   // entry lacks the resolved fields, so it is cast — `RootElement` branches on `plitziJsxSkipHOC` before reading them.
   const SkipHocElement = (props: WithElementProps<T>) => {
     const { id, rootId } = props.internalProps;
-    const entry = useMemo<ElementContextValue>(
-      () => ({ id, rootId, plitziJsxSkipHOC: true }) as ElementContextValue,
-      [id, rootId]
+    const entry = useMemo<SkipHocElementContextValue>(() => ({ id, rootId, plitziJsxSkipHOC: true }), [id, rootId]);
+
+    return (
+      <ElementContext value={entry}>
+        <WrappedComponent {...props} />
+      </ElementContext>
     );
-
-    const content = useMemo(() => {
-      const wrappedProps = { ...props } as unknown as T;
-
-      return <WrappedComponent {...wrappedProps} />;
-    }, [props]);
-
-    return <ElementContext value={entry}>{content}</ElementContext>;
   };
 
   // Pre-render phase: resolve the element's data and provide it to its subtree through `ElementContext`. The wrapped
