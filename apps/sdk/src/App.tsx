@@ -173,7 +173,7 @@ const App = ({
       middlewares={[
         loggerMw(createStoreDevToolsLogger<SdkState>('sdk')),
         runtimeStatePersist<SdkState>(webId),
-        ...(debugMode ? [historyMw<SdkState>()] : [])
+        ...(debugMode ? [historyMw<SdkState>({ shouldRecord: p => !p?.startsWith('runtime.elements') })] : [])
       ]}
     >
       <ThemeProvider>

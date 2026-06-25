@@ -25,8 +25,16 @@ export type CommonState = {
   segments: Record<string, Segment>;
   // Runtime: real source DATA, all under `runtime.sources.*` — globals (typed) plus scoped per-instance sources
   // (dynamic keys), combined by the store's deep-merge scope chain. `runtime.state` holds the user/application state
-  // (writable at runtime via interactions), separate from source values.
-  runtime?: { sources: RuntimeSourceValues & Record<string, unknown>; state?: Record<string, unknown> };
+  // (writable at runtime via interactions), separate from source values. `runtime.elements` holds each element's
+  // private UI state, keyed by element id (and a `scopePath` sub-key for duplicated instances like list rows); it is
+  // ephemeral — excluded from persist and history — and exists so element state is uniformly observable in devtools.
+  runtime?: {
+    sources: RuntimeSourceValues & Record<string, unknown>;
+    // Global State
+    state?: Record<string, unknown>;
+    // Element State
+    elements?: Record<string, unknown>;
+  };
   // Data-source REGISTRY (authoring metadata: which sources exist + their fields). Only definitions for
   // enumeration + the builder editor — NOT the real values (those are in `runtime.sources`).
   sources?: Record<string, Source>;

@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import { createElement } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { StoreProvider, useStoreById } from '@plitzi/nexus/react';
+import { StoreProvider } from '@plitzi/nexus/react';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 
 import withElement from './withElement';
@@ -21,7 +21,7 @@ const definition: Element['definition'] = {
   styleSelectors: { base: 'el1' }
 };
 
-// `withElement` reads `schema.flat.<id>` to resolve the element, then mounts a per-element state scope for it.
+// `withElement` reads `schema.flat.<id>` to resolve the element and inject its resolved props.
 const element: Element = { id: 'el1', attributes: {}, definition };
 
 vi.mock('@plitzi/sdk-event-bridge/hooks/useEventBridge', () => ({ default: vi.fn() }));
@@ -49,14 +49,11 @@ vi.mock('../hooks/useElementInternal', () => ({
 
 type ProbeProps = { id?: string; text?: string; customX?: string; extraX?: string; children?: ReactNode };
 
-const captured: { props?: ProbeProps; ctx?: ElementContextValue; scopePath?: string } = {};
+const captured: { props?: ProbeProps; ctx?: ElementContextValue } = {};
 
 const Probe = (props: ProbeProps) => {
   captured.props = props;
   captured.ctx = useElement();
-  // The nearest store's `scopePath` is the element id only when `withElement` mounted a per-element scope (segment=id);
-  // otherwise it resolves to the root store's empty path.
-  captured.scopePath = useStoreById().scopePath;
 
   return (
     <div data-testid="probe">
@@ -124,11 +121,5 @@ describe('withElement', () => {
     expect(captured.ctx?.rootId).toBe('root');
     expect((captured.ctx as { plitziJsxSkipHOC?: boolean }).plitziJsxSkipHOC).toBe(true);
     expect(useEventBridge).not.toHaveBeenCalled();
-  });
-
-  it('mounts a per-element state scope for every element (scopePath derived from the element id)', () => {
-    renderWrapped(<Wrapped internalProps={{ id: 'el1', rootId: 'root' }} />);
-
-    expect(captured.scopePath).toBe('el1');
   });
 });

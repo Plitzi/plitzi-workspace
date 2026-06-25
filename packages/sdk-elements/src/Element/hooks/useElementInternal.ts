@@ -87,7 +87,7 @@ export type UseElementInternalProps = {
 
 const useElementInternal = ({ element, children, internalProps, previewMode = false }: UseElementInternalProps) => {
   const { id } = internalProps;
-  const { state, setElementState } = useElementState({ bindings: element.definition.bindings, previewMode });
+  const { state, setElementState } = useElementState({ id, bindings: element.definition.bindings, previewMode });
   const dataSource = useElementDataSource({ bindings: element.definition.bindings, sources: ['variables'] });
 
   const internalPropsParsed = useMemo(
