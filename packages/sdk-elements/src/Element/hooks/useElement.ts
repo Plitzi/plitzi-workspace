@@ -6,7 +6,7 @@ import type { ElementContextValue } from '../ElementContext';
 
 const useElement = () => {
   const data = use(ElementContext);
-  if (data === undefined) {
+  if ((data as ElementContextValue | undefined) === undefined) {
     throw new Error('Element data not found. Make sure the element is rendered under withElement.');
   }
 
