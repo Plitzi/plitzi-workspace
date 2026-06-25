@@ -24,4 +24,4 @@ export type ElementContextValue<T extends 'skipHOC' | 'full' = 'full'> = {
 const ElementContext = createContext<ElementContextValue | ElementContextValue<'skipHOC'> | undefined>(undefined);
 ElementContext.displayName = 'ElementContext';
 
-export { ElementContext };
+export default ElementContext;

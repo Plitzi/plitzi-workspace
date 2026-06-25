@@ -34,10 +34,6 @@
       "types": "./dist/Element/JsxManager.d.ts",
       "import": "./dist/Element/JsxManager.mjs"
     },
-    "./Element/PlitziElementsProvider": {
-      "types": "./dist/Element/PlitziElementsProvider.d.ts",
-      "import": "./dist/Element/PlitziElementsProvider.mjs"
-    },
     "./Element/PluginManager": {
       "types": "./dist/Element/PluginManager.d.ts",
       "import": "./dist/Element/PluginManager.mjs"

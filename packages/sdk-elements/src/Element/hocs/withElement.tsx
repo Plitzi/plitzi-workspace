@@ -5,7 +5,7 @@ import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
-import { ElementContext } from '../ElementContext';
+import ElementContext from '../ElementContext';
 import { omitKeys } from '../helpers/omitKeys';
 import useElementInternal from '../hooks/useElementInternal';
 

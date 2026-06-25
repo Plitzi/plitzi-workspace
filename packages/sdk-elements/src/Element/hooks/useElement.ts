@@ -1,6 +1,6 @@
 import { use } from 'react';
 
-import { ElementContext } from '../ElementContext';
+import ElementContext from '../ElementContext';
 
 import type { ElementContextValue } from '../ElementContext';
 
