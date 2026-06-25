@@ -21,7 +21,9 @@ export type ElementContextValue<T extends 'skipHOC' | 'full' = 'full'> = {
       ) => boolean;
     });
 
-const ElementContext = createContext<ElementContextValue | ElementContextValue<'skipHOC'> | undefined>(undefined);
+const ElementContext = createContext<ElementContextValue | ElementContextValue<'skipHOC'>>(
+  undefined as unknown as ElementContextValue
+);
 ElementContext.displayName = 'ElementContext';
 
 export default ElementContext;
