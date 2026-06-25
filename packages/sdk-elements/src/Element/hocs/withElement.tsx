@@ -21,8 +21,6 @@ export type WithElementProps<T> = {
 } & T;
 
 const withElement = <T extends object>(WrappedComponent: FC<T>) => {
-  // Manual-render path (JSX manager): provides only element identity through the context; no resolution. The skip
-  // entry lacks the resolved fields, so it is cast — `RootElement` branches on `plitziJsxSkipHOC` before reading them.
   const SkipHocElement = (props: WithElementProps<T>) => {
     const { id, rootId } = props.internalProps;
     const entry = useMemo<SkipHocElementContextValue>(() => ({ id, rootId, plitziJsxSkipHOC: true }), [id, rootId]);
@@ -34,10 +32,6 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     );
   };
 
-  // Pre-render phase: resolve the element's data and provide it to its subtree through `ElementContext`. The wrapped
-  // component receives the resolved attributes as props (plugin contract); everything else it reads from
-  // the ambient context via `useElement()`. The context value propagates top-down with this element's own re-render,
-  // so descendants read fresh data in the same pass — no store subscription notified mid-render.
   const FullElement = (props: WithElementProps<T>) => {
     const ref = useRef<HTMLElement>(undefined);
     const { id, rootId } = props.internalProps;
