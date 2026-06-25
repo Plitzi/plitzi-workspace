@@ -12,7 +12,6 @@ import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
 import useElement from '@plitzi/sdk-elements/Element/hooks/useElement';
 import useRscData from '@plitzi/sdk-elements/Element/hooks/useRscData';
 import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
-import { PlitziElementsProvider } from '@plitzi/sdk-elements/Element/PlitziElementsProvider';
 import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
 import PluginRemote from '@plitzi/sdk-elements/Element/PluginRemote';
 import ReplicaProvider from '@plitzi/sdk-elements/Element/ReplicaProvider';
@@ -174,7 +173,6 @@ export {
   ComponentContext,
   usePlitziServiceContext,
   PlitziServiceProvider,
-  PlitziElementsProvider,
   RootElement,
   withElement,
   JsxManager,
