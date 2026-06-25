@@ -85,14 +85,17 @@ const StoreProvider = <TState extends object = any>({
   }, [inherit, parentStore, value]);
 
   // This store gets the cascaded middlewares from ancestor providers plus its own. The set this provider hands to its
-  // descendants is the inherited cascade plus its own `cascade()`-marked middlewares.
+  // descendants is the inherited cascade plus its own `cascade()`-marked middlewares — but when this provider adds no
+  // cascading middleware of its own, we pass the inherited array through BY REFERENCE so the `StoreMiddlewareContext`
+  // provider below can be skipped entirely (it would otherwise re-provide an identical value, an extra fiber per scope).
   const ownMiddlewares = middlewares ?? [];
   const storeMiddlewares = inheritedMiddlewares ? [...inheritedMiddlewares, ...ownMiddlewares] : ownMiddlewares;
-  const cascadedMiddlewares = useMemo(
-    () => [...(inheritedMiddlewares ?? []), ...ownMiddlewares.filter(cascades)],
+  const cascadedMiddlewares = useMemo(() => {
+    const ownCascading = ownMiddlewares.filter(cascades);
+
+    return ownCascading.length === 0 ? inheritedMiddlewares : [...(inheritedMiddlewares ?? []), ...ownCascading];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [inheritedMiddlewares, middlewares]
-  );
+  }, [inheritedMiddlewares, middlewares]);
 
   if (!storeRef.current) {
     storeRef.current =
@@ -156,22 +159,25 @@ const StoreProvider = <TState extends object = any>({
 
   const syncEnabled = !!value && autoSync;
 
+  // One sync call covers both shapes: a `path` syncs that key, an absent `path` syncs the whole seeded state.
   useStoreSync(path as any, (path ? value : storeState) as any, {
-    enabled: syncEnabled && !!path,
-    store: storeRef.current
-  });
-  useStoreSync<TState>(undefined, storeState as Partial<TState>, {
-    enabled: syncEnabled && !path,
+    enabled: syncEnabled,
     store: storeRef.current
   });
 
-  return (
-    <StoreMiddlewareContext value={cascadedMiddlewares.length > 0 ? cascadedMiddlewares : undefined}>
-      <StoreRegistryContext value={registry}>
-        <StoreContext value={storeRef.current}>{children}</StoreContext>
-      </StoreRegistryContext>
-    </StoreMiddlewareContext>
-  );
+  // Only wrap in a context provider when this scope actually changes that context's value. A scope with no `id`
+  // re-provides the parent registry, and a scope with no own cascading middleware re-provides the inherited set —
+  // skipping those redundant providers removes two fibers per scope (the common per-element case keeps just one).
+  let tree = <StoreContext value={storeRef.current}>{children}</StoreContext>;
+  if (registry !== parentRegistry) {
+    tree = <StoreRegistryContext value={registry}>{tree}</StoreRegistryContext>;
+  }
+
+  if (cascadedMiddlewares !== inheritedMiddlewares) {
+    tree = <StoreMiddlewareContext value={cascadedMiddlewares}>{tree}</StoreMiddlewareContext>;
+  }
+
+  return tree;
 };
 
 export { StoreContext, StoreRegistryContext };

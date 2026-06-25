@@ -14,25 +14,12 @@ import type { ElementContextValue } from '../ElementContext';
 import type { CommonState, Element, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { FC, ReactNode } from 'react';
 
-// Only "stateful" elements get a nexus scope so devtools/history can observe their state; every other element keeps
-// cheap local `useState` (the perf floor — wrapping every element in a live scope is ~3x slower to mount). An element
-// is stateful when EITHER its component writes element state internally (declared via `withElement(C, { stateful })`
-// — Form, Dropdown, Dialog, Modal…) OR it carries interactions (which can run the `setState` action). A non-scoped
-// element targeted out-of-band (event bridge) still works: `useElementState` falls back to `useState`.
-const hasInteractions = (definition: Element['definition']): boolean =>
-  !!definition.interactions && Object.keys(definition.interactions).length > 0;
-
-export type WithElementOptions = {
-  // The component reads/writes its own element `state` (not only via authored interactions), so it always needs the
-  // nexus-backed scope regardless of the element's interactions.
-  stateful?: boolean;
-};
-
-// A stateful element owns a live scope holding its private `state` slice (read/written through `useElementState`). It
-// is seeded once and never re-synced (`autoSync={false}`); `runtime.sources`/schema fall through to the parent, while
-// `state` writes stay local and isolated (`isolate={['state']}` — no deep-merge with an ancestor element's state).
-// `segment={id}` gives the scope a position-derived `scopePath` so the same element rendered in several places stays
-// distinct (devtools/per-instance identity).
+// Every element owns a live scope holding its private `state` slice (read/written through `useElementState`) so its
+// state is uniformly nexus-backed — observable and reachable out-of-band — regardless of whether it carries
+// interactions. The scope is seeded once and never re-synced (`autoSync={false}`); `runtime.sources`/schema fall
+// through to the parent, while `state` writes stay local and isolated (`isolate={['state']}` — no deep-merge with an
+// ancestor element's state). `segment={id}` gives the scope a position-derived `scopePath` so the same element
+// rendered in several places stays distinct (devtools/per-instance identity).
 type ElementScopeState = CommonState & { state: Record<string, unknown> };
 
 const initialScope: { state: Record<string, unknown> } = { state: {} };
@@ -47,9 +34,7 @@ export type WithElementProps<T> = {
   extraProps?: Record<string, unknown>;
 } & T;
 
-const withElement = <T extends object>(WrappedComponent: FC<T>, options: WithElementOptions = {}) => {
-  const { stateful = false } = options;
-
+const withElement = <T extends object>(WrappedComponent: FC<T>) => {
   const SkipHocElement = (props: WithElementProps<T>) => {
     const { id, rootId } = props.internalProps;
     const entry = useMemo<ElementContextValue<'skipHOC'>>(() => ({ id, rootId, plitziJsxSkipHOC: true }), [id, rootId]);
@@ -61,11 +46,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>, options: WithEle
     );
   };
 
-  const FullElementInner = ({
-    element,
-    scoped,
-    ...props
-  }: WithElementProps<T> & { element: Element; scoped: boolean }) => {
+  const FullElementInner = ({ element, ...props }: WithElementProps<T> & { element: Element }) => {
     const ref = useRef<HTMLElement>(undefined);
     const { id, rootId } = props.internalProps;
     const {
@@ -74,7 +55,6 @@ const withElement = <T extends object>(WrappedComponent: FC<T>, options: WithEle
 
     const { internalProps, customProps, children } = useElementInternal({
       element,
-      scoped,
       internalProps: props.internalProps,
       children: props.children,
       previewMode
@@ -121,12 +101,6 @@ const withElement = <T extends object>(WrappedComponent: FC<T>, options: WithEle
       throw new Error(`Element ${id} not found, Page ${baseElementId}`);
     }
 
-    const scoped = stateful || hasInteractions(element.definition);
-    const inner = <FullElementInner {...props} element={element} scoped={scoped} />;
-    if (!scoped) {
-      return inner;
-    }
-
     return (
       <StoreProvider<ElementScopeState>
         inherit="live"
@@ -135,7 +109,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>, options: WithEle
         segment={id}
         value={initialScope}
       >
-        {inner}
+        <FullElementInner {...props} element={element} />
       </StoreProvider>
     );
   };

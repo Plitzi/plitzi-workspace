@@ -241,6 +241,6 @@ const DialogContainer = ({
   );
 };
 
-export default withElement(DialogContainer, { stateful: true });
+export default withElement(DialogContainer);
 
 export { DialogContainer };

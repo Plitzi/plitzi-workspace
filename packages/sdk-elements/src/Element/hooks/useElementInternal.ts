@@ -77,24 +77,17 @@ export const getProps = (
 };
 
 export type UseElementInternalProps = {
-  // The resolved element is read once by `withElement` (which also decides `scoped`) and threaded in, so the element
-  // is subscribed to a single time per instance instead of again here.
+  // The resolved element is read once by `withElement` and threaded in, so the element is subscribed to a single time
+  // per instance instead of again here.
   element: Element;
-  scoped: boolean;
   children?: ReactNode;
   internalProps: InternalPropsSTG1;
   previewMode?: boolean;
 };
 
-const useElementInternal = ({
-  element,
-  scoped,
-  children,
-  internalProps,
-  previewMode = false
-}: UseElementInternalProps) => {
+const useElementInternal = ({ element, children, internalProps, previewMode = false }: UseElementInternalProps) => {
   const { id } = internalProps;
-  const { state, setElementState } = useElementState({ bindings: element.definition.bindings, previewMode, scoped });
+  const { state, setElementState } = useElementState({ bindings: element.definition.bindings, previewMode });
   const dataSource = useElementDataSource({ bindings: element.definition.bindings, sources: ['variables'] });
 
   const internalPropsParsed = useMemo(

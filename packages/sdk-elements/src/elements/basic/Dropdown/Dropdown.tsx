@@ -107,6 +107,6 @@ const Dropdown = ({
   );
 };
 
-export default withElement(Dropdown, { stateful: true });
+export default withElement(Dropdown);
 
 export { Dropdown };

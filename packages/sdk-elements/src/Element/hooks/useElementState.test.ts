@@ -30,7 +30,7 @@ const render = <T>(hook: () => T) => renderHook(hook, { wrapper });
 
 describe('useElementState', () => {
   it('does not change state and returns false when not in preview mode', () => {
-    const { result } = render(() => useElementState({ scoped: true, previewMode: false }));
+    const { result } = render(() => useElementState({ previewMode: false }));
 
     let returned = true;
     act(() => {
@@ -42,7 +42,7 @@ describe('useElementState', () => {
   });
 
   it('updates state and returns true in preview mode', () => {
-    const { result } = render(() => useElementState({ scoped: true, previewMode: true }));
+    const { result } = render(() => useElementState({ previewMode: true }));
 
     let returned = false;
     act(() => {
@@ -54,7 +54,7 @@ describe('useElementState', () => {
   });
 
   it('resets state to an empty object when called without a value', () => {
-    const { result } = render(() => useElementState({ scoped: true, previewMode: true }));
+    const { result } = render(() => useElementState({ previewMode: true }));
 
     act(() => {
       result.current.setElementState({ foo: 'bar' });
@@ -67,7 +67,7 @@ describe('useElementState', () => {
   });
 
   it('supports a function updater', () => {
-    const { result } = render(() => useElementState({ scoped: true, previewMode: true }));
+    const { result } = render(() => useElementState({ previewMode: true }));
 
     act(() => {
       result.current.setElementState({ count: 1 });
@@ -83,7 +83,10 @@ describe('useElementState', () => {
 
   it('omits attribute-bound keys from the next state', () => {
     const { result } = render(() =>
-      useElementState({ scoped: true, previewMode: true, bindings: { attributes: [binding('text')] } })
+      useElementState({
+        previewMode: true,
+        bindings: { attributes: [binding('text')] }
+      })
     );
 
     act(() => {
@@ -95,7 +98,10 @@ describe('useElementState', () => {
 
   it('does not omit bindings that are disabled', () => {
     const { result } = render(() =>
-      useElementState({ scoped: true, previewMode: true, bindings: { attributes: [binding('text', false)] } })
+      useElementState({
+        previewMode: true,
+        bindings: { attributes: [binding('text', false)] }
+      })
     );
 
     act(() => {
@@ -105,26 +111,10 @@ describe('useElementState', () => {
     expect(result.current.state).toEqual({ text: 'kept' });
   });
 
-  it('falls back to local state (no element scope) when not scoped', () => {
-    // A non-scoped element renders under the app's root store but without its own `state` scope: it must still work,
-    // backed by `useState`, without subscribing to or writing the store.
-    const rootWrapper = ({ children }: { children: ReactNode }) =>
-      createElement(StoreProvider, { value: {} }, children);
-    const { result } = renderHook(() => useElementState({ scoped: false, previewMode: true }), {
-      wrapper: rootWrapper
-    });
-
-    act(() => {
-      result.current.setElementState({ foo: 'bar' });
-    });
-
-    expect(result.current.state).toEqual({ foo: 'bar' });
-  });
-
   it('isolates state between nested element scopes — an ancestor element state never leaks in', () => {
     const captured: Record<string, ReturnType<typeof useElementState>> = {};
     const Probe = ({ name }: { name: string }) => {
-      captured[name] = useElementState({ scoped: true, previewMode: true });
+      captured[name] = useElementState({ previewMode: true });
 
       return null;
     };

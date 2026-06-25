@@ -1,15 +1,14 @@
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useStore, useStoreSetter } from '@plitzi/nexus/react';
 
 import type { CommonState, Element } from '@plitzi/sdk-shared';
 
-// Element state is gated: only `scoped` elements (those that can change state at runtime — see `withElement`) get a
-// nexus-backed slice so devtools/history can see it; the rest keep cheap local `useState`. Both backings are wired
-// unconditionally (rules of hooks) but the nexus subscription is disabled when not scoped, so the non-scoped path
-// stays at the `useState` floor. The scoped slice is a top-level `state` key, private to the element (owned
-// exclusively), NOT part of `CommonState` (global app state is `runtime.state`). Same public shape either way.
+// Element state lives in the per-element live scope `withElement` mounts: a top-level `state` key the scope owns
+// exclusively, private to the element (NOT part of `CommonState` — global app state is `runtime.state`). Every
+// element is scoped, so the state is uniformly nexus-backed (observable, reachable out-of-band) with no per-element
+// gating to maintain.
 
 type ElementScopeState = CommonState & { state?: Record<string, unknown> };
 
@@ -18,14 +17,11 @@ const emptyState: Record<string, unknown> = {};
 export type UseElementStateProps = {
   bindings?: Partial<Element['definition']['bindings']>;
   previewMode: boolean;
-  scoped: boolean;
 };
 
-const useElementState = ({ bindings, previewMode, scoped }: UseElementStateProps) => {
-  const [localState, setLocalState] = useState<Record<string, unknown>>(emptyState);
-  const [scopedState = emptyState] = useStore<ElementScopeState, 'state'>('state', { enabled: scoped });
+const useElementState = ({ bindings, previewMode }: UseElementStateProps) => {
+  const [state = emptyState] = useStore<ElementScopeState, 'state'>('state');
   const setScoped = useStoreSetter<ElementScopeState>();
-  const state = scoped ? scopedState : localState;
   const attributesBinded = useMemo(() => {
     const attributes = bindings?.attributes && Array.isArray(bindings.attributes) ? bindings.attributes : [];
 
@@ -51,15 +47,11 @@ const useElementState = ({ bindings, previewMode, scoped }: UseElementStateProps
         return next;
       };
 
-      if (scoped) {
-        setScoped('state', computeNext);
-      } else {
-        setLocalState(computeNext);
-      }
+      setScoped('state', computeNext);
 
       return true;
     },
-    [attributesBinded, previewMode, scoped, setScoped]
+    [attributesBinded, previewMode, setScoped]
   );
 
   return { state, setElementState };
