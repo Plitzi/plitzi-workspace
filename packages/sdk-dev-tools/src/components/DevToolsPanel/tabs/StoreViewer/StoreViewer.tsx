@@ -2,11 +2,9 @@ import JsonView from '@uiw/react-json-view';
 import * as vscode from '@uiw/react-json-view/vscode';
 import { use } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import DevToolsContext from '@plitzi/sdk-shared/devTools/DevToolsContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-
-import type { CommonState } from '@plitzi/sdk-shared';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 const jsonViewStyle = {
   ...vscode.vscodeTheme,
@@ -23,8 +21,7 @@ export type StoreViewerProps = {
 
 const StoreViewer = ({ elementSelected }: StoreViewerProps) => {
   const { getData } = use(DevToolsContext);
-  const { useStore } = createStoreHook<CommonState>();
-  const [state] = useStore();
+  const [state] = useCommonStore();
 
   // With an element selected show its resolved data source; otherwise the whole store.
   const value = elementSelected ? getData?.(`getElementDataSource-${elementSelected}`) : state;

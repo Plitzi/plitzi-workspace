@@ -21,10 +21,16 @@ export type pluginSelectorProps = {
   plugins: Record<string, ComponentDefinition>;
 };
 
-const getParentPlugin = (plugins: Record<string, ComponentDefinition>, subPlugin: string) =>
+export const getParentPlugin = (plugins: Record<string, ComponentDefinition>, subPlugin: string) =>
   Object.values(plugins).find(plugin => plugin.subPlugins.find(type => type === subPlugin));
 
-const getRemoteSettings = ({ type, plugins }: { type: string; plugins: Record<string, ComponentDefinition> }) => {
+export const getRemoteSettings = ({
+  type,
+  plugins
+}: {
+  type: string;
+  plugins: Record<string, ComponentDefinition>;
+}) => {
   const pluginDefinition = (type ? plugins[type] : undefined) ?? getParentPlugin(plugins, type);
   if (!pluginDefinition) {
     return undefined;

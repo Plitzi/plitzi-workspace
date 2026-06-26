@@ -4,16 +4,16 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import { memo, useCallback, use, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
 
 import TemplateForm from '../../Models/TemplateForm';
 import BuilderElementTools from '../BuilderElementTools';
 import BuilderContextMenuItem from './BuilderContextMenuItem';
 import BuilderContextSubMenu from './BuilderContextSubMenu';
 
-import type { BuilderState, SegmentsContextValue } from '@plitzi/sdk-shared';
+import type { SegmentsContextValue } from '@plitzi/sdk-shared';
 
 export type BuilderContextMenuProps = {
   width?: number;
@@ -23,10 +23,9 @@ export type BuilderContextMenuProps = {
 };
 
 const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: BuilderContextMenuProps) => {
-  const { useStore, useStoreGetter } = createStoreHook<BuilderState>();
-  const [getSchema, getElement, getStyle] = useStoreGetter(['schema', 'schema.flat', 'style']);
-  const [[elementSelected, setSelected]] = useStore(['elementSelected', 'setSelected']);
-  const [element = undefined] = useStore(`schema.flat.${elementSelected}`);
+  const [getSchema, getElement, getStyle] = useBuilderStoreGetter(['schema', 'schema.flat', 'style']);
+  const [[elementSelected, setSelected]] = useBuilderStore(['elementSelected', 'setSelected']);
+  const [element = undefined] = useBuilderStore(`schema.flat.${elementSelected}`);
   const { showModal } = useModal();
   const { existsPopup, addPopup } = usePopup();
   const ref = useRef<HTMLDivElement>(null);

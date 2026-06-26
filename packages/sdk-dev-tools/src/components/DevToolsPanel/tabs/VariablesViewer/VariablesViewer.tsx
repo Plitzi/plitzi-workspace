@@ -1,13 +1,10 @@
-import { createStoreHook } from '@plitzi/nexus/react';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import VariablesList from './VariablesList';
 import VariablesStyleList from './VariablesStyleList';
 
-import type { CommonState } from '@plitzi/sdk-shared';
-
 const VariablesViewer = () => {
-  const { useStore } = createStoreHook<CommonState>();
-  const [[variables, styleVariables, variablesParsed]] = useStore([
+  const [[variables, styleVariables, variablesParsed]] = useCommonStore([
     'schema.variables',
     'style.variables',
     'runtime.sources.variables'

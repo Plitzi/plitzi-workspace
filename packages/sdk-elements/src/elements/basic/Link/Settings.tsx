@@ -3,11 +3,9 @@ import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useMemo, use, useCallback, useEffect } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-
-import type { CommonState } from '@plitzi/sdk-shared';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 type SettingsProps = {
   mode?: 'page' | 'internal' | 'external';
@@ -20,8 +18,7 @@ const Settings = ({ mode = 'page', href = '#', target = 'self', onUpdate }: Sett
   const {
     contexts: { NetworkContext }
   } = usePlitziServiceContext();
-  const { useStore } = createStoreHook<CommonState>();
-  const [[flat, pageIds, pageFolders]] = useStore(['schema.flat', 'schema.pages', 'schema.pageFolders']);
+  const [[flat, pageIds, pageFolders]] = useCommonStore(['schema.flat', 'schema.pages', 'schema.pageFolders']);
   const { server } = use(NetworkContext);
   const domain = useMemo(() => get(server, 'domain', 'https://subdomain.plitzi.app'), [server]);
   const pageUrls = useMemo(() => {

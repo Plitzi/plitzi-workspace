@@ -26,6 +26,10 @@
       "types": "./dist/Component/index.d.ts",
       "import": "./dist/Component/index.mjs"
     },
+    "./Element/ElementContext": {
+      "types": "./dist/Element/ElementContext.d.ts",
+      "import": "./dist/Element/ElementContext.mjs"
+    },
     "./Element/JsxManager": {
       "types": "./dist/Element/JsxManager.d.ts",
       "import": "./dist/Element/JsxManager.mjs"
@@ -46,9 +50,17 @@
       "types": "./dist/Element/RootElement.d.ts",
       "import": "./dist/Element/RootElement.mjs"
     },
+    "./Element/RootElementInteractive": {
+      "types": "./dist/Element/RootElementInteractive.d.ts",
+      "import": "./dist/Element/RootElementInteractive.mjs"
+    },
     "./Element/ServerStaticShell": {
       "types": "./dist/Element/ServerStaticShell.d.ts",
       "import": "./dist/Element/ServerStaticShell.mjs"
+    },
+    "./Element/StaticTag": {
+      "types": "./dist/Element/StaticTag.d.ts",
+      "import": "./dist/Element/StaticTag.mjs"
     },
     "./Element/helpers/elementConstants": {
       "types": "./dist/Element/helpers/elementConstants.d.ts",
@@ -66,6 +78,10 @@
       "types": "./dist/Element/helpers/loadComponent.d.ts",
       "import": "./dist/Element/helpers/loadComponent.mjs"
     },
+    "./Element/helpers/omitKeys": {
+      "types": "./dist/Element/helpers/omitKeys.d.ts",
+      "import": "./dist/Element/helpers/omitKeys.mjs"
+    },
     "./Element/helpers/parseStyle": {
       "types": "./dist/Element/helpers/parseStyle.d.ts",
       "import": "./dist/Element/helpers/parseStyle.mjs"
@@ -81,6 +97,10 @@
     "./Element/hocs/withElement": {
       "types": "./dist/Element/hocs/withElement.d.ts",
       "import": "./dist/Element/hocs/withElement.mjs"
+    },
+    "./Element/hooks/useElement": {
+      "types": "./dist/Element/hooks/useElement.d.ts",
+      "import": "./dist/Element/hooks/useElement.mjs"
     },
     "./Element/hooks/useElementDataSource": {
       "types": "./dist/Element/hooks/useElementDataSource.d.ts",
@@ -105,6 +125,10 @@
     "./Element/hooks/useInternalItems": {
       "types": "./dist/Element/hooks/useInternalItems.d.ts",
       "import": "./dist/Element/hooks/useInternalItems.mjs"
+    },
+    "./Element/hooks/useRscData": {
+      "types": "./dist/Element/hooks/useRscData.d.ts",
+      "import": "./dist/Element/hooks/useRscData.mjs"
     },
     "./components/ElementAdvancedEditor": {
       "types": "./dist/components/ElementAdvancedEditor.d.ts",

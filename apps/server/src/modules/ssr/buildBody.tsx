@@ -6,7 +6,9 @@ import { prepareRender } from './prepareRender';
 import type { TtlCache } from '../../helpers/cache';
 import type { RequestMetrics } from '../../helpers/metrics';
 import type { PluginManager } from '../../plugins/manager';
-import type { Environment, SSRRequest, SSRServerConfig, SSRTemplateFn } from '@plitzi/sdk-shared';
+import type { Environment, SSRRenderResult, SSRRequest, SSRServerConfig, SSRTemplateFn } from '@plitzi/sdk-shared';
+
+export type BuildBodyResult = { body?: string; result: SSRRenderResult };
 
 export const buildBody = async (
   req: SSRRequest,
@@ -18,7 +20,7 @@ export const buildBody = async (
   pluginManager: PluginManager,
   offlineDataCache?: TtlCache<string>,
   metrics?: RequestMetrics
-): Promise<string> => {
+): Promise<BuildBodyResult> => {
   const prep = await prepareRender(
     req,
     config,
@@ -30,13 +32,19 @@ export const buildBody = async (
     metrics
   );
 
+  const result: SSRRenderResult = {};
+
   const reactStart = metrics ? performance.now() : 0;
-  const html = renderToString(<Component {...prep.componentProps} />).trim();
+  const html = renderToString(<Component {...prep.componentProps} ssrResult={result} />).trim();
   metrics?.record('react', Math.round(performance.now() - reactStart));
+
+  if (result.redirect !== undefined) {
+    return { result };
+  }
 
   const templateStart = metrics ? performance.now() : 0;
   const body = renderFn({ ...prep.templateParams, html });
   metrics?.record('template', Math.round(performance.now() - templateStart));
 
-  return body;
+  return { body, result };
 };

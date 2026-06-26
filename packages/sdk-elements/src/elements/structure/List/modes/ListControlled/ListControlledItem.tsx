@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 
@@ -25,27 +25,30 @@ const ListControlledItem = ({
   source = ''
 }: ListControlledItemProps) => {
   const dataSourceValue = useMemo(() => ({ item: record, index: `${itemCount}` }), [record, itemCount]);
+  // A per-row `segment` gives each replica scope a distinct `scopePath`, which `useElementState` folds into a sub-key
+  // so duplicated element ids (every row renders the same template ids) keep isolated state in the shared store.
+  // `useId` is a unique, stable identity per row instance — independent of the row index and free of any global
+  // record→id bookkeeping, so the segment never collides across sibling lists.
+  const segment = useId();
+
+  const scopedRow = (
+    <ReplicaProvider>
+      <StoreProvider inherit="live" segment={segment} value={{ runtime: { sources: { [source]: dataSourceValue } } }}>
+        {children}
+      </StoreProvider>
+    </ReplicaProvider>
+  );
 
   if (isTemplate) {
     return (
       <div className={clsx('plitzi-component__controlled-list-item', className)}>
         <div className="controlled-list-item__counter">{`List Item - ${itemCount}`}</div>
-        <ReplicaProvider>
-          <StoreProvider inherit="live" value={{ runtime: { sources: { [source]: dataSourceValue } } }}>
-            {children}
-          </StoreProvider>
-        </ReplicaProvider>
+        {scopedRow}
       </div>
     );
   }
 
-  return (
-    <ReplicaProvider>
-      <StoreProvider inherit="live" value={{ runtime: { sources: { [source]: dataSourceValue } } }}>
-        {children}
-      </StoreProvider>
-    </ReplicaProvider>
-  );
+  return scopedRow;
 };
 
 export default ListControlledItem;

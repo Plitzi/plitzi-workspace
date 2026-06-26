@@ -1,7 +1,6 @@
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { use, useMemo, useRef, useCallback } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
@@ -12,6 +11,7 @@ import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import RscProvider from '@plitzi/sdk-shared/server/rsc/RscProvider';
+import { useSdkStore } from '@plitzi/sdk-shared/store';
 import { ThemeContext } from '@plitzi/sdk-shared/theme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
@@ -23,7 +23,7 @@ import SdkPlugin from './SdkPlugin';
 // eslint-disable-next-line
 // @ts-ignore
 
-import type { Environment, RenderMode, SdkState, Server } from '@plitzi/sdk-shared';
+import type { Environment, RenderMode, Server } from '@plitzi/sdk-shared';
 
 export type SdkProps = {
   renderMode?: RenderMode;
@@ -51,9 +51,8 @@ const Sdk = ({
   const { assets } = use(PluginsContext);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const { rootRef } = use(ContainerRootContext);
-  const { useStore } = createStoreHook<SdkState>();
-  const [[schemaSettings, styleCache, segments]] = useStore(['schema.settings', 'style.cache', 'segments']);
-  const [variables = emptyObject] = useStore('runtime.sources.variables');
+  const [[schemaSettings, styleCache, segments]] = useSdkStore(['schema.settings', 'style.cache', 'segments']);
+  const [variables = emptyObject] = useSdkStore('runtime.sources.variables');
 
   const css = useMemo(() => {
     const segmentsCss = Object.values(segments).map(segment => segment.style.cache);

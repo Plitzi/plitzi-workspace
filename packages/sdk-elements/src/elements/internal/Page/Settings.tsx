@@ -7,11 +7,10 @@ import Select2 from '@plitzi/plitzi-ui/Select2';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
-import type { CommonState } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
 
 type SettingsProps = {
@@ -47,8 +46,7 @@ const Settings = ({
   unauthorizedPageRedirect = '',
   onUpdate
 }: SettingsProps) => {
-  const { useStore } = createStoreHook<CommonState>();
-  const [[flat, pages, pageFolders]] = useStore(['schema.flat', 'schema.pages', 'schema.pageFolders']);
+  const [[flat, pages, pageFolders]] = useCommonStore(['schema.flat', 'schema.pages', 'schema.pageFolders']);
 
   const layouts = useMemo(
     () => Object.values(flat).filter(element => get(element, 'definition.type', '') === 'layoutContainer'),

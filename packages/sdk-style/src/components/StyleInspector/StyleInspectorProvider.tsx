@@ -3,9 +3,9 @@
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import { baseDefaultValue } from '@plitzi/sdk-shared';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import useStyleBinding from './hooks/useStyleBinding';
 import StyleInspectorContext from './StyleInspectorContext';
@@ -13,7 +13,6 @@ import StyleInspectorContext from './StyleInspectorContext';
 import type { SetValues } from './StyleInspectorContext';
 import type { InheritData } from '../../helpers';
 import type {
-  CommonState,
   DisplayMode,
   Element,
   StyleBlock,
@@ -51,8 +50,7 @@ const StyleInspectorProvider = ({
   onChange
 }: StyleInspectorProviderProps) => {
   const bindingData = useStyleBinding({ element });
-  const { useStore } = createStoreHook<CommonState>();
-  const [schemaVariables = emptyObject] = useStore('runtime.sources.variables');
+  const [schemaVariables = emptyObject] = useCommonStore('runtime.sources.variables');
 
   const getValues = useCallback(() => {
     let attributes: Partial<Record<StyleCategory, StyleValue>> | undefined = undefined;

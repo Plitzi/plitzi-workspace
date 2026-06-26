@@ -5,17 +5,16 @@ import ReactDOM from 'react-dom/client';
 
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
+import useElement from '@plitzi/sdk-elements/Element/hooks/useElement';
+import useRscData from '@plitzi/sdk-elements/Element/hooks/useRscData';
 import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
 import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
 import PluginRemote from '@plitzi/sdk-elements/Element/PluginRemote';
 import ReplicaProvider from '@plitzi/sdk-elements/Element/ReplicaProvider';
 import RootElement from '@plitzi/sdk-elements/Element/RootElement';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
-import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import { disableReactDevTools } from '@plitzi/sdk-shared/helpers/security';
 import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import useRscData from '@plitzi/sdk-shared/server/hooks/useRscData';
 import Builder from '@pmodules/Builder';
 
 import App from './App';
@@ -105,8 +104,7 @@ export {
   PluginRemote,
   ReplicaProvider,
   useElement,
-  useRscData,
-  ElementContext
+  useRscData
 };
 
 export default PlitziBuilder;

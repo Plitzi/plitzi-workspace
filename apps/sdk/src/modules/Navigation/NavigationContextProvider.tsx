@@ -3,20 +3,20 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo, useRef, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import type {
-  BuilderState,
   NavigationContextValue,
   NavigationStatus,
   RenderMode,
-  RouteParams
+  RouteParams,
+  SSRRenderResult
 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 import type { PathMatch } from 'react-router-dom';
@@ -26,17 +26,18 @@ export type NavigationContextProviderProps = {
   renderMode?: RenderMode;
   currentPageId?: string;
   previewMode?: boolean;
+  ssrResult?: SSRRenderResult;
 };
 
 const NavigationContextProvider = ({
   children,
   renderMode = 'iframe',
   currentPageId: currentPageIdProp,
-  previewMode = true
+  previewMode = true,
+  ssrResult
 }: NavigationContextProviderProps) => {
   const { server } = use(NetworkContext);
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[pageFolders, pageDefinitions]] = useStore(['schema.pageFolders', 'pageDefinitions']);
+  const [[pageFolders, pageDefinitions]] = useBuilderStore(['schema.pageFolders', 'pageDefinitions']);
   const { queryParams, hostname, location } = useNavigation({ server });
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
@@ -140,16 +141,30 @@ const NavigationContextProvider = ({
   if (action.type === 'notFound') {
     // @todo: In the future this should navigate to page 404
     // return <Navigate to="/not-found" replace />;
+    if (ssrResult) {
+      ssrResult.status = 404;
+    }
+
     return 'Not Found';
   }
 
   if (action.type === 'accessDenied') {
     // @todo: In the future this should navigate to page 403
     // return <Navigate to="/unauthorized" replace />;
+    if (ssrResult) {
+      ssrResult.status = 403;
+    }
+
     return 'Access Denied';
   }
 
   if (action.type === 'redirect') {
+    if (ssrResult) {
+      ssrResult.redirect = action.path ?? '';
+
+      return null;
+    }
+
     return <Navigate to={action.path ?? ''} replace />;
   }
 

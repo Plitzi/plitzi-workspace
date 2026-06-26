@@ -1,10 +1,10 @@
 import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import { StoreContext } from '@plitzi/nexus/react';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import type { StoreApi } from '@plitzi/nexus';
 import type { SdkState, InteractionCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
@@ -19,8 +19,7 @@ const PageInteractions = ({ children, previewMode = true }: PageInteractionsProp
   const { useInteractions } = use(InteractionsContext);
   const { navigate } = use(NavigationContext);
   const store = use(StoreContext) as StoreApi<SdkState> | undefined;
-  const { useStore } = createStoreHook<SdkState>();
-  const [[pageIds, pageDefinitions]] = useStore(['schema.pages', 'pageDefinitions']);
+  const [[pageIds, pageDefinitions]] = useSdkStore(['schema.pages', 'pageDefinitions']);
 
   const handleSetPageState = useCallback(
     (params: InteractionCallbackParamValues<{ key: string; type: string; value: string | boolean | number }>) => {

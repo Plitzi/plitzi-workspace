@@ -6,11 +6,11 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
 import { useCallback, use } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
-import type { BuilderState, Element } from '@plitzi/sdk-shared';
+import type { Element } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 export type PageActionsProps = {
@@ -30,8 +30,7 @@ const ItemActions = ({
   defaultPage = false,
   onZoom
 }: PageActionsProps) => {
-  const { useStore } = createStoreHook<BuilderState>();
-  const [element] = useStore(`schema.flat.${id}`);
+  const [element] = useBuilderStore(`schema.flat.${id}`);
   const { eventBridge } = use(EventBridgeContext);
   const { navigate, currentPageId } = use(NavigationContext);
   const { showDialog } = useModal();

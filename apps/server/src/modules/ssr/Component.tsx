@@ -1,6 +1,6 @@
 import PlitziSdk from '@plitzi/plitzi-sdk';
 
-import type { OfflineDataRaw, Environment, RenderMode, Server, SSRPlugin } from '@plitzi/sdk-shared';
+import type { OfflineDataRaw, Environment, RenderMode, Server, SSRPlugin, SSRRenderResult } from '@plitzi/sdk-shared';
 
 export type ComponentProps = {
   server: Partial<Server>;
@@ -9,6 +9,7 @@ export type ComponentProps = {
   previewMode?: boolean;
   offlineData?: OfflineDataRaw;
   plugins?: Record<string, SSRPlugin>;
+  ssrResult?: SSRRenderResult;
 };
 
 const Component = ({
@@ -17,7 +18,8 @@ const Component = ({
   previewMode = true,
   offlineData,
   environment = 'main',
-  plugins
+  plugins,
+  ssrResult
 }: ComponentProps) => {
   return (
     <PlitziSdk
@@ -27,6 +29,7 @@ const Component = ({
       renderMode={renderMode}
       offlineMode={!!offlineData && Object.keys(offlineData).length > 0}
       offlineData={offlineData}
+      ssrResult={ssrResult}
     >
       {plugins &&
         Object.keys(plugins).map(key => (

@@ -4,10 +4,10 @@ import { throttle } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { useCallback, useEffect } from 'react';
 
-import useElement from '@plitzi/sdk-shared/elements/hooks/useElement';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { ReactNode, RefObject } from 'react';

@@ -72,8 +72,8 @@ type SSRAdapters = {
   getOfflineData: (spaceId: number, environment: string, revision?: number) => Promise<OfflineDataRaw | undefined>;
   getSpaceDeployment: (req: SSRRequest) => Promise<SSRSpaceDeployment>;
   getUser?: (req: SSRRequest) => Promise<SSRUser | undefined>;
-  onLogin?: (req: SSRRequest) => Promise<boolean>;
-  onLogout?: (req: SSRRequest) => Promise<void>;
+  onLogin?: (req: SSRRequest, res: SSRResponseHelpers) => Promise<boolean>;
+  onLogout?: (req: SSRRequest, res: SSRResponseHelpers) => Promise<void>;
   getRscData?: (
     req: SSRRequest,
     spaceId: number,
@@ -88,8 +88,8 @@ type SSRAdapters = {
 - **`getOfflineData`** — returns the space snapshot (schema, plugins, styles, segments, collections) for SSR.
 - **`getSpaceDeployment`** — resolves which space and environment to render for a given inbound request. Return `{ error: { code, message } }` to abort with an HTTP error. Optionally include `templateProps` to override template variables, or `pluginNames` to activate plugins for the space (see [Plugins](#plugins) and [Template props](#template-props)).
 - **`getUser`** *(optional)* — resolves the authenticated user from the inbound request (e.g. via a session cookie or `Authorization` header). Called in parallel with `getOfflineData` on every cache miss. The returned user is forwarded to the SDK as `authenticated: true` and `user.details`, which controls page-level access for guest vs. registered users. Return `undefined` for unauthenticated requests.
-- **`onLogin`** *(optional)* — called when `POST {loginPath}` is received. Responsible for establishing a session or issuing tokens. Return `true` if login succeeded; return `false` to respond with `401 Unauthorized`.
-- **`onLogout`** *(optional)* — called when `POST {logoutPath}` is received. Responsible for invalidating any server-side user session or cache entry. The server responds with `204 No Content` after the adapter resolves.
+- **`onLogin`** *(optional)* — called when `POST {loginPath}` is received. Responsible for establishing a session or issuing tokens. The raw request body is available on `req.body` (e.g. `JSON.stringify({ username, password })`), and `res` lets the adapter set the session cookie via `res.setHeader('Set-Cookie', …)`. Return `true` if login succeeded; return `false` to reject it. For a navigation (full-page form submit, `Sec-Fetch-Mode: navigate`) the server responds with a `303` redirect so the view re-renders via a GET; for a fetch it responds `200`/`401`.
+- **`onLogout`** *(optional)* — called when `POST {logoutPath}` is received. Responsible for invalidating any server-side user session or cache entry, and may clear the session cookie via `res`. A navigation receives a `303` redirect; a fetch receives `204 No Content`.
 - **`getRscData`** *(optional)* — called by the RSC endpoint (`/_rsc`) to fetch server-side data for schema elements with `runtime: 'server'`. Receives the full request, space context, and the resolved user so that authenticated operations can be performed. When `ids` is provided the adapter should return data only for those element IDs (partial refresh); omitting `ids` means a full fetch for all elements. Return `{}` when there is no server data for the current request (see [RSC](#react-server-components-rsc)).
 
 ## JSON adapters (offline mode)
@@ -614,15 +614,15 @@ createSSRServer({ adapters: { getOfflineData, getSpaceDeployment, getUser } });
 
 ### Login endpoint
 
-The server exposes a built-in `POST /auth/login` endpoint. When hit, it calls `adapters.onLogin(req)` and responds with `200 OK` on success or `401 Unauthorized` when the adapter returns `false`:
+The server exposes a built-in `POST /auth/login` endpoint. When hit, it calls `adapters.onLogin(req, res)`. The raw request body is on `req.body`, and `res` is used to set the session cookie. A navigation (full-page form submit) gets a `303` redirect so the view re-renders; a fetch gets `200 OK` on success or `401 Unauthorized` when the adapter returns `false`:
 
 ```ts
-const onLogin = async (req: SSRRequest): Promise<boolean> => {
+const onLogin = async (req: SSRRequest, res: SSRResponseHelpers): Promise<boolean> => {
   const { username, password } = JSON.parse(req.body ?? '{}');
-  const user = await db.users.authenticate(username, password);
-  if (!user) return false;
+  const session = await db.users.authenticate(username, password);
+  if (!session) return false;
 
-  // Set session cookie or issue token here
+  res.setHeader('Set-Cookie', `my_session=${session.token}; Path=/; HttpOnly; SameSite=Lax`);
   return true;
 };
 
@@ -641,14 +641,16 @@ createSSRServer({
 
 ### Logout endpoint
 
-The server exposes a built-in `POST /auth/logout` endpoint. When hit, it calls `adapters.onLogout(req)` and responds with `204 No Content`. Implement `onLogout` to invalidate the session or cached user entry:
+The server exposes a built-in `POST /auth/logout` endpoint. When hit, it calls `adapters.onLogout(req, res)`. A navigation gets a `303` redirect so the view re-renders logged out; a fetch gets `204 No Content`. Implement `onLogout` to invalidate the session or cached user entry and clear the cookie:
 
 ```ts
-const onLogout = async (req: SSRRequest): Promise<void> => {
+const onLogout = async (req: SSRRequest, res: SSRResponseHelpers): Promise<void> => {
   const token = parseCookies(req.headers['cookie'] ?? '')['my_session'];
   if (token) {
     await cache.delete(`user-${token}`);
   }
+
+  res.setHeader('Set-Cookie', 'my_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
 };
 
 createSSRServer({ adapters: { getOfflineData, getSpaceDeployment, getUser, onLogout } });

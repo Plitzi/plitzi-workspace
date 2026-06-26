@@ -19,7 +19,6 @@ type BrowserInfo = {
 };
 
 const ClientInfo = () => {
-  // console.log('client', props);
   const [info, setInfo] = useState<BrowserInfo | null>(null);
 
   useEffect(() => {

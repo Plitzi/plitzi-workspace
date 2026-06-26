@@ -18,7 +18,6 @@ type ServerData = {
 };
 
 const ServerInfo = () => {
-  // console.log('server', props);
   const { serverData, elementData } = useRscData<ServerData | null>();
 
   useEffect(() => {

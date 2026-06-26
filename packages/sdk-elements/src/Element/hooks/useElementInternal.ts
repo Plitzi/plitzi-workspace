@@ -1,17 +1,17 @@
-import { get, omit } from '@plitzi/plitzi-ui/helpers';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import { processTwig, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import useElementDataSource from './useElementDataSource';
 import useElementState from './useElementState';
 import useInternalItems from './useInternalItems';
 import getBindingsDetails from '../../dataSource/getBindingsDetails';
+import { omitKeys } from '../helpers/omitKeys';
 import parseStyleSelectors from '../helpers/parseStyleSelectors';
 
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { CommonState, Element, InternalPropsSTG1 } from '@plitzi/sdk-shared';
+import type { Element, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export const getProps = (
@@ -37,17 +37,20 @@ export const getProps = (
   // Variables
   const { variables } = dataSource;
   if (variables && Object.keys(variables).length > 0) {
-    attributes = Object.keys(attributes).reduce((acum, key) => {
-      if (typeof attributes[key] === 'string' && hasValidToken(attributes[key])) {
-        return { ...acum, [key]: processTwig(attributes[key], variables as Record<string, unknown>, true) };
-      }
+    const interpolated: Element['attributes'] = {};
+    for (const key of Object.keys(attributes)) {
+      const value = attributes[key];
+      interpolated[key] =
+        typeof value === 'string' && hasValidToken(value)
+          ? processTwig(value, variables as Record<string, unknown>, true)
+          : value;
+    }
 
-      return { ...acum, [key]: attributes[key] };
-    }, {});
+    attributes = interpolated;
   }
 
   // State
-  attributes = { ...attributes, ...omit(state, ['visibility', 'styleSelectors']) };
+  attributes = { ...attributes, ...omitKeys(state, ['visibility', 'styleSelectors']) };
   definition = {
     ...definition,
     styleSelectors: {
@@ -65,7 +68,7 @@ export const getProps = (
     rootId: get(plitziElementLayout, 'rootId', rootId),
     attributes: {
       ...attributes,
-      ...omit(internalProps, ['id', 'rootId', 'attributes', 'definition', 'plitziElementLayout'])
+      ...omitKeys(internalProps, ['id', 'rootId', 'attributes', 'definition', 'plitziElementLayout'])
     },
     definition,
     elementState: { ...definition.initialState, ...state },
@@ -74,26 +77,17 @@ export const getProps = (
 };
 
 export type UseElementInternalProps = {
+  // The resolved element is read once by `withElement` and threaded in, so the element is subscribed to a single time
+  // per instance instead of again here.
+  element: Element;
   children?: ReactNode;
   internalProps: InternalPropsSTG1;
   previewMode?: boolean;
-  baseElementId?: string;
 };
 
-const useElementInternal = ({
-  children,
-  internalProps,
-  previewMode = false,
-  baseElementId
-}: UseElementInternalProps) => {
-  const { useStore } = createStoreHook<CommonState>();
+const useElementInternal = ({ element, children, internalProps, previewMode = false }: UseElementInternalProps) => {
   const { id } = internalProps;
-  const [element] = useStore(`schema.flat.${id}`);
-  if (!(element as Element | undefined)) {
-    throw new Error(`Element ${id} not found, Page ${baseElementId}`);
-  }
-
-  const { state, setElementState } = useElementState({ bindings: element.definition.bindings, previewMode });
+  const { state, setElementState } = useElementState({ id, bindings: element.definition.bindings, previewMode });
   const dataSource = useElementDataSource({ bindings: element.definition.bindings, sources: ['variables'] });
 
   const internalPropsParsed = useMemo(
@@ -103,7 +97,7 @@ const useElementInternal = ({
 
   return {
     internalProps: internalPropsParsed,
-    customProps: omit(internalPropsParsed, [
+    customProps: omitKeys(internalPropsParsed, [
       'id',
       'rootId',
       'plitziElementLayout',

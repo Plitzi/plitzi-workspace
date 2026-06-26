@@ -1,6 +1,6 @@
-import { set, omit } from '@plitzi/plitzi-ui/helpers';
+import { set } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import getInteractions from '../helpers/getInteractions';
 
@@ -30,49 +30,39 @@ const sanityValue = (value: string | boolean | number) => {
 };
 
 const useElementInteractions = ({ attributes, definition, setElementState }: UseElementInteractionsProps) => {
-  const prevStateRef = useRef<Record<string, unknown>>({});
-
+  // The `setState` interaction reads and writes the element's state straight through `setElementState`'s functional
+  // updater, which hands over the live slice from the store — the single source of truth. No shadow ref to keep in
+  // sync (it could drift if the state changed elsewhere), and a chain of setStates builds on each other because the
+  // store commits synchronously. `prevState` (captured from that live value) lets `revertOnFinish` restore it.
   const setStateCallback = useCallback(
     (params: InteractionCallbackParamValues) => {
-      const prevState = prevStateRef.current;
       if (!params.key || !params.value) {
-        return { prevState, nextState: prevState };
+        return { prevState: undefined, nextState: undefined };
       }
 
       const { key } = params;
-      let { value } = params;
-      value = sanityValue(value as string | number | boolean);
-      let newState = {};
-      if (typeof value === 'undefined') {
-        newState = omit(prevState, [key as string]);
-      } else {
-        newState = produce(prevState, draft => set(draft, key as string, value));
-      }
+      const value = sanityValue(params.value as string | number | boolean);
+      let prevState: Record<string, unknown> | undefined;
+      let nextState: Record<string, unknown> | undefined;
+      setElementState((prev: Record<string, unknown>) => {
+        prevState = prev;
+        nextState = produce(prev, (draft: Record<string, unknown>) => set(draft, key as string, value));
 
-      if (setElementState(newState)) {
-        prevStateRef.current = newState;
+        return nextState;
+      });
 
-        return { prevState, nextState: newState };
-      }
-
-      return { prevState, nextState: prevState };
+      return { prevState, nextState };
     },
     [setElementState]
   );
 
   const setStatePostCallback: InteractionPostCallback = useCallback(
     (params, callbackResult) => {
-      const { revertOnFinish } = params;
-      if (
-        !revertOnFinish ||
-        !callbackResult ||
-        !(callbackResult as { prevState: Record<string, unknown> | undefined }).prevState
-      ) {
+      const prevState = (callbackResult as { prevState?: Record<string, unknown> } | undefined)?.prevState;
+      if (!params.revertOnFinish || !prevState) {
         return;
       }
 
-      const { prevState } = callbackResult as { prevState: Record<string, unknown> };
-      prevStateRef.current = prevState;
       setElementState(prevState);
     },
     [setElementState]

@@ -3,9 +3,10 @@ import { createContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
 
 import { Custom } from './Custom';
+import ElementContext from '../../../Element/ElementContext';
+import { skipHocEntry } from '../../../testUtils/elementTestUtils';
 
 import type { ComponentContextValue } from '@plitzi/sdk-shared';
 
@@ -26,7 +27,7 @@ describe('Custom Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
       <ComponentContext value={{ components: { current: {} } } as ComponentContextValue}>
-        <ElementContext value={{ id: '', rootId: '', plitziJsxSkipHOC: true }}>
+        <ElementContext value={skipHocEntry()}>
           <Custom />
         </ElementContext>
       </ComponentContext>

@@ -4,8 +4,8 @@ import clsx from 'clsx';
 import { produce } from 'immer';
 import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
 
 import OverlayButtonContainer from './OverlayButtonContainer';
@@ -13,7 +13,7 @@ import OverlayButtonResize from './OverlayButtonResize';
 import OverlaySpacing from './OverlaySpacing';
 
 import type { OverlayRect } from './BuilderOverlayHelper';
-import type { BuilderState, DisplayMode, Element } from '@plitzi/sdk-shared';
+import type { DisplayMode, Element } from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type OverlayNormalProps = {
@@ -47,8 +47,7 @@ const OverlayNormal = ({
   color,
   collaboratorName = ''
 }: OverlayNormalProps) => {
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[style, selector, styleSelector, styleVariant, styleState]] = useStore([
+  const [[style, selector, styleSelector, styleVariant, styleState]] = useBuilderStore([
     'style',
     'selector',
     'styleSelector',

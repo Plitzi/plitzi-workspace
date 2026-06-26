@@ -2,14 +2,14 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { useCallback, use, useMemo, useEffect, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import utility from '@plitzi/sdk-interactions/utility/index';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import Workflow from './components/Workflow';
 
-import type { Element, InteractionCallback, Source, BuilderState } from '@plitzi/sdk-shared';
+import type { Element, InteractionCallback, Source } from '@plitzi/sdk-shared';
 
 export type InteractionsProps = {
   className?: string;
@@ -19,8 +19,7 @@ export type InteractionsProps = {
 };
 
 const Interactions = ({ className = '', id = '', interactions = emptyObject, onChange }: InteractionsProps) => {
-  const { useStore } = createStoreHook<BuilderState>();
-  const [sourcesRegistry] = useStore('sources');
+  const [sourcesRegistry] = useBuilderStore('sources');
   const { interactionsManager } = use(InteractionsContext);
   const [reRender, setRerender] = useState(0);
   // eslint-disable-next-line react-hooks/exhaustive-deps

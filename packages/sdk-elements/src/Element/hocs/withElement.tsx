@@ -1,16 +1,16 @@
-/* eslint-disable react-hooks/rules-of-hooks */
-
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
-import { omit } from '@plitzi/plitzi-ui/helpers/lodash';
 import { useMemo, useRef } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
-import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
+import ElementContext from '../ElementContext';
+import { omitKeys } from '../helpers/omitKeys';
 import useElementInternal from '../hooks/useElementInternal';
 
-import type { ElementContextValue, InternalPropsSTG1 } from '@plitzi/sdk-shared';
+import type { ElementContextValue } from '../ElementContext';
+import type { Element, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { FC, ReactNode } from 'react';
 
 export type WithElementProps<T> = {
@@ -22,61 +22,52 @@ export type WithElementProps<T> = {
 } & T;
 
 const withElement = <T extends object>(WrappedComponent: FC<T>) => {
-  const WithElementComponent = (props: WithElementProps<T>) => {
+  const SkipHocElement = (props: WithElementProps<T>) => {
+    const { id, rootId } = props.internalProps;
+    const entry = useMemo<ElementContextValue<'skipHOC'>>(() => ({ id, rootId, plitziJsxSkipHOC: true }), [id, rootId]);
+
+    return (
+      <ElementContext value={entry}>
+        <WrappedComponent {...props} />
+      </ElementContext>
+    );
+  };
+
+  const FullElement = (props: WithElementProps<T>) => {
     const ref = useRef<HTMLElement>(undefined);
     const { id, rootId } = props.internalProps;
-    const contextValueSkipHOC = useMemo<ElementContextValue<'skipHOC'>>(
-      () => ({ id, rootId, plitziJsxSkipHOC: true }),
-      [id, rootId]
-    );
-    if (props.plitziJsxSkipHOC) {
-      return useMemo(
-        () => (
-          <ElementContext value={contextValueSkipHOC}>
-            <WrappedComponent {...props} internalProps={props.internalProps} />
-          </ElementContext>
-        ),
-        [contextValueSkipHOC, props]
-      );
-    }
-
     const {
       settings: { previewMode },
       root: { baseElementId }
     } = usePlitziServiceContext();
+    const [element] = useCommonStore(`schema.flat.${id}`);
+    if (!(element as Element | undefined)) {
+      throw new Error(`Element ${id} not found, Page ${baseElementId}`);
+    }
 
     const { internalProps, customProps, children } = useElementInternal({
+      element,
       internalProps: props.internalProps,
       children: props.children,
-      previewMode,
-      baseElementId
+      previewMode
     });
 
     const { attributes, definition, style, plitziElementLayout, elementState, setElementState } = internalProps;
     const eventCallbacks = useMemo(() => ({ [`${id}_setState`]: setElementState }), [id, setElementState]);
     useEventBridge('element', eventCallbacks);
 
-    const contextValue = useMemo(
-      () => ({
-        id,
-        rootId,
-        attributes,
-        definition,
-        plitziElementLayout,
-        style,
-        elementState,
-        setElementState
-      }),
+    const elementData = useMemo<ElementContextValue>(
+      () => ({ id, rootId, attributes, definition, plitziElementLayout, style, elementState, setElementState }),
       [attributes, definition, elementState, id, plitziElementLayout, rootId, style, setElementState]
     );
 
-    return useMemo(() => {
+    const content = useMemo(() => {
       let wrappedProps = {
         ...internalProps.attributes,
         ...props.extraProps,
         ...customProps,
         // Props injected via other elements
-        ...omit(props, ['plitziJsxSkipHOC', 'internalProps', 'className', 'children', 'extraProps'])
+        ...omitKeys(props, ['plitziJsxSkipHOC', 'internalProps', 'className', 'children', 'extraProps'])
       } as T;
       if (children) {
         wrappedProps = { ...wrappedProps, children };
@@ -84,13 +75,16 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
 
       return (
         <ErrorBoundary>
-          <ElementContext value={contextValue}>
-            <WrappedComponent {...wrappedProps} ref={ref} />
-          </ElementContext>
+          <WrappedComponent {...wrappedProps} ref={ref} />
         </ErrorBoundary>
       );
-    }, [internalProps.attributes, props, customProps, children, contextValue]);
+    }, [internalProps.attributes, props, customProps, children]);
+
+    return <ElementContext value={elementData}>{content}</ElementContext>;
   };
+
+  const WithElementComponent = (props: WithElementProps<T>) =>
+    props.plitziJsxSkipHOC ? <SkipHocElement {...props} /> : <FullElement {...props} />;
 
   WithElementComponent.displayName = `withElement(${WrappedComponent.displayName || WrappedComponent.name})`;
 

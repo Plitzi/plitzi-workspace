@@ -1,14 +1,14 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { isValidElement, use, useMemo, useSyncExternalStore } from 'react';
+import { isValidElement, use, useMemo, useRef, useSyncExternalStore } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import { usePlitziServiceContext } from '@plitzi/sdk-shared';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import pluginSelector from '../helpers/pluginSelector';
 import ServerStaticShell from '../ServerStaticShell';
 
-import type { Element, ElementLayout, CommonState } from '@plitzi/sdk-shared';
+import type { Element, ElementLayout } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 const isServer = typeof window === 'undefined';
@@ -30,8 +30,7 @@ const useInternalItems = ({
   children: ReactNode | ReactNode[];
   previewMode?: boolean;
 }) => {
-  const { useStore } = createStoreHook<CommonState>();
-  const [[flat, rscEnabled]] = useStore(['schema.flat', 'schema.rsc.enabled'], { mode: 'mount' });
+  const [[flat, rscEnabled]] = useCommonStore(['schema.flat', 'schema.rsc.enabled'], { mode: 'mount' });
   const { components } = use(ComponentContext);
   const {
     contexts: { PluginsContext }
@@ -39,8 +38,16 @@ const useInternalItems = ({
   const { plugins } = use(PluginsContext);
   const { items } = definition;
   const hasItems = plitziElementLayout || children || items?.length;
-  // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/purity
-  const layoutKeyIdentifier = useMemo(() => Math.round(Date.now()), [plitziElementLayout]);
+  // Bump a deterministic version whenever the layout instance changes so layout items remount (resetting their
+  // internal state). Derived during render from the previous prop — idempotent on re-render and StrictMode-safe.
+  const prevLayoutRef = useRef(plitziElementLayout);
+  const layoutVersionRef = useRef(0);
+  if (prevLayoutRef.current !== plitziElementLayout) {
+    prevLayoutRef.current = plitziElementLayout;
+    layoutVersionRef.current += 1;
+  }
+
+  const layoutKeyIdentifier = layoutVersionRef.current;
 
   // useSyncExternalStore with getServerSnapshot: React uses the server snapshot during
   // hydration (false → client elements excluded, matching server HTML), then transitions
@@ -101,12 +108,10 @@ const useInternalItems = ({
     }
 
     // Process Children
-    if (children && isValidElement(children)) {
-      if (Array.isArray(children)) {
-        itemsParsed.push(...children);
-      } else {
-        itemsParsed.push(children);
-      }
+    if (Array.isArray(children)) {
+      itemsParsed.push(...children.filter(isValidElement));
+    } else if (isValidElement(children)) {
+      itemsParsed.push(children);
     }
 
     if (!items) {

@@ -23,7 +23,11 @@ export type ChainReads<TState extends object> = {
 export function createChainReads<TState extends object>(
   getOwnState: () => TState,
   getOwnSnapshot: () => TState,
-  parent: StoreApi<TState> | undefined
+  parent: StoreApi<TState> | undefined,
+  // Top-level keys this scope owns EXCLUSIVELY: when present in own state they fully shadow the parent (no
+  // deep-merge, no fall-through into them), so a per-instance slice like an element's `state` stays isolated from an
+  // ancestor scope that happens to use the same key. Keys the scope does not seed are unaffected (still inherited).
+  exclusive?: ReadonlyArray<string>
 ): ChainReads<TState> {
   if (!parent) {
     // A root store is its own state — no merge, no fall-through, nothing to invalidate.
@@ -37,6 +41,7 @@ export function createChainReads<TState extends object>(
   }
 
   const parentStore = parent;
+  const exclusiveKeys = exclusive && exclusive.length > 0 ? new Set(exclusive) : undefined;
 
   let stateDirty = true;
   let pathDirty = false;
@@ -47,7 +52,19 @@ export function createChainReads<TState extends object>(
   const mergeNow = (): TState => {
     mergeCount++;
 
-    return deepMerge(parentStore.getState(), getOwnSnapshot()) as TState;
+    const own = getOwnSnapshot();
+    const next = deepMerge(parentStore.getState(), own) as TState;
+    if (exclusiveKeys) {
+      // Overwrite the merged value for each exclusively-owned key the scope actually holds, so the full-state view
+      // matches the per-path `resolve` below (own shadows, no merge).
+      for (const key of exclusiveKeys) {
+        if ((own as Record<string, unknown>)[key] !== undefined) {
+          (next as Record<string, unknown>)[key] = (own as Record<string, unknown>)[key];
+        }
+      }
+    }
+
+    return next;
   };
 
   const getState: GetState<TState> = () => {
@@ -60,6 +77,16 @@ export function createChainReads<TState extends object>(
   };
 
   const resolve = <P extends PathOf<TState>>(path: P): PathValue<TState, P> | undefined => {
+    if (exclusiveKeys) {
+      const dot = path.indexOf('.');
+      const rootKey = dot === -1 ? path : path.slice(0, dot);
+      // The scope owns this key exclusively and actually holds it: resolve within own state only — never merge with
+      // or fall through to the parent, even when the deeper path is absent.
+      if (exclusiveKeys.has(rootKey) && (getOwnState() as Record<string, unknown>)[rootKey] !== undefined) {
+        return getByPath(getOwnState(), path);
+      }
+    }
+
     const ownValue = getByPath(getOwnState(), path);
     if (ownValue === undefined) {
       return parentStore.getPath(path);

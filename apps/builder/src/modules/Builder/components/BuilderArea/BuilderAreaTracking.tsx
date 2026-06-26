@@ -3,11 +3,11 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
 import { use, useRef, useCallback, useMemo, useEffect, useImperativeHandle } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
 import { RTEvent } from '@plitzi/sdk-shared/websockets/RTCodec';
 import AppContext from '@pmodules/App/AppContext';
 import useNormalizedCursor from '@pmodules/Builder/hooks/useNormalizedCursor';
@@ -16,7 +16,6 @@ import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
 import { processPaste } from '../../BuilderHelper';
 
-import type { BuilderState } from '@plitzi/sdk-shared';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 export type BuilderAreaTrackingProps = {
@@ -50,14 +49,13 @@ const BuilderAreaTracking = ({
     builderSetBaseContext,
     builderDropElement
   } = use(BuilderContext);
-  const { useStore, useStoreGetter } = createStoreHook<BuilderState>();
-  const [[elementHovered, setHovered, elementSelected, setSelected]] = useStore([
+  const [[elementHovered, setHovered, elementSelected, setSelected]] = useBuilderStore([
     'elementHovered',
     'setHovered',
     'elementSelected',
     'setSelected'
   ]);
-  const [getSchema, getStyle] = useStoreGetter(['schema', 'style']);
+  const [getSchema, getStyle] = useBuilderStoreGetter(['schema', 'style']);
   const { displayBorderComponents } = use(AppContext);
   const { addToast } = useToast();
   const { canRedo, canUndo, undoableRedo, undoableUndo } = use(UndoableContext);

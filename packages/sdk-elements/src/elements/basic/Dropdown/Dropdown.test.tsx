@@ -1,11 +1,9 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
-import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
-
 import { Dropdown } from './Dropdown';
-
-import type { ElementContextValue } from '@plitzi/sdk-shared/elements/ElementContext';
+import ElementContext from '../../../Element/ElementContext';
+import { elementEntry } from '../../../testUtils/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
@@ -14,6 +12,7 @@ vi.mock('../../../Element/hocs/withElement', () => ({
 vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
   default: () => ({
     settings: { previewMode: true },
+    root: { baseElementId: '' },
     utils: { getWindow: () => undefined },
     contexts: {}
   })
@@ -22,17 +21,7 @@ vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
 describe('Dropdown Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
-      <ElementContext
-        value={
-          {
-            id: '',
-            rootId: '',
-            plitziJsxSkipHOC: false,
-            definition: { styleSelectors: { base: '' } },
-            setElementState: () => {}
-          } as ElementContextValue
-        }
-      >
+      <ElementContext value={elementEntry('')}>
         <Dropdown />
       </ElementContext>
     );

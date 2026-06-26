@@ -1,3 +1,4 @@
+import useRscData from './Element/hooks/useRscData';
 import JsxManager from './Element/JsxManager';
 import * as elements from './elements';
 import * as elementSettings from './elements/settings';
@@ -36,4 +37,4 @@ export const defaultElements = {
   collectionContainer: elements.CollectionContainer
 };
 
-export { elements, elementSettings, JsxManager };
+export { useRscData, elements, elementSettings, JsxManager };

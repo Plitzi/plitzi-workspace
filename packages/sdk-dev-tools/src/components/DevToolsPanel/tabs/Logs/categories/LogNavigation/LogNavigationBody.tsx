@@ -1,10 +1,8 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import { formatDate } from '@plitzi/sdk-shared/helpers';
-
-import type { CommonState } from '@plitzi/sdk-shared';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 export type LogNavigationBodyProps = {
   className?: string;
@@ -15,8 +13,7 @@ export type LogNavigationBodyProps = {
 };
 
 const LogNavigationBody = ({ elementId, startTime, endTime, duration }: LogNavigationBodyProps) => {
-  const { useStore } = createStoreHook<CommonState>();
-  const [flat] = useStore('schema.flat');
+  const [flat] = useCommonStore('schema.flat');
   const element = useMemo(() => (elementId ? get(flat, elementId) : undefined), [elementId, flat]);
 
   return (

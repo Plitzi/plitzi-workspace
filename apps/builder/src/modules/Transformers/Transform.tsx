@@ -8,11 +8,11 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
 import { useCallback, use, useMemo, useRef, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 
 import TransformActions from './TransformActions';
@@ -21,7 +21,7 @@ import TransformPreview from './TransformPreview';
 
 import type { ResizeHandle } from '@plitzi/plitzi-ui/ContainerResizable';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
-import type { BuilderState, Schema, Style } from '@plitzi/sdk-shared';
+import type { Schema, Style } from '@plitzi/sdk-shared';
 import type { ClipboardEvent } from 'react';
 
 const Transform = () => {
@@ -33,8 +33,7 @@ const Transform = () => {
     builderHandler,
     baseContext: { baseElementId }
   } = use(BuilderContext);
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[styleMode, elementSelected]] = useStore(['style.mode', 'elementSelected']);
+  const [[styleMode, elementSelected]] = useBuilderStore(['style.mode', 'elementSelected']);
   const { rootRef } = use(ContainerRootContext);
   const [mode, setMode] = useState<'html-tailwind' | 'webflow' | 'html'>('html-tailwind');
   const [isEditorVisible, setEditorVisible] = useState(true);

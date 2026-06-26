@@ -2,12 +2,12 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import { useCallback, use, useEffect, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import { useBuilderStoreGetter, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
@@ -34,8 +34,7 @@ import type {
   BuilderMutationsMap,
   BuilderSubscriptionsMap,
   StyleCategory,
-  StyleState,
-  BuilderState
+  StyleState
 } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { ReactNode } from 'react';
@@ -72,9 +71,8 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
     }
   ]);
 
-  const { useStoreSync, useStoreGetter } = createStoreHook<BuilderState>();
-  useStoreSync('segments', segments);
-  const getSegment = useStoreGetter('segments');
+  useBuilderStoreSync('segments', segments);
+  const getSegment = useBuilderStoreGetter('segments');
 
   const segmentsFetch = useCallback(
     async (filter?: string | object, cursor?: string, limit?: number) => {

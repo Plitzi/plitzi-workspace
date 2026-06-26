@@ -1,14 +1,14 @@
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import { useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import AuthContext from './AuthContext';
 import useAuth from './hooks/useAuth';
 
-import type { CommonState, AuthContextValue, Environment, Server } from '@plitzi/sdk-shared';
+import type { AuthContextValue, Environment, Server } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type AuthContextProviderProps = {
@@ -27,7 +27,6 @@ const AuthContextProvider = ({
   server,
   environment = 'production'
 }: AuthContextProviderProps) => {
-  const { useStore } = createStoreHook<CommonState>();
   const [
     [
       {
@@ -43,7 +42,7 @@ const AuthContextProvider = ({
       },
       variables
     ]
-  ] = useStore(['schema.settings', 'schema.variables']);
+  ] = useCommonStore(['schema.settings', 'schema.variables']);
   const { queryParams, hostname } = useNavigation({ server });
 
   const variablesWhenData = useMemo(

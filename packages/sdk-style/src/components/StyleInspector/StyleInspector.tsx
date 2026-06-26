@@ -6,15 +6,15 @@ import { clsx } from 'clsx';
 import { produce } from 'immer';
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 
 import Selector from '../Selector';
 import Inspector from './Inspector';
 
 import type { SelectorValue } from '../Selector';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
-import type { BuilderState, DisplayMode, Element, StyleItem, TagType } from '@plitzi/sdk-shared';
+import type { DisplayMode, Element, StyleItem, TagType } from '@plitzi/sdk-shared';
 import type { StyleState } from '@plitzi/sdk-shared';
 
 export type StyleInspectorProps = {
@@ -52,14 +52,13 @@ const StyleInspector = ({
   onChange,
   onRemoveVariant
 }: StyleInspectorProps) => {
-  const { useStoreSync } = createStoreHook<BuilderState>();
   const [componentSubType, setComponentSubType] = useState<string | undefined>(undefined);
   const [styleSelector, setStyleSelector] = useState('base');
   const [styleVariant, setStyleVariant] = useState<string | undefined>(undefined);
   const [styleState, setStyleState] = useState<StyleState | undefined>(undefined);
-  useStoreSync('styleSelector', styleSelector, { enabled: mode === 'element' });
-  useStoreSync('styleVariant', styleVariant, { enabled: mode === 'element' });
-  useStoreSync('styleState', styleState, { enabled: mode === 'element' });
+  useBuilderStoreSync('styleSelector', styleSelector, { enabled: mode === 'element' });
+  useBuilderStoreSync('styleVariant', styleVariant, { enabled: mode === 'element' });
+  useBuilderStoreSync('styleState', styleState, { enabled: mode === 'element' });
   const { builderHandler } = use(BuilderContext);
   const selectorName = useMemo(() => get(styleSelectors, styleSelector, ''), [styleSelectors, styleSelector]);
   const selectorsFiltered = useMemo(

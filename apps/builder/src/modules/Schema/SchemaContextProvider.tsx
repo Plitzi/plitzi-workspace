@@ -5,7 +5,6 @@ import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMidd
 import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
 import { useMemo, useCallback, use, useEffect } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
@@ -14,6 +13,7 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { useBuilderStoreGetter, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
@@ -23,7 +23,6 @@ import type {
   BuilderMutationsMap,
   BuilderNetworkContextValue,
   BuilderQueriesMap,
-  BuilderState,
   BuilderSubscriptionsMap,
   DropPosition,
   Element,
@@ -69,15 +68,14 @@ const SchemaContextProvider = ({
     BuilderMutationsMap,
     BuilderSubscriptionsMap
   >;
-  const { useStoreSync, useStoreGetter } = createStoreHook<BuilderState>();
-  useStoreSync('schema', schema);
-  const getSchemaFlat = useStoreGetter('schema.flat');
+  useBuilderStoreSync('schema', schema);
+  const getSchemaFlat = useBuilderStoreGetter('schema.flat');
 
   const pageDefinitions = useValueMemo(
     pick(get(schema, 'flat', {} as Record<string, Element>), get(schema, 'pages', [])),
     'soft'
   );
-  useStoreSync('pageDefinitions', pageDefinitions);
+  useBuilderStoreSync('pageDefinitions', pageDefinitions);
 
   const schemaUpdate = useCallback(
     (newSchema: SchemaRaw, fromSubscriptions = false) =>

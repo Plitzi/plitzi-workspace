@@ -1,15 +1,15 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, memo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
 import { Page } from '@plitzi/sdk-elements/elements';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import SpaceContainer from '../../Space/SpaceContainer';
 import MadeInPlitzi from '../components/MadeInPlitzi';
 
-import type { RenderMode, SdkState } from '@plitzi/sdk-shared';
+import type { RenderMode } from '@plitzi/sdk-shared';
 import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 export type RawModeProps = {
@@ -21,8 +21,7 @@ export type RawModeProps = {
 
 const RawMode = ({ pageId = '', style = '', plitziContextValue, renderMode = 'raw' }: RawModeProps) => {
   const pageValueMemo = useMemo(() => ({ id: pageId, rootId: pageId }), [pageId]);
-  const { useStore } = createStoreHook<SdkState>();
-  const [flat] = useStore('schema.flat');
+  const [flat] = useSdkStore('schema.flat');
 
   const type = useMemo(() => {
     if (pageId && renderMode === 'widget') {

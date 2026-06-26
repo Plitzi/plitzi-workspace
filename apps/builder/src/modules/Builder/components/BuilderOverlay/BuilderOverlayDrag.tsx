@@ -2,10 +2,10 @@ import { debounce } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { memo, use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
-import type { BuilderState, DropPosition, Element as PlitziElement } from '@plitzi/sdk-shared';
+import type { DropPosition, Element as PlitziElement } from '@plitzi/sdk-shared';
 import type { CSSProperties, RefObject } from 'react';
 
 export const OVERLAY_MODE_NORMAL = 'normal';
@@ -18,8 +18,7 @@ export type BuilderOverlayDragProps = {
 };
 
 const BuilderOverlayDrag = ({ refIframe, sizeOffset = 2, zoom = 1 }: BuilderOverlayDragProps) => {
-  const { useStore } = createStoreHook<BuilderState>();
-  const [flat] = useStore('schema.flat');
+  const [flat] = useBuilderStore('schema.flat');
   const elementDOM = useRef<Element | undefined | null>(null);
   const [, setRerender] = useState(false);
   const {

@@ -5,7 +5,7 @@ import type { ComponentOrigin, ComponentPluginWithHOC } from '@plitzi/sdk-shared
 // Generic methods
 
 export const getPlugins = (component: ComponentPluginWithHOC | undefined) => {
-  let result: Record<string, ComponentPluginWithHOC> = {};
+  const result: Record<string, ComponentPluginWithHOC> = {};
   if (!component) {
     return result;
   }
@@ -14,7 +14,7 @@ export const getPlugins = (component: ComponentPluginWithHOC | undefined) => {
   const { plugins } = component;
   if (plugins && Object.keys(plugins).length > 0) {
     Object.keys(plugins).forEach(pluginKey => {
-      result = { ...result, ...getPlugins(plugins[pluginKey]) };
+      Object.assign(result, getPlugins(plugins[pluginKey]));
     });
   }
 
@@ -24,14 +24,14 @@ export const getPlugins = (component: ComponentPluginWithHOC | undefined) => {
 // Local
 
 export const processLocalPlugins = (plugins?: Record<string, ComponentPluginWithHOC>) => {
-  let pluginsProcessed = {};
+  const pluginsProcessed: Record<string, ComponentPluginWithHOC> = {};
   if (!plugins) {
     return pluginsProcessed;
   }
 
   Object.values(plugins).forEach(comp => {
     if (comp.type) {
-      pluginsProcessed = { ...pluginsProcessed, ...getPlugins(comp) };
+      Object.assign(pluginsProcessed, getPlugins(comp));
     }
   });
 
@@ -63,7 +63,7 @@ export const nestedInject = (plugins: Record<string, ComponentPluginWithHOC> | u
 };
 
 export const processLocalCustomPlugins = (localComponents?: Record<string, ComponentPluginWithHOC>) => {
-  let pluginsProcessed = {};
+  const pluginsProcessed: Record<string, ComponentPluginWithHOC> = {};
   if (!localComponents) {
     return pluginsProcessed;
   }
@@ -85,10 +85,8 @@ export const processLocalCustomPlugins = (localComponents?: Record<string, Compo
     plitziComponent.extraProps = extraProps;
     plitziComponent.plugins = nestedInject(plugins, 'local-custom');
 
-    pluginsProcessed = { ...pluginsProcessed, ...getPlugins(plitziComponent) };
+    Object.assign(pluginsProcessed, getPlugins(plitziComponent));
   });
 
   return pluginsProcessed;
 };
-
-// Remote Custom Components

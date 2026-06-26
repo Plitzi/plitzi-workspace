@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-import type { Element, ElementLayout } from '../types';
+import type { Element, ElementLayout } from '@plitzi/sdk-shared';
 import type { CSSProperties } from 'react';
 
 export type ElementContextValue<T extends 'skipHOC' | 'full' = 'full'> = {

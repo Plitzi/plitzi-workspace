@@ -2,10 +2,9 @@ import Select from '@plitzi/plitzi-ui/Select';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import { useCallback, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
-import type { CommonState } from '@plitzi/sdk-shared';
 
 type SettingsProps = {
   subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
@@ -14,8 +13,7 @@ type SettingsProps = {
 };
 
 const Settings = ({ subType = 'div', folder = '', onUpdate }: SettingsProps) => {
-  const { useStore } = createStoreHook<CommonState>();
-  const [pageFolders] = useStore('schema.pageFolders');
+  const [pageFolders] = useCommonStore('schema.pageFolders');
 
   const handleChangeSubType = useCallback((value: string) => onUpdate?.('subType', value), [onUpdate]);
 

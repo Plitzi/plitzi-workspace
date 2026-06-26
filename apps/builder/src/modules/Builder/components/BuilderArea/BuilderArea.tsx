@@ -4,7 +4,6 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { memo, useCallback, use, useMemo, useRef, useState } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
@@ -15,6 +14,7 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
@@ -30,7 +30,7 @@ import BuilderAreaTracking from './BuilderAreaTracking';
 import styleFrame from '../../Assets/index-iframe.scss?inline';
 import BuilderCollaboratorArea from '../BuilderCollaborator/BuilderCollaboratorArea';
 
-import type { BuilderState, ComponentPluginWithHOC, DisplayMode } from '@plitzi/sdk-shared';
+import type { ComponentPluginWithHOC, DisplayMode } from '@plitzi/sdk-shared';
 
 export type BuilderAreaProps = {
   className?: string;
@@ -55,10 +55,9 @@ const BuilderArea = ({
   previewMode = false,
   debugMode = false
 }: BuilderAreaProps) => {
-  const { useStore } = createStoreHook<BuilderState>();
-  const [cache] = useStore('style.cache');
+  const [cache] = useBuilderStore('style.cache');
   // @todo: variables should be only related to styles
-  const [variables] = useStore('runtime.sources.variables');
+  const [variables] = useBuilderStore('runtime.sources.variables');
   const trackingContainerRef = useRef<HTMLDivElement | null>(null);
   const { assets } = use(PluginsContext);
   const {

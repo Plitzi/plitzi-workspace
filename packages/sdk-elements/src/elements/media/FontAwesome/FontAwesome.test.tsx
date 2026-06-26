@@ -1,9 +1,9 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
-import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
-
 import { FontAwesome } from './FontAwesome';
+import ElementContext from '../../../Element/ElementContext';
+import { skipHocEntry } from '../../../testUtils/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
@@ -19,7 +19,7 @@ vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
 describe('FontAwesome Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
-      <ElementContext value={{ id: '', rootId: '', plitziJsxSkipHOC: true }}>
+      <ElementContext value={skipHocEntry()}>
         <FontAwesome />
       </ElementContext>
     );

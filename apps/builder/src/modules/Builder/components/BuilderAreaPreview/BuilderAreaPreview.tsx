@@ -7,7 +7,6 @@ import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
@@ -19,6 +18,7 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
@@ -27,8 +27,6 @@ import InteractionsBuilderContextProvider from '@pmodules/Interactions/Interacti
 // eslint-disable-next-line
 // @ts-ignore
 import styleFrame from '../../../Builder/Assets/index-iframe.scss?inline';
-
-import type { BuilderState } from '@plitzi/sdk-shared';
 
 export type BuilderAreaPreviewProps = {
   id?: string;
@@ -42,8 +40,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
   const { rootRef } = use(ContainerRootContext);
   const { displayBorderComponents } = use(AppContext);
   const { theme } = use(BuilderContext);
-  const { useStore } = createStoreHook<BuilderState>();
-  const [[settings = undefined, variables = undefined, element = undefined, styleCache = '']] = useStore([
+  const [[settings = undefined, variables = undefined, element = undefined, styleCache = '']] = useBuilderStore([
     'schema.settings',
     'schema.variables',
     `schema.flat.${id}`,

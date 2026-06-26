@@ -2,9 +2,9 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { PopupProvider } from '@plitzi/plitzi-ui/Popup';
 import { useState, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
+import { useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
 
 import AppContainer from './AppContainer';
@@ -12,7 +12,7 @@ import AppContext from './AppContext';
 import AppProvider from './AppProvider';
 
 import type { AppContextValue } from './AppContext';
-import type { DisplayMode, Environment, Server, BuilderState } from '@plitzi/sdk-shared';
+import type { DisplayMode, Environment, Server } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type AppMainProps = {
@@ -50,8 +50,7 @@ const AppMain = ({
   const [zoom, setZoom] = useState(1);
   const [displayMode, setDisplayMode] = useState<DisplayMode>('desktop');
   const [mobilePreview, setMobilePreview] = useState(false);
-  const { useStoreSync } = createStoreHook<BuilderState>();
-  useStoreSync('displayMode', displayMode);
+  useBuilderStoreSync('displayMode', displayMode);
 
   const appValueMemo = useMemo(
     () => ({

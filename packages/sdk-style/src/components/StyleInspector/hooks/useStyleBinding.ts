@@ -1,16 +1,15 @@
 import { get, set } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
-import type { CommonState, Element, StyleCategory, StyleValue } from '@plitzi/sdk-shared';
+import type { Element, StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 export type UseStyleBindingProps = { element?: Element };
 
 const useStyleBinding = ({ element }: UseStyleBindingProps) => {
-  const { useStore } = createStoreHook<CommonState>();
-  const [dataSource = emptyObject] = useStore('runtime.sources');
+  const [dataSource = emptyObject] = useCommonStore('runtime.sources');
   const attributes = useMemo(() => {
     const metadata: Partial<Record<StyleCategory, StyleValue>> = {};
     if (!element) {

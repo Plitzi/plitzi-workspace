@@ -1,11 +1,9 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
-import ElementContext from '@plitzi/sdk-shared/elements/ElementContext';
-
 import { NotFound } from './NotFound';
-
-import type { ElementContextValue } from '@plitzi/sdk-shared';
+import ElementContext from '../../../Element/ElementContext';
+import { elementEntry } from '../../../testUtils/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
@@ -13,7 +11,7 @@ vi.mock('../../../Element/hocs/withElement', () => ({
 
 vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
   default: () => ({
-    settings: { previewMode: true },
+    settings: { previewMode: true, isHydrating: false },
     contexts: {}
   })
 }));
@@ -21,11 +19,7 @@ vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
 describe('NotFound Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
-      <ElementContext
-        value={
-          { id: '', rootId: '', plitziJsxSkipHOC: false, definition: { label: 'Not Found' } } as ElementContextValue
-        }
-      >
+      <ElementContext value={elementEntry('not-found')}>
         <NotFound />
       </ElementContext>
     );

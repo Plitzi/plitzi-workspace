@@ -344,7 +344,7 @@ const App = (props: AppProps) => {
       middlewares={[
         loggerMw(createStoreDevToolsLogger<BuilderState>('builder')),
         runtimeStatePersist<BuilderState>(webId),
-        ...(debugMode ? [historyMw<BuilderState>()] : [])
+        ...(debugMode ? [historyMw<BuilderState>({ shouldRecord: p => !p?.startsWith('runtime.elements') })] : [])
       ]}
     >
       <ThemeProvider storageKey="builder-state.theme">

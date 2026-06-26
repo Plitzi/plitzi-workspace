@@ -1,3 +1,4 @@
+import { applySSRResult } from './applySSRResult';
 import { buildBody } from './buildBody';
 import { streamBody } from './streamBody';
 import { buildHtmlCacheKey } from '../../helpers/cache';
@@ -62,7 +63,7 @@ export const renderSSR = async (
     return;
   }
 
-  const body = await buildBody(
+  const { body, result } = await buildBody(
     req,
     config,
     spaceId as number,
@@ -74,14 +75,18 @@ export const renderSSR = async (
     metrics
   );
 
-  if (htmlCache && cacheKey) {
-    htmlCache.set(cacheKey, body);
-  }
-
   if (metrics) {
     res.setHeader('Server-Timing', metrics.toServerTimingHeader());
     metrics.log(`${req.method} ${req.path}`);
   }
 
-  res.send(body);
+  if (applySSRResult(res, result)) {
+    return;
+  }
+
+  if (htmlCache && cacheKey && body !== undefined) {
+    htmlCache.set(cacheKey, body);
+  }
+
+  res.send(body ?? '');
 };

@@ -1,7 +1,7 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 
 import { generatePluginModule } from './elementUtils';
-import { nestedInject } from '../../Component';
+import { nestedInject } from '../../Component/ComponentHelper';
 import NotFound from '../../elements/internal/NotFound/NotFound';
 import withElement from '../hocs/withElement';
 

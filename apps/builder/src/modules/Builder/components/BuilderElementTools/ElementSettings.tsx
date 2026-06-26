@@ -5,7 +5,6 @@ import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
 import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import { defaultElementsSettings } from '@plitzi/sdk-elements/elements/settings';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
@@ -18,10 +17,11 @@ import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { ThemeContext } from '@plitzi/sdk-shared/theme';
 import AppContext from '@pmodules/App/AppContext';
 
-import type { BuilderState, ComponentPlugin } from '@plitzi/sdk-shared';
+import type { ComponentPlugin } from '@plitzi/sdk-shared';
 import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import type { FC } from 'react';
 
@@ -33,7 +33,6 @@ export type ElementSettingsProps = {
 };
 
 const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleChange }: ElementSettingsProps) => {
-  const { useStore } = createStoreHook<BuilderState>();
   const { previewMode, displayBorderComponents } = use(AppContext);
   const { getComponent } = use(ComponentContext);
   const { theme } = use(ThemeContext);
@@ -85,7 +84,7 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Settings = (Plugin?.pluginSettings ?? defaultElementsSettings[type]) as FC<any> | undefined;
-  const [variables = emptyObject] = useStore('runtime.sources.variables');
+  const [variables = emptyObject] = useBuilderStore('runtime.sources.variables');
 
   const children = useMemo(
     () => (

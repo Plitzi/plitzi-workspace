@@ -1,9 +1,8 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, useCallback } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
-import type { CommonState } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type DetailsValue = {
@@ -23,8 +22,7 @@ const DetailsValue = ({
   // isStyle = false,
   onSelectElement
 }: DetailsValue) => {
-  const { useStore } = createStoreHook<CommonState>();
-  const [flat] = useStore('schema.flat');
+  const [flat] = useCommonStore('schema.flat');
 
   const handleClickElement = useCallback((elementId: string) => () => onSelectElement?.(elementId), [onSelectElement]);
 

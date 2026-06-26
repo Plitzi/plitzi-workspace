@@ -4,9 +4,9 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
-import { createStoreHook } from '@plitzi/nexus/react';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
 import SegmentForm from '@pmodules/Segments/models/SegmentForm';
 
 import OverlayButton from './OverlayButton';
@@ -14,7 +14,7 @@ import TemplateForm from '../../Models/TemplateForm';
 import BuilderElementTools from '../BuilderElementTools';
 
 import type { OverlayRect } from './BuilderOverlayHelper';
-import type { BuilderState, Element, SegmentsContextValue } from '@plitzi/sdk-shared';
+import type { Element, SegmentsContextValue } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 export type OverlayButtonContainerProps = {
@@ -36,9 +36,12 @@ const OverlayButtonContainer = ({
   zoom = 1,
   onHoverRemove
 }: OverlayButtonContainerProps) => {
-  const { useStore, useStoreGetter } = createStoreHook<BuilderState>();
-  const [getSchema, getStyle] = useStoreGetter(['schema', 'style']);
-  const [[elementSelected, setSelected, setHovered]] = useStore(['elementSelected', 'setSelected', 'setHovered']);
+  const [getSchema, getStyle] = useBuilderStoreGetter(['schema', 'style']);
+  const [[elementSelected, setSelected, setHovered]] = useBuilderStore([
+    'elementSelected',
+    'setSelected',
+    'setHovered'
+  ]);
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { existsPopup, addPopup } = usePopup();

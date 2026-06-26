@@ -2,13 +2,21 @@ import { Writable } from 'node:stream';
 
 import { renderToPipeableStream } from 'react-dom/server';
 
+import { applySSRResult } from './applySSRResult';
 import Component from './Component';
 import { prepareRender } from './prepareRender';
 
 import type { TtlCache } from '../../helpers/cache';
 import type { RequestMetrics } from '../../helpers/metrics';
 import type { PluginManager } from '../../plugins/manager';
-import type { Environment, SSRRequest, SSRResponseHelpers, SSRServerConfig, SSRTemplateFn } from '@plitzi/sdk-shared';
+import type {
+  Environment,
+  SSRRenderResult,
+  SSRRequest,
+  SSRResponseHelpers,
+  SSRServerConfig,
+  SSRTemplateFn
+} from '@plitzi/sdk-shared';
 
 // Placeholder injected into the template so we can split head/tail without parsing HTML.
 const SSR_SENTINEL = '<!--SSR_CONTENT-->';
@@ -48,6 +56,8 @@ export const streamBody = async (
   const head = sentinelIdx >= 0 ? fullTemplate.slice(0, sentinelIdx) : fullTemplate;
   const tail = sentinelIdx >= 0 ? fullTemplate.slice(sentinelIdx + SSR_SENTINEL.length) : '';
 
+  const result: SSRRenderResult = {};
+
   await new Promise<void>((resolve, reject) => {
     // Only accumulate chunks when caching is active — avoids holding the full
     // React HTML in memory on uncached paths.
@@ -74,7 +84,7 @@ export const streamBody = async (
     });
 
     const reactStart = metrics ? performance.now() : 0;
-    const { pipe } = renderToPipeableStream(<Component {...prep.componentProps} />, {
+    const { pipe, abort } = renderToPipeableStream(<Component {...prep.componentProps} ssrResult={result} />, {
       onShellReady() {
         metrics?.record('react', Math.round(performance.now() - reactStart));
 
@@ -82,6 +92,14 @@ export const streamBody = async (
         if (metrics) {
           res.setHeader('Server-Timing', metrics.toServerTimingHeader());
           metrics.log(`${req.method} ${req.path}`);
+        }
+
+        // Redirects/status are decided during the shell render — apply them before any byte is flushed.
+        if (applySSRResult(res, result)) {
+          abort();
+          resolve();
+
+          return;
         }
 
         res.write(Buffer.from(head, 'utf-8'));

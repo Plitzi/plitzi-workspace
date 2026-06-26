@@ -2,10 +2,10 @@ import { PopupProvider, PopupSidePanel } from '@plitzi/plitzi-ui/Popup';
 import { useCallback, use } from 'react';
 
 import { loggerMiddleware as loggerMw } from '@plitzi/nexus';
-import { createStoreHook } from '@plitzi/nexus/react';
 import { StoreProvider } from '@plitzi/nexus/react';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import Builder from '@pmodules/Builder';
 import BuilderProvider from '@pmodules/Builder/BuilderProvider';
@@ -19,8 +19,7 @@ export type BuilderPopupProps = {
 
 const BuilderPopup = ({ previewMode = false, segmentIdentifier = '' }: BuilderPopupProps) => {
   const { eventBridge } = use(EventBridgeContext);
-  const { useStore } = createStoreHook<BuilderState>();
-  const [segment = undefined] = useStore(`segments.${segmentIdentifier}`);
+  const [segment = undefined] = useBuilderStore(`segments.${segmentIdentifier}`);
 
   const generateStoreState = useCallback(
     (currentState: BuilderState) => ({

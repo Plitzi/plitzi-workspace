@@ -99,6 +99,7 @@ export const prepareRender = async (
       reactJsx: vendorJs,
       reactDom: vendorJs,
       reactDomClient: vendorJs,
+      reactCompilerRuntime: vendorJs,
       ...req.ctx.spaceDeployment?.templateProps,
       plugins: templatePlugins,
       debugMode: config.devMode,
