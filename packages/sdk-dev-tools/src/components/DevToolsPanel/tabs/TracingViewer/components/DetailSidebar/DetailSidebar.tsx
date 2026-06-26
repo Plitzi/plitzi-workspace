@@ -37,6 +37,15 @@ const DetailSidebar = ({ node, commit, model }: DetailSidebarProps) => (
       {node.state === 'bubbled' && 'a descendant rendered'}
       {node.state === 'hatched' && 'did not render'}
     </span>
+    {node.trigger && (
+      <span
+        className="w-fit rounded bg-violet-500/15 px-1 py-0.5 text-[9px] text-violet-600 dark:text-violet-400"
+        title="A root cause of this commit — no ancestor re-rendered"
+      >
+        <i className="fa-solid fa-bolt mr-1" />
+        trigger
+      </span>
+    )}
 
     <div className="mt-1 font-medium tracking-wide text-zinc-400 uppercase dark:text-zinc-500">Durations</div>
     <div className="flex justify-between gap-2">
@@ -83,6 +92,20 @@ const DetailSidebar = ({ node, commit, model }: DetailSidebarProps) => (
         {model.renderedCount} of {commit.elementCount}
       </span>
     </div>
+    <div className="flex justify-between gap-2">
+      <span className="text-zinc-400 dark:text-zinc-500">Triggers</span>
+      <span className="text-zinc-700 tabular-nums dark:text-zinc-200">{model.triggers.length}</span>
+    </div>
+
+    <div className="mt-1 font-medium tracking-wide text-zinc-400 uppercase dark:text-zinc-500">Caused by</div>
+    {commit.causes.length === 0 && (
+      <span className="text-zinc-400 italic dark:text-zinc-500">no store write captured</span>
+    )}
+    {commit.causes.map(path => (
+      <span key={path} className="truncate font-mono text-[9px] text-zinc-600 dark:text-zinc-300" title={path}>
+        {path}
+      </span>
+    ))}
   </aside>
 );
 

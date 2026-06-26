@@ -75,13 +75,15 @@ export type CommitElementRender = {
   baseDuration: number;
 };
 
-// A group of element renders React flushed together (same `commitTime`).
+// A group of element renders React flushed together (same `commitTime`). `causes` are the store paths written just
+// before this commit (captured from nexus `subscribeChange`) — the "why did it render" at the data level.
 export type CommitEntry = {
   commitId: number;
   timestamp: number;
   duration: number;
   elementCount: number;
   elements: CommitElementRender[];
+  causes: string[];
 };
 
 // Accumulated render-tree info for one element, gathered across ALL commits (not just the latest). `parentId` is its

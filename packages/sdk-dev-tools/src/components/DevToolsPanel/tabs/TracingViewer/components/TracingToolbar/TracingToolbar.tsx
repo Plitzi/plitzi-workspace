@@ -5,7 +5,8 @@ import type { TracingView } from '../../helpers';
 
 const VIEWS = [
   { id: 'ranked', label: 'Ranked', icon: 'fa-solid fa-ranking-star' },
-  { id: 'flamegraph', label: 'Flamegraph', icon: 'fa-solid fa-fire' }
+  { id: 'flamegraph', label: 'Flamegraph', icon: 'fa-solid fa-fire' },
+  { id: 'hotspots', label: 'Hotspots', icon: 'fa-solid fa-temperature-three-quarters' }
 ] as const;
 
 export type TracingToolbarProps = {

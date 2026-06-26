@@ -175,6 +175,7 @@ const Flamegraph = ({ commit, model, active, onSelectElement }: FlamegraphProps)
                     { 'brightness-125 saturate-150': isActive }
                   )}
                 >
+                  {node.trigger && <i className="fa-solid fa-bolt shrink-0 text-[8px] text-violet-200" />}
                   {!node.visible && <i className="fa-solid fa-eye-slash shrink-0 text-[8px] opacity-70" />}
                   {showLabel && <span className="min-w-0 truncate">{node.name}</span>}
                   {showTime && (

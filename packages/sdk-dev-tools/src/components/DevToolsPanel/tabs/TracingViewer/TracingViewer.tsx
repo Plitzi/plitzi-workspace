@@ -5,6 +5,7 @@ import { useTracing } from '@plitzi/sdk-shared/store/tracing';
 
 import CommitStrip from './components/CommitStrip';
 import Flamegraph from './components/Flamegraph';
+import HotspotsList from './components/HotspotsList';
 import RankedList from './components/RankedList';
 import TracingToolbar from './components/TracingToolbar';
 import { buildFlameModel } from './helpers';
@@ -92,12 +93,23 @@ const TracingViewer = () => {
   return (
     <div className="flex h-full min-h-0 w-full flex-col" onKeyDown={handleKeyDown}>
       <TracingToolbar view={view} commitCount={commits.length} onClear={clear} onViewChange={setView} />
-      <CommitStrip commits={commits} selectedIndex={selectedIndex} onSelect={handleSelectCommit} />
+      {view !== 'hotspots' && (
+        <CommitStrip commits={commits} selectedIndex={selectedIndex} onSelect={handleSelectCommit} />
+      )}
       {view === 'ranked' && (
         <RankedList commit={selectedCommit} model={model} active={active} onSelectElement={handleSelectElement} />
       )}
       {view === 'flamegraph' && (
         <Flamegraph commit={selectedCommit} model={model} active={active} onSelectElement={handleSelectElement} />
+      )}
+      {view === 'hotspots' && (
+        <HotspotsList
+          commits={commits}
+          tree={tree}
+          flat={flat}
+          selectedId={selectedElementId}
+          onSelectElement={handleSelectElement}
+        />
       )}
     </div>
   );

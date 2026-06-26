@@ -95,6 +95,12 @@ const RankedList = ({ commit, model, active, onSelectElement }: RankedListProps)
               >
                 <span className="flex w-40 shrink-0 flex-col">
                   <span className="flex items-center gap-1 text-zinc-700 dark:text-zinc-200">
+                    {row.trigger && (
+                      <i
+                        className="fa-solid fa-bolt shrink-0 text-[9px] text-violet-500"
+                        title="Trigger — a root cause of this commit"
+                      />
+                    )}
                     {!row.visible && (
                       <i
                         className="fa-solid fa-eye-slash shrink-0 text-[9px] text-amber-500"

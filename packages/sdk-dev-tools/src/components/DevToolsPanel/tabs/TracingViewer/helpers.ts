@@ -3,7 +3,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import type { CommitEntry, Element, RenderPhase, TracingTree } from '@plitzi/sdk-shared';
 import type { CSSProperties } from 'react';
 
-export type TracingView = 'ranked' | 'flamegraph';
+export type TracingView = 'ranked' | 'flamegraph' | 'hotspots';
 
 // Self = the element's own render work; Total = subtree-inclusive ("as a page"). Both matter, so the views let you
 // switch which one drives the bars.
@@ -23,6 +23,7 @@ export type FlameNode = {
   type: string;
   state: RenderState;
   visible: boolean; // false ⇒ rendered but hidden via `visibility`
+  trigger: boolean; // rendered AND no ancestor rendered → a root cause of this commit's cascade
   phase?: RenderPhase; // only when rendered
   actualDuration: number; // subtree-inclusive (0 if it didn't render)
   baseDuration: number; // structural size (drives flamegraph width); stable across commits
@@ -37,6 +38,20 @@ export type FlameModel = {
   maxDepth: number;
   totalSelf: number; // Σ self over rendered nodes — the denominator for "contribution %"
   renderedCount: number; // how many nodes actually rendered
+  triggers: string[]; // ids of the cascade roots (the elements that started this commit)
+};
+
+// Per-element aggregate across ALL recorded commits — the session "hotspots" (chatty / expensive elements).
+export type HotspotRow = {
+  id: string;
+  name: string;
+  type: string;
+  renders: number; // times the element rendered itself
+  mounts: number;
+  totalSelf: number;
+  maxSelf: number;
+  avgSelf: number;
+  lastSelf: number;
 };
 
 export const formatMs = (ms: number): string => {
@@ -129,17 +144,19 @@ const MIN_SIZE = 0.01;
 // truly bubbled node's self time is exactly 0 because React propagates `actualDuration` additively up the tree.
 const SELF_EPS = 1e-6;
 
-// Builds the FULL render tree for a single commit from the ACCUMULATED tree (every element ever seen, with its real
-// render-tree parent and last base duration). Rendered nodes are placed under their real ancestors even when those
-// ancestors did not render this commit — so a rendered grandchild never detaches to the root and gets its time
-// misattributed to the page. Self time is `actual − Σ(nearest rendered descendants' actual)`, which stays correct
-// across non-rendered intermediates. Widths come from base duration (structural, stable), not from this commit's
-// time, so the layout doesn't reshuffle between commits — exactly the React DevTools flamegraph model.
-export const buildFlameModel = (
-  commit: CommitEntry,
-  tree: TracingTree,
-  flat: Record<string, Element> | undefined
-): FlameModel => {
+type CommitGraph = {
+  rendered: Map<string, CommitEntry['elements'][number]>;
+  parent: Map<string, string | undefined>;
+  children: Map<string, string[]>;
+  base: Map<string, number>;
+  roots: string[];
+  selfOf: (id: string) => number;
+};
+
+// Indexes the accumulated tree + a single commit's renders, with self time = `actual − Σ(nearest rendered
+// descendants' actual)` (correct across non-rendered intermediates). Shared by the flamegraph model and the session
+// hotspots aggregator so both compute self the same way.
+const buildCommitGraph = (commit: CommitEntry, tree: TracingTree): CommitGraph => {
   const parent = new Map<string, string | undefined>();
   const base = new Map<string, number>();
   for (const id of Object.keys(tree)) {
@@ -207,6 +224,20 @@ export const buildFlameModel = (
     return Math.max(0, entry.actualDuration - childTotal);
   };
 
+  return { rendered, parent, children, base, roots: [...roots], selfOf };
+};
+
+// Builds the FULL render tree for a single commit from the ACCUMULATED tree (every element ever seen). Rendered nodes
+// nest under their real ancestors even when those ancestors did not render this commit — so a rendered grandchild
+// never detaches to the root and gets its time misattributed to the page. Widths come from base duration (structural,
+// stable), not from this commit's time, so the layout doesn't reshuffle between commits — the React DevTools model.
+export const buildFlameModel = (
+  commit: CommitEntry,
+  tree: TracingTree,
+  flat: Record<string, Element> | undefined
+): FlameModel => {
+  const { rendered, children, base, roots, selfOf } = buildCommitGraph(commit, tree);
+
   const sizeOf = (id: string): number => {
     const b = base.get(id) ?? 0;
     if (b > 0) {
@@ -219,19 +250,26 @@ export const buildFlameModel = (
   };
 
   const nodes: FlameNode[] = [];
+  const triggers: string[] = [];
   let maxDepth = 0;
   let totalSelf = 0;
   let renders = 0;
 
-  const visit = (id: string, x: number, width: number, depth: number): void => {
+  const visit = (id: string, x: number, width: number, depth: number, ancestorRendered: boolean): void => {
     const entry = rendered.get(id);
     const selfDuration = selfOf(id);
     // `rendered` = it did its own work this commit (self time > ~0, exact since React propagates durations additively);
     // `bubbled` = it committed only because a descendant rendered (self time 0); `hatched` = absent from the commit.
     const state: RenderState = entry ? (selfDuration > SELF_EPS ? 'rendered' : 'bubbled') : 'hatched';
+    // A trigger is a rendered node with no rendered ancestor — a root cause of the commit's render cascade.
+    const trigger = state === 'rendered' && !ancestorRendered;
     if (state === 'rendered') {
       totalSelf += selfDuration;
       renders += 1;
+    }
+
+    if (trigger) {
+      triggers.push(id);
     }
 
     maxDepth = Math.max(maxDepth, depth);
@@ -241,6 +279,7 @@ export const buildFlameModel = (
       type: elementType(id, flat),
       state,
       visible: elementVisible(id, flat),
+      trigger,
       phase: entry?.phase,
       actualDuration: entry?.actualDuration ?? 0,
       baseDuration: base.get(id) ?? entry?.baseDuration ?? 0,
@@ -257,20 +296,61 @@ export const buildFlameModel = (
     let cursor = x;
     kids.forEach((kid, index) => {
       const childWidth = ((sizes[index] || MIN_SIZE) / span) * width;
-      visit(kid, cursor, childWidth, depth + 1);
+      visit(kid, cursor, childWidth, depth + 1, ancestorRendered || state === 'rendered');
       cursor += childWidth;
     });
   };
 
-  const rootIds = [...roots];
-  const rootSizes = rootIds.map(sizeOf);
+  const rootSizes = roots.map(sizeOf);
   const total = rootSizes.reduce((sum, value) => sum + value, 0) || 1;
   let cursor = 0;
-  rootIds.forEach((id, index) => {
+  roots.forEach((id, index) => {
     const width = (rootSizes[index] || MIN_SIZE) / total;
-    visit(id, cursor, width, 0);
+    visit(id, cursor, width, 0, false);
     cursor += width;
   });
 
-  return { nodes, maxDepth, totalSelf, renderedCount: renders };
+  return { nodes, maxDepth, totalSelf, renderedCount: renders, triggers };
+};
+
+// Aggregates self time per element across ALL recorded commits — the session hotspots: which elements render the most
+// and cost the most. Surfaces chatty/expensive elements (memoization candidates) that a single commit can't reveal.
+export const buildHotspots = (
+  commits: CommitEntry[],
+  tree: TracingTree,
+  flat: Record<string, Element> | undefined
+): HotspotRow[] => {
+  const acc = new Map<
+    string,
+    { renders: number; mounts: number; totalSelf: number; maxSelf: number; lastSelf: number }
+  >();
+  for (const commit of commits) {
+    const { selfOf } = buildCommitGraph(commit, tree);
+    for (const entry of commit.elements) {
+      const self = selfOf(entry.id);
+      if (self <= SELF_EPS) {
+        continue;
+      }
+
+      const current = acc.get(entry.id) ?? { renders: 0, mounts: 0, totalSelf: 0, maxSelf: 0, lastSelf: 0 };
+      current.renders += 1;
+      current.mounts += entry.phase === 'mount' ? 1 : 0;
+      current.totalSelf += self;
+      current.maxSelf = Math.max(current.maxSelf, self);
+      current.lastSelf = self;
+      acc.set(entry.id, current);
+    }
+  }
+
+  return [...acc.entries()].map(([id, value]) => ({
+    id,
+    name: elementName(id, flat),
+    type: elementType(id, flat),
+    renders: value.renders,
+    mounts: value.mounts,
+    totalSelf: value.totalSelf,
+    maxSelf: value.maxSelf,
+    avgSelf: value.totalSelf / value.renders,
+    lastSelf: value.lastSelf
+  }));
 };

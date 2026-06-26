@@ -24,6 +24,11 @@ const parentOf = new Map<string, string | undefined>();
 const baseOf = new Map<string, number>();
 let treeDirty = true;
 
+// Store paths written since the last commit, fed by `recordChange` (the viewer wires this to nexus `subscribeChange`).
+// The next commit claims them as its `causes` — the "why did it render" at the data level — then the buffer resets.
+let pendingCauses: string[] = [];
+const MAX_CAUSES = 30;
+
 let enabled = false;
 let viewing = false;
 let commitSeq = 0;
@@ -111,18 +116,37 @@ const onRender: ProfilerOnRenderCallback = (id, phase, actualDuration, baseDurat
     bucket.duration = Math.max(bucket.duration, actualDuration);
   } else {
     commitSeq += 1;
+    // The store writes buffered since the previous commit are what triggered this one.
+    const causes = pendingCauses;
+    pendingCauses = [];
     pendingByCommit.set(commitTime, {
       commitId: commitSeq,
       timestamp: commitTime,
       duration: actualDuration,
       elementCount: 1,
-      elements: [render]
+      elements: [render],
+      causes
     });
   }
 
   if (!flushScheduled) {
     flushScheduled = true;
     schedule(flush);
+  }
+};
+
+// Called by the viewer's nexus `subscribeChange` subscription: a store path was just written, so the upcoming commit
+// (if any) was caused by it. Only the path is kept (values can be large/cyclic); duplicates within a batch collapse.
+const recordChange = (path: string | undefined) => {
+  if (!viewing || path === undefined) {
+    return;
+  }
+
+  if (!pendingCauses.includes(path)) {
+    pendingCauses.push(path);
+    if (pendingCauses.length > MAX_CAUSES) {
+      pendingCauses.shift();
+    }
   }
 };
 
@@ -141,6 +165,7 @@ const stop = () => {
 const clear = () => {
   commits = [];
   pendingByCommit.clear();
+  pendingCauses = [];
   commitSeq = 0;
   // The accumulated tree (parentOf/baseOf) is intentionally kept: clearing only the commits resets the timeline while
   // preserving the known structure, so the next commit still nests correctly. Only re-publish the (unchanged) tree.
@@ -148,6 +173,6 @@ const clear = () => {
   writeSnapshot();
 };
 
-const tracingCollector = { onRender, linkParent, start, stop, clear };
+const tracingCollector = { onRender, linkParent, recordChange, start, stop, clear };
 
 export default tracingCollector;
