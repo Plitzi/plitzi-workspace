@@ -394,6 +394,18 @@
       "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/Flamegraph/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/Flamegraph/index.mjs"
     },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/HotspotSidebar": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/HotspotSidebar/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/HotspotSidebar/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/HotspotSidebar/HotspotSidebar": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/HotspotSidebar/HotspotSidebar.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/HotspotSidebar/HotspotSidebar.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/HotspotSidebar/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/HotspotSidebar/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/HotspotSidebar/index.mjs"
+    },
     "./components/DevToolsPanel/tabs/TracingViewer/components/HotspotsList": {
       "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/HotspotsList/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/HotspotsList/index.mjs"
