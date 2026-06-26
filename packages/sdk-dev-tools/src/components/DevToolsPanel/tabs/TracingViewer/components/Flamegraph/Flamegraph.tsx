@@ -10,6 +10,8 @@ import type { KeyboardEvent } from 'react';
 
 const ROW_HEIGHT = 22;
 const EPS = 1e-6;
+// Floor on a frame's width so its label + timing stay readable even when its proportional slice is tiny.
+const MIN_WIDTH_PX = 56;
 // Share of the width the focused subtree expands to; the rest (out-of-focus context) compresses into the remainder.
 const FOCUS_SPAN = 0.88;
 
@@ -184,11 +186,12 @@ const Flamegraph = ({ commit, flat }: FlamegraphProps) => {
                 style={{
                   left: `${left * 100}%`,
                   width: `calc(${width * 100}% - 2px)`,
+                  minWidth: MIN_WIDTH_PX,
                   top: node.depth * ROW_HEIGHT + 1,
                   height: ROW_HEIGHT - 3
                 }}
                 className={clsx(
-                  'absolute flex items-center overflow-hidden rounded-sm border px-1 text-left text-[10px] text-white transition-all',
+                  'absolute flex items-center justify-between gap-1 overflow-hidden rounded-sm border px-1 text-left text-[10px] text-white transition-all',
                   durationColor(node.selfDuration),
                   {
                     'border-white ring-1 ring-violet-500 dark:border-zinc-900': isActive,
@@ -199,6 +202,9 @@ const Flamegraph = ({ commit, flat }: FlamegraphProps) => {
                 )}
               >
                 <span className="truncate">{node.name}</span>
+                <span className="shrink-0 tabular-nums opacity-90">
+                  {formatMs(node.selfDuration)} / {formatMs(node.actualDuration)}
+                </span>
               </button>
             );
           })}
