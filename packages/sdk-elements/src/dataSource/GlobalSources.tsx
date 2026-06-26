@@ -103,7 +103,7 @@ const GlobalSources = ({ children, environment = 'main' }: GlobalSourcesProps) =
   useRegisterSource({ id: 'global', source: 'auth', name: 'Auth State', fields: authFields });
   useCommonStoreSync('runtime.sources.auth', authValue);
 
-  // --- state (canonical runtime/application state, the former `@plitzi/sdk-state`) ---
+  // --- state (canonical runtime/application state) ---
   const [state] = useCommonStore('runtime.state');
   const stateFields = useCallback(
     () => getPathsFromObeject(state).map(path => ({ path, name: `state.${path}` })),
