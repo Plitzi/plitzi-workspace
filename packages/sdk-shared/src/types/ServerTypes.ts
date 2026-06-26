@@ -96,6 +96,7 @@ export type SSRTemplateProps = {
   reactJsx?: string;
   reactDom?: string;
   reactDomClient?: string;
+  reactCompilerRuntime?: string;
   /** When true the client-side <script> block is omitted — useful for inspecting raw SSR HTML. */
   ssrOnly?: boolean;
   debugMode?: boolean;

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as ReactCompilerRuntime from 'react/compiler-runtime';
 import * as ReactJsx from 'react/jsx-runtime';
 import * as ReactDOM from 'react-dom';
 import * as ReactDOMClient from 'react-dom/client';
@@ -66,5 +67,8 @@ export const {
 export const { createRoot, hydrateRoot } = ReactDOMClient;
 
 export const { jsx, jsxs } = ReactJsx;
+
+// @ts-expect-error - react/compiler-runtime types intentionally omit exports
+export const { c } = ReactCompilerRuntime;
 
 export default React;
