@@ -22,6 +22,13 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BUILTIN_PUBLIC_DIR = path.resolve(__dirname, '../public');
 
+// Same-origin only: reject absolute URLs and protocol-relative `//host` to avoid open redirects.
+const safeRedirectTarget = (req: SSRRequest): string => {
+  const redirectParam = req.query['redirect'];
+
+  return redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//') ? redirectParam : '/';
+};
+
 const handleRequest = async (
   raw: IncomingMessage,
   rawRes: RawResponse,
@@ -96,12 +103,18 @@ const handleRequest = async (
   const loginPath = config.loginPath === false ? null : (config.loginPath ?? '/auth/login');
   if (loginPath && req.method === 'POST' && req.path === loginPath) {
     const isLoggedIn = await config.adapters.onLogin?.(req);
-    if (isLoggedIn) {
-      res.setStatus(200);
-    } else {
-      res.setStatus(401);
+
+    // A full-page form submission (navigation) must not be answered with a bodyless 401/200, or the
+    // browser shows its own error page instead of the view. Redirect so the view re-renders via a GET.
+    if (req.headers['sec-fetch-mode'] === 'navigate') {
+      res.setStatus(303);
+      res.setHeader('Location', isLoggedIn ? safeRedirectTarget(req) : loginPath);
+      res.end();
+
+      return;
     }
 
+    res.setStatus(isLoggedIn ? 200 : 401);
     res.end();
 
     return;
@@ -110,6 +123,17 @@ const handleRequest = async (
   const logoutPath = config.logoutPath === false ? null : (config.logoutPath ?? '/auth/logout');
   if (logoutPath && req.method === 'POST' && req.path === logoutPath) {
     await config.adapters.onLogout?.(req);
+
+    // On a navigation a 204 keeps the browser on the stale (still logged-in) page. Redirect so the
+    // view re-renders in its logged-out state; a fetch can keep the lean 204.
+    if (req.headers['sec-fetch-mode'] === 'navigate') {
+      res.setStatus(303);
+      res.setHeader('Location', safeRedirectTarget(req));
+      res.end();
+
+      return;
+    }
+
     res.setStatus(204);
     res.end();
 
