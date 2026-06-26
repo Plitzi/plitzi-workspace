@@ -1,9 +1,10 @@
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
-import { useMemo, useRef } from 'react';
+import { Profiler, use, useMemo, useRef } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
+import { tracingCollector } from '@plitzi/sdk-shared/store/tracing';
 
 import ElementContext from '../ElementContext';
 import { omitKeys } from '../helpers/omitKeys';
@@ -36,8 +37,10 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
   const FullElement = (props: WithElementProps<T>) => {
     const ref = useRef<HTMLElement>(undefined);
     const { id, rootId } = props.internalProps;
+    // The enclosing element context is this element's real render-tree parent (nests across schemas/rootIds).
+    const parentElement = use(ElementContext) as ElementContextValue | undefined;
     const {
-      settings: { previewMode },
+      settings: { previewMode, debugMode },
       root: { baseElementId }
     } = usePlitziServiceContext();
     const [element] = useCommonStore(`schema.flat.${id}`);
@@ -79,6 +82,18 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
         </ErrorBoundary>
       );
     }, [internalProps.attributes, props, customProps, children]);
+
+    if (debugMode) {
+      // Registers the real render-tree parent so the collector/flamegraph nest correctly across schemas. Whether the
+      // element rendered itself vs only a descendant did is derived later from self time, not flagged here.
+      tracingCollector.linkParent(id, parentElement?.id);
+
+      return (
+        <Profiler id={id} onRender={tracingCollector.onRender}>
+          <ElementContext value={elementData}>{content}</ElementContext>
+        </Profiler>
+      );
+    }
 
     return <ElementContext value={elementData}>{content}</ElementContext>;
   };

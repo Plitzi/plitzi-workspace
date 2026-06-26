@@ -9,7 +9,8 @@ const TABS = [
   { id: 'history', label: 'History', icon: 'fa-solid fa-clock-rotate-left' },
   { id: 'elements', label: 'Elements', icon: 'fa-solid fa-layer-group' },
   { id: 'variables', label: 'Variables', icon: 'fa-solid fa-code' },
-  { id: 'plugins', label: 'Plugins', icon: 'fa-solid fa-puzzle-piece' }
+  { id: 'plugins', label: 'Plugins', icon: 'fa-solid fa-puzzle-piece' },
+  { id: 'tracing', label: 'Tracing', icon: 'fa-solid fa-gauge-high' }
 ] as const;
 
 export type DevToolsHeaderProps = {

@@ -314,6 +314,158 @@
       "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/index.mjs"
     },
+    "./components/DevToolsPanel/tabs/TracingViewer": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/TracingViewer": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/TracingViewer.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/TracingViewer.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/CommitStrip": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/CommitStrip/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/CommitStrip/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/CommitStrip/CommitStrip": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/CommitStrip/CommitStrip.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/CommitStrip/CommitStrip.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/CommitStrip/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/CommitStrip/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/CommitStrip/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/CommitTimeline": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/CommitTimeline/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/CommitTimeline/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/CommitTimeline/CommitTimeline": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/CommitTimeline/CommitTimeline.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/CommitTimeline/CommitTimeline.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/CommitTimeline/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/CommitTimeline/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/CommitTimeline/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/DetailSidebar": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/DetailSidebar/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/DetailSidebar/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/DetailSidebar/DetailSidebar": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/DetailSidebar/DetailSidebar.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/DetailSidebar/DetailSidebar.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/DetailSidebar/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/DetailSidebar/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/DetailSidebar/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/DurationLegend": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/DurationLegend/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/DurationLegend/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/DurationLegend/DurationLegend": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/DurationLegend/DurationLegend.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/DurationLegend/DurationLegend.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/DurationLegend/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/DurationLegend/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/DurationLegend/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/ElementTable": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/ElementTable/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/ElementTable/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/ElementTable/ElementTable": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/ElementTable/ElementTable.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/ElementTable/ElementTable.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/ElementTable/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/ElementTable/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/ElementTable/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/Flamegraph": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/Flamegraph/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/Flamegraph/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/Flamegraph/Flamegraph": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/Flamegraph/Flamegraph.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/Flamegraph/Flamegraph.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/Flamegraph/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/Flamegraph/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/Flamegraph/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/HotspotSidebar": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/HotspotSidebar/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/HotspotSidebar/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/HotspotSidebar/HotspotSidebar": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/HotspotSidebar/HotspotSidebar.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/HotspotSidebar/HotspotSidebar.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/HotspotSidebar/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/HotspotSidebar/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/HotspotSidebar/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/HotspotsList": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/HotspotsList/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/HotspotsList/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/HotspotsList/HotspotsList": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/HotspotsList/HotspotsList.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/HotspotsList/HotspotsList.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/HotspotsList/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/HotspotsList/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/HotspotsList/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/MetricToggle": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/MetricToggle/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/MetricToggle/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/MetricToggle/MetricToggle": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/MetricToggle/MetricToggle.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/MetricToggle/MetricToggle.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/MetricToggle/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/MetricToggle/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/MetricToggle/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/RankedList": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/RankedList/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/RankedList/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/RankedList/RankedList": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/RankedList/RankedList.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/RankedList/RankedList.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/RankedList/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/RankedList/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/RankedList/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/TracingToolbar": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/TracingToolbar/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/TracingToolbar/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/TracingToolbar/TracingToolbar": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/TracingToolbar/TracingToolbar.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/TracingToolbar/TracingToolbar.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/TracingToolbar/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/TracingToolbar/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/TracingToolbar/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/helpers": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/helpers.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/helpers.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/useHighlightElement": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/useHighlightElement.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/useHighlightElement.mjs"
+    },
     "./components/DevToolsPanel/tabs/VariablesViewer": {
       "types": "./dist/components/DevToolsPanel/tabs/VariablesViewer/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/VariablesViewer/index.mjs"

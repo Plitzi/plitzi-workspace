@@ -8,6 +8,7 @@ import HistoryViewer from './tabs/HistoryViewer';
 import Logs from './tabs/Logs';
 import PluginsViewer from './tabs/PluginsViewer/PluginsViewer';
 import StoreViewer from './tabs/StoreViewer';
+import TracingViewer from './tabs/TracingViewer';
 import VariablesViewer from './tabs/VariablesViewer';
 
 export type DevToolsBodyProps = {
@@ -32,6 +33,7 @@ const DevToolsBody = ({ className, tabSelected, orientation, elementSelected, on
           <ElementsViewer elementSelected={elementSelected} onSelectElement={onSelectElement} />
         )}
         {tabSelected === 'plugins' && <PluginsViewer />}
+        {tabSelected === 'tracing' && <TracingViewer />}
       </div>
     </div>
   );
