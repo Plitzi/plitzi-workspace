@@ -35,6 +35,15 @@ export type SSRResponseHelpers = {
   end: () => void;
 };
 
+// Mutable channel written during the React SSR render and read back by the server to shape the HTTP
+// response (status, redirect, extra headers). Passed by reference as a prop so it crosses the
+// server/SDK bundle boundary without relying on a shared React context instance.
+export type SSRRenderResult = {
+  status?: number;
+  redirect?: string;
+  headers?: Record<string, string>;
+};
+
 export type SSRCredential = {
   provider: string;
   data: unknown;

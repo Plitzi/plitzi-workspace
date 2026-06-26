@@ -15,8 +15,7 @@ import Provider from '@plitzi/plitzi-ui/Provider';
 import { textTheme } from '@plitzi/plitzi-ui/Text';
 import clsx from 'clsx';
 import { useEffect, Children, isValidElement, useMemo, useCallback, useRef, Fragment } from 'react';
-import { StaticRouter } from 'react-router';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, StaticRouter } from 'react-router-dom';
 
 import { initClient } from '@modules/App/AppHelper';
 import AppMain from '@modules/App/AppMain';
@@ -41,7 +40,8 @@ import type {
   OfflineDataRaw,
   RenderMode,
   Server,
-  RuntimeStateInstance
+  RuntimeStateInstance,
+  SSRRenderResult
 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
@@ -64,6 +64,7 @@ export type AppProps = {
   state?: Record<string, unknown>;
   onInitStateManager?: (instance: RuntimeStateInstance) => void;
   onInitEventBridge?: (instance: EventBridgeContextValue) => void;
+  ssrResult?: SSRRenderResult;
 };
 
 const components = {

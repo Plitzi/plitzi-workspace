@@ -27,7 +27,8 @@ import type {
   RuntimeStateInstance,
   EventBridgeContextValue,
   OfflineDataRaw,
-  SdkState
+  SdkState,
+  SSRRenderResult
 } from '@plitzi/sdk-shared';
 
 export type AppMainProps = {
@@ -50,6 +51,7 @@ export type AppMainProps = {
   state?: Record<string, unknown>;
   onInitStateManager?: (instance: RuntimeStateInstance) => void;
   onInitEventBridge?: (instance: EventBridgeContextValue) => void;
+  ssrResult?: SSRRenderResult;
 };
 
 const AppMain = ({
@@ -74,6 +76,7 @@ const AppMain = ({
   debugMode = false,
   onInitEventBridge,
   onInitStateManager,
+  ssrResult,
   ...sdkProps
 }: AppMainProps) => {
   const store = use(StoreContext) as StoreApi<SdkState> | undefined;
@@ -126,6 +129,7 @@ const AppMain = ({
                       renderMode={renderMode}
                       currentPageId={currentPageId}
                       previewMode={previewMode}
+                      ssrResult={ssrResult}
                     >
                       <GlobalSources environment={environment}>
                         <InteractionsSdkContextProvider previewMode={previewMode}>
