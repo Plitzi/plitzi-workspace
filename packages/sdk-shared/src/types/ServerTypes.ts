@@ -22,6 +22,8 @@ export type SSRRequest = {
   protocol: 'http' | 'https';
   headers: SSRHeaders;
   query: Record<string, string>;
+  /** Raw request body. Populated only for endpoints that consume it (e.g. the login/logout handlers). */
+  body?: string;
   ctx: SSRContext;
 };
 
@@ -139,8 +141,8 @@ export type SSRAdapters = {
   getOfflineData: (spaceId: number, environment: string, revision?: number) => Promise<OfflineDataRaw | undefined>;
   getSpaceDeployment: (req: SSRRequest) => Promise<SSRSpaceDeployment>;
   getUser?: (req: SSRRequest) => Promise<SSRUser | undefined>;
-  onLogin?: (req: SSRRequest) => Promise<boolean>;
-  onLogout?: (req: SSRRequest) => Promise<void>;
+  onLogin?: (req: SSRRequest, res: SSRResponseHelpers) => Promise<boolean>;
+  onLogout?: (req: SSRRequest, res: SSRResponseHelpers) => Promise<void>;
   /** Called by the RSC endpoint to fetch server-side data for server components.
    *  When `ids` is provided the adapter should return data only for those element IDs.
    *  Omitting `ids` (initial SSR fetch or full refresh) must return data for all elements. */

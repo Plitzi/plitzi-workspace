@@ -36,3 +36,23 @@ export const parseRequest = (raw: IncomingMessage): SSRRequest => {
 
   return { method, path, search, url: rawUrl, hostname, protocol, headers, query, ctx: {} };
 };
+
+const MAX_BODY_BYTES = 1024 * 1024; // 1 MB — login/logout payloads are tiny; cap guards against abuse.
+
+export const readRawBody = (raw: IncomingMessage): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    let size = 0;
+    raw.on('data', (chunk: Buffer) => {
+      size += chunk.length;
+      if (size > MAX_BODY_BYTES) {
+        reject(new Error('Request body too large'));
+
+        return;
+      }
+
+      chunks.push(chunk);
+    });
+    raw.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    raw.on('error', reject);
+  });
