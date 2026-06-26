@@ -61,14 +61,18 @@ export type SdkState = CommonState & {};
 export type RenderPhase = 'mount' | 'update' | 'nested-update';
 
 // One profiled element render within a commit. `actualDuration` is React's subtree-INCLUSIVE time (cascades up, so
-// ancestors like the page are always large). `parentId` is the nearest ancestor element in the REAL render tree
-// (captured via ElementContext), so the viewer nests correctly even across schemas/rootIds (e.g. a layout rendered
-// inside a page) — undefined only for the topmost element (the page root).
+// ancestors like the page are always large). `baseDuration` is React's estimate of rendering the whole subtree
+// without memoization. `parentId` is the nearest ancestor element in the REAL render tree (captured via
+// ElementContext), so the viewer nests correctly even across schemas/rootIds (e.g. a layout rendered inside a page) —
+// undefined only for the topmost element (the page root). Whether the element rendered ITSELF (vs only a descendant
+// did) is derived in the viewer from self time: React propagates `actualDuration` additively, so a node that did no
+// own work has self time of exactly 0 — "rendered" vs "bubbled" without any render-time instrumentation.
 export type CommitElementRender = {
   id: string;
   parentId?: string;
   phase: RenderPhase;
   actualDuration: number;
+  baseDuration: number;
 };
 
 // A group of element renders React flushed together (same `commitTime`).
@@ -80,10 +84,23 @@ export type CommitEntry = {
   elements: CommitElementRender[];
 };
 
+// Accumulated render-tree info for one element, gathered across ALL commits (not just the latest). `parentId` is its
+// real render-tree parent; `baseDuration` is the last value React reported (its no-memoization subtree estimate).
+export type TracingTreeNode = {
+  parentId?: string;
+  baseDuration: number;
+};
+
+// The whole known render tree, keyed by element id. Because it accumulates across commits, the viewer can rebuild the
+// FULL tree for any single commit — including elements that did NOT render in it — so rendered nodes nest under their
+// real (possibly non-rendered) ancestors and self time isn't misattributed, and untouched branches show as hatched.
+export type TracingTree = Record<string, TracingTreeNode>;
+
 export type TracingState = {
   // True once any profiled element has committed — i.e. `debugMode` is on in the element tree, so instrumentation is
   // live. The devtools panel renders outside the service provider and can't read `debugMode` directly, so it relies
   // on this flag to know tracing is available.
   enabled: boolean;
   commits: CommitEntry[];
+  tree: TracingTree;
 };

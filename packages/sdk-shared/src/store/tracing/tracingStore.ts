@@ -5,7 +5,7 @@ import type { TracingState } from '../../types';
 // Newest commits are kept; older ones are dropped past this cap so a long session can't grow unbounded.
 export const MAX_COMMITS = 200;
 
-export const createTracingState = (): TracingState => ({ enabled: false, commits: [] });
+export const createTracingState = (): TracingState => ({ enabled: false, commits: [], tree: {} });
 
 // DEDICATED, isolated store — intentionally NOT part of the reactive CommonState. Tracing writes happen on every
 // render commit; if they lived on the root store, the per-element scoped stores would inherit that change through

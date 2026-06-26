@@ -1,6 +1,6 @@
 import tracingStore, { MAX_COMMITS } from './tracingStore';
 
-import type { CommitElementRender, CommitEntry } from '../../types';
+import type { CommitElementRender, CommitEntry, TracingTree } from '../../types';
 import type { ProfilerOnRenderCallback } from 'react';
 
 // Running, mutable mirror of the store. `onRender` mutates this on the hot path (a Map write per commit). Capture is
@@ -17,6 +17,12 @@ const pendingByCommit = new Map<number, CommitEntry>();
 // Each element's real render-tree parent, registered by `withElement` from the enclosing ElementContext. Captures
 // cross-schema nesting (a layout inside a page) that the schema `parentId` alone misses.
 const parentOf = new Map<string, string | undefined>();
+
+// Last base duration React reported per element, accumulated across all commits. Together with `parentOf` this is the
+// full render tree the viewer needs to reconstruct any commit (including elements that didn't render in it). Mutated
+// whenever the structure grows so the published `tree` only needs a fresh object on flush.
+const baseOf = new Map<string, number>();
+let treeDirty = true;
 
 let enabled = false;
 let viewing = false;
@@ -35,7 +41,21 @@ const schedule = (() => {
   };
 })();
 
+const buildTree = (): TracingTree => {
+  const tree: TracingTree = {};
+  for (const [id, baseDuration] of baseOf) {
+    tree[id] = { parentId: parentOf.get(id), baseDuration };
+  }
+
+  return tree;
+};
+
 const writeSnapshot = () => {
+  if (treeDirty) {
+    treeDirty = false;
+    tracingStore.setState('tree', buildTree());
+  }
+
   tracingStore.setState('commits', commits);
 };
 
@@ -58,16 +78,32 @@ const flush = () => {
 
 // Called by `withElement` so the collector knows the real render-tree parent of each element.
 const linkParent = (id: string, parentId: string | undefined) => {
+  if (!parentOf.has(id) || parentOf.get(id) !== parentId) {
+    treeDirty = true;
+  }
+
   parentOf.set(id, parentId);
 };
 
-const onRender: ProfilerOnRenderCallback = (id, phase, actualDuration, _baseDuration, _startTime, commitTime) => {
+const onRender: ProfilerOnRenderCallback = (id, phase, actualDuration, baseDuration, _startTime, commitTime) => {
   if (!enabled) {
     enabled = true;
     tracingStore.setState('enabled', true);
   }
 
-  const render: CommitElementRender = { id, parentId: parentOf.get(id), phase, actualDuration };
+  if (!baseOf.has(id)) {
+    treeDirty = true;
+  }
+
+  baseOf.set(id, baseDuration);
+
+  const render: CommitElementRender = {
+    id,
+    parentId: parentOf.get(id),
+    phase,
+    actualDuration,
+    baseDuration
+  };
   const bucket = pendingByCommit.get(commitTime);
   if (bucket) {
     bucket.elements.push(render);
@@ -106,6 +142,9 @@ const clear = () => {
   commits = [];
   pendingByCommit.clear();
   commitSeq = 0;
+  // The accumulated tree (parentOf/baseOf) is intentionally kept: clearing only the commits resets the timeline while
+  // preserving the known structure, so the next commit still nests correctly. Only re-publish the (unchanged) tree.
+  treeDirty = true;
   writeSnapshot();
 };
 

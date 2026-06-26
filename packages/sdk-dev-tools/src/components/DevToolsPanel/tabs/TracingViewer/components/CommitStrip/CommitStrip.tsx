@@ -27,7 +27,9 @@ const CommitStrip = ({ commits, selectedIndex, onSelect }: CommitStripProps) => 
         return;
       }
 
+      // Handle it here and stop it reaching the tab-level ←/→ handler, so the commit only steps once.
       event.preventDefault();
+      event.stopPropagation();
       const index = selectedIndex + (event.key === 'ArrowLeft' ? -1 : 1);
       if (index >= 0 && index < commits.length) {
         onSelect(commits[index].commitId);

@@ -84,7 +84,8 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     }, [internalProps.attributes, props, customProps, children]);
 
     if (debugMode) {
-      // Registers the real render-tree parent so the collector/flamegraph nest correctly across schemas.
+      // Registers the real render-tree parent so the collector/flamegraph nest correctly across schemas. Whether the
+      // element rendered itself vs only a descendant did is derived later from self time, not flagged here.
       tracingCollector.linkParent(id, parentElement?.id);
 
       return (

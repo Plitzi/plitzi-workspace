@@ -1,117 +1,102 @@
 import clsx from 'clsx';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { buildFlameLayout, durationColor, elementName, formatMs, formatPercent } from '../../helpers';
+import { formatMs, formatPercent, frameColor, HATCH_STYLE } from '../../helpers';
+import DetailSidebar from '../DetailSidebar';
 import DurationLegend from '../DurationLegend';
 
-import type { FlameNode } from '../../helpers';
-import type { CommitEntry, Element } from '@plitzi/sdk-shared';
+import type { FlameModel, FlameNode } from '../../helpers';
+import type { CommitEntry } from '@plitzi/sdk-shared';
 import type { KeyboardEvent } from 'react';
 
 const ROW_HEIGHT = 22;
 const EPS = 1e-6;
-// Floor on a frame's width so its label + timing stay readable even when its proportional slice is tiny.
-const MIN_WIDTH_PX = 56;
-// Share of the width the focused subtree expands to; the rest (out-of-focus context) compresses into the remainder.
-const FOCUS_SPAN = 0.88;
+// Below these pixel widths a frame can't fit its text, so we drop it and let the tooltip carry the detail.
+const MIN_LABEL_PX = 26;
+const MIN_TIME_PX = 96;
 
 export type FlamegraphProps = {
   commit: CommitEntry;
-  flat: Record<string, Element> | undefined;
+  model: FlameModel;
+  active: FlameNode | undefined;
+  onSelectElement: (id: string | undefined) => void;
 };
 
-const Flamegraph = ({ commit, flat }: FlamegraphProps) => {
+type Placed = {
+  node: FlameNode;
+  left: number;
+  width: number;
+  role: 'subtree' | 'ancestor';
+};
+
+const Flamegraph = ({ commit, model, active, onSelectElement }: FlamegraphProps) => {
+  const { nodes, maxDepth } = model;
   const [focusId, setFocusId] = useState<string | undefined>();
-  const [activeId, setActiveId] = useState<string | undefined>();
-
-  const renderedIds = useMemo(() => new Set(commit.elements.map(entry => entry.id)), [commit]);
-  // Always the FULL tree, so positions stay stable while zooming/focusing.
-  const { nodes, maxDepth } = useMemo(() => buildFlameLayout(commit, flat), [commit, flat]);
-  const focus = useMemo(() => nodes.find(node => node.id === focusId), [nodes, focusId]);
-  const active = useMemo(() => {
-    if (nodes.length === 0) {
-      return undefined;
-    }
-
-    return nodes.find(node => node.id === activeId) ?? nodes[0];
-  }, [nodes, activeId]);
-
-  // A node belongs to the focused subtree when it sits within the focus node's x-range and at or below its depth.
-  const inFocus = useCallback(
-    (node: FlameNode): boolean =>
-      !focus ||
-      (node.depth >= focus.depth && node.x >= focus.x - EPS && node.x + node.width <= focus.x + focus.width + EPS),
-    [focus]
-  );
-
-  // Monotonic piecewise remap of the [0..1] axis: the focused range expands to FOCUS_SPAN of the width, the left and
-  // right context compress into the rest. Applied to a node's edges it scales it without breaking nesting, so the
-  // focused subtree grows and everything else shrinks horizontally — staying visible, never relayouting vertically.
-  const project = useMemo(() => {
-    if (!focus || focus.width <= EPS) {
-      return (x: number): number => x;
-    }
-
-    const { x: fx, width: fw } = focus;
-    const left = fx;
-    const right = 1 - (fx + fw);
-    const context = left + right;
-    const focusDisp = context > EPS ? FOCUS_SPAN : 1;
-    const leftDisp = context > EPS ? (1 - FOCUS_SPAN) * (left / context) : 0;
-    const rightDisp = context > EPS ? 1 - FOCUS_SPAN - leftDisp : 0;
-
-    return (x: number): number => {
-      if (x <= fx) {
-        return left > EPS ? (x / left) * leftDisp : 0;
-      }
-
-      if (x >= fx + fw) {
-        return leftDisp + focusDisp + (right > EPS ? ((x - (fx + fw)) / right) * rightDisp : 0);
-      }
-
-      return leftDisp + ((x - fx) / fw) * focusDisp;
-    };
-  }, [focus]);
-
-  // Rendered ancestors of the focused node (outermost → focus) for the breadcrumb. Names come from the schema, not
-  // the layout, so they resolve even for ancestors outside a deep focus.
-  const trail = useMemo(() => {
-    const chain: { id: string; name: string }[] = [];
-    let current = focusId;
-    while (current) {
-      if (renderedIds.has(current)) {
-        chain.unshift({ id: current, name: elementName(current, flat) });
-      }
-
-      current = flat?.[current]?.definition.parentId;
-    }
-
-    return chain;
-  }, [focusId, flat, renderedIds]);
-
-  const zoomOutTarget = useMemo(() => {
-    let parent = focusId ? flat?.[focusId]?.definition.parentId : undefined;
-    while (parent) {
-      if (renderedIds.has(parent)) {
-        return parent;
-      }
-
-      parent = flat?.[parent]?.definition.parentId;
-    }
-
-    return undefined;
-  }, [focusId, flat, renderedIds]);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setFocusId(undefined);
-    setActiveId(undefined);
-  }, [commit.commitId]);
+    const el = scrollRef.current;
+    if (!el) {
+      return;
+    }
 
-  const handleNodeClick = useCallback(
-    (node: FlameNode) => () => setFocusId(node.id === focusId ? zoomOutTarget : node.id),
-    [focusId, zoomOutTarget]
+    const observer = new ResizeObserver(entries => setContainerWidth(entries[0]?.contentRect.width ?? 0));
+    observer.observe(el);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => setFocusId(undefined), [commit.commitId]);
+
+  const focus = useMemo(() => nodes.find(node => node.id === focusId), [nodes, focusId]);
+  // The focused range; identity ([0,1] from the top) when nothing is focused.
+  const fx = focus?.x ?? 0;
+  const fw = focus && focus.width > EPS ? focus.width : 1;
+  const focusDepth = focus?.depth ?? 0;
+
+  // Re-projects the full tree for the current focus, React-DevTools style: the focused subtree expands to fill the
+  // width; the focus's ancestors stay as full-width bars above it (click to zoom out); everything else is hidden.
+  const placed = useMemo(() => {
+    const result: Placed[] = [];
+    for (const node of nodes) {
+      const within = node.x >= fx - EPS && node.x + node.width <= fx + fw + EPS;
+      if (node.depth >= focusDepth && within) {
+        result.push({ node, left: (node.x - fx) / fw, width: node.width / fw, role: 'subtree' });
+      } else if (focus && node.depth < focusDepth && node.x <= fx + EPS && node.x + node.width >= fx + fw - EPS) {
+        result.push({ node, left: 0, width: 1, role: 'ancestor' });
+      }
+    }
+
+    return result;
+  }, [nodes, focus, fx, fw, focusDepth]);
+
+  // Focus + its ancestors, top→down, for the breadcrumb and zoom-out.
+  const trail = useMemo(
+    () =>
+      placed
+        .filter(item => item.role === 'ancestor' || item.node.id === focusId)
+        .map(item => item.node)
+        .sort((a, b) => a.depth - b.depth),
+    [placed, focusId]
   );
-  const handleNodeHover = useCallback((id: string) => () => setActiveId(id), []);
+  const zoomOutTarget = trail.length >= 2 ? trail[trail.length - 2].id : undefined;
+
+  // Clicking a frame selects it (sidebar + page outline) and zooms in; clicking the already-focused frame deselects
+  // and zooms back out.
+  const handleNodeClick = useCallback(
+    (id: string) => () => {
+      if (id === focusId) {
+        setFocusId(zoomOutTarget);
+        onSelectElement(undefined);
+      } else {
+        setFocusId(id);
+        onSelectElement(id);
+      }
+    },
+    [focusId, zoomOutTarget, onSelectElement]
+  );
+  const handleNodeFocus = useCallback((id: string) => () => onSelectElement(id), [onSelectElement]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
@@ -149,66 +134,61 @@ const Flamegraph = ({ commit, flat }: FlamegraphProps) => {
         ))}
       </div>
 
-      {active && (
-        <div className="flex shrink-0 items-center gap-2 px-2 py-1 text-[10px] dark:text-zinc-300">
-          <span className={clsx('h-2 w-2 rounded-sm', durationColor(active.selfDuration))} />
-          <span className="truncate font-medium text-zinc-700 dark:text-zinc-200">{active.name}</span>
-          <span className="text-zinc-400 dark:text-zinc-500">{active.type}</span>
-          <span className="ml-auto shrink-0 text-zinc-500 tabular-nums dark:text-zinc-400">
-            {formatMs(active.selfDuration)} self · {formatMs(active.actualDuration)} total ·{' '}
-            {formatPercent(active.actualDuration / commit.duration)}
-          </span>
-        </div>
-      )}
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <div
+          ref={scrollRef}
+          role="tree"
+          aria-label="Flamegraph — width is base render time, color is self time this commit. Click a frame to zoom, the focused frame to zoom out."
+          tabIndex={0}
+          onKeyDown={handleKeyDown}
+          className="min-h-0 flex-1 overflow-auto p-1 outline-none focus-visible:ring-1 focus-visible:ring-violet-400"
+        >
+          <div className="relative w-full" style={{ height: (maxDepth + 1) * ROW_HEIGHT }}>
+            {placed.map(({ node, left, width }) => {
+              const isActive = node.id === active?.id;
+              const px = width * containerWidth;
+              const showLabel = px >= MIN_LABEL_PX;
+              const showTime = px >= MIN_TIME_PX && node.state === 'rendered';
 
-      <div
-        role="tree"
-        aria-label="Flamegraph — width is total time, color is self time. Click a frame to focus, the top frame to zoom out."
-        tabIndex={0}
-        onKeyDown={handleKeyDown}
-        className="min-h-0 flex-1 overflow-auto p-1 outline-none focus-visible:ring-1 focus-visible:ring-violet-400"
-      >
-        <div className="relative w-full" style={{ height: (maxDepth + 1) * ROW_HEIGHT }}>
-          {nodes.map(node => {
-            const isActive = node.id === active?.id;
-            const dimmed = !inFocus(node);
-            const left = project(node.x);
-            const width = project(node.x + node.width) - left;
-
-            return (
-              <button
-                key={node.id}
-                role="treeitem"
-                aria-label={`${node.name}, ${formatMs(node.selfDuration)} self of ${formatMs(node.actualDuration)} total`}
-                onClick={handleNodeClick(node)}
-                onMouseEnter={handleNodeHover(node.id)}
-                onFocus={handleNodeHover(node.id)}
-                style={{
-                  left: `${left * 100}%`,
-                  width: `calc(${width * 100}% - 2px)`,
-                  minWidth: MIN_WIDTH_PX,
-                  top: node.depth * ROW_HEIGHT + 1,
-                  height: ROW_HEIGHT - 3
-                }}
-                className={clsx(
-                  'absolute flex items-center justify-between gap-1 overflow-hidden rounded-sm border px-1 text-left text-[10px] text-white transition-all',
-                  durationColor(node.selfDuration),
-                  {
-                    'border-white ring-1 ring-violet-500 dark:border-zinc-900': isActive,
-                    'border-white/30 dark:border-black/20': !isActive,
-                    'opacity-30 hover:opacity-70': dimmed,
-                    'opacity-100': !dimmed
-                  }
-                )}
-              >
-                <span className="truncate">{node.name}</span>
-                <span className="shrink-0 tabular-nums opacity-90">
-                  {formatMs(node.selfDuration)} / {formatMs(node.actualDuration)}
-                </span>
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={node.id}
+                  role="treeitem"
+                  aria-label={`${node.name}, ${node.state}${node.visible ? '' : ', hidden'}, ${formatMs(node.selfDuration)} self of ${formatMs(node.actualDuration)} total`}
+                  title={`${node.name} (${node.type})${node.visible ? '' : ' · hidden (visibility)'}\n${node.state === 'rendered' ? `rendered · ${node.phase ?? 'update'}` : node.state === 'bubbled' ? 'a descendant rendered' : 'did not render this commit'}\n${formatMs(node.selfDuration)} self · ${formatMs(node.actualDuration)} total · ${formatMs(node.baseDuration)} base\n${formatPercent(node.actualDuration / commit.duration)} of commit`}
+                  onClick={handleNodeClick(node.id)}
+                  onFocus={handleNodeFocus(node.id)}
+                  style={{
+                    left: `${left * 100}%`,
+                    width: `calc(${width * 100}% - 2px)`,
+                    top: node.depth * ROW_HEIGHT + 1,
+                    height: ROW_HEIGHT - 3,
+                    ...(node.state === 'hatched' ? HATCH_STYLE : {})
+                  }}
+                  className={clsx(
+                    'absolute flex items-center gap-1 overflow-hidden rounded-sm border px-1 text-left text-[10px] transition-[filter] hover:brightness-110',
+                    frameColor(node),
+                    node.state === 'rendered' ? 'text-white' : 'text-zinc-600 dark:text-zinc-300',
+                    node.state === 'hatched'
+                      ? 'border-dashed border-zinc-400/50'
+                      : 'border-black/10 dark:border-white/10',
+                    { 'brightness-125 saturate-150': isActive }
+                  )}
+                >
+                  {!node.visible && <i className="fa-solid fa-eye-slash shrink-0 text-[8px] opacity-70" />}
+                  {showLabel && <span className="min-w-0 truncate">{node.name}</span>}
+                  {showTime && (
+                    <span className="ml-1 shrink-0 tabular-nums opacity-80">
+                      {formatMs(node.selfDuration)} / {formatMs(node.actualDuration)}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
+
+        {active && <DetailSidebar node={active} commit={commit} model={model} />}
       </div>
 
       <DurationLegend />
