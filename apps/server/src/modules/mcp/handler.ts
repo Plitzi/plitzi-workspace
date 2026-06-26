@@ -1,4 +1,4 @@
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp';
 
 import { createMcpServer } from './server';
 import AIEngine from '../ai/AIEngine';
