@@ -4,10 +4,10 @@ import { useCallback } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 
 // This one it is important due that there its a circular import, so we need to import ComponentProvider in a specific order
-
+// eslint-disable-next-line import/order
+import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
 import sdkComponents from '@modules/Element';
 import Sdk from '@modules/Sdk';
-import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
 import useElement from '@plitzi/sdk-elements/Element/hooks/useElement';
 import useRscData from '@plitzi/sdk-elements/Element/hooks/useRscData';
