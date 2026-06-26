@@ -1,0 +1,114 @@
+import tracingStore, { MAX_COMMITS } from './tracingStore';
+
+import type { CommitElementRender, CommitEntry } from '../../types';
+import type { ProfilerOnRenderCallback } from 'react';
+
+// Running, mutable mirror of the store. `onRender` mutates this on the hot path (a Map write per commit). Capture is
+// ALWAYS on while instrumentation is live (`debugMode`), so the initial mount commits — which happen at page load,
+// before the devtools panel can be opened — are not lost. A batched flush drains the buffer each frame (keeping
+// memory bounded) but only writes the immutable snapshot into the store while the tab is open (`viewing`), so a
+// closed panel costs nothing in re-renders.
+let commits: CommitEntry[] = [];
+
+// Renders of the current frame, bucketed by React's `commitTime` so all elements flushed together become one
+// `CommitEntry`. Filled by `onRender`, drained on flush.
+const pendingByCommit = new Map<number, CommitEntry>();
+
+// Each element's real render-tree parent, registered by `withElement` from the enclosing ElementContext. Captures
+// cross-schema nesting (a layout inside a page) that the schema `parentId` alone misses.
+const parentOf = new Map<string, string | undefined>();
+
+let enabled = false;
+let viewing = false;
+let commitSeq = 0;
+let flushScheduled = false;
+
+const schedule = (() => {
+  if (typeof requestAnimationFrame === 'function') {
+    return (cb: () => void): void => {
+      requestAnimationFrame(cb);
+    };
+  }
+
+  return (cb: () => void): void => {
+    setTimeout(cb, 16);
+  };
+})();
+
+const writeSnapshot = () => {
+  tracingStore.setState('commits', commits);
+};
+
+const flush = () => {
+  flushScheduled = false;
+  if (pendingByCommit.size > 0) {
+    const finalized = [...pendingByCommit.values()].sort((a, b) => a.timestamp - b.timestamp);
+    pendingByCommit.clear();
+
+    commits = [...commits, ...finalized];
+    if (commits.length > MAX_COMMITS) {
+      commits = commits.slice(commits.length - MAX_COMMITS);
+    }
+  }
+
+  if (viewing) {
+    writeSnapshot();
+  }
+};
+
+// Called by `withElement` so the collector knows the real render-tree parent of each element.
+const linkParent = (id: string, parentId: string | undefined) => {
+  parentOf.set(id, parentId);
+};
+
+const onRender: ProfilerOnRenderCallback = (id, phase, actualDuration, _baseDuration, _startTime, commitTime) => {
+  if (!enabled) {
+    enabled = true;
+    tracingStore.setState('enabled', true);
+  }
+
+  const render: CommitElementRender = { id, parentId: parentOf.get(id), phase, actualDuration };
+  const bucket = pendingByCommit.get(commitTime);
+  if (bucket) {
+    bucket.elements.push(render);
+    bucket.elementCount += 1;
+    bucket.duration = Math.max(bucket.duration, actualDuration);
+  } else {
+    commitSeq += 1;
+    pendingByCommit.set(commitTime, {
+      commitId: commitSeq,
+      timestamp: commitTime,
+      duration: actualDuration,
+      elementCount: 1,
+      elements: [render]
+    });
+  }
+
+  if (!flushScheduled) {
+    flushScheduled = true;
+    schedule(flush);
+  }
+};
+
+// Called when the Tracing tab mounts: start streaming to the store and immediately publish whatever was captured
+// before the panel opened (e.g. the page's initial mounts).
+const start = () => {
+  viewing = true;
+  flush();
+  writeSnapshot();
+};
+
+const stop = () => {
+  viewing = false;
+};
+
+const clear = () => {
+  commits = [];
+  pendingByCommit.clear();
+  commitSeq = 0;
+  writeSnapshot();
+};
+
+const tracingCollector = { onRender, linkParent, start, stop, clear };
+
+export default tracingCollector;

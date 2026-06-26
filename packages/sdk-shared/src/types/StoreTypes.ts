@@ -53,3 +53,37 @@ export type BuilderState = CommonState & {
 };
 
 export type SdkState = CommonState & {};
+
+// Render tracing (devtools Tracing tab). Fed by a React `<Profiler>` per element (see the tracing store/collector
+// under `store/tracing`) and read by the devtools panel. The collector stores only React's raw, subtree-INCLUSIVE
+// `actualDuration` per commit; SELF time (own work) is derived in the viewer from the schema tree, where `flat` is
+// always available — so it never depends on capture-time instrumentation order.
+export type RenderPhase = 'mount' | 'update' | 'nested-update';
+
+// One profiled element render within a commit. `actualDuration` is React's subtree-INCLUSIVE time (cascades up, so
+// ancestors like the page are always large). `parentId` is the nearest ancestor element in the REAL render tree
+// (captured via ElementContext), so the viewer nests correctly even across schemas/rootIds (e.g. a layout rendered
+// inside a page) — undefined only for the topmost element (the page root).
+export type CommitElementRender = {
+  id: string;
+  parentId?: string;
+  phase: RenderPhase;
+  actualDuration: number;
+};
+
+// A group of element renders React flushed together (same `commitTime`).
+export type CommitEntry = {
+  commitId: number;
+  timestamp: number;
+  duration: number;
+  elementCount: number;
+  elements: CommitElementRender[];
+};
+
+export type TracingState = {
+  // True once any profiled element has committed — i.e. `debugMode` is on in the element tree, so instrumentation is
+  // live. The devtools panel renders outside the service provider and can't read `debugMode` directly, so it relies
+  // on this flag to know tracing is available.
+  enabled: boolean;
+  commits: CommitEntry[];
+};
