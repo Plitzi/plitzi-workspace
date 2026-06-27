@@ -29,6 +29,7 @@ export type FlameNode = {
   baseDuration: number; // structural size (drives flamegraph width); stable across commits
   selfDuration: number; // own work (0 if it didn't render)
   depth: number;
+  parentId?: string; // nearest ancestor WITHIN this model (undefined for the model's roots) — drives nested layout
   x: number; // left offset as a fraction 0..1
   width: number; // width as a fraction 0..1, proportional to base duration
 };
@@ -188,6 +189,20 @@ export const frameColor = (node: FlameNode): string => {
   return 'bg-transparent';
 };
 
+// Text colour for a flamegraph frame, paired with `frameColor` so the label stays legible on each background: amber
+// frames need dark text; the other duration colours are saturated enough for white; bubbled/hatched read as muted.
+export const frameTextColor = (node: FlameNode): string => {
+  if (node.state === 'bubbled') {
+    return 'text-zinc-600 dark:text-zinc-300';
+  }
+
+  if (node.state === 'hatched') {
+    return 'text-zinc-400 dark:text-zinc-600';
+  }
+
+  return durationColor(node.selfDuration) === 'bg-amber-500' ? 'text-stone-900' : 'text-white';
+};
+
 export const elementName = (id: string, flat: Record<string, Element> | undefined): string => {
   const element = flat?.[id];
   if (!element) {
@@ -332,7 +347,14 @@ export const buildFlameModel = (
   let totalSelf = 0;
   let renders = 0;
 
-  const visit = (id: string, x: number, width: number, depth: number, ancestorRendered: boolean): void => {
+  const visit = (
+    id: string,
+    parentId: string | undefined,
+    x: number,
+    width: number,
+    depth: number,
+    ancestorRendered: boolean
+  ): void => {
     const entry = rendered.get(id);
     const selfDuration = selfOf(id);
     // `rendered` = it did its own work this commit (self time > ~0, exact since React propagates durations additively);
@@ -362,6 +384,7 @@ export const buildFlameModel = (
       baseDuration: base.get(id) ?? entry?.baseDuration ?? 0,
       selfDuration,
       depth,
+      parentId,
       x,
       width
     });
@@ -373,7 +396,7 @@ export const buildFlameModel = (
     let cursor = x;
     kids.forEach((kid, index) => {
       const childWidth = ((sizes[index] || MIN_SIZE) / span) * width;
-      visit(kid, cursor, childWidth, depth + 1, ancestorRendered || state === 'rendered');
+      visit(kid, id, cursor, childWidth, depth + 1, ancestorRendered || state === 'rendered');
       cursor += childWidth;
     });
   };
@@ -383,7 +406,7 @@ export const buildFlameModel = (
   let cursor = 0;
   roots.forEach((id, index) => {
     const width = (rootSizes[index] || MIN_SIZE) / total;
-    visit(id, cursor, width, 0, false);
+    visit(id, undefined, cursor, width, 0, false);
     cursor += width;
   });
 
