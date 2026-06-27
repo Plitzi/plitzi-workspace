@@ -6,7 +6,8 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import CollectionInteractions from './sources/CollectionSource/CollectionInteractions';
-import PageInteractions from './sources/PageSource/PageInteractions';
+import NavigationInteractions from './sources/NavigationSource/NavigationInteractions';
+import StateInteractions from './sources/StateSource/StateInteractions';
 
 import type { ReactNode } from 'react';
 
@@ -26,7 +27,9 @@ const InteractionsBuilderContextProvider = ({
     <InteractionsContextProvider currentPageId={currentPageId} routeParams={routeParams} queryParams={queryParams}>
       <AuthInteractions authProvider={userProvider}>
         <CollectionInteractions>
-          <PageInteractions previewMode={previewMode}>{children}</PageInteractions>
+          <StateInteractions>
+            <NavigationInteractions previewMode={previewMode}>{children}</NavigationInteractions>
+          </StateInteractions>
         </CollectionInteractions>
       </AuthInteractions>
     </InteractionsContextProvider>

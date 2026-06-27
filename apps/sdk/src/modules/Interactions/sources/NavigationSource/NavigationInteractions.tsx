@@ -1,44 +1,22 @@
 import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo } from 'react';
 
-import { StoreContext } from '@plitzi/nexus/react';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
-import type { StoreApi } from '@plitzi/nexus';
-import type { SdkState, InteractionCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
+import type { InteractionCallback } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
-export type PageInteractionsProps = {
+export type NavigationInteractionsProps = {
   children: ReactNode;
   previewMode?: boolean;
 };
 
-const PageInteractions = ({ children, previewMode = true }: PageInteractionsProps) => {
+const NavigationInteractions = ({ children, previewMode = true }: NavigationInteractionsProps) => {
   const { useInteractions } = use(InteractionsContext);
   const { navigate } = use(NavigationContext);
-  const store = use(StoreContext) as StoreApi<SdkState> | undefined;
   const [[pageIds, pageDefinitions]] = useSdkStore(['schema.pages', 'pageDefinitions']);
-
-  const handleSetPageState = useCallback(
-    (params: InteractionCallbackParamValues<{ key: string; type: string; value: string | boolean | number }>) => {
-      const { key, type } = params;
-      let { value } = params;
-      if (type === 'boolean') {
-        value = value === 'true';
-      } else if (type === 'number') {
-        value = parseInt(value as string, 10);
-      }
-
-      store?.setState(`runtime.state.${key}`, value);
-    },
-    [store]
-  );
-
-  const handleClearStatePage = useCallback(() => {
-    store?.setState('runtime.state', {});
-  }, [store]);
 
   const pageUrls = useMemo(() => {
     const pages = pick(pageDefinitions, pageIds);
@@ -72,8 +50,8 @@ const PageInteractions = ({ children, previewMode = true }: PageInteractionsProp
   const interactionCallbacks = useMemo(
     () => ({
       navigate: {
-        action: 'navigateToPage',
-        title: 'Navigate To Page',
+        action: 'navigate',
+        title: 'Navigate',
         type: 'globalCallback',
         callback: handleNavigate,
         preview: {},
@@ -95,53 +73,17 @@ const PageInteractions = ({ children, previewMode = true }: PageInteractionsProp
             options: pageUrls.map(page => ({ value: page.key, label: page.label }))
           }
         }
-      } as InteractionCallback<{ urlType: string; url: string }>,
-      setPageState: {
-        action: 'setPageState',
-        title: 'Set Page State',
-        type: 'globalCallback',
-        callback: handleSetPageState,
-        preview: {},
-        params: {
-          key: { defaultValue: '', type: 'text' },
-          type: {
-            defaultValue: undefined,
-            type: 'select',
-            options: [
-              { value: 'boolean', label: 'True / False' },
-              { value: 'number', label: 'Numeric' },
-              { value: 'text', label: 'Text' }
-            ]
-          },
-          value: {
-            defaultValue: undefined,
-            type: params => (params.type === 'boolean' ? 'select' : 'text'),
-            when: params => !!params.type,
-            options: [
-              { value: 'true', label: 'True' },
-              { value: 'false', label: 'False' }
-            ]
-          }
-        }
-      } satisfies InteractionCallback<{ key: string; type: string; value: string }>,
-      clearState: {
-        action: 'clearState',
-        title: 'Clear Page State',
-        type: 'globalCallback',
-        callback: handleClearStatePage,
-        preview: {},
-        params: {}
-      }
+      } as InteractionCallback<{ urlType: string; url: string }>
     }),
-    [handleSetPageState, handleClearStatePage, handleNavigate, pageUrls]
+    [handleNavigate, pageUrls]
   );
 
   useInteractions({
-    id: 'page',
+    id: 'navigation',
     callbacks: interactionCallbacks as unknown as Record<string, InteractionCallback>
   });
 
   return children;
 };
 
-export default PageInteractions;
+export default NavigationInteractions;
