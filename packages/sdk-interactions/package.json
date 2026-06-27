@@ -93,7 +93,7 @@
     "vitest": "^4.1.9"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.10",
+    "@plitzi/plitzi-ui": "^1.6.13",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",

@@ -10,6 +10,8 @@ export type ComponentProps = {
   offlineData?: OfflineDataRaw;
   plugins?: Record<string, SSRPlugin>;
   ssrResult?: SSRRenderResult;
+  sdkDevToolsStylePath?: string;
+  debugMode?: boolean;
 };
 
 const Component = ({
@@ -19,7 +21,9 @@ const Component = ({
   offlineData,
   environment = 'main',
   plugins,
-  ssrResult
+  ssrResult,
+  sdkDevToolsStylePath,
+  debugMode = false
 }: ComponentProps) => {
   return (
     <PlitziSdk
@@ -30,6 +34,8 @@ const Component = ({
       offlineMode={!!offlineData && Object.keys(offlineData).length > 0}
       offlineData={offlineData}
       ssrResult={ssrResult}
+      sdkDevToolsStylePath={sdkDevToolsStylePath}
+      debugMode={debugMode}
     >
       {plugins &&
         Object.keys(plugins).map(key => (

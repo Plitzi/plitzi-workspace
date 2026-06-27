@@ -29,6 +29,8 @@ class PlitziConsole {
   listeningCategory?: Log['category'];
   logsListened: Log[] = [];
   listeningParams?: { category: Log['category'] };
+  #deliveryQueue: Log[] = [];
+  #flushScheduled = false;
 
   constructor(callback?: CallbackInternal, pendingLimit: number = 100) {
     this.callbackInternal = callback;
@@ -81,7 +83,8 @@ class PlitziConsole {
     }
 
     if (!this.listening) {
-      this.callbackInternal(logType, category, message, params, time);
+      this.#deliveryQueue.push({ logType, category, message, params, time } as Log);
+      this.#scheduleDelivery();
     } else if (category === 'navigation') {
       this.logsListened.push({ logType, category, message, params, time } as Log & LogNavigation);
     } else {
@@ -91,6 +94,27 @@ class PlitziConsole {
     if (this.logsListened.length > this.logsListenedLimit) {
       this.logsListened.shift();
     }
+  }
+
+  #scheduleDelivery() {
+    if (this.#flushScheduled) {
+      return;
+    }
+
+    this.#flushScheduled = true;
+    queueMicrotask(() => {
+      this.#flushScheduled = false;
+      const callback = this.callbackInternal;
+      const queue = this.#deliveryQueue;
+      this.#deliveryQueue = [];
+      if (!callback) {
+        return;
+      }
+
+      for (const log of queue) {
+        callback(log.logType, log.category, log.message, log.params, log.time);
+      }
+    });
   }
 
   // Methods providers

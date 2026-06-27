@@ -100,7 +100,9 @@ const App = ({
     () => ({ segments: {}, runtime: { sources: {}, state: initialState ?? {} } }),
     [initialState]
   );
-  const [debugMode, setDebugMode] = useStorage(`web_${webId}_state.debugMode`, false, 'localStorage', debugModeProp);
+  // Cookie-backed so SSR reads the same value and hydration stays consistent. Name coupled with the
+  // server (apps/server prepareRender reads 'plitzi_debug').
+  const [debugMode, setDebugMode] = useStorage('plitzi_debug', debugModeProp, 'cookie');
   const finalServer = useMemo(() => getEnvironmentServer(server), [server]);
   const client = useMemo<ApolloClient>(() => initClient(finalServer, webKey), [finalServer, webKey]);
 
@@ -121,12 +123,14 @@ const App = ({
   );
 
   useEffect(() => {
-    if (!debugModeProp) {
+    if (process.env.NODE_ENV === 'production') {
       return;
     }
 
     window.addEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown, debugModeProp]);
+
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 
   const localCustomComponents = useMemo(() => {
     const components: Record<string, ComponentPlugin> = {};

@@ -3,6 +3,7 @@ import { registerExternalPlugins } from './registerExternalPlugins';
 import { buildServerInfo } from '../../helpers/buildServerInfo';
 import { buildOfflineDataCacheKey } from '../../helpers/cache';
 import { escapeJson } from '../../helpers/escapeJson';
+import { readCookie } from '../../helpers/readCookie';
 
 import type { ComponentProps } from './Component';
 import type { TtlCache } from '../../helpers/cache';
@@ -50,8 +51,16 @@ export const prepareRender = async (
     offlineDataCache?.set(offlineCacheKey, JSON.stringify(offlineData));
   }
 
+  const v = config.assetVersion ? `?v=${config.assetVersion}` : '';
+  const sdkDevToolsStylePath = `/sdk-assets/plitzi-sdk-devtools.css${v}`;
+
+  // debugMode is owned by the client (shift+F12) and persisted in the 'plitzi_debug' cookie so this SSR
+  // render matches what the client will hydrate with. Falls back to devMode when the cookie is unset.
+  const debugCookie = readCookie(req.headers.cookie, 'plitzi_debug');
+  const debugMode = debugCookie === undefined ? config.devMode : debugCookie === 'true';
+
   const offlineDataStr = escapeJson(
-    JSON.stringify({ offlineData, offlineMode: true, environment, renderMode: 'raw', server })
+    JSON.stringify({ offlineData, offlineMode: true, environment, renderMode: 'raw', server, sdkDevToolsStylePath })
   );
 
   const pluginNames = req.ctx.spaceDeployment?.pluginNames ?? [];
@@ -80,7 +89,6 @@ export const prepareRender = async (
   const pluginComponents = await m('plugins', () => loadPluginComponents(entries, pluginManager.getComponents()));
 
   const templatePlugins = entries.length > 0 ? entries : req.ctx.spaceDeployment?.templateProps?.plugins;
-  const v = config.assetVersion ? `?v=${config.assetVersion}` : '';
   const vendorJs = (config.devMode ? '/sdk-assets/plitzi-sdk-dev-vendor.js' : '/sdk-assets/plitzi-sdk-vendor.js') + v;
 
   return {
@@ -88,7 +96,9 @@ export const prepareRender = async (
       plugins: Object.keys(pluginComponents).length > 0 ? pluginComponents : undefined,
       offlineData,
       server,
-      environment: req.ctx.spaceDeployment?.environment ?? environment
+      environment: req.ctx.spaceDeployment?.environment ?? environment,
+      debugMode,
+      sdkDevToolsStylePath
     },
     entries,
     templateParams: {
@@ -102,7 +112,7 @@ export const prepareRender = async (
       reactCompilerRuntime: vendorJs,
       ...req.ctx.spaceDeployment?.templateProps,
       plugins: templatePlugins,
-      debugMode: config.devMode,
+      debugMode,
       ssrOnly: config.ssrOnly === true,
       offlineData: offlineDataStr
     }

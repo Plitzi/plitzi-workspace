@@ -71,7 +71,7 @@ const AppMain = ({
   instanceId,
   renderMode = 'iframe',
   sdkStylePath = './plitzi-sdk.css',
-  sdkDevToolsStylePath = './plitzi-sdk-devtools.css',
+  sdkDevToolsStylePath,
   previewMode = true,
   debugMode = false,
   onInitEventBridge,
@@ -135,7 +135,7 @@ const AppMain = ({
                         <InteractionsSdkContextProvider previewMode={previewMode}>
                           <DevToolsContainer
                             enabled={debugMode}
-                            devToolsStyleLink={devtoolsCssUrl ? devtoolsCssUrl : sdkDevToolsStylePath}
+                            devToolsStyleLink={sdkDevToolsStylePath ? sdkDevToolsStylePath : devtoolsCssUrl}
                             renderMode="shadow"
                             innerClassName={clsx({ flex: renderMode === 'iframe' })}
                           >

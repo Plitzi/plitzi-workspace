@@ -30,7 +30,7 @@
     "@fortawesome/fontawesome-free": "^7.2.0",
     "@plitzi/nexus": "workspace:*",
     "@plitzi/plitzi-sdk": "workspace:*",
-    "@plitzi/plitzi-ui": "^1.6.10",
+    "@plitzi/plitzi-ui": "^1.6.13",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-collections": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
