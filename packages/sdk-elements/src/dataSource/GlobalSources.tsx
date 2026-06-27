@@ -47,11 +47,28 @@ const GlobalSources = ({ children, environment = 'main' }: GlobalSourcesProps) =
   useCommonStoreSync('runtime.sources.variables', variablesValue);
 
   // --- navigation ---
-  const navigationValue = useMemo(() => ({ routeParams, queryParams }), [routeParams, queryParams]);
-  const navigationFields = useCallback(
-    () => getPathsFromObeject({ routeParams, queryParams }).map(path => ({ path, name: `navigation.${path}` })),
-    [routeParams, queryParams]
+  const [pageDefinitions = {}] = useCommonStore('pageDefinitions');
+  const pages = useMemo(
+    () =>
+      Object.values(pageDefinitions).map(page => ({ value: page.id, label: get(page, 'attributes.name', page.id) })),
+    [pageDefinitions]
   );
+  const navigationValue = useMemo(
+    () => ({ routeParams, queryParams, currentPageId }),
+    [routeParams, queryParams, currentPageId]
+  );
+  const navigationFields = useCallback(() => {
+    const fields = getPathsFromObeject({ routeParams, queryParams }).map(path => ({
+      path,
+      name: `navigation.${path}`
+    })) as SourceField[];
+    const currentPageField =
+      pages.length > 0
+        ? ({ path: 'currentPageId', name: 'Current Page', inputType: 'select', values: pages } as SourceField)
+        : ({ path: 'currentPageId', name: 'Current Page' } as SourceField);
+
+    return [...fields, currentPageField];
+  }, [routeParams, queryParams, pages]);
   useRegisterSource({ id: 'global', source: 'navigation', name: 'Navigation', fields: navigationFields });
   useCommonStoreSync('runtime.sources.navigation', navigationValue);
 
@@ -111,26 +128,6 @@ const GlobalSources = ({ children, environment = 'main' }: GlobalSourcesProps) =
   );
   useRegisterSource({ id: 'global', source: 'state', name: 'State', fields: stateFields });
   useCommonStoreSync('runtime.sources.state', state);
-
-  // --- page (deprecated alias of `state`; carries the runtime state plus `currentPageId`) ---
-  const [pageDefinitions = {}] = useCommonStore('pageDefinitions');
-  const pages = useMemo(
-    () =>
-      Object.values(pageDefinitions).map(page => ({ value: page.id, label: get(page, 'attributes.name', page.id) })),
-    [pageDefinitions]
-  );
-  const pageValue = useMemo(() => ({ ...state, currentPageId }), [state, currentPageId]);
-  const pageFields = useCallback(() => {
-    const fields = getPathsFromObeject(state).map(path => ({ path, name: `page.${path}` })) as SourceField[];
-    const currentPageField =
-      pages.length > 0
-        ? ({ path: 'currentPageId', name: 'Current Page', inputType: 'select', values: pages } as SourceField)
-        : { path: 'currentPageId', name: 'Current Page' };
-
-    return [...fields, currentPageField];
-  }, [state, pages]);
-  useRegisterSource({ id: 'global', source: 'page', name: 'Page', fields: pageFields });
-  useCommonStoreSync('runtime.sources.page', pageValue);
 
   return children;
 };
