@@ -123,14 +123,14 @@ const App = ({
   );
 
   useEffect(() => {
-    if (process.env.NODE_ENV === 'production') {
+    if (sdkProps.environment === 'production') {
       return;
     }
 
     window.addEventListener('keydown', handleKeyDown);
 
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
+  }, [handleKeyDown, sdkProps.environment]);
 
   const localCustomComponents = useMemo(() => {
     const components: Record<string, ComponentPlugin> = {};
