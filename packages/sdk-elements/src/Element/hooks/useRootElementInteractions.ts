@@ -1,62 +1,51 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import { useCallback, use, useMemo, useRef, useEffect } from 'react';
+import { use, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
-import { interactionBasicTriggers, nativeEventsList } from './helpers/elementConstants';
-import useElementInteractions from './hooks/useElementInteractions';
-import useInternalClassName from './hooks/useInternalClassName';
-import StaticTag from './StaticTag';
+import useElementInteractions from './useElementInteractions';
+import useInternalClassName from './useInternalClassName';
+import { interactionBasicTriggers, nativeEventsList } from '../helpers/elementConstants';
 
-import type { ElementContextValue } from './ElementContext';
-import type { DebugParams } from './RootElement';
+import type { ElementContextValue } from '../ElementContext';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { InteractionCallback } from '@plitzi/sdk-shared';
-import type { Context, CSSProperties, JSX, ReactNode, RefObject } from 'react';
+import type { Context } from 'react';
 
-export type ResolvedProps = {
+export type UseRootElementInteractionsProps = {
   elementContext: ElementContextValue;
-  tag: keyof JSX.IntrinsicElements;
-  refProp?: RefObject<HTMLElement | null>;
-  styleParsed?: CSSProperties;
-  className: string;
-  interactionTriggers?: Record<string, InteractionCallback>;
-  interactionCallbacks?: Record<string, InteractionCallback>;
-  otherProps: Record<string, unknown>;
-  children?: ReactNode;
-};
-
-export type RootElementInteractiveProps = ResolvedProps & {
   InteractionsContext: Context<InteractionsContextValue>;
   previewMode: boolean;
   debugMode: boolean;
   baseElementId?: string;
-  params: DebugParams;
-  serverMarker?: { 'data-rsc-id': string };
+  className: string;
+  interactionTriggers?: Record<string, InteractionCallback>;
+  interactionCallbacks?: Record<string, InteractionCallback>;
+  otherProps: Record<string, unknown>;
 };
 
-// Post-render phase, interactions branch: wires native events + the interaction rule engine and computes the
-// element's internal class names. Only mounted when an InteractionsContext is present so its hooks run unconditionally.
-const RootElementInteractive = ({
+export type RootElementInteractions = {
+  className: string;
+  events: Record<string, unknown>;
+};
+
+// Interactions branch of RootElement, wires native events + the interaction rule engine and computes the element's
+// internal class names. Extracted as a hook so RootElement stays a single flat component (custom hooks add no level to
+// the React DevTools tree); only called when an InteractionsContext is present, so its hooks run as if unconditional.
+const useRootElementInteractions = ({
   elementContext,
-  tag,
-  refProp,
-  styleParsed,
-  className,
-  interactionTriggers,
-  interactionCallbacks,
-  otherProps,
-  children,
   InteractionsContext,
   previewMode,
   debugMode,
   baseElementId,
-  params,
-  serverMarker
-}: RootElementInteractiveProps) => {
+  className,
+  interactionTriggers,
+  interactionCallbacks,
+  otherProps
+}: UseRootElementInteractionsProps): RootElementInteractions => {
   const {
     id,
     className: classNameInternalProp,
@@ -64,7 +53,6 @@ const RootElementInteractive = ({
     definition,
     definition: { interactions },
     plitziElementLayout,
-    style,
     elementState,
     setElementState
   } = elementContext;
@@ -92,7 +80,7 @@ const RootElementInteractive = ({
     [interactionsManager]
   );
 
-  const eventsAttached = useMemo(() => {
+  const events = useMemo(() => {
     if (!previewMode || !interactions) {
       return {};
     }
@@ -110,8 +98,8 @@ const RootElementInteractive = ({
       }, {});
   }, [id, interactions, otherProps, previewMode, processEvent]);
 
-  // Interactions can reference any source by name at runtime, so when present (or in debug) we hand the rule
-  // engine the whole `runtime.sources` slice; otherwise the dataSource is unused, so we skip the subscription.
+  // Interactions can reference any source by name at runtime, so when present (or in debug) we hand the rule engine the
+  // whole `runtime.sources` slice; otherwise the dataSource is unused, so we skip the subscription.
   const needsDataSource = debugMode || !!(interactions && Object.keys(interactions).length);
   const [runtimeSources = emptyObject] = useCommonStore('runtime.sources', { enabled: needsDataSource });
   const dataSourceRef = useRef<Record<string, unknown>>({});
@@ -159,20 +147,7 @@ const RootElementInteractive = ({
     plitziElementLayout
   });
 
-  return (
-    <StaticTag
-      tag={tag}
-      refProp={refProp}
-      style={{ ...style, ...styleParsed }}
-      className={clsx(classNameInternalProp, classNameInternal)}
-      otherProps={otherProps}
-      params={params}
-      serverMarker={serverMarker}
-      events={eventsAttached}
-    >
-      {children}
-    </StaticTag>
-  );
+  return { className: clsx(classNameInternalProp, classNameInternal), events };
 };
 
-export default RootElementInteractive;
+export default useRootElementInteractions;

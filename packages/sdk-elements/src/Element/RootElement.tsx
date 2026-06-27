@@ -3,9 +3,9 @@ import { useMemo } from 'react';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import parseStyle from './helpers/parseStyle';
+import renderStaticTag from './helpers/renderStaticTag';
 import useElement from './hooks/useElement';
-import RootElementInteractive from './RootElementInteractive';
-import StaticTag from './StaticTag';
+import useRootElementInteractions from './hooks/useRootElementInteractions';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { InteractionCallback } from '@plitzi/sdk-shared';
@@ -23,6 +23,13 @@ export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {
 
 export type DebugParams = Record<string, string | undefined | boolean>;
 
+// Three branches, all rendering the same host tag via renderStaticTag:
+//   1. skipHOC  → identity-only static descendant (no element data resolved).
+//   2. no interactions context (SSR / tests) → static tag + debug params.
+//   3. interactive runtime → useRootElementInteractions wires events + class names.
+// Kept as a single component (the interactions hook is called only in branch 3) to avoid an extra wrapper level in the
+// React DevTools tree for every element. Branch selection is invariant per mounted element, so the conditional hook
+// call is safe; the eslint-disable below is scoped to that single call.
 const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   ref,
   children,
@@ -39,35 +46,8 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   const previewMode = serviceContext.settings.previewMode ?? true;
   const debugMode = Boolean(serviceContext.settings.debugMode);
 
-  const params = useMemo<DebugParams>(() => {
-    if (elementContext.plitziJsxSkipHOC) {
-      return {};
-    }
-
-    const {
-      id: elementId,
-      rootId,
-      definition: { type, label }
-    } = elementContext;
-    if (!debugMode && (previewMode || !type || rootId !== serviceContext.root.baseElementId)) {
-      return {};
-    }
-
-    return {
-      'data-id': elementId,
-      'data-name': label ? label : type ? type : 'unknown',
-      'data-root-id': rootId,
-      'data-type': type ? type : 'unknown',
-      'data-root-render-element': true
-    };
-  }, [elementContext, serviceContext, previewMode, debugMode]);
-
   if (elementContext.plitziJsxSkipHOC) {
-    return (
-      <StaticTag tag={tag} refProp={ref} style={styleParsed} className={className} otherProps={otherProps}>
-        {children}
-      </StaticTag>
-    );
+    return renderStaticTag({ tag, refProp: ref, style: styleParsed, className, otherProps, children });
   }
 
   const {
@@ -78,47 +58,60 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   // it, so we narrow to nullable to keep the static-tag fallback below.
   const InteractionsContext = contexts.InteractionsContext as Context<InteractionsContextValue> | undefined;
   const {
-    definition: { runtime },
-    style
+    id,
+    rootId,
+    style,
+    definition: { type, label, runtime }
   } = elementContext;
-  const serverMarker = runtime === 'server' ? { 'data-rsc-id': elementContext.id } : undefined;
+  const serverMarker = runtime === 'server' ? { 'data-rsc-id': id } : undefined;
+  const params: DebugParams =
+    !debugMode && (previewMode || !type || rootId !== baseElementId)
+      ? {}
+      : {
+          'data-id': id,
+          'data-name': label || type || 'unknown',
+          'data-root-id': rootId,
+          'data-type': type || 'unknown',
+          'data-root-render-element': true
+        };
 
   if (!InteractionsContext) {
-    return (
-      <StaticTag
-        tag={tag}
-        refProp={ref}
-        style={{ ...style, ...styleParsed }}
-        className={className}
-        otherProps={otherProps}
-        params={params}
-        serverMarker={serverMarker}
-      >
-        {children}
-      </StaticTag>
-    );
+    return renderStaticTag({
+      tag,
+      refProp: ref,
+      style: { ...style, ...styleParsed },
+      className,
+      otherProps,
+      params,
+      serverMarker,
+      children
+    });
   }
 
-  return (
-    <RootElementInteractive
-      elementContext={elementContext}
-      tag={tag}
-      refProp={ref}
-      styleParsed={styleParsed}
-      className={className}
-      interactionTriggers={interactionTriggers}
-      interactionCallbacks={interactionCallbacks}
-      otherProps={otherProps}
-      InteractionsContext={InteractionsContext}
-      previewMode={previewMode}
-      debugMode={debugMode}
-      baseElementId={baseElementId}
-      params={params}
-      serverMarker={serverMarker}
-    >
-      {children}
-    </RootElementInteractive>
-  );
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const { className: classNameResolved, events } = useRootElementInteractions({
+    elementContext,
+    InteractionsContext,
+    previewMode,
+    debugMode,
+    baseElementId,
+    className,
+    interactionTriggers,
+    interactionCallbacks,
+    otherProps
+  });
+
+  return renderStaticTag({
+    tag,
+    refProp: ref,
+    style: { ...style, ...styleParsed },
+    className: classNameResolved,
+    otherProps,
+    params,
+    serverMarker,
+    events,
+    children
+  });
 };
 
 export default RootElement;

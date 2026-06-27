@@ -50,17 +50,9 @@
       "types": "./dist/Element/RootElement.d.ts",
       "import": "./dist/Element/RootElement.mjs"
     },
-    "./Element/RootElementInteractive": {
-      "types": "./dist/Element/RootElementInteractive.d.ts",
-      "import": "./dist/Element/RootElementInteractive.mjs"
-    },
     "./Element/ServerStaticShell": {
       "types": "./dist/Element/ServerStaticShell.d.ts",
       "import": "./dist/Element/ServerStaticShell.mjs"
-    },
-    "./Element/StaticTag": {
-      "types": "./dist/Element/StaticTag.d.ts",
-      "import": "./dist/Element/StaticTag.mjs"
     },
     "./Element/helpers/elementConstants": {
       "types": "./dist/Element/helpers/elementConstants.d.ts",
@@ -94,6 +86,10 @@
       "types": "./dist/Element/helpers/pluginSelector.d.ts",
       "import": "./dist/Element/helpers/pluginSelector.mjs"
     },
+    "./Element/helpers/renderStaticTag": {
+      "types": "./dist/Element/helpers/renderStaticTag.d.ts",
+      "import": "./dist/Element/helpers/renderStaticTag.mjs"
+    },
     "./Element/hocs/withElement": {
       "types": "./dist/Element/hocs/withElement.d.ts",
       "import": "./dist/Element/hocs/withElement.mjs"
@@ -125,6 +121,10 @@
     "./Element/hooks/useInternalItems": {
       "types": "./dist/Element/hooks/useInternalItems.d.ts",
       "import": "./dist/Element/hooks/useInternalItems.mjs"
+    },
+    "./Element/hooks/useRootElementInteractions": {
+      "types": "./dist/Element/hooks/useRootElementInteractions.d.ts",
+      "import": "./dist/Element/hooks/useRootElementInteractions.mjs"
     },
     "./Element/hooks/useRscData": {
       "types": "./dist/Element/hooks/useRscData.d.ts",
