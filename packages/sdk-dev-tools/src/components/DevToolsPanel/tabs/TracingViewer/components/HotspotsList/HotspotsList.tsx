@@ -1,5 +1,6 @@
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import clsx from 'clsx';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { buildHotspots, durationColor, formatMs } from '../../helpers';
 import DurationLegend from '../DurationLegend';
@@ -43,7 +44,7 @@ const valueOf = (row: HotspotRow, sort: SortKey): number => {
 };
 
 const HotspotsList = ({ commits, tree, flat, selectedId, onSelectElement }: HotspotsListProps) => {
-  const [sort, setSort] = useState<SortKey>('total');
+  const [sort, setSort] = useStorage<SortKey>('plitzi-sdk.dev-tools.tracing.sort', 'total');
   const selectedRef = useRef<HTMLButtonElement>(null);
 
   const rows = useMemo(
@@ -57,7 +58,7 @@ const HotspotsList = ({ commits, tree, flat, selectedId, onSelectElement }: Hots
 
   useEffect(() => selectedRef.current?.scrollIntoView({ block: 'nearest' }), [selectedId]);
 
-  const handleSort = useCallback((next: SortKey) => () => setSort(next), []);
+  const handleSort = useCallback((next: SortKey) => () => setSort(next), [setSort]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {

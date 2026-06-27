@@ -23,6 +23,7 @@ export type DevToolsPanelProps = {
 
 const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientation }: DevToolsPanelProps) => {
   const [tabSelected, setTabSelected] = useStorage('plitzi-sdk.dev-tools.tab', 'logs');
+  const [size, setSize] = useStorage('plitzi-sdk.dev-tools.size', { width: 500, height: 200 });
   const { currentPageId } = use(NavigationContext);
   const [elementSelected, setElementSelected] = useState<string | undefined>();
   const resizeHandles = useMemo<ResizeHandle[]>(() => (orientation === 'vertical' ? ['w'] : ['n']), [orientation]);
@@ -32,6 +33,15 @@ const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientatio
 
   const handleTabSelect = useCallback((tabIndex: string) => setTabSelected(tabIndex), [setTabSelected]);
   const handleSelectElement = useCallback((id?: string) => setElementSelected(id), [setElementSelected]);
+  // Only one axis resizes per orientation (width when vertical, height when horizontal); the other arrives as Infinity.
+  const handleResize = useCallback(
+    (width: number, height: number) =>
+      setSize(prev => ({
+        width: Number.isFinite(width) ? width : prev.width,
+        height: Number.isFinite(height) ? height : prev.height
+      })),
+    [setSize]
+  );
 
   return (
     <ContainerResizable
@@ -42,11 +52,12 @@ const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientatio
       maxConstraintsX={orientation === 'vertical' ? 1000 : Infinity}
       minConstraintsY={orientation === 'vertical' ? Infinity : 34}
       maxConstraintsY={orientation === 'vertical' ? Infinity : 600}
-      width={orientation === 'vertical' ? 500 : Infinity}
-      height={orientation === 'vertical' ? Infinity : 200}
+      width={orientation === 'vertical' ? size.width : Infinity}
+      height={orientation === 'vertical' ? Infinity : size.height}
       resizeHandles={resizeHandles}
       parentRef={parentRef}
       autoGrow={false}
+      onChange={handleResize}
     >
       <div className="flex h-full w-full flex-col bg-white text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
         <DevToolsHeader

@@ -1,3 +1,4 @@
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { useCallback, useMemo, useState } from 'react';
 
 import { useCommonStore } from '@plitzi/sdk-shared/store';
@@ -18,7 +19,7 @@ import type { KeyboardEvent } from 'react';
 const TracingViewer = () => {
   const { enabled, hydrated, commits, tree, clear } = useTracing();
   const [flat] = useCommonStore('schema.flat');
-  const [view, setView] = useState<TracingView>('ranked');
+  const [view, setView] = useStorage<TracingView>('plitzi-sdk.dev-tools.tracing.view', 'ranked');
   const [selectedCommitId, setSelectedCommitId] = useState<number | undefined>();
   // The element picked in either view: drives the shared sidebar and outlines it on the page.
   const [selectedElementId, setSelectedElementId] = useState<string | undefined>();

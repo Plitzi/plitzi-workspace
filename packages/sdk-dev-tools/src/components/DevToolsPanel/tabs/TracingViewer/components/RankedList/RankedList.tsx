@@ -1,5 +1,6 @@
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import clsx from 'clsx';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { COMMIT_ORIGIN_LABEL, durationColor, formatMs, formatPercent, rowDuration } from '../../helpers';
 import DetailSidebar from '../DetailSidebar';
@@ -19,7 +20,7 @@ export type RankedListProps = {
 };
 
 const RankedList = ({ commit, model, active, origin, onSelectElement }: RankedListProps) => {
-  const [metric, setMetric] = useState<DurationMetric>('self');
+  const [metric, setMetric] = useStorage<DurationMetric>('plitzi-sdk.dev-tools.tracing.metric', 'self');
   const selectedRef = useRef<HTMLButtonElement>(null);
 
   // Only elements that actually re-rendered (like React DevTools) — bubbled/hatched ones did no work to rank.
