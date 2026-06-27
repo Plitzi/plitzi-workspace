@@ -1,13 +1,12 @@
-import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { COMMIT_ORIGIN_LABEL, formatMs, formatPercent, frameColor, frameTextColor, HATCH_STYLE } from '../../helpers';
+import { COMMIT_ORIGIN_LABEL } from '../../helpers';
 import DetailSidebar from '../DetailSidebar';
 import DurationLegend from '../DurationLegend';
+import FlameFrame, { ROW_HEIGHT } from './FlameFrame';
 
 import type { CommitOrigin, FlameModel, FlameNode } from '../../helpers';
 import type { CommitEntry } from '@plitzi/sdk-shared';
-import type { CSSProperties } from 'react';
 
 export type FlamegraphProps = {
   commit: CommitEntry;
@@ -17,21 +16,15 @@ export type FlamegraphProps = {
   onSelectElement: (id: string | undefined) => void;
 };
 
-const ROW_HEIGHT = 18;
-
-// Float slack: a child's [x, x+width] can land a hair outside the parent's after the proportional layout's divisions,
-// so the containment test that selects the focused subtree is widened by this much.
+// Float slack for the subtree-containment test (a child's span can land a hair outside its parent's after division).
 const EPS = 1e-6;
 
-// A self-contained, shadow-DOM-native flamegraph: every frame is an absolutely-positioned DOM box sized by the layout
-// fractions already on each `FlameNode` (`x`, `width`, `depth`), so there is no library injecting styles into
-// `document.head` and no canvas — clicks, theming and the panel's Tailwind all work inside the shadow root directly.
-// Clicking a frame zooms to it (its span fills the width); its ancestors stay as full-width bars above so you can
-// click back out; clicking the focused frame zooms out one level.
+// A shadow-DOM-native flamegraph: every frame is an absolutely-positioned DOM box sized by the layout fractions on each
+// `FlameNode`, so clicks, theming and Tailwind all work inside the shadow root (no library injecting styles into
+// `document.head`, no canvas). Clicking a frame zooms to it; its ancestors stay as full-width bars above to zoom back.
 const Flamegraph = ({ commit, model, active, origin, onSelectElement }: FlamegraphProps) => {
   const [focusId, setFocusId] = useState<string | undefined>();
 
-  // A new commit/model is a different tree — drop any zoom so we don't strand the view on a now-absent frame.
   useEffect(() => setFocusId(undefined), [commit.commitId, model]);
 
   const byId = useMemo(() => {
@@ -48,8 +41,6 @@ const Flamegraph = ({ commit, model, active, origin, onSelectElement }: Flamegra
   const focusWidth = focus ? focus.width : 1;
   const focusDepth = focus ? focus.depth : 0;
 
-  // The focused frame's ancestor chain (root → parent), shown as full-width bars above so every zoom level stays
-  // reachable with one click.
   const ancestors = useMemo(() => {
     if (!focus) {
       return [];
@@ -70,8 +61,7 @@ const Flamegraph = ({ commit, model, active, origin, onSelectElement }: Flamegra
     return chain.reverse();
   }, [focus, byId]);
 
-  // The focused frame plus its subtree — selected by horizontal containment (children always nest inside their
-  // parent's span by construction), drawn at their real depth scaled into the focused span's width.
+  // The focused frame plus its subtree, selected by horizontal containment (children always nest within their parent).
   const frames = useMemo(
     () =>
       model.nodes.filter(
@@ -85,8 +75,7 @@ const Flamegraph = ({ commit, model, active, origin, onSelectElement }: Flamegra
     [frames, focusDepth]
   );
 
-  // Clicking the already-selected frame clears the selection AND zooms out one level, so re-clicking the page resets
-  // back to the full, unselected view.
+  // Clicking the selected frame clears the selection AND zooms out a level, so re-clicking the page resets the view.
   const handleFrameClick = useCallback(
     (node: FlameNode) => {
       onSelectElement(node.id === active?.id ? undefined : node.id);
@@ -147,52 +136,6 @@ const Flamegraph = ({ commit, model, active, origin, onSelectElement }: Flamegra
 
       <DurationLegend />
     </div>
-  );
-};
-
-type FlameFrameProps = {
-  node: FlameNode;
-  left: number;
-  width: number;
-  top: number;
-  selected: boolean;
-  onClick: (node: FlameNode) => void;
-};
-
-const FlameFrame = ({ node, left, width, top, selected, onClick }: FlameFrameProps) => {
-  const style: CSSProperties = {
-    left: `${left}%`,
-    width: `${width}%`,
-    top,
-    height: ROW_HEIGHT,
-    // The diagonal stripes alone vanish on tiny frames, so non-rendered nodes also get a faint fill below them.
-    ...(node.state === 'hatched' && !selected ? HATCH_STYLE : undefined)
-  };
-
-  // Selection is signalled by a solid violet fill (the panel's accent), not a border — so adjacent frames keep their
-  // 1px neutral separator and the active frame still reads at any width.
-  const background = selected
-    ? 'bg-violet-600'
-    : node.state === 'hatched'
-      ? 'bg-zinc-200 dark:bg-zinc-800'
-      : frameColor(node);
-
-  return (
-    <button
-      type="button"
-      onClick={() => onClick(node)}
-      title={`${node.name} (${node.type})${node.visible ? '' : ' · hidden'}\n${formatMs(node.selfDuration)} self · ${formatMs(node.actualDuration)} total · ${formatPercent(node.baseDuration > 0 ? node.width : 0)} width`}
-      style={style}
-      className={clsx(
-        'absolute flex cursor-pointer items-center gap-1 overflow-hidden rounded-[1px] border border-zinc-50 px-1 text-left text-[11px] leading-none whitespace-nowrap dark:border-zinc-900',
-        background,
-        selected ? 'z-10 text-white' : clsx(frameTextColor(node), 'hover:brightness-110')
-      )}
-    >
-      {node.trigger && <i className="fa-solid fa-bolt shrink-0 text-[8px] text-violet-200" />}
-      {!node.visible && <i className="fa-solid fa-eye-slash shrink-0 text-[8px] opacity-80" />}
-      <span className="truncate">{node.name}</span>
-    </button>
   );
 };
 

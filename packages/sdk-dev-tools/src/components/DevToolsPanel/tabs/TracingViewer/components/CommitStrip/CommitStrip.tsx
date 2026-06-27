@@ -21,11 +21,9 @@ export type CommitStripProps = {
   onSelect: (commitId: number) => void;
 };
 
-// Shared, always-visible commit selector (total render time per commit). Left/Right arrows step commits.
 const CommitStrip = ({ commits, selectedIndex, hydrated, onSelect }: CommitStripProps) => {
   const selectedRef = useRef<HTMLButtonElement>(null);
   const maxDuration = useMemo(() => Math.max(1, ...commits.map(commit => commit.duration)), [commits]);
-  // The first real React commit (the hydration when SSR'd) — the SSR marker uses id 0 and never counts as "first".
   const firstRealId = useMemo(() => commits.find(commit => commit.commitId !== SSR_COMMIT_ID)?.commitId, [commits]);
 
   useEffect(() => selectedRef.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' }), [selectedIndex]);
@@ -38,7 +36,7 @@ const CommitStrip = ({ commits, selectedIndex, hydrated, onSelect }: CommitStrip
         return;
       }
 
-      // Handle it here and stop it reaching the tab-level ←/→ handler, so the commit only steps once.
+      // Stop it reaching the tab-level ←/→ handler, so the commit only steps once.
       event.preventDefault();
       event.stopPropagation();
       const index = selectedIndex + (event.key === 'ArrowLeft' ? -1 : 1);

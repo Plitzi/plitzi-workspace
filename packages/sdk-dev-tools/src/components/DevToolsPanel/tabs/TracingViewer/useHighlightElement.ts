@@ -1,8 +1,6 @@
 import { useEffect } from 'react';
 
-// Outlines the selected element on the page while it stays selected, reusing the same `devtools-element-hovered` class
-// the Elements tab applies to `[data-id]` nodes — so picking a frame in the flamegraph/ranked list points at the real
-// element on the canvas.
+// Outlines the selected element on the page, reusing the Elements tab's `devtools-element-hovered` class on `[data-id]`.
 const useHighlightElement = (id: string | undefined): void => {
   useEffect(() => {
     if (typeof document === 'undefined' || !id) {

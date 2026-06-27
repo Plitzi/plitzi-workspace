@@ -386,6 +386,10 @@
       "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/Flamegraph/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/Flamegraph/index.mjs"
     },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/Flamegraph/FlameFrame": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/Flamegraph/FlameFrame.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/Flamegraph/FlameFrame.mjs"
+    },
     "./components/DevToolsPanel/tabs/TracingViewer/components/Flamegraph/Flamegraph": {
       "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/Flamegraph/Flamegraph.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/Flamegraph/Flamegraph.mjs"
@@ -455,7 +459,6 @@
       "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/TracingToolbar/index.mjs"
     },
     "./components/DevToolsPanel/tabs/TracingViewer/helpers": {
-      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/helpers.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/helpers.mjs"
     },
     "./components/DevToolsPanel/tabs/TracingViewer/index": {

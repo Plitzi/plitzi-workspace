@@ -22,8 +22,7 @@ const RankedList = ({ commit, model, active, origin, onSelectElement }: RankedLi
   const [metric, setMetric] = useState<DurationMetric>('self');
   const selectedRef = useRef<HTMLButtonElement>(null);
 
-  // Ranked lists only elements that actually re-rendered (like React DevTools); bubbled/hatched ones are excluded so
-  // a render budget never blames an element that did no work.
+  // Only elements that actually re-rendered (like React DevTools) — bubbled/hatched ones did no work to rank.
   const ranked = useMemo(
     () =>
       model.nodes
@@ -31,8 +30,7 @@ const RankedList = ({ commit, model, active, origin, onSelectElement }: RankedLi
         .sort((a, b) => rowDuration(b, metric) - rowDuration(a, metric)),
     [model, metric]
   );
-  // Relative to the slowest in THIS list so the top bar always fills — never floored at 1ms (sub-ms renders would
-  // otherwise leave every bar tiny).
+  // Relative to the slowest in this list so the top bar always fills (sub-ms renders would leave every bar tiny).
   const max = useMemo(() => ranked.reduce((m, row) => Math.max(m, rowDuration(row, metric)), 0) || 1, [ranked, metric]);
   const selectedIndex = useMemo(() => ranked.findIndex(row => row.id === active?.id), [ranked, active]);
 

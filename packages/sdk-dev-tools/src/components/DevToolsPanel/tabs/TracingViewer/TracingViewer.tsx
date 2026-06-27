@@ -23,9 +23,8 @@ const TracingViewer = () => {
   // The element picked in either view: drives the shared sidebar and outlines it on the page.
   const [selectedElementId, setSelectedElementId] = useState<string | undefined>();
 
-  // Synthetic SSR baseline: when the app hydrated, the server rendered the tree FIRST, but React's Profiler emits
-  // nothing for that pass — so we prepend a marker commit (#0) for it. That makes the first real client commit read
-  // clearly as the hydration OF that server render, instead of looking like a from-scratch client mount.
+  // Synthetic SSR baseline: React's Profiler emits nothing for the server pass, so prepend a marker commit (#0) for it
+  // — the first real client commit then reads as the hydration of that server render, not a from-scratch mount.
   const ssrCommit = useMemo<CommitEntry | undefined>(() => {
     if (!hydrated || commits.length === 0) {
       return undefined;
@@ -56,18 +55,15 @@ const TracingViewer = () => {
   const selectedCommit = selectedIndex === -1 ? undefined : timeline[selectedIndex];
   const isSsrCommit = selectedCommit?.commitId === SSR_COMMIT_ID;
 
-  // The full render-tree model for the selected commit, reused by both views (built once here). The SSR marker has no
-  // client profile data, so it has no model — the view shows an explanation instead.
+  // The render-tree model for the selected commit, shared by both views. The SSR marker has no client data → no model.
   const model = useMemo(
     () => (selectedCommit && !isSsrCommit ? buildFlameModel(selectedCommit, tree, flat) : undefined),
     [selectedCommit, isSsrCommit, tree, flat]
   );
 
-  // No preselection: the sidebar/outline only appear for an explicit pick (undefined ⇒ nothing selected).
   const active = useMemo(() => model?.nodes.find(node => node.id === selectedElementId), [model, selectedElementId]);
   useHighlightElement(active?.id);
 
-  // Origin of the selected commit (ssr / hydration / mount / mixed / update) for the per-view header label.
   const origin = useMemo(
     () => (selectedCommit ? commitOrigin(selectedCommit, hydrated, selectedCommit.commitId === firstRealId) : 'update'),
     [selectedCommit, hydrated, firstRealId]
@@ -85,8 +81,7 @@ const TracingViewer = () => {
     [timeline, selectedIndex]
   );
 
-  // ←/→ steps commits from anywhere focus lands inside the tab (the views let these keys bubble up here), not just on
-  // the commit strip.
+  // ←/→ steps commits from anywhere focus lands inside the tab, not just the commit strip.
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
       if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
