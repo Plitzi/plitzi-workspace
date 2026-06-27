@@ -1,22 +1,23 @@
 import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo } from 'react';
 
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import { useSdkStore } from '@plitzi/sdk-shared/store';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
+
+import InteractionsContext from '../../InteractionsContext';
 
 import type { InteractionCallback } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type NavigationInteractionsProps = {
-  children: ReactNode;
+  children?: ReactNode;
   previewMode?: boolean;
 };
 
-const NavigationInteractions = ({ children, previewMode = true }: NavigationInteractionsProps) => {
+const NavigationInteractions = ({ children, previewMode = false }: NavigationInteractionsProps) => {
   const { useInteractions } = use(InteractionsContext);
   const { navigate } = use(NavigationContext);
-  const [[pageIds, pageDefinitions]] = useSdkStore(['schema.pages', 'pageDefinitions']);
+  const [[pageIds, pageDefinitions]] = useCommonStore(['schema.pages', 'pageDefinitions']);
 
   const pageUrls = useMemo(() => {
     const pages = pick(pageDefinitions, pageIds);

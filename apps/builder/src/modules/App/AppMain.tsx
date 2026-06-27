@@ -4,8 +4,8 @@ import { useState, useMemo } from 'react';
 
 import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
+import InteractionsSourcesProvider from '@plitzi/sdk-interactions/InteractionsSourcesProvider';
 import { useBuilderStoreSync } from '@plitzi/sdk-shared/store';
-import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
 
 import AppContainer from './AppContainer';
 import AppContext from './AppContext';
@@ -96,13 +96,13 @@ const AppMain = ({
         debugMode={debugMode}
       >
         <GlobalSources environment={environment}>
-          <InteractionsBuilderContextProvider previewMode={previewMode}>
+          <InteractionsSourcesProvider previewMode={previewMode}>
             <PopupProvider renderLeftPopup={false} renderRightPopup={false} renderFloatingPopup={!previewMode}>
               <DevToolsContainer innerClassName="flex" enabled={debugMode}>
                 <AppContainer externalStyle={externalStyle} />
               </DevToolsContainer>
             </PopupProvider>
-          </InteractionsBuilderContextProvider>
+          </InteractionsSourcesProvider>
         </GlobalSources>
       </AppProvider>
     ),

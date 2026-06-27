@@ -6,7 +6,7 @@ import Select2 from '@plitzi/plitzi-ui/Select2';
 import { produce } from 'immer';
 import { useCallback, useMemo, useRef } from 'react';
 
-import utility, { utilityOptions } from '@plitzi/sdk-elements/dataSource/utility';
+import utility, { utilityOptions } from '@plitzi/sdk-shared/dataSource/utility';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import TransformerParam from './TransformerParam';

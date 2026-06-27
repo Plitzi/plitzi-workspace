@@ -1,6 +1,6 @@
-import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { processTwig } from '../../helpers/twigWrapper';
 
-import type { DataSourceUtility, DataSourceUtilityParamsValue, Element } from '@plitzi/sdk-shared';
+import type { DataSourceUtility, DataSourceUtilityParamsValue, Element } from '../../types';
 
 const callback = (
   source: string,

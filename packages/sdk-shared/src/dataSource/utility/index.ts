@@ -8,7 +8,7 @@ import stringToArray from './stringToArray';
 import styleSelector from './styleSelector';
 import twigTemplate from './twigTemplate';
 
-import type { DataSourceUtility } from '@plitzi/sdk-shared';
+import type { DataSourceUtility } from '../../types';
 
 const utilities = {
   twigTemplate,

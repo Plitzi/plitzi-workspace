@@ -26,6 +26,10 @@
       "types": "./dist/InteractionsManager.d.ts",
       "import": "./dist/InteractionsManager.mjs"
     },
+    "./InteractionsSourcesProvider": {
+      "types": "./dist/InteractionsSourcesProvider.d.ts",
+      "import": "./dist/InteractionsSourcesProvider.mjs"
+    },
     "./hooks/useInteractions": {
       "types": "./dist/hooks/useInteractions.d.ts",
       "import": "./dist/hooks/useInteractions.mjs"
@@ -49,6 +53,42 @@
     "./sources/AuthSource/index": {
       "types": "./dist/sources/AuthSource/index.d.ts",
       "import": "./dist/sources/AuthSource/index.mjs"
+    },
+    "./sources/CollectionSource": {
+      "types": "./dist/sources/CollectionSource/index.d.ts",
+      "import": "./dist/sources/CollectionSource/index.mjs"
+    },
+    "./sources/CollectionSource/CollectionInteractions": {
+      "types": "./dist/sources/CollectionSource/CollectionInteractions.d.ts",
+      "import": "./dist/sources/CollectionSource/CollectionInteractions.mjs"
+    },
+    "./sources/CollectionSource/index": {
+      "types": "./dist/sources/CollectionSource/index.d.ts",
+      "import": "./dist/sources/CollectionSource/index.mjs"
+    },
+    "./sources/NavigationSource": {
+      "types": "./dist/sources/NavigationSource/index.d.ts",
+      "import": "./dist/sources/NavigationSource/index.mjs"
+    },
+    "./sources/NavigationSource/NavigationInteractions": {
+      "types": "./dist/sources/NavigationSource/NavigationInteractions.d.ts",
+      "import": "./dist/sources/NavigationSource/NavigationInteractions.mjs"
+    },
+    "./sources/NavigationSource/index": {
+      "types": "./dist/sources/NavigationSource/index.d.ts",
+      "import": "./dist/sources/NavigationSource/index.mjs"
+    },
+    "./sources/StateSource": {
+      "types": "./dist/sources/StateSource/index.d.ts",
+      "import": "./dist/sources/StateSource/index.mjs"
+    },
+    "./sources/StateSource/StateInteractions": {
+      "types": "./dist/sources/StateSource/StateInteractions.d.ts",
+      "import": "./dist/sources/StateSource/StateInteractions.mjs"
+    },
+    "./sources/StateSource/index": {
+      "types": "./dist/sources/StateSource/index.d.ts",
+      "import": "./dist/sources/StateSource/index.mjs"
     },
     "./sources/index": {
       "types": "./dist/sources/index.d.ts",
@@ -95,8 +135,10 @@
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.6.13",
     "@plitzi/sdk-auth": "workspace:*",
+    "@plitzi/sdk-collections": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
+    "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*"
   }
 }

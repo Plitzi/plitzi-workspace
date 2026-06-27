@@ -1,6 +1,6 @@
 import { capitalize as capitalizeHelper } from '@plitzi/plitzi-ui/helpers';
 
-import type { DataSourceUtility } from '@plitzi/sdk-shared';
+import type { DataSourceUtility } from '../../types';
 
 const callback = (source: string) => {
   if (typeof source !== 'string') {

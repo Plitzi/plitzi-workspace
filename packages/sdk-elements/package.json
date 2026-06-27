@@ -50,9 +50,17 @@
       "types": "./dist/Element/RootElement.d.ts",
       "import": "./dist/Element/RootElement.mjs"
     },
+    "./Element/RootElementInteractive": {
+      "types": "./dist/Element/RootElementInteractive.d.ts",
+      "import": "./dist/Element/RootElementInteractive.mjs"
+    },
     "./Element/ServerStaticShell": {
       "types": "./dist/Element/ServerStaticShell.d.ts",
       "import": "./dist/Element/ServerStaticShell.mjs"
+    },
+    "./Element/StaticTag": {
+      "types": "./dist/Element/StaticTag.d.ts",
+      "import": "./dist/Element/StaticTag.mjs"
     },
     "./Element/helpers/elementConstants": {
       "types": "./dist/Element/helpers/elementConstants.d.ts",

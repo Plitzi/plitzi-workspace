@@ -50,6 +50,10 @@
       "types": "./dist/dataSource/index.d.ts",
       "import": "./dist/dataSource/index.mjs"
     },
+    "./dataSource/getBindingsDetails": {
+      "types": "./dist/dataSource/getBindingsDetails.d.ts",
+      "import": "./dist/dataSource/getBindingsDetails.mjs"
+    },
     "./dataSource/hooks": {
       "types": "./dist/dataSource/hooks/index.d.ts",
       "import": "./dist/dataSource/hooks/index.mjs"
@@ -65,6 +69,42 @@
     "./dataSource/index": {
       "types": "./dist/dataSource/index.d.ts",
       "import": "./dist/dataSource/index.mjs"
+    },
+    "./dataSource/utility": {
+      "types": "./dist/dataSource/utility/index.d.ts",
+      "import": "./dist/dataSource/utility/index.mjs"
+    },
+    "./dataSource/utility/arrayMap": {
+      "types": "./dist/dataSource/utility/arrayMap.d.ts",
+      "import": "./dist/dataSource/utility/arrayMap.mjs"
+    },
+    "./dataSource/utility/capitalize": {
+      "types": "./dist/dataSource/utility/capitalize.d.ts",
+      "import": "./dist/dataSource/utility/capitalize.mjs"
+    },
+    "./dataSource/utility/dateConverter": {
+      "types": "./dist/dataSource/utility/dateConverter.d.ts",
+      "import": "./dist/dataSource/utility/dateConverter.mjs"
+    },
+    "./dataSource/utility/index": {
+      "types": "./dist/dataSource/utility/index.d.ts",
+      "import": "./dist/dataSource/utility/index.mjs"
+    },
+    "./dataSource/utility/staticValue": {
+      "types": "./dist/dataSource/utility/staticValue.d.ts",
+      "import": "./dist/dataSource/utility/staticValue.mjs"
+    },
+    "./dataSource/utility/stringToArray": {
+      "types": "./dist/dataSource/utility/stringToArray.d.ts",
+      "import": "./dist/dataSource/utility/stringToArray.mjs"
+    },
+    "./dataSource/utility/styleSelector": {
+      "types": "./dist/dataSource/utility/styleSelector.d.ts",
+      "import": "./dist/dataSource/utility/styleSelector.mjs"
+    },
+    "./dataSource/utility/twigTemplate": {
+      "types": "./dist/dataSource/utility/twigTemplate.d.ts",
+      "import": "./dist/dataSource/utility/twigTemplate.mjs"
     },
     "./devTools": {
       "types": "./dist/devTools/index.d.ts",
@@ -1068,6 +1108,7 @@
     "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
     "graphql-tag": "^2.12.7",
+    "immer": "^11.1.8",
     "twig": "^3.0.0",
     "zod": "^4.4.3"
   },

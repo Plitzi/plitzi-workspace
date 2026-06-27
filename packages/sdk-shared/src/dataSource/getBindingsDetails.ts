@@ -4,8 +4,8 @@ import { produce } from 'immer';
 
 import utility from './utility';
 
+import type { BindingCategory, Element, ElementBinding } from '../types';
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { BindingCategory, Element, ElementBinding } from '@plitzi/sdk-shared';
 
 const getValues = (
   dataSource: Record<string, unknown>,

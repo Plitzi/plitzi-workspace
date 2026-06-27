@@ -2,7 +2,6 @@ import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
 import CollectionContextProvider from '@modules/Collection/CollectionContextProvider';
-import InteractionsSdkContextProvider from '@modules/Interactions/InteractionsSdkContextProvider';
 import NavigationContextProvider from '@modules/Navigation/NavigationContextProvider';
 import NetworkContextProvider from '@modules/Network/NetworkContextProvider';
 import PluginsContextProvider from '@modules/Plugins/PluginsContextProvider';
@@ -14,6 +13,7 @@ import AuthContextProvider from '@plitzi/sdk-auth/AuthContextProvider';
 import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
 import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
+import InteractionsSourcesProvider from '@plitzi/sdk-interactions/InteractionsSourcesProvider';
 import SdkStyleContextProvider from '@plitzi/sdk-style/SdkStyleContextProvider';
 
 import devtoolsCssUrl from '../../assets/plitzi-sdk-devtools.scss?url';
@@ -132,7 +132,7 @@ const AppMain = ({
                       ssrResult={ssrResult}
                     >
                       <GlobalSources environment={environment}>
-                        <InteractionsSdkContextProvider previewMode={previewMode}>
+                        <InteractionsSourcesProvider previewMode={previewMode}>
                           <DevToolsContainer
                             enabled={debugMode}
                             devToolsStyleLink={sdkDevToolsStylePath ? sdkDevToolsStylePath : devtoolsCssUrl}
@@ -150,7 +150,7 @@ const AppMain = ({
                               {...sdkProps}
                             />
                           </DevToolsContainer>
-                        </InteractionsSdkContextProvider>
+                        </InteractionsSourcesProvider>
                       </GlobalSources>
                     </NavigationContextProvider>
                   </AuthContextProvider>

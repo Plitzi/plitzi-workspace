@@ -1,27 +1,24 @@
 import { use } from 'react';
 
-import InteractionsContextProvider from '@plitzi/sdk-interactions/InteractionsContextProvider';
-import AuthInteractions from '@plitzi/sdk-interactions/sources/AuthSource/AuthInteractions';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
+import InteractionsContextProvider from './InteractionsContextProvider';
+import AuthInteractions from './sources/AuthSource/AuthInteractions';
 import CollectionInteractions from './sources/CollectionSource/CollectionInteractions';
 import NavigationInteractions from './sources/NavigationSource/NavigationInteractions';
 import StateInteractions from './sources/StateSource/StateInteractions';
 
 import type { ReactNode } from 'react';
 
-export type InteractionsBuilderContextProviderProps = {
+export type InteractionsSourcesProviderProps = {
   children?: ReactNode;
   previewMode?: boolean;
 };
 
-const InteractionsBuilderContextProvider = ({
-  children,
-  previewMode = true
-}: InteractionsBuilderContextProviderProps) => {
+const InteractionsSourcesProvider = ({ children, previewMode = false }: InteractionsSourcesProviderProps) => {
   const { currentPageId, routeParams, queryParams } = use(NavigationContext);
-  const [userProvider = 'basic'] = useBuilderStore('schema.settings.userProvider');
+  const [userProvider = 'basic'] = useCommonStore('schema.settings.userProvider');
 
   return (
     <InteractionsContextProvider currentPageId={currentPageId} routeParams={routeParams} queryParams={queryParams}>
@@ -36,4 +33,4 @@ const InteractionsBuilderContextProvider = ({
   );
 };
 
-export default InteractionsBuilderContextProvider;
+export default InteractionsSourcesProvider;

@@ -1,19 +1,19 @@
 import { useCallback, use, useMemo } from 'react';
 
-import { StoreContext } from '@plitzi/nexus/react';
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
+import { useCommonStoreSetter } from '@plitzi/sdk-shared/store';
 
-import type { StoreApi } from '@plitzi/nexus';
-import type { SdkState, InteractionCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
+import InteractionsContext from '../../InteractionsContext';
+
+import type { InteractionCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type StateInteractionsProps = {
-  children: ReactNode;
+  children?: ReactNode;
 };
 
 const StateInteractions = ({ children }: StateInteractionsProps) => {
   const { useInteractions } = use(InteractionsContext);
-  const store = use(StoreContext) as StoreApi<SdkState> | undefined;
+  const setState = useCommonStoreSetter() as (path: string, value: unknown) => void;
 
   const handleSetState = useCallback(
     (params: InteractionCallbackParamValues<{ key: string; type: string; value: string | boolean | number }>) => {
@@ -25,14 +25,14 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
         value = parseInt(value as string, 10);
       }
 
-      store?.setState(`runtime.state.${key}`, value);
+      setState(`runtime.state.${key}`, value);
     },
-    [store]
+    [setState]
   );
 
   const handleClearState = useCallback(() => {
-    store?.setState('runtime.state', {});
-  }, [store]);
+    setState('runtime.state', {});
+  }, [setState]);
 
   const interactionCallbacks = useMemo(
     () => ({

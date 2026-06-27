@@ -1,6 +1,7 @@
-import { parseDate, formatDate, formatDateUTC, formatFromNow } from '@plitzi/sdk-shared';
+import { parseDate, formatDate, formatDateUTC, formatFromNow } from '../../helpers';
 
-import type { DataSourceUtility, DataSourceUtilityParamsValue, SupportedLocale } from '@plitzi/sdk-shared';
+import type { SupportedLocale } from '../../helpers';
+import type { DataSourceUtility, DataSourceUtilityParamsValue } from '../../types';
 
 const callback = (
   source: string | number,

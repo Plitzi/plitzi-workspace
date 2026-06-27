@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 
 import getBindingsDetails from './getBindingsDetails';
 
-import type { Element, ElementBinding } from '@plitzi/sdk-shared';
+import type { Element, ElementBinding } from '../types';
 
 const makeElement = (
   bindings?: Element['definition']['bindings'],

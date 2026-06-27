@@ -3790,8 +3790,10 @@ __metadata:
   dependencies:
     "@plitzi/plitzi-ui": "npm:^1.6.13"
     "@plitzi/sdk-auth": "workspace:*"
+    "@plitzi/sdk-collections": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
+    "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     eslint: "npm:^9.39.4"
     typescript: "npm:^6.0.3"
@@ -3921,6 +3923,7 @@ __metadata:
     eslint-plugin-storybook: "npm:^10.4.6"
     globals: "npm:^17.6.0"
     graphql-tag: "npm:^2.12.7"
+    immer: "npm:^11.1.8"
     jsdom: "npm:^29.1.1"
     postcss: "npm:^8.5.15"
     prettier: "npm:^3.8.4"

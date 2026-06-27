@@ -10,6 +10,7 @@ import { useCallback, use, useMemo } from 'react';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
+import InteractionsSourcesProvider from '@plitzi/sdk-interactions/InteractionsSourcesProvider';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
@@ -22,7 +23,6 @@ import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
-import InteractionsBuilderContextProvider from '@pmodules/Interactions/InteractionsBuilderContextProvider';
 
 // eslint-disable-next-line
 // @ts-ignore
@@ -130,7 +130,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
     >
       <PlitziServiceProvider value={plitziContextValue}>
         <GlobalSources>
-          <InteractionsBuilderContextProvider>
+          <InteractionsSourcesProvider previewMode>
             <div
               className={clsx('builder-iframe', {
                 'builder--display-component-border display-component-border--black':
@@ -141,7 +141,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
             >
               {Plugin}
             </div>
-          </InteractionsBuilderContextProvider>
+          </InteractionsSourcesProvider>
         </GlobalSources>
       </PlitziServiceProvider>
     </ContainerFrame>

@@ -5,8 +5,8 @@ import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import clsx from 'clsx';
 import { use, useCallback, useMemo } from 'react';
 
-import getBindingsDetails from '@plitzi/sdk-elements/dataSource/getBindingsDetails';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import getBindingsDetails from '@plitzi/sdk-shared/dataSource/getBindingsDetails';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 

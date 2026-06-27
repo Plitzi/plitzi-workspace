@@ -1,12 +1,12 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
+import getBindingsDetails from '@plitzi/sdk-shared/dataSource/getBindingsDetails';
 import { processTwig, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import useElementDataSource from './useElementDataSource';
 import useElementState from './useElementState';
 import useInternalItems from './useInternalItems';
-import getBindingsDetails from '../../dataSource/getBindingsDetails';
 import { omitKeys } from '../helpers/omitKeys';
 import parseStyleSelectors from '../helpers/parseStyleSelectors';
 

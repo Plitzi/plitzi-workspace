@@ -1,6 +1,6 @@
 import { get, set } from '@plitzi/plitzi-ui/helpers';
 
-import type { DataSourceUtility, DataSourceUtilityParamsValue } from '@plitzi/sdk-shared';
+import type { DataSourceUtility, DataSourceUtilityParamsValue } from '../../types';
 
 const callback = (
   source: string[] | string,

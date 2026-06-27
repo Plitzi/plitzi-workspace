@@ -1,4 +1,4 @@
-import type { DataSourceUtility, DataSourceUtilityParamsValue } from '@plitzi/sdk-shared';
+import type { DataSourceUtility, DataSourceUtilityParamsValue } from '../../types';
 
 const callback = (source: string, params: DataSourceUtilityParamsValue<string>) => {
   const { separator } = params;
