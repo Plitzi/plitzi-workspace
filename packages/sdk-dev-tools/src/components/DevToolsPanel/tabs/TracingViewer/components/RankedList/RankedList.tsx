@@ -1,12 +1,12 @@
 import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { durationColor, formatMs, formatPercent, rowDuration } from '../../helpers';
+import { COMMIT_ORIGIN_LABEL, durationColor, formatMs, formatPercent, rowDuration } from '../../helpers';
 import DetailSidebar from '../DetailSidebar';
 import DurationLegend from '../DurationLegend';
 import MetricToggle from '../MetricToggle';
 
-import type { DurationMetric, FlameModel, FlameNode } from '../../helpers';
+import type { CommitOrigin, DurationMetric, FlameModel, FlameNode } from '../../helpers';
 import type { CommitEntry } from '@plitzi/sdk-shared';
 import type { KeyboardEvent } from 'react';
 
@@ -14,10 +14,11 @@ export type RankedListProps = {
   commit: CommitEntry;
   model: FlameModel;
   active: FlameNode | undefined;
+  origin: CommitOrigin;
   onSelectElement: (id: string | undefined) => void;
 };
 
-const RankedList = ({ commit, model, active, onSelectElement }: RankedListProps) => {
+const RankedList = ({ commit, model, active, origin, onSelectElement }: RankedListProps) => {
   const [metric, setMetric] = useState<DurationMetric>('self');
   const selectedRef = useRef<HTMLButtonElement>(null);
 
@@ -55,6 +56,11 @@ const RankedList = ({ commit, model, active, onSelectElement }: RankedListProps)
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="flex shrink-0 items-center gap-2 border-b border-zinc-200 px-2 py-1.5 text-[10px] text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
         <span className="font-medium text-zinc-700 dark:text-zinc-200">Commit #{commit.commitId}</span>
+        {origin !== 'update' && (
+          <span className="rounded bg-violet-100 px-1 text-[9px] font-medium text-violet-700 uppercase dark:bg-violet-500/20 dark:text-violet-300">
+            {COMMIT_ORIGIN_LABEL[origin]}
+          </span>
+        )}
         <span>{formatMs(commit.duration)} total</span>
         <span title="Elements that re-rendered, of all in this commit's subtree">
           · {model.renderedCount} of {commit.elementCount} rendered

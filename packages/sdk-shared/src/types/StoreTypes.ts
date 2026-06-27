@@ -103,6 +103,10 @@ export type TracingState = {
   // live. The devtools panel renders outside the service provider and can't read `debugMode` directly, so it relies
   // on this flag to know tracing is available.
   enabled: boolean;
+  // True when this app was rendered from SSR output and hydrated on the client (the `hydrateRoot` path), as opposed
+  // to a pure client `createRoot`. Lets the viewer tell a real hydration commit from an ordinary client initial mount
+  // — both have React phase `mount`, so phase alone can't distinguish them.
+  hydrated: boolean;
   commits: CommitEntry[];
   tree: TracingTree;
 };

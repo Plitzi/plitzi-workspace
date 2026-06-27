@@ -54,6 +54,83 @@ export type HotspotRow = {
   lastSelf: number;
 };
 
+// How a whole commit originated, from its elements' React phases. The SSR/hydration pass commits everything as
+// `mount` (React's Profiler does NOT fire during the server `renderToString` — only on the client, where hydration
+// counts as a mount), so an all-`mount` commit is the hydration baseline; later interactions are `update`. `mixed`
+// flags a commit that both mounted new branches and updated existing ones.
+export type CommitKind = 'mount' | 'update' | 'mixed';
+
+export const commitKind = (commit: CommitEntry): CommitKind => {
+  let mount = 0;
+  let update = 0;
+  for (const element of commit.elements) {
+    if (element.phase === 'mount') {
+      mount += 1;
+    } else {
+      update += 1;
+    }
+  }
+
+  if (mount > 0 && update === 0) {
+    return 'mount';
+  }
+
+  if (update > 0 && mount === 0) {
+    return 'update';
+  }
+
+  return 'mixed';
+};
+
+// What a commit represents in the timeline. `ssr` is the synthetic commit #0 standing in for the server render (no
+// client Profiler data exists for it). `hydration` is the first real client commit when the app hydrated SSR output —
+// an all-`mount` commit; without the `hydrated` signal a pure client mount would falsely read as hydration since both
+// are React phase `mount`. `mount` = a later branch mounting; `mixed` = mounts + updates; `update` = ordinary
+// re-render.
+export type CommitOrigin = 'ssr' | 'hydration' | 'mount' | 'mixed' | 'update';
+
+// The synthetic SSR commit uses id 0; real React commits start at 1.
+export const SSR_COMMIT_ID = 0;
+
+export const commitOrigin = (commit: CommitEntry, hydrated: boolean, isFirstReal: boolean): CommitOrigin => {
+  if (commit.commitId === SSR_COMMIT_ID) {
+    return 'ssr';
+  }
+
+  const kind = commitKind(commit);
+  if (kind === 'mount') {
+    return hydrated && isFirstReal ? 'hydration' : 'mount';
+  }
+
+  return kind;
+};
+
+export const COMMIT_ORIGIN_LABEL: Record<CommitOrigin, string> = {
+  ssr: 'SSR render (server)',
+  hydration: 'Hydration (SSR)',
+  mount: 'Mount',
+  mixed: 'Mount + update',
+  update: 'Update'
+};
+
+export const COMMIT_ORIGIN_BADGE: Record<CommitOrigin, string> = {
+  ssr: 'S',
+  hydration: 'H',
+  mount: 'M',
+  mixed: '±',
+  update: '·'
+};
+
+// Single source of truth for the commit-badge legend shown under the strip — kept here so the badge glyphs and their
+// meanings can't drift apart.
+export const COMMIT_ORIGIN_LEGEND = [
+  { origin: 'ssr', label: 'SSR' },
+  { origin: 'hydration', label: 'Hydration' },
+  { origin: 'mount', label: 'Mount' },
+  { origin: 'mixed', label: 'Mount+update' },
+  { origin: 'update', label: 'Update' }
+] as const satisfies ReadonlyArray<{ origin: CommitOrigin; label: string }>;
+
 export const formatMs = (ms: number): string => {
   if (ms < 0.1) {
     return '<0.1ms';

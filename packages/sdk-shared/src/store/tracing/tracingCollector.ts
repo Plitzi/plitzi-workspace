@@ -33,6 +33,9 @@ let enabled = false;
 let viewing = false;
 let commitSeq = 0;
 let flushScheduled = false;
+// Whether the app was hydrated from SSR output (set once by the SDK on the `hydrateRoot` path). The viewer needs this
+// to tell a real hydration commit from a pure client initial mount — both report React phase `mount`.
+let hydrated = false;
 
 const schedule = (() => {
   if (typeof requestAnimationFrame === 'function') {
@@ -61,7 +64,21 @@ const writeSnapshot = () => {
     tracingStore.setState('tree', buildTree());
   }
 
+  tracingStore.setState('hydrated', hydrated);
   tracingStore.setState('commits', commits);
+};
+
+// Called once by the SDK when it hydrates SSR output (`hydrateRoot`). Published so the viewer can label the first
+// mount commit as a hydration (vs an ordinary client mount). Always recorded; only written to the store while viewing.
+const setHydrated = () => {
+  if (hydrated) {
+    return;
+  }
+
+  hydrated = true;
+  if (viewing) {
+    tracingStore.setState('hydrated', true);
+  }
 };
 
 const flush = () => {
@@ -173,6 +190,6 @@ const clear = () => {
   writeSnapshot();
 };
 
-const tracingCollector = { onRender, linkParent, recordChange, start, stop, clear };
+const tracingCollector = { onRender, linkParent, recordChange, setHydrated, start, stop, clear };
 
 export default tracingCollector;

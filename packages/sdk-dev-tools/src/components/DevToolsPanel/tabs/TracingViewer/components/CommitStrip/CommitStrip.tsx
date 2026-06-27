@@ -1,7 +1,15 @@
 import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { durationColor, formatMs } from '../../helpers';
+import {
+  COMMIT_ORIGIN_BADGE,
+  COMMIT_ORIGIN_LABEL,
+  COMMIT_ORIGIN_LEGEND,
+  commitOrigin,
+  durationColor,
+  formatMs,
+  SSR_COMMIT_ID
+} from '../../helpers';
 
 import type { CommitEntry } from '@plitzi/sdk-shared';
 import type { KeyboardEvent } from 'react';
@@ -9,13 +17,16 @@ import type { KeyboardEvent } from 'react';
 export type CommitStripProps = {
   commits: CommitEntry[];
   selectedIndex: number;
+  hydrated: boolean;
   onSelect: (commitId: number) => void;
 };
 
 // Shared, always-visible commit selector (total render time per commit). Left/Right arrows step commits.
-const CommitStrip = ({ commits, selectedIndex, onSelect }: CommitStripProps) => {
+const CommitStrip = ({ commits, selectedIndex, hydrated, onSelect }: CommitStripProps) => {
   const selectedRef = useRef<HTMLButtonElement>(null);
   const maxDuration = useMemo(() => Math.max(1, ...commits.map(commit => commit.duration)), [commits]);
+  // The first real React commit (the hydration when SSR'd) — the SSR marker uses id 0 and never counts as "first".
+  const firstRealId = useMemo(() => commits.find(commit => commit.commitId !== SSR_COMMIT_ID)?.commitId, [commits]);
 
   useEffect(() => selectedRef.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' }), [selectedIndex]);
 
@@ -39,38 +50,69 @@ const CommitStrip = ({ commits, selectedIndex, onSelect }: CommitStripProps) => 
   );
 
   return (
-    <div
-      role="listbox"
-      aria-label="Commits, total render time"
-      aria-orientation="horizontal"
-      tabIndex={0}
-      onKeyDown={handleKeyDown}
-      className="flex h-20 shrink-0 items-end gap-1 overflow-x-auto border-b border-zinc-200 bg-zinc-50 px-2 py-2 outline-none focus-visible:ring-1 focus-visible:ring-violet-400 dark:border-zinc-800 dark:bg-zinc-900"
-    >
-      {commits.map((commit, index) => {
-        const isSelected = index === selectedIndex;
-        const height = Math.max(6, Math.round((commit.duration / maxDuration) * 100));
+    <div className="flex shrink-0 flex-col border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
+      <div
+        role="listbox"
+        aria-label="Commits, total render time"
+        aria-orientation="horizontal"
+        tabIndex={0}
+        onKeyDown={handleKeyDown}
+        className="flex h-20 items-end gap-1 overflow-x-auto px-2 pt-2 outline-none focus-visible:ring-1 focus-visible:ring-violet-400"
+      >
+        {commits.map((commit, index) => {
+          const isSelected = index === selectedIndex;
+          const isSsr = commit.commitId === SSR_COMMIT_ID;
+          const height = isSsr ? 100 : Math.max(6, Math.round((commit.duration / maxDuration) * 100));
+          const origin = commitOrigin(commit, hydrated, commit.commitId === firstRealId);
 
-        return (
-          <button
-            key={commit.commitId}
-            ref={isSelected ? selectedRef : undefined}
-            role="option"
-            aria-selected={isSelected}
-            onClick={handleSelect(commit.commitId)}
-            title={`Commit #${commit.commitId} · ${formatMs(commit.duration)} total · ${commit.elementCount} elements`}
-            className="flex h-full shrink-0 flex-col justify-end px-0.5"
-          >
-            <div
-              style={{ height: `${height}%` }}
-              className={clsx('w-3.5 rounded-sm transition-all', durationColor(commit.duration), {
-                'opacity-100 ring-2 ring-violet-400': isSelected,
-                'opacity-40 hover:opacity-80': !isSelected
-              })}
-            />
-          </button>
-        );
-      })}
+          return (
+            <button
+              key={commit.commitId}
+              ref={isSelected ? selectedRef : undefined}
+              role="option"
+              aria-selected={isSelected}
+              onClick={handleSelect(commit.commitId)}
+              title={
+                isSsr
+                  ? `Commit #${commit.commitId} · ${COMMIT_ORIGIN_LABEL[origin]} · no client timing · ${commit.elementCount} elements`
+                  : `Commit #${commit.commitId} · ${COMMIT_ORIGIN_LABEL[origin]} · ${formatMs(commit.duration)} total · ${commit.elementCount} elements`
+              }
+              className="flex h-full shrink-0 flex-col items-center justify-end gap-0.5 px-0.5"
+            >
+              <div
+                style={{ height: `${height}%` }}
+                className={clsx(
+                  'w-3.5 rounded-sm transition-all',
+                  isSsr ? 'bg-violet-400/40' : durationColor(commit.duration),
+                  {
+                    'border border-dashed border-violet-400/70': isSsr,
+                    'opacity-100 ring-2 ring-violet-400': isSelected,
+                    'opacity-40 hover:opacity-80': !isSelected
+                  }
+                )}
+              />
+              <span
+                className={clsx('text-[8px] leading-none font-semibold', {
+                  'text-violet-600 dark:text-violet-300': origin === 'ssr' || origin === 'hydration',
+                  'text-zinc-500 dark:text-zinc-400': origin === 'mount' || origin === 'mixed',
+                  'text-transparent': origin === 'update'
+                })}
+              >
+                {COMMIT_ORIGIN_BADGE[origin]}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex items-center gap-x-3 gap-y-0.5 overflow-x-auto px-2 pb-1 text-[9px] text-zinc-400 dark:text-zinc-500">
+        {COMMIT_ORIGIN_LEGEND.map(item => (
+          <span key={item.origin} className="flex shrink-0 items-center gap-1">
+            <span className="font-semibold text-zinc-500 dark:text-zinc-300">{COMMIT_ORIGIN_BADGE[item.origin]}</span>
+            {item.label}
+          </span>
+        ))}
+      </div>
     </div>
   );
 };

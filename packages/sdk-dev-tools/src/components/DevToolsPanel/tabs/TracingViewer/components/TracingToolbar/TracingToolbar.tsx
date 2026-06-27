@@ -21,11 +21,6 @@ const TracingToolbar = ({ view, commitCount, onClear, onViewChange }: TracingToo
 
   return (
     <div className="flex shrink-0 items-center gap-2 border-b border-zinc-200 bg-zinc-50 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-900">
-      <span className="flex items-center gap-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-300">
-        <i className="fa-solid fa-circle animate-pulse text-[8px] text-red-500" />
-        Recording
-      </span>
-
       <div className="flex items-stretch gap-1">
         {VIEWS.map(item => {
           const isActive = view === item.id;

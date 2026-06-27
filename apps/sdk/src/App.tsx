@@ -27,6 +27,7 @@ import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider'
 import { createStoreDevToolsLogger, ThemeProvider, type SdkState } from '@plitzi/sdk-shared';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 import { runtimeStatePersist } from '@plitzi/sdk-shared/state/runtimeStatePersist';
+import { tracingCollector } from '@plitzi/sdk-shared/store/tracing';
 
 import { getEnvironmentServer } from './config';
 
@@ -131,6 +132,14 @@ const App = ({
 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown, sdkProps.environment]);
+
+  // Tells the render profiler this app hydrated SSR output, so it can label the hydration commit (a pure client mount
+  // looks identical at the React-phase level).
+  useEffect(() => {
+    if (sdkProps.isHydrating) {
+      tracingCollector.setHydrated();
+    }
+  }, [sdkProps.isHydrating]);
 
   const localCustomComponents = useMemo(() => {
     const components: Record<string, ComponentPlugin> = {};
