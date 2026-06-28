@@ -1,6 +1,7 @@
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
-import { useCallback, useMemo, useState } from 'react';
+import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 import { useTracing } from '@plitzi/sdk-shared/store/tracing';
 
@@ -19,10 +20,28 @@ import type { KeyboardEvent } from 'react';
 const TracingViewer = () => {
   const { enabled, hydrated, commits, tree, clear } = useTracing();
   const [flat] = useCommonStore('schema.flat');
+  const { currentPageId } = use(NavigationContext);
   const [view, setView] = useStorage<TracingView>('plitzi-sdk.dev-tools.tracing.view', 'ranked');
+  const [persist, setPersist] = useStorage<boolean>('plitzi-sdk.dev-tools.tracing.persist', false);
   const [selectedCommitId, setSelectedCommitId] = useState<number | undefined>();
   // The element picked in either view: drives the shared sidebar and outlines it on the page.
   const [selectedElementId, setSelectedElementId] = useState<string | undefined>();
+
+  // A navigation to a different page produces an unrelated render timeline; reset it on every page change so the tab
+  // shows the new page's commits — unless the user opted to keep the history across navigations (`persist`).
+  const prevPageId = useRef(currentPageId);
+  useEffect(() => {
+    if (prevPageId.current === currentPageId) {
+      return;
+    }
+
+    prevPageId.current = currentPageId;
+    if (!persist) {
+      clear();
+      setSelectedCommitId(undefined);
+      setSelectedElementId(undefined);
+    }
+  }, [currentPageId, persist, clear]);
 
   // Synthetic SSR baseline: React's Profiler emits nothing for the server pass, so prepend a marker commit (#0) for it
   // — the first real client commit then reads as the hydration of that server render, not a from-scratch mount.
@@ -70,13 +89,19 @@ const TracingViewer = () => {
     [selectedCommit, hydrated, firstRealId]
   );
 
-  const handleSelectCommit = useCallback((commitId: number) => setSelectedCommitId(commitId), []);
+  // Switching commits also drops the selected element: its render/timing belongs to the previous commit, and the
+  // flamegraph would otherwise keep an unrelated node highlighted.
+  const handleSelectCommit = useCallback((commitId: number) => {
+    setSelectedCommitId(commitId);
+    setSelectedElementId(undefined);
+  }, []);
   const handleSelectElement = useCallback((id: string | undefined) => setSelectedElementId(id), []);
   const handleStepCommit = useCallback(
     (delta: number) => {
       const next = selectedIndex + delta;
       if (next >= 0 && next < timeline.length) {
         setSelectedCommitId(timeline[next].commitId);
+        setSelectedElementId(undefined);
       }
     },
     [timeline, selectedIndex]
@@ -107,7 +132,14 @@ const TracingViewer = () => {
   if (!selectedCommit) {
     return (
       <div className="flex h-full min-h-0 w-full flex-col">
-        <TracingToolbar view={view} commitCount={commits.length} onClear={clear} onViewChange={setView} />
+        <TracingToolbar
+          view={view}
+          persist={persist}
+          commitCount={commits.length}
+          onClear={clear}
+          onViewChange={setView}
+          onPersistChange={setPersist}
+        />
         <div className="flex grow flex-col items-center justify-center gap-2 text-zinc-400 dark:text-zinc-500">
           <i className="fa-solid fa-chart-column text-3xl opacity-20" />
           <span className="text-xs">No commits recorded yet — interact with the page</span>
@@ -118,7 +150,14 @@ const TracingViewer = () => {
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col" onKeyDown={handleKeyDown}>
-      <TracingToolbar view={view} commitCount={commits.length} onClear={clear} onViewChange={setView} />
+      <TracingToolbar
+        view={view}
+        persist={persist}
+        commitCount={commits.length}
+        onClear={clear}
+        onViewChange={setView}
+        onPersistChange={setPersist}
+      />
       {view !== 'hotspots' && (
         <CommitStrip
           commits={timeline}
