@@ -16,6 +16,7 @@ export { loggerMiddleware } from './middleware/loggerMiddleware';
 export { persistMiddleware } from './middleware/persistMiddleware';
 export { historyMiddleware } from './middleware/historyMiddleware';
 export { reduxDevToolsMiddleware } from './middleware/reduxDevToolsMiddleware';
+export { createRecorder } from './middleware/recorderMiddleware';
 export { cascade } from './middleware/cascade';
 export { getStoreHistory } from './middleware/historyMiddleware';
 
@@ -43,4 +44,5 @@ export type {
   PersistTargetOption
 } from './middleware/persistMiddleware';
 export type { ReduxDevToolsOptions } from './middleware/reduxDevToolsMiddleware';
+export type { Recorder, RecorderEntry, RecorderOptions } from './middleware/recorderMiddleware';
 export type { HistoryEntry, HistorySnapshot, StoreHistory, StoreHistoryOptions } from './middleware/historyMiddleware';

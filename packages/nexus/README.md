@@ -79,7 +79,7 @@ Also importable from the focused `@plitzi/nexus/advanced` entry point, which kee
 | `createDerived` / `useDerived` | A memoized value computed from store paths (reselect-style). |
 | `createEntityAdapter` / `createEntityStore` | CRUD + selectors for a normalized `Record<id, T>` map; the store variant adds O(1) per-item updates. |
 | `createAsync` / `useAsync` / `useAsyncValue` | Race-safe fetch landed on a path; inline UI or Suspense. |
-| `loggerMiddleware` / `persistMiddleware` / `historyMiddleware` / `reduxDevToolsMiddleware` | Middlewares: log, persist to storage, record time-travel, connect to Redux DevTools. |
+| `loggerMiddleware` / `persistMiddleware` / `historyMiddleware` / `reduxDevToolsMiddleware` / `createRecorder` | Middlewares: log, persist to storage, record time-travel, connect to Redux DevTools, buffer recent changes for a custom dev-tools panel. |
 | `getStoreHistory` / `useStoreHistory` | Undo / redo / jump-to-snapshot action log (enabled by `historyMiddleware`). |
 | `setCodegenEnabled` | Force on/off the `new Function` codegen path (auto-detects CSP/SSR). |
 | `createServerSnapshot` / `isServerSnapshot` | Mark server-fetched data for RSC → Client handoff, and check the marker. |
@@ -620,6 +620,26 @@ reduxDevToolsMiddleware<State>({
 ```
 
 Intended for the root store; like `persist`/`history` it's per-store and not cascaded.
+
+### `createRecorder`
+
+A ready-to-use change recorder for building your **own** dev-tools UI — a bounded, subscribable log of committed writes (`{ seq, time, path, prevValue, nextValue }`). Unlike `loggerMiddleware` (fire-and-forget to a sink) it retains recent history and lets a UI read/subscribe; unlike `reduxDevToolsMiddleware` it needs no browser extension. The `getEntries` snapshot is reference-stable between records, so it drops straight into `useSyncExternalStore`.
+
+```tsx
+import { createStore, createRecorder } from '@plitzi/nexus';
+import { useSyncExternalStore } from 'react';
+
+const recorder = createRecorder<State>({ max: 100 });
+const store = createStore<State>(initial, { middlewares: [recorder.middleware] });
+
+function ChangesPanel() {
+  const entries = useSyncExternalStore(recorder.subscribe, recorder.getEntries);
+
+  return entries.map(e => `${e.path}: ${JSON.stringify(e.prevValue)} → ${JSON.stringify(e.nextValue)}`);
+}
+```
+
+`entriesSince(seq)` / `lastSeq()` correlate writes with an external timeline (e.g. "which writes happened since the last render commit"); `record(change)` feeds it directly so one shared recorder can collect from several stores. Per-store, not cascaded.
 
 ## Time-travel (`historyMiddleware`)
 

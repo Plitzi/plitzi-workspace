@@ -953,6 +953,10 @@
       "types": "./dist/store/tracing/tracingMiddleware.d.ts",
       "import": "./dist/store/tracing/tracingMiddleware.mjs"
     },
+    "./store/tracing/tracingRecorder": {
+      "types": "./dist/store/tracing/tracingRecorder.d.ts",
+      "import": "./dist/store/tracing/tracingRecorder.mjs"
+    },
     "./store/tracing/tracingStore": {
       "types": "./dist/store/tracing/tracingStore.d.ts",
       "import": "./dist/store/tracing/tracingStore.mjs"

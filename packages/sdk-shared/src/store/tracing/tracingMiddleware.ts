@@ -1,24 +1,11 @@
-import { previewValue } from './preview';
-import tracingCollector from './tracingCollector';
+import tracingRecorder from './tracingRecorder';
 
 import type { StoreMiddleware } from '@plitzi/nexus';
 
-// Captures "store write → tracing cause" as a store middleware, riding the same `onChange` channel the dev-tools
-// console logger already uses. This standardizes the dev-tools store taps (both are now middlewares declared at store
-// creation) and runs on the real app store — instead of the panel tapping `subscribeChange` on whatever store
-// `useStoreById` happens to resolve. It's cheap when the panel is closed: `recordChange` ignores writes unless the
-// Tracing tab is open. Wire it only in `debugMode`, where the `<Profiler>` instrumentation that produces commits runs.
+// Feeds committed store writes into the shared tracing recorder (nexus's `createRecorder`), which the collector drains
+// per render commit to label each commit with "which store write caused it". A thin typed adapter over the singleton
+// recorder's `record`, so one collector can observe several stores (sdk + builder). It's cheap regardless of whether
+// the panel is open. Wire it only in `debugMode`, where the `<Profiler>` instrumentation that produces commits runs.
 export const tracingMiddleware =
   <TState extends object>(): StoreMiddleware<TState> =>
-  () => ({
-    onChange: change => {
-      if (change.path === undefined) {
-        return;
-      }
-
-      tracingCollector.recordChange(
-        change.path,
-        `${previewValue(change.prevValue)} → ${previewValue(change.nextValue)}`
-      );
-    }
-  });
+  () => ({ onChange: change => tracingRecorder.record(change) });

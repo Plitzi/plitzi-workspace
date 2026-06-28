@@ -1,3 +1,5 @@
+import { previewValue } from './preview';
+import tracingRecorder from './tracingRecorder';
 import tracingStore, { MAX_COMMITS } from './tracingStore';
 
 import type { CommitCause, CommitElementRender, CommitEntry, PropChange, TracingTree } from '../../types';
@@ -24,10 +26,10 @@ const parentOf = new Map<string, string | undefined>();
 const baseOf = new Map<string, number>();
 let treeDirty = true;
 
-// Store writes recorded since the last commit, fed by `recordChange` (the viewer wires this to nexus `subscribeChange`).
-// The next commit claims them as its `causes` — the "why did it render" at the data level — then the buffer resets.
-let pendingCauses: CommitCause[] = [];
-const MAX_CAUSES = 30;
+// The recorder's seq up to which store writes have already been claimed as a commit's causes. Each new commit drains
+// everything recorded since, so it owns exactly the writes that happened since the previous commit — the "why did it
+// render" at the data level.
+let claimedSeq = 0;
 
 // Per-element changed-input diffs reported by `withElement` during the render phase, keyed by element id. Each commit's
 // `onRender` (which fires afterwards, in the commit phase) claims its element's entry, so the viewer can answer "which
@@ -113,6 +115,31 @@ const linkParent = (id: string, parentId: string | undefined) => {
   parentOf.set(id, parentId);
 };
 
+// Drains every store write recorded since the previous commit into this commit's causes, deduped by path (net change:
+// the first write's `prev`, the latest write's `next`). Full-state replaces (no path) are skipped.
+const claimCauses = (): CommitCause[] => {
+  const entries = tracingRecorder.entriesSince(claimedSeq);
+  claimedSeq = tracingRecorder.lastSeq();
+  const byPath = new Map<string, { prev: unknown; next: unknown }>();
+  for (const entry of entries) {
+    if (entry.path === undefined) {
+      continue;
+    }
+
+    const existing = byPath.get(entry.path);
+    if (existing) {
+      existing.next = entry.nextValue;
+    } else {
+      byPath.set(entry.path, { prev: entry.prevValue, next: entry.nextValue });
+    }
+  }
+
+  return [...byPath.entries()].map(([path, value]) => ({
+    path,
+    preview: `${previewValue(value.prev)} → ${previewValue(value.next)}`
+  }));
+};
+
 const onRender: ProfilerOnRenderCallback = (id, phase, actualDuration, baseDuration, _startTime, commitTime) => {
   if (!enabled) {
     enabled = true;
@@ -142,43 +169,20 @@ const onRender: ProfilerOnRenderCallback = (id, phase, actualDuration, baseDurat
     bucket.duration = Math.max(bucket.duration, actualDuration);
   } else {
     commitSeq += 1;
-    // The store writes buffered since the previous commit are what triggered this one.
-    const causes = pendingCauses;
-    pendingCauses = [];
     pendingByCommit.set(commitTime, {
       commitId: commitSeq,
       timestamp: commitTime,
       duration: actualDuration,
       elementCount: 1,
       elements: [render],
-      causes
+      // The store writes recorded since the previous commit are what triggered this one.
+      causes: claimCauses()
     });
   }
 
   if (!flushScheduled) {
     flushScheduled = true;
     schedule(flush);
-  }
-};
-
-// Called by the viewer's nexus `subscribeChange` subscription: a store path was just written, so the upcoming commit
-// (if any) was caused by it. The path plus a compact `prev → next` preview is kept; duplicate paths within a batch
-// collapse (the last preview wins, so the cause shows the net change).
-const recordChange = (path: string | undefined, preview?: string) => {
-  if (!viewing || path === undefined) {
-    return;
-  }
-
-  const existing = pendingCauses.find(cause => cause.path === path);
-  if (existing) {
-    existing.preview = preview;
-
-    return;
-  }
-
-  pendingCauses.push({ path, preview });
-  if (pendingCauses.length > MAX_CAUSES) {
-    pendingCauses.shift();
   }
 };
 
@@ -203,7 +207,8 @@ const stop = () => {
 const clear = () => {
   commits = [];
   pendingByCommit.clear();
-  pendingCauses = [];
+  // Skip past everything recorded so far, so the next commit's causes start fresh from the cleared point.
+  claimedSeq = tracingRecorder.lastSeq();
   pendingPropsById.clear();
   commitSeq = 0;
   // The accumulated tree (parentOf/baseOf) is intentionally kept: clearing only the commits resets the timeline while
@@ -212,6 +217,6 @@ const clear = () => {
   writeSnapshot();
 };
 
-const tracingCollector = { onRender, linkParent, recordChange, recordProps, setHydrated, start, stop, clear };
+const tracingCollector = { onRender, linkParent, recordProps, setHydrated, start, stop, clear };
 
 export default tracingCollector;

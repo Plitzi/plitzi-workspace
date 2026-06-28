@@ -212,6 +212,10 @@
       "types": "./dist/middleware/persistMiddleware.d.ts",
       "import": "./dist/middleware/persistMiddleware.mjs"
     },
+    "./middleware/recorderMiddleware": {
+      "types": "./dist/middleware/recorderMiddleware.d.ts",
+      "import": "./dist/middleware/recorderMiddleware.mjs"
+    },
     "./middleware/reduxDevToolsMiddleware": {
       "types": "./dist/middleware/reduxDevToolsMiddleware.d.ts",
       "import": "./dist/middleware/reduxDevToolsMiddleware.mjs"

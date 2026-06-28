@@ -122,8 +122,8 @@ const DetailSidebar = ({ node, commit, model }: DetailSidebarProps) => (
         )}
         {node.changedProps?.map(change => (
           <div key={change.key} className="flex flex-col gap-0.5 border-l border-zinc-200 pl-1.5 dark:border-zinc-700">
-            <span className="flex items-center gap-1">
-              <span className="truncate font-mono text-[9px] font-medium text-zinc-600 dark:text-zinc-300">
+            <span className="flex flex-wrap items-center gap-1">
+              <span className="font-mono text-[9px] font-medium break-all text-zinc-600 dark:text-zinc-300">
                 {change.key}
               </span>
               {change.ref && (
@@ -135,15 +135,16 @@ const DetailSidebar = ({ node, commit, model }: DetailSidebarProps) => (
                 </span>
               )}
             </span>
-            <span className="flex items-center gap-1 font-mono text-[9px] text-zinc-400 dark:text-zinc-500">
-              <span className="truncate" title={change.prev}>
+            <div className="flex flex-col gap-0.5 font-mono text-[9px] leading-snug">
+              <span className="break-all text-zinc-400 dark:text-zinc-500">
+                <span className="text-rose-400/70 select-none dark:text-rose-400/60">− </span>
                 {change.prev}
               </span>
-              <i className="fa-solid fa-arrow-right-long shrink-0 text-[8px]" />
-              <span className="truncate text-zinc-600 dark:text-zinc-300" title={change.next}>
+              <span className="break-all text-zinc-600 dark:text-zinc-300">
+                <span className="text-emerald-500/80 select-none">+ </span>
                 {change.next}
               </span>
-            </span>
+            </div>
           </div>
         ))}
       </>
