@@ -76,6 +76,24 @@ export default defineConfig(({ mode }) => {
       target: 'node20',
       ssr: true,
       minify: false
+    },
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: ['../../packages/sdk-shared/setupTests.ts'],
+      coverage: {
+        provider: 'v8',
+        reporter: ['text', 'html'],
+        reportsDirectory: 'tests',
+        include: ['src'],
+        exclude: ['**/*.test.tsx', '**/*.stories.ts', '**/*.stories.tsx'] // , 'src/index.ts'
+      },
+      server: {
+        deps: {
+          inline: ['@plitzi/plitzi-ui']
+        }
+      },
+      reporters: ['default']
     }
   };
 });
