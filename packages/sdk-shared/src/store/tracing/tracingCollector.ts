@@ -1,9 +1,15 @@
+import { createRecorder } from '@plitzi/nexus';
+
 import { previewValue } from './preview';
-import tracingRecorder from './tracingRecorder';
-import tracingStore, { MAX_COMMITS } from './tracingStore';
+import tracingStore, { MAX_CAUSES, MAX_COMMITS } from './tracingStore';
 
 import type { CommitCause, CommitElementRender, CommitEntry, PropChange, TracingTree } from '../../types';
 import type { ProfilerOnRenderCallback } from 'react';
+
+// The standard nexus change-recorder buffers recent store writes. The collector is its primary consumer — it drains
+// the writes since the previous commit into each commit's causes — while `tracingMiddleware` feeds it through
+// `recordStoreChange`. Typed against an open record so writes from any concrete store (sdk + builder) fit.
+const recorder = createRecorder<Record<string, unknown>>({ max: MAX_CAUSES });
 
 // Running, mutable mirror of the store. `onRender` mutates this on the hot path (a Map write per commit). Capture is
 // ALWAYS on while instrumentation is live (`debugMode`), so the initial mount commits — which happen at page load,
@@ -118,8 +124,8 @@ const linkParent = (id: string, parentId: string | undefined) => {
 // Drains every store write recorded since the previous commit into this commit's causes, deduped by path (net change:
 // the first write's `prev`, the latest write's `next`). Full-state replaces (no path) are skipped.
 const claimCauses = (): CommitCause[] => {
-  const entries = tracingRecorder.entriesSince(claimedSeq);
-  claimedSeq = tracingRecorder.lastSeq();
+  const entries = recorder.entriesSince(claimedSeq);
+  claimedSeq = recorder.lastSeq();
   const byPath = new Map<string, { prev: unknown; next: unknown }>();
   for (const entry of entries) {
     if (entry.path === undefined) {
@@ -192,6 +198,11 @@ const recordProps = (id: string, changes: PropChange[]) => {
   pendingPropsById.set(id, changes);
 };
 
+// Called by `tracingMiddleware` with each committed store write; buffered in the recorder the next commit drains.
+const recordStoreChange = (change: { path: string | undefined; prevValue: unknown; nextValue: unknown }) => {
+  recorder.record(change);
+};
+
 // Called when the Tracing tab mounts: start streaming to the store and immediately publish whatever was captured
 // before the panel opened (e.g. the page's initial mounts).
 const start = () => {
@@ -208,7 +219,7 @@ const clear = () => {
   commits = [];
   pendingByCommit.clear();
   // Skip past everything recorded so far, so the next commit's causes start fresh from the cleared point.
-  claimedSeq = tracingRecorder.lastSeq();
+  claimedSeq = recorder.lastSeq();
   pendingPropsById.clear();
   commitSeq = 0;
   // The accumulated tree (parentOf/baseOf) is intentionally kept: clearing only the commits resets the timeline while
@@ -217,6 +228,6 @@ const clear = () => {
   writeSnapshot();
 };
 
-const tracingCollector = { onRender, linkParent, recordProps, setHydrated, start, stop, clear };
+const tracingCollector = { onRender, linkParent, recordProps, recordStoreChange, setHydrated, start, stop, clear };
 
 export default tracingCollector;
