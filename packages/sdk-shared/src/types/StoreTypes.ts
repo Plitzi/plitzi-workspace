@@ -67,23 +67,43 @@ export type RenderPhase = 'mount' | 'update' | 'nested-update';
 // undefined only for the topmost element (the page root). Whether the element rendered ITSELF (vs only a descendant
 // did) is derived in the viewer from self time: React propagates `actualDuration` additively, so a node that did no
 // own work has self time of exactly 0 — "rendered" vs "bubbled" without any render-time instrumentation.
+// One changed input of an element between two of its renders: the prop/data key and compact previews of its value
+// before and after. `prev`/`next` referentially equal but shown identical is the classic unnecessary-re-render tell
+// (a new object/array reference with the same content).
+export type PropChange = {
+  key: string;
+  prev: string;
+  next: string;
+};
+
 export type CommitElementRender = {
   id: string;
   parentId?: string;
   phase: RenderPhase;
   actualDuration: number;
   baseDuration: number;
+  // Shallow diff of the element's inputs (props + element data) against its previous render, captured in `withElement`
+  // under `debugMode`. An EMPTY array on an `update` means nothing the element reads changed — it re-rendered only
+  // because an ancestor/context did, the prime suspect for an unnecessary re-render. Undefined on the SSR marker.
+  changedProps?: PropChange[];
 };
 
-// A group of element renders React flushed together (same `commitTime`). `causes` are the store paths written just
-// before this commit (captured from nexus `subscribeChange`) — the "why did it render" at the data level.
+// A single store write that preceded a commit: the path that changed plus a compact `prev → next` preview of the value
+// at that path, so the data-level cause is legible without expanding the store.
+export type CommitCause = {
+  path: string;
+  preview?: string;
+};
+
+// A group of element renders React flushed together (same `commitTime`). `causes` are the store writes captured just
+// before this commit (from nexus `subscribeChange`) — the "why did it render" at the data level.
 export type CommitEntry = {
   commitId: number;
   timestamp: number;
   duration: number;
   elementCount: number;
   elements: CommitElementRender[];
-  causes: string[];
+  causes: CommitCause[];
 };
 
 // Accumulated render-tree info for one element, gathered across ALL commits (not just the latest). `parentId` is its

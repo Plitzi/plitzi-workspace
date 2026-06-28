@@ -1,6 +1,6 @@
 import tracingStore, { MAX_COMMITS } from './tracingStore';
 
-import type { CommitElementRender, CommitEntry, TracingTree } from '../../types';
+import type { CommitCause, CommitElementRender, CommitEntry, PropChange, TracingTree } from '../../types';
 import type { ProfilerOnRenderCallback } from 'react';
 
 // Running, mutable mirror of the store. `onRender` mutates this on the hot path (a Map write per commit). Capture is
@@ -24,10 +24,16 @@ const parentOf = new Map<string, string | undefined>();
 const baseOf = new Map<string, number>();
 let treeDirty = true;
 
-// Store paths written since the last commit, fed by `recordChange` (the viewer wires this to nexus `subscribeChange`).
+// Store writes recorded since the last commit, fed by `recordChange` (the viewer wires this to nexus `subscribeChange`).
 // The next commit claims them as its `causes` — the "why did it render" at the data level — then the buffer resets.
-let pendingCauses: string[] = [];
+let pendingCauses: CommitCause[] = [];
 const MAX_CAUSES = 30;
+
+// Per-element changed-input diffs reported by `withElement` during the render phase, keyed by element id. Each commit's
+// `onRender` (which fires afterwards, in the commit phase) claims its element's entry, so the viewer can answer "which
+// prop changed" per element. Set every render in `debugMode`; an empty array means the element re-rendered with none of
+// its tracked inputs changed (i.e. driven by an ancestor/context) — the unnecessary-re-render signal.
+const pendingPropsById = new Map<string, PropChange[]>();
 
 let enabled = false;
 let viewing = false;
@@ -119,12 +125,15 @@ const onRender: ProfilerOnRenderCallback = (id, phase, actualDuration, baseDurat
 
   baseOf.set(id, baseDuration);
 
+  const changedProps = pendingPropsById.get(id);
+  pendingPropsById.delete(id);
   const render: CommitElementRender = {
     id,
     parentId: parentOf.get(id),
     phase,
     actualDuration,
-    baseDuration
+    baseDuration,
+    changedProps
   };
   const bucket = pendingByCommit.get(commitTime);
   if (bucket) {
@@ -153,18 +162,30 @@ const onRender: ProfilerOnRenderCallback = (id, phase, actualDuration, baseDurat
 };
 
 // Called by the viewer's nexus `subscribeChange` subscription: a store path was just written, so the upcoming commit
-// (if any) was caused by it. Only the path is kept (values can be large/cyclic); duplicates within a batch collapse.
-const recordChange = (path: string | undefined) => {
+// (if any) was caused by it. The path plus a compact `prev → next` preview is kept; duplicate paths within a batch
+// collapse (the last preview wins, so the cause shows the net change).
+const recordChange = (path: string | undefined, preview?: string) => {
   if (!viewing || path === undefined) {
     return;
   }
 
-  if (!pendingCauses.includes(path)) {
-    pendingCauses.push(path);
-    if (pendingCauses.length > MAX_CAUSES) {
-      pendingCauses.shift();
-    }
+  const existing = pendingCauses.find(cause => cause.path === path);
+  if (existing) {
+    existing.preview = preview;
+
+    return;
   }
+
+  pendingCauses.push({ path, preview });
+  if (pendingCauses.length > MAX_CAUSES) {
+    pendingCauses.shift();
+  }
+};
+
+// Called by `withElement` during render (under `debugMode`) with the element's changed inputs vs its previous render.
+// Stashed until this element's `onRender` fires in the commit phase and claims it.
+const recordProps = (id: string, changes: PropChange[]) => {
+  pendingPropsById.set(id, changes);
 };
 
 // Called when the Tracing tab mounts: start streaming to the store and immediately publish whatever was captured
@@ -183,6 +204,7 @@ const clear = () => {
   commits = [];
   pendingByCommit.clear();
   pendingCauses = [];
+  pendingPropsById.clear();
   commitSeq = 0;
   // The accumulated tree (parentOf/baseOf) is intentionally kept: clearing only the commits resets the timeline while
   // preserving the known structure, so the next commit still nests correctly. Only re-publish the (unchanged) tree.
@@ -190,6 +212,6 @@ const clear = () => {
   writeSnapshot();
 };
 
-const tracingCollector = { onRender, linkParent, recordChange, setHydrated, start, stop, clear };
+const tracingCollector = { onRender, linkParent, recordChange, recordProps, setHydrated, start, stop, clear };
 
 export default tracingCollector;

@@ -5,7 +5,7 @@ import { Profiler, use, useMemo, useRef } from 'react';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
-import { tracingCollector } from '@plitzi/sdk-shared/store/tracing';
+import { diffProps, tracingCollector } from '@plitzi/sdk-shared/store/tracing';
 
 import ElementContext from '../ElementContext';
 import { omitKeys } from '../helpers/omitKeys';
@@ -33,6 +33,9 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
 
   const WithElementComponent = (props: WithElementProps<T>) => {
     const ref = useRef<HTMLElement>(undefined);
+    // Previous render's input snapshot, diffed under `debugMode` so the tracing panel can show which prop/data changed.
+    // Declared unconditionally (hooks rules) even though only the debug branch reads it.
+    const prevInputsRef = useRef<Record<string, unknown> | undefined>(undefined);
     const { id, rootId } = props.internalProps;
     const skipEntry = useMemo<ElementContextValue<'skipHOC'>>(
       () => ({ id, rootId, plitziJsxSkipHOC: true }),
@@ -102,6 +105,22 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       // Registers the real render-tree parent so the collector/flamegraph nest correctly across schemas. Whether the
       // element rendered itself vs only a descendant did is derived later from self time, not flagged here.
       tracingCollector.linkParent(id, parentElement?.id);
+
+      // Snapshot the inputs that feed this element (its resolved data + the props handed to the wrapped component) and
+      // diff against the previous render, so the panel can attribute "which prop changed" to each re-render.
+      const inputs: Record<string, unknown> = {
+        attributes,
+        definition,
+        style,
+        elementState,
+        plitziElementLayout,
+        children,
+        ...customProps,
+        ...props.extraProps,
+        ...omitKeys(props, ['plitziJsxSkipHOC', 'internalProps', 'className', 'children', 'extraProps'])
+      };
+      tracingCollector.recordProps(id, diffProps(prevInputsRef.current, inputs));
+      prevInputsRef.current = inputs;
 
       return (
         <Profiler id={id} onRender={tracingCollector.onRender}>

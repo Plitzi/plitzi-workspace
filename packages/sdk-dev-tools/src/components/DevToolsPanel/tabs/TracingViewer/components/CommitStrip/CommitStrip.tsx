@@ -66,10 +66,13 @@ const CommitStrip = ({ commits, selectedIndex, hydrated, onSelect }: CommitStrip
           const isSsr = commit.commitId === SSR_COMMIT_ID;
           const height = isSsr ? 100 : Math.max(6, Math.round((commit.duration / maxDuration) * 100));
           const origin = commitOrigin(commit, hydrated, commit.commitId === firstRealId);
-          const causes =
-            commit.causes.length > 0
-              ? `\nCaused by ${commit.causes.slice(0, MAX_CAUSE_HINT).join(', ')}${commit.causes.length > MAX_CAUSE_HINT ? ` +${commit.causes.length - MAX_CAUSE_HINT}` : ''}`
-              : '';
+          const causePaths = commit.causes
+            .slice(0, MAX_CAUSE_HINT)
+            .map(cause => cause.path)
+            .join(', ');
+          const causeOverflow =
+            commit.causes.length > MAX_CAUSE_HINT ? ` +${commit.causes.length - MAX_CAUSE_HINT}` : '';
+          const causes = commit.causes.length > 0 ? `\nCaused by ${causePaths}${causeOverflow}` : '';
 
           return (
             <button

@@ -96,6 +96,38 @@ const DetailSidebar = ({ node, commit, model }: DetailSidebarProps) => (
       <span className="text-zinc-400 dark:text-zinc-500">Triggers</span>
       <span className="text-zinc-700 tabular-nums dark:text-zinc-200">{model.triggers.length}</span>
     </div>
+
+    {node.state === 'rendered' && (
+      <>
+        <div className="mt-1 font-medium tracking-wide text-zinc-400 uppercase dark:text-zinc-500">Why it rendered</div>
+        {node.changedProps === undefined && (
+          <span className="text-zinc-400 italic dark:text-zinc-500">not captured</span>
+        )}
+        {node.changedProps?.length === 0 && node.phase === 'mount' && (
+          <span className="text-zinc-400 italic dark:text-zinc-500">first mount</span>
+        )}
+        {node.changedProps?.length === 0 && node.phase !== 'mount' && (
+          <span className="w-fit rounded bg-amber-500/15 px-1 py-0.5 text-[9px] text-amber-600 dark:text-amber-400">
+            <i className="fa-solid fa-triangle-exclamation mr-1" />
+            no input changed — parent/context re-render
+          </span>
+        )}
+        {node.changedProps?.map(change => (
+          <div key={change.key} className="flex flex-col gap-0.5 border-l border-zinc-200 pl-1.5 dark:border-zinc-700">
+            <span className="font-mono text-[9px] font-medium text-zinc-600 dark:text-zinc-300">{change.key}</span>
+            <span className="flex items-center gap-1 font-mono text-[9px] text-zinc-400 dark:text-zinc-500">
+              <span className="truncate" title={change.prev}>
+                {change.prev}
+              </span>
+              <i className="fa-solid fa-arrow-right-long shrink-0 text-[8px]" />
+              <span className="truncate text-zinc-600 dark:text-zinc-300" title={change.next}>
+                {change.next}
+              </span>
+            </span>
+          </div>
+        ))}
+      </>
+    )}
   </aside>
 );
 

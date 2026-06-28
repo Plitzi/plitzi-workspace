@@ -322,6 +322,18 @@
       "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/TracingViewer.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/TracingViewer.mjs"
     },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/CommitCause": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/CommitCause/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/CommitCause/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/CommitCause/CommitCause": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/CommitCause/CommitCause.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/CommitCause/CommitCause.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/CommitCause/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/CommitCause/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/CommitCause/index.mjs"
+    },
     "./components/DevToolsPanel/tabs/TracingViewer/components/CommitStrip": {
       "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/CommitStrip/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/CommitStrip/index.mjs"

@@ -57,13 +57,14 @@ const CommitCause = ({ commit, model, active, onSelectElement }: CommitCauseProp
           <span className="mr-0.5 font-medium tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
             Store write
           </span>
-          {shownCauses.map(path => (
+          {shownCauses.map(cause => (
             <span
-              key={path}
-              title={path}
-              className="max-w-48 truncate rounded bg-zinc-500/10 px-1 py-0.5 font-mono text-[9px] text-zinc-600 dark:text-zinc-300"
+              key={cause.path}
+              title={cause.preview ? `${cause.path}\n${cause.preview}` : cause.path}
+              className="max-w-56 truncate rounded bg-zinc-500/10 px-1 py-0.5 font-mono text-[9px] text-zinc-600 dark:text-zinc-300"
             >
-              {path}
+              {cause.path}
+              {cause.preview && <span className="ml-1 text-zinc-400 dark:text-zinc-500">{cause.preview}</span>}
             </span>
           ))}
           {extraCauses > 0 && <span className="text-zinc-400 dark:text-zinc-500">+{extraCauses}</span>}

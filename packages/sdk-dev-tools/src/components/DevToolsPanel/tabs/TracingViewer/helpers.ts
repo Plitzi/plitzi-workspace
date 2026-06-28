@@ -1,6 +1,6 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 
-import type { CommitEntry, Element, RenderPhase, TracingTree } from '@plitzi/sdk-shared';
+import type { CommitEntry, Element, PropChange, RenderPhase, TracingTree } from '@plitzi/sdk-shared';
 import type { CSSProperties } from 'react';
 
 export type TracingView = 'ranked' | 'flamegraph' | 'hotspots';
@@ -25,6 +25,7 @@ export type FlameNode = {
   selfDuration: number;
   depth: number;
   parentId?: string;
+  changedProps?: PropChange[]; // inputs that changed vs this element's previous render (undefined if not captured)
   x: number; // left offset, fraction 0..1
   width: number; // fraction 0..1
 };
@@ -356,6 +357,7 @@ export const buildFlameModel = (
       selfDuration,
       depth,
       parentId,
+      changedProps: entry?.changedProps,
       x,
       width
     });

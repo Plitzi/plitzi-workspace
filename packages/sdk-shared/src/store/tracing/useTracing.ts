@@ -2,6 +2,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 
 import { useStoreById } from '@plitzi/nexus/react';
 
+import { getByPath, previewValue } from './preview';
 import tracingCollector from './tracingCollector';
 import tracingStore from './tracingStore';
 
@@ -26,7 +27,19 @@ const useTracing = (): UseTracingReturn => {
     return tracingCollector.stop;
   }, []);
 
-  useEffect(() => store.subscribeChange(change => tracingCollector.recordChange(change.path)), [store]);
+  useEffect(
+    () =>
+      store.subscribeChange(change => {
+        if (change.path === undefined) {
+          return;
+        }
+
+        const before = previewValue(getByPath(change.prev, change.path));
+        const after = previewValue(getByPath(change.next, change.path));
+        tracingCollector.recordChange(change.path, `${before} → ${after}`);
+      }),
+    [store]
+  );
 
   return { ...state, clear: tracingCollector.clear };
 };
