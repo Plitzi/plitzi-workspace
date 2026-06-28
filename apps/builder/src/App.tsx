@@ -66,6 +66,7 @@ import { createStoreDevToolsLogger, ThemeProvider, type BuilderState } from '@pl
 import { createStripTypenameLink } from '@plitzi/sdk-shared/helpers/stripTypename';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 import { runtimeStatePersist } from '@plitzi/sdk-shared/state/runtimeStatePersist';
+import { tracingMiddleware } from '@plitzi/sdk-shared/store/tracing';
 import AppMain from '@pmodules/App/AppMain';
 import customFetch from '@pmodules/Network/helpers/customFetch';
 
@@ -344,7 +345,12 @@ const App = (props: AppProps) => {
       middlewares={[
         loggerMw(createStoreDevToolsLogger<BuilderState>('builder')),
         runtimeStatePersist<BuilderState>(webId),
-        ...(debugMode ? [historyMw<BuilderState>({ shouldRecord: p => !p?.startsWith('runtime.elements') })] : [])
+        ...(debugMode
+          ? [
+              tracingMiddleware<BuilderState>(),
+              historyMw<BuilderState>({ shouldRecord: p => !p?.startsWith('runtime.elements') })
+            ]
+          : [])
       ]}
     >
       <ThemeProvider storageKey="builder-state.theme">

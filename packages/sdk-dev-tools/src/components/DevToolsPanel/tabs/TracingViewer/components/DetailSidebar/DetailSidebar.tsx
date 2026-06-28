@@ -101,19 +101,20 @@ const DetailSidebar = ({ node, commit, model }: DetailSidebarProps) => (
     {node.state === 'rendered' && (
       <>
         <div className="mt-1 font-medium tracking-wide text-zinc-400 uppercase dark:text-zinc-500">Why it rendered</div>
-        {node.changedProps === undefined && (
-          <span className="text-zinc-400 italic dark:text-zinc-500">not captured</span>
-        )}
-        {node.changedProps?.length === 0 && node.phase === 'mount' && (
-          <span className="text-zinc-400 italic dark:text-zinc-500">first mount</span>
-        )}
-        {node.changedProps?.length === 0 && node.phase !== 'mount' && node.trigger && (
+        {node.phase === 'mount' && <span className="text-zinc-400 italic dark:text-zinc-500">first mount</span>}
+        {node.phase !== 'mount' && node.changedProps === undefined && (
           <span className="w-fit rounded bg-sky-500/15 px-1 py-0.5 text-[9px] text-sky-600 dark:text-sky-400">
             <i className="fa-solid fa-microchip mr-1" />
-            internal: own state, a hook or a consumed context — not props or store
+            internal React — own state or a hook (props & store inputs unchanged)
           </span>
         )}
-        {node.changedProps?.length === 0 && node.phase !== 'mount' && !node.trigger && (
+        {node.phase !== 'mount' && node.changedProps?.length === 0 && node.trigger && (
+          <span className="w-fit rounded bg-sky-500/15 px-1 py-0.5 text-[9px] text-sky-600 dark:text-sky-400">
+            <i className="fa-solid fa-microchip mr-1" />
+            internal — a hook or consumed context changed, not props or store
+          </span>
+        )}
+        {node.phase !== 'mount' && node.changedProps?.length === 0 && !node.trigger && (
           <span className="w-fit rounded bg-amber-500/15 px-1 py-0.5 text-[9px] text-amber-600 dark:text-amber-400">
             <i className="fa-solid fa-triangle-exclamation mr-1" />
             no input changed — re-rendered by an ancestor
@@ -121,7 +122,19 @@ const DetailSidebar = ({ node, commit, model }: DetailSidebarProps) => (
         )}
         {node.changedProps?.map(change => (
           <div key={change.key} className="flex flex-col gap-0.5 border-l border-zinc-200 pl-1.5 dark:border-zinc-700">
-            <span className="font-mono text-[9px] font-medium text-zinc-600 dark:text-zinc-300">{change.key}</span>
+            <span className="flex items-center gap-1">
+              <span className="truncate font-mono text-[9px] font-medium text-zinc-600 dark:text-zinc-300">
+                {change.key}
+              </span>
+              {change.ref && (
+                <span
+                  className="shrink-0 rounded bg-amber-500/15 px-1 text-[8px] text-amber-600 dark:text-amber-400"
+                  title="Reference changed but the content is shallow-equal — a new object/array, likely a missing memo"
+                >
+                  new ref
+                </span>
+              )}
+            </span>
             <span className="flex items-center gap-1 font-mono text-[9px] text-zinc-400 dark:text-zinc-500">
               <span className="truncate" title={change.prev}>
                 {change.prev}

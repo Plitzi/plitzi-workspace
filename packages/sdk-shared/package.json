@@ -949,6 +949,10 @@
       "types": "./dist/store/tracing/tracingCollector.d.ts",
       "import": "./dist/store/tracing/tracingCollector.mjs"
     },
+    "./store/tracing/tracingMiddleware": {
+      "types": "./dist/store/tracing/tracingMiddleware.d.ts",
+      "import": "./dist/store/tracing/tracingMiddleware.mjs"
+    },
     "./store/tracing/tracingStore": {
       "types": "./dist/store/tracing/tracingStore.d.ts",
       "import": "./dist/store/tracing/tracingStore.mjs"

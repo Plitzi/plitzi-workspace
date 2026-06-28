@@ -74,6 +74,9 @@ export type PropChange = {
   key: string;
   prev: string;
   next: string;
+  // The reference changed but the shallow content is equal — a new object/array with the same values, i.e. the classic
+  // missing-memo cause of an unnecessary re-render.
+  ref?: boolean;
 };
 
 export type CommitElementRender = {

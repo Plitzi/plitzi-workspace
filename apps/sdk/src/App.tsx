@@ -27,7 +27,7 @@ import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider'
 import { createStoreDevToolsLogger, ThemeProvider, type SdkState } from '@plitzi/sdk-shared';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 import { runtimeStatePersist } from '@plitzi/sdk-shared/state/runtimeStatePersist';
-import { tracingCollector } from '@plitzi/sdk-shared/store/tracing';
+import { tracingCollector, tracingMiddleware } from '@plitzi/sdk-shared/store/tracing';
 
 import { getEnvironmentServer } from './config';
 
@@ -187,7 +187,12 @@ const App = ({
       middlewares={[
         loggerMw(createStoreDevToolsLogger<SdkState>('sdk')),
         runtimeStatePersist<SdkState>(webId),
-        ...(debugMode ? [historyMw<SdkState>({ shouldRecord: p => !p?.startsWith('runtime.elements') })] : [])
+        ...(debugMode
+          ? [
+              tracingMiddleware<SdkState>(),
+              historyMw<SdkState>({ shouldRecord: p => !p?.startsWith('runtime.elements') })
+            ]
+          : [])
       ]}
     >
       <ThemeProvider>

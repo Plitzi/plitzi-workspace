@@ -20,7 +20,7 @@ const SidebarToggle = ({ open, onToggle, className }: SidebarToggleProps) => (
       className
     )}
   >
-    <i className="fa-solid fa-table-columns" />
+    <i className="fa-solid fa-circle-info" />
   </button>
 );
 

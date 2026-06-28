@@ -99,11 +99,14 @@ const RankedList = ({
             const value = rowDuration(row, metric);
             const isSelected = row.id === active?.id;
             const contribution = model.totalSelf > 0 ? row.selfDuration / model.totalSelf : 0;
-            const noInputChange = row.phase !== 'mount' && row.changedProps?.length === 0;
-            // An ancestor-driven re-render with no input change is the unnecessary-render suspect; a trigger with none is
-            // a legitimate self-render from internal state/hooks/context, so it isn't flagged as wasted.
-            const wasted = noInputChange && !row.trigger;
-            const internal = noInputChange && row.trigger;
+            const isUpdate = row.phase !== 'mount';
+            // `undefined` = the element wrapper didn't even re-render, so the change came from inside the component
+            // (own state/hook/context); `[] + trigger` = a hook/context the wrapper reads changed. Both are internal.
+            const internal =
+              isUpdate && (row.changedProps === undefined || (row.changedProps.length === 0 && row.trigger));
+            // An ancestor-driven re-render with no input change is the unnecessary-render suspect.
+            const wasted = isUpdate && row.changedProps?.length === 0 && !row.trigger;
+            const refOnly = !!row.changedProps?.length && row.changedProps.every(change => change.ref);
             const changedKeys = row.changedProps?.map(change => change.key).join(', ');
             const subtitle = changedKeys || (internal ? 'internal state / hook' : row.type);
 
@@ -114,7 +117,7 @@ const RankedList = ({
                 role="option"
                 aria-selected={isSelected}
                 onClick={() => onSelectElement(row.id === active?.id ? undefined : row.id)}
-                title={`${row.name} (${row.type})\n${formatMs(row.selfDuration)} self · ${formatMs(row.actualDuration)} total · ${formatMs(row.baseDuration)} base\nphase: ${row.phase ?? 'update'} · ${formatPercent(contribution)} of render work${wasted ? '\nno input changed — re-rendered by an ancestor' : internal ? '\nno input changed — internal state/hook/context' : changedKeys ? `\nchanged: ${changedKeys}` : ''}`}
+                title={`${row.name} (${row.type})\n${formatMs(row.selfDuration)} self · ${formatMs(row.actualDuration)} total · ${formatMs(row.baseDuration)} base\nphase: ${row.phase ?? 'update'} · ${formatPercent(contribution)} of render work${wasted ? '\nno input changed — re-rendered by an ancestor' : internal ? '\nno input changed — internal state/hook/context' : refOnly ? `\nreference-only change (missing memo): ${changedKeys}` : changedKeys ? `\nchanged: ${changedKeys}` : ''}`}
                 className={clsx('flex w-full items-center gap-2 px-2 py-0.5 text-left', {
                   'bg-violet-500/10': isSelected,
                   'hover:bg-zinc-50 dark:hover:bg-zinc-800/50': !isSelected
@@ -128,10 +131,14 @@ const RankedList = ({
                         title="Trigger — a root cause of this commit"
                       />
                     )}
-                    {wasted && (
+                    {(wasted || refOnly) && (
                       <i
                         className="fa-solid fa-triangle-exclamation shrink-0 text-[9px] text-amber-500"
-                        title="Re-rendered without any input change — possible unnecessary re-render"
+                        title={
+                          wasted
+                            ? 'Re-rendered without any input change — possible unnecessary re-render'
+                            : 'Only reference-changed props (shallow-equal content) — likely a missing memo'
+                        }
                       />
                     )}
                     {!row.visible && (
