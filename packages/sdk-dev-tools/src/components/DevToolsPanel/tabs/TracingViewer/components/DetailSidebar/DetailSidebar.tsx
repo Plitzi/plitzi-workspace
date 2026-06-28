@@ -96,16 +96,6 @@ const DetailSidebar = ({ node, commit, model }: DetailSidebarProps) => (
       <span className="text-zinc-400 dark:text-zinc-500">Triggers</span>
       <span className="text-zinc-700 tabular-nums dark:text-zinc-200">{model.triggers.length}</span>
     </div>
-
-    <div className="mt-1 font-medium tracking-wide text-zinc-400 uppercase dark:text-zinc-500">Caused by</div>
-    {commit.causes.length === 0 && (
-      <span className="text-zinc-400 italic dark:text-zinc-500">no store write captured</span>
-    )}
-    {commit.causes.map(path => (
-      <span key={path} className="truncate font-mono text-[9px] text-zinc-600 dark:text-zinc-300" title={path}>
-        {path}
-      </span>
-    ))}
   </aside>
 );
 

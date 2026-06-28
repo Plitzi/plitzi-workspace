@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { COMMIT_ORIGIN_LABEL } from '../../helpers';
+import CommitCause from '../CommitCause';
 import DetailSidebar from '../DetailSidebar';
 import DurationLegend from '../DurationLegend';
 import FlameFrame, { ROW_HEIGHT } from './FlameFrame';
@@ -94,7 +95,7 @@ const Flamegraph = ({ commit, model, active, origin, onSelectElement }: Flamegra
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="flex shrink-0 items-center gap-2 border-b border-zinc-200 px-2 py-1 text-[10px] text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+      <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-zinc-200 px-2 py-1 text-[10px] text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
         <span className="font-medium text-zinc-700 dark:text-zinc-200">Commit #{commit.commitId}</span>
         {origin !== 'update' && (
           <span className="rounded bg-violet-100 px-1 text-[9px] font-medium text-violet-700 uppercase dark:bg-violet-500/20 dark:text-violet-300">
@@ -102,6 +103,7 @@ const Flamegraph = ({ commit, model, active, origin, onSelectElement }: Flamegra
           </span>
         )}
         <span className="opacity-60">click a frame to zoom · click the focused frame to zoom out</span>
+        <CommitCause commit={commit} model={model} active={active} onSelectElement={onSelectElement} />
       </div>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">

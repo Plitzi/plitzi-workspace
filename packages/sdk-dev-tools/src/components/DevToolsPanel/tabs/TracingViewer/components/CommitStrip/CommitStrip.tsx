@@ -14,6 +14,10 @@ import {
 import type { CommitEntry } from '@plitzi/sdk-shared';
 import type { KeyboardEvent } from 'react';
 
+// Past this many store paths the tooltip collapses the rest into a "+N" marker so a chatty commit can't grow it
+// unboundedly.
+const MAX_CAUSE_HINT = 6;
+
 export type CommitStripProps = {
   commits: CommitEntry[];
   selectedIndex: number;
@@ -62,6 +66,10 @@ const CommitStrip = ({ commits, selectedIndex, hydrated, onSelect }: CommitStrip
           const isSsr = commit.commitId === SSR_COMMIT_ID;
           const height = isSsr ? 100 : Math.max(6, Math.round((commit.duration / maxDuration) * 100));
           const origin = commitOrigin(commit, hydrated, commit.commitId === firstRealId);
+          const causes =
+            commit.causes.length > 0
+              ? `\nCaused by ${commit.causes.slice(0, MAX_CAUSE_HINT).join(', ')}${commit.causes.length > MAX_CAUSE_HINT ? ` +${commit.causes.length - MAX_CAUSE_HINT}` : ''}`
+              : '';
 
           return (
             <button
@@ -73,7 +81,7 @@ const CommitStrip = ({ commits, selectedIndex, hydrated, onSelect }: CommitStrip
               title={
                 isSsr
                   ? `Commit #${commit.commitId} · ${COMMIT_ORIGIN_LABEL[origin]} · no client timing · ${commit.elementCount} elements`
-                  : `Commit #${commit.commitId} · ${COMMIT_ORIGIN_LABEL[origin]} · ${formatMs(commit.duration)} total · ${commit.elementCount} elements`
+                  : `Commit #${commit.commitId} · ${COMMIT_ORIGIN_LABEL[origin]} · ${formatMs(commit.duration)} total · ${commit.elementCount} elements${causes}`
               }
               className="flex h-full shrink-0 flex-col items-center justify-end gap-0.5 px-0.5"
             >
