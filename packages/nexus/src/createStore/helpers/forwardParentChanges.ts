@@ -1,3 +1,5 @@
+import getByPath from '../../helpers/getByPath';
+
 import type PathTrie from './PathTrie';
 import type Subscribers from './Subscribers';
 import type { ChangeListener, GetState, Listener, PathOf, StoreErrorReporter, StoreApi } from '../../types';
@@ -45,7 +47,10 @@ export function forwardParentChanges<TState extends object>(
 
     if (changeListeners.length > 0) {
       const next = getState();
-      const change = { path, prev: prevMerged ?? next, next };
+      const prev = prevMerged ?? next;
+      const prevValue = path === undefined ? prev : getByPath(prev, path);
+      const nextValue = path === undefined ? next : getByPath(next, path);
+      const change = { path, prev, next, prevValue, nextValue };
       prevMerged = next;
       changeListeners.forEach(
         listener => listener(change),

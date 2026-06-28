@@ -2267,7 +2267,9 @@ describe('logger middleware', () => {
     expect(logger).toHaveBeenCalledWith({
       path: 'count',
       prev: { count: 0, user: { name: 'Alice' } },
-      next: { count: 5, user: { name: 'Alice' } }
+      next: { count: 5, user: { name: 'Alice' } },
+      prevValue: 0,
+      nextValue: 5
     });
   });
 

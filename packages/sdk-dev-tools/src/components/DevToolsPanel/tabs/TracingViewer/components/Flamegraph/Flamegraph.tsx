@@ -4,6 +4,8 @@ import { COMMIT_ORIGIN_LABEL } from '../../helpers';
 import CommitCause from '../CommitCause';
 import DetailSidebar from '../DetailSidebar';
 import DurationLegend from '../DurationLegend';
+import SidebarShell, { SidebarEmpty } from '../SidebarShell';
+import SidebarToggle from '../SidebarToggle';
 import FlameFrame, { ROW_HEIGHT } from './FlameFrame';
 
 import type { CommitOrigin, FlameModel, FlameNode } from '../../helpers';
@@ -14,7 +16,9 @@ export type FlamegraphProps = {
   model: FlameModel;
   active: FlameNode | undefined;
   origin: CommitOrigin;
+  sidebarOpen: boolean;
   onSelectElement: (id: string | undefined) => void;
+  onToggleSidebar: () => void;
 };
 
 // Float slack for the subtree-containment test (a child's span can land a hair outside its parent's after division).
@@ -23,7 +27,15 @@ const EPS = 1e-6;
 // A shadow-DOM-native flamegraph: every frame is an absolutely-positioned DOM box sized by the layout fractions on each
 // `FlameNode`, so clicks, theming and Tailwind all work inside the shadow root (no library injecting styles into
 // `document.head`, no canvas). Clicking a frame zooms to it; its ancestors stay as full-width bars above to zoom back.
-const Flamegraph = ({ commit, model, active, origin, onSelectElement }: FlamegraphProps) => {
+const Flamegraph = ({
+  commit,
+  model,
+  active,
+  origin,
+  sidebarOpen,
+  onSelectElement,
+  onToggleSidebar
+}: FlamegraphProps) => {
   const [focusId, setFocusId] = useState<string | undefined>();
 
   useEffect(() => setFocusId(undefined), [commit.commitId, model]);
@@ -107,6 +119,7 @@ const Flamegraph = ({ commit, model, active, origin, onSelectElement }: Flamegra
         )}
         <span className="opacity-60">click a frame to zoom · click the focused frame to zoom out</span>
         <CommitCause commit={commit} model={model} active={active} onSelectElement={onSelectElement} />
+        <SidebarToggle className="ml-auto" open={sidebarOpen} onToggle={onToggleSidebar} />
       </div>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
@@ -136,7 +149,11 @@ const Flamegraph = ({ commit, model, active, origin, onSelectElement }: Flamegra
             ))}
           </div>
         </div>
-        {active && <DetailSidebar node={active} commit={commit} model={model} />}
+        {sidebarOpen && (
+          <SidebarShell>
+            {active ? <DetailSidebar node={active} commit={commit} model={model} /> : <SidebarEmpty />}
+          </SidebarShell>
+        )}
       </div>
 
       <DurationLegend />

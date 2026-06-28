@@ -33,7 +33,26 @@ describe('logger middleware', () => {
     store.setState('count', 1);
 
     expect(changes).toEqual([
-      { path: 'count', prev: { count: 0, ui: { open: false } }, next: { count: 1, ui: { open: false } } }
+      {
+        path: 'count',
+        prev: { count: 0, ui: { open: false } },
+        next: { count: 1, ui: { open: false } },
+        prevValue: 0,
+        nextValue: 1
+      }
+    ]);
+  });
+
+  it('carries the value at the changed path', () => {
+    const changes: StoreChange<AppState>[] = [];
+    const store = createStore<AppState>(initial(), { middlewares: [loggerMiddleware({ sink: c => changes.push(c) })] });
+
+    store.setState('ui.open', true);
+    store.setState(undefined, { count: 9, ui: { open: false } });
+
+    expect(changes.map(c => ({ prevValue: c.prevValue, nextValue: c.nextValue }))).toEqual([
+      { prevValue: false, nextValue: true },
+      { prevValue: { count: 0, ui: { open: true } }, nextValue: { count: 9, ui: { open: false } } }
     ]);
   });
 

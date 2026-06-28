@@ -23,6 +23,7 @@ const TracingViewer = () => {
   const { currentPageId } = use(NavigationContext);
   const [view, setView] = useStorage<TracingView>('plitzi-sdk.dev-tools.tracing.view', 'ranked');
   const [persist, setPersist] = useStorage<boolean>('plitzi-sdk.dev-tools.tracing.persist', false);
+  const [sidebarOpen, setSidebarOpen] = useStorage<boolean>('plitzi-sdk.dev-tools.tracing.sidebar-open', false);
   const [selectedCommitId, setSelectedCommitId] = useState<number | undefined>();
   // The element picked in either view: drives the shared sidebar and outlines it on the page.
   const [selectedElementId, setSelectedElementId] = useState<string | undefined>();
@@ -95,7 +96,17 @@ const TracingViewer = () => {
     setSelectedCommitId(commitId);
     setSelectedElementId(undefined);
   }, []);
-  const handleSelectElement = useCallback((id: string | undefined) => setSelectedElementId(id), []);
+  // Selecting an element opens the panel; the toggle can still hide it afterwards.
+  const handleSelectElement = useCallback(
+    (id: string | undefined) => {
+      setSelectedElementId(id);
+      if (id) {
+        setSidebarOpen(true);
+      }
+    },
+    [setSidebarOpen]
+  );
+  const handleToggleSidebar = useCallback(() => setSidebarOpen(open => !open), [setSidebarOpen]);
   const handleStepCommit = useCallback(
     (delta: number) => {
       const next = selectedIndex + delta;
@@ -185,7 +196,9 @@ const TracingViewer = () => {
           model={model}
           active={active}
           origin={origin}
+          sidebarOpen={sidebarOpen}
           onSelectElement={handleSelectElement}
+          onToggleSidebar={handleToggleSidebar}
         />
       )}
       {view === 'flamegraph' && model && (
@@ -194,7 +207,9 @@ const TracingViewer = () => {
           model={model}
           active={active}
           origin={origin}
+          sidebarOpen={sidebarOpen}
           onSelectElement={handleSelectElement}
+          onToggleSidebar={handleToggleSidebar}
         />
       )}
       {view === 'hotspots' && (

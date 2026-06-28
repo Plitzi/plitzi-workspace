@@ -7,6 +7,8 @@ import CommitCause from '../CommitCause';
 import DetailSidebar from '../DetailSidebar';
 import DurationLegend from '../DurationLegend';
 import MetricToggle from '../MetricToggle';
+import SidebarShell, { SidebarEmpty } from '../SidebarShell';
+import SidebarToggle from '../SidebarToggle';
 
 import type { CommitOrigin, DurationMetric, FlameModel, FlameNode } from '../../helpers';
 import type { CommitEntry } from '@plitzi/sdk-shared';
@@ -17,10 +19,20 @@ export type RankedListProps = {
   model: FlameModel;
   active: FlameNode | undefined;
   origin: CommitOrigin;
+  sidebarOpen: boolean;
   onSelectElement: (id: string | undefined) => void;
+  onToggleSidebar: () => void;
 };
 
-const RankedList = ({ commit, model, active, origin, onSelectElement }: RankedListProps) => {
+const RankedList = ({
+  commit,
+  model,
+  active,
+  origin,
+  sidebarOpen,
+  onSelectElement,
+  onToggleSidebar
+}: RankedListProps) => {
   const [metric, setMetric] = useStorage<DurationMetric>('plitzi-sdk.dev-tools.tracing.metric', 'self');
   const selectedRef = useRef<HTMLButtonElement>(null);
 
@@ -67,6 +79,7 @@ const RankedList = ({ commit, model, active, origin, onSelectElement }: RankedLi
         </span>
         <CommitCause commit={commit} model={model} active={active} onSelectElement={onSelectElement} />
         <MetricToggle className="ml-auto" metric={metric} onChange={setMetric} />
+        <SidebarToggle open={sidebarOpen} onToggle={onToggleSidebar} />
       </div>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
@@ -159,7 +172,11 @@ const RankedList = ({ commit, model, active, origin, onSelectElement }: RankedLi
           })}
         </div>
 
-        {active && <DetailSidebar node={active} commit={commit} model={model} />}
+        {sidebarOpen && (
+          <SidebarShell>
+            {active ? <DetailSidebar node={active} commit={commit} model={model} /> : <SidebarEmpty />}
+          </SidebarShell>
+        )}
       </div>
 
       <DurationLegend />

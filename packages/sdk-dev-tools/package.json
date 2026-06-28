@@ -458,6 +458,34 @@
       "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/RankedList/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/RankedList/index.mjs"
     },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/SidebarShell": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/SidebarShell/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/SidebarShell/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/SidebarShell/SidebarEmpty": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/SidebarShell/SidebarEmpty.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/SidebarShell/SidebarEmpty.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/SidebarShell/SidebarShell": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/SidebarShell/SidebarShell.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/SidebarShell/SidebarShell.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/SidebarShell/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/SidebarShell/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/SidebarShell/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/SidebarToggle": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/SidebarToggle/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/SidebarToggle/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/SidebarToggle/SidebarToggle": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/SidebarToggle/SidebarToggle.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/SidebarToggle/SidebarToggle.mjs"
+    },
+    "./components/DevToolsPanel/tabs/TracingViewer/components/SidebarToggle/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/SidebarToggle/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/SidebarToggle/index.mjs"
+    },
     "./components/DevToolsPanel/tabs/TracingViewer/components/TracingToolbar": {
       "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/TracingToolbar/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/components/TracingToolbar/index.mjs"

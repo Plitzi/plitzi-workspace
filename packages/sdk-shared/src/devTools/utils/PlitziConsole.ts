@@ -1,7 +1,4 @@
-import getByPath from '@plitzi/nexus/helpers/getByPath';
-
 import { formatDate } from '../../helpers';
-// import getByPath from '../../store/helpers/getByPath';
 
 import type { Log, LogInteraction, LogNavigation, ProviderCallback } from '../../types/DevToolsTypes';
 import type { ChangeListener } from '@plitzi/nexus';
@@ -182,9 +179,7 @@ class PlitziConsole {
 export const pConsole = new PlitziConsole();
 
 export function createStoreDevToolsLogger<TState extends object>(storeName = 'store'): ChangeListener<TState> {
-  return ({ path, prev, next }) => {
-    const prevValue = path ? getByPath(prev, path) : prev;
-    const nextValue = path ? getByPath(next, path) : next;
+  return ({ path, prevValue, nextValue }) => {
     pConsole.info('store', storeName, { storeName, path, prev: prevValue, next: nextValue });
   };
 }

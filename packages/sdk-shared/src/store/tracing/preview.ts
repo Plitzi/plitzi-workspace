@@ -58,21 +58,6 @@ export const previewValue = (value: unknown): string => {
   return 'unknown';
 };
 
-// Reads the value at a dot-separated store path out of a full state snapshot. Used only to preview what a store write
-// changed; tolerant of missing intermediates (returns undefined).
-export const getByPath = (state: unknown, path: string): unknown => {
-  let current = state;
-  for (const segment of path.split('.')) {
-    if (current === null || typeof current !== 'object') {
-      return undefined;
-    }
-
-    current = (current as Record<string, unknown>)[segment];
-  }
-
-  return current;
-};
-
 // Shallow diff of two flat input snapshots → the keys whose values are not `Object.is`-equal, each with a before/after
 // preview. Returns empty on first render (no previous snapshot) — a mount is already labelled by phase, not a diff.
 export const diffProps = (prev: Record<string, unknown> | undefined, next: Record<string, unknown>): PropChange[] => {

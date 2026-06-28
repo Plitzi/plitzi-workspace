@@ -65,7 +65,10 @@ export type StoreHookReactiveOptions<T, TState extends object = object> = StoreH
 };
 
 // A committed write: the changed path (undefined for a full-state replace) and the own-state snapshots around it.
-export type StoreChange<T> = { path: PathOf<T> | undefined; prev: T; next: T };
+// `prevValue`/`nextValue` are the value AT `path` before/after (the whole state when `path` is undefined), so an
+// observer never has to re-walk the path out of `prev`/`next`. Typed `unknown` because the value's shape depends on
+// the runtime `path`.
+export type StoreChange<T> = { path: PathOf<T> | undefined; prev: T; next: T; prevValue: unknown; nextValue: unknown };
 
 // Observer of committed changes — the substrate logger, history and persist all ride on. Returned by a middleware.
 export type ChangeListener<T> = (change: StoreChange<T>) => void;

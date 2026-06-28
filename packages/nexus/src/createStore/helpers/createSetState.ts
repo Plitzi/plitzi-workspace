@@ -175,7 +175,9 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
   };
 
   const emitChange = (path: PathOf<TState> | undefined, prev: TState, next: TState): void => {
-    const change = { path, prev, next };
+    const prevValue = path === undefined ? prev : getByPath(prev, path);
+    const nextValue = path === undefined ? next : getByPath(next, path);
+    const change = { path, prev, next, prevValue, nextValue };
     const { items } = changeListeners;
     changeListeners.begin();
     try {
