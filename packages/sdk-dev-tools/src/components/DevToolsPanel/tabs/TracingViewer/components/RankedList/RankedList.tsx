@@ -86,8 +86,13 @@ const RankedList = ({ commit, model, active, origin, onSelectElement }: RankedLi
             const value = rowDuration(row, metric);
             const isSelected = row.id === active?.id;
             const contribution = model.totalSelf > 0 ? row.selfDuration / model.totalSelf : 0;
-            const wasted = row.phase !== 'mount' && row.changedProps?.length === 0;
+            const noInputChange = row.phase !== 'mount' && row.changedProps?.length === 0;
+            // An ancestor-driven re-render with no input change is the unnecessary-render suspect; a trigger with none is
+            // a legitimate self-render from internal state/hooks/context, so it isn't flagged as wasted.
+            const wasted = noInputChange && !row.trigger;
+            const internal = noInputChange && row.trigger;
             const changedKeys = row.changedProps?.map(change => change.key).join(', ');
+            const subtitle = changedKeys || (internal ? 'internal state / hook' : row.type);
 
             return (
               <button
@@ -96,7 +101,7 @@ const RankedList = ({ commit, model, active, origin, onSelectElement }: RankedLi
                 role="option"
                 aria-selected={isSelected}
                 onClick={() => onSelectElement(row.id === active?.id ? undefined : row.id)}
-                title={`${row.name} (${row.type})\n${formatMs(row.selfDuration)} self · ${formatMs(row.actualDuration)} total · ${formatMs(row.baseDuration)} base\nphase: ${row.phase ?? 'update'} · ${formatPercent(contribution)} of render work${wasted ? '\nno input changed — re-rendered by parent/context' : changedKeys ? `\nchanged: ${changedKeys}` : ''}`}
+                title={`${row.name} (${row.type})\n${formatMs(row.selfDuration)} self · ${formatMs(row.actualDuration)} total · ${formatMs(row.baseDuration)} base\nphase: ${row.phase ?? 'update'} · ${formatPercent(contribution)} of render work${wasted ? '\nno input changed — re-rendered by an ancestor' : internal ? '\nno input changed — internal state/hook/context' : changedKeys ? `\nchanged: ${changedKeys}` : ''}`}
                 className={clsx('flex w-full items-center gap-2 px-2 py-0.5 text-left', {
                   'bg-violet-500/10': isSelected,
                   'hover:bg-zinc-50 dark:hover:bg-zinc-800/50': !isSelected
@@ -124,9 +129,7 @@ const RankedList = ({ commit, model, active, origin, onSelectElement }: RankedLi
                     )}
                     <span className="truncate">{row.name}</span>
                   </span>
-                  <span className="truncate text-[9px] text-zinc-400 dark:text-zinc-500">
-                    {changedKeys ? changedKeys : row.type}
-                  </span>
+                  <span className="truncate text-[9px] text-zinc-400 dark:text-zinc-500">{subtitle}</span>
                 </span>
                 <span
                   className={clsx('rounded px-1 text-[9px] uppercase', {

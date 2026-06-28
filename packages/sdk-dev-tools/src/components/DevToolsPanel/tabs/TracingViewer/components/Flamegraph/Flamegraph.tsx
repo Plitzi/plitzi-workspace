@@ -76,19 +76,22 @@ const Flamegraph = ({ commit, model, active, origin, onSelectElement }: Flamegra
     [frames, focusDepth]
   );
 
-  // Clicking the selected frame clears the selection AND zooms out a level, so re-clicking the page resets the view.
+  // Clicking a frame selects it and zooms to it; clicking the already-selected frame clears BOTH the selection and the
+  // zoom (back to the full graph), so deselecting never leaves the view stuck zoomed in.
   const handleFrameClick = useCallback(
     (node: FlameNode) => {
-      onSelectElement(node.id === active?.id ? undefined : node.id);
-      setFocusId(node.id === focusId ? node.parentId : node.id);
+      const deselect = node.id === active?.id;
+      onSelectElement(deselect ? undefined : node.id);
+      setFocusId(deselect ? undefined : node.id);
     },
-    [focusId, active, onSelectElement]
+    [active, onSelectElement]
   );
 
   const handleAncestorClick = useCallback(
     (node: FlameNode) => {
-      onSelectElement(node.id === active?.id ? undefined : node.id);
-      setFocusId(node.id);
+      const deselect = node.id === active?.id;
+      onSelectElement(deselect ? undefined : node.id);
+      setFocusId(deselect ? undefined : node.id);
     },
     [active, onSelectElement]
   );
