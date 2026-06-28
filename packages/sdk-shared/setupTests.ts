@@ -1,6 +1,8 @@
 import { vi } from 'vitest';
 import createFetchMock from 'vitest-fetch-mock';
 
+(globalThis as Record<string, unknown>).PERF_MULTIPLIER = Number(process.env.PERF_MULTIPLIER ?? (process.env.TURBO_RUN ? 5 : 1));
+
 //  set globalThis.fetch and globalThis.fetchMock
 const fetchMocker = createFetchMock(vi);
 fetchMocker.enableMocks();

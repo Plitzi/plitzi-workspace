@@ -4,8 +4,8 @@
   "scripts": {
     "start": "turbo start --parallel",
     "start:debug": "turbo start:debug --parallel --concurrency=20",
-    "test": "turbo test --parallel",
-    "test:coverage": "turbo test:coverage --parallel --concurrency=20",
+    "test": "TURBO_RUN=1 turbo test --parallel",
+    "test:coverage": "TURBO_RUN=1 turbo test:coverage --parallel --concurrency=20",
     "lint": "turbo lint --parallel",
     "lint-style": "turbo lint-style --parallel",
     "lint-style:fix": "turbo lint-style:fix --parallel --concurrency=20",

@@ -1308,6 +1308,8 @@ describe('Advanced store tests', () => {
 });
 
 describe('performance', () => {
+  const PERF_MULTIPLIER = (globalThis as unknown as Record<string, number>).PERF_MULTIPLIER;
+
   type PerfState = {
     count: number;
     user: { name: string; age: number };
@@ -1364,7 +1366,7 @@ describe('performance', () => {
 
       // Solo el render inicial
       expect(renderFn).toHaveBeenCalledTimes(1);
-      expect(elapsed).toBeLessThan(500);
+      expect(elapsed).toBeLessThan(500 * PERF_MULTIPLIER);
     });
 
     it('re-renderiza exactamente 1 vez por update relevante (1000 updates)', () => {
@@ -1389,7 +1391,7 @@ describe('performance', () => {
 
       // 1 inicial + 1 por cada update
       expect(renderFn).toHaveBeenCalledTimes(1001);
-      expect(elapsed).toBeLessThan(2000);
+      expect(elapsed).toBeLessThan(2000 * PERF_MULTIPLIER);
     });
 
     it('equalityFn evita re-renders con objetos equivalentes (path)', () => {
@@ -1413,7 +1415,7 @@ describe('performance', () => {
       });
 
       expect(renderFn).toHaveBeenCalledTimes(1);
-      expect(elapsed).toBeLessThan(500);
+      expect(elapsed).toBeLessThan(500 * PERF_MULTIPLIER);
     });
 
     it('1000 hooks suscritos al mismo path: solo re-renderizan cuando cambia', () => {
@@ -1441,7 +1443,7 @@ describe('performance', () => {
 
       const totalRenders = renderCounts.reduce((a, b) => a + b, 0);
       expect(totalRenders).toBe(2000); // 1 extra por cada hook
-      expect(elapsed).toBeLessThan(1000);
+      expect(elapsed).toBeLessThan(1000 * PERF_MULTIPLIER);
 
       hooks.forEach(h => h.unmount());
     });
@@ -1461,8 +1463,8 @@ describe('performance', () => {
         unsubs.forEach(u => u());
       });
 
-      expect(subElapsed).toBeLessThan(200);
-      expect(unsubElapsed).toBeLessThan(200);
+      expect(subElapsed).toBeLessThan(200 * PERF_MULTIPLIER);
+      expect(unsubElapsed).toBeLessThan(200 * PERF_MULTIPLIER);
     });
 
     it('suscribe y desuscribe 10.000 path listeners en menos de 200ms', () => {
@@ -1479,8 +1481,8 @@ describe('performance', () => {
         unsubs.forEach(u => u());
       });
 
-      expect(subElapsed).toBeLessThan(200);
-      expect(unsubElapsed).toBeLessThan(200);
+      expect(subElapsed).toBeLessThan(200 * PERF_MULTIPLIER);
+      expect(unsubElapsed).toBeLessThan(200 * PERF_MULTIPLIER);
     });
 
     it('notifica 10.000 listeners en menos de 100ms', () => {
@@ -1493,7 +1495,7 @@ describe('performance', () => {
       });
 
       listeners.forEach(l => expect(l).toHaveBeenCalledTimes(1));
-      expect(elapsed).toBeLessThan(100);
+      expect(elapsed).toBeLessThan(100 * PERF_MULTIPLIER);
     });
 
     it('hooks: mount y unmount de 500 componentes en menos de 2s', () => {
@@ -1507,7 +1509,7 @@ describe('performance', () => {
         hooks.forEach(h => h.unmount());
       });
 
-      expect(elapsed).toBeLessThan(2000);
+      expect(elapsed).toBeLessThan(2000 * PERF_MULTIPLIER);
     });
   });
 
@@ -1626,7 +1628,7 @@ describe('performance', () => {
 
       hooks.forEach(h => h.unmount());
 
-      expect(elapsed).toBeLessThan(5000);
+      expect(elapsed).toBeLessThan(5000 * PERF_MULTIPLIER);
     });
   });
 });

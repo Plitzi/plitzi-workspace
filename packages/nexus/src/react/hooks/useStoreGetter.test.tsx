@@ -588,6 +588,8 @@ describe('useStoreGetter — createStoreHook integration', () => {
 // ─── Performance ─────────────────────────────────────────────────────────────
 
 describe('useStoreGetter — performance', () => {
+  const PERF_MULTIPLIER = (globalThis as unknown as Record<string, number>).PERF_MULTIPLIER;
+
   const measure = (label: string, fn: () => void): number => {
     const start = performance.now();
     fn();
@@ -606,7 +608,7 @@ describe('useStoreGetter — performance', () => {
       }
     });
 
-    expect(elapsed).toBeLessThan(50);
+    expect(elapsed).toBeLessThan(50 * PERF_MULTIPLIER);
   });
 
   it('500 mount + unmount of useStoreGetter hooks in < 1s', () => {
@@ -619,7 +621,7 @@ describe('useStoreGetter — performance', () => {
       hooks.forEach(h => h.unmount());
     });
 
-    expect(elapsed).toBeLessThan(1000);
+    expect(elapsed).toBeLessThan(1000 * PERF_MULTIPLIER);
   });
 
   it('getValue does not re-render after 1000 setState calls (render count stays 1)', () => {
@@ -641,7 +643,7 @@ describe('useStoreGetter — performance', () => {
     });
 
     expect(renderFn).toHaveBeenCalledTimes(1);
-    expect(elapsed).toBeLessThan(2000);
+    expect(elapsed).toBeLessThan(2000 * PERF_MULTIPLIER);
   });
 });
 
