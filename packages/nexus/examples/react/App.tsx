@@ -25,7 +25,7 @@ const Counter = () => {
 };
 
 const App = () => (
-  <StoreProvider<AppState>
+  <StoreProvider
     value={{ count: 0, user: { name: 'Ada' } }}
     middlewares={[persistMiddleware({ key: 'demo' }), historyMiddleware()]}
   >

@@ -44,7 +44,7 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode, version }
   const handleClickExpand = useCallback(() => {
     addPopup(
       `transform-${Date.now()}`,
-      <StoreProvider<BuilderState>
+      <StoreProvider
         value={storeValue as Partial<BuilderState>}
         middlewares={[loggerMw(createStoreDevToolsLogger<BuilderState>('ai-preview'))]}
       >
@@ -100,7 +100,7 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode, version }
       )}
       {(!showHtml || !html) && (
         <div className="flex justify-center overflow-hidden bg-zinc-50 dark:bg-zinc-900">
-          <StoreProvider<BuilderState>
+          <StoreProvider
             value={storeValue as Partial<BuilderState>}
             middlewares={[loggerMw(createStoreDevToolsLogger<BuilderState>('ai-preview'))]}
           >

@@ -141,6 +141,11 @@ const ModalContainer = ({
     fields: sourceFields
   });
 
+  const storeContextValue = useMemo(
+    () => ({ runtime: { sources: { [`modalContainer_${id}`]: internalMetadata } } }),
+    [id, internalMetadata]
+  );
+
   return (
     <RootElement
       ref={ref}
@@ -164,10 +169,7 @@ const ModalContainer = ({
           />
         </div>
         <div className={clsx('modal-container__body', styleSelectors.bodyContainer)}>
-          <StoreProvider
-            inherit="live"
-            value={{ runtime: { sources: { [`modalContainer_${id}`]: internalMetadata } } }}
-          >
+          <StoreProvider inherit="live" value={storeContextValue}>
             {children}
           </StoreProvider>
         </div>

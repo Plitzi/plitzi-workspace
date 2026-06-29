@@ -340,7 +340,7 @@ const App = (props: AppProps) => {
   const storeValue = useMemo(() => ({ styleSelector: 'base' }), []);
 
   return (
-    <StoreProvider<BuilderState>
+    <StoreProvider
       value={storeValue}
       middlewares={[
         loggerMw(createStoreDevToolsLogger<BuilderState>('builder')),

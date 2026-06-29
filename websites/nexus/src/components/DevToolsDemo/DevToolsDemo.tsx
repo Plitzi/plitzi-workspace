@@ -16,7 +16,7 @@ const DevToolsDemo = () => (
     subtitle="one middleware → actions, inspector, and time-travel in the Redux DevTools extension"
     code={DEVTOOLS_CODE}
   >
-    <StoreProvider<DevToolsState> value={DEVTOOLS_INITIAL} autoSync={false} middlewares={middlewares}>
+    <StoreProvider value={DEVTOOLS_INITIAL} autoSync={false} middlewares={middlewares}>
       <DevToolsBody />
     </StoreProvider>
   </ExampleCard>

@@ -47,7 +47,7 @@ const BuilderPopup = ({ previewMode = false, segmentIdentifier = '' }: BuilderPo
 
   return (
     <div className="flex w-full grow">
-      <StoreProvider<BuilderState>
+      <StoreProvider
         value={generateStoreState}
         inherit="snapshot"
         middlewares={[loggerMw(createStoreDevToolsLogger<BuilderState>('segment'))]}

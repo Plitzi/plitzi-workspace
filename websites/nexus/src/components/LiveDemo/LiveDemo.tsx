@@ -79,7 +79,7 @@ const LiveDemo = () => {
       />
 
       <div className="border-ink-700 bg-ink-900/40 mt-10 overflow-hidden rounded-2xl border">
-        <StoreProvider<DemoState> value={DEMO_INITIAL_STATE} autoSync={false} middlewares={middlewares}>
+        <StoreProvider value={DEMO_INITIAL_STATE} autoSync={false} middlewares={middlewares}>
           <div className="bg-ink-700 grid gap-px md:grid-cols-3">
             <DemoPanel title="Controls · root scope" code={CONTROLS_CODE}>
               <DemoControls />

@@ -17,7 +17,7 @@ const TransformPreview = ({ preview, previewMode = true }: TransformPreviewProps
 
   return (
     <div className="flex w-full grow overflow-y-auto">
-      <StoreProvider<BuilderState>
+      <StoreProvider
         value={storeValue}
         middlewares={[loggerMw(createStoreDevToolsLogger<BuilderState>('transform-preview'))]}
       >

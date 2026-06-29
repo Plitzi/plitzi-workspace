@@ -188,6 +188,8 @@ const ApiContainer = ({
     []
   );
 
+  const storeContext = useMemo(() => ({ runtime: { sources: { [`apiContainer_${id}`]: data } } }), [data, id]);
+
   return (
     <RootElement
       ref={ref}
@@ -196,7 +198,7 @@ const ApiContainer = ({
       interactionTriggers={interactionTriggers}
       interactionCallbacks={interactionCallbacks}
     >
-      <StoreProvider inherit="live" value={{ runtime: { sources: { [`apiContainer_${id}`]: data } } }}>
+      <StoreProvider inherit="live" value={storeContext}>
         {!isLoading && children}
       </StoreProvider>
     </RootElement>

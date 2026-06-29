@@ -188,6 +188,11 @@ const DialogContainer = ({
     fields: sourceFields
   });
 
+  const storeContext = useMemo(
+    () => ({ runtime: { sources: { [`dialogContainer_${id}`]: internalMetadata } } }),
+    [id, internalMetadata]
+  );
+
   return (
     <RootElement
       ref={ref}
@@ -207,10 +212,7 @@ const DialogContainer = ({
           <i className="fa-solid fa-xmark" title="Close" onClick={void handleClickCancel} />
         </div>
         <div className={clsx('dialog-container__body', styleSelectors.body)}>
-          <StoreProvider
-            inherit="live"
-            value={{ runtime: { sources: { [`dialogContainer_${id}`]: internalMetadata } } }}
-          >
+          <StoreProvider inherit="live" value={storeContext}>
             {children}
           </StoreProvider>
         </div>

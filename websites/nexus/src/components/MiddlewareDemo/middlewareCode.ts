@@ -15,7 +15,7 @@ const middlewares = [
 
 function App() {
   return (
-    <StoreProvider<State> value={initial} middlewares={middlewares}>
+    <StoreProvider value={initial} middlewares={middlewares}>
       <Controls />            {/* useStoreHistory() → undo / redo  */}
 
       {/* Nested store with NO middlewares — it still logs, because

@@ -24,16 +24,20 @@ const ListControlledItem = ({
   record,
   source = ''
 }: ListControlledItemProps) => {
-  const dataSourceValue = useMemo(() => ({ item: record, index: `${itemCount}` }), [record, itemCount]);
   // A per-row `segment` gives each replica scope a distinct `scopePath`, which `useElementState` folds into a sub-key
   // so duplicated element ids (every row renders the same template ids) keep isolated state in the shared store.
   // `useId` is a unique, stable identity per row instance — independent of the row index and free of any global
   // record→id bookkeeping, so the segment never collides across sibling lists.
   const segment = useId();
 
+  const storeContextValue = useMemo(
+    () => ({ runtime: { sources: { [source]: { item: record, index: `${itemCount}` } } } }),
+    [source, record, itemCount]
+  );
+
   const scopedRow = (
     <ReplicaProvider>
-      <StoreProvider inherit="live" segment={segment} value={{ runtime: { sources: { [source]: dataSourceValue } } }}>
+      <StoreProvider inherit="live" segment={segment} value={storeContextValue}>
         {children}
       </StoreProvider>
     </ReplicaProvider>

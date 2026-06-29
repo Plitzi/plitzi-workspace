@@ -26,10 +26,7 @@ const TemplateContent = ({ baseElementId, schema, style }: TemplateContentProps)
   return (
     <div className="flex h-full w-full flex-col gap-2 overflow-hidden">
       <div className="relative flex flex-col overflow-hidden">
-        <StoreProvider<BuilderState>
-          value={storeValue}
-          middlewares={[loggerMw(createStoreDevToolsLogger<BuilderState>('template'))]}
-        >
+        <StoreProvider value={storeValue} middlewares={[loggerMw(createStoreDevToolsLogger<BuilderState>('template'))]}>
           <ContainerAutoScale className="flex min-h-46 w-full items-center justify-center overflow-hidden">
             <BuilderAreaPreview id={baseElementId} className="h-full w-full" previewMode />
           </ContainerAutoScale>

@@ -14,7 +14,7 @@ function Counter() {
 
 export default function ProviderCounter() {
   return (
-    <StoreProvider<LocalState> value={{ count: 0 }}>
+    <StoreProvider value={{ count: 0 }}>
       <Counter />
     </StoreProvider>
   );

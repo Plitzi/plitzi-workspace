@@ -32,12 +32,10 @@ export type Field = { id: string; name: string };
 export type FieldValue = string | boolean | number;
 
 export type FormContextValue = {
-  fields: Record<string, SourceField>;
   errors: Record<string, string>;
   values: Record<string, unknown>;
   registerField: (field: SourceField) => void;
   unregisterField: (name: string) => void;
-  getField: (name: string) => SourceField | Record<string, SourceField>;
   setFieldValue: (name: string, value: FieldValue | null) => void;
   setFieldError: (name: string, error: string) => void;
 };
@@ -67,17 +65,6 @@ const Form = ({
   const registerField = useCallback(
     (field: SourceField) => setFields(state => ({ ...state, [field.name]: field })),
     [setFields]
-  );
-
-  const getField = useCallback(
-    (name: string) => {
-      if (!name || !(fields[name] as SourceField | undefined)) {
-        return fields;
-      }
-
-      return get(fields, name);
-    },
-    [fields]
   );
 
   const unregisterField = useCallback(
@@ -162,9 +149,11 @@ const Form = ({
     [fields]
   );
 
-  const contextValue = useMemo<FormContextValue>(
-    () => ({ fields, errors, values, registerField, unregisterField, getField, setFieldValue, setFieldError }),
-    [fields, errors, values, registerField, unregisterField, getField, setFieldValue, setFieldError]
+  const contextValue = useMemo(
+    () => ({
+      runtime: { sources: { form: { errors, values, registerField, unregisterField, setFieldValue, setFieldError } } }
+    }),
+    [errors, values, registerField, unregisterField, setFieldValue, setFieldError]
   );
   useRegisterSource({ id, source: 'form', name: label ? label : `Form - ${id}`, fields: sourceFields });
 
@@ -296,7 +285,7 @@ const Form = ({
       onReset={handleReset}
       action={actionUrl}
     >
-      <StoreProvider inherit="live" value={{ runtime: { sources: { form: contextValue } } }}>
+      <StoreProvider inherit="live" value={contextValue}>
         {children}
       </StoreProvider>
     </RootElement>

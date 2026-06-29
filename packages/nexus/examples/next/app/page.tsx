@@ -11,7 +11,7 @@ export default async function Page() {
   const likes = await Promise.resolve(42); // stand-in for a real fetch
 
   return (
-    <StoreProvider<PageState> value={createServerSnapshot({ likes })}>
+    <StoreProvider value={createServerSnapshot({ likes })}>
       <Likes />
     </StoreProvider>
   );

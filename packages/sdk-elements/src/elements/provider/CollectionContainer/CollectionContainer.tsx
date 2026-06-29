@@ -83,6 +83,11 @@ const CollectionContainer = ({
     };
   }, [fetch, label]);
 
+  const storeContext = useMemo(
+    () => ({ runtime: { sources: { [`collectionContainer_${id}`]: collection } } }),
+    [collection, id]
+  );
+
   if (!collection && previewMode) {
     return undefined;
   }
@@ -97,7 +102,7 @@ const CollectionContainer = ({
     >
       {!collection && <div className="collection-container__message">Source Not Selected</div>}
       {collection && !loading && (
-        <StoreProvider inherit="live" value={{ runtime: { sources: { [`collectionContainer_${id}`]: collection } } }}>
+        <StoreProvider inherit="live" value={storeContext}>
           {children}
         </StoreProvider>
       )}

@@ -46,7 +46,10 @@ const ListControlled = ({ ref, className = '', children, items = [] }: ListContr
     [finalItems]
   );
 
-  const listContextValue = useMemo(() => ({ items: finalItems }), [finalItems]);
+  const storeContextValue = useMemo(
+    () => ({ runtime: { sources: { [`list_${id}`]: { items: finalItems } } } }),
+    [id, finalItems]
+  );
 
   useRegisterSource({
     id,
@@ -62,7 +65,7 @@ const ListControlled = ({ ref, className = '', children, items = [] }: ListContr
         'controlled-list--build-mode': !previewMode
       })}
     >
-      <StoreProvider inherit="live" value={{ runtime: { sources: { [`list_${id}`]: listContextValue } } }}>
+      <StoreProvider inherit="live" value={storeContextValue}>
         {finalItems.map((item, i) => {
           if (!children || (Array.isArray(children) && children.length === 0)) {
             return (

@@ -40,7 +40,7 @@ const SdkElementPreview = ({ elementId, schema, style }: SdkElementPreviewProps)
   let preview = <BuilderAreaPreview id={elementId} className="h-full w-full" previewMode />;
   if (hasOverlay) {
     preview = (
-      <StoreProvider<BuilderState>
+      <StoreProvider
         value={overlayValue as Partial<BuilderState>}
         middlewares={[loggerMw(createStoreDevToolsLogger<BuilderState>('ai-preview'))]}
       >

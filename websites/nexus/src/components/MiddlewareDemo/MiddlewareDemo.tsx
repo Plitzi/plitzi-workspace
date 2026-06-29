@@ -13,7 +13,9 @@ import type { LogEntry, MiddlewareState } from './middlewareStore';
 import type { StoreChange } from '@plitzi/nexus';
 
 const readPath = (obj: unknown, path: string): unknown =>
-  path.split('.').reduce<unknown>((node, key) => (node == null ? undefined : (node as Record<string, unknown>)[key]), obj);
+  path
+    .split('.')
+    .reduce<unknown>((node, key) => (node == null ? undefined : (node as Record<string, unknown>)[key]), obj);
 
 const MiddlewareDemo = () => {
   const [log, setLog] = useState<LogEntry[]>([]);
@@ -41,7 +43,7 @@ const MiddlewareDemo = () => {
       subtitle="logger · persist · history · cascade — all on one subscribeChange substrate"
       code={MIDDLEWARE_CODE}
     >
-      <StoreProvider<MiddlewareState> value={MIDDLEWARE_INITIAL} autoSync={false} middlewares={middlewares}>
+      <StoreProvider value={MIDDLEWARE_INITIAL} autoSync={false} middlewares={middlewares}>
         <MiddlewareBody log={log} />
         <StoreProvider value={CHILD_INITIAL} autoSync={false}>
           <CascadeChild />
