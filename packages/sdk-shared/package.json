@@ -130,18 +130,6 @@
       "types": "./dist/elements/ComponentContext.d.ts",
       "import": "./dist/elements/ComponentContext.mjs"
     },
-    "./elements/ElementContext": {
-      "types": "./dist/elements/ElementContext.d.ts",
-      "import": "./dist/elements/ElementContext.mjs"
-    },
-    "./elements/ElementStore": {
-      "types": "./dist/elements/ElementStore.d.ts",
-      "import": "./dist/elements/ElementStore.mjs"
-    },
-    "./elements/hooks/useElement": {
-      "types": "./dist/elements/hooks/useElement.d.ts",
-      "import": "./dist/elements/hooks/useElement.mjs"
-    },
     "./elements/index": {
       "types": "./dist/elements/index.d.ts",
       "import": "./dist/elements/index.mjs"
@@ -913,10 +901,6 @@
       "types": "./dist/state/index.d.ts",
       "import": "./dist/state/index.mjs"
     },
-    "./state/commonStore": {
-      "types": "./dist/state/commonStore.d.ts",
-      "import": "./dist/state/commonStore.mjs"
-    },
     "./state/index": {
       "types": "./dist/state/index.d.ts",
       "import": "./dist/state/index.mjs"
@@ -953,10 +937,6 @@
       "types": "./dist/store/tracing/tracingMiddleware.d.ts",
       "import": "./dist/store/tracing/tracingMiddleware.mjs"
     },
-    "./store/tracing/tracingRecorder": {
-      "types": "./dist/store/tracing/tracingRecorder.d.ts",
-      "import": "./dist/store/tracing/tracingRecorder.mjs"
-    },
     "./store/tracing/tracingStore": {
       "types": "./dist/store/tracing/tracingStore.d.ts",
       "import": "./dist/store/tracing/tracingStore.mjs"
@@ -988,26 +968,6 @@
     "./theme/index": {
       "types": "./dist/theme/index.d.ts",
       "import": "./dist/theme/index.mjs"
-    },
-    "./tracing": {
-      "types": "./dist/tracing/index.d.ts",
-      "import": "./dist/tracing/index.mjs"
-    },
-    "./tracing/index": {
-      "types": "./dist/tracing/index.d.ts",
-      "import": "./dist/tracing/index.mjs"
-    },
-    "./tracing/tracingCollector": {
-      "types": "./dist/tracing/tracingCollector.d.ts",
-      "import": "./dist/tracing/tracingCollector.mjs"
-    },
-    "./tracing/tracingStore": {
-      "types": "./dist/tracing/tracingStore.d.ts",
-      "import": "./dist/tracing/tracingStore.mjs"
-    },
-    "./tracing/useTracing": {
-      "types": "./dist/tracing/useTracing.d.ts",
-      "import": "./dist/tracing/useTracing.mjs"
     },
     "./types": {
       "types": "./dist/types/index.d.ts",
