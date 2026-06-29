@@ -166,12 +166,7 @@ const Form = ({
     () => ({ fields, errors, values, registerField, unregisterField, getField, setFieldValue, setFieldError }),
     [fields, errors, values, registerField, unregisterField, getField, setFieldValue, setFieldError]
   );
-  useRegisterSource({
-    id,
-    source: 'form',
-    name: label ? label : `Form - ${id}`,
-    fields: sourceFields
-  });
+  useRegisterSource({ id, source: 'form', name: label ? label : `Form - ${id}`, fields: sourceFields });
 
   // Interactions Triggers
 
@@ -232,7 +227,6 @@ const Form = ({
   const handleSetFieldValue = useCallback(
     (params: InteractionCallbackParamValues) => {
       const { name, value } = params;
-
       setFieldValue(name as string, value as FieldValue);
     },
     [setFieldValue]
