@@ -33,14 +33,13 @@ const useCollectionContext = (
     previewMode = true
   }: UseCollectionContextProps = {} as UseCollectionContextProps
 ): UseCollectionContextResult => {
-  const plitziContext = usePlitziServiceContext();
+  const {
+    contexts: { CollectionContext, NavigationContext }
+  } = usePlitziServiceContext();
   const [collection, setCollection] = useState<(Collection & { record?: CollectionRecord }) | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [hasNextPage, setHasNextPage] = useState(false);
-  const {
-    contexts: { CollectionContext, NavigationContext }
-  } = plitziContext;
   const { routeParams, queryParams } = use(NavigationContext);
   const { fetchRecords, fetchCollection } = use(CollectionContext);
 
