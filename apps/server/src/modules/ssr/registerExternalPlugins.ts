@@ -1,7 +1,50 @@
+import crypto from 'node:crypto';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
 import type { PluginManager } from '../../plugins/manager';
 import type { OfflineDataRaw, PluginManifest, PluginRaw, PluginSourceFile } from '@plitzi/sdk-shared';
 
-const fetchManifest = async (resource: string): Promise<PluginManifest | null> => {
+// Plugin resources are versioned (immutable) URLs, so their manifests are cached to keep the network
+// fetch off the SSR critical path. The cache is stale-while-revalidate: a hit is served immediately
+// (even when expired) and, if expired, refreshed in the background so moving/"latest" URLs still update
+// within one render of staleness. A disk mirror survives restarts, so the fetch never blocks a render
+// once a resource has been seen at least once.
+const MANIFEST_TTL_MS = 10 * 60 * 1000;
+
+type ManifestCacheEntry = { manifest: PluginManifest; expiresAt: number };
+
+const manifestCache = new Map<string, ManifestCacheEntry>();
+const refreshing = new Set<string>();
+
+let cacheDir: string | undefined;
+const manifestCacheDir = (pluginManager: PluginManager): string => {
+  cacheDir ??= path.join(pluginManager.outputDir, '.manifest-cache');
+  return cacheDir;
+};
+
+const cacheFilePath = (dir: string, resource: string): string =>
+  path.join(dir, `${crypto.createHash('sha1').update(resource).digest('hex')}.json`);
+
+const readDiskEntry = async (dir: string, resource: string): Promise<ManifestCacheEntry | null> => {
+  try {
+    const raw = await fs.readFile(cacheFilePath(dir, resource), 'utf-8');
+    return JSON.parse(raw) as ManifestCacheEntry;
+  } catch {
+    return null;
+  }
+};
+
+const writeDiskEntry = async (dir: string, resource: string, entry: ManifestCacheEntry): Promise<void> => {
+  try {
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(cacheFilePath(dir, resource), JSON.stringify(entry), 'utf-8');
+  } catch (err) {
+    console.warn(`[SSR] Failed to persist plugin manifest cache for ${resource}:`, err);
+  }
+};
+
+const fetchAndStore = async (dir: string, resource: string): Promise<PluginManifest | null> => {
   try {
     const url = `${resource}/plugin-manifest.json`;
     const res = await fetch(url);
@@ -10,11 +53,41 @@ const fetchManifest = async (resource: string): Promise<PluginManifest | null> =
       return null;
     }
 
-    return (await res.json()) as PluginManifest;
+    const manifest = (await res.json()) as PluginManifest;
+    const entry: ManifestCacheEntry = { manifest, expiresAt: Date.now() + MANIFEST_TTL_MS };
+    manifestCache.set(resource, entry);
+    await writeDiskEntry(dir, resource, entry);
+
+    return manifest;
   } catch (err) {
     console.warn(`[SSR] Error fetching plugin manifest from ${resource}:`, err);
     return null;
   }
+};
+
+const revalidate = (dir: string, resource: string): void => {
+  if (refreshing.has(resource)) {
+    return;
+  }
+
+  refreshing.add(resource);
+  void fetchAndStore(dir, resource).finally(() => refreshing.delete(resource));
+};
+
+const fetchManifest = async (pluginManager: PluginManager, resource: string): Promise<PluginManifest | null> => {
+  const dir = manifestCacheDir(pluginManager);
+
+  const cached = manifestCache.get(resource) ?? (await readDiskEntry(dir, resource)) ?? undefined;
+  if (cached) {
+    manifestCache.set(resource, cached);
+    if (cached.expiresAt <= Date.now()) {
+      revalidate(dir, resource);
+    }
+
+    return cached.manifest;
+  }
+
+  return fetchAndStore(dir, resource);
 };
 
 const resolveAssetUrl = (resource: string, asset: PluginManifest['assets'][string]): string | null => {
@@ -42,7 +115,7 @@ const registerPlugin = async (pluginManager: PluginManager, plugin: PluginRaw): 
     return null;
   }
 
-  const manifest = await fetchManifest(plugin.resource);
+  const manifest = await fetchManifest(pluginManager, plugin.resource);
   if (!manifest) {
     return null;
   }
