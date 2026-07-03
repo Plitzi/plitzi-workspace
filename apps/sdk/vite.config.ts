@@ -207,14 +207,13 @@ export default defineConfig(({ mode, command }) => {
             manualChunks: undefined,
             // inlineDynamicImports: true, // false if u want to have chunks !devMode,
             entryFileNames: 'plitzi-sdk.js',
-            // assetFileNames: assetInfo => {
-            //   const { names } = assetInfo;
-            //   if (names[0] === 'index.css') {
-            //     return 'plitzi-sdk.css';
-            //   }
+            assetFileNames: assetInfo => {
+              if (assetInfo.names[0] === 'index.css') {
+                return 'plitzi-sdk.css';
+              }
 
-            //   return assetInfo.names[0];
-            // },
+              return assetInfo.names[0];
+            },
             globals: {
               react: 'React',
               'react-dom': 'ReactDOM',
