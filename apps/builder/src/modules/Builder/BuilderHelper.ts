@@ -147,8 +147,7 @@ export const getElementDefinition = (
   parentId: string = ''
 ) => {
   let elementDefinition = pick(componentDefinitions[type], ['definition', 'attributes']) as
-    | { definition: Element['definition']; attributes: Element['attributes'] }
-    | undefined;
+    { definition: Element['definition']; attributes: Element['attributes'] } | undefined;
   if (!elementDefinition) {
     return undefined;
   }

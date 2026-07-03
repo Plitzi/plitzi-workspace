@@ -18,8 +18,7 @@ export const getInitialItems = (
 
   items.forEach(item => {
     const element = cloneDeep(definitions[item]) as unknown as
-      | (Pick<ComponentDefinition, 'definition' | 'attributes'> & { id: string; initialItems?: string[] })
-      | undefined;
+      (Pick<ComponentDefinition, 'definition' | 'attributes'> & { id: string; initialItems?: string[] }) | undefined;
     if (!element) {
       return;
     }

@@ -511,8 +511,7 @@ class FlatMap {
   getElementVariables = (style: Style, elementId: Element['id'], flat = this.flat, variables = this.variables) => {
     const variablesFound: Schema['variables'] = [];
     const selectors = get(flat, `${elementId}.definition.styleSelectors`) as unknown as
-      | Element['definition']['styleSelectors']
-      | undefined;
+      Element['definition']['styleSelectors'] | undefined;
     if (!selectors) {
       return variablesFound;
     }

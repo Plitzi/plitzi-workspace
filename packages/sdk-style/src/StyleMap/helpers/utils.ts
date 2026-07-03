@@ -18,13 +18,7 @@ import type {
 const parseValue = (
   path: StyleCategory | undefined,
   value:
-    | StyleItem['attributes']
-    | StyleValue
-    | Partial<StyleObject>
-    | StyleVariants
-    | StyleStates
-    | StyleBlock
-    | undefined,
+    StyleItem['attributes'] | StyleValue | Partial<StyleObject> | StyleVariants | StyleStates | StyleBlock | undefined,
   prevValue: StyleObject
 ): StyleObject => {
   if (path && (typeof value === 'string' || typeof value === 'number')) {

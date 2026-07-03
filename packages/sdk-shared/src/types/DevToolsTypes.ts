@@ -30,15 +30,9 @@ export type LogStore = {
 };
 
 export type LogParams =
-  | LogNavigation['params']
-  | LogInteraction['params']
-  | LogEventBridge['params']
-  | LogStore['params'];
+  LogNavigation['params'] | LogInteraction['params'] | LogEventBridge['params'] | LogStore['params'];
 export type Log = { logType: string; message: ReactNode; time?: string } & (
-  | LogInteraction
-  | LogNavigation
-  | LogEventBridge
-  | LogStore
+  LogInteraction | LogNavigation | LogEventBridge | LogStore
 );
 
 export type ProviderCallback = (...args: unknown[]) => Record<string, unknown>;

@@ -18,11 +18,7 @@ export const CollectionsActions = {
 export type CollectionReducerActions =
   | {
       type:
-        | 'COLLECTIONS_INIT'
-        | 'COLLECTIONS_ADD'
-        | 'COLLECTIONS_ADD_MANY'
-        | 'COLLECTIONS_UPDATE'
-        | 'COLLECTIONS_REMOVE';
+        'COLLECTIONS_INIT' | 'COLLECTIONS_ADD' | 'COLLECTIONS_ADD_MANY' | 'COLLECTIONS_UPDATE' | 'COLLECTIONS_REMOVE';
       collections: Record<string, Collection>;
     }
   | { type: 'COLLECTION_RECORDS_ADD'; collectionId: string; record: CollectionRecord }

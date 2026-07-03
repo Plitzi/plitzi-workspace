@@ -51,9 +51,7 @@ export type CollectionFieldFormProps = {
   onValidate?: (
     values: z.infer<typeof collectionFieldSchema>
   ) =>
-    | { key: 'name' | 'machineName' | 'type' | 'params.required' | 'params.primary'; message: string }
-    | null
-    | undefined;
+    { key: 'name' | 'machineName' | 'type' | 'params.required' | 'params.primary'; message: string } | null | undefined;
 };
 
 const CollectionFieldForm = ({

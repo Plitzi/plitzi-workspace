@@ -14,16 +14,7 @@ export type WithFieldValueProps<T> = {
   name: string;
   defaultValue?: string;
   subType:
-    | 'hidden'
-    | 'text'
-    | 'number'
-    | 'email'
-    | 'password'
-    | 'select'
-    | 'checkbox'
-    | 'textarea'
-    | 'color'
-    | 'switch';
+    'hidden' | 'text' | 'number' | 'email' | 'password' | 'select' | 'checkbox' | 'textarea' | 'color' | 'switch';
   required: boolean;
   previewError?: boolean;
 } & T;

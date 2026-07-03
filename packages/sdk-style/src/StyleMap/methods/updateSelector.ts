@@ -24,13 +24,7 @@ const updateSelector = (
   selector: string,
   path: StyleCategory | undefined,
   value:
-    | StyleItem['attributes']
-    | StyleValue
-    | Partial<StyleObject>
-    | StyleVariants
-    | StyleStates
-    | StyleBlock
-    | undefined,
+    StyleItem['attributes'] | StyleValue | Partial<StyleObject> | StyleVariants | StyleStates | StyleBlock | undefined,
   params: { componentType?: string; styleSelector: string; styleState?: StyleState; styleVariant?: string }
 ) => {
   if (!(params as typeof params | undefined)) {

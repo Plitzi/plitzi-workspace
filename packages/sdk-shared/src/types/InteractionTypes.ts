@@ -80,8 +80,7 @@ export type Trigger<T extends Record<string, unknown> = Record<string, unknown>>
   title: string;
   preview?: InteractionCallbackPreviews | ((params: T) => InteractionCallbackPreviews);
   params:
-    | { [K in keyof T]: InteractionCallbackParam<T> }
-    | ((params: T) => { [K in keyof T]: InteractionCallbackParam<T> });
+    { [K in keyof T]: InteractionCallbackParam<T> } | ((params: T) => { [K in keyof T]: InteractionCallbackParam<T> });
 };
 
 export type Subscriptor<T extends Record<string, unknown> = Record<string, unknown>> = {

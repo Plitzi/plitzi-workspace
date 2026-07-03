@@ -38,8 +38,7 @@ const delayTime: InteractionCallback<{ returnMode: 'jsonObject' | 'json' | 'text
     if (returnMode === 'jsonObject') {
       try {
         const templateParsed = JSON.parse(processTwig(template, params) as string) as
-          | { [key: string]: unknown }
-          | undefined;
+          { [key: string]: unknown } | undefined;
         if (templateParsed && typeof templateParsed === 'object') {
           return {
             template: '',
