@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://cdn.plitzi.com" />
     <link rel="preconnect" href="https://server.plitzi.local:8888" />
-    <link rel="preconnect" href="https://api.plitzi.local" />
+    <link rel="preconnect" href="https://server.plitzi.local:8888" />
     <link rel="preconnect" href="https://ssr.plitzi.local:4000" />
 
     <link rel="modulepreload" href="<%= react %>" crossorigin />
@@ -65,13 +65,14 @@
           server: {
             basePath: '/',
             // Dashboard
-            apiServer: 'https://api.plitzi.local',
+            apiServer: 'https://server.plitzi.local:8888',
             ssrServer: 'https://ssr.plitzi.local:4000',
             // SDK
             nodeServer: 'https://server.plitzi.local:8888',
-            graphqlServer: 'https://server.plitzi.local:8888/graphql',
-            websocketServer: 'wss://server.plitzi.local:8888',
-            subscriptionServer: 'wss://server.plitzi.local:8888/subscriptions'
+            aiServer: 'https://server.plitzi.local:8891',
+            graphqlServer: 'https://server.plitzi.local:8890/graphql',
+            websocketServer: 'wss://server.plitzi.local:8890',
+            subscriptionServer: 'wss://server.plitzi.local:8890/subscriptions'
           },
           state: {}
         },

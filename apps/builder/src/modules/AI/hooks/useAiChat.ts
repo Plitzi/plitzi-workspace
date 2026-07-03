@@ -23,7 +23,7 @@ type QueueEntry = {
 
 const useAiChat = (providerSettings?: AiProviderSettings) => {
   const { server, webKey } = use(NetworkContext);
-  const { networkQuery } = useNetwork({ initLoading: false, server, webKey });
+  const { networkQuery } = useNetwork({ initLoading: false, server, webKey, baseUrl: server.aiServer });
   const [conversationId, setConversationId] = useStorage<string>('builder-state.aiChat.conversationId', '');
   const [mode, setMode] = useStorage<AiMode>('builder-state.aiChat.mode', 'build');
   const [messages, setMessages] = useState<AiMessage[]>([]);
@@ -110,7 +110,7 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
         abortRef.current = controller;
 
         const serverAttachments = entry.attachments.map(a => ({ type: a.type, mimeType: a.mimeType, data: a.data }));
-        const res = await fetch(`${server.nodeServer}/ai/chat`, {
+        const res = await fetch(`${server.aiServer}/ai/chat`, {
           method: 'POST',
           signal: controller.signal,
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${webKey}` },
@@ -200,7 +200,7 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
       clearErrors,
       networkQuery,
       setConversationId,
-      server.nodeServer,
+      server.aiServer,
       webKey,
       onThinking,
       onChunk,
@@ -325,7 +325,7 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
       return;
     }
 
-    const res = await fetch(`${server.nodeServer}/ai/compact`, {
+    const res = await fetch(`${server.aiServer}/ai/compact`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${webKey}` },
       body: JSON.stringify({ conversationId: id, ...providerSettingsRef.current })
@@ -339,7 +339,7 @@ const useAiChat = (providerSettings?: AiProviderSettings) => {
       setMessages([data.message]);
       resetUsage();
     }
-  }, [isStreaming, server.nodeServer, webKey, resetUsage]);
+  }, [isStreaming, server.aiServer, webKey, resetUsage]);
 
   const usedPercent = usage?.usedPercent ?? 0;
   const compactedAtRef = useRef(0);

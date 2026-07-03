@@ -14,6 +14,7 @@ const getEnvironment = (env: string = 'production', server?: Record<string, unkn
         ssrServer: 'https://ssr-stg.plitzi.com',
         // SDK
         nodeServer: 'https://server-stg.plitzi.com',
+        aiServer: 'https://server-stg.plitzi.com',
         graphqlServer: 'https://server-stg.plitzi.com/graphql',
         websocketServer: 'wss://server-stg.plitzi.com',
         subscriptionServer: 'wss://server-stg.plitzi.com/subscriptions',
@@ -28,6 +29,7 @@ const getEnvironment = (env: string = 'production', server?: Record<string, unkn
         ssrServer: 'https://ssr-dev.plitzi.com',
         // SDK
         nodeServer: 'https://server-dev.plitzi.com',
+        aiServer: 'https://server-dev.plitzi.com',
         graphqlServer: 'https://server-dev.plitzi.com/graphql',
         websocketServer: 'wss://server-dev.plitzi.com',
         subscriptionServer: 'wss://server-dev.plitzi.com/subscriptions',
@@ -38,13 +40,14 @@ const getEnvironment = (env: string = 'production', server?: Record<string, unkn
     default:
       return {
         // Dashboard
-        apiServer: 'https://api.plitzi.local',
+        apiServer: 'https://server.plitzi.local:8888',
         ssrServer: 'https://ssr.plitzi.local:4000',
         // SDK
         nodeServer: 'https://server.plitzi.local:8888',
-        graphqlServer: 'https://server.plitzi.local:8888/graphql',
-        websocketServer: 'wss://server.plitzi.local:8888',
-        subscriptionServer: 'wss://server.plitzi.local:8888/subscriptions',
+        aiServer: 'https://server.plitzi.local:8891',
+        graphqlServer: 'https://server.plitzi.local:8890/graphql',
+        websocketServer: 'wss://server.plitzi.local:8890',
+        subscriptionServer: 'wss://server.plitzi.local:8890/subscriptions',
         ...server
       };
   }

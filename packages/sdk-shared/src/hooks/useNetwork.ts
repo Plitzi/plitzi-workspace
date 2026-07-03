@@ -7,9 +7,10 @@ export type UseNetworkProps = {
   server?: Server;
   webKey?: string;
   internalUsage?: boolean;
+  baseUrl?: string;
 };
 
-const useNetwork = ({ initLoading = false, server, webKey, internalUsage = true }: UseNetworkProps) => {
+const useNetwork = ({ initLoading = false, server, webKey, internalUsage = true, baseUrl }: UseNetworkProps) => {
   const [networkLoading, setNetworkLoading] = useState(initLoading);
 
   const networkQuery = useCallback(
@@ -32,8 +33,7 @@ const useNetwork = ({ initLoading = false, server, webKey, internalUsage = true 
 
         let baseURL = '';
         if (internalUsage && server) {
-          const { nodeServer } = server;
-          baseURL = nodeServer;
+          baseURL = baseUrl ?? server.nodeServer;
         }
 
         let formData = params;
@@ -73,7 +73,7 @@ const useNetwork = ({ initLoading = false, server, webKey, internalUsage = true 
 
       return undefined;
     },
-    [webKey, internalUsage, server]
+    [webKey, internalUsage, server, baseUrl]
   );
 
   return { networkLoading, networkQuery };

@@ -9,6 +9,7 @@ export const getEnvironmentServer = (server?: Partial<Server>): Server => {
     basePath: '',
     host: 'https://plitzi.com',
     nodeServer: 'https://server.plitzi.com',
+    aiServer: 'https://server.plitzi.com',
     graphqlServer: 'https://server.plitzi.com/graphql',
     websocketServer: 'wss://server.plitzi.com',
     subscriptionServer: 'wss://server.plitzi.com/subscriptions',

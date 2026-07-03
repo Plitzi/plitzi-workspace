@@ -23,6 +23,7 @@ import baseUsePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-
 import App from './App';
 
 // SDK Style
+import './assets/plitzi-sdk.scss';
 if (import.meta.env.PROD) {
   void import('./assets/plitzi-sdk-devtools.scss');
 }

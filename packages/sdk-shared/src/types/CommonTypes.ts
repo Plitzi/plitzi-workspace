@@ -11,6 +11,7 @@ export type Server<T extends Record<string, unknown> = Record<string, unknown>> 
   domain?: string;
   requestUrl?: string;
   nodeServer: string;
+  aiServer: string;
   graphqlServer: string;
   websocketServer: string;
   subscriptionServer: string;
