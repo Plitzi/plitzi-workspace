@@ -14,8 +14,8 @@ const getEnvironment = (env: string = 'production', server?: Record<string, unkn
         ssrServer: 'https://ssr-stg.plitzi.com',
         // SDK
         nodeServer: 'https://server-stg.plitzi.com',
-        aiServer: 'https://server-stg.plitzi.com',
-        graphqlServer: 'https://server-stg.plitzi.com/graphql',
+        aiServer: 'https://mcp-stg.plitzi.com',
+        graphqlServer: 'https://server-stg.plitzi.com',
         websocketServer: 'wss://server-stg.plitzi.com',
         subscriptionServer: 'wss://server-stg.plitzi.com/subscriptions',
         ...server
@@ -29,8 +29,8 @@ const getEnvironment = (env: string = 'production', server?: Record<string, unkn
         ssrServer: 'https://ssr-dev.plitzi.com',
         // SDK
         nodeServer: 'https://server-dev.plitzi.com',
-        aiServer: 'https://server-dev.plitzi.com',
-        graphqlServer: 'https://server-dev.plitzi.com/graphql',
+        aiServer: 'https://mcp-dev.plitzi.com',
+        graphqlServer: 'https://server-dev.plitzi.com',
         websocketServer: 'wss://server-dev.plitzi.com',
         subscriptionServer: 'wss://server-dev.plitzi.com/subscriptions',
         ...server
@@ -38,16 +38,19 @@ const getEnvironment = (env: string = 'production', server?: Record<string, unkn
     }
 
     default:
+      // Local `yarn start` fronts every role with the dev gateway on :443, so each tier is its own
+      // sub-domain with no port and no path — the same shape as dev/stg/prod. SSR keeps its own
+      // server (own TLS/http2) on :4000.
       return {
         // Dashboard
-        apiServer: 'https://server.plitzi.local:8888',
-        ssrServer: 'https://ssr.plitzi.local:4000',
+        apiServer: 'https://api.plitzi.local',
+        ssrServer: 'https://ssr.plitzi.local',
         // SDK
-        nodeServer: 'https://server.plitzi.local:8888',
-        aiServer: 'https://server.plitzi.local:8891',
-        graphqlServer: 'https://server.plitzi.local:8890/graphql',
-        websocketServer: 'wss://server.plitzi.local:8890',
-        subscriptionServer: 'wss://server.plitzi.local:8890/subscriptions',
+        nodeServer: 'https://server.plitzi.local',
+        aiServer: 'https://mcp.plitzi.local',
+        graphqlServer: 'https://server.plitzi.local',
+        websocketServer: 'wss://server.plitzi.local',
+        subscriptionServer: 'wss://server.plitzi.local/subscriptions',
         ...server
       };
   }

@@ -9,9 +9,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://cdn.plitzi.com" />
-    <link rel="preconnect" href="https://server.plitzi.local:8888" />
-    <link rel="preconnect" href="https://server.plitzi.local:8888" />
-    <link rel="preconnect" href="https://ssr.plitzi.local:4000" />
+    <link rel="preconnect" href="https://server.plitzi.local" />
+    <link rel="preconnect" href="https://api.plitzi.local" />
+    <link rel="preconnect" href="https://ssr.plitzi.local" />
 
     <link rel="modulepreload" href="<%= react %>" crossorigin />
     <link rel="modulepreload" href="<%= reactDom %>" crossorigin />
@@ -58,21 +58,21 @@
         'plitzi',
         {
           webKey:
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InNwYWNlSWQiOjF9LCJpc3MiOiJodHRwczovL3NlcnZlci5wbGl0emkubG9jYWw6ODg4OCIsImF1ZCI6WyJodHRwczovL2FwcC5wbGl0emkubG9jYWwiLCJodHRwczovL3Nzci5wbGl0emkubG9jYWw6NDAwMCIsImh0dHBzOi8vc2VydmVyLnBsaXR6aS5sb2NhbDo4ODg4IiwiaHR0cHM6Ly9hcHAucGxpdHppLmxvY2FsOjMwMDAiLCJodHRwczovL2FwcC5wbGl0emkubG9jYWw6MzAwMSIsImh0dHBzOi8vd2Vic2l0ZS5wbGl0emkuYXBwIl0sInZlcnNpb24iOjEsImV4cCI6MTc4NTczMjI4NSwiaWF0IjoxNzgzMTAyMjg5LCJuYmYiOjE3ODMxMDIyODl9.vIfZkUZ76Pd4GlynM7mOnMcS4c9RKvGs6ObHIWDmUA0',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InNwYWNlSWQiOjF9LCJpc3MiOiJodHRwczovL3NlcnZlci5wbGl0emkubG9jYWwiLCJhdWQiOlsiaHR0cHM6Ly9hcHAucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9zc3IucGxpdHppLmxvY2FsOjQwMDAiLCJodHRwczovL3NlcnZlci5wbGl0emkubG9jYWwiLCJodHRwczovL2FwaS5wbGl0emkubG9jYWwiLCJodHRwczovL21jcC5wbGl0emkubG9jYWwiLCJodHRwczovL2FwcC5wbGl0emkubG9jYWw6MzAwMCIsImh0dHBzOi8vYXBwLnBsaXR6aS5sb2NhbDozMDAxIiwiaHR0cHM6Ly93ZWJzaXRlLnBsaXR6aS5hcHAiXSwidmVyc2lvbiI6MSwiZXhwIjoxNzg1ODI2MDcwLCJpYXQiOjE3ODMxOTYwNzQsIm5iZiI6MTc4MzE5NjA3NH0.RJb3-crFskL_qIG4yxvEtiQ-omXKNROR4dHBvny_-MI',
           environment: 'main',
           revision: 0,
           renderMode: 'raw',
           server: {
             basePath: '/',
             // Dashboard
-            apiServer: 'https://server.plitzi.local:8888',
-            ssrServer: 'https://ssr.plitzi.local:4000',
+            apiServer: 'https://api.plitzi.local',
+            ssrServer: 'https://ssr.plitzi.local',
             // SDK
-            nodeServer: 'https://server.plitzi.local:8888',
-            aiServer: 'https://server.plitzi.local:8891',
-            graphqlServer: 'https://server.plitzi.local:8890/graphql',
-            websocketServer: 'wss://server.plitzi.local:8890',
-            subscriptionServer: 'wss://server.plitzi.local:8890/subscriptions'
+            nodeServer: 'https://server.plitzi.local',
+            aiServer: 'https://mcp.plitzi.local',
+            graphqlServer: 'https://server.plitzi.local',
+            websocketServer: 'wss://server.plitzi.local',
+            subscriptionServer: 'wss://server.plitzi.local/subscriptions'
           },
           state: {}
         },
