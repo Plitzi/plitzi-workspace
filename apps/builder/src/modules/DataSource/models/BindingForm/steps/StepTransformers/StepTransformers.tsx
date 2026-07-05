@@ -4,7 +4,7 @@ import Heading from '@plitzi/plitzi-ui/Heading';
 import { get, set } from '@plitzi/plitzi-ui/helpers';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import { produce } from 'immer';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 
 import utility, { utilityOptions } from '@plitzi/sdk-shared/dataSource/utility';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
@@ -13,27 +13,20 @@ import TransformerParam from './TransformerParam';
 
 import type { BindingSchema } from '../../BindingForm';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
-import type { DataSourceUtilityParams, DisplayMode, SourceField } from '@plitzi/sdk-shared';
+import type { DataSourceUtilityParams, Element, SourceField } from '@plitzi/sdk-shared';
 
 export type StepTransformersProps = {
+  element: Element;
   dataSourceFields?: Record<string, SourceField[]>;
 };
 
-const StepTransformers = ({ dataSourceFields }: StepTransformersProps) => {
+const StepTransformers = ({ element, dataSourceFields }: StepTransformersProps) => {
   const form = useFormContext<BindingSchema>();
   const { control, setValue } = form;
   const watchTransformers = useFormWatch(form, 'transformers');
   const watchTransformersRef = useRef(watchTransformers);
   watchTransformersRef.current = watchTransformers;
   const [stylePlatform] = useBuilderStore('style.platform');
-  const styleSelectors = useMemo(() => {
-    return (Object.keys(stylePlatform) as DisplayMode[]).map(displayMode => ({
-      label: displayMode,
-      options: Object.values(stylePlatform[displayMode])
-        .filter(selector => selector.type === 'class')
-        .map(selector => ({ label: selector.name, value: selector.name }))
-    }));
-  }, [stylePlatform]);
 
   const handleClickAdd = useCallback(
     () => setValue('transformers', [...watchTransformers, { type: 'utility', action: '', params: {} }]),
@@ -77,6 +70,10 @@ const StepTransformers = ({ dataSourceFields }: StepTransformersProps) => {
         'transformers',
         produce(watchTransformersRef.current, draft => {
           set(draft, `${index}.params.${id}`, paramValue);
+
+          if (id === 'key') {
+            set(draft, `${index}.params.variant`, '');
+          }
         })
       );
     },
@@ -122,7 +119,11 @@ const StepTransformers = ({ dataSourceFields }: StepTransformersProps) => {
                         description={description}
                         value={paramValue}
                         index={i}
-                        options={action === 'styleSelector' && paramKey === 'selector' ? styleSelectors : options}
+                        options={
+                          typeof options === 'function'
+                            ? (options as (...args: unknown[]) => Option[])(params, element, { stylePlatform })
+                            : options
+                        }
                         dataSourceFields={dataSourceFields}
                         disabled={typeof disabled === 'function' ? disabled(params) : disabled}
                         onChange={handleChangeParam}

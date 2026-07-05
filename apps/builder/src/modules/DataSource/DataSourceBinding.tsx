@@ -165,7 +165,7 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
         { path: 'visibility', label: 'Visibility' },
         ...Object.keys(definition.styleSelectors).flatMap(styleSelector => [
           { path: `styleSelectors.${styleSelector}`, label: `Style Selector - ${styleSelector}` },
-          { path: `styleVariant.${styleSelector}`, label: `Style Variant - ${styleSelector}` }
+          { path: 'styleVariant', label: 'Style Variant' }
         ])
       ]
     }),
@@ -233,6 +233,7 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
                     })}
                   >
                     <BindingForm
+                      element={element}
                       value={bindingFormValues[fkey]}
                       category={fkey}
                       onClose={handleClickCloseForm(fkey)}

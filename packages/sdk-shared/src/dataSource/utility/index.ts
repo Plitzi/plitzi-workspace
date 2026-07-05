@@ -6,6 +6,7 @@ import dateConverter from './dateConverter';
 import staticValue from './staticValue';
 import stringToArray from './stringToArray';
 import styleSelector from './styleSelector';
+import styleVariant from './styleVariant';
 import twigTemplate from './twigTemplate';
 
 import type { DataSourceUtility } from '../../types';
@@ -17,7 +18,8 @@ const utilities = {
   capitalize,
   arrayMap,
   stringToArray,
-  styleSelector
+  styleSelector,
+  styleVariant
 } as Record<string, DataSourceUtility<any, any, any>>;
 
 export const utilityOptions = Object.values(utilities).map(({ title, action }) => ({ label: title, value: action }));

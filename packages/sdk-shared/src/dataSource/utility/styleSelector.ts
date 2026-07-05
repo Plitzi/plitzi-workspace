@@ -1,6 +1,6 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 
-import type { DataSourceUtility, DataSourceUtilityParamsValue, Element } from '../../types';
+import type { DataSourceUtility, DataSourceUtilityParamsValue, DisplayMode, Element, Style } from '../../types';
 
 const callback = (
   _source: string,
@@ -54,7 +54,23 @@ const styleSelector: DataSourceUtility = {
       label: 'Selector',
       defaultValue: '',
       type: 'select',
-      options: []
+      options: (
+        _params: DataSourceUtilityParamsValue,
+        _element?: Partial<Element>,
+        data?: { stylePlatform?: Style['platform'] }
+      ) => {
+        const stylePlatform = data?.stylePlatform;
+        if (!stylePlatform) {
+          return [];
+        }
+
+        return (Object.keys(stylePlatform) as DisplayMode[]).map(displayMode => ({
+          label: displayMode,
+          options: Object.values(stylePlatform[displayMode])
+            .filter(item => item.type === 'class')
+            .map(item => ({ label: item.name, value: item.name }))
+        }));
+      }
     }
   },
   preview: { append: '', originalSelector: '', selector: '' },

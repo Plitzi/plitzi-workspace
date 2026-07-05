@@ -3,6 +3,9 @@
 import type { Element } from './SchemaTypes';
 import type { Field, RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 
+export type DataSourceUtilityParamsOption =
+  { label: string; value: string } | { label: string; options: { label: string; value: string }[] };
+
 export type DataSourceUtilityParams<TParams = string | boolean | number> = Record<
   string,
   {
@@ -11,7 +14,13 @@ export type DataSourceUtilityParams<TParams = string | boolean | number> = Recor
     description?: string;
     defaultValue?: string | boolean | number;
     disabled?: boolean | ((params: DataSourceUtilityParamsValue<TParams>) => boolean);
-    options?: { label: string; value: string }[];
+    options?:
+      | DataSourceUtilityParamsOption
+      | ((
+          params: DataSourceUtilityParamsValue<TParams>,
+          element?: Partial<Element>,
+          data?: Record<string, unknown>
+        ) => DataSourceUtilityParamsOption[]);
   }
 >;
 

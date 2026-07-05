@@ -11,7 +11,7 @@ import StepTransformers from './steps/StepTransformers';
 import StepWhen from './steps/StepWhen';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { ElementBinding, SourceField, SourceMeta } from '@plitzi/sdk-shared';
+import type { Element, ElementBinding, SourceField, SourceMeta } from '@plitzi/sdk-shared';
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const bindingForm = z.object({
@@ -32,6 +32,7 @@ export const bindingForm = z.object({
 export type BindingSchema = z.infer<typeof bindingForm>;
 
 export type BindingFormProps = {
+  element: Element;
   category?: string;
   attributes?: { label: string; path: string }[];
   sources: Record<string, SourceMeta>;
@@ -41,7 +42,7 @@ export type BindingFormProps = {
 
 const totalSteps = 4;
 
-const BindingForm = ({ category = '', attributes, sources, value, onClose }: BindingFormProps) => {
+const BindingForm = ({ element, category = '', attributes, sources, value, onClose }: BindingFormProps) => {
   const form = useForm({
     defaultValues: { id: '', source: '', fromPath: '', toPath: '', when: {}, transformers: [], ...value },
     config: { schema: bindingForm }
@@ -103,7 +104,7 @@ const BindingForm = ({ category = '', attributes, sources, value, onClose }: Bin
           <>
             {step === 1 && <StepSettings source={watchSource} fields={fields} attributes={attributes} />}
             {step === 2 && <StepWhen dataSourceFields={dataSourceFields} />}
-            {step === 3 && <StepTransformers dataSourceFields={dataSourceFields} />}
+            {step === 3 && <StepTransformers dataSourceFields={dataSourceFields} element={element} />}
             {step === 4 && <StepPreview sources={sources} fields={fields} category={category} />}
           </>
         )}
