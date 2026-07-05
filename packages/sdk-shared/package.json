@@ -102,6 +102,10 @@
       "types": "./dist/dataSource/utility/styleSelector.d.ts",
       "import": "./dist/dataSource/utility/styleSelector.mjs"
     },
+    "./dataSource/utility/styleVariant": {
+      "types": "./dist/dataSource/utility/styleVariant.d.ts",
+      "import": "./dist/dataSource/utility/styleVariant.mjs"
+    },
     "./dataSource/utility/twigTemplate": {
       "types": "./dist/dataSource/utility/twigTemplate.d.ts",
       "import": "./dist/dataSource/utility/twigTemplate.mjs"

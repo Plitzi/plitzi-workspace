@@ -15,12 +15,13 @@ export type DataSourceUtilityParams<TParams = string | boolean | number> = Recor
     defaultValue?: string | boolean | number;
     disabled?: boolean | ((params: DataSourceUtilityParamsValue<TParams>) => boolean);
     options?:
-      | DataSourceUtilityParamsOption
+      | DataSourceUtilityParamsOption[]
+      | Promise<DataSourceUtilityParamsOption[]>
       | ((
           params: DataSourceUtilityParamsValue<TParams>,
           element?: Partial<Element>,
           data?: Record<string, unknown>
-        ) => DataSourceUtilityParamsOption[]);
+        ) => DataSourceUtilityParamsOption[] | Promise<DataSourceUtilityParamsOption[]>);
   }
 >;
 
