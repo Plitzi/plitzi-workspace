@@ -1,5 +1,13 @@
 # @plitzi/sdk-shared
 
+## 0.32.4
+
+### Patch Changes
+
+- v0.32.4
+- Updated dependencies
+  - @plitzi/nexus@0.32.4
+
 ## 0.32.3
 
 ### Patch Changes

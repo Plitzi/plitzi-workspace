@@ -1,5 +1,11 @@
 # @plitzi/nexus
 
+## 0.32.4
+
+### Patch Changes
+
+- v0.32.4
+
 ## 0.32.3
 
 ### Patch Changes
