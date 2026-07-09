@@ -1,15 +1,11 @@
-import * as tools from './tools';
+export { createMcpServer, handleMcp, serveMcp, readMcpBody } from './handler';
+export type { McpState } from './server';
 
-export { readMcpBody, handleMcp } from './handler';
-export { createMcpServer } from './server';
-export {
-  zodToJsonSchema,
-  getAllowedModes,
-  toolResponseOk,
-  toolResponseErr,
-  bindTools,
-  isToolActive,
-  resolveToolHandler
-} from './helpers';
+export { readResource, resourceVersion, registerResources, buildTypeRegistry, cssProperties } from './resources';
+export { apply, preview, validate, search, validateOperations, operation } from './tools';
+export type { ApplyInput, WriteResponse, Persisters, SearchInput, ValidateInput, Operation } from './tools';
 
-export { tools };
+export { computeVersion } from './helpers';
+export type { Space } from './helpers';
+
+export type * from './types';

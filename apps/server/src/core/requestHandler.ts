@@ -9,6 +9,7 @@ import { authMiddleware } from '../middlewares/auth';
 import { basicAuthMiddleware } from '../middlewares/basicAuth';
 import { spaceDeploymentMiddleware } from '../middlewares/spaceDeployment';
 import { handleMcp } from '../modules/mcp/handler';
+import { handleMcp as handleMcpLegacy } from '../modules/mcp-legacy/handler';
 import { handleRsc } from '../modules/rsc/handler';
 import { renderSSR } from '../modules/ssr/handler';
 
@@ -155,8 +156,15 @@ const handleRequest = async (
   }
 
   const mcpPath = config.mcp?.path ?? '/mcp';
+
+  if (config.mcpAi?.enabled && req.path.startsWith(mcpPath)) {
+    await handleMcp(raw, rawRes as unknown as ServerResponse, req, config.adapters);
+
+    return;
+  }
+
   if (config.mcp && (config.mcp.enabled ?? true) && req.path.startsWith(mcpPath)) {
-    await handleMcp(raw, rawRes as unknown as ServerResponse, config.mcp);
+    await handleMcpLegacy(raw, rawRes as unknown as ServerResponse, config.mcp);
 
     return;
   }

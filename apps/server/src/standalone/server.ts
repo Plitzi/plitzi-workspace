@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -69,10 +69,19 @@ const getRscData = async (
   return { serverData };
 };
 
-const adapters: SSRAdapters = { getOfflineData, getSpaceDeployment, getRscData };
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Persists mcp-ai writes back to the sample space (git-restore to reset). A real platform adapter must also
+// recompute style.cache; the SDK renderer reads that cache, though mcp-ai reads/writes the structured source.
+const saveOfflineData = (_spaceId: number, _environment: string, data: OfflineDataRaw): Promise<void> => {
+  writeFileSync(path.resolve(__dirname, 'schemas/basic', 'space.json'), JSON.stringify({ schema: data.schema }, null, 2));
+  writeFileSync(path.resolve(__dirname, 'schemas/basic', 'style.json'), JSON.stringify(data.style, null, 2));
+
+  return Promise.resolve();
+};
+
+const adapters: SSRAdapters = { getOfflineData, getSpaceDeployment, getRscData, saveOfflineData };
 
 const server = createSSRServer({
   port: PORT,
@@ -83,6 +92,7 @@ const server = createSSRServer({
     '/sdk-assets': path.resolve(process.cwd(), '../sdk/dist')
   },
   httpVersion: 1,
+  mcpAi: { enabled: true },
   // streaming: true,
   // ssrOnly: true,
   plugins: {

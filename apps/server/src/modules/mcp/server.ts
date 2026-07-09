@@ -1,48 +1,75 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 
-import { bindTools } from './helpers';
 import { registerResources } from './resources';
-import * as defaultTools from './tools';
-import PACKAGE from '../../../package.json' with { type: 'json' };
+import { serverInstructions } from './resources/guide';
+import { apply, applyShape, preview, search, searchShape, validate, validateShape } from './tools';
 
-import type AIEngine from '../ai/AIEngine';
-import type { McpAdapters, McpTool, McpPrompt, McpResource } from '@plitzi/sdk-shared';
+import type { Space } from './helpers';
+import type { Persisters } from './tools';
+import type { Env } from './types';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { Schema, Style } from '@plitzi/sdk-shared';
 
-export const createMcpServer = (
-  adapters: Partial<McpAdapters> = {},
-  engine: AIEngine,
-  tools?: McpTool[],
-  prompts?: McpPrompt[],
-  resources?: McpResource[]
-) => {
-  // Bind once: every tool now carries a handler (adapter tools get the adapter wrapped in), so
-  // registration is uniform and unusable tools (missing adapter) are dropped.
-  const boundTools = bindTools([...Object.values(defaultTools), ...(tools ?? [])], adapters);
-  const server = new McpServer({ name: 'plitzi-mcp', version: PACKAGE.version });
-  engine.setToolsAvailables(boundTools);
-  registerResources(server, resources, engine.readResource);
+/** The two Plitzi schemas the platform stores and persists separately, plus a persister for each. */
+export interface McpState {
+  env: Env;
+  schema: Schema;
+  style: Style;
+  persistSchema?: (schema: Schema) => Promise<void>;
+  persistStyle?: (style: Style) => Promise<void>;
+}
 
-  for (const tool of boundTools) {
-    // Only expose tools permitted in the current mode (e.g. hide write tools in plan mode), so the
-    // MCP tool set matches what the direct providers advertise via getActiveTools.
-    if (!engine.can(tool.name)) {
-      continue;
-    }
+const asText = (data: unknown): CallToolResult => ({ content: [{ type: 'text', text: JSON.stringify(data) }] });
 
-    // outputSchema is intentionally omitted from the MCP registration: the SDK would force
-    // every result to carry an object-shaped structuredContent and reject boolean/array/empty
-    // payloads. Output validation is handled uniformly across all providers by AIEngine instead.
-    const { title, description, inputSchema, annotations } = tool.mcpDefinition;
-    const definition = { title, description, inputSchema, annotations };
+export const createMcpServer = (state: McpState): McpServer => {
+  const { env } = state;
+  const space: Space = { schema: state.schema, style: state.style };
+  const persisters: Persisters = { schema: state.persistSchema, style: state.persistStyle };
+  const server = new McpServer({ name: 'plitzi-mcp', version: '0.3.0' }, { instructions: serverInstructions });
 
-    server.registerTool(tool.name, definition, engine.execute(tool.name, tool.handler));
-  }
+  registerResources(server, space, env);
 
-  if (prompts) {
-    for (const prompt of prompts) {
-      server.registerPrompt(prompt.name, prompt.definition, engine.executePrompt(prompt.name, prompt.handler));
-    }
-  }
+  server.registerTool(
+    'plitzi_apply',
+    {
+      title: 'Apply',
+      description:
+        'Validate, apply and persist a batch of operations atomically. Returns the changed resources and their ' +
+        'new versions. Rejects the whole batch on any error or version conflict.',
+      inputSchema: applyShape
+    },
+    async args => asText(await apply(args, space, persisters))
+  );
+
+  server.registerTool(
+    'plitzi_preview',
+    {
+      title: 'Preview',
+      description: 'Validate and apply a batch in memory without persisting. Returns the resources it would change.',
+      inputSchema: applyShape
+    },
+    args => asText(preview(args, space))
+  );
+
+  server.registerTool(
+    'plitzi_validate',
+    {
+      title: 'Validate',
+      description: 'Check a batch of operations without executing them. Returns teachable errors and warnings.',
+      inputSchema: validateShape
+    },
+    args => asText(validate(args, space))
+  );
+
+  server.registerTool(
+    'plitzi_search',
+    {
+      title: 'Search',
+      description: 'Find elements by label, type or attribute value across all pages.',
+      inputSchema: searchShape
+    },
+    args => asText(search(args, space))
+  );
 
   return server;
 };

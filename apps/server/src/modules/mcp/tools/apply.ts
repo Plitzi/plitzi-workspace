@@ -1,0 +1,76 @@
+import { cloneSpace } from '../helpers';
+import { applyOperations } from './mutate';
+import { changedResources, conflictMessage, detectConflicts } from './state';
+import { validateOperations } from './validator';
+
+import type { ApplyInput, Persisters, WriteResponse } from './state';
+import type { Space } from '../helpers';
+import type { Env } from '../types';
+
+const noWarnings = (warnings: string[]): string[] | undefined => (warnings.length > 0 ? warnings : undefined);
+
+export const apply = async (input: ApplyInput, space: Space, persisters?: Persisters): Promise<WriteResponse> => {
+  const env = (input.environment ?? 'main') as Env;
+
+  const validation = validateOperations(space, input.operations);
+  if (!validation.valid) {
+    return {
+      applied: false,
+      persisted: false,
+      summary: { created: 0, updated: 0, deleted: 0 },
+      changed: [],
+      errors: validation.errors,
+      warnings: noWarnings(validation.warnings)
+    };
+  }
+
+  const conflicts = detectConflicts(space, env, input.expectedResourceVersions);
+  if (conflicts.length > 0) {
+    return {
+      applied: false,
+      persisted: false,
+      summary: { created: 0, updated: 0, deleted: 0 },
+      changed: [],
+      conflict: { message: conflictMessage, conflicts }
+    };
+  }
+
+  const draft = cloneSpace(space);
+  const outcome = applyOperations(draft, env, input.operations);
+  if (outcome.errors.length > 0) {
+    return {
+      applied: false,
+      persisted: false,
+      summary: { created: 0, updated: 0, deleted: 0 },
+      changed: [],
+      errors: outcome.errors,
+      warnings: noWarnings(validation.warnings)
+    };
+  }
+
+  // Persist each schema that changed to its own store; unsaved when a changed schema has no persister.
+  let persisted = true;
+  if (outcome.changedSchema) {
+    if (persisters?.schema) {
+      await persisters.schema(draft.schema);
+    } else {
+      persisted = false;
+    }
+  }
+
+  if (outcome.changedStyle) {
+    if (persisters?.style) {
+      await persisters.style(draft.style);
+    } else {
+      persisted = false;
+    }
+  }
+
+  return {
+    applied: true,
+    persisted,
+    summary: { created: outcome.created, updated: outcome.updated, deleted: outcome.deleted },
+    changed: changedResources(draft, env, outcome.staleResources),
+    warnings: noWarnings(validation.warnings)
+  };
+};

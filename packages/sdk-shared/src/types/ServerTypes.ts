@@ -141,6 +141,10 @@ export type SSRRscData = {
 export type SSRAdapters = {
   getOfflineData: (spaceId: number, environment: string, revision?: number) => Promise<OfflineDataRaw | undefined>;
   getSpaceDeployment: (req: SSRRequest) => Promise<SSRSpaceDeployment>;
+  /** Persist a space mutated by the mcp-ai `apply` tool. Implementations must recompute derived caches
+   *  (notably `style.cache`) before storing. When omitted, mcp-ai runs read/preview/validate only and
+   *  `apply` reports `persisted: false`. */
+  saveOfflineData?: (spaceId: number, environment: string, data: OfflineDataRaw) => Promise<void>;
   getUser?: (req: SSRRequest) => Promise<SSRUser | undefined>;
   onLogin?: (req: SSRRequest, res: SSRResponseHelpers) => Promise<boolean>;
   onLogout?: (req: SSRRequest, res: SSRResponseHelpers) => Promise<void>;
@@ -203,6 +207,12 @@ export type SSRServerConfig = {
   rsc?: SSRRscConfig;
   /** MCP (Model Context Protocol) server configuration — exposes schema tools to Claude. */
   mcp?: McpServerConfig;
+  /** AI-native MCP server — replaces the standard MCP with a zero-hallucination batch protocol.
+   *  When enabled, requests to the MCP path serve the AI-native server instead. */
+  mcpAi?: {
+    enabled?: boolean;
+    path?: string;
+  };
   adapters: SSRAdapters;
   /** Cache-buster appended as ?v=<assetVersion> to all default SDK asset URLs (jsPath, cssPath, react vendor). Compute from file mtime or package version at startup. */
   assetVersion?: string;

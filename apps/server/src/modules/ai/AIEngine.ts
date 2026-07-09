@@ -1,4 +1,4 @@
-import { toolResponseErr } from '../mcp/helpers';
+import { toolResponseErr } from '../mcp-legacy/helpers';
 
 import type {
   AiMode,
