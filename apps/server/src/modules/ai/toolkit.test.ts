@@ -1,11 +1,7 @@
-import { vi, describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { z } from 'zod';
 
-import { zodToJsonSchema, getAllowedModes, toolResponseOk, toolResponseErr, adapterWrapper } from './helpers';
-
-import type { AiContext } from '@plitzi/sdk-shared';
-
-const ctx = {} as AiContext;
+import { zodToJsonSchema, getAllowedModes, toolResponseOk, toolResponseErr } from './toolkit';
 
 describe('zodToJsonSchema', () => {
   it('converts a flat ZodObject', () => {
@@ -130,34 +126,5 @@ describe('toolResponseErr', () => {
 
     expect(result.content[0].text).toBe('DB error');
     expect(result.isError).toBe(true);
-  });
-});
-
-describe('adapterWrapper', () => {
-  it('returns toolResponseErr when handler is undefined', async () => {
-    const wrapped = adapterWrapper('myAdapter', undefined);
-    const result = await wrapped({}, ctx);
-
-    expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain('myAdapter');
-  });
-
-  it('calls the handler and returns toolResponseOk on success', async () => {
-    const handler = vi.fn().mockResolvedValue({ data: { id: '1' } });
-    const wrapped = adapterWrapper('myAdapter', handler);
-    const result = await wrapped({ name: 'Test' }, ctx);
-
-    expect(handler).toHaveBeenCalledWith({ name: 'Test' }, ctx);
-    expect(result.data).toEqual({ id: '1' });
-    expect((result as Record<string, unknown>).isError).toBeUndefined();
-  });
-
-  it('returns toolResponseErr when handler returns an error object', async () => {
-    const handler = vi.fn().mockResolvedValue({ error: 'Not found' });
-    const wrapped = adapterWrapper('myAdapter', handler);
-    const result = await wrapped({}, ctx);
-
-    expect(result.isError).toBe(true);
-    expect(result.content[0].text).toBe('Not found');
   });
 });

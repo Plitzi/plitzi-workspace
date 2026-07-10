@@ -1,15 +1,6 @@
 import { z } from 'zod';
 
-import type {
-  AiContext,
-  AiMode,
-  McpAdapter,
-  McpAdapters,
-  McpTool,
-  McpToolHandler,
-  McpToolHandlerResult,
-  ToolOperationType
-} from '@plitzi/sdk-shared';
+import type { AiMode, McpTool, McpToolHandler, McpToolHandlerResult, ToolOperationType } from '@plitzi/sdk-shared';
 
 export const zodToJsonSchema = (schema: unknown): Record<string, unknown> => {
   if (schema instanceof z.ZodObject) {
@@ -93,41 +84,11 @@ export const toolResponseErr = (error: Error | string): McpToolHandlerResult => 
   isError: true as const
 });
 
-// A tool is usable when it has a direct handler or its declared adapter is registered.
-export const isToolActive = (tool: McpTool, adapters: Partial<McpAdapters>): boolean =>
-  Boolean(tool.handler || (tool.adapterName && adapters[tool.adapterName]));
+// A tool is usable when it carries a direct handler.
+export const isToolActive = (tool: McpTool): boolean => Boolean(tool.handler);
 
-// Resolve the single execution path for a tool: its own handler, or the adapter wrapped as a handler.
-export const resolveToolHandler = (tool: McpTool, adapters: Partial<McpAdapters>): McpToolHandler | undefined => {
-  if (tool.handler) {
-    return tool.handler;
-  }
+// The single execution path for a tool: its own handler.
+export const resolveToolHandler = (tool: McpTool): McpToolHandler | undefined => tool.handler;
 
-  if (tool.adapterName) {
-    return adapterWrapper(tool.adapterName, adapters[tool.adapterName] as McpAdapter | undefined);
-  }
-
-  return undefined;
-};
-
-// Bind a list of tools against the runtime adapters: keeps only usable tools and gives each a
-// guaranteed handler, so every consumer (MCP server, providers, direct callers) runs them identically.
-export const bindTools = (tools: McpTool[], adapters: Partial<McpAdapters>): McpTool[] =>
-  tools
-    .filter(tool => isToolActive(tool, adapters))
-    .map(tool => ({ ...tool, handler: resolveToolHandler(tool, adapters) }));
-
-export const adapterWrapper = (adapterName: string, handler?: McpAdapter): McpToolHandler => {
-  return async (args: Record<string, unknown>, ctx: AiContext) => {
-    if (!handler) {
-      return toolResponseErr(`Adapter ${adapterName} not found`);
-    }
-
-    const result = await handler(args, ctx);
-    if ('error' in result) {
-      return toolResponseErr(result.error);
-    }
-
-    return toolResponseOk(result.data);
-  };
-};
+// Keep only usable tools; every consumer (MCP server, providers, direct callers) runs them identically.
+export const bindTools = (tools: McpTool[]): McpTool[] => tools.filter(isToolActive);

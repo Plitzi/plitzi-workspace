@@ -3,7 +3,7 @@ export { registerHealthCheck, buildHealthPayload } from './core/health';
 export type { HealthCheckApp, HealthIdentity } from './core/health';
 export { createJsonAdapters } from './adapters/jsonAdapters';
 export {
-  tools,
+  AIEngine,
   toolResponseOk,
   toolResponseErr,
   zodToJsonSchema,
@@ -11,11 +11,25 @@ export {
   bindTools,
   isToolActive,
   resolveToolHandler
-} from './modules/mcp-legacy';
-export { AIEngine } from './modules/ai';
+} from './modules/ai';
 
+// mcp-ai server + its tool functions (also runnable in-process, e.g. wrapped as agent tools by a consumer).
 export { createMcpServer, handleMcp, serveMcp, readMcpBody } from './modules/mcp';
+export { apply, search, validate, applyShape, searchShape, validateShape, operation } from './modules/mcp/tools';
 
 export type { JsonAdaptersConfig } from './adapters/jsonAdapters';
 export type { ResolvedServices } from './core/createServer';
 export type { McpServerContext } from './modules/mcp';
+export type {
+  ApplyInput,
+  SearchInput,
+  SearchResponse,
+  SearchHit,
+  ValidateInput,
+  WriteResponse,
+  WriteElement,
+  Persisters,
+  Operation
+} from './modules/mcp/tools';
+export type { Space } from './modules/mcp/helpers';
+export type { Env } from './modules/mcp/types';

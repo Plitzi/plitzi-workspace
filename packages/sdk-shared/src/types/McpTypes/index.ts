@@ -1,30 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { AiContext, AiMode, PromptRole } from '../AITypes';
-import type { StyleVariableCategory, StyleVariableValue } from '../StyleTypes';
-import type { McpAdapters } from './McpAdapters';
 import type { ToolAnnotations } from '@modelcontextprotocol/sdk/types';
 import type { ZodType } from 'zod';
-
-export * from './McpAdapters';
-
-export type McpPlugin = {
-  name: string;
-  version?: string;
-  description?: string;
-};
-
-export type McpStyleVariable = {
-  category: StyleVariableCategory;
-  name: string;
-  value: StyleVariableValue;
-};
-
-export type McpSegment = {
-  id?: string;
-  identifier: string;
-  definition: { name: string; description: string; baseElementId: string };
-};
 
 // Backend
 
@@ -35,24 +13,6 @@ export type McpPromptHandlerResult = {
 };
 
 export type McpPromptHandler = (args: Record<string, any>, ctx: AiContext) => Promise<McpPromptHandlerResult>;
-
-export type McpPrompt = {
-  name: string;
-  definition: {
-    title: string;
-    description: string;
-    argsSchema?: Record<string, any>;
-  };
-  handler: McpPromptHandler;
-};
-
-export type McpResource = {
-  uri: string;
-  name: string;
-  description: string;
-  mimeType: string;
-  content: string;
-};
 
 export type McpToolHandlerResult = {
   content: { type: 'text'; text: string }[];
@@ -88,9 +48,8 @@ export type McpToolHandler<T extends Record<string, unknown> = any> = (
   ctx: AiContext
 ) => Promise<McpToolHandlerResult> | McpToolHandlerResult;
 
-// A tool declares its data dependency via adapterName (resolved against the runtime adapters) and/or
-// carries a direct handler. bindTools() turns every tool into one with a guaranteed handler, so the
-// MCP server, the providers and any standalone caller all execute tools the exact same way.
+// Every tool carries a direct handler. bindTools() guarantees the handler is present, so the MCP server, the
+// providers and any standalone caller all execute tools the exact same way.
 export type McpTool = {
   name: string;
   mcpDefinition: {
@@ -103,15 +62,10 @@ export type McpTool = {
   definition: {
     allowedModes: AiMode[];
   };
-  adapterName?: keyof McpAdapters;
   handler?: McpToolHandler;
 };
 
 export type McpServerConfig = {
   enabled?: boolean; // Whether the MCP endpoint is active. Defaults to true.
   path?: string; // URL path for the MCP endpoint. Defaults to '/mcp'.
-  adapters: Partial<McpAdapters>;
-  tools?: McpTool[];
-  prompts?: McpPrompt[];
-  resources?: McpResource[];
 };

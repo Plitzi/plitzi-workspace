@@ -27,17 +27,3 @@ export const mcpOnlyStage: Stage = async ctx => {
 
   return true;
 };
-
-// Legacy tool-calling MCP server, kept for consumers still on the old protocol. Its handler drags in a heavy
-// dependency tree (plitzi-ui markdown), so it loads lazily — only when a legacy request actually arrives —
-// keeping it out of every server's startup graph.
-export const mcpLegacyStage: Stage = async ctx => {
-  if (!ctx.config.mcp || !ctx.req.path.startsWith(mcpPathOf(ctx.config.mcp.path))) {
-    return false;
-  }
-
-  const { handleMcp: handleMcpLegacy } = await import('../../modules/mcp-legacy/handler');
-  await handleMcpLegacy(ctx.raw, ctx.rawRes as unknown as ServerResponse, ctx.config.mcp);
-
-  return true;
-};

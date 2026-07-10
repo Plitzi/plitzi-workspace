@@ -1,4 +1,4 @@
-import { mcpLegacyStage, mcpOnlyStage, mcpStage } from './mcp';
+import { mcpOnlyStage, mcpStage } from './mcp';
 import { rscStage } from './rsc';
 import { notFoundStage, ssrStage } from './ssr';
 import { authRoutesStages } from '../http/stages/authRoutes';
@@ -9,12 +9,11 @@ import { builtinPublicStage, configStaticStage, publicDirStage, wellKnownStage }
 
 import type { ResolvedServices } from './resolve';
 import type { BaseContext, SSRContext, Stage } from '../http/types';
-import type { SSRServerConfig } from '@plitzi/sdk-shared';
 
 // The full page-serving pipeline. This is the single place that decides which stages a page server runs, so no
 // stage — and not the dispatcher — branches on which services are enabled. Order matters: static assets first,
 // then MCP (self-authenticating) before the auth middleware chain, then the data services.
-export const buildSSRPipeline = (config: SSRServerConfig, services: ResolvedServices): Stage<SSRContext>[] => {
+export const buildSSRPipeline = (services: ResolvedServices): Stage<SSRContext>[] => {
   const stages: Stage<SSRContext>[] = [
     healthStage,
     builtinPublicStage,
@@ -27,10 +26,6 @@ export const buildSSRPipeline = (config: SSRServerConfig, services: ResolvedServ
 
   if (services.mcp) {
     stages.push(mcpStage);
-  }
-
-  if (config.mcp && (config.mcp.enabled ?? true)) {
-    stages.push(mcpLegacyStage);
   }
 
   stages.push(middlewaresStage);

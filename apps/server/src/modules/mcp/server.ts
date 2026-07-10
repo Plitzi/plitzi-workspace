@@ -7,9 +7,8 @@ import { apply, applyShape, search, searchShape, validate, validateShape } from 
 
 import type { Space } from './helpers';
 import type { Persisters } from './tools';
-import type { Env } from './types';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { SSRAdapters } from '@plitzi/sdk-shared';
+import type { SSRAdapters, Environment } from '@plitzi/sdk-shared';
 
 /** The MCP service is stateless: every request resolves its own `spaceId` (from the request JWT) and reads the
  *  space fresh through the adapters — schema and style are two documents, read/written independently. Both the
@@ -22,7 +21,7 @@ export interface McpServerContext {
 }
 
 // The MCP tools only ever operate on the active-editing environment.
-const MCP_ENV: Env = 'main';
+const MCP_ENV: Environment = 'main';
 
 const asText = (data: unknown): CallToolResult => ({ content: [{ type: 'text', text: JSON.stringify(data) }] });
 

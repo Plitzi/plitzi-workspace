@@ -35,7 +35,7 @@ export const createSSRServer = (config: SSRServerConfig): SSRServer => {
     invalidate: (name?, version?) => pluginManager.invalidate(name, version)
   };
 
-  const stages = buildSSRPipeline(config, services);
+  const stages = buildSSRPipeline(services);
   const makeHandlerForPort = (port: number) => {
     const buildContext: BuildContext<SSRContext> = (raw, rawRes, req, res) => ({
       raw,
