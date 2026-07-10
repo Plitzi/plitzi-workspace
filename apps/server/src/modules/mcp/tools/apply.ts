@@ -1,3 +1,5 @@
+import { validateSchema } from '@plitzi/sdk-schema';
+
 import { cloneSpace } from '../helpers';
 import { applyOperations } from './mutate';
 import { changedResources, conflictMessage, detectConflicts, resolvedElements } from './state';
@@ -5,9 +7,19 @@ import { validateOperations } from './validator';
 
 import type { ApplyInput, Persisters, WriteResponse } from './state';
 import type { Space } from '../helpers';
-import type { Env } from '../types';
+import type { Env, ValidationError } from '../types';
+import type { SchemaValidationError } from '@plitzi/sdk-schema';
 
 const noWarnings = (warnings: string[]): string[] | undefined => (warnings.length > 0 ? warnings : undefined);
+
+// Post-apply integrity: the canonical schema validator (@plitzi/sdk-schema) catches any structural corruption the
+// ops would produce — orphaned/inconsistent parent-child links, cycles, bad rootIds — that the per-op checks miss.
+// A failure here rejects the whole batch (the draft is discarded, nothing persists), so apply stays all-or-nothing.
+const schemaErrorToValidation = (error: SchemaValidationError): ValidationError => ({
+  path: error.elementId ? `schema.${error.elementId}` : 'schema',
+  message: error.message,
+  hint: 'This batch would leave the schema inconsistent (broken parent/child link or a cycle); nothing was applied.'
+});
 
 export const apply = async (input: ApplyInput, space: Space, persisters?: Persisters): Promise<WriteResponse> => {
   const env = (input.environment ?? 'main') as Env;
@@ -44,6 +56,18 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
       summary: { created: 0, updated: 0, deleted: 0 },
       changed: [],
       errors: outcome.errors,
+      warnings: noWarnings(validation.warnings)
+    };
+  }
+
+  const integrity = validateSchema(draft.schema);
+  if (!integrity.valid) {
+    return {
+      applied: false,
+      persisted: false,
+      summary: { created: 0, updated: 0, deleted: 0 },
+      changed: [],
+      errors: integrity.errors.map(schemaErrorToValidation),
       warnings: noWarnings(validation.warnings)
     };
   }

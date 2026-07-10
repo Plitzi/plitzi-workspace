@@ -335,6 +335,50 @@ describe('mcp-ai apply (writes + dryRun + diff + full elements + OCC)', () => {
     const res = await apply({ operations: [{ type: 'deleteElement', pageRef: 'home', ref: 'c1' }] }, buildSpace());
     expect(res.elements).toBeUndefined();
   });
+
+  it('creates a page and fills it in the same atomic batch (new page + elements)', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      {
+        operations: [
+          { type: 'upsertPage', ref: 'cats', label: 'Cats', slug: 'cats' },
+          { type: 'upsertDefinition', ref: 'hero', desktop: { 'background-color': '#111' } },
+          {
+            type: 'upsertElement',
+            pageRef: 'cats',
+            element: {
+              ref: 'cats.hero',
+              type: 'container',
+              style: { base: ['hero'] },
+              children: [{ ref: 'cats.title', type: 'text', props: { content: 'Cats' } }]
+            }
+          }
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+    expect(res.applied).toBe(true);
+    const page = readResource(cap.saved(), 'main', 'plitzi://schema/main/pages/cats')?.data as AIPageSkeleton;
+    expect(page.tree.map(n => n.ref)).toContain('cats.hero');
+    expect(page.tree[0].children?.[0].ref).toBe('cats.title');
+  });
+});
+
+describe('mcp-ai schema integrity gate (validateSchema)', () => {
+  it('rejects a batch that would create a cycle, and rolls back', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      { operations: [{ type: 'moveElement', pageRef: 'home', ref: 'c1', toParentRef: 'c1', position: 'inside' }] },
+      buildSpace(),
+      cap.persisters
+    );
+    expect(res.applied).toBe(false);
+    expect((res.errors ?? []).length).toBeGreaterThan(0);
+    // Rollback: nothing persisted, c1 still sits under the page untouched.
+    const page = readResource(cap.saved(), 'main', 'plitzi://schema/main/pages/home')?.data as AIPageSkeleton;
+    expect(page.tree.map(n => n.ref)).toEqual(['c1']);
+  });
 });
 
 describe('mcp-ai AI-facing contract', () => {

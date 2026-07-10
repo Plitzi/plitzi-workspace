@@ -213,8 +213,23 @@ const batchDeclaredVars = (ops: Operation[]): string[] => {
   return names;
 };
 
+// Page refs the batch itself creates via upsertPage, so a later op in the same batch can target the new page
+// (e.g. "create a page AND fill it in one apply") without a false "page does not exist". Runtime still enforces
+// order: an element op that runs before its page is created fails with a clear pageRef error.
+const batchDeclaredPages = (ops: Operation[]): Set<string> => {
+  const refs = new Set<string>();
+  for (const op of ops) {
+    if (op.type === 'upsertPage') {
+      refs.add(op.ref);
+    }
+  }
+
+  return refs;
+};
+
 export const validateOperations = (space: Space, ops: Operation[]): ValidationResult => {
   const registry = buildTypeRegistry(space.schema);
+  const batchPages = batchDeclaredPages(ops);
   const ctx: ValidationCtx = {
     errors: [],
     warnings: [],
@@ -247,12 +262,12 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
         op.type === 'moveElement') &&
       op.pageRef
     ) {
-      if (!findPageByRef(space.schema, op.pageRef)) {
+      if (!findPageByRef(space.schema, op.pageRef) && !batchPages.has(op.pageRef)) {
         const validRefs = getPageElements(space.schema).map(pageRefOf);
         ctx.errors.push({
           path: `${base}.pageRef`,
           message: `Page "${op.pageRef}" does not exist`,
-          hint: 'Use an existing page ref',
+          hint: 'Use an existing page ref, or create it with upsertPage earlier in the same batch',
           validValues: validRefs
         });
       }
