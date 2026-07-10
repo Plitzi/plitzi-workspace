@@ -91,7 +91,7 @@ export const upsertElement = (space: Space, env: Env, op: Extract<Operation, { t
       existing.definition.styleSelectors = selectors as { base: string; [selector: string]: string };
     }
 
-    return { ...empty(), updated: 1, staleResources: [pageUri(env, op.pageRef)] };
+    return { ...empty(), updated: 1, staleResources: [pageUri(env, op.pageRef)], elementRefs: [op.element.ref] };
   }
 
   let parent = page;
@@ -114,7 +114,7 @@ export const upsertElement = (space: Space, env: Env, op: Extract<Operation, { t
 
   createElement(space, page, op.element, parent, index);
 
-  return { ...empty(), created: 1, staleResources: [pageUri(env, op.pageRef)] };
+  return { ...empty(), created: 1, staleResources: [pageUri(env, op.pageRef)], elementRefs: [op.element.ref] };
 };
 
 export const deleteElement = (space: Space, env: Env, op: Extract<Operation, { type: 'deleteElement' }>): OpResult => {
@@ -170,7 +170,7 @@ export const moveElement = (space: Space, env: Env, op: Extract<Operation, { typ
   el.definition.parentId = parent.id;
   placeChild(parent, el.id, index);
 
-  return { ...empty(), updated: 1, staleResources: [pageUri(env, op.pageRef)] };
+  return { ...empty(), updated: 1, staleResources: [pageUri(env, op.pageRef)], elementRefs: [op.ref] };
 };
 
 export const upsertPage = (space: Space, env: Env, op: Extract<Operation, { type: 'upsertPage' }>): OpResult => {

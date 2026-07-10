@@ -36,6 +36,13 @@ const operations = z.array(operation).max(100).describe('Operations applied atom
 
 export const applyShape = {
   environment,
+  dryRun: z
+    .boolean()
+    .optional()
+    .describe(
+      'Validate and apply in memory only, WITHOUT persisting. Returns the same result (changed versions + full ' +
+        'element detail) so you can inspect the outcome and decide on more changes before committing for real.'
+    ),
   expectedResourceVersions: z
     .record(z.string(), z.string())
     .optional()

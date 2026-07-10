@@ -1,6 +1,6 @@
 import { cloneSpace } from '../helpers';
 import { applyOperations } from './mutate';
-import { changedResources, conflictMessage, detectConflicts } from './state';
+import { changedResources, conflictMessage, detectConflicts, resolvedElements } from './state';
 import { validateOperations } from './validator';
 
 import type { ApplyInput, Persisters, WriteResponse } from './state';
@@ -48,6 +48,19 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
     };
   }
 
+  // Dry run: everything is applied to the in-memory draft and reported (changed versions + full element detail),
+  // but nothing is persisted — the agent inspects the outcome, then re-runs without dryRun to commit.
+  if (input.dryRun) {
+    return {
+      applied: false,
+      dryRun: true,
+      summary: { created: outcome.created, updated: outcome.updated, deleted: outcome.deleted },
+      changed: changedResources(draft, env, outcome.staleResources),
+      elements: resolvedElements(draft, env, outcome.elementRefs),
+      warnings: noWarnings(validation.warnings)
+    };
+  }
+
   // Persist each schema that changed to its own store; unsaved when a changed schema has no persister.
   let persisted = true;
   if (outcome.changedSchema) {
@@ -71,6 +84,7 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
     persisted,
     summary: { created: outcome.created, updated: outcome.updated, deleted: outcome.deleted },
     changed: changedResources(draft, env, outcome.staleResources),
+    elements: resolvedElements(draft, env, outcome.elementRefs),
     warnings: noWarnings(validation.warnings)
   };
 };

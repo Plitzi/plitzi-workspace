@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 import { emptySpaceMessage, unauthorizedSpaceMessage } from './helpers';
 import { registerResources } from './resources';
 import { serverInstructions } from './resources/guide';
-import { apply, applyShape, preview, search, searchShape, validate, validateShape } from './tools';
+import { apply, applyShape, search, searchShape, validate, validateShape } from './tools';
 
 import type { Space } from './helpers';
 import type { Persisters } from './tools';
@@ -72,20 +72,12 @@ export const createMcpServer = ({ adapters, getSpaceId }: McpServerContext): Mcp
       title: 'Apply',
       description:
         'Validate, apply and persist a batch of operations atomically. Returns the changed resources and their ' +
-        'new versions. Rejects the whole batch on any error or version conflict.',
+        'new versions, plus the full detail of every element it created or updated. Pass dryRun to apply in ' +
+        'memory only (inspect the outcome without committing). Rejects the whole batch on any error or version ' +
+        'conflict.',
       inputSchema: applyShape
     },
     async args => asText(await apply(args, await getSpace(), persisters))
-  );
-
-  server.registerTool(
-    'plitzi_preview',
-    {
-      title: 'Preview',
-      description: 'Validate and apply a batch in memory without persisting. Returns the resources it would change.',
-      inputSchema: applyShape
-    },
-    async args => asText(preview(args, await getSpace()))
   );
 
   server.registerTool(

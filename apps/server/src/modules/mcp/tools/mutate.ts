@@ -44,6 +44,7 @@ export interface MutationOutcome {
   updated: number;
   deleted: number;
   staleResources: string[];
+  elementRefs: string[];
   errors: ValidationError[];
   changedSchema: boolean;
   changedStyle: boolean;
@@ -57,11 +58,13 @@ export const applyOperations = (space: Space, env: Env, ops: Operation[]): Mutat
     updated: 0,
     deleted: 0,
     staleResources: [],
+    elementRefs: [],
     errors: [],
     changedSchema: false,
     changedStyle: false
   };
   const stale = new Set<string>();
+  const elements = new Set<string>();
 
   for (let i = 0; i < ops.length; i++) {
     const op = ops[i];
@@ -83,9 +86,14 @@ export const applyOperations = (space: Space, env: Env, ops: Operation[]): Mutat
     for (const uri of result.staleResources) {
       stale.add(uri);
     }
+
+    for (const ref of result.elementRefs ?? []) {
+      elements.add(ref);
+    }
   }
 
   outcome.staleResources = Array.from(stale);
+  outcome.elementRefs = Array.from(elements);
 
   return outcome;
 };

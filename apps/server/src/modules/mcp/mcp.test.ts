@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { buildTypeRegistry, readResource } from './resources';
 import { createMcpServer } from './server';
-import { apply, operation, preview, search, validate } from './tools';
+import { apply, operation, search, validate } from './tools';
 
 import type { Space } from './helpers';
 import type { Operation, Persisters } from './tools';
@@ -245,7 +245,7 @@ describe('mcp-ai page skeleton route params', () => {
   });
 });
 
-describe('mcp-ai apply/preview (writes + lean diff + OCC)', () => {
+describe('mcp-ai apply (writes + dryRun + diff + full elements + OCC)', () => {
   const ops: Operation[] = [
     { type: 'upsertDefinition', ref: 'btn-hero', desktop: { 'background-color': '#3b82f6' } },
     {
@@ -255,11 +255,16 @@ describe('mcp-ai apply/preview (writes + lean diff + OCC)', () => {
     }
   ];
 
-  it('preview reports the changed resources without persisting', () => {
-    const res = preview({ operations: ops }, buildSpace());
+  it('dryRun reports the changed resources without persisting', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply({ operations: ops, dryRun: true }, buildSpace(), cap.persisters);
     expect(res.applied).toBe(false);
+    expect(res.dryRun).toBe(true);
     expect(res.summary.created + res.summary.updated).toBe(2);
     expect(res.changed.map(c => c.uri)).toContain('plitzi://schema/main/pages/home');
+    // dryRun must not call the persisters — the store is untouched.
+    const page = readResource(cap.saved(), 'main', 'plitzi://schema/main/pages/home')?.data as AIPageSkeleton;
+    expect(page.tree.map(n => n.ref)).not.toContain('hero.cta');
   });
 
   it('apply persists each changed schema and reports changed versions', async () => {
@@ -295,6 +300,40 @@ describe('mcp-ai apply/preview (writes + lean diff + OCC)', () => {
     await apply({ operations: [{ type: 'deleteElement', pageRef: 'home', ref: 'c1' }] }, buildSpace(), cap.persisters);
     const page = readResource(cap.saved(), 'main', 'plitzi://schema/main/pages/home')?.data as AIPageSkeleton;
     expect(page.tree).toHaveLength(0);
+  });
+
+  it('returns the full detail of each created element (not just the diff)', async () => {
+    const res = await apply({ operations: ops }, buildSpace());
+    const cta = res.elements?.find(e => e.ref === 'hero.cta');
+    expect(cta).toMatchObject({ ref: 'hero.cta', type: 'button', pageRef: 'home', props: { content: 'Go' } });
+    expect(cta?.style.base).toEqual(['btn-hero']);
+  });
+
+  it('dryRun returns the same full element detail without persisting', async () => {
+    const res = await apply({ operations: ops, dryRun: true }, buildSpace());
+    expect(res.dryRun).toBe(true);
+    expect(res.elements?.map(e => e.ref)).toContain('hero.cta');
+  });
+
+  it('returns an updated element with its new props', async () => {
+    const res = await apply(
+      {
+        operations: [
+          {
+            type: 'upsertElement',
+            pageRef: 'home',
+            element: { ref: 'c1', type: 'container', props: { title: 'Renamed' } }
+          }
+        ]
+      },
+      buildSpace()
+    );
+    expect(res.elements?.find(e => e.ref === 'c1')?.props).toEqual({ title: 'Renamed' });
+  });
+
+  it('omits the elements field for a delete-only batch', async () => {
+    const res = await apply({ operations: [{ type: 'deleteElement', pageRef: 'home', ref: 'c1' }] }, buildSpace());
+    expect(res.elements).toBeUndefined();
   });
 });
 

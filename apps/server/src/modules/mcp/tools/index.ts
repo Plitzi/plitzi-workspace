@@ -1,5 +1,4 @@
 export { apply } from './apply';
-export { preview } from './preview';
 export { validate } from './validate';
 export { search } from './search';
 export { applyOperations } from './mutate';

@@ -4,8 +4,9 @@ export const serverInstructions =
   'Plitzi AI server: read-then-write editing of a Plitzi space. Reads follow a filesystem model — list cheap, ' +
   'read one item in detail on demand; never fetch a whole tree you do not need. Workflow: (1) skim plitzi://guide ' +
   'and plitzi://types; (2) list plitzi://schema/{env}/pages, open one page skeleton, then read individual ' +
-  'elements/definitions as needed, keeping their stateVersion; (3) plitzi_preview a batch of operations to see ' +
-  'what changes; (4) plitzi_apply to persist, passing expectedResourceVersions to guard against concurrent edits. ' +
+  'elements/definitions as needed, keeping their stateVersion; (3) plitzi_apply with dryRun to see what a batch ' +
+  'changes without committing; (4) plitzi_apply to persist, passing expectedResourceVersions to guard against ' +
+  'concurrent edits. ' +
   'Element and page refs accept a semantic aiRef or the raw id. CSS is kebab-case; style vars are var(--name), ' +
   'schema vars are {{name}}.';
 
@@ -49,12 +50,15 @@ read the specific element. Or use \`plitzi_search\` to jump straight to elements
 
 ## Tools (write)
 - \`plitzi_validate\` — check a batch, returns teachable errors/warnings. Writes nothing.
-- \`plitzi_preview\` — apply in memory, returns the resources it would change. Persists nothing.
-- \`plitzi_apply\` — validate → apply → persist atomically. Rejects the whole batch on any error or conflict.
+- \`plitzi_apply\` — validate → apply → persist atomically. Rejects the whole batch on any error or conflict. Pass
+  \`dryRun: true\` to apply in memory only and get the same result back (changed versions + full element detail)
+  without persisting — inspect it, then re-run without \`dryRun\` to commit.
 - \`plitzi_search\` — find elements across pages.
 
-Write tools return only what **changed** (\`{ uri, stateVersion }\`) plus counts — re-read a resource if you need
-its new content. The operation shapes are in each tool's input schema (discriminated by \`type\`).
+Write tools return what **changed** (\`{ uri, stateVersion }\`) plus counts, and the **full detail of every element
+they created or updated** (\`elements: [...]\`) so you have the applied result without a follow-up read. Other
+resources (pages, definitions, variables) still report only uri+stateVersion — re-read them if you need their new
+content. The operation shapes are in each tool's input schema (discriminated by \`type\`).
 
 ## Addressing
 Refs are a semantic \`aiRef\` you choose (e.g. \`"hero.cta"\`) or the element's **raw id**. Both always resolve, so
