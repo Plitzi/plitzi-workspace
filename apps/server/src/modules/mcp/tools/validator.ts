@@ -1,4 +1,4 @@
-import { findPageByRef, getPageElements, pageRefOf } from '../helpers';
+import { findPageByRef, getPageElements, pageRefOf, routeParamNames, slugRouteParams } from '../helpers';
 import { buildTypeRegistry, isCssProperty, suggestCssProperty } from '../resources';
 
 import type { DefinitionSlotInput, ElementInput, Operation } from './operations';
@@ -9,21 +9,72 @@ const REF_RE = /^[a-zA-Z0-9._-]+$/;
 const MAX_OPS = 100;
 const STYLE_CATEGORIES = ['color', 'spacing', 'shadow', 'custom'];
 
+// A {{name}} binding: only a bare identifier/path between the braces — never the multiline JS/JSX object
+// literals that live in code-bearing element props (those never match a lone identifier).
+const VAR_REF = /\{\{\s*([A-Za-z_][\w.-]*)\s*\}\}/g;
+const CSS_VAR = /var\(\s*--([A-Za-z_][\w-]*)\s*\)/g;
+
+// Types whose props carry raw JSX/HTML/JS, where `{{ ... }}` is code (e.g. JSX object shorthand), not a Plitzi
+// variable reference. Their props are skipped by the {{name}} check to avoid false positives.
+const RAW_CODE_TYPES = new Set(['blockJsx', 'blockHtml', 'custom']);
+
 export interface ValidationResult {
   valid: boolean;
   errors: ValidationError[];
   warnings: string[];
 }
 
-const checkRef = (ref: string, path: string, errors: ValidationError[]): void => {
+interface ValidationCtx {
+  errors: ValidationError[];
+  warnings: string[];
+  warned: Set<string>;
+  knownTypes: Set<string>;
+  schemaVars: Set<string>; // valid {{name}}: space schema variables ∪ page route params ∪ batch-declared
+  styleVars: Set<string>; // valid var(--name): design tokens across all categories
+}
+
+const warnOnce = (ctx: ValidationCtx, message: string): void => {
+  if (!ctx.warned.has(message)) {
+    ctx.warned.add(message);
+    ctx.warnings.push(message);
+  }
+};
+
+const checkVarRefs = (text: string, path: string, ctx: ValidationCtx): void => {
+  for (const match of text.matchAll(VAR_REF)) {
+    const name = match[1];
+    if (!ctx.schemaVars.has(name)) {
+      warnOnce(
+        ctx,
+        `Unknown variable {{${name}}} at ${path}: not a space schema variable or a page route param. ` +
+          'Read plitzi://schema-variables, or use a route param from the page skeleton (routeParams).'
+      );
+    }
+  }
+};
+
+const checkStyleVarRefs = (text: string, path: string, ctx: ValidationCtx): void => {
+  for (const match of text.matchAll(CSS_VAR)) {
+    const name = match[1];
+    if (!ctx.styleVars.has(name)) {
+      warnOnce(
+        ctx,
+        `Unknown style variable var(--${name}) at ${path}: not a design token in this space. ` +
+          'Read plitzi://style-variables for the valid token names.'
+      );
+    }
+  }
+};
+
+const checkRef = (ref: string, path: string, ctx: ValidationCtx): void => {
   if (!ref || ref.trim().length === 0) {
-    errors.push({ path, message: 'Ref must not be empty', hint: 'Use a semantic name like "hero.title"' });
+    ctx.errors.push({ path, message: 'Ref must not be empty', hint: 'Use a semantic name like "hero.title"' });
 
     return;
   }
 
   if (!REF_RE.test(ref)) {
-    errors.push({
+    ctx.errors.push({
       path,
       message: `Ref "${ref}" has invalid characters`,
       hint: 'Allowed characters: letters, numbers, dot, hyphen, underscore'
@@ -31,15 +82,15 @@ const checkRef = (ref: string, path: string, errors: ValidationError[]): void =>
   }
 };
 
-const checkCss = (css: Record<string, string | number> | undefined, path: string, errors: ValidationError[]): void => {
+const checkCss = (css: Record<string, string | number> | undefined, path: string, ctx: ValidationCtx): void => {
   if (!css) {
     return;
   }
 
-  for (const key of Object.keys(css)) {
+  for (const [key, value] of Object.entries(css)) {
     if (!isCssProperty(key)) {
       const suggestion = suggestCssProperty(key);
-      errors.push({
+      ctx.errors.push({
         path: `${path}.${key}`,
         message: `Unknown CSS property "${key}"`,
         hint: suggestion
@@ -47,37 +98,47 @@ const checkCss = (css: Record<string, string | number> | undefined, path: string
           : 'Read plitzi://css-properties for the valid property keys'
       });
     }
+
+    if (typeof value === 'string') {
+      checkStyleVarRefs(value, `${path}.${key}`, ctx);
+      checkVarRefs(value, `${path}.${key}`, ctx);
+    }
   }
 };
 
-const checkSlotCss = (slot: DefinitionSlotInput, path: string, errors: ValidationError[]): void => {
-  checkCss(slot.desktop, `${path}.desktop`, errors);
-  checkCss(slot.tablet, `${path}.tablet`, errors);
-  checkCss(slot.mobile, `${path}.mobile`, errors);
+const checkSlotCss = (slot: DefinitionSlotInput, path: string, ctx: ValidationCtx): void => {
+  checkCss(slot.desktop, `${path}.desktop`, ctx);
+  checkCss(slot.tablet, `${path}.tablet`, ctx);
+  checkCss(slot.mobile, `${path}.mobile`, ctx);
   for (const [state, dm] of Object.entries(slot.states ?? {})) {
-    checkCss(dm.desktop, `${path}.states.${state}.desktop`, errors);
-    checkCss(dm.tablet, `${path}.states.${state}.tablet`, errors);
-    checkCss(dm.mobile, `${path}.states.${state}.mobile`, errors);
+    checkCss(dm.desktop, `${path}.states.${state}.desktop`, ctx);
+    checkCss(dm.tablet, `${path}.states.${state}.tablet`, ctx);
+    checkCss(dm.mobile, `${path}.states.${state}.mobile`, ctx);
   }
 
   for (const [name, dm] of Object.entries(slot.variants ?? {})) {
-    checkCss(dm.desktop, `${path}.variants.${name}.desktop`, errors);
-    checkCss(dm.tablet, `${path}.variants.${name}.tablet`, errors);
-    checkCss(dm.mobile, `${path}.variants.${name}.mobile`, errors);
+    checkCss(dm.desktop, `${path}.variants.${name}.desktop`, ctx);
+    checkCss(dm.tablet, `${path}.variants.${name}.tablet`, ctx);
+    checkCss(dm.mobile, `${path}.variants.${name}.mobile`, ctx);
   }
 };
 
-const checkElementInput = (
-  element: ElementInput,
-  path: string,
-  knownTypes: Set<string>,
-  errors: ValidationError[],
-  warnings: string[],
-  seen: Set<string>
-): void => {
-  checkRef(element.ref, `${path}.ref`, errors);
+const checkElementProps = (element: ElementInput, path: string, ctx: ValidationCtx): void => {
+  if (!element.props || RAW_CODE_TYPES.has(element.type)) {
+    return;
+  }
+
+  for (const [key, value] of Object.entries(element.props)) {
+    if (typeof value === 'string') {
+      checkVarRefs(value, `${path}.props.${key}`, ctx);
+    }
+  }
+};
+
+const checkElementInput = (element: ElementInput, path: string, ctx: ValidationCtx, seen: Set<string>): void => {
+  checkRef(element.ref, `${path}.ref`, ctx);
   if (seen.has(element.ref)) {
-    errors.push({
+    ctx.errors.push({
       path: `${path}.ref`,
       message: `Duplicate ref "${element.ref}" in this batch`,
       hint: 'Use a unique ref'
@@ -87,27 +148,50 @@ const checkElementInput = (
   seen.add(element.ref);
 
   if (!element.type) {
-    errors.push({
+    ctx.errors.push({
       path: `${path}.type`,
       message: 'Element type is required',
       hint: 'Read plitzi://types for known types'
     });
-  } else if (!knownTypes.has(element.type)) {
-    warnings.push(`Type "${element.type}" was not seen in this space; ensure a plugin provides it (${path}.type).`);
+  } else if (!ctx.knownTypes.has(element.type)) {
+    ctx.warnings.push(`Type "${element.type}" was not seen in this space; ensure a plugin provides it (${path}.type).`);
   }
 
-  element.children?.forEach((child, i) =>
-    checkElementInput(child, `${path}.children[${i}]`, knownTypes, errors, warnings, seen)
-  );
+  checkElementProps(element, path, ctx);
+  element.children?.forEach((child, i) => checkElementInput(child, `${path}.children[${i}]`, ctx, seen));
+};
+
+// Names an agent may legally reference within the same batch even though they are not in the space yet: variables
+// and route params (page slugs) the batch itself declares. Prevents false "unknown variable" warnings.
+const batchDeclaredVars = (ops: Operation[]): string[] => {
+  const names: string[] = [];
+  for (const op of ops) {
+    if (op.type === 'upsertVariable') {
+      names.push(op.name);
+    } else if (op.type === 'upsertPage' && typeof op.slug === 'string') {
+      names.push(...slugRouteParams(op.slug));
+    }
+  }
+
+  return names;
 };
 
 export const validateOperations = (space: Space, ops: Operation[]): ValidationResult => {
-  const errors: ValidationError[] = [];
-  const warnings: string[] = [];
-  const knownTypes = new Set(Object.keys(buildTypeRegistry(space.schema).types));
+  const ctx: ValidationCtx = {
+    errors: [],
+    warnings: [],
+    warned: new Set(),
+    knownTypes: new Set(Object.keys(buildTypeRegistry(space.schema).types)),
+    schemaVars: new Set([
+      ...space.schema.variables.map(v => v.name),
+      ...routeParamNames(space.schema),
+      ...batchDeclaredVars(ops)
+    ]),
+    styleVars: new Set(Object.values(space.style.variables).flatMap(group => Object.keys(group)))
+  };
 
   if (ops.length > MAX_OPS) {
-    errors.push({
+    ctx.errors.push({
       path: 'operations',
       message: `Batch has ${ops.length} operations (max ${MAX_OPS})`,
       hint: `Split into batches of at most ${MAX_OPS}`
@@ -120,7 +204,7 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
     if ((op.type === 'upsertElement' || op.type === 'deleteElement' || op.type === 'moveElement') && op.pageRef) {
       if (!findPageByRef(space.schema, op.pageRef)) {
         const validRefs = getPageElements(space.schema).map(pageRefOf);
-        errors.push({
+        ctx.errors.push({
           path: `${base}.pageRef`,
           message: `Page "${op.pageRef}" does not exist`,
           hint: 'Use an existing page ref',
@@ -131,15 +215,15 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
 
     switch (op.type) {
       case 'upsertElement':
-        checkElementInput(op.element, `${base}.element`, knownTypes, errors, warnings, new Set());
+        checkElementInput(op.element, `${base}.element`, ctx, new Set());
         break;
       case 'upsertDefinition': {
         const { type, ref, slots, ...slot } = op;
         void type;
-        checkRef(ref, `${base}.ref`, errors);
-        checkSlotCss(slot, base, errors);
+        checkRef(ref, `${base}.ref`, ctx);
+        checkSlotCss(slot, base, ctx);
         for (const [slotName, slotDef] of Object.entries(slots ?? {})) {
-          checkSlotCss(slotDef, `${base}.slots.${slotName}`, errors);
+          checkSlotCss(slotDef, `${base}.slots.${slotName}`, ctx);
         }
 
         break;
@@ -149,12 +233,12 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
       case 'deletePage':
       case 'upsertVariable':
       case 'deleteVariable':
-        checkRef('ref' in op ? op.ref : op.name, `${base}.${'ref' in op ? 'ref' : 'name'}`, errors);
+        checkRef('ref' in op ? op.ref : op.name, `${base}.${'ref' in op ? 'ref' : 'name'}`, ctx);
         break;
       case 'upsertStyleVariable':
       case 'deleteStyleVariable':
         if (!STYLE_CATEGORIES.includes(op.category)) {
-          errors.push({
+          ctx.errors.push({
             path: `${base}.category`,
             message: `Unknown style-variable category "${op.category}"`,
             hint: 'Use one of the valid categories',
@@ -168,5 +252,5 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
     }
   });
 
-  return { valid: errors.length === 0, errors, warnings };
+  return { valid: ctx.errors.length === 0, errors: ctx.errors, warnings: ctx.warnings };
 };

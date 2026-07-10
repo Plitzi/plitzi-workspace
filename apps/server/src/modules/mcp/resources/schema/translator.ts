@@ -5,7 +5,8 @@ import {
   isPageElement,
   orderedChildren,
   pageRefOf,
-  pageRefOfElement
+  pageRefOfElement,
+  slugRouteParams
 } from '../../helpers';
 
 import type { AIElementDetail, AIPageSkeleton, AIPageSummary, AISchemaVariable, AISkeletonNode } from '../../types';
@@ -62,13 +63,18 @@ const skeletonNode = (schema: Schema, el: Element): AISkeletonNode => {
   };
 };
 
-export const pageSkeletonToAI = (schema: Schema, pageEl: Element): AIPageSkeleton => ({
-  ref: pageRefOf(pageEl),
-  label: nameOf(pageEl),
-  slug: strOr(pageEl.attributes.slug) ?? '',
-  default: pageEl.attributes.default === true,
-  tree: orderedChildren(schema, pageEl).map(child => skeletonNode(schema, child))
-});
+export const pageSkeletonToAI = (schema: Schema, pageEl: Element): AIPageSkeleton => {
+  const slug = strOr(pageEl.attributes.slug) ?? '';
+
+  return {
+    ref: pageRefOf(pageEl),
+    label: nameOf(pageEl),
+    slug,
+    default: pageEl.attributes.default === true,
+    routeParams: slugRouteParams(slug),
+    tree: orderedChildren(schema, pageEl).map(child => skeletonNode(schema, child))
+  };
+};
 
 // --- Detail (on demand): one element with its props and style. ---
 

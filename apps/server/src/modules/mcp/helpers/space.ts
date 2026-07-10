@@ -48,6 +48,33 @@ export const elementRefOf = (el: Element): string => el.definition.aiRef ?? el.i
 export const findPageByRef = (schema: Schema, pageRef: string): Element | undefined =>
   getPageElements(schema).find(el => pageRefOf(el) === pageRef || el.id === pageRef);
 
+/** Route params a page's slug binds (e.g. ":spaceId/update/*" → ["spaceId"]). These are valid {{name}}
+ *  references on that page even though they are not space-level schema variables. */
+export const slugRouteParams = (slug: string): string[] => {
+  const params: string[] = [];
+  for (const segment of slug.split('/')) {
+    if (segment.startsWith(':')) {
+      params.push(segment.slice(1).replace(/[*+?]+$/, ''));
+    }
+  }
+
+  return params;
+};
+
+/** Every route param bound by any page slug in the space (union), so {{name}} validation does not false-flag a
+ *  page-scoped dynamic binding. */
+export const routeParamNames = (schema: Schema): string[] => {
+  const params = new Set<string>();
+  for (const page of getPageElements(schema)) {
+    const slug = typeof page.attributes.slug === 'string' ? page.attributes.slug : '';
+    for (const param of slugRouteParams(slug)) {
+      params.add(param);
+    }
+  }
+
+  return [...params];
+};
+
 /** Indexed lookup that reflects the runtime reality: a flat id may be dangling (rsc placeholders, stale items). */
 export const elementById = (schema: Schema, id: string): Element | undefined => schema.flat[id];
 

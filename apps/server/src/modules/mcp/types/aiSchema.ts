@@ -44,6 +44,9 @@ export interface AIPageSkeleton {
   label: string;
   slug: string;
   default: boolean;
+  /** Route params bound by the slug (e.g. ":spaceId" → ["spaceId"]). Valid as {{name}} references on this page,
+   *  alongside the space-level plitzi://schema-variables. */
+  routeParams: string[];
   tree: AISkeletonNode[];
 }
 

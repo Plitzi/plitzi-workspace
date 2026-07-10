@@ -163,6 +163,88 @@ describe('mcp-ai validator (teaching errors)', () => {
   });
 });
 
+const spaceWithRoute = (): Space => {
+  const space = buildSpace();
+  (space.schema.flat.page1.attributes as Record<string, unknown>).slug = ':spaceId';
+
+  return space;
+};
+
+const varOp = (pageRef: string, type: string, value: string): Operation => ({
+  type: 'upsertElement',
+  pageRef,
+  element: { ref: 'x', type, props: { q: value } }
+});
+
+describe('mcp-ai variable-reference validation', () => {
+  it('accepts a known space schema variable, no warning', () => {
+    const r = validate({ operations: [varOp('home', 'container', '{{apiUrl}}/x')] }, buildSpace());
+    expect(r.valid).toBe(true);
+    expect(r.warnings.some(w => w.includes('Unknown variable'))).toBe(false);
+  });
+
+  it('warns (does not error) on an unknown/hallucinated variable', () => {
+    const r = validate({ operations: [varOp('home', 'container', '{{bogusVar}}')] }, buildSpace());
+    expect(r.valid).toBe(true);
+    expect(r.warnings.some(w => w.includes('Unknown variable {{bogusVar}}'))).toBe(true);
+  });
+
+  it('accepts a page route param (from the slug) as a valid {{name}}', () => {
+    const r = validate(
+      { operations: [varOp('spaceid', 'container', '{{apiUrl}}/spaces/{{spaceId}}')] },
+      spaceWithRoute()
+    );
+    expect(r.warnings.some(w => w.includes('Unknown variable'))).toBe(false);
+  });
+
+  it('accepts a variable the same batch declares', () => {
+    const r = validate(
+      {
+        operations: [
+          { type: 'upsertVariable', name: 'newVar', variableType: 'text', value: 'v' },
+          varOp('home', 'container', '{{newVar}}')
+        ]
+      },
+      buildSpace()
+    );
+    expect(r.warnings.some(w => w.includes('Unknown variable'))).toBe(false);
+  });
+
+  it('skips {{...}} inside raw-code element types (no false positives on JSX)', () => {
+    const r = validate(
+      { operations: [varOp('home', 'blockJsx', 'style={{ position: "relative" }} {{bogusVar}}')] },
+      buildSpace()
+    );
+    expect(r.warnings.some(w => w.includes('Unknown variable'))).toBe(false);
+  });
+
+  it('validates var(--token) in CSS values against the design tokens', () => {
+    const known = validate(
+      { operations: [{ type: 'upsertDefinition', ref: 'btn', desktop: { color: 'var(--foreground)' } }] },
+      buildSpace()
+    );
+    expect(known.warnings.some(w => w.includes('Unknown style variable'))).toBe(false);
+
+    const unknown = validate(
+      { operations: [{ type: 'upsertDefinition', ref: 'btn', desktop: { color: 'var(--nope)' } }] },
+      buildSpace()
+    );
+    expect(unknown.warnings.some(w => w.includes('Unknown style variable var(--nope)'))).toBe(true);
+  });
+});
+
+describe('mcp-ai page skeleton route params', () => {
+  it('exposes route params derived from the slug', () => {
+    const sk = readResource(spaceWithRoute(), 'main', 'plitzi://schema/main/pages/spaceid')?.data as AIPageSkeleton;
+    expect(sk.routeParams).toEqual(['spaceId']);
+  });
+
+  it('is an empty list for a static page', () => {
+    const sk = readResource(buildSpace(), 'main', 'plitzi://schema/main/pages/home')?.data as AIPageSkeleton;
+    expect(sk.routeParams).toEqual([]);
+  });
+});
+
 describe('mcp-ai apply/preview (writes + lean diff + OCC)', () => {
   const ops: Operation[] = [
     { type: 'upsertDefinition', ref: 'btn-hero', desktop: { 'background-color': '#3b82f6' } },
