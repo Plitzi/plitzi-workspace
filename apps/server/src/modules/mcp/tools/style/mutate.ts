@@ -1,3 +1,5 @@
+import processSelector from '@plitzi/sdk-style/helpers/processSelector';
+
 import { empty } from '../opResult';
 
 import type { DefinitionSlotInput } from './operations';
@@ -5,7 +7,7 @@ import type { Space } from '../../helpers';
 import type { Env } from '../../types';
 import type { Operation } from '../operations';
 import type { OpResult } from '../opResult';
-import type { DisplayMode, Style, StyleAttributes, StyleBlock } from '@plitzi/sdk-shared';
+import type { DisplayMode, Style, StyleAttributes, StyleBlock, StyleItem } from '@plitzi/sdk-shared';
 
 // Handlers that mutate the STYLE schema (space.style): definitions and design tokens.
 
@@ -68,8 +70,11 @@ const writeDefinition = (
     if (Object.keys(attributes).length === 0) {
       Reflect.deleteProperty(style.platform[mode], ref);
     } else {
-      // cache is recompiled by the platform on persist; mcp writes the canonical structured source only.
-      style.platform[mode][ref] = { name: ref, type: 'class', attributes, cache: '' };
+      // generateCache (on persist) only concatenates each StyleItem's own `cache`, so it must be compiled here
+      // from the structured attributes; otherwise both the item cache and the global style.cache drop this def.
+      const styleItem: StyleItem = { name: ref, type: 'class', attributes, cache: '' };
+      styleItem.cache = processSelector(styleItem);
+      style.platform[mode][ref] = styleItem;
     }
   }
 };
