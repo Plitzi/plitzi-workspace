@@ -15,10 +15,10 @@ export type Handler = (req: IncomingMessage, res: RawResponse) => void;
 
 type H3Module = { createServer: (opts: object, handler: Handler) => CloseableServer };
 
-export const tlsOptions = (config: SSRServerConfig) => {
+export const tlsOptions = (config: SSRServerConfig, label = 'Server') => {
   const { tls } = config;
   if (!tls) {
-    throw new Error('[SSR] TLS config required');
+    throw new Error(`[${label}] TLS config required`);
   }
   return { key: tls.key, cert: tls.cert, minVersion: (tls.minVersion ?? 'TLSv1.3') as 'TLSv1.3' };
 };
@@ -38,7 +38,8 @@ export const protoLabel = (version: number, hasTls: boolean): string => {
 export const buildTransport = (
   config: SSRServerConfig,
   handler: Handler,
-  port: number
+  port: number,
+  label = 'Server'
 ): { primary: CloseableServer; h3?: CloseableServer } => {
   const version = config.httpVersion ?? 2;
   let primary: CloseableServer;
@@ -46,7 +47,7 @@ export const buildTransport = (
 
   if (version >= 3) {
     primary = http2.createSecureServer(
-      { ...tlsOptions(config), allowHTTP1: true },
+      { ...tlsOptions(config, label), allowHTTP1: true },
       handler as unknown as Parameters<typeof http2.createSecureServer>[1]
     );
 
@@ -54,20 +55,20 @@ export const buildTransport = (
       try {
         // @ts-expect-error eslint-disable-line
         const mod = (await import('node:http3')) as unknown as H3Module;
-        h3 = mod.createServer(tlsOptions(config), handler);
+        h3 = mod.createServer(tlsOptions(config, label), handler);
         h3.listen(port, '0.0.0.0', () => {
-          console.log(`[SSR] HTTP/3 (QUIC) listening on port ${port}`);
+          console.log(`[${label}] HTTP/3 (QUIC) listening on port ${port}`);
         });
       } catch {
         console.warn(
-          '[SSR] HTTP/3 unavailable — start Node.js with --experimental-quic (requires Node ≥ 23). Falling back to HTTP/2.'
+          `[${label}] HTTP/3 unavailable — start Node.js with --experimental-quic (requires Node ≥ 23). Falling back to HTTP/2.`
         );
       }
     })();
   } else if (version >= 2) {
     if (config.tls) {
       primary = http2.createSecureServer(
-        { ...tlsOptions(config), allowHTTP1: true },
+        { ...tlsOptions(config, label), allowHTTP1: true },
         handler as unknown as Parameters<typeof http2.createSecureServer>[1]
       );
     } else {
@@ -75,7 +76,7 @@ export const buildTransport = (
       primary = http.createServer(handler as RequestListener);
     }
   } else if (config.tls) {
-    primary = https.createServer(tlsOptions(config), handler as RequestListener);
+    primary = https.createServer(tlsOptions(config, label), handler as RequestListener);
   } else {
     primary = http.createServer(handler as RequestListener);
   }

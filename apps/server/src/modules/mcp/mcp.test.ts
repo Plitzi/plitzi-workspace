@@ -7,7 +7,7 @@ import { apply, operation, preview, search, validate } from './tools';
 import type { Space } from './helpers';
 import type { Operation, Persisters } from './tools';
 import type { AIDefinition, AIElementDetail, AIPageSkeleton, AIPageSummary, AIStyleVariable } from './types';
-import type { Schema, Style } from '@plitzi/sdk-shared';
+import type { Schema, SSRAdapters, Style } from '@plitzi/sdk-shared';
 
 const buildSpace = (): Space => {
   const schema = {
@@ -226,7 +226,11 @@ describe('mcp-ai AI-facing contract', () => {
 
   it('builds an MCP server (registers tools + resources) without throwing', () => {
     const s = buildSpace();
-    expect(() => createMcpServer({ env: 'main', schema: s.schema, style: s.style })).not.toThrow();
+    const adapters = {
+      getSchema: () => Promise.resolve(s.schema),
+      getStyle: () => Promise.resolve(s.style)
+    } as unknown as SSRAdapters;
+    expect(() => createMcpServer({ adapters, spaceId: 1 })).not.toThrow();
   });
 
   it('serves a human guide resource', () => {

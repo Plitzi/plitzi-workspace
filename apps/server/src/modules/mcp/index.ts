@@ -1,5 +1,5 @@
 export { createMcpServer, handleMcp, serveMcp, readMcpBody } from './handler';
-export type { McpState } from './server';
+export type { McpServerContext } from './server';
 
 export { readResource, resourceVersion, registerResources, buildTypeRegistry, cssProperties } from './resources';
 export { apply, preview, validate, search, validateOperations, operation } from './tools';

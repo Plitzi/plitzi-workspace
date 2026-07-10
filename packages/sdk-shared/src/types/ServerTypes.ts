@@ -1,6 +1,8 @@
 import type { Environment } from './CommonTypes';
 import type { McpServerConfig } from './McpTypes';
+import type { Schema } from './SchemaTypes';
 import type { OfflineDataRaw } from './SdkTypes';
+import type { Style } from './StyleTypes';
 import type { IncomingHttpHeaders } from 'node:http';
 import type { FC } from 'react';
 
@@ -145,6 +147,20 @@ export type SSRAdapters = {
    *  (notably `style.cache`) before storing. When omitted, mcp-ai runs read/preview/validate only and
    *  `apply` reports `persisted: false`. */
   saveOfflineData?: (spaceId: number, environment: string, data: OfflineDataRaw) => Promise<void>;
+  /** Resolve the spaceId the MCP request operates on, from the verified `Authorization` bearer. The consumer
+   *  owns the JWT secret, so it decodes here; the MCP service stays stateless. Returns undefined when the
+   *  token is missing or invalid. Required for the `mcp` service to serve any request. */
+  getSpaceId?: (req: SSRRequest) => Promise<number | undefined>;
+  /** Read the element schema for the MCP tools. Separate from `getOfflineData` (which is SSR/RSC shaped and
+   *  strips `style.platform`); the MCP style resource needs the full documents, so schema and style split. */
+  getSchema?: (spaceId: number, environment: Environment) => Promise<Schema | undefined>;
+  /** Read the full style document (with `platform`/`mode`, which the MCP definitions resource requires). */
+  getStyle?: (spaceId: number, environment: Environment) => Promise<Style | undefined>;
+  /** Persist the element schema mutated by the MCP `apply` tool. When omitted, `apply` reports `persisted: false`. */
+  saveSchema?: (spaceId: number, environment: Environment, schema: Schema) => Promise<void>;
+  /** Persist the style document mutated by the MCP `apply` tool. Implementations must recompute `style.cache`
+   *  before storing. When omitted, `apply` reports `persisted: false`. */
+  saveStyle?: (spaceId: number, environment: Environment, style: Style) => Promise<void>;
   getUser?: (req: SSRRequest) => Promise<SSRUser | undefined>;
   onLogin?: (req: SSRRequest, res: SSRResponseHelpers) => Promise<boolean>;
   onLogout?: (req: SSRRequest, res: SSRResponseHelpers) => Promise<void>;
@@ -214,8 +230,24 @@ export type SSRServerConfig = {
     path?: string;
   };
   adapters: SSRAdapters;
+  /** Which request-handling services this server mounts. Each maps to an internal `create<Name>Server` unit,
+   *  so new services scale without rewriting the dispatcher. Omitted flags fall back to sensible defaults:
+   *  ssr on, rsc when `adapters.getRscData` exists, mcp from `mcpAi.enabled`. `ai` is a reserved slot (not
+   *  wired yet). The per-service presets (createSSRServer / createMCPServer) pin these flags for you. */
+  services?: ServerServices;
+  /** Liveness/readiness endpoint for standalone servers (k8s probes). When set, a stage answers `path`
+   *  (default /health) with 200 and this JSON payload. SSR servers usually serve health as a static file
+   *  instead, so they can leave this unset. */
+  health?: { path?: string; payload?: Record<string, unknown> };
   /** Cache-buster appended as ?v=<assetVersion> to all default SDK asset URLs (jsPath, cssPath, react vendor). Compute from file mtime or package version at startup. */
   assetVersion?: string;
+};
+
+export type ServerServices = {
+  ssr?: boolean;
+  rsc?: boolean;
+  mcp?: boolean;
+  ai?: boolean;
 };
 
 export type PluginRegistry = {

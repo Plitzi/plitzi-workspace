@@ -1,59 +1,22 @@
-import { makeHandler } from './requestHandler';
-import { buildTransport, protoLabel } from './transports';
-import { buildCacheManager, createServerCaches, DEFAULT_TTL_MS, destroyServerCaches } from '../helpers/cache';
-import normalizePlugins, { normalizePluginSource } from '../helpers/normalizePlugins';
-import { compileTemplate } from '../modules/ssr/template';
-import { PluginManager } from '../plugins/manager';
+import { createMCPServer } from './server/mcpServer';
+import { createSSRServer } from './server/ssrServer';
+import { resolveServices } from './services/resolve';
 
-import type { CacheManager, PluginRegistry, SSRServer, SSRServerConfig } from '@plitzi/sdk-shared';
+import type { SSRServer, SSRServerConfig } from '@plitzi/sdk-shared';
 
-export const createSSRServer = (config: SSRServerConfig): SSRServer => {
-  const { httpVersion: version = 2, cacheTtlMs: htmlTtlMs = DEFAULT_TTL_MS.html } = config;
-  if (version >= 3 && !config.tls) {
-    throw new Error(`[SSR] httpVersion: ${version} requires a tls config with key and cert`);
+export { createSSRServer } from './server/ssrServer';
+export { createMCPServer } from './server/mcpServer';
+export { resolveServices } from './services/resolve';
+export type { ResolvedServices } from './services/resolve';
+
+// Entry wrapper: routes a config to the specialized factory for the surface it asks for. An MCP-only config
+// gets the lean MCP server; anything with a page/RSC surface gets the full SSR server. Callers that already
+// know which they want can import createSSRServer / createMCPServer directly.
+export const createServer = (config: SSRServerConfig): SSRServer => {
+  const services = resolveServices(config);
+  if (services.mcp && !services.ssr && !services.rsc && !services.ai) {
+    return createMCPServer(config);
   }
 
-  const caches = createServerCaches(htmlTtlMs, config.rsc?.cacheTtlMs ?? DEFAULT_TTL_MS.rsc);
-  const cache: CacheManager | null = caches.html ? buildCacheManager(caches.html) : null;
-  const renderFn = config.templateFn ?? compileTemplate();
-
-  const pluginManager = new PluginManager(
-    normalizePlugins(config.plugins ?? {}),
-    config.pluginsCacheDir,
-    config.pluginsTtlMs,
-    config.devMode
-  );
-
-  const plugins: PluginRegistry = {
-    register: (name, source) => {
-      const normalized = normalizePluginSource(source);
-      pluginManager.register(`${name}@${normalized.version}`, normalized);
-    },
-    invalidate: (name?, version?) => pluginManager.invalidate(name, version)
-  };
-
-  let primary: ReturnType<typeof buildTransport>['primary'];
-  let h3: ReturnType<typeof buildTransport>['h3'];
-
-  return {
-    cache,
-    plugins,
-    listen(port: number, host = '0.0.0.0') {
-      const handler = makeHandler(config, port, renderFn, caches, pluginManager);
-      ({ primary, h3 } = buildTransport(config, handler, port));
-      primary.listen(port, host, () => {
-        console.log(`[SSR] ${protoLabel(version, !!config.tls)} - listening on ${host}:${port}`);
-      });
-    },
-    async close() {
-      destroyServerCaches(caches);
-      pluginManager.destroy();
-      const closeOne = (srv: typeof primary) =>
-        new Promise<void>((resolve, reject) => {
-          srv.close(err => (err ? reject(err) : resolve()));
-        });
-
-      await Promise.all([closeOne(primary), ...(h3 ? [closeOne(h3)] : [])]);
-    }
-  };
+  return createSSRServer(config);
 };

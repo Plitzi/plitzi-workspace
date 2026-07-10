@@ -82,10 +82,11 @@ const jsonContents = (uri: string, data: unknown) => ({
   contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(data) }]
 });
 
-/** Register every resource on the MCP server: fixed listings plus templated per-item reads. */
-export const registerResources = (server: McpServer, space: Space, env: Env): void => {
-  const emit = (uri: string) => {
-    const result = readResource(space, env, uri);
+/** Register every resource on the MCP server: fixed listings plus templated per-item reads. The space is
+ *  loaded lazily via getSpace, so listing resources never touches the store — only reading one does. */
+export const registerResources = (server: McpServer, getSpace: () => Promise<Space>, env: Env): void => {
+  const emit = async (uri: string) => {
+    const result = readResource(await getSpace(), env, uri);
     if (!result) {
       throw new Error(`Unknown or missing resource: ${uri}`);
     }

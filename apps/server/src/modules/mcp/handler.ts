@@ -1,9 +1,7 @@
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp';
 
-import { emptySpaceMessage } from './helpers';
 import { createMcpServer } from './server';
 
-import type { McpState } from './server';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 import type { SSRAdapters, SSRRequest } from '@plitzi/sdk-shared';
 import type { IncomingMessage, ServerResponse } from 'node:http';
@@ -53,57 +51,24 @@ export const serveMcp = async (raw: IncomingMessage, res: ServerResponse, server
   }
 };
 
-// Resolve the two schemas this request targets from the SSR adapters. The SSR adapter persists the whole
-// OfflineDataRaw at once, so each schema persister writes back a shared, up-to-date copy (last write wins).
-// Returns undefined when the deployment has no offline data, so the caller can answer accordingly.
-const loadState = async (req: SSRRequest, adapters: SSRAdapters): Promise<McpState | undefined> => {
-  const deployment = await adapters.getSpaceDeployment(req);
-  const env = deployment.environment ?? 'main';
-  const spaceId = deployment.spaceId ?? 0;
-  const offlineData = await adapters.getOfflineData(spaceId, env, deployment.revision);
-  if (!offlineData) {
-    return undefined;
-  }
-
-  const { saveOfflineData } = adapters;
-  const current = { ...offlineData };
-
-  return {
-    env,
-    schema: offlineData.schema,
-    style: offlineData.style,
-    persistSchema: saveOfflineData
-      ? schema => {
-          current.schema = schema;
-
-          return saveOfflineData(spaceId, env, current);
-        }
-      : undefined,
-    persistStyle: saveOfflineData
-      ? style => {
-          current.style = style;
-
-          return saveOfflineData(spaceId, env, current);
-        }
-      : undefined
-  };
-};
-
+// The MCP service is stateless: the spaceId comes from the request's verified `Authorization` bearer (the
+// consumer owns the JWT secret, so it decodes in getSpaceId). Reads/writes then go straight through the
+// schema/style adapters — no deployment lookup, no in-memory space blob.
 export const handleMcp = async (
   raw: IncomingMessage,
   res: ServerResponse,
   req: SSRRequest,
   adapters: SSRAdapters
 ): Promise<void> => {
-  const state = await loadState(req, adapters);
-  if (!state) {
-    res.writeHead(503, { 'Content-Type': 'text/plain' });
-    res.end(emptySpaceMessage);
+  const spaceId = await adapters.getSpaceId?.(req);
+  if (!spaceId) {
+    res.writeHead(401, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Unauthorized: no spaceId resolved from the Authorization token' }));
 
     return;
   }
 
-  await serveMcp(raw, res, createMcpServer(state));
+  await serveMcp(raw, res, createMcpServer({ adapters, spaceId }));
 };
 
 export { createMcpServer };

@@ -1,4 +1,4 @@
-export { createSSRServer } from './core/createServer';
+export { createServer, createSSRServer, createMCPServer, resolveServices } from './core/createServer';
 export { createJsonAdapters } from './adapters/jsonAdapters';
 export {
   tools,
@@ -15,4 +15,5 @@ export { AIEngine } from './modules/ai';
 export { createMcpServer, handleMcp, serveMcp, readMcpBody } from './modules/mcp';
 
 export type { JsonAdaptersConfig } from './adapters/jsonAdapters';
-export type { McpState } from './modules/mcp';
+export type { ResolvedServices } from './core/createServer';
+export type { McpServerContext } from './modules/mcp';
