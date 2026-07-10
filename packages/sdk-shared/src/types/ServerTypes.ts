@@ -235,10 +235,10 @@ export type SSRServerConfig = {
    *  ssr on, rsc when `adapters.getRscData` exists, mcp from `mcpAi.enabled`. `ai` is a reserved slot (not
    *  wired yet). The per-service presets (createSSRServer / createMCPServer) pin these flags for you. */
   services?: ServerServices;
-  /** Liveness/readiness endpoint for standalone servers (k8s probes). When set, a stage answers `path`
-   *  (default /health) with 200 and this JSON payload. SSR servers usually serve health as a static file
-   *  instead, so they can leave this unset. */
-  health?: { path?: string; payload?: Record<string, unknown> };
+  /** Liveness/readiness endpoint for standalone servers (k8s probes). A stage always answers `path`
+   *  (default /health) with 200. The body is the generic identity payload built from `name`/`version`/`role`
+   *  ({ Server, Version, role }); pass an explicit `payload` to override it entirely. */
+  health?: { path?: string; payload?: Record<string, unknown>; name?: string; version?: string; role?: string };
   /** Cache-buster appended as ?v=<assetVersion> to all default SDK asset URLs (jsPath, cssPath, react vendor). Compute from file mtime or package version at startup. */
   assetVersion?: string;
 };

@@ -94,6 +94,8 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
     return jsonContents(uri, result);
   };
 
+  // Public, space-independent resources: served straight from static data so they resolve no spaceId and load
+  // no space — reachable even on an unauthenticated connection.
   server.registerResource(
     'Guide',
     'plitzi://guide',
@@ -101,9 +103,16 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
     () => ({ contents: [{ uri: 'plitzi://guide', mimeType: 'text/markdown', text: guideText }] })
   );
 
+  server.registerResource(
+    'CSS properties',
+    'plitzi://css-properties',
+    { description: 'Valid kebab-case CSS property keys', mimeType: 'application/json' },
+    () => jsonContents('plitzi://css-properties', envelope(cssProperties))
+  );
+
+  // Space-dependent listings: reading any of these resolves the spaceId and loads the space via getSpace.
   const fixed: Array<[string, string, string]> = [
     ['Element types', 'plitzi://types', 'Observed element types with props, slots and subTypes'],
-    ['CSS properties', 'plitzi://css-properties', 'Valid kebab-case CSS property keys'],
     ['Pages', `plitzi://schema/${env}/pages`, 'Page summaries (ref, label, elementCount) — no element trees'],
     ['Style definitions', `plitzi://definitions/${env}`, 'Style definition refs (names)'],
     ['Style variables', `plitzi://style-variables/${env}`, 'Design tokens by category'],

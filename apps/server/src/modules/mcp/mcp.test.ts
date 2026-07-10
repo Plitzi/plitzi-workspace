@@ -230,7 +230,7 @@ describe('mcp-ai AI-facing contract', () => {
       getSchema: () => Promise.resolve(s.schema),
       getStyle: () => Promise.resolve(s.style)
     } as unknown as SSRAdapters;
-    expect(() => createMcpServer({ adapters, spaceId: 1 })).not.toThrow();
+    expect(() => createMcpServer({ adapters, getSpaceId: () => Promise.resolve(1) })).not.toThrow();
   });
 
   it('serves a human guide resource', () => {

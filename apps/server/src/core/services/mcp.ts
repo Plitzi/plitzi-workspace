@@ -3,7 +3,7 @@ import { handleMcp } from '../../modules/mcp/handler';
 import type { Stage } from '../http/types';
 import type { ServerResponse } from 'node:http';
 
-const mcpPathOf = (path: string | undefined): string => path ?? '/mcp';
+const mcpPathOf = (path: string | undefined): string => path ?? '/';
 
 const serveMcp = (ctx: Parameters<Stage>[0]): Promise<void> =>
   handleMcp(ctx.raw, ctx.rawRes as unknown as ServerResponse, ctx.req, ctx.config.adapters);

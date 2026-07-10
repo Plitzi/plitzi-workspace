@@ -134,6 +134,11 @@ export const descendantCount = (schema: Schema, rootId: string): number => desce
 
 export const emptySpaceMessage = 'Space data not available';
 
+// Thrown when a space-dependent tool/resource runs but the request carried no resolvable spaceId. The public
+// surface (handshake, listings, guide, css-properties) never triggers this.
+export const unauthorizedSpaceMessage =
+  'This tool/resource needs a space, but no spaceId could be resolved from the Authorization token';
+
 export const generateObjectId = (): string => {
   const ts = Math.floor(Date.now() / 1000)
     .toString(16)

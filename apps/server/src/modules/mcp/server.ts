@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 
-import { emptySpaceMessage } from './helpers';
+import { emptySpaceMessage, unauthorizedSpaceMessage } from './helpers';
 import { registerResources } from './resources';
 import { serverInstructions } from './resources/guide';
 import { apply, applyShape, preview, search, searchShape, validate, validateShape } from './tools';
@@ -12,11 +12,13 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { SSRAdapters } from '@plitzi/sdk-shared';
 
 /** The MCP service is stateless: every request resolves its own `spaceId` (from the request JWT) and reads the
- *  space fresh through the adapters — schema and style are two documents, read/written independently. Reads are
- *  lazy so the handshake / tools-list / resources-list never touch the store. */
+ *  space fresh through the adapters — schema and style are two documents, read/written independently. Both the
+ *  spaceId and the space itself resolve lazily, so the public surface (handshake, tools-list, resources-list,
+ *  and the space-independent guide / css-properties resources) works even when the request carries no auth —
+ *  only a space-dependent tool/resource demands a spaceId, failing with `unauthorizedSpaceMessage` if none. */
 export interface McpServerContext {
   adapters: SSRAdapters;
-  spaceId: number;
+  getSpaceId: () => Promise<number | undefined>;
 }
 
 // The MCP tools only ever operate on the active-editing environment.
@@ -24,8 +26,21 @@ const MCP_ENV: Env = 'main';
 
 const asText = (data: unknown): CallToolResult => ({ content: [{ type: 'text', text: JSON.stringify(data) }] });
 
-export const createMcpServer = ({ adapters, spaceId }: McpServerContext): McpServer => {
+export const createMcpServer = ({ adapters, getSpaceId }: McpServerContext): McpServer => {
+  // Resolve the spaceId at most once, and only when a space-dependent operation actually needs it. A request
+  // without a valid token fails here (not at connect time), so the public surface stays reachable.
+  let spaceIdPromise: Promise<number> | undefined;
+  const requireSpaceId = (): Promise<number> =>
+    (spaceIdPromise ??= getSpaceId().then(id => {
+      if (!id) {
+        throw new Error(unauthorizedSpaceMessage);
+      }
+
+      return id;
+    }));
+
   const loadSpace = async (): Promise<Space> => {
+    const spaceId = await requireSpaceId();
     const [schema, style] = await Promise.all([
       adapters.getSchema?.(spaceId, MCP_ENV),
       adapters.getStyle?.(spaceId, MCP_ENV)
@@ -39,8 +54,8 @@ export const createMcpServer = ({ adapters, spaceId }: McpServerContext): McpSer
 
   const { saveSchema, saveStyle } = adapters;
   const persisters: Persisters = {
-    schema: saveSchema ? schema => saveSchema(spaceId, MCP_ENV, schema) : undefined,
-    style: saveStyle ? style => saveStyle(spaceId, MCP_ENV, style) : undefined
+    schema: saveSchema ? async schema => saveSchema(await requireSpaceId(), MCP_ENV, schema) : undefined,
+    style: saveStyle ? async style => saveStyle(await requireSpaceId(), MCP_ENV, style) : undefined
   };
 
   // Load the space at most once per request, and only on first read/write — never for the handshake.

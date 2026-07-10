@@ -52,23 +52,20 @@ export const serveMcp = async (raw: IncomingMessage, res: ServerResponse, server
 };
 
 // The MCP service is stateless: the spaceId comes from the request's verified `Authorization` bearer (the
-// consumer owns the JWT secret, so it decodes in getSpaceId). Reads/writes then go straight through the
-// schema/style adapters — no deployment lookup, no in-memory space blob.
-export const handleMcp = async (
+// consumer owns the JWT secret, so it decodes in getSpaceId). It is resolved lazily — never at connect time —
+// so unauthenticated clients (MCP Inspector, capability probes) can still handshake and list tools/resources
+// and read the public ones; only space-dependent tools/resources demand a spaceId. Reads/writes then go
+// straight through the schema/style adapters — no deployment lookup, no in-memory space blob.
+export const handleMcp = (
   raw: IncomingMessage,
   res: ServerResponse,
   req: SSRRequest,
   adapters: SSRAdapters
-): Promise<void> => {
-  const spaceId = await adapters.getSpaceId?.(req);
-  if (!spaceId) {
-    res.writeHead(401, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Unauthorized: no spaceId resolved from the Authorization token' }));
-
-    return;
-  }
-
-  await serveMcp(raw, res, createMcpServer({ adapters, spaceId }));
-};
+): Promise<void> =>
+  serveMcp(
+    raw,
+    res,
+    createMcpServer({ adapters, getSpaceId: () => adapters.getSpaceId?.(req) ?? Promise.resolve(undefined) })
+  );
 
 export { createMcpServer };
