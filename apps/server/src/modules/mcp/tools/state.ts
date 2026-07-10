@@ -30,16 +30,20 @@ export interface ChangedResource {
   stateVersion: string;
 }
 
-/** Write result: what changed and the new versions, plus the full detail of every element created/updated so
- *  the caller has that context without a follow-up read. Other resources (pages, definitions, variables) still
- *  report only uri+version — re-read them if needed. */
+/** Full detail of a created/updated element, plus its own uri and stateVersion so a follow-up edit of the same
+ *  element can guard with optimistic concurrency without an intermediate read. */
+export type WriteElement = AIElementDetail & { uri: string; stateVersion: string };
+
+/** Write result: what changed and the new versions, plus the full detail of every element created/updated (with
+ *  its uri + stateVersion) so the caller has that context without a follow-up read. Other resources (pages,
+ *  definitions, variables) still report only uri+version — re-read them if needed. */
 export interface WriteResponse {
   applied: boolean;
   dryRun?: boolean;
   persisted?: boolean;
   summary: { created: number; updated: number; deleted: number };
   changed: ChangedResource[];
-  elements?: AIElementDetail[];
+  elements?: WriteElement[];
   warnings?: string[];
   errors?: ValidationError[];
   conflict?: { message: string; conflicts: Conflict[] };
@@ -66,10 +70,15 @@ export const changedResources = (space: Space, env: Env, uris: string[]): Change
 
 /** Full detail of each created/updated element (by ref), skipping any that no longer resolve (e.g. deleted later
  *  in the same batch). Returns undefined when there is nothing, so the field stays off the response. */
-export const resolvedElements = (space: Space, env: Env, refs: string[]): AIElementDetail[] | undefined => {
+export const resolvedElements = (space: Space, env: Env, refs: string[]): WriteElement[] | undefined => {
   const elements = refs
-    .map(ref => readResource(space, env, `plitzi://schema/${env}/elements/${ref}`)?.data as AIElementDetail | undefined)
-    .filter((el): el is AIElementDetail => el !== undefined);
+    .map(ref => {
+      const uri = `plitzi://schema/${env}/elements/${ref}`;
+      const res = readResource(space, env, uri);
+
+      return res ? { uri, stateVersion: res.stateVersion, ...(res.data as AIElementDetail) } : undefined;
+    })
+    .filter((el): el is WriteElement => el !== undefined);
 
   return elements.length > 0 ? elements : undefined;
 };

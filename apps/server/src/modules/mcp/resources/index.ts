@@ -27,6 +27,20 @@ export const readResource = (space: Space, env: Env, uri: string): ResourceEnvel
     return envelope(cssProperties);
   }
 
+  // The cold-start bundle: everything the guide says to read before the first write, in one round-trip.
+  // Summaries only — never full page/element trees (open those on demand).
+  if (uri === `plitzi://primer/${env}`) {
+    return envelope({
+      guide: guideText,
+      types: buildTypeRegistry(space.schema),
+      cssProperties,
+      pages: pageSummariesToAI(space.schema),
+      definitions: definitionRefs(space.style),
+      styleVariables: styleVariablesToAI(space.style),
+      schemaVariables: schemaVariablesToAI(space.schema)
+    });
+  }
+
   if (uri === `plitzi://schema/${env}/pages`) {
     return envelope(pageSummariesToAI(space.schema));
   }
@@ -78,6 +92,34 @@ export const readResource = (space: Space, env: Env, uri: string): ResourceEnvel
 export const resourceVersion = (space: Space, env: Env, uri: string): string | null =>
   readResource(space, env, uri)?.stateVersion ?? null;
 
+const itemTemplates = (env: Env): string[] => [
+  `plitzi://schema/${env}/pages/{ref}`,
+  `plitzi://schema/${env}/elements/{ref}`,
+  `plitzi://definitions/${env}/{ref}`,
+  `plitzi://style-variables/${env}/{category}`
+];
+
+/** Teachable message for a URI that read as null. Distinguishes a well-formed URI whose ref does not resolve (the
+ *  resource may be stale/deleted) from a URI whose shape matches no template at all (malformed — echo the valid
+ *  templates so the agent stops hand-building URIs). See RFC 0004 I2. */
+export const resourceErrorMessage = (env: Env, uri: string): string => {
+  const knownShape = itemTemplates(env).some(tpl => uri.startsWith(tpl.slice(0, tpl.lastIndexOf('/') + 1)));
+  if (knownShape) {
+    return JSON.stringify({
+      error: 'NOT_FOUND',
+      message: `No resource at '${uri}'. Its shape is valid but the ref does not resolve.`,
+      hint: 'It may have been deleted or your URI is stale. Re-list the parent resource (pages/definitions) to refresh.'
+    });
+  }
+
+  return JSON.stringify({
+    error: 'MALFORMED_URI',
+    message: `'${uri}' matches no resource template.`,
+    hint: 'Do not hand-build element URIs — take the ready-made uri from plitzi_search or a write response.',
+    validTemplates: [`plitzi://primer/${env}`, ...itemTemplates(env)]
+  });
+};
+
 const jsonContents = (uri: string, data: unknown) => ({
   contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(data) }]
 });
@@ -88,7 +130,7 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
   const emit = async (uri: string) => {
     const result = readResource(await getSpace(), env, uri);
     if (!result) {
-      throw new Error(`Unknown or missing resource: ${uri}`);
+      throw new Error(resourceErrorMessage(env, uri));
     }
 
     return jsonContents(uri, result);
@@ -112,6 +154,11 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
 
   // Space-dependent listings: reading any of these resolves the spaceId and loads the space via getSpace.
   const fixed: Array<[string, string, string]> = [
+    [
+      'Primer',
+      `plitzi://primer/${env}`,
+      'Cold-start bundle: guide, types, css-properties, page/definition/variable summaries in one read'
+    ],
     ['Element types', 'plitzi://types', 'Observed element types with props, slots and subTypes'],
     ['Pages', `plitzi://schema/${env}/pages`, 'Page summaries (ref, label, elementCount) — no element trees'],
     ['Style definitions', `plitzi://definitions/${env}`, 'Style definition refs (names)'],
@@ -141,5 +188,5 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
 export { buildTypeRegistry } from './schema/registry';
 export type { TypeInfo, TypePropInfo, TypeRegistry } from './schema/registry';
 export * from './schema/translator';
-export { cssProperties, isCssProperty, suggestCssProperty } from './style/cssCatalog';
+export { cssProperties, expandShorthand, isCssProperty, suggestCssProperty } from './style/cssCatalog';
 export * from './style/translator';

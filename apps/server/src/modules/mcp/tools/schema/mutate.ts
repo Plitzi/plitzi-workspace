@@ -117,6 +117,58 @@ export const upsertElement = (space: Space, env: Env, op: Extract<Operation, { t
   return { ...empty(), created: 1, staleResources: [pageUri(env, op.pageRef)], elementRefs: [op.element.ref] };
 };
 
+export const patchElement = (space: Space, env: Env, op: Extract<Operation, { type: 'patchElement' }>): OpResult => {
+  const page = findPageByRef(space.schema, op.pageRef);
+  if (!page) {
+    return fail('pageRef', `Page "${op.pageRef}" not found`, 'Read plitzi://schema/' + env + '/pages for valid refs');
+  }
+
+  const el = resolveRef(space.schema, page, op.ref);
+  if (!el || el.id === page.id) {
+    return fail(
+      'ref',
+      `Element "${op.ref}" not found in page "${op.pageRef}"`,
+      'patchElement only updates an existing element; use upsertElement to create one'
+    );
+  }
+
+  if (op.label !== undefined) {
+    el.definition.label = op.label;
+  }
+
+  if (op.subType !== undefined) {
+    el.attributes = { ...el.attributes, subType: op.subType };
+  }
+
+  if (op.props !== undefined) {
+    const merged: Record<string, unknown> = { ...el.attributes };
+    for (const [key, value] of Object.entries(op.props)) {
+      if (value === null) {
+        Reflect.deleteProperty(merged, key);
+      } else {
+        merged[key] = value;
+      }
+    }
+
+    el.attributes = merged;
+  }
+
+  if (op.style !== undefined) {
+    const selectors: Record<string, string> = { ...el.definition.styleSelectors };
+    if (op.style.base !== undefined) {
+      selectors.base = op.style.base.join(' ');
+    }
+
+    for (const [slot, classes] of Object.entries(op.style.slots ?? {})) {
+      selectors[slot] = classes.join(' ');
+    }
+
+    el.definition.styleSelectors = selectors as { base: string; [selector: string]: string };
+  }
+
+  return { ...empty(), updated: 1, staleResources: [pageUri(env, op.pageRef)], elementRefs: [op.ref] };
+};
+
 export const deleteElement = (space: Space, env: Env, op: Extract<Operation, { type: 'deleteElement' }>): OpResult => {
   const page = findPageByRef(space.schema, op.pageRef);
   if (!page) {

@@ -1,5 +1,6 @@
 import processSelector from '@plitzi/sdk-style/helpers/processSelector';
 
+import { expandShorthand } from '../../resources';
 import { empty } from '../opResult';
 
 import type { DefinitionSlotInput } from './operations';
@@ -23,19 +24,20 @@ const slotToBlocks = (slot: DefinitionSlotInput): Partial<Record<DisplayMode, St
 
   for (const mode of MODES) {
     const block: StyleBlock = {};
-    if (slot[mode] && Object.keys(slot[mode]).length > 0) {
-      block.default = slot[mode];
+    const baseCss = slot[mode];
+    if (baseCss && Object.keys(baseCss).length > 0) {
+      block.default = expandShorthand(baseCss);
     }
 
     for (const [state, dm] of Object.entries(slot.states ?? {})) {
       if (dm[mode]) {
-        (block.states ??= {})[state as keyof NonNullable<StyleBlock['states']>] = dm[mode];
+        (block.states ??= {})[state as keyof NonNullable<StyleBlock['states']>] = expandShorthand(dm[mode]);
       }
     }
 
     for (const [name, dm] of Object.entries(slot.variants ?? {})) {
       if (dm[mode]) {
-        (block.variants ??= {})[name] = { default: dm[mode] };
+        (block.variants ??= {})[name] = { default: expandShorthand(dm[mode]) };
       }
     }
 

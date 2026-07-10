@@ -2,13 +2,15 @@
 // plitzi://guide.
 export const serverInstructions =
   'Plitzi AI server: read-then-write editing of a Plitzi space. Reads follow a filesystem model — list cheap, ' +
-  'read one item in detail on demand; never fetch a whole tree you do not need. Workflow: (1) skim plitzi://guide ' +
-  'and plitzi://types; (2) list plitzi://schema/{env}/pages, open one page skeleton, then read individual ' +
-  'elements/definitions as needed, keeping their stateVersion; (3) plitzi_apply with dryRun to see what a batch ' +
-  'changes without committing; (4) plitzi_apply to persist, passing expectedResourceVersions to guard against ' +
-  'concurrent edits. ' +
-  'Element and page refs accept a semantic aiRef or the raw id. CSS is kebab-case; style vars are var(--name), ' +
-  'schema vars are {{name}}.';
+  'read one item in detail on demand; never fetch a whole tree you do not need. Workflow: (1) read ' +
+  'plitzi://primer/{env} once — it bundles the guide, types, css-properties and page/definition/variable ' +
+  'summaries in a single call; (2) plitzi_search to jump to elements (each hit already carries its uri + ' +
+  'stateVersion, so no follow-up read is needed to edit); open a page skeleton or element only when you need ' +
+  'its tree/detail; (3) plitzi_apply with dryRun to preview a batch; (4) plitzi_apply to persist, passing ' +
+  'expectedResourceVersions to guard against concurrent edits — apply and search both hand back the versions ' +
+  'you need for the next edit. Use patchElement to change only some props (upsertElement replaces them all). ' +
+  'Refs accept a semantic aiRef or the raw id. CSS is kebab-case (shorthands like border/padding are accepted); ' +
+  'style vars are var(--name), schema vars are {{name}}.';
 
 export const guideText = `# Plitzi AI MCP — usage guide
 
@@ -31,6 +33,9 @@ Reads are cheap by design — treat them like a filesystem: **list** to navigate
 Never download a whole tree you do not need.
 
 ## Resources (read)
+- \`plitzi://primer/{env}\` — **cold-start bundle**: guide + types + css-properties + page/definition/variable
+  **summaries** in one read. Fetch this first instead of the individual resources below. Summaries only — open a
+  page skeleton or element for its tree/detail.
 - \`plitzi://guide\` — this guide.
 - \`plitzi://types\` — element types **observed in this space** (ground truth): props, slots, subTypes.
 - \`plitzi://css-properties\` — valid kebab-case CSS property keys.
@@ -46,7 +51,10 @@ Data resources return \`{ stateVersion, data }\`. Keep \`stateVersion\` for opti
 
 ## Navigating (files analogy)
 Pages and containers are folders; elements are files. To find something: list pages → open a page skeleton →
-read the specific element. Or use \`plitzi_search\` to jump straight to elements by label/type/attribute.
+read the specific element. Or use \`plitzi_search\` to jump straight to elements by label/type/attribute — each hit
+already carries the element's \`uri\`, \`stateVersion\`, \`pageUri\`, \`parentRef\` and tree \`path\`, so you can edit it
+(with optimistic concurrency) **without a follow-up read**. Pass \`include: "detail"\` to also inline each hit's
+props/style.
 
 ## Tools (write)
 - \`plitzi_validate\` — check a batch, returns teachable errors/warnings. Writes nothing.
@@ -56,9 +64,10 @@ read the specific element. Or use \`plitzi_search\` to jump straight to elements
 - \`plitzi_search\` — find elements across pages.
 
 Write tools return what **changed** (\`{ uri, stateVersion }\`) plus counts, and the **full detail of every element
-they created or updated** (\`elements: [...]\`) so you have the applied result without a follow-up read. Other
-resources (pages, definitions, variables) still report only uri+stateVersion — re-read them if you need their new
-content. The operation shapes are in each tool's input schema (discriminated by \`type\`).
+they created or updated** — each with its own \`uri\` and \`stateVersion\` (\`elements: [...]\`) so a follow-up edit of
+the same element needs **no intermediate read**. Other resources (pages, definitions, variables) still report only
+uri+stateVersion — re-read them if you need their new content. The operation shapes are in each tool's input
+schema (discriminated by \`type\`).
 
 ## Addressing
 Refs are a semantic \`aiRef\` you choose (e.g. \`"hero.cta"\`) or the element's **raw id**. Both always resolve, so
@@ -68,12 +77,17 @@ schemas predating aiRef keep working through ids. Creating an element stores its
 - A definition lives in the **style schema**; an element's \`style.base\` (element schema) is the link that applies
   it. Styling an element = upsertDefinition + upsertElement with that ref in \`style.base\`, in one batch.
 - CSS keys are **kebab-case** (\`background-color\`). camelCase is rejected — read \`plitzi://css-properties\`.
+- Common **shorthands are accepted** and expanded for you: \`border\`, \`border-{side}\`, \`border-radius\`,
+  \`padding\`, \`margin\`, \`inset\`, \`gap\` (they persist as their longhand keys).
 - CSS is grouped by breakpoint: \`desktop\`, \`tablet\`, \`mobile\`.
 - Reference a style variable in CSS as \`var(--name)\`; a schema variable in a prop as \`{{name}}\`.
 - \`element.style.base\` is a list of definition refs; other slots go under \`element.style.slots\`.
 
 ## Semantics
-- **props are fully replaced** on \`upsertElement\`: send every prop you want to keep.
+- **props are fully replaced** on \`upsertElement\`: send every prop you want to keep. To change only some props,
+  use **\`patchElement\`** — it merges \`props\`/\`style\` onto the existing element (listed keys change, \`null\` unsets
+  a key, everything else is preserved) and never creates. Combined with \`plitzi_search\` (which returns the ref +
+  stateVersion), a targeted edit is two calls with no read.
 - **Atomic batches**: if any operation fails, \`plitzi_apply\` persists nothing.
 - **Optimistic concurrency**: pass \`expectedResourceVersions\` (URI → the stateVersion you read). If the live data
   drifted, apply is rejected with a conflict; re-read the reported resources and retry.

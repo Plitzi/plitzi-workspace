@@ -11,6 +11,7 @@ export type { DefinitionSlotInput } from './style/operations';
 // ops (e.g. rename an element AND make it red) — applied atomically across both schemas.
 export const operation = z.discriminatedUnion('type', [
   elementOps.upsertElement,
+  elementOps.patchElement,
   elementOps.deleteElement,
   elementOps.moveElement,
   elementOps.upsertPage,
@@ -54,5 +55,9 @@ export const validateShape = { environment, operations };
 
 export const searchShape = {
   query: z.string().describe('Case-insensitive match on label, type and attribute values'),
-  filters: z.object({ type: z.string().optional(), pageRef: z.string().optional() }).optional()
+  filters: z.object({ type: z.string().optional(), pageRef: z.string().optional() }).optional(),
+  include: z
+    .literal('detail')
+    .optional()
+    .describe('Set to "detail" to inline each hit\'s full props/style so an edit needs no follow-up read')
 };

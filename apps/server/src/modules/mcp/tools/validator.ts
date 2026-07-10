@@ -1,5 +1,5 @@
-import { findPageByRef, getPageElements, pageRefOf, routeParamNames, slugRouteParams } from '../helpers';
-import { buildTypeRegistry, isCssProperty, suggestCssProperty } from '../resources';
+import { findPageByRef, getPageElements, pageRefOf, resolveRef, routeParamNames, slugRouteParams } from '../helpers';
+import { buildTypeRegistry, expandShorthand, isCssProperty, suggestCssProperty } from '../resources';
 
 import type { DefinitionSlotInput, ElementInput, Operation } from './operations';
 import type { Space } from '../helpers';
@@ -29,6 +29,7 @@ interface ValidationCtx {
   warnings: string[];
   warned: Set<string>;
   knownTypes: Set<string>;
+  typeProps: Map<string, Set<string>>; // observed prop keys per element type (I5)
   schemaVars: Set<string>; // valid {{name}}: space schema variables ∪ page route params ∪ batch-declared
   styleVars: Set<string>; // valid var(--name): design tokens across all categories
 }
@@ -57,12 +58,44 @@ const checkStyleVarRefs = (text: string, path: string, ctx: ValidationCtx): void
   for (const match of text.matchAll(CSS_VAR)) {
     const name = match[1];
     if (!ctx.styleVars.has(name)) {
-      warnOnce(
-        ctx,
-        `Unknown style variable var(--${name}) at ${path}: not a design token in this space. ` +
-          'Read plitzi://style-variables for the valid token names.'
-      );
+      const tokens = [...ctx.styleVars];
+      const available =
+        tokens.length > 0
+          ? `Available tokens: ${tokens.slice(0, 30).join(', ')}${tokens.length > 30 ? ', …' : ''}.`
+          : 'Read plitzi://style-variables for the valid token names.';
+      warnOnce(ctx, `Unknown style variable var(--${name}) at ${path}: not a design token in this space. ${available}`);
     }
+  }
+};
+
+// I5: warn when a prop is not among the type's OBSERVED props (plitzi://types is observed, not declared — so this
+// is a warning, never a hard error: an unseen-but-valid prop is possible). Skips raw-code types and any type with
+// no observed props (zero knowledge → no basis to flag).
+const checkTypeProps = (
+  type: string,
+  props: Record<string, unknown> | undefined,
+  path: string,
+  ctx: ValidationCtx
+): void => {
+  if (!props || RAW_CODE_TYPES.has(type)) {
+    return;
+  }
+
+  const known = ctx.typeProps.get(type);
+  if (!known || known.size === 0) {
+    return;
+  }
+
+  for (const key of Object.keys(props)) {
+    if (key === 'subType' || known.has(key)) {
+      continue;
+    }
+
+    warnOnce(
+      ctx,
+      `Type "${type}" has no observed prop "${key}" at ${path} (observed: ${[...known].sort().join(', ')}). ` +
+        'It may still be valid — verify against plitzi://types.'
+    );
   }
 };
 
@@ -87,7 +120,9 @@ const checkCss = (css: Record<string, string | number> | undefined, path: string
     return;
   }
 
-  for (const [key, value] of Object.entries(css)) {
+  // Expand shorthands first (border, border-radius, padding…) so they validate as their longhand keys — matching
+  // what persistence stores (RFC 0004 I4).
+  for (const [key, value] of Object.entries(expandShorthand(css))) {
     if (!isCssProperty(key)) {
       const suggestion = suggestCssProperty(key);
       ctx.errors.push({
@@ -133,6 +168,8 @@ const checkElementProps = (element: ElementInput, path: string, ctx: ValidationC
       checkVarRefs(value, `${path}.props.${key}`, ctx);
     }
   }
+
+  checkTypeProps(element.type, element.props, path, ctx);
 };
 
 const checkElementInput = (element: ElementInput, path: string, ctx: ValidationCtx, seen: Set<string>): void => {
@@ -177,11 +214,13 @@ const batchDeclaredVars = (ops: Operation[]): string[] => {
 };
 
 export const validateOperations = (space: Space, ops: Operation[]): ValidationResult => {
+  const registry = buildTypeRegistry(space.schema);
   const ctx: ValidationCtx = {
     errors: [],
     warnings: [],
     warned: new Set(),
-    knownTypes: new Set(Object.keys(buildTypeRegistry(space.schema).types)),
+    knownTypes: new Set(Object.keys(registry.types)),
+    typeProps: new Map(Object.entries(registry.types).map(([type, info]) => [type, new Set(Object.keys(info.props))])),
     schemaVars: new Set([
       ...space.schema.variables.map(v => v.name),
       ...routeParamNames(space.schema),
@@ -201,7 +240,13 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
   ops.forEach((op, i) => {
     const base = `operations[${i}]`;
 
-    if ((op.type === 'upsertElement' || op.type === 'deleteElement' || op.type === 'moveElement') && op.pageRef) {
+    if (
+      (op.type === 'upsertElement' ||
+        op.type === 'patchElement' ||
+        op.type === 'deleteElement' ||
+        op.type === 'moveElement') &&
+      op.pageRef
+    ) {
       if (!findPageByRef(space.schema, op.pageRef)) {
         const validRefs = getPageElements(space.schema).map(pageRefOf);
         ctx.errors.push({
@@ -217,6 +262,24 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
       case 'upsertElement':
         checkElementInput(op.element, `${base}.element`, ctx, new Set());
         break;
+      case 'patchElement': {
+        checkRef(op.ref, `${base}.ref`, ctx);
+        const page = findPageByRef(space.schema, op.pageRef);
+        const target = page ? resolveRef(space.schema, page, op.ref) : undefined;
+        if (op.props) {
+          for (const [key, value] of Object.entries(op.props)) {
+            if (typeof value === 'string') {
+              checkVarRefs(value, `${base}.props.${key}`, ctx);
+            }
+          }
+
+          if (target && target.id !== page?.id) {
+            checkTypeProps(target.definition.type, op.props, base, ctx);
+          }
+        }
+
+        break;
+      }
       case 'upsertDefinition': {
         const { type, ref, slots, ...slot } = op;
         void type;

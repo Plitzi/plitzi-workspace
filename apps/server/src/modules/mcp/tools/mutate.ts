@@ -14,6 +14,8 @@ const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
   switch (op.type) {
     case 'upsertElement':
       return schema.upsertElement(space, env, op);
+    case 'patchElement':
+      return schema.patchElement(space, env, op);
     case 'deleteElement':
       return schema.deleteElement(space, env, op);
     case 'moveElement':

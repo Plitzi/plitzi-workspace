@@ -1,22 +1,63 @@
-import { elementRefOf, pageRefOfElement } from '../helpers';
+import { computeVersion, elementRefOf, isPageElement, pageRefOfElement } from '../helpers';
+import { elementDetailToAI } from '../resources';
 
 import type { Space } from '../helpers';
+import type { AIElementDetail, Env } from '../types';
+import type { Element, Schema } from '@plitzi/sdk-shared';
 
 export interface SearchInput {
   query: string;
   filters?: { type?: string; pageRef?: string };
+  /** 'detail' inlines each hit's full props/style so an edit needs no follow-up read. */
+  include?: 'detail';
+}
+
+export interface SearchHit {
+  pageRef: string;
+  ref: string;
+  uri: string;
+  pageUri: string;
+  stateVersion: string;
+  parentRef?: string;
+  /** Ancestor labels from the page down to and including this element. */
+  path: string[];
+  label: string;
+  type: string;
+  matches: string[];
+  detail?: AIElementDetail;
 }
 
 export interface SearchResponse {
-  results: Array<{ pageRef: string; ref: string; label: string; type: string; matches: string[] }>;
+  results: SearchHit[];
   total: number;
 }
 
-export const search = (input: SearchInput, space: Space): SearchResponse => {
+const labelOf = (el: Element): string =>
+  (typeof el.attributes.name === 'string' ? el.attributes.name : undefined) ?? el.definition.label;
+
+// Ancestor labels from the page root down to (and including) the element, so a hit locates itself in the tree.
+const breadcrumb = (schema: Schema, el: Element): string[] => {
+  const chain: string[] = [];
+  let current: Element | undefined = el;
+  const guard = new Set<string>();
+  while (current && !guard.has(current.id)) {
+    guard.add(current.id);
+    chain.push(labelOf(current));
+    current = current.definition.parentId ? schema.flat[current.definition.parentId] : undefined;
+  }
+
+  return chain.reverse();
+};
+
+export const search = (input: SearchInput, space: Space, env: Env): SearchResponse => {
   const query = input.query.toLowerCase();
-  const results: SearchResponse['results'] = [];
+  const results: SearchHit[] = [];
 
   for (const el of Object.values(space.schema.flat)) {
+    if (isPageElement(space.schema, el)) {
+      continue;
+    }
+
     if (input.filters?.type && el.definition.type !== input.filters.type) {
       continue;
     }
@@ -41,9 +82,25 @@ export const search = (input: SearchInput, space: Space): SearchResponse => {
       }
     }
 
-    if (matches.length > 0) {
-      results.push({ pageRef, ref: elementRefOf(el), label: el.definition.label, type: el.definition.type, matches });
+    if (matches.length === 0) {
+      continue;
     }
+
+    const ref = elementRefOf(el);
+    const detail = elementDetailToAI(space.schema, el);
+    results.push({
+      pageRef,
+      ref,
+      uri: `plitzi://schema/${env}/elements/${ref}`,
+      pageUri: `plitzi://schema/${env}/pages/${pageRef}`,
+      stateVersion: computeVersion(detail),
+      parentRef: detail.parentRef,
+      path: breadcrumb(space.schema, el),
+      label: el.definition.label,
+      type: el.definition.type,
+      matches,
+      detail: input.include === 'detail' ? detail : undefined
+    });
   }
 
   return { results: results.slice(0, 50), total: results.length };

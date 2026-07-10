@@ -40,6 +40,18 @@ export const elementOps = {
     parentRef: z.string().optional().describe('Anchor ref/id; defaults to page root'),
     position: position.optional()
   }),
+  patchElement: z.object({
+    type: z.literal('patchElement'),
+    pageRef: z.string().describe('Page ref or id'),
+    ref: z.string().describe('Existing element ref or id'),
+    label: z.string().optional(),
+    subType: z.string().optional(),
+    props: z
+      .record(z.string(), z.unknown())
+      .optional()
+      .describe('Merged onto existing props: listed keys change, null unsets a key, others are preserved'),
+    style: styleRefs.optional().describe('Merged onto existing style: base replaces base, listed slots replace slots')
+  }),
   deleteElement: z.object({ type: z.literal('deleteElement'), pageRef: z.string(), ref: z.string() }),
   moveElement: z.object({
     type: z.literal('moveElement'),

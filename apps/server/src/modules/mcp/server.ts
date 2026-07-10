@@ -94,10 +94,13 @@ export const createMcpServer = ({ adapters, getSpaceId }: McpServerContext): Mcp
     'plitzi_search',
     {
       title: 'Search',
-      description: 'Find elements by label, type or attribute value across all pages.',
+      description:
+        'Find elements by label, type or attribute value across all pages. Each hit returns the element uri, ' +
+        'its stateVersion (edit with optimistic concurrency, no read needed) and its tree path. Pass ' +
+        'include: "detail" to inline each hit\'s full props/style.',
       inputSchema: searchShape
     },
-    async args => asText(search(args, await getSpace()))
+    async args => asText(search(args, await getSpace(), MCP_ENV))
   );
 
   return server;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildTypeRegistry, readResource } from './resources';
+import { buildTypeRegistry, readResource, resourceErrorMessage } from './resources';
 import { createMcpServer } from './server';
 import { apply, operation, search, validate } from './tools';
 
@@ -376,7 +376,181 @@ describe('mcp-ai legacy id addressing', () => {
 
 describe('mcp-ai search', () => {
   it('finds elements by attribute value and reports their page ref', () => {
-    const res = search({ query: 'box' }, buildSpace());
+    const res = search({ query: 'box' }, buildSpace(), 'main');
     expect(res.results.some(r => r.ref === 'c1' && r.pageRef === 'home')).toBe(true);
+  });
+
+  it('returns a ready-to-read uri, pageUri, stateVersion and tree path per hit (I1/I6/R2)', () => {
+    const res = search({ query: 'box' }, buildSpace(), 'main');
+    const hit = res.results.find(r => r.ref === 'c1');
+    expect(hit?.uri).toBe('plitzi://schema/main/elements/c1');
+    expect(hit?.pageUri).toBe('plitzi://schema/main/pages/home');
+    expect(hit?.parentRef).toBe('home');
+    expect(hit?.path).toEqual(['Home', 'Container']);
+    // The version must match what a direct element read yields, so it is valid for optimistic concurrency.
+    const read = readResource(buildSpace(), 'main', 'plitzi://schema/main/elements/c1');
+    expect(hit?.stateVersion).toBe(read?.stateVersion);
+  });
+
+  it('omits detail unless include: "detail" is requested', () => {
+    expect(search({ query: 'box' }, buildSpace(), 'main').results[0].detail).toBeUndefined();
+    const withDetail = search({ query: 'box', include: 'detail' }, buildSpace(), 'main');
+    expect(withDetail.results[0].detail?.props).toEqual({ title: 'Box' });
+  });
+
+  it('never returns page elements as hits', () => {
+    const res = search({ query: 'home' }, buildSpace(), 'main');
+    expect(res.results.every(r => r.type !== 'page')).toBe(true);
+  });
+});
+
+describe('mcp-ai primer bootstrap (R4)', () => {
+  it('bundles guide, types, css and summaries in one read', () => {
+    const res = readResource(buildSpace(), 'main', 'plitzi://primer/main');
+    const primer = res?.data as {
+      guide: string;
+      types: { types: Record<string, unknown> };
+      cssProperties: string[];
+      pages: AIPageSummary[];
+      definitions: string[];
+    };
+    expect(primer.guide).toContain('plitzi://types');
+    expect(Object.keys(primer.types.types).sort()).toEqual(['container', 'page']);
+    expect(primer.cssProperties.length).toBeGreaterThan(0);
+    expect(primer.pages[0].ref).toBe('home');
+    expect(primer.definitions).toContain('box');
+    // Summaries only — no element trees inline.
+    expect(primer.pages[0]).not.toHaveProperty('tree');
+  });
+});
+
+describe('mcp-ai patchElement (I3/R3 — partial merge)', () => {
+  it('changes only the listed prop, preserving the rest', async () => {
+    const space = buildSpace();
+    (space.schema.flat.c1.attributes as Record<string, unknown>).extra = 'keep';
+    const res = await apply(
+      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', props: { title: 'Renamed' } }] },
+      space
+    );
+    const el = res.elements?.find(e => e.ref === 'c1');
+    expect(el?.props).toEqual({ title: 'Renamed', extra: 'keep' });
+  });
+
+  it('unsets a prop when its value is null', async () => {
+    const res = await apply(
+      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', props: { title: null } }] },
+      buildSpace()
+    );
+    expect(res.elements?.find(e => e.ref === 'c1')?.props).toBeUndefined();
+  });
+
+  it('merges style.base without touching other selectors', async () => {
+    const res = await apply(
+      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', style: { base: ['box', 'extra'] } }] },
+      buildSpace()
+    );
+    expect(res.elements?.find(e => e.ref === 'c1')?.style.base).toEqual(['box', 'extra']);
+  });
+
+  it('fails (does not create) when the element does not exist', async () => {
+    const res = await apply(
+      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'ghost', props: { x: 1 } }] },
+      buildSpace()
+    );
+    expect(res.applied).toBe(false);
+    expect(res.errors?.[0].message).toContain('not found');
+  });
+});
+
+describe('mcp-ai write response element versions (R1)', () => {
+  it('returns each element with its own uri and stateVersion, ready for the next edit', async () => {
+    const res = await apply(
+      {
+        operations: [
+          { type: 'upsertElement', pageRef: 'home', element: { ref: 'c1', type: 'container', props: { title: 'X' } } }
+        ]
+      },
+      buildSpace()
+    );
+    const el = res.elements?.find(e => e.ref === 'c1');
+    expect(el?.uri).toBe('plitzi://schema/main/elements/c1');
+    expect(el?.stateVersion).toMatch(/^[a-f0-9]{12}$/);
+  });
+});
+
+describe('mcp-ai resource error messages (I2)', () => {
+  it('teaches valid templates for a malformed URI shape', () => {
+    const msg = resourceErrorMessage('main', 'plitzi://schema/main/element/home/c1');
+    const parsed = JSON.parse(msg) as { error: string; validTemplates: string[] };
+    expect(parsed.error).toBe('MALFORMED_URI');
+    expect(parsed.validTemplates).toContain('plitzi://schema/main/elements/{ref}');
+  });
+
+  it('flags a well-formed URI whose ref does not resolve as not-found', () => {
+    const parsed = JSON.parse(resourceErrorMessage('main', 'plitzi://schema/main/elements/ghost')) as {
+      error: string;
+    };
+    expect(parsed.error).toBe('NOT_FOUND');
+  });
+});
+
+describe('mcp-ai CSS shorthand expansion (I4)', () => {
+  it('accepts border-radius / padding shorthands and persists them as longhands', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      {
+        operations: [
+          { type: 'upsertDefinition', ref: 'pill', desktop: { 'border-radius': '9999px', padding: '4px 8px' } }
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+    expect(res.applied).toBe(true);
+    const def = readResource(cap.saved(), 'main', 'plitzi://definitions/main/pill')?.data as AIDefinition;
+    expect(def.desktop?.['border-top-left-radius']).toBe('9999px');
+    expect(def.desktop?.['padding-top']).toBe('4px');
+    expect(def.desktop?.['padding-right']).toBe('8px');
+    expect(def.desktop).not.toHaveProperty('border-radius');
+  });
+
+  it('expands the border shorthand into per-side width/style/color', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      { operations: [{ type: 'upsertDefinition', ref: 'bd', desktop: { border: '1px solid red' } }] },
+      buildSpace(),
+      cap.persisters
+    );
+    const def = readResource(cap.saved(), 'main', 'plitzi://definitions/main/bd')?.data as AIDefinition;
+    expect(def.desktop?.['border-top-width']).toBe('1px');
+    expect(def.desktop?.['border-top-style']).toBe('solid');
+    expect(def.desktop?.['border-top-color']).toBe('red');
+  });
+});
+
+describe('mcp-ai type-aware prop warnings (I5)', () => {
+  it('warns (not errors) when a prop is not among the type’s observed props', () => {
+    const r = validate(
+      {
+        operations: [
+          { type: 'upsertElement', pageRef: 'home', element: { ref: 'c2', type: 'container', props: { bogusProp: 1 } } }
+        ]
+      },
+      buildSpace()
+    );
+    expect(r.valid).toBe(true);
+    expect(r.warnings.some(w => w.includes('bogusProp'))).toBe(true);
+  });
+
+  it('does not warn for an observed prop', () => {
+    const r = validate(
+      {
+        operations: [
+          { type: 'upsertElement', pageRef: 'home', element: { ref: 'c2', type: 'container', props: { title: 'ok' } } }
+        ]
+      },
+      buildSpace()
+    );
+    expect(r.warnings.some(w => w.includes('has no observed prop'))).toBe(false);
   });
 });
