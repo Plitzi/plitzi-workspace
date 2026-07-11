@@ -38,40 +38,6 @@ const STYLE_OP_TYPES = new Set<string>(Object.keys(styleOps));
 
 export const isStyleOp = (type: OperationType): boolean => STYLE_OP_TYPES.has(type);
 
-const environment = z.string().optional().describe('Environment; default main');
-const operations = z.array(operation).max(100).describe('Operations applied atomically, in order (max 100)');
-
-export const applyShape = {
-  environment,
-  dryRun: z
-    .boolean()
-    .optional()
-    .describe(
-      'Validate and apply in memory only, WITHOUT persisting. Returns the same result (changed versions + full ' +
-        'element detail) so you can inspect the outcome and decide on more changes before committing for real.'
-    ),
-  expectedResourceVersions: z
-    .record(z.string(), z.string())
-    .optional()
-    .describe('Resource URI → the stateVersion you read; guards against concurrent edits'),
-  operations
-};
-
-export const validateShape = { environment, operations };
-
-export const searchShape = {
-  query: z.string().describe('Case-insensitive match on label, type and attribute values'),
-  filters: z.object({ type: z.string().optional(), pageRef: z.string().optional() }).optional(),
-  include: z
-    .literal('detail')
-    .optional()
-    .describe('Set to "detail" to inline each hit\'s full props/style so an edit needs no follow-up read')
-};
-
-export const readShape = {
-  uris: z
-    .array(z.string())
-    .min(1)
-    .max(50)
-    .describe('Resource URIs to read in one batch (max 50). Use the ready-made uris from search / write responses.')
-};
+// Shared input fragments for the batch tools (apply / validate), which co-locate their own full shapes.
+export const environment = z.string().optional().describe('Environment; default main');
+export const operations = z.array(operation).max(100).describe('Operations applied atomically, in order (max 100)');

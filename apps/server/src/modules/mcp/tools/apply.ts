@@ -1,13 +1,33 @@
+import { z } from 'zod';
+
 import { validateSchema } from '@plitzi/sdk-schema';
 
 import { cloneSpace } from '../helpers';
 import { applyOperations } from './dispatch';
+import { environment, operations } from './operations';
 import { validateOperations } from './validator';
 import { changedResources, conflictMessage, detectConflicts, resolvedElements } from './writeResult';
 
+import type { ToolDef } from './tool';
 import type { Space } from '../helpers';
 import type { ApplyInput, Env, Persisters, ValidationError, WriteResponse } from '../types';
 import type { SchemaValidationError } from '@plitzi/sdk-schema';
+
+export const applyShape = {
+  environment,
+  dryRun: z
+    .boolean()
+    .optional()
+    .describe(
+      'Validate and apply in memory only, WITHOUT persisting. Returns the same result (changed versions + full ' +
+        'element detail) so you can inspect the outcome and decide on more changes before committing for real.'
+    ),
+  expectedResourceVersions: z
+    .record(z.string(), z.string())
+    .optional()
+    .describe('Resource URI → the stateVersion you read; guards against concurrent edits'),
+  operations
+};
 
 const noWarnings = (warnings: string[]): string[] | undefined => (warnings.length > 0 ? warnings : undefined);
 
@@ -110,4 +130,16 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
     elements: resolvedElements(draft, env, outcome.elementRefs),
     warnings: noWarnings(validation.warnings)
   };
+};
+
+export const applyTool: ToolDef = {
+  name: 'plitzi_apply',
+  title: 'Apply',
+  description:
+    'Validate, apply and persist a batch of operations atomically. Returns the changed resources and their new ' +
+    'versions, plus the full detail of every element it created or updated. Pass dryRun to apply in memory only ' +
+    '(inspect the outcome without committing). Rejects the whole batch on any error or version conflict.',
+  inputShape: applyShape,
+  access: 'write',
+  run: (args, ctx) => apply({ ...(args as ApplyInput), environment: ctx.env }, ctx.space, ctx.persisters)
 };

@@ -24,7 +24,8 @@ export {
   searchShape,
   readShape,
   validateShape,
-  operation
+  operation,
+  tools
 } from './modules/mcp/tools';
 
 export type { JsonAdaptersConfig } from './adapters/jsonAdapters';
@@ -42,7 +43,9 @@ export type {
   WriteResponse,
   WriteElement,
   Persisters,
-  Operation
+  Operation,
+  ToolDef,
+  ToolContext
 } from './modules/mcp/tools';
 export type { Space } from './modules/mcp/helpers';
 export type { Env } from './modules/mcp/types';

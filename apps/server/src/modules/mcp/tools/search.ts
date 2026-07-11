@@ -1,9 +1,21 @@
+import { z } from 'zod';
+
 import { computeVersion, elementRefOf, getPageElements, isPageElement, pageRefOf, pageRefOfElement } from '../helpers';
 import { definitionRefs, definitionToAI, elementDetailToAI, pageSkeletonToAI } from '../resources';
 
+import type { ToolDef } from './tool';
 import type { Space } from '../helpers';
 import type { AIDefinition, Env, SearchHit, SearchInput, SearchPageHit, SearchResponse } from '../types';
 import type { Element, Schema } from '@plitzi/sdk-shared';
+
+export const searchShape = {
+  query: z.string().describe('Case-insensitive match on label, type and attribute values'),
+  filters: z.object({ type: z.string().optional(), pageRef: z.string().optional() }).optional(),
+  include: z
+    .literal('detail')
+    .optional()
+    .describe('Set to "detail" to inline each hit\'s full props/style so an edit needs no follow-up read')
+};
 
 const labelOf = (el: Element): string =>
   (typeof el.attributes.name === 'string' ? el.attributes.name : undefined) ?? el.definition.label;
@@ -126,4 +138,17 @@ export const search = (input: SearchInput, space: Space, env: Env): SearchRespon
     definitions: definitions.length > 0 ? definitions : undefined,
     pages: pages.length > 0 ? pages : undefined
   };
+};
+
+export const searchTool: ToolDef = {
+  name: 'plitzi_search',
+  title: 'Search',
+  description:
+    'Find elements by label, type or attribute value across all pages. Each hit returns the element uri, its ' +
+    'stateVersion (edit with optimistic concurrency, no read needed) and its tree path. Pass include: "detail" ' +
+    'to inline the full props/style of each hit plus resolvedStyle (the CSS of its classes). Also returns any ' +
+    'style definitions matching the query (with full CSS) under `definitions`, and matching pages under `pages`.',
+  inputShape: searchShape,
+  access: 'read',
+  run: (args, ctx) => search(args as SearchInput, ctx.space, ctx.env)
 };

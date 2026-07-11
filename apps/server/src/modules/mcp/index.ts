@@ -1,6 +1,6 @@
 export { createMcpServer, handleMcp, serveMcp, readMcpBody } from './handler';
 export { readResource, resourceVersion, registerResources, buildTypeRegistry, cssProperties } from './resources';
-export { apply, validate, search, read, validateOperations, operation } from './tools';
+export { apply, validate, search, read, validateOperations, operation, tools } from './tools';
 export { computeVersion } from './helpers';
 
 export type { McpServerContext } from './server';
@@ -12,7 +12,9 @@ export type {
   ReadInput,
   ReadResponse,
   ValidateInput,
-  Operation
+  Operation,
+  ToolDef,
+  ToolContext
 } from './tools';
 export type { Space } from './helpers';
 export type * from './types';
