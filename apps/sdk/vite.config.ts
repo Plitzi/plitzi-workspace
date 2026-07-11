@@ -71,6 +71,26 @@ function ejsPlugin(devMode?: boolean): Plugin {
   };
 }
 
+function renameCssPlugin(): Plugin {
+  return {
+    name: 'vite-plugin-rename-css',
+    enforce: 'post',
+
+    closeBundle() {
+      const outDir = path.resolve(__dirname, 'dist');
+      const cssFiles = fs.readdirSync(outDir).filter(f => f.endsWith('.css') && f !== 'plitzi-sdk-devtools.css');
+
+      for (const file of cssFiles) {
+        const targetPath = path.join(outDir, 'plitzi-sdk.css');
+        const sourcePath = path.join(outDir, file);
+
+        fs.renameSync(sourcePath, targetPath);
+        break;
+      }
+    }
+  };
+}
+
 export default defineConfig(({ mode, command }) => {
   const devMode = mode !== 'production';
   const onlyAnalyze = !!process.env.ONLY_ANALYZE;
@@ -94,6 +114,7 @@ export default defineConfig(({ mode, command }) => {
         version: PACKAGE.version
       }),
       command === 'build' && ejsPlugin(devMode),
+      command === 'build' && renameCssPlugin(),
       !isWatch &&
         viteCompression({ algorithm: 'gzip', deleteOriginFile: onlyGzip, filter: /plitzi-sdk(|-devtools).(js|css)$/ }),
       dts({
@@ -207,25 +228,7 @@ export default defineConfig(({ mode, command }) => {
             manualChunks: undefined,
             // inlineDynamicImports: true, // false if u want to have chunks !devMode,
             entryFileNames: 'plitzi-sdk.js',
-            assetFileNames: ((cssFileIndex: { current: number }) => {
-              return (assetInfo: { names: string[] }) => {
-                const fileName = assetInfo.names[0];
-
-                if (!fileName.endsWith('.css')) {
-                  return fileName;
-                }
-
-                if (fileName === 'style.css' || fileName === 'index.css') {
-                  return 'plitzi-sdk.css';
-                }
-
-                if (fileName === 'plitzi-sdk.css' && cssFileIndex.current++ > 0) {
-                  return `plitzi-sdk.chunk-${cssFileIndex.current}.css`;
-                }
-
-                return fileName;
-              };
-            })({ current: 0 }),
+            assetFileNames: '[name].[ext]',
             globals: {
               react: 'React',
               'react-dom': 'ReactDOM',

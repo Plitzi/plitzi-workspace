@@ -1010,9 +1010,6 @@
     "./types/InteractionTypes": {
       "types": "./dist/types/InteractionTypes.d.ts"
     },
-    "./types/McpTypes/McpAdapters": {
-      "types": "./dist/types/McpTypes/McpAdapters.d.ts"
-    },
     "./types/McpTypes/index": {
       "types": "./dist/types/McpTypes/index.d.ts"
     },
