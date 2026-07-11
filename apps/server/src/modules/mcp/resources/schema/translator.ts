@@ -1,5 +1,7 @@
 import {
   descendantCount,
+  descendantIds,
+  elementById,
   elementRefOf,
   getPageElements,
   isPageElement,
@@ -15,7 +17,9 @@ import type {
   AIDefinition,
   AIElementDetail,
   AIFolder,
+  AIGlobalStyle,
   AIPageSkeleton,
+  AIPageStyles,
   AIPageSummary,
   AISchemaVariable,
   AISkeletonNode
@@ -78,12 +82,16 @@ export const folderRefToAI = (schema: Schema, ref: string): AIFolder | undefined
 
 const skeletonNode = (schema: Schema, el: Element): AISkeletonNode => {
   const children = orderedChildren(schema, el);
+  const base = splitClasses(el.definition.styleSelectors.base);
+  const slots = slotClasses(el.definition.styleSelectors);
 
   return {
     ref: elementRefOf(el),
     type: el.definition.type,
     label: el.definition.label,
     subType: strOr(el.attributes.subType),
+    base: base.length > 0 ? base : undefined,
+    slots: Object.keys(slots).length > 0 ? slots : undefined,
     childCount: children.length,
     children: children.length > 0 ? children.map(child => skeletonNode(schema, child)) : undefined
   };
@@ -100,6 +108,57 @@ export const pageSkeletonToAI = (schema: Schema, pageEl: Element): AIPageSkeleto
     routeParams: slugRouteParams(slug),
     tree: orderedChildren(schema, pageEl).map(child => skeletonNode(schema, child))
   };
+};
+
+// All class refs an element attaches (base + every non-base slot), so a page-wide sweep can dedupe them.
+const elementClassRefs = (el: Element): string[] => {
+  const refs = splitClasses(el.definition.styleSelectors.base);
+  for (const classes of Object.values(slotClasses(el.definition.styleSelectors))) {
+    refs.push(...classes);
+  }
+
+  return refs;
+};
+
+export const pageStylesToAI = (schema: Schema, style: Style, pageEl: Element): AIPageStyles => {
+  const classRefs = new Set<string>();
+  const types = new Set<string>();
+  const collect = (el: Element): void => {
+    for (const ref of elementClassRefs(el)) {
+      classRefs.add(ref);
+    }
+
+    types.add(el.definition.type);
+  };
+
+  collect(pageEl);
+  for (const id of descendantIds(schema, pageEl.id)) {
+    const el = elementById(schema, id);
+    if (el) {
+      collect(el);
+    }
+  }
+
+  const definitions: AIDefinition[] = [];
+  for (const ref of Array.from(classRefs).sort()) {
+    const def = definitionToAI(style, ref);
+    if (def) {
+      definitions.push(def);
+    }
+  }
+
+  const globalStyles: AIGlobalStyle[] = [];
+  const seenGlobals = new Set<string>();
+  for (const type of Array.from(types).sort()) {
+    for (const global of globalStylesForType(style, type)) {
+      if (!seenGlobals.has(global.ref)) {
+        seenGlobals.add(global.ref);
+        globalStyles.push(global);
+      }
+    }
+  }
+
+  return { ref: pageRefOf(pageEl), definitions, globalStyles };
 };
 
 // --- Detail (on demand): one element with its props and style. ---
@@ -162,7 +221,9 @@ export const elementDetailToAI = (schema: Schema, el: Element, style?: Style): A
   return detail;
 };
 
-export const schemaVariablesToAI = (schema: Schema): Record<string, AISchemaVariable> => {
+// includeSubValues=false drops the per-variable conditional overrides — the cold-start primer only needs the
+// names/values to know what {{name}} references exist; the full subValues are one dedicated read away.
+export const schemaVariablesToAI = (schema: Schema, includeSubValues = true): Record<string, AISchemaVariable> => {
   const data: Record<string, AISchemaVariable> = {};
 
   for (const variable of schema.variables) {
@@ -172,7 +233,7 @@ export const schemaVariablesToAI = (schema: Schema): Record<string, AISchemaVari
       category: variable.category,
       type: variable.type,
       value: variable.value,
-      subValues: variable.subValues.map(sv => ({ when: sv.when, value: sv.value }))
+      subValues: includeSubValues ? variable.subValues.map(sv => ({ when: sv.when, value: sv.value })) : undefined
     };
   }
 

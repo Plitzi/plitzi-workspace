@@ -67,3 +67,11 @@ export const searchShape = {
     .optional()
     .describe('Set to "detail" to inline each hit\'s full props/style so an edit needs no follow-up read')
 };
+
+export const readShape = {
+  uris: z
+    .array(z.string())
+    .min(1)
+    .max(50)
+    .describe('Resource URIs to read in one batch (max 50). Use the ready-made uris from search / write responses.')
+};

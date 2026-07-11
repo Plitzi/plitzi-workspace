@@ -1,5 +1,5 @@
-import { computeVersion, elementRefOf, isPageElement, pageRefOfElement } from '../helpers';
-import { definitionRefs, definitionToAI, elementDetailToAI } from '../resources';
+import { computeVersion, elementRefOf, getPageElements, isPageElement, pageRefOf, pageRefOfElement } from '../helpers';
+import { definitionRefs, definitionToAI, elementDetailToAI, pageSkeletonToAI } from '../resources';
 
 import type { Space } from '../helpers';
 import type { AIDefinition, AIElementDetail, Env } from '../types';
@@ -27,12 +27,24 @@ export interface SearchHit {
   detail?: AIElementDetail;
 }
 
+export interface SearchPageHit {
+  ref: string;
+  uri: string;
+  stateVersion: string;
+  label: string;
+  slug: string;
+  matches: string[];
+}
+
 export interface SearchResponse {
   results: SearchHit[];
   total: number;
   /** Style definitions whose ref matches the query, with their full CSS — so finding a class by name closes the
    *  loop to its style without a separate read. Present only when at least one definition matches. */
   definitions?: AIDefinition[];
+  /** Pages whose name or slug matches the query (element hits never include pages). Each carries the page uri +
+   *  stateVersion, ready to open or edit. Present only when at least one page matches. */
+  pages?: SearchPageHit[];
 }
 
 const labelOf = (el: Element): string =>
@@ -122,9 +134,38 @@ export const search = (input: SearchInput, space: Space, env: Env): SearchRespon
     }
   }
 
+  const pages: SearchPageHit[] = [];
+  for (const page of getPageElements(space.schema)) {
+    const label = labelOf(page);
+    const slug = typeof page.attributes.slug === 'string' ? page.attributes.slug : '';
+    const matches: string[] = [];
+    if (label.toLowerCase().includes(query)) {
+      matches.push(`label: ${label}`);
+    }
+
+    if (slug && slug.toLowerCase().includes(query)) {
+      matches.push(`slug: ${slug}`);
+    }
+
+    if (matches.length === 0) {
+      continue;
+    }
+
+    const ref = pageRefOf(page);
+    pages.push({
+      ref,
+      uri: `plitzi://schema/${env}/pages/${ref}`,
+      stateVersion: computeVersion(pageSkeletonToAI(space.schema, page)),
+      label,
+      slug,
+      matches
+    });
+  }
+
   return {
     results: results.slice(0, 50),
     total: results.length,
-    definitions: definitions.length > 0 ? definitions : undefined
+    definitions: definitions.length > 0 ? definitions : undefined,
+    pages: pages.length > 0 ? pages : undefined
   };
 };

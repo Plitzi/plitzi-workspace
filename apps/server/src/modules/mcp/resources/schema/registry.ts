@@ -22,6 +22,19 @@ export interface TypeRegistry {
   types: Record<string, TypeInfo>;
 }
 
+// Only small scalars are kept as prop examples: a long string (e.g. a base64 blockJsx contentCache is thousands
+// of chars) or a whole array/object bloats the type registry — which rides in the cold-start primer — for no
+// discovery value. The valueType is still recorded, so the shape is preserved without the payload.
+const EXAMPLE_MAX_LENGTH = 80;
+
+const isCompactExample = (value: unknown): boolean => {
+  if (typeof value === 'string') {
+    return value.length <= EXAMPLE_MAX_LENGTH;
+  }
+
+  return typeof value === 'number' || typeof value === 'boolean';
+};
+
 const NOTE =
   'Element types and their props/slots are observed from the elements that already exist in this space — ' +
   'they are ground truth, never inferred. Props list the attribute keys seen on each type with example values. ' +
@@ -59,7 +72,7 @@ export const buildTypeRegistry = (schema: Schema): TypeRegistry => {
         prop.valueTypes.push(valueType);
       }
 
-      if (prop.examples.length < 3 && value !== null && value !== '' && !prop.examples.includes(value)) {
+      if (prop.examples.length < 3 && isCompactExample(value) && value !== '' && !prop.examples.includes(value)) {
         prop.examples.push(value);
       }
     }

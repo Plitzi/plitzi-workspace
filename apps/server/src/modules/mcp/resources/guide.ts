@@ -4,9 +4,11 @@ export const serverInstructions =
   'Plitzi AI server: read-then-write editing of a Plitzi space. Reads follow a filesystem model — list cheap, ' +
   'read one item in detail on demand; never fetch a whole tree you do not need. Workflow: (1) read ' +
   'plitzi://primer/{env} once — it bundles the guide, types, css-properties and page/definition/variable ' +
-  'summaries in a single call; (2) plitzi_search to jump to elements (each hit already carries its uri + ' +
-  'stateVersion, so no follow-up read is needed to edit); open a page skeleton or element only when you need ' +
-  'its tree/detail; (3) plitzi_apply with dryRun to preview a batch; (4) plitzi_apply to persist, passing ' +
+  'summaries in a single call; (2) plitzi_search with include:"detail" to jump to elements — each hit then carries ' +
+  'its uri, stateVersion AND full style/resolvedStyle, so an edit needs no per-element read; open a page skeleton ' +
+  'or element only when you need its tree/detail (the skeleton already lists the style classes of each node, and ' +
+  'plitzi_read fetches many uris at once); (3) plitzi_apply with dryRun to preview a batch; (4) plitzi_apply to ' +
+  'persist, passing ' +
   'expectedResourceVersions to guard against concurrent edits — apply and search both hand back the versions ' +
   'you need for the next edit. Use patchElement / patchDefinition to change only some props / CSS (the upsert ' +
   'variants replace them all). An element read (and search include:"detail") inlines the CSS of the definitions ' +
@@ -43,7 +45,12 @@ Never download a whole tree you do not need.
 - \`plitzi://css-properties\` — valid kebab-case CSS property keys.
 - \`plitzi://schema/{env}/pages\` — page **summaries** (ref, label, elementCount, folder). No element trees.
 - \`plitzi://folders/{env}\` — page **folders** (the sidebar tree): ref, name, slug, parentId. \`/{ref}\` for one.
-- \`plitzi://schema/{env}/pages/{ref}\` — one page as a **skeleton tree** (ref/type/label/children), no props/style.
+- \`plitzi://schema/{env}/pages/{ref}\` — one page as a **skeleton tree**: each node is \`ref/type/label\` **plus the
+  style classes it attaches** (\`base\`, and \`slots\` for non-base slots) — names only, no CSS. So you can map every
+  element to its class in a single page read, without opening each element just to learn which class it uses.
+- \`plitzi://schema/{env}/pages/{ref}/styles\` — **every style the page uses in one read**: the class definitions its
+  elements attach (deduplicated, **with full CSS**) plus the global styles affecting any element type on the page.
+  Reach for this to recolor/restyle a whole page — it needs no shared class-name prefix and no per-element reads.
 - \`plitzi://schema/{env}/elements/{ref}\` — one element in **full detail** (props, style, parentRef, childRefs).
   Its \`resolvedStyle\` inlines the **CSS of every definition** the element attaches (keyed by class ref), so you
   can see and edit its style without a separate definition read. Its \`globalStyles\` lists the **global element
@@ -60,19 +67,24 @@ The style resources also answer under the \`plitzi://schema/{env}/…\` root as 
 Data resources return \`{ stateVersion, data }\`. Keep \`stateVersion\` for optimistic concurrency.
 
 ## Navigating (files analogy)
-Pages and containers are folders; elements are files. To find something: list pages → open a page skeleton →
-read the specific element. Or use \`plitzi_search\` to jump straight to elements by label/type/attribute — each hit
-already carries the element's \`uri\`, \`stateVersion\`, \`pageUri\`, \`parentRef\` and tree \`path\`, so you can edit it
-(with optimistic concurrency) **without a follow-up read**. Pass \`include: "detail"\` to also inline each hit's
-props/style **and** its \`resolvedStyle\` (the CSS behind its classes). Search also returns any **style definitions**
-whose name matches the query, with their full CSS, under \`definitions\` — so finding a class by name needs no read.
+Pages and containers are folders; elements are files. **Prefer \`plitzi_search\` (especially with \`include: "detail"\`)
+over reading elements one by one** — it jumps straight to elements by label/type/attribute and each hit already
+carries the element's \`uri\`, \`stateVersion\`, \`pageUri\`, \`parentRef\` and tree \`path\`, so you can edit it (with
+optimistic concurrency) **without a follow-up read**. \`include: "detail"\` additionally inlines each hit's props/style
+**and** its \`resolvedStyle\` (the CSS behind its classes) — so a search-then-edit is the efficient path and a manual
+element read is the exception. Search also matches **pages** by name/slug (returned under \`pages\`, each with its uri +
+stateVersion) and returns any **style definitions** whose name matches the query, with full CSS, under \`definitions\`.
+When you do hold several refs to open (e.g. from a skeleton), read them together with \`plitzi_read\` rather than one at a time.
 
 ## Tools (write)
 - \`plitzi_validate\` — check a batch, returns teachable errors/warnings. Writes nothing.
 - \`plitzi_apply\` — validate → apply → persist atomically. Rejects the whole batch on any error or conflict. Pass
   \`dryRun: true\` to apply in memory only and get the same result back (changed versions + full element detail)
   without persisting — inspect it, then re-run without \`dryRun\` to commit.
-- \`plitzi_search\` — find elements across pages.
+- \`plitzi_search\` — find elements (and pages/definitions) across the space.
+- \`plitzi_read\` — read many resource **uris in one batch** (pages, elements, definitions, variables). Pass the
+  ready-made uris from search / a write response; each result is \`{ uri, stateVersion, data }\` or a teachable error,
+  so one bad uri never fails the batch. Use it instead of N single reads whenever you already hold several refs.
 
 Write tools return what **changed** (\`{ uri, stateVersion }\`) plus counts, and the **full detail of every element
 they created or updated** — each with its own \`uri\` and \`stateVersion\` (\`elements: [...]\`) so a follow-up edit of

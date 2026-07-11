@@ -45,6 +45,11 @@ export interface AISkeletonNode {
   type: string;
   label: string;
   subType?: string;
+  /** The class refs this node attaches on its base selector — names only, no CSS. Lets an agent map element →
+   *  class straight from the page skeleton, without a per-element read just to learn which class it uses. */
+  base?: string[];
+  /** Class refs attached on non-base slots (slot → class refs), names only. */
+  slots?: Record<string, string[]>;
   childCount: number;
   children?: AISkeletonNode[];
 }
@@ -58,6 +63,15 @@ export interface AIPageSkeleton {
    *  alongside the space-level plitzi://schema-variables. */
   routeParams: string[];
   tree: AISkeletonNode[];
+}
+
+/** Every style a page uses in one payload: the class definitions its elements attach (deduplicated, with CSS)
+ *  and the global element selectors that affect any element type present on the page. Collapses "what styles
+ *  does this page use" to a single read, with no reliance on a shared class-naming prefix. */
+export interface AIPageStyles {
+  ref: string;
+  definitions: AIDefinition[];
+  globalStyles: AIGlobalStyle[];
 }
 
 export interface AIElementDetail {

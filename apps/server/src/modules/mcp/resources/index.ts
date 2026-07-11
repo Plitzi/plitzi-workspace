@@ -8,6 +8,7 @@ import {
   folderRefToAI,
   foldersToAI,
   pageSkeletonToAI,
+  pageStylesToAI,
   pageSummariesToAI,
   schemaVariablesToAI
 } from './schema/translator';
@@ -77,7 +78,7 @@ export const readResource = (space: Space, env: Env, rawUri: string): ResourceEn
       folders: foldersToAI(space.schema),
       definitions: definitionRefs(space.style),
       styleVariables: styleVariablesToAI(space.style),
-      schemaVariables: schemaVariablesToAI(space.schema)
+      schemaVariables: schemaVariablesToAI(space.schema, false)
     });
   }
 
@@ -94,6 +95,13 @@ export const readResource = (space: Space, env: Env, rawUri: string): ResourceEn
     const folder = folderRefToAI(space.schema, ref);
 
     return folder ? envelope(folder) : null;
+  }
+
+  if (uri.startsWith(`plitzi://schema/${env}/pages/`) && uri.endsWith('/styles')) {
+    const ref = uri.slice(`plitzi://schema/${env}/pages/`.length, -'/styles'.length);
+    const page = findPageByRef(space.schema, ref);
+
+    return page ? envelope(pageStylesToAI(space.schema, space.style, page)) : null;
   }
 
   if (uri.startsWith(`plitzi://schema/${env}/pages/`)) {
@@ -250,6 +258,11 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
 
   const templates: Array<[string, string, string]> = [
     ['Page', `plitzi://schema/${env}/pages/{ref}`, 'One page as a skeleton tree (ref/type/label/children), no props'],
+    [
+      'Page styles',
+      `plitzi://schema/${env}/pages/{ref}/styles`,
+      'Every style a page uses in one read: class definitions its elements attach (with CSS) + global styles'
+    ],
     ['Element', `plitzi://schema/${env}/elements/{ref}`, 'One element in full detail (props, style) by ref or id'],
     ['Folder', `plitzi://folders/${env}/{ref}`, 'One page folder (name, slug, parentId) by folder id'],
     ['Style definition', `plitzi://definitions/${env}/{ref}`, 'One style definition (CSS) by class ref'],

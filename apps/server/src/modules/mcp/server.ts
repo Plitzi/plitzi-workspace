@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 import { emptySpaceMessage, unauthorizedSpaceMessage } from './helpers';
 import { registerResources } from './resources';
 import { serverInstructions } from './resources/guide';
-import { apply, applyShape, search, searchShape, validate, validateShape } from './tools';
+import { apply, applyShape, read, readShape, search, searchShape, validate, validateShape } from './tools';
 
 import type { Space } from './helpers';
 import type { Persisters } from './tools';
@@ -101,6 +101,19 @@ export const createMcpServer = ({ adapters, getSpaceId }: McpServerContext): Mcp
       inputSchema: searchShape
     },
     async args => asText(search(args, await getSpace(), MCP_ENV))
+  );
+
+  server.registerTool(
+    'plitzi_read',
+    {
+      title: 'Read',
+      description:
+        'Read multiple resources by URI in one batch (pages, elements, definitions, variables) — pass the ' +
+        'ready-made uris from plitzi_search or a write response. Each result is { uri, stateVersion, data } or a ' +
+        'teachable error, so one bad URI never fails the batch.',
+      inputSchema: readShape
+    },
+    async args => asText(read(args, await getSpace(), MCP_ENV))
   );
 
   return server;

@@ -2,11 +2,20 @@ import { describe, expect, it } from 'vitest';
 
 import { buildTypeRegistry, readResource, resourceErrorMessage } from './resources';
 import { createMcpServer } from './server';
-import { apply, operation, search, validate } from './tools';
+import { apply, operation, read, search, validate } from './tools';
 
 import type { Space } from './helpers';
 import type { Operation, Persisters } from './tools';
-import type { AIDefinition, AIElementDetail, AIFolder, AIPageSkeleton, AIPageSummary, AIStyleVariable } from './types';
+import type {
+  AIDefinition,
+  AIElementDetail,
+  AIFolder,
+  AIPageSkeleton,
+  AIPageStyles,
+  AIPageSummary,
+  AISchemaVariable,
+  AIStyleVariable
+} from './types';
 import type { Schema, SSRAdapters, Style } from '@plitzi/sdk-shared';
 
 const buildSpace = (): Space => {
@@ -98,10 +107,17 @@ describe('mcp-ai reads (filesystem model)', () => {
     expect(pages[0]).not.toHaveProperty('tree');
   });
 
-  it('reads one page as a skeleton tree (no props/style)', () => {
+  it('reads one page as a skeleton tree (class refs, no props/CSS)', () => {
     const res = readResource(buildSpace(), 'main', 'plitzi://schema/main/pages/home');
     const page = res?.data as AIPageSkeleton;
-    expect(page.tree[0]).toEqual({ ref: 'c1', type: 'container', label: 'Container', subType: 'div', childCount: 0 });
+    expect(page.tree[0]).toMatchObject({
+      ref: 'c1',
+      type: 'container',
+      label: 'Container',
+      subType: 'div',
+      childCount: 0,
+      base: ['box']
+    });
     expect(page.tree[0]).not.toHaveProperty('props');
   });
 
@@ -445,6 +461,86 @@ describe('mcp-ai search', () => {
   it('never returns page elements as hits', () => {
     const res = search({ query: 'home' }, buildSpace(), 'main');
     expect(res.results.every(r => r.type !== 'page')).toBe(true);
+  });
+
+  it('matches pages by name/slug under a separate pages field, with a ready-to-read uri + version', () => {
+    const res = search({ query: 'home' }, buildSpace(), 'main');
+    const page = res.pages?.find(p => p.ref === 'home');
+    expect(page?.uri).toBe('plitzi://schema/main/pages/home');
+    expect(page?.matches).toContain('label: Home');
+    const readPage = readResource(buildSpace(), 'main', 'plitzi://schema/main/pages/home');
+    expect(page?.stateVersion).toBe(readPage?.stateVersion);
+  });
+
+  it('omits the pages field when no page name/slug matches', () => {
+    expect(search({ query: 'box' }, buildSpace(), 'main').pages).toBeUndefined();
+  });
+});
+
+describe('mcp-ai page styles resource (all styles a page uses in one read)', () => {
+  it('collects the class definitions the page elements attach, deduplicated and with CSS', () => {
+    const res = readResource(buildSpace(), 'main', 'plitzi://schema/main/pages/home/styles');
+    const styles = res?.data as AIPageStyles;
+    expect(styles.ref).toBe('home');
+    expect(styles.definitions.find(d => d.ref === 'box')?.desktop).toEqual({ display: 'flex' });
+    // page-x is attached by the page but has no definition in the style schema, so it does not surface.
+    expect(styles.definitions.every(d => d.ref !== 'page-x')).toBe(true);
+  });
+
+  it('includes the global styles affecting any element type on the page', () => {
+    const space = buildSpace();
+    space.style.platform.desktop.containerGlobal = {
+      name: 'containerGlobal',
+      type: 'element',
+      componentType: 'container',
+      attributes: { base: { default: { 'box-sizing': 'border-box' } } },
+      cache: ''
+    } as unknown as (typeof space.style.platform)['desktop'][string];
+    const styles = readResource(space, 'main', 'plitzi://schema/main/pages/home/styles')?.data as AIPageStyles;
+    expect(styles.globalStyles.find(g => g.ref === 'containerGlobal')?.appliesToType).toBe('container');
+  });
+});
+
+describe('mcp-ai batch read (many uris in one call)', () => {
+  it('reads several uris at once, returning data or a teachable error per uri', () => {
+    const res = read(
+      { uris: ['plitzi://schema/main/elements/c1', 'plitzi://schema/main/elements/does-not-exist'] },
+      buildSpace(),
+      'main'
+    );
+    expect(res.results[0].stateVersion).toMatch(/^[a-f0-9]{12}$/);
+    expect((res.results[0].data as AIElementDetail).ref).toBe('c1');
+    expect(res.results[1].data).toBeUndefined();
+    expect(res.results[1].error).toBe('NOT_FOUND');
+  });
+
+  it('flags a malformed uri without failing the whole batch', () => {
+    const res = read({ uris: ['not-a-real-uri', 'plitzi://schema/main/elements/c1'] }, buildSpace(), 'main');
+    expect(res.results[0].error).toBe('MALFORMED_URI');
+    expect((res.results[1].data as AIElementDetail).ref).toBe('c1');
+  });
+});
+
+describe('mcp-ai slim primer (cold-start payload)', () => {
+  it('drops schema-variable subValues (kept only on the dedicated resource)', () => {
+    const primer = readResource(buildSpace(), 'main', 'plitzi://primer/main')?.data as {
+      schemaVariables: Record<string, AISchemaVariable>;
+    };
+    expect(primer.schemaVariables.apiUrl.value).toBe('https://api');
+    expect(primer.schemaVariables.apiUrl.subValues).toBeUndefined();
+    const dedicated = readResource(buildSpace(), 'main', 'plitzi://schema-variables/main')?.data as Record<
+      string,
+      AISchemaVariable
+    >;
+    expect(dedicated.apiUrl.subValues).toEqual([]);
+  });
+
+  it('excludes oversized prop values (e.g. base64 blobs) from type-registry examples', () => {
+    const space = buildSpace();
+    space.schema.flat.c1.attributes.contentCache = 'x'.repeat(500);
+    const reg = buildTypeRegistry(space.schema);
+    expect(reg.types.container.props.contentCache.valueTypes).toEqual(['string']);
+    expect(reg.types.container.props.contentCache.examples).toEqual([]);
   });
 });
 

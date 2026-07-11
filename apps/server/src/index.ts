@@ -15,7 +15,17 @@ export {
 
 // mcp-ai server + its tool functions (also runnable in-process, e.g. wrapped as agent tools by a consumer).
 export { createMcpServer, handleMcp, serveMcp, readMcpBody } from './modules/mcp';
-export { apply, search, validate, applyShape, searchShape, validateShape, operation } from './modules/mcp/tools';
+export {
+  apply,
+  search,
+  read,
+  validate,
+  applyShape,
+  searchShape,
+  readShape,
+  validateShape,
+  operation
+} from './modules/mcp/tools';
 
 export type { JsonAdaptersConfig } from './adapters/jsonAdapters';
 export type { ResolvedServices } from './core/createServer';
@@ -25,6 +35,9 @@ export type {
   SearchInput,
   SearchResponse,
   SearchHit,
+  ReadInput,
+  ReadResponse,
+  ReadHit,
   ValidateInput,
   WriteResponse,
   WriteElement,
