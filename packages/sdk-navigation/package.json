@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-navigation",
-  "version": "0.32.4",
+  "version": "0.32.5",
   "license": "AGPL-3.0",
   "files": [
     "dist"
@@ -45,8 +45,8 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "typescript": "^6.0.3",
-    "vite": "^8.0.16",
-    "vitest": "^4.1.9"
+    "vite": "^8.1.4",
+    "vitest": "^4.1.10"
   },
   "peerDependencies": {
     "react": "^19",
@@ -55,7 +55,7 @@
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.6.13",
     "@plitzi/sdk-shared": "workspace:*",
-    "react-router": "^8.0.1",
-    "react-router-dom": "^7.18.0"
+    "react-router": "^8.2.0",
+    "react-router-dom": "^7.18.1"
   }
 }

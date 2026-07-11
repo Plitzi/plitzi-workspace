@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-style",
-  "version": "0.32.4",
+  "version": "0.32.5",
   "license": "AGPL-3.0",
   "files": [
     "dist"
@@ -836,14 +836,14 @@
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-variables": "workspace:*",
     "clsx": "^2.1.1",
-    "immer": "^11.1.8",
+    "immer": "^11.1.11",
     "prop-types": "^15.8.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "eslint": "^9.39.4",
     "typescript": "^6.0.3",
-    "vite": "^8.0.16",
-    "vitest": "^4.1.9"
+    "vite": "^8.1.4",
+    "vitest": "^4.1.10"
   }
 }
