@@ -1,15 +1,24 @@
-import * as tools from './tools';
+export { createMcpServer, handleMcp, serveMcp, readMcpBody } from './handler';
+export { readResource, resourceVersion, registerResources, buildTypeRegistry, cssProperties } from './resources';
+export { apply, validate, search, read, validateOperations, operation, tools } from './tools';
+export { computeVersion } from './helpers';
+export { createHttpPreviewClient } from './previewClient';
+export { createHttpScreenshotClient } from './screenshotClient';
 
-export { readMcpBody, handleMcp } from './handler';
-export { createMcpServer } from './server';
-export {
-  zodToJsonSchema,
-  getAllowedModes,
-  toolResponseOk,
-  toolResponseErr,
-  bindTools,
-  isToolActive,
-  resolveToolHandler
-} from './helpers';
-
-export { tools };
+export type { HttpPreviewClientConfig } from './previewClient';
+export type { HttpScreenshotClientConfig } from './screenshotClient';
+export type { McpServerContext } from './server';
+export type {
+  ApplyInput,
+  WriteResponse,
+  Persisters,
+  SearchInput,
+  ReadInput,
+  ReadResponse,
+  ValidateInput,
+  Operation,
+  ToolDef,
+  ToolContext
+} from './tools';
+export type { Space } from './helpers';
+export type * from './types';

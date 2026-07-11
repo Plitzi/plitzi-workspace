@@ -1,6 +1,8 @@
 import type { Environment } from './CommonTypes';
 import type { McpServerConfig } from './McpTypes';
+import type { Schema } from './SchemaTypes';
 import type { OfflineDataRaw } from './SdkTypes';
+import type { Style } from './StyleTypes';
 import type { IncomingHttpHeaders } from 'node:http';
 import type { FC } from 'react';
 
@@ -141,6 +143,24 @@ export type SSRRscData = {
 export type SSRAdapters = {
   getOfflineData: (spaceId: number, environment: string, revision?: number) => Promise<OfflineDataRaw | undefined>;
   getSpaceDeployment: (req: SSRRequest) => Promise<SSRSpaceDeployment>;
+  /** Persist a space mutated by the mcp-ai `apply` tool. Implementations must recompute derived caches
+   *  (notably `style.cache`) before storing. When omitted, mcp-ai runs read/preview/validate only and
+   *  `apply` reports `persisted: false`. */
+  saveOfflineData?: (spaceId: number, environment: string, data: OfflineDataRaw) => Promise<void>;
+  /** Resolve the spaceId the MCP request operates on, from the verified `Authorization` bearer. The consumer
+   *  owns the JWT secret, so it decodes here; the MCP service stays stateless. Returns undefined when the
+   *  token is missing or invalid. Required for the `mcp` service to serve any request. */
+  getSpaceId?: (req: SSRRequest) => Promise<number | undefined>;
+  /** Read the element schema for the MCP tools. Separate from `getOfflineData` (which is SSR/RSC shaped and
+   *  strips `style.platform`); the MCP style resource needs the full documents, so schema and style split. */
+  getSchema?: (spaceId: number, environment: Environment) => Promise<Schema | undefined>;
+  /** Read the full style document (with `platform`/`mode`, which the MCP definitions resource requires). */
+  getStyle?: (spaceId: number, environment: Environment) => Promise<Style | undefined>;
+  /** Persist the element schema mutated by the MCP `apply` tool. When omitted, `apply` reports `persisted: false`. */
+  saveSchema?: (spaceId: number, environment: Environment, schema: Schema) => Promise<void>;
+  /** Persist the style document mutated by the MCP `apply` tool. Implementations must recompute `style.cache`
+   *  before storing. When omitted, `apply` reports `persisted: false`. */
+  saveStyle?: (spaceId: number, environment: Environment, style: Style) => Promise<void>;
   getUser?: (req: SSRRequest) => Promise<SSRUser | undefined>;
   onLogin?: (req: SSRRequest, res: SSRResponseHelpers) => Promise<boolean>;
   onLogout?: (req: SSRRequest, res: SSRResponseHelpers) => Promise<void>;
@@ -203,9 +223,46 @@ export type SSRServerConfig = {
   rsc?: SSRRscConfig;
   /** MCP (Model Context Protocol) server configuration — exposes schema tools to Claude. */
   mcp?: McpServerConfig;
+  /** AI-native MCP server — replaces the standard MCP with a zero-hallucination batch protocol.
+   *  When enabled, requests to the MCP path serve the AI-native server instead. */
+  mcpAi?: {
+    enabled?: boolean;
+    path?: string;
+  };
   adapters: SSRAdapters;
+  /** Draft-preview endpoint for the MCP visual-preview tools (the RENDERER side). Off unless `enabled`. */
+  preview?: SSRPreviewConfig;
+  /** For an MCP server that runs separately from the renderer (the CLIENT side): where to reach the SSR
+   *  `/preview` endpoint so the visual-preview tools work. The SDK builds an HTTP preview client from this;
+   *  absent → those tools report PREVIEW_UNAVAILABLE. */
+  previewClient?: { url: string; secret?: string };
+  /** Dedicated headless-browser service for plitzi_screenshot (off unless set). `serviceUrl` is the browser
+   *  service that turns a URL into PNG(s); `renderBaseUrl` is the SSR base the browser navigates to (a page
+   *  path + the one-shot `__pt` token are appended). When absent, plitzi_screenshot is not registered and only
+   *  the HTML plitzi_preview is available; when the service is unreachable at call time the tool degrades to
+   *  returning the HTML preview with a warning. */
+  screenshot?: { serviceUrl: string; renderBaseUrl: string };
+  /** Backing store for draft-preview tokens. Defaults to an in-memory store (single replica); inject a shared
+   *  store (e.g. Redis) for multi-replica correctness. */
+  draftStore?: DraftStore;
+  /** Which request-handling services this server mounts. Each maps to an internal `create<Name>Server` unit,
+   *  so new services scale without rewriting the dispatcher. Omitted flags fall back to sensible defaults:
+   *  ssr on, rsc when `adapters.getRscData` exists, mcp from `mcpAi.enabled`. `ai` is a reserved slot (not
+   *  wired yet). The per-service presets (createSSRServer / createMCPServer) pin these flags for you. */
+  services?: ServerServices;
+  /** Liveness/readiness endpoint for standalone servers (k8s probes). A stage always answers `path`
+   *  (default /health) with 200. The body is the generic identity payload built from `name`/`version`/`role`
+   *  ({ Server, Version, role }); pass an explicit `payload` to override it entirely. */
+  health?: { path?: string; payload?: Record<string, unknown>; name?: string; version?: string; role?: string };
   /** Cache-buster appended as ?v=<assetVersion> to all default SDK asset URLs (jsPath, cssPath, react vendor). Compute from file mtime or package version at startup. */
   assetVersion?: string;
+};
+
+export type ServerServices = {
+  ssr?: boolean;
+  rsc?: boolean;
+  mcp?: boolean;
+  ai?: boolean;
 };
 
 export type PluginRegistry = {
@@ -239,4 +296,26 @@ export type SSRServer = {
   close: () => Promise<void>;
   readonly cache: CacheManager | null;
   readonly plugins: PluginRegistry;
+};
+
+/** A short-TTL, one-shot store for unsaved draft offline-data behind a preview token. The SDK ships an
+ *  in-memory default (fine for a single replica); a multi-replica deployment injects a shared (e.g. Redis)
+ *  implementation so a preview URL resolves on whichever replica the browser lands on. `take` consumes the
+ *  token so a preview URL is not replayable. */
+export type DraftStore = {
+  put: (token: string, data: OfflineDataRaw, ttlMs: number) => void | Promise<void>;
+  take: (token: string) => (OfflineDataRaw | undefined) | Promise<OfflineDataRaw | undefined>;
+};
+
+/** Draft-preview config for the MCP visual-preview tools. When enabled, an internal endpoint at `path`
+ *  (guarded by `secret`) applies unsaved edits to a clone, stashes the resulting offline-data under a
+ *  one-shot token, and the render path serves it back at `?__pt=<token>`. Off by default. */
+export type SSRPreviewConfig = {
+  enabled?: boolean;
+  /** Internal endpoint path that mints a preview token. Default '/__preview'. */
+  path?: string;
+  /** Shared secret required in the `x-preview-secret` header; requests without it are rejected. */
+  secret?: string;
+  /** Token time-to-live in milliseconds. Default 60000. */
+  ttlMs?: number;
 };

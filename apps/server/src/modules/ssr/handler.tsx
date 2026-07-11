@@ -1,5 +1,6 @@
 import { applySSRResult } from './applySSRResult';
 import { buildBody } from './buildBody';
+import { takeDraftOverride } from './preview';
 import { streamBody } from './streamBody';
 import { buildHtmlCacheKey } from '../../helpers/cache';
 import { RequestMetrics } from '../../helpers/metrics';
@@ -21,8 +22,11 @@ export const renderSSR = async (
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
 
-  // Cache is disabled for the main environment (development).
-  const htmlCache = environment !== 'main' ? caches.html : undefined;
+  // A one-shot preview token renders unsaved draft edits (never persisted); such a render is never cached.
+  const offlineDataOverride = await takeDraftOverride(req, config);
+
+  // Cache is disabled for the main environment (development) and for any draft-override render.
+  const htmlCache = environment !== 'main' && !offlineDataOverride ? caches.html : undefined;
   const cacheKey = htmlCache ? buildHtmlCacheKey(req.ctx.user?.token, spaceId, environment, revision, req) : undefined;
 
   if (htmlCache && cacheKey) {
@@ -57,7 +61,8 @@ export const renderSSR = async (
       caches.offlineData,
       htmlCache,
       cacheKey,
-      metrics
+      metrics,
+      offlineDataOverride
     );
 
     return;
@@ -72,7 +77,8 @@ export const renderSSR = async (
     renderFn,
     pluginManager,
     caches.offlineData,
-    metrics
+    metrics,
+    offlineDataOverride
   );
 
   if (metrics) {

@@ -1,0 +1,84 @@
+import { z } from 'zod';
+
+import { pageUri, pagesUri } from './write';
+import { empty, fail, findFolderByRef, findPageByRef, generateObjectId } from '../../../helpers';
+
+import type { Space } from '../../../helpers';
+import type { OpResult } from '../../../helpers';
+import type { Env } from '../../../types';
+import type { Element } from '@plitzi/sdk-shared';
+
+export const upsertPageOp = z
+  .object({
+    type: z.literal('upsertPage'),
+    ref: z.string().describe('Page id/slug to update, or a new id you choose to create one'),
+    label: z.string().optional(),
+    slug: z.string().optional(),
+    folder: z
+      .string()
+      .nullable()
+      .optional()
+      .describe('Ref of an existing folder to place this page in; "" or null moves it to the root. Unknown → error'),
+    default: z.boolean().optional()
+  })
+  .describe('Create a page, or update it when ref already exists (only the fields you pass change).');
+
+export type UpsertPage = z.infer<typeof upsertPageOp>;
+
+export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => {
+  // The stored `folder` is always either '' (root) or an existing folder id — never a dangling ref. undefined =
+  // leave as-is; null or '' = move to root; any other ref must resolve to an existing folder or the op fails.
+  let folderValue: string | undefined;
+  if (op.folder !== undefined) {
+    if (op.folder === null || op.folder === '') {
+      folderValue = '';
+    } else {
+      const resolved = findFolderByRef(space.schema, op.folder);
+      if (!resolved) {
+        return fail(
+          'folder',
+          `Folder "${op.folder}" not found`,
+          'Create it with upsertFolder, or read plitzi://folders'
+        );
+      }
+
+      folderValue = resolved.id;
+    }
+  }
+
+  const existing = findPageByRef(space.schema, op.ref);
+  if (existing) {
+    existing.attributes = {
+      ...existing.attributes,
+      ...(op.slug !== undefined ? { slug: op.slug } : {}),
+      ...(op.label !== undefined ? { name: op.label } : {}),
+      ...(op.default !== undefined ? { default: op.default } : {}),
+      ...(folderValue !== undefined ? { folder: folderValue } : {})
+    };
+
+    return { ...empty(), updated: 1, staleResources: [pageUri(env, op.ref), pagesUri(env)] };
+  }
+
+  const id = generateObjectId();
+  const attributes: Element['attributes'] = {
+    slug: op.slug ?? '',
+    name: op.label ?? op.ref,
+    default: op.default ?? false,
+    folder: folderValue ?? ''
+  };
+  space.schema.flat[id] = {
+    id,
+    attributes,
+    definition: {
+      rootId: id,
+      label: op.label ?? op.ref,
+      type: 'page',
+      items: [],
+      styleSelectors: { base: '' },
+      aiRef: op.ref
+    }
+  };
+  space.schema.pages.push(id);
+
+  return { ...empty(), created: 1, staleResources: [pageUri(env, op.ref), pagesUri(env)] };
+};

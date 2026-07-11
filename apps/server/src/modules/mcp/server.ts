@@ -1,47 +1,107 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 
-import { bindTools } from './helpers';
+import { emptySpaceMessage, serverInstructions, unauthorizedSpaceMessage } from './helpers';
 import { registerResources } from './resources';
-import * as defaultTools from './tools';
-import PACKAGE from '../../../package.json' with { type: 'json' };
+import { tools } from './tools';
 
-import type AIEngine from '../ai/AIEngine';
-import type { McpAdapters, McpTool, McpPrompt, McpResource } from '@plitzi/sdk-shared';
+import type { Space } from './helpers';
+import type { Persisters, ToolContext } from './tools';
+import type { PreviewClient, ScreenshotClient } from './types';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { SSRAdapters, Environment } from '@plitzi/sdk-shared';
 
-export const createMcpServer = (
-  adapters: Partial<McpAdapters> = {},
-  engine: AIEngine,
-  tools?: McpTool[],
-  prompts?: McpPrompt[],
-  resources?: McpResource[]
-) => {
-  // Bind once: every tool now carries a handler (adapter tools get the adapter wrapped in), so
-  // registration is uniform and unusable tools (missing adapter) are dropped.
-  const boundTools = bindTools([...Object.values(defaultTools), ...(tools ?? [])], adapters);
-  const server = new McpServer({ name: 'plitzi-mcp', version: PACKAGE.version });
-  engine.setToolsAvailables(boundTools);
-  registerResources(server, resources, engine.readResource);
+/** The MCP service is stateless: every request resolves its own `spaceId` (from the request JWT) and reads the
+ *  space fresh through the adapters — schema and style are two documents, read/written independently. Both the
+ *  spaceId and the space itself resolve lazily, so the public surface (handshake, tools-list, resources-list,
+ *  and the space-independent guide / css-properties resources) works even when the request carries no auth —
+ *  only a space-dependent tool/resource demands a spaceId, failing with `unauthorizedSpaceMessage` if none. */
+export interface McpServerContext {
+  adapters: SSRAdapters;
+  getSpaceId: () => Promise<number | undefined>;
+  /** How the visual-preview tools (plitzi_preview / plitzi_screenshot) reach the renderer. Absent → those tools
+   *  report PREVIEW_UNAVAILABLE, so an MCP-only deployment without a renderer still runs every other tool. */
+  preview?: PreviewClient;
+  /** The dedicated browser service for plitzi_screenshot. Absent → the tool is not registered (only the HTML
+   *  plitzi_preview is offered). */
+  screenshot?: ScreenshotClient;
+}
 
-  for (const tool of boundTools) {
-    // Only expose tools permitted in the current mode (e.g. hide write tools in plan mode), so the
-    // MCP tool set matches what the direct providers advertise via getActiveTools.
-    if (!engine.can(tool.name)) {
+// The MCP tools only ever operate on the active-editing environment.
+const MCP_ENV: Environment = 'main';
+
+const asText = (data: unknown): CallToolResult => ({ content: [{ type: 'text', text: JSON.stringify(data) }] });
+
+// A tool may return either a plain JSON value (serialized as text) or an already-formed CallToolResult (its own
+// content blocks, e.g. plitzi_screenshot's image blocks) — pass the latter straight through.
+const isCallToolResult = (result: unknown): result is CallToolResult =>
+  typeof result === 'object' && result !== null && Array.isArray((result as { content?: unknown }).content);
+
+export const createMcpServer = ({ adapters, getSpaceId, preview, screenshot }: McpServerContext): McpServer => {
+  // Resolve the spaceId at most once, and only when a space-dependent operation actually needs it. A request
+  // without a valid token fails here (not at connect time), so the public surface stays reachable.
+  let spaceIdPromise: Promise<number> | undefined;
+  const requireSpaceId = (): Promise<number> =>
+    (spaceIdPromise ??= getSpaceId().then(id => {
+      if (!id) {
+        throw new Error(unauthorizedSpaceMessage);
+      }
+
+      return id;
+    }));
+
+  const loadSpace = async (): Promise<Space> => {
+    const spaceId = await requireSpaceId();
+    const [schema, style] = await Promise.all([
+      adapters.getSchema?.(spaceId, MCP_ENV),
+      adapters.getStyle?.(spaceId, MCP_ENV)
+    ]);
+    if (!schema || !style) {
+      throw new Error(emptySpaceMessage);
+    }
+
+    return { schema, style };
+  };
+
+  const { saveSchema, saveStyle } = adapters;
+  const persisters: Persisters = {
+    schema: saveSchema ? async schema => saveSchema(await requireSpaceId(), MCP_ENV, schema) : undefined,
+    style: saveStyle ? async style => saveStyle(await requireSpaceId(), MCP_ENV, style) : undefined
+  };
+
+  // Load the space at most once per request, and only on first read/write — never for the handshake.
+  let spacePromise: Promise<Space> | undefined;
+  const getSpace = (): Promise<Space> => (spacePromise ??= loadSpace());
+
+  const server = new McpServer({ name: 'plitzi-mcp', version: '0.3.0' }, { instructions: serverInstructions });
+
+  registerResources(server, getSpace, MCP_ENV);
+
+  // Register every tool straight from the shared registry: identity + input schema + behavior come from each
+  // tool's descriptor, so a new tool is picked up here with no per-tool wiring.
+  const toolContext = async (): Promise<ToolContext> => ({
+    space: await getSpace(),
+    env: MCP_ENV,
+    persisters,
+    spaceId: await requireSpaceId(),
+    preview,
+    screenshot
+  });
+  for (const tool of tools) {
+    // Skip a tool whose capability the host did not wire — e.g. plitzi_screenshot without a browser service, so
+    // it never appears in tools/list when the feature is off.
+    if (tool.requires === 'screenshot' && !screenshot) {
       continue;
     }
 
-    // outputSchema is intentionally omitted from the MCP registration: the SDK would force
-    // every result to carry an object-shaped structuredContent and reject boolean/array/empty
-    // payloads. Output validation is handled uniformly across all providers by AIEngine instead.
-    const { title, description, inputSchema, annotations } = tool.mcpDefinition;
-    const definition = { title, description, inputSchema, annotations };
+    server.registerTool(
+      tool.name,
+      { title: tool.title, description: tool.description, inputSchema: tool.inputShape },
+      async (args: unknown) => {
+        const result = await tool.execute(args, await toolContext());
 
-    server.registerTool(tool.name, definition, engine.execute(tool.name, tool.handler));
-  }
-
-  if (prompts) {
-    for (const prompt of prompts) {
-      server.registerPrompt(prompt.name, prompt.definition, engine.executePrompt(prompt.name, prompt.handler));
-    }
+        return isCallToolResult(result) ? result : asText(result);
+      }
+    );
   }
 
   return server;

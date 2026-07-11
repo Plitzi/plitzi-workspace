@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 import type { OfflineDataRaw, SSRAdapters, SSRRequest, SSRSpaceDeployment, SSRUser } from '@plitzi/sdk-shared';
 
@@ -33,6 +33,14 @@ export const createJsonAdapters = (config: JsonAdaptersConfig): SSRAdapters => {
     }
   };
 
+  const saveOfflineData = (spaceId: number, environment: string, data: OfflineDataRaw): Promise<void> => {
+    const filePath =
+      typeof config.offlineData === 'function' ? config.offlineData(spaceId, environment) : config.offlineData;
+    writeFileSync(filePath, JSON.stringify(data, null, 2));
+
+    return Promise.resolve();
+  };
+
   const getSpaceDeployment = (req: SSRRequest): Promise<SSRSpaceDeployment> => {
     const { deployment } = config;
 
@@ -65,5 +73,5 @@ export const createJsonAdapters = (config: JsonAdaptersConfig): SSRAdapters => {
         Promise.resolve(typeof config.user === 'function' ? config.user(req) : config.user)
     : undefined;
 
-  return { getOfflineData, getSpaceDeployment, getUser };
+  return { getOfflineData, saveOfflineData, getSpaceDeployment, getUser };
 };

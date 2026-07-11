@@ -6,7 +6,14 @@ import { prepareRender } from './prepareRender';
 import type { TtlCache } from '../../helpers/cache';
 import type { RequestMetrics } from '../../helpers/metrics';
 import type { PluginManager } from '../../plugins/manager';
-import type { Environment, SSRRenderResult, SSRRequest, SSRServerConfig, SSRTemplateFn } from '@plitzi/sdk-shared';
+import type {
+  Environment,
+  OfflineDataRaw,
+  SSRRenderResult,
+  SSRRequest,
+  SSRServerConfig,
+  SSRTemplateFn
+} from '@plitzi/sdk-shared';
 
 export type BuildBodyResult = { body?: string; result: SSRRenderResult };
 
@@ -19,7 +26,8 @@ export const buildBody = async (
   renderFn: SSRTemplateFn,
   pluginManager: PluginManager,
   offlineDataCache?: TtlCache<string>,
-  metrics?: RequestMetrics
+  metrics?: RequestMetrics,
+  offlineDataOverride?: OfflineDataRaw
 ): Promise<BuildBodyResult> => {
   const prep = await prepareRender(
     req,
@@ -29,7 +37,8 @@ export const buildBody = async (
     revision,
     pluginManager,
     offlineDataCache,
-    metrics
+    metrics,
+    offlineDataOverride
   );
 
   const result: SSRRenderResult = {};

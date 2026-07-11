@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -18,15 +18,32 @@ import type {
 const PORT = parseInt(process.env.SSR_PORT ?? '3002', 10);
 const HOST = process.env.SSR_HOST ?? '0.0.0.0';
 
+const spacePath = () => path.resolve(__dirname, 'schemas/basic', 'space.json');
+const stylePath = () => path.resolve(__dirname, 'schemas/basic', 'style.json');
+
+const readSchema = (): Schema => (JSON.parse(readFileSync(spacePath(), 'utf-8')) as { schema: Schema }).schema;
+const readStyle = (): Style => JSON.parse(readFileSync(stylePath(), 'utf-8')) as Style;
+
 const getOfflineData = (): Promise<OfflineDataRaw | undefined> => {
-  const fileSchema = JSON.parse(readFileSync(path.resolve(__dirname, 'schemas/basic', 'space.json'), 'utf-8')) as {
-    schema: Schema;
-  };
-  const style = JSON.parse(readFileSync(path.resolve(__dirname, 'schemas/basic', 'style.json'), 'utf-8')) as Style;
-  const offlineData = { schema: fileSchema.schema, style } satisfies OfflineDataRaw;
+  const offlineData = { schema: readSchema(), style: readStyle() } satisfies OfflineDataRaw;
   console.warn('[SSR] getOfflineData: using stub adapter — returning spaceId=1');
 
   return Promise.resolve(offlineData);
+};
+
+// MCP reads/writes schema and style as separate documents (see SSRAdapters). The stub always resolves spaceId=1.
+const getSpaceId = (): Promise<number> => Promise.resolve(1);
+const getSchema = (): Promise<Schema> => Promise.resolve(readSchema());
+const getStyle = (): Promise<Style> => Promise.resolve(readStyle());
+const saveSchema = (_spaceId: number, _environment: string, schema: Schema): Promise<void> => {
+  writeFileSync(spacePath(), JSON.stringify({ schema }, null, 2));
+
+  return Promise.resolve();
+};
+const saveStyle = (_spaceId: number, _environment: string, style: Style): Promise<void> => {
+  writeFileSync(stylePath(), JSON.stringify(style, null, 2));
+
+  return Promise.resolve();
 };
 
 const getSpaceDeployment = (): Promise<SSRSpaceDeployment> => {
@@ -69,10 +86,29 @@ const getRscData = async (
   return { serverData };
 };
 
-const adapters: SSRAdapters = { getOfflineData, getSpaceDeployment, getRscData };
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Persists mcp-ai writes back to the sample space (git-restore to reset). A real platform adapter must also
+// recompute style.cache; the SDK renderer reads that cache, though mcp-ai reads/writes the structured source.
+const saveOfflineData = (_spaceId: number, _environment: string, data: OfflineDataRaw): Promise<void> => {
+  writeFileSync(spacePath(), JSON.stringify({ schema: data.schema }, null, 2));
+  writeFileSync(stylePath(), JSON.stringify(data.style, null, 2));
+
+  return Promise.resolve();
+};
+
+const adapters: SSRAdapters = {
+  getOfflineData,
+  getSpaceDeployment,
+  getRscData,
+  saveOfflineData,
+  getSpaceId,
+  getSchema,
+  getStyle,
+  saveSchema,
+  saveStyle
+};
 
 const server = createSSRServer({
   port: PORT,
@@ -83,6 +119,7 @@ const server = createSSRServer({
     '/sdk-assets': path.resolve(process.cwd(), '../sdk/dist')
   },
   httpVersion: 1,
+  mcpAi: { enabled: true },
   // streaming: true,
   // ssrOnly: true,
   plugins: {

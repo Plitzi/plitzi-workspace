@@ -11,6 +11,7 @@ import type { RequestMetrics } from '../../helpers/metrics';
 import type { PluginManager } from '../../plugins/manager';
 import type {
   Environment,
+  OfflineDataRaw,
   SSRRenderResult,
   SSRRequest,
   SSRResponseHelpers,
@@ -33,7 +34,8 @@ export const streamBody = async (
   offlineDataCache?: TtlCache<string>,
   htmlCache?: TtlCache<string>,
   cacheKey?: string,
-  metrics?: RequestMetrics
+  metrics?: RequestMetrics,
+  offlineDataOverride?: OfflineDataRaw
 ): Promise<void> => {
   const prep = await prepareRender(
     req,
@@ -43,7 +45,8 @@ export const streamBody = async (
     revision,
     pluginManager,
     offlineDataCache,
-    metrics
+    metrics,
+    offlineDataOverride
   );
 
   // Render the template with a sentinel in place of React HTML, then split it.

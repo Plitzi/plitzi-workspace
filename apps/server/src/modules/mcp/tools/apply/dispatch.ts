@@ -1,0 +1,100 @@
+import { fail } from '../../helpers';
+import { isStyleOp } from '../operations';
+import * as schema from '../operations/schema';
+import * as style from '../operations/style';
+
+import type { OpResult } from '../../helpers';
+import type { Space } from '../../helpers';
+import type { Env, MutationOutcome } from '../../types';
+import type { Operation } from '../operations';
+
+const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
+  switch (op.type) {
+    case 'upsertElement':
+      return schema.upsertElement(space, env, op);
+    case 'patchElement':
+      return schema.patchElement(space, env, op);
+    case 'deleteElement':
+      return schema.deleteElement(space, env, op);
+    case 'moveElement':
+      return schema.moveElement(space, env, op);
+    case 'upsertPage':
+      return schema.upsertPage(space, env, op);
+    case 'deletePage':
+      return schema.deletePage(space, env, op);
+    case 'upsertFolder':
+      return schema.upsertFolder(space, env, op);
+    case 'deleteFolder':
+      return schema.deleteFolder(space, env, op);
+    case 'upsertVariable':
+      return schema.upsertVariable(space, env, op);
+    case 'deleteVariable':
+      return schema.deleteVariable(space, env, op);
+    case 'upsertDefinition':
+      return style.upsertDefinition(space, env, op);
+    case 'patchDefinition':
+      return style.patchDefinition(space, env, op);
+    case 'deleteDefinition':
+      return style.deleteDefinition(space, env, op);
+    case 'upsertGlobalStyle':
+      return style.upsertGlobalStyle(space, env, op);
+    case 'patchGlobalStyle':
+      return style.patchGlobalStyle(space, env, op);
+    case 'deleteGlobalStyle':
+      return style.deleteGlobalStyle(space, env, op);
+    case 'upsertStyleVariable':
+      return style.upsertStyleVariable(space, env, op);
+    case 'deleteStyleVariable':
+      return style.deleteStyleVariable(space, env, op);
+    default:
+      return fail('type', `Unknown operation "${(op as { type: string }).type}"`, 'See the Operation union');
+  }
+};
+
+/** Apply operations in order to the space (mutating it). Records which schema(s) changed so the caller can
+ *  persist each independently. Stops collecting counts for a failed op but records its errors. */
+export const applyOperations = (space: Space, env: Env, ops: Operation[]): MutationOutcome => {
+  const outcome: MutationOutcome = {
+    created: 0,
+    updated: 0,
+    deleted: 0,
+    staleResources: [],
+    elementRefs: [],
+    errors: [],
+    changedSchema: false,
+    changedStyle: false
+  };
+  const stale = new Set<string>();
+  const elements = new Set<string>();
+
+  for (let i = 0; i < ops.length; i++) {
+    const op = ops[i];
+    const result = executeOp(space, env, op);
+    if (result.errors) {
+      outcome.errors.push(...result.errors.map(e => ({ ...e, path: `operations[${i}].${e.path}` })));
+      continue;
+    }
+
+    if (isStyleOp(op.type)) {
+      outcome.changedStyle = true;
+    } else {
+      outcome.changedSchema = true;
+    }
+
+    outcome.created += result.created;
+    outcome.updated += result.updated;
+    outcome.deleted += result.deleted;
+    for (const uri of result.staleResources) {
+      stale.add(uri);
+    }
+
+    for (const ref of result.elementRefs ?? []) {
+      elements.add(ref);
+    }
+  }
+
+  outcome.staleResources = Array.from(stale);
+  outcome.elementRefs = Array.from(elements);
+
+  return outcome;
+};
