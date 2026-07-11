@@ -12,7 +12,6 @@ for discussion and is **not implemented** yet.
 |---|---|---|---|
 | [0001](./0001-native-mobile-renderer.md) | Native mobile renderer (React Native) | Proposal | `plitzi-sdk` render packages |
 | [0002](./0002-ai-schema-comprehension-and-improvement.md) | AI schema comprehension and improvement | Proposal | `sdk-schema`, `sdk-elements`, MCP/AI toolset |
-| [0003](./0003-ai-mcp-server-design.md) | AI-native MCP server — zero-hallucination design | Proposal | New MCP server (external) |
 
 ## Conventions
 
