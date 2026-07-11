@@ -3,6 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 import { emptySpaceMessage, serverInstructions, unauthorizedSpaceMessage } from './helpers';
 import { registerResources } from './resources';
 import { tools } from './tools';
+import { isCallToolResult } from '../ai/toolkit';
 
 import type { Space } from './helpers';
 import type { Persisters, ToolContext } from './tools';
@@ -30,11 +31,6 @@ export interface McpServerContext {
 const MCP_ENV: Environment = 'main';
 
 const asText = (data: unknown): CallToolResult => ({ content: [{ type: 'text', text: JSON.stringify(data) }] });
-
-// A tool may return either a plain JSON value (serialized as text) or an already-formed CallToolResult (its own
-// content blocks, e.g. plitzi_screenshot's image blocks) — pass the latter straight through.
-const isCallToolResult = (result: unknown): result is CallToolResult =>
-  typeof result === 'object' && result !== null && Array.isArray((result as { content?: unknown }).content);
 
 export const createMcpServer = ({ adapters, getSpaceId, preview, screenshot }: McpServerContext): McpServer => {
   // Resolve the spaceId at most once, and only when a space-dependent operation actually needs it. A request

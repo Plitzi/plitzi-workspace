@@ -1,4 +1,4 @@
-import { toolResponseErr } from './toolkit';
+import { firstText, toolResponseErr } from './toolkit';
 
 import type {
   AiMode,
@@ -70,7 +70,7 @@ class AIEngine implements McpToolLifecycleHooks {
       resultParsed = result.data;
     } else {
       try {
-        resultParsed = JSON.parse(result.content[0]?.text ?? '');
+        resultParsed = JSON.parse(firstText(result.content) ?? '');
       } catch {
         // ignore
       }
@@ -80,7 +80,7 @@ class AIEngine implements McpToolLifecycleHooks {
       this.callbacks.onToolError?.({
         name,
         args,
-        result: resultParsed ?? { error: result.content[0]?.text ?? 'Tool failed' }
+        result: resultParsed ?? { error: firstText(result.content) ?? 'Tool failed' }
       });
     } else {
       this.callbacks.onToolSuccess?.({ name, args, result: resultParsed });
@@ -165,7 +165,7 @@ class AIEngine implements McpToolLifecycleHooks {
     }
 
     if (result.isError) {
-      this.callbacks.onLog?.('error', `tool failed: ${name} error=${result.content[0]?.text ?? 'unknown'}`);
+      this.callbacks.onLog?.('error', `tool failed: ${name} error=${firstText(result.content) ?? 'unknown'}`);
     }
 
     await this.after(name, args, result);

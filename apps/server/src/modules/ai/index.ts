@@ -8,7 +8,9 @@ export {
   toolResponseErr,
   bindTools,
   isToolActive,
-  resolveToolHandler
+  resolveToolHandler,
+  isCallToolResult,
+  toolResponseFromResult
 } from './toolkit';
 
 export { AIEngine };

@@ -1,7 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { z } from 'zod';
 
-import { zodToJsonSchema, getAllowedModes, toolResponseOk, toolResponseErr } from './toolkit';
+import {
+  zodToJsonSchema,
+  getAllowedModes,
+  toolResponseOk,
+  toolResponseErr,
+  isCallToolResult,
+  toolResponseFromResult,
+  firstText
+} from './toolkit';
+
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 describe('zodToJsonSchema', () => {
   it('converts a flat ZodObject with its required fields', () => {
@@ -92,14 +102,14 @@ describe('toolResponseOk', () => {
     const result = toolResponseOk(data);
 
     expect(result.content[0].type).toBe('text');
-    expect(result.content[0].text).toBe(JSON.stringify(data, null, 2));
+    expect(firstText(result.content)).toBe(JSON.stringify(data, null, 2));
     expect(result.data).toEqual(data);
   });
 
   it('uses agentMessage as text when provided', () => {
     const result = toolResponseOk({ id: '1' }, 'Record created successfully.');
 
-    expect(result.content[0].text).toBe('Record created successfully.');
+    expect(firstText(result.content)).toBe('Record created successfully.');
   });
 
   it('does not set isError', () => {
@@ -113,14 +123,50 @@ describe('toolResponseErr', () => {
   it('returns error text from a string', () => {
     const result = toolResponseErr('Something went wrong');
 
-    expect(result.content[0].text).toBe('Something went wrong');
+    expect(firstText(result.content)).toBe('Something went wrong');
     expect(result.isError).toBe(true);
   });
 
   it('returns error message from an Error object', () => {
     const result = toolResponseErr(new Error('DB error'));
 
-    expect(result.content[0].text).toBe('DB error');
+    expect(firstText(result.content)).toBe('DB error');
     expect(result.isError).toBe(true);
+  });
+});
+
+describe('isCallToolResult', () => {
+  it('recognizes a result carrying a content array', () => {
+    expect(isCallToolResult({ content: [{ type: 'text', text: 'x' }] })).toBe(true);
+  });
+
+  it('rejects plain JSON values a tool returns', () => {
+    expect(isCallToolResult({ id: '1', name: 'Test' })).toBe(false);
+    expect(isCallToolResult(null)).toBe(false);
+    expect(isCallToolResult('string')).toBe(false);
+  });
+});
+
+describe('toolResponseFromResult', () => {
+  it('keeps text and image blocks so a screenshot reaches the agent as image content', () => {
+    const call: CallToolResult = {
+      content: [
+        { type: 'text', text: '{"pageRef":"default"}' },
+        { type: 'image', data: 'AAAA', mimeType: 'image/png' }
+      ]
+    };
+    const result = toolResponseFromResult(call);
+
+    expect(result.content).toEqual([
+      { type: 'text', text: '{"pageRef":"default"}' },
+      { type: 'image', data: 'AAAA', mimeType: 'image/png' }
+    ]);
+    expect(result.isError).toBeUndefined();
+  });
+
+  it('carries the error flag through', () => {
+    const call: CallToolResult = { content: [{ type: 'text', text: 'boom' }], isError: true };
+
+    expect(toolResponseFromResult(call).isError).toBe(true);
   });
 });

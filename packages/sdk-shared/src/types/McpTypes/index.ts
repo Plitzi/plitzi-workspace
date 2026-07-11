@@ -14,8 +14,12 @@ export type McpPromptHandlerResult = {
 
 export type McpPromptHandler = (args: Record<string, any>, ctx: AiContext) => Promise<McpPromptHandlerResult>;
 
+export type McpTextContent = { type: 'text'; text: string };
+export type McpImageContent = { type: 'image'; data: string; mimeType: string };
+export type McpContent = McpTextContent | McpImageContent;
+
 export type McpToolHandlerResult = {
-  content: { type: 'text'; text: string }[];
+  content: McpContent[];
   data?: unknown;
   structuredContent?: Record<string, unknown>;
   isError?: true;

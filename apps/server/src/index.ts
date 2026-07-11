@@ -10,7 +10,9 @@ export {
   getAllowedModes,
   bindTools,
   isToolActive,
-  resolveToolHandler
+  resolveToolHandler,
+  isCallToolResult,
+  toolResponseFromResult
 } from './modules/ai';
 
 // mcp-ai server + its tool functions (also runnable in-process, e.g. wrapped as agent tools by a consumer).
