@@ -7,7 +7,12 @@ import type { Space } from '../../../helpers';
 import type { OpResult } from '../../../helpers';
 import type { Env } from '../../../types';
 
-export const deleteGlobalStyleOp = z.object({ type: z.literal('deleteGlobalStyle'), componentType: z.string() });
+export const deleteGlobalStyleOp = z
+  .object({
+    type: z.literal('deleteGlobalStyle'),
+    componentType: z.string().describe('Element type whose site-wide style to remove')
+  })
+  .describe('Remove the site-wide style for an element type (elements of that type keep their own classes).');
 
 export type DeleteGlobalStyle = z.infer<typeof deleteGlobalStyleOp>;
 

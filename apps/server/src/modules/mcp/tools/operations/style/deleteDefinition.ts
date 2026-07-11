@@ -7,7 +7,9 @@ import type { Space } from '../../../helpers';
 import type { OpResult } from '../../../helpers';
 import type { Env } from '../../../types';
 
-export const deleteDefinitionOp = z.object({ type: z.literal('deleteDefinition'), ref: z.string() });
+export const deleteDefinitionOp = z
+  .object({ type: z.literal('deleteDefinition'), ref: z.string().describe('Class ref of the definition to delete') })
+  .describe('Delete a style class definition by ref (does not detach it from elements that still list it).');
 
 export type DeleteDefinition = z.infer<typeof deleteDefinitionOp>;
 

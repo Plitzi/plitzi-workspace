@@ -8,11 +8,16 @@ import type { Space } from '../../../helpers';
 import type { OpResult } from '../../../helpers';
 import type { Env } from '../../../types';
 
-export const upsertDefinitionOp = z.object({
-  type: z.literal('upsertDefinition'),
-  ref: z.string(),
-  ...upsertCssShape
-});
+export const upsertDefinitionOp = z
+  .object({
+    type: z.literal('upsertDefinition'),
+    ref: z.string().describe('Class name you choose (kebab-case), or an existing class ref to fully replace'),
+    ...upsertCssShape
+  })
+  .describe(
+    'Create a reusable style class (CSS), or fully replace it when ref exists. Apply it by attaching ref to an ' +
+      'element via its style.base. Use patchDefinition to change only some CSS.'
+  );
 
 export type UpsertDefinition = z.infer<typeof upsertDefinitionOp>;
 

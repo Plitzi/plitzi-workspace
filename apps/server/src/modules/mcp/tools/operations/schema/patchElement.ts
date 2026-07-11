@@ -8,18 +8,23 @@ import type { Space } from '../../../helpers';
 import type { OpResult } from '../../../helpers';
 import type { Env } from '../../../types';
 
-export const patchElementOp = z.object({
-  type: z.literal('patchElement'),
-  pageRef: z.string().describe('Page ref or id'),
-  ref: z.string().describe('Existing element ref or id'),
-  label: z.string().optional(),
-  subType: z.string().optional(),
-  props: z
-    .record(z.string(), z.unknown())
-    .optional()
-    .describe('Merged onto existing props: listed keys change, null unsets a key, others are preserved'),
-  style: styleRefs.optional().describe('Merged onto existing style: base replaces base, listed slots replace slots')
-});
+export const patchElementOp = z
+  .object({
+    type: z.literal('patchElement'),
+    pageRef: z.string().describe('Page ref or id'),
+    ref: z.string().describe('Existing element ref or id'),
+    label: z.string().optional(),
+    subType: z.string().optional(),
+    props: z
+      .record(z.string(), z.unknown())
+      .optional()
+      .describe('Merged onto existing props: listed keys change, null unsets a key, others are preserved'),
+    style: styleRefs.optional().describe('Merged onto existing style: base replaces base, listed slots replace slots')
+  })
+  .describe(
+    'Partially update an EXISTING element: only the fields you pass change (props/style are merged, not replaced). ' +
+      'Never creates — fails if ref does not resolve. Use upsertElement to create or fully replace.'
+  );
 
 export type PatchElement = z.infer<typeof patchElementOp>;
 

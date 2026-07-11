@@ -7,7 +7,9 @@ import type { Space } from '../../../helpers';
 import type { OpResult } from '../../../helpers';
 import type { Env } from '../../../types';
 
-export const deleteVariableOp = z.object({ type: z.literal('deleteVariable'), name: z.string() });
+export const deleteVariableOp = z
+  .object({ type: z.literal('deleteVariable'), name: z.string().describe('Name of the schema variable to delete') })
+  .describe('Delete a space-level schema variable by name.');
 
 export type DeleteVariable = z.infer<typeof deleteVariableOp>;
 

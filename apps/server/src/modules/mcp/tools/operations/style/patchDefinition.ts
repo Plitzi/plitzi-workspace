@@ -9,11 +9,16 @@ import type { Space } from '../../../helpers';
 import type { OpResult } from '../../../helpers';
 import type { Env } from '../../../types';
 
-export const patchDefinitionOp = z.object({
-  type: z.literal('patchDefinition'),
-  ref: z.string(),
-  ...patchCssShape
-});
+export const patchDefinitionOp = z
+  .object({
+    type: z.literal('patchDefinition'),
+    ref: z.string().describe('Existing class ref to patch'),
+    ...patchCssShape
+  })
+  .describe(
+    'Partially update an existing style class: the CSS you pass is merged (a null value removes that property, ' +
+      'others are kept). Never creates — use upsertDefinition for that.'
+  );
 
 export type PatchDefinition = z.infer<typeof patchDefinitionOp>;
 

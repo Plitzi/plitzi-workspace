@@ -34,11 +34,12 @@ export const read = (input: ReadInput, space: Space, env: Env): ReadResponse => 
 
 export const readTool = defineTool({
   name: 'plitzi_read',
-  title: 'Read',
+  title: 'Batch read',
   description:
-    'Read multiple resources by URI in one batch (pages, elements, definitions, variables) — pass the ready-made ' +
-    'uris from plitzi_search or a write response. Each result is { uri, stateVersion, data } or a teachable error, ' +
-    'so one bad URI never fails the batch.',
+    'Read MANY resources at once by URI — the batch alternative to opening resources one by one. Pass an array of ' +
+    'URIs (pages, elements, definitions, variables), e.g. the ready-made uris from plitzi_search or a write ' +
+    'response, and get them all back in a single call instead of one read per URI. Each result is ' +
+    '{ uri, stateVersion, data } or a teachable error, so one bad URI never fails the batch.',
   inputShape: readShape,
   access: 'read',
   run: (input, ctx) => read(input, ctx.space, ctx.env)

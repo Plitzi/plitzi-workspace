@@ -8,13 +8,15 @@ import type { Space } from '../../../helpers';
 import type { OpResult } from '../../../helpers';
 import type { Env } from '../../../types';
 
-export const moveElementOp = z.object({
-  type: z.literal('moveElement'),
-  pageRef: z.string(),
-  ref: z.string(),
-  toParentRef: z.string(),
-  position
-});
+export const moveElementOp = z
+  .object({
+    type: z.literal('moveElement'),
+    pageRef: z.string().describe('Page ref or id'),
+    ref: z.string().describe('Ref or id of the element to move'),
+    toParentRef: z.string().describe('Ref or id of the anchor the element moves relative to (see position)'),
+    position
+  })
+  .describe('Move an existing element to a new parent, or reorder it — its placement is set by position.');
 
 export type MoveElement = z.infer<typeof moveElementOp>;
 

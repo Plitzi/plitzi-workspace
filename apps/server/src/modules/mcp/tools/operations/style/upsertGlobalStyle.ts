@@ -11,11 +11,16 @@ import type { Env } from '../../../types';
 // Global element selectors — the CSS equivalent of `button { … }`: they style EVERY element of a type. Keyed by
 // componentType (its name IS the type). Use these ONLY for deliberate site-wide intent ("all buttons rounded");
 // to style one element, attach a class definition instead.
-export const upsertGlobalStyleOp = z.object({
-  type: z.literal('upsertGlobalStyle'),
-  componentType: z.string().describe('Element type to style site-wide (e.g. "button"); affects ALL of that type'),
-  ...upsertCssShape
-});
+export const upsertGlobalStyleOp = z
+  .object({
+    type: z.literal('upsertGlobalStyle'),
+    componentType: z.string().describe('Element type to style site-wide (e.g. "button"); affects ALL of that type'),
+    ...upsertCssShape
+  })
+  .describe(
+    'Create or fully replace the site-wide style for an element TYPE — its CSS applies to every element of that ' +
+      'type. To style one element only, use upsertDefinition + attach it. Use patchGlobalStyle for a partial change.'
+  );
 
 export type UpsertGlobalStyle = z.infer<typeof upsertGlobalStyleOp>;
 

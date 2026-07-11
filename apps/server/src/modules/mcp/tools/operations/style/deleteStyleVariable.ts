@@ -8,11 +8,13 @@ import type { Space } from '../../../helpers';
 import type { OpResult } from '../../../helpers';
 import type { Env } from '../../../types';
 
-export const deleteStyleVariableOp = z.object({
-  type: z.literal('deleteStyleVariable'),
-  category: styleCategory,
-  name: z.string()
-});
+export const deleteStyleVariableOp = z
+  .object({
+    type: z.literal('deleteStyleVariable'),
+    category: styleCategory,
+    name: z.string().describe('Token name without the -- prefix')
+  })
+  .describe('Delete a design token by category + name.');
 
 export type DeleteStyleVariable = z.infer<typeof deleteStyleVariableOp>;
 

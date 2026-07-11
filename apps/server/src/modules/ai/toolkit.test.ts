@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { zodToJsonSchema, getAllowedModes, toolResponseOk, toolResponseErr } from './toolkit';
 
 describe('zodToJsonSchema', () => {
-  it('converts a flat ZodObject', () => {
+  it('converts a flat ZodObject with its required fields', () => {
     const schema = z.object({ name: z.string(), age: z.number() });
     const result = zodToJsonSchema(schema);
 
@@ -23,60 +23,56 @@ describe('zodToJsonSchema', () => {
     expect(result.required).not.toContain('optional');
   });
 
-  it('converts ZodString', () => {
-    const result = zodToJsonSchema(z.string());
-
-    expect(result).toEqual({ type: 'string' });
+  it('converts primitives, enums and arrays', () => {
+    expect(zodToJsonSchema(z.string())).toMatchObject({ type: 'string' });
+    expect(zodToJsonSchema(z.number())).toMatchObject({ type: 'number' });
+    expect(zodToJsonSchema(z.boolean())).toMatchObject({ type: 'boolean' });
+    expect(zodToJsonSchema(z.enum(['a', 'b', 'c']))).toMatchObject({ enum: ['a', 'b', 'c'] });
+    expect(zodToJsonSchema(z.array(z.string()))).toMatchObject({ type: 'array', items: { type: 'string' } });
+    expect(zodToJsonSchema(z.record(z.string(), z.number()))).toMatchObject({
+      type: 'object',
+      additionalProperties: { type: 'number' }
+    });
   });
 
-  it('converts ZodNumber', () => {
-    const result = zodToJsonSchema(z.number());
-
-    expect(result).toEqual({ type: 'number' });
+  it('unwraps ZodOptional to its inner type', () => {
+    expect(zodToJsonSchema(z.string().optional())).toMatchObject({ type: 'string' });
   });
 
-  it('converts ZodBoolean', () => {
-    const result = zodToJsonSchema(z.boolean());
+  it('converts a union to anyOf branches', () => {
+    const result = zodToJsonSchema(z.union([z.string(), z.number()])) as { anyOf: unknown[] };
 
-    expect(result).toEqual({ type: 'boolean' });
+    expect(result.anyOf).toEqual([{ type: 'string' }, { type: 'number' }]);
   });
 
-  it('converts ZodEnum', () => {
-    const result = zodToJsonSchema(z.enum(['a', 'b', 'c']));
-
-    expect(result).toEqual({ type: 'string', enum: ['a', 'b', 'c'] });
+  it('strips the $schema dialect marker so the provider payload stays minimal', () => {
+    expect(zodToJsonSchema(z.object({ a: z.string() }))).not.toHaveProperty('$schema');
   });
 
-  it('converts ZodOptional by unwrapping the inner type', () => {
-    const result = zodToJsonSchema(z.string().optional());
+  it('preserves .describe() text on both fields and object branches', () => {
+    const schema = z.object({ ref: z.string().describe('the element ref') }).describe('update an element');
+    const result = zodToJsonSchema(schema) as {
+      description?: string;
+      properties: { ref: { description?: string } };
+    };
 
-    expect(result).toEqual({ type: 'string' });
+    expect(result.description).toBe('update an element');
+    expect(result.properties.ref.description).toBe('the element ref');
   });
 
-  it('converts ZodArray', () => {
-    const result = zodToJsonSchema(z.array(z.string()));
+  it('emits a literal as a const, so a discriminated-union branch shows its type value', () => {
+    const schema = z.discriminatedUnion('type', [
+      z.object({ type: z.literal('a'), x: z.string() }),
+      z.object({ type: z.literal('b'), y: z.number() })
+    ]);
+    const result = zodToJsonSchema(schema) as { oneOf: Array<{ properties: { type: { const: string } } }> };
 
-    expect(result).toEqual({ type: 'array', items: { type: 'string' } });
+    expect(result.oneOf.map(b => b.properties.type.const).sort()).toEqual(['a', 'b']);
   });
 
-  it('converts ZodRecord', () => {
-    const result = zodToJsonSchema(z.record(z.string(), z.number()));
-
-    expect(result).toEqual({ type: 'object', additionalProperties: { type: 'number' } });
-  });
-
-  it('converts ZodUnion with oneOf', () => {
-    const result = zodToJsonSchema(z.union([z.string(), z.number()])) as { oneOf: unknown[] };
-
-    expect(result.oneOf).toHaveLength(2);
-    expect(result.oneOf[0]).toEqual({ type: 'string' });
-    expect(result.oneOf[1]).toEqual({ type: 'number' });
-  });
-
-  it('returns empty object for unknown types', () => {
-    const result = zodToJsonSchema(z.null());
-
-    expect(result).toEqual({});
+  it('degrades an unrepresentable type to an empty schema instead of throwing', () => {
+    expect(() => zodToJsonSchema(z.date())).not.toThrow();
+    expect(zodToJsonSchema(z.date())).toEqual({});
   });
 });
 

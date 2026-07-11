@@ -8,13 +8,18 @@ import type { Space } from '../../../helpers';
 import type { OpResult } from '../../../helpers';
 import type { Env } from '../../../types';
 
-export const upsertElementOp = z.object({
-  type: z.literal('upsertElement'),
-  pageRef: z.string().describe('Page ref or id'),
-  element: elementInput,
-  parentRef: z.string().optional().describe('Anchor ref/id; defaults to page root'),
-  position: position.optional()
-});
+export const upsertElementOp = z
+  .object({
+    type: z.literal('upsertElement'),
+    pageRef: z.string().describe('Page ref or id'),
+    element: elementInput,
+    parentRef: z.string().optional().describe('Anchor ref/id; defaults to page root'),
+    position: position.optional()
+  })
+  .describe(
+    'Add an element to a page, or fully update it when element.ref already exists (props and style are REPLACED, ' +
+      'not merged). To change only some fields of an existing element, use patchElement instead.'
+  );
 
 export type UpsertElement = z.infer<typeof upsertElementOp>;
 

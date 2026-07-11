@@ -9,14 +9,16 @@ import type { OpResult } from '../../../helpers';
 import type { Env } from '../../../types';
 import type { SchemaVariable } from '@plitzi/sdk-shared';
 
-export const upsertVariableOp = z.object({
-  type: z.literal('upsertVariable'),
-  name: z.string(),
-  variableType: z.string().describe('Runtime type (text|number|...); NOT the `type` discriminator'),
-  value: scalar,
-  category: z.string().optional(),
-  subValues: z.array(z.object({ when: z.unknown(), value: scalar })).optional()
-});
+export const upsertVariableOp = z
+  .object({
+    type: z.literal('upsertVariable'),
+    name: z.string().describe('Variable name; referenced in content as {{name}}'),
+    variableType: z.string().describe('Runtime type (text|number|...); NOT the `type` discriminator'),
+    value: scalar,
+    category: z.string().optional(),
+    subValues: z.array(z.object({ when: z.unknown(), value: scalar })).optional()
+  })
+  .describe('Create or update a space-level schema variable (a {{name}} value shared across the space).');
 
 export type UpsertVariable = z.infer<typeof upsertVariableOp>;
 

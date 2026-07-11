@@ -7,11 +7,13 @@ import type { Space } from '../../../helpers';
 import type { OpResult } from '../../../helpers';
 import type { Env } from '../../../types';
 
-export const deleteElementOp = z.object({
-  type: z.literal('deleteElement'),
-  pageRef: z.string(),
-  ref: z.string()
-});
+export const deleteElementOp = z
+  .object({
+    type: z.literal('deleteElement'),
+    pageRef: z.string().describe('Page ref or id'),
+    ref: z.string().describe('Ref or id of the element to delete')
+  })
+  .describe('Delete an element and all of its descendants from a page.');
 
 export type DeleteElement = z.infer<typeof deleteElementOp>;
 

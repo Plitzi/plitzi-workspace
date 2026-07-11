@@ -2,68 +2,21 @@ import { z } from 'zod';
 
 import type { AiMode, McpTool, McpToolHandler, McpToolHandlerResult, ToolOperationType } from '@plitzi/sdk-shared';
 
+/** Convert a Zod schema to the JSON Schema an AI provider (Anthropic / OpenAI) expects in a tool definition.
+ *  Delegates to Zod v4's built-in converter — one implementation, so descriptions, literal discriminators,
+ *  enums, nested objects and recursive (z.lazy) shapes all survive and the provider sees the same contract an
+ *  MCP client does. `io: 'input'` describes what the agent must SEND; `unrepresentable: 'any'` degrades an
+ *  exotic type to an empty schema instead of throwing, so one unusual tool never breaks the whole tool list. */
 export const zodToJsonSchema = (schema: unknown): Record<string, unknown> => {
-  if (schema instanceof z.ZodObject) {
-    const properties: Record<string, unknown> = {};
-    const required: string[] = [];
+  const json = z.toJSONSchema(schema as z.ZodType, {
+    target: 'draft-7',
+    io: 'input',
+    unrepresentable: 'any'
+  }) as Record<string, unknown>;
+  // The provider tool schema does not need the dialect marker; drop it so the payload stays minimal.
+  delete json.$schema;
 
-    for (const [key, value] of Object.entries(schema.shape)) {
-      const propSchema = zodToJsonSchema(value as z.ZodTypeAny);
-      properties[key] = propSchema;
-
-      if (value instanceof z.ZodString || value instanceof z.ZodNumber || value instanceof z.ZodBoolean) {
-        if (!value.isOptional()) {
-          required.push(key);
-        }
-      }
-    }
-
-    return {
-      type: 'object',
-      properties,
-      required: required.length > 0 ? required : []
-    };
-  }
-
-  if (schema instanceof z.ZodString) {
-    return { type: 'string' };
-  }
-
-  if (schema instanceof z.ZodNumber) {
-    return { type: 'number' };
-  }
-
-  if (schema instanceof z.ZodBoolean) {
-    return { type: 'boolean' };
-  }
-
-  if (schema instanceof z.ZodEnum) {
-    return { type: 'string', enum: schema.options };
-  }
-
-  if (schema instanceof z.ZodOptional) {
-    return zodToJsonSchema((schema as unknown as { _def: { innerType: z.ZodTypeAny } })._def.innerType);
-  }
-
-  if (schema instanceof z.ZodUnion) {
-    return { oneOf: schema.options.map(opt => zodToJsonSchema(opt)) };
-  }
-
-  if (schema instanceof z.ZodArray) {
-    return {
-      type: 'array',
-      items: zodToJsonSchema(schema.element)
-    };
-  }
-
-  if (schema instanceof z.ZodRecord) {
-    return {
-      type: 'object',
-      additionalProperties: zodToJsonSchema(schema.valueType)
-    };
-  }
-
-  return {};
+  return json;
 };
 
 export const getAllowedModes = (operationType: ToolOperationType): AiMode[] => {

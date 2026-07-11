@@ -86,6 +86,10 @@ export interface SearchInput {
   filters?: { type?: string; pageRef?: string };
   /** 'detail' inlines each hit's full props/style so an edit needs no follow-up read. */
   include?: 'detail';
+  /** Max element hits to return in this page (default 50). */
+  limit?: number;
+  /** Element hits to skip before this page (default 0). */
+  offset?: number;
 }
 
 export interface SearchHit {
@@ -114,7 +118,14 @@ export interface SearchPageHit {
 
 export interface SearchResponse {
   results: SearchHit[];
+  /** Total element hits matching the query across all pages, before offset/limit. */
   total: number;
+  /** Element hits skipped before this page (echoes the request's offset, defaulted). */
+  offset: number;
+  /** Page size applied to element hits (echoes the request's limit, defaulted). */
+  limit: number;
+  /** The offset to pass next to fetch the following page. Present only while more hits remain past this page. */
+  nextOffset?: number;
   /** Style definitions whose ref matches the query, with their full CSS — so finding a class by name closes the
    *  loop to its style without a separate read. Present only when at least one definition matches. */
   definitions?: AIDefinition[];

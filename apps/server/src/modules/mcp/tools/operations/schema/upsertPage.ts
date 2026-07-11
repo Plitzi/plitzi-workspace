@@ -8,18 +8,20 @@ import type { OpResult } from '../../../helpers';
 import type { Env } from '../../../types';
 import type { Element } from '@plitzi/sdk-shared';
 
-export const upsertPageOp = z.object({
-  type: z.literal('upsertPage'),
-  ref: z.string(),
-  label: z.string().optional(),
-  slug: z.string().optional(),
-  folder: z
-    .string()
-    .nullable()
-    .optional()
-    .describe('Ref of an existing folder to place this page in; "" or null moves it to the root. Unknown → error'),
-  default: z.boolean().optional()
-});
+export const upsertPageOp = z
+  .object({
+    type: z.literal('upsertPage'),
+    ref: z.string().describe('Page id/slug to update, or a new id you choose to create one'),
+    label: z.string().optional(),
+    slug: z.string().optional(),
+    folder: z
+      .string()
+      .nullable()
+      .optional()
+      .describe('Ref of an existing folder to place this page in; "" or null moves it to the root. Unknown → error'),
+    default: z.boolean().optional()
+  })
+  .describe('Create a page, or update it when ref already exists (only the fields you pass change).');
 
 export type UpsertPage = z.infer<typeof upsertPageOp>;
 

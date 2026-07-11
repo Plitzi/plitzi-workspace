@@ -8,12 +8,14 @@ import type { Space } from '../../../helpers';
 import type { OpResult } from '../../../helpers';
 import type { Env } from '../../../types';
 
-export const upsertStyleVariableOp = z.object({
-  type: z.literal('upsertStyleVariable'),
-  category: styleCategory,
-  name: z.string(),
-  value: themeValue
-});
+export const upsertStyleVariableOp = z
+  .object({
+    type: z.literal('upsertStyleVariable'),
+    category: styleCategory,
+    name: z.string().describe('Token name without the -- prefix; referenced in CSS as var(--name)'),
+    value: themeValue
+  })
+  .describe('Create or update a design token (referenced in CSS as var(--name); value may differ per light/dark).');
 
 export type UpsertStyleVariable = z.infer<typeof upsertStyleVariableOp>;
 

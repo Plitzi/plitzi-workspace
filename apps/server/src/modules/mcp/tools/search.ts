@@ -14,7 +14,20 @@ export const searchShape = {
   include: z
     .literal('detail')
     .optional()
-    .describe('Set to "detail" to inline each hit\'s full props/style so an edit needs no follow-up read')
+    .describe('Set to "detail" to inline each hit\'s full props/style so an edit needs no follow-up read'),
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .optional()
+    .describe('Max element hits to return (default 50). Response echoes total and, if more remain, nextOffset.'),
+  offset: z
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .describe('Element hits to skip (default 0). Page by re-calling with offset = nextOffset until it is absent.')
 };
 
 const labelOf = (el: Element): string =>
@@ -132,9 +145,17 @@ export const search = (input: SearchInput, space: Space, env: Env): SearchRespon
     });
   }
 
+  const offset = input.offset ?? 0;
+  const limit = input.limit ?? 50;
+  const total = results.length;
+  const nextOffset = offset + limit < total ? offset + limit : undefined;
+
   return {
-    results: results.slice(0, 50),
-    total: results.length,
+    results: results.slice(offset, offset + limit),
+    total,
+    offset,
+    limit,
+    nextOffset,
     definitions: definitions.length > 0 ? definitions : undefined,
     pages: pages.length > 0 ? pages : undefined
   };
@@ -147,7 +168,9 @@ export const searchTool = defineTool({
     'Find elements by label, type or attribute value across all pages. Each hit returns the element uri, its ' +
     'stateVersion (edit with optimistic concurrency, no read needed) and its tree path. Pass include: "detail" ' +
     'to inline the full props/style of each hit plus resolvedStyle (the CSS of its classes). Also returns any ' +
-    'style definitions matching the query (with full CSS) under `definitions`, and matching pages under `pages`.',
+    'style definitions matching the query (with full CSS) under `definitions`, and matching pages under `pages`. ' +
+    'Element hits are paginated: it returns at most `limit` (default 50) starting at `offset`, plus `total` and — ' +
+    'while more remain — `nextOffset` to fetch the next page.',
   inputShape: searchShape,
   access: 'read',
   run: (input, ctx) => search(input, ctx.space, ctx.env)

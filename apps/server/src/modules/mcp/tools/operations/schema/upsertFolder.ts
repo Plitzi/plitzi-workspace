@@ -8,13 +8,15 @@ import type { OpResult } from '../../../helpers';
 import type { Env } from '../../../types';
 import type { PageFolder } from '@plitzi/sdk-shared';
 
-export const upsertFolderOp = z.object({
-  type: z.literal('upsertFolder'),
-  ref: z.string().describe('Folder ref: an existing folder id/name/slug to update, or a new id you choose'),
-  name: z.string().optional(),
-  slug: z.string().optional(),
-  parentId: z.string().nullable().optional().describe('Ref of the parent folder for nesting; null keeps it at root')
-});
+export const upsertFolderOp = z
+  .object({
+    type: z.literal('upsertFolder'),
+    ref: z.string().describe('Folder ref: an existing folder id/name/slug to update, or a new id you choose'),
+    name: z.string().optional(),
+    slug: z.string().optional(),
+    parentId: z.string().nullable().optional().describe('Ref of the parent folder for nesting; null keeps it at root')
+  })
+  .describe('Create a sidebar page-folder, or update it when ref already exists. Nest it under another via parentId.');
 
 export type UpsertFolder = z.infer<typeof upsertFolderOp>;
 

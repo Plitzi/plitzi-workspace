@@ -477,6 +477,72 @@ describe('mcp-ai search', () => {
   });
 });
 
+describe('mcp-ai search pagination', () => {
+  // A space with exactly `count` elements that all match the query 'box', so paging is observable and total is
+  // deterministic (the fixture's own c1 is removed so it does not add an extra hit).
+  const buildBusySpace = (count: number): Space => {
+    const space = buildSpace();
+    const flat = space.schema.flat as unknown as Record<string, unknown>;
+    delete flat.c1;
+    const items: string[] = [];
+    for (let i = 1; i <= count; i++) {
+      const ref = `box${i}`;
+      items.push(ref);
+      flat[ref] = {
+        id: ref,
+        attributes: { subType: 'div', title: 'Box' },
+        definition: {
+          rootId: 'page1',
+          parentId: 'page1',
+          label: 'Container',
+          type: 'container',
+          items: [],
+          styleSelectors: { base: 'box' }
+        }
+      };
+    }
+
+    (flat.page1 as { definition: { items: string[] } }).definition.items = items;
+
+    return space;
+  };
+
+  it('caps results at limit, reports total and hands back nextOffset while more remain', () => {
+    const res = search({ query: 'box', limit: 2 }, buildBusySpace(5), 'main');
+    expect(res.results).toHaveLength(2);
+    expect(res.total).toBe(5);
+    expect(res.offset).toBe(0);
+    expect(res.limit).toBe(2);
+    expect(res.nextOffset).toBe(2);
+  });
+
+  it('returns the page at offset and omits nextOffset on the last page', () => {
+    const res = search({ query: 'box', limit: 2, offset: 4 }, buildBusySpace(5), 'main');
+    expect(res.results).toHaveLength(1);
+    expect(res.total).toBe(5);
+    expect(res.offset).toBe(4);
+    expect(res.nextOffset).toBeUndefined();
+  });
+
+  it('defaults to a page of 50 from offset 0', () => {
+    const res = search({ query: 'box' }, buildBusySpace(3), 'main');
+    expect(res.offset).toBe(0);
+    expect(res.limit).toBe(50);
+    expect(res.results).toHaveLength(3);
+    expect(res.nextOffset).toBeUndefined();
+  });
+
+  it('paging with offset = nextOffset covers every hit exactly once', () => {
+    const space = buildBusySpace(5);
+    const first = search({ query: 'box', limit: 2 }, space, 'main');
+    const second = search({ query: 'box', limit: 2, offset: first.nextOffset }, space, 'main');
+    const third = search({ query: 'box', limit: 2, offset: second.nextOffset }, space, 'main');
+    const refs = [...first.results, ...second.results, ...third.results].map(r => r.ref);
+    expect(new Set(refs).size).toBe(5);
+    expect(third.nextOffset).toBeUndefined();
+  });
+});
+
 describe('mcp-ai page styles resource (all styles a page uses in one read)', () => {
   it('collects the class definitions the page elements attach, deduplicated and with CSS', () => {
     const res = readResource(buildSpace(), 'main', 'plitzi://schema/main/pages/home/styles');
