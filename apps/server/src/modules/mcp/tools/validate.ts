@@ -1,4 +1,4 @@
-import { environment, operations } from './shared/operations';
+import { environment, operations } from './operations';
 import { defineTool } from './shared/tool';
 import { validateOperations } from './shared/validator';
 

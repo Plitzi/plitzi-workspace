@@ -1,12 +1,12 @@
 import { fail } from '../../helpers';
+import { isStyleOp } from '../operations';
 import * as schema from '../operations/schema';
 import * as style from '../operations/style';
-import { isStyleOp } from '../shared/operations';
 
 import type { OpResult } from '../../helpers';
 import type { Space } from '../../helpers';
 import type { Env, MutationOutcome } from '../../types';
-import type { Operation } from '../shared/operations';
+import type { Operation } from '../operations';
 
 const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
   switch (op.type) {

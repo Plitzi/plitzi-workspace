@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
-import { elementOps } from '../operations/schema';
-import { styleOps } from '../operations/style';
+import { elementOps } from './schema';
+import { styleOps } from './style';
 
-export type { ElementInput } from '../operations/schema';
-export type { DefinitionSlotInput, DefinitionSlotPatch } from '../operations/style';
+export type { ElementInput } from './schema';
+export type { DefinitionSlotInput, DefinitionSlotPatch } from './style';
 
 // The write vocabulary across both schemas — single source of truth for the tool input schema (compact, sent
 // to the agent), for runtime parsing, and for the `Operation` type. A single batch may mix element and style

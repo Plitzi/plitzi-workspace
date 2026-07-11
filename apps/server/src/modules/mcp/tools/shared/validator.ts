@@ -11,9 +11,9 @@ import {
 } from '../../helpers';
 import { buildTypeRegistry, expandShorthand, isCssProperty, suggestCssProperty } from '../../resources';
 
-import type { DefinitionSlotPatch, ElementInput, Operation } from './operations';
 import type { Space } from '../../helpers';
 import type { ValidationError, ValidationResult } from '../../types';
+import type { DefinitionSlotPatch, ElementInput, Operation } from '../operations';
 
 const REF_RE = /^[a-zA-Z0-9._-]+$/;
 const MAX_OPS = 100;

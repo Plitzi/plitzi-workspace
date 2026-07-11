@@ -1,5 +1,5 @@
 import type { AIDefinition, AIElementDetail, ValidationError } from './aiSchema';
-import type { Operation } from '../tools/shared/operations';
+import type { Operation } from '../tools/operations';
 import type { Schema, Style } from '@plitzi/sdk-shared';
 
 // I/O contracts for the MCP tools (apply / validate / search / read) and the write engine. The runtime logic

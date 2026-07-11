@@ -5,7 +5,7 @@ import { validateSchema } from '@plitzi/sdk-schema';
 import { applyOperations } from './dispatch';
 import { changedResources, conflictMessage, detectConflicts, resolvedElements } from './writeResult';
 import { cloneSpace } from '../../helpers';
-import { environment, operations } from '../shared/operations';
+import { environment, operations } from '../operations';
 import { defineTool } from '../shared/tool';
 import { validateOperations } from '../shared/validator';
 
