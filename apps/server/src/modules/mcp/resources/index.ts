@@ -5,7 +5,13 @@ import { guideText } from './guide';
 import { buildTypeRegistry } from './schema/registry';
 import { elementDetailToAI, pageSkeletonToAI, pageSummariesToAI, schemaVariablesToAI } from './schema/translator';
 import { cssProperties } from './style/cssCatalog';
-import { definitionRefs, definitionToAI, styleVariablesToAI } from './style/translator';
+import {
+  definitionRefs,
+  definitionToAI,
+  globalStyleToAI,
+  globalStyleTypes,
+  styleVariablesToAI
+} from './style/translator';
 
 import type { Space } from '../helpers';
 import type { Env, ResourceEnvelope } from '../types';
@@ -13,8 +19,34 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 
 const envelope = <T>(data: T): ResourceEnvelope<T> => ({ stateVersion: computeVersion(data), data });
 
+// Style resources live at their own top-level roots (plitzi://definitions, plitzi://style-variables,
+// plitzi://schema-variables) but agents reach for them by analogy under plitzi://schema/{env}/… . Accept that
+// alias shape and fold it back to the canonical root, so both forms resolve (RFC 0005 I3).
+const ALIASED_ROOTS = ['definitions', 'global-styles', 'style-variables', 'schema-variables'];
+
+const canonicalUri = (env: Env, uri: string): string => {
+  const aliasPrefix = `plitzi://schema/${env}/`;
+  if (!uri.startsWith(aliasPrefix)) {
+    return uri;
+  }
+
+  const rest = uri.slice(aliasPrefix.length);
+  for (const root of ALIASED_ROOTS) {
+    if (rest === root) {
+      return `plitzi://${root}/${env}`;
+    }
+
+    if (rest.startsWith(`${root}/`)) {
+      return `plitzi://${root}/${env}/${rest.slice(root.length + 1)}`;
+    }
+  }
+
+  return uri;
+};
+
 /** Resolve a resource URI to its versioned envelope, or null if unknown / not found. */
-export const readResource = (space: Space, env: Env, uri: string): ResourceEnvelope<unknown> | null => {
+export const readResource = (space: Space, env: Env, rawUri: string): ResourceEnvelope<unknown> | null => {
+  const uri = canonicalUri(env, rawUri);
   if (uri === 'plitzi://guide') {
     return envelope(guideText);
   }
@@ -56,7 +88,7 @@ export const readResource = (space: Space, env: Env, uri: string): ResourceEnvel
     const ref = uri.slice(`plitzi://schema/${env}/elements/`.length);
     const el = findElementByRef(space.schema, ref);
 
-    return el ? envelope(elementDetailToAI(space.schema, el)) : null;
+    return el ? envelope(elementDetailToAI(space.schema, el, space.style)) : null;
   }
 
   if (uri === `plitzi://definitions/${env}`) {
@@ -68,6 +100,17 @@ export const readResource = (space: Space, env: Env, uri: string): ResourceEnvel
     const def = definitionToAI(space.style, ref);
 
     return def ? envelope(def) : null;
+  }
+
+  if (uri === `plitzi://global-styles/${env}`) {
+    return envelope(globalStyleTypes(space.style));
+  }
+
+  if (uri.startsWith(`plitzi://global-styles/${env}/`)) {
+    const componentType = uri.slice(`plitzi://global-styles/${env}/`.length);
+    const global = globalStyleToAI(space.style, componentType);
+
+    return global ? envelope(global) : null;
   }
 
   if (uri === `plitzi://style-variables/${env}`) {
@@ -96,6 +139,7 @@ const itemTemplates = (env: Env): string[] => [
   `plitzi://schema/${env}/pages/{ref}`,
   `plitzi://schema/${env}/elements/{ref}`,
   `plitzi://definitions/${env}/{ref}`,
+  `plitzi://global-styles/${env}/{componentType}`,
   `plitzi://style-variables/${env}/{category}`
 ];
 
@@ -103,7 +147,8 @@ const itemTemplates = (env: Env): string[] => [
  *  resource may be stale/deleted) from a URI whose shape matches no template at all (malformed — echo the valid
  *  templates so the agent stops hand-building URIs). See RFC 0004 I2. */
 export const resourceErrorMessage = (env: Env, uri: string): string => {
-  const knownShape = itemTemplates(env).some(tpl => uri.startsWith(tpl.slice(0, tpl.lastIndexOf('/') + 1)));
+  const canonical = canonicalUri(env, uri);
+  const knownShape = itemTemplates(env).some(tpl => canonical.startsWith(tpl.slice(0, tpl.lastIndexOf('/') + 1)));
   if (knownShape) {
     return JSON.stringify({
       error: 'NOT_FOUND',
@@ -162,8 +207,21 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
     ['Element types', 'plitzi://types', 'Observed element types with props, slots and subTypes'],
     ['Pages', `plitzi://schema/${env}/pages`, 'Page summaries (ref, label, elementCount) — no element trees'],
     ['Style definitions', `plitzi://definitions/${env}`, 'Style definition refs (names)'],
+    ['Global styles', `plitzi://global-styles/${env}`, 'Element types that have a site-wide global style'],
     ['Style variables', `plitzi://style-variables/${env}`, 'Design tokens by category'],
-    ['Schema variables', `plitzi://schema-variables/${env}`, 'Space-level values referenced via {{name}}']
+    ['Schema variables', `plitzi://schema-variables/${env}`, 'Space-level values referenced via {{name}}'],
+    // Aliases under the plitzi://schema/{env} root, so the analogous shape agents reach for also resolves (I3).
+    ['Style definitions (schema alias)', `plitzi://schema/${env}/definitions`, 'Alias of plitzi://definitions/{env}'],
+    [
+      'Style variables (schema alias)',
+      `plitzi://schema/${env}/style-variables`,
+      'Alias of plitzi://style-variables/{env}'
+    ],
+    [
+      'Schema variables (schema alias)',
+      `plitzi://schema/${env}/schema-variables`,
+      'Alias of plitzi://schema-variables/{env}'
+    ]
   ];
   for (const [name, uri, description] of fixed) {
     server.registerResource(name, uri, { description, mimeType: 'application/json' }, () => emit(uri));
@@ -173,7 +231,23 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
     ['Page', `plitzi://schema/${env}/pages/{ref}`, 'One page as a skeleton tree (ref/type/label/children), no props'],
     ['Element', `plitzi://schema/${env}/elements/{ref}`, 'One element in full detail (props, style) by ref or id'],
     ['Style definition', `plitzi://definitions/${env}/{ref}`, 'One style definition (CSS) by class ref'],
-    ['Style variables by category', `plitzi://style-variables/${env}/{category}`, 'Design tokens for one category']
+    [
+      'Global style',
+      `plitzi://global-styles/${env}/{componentType}`,
+      'The site-wide CSS applied to every element of one type'
+    ],
+    ['Style variables by category', `plitzi://style-variables/${env}/{category}`, 'Design tokens for one category'],
+    // Aliases under plitzi://schema/{env} (I3).
+    [
+      'Style definition (schema alias)',
+      `plitzi://schema/${env}/definitions/{ref}`,
+      'Alias of plitzi://definitions/{env}/{ref}'
+    ],
+    [
+      'Style variables by category (schema alias)',
+      `plitzi://schema/${env}/style-variables/{category}`,
+      'Alias of plitzi://style-variables/{env}/{category}'
+    ]
   ];
   for (const [name, tpl, description] of templates) {
     server.registerResource(

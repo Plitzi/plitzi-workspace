@@ -8,9 +8,17 @@ import {
   pageRefOfElement,
   slugRouteParams
 } from '../../helpers';
+import { definitionToAI, globalStylesForType } from '../style/translator';
 
-import type { AIElementDetail, AIPageSkeleton, AIPageSummary, AISchemaVariable, AISkeletonNode } from '../../types';
-import type { Element, Schema } from '@plitzi/sdk-shared';
+import type {
+  AIDefinition,
+  AIElementDetail,
+  AIPageSkeleton,
+  AIPageSummary,
+  AISchemaVariable,
+  AISkeletonNode
+} from '../../types';
+import type { Element, Schema, Style } from '@plitzi/sdk-shared';
 
 // Read projections of the ELEMENT schema: page summaries, per-page skeleton trees, element detail, and vars.
 
@@ -78,11 +86,38 @@ export const pageSkeletonToAI = (schema: Schema, pageEl: Element): AIPageSkeleto
 
 // --- Detail (on demand): one element with its props and style. ---
 
-export const elementDetailToAI = (schema: Schema, el: Element): AIElementDetail => {
+// Inline the CSS of every definition the element attaches (base + slots), so an edit that only needs to see the
+// current style does not have to follow up with a read of each definition (RFC 0005). Undefined when none resolve.
+const resolveDefinitions = (
+  style: Style,
+  base: string[],
+  slots: Record<string, string[]>
+): Record<string, AIDefinition> | undefined => {
+  const refs = new Set<string>(base);
+  for (const classes of Object.values(slots)) {
+    for (const cls of classes) {
+      refs.add(cls);
+    }
+  }
+
+  const resolved: Record<string, AIDefinition> = {};
+  for (const ref of refs) {
+    const def = definitionToAI(style, ref);
+    if (def) {
+      resolved[ref] = def;
+    }
+  }
+
+  return Object.keys(resolved).length > 0 ? resolved : undefined;
+};
+
+export const elementDetailToAI = (schema: Schema, el: Element, style?: Style): AIElementDetail => {
   const children = orderedChildren(schema, el);
   const parent = el.definition.parentId ? schema.flat[el.definition.parentId] : undefined;
+  const base = splitClasses(el.definition.styleSelectors.base);
+  const slots = slotClasses(el.definition.styleSelectors);
 
-  return {
+  const detail: AIElementDetail = {
     ref: elementRefOf(el),
     type: el.definition.type,
     subType: strOr(el.attributes.subType),
@@ -90,12 +125,23 @@ export const elementDetailToAI = (schema: Schema, el: Element): AIElementDetail 
     pageRef: pageRefOfElement(schema, el),
     parentRef: parent ? (isPageElement(schema, parent) ? pageRefOf(parent) : elementRefOf(parent)) : undefined,
     props: propsOf(el),
-    style: {
-      base: splitClasses(el.definition.styleSelectors.base),
-      slots: slotClasses(el.definition.styleSelectors)
-    },
+    style: { base, slots },
     childRefs: children.length > 0 ? children.map(elementRefOf) : undefined
   };
+
+  if (style) {
+    const resolvedStyle = resolveDefinitions(style, base, slots);
+    if (resolvedStyle) {
+      detail.resolvedStyle = resolvedStyle;
+    }
+
+    const globalStyles = globalStylesForType(style, el.definition.type);
+    if (globalStyles.length > 0) {
+      detail.globalStyles = globalStyles;
+    }
+  }
+
+  return detail;
 };
 
 export const schemaVariablesToAI = (schema: Schema): Record<string, AISchemaVariable> => {

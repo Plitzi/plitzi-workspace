@@ -448,6 +448,267 @@ describe('mcp-ai search', () => {
   });
 });
 
+describe('mcp-ai resolved style inlined in element detail (RFC 0005 #1)', () => {
+  it('inlines the CSS of each attached definition under resolvedStyle', () => {
+    const res = readResource(buildSpace(), 'main', 'plitzi://schema/main/elements/c1');
+    const el = res?.data as AIElementDetail;
+    expect(el.resolvedStyle?.box.desktop).toEqual({ display: 'flex' });
+    expect(el.resolvedStyle?.box.variants?.lg.desktop).toEqual({ 'font-size': '50px' });
+  });
+
+  it('omits resolvedStyle when the attached class resolves to no definition', () => {
+    const space = buildSpace();
+    space.schema.flat.c1.definition.styleSelectors.base = 'not-a-definition';
+    const el = readResource(space, 'main', 'plitzi://schema/main/elements/c1')?.data as AIElementDetail;
+    expect(el.resolvedStyle).toBeUndefined();
+  });
+
+  it('lists the global element selectors that affect the element by its type (like `button { … }`)', () => {
+    const space = buildSpace();
+    space.style.platform.desktop.containerGlobal = {
+      name: 'containerGlobal',
+      type: 'element',
+      componentType: 'container',
+      attributes: { base: { default: { 'box-sizing': 'border-box' } } },
+      cache: ''
+    } as unknown as (typeof space.style.platform)['desktop'][string];
+    const el = readResource(space, 'main', 'plitzi://schema/main/elements/c1')?.data as AIElementDetail;
+    expect(el.globalStyles?.[0]).toMatchObject({
+      ref: 'containerGlobal',
+      appliesToType: 'container',
+      desktop: { 'box-sizing': 'border-box' }
+    });
+  });
+
+  it('omits globalStyles when no global selector targets the element type (globals may not exist yet)', () => {
+    const el = readResource(buildSpace(), 'main', 'plitzi://schema/main/elements/c1')?.data as AIElementDetail;
+    expect(el.globalStyles).toBeUndefined();
+  });
+
+  it('search include:"detail" carries resolvedStyle and its version matches a direct element read', () => {
+    const withDetail = search({ query: 'box', include: 'detail' }, buildSpace(), 'main');
+    const hit = withDetail.results.find(r => r.ref === 'c1');
+    expect(hit?.detail?.resolvedStyle?.box.desktop).toEqual({ display: 'flex' });
+    const read = readResource(buildSpace(), 'main', 'plitzi://schema/main/elements/c1');
+    expect(hit?.stateVersion).toBe(read?.stateVersion);
+  });
+});
+
+describe('mcp-ai search returns matching definitions (RFC 0005 #5)', () => {
+  it('returns definitions whose ref matches the query, with full CSS', () => {
+    const res = search({ query: 'box' }, buildSpace(), 'main');
+    expect(res.definitions?.find(d => d.ref === 'box')?.desktop).toEqual({ display: 'flex' });
+  });
+
+  it('omits the definitions field when no definition name matches', () => {
+    expect(search({ query: 'zzz-nothing' }, buildSpace(), 'main').definitions).toBeUndefined();
+  });
+});
+
+describe('mcp-ai patchDefinition (RFC 0005 #2 — partial CSS merge)', () => {
+  it('merges one declaration, preserving the rest of the definition', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      { operations: [{ type: 'patchDefinition', ref: 'box', desktop: { color: 'red' } }] },
+      buildSpace(),
+      cap.persisters
+    );
+    expect(res.applied).toBe(true);
+    const def = readResource(cap.saved(), 'main', 'plitzi://definitions/main/box')?.data as AIDefinition;
+    expect(def.desktop).toEqual({ display: 'flex', color: 'red' });
+    expect(def.variants?.lg.desktop).toEqual({ 'font-size': '50px' });
+  });
+
+  it('removes a property when its value is null, leaving the others', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      { operations: [{ type: 'patchDefinition', ref: 'box', desktop: { display: null, 'align-items': 'center' } }] },
+      buildSpace(),
+      cap.persisters
+    );
+    const def = readResource(cap.saved(), 'main', 'plitzi://definitions/main/box')?.data as AIDefinition;
+    expect(def.desktop).toEqual({ 'align-items': 'center' });
+  });
+
+  it('fails (does not create) when the definition does not exist', async () => {
+    const res = await apply(
+      { operations: [{ type: 'patchDefinition', ref: 'ghost', desktop: { color: 'red' } }] },
+      buildSpace()
+    );
+    expect(res.applied).toBe(false);
+    expect(res.errors?.[0].message).toContain('not found');
+  });
+
+  it('expands shorthands in a patch just like upsertDefinition', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      { operations: [{ type: 'patchDefinition', ref: 'box', desktop: { padding: '4px 8px' } }] },
+      buildSpace(),
+      cap.persisters
+    );
+    const def = readResource(cap.saved(), 'main', 'plitzi://definitions/main/box')?.data as AIDefinition;
+    expect(def.desktop?.['padding-top']).toBe('4px');
+    expect(def.desktop?.['padding-right']).toBe('8px');
+    expect(def.desktop?.display).toBe('flex');
+  });
+});
+
+describe('mcp-ai class ops never touch a global element style (false-positive guard)', () => {
+  const spaceWithGlobal = (): Space => {
+    const space = buildSpace();
+    space.style.platform.desktop.button = {
+      name: 'button',
+      type: 'element',
+      componentType: 'button',
+      attributes: { base: { default: { 'background-color': 'blue' } } },
+      cache: ''
+    } as unknown as (typeof space.style.platform)['desktop'][string];
+
+    return space;
+  };
+
+  it('excludes element-type items from the definitions listing and does not resolve one', () => {
+    expect(readResource(spaceWithGlobal(), 'main', 'plitzi://definitions/main')?.data).toEqual(['box']);
+    expect(readResource(spaceWithGlobal(), 'main', 'plitzi://definitions/main/button')).toBeNull();
+  });
+
+  it('omits element-type items from search definitions', () => {
+    expect(search({ query: 'button' }, spaceWithGlobal(), 'main').definitions).toBeUndefined();
+  });
+
+  it('refuses upsertDefinition on a global element name and never converts it', async () => {
+    const cap = capturing(spaceWithGlobal());
+    const res = await apply(
+      { operations: [{ type: 'upsertDefinition', ref: 'button', desktop: { color: 'red' } }] },
+      cap.saved(),
+      cap.persisters
+    );
+    expect(res.applied).toBe(false);
+    expect(res.errors?.[0].message).toContain('global style');
+    // Nothing persisted; the global item keeps its type and CSS.
+    const item = cap.saved().style.platform.desktop.button as unknown as { type: string };
+    expect(item.type).toBe('element');
+  });
+
+  it('refuses patchDefinition and deleteDefinition on a global element name', async () => {
+    const patched = await apply(
+      { operations: [{ type: 'patchDefinition', ref: 'button', desktop: { color: 'red' } }] },
+      spaceWithGlobal()
+    );
+    expect(patched.applied).toBe(false);
+    expect(patched.errors?.[0].message).toContain('global style');
+
+    const deleted = await apply({ operations: [{ type: 'deleteDefinition', ref: 'button' }] }, spaceWithGlobal());
+    expect(deleted.applied).toBe(false);
+    expect(deleted.errors?.[0].message).toContain('global style');
+  });
+});
+
+describe('mcp-ai global element styles (editable site-wide selectors like `button { … }`)', () => {
+  const globalOp = {
+    type: 'upsertGlobalStyle',
+    componentType: 'button',
+    desktop: { 'border-radius': '9999px' }
+  } as const;
+
+  it('creates a type "element" selector keyed by componentType — "all buttons rounded"', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply({ operations: [globalOp] }, buildSpace(), cap.persisters);
+    expect(res.applied).toBe(true);
+    const item = cap.saved().style.platform.desktop.button as unknown as { type: string; componentType: string };
+    expect(item.type).toBe('element');
+    expect(item.componentType).toBe('button');
+    const read = readResource(cap.saved(), 'main', 'plitzi://global-styles/main/button')?.data as AIDefinition & {
+      appliesToType: string;
+    };
+    expect(read.appliesToType).toBe('button');
+    expect(read.desktop?.['border-top-left-radius']).toBe('9999px');
+  });
+
+  it('lists the element types that have a global style', async () => {
+    const cap = capturing(buildSpace());
+    await apply({ operations: [globalOp] }, buildSpace(), cap.persisters);
+    expect(readResource(cap.saved(), 'main', 'plitzi://global-styles/main')?.data).toEqual(['button']);
+  });
+
+  it('reflects the created global in the detail of every element of that type', async () => {
+    const cap = capturing(buildSpace());
+    // c1 is a container; add a button element so it inherits the button global.
+    await apply(
+      {
+        operations: [
+          { type: 'upsertElement', pageRef: 'home', element: { ref: 'cta', type: 'button', props: { content: 'Go' } } },
+          globalOp
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+    const el = readResource(cap.saved(), 'main', 'plitzi://schema/main/elements/cta')?.data as AIElementDetail;
+    expect(el.globalStyles?.[0].appliesToType).toBe('button');
+    expect(el.globalStyles?.[0].desktop?.['border-top-left-radius']).toBe('9999px');
+  });
+
+  it('patchGlobalStyle merges into an existing global without resending it', async () => {
+    const cap = capturing(buildSpace());
+    await apply({ operations: [globalOp] }, buildSpace(), cap.persisters);
+    const res = await apply(
+      { operations: [{ type: 'patchGlobalStyle', componentType: 'button', desktop: { color: 'white' } }] },
+      cap.saved(),
+      cap.persisters
+    );
+    expect(res.applied).toBe(true);
+    const read = readResource(cap.saved(), 'main', 'plitzi://global-styles/main/button')?.data as AIDefinition;
+    expect(read.desktop?.color).toBe('white');
+    expect(read.desktop?.['border-top-left-radius']).toBe('9999px');
+  });
+
+  it('deleteGlobalStyle removes the global selector', async () => {
+    const cap = capturing(buildSpace());
+    await apply({ operations: [globalOp] }, buildSpace(), cap.persisters);
+    await apply({ operations: [{ type: 'deleteGlobalStyle', componentType: 'button' }] }, cap.saved(), cap.persisters);
+    expect(readResource(cap.saved(), 'main', 'plitzi://global-styles/main/button')).toBeNull();
+  });
+
+  it('refuses a global op on a name held by a class definition (symmetric guard)', async () => {
+    const res = await apply(
+      { operations: [{ type: 'upsertGlobalStyle', componentType: 'box', desktop: { color: 'red' } }] },
+      buildSpace()
+    );
+    expect(res.applied).toBe(false);
+    expect(res.errors?.[0].message).toContain('class definition');
+  });
+
+  it('patchGlobalStyle fails when no global exists yet for that type', async () => {
+    const res = await apply(
+      { operations: [{ type: 'patchGlobalStyle', componentType: 'button', desktop: { color: 'red' } }] },
+      buildSpace()
+    );
+    expect(res.applied).toBe(false);
+    expect(res.errors?.[0].message).toContain('No global style');
+  });
+});
+
+describe('mcp-ai URI aliases under schema root (RFC 0005 #3/#4)', () => {
+  it('resolves a definition through the plitzi://schema/{env}/definitions/{ref} alias', () => {
+    const canonical = readResource(buildSpace(), 'main', 'plitzi://definitions/main/box');
+    const alias = readResource(buildSpace(), 'main', 'plitzi://schema/main/definitions/box');
+    expect(alias?.data).toEqual(canonical?.data);
+  });
+
+  it('resolves the definitions listing through the alias root', () => {
+    const alias = readResource(buildSpace(), 'main', 'plitzi://schema/main/definitions')?.data as string[];
+    expect(alias).toEqual(['box']);
+  });
+
+  it('reports a not-found (not malformed) alias whose ref does not resolve', () => {
+    const parsed = JSON.parse(resourceErrorMessage('main', 'plitzi://schema/main/definitions/ghost')) as {
+      error: string;
+    };
+    expect(parsed.error).toBe('NOT_FOUND');
+  });
+});
+
 describe('mcp-ai primer bootstrap (R4)', () => {
   it('bundles guide, types, css and summaries in one read', () => {
     const res = readResource(buildSpace(), 'main', 'plitzi://primer/main');

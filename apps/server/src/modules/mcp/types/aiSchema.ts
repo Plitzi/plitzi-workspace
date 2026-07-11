@@ -59,7 +59,19 @@ export interface AIElementDetail {
   parentRef?: string;
   props?: Record<string, unknown>;
   style: { base: string[]; slots: Record<string, string[]> };
+  /** CSS of the definitions referenced by `style` (keyed by class ref), inlined so an edit needs no follow-up
+   *  read of each definition. Present only for refs that resolve to a definition. */
+  resolvedStyle?: Record<string, AIDefinition>;
+  /** Global (type 'element') styles that also affect this element because they target its type — every element of
+   *  the type inherits them. Read-only here (not editable as definitions); shown so the effective CSS is complete. */
+  globalStyles?: AIGlobalStyle[];
   childRefs?: string[];
+}
+
+/** A global element style (a type 'element' StyleItem): its CSS applies to every element whose type equals
+ *  `appliesToType`. It is not an addressable class definition — editing it would change every such element. */
+export interface AIGlobalStyle extends AIDefinition {
+  appliesToType: string;
 }
 
 export interface AIDefinitionSlot extends DisplayModeCss {

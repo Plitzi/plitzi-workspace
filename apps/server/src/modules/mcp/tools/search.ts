@@ -1,8 +1,8 @@
 import { computeVersion, elementRefOf, isPageElement, pageRefOfElement } from '../helpers';
-import { elementDetailToAI } from '../resources';
+import { definitionRefs, definitionToAI, elementDetailToAI } from '../resources';
 
 import type { Space } from '../helpers';
-import type { AIElementDetail, Env } from '../types';
+import type { AIDefinition, AIElementDetail, Env } from '../types';
 import type { Element, Schema } from '@plitzi/sdk-shared';
 
 export interface SearchInput {
@@ -30,6 +30,9 @@ export interface SearchHit {
 export interface SearchResponse {
   results: SearchHit[];
   total: number;
+  /** Style definitions whose ref matches the query, with their full CSS — so finding a class by name closes the
+   *  loop to its style without a separate read. Present only when at least one definition matches. */
+  definitions?: AIDefinition[];
 }
 
 const labelOf = (el: Element): string =>
@@ -87,7 +90,9 @@ export const search = (input: SearchInput, space: Space, env: Env): SearchRespon
     }
 
     const ref = elementRefOf(el);
-    const detail = elementDetailToAI(space.schema, el);
+    // Resolve style even when detail is not returned, so stateVersion matches a direct element read (which inlines
+    // resolvedStyle) and stays valid for optimistic concurrency.
+    const detail = elementDetailToAI(space.schema, el, space.style);
     results.push({
       pageRef,
       ref,
@@ -103,5 +108,23 @@ export const search = (input: SearchInput, space: Space, env: Env): SearchRespon
     });
   }
 
-  return { results: results.slice(0, 50), total: results.length };
+  const definitions: AIDefinition[] = [];
+  for (const ref of definitionRefs(space.style)) {
+    if (ref.toLowerCase().includes(query)) {
+      const def = definitionToAI(space.style, ref);
+      if (def) {
+        definitions.push(def);
+      }
+    }
+
+    if (definitions.length >= 50) {
+      break;
+    }
+  }
+
+  return {
+    results: results.slice(0, 50),
+    total: results.length,
+    definitions: definitions.length > 0 ? definitions : undefined
+  };
 };

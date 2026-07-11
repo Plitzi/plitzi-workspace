@@ -10,4 +10,4 @@ export type { ValidateInput } from './validate';
 export type { SearchHit, SearchInput, SearchResponse } from './search';
 export type { MutationOutcome, OpResult } from './mutate';
 export type { ValidationResult } from './validator';
-export type { DefinitionSlotInput, ElementInput, Operation, OperationType } from './operations';
+export type { DefinitionSlotInput, DefinitionSlotPatch, ElementInput, Operation, OperationType } from './operations';

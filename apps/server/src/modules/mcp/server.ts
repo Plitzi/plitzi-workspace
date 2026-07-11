@@ -96,7 +96,8 @@ export const createMcpServer = ({ adapters, getSpaceId }: McpServerContext): Mcp
       description:
         'Find elements by label, type or attribute value across all pages. Each hit returns the element uri, ' +
         'its stateVersion (edit with optimistic concurrency, no read needed) and its tree path. Pass ' +
-        'include: "detail" to inline each hit\'s full props/style.',
+        'include: "detail" to inline each hit\'s full props/style plus resolvedStyle (the CSS of its classes). ' +
+        'Also returns any style definitions whose name matches the query (with full CSS) under `definitions`.',
       inputSchema: searchShape
     },
     async args => asText(search(args, await getSpace(), MCP_ENV))

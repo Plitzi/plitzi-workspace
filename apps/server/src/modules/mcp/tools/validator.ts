@@ -1,7 +1,7 @@
 import { findPageByRef, getPageElements, pageRefOf, resolveRef, routeParamNames, slugRouteParams } from '../helpers';
 import { buildTypeRegistry, expandShorthand, isCssProperty, suggestCssProperty } from '../resources';
 
-import type { DefinitionSlotInput, ElementInput, Operation } from './operations';
+import type { DefinitionSlotPatch, ElementInput, Operation } from './operations';
 import type { Space } from '../helpers';
 import type { ValidationError } from '../types';
 
@@ -115,14 +115,23 @@ const checkRef = (ref: string, path: string, ctx: ValidationCtx): void => {
   }
 };
 
-const checkCss = (css: Record<string, string | number> | undefined, path: string, ctx: ValidationCtx): void => {
+// Accepts a patch map too: a null value marks a property for removal (patchDefinition), which needs no key/value
+// validation, so it is dropped before checking.
+const checkCss = (css: Record<string, string | number | null> | undefined, path: string, ctx: ValidationCtx): void => {
   if (!css) {
     return;
   }
 
+  const declared: Record<string, string | number> = {};
+  for (const [key, value] of Object.entries(css)) {
+    if (value !== null) {
+      declared[key] = value;
+    }
+  }
+
   // Expand shorthands first (border, border-radius, padding…) so they validate as their longhand keys — matching
   // what persistence stores (RFC 0004 I4).
-  for (const [key, value] of Object.entries(expandShorthand(css))) {
+  for (const [key, value] of Object.entries(expandShorthand(declared))) {
     if (!isCssProperty(key)) {
       const suggestion = suggestCssProperty(key);
       ctx.errors.push({
@@ -141,7 +150,9 @@ const checkCss = (css: Record<string, string | number> | undefined, path: string
   }
 };
 
-const checkSlotCss = (slot: DefinitionSlotInput, path: string, ctx: ValidationCtx): void => {
+// Accepts both the full DefinitionSlotInput (upsert) and DefinitionSlotPatch (patch, with null removals) — the
+// latter is the wider type, and checkCss tolerates the nulls.
+const checkSlotCss = (slot: DefinitionSlotPatch, path: string, ctx: ValidationCtx): void => {
   checkCss(slot.desktop, `${path}.desktop`, ctx);
   checkCss(slot.tablet, `${path}.tablet`, ctx);
   checkCss(slot.mobile, `${path}.mobile`, ctx);
@@ -295,7 +306,8 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
 
         break;
       }
-      case 'upsertDefinition': {
+      case 'upsertDefinition':
+      case 'patchDefinition': {
         const { type, ref, slots, ...slot } = op;
         void type;
         checkRef(ref, `${base}.ref`, ctx);
@@ -306,6 +318,21 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
 
         break;
       }
+      case 'upsertGlobalStyle':
+      case 'patchGlobalStyle': {
+        const { type, componentType, slots, ...slot } = op;
+        void type;
+        checkRef(componentType, `${base}.componentType`, ctx);
+        checkSlotCss(slot, base, ctx);
+        for (const [slotName, slotDef] of Object.entries(slots ?? {})) {
+          checkSlotCss(slotDef, `${base}.slots.${slotName}`, ctx);
+        }
+
+        break;
+      }
+      case 'deleteGlobalStyle':
+        checkRef(op.componentType, `${base}.componentType`, ctx);
+        break;
       case 'deleteDefinition':
       case 'upsertPage':
       case 'deletePage':

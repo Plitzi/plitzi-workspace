@@ -4,7 +4,7 @@ import { elementOps } from './schema/operations';
 import { styleOps } from './style/operations';
 
 export type { ElementInput } from './schema/operations';
-export type { DefinitionSlotInput } from './style/operations';
+export type { DefinitionSlotInput, DefinitionSlotPatch } from './style/operations';
 
 // The write vocabulary across both schemas — single source of truth for the tool input schema (compact, sent
 // to the agent), for runtime parsing, and for the `Operation` type. A single batch may mix element and style
@@ -19,7 +19,11 @@ export const operation = z.discriminatedUnion('type', [
   elementOps.upsertVariable,
   elementOps.deleteVariable,
   styleOps.upsertDefinition,
+  styleOps.patchDefinition,
   styleOps.deleteDefinition,
+  styleOps.upsertGlobalStyle,
+  styleOps.patchGlobalStyle,
+  styleOps.deleteGlobalStyle,
   styleOps.upsertStyleVariable,
   styleOps.deleteStyleVariable
 ]);

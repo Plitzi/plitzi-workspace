@@ -30,8 +30,16 @@ const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
       return schema.deleteVariable(space, env, op);
     case 'upsertDefinition':
       return style.upsertDefinition(space, env, op);
+    case 'patchDefinition':
+      return style.patchDefinition(space, env, op);
     case 'deleteDefinition':
       return style.deleteDefinition(space, env, op);
+    case 'upsertGlobalStyle':
+      return style.upsertGlobalStyle(space, env, op);
+    case 'patchGlobalStyle':
+      return style.patchGlobalStyle(space, env, op);
+    case 'deleteGlobalStyle':
+      return style.deleteGlobalStyle(space, env, op);
     case 'upsertStyleVariable':
       return style.upsertStyleVariable(space, env, op);
     case 'deleteStyleVariable':
