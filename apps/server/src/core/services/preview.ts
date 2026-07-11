@@ -1,7 +1,7 @@
 import { createPreview } from '../../modules/ssr/preview';
 import { readRawBody } from '../requestParser';
 
-import type { PreviewRequestBody } from '../../modules/mcp/previewTypes';
+import type { PreviewRequestBody } from '../../modules/mcp/types';
 import type { SSRContext, Stage } from '../http/types';
 
 const PREVIEW_PATH_DEFAULT = '/__preview';

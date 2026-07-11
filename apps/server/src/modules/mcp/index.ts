@@ -3,9 +3,10 @@ export { readResource, resourceVersion, registerResources, buildTypeRegistry, cs
 export { apply, validate, search, read, validateOperations, operation, tools } from './tools';
 export { computeVersion } from './helpers';
 export { createHttpPreviewClient } from './previewClient';
+export { createHttpScreenshotClient } from './screenshotClient';
 
 export type { HttpPreviewClientConfig } from './previewClient';
-export type { PreviewClient, PreviewRequestBody, PreviewResult } from './previewTypes';
+export type { HttpScreenshotClientConfig } from './screenshotClient';
 export type { McpServerContext } from './server';
 export type {
   ApplyInput,

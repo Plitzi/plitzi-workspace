@@ -1,5 +1,5 @@
-import type { Operation } from './tools/operations';
-import type { ValidationError } from './types';
+import type { ValidationError } from './aiSchema';
+import type { Operation } from '../tools/operations';
 
 // Shared I/O for the draft-preview path. Lives on the MCP side (it references the MCP write vocabulary and
 // error shape); the SSR endpoint that renders a draft and the MCP tools that request one both import it here,

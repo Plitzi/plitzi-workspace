@@ -2,7 +2,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 
 import { createMcpServer } from './server';
 
-import type { PreviewClient } from './previewTypes';
+import type { PreviewClient, ScreenshotClient } from './types';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 import type { SSRAdapters, SSRRequest } from '@plitzi/sdk-shared';
 import type { IncomingMessage, ServerResponse } from 'node:http';
@@ -62,12 +62,18 @@ export const handleMcp = (
   res: ServerResponse,
   req: SSRRequest,
   adapters: SSRAdapters,
-  preview?: PreviewClient
+  preview?: PreviewClient,
+  screenshot?: ScreenshotClient
 ): Promise<void> =>
   serveMcp(
     raw,
     res,
-    createMcpServer({ adapters, getSpaceId: () => adapters.getSpaceId?.(req) ?? Promise.resolve(undefined), preview })
+    createMcpServer({
+      adapters,
+      getSpaceId: () => adapters.getSpaceId?.(req) ?? Promise.resolve(undefined),
+      preview,
+      screenshot
+    })
   );
 
 export { createMcpServer };

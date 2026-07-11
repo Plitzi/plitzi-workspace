@@ -1,4 +1,4 @@
-import type { PreviewClient, PreviewRequestBody, PreviewResult } from './previewTypes';
+import type { PreviewClient, PreviewRequestBody, PreviewResult } from './types';
 
 export type HttpPreviewClientConfig = {
   /** Absolute URL of the SSR `/preview` endpoint. */

@@ -14,7 +14,14 @@ export {
 } from './modules/ai';
 
 // mcp-ai server + its tool functions (also runnable in-process, e.g. wrapped as agent tools by a consumer).
-export { createMcpServer, handleMcp, serveMcp, readMcpBody, createHttpPreviewClient } from './modules/mcp';
+export {
+  createMcpServer,
+  handleMcp,
+  serveMcp,
+  readMcpBody,
+  createHttpPreviewClient,
+  createHttpScreenshotClient
+} from './modules/mcp';
 // Draft-preview primitives: the in-process render + the default token store (consumers inject a shared store).
 export { createPreview, createMemoryDraftStore, PREVIEW_TOKEN_PARAM } from './modules/ssr/preview';
 export {
@@ -37,7 +44,12 @@ export type {
   PreviewClient,
   PreviewRequestBody,
   PreviewResult,
-  HttpPreviewClientConfig
+  HttpPreviewClientConfig,
+  ScreenshotClient,
+  ScreenshotImage,
+  ScreenshotResult,
+  Viewport,
+  HttpScreenshotClientConfig
 } from './modules/mcp';
 export type {
   ApplyInput,

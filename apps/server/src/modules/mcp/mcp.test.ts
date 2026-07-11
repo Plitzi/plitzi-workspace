@@ -1203,6 +1203,7 @@ describe('mcp-ai tool registry (defineTool descriptors)', () => {
       'plitzi_apply',
       'plitzi_preview',
       'plitzi_read',
+      'plitzi_screenshot',
       'plitzi_search',
       'plitzi_validate'
     ]);
@@ -1300,5 +1301,57 @@ describe('mcp-ai plitzi_preview tool', () => {
     expect(res.html).toContain('<!doctype html>');
     expect(res.pagePath).toBe('/');
     expect(res.stateVersion).toBe('v1');
+  });
+});
+
+describe('mcp-ai plitzi_screenshot tool', () => {
+  const screenshotToolDef = () => tools.find(t => t.name === 'plitzi_screenshot');
+  const okPreview = {
+    render: () =>
+      Promise.resolve({
+        ok: true as const,
+        token: 't',
+        pagePath: '/',
+        html: '<!doctype html><html></html>',
+        stateVersion: 'v1'
+      })
+  };
+
+  it('declares a screenshot capability requirement', () => {
+    expect(screenshotToolDef()?.requires).toBe('screenshot');
+  });
+
+  it('returns image content when the browser service succeeds', async () => {
+    const screenshot = {
+      capture: () =>
+        Promise.resolve({ ok: true as const, images: [{ label: 'desktop', mimeType: 'image/png', data: 'AAAA' }] })
+    };
+    const res = (await screenshotToolDef()?.execute(
+      { viewport: 'desktop' },
+      { space: buildSpace(), env: 'main', persisters: {}, spaceId: 1, preview: okPreview, screenshot }
+    )) as { content?: Array<{ type: string; data?: string; mimeType?: string }> };
+    const image = res.content?.find(c => c.type === 'image');
+    expect(image).toMatchObject({ type: 'image', data: 'AAAA', mimeType: 'image/png' });
+  });
+
+  it('falls back to the HTML preview with a warning when the browser service fails', async () => {
+    const screenshot = {
+      capture: () => Promise.resolve({ ok: false as const, error: 'SCREENSHOT_UNREACHABLE', message: 'pod down' })
+    };
+    const res = (await screenshotToolDef()?.execute(
+      {},
+      { space: buildSpace(), env: 'main', persisters: {}, spaceId: 1, preview: okPreview, screenshot }
+    )) as { warning?: string; html?: string };
+    expect(res.warning).toBe('SCREENSHOT_UNAVAILABLE');
+    expect(res.html).toContain('<!doctype html>');
+  });
+
+  it('falls back to HTML when no browser service is wired', async () => {
+    const res = (await screenshotToolDef()?.execute(
+      {},
+      { space: buildSpace(), env: 'main', persisters: {}, spaceId: 1, preview: okPreview }
+    )) as { warning?: string; html?: string };
+    expect(res.warning).toBe('SCREENSHOT_DISABLED');
+    expect(res.html).toContain('<!doctype html>');
   });
 });

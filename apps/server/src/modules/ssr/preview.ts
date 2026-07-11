@@ -1,12 +1,13 @@
 import { randomUUID } from 'node:crypto';
 
 import { buildBody } from './buildBody';
+import { PREVIEW_TOKEN_PARAM } from '../mcp/constants';
 import { cloneSpace, computeVersion, findPageByRef, getPageElements } from '../mcp/helpers';
 import { applyOperations, validateOperations } from '../mcp/tools';
 
 import type { ServerCaches } from '../../helpers/cache';
 import type { PluginManager } from '../../plugins/manager';
-import type { PreviewRequestBody, PreviewResult } from '../mcp/previewTypes';
+import type { PreviewRequestBody, PreviewResult } from '../mcp/types';
 import type {
   DraftStore,
   Environment,
@@ -17,9 +18,7 @@ import type {
   SSRTemplateFn
 } from '@plitzi/sdk-shared';
 
-// Query param carrying a one-shot draft-preview token. A normal render sees it, resolves the stashed draft
-// offline-data from the draft store, and renders that instead of the persisted state.
-export const PREVIEW_TOKEN_PARAM = '__pt';
+export { PREVIEW_TOKEN_PARAM };
 
 /** In-memory one-shot draft store — the default when the consumer injects none. Fine for a single replica;
  *  a multi-replica deployment must inject a shared store so a preview URL resolves on any replica. */

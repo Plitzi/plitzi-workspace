@@ -1,5 +1,6 @@
 import { handleMcp } from '../../modules/mcp/handler';
 import { createHttpPreviewClient } from '../../modules/mcp/previewClient';
+import { createHttpScreenshotClient } from '../../modules/mcp/screenshotClient';
 
 import type { Stage } from '../http/types';
 import type { ServerResponse } from 'node:http';
@@ -7,10 +8,18 @@ import type { ServerResponse } from 'node:http';
 const mcpPathOf = (path: string | undefined): string => path ?? '/';
 
 const serveMcp = (ctx: Parameters<Stage>[0]): Promise<void> => {
-  const previewClient = ctx.config.previewClient;
+  const { previewClient, screenshot } = ctx.config;
   const preview = previewClient ? createHttpPreviewClient(previewClient) : undefined;
+  const screenshotClient = screenshot ? createHttpScreenshotClient(screenshot) : undefined;
 
-  return handleMcp(ctx.raw, ctx.rawRes as unknown as ServerResponse, ctx.req, ctx.config.adapters, preview);
+  return handleMcp(
+    ctx.raw,
+    ctx.rawRes as unknown as ServerResponse,
+    ctx.req,
+    ctx.config.adapters,
+    preview,
+    screenshotClient
+  );
 };
 
 // AI-native MCP (mcp-ai) mounted alongside other services: only answers under its path, so page/RSC routes

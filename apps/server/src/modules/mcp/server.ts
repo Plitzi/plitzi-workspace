@@ -5,8 +5,8 @@ import { registerResources } from './resources';
 import { tools } from './tools';
 
 import type { Space } from './helpers';
-import type { PreviewClient } from './previewTypes';
 import type { Persisters, ToolContext } from './tools';
+import type { PreviewClient, ScreenshotClient } from './types';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { SSRAdapters, Environment } from '@plitzi/sdk-shared';
 
@@ -21,6 +21,9 @@ export interface McpServerContext {
   /** How the visual-preview tools (plitzi_preview / plitzi_screenshot) reach the renderer. Absent → those tools
    *  report PREVIEW_UNAVAILABLE, so an MCP-only deployment without a renderer still runs every other tool. */
   preview?: PreviewClient;
+  /** The dedicated browser service for plitzi_screenshot. Absent → the tool is not registered (only the HTML
+   *  plitzi_preview is offered). */
+  screenshot?: ScreenshotClient;
 }
 
 // The MCP tools only ever operate on the active-editing environment.
@@ -28,7 +31,12 @@ const MCP_ENV: Environment = 'main';
 
 const asText = (data: unknown): CallToolResult => ({ content: [{ type: 'text', text: JSON.stringify(data) }] });
 
-export const createMcpServer = ({ adapters, getSpaceId, preview }: McpServerContext): McpServer => {
+// A tool may return either a plain JSON value (serialized as text) or an already-formed CallToolResult (its own
+// content blocks, e.g. plitzi_screenshot's image blocks) — pass the latter straight through.
+const isCallToolResult = (result: unknown): result is CallToolResult =>
+  typeof result === 'object' && result !== null && Array.isArray((result as { content?: unknown }).content);
+
+export const createMcpServer = ({ adapters, getSpaceId, preview, screenshot }: McpServerContext): McpServer => {
   // Resolve the spaceId at most once, and only when a space-dependent operation actually needs it. A request
   // without a valid token fails here (not at connect time), so the public surface stays reachable.
   let spaceIdPromise: Promise<number> | undefined;
@@ -75,13 +83,24 @@ export const createMcpServer = ({ adapters, getSpaceId, preview }: McpServerCont
     env: MCP_ENV,
     persisters,
     spaceId: await requireSpaceId(),
-    preview
+    preview,
+    screenshot
   });
   for (const tool of tools) {
+    // Skip a tool whose capability the host did not wire — e.g. plitzi_screenshot without a browser service, so
+    // it never appears in tools/list when the feature is off.
+    if (tool.requires === 'screenshot' && !screenshot) {
+      continue;
+    }
+
     server.registerTool(
       tool.name,
       { title: tool.title, description: tool.description, inputSchema: tool.inputShape },
-      async (args: unknown) => asText(await tool.execute(args, await toolContext()))
+      async (args: unknown) => {
+        const result = await tool.execute(args, await toolContext());
+
+        return isCallToolResult(result) ? result : asText(result);
+      }
     );
   }
 

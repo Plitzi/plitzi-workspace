@@ -236,6 +236,12 @@ export type SSRServerConfig = {
    *  `/preview` endpoint so the visual-preview tools work. The SDK builds an HTTP preview client from this;
    *  absent → those tools report PREVIEW_UNAVAILABLE. */
   previewClient?: { url: string; secret?: string };
+  /** Dedicated headless-browser service for plitzi_screenshot (off unless set). `serviceUrl` is the browser
+   *  service that turns a URL into PNG(s); `renderBaseUrl` is the SSR base the browser navigates to (a page
+   *  path + the one-shot `__pt` token are appended). When absent, plitzi_screenshot is not registered and only
+   *  the HTML plitzi_preview is available; when the service is unreachable at call time the tool degrades to
+   *  returning the HTML preview with a warning. */
+  screenshot?: { serviceUrl: string; renderBaseUrl: string };
   /** Backing store for draft-preview tokens. Defaults to an in-memory store (single replica); inject a shared
    *  store (e.g. Redis) for multi-replica correctness. */
   draftStore?: DraftStore;
