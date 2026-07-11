@@ -1,8 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 
-import { emptySpaceMessage, unauthorizedSpaceMessage } from './helpers';
+import { emptySpaceMessage, serverInstructions, unauthorizedSpaceMessage } from './helpers';
 import { registerResources } from './resources';
-import { serverInstructions } from './resources/guide';
 import { apply, applyShape, read, readShape, search, searchShape, validate, validateShape } from './tools';
 
 import type { Space } from './helpers';

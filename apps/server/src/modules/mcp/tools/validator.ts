@@ -13,7 +13,7 @@ import { buildTypeRegistry, expandShorthand, isCssProperty, suggestCssProperty }
 
 import type { DefinitionSlotPatch, ElementInput, Operation } from './operations';
 import type { Space } from '../helpers';
-import type { ValidationError } from '../types';
+import type { ValidationError, ValidationResult } from '../types';
 
 const REF_RE = /^[a-zA-Z0-9._-]+$/;
 const MAX_OPS = 100;
@@ -27,12 +27,6 @@ const CSS_VAR = /var\(\s*--([A-Za-z_][\w-]*)\s*\)/g;
 // Types whose props carry raw JSX/HTML/JS, where `{{ ... }}` is code (e.g. JSX object shorthand), not a Plitzi
 // variable reference. Their props are skipped by the {{name}} check to avoid false positives.
 const RAW_CODE_TYPES = new Set(['blockJsx', 'blockHtml', 'custom']);
-
-export interface ValidationResult {
-  valid: boolean;
-  errors: ValidationError[];
-  warnings: string[];
-}
 
 interface ValidationCtx {
   errors: ValidationError[];

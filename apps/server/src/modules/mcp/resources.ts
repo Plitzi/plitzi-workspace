@@ -1,8 +1,8 @@
 import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp';
 
-import { computeVersion, findElementByRef, findPageByRef } from '../helpers';
-import { guideText } from './guide';
-import { buildTypeRegistry } from './schema/registry';
+import { computeVersion, findElementByRef, findPageByRef } from './helpers';
+import { guideText } from './helpers/guide';
+import { buildTypeRegistry } from './tools/schema/registry';
 import {
   elementDetailToAI,
   folderRefToAI,
@@ -11,18 +11,18 @@ import {
   pageStylesToAI,
   pageSummariesToAI,
   schemaVariablesToAI
-} from './schema/translator';
-import { cssProperties } from './style/cssCatalog';
+} from './tools/schema/translator';
+import { cssProperties } from './tools/style/cssCatalog';
 import {
   definitionRefs,
   definitionToAI,
   globalStyleToAI,
   globalStyleTypes,
   styleVariablesToAI
-} from './style/translator';
+} from './tools/style/translator';
 
-import type { Space } from '../helpers';
-import type { Env, ResourceEnvelope } from '../types';
+import type { Space } from './helpers';
+import type { Env, ResourceEnvelope } from './types';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 
 const envelope = <T>(data: T): ResourceEnvelope<T> => ({ stateVersion: computeVersion(data), data });
@@ -294,8 +294,8 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
   }
 };
 
-export { buildTypeRegistry } from './schema/registry';
-export type { TypeInfo, TypePropInfo, TypeRegistry } from './schema/registry';
-export * from './schema/translator';
-export { cssProperties, expandShorthand, isCssProperty, suggestCssProperty } from './style/cssCatalog';
-export * from './style/translator';
+export { buildTypeRegistry } from './tools/schema/registry';
+export type { TypeInfo, TypePropInfo, TypeRegistry } from './tools/schema/registry';
+export * from './tools/schema/translator';
+export { cssProperties, expandShorthand, isCssProperty, suggestCssProperty } from './tools/style/cssCatalog';
+export * from './tools/style/translator';

@@ -2,50 +2,8 @@ import { computeVersion, elementRefOf, getPageElements, isPageElement, pageRefOf
 import { definitionRefs, definitionToAI, elementDetailToAI, pageSkeletonToAI } from '../resources';
 
 import type { Space } from '../helpers';
-import type { AIDefinition, AIElementDetail, Env } from '../types';
+import type { AIDefinition, Env, SearchHit, SearchInput, SearchPageHit, SearchResponse } from '../types';
 import type { Element, Schema } from '@plitzi/sdk-shared';
-
-export interface SearchInput {
-  query: string;
-  filters?: { type?: string; pageRef?: string };
-  /** 'detail' inlines each hit's full props/style so an edit needs no follow-up read. */
-  include?: 'detail';
-}
-
-export interface SearchHit {
-  pageRef: string;
-  ref: string;
-  uri: string;
-  pageUri: string;
-  stateVersion: string;
-  parentRef?: string;
-  /** Ancestor labels from the page down to and including this element. */
-  path: string[];
-  label: string;
-  type: string;
-  matches: string[];
-  detail?: AIElementDetail;
-}
-
-export interface SearchPageHit {
-  ref: string;
-  uri: string;
-  stateVersion: string;
-  label: string;
-  slug: string;
-  matches: string[];
-}
-
-export interface SearchResponse {
-  results: SearchHit[];
-  total: number;
-  /** Style definitions whose ref matches the query, with their full CSS — so finding a class by name closes the
-   *  loop to its style without a separate read. Present only when at least one definition matches. */
-  definitions?: AIDefinition[];
-  /** Pages whose name or slug matches the query (element hits never include pages). Each carries the page uri +
-   *  stateVersion, ready to open or edit. Present only when at least one page matches. */
-  pages?: SearchPageHit[];
-}
 
 const labelOf = (el: Element): string =>
   (typeof el.attributes.name === 'string' ? el.attributes.name : undefined) ?? el.definition.label;

@@ -1,24 +1,7 @@
 import { readResource, resourceErrorMessage } from '../resources';
 
 import type { Space } from '../helpers';
-import type { Env } from '../types';
-
-export interface ReadInput {
-  uris: string[];
-}
-
-export interface ReadHit {
-  uri: string;
-  stateVersion?: string;
-  data?: unknown;
-  error?: string;
-  message?: string;
-  hint?: string;
-}
-
-export interface ReadResponse {
-  results: ReadHit[];
-}
+import type { Env, ReadHit, ReadInput, ReadResponse } from '../types';
 
 // Resolve many resource URIs in one call so an agent that already holds N refs (from search / a write response)
 // does not spend N round-trips reading them. Each hit is either { stateVersion, data } or a teachable error,

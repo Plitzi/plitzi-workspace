@@ -1,14 +1,12 @@
+import { fail } from '../helpers';
 import { isStyleOp } from './operations';
-import { fail } from './opResult';
-import * as schema from './schema/mutate';
-import * as style from './style/mutate';
+import * as schema from './schema';
+import * as style from './style';
 
-import type { OpResult } from './opResult';
+import type { OpResult } from '../helpers';
 import type { Space } from '../helpers';
-import type { Env, ValidationError } from '../types';
+import type { Env, MutationOutcome } from '../types';
 import type { Operation } from './operations';
-
-export type { OpResult } from './opResult';
 
 const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
   switch (op.type) {
@@ -52,17 +50,6 @@ const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
       return fail('type', `Unknown operation "${(op as { type: string }).type}"`, 'See the Operation union');
   }
 };
-
-export interface MutationOutcome {
-  created: number;
-  updated: number;
-  deleted: number;
-  staleResources: string[];
-  elementRefs: string[];
-  errors: ValidationError[];
-  changedSchema: boolean;
-  changedStyle: boolean;
-}
 
 /** Apply operations in order to the space (mutating it). Records which schema(s) changed so the caller can
  *  persist each independently. Stops collecting counts for a failed op but records its errors. */

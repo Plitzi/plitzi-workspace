@@ -1,13 +1,12 @@
 import { validateSchema } from '@plitzi/sdk-schema';
 
 import { cloneSpace } from '../helpers';
-import { applyOperations } from './mutate';
-import { changedResources, conflictMessage, detectConflicts, resolvedElements } from './state';
+import { applyOperations } from './dispatch';
 import { validateOperations } from './validator';
+import { changedResources, conflictMessage, detectConflicts, resolvedElements } from './writeResult';
 
-import type { ApplyInput, Persisters, WriteResponse } from './state';
 import type { Space } from '../helpers';
-import type { Env, ValidationError } from '../types';
+import type { ApplyInput, Env, Persisters, ValidationError, WriteResponse } from '../types';
 import type { SchemaValidationError } from '@plitzi/sdk-schema';
 
 const noWarnings = (warnings: string[]): string[] | undefined => (warnings.length > 0 ? warnings : undefined);
