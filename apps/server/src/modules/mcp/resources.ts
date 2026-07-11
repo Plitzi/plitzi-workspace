@@ -2,7 +2,7 @@ import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp';
 
 import { computeVersion, findElementByRef, findPageByRef } from './helpers';
 import { guideText } from './helpers/guide';
-import { buildTypeRegistry } from './tools/schema/registry';
+import { buildTypeRegistry } from './tools/operations/schema/registry';
 import {
   elementDetailToAI,
   folderRefToAI,
@@ -11,15 +11,15 @@ import {
   pageStylesToAI,
   pageSummariesToAI,
   schemaVariablesToAI
-} from './tools/schema/translator';
-import { cssProperties } from './tools/style/cssCatalog';
+} from './tools/operations/schema/translator';
+import { cssProperties } from './tools/operations/style/cssCatalog';
 import {
   definitionRefs,
   definitionToAI,
   globalStyleToAI,
   globalStyleTypes,
   styleVariablesToAI
-} from './tools/style/translator';
+} from './tools/operations/style/translator';
 
 import type { Space } from './helpers';
 import type { Env, ResourceEnvelope } from './types';
@@ -294,8 +294,8 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
   }
 };
 
-export { buildTypeRegistry } from './tools/schema/registry';
-export type { TypeInfo, TypePropInfo, TypeRegistry } from './tools/schema/registry';
-export * from './tools/schema/translator';
-export { cssProperties, expandShorthand, isCssProperty, suggestCssProperty } from './tools/style/cssCatalog';
-export * from './tools/style/translator';
+export { buildTypeRegistry } from './tools/operations/schema/registry';
+export type { TypeInfo, TypePropInfo, TypeRegistry } from './tools/operations/schema/registry';
+export * from './tools/operations/schema/translator';
+export { cssProperties, expandShorthand, isCssProperty, suggestCssProperty } from './tools/operations/style/cssCatalog';
+export * from './tools/operations/style/translator';

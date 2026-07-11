@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { computeVersion, elementRefOf, getPageElements, isPageElement, pageRefOf, pageRefOfElement } from '../helpers';
 import { definitionRefs, definitionToAI, elementDetailToAI, pageSkeletonToAI } from '../resources';
-import { defineTool } from './tool';
+import { defineTool } from './shared/tool';
 
 import type { Space } from '../helpers';
 import type { AIDefinition, Env, SearchHit, SearchInput, SearchPageHit, SearchResponse } from '../types';

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { readResource, resourceErrorMessage } from '../resources';
-import { defineTool } from './tool';
+import { defineTool } from './shared/tool';
 
 import type { Space } from '../helpers';
 import type { Env, ReadHit, ReadInput, ReadResponse } from '../types';

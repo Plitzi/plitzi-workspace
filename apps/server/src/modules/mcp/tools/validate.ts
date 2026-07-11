@@ -1,6 +1,6 @@
-import { environment, operations } from './operations';
-import { defineTool } from './tool';
-import { validateOperations } from './validator';
+import { environment, operations } from './shared/operations';
+import { defineTool } from './shared/tool';
+import { validateOperations } from './shared/validator';
 
 import type { Space } from '../helpers';
 import type { ValidateInput, ValidationResult } from '../types';
