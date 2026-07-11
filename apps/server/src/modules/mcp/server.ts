@@ -5,6 +5,7 @@ import { registerResources } from './resources';
 import { tools } from './tools';
 
 import type { Space } from './helpers';
+import type { PreviewClient } from './previewTypes';
 import type { Persisters, ToolContext } from './tools';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { SSRAdapters, Environment } from '@plitzi/sdk-shared';
@@ -17,6 +18,9 @@ import type { SSRAdapters, Environment } from '@plitzi/sdk-shared';
 export interface McpServerContext {
   adapters: SSRAdapters;
   getSpaceId: () => Promise<number | undefined>;
+  /** How the visual-preview tools (plitzi_preview / plitzi_screenshot) reach the renderer. Absent → those tools
+   *  report PREVIEW_UNAVAILABLE, so an MCP-only deployment without a renderer still runs every other tool. */
+  preview?: PreviewClient;
 }
 
 // The MCP tools only ever operate on the active-editing environment.
@@ -24,7 +28,7 @@ const MCP_ENV: Environment = 'main';
 
 const asText = (data: unknown): CallToolResult => ({ content: [{ type: 'text', text: JSON.stringify(data) }] });
 
-export const createMcpServer = ({ adapters, getSpaceId }: McpServerContext): McpServer => {
+export const createMcpServer = ({ adapters, getSpaceId, preview }: McpServerContext): McpServer => {
   // Resolve the spaceId at most once, and only when a space-dependent operation actually needs it. A request
   // without a valid token fails here (not at connect time), so the public surface stays reachable.
   let spaceIdPromise: Promise<number> | undefined;
@@ -66,7 +70,13 @@ export const createMcpServer = ({ adapters, getSpaceId }: McpServerContext): Mcp
 
   // Register every tool straight from the shared registry: identity + input schema + behavior come from each
   // tool's descriptor, so a new tool is picked up here with no per-tool wiring.
-  const toolContext = async (): Promise<ToolContext> => ({ space: await getSpace(), env: MCP_ENV, persisters });
+  const toolContext = async (): Promise<ToolContext> => ({
+    space: await getSpace(),
+    env: MCP_ENV,
+    persisters,
+    spaceId: await requireSpaceId(),
+    preview
+  });
   for (const tool of tools) {
     server.registerTool(
       tool.name,

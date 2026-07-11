@@ -230,6 +230,15 @@ export type SSRServerConfig = {
     path?: string;
   };
   adapters: SSRAdapters;
+  /** Draft-preview endpoint for the MCP visual-preview tools (the RENDERER side). Off unless `enabled`. */
+  preview?: SSRPreviewConfig;
+  /** For an MCP server that runs separately from the renderer (the CLIENT side): where to reach the SSR
+   *  `/preview` endpoint so the visual-preview tools work. The SDK builds an HTTP preview client from this;
+   *  absent → those tools report PREVIEW_UNAVAILABLE. */
+  previewClient?: { url: string; secret?: string };
+  /** Backing store for draft-preview tokens. Defaults to an in-memory store (single replica); inject a shared
+   *  store (e.g. Redis) for multi-replica correctness. */
+  draftStore?: DraftStore;
   /** Which request-handling services this server mounts. Each maps to an internal `create<Name>Server` unit,
    *  so new services scale without rewriting the dispatcher. Omitted flags fall back to sensible defaults:
    *  ssr on, rsc when `adapters.getRscData` exists, mcp from `mcpAi.enabled`. `ai` is a reserved slot (not
@@ -281,4 +290,26 @@ export type SSRServer = {
   close: () => Promise<void>;
   readonly cache: CacheManager | null;
   readonly plugins: PluginRegistry;
+};
+
+/** A short-TTL, one-shot store for unsaved draft offline-data behind a preview token. The SDK ships an
+ *  in-memory default (fine for a single replica); a multi-replica deployment injects a shared (e.g. Redis)
+ *  implementation so a preview URL resolves on whichever replica the browser lands on. `take` consumes the
+ *  token so a preview URL is not replayable. */
+export type DraftStore = {
+  put: (token: string, data: OfflineDataRaw, ttlMs: number) => void | Promise<void>;
+  take: (token: string) => (OfflineDataRaw | undefined) | Promise<OfflineDataRaw | undefined>;
+};
+
+/** Draft-preview config for the MCP visual-preview tools. When enabled, an internal endpoint at `path`
+ *  (guarded by `secret`) applies unsaved edits to a clone, stashes the resulting offline-data under a
+ *  one-shot token, and the render path serves it back at `?__pt=<token>`. Off by default. */
+export type SSRPreviewConfig = {
+  enabled?: boolean;
+  /** Internal endpoint path that mints a preview token. Default '/__preview'. */
+  path?: string;
+  /** Shared secret required in the `x-preview-secret` header; requests without it are rejected. */
+  secret?: string;
+  /** Token time-to-live in milliseconds. Default 60000. */
+  ttlMs?: number;
 };

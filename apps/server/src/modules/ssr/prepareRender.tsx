@@ -32,22 +32,28 @@ export const prepareRender = async (
   revision: number,
   pluginManager: PluginManager,
   offlineDataCache?: TtlCache<string>,
-  metrics?: RequestMetrics
+  metrics?: RequestMetrics,
+  offlineDataOverride?: OfflineDataRaw
 ): Promise<RenderPrep> => {
   const m = <T,>(name: string, fn: () => T | Promise<T>): Promise<T> =>
     metrics ? metrics.measure(name, fn) : Promise.resolve(fn());
 
   const offlineCacheKey = environment !== 'main' ? buildOfflineDataCacheKey(spaceId, environment, revision) : undefined;
-  const cachedOfflineStr = offlineCacheKey ? offlineDataCache?.get(offlineCacheKey) : undefined;
+  // A draft override (an unsaved preview) never touches the adapters or the shared offline-data cache — it is a
+  // one-shot render of in-memory edits, so it must not read from nor pollute the persisted-state cache.
+  const cachedOfflineStr =
+    offlineDataOverride === undefined && offlineCacheKey ? offlineDataCache?.get(offlineCacheKey) : undefined;
 
   const [offlineData, server] = await Promise.all([
-    cachedOfflineStr
-      ? (JSON.parse(cachedOfflineStr) as OfflineDataRaw | undefined)
-      : m('schema', () => config.adapters.getOfflineData(spaceId, environment, revision)),
+    offlineDataOverride !== undefined
+      ? Promise.resolve<OfflineDataRaw | undefined>(offlineDataOverride)
+      : cachedOfflineStr
+        ? (JSON.parse(cachedOfflineStr) as OfflineDataRaw | undefined)
+        : m('schema', () => config.adapters.getOfflineData(spaceId, environment, revision)),
     m('rsc', () => buildServerInfo(req, config))
   ]);
 
-  if (!cachedOfflineStr && offlineCacheKey && offlineData !== undefined) {
+  if (offlineDataOverride === undefined && !cachedOfflineStr && offlineCacheKey && offlineData !== undefined) {
     offlineDataCache?.set(offlineCacheKey, JSON.stringify(offlineData));
   }
 

@@ -1,4 +1,5 @@
 import { mcpOnlyStage, mcpStage } from './mcp';
+import { previewStage } from './preview';
 import { rscStage } from './rsc';
 import { notFoundStage, ssrStage } from './ssr';
 import { authRoutesStages } from '../http/stages/authRoutes';
@@ -27,6 +28,10 @@ export const buildSSRPipeline = (services: ResolvedServices): Stage<SSRContext>[
   if (services.mcp) {
     stages.push(mcpStage);
   }
+
+  // Draft-preview endpoint (self-gated on config.preview.enabled); secret-guarded, so it sits before the auth
+  // middleware chain like the MCP stage.
+  stages.push(previewStage);
 
   stages.push(middlewaresStage);
 

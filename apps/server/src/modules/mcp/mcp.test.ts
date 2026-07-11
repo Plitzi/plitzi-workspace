@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { buildTypeRegistry, readResource, resourceErrorMessage } from './resources';
 import { createMcpServer } from './server';
 import { apply, operation, read, search, tools, validate } from './tools';
+import { createMemoryDraftStore, createPreview } from '../ssr/preview';
 
 import type { Space } from './helpers';
 import type { Operation, Persisters, SearchResponse } from './tools';
@@ -1198,7 +1199,13 @@ describe('mcp-ai tool registry (defineTool descriptors)', () => {
   const ctx = () => ({ space: buildSpace(), env: 'main' as const, persisters: {} as Persisters });
 
   it('registers every tool with name, modes metadata and an execute', () => {
-    expect(tools.map(t => t.name).sort()).toEqual(['plitzi_apply', 'plitzi_read', 'plitzi_search', 'plitzi_validate']);
+    expect(tools.map(t => t.name).sort()).toEqual([
+      'plitzi_apply',
+      'plitzi_preview',
+      'plitzi_read',
+      'plitzi_search',
+      'plitzi_validate'
+    ]);
     expect(tools.every(t => typeof t.execute === 'function')).toBe(true);
     expect(tools.find(t => t.name === 'plitzi_apply')?.access).toBe('write');
     expect(tools.find(t => t.name === 'plitzi_search')?.access).toBe('read');
@@ -1213,5 +1220,85 @@ describe('mcp-ai tool registry (defineTool descriptors)', () => {
   it('execute rejects args that do not match the shape', () => {
     const readTool = tools.find(t => t.name === 'plitzi_read');
     expect(() => readTool?.execute({}, ctx())).toThrow();
+  });
+});
+
+describe('mcp-ai draft store (one-shot preview tokens)', () => {
+  it('returns the stashed draft exactly once, then nothing', () => {
+    const store = createMemoryDraftStore();
+    const data = { schema: buildSpace().schema, style: buildSpace().style };
+    void store.put('tok', data, 60000);
+    expect(store.take('tok')).toBe(data);
+    expect(store.take('tok')).toBeUndefined();
+  });
+
+  it('drops an expired token', () => {
+    const store = createMemoryDraftStore();
+    void store.put('tok', { schema: buildSpace().schema, style: buildSpace().style }, -1);
+    expect(store.take('tok')).toBeUndefined();
+  });
+});
+
+describe('mcp-ai createPreview (draft build, pre-render error paths)', () => {
+  const configWith = (offline: unknown) =>
+    ({ adapters: { getOfflineData: () => Promise.resolve(offline) } }) as unknown as Parameters<
+      typeof createPreview
+    >[1];
+  const unusedRender = (() => '') as unknown as Parameters<typeof createPreview>[2];
+  const unusedPlugins = {} as Parameters<typeof createPreview>[3];
+  const unusedCaches = {} as Parameters<typeof createPreview>[4];
+
+  it('reports NO_DATA when the space has no offline data', async () => {
+    const res = await createPreview({ spaceId: 1 }, configWith(undefined), unusedRender, unusedPlugins, unusedCaches);
+    expect(res.ok).toBe(false);
+    expect(res).toMatchObject({ error: 'NO_DATA' });
+  });
+
+  it('rejects unapplicable operations with teachable errors, before any render', async () => {
+    const offline = { schema: buildSpace().schema, style: buildSpace().style };
+    const res = await createPreview(
+      {
+        spaceId: 1,
+        operations: [{ type: 'upsertElement', pageRef: 'no-such-page', element: { ref: 'x', type: 'button' } }]
+      },
+      configWith(offline),
+      unusedRender,
+      unusedPlugins,
+      unusedCaches
+    );
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(['INVALID_OPERATIONS', 'APPLY_FAILED']).toContain(res.error);
+      expect(res.errors?.length).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('mcp-ai plitzi_preview tool', () => {
+  const previewToolDef = () => tools.find(t => t.name === 'plitzi_preview');
+
+  it('is registered as a read tool', () => {
+    expect(previewToolDef()?.access).toBe('read');
+  });
+
+  it('reports PREVIEW_UNAVAILABLE when no preview client is wired', async () => {
+    const res = (await previewToolDef()?.execute({}, { space: buildSpace(), env: 'main', persisters: {} })) as {
+      error?: string;
+    };
+    expect(res.error).toBe('PREVIEW_UNAVAILABLE');
+  });
+
+  it('forwards to the preview client and returns its html + meta', async () => {
+    const preview = {
+      render: () =>
+        Promise.resolve({ ok: true as const, pagePath: '/', html: '<!doctype html><html></html>', stateVersion: 'v1' })
+    };
+    const res = (await previewToolDef()?.execute(
+      { pageRef: 'home' },
+      { space: buildSpace(), env: 'main', persisters: {}, spaceId: 1, preview }
+    )) as { html?: string; pagePath?: string; stateVersion?: string };
+    expect(res.html).toContain('<!doctype html>');
+    expect(res.pagePath).toBe('/');
+    expect(res.stateVersion).toBe('v1');
   });
 });

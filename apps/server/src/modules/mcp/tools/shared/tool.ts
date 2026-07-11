@@ -1,16 +1,20 @@
 import { z } from 'zod';
 
 import type { Space } from '../../helpers';
+import type { PreviewClient } from '../../previewTypes';
 import type { Env, Persisters } from '../../types';
 import type { ZodObject, ZodRawShape } from 'zod';
 
 /** Everything a tool needs at call time: the loaded space, the target environment, and the persisters (only the
  *  write tools use them). Built by whoever hosts the tools — the standalone MCP server or the in-process AI
- *  engine — so a tool's behavior never touches spaceId resolution or adapters directly. */
+ *  engine — so a tool's behavior never touches spaceId resolution or adapters directly. `spaceId` and `preview`
+ *  are present only when the host wired them (the visual-preview tools need both; absent → PREVIEW_UNAVAILABLE). */
 export interface ToolContext {
   space: Space;
   env: Env;
   persisters: Persisters;
+  spaceId?: number;
+  preview?: PreviewClient;
 }
 
 /** What a tool author writes: identity, the input schema that is the contract sent to the agent, and a typed
