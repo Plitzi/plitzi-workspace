@@ -71,7 +71,7 @@ export const createMcpServer = ({ adapters, getSpaceId }: McpServerContext): Mcp
     server.registerTool(
       tool.name,
       { title: tool.title, description: tool.description, inputSchema: tool.inputShape },
-      async (args: unknown) => asText(await tool.run(args, await toolContext()))
+      async (args: unknown) => asText(await tool.execute(args, await toolContext()))
     );
   }
 

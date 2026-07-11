@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import { buildTypeRegistry, readResource, resourceErrorMessage } from './resources';
 import { createMcpServer } from './server';
-import { apply, operation, read, search, validate } from './tools';
+import { apply, operation, read, search, tools, validate } from './tools';
 
 import type { Space } from './helpers';
-import type { Operation, Persisters } from './tools';
+import type { Operation, Persisters, SearchResponse } from './tools';
 import type {
   AIDefinition,
   AIElementDetail,
@@ -1125,5 +1125,27 @@ describe('mcp-ai page.folder is always "" (root) or a valid id', () => {
       p => p.ref === 'post'
     );
     expect(summary?.folder).toBeUndefined();
+  });
+});
+
+describe('mcp-ai tool registry (defineTool descriptors)', () => {
+  const ctx = () => ({ space: buildSpace(), env: 'main' as const, persisters: {} as Persisters });
+
+  it('registers every tool with name, modes metadata and an execute', () => {
+    expect(tools.map(t => t.name).sort()).toEqual(['plitzi_apply', 'plitzi_read', 'plitzi_search', 'plitzi_validate']);
+    expect(tools.every(t => typeof t.execute === 'function')).toBe(true);
+    expect(tools.find(t => t.name === 'plitzi_apply')?.access).toBe('write');
+    expect(tools.find(t => t.name === 'plitzi_search')?.access).toBe('read');
+  });
+
+  it('execute validates raw args against the shape, then runs the typed tool', () => {
+    const searchTool = tools.find(t => t.name === 'plitzi_search');
+    const result = searchTool?.execute({ query: 'box' }, ctx()) as SearchResponse;
+    expect(result.results.some(r => r.ref === 'c1')).toBe(true);
+  });
+
+  it('execute rejects args that do not match the shape', () => {
+    const readTool = tools.find(t => t.name === 'plitzi_read');
+    expect(() => readTool?.execute({}, ctx())).toThrow();
   });
 });

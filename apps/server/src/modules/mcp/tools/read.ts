@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 import { readResource, resourceErrorMessage } from '../resources';
+import { defineTool } from './tool';
 
-import type { ToolDef } from './tool';
 import type { Space } from '../helpers';
 import type { Env, ReadHit, ReadInput, ReadResponse } from '../types';
 
@@ -32,7 +32,7 @@ export const read = (input: ReadInput, space: Space, env: Env): ReadResponse => 
   return { results };
 };
 
-export const readTool: ToolDef = {
+export const readTool = defineTool({
   name: 'plitzi_read',
   title: 'Read',
   description:
@@ -41,5 +41,5 @@ export const readTool: ToolDef = {
     'so one bad URI never fails the batch.',
   inputShape: readShape,
   access: 'read',
-  run: (args, ctx) => read(args as ReadInput, ctx.space, ctx.env)
-};
+  run: (input, ctx) => read(input, ctx.space, ctx.env)
+});

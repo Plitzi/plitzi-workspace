@@ -5,10 +5,10 @@ import { validateSchema } from '@plitzi/sdk-schema';
 import { cloneSpace } from '../helpers';
 import { applyOperations } from './dispatch';
 import { environment, operations } from './operations';
+import { defineTool } from './tool';
 import { validateOperations } from './validator';
 import { changedResources, conflictMessage, detectConflicts, resolvedElements } from './writeResult';
 
-import type { ToolDef } from './tool';
 import type { Space } from '../helpers';
 import type { ApplyInput, Env, Persisters, ValidationError, WriteResponse } from '../types';
 import type { SchemaValidationError } from '@plitzi/sdk-schema';
@@ -132,7 +132,7 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
   };
 };
 
-export const applyTool: ToolDef = {
+export const applyTool = defineTool({
   name: 'plitzi_apply',
   title: 'Apply',
   description:
@@ -141,5 +141,5 @@ export const applyTool: ToolDef = {
     '(inspect the outcome without committing). Rejects the whole batch on any error or version conflict.',
   inputShape: applyShape,
   access: 'write',
-  run: (args, ctx) => apply({ ...(args as ApplyInput), environment: ctx.env }, ctx.space, ctx.persisters)
-};
+  run: (input, ctx) => apply({ ...input, environment: ctx.env }, ctx.space, ctx.persisters)
+});

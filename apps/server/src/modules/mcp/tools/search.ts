@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 import { computeVersion, elementRefOf, getPageElements, isPageElement, pageRefOf, pageRefOfElement } from '../helpers';
 import { definitionRefs, definitionToAI, elementDetailToAI, pageSkeletonToAI } from '../resources';
+import { defineTool } from './tool';
 
-import type { ToolDef } from './tool';
 import type { Space } from '../helpers';
 import type { AIDefinition, Env, SearchHit, SearchInput, SearchPageHit, SearchResponse } from '../types';
 import type { Element, Schema } from '@plitzi/sdk-shared';
@@ -140,7 +140,7 @@ export const search = (input: SearchInput, space: Space, env: Env): SearchRespon
   };
 };
 
-export const searchTool: ToolDef = {
+export const searchTool = defineTool({
   name: 'plitzi_search',
   title: 'Search',
   description:
@@ -150,5 +150,5 @@ export const searchTool: ToolDef = {
     'style definitions matching the query (with full CSS) under `definitions`, and matching pages under `pages`.',
   inputShape: searchShape,
   access: 'read',
-  run: (args, ctx) => search(args as SearchInput, ctx.space, ctx.env)
-};
+  run: (input, ctx) => search(input, ctx.space, ctx.env)
+});
