@@ -16,6 +16,8 @@ export const operation = z.discriminatedUnion('type', [
   elementOps.moveElement,
   elementOps.upsertPage,
   elementOps.deletePage,
+  elementOps.upsertFolder,
+  elementOps.deleteFolder,
   elementOps.upsertVariable,
   elementOps.deleteVariable,
   styleOps.upsertDefinition,

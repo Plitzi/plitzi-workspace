@@ -6,7 +6,7 @@ import { apply, operation, search, validate } from './tools';
 
 import type { Space } from './helpers';
 import type { Operation, Persisters } from './tools';
-import type { AIDefinition, AIElementDetail, AIPageSkeleton, AIPageSummary, AIStyleVariable } from './types';
+import type { AIDefinition, AIElementDetail, AIFolder, AIPageSkeleton, AIPageSummary, AIStyleVariable } from './types';
 import type { Schema, SSRAdapters, Style } from '@plitzi/sdk-shared';
 
 const buildSpace = (): Space => {
@@ -857,5 +857,177 @@ describe('mcp-ai type-aware prop warnings (I5)', () => {
       buildSpace()
     );
     expect(r.warnings.some(w => w.includes('has no observed prop'))).toBe(false);
+  });
+});
+
+describe('mcp-ai page folders (create/nest/associate/delete)', () => {
+  it('creates a folder (ref becomes its id) and lists it', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      { operations: [{ type: 'upsertFolder', ref: 'blog', name: 'Blog' }] },
+      buildSpace(),
+      cap.persisters
+    );
+    expect(res.applied).toBe(true);
+    const folders = readResource(cap.saved(), 'main', 'plitzi://folders/main')?.data as AIFolder[];
+    expect(folders).toEqual([{ ref: 'blog', name: 'Blog', slug: 'blog', parentId: undefined }]);
+    const one = readResource(cap.saved(), 'main', 'plitzi://folders/main/blog')?.data as AIFolder;
+    expect(one.name).toBe('Blog');
+  });
+
+  it('places a page in a folder (by its id) and reflects it in the page summary', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      {
+        operations: [
+          { type: 'upsertFolder', ref: 'blog', name: 'Blog' },
+          { type: 'upsertPage', ref: 'post', label: 'Post', folder: 'blog' }
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+    const pages = readResource(cap.saved(), 'main', 'plitzi://schema/main/pages')?.data as AIPageSummary[];
+    expect(pages.find(p => p.ref === 'post')?.folder).toBe('blog');
+  });
+
+  it('nests folders parent-before-child (valid ordering) and applies', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      {
+        operations: [
+          { type: 'upsertFolder', ref: 'docs', name: 'Docs' },
+          { type: 'upsertFolder', ref: 'guides', name: 'Guides', parentId: 'docs' }
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+    expect(res.applied).toBe(true);
+    const folders = readResource(cap.saved(), 'main', 'plitzi://folders/main')?.data as AIFolder[];
+    expect(folders.map(f => f.ref)).toEqual(['docs', 'guides']);
+    expect(folders[1].parentId).toBe('docs');
+  });
+
+  it('rejects a page joining a folder that does not exist', () => {
+    const r = validate({ operations: [{ type: 'upsertPage', ref: 'x', folder: 'ghost' }] }, buildSpace());
+    expect(r.valid).toBe(false);
+    expect(r.errors[0].message).toContain('Folder "ghost" does not exist');
+  });
+
+  it('rejects nesting a folder under itself', () => {
+    const r = validate({ operations: [{ type: 'upsertFolder', ref: 'blog', parentId: 'blog' }] }, buildSpace());
+    expect(r.valid).toBe(false);
+    expect(r.errors.some(e => e.message.includes('cannot be nested under itself'))).toBe(true);
+  });
+
+  it('deleteFolder promotes child folders and pages up to the parent', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      {
+        operations: [
+          { type: 'upsertFolder', ref: 'docs', name: 'Docs' },
+          { type: 'upsertFolder', ref: 'guides', name: 'Guides', parentId: 'docs' },
+          { type: 'upsertPage', ref: 'intro', label: 'Intro', folder: 'guides' }
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+    const afterCreate = cap.saved();
+    const res = await apply({ operations: [{ type: 'deleteFolder', ref: 'guides' }] }, afterCreate, cap.persisters);
+    expect(res.applied).toBe(true);
+    const folders = readResource(cap.saved(), 'main', 'plitzi://folders/main')?.data as AIFolder[];
+    expect(folders.map(f => f.ref)).toEqual(['docs']);
+    // The page in the deleted folder moved up to its parent (docs).
+    const pages = readResource(cap.saved(), 'main', 'plitzi://schema/main/pages')?.data as AIPageSummary[];
+    expect(pages.find(p => p.ref === 'intro')?.folder).toBe('docs');
+  });
+
+  it('resolves an existing folder ref by name and moves a page to the root with null', async () => {
+    const cap = capturing(buildSpace());
+    await apply({ operations: [{ type: 'upsertFolder', ref: 'blog', name: 'Blog' }] }, buildSpace(), cap.persisters);
+    // The folder now exists, so a later batch may reference it by its name.
+    await apply({ operations: [{ type: 'upsertPage', ref: 'post', folder: 'Blog' }] }, cap.saved(), cap.persisters);
+    expect(
+      (readResource(cap.saved(), 'main', 'plitzi://schema/main/pages')?.data as AIPageSummary[]).find(
+        p => p.ref === 'post'
+      )?.folder
+    ).toBe('blog');
+
+    await apply({ operations: [{ type: 'upsertPage', ref: 'post', folder: null }] }, cap.saved(), cap.persisters);
+    expect(
+      (readResource(cap.saved(), 'main', 'plitzi://schema/main/pages')?.data as AIPageSummary[]).find(
+        p => p.ref === 'post'
+      )?.folder
+    ).toBeUndefined();
+  });
+});
+
+describe('mcp-ai page.folder is always "" (root) or a valid id', () => {
+  const folderOf = (space: Space, ref: string): unknown =>
+    Object.values(space.schema.flat).find(el => el.definition.aiRef === ref)?.attributes.folder;
+
+  it('stores "" (not a missing key) for a new page with no folder', async () => {
+    const cap = capturing(buildSpace());
+    await apply({ operations: [{ type: 'upsertPage', ref: 'plain', label: 'Plain' }] }, buildSpace(), cap.persisters);
+    expect(folderOf(cap.saved(), 'plain')).toBe('');
+  });
+
+  it('accepts an explicit empty-string folder as root (not a missing-folder error)', async () => {
+    const res = await apply({ operations: [{ type: 'upsertPage', ref: 'p', label: 'P', folder: '' }] }, buildSpace());
+    expect(res.applied).toBe(true);
+    expect(validate({ operations: [{ type: 'upsertPage', ref: 'p', folder: '' }] }, buildSpace()).valid).toBe(true);
+  });
+
+  it('detects (rejects) a folder that is not a real folder ref, via apply', async () => {
+    const res = await apply(
+      { operations: [{ type: 'upsertPage', ref: 'p', label: 'P', folder: 'not-a-real-folder' }] },
+      buildSpace()
+    );
+    expect(res.applied).toBe(false);
+    expect(res.errors?.some(e => e.message.includes('not-a-real-folder') && /does not exist/.test(e.message))).toBe(
+      true
+    );
+  });
+
+  it('detects a non-existent folder id when updating an existing page', async () => {
+    const res = await apply({ operations: [{ type: 'upsertPage', ref: 'home', folder: 'ghost-id' }] }, buildSpace());
+    expect(res.applied).toBe(false);
+    expect(res.errors?.[0].path).toContain('folder');
+  });
+
+  it('guards at mutate time when the folder op is ordered after the page (validation cannot see order)', async () => {
+    const res = await apply(
+      {
+        operations: [
+          { type: 'upsertPage', ref: 'post', folder: 'blog' },
+          { type: 'upsertFolder', ref: 'blog', name: 'Blog' }
+        ]
+      },
+      buildSpace()
+    );
+    expect(res.applied).toBe(false);
+    expect(res.errors?.some(e => e.message.includes('not found'))).toBe(true);
+  });
+
+  it('moving a page to the root stores "" (round-trips through the summary as no folder)', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      {
+        operations: [
+          { type: 'upsertFolder', ref: 'blog', name: 'Blog' },
+          { type: 'upsertPage', ref: 'post', folder: 'blog' }
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+    await apply({ operations: [{ type: 'upsertPage', ref: 'post', folder: '' }] }, cap.saved(), cap.persisters);
+    expect(folderOf(cap.saved(), 'post')).toBe('');
+    const summary = (readResource(cap.saved(), 'main', 'plitzi://schema/main/pages')?.data as AIPageSummary[]).find(
+      p => p.ref === 'post'
+    );
+    expect(summary?.folder).toBeUndefined();
   });
 });

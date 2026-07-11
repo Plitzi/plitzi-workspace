@@ -65,10 +65,24 @@ export const elementOps = {
     ref: z.string(),
     label: z.string().optional(),
     slug: z.string().optional(),
-    folder: z.string().optional(),
+    folder: z
+      .string()
+      .nullable()
+      .optional()
+      .describe('Ref of an existing folder to place this page in; "" or null moves it to the root. Unknown → error'),
     default: z.boolean().optional()
   }),
   deletePage: z.object({ type: z.literal('deletePage'), ref: z.string() }),
+  upsertFolder: z.object({
+    type: z.literal('upsertFolder'),
+    ref: z.string().describe('Folder ref: an existing folder id/name/slug to update, or a new id you choose'),
+    name: z.string().optional(),
+    slug: z.string().optional(),
+    parentId: z.string().nullable().optional().describe('Ref of the parent folder for nesting; null keeps it at root')
+  }),
+  deleteFolder: z
+    .object({ type: z.literal('deleteFolder'), ref: z.string() })
+    .describe('Delete a folder; its child folders and pages move up to its parent (or the root)'),
   upsertVariable: z.object({
     type: z.literal('upsertVariable'),
     name: z.string(),

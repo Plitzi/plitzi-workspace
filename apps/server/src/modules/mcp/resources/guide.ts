@@ -41,7 +41,8 @@ Never download a whole tree you do not need.
 - \`plitzi://guide\` — this guide.
 - \`plitzi://types\` — element types **observed in this space** (ground truth): props, slots, subTypes.
 - \`plitzi://css-properties\` — valid kebab-case CSS property keys.
-- \`plitzi://schema/{env}/pages\` — page **summaries** (ref, label, elementCount). No element trees.
+- \`plitzi://schema/{env}/pages\` — page **summaries** (ref, label, elementCount, folder). No element trees.
+- \`plitzi://folders/{env}\` — page **folders** (the sidebar tree): ref, name, slug, parentId. \`/{ref}\` for one.
 - \`plitzi://schema/{env}/pages/{ref}\` — one page as a **skeleton tree** (ref/type/label/children), no props/style.
 - \`plitzi://schema/{env}/elements/{ref}\` — one element in **full detail** (props, style, parentRef, childRefs).
   Its \`resolvedStyle\` inlines the **CSS of every definition** the element attaches (keyed by class ref), so you
@@ -102,6 +103,18 @@ schemas predating aiRef keep working through ids. Creating an element stores its
   - The two share one name space, so a class op refuses a name held by a global and vice-versa (guards against a
     typo silently rewriting every element of a type). If refused, you targeted the wrong kind — switch tools or
     rename. To style one element only, never reach for a global.
+
+## Pages & folders
+Pages can be grouped into **folders** (the sidebar tree). A folder is \`{ ref, name, slug, parentId? }\`; its \`ref\`
+**is its id** (there is no separate aiRef), and that id is what a page and a nested folder reference.
+- Create/rename/move a folder with \`upsertFolder\` (the \`ref\` you pass on create becomes its id — pick a stable one
+  like \`"blog"\`). Nest it under another with \`parentId\` (a folder ref); \`parentId: null\` moves it back to the root.
+- Put a page in a folder with \`upsertPage\`'s \`folder\` (a folder ref). A page's \`folder\` is always either **empty
+  (root)** or an **existing folder id**: \`folder: null\` or \`folder: ""\` moves it to the root, and any other value
+  must resolve to a folder that already exists or is created earlier in the same batch — an unknown folder is
+  rejected, never stored.
+- \`deleteFolder\` removes a folder and **promotes its contents up one level** — its child folders and its pages move
+  to its parent (or the root). A folder cannot be nested under itself or one of its descendants.
 
 ## Semantics
 - **props are fully replaced** on \`upsertElement\`: send every prop you want to keep. To change only some props,

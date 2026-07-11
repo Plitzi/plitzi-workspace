@@ -1,4 +1,14 @@
-import { findPageByRef, getPageElements, pageRefOf, resolveRef, routeParamNames, slugRouteParams } from '../helpers';
+import {
+  findFolderByRef,
+  findPageByRef,
+  folderAncestorIds,
+  getPageElements,
+  pageFoldersOf,
+  pageRefOf,
+  resolveRef,
+  routeParamNames,
+  slugRouteParams
+} from '../helpers';
 import { buildTypeRegistry, expandShorthand, isCssProperty, suggestCssProperty } from '../resources';
 
 import type { DefinitionSlotPatch, ElementInput, Operation } from './operations';
@@ -238,9 +248,24 @@ const batchDeclaredPages = (ops: Operation[]): Set<string> => {
   return refs;
 };
 
+// Folder refs the batch itself creates via upsertFolder, so a later op (a page joining it, or a nested folder) can
+// target the new folder in the same apply without a false "folder does not exist".
+const batchDeclaredFolders = (ops: Operation[]): Set<string> => {
+  const refs = new Set<string>();
+  for (const op of ops) {
+    if (op.type === 'upsertFolder') {
+      refs.add(op.ref);
+    }
+  }
+
+  return refs;
+};
+
 export const validateOperations = (space: Space, ops: Operation[]): ValidationResult => {
   const registry = buildTypeRegistry(space.schema);
   const batchPages = batchDeclaredPages(ops);
+  const batchFolders = batchDeclaredFolders(ops);
+  const folderRefs = (): unknown[] => pageFoldersOf(space.schema).map(f => f.id);
   const ctx: ValidationCtx = {
     errors: [],
     warnings: [],
@@ -333,8 +358,54 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
       case 'deleteGlobalStyle':
         checkRef(op.componentType, `${base}.componentType`, ctx);
         break;
-      case 'deleteDefinition':
       case 'upsertPage':
+        checkRef(op.ref, `${base}.ref`, ctx);
+        // A non-empty folder ref must resolve to an existing folder (or one created earlier in the batch); '' and
+        // null both mean "root" and are always valid. This is what keeps a page's folder either '' or a real id.
+        if (typeof op.folder === 'string' && op.folder !== '') {
+          if (!findFolderByRef(space.schema, op.folder) && !batchFolders.has(op.folder)) {
+            ctx.errors.push({
+              path: `${base}.folder`,
+              message: `Folder "${op.folder}" does not exist`,
+              hint: 'Create it with upsertFolder earlier in the same batch, or read plitzi://folders for valid refs',
+              validValues: folderRefs()
+            });
+          }
+        }
+
+        break;
+      case 'upsertFolder': {
+        checkRef(op.ref, `${base}.ref`, ctx);
+        if (typeof op.parentId === 'string') {
+          checkRef(op.parentId, `${base}.parentId`, ctx);
+          const parent = findFolderByRef(space.schema, op.parentId);
+          if (!parent && !batchFolders.has(op.parentId)) {
+            ctx.errors.push({
+              path: `${base}.parentId`,
+              message: `Parent folder "${op.parentId}" does not exist`,
+              hint: 'Create the parent with upsertFolder first, or read plitzi://folders for valid refs',
+              validValues: folderRefs()
+            });
+          }
+
+          const selfId = findFolderByRef(space.schema, op.ref)?.id ?? op.ref;
+          const parentId = parent?.id ?? op.parentId;
+          if (
+            parentId === selfId ||
+            (parent && folderAncestorIds(pageFoldersOf(space.schema), parent.id).includes(selfId))
+          ) {
+            ctx.errors.push({
+              path: `${base}.parentId`,
+              message: `Folder "${op.ref}" cannot be nested under itself or one of its descendants`,
+              hint: 'Choose a parent that is not this folder or below it'
+            });
+          }
+        }
+
+        break;
+      }
+      case 'deleteDefinition':
+      case 'deleteFolder':
       case 'deletePage':
       case 'upsertVariable':
       case 'deleteVariable':

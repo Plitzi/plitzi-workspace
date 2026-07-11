@@ -3,7 +3,14 @@ import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp';
 import { computeVersion, findElementByRef, findPageByRef } from '../helpers';
 import { guideText } from './guide';
 import { buildTypeRegistry } from './schema/registry';
-import { elementDetailToAI, pageSkeletonToAI, pageSummariesToAI, schemaVariablesToAI } from './schema/translator';
+import {
+  elementDetailToAI,
+  folderRefToAI,
+  foldersToAI,
+  pageSkeletonToAI,
+  pageSummariesToAI,
+  schemaVariablesToAI
+} from './schema/translator';
 import { cssProperties } from './style/cssCatalog';
 import {
   definitionRefs,
@@ -22,7 +29,7 @@ const envelope = <T>(data: T): ResourceEnvelope<T> => ({ stateVersion: computeVe
 // Style resources live at their own top-level roots (plitzi://definitions, plitzi://style-variables,
 // plitzi://schema-variables) but agents reach for them by analogy under plitzi://schema/{env}/… . Accept that
 // alias shape and fold it back to the canonical root, so both forms resolve (RFC 0005 I3).
-const ALIASED_ROOTS = ['definitions', 'global-styles', 'style-variables', 'schema-variables'];
+const ALIASED_ROOTS = ['definitions', 'global-styles', 'style-variables', 'schema-variables', 'folders'];
 
 const canonicalUri = (env: Env, uri: string): string => {
   const aliasPrefix = `plitzi://schema/${env}/`;
@@ -67,6 +74,7 @@ export const readResource = (space: Space, env: Env, rawUri: string): ResourceEn
       types: buildTypeRegistry(space.schema),
       cssProperties,
       pages: pageSummariesToAI(space.schema),
+      folders: foldersToAI(space.schema),
       definitions: definitionRefs(space.style),
       styleVariables: styleVariablesToAI(space.style),
       schemaVariables: schemaVariablesToAI(space.schema)
@@ -75,6 +83,17 @@ export const readResource = (space: Space, env: Env, rawUri: string): ResourceEn
 
   if (uri === `plitzi://schema/${env}/pages`) {
     return envelope(pageSummariesToAI(space.schema));
+  }
+
+  if (uri === `plitzi://folders/${env}`) {
+    return envelope(foldersToAI(space.schema));
+  }
+
+  if (uri.startsWith(`plitzi://folders/${env}/`)) {
+    const ref = uri.slice(`plitzi://folders/${env}/`.length);
+    const folder = folderRefToAI(space.schema, ref);
+
+    return folder ? envelope(folder) : null;
   }
 
   if (uri.startsWith(`plitzi://schema/${env}/pages/`)) {
@@ -140,7 +159,8 @@ const itemTemplates = (env: Env): string[] => [
   `plitzi://schema/${env}/elements/{ref}`,
   `plitzi://definitions/${env}/{ref}`,
   `plitzi://global-styles/${env}/{componentType}`,
-  `plitzi://style-variables/${env}/{category}`
+  `plitzi://style-variables/${env}/{category}`,
+  `plitzi://folders/${env}/{ref}`
 ];
 
 /** Teachable message for a URI that read as null. Distinguishes a well-formed URI whose ref does not resolve (the
@@ -206,6 +226,7 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
     ],
     ['Element types', 'plitzi://types', 'Observed element types with props, slots and subTypes'],
     ['Pages', `plitzi://schema/${env}/pages`, 'Page summaries (ref, label, elementCount) — no element trees'],
+    ['Folders', `plitzi://folders/${env}`, 'Page folders (the sidebar tree): ref, name, slug, parentId'],
     ['Style definitions', `plitzi://definitions/${env}`, 'Style definition refs (names)'],
     ['Global styles', `plitzi://global-styles/${env}`, 'Element types that have a site-wide global style'],
     ['Style variables', `plitzi://style-variables/${env}`, 'Design tokens by category'],
@@ -230,6 +251,7 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
   const templates: Array<[string, string, string]> = [
     ['Page', `plitzi://schema/${env}/pages/{ref}`, 'One page as a skeleton tree (ref/type/label/children), no props'],
     ['Element', `plitzi://schema/${env}/elements/{ref}`, 'One element in full detail (props, style) by ref or id'],
+    ['Folder', `plitzi://folders/${env}/{ref}`, 'One page folder (name, slug, parentId) by folder id'],
     ['Style definition', `plitzi://definitions/${env}/{ref}`, 'One style definition (CSS) by class ref'],
     [
       'Global style',

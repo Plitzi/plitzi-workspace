@@ -26,8 +26,18 @@ export interface AIPageSummary {
   label: string;
   slug: string;
   default: boolean;
+  /** The ref of the folder this page lives in (a PageFolder id), or undefined for a root-level page. */
   folder?: string;
   elementCount: number;
+}
+
+/** A page folder in the sidebar tree. `ref` is the folder's id (there is no separate aiRef); pages reference it
+ *  by that id via their `folder`, and nested folders via `parentId`. */
+export interface AIFolder {
+  ref: string;
+  name: string;
+  slug: string;
+  parentId?: string;
 }
 
 export interface AISkeletonNode {

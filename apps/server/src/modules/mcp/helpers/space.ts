@@ -1,4 +1,4 @@
-import type { Element, Schema, Style } from '@plitzi/sdk-shared';
+import type { Element, PageFolder, Schema, Style } from '@plitzi/sdk-shared';
 
 /** The working view the tools read and mutate: the two Plitzi schemas (elements + style), which the platform
  *  stores and persists as separate documents (Space model / Style model). */
@@ -47,6 +47,82 @@ export const elementRefOf = (el: Element): string => el.definition.aiRef ?? el.i
 /** Finds a page by its semantic ref (aiRef/slug/…) or its raw id, so legacy schemas without an aiRef still resolve. */
 export const findPageByRef = (schema: Schema, pageRef: string): Element | undefined =>
   getPageElements(schema).find(el => pageRefOf(el) === pageRef || el.id === pageRef);
+
+// --- Page folders (the sidebar tree). A folder has no aiRef; its ref is its id. Pages reference a folder by that
+// id (attributes.folder), and nested folders via parentId. ---
+
+// The Schema type declares pageFolders as always present, but a legacy/partial document may omit it — initialize
+// defensively so every reader/writer sees an array. (The types can't express the legacy case, hence the disable.)
+export const pageFoldersOf = (schema: Schema): PageFolder[] => {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  schema.pageFolders ??= [];
+
+  return schema.pageFolders;
+};
+
+/** Resolve a folder by its id, or (for agent convenience) by an exact name or slug when that is unambiguous. */
+export const findFolderByRef = (schema: Schema, ref: string): PageFolder | undefined => {
+  const folders = pageFoldersOf(schema);
+  const byId = folders.find(f => f.id === ref);
+  if (byId) {
+    return byId;
+  }
+
+  const byName = folders.filter(f => f.name === ref);
+  if (byName.length === 1) {
+    return byName[0];
+  }
+
+  const bySlug = folders.filter(f => f.slug === ref);
+
+  return bySlug.length === 1 ? bySlug[0] : undefined;
+};
+
+/** Order folders so every parent precedes its children — the invariant the schema validator enforces on
+ *  pageFolders (a parentId must appear earlier in the array). Cycles (rejected upstream) are left in place. */
+export const sortFolders = (folders: PageFolder[]): PageFolder[] => {
+  const byId = new Map(folders.map(f => [f.id, f]));
+  const placed = new Set<string>();
+  const result: PageFolder[] = [];
+
+  const visit = (folder: PageFolder, ancestry: Set<string>): void => {
+    if (placed.has(folder.id)) {
+      return;
+    }
+
+    const parent = folder.parentId ? byId.get(folder.parentId) : undefined;
+    if (parent && !ancestry.has(parent.id)) {
+      visit(parent, new Set(ancestry).add(folder.id));
+    }
+
+    if (!placed.has(folder.id)) {
+      placed.add(folder.id);
+      result.push(folder);
+    }
+  };
+
+  for (const folder of folders) {
+    visit(folder, new Set([folder.id]));
+  }
+
+  return result;
+};
+
+/** Ancestor ids of a folder (following parentId), stopping on a cycle. Used to reject a parent change that would
+ *  make a folder its own ancestor. */
+export const folderAncestorIds = (folders: PageFolder[], startParentId: string | undefined): string[] => {
+  const byId = new Map(folders.map(f => [f.id, f]));
+  const chain: string[] = [];
+  const seen = new Set<string>();
+  let current = startParentId ? byId.get(startParentId) : undefined;
+  while (current && !seen.has(current.id)) {
+    seen.add(current.id);
+    chain.push(current.id);
+    current = current.parentId ? byId.get(current.parentId) : undefined;
+  }
+
+  return chain;
+};
 
 /** Route params a page's slug binds (e.g. ":spaceId/update/*" → ["spaceId"]). These are valid {{name}}
  *  references on that page even though they are not space-level schema variables. */

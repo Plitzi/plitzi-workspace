@@ -4,6 +4,7 @@ import {
   getPageElements,
   isPageElement,
   orderedChildren,
+  pageFoldersOf,
   pageRefOf,
   pageRefOfElement,
   slugRouteParams
@@ -13,12 +14,13 @@ import { definitionToAI, globalStylesForType } from '../style/translator';
 import type {
   AIDefinition,
   AIElementDetail,
+  AIFolder,
   AIPageSkeleton,
   AIPageSummary,
   AISchemaVariable,
   AISkeletonNode
 } from '../../types';
-import type { Element, Schema, Style } from '@plitzi/sdk-shared';
+import type { Element, PageFolder, Schema, Style } from '@plitzi/sdk-shared';
 
 // Read projections of the ELEMENT schema: page summaries, per-page skeleton trees, element detail, and vars.
 
@@ -54,9 +56,25 @@ export const pageSummariesToAI = (schema: Schema): AIPageSummary[] =>
     label: nameOf(page),
     slug: strOr(page.attributes.slug) ?? '',
     default: page.attributes.default === true,
-    folder: strOr(page.attributes.folder),
+    // Stored as '' for a root-level page; surface that as no folder so the agent only ever sees a real folder id.
+    folder: strOr(page.attributes.folder) || undefined,
     elementCount: descendantCount(schema, page.id)
   }));
+
+const folderToAI = (folder: PageFolder): AIFolder => ({
+  ref: folder.id,
+  name: folder.name,
+  slug: folder.slug,
+  parentId: folder.parentId
+});
+
+export const foldersToAI = (schema: Schema): AIFolder[] => pageFoldersOf(schema).map(folderToAI);
+
+export const folderRefToAI = (schema: Schema, ref: string): AIFolder | undefined => {
+  const folder = pageFoldersOf(schema).find(f => f.id === ref);
+
+  return folder ? folderToAI(folder) : undefined;
+};
 
 const skeletonNode = (schema: Schema, el: Element): AISkeletonNode => {
   const children = orderedChildren(schema, el);

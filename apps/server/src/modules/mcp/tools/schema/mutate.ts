@@ -1,4 +1,14 @@
-import { descendantIds, findPageByRef, generateObjectId, resolveRef } from '../../helpers';
+import {
+  descendantIds,
+  findFolderByRef,
+  findPageByRef,
+  generateObjectId,
+  isPageElement,
+  pageFoldersOf,
+  resolveRef,
+  slugify,
+  sortFolders
+} from '../../helpers';
 import { empty, fail } from '../opResult';
 
 import type { ElementInput } from './operations';
@@ -6,12 +16,14 @@ import type { Space } from '../../helpers';
 import type { Env } from '../../types';
 import type { Operation } from '../operations';
 import type { OpResult } from '../opResult';
-import type { Element, SchemaVariable } from '@plitzi/sdk-shared';
+import type { Element, PageFolder, SchemaVariable } from '@plitzi/sdk-shared';
 
-// Handlers that mutate the ELEMENT schema (space.schema): elements, pages, schema variables.
+// Handlers that mutate the ELEMENT schema (space.schema): elements, pages, folders, schema variables.
 
 const pageUri = (env: Env, ref: string): string => `plitzi://schema/${env}/pages/${ref}`;
 const pagesUri = (env: Env): string => `plitzi://schema/${env}/pages`;
+const foldersUri = (env: Env): string => `plitzi://folders/${env}`;
+const folderUri = (env: Env, ref: string): string => `plitzi://folders/${env}/${ref}`;
 const schemaVarsUri = (env: Env): string => `plitzi://schema-variables/${env}`;
 
 const removeFromParent = (space: Space, childId: string): void => {
@@ -226,6 +238,26 @@ export const moveElement = (space: Space, env: Env, op: Extract<Operation, { typ
 };
 
 export const upsertPage = (space: Space, env: Env, op: Extract<Operation, { type: 'upsertPage' }>): OpResult => {
+  // The stored `folder` is always either '' (root) or an existing folder id — never a dangling ref. undefined =
+  // leave as-is; null or '' = move to root; any other ref must resolve to an existing folder or the op fails.
+  let folderValue: string | undefined;
+  if (op.folder !== undefined) {
+    if (op.folder === null || op.folder === '') {
+      folderValue = '';
+    } else {
+      const resolved = findFolderByRef(space.schema, op.folder);
+      if (!resolved) {
+        return fail(
+          'folder',
+          `Folder "${op.folder}" not found`,
+          'Create it with upsertFolder, or read plitzi://folders'
+        );
+      }
+
+      folderValue = resolved.id;
+    }
+  }
+
   const existing = findPageByRef(space.schema, op.ref);
   if (existing) {
     existing.attributes = {
@@ -233,16 +265,22 @@ export const upsertPage = (space: Space, env: Env, op: Extract<Operation, { type
       ...(op.slug !== undefined ? { slug: op.slug } : {}),
       ...(op.label !== undefined ? { name: op.label } : {}),
       ...(op.default !== undefined ? { default: op.default } : {}),
-      ...(op.folder !== undefined ? { folder: op.folder } : {})
+      ...(folderValue !== undefined ? { folder: folderValue } : {})
     };
 
     return { ...empty(), updated: 1, staleResources: [pageUri(env, op.ref), pagesUri(env)] };
   }
 
   const id = generateObjectId();
+  const attributes: Element['attributes'] = {
+    slug: op.slug ?? '',
+    name: op.label ?? op.ref,
+    default: op.default ?? false,
+    folder: folderValue ?? ''
+  };
   space.schema.flat[id] = {
     id,
-    attributes: { slug: op.slug ?? '', name: op.label ?? op.ref, default: op.default ?? false, folder: op.folder },
+    attributes,
     definition: {
       rootId: id,
       label: op.label ?? op.ref,
@@ -270,6 +308,82 @@ export const deletePage = (space: Space, env: Env, op: Extract<Operation, { type
   space.schema.pages = space.schema.pages.filter(id => id !== page.id);
 
   return { ...empty(), deleted: 1, staleResources: [pageUri(env, op.ref), pagesUri(env)] };
+};
+
+export const upsertFolder = (space: Space, env: Env, op: Extract<Operation, { type: 'upsertFolder' }>): OpResult => {
+  const folders = pageFoldersOf(space.schema);
+
+  let parentId: string | undefined;
+  if (op.parentId !== undefined && op.parentId !== null) {
+    const parent = findFolderByRef(space.schema, op.parentId);
+    if (!parent) {
+      return fail('parentId', `Parent folder "${op.parentId}" not found`, 'Create it with upsertFolder first');
+    }
+
+    parentId = parent.id;
+  }
+
+  const existing = findFolderByRef(space.schema, op.ref);
+  if (existing) {
+    if (op.name !== undefined) {
+      existing.name = op.name;
+    }
+
+    if (op.slug !== undefined) {
+      existing.slug = op.slug;
+    }
+
+    if (op.parentId === null) {
+      Reflect.deleteProperty(existing, 'parentId');
+    } else if (op.parentId !== undefined) {
+      existing.parentId = parentId;
+    }
+
+    space.schema.pageFolders = sortFolders(folders);
+
+    return { ...empty(), updated: 1, staleResources: [folderUri(env, existing.id), foldersUri(env)] };
+  }
+
+  const folder: PageFolder = { id: op.ref, name: op.name ?? op.ref, slug: op.slug ?? slugify(op.ref) };
+  if (parentId !== undefined) {
+    folder.parentId = parentId;
+  }
+
+  folders.push(folder);
+  space.schema.pageFolders = sortFolders(folders);
+
+  return { ...empty(), created: 1, staleResources: [folderUri(env, folder.id), foldersUri(env)] };
+};
+
+export const deleteFolder = (space: Space, env: Env, op: Extract<Operation, { type: 'deleteFolder' }>): OpResult => {
+  const folders = pageFoldersOf(space.schema);
+  const folder = findFolderByRef(space.schema, op.ref);
+  if (!folder) {
+    return fail('ref', `Folder "${op.ref}" not found`, 'Read plitzi://folders for valid refs');
+  }
+
+  // Promote the folder's contents one level up: child folders and its pages move to its parent (or the root).
+  const newParent = folder.parentId;
+  for (const child of folders) {
+    if (child.parentId === folder.id) {
+      if (newParent === undefined) {
+        Reflect.deleteProperty(child, 'parentId');
+      } else {
+        child.parentId = newParent;
+      }
+    }
+  }
+
+  for (const el of Object.values(space.schema.flat)) {
+    if (isPageElement(space.schema, el) && el.attributes.folder === folder.id) {
+      // A page's folder is always '' (root) or a valid id, never a missing key — so promote to '' at the root.
+      el.attributes.folder = newParent ?? '';
+    }
+  }
+
+  space.schema.pageFolders = sortFolders(folders.filter(f => f.id !== folder.id));
+
+  return { ...empty(), deleted: 1, staleResources: [folderUri(env, folder.id), foldersUri(env), pagesUri(env)] };
 };
 
 export const upsertVariable = (
