@@ -33,7 +33,7 @@ const useNetwork = ({ initLoading = false, server, webKey, internalUsage = true,
 
         let baseURL = '';
         if (internalUsage && server) {
-          baseURL = baseUrl ?? server.nodeServer;
+          baseURL = baseUrl ?? server.serverUrl;
         }
 
         let formData = params;

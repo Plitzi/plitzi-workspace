@@ -197,7 +197,7 @@ const App = (props: AppProps) => {
       }
 
       const cache = new InMemoryCache();
-      const httpWithUploadLink = new UploadHttpLink({ uri: server.graphqlServer, fetch: customFetch });
+      const httpWithUploadLink = new UploadHttpLink({ uri: server.serverUrl, fetch: customFetch });
       const authLink = new SetContextLink(prev => {
         const base = (prev.headers ?? {}) as Record<string, string>;
         const headers: Record<string, string> = {

@@ -32,7 +32,7 @@ const useAiProviderSettings = (enabled = false) => {
     setModelsLoading(true);
     setModelsError(undefined);
 
-    fetch(`${server.aiServer}/ai/models?provider=${settings.provider}`, {
+    fetch(`${server.serverUrl}/ai/models?provider=${settings.provider}`, {
       headers: { Authorization: `Bearer ${webKey}` }
     })
       .then(r => r.json())
@@ -58,7 +58,7 @@ const useAiProviderSettings = (enabled = false) => {
     return () => {
       cancelled = true;
     };
-  }, [enabled, settings.provider, server.aiServer, webKey]);
+  }, [enabled, settings.provider, server.serverUrl, webKey]);
 
   const updateSettings = useCallback((updates: Partial<AiProviderSettings>) => {
     setSettings(prev => {

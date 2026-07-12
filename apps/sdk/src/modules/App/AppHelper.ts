@@ -7,7 +7,7 @@ import { createStripTypenameLink } from '@plitzi/sdk-shared/helpers/stripTypenam
 import type { Server } from '@plitzi/sdk-shared';
 
 export const initClient = (finalServer: Server, webKey: string) => {
-  const httpLink = new HttpLink({ uri: finalServer.graphqlServer });
+  const httpLink = new HttpLink({ uri: finalServer.serverUrl });
   const cache = new InMemoryCache();
 
   // Init Auth Link

@@ -8,9 +8,7 @@ export const getEnvironmentServer = (server?: Partial<Server>): Server => {
     // SDK
     basePath: '',
     host: 'https://plitzi.com',
-    nodeServer: 'https://server.plitzi.com',
-    aiServer: 'https://server.plitzi.com',
-    graphqlServer: 'https://server.plitzi.com/graphql',
+    serverUrl: 'https://server.plitzi.com',
     websocketServer: 'wss://server.plitzi.com',
     subscriptionServer: 'wss://server.plitzi.com/subscriptions',
     // Others
@@ -30,7 +28,7 @@ export const getEnvironmentServer = (server?: Partial<Server>): Server => {
 // Experimental Functionality Flag
 // @todo: make this based on the user later and add launchDarkly
 const featureFlag = {
-  assistanceAI: false
+  assistanceAI: true
 };
 
 export { featureFlag };
