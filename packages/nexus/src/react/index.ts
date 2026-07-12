@@ -2,6 +2,7 @@
 // (Context, Provider, hooks). Also available as `@plitzi/nexus/react`.
 
 export { default as StoreProvider, StoreContext, StoreRegistryContext } from './StoreProvider';
+export { default as DevStoreScopeContext } from './DevStoreScopeContext';
 export { findStoreInRegistry } from './StoreContext';
 export { createStoreHook } from './createStoreHook';
 

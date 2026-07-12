@@ -212,7 +212,7 @@ const DialogContainer = ({
           <i className="fa-solid fa-xmark" title="Close" onClick={void handleClickCancel} />
         </div>
         <div className={clsx('dialog-container__body', styleSelectors.body)}>
-          <StoreProvider inherit="live" value={storeContext}>
+          <StoreProvider inherit="live" name={`Dialog:${id}`} value={storeContext}>
             {children}
           </StoreProvider>
         </div>

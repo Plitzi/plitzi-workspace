@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { COMMIT_ORIGIN_LABEL } from '../../helpers';
 import CommitCause from '../CommitCause';
@@ -27,6 +27,7 @@ const EPS = 1e-6;
 // A shadow-DOM-native flamegraph: every frame is an absolutely-positioned DOM box sized by the layout fractions on each
 // `FlameNode`, so clicks, theming and Tailwind all work inside the shadow root (no library injecting styles into
 // `document.head`, no canvas). Clicking a frame zooms to it; its ancestors stay as full-width bars above to zoom back.
+// The zoom follows the shared `active` selection so picking an element elsewhere (e.g. a "Triggered by" chip) also zooms.
 const Flamegraph = ({
   commit,
   model,
@@ -36,10 +37,6 @@ const Flamegraph = ({
   onSelectElement,
   onToggleSidebar
 }: FlamegraphProps) => {
-  const [focusId, setFocusId] = useState<string | undefined>();
-
-  useEffect(() => setFocusId(undefined), [commit.commitId, model]);
-
   const byId = useMemo(() => {
     const map = new Map<string, FlameNode>();
     for (const node of model.nodes) {
@@ -49,7 +46,7 @@ const Flamegraph = ({
     return map;
   }, [model]);
 
-  const focus = focusId ? byId.get(focusId) : undefined;
+  const focus = active;
   const focusX = focus ? focus.x : 0;
   const focusWidth = focus ? focus.width : 1;
   const focusDepth = focus ? focus.depth : 0;
@@ -88,23 +85,10 @@ const Flamegraph = ({
     [frames, focusDepth]
   );
 
-  // Clicking a frame selects it and zooms to it; clicking the already-selected frame clears BOTH the selection and the
-  // zoom (back to the full graph), so deselecting never leaves the view stuck zoomed in.
+  // Clicking a frame selects it (which zooms to it, as focus tracks the selection); clicking the already-selected frame
+  // clears the selection, so the view zooms back out to the full graph and deselecting never leaves it stuck zoomed in.
   const handleFrameClick = useCallback(
-    (node: FlameNode) => {
-      const deselect = node.id === active?.id;
-      onSelectElement(deselect ? undefined : node.id);
-      setFocusId(deselect ? undefined : node.id);
-    },
-    [active, onSelectElement]
-  );
-
-  const handleAncestorClick = useCallback(
-    (node: FlameNode) => {
-      const deselect = node.id === active?.id;
-      onSelectElement(deselect ? undefined : node.id);
-      setFocusId(deselect ? undefined : node.id);
-    },
+    (node: FlameNode) => onSelectElement(node.id === active?.id ? undefined : node.id),
     [active, onSelectElement]
   );
 
@@ -133,7 +117,7 @@ const Flamegraph = ({
                 width={100}
                 top={node.depth * ROW_HEIGHT}
                 selected={node.id === active?.id}
-                onClick={handleAncestorClick}
+                onClick={handleFrameClick}
               />
             ))}
             {frames.map(node => (

@@ -310,9 +310,21 @@
       "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/StoreViewer.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/StoreViewer.mjs"
     },
+    "./components/DevToolsPanel/tabs/StoreViewer/helpers": {
+      "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/helpers.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/helpers.mjs"
+    },
     "./components/DevToolsPanel/tabs/StoreViewer/index": {
       "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/StoreViewer/useDevStores": {
+      "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/useDevStores.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/useDevStores.mjs"
+    },
+    "./components/DevToolsPanel/tabs/StoreViewer/useStoreState": {
+      "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/useStoreState.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/useStoreState.mjs"
     },
     "./components/DevToolsPanel/tabs/TracingViewer": {
       "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/index.d.ts",
@@ -529,9 +541,37 @@
       "types": "./dist/components/List/index.d.ts",
       "import": "./dist/components/List/index.mjs"
     },
+    "./hooks/usePanelOwnership": {
+      "types": "./dist/hooks/usePanelOwnership.d.ts",
+      "import": "./dist/hooks/usePanelOwnership.mjs"
+    },
     "./index": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
+    },
+    "./instanceRegistry": {
+      "types": "./dist/instanceRegistry.d.ts",
+      "import": "./dist/instanceRegistry.mjs"
+    },
+    "./scope/helpers": {
+      "types": "./dist/scope/helpers.d.ts",
+      "import": "./dist/scope/helpers.mjs"
+    },
+    "./scope/storeSelection": {
+      "types": "./dist/scope/storeSelection.d.ts",
+      "import": "./dist/scope/storeSelection.mjs"
+    },
+    "./scope/useDevStores": {
+      "types": "./dist/scope/useDevStores.d.ts",
+      "import": "./dist/scope/useDevStores.mjs"
+    },
+    "./scope/useScope": {
+      "types": "./dist/scope/useScope.d.ts",
+      "import": "./dist/scope/useScope.mjs"
+    },
+    "./scope/useStoreState": {
+      "types": "./dist/scope/useStoreState.d.ts",
+      "import": "./dist/scope/useStoreState.mjs"
     }
   },
   "scripts": {

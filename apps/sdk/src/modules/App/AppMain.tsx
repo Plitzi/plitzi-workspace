@@ -135,6 +135,7 @@ const AppMain = ({
                         <InteractionsSourcesProvider previewMode={previewMode}>
                           <DevToolsContainer
                             enabled={debugMode}
+                            instanceId={instanceId}
                             devToolsStyleLink={sdkDevToolsStylePath ? sdkDevToolsStylePath : devtoolsCssUrl}
                             renderMode="shadow"
                             innerClassName={clsx({ flex: renderMode === 'iframe' })}

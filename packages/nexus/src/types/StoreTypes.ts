@@ -194,6 +194,10 @@ export type StoreApi<T> = {
   // it off the nearest store via `useStoreById().scopePath` (no dedicated hook).
   scopePath?: string;
   getState: GetState<T>;
+  // This scope's OWN layer only — the keys it seeds/writes locally, without the parent fall-through that `getState`
+  // merges in. For a root store it equals `getState()`; for a scoped store it isolates what that scope contributes,
+  // which is what a devtools inspector shows to tell nested scopes apart. Stable between changes like `getState`.
+  getOwnState: () => T;
   // Resolves a single path through the scope chain without materializing the full merged state — own value
   // shadows the parent's, except where both are objects (then the subtree at that path is deep-merged).
   getPath: <P extends PathOf<T>>(path: P) => PathValue<T, P> | undefined;

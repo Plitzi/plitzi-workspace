@@ -4,8 +4,10 @@
 import { createContext, useContext, useEffect, useMemo, useRef } from 'react';
 
 import createStore from '../createStore';
+import { registerDevStore } from '../devStoreRegistry';
 import { isDev } from '../env';
 import { isServerSnapshot, stripServerFlag } from '../rsc';
+import DevStoreScopeContext from './DevStoreScopeContext';
 import useStoreSync from './hooks/useStoreSync';
 import { findStoreInRegistry, StoreContext, StoreRegistryContext } from './StoreContext';
 
@@ -49,6 +51,9 @@ export type StoreProviderProps<TState extends object = any> = {
   // `historyMiddleware()`, or your own. History is only recorded when `historyMiddleware()` is added — `useStoreHistory`
   // then reads it (without it, the hook returns an empty, no-op view).
   middlewares?: StoreMiddleware<TState>[];
+  // A human label of where this store comes from (e.g. `"Form:hero"`), shown by the devtools store picker. Purely
+  // cosmetic — unlike `id` it carries no addressing semantics and never collides. Stripped from production.
+  name?: string;
   children?: ReactNode;
 };
 
@@ -62,11 +67,13 @@ const StoreProvider = <TState extends object = any>({
   inherit,
   autoSync = true,
   middlewares,
+  name,
   children
 }: StoreProviderProps<TState>) => {
   const parentStore = useContext(StoreContext) as StoreApi<TState> | undefined;
   const inheritedMiddlewares = useContext(StoreMiddlewareContext) as StoreMiddleware<TState>[] | undefined;
   const parentRegistry = useContext(StoreRegistryContext);
+  const devScopeId = useContext(DevStoreScopeContext);
   // The parent scope path travels on the parent store itself (`store.scopePath`) — no separate context. A
   // `segment`-less provider is transparent: it forwards the parent path so structural wrappers don't pollute the
   // addressable identity. With a `segment`, this scope's path extends the parent's by one `/`-joined step.
@@ -146,6 +153,17 @@ const StoreProvider = <TState extends object = any>({
       }
     };
   }, [liveChain, store]);
+
+  // Expose this store to the dev-only global registry so a devtools panel mounted above the scoped stores can still
+  // enumerate them (React context can't reach downward), tagged with the ambient `DevStoreScopeContext` so the panel
+  // can group stores by origin. Dev-only, so production carries no registry bookkeeping.
+  useEffect(() => {
+    if (!isDev) {
+      return;
+    }
+
+    return registerDevStore(storeRef.current as StoreApi<TState>, devScopeId, name);
+  }, [devScopeId, name]);
 
   // Hydrate middlewares (e.g., restore persisted state) after mount. This runs after React hydration is complete,
   // so persistMiddleware reading from localStorage can't cause a hydration mismatch.

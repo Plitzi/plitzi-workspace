@@ -98,7 +98,7 @@ const AppMain = ({
         <GlobalSources environment={environment}>
           <InteractionsSourcesProvider previewMode={previewMode}>
             <PopupProvider renderLeftPopup={false} renderRightPopup={false} renderFloatingPopup={!previewMode}>
-              <DevToolsContainer innerClassName="flex" enabled={debugMode}>
+              <DevToolsContainer innerClassName="flex" enabled={debugMode} instanceId={instanceId}>
                 <AppContainer externalStyle={externalStyle} />
               </DevToolsContainer>
             </PopupProvider>

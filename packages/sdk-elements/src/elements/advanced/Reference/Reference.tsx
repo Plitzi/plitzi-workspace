@@ -181,7 +181,7 @@ const Reference = ({
   const { element, elementType, referenceContextData } = reference;
   if (previewMode && element && referenceType === 'element') {
     return (
-      <StoreProvider value={referenceContextData}>
+      <StoreProvider name={`Reference:${id}`} value={referenceContextData}>
         <PluginManager
           key={`${id}_${referenceId}`}
           type={elementType}
@@ -199,7 +199,7 @@ const Reference = ({
         'reference--build-mode': !previewMode
       })}
     >
-      <StoreProvider value={referenceContextData}>
+      <StoreProvider name={`Reference:${id}`} value={referenceContextData}>
         {element && (
           <PluginManager
             key={`${id}_${referenceId}`}

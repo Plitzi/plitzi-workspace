@@ -286,6 +286,7 @@ function createStore<TState extends object>(
     id: storeOptions?.id,
     scopePath: storeOptions?.scopePath,
     getState,
+    getOwnState: getOwnSnapshot,
     getPath,
     setState,
     get,

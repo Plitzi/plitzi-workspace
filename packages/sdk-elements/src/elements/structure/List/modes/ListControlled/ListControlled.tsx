@@ -65,7 +65,7 @@ const ListControlled = ({ ref, className = '', children, items = [] }: ListContr
         'controlled-list--build-mode': !previewMode
       })}
     >
-      <StoreProvider inherit="live" value={storeContextValue}>
+      <StoreProvider inherit="live" name={`List:${id}`} value={storeContextValue}>
         {finalItems.map((item, i) => {
           if (!children || (Array.isArray(children) && children.length === 0)) {
             return (

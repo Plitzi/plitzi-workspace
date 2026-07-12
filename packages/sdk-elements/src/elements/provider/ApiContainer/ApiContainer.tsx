@@ -198,7 +198,7 @@ const ApiContainer = ({
       interactionTriggers={interactionTriggers}
       interactionCallbacks={interactionCallbacks}
     >
-      <StoreProvider inherit="live" value={storeContext}>
+      <StoreProvider inherit="live" name={`Api:${id}`} value={storeContext}>
         {!isLoading && children}
       </StoreProvider>
     </RootElement>

@@ -17,16 +17,17 @@ export type LogsProps = {
 const Logs = ({ items = [], autoScrollOffset = 40, orientation = 'horizontal', onClear }: LogsProps) => {
   const [logTypeSelected, setLogTypeSelected] = useState<LogType>();
   const listRef = useRef<HTMLDivElement | null>(null);
-  const isUserNearBottomRef = useRef(true);
+  const isUserNearTopRef = useRef(true);
 
+  // Newest entry sits at the top, so auto-follow scrolls to the top (not the bottom) when the user is already there.
   useEffect(() => {
     const el = listRef.current;
     if (!el) {
       return;
     }
 
-    if (isUserNearBottomRef.current) {
-      el.scrollTop = el.scrollHeight;
+    if (isUserNearTopRef.current) {
+      el.scrollTop = 0;
     }
   }, [items]);
 
@@ -36,8 +37,7 @@ const Logs = ({ items = [], autoScrollOffset = 40, orientation = 'horizontal', o
       return;
     }
 
-    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= autoScrollOffset;
-    isUserNearBottomRef.current = isNearBottom;
+    isUserNearTopRef.current = el.scrollTop <= autoScrollOffset;
   }, [autoScrollOffset]);
 
   const handleClickSummary = useCallback((logType?: LogType) => {
@@ -81,9 +81,11 @@ const Logs = ({ items = [], autoScrollOffset = 40, orientation = 'horizontal', o
             </div>
           ) : (
             items
-              .filter(item => !logTypeSelected || item.logType === logTypeSelected)
-              .map((item, i) => (
-                <Log key={i} category={item.category} time={item.time} params={item.params} message={item.message} />
+              .map((item, i) => ({ item, key: i }))
+              .filter(({ item }) => !logTypeSelected || item.logType === logTypeSelected)
+              .reverse()
+              .map(({ item, key }) => (
+                <Log key={key} category={item.category} time={item.time} params={item.params} message={item.message} />
               ))
           )}
         </div>

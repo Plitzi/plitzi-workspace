@@ -22,6 +22,9 @@ export { getStoreHistory } from './middleware/historyMiddleware';
 
 export { createServerSnapshot, isServerSnapshot } from './rsc';
 
+export { registerDevStore, subscribeDevStores, getDevStoresSnapshot } from './devStoreRegistry';
+export type { DevStore, DevStoreEntry } from './devStoreRegistry';
+
 export * from './types';
 
 export type { CreateStoreOptions } from './createStore/createStore';

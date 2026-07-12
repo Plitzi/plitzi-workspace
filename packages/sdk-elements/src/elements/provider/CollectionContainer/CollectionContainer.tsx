@@ -102,7 +102,7 @@ const CollectionContainer = ({
     >
       {!collection && <div className="collection-container__message">Source Not Selected</div>}
       {collection && !loading && (
-        <StoreProvider inherit="live" value={storeContext}>
+        <StoreProvider inherit="live" name={`Collection:${id}`} value={storeContext}>
           {children}
         </StoreProvider>
       )}

@@ -1,7 +1,10 @@
 import clsx from 'clsx';
 import { useCallback } from 'react';
 
+import { useScopeSelector } from '../../scope/useScope';
+
 import type { Orientation } from '../../DevToolsContainer';
+import type { ChangeEvent } from 'react';
 
 const TABS = [
   { id: 'logs', label: 'Logs', icon: 'fa-solid fa-terminal' },
@@ -27,11 +30,18 @@ const DevToolsHeader = ({
   onChangeOrientation,
   onTabSelect
 }: DevToolsHeaderProps) => {
+  const { options: scopeOptions, value: scopeValue, onSelect: onSelectScope } = useScopeSelector();
+
   const handleClickOrientation = useCallback(() => {
     onChangeOrientation?.(orientation === 'horizontal' ? 'vertical' : 'horizontal');
   }, [orientation, onChangeOrientation]);
 
   const handleClickTab = useCallback((tabId: string) => () => onTabSelect?.(tabId), [onTabSelect]);
+
+  const handleSelectScope = useCallback(
+    (event: ChangeEvent<HTMLSelectElement>) => onSelectScope(event.target.value),
+    [onSelectScope]
+  );
 
   return (
     <div className="flex shrink-0 items-stretch justify-between border-b border-zinc-200 bg-zinc-100 select-none dark:border-zinc-700 dark:bg-zinc-800">
@@ -62,6 +72,24 @@ const DevToolsHeader = ({
 
       {/* Toolbar right */}
       <div className="flex shrink-0 items-center gap-1 border-l border-zinc-200 px-2 dark:border-zinc-700">
+        {scopeOptions.length > 0 && (
+          <select
+            value={scopeValue ?? ''}
+            onChange={handleSelectScope}
+            title="Instance / StoreProvider driving the panel"
+            className="max-w-52 rounded border border-zinc-300 bg-white px-1 py-0.5 text-[11px] text-zinc-700 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200"
+          >
+            {scopeOptions.map(group => (
+              <optgroup key={group.label} label={group.label}>
+                {group.options.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        )}
         <button
           className="flex h-6 w-6 items-center justify-center rounded text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
           title={orientation === 'horizontal' ? 'Switch to side panel' : 'Switch to bottom panel'}

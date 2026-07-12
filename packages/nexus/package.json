@@ -128,6 +128,10 @@
       "types": "./dist/derived/index.d.ts",
       "import": "./dist/derived/index.mjs"
     },
+    "./devStoreRegistry": {
+      "types": "./dist/devStoreRegistry.d.ts",
+      "import": "./dist/devStoreRegistry.mjs"
+    },
     "./entities": {
       "types": "./dist/entities/index.d.ts",
       "import": "./dist/entities/index.mjs"
@@ -231,6 +235,10 @@
     "./react": {
       "types": "./dist/react/index.d.ts",
       "import": "./dist/react/index.mjs"
+    },
+    "./react/DevStoreScopeContext": {
+      "types": "./dist/react/DevStoreScopeContext.d.ts",
+      "import": "./dist/react/DevStoreScopeContext.mjs"
     },
     "./react/StoreContext": {
       "types": "./dist/react/StoreContext.d.ts",

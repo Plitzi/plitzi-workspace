@@ -37,7 +37,7 @@ const ListControlledItem = ({
 
   const scopedRow = (
     <ReplicaProvider>
-      <StoreProvider inherit="live" segment={segment} value={storeContextValue}>
+      <StoreProvider inherit="live" name={`Row:${source}`} segment={segment} value={storeContextValue}>
         {children}
       </StoreProvider>
     </ReplicaProvider>

@@ -169,7 +169,7 @@ const ModalContainer = ({
           />
         </div>
         <div className={clsx('modal-container__body', styleSelectors.bodyContainer)}>
-          <StoreProvider inherit="live" value={storeContextValue}>
+          <StoreProvider inherit="live" name={`Modal:${id}`} value={storeContextValue}>
             {children}
           </StoreProvider>
         </div>
