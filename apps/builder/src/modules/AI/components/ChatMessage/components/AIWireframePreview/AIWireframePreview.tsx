@@ -8,7 +8,7 @@ import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 
 import { PLACEHOLDER } from './helpers';
 
-import type { WireframeData } from '../../helpers/getWireframeResult';
+import type { WireframeData } from '../../helpers/toolVisualTypes';
 import type { Element, Schema } from '@plitzi/sdk-shared';
 import type { AiMode } from '@pmodules/AI/types';
 

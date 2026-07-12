@@ -2,7 +2,7 @@
 import ColorShadeButton from './ColorShadeButton';
 import { sortedShades } from '../../helpers';
 
-import type { ColorScale } from '../../../../helpers/getStyleGuideResult';
+import type { ColorScale } from '../../../../helpers/toolVisualTypes';
 
 export type ColorScaleRowProps = {
   label: string;

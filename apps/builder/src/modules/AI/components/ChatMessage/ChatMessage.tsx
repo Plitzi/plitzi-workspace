@@ -5,7 +5,7 @@ import UserMessage from './components/UserMessage';
 
 import type { AiMessage } from '../../types';
 
-export type ChatMessageProps = AiMessage & { stagePreviewVersion?: number; wireframeVersion?: number };
+export type ChatMessageProps = AiMessage & { previewConceptVersion?: number; wireframeVersion?: number };
 
 const ChatMessage = ({
   id,
@@ -19,7 +19,7 @@ const ChatMessage = ({
   attachments,
   steps,
   createdAt,
-  stagePreviewVersion,
+  previewConceptVersion,
   wireframeVersion
 }: ChatMessageProps) => {
   if (role === 'user') {
@@ -45,7 +45,7 @@ const ChatMessage = ({
       actions={actions}
       steps={steps}
       createdAt={createdAt}
-      stagePreviewVersion={stagePreviewVersion}
+      previewConceptVersion={previewConceptVersion}
       wireframeVersion={wireframeVersion}
     />
   );

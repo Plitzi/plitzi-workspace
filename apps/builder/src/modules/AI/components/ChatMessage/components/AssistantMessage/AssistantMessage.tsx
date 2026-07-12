@@ -7,20 +7,13 @@ import ModeLabel from '@pmodules/AI/components/ModeLabel';
 import CopyButton from '../../../CopyButton';
 import MessageTools from '../../../MessageTools';
 import ToolVisualRenderer from '../../../ToolVisualRenderer';
-import extractToolVisual, { VISUAL_TOOL_NAMES } from '../../helpers/extractToolVisual';
+import groupStepsIntoItems from '../../helpers/groupStepsIntoItems';
 import { formatTime } from '../../helpers/utils';
 import ActionButtons from '../ActionButtons';
 import ResourceStep from '../ResourceStep';
 import ThinkingBlock from '../ThinkingBlock';
 
-import type { AiMessage, AiMessageStep, AiMode, AiToolCall } from '../../../../types';
-import type { ToolVisual } from '../../helpers/extractToolVisual';
-
-type GroupedStep =
-  | { type: 'thinking'; step: Extract<AiMessageStep, { type: 'thinking' }>; key: string }
-  | { type: 'tools'; tools: AiToolCall[]; key: string; visual?: ToolVisual }
-  | { type: 'resource'; step: Extract<AiMessageStep, { type: 'resource' }>; key: string }
-  | { type: 'text'; step: Extract<AiMessageStep, { type: 'text' }>; key: string };
+import type { AiMessage, AiMessageStep, AiMode } from '../../../../types';
 
 export type AssistantMessageProps = {
   id: AiMessage['id'];
@@ -31,7 +24,7 @@ export type AssistantMessageProps = {
   actions?: AiMessage['actions'];
   steps?: AiMessageStep[];
   createdAt?: number;
-  stagePreviewVersion?: number;
+  previewConceptVersion?: number;
   wireframeVersion?: number;
 };
 
@@ -44,65 +37,10 @@ const AssistantMessage = ({
   actions,
   steps,
   createdAt,
-  stagePreviewVersion,
+  previewConceptVersion,
   wireframeVersion
 }: AssistantMessageProps) => {
-  const groupedSteps = useMemo<GroupedStep[] | null>(() => {
-    if (!steps) {
-      return null;
-    }
-
-    const items: GroupedStep[] = [];
-    steps.forEach((step, i) => {
-      if (step.type === 'tool') {
-        const toolCall: AiToolCall = {
-          id: step.id,
-          name: step.name,
-          args: step.args,
-          result: step.result,
-          status: step.status
-        };
-        const isVisual = VISUAL_TOOL_NAMES.has(step.name);
-        const last = items.at(-1);
-        if (!isVisual && last?.type === 'tools' && !last.tools.some(t => VISUAL_TOOL_NAMES.has(t.name))) {
-          last.tools = [...last.tools, toolCall];
-        } else {
-          items.push({ type: 'tools', tools: [toolCall], key: step.id });
-        }
-      } else if (step.type === 'thinking') {
-        const last = items.at(-1);
-        if (last?.type === 'thinking') {
-          items[items.length - 1] = {
-            ...last,
-            step: {
-              type: 'thinking' as const,
-              text: last.step.text + '\n\n' + step.text,
-              durationMs: (last.step.durationMs ?? 0) + (step.durationMs ?? 0)
-            }
-          };
-        } else {
-          items.push({ type: 'thinking', step, key: `t-${i}` });
-        }
-      } else if (step.type === 'resource') {
-        items.push({ type: 'resource', step, key: `res-${i}` });
-      } else {
-        items.push({ type: 'text', step, key: `tx-${i}` });
-      }
-    });
-
-    return items.map(item => {
-      if (item.type !== 'tools') {
-        return item;
-      }
-
-      const visual = extractToolVisual(item.tools);
-      if (!visual) {
-        return item;
-      }
-
-      return { ...item, visual };
-    });
-  }, [steps]);
+  const groupedSteps = useMemo(() => (steps ? groupStepsIntoItems(steps) : null), [steps]);
 
   return (
     <div className="group flex flex-col gap-1.5" data-id={id}>
@@ -154,7 +92,7 @@ const AssistantMessage = ({
                   <ToolVisualRenderer
                     visual={item.visual}
                     mode={mode}
-                    stagePreviewVersion={stagePreviewVersion}
+                    previewConceptVersion={previewConceptVersion}
                     wireframeVersion={wireframeVersion}
                   />
                 )}

@@ -11,7 +11,7 @@ import BrandTypography from './components/BrandTypography';
 import BrandVoice from './components/BrandVoice';
 
 import type { BrandCssVar } from './components/BrandConfirmPanel';
-import type { BrandData } from '../../helpers/getBrandResult';
+import type { BrandData } from '../../helpers/toolVisualTypes';
 import type { AiMode } from '@pmodules/AI/types';
 
 export type AIBrandPreviewProps = BrandData & { mode?: AiMode };

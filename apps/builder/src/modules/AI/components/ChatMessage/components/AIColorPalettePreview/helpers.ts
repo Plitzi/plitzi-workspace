@@ -1,4 +1,4 @@
-import type { ColorItem } from '../../helpers/getColorPaletteResult';
+import type { ColorItem } from '../../helpers/toolVisualTypes';
 
 export const ROLE_ORDER = [
   'primary',

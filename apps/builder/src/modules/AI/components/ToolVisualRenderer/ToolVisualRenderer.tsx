@@ -11,11 +11,11 @@ import type { AiMode } from '@pmodules/AI/types';
 export type ToolVisualRendererProps = {
   visual: ToolVisual;
   mode?: AiMode;
-  stagePreviewVersion?: number;
+  previewConceptVersion?: number;
   wireframeVersion?: number;
 };
 
-const ToolVisualRenderer = ({ visual, mode, stagePreviewVersion, wireframeVersion }: ToolVisualRendererProps) => {
+const ToolVisualRenderer = ({ visual, mode, previewConceptVersion, wireframeVersion }: ToolVisualRendererProps) => {
   if (visual.type === 'style_guide') {
     return <AIStyleGuidePreview {...visual.data} mode={mode} />;
   }
@@ -45,7 +45,7 @@ const ToolVisualRenderer = ({ visual, mode, stagePreviewVersion, wireframeVersio
       style={visual.data.style}
       html={visual.data.html}
       mode={mode}
-      version={stagePreviewVersion}
+      version={previewConceptVersion}
     />
   );
 };

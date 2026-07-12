@@ -1,4 +1,4 @@
-import type { BrandData } from '../../../../helpers/getBrandResult';
+import type { BrandData } from '../../../../helpers/toolVisualTypes';
 
 export type BrandVoiceProps = {
   voice: NonNullable<BrandData['voice']>;

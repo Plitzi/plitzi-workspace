@@ -7,7 +7,7 @@ import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 import ColorScaleRow from './components/ColorScaleRow';
 import { buildCssVars, needsWhiteText, sortedShades } from './helpers';
 
-import type { ColorScale, NamedToken, StyleGuideData } from '../../helpers/getStyleGuideResult';
+import type { ColorScale, NamedToken, StyleGuideData } from '../../helpers/toolVisualTypes';
 import type { AiMode } from '@pmodules/AI/types';
 
 export type AIStyleGuidePreviewProps = StyleGuideData & { mode?: AiMode };

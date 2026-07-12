@@ -1,6 +1,6 @@
 import { needsWhiteText } from '../../helpers';
 
-import type { BrandData } from '../../../../helpers/getBrandResult';
+import type { BrandData } from '../../../../helpers/toolVisualTypes';
 
 export type BrandHeroProps = {
   name: string;

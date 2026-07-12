@@ -1,8 +1,4 @@
-import type { BrandData } from './getBrandResult';
-import type { ColorPaletteData } from './getColorPaletteResult';
-import type { PreviewData } from './getStagePreviewResult';
-import type { StyleGuideData } from './getStyleGuideResult';
-import type { WireframeData } from './getWireframeResult';
+import type { BrandData, ColorPaletteData, PreviewData, StyleGuideData, WireframeData } from './toolVisualTypes';
 import type { Schema, Style } from '@plitzi/sdk-shared';
 import type { AiToolCall } from '@pmodules/AI/types';
 

@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import type { ColorItem } from '../../../../helpers/getColorPaletteResult';
+import type { ColorItem } from '../../../../helpers/toolVisualTypes';
 
 export type ColorPaletteRowProps = {
   item: ColorItem;

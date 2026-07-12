@@ -1,4 +1,4 @@
-import type { BrandData } from '../../../../helpers/getBrandResult';
+import type { BrandData } from '../../../../helpers/toolVisualTypes';
 
 export type BrandTypographyProps = {
   typography: NonNullable<BrandData['typography']>;

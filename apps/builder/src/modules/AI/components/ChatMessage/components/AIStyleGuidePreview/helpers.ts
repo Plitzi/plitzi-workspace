@@ -1,4 +1,4 @@
-import type { ColorScale, NamedToken, StyleGuideData } from '../../helpers/getStyleGuideResult';
+import type { ColorScale, NamedToken, StyleGuideData } from '../../helpers/toolVisualTypes';
 
 export const needsWhiteText = (hex?: string): boolean => {
   if (!hex || hex.length < 7) {

@@ -7,7 +7,7 @@ import ColorPaletteRow from './components/ColorPaletteRow';
 import ColorStripItem from './components/ColorStripItem';
 import { getHex, sortedColors, toVarName } from './helpers';
 
-import type { ColorPaletteData } from '../../helpers/getColorPaletteResult';
+import type { ColorPaletteData } from '../../helpers/toolVisualTypes';
 import type { AiMode } from '@pmodules/AI/types';
 
 export type AIColorPalettePreviewProps = ColorPaletteData & { mode?: AiMode };

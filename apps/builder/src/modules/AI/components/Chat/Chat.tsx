@@ -30,15 +30,15 @@ const Chat = ({ ref }: ChatProps) => {
   const count = messages.length + (hasLive ? 1 : 0);
 
   const previewVersions = useMemo(() => {
-    const map: Record<string, { stage: number; wireframe: number }> = {};
-    let stageCount = 0;
+    const map: Record<string, { concept: number; wireframe: number }> = {};
+    let conceptCount = 0;
     let wireframeCount = 0;
     for (const msg of messages) {
-      const hasStage =
+      const hasConcept =
         msg.steps?.some(s => s.type === 'tool' && s.name === 'preview_concept' && s.status === 'done') ?? false;
       const hasWire =
         msg.steps?.some(s => s.type === 'tool' && s.name === 'sketch_wireframe' && s.status === 'done') ?? false;
-      map[msg.id] = { stage: hasStage ? ++stageCount : 0, wireframe: hasWire ? ++wireframeCount : 0 };
+      map[msg.id] = { concept: hasConcept ? ++conceptCount : 0, wireframe: hasWire ? ++wireframeCount : 0 };
     }
 
     return map;
@@ -164,7 +164,11 @@ const Chat = ({ ref }: ChatProps) => {
                   />
                 )}
                 {msg && (
-                  <ChatMessage {...msg} stagePreviewVersion={versions?.stage} wireframeVersion={versions?.wireframe} />
+                  <ChatMessage
+                    {...msg}
+                    previewConceptVersion={versions?.concept}
+                    wireframeVersion={versions?.wireframe}
+                  />
                 )}
               </div>
             );
