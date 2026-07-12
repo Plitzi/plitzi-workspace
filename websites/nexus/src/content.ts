@@ -114,7 +114,7 @@ export const FEATURES: Feature[] = [
     group: 'Composition & scale',
     title: 'Scoped stores',
     description:
-      'Nested scopes shadow shared state while reading it live. Reads fall through the chain, writes target the owning scope — no prop-drilling.'
+      'Nested scopes shadow shared state while reading it live. Reads fall through the chain, writes target the owning scope — no prop-drilling. getState() gives the merged view; getOwnState() isolates just the scope’s own layer.'
   },
   {
     icon: '🧭',
@@ -164,6 +164,13 @@ export const FEATURES: Feature[] = [
     title: 'Middleware pipeline',
     description:
       'logger, persist and time-travel are all middlewares riding one subscribeChange substrate. Add your own with a single (api) => { onChange } — zero cost on the hot path when none are attached.'
+  },
+  {
+    icon: '🔍',
+    group: 'Tooling',
+    title: 'DevTools introspection',
+    description:
+      'A dev-only registry lets a panel enumerate and inspect every store — even scoped ones mounted below it. Name a provider, group stores by origin with DevStoreScopeContext, and read each scope’s own layer with getOwnState(). Stripped from production.'
   }
 ];
 
@@ -361,6 +368,10 @@ function Toolbar() {
 // Writes walk up to the owning scope automatically:
 item.setState('user.name', 'Bob');   // delegates to parent
 item.setState('record', next);        // stays local
+
+// Two views of a scope's data:
+item.getState();     // { user, theme, record } — merged with parents
+item.getOwnState();  // { record }              — this scope's own layer
 
 // inherit="snapshot" — copy the parent once at mount, then
 // diverge. Parent updates never reach it: ideal for draft /
@@ -663,6 +674,35 @@ export function Dashboard() {
     </div>
   );
 }`
+  },
+  {
+    id: 'devtools',
+    label: 'DevTools',
+    category: 'advanced',
+    code: `import { StoreProvider, DevStoreScopeContext } from '@plitzi/nexus/react';
+import { subscribeDevStores, getDevStoresSnapshot } from '@plitzi/nexus';
+import type { DevStoreEntry } from '@plitzi/nexus';
+
+// A dev-only registry: every StoreProvider registers itself, so a
+// panel can enumerate stores it never rendered — even scoped ones.
+
+// 1. Name providers and tag a subtree with an origin (scopeId):
+<DevStoreScopeContext value={instanceId}>
+  <StoreProvider name="Form:hero" inherit="live" value={{ record }}>
+    <Field />
+  </StoreProvider>
+</DevStoreScopeContext>;
+
+// 2. Read the live list of stores from anywhere:
+const useDevStores = (): ReadonlyArray<DevStoreEntry> =>
+  useSyncExternalStore(subscribeDevStores, getDevStoresSnapshot, getDevStoresSnapshot);
+
+// Each entry: { uid, store, name?, scopeId }. Inspect a scope's
+// own contribution with getOwnState() (vs the merged getState()).
+entry.store.getOwnState();   // { record } — just this scope
+entry.store.getState();      // merged with parents
+
+// Everything here is stripped from production builds.`
   }
 ];
 

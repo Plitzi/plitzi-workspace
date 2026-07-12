@@ -162,11 +162,19 @@ Wraps children with a store context. Creates a new store by default; pass `store
 <StoreProvider id="root" value={builderState}>
   <App />
 </StoreProvider>
+
+// Label it for devtools — cosmetic only, unlike `id` it carries no addressing and never collides
+<StoreProvider name="Form:hero" inherit="live" value={{ record }}>
+  <Child />
+</StoreProvider>
 ```
 
 > **`inherit` modes:** `'snapshot'` copies parent keys **once** at init — isolated thereafter: writes stay
 > local and parent updates do **not** propagate (use for draft/diverge editors). `'live'` keeps a **live
 > link** — inherited keys stay in sync and writes delegate to the owning scope.
+
+> **`name`** is a human label of where the store comes from, shown by the devtools store picker (see
+> [DevTools integration](#devtools-integration)). Purely cosmetic — stripped from production.
 
 ## Scoped stores (live scope chain)
 
@@ -192,6 +200,17 @@ const item = createStore<S>({ record }, { parent: root });
   const root = createStore<S>({ runtime: { sources: { variables: { a: 1 } } } });
   const item = createStore<S>({ runtime: { sources: { record } } }, { parent: root });
   item.getState().runtime.sources; // { variables: { a: 1 }, record } ← merged, not shadowed
+  ```
+- **Own layer vs merged view (`getOwnState`)** — `getState()` returns the full **merged** view (own +
+  inherited). `getOwnState()` returns **only this scope's own layer** — the keys it seeds/writes locally,
+  without the parent fall-through. For a root store the two are identical; for a scoped store `getOwnState()`
+  isolates the scope's contribution (what a devtools inspector shows to tell nested scopes apart). Both are
+  cached and reference-stable between changes.
+  ```ts
+  const root = createStore<S>({ user, theme: 'dark' });
+  const item = createStore<S>({ record }, { parent: root });
+  item.getState();    // { user, theme: 'dark', record } ← merged
+  item.getOwnState(); // { record }                      ← own layer only
   ```
 - **Shadowing** — a scope's own **leaf** value hides the parent's at that path (reads and subscriptions);
   sibling leaves under a shared object branch are preserved (see deep-merge above).
@@ -667,6 +686,40 @@ function HistoryPanel() {
 
 `<StoreProvider history>` (or `history="schema"` to scope it to a subtree) starts recording from mount.
 
+## DevTools integration
+
+A **dev-only** global registry lets a devtools panel enumerate and inspect every store — including scoped stores mounted **below** the panel, where React context can't reach them. Everything here is stripped from production builds (guarded by `isDev`), so it carries no runtime cost when shipped.
+
+Every `StoreProvider` registers its store on mount and removes it on unmount. Read the registry with `useSyncExternalStore`:
+
+```ts
+import { subscribeDevStores, getDevStoresSnapshot } from '@plitzi/nexus';
+import type { DevStoreEntry } from '@plitzi/nexus';
+
+// snapshot is a stable array (identity only changes when a store is added/removed)
+const useDevStores = (): ReadonlyArray<DevStoreEntry> =>
+  useSyncExternalStore(subscribeDevStores, getDevStoresSnapshot, getDevStoresSnapshot);
+```
+
+Each `DevStoreEntry` is `{ uid, store, scopeId?, name? }`:
+
+- **`uid`** — a stable id for selection in a picker.
+- **`store`** — the `StoreApi`; inspect it with `getState()` (merged view) or `getOwnState()` (this scope's own layer — see [Scoped stores](#scoped-stores-live-scope-chain)).
+- **`name`** — the `<StoreProvider name>` label, e.g. `"Form:hero"` — a human hint of where the store comes from.
+- **`scopeId`** — an app-defined grouping tag (see `DevStoreScopeContext` below), e.g. the app/SDK instance the store belongs to, so a panel can group stores by origin.
+
+**`DevStoreScopeContext`** tags every store registered beneath it with a `scopeId`. Wrap a subtree to attribute its stores to one origin (a panel then groups by it):
+
+```tsx
+import { DevStoreScopeContext } from '@plitzi/nexus/react';
+
+<DevStoreScopeContext value={instanceId}>
+  <App /> {/* every StoreProvider below registers with scopeId = instanceId */}
+</DevStoreScopeContext>
+```
+
+Combine the three — `name` (where it comes from), `getOwnState()` (what it uniquely holds) and `scopeId` (which app owns it) — to build a store picker that tells otherwise-identical nested scopes apart. This is exactly what the Plitzi `sdk-dev-tools` Store tab does.
+
 ## CSP & `new Function`
 
 By default `@plitzi/nexus` uses a compiled codegen path (`new Function`) for structural-sharing writes, which is orders of magnitude faster than the recursive fallback for deep paths. When a strict [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) blocks `new Function`, the store auto-detects the error at first use and falls back to a recursive writer with identical behaviour — you **don't need to do anything** for CSP environments to work.
@@ -925,8 +978,9 @@ All types live in `src/types/StoreTypes.ts`:
 | `PathSetter<T, P>` | Setter function for a single path |
 | `PathSetters<T, Paths>` | Tuple of setters for an array of paths |
 | `MultiPathReturn<T, Paths>` | `[values, ...setters]` tuple |
-| `StoreApi<T>` | `{ getState, getPath, setState, subscribe, subscribePath, subscribeChange, destroy? }` |
+| `StoreApi<T>` | `{ getState, getOwnState, getPath, setState, subscribe, subscribePath, subscribeChange, destroy? }` |
 | `StoreChange<T>` | `{ path, prev, next }` — payload of `subscribeChange` / middleware `onChange` |
+| `DevStoreEntry` | `{ uid, store, scopeId?, name? }` — a store registered in the dev-only registry (see [DevTools integration](#devtools-integration)) |
 | `StoreMiddleware<T>` | `(api) => { beforeChange?, onChange? } \| void` — a middleware factory |
 | `WriteContext<T>` | `{ path, value, prev }` — payload of a `beforeChange` interceptor |
 | `WriteInterceptor<T>` | `(ctx: WriteContext<T>) => unknown` — return a value, `CANCEL`, or `undefined` |
