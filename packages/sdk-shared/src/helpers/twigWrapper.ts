@@ -23,7 +23,7 @@ export const processTwig = (
   keepEmptyTokens = false,
   asRaw = false
 ) => {
-  if (typeof template !== 'string' || !hasValidToken(template)) {
+  if (typeof template !== 'string') {
     return template;
   }
 
