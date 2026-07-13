@@ -122,6 +122,10 @@
     cursor: pointer;
   }
 
+  .input-container__input {
+    color: inherit;
+  }
+
   // Textarea
 
   .form-control__label-textarea {
@@ -166,6 +170,7 @@
     outline: none;
     // Extra
     resize: vertical;
+    color: inherit;
   }
 
   // Checkbox
@@ -249,6 +254,7 @@
       appearance: none;
       cursor: inherit;
       box-shadow: none;
+      background-color: transparent;
 
       &:focus-visible {
         outline: inherit;
@@ -260,16 +266,17 @@
       right: 0;
       top: 50%;
       position: absolute;
-      // background-color: gray;
-      // clip-path: polygon(100% 0%, 0 0%, 50% 100%);
       display: flex;
       font-weight: 900;
-      font-family: 'Font Awesome 6 Free';
       transform: translate(-50%, -50%);
-      content: '\f078';
+      content: '▼';
       cursor: pointer;
       pointer-events: none;
     }
+  }
+
+  .select-container__select {
+    color: inherit;
   }
 
   // Hidden
