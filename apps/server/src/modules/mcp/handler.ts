@@ -26,6 +26,18 @@ export const readMcpBody = (req: IncomingMessage): Promise<unknown> =>
 // Drive one stateless request/response through a pre-built server. Callers that already hold the space
 // (e.g. the gateway, which resolves it from the request JWT) build the server and use this directly.
 export const serveMcp = async (raw: IncomingMessage, res: ServerResponse, server: McpServer): Promise<void> => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', '*');
+  res.setHeader('Access-Control-Max-Age', '86400');
+
+  if (raw.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+
+    return;
+  }
+
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
   await server.connect(transport);
 
