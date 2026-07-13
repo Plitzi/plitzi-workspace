@@ -1,11 +1,20 @@
 /// <reference types="vite/client" />
 
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
+
+const require = createRequire(import.meta.url);
+const PACKAGE = require('./package.json') as {
+  version: string;
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+};
 
 const baseUrl = new URL('.', import.meta.url);
 const root = baseUrl.pathname;
@@ -40,7 +49,8 @@ export default defineConfig(({ mode }) => {
       copyAssets()
     ],
     define: {
-      'process.env.NODE_ENV': devMode ? '"development"' : '"production"'
+      'process.env.NODE_ENV': devMode ? '"development"' : '"production"',
+      VERSION: JSON.stringify(PACKAGE.version)
     },
     build: {
       lib: {

@@ -68,7 +68,7 @@ export const createMcpServer = ({ adapters, getSpaceId, preview, screenshot }: M
   let spacePromise: Promise<Space> | undefined;
   const getSpace = (): Promise<Space> => (spacePromise ??= loadSpace());
 
-  const server = new McpServer({ name: 'plitzi-mcp', version: '0.3.0' }, { instructions: serverInstructions });
+  const server = new McpServer({ name: 'plitzi-mcp', version: VERSION }, { instructions: serverInstructions });
 
   registerResources(server, getSpace, MCP_ENV);
 
