@@ -19,6 +19,7 @@ export { useEntity, useEntityOne, useEntityIds, useEntityAll } from './hooks/use
 
 export { default as useIsomorphicLayoutEffect } from './useIsomorphicLayoutEffect';
 
+export type { StoreApi } from '../types';
 export type { StoreProviderProps } from './StoreProvider';
 export type { StoreRegistry } from './StoreContext';
 export type { UseStoreHistoryReturn } from './hooks/useStoreHistory';

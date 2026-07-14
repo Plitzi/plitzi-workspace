@@ -1,4 +1,3 @@
-import { omit } from '@plitzi/plitzi-ui/helpers';
 import { useEffect, useMemo } from 'react';
 
 import { createStoreHook } from '@plitzi/nexus/react';
@@ -25,7 +24,7 @@ const useRegisterSource = ({ id = '', source, name, fields = [] }: UseRegisterSo
   useEffect(() => {
     setStore(`sources.${uniqueId}`, { id: uniqueId, meta: { id, source, name, fields } });
 
-    return () => setStore('sources', (prev: unknown) => omit((prev ?? {}) as Record<string, unknown>, uniqueId));
+    return () => setStore(`sources.${uniqueId}`, undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uniqueId]);
 

@@ -223,50 +223,34 @@ describe('scoped store: getPath memoizes fall-through reads and invalidates on c
 });
 
 describe('scoped store: dev-only sibling collision detection', () => {
-  const spyOnWarn = () => vi.spyOn(console, 'warn').mockImplementation(() => {});
-  let warn: ReturnType<typeof spyOnWarn>;
-
-  beforeEach(() => {
-    warn = spyOnWarn();
-  });
-
-  afterEach(() => {
-    warn.mockRestore();
-  });
-
-  it('warns when two sibling scopes delegate a write to the same parent path', () => {
+  it('throws when two sibling scopes delegate a write to the same parent path', () => {
     const parent = createStore<S>({ a: 1, nested: { x: 1, y: 2 } });
     const first = createStore<S>({}, { parent });
     const second = createStore<S>({}, { parent });
 
     first.setState('a', 10); // delegates to parent (not owned locally)
-    expect(warn).not.toHaveBeenCalled();
 
-    second.setState('a', 20); // same delegated path from a different sibling
-
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"a"'));
+    expect(() => {
+      second.setState('a', 20); // same delegated path from a different sibling
+    }).toThrow('scope collision');
   });
 
-  it('does not warn when one scope delegates the same path repeatedly', () => {
+  it('does not throw when one scope delegates the same path repeatedly', () => {
     const parent = createStore<S>({ a: 1, nested: { x: 1, y: 2 } });
     const child = createStore<S>({}, { parent });
 
     child.setState('a', 1);
     child.setState('a', 2);
     child.setState('a', 3);
-
-    expect(warn).not.toHaveBeenCalled();
   });
 
-  it('does not warn when siblings declare the same key but never delegate (the List pattern)', () => {
+  it('does not throw when siblings declare the same key but never delegate (the List pattern)', () => {
     const parent = createStore<S>({ nested: { x: 1, y: 2 } });
     const first = createStore<S>({ a: 1 }, { parent });
     const second = createStore<S>({ a: 2 }, { parent });
 
     first.setState('a', 11); // owned locally — stays in its own scope
     second.setState('a', 22);
-
-    expect(warn).not.toHaveBeenCalled();
   });
 });
 

@@ -5,7 +5,14 @@
 // same unowned path clobber each other through it. This detects that and warns; it never changes behavior, and the
 // whole module is compiled out of production builds (see the caller's MODE gate).
 
+import { isTest } from '../../env';
+
 export type ScopeClaims = { claimDelegatedWrite: (path: string, scopeId: number) => void };
+
+const collisionMessage = (path: string) =>
+  '@plitzi/nexus: scope collision — two sibling scopes under the same parent both delegate a write to ' +
+  `"${path}", clobbering each other through the shared parent. Write to a path each scope owns, or move the ` +
+  'shared value into the parent and update it there.';
 
 // A registry held by a parent scope: each child registers the unowned paths it delegates up, tagged with its scope
 // id, so a second child delegating the same path can be flagged.
@@ -16,11 +23,11 @@ export const createScopeClaims = (): ScopeClaims => {
     claimDelegatedWrite(path, scopeId) {
       const existing = writers.get(path);
       if (existing !== undefined && existing !== scopeId) {
-        console.warn(
-          '@plitzi/nexus: scope collision — two sibling scopes under the same parent both delegate a write to ' +
-            `"${path}", clobbering each other through the shared parent. Write to a path each scope owns, or move the ` +
-            'shared value into the parent and update it there.'
-        );
+        if (isTest) {
+          throw new Error(collisionMessage(path));
+        }
+
+        console.warn(collisionMessage(path));
 
         return;
       }
