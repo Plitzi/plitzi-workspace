@@ -164,13 +164,13 @@
     border-top-color: #6f7780;
     border-top-style: solid;
     border-top-width: 1px;
+    color: inherit;
     line-height: 20px;
     font-size: 14px;
     user-select: none;
     outline: none;
     // Extra
     resize: vertical;
-    color: inherit;
   }
 
   // Checkbox
@@ -248,13 +248,13 @@
       width: 100%;
       display: block;
       border: none;
+      background-color: transparent;
       line-height: inherit;
       font-family: inherit;
       font-size: inherit;
       appearance: none;
       cursor: inherit;
       box-shadow: none;
-      background-color: transparent;
 
       &:focus-visible {
         outline: inherit;
