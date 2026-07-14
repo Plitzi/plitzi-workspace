@@ -120,21 +120,25 @@ const styleConstants = {
 } as const;
 
 export const inheritableAttributesBase: StyleCategory[] = [
-  styleConstants.TEXT_DECORATION,
+  styleConstants.FONT_FAMILY,
+  styleConstants.FONT_SIZE,
+  styleConstants.FONT_STYLE,
+  styleConstants.FONT_WEIGHT,
+  styleConstants.COLOR,
   styleConstants.LINE_HEIGHT,
   styleConstants.LETTER_SPACING,
-  styleConstants.COLOR,
-  styleConstants.DIRECTION,
-  styleConstants.FONT_FAMILY,
-  styleConstants.FONT_WEIGHT,
-  styleConstants.FONT_SIZE,
   styleConstants.TEXT_ALIGN,
+  styleConstants.TEXT_DECORATION,
   styleConstants.TEXT_INDENT,
   styleConstants.TEXT_SHADOW,
   styleConstants.TEXT_TRANSFORM,
-  styleConstants.WHITE_SPACE,
   styleConstants.TEXT_WRAP,
-  styleConstants.TEXT_OVERFLOW
+  styleConstants.TEXT_OVERFLOW,
+  styleConstants.WHITE_SPACE,
+  styleConstants.DIRECTION,
+  styleConstants.CURSOR,
+  styleConstants.LIST_STYLE,
+  styleConstants.LIST_STYLE_TYPE
 ];
 
 export const StyleBindingsAllowed = Object.values(styleConstants).map(attr => ({ path: attr, label: attr }));
