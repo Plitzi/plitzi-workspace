@@ -560,6 +560,89 @@ describe('calculateInheriting', () => {
       });
     });
 
+    describe('defaultStyle filtering by componentType', () => {
+      it('defaultStyle from DIFFERENT componentType should only contribute inheritable properties', () => {
+        const element: Element = {
+          ...baseElement,
+          definition: {
+            ...baseElement.definition,
+            type: 'button',
+            parentId: 'card'
+          }
+        };
+
+        const flat: Schema['flat'] = {
+          card: {
+            id: 'card',
+            attributes: {},
+            definition: {
+              label: 'Card',
+              type: 'card',
+              rootId: 'card',
+              parentId: undefined,
+              styleSelectors: { base: '' }
+            }
+          }
+        };
+
+        const componentDefinitions = {
+          card: {
+            defaultStyle: {
+              style: {
+                base: {
+                  default: { color: 'blue', display: 'flex', 'background-color': 'white' }
+                }
+              }
+            }
+          }
+        } as unknown as Record<string, ComponentDefinition>;
+
+        const result = calculateInheriting(element, 'button', flat, emptyPlatform, componentDefinitions, {
+          styleSelector: 'base'
+        });
+
+        // 🔥 color is inheritable — should appear
+        expect(result.style.color).toBeDefined();
+        expect(result.style.color[0].value).toBe('blue');
+
+        // 🔥 display and background-color are NOT inheritable — must be filtered
+        expect(result.style.display).toBeUndefined();
+        expect(result.style['background-color']).toBeUndefined();
+      });
+
+      it('defaultStyle from SAME componentType should contribute ALL properties (unfiltered)', () => {
+        const element: Element = {
+          ...baseElement,
+          definition: {
+            ...baseElement.definition,
+            type: 'button',
+            parentId: undefined
+          }
+        };
+
+        const componentDefinitions = {
+          button: {
+            defaultStyle: {
+              style: {
+                base: {
+                  default: { color: 'red', display: 'flex', 'background-color': 'white' }
+                }
+              }
+            }
+          }
+        } as unknown as Record<string, ComponentDefinition>;
+
+        const result = calculateInheriting(element, 'button', {}, emptyPlatform, componentDefinitions, {
+          styleSelector: 'base'
+        });
+
+        // 🔥 ALL properties should appear — no filtering for same componentType
+        expect(result.style.color[0].value).toBe('red');
+        expect(result.style.display[0].value).toBe('flex');
+        expect(result.style['background-color'][0].value).toBe('white');
+      });
+    });
+
     it('handles unknown selectors safely', () => {
       const element: Element = {
         ...baseElement,
@@ -729,7 +812,7 @@ describe('calculateInheriting', () => {
       });
     });
 
-    it('ancestor styles should not override current non-inheritable values', () => {
+    it('current element keeps all properties, ancestors only inheritable', () => {
       const element = {
         ...baseElement,
         definition: { ...baseElement.definition, parentId: 'parent' }
@@ -756,7 +839,7 @@ describe('calculateInheriting', () => {
             type: 'class',
             attributes: {
               base: {
-                default: { position: 'absolute' }
+                default: { position: 'absolute', color: 'purple' }
               }
             },
             cache: ''
@@ -766,7 +849,7 @@ describe('calculateInheriting', () => {
             type: 'class',
             attributes: {
               base: {
-                default: { position: 'relative' }
+                default: { position: 'relative', color: 'red' }
               }
             },
             cache: ''
@@ -778,7 +861,11 @@ describe('calculateInheriting', () => {
 
       const result = calculateInheriting(element, undefined, flat, platform, undefined, { includeSelf: true });
 
-      expect(result.style.position[result.style.position.length - 1].value).toBe('relative');
+      const positionValues = result.style.position.map(v => v.value);
+
+      expect(positionValues).toContain('relative');
+      expect(positionValues).not.toContain('absolute');
+      expect(result.style.color.some(v => v.value === 'purple')).toBe(true);
     });
 
     it('multiple displayModes should not bleed values between modes', () => {
@@ -944,6 +1031,119 @@ describe('calculateInheriting', () => {
       const values = result.style.color.map(v => v.value);
 
       expect(values[0]).toBe('red');
+    });
+
+    describe('inheritable filtering — non-inheritable properties must not leak', () => {
+      const element = {
+        ...baseElement,
+        definition: { ...baseElement.definition, parentId: 'parent' }
+      } as Element;
+
+      const flat: Schema['flat'] = {
+        parent: {
+          id: 'parent',
+          attributes: {},
+          definition: {
+            label: 'Parent',
+            type: 'button',
+            rootId: 'parent',
+            parentId: undefined,
+            styleSelectors: { base: 'parentBtn' }
+          }
+        }
+      };
+
+      it('ancestors must NOT contribute display to style', () => {
+        const platform: Style['platform'] = {
+          desktop: {
+            parentBtn: {
+              name: 'parentBtn',
+              type: 'class',
+              attributes: { base: { default: { display: 'flex', color: 'red' } } },
+              cache: ''
+            }
+          },
+          tablet: {},
+          mobile: {}
+        };
+
+        const result = calculateInheriting(element, undefined, flat, platform);
+
+        expect(result.style.display).toBeUndefined();
+        expect(result.style.color).toBeDefined();
+      });
+
+      it('ancestors must NOT contribute background-color to style', () => {
+        const platform: Style['platform'] = {
+          desktop: {
+            parentBtn: {
+              name: 'parentBtn',
+              type: 'class',
+              attributes: { base: { default: { 'background-color': 'red', color: 'blue' } } },
+              cache: ''
+            }
+          },
+          tablet: {},
+          mobile: {}
+        };
+
+        const result = calculateInheriting(element, undefined, flat, platform);
+
+        expect(result.style['background-color']).toBeUndefined();
+        expect(result.style.color).toBeDefined();
+      });
+
+      it('ancestors must NOT contribute margin/padding to style', () => {
+        const platform: Style['platform'] = {
+          desktop: {
+            parentBtn: {
+              name: 'parentBtn',
+              type: 'class',
+              attributes: {
+                base: {
+                  default: {
+                    'margin-top': '10px',
+                    'padding-left': '5px',
+                    'font-size': '14px',
+                    opacity: '0.5'
+                  }
+                }
+              },
+              cache: ''
+            }
+          },
+          tablet: {},
+          mobile: {}
+        };
+
+        const result = calculateInheriting(element, undefined, flat, platform);
+
+        expect(result.style['margin-top']).toBeUndefined();
+        expect(result.style['padding-left']).toBeUndefined();
+        expect(result.style.opacity).toBeUndefined();
+        expect(result.style['font-size']).toBeDefined();
+      });
+
+      it('ancestors must NOT contribute width/height to style', () => {
+        const platform: Style['platform'] = {
+          desktop: {
+            parentBtn: {
+              name: 'parentBtn',
+              type: 'class',
+              attributes: { base: { default: { width: '100%', height: '200px', color: 'green' } } },
+              cache: ''
+            }
+          },
+          tablet: {},
+          mobile: {}
+        };
+
+        const result = calculateInheriting(element, undefined, flat, platform);
+
+        expect(result.style.width).toBeUndefined();
+        expect(result.style.height).toBeUndefined();
+        expect(result.style.color).toBeDefined();
+      });
     });
 
     it('deeply nested hierarchy should respect priority', () => {

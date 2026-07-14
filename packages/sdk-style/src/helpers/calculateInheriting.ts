@@ -404,19 +404,19 @@ const calculateInheriting = (
   const finalStyle: InheritData['style'] = {};
   for (const node of metadata.tree) {
     let styleData = resolveNodeStyle(node, styleSelector, styleState, styleVariant);
-    if (!(styleData as typeof styleData | undefined)) {
+    if (!(styleData as typeof styleData | undefined) || !Object.keys(styleData).length) {
       continue;
     }
 
-    if (node.isAncestor) {
+    if (node.isAncestor || (node.isDefault && node.componentType !== componentType)) {
       styleData = pick(styleData, inheritableAttributesBase);
     }
 
-    for (const key of Object.keys(styleData) as StyleCategory[]) {
-      if (node.isAncestor && !inheritableAttributesBase.includes(key)) {
-        continue;
-      }
+    if (!Object.keys(styleData).length) {
+      continue;
+    }
 
+    for (const key of Object.keys(styleData) as StyleCategory[]) {
       if (!(finalStyle[key] as (typeof finalStyle)[string] | undefined)) {
         finalStyle[key] = [];
       }
