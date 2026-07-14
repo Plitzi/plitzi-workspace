@@ -42,6 +42,7 @@ const OptionIconGroup = ({ items = [], onChange }: OptionIconGroupProps) => {
           key={i}
           onClick={handleChange(item.value)}
           icon={typeof item.icon === 'string' ? item.icon : undefined}
+          title={item.description}
         >
           {typeof item.icon !== 'string' && item.icon}
         </IconGroup.Icon>
