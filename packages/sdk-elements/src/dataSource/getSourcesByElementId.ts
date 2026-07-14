@@ -16,7 +16,11 @@ const getSourcesByElementId = (
   const ids = FlatMap.parentTree(schemaFlat, id);
 
   return Object.values(sources)
-    .filter(source => (source.meta.id && ids.includes(source.meta.id)) || source.meta.id === 'global')
+    .filter(
+      source =>
+        ((source as Source | undefined) && source.meta.id && ids.includes(source.meta.id)) ||
+        source.meta.id === 'global'
+    )
     .reduce<Record<string, Source>>((acum, source) => ({ ...acum, [source.id]: source }), {});
 };
 
