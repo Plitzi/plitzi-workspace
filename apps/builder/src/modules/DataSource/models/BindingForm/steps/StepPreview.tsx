@@ -20,13 +20,7 @@ export type StepPreviewProps = {
 const StepPreview = ({ category, fields, sources }: StepPreviewProps) => {
   const form = useFormContext<BindingSchema>();
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const [path, to, source, when, transformers] = useFormWatch(form, [
-    'path',
-    'to',
-    'source',
-    'when',
-    'transformers'
-  ]);
+  const [path, to, source, when, transformers] = useFormWatch(form, ['path', 'to', 'source', 'when', 'transformers']);
   const name = useMemo(() => fields?.find(f => f.path === path)?.name ?? 'Unknown', [fields, path]);
   const transformerName = useMemo(() => transformerString(transformers), [transformers]);
   const whenStr = useMemo(() => whenString(when as RuleGroup), [when]);

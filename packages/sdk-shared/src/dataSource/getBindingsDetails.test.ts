@@ -85,7 +85,7 @@ describe('getBindingsDetails', () => {
       attributes: [
         binding({
           source: 'variables.title',
-  to: 'text',
+          to: 'text',
           transformers: [{ action: 'capitalize', params: { valueType: '', value: '' } }]
         })
       ]
