@@ -23,7 +23,7 @@ export const bindingForm = z.object({
   transformers: z.array(
     z.object({
       action: z.string(),
-      params: z.record(z.string(), z.any())
+      params: z.record(z.string(), z.string())
     })
   )
 });
@@ -82,7 +82,7 @@ const BindingForm = ({ element, category = '', attributes, sources, value, onClo
       } else {
         const { path, ...rest } = values;
         const source = path ? `${values.source}.${path}` : values.source;
-        onClose?.(true, { ...rest, source } as ElementBinding);
+        onClose?.(true, { ...rest, source });
       }
     },
     [onClose, step]
