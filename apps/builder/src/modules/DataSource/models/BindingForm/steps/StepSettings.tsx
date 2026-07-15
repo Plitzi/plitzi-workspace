@@ -30,14 +30,6 @@ const StepSettings = ({ source, fields, attributes }: StepSettingsProps) => {
 
   return (
     <>
-      <Form.Select2
-        name="to"
-        placeholder="Attribute"
-        allowCreateOptions
-        options={toOptions}
-        size="xs"
-        valueAsString
-      />
       {source && (
         <Form.Select2
           name="path"
@@ -48,6 +40,7 @@ const StepSettings = ({ source, fields, attributes }: StepSettingsProps) => {
           valueAsString
         />
       )}
+      <Form.Select2 name="to" placeholder="Attribute" allowCreateOptions options={toOptions} size="xs" valueAsString />
     </>
   );
 };
