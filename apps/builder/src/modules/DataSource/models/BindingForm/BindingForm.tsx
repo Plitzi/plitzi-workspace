@@ -17,12 +17,11 @@ import type { Element, ElementBinding, SourceField, SourceMeta } from '@plitzi/s
 export const bindingForm = z.object({
   id: z.string(),
   source: z.string(),
-  fromPath: z.string(),
-  toPath: z.string(),
+  path: z.string(),
+  to: z.string(),
   when: z.any().optional(),
   transformers: z.array(
     z.object({
-      type: z.enum(['utility', 'unknown']),
       action: z.string(),
       params: z.record(z.string(), z.any())
     })
@@ -42,9 +41,28 @@ export type BindingFormProps = {
 
 const totalSteps = 4;
 
+const parseSource = (combined: string) => {
+  const dotIndex = combined.indexOf('.');
+  if (dotIndex > -1) {
+    return { source: combined.substring(0, dotIndex), path: combined.substring(dotIndex + 1) };
+  }
+
+  return { source: combined, path: '' };
+};
+
 const BindingForm = ({ element, category = '', attributes, sources, value, onClose }: BindingFormProps) => {
+  const parsedSource = useMemo(() => (value?.source ? parseSource(value.source) : undefined), [value?.source]);
   const form = useForm({
-    defaultValues: { id: '', source: '', fromPath: '', toPath: '', when: {}, transformers: [], ...value },
+    defaultValues: {
+      id: '',
+      source: '',
+      path: '',
+      to: '',
+      when: {},
+      transformers: [],
+      ...value,
+      ...(parsedSource && { source: parsedSource.source, path: parsedSource.path })
+    },
     config: { schema: bindingForm }
   });
   const [step, setStep] = useState(0);
@@ -62,7 +80,9 @@ const BindingForm = ({ element, category = '', attributes, sources, value, onClo
       if (step < totalSteps) {
         setStep(state => state + 1);
       } else {
-        onClose?.(true, values as ElementBinding);
+        const { path, ...rest } = values;
+        const source = path ? `${values.source}.${path}` : values.source;
+        onClose?.(true, { ...rest, source } as ElementBinding);
       }
     },
     [onClose, step]

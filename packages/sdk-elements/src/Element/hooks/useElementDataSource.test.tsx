@@ -14,9 +14,7 @@ const makeWrapper =
   ({ children }: { children: ReactNode }) =>
     createElement(StoreProvider, { value: storeValue }, children);
 
-const variablesBinding: ElementBinding[] = [
-  { id: 'b1', source: 'variables', fromPath: 'title', toPath: 'text', enabled: true }
-];
+const variablesBinding: ElementBinding[] = [{ id: 'b1', source: 'variables.title', to: 'text', enabled: true }];
 
 describe('useElementDataSource (subscribes to referenced `runtime.sources.*`)', () => {
   it('reads a source referenced by a binding', () => {

@@ -10,7 +10,7 @@ export type StepSettingsProps = {
 };
 
 const StepSettings = ({ source, fields, attributes }: StepSettingsProps) => {
-  const fromPathOptions = useMemo(
+  const pathOptions = useMemo(
     () =>
       fields.reduce<{ label: string; value: string }[]>(
         (acum, field) => [...acum, { label: `${field.name} [${field.path}]`, value: field.path }],
@@ -19,7 +19,7 @@ const StepSettings = ({ source, fields, attributes }: StepSettingsProps) => {
     [fields]
   );
 
-  const toPathOptions = useMemo(
+  const toOptions = useMemo(
     () =>
       attributes?.reduce<{ label: string; value: string }[]>(
         (acum, field) => [...acum, { label: `${field.label} [${field.path}]`, value: field.path }],
@@ -31,19 +31,19 @@ const StepSettings = ({ source, fields, attributes }: StepSettingsProps) => {
   return (
     <>
       <Form.Select2
-        name="toPath"
+        name="to"
         placeholder="Attribute"
         allowCreateOptions
-        options={toPathOptions}
+        options={toOptions}
         size="xs"
         valueAsString
       />
       {source && (
         <Form.Select2
-          name="fromPath"
+          name="path"
           placeholder="Select Path"
           allowCreateOptions
-          options={fromPathOptions}
+          options={pathOptions}
           size="xs"
           valueAsString
         />

@@ -37,7 +37,7 @@ const useElementState = ({ id, bindings, previewMode }: UseElementStateProps) =>
   const attributesBinded = useMemo(() => {
     const attributes = bindings?.attributes && Array.isArray(bindings.attributes) ? bindings.attributes : [];
 
-    return attributes.filter(binding => binding.enabled !== false).map(binding => get(binding, 'toPath', ''));
+    return attributes.filter(binding => binding.enabled !== false).map(binding => get(binding, 'to', ''));
   }, [bindings]);
 
   const setElementState = useCallback(

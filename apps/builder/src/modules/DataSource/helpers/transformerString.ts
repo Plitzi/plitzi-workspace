@@ -6,7 +6,6 @@ import utility from '@plitzi/sdk-shared/dataSource/utility';
 
 const transformerString = (
   transformers: {
-    type: 'unknown' | 'utility';
     action: string;
     params: Record<string, any>;
   }[] = []

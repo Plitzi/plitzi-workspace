@@ -20,17 +20,18 @@ export type StepPreviewProps = {
 const StepPreview = ({ category, fields, sources }: StepPreviewProps) => {
   const form = useFormContext<BindingSchema>();
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const [fromPath, toPath, source, when, transformers] = useFormWatch(form, [
-    'fromPath',
-    'toPath',
+  const [path, to, source, when, transformers] = useFormWatch(form, [
+    'path',
+    'to',
     'source',
     'when',
     'transformers'
   ]);
-  const name = useMemo(() => fields?.find(f => f.path === fromPath)?.name ?? 'Unknown', [fields, fromPath]);
+  const name = useMemo(() => fields?.find(f => f.path === path)?.name ?? 'Unknown', [fields, path]);
   const transformerName = useMemo(() => transformerString(transformers), [transformers]);
   const whenStr = useMemo(() => whenString(when as RuleGroup), [when]);
   const sourceName = useMemo(() => get(sources, `${source}.name`, source), [source, sources]);
+  const fullSource = useMemo(() => (path ? `${source}.${path}` : source), [source, path]);
 
   return (
     <div className="flex flex-col">
@@ -40,18 +41,18 @@ const StepPreview = ({ category, fields, sources }: StepPreviewProps) => {
       <div className="flex w-full flex-col truncate rounded-sm border border-gray-300 dark:border-zinc-600">
         <div className="flex truncate px-1 py-0.5 text-xs" title={name}>
           <div className="font-bold">From:</div>
-          <div className="ml-1 truncate capitalize">{fromPath ? `${sourceName} [${name}]` : 'None'}</div>
+          <div className="ml-1 truncate capitalize">{path ? `${sourceName} [${name}]` : 'None'}</div>
         </div>
         <div
           className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600"
-          title={fromPath}
+          title={fullSource}
         >
           <div className="font-bold">Path:</div>
-          <div className="ml-1 truncate">{fromPath ? `${source}.${fromPath}` : ''}</div>
+          <div className="ml-1 truncate">{fullSource}</div>
         </div>
-        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600" title={toPath}>
+        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600" title={to}>
           <div className="font-bold">To:</div>
-          <div className="ml-1 truncate capitalize">{`${category} ${toPath}`}</div>
+          <div className="ml-1 truncate capitalize">{`${category} ${to}`}</div>
         </div>
         <div
           className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600"

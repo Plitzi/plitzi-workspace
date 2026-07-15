@@ -31,7 +31,7 @@ describe('getProps (element resolution)', () => {
 
   it('resolves an attribute binding from the dataSource map', () => {
     const element = makeElement({
-      attributes: [{ id: 'b1', source: 'variables', fromPath: 'title', toPath: 'text', enabled: true }]
+      attributes: [{ id: 'b1', source: 'variables.title', to: 'text', enabled: true }]
     });
     const result = getProps(element, internal, { variables: { title: 'Hello' } });
 
@@ -54,7 +54,7 @@ describe('getProps (element resolution)', () => {
 
   it('lets a binding override a base attribute', () => {
     const element = makeElement(
-      { attributes: [{ id: 'b1', source: 'variables', fromPath: 'title', toPath: 'text', enabled: true }] },
+      { attributes: [{ id: 'b1', source: 'variables.title', to: 'text', enabled: true }] },
       { text: 'original' }
     );
     const result = getProps(element, internal, { variables: { title: 'bound' } });

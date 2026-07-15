@@ -50,8 +50,7 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
         ...state,
         [category]: {
           id: generateID(),
-          fromPath: '',
-          toPath: '',
+          to: '',
           source: '',
           transformers: [],
           when: undefined,
@@ -130,7 +129,7 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
 
   const handleClickCloseForm = (category: BindingCategory) => (isSaving: boolean, values?: ElementBinding) => {
     if (isSaving && values) {
-      const { id, source, fromPath, toPath, transformers, when } = values;
+      const { id, source, to, transformers, when } = values;
       let finalBingings = bindings as Record<string, ElementBinding[]>;
       if (!bindings || Array.isArray(bindings) || typeof bindings !== 'object') {
         finalBingings = {};
@@ -144,12 +143,12 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
 
           const index = draft[category].findIndex(b => b.id === id);
           if (index !== -1) {
-            draft[category][index] = { id, source, fromPath, transformers, when, toPath };
+            draft[category][index] = { id, source, transformers, when, to };
 
             return;
           }
 
-          draft[category].push({ id, source, fromPath, transformers, when, toPath });
+          draft[category].push({ id, source, transformers, when, to });
         })
       );
     }
@@ -204,7 +203,7 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
                   {binding
                     .filter(binding => binding.id && binding.id !== get(bindingFormValues, `${fkey}.id`, ''))
                     .map((binding, j) => {
-                      const { id, source, fromPath, toPath, transformers, when, enabled } = binding;
+                      const { id, source, to, transformers, when, enabled } = binding;
 
                       return (
                         <BindingSelected
@@ -213,8 +212,7 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
                           sources={sources}
                           category={fkey}
                           source={source}
-                          fromPath={fromPath}
-                          toPath={toPath}
+                          to={to}
                           transformers={transformers}
                           when={when}
                           enabled={enabled}

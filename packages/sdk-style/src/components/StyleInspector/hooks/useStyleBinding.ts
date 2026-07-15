@@ -25,12 +25,12 @@ const useStyleBinding = ({ element }: UseStyleBindingProps) => {
     }
 
     bindings.style.forEach(binding => {
-      const value = get(dataSource, `${binding.source}.${binding.fromPath}`);
+      const value = get(dataSource, binding.source);
       if (value === undefined || !binding.enabled) {
         return;
       }
 
-      set(metadata, binding.toPath, get(dataSource, `${binding.source}.${binding.fromPath}`));
+      set(metadata, binding.to, get(dataSource, binding.source));
     });
 
     return metadata;

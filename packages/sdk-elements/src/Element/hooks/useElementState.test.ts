@@ -9,10 +9,10 @@ import useElementState from './useElementState';
 import type { ElementBinding } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
-const binding = (toPath: string, enabled = true): ElementBinding => ({
-  id: toPath,
+const binding = (to: string, enabled = true): ElementBinding => ({
+  id: to,
   source: 'variables',
-  toPath,
+  to,
   enabled
 });
 

@@ -20,19 +20,17 @@ export type DropPosition = 'top' | 'bottom' | 'left' | 'right' | 'inside' | 'cus
 export type BindingCategory = 'attributes' | 'style' | 'initialState';
 
 export type BindingTransformer = {
-  type: 'utility' | 'unknown';
   action: string;
-  params: { valueType: string; value: string };
+  params: Record<string, string>;
 };
 
 export type ElementBinding = {
   id: string;
   source: string;
-  fromPath?: string;
   transformers?: BindingTransformer[];
   when?: RuleGroup;
   enabled?: boolean;
-  toPath: string;
+  to: string;
 };
 
 export type ElementInteraction<

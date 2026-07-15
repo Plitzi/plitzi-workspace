@@ -29,7 +29,7 @@ const StepTransformers = ({ element, dataSourceFields }: StepTransformersProps) 
   const [stylePlatform] = useBuilderStore('style.platform');
 
   const handleClickAdd = useCallback(
-    () => setValue('transformers', [...watchTransformers, { type: 'utility', action: '', params: {} }]),
+    () => setValue('transformers', [...watchTransformers, { action: '', params: {} }]),
     [setValue, watchTransformers]
   );
 

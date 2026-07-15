@@ -22,7 +22,8 @@ const useElementDataSource = ({ bindings, sources: sourcesProp }: UseElementData
 
       for (const { source } of bindingsGroup) {
         if (source) {
-          names.add(source);
+          const dotIndex = source.indexOf('.');
+          names.add(dotIndex > -1 ? source.substring(0, dotIndex) : source);
         }
       }
     }

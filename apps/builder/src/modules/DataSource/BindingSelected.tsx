@@ -13,8 +13,7 @@ export type BindingSelected = {
   id?: string;
   sources?: Record<string, SourceMeta>;
   category?: string;
-  fromPath?: string;
-  toPath?: string;
+  to?: string;
   source?: string;
   transformers?: BindingTransformer[];
   when?: RuleGroup;
@@ -28,8 +27,7 @@ const BindingSelected = ({
   id = '',
   sources,
   category = '',
-  fromPath,
-  toPath = '',
+  to = '',
   source = '',
   transformers,
   when,
@@ -39,22 +37,25 @@ const BindingSelected = ({
   onRemove
 }: BindingSelected) => {
   const [fields, setFields] = useState<SourceField[]>([]);
-  const [loading, setLoading] = useState(typeof get(sources, source, {} as SourceMeta).fields === 'function');
+  const dotIndex = source.indexOf('.');
+  const sourceName = dotIndex > -1 ? source.substring(0, dotIndex) : source;
+  const fieldPath = dotIndex > -1 ? source.substring(dotIndex + 1) : '';
+  const [loading, setLoading] = useState(typeof get(sources, sourceName, {} as SourceMeta).fields === 'function');
   const name = useMemo(() => {
-    if (!fromPath) {
+    if (!fieldPath) {
       return 'None';
     }
 
-    const field = fields.find(f => f.path === fromPath);
+    const field = fields.find(f => f.path === fieldPath);
     if (!field) {
-      return fromPath;
+      return fieldPath;
     }
 
-    return field.name ? field.name : fromPath;
-  }, [fields, fromPath]);
+    return field.name ? field.name : fieldPath;
+  }, [fields, fieldPath]);
 
   const processFields = useCallback(async () => {
-    let { fields: fieldsAux } = get(sources, source, {} as SourceMeta);
+    let { fields: fieldsAux } = get(sources, sourceName, {} as SourceMeta);
     if (fieldsAux && typeof fieldsAux === 'function') {
       setLoading(true);
       fieldsAux = await fieldsAux();
@@ -68,15 +69,15 @@ const BindingSelected = ({
     } else {
       setFields([]);
     }
-  }, [sources, source]);
+  }, [sources, sourceName]);
 
   useEffect(() => {
-    if (source && sources?.[source]) {
+    if (sourceName && sources?.[sourceName]) {
       void processFields();
     } else {
       setLoading(false);
     }
-  }, [sources, source, processFields]);
+  }, [sources, sourceName, processFields]);
 
   const handleClickUpdateBinding = useCallback(
     () => onUpdate?.(category as BindingCategory, id),
@@ -90,7 +91,7 @@ const BindingSelected = ({
 
   const transformerName = useMemo(() => transformerString(transformers), [transformers]);
   const whenStr = useMemo(() => whenString(when), [when]);
-  const sourceName = useMemo(() => get(sources, `${source}.name`, source), [source, sources]);
+  const sourceDisplayName = useMemo(() => get(sources, `${sourceName}.name`, sourceName), [sourceName, sources]);
 
   const handleChangeEnabled = useCallback(
     () => onEnable?.(category as BindingCategory, id, !enabled),
@@ -114,19 +115,16 @@ const BindingSelected = ({
         <div className="flex truncate px-1 py-0.5 text-xs" title={name}>
           <div className="font-bold">From:</div>
           <div className="ml-1 truncate capitalize">
-            {!loading ? (fromPath ? `${sourceName} [${name}]` : 'None') : 'Loading...'}
+            {!loading ? (fieldPath ? `${sourceDisplayName} [${name}]` : 'None') : 'Loading...'}
           </div>
         </div>
-        <div
-          className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600"
-          title={fromPath}
-        >
+        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600" title={source}>
           <div className="font-bold">Path:</div>
-          <div className="ml-1 truncate">{fromPath ? `${source}.${fromPath}` : ''}</div>
+          <div className="ml-1 truncate">{source || ''}</div>
         </div>
-        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600" title={toPath}>
+        <div className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600" title={to}>
           <div className="font-bold">To:</div>
-          <div className="ml-1 truncate capitalize">{`${category} ${toPath}`}</div>
+          <div className="ml-1 truncate capitalize">{`${category} ${to}`}</div>
         </div>
         <div
           className="flex truncate border-t border-gray-300 px-1 py-0.5 text-xs dark:border-zinc-600"

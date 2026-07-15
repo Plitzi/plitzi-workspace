@@ -22,7 +22,7 @@ const makeElement = (
 const binding = (over: Partial<ElementBinding>): ElementBinding => ({
   id: 'b1',
   source: 'variables',
-  toPath: 'text',
+  to: 'text',
   enabled: true,
   ...over
 });
@@ -37,22 +37,22 @@ describe('getBindingsDetails', () => {
     expect(result.definition).toBe(element.definition);
   });
 
-  it('writes an attribute binding from source.fromPath into the target attribute', () => {
-    const element = makeElement({ attributes: [binding({ fromPath: 'title', toPath: 'text' })] });
+  it('writes an attribute binding from source path into the target attribute', () => {
+    const element = makeElement({ attributes: [binding({ source: 'variables.title', to: 'text' })] });
     const result = getBindingsDetails({ variables: { title: 'Hello' } }, element);
 
     expect(result.attributes.text).toBe('Hello');
   });
 
-  it('camelCases the toPath for style bindings', () => {
-    const element = makeElement({ style: [binding({ fromPath: 'col', toPath: 'background-color' })] });
+  it('camelCases the to for style bindings', () => {
+    const element = makeElement({ style: [binding({ source: 'variables.col', to: 'background-color' })] });
     const result = getBindingsDetails({ variables: { col: 'red' } }, element);
 
     expect((result.style as Record<string, unknown>).backgroundColor).toBe('red');
   });
 
   it('writes initialState bindings under definition.initialState', () => {
-    const element = makeElement({ initialState: [binding({ fromPath: 'on', toPath: 'visibility' })] });
+    const element = makeElement({ initialState: [binding({ source: 'variables.on', to: 'visibility' })] });
     const result = getBindingsDetails({ variables: { on: true } }, element);
 
     expect(result.definition.initialState?.visibility).toBe(true);
@@ -63,14 +63,18 @@ describe('getBindingsDetails', () => {
       combinator: 'and',
       rules: [{ field: 'variables.flag', operator: '=', value: true }]
     } as ElementBinding['when'];
-    const element = makeElement({ attributes: [binding({ fromPath: 'title', toPath: 'text', when })] });
+    const element = makeElement({
+      attributes: [binding({ source: 'variables.title', to: 'text', when })]
+    });
 
     expect(getBindingsDetails({ variables: { flag: false, title: 'Hi' } }, element).attributes.text).toBeUndefined();
     expect(getBindingsDetails({ variables: { flag: true, title: 'Hi' } }, element).attributes.text).toBe('Hi');
   });
 
   it('skips a disabled binding', () => {
-    const element = makeElement({ attributes: [binding({ fromPath: 'title', toPath: 'text', enabled: false })] });
+    const element = makeElement({
+      attributes: [binding({ source: 'variables.title', to: 'text', enabled: false })]
+    });
     const result = getBindingsDetails({ variables: { title: 'Hello' } }, element);
 
     expect(result.attributes.text).toBeUndefined();
@@ -80,9 +84,9 @@ describe('getBindingsDetails', () => {
     const element = makeElement({
       attributes: [
         binding({
-          fromPath: 'title',
-          toPath: 'text',
-          transformers: [{ type: 'utility', action: 'capitalize', params: { valueType: '', value: '' } }]
+          source: 'variables.title',
+  to: 'text',
+          transformers: [{ action: 'capitalize', params: { valueType: '', value: '' } }]
         })
       ]
     });
@@ -93,7 +97,10 @@ describe('getBindingsDetails', () => {
 
   describe('falsy write predicate (current behavior — no allowEmpty)', () => {
     it('does NOT write an empty string (keeps the design-time value)', () => {
-      const element = makeElement({ attributes: [binding({ fromPath: 'title', toPath: 'text' })] }, { text: 'keep' });
+      const element = makeElement(
+        { attributes: [binding({ source: 'variables.title', to: 'text' })] },
+        { text: 'keep' }
+      );
       const result = getBindingsDetails({ variables: { title: '' } }, element);
 
       expect(result.attributes.text).toBe('keep');
@@ -102,8 +109,8 @@ describe('getBindingsDetails', () => {
     it('writes 0 (number) and false (boolean)', () => {
       const element = makeElement({
         attributes: [
-          binding({ id: 'b1', fromPath: 'n', toPath: 'count' }),
-          binding({ id: 'b2', fromPath: 'b', toPath: 'flag' })
+          binding({ id: 'b1', source: 'variables.n', to: 'count' }),
+          binding({ id: 'b2', source: 'variables.b', to: 'flag' })
         ]
       });
       const result = getBindingsDetails({ variables: { n: 0, b: false } }, element);
