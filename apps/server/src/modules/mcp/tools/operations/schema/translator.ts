@@ -1,8 +1,10 @@
 import {
+  bindingsToAI,
   descendantCount,
   descendantIds,
   elementById,
   elementRefOf,
+  flowsFromInteractions,
   getPageElements,
   isPageElement,
   orderedChildren,
@@ -18,11 +20,13 @@ import type {
   AIElementDetail,
   AIFolder,
   AIGlobalStyle,
+  AIInitialState,
   AIPageSkeleton,
   AIPageStyles,
   AIPageSummary,
   AISchemaVariable,
-  AISkeletonNode
+  AISkeletonNode,
+  AIStyleVariantSelection
 } from '../../../types';
 import type { Element, PageFolder, Schema, Style } from '@plitzi/sdk-shared';
 
@@ -188,6 +192,77 @@ const resolveDefinitions = (
   return Object.keys(resolved).length > 0 ? resolved : undefined;
 };
 
+// The variant names a definition exposes, deduped across its base and every slot — so an element read can tell
+// the agent a class HAS a variant (e.g. "primary") without a separate definition read.
+const variantNamesOf = (def: AIDefinition): string[] => {
+  const names = new Set<string>(Object.keys(def.variants ?? {}));
+  for (const slot of Object.values(def.slots ?? {})) {
+    for (const name of Object.keys(slot.variants ?? {})) {
+      names.add(name);
+    }
+  }
+
+  return [...names].sort();
+};
+
+const availableVariantsFrom = (
+  resolvedStyle: Record<string, AIDefinition> | undefined
+): Record<string, string[]> | undefined => {
+  if (!resolvedStyle) {
+    return undefined;
+  }
+
+  const result: Record<string, string[]> = {};
+  for (const [ref, def] of Object.entries(resolvedStyle)) {
+    const names = variantNamesOf(def);
+    if (names.length > 0) {
+      result[ref] = names;
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : undefined;
+};
+
+// Project the stored initialState down to the two fields agents set: which variant each class/selector uses, and
+// initial visibility. Other keys (styleSelectors overrides, plugin-specific) are intentionally omitted here.
+const initialStateToAI = (el: Element): AIInitialState | undefined => {
+  const initialState = el.definition.initialState;
+  if (!initialState) {
+    return undefined;
+  }
+
+  const result: AIInitialState = {};
+  if (initialState.styleVariant) {
+    const styleVariant: AIStyleVariantSelection = {};
+    for (const [cls, selectors] of Object.entries(initialState.styleVariant)) {
+      if (!selectors) {
+        continue;
+      }
+
+      const bySelector: Record<string, string | string[]> = {};
+      for (const [selector, variant] of Object.entries(selectors)) {
+        if (variant !== undefined) {
+          bySelector[selector] = variant;
+        }
+      }
+
+      if (Object.keys(bySelector).length > 0) {
+        styleVariant[cls] = bySelector;
+      }
+    }
+
+    if (Object.keys(styleVariant).length > 0) {
+      result.styleVariant = styleVariant;
+    }
+  }
+
+  if (typeof initialState.visibility === 'boolean') {
+    result.visibility = initialState.visibility;
+  }
+
+  return Object.keys(result).length > 0 ? result : undefined;
+};
+
 export const elementDetailToAI = (schema: Schema, el: Element, style?: Style): AIElementDetail => {
   const children = orderedChildren(schema, el);
   const parent = el.definition.parentId ? schema.flat[el.definition.parentId] : undefined;
@@ -206,10 +281,29 @@ export const elementDetailToAI = (schema: Schema, el: Element, style?: Style): A
     childRefs: children.length > 0 ? children.map(elementRefOf) : undefined
   };
 
+  const initialState = initialStateToAI(el);
+  if (initialState) {
+    detail.initialState = initialState;
+  }
+
+  const bindings = bindingsToAI(el.definition.bindings);
+  if (bindings) {
+    detail.bindings = bindings;
+  }
+
+  const interactions = flowsFromInteractions(el.definition.interactions);
+  if (interactions.length > 0) {
+    detail.interactions = interactions;
+  }
+
   if (style) {
     const resolvedStyle = resolveDefinitions(style, base, slots);
     if (resolvedStyle) {
       detail.resolvedStyle = resolvedStyle;
+      const availableVariants = availableVariantsFrom(resolvedStyle);
+      if (availableVariants) {
+        detail.availableVariants = availableVariants;
+      }
     }
 
     const globalStyles = globalStylesForType(style, el.definition.type);

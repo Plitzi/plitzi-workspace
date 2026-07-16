@@ -165,7 +165,8 @@ export const searchTool = defineTool({
   name: 'plitzi_search',
   title: 'Search',
   description:
-    'Find elements by label, type or attribute value across all pages. Each hit returns the element uri, its ' +
+    'FIND elements when you know what you want but not its ref/uri (e.g. "the hero button"). Matches label, type ' +
+    'or attribute value across all pages. Each hit returns the element uri, its ' +
     'stateVersion (edit with optimistic concurrency, no read needed) and its tree path. Pass include: "detail" ' +
     'to inline the full props/style of each hit plus resolvedStyle (the CSS of its classes). Also returns any ' +
     'style definitions matching the query (with full CSS) under `definitions`, and matching pages under `pages`. ' +

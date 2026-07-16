@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { styleRefs } from './shared';
-import { pageUri } from './write';
+import { initialStateInput, styleRefs } from './shared';
+import { pageUri, writeInitialState } from './write';
 import { empty, fail, findPageByRef, resolveRef } from '../../../helpers';
 
 import type { Space } from '../../../helpers';
@@ -19,11 +19,14 @@ export const patchElementOp = z
       .record(z.string(), z.unknown())
       .optional()
       .describe('Merged onto existing props: listed keys change, null unsets a key, others are preserved'),
-    style: styleRefs.optional().describe('Merged onto existing style: base replaces base, listed slots replace slots')
+    style: styleRefs.optional().describe('Merged onto existing style: base replaces base, listed slots replace slots'),
+    initialState: initialStateInput
+      .optional()
+      .describe('Merged onto existing initialState: styleVariant overlays per class/selector, visibility overrides')
   })
   .describe(
-    'Partially update an EXISTING element: only the fields you pass change (props/style are merged, not replaced). ' +
-      'Never creates — fails if ref does not resolve. Use upsertElement to create or fully replace.'
+    'Partially update an EXISTING element: only the fields you pass change (props/style/initialState are merged, ' +
+      'not replaced). Never creates — fails if ref does not resolve. Use upsertElement to create or fully replace.'
   );
 
 export type PatchElement = z.infer<typeof patchElementOp>;
@@ -75,6 +78,10 @@ export const patchElement = (space: Space, env: Env, op: PatchElement): OpResult
     }
 
     el.definition.styleSelectors = selectors as { base: string; [selector: string]: string };
+  }
+
+  if (op.initialState !== undefined) {
+    writeInitialState(el, op.initialState, true);
   }
 
   return { ...empty(), updated: 1, staleResources: [pageUri(env, op.pageRef)], elementRefs: [op.ref] };

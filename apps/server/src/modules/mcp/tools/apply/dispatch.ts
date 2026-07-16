@@ -30,6 +30,18 @@ const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
       return schema.upsertVariable(space, env, op);
     case 'deleteVariable':
       return schema.deleteVariable(space, env, op);
+    case 'upsertBinding':
+      return schema.upsertBinding(space, env, op);
+    case 'patchBinding':
+      return schema.patchBinding(space, env, op);
+    case 'deleteBinding':
+      return schema.deleteBinding(space, env, op);
+    case 'upsertInteractionFlow':
+      return schema.upsertInteractionFlow(space, env, op);
+    case 'patchInteractionNode':
+      return schema.patchInteractionNode(space, env, op);
+    case 'deleteInteraction':
+      return schema.deleteInteraction(space, env, op);
     case 'upsertDefinition':
       return style.upsertDefinition(space, env, op);
     case 'patchDefinition':

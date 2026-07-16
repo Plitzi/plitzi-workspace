@@ -1355,3 +1355,292 @@ describe('mcp-ai plitzi_screenshot tool', () => {
     expect(res.html).toContain('<!doctype html>');
   });
 });
+
+describe('mcp-ai style variants + element state', () => {
+  it('an element read exposes availableVariants of its attached classes', () => {
+    const el = readResource(buildSpace(), 'main', 'plitzi://schema/main/elements/c1')?.data as AIElementDetail;
+    expect(el.availableVariants).toEqual({ box: ['lg'] });
+  });
+
+  it('patchElement applies a style variant + visibility and the read reflects it', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      {
+        operations: [
+          {
+            type: 'patchElement',
+            pageRef: 'home',
+            ref: 'c1',
+            initialState: { styleVariant: { box: { base: 'lg' } }, visibility: false }
+          }
+        ]
+      },
+      cap.saved(),
+      cap.persisters
+    );
+    const el = readResource(cap.saved(), 'main', 'plitzi://schema/main/elements/c1')?.data as AIElementDetail;
+    expect(el.initialState).toEqual({ styleVariant: { box: { base: 'lg' } }, visibility: false });
+  });
+
+  it('warns when an element applies a variant its class does not declare', () => {
+    const res = validate(
+      {
+        operations: [
+          {
+            type: 'patchElement',
+            pageRef: 'home',
+            ref: 'c1',
+            initialState: { styleVariant: { box: { base: 'ghost' } } }
+          }
+        ]
+      },
+      buildSpace()
+    );
+    expect(res.valid).toBe(true);
+    expect(res.warnings.some(w => w.includes('ghost'))).toBe(true);
+  });
+
+  it('does not warn for a declared variant, nor for one created in the same batch', () => {
+    const res = validate(
+      {
+        operations: [
+          { type: 'patchElement', pageRef: 'home', ref: 'c1', initialState: { styleVariant: { box: { base: 'lg' } } } },
+          { type: 'upsertDefinition', ref: 'box', variants: { fresh: { desktop: { color: 'red' } } } },
+          {
+            type: 'patchElement',
+            pageRef: 'home',
+            ref: 'c1',
+            initialState: { styleVariant: { box: { base: 'fresh' } } }
+          }
+        ]
+      },
+      buildSpace()
+    );
+    expect(res.warnings.some(w => w.includes('lg') || w.includes('fresh'))).toBe(false);
+  });
+});
+
+describe('mcp-ai data bindings', () => {
+  it('upserts, patches and deletes a binding; reads reflect each step', async () => {
+    const cap = capturing(buildSpace());
+    let res = await apply(
+      {
+        operations: [
+          {
+            type: 'upsertBinding',
+            pageRef: 'home',
+            ref: 'c1',
+            category: 'attributes',
+            binding: { to: 'items', source: 'apiContainer_x.data' }
+          }
+        ]
+      },
+      cap.saved(),
+      cap.persisters
+    );
+    expect(res.summary.created).toBe(1);
+    let el = readResource(cap.saved(), 'main', 'plitzi://schema/main/elements/c1')?.data as AIElementDetail;
+    expect(el.bindings?.attributes?.[0]).toMatchObject({ to: 'items', source: 'apiContainer_x.data' });
+
+    res = await apply(
+      {
+        operations: [
+          {
+            type: 'patchBinding',
+            pageRef: 'home',
+            ref: 'c1',
+            category: 'attributes',
+            to: 'items',
+            source: 'other.data'
+          }
+        ]
+      },
+      cap.saved(),
+      cap.persisters
+    );
+    expect(res.summary.updated).toBe(1);
+    el = readResource(cap.saved(), 'main', 'plitzi://schema/main/elements/c1')?.data as AIElementDetail;
+    expect(el.bindings?.attributes?.[0].source).toBe('other.data');
+
+    await apply(
+      { operations: [{ type: 'deleteBinding', pageRef: 'home', ref: 'c1', category: 'attributes', to: 'items' }] },
+      cap.saved(),
+      cap.persisters
+    );
+    el = readResource(cap.saved(), 'main', 'plitzi://schema/main/elements/c1')?.data as AIElementDetail;
+    expect(el.bindings).toBeUndefined();
+  });
+
+  it('exposes an observed data-sources catalog', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      {
+        operations: [
+          {
+            type: 'upsertBinding',
+            pageRef: 'home',
+            ref: 'c1',
+            category: 'attributes',
+            binding: { to: 'items', source: 'apiContainer_x.data' }
+          }
+        ]
+      },
+      cap.saved(),
+      cap.persisters
+    );
+    const catalog = readResource(cap.saved(), 'main', 'plitzi://data-sources/main')?.data as {
+      sources: string[];
+      targets: Record<string, string[]>;
+    };
+    expect(catalog.sources).toContain('apiContainer_x.data');
+    expect(catalog.targets.attributes).toContain('items');
+  });
+});
+
+describe('mcp-ai interactions', () => {
+  const flowOp: Operation = {
+    type: 'upsertInteractionFlow',
+    pageRef: 'home',
+    ref: 'c1',
+    nodes: [
+      { nodeType: 'trigger', action: 'onClick', title: 'Click' },
+      { nodeType: 'globalCallback', action: 'login', title: 'Log in', params: { mode: 'token' } }
+    ]
+  };
+
+  it('creates a flow from ordered steps and reads it back in order', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply({ operations: [flowOp] }, cap.saved(), cap.persisters);
+    expect(res.summary.created).toBe(1);
+    const el = readResource(cap.saved(), 'main', 'plitzi://schema/main/elements/c1')?.data as AIElementDetail;
+    const flow = el.interactions?.[0];
+    expect(flow?.nodes.map(n => n.action)).toEqual(['onClick', 'login']);
+    expect(flow?.flowId).toBe(flow?.nodes[0].id);
+  });
+
+  it('patches one node and deletes a single step, re-linking the flow', async () => {
+    const cap = capturing(buildSpace());
+    const created = await apply({ operations: [flowOp] }, cap.saved(), cap.persisters);
+    const el0 = created.elements?.[0] as AIElementDetail;
+    const callbackId = el0.interactions?.[0].nodes[1].id ?? '';
+
+    await apply(
+      {
+        operations: [{ type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: callbackId, title: 'Renamed' }]
+      },
+      cap.saved(),
+      cap.persisters
+    );
+    let el = readResource(cap.saved(), 'main', 'plitzi://schema/main/elements/c1')?.data as AIElementDetail;
+    expect(el.interactions?.[0].nodes[1].title).toBe('Renamed');
+
+    await apply(
+      { operations: [{ type: 'deleteInteraction', pageRef: 'home', ref: 'c1', nodeId: callbackId }] },
+      cap.saved(),
+      cap.persisters
+    );
+    el = readResource(cap.saved(), 'main', 'plitzi://schema/main/elements/c1')?.data as AIElementDetail;
+    expect(el.interactions?.[0].nodes.map(n => n.action)).toEqual(['onClick']);
+  });
+
+  it('rejects a flow whose first node is not a trigger', () => {
+    const res = validate(
+      {
+        operations: [
+          {
+            type: 'upsertInteractionFlow',
+            pageRef: 'home',
+            ref: 'c1',
+            nodes: [{ nodeType: 'callback', action: 'login', title: 'Log in' }]
+          }
+        ]
+      },
+      buildSpace()
+    );
+    expect(res.valid).toBe(false);
+    expect(res.errors.some(e => e.message.includes('trigger'))).toBe(true);
+  });
+
+  it('rejects deleteInteraction without exactly one of flowId/nodeId', () => {
+    const res = validate({ operations: [{ type: 'deleteInteraction', pageRef: 'home', ref: 'c1' }] }, buildSpace());
+    expect(res.valid).toBe(false);
+    expect(res.errors.some(e => e.message.includes('exactly one'))).toBe(true);
+  });
+});
+
+describe('mcp-ai deep validation of when (RuleGroup) and transformers', () => {
+  const withWhen = (when: unknown): unknown => ({
+    type: 'upsertBinding',
+    pageRef: 'home',
+    ref: 'c1',
+    category: 'attributes',
+    binding: { to: 'items', source: 'api.data', when }
+  });
+
+  it('accepts a well-formed RuleGroup guard', () => {
+    const when = { combinator: 'and', rules: [{ field: 'user.role', operator: '=', value: 'admin' }] };
+    expect(operation.safeParse(withWhen(when)).success).toBe(true);
+  });
+
+  it('accepts nested groups', () => {
+    const when = {
+      combinator: 'or',
+      rules: [
+        { field: 'a', operator: 'notEmpty', value: '' },
+        { combinator: 'and', rules: [{ field: 'b', operator: '=', value: 1 }] }
+      ]
+    };
+    expect(operation.safeParse(withWhen(when)).success).toBe(true);
+  });
+
+  it('rejects an invalid combinator', () => {
+    expect(operation.safeParse(withWhen({ combinator: 'xor', rules: [] })).success).toBe(false);
+  });
+
+  it('rejects an invalid operator', () => {
+    const when = { combinator: 'and', rules: [{ field: 'a', operator: 'LIKE', value: 'x' }] };
+    expect(operation.safeParse(withWhen(when)).success).toBe(false);
+  });
+
+  it('rejects a rule missing its field', () => {
+    const when = { combinator: 'and', rules: [{ operator: '=', value: 'x' }] };
+    expect(operation.safeParse(withWhen(when)).success).toBe(false);
+  });
+
+  it('rejects rules that are not an array', () => {
+    expect(operation.safeParse(withWhen({ combinator: 'and', rules: {} })).success).toBe(false);
+  });
+
+  it('validates the same RuleGroup on an interaction step', () => {
+    const flow = (when: unknown): unknown => ({
+      type: 'upsertInteractionFlow',
+      pageRef: 'home',
+      ref: 'c1',
+      nodes: [{ nodeType: 'trigger', action: 'onClick', title: 'Click', when }]
+    });
+    expect(operation.safeParse(flow({ combinator: 'and', rules: [] })).success).toBe(true);
+    expect(operation.safeParse(flow({ combinator: 'nope', rules: [] })).success).toBe(false);
+  });
+
+  it('rejects a malformed transformer (params must be a string map)', () => {
+    const op = {
+      type: 'upsertBinding',
+      pageRef: 'home',
+      ref: 'c1',
+      category: 'attributes',
+      binding: { to: 'items', source: 'api.data', transformers: [{ action: 'toUpper', params: { x: 5 } }] }
+    };
+    expect(operation.safeParse(op).success).toBe(false);
+  });
+
+  it('rejects a transformer missing its action', () => {
+    const op = {
+      type: 'upsertBinding',
+      pageRef: 'home',
+      ref: 'c1',
+      category: 'attributes',
+      binding: { to: 'items', source: 'api.data', transformers: [{ params: {} }] }
+    };
+    expect(operation.safeParse(op).success).toBe(false);
+  });
+});

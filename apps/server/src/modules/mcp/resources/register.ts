@@ -54,6 +54,16 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
     ['Global styles', `plitzi://global-styles/${env}`, 'Element types that have a site-wide global style'],
     ['Style variables', `plitzi://style-variables/${env}`, 'Design tokens by category'],
     ['Schema variables', `plitzi://schema-variables/${env}`, 'Space-level values referenced via {{name}}'],
+    [
+      'Interactions catalog',
+      `plitzi://interactions/${env}`,
+      'Interaction actions observed in this space, grouped by node type — the vocabulary for upsertInteractionFlow'
+    ],
+    [
+      'Data sources catalog',
+      `plitzi://data-sources/${env}`,
+      'Data-source paths and binding targets observed in this space — the vocabulary for upsertBinding'
+    ],
     // Aliases under the plitzi://schema/{env} root, so the analogous shape agents reach for also resolves (I3).
     ['Style definitions (schema alias)', `plitzi://schema/${env}/definitions`, 'Alias of plitzi://definitions/{env}'],
     [

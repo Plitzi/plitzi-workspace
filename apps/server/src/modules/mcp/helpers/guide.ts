@@ -14,7 +14,14 @@ export const serverInstructions =
   'variants replace them all). An element read (and search include:"detail") inlines the CSS of the definitions ' +
   'it attaches under resolvedStyle, so you rarely need a separate definition read. ' +
   'Refs accept a semantic aiRef or the raw id. CSS is kebab-case (shorthands like border/padding are accepted); ' +
-  'style vars are var(--name), schema vars are {{name}}.';
+  'style vars are var(--name), schema vars are {{name}}. ' +
+  'READERS — do not confuse them: MCP *resources* are the browsable catalog (list them, or open one by URI); ' +
+  'plitzi_search FINDS refs by label/type/attribute; plitzi_read BATCH-fetches URIs you already hold. Reach for ' +
+  'search/read to work; browse resources to discover. ' +
+  'Elements also carry applied style variants + visibility (initialState), data bindings and interaction flows: ' +
+  'edit them with patchElement (initialState), upsertBinding/patchBinding/deleteBinding, and ' +
+  'upsertInteractionFlow/patchInteractionNode/deleteInteraction. An element read shows all three plus ' +
+  'availableVariants (which variant each of its classes offers).';
 
 export const guideText = `# Plitzi AI MCP — usage guide
 
@@ -61,6 +68,10 @@ Never download a whole tree you do not need.
 - \`plitzi://global-styles/{env}\` — element **types** that have a site-wide global style. \`/{componentType}\` for one.
 - \`plitzi://style-variables/{env}\` — design tokens by category. \`/{category}\` for one.
 - \`plitzi://schema-variables/{env}\` — space-level values referenced in props as \`{{name}}\`.
+- \`plitzi://interactions/{env}\` — interaction **actions** observed in this space (grouped by node type): the
+  vocabulary for interaction flows.
+- \`plitzi://data-sources/{env}\` — data-source **paths** and binding targets observed in this space: the
+  vocabulary for data bindings.
 
 The style resources also answer under the \`plitzi://schema/{env}/…\` root as aliases — \`plitzi://schema/{env}/definitions/{ref}\`, \`plitzi://schema/{env}/style-variables/{category}\`, \`plitzi://schema/{env}/schema-variables\` — but prefer the ready-made \`uri\` from search / a write response over hand-building either form.
 
@@ -85,6 +96,17 @@ When you do hold several refs to open (e.g. from a skeleton), read them together
 - \`plitzi_read\` — read many resource **uris in one batch** (pages, elements, definitions, variables). Pass the
   ready-made uris from search / a write response; each result is \`{ uri, stateVersion, data }\` or a teachable error,
   so one bad uri never fails the batch. Use it instead of N single reads whenever you already hold several refs.
+
+## Readers: resources vs plitzi_search vs plitzi_read (do not confuse them)
+Three ways to read, each for a different moment — pick by what you have in hand:
+- **MCP resources** (the \`plitzi://…\` catalog above) — the **browsable index**. List them to discover what exists, or
+  open one by URI when you are exploring. This is the passive catalog, not a tool.
+- **\`plitzi_search\`** — you know *what* you want but not its **ref/uri** ("the hero button"). Search finds it by
+  label/type/attribute and hands back the uri + stateVersion (and, with \`include:"detail"\`, the full element).
+- **\`plitzi_read\`** — you **already hold one or more uris** (from search or a write response) and want their
+  content in one batch. It is the tool form of opening resources, for when you have the addresses.
+Rule of thumb: **discover → resources**, **find a ref → plitzi_search**, **fetch known uris → plitzi_read**. Never
+hand-build a URI to guess your way to an element — search for it instead.
 
 Write tools return what **changed** (\`{ uri, stateVersion }\`) plus counts, and the **full detail of every element
 they created or updated** — each with its own \`uri\` and \`stateVersion\` (\`elements: [...]\`) so a follow-up edit of
@@ -115,6 +137,43 @@ schemas predating aiRef keep working through ids. Creating an element stores its
   - The two share one name space, so a class op refuses a name held by a global and vice-versa (guards against a
     typo silently rewriting every element of a type). If refused, you targeted the wrong kind — switch tools or
     rename. To style one element only, never reach for a global.
+
+## Style variants & element state
+A **variant** is a named CSS override on a definition (e.g. a button class with a \`primary\` variant). It takes two
+steps across the two schemas:
+- **Declare** the variant CSS on the class (style schema): \`upsertDefinition\`/\`patchDefinition\` with
+  \`variants: { "primary": { "desktop": { "background-color": "#111" } } }\` (per slot under \`slots.<slot>.variants\`).
+- **Apply** it to an element (element schema): \`initialState.styleVariant\` =
+  \`{ "<class-ref>": { "base": "primary" } }\` — a slot name instead of \`base\` targets that slot; an array applies
+  several. Set it via \`upsertElement\`/\`patchElement\`.
+An element read reports \`availableVariants\` (which variant each attached class offers) and the element's current
+\`initialState\`, so you can see a button **has** a \`primary\` variant and whether it uses it. If the user asks for a
+variant that does not exist yet, **create it (upsertDefinition variants) and apply it in the same batch**.
+- \`initialState.visibility\` (boolean) sets whether the element starts shown or hidden.
+
+## Data bindings
+Connect a data **source** to an element field. A binding is \`{ to, source, transformers?, when?, enabled? }\` grouped
+by **category**: \`attributes\` (a prop), \`style\` (a style value), \`initialState\` (an initial-state key).
+- \`upsertBinding\` adds one, or replaces the binding already feeding the same \`to\` (or \`id\`).
+- \`patchBinding\` edits an existing one (matched by \`to\`/\`id\`); \`deleteBinding\` removes it.
+Discover valid source paths in \`plitzi://data-sources/{env}\`. Example — feed an API list into a list element:
+\`{ "type": "upsertBinding", "pageRef": "home", "ref": "myList", "category": "attributes",
+  "binding": { "to": "items", "source": "apiContainer_x.data" } }\`.
+
+## Interactions
+An interaction **flow** is a **trigger** (an event like \`onClick\`, \`onPageLoad\`) followed by the callbacks/utilities
+it runs, in order. You pass the steps **in order** and the stored beforeNode/afterNode/flowId links are computed for
+you — never wire them by hand.
+- \`upsertInteractionFlow\` — create or replace one flow. The FIRST node must be a \`trigger\`. Pass \`flowId\` (the
+  trigger's node id) to replace an existing flow. Example:
+  \`{ "type": "upsertInteractionFlow", "pageRef": "home", "ref": "cta", "nodes": [
+    { "nodeType": "trigger", "action": "onClick", "title": "Click" },
+    { "nodeType": "globalCallback", "action": "login", "title": "Log in", "params": {} } ] }\`.
+- \`patchInteractionNode\` — change one step in place (by \`nodeId\`); \`params\` merge onto the node.
+- \`deleteInteraction\` — remove a whole flow (\`flowId\`) or a single step (\`nodeId\`, neighbors re-linked). Provide
+  exactly one.
+Discover valid actions in \`plitzi://interactions/{env}\`. An element read lists its flows as ordered nodes (each with
+its \`id\`), so a follow-up patch/delete needs no extra read.
 
 ## Pages & folders
 Pages can be grouped into **folders** (the sidebar tree). A folder is \`{ ref, name, slug, parentId? }\`; its \`ref\`

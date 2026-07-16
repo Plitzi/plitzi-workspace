@@ -76,6 +76,31 @@ const projectItem = (style: Style, ref: string, accept: (item: StyleItem) => boo
 export const definitionToAI = (style: Style, ref: string): AIDefinition | undefined =>
   projectItem(style, ref, isClassDefinition);
 
+// Variant names a class definition declares, keyed by selector (`base` or a slot). Used to check that an element
+// only applies a variant its class actually defines (initialState.styleVariant). Undefined when the class has no
+// variants at all.
+export const definitionVariantNames = (style: Style, ref: string): Record<string, string[]> | undefined => {
+  const def = definitionToAI(style, ref);
+  if (!def) {
+    return undefined;
+  }
+
+  const result: Record<string, string[]> = {};
+  const baseVariants = Object.keys(def.variants ?? {});
+  if (baseVariants.length > 0) {
+    result.base = baseVariants.sort();
+  }
+
+  for (const [slot, slotDef] of Object.entries(def.slots ?? {})) {
+    const variants = Object.keys(slotDef.variants ?? {});
+    if (variants.length > 0) {
+      result[slot] = variants.sort();
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : undefined;
+};
+
 // Global element selectors that target `componentType` — the CSS equivalent of `button { … }`, affecting EVERY
 // element of that type. Collected so an element read shows the full effective CSS, not just its own classes.
 export const globalStylesForType = (style: Style, componentType: string): AIGlobalStyle[] => {

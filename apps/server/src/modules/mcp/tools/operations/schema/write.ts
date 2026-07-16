@@ -1,9 +1,9 @@
-import { generateObjectId } from '../../../helpers';
+import { fail, findPageByRef, generateObjectId, resolveRef } from '../../../helpers';
 
-import type { ElementInput } from './shared';
-import type { Space } from '../../../helpers';
+import type { ElementInput, InitialStateInput } from './shared';
+import type { OpResult, Space } from '../../../helpers';
 import type { Env } from '../../../types';
-import type { Element } from '@plitzi/sdk-shared';
+import type { Element, ElementDefinition } from '@plitzi/sdk-shared';
 
 // Shared mutation utilities for the element-schema handlers: stale-resource URI builders and the low-level tree
 // operations (create/place/detach) the upsert/move handlers reuse.
@@ -29,6 +29,34 @@ export const placeChild = (parent: Element, childId: string, index?: number): vo
   } else {
     items.splice(index, 0, childId);
   }
+};
+
+// Write the two initial-state fields agents control (which variant each class uses + initial visibility) onto an
+// element, always preserving any other initialState keys (styleSelectors overrides, plugin-specific). `merge`
+// overlays styleVariant per class/selector (patch); otherwise it replaces the whole styleVariant map (upsert).
+export const writeInitialState = (el: Element, input: InitialStateInput, merge: boolean): void => {
+  const current = el.definition.initialState ?? {};
+  const next: NonNullable<ElementDefinition['initialState']> = { ...current };
+
+  if (input.styleVariant !== undefined) {
+    if (merge) {
+      type StyleVariantMap = NonNullable<NonNullable<ElementDefinition['initialState']>['styleVariant']>;
+      const merged: StyleVariantMap = { ...current.styleVariant };
+      for (const [cls, selectors] of Object.entries(input.styleVariant)) {
+        merged[cls] = { ...merged[cls], ...selectors };
+      }
+
+      next.styleVariant = merged;
+    } else {
+      next.styleVariant = input.styleVariant;
+    }
+  }
+
+  if (input.visibility !== undefined) {
+    next.visibility = input.visibility;
+  }
+
+  el.definition.initialState = next;
 };
 
 export const createElement = (
@@ -60,7 +88,37 @@ export const createElement = (
   };
   placeChild(parent, id, index);
 
+  if (input.initialState) {
+    writeInitialState(space.schema.flat[id], input.initialState, false);
+  }
+
   for (const child of input.children ?? []) {
     createElement(space, page, child, space.schema.flat[id], undefined);
   }
+};
+
+/** Resolve a non-page element within a page for the element-scoped ops (bindings, interactions). Returns the
+ *  element, or a teachable OpResult when the page or element ref does not resolve — so each op reports the same
+ *  errors as patchElement without repeating them. */
+export const resolveElement = (
+  space: Space,
+  env: Env,
+  pageRef: string,
+  ref: string
+): { el: Element } | { error: OpResult } => {
+  const page = findPageByRef(space.schema, pageRef);
+  if (!page) {
+    return {
+      error: fail('pageRef', `Page "${pageRef}" not found`, `Read plitzi://schema/${env}/pages for valid refs`)
+    };
+  }
+
+  const el = resolveRef(space.schema, page, ref);
+  if (!el || el.id === page.id) {
+    return {
+      error: fail('ref', `Element "${ref}" not found in page "${pageRef}"`, 'Use an existing element ref or id')
+    };
+  }
+
+  return { el };
 };

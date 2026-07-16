@@ -1,5 +1,6 @@
 import { envelope } from './envelope';
 import { guideText } from '../helpers/guide';
+import { buildDataSourceCatalog, buildInteractionCatalog } from '../tools/operations/schema/observed';
 import { buildTypeRegistry } from '../tools/operations/schema/registry';
 import { foldersToAI, pageSummariesToAI, schemaVariablesToAI } from '../tools/operations/schema/translator';
 import { cssProperties } from '../tools/operations/style/cssCatalog';
@@ -24,6 +25,8 @@ export const readPrimerResource = (space: Space, env: Env, uri: string): Resourc
     folders: foldersToAI(space.schema),
     definitions: definitionRefs(space.style),
     styleVariables: styleVariablesToAI(space.style),
-    schemaVariables: schemaVariablesToAI(space.schema, false)
+    schemaVariables: schemaVariablesToAI(space.schema, false),
+    interactions: buildInteractionCatalog(space.schema),
+    dataSources: buildDataSourceCatalog(space.schema)
   });
 };

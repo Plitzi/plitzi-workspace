@@ -10,10 +10,14 @@ import {
   slugRouteParams
 } from '../../helpers';
 import { buildTypeRegistry, expandShorthand, isCssProperty, suggestCssProperty } from '../../resources';
+import { observedDataSources, observedInteractionActions } from '../operations/schema/observed';
+import { definitionVariantNames } from '../operations/style/translator';
 
 import type { Space } from '../../helpers';
 import type { ValidationError, ValidationResult } from '../../types';
 import type { DefinitionSlotPatch, ElementInput, Operation } from '../operations';
+import type { InitialStateInput } from '../operations/schema/shared';
+import type { Style } from '@plitzi/sdk-shared';
 
 const REF_RE = /^[a-zA-Z0-9._-]+$/;
 const MAX_OPS = 100;
@@ -36,6 +40,10 @@ interface ValidationCtx {
   typeProps: Map<string, Set<string>>; // observed prop keys per element type (I5)
   schemaVars: Set<string>; // valid {{name}}: space schema variables ∪ page route params ∪ batch-declared
   styleVars: Set<string>; // valid var(--name): design tokens across all categories
+  style: Style; // to check that an applied variant is actually declared on its class
+  batchVariants: Map<string, Set<string>>; // variant names each class declares within this batch (class → names)
+  observedActions: Set<string>; // interaction actions seen anywhere in the space (lenient warning basis)
+  observedSources: Set<string>; // binding source paths seen anywhere in the space (lenient warning basis)
 }
 
 const warnOnce = (ctx: ValidationCtx, message: string): void => {
@@ -101,6 +109,56 @@ const checkTypeProps = (
         'It may still be valid — verify against plitzi://types.'
     );
   }
+};
+
+// Warn when an element applies a variant its class does not declare (and the batch does not create). Precise: we
+// know the class's declared variants, so a hallucinated name (e.g. a "primary" that no definition defines) is
+// caught — but it stays a warning because the batch may add it, or a global/plugin variant may exist.
+const checkVariantApplication = (
+  initialState: InitialStateInput | undefined,
+  path: string,
+  ctx: ValidationCtx
+): void => {
+  for (const [cls, selectors] of Object.entries(initialState?.styleVariant ?? {})) {
+    const declared = definitionVariantNames(ctx.style, cls);
+    const batch = ctx.batchVariants.get(cls);
+    for (const [selector, variant] of Object.entries(selectors)) {
+      const names = Array.isArray(variant) ? variant : [variant];
+      for (const name of names) {
+        const known = (declared?.[selector]?.includes(name) ?? false) || (batch?.has(name) ?? false);
+        if (!known) {
+          const avail = declared
+            ? ` (declares: ${Object.entries(declared)
+                .map(([s, v]) => `${s}:${v.join('/')}`)
+                .join(', ')})`
+            : '';
+          warnOnce(
+            ctx,
+            `Element applies variant "${name}" on class "${cls}" (${selector}) at ${path}, but that class defines ` +
+              `no such variant${avail}. Create it via upsertDefinition/patchDefinition "variants", or fix the name.`
+          );
+        }
+      }
+    }
+  }
+};
+
+const checkObservedName = (
+  value: string | undefined,
+  observed: Set<string>,
+  kind: string,
+  resource: string,
+  path: string,
+  ctx: ValidationCtx
+): void => {
+  if (!value || observed.size === 0 || observed.has(value)) {
+    return;
+  }
+
+  warnOnce(
+    ctx,
+    `${kind} "${value}" at ${path} was not seen in this space. Verify against ${resource}; it may still be valid.`
+  );
 };
 
 const checkRef = (ref: string, path: string, ctx: ValidationCtx): void => {
@@ -255,6 +313,30 @@ const batchDeclaredFolders = (ops: Operation[]): Set<string> => {
   return refs;
 };
 
+// Variant names each class declares within this same batch (upsertDefinition/patchDefinition), so applying a
+// variant an earlier op in the batch just created does not false-warn.
+const batchDeclaredVariants = (ops: Operation[]): Map<string, Set<string>> => {
+  const map = new Map<string, Set<string>>();
+  for (const op of ops) {
+    if (op.type !== 'upsertDefinition' && op.type !== 'patchDefinition') {
+      continue;
+    }
+
+    const names = new Set<string>(Object.keys(op.variants ?? {}));
+    for (const slot of Object.values(op.slots ?? {})) {
+      for (const name of Object.keys(slot.variants ?? {})) {
+        names.add(name);
+      }
+    }
+
+    if (names.size > 0) {
+      map.set(op.ref, new Set([...(map.get(op.ref) ?? []), ...names]));
+    }
+  }
+
+  return map;
+};
+
 export const validateOperations = (space: Space, ops: Operation[]): ValidationResult => {
   const registry = buildTypeRegistry(space.schema);
   const batchPages = batchDeclaredPages(ops);
@@ -271,7 +353,11 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
       ...routeParamNames(space.schema),
       ...batchDeclaredVars(ops)
     ]),
-    styleVars: new Set(Object.values(space.style.variables).flatMap(group => Object.keys(group)))
+    styleVars: new Set(Object.values(space.style.variables).flatMap(group => Object.keys(group))),
+    style: space.style,
+    batchVariants: batchDeclaredVariants(ops),
+    observedActions: observedInteractionActions(space.schema),
+    observedSources: observedDataSources(space.schema)
   };
 
   if (ops.length > MAX_OPS) {
@@ -289,7 +375,13 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
       (op.type === 'upsertElement' ||
         op.type === 'patchElement' ||
         op.type === 'deleteElement' ||
-        op.type === 'moveElement') &&
+        op.type === 'moveElement' ||
+        op.type === 'upsertBinding' ||
+        op.type === 'patchBinding' ||
+        op.type === 'deleteBinding' ||
+        op.type === 'upsertInteractionFlow' ||
+        op.type === 'patchInteractionNode' ||
+        op.type === 'deleteInteraction') &&
       op.pageRef
     ) {
       if (!findPageByRef(space.schema, op.pageRef) && !batchPages.has(op.pageRef)) {
@@ -306,6 +398,7 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
     switch (op.type) {
       case 'upsertElement':
         checkElementInput(op.element, `${base}.element`, ctx, new Set());
+        checkVariantApplication(op.element.initialState, `${base}.element.initialState`, ctx);
         break;
       case 'patchElement': {
         checkRef(op.ref, `${base}.ref`, ctx);
@@ -323,6 +416,7 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
           }
         }
 
+        checkVariantApplication(op.initialState, `${base}.initialState`, ctx);
         break;
       }
       case 'upsertDefinition':
@@ -413,6 +507,74 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
             message: `Unknown style-variable category "${op.category}"`,
             hint: 'Use one of the valid categories',
             validValues: STYLE_CATEGORIES
+          });
+        }
+
+        break;
+      case 'upsertBinding':
+        checkRef(op.ref, `${base}.ref`, ctx);
+        checkObservedName(
+          op.binding.source,
+          ctx.observedSources,
+          'Data source',
+          'plitzi://data-sources',
+          `${base}.binding.source`,
+          ctx
+        );
+        break;
+      case 'patchBinding':
+        checkRef(op.ref, `${base}.ref`, ctx);
+        checkObservedName(
+          op.source,
+          ctx.observedSources,
+          'Data source',
+          'plitzi://data-sources',
+          `${base}.source`,
+          ctx
+        );
+        break;
+      case 'deleteBinding':
+        checkRef(op.ref, `${base}.ref`, ctx);
+        break;
+      case 'upsertInteractionFlow':
+        checkRef(op.ref, `${base}.ref`, ctx);
+        if (op.nodes[0] && op.nodes[0].nodeType !== 'trigger') {
+          ctx.errors.push({
+            path: `${base}.nodes[0].nodeType`,
+            message: 'The first node of a flow must be a trigger',
+            hint: 'Put the trigger first; the callbacks/utilities that run after it follow in order'
+          });
+        }
+
+        op.nodes.forEach((node, n) =>
+          checkObservedName(
+            node.action,
+            ctx.observedActions,
+            'Interaction action',
+            'plitzi://interactions',
+            `${base}.nodes[${n}].action`,
+            ctx
+          )
+        );
+        break;
+      case 'patchInteractionNode':
+        checkRef(op.ref, `${base}.ref`, ctx);
+        checkObservedName(
+          op.action,
+          ctx.observedActions,
+          'Interaction action',
+          'plitzi://interactions',
+          `${base}.action`,
+          ctx
+        );
+        break;
+      case 'deleteInteraction':
+        checkRef(op.ref, `${base}.ref`, ctx);
+        if (Boolean(op.flowId) === Boolean(op.nodeId)) {
+          ctx.errors.push({
+            path: `${base}.nodeId`,
+            message: 'Provide exactly one of flowId or nodeId',
+            hint: 'flowId removes a whole flow; nodeId removes a single step'
           });
         }
 

@@ -74,6 +74,56 @@ export interface AIPageStyles {
   globalStyles: AIGlobalStyle[];
 }
 
+/** Which variant each attached class/selector currently uses on this element (element.definition.initialState
+ *  .styleVariant). Outer key = class ref, inner key = selector (`base` or a slot), value = variant name(s). */
+export type AIStyleVariantSelection = Record<string, Record<string, string | string[]>>;
+
+/** The element's initial (default) state overrides. `styleVariant` picks which variant of its classes is active;
+ *  `visibility` hides/shows it initially. Kept minimal — the two fields agents actually set. */
+export interface AIInitialState {
+  styleVariant?: AIStyleVariantSelection;
+  visibility?: boolean;
+}
+
+/** One data binding: connect a data `source` to the element field named by `to` (a prop, a style value, or an
+ *  initial-state key, per its category). `transformers` reshape the value; `when` gates the binding. */
+export interface AIBinding {
+  id: string;
+  to: string;
+  source: string;
+  transformers?: Array<{ action: string; params: Record<string, string> }>;
+  when?: unknown;
+  enabled?: boolean;
+}
+
+/** Data bindings on an element, grouped by what they feed: element props (`attributes`), style values (`style`),
+ *  or initial-state keys (`initialState`). */
+export type AIBindings = Partial<Record<'attributes' | 'style' | 'initialState', AIBinding[]>>;
+
+export type AIInteractionNodeType = 'trigger' | 'globalCallback' | 'callback' | 'utility';
+
+/** One step of an interaction flow, projected from the stored doubly-linked node. Order is conveyed by the
+ *  position in `AIInteractionFlow.nodes`; the stored beforeNode/afterNode/flowId links are computed on write. */
+export interface AIInteractionNode {
+  id: string;
+  title: string;
+  nodeType: AIInteractionNodeType;
+  action: string;
+  params?: Record<string, unknown>;
+  enabled?: boolean;
+  when?: unknown;
+  /** Source element the callback targets (globalCallback/utility). Defaults to this element on write. */
+  elementId?: string;
+  preview?: Record<string, unknown>;
+}
+
+/** One interaction flow on an element: a trigger (first node) followed by the callbacks/utilities it runs, in
+ *  order. `flowId` equals the trigger node id. */
+export interface AIInteractionFlow {
+  flowId: string;
+  nodes: AIInteractionNode[];
+}
+
 export interface AIElementDetail {
   ref: string;
   type: string;
@@ -89,6 +139,15 @@ export interface AIElementDetail {
   /** Global (type 'element') styles that also affect this element because they target its type — every element of
    *  the type inherits them. Read-only here (not editable as definitions); shown so the effective CSS is complete. */
   globalStyles?: AIGlobalStyle[];
+  /** Variant names each attached class exposes (deduped across its selectors), so the agent knows a class HAS a
+   *  variant (e.g. a button class with "primary") before applying it via `initialState.styleVariant`. */
+  availableVariants?: Record<string, string[]>;
+  /** Which variant/visibility this element applies today (element.definition.initialState). */
+  initialState?: AIInitialState;
+  /** Data bindings on this element, grouped by category. */
+  bindings?: AIBindings;
+  /** Interaction flows on this element (event → ordered callbacks). */
+  interactions?: AIInteractionFlow[];
   childRefs?: string[];
 }
 

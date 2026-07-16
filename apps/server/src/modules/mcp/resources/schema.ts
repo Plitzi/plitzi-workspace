@@ -1,5 +1,6 @@
 import { findElementByRef, findPageByRef } from '../helpers';
 import { envelope } from './envelope';
+import { buildDataSourceCatalog, buildInteractionCatalog } from '../tools/operations/schema/observed';
 import {
   elementDetailToAI,
   folderRefToAI,
@@ -58,6 +59,14 @@ export const readSchemaResource = (
 
   if (uri === `plitzi://schema-variables/${env}`) {
     return envelope(schemaVariablesToAI(space.schema));
+  }
+
+  if (uri === `plitzi://interactions/${env}`) {
+    return envelope(buildInteractionCatalog(space.schema));
+  }
+
+  if (uri === `plitzi://data-sources/${env}`) {
+    return envelope(buildDataSourceCatalog(space.schema));
   }
 
   return undefined;
