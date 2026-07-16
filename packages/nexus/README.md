@@ -52,8 +52,11 @@ store.get('user.name');                 // 'Carlos'  (one path, no full merge)
 store.get();                            // entire state
 store.set('user.name', 'Ada');          // typed dot-path write
 store.set('count', n => n + 1);         // updater form
+store.set('user.name', undefined, { unmount: true }); // DELETE the key (see "Removing a path")
 const off = store.watch('user.name', name => render(name)); // fires only for this path
 ```
+
+Every write takes an optional third argument, `SetStateOptions = { canPropagate?; unmount? }` — see [Removing a path](#removing-a-path-unmount). To freeze paths against writes, see [Read-only paths](#read-only-paths).
 
 ## What each piece is for
 
@@ -129,6 +132,9 @@ const store = createStore<MyState>({ count: 0 }, {
 
 // With an id, so descendants can target it by id (see "Named stores" below)
 const store = createStore<MyState>({ count: 0 }, { id: 'root' });
+
+// Freeze paths against writes (see "Read-only paths" below)
+const store = createStore<MyState>({ count: 0 }, { readOnly: ['config.theme'] });
 ```
 
 `StoreApi` exposes `getState`, `getPath`, `setState`, `subscribe`, `subscribePath`, `subscribeChange`,
@@ -389,6 +395,44 @@ setFlat(id, element);               // sets schema.flat.${id}
 setFlat(`${id}.attributes`, attrs); // sets schema.flat.${id}.attributes
 setFlat(undefined, flatObj);        // replaces schema.flat
 ```
+
+## Removing a path (`unmount`)
+
+Every write takes an optional third argument: `SetStateOptions = { canPropagate?; unmount? }`. `canPropagate: false` commits silently (no subscriber wakes); `unmount: true` **deletes** the key at `path` instead of writing `undefined`, so the path leaves no dead entry — an object key or array slot that would otherwise linger as `undefined`.
+
+Reach for it whenever you register/unregister things under a dynamic key (a source registry, a per-id cache) and don't want `Object.keys` / `Object.values` to see stale `undefined` holes.
+
+```ts
+store.set('sources.abc', { id: 'abc', meta });          // register
+store.set('sources.abc', undefined, { unmount: true }); // unregister — key is gone
+Object.hasOwn(store.get('sources'), 'abc');             // false
+```
+
+- **Nested paths** delete only the leaf and keep siblings, with structural sharing (`a.b` removed → `a` is a new object; untouched subtrees are shared by reference).
+- A numeric leaf on an **array** is **spliced** out (later indices shift down), never left as a hole.
+- Removing an **absent** key is a **no-op** — no change is emitted, no subscriber wakes.
+- Writing a value back later **recreates** the path, rebuilding any container the delete had emptied. In a scope chain the re-write delegates to the owning scope just like the original write.
+- `beforeChange` interceptors still run (with `value: undefined`), so a validation or [read-only](#read-only-paths) guard can veto the removal.
+- `unmount` is **ignored** for a whole-state write (`set(undefined, next)`).
+
+## Read-only paths
+
+Pass `readOnly` to `createStore` to freeze one or more paths. A write to a read-only path — or to an **ancestor** or **descendant** of one — **throws in development** (surfacing the bug at its source) and is **silently dropped in production** (so it never crashes a render).
+
+```ts
+const store = createStore<State>(initial, { readOnly: ['config.theme', 'license'] });
+
+store.set('config.theme', 'dark');    // dev: throws · prod: no-op
+store.set('config', { theme: 'x' });  // ancestor — also blocked (would replace the frozen subtree)
+store.set('config.theme.shade', 'x'); // descendant — also blocked
+store.set('config.other', 'ok');      // sibling — allowed
+```
+
+- **Prefix-safe matching**: `readOnly: ['config']` blocks `config` and `config.*` but never `configuration`; `['a.b']` never blocks `a.bc`.
+- The **updater form** throws *before* the updater runs; an `unmount` of a protected path is blocked too.
+- A **whole-state replace** (`set(undefined, next)`) is checked per read-only path by **reference** — blocked if the value at that path changes identity (rebuilding an equal-but-new object still counts as a change).
+- Enforcement is **per scope, on that scope's own writes**. A child that delegates a write up is rejected by the parent's `readOnly`; a key the child owns locally is not governed by an ancestor's `readOnly`.
+- The check is **skipped entirely** when `readOnly` is omitted — zero cost by default.
 
 ## `createStoreHook`
 

@@ -40,6 +40,13 @@
   `useStoreHistory`. `vue` is an optional peer dependency (`^3.4`).
 - Added runnable examples (`examples/`) and integration docs (`docs/integrations/`) for React, Next.js, Astro 6 (LTS),
   Astro 7, Vue and Svelte.
+- **`unmount` write option.** Every write now takes an optional third argument `SetStateOptions = { canPropagate?;
+  unmount? }`. `set(path, undefined, { unmount: true })` **deletes** the key at `path` (splicing array indices) instead
+  of leaving a dead `undefined`, so registries keyed by dynamic id leave no stale entries. Nested deletes keep siblings
+  with structural sharing, interceptors can veto them, and writing a value back recreates the path.
+- **Read-only paths.** `createStore(init, { readOnly: [...] })` freezes paths: a write to a read-only path — or to an
+  ancestor/descendant of one — throws in development and no-ops in production. Prefix-safe matching, enforced per scope
+  on that scope's own writes, zero cost when unused.
 
 ### Breaking Changes
 

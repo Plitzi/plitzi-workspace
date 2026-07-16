@@ -110,6 +110,20 @@ export const FEATURES: Feature[] = [
       'store.batch(fn) coalesces many writes into one wake pass — subscribers, derived values and listeners fire once at the end, not once per write. Reads inside the batch still see each change immediately.'
   },
   {
+    icon: '🧹',
+    group: 'Core',
+    title: 'Delete paths, not just set them',
+    description:
+      'set(path, undefined, { unmount: true }) removes the key entirely instead of leaving a dead undefined behind — arrays are spliced, siblings and untouched subtrees are shared. Ideal for registries keyed by dynamic id: write a value back later and the path is recreated.'
+  },
+  {
+    icon: '🔒',
+    group: 'Core',
+    title: 'Read-only paths',
+    description:
+      'Freeze any path with createStore(init, { readOnly: [...] }). Writes to it — or its ancestors and descendants — throw in development and no-op in production. Prefix-safe matching, enforced per scope, zero cost when unused.'
+  },
+  {
     icon: '🪆',
     group: 'Composition & scale',
     title: 'Scoped stores',
@@ -565,6 +579,35 @@ store.batch(() => {
 // Nestable — only the OUTERMOST batch flushes. Change observers
 // (logger / history / persist) still see each write, so undo
 // stays granular and persistence mirrors every commit.`
+  },
+  {
+    id: 'guardrails',
+    label: 'unmount & read-only',
+    category: 'advanced',
+    code: `import { createStore } from '@plitzi/nexus';
+
+// Freeze paths: writes to them (or their ancestors/descendants)
+// throw in dev and no-op in production. Prefix-safe: 'config'
+// blocks 'config.*' but never 'configuration'.
+const store = createStore<State>(initial, {
+  readOnly: ['config.theme', 'license']
+});
+
+store.set('config.theme', 'dark'); // dev: throws · prod: dropped
+store.set('config.other', 'ok');   // sibling — allowed
+
+// unmount: DELETE a key instead of leaving a dead \`undefined\`.
+// The third arg is { canPropagate?, unmount? }.
+store.set('sources.abc', { id: 'abc' });          // register
+store.set('sources.abc', undefined, { unmount: true }); // remove
+Object.hasOwn(store.get('sources'), 'abc');       // false
+
+// Nested paths delete only the leaf (siblings kept, structural
+// sharing); array indices are spliced, not left as holes.
+store.set('list.1', undefined, { unmount: true }); // [a, c]
+
+// Write a value back later and the path is recreated:
+store.set('sources.abc', { id: 'abc-again' });    // key returns`
   },
   {
     id: 'async',
