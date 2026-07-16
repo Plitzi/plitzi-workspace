@@ -140,6 +140,20 @@ export type SSRRscData = {
   serverData?: Record<string, unknown>;
 };
 
+/** Semantic metadata for one element type, so the MCP can tell an agent what the type DOES (not just that it
+ *  exists). `category` groups it (e.g. provider, structure, media); `custom` marks a plugin-provided type. */
+export type ComponentCatalogEntry = {
+  label?: string;
+  description?: string;
+  category?: string;
+  custom?: boolean;
+};
+
+/** Element type → its semantic metadata, keyed by the `type` string used in the schema. Covers the plugin
+ *  (custom) element types installed on a space; the MCP layers its own curated descriptions of the built-in
+ *  types on top. */
+export type ComponentCatalog = Record<string, ComponentCatalogEntry>;
+
 export type SSRAdapters = {
   getOfflineData: (spaceId: number, environment: string, revision?: number) => Promise<OfflineDataRaw | undefined>;
   getSpaceDeployment: (req: SSRRequest) => Promise<SSRSpaceDeployment>;
@@ -156,6 +170,10 @@ export type SSRAdapters = {
   getSchema?: (spaceId: number, environment: Environment) => Promise<Schema | undefined>;
   /** Read the full style document (with `platform`/`mode`, which the MCP definitions resource requires). */
   getStyle?: (spaceId: number, environment: Environment) => Promise<Style | undefined>;
+  /** Read the semantic catalog of the space's PLUGIN (custom) element types — label/description/category from
+   *  each installed plugin's manifest — so the MCP `plitzi://types` resource can explain what custom elements do.
+   *  The MCP already knows the built-in types. When omitted, custom types surface with their observed label only. */
+  getComponentCatalog?: (spaceId: number, environment: Environment) => Promise<ComponentCatalog | undefined>;
   /** Persist the element schema mutated by the MCP `apply` tool. When omitted, `apply` reports `persisted: false`. */
   saveSchema?: (spaceId: number, environment: Environment, schema: Schema) => Promise<void>;
   /** Persist the style document mutated by the MCP `apply` tool. Implementations must recompute `style.cache`

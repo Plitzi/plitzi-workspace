@@ -1,14 +1,26 @@
+import { BUILTIN_COMPONENTS } from './builtinComponents';
 import { cssProperties } from '../style/cssCatalog';
 
-import type { Schema } from '@plitzi/sdk-shared';
+import type { ComponentCatalog, Schema } from '@plitzi/sdk-shared';
 
 export interface TypePropInfo {
   valueTypes: string[];
   examples: unknown[];
 }
 
+/** Where a type's semantics came from: a Plitzi 'builtin' (curated), a 'plugin' (custom element, from the
+ *  getComponentCatalog adapter), or 'unknown' (observed in the schema but neither knows it — label only). */
+export type TypeSource = 'builtin' | 'plugin' | 'unknown';
+
 export interface TypeInfo {
   count: number;
+  /** Human name of the type (e.g. "Api Container"). */
+  label?: string;
+  /** What the type is FOR — so an agent picks the right one. */
+  description?: string;
+  /** Grouping (provider, structure, media, form, advanced…). */
+  category?: string;
+  source: TypeSource;
   subTypes: string[];
   slots: string[];
   props: Record<string, TypePropInfo>;
@@ -21,6 +33,28 @@ export interface TypeRegistry {
   templateSyntax: { schemaVariable: string; styleVariable: string };
   types: Record<string, TypeInfo>;
 }
+
+// Layer semantic metadata onto an observed type: prefer the curated built-in description, else the plugin catalog
+// (custom element), else fall back to the label observed on the element instances. Mutates in place.
+const enrichType = (typeName: string, info: TypeInfo, catalog: ComponentCatalog | undefined): void => {
+  const builtin = BUILTIN_COMPONENTS[typeName];
+  if (builtin) {
+    info.label = builtin.label;
+    info.description = builtin.description;
+    info.category = builtin.category;
+    info.source = 'builtin';
+
+    return;
+  }
+
+  const custom = catalog?.[typeName];
+  if (custom) {
+    info.label = custom.label ?? info.label;
+    info.description = custom.description;
+    info.category = custom.category;
+    info.source = 'plugin';
+  }
+};
 
 // Only small scalars are kept as prop examples: a long string (e.g. a base64 blockJsx contentCache is thousands
 // of chars) or a whole array/object bloats the type registry — which rides in the cold-start primer — for no
@@ -37,18 +71,27 @@ const isCompactExample = (value: unknown): boolean => {
 
 const NOTE =
   'Element types and their props/slots are observed from the elements that already exist in this space — ' +
-  'they are ground truth, never inferred. Props list the attribute keys seen on each type with example values. ' +
-  'Slots are the styleSelectors keys seen on each type (target them via element.style.slots). CSS in definitions ' +
-  'must use the kebab-case keys in cssProperties. Reference schema variables in props via {{name}} and style ' +
-  'variables in CSS via var(--name).';
+  'they are ground truth, never inferred. Each type also carries a `label`, `description` (what it is FOR) and ' +
+  '`category`, plus a `source`: "builtin" (a Plitzi element), "plugin" (a custom element added via a plugin), or ' +
+  '"unknown" (observed but undescribed — label only). Use the description to pick the right type (e.g. ' +
+  'apiContainer fetches backend data, link navigates between pages). Props list the attribute keys seen on each ' +
+  'type with example values. Slots are the styleSelectors keys seen on each type (target them via ' +
+  'element.style.slots). CSS in definitions must use the kebab-case keys in cssProperties. Reference schema ' +
+  'variables in props via {{name}} and style variables in CSS via var(--name).';
 
-export const buildTypeRegistry = (schema: Schema): TypeRegistry => {
+export const buildTypeRegistry = (schema: Schema, catalog?: ComponentCatalog): TypeRegistry => {
   const types: Record<string, TypeInfo> = {};
 
   for (const el of Object.values(schema.flat)) {
     const typeName = el.definition.type;
-    const info = (types[typeName] ??= { count: 0, subTypes: [], slots: [], props: {} });
+    const info = (types[typeName] ??= { count: 0, source: 'unknown', subTypes: [], slots: [], props: {} });
     info.count += 1;
+
+    // Fallback label from the instance, used only when neither the built-in dictionary nor the plugin catalog
+    // names the type. Instance labels are user-editable, so the first non-empty one is a best-effort hint.
+    if (!info.label && typeof el.definition.label === 'string' && el.definition.label !== '') {
+      info.label = el.definition.label;
+    }
 
     const subType = el.attributes.subType;
     if (typeof subType === 'string' && !info.subTypes.includes(subType)) {
@@ -78,9 +121,10 @@ export const buildTypeRegistry = (schema: Schema): TypeRegistry => {
     }
   }
 
-  for (const info of Object.values(types)) {
+  for (const [typeName, info] of Object.entries(types)) {
     info.subTypes.sort();
     info.slots.sort();
+    enrichType(typeName, info, catalog);
   }
 
   return {

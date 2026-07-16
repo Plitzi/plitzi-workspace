@@ -47,15 +47,18 @@ export const createMcpServer = ({ adapters, getSpaceId, preview, screenshot }: M
 
   const loadSpace = async (): Promise<Space> => {
     const spaceId = await requireSpaceId();
-    const [schema, style] = await Promise.all([
+    // The catalog is optional reference data (plugin type semantics); a failure to load it must never block the
+    // space read, so it is fetched best-effort and degrades to built-in-only type descriptions.
+    const [schema, style, catalog] = await Promise.all([
       adapters.getSchema?.(spaceId, MCP_ENV),
-      adapters.getStyle?.(spaceId, MCP_ENV)
+      adapters.getStyle?.(spaceId, MCP_ENV),
+      adapters.getComponentCatalog?.(spaceId, MCP_ENV).catch(() => undefined)
     ]);
     if (!schema || !style) {
       throw new Error(emptySpaceMessage);
     }
 
-    return { schema, style };
+    return { schema, style, catalog };
   };
 
   const { saveSchema, saveStyle } = adapters;

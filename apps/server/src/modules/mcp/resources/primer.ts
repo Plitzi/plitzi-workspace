@@ -24,7 +24,7 @@ export const readPrimerResource = (space: Space, env: Env, uri: string): Resourc
 
   return envelope({
     guide: guideText,
-    types: buildTypeRegistry(space.schema),
+    types: buildTypeRegistry(space.schema, space.catalog),
     cssProperties,
     pages: pageSummariesToAI(space.schema),
     folders: foldersToAI(space.schema),

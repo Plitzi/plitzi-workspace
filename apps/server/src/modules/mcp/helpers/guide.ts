@@ -48,7 +48,10 @@ Never download a whole tree you do not need.
   **summaries** in one read. Fetch this first instead of the individual resources below. Summaries only — open a
   page skeleton or element for its tree/detail.
 - \`plitzi://guide\` — this guide.
-- \`plitzi://types\` — element types **observed in this space** (ground truth): props, slots, subTypes.
+- \`plitzi://types\` — element types **observed in this space** (ground truth): props, slots, subTypes, plus each
+  type's \`label\`, \`description\` (what it is FOR) and \`category\`, and a \`source\` (\`builtin\` | \`plugin\` | \`unknown\`).
+  Read the descriptions to pick the right type — e.g. \`apiContainer\` fetches backend data into the frontend,
+  \`link\` navigates between pages, \`list\` repeats a template over a data array. \`plugin\` types are custom elements.
 - \`plitzi://css-properties\` — valid kebab-case CSS property keys.
 - \`plitzi://schema/{env}/pages\` — page **summaries** (ref, label, elementCount, folder). No element trees.
 - \`plitzi://folders/{env}\` — page **folders** (the sidebar tree): ref, name, slug, parentId. \`/{ref}\` for one.

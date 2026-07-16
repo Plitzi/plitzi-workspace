@@ -14,7 +14,7 @@ export const readCoreResource = (space: Space, uri: string): ResourceEnvelope<un
   }
 
   if (uri === 'plitzi://types') {
-    return envelope(buildTypeRegistry(space.schema));
+    return envelope(buildTypeRegistry(space.schema, space.catalog));
   }
 
   if (uri === 'plitzi://css-properties') {

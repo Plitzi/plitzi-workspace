@@ -100,6 +100,68 @@ describe('mcp-ai reads (filesystem model)', () => {
     expect(reg.styleVariableCategories).toEqual(['color', 'spacing', 'shadow', 'custom']);
   });
 
+  it('enriches built-in types with curated label/description/category and source', () => {
+    const reg = buildTypeRegistry(buildSpace().schema);
+    expect(reg.types.container.source).toBe('builtin');
+    expect(reg.types.container.label).toBe('Container');
+    expect(reg.types.container.category).toBe('structure');
+    expect(reg.types.container.description).toContain('layout box');
+    expect(reg.types.page.source).toBe('builtin');
+  });
+
+  it('enriches plugin types from the component catalog and falls back to observed label otherwise', () => {
+    const schema = {
+      flat: {
+        p: {
+          id: 'p',
+          attributes: {},
+          definition: { rootId: 'p', label: 'Page', type: 'page', items: ['w', 'u'], styleSelectors: { base: '' } }
+        },
+        w: {
+          id: 'w',
+          attributes: {},
+          definition: {
+            rootId: 'p',
+            parentId: 'p',
+            label: 'Fancy Chart',
+            type: 'chartWidget',
+            items: [],
+            styleSelectors: { base: '' }
+          }
+        },
+        u: {
+          id: 'u',
+          attributes: {},
+          definition: {
+            rootId: 'p',
+            parentId: 'p',
+            label: 'Mystery',
+            type: 'legacyThing',
+            items: [],
+            styleSelectors: { base: '' }
+          }
+        }
+      },
+      definition: { name: 'T', permanentUrl: '' },
+      variables: [],
+      settings: { customCss: '' },
+      pages: ['p'],
+      pageFolders: []
+    } as unknown as Schema;
+    const catalog = {
+      chartWidget: { label: 'Chart Widget', description: 'Renders a chart from a data source', category: 'plugin' }
+    };
+
+    const reg = buildTypeRegistry(schema, catalog);
+    expect(reg.types.chartWidget.source).toBe('plugin');
+    expect(reg.types.chartWidget.label).toBe('Chart Widget');
+    expect(reg.types.chartWidget.description).toBe('Renders a chart from a data source');
+    // Observed but undescribed: source unknown, label falls back to the instance label.
+    expect(reg.types.legacyThing.source).toBe('unknown');
+    expect(reg.types.legacyThing.label).toBe('Mystery');
+    expect(reg.types.legacyThing.description).toBeUndefined();
+  });
+
   it('lists pages as cheap summaries without element trees', () => {
     const res = readResource(buildSpace(), 'main', 'plitzi://schema/main/pages');
     const pages = res?.data as AIPageSummary[];

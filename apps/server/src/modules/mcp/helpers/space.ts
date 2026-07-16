@@ -1,10 +1,12 @@
-import type { Element, PageFolder, Schema, Style } from '@plitzi/sdk-shared';
+import type { ComponentCatalog, Element, PageFolder, Schema, Style } from '@plitzi/sdk-shared';
 
 /** The working view the tools read and mutate: the two Plitzi schemas (elements + style), which the platform
- *  stores and persists as separate documents (Space model / Style model). */
+ *  stores and persists as separate documents (Space model / Style model). `catalog` is read-only reference data
+ *  (plugin element-type semantics), not persisted — used only to enrich the plitzi://types resource. */
 export interface Space {
   schema: Schema;
   style: Style;
+  catalog?: ComponentCatalog;
 }
 
 export const cloneSpace = (space: Space): Space => structuredClone(space);
