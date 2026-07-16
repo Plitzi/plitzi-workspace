@@ -52,8 +52,10 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
     ['Folders', `plitzi://folders/${env}`, 'Page folders (the sidebar tree): ref, name, slug, parentId'],
     ['Style definitions', `plitzi://definitions/${env}`, 'Style definition refs (names)'],
     ['Global styles', `plitzi://global-styles/${env}`, 'Element types that have a site-wide global style'],
+    ['Id styles', `plitzi://id-styles/${env}`, 'DOM ids that have an id rule (#id) targeting a single element'],
     ['Style variables', `plitzi://style-variables/${env}`, 'Design tokens by category'],
     ['Schema variables', `plitzi://schema-variables/${env}`, 'Space-level values referenced via {{name}}'],
+    ['Settings', `plitzi://settings/${env}`, 'Space-level settings: global customCss and state/auth configuration'],
     [
       'Interactions catalog',
       `plitzi://interactions/${env}`,
@@ -96,6 +98,7 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
       `plitzi://global-styles/${env}/{componentType}`,
       'The site-wide CSS applied to every element of one type'
     ],
+    ['Id style', `plitzi://id-styles/${env}/{targetId}`, 'The CSS of an id rule (#id) targeting a single element'],
     ['Style variables by category', `plitzi://style-variables/${env}/{category}`, 'Design tokens for one category'],
     // Aliases under plitzi://schema/{env} (I3).
     [

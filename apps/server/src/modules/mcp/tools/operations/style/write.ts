@@ -17,20 +17,32 @@ export const defUri = (env: Env, ref: string): string => `plitzi://definitions/$
 export const defsUri = (env: Env): string => `plitzi://definitions/${env}`;
 export const globalUri = (env: Env, componentType: string): string => `plitzi://global-styles/${env}/${componentType}`;
 export const globalsUri = (env: Env): string => `plitzi://global-styles/${env}`;
+export const idUri = (env: Env, targetId: string): string => `plitzi://id-styles/${env}/${targetId}`;
+export const idsUri = (env: Env): string => `plitzi://id-styles/${env}`;
 export const styleVarUri = (env: Env, category: string): string => `plitzi://style-variables/${env}/${category}`;
 export const styleVarsUri = (env: Env): string => `plitzi://style-variables/${env}`;
 
-const describeKind = (item: StyleItem): string =>
-  item.type === 'element'
-    ? `a global style for every "${item.componentType}" element`
-    : item.type === 'class'
-      ? 'a reusable class definition'
-      : 'an id rule';
+// The three kinds a StyleItem can be, each addressed by its own op family and identifier — a shared vocabulary for
+// the clash guard's teachable errors.
+const KIND_LABEL: Record<TagType, string> = {
+  class: 'a reusable class definition',
+  element: 'a global style for an element type',
+  id: 'an id rule targeting a single element'
+};
 
-// Class definitions and global (type 'element') selectors share the same name→StyleItem map, so a write of one
-// kind must never land on a name already held by the other: that would silently convert it (a class turned global
-// would then restyle EVERY element of a type; a global turned class would lose that reach). This is the guard
-// against false positives — refuse when the name is occupied by a different kind, pointing to the right tool.
+const KIND_TOOL: Record<TagType, string> = {
+  class: 'upsertDefinition/patchDefinition',
+  element: 'upsertGlobalStyle/patchGlobalStyle',
+  id: 'upsertIdStyle/patchIdStyle'
+};
+
+const KIND_FIELD: Record<TagType, string> = { class: 'ref', element: 'componentType', id: 'targetId' };
+
+// Class definitions, global (type 'element') selectors and id rules all share the same name→StyleItem map, so a
+// write of one kind must never land on a name already held by another: that would silently convert it (a class
+// turned global would then restyle EVERY element of a type; a global turned class would lose that reach). This is
+// the guard against false positives — refuse when the name is occupied by a different kind, pointing to the right
+// tool.
 export const guardKind = (style: Style, ref: string, want: TagType): OpResult | null => {
   const clash = MODES.map(mode => style.platform[mode][ref] as StyleItem | undefined).find(
     (item): item is StyleItem => item !== undefined && item.type !== want
@@ -39,14 +51,10 @@ export const guardKind = (style: Style, ref: string, want: TagType): OpResult | 
     return null;
   }
 
-  const wantIsClass = want === 'class';
-
   return fail(
-    wantIsClass ? 'ref' : 'componentType',
-    `"${ref}" is already ${describeKind(clash)}; it cannot be edited as ${wantIsClass ? 'a class definition' : 'a global element style'}`,
-    wantIsClass
-      ? 'To restyle every element of a type on purpose, use upsertGlobalStyle/patchGlobalStyle with its componentType. Otherwise pick a different class name.'
-      : 'That name is a class definition — edit it with upsertDefinition/patchDefinition, or choose a different componentType.'
+    KIND_FIELD[want],
+    `"${ref}" is already ${KIND_LABEL[clash.type]}; it cannot be edited as ${KIND_LABEL[want]}`,
+    `Edit it with ${KIND_TOOL[clash.type]}, or choose a different ${KIND_FIELD[want]}.`
   );
 };
 

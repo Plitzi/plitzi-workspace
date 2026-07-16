@@ -26,12 +26,16 @@ export const operation = z.discriminatedUnion('type', [
   elementOps.upsertInteractionFlow,
   elementOps.patchInteractionNode,
   elementOps.deleteInteraction,
+  elementOps.patchSettings,
   styleOps.upsertDefinition,
   styleOps.patchDefinition,
   styleOps.deleteDefinition,
   styleOps.upsertGlobalStyle,
   styleOps.patchGlobalStyle,
   styleOps.deleteGlobalStyle,
+  styleOps.upsertIdStyle,
+  styleOps.patchIdStyle,
+  styleOps.deleteIdStyle,
   styleOps.upsertStyleVariable,
   styleOps.deleteStyleVariable
 ]);

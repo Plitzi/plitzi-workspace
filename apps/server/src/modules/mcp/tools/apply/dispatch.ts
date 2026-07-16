@@ -42,6 +42,8 @@ const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
       return schema.patchInteractionNode(space, env, op);
     case 'deleteInteraction':
       return schema.deleteInteraction(space, env, op);
+    case 'patchSettings':
+      return schema.patchSettings(space, env, op);
     case 'upsertDefinition':
       return style.upsertDefinition(space, env, op);
     case 'patchDefinition':
@@ -54,6 +56,12 @@ const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
       return style.patchGlobalStyle(space, env, op);
     case 'deleteGlobalStyle':
       return style.deleteGlobalStyle(space, env, op);
+    case 'upsertIdStyle':
+      return style.upsertIdStyle(space, env, op);
+    case 'patchIdStyle':
+      return style.patchIdStyle(space, env, op);
+    case 'deleteIdStyle':
+      return style.deleteIdStyle(space, env, op);
     case 'upsertStyleVariable':
       return style.upsertStyleVariable(space, env, op);
     case 'deleteStyleVariable':

@@ -3,7 +3,7 @@ import type { Env } from '../types';
 // Style resources live at their own top-level roots (plitzi://definitions, plitzi://style-variables,
 // plitzi://schema-variables) but agents reach for them by analogy under plitzi://schema/{env}/… . Accept that
 // alias shape and fold it back to the canonical root, so both forms resolve (RFC 0005 I3).
-const ALIASED_ROOTS = ['definitions', 'global-styles', 'style-variables', 'schema-variables', 'folders'];
+const ALIASED_ROOTS = ['definitions', 'global-styles', 'id-styles', 'style-variables', 'schema-variables', 'folders'];
 
 export const canonicalUri = (env: Env, uri: string): string => {
   const aliasPrefix = `plitzi://schema/${env}/`;
@@ -30,6 +30,7 @@ export const itemTemplates = (env: Env): string[] => [
   `plitzi://schema/${env}/elements/{ref}`,
   `plitzi://definitions/${env}/{ref}`,
   `plitzi://global-styles/${env}/{componentType}`,
+  `plitzi://id-styles/${env}/{targetId}`,
   `plitzi://style-variables/${env}/{category}`,
   `plitzi://folders/${env}/{ref}`
 ];

@@ -1,4 +1,4 @@
-import type { AIDefinition, AIDefinitionSlot, AIGlobalStyle, AIStyleVariable } from '../../../types';
+import type { AIDefinition, AIDefinitionSlot, AIGlobalStyle, AIIdStyle, AIStyleVariable } from '../../../types';
 import type { DisplayMode, Style, StyleBlock, StyleItem } from '@plitzi/sdk-shared';
 
 // Read projections of the STYLE schema: definition names, one definition's CSS, and design tokens.
@@ -7,9 +7,10 @@ const DISPLAY_MODES: DisplayMode[] = ['desktop', 'tablet', 'mobile'];
 
 // A "definition" in the MCP model is only a reusable class (type 'class', selector `.name`). A type 'element'
 // StyleItem is a GLOBAL style applied to every element of its componentType (selector `.plitzi__name`), and a
-// type 'id' item targets a single id — neither is an addressable, editable definition here. They share the same
-// platform map keyed by name, so every definition read/write must filter to classes, and writes must never
-// overwrite a non-class item (that would silently strip its global reach). See TagType in StyleTypes.
+// type 'id' item is an id rule targeting a single element (selector `#name`) — each has its own op family and
+// read projection (globalStyleToAI / idStyleToAI), neither is an addressable class definition here. They share the
+// same platform map keyed by name, so every definition read/write must filter to classes, and writes must never
+// overwrite an item of another kind (guardKind enforces this). See TagType in StyleTypes.
 export const isClassDefinition = (item: StyleItem): boolean => item.type === 'class';
 
 export const definitionRefs = (style: Style): string[] => {
@@ -148,6 +149,27 @@ export const globalStyleTypes = (style: Style): string[] => {
   }
 
   return Array.from(types).sort();
+};
+
+// Id rules (type 'id') that target a single DOM id — the CSS equivalent of `#id { … }`. Keyed by the id itself
+// (name === targetId), mirroring how globals are keyed by componentType.
+export const idStyleIds = (style: Style): string[] => {
+  const ids = new Set<string>();
+  for (const mode of DISPLAY_MODES) {
+    for (const [name, item] of Object.entries(style.platform[mode])) {
+      if (item.type === 'id') {
+        ids.add(name);
+      }
+    }
+  }
+
+  return Array.from(ids).sort();
+};
+
+export const idStyleToAI = (style: Style, targetId: string): AIIdStyle | undefined => {
+  const def = projectItem(style, targetId, item => item.type === 'id');
+
+  return def ? { ...def, targetId } : undefined;
 };
 
 export const styleVariablesToAI = (style: Style): Record<string, AIStyleVariable[]> => {

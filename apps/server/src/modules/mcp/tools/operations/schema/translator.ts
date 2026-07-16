@@ -13,7 +13,7 @@ import {
   pageRefOfElement,
   slugRouteParams
 } from '../../../helpers';
-import { definitionToAI, globalStylesForType } from '../style/translator';
+import { definitionToAI, globalStylesForType, idStyleToAI } from '../style/translator';
 
 import type {
   AIDefinition,
@@ -25,6 +25,7 @@ import type {
   AIPageStyles,
   AIPageSummary,
   AISchemaVariable,
+  AISettings,
   AISkeletonNode,
   AIStyleVariantSelection
 } from '../../../types';
@@ -64,6 +65,8 @@ export const pageSummariesToAI = (schema: Schema): AIPageSummary[] =>
     label: nameOf(page),
     slug: strOr(page.attributes.slug) ?? '',
     default: page.attributes.default === true,
+    // Defaults to enabled: only an explicit `false` disables the page.
+    enabled: page.attributes.enabled !== false,
     // Stored as '' for a root-level page; surface that as no folder so the agent only ever sees a real folder id.
     folder: strOr(page.attributes.folder) || undefined,
     elementCount: descendantCount(schema, page.id)
@@ -109,6 +112,7 @@ export const pageSkeletonToAI = (schema: Schema, pageEl: Element): AIPageSkeleto
     label: nameOf(pageEl),
     slug,
     default: pageEl.attributes.default === true,
+    enabled: pageEl.attributes.enabled !== false,
     routeParams: slugRouteParams(slug),
     tree: orderedChildren(schema, pageEl).map(child => skeletonNode(schema, child))
   };
@@ -310,6 +314,14 @@ export const elementDetailToAI = (schema: Schema, el: Element, style?: Style): A
     if (globalStyles.length > 0) {
       detail.globalStyles = globalStyles;
     }
+
+    const domId = strOr(el.attributes.id);
+    if (domId) {
+      const idStyle = idStyleToAI(style, domId);
+      if (idStyle) {
+        detail.idStyle = idStyle;
+      }
+    }
   }
 
   return detail;
@@ -332,4 +344,15 @@ export const schemaVariablesToAI = (schema: Schema, includeSubValues = true): Re
   }
 
   return data;
+};
+
+// Space-level settings, projected as-is: the global CSS plus state/auth configuration. Only the keys actually
+// present are returned, so a fresh space (no settings persisted) reads as an empty object rather than nulls.
+export const settingsToAI = (schema: Schema): AISettings => {
+  const result: AISettings = {};
+  for (const [key, value] of Object.entries(schema.settings)) {
+    result[key as keyof AISettings] = value as never;
+  }
+
+  return result;
 };

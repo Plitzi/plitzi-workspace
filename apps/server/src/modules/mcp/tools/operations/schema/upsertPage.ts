@@ -19,7 +19,14 @@ export const upsertPageOp = z
       .nullable()
       .optional()
       .describe('Ref of an existing folder to place this page in; "" or null moves it to the root. Unknown → error'),
-    default: z.boolean().optional()
+    default: z.boolean().optional(),
+    enabled: z
+      .boolean()
+      .optional()
+      .describe(
+        'false disables the page in the published SDK runtime (not routable/accessible to end users); it stays ' +
+          'editable here. Defaults to true'
+      )
   })
   .describe('Create a page, or update it when ref already exists (only the fields you pass change).');
 
@@ -53,6 +60,7 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
       ...(op.slug !== undefined ? { slug: op.slug } : {}),
       ...(op.label !== undefined ? { name: op.label } : {}),
       ...(op.default !== undefined ? { default: op.default } : {}),
+      ...(op.enabled !== undefined ? { enabled: op.enabled } : {}),
       ...(folderValue !== undefined ? { folder: folderValue } : {})
     };
 
@@ -64,6 +72,7 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
     slug: op.slug ?? '',
     name: op.label ?? op.ref,
     default: op.default ?? false,
+    enabled: op.enabled ?? true,
     folder: folderValue ?? ''
   };
   space.schema.flat[id] = {

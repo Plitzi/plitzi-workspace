@@ -852,6 +852,149 @@ describe('mcp-ai global element styles (editable site-wide selectors like `butto
   });
 });
 
+describe('mcp-ai id styles (editable single-element selectors like `#hero { … }`)', () => {
+  const idOp = { type: 'upsertIdStyle', targetId: 'hero', desktop: { 'min-height': '100vh' } } as const;
+
+  it('creates a type "id" selector keyed by the DOM id', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply({ operations: [idOp] }, buildSpace(), cap.persisters);
+    expect(res.applied).toBe(true);
+    const item = cap.saved().style.platform.desktop.hero as unknown as { type: string; cache: string };
+    expect(item.type).toBe('id');
+    expect(item.cache).toContain('#hero');
+    const read = readResource(cap.saved(), 'main', 'plitzi://id-styles/main/hero')?.data as AIDefinition & {
+      targetId: string;
+    };
+    expect(read.targetId).toBe('hero');
+    expect(read.desktop?.['min-height']).toBe('100vh');
+  });
+
+  it('lists the DOM ids that have an id rule', async () => {
+    const cap = capturing(buildSpace());
+    await apply({ operations: [idOp] }, buildSpace(), cap.persisters);
+    expect(readResource(cap.saved(), 'main', 'plitzi://id-styles/main')?.data).toEqual(['hero']);
+  });
+
+  it('patchIdStyle merges into an existing id rule; deleteIdStyle removes it', async () => {
+    const cap = capturing(buildSpace());
+    await apply({ operations: [idOp] }, buildSpace(), cap.persisters);
+    const patched = await apply(
+      { operations: [{ type: 'patchIdStyle', targetId: 'hero', desktop: { color: 'white' } }] },
+      cap.saved(),
+      cap.persisters
+    );
+    expect(patched.applied).toBe(true);
+    const read = readResource(cap.saved(), 'main', 'plitzi://id-styles/main/hero')?.data as AIDefinition;
+    expect(read.desktop?.color).toBe('white');
+    expect(read.desktop?.['min-height']).toBe('100vh');
+
+    await apply({ operations: [{ type: 'deleteIdStyle', targetId: 'hero' }] }, cap.saved(), cap.persisters);
+    expect(readResource(cap.saved(), 'main', 'plitzi://id-styles/main/hero')).toBeNull();
+  });
+
+  it('patchIdStyle fails when no id rule exists yet', async () => {
+    const res = await apply(
+      { operations: [{ type: 'patchIdStyle', targetId: 'hero', desktop: { color: 'red' } }] },
+      buildSpace()
+    );
+    expect(res.applied).toBe(false);
+    expect(res.errors?.[0].message).toContain('No id rule');
+  });
+
+  it('refuses an id op on a name held by a class definition (cross-kind guard)', async () => {
+    const res = await apply(
+      { operations: [{ type: 'upsertIdStyle', targetId: 'box', desktop: { color: 'red' } }] },
+      buildSpace()
+    );
+    expect(res.applied).toBe(false);
+    expect(res.errors?.[0].message).toContain('class definition');
+  });
+
+  it('inlines the id rule in the detail of an element carrying that DOM id', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', props: { id: 'hero' } }, idOp] },
+      buildSpace(),
+      cap.persisters
+    );
+    const el = readResource(cap.saved(), 'main', 'plitzi://schema/main/elements/c1')?.data as AIElementDetail;
+    expect(el.idStyle?.targetId).toBe('hero');
+    expect(el.idStyle?.desktop?.['min-height']).toBe('100vh');
+  });
+
+  it('omits idStyle when the element has no matching DOM id', async () => {
+    const cap = capturing(buildSpace());
+    await apply({ operations: [idOp] }, buildSpace(), cap.persisters);
+    const el = readResource(cap.saved(), 'main', 'plitzi://schema/main/elements/c1')?.data as AIElementDetail;
+    expect(el.idStyle).toBeUndefined();
+  });
+});
+
+describe('mcp-ai settings (space-level customCss + auth config)', () => {
+  it('patchSettings merges customCss without dropping other settings', async () => {
+    const cap = capturing(buildSpace());
+    const css = '@keyframes spin { to { transform: rotate(360deg); } }';
+    const res = await apply({ operations: [{ type: 'patchSettings', customCss: css }] }, buildSpace(), cap.persisters);
+    expect(res.applied).toBe(true);
+    const settings = readResource(cap.saved(), 'main', 'plitzi://settings/main')?.data as { customCss?: string };
+    expect(settings.customCss).toBe(css);
+  });
+
+  it('a later patch preserves earlier keys (merge, not replace)', async () => {
+    const cap = capturing(buildSpace());
+    await apply({ operations: [{ type: 'patchSettings', customCss: '.a{}' }] }, buildSpace(), cap.persisters);
+    await apply({ operations: [{ type: 'patchSettings', keepState: true }] }, cap.saved(), cap.persisters);
+    const settings = readResource(cap.saved(), 'main', 'plitzi://settings/main')?.data as {
+      customCss?: string;
+      keepState?: boolean;
+    };
+    expect(settings.customCss).toBe('.a{}');
+    expect(settings.keepState).toBe(true);
+  });
+
+  it('exposes settings in the cold-start primer', async () => {
+    const cap = capturing(buildSpace());
+    await apply({ operations: [{ type: 'patchSettings', customCss: '.z{}' }] }, buildSpace(), cap.persisters);
+    const primer = readResource(cap.saved(), 'main', 'plitzi://primer/main')?.data as {
+      settings: { customCss?: string };
+    };
+    expect(primer.settings.customCss).toBe('.z{}');
+  });
+});
+
+describe('mcp-ai page enable/disable (attributes.enabled)', () => {
+  it('a new page defaults to enabled', async () => {
+    const cap = capturing(buildSpace());
+    await apply({ operations: [{ type: 'upsertPage', ref: 'about', label: 'About' }] }, buildSpace(), cap.persisters);
+    const page = readResource(cap.saved(), 'main', 'plitzi://schema/main/pages/about')?.data as AIPageSkeleton;
+    expect(page.enabled).toBe(true);
+  });
+
+  it('disables a page with enabled:false and re-enables it', async () => {
+    const cap = capturing(buildSpace());
+    await apply({ operations: [{ type: 'upsertPage', ref: 'home', enabled: false }] }, buildSpace(), cap.persisters);
+    let home = readResource(cap.saved(), 'main', 'plitzi://schema/main/pages/home')?.data as AIPageSkeleton;
+    expect(home.enabled).toBe(false);
+    const summary = (readResource(cap.saved(), 'main', 'plitzi://schema/main/pages')?.data as AIPageSummary[]).find(
+      p => p.ref === 'home'
+    );
+    expect(summary?.enabled).toBe(false);
+
+    await apply({ operations: [{ type: 'upsertPage', ref: 'home', enabled: true }] }, cap.saved(), cap.persisters);
+    home = readResource(cap.saved(), 'main', 'plitzi://schema/main/pages/home')?.data as AIPageSkeleton;
+    expect(home.enabled).toBe(true);
+  });
+
+  it('leaves enabled untouched when the field is omitted', async () => {
+    const cap = capturing(buildSpace());
+    await apply({ operations: [{ type: 'upsertPage', ref: 'home', enabled: false }] }, buildSpace(), cap.persisters);
+    await apply({ operations: [{ type: 'upsertPage', ref: 'home', label: 'Renamed' }] }, cap.saved(), cap.persisters);
+    const home = readResource(cap.saved(), 'main', 'plitzi://schema/main/pages/home')?.data as AIPageSkeleton;
+    expect(home.label).toBe('Renamed');
+    expect(home.enabled).toBe(false);
+  });
+});
+
 describe('mcp-ai URI aliases under schema root (RFC 0005 #3/#4)', () => {
   it('resolves a definition through the plitzi://schema/{env}/definitions/{ref} alias', () => {
     const canonical = readResource(buildSpace(), 'main', 'plitzi://definitions/main/box');

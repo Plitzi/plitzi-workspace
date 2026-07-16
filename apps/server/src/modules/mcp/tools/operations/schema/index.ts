@@ -23,3 +23,4 @@ export * from './deleteBinding';
 export * from './upsertInteractionFlow';
 export * from './patchInteractionNode';
 export * from './deleteInteraction';
+export * from './patchSettings';

@@ -8,7 +8,8 @@ import {
   pageSkeletonToAI,
   pageStylesToAI,
   pageSummariesToAI,
-  schemaVariablesToAI
+  schemaVariablesToAI,
+  settingsToAI
 } from '../tools/operations/schema/translator';
 
 import type { Space } from '../helpers';
@@ -59,6 +60,10 @@ export const readSchemaResource = (
 
   if (uri === `plitzi://schema-variables/${env}`) {
     return envelope(schemaVariablesToAI(space.schema));
+  }
+
+  if (uri === `plitzi://settings/${env}`) {
+    return envelope(settingsToAI(space.schema));
   }
 
   if (uri === `plitzi://interactions/${env}`) {

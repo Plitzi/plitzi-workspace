@@ -13,6 +13,7 @@ export const pagesUri = (env: Env): string => `plitzi://schema/${env}/pages`;
 export const foldersUri = (env: Env): string => `plitzi://folders/${env}`;
 export const folderUri = (env: Env, ref: string): string => `plitzi://folders/${env}/${ref}`;
 export const schemaVarsUri = (env: Env): string => `plitzi://schema-variables/${env}`;
+export const settingsUri = (env: Env): string => `plitzi://settings/${env}`;
 
 export const removeFromParent = (space: Space, childId: string): void => {
   for (const el of Object.values(space.schema.flat)) {

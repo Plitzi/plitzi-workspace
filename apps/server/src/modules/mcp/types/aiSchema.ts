@@ -26,6 +26,9 @@ export interface AIPageSummary {
   label: string;
   slug: string;
   default: boolean;
+  /** Whether the page is served by the published SDK runtime. A disabled page (`false`) is not routable/accessible
+   *  to end users, but stays fully editable here. Defaults to true. */
+  enabled: boolean;
   /** The ref of the folder this page lives in (a PageFolder id), or undefined for a root-level page. */
   folder?: string;
   elementCount: number;
@@ -59,6 +62,9 @@ export interface AIPageSkeleton {
   label: string;
   slug: string;
   default: boolean;
+  /** Whether the page is served by the published SDK runtime. A disabled page (`false`) is not routable/accessible
+   *  to end users, but stays fully editable here. Defaults to true. */
+  enabled: boolean;
   /** Route params bound by the slug (e.g. ":spaceId" → ["spaceId"]). Valid as {{name}} references on this page,
    *  alongside the space-level plitzi://schema-variables. */
   routeParams: string[];
@@ -139,6 +145,9 @@ export interface AIElementDetail {
   /** Global (type 'element') styles that also affect this element because they target its type — every element of
    *  the type inherits them. Read-only here (not editable as definitions); shown so the effective CSS is complete. */
   globalStyles?: AIGlobalStyle[];
+  /** Id rule (type 'id') targeting this element by its DOM `id` attribute (`#id`). Present only when the element
+   *  carries an `id` that a rule matches. Edit it with the id-style tools (never as a definition). */
+  idStyle?: AIIdStyle;
   /** Variant names each attached class exposes (deduped across its selectors), so the agent knows a class HAS a
    *  variant (e.g. a button class with "primary") before applying it via `initialState.styleVariant`. */
   availableVariants?: Record<string, string[]>;
@@ -155,6 +164,13 @@ export interface AIElementDetail {
  *  `appliesToType`. It is not an addressable class definition — editing it would change every such element. */
 export interface AIGlobalStyle extends AIDefinition {
   appliesToType: string;
+}
+
+/** An id rule (a type 'id' StyleItem): its CSS targets the single element whose DOM `id` equals `targetId`
+ *  (the CSS equivalent of `#id { … }`). Style one element by giving it an `id` attribute and writing this rule;
+ *  prefer a class definition when the styling could be reused. */
+export interface AIIdStyle extends AIDefinition {
+  targetId: string;
 }
 
 export interface AIDefinitionSlot extends DisplayModeCss {
@@ -184,6 +200,25 @@ export interface AISchemaVariable {
   type: string;
   value: string | number | boolean;
   subValues?: Array<{ when: unknown; value: string | number | boolean }>;
+}
+
+/** Space-level settings: the arbitrary global CSS (`customCss`), state persistence, and the user/auth provider
+ *  configuration. Every field is optional — a patch changes only the keys it sends. */
+export interface AISettings {
+  customCss?: string;
+  keepState?: boolean;
+  stateStorage?: 'localStorage' | 'sessionStorage';
+  userProvider?: 'auth0' | 'basic' | 'custom' | '';
+  auth0Domain?: string;
+  auth0ClientId?: string;
+  tokenStorage?: 'localStorage' | 'sessionStorage' | '';
+  loginUrl?: string;
+  userUrl?: string;
+  refreshUrl?: string;
+  logoutUrl?: string;
+  detailsPath?: string;
+  tokenPath?: string;
+  expirationTimePath?: string;
 }
 
 export interface ValidationError {

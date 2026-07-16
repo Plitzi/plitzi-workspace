@@ -4,6 +4,8 @@ import {
   definitionToAI,
   globalStyleToAI,
   globalStyleTypes,
+  idStyleIds,
+  idStyleToAI,
   styleVariablesToAI
 } from '../tools/operations/style/translator';
 
@@ -37,6 +39,17 @@ export const readStyleResource = (
     const global = globalStyleToAI(space.style, componentType);
 
     return global ? envelope(global) : null;
+  }
+
+  if (uri === `plitzi://id-styles/${env}`) {
+    return envelope(idStyleIds(space.style));
+  }
+
+  if (uri.startsWith(`plitzi://id-styles/${env}/`)) {
+    const targetId = uri.slice(`plitzi://id-styles/${env}/`.length);
+    const idStyle = idStyleToAI(space.style, targetId);
+
+    return idStyle ? envelope(idStyle) : null;
   }
 
   if (uri === `plitzi://style-variables/${env}`) {

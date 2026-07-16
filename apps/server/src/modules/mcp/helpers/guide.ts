@@ -62,12 +62,15 @@ Never download a whole tree you do not need.
   Its \`resolvedStyle\` inlines the **CSS of every definition** the element attaches (keyed by class ref), so you
   can see and edit its style without a separate definition read. Its \`globalStyles\` lists the **global element
   selectors** that also affect it (the CSS equivalent of \`button { … }\`, keyed by the type they target) — every
-  element of that type inherits them. Edit a global only through the global-style tools (never per element).
+  element of that type inherits them. Edit a global only through the global-style tools (never per element). If the
+  element carries a DOM \`id\` that an id rule matches, its \`idStyle\` (\`#id\`) is inlined too.
 - \`plitzi://definitions/{env}\` — the **names** of every style definition.
 - \`plitzi://definitions/{env}/{ref}\` — one definition's CSS.
 - \`plitzi://global-styles/{env}\` — element **types** that have a site-wide global style. \`/{componentType}\` for one.
+- \`plitzi://id-styles/{env}\` — DOM **ids** that have an id rule (\`#id\`) targeting a single element. \`/{targetId}\` for one.
 - \`plitzi://style-variables/{env}\` — design tokens by category. \`/{category}\` for one.
 - \`plitzi://schema-variables/{env}\` — space-level values referenced in props as \`{{name}}\`.
+- \`plitzi://settings/{env}\` — space-level settings: the global \`customCss\` and the state/auth (user-provider) config.
 - \`plitzi://interactions/{env}\` — interaction **actions** observed in this space (grouped by node type): the
   vocabulary for interaction flows.
 - \`plitzi://data-sources/{env}\` — data-source **paths** and binding targets observed in this space: the
@@ -127,16 +130,22 @@ schemas predating aiRef keep working through ids. Creating an element stores its
 - CSS is grouped by breakpoint: \`desktop\`, \`tablet\`, \`mobile\`.
 - Reference a style variable in CSS as \`var(--name)\`; a schema variable in a prop as \`{{name}}\`.
 - \`element.style.base\` is a list of definition refs; other slots go under \`element.style.slots\`.
-- **Two kinds of style live in the style schema — do not confuse them:**
+- **Three kinds of style live in the style schema — do not confuse them:**
   - **Definitions** = reusable CSS **classes** (\`upsertDefinition\`/\`patchDefinition\`/\`deleteDefinition\`, keyed by a
     class \`ref\`). Attach one to an element via \`style.base\` to style **that** element (and anything else that opts in).
+    This is the **default** way to style one element.
   - **Global styles** = the CSS equivalent of a bare element selector like \`button { … }\`
     (\`upsertGlobalStyle\`/\`patchGlobalStyle\`/\`deleteGlobalStyle\`, keyed by \`componentType\`). They style **every**
     element of that type at once. Use these for site-wide intent — e.g. "all buttons rounded":
     \`{ "type": "upsertGlobalStyle", "componentType": "button", "desktop": { "border-radius": "9999px" } }\`.
-  - The two share one name space, so a class op refuses a name held by a global and vice-versa (guards against a
-    typo silently rewriting every element of a type). If refused, you targeted the wrong kind — switch tools or
-    rename. To style one element only, never reach for a global.
+  - **Id styles** = the CSS equivalent of an id selector like \`#hero { … }\`
+    (\`upsertIdStyle\`/\`patchIdStyle\`/\`deleteIdStyle\`, keyed by \`targetId\`). They style the **single** element whose
+    DOM \`id\` attribute equals \`targetId\` — so the element must carry that \`id\` (set it in its props). Prefer a
+    **definition** for one element; reach for an id style only when a specific, uniquely-identified node must be
+    targeted by id: \`{ "type": "upsertIdStyle", "targetId": "hero", "desktop": { "min-height": "100vh" } }\`.
+  - The three share one name space, so an op refuses a name held by another kind (guards against a typo silently
+    rewriting every element of a type, or converting a class into an id rule). If refused, you targeted the wrong
+    kind — switch tools or rename.
 
 ## Style variants & element state
 A **variant** is a named CSS override on a definition (e.g. a button class with a \`primary\` variant). It takes two
@@ -186,6 +195,21 @@ Pages can be grouped into **folders** (the sidebar tree). A folder is \`{ ref, n
   rejected, never stored.
 - \`deleteFolder\` removes a folder and **promotes its contents up one level** — its child folders and its pages move
   to its parent (or the root). A folder cannot be nested under itself or one of its descendants.
+- **Disable a page** with \`upsertPage\`'s \`enabled: false\`; \`enabled: true\` re-enables it (defaults to enabled, and
+  a page read reports its current \`enabled\`). Disabling only affects the **published SDK runtime** — the page stops
+  being routable/accessible to end users. It stays fully **editable here**: you can still read it and apply any op to
+  a disabled page. This does not delete it — \`deletePage\` does.
+
+## Settings
+Space-level configuration lives in \`plitzi://settings/{env}\` and is edited with a single **\`patchSettings\`** op
+(merge — only the fields you pass change):
+- \`customCss\` — **raw global CSS** injected for the whole space. Use it only for genuinely site-wide rules
+  (\`@keyframes\`, \`@font-face\`, resets). To style an element, write a **definition** and attach it — never customCss.
+- \`keepState\` / \`stateStorage\` — persist element state across reloads (\`localStorage\`/\`sessionStorage\`).
+- **User provider / auth**: \`userProvider\` (\`auth0\`|\`basic\`|\`custom\`|\`""\` to disable), \`auth0Domain\`,
+  \`auth0ClientId\`, \`tokenStorage\`, and the \`loginUrl\`/\`userUrl\`/\`refreshUrl\`/\`logoutUrl\` + \`detailsPath\`/
+  \`tokenPath\`/\`expirationTimePath\` mapping. Example — inject a keyframe globally:
+  \`{ "type": "patchSettings", "customCss": "@keyframes spin { to { transform: rotate(360deg); } }" }\`.
 
 ## Semantics
 - **props are fully replaced** on \`upsertElement\`: send every prop you want to keep. To change only some props,

@@ -12,5 +12,8 @@ export * from './deleteDefinition';
 export * from './upsertGlobalStyle';
 export * from './patchGlobalStyle';
 export * from './deleteGlobalStyle';
+export * from './upsertIdStyle';
+export * from './patchIdStyle';
+export * from './deleteIdStyle';
 export * from './upsertStyleVariable';
 export * from './deleteStyleVariable';
