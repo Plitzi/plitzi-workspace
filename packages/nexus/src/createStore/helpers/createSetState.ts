@@ -1,4 +1,5 @@
-import { UNCHANGED, writeByPath } from './writeByPath';
+import { deleteByPath, UNCHANGED, writeByPath } from './writeByPath';
+import { isDev } from '../../env';
 import getByPath from '../../helpers/getByPath';
 import parsePath from '../../helpers/parsePath';
 import setByPath from '../../helpers/setByPath';
@@ -12,6 +13,7 @@ import type {
   PathOf,
   PathValue,
   SetState,
+  SetStateOptions,
   StoreApi,
   StoreErrorReporter,
   WriteInterceptor
@@ -65,11 +67,17 @@ export type SetStateDeps<TState extends object> = {
   getOwnSnapshot: () => TState;
   setOwnState: (next: TState) => void;
   mutateOwnKey: (key: string, value: unknown) => void;
+  // Removes an own top-level key in place (the `unmount` counterpart of `mutateOwnKey`), so an unmounted path leaves
+  // no lingering `undefined` entry.
+  deleteOwnKey: (key: string) => void;
   parent: StoreApi<TState> | undefined;
   listeners: Subscribers<Listener>;
   changeListeners: Subscribers<ChangeListener<TState>>;
   pathListeners: PathTrie;
   interceptors: WriteInterceptor<TState>[];
+  // Paths this scope refuses to mutate. A write to a read-only path — or to an ancestor/descendant of one — throws in
+  // dev (surfacing the bug) and is silently dropped in production. Empty (the default) skips the check entirely.
+  readOnly: ReadonlyArray<string>;
   reportError: StoreErrorReporter<TState>;
   // Invalidate scoped descendants' cached reads after every commit. Detached scopes don't receive
   // subscriber notifications, so they rely on this invalidation channel to keep their cache correct.
@@ -90,15 +98,44 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     getOwnSnapshot,
     setOwnState,
     mutateOwnKey,
+    deleteOwnKey,
     parent,
     listeners,
     pathListeners,
     changeListeners,
     interceptors,
+    readOnly,
     reportError,
     invalidateDescendants,
     onDelegateToParent
   } = deps;
+
+  // A write to `path` violates read-only when it targets a protected path, a descendant of one (would mutate inside
+  // it), or an ancestor of one (would replace the protected subtree). Only consulted when `readOnly` is non-empty.
+  const violatesReadOnly = (path: string): boolean => {
+    for (let i = 0, n = readOnly.length; i < n; i++) {
+      const r = readOnly[i];
+      if (path === r || path.startsWith(`${r}.`) || r.startsWith(`${path}.`)) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  // Enforces the read-only contract: throws in dev to surface the offending write, drops it silently in production.
+  // Returns true when the caller should abort the write.
+  const rejectedByReadOnly = (path: string): boolean => {
+    if (readOnly.length === 0 || !violatesReadOnly(path)) {
+      return false;
+    }
+
+    if (isDev) {
+      throw new Error(`@plitzi/nexus: refused to write to read-only path "${path}"`);
+    }
+
+    return true;
+  };
 
   // Runs interceptors in order, each seeing the previous one's result. Returns the final value, or `CANCEL` if any
   // aborted; a thrown interceptor is reported and fails the write closed (its validation outcome is unknown).
@@ -275,6 +312,21 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       return;
     }
 
+    // A whole-state (or array-path) write can't be gated by the entry-level read-only check, so diff each protected
+    // path against the computed next state and reject the write when one would change.
+    if (readOnly.length > 0) {
+      for (let i = 0, n = readOnly.length; i < n; i++) {
+        const r = readOnly[i] as P;
+        if (getByPath(prevState, r) !== getByPath(nextState, r)) {
+          if (isDev) {
+            throw new Error(`@plitzi/nexus: refused to write to read-only path "${readOnly[i]}"`);
+          }
+
+          return;
+        }
+      }
+    }
+
     setOwnState(nextState);
     if (changeListeners.length > 0) {
       emitChange(path, prevState, nextState);
@@ -304,8 +356,9 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       | ((prev: PathValue<TState, P>) => PathValue<TState, P>)
       | TState
       | ((prev: TState) => TState),
-    canPropagate: boolean = true
+    options: SetStateOptions = {}
   ) => {
+    const { canPropagate = true, unmount = false } = options;
     const prevState = getOwnState();
 
     // Reject prototype-pollution paths before any write. The cheap substring gate keeps normal paths a single scan.
@@ -313,14 +366,19 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       throw new Error(`@plitzi/nexus: refused to write to unsafe path "${path}" (\`__proto__\` segment)`);
     }
 
+    // Read-only paths are rejected before any delegation, so a child can't slip a protected write up to the parent.
+    if (typeof path === 'string' && rejectedByReadOnly(path)) {
+      return;
+    }
+
     // A scope that doesn't structurally own the path delegates to the parent — so an explicit `undefined` on a key the
-    // child owns stays local instead of leaking upward.
+    // child owns stays local instead of leaking upward. `unmount` (and `canPropagate`) ride along to the owning scope.
     if (parent && typeof path === 'string') {
       const dot = path.indexOf('.');
       const owns = dot === -1 ? Object.hasOwn(prevState, path) : ownsPath(prevState, parsePath(path));
       if (!owns) {
         onDelegateToParent?.(path);
-        parent.setState(path, value as PathValue<TState, P>, canPropagate);
+        parent.setState(path, value as PathValue<TState, P>, { canPropagate, unmount });
 
         return;
       }
@@ -335,6 +393,41 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     const singleSegment = path.indexOf('.') === -1;
 
     if (singleSegment) {
+      if (unmount) {
+        // Nothing to remove if the key was never present locally — treat as a no-op rather than a change.
+        if (!Object.hasOwn(prevState, path)) {
+          return;
+        }
+
+        const prevValue: unknown = (prevState as Record<string, unknown>)[path];
+        // Interceptors still run (value `undefined`) so a read-only/validation middleware can veto the removal.
+        if (interceptors.length > 0 && runInterceptors(path, undefined, prevValue) === CANCEL) {
+          return;
+        }
+
+        const prevSnapshot = changeListeners.length > 0 ? getOwnSnapshot() : undefined;
+        deleteOwnKey(path);
+        if (prevSnapshot !== undefined) {
+          emitChange(path, prevSnapshot, getOwnSnapshot());
+        }
+
+        if (canPropagate) {
+          notify(listeners, path);
+          if (pathListeners.size > 0) {
+            const exact = pathListeners.direct.get(path);
+            if (exact) {
+              notify(exact, path);
+            }
+
+            wakeChangedDescendants(path, prevValue, undefined, 1);
+          }
+        }
+
+        invalidateDescendants();
+
+        return;
+      }
+
       // Mutate the live state in place (O(1), no top-level spread). Safe: snapshots are distinct clones, and this
       // rebinds a key rather than mutating any object already handed out.
       const prevValue: unknown = (prevState as Record<string, unknown>)[path];
@@ -383,7 +476,14 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     // Multi-segment: immutable structural-sharing write that shares untouched subtrees.
     const segments = parsePath(path);
     let result: TState | typeof UNCHANGED;
-    if (interceptors.length > 0) {
+    if (unmount) {
+      // Interceptors still run (value `undefined`) so a read-only/validation middleware can veto the removal.
+      if (interceptors.length > 0 && runInterceptors(path, undefined, getByPath(prevState, path)) === CANCEL) {
+        return;
+      }
+
+      result = deleteByPath(prevState, segments) as TState | typeof UNCHANGED;
+    } else if (interceptors.length > 0) {
       // Resolve the leaf up front so interceptors see a concrete value, then write the (possibly transformed) result
       // as a plain value rather than re-running a setter function.
       const prevValue: unknown = getByPath(prevState, path);

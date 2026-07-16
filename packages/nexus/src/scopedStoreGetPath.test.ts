@@ -96,7 +96,7 @@ describe('scoped store: getPath memoizes fall-through reads and invalidates on c
 
     expect(child.getPath('a')).toBe(1);
 
-    parent.setState('a', 5, false); // canPropagate=false: silent, but the parent's own version still bumps
+    parent.setState('a', 5, { canPropagate: false }); // canPropagate=false: silent, but the parent's own version still bumps
 
     expect(child.getPath('a')).toBe(5);
   });
@@ -108,7 +108,7 @@ describe('scoped store: getPath memoizes fall-through reads and invalidates on c
 
     expect(leaf.getPath('a')).toBe(1);
 
-    root.setState('a', 9, false); // silent: mid's forwarder never fires, the invalidate channel must carry it down
+    root.setState('a', 9, { canPropagate: false }); // silent: mid's forwarder never fires, the invalidate channel must carry it down
 
     expect(leaf.getPath('a')).toBe(9);
   });
@@ -146,7 +146,7 @@ describe('scoped store: getPath memoizes fall-through reads and invalidates on c
     expect(first.getPath('a')).toBe(50);
     expect(second.getPath('a')).toBe(50);
 
-    parent.setState('a', 7, false); // silent reaches every registered sibling
+    parent.setState('a', 7, { canPropagate: false }); // silent reaches every registered sibling
 
     expect(first.getPath('a')).toBe(7);
     expect(second.getPath('a')).toBe(7);
@@ -185,7 +185,7 @@ describe('scoped store: getPath memoizes fall-through reads and invalidates on c
     expect(child.getPath('a')).toBe(1);
 
     // Silent parent write
-    parent.setState('a', 99, false);
+    parent.setState('a', 99, { canPropagate: false });
 
     // Child should see the new value
     expect(child.getPath('a')).toBe(99);
@@ -209,7 +209,7 @@ describe('scoped store: getPath memoizes fall-through reads and invalidates on c
     expect(child.getPath('a')).toBe(1);
 
     // Silent parent write should trigger invalidation exactly once
-    parent.setState('a', 99, false);
+    parent.setState('a', 99, { canPropagate: false });
 
     // Child should see the new value (if subscriptions accumulated, this would still work,
     // but we'd be doing extra work)

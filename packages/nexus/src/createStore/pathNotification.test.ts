@@ -183,7 +183,7 @@ describe('path notification — combined directions', () => {
     const spy = vi.fn();
     store.subscribePath('items', spy);
 
-    store.setState('items.coffee.qty', 8, false);
+    store.setState('items.coffee.qty', 8, { canPropagate: false });
 
     expect(spy).not.toHaveBeenCalled();
     expect(store.getPath('items.coffee.qty')).toBe(8);

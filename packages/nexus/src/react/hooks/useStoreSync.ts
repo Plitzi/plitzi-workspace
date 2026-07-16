@@ -88,12 +88,12 @@ function useStoreSyncSingle<TState extends object, P extends PathOf<TState>>(
   const runSync = (canPropagate = true) => {
     lastSyncedRef.current = value;
     if (isFullState) {
-      store.setState(undefined, prev => ({ ...prev, ...value }), canPropagate);
+      store.setState(undefined, prev => ({ ...prev, ...value }), { canPropagate });
     } else if (isDynamicPath) {
       const resolvedPath = path(store.getState());
-      store.setState(resolvedPath, value as PathValue<TState, P>, canPropagate);
+      store.setState(resolvedPath, value as PathValue<TState, P>, { canPropagate });
     } else {
-      store.setState(path, value as PathValue<TState, P>, canPropagate);
+      store.setState(path, value as PathValue<TState, P>, { canPropagate });
     }
   };
 

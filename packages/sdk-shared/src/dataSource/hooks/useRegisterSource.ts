@@ -18,13 +18,15 @@ export type UseRegisterSourceProps = {
 const useRegisterSource = ({ id = '', source, name, fields = [] }: UseRegisterSourceProps) => {
   const { useStoreSetter } = createStoreHook<Record<string, unknown>>();
   // Loosely typed: the registry lives under dynamic `sources.<id>` paths the typed setter can't express.
-  const setStore = useStoreSetter() as (path: string, value: unknown) => void;
+  const setStore = useStoreSetter() as (path: string, value: unknown, options?: { unmount?: boolean }) => void;
   const uniqueId = useMemo(() => `${id}_${makeId(8)}`, [id]);
 
   useEffect(() => {
     setStore(`sources.${uniqueId}`, { id: uniqueId, meta: { id, source, name, fields } });
 
-    return () => setStore(`sources.${uniqueId}`, undefined);
+    // `unmount` removes the key outright instead of leaving a dead `sources.<id>: undefined` the source registry
+    // would still have to defend against (see `getSourcesByElementId`).
+    return () => setStore(`sources.${uniqueId}`, undefined, { unmount: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uniqueId]);
 

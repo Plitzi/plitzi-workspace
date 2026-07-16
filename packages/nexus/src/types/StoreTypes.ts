@@ -130,12 +130,17 @@ export type MiddlewareOptions<T extends object> = {
 // Consumer listeners (React `onStoreChange`) simply ignore the argument.
 export type Listener = (changedPath?: Path) => void;
 
+// Third argument to every write. `canPropagate` (default true) gates subscriber wakes; `unmount` DELETES the key at
+// `path` instead of writing `undefined` — so the path leaves no dead entry (an object key or array slot that lingers
+// as `undefined`). `unmount` is meaningless for a whole-state write (`path === undefined`) and ignored there.
+export type SetStateOptions = { canPropagate?: boolean; unmount?: boolean };
+
 export type SetState<T> = {
-  (path: undefined, value: T | ((prev: T) => T), canPropagate?: boolean): void;
+  (path: undefined, value: T | ((prev: T) => T), options?: SetStateOptions): void;
   <P extends PathOf<T>>(
     path: P,
     value: PathValue<T, P> | ((prev: PathValue<T, P>) => PathValue<T, P>),
-    canPropagate?: boolean
+    options?: SetStateOptions
   ): void;
 };
 
@@ -351,21 +356,23 @@ export type GetterTuple<
 export type UseStoreGetterOptions<TState extends object = object> = StoreHookBaseOptions<TState>;
 
 export type SetStateFn<TState extends object> = {
-  (path: undefined, value: TState | ((prev: TState) => TState)): void;
+  (path: undefined, value: TState | ((prev: TState) => TState), options?: SetStateOptions): void;
   <P extends PathOf<TState>>(
     path: P,
-    value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)
+    value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>),
+    options?: SetStateOptions
   ): void;
 };
 
 export type SetFromBaseFn<TBase> = TBase extends object
   ? {
-      (subPath: undefined, value: TBase | ((prev: TBase) => TBase)): void;
+      (subPath: undefined, value: TBase | ((prev: TBase) => TBase), options?: SetStateOptions): void;
       <SubP extends PathOf<TBase>>(
         subPath: SubP,
-        value: PathValue<TBase, SubP> | ((prev: PathValue<TBase, SubP>) => PathValue<TBase, SubP>)
+        value: PathValue<TBase, SubP> | ((prev: PathValue<TBase, SubP>) => PathValue<TBase, SubP>),
+        options?: SetStateOptions
       ): void;
     }
-  : (subPath: undefined, value: TBase) => void;
+  : (subPath: undefined, value: TBase, options?: SetStateOptions) => void;
 
 export type UseStoreSetterOptions<TState extends object = object> = StoreHookBaseOptions<TState>;

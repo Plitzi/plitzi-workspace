@@ -16,6 +16,7 @@ import type {
   Listener,
   PathOf,
   SetState,
+  SetStateOptions,
   StoreApi,
   StoreApiInternal,
   StoreErrorHandler,
@@ -41,6 +42,9 @@ export type CreateStoreOptions<TState extends object> = {
   // so a per-instance slice stays isolated from an ancestor that uses the same key. Only meaningful with a `parent`.
   exclusive?: ReadonlyArray<string>;
   middlewares?: StoreMiddleware<TState>[];
+  // Paths this store refuses to mutate. A write to a read-only path — or to an ancestor/descendant of one — throws in
+  // dev (surfacing the bug) and is silently dropped in production. Enforced on this scope's own writes only.
+  readOnly?: ReadonlyArray<string>;
   /** When true, hydrate handlers are collected but NOT run during creation.
    *  Call `store.hydrate()` manually (StoreProvider does this in a useEffect).
    *  Defaults to false (backward-compatible: standalone usage hydrates synchronously). */
@@ -138,11 +142,18 @@ function createStore<TState extends object>(
       invalidateReads();
       ownSnapshot = undefined;
     },
+    deleteOwnKey: key => {
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+      delete (state as Record<string, unknown>)[key];
+      invalidateReads();
+      ownSnapshot = undefined;
+    },
     parent,
     listeners,
     pathListeners,
     changeListeners,
     interceptors,
+    readOnly: storeOptions?.readOnly ?? [],
     reportError,
     invalidateDescendants,
     onDelegateToParent:
@@ -246,8 +257,8 @@ function createStore<TState extends object>(
   };
 
   const withBase = (basePath: string): any => {
-    const boundSet = (subPath: string | undefined, value: unknown) =>
-      setState((subPath === undefined ? basePath : `${basePath}.${subPath}`) as PathOf<TState>, value as any);
+    const boundSet = (subPath: string | undefined, value: unknown, options?: SetStateOptions) =>
+      setState((subPath === undefined ? basePath : `${basePath}.${subPath}`) as PathOf<TState>, value as any, options);
 
     return {
       getState: (defaultValue?: unknown) => {

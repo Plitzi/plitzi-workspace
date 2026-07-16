@@ -56,7 +56,7 @@ describe('useRegisterSource', () => {
     expect(entry.meta.name).toBe('My Form');
   });
 
-  it('sets sources.<uniqueId> to undefined on unmount (cleanup)', () => {
+  it('removes sources.<uniqueId> entirely on unmount (cleanup, no dead undefined entry)', () => {
     const storeRef = { current: undefined as StoreApi<SourceState> | undefined };
 
     const { unmount } = renderHook(
@@ -77,6 +77,9 @@ describe('useRegisterSource', () => {
 
     const sourcesAfter = getSources(storeRef.current);
     expect(sourcesAfter[key]).toBeUndefined();
+    // `unmount: true` deletes the key rather than leaving `sources.<id>: undefined` behind.
+    expect(Object.hasOwn(sourcesAfter, key)).toBe(false);
+    expect(Object.keys(sourcesAfter)).toHaveLength(0);
   });
 
   it('does NOT clobber a sibling scope source when unmounting (no scope collision)', () => {

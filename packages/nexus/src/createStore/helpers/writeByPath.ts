@@ -146,6 +146,50 @@ const getCompiled = (path: string, segments: readonly string[]): CompiledWriter 
   return fn;
 };
 
+// Removes the leaf key at `segments` immutably, sharing untouched subtrees. Returns the new root, or `UNCHANGED`
+// when any container along the path is absent or the leaf key doesn't exist (nothing to remove). A numeric leaf
+// segment on an array is spliced out (shifting later items) rather than left as a hole.
+const deleteStep = (
+  node: unknown,
+  segments: readonly string[],
+  index: number
+): Record<string, unknown> | typeof UNCHANGED => {
+  if (typeof node !== 'object' || node === null) {
+    return UNCHANGED;
+  }
+
+  const base = node as Record<string, unknown>;
+  const key = segments[index];
+  if (!Object.hasOwn(base, key)) {
+    return UNCHANGED;
+  }
+
+  if (index === segments.length - 1) {
+    const next = clone(base);
+    if (Array.isArray(next)) {
+      next.splice(Number(key), 1);
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+      delete next[key];
+    }
+
+    return next;
+  }
+
+  const child = deleteStep(base[key], segments, index + 1);
+  if (child === UNCHANGED) {
+    return UNCHANGED;
+  }
+
+  const next = clone(base);
+  next[key] = child;
+
+  return next;
+};
+
+export const deleteByPath = (root: unknown, segments: readonly string[]): Record<string, unknown> | typeof UNCHANGED =>
+  deleteStep(root, segments, 0);
+
 // Writes `value` (or `value(prevLeaf)` when `isFn`) at `path` immutably, sharing untouched subtrees. Returns the
 // new root, or `UNCHANGED` when the leaf value is identical.
 export const writeByPath = (
