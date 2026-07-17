@@ -1,7 +1,7 @@
 /* eslint-disable quotes */
 import { expect, describe, it } from 'vitest';
 
-import { processTwig, hasValidToken } from './twigWrapper';
+import { processTwig, hasValidToken } from '.';
 
 describe('twigWrapper', () => {
   it('processTwig should work successfully', () => {

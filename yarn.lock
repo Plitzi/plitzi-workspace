@@ -1575,7 +1575,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.28.4, @babel/runtime@npm:^7.29.2, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.8.4":
+"@babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.28.4, @babel/runtime@npm:^7.29.2, @babel/runtime@npm:^7.5.5":
   version: 7.29.7
   resolution: "@babel/runtime@npm:7.29.7"
   checksum: 10c0/ca11572f7146b21e0bde6a9ed4bb6a89eafbee5f0944c7eb54d0d8a2dac962c33638a1d611e14faa71dfbb92b4b5f9236232208568a6b7d5c6f3f39ddb91771e
@@ -3503,7 +3503,6 @@ __metadata:
     stylelint-scss: "npm:^7.2.0"
     swr: "npm:^2.4.2"
     terser: "npm:^5.49.0"
-    twig: "npm:^3.0.0"
     typescript: "npm:^6.0.3"
     uuid: "npm:^14.0.1"
     vite: "npm:^8.1.4"
@@ -3586,7 +3585,6 @@ __metadata:
     stylelint-order: "npm:^8.1.1"
     stylelint-scss: "npm:^7.2.0"
     terser: "npm:^5.49.0"
-    twig: "npm:^3.0.0"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.1.4"
     vite-plugin-compression: "npm:^0.5.1"
@@ -3858,7 +3856,6 @@ __metadata:
     "@testing-library/user-event": "npm:^14.6.1"
     "@types/react": "npm:^19.2.17"
     "@types/react-dom": "npm:^19.2.3"
-    "@types/twig": "npm:^1.12.17"
     "@vitejs/plugin-react": "npm:^6.0.3"
     "@vitest/coverage-v8": "npm:^4.1.10"
     babel-minify: "npm:^0.5.2"
@@ -3889,7 +3886,6 @@ __metadata:
     react-dom: "npm:^19.2.7"
     tailwindcss: "npm:^4.3.2"
     terser: "npm:^5.49.0"
-    twig: "npm:^3.0.0"
     typescript: "npm:^6.0.3"
     typescript-eslint: "npm:^8.63.0"
     vite: "npm:^8.1.4"
@@ -5014,13 +5010,6 @@ __metadata:
   version: 0.2.6
   resolution: "@types/tmp@npm:0.2.6"
   checksum: 10c0/a11bfa2cd8eaa6c5d62f62a3569192d7a2c28efdc5c17af0b0551db85816b2afc8156f3ca15ac76f0b142ae1403f04f44279871424233a1f3390b2e5fc828cd0
-  languageName: node
-  linkType: hard
-
-"@types/twig@npm:^1.12.17":
-  version: 1.12.17
-  resolution: "@types/twig@npm:1.12.17"
-  checksum: 10c0/a54d62abb979ecc81707c7da9ffe641cdbb12c5e73d782c5fbed69c41123d7c2142c8c79fe7a92295bc13eea7abbafd68863e5f0eb3f54094a26b179e3a2d653
   languageName: node
   linkType: hard
 
@@ -9376,13 +9365,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"foreachasync@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "foreachasync@npm:3.0.0"
-  checksum: 10c0/8ad877008da351fa78939e850c6014e94b8b9c6de3d12751b2b906ef96f8c80945310d998b2a704854e126c508237dc9951f6900685ccc42c93db15b09a0c4b3
-  languageName: node
-  linkType: hard
-
 "forever-agent@npm:~0.6.1":
   version: 0.6.1
   resolution: "forever-agent@npm:0.6.1"
@@ -11351,13 +11333,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"locutus@npm:^3.0.9":
-  version: 3.0.36
-  resolution: "locutus@npm:3.0.36"
-  checksum: 10c0/54a04ecddeaeadd924f2362c31d888e333bb717bd48dd9d40ac6ddccb352a924791223e09b782d03196808c1404a1f74210a388ce4475c3650dcb8d7b0a75730
-  languageName: node
-  linkType: hard
-
 "lodash.debounce@npm:^4.0.8":
   version: 4.0.8
   resolution: "lodash.debounce@npm:4.0.8"
@@ -12225,7 +12200,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minimatch@npm:^10, minimatch@npm:^10.2.2":
+"minimatch@npm:^10.2.2":
   version: 10.2.5
   resolution: "minimatch@npm:10.2.5"
   dependencies:
@@ -15855,20 +15830,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"twig@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "twig@npm:3.0.0"
-  dependencies:
-    "@babel/runtime": "npm:^7.8.4"
-    locutus: "npm:^3.0.9"
-    minimatch: "npm:^10"
-    walk: "npm:2.3.x"
-  bin:
-    twigjs: bin/twigjs
-  checksum: 10c0/a727b665d34c9b7db9cf5fa99072472ef1dd9291d6f29a4b1de88ca95493d16c667f47d7e87f4aaea05275ea184f6550dc3c32cb42026b819d154690f48cff76
-  languageName: node
-  linkType: hard
-
 "type-check@npm:^0.4.0, type-check@npm:~0.4.0":
   version: 0.4.0
   resolution: "type-check@npm:0.4.0"
@@ -16569,15 +16530,6 @@ __metadata:
   dependencies:
     xml-name-validator: "npm:^5.0.0"
   checksum: 10c0/8712774c1aeb62dec22928bf1cdfd11426c2c9383a1a63f2bcae18db87ca574165a0fbe96b312b73652149167ac6c7f4cf5409f2eb101d9c805efe0e4bae798b
-  languageName: node
-  linkType: hard
-
-"walk@npm:2.3.x":
-  version: 2.3.15
-  resolution: "walk@npm:2.3.15"
-  dependencies:
-    foreachasync: "npm:^3.0.0"
-  checksum: 10c0/c390221ff6fdb8e95f9b03d90fa9980edc2c01ce9efac44c0ade2036ee2823bf2bc9abfae388bdf64ab59e9262610e7cf6634ad54acac018e62621b85edad2cf
   languageName: node
   linkType: hard
 

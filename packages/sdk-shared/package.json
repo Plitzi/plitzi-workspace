@@ -182,8 +182,44 @@
       "import": "./dist/helpers/syntaxHighlight.mjs"
     },
     "./helpers/twigWrapper": {
-      "types": "./dist/helpers/twigWrapper.d.ts",
-      "import": "./dist/helpers/twigWrapper.mjs"
+      "types": "./dist/helpers/twigWrapper/index.d.ts",
+      "import": "./dist/helpers/twigWrapper/index.mjs"
+    },
+    "./helpers/twigWrapper/conditionals": {
+      "types": "./dist/helpers/twigWrapper/conditionals.d.ts",
+      "import": "./dist/helpers/twigWrapper/conditionals.mjs"
+    },
+    "./helpers/twigWrapper/evalOperand": {
+      "types": "./dist/helpers/twigWrapper/evalOperand.d.ts",
+      "import": "./dist/helpers/twigWrapper/evalOperand.mjs"
+    },
+    "./helpers/twigWrapper/filters": {
+      "types": "./dist/helpers/twigWrapper/filters.d.ts",
+      "import": "./dist/helpers/twigWrapper/filters.mjs"
+    },
+    "./helpers/twigWrapper/hasValidToken": {
+      "types": "./dist/helpers/twigWrapper/hasValidToken.d.ts",
+      "import": "./dist/helpers/twigWrapper/hasValidToken.mjs"
+    },
+    "./helpers/twigWrapper/index": {
+      "types": "./dist/helpers/twigWrapper/index.d.ts",
+      "import": "./dist/helpers/twigWrapper/index.mjs"
+    },
+    "./helpers/twigWrapper/patterns": {
+      "types": "./dist/helpers/twigWrapper/patterns.d.ts",
+      "import": "./dist/helpers/twigWrapper/patterns.mjs"
+    },
+    "./helpers/twigWrapper/processTwig": {
+      "types": "./dist/helpers/twigWrapper/processTwig.d.ts",
+      "import": "./dist/helpers/twigWrapper/processTwig.mjs"
+    },
+    "./helpers/twigWrapper/renderTokens": {
+      "types": "./dist/helpers/twigWrapper/renderTokens.d.ts",
+      "import": "./dist/helpers/twigWrapper/renderTokens.mjs"
+    },
+    "./helpers/twigWrapper/resolvePath": {
+      "types": "./dist/helpers/twigWrapper/resolvePath.d.ts",
+      "import": "./dist/helpers/twigWrapper/resolvePath.mjs"
     },
     "./helpers/utils": {
       "types": "./dist/helpers/utils.d.ts",
@@ -1094,7 +1130,6 @@
     "date-fns-tz": "^3.2.0",
     "graphql-tag": "^2.12.7",
     "immer": "^11.1.11",
-    "twig": "^3.0.0",
     "zod": "^4.4.3"
   },
   "peerDependencies": {
@@ -1116,7 +1151,6 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "@types/twig": "^1.12.17",
     "@vitejs/plugin-react": "^6.0.3",
     "@vitest/coverage-v8": "^4.1.10",
     "babel-minify": "^0.5.2",
