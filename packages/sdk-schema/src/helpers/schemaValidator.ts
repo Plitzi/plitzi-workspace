@@ -472,7 +472,7 @@ const createValidator = (schema: Schema) => {
       if (!isValidIdRef(idRef)) {
         errors.push({
           code: 'INVALID_ID_REF',
-          message: `Element "${element.id}" has idRef "${idRef}", which must be letters, numbers and hyphens only`,
+          message: `Element "${element.id}" has idRef "${idRef}", which must start with a letter, then letters, numbers and hyphens (no hyphen at the start or end)`,
           elementId: element.id
         });
       }

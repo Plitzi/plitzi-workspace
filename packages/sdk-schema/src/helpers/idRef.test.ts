@@ -27,9 +27,21 @@ const element = (
 });
 
 describe('isValidIdRef', () => {
-  it('accepts letters, numbers and hyphens', () => {
+  it('accepts a letter start followed by letters, numbers and hyphens', () => {
     expect(isValidIdRef('products-api')).toBe(true);
     expect(isValidIdRef('Hero2')).toBe(true);
+  });
+
+  it('requires a letter start, rejecting a digit or hyphen first', () => {
+    expect(isValidIdRef('1hero')).toBe(false);
+    expect(isValidIdRef('2products-api')).toBe(false);
+    expect(isValidIdRef('-hero')).toBe(false);
+  });
+
+  it('accepts a single letter and an internal hyphen but not a trailing one', () => {
+    expect(isValidIdRef('a')).toBe(true);
+    expect(isValidIdRef('a-b-c')).toBe(true);
+    expect(isValidIdRef('hero-')).toBe(false);
   });
 
   it('rejects the separators the source grammar uses, and the empty ref', () => {
@@ -194,6 +206,87 @@ describe('repointIdRefs', () => {
 
     expect(elements.b.definition.bindings?.attributes?.[0].source).toBe('apiContainer_card-2.data.name');
   });
+
+  it('repoints a twig token inside a binding transformer template', () => {
+    const elements = {
+      b: element('b', 'title', 'text', {
+        bindings: {
+          attributes: [
+            {
+              id: 'b1',
+              source: 'source',
+              to: 'content',
+              transformers: [
+                { action: 'twigTemplate', params: { template: 'Hello {{ apiContainer_card-1.data.name }}!' } }
+              ]
+            }
+          ]
+        }
+      })
+    };
+    repointIdRefs(elements, { 'card-1': 'card-2' });
+
+    expect(elements.b.definition.bindings?.attributes?.[0].transformers?.[0].params.template).toBe(
+      'Hello {{ apiContainer_card-2.data.name }}!'
+    );
+  });
+
+  it('repoints a token inside an interaction param but leaves prose and node_<id> flow refs alone', () => {
+    const elements = {
+      b: element('b', 'opener', 'button', {
+        interactions: {
+          i1: {
+            id: 'i1',
+            title: 'Open',
+            type: 'callback',
+            action: 'run',
+            params: {
+              url: '{{ list_card-1.item.id }}',
+              from: '{{ node_65bcebd45b7e990c363f45af.details.username }}',
+              note: 'the card-1 label stays'
+            },
+            preview: {},
+            elementId: 'someone-else',
+            beforeNode: '',
+            afterNode: '',
+            flowId: 'f1',
+            enabled: true
+          }
+        }
+      })
+    };
+    repointIdRefs(elements, { 'card-1': 'card-2' });
+
+    const params = elements.b.definition.interactions?.i1.params as Record<string, string>;
+    expect(params.url).toBe('{{ list_card-2.item.id }}');
+    expect(params.from).toBe('{{ node_65bcebd45b7e990c363f45af.details.username }}');
+    expect(params.note).toBe('the card-1 label stays');
+  });
+
+  it('leaves a bare idRef occurrence untouched — only a full <type>_<idRef> token is rewritten', () => {
+    const elements = {
+      b: element('b', 'title', 'text', {
+        interactions: {
+          i1: {
+            id: 'i1',
+            title: 'x',
+            type: 'callback',
+            action: 'run',
+            params: { label: 'card-1' },
+            preview: {},
+            elementId: 'other',
+            beforeNode: '',
+            afterNode: '',
+            flowId: 'f1',
+            enabled: true
+          }
+        }
+      })
+    };
+    repointIdRefs(elements, { 'card-1': 'card-2' });
+
+    expect((elements.b.definition.interactions?.i1.params as Record<string, string>).label).toBe('card-1');
+  });
 });
 
 describe('FlatMap.updateElement rename inside an Immer producer', () => {
@@ -222,5 +315,73 @@ describe('FlatMap.updateElement rename inside an Immer producer', () => {
     expect(next.flat.a.idRef).toBe('card-2');
     expect(next.flat.a.definition.bindings?.attributes?.[0].source).toBe('apiContainer_external.data.name');
     expect(next.flat.b.definition.bindings?.attributes?.[0].source).toBe('apiContainer_untouched.data.name');
+  });
+
+  it('propagates the rename to every sibling binding and interaction that targets the old idRef', () => {
+    setAutoFreeze(true);
+    const state = produce({ flat: {} } as Pick<Schema, 'flat'>, draft => {
+      draft.flat.a = element('a', 'products-api', 'apiContainer');
+      draft.flat.b = element('b', 'title', 'text', {
+        bindings: { attributes: [{ id: 'b1', source: 'apiContainer_products-api.data.name', to: 'content' }] }
+      });
+      draft.flat.c = element('c', 'opener', 'button', {
+        interactions: {
+          i1: {
+            id: 'i1',
+            title: 'Open',
+            type: 'callback',
+            action: 'openModal',
+            params: {},
+            preview: {},
+            elementId: 'products-api',
+            beforeNode: '',
+            afterNode: '',
+            flowId: 'f1',
+            enabled: true
+          }
+        }
+      });
+    });
+
+    const renamed: Element = { ...state.flat.a, idRef: 'catalog-api' };
+
+    const next = produce(state, draft => {
+      expect(FlatMap.updateElement(draft.flat, renamed)).toBe(true);
+    });
+
+    expect(next.flat.a.idRef).toBe('catalog-api');
+    expect(next.flat.b.definition.bindings?.attributes?.[0].source).toBe('apiContainer_catalog-api.data.name');
+    expect(next.flat.c.definition.interactions?.i1.elementId).toBe('catalog-api');
+  });
+
+  it('rewrites the renamed element own frozen transformer token, which needs a writable copy of the element', () => {
+    // The renamed element references its own old idRef through a transformer twig token. That value is a frozen
+    // reference on the caller's element, so repointing it demands the stored element be a writable clone.
+    setAutoFreeze(true);
+    const state = produce({ flat: {} } as Pick<Schema, 'flat'>, draft => {
+      draft.flat.a = element('a', 'card-1', 'apiContainer', {
+        bindings: {
+          attributes: [
+            {
+              id: 'a1',
+              source: 'source',
+              to: 'content',
+              transformers: [{ action: 'twigTemplate', params: { template: '{{ apiContainer_card-1.data.total }}' } }]
+            }
+          ]
+        }
+      });
+    });
+
+    const renamed: Element = { ...state.flat.a, idRef: 'card-2' };
+
+    const next = produce(state, draft => {
+      expect(FlatMap.updateElement(draft.flat, renamed)).toBe(true);
+    });
+
+    expect(next.flat.a.idRef).toBe('card-2');
+    expect(next.flat.a.definition.bindings?.attributes?.[0].transformers?.[0].params.template).toBe(
+      '{{ apiContainer_card-2.data.total }}'
+    );
   });
 });

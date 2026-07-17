@@ -157,10 +157,17 @@ class FlatMap {
       return false;
     }
 
-    this.flat[element.id] = element;
     if (renamed && previous && element.idRef) {
+      // The caller builds `element` from prior store state, so its nested bindings, transformers and params are
+      // still the deeply frozen references of that state. Repointing rewrites them in place, so the stored element
+      // has to be a writable copy — mutating the shared frozen object throws on a read-only property.
+      this.flat[element.id] = structuredClone(element);
       repointIdRefs(this.flat, { [previous]: element.idRef });
+
+      return true;
     }
+
+    this.flat[element.id] = element;
 
     return true;
   };

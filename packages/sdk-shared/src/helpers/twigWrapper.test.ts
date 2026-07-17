@@ -114,6 +114,39 @@ describe('twigWrapper', () => {
       const result = processTwig(template, { data: { key: 'value', nested: { a: 1 } } }, false, true);
       expect(result).toEqual(`Data: ${JSON.stringify({ key: 'value', nested: { a: 1 } })}`);
     });
+
+    // Hyphenated source tokens (`<type>_<idRef>` where the idRef carries a hyphen). Twig reads a bare '-' as
+    // subtraction, so these resolve only because processTwig rewrites the path to `_context` subscript access.
+
+    it('resolves a hyphenated source token instead of treating the hyphen as subtraction', () => {
+      const result = processTwig('X {{ apiContainer_products-api.data.name }} Y', {
+        'apiContainer_products-api': { data: { name: 'hello' } }
+      });
+
+      expect(result).toBe('X hello Y');
+    });
+
+    it('resolves a hyphenated token with keepEmptyTokens and keeps the original on a miss', () => {
+      const vars = { 'list_card-1': { item: { id: '42' } } };
+      expect(processTwig('{{ list_card-1.item.id }}', vars, true)).toBe('42');
+      expect(processTwig('{{ list_card-1.item.missing }}', {}, true)).toBe('{{ list_card-1.item.missing }}');
+    });
+
+    it('resolves a hyphenated token with asRaw', () => {
+      const result = processTwig('{{ list_card-1.item }}', { 'list_card-1': { item: { a: 1 } } }, false, true);
+
+      expect(result).toEqual({ a: 1 });
+    });
+
+    it('leaves a hyphenated idRef in the leaf segment resolvable too', () => {
+      const result = processTwig('{{ node_flow-1.my-field }}', { 'node_flow-1': { 'my-field': 'ok' } });
+
+      expect(result).toBe('ok');
+    });
+
+    it('does not disturb a hyphen-free token', () => {
+      expect(processTwig('Hello {{ user.name }}', { user: { name: 'Peter' } })).toBe('Hello Peter');
+    });
   });
 
   describe('hasValidToken - non strict (search mode)', () => {
