@@ -13,17 +13,18 @@ import type { Element, InteractionCallback, Source } from '@plitzi/sdk-shared';
 
 export type InteractionsProps = {
   className?: string;
-  id?: string;
+  idRef?: string;
   interactions?: Element['definition']['interactions'];
   onChange?: (interactions: Element['definition']['interactions']) => void;
 };
 
-const Interactions = ({ className = '', id = '', interactions = emptyObject, onChange }: InteractionsProps) => {
+const Interactions = ({ className = '', idRef = '', interactions = emptyObject, onChange }: InteractionsProps) => {
   const [sourcesRegistry] = useBuilderStore('sources');
+  const [schemaFlat] = useBuilderStore('schema.flat');
   const { interactionsManager } = use(InteractionsContext);
   const [reRender, setRerender] = useState(0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const subscriptor = useMemo(() => interactionsManager.getSubscriptor(id), [id, interactionsManager, reRender]);
+  const subscriptor = useMemo(() => interactionsManager.getSubscriptor(idRef), [idRef, interactionsManager, reRender]);
 
   const handleWorkflowChange = useCallback(
     (workflow: Element['definition']['interactions']) => onChange?.(workflow),
@@ -39,7 +40,7 @@ const Interactions = ({ className = '', id = '', interactions = emptyObject, onC
     const { triggers } = subscriptor;
     Object.keys(triggers).forEach(triggerKey => {
       const { title = `Trigger ${triggerKey}`, params = {}, preview = {} } = triggers[triggerKey];
-      definitions.push({ action: triggerKey, title, type: 'trigger', params, preview, elementId: id });
+      definitions.push({ action: triggerKey, title, type: 'trigger', params, preview, elementId: idRef });
     });
 
     const callbacksAvailables = interactionsManager.getCallbacksAvailables();
@@ -58,8 +59,25 @@ const Interactions = ({ className = '', id = '', interactions = emptyObject, onC
       });
     });
 
+    const flat = schemaFlat as Record<string, Element> | undefined;
+    Object.values(flat ?? {}).forEach(element => {
+      if (element.idRef) {
+        return;
+      }
+
+      definitions.push({
+        action: '',
+        elementId: element.id,
+        title: element.definition.label || element.definition.type,
+        type: 'callback',
+        unreferenced: true,
+        params: {},
+        preview: {}
+      });
+    });
+
     return definitions;
-  }, [id, subscriptor, interactionsManager]);
+  }, [idRef, subscriptor, interactionsManager, schemaFlat]);
 
   useEffect(() => {
     return interactionsManager.onUpdate((timestamp: number) => {
@@ -75,10 +93,21 @@ const Interactions = ({ className = '', id = '', interactions = emptyObject, onC
     [sourcesRegistry]
   );
 
+  if (!idRef) {
+    return (
+      <div className={clsx('flex grow flex-col', className)}>
+        <div className="m-3 self-stretch rounded-sm border-2 border-dashed border-gray-300 p-3 text-center text-zinc-600 dark:border-zinc-600 dark:text-zinc-400">
+          Give this element a Reference (the link button in Settings) before adding interactions — the runtime wires
+          them by that name.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={clsx('flex grow flex-col', className)}>
       <Workflow
-        key={id}
+        key={idRef}
         nodes={interactions}
         direction="vertical"
         dataSource={dataSource}

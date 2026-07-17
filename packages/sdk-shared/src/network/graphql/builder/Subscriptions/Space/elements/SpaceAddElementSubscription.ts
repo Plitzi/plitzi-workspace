@@ -15,6 +15,7 @@ const SpaceAddElementSubscription = gql`
     SpaceAddElement(environment: $environment) {
       element {
         id
+        idRef
         definition {
           label
           type

@@ -18,6 +18,14 @@
       "types": "./dist/helpers/FlatMap.d.ts",
       "import": "./dist/helpers/FlatMap.mjs"
     },
+    "./helpers/idRef": {
+      "types": "./dist/helpers/idRef.d.ts",
+      "import": "./dist/helpers/idRef.mjs"
+    },
+    "./helpers/remapClonedRefs": {
+      "types": "./dist/helpers/remapClonedRefs.d.ts",
+      "import": "./dist/helpers/remapClonedRefs.mjs"
+    },
     "./helpers/schemaValidator": {
       "types": "./dist/helpers/schemaValidator.d.ts",
       "import": "./dist/helpers/schemaValidator.mjs"
@@ -40,7 +48,7 @@
     "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.13",
+    "@plitzi/plitzi-ui": "^1.6.14",
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-style": "workspace:*",
     "prop-types": "^15.8.1"

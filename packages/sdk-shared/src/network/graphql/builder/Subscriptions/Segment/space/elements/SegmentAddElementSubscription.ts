@@ -17,6 +17,7 @@ const SegmentAddElementSubscription = gql`
       contextId
       element {
         id
+        idRef
         definition {
           label
           type

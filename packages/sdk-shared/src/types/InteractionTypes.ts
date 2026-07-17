@@ -68,6 +68,9 @@ export type InteractionCallback<T extends Record<string, unknown> = Record<strin
   title: string;
   type: InteractionCallbackType;
   enabled?: boolean;
+  // Set by the builder for an element with no idRef: its callbacks are never registered, so the entry is a flagged,
+  // inert hint in the picker rather than a wireable action (the runtime keys interactions by idRef only).
+  unreferenced?: boolean;
   params:
     | Record<keyof T, InteractionCallbackParam<T>>
     | ((params: InteractionCallbackParamValues<T>) => Record<keyof T, InteractionCallbackParam<T>>);
@@ -92,7 +95,9 @@ export type Subscriptor<T extends Record<string, unknown> = Record<string, unkno
 export type InteractionsContextValue<TManager = any> = {
   interactionsManager: TManager;
   useInteractions: <T extends Record<string, unknown> = Record<string, unknown>>(props: {
-    id: string;
+    // The element's idRef, the key interactions wire by. Absent for an element without one, which is then left
+    // unregistered rather than falling back to its opaque id.
+    id?: string;
     interactions?: Record<string, ElementInteraction>;
     triggers?: Record<string, InteractionCallback<T>>;
     callbacks?: Record<string, InteractionCallback<T>>;

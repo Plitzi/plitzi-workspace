@@ -13,6 +13,7 @@ const SegmentUpdateMutation = gql`
       schema {
         flat {
           id
+          idRef
           definition {
             label
             type

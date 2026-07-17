@@ -1,3 +1,5 @@
+import { isValidIdRef } from '@plitzi/sdk-schema/helpers/idRef';
+
 import {
   findFolderByRef,
   findPageByRef,
@@ -19,6 +21,8 @@ import type { DefinitionSlotPatch, ElementInput, Operation } from '../operations
 import type { InitialStateInput } from '../operations/schema/shared';
 import type { Style } from '@plitzi/sdk-shared';
 
+// Wider than the idRef charset (`isValidIdRef`): this also covers refs that are NOT idRefs — a raw element id, a
+// style class ref, a componentType, a variable name.
 const REF_RE = /^[a-zA-Z0-9._-]+$/;
 const MAX_OPS = 100;
 const STYLE_CATEGORIES = ['color', 'spacing', 'shadow', 'custom'];
@@ -177,6 +181,22 @@ const checkRef = (ref: string, path: string, ctx: ValidationCtx): void => {
   }
 };
 
+// A ref on a NEW element, which is stored verbatim as its idRef. Checked here so the whole batch reports at once;
+// the handler re-checks at write time, where it also knows the ref is not already taken by another element.
+const checkIdRef = (ref: string, path: string, ctx: ValidationCtx): void => {
+  checkRef(ref, path, ctx);
+  if (ref && REF_RE.test(ref) && !isValidIdRef(ref)) {
+    ctx.errors.push({
+      path,
+      message: `Ref "${ref}" is not a valid idRef`,
+      hint:
+        'Use only letters, numbers and hyphens (e.g. "hero-cta"). This ref becomes the element idRef, which the ' +
+        'runtime embeds in source names like `apiContainer_<idRef>.field` and in interaction targets — a dot or ' +
+        'an underscore would break those paths.'
+    });
+  }
+};
+
 // Accepts a patch map too: a null value marks a property for removal (patchDefinition), which needs no key/value
 // validation, so it is dropped before checking.
 const checkCss = (css: Record<string, string | number | null> | undefined, path: string, ctx: ValidationCtx): void => {
@@ -246,7 +266,7 @@ const checkElementProps = (element: ElementInput, path: string, ctx: ValidationC
 };
 
 const checkElementInput = (element: ElementInput, path: string, ctx: ValidationCtx, seen: Set<string>): void => {
-  checkRef(element.ref, `${path}.ref`, ctx);
+  checkIdRef(element.ref, `${path}.ref`, ctx);
   if (seen.has(element.ref)) {
     ctx.errors.push({
       path: `${path}.ref`,

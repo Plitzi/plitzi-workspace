@@ -23,10 +23,11 @@ export const isPageElement = (schema: Schema, el: Element): boolean =>
 export const getPageElements = (schema: Schema): Element[] =>
   Object.values(schema.flat).filter(el => isPageElement(schema, el));
 
-/** Stable, human-readable ref for a page. Prefers an agent-chosen aiRef, then slug, then a slugified label. */
+/** Stable, human-readable ref for a page: its idRef, then slug, then a slugified label. A page without an idRef is
+ *  still addressable — unlike a data source, a page ref has meaningful fallbacks the agent can read off the tree. */
 export const pageRefOf = (el: Element): string => {
-  if (el.definition.aiRef) {
-    return el.definition.aiRef;
+  if (el.idRef) {
+    return el.idRef;
   }
 
   const slug = typeof el.attributes.slug === 'string' ? el.attributes.slug.trim() : '';
@@ -43,14 +44,17 @@ export const pageRefOf = (el: Element): string => {
   return slugify(label) || el.id;
 };
 
-/** Stable ref for a non-page element. An agent-chosen aiRef when present, otherwise the opaque id. */
-export const elementRefOf = (el: Element): string => el.definition.aiRef ?? el.id;
+/** Stable ref for ADDRESSING a non-page element in the tree: its idRef when present, otherwise the opaque id so an
+ *  element without one is still reachable — the agent needs to name it to give it an idRef in the first place.
+ *  This is not the wiring key: the runtime wires interactions and data sources by idRef only, so an element
+ *  addressed here by its id alone publishes no source and takes no interactions (see `getSourceName`). */
+export const elementRefOf = (el: Element): string => el.idRef ?? el.id;
 
-/** Finds a page by its semantic ref (aiRef/slug/…) or its raw id, so legacy schemas without an aiRef still resolve. */
+/** Finds a page by its semantic ref (idRef/slug/…) or its raw id, so legacy schemas without an idRef still resolve. */
 export const findPageByRef = (schema: Schema, pageRef: string): Element | undefined =>
   getPageElements(schema).find(el => pageRefOf(el) === pageRef || el.id === pageRef);
 
-// --- Page folders (the sidebar tree). A folder has no aiRef; its ref is its id. Pages reference a folder by that
+// --- Page folders (the sidebar tree). A folder has no idRef; its ref is its id. Pages reference a folder by that
 // id (attributes.folder), and nested folders via parentId. ---
 
 // The Schema type declares pageFolders as always present, but a legacy/partial document may omit it — initialize
@@ -180,7 +184,7 @@ export const descendantIds = (schema: Schema, pageRootId: string): string[] => {
 };
 
 /** Resolve a ref to a concrete element within a page subtree (or the page root itself). Accepts either the
- *  semantic ref (aiRef) or the raw element id, so schemas predating aiRef keep working through their ids. */
+ *  semantic ref (idRef) or the raw element id, so schemas predating idRef keep working through their ids. */
 export const resolveRef = (schema: Schema, page: Element, ref: string): Element | undefined => {
   if (elementRefOf(page) === ref || pageRefOf(page) === ref || page.id === ref) {
     return page;
@@ -219,7 +223,7 @@ export const pageRefOfElement = (schema: Schema, el: Element): string => {
   return 'unknown';
 };
 
-/** Find any non-page element by its semantic ref (aiRef) or raw id, across the whole space. */
+/** Find any non-page element by its semantic ref (idRef) or raw id, across the whole space. */
 export const findElementByRef = (schema: Schema, ref: string): Element | undefined => {
   for (const el of Object.values(schema.flat)) {
     if (isPageElement(schema, el)) {

@@ -34,7 +34,7 @@ export interface AIPageSummary {
   elementCount: number;
 }
 
-/** A page folder in the sidebar tree. `ref` is the folder's id (there is no separate aiRef); pages reference it
+/** A page folder in the sidebar tree. `ref` is the folder's id (there is no separate idRef); pages reference it
  *  by that id via their `folder`, and nested folders via `parentId`. */
 export interface AIFolder {
   ref: string;

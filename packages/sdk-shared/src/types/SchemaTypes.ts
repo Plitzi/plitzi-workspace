@@ -70,13 +70,11 @@ export type ElementDefinition = {
   runtime?: ElementRuntime;
   /** Controls when the element is loaded/rendered. */
   loadStrategy?: ElementLoadStrategy;
-  /** Stable, human-readable reference chosen by an AI agent (mcp-ai). Lets agents address this element
-   *  without knowing its opaque `id`. Optional and ignored by rendering. */
-  aiRef?: string;
 };
 
 export type Element<TAttributes extends Record<string, unknown> = Record<string, unknown>> = {
   id: string;
+  idRef?: string;
   attributes: TAttributes & { subType?: string };
   definition: ElementDefinition;
 };

@@ -612,6 +612,84 @@ describe('Testing FlatMap', () => {
     });
   });
 
+  it('FlatMap Update Element idRef', () => {
+    const instance = new FlatMap({ flat: cloneDeep(flat) });
+    expect(instance.addElement({ ...element1, idRef: 'hero' }, '62f70064f2882d5ee31dcf71', 'inside')).toBe(true);
+    expect(instance.updateElement({ ...element1, idRef: 'hero-2' })).toBe(true);
+    expect(instance.flat[element1.id].idRef).toBe('hero-2');
+  });
+
+  it('FlatMap Update Element idRef Repoints The Wiring', () => {
+    const instance = new FlatMap({ flat: cloneDeep(flat) });
+    expect(instance.addElement({ ...element1, idRef: 'hero' }, '62f70064f2882d5ee31dcf71', 'inside')).toBe(true);
+    // A sibling wired to the renamed element: a binding reading its source, and an interaction targeting it.
+    instance.flat['62f70064f2882d5ee31dcf72'].definition.bindings = {
+      attributes: [{ id: 'b1', source: 'heading_hero.content', to: 'content' }]
+    };
+    instance.flat['62f70064f2882d5ee31dcf72'].definition.interactions = {
+      n1: {
+        id: 'n1',
+        title: 'Hide',
+        type: 'callback',
+        action: 'setVisibility',
+        elementId: 'hero',
+        params: {},
+        preview: {},
+        beforeNode: '',
+        afterNode: '',
+        flowId: 'n0',
+        enabled: true
+      }
+    };
+
+    expect(instance.updateElement({ ...element1, idRef: 'hero-2' })).toBe(true);
+
+    const sibling = instance.flat['62f70064f2882d5ee31dcf72'].definition;
+    expect(sibling.bindings?.attributes?.[0].source).toBe('heading_hero-2.content');
+    expect(sibling.interactions?.n1.elementId).toBe('hero-2');
+  });
+
+  it('FlatMap Update Element idRef Taken', () => {
+    const instance = new FlatMap({ flat: cloneDeep(flat) });
+    instance.flat['62f70064f2882d5ee31dcf72'].idRef = 'landing';
+    expect(instance.addElement({ ...element1, idRef: 'hero' }, '62f70064f2882d5ee31dcf71', 'inside')).toBe(true);
+    expect(instance.updateElement({ ...element1, idRef: 'landing' })).toBe(false);
+    expect(instance.flat[element1.id].idRef).toBe('hero');
+  });
+
+  it('FlatMap Update Element idRef Malformed', () => {
+    const instance = new FlatMap({ flat: cloneDeep(flat) });
+    expect(instance.addElement({ ...element1, idRef: 'hero' }, '62f70064f2882d5ee31dcf71', 'inside')).toBe(true);
+    expect(instance.updateElement({ ...element1, idRef: 'hero.cta' })).toBe(false);
+    expect(instance.flat[element1.id].idRef).toBe('hero');
+  });
+
+  it('FlatMap Add Element idRef Taken', () => {
+    const instance = new FlatMap({ flat: cloneDeep(flat) });
+    instance.flat['62f70064f2882d5ee31dcf72'].idRef = 'landing';
+    expect(instance.addElement({ ...element1, idRef: 'landing' }, '62f70064f2882d5ee31dcf71', 'inside')).toBe(false);
+    expect(instance.flat[element1.id]).toBeUndefined();
+    expect(instance.flat['62f70064f2882d5ee31dcf71'].definition.items).toStrictEqual([]);
+  });
+
+  it('FlatMap Add Element idRef Repeated In The Incoming Set', () => {
+    const instance = new FlatMap({ flat: cloneDeep(flat) });
+    const child = { ...element1, id: '62f89157c38ce9ef02b7a5a7', idRef: 'hero' };
+    expect(
+      instance.addElement({ ...element1, idRef: 'hero' }, '62f70064f2882d5ee31dcf71', 'inside', { [child.id]: child })
+    ).toBe(false);
+    expect(instance.flat[child.id]).toBeUndefined();
+  });
+
+  it('FlatMap Update Element idRef Unchanged', () => {
+    const instance = new FlatMap({ flat: cloneDeep(flat) });
+    expect(instance.addElement({ ...element1, idRef: 'hero' }, '62f70064f2882d5ee31dcf71', 'inside')).toBe(true);
+    expect(
+      instance.updateElement({ ...element1, idRef: 'hero', attributes: { ...element1.attributes, content: 'Hi' } })
+    ).toBe(true);
+    expect(instance.flat[element1.id].attributes.content).toBe('Hi');
+  });
+
   it('FlatMap Update Element Wrong', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
     expect(instance instanceof FlatMap).toBe(true);

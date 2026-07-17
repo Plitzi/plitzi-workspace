@@ -245,7 +245,7 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
       const { element } = action;
 
       return produce(state, draft => {
-        set(draft.flat, element.id, element);
+        FlatMap.updateElement(draft.flat, element);
       });
     }
 

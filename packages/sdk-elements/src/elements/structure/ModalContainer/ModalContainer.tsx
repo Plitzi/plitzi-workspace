@@ -3,8 +3,9 @@ import clsx from 'clsx';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
+import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
-import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
@@ -32,10 +33,12 @@ const ModalContainer = ({
 }: ModalContainerProps) => {
   const {
     id,
+    idRef,
     definition: { styleSelectors, label = 'Modal' },
     elementState,
     setElementState
   } = useElement();
+  const sourceName = getSourceName('modalContainer', { idRef });
   const {
     contexts: { InteractionsContext }
   } = usePlitziServiceContext();
@@ -65,20 +68,20 @@ const ModalContainer = ({
   );
 
   const handleClickClose = useCallback(() => {
-    void interactionsManager.interactionTrigger(id, 'onModalClose', { metadata: internalMetadata });
+    void interactionsManager.interactionTrigger(idRef, 'onModalClose', { metadata: internalMetadata });
     setInternalMetadata({});
     setElementState(state => ({ ...state, visibility: false }));
-  }, [interactionsManager, setElementState, setInternalMetadata, internalMetadata, id]);
+  }, [interactionsManager, setElementState, setInternalMetadata, internalMetadata, idRef]);
 
   const handleClickBackground = useCallback(() => {
     if (!autoHideAfterClick) {
       return;
     }
 
-    void interactionsManager.interactionTrigger(id, 'onModalClose', { metadata: internalMetadata });
+    void interactionsManager.interactionTrigger(idRef, 'onModalClose', { metadata: internalMetadata });
     setInternalMetadata({});
     setElementState(state => ({ ...state, visibility: false }));
-  }, [interactionsManager, autoHideAfterClick, setElementState, setInternalMetadata, internalMetadata, id]);
+  }, [interactionsManager, autoHideAfterClick, setElementState, setInternalMetadata, internalMetadata, idRef]);
 
   const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
     () => ({
@@ -117,9 +120,9 @@ const ModalContainer = ({
 
   useEffect(() => {
     if (elementState.visibility !== false) {
-      void interactionsManager.interactionTrigger(id, 'onModalOpen', { metadata: internalMetadata });
+      void interactionsManager.interactionTrigger(idRef, 'onModalOpen', { metadata: internalMetadata });
     }
-  }, [id, interactionsManager, internalMetadata, elementState.visibility]);
+  }, [idRef, interactionsManager, internalMetadata, elementState.visibility]);
 
   const sourceFields = useCallback(
     () =>
@@ -134,16 +137,11 @@ const ModalContainer = ({
     [internalMetadata]
   );
 
-  useRegisterSource({
-    id,
-    source: `modalContainer_${id}`,
-    name: label ? label : `Modal - ${id}`,
-    fields: sourceFields
-  });
+  useRegisterSource({ id, source: sourceName, name: label ? label : `Modal - ${id}`, fields: sourceFields });
 
   const storeContextValue = useMemo(
-    () => ({ runtime: { sources: { [`modalContainer_${id}`]: internalMetadata } } }),
-    [id, internalMetadata]
+    () => (sourceName ? { runtime: { sources: { [sourceName]: internalMetadata } } } : emptyObject),
+    [sourceName, internalMetadata]
   );
 
   return (

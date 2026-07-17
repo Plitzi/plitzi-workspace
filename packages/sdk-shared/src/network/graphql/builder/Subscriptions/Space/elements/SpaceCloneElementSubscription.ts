@@ -14,6 +14,7 @@ const SpaceCloneElementSubscription = gql`
     SpaceCloneElement(environment: $environment) {
       element {
         id
+        idRef
         definition {
           label
           type

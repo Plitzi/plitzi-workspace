@@ -5,6 +5,7 @@ import { produce } from 'immer';
 import { useCallback, useMemo, useState, use } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
+import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -53,9 +54,11 @@ const Form = ({
   const [fields, setFields] = useState<Record<string, SourceField>>({});
   const {
     id,
+    idRef,
     definition: { label = 'Form' },
     setElementState
   } = useElement();
+  const sourceName = getSourceName('apiContainer', { idRef });
   const {
     settings: { previewMode },
     contexts: { InteractionsContext }
@@ -155,7 +158,7 @@ const Form = ({
     }),
     [errors, values, registerField, unregisterField, setFieldValue, setFieldError]
   );
-  useRegisterSource({ id, source: 'form', name: label ? label : `Form - ${id}`, fields: sourceFields });
+  useRegisterSource({ id, source: sourceName, name: label ? label : `Form - ${id}`, fields: sourceFields });
 
   // Interactions Triggers
 
@@ -192,9 +195,9 @@ const Form = ({
       }
 
       const valuesParsed = Object.values(fields).reduce((acum, { name }) => ({ ...acum, [name]: values[name] }), {});
-      void interactionsManager.interactionTrigger(id, 'onSubmit', { values: valuesParsed, actionUrl, method });
+      void interactionsManager.interactionTrigger(idRef, 'onSubmit', { values: valuesParsed, actionUrl, method });
     },
-    [setElementState, managedByInteractions, previewMode, fields, interactionsManager, id, actionUrl, method, values]
+    [setElementState, managedByInteractions, previewMode, fields, interactionsManager, idRef, actionUrl, method, values]
   );
 
   const handleReset = useCallback(

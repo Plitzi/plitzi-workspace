@@ -5,6 +5,7 @@ const SegmentAddTemplateSubscription = gql`
     SegmentAddTemplate(environment: $environment) {
       element {
         id
+        idRef
         definition {
           label
           type

@@ -6,6 +6,7 @@ import clsx from 'clsx';
 import { useCallback, use, useEffect, useMemo } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
+import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
@@ -50,8 +51,10 @@ const ApiContainer = ({
 }: ApiContainerProps) => {
   const {
     id,
+    idRef,
     definition: { label = 'Api Container' }
   } = useElement();
+  const sourceName = getSourceName('apiContainer', { idRef });
   const {
     settings: { previewMode, debugMode },
     contexts: { NavigationContext, InteractionsContext }
@@ -122,18 +125,18 @@ const ApiContainer = ({
   });
 
   useEffect(() => {
-    if (isLoading) {
+    if (isLoading || !idRef) {
       return undefined;
     }
 
     if (isSuccess) {
-      void interactionsManager.interactionTrigger(id, 'onApiSuccess', { url: queryCompiled, method, ...data });
+      void interactionsManager.interactionTrigger(idRef, 'onApiSuccess', { url: queryCompiled, method, ...data });
     } else if (isError) {
-      void interactionsManager.interactionTrigger(id, 'onApiError', { url: queryCompiled, method, ...data });
+      void interactionsManager.interactionTrigger(idRef, 'onApiError', { url: queryCompiled, method, ...data });
     }
 
     return undefined;
-  }, [data, id, interactionsManager, isError, isLoading, isSuccess, method, queryCompiled]);
+  }, [data, idRef, interactionsManager, isError, isLoading, isSuccess, method, queryCompiled]);
 
   const sourceFields = useCallback(
     () =>
@@ -148,12 +151,7 @@ const ApiContainer = ({
     [data]
   );
 
-  useRegisterSource({
-    id,
-    source: `apiContainer_${id}`,
-    name: label ? label : `API - ${id}`,
-    fields: sourceFields
-  });
+  useRegisterSource({ id, source: sourceName, name: label ? label : `API - ${id}`, fields: sourceFields });
 
   const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
     return {
@@ -188,7 +186,10 @@ const ApiContainer = ({
     []
   );
 
-  const storeContext = useMemo(() => ({ runtime: { sources: { [`apiContainer_${id}`]: data } } }), [data, id]);
+  const storeContext = useMemo(
+    () => (sourceName ? { runtime: { sources: { [sourceName]: data } } } : emptyObject),
+    [data, sourceName]
+  );
 
   return (
     <RootElement

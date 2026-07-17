@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
+import { isValidIdRef } from './idRef';
+
 import type { Element, Schema } from '@plitzi/sdk-shared';
 
 export type SchemaValidationOptions = {
@@ -441,6 +443,56 @@ const createValidator = (schema: Schema) => {
     });
   };
 
+  // 9. Validate idRefs: the key an element publishes its data source under (`<type>_<idRef>`) and that a binding
+  // targets. It is optional, but where present it must be unique across the space (two elements sharing one make a
+  // binding ambiguous) and free of the separators its own grammar uses. And an element carrying interactions must
+  // have one: the runtime registers an element's triggers/callbacks by idRef only, so a flow on an element without
+  // one could never fire — the opaque id is deliberately not a fallback.
+  const validateIdRefs = () => {
+    const seen = new Map<string, string>();
+    Object.values(flat).forEach(element => {
+      // A null entry is already reported by validateElements; skip it rather than report it twice.
+      if (!(element as Element | undefined)) {
+        return;
+      }
+
+      const { idRef } = element;
+      if (!idRef) {
+        if (element.definition.interactions && Object.keys(element.definition.interactions).length > 0) {
+          errors.push({
+            code: 'INTERACTIONS_WITHOUT_ID_REF',
+            message: `Element "${element.id}" has interactions but no idRef, so none of them can fire`,
+            elementId: element.id
+          });
+        }
+
+        return;
+      }
+
+      if (!isValidIdRef(idRef)) {
+        errors.push({
+          code: 'INVALID_ID_REF',
+          message: `Element "${element.id}" has idRef "${idRef}", which must be letters, numbers and hyphens only`,
+          elementId: element.id
+        });
+      }
+
+      const owner = seen.get(idRef);
+      if (owner) {
+        errors.push({
+          code: 'DUPLICATE_ID_REF',
+          message: `Elements "${owner}" and "${element.id}" share the idRef "${idRef}"`,
+          elementId: element.id,
+          details: { idRef, otherElementId: owner }
+        });
+
+        return;
+      }
+
+      seen.set(idRef, element.id);
+    });
+  };
+
   // Run all validations
   const validate = (options?: SchemaValidationOptions): SchemaValidationResult => {
     const { baseElementId } = options ?? {};
@@ -456,6 +508,7 @@ const createValidator = (schema: Schema) => {
     validatePageFolders();
     validateOrphanedElements(baseElementId);
     validateVariables();
+    validateIdRefs();
 
     return {
       valid: errors.length === 0,

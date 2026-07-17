@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import { useId, useMemo } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import ReplicaProvider from '../../../../../Element/ReplicaProvider';
 
@@ -30,8 +31,10 @@ const ListControlledItem = ({
   // record→id bookkeeping, so the segment never collides across sibling lists.
   const segment = useId();
 
+  // An empty `source` means the list has no idRef and so publishes nothing bindable — the row then contributes no
+  // scope value rather than a `sources['']` key nothing could ever address.
   const storeContextValue = useMemo(
-    () => ({ runtime: { sources: { [source]: { item: record, index: `${itemCount}` } } } }),
+    () => (source ? { runtime: { sources: { [source]: { item: record, index: `${itemCount}` } } } } : emptyObject),
     [source, record, itemCount]
   );
 

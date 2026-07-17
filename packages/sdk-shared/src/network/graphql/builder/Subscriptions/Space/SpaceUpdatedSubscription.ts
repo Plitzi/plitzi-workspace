@@ -10,6 +10,7 @@ const SpaceUpdatedSubscription = gql`
       schema {
         flat {
           id
+          idRef
           definition {
             label
             type

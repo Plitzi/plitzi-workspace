@@ -34,7 +34,7 @@ const Page = ({
   layoutContainer = '',
   children
 }: PageProps) => {
-  const { id } = useElement();
+  const { id, idRef } = useElement();
   const {
     settings: { previewMode },
     contexts: { NavigationContext, InteractionsContext }
@@ -75,8 +75,8 @@ const Page = ({
   );
 
   useEffect(() => {
-    void interactionsManager.interactionTrigger(id, 'onPageLoad', { pageId: id, routeParams, queryParams });
-  }, [id, interactionsManager, queryParams, routeParams]);
+    void interactionsManager.interactionTrigger(idRef, 'onPageLoad', { pageId: id, routeParams, queryParams });
+  }, [id, idRef, interactionsManager, queryParams, routeParams]);
 
   return (
     <RootElement

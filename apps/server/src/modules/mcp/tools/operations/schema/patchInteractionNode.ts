@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { interactionNode } from './shared';
-import { pageUri, resolveElement } from './write';
+import { pageUri, resolveElement, resolveTargetRef } from './write';
 import { empty, fail } from '../../../helpers';
 
 import type { OpResult, Space } from '../../../helpers';
@@ -62,7 +62,7 @@ export const patchInteractionNode = (space: Space, env: Env, op: PatchInteractio
   }
 
   if (op.elementId !== undefined) {
-    node.elementId = op.elementId;
+    node.elementId = resolveTargetRef(space, op.elementId);
   }
 
   if (op.preview !== undefined) {

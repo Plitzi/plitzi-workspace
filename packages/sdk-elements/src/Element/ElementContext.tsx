@@ -5,6 +5,7 @@ import type { CSSProperties } from 'react';
 
 export type ElementContextValue<T extends 'skipHOC' | 'full' = 'full'> = {
   id: string;
+  idRef?: string;
   rootId?: string;
 } & (T extends 'skipHOC'
   ? { plitziJsxSkipHOC: true }

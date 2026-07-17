@@ -3,7 +3,9 @@ import clsx from 'clsx';
 import { useCallback, useMemo } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
+import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import useCollectionContext from './hooks/useCollectionContext';
@@ -36,8 +38,10 @@ const CollectionContainer = ({
 }: CollectionContainerProps) => {
   const {
     id,
+    idRef,
     definition: { label = 'Collection Container' }
   } = useElement();
+  const sourceName = getSourceName('collectionContainer', { idRef });
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
@@ -65,7 +69,7 @@ const CollectionContainer = ({
 
   useRegisterSource({
     id,
-    source: `collectionContainer_${id}`,
+    source: sourceName,
     name: label ? label : `Collection - ${collection?.name || id}`,
     fields: sourceFields
   });
@@ -84,8 +88,8 @@ const CollectionContainer = ({
   }, [fetch, label]);
 
   const storeContext = useMemo(
-    () => ({ runtime: { sources: { [`collectionContainer_${id}`]: collection } } }),
-    [collection, id]
+    () => (sourceName ? { runtime: { sources: { [sourceName]: collection } } } : emptyObject),
+    [collection, sourceName]
   );
 
   if (!collection && previewMode) {

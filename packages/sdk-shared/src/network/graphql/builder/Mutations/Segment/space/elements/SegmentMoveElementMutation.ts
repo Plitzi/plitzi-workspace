@@ -18,6 +18,7 @@ const SegmentMoveElementMutation = gql`
       contextId: $contextId
     ) {
       id
+      idRef
       definition {
         label
         type

@@ -3,8 +3,9 @@ import clsx from 'clsx';
 import { useCallback, useMemo } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
+import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
-import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import ListControlledItem from './ListControlledItem';
@@ -24,8 +25,10 @@ export type ListControlledProps<T = unknown> = {
 const ListControlled = ({ ref, className = '', children, items = [] }: ListControlledProps) => {
   const {
     id,
+    idRef,
     definition: { label }
   } = useElement();
+  const sourceName = getSourceName('list', { idRef });
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
@@ -47,16 +50,11 @@ const ListControlled = ({ ref, className = '', children, items = [] }: ListContr
   );
 
   const storeContextValue = useMemo(
-    () => ({ runtime: { sources: { [`list_${id}`]: { items: finalItems } } } }),
-    [id, finalItems]
+    () => (sourceName ? { runtime: { sources: { [sourceName]: { items: finalItems } } } } : emptyObject),
+    [sourceName, finalItems]
   );
 
-  useRegisterSource({
-    id,
-    source: `list_${id}`,
-    name: label ? label : `List - ${id}`,
-    fields: sourceFields
-  });
+  useRegisterSource({ id, source: sourceName, name: label ? label : `List - ${id}`, fields: sourceFields });
 
   return (
     <RootElement
@@ -81,7 +79,7 @@ const ListControlled = ({ ref, className = '', children, items = [] }: ListContr
               itemCount={i + 1}
               isTemplate={i !== 0 && !previewMode}
               record={item}
-              source={`list_${id}`}
+              source={sourceName}
             >
               {children}
             </ListControlledItem>

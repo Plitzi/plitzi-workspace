@@ -4,6 +4,7 @@ const SegmentRemoveElementMutation = gql`
   mutation SegmentRemoveElementMutation($environment: String!, $elementId: String!, $contextId: String!) {
     SegmentRemoveElement(environment: $environment, elementId: $elementId, contextId: $contextId) {
       id
+      idRef
       definition {
         label
         type

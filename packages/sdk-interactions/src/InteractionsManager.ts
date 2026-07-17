@@ -84,6 +84,9 @@ class InteractionsManager {
       }
     };
 
+  // `id` is the element's idRef — the only key an interaction is wired by. An element without one is not
+  // registered at all: its callbacks would be unreachable (nothing can name them) and its triggers would fire
+  // against a key no flow can target, so the opaque id is never used as a substitute.
   subscribe<TParams extends Record<string, unknown> = Record<string, unknown>>(
     id: string,
     interactions: Record<string, ElementInteraction> = {},
@@ -91,7 +94,7 @@ class InteractionsManager {
     callbacks: Record<string, InteractionCallback<TParams>> = {},
     getAdditionalParams?: Subscriptor<TParams>['getAdditionalParams']
   ) {
-    if (this.subscriptors[id] as Subscriptor | undefined) {
+    if (!id || (this.subscriptors[id] as Subscriptor | undefined)) {
       return false;
     }
 
@@ -206,7 +209,13 @@ class InteractionsManager {
     return rootManager?.getCallbacksAvailablesInternal() ?? {};
   }
 
-  interactionTrigger(subscriptorId: string, eventName: string, params: Record<string, unknown> = {}) {
+  // `subscriptorId` is the firing element's idRef. Absent for an element without one — it was never subscribed, so
+  // there is nothing to fire and no key to fire against (the opaque id is deliberately not a fallback).
+  interactionTrigger(subscriptorId: string | undefined, eventName: string, params: Record<string, unknown> = {}) {
+    if (!subscriptorId) {
+      return undefined;
+    }
+
     return this.eventBridge.emit('interaction', subscriptorId as EventBridgeEvent, subscriptorId, eventName, params);
   }
 

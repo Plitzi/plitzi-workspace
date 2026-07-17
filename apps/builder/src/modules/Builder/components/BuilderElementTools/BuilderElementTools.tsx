@@ -4,9 +4,10 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import clsx from 'clsx';
 import { use, useMemo, useCallback, useRef } from 'react';
 
+import { idRefConflict } from '@plitzi/sdk-schema/helpers/idRef';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
 import StyleInspector from '@plitzi/sdk-style/components/StyleInspector';
 import DataSourceBinding from '@pmodules/DataSource/DataSourceBinding';
 import Interactions from '@pmodules/Interactions/Interactions';
@@ -32,6 +33,7 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
     `schema.flat.${elementSelected}`
   ]);
   const { componentDefinitions } = use(ComponentContext);
+  const getSchemaFlat = useBuilderStoreGetter('schema.flat');
   const attributes = useMemo(() => get(element, 'attributes', {} as Element['attributes']), [element]);
   const definition = useMemo(() => get(element, 'definition', {} as Element['definition']), [element]);
   const elementRef = useRef(element);
@@ -73,6 +75,16 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
       }
     },
     [setTempAttributes, setTempDefinition]
+  );
+
+  const getIdRefConflict = useCallback(
+    (idRef: string) => idRefConflict(getSchemaFlat(), idRef, elementSelected),
+    [getSchemaFlat, elementSelected]
+  );
+
+  const handleUpdateIdRef = useCallback(
+    (idRef: string) => builderHandler('schemaUpdateElement', { ...elementRef.current, idRef: idRef || undefined }),
+    [builderHandler]
   );
 
   const handleChangeBinding = useCallback(
@@ -134,7 +146,14 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
         )}
         {selected === 'settings' && (
           <div className="flex grow basis-0 flex-col gap-2 px-2">
-            <ElementDefinitionSettings definition={tempDefinition} onUpdate={handleChange} />
+            <ElementDefinitionSettings
+              key={elementSelected}
+              definition={tempDefinition}
+              idRef={element.idRef}
+              getIdRefConflict={getIdRefConflict}
+              onUpdate={handleChange}
+              onUpdateRef={handleUpdateIdRef}
+            />
             <ElementSettings attributes={tempAttributes} id={elementSelected} type={type} handleChange={handleChange} />
           </div>
         )}
@@ -147,7 +166,7 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
           />
         )}
         {selected === 'interactions' && (
-          <Interactions id={elementSelected} interactions={interactions} onChange={handleChangeInteractions} />
+          <Interactions idRef={element.idRef} interactions={interactions} onChange={handleChangeInteractions} />
         )}
       </div>
     </div>

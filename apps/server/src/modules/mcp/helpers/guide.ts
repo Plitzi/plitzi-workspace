@@ -13,7 +13,8 @@ export const serverInstructions =
   'you need for the next edit. Use patchElement / patchDefinition to change only some props / CSS (the upsert ' +
   'variants replace them all). An element read (and search include:"detail") inlines the CSS of the definitions ' +
   'it attaches under resolvedStyle, so you rarely need a separate definition read. ' +
-  'Refs accept a semantic aiRef or the raw id. CSS is kebab-case (shorthands like border/padding are accepted); ' +
+  'Refs accept a semantic idRef ([A-Za-z0-9-], unique, chosen by you) or the raw id — the idRef is ALSO the ' +
+  'runtime wiring key, so a provider source is `<type>_<idRef>.<field>`. CSS is kebab-case (shorthands accepted); ' +
   'style vars are var(--name), schema vars are {{name}}. ' +
   'READERS — do not confuse them: MCP *resources* are the browsable catalog (list them, or open one by URI); ' +
   'plitzi_search FINDS refs by label/type/attribute; plitzi_read BATCH-fetches URIs you already hold. Reach for ' +
@@ -121,8 +122,28 @@ uri+stateVersion — re-read them if you need their new content. The operation s
 schema (discriminated by \`type\`).
 
 ## Addressing
-Refs are a semantic \`aiRef\` you choose (e.g. \`"hero.cta"\`) or the element's **raw id**. Both always resolve, so
-schemas predating aiRef keep working through ids. Creating an element stores its \`ref\` as the aiRef.
+Refs are the semantic \`idRef\` (e.g. \`"hero-cta"\`) or the element's **raw id** — both resolve. Creating an element
+stores the \`ref\` you chose as its **idRef**.
+
+The idRef is not just an alias — it is the **wiring key the runtime uses**. A provider registers its data source as
+\`<type>_<idRef>\`, so a \`source\` you write against a ref resolves to that element at runtime with no id translation.
+Rules for a **new** ref (both are enforced; a violation fails the batch):
+- Charset \`[A-Za-z0-9-]\` (e.g. \`"products-api"\`). A \`.\` would split the \`<type>_<idRef>.<field>\` source path and the
+  interaction target lookup; a \`_\` would collide with the \`<type>_<idRef>\` separator. **No dots, no underscores** —
+  use hyphens.
+- **Unique across the space**; creating a ref that is taken is rejected (address the existing element instead).
+
+An idRef is **optional** on an element — one built in the builder may not have it. The consequence is specific: an
+element without an idRef **publishes no data source** and **holds no interactions**, because the runtime keys
+everything by idRef and the raw id is never a fallback. You do not have to fix this by hand: writing an
+interaction **mints an idRef for you** — the element that hosts the flow, and any element a node targets, is given
+a free \`<type>-<n>\` ref if it lacks one, and the flow is wired to it. A node target you write may be a raw id; it
+is normalised to that element's idRef. (To make an element a data-source **provider** to bind against, give it an
+idRef explicitly with \`patchElement\`, or create it with the \`ref\` you want — a created element stores its ref as
+its idRef.)
+
+**Renaming** an idRef moves the wiring key: every binding source and interaction target across the space that
+pointed at the old name is repointed with it, so the element stays wired. You do not have to rewrite them.
 
 ## Styling (crosses both schemas)
 - A definition lives in the **style schema**; an element's \`style.base\` (element schema) is the link that applies
@@ -189,7 +210,7 @@ its \`id\`), so a follow-up patch/delete needs no extra read.
 
 ## Pages & folders
 Pages can be grouped into **folders** (the sidebar tree). A folder is \`{ ref, name, slug, parentId? }\`; its \`ref\`
-**is its id** (there is no separate aiRef), and that id is what a page and a nested folder reference.
+**is its id** (there is no separate idRef), and that id is what a page and a nested folder reference.
 - Create/rename/move a folder with \`upsertFolder\` (the \`ref\` you pass on create becomes its id — pick a stable one
   like \`"blog"\`). Nest it under another with \`parentId\` (a folder ref); \`parentId: null\` moves it back to the root.
 - Put a page in a folder with \`upsertPage\`'s \`folder\` (a folder ref). A page's \`folder\` is always either **empty

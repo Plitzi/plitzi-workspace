@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { elementRefOf } from './helpers';
 import { buildTypeRegistry, readResource, resourceErrorMessage } from './resources';
 import { createMcpServer } from './server';
 import { apply, operation, read, search, tools, validate } from './tools';
@@ -330,7 +331,7 @@ describe('mcp-ai apply (writes + dryRun + diff + full elements + OCC)', () => {
     {
       type: 'upsertElement',
       pageRef: 'home',
-      element: { ref: 'hero.cta', type: 'button', props: { content: 'Go' }, style: { base: ['btn-hero'] } }
+      element: { ref: 'hero-cta', type: 'button', props: { content: 'Go' }, style: { base: ['btn-hero'] } }
     }
   ];
 
@@ -343,7 +344,7 @@ describe('mcp-ai apply (writes + dryRun + diff + full elements + OCC)', () => {
     expect(res.changed.map(c => c.uri)).toContain('plitzi://schema/main/pages/home');
     // dryRun must not call the persisters — the store is untouched.
     const page = readResource(cap.saved(), 'main', 'plitzi://schema/main/pages/home')?.data as AIPageSkeleton;
-    expect(page.tree.map(n => n.ref)).not.toContain('hero.cta');
+    expect(page.tree.map(n => n.ref)).not.toContain('hero-cta');
   });
 
   it('apply persists each changed schema and reports changed versions', async () => {
@@ -354,7 +355,7 @@ describe('mcp-ai apply (writes + dryRun + diff + full elements + OCC)', () => {
     expect(res.changed.some(c => c.uri.includes('definitions'))).toBe(true);
     // element op → element schema (page gains the new element); style op → style schema (new definition).
     const page = readResource(cap.saved(), 'main', 'plitzi://schema/main/pages/home')?.data as AIPageSkeleton;
-    expect(page.tree.map(n => n.ref)).toContain('hero.cta');
+    expect(page.tree.map(n => n.ref)).toContain('hero-cta');
     const defs = readResource(cap.saved(), 'main', 'plitzi://definitions/main')?.data as string[];
     expect(defs).toContain('btn-hero');
   });
@@ -383,15 +384,15 @@ describe('mcp-ai apply (writes + dryRun + diff + full elements + OCC)', () => {
 
   it('returns the full detail of each created element (not just the diff)', async () => {
     const res = await apply({ operations: ops }, buildSpace());
-    const cta = res.elements?.find(e => e.ref === 'hero.cta');
-    expect(cta).toMatchObject({ ref: 'hero.cta', type: 'button', pageRef: 'home', props: { content: 'Go' } });
+    const cta = res.elements?.find(e => e.ref === 'hero-cta');
+    expect(cta).toMatchObject({ ref: 'hero-cta', type: 'button', pageRef: 'home', props: { content: 'Go' } });
     expect(cta?.style.base).toEqual(['btn-hero']);
   });
 
   it('dryRun returns the same full element detail without persisting', async () => {
     const res = await apply({ operations: ops, dryRun: true }, buildSpace());
     expect(res.dryRun).toBe(true);
-    expect(res.elements?.map(e => e.ref)).toContain('hero.cta');
+    expect(res.elements?.map(e => e.ref)).toContain('hero-cta');
   });
 
   it('returns an updated element with its new props', async () => {
@@ -426,10 +427,10 @@ describe('mcp-ai apply (writes + dryRun + diff + full elements + OCC)', () => {
             type: 'upsertElement',
             pageRef: 'cats',
             element: {
-              ref: 'cats.hero',
+              ref: 'cats-hero',
               type: 'container',
               style: { base: ['hero'] },
-              children: [{ ref: 'cats.title', type: 'text', props: { content: 'Cats' } }]
+              children: [{ ref: 'cats-title', type: 'text', props: { content: 'Cats' } }]
             }
           }
         ]
@@ -439,8 +440,8 @@ describe('mcp-ai apply (writes + dryRun + diff + full elements + OCC)', () => {
     );
     expect(res.applied).toBe(true);
     const page = readResource(cap.saved(), 'main', 'plitzi://schema/main/pages/cats')?.data as AIPageSkeleton;
-    expect(page.tree.map(n => n.ref)).toContain('cats.hero');
-    expect(page.tree[0].children?.[0].ref).toBe('cats.title');
+    expect(page.tree.map(n => n.ref)).toContain('cats-hero');
+    expect(page.tree[0].children?.[0].ref).toBe('cats-title');
   });
 });
 
@@ -485,9 +486,9 @@ describe('mcp-ai AI-facing contract', () => {
 });
 
 describe('mcp-ai legacy id addressing', () => {
-  it('resolves a page and element by their raw ids even when an aiRef is present', async () => {
+  it('resolves a page and element by their raw ids even when an idRef is present', async () => {
     const space = buildSpace();
-    space.schema.flat.c1.definition.aiRef = 'my-box';
+    space.schema.flat.c1.idRef = 'my-box';
 
     const cap = capturing(space);
     await apply({ operations: [{ type: 'deleteElement', pageRef: 'page1', ref: 'c1' }] }, space, cap.persisters);
@@ -1057,6 +1058,197 @@ describe('mcp-ai page enable/disable (attributes.enabled)', () => {
   });
 });
 
+describe('mcp-ai idRef (the ref IS the runtime wiring key)', () => {
+  it('stores the chosen ref as the element idRef at the Element root', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      {
+        operations: [{ type: 'upsertElement', pageRef: 'home', element: { ref: 'products-api', type: 'apiContainer' } }]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+    const el = Object.values(cap.saved().schema.flat).find(e => e.definition.type === 'apiContainer');
+    expect(el?.idRef).toBe('products-api');
+    // The opaque id stays as the internal key and is NOT the ref.
+    expect(el?.id).not.toBe('products-api');
+  });
+
+  it('a binding source written against the ref matches the key the runtime registers', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      {
+        operations: [
+          { type: 'upsertElement', pageRef: 'home', element: { ref: 'products-api', type: 'apiContainer' } },
+          {
+            type: 'upsertElement',
+            pageRef: 'home',
+            parentRef: 'products-api',
+            element: { ref: 'row-title', type: 'text' }
+          },
+          {
+            type: 'upsertBinding',
+            pageRef: 'home',
+            ref: 'row-title',
+            category: 'attributes',
+            binding: { to: 'content', source: 'apiContainer_products-api.data.name' }
+          }
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+    expect(res.applied).toBe(true);
+
+    const saved = cap.saved();
+    const api = Object.values(saved.schema.flat).find(e => e.definition.type === 'apiContainer');
+    const child = Object.values(saved.schema.flat).find(e => e.idRef === 'row-title');
+    const storedSource = child?.definition.bindings?.attributes?.[0].source;
+    // What ApiContainer registers at runtime is `apiContainer_${idRef ?? id}` — the binding must target exactly that.
+    const runtimeSourceName = api ? `apiContainer_${elementRefOf(api)}` : '';
+    expect(storedSource?.startsWith(`${runtimeSourceName}.`)).toBe(true);
+    expect(child?.definition.parentId).toBe(api?.id);
+  });
+
+  it('rejects a new ref whose charset would break the source/interaction path grammar', async () => {
+    for (const ref of ['hero.cta', 'api_products']) {
+      const res = await apply(
+        { operations: [{ type: 'upsertElement', pageRef: 'home', element: { ref, type: 'text' } }] },
+        buildSpace()
+      );
+      expect(res.applied).toBe(false);
+      expect(res.errors?.[0].message).toContain('not a valid idRef');
+    }
+  });
+
+  it('rejects a new ref already used elsewhere in the space (idRef is a global wiring key)', async () => {
+    // "home" is the existing page's ref: reusing it for a new element would make the wiring key ambiguous.
+    const res = await apply(
+      { operations: [{ type: 'upsertElement', pageRef: 'home', element: { ref: 'home', type: 'text' } }] },
+      buildSpace()
+    );
+    expect(res.applied).toBe(false);
+    expect(res.errors?.[0].message).toContain('already used');
+  });
+
+  it('rejects duplicate refs within one element tree (validator)', async () => {
+    const res = await apply(
+      {
+        operations: [
+          {
+            type: 'upsertElement',
+            pageRef: 'home',
+            element: { ref: 'dup', type: 'container', children: [{ ref: 'dup', type: 'text' }] }
+          }
+        ]
+      },
+      buildSpace()
+    );
+    expect(res.applied).toBe(false);
+    expect(res.errors?.[0].message).toContain('Duplicate ref');
+  });
+
+  it('upserting an existing ref on its own page still updates it (not a uniqueness collision)', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      {
+        operations: [
+          { type: 'upsertElement', pageRef: 'home', element: { ref: 'c1', type: 'container', label: 'Renamed' } }
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+    expect(res.applied).toBe(true);
+    expect(cap.saved().schema.flat.c1.definition.label).toBe('Renamed');
+  });
+
+  it('patchElement assigns an idRef to an element that has none, addressing it by its raw id', async () => {
+    const cap = capturing(buildSpace());
+    // c1 has no idRef, so it publishes no data source — this is how an agent makes it bindable.
+    const res = await apply(
+      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', idRef: 'hero-box' }] },
+      buildSpace(),
+      cap.persisters
+    );
+    expect(res.applied).toBe(true);
+    expect(cap.saved().schema.flat.c1.idRef).toBe('hero-box');
+  });
+
+  it('patchElement rejects an idRef that is taken or malformed, leaving the element untouched', async () => {
+    for (const [idRef, message] of [
+      ['home', 'already used'],
+      ['hero.box', 'not a valid idRef']
+    ]) {
+      const res = await apply(
+        { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', idRef }] },
+        buildSpace()
+      );
+      expect(res.applied).toBe(false);
+      expect(res.errors?.[0].message).toContain(message);
+    }
+  });
+
+  it('patchElement re-assigning an element its own idRef is a no-op, not a collision', async () => {
+    const withRef = (): Space => {
+      const space = buildSpace();
+      space.schema.flat.c1.idRef = 'my-box';
+
+      return space;
+    };
+
+    const cap = capturing(withRef());
+    const res = await apply(
+      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'my-box', idRef: 'my-box', label: 'Renamed' }] },
+      withRef(),
+      cap.persisters
+    );
+    expect(res.applied).toBe(true);
+    expect(cap.saved().schema.flat.c1.idRef).toBe('my-box');
+    expect(cap.saved().schema.flat.c1.definition.label).toBe('Renamed');
+  });
+
+  // The idRef is the wiring key, so renaming it moves the source name with it: anything still pointing at the old
+  // name would silently read nothing. The agent is told the repoint is automatic, so it must actually happen.
+  it('patchElement renaming an idRef repoints the bindings and interactions that targeted it', async () => {
+    const space = buildSpace();
+    space.schema.flat.c1.idRef = 'products-api';
+    // The page hosts the interaction, so it needs an idRef of its own under the new contract. It matches the slug
+    // ref the page already addresses by, so `pageRef: 'home'` still resolves.
+    space.schema.flat.page1.idRef = 'home';
+    space.schema.flat.page1.definition.bindings = {
+      attributes: [{ id: 'b1', source: 'container_products-api.data', to: 'items' }]
+    };
+    space.schema.flat.page1.definition.interactions = {
+      n1: {
+        id: 'n1',
+        title: 'Hide',
+        type: 'callback',
+        action: 'setVisibility',
+        elementId: 'products-api',
+        params: {},
+        preview: {},
+        beforeNode: '',
+        afterNode: '',
+        flowId: 'n1',
+        enabled: true
+      }
+    };
+    const cap = capturing(space);
+
+    const res = await apply(
+      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'products-api', idRef: 'catalog-api' }] },
+      cap.saved(),
+      cap.persisters
+    );
+
+    expect(res.applied).toBe(true);
+    const page = cap.saved().schema.flat.page1.definition;
+    expect(page.bindings?.attributes?.[0].source).toBe('container_catalog-api.data');
+    expect(page.interactions?.n1.elementId).toBe('catalog-api');
+  });
+});
+
 describe('mcp-ai URI aliases under schema root (RFC 0005 #3/#4)', () => {
   it('resolves a definition through the plitzi://schema/{env}/definitions/{ref} alias', () => {
     const canonical = readResource(buildSpace(), 'main', 'plitzi://definitions/main/box');
@@ -1334,7 +1526,7 @@ describe('mcp-ai page folders (create/nest/associate/delete)', () => {
 
 describe('mcp-ai page.folder is always "" (root) or a valid id', () => {
   const folderOf = (space: Space, ref: string): unknown =>
-    Object.values(space.schema.flat).find(el => el.definition.aiRef === ref)?.attributes.folder;
+    Object.values(space.schema.flat).find(el => el.idRef === ref)?.attributes.folder;
 
   it('stores "" (not a missing key) for a new page with no folder', async () => {
     const cap = capturing(buildSpace());
@@ -1703,10 +1895,19 @@ describe('mcp-ai data bindings', () => {
 });
 
 describe('mcp-ai interactions', () => {
+  // Interactions are wired by idRef, so an element only takes a flow once it has one — the harness gives c1 an
+  // idRef, and the flow is addressed by that ref.
+  const interactiveSpace = (): Space => {
+    const space = buildSpace();
+    space.schema.flat.c1.idRef = 'box-1';
+
+    return space;
+  };
+
   const flowOp: Operation = {
     type: 'upsertInteractionFlow',
     pageRef: 'home',
-    ref: 'c1',
+    ref: 'box-1',
     nodes: [
       { nodeType: 'trigger', action: 'onClick', title: 'Click' },
       { nodeType: 'globalCallback', action: 'login', title: 'Log in', params: { mode: 'token' } }
@@ -1714,7 +1915,7 @@ describe('mcp-ai interactions', () => {
   };
 
   it('creates a flow from ordered steps and reads it back in order', async () => {
-    const cap = capturing(buildSpace());
+    const cap = capturing(interactiveSpace());
     const res = await apply({ operations: [flowOp] }, cap.saved(), cap.persisters);
     expect(res.summary.created).toBe(1);
     const el = readResource(cap.saved(), 'main', 'plitzi://schema/main/elements/c1')?.data as AIElementDetail;
@@ -1723,15 +1924,30 @@ describe('mcp-ai interactions', () => {
     expect(flow?.flowId).toBe(flow?.nodes[0].id);
   });
 
-  it('patches one node and deletes a single step, re-linking the flow', async () => {
+  it('mints an idRef for an element that has none so the flow can be wired', async () => {
     const cap = capturing(buildSpace());
+    const res = await apply({ operations: [{ ...flowOp, ref: 'c1' }] }, cap.saved(), cap.persisters);
+    expect(res.applied).toBe(true);
+    // c1 had no idRef; the flow forces one, and the trigger is registered under it.
+    const idRef = cap.saved().schema.flat.c1.idRef;
+    expect(idRef).toBeTruthy();
+    const trigger = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {}).find(
+      n => n.type === 'trigger'
+    );
+    expect(trigger?.elementId).toBe(idRef);
+  });
+
+  it('patches one node and deletes a single step, re-linking the flow', async () => {
+    const cap = capturing(interactiveSpace());
     const created = await apply({ operations: [flowOp] }, cap.saved(), cap.persisters);
     const el0 = created.elements?.[0] as AIElementDetail;
     const callbackId = el0.interactions?.[0].nodes[1].id ?? '';
 
     await apply(
       {
-        operations: [{ type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: callbackId, title: 'Renamed' }]
+        operations: [
+          { type: 'patchInteractionNode', pageRef: 'home', ref: 'box-1', nodeId: callbackId, title: 'Renamed' }
+        ]
       },
       cap.saved(),
       cap.persisters
@@ -1740,12 +1956,101 @@ describe('mcp-ai interactions', () => {
     expect(el.interactions?.[0].nodes[1].title).toBe('Renamed');
 
     await apply(
-      { operations: [{ type: 'deleteInteraction', pageRef: 'home', ref: 'c1', nodeId: callbackId }] },
+      { operations: [{ type: 'deleteInteraction', pageRef: 'home', ref: 'box-1', nodeId: callbackId }] },
       cap.saved(),
       cap.persisters
     );
     el = readResource(cap.saved(), 'main', 'plitzi://schema/main/elements/c1')?.data as AIElementDetail;
     expect(el.interactions?.[0].nodes.map(n => n.action)).toEqual(['onClick']);
+  });
+
+  // The runtime registers an element's callbacks under `idRef ?? id` and looks them up by that same key, so a node
+  // pinned to a raw id would resolve to nothing once the element has an idRef — the flow would silently do nothing.
+  it('targets a node at the element ref, not its raw id, so the callback resolves at runtime', async () => {
+    const space = buildSpace();
+    space.schema.flat.c1.idRef = 'hero-box';
+    const cap = capturing(space);
+
+    await apply({ operations: [{ ...flowOp, ref: 'hero-box' }] }, cap.saved(), cap.persisters);
+
+    const stored = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {});
+    expect(stored).not.toHaveLength(0);
+    stored.forEach(node => expect(node.elementId).toBe(elementRefOf(cap.saved().schema.flat.c1)));
+  });
+
+  it('rewrites a node target given as a raw id onto the ref the runtime registers', async () => {
+    const space = buildSpace();
+    space.schema.flat.c1.idRef = 'hero-box';
+    const cap = capturing(space);
+
+    await apply(
+      {
+        operations: [
+          {
+            type: 'upsertInteractionFlow',
+            pageRef: 'home',
+            ref: 'hero-box',
+            nodes: [
+              { nodeType: 'trigger', action: 'onClick', title: 'Click' },
+              // An agent may address any element by its raw id; the stored node must still carry the ref.
+              { nodeType: 'callback', action: 'setVisibility', title: 'Hide', elementId: 'c1' }
+            ]
+          }
+        ]
+      },
+      cap.saved(),
+      cap.persisters
+    );
+
+    const callback = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {}).find(
+      n => n.type === 'callback'
+    );
+    expect(callback?.elementId).toBe('hero-box');
+  });
+
+  it('mints an idRef for a target element that has none, so the callback can reach it', async () => {
+    const space = interactiveSpace();
+    // A sibling with no idRef: targeting it forces one so the callback resolves at runtime.
+    space.schema.flat.c2 = {
+      id: 'c2',
+      attributes: {},
+      definition: {
+        rootId: 'page1',
+        parentId: 'page1',
+        label: 'Bare',
+        type: 'container',
+        items: [],
+        styleSelectors: { base: '' }
+      }
+    };
+    space.schema.flat.page1.definition.items = ['c1', 'c2'];
+    const cap = capturing(space);
+
+    const res = await apply(
+      {
+        operations: [
+          {
+            type: 'upsertInteractionFlow',
+            pageRef: 'home',
+            ref: 'box-1',
+            nodes: [
+              { nodeType: 'trigger', action: 'onClick', title: 'Click' },
+              { nodeType: 'callback', action: 'setVisibility', title: 'Hide', elementId: 'c2' }
+            ]
+          }
+        ]
+      },
+      cap.saved(),
+      cap.persisters
+    );
+
+    expect(res.applied).toBe(true);
+    const mintedRef = cap.saved().schema.flat.c2.idRef;
+    expect(mintedRef).toBeTruthy();
+    const callback = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {}).find(
+      n => n.type === 'callback'
+    );
+    expect(callback?.elementId).toBe(mintedRef);
   });
 
   it('rejects a flow whose first node is not a trigger', () => {

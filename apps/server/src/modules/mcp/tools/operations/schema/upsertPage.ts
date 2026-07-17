@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { pageUri, pagesUri } from './write';
+import { guardNewRef, pageUri, pagesUri } from './write';
 import { empty, fail, findFolderByRef, findPageByRef, generateObjectId } from '../../../helpers';
 
 import type { Space } from '../../../helpers';
@@ -11,7 +11,12 @@ import type { Element } from '@plitzi/sdk-shared';
 export const upsertPageOp = z
   .object({
     type: z.literal('upsertPage'),
-    ref: z.string().describe('Page id/slug to update, or a new id you choose to create one'),
+    ref: z
+      .string()
+      .describe(
+        'Page id/slug to update, or a new id you choose to create one. On a new page it is stored as its idRef: ' +
+          'letters, numbers and hyphens only ("pricing"), unique across the space.'
+      ),
     label: z.string().optional(),
     slug: z.string().optional(),
     folder: z
@@ -67,6 +72,12 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
     return { ...empty(), updated: 1, staleResources: [pageUri(env, op.ref), pagesUri(env)] };
   }
 
+  // Creating: the ref becomes this page's idRef, so it must pass the same charset/uniqueness guard as any element.
+  const guard = guardNewRef(space, op.ref, 'ref');
+  if (guard) {
+    return guard;
+  }
+
   const id = generateObjectId();
   const attributes: Element['attributes'] = {
     slug: op.slug ?? '',
@@ -77,14 +88,14 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
   };
   space.schema.flat[id] = {
     id,
+    idRef: op.ref,
     attributes,
     definition: {
       rootId: id,
       label: op.label ?? op.ref,
       type: 'page',
       items: [],
-      styleSelectors: { base: '' },
-      aiRef: op.ref
+      styleSelectors: { base: '' }
     }
   };
   space.schema.pages.push(id);

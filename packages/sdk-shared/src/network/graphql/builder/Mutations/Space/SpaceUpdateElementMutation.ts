@@ -4,6 +4,7 @@ const SpaceUpdateElementMutation = gql`
   mutation SpaceUpdateElement($environment: String!, $element: Json!) {
     SpaceUpdateElement(environment: $environment, element: $element) {
       id
+      idRef
       definition {
         label
         type

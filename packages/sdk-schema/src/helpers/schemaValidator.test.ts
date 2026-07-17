@@ -520,6 +520,54 @@ describe('schemaValidator', () => {
     expect(result.valid).toBe(true);
   });
 
+  // An idRef is the key an element publishes its data source under, so the space must agree on who owns one.
+  describe('idRef', () => {
+    const withIdRefs = (...idRefs: (string | undefined)[]): Schema => ({
+      ...EMPTY_SCHEMA.schema,
+      pages: ['page-1'],
+      flat: {
+        'page-1': {
+          ...createElement('page-1', 'page'),
+          definition: { ...createElement('page-1', 'page').definition, items: idRefs.map((_, i) => `el-${i}`) }
+        },
+        ...Object.fromEntries(
+          idRefs.map((idRef, i) => [
+            `el-${i}`,
+            {
+              ...createElement(`el-${i}`, 'apiContainer'),
+              idRef,
+              definition: { ...createElement(`el-${i}`, 'apiContainer').definition, parentId: 'page-1' }
+            }
+          ])
+        )
+      }
+    });
+
+    it('accepts elements with no idRef at all (it is optional)', () => {
+      expect(validateSchema(withIdRefs(undefined, undefined)).valid).toBe(true);
+    });
+
+    it('accepts distinct, well-formed idRefs', () => {
+      expect(validateSchema(withIdRefs('products-api', 'orders-api')).valid).toBe(true);
+    });
+
+    it('rejects two elements sharing one idRef, naming both owners', () => {
+      const result = validateSchema(withIdRefs('products-api', 'products-api'));
+      expect(result.valid).toBe(false);
+      const error = result.errors.find(e => e.code === 'DUPLICATE_ID_REF');
+      expect(error?.message).toContain('products-api');
+      expect(error?.details).toEqual({ idRef: 'products-api', otherElementId: 'el-0' });
+    });
+
+    it('rejects an idRef carrying a separator its own source grammar uses', () => {
+      for (const idRef of ['products.api', 'products_api']) {
+        const result = validateSchema(withIdRefs(idRef));
+        expect(result.valid).toBe(false);
+        expect(result.errors.some(e => e.code === 'INVALID_ID_REF')).toBe(true);
+      }
+    });
+  });
+
   // Tests for baseElementId (useful for AI templates/previews)
   describe('baseElementId option (AI templates/previews)', () => {
     it('should validate valid template without pages when baseElementId provided', () => {

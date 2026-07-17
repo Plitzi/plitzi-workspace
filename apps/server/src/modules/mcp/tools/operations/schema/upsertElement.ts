@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { elementInput, position } from './shared';
-import { createElement, pageUri, writeInitialState } from './write';
+import { collectInputRefs, createElement, guardNewRef, pageUri, writeInitialState } from './write';
 import { empty, fail, findPageByRef, resolveRef } from '../../../helpers';
 
 import type { Space } from '../../../helpers';
@@ -54,6 +54,15 @@ export const upsertElement = (space: Space, env: Env, op: UpsertElement): OpResu
     }
 
     return { ...empty(), updated: 1, staleResources: [pageUri(env, op.pageRef)], elementRefs: [op.element.ref] };
+  }
+
+  // Creating: every ref in the input tree becomes a new element's idRef, so each must pass the charset/uniqueness
+  // guard before anything is written (duplicates *within* the batch are already rejected by the validator).
+  for (const ref of collectInputRefs(op.element)) {
+    const guard = guardNewRef(space, ref, 'element.ref');
+    if (guard) {
+      return guard;
+    }
   }
 
   let parent = page;

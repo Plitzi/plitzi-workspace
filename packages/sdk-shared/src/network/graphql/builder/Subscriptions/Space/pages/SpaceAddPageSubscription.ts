@@ -11,6 +11,7 @@ const SpaceAddPageSubscription = gql`
     SpaceAddPage(environment: $environment) {
       page {
         id
+        idRef
         definition {
           label
           type

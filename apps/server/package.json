@@ -24,6 +24,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@plitzi/plitzi-sdk": "workspace:*",
+    "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "ejs": "^6.0.1",
     "esbuild": "^0.28.1",

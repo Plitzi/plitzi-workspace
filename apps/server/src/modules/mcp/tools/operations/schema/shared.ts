@@ -99,7 +99,14 @@ export const initialStateInput = z.object({
 
 export const elementInput: z.ZodType<ElementInput> = z.lazy(() =>
   z.object({
-    ref: z.string().describe('Semantic id you choose, or an existing element ref/id'),
+    ref: z
+      .string()
+      .describe(
+        'Semantic id you choose, or an existing element ref/id. On a new element this is stored as its idRef and ' +
+          'becomes the key everything else addresses it by — its data source is named `<type>_<ref>`, and an ' +
+          'interaction targets it by this ref. Letters, numbers and hyphens only ("hero-cta"): a dot or an ' +
+          'underscore would break the `<type>_<idRef>.<field>` grammar. Must be unique across the space.'
+      ),
     type: z.string().describe('Type from plitzi://types'),
     label: z.string().optional(),
     subType: z.string().optional(),
@@ -153,7 +160,14 @@ export const interactionNode = z.object({
   params: z.record(z.string(), z.unknown()).optional(),
   enabled: z.boolean().optional(),
   when: ruleGroup.optional().describe('QueryBuilder RuleGroup gating this step (validated structurally)'),
-  elementId: z.string().optional().describe('Source element the callback targets; defaults to this element'),
+  elementId: z
+    .string()
+    .optional()
+    .describe(
+      'Element whose callback this step invokes; defaults to this element. Give its ref or its raw id — a raw id ' +
+        'is normalised to the element idRef the runtime looks callbacks up by, and a target without an idRef is ' +
+        'given one automatically.'
+    ),
   preview: z.record(z.string(), z.unknown()).optional()
 });
 

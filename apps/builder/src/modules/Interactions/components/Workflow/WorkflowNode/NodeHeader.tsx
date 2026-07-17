@@ -50,6 +50,10 @@ const NodeHeader = ({
   onClickRemove
 }: NodeHeaderProps) => {
   const { moveNode } = use(WorkflowContext);
+  // The node's target has no idRef when the element it points at is one of the flagged, unreferenced entries.
+  const targetUnreferenced =
+    Boolean(elementId) &&
+    Boolean(nodeDefinitions?.some(definition => definition.elementId === elementId && definition.unreferenced));
 
   const handleClickUp = useCallback(() => moveNode(id, 'up'), [id, moveNode]);
 
@@ -122,9 +126,10 @@ const NodeHeader = ({
       .filter(node => node.type !== 'trigger')
       .reduce<(Option & { type: string; options: Option[] })[]>((acum, nodeDef) => {
         const { title, elementId, action, type } = nodeDef;
+        const label = nodeDef.unreferenced ? `${title} (no Reference)` : title;
         const group = acum.find(node => node.type === nodeDef.type);
         if (group) {
-          group.options.push({ value: `${elementId}_${action}`, label: title, type, elementId });
+          group.options.push({ value: `${elementId}_${action}`, label, type, elementId });
 
           return acum;
         }
@@ -134,7 +139,9 @@ const NodeHeader = ({
           {
             type,
             label: type,
-            options: [{ value: `${elementId}_${action}`, label: title, type, elementId }]
+            options: [
+              { value: `${elementId}_${action}`, label, type, elementId, disabled: nodeDef.unreferenced ?? false }
+            ]
           }
         ];
       }, []);
@@ -194,7 +201,13 @@ const NodeHeader = ({
             </div>
           )}
           {isOpened && <Input size="xs" className="w-full" value={title} onChange={handleChangeTitle} />}
-          {!nodeDefinition && elementId && (
+          {targetUnreferenced && (
+            <i
+              className="fa-solid fa-link-slash ml-2 text-orange-400"
+              title="This element has no Reference, so the runtime cannot wire this step — give it one in Settings"
+            />
+          )}
+          {!targetUnreferenced && !nodeDefinition && elementId && (
             <i className="fa-solid fa-triangle-exclamation ml-2 text-orange-400" title="Node Not Found" />
           )}
           {(canUp || canDown) && (

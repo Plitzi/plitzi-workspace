@@ -72,12 +72,10 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     const eventCallbacks = useMemo(() => ({ [`${id}_setState`]: setElementState }), [id, setElementState]);
     useEventBridge('element', eventCallbacks);
 
-    // `elementData` and `content` are deliberately separate memos: `elementData` (the context value) has narrow deps so
-    // consumers re-render only when element data changes, while `content` excludes those deps so the WrappedComponent is
-    // not re-rendered when only element data (style, elementState…) changes. Merging them would regress both.
+    const idRef = element.idRef;
     const elementData = useMemo<ElementContextValue>(
-      () => ({ id, rootId, attributes, definition, plitziElementLayout, style, elementState, setElementState }),
-      [attributes, definition, elementState, id, plitziElementLayout, rootId, style, setElementState]
+      () => ({ id, idRef, rootId, attributes, definition, plitziElementLayout, style, elementState, setElementState }),
+      [attributes, definition, elementState, id, idRef, plitziElementLayout, rootId, style, setElementState]
     );
 
     const content = useMemo(() => {

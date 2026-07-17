@@ -16,6 +16,7 @@ const SpaceMoveElementMutation = gql`
       dropPosition: $dropPosition
     ) {
       id
+      idRef
       definition {
         label
         type

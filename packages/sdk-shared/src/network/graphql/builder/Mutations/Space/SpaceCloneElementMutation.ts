@@ -16,6 +16,7 @@ const SpaceCloneElementMutation = gql`
       initialItems: $initialItems
     ) {
       id
+      idRef
       definition {
         label
         type

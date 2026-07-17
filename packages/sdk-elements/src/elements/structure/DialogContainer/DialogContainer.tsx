@@ -3,8 +3,9 @@ import clsx from 'clsx';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
+import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
-import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
@@ -38,10 +39,12 @@ const DialogContainer = ({
 }: DialogContainerProps) => {
   const {
     id,
+    idRef,
     setElementState,
     definition: { styleSelectors, label = 'Dialog' },
     elementState
   } = useElement();
+  const sourceName = getSourceName('dialogContainer', { idRef });
   const {
     contexts: { InteractionsContext }
   } = usePlitziServiceContext();
@@ -74,36 +77,36 @@ const DialogContainer = ({
   );
 
   const handleClickClose = useCallback(() => {
-    void interactionsManager.interactionTrigger(id, 'onDialogClose', { metadata: internalMetadata });
+    void interactionsManager.interactionTrigger(idRef, 'onDialogClose', { metadata: internalMetadata });
     setInternalMetadata({});
     setElementState(state => ({ ...state, visibility: false }));
-  }, [interactionsManager, setElementState, setInternalMetadata, internalMetadata, id]);
+  }, [interactionsManager, setElementState, setInternalMetadata, internalMetadata, idRef]);
 
   const handleClickBackground = useCallback(() => {
     if (!autoHideAfterClick) {
       return;
     }
 
-    void interactionsManager.interactionTrigger(id, 'onDialogClose', { metadata: internalMetadata });
+    void interactionsManager.interactionTrigger(idRef, 'onDialogClose', { metadata: internalMetadata });
     setInternalMetadata({});
     setElementState(state => ({ ...state, visibility: false }));
-  }, [interactionsManager, autoHideAfterClick, setElementState, setInternalMetadata, internalMetadata, id]);
+  }, [interactionsManager, autoHideAfterClick, setElementState, setInternalMetadata, internalMetadata, idRef]);
 
   // Dialog Methods
 
   const handleClickAccept = useCallback(async () => {
     setProcessing(true);
-    await interactionsManager.interactionTrigger(id, 'onDialogAccept', { metadata: internalMetadata });
+    await interactionsManager.interactionTrigger(idRef, 'onDialogAccept', { metadata: internalMetadata });
     setProcessing(false);
     setElementState(state => ({ ...state, visibility: false }));
-  }, [interactionsManager, id, internalMetadata, setElementState]);
+  }, [interactionsManager, idRef, internalMetadata, setElementState]);
 
   const handleClickCancel = useCallback(async () => {
     setProcessing(true);
-    await interactionsManager.interactionTrigger(id, 'onDialogReject', { metadata: internalMetadata });
+    await interactionsManager.interactionTrigger(idRef, 'onDialogReject', { metadata: internalMetadata });
     setProcessing(false);
     setElementState(state => ({ ...state, visibility: false }));
-  }, [interactionsManager, id, internalMetadata, setElementState]);
+  }, [interactionsManager, idRef, internalMetadata, setElementState]);
 
   const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
     () => ({
@@ -162,9 +165,9 @@ const DialogContainer = ({
 
   useEffect(() => {
     if (elementState.visibility !== false) {
-      void interactionsManager.interactionTrigger(id, 'onDialogOpen', { metadata: internalMetadata });
+      void interactionsManager.interactionTrigger(idRef, 'onDialogOpen', { metadata: internalMetadata });
     }
-  }, [id, interactionsManager, internalMetadata, elementState.visibility]);
+  }, [idRef, interactionsManager, internalMetadata, elementState.visibility]);
 
   const sourceFields = useCallback(() => {
     if (typeof internalMetadata !== 'object') {
@@ -181,16 +184,11 @@ const DialogContainer = ({
     }, []);
   }, [internalMetadata]);
 
-  useRegisterSource({
-    id,
-    source: `dialogContainer_${id}`,
-    name: label ? label : `Dialog - ${id}`,
-    fields: sourceFields
-  });
+  useRegisterSource({ id, source: sourceName, name: label ? label : `Dialog - ${id}`, fields: sourceFields });
 
   const storeContext = useMemo(
-    () => ({ runtime: { sources: { [`dialogContainer_${id}`]: internalMetadata } } }),
-    [id, internalMetadata]
+    () => (sourceName ? { runtime: { sources: { [sourceName]: internalMetadata } } } : emptyObject),
+    [sourceName, internalMetadata]
   );
 
   return (

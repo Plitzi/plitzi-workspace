@@ -7,6 +7,7 @@ import { EMPTY_SCHEMA, VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaCo
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import calculateInheriting from '@plitzi/sdk-style/helpers/calculateInheriting';
 
+import { idRefConflict, idRefsUsable, remapClonedRefs, repointIdRefs, takenIdRefs } from './idRef';
 import { validateSchema, type SchemaValidationResult } from './schemaValidator';
 
 import type { Style, Element, Schema, DisplayMode, StyleItem, DropPosition, SchemaVariable } from '@plitzi/sdk-shared';
@@ -64,6 +65,10 @@ class FlatMap {
     }
 
     if (!this.isValidElement(data)) {
+      return false;
+    }
+
+    if (!idRefsUsable(this.flat, [data, ...Object.values(initialItems)])) {
       return false;
     }
 
@@ -134,12 +139,28 @@ class FlatMap {
     return true;
   };
 
+  /** Refuses a rename onto an unusable idRef: two elements answering to the same name make every binding and
+   *  interaction written against it resolve to whichever one is found first. Only a change is checked, so an
+   *  element already stored with a bad ref stays editable.
+   *
+   *  A rename that IS accepted carries its wiring with it: the idRef is the key bindings and interactions target,
+   *  so every reference to the old name across the space is repointed here. Doing it at the single point every
+   *  writer goes through is what keeps a rename from silently unwiring the element. */
   updateElement = (element?: Element) => {
     if (!element || !(this.flat[element.id] as Element | undefined)) {
       return false;
     }
 
+    const previous = this.flat[element.id].idRef;
+    const renamed = element.idRef !== previous;
+    if (renamed && !idRefsUsable(this.flat, [element])) {
+      return false;
+    }
+
     this.flat[element.id] = element;
+    if (renamed && previous && element.idRef) {
+      repointIdRefs(this.flat, { [previous]: element.idRef });
+    }
 
     return true;
   };
@@ -228,6 +249,13 @@ class FlatMap {
 
   getElement = (elementId: Element['id']) => get(this.flat, elementId);
 
+  /** Every idRef currently in use, so a newly minted one stays unique across the space. */
+  takenIdRefs = () => takenIdRefs(this.flat);
+
+  /** Why an idRef cannot be used here (charset or a clash), or null when it is free. `ignoreElementId` exempts the
+   *  element being edited, so re-saving an element its own ref is not a conflict. */
+  idRefConflict = (idRef: string, ignoreElementId?: Element['id']) => idRefConflict(this.flat, idRef, ignoreElementId);
+
   cloneElements = (
     elementId: Element['id'],
     parentId: Element['id'] = '',
@@ -242,6 +270,7 @@ class FlatMap {
       return result;
     }
 
+    const taken = this.takenIdRefs();
     const elements = [elementId, ...this.childTree(elementId)].reduce<Record<Element['id'], Element>>((acum, id) => {
       const element = this.flat[id] as Element | undefined;
       if (!element) {
@@ -261,6 +290,7 @@ class FlatMap {
       dataStr = Object.keys(mapIds).reduce((acum, id) => acum.replace(new RegExp(id, 'g'), mapIds[id]), dataStr);
       result.acum = JSON.parse(dataStr) as Record<Element['id'], Element>;
       result.item = result.acum[mapIds[elementId]];
+      remapClonedRefs(result.acum, candidate => taken.has(candidate));
     } catch (e) {
       console.error('Error parsing elements', e);
 
@@ -573,6 +603,11 @@ class FlatMap {
 
   static removeElement = (flat: Schema['flat'], elementId: Element['id'], removePage = false) =>
     this.getInstance({ flat }).removeElement(elementId, removePage);
+
+  static takenIdRefs = (flat: Schema['flat']) => this.getInstance({ flat }).takenIdRefs();
+
+  static idRefConflict = (flat: Schema['flat'], idRef: string, ignoreElementId?: Element['id']) =>
+    this.getInstance({ flat }).idRefConflict(idRef, ignoreElementId);
 
   // Variables - Static
 

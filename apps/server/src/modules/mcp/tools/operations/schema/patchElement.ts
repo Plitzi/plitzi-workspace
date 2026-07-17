@@ -1,7 +1,9 @@
 import { z } from 'zod';
 
+import { repointIdRefs } from '@plitzi/sdk-schema/helpers/idRef';
+
 import { initialStateInput, styleRefs } from './shared';
-import { pageUri, writeInitialState } from './write';
+import { guardNewRef, pageUri, writeInitialState } from './write';
 import { empty, fail, findPageByRef, resolveRef } from '../../../helpers';
 
 import type { Space } from '../../../helpers';
@@ -13,6 +15,15 @@ export const patchElementOp = z
     type: z.literal('patchElement'),
     pageRef: z.string().describe('Page ref or id'),
     ref: z.string().describe('Existing element ref or id'),
+    idRef: z
+      .string()
+      .optional()
+      .describe(
+        'Assign or rename the idRef of this element ([A-Za-z0-9-], unique in the space). Give an element one to ' +
+          'make it bindable: without an idRef it publishes no data source. Renaming one moves its source name ' +
+          'with it — every binding and interaction across the space that targeted the old name is repointed for ' +
+          'you, so the wiring survives the rename.'
+      ),
     label: z.string().optional(),
     subType: z.string().optional(),
     props: z
@@ -44,6 +55,24 @@ export const patchElement = (space: Space, env: Env, op: PatchElement): OpResult
       `Element "${op.ref}" not found in page "${op.pageRef}"`,
       'patchElement only updates an existing element; use upsertElement to create one'
     );
+  }
+
+  // Re-uses the create-time guard: an idRef assigned here is the same wiring key, so it faces the same charset and
+  // space-wide uniqueness rules. Setting an element's current idRef to itself is a no-op, not a conflict.
+  if (op.idRef !== undefined && op.idRef !== el.idRef) {
+    const guard = guardNewRef(space, op.idRef, 'idRef');
+    if (guard) {
+      return guard;
+    }
+
+    // A rename moves the wiring key, so every binding source and interaction target written against the old name
+    // has to move with it — across the whole space, since an element on another page may bind to this one. An
+    // element that had no idRef has nothing pointing at it yet, so only a true rename repoints.
+    const previous = el.idRef;
+    el.idRef = op.idRef;
+    if (previous) {
+      repointIdRefs(space.schema.flat, { [previous]: op.idRef });
+    }
   }
 
   if (op.label !== undefined) {

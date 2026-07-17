@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { interactionNode } from './shared';
-import { pageUri, resolveElement } from './write';
+import { ensureIdRef, pageUri, resolveElement, resolveTargetRef } from './write';
 import { empty, materializeFlow } from '../../../helpers';
 
 import type { OpResult, Space } from '../../../helpers';
@@ -33,10 +33,19 @@ export const upsertInteractionFlow = (space: Space, env: Env, op: UpsertInteract
     return found.error;
   }
 
+  // The runtime keys triggers/callbacks by idRef, so the host element needs one. Rather than fail and make the
+  // agent assign it first, mint a free ref for an element that has none and carry on.
+  const ownerRef = ensureIdRef(space, found.el);
+
   // When replacing a known flow, pin the trigger id to it so the recomputed flowId matches and the old nodes are
   // swapped out cleanly (rather than leaving a duplicate flow behind).
-  const nodes = op.flowId && !op.nodes[0].id ? [{ ...op.nodes[0], id: op.flowId }, ...op.nodes.slice(1)] : op.nodes;
-  const { flowId, record } = materializeFlow(nodes, found.el.id);
+  const pinned = op.flowId && !op.nodes[0].id ? [{ ...op.nodes[0], id: op.flowId }, ...op.nodes.slice(1)] : op.nodes;
+  const nodes = pinned.map(node =>
+    node.elementId === undefined ? node : { ...node, elementId: resolveTargetRef(space, node.elementId) }
+  );
+
+  // A node defaulting to its own element carries the owner ref — the key the runtime registers the callback under.
+  const { flowId, record } = materializeFlow(nodes, ownerRef);
 
   const interactions: Record<string, ElementInteraction> = found.el.definition.interactions ?? {};
   const targetFlow = op.flowId ?? flowId;
