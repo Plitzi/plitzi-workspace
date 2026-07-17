@@ -106,7 +106,10 @@ export const repointIdRefs = (elements: Record<Element['id'], Element>, mapRefs:
 
     for (const bindings of Object.values(element.definition.bindings ?? {})) {
       for (const binding of bindings) {
-        binding.source = remapSource(binding.source, mapRefs);
+        const source = remapSource(binding.source, mapRefs);
+        if (source !== binding.source) {
+          binding.source = source;
+        }
       }
     }
 

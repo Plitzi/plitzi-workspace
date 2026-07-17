@@ -1,8 +1,18 @@
+import { produce, setAutoFreeze } from 'immer';
 import { describe, it, expect } from 'vitest';
 
-import { idRefConflict, idRefsUsable, isValidIdRef, makeIdRef, remapClonedRefs, takenIdRefs } from './idRef';
+import FlatMap from './FlatMap';
+import {
+  idRefConflict,
+  idRefsUsable,
+  isValidIdRef,
+  makeIdRef,
+  remapClonedRefs,
+  repointIdRefs,
+  takenIdRefs
+} from './idRef';
 
-import type { Element } from '@plitzi/sdk-shared';
+import type { Element, Schema } from '@plitzi/sdk-shared';
 
 const element = (
   id: string,
@@ -170,5 +180,47 @@ describe('remapClonedRefs', () => {
     remapClonedRefs(elements, () => false);
 
     expect(elements.b.definition.interactions?.i1.elementId).toBe(elements.a.idRef);
+  });
+});
+
+describe('repointIdRefs', () => {
+  it('still repoints a binding whose source matches the rename', () => {
+    const elements = {
+      b: element('b', 'title', 'text', {
+        bindings: { attributes: [{ id: 'b1', source: 'apiContainer_card-1.data.name', to: 'content' }] }
+      })
+    };
+    repointIdRefs(elements, { 'card-1': 'card-2' });
+
+    expect(elements.b.definition.bindings?.attributes?.[0].source).toBe('apiContainer_card-2.data.name');
+  });
+});
+
+describe('FlatMap.updateElement rename inside an Immer producer', () => {
+  it('renames an element whose siblings carry deeply frozen bindings without throwing', () => {
+    // A rename runs through the schema reducer's `produce`, where the sibling elements are the deeply frozen
+    // base state. FlatMap assigns the caller's plain element over the draft, then repoints every ref across the
+    // space — rewriting an unchanged source in place would assign to a read-only property and throw.
+    setAutoFreeze(true);
+    const state = produce({ flat: {} } as Pick<Schema, 'flat'>, draft => {
+      draft.flat.a = element('a', 'card-1', 'text', {
+        bindings: { attributes: [{ id: 'a1', source: 'apiContainer_external.data.name', to: 'content' }] }
+      });
+      draft.flat.b = element('b', 'title', 'text', {
+        bindings: { attributes: [{ id: 'b1', source: 'apiContainer_untouched.data.name', to: 'content' }] }
+      });
+    });
+
+    // The caller hands FlatMap a plain element built from the frozen store element, so its nested binding is
+    // still the frozen reference — the exact shape that made the in-place rewrite throw.
+    const renamed: Element = { ...state.flat.a, idRef: 'card-2' };
+
+    const next = produce(state, draft => {
+      expect(FlatMap.updateElement(draft.flat, renamed)).toBe(true);
+    });
+
+    expect(next.flat.a.idRef).toBe('card-2');
+    expect(next.flat.a.definition.bindings?.attributes?.[0].source).toBe('apiContainer_external.data.name');
+    expect(next.flat.b.definition.bindings?.attributes?.[0].source).toBe('apiContainer_untouched.data.name');
   });
 });
