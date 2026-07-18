@@ -1,6 +1,19 @@
 import { bench, describe } from 'vitest';
 
-import { findElementByRef, findPageByRef, invalidateIndex, pageUri, resolveRef } from './helpers';
+import {
+  dataSourcesUri,
+  defUri,
+  defsUri,
+  findElementByRef,
+  findPageByRef,
+  globalsUri,
+  interactionsUri,
+  invalidateIndex,
+  pageUri,
+  resolveRef,
+  styleVarsUri,
+  typesUri
+} from './helpers';
 import { readResource, resourceVersion } from './resources';
 import { apply, search, validateOperations } from './tools';
 
@@ -146,10 +159,52 @@ const mixedOps = (n: number): Operation[] =>
     return { type: 'patchElement', pageRef: pageRefOf(pi), ref: elementRefOf(pi, el), props: { title: `Mix ${i}` } };
   });
 
+// Delete distinct leaf elements (index ≥ PER_PAGE/2 have no children in a branch-4 tree), so no op targets a node
+// another already removed. deleteElement detaches via the parentId splice (O(items)), not a flat scan.
+const LEAF_BASE = Math.floor(PER_PAGE / 2);
+const deleteOps = (n: number): Operation[] =>
+  Array.from({ length: n }, (_, i): Operation => ({
+    type: 'deleteElement',
+    pageRef: pageRefOf(i % PAGES),
+    ref: elementRefOf(i % PAGES, LEAF_BASE + Math.floor(i / PAGES))
+  }));
+
+// Reparent a leaf to sit after the first element (a shallow node), staying within the page and never a cycle.
+const moveOps = (n: number): Operation[] =>
+  Array.from({ length: n }, (_, i): Operation => ({
+    type: 'moveElement',
+    pageRef: pageRefOf(i % PAGES),
+    ref: elementRefOf(i % PAGES, LEAF_BASE + (i % (PER_PAGE - LEAF_BASE))),
+    toParentRef: elementRefOf(i % PAGES, 1),
+    position: 'after'
+  }));
+
+// New reusable style classes — a pure style batch (no schema mutation), so its changedResources hashes definitions.
+const defOps = (n: number): Operation[] =>
+  Array.from({ length: n }, (_, i): Operation => ({
+    type: 'upsertDefinition',
+    ref: `bench-def-${i}`,
+    desktop: { color: '#111', 'font-size': `${12 + (i % 8)}px` }
+  }));
+
+// Every op targets a page that does not exist, so validation reports an error per op (exercises the validValues
+// recomputation on the failure path).
+const invalidOps = (n: number): Operation[] =>
+  Array.from({ length: n }, (_, i): Operation => ({
+    type: 'patchElement',
+    pageRef: `no-such-page-${i}`,
+    ref: `no-such-el-${i}`,
+    props: { title: 'x' }
+  }));
+
 const patch250 = patchOps(250);
 const patch1000 = patchOps(1000);
 const create250 = createOps(250);
 const mixed1000 = mixedOps(1000);
+const delete250 = deleteOps(250);
+const move250 = moveOps(250);
+const def1000 = defOps(1000);
+const invalid250 = invalidOps(250);
 
 // Optimistic-concurrency guard for a patch batch: the current version of every page it touches (no conflict), so
 // apply runs the full detectConflicts pass (a resourceVersion per URI) on top of the write.
@@ -269,6 +324,77 @@ describe('search', () => {
   bench('deep pagination (offset 2000)', () => {
     search({ query: 'box', offset: 2000 }, space, 'main');
   });
+
+  bench('filter by type', () => {
+    search({ query: 'box', filters: { type: 'container' } }, space, 'main');
+  });
+
+  bench('filter by pageRef (one page)', () => {
+    search({ query: 'box', filters: { pageRef: pageRefOf(0) } }, space, 'main');
+  });
+
+  bench('no matches (full scan, empty result)', () => {
+    search({ query: 'zzz-no-such-token' }, space, 'main');
+  });
+});
+
+describe('apply — deletes & moves (parentId splice, O(items) per op)', () => {
+  bench('apply: 250 deletes (dryRun)', async () => {
+    await apply({ dryRun: true, operations: delete250 }, space);
+  });
+
+  bench('apply: 250 moves (dryRun)', async () => {
+    await apply({ dryRun: true, operations: move250 }, space);
+  });
+});
+
+describe('style ops & reads', () => {
+  bench('validateOperations: 1000 upsertDefinition', () => {
+    validateOperations(space, def1000);
+  });
+
+  bench('apply: 1000 upsertDefinition (dryRun)', async () => {
+    await apply({ dryRun: true, operations: def1000 }, space);
+  });
+
+  bench('read: definitions list', () => {
+    readResource(space, 'main', defsUri('main'));
+  });
+
+  bench('read: one definition', () => {
+    readResource(space, 'main', defUri('main', 'box-0'));
+  });
+
+  bench('read: global-styles list', () => {
+    readResource(space, 'main', globalsUri('main'));
+  });
+
+  bench('read: style-variables', () => {
+    readResource(space, 'main', styleVarsUri('main'));
+  });
+});
+
+describe('catalog reads (whole-space scans)', () => {
+  bench('types registry', () => {
+    invalidateIndex(space.schema);
+    readResource(space, 'main', typesUri);
+  });
+
+  bench('interactions catalog', () => {
+    invalidateIndex(space.schema);
+    readResource(space, 'main', interactionsUri('main'));
+  });
+
+  bench('data-sources catalog', () => {
+    invalidateIndex(space.schema);
+    readResource(space, 'main', dataSourcesUri('main'));
+  });
+});
+
+describe('validation — error path', () => {
+  bench('validateOperations: 250 invalid (unknown page/ref)', () => {
+    validateOperations(space, invalid250);
+  });
 });
 
 // --- Scaling fixture: 60 pages × 200 elements (~12000), 4× the primary scale. ---
@@ -279,6 +405,13 @@ const bigPatch1000 = Array.from({ length: 1000 }, (_, i): Operation => {
 
   return { type: 'patchElement', pageRef: `home-${pi}`, ref: `el-${pi}-${el}`, props: { title: `Big ${i}` } };
 });
+
+// 250 deletes on the 12k space (distinct leaves across its 60 pages) — surfaces any O(batch × flat) in delete.
+const bigDelete250 = Array.from({ length: 250 }, (_, i): Operation => ({
+  type: 'deleteElement',
+  pageRef: `home-${i % 60}`,
+  ref: `el-${i % 60}-${100 + Math.floor(i / 60)}`
+}));
 
 describe('scaling — 12k-element space', () => {
   bench('validateOperations: 1000 patches', () => {
@@ -295,6 +428,39 @@ describe('scaling — 12k-element space', () => {
 
   bench('page skeleton read (cold)', () => {
     invalidateIndex(bigSpace.schema);
-    readResource(bigSpace, 'main', 'plitzi://schema/main/pages/home-59');
+    readResource(bigSpace, 'main', pageUri('main', 'home-59'));
+  });
+
+  bench('apply: 250 deletes (dryRun)', async () => {
+    await apply({ dryRun: true, operations: bigDelete250 }, bigSpace);
+  });
+
+  bench('types registry (cold)', () => {
+    invalidateIndex(bigSpace.schema);
+    readResource(bigSpace, 'main', typesUri);
+  });
+
+  bench('interactions catalog (cold)', () => {
+    invalidateIndex(bigSpace.schema);
+    readResource(bigSpace, 'main', interactionsUri('main'));
+  });
+});
+
+// --- Single mega-page fixture: one page with 2000 elements, to stress a deep/wide single tree. ---
+const megaSpace = buildSpace(1, 2000, 100);
+
+describe('single mega-page (one page, 2000 elements)', () => {
+  bench('page skeleton read (cold)', () => {
+    invalidateIndex(megaSpace.schema);
+    readResource(megaSpace, 'main', pageUri('main', 'home-0'));
+  });
+
+  bench('page styles read (cold)', () => {
+    invalidateIndex(megaSpace.schema);
+    readResource(megaSpace, 'main', `${pageUri('main', 'home-0')}/styles`);
+  });
+
+  bench('search: common term (matches all 2000)', () => {
+    search({ query: 'box' }, megaSpace, 'main');
   });
 });

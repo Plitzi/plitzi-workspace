@@ -38,7 +38,7 @@ export const deleteElement = (space: Space, env: Env, op: DeleteElement): OpResu
     Reflect.deleteProperty(space.schema.flat, id);
   }
 
-  removeFromParent(space, el.id);
+  removeFromParent(space, el);
   indexRemoveElements(space.schema, removed);
 
   return { ...empty(), deleted: 1, staleResources: [pageUri(env, op.pageRef)] };

@@ -36,7 +36,7 @@ export const moveElement = (space: Space, env: Env, op: MoveElement): OpResult =
     return fail('toParentRef', `Target "${op.toParentRef}" not found`, 'Read the page resource for valid refs');
   }
 
-  removeFromParent(space, el.id);
+  removeFromParent(space, el);
   let parent = anchor;
   let index: number | undefined;
   if (op.position === 'before' || op.position === 'after') {

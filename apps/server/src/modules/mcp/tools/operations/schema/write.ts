@@ -60,11 +60,14 @@ export const guardNewRef = (space: Space, ref: string, field: string): OpResult 
 // keep importing them from `../write` unchanged.
 export { folderUri, foldersUri, pageUri, pagesUri, schemaVarsUri, settingsUri } from '../../../helpers';
 
-export const removeFromParent = (space: Space, childId: string): void => {
-  for (const el of Object.values(space.schema.flat)) {
-    if (el.definition.items?.includes(childId)) {
-      el.definition.items = el.definition.items.filter(id => id !== childId);
-    }
+// Detach an element from its parent's item list. The child names its parent (definition.parentId), so this splices
+// the one owning list directly — O(items) — instead of scanning every element in the space (O(flat)), which turned
+// a batch of deletes/moves into O(batch × flat). A well-formed schema lists a child under exactly its parentId;
+// any stray reference elsewhere is already a schema inconsistency the post-apply validator rejects.
+export const removeFromParent = (space: Space, child: Element): void => {
+  const parent = child.definition.parentId ? space.schema.flat[child.definition.parentId] : undefined;
+  if (parent?.definition.items) {
+    parent.definition.items = parent.definition.items.filter(id => id !== child.id);
   }
 };
 
