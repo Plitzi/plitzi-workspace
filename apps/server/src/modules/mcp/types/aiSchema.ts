@@ -48,6 +48,9 @@ export interface AISkeletonNode {
   type: string;
   label: string;
   subType?: string;
+  /** This element's version — identical to the stateVersion a direct element read or search hit returns for it. Diff
+   *  it against a version you already hold to re-read (plitzi_read) only the nodes that actually changed. */
+  stateVersion?: string;
   /** The class refs this node attaches on its base selector — names only, no CSS. Lets an agent map element →
    *  class straight from the page skeleton, without a per-element read just to learn which class it uses. */
   base?: string[];

@@ -24,6 +24,9 @@ export interface TypeInfo {
   subTypes: string[];
   slots: string[];
   props: Record<string, TypePropInfo>;
+  /** The type's intrinsic base CSS before any class is attached (e.g. `text` → `{ display: 'inline' }`). Style
+   *  against this starting point rather than assuming `display: block`. */
+  defaultStyle?: Record<string, string>;
 }
 
 export interface TypeRegistry {
@@ -52,6 +55,10 @@ const enrichType = (typeName: string, info: TypeInfo, catalog: ComponentCatalog 
     }
 
     info.source = entry.custom ? 'plugin' : 'builtin';
+    if (entry.defaultStyle && Object.keys(entry.defaultStyle).length > 0) {
+      info.defaultStyle = entry.defaultStyle;
+    }
+
     for (const attr of entry.attributes ?? []) {
       info.props[attr] ??= { valueTypes: [], examples: [] };
     }
@@ -94,8 +101,11 @@ const NOTE =
   '"unknown" (observed but undescribed — label only). Use the description to pick the right type (e.g. ' +
   'apiContainer fetches backend data, link navigates between pages). Props list the attribute keys seen on each ' +
   'type with example values. Slots are the styleSelectors keys seen on each type (target them via ' +
-  'element.style.slots). CSS in definitions must use the kebab-case keys in cssProperties. Reference schema ' +
-  'variables in props via {{name}} and style variables in CSS via var(--name).';
+  'element.style.slots). `defaultStyle` (when present) is the intrinsic base CSS of the type BEFORE any class is ' +
+  'attached — the real starting point, so account for it and never assume `display: block` (e.g. `text` is ' +
+  '`display: inline`; wrap or override it explicitly if you need block/flex layout). CSS in definitions must use ' +
+  'the kebab-case keys in cssProperties. Reference schema variables in props via {{name}} and style variables in ' +
+  'CSS via var(--name).';
 
 export const buildTypeRegistry = (schema: Schema, catalog?: ComponentCatalog): TypeRegistry => {
   const types: Record<string, TypeInfo> = {};

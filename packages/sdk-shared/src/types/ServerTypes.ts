@@ -156,6 +156,10 @@ export type ComponentCatalogEntry = {
   /** The type's `definition.styleSelectors` keys (slots) — setState `key` when category="state" is
    *  `visibility` or `styleSelectors.<selector>`. */
   styleSelectors?: string[];
+  /** The type's intrinsic base default CSS (its `defaultStyle.style.base.default`) — the declarations the element
+   *  renders with before any class is attached, e.g. `text` defaults to `{ display: 'inline' }`. The MCP surfaces
+   *  it so an agent styles against the real starting point instead of assuming `display: block`. */
+  defaultStyle?: Record<string, string>;
   /** Binding targets the type exposes, from the plugin manifest's `defaultStyle.bindingsAllowed`. */
   bindingsAllowed?: { attributes?: string[]; initialState?: string[] };
 };

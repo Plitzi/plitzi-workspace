@@ -168,6 +168,15 @@ describe('mcp-ai reads (filesystem model)', () => {
     expect(reg.types.legacyThing.description).toBeUndefined();
   });
 
+  it('surfaces a type intrinsic base default style so an agent does not assume display:block', () => {
+    const reg = buildTypeRegistry(buildSpace().schema, {
+      text: { custom: false, attributes: ['content'], defaultStyle: { display: 'inline', 'font-size': '14px' } },
+      container: { custom: false, attributes: [] }
+    });
+    expect(reg.types.text.defaultStyle).toEqual({ display: 'inline', 'font-size': '14px' });
+    expect(reg.types.container.defaultStyle).toBeUndefined();
+  });
+
   it('lists pages as cheap summaries without element trees', () => {
     const res = readResource(buildSpace(), 'main', 'plitzi://schema/main/pages');
     const pages = res?.data as AIPageSummary[];
@@ -188,6 +197,28 @@ describe('mcp-ai reads (filesystem model)', () => {
       base: ['box']
     });
     expect(page.tree[0]).not.toHaveProperty('props');
+  });
+
+  it('skeleton node stateVersion equals a direct element read (so cached versions can be diffed)', () => {
+    const space = buildSpace();
+    const node = (readResource(space, 'main', 'plitzi://schema/main/pages/home')?.data as AIPageSkeleton).tree[0];
+    const el = readResource(space, 'main', 'plitzi://schema/main/elements/c1');
+    expect(node.stateVersion).toBe(el?.stateVersion);
+  });
+
+  it('page stateVersion aggregates the tree: it changes when a descendant changes', async () => {
+    const original = readResource(buildSpace(), 'main', 'plitzi://schema/main/pages/home')?.stateVersion;
+    const cap = capturing(buildSpace());
+    await apply(
+      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', props: { title: 'Renamed' } }] },
+      buildSpace(),
+      cap.persisters
+    );
+    const after = readResource(cap.saved(), 'main', 'plitzi://schema/main/pages/home');
+    const node = (after?.data as AIPageSkeleton).tree[0];
+    const el = readResource(cap.saved(), 'main', 'plitzi://schema/main/elements/c1');
+    expect(after?.stateVersion).not.toBe(original);
+    expect(node.stateVersion).toBe(el?.stateVersion);
   });
 
   it('reads one element in full detail on demand', () => {

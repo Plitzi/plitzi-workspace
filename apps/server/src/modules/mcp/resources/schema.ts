@@ -48,7 +48,7 @@ export const readSchemaResource = (
     const ref = uri.slice(`plitzi://schema/${env}/pages/`.length);
     const page = findPageByRef(space.schema, ref);
 
-    return page ? envelope(pageSkeletonToAI(space.schema, page)) : null;
+    return page ? envelope(pageSkeletonToAI(space.schema, page, space.style)) : null;
   }
 
   if (uri.startsWith(`plitzi://schema/${env}/elements/`)) {

@@ -84,6 +84,15 @@ The style resources also answer under the \`plitzi://schema/{env}/…\` root as 
 
 Data resources return \`{ stateVersion, data }\`. Keep \`stateVersion\` for optimistic concurrency.
 
+**Reuse what you already know — don't re-scan an unchanged page.** A page read (\`plitzi://schema/{env}/pages/{ref}\`)
+returns a \`stateVersion\` that is an **aggregate of the whole page**: it changes if and only if some element on the
+page changed. Its skeleton \`tree\` also carries a \`stateVersion\` **per node**, identical to the one a direct element
+read or search hit returns for that element. So when you come back to a page you already inspected:
+1. Re-read just the page skeleton and compare its top-level \`stateVersion\` to the one you held. **Same → nothing
+   changed; skip re-reading and re-searching entirely** and act on what you already know.
+2. If it differs, diff the per-node \`stateVersion\`s against the ones you cached and \`plitzi_read\` **only the nodes
+   that changed** — never re-search or re-read the whole tree.
+
 ## Navigating (files analogy)
 Pages and containers are folders; elements are files. **Prefer \`plitzi_search\` (especially with \`include: "detail"\`)
 over reading elements one by one** — it jumps straight to elements by label/type/attribute and each hit already
@@ -146,6 +155,10 @@ its idRef.)
 pointed at the old name is repointed with it, so the element stays wired. You do not have to rewrite them.
 
 ## Styling (crosses both schemas)
+- **Mind the type's intrinsic default style.** A type renders with a base CSS *before* any class is attached — read
+  it from \`defaultStyle\` on the type in \`plitzi://types\` (the primer includes it). Do not assume \`display: block\`:
+  \`text\`, for one, defaults to \`display: inline\`, so margins/width/vertical padding behave differently. If you need
+  block/flex layout on such an element, set \`display\` explicitly in your definition rather than relying on a default.
 - A definition lives in the **style schema**; an element's \`style.base\` (element schema) is the link that applies
   it. Styling an element = upsertDefinition + upsertElement with that ref in \`style.base\`, in one batch.
 - CSS keys are **kebab-case** (\`background-color\`). camelCase is rejected — read \`plitzi://css-properties\`.

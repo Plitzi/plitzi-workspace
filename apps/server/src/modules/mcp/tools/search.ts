@@ -138,7 +138,7 @@ export const search = (input: SearchInput, space: Space, env: Env): SearchRespon
     pages.push({
       ref,
       uri: `plitzi://schema/${env}/pages/${ref}`,
-      stateVersion: computeVersion(pageSkeletonToAI(space.schema, page)),
+      stateVersion: computeVersion(pageSkeletonToAI(space.schema, page, space.style)),
       label,
       slug,
       matches

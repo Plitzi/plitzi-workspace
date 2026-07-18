@@ -1,5 +1,6 @@
 import {
   bindingsToAI,
+  computeVersion,
   descendantCount,
   descendantIds,
   elementById,
@@ -87,7 +88,10 @@ export const folderRefToAI = (schema: Schema, ref: string): AIFolder | undefined
   return folder ? folderToAI(folder) : undefined;
 };
 
-const skeletonNode = (schema: Schema, el: Element): AISkeletonNode => {
+// The per-node stateVersion is the SAME hash a direct element read (or a search hit) returns for that element, so an
+// agent holding a page skeleton can diff node versions against what it cached and re-read only the changed elements.
+// It needs the style to resolve each element exactly as elementDetailToAI does; without it the field is omitted.
+const skeletonNode = (schema: Schema, el: Element, style?: Style): AISkeletonNode => {
   const children = orderedChildren(schema, el);
   const base = splitClasses(el.definition.styleSelectors.base);
   const slots = slotClasses(el.definition.styleSelectors);
@@ -97,14 +101,15 @@ const skeletonNode = (schema: Schema, el: Element): AISkeletonNode => {
     type: el.definition.type,
     label: el.definition.label,
     subType: strOr(el.attributes.subType),
+    stateVersion: style ? computeVersion(elementDetailToAI(schema, el, style)) : undefined,
     base: base.length > 0 ? base : undefined,
     slots: Object.keys(slots).length > 0 ? slots : undefined,
     childCount: children.length,
-    children: children.length > 0 ? children.map(child => skeletonNode(schema, child)) : undefined
+    children: children.length > 0 ? children.map(child => skeletonNode(schema, child, style)) : undefined
   };
 };
 
-export const pageSkeletonToAI = (schema: Schema, pageEl: Element): AIPageSkeleton => {
+export const pageSkeletonToAI = (schema: Schema, pageEl: Element, style?: Style): AIPageSkeleton => {
   const slug = strOr(pageEl.attributes.slug) ?? '';
 
   return {
@@ -114,7 +119,7 @@ export const pageSkeletonToAI = (schema: Schema, pageEl: Element): AIPageSkeleto
     default: pageEl.attributes.default === true,
     enabled: pageEl.attributes.enabled !== false,
     routeParams: slugRouteParams(slug),
-    tree: orderedChildren(schema, pageEl).map(child => skeletonNode(schema, child))
+    tree: orderedChildren(schema, pageEl).map(child => skeletonNode(schema, child, style))
   };
 };
 
