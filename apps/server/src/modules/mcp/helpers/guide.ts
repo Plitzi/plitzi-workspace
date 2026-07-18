@@ -89,9 +89,14 @@ returns a \`stateVersion\` that is an **aggregate of the whole page**: it change
 page changed. Its skeleton \`tree\` also carries a \`stateVersion\` **per node**, identical to the one a direct element
 read or search hit returns for that element. So when you come back to a page you already inspected:
 1. Re-read just the page skeleton and compare its top-level \`stateVersion\` to the one you held. **Same → nothing
-   changed; skip re-reading and re-searching entirely** and act on what you already know.
+   changed since your read; skip re-reading and re-searching the tree** and act on what you already know.
 2. If it differs, diff the per-node \`stateVersion\`s against the ones you cached and \`plitzi_read\` **only the nodes
    that changed** — never re-search or re-read the whole tree.
+
+This is a **read-time** shortcut, not a safety guarantee. **Other agents/sub-agents may edit the same space
+concurrently**, so a version you cached can go stale between your read and your write. Never skip the write-time
+check below on the strength of a cached hash — the guarantee that no concurrent edit is lost comes only from
+\`expectedResourceVersions\` on \`plitzi_apply\`, which re-validates against the live data at write time.
 
 ## Navigating (files analogy)
 Pages and containers are folders; elements are files. **Prefer \`plitzi_search\` (especially with \`include: "detail"\`)
@@ -159,6 +164,12 @@ pointed at the old name is repointed with it, so the element stays wired. You do
   it from \`defaultStyle\` on the type in \`plitzi://types\` (the primer includes it). Do not assume \`display: block\`:
   \`text\`, for one, defaults to \`display: inline\`, so margins/width/vertical padding behave differently. If you need
   block/flex layout on such an element, set \`display\` explicitly in your definition rather than relying on a default.
+- **Images: preserve aspect ratio.** Setting only \`width\` and \`height\` (or forcing both) distorts an image. Change
+  one dimension and let the other be \`auto\`, or set \`aspect-ratio\` with \`object-fit: cover\`/\`contain\`, so the
+  image scales without stretching.
+- **Font size and line height move together.** When you change \`font-size\`, set \`line-height\` in the same edit
+  (prefer a unitless ratio like \`1.5\`, which tracks the font size). Changing one without the other leaves cramped or
+  loosely-spaced text — they are a joint change, not two separate ones.
 - A definition lives in the **style schema**; an element's \`style.base\` (element schema) is the link that applies
   it. Styling an element = upsertDefinition + upsertElement with that ref in \`style.base\`, in one batch.
 - CSS keys are **kebab-case** (\`background-color\`). camelCase is rejected — read \`plitzi://css-properties\`.
@@ -309,6 +320,11 @@ Space-level configuration lives in \`plitzi://settings/{env}\` and is edited wit
   Example — recolor one definition without resending it: \`{ "type": "patchDefinition", "ref": "btn-x",
   "desktop": { "background-color": "#111" } }\`.
 - **Atomic batches**: if any operation fails, \`plitzi_apply\` persists nothing.
-- **Optimistic concurrency**: pass \`expectedResourceVersions\` (URI → the stateVersion you read). If the live data
-  drifted, apply is rejected with a conflict; re-read the reported resources and retry.
+- **Optimistic concurrency — read before you write, and prove your read is current.** Editing a resource means you
+  read it first, so you hold its \`stateVersion\`. **Always pass \`expectedResourceVersions\`** (URI → the stateVersion
+  you read) for every resource your batch changes. If another agent edited it in the meantime, the live version no
+  longer matches and apply is **rejected with a conflict** — nothing persists. Then re-read the reported resources
+  (their new content + version) and retry on top of the fresh state. This is exactly how a file editor forces a
+  re-read after a stale write: it is what keeps concurrent agents from silently overwriting each other's changes, so
+  never omit it "to save a call".
 `;
