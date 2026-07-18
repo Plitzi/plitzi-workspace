@@ -42,7 +42,10 @@ export type ElementInteraction<
   action: string;
   params: InteractionCallbackParamValues<T>;
   preview: Record<string, unknown>;
-  elementId: Element['id'];
+  // The element the step is registered on: an element idRef for a `callback`/`trigger`, the source module for a
+  // `globalCallback` (e.g. `space`/`state`). A `utility` is resolved by its action alone (`utility[action]`) and is
+  // registered on NO element, so its elementId is null.
+  elementId: Element['id'] | null;
   beforeNode: string;
   afterNode: string;
   flowId: string;

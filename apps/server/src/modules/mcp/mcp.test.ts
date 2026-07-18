@@ -2374,6 +2374,120 @@ describe('mcp-ai interactions', () => {
     expect(node?.params).not.toHaveProperty('delay');
   });
 
+  // A utility is resolved by its action alone (`utility[action]`) — it is registered on NO element, so its stored
+  // elementId must be null, never the host. The agent commonly (and wrongly) pins delayTime to the host button.
+  it('stores a utility elementId as null even when the agent points it at the host element', async () => {
+    const cap = capturing(interactiveSpace());
+    await apply(
+      {
+        operations: [
+          {
+            type: 'upsertInteractionFlow',
+            pageRef: 'home',
+            ref: 'box-1',
+            nodes: [
+              { nodeType: 'trigger', action: 'onClick', title: 'Click' },
+              // The agent wrongly pins the utility to the host element; the tool must null it.
+              { nodeType: 'utility', action: 'delayTime', title: 'Wait', params: { time: 2000 }, elementId: 'box-1' }
+            ]
+          }
+        ]
+      },
+      cap.saved(),
+      cap.persisters
+    );
+
+    const node = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {}).find(
+      n => n.type === 'utility' && n.action === 'delayTime'
+    );
+    expect(node?.elementId).toBeNull();
+  });
+
+  it('normalizes a stringified nullish elementId ("undefined") on a patched utility to null', async () => {
+    const space = interactiveSpace();
+    space.schema.flat.c1.definition.interactions = {
+      node_u: {
+        id: 'node_u',
+        title: 'Wait 2 seconds',
+        type: 'utility',
+        action: 'delayTime',
+        params: { time: 1500 },
+        preview: {},
+        // The builder writes the literal string "undefined" here — a known artifact.
+        elementId: 'undefined',
+        beforeNode: '',
+        afterNode: '',
+        flowId: 'node_u',
+        enabled: true
+      }
+    };
+    const cap = capturing(space);
+    await apply(
+      {
+        operations: [{ type: 'patchInteractionNode', pageRef: 'home', ref: 'box-1', nodeId: 'node_u', title: 'Wait' }]
+      },
+      cap.saved(),
+      cap.persisters
+    );
+    expect(cap.saved().schema.flat.c1.definition.interactions?.node_u.elementId).toBeNull();
+  });
+
+  it('warns when an existing utility node carries a real (host) elementId, on patch', () => {
+    const space = interactiveSpace();
+    space.schema.flat.c1.definition.interactions = {
+      node_u: {
+        id: 'node_u',
+        title: 'Wait',
+        type: 'utility',
+        action: 'delayTime',
+        params: { time: 2000 },
+        preview: {},
+        elementId: 'box-1',
+        beforeNode: '',
+        afterNode: '',
+        flowId: 'node_u',
+        enabled: true
+      }
+    };
+    const res = validate(
+      {
+        operations: [
+          { type: 'patchInteractionNode', pageRef: 'home', ref: 'box-1', nodeId: 'node_u', title: 'Renamed' }
+        ]
+      },
+      space
+    );
+    expect(res.warnings.some(w => w.includes('delayTime') && w.includes('takes NO element'))).toBe(true);
+  });
+
+  it('warns on a literal string "undefined" elementId (stringified nullish, a builder artifact)', () => {
+    const space = interactiveSpace();
+    space.schema.flat.c1.definition.interactions = {
+      node_u: {
+        id: 'node_u',
+        title: 'Wait',
+        type: 'utility',
+        action: 'delayTime',
+        params: { time: 2000 },
+        preview: {},
+        elementId: 'undefined',
+        beforeNode: '',
+        afterNode: '',
+        flowId: 'node_u',
+        enabled: true
+      }
+    };
+    const res = validate(
+      {
+        operations: [
+          { type: 'patchInteractionNode', pageRef: 'home', ref: 'box-1', nodeId: 'node_u', title: 'Renamed' }
+        ]
+      },
+      space
+    );
+    expect(res.warnings.some(w => w.includes('literal string elementId') && w.includes('"undefined"'))).toBe(true);
+  });
+
   it('warns when a global callback is used with nodeType "callback" (wrong node type)', () => {
     const res = validate(
       {
@@ -2558,10 +2672,14 @@ describe('mcp-ai interactions', () => {
     ]
   });
 
-  it('ERRORS on a number param given as a string', () => {
-    const res = validate({ operations: [notifyFlow({ autoDismissTimeout: '5000' })] }, interactiveSpace());
-    expect(res.valid).toBe(false);
-    expect(res.errors.some(e => e.message.includes('autoDismissTimeout') && e.message.includes('number'))).toBe(true);
+  it('ERRORS on a non-numeric value for a number param, but ACCEPTS a numeric string (text input)', () => {
+    const bad = validate({ operations: [notifyFlow({ autoDismissTimeout: 'soon' })] }, interactiveSpace());
+    expect(bad.valid).toBe(false);
+    expect(bad.errors.some(e => e.message.includes('autoDismissTimeout') && e.message.includes('number'))).toBe(true);
+
+    // The builder's number fields are text inputs, so a numeric string ("5000") is legitimate and coerces at runtime.
+    const ok = validate({ operations: [notifyFlow({ autoDismissTimeout: '5000' })] }, interactiveSpace());
+    expect(ok.valid).toBe(true);
   });
 
   it('ERRORS on a boolean param given as a string', () => {
@@ -2605,7 +2723,7 @@ describe('mcp-ai interactions', () => {
         title: 'Notify',
         type: 'globalCallback',
         action: 'addNotification',
-        params: { content: 'Hi', autoDismissTimeout: '5000' },
+        params: { content: 'Hi', autoDismissTimeout: 'soon' },
         preview: {},
         elementId: 'space',
         beforeNode: '',
@@ -2664,7 +2782,7 @@ describe('mcp-ai interactions', () => {
         title: 'Notify',
         type: 'globalCallback',
         action: 'addNotification',
-        params: { content: 'Hi', autoDismissTimeout: '5000' },
+        params: { content: 'Hi', autoDismissTimeout: 'soon' },
         preview: {},
         elementId: 'space',
         beforeNode: '',
@@ -2704,7 +2822,7 @@ describe('mcp-ai interactions', () => {
         title: 'Notify',
         type: 'globalCallback',
         action: 'addNotification',
-        params: { content: 'Hi', autoDismissTimeout: '5000' },
+        params: { content: 'Hi', autoDismissTimeout: 'soon' },
         preview: {},
         elementId: 'space',
         beforeNode: '',

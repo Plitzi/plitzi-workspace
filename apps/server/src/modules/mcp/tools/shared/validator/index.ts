@@ -311,7 +311,7 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
             action: op.action ?? existing.action,
             params: { ...existing.params, ...(op.params ?? {}) },
             enabled: op.enabled ?? existing.enabled,
-            elementId: op.elementId ?? existing.elementId
+            elementId: op.elementId ?? existing.elementId ?? undefined
           };
           checkInteractionNode(merged, base, ctx, op.ref);
         } else {

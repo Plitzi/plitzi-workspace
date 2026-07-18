@@ -8,6 +8,7 @@ import {
   missingRequiredParams,
   reconcileParams
 } from '../../../catalogs';
+import { NULLISH_ELEMENT_IDS } from '../../../helpers';
 
 import type { ValidationCtx } from './context';
 import type { BuiltinParamType, ParamSpec } from '../../../catalogs';
@@ -188,6 +189,17 @@ const checkElementCallback = (node: InteractionNodeInput, base: string, ctx: Val
 };
 
 const checkUtility = (node: InteractionNodeInput, base: string, ctx: ValidationCtx): void => {
+  // A utility is resolved by its action alone (`utility[action]`) and is registered on NO element — its stored
+  // elementId must be null. A real element/host ref here is a no-op that misrepresents the flow (the common agent
+  // mistake: pinning delayTime to the host button). The literal "undefined"/"null" placeholder is flagged separately.
+  if (node.elementId && !NULLISH_ELEMENT_IDS.has(node.elementId)) {
+    warnOnce(
+      ctx,
+      `Utility "${node.action}" at ${base} has elementId "${node.elementId}" — a utility takes NO element (it is ` +
+        'resolved by its action alone). Omit elementId; the MCP stores null. Pointing it at an element is a no-op.'
+    );
+  }
+
   const utility = getUtility(node.action);
   if (!utility) {
     if (getGlobalCallback(node.action)) {
@@ -218,6 +230,17 @@ export const checkInteractionNode = (
     `${base}.action`,
     ctx
   );
+
+  // The literal string "undefined"/"null" as elementId is a stringified nullish value (a known builder artifact,
+  // e.g. a utility saved from the builder). It resolves to nothing at runtime for a callback/globalCallback; re-save
+  // the step so elementId is a real ref/source, or empty for a utility.
+  if (node.elementId === 'undefined' || node.elementId === 'null') {
+    warnOnce(
+      ctx,
+      `Node "${node.action}" at ${base} has the literal string elementId "${node.elementId}" — a stringified nullish ` +
+        'value. Re-save the step: elementId must be a real element ref, a source module, or empty for a utility.'
+    );
+  }
 
   switch (node.nodeType) {
     case 'globalCallback':

@@ -42,8 +42,12 @@ export const upsertInteractionFlow = (space: Space, env: Env, op: UpsertInteract
   // When replacing a known flow, pin the trigger id to it so the recomputed flowId matches and the old nodes are
   // swapped out cleanly (rather than leaving a duplicate flow behind).
   const pinned = op.flowId && !op.nodes[0].id ? [{ ...op.nodes[0], id: op.flowId }, ...op.nodes.slice(1)] : op.nodes;
+  // A utility has no element (materializeFlow stores null), so never resolve/mint an idRef for one — that would
+  // spuriously give some element an idRef just because a delayTime step carried a stray elementId.
   const nodes = pinned.map(node =>
-    node.elementId === undefined ? node : { ...node, elementId: resolveTargetRef(space, node.elementId) }
+    node.elementId === undefined || node.nodeType === 'utility'
+      ? node
+      : { ...node, elementId: resolveTargetRef(space, node.elementId) }
   );
 
   // A node defaulting to its own element carries the owner ref — the key the runtime registers the callback under.

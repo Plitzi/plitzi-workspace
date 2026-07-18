@@ -26,6 +26,10 @@ export interface FlowNodeInput {
 
 const BINDING_CATEGORIES: Array<keyof AIBindings> = ['attributes', 'style', 'initialState'];
 
+// A node elementId that is really "no element" but was serialized as text. The builder writes the string
+// "undefined" for a utility (which has no element); "null"/"" are the same artifact. Normalized to a real absence.
+export const NULLISH_ELEMENT_IDS = new Set(['undefined', 'null', '']);
+
 const isNonEmptyObject = (value: Record<string, unknown> | undefined): boolean =>
   value !== undefined && Object.keys(value).length > 0;
 
@@ -123,13 +127,18 @@ export const materializeFlow = (
 
   nodes.forEach((node, i) => {
     let params = node.params ?? {};
+    // A stringified nullish elementId ("undefined"/"null"/"") is a known builder artifact (it serializes an absent
+    // value as text) — treat it as no element so it never leaks into storage.
+    const supplied = NULLISH_ELEMENT_IDS.has(node.elementId ?? '') ? undefined : node.elementId;
     // Reconcile params to the catalog that matches the node type, so the stored node round-trips like the builder's:
-    // unknown keys dropped, builder defaults filled. Each node type resolves its callback differently:
+    // unknown keys dropped, builder defaults filled. Each node type resolves its callback (and thus its elementId)
+    // differently:
     //  - globalCallback — registered on a SOURCE MODULE, so elementId is that source (e.g. `space`), never the owner.
-    //  - callback — a callback ON an element (the owner by default, or a target); a built-in one (setState) is
-    //    reconciled, an element-type-specific/plugin one is left as-is (its schema is not knowable here).
-    //  - utility — resolved as `utility[action]`, so elementId is irrelevant; only its params are reconciled.
-    let elementId = node.elementId ?? ownerId;
+    //  - callback / trigger — runs ON an element (the owner by default, or a named target); a built-in callback
+    //    (setState) is reconciled, an element-type-specific/plugin one is left as-is (schema not knowable here).
+    //  - utility — resolved as `utility[action]`, registered on NO element, so its elementId is null (mirrors mongo);
+    //    a host/target elementId here is a no-op that misrepresents the flow.
+    let elementId: string | null = node.nodeType === 'utility' ? null : (supplied ?? ownerId);
     if (node.nodeType === 'globalCallback') {
       const builtin = applyBuiltinCallback(node.action, params);
       if (builtin.source) {

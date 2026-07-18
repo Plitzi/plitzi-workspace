@@ -83,12 +83,18 @@ export interface InvalidParam {
   options?: string[];
 }
 
+const isNumeric = (value: string): boolean => value.trim() !== '' && Number.isFinite(Number(value));
+
 const matchesType = (value: unknown, param: BuiltinParam): boolean => {
   switch (param.type) {
     case 'boolean':
+      // Booleans must be REAL booleans — the builder/mongo stores true/false, so the strings "true"/"false" are a
+      // malformation (unlike the polymorphic `scalar` value param, which handles its own coercion).
       return typeof value === 'boolean';
     case 'number':
-      return typeof value === 'number';
+      // A number OR a numeric string: the builder legitimately stores numbers as strings ("1500") and the runtime
+      // coerces them, so only a non-numeric value is wrong.
+      return typeof value === 'number' || (typeof value === 'string' && isNumeric(value));
     case 'select':
       return typeof value === 'string' && (!param.options || param.options.includes(value));
     case 'scalar':

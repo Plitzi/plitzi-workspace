@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { empty, fail } from '../../../../helpers';
+import { NULLISH_ELEMENT_IDS, empty, fail } from '../../../../helpers';
 import { interactionNode } from '../shared';
 import { pageUri, resolveElement, resolveTargetRef } from '../write';
 
@@ -65,6 +65,15 @@ export const patchInteractionNode = (space: Space, env: Env, op: PatchInteractio
 
   if (op.elementId !== undefined) {
     node.elementId = resolveTargetRef(space, op.elementId);
+  }
+
+  // A utility is registered on NO element — keep its elementId null regardless of what was patched in or already
+  // stored (the builder writes the string "undefined" here; the agent may wrongly pin the host). Normalize a
+  // stringified nullish value on other node types to a real null too.
+  if (node.type === 'utility') {
+    node.elementId = null;
+  } else if (typeof node.elementId === 'string' && NULLISH_ELEMENT_IDS.has(node.elementId)) {
+    node.elementId = null;
   }
 
   if (op.preview !== undefined) {
