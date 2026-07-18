@@ -21,7 +21,7 @@ export type WorkflowHeaderProps = {
     nodes: Record<string, ElementInteraction>;
   }[];
   flowId?: string;
-  flowSummaries?: Record<string, FlowSummary>;
+  flowSummaries?: Record<string, FlowSummary | undefined>;
   setFlowId: Dispatch<SetStateAction<string | undefined>>;
 };
 
