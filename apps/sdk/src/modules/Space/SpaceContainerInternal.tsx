@@ -105,10 +105,7 @@ const SpaceContainerInternal = ({ children }: SpaceContainerInternalProps) => {
     [handleAddNotification]
   );
 
-  useInteractions({
-    id: 'space',
-    callbacks: interactionCallbacks as unknown as Record<string, InteractionCallback>
-  });
+  useInteractions({ id: 'space', callbacks: interactionCallbacks });
 
   // @todo: we need to render space headers here
 

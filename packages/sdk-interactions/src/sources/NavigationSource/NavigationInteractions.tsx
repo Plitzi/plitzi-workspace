@@ -79,10 +79,7 @@ const NavigationInteractions = ({ children, previewMode = false }: NavigationInt
     [handleNavigate, pageUrls]
   );
 
-  useInteractions({
-    id: 'navigation',
-    callbacks: interactionCallbacks as unknown as Record<string, InteractionCallback>
-  });
+  useInteractions({ id: 'navigation', callbacks: interactionCallbacks });
 
   return children;
 };
