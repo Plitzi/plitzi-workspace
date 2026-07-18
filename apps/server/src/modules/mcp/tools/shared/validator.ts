@@ -1,6 +1,7 @@
 import { isValidIdRef } from '@plitzi/sdk-schema/helpers/idRef';
 
 import {
+  BUILTIN_GLOBAL_CALLBACKS,
   findFolderByRef,
   findPageByRef,
   folderAncestorIds,
@@ -566,7 +567,7 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
           });
         }
 
-        op.nodes.forEach((node, n) =>
+        op.nodes.forEach((node, n) => {
           checkObservedName(
             node.action,
             ctx.observedActions,
@@ -574,8 +575,19 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
             'plitzi://interactions',
             `${base}.nodes[${n}].action`,
             ctx
-          )
-        );
+          );
+
+          // A built-in globalCallback is registered on its source module — the MCP pins elementId to that source.
+          // Warn (not fail) when the agent points it at the host element instead, the common mistake.
+          const builtin = node.nodeType === 'globalCallback' ? BUILTIN_GLOBAL_CALLBACKS[node.action] : undefined;
+          if (builtin && node.elementId !== undefined && node.elementId !== builtin.source) {
+            warnOnce(
+              ctx,
+              `Global callback "${node.action}" at ${base}.nodes[${n}] is registered on "${builtin.source}", not on ` +
+                `"${node.elementId}". Omit elementId (the MCP sets "${builtin.source}") or set it to "${builtin.source}".`
+            );
+          }
+        });
         break;
       case 'patchInteractionNode':
         checkRef(op.ref, `${base}.ref`, ctx);

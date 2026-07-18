@@ -196,17 +196,45 @@ Discover valid source paths in \`plitzi://data-sources/{env}\`. Example — feed
 ## Interactions
 An interaction **flow** is a **trigger** (an event like \`onClick\`, \`onPageLoad\`) followed by the callbacks/utilities
 it runs, in order. You pass the steps **in order** and the stored beforeNode/afterNode/flowId links are computed for
-you — never wire them by hand.
+you — never wire them by hand. Each step also has an \`enabled\` flag (see disable vs delete below).
+
+**Node types & \`elementId\`** — a step names which element (or module) provides the callback it runs:
+- \`trigger\` — the event; belongs to the host element. \`elementId\` defaults to the host.
+- \`callback\` — a callback on a **specific element** (e.g. \`setVisibility\` on another box). \`elementId\` is that
+  element's ref; give its ref or raw id and it is normalised to the idRef. Defaults to the host element.
+- \`globalCallback\` — a callback provided by a **source module**, NOT by any element: \`addNotification\` (source
+  \`space\`), \`setState\`/\`clearState\` (\`state\`), \`navigate\` (\`navigation\`), \`authLogin\`/\`authLogout\`/
+  \`authRefreshDetails\` (\`auth\`), \`addCollectionRecord\`/\`updateCollectionRecord\`/\`removeCollectionRecord\`
+  (\`collection\`). Its \`elementId\` is the **source module id**, never the host element — a node that stored the host
+  idRef here would resolve to nothing at runtime. **Omit \`elementId\`**: the MCP sets the correct source and fills the
+  builder's **param defaults** (e.g. \`addNotification\` gets \`autoDismiss:true\`, \`autoDismissTimeout:5000\`,
+  \`placement:"top-right"\`, \`appeareance:"success"\`) for any params you leave out. See these under \`globalCallbacks\`
+  in \`plitzi://interactions/{env}\`.
+- \`utility\` — a built-in utility action (no element).
+
+Tools:
 - \`upsertInteractionFlow\` — create or replace one flow. The FIRST node must be a \`trigger\`. Pass \`flowId\` (the
-  trigger's node id) to replace an existing flow. Example:
+  trigger's node id) to replace an existing flow. Example (elementId omitted — the MCP wires it to \`space\` and fills
+  the notification defaults):
   \`{ "type": "upsertInteractionFlow", "pageRef": "home", "ref": "cta", "nodes": [
     { "nodeType": "trigger", "action": "onClick", "title": "Click" },
-    { "nodeType": "globalCallback", "action": "login", "title": "Log in", "params": {} } ] }\`.
+    { "nodeType": "globalCallback", "action": "addNotification", "title": "Notify",
+      "params": { "content": "Saved!" } } ] }\`.
 - \`patchInteractionNode\` — change one step in place (by \`nodeId\`); \`params\` merge onto the node.
-- \`deleteInteraction\` — remove a whole flow (\`flowId\`) or a single step (\`nodeId\`, neighbors re-linked). Provide
-  exactly one.
-Discover valid actions in \`plitzi://interactions/{env}\`. An element read lists its flows as ordered nodes (each with
-its \`id\`), so a follow-up patch/delete needs no extra read.
+
+**Disable vs delete a step — do not confuse them (three different intents):**
+- **Disable / deactivate / turn off a step** (keep it in the flow, just stop it running): \`patchInteractionNode\`
+  with \`{ "enabled": false }\`. Re-enable with \`{ "enabled": true }\`. This is NOT a deletion — the step stays.
+- **Remove one step** from a flow: \`deleteInteraction\` with \`nodeId\` (its neighbors are re-linked).
+- **Remove the whole flow**: \`deleteInteraction\` with \`flowId\` (the trigger node id).
+
+So "deactivate the addNotification step" means \`patchInteractionNode { enabled: false }\` — never delete the step, and
+never delete the flow. \`deleteInteraction\` is **destructive and not undoable**: only use it when the user asked to
+*remove* something, and **confirm with the user before deleting** a step or a flow.
+
+Discover valid actions in \`plitzi://interactions/{env}\` (\`actions\` = observed, \`globalCallbacks\` = built-ins with
+their source + defaults). An element read lists its flows as ordered nodes (each with its \`id\` and \`enabled\`), so a
+follow-up patch/delete needs no extra read.
 
 ## Pages & folders
 Pages can be grouped into **folders** (the sidebar tree). A folder is \`{ ref, name, slug, parentId? }\`; its \`ref\`

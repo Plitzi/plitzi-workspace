@@ -2076,6 +2076,104 @@ describe('mcp-ai interactions', () => {
     expect(res.valid).toBe(false);
     expect(res.errors.some(e => e.message.includes('exactly one'))).toBe(true);
   });
+
+  // A globalCallback is registered on its source module, not the host element — the built-in catalog pins elementId
+  // to the source and fills the builder's param defaults for the keys the agent omits.
+  it('routes a built-in globalCallback to its source module and fills param defaults', async () => {
+    const cap = capturing(interactiveSpace());
+    await apply(
+      {
+        operations: [
+          {
+            type: 'upsertInteractionFlow',
+            pageRef: 'home',
+            ref: 'box-1',
+            nodes: [
+              { nodeType: 'trigger', action: 'onClick', title: 'Click' },
+              { nodeType: 'globalCallback', action: 'addNotification', title: 'Notify', params: { content: 'Saved!' } }
+            ]
+          }
+        ]
+      },
+      cap.saved(),
+      cap.persisters
+    );
+
+    const node = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {}).find(
+      n => n.action === 'addNotification'
+    );
+    expect(node?.elementId).toBe('space');
+    expect(node?.params).toMatchObject({
+      content: 'Saved!',
+      placement: 'top-right',
+      appeareance: 'success',
+      autoDismiss: true,
+      autoDismissTimeout: 5000
+    });
+  });
+
+  it('skips a conditional default when its guard fails (autoDismiss:false omits the timeout)', async () => {
+    const cap = capturing(interactiveSpace());
+    await apply(
+      {
+        operations: [
+          {
+            type: 'upsertInteractionFlow',
+            pageRef: 'home',
+            ref: 'box-1',
+            nodes: [
+              { nodeType: 'trigger', action: 'onClick', title: 'Click' },
+              {
+                nodeType: 'globalCallback',
+                action: 'addNotification',
+                title: 'Notify',
+                params: { content: 'Hi', autoDismiss: false }
+              }
+            ]
+          }
+        ]
+      },
+      cap.saved(),
+      cap.persisters
+    );
+
+    const node = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {}).find(
+      n => n.action === 'addNotification'
+    );
+    expect(node?.params.autoDismiss).toBe(false);
+    expect(node?.params).not.toHaveProperty('autoDismissTimeout');
+  });
+
+  it('warns when a built-in globalCallback is pointed at the host element instead of its source', () => {
+    const res = validate(
+      {
+        operations: [
+          {
+            type: 'upsertInteractionFlow',
+            pageRef: 'home',
+            ref: 'box-1',
+            nodes: [
+              { nodeType: 'trigger', action: 'onClick', title: 'Click' },
+              { nodeType: 'globalCallback', action: 'addNotification', title: 'Notify', elementId: 'box-1' }
+            ]
+          }
+        ]
+      },
+      interactiveSpace()
+    );
+    expect(res.valid).toBe(true);
+    expect(res.warnings.some(w => w.includes('addNotification') && w.includes('"space"'))).toBe(true);
+  });
+
+  it('exposes built-in globalCallbacks with their source and defaults in the interactions catalog', () => {
+    const catalog = readResource(buildSpace(), 'main', 'plitzi://interactions/main')?.data as {
+      globalCallbacks: { action: string; source: string; defaults: Record<string, unknown> }[];
+    };
+    const notify = catalog.globalCallbacks.find(c => c.action === 'addNotification');
+    expect(notify?.source).toBe('space');
+    expect(notify?.defaults).toMatchObject({ autoDismiss: true, autoDismissTimeout: 5000 });
+    expect(catalog.globalCallbacks.find(c => c.action === 'navigate')?.source).toBe('navigation');
+  });
 });
 
 describe('mcp-ai deep validation of when (RuleGroup) and transformers', () => {

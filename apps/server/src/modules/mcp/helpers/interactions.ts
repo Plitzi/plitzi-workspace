@@ -1,3 +1,4 @@
+import { applyBuiltinCallback } from './builtinCallbacks';
 import { generateObjectId } from './space';
 
 import type { AIBinding, AIBindings, AIInteractionFlow, AIInteractionNode, AIInteractionNodeType } from '../types';
@@ -121,14 +122,28 @@ export const materializeFlow = (
   const record: Record<string, ElementInteraction> = {};
 
   nodes.forEach((node, i) => {
+    let params = node.params ?? {};
+    // A globalCallback is registered on its source module, not on the host element, so its elementId is the source
+    // id (e.g. `space` for addNotification) — never the owner. For a built-in callback the catalog is authoritative:
+    // it pins the source and fills the param defaults the builder pre-fills. An unknown (plugin) globalCallback keeps
+    // the caller-provided elementId (falling back to owner), since its source is not knowable here.
+    let elementId = node.elementId ?? ownerId;
+    if (node.nodeType === 'globalCallback') {
+      const builtin = applyBuiltinCallback(node.action, params);
+      if (builtin.source) {
+        elementId = builtin.source;
+        params = builtin.params;
+      }
+    }
+
     const interaction: ElementInteraction = {
       id: ids[i],
       title: node.title,
       type: node.nodeType,
       action: node.action,
-      params: node.params ?? {},
+      params,
       preview: node.preview ?? {},
-      elementId: node.elementId ?? ownerId,
+      elementId,
       beforeNode: i > 0 ? ids[i - 1] : '',
       afterNode: i < ids.length - 1 ? ids[i + 1] : '',
       flowId,

@@ -1,3 +1,5 @@
+import { BUILTIN_GLOBAL_CALLBACKS } from '../../../helpers';
+
 import type { AIInteractionNodeType } from '../../../types';
 import type { Schema } from '@plitzi/sdk-shared';
 
@@ -6,9 +8,21 @@ import type { Schema } from '@plitzi/sdk-shared';
 // catalogs are ground truth for discovery, and feed lenient validator warnings (an unseen name may still be
 // valid, so it is a warning, never a hard error).
 
+export interface BuiltinGlobalCallbackInfo {
+  action: string;
+  // The module id this global callback is registered on — the value a node's `elementId` MUST carry (never the host
+  // element). The MCP sets it for you when you omit it.
+  source: string;
+  title: string;
+  // Param default values the MCP fills for you when you omit them.
+  defaults: Record<string, string | number | boolean>;
+}
+
 export interface InteractionCatalog {
   note: string;
   actions: Record<string, string[]>;
+  globalCallbacksNote: string;
+  globalCallbacks: BuiltinGlobalCallbackInfo[];
   flowCount: number;
 }
 
@@ -21,6 +35,19 @@ export interface DataSourceCatalog {
 const INTERACTION_NOTE =
   'Interaction actions observed on this space, grouped by node type. A flow is a trigger followed by ordered ' +
   'callbacks/utilities; write one with upsertInteractionFlow. Names not listed may still be valid plugin actions.';
+
+const GLOBAL_CALLBACKS_NOTE =
+  'Built-in global callbacks always available in every space. A globalCallback is registered on its SOURCE MODULE, ' +
+  'so its node `elementId` is the listed `source` (e.g. "space" for addNotification) — NOT the element that hosts ' +
+  'the flow. Omit `elementId` and the MCP sets the right source and fills the listed param defaults for you.';
+
+const builtinGlobalCallbacks = (): BuiltinGlobalCallbackInfo[] =>
+  Object.entries(BUILTIN_GLOBAL_CALLBACKS).map(([action, { source, title, defaults }]) => ({
+    action,
+    source,
+    title,
+    defaults: Object.fromEntries(Object.entries(defaults).map(([key, def]) => [key, def.value]))
+  }));
 
 const DATA_SOURCE_NOTE =
   'Data-source paths and binding targets observed on this space. Bind a source to an element field with ' +
@@ -41,7 +68,13 @@ export const buildInteractionCatalog = (schema: Schema): InteractionCatalog => {
     grouped[nodeType] = [...set].sort();
   }
 
-  return { note: INTERACTION_NOTE, actions: grouped, flowCount: flows.size };
+  return {
+    note: INTERACTION_NOTE,
+    actions: grouped,
+    globalCallbacksNote: GLOBAL_CALLBACKS_NOTE,
+    globalCallbacks: builtinGlobalCallbacks(),
+    flowCount: flows.size
+  };
 };
 
 export const buildDataSourceCatalog = (schema: Schema): DataSourceCatalog => {
