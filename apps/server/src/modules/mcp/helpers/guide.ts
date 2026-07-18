@@ -208,8 +208,10 @@ you — never wire them by hand. Each step also has an \`enabled\` flag (see dis
   (\`collection\`). Its \`elementId\` is the **source module id**, never the host element — a node that stored the host
   idRef here would resolve to nothing at runtime. **Omit \`elementId\`**: the MCP sets the correct source and fills the
   builder's **param defaults** (e.g. \`addNotification\` gets \`autoDismiss:true\`, \`autoDismissTimeout:5000\`,
-  \`placement:"top-right"\`, \`appeareance:"success"\`) for any params you leave out. See these under \`globalCallbacks\`
-  in \`plitzi://interactions/{env}\`.
+  \`placement:"top-right"\`, \`appeareance:"success"\`) for any params you leave out. Use **only** the params each
+  callback declares (exact spelling) — for \`addNotification\` the visible text goes in \`content\`; there is **no**
+  \`title\`/\`message\`/\`type\` param, and any unknown key is dropped. See the full param schema for each callback under
+  \`globalCallbacks\` in \`plitzi://interactions/{env}\`.
 - \`utility\` — a built-in utility action (no element).
 
 Tools:
@@ -233,8 +235,8 @@ never delete the flow. \`deleteInteraction\` is **destructive and not undoable**
 *remove* something, and **confirm with the user before deleting** a step or a flow.
 
 Discover valid actions in \`plitzi://interactions/{env}\` (\`actions\` = observed, \`globalCallbacks\` = built-ins with
-their source + defaults). An element read lists its flows as ordered nodes (each with its \`id\` and \`enabled\`), so a
-follow-up patch/delete needs no extra read.
+their source + full param schema, so you know the exact valid params per callback). An element read lists its flows as
+ordered nodes (each with its \`id\` and \`enabled\`), so a follow-up patch/delete needs no extra read.
 
 ## Pages & folders
 Pages can be grouped into **folders** (the sidebar tree). A folder is \`{ ref, name, slug, parentId? }\`; its \`ref\`

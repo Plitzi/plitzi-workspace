@@ -2165,14 +2165,84 @@ describe('mcp-ai interactions', () => {
     expect(res.warnings.some(w => w.includes('addNotification') && w.includes('"space"'))).toBe(true);
   });
 
-  it('exposes built-in globalCallbacks with their source and defaults in the interactions catalog', () => {
+  it('exposes built-in globalCallbacks with their source and full param schema in the interactions catalog', () => {
     const catalog = readResource(buildSpace(), 'main', 'plitzi://interactions/main')?.data as {
-      globalCallbacks: { action: string; source: string; defaults: Record<string, unknown> }[];
+      globalCallbacks: {
+        action: string;
+        source: string;
+        strictParams: boolean;
+        params: { name: string; type: string; description: string; default?: unknown; options?: string[] }[];
+      }[];
     };
     const notify = catalog.globalCallbacks.find(c => c.action === 'addNotification');
     expect(notify?.source).toBe('space');
-    expect(notify?.defaults).toMatchObject({ autoDismiss: true, autoDismissTimeout: 5000 });
+    expect(notify?.strictParams).toBe(true);
+    const paramNames = notify?.params.map(p => p.name);
+    expect(paramNames).toEqual(['content', 'placement', 'appeareance', 'autoDismiss', 'autoDismissTimeout']);
+    expect(paramNames).not.toContain('title');
+    expect(paramNames).not.toContain('message');
+    expect(notify?.params.find(p => p.name === 'autoDismiss')?.default).toBe(true);
     expect(catalog.globalCallbacks.find(c => c.action === 'navigate')?.source).toBe('navigation');
+  });
+
+  it('drops unknown params on a strict built-in callback and keeps the real content field', async () => {
+    const cap = capturing(interactiveSpace());
+    await apply(
+      {
+        operations: [
+          {
+            type: 'upsertInteractionFlow',
+            pageRef: 'home',
+            ref: 'box-1',
+            nodes: [
+              { nodeType: 'trigger', action: 'onClick', title: 'Click' },
+              {
+                nodeType: 'globalCallback',
+                action: 'addNotification',
+                title: 'Notify',
+                params: { title: 'Hola!', message: 'Hola a todos', type: 'success', content: 'Real body' }
+              }
+            ]
+          }
+        ]
+      },
+      cap.saved(),
+      cap.persisters
+    );
+
+    const node = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {}).find(
+      n => n.action === 'addNotification'
+    );
+    expect(node?.params).not.toHaveProperty('title');
+    expect(node?.params).not.toHaveProperty('message');
+    expect(node?.params).not.toHaveProperty('type');
+    expect(node?.params.content).toBe('Real body');
+  });
+
+  it('warns when a strict built-in callback gets unknown params', () => {
+    const res = validate(
+      {
+        operations: [
+          {
+            type: 'upsertInteractionFlow',
+            pageRef: 'home',
+            ref: 'box-1',
+            nodes: [
+              { nodeType: 'trigger', action: 'onClick', title: 'Click' },
+              {
+                nodeType: 'globalCallback',
+                action: 'addNotification',
+                title: 'Notify',
+                params: { message: 'Hola', content: 'Body' }
+              }
+            ]
+          }
+        ]
+      },
+      interactiveSpace()
+    );
+    expect(res.valid).toBe(true);
+    expect(res.warnings.some(w => w.includes('addNotification') && w.includes('"message"'))).toBe(true);
   });
 });
 

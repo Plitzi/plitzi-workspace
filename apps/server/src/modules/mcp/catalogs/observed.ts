@@ -8,14 +8,28 @@ import type { Schema } from '@plitzi/sdk-shared';
 // catalogs are ground truth for discovery, and feed lenient validator warnings (an unseen name may still be
 // valid, so it is a warning, never a hard error).
 
+export interface BuiltinGlobalCallbackParamInfo {
+  name: string;
+  type: string;
+  description: string;
+  default?: string | number | boolean;
+  options?: string[];
+  // True when the param is only shown/relevant under a condition (mirrors the source param's `when`).
+  conditional?: boolean;
+}
+
 export interface BuiltinGlobalCallbackInfo {
   action: string;
   // The module id this global callback is registered on — the value a node's `elementId` MUST carry (never the host
   // element). The MCP sets it for you when you omit it.
   source: string;
   title: string;
-  // Param default values the MCP fills for you when you omit them.
-  defaults: Record<string, string | number | boolean>;
+  // When true, ONLY the listed params are valid — any other key is rejected. When false the callback also accepts
+  // arbitrary per-collection field keys on top of the listed params.
+  strictParams: boolean;
+  // The full set of valid params for this callback: name, type, meaning, default and (for selects) allowed options.
+  // Use exactly these keys — do not invent params like `title`/`message`/`type`.
+  params: BuiltinGlobalCallbackParamInfo[];
 }
 
 export interface InteractionCatalog {
@@ -39,14 +53,24 @@ const INTERACTION_NOTE =
 const GLOBAL_CALLBACKS_NOTE =
   'Built-in global callbacks always available in every space. A globalCallback is registered on its SOURCE MODULE, ' +
   'so its node `elementId` is the listed `source` (e.g. "space" for addNotification) — NOT the element that hosts ' +
-  'the flow. Omit `elementId` and the MCP sets the right source and fills the listed param defaults for you.';
+  'the flow. Omit `elementId` and the MCP sets the right source and fills the param defaults for you. Use ONLY the ' +
+  'params listed under each callback (with the exact spelling shown) — for addNotification the visible text goes in ' +
+  '`content`; there is no title/message/type param. When strictParams is true, any other key is rejected.';
 
 const builtinGlobalCallbacks = (): BuiltinGlobalCallbackInfo[] =>
-  Object.entries(BUILTIN_GLOBAL_CALLBACKS).map(([action, { source, title, defaults }]) => ({
+  Object.entries(BUILTIN_GLOBAL_CALLBACKS).map(([action, { source, title, strictParams, params }]) => ({
     action,
     source,
     title,
-    defaults: Object.fromEntries(Object.entries(defaults).map(([key, def]) => [key, def.value]))
+    strictParams,
+    params: Object.entries(params).map(([name, spec]) => ({
+      name,
+      type: spec.type,
+      description: spec.description,
+      ...(spec.default !== undefined ? { default: spec.default } : {}),
+      ...(spec.options ? { options: spec.options } : {}),
+      ...(spec.when ? { conditional: true } : {})
+    }))
   }));
 
 const DATA_SOURCE_NOTE =
