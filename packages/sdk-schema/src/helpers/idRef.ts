@@ -182,9 +182,13 @@ export const repointIdRefs = (elements: Record<Element['id'], Element>, mapRefs:
     }
 
     for (const interaction of Object.values(element.definition.interactions ?? {})) {
-      const elementId = mapRefs[interaction.elementId];
-      if (elementId) {
-        interaction.elementId = elementId;
+      // elementId is `string | null` (null when the step targets a source/global, not an element), so only a
+      // non-empty ref can be remapped.
+      if (interaction.elementId) {
+        const elementId = mapRefs[interaction.elementId];
+        if (elementId) {
+          interaction.elementId = elementId;
+        }
       }
 
       remapTokensDeep(interaction.params, mapRefs);
