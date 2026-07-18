@@ -3,10 +3,12 @@ import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
 import clsx from 'clsx';
 import { useCallback, useMemo, useState } from 'react';
 
+import { summarizeFlow } from './helpers/nodeWarnings';
 import WorkflowContextProvider from './WorkflowContextProvider';
 import WorkflowFlow from './WorkflowFlow';
 import WorkflowHeader from './WorkflowHeader';
 
+import type { WarningLevel } from './helpers/nodeWarnings';
 import type { ElementInteraction, InteractionCallback, Source } from '@plitzi/sdk-shared';
 
 export type WorkflowProps = {
@@ -66,6 +68,15 @@ const Workflow = ({
 
   const flow = useMemo(() => flows.find(flow => flow.id === flowId), [flowId, flows]);
 
+  const flowSummaries = useMemo(
+    () =>
+      flows.reduce<Record<string, { count: number; level: WarningLevel | undefined }>>(
+        (acum, f) => ({ ...acum, [f.id]: summarizeFlow(f.nodes, nodeDefinitions) }),
+        {}
+      ),
+    [flows, nodeDefinitions]
+  );
+
   useDidUpdateEffect(() => {
     if (Array.isArray(nodesProp)) {
       setNodes({});
@@ -102,7 +113,7 @@ const Workflow = ({
         setFlowId={setFlowId}
         onChange={handleChange}
       >
-        <WorkflowHeader flows={flows} flowId={flowId} setFlowId={setFlowId} />
+        <WorkflowHeader flows={flows} flowId={flowId} setFlowId={setFlowId} flowSummaries={flowSummaries} />
         {flow && (
           <WorkflowFlow
             trigger={flow.trigger}

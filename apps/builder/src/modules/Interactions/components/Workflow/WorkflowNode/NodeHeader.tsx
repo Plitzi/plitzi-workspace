@@ -6,6 +6,7 @@ import Switch from '@plitzi/plitzi-ui/Switch';
 import clsx from 'clsx';
 import { useCallback, useMemo, use } from 'react';
 
+import { WARNING_ICON, getNodeWarnings, isTargetUnreferenced, worstLevel } from '../helpers/nodeWarnings';
 import WorkflowContext from '../WorkflowContext';
 
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
@@ -51,9 +52,12 @@ const NodeHeader = ({
 }: NodeHeaderProps) => {
   const { moveNode } = use(WorkflowContext);
   // The node's target has no idRef when the element it points at is one of the flagged, unreferenced entries.
-  const targetUnreferenced =
-    Boolean(elementId) &&
-    Boolean(nodeDefinitions?.some(definition => definition.elementId === elementId && definition.unreferenced));
+  const targetUnreferenced = isTargetUnreferenced({ elementId }, nodeDefinitions);
+  const warnings = useMemo(
+    () => getNodeWarnings({ type, action, elementId }, nodeDefinition, targetUnreferenced),
+    [type, action, elementId, nodeDefinition, targetUnreferenced]
+  );
+  const warningLevel = worstLevel(warnings);
 
   const handleClickUp = useCallback(() => moveNode(id, 'up'), [id, moveNode]);
 
@@ -67,16 +71,26 @@ const NodeHeader = ({
         return;
       }
 
-      const { value, type } = option as Exclude<Option, OptionGroup> & { type: string };
-      const [elementId, action] = value.split('_');
-      if (!elementId || !action) {
+      const {
+        value,
+        type,
+        elementId: optionElementId
+      } = option as Exclude<Option, OptionGroup> & {
+        type: string;
+        elementId?: string;
+      };
+      // The option value is `${elementId}_${action}`; a utility definition has no elementId, so its value starts with
+      // an empty segment. Read the action from the value and take the target from the option itself (never the split
+      // string, which would stringify an absent elementId as the text "undefined").
+      const action = value.split('_').slice(1).join('_');
+      if (!action) {
         return;
       }
 
       const nodeDefinition = nodeDefinitions?.find(
         definition =>
           definition.type === type &&
-          (!definition.elementId || definition.elementId === elementId) &&
+          (!definition.elementId || definition.elementId === optionElementId) &&
           definition.action === action
       );
       if (!nodeDefinition) {
@@ -89,7 +103,15 @@ const NodeHeader = ({
         {}
       );
 
-      onChange?.({ action, elementId, params: paramsParsed, preview: {}, type: nodeDefinition.type });
+      // A utility (any definition with no elementId) is registered on no element — store null, never the stringified
+      // "undefined" that the split value would carry.
+      onChange?.({
+        action,
+        elementId: nodeDefinition.elementId ?? null,
+        params: paramsParsed,
+        preview: {},
+        type: nodeDefinition.type
+      });
     },
     [nodeDefinitions, onChange]
   );
@@ -118,7 +140,7 @@ const NodeHeader = ({
         .map(nodeDefinition => {
           const { title, action, type, elementId } = nodeDefinition;
 
-          return { value: `${elementId}_${action}`, label: title, type, elementId };
+          return { value: `${elementId ?? ''}_${action}`, label: title, type, elementId };
         });
     }
 
@@ -127,30 +149,28 @@ const NodeHeader = ({
       .reduce<(Option & { type: string; options: Option[] })[]>((acum, nodeDef) => {
         const { title, elementId, action, type } = nodeDef;
         const label = nodeDef.unreferenced ? `${title} (no Reference)` : title;
+        // A utility definition has no elementId; encode it as an empty segment, never the text "undefined".
+        const value = `${elementId ?? ''}_${action}`;
         const group = acum.find(node => node.type === nodeDef.type);
         if (group) {
-          group.options.push({ value: `${elementId}_${action}`, label, type, elementId });
+          group.options.push({ value, label, type, elementId });
 
           return acum;
         }
 
         return [
           ...acum,
-          {
-            type,
-            label: type,
-            options: [
-              { value: `${elementId}_${action}`, label, type, elementId, disabled: nodeDef.unreferenced ?? false }
-            ]
-          }
+          { type, label: type, options: [{ value, label, type, elementId, disabled: nodeDef.unreferenced ?? false }] }
         ];
       }, []);
   }, [nodeDefinitions, type]);
 
   const optionValue = useMemo<Exclude<Option, OptionGroup> | undefined>(() => {
+    // Normalize a stringified nullish target (legacy "undefined"/"null") to empty so the option still matches.
+    const targetKey = elementId && elementId !== 'undefined' && elementId !== 'null' ? elementId : '';
     if (type === 'trigger') {
       return (optionsMemo as Exclude<Option, OptionGroup>[]).find(
-        option => option.value === `${elementId}_${action}` && option.elementId === elementId
+        option => option.value === `${targetKey}_${action}` && (option.elementId ?? '') === targetKey
       );
     }
 
@@ -161,11 +181,11 @@ const NodeHeader = ({
 
     if (type === 'callback') {
       return (group.options as Exclude<Option, OptionGroup>[]).find(
-        option => option.value === `${elementId}_${action}` && option.elementId === elementId
+        option => option.value === `${targetKey}_${action}` && (option.elementId ?? '') === targetKey
       );
     }
 
-    return (group.options as Exclude<Option, OptionGroup>[]).find(option => option.value === `${elementId}_${action}`);
+    return (group.options as Exclude<Option, OptionGroup>[]).find(option => option.value === `${targetKey}_${action}`);
   }, [optionsMemo, elementId, action, type]);
 
   return (
@@ -207,8 +227,8 @@ const NodeHeader = ({
               title="This element has no Reference, so the runtime cannot wire this step — give it one in Settings"
             />
           )}
-          {!targetUnreferenced && !nodeDefinition && elementId && (
-            <i className="fa-solid fa-triangle-exclamation ml-2 text-orange-400" title="Node Not Found" />
+          {!targetUnreferenced && warningLevel && (
+            <i className={clsx(WARNING_ICON[warningLevel], 'ml-2')} title={warnings.map(w => w.message).join('\n')} />
           )}
           {(canUp || canDown) && (
             <div className="ml-2 flex grow basis-0 justify-end gap-1">
