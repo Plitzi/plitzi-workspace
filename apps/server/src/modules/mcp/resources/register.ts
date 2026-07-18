@@ -59,8 +59,9 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
     [
       'Interactions catalog',
       `plitzi://interactions/${env}`,
-      'Interaction actions (observed, grouped by node type) plus built-in globalCallbacks with their source module ' +
-        'and full param schema — the vocabulary for upsertInteractionFlow'
+      'Interaction actions (observed, grouped by node type) plus the built-in vocabularies — globalCallbacks (with ' +
+        'their source module), element callbacks and utilities — each with its full param schema, the vocabulary ' +
+        'for upsertInteractionFlow'
     ],
     [
       'Data sources catalog',

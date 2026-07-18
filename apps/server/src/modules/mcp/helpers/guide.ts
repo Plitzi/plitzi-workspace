@@ -198,10 +198,18 @@ An interaction **flow** is a **trigger** (an event like \`onClick\`, \`onPageLoa
 it runs, in order. You pass the steps **in order** and the stored beforeNode/afterNode/flowId links are computed for
 you — never wire them by hand. Each step also has an \`enabled\` flag (see disable vs delete below).
 
-**Node types & \`elementId\`** — a step names which element (or module) provides the callback it runs:
+**Node types & \`elementId\`** — a step names which element (or module) provides the callback it runs. Picking the
+**wrong node type for an action** makes the runtime resolve it against nothing, so the step **silently does nothing**:
 - \`trigger\` — the event; belongs to the host element. \`elementId\` defaults to the host.
-- \`callback\` — a callback on a **specific element** (e.g. \`setVisibility\` on another box). \`elementId\` is that
-  element's ref; give its ref or raw id and it is normalised to the idRef. Defaults to the host element.
+- \`callback\` — a callback provided by a **specific element**. \`elementId\` is that element's ref (the flow host by
+  default, or another element to act on); give its ref or raw id and it is normalised to the idRef. Every element
+  registers a built-in **\`setState\`** callback that changes **its own attribute or state**: params
+  \`category\` (\`"attribute"\` — set a prop like \`content\`/\`disabled\` — or \`"state"\` — \`visibility\` or a style
+  selector), \`key\`, \`value\` (booleans as the strings \`"true"\`/\`"false"\`), and **\`revertOnFinish\`**. Set
+  \`revertOnFinish: true\` for a **temporary** change (a "loading…" label, disabling a button while it works): it is
+  **undone automatically when the flow finishes**, so you do **NOT** add manual restore steps at the end. This element
+  \`setState\` has **no** \`type\` param (that belongs to the global one below). An element type may also register its
+  own extra callbacks.
 - \`globalCallback\` — a callback provided by a **source module**, NOT by any element: \`addNotification\` (source
   \`space\`), \`setState\`/\`clearState\` (\`state\`), \`navigate\` (\`navigation\`), \`authLogin\`/\`authLogout\`/
   \`authRefreshDetails\` (\`auth\`), \`addCollectionRecord\`/\`updateCollectionRecord\`/\`removeCollectionRecord\`
@@ -212,7 +220,13 @@ you — never wire them by hand. Each step also has an \`enabled\` flag (see dis
   callback declares (exact spelling) — for \`addNotification\` the visible text goes in \`content\`; there is **no**
   \`title\`/\`message\`/\`type\` param, and any unknown key is dropped. See the full param schema for each callback under
   \`globalCallbacks\` in \`plitzi://interactions/{env}\`.
-- \`utility\` — a built-in utility action (no element).
+- **Two \`setState\`s — do not mix them:** the **element** \`setState\` (nodeType \`callback\`, on an element,
+  category/key/value/revertOnFinish) changes THAT element's attribute/state and is what you want to change a button's
+  label or disabled flag. The **global** \`setState\` (nodeType \`globalCallback\`, source \`state\`, key/type/value)
+  writes \`runtime.state.<key>\`. They share a name but have different node types AND different params.
+- \`utility\` — a built-in utility action (no element/source module); nodeType \`utility\`. Use the **exact** param
+  names: \`delayTime\` waits \`time\` milliseconds (**not** \`delay\`), \`twigTemplate\` (\`returnMode\`, \`template\`),
+  \`webHook\` (\`url\`, \`method\`, …). See \`utilities\` in \`plitzi://interactions/{env}\`.
 
 Tools:
 - \`upsertInteractionFlow\` — create or replace one flow. The FIRST node must be a \`trigger\`. Pass \`flowId\` (the
@@ -234,9 +248,10 @@ So "deactivate the addNotification step" means \`patchInteractionNode { enabled:
 never delete the flow. \`deleteInteraction\` is **destructive and not undoable**: only use it when the user asked to
 *remove* something, and **confirm with the user before deleting** a step or a flow.
 
-Discover valid actions in \`plitzi://interactions/{env}\` (\`actions\` = observed, \`globalCallbacks\` = built-ins with
-their source + full param schema, so you know the exact valid params per callback). An element read lists its flows as
-ordered nodes (each with its \`id\` and \`enabled\`), so a follow-up patch/delete needs no extra read.
+Discover valid actions in \`plitzi://interactions/{env}\`: \`actions\` = observed, \`globalCallbacks\` /
+\`elementCallbacks\` / \`utilities\` = the built-in vocabularies with their full param schema, so you know the exact
+node type and valid params per action. An element read lists its flows as ordered nodes (each with its \`id\` and
+\`enabled\`), so a follow-up patch/delete needs no extra read.
 
 ## Pages & folders
 Pages can be grouped into **folders** (the sidebar tree). A folder is \`{ ref, name, slug, parentId? }\`; its \`ref\`

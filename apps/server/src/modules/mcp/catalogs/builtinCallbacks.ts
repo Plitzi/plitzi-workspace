@@ -6,22 +6,9 @@
 // faithful, hand-maintained mirror of what each source declares (source id + the FULL param schema each callback
 // exposes in the builder). Mirror any change to the sdk-interactions sources here.
 
-export type BuiltinParamType = 'text' | 'textarea' | 'select' | 'boolean' | 'number';
+import { reconcileParams, unknownParams } from './paramSpec';
 
-export interface BuiltinCallbackParam {
-  type: BuiltinParamType;
-  // What the param is for — shown to the agent so it uses the right key instead of inventing one.
-  description: string;
-  // Value the builder pre-fills when the agent omits the param. Absent means the param has no default (the agent
-  // must supply it when relevant).
-  default?: string | number | boolean;
-  // Allowed values for a `select` param.
-  options?: string[];
-  // Only fill the default / show the param when this predicate over the already-resolved params holds — mirrors the
-  // source param's `when`, so a conditionally-shown field (e.g. autoDismissTimeout only when autoDismiss is on) is
-  // not filled when hidden.
-  when?: (params: Record<string, unknown>) => boolean;
-}
+import type { ParamSpec } from './paramSpec';
 
 export interface BuiltinGlobalCallback {
   // The registration id the runtime looks the callback up under — the value a node's `elementId` must carry.
@@ -33,7 +20,7 @@ export interface BuiltinGlobalCallback {
   strictParams: boolean;
   // The full param schema the builder exposes for this callback — the authoritative list of valid params, their
   // meaning, defaults, options and conditional visibility.
-  params: Record<string, BuiltinCallbackParam>;
+  params: ParamSpec;
 }
 
 export const BUILTIN_GLOBAL_CALLBACKS: Record<string, BuiltinGlobalCallback> = {
@@ -153,6 +140,11 @@ export const BUILTIN_GLOBAL_CALLBACKS: Record<string, BuiltinGlobalCallback> = {
   }
 };
 
+/** The built-in globalCallback for an action, or undefined when the action is not a known built-in (a plugin
+ *  callback whose source/schema is not knowable here). */
+export const getGlobalCallback = (action: string): BuiltinGlobalCallback | undefined =>
+  Object.hasOwn(BUILTIN_GLOBAL_CALLBACKS, action) ? BUILTIN_GLOBAL_CALLBACKS[action] : undefined;
+
 /** Report the param keys the agent supplied that are not valid for a built-in callback: only for CLOSED
  *  (`strictParams`) callbacks; open ones (collection) accept arbitrary field keys so nothing is unknown. Returns []
  *  for an unknown action (a plugin callback whose schema is not known here). */
@@ -166,7 +158,7 @@ export const unknownBuiltinParams = (action: string, params: Record<string, unkn
     return [];
   }
 
-  return Object.keys(params).filter(key => !(key in builtin.params));
+  return unknownParams(params, builtin.params);
 };
 
 /** Resolve a `globalCallback` action against the built-in catalog: returns the module id it is registered under
@@ -182,22 +174,6 @@ export const applyBuiltinCallback = (
   }
 
   const builtin = BUILTIN_GLOBAL_CALLBACKS[action];
-  const next: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(params)) {
-    if (builtin.strictParams && !(key in builtin.params)) {
-      continue;
-    }
 
-    next[key] = value;
-  }
-
-  for (const [key, spec] of Object.entries(builtin.params)) {
-    if (spec.default === undefined || next[key] !== undefined || (spec.when && !spec.when(next))) {
-      continue;
-    }
-
-    next[key] = spec.default;
-  }
-
-  return { source: builtin.source, params: next };
+  return { source: builtin.source, params: reconcileParams(params, builtin.params, builtin.strictParams) };
 };

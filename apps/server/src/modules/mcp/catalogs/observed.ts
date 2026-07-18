@@ -1,5 +1,8 @@
 import { BUILTIN_GLOBAL_CALLBACKS } from './builtinCallbacks';
+import { BUILTIN_ELEMENT_CALLBACKS } from './builtinElementCallbacks';
+import { BUILTIN_UTILITIES } from './builtinUtilities';
 
+import type { BuiltinParam } from './paramSpec';
 import type { AIInteractionNodeType } from '../types';
 import type { Schema } from '@plitzi/sdk-shared';
 
@@ -8,7 +11,7 @@ import type { Schema } from '@plitzi/sdk-shared';
 // catalogs are ground truth for discovery, and feed lenient validator warnings (an unseen name may still be
 // valid, so it is a warning, never a hard error).
 
-export interface BuiltinGlobalCallbackParamInfo {
+export interface BuiltinParamInfo {
   name: string;
   type: string;
   description: string;
@@ -29,7 +32,14 @@ export interface BuiltinGlobalCallbackInfo {
   strictParams: boolean;
   // The full set of valid params for this callback: name, type, meaning, default and (for selects) allowed options.
   // Use exactly these keys — do not invent params like `title`/`message`/`type`.
-  params: BuiltinGlobalCallbackParamInfo[];
+  params: BuiltinParamInfo[];
+}
+
+export interface BuiltinActionInfo {
+  action: string;
+  title: string;
+  strictParams: boolean;
+  params: BuiltinParamInfo[];
 }
 
 export interface InteractionCatalog {
@@ -37,6 +47,10 @@ export interface InteractionCatalog {
   actions: Record<string, string[]>;
   globalCallbacksNote: string;
   globalCallbacks: BuiltinGlobalCallbackInfo[];
+  elementCallbacksNote: string;
+  elementCallbacks: BuiltinActionInfo[];
+  utilitiesNote: string;
+  utilities: BuiltinActionInfo[];
   flowCount: number;
 }
 
@@ -57,20 +71,52 @@ const GLOBAL_CALLBACKS_NOTE =
   'params listed under each callback (with the exact spelling shown) — for addNotification the visible text goes in ' +
   '`content`; there is no title/message/type param. When strictParams is true, any other key is rejected.';
 
+const ELEMENT_CALLBACKS_NOTE =
+  'Built-in `callback`-type actions every element registers on ITSELF. Unlike a globalCallback, an element callback ' +
+  'runs against a real element, so its node `elementId` is that element (the flow host by default, or another ' +
+  'element to act on) and its nodeType is "callback". `setState` here changes the element\'s own attribute/state ' +
+  '(params category/key/value/revertOnFinish) — NOT the global state setState (which is a globalCallback on source ' +
+  '"state" with params key/type/value). Set revertOnFinish:true for a TEMPORARY change (e.g. a "loading…" label): it ' +
+  'is undone automatically when the flow finishes, so you do NOT add manual restore steps. A specific element type ' +
+  'may register more callbacks beyond these defaults.';
+
+const UTILITIES_NOTE =
+  'Built-in `utility`-type actions (no element/source module). Use nodeType "utility". Use the EXACT param names — ' +
+  'e.g. delayTime waits `time` milliseconds (not `delay`).';
+
+const toParamInfo = (params: Record<string, BuiltinParam>): BuiltinParamInfo[] =>
+  Object.entries(params).map(([name, spec]) => ({
+    name,
+    type: spec.type,
+    description: spec.description,
+    ...(spec.default !== undefined ? { default: spec.default } : {}),
+    ...(spec.options ? { options: spec.options } : {}),
+    ...(spec.when ? { conditional: true } : {})
+  }));
+
 const builtinGlobalCallbacks = (): BuiltinGlobalCallbackInfo[] =>
   Object.entries(BUILTIN_GLOBAL_CALLBACKS).map(([action, { source, title, strictParams, params }]) => ({
     action,
     source,
     title,
     strictParams,
-    params: Object.entries(params).map(([name, spec]) => ({
-      name,
-      type: spec.type,
-      description: spec.description,
-      ...(spec.default !== undefined ? { default: spec.default } : {}),
-      ...(spec.options ? { options: spec.options } : {}),
-      ...(spec.when ? { conditional: true } : {})
-    }))
+    params: toParamInfo(params)
+  }));
+
+const builtinElementCallbacks = (): BuiltinActionInfo[] =>
+  Object.entries(BUILTIN_ELEMENT_CALLBACKS).map(([action, { title, strictParams, params }]) => ({
+    action,
+    title,
+    strictParams,
+    params: toParamInfo(params)
+  }));
+
+const builtinUtilities = (): BuiltinActionInfo[] =>
+  Object.entries(BUILTIN_UTILITIES).map(([action, { title, strictParams, params }]) => ({
+    action,
+    title,
+    strictParams,
+    params: toParamInfo(params)
   }));
 
 const DATA_SOURCE_NOTE =
@@ -97,6 +143,10 @@ export const buildInteractionCatalog = (schema: Schema): InteractionCatalog => {
     actions: grouped,
     globalCallbacksNote: GLOBAL_CALLBACKS_NOTE,
     globalCallbacks: builtinGlobalCallbacks(),
+    elementCallbacksNote: ELEMENT_CALLBACKS_NOTE,
+    elementCallbacks: builtinElementCallbacks(),
+    utilitiesNote: UTILITIES_NOTE,
+    utilities: builtinUtilities(),
     flowCount: flows.size
   };
 };

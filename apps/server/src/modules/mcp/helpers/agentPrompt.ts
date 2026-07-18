@@ -1,4 +1,4 @@
-import { BUILTIN_GLOBAL_CALLBACKS } from '../catalogs';
+import { BUILTIN_ELEMENT_CALLBACKS, BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from '../catalogs';
 
 // MCP-OWNED agent guidance. A consumer (a co-worker system prompt) concatenates this so the MCP's own vocabulary —
 // its tool names, its resource URIs, its interaction rules — lives in ONE place and cannot drift out of sync with
@@ -47,15 +47,26 @@ const RESOURCES = [
   '• plitzi://settings/{env} — space-level settings.'
 ].join('\n');
 
-// One line per built-in globalCallback: its action, the source module it is registered on, and its exact param
-// names. Generated from the catalog so it is always the truth.
-const builtinCallbackLines = (): string[] =>
-  Object.entries(BUILTIN_GLOBAL_CALLBACKS).map(([action, { source, params }]) => {
-    const names = Object.keys(params);
-    const paramList = names.length > 0 ? names.join(', ') : '(no params)';
+// One line per built-in action (its exact param names), generated from the catalogs so the guidance is always the
+// truth — the class of drift that let an agent invent title/message on addNotification or `delay` on delayTime.
+const paramList = (params: Record<string, unknown>): string => {
+  const names = Object.keys(params);
 
-    return `  • ${action} → source "${source}"; params: ${paramList}`;
-  });
+  return names.length > 0 ? names.join(', ') : '(no params)';
+};
+
+const globalCallbackLines = (): string[] =>
+  Object.entries(BUILTIN_GLOBAL_CALLBACKS).map(
+    ([action, { source, params }]) => `  • ${action} → source "${source}"; params: ${paramList(params)}`
+  );
+
+const elementCallbackLines = (): string[] =>
+  Object.entries(BUILTIN_ELEMENT_CALLBACKS).map(
+    ([action, { params }]) => `  • ${action}; params: ${paramList(params)}`
+  );
+
+const utilityLines = (): string[] =>
+  Object.entries(BUILTIN_UTILITIES).map(([action, { params }]) => `  • ${action}; params: ${paramList(params)}`);
 
 const INTERACTIONS = (): string =>
   [
@@ -65,13 +76,22 @@ const INTERACTIONS = (): string =>
     'patchInteractionNode; remove a step (nodeId) or a whole flow (flowId) with deleteInteraction.',
     'Disable ≠ delete: to turn a step off without removing it use patchInteractionNode { enabled: false }.',
     'deleteInteraction is destructive — confirm with the user first.',
+    'Pick the RIGHT node type for an action: the wrong type resolves against nothing and the step silently no-ops.',
     '',
-    'globalCallback steps are provided by a SOURCE MODULE, not by the host element: OMIT elementId and the MCP pins',
-    'the right source and fills the builder’s param defaults. Never point their elementId at the host element.',
-    'Use ONLY each callback’s declared params, with the exact spelling shown — unknown keys are dropped. For',
-    'addNotification the user-facing text goes in `content` (there is NO title/message/type param). Built-in',
-    'globalCallbacks:',
-    ...builtinCallbackLines(),
+    'globalCallback (nodeType "globalCallback") — provided by a SOURCE MODULE, not the host element: OMIT elementId',
+    'and the MCP pins the right source and fills the builder’s param defaults. Use ONLY each callback’s declared',
+    'params (exact spelling) — for addNotification the text goes in `content` (NO title/message/type). Built-ins:',
+    ...globalCallbackLines(),
+    '',
+    'callback (nodeType "callback") — a callback ON an element; elementId is that element (host by default). Every',
+    'element has a built-in `setState` that changes ITS OWN attribute/state (category/key/value/revertOnFinish). Set',
+    'revertOnFinish:true for a TEMPORARY change (e.g. a "loading…" label) so it auto-reverts at flow end — do NOT add',
+    'manual restore steps. This element setState has NO `type` param (that is the global state setState). Built-ins:',
+    ...elementCallbackLines(),
+    '',
+    'utility (nodeType "utility") — no element/source. Use the EXACT param names (delayTime waits `time` ms, not',
+    '`delay`). Built-ins:',
+    ...utilityLines(),
     'The full param schema (types, options, defaults) for each is in plitzi://interactions/{env}.'
   ].join('\n');
 

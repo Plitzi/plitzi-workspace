@@ -1,14 +1,10 @@
 import { batchDeclaredFolders, batchDeclaredPages, batchDeclaredVariants, batchDeclaredVars } from './batch';
-import { checkObservedName, checkVarRefs, warnOnce } from './context';
+import { checkObservedName, checkVarRefs } from './context';
 import { checkSlotCss } from './css';
 import { checkElementInput, checkTypeProps, checkVariantApplication } from './elements';
+import { checkInteractionNode } from './interactions';
 import { checkRef } from './refs';
-import {
-  BUILTIN_GLOBAL_CALLBACKS,
-  observedDataSources,
-  observedInteractionActions,
-  unknownBuiltinParams
-} from '../../../catalogs';
+import { observedDataSources, observedInteractionActions } from '../../../catalogs';
 import {
   findFolderByRef,
   findPageByRef,
@@ -242,42 +238,7 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
           });
         }
 
-        op.nodes.forEach((node, n) => {
-          checkObservedName(
-            node.action,
-            ctx.observedActions,
-            'Interaction action',
-            'plitzi://interactions',
-            `${base}.nodes[${n}].action`,
-            ctx
-          );
-
-          // A built-in globalCallback is registered on its source module — the MCP pins elementId to that source.
-          // Warn (not fail) when the agent points it at the host element instead, the common mistake.
-          const builtin = node.nodeType === 'globalCallback' ? BUILTIN_GLOBAL_CALLBACKS[node.action] : undefined;
-          if (builtin && node.elementId !== undefined && node.elementId !== builtin.source) {
-            warnOnce(
-              ctx,
-              `Global callback "${node.action}" at ${base}.nodes[${n}] is registered on "${builtin.source}", not on ` +
-                `"${node.elementId}". Omit elementId (the MCP sets "${builtin.source}") or set it to "${builtin.source}".`
-            );
-          }
-
-          // A built-in callback with a closed param set: any key that is not one of its declared params is a
-          // mistake (e.g. inventing `title`/`message`/`type` on addNotification instead of using `content`). The
-          // MCP drops these on apply — surface it so the agent corrects the payload rather than losing data silently.
-          if (builtin && node.params) {
-            const unknown = unknownBuiltinParams(node.action, node.params);
-            if (unknown.length > 0) {
-              warnOnce(
-                ctx,
-                `Global callback "${node.action}" at ${base}.nodes[${n}] got unknown param(s) ` +
-                  `${unknown.map(k => `"${k}"`).join(', ')} — these are dropped. Valid params: ` +
-                  `${Object.keys(builtin.params).join(', ')}.`
-              );
-            }
-          }
-        });
+        op.nodes.forEach((node, n) => checkInteractionNode(node, `${base}.nodes[${n}]`, ctx));
         break;
       case 'patchInteractionNode':
         checkRef(op.ref, `${base}.ref`, ctx);

@@ -1,5 +1,5 @@
 import { generateObjectId } from './space';
-import { applyBuiltinCallback } from '../catalogs';
+import { applyBuiltinCallback, applyElementCallback, applyUtility } from '../catalogs';
 
 import type { AIBinding, AIBindings, AIInteractionFlow, AIInteractionNode, AIInteractionNodeType } from '../types';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
@@ -123,10 +123,12 @@ export const materializeFlow = (
 
   nodes.forEach((node, i) => {
     let params = node.params ?? {};
-    // A globalCallback is registered on its source module, not on the host element, so its elementId is the source
-    // id (e.g. `space` for addNotification) — never the owner. For a built-in callback the catalog is authoritative:
-    // it pins the source and fills the param defaults the builder pre-fills. An unknown (plugin) globalCallback keeps
-    // the caller-provided elementId (falling back to owner), since its source is not knowable here.
+    // Reconcile params to the catalog that matches the node type, so the stored node round-trips like the builder's:
+    // unknown keys dropped, builder defaults filled. Each node type resolves its callback differently:
+    //  - globalCallback — registered on a SOURCE MODULE, so elementId is that source (e.g. `space`), never the owner.
+    //  - callback — a callback ON an element (the owner by default, or a target); a built-in one (setState) is
+    //    reconciled, an element-type-specific/plugin one is left as-is (its schema is not knowable here).
+    //  - utility — resolved as `utility[action]`, so elementId is irrelevant; only its params are reconciled.
     let elementId = node.elementId ?? ownerId;
     if (node.nodeType === 'globalCallback') {
       const builtin = applyBuiltinCallback(node.action, params);
@@ -134,6 +136,10 @@ export const materializeFlow = (
         elementId = builtin.source;
         params = builtin.params;
       }
+    } else if (node.nodeType === 'callback') {
+      params = applyElementCallback(node.action, params).params;
+    } else if (node.nodeType === 'utility') {
+      params = applyUtility(node.action, params).params;
     }
 
     const interaction: ElementInteraction = {

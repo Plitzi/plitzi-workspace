@@ -2244,6 +2244,187 @@ describe('mcp-ai interactions', () => {
     expect(res.valid).toBe(true);
     expect(res.warnings.some(w => w.includes('addNotification') && w.includes('"message"'))).toBe(true);
   });
+
+  // The element `setState` callback (nodeType "callback") changes the element's own attribute/state and fills its
+  // builder defaults (category:"attribute", revertOnFinish:false). It is a DIFFERENT thing from the global state
+  // setState (nodeType "globalCallback") even though they share the name.
+  it('fills the element setState defaults and keeps it on the host element', async () => {
+    const cap = capturing(interactiveSpace());
+    await apply(
+      {
+        operations: [
+          {
+            type: 'upsertInteractionFlow',
+            pageRef: 'home',
+            ref: 'box-1',
+            nodes: [
+              { nodeType: 'trigger', action: 'onClick', title: 'Click' },
+              {
+                nodeType: 'callback',
+                action: 'setState',
+                title: 'Loading label',
+                params: { key: 'content', value: 'Loading…', revertOnFinish: true }
+              }
+            ]
+          }
+        ]
+      },
+      cap.saved(),
+      cap.persisters
+    );
+
+    const node = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {}).find(
+      n => n.type === 'callback' && n.action === 'setState'
+    );
+    expect(node?.elementId).toBe('box-1');
+    expect(node?.params).toMatchObject({
+      category: 'attribute',
+      key: 'content',
+      value: 'Loading…',
+      revertOnFinish: true
+    });
+  });
+
+  it('drops the global-schema `type` param leaked onto the element setState and warns', async () => {
+    const op: Operation = {
+      type: 'upsertInteractionFlow',
+      pageRef: 'home',
+      ref: 'box-1',
+      nodes: [
+        { nodeType: 'trigger', action: 'onClick', title: 'Click' },
+        {
+          nodeType: 'callback',
+          action: 'setState',
+          title: 'Disable',
+          params: { key: 'disabled', type: 'boolean', value: 'true' }
+        }
+      ]
+    };
+    const res = validate({ operations: [op] }, interactiveSpace());
+    expect(res.valid).toBe(true);
+    expect(res.warnings.some(w => w.includes('setState') && w.includes('"type"'))).toBe(true);
+
+    const cap = capturing(interactiveSpace());
+    await apply({ operations: [op] }, cap.saved(), cap.persisters);
+    const node = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {}).find(
+      n => n.type === 'callback' && n.action === 'setState'
+    );
+    expect(node?.params).not.toHaveProperty('type');
+    expect(node?.params).toMatchObject({ category: 'attribute', key: 'disabled', value: 'true' });
+  });
+
+  // The global state setState (nodeType "globalCallback") keeps its own schema (key/type/value) and routes to source
+  // "state" — the two setStates must not be conflated.
+  it('routes the global setState to source "state" with its own key/type/value schema', async () => {
+    const cap = capturing(interactiveSpace());
+    await apply(
+      {
+        operations: [
+          {
+            type: 'upsertInteractionFlow',
+            pageRef: 'home',
+            ref: 'box-1',
+            nodes: [
+              { nodeType: 'trigger', action: 'onClick', title: 'Click' },
+              {
+                nodeType: 'globalCallback',
+                action: 'setState',
+                title: 'Set global state',
+                params: { key: 'count', type: 'number', value: '1' }
+              }
+            ]
+          }
+        ]
+      },
+      cap.saved(),
+      cap.persisters
+    );
+
+    const node = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {}).find(
+      n => n.type === 'globalCallback' && n.action === 'setState'
+    );
+    expect(node?.elementId).toBe('state');
+    expect(node?.params).toMatchObject({ key: 'count', type: 'number', value: '1' });
+  });
+
+  it('warns and drops the wrong `delay` param on the delayTime utility (the key is `time`)', async () => {
+    const op: Operation = {
+      type: 'upsertInteractionFlow',
+      pageRef: 'home',
+      ref: 'box-1',
+      nodes: [
+        { nodeType: 'trigger', action: 'onClick', title: 'Click' },
+        { nodeType: 'utility', action: 'delayTime', title: 'Wait', params: { delay: 2000 } }
+      ]
+    };
+    const res = validate({ operations: [op] }, interactiveSpace());
+    expect(res.valid).toBe(true);
+    expect(res.warnings.some(w => w.includes('delayTime') && w.includes('"delay"') && w.includes('time'))).toBe(true);
+
+    const cap = capturing(interactiveSpace());
+    await apply({ operations: [op] }, cap.saved(), cap.persisters);
+    const node = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {}).find(
+      n => n.type === 'utility' && n.action === 'delayTime'
+    );
+    expect(node?.params).not.toHaveProperty('delay');
+  });
+
+  it('warns when a global callback is used with nodeType "callback" (wrong node type)', () => {
+    const res = validate(
+      {
+        operations: [
+          {
+            type: 'upsertInteractionFlow',
+            pageRef: 'home',
+            ref: 'box-1',
+            nodes: [
+              { nodeType: 'trigger', action: 'onClick', title: 'Click' },
+              { nodeType: 'callback', action: 'addNotification', title: 'Notify', params: { content: 'Hi' } }
+            ]
+          }
+        ]
+      },
+      interactiveSpace()
+    );
+    expect(res.valid).toBe(true);
+    expect(
+      res.warnings.some(
+        w => w.includes('addNotification') && w.includes('global callback') && w.includes('globalCallback')
+      )
+    ).toBe(true);
+  });
+
+  it('warns when a utility is used with nodeType "globalCallback" (wrong node type)', () => {
+    const res = validate(
+      {
+        operations: [
+          {
+            type: 'upsertInteractionFlow',
+            pageRef: 'home',
+            ref: 'box-1',
+            nodes: [
+              { nodeType: 'trigger', action: 'onClick', title: 'Click' },
+              { nodeType: 'globalCallback', action: 'delayTime', title: 'Wait', params: { time: 100 } }
+            ]
+          }
+        ]
+      },
+      interactiveSpace()
+    );
+    expect(res.valid).toBe(true);
+    expect(res.warnings.some(w => w.includes('delayTime') && w.includes('utility'))).toBe(true);
+  });
+
+  it('exposes element callbacks and utilities with their param schema in the interactions catalog', () => {
+    const catalog = readResource(buildSpace(), 'main', 'plitzi://interactions/main')?.data as {
+      elementCallbacks: { action: string; params: { name: string }[] }[];
+      utilities: { action: string; params: { name: string }[] }[];
+    };
+    const setState = catalog.elementCallbacks.find(c => c.action === 'setState');
+    expect(setState?.params.map(p => p.name)).toEqual(['category', 'key', 'value', 'revertOnFinish']);
+    const delay = catalog.utilities.find(c => c.action === 'delayTime');
+    expect(delay?.params.map(p => p.name)).toEqual(['time']);
+  });
 });
 
 describe('mcp-ai deep validation of when (RuleGroup) and transformers', () => {
