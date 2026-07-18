@@ -3,7 +3,11 @@
 // declare in the builder — the SSR runtime has no manifest of these, so the shapes and the reconcile rules live in
 // ONE place and every catalog validates/fills params the same way.
 
-export type BuiltinParamType = 'text' | 'textarea' | 'select' | 'boolean' | 'number';
+// `scalar` is the polymorphic value type: the param legitimately holds a string, number OR boolean (e.g. a setState
+// `value`, whose data type follows the target attribute — booleans are stored as real booleans, numbers as numbers).
+// The others map to a single JS type — `text`/`textarea` → string, `boolean` → boolean, `number` → number, `select`
+// → one of `options`. This drives value-type validation (see `invalidParams`), not just the builder widget.
+export type BuiltinParamType = 'text' | 'textarea' | 'select' | 'boolean' | 'number' | 'scalar';
 
 export interface BuiltinParam {
   type: BuiltinParamType;
@@ -67,6 +71,64 @@ export const missingRequiredParams = (
   }
 
   return missing;
+};
+
+/** A param the agent supplied whose VALUE does not match its declared type — a boolean given as the string "true",
+ *  a number given as a string, a `select` value outside its options, a null placeholder left behind. `expected` is
+ *  the declared type, `got` the JS typeof (or "null"), and `options` the allowed values for a `select`. */
+export interface InvalidParam {
+  key: string;
+  expected: BuiltinParamType;
+  got: string;
+  options?: string[];
+}
+
+const matchesType = (value: unknown, param: BuiltinParam): boolean => {
+  switch (param.type) {
+    case 'boolean':
+      return typeof value === 'boolean';
+    case 'number':
+      return typeof value === 'number';
+    case 'select':
+      return typeof value === 'string' && (!param.options || param.options.includes(value));
+    case 'scalar':
+      return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
+    case 'text':
+    case 'textarea':
+      return typeof value === 'string';
+    default:
+      return true;
+  }
+};
+
+/** Declared params the agent supplied whose value is the WRONG type for the catalog — the check that catches a
+ *  malformed node the unknown/missing/hidden checks miss (a boolean stored as a string, a select value not in its
+ *  options, a leftover `null`). Only params actually in play are checked: undefined values (the param is absent) and
+ *  params hidden by their own `when` guard against the effective params are skipped, so this never fires on a param
+ *  that is not really used. Callers gate this to CLOSED (strict) catalogs, whose types we own authoritatively. */
+export const invalidParams = (
+  provided: Record<string, unknown>,
+  effective: Record<string, unknown>,
+  spec: ParamSpec
+): InvalidParam[] => {
+  const invalid: InvalidParam[] = [];
+  for (const [key, param] of Object.entries(spec)) {
+    const value = provided[key];
+    if (value === undefined || (param.when && !param.when(effective))) {
+      continue;
+    }
+
+    if (!matchesType(value, param)) {
+      invalid.push({
+        key,
+        expected: param.type,
+        got: value === null ? 'null' : typeof value,
+        ...(param.options ? { options: param.options } : {})
+      });
+    }
+  }
+
+  return invalid;
 };
 
 /** Reconcile supplied params to a catalog schema: drop unknown keys when the set is CLOSED (strict), then fill the

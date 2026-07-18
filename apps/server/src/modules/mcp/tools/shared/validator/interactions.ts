@@ -4,12 +4,13 @@ import {
   getGlobalCallback,
   getUtility,
   hiddenParams,
+  invalidParams,
   missingRequiredParams,
   reconcileParams
 } from '../../../catalogs';
 
 import type { ValidationCtx } from './context';
-import type { ParamSpec } from '../../../catalogs';
+import type { BuiltinParamType, ParamSpec } from '../../../catalogs';
 import type { InteractionNodeInput } from '../../operations/schema/shared';
 
 // Interaction-node validation. The MCP knows three built-in vocabularies — globalCallbacks (source modules),
@@ -23,6 +24,21 @@ import type { InteractionNodeInput } from '../../operations/schema/shared';
 // setState exists as BOTH a globalCallback (source `state`, params key/type/value → runtime.state.*) and an element
 // callback (params category/key/value/revertOnFinish → the element's own attribute/state). It is disambiguated by
 // node type, so it is never cross-warned as "wrong type".
+
+const describeType = (type: BuiltinParamType): string => {
+  switch (type) {
+    case 'boolean':
+      return 'a boolean';
+    case 'number':
+      return 'a number';
+    case 'select':
+      return 'one of its allowed values';
+    case 'scalar':
+      return 'a string, number or boolean';
+    default:
+      return 'a string';
+  }
+};
 
 const checkParams = (
   label: string,
@@ -59,6 +75,20 @@ const checkParams = (
         'current params (they only apply when a companion param is set — see plitzi://interactions). Set the ' +
         'companion param or drop them.'
     );
+  }
+
+  // Value-type check: for a CLOSED (strict) built-in catalog we own the exact type of every param, so a value of the
+  // wrong type — a boolean stored as the string "true", a number as a string, a leftover null, a select value not in
+  // its options — is a hard ERROR (unlike unknown/hidden keys, which stay warnings for plugin tolerance). This is
+  // what catches a node the agent "half-fixed": one param corrected, others still malformed.
+  for (const { key, expected, got, options } of invalidParams(params, effective, spec)) {
+    const detail = options ? ` Allowed values: ${options.join(', ')}.` : '';
+    ctx.errors.push({
+      path: `${base}.params.${key}`,
+      message: `${label} "${action}" at ${base}: param "${key}" must be ${describeType(expected)} but got ${got}.${detail}`,
+      hint: `Set "${key}" to ${describeType(expected)}.`,
+      ...(options ? { validValues: options } : {})
+    });
   }
 };
 

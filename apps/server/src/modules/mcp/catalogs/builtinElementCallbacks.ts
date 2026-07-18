@@ -47,12 +47,15 @@ export const BUILTIN_ELEMENT_CALLBACKS: Record<string, BuiltinElementCallback> =
         required: true
       },
       value: {
-        type: 'text',
-        // No `type` param here: the element callback coerces "true"/"false"/"yes"/"no" to a boolean itself. Booleans
-        // are passed as the strings "true"/"false".
+        // Polymorphic: the value follows the target attribute's own type — a boolean attribute stores a real boolean
+        // (true/false), a number a real number, everything else a string. The runtime also coerces the strings
+        // "true"/"false"/"yes"/"no" to a boolean, but the stored value is whatever type the attribute holds. There is
+        // NO separate `type` param here (that belongs to the global state setState, not this one).
+        type: 'scalar',
         description:
-          'The value to set. Booleans are passed as the strings "true"/"false" ("yes"/"no" also coerce) — there is ' +
-          'NO separate `type` param (that belongs to the global state setState, not this one). REQUIRED.',
+          'The value to set — its type follows the target attribute: a real boolean (true/false) for a boolean ' +
+          'attribute, a number for a numeric one, otherwise a string (the strings "true"/"false" also coerce). There ' +
+          'is NO separate `type` param (that belongs to the global state setState, not this one). REQUIRED.',
         when: params => Boolean(params.category),
         required: true
       },

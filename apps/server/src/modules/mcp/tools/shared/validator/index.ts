@@ -22,6 +22,7 @@ import type { TypeMeta, ValidationCtx } from './context';
 import type { Space } from '../../../helpers';
 import type { ValidationResult } from '../../../types';
 import type { Operation } from '../../operations';
+import type { InteractionNodeInput } from '../../operations/schema/shared';
 import type { ComponentCatalog } from '@plitzi/sdk-shared';
 
 // The batch validator: builds the shared context from the space, then runs the per-op checks (split across the
@@ -296,17 +297,36 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
 
         op.nodes.forEach((node, n) => checkInteractionNode(node, `${base}.nodes[${n}]`, ctx, op.ref));
         break;
-      case 'patchInteractionNode':
+      case 'patchInteractionNode': {
         checkRef(op.ref, `${base}.ref`, ctx);
-        checkObservedName(
-          op.action,
-          ctx.observedActions,
-          'Interaction action',
-          'plitzi://interactions',
-          `${base}.action`,
-          ctx
-        );
+        // Validate the MERGED node (stored params ∪ the patch), not just the keys the agent touched: a patch merges
+        // onto the existing params, so a half-fixed node (one param corrected, others still malformed) must be caught.
+        // When the node cannot be resolved, fall back to the lightweight action check (apply reports the missing node).
+        const existing = findElementByRef(space.schema, op.ref)?.definition.interactions?.[op.nodeId];
+        if (existing) {
+          const merged: InteractionNodeInput = {
+            id: existing.id,
+            title: op.title ?? existing.title,
+            nodeType: existing.type,
+            action: op.action ?? existing.action,
+            params: { ...existing.params, ...(op.params ?? {}) },
+            enabled: op.enabled ?? existing.enabled,
+            elementId: op.elementId ?? existing.elementId
+          };
+          checkInteractionNode(merged, base, ctx, op.ref);
+        } else {
+          checkObservedName(
+            op.action,
+            ctx.observedActions,
+            'Interaction action',
+            'plitzi://interactions',
+            `${base}.action`,
+            ctx
+          );
+        }
+
         break;
+      }
       case 'deleteInteraction':
         checkRef(op.ref, `${base}.ref`, ctx);
         if (Boolean(op.flowId) === Boolean(op.nodeId)) {

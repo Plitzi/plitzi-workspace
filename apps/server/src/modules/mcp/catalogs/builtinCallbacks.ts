@@ -74,7 +74,13 @@ export const BUILTIN_GLOBAL_CALLBACKS: Record<string, BuiltinGlobalCallback> = {
         description: 'The value type.',
         options: ['boolean', 'number', 'text']
       },
-      value: { type: 'text', description: 'The value to store.', when: params => Boolean(params.type) }
+      value: {
+        // Polymorphic: the stored value is coerced to whatever `type` selects (boolean/number/text), so it may be a
+        // real boolean or number, not only a string.
+        type: 'scalar',
+        description: 'The value to store — its type follows the `type` param (a real boolean/number, or text).',
+        when: params => Boolean(params.type)
+      }
     }
   },
   clearState: { source: 'state', title: 'Clear State', strictParams: true, params: {} },

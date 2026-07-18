@@ -33,7 +33,7 @@
   "type": "module",
   "sideEffects": false,
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.16",
+    "@plitzi/plitzi-ui": "^1.6.17",
     "@plitzi/sdk-shared": "workspace:*",
     "immer": "^11.1.11"
   },

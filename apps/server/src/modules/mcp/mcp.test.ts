@@ -2544,6 +2544,196 @@ describe('mcp-ai interactions', () => {
     expect(Object.keys(reg.types.gauge.props).sort()).toEqual(['max', 'min']);
     expect(reg.types.gauge.slots).toContain('track');
   });
+
+  // --- Value-type validation: a param of the WRONG type on a strict built-in catalog is a hard error, so a node
+  // that is malformed by a wrong data type (not just an unknown key) is caught. ---
+
+  const notifyFlow = (params: Record<string, unknown>): Operation => ({
+    type: 'upsertInteractionFlow',
+    pageRef: 'home',
+    ref: 'box-1',
+    nodes: [
+      { nodeType: 'trigger', action: 'onClick', title: 'Click' },
+      { nodeType: 'globalCallback', action: 'addNotification', title: 'Notify', params: { content: 'Hi', ...params } }
+    ]
+  });
+
+  it('ERRORS on a number param given as a string', () => {
+    const res = validate({ operations: [notifyFlow({ autoDismissTimeout: '5000' })] }, interactiveSpace());
+    expect(res.valid).toBe(false);
+    expect(res.errors.some(e => e.message.includes('autoDismissTimeout') && e.message.includes('number'))).toBe(true);
+  });
+
+  it('ERRORS on a boolean param given as a string', () => {
+    const res = validate({ operations: [notifyFlow({ autoDismiss: 'true' })] }, interactiveSpace());
+    expect(res.valid).toBe(false);
+    expect(res.errors.some(e => e.message.includes('autoDismiss') && e.message.includes('boolean'))).toBe(true);
+  });
+
+  it('ERRORS on a select param value outside its options and lists the allowed values', () => {
+    const res = validate({ operations: [notifyFlow({ appeareance: 'bogus' })] }, interactiveSpace());
+    expect(res.valid).toBe(false);
+    const err = res.errors.find(e => e.message.includes('appeareance'));
+    expect(err?.validValues).toContain('success');
+  });
+
+  // `value` is a `scalar` param: its data type follows the target attribute (a boolean attribute stores a real
+  // boolean, a number a real number), so none of these is a type error.
+  it('accepts a scalar setState value of any primitive type (boolean / number / string)', () => {
+    const flow = (value: unknown): Operation => ({
+      type: 'upsertInteractionFlow',
+      pageRef: 'home',
+      ref: 'box-1',
+      nodes: [
+        { nodeType: 'trigger', action: 'onClick', title: 'Click' },
+        { nodeType: 'callback', action: 'setState', title: 'Set', params: { category: 'attribute', key: 'x', value } }
+      ]
+    });
+    expect(validate({ operations: [flow(true)] }, interactiveSpace()).valid).toBe(true);
+    expect(validate({ operations: [flow(5)] }, interactiveSpace()).valid).toBe(true);
+    expect(validate({ operations: [flow('Hola')] }, interactiveSpace()).valid).toBe(true);
+  });
+
+  // --- patchInteractionNode validates the MERGED node (stored params ∪ the patch), not only the keys touched: a
+  // half-fixed node — one param corrected, another still malformed — is caught. ---
+
+  it('re-validates the whole merged node on patch, catching a malformed param the patch did not touch', () => {
+    const space = interactiveSpace();
+    space.schema.flat.c1.definition.interactions = {
+      node_bad: {
+        id: 'node_bad',
+        title: 'Notify',
+        type: 'globalCallback',
+        action: 'addNotification',
+        params: { content: 'Hi', autoDismissTimeout: '5000' },
+        preview: {},
+        elementId: 'space',
+        beforeNode: '',
+        afterNode: '',
+        flowId: 'node_bad',
+        enabled: true
+      }
+    };
+    const res = validate(
+      {
+        operations: [
+          { type: 'patchInteractionNode', pageRef: 'home', ref: 'box-1', nodeId: 'node_bad', title: 'Renamed' }
+        ]
+      },
+      space
+    );
+    expect(res.valid).toBe(false);
+    expect(res.errors.some(e => e.message.includes('autoDismissTimeout') && e.message.includes('number'))).toBe(true);
+  });
+
+  it('surfaces leftover unknown params (delay/time) on the merged node when patching one field', () => {
+    const space = interactiveSpace();
+    space.schema.flat.c1.definition.interactions = {
+      node_x: {
+        id: 'node_x',
+        title: 'Set loading text',
+        type: 'callback',
+        action: 'setState',
+        params: { key: 'content', value: 'probando...', category: 'attribute', delay: null, time: null },
+        preview: {},
+        elementId: 'box-1',
+        beforeNode: '',
+        afterNode: '',
+        flowId: 'node_x',
+        enabled: true
+      }
+    };
+    const res = validate(
+      {
+        operations: [
+          { type: 'patchInteractionNode', pageRef: 'home', ref: 'box-1', nodeId: 'node_x', params: { value: 'nuevo' } }
+        ]
+      },
+      space
+    );
+    expect(res.warnings.some(w => w.includes('setState') && w.includes('"delay"') && w.includes('"time"'))).toBe(true);
+  });
+
+  // The whole point: a patch whose OWN fields are correct must still be REJECTED (and NOT persisted) while the node
+  // it lands on stays malformed — the agent has to fix the malformation too before the save goes through.
+  it('blocks the save when a valid patch lands on an already-malformed node, and persists nothing', async () => {
+    const space = interactiveSpace();
+    space.schema.flat.c1.definition.interactions = {
+      node_bad: {
+        id: 'node_bad',
+        title: 'Notify',
+        type: 'globalCallback',
+        action: 'addNotification',
+        params: { content: 'Hi', autoDismissTimeout: '5000' },
+        preview: {},
+        elementId: 'space',
+        beforeNode: '',
+        afterNode: '',
+        flowId: 'node_bad',
+        enabled: true
+      }
+    };
+    const cap = capturing(space);
+    const res = await apply(
+      {
+        operations: [
+          {
+            type: 'patchInteractionNode',
+            pageRef: 'home',
+            ref: 'box-1',
+            nodeId: 'node_bad',
+            params: { content: 'Nuevo contenido' }
+          }
+        ]
+      },
+      cap.saved(),
+      cap.persisters
+    );
+    expect(res.applied).toBe(false);
+    expect(res.persisted).toBe(false);
+    expect(res.errors?.some(e => e.message.includes('autoDismissTimeout') && e.message.includes('number'))).toBe(true);
+    // The correct new field was NOT written, because the node as a whole is still malformed.
+    expect(cap.saved().schema.flat.c1.definition.interactions?.node_bad.params.content).toBe('Hi');
+  });
+
+  it('lets the save through once the same patch ALSO corrects the malformation', async () => {
+    const space = interactiveSpace();
+    space.schema.flat.c1.definition.interactions = {
+      node_bad: {
+        id: 'node_bad',
+        title: 'Notify',
+        type: 'globalCallback',
+        action: 'addNotification',
+        params: { content: 'Hi', autoDismissTimeout: '5000' },
+        preview: {},
+        elementId: 'space',
+        beforeNode: '',
+        afterNode: '',
+        flowId: 'node_bad',
+        enabled: true
+      }
+    };
+    const cap = capturing(space);
+    const res = await apply(
+      {
+        operations: [
+          {
+            type: 'patchInteractionNode',
+            pageRef: 'home',
+            ref: 'box-1',
+            nodeId: 'node_bad',
+            params: { content: 'Nuevo contenido', autoDismissTimeout: 3000 }
+          }
+        ]
+      },
+      cap.saved(),
+      cap.persisters
+    );
+    expect(res.applied).toBe(true);
+    const stored = cap.saved().schema.flat.c1.definition.interactions?.node_bad;
+    expect(stored?.params.autoDismissTimeout).toBe(3000);
+    expect(stored?.params.content).toBe('Nuevo contenido');
+  });
 });
 
 describe('mcp-ai deep validation of when (RuleGroup) and transformers', () => {

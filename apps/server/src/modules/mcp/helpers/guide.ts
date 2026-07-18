@@ -205,7 +205,8 @@ you — never wire them by hand. Each step also has an \`enabled\` flag (see dis
   default, or another element to act on); give its ref or raw id and it is normalised to the idRef. Every element
   registers a built-in **\`setState\`** callback that changes **its own attribute or state**: params
   \`category\` (\`"attribute"\` — set a prop like \`content\`/\`disabled\` — or \`"state"\` — \`visibility\` or a style
-  selector), \`key\`, \`value\` (booleans as the strings \`"true"\`/\`"false"\`), and **\`revertOnFinish\`**. Set
+  selector), \`key\`, \`value\` (a **scalar** whose type follows the target attribute — a real boolean \`true\`/\`false\`
+  for a boolean attribute, a number for a numeric one, otherwise a string), and **\`revertOnFinish\`**. Set
   \`revertOnFinish: true\` for a **temporary** change (a "loading…" label, disabling a button while it works): it is
   **undone automatically when the flow finishes**, so you do **NOT** add manual restore steps at the end. This element
   \`setState\` has **no** \`type\` param (that belongs to the global one below). An element type may also register its
