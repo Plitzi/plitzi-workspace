@@ -17,6 +17,7 @@ import {
   routeParamNames
 } from '../../../helpers';
 import { buildTypeRegistry } from '../../../resources';
+import { MAX_OPS } from '../../operations';
 
 import type { TypeMeta, ValidationCtx } from './context';
 import type { Space } from '../../../helpers';
@@ -29,7 +30,6 @@ import type { ComponentCatalog } from '@plitzi/sdk-shared';
 // sibling modules: refs, css, elements, batch, context) and the pageRef existence guard. The only export a
 // consumer needs is validateOperations — importers reference the folder (./shared/validator), which resolves here.
 
-const MAX_OPS = 250;
 const STYLE_CATEGORIES = ['color', 'spacing', 'shadow', 'custom'];
 
 const buildTypeMeta = (catalog: ComponentCatalog | undefined): Map<string, TypeMeta> => {

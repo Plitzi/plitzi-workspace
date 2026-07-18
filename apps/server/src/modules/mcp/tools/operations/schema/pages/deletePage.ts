@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { descendantIds, empty, fail, findPageByRef, invalidateIndex } from '../../../../helpers';
+import { descendantIds, empty, fail, findPageByRef, indexRemovePage } from '../../../../helpers';
 import { pageUri, pagesUri } from '../write';
 
 import type { Space } from '../../../../helpers';
@@ -19,12 +19,14 @@ export const deletePage = (space: Space, env: Env, op: DeletePage): OpResult => 
     return fail('ref', `Page "${op.ref}" not found`, 'Read the pages resource for valid refs');
   }
 
-  for (const id of [...descendantIds(space.schema, page.id), page.id]) {
+  const descendantElementIds = descendantIds(space.schema, page.id);
+  const descendants = descendantElementIds.map(id => space.schema.flat[id]);
+  for (const id of [...descendantElementIds, page.id]) {
     Reflect.deleteProperty(space.schema.flat, id);
   }
 
   space.schema.pages = space.schema.pages.filter(id => id !== page.id);
-  invalidateIndex(space.schema);
+  indexRemovePage(space.schema, page, descendants);
 
   return { ...empty(), deleted: 1, staleResources: [pageUri(env, op.ref), pagesUri(env)] };
 };

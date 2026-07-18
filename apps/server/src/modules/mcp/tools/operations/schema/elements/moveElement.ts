@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { empty, fail, findPageByRef, invalidateIndex, resolveRef } from '../../../../helpers';
+import { empty, fail, findPageByRef, indexInvalidateDetails, resolveRef } from '../../../../helpers';
 import { position } from '../shared';
 import { pageUri, placeChild, removeFromParent } from '../write';
 
@@ -48,8 +48,9 @@ export const moveElement = (space: Space, env: Env, op: MoveElement): OpResult =
 
   el.definition.parentId = parent.id;
   placeChild(parent, el.id, index);
-  // Reparenting rewrites the tree; invalidate so any pageOf/child lookup after this move sees the new structure.
-  invalidateIndex(space.schema);
+  // The move stays within the page (both refs resolved inside it), so the ref/page maps are unchanged; only the
+  // moved element's parentRef and the two parents' childRefs did, so just drop the affected memoized detail.
+  indexInvalidateDetails(space.schema);
 
   return { ...empty(), updated: 1, staleResources: [pageUri(env, op.pageRef)], elementRefs: [op.ref] };
 };

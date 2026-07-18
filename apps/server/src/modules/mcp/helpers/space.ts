@@ -165,10 +165,136 @@ export const spaceIndex = (schema: Schema): SpaceIndex => {
   return index;
 };
 
-/** Drop the memoized index after a structural/attribute mutation, so the next scanner rebuilds against current
- *  state. Called once per successful schema op in the dispatch loop — the only place a space schema is mutated. */
+/** Drop the memoized index wholesale. A correctness fallback for a mutation with no dedicated incremental updater;
+ *  the next scanner rebuilds against current state. Prefer the index* helpers below, which keep a built index in
+ *  step in O(1) — a large structural batch would otherwise pay an O(flat) rebuild after every op. */
 export const invalidateIndex = (schema: Schema): void => {
   indexCache.delete(schema);
+};
+
+// --- Incremental index maintenance -------------------------------------------------------------------------------
+// The mutation primitives call these so a single dispatch batch builds the index at most ONCE (on first ref lookup)
+// and then patches it per op in O(1), instead of invalidating and rebuilding O(flat) every op. Each no-ops when no
+// index is cached yet — the mutation is already in schema.flat, so a later first build reflects it. detailCache is
+// cleared on any structural change: it is only ever populated by reads (which never interleave with the dispatch
+// mutations), so clearing costs nothing there and keeps neighbor entries — a parent's childRefs, a moved element's
+// parentRef, a renamed page's descendant pageRefs — from silently going stale.
+
+const cachedIndex = (schema: Schema): SpaceIndex | undefined => indexCache.get(schema);
+
+/** A new non-page element was created under `pageId`. */
+export const indexAddElement = (schema: Schema, el: Element, pageId: string): void => {
+  const index = cachedIndex(schema);
+  if (!index) {
+    return;
+  }
+
+  index.elementByRef.set(el.id, el);
+  if (el.idRef) {
+    index.elementByRef.set(el.idRef, el);
+  }
+
+  index.pageOf.set(el.id, pageId);
+  index.detailCache.clear();
+};
+
+/** These non-page elements were deleted (an element and its descendants). */
+export const indexRemoveElements = (schema: Schema, els: Element[]): void => {
+  const index = cachedIndex(schema);
+  if (!index) {
+    return;
+  }
+
+  for (const el of els) {
+    index.elementByRef.delete(el.id);
+    if (el.idRef) {
+      index.elementByRef.delete(el.idRef);
+    }
+
+    index.pageOf.delete(el.id);
+  }
+
+  index.detailCache.clear();
+};
+
+/** An existing element was just given an idRef (it had none), so it becomes addressable by that ref. */
+export const indexReRefElement = (schema: Schema, el: Element): void => {
+  const index = cachedIndex(schema);
+  if (!index) {
+    return;
+  }
+
+  if (el.idRef) {
+    index.elementByRef.set(el.idRef, el);
+  }
+
+  index.detailCache.clear();
+};
+
+/** A new page element was created. */
+export const indexAddPage = (schema: Schema, page: Element): void => {
+  const index = cachedIndex(schema);
+  if (!index) {
+    return;
+  }
+
+  index.pageIds.add(page.id);
+  index.pageElements.push(page);
+  index.pageByRef.set(page.id, page);
+  index.pageByRef.set(pageRefOf(page), page);
+  index.pageOf.set(page.id, page.id);
+  index.detailCache.clear();
+};
+
+/** A page and its `descendants` (its non-page elements) were deleted. */
+export const indexRemovePage = (schema: Schema, page: Element, descendants: Element[]): void => {
+  const index = cachedIndex(schema);
+  if (!index) {
+    return;
+  }
+
+  index.pageIds.delete(page.id);
+  const at = index.pageElements.findIndex(p => p.id === page.id);
+  if (at >= 0) {
+    index.pageElements.splice(at, 1);
+  }
+
+  index.pageByRef.delete(page.id);
+  index.pageByRef.delete(pageRefOf(page));
+  index.pageOf.delete(page.id);
+  for (const el of descendants) {
+    index.elementByRef.delete(el.id);
+    if (el.idRef) {
+      index.elementByRef.delete(el.idRef);
+    }
+
+    index.pageOf.delete(el.id);
+  }
+
+  index.detailCache.clear();
+};
+
+/** A page's slug/name/default changed; re-key its pageByRef entry if that changed its ref. `oldRef` is the ref
+ *  computed BEFORE the attribute change. */
+export const indexReRefPage = (schema: Schema, page: Element, oldRef: string): void => {
+  const index = cachedIndex(schema);
+  if (!index) {
+    return;
+  }
+
+  const newRef = pageRefOf(page);
+  if (newRef !== oldRef) {
+    index.pageByRef.delete(oldRef);
+    index.pageByRef.set(newRef, page);
+    // Every descendant's projected pageRef changed with it, so their memoized detail is stale.
+    index.detailCache.clear();
+  }
+};
+
+/** A move reparented an element within its page: the ref/page maps are unchanged, but the moved element's
+ *  parentRef and both parents' childRefs did change, so their memoized detail must be dropped. */
+export const indexInvalidateDetails = (schema: Schema): void => {
+  cachedIndex(schema)?.detailCache.clear();
 };
 
 export const isPageElement = (schema: Schema, el: Element): boolean =>

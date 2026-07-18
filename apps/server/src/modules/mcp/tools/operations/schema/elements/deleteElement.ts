@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { descendantIds, empty, fail, findPageByRef, invalidateIndex, resolveRef } from '../../../../helpers';
+import { descendantIds, empty, fail, findPageByRef, indexRemoveElements, resolveRef } from '../../../../helpers';
 import { pageUri, removeFromParent } from '../write';
 
 import type { Space } from '../../../../helpers';
@@ -32,12 +32,14 @@ export const deleteElement = (space: Space, env: Env, op: DeleteElement): OpResu
     );
   }
 
-  for (const id of [...descendantIds(space.schema, el.id), el.id]) {
+  const ids = [...descendantIds(space.schema, el.id), el.id];
+  const removed = ids.map(id => space.schema.flat[id]);
+  for (const id of ids) {
     Reflect.deleteProperty(space.schema.flat, id);
   }
 
   removeFromParent(space, el.id);
-  invalidateIndex(space.schema);
+  indexRemoveElements(space.schema, removed);
 
   return { ...empty(), deleted: 1, staleResources: [pageUri(env, op.pageRef)] };
 };

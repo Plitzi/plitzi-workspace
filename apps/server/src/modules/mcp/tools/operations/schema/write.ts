@@ -1,7 +1,15 @@
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import { isValidIdRef, makeIdRef } from '@plitzi/sdk-schema/helpers/idRef';
 
-import { fail, findElementByRef, findPageByRef, generateObjectId, invalidateIndex, resolveRef } from '../../../helpers';
+import {
+  fail,
+  findElementByRef,
+  findPageByRef,
+  generateObjectId,
+  indexAddElement,
+  indexReRefElement,
+  resolveRef
+} from '../../../helpers';
 
 import type { ElementInput, InitialStateInput } from './shared';
 import type { OpResult, Space } from '../../../helpers';
@@ -111,7 +119,7 @@ export const createElement = (
     styleSelectors[slot] = classes.join(' ');
   }
 
-  space.schema.flat[id] = {
+  const el: Element = {
     id,
     // The agent's chosen ref IS the element's idRef: the key it addresses the element by here AND the key the
     // runtime wires with (a provider registers its source as `<type>_<idRef>`), so a binding written against this
@@ -127,17 +135,18 @@ export const createElement = (
       styleSelectors: styleSelectors as { base: string; [selector: string]: string }
     }
   };
+  space.schema.flat[id] = el;
   placeChild(parent, id, index);
-  // A new element changes what the ref index resolves (elementByRef, pageOf), so drop it here — the single point
-  // element creation happens. Cheap (a map delete); the next ref lookup rebuilds against the new tree.
-  invalidateIndex(space.schema);
+  // Keep the ref index in step with the new element (elementByRef + pageOf) in O(1), rather than dropping it and
+  // paying a full rebuild on the next lookup — so a batch creating hundreds of elements stays linear.
+  indexAddElement(space.schema, el, page.id);
 
   if (input.initialState) {
-    writeInitialState(space.schema.flat[id], input.initialState, false);
+    writeInitialState(el, input.initialState, false);
   }
 
   for (const child of input.children ?? []) {
-    createElement(space, page, child, space.schema.flat[id], undefined);
+    createElement(space, page, child, el, undefined);
   }
 };
 
@@ -152,8 +161,8 @@ export const ensureIdRef = (space: Space, el: Element): string => {
 
   const taken = FlatMap.takenIdRefs(space.schema.flat);
   el.idRef = makeIdRef(el.definition.type, candidate => taken.has(candidate));
-  // The element is now addressable by a new idRef; the ref index must pick it up.
-  invalidateIndex(space.schema);
+  // The element is now addressable by a new idRef; add that key to the index in place.
+  indexReRefElement(space.schema, el);
 
   return el.idRef;
 };

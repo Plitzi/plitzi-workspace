@@ -48,6 +48,13 @@ const STYLE_OP_TYPES = new Set<string>(Object.keys(styleOps));
 
 export const isStyleOp = (type: OperationType): boolean => STYLE_OP_TYPES.has(type);
 
+// The maximum number of operations one apply/validate batch may carry — the single source of truth, enforced by
+// the zod shape below (parse-time) and re-checked with a teachable message by the batch validator.
+export const MAX_OPS = 1000;
+
 // Shared input fragments for the batch tools (apply / validate), which co-locate their own full shapes.
 export const environment = z.string().optional().describe('Environment; default main');
-export const operations = z.array(operation).max(250).describe('Operations applied atomically, in order (max 250)');
+export const operations = z
+  .array(operation)
+  .max(MAX_OPS)
+  .describe(`Operations applied atomically, in order (max ${MAX_OPS})`);
