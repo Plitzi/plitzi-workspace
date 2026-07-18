@@ -18,7 +18,13 @@ export const upsertPageOp = z
           'letters, numbers and hyphens only ("pricing"), unique across the space.'
       ),
     label: z.string().optional(),
-    slug: z.string().optional(),
+    slug: z
+      .string()
+      .optional()
+      .describe(
+        'The page URL path (good practice: always set one on create for a clean, stable route, e.g. "/pricing" ' +
+          'or ":spaceId/update/*"). Omitted on create → the page ref is used as the slug.'
+      ),
     folder: z
       .string()
       .nullable()
@@ -80,7 +86,7 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
 
   const id = generateObjectId();
   const attributes: Element['attributes'] = {
-    slug: op.slug ?? '',
+    slug: op.slug ?? op.ref,
     name: op.label ?? op.ref,
     default: op.default ?? false,
     enabled: op.enabled ?? true,

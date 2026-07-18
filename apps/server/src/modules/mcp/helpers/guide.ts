@@ -255,6 +255,10 @@ node type and valid params per action. An element read lists its flows as ordere
 \`enabled\`), so a follow-up patch/delete needs no extra read.
 
 ## Pages & folders
+- **Always set a \`slug\` when creating a page** (\`upsertPage\`) — it is the page's URL path and good practice for a
+  clean, stable route (e.g. \`"/pricing"\` or \`":spaceId/update/*"\`). Omit it and the page ref is used as the slug,
+  and \`plitzi_validate\`/\`plitzi_apply\` warn so you remember to set a meaningful one.
+
 Pages can be grouped into **folders** (the sidebar tree). A folder is \`{ ref, name, slug, parentId? }\`; its \`ref\`
 **is its id** (there is no separate idRef), and that id is what a page and a nested folder reference.
 - Create/rename/move a folder with \`upsertFolder\` (the \`ref\` you pass on create becomes its id — pick a stable one

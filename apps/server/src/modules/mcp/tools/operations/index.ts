@@ -50,4 +50,4 @@ export const isStyleOp = (type: OperationType): boolean => STYLE_OP_TYPES.has(ty
 
 // Shared input fragments for the batch tools (apply / validate), which co-locate their own full shapes.
 export const environment = z.string().optional().describe('Environment; default main');
-export const operations = z.array(operation).max(100).describe('Operations applied atomically, in order (max 100)');
+export const operations = z.array(operation).max(250).describe('Operations applied atomically, in order (max 250)');

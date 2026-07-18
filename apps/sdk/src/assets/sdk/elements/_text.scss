@@ -1,5 +1,7 @@
 @mixin styles {
   .plitzi-component__text {
     display: inline;
+    font-size: '14px';
+    line-height: '24px';
   }
 }

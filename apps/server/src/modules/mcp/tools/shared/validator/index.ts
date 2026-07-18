@@ -29,7 +29,7 @@ import type { ComponentCatalog } from '@plitzi/sdk-shared';
 // sibling modules: refs, css, elements, batch, context) and the pageRef existence guard. The only export a
 // consumer needs is validateOperations — importers reference the folder (./shared/validator), which resolves here.
 
-const MAX_OPS = 100;
+const MAX_OPS = 250;
 const STYLE_CATEGORIES = ['color', 'spacing', 'shadow', 'custom'];
 
 const buildTypeMeta = (catalog: ComponentCatalog | undefined): Map<string, TypeMeta> => {
@@ -195,6 +195,16 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
         break;
       case 'upsertPage':
         checkRef(op.ref, `${base}.ref`, ctx);
+        // Nudge toward giving a new page an explicit slug (good practice: a clean, stable route). Only on create,
+        // and lenient — the ref is used as a fallback slug, so a missing slug never fails the batch.
+        if (op.slug === undefined && !findPageByRef(space.schema, op.ref)) {
+          warnOnce(
+            ctx,
+            `Page "${op.ref}" is being created without a slug. Set a slug for a clean, stable URL (good practice); ` +
+              'the page ref is used as a fallback.'
+          );
+        }
+
         // A non-empty folder ref must resolve to an existing folder (or one created earlier in the batch); '' and
         // null both mean "root" and are always valid. This is what keeps a page's folder either '' or a real id.
         if (typeof op.folder === 'string' && op.folder !== '') {
