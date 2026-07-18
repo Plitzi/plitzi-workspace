@@ -16,6 +16,7 @@ import {
 } from './helpers';
 import { readResource, resourceVersion } from './resources';
 import { apply, search, validateOperations } from './tools';
+import { ensureIdRef } from './tools/operations/schema/write';
 
 import type { Space } from './helpers';
 import type { Operation } from './tools';
@@ -443,6 +444,27 @@ describe('scaling — 12k-element space', () => {
   bench('interactions catalog (cold)', () => {
     invalidateIndex(bigSpace.schema);
     readResource(bigSpace, 'main', interactionsUri('main'));
+  });
+});
+
+// --- ensureIdRef fixture: elements WITHOUT an idRef, so ensureIdRef actually mints one (it short-circuits when a
+// ref already exists). Minting used to rebuild the whole taken-idRef set (O(flat)) per call; it now checks the
+// index in O(1). The bench resets the refs each iteration so every run mints from scratch. ---
+const noIdRefSpace = buildSpace(30, 100, 200);
+const assignTargets = Object.values(noIdRefSpace.schema.flat)
+  .filter(el => el.definition.type !== 'page')
+  .slice(0, 300);
+
+describe('ensureIdRef (mint against the index, not a flat scan)', () => {
+  bench('mint idRefs for 300 elements', () => {
+    for (const el of assignTargets) {
+      el.idRef = undefined;
+    }
+
+    invalidateIndex(noIdRefSpace.schema);
+    for (const el of assignTargets) {
+      ensureIdRef(noIdRefSpace, el);
+    }
   });
 });
 

@@ -1,4 +1,3 @@
-import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import { isValidIdRef, makeIdRef } from '@plitzi/sdk-schema/helpers/idRef';
 
 import {
@@ -8,7 +7,8 @@ import {
   generateObjectId,
   indexAddElement,
   indexReRefElement,
-  resolveRef
+  resolveRef,
+  spaceIndex
 } from '../../../helpers';
 
 import type { ElementInput, InitialStateInput } from './shared';
@@ -162,8 +162,14 @@ export const ensureIdRef = (space: Space, el: Element): string => {
     return el.idRef;
   }
 
-  const taken = FlatMap.takenIdRefs(space.schema.flat);
-  el.idRef = makeIdRef(el.definition.type, candidate => taken.has(candidate));
+  // The ref index already answers "is this ref taken?" in O(1) via its element and page ref maps, so mint against
+  // it instead of rebuilding the full taken-idRef set (O(flat)) on every call. makeIdRef only proposes `<type>-<n>`
+  // candidates, so the broader index membership is equivalent for them — and never collides with a raw element id.
+  const index = spaceIndex(space.schema);
+  el.idRef = makeIdRef(
+    el.definition.type,
+    candidate => index.elementByRef.has(candidate) || index.pageByRef.has(candidate)
+  );
   // The element is now addressable by a new idRef; add that key to the index in place.
   indexReRefElement(space.schema, el);
 
