@@ -1,6 +1,6 @@
 import { findElementByRef, findPageByRef } from '../helpers';
 import { envelope } from './envelope';
-import { buildDataSourceCatalog, buildInteractionCatalog } from '../tools/operations/schema/observed';
+import { buildDataSourceCatalog, buildInteractionCatalog } from '../catalogs';
 import {
   elementDetailToAI,
   folderRefToAI,

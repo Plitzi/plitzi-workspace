@@ -1,5 +1,5 @@
-import { applyBuiltinCallback } from './builtinCallbacks';
 import { generateObjectId } from './space';
+import { applyBuiltinCallback } from '../catalogs';
 
 import type { AIBinding, AIBindings, AIInteractionFlow, AIInteractionNode, AIInteractionNodeType } from '../types';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';

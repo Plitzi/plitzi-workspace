@@ -1,6 +1,6 @@
 import processSelector from '@plitzi/sdk-style/helpers/processSelector';
 
-import { expandShorthand } from './cssCatalog';
+import { expandShorthand } from '../../../catalogs';
 import { fail } from '../../../helpers';
 
 import type { DefinitionSlotInput, DefinitionSlotPatch } from './shared';

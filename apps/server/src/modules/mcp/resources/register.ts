@@ -3,8 +3,8 @@ import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp';
 import { resourceErrorMessage } from './canonical';
 import { envelope, jsonContents } from './envelope';
 import { readResource } from './router';
+import { cssProperties } from '../catalogs';
 import { guideText } from '../helpers/guide';
-import { cssProperties } from '../tools/operations/style/cssCatalog';
 
 import type { Space } from '../helpers';
 import type { Env } from '../types';

@@ -1,20 +1,20 @@
-import { deleteBindingOp } from './deleteBinding';
-import { deleteElementOp } from './deleteElement';
-import { deleteFolderOp } from './deleteFolder';
-import { deleteInteractionOp } from './deleteInteraction';
-import { deletePageOp } from './deletePage';
-import { deleteVariableOp } from './deleteVariable';
-import { moveElementOp } from './moveElement';
-import { patchBindingOp } from './patchBinding';
-import { patchElementOp } from './patchElement';
-import { patchInteractionNodeOp } from './patchInteractionNode';
-import { patchSettingsOp } from './patchSettings';
-import { upsertBindingOp } from './upsertBinding';
-import { upsertElementOp } from './upsertElement';
-import { upsertFolderOp } from './upsertFolder';
-import { upsertInteractionFlowOp } from './upsertInteractionFlow';
-import { upsertPageOp } from './upsertPage';
-import { upsertVariableOp } from './upsertVariable';
+import { deleteBindingOp } from './bindings/deleteBinding';
+import { patchBindingOp } from './bindings/patchBinding';
+import { upsertBindingOp } from './bindings/upsertBinding';
+import { deleteElementOp } from './elements/deleteElement';
+import { moveElementOp } from './elements/moveElement';
+import { patchElementOp } from './elements/patchElement';
+import { upsertElementOp } from './elements/upsertElement';
+import { deleteFolderOp } from './folders/deleteFolder';
+import { upsertFolderOp } from './folders/upsertFolder';
+import { deleteInteractionOp } from './interactions/deleteInteraction';
+import { patchInteractionNodeOp } from './interactions/patchInteractionNode';
+import { upsertInteractionFlowOp } from './interactions/upsertInteractionFlow';
+import { deletePageOp } from './pages/deletePage';
+import { upsertPageOp } from './pages/upsertPage';
+import { patchSettingsOp } from './settings/patchSettings';
+import { deleteVariableOp } from './variables/deleteVariable';
+import { upsertVariableOp } from './variables/upsertVariable';
 
 // The element-schema write vocabulary, keyed by op type — feeds the discriminated union in tools/operations.ts.
 export const elementOps = {

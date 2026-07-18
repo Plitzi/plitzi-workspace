@@ -1,7 +1,6 @@
 import { envelope } from './envelope';
+import { buildTypeRegistry, cssProperties } from '../catalogs';
 import { guideText } from '../helpers/guide';
-import { buildTypeRegistry } from '../tools/operations/schema/registry';
-import { cssProperties } from '../tools/operations/style/cssCatalog';
 
 import type { Space } from '../helpers';
 import type { ResourceEnvelope } from '../types';

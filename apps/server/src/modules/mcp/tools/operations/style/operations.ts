@@ -1,14 +1,14 @@
-import { deleteDefinitionOp } from './deleteDefinition';
-import { deleteGlobalStyleOp } from './deleteGlobalStyle';
-import { deleteIdStyleOp } from './deleteIdStyle';
-import { deleteStyleVariableOp } from './deleteStyleVariable';
-import { patchDefinitionOp } from './patchDefinition';
-import { patchGlobalStyleOp } from './patchGlobalStyle';
-import { patchIdStyleOp } from './patchIdStyle';
-import { upsertDefinitionOp } from './upsertDefinition';
-import { upsertGlobalStyleOp } from './upsertGlobalStyle';
-import { upsertIdStyleOp } from './upsertIdStyle';
-import { upsertStyleVariableOp } from './upsertStyleVariable';
+import { deleteDefinitionOp } from './definitions/deleteDefinition';
+import { patchDefinitionOp } from './definitions/patchDefinition';
+import { upsertDefinitionOp } from './definitions/upsertDefinition';
+import { deleteGlobalStyleOp } from './globalStyles/deleteGlobalStyle';
+import { patchGlobalStyleOp } from './globalStyles/patchGlobalStyle';
+import { upsertGlobalStyleOp } from './globalStyles/upsertGlobalStyle';
+import { deleteIdStyleOp } from './idStyles/deleteIdStyle';
+import { patchIdStyleOp } from './idStyles/patchIdStyle';
+import { upsertIdStyleOp } from './idStyles/upsertIdStyle';
+import { deleteStyleVariableOp } from './variables/deleteStyleVariable';
+import { upsertStyleVariableOp } from './variables/upsertStyleVariable';
 
 // The style-schema write vocabulary, keyed by op type — feeds the discriminated union in tools/operations.ts.
 export const styleOps = {

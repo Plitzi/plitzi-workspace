@@ -1,19 +1,19 @@
-// The style-schema domain: read projections (translator, cssCatalog) and one file per write operation
-// (each exporting its zod schema + handler). operations.ts bundles the op schemas for the tool input union.
+// The style-schema domain: the read projection (translator) and one file per write operation (each exporting its
+// zod schema + handler). operations.ts bundles the op schemas for the tool input union. The CSS property catalog
+// lives under modules/mcp/catalogs.
 
 export * from './translator';
-export * from './cssCatalog';
 export { styleOps } from './operations';
 export type { DefinitionSlotInput, DefinitionSlotPatch } from './shared';
 
-export * from './upsertDefinition';
-export * from './patchDefinition';
-export * from './deleteDefinition';
-export * from './upsertGlobalStyle';
-export * from './patchGlobalStyle';
-export * from './deleteGlobalStyle';
-export * from './upsertIdStyle';
-export * from './patchIdStyle';
-export * from './deleteIdStyle';
-export * from './upsertStyleVariable';
-export * from './deleteStyleVariable';
+export * from './definitions/upsertDefinition';
+export * from './definitions/patchDefinition';
+export * from './definitions/deleteDefinition';
+export * from './globalStyles/upsertGlobalStyle';
+export * from './globalStyles/patchGlobalStyle';
+export * from './globalStyles/deleteGlobalStyle';
+export * from './idStyles/upsertIdStyle';
+export * from './idStyles/patchIdStyle';
+export * from './idStyles/deleteIdStyle';
+export * from './variables/upsertStyleVariable';
+export * from './variables/deleteStyleVariable';

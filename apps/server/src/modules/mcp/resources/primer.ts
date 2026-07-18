@@ -1,14 +1,12 @@
 import { envelope } from './envelope';
+import { buildDataSourceCatalog, buildInteractionCatalog, buildTypeRegistry, cssProperties } from '../catalogs';
 import { guideText } from '../helpers/guide';
-import { buildDataSourceCatalog, buildInteractionCatalog } from '../tools/operations/schema/observed';
-import { buildTypeRegistry } from '../tools/operations/schema/registry';
 import {
   foldersToAI,
   pageSummariesToAI,
   schemaVariablesToAI,
   settingsToAI
 } from '../tools/operations/schema/translator';
-import { cssProperties } from '../tools/operations/style/cssCatalog';
 import { definitionRefs, styleVariablesToAI } from '../tools/operations/style/translator';
 
 import type { Space } from '../helpers';
