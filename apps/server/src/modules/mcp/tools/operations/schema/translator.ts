@@ -8,14 +8,18 @@ import {
   flowsFromInteractions,
   getPageElements,
   isPageElement,
+  nameOf,
   orderedChildren,
   pageFoldersOf,
   pageRefOf,
   pageRefOfElement,
-  slugRouteParams
+  slugRouteParams,
+  spaceIndex,
+  strOr
 } from '../../../helpers';
 import { definitionToAI, globalStylesForType, idStyleToAI } from '../style/translator';
 
+import type { ElementVersion } from '../../../helpers';
 import type {
   AIDefinition,
   AIElementDetail,
@@ -35,10 +39,6 @@ import type { Element, PageFolder, Schema, Style } from '@plitzi/sdk-shared';
 // Read projections of the ELEMENT schema: page summaries, per-page skeleton trees, element detail, and vars.
 
 const splitClasses = (value: string | undefined): string[] => (value ? value.split(/\s+/).filter(Boolean) : []);
-
-const strOr = (value: unknown): string | undefined => (typeof value === 'string' ? value : undefined);
-
-const nameOf = (page: Element): string => strOr(page.attributes.name) ?? page.definition.label;
 
 const propsOf = (el: Element): Record<string, unknown> | undefined => {
   const { subType, ...rest } = el.attributes;
@@ -88,6 +88,24 @@ export const folderRefToAI = (schema: Schema, ref: string): AIFolder | undefined
   return folder ? folderToAI(folder) : undefined;
 };
 
+// The memoized detail + stateVersion of one element, computed once per request and reused across a page-skeleton
+// hash, a search hit and any follow-up element read. The version is the SAME content hash a direct element read
+// returns, so it is a valid optimistic-concurrency token everywhere it appears. The memo lives on the per-request
+// SpaceIndex and is dropped whenever an op mutates the space (invalidateIndex), so it never returns stale data.
+export const elementView = (schema: Schema, el: Element, style: Style): ElementVersion => {
+  const cache = spaceIndex(schema).detailCache;
+  const cached = cache.get(el.id);
+  if (cached && cached.style === style) {
+    return cached;
+  }
+
+  const detail = elementDetailToAI(schema, el, style);
+  const view: ElementVersion = { style, detail, version: computeVersion(detail) };
+  cache.set(el.id, view);
+
+  return view;
+};
+
 // The per-node stateVersion is the SAME hash a direct element read (or a search hit) returns for that element, so an
 // agent holding a page skeleton can diff node versions against what it cached and re-read only the changed elements.
 // It needs the style to resolve each element exactly as elementDetailToAI does; without it the field is omitted.
@@ -101,7 +119,7 @@ const skeletonNode = (schema: Schema, el: Element, style?: Style): AISkeletonNod
     type: el.definition.type,
     label: el.definition.label,
     subType: strOr(el.attributes.subType),
-    stateVersion: style ? computeVersion(elementDetailToAI(schema, el, style)) : undefined,
+    stateVersion: style ? elementView(schema, el, style).version : undefined,
     base: base.length > 0 ? base : undefined,
     slots: Object.keys(slots).length > 0 ? slots : undefined,
     childCount: children.length,

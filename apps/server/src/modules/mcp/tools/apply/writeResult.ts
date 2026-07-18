@@ -1,3 +1,4 @@
+import { elementUri } from '../../helpers';
 import { readResource, resourceVersion } from '../../resources';
 
 import type { Space } from '../../helpers';
@@ -31,7 +32,7 @@ export const changedResources = (space: Space, env: Env, uris: string[]): Change
 export const resolvedElements = (space: Space, env: Env, refs: string[]): WriteElement[] | undefined => {
   const elements = refs
     .map(ref => {
-      const uri = `plitzi://schema/${env}/elements/${ref}`;
+      const uri = elementUri(env, ref);
       const res = readResource(space, env, uri);
 
       return res ? { uri, stateVersion: res.stateVersion, ...(res.data as AIElementDetail) } : undefined;

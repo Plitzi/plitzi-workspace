@@ -1,5 +1,16 @@
 import { envelope } from './envelope';
 import {
+  afterPrefix,
+  defUri,
+  defsUri,
+  globalUri,
+  globalsUri,
+  idUri,
+  idsUri,
+  styleVarUri,
+  styleVarsUri
+} from '../helpers';
+import {
   definitionRefs,
   definitionToAI,
   globalStyleToAI,
@@ -19,45 +30,45 @@ export const readStyleResource = (
   env: Env,
   uri: string
 ): ResourceEnvelope<unknown> | null | undefined => {
-  if (uri === `plitzi://definitions/${env}`) {
+  if (uri === defsUri(env)) {
     return envelope(definitionRefs(space.style));
   }
 
-  if (uri.startsWith(`plitzi://definitions/${env}/`)) {
-    const ref = uri.slice(`plitzi://definitions/${env}/`.length);
-    const def = definitionToAI(space.style, ref);
+  const defRef = afterPrefix(uri, defUri(env, ''));
+  if (defRef !== undefined) {
+    const def = definitionToAI(space.style, defRef);
 
     return def ? envelope(def) : null;
   }
 
-  if (uri === `plitzi://global-styles/${env}`) {
+  if (uri === globalsUri(env)) {
     return envelope(globalStyleTypes(space.style));
   }
 
-  if (uri.startsWith(`plitzi://global-styles/${env}/`)) {
-    const componentType = uri.slice(`plitzi://global-styles/${env}/`.length);
+  const componentType = afterPrefix(uri, globalUri(env, ''));
+  if (componentType !== undefined) {
     const global = globalStyleToAI(space.style, componentType);
 
     return global ? envelope(global) : null;
   }
 
-  if (uri === `plitzi://id-styles/${env}`) {
+  if (uri === idsUri(env)) {
     return envelope(idStyleIds(space.style));
   }
 
-  if (uri.startsWith(`plitzi://id-styles/${env}/`)) {
-    const targetId = uri.slice(`plitzi://id-styles/${env}/`.length);
+  const targetId = afterPrefix(uri, idUri(env, ''));
+  if (targetId !== undefined) {
     const idStyle = idStyleToAI(space.style, targetId);
 
     return idStyle ? envelope(idStyle) : null;
   }
 
-  if (uri === `plitzi://style-variables/${env}`) {
+  if (uri === styleVarsUri(env)) {
     return envelope(styleVariablesToAI(space.style));
   }
 
-  if (uri.startsWith(`plitzi://style-variables/${env}/`)) {
-    const category = uri.slice(`plitzi://style-variables/${env}/`.length);
+  const category = afterPrefix(uri, styleVarUri(env, ''));
+  if (category !== undefined) {
     const byCategory = styleVariablesToAI(space.style);
 
     return envelope(Object.hasOwn(byCategory, category) ? byCategory[category] : []);

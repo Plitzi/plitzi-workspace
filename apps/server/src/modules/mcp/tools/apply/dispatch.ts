@@ -101,6 +101,11 @@ export const applyOperations = (space: Space, env: Env, ops: Operation[]): Mutat
       outcome.changedSchema = true;
     }
 
+    // NOTE: the per-request index/memo is NOT dropped here. It only goes stale when an op changes what the index
+    // keys on — element/page membership, an idRef, or a page's slug/name/default. Those handlers invalidate at the
+    // exact mutation point (see createElement/ensureIdRef, delete*, upsertPage). A pure prop/style/interaction
+    // patch leaves the index valid, so a large patch-only batch resolves every ref in O(1) with no rebuild.
+
     outcome.created += result.created;
     outcome.updated += result.updated;
     outcome.deleted += result.deleted;

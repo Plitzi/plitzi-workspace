@@ -1,8 +1,21 @@
-import { findElementByRef, findPageByRef } from '../helpers';
+import {
+  afterPrefix,
+  dataSourcesUri,
+  elementUri,
+  findElementByRef,
+  findPageByRef,
+  folderUri,
+  foldersUri,
+  interactionsUri,
+  pageUri,
+  pagesUri,
+  schemaVarsUri,
+  settingsUri
+} from '../helpers';
 import { envelope } from './envelope';
 import { buildDataSourceCatalog, buildInteractionCatalog } from '../catalogs';
 import {
-  elementDetailToAI,
+  elementView,
   folderRefToAI,
   foldersToAI,
   pageSkeletonToAI,
@@ -22,55 +35,60 @@ export const readSchemaResource = (
   env: Env,
   uri: string
 ): ResourceEnvelope<unknown> | null | undefined => {
-  if (uri === `plitzi://schema/${env}/pages`) {
+  if (uri === pagesUri(env)) {
     return envelope(pageSummariesToAI(space.schema));
   }
 
-  if (uri === `plitzi://folders/${env}`) {
+  if (uri === foldersUri(env)) {
     return envelope(foldersToAI(space.schema));
   }
 
-  if (uri.startsWith(`plitzi://folders/${env}/`)) {
-    const ref = uri.slice(`plitzi://folders/${env}/`.length);
-    const folder = folderRefToAI(space.schema, ref);
+  const folderRef = afterPrefix(uri, folderUri(env, ''));
+  if (folderRef !== undefined) {
+    const folder = folderRefToAI(space.schema, folderRef);
 
     return folder ? envelope(folder) : null;
   }
 
-  if (uri.startsWith(`plitzi://schema/${env}/pages/`) && uri.endsWith('/styles')) {
-    const ref = uri.slice(`plitzi://schema/${env}/pages/`.length, -'/styles'.length);
-    const page = findPageByRef(space.schema, ref);
+  const pageItem = afterPrefix(uri, pageUri(env, ''));
+  if (pageItem !== undefined) {
+    if (pageItem.endsWith('/styles')) {
+      const ref = pageItem.slice(0, -'/styles'.length);
+      const page = findPageByRef(space.schema, ref);
 
-    return page ? envelope(pageStylesToAI(space.schema, space.style, page)) : null;
-  }
+      return page ? envelope(pageStylesToAI(space.schema, space.style, page)) : null;
+    }
 
-  if (uri.startsWith(`plitzi://schema/${env}/pages/`)) {
-    const ref = uri.slice(`plitzi://schema/${env}/pages/`.length);
-    const page = findPageByRef(space.schema, ref);
+    const page = findPageByRef(space.schema, pageItem);
 
     return page ? envelope(pageSkeletonToAI(space.schema, page, space.style)) : null;
   }
 
-  if (uri.startsWith(`plitzi://schema/${env}/elements/`)) {
-    const ref = uri.slice(`plitzi://schema/${env}/elements/`.length);
-    const el = findElementByRef(space.schema, ref);
+  const elementRef = afterPrefix(uri, elementUri(env, ''));
+  if (elementRef !== undefined) {
+    const el = findElementByRef(space.schema, elementRef);
+    if (!el) {
+      return null;
+    }
 
-    return el ? envelope(elementDetailToAI(space.schema, el, space.style)) : null;
+    const view = elementView(space.schema, el, space.style);
+
+    return { stateVersion: view.version, data: view.detail };
   }
 
-  if (uri === `plitzi://schema-variables/${env}`) {
+  if (uri === schemaVarsUri(env)) {
     return envelope(schemaVariablesToAI(space.schema));
   }
 
-  if (uri === `plitzi://settings/${env}`) {
+  if (uri === settingsUri(env)) {
     return envelope(settingsToAI(space.schema));
   }
 
-  if (uri === `plitzi://interactions/${env}`) {
+  if (uri === interactionsUri(env)) {
     return envelope(buildInteractionCatalog(space.schema));
   }
 
-  if (uri === `plitzi://data-sources/${env}`) {
+  if (uri === dataSourcesUri(env)) {
     return envelope(buildDataSourceCatalog(space.schema));
   }
 

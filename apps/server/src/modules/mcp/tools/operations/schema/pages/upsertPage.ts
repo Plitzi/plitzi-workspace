@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { empty, fail, findFolderByRef, findPageByRef, generateObjectId } from '../../../../helpers';
+import { empty, fail, findFolderByRef, findPageByRef, generateObjectId, invalidateIndex } from '../../../../helpers';
 import { guardNewRef, pageUri, pagesUri } from '../write';
 
 import type { Space } from '../../../../helpers';
@@ -74,6 +74,10 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
       ...(op.enabled !== undefined ? { enabled: op.enabled } : {}),
       ...(folderValue !== undefined ? { folder: folderValue } : {})
     };
+    // slug/name/default feed pageRefOf, which the page ref index keys on — invalidate only when one of them changed.
+    if (op.slug !== undefined || op.label !== undefined || op.default !== undefined) {
+      invalidateIndex(space.schema);
+    }
 
     return { ...empty(), updated: 1, staleResources: [pageUri(env, op.ref), pagesUri(env)] };
   }
@@ -105,6 +109,7 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
     }
   };
   space.schema.pages.push(id);
+  invalidateIndex(space.schema);
 
   return { ...empty(), created: 1, staleResources: [pageUri(env, op.ref), pagesUri(env)] };
 };

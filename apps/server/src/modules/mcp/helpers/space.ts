@@ -1,3 +1,4 @@
+import type { AIElementDetail } from '../types';
 import type { ComponentCatalog, Element, PageFolder, Schema, Style } from '@plitzi/sdk-shared';
 
 /** The working view the tools read and mutate: the two Plitzi schemas (elements + style), which the platform
@@ -9,7 +10,14 @@ export interface Space {
   catalog?: ComponentCatalog;
 }
 
-export const cloneSpace = (space: Space): Space => structuredClone(space);
+// Only the two schemas are mutated by an apply, so only they are deep-copied for the all-or-nothing draft. The
+// catalog is read-only reference data an op never touches — sharing its reference avoids a needless deep clone of
+// every plugin manifest on every write.
+export const cloneSpace = (space: Space): Space => ({
+  schema: structuredClone(space.schema),
+  style: structuredClone(space.style),
+  ...(space.catalog ? { catalog: space.catalog } : {})
+});
 
 export const slugify = (value: string): string =>
   value
@@ -17,11 +25,12 @@ export const slugify = (value: string): string =>
     .replace(/[^a-z0-9._-]+/g, '-')
     .replace(/^-+|-+$/g, '') || '';
 
-export const isPageElement = (schema: Schema, el: Element): boolean =>
-  schema.pages.includes(el.id) || el.definition.type === 'page';
+/** A value when it is a string, otherwise undefined — for the many attributes typed as `unknown` that are strings
+ *  in practice (name, slug, subType, dom id…). */
+export const strOr = (value: unknown): string | undefined => (typeof value === 'string' ? value : undefined);
 
-export const getPageElements = (schema: Schema): Element[] =>
-  Object.values(schema.flat).filter(el => isPageElement(schema, el));
+/** Display name of a page or element: its `name` attribute when set, otherwise its definition label. */
+export const nameOf = (el: Element): string => strOr(el.attributes.name) ?? el.definition.label;
 
 /** Stable, human-readable ref for a page: its idRef, then slug, then a slugified label. A page without an idRef is
  *  still addressable — unlike a data source, a page ref has meaningful fallbacks the agent can read off the tree. */
@@ -30,7 +39,7 @@ export const pageRefOf = (el: Element): string => {
     return el.idRef;
   }
 
-  const slug = typeof el.attributes.slug === 'string' ? el.attributes.slug.trim() : '';
+  const slug = strOr(el.attributes.slug)?.trim();
   if (slug) {
     return slugify(slug);
   }
@@ -39,9 +48,7 @@ export const pageRefOf = (el: Element): string => {
     return 'home';
   }
 
-  const label = typeof el.attributes.name === 'string' ? el.attributes.name : el.definition.label;
-
-  return slugify(label) || el.id;
+  return slugify(nameOf(el)) || el.id;
 };
 
 /** Stable ref for ADDRESSING a non-page element in the tree: its idRef when present, otherwise the opaque id so an
@@ -50,9 +57,132 @@ export const pageRefOf = (el: Element): string => {
  *  addressed here by its id alone publishes no source and takes no interactions (see `getSourceName`). */
 export const elementRefOf = (el: Element): string => el.idRef ?? el.id;
 
+// --- Per-request index -------------------------------------------------------------------------------------------
+// The scanners below (isPageElement/find*/resolveRef/pageRefOfElement) are called a lot — per validated op, per
+// dispatched op, per search hit — and each used to re-scan schema.flat (some O(flat × pages)). This index resolves
+// all of them in O(1) after a single O(flat) build. It is memoized on the Schema OBJECT identity, so it lives and
+// dies with the space a request loaded (the MCP is stateless: a new request reads a fresh space object and builds
+// its own index). The apply draft is a structuredClone — a different object with its own entry — and every schema
+// mutation in the dispatch loop calls `invalidateIndex`, so a scanner never reads a stale index.
+
+/** A memoized element projection: its full detail and the stateVersion (content hash) derived from it, plus the
+ *  style object they were computed against (a different style ref forces a recompute). */
+export interface ElementVersion {
+  style: Style;
+  detail: AIElementDetail;
+  version: string;
+}
+
+export interface SpaceIndex {
+  /** Ids of the page elements (schema.pages ∪ every element whose type is 'page'). */
+  pageIds: Set<string>;
+  /** The page elements, in schema.flat insertion order (what getPageElements returns). */
+  pageElements: Element[];
+  /** page ref (idRef/slug/label) AND raw page id → the page element. First writer wins on a ref collision. */
+  pageByRef: Map<string, Element>;
+  /** non-page idRef AND raw id → the element. First writer wins on a ref collision. */
+  elementByRef: Map<string, Element>;
+  /** Any element id (page root or nested descendant) → the id of the page it belongs to. */
+  pageOf: Map<string, string>;
+  /** element id → its memoized detail/version, so a page-skeleton hash, a search hit and a follow-up element read
+   *  all resolve the same element once. Populated lazily by `elementView`; dropped whole on `invalidateIndex`. */
+  detailCache: Map<string, ElementVersion>;
+}
+
+const buildIndex = (schema: Schema): SpaceIndex => {
+  const flat = schema.flat;
+  // items may reference a dangling id (rsc placeholders, stale entries); read through a nullable view.
+  const lookup = (id: string): Element | undefined => flat[id];
+
+  const pageIds = new Set<string>(schema.pages);
+  for (const el of Object.values(flat)) {
+    if (el.definition.type === 'page') {
+      pageIds.add(el.id);
+    }
+  }
+
+  const pageElements: Element[] = [];
+  const pageByRef = new Map<string, Element>();
+  const elementByRef = new Map<string, Element>();
+  for (const el of Object.values(flat)) {
+    if (pageIds.has(el.id)) {
+      pageElements.push(el);
+      const ref = pageRefOf(el);
+      if (!pageByRef.has(ref)) {
+        pageByRef.set(ref, el);
+      }
+
+      if (!pageByRef.has(el.id)) {
+        pageByRef.set(el.id, el);
+      }
+    } else {
+      const ref = elementRefOf(el);
+      if (!elementByRef.has(ref)) {
+        elementByRef.set(ref, el);
+      }
+
+      if (!elementByRef.has(el.id)) {
+        elementByRef.set(el.id, el);
+      }
+    }
+  }
+
+  const pageOf = new Map<string, string>();
+  for (const page of pageElements) {
+    pageOf.set(page.id, page.id);
+    const stack = [...(page.definition.items ?? [])];
+    while (stack.length > 0) {
+      const id = stack.pop();
+      if (id === undefined || pageOf.has(id)) {
+        continue;
+      }
+
+      const el = lookup(id);
+      if (!el) {
+        continue;
+      }
+
+      pageOf.set(id, page.id);
+      for (const childId of el.definition.items ?? []) {
+        stack.push(childId);
+      }
+    }
+  }
+
+  return { pageIds, pageElements, pageByRef, elementByRef, pageOf, detailCache: new Map() };
+};
+
+const indexCache = new WeakMap<Schema, SpaceIndex>();
+
+/** The index for a schema, built once and memoized on the schema object. */
+export const spaceIndex = (schema: Schema): SpaceIndex => {
+  let index = indexCache.get(schema);
+  if (!index) {
+    index = buildIndex(schema);
+    indexCache.set(schema, index);
+  }
+
+  return index;
+};
+
+/** Drop the memoized index after a structural/attribute mutation, so the next scanner rebuilds against current
+ *  state. Called once per successful schema op in the dispatch loop — the only place a space schema is mutated. */
+export const invalidateIndex = (schema: Schema): void => {
+  indexCache.delete(schema);
+};
+
+export const isPageElement = (schema: Schema, el: Element): boolean =>
+  spaceIndex(schema).pageIds.has(el.id) || el.definition.type === 'page';
+
+export const getPageElements = (schema: Schema): Element[] => spaceIndex(schema).pageElements;
+
 /** Finds a page by its semantic ref (idRef/slug/…) or its raw id, so legacy schemas without an idRef still resolve. */
 export const findPageByRef = (schema: Schema, pageRef: string): Element | undefined =>
-  getPageElements(schema).find(el => pageRefOf(el) === pageRef || el.id === pageRef);
+  spaceIndex(schema).pageByRef.get(pageRef);
+
+/** Find any non-page element by its semantic ref (idRef) or raw id, across the whole space. */
+export const findElementByRef = (schema: Schema, ref: string): Element | undefined =>
+  spaceIndex(schema).elementByRef.get(ref);
 
 // --- Page folders (the sidebar tree). A folder has no idRef; its ref is its id. Pages reference a folder by that
 // id (attributes.folder), and nested folders via parentId. ---
@@ -190,14 +320,10 @@ export const resolveRef = (schema: Schema, page: Element, ref: string): Element 
     return page;
   }
 
-  for (const id of descendantIds(schema, page.id)) {
-    const el = elementById(schema, id);
-    if (el && (elementRefOf(el) === ref || el.id === ref)) {
-      return el;
-    }
-  }
+  const index = spaceIndex(schema);
+  const el = index.elementByRef.get(ref);
 
-  return undefined;
+  return el && index.pageOf.get(el.id) === page.id ? el : undefined;
 };
 
 /** Ordered children of an element, honoring definition.items and skipping dangling ids. */
@@ -207,35 +333,12 @@ export const orderedChildren = (schema: Schema, el: Element): Element[] => {
   return ids.map(id => schema.flat[id]).filter((child): child is Element => Boolean(child));
 };
 
-/** The page ref an element belongs to, walking up parents. 'unknown' when it has no page ancestor. */
+/** The page ref an element belongs to. 'unknown' when it has no page ancestor. */
 export const pageRefOfElement = (schema: Schema, el: Element): string => {
-  let current: Element | undefined = el;
-  const guard = new Set<string>();
-  while (current && !guard.has(current.id)) {
-    guard.add(current.id);
-    if (isPageElement(schema, current)) {
-      return pageRefOf(current);
-    }
+  const pageId = spaceIndex(schema).pageOf.get(el.id);
+  const page = pageId ? schema.flat[pageId] : undefined;
 
-    current = current.definition.parentId ? schema.flat[current.definition.parentId] : undefined;
-  }
-
-  return 'unknown';
-};
-
-/** Find any non-page element by its semantic ref (idRef) or raw id, across the whole space. */
-export const findElementByRef = (schema: Schema, ref: string): Element | undefined => {
-  for (const el of Object.values(schema.flat)) {
-    if (isPageElement(schema, el)) {
-      continue;
-    }
-
-    if (elementRefOf(el) === ref || el.id === ref) {
-      return el;
-    }
-  }
-
-  return undefined;
+  return page ? pageRefOf(page) : 'unknown';
 };
 
 /** Total number of descendant elements under a subtree (excluding the root). */

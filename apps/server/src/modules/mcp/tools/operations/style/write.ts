@@ -5,7 +5,7 @@ import { fail } from '../../../helpers';
 
 import type { DefinitionSlotInput, DefinitionSlotPatch } from './shared';
 import type { OpResult } from '../../../helpers';
-import type { AIDefinition, AIDefinitionSlot, CssProps, DisplayModeCss, Env } from '../../../types';
+import type { AIDefinition, AIDefinitionSlot, CssProps, DisplayModeCss } from '../../../types';
 import type { DisplayMode, Style, StyleAttributes, StyleBlock, StyleItem, TagType } from '@plitzi/sdk-shared';
 
 // Shared machinery for the style-schema handlers: stale-resource URI builders, the kind-clash guard, and the
@@ -13,14 +13,9 @@ import type { DisplayMode, Style, StyleAttributes, StyleBlock, StyleItem, TagTyp
 
 export const MODES: DisplayMode[] = ['desktop', 'tablet', 'mobile'];
 
-export const defUri = (env: Env, ref: string): string => `plitzi://definitions/${env}/${ref}`;
-export const defsUri = (env: Env): string => `plitzi://definitions/${env}`;
-export const globalUri = (env: Env, componentType: string): string => `plitzi://global-styles/${env}/${componentType}`;
-export const globalsUri = (env: Env): string => `plitzi://global-styles/${env}`;
-export const idUri = (env: Env, targetId: string): string => `plitzi://id-styles/${env}/${targetId}`;
-export const idsUri = (env: Env): string => `plitzi://id-styles/${env}`;
-export const styleVarUri = (env: Env, category: string): string => `plitzi://style-variables/${env}/${category}`;
-export const styleVarsUri = (env: Env): string => `plitzi://style-variables/${env}`;
+// URI builders are the single source of truth in helpers/uris; re-exported here so the style handlers keep
+// importing them from `./write` unchanged.
+export { defUri, defsUri, globalUri, globalsUri, idUri, idsUri, styleVarUri, styleVarsUri } from '../../../helpers';
 
 // The three kinds a StyleItem can be, each addressed by its own op family and identifier — a shared vocabulary for
 // the clash guard's teachable errors.

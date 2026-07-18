@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { descendantIds, empty, fail, findPageByRef } from '../../../../helpers';
+import { descendantIds, empty, fail, findPageByRef, invalidateIndex } from '../../../../helpers';
 import { pageUri, pagesUri } from '../write';
 
 import type { Space } from '../../../../helpers';
@@ -24,6 +24,7 @@ export const deletePage = (space: Space, env: Env, op: DeletePage): OpResult => 
   }
 
   space.schema.pages = space.schema.pages.filter(id => id !== page.id);
+  invalidateIndex(space.schema);
 
   return { ...empty(), deleted: 1, staleResources: [pageUri(env, op.ref), pagesUri(env)] };
 };

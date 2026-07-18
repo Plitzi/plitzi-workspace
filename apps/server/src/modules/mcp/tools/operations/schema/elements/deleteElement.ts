@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { descendantIds, empty, fail, findPageByRef, resolveRef } from '../../../../helpers';
+import { descendantIds, empty, fail, findPageByRef, invalidateIndex, resolveRef } from '../../../../helpers';
 import { pageUri, removeFromParent } from '../write';
 
 import type { Space } from '../../../../helpers';
@@ -37,6 +37,7 @@ export const deleteElement = (space: Space, env: Env, op: DeleteElement): OpResu
   }
 
   removeFromParent(space, el.id);
+  invalidateIndex(space.schema);
 
   return { ...empty(), deleted: 1, staleResources: [pageUri(env, op.pageRef)] };
 };

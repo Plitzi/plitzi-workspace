@@ -1,7 +1,7 @@
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import { isValidIdRef, makeIdRef } from '@plitzi/sdk-schema/helpers/idRef';
 
-import { fail, findElementByRef, findPageByRef, generateObjectId, resolveRef } from '../../../helpers';
+import { fail, findElementByRef, findPageByRef, generateObjectId, invalidateIndex, resolveRef } from '../../../helpers';
 
 import type { ElementInput, InitialStateInput } from './shared';
 import type { OpResult, Space } from '../../../helpers';
@@ -48,12 +48,9 @@ export const guardNewRef = (space: Space, ref: string, field: string): OpResult 
   return null;
 };
 
-export const pageUri = (env: Env, ref: string): string => `plitzi://schema/${env}/pages/${ref}`;
-export const pagesUri = (env: Env): string => `plitzi://schema/${env}/pages`;
-export const foldersUri = (env: Env): string => `plitzi://folders/${env}`;
-export const folderUri = (env: Env, ref: string): string => `plitzi://folders/${env}/${ref}`;
-export const schemaVarsUri = (env: Env): string => `plitzi://schema-variables/${env}`;
-export const settingsUri = (env: Env): string => `plitzi://settings/${env}`;
+// URI builders are the single source of truth in helpers/uris; re-exported here so the element-schema handlers
+// keep importing them from `../write` unchanged.
+export { folderUri, foldersUri, pageUri, pagesUri, schemaVarsUri, settingsUri } from '../../../helpers';
 
 export const removeFromParent = (space: Space, childId: string): void => {
   for (const el of Object.values(space.schema.flat)) {
@@ -131,6 +128,9 @@ export const createElement = (
     }
   };
   placeChild(parent, id, index);
+  // A new element changes what the ref index resolves (elementByRef, pageOf), so drop it here — the single point
+  // element creation happens. Cheap (a map delete); the next ref lookup rebuilds against the new tree.
+  invalidateIndex(space.schema);
 
   if (input.initialState) {
     writeInitialState(space.schema.flat[id], input.initialState, false);
@@ -152,6 +152,8 @@ export const ensureIdRef = (space: Space, el: Element): string => {
 
   const taken = FlatMap.takenIdRefs(space.schema.flat);
   el.idRef = makeIdRef(el.definition.type, candidate => taken.has(candidate));
+  // The element is now addressable by a new idRef; the ref index must pick it up.
+  invalidateIndex(space.schema);
 
   return el.idRef;
 };

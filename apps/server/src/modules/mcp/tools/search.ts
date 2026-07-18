@@ -1,7 +1,17 @@
 import { z } from 'zod';
 
-import { computeVersion, elementRefOf, getPageElements, isPageElement, pageRefOf, pageRefOfElement } from '../helpers';
-import { definitionRefs, definitionToAI, elementDetailToAI, pageSkeletonToAI } from '../resources';
+import {
+  computeVersion,
+  elementRefOf,
+  elementUri,
+  getPageElements,
+  isPageElement,
+  nameOf,
+  pageRefOf,
+  pageRefOfElement,
+  pageUri
+} from '../helpers';
+import { definitionRefs, definitionToAI, elementView, pageSkeletonToAI } from '../resources';
 import { defineTool } from './shared/tool';
 
 import type { Space } from '../helpers';
@@ -30,9 +40,6 @@ export const searchShape = {
     .describe('Element hits to skip (default 0). Page by re-calling with offset = nextOffset until it is absent.')
 };
 
-const labelOf = (el: Element): string =>
-  (typeof el.attributes.name === 'string' ? el.attributes.name : undefined) ?? el.definition.label;
-
 // Ancestor labels from the page root down to (and including) the element, so a hit locates itself in the tree.
 const breadcrumb = (schema: Schema, el: Element): string[] => {
   const chain: string[] = [];
@@ -40,7 +47,7 @@ const breadcrumb = (schema: Schema, el: Element): string[] => {
   const guard = new Set<string>();
   while (current && !guard.has(current.id)) {
     guard.add(current.id);
-    chain.push(labelOf(current));
+    chain.push(nameOf(current));
     current = current.definition.parentId ? schema.flat[current.definition.parentId] : undefined;
   }
 
@@ -49,7 +56,9 @@ const breadcrumb = (schema: Schema, el: Element): string[] => {
 
 export const search = (input: SearchInput, space: Space, env: Env): SearchResponse => {
   const query = input.query.toLowerCase();
-  const results: SearchHit[] = [];
+  // First pass is cheap: match label/type/attributes for every element and keep only what a hit needs to be counted
+  // and located. The expensive per-hit projection is deferred to the returned window below.
+  const matched: { el: Element; pageRef: string; ref: string; matches: string[] }[] = [];
 
   for (const el of Object.values(space.schema.flat)) {
     if (isPageElement(space.schema, el)) {
@@ -84,24 +93,34 @@ export const search = (input: SearchInput, space: Space, env: Env): SearchRespon
       continue;
     }
 
-    const ref = elementRefOf(el);
-    // Resolve style even when detail is not returned, so stateVersion matches a direct element read (which inlines
-    // resolvedStyle) and stays valid for optimistic concurrency.
-    const detail = elementDetailToAI(space.schema, el, space.style);
-    results.push({
-      pageRef,
-      ref,
-      uri: `plitzi://schema/${env}/elements/${ref}`,
-      pageUri: `plitzi://schema/${env}/pages/${pageRef}`,
-      stateVersion: computeVersion(detail),
-      parentRef: detail.parentRef,
-      path: breadcrumb(space.schema, el),
-      label: el.definition.label,
-      type: el.definition.type,
-      matches,
-      detail: input.include === 'detail' ? detail : undefined
-    });
+    matched.push({ el, pageRef, ref: elementRefOf(el), matches });
   }
+
+  const offset = input.offset ?? 0;
+  const limit = input.limit ?? 50;
+  const total = matched.length;
+  const nextOffset = offset + limit < total ? offset + limit : undefined;
+
+  // Resolve the full detail + stateVersion (and breadcrumb) ONLY for the returned window: an unbounded query would
+  // otherwise pay a full element projection per match just to discard all but `limit`. stateVersion still matches a
+  // direct element read (elementView inlines resolvedStyle), so it stays a valid optimistic-concurrency token.
+  const results: SearchHit[] = matched.slice(offset, offset + limit).map(hit => {
+    const { detail, version } = elementView(space.schema, hit.el, space.style);
+
+    return {
+      pageRef: hit.pageRef,
+      ref: hit.ref,
+      uri: elementUri(env, hit.ref),
+      pageUri: pageUri(env, hit.pageRef),
+      stateVersion: version,
+      parentRef: detail.parentRef,
+      path: breadcrumb(space.schema, hit.el),
+      label: hit.el.definition.label,
+      type: hit.el.definition.type,
+      matches: hit.matches,
+      detail: input.include === 'detail' ? detail : undefined
+    };
+  });
 
   const definitions: AIDefinition[] = [];
   for (const ref of definitionRefs(space.style)) {
@@ -119,7 +138,7 @@ export const search = (input: SearchInput, space: Space, env: Env): SearchRespon
 
   const pages: SearchPageHit[] = [];
   for (const page of getPageElements(space.schema)) {
-    const label = labelOf(page);
+    const label = nameOf(page);
     const slug = typeof page.attributes.slug === 'string' ? page.attributes.slug : '';
     const matches: string[] = [];
     if (label.toLowerCase().includes(query)) {
@@ -137,7 +156,7 @@ export const search = (input: SearchInput, space: Space, env: Env): SearchRespon
     const ref = pageRefOf(page);
     pages.push({
       ref,
-      uri: `plitzi://schema/${env}/pages/${ref}`,
+      uri: pageUri(env, ref),
       stateVersion: computeVersion(pageSkeletonToAI(space.schema, page, space.style)),
       label,
       slug,
@@ -145,13 +164,8 @@ export const search = (input: SearchInput, space: Space, env: Env): SearchRespon
     });
   }
 
-  const offset = input.offset ?? 0;
-  const limit = input.limit ?? 50;
-  const total = results.length;
-  const nextOffset = offset + limit < total ? offset + limit : undefined;
-
   return {
-    results: results.slice(offset, offset + limit),
+    results,
     total,
     offset,
     limit,

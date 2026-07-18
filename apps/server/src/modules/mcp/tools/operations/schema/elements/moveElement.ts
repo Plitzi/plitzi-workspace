@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { empty, fail, findPageByRef, resolveRef } from '../../../../helpers';
+import { empty, fail, findPageByRef, invalidateIndex, resolveRef } from '../../../../helpers';
 import { position } from '../shared';
 import { pageUri, placeChild, removeFromParent } from '../write';
 
@@ -48,6 +48,8 @@ export const moveElement = (space: Space, env: Env, op: MoveElement): OpResult =
 
   el.definition.parentId = parent.id;
   placeChild(parent, el.id, index);
+  // Reparenting rewrites the tree; invalidate so any pageOf/child lookup after this move sees the new structure.
+  invalidateIndex(space.schema);
 
   return { ...empty(), updated: 1, staleResources: [pageUri(env, op.pageRef)], elementRefs: [op.ref] };
 };

@@ -60,6 +60,7 @@
     "lint": "TIMING=1 eslint ./src",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "bench": "vitest bench --run"
   }
 }
