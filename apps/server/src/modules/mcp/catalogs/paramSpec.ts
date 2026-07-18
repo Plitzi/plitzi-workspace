@@ -18,6 +18,10 @@ export interface BuiltinParam {
   // source param's `when`, so a conditionally-shown field (e.g. a value only shown once its category/type is set) is
   // not filled when hidden.
   when?: (params: Record<string, unknown>) => boolean;
+  // A param the agent MUST supply for a well-formed node — omitting it makes the step malformed (e.g. a setState
+  // with no `category`/`key`). Validation flags a missing required param (when its `when` guard holds), even if a
+  // `default` also exists (the builder always writes it; a silent default could pick the wrong value).
+  required?: boolean;
 }
 
 export type ParamSpec = Record<string, BuiltinParam>;
@@ -44,6 +48,25 @@ export const hiddenParams = (
   }
 
   return hidden;
+};
+
+/** Declared params marked `required` that the agent did NOT supply, and whose `when` guard holds against the
+ *  effective params (so they are actually in play). Evaluated against the effective params so a required param
+ *  gated by a companion (e.g. setState `value`, shown only once `category` is set) is not reported when its guard
+ *  is not met. */
+export const missingRequiredParams = (
+  provided: Record<string, unknown>,
+  effective: Record<string, unknown>,
+  spec: ParamSpec
+): string[] => {
+  const missing: string[] = [];
+  for (const [key, param] of Object.entries(spec)) {
+    if (param.required && provided[key] === undefined && (!param.when || param.when(effective))) {
+      missing.push(key);
+    }
+  }
+
+  return missing;
 };
 
 /** Reconcile supplied params to a catalog schema: drop unknown keys when the set is CLOSED (strict), then fill the

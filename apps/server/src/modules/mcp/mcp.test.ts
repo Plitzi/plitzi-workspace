@@ -18,7 +18,7 @@ import type {
   AISchemaVariable,
   AIStyleVariable
 } from './types';
-import type { Schema, SSRAdapters, Style } from '@plitzi/sdk-shared';
+import type { ComponentCatalog, Schema, SSRAdapters, Style } from '@plitzi/sdk-shared';
 
 const buildSpace = (): Space => {
   const schema = {
@@ -150,7 +150,12 @@ describe('mcp-ai reads (filesystem model)', () => {
       pageFolders: []
     } as unknown as Schema;
     const catalog = {
-      chartWidget: { label: 'Chart Widget', description: 'Renders a chart from a data source', category: 'plugin' }
+      chartWidget: {
+        custom: true,
+        label: 'Chart Widget',
+        description: 'Renders a chart from a data source',
+        category: 'plugin'
+      }
     };
 
     const reg = buildTypeRegistry(schema, catalog);
@@ -2424,6 +2429,120 @@ describe('mcp-ai interactions', () => {
     expect(setState?.params.map(p => p.name)).toEqual(['category', 'key', 'value', 'revertOnFinish']);
     const delay = catalog.utilities.find(c => c.action === 'delayTime');
     expect(delay?.params.map(p => p.name)).toEqual(['time']);
+  });
+
+  // --- Dynamic per-space catalog: strict for default (custom:false) types, lenient for plugins (custom:true) ---
+
+  const spaceWithCatalog = (catalog: ComponentCatalog): Space => ({ ...interactiveSpace(), catalog });
+
+  const setStateFlow = (params: Record<string, unknown>): Operation => ({
+    type: 'upsertInteractionFlow',
+    pageRef: 'home',
+    ref: 'box-1',
+    nodes: [
+      { nodeType: 'trigger', action: 'onClick', title: 'Click' },
+      { nodeType: 'callback', action: 'setState', title: 'Set', params }
+    ]
+  });
+
+  it('warns when the element setState is missing required params (category/key)', () => {
+    const res = validate({ operations: [setStateFlow({ value: 'x' })] }, interactiveSpace());
+    expect(res.valid).toBe(true);
+    const missing = res.warnings.find(w => w.includes('setState') && w.includes('missing required'));
+    expect(missing).toBeTruthy();
+    expect(missing).toContain('"category"');
+    expect(missing).toContain('"key"');
+  });
+
+  it('ERRORS on a setState attribute key not on a default (custom:false) target type; a real key passes', () => {
+    const catalog: ComponentCatalog = {
+      container: { custom: false, attributes: ['title', 'content'], styleSelectors: ['base'] }
+    };
+    const ok = validate(
+      { operations: [setStateFlow({ category: 'attribute', key: 'content', value: 'x' })] },
+      spaceWithCatalog(catalog)
+    );
+    expect(ok.valid).toBe(true);
+
+    const bad = validate(
+      { operations: [setStateFlow({ category: 'attribute', key: 'bogus', value: 'x' })] },
+      spaceWithCatalog(catalog)
+    );
+    expect(bad.valid).toBe(false);
+    expect(bad.errors.some(e => e.message.includes('container') && e.message.includes('bogus'))).toBe(true);
+  });
+
+  it('only WARNS on a bad setState key for a plugin (custom:true) target type', () => {
+    const catalog: ComponentCatalog = {
+      container: { custom: true, attributes: ['title'], styleSelectors: ['base'] }
+    };
+    const res = validate(
+      { operations: [setStateFlow({ category: 'attribute', key: 'bogus', value: 'x' })] },
+      spaceWithCatalog(catalog)
+    );
+    expect(res.valid).toBe(true);
+    expect(res.warnings.some(w => w.includes('container') && w.includes('bogus'))).toBe(true);
+  });
+
+  it('validates category="state" keys against the type visibility + styleSelectors', () => {
+    const catalog: ComponentCatalog = {
+      container: { custom: false, attributes: ['title'], styleSelectors: ['base'] }
+    };
+    const ok = validate(
+      { operations: [setStateFlow({ category: 'state', key: 'styleSelectors.base', value: 'true' })] },
+      spaceWithCatalog(catalog)
+    );
+    expect(ok.valid).toBe(true);
+
+    const bad = validate(
+      { operations: [setStateFlow({ category: 'state', key: 'styleSelectors.nope', value: 'true' })] },
+      spaceWithCatalog(catalog)
+    );
+    expect(bad.valid).toBe(false);
+  });
+
+  it('ERRORS on an unknown attribute of a default type, WARNS for a plugin type (upsertElement)', () => {
+    const upsert: Operation = {
+      type: 'upsertElement',
+      pageRef: 'home',
+      parentRef: 'page1',
+      position: 'inside',
+      element: { ref: 'w-1', type: 'container', props: { bogus: 1 } }
+    };
+    const strict = validate(
+      { operations: [upsert] },
+      spaceWithCatalog({ container: { custom: false, attributes: ['title'] } })
+    );
+    expect(strict.valid).toBe(false);
+    expect(strict.errors.some(e => e.message.includes('container') && e.message.includes('bogus'))).toBe(true);
+
+    const lenient = validate(
+      { operations: [upsert] },
+      spaceWithCatalog({ container: { custom: true, attributes: ['title'] } })
+    );
+    expect(lenient.valid).toBe(true);
+    expect(lenient.warnings.some(w => w.includes('bogus'))).toBe(true);
+  });
+
+  it('lists a catalog type with zero instances in plitzi://types with its attributes/slots and source', () => {
+    const space = {
+      ...buildSpace(),
+      catalog: {
+        gauge: {
+          custom: true,
+          label: 'Gauge',
+          category: 'widget',
+          attributes: ['min', 'max'],
+          styleSelectors: ['track']
+        }
+      } as ComponentCatalog
+    };
+    const reg = readResource(space, 'main', 'plitzi://types')?.data as {
+      types: Record<string, { source: string; props: Record<string, unknown>; slots: string[] }>;
+    };
+    expect(reg.types.gauge.source).toBe('plugin');
+    expect(Object.keys(reg.types.gauge.props).sort()).toEqual(['max', 'min']);
+    expect(reg.types.gauge.slots).toContain('track');
   });
 });
 

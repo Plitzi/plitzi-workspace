@@ -1,11 +1,12 @@
 import { batchDeclaredFolders, batchDeclaredPages, batchDeclaredVariants, batchDeclaredVars } from './batch';
-import { checkObservedName, checkVarRefs } from './context';
+import { checkObservedName, checkVarRefs, warnOnce } from './context';
 import { checkSlotCss } from './css';
 import { checkElementInput, checkTypeProps, checkVariantApplication } from './elements';
 import { checkInteractionNode } from './interactions';
 import { checkRef } from './refs';
 import { observedDataSources, observedInteractionActions } from '../../../catalogs';
 import {
+  findElementByRef,
   findFolderByRef,
   findPageByRef,
   folderAncestorIds,
@@ -17,10 +18,11 @@ import {
 } from '../../../helpers';
 import { buildTypeRegistry } from '../../../resources';
 
-import type { ValidationCtx } from './context';
+import type { TypeMeta, ValidationCtx } from './context';
 import type { Space } from '../../../helpers';
 import type { ValidationResult } from '../../../types';
 import type { Operation } from '../../operations';
+import type { ComponentCatalog } from '@plitzi/sdk-shared';
 
 // The batch validator: builds the shared context from the space, then runs the per-op checks (split across the
 // sibling modules: refs, css, elements, batch, context) and the pageRef existence guard. The only export a
@@ -29,8 +31,58 @@ import type { Operation } from '../../operations';
 const MAX_OPS = 100;
 const STYLE_CATEGORIES = ['color', 'spacing', 'shadow', 'custom'];
 
+const buildTypeMeta = (catalog: ComponentCatalog | undefined): Map<string, TypeMeta> => {
+  const meta = new Map<string, TypeMeta>();
+  for (const [type, entry] of Object.entries(catalog ?? {})) {
+    const bindingsAllowed = entry.bindingsAllowed;
+
+    meta.set(type, {
+      attributes: new Set(entry.attributes ?? []),
+      styleSelectors: new Set(entry.styleSelectors ?? []),
+      custom: entry.custom ?? false,
+      ...(bindingsAllowed
+        ? {
+            bindingTargets: {
+              attributes: new Set(bindingsAllowed.attributes ?? []),
+              initialState: new Set(bindingsAllowed.initialState ?? [])
+            }
+          }
+        : {})
+    });
+  }
+
+  return meta;
+};
+
+// When the bound element's type declares its allowed binding targets (a plugin manifest's `bindingsAllowed`), warn
+// if the `to` target is not among them. Lenient (warning): only plugin types carry this list, and a manifest is a
+// best-effort snapshot. Categories other than attributes/initialState (e.g. style) carry no such list.
+const checkBindingTarget = (
+  ref: string,
+  category: string | undefined,
+  to: string,
+  path: string,
+  ctx: ValidationCtx
+): void => {
+  if (category !== 'attributes' && category !== 'initialState') {
+    return;
+  }
+
+  const type = ctx.elementType(ref);
+  const targets = type ? ctx.typeMeta.get(type)?.bindingTargets?.[category] : undefined;
+  if (!targets || targets.size === 0 || targets.has(to)) {
+    return;
+  }
+
+  warnOnce(
+    ctx,
+    `Binding target "${to}" at ${path} is not among the "${category}" targets the type "${type}" declares ` +
+      `(${[...targets].sort().join(', ')}). Verify against plitzi://data-sources; it may still be valid.`
+  );
+};
+
 export const validateOperations = (space: Space, ops: Operation[]): ValidationResult => {
-  const registry = buildTypeRegistry(space.schema);
+  const registry = buildTypeRegistry(space.schema, space.catalog);
   const batchPages = batchDeclaredPages(ops);
   const batchFolders = batchDeclaredFolders(ops);
   const folderRefs = (): unknown[] => pageFoldersOf(space.schema).map(f => f.id);
@@ -40,6 +92,8 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
     warned: new Set(),
     knownTypes: new Set(Object.keys(registry.types)),
     typeProps: new Map(Object.entries(registry.types).map(([type, info]) => [type, new Set(Object.keys(info.props))])),
+    typeMeta: buildTypeMeta(space.catalog),
+    elementType: ref => (findElementByRef(space.schema, ref) ?? findPageByRef(space.schema, ref))?.definition.type,
     schemaVars: new Set([
       ...space.schema.variables.map(v => v.name),
       ...routeParamNames(space.schema),
@@ -213,6 +267,7 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
           `${base}.binding.source`,
           ctx
         );
+        checkBindingTarget(op.ref, op.category, op.binding.to, `${base}.binding.to`, ctx);
         break;
       case 'patchBinding':
         checkRef(op.ref, `${base}.ref`, ctx);
@@ -224,6 +279,7 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
           `${base}.source`,
           ctx
         );
+        checkBindingTarget(op.ref, op.category, op.to, `${base}.to`, ctx);
         break;
       case 'deleteBinding':
         checkRef(op.ref, `${base}.ref`, ctx);
@@ -238,7 +294,7 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
           });
         }
 
-        op.nodes.forEach((node, n) => checkInteractionNode(node, `${base}.nodes[${n}]`, ctx));
+        op.nodes.forEach((node, n) => checkInteractionNode(node, `${base}.nodes[${n}]`, ctx, op.ref));
         break;
       case 'patchInteractionNode':
         checkRef(op.ref, `${base}.ref`, ctx);

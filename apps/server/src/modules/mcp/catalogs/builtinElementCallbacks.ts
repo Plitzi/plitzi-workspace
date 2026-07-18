@@ -34,15 +34,17 @@ export const BUILTIN_ELEMENT_CALLBACKS: Record<string, BuiltinElementCallback> =
         type: 'select',
         description:
           'What to change on the element: "attribute" sets one of its props (the common case — e.g. content, ' +
-          'disabled); "state" sets element state (visibility or a style selector).',
+          'disabled); "state" sets element state (visibility or a style selector). REQUIRED — always set it.',
         default: 'attribute',
-        options: ['attribute', 'state']
+        options: ['attribute', 'state'],
+        required: true
       },
       key: {
         type: 'text',
         description:
           'The field to set. When category="attribute", an attribute/prop key of THIS element (e.g. "content", ' +
-          '"disabled"). When category="state", "visibility" or "styleSelectors.<selector>".'
+          '"disabled"). When category="state", "visibility" or "styleSelectors.<selector>". REQUIRED.',
+        required: true
       },
       value: {
         type: 'text',
@@ -50,8 +52,9 @@ export const BUILTIN_ELEMENT_CALLBACKS: Record<string, BuiltinElementCallback> =
         // are passed as the strings "true"/"false".
         description:
           'The value to set. Booleans are passed as the strings "true"/"false" ("yes"/"no" also coerce) — there is ' +
-          'NO separate `type` param (that belongs to the global state setState, not this one).',
-        when: params => Boolean(params.category)
+          'NO separate `type` param (that belongs to the global state setState, not this one). REQUIRED.',
+        when: params => Boolean(params.category),
+        required: true
       },
       revertOnFinish: {
         type: 'boolean',

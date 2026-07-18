@@ -140,18 +140,29 @@ export type SSRRscData = {
   serverData?: Record<string, unknown>;
 };
 
-/** Semantic metadata for one element type, so the MCP can tell an agent what the type DOES (not just that it
- *  exists). `category` groups it (e.g. provider, structure, media); `custom` marks a plugin-provided type. */
+/** Semantic + machine-readable metadata for one element type, so the MCP can tell an agent what the type DOES
+ *  (not just that it exists) AND validate against it. `category` groups it (e.g. provider, structure, media);
+ *  `custom` marks a plugin-provided type. The MCP keys strict-vs-lenient validation off `custom`: a `custom:false`
+ *  (default sdk-elements) type is authoritative — an unknown attribute/setState key on it is an error — while a
+ *  `custom:true` (plugin) type is best-effort (warnings only), since its metadata is a manifest snapshot. */
 export type ComponentCatalogEntry = {
   label?: string;
   description?: string;
   category?: string;
   custom?: boolean;
+  /** The type's attribute/prop keys — the authoritative set for a default type (setState `key` when
+   *  category="attribute", and type-prop validation). Absent when unknown (e.g. a plugin with no manifest). */
+  attributes?: string[];
+  /** The type's `definition.styleSelectors` keys (slots) — setState `key` when category="state" is
+   *  `visibility` or `styleSelectors.<selector>`. */
+  styleSelectors?: string[];
+  /** Binding targets the type exposes, from the plugin manifest's `defaultStyle.bindingsAllowed`. */
+  bindingsAllowed?: { attributes?: string[]; initialState?: string[] };
 };
 
-/** Element type → its semantic metadata, keyed by the `type` string used in the schema. Covers the plugin
- *  (custom) element types installed on a space; the MCP layers its own curated descriptions of the built-in
- *  types on top. */
+/** Element type → its semantic metadata, keyed by the `type` string used in the schema. Covers BOTH the default
+ *  sdk-elements types (custom:false, authoritative) and the plugin (custom:true) element types installed on a
+ *  space, so the MCP can validate types/attributes dynamically per space instead of against a hand-mirror. */
 export type ComponentCatalog = Record<string, ComponentCatalogEntry>;
 
 export type SSRAdapters = {

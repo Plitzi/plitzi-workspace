@@ -13,12 +13,24 @@ const CSS_VAR = /var\(\s*--([A-Za-z_][\w-]*)\s*\)/g;
 // variable reference. Their props are skipped by the {{name}} check to avoid false positives.
 export const RAW_CODE_TYPES = new Set(['blockJsx', 'blockHtml', 'custom']);
 
+/** Authoritative per-type metadata from the component catalog (default sdk-elements ∪ this space's plugins).
+ *  `custom` drives strict-vs-lenient validation: a default type (custom:false) owns its full attribute set, so an
+ *  unknown attribute/setState key on it is an error; a plugin type (custom:true) is best-effort (warnings). */
+export interface TypeMeta {
+  attributes: Set<string>;
+  styleSelectors: Set<string>;
+  custom: boolean;
+  bindingTargets?: { attributes: Set<string>; initialState: Set<string> };
+}
+
 export interface ValidationCtx {
   errors: ValidationError[];
   warnings: string[];
   warned: Set<string>;
   knownTypes: Set<string>;
   typeProps: Map<string, Set<string>>; // observed prop keys per element type (I5)
+  typeMeta: Map<string, TypeMeta>; // authoritative per-type metadata from the component catalog
+  elementType: (ref: string) => string | undefined; // resolve an element ref/id to its schema type
   schemaVars: Set<string>; // valid {{name}}: space schema variables ∪ page route params ∪ batch-declared
   styleVars: Set<string>; // valid var(--name): design tokens across all categories
   style: Style; // to check that an applied variant is actually declared on its class

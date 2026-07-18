@@ -1,5 +1,12 @@
 import { checkObservedName, warnOnce } from './context';
-import { getElementCallback, getGlobalCallback, getUtility, hiddenParams, reconcileParams } from '../../../catalogs';
+import {
+  getElementCallback,
+  getGlobalCallback,
+  getUtility,
+  hiddenParams,
+  missingRequiredParams,
+  reconcileParams
+} from '../../../catalogs';
 
 import type { ValidationCtx } from './context';
 import type { ParamSpec } from '../../../catalogs';
@@ -9,14 +16,15 @@ import type { InteractionNodeInput } from '../../operations/schema/shared';
 // element callbacks (registered by every element) and utilities — each with its OWN param schema. The single most
 // common mistake is picking the WRONG node type for an action (so the runtime resolves it against nothing and the
 // step silently no-ops), or leaking one setState's params onto the other. This module tells them apart by node
-// type and validates each node against the matching schema; everything here is a WARNING (an unlisted action may be
-// a valid plugin/element-specific callback), never a hard error.
+// type and validates each node against the matching schema. Most checks WARN (an unlisted action may be a valid
+// plugin/element-specific callback); a setState `key` that is not a real attribute of a DEFAULT (sdk-elements)
+// type is a hard ERROR, since we own the full attribute set of those types.
 
 // setState exists as BOTH a globalCallback (source `state`, params key/type/value → runtime.state.*) and an element
 // callback (params category/key/value/revertOnFinish → the element's own attribute/state). It is disambiguated by
 // node type, so it is never cross-warned as "wrong type".
 
-const warnUnknownParams = (
+const checkParams = (
   label: string,
   action: string,
   params: Record<string, unknown>,
@@ -34,6 +42,15 @@ const warnUnknownParams = (
   }
 
   const effective = reconcileParams(params, spec, true);
+  const missing = missingRequiredParams(params, effective, spec);
+  if (missing.length > 0) {
+    warnOnce(
+      ctx,
+      `${label} "${action}" at ${base} is missing required param(s) ${missing.map(k => `"${k}"`).join(', ')} — the ` +
+        'step is malformed without them (see plitzi://interactions for what each does).'
+    );
+  }
+
   const hidden = hiddenParams(params, effective, spec);
   if (hidden.length > 0) {
     warnOnce(
@@ -72,11 +89,47 @@ const checkGlobalCallback = (node: InteractionNodeInput, base: string, ctx: Vali
   }
 
   if (node.params && builtin.strictParams) {
-    warnUnknownParams('Global callback', node.action, node.params, builtin.params, base, ctx);
+    checkParams('Global callback', node.action, node.params, builtin.params, base, ctx);
   }
 };
 
-const checkElementCallback = (node: InteractionNodeInput, base: string, ctx: ValidationCtx): void => {
+// The element `setState` sets an attribute or state key of the TARGET element. We can validate the key against that
+// element's type: strict (ERROR) for a default (custom:false) type — we own its full attribute/selector set — and
+// lenient (WARNING) for a plugin/unknown type. `category="attribute"` → key ∈ the type's attributes;
+// `category="state"` → key is `visibility` or `styleSelectors.<selector>`.
+const checkSetStateKey = (node: InteractionNodeInput, base: string, ctx: ValidationCtx, hostRef: string): void => {
+  const key = node.params?.key;
+  if (typeof key !== 'string' || key === '') {
+    return;
+  }
+
+  const targetRef = typeof node.elementId === 'string' && node.elementId !== '' ? node.elementId : hostRef;
+  const type = ctx.elementType(targetRef);
+  const meta = type ? ctx.typeMeta.get(type) : undefined;
+  if (!meta) {
+    return;
+  }
+
+  const state = node.params?.category === 'state';
+  const validKeys = state
+    ? new Set<string>(['visibility', ...[...meta.styleSelectors].map(selector => `styleSelectors.${selector}`)])
+    : meta.attributes;
+  // An attribute set we do not know (empty) is no basis to flag.
+  if (validKeys.size === 0 || validKeys.has(key)) {
+    return;
+  }
+
+  const kind = state ? 'state' : 'attribute';
+  const valid = [...validKeys].sort();
+  const detail = `Element setState at ${base} sets ${kind} "${key}" on type "${type}", which has no such ${kind} key`;
+  if (!meta.custom) {
+    ctx.errors.push({ path: base, message: detail, hint: `Use one of: ${valid.join(', ')}`, validValues: valid });
+  } else {
+    warnOnce(ctx, `${detail} (${valid.join(', ')}). It may still be valid — verify against plitzi://types.`);
+  }
+};
+
+const checkElementCallback = (node: InteractionNodeInput, base: string, ctx: ValidationCtx, hostRef: string): void => {
   const builtin = getElementCallback(node.action);
   if (!builtin) {
     if (getUtility(node.action)) {
@@ -96,7 +149,11 @@ const checkElementCallback = (node: InteractionNodeInput, base: string, ctx: Val
   }
 
   if (node.params && builtin.strictParams) {
-    warnUnknownParams('Element callback', node.action, node.params, builtin.params, base, ctx);
+    checkParams('Element callback', node.action, node.params, builtin.params, base, ctx);
+  }
+
+  if (node.action === 'setState') {
+    checkSetStateKey(node, base, ctx, hostRef);
   }
 };
 
@@ -113,11 +170,16 @@ const checkUtility = (node: InteractionNodeInput, base: string, ctx: ValidationC
   }
 
   if (node.params && utility.strictParams) {
-    warnUnknownParams('Utility', node.action, node.params, utility.params, base, ctx);
+    checkParams('Utility', node.action, node.params, utility.params, base, ctx);
   }
 };
 
-export const checkInteractionNode = (node: InteractionNodeInput, base: string, ctx: ValidationCtx): void => {
+export const checkInteractionNode = (
+  node: InteractionNodeInput,
+  base: string,
+  ctx: ValidationCtx,
+  hostRef: string
+): void => {
   checkObservedName(
     node.action,
     ctx.observedActions,
@@ -132,7 +194,7 @@ export const checkInteractionNode = (node: InteractionNodeInput, base: string, c
       checkGlobalCallback(node, base, ctx);
       break;
     case 'callback':
-      checkElementCallback(node, base, ctx);
+      checkElementCallback(node, base, ctx, hostRef);
       break;
     case 'utility':
       checkUtility(node, base, ctx);

@@ -34,25 +34,43 @@ export interface TypeRegistry {
   types: Record<string, TypeInfo>;
 }
 
-// Layer semantic metadata onto an observed type: prefer the curated built-in description, else the plugin catalog
-// (custom element), else fall back to the label observed on the element instances. Mutates in place.
+// Layer semantic + machine-readable metadata onto a type. The per-space component catalog (default sdk-elements
+// types ∪ this space's plugin types) is authoritative and takes precedence: it carries the type's FULL attribute
+// set and style selectors — so a type is known even with zero instances placed, and `source` follows the catalog's
+// `custom` flag. The hand-curated BUILTIN_COMPONENTS is only a fallback for the no-adapter MCP role. Mutates in
+// place.
 const enrichType = (typeName: string, info: TypeInfo, catalog: ComponentCatalog | undefined): void => {
+  const entry = catalog?.[typeName];
+  if (entry) {
+    info.label = entry.label ?? info.label;
+    if (entry.description !== undefined) {
+      info.description = entry.description;
+    }
+
+    if (entry.category !== undefined) {
+      info.category = entry.category;
+    }
+
+    info.source = entry.custom ? 'plugin' : 'builtin';
+    for (const attr of entry.attributes ?? []) {
+      info.props[attr] ??= { valueTypes: [], examples: [] };
+    }
+
+    for (const slot of entry.styleSelectors ?? []) {
+      if (!info.slots.includes(slot)) {
+        info.slots.push(slot);
+      }
+    }
+
+    return;
+  }
+
   const builtin = BUILTIN_COMPONENTS[typeName];
   if (builtin) {
     info.label = builtin.label;
     info.description = builtin.description;
     info.category = builtin.category;
     info.source = 'builtin';
-
-    return;
-  }
-
-  const custom = catalog?.[typeName];
-  if (custom) {
-    info.label = custom.label ?? info.label;
-    info.description = custom.description;
-    info.category = custom.category;
-    info.source = 'plugin';
   }
 };
 
@@ -121,10 +139,16 @@ export const buildTypeRegistry = (schema: Schema, catalog?: ComponentCatalog): T
     }
   }
 
+  // Catalog types with no instance placed yet are still valid types the agent can use — surface them so the
+  // registry (and the validation that reads it) is not limited to what already exists in the space.
+  for (const typeName of Object.keys(catalog ?? {})) {
+    types[typeName] ??= { count: 0, source: 'unknown', subTypes: [], slots: [], props: {} };
+  }
+
   for (const [typeName, info] of Object.entries(types)) {
+    enrichType(typeName, info, catalog);
     info.subTypes.sort();
     info.slots.sort();
-    enrichType(typeName, info, catalog);
   }
 
   return {

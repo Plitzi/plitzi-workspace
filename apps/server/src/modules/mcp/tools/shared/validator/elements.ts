@@ -6,9 +6,10 @@ import type { ValidationCtx } from './context';
 import type { ElementInput } from '../../operations';
 import type { InitialStateInput } from '../../operations/schema/shared';
 
-// I5: warn when a prop is not among the type's OBSERVED props (plitzi://types is observed, not declared — so this
-// is a warning, never a hard error: an unseen-but-valid prop is possible). Skips raw-code types and any type with
-// no observed props (zero knowledge → no basis to flag).
+// Flag a prop that is not one the type declares. Strict-vs-lenient by ownership: for a DEFAULT (sdk-elements) type
+// we own the full attribute set (catalog `custom:false`), so an unknown prop is an ERROR; for a PLUGIN type
+// (`custom:true`) or a type only known from observed instances it stays a WARNING (an unseen-but-valid prop is
+// possible). Skips raw-code types and any type with no known attributes (zero knowledge → no basis to flag).
 export const checkTypeProps = (
   type: string,
   props: Record<string, unknown> | undefined,
@@ -19,21 +20,33 @@ export const checkTypeProps = (
     return;
   }
 
-  const known = ctx.typeProps.get(type);
+  const meta = ctx.typeMeta.get(type);
+  // A default type's authoritative attribute set; else the observed props (lenient basis).
+  const known = meta && meta.attributes.size > 0 ? meta.attributes : ctx.typeProps.get(type);
   if (!known || known.size === 0) {
     return;
   }
 
+  const strict = meta?.custom === false;
   for (const key of Object.keys(props)) {
     if (key === 'subType' || known.has(key)) {
       continue;
     }
 
-    warnOnce(
-      ctx,
-      `Type "${type}" has no observed prop "${key}" at ${path} (observed: ${[...known].sort().join(', ')}). ` +
-        'It may still be valid — verify against plitzi://types.'
-    );
+    if (strict) {
+      ctx.errors.push({
+        path,
+        message: `Type "${type}" has no attribute "${key}"`,
+        hint: `Valid attributes: ${[...known].sort().join(', ')}`,
+        validValues: [...known].sort()
+      });
+    } else {
+      warnOnce(
+        ctx,
+        `Type "${type}" has no observed prop "${key}" at ${path} (known: ${[...known].sort().join(', ')}). ` +
+          'It may still be valid — verify against plitzi://types.'
+      );
+    }
   }
 };
 
