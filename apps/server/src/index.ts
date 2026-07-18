@@ -21,6 +21,7 @@ export {
   handleMcp,
   serveMcp,
   readMcpBody,
+  buildAgentGuide,
   createHttpPreviewClient,
   createHttpScreenshotClient
 } from './modules/mcp';

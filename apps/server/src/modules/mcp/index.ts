@@ -1,7 +1,7 @@
 export { createMcpServer, handleMcp, serveMcp, readMcpBody } from './handler';
 export { readResource, resourceVersion, registerResources, buildTypeRegistry, cssProperties } from './resources';
 export { apply, validate, search, read, validateOperations, operation, tools } from './tools';
-export { computeVersion } from './helpers';
+export { computeVersion, buildAgentGuide } from './helpers';
 export { createHttpPreviewClient } from './previewClient';
 export { createHttpScreenshotClient } from './screenshotClient';
 
