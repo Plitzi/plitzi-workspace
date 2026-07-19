@@ -259,10 +259,116 @@ describe('robustness — {% if %} blocks tolerate malformed and nested input', (
     '{% if source %}no endif here',
     'a{% endif %}b',
     'a{% else %}b',
-    '{% if source %}A{% else %}B',
-    '{% for item in list %}L{% endfor %}'
+    '{% if source %}A{% else %}B'
   ])('leaves the malformed or unsupported block %j untouched without throwing', template => {
     expect(() => processTwig(template, context)).not.toThrow();
     expect(processTwig(template, context)).toBe(template);
+  });
+});
+
+describe('processTwig — {% for %} loops', () => {
+  it('iterates over an array', () => {
+    expect(processTwig('{% for item in items %}{{ item }}{% endfor %}', { items: ['a', 'b', 'c'] })).toBe('abc');
+  });
+
+  it('renders surrounding text around the loop', () => {
+    expect(processTwig('pre {% for item in items %}[{{ item }}] {% endfor %}post', { items: ['x', 'y'] })).toBe(
+      'pre [x] [y] post'
+    );
+  });
+
+  it('resolves nested paths inside the loop body', () => {
+    expect(
+      processTwig('{% for item in items %}{{ item.name }}{% endfor %}', {
+        items: [{ name: 'A' }, { name: 'B' }]
+      })
+    ).toBe('AB');
+  });
+
+  it('supports {% if %} inside the loop body', () => {
+    expect(
+      processTwig('{% for item in items %}{% if item.active %}{{ item.name }}{% endif %}{% endfor %}', {
+        items: [
+          { name: 'A', active: true },
+          { name: 'B', active: false }
+        ]
+      })
+    ).toBe('A');
+  });
+
+  it('supports nested for loops', () => {
+    expect(
+      processTwig('{% for a in matrix %}{% for b in a %}{{ b }}{% endfor %}{% endfor %}', {
+        matrix: [
+          [1, 2],
+          [3, 4]
+        ]
+      })
+    ).toBe('1234');
+  });
+
+  it('iterates over object key/value pairs', () => {
+    expect(
+      processTwig('{% for key, value in obj %}{{ key }}={{ value }} {% endfor %}', { obj: { a: '1', b: '2' } })
+    ).toBe('a=1 b=2 ');
+  });
+
+  it('renders empty string for empty array', () => {
+    expect(processTwig('{% for item in items %}X{% endfor %}', { items: [] })).toBe('');
+  });
+
+  it('renders else clause for empty array', () => {
+    expect(processTwig('{% for item in items %}X{% else %}empty{% endfor %}', { items: [] })).toBe('empty');
+  });
+
+  it('renders else clause for undefined collection', () => {
+    expect(processTwig('{% for item in missing %}X{% else %}none{% endfor %}', {})).toBe('none');
+  });
+
+  it('exposes loop metadata (index, index0, first, last, length, revindex)', () => {
+    const tpl =
+      '{% for item in items %}{{ loop.index }}:{{ loop.index0 }}{% if loop.first %}F{% endif %}{% if loop.last %}L{% endif %}({{ loop.length }}){% if not loop.last %},{% endif %}{% endfor %}';
+    expect(processTwig(tpl, { items: ['a', 'b', 'c'] })).toBe('1:0F(3),2:1(3),3:2L(3)');
+  });
+
+  it('supports numeric range 0..N', () => {
+    expect(processTwig('{% for i in 0..4 %}{{ i }}{% endfor %}', {})).toBe('01234');
+  });
+
+  it('supports reverse range N..0', () => {
+    expect(processTwig('{% for i in 4..0 %}{{ i }}{% endfor %}', {})).toBe('43210');
+  });
+
+  it('supports range with variable bounds', () => {
+    expect(processTwig('{% for i in start..end %}{{ i }}{% endfor %}', { start: 2, end: 5 })).toBe('2345');
+  });
+
+  it('handles no spaces around keywords', () => {
+    expect(processTwig('{%for item in items%}{{ item }}{%endfor%}', { items: ['x'] })).toBe('x');
+  });
+
+  it('handles excessive whitespace', () => {
+    expect(processTwig('{%   for   item   in   items   %}{{ item }}{%   endfor   %}', { items: ['x'] })).toBe('x');
+  });
+
+  it('cycles through values with {{ cycle() }}', () => {
+    expect(
+      processTwig('{% for item in items %}{{ cycle(["odd", "even"], loop.index0) }}{% endfor %}', {
+        items: ['a', 'b', 'c']
+      })
+    ).toBe('oddevenodd');
+  });
+
+  it('leaves malformed for blocks untouched without throwing', () => {
+    const malformed = [
+      '{% for in list %}X{% endfor %}',
+      '{% for item, in list %}X{% endfor %}',
+      '{% for item in %}X{% endfor %}',
+      '{% for item in list %}X'
+    ];
+    for (const template of malformed) {
+      expect(() => processTwig(template, { list: ['a'] })).not.toThrow();
+      expect(processTwig(template, { list: ['a'] })).toBe(template);
+    }
   });
 });

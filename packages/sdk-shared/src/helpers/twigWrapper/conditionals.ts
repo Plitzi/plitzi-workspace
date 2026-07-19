@@ -43,12 +43,19 @@ const compareValues = (operator: string, left: unknown, right: unknown): boolean
 // Evaluates a `{% if %}` condition. Anything it cannot make sense of — an unresolved path, an unsupported operator
 // left inside the operand, a malformed expression — collapses to a falsy result rather than throwing.
 const evalCondition = (expr: string, context: Record<string, unknown>): boolean => {
-  const comparison = COMPARISON.exec(expr.trim());
+  const trimmed = expr.trim();
+
+  // Twig `not` unary operator: `{% if not condition %}`
+  if (trimmed.startsWith('not ')) {
+    return !evalCondition(trimmed.slice(4), context);
+  }
+
+  const comparison = COMPARISON.exec(trimmed);
   if (comparison) {
     return compareValues(comparison[2], evalOperand(comparison[1], context), evalOperand(comparison[3], context));
   }
 
-  return Boolean(evalOperand(expr, context));
+  return Boolean(evalOperand(trimmed, context));
 };
 
 // Replaces every `{% if %}` block with its chosen branch, innermost first. The guard caps pathological input; a

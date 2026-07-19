@@ -1,4 +1,5 @@
 import { applyConditionals } from './conditionals';
+import { applyLoops } from './loops';
 import { renderTokens } from './renderTokens';
 
 // Renders a user-written template: resolves `{% if %}` blocks, then `{{ token }}` interpolation. `keepEmptyTokens`
@@ -21,7 +22,12 @@ export const processTwig = (
       context = { ...variables, ...(variables.variables as Record<string, unknown>) };
     }
 
-    const result = renderTokens(applyConditionals(template, context), context, keepEmptyTokens, asRaw);
+    const result = renderTokens(
+      applyConditionals(applyLoops(template, context), context),
+      context,
+      keepEmptyTokens,
+      asRaw
+    );
     if (!asRaw) {
       return result;
     }

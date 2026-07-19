@@ -30,3 +30,21 @@ export const IF_BLOCK = new RegExp(
 );
 export const COMPARISON = /^([\s\S]+?)\s*(==|!=|>=|<=|>|<)\s*([\s\S]+)$/;
 export const STRING_LITERAL = /^(['"])([\s\S]*)\1$/;
+
+// Matches the opening `{% for %}` tag with its variable(s) and collection expression. Captures the primary
+// variable name, the optional secondary variable (for `{% for key, value in obj %}`), and the collection expression.
+export const FOR_OPEN = /\{%\s*for\s+(\w+)(?:\s*,\s*(\w+))?\s+in\s+((?:(?!%\})[\s\S])+?)\s*%\}/;
+
+// Matches structural tags inside a for block body (for scanning nesting depth). Captures the tag type
+// (for/endfor/else/if/endif) so the caller can track depth. The `for` and `if` alternatives allow content
+// after the keyword to handle opening tags like `{% for b in a %}` or `{% if active %}`.
+export const FOR_TAG = /\{%\s*(if\b[\s\S]*?|endif|for\b[\s\S]*?|endfor|else)\s*%\}/g;
+
+// Detects the Twig range operator `start..end` inside a `{% for %}` collection expression. The bounds can be
+// numeric literals (`0..10`, `-2..2`), variable paths (`start..end`) or quoted characters (`'a'..'z'`).
+export const RANGE_EXPR = /^(['"]?)(-?\w+)\1\s*\.\.\s*(['"]?)(-?\w+)\3$/;
+
+// Twig loop control tags: `{% break %}` exits the loop entirely, `{% continue %}` skips the current iteration.
+// Whitespace is fully flexible, matching Twig conventions.
+export const BREAK_TAG = /\{%\s*break\s*%\}/;
+export const CONTINUE_TAG = /\{%\s*continue\s*%\}/;
