@@ -24,15 +24,17 @@ export const upsertPageOp = z
       .string()
       .describe(
         'Page id/slug to update, or a new id you choose to create one. On a new page it is stored as its idRef: ' +
-          'letters, numbers and hyphens only ("pricing"), unique across the space.'
+          'starts with a letter, then letters, numbers, hyphens and underscores ("pricing"), unique across the space.'
       ),
     label: z.string().optional(),
     slug: z
       .string()
       .optional()
       .describe(
-        'The page URL path (good practice: always set one on create for a clean, stable route, e.g. "/pricing" ' +
-          'or ":spaceId/update/*"). Omitted on create → the page ref is used as the slug.'
+        'The page URL path, RELATIVE — do NOT start it with "/" (the runtime and any parent folder slugs prepend ' +
+          'the path; a leading "/" is stripped). Good practice: always set one on create for a clean, stable route, ' +
+          'e.g. "pricing" or "posts/:postId" (a ":name" segment is a route param, readable as {{name}} and as the ' +
+          'source navigation.routeParams.name). Omitted on create → the page ref is used as the slug.'
       ),
     folder: z
       .string()
@@ -53,6 +55,11 @@ export const upsertPageOp = z
 export type UpsertPage = z.infer<typeof upsertPageOp>;
 
 export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => {
+  // A page slug is RELATIVE: the navigation runtime prepends the leading '/' (and any parent folder slugs) when it
+  // builds the route, so a stored leading slash would double it (`//pricing`). Strip it here so a slug the agent
+  // wrote as "/pricing" persists as "pricing" and the URL is well formed.
+  const slug = op.slug === undefined ? undefined : op.slug.replace(/^\/+/, '');
+
   // The stored `folder` is always either '' (root) or an existing folder id — never a dangling ref. undefined =
   // leave as-is; null or '' = move to root; any other ref must resolve to an existing folder or the op fails.
   let folderValue: string | undefined;
@@ -80,7 +87,7 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
     const oldRef = pageRefOf(existing);
     existing.attributes = {
       ...existing.attributes,
-      ...(op.slug !== undefined ? { slug: op.slug } : {}),
+      ...(slug !== undefined ? { slug } : {}),
       ...(op.label !== undefined ? { name: op.label } : {}),
       ...(op.default !== undefined ? { default: op.default } : {}),
       ...(op.enabled !== undefined ? { enabled: op.enabled } : {}),
@@ -99,7 +106,7 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
 
   const id = generateObjectId();
   const attributes: Element['attributes'] = {
-    slug: op.slug ?? op.ref,
+    slug: slug ?? op.ref,
     name: op.label ?? op.ref,
     default: op.default ?? false,
     enabled: op.enabled ?? true,

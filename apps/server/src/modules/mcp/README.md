@@ -111,8 +111,10 @@ is a **warning**, never a hard error. Only structurally-wrong input fails the ba
 
 - **Read-then-write.** Reads follow a filesystem model (list cheap, read one on demand). The guide in
   [`helpers/guide.ts`](helpers/guide.ts) is the agent's manual — keep it in sync with tool behavior.
-- **Address by `idRef`.** Charset `[A-Za-z0-9-]`, unique across the space; no dots/underscores (they break the
-  `<type>_<idRef>.<field>` grammar). Writing an interaction/binding mints an idRef when one is missing.
+- **Address by `idRef`.** Charset `[A-Za-z0-9_-]` starting with a letter, unique across the space; no dots (a dot
+  splits the `<type>_<idRef>.<field>` grammar). Underscores are allowed — the FIRST `_` separates `<type>` from
+  `<idRef>` and element types have none, so extra underscores are unambiguous. Writing an interaction/binding mints
+  an idRef when one is missing.
 - **`upsert` replaces, `patch` merges.** Upsert ops fully replace props/CSS; patch ops merge (a `null` value
   unsets a key). Mirror this in any new op pair.
 - **Atomic + optimistic concurrency.** `plitzi_apply` persists nothing if any op fails; callers pass

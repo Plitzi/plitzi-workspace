@@ -1350,6 +1350,31 @@ describe('mcp-ai page enable/disable (attributes.enabled)', () => {
   });
 });
 
+describe('mcp-ai page slug is relative (leading slash stripped)', () => {
+  it('strips a leading slash so the slug persists relative on create', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      { operations: [{ type: 'upsertPage', ref: 'pricing', label: 'Pricing', slug: '/pricing' }] },
+      buildSpace(),
+      cap.persisters
+    );
+    const page = readResource(cap.saved(), 'main', 'plitzi://schema/main/pages/pricing')?.data as AIPageSkeleton;
+    expect(page.slug).toBe('pricing');
+  });
+
+  it('keeps a route-param slug intact while dropping the leading slash', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      { operations: [{ type: 'upsertPage', ref: 'post-detail', label: 'Post', slug: '/posts/:postId' }] },
+      buildSpace(),
+      cap.persisters
+    );
+    const page = readResource(cap.saved(), 'main', 'plitzi://schema/main/pages/post-detail')?.data as AIPageSkeleton;
+    expect(page.slug).toBe('posts/:postId');
+    expect(page.routeParams).toEqual(['postId']);
+  });
+});
+
 describe('mcp-ai idRef (the ref IS the runtime wiring key)', () => {
   it('stores the chosen ref as the element idRef at the Element root', async () => {
     const cap = capturing(buildSpace());
@@ -2436,6 +2461,38 @@ describe('mcp-ai interactions', () => {
     );
     expect(node?.params.autoDismiss).toBe(false);
     expect(node?.params).not.toHaveProperty('autoDismissTimeout');
+  });
+
+  // A param value can be a data-binding token ({{ source }}) that resolves at runtime — so its literal string form is
+  // NOT a type error even for a param declared boolean/number (autoDismiss/autoDismissTimeout here).
+  it('accepts a data-binding token as a param value where the type would otherwise be boolean/number', () => {
+    const res = validate(
+      {
+        operations: [
+          {
+            type: 'upsertInteractionFlow',
+            pageRef: 'home',
+            ref: 'box-1',
+            nodes: [
+              { nodeType: 'trigger', action: 'onClick', title: 'Click' },
+              {
+                nodeType: 'globalCallback',
+                action: 'addNotification',
+                title: 'Notify',
+                params: {
+                  content: '{{ list_food-list.item.name }}',
+                  autoDismiss: '{{ list_food-list.item.pinned }}',
+                  autoDismissTimeout: '{{ list_food-list.item.ttl }}'
+                }
+              }
+            ]
+          }
+        ]
+      },
+      interactiveSpace()
+    );
+    expect(res.errors.some(e => e.message.includes('autoDismiss'))).toBe(false);
+    expect(res.errors.some(e => e.message.includes('autoDismissTimeout'))).toBe(false);
   });
 
   it('warns when a built-in globalCallback is pointed at the host element instead of its source', () => {

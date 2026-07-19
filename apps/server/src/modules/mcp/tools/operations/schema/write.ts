@@ -20,9 +20,10 @@ import type { Element, ElementDefinition } from '@plitzi/sdk-shared';
 // operations (create/place/detach) the upsert/move handlers reuse.
 
 export const ID_REF_HINT =
-  'Use only letters, numbers and hyphens (e.g. "hero-cta"). The ref becomes the element idRef, which the runtime ' +
-  'embeds in source names like `apiContainer_<idRef>.field` and in interaction targets — a dot or underscore would ' +
-  'break those paths.';
+  'Start with a letter, then letters, numbers, hyphens and underscores (e.g. "hero-cta" or "food_item"). The ref ' +
+  'becomes the element idRef, which the runtime embeds in source names like `apiContainer_<idRef>.field` and in ' +
+  'interaction targets — a dot would split those paths (an underscore is fine: the FIRST `_` separates the type from ' +
+  'the idRef, and element types carry none, so extra underscores are unambiguous).';
 
 const TAKEN_HINT =
   'An idRef must be unique across the space — pick a different ref, or address the existing element by this ref.';
