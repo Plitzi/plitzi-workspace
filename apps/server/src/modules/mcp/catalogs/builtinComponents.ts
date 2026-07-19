@@ -20,7 +20,7 @@ export const BUILTIN_COMPONENTS: Partial<Record<string, BuiltinComponent>> = {
     label: 'List',
     category: 'structure',
     description:
-      'Repeats a template (its listItem child) once per entry of a data array — the way to render a dynamic ' +
+      'Repeats a template (its listItem/link child) once per entry of a data array — the way to render a dynamic ' +
       'collection. Bind its items to a data source (e.g. an apiContainer/collectionContainer response).'
   },
   listItem: {
