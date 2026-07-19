@@ -1,8 +1,10 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import { get } from '@plitzi/plitzi-ui/helpers';
 import Switch from '@plitzi/plitzi-ui/Switch';
+import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import getBindingWarnings, { WARNING_ICON, worstLevel } from './helpers/getBindingWarnings';
 import transformerString from './helpers/transformerString';
 import whenString from './helpers/whenString';
 
@@ -92,6 +94,12 @@ const BindingSelected = ({
   const transformerName = useMemo(() => transformerString(transformers), [transformers]);
   const whenStr = useMemo(() => whenString(when), [when]);
   const sourceDisplayName = useMemo(() => get(sources, `${sourceName}.name`, sourceName), [sourceName, sources]);
+  const warnings = useMemo(
+    () => getBindingWarnings({ source, transformers, sources }),
+    [source, transformers, sources]
+  );
+  const warningLevel = worstLevel(warnings);
+  const warningTitle = warnings.map(w => w.message).join('\n\n');
 
   const handleChangeEnabled = useCallback(
     () => onEnable?.(category as BindingCategory, id, !enabled),
@@ -99,8 +107,17 @@ const BindingSelected = ({
   );
 
   return (
-    <div className="flex rounded-sm border border-gray-300 dark:border-zinc-600">
+    <div
+      className={clsx('flex rounded-sm border', {
+        'border-gray-300 dark:border-zinc-600': !warningLevel,
+        'border-orange-400 dark:border-orange-500': warningLevel === 'warning',
+        'border-red-400 dark:border-red-500': warningLevel === 'danger'
+      })}
+    >
       <div className="flex flex-col items-center gap-2 p-1">
+        {warningLevel && (
+          <i className={clsx(WARNING_ICON[warningLevel])} title={warningTitle} aria-label={warningTitle} />
+        )}
         <Switch checked={enabled} size="xs" onChange={handleChangeEnabled} />
         <div className="flex grow flex-col items-center justify-end gap-1">
           <Button size="xs" title="Update" onClick={handleClickUpdateBinding}>
