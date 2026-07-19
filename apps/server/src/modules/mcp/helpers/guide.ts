@@ -13,7 +13,8 @@ export const serverInstructions =
   'you need for the next edit. Use patchElement / patchDefinition to change only some props / CSS (the upsert ' +
   'variants replace them all). An element read (and search include:"detail") inlines the CSS of the definitions ' +
   'it attaches under resolvedStyle, so you rarely need a separate definition read. ' +
-  'Refs accept a semantic idRef ([A-Za-z0-9-], unique, chosen by you) or the raw id — the idRef is ALSO the ' +
+  'Refs accept a semantic idRef ([A-Za-z0-9_-] starting with a letter, unique, chosen by you) or the raw id — the ' +
+  'idRef is ALSO the ' +
   'runtime wiring key, so a provider source is `<type>_<idRef>.<field>`, visible to the provider’s DESCENDANTS only ' +
   '(bind inside its subtree). CSS is kebab-case and ATOMIC (shorthands like border/padding expanded; compound ones ' +
   'like flex/background/font rejected — use longhands); style vars are var(--name), schema vars are {{name}}. ' +
@@ -41,8 +42,10 @@ per-element read. (3) \`plitzi_apply\` with \`dryRun:true\` to preview. (4) \`pl
 \`expectedResourceVersions\` (uri → the stateVersion you read) for every resource you change — omitting it lets a
 concurrent edit be lost. Use \`patchElement\`/\`patchDefinition\` to change only some props/CSS (upsert replaces all).
 
-**Refs & wiring:** a ref is the semantic \`idRef\` (letters/numbers/hyphens — **no dots or underscores**) or the raw
-id. The idRef is the runtime wiring key: a provider's source is \`<type>_<idRef>\`, and interactions target by it.
+**Refs & wiring:** a ref is the semantic \`idRef\` (letters, numbers, hyphens and underscores, **starting with a
+letter — no dots**) or the raw id. The idRef is the runtime wiring key: a provider's source is \`<type>_<idRef>\`, and
+interactions target by it. A dot would split that path; an **underscore is fine** — the first \`_\` separates the type
+from the idRef (element types have none), so \`list_food_item\` reads unambiguously as type \`list\`, idRef \`food_item\`.
 
 **Styling:** CSS keys are **kebab-case** (\`background-color\`); \`var(--token)\` for style vars, \`{{name}}\` for schema
 vars. Shorthands \`border\`/\`padding\`/\`margin\`/\`gap\` are expanded for you. Write **atomically — no compound
@@ -61,9 +64,13 @@ a QueryBuilder RuleGroup gating the binding.
 computed for you). Node types: \`callback\` (an element's own callback — \`elementId\` is that element), \`globalCallback\`
 (a source module — omit \`elementId\`, the MCP sets it), \`utility\` (no element). Element \`setState\`
 (category/key/value/revertOnFinish) ≠ global \`setState\` (source \`state\`, key/type/value). To turn a step off use
-\`patchInteractionNode {enabled:false}\` — \`deleteInteraction\` removes it (destructive; confirm first).
+\`patchInteractionNode {enabled:false}\` — \`deleteInteraction\` removes it (destructive; confirm first). Any param
+**value** can be a binding token \`{{ source }}\` (e.g. notification \`content: "{{ list_<idRef>.item.name }}"\`).
 
-**Pages:** \`upsertPage\` — always set a \`slug\`.
+**Pages & navigation:** \`upsertPage\` — always set a **relative** \`slug\` (no leading \`/\`; the runtime and folder
+slugs prepend the path). A \`:name\` segment (\`"posts/:postId"\`) is a route param, readable as \`{{name}}\` and as the
+source \`navigation.routeParams.name\` → build dynamic pages this way. To move between pages **prefer the \`Link\`
+element** (a container: \`mode\` "page"/"internal"/"external") over a \`navigate\` interaction.
 
 **Touched resources must be malformation-free.** Editing an element/definition also checks its CURRENT stored content
 and BLOCKS the save on any \`Pre-existing malformation in <resource>\` error (a broken transformer, malformed node,
@@ -193,9 +200,10 @@ stores the \`ref\` you chose as its **idRef**.
 The idRef is not just an alias — it is the **wiring key the runtime uses**. A provider registers its data source as
 \`<type>_<idRef>\`, so a \`source\` you write against a ref resolves to that element at runtime with no id translation.
 Rules for a **new** ref (both are enforced; a violation fails the batch):
-- Charset \`[A-Za-z0-9-]\` (e.g. \`"products-api"\`). A \`.\` would split the \`<type>_<idRef>.<field>\` source path and the
-  interaction target lookup; a \`_\` would collide with the \`<type>_<idRef>\` separator. **No dots, no underscores** —
-  use hyphens.
+- Charset \`[A-Za-z0-9_-]\`, **starting with a letter** (e.g. \`"products-api"\`, \`"food_item"\`). A \`.\` would split the
+  \`<type>_<idRef>.<field>\` source path and the interaction target lookup, so **no dots**. An **underscore is
+  allowed**: the FIRST \`_\` separates \`<type>\` from \`<idRef>\` and element types are camelCase with none, so
+  underscores inside the idRef are unambiguous (\`list_food_item\` → type \`list\`, idRef \`food_item\`).
 - **Unique across the space**; creating a ref that is taken is rejected (address the existing element instead).
 
 An idRef is **optional** on an element — one built in the builder may not have it. The consequence is specific: an
@@ -234,7 +242,13 @@ pointed at the old name is repointed with it, so the element stays wired. You do
   \`display: flex\` **plus** \`flex-direction\`, \`align-items\`, \`justify-content\` as separate properties.
 - CSS is grouped by breakpoint: \`desktop\`, \`tablet\`, \`mobile\`.
 - Reference a style variable in CSS as \`var(--name)\`; a schema variable in a prop as \`{{name}}\`.
-- \`element.style.base\` is a list of definition refs; other slots go under \`element.style.slots\`.
+- \`element.style.base\` is a **list** of definition refs; other slots go under \`element.style.slots\`.
+- **An element can attach SEVERAL classes at once, and they all apply.** \`style.base\` holds a list, and each
+  non-base slot holds its own — every attached definition contributes CSS, and they **cascade** (a later class, then a
+  global/id rule, overrides an earlier one on the same property). So when a style looks wrong, the culprit may be
+  ANY attached class, not the one you just edited: read the element's \`resolvedStyle\` (it inlines the CSS of every
+  class it attaches, keyed by ref) together with its \`globalStyles\`/\`idStyle\` and the type's \`defaultStyle\`, and
+  fix the class that actually sets the property — do not just pile another class on top.
 - **Three kinds of style live in the style schema — do not confuse them:**
   - **Definitions** = reusable CSS **classes** (\`upsertDefinition\`/\`patchDefinition\`/\`deleteDefinition\`, keyed by a
     class \`ref\`). Attach one to an element via \`style.base\` to style **that** element (and anything else that opts in).
@@ -345,6 +359,17 @@ you — never wire them by hand. Each step also has an \`enabled\` flag (see dis
   names: \`delayTime\` waits \`time\` milliseconds (**not** \`delay\`), \`twigTemplate\` (\`returnMode\`, \`template\`),
   \`webHook\` (\`url\`, \`method\`, …). See \`utilities\` in \`plitzi://interactions/{env}\`.
 
+**A param value can be a data binding.** Any interaction param may hold a \`{{ source }}\` token instead of a literal —
+it resolves at runtime exactly like a prop binding, using the same source grammar (\`<type>_<idRef>.<path>\`, or a
+module source like \`navigation\`/\`state\`). This is how a step reacts to *the data in context*: inside a \`listItem\`,
+a click on a row can show \`addNotification\` with \`content: "{{ list_<idRef>.item.name }}"\` — the clicked row's field.
+The value follows the source's type, so a token is valid even where a param expects a boolean/number. Copy/paste of an
+element repoints these tokens to the new idRefs automatically, along with the element's bindings.
+
+**Navigating between pages — prefer the \`Link\` element over an interaction.** For a plain "go to page X" the right
+tool is a \`link\` element (a container, see *Pages & folders*), not a \`navigate\` interaction step. Use the
+\`navigate\` globalCallback only when the navigation is one step of a larger flow (e.g. submit a form, then go).
+
 Tools:
 - \`upsertInteractionFlow\` — create or replace one flow. The FIRST node must be a \`trigger\`. Pass \`flowId\` (the
   trigger's node id) to replace an existing flow. Example (elementId omitted — the MCP wires it to \`space\` and fills
@@ -372,11 +397,30 @@ node type and valid params per action. An element read lists its flows as ordere
 
 ## Pages & folders
 - **Always set a \`slug\` when creating a page** (\`upsertPage\`) — it is the page's URL path and good practice for a
-  clean, stable route (e.g. \`"/pricing"\` or \`":spaceId/update/*"\`). Omit it and the page ref is used as the slug,
+  clean, stable route (e.g. \`"pricing"\` or \`"posts/:postId"\`). Omit it and the page ref is used as the slug,
   and \`plitzi_validate\`/\`plitzi_apply\` warn so you remember to set a meaningful one.
+- **A page slug is RELATIVE — do NOT start it with \`/\`.** The runtime prepends the leading slash (and any folder
+  path) itself, so a leading slash doubles it. Write \`"pricing"\`, not \`"/pricing"\`. (upsertPage strips a leading
+  slash for you, but write it relative.)
+- **Dynamic pages — route params.** A slug segment written \`:name\` (e.g. \`"posts/:postId"\`) is a **route param**,
+  exactly like React Router. On that page it is readable **two ways**: as \`{{name}}\` inside a prop, and as the
+  data-binding source **\`navigation.routeParams.name\`** (the \`navigation\` module source, global — bindable
+  anywhere). So a blog is a \`"posts"\` list page plus a \`"posts/:postId"\` detail page whose \`apiContainer\` query
+  binds \`navigation.routeParams.postId\` to fetch that one post. (\`navigation.queryParams.<name>\` exposes \`?query=\`
+  string params the same way.)
+- **Navigate with the \`Link\` element, not an interaction.** \`link\` is a **container** — it wraps any children and
+  navigates on click, so it is the default way to move between pages. Its \`mode\`: \`"page"\` links to another space
+  page (set \`href\` to the target page, folder path resolved for you); \`"internal"\` takes a path inside the space and
+  resolves \`{{token}}\` templates in it, so a row's "view" link is \`mode:"internal", href:"posts/{{postId}}"\`;
+  \`"external"\` is a full URL. \`target\` is \`self\`/\`blank\`/\`parent\`/\`top\`. Reach for the \`navigate\` globalCallback
+  only when navigation must be **one step inside a larger interaction flow** (e.g. save, then go) — for a plain link,
+  use \`link\`.
 
 Pages can be grouped into **folders** (the sidebar tree). A folder is \`{ ref, name, slug, parentId? }\`; its \`ref\`
 **is its id** (there is no separate idRef), and that id is what a page and a nested folder reference.
+- **Folder slugs PREPEND to the page URL — this is how nested URLs are built.** The full path is each ancestor
+  folder's slug plus the page slug, joined by \`/\`: a page at slug \`"1-1-1"\` inside \`folder-1\` > \`folder-1-1\`
+  resolves to \`/folder-1/folder-1-1/1-1-1\`. So a folder slug is part of the route; keep folder slugs relative too.
 - Create/rename/move a folder with \`upsertFolder\` (the \`ref\` you pass on create becomes its id — pick a stable one
   like \`"blog"\`). Nest it under another with \`parentId\` (a folder ref); \`parentId: null\` moves it back to the root.
 - Put a page in a folder with \`upsertPage\`'s \`folder\` (a folder ref). A page's \`folder\` is always either **empty

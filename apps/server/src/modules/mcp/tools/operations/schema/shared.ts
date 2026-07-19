@@ -104,8 +104,9 @@ export const elementInput: z.ZodType<ElementInput> = z.lazy(() =>
       .describe(
         'Semantic id you choose, or an existing element ref/id. On a new element this is stored as its idRef and ' +
           'becomes the key everything else addresses it by — its data source is named `<type>_<ref>`, and an ' +
-          'interaction targets it by this ref. Letters, numbers and hyphens only ("hero-cta"): a dot or an ' +
-          'underscore would break the `<type>_<idRef>.<field>` grammar. Must be unique across the space.'
+          'interaction targets it by this ref. Start with a letter, then letters, numbers, hyphens and underscores ' +
+          '("hero-cta" or "food_item"): a dot would break the `<type>_<idRef>.<field>` grammar (an underscore is ' +
+          'fine — the first `_` separates the type from the idRef). Must be unique across the space.'
       ),
     type: z.string().describe('Type from plitzi://types'),
     label: z.string().optional(),

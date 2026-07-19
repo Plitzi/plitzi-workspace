@@ -1,3 +1,5 @@
+import { hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
+
 // Shared vocabulary for the three interaction catalogs (built-in globalCallbacks, built-in element callbacks and
 // built-in utilities). Each catalog is a hand-maintained mirror of what the sdk-interactions / sdk-elements sources
 // declare in the builder — the SSR runtime has no manifest of these, so the shapes and the reconcile rules live in
@@ -85,6 +87,12 @@ export interface InvalidParam {
 
 const isNumeric = (value: string): boolean => value.trim() !== '' && Number.isFinite(Number(value));
 
+// A param value may be a data-binding token (`{{ list_food.item.count }}`) instead of a literal — the runtime
+// resolves it to whatever the source yields, so its string form is NOT a type error even where the param expects a
+// boolean/number/select. Skip the value-type check for it; the token grammar is owned by twigWrapper's
+// `hasValidToken` (a malformed `{{ }}` reads as false there, so a genuinely broken value is still flagged).
+const isBindingToken = (value: unknown): boolean => typeof value === 'string' && hasValidToken(value);
+
 const matchesType = (value: unknown, param: BuiltinParam): boolean => {
   switch (param.type) {
     case 'boolean':
@@ -120,7 +128,7 @@ export const invalidParams = (
   const invalid: InvalidParam[] = [];
   for (const [key, param] of Object.entries(spec)) {
     const value = provided[key];
-    if (value === undefined || (param.when && !param.when(effective))) {
+    if (value === undefined || isBindingToken(value) || (param.when && !param.when(effective))) {
       continue;
     }
 

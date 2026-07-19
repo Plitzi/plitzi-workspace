@@ -19,7 +19,8 @@ export const patchElementOp = z
       .string()
       .optional()
       .describe(
-        'Assign or rename the idRef of this element ([A-Za-z0-9-], unique in the space). Give an element one to ' +
+        'Assign or rename the idRef of this element ([A-Za-z0-9_-], starting with a letter, unique in the space). ' +
+          'Give an element one to ' +
           'make it bindable: without an idRef it publishes no data source. Renaming one moves its source name ' +
           'with it — every binding and interaction across the space that targeted the old name is repointed for ' +
           'you, so the wiring survives the rename.'
