@@ -14,8 +14,9 @@ export const serverInstructions =
   'variants replace them all). An element read (and search include:"detail") inlines the CSS of the definitions ' +
   'it attaches under resolvedStyle, so you rarely need a separate definition read. ' +
   'Refs accept a semantic idRef ([A-Za-z0-9-], unique, chosen by you) or the raw id — the idRef is ALSO the ' +
-  'runtime wiring key, so a provider source is `<type>_<idRef>.<field>`. CSS is kebab-case (shorthands accepted); ' +
-  'style vars are var(--name), schema vars are {{name}}. ' +
+  'runtime wiring key, so a provider source is `<type>_<idRef>.<field>`, visible to the provider’s DESCENDANTS only ' +
+  '(bind inside its subtree). CSS is kebab-case and ATOMIC (shorthands like border/padding expanded; compound ones ' +
+  'like flex/background/font rejected — use longhands); style vars are var(--name), schema vars are {{name}}. ' +
   'READERS — do not confuse them: MCP *resources* are the browsable catalog (list them, or open one by URI); ' +
   'plitzi_search FINDS refs by label/type/attribute; plitzi_read BATCH-fetches URIs you already hold. Reach for ' +
   'search/read to work; browse resources to discover. ' +
@@ -23,6 +24,55 @@ export const serverInstructions =
   'edit them with patchElement (initialState), upsertBinding/patchBinding/deleteBinding, and ' +
   'upsertInteractionFlow/patchInteractionNode/deleteInteraction. An element read shows all three plus ' +
   'availableVariants (which variant each of its classes offers).';
+
+// The condensed guide the PRIMER carries — the essentials and the highest-frequency gotchas, kept short so the
+// cold-start bundle stays cheap. The full reference (every resource, op shape, and worked example) is guideText,
+// served on demand at plitzi://guide; this quickstart links there for anything it does not cover.
+export const guideQuickstart = `# Plitzi AI MCP — quickstart
+This is the condensed guide; read \`plitzi://guide\` for the full reference (every resource, op and example).
+
+A space is **two schemas you edit together in one atomic \`plitzi_apply\` batch**: the **element schema** (tree of
+pages/elements) and the **style schema** (definitions = CSS classes, tokens, theme). To style an element: write a
+**definition** and attach it via the element's \`style.base\` in the same batch.
+
+**Workflow:** (1) you already have this primer (guide + types + css + page/style summaries). (2) \`plitzi_search\`
+with \`include:"detail"\` to find elements — each hit carries its \`uri\`, \`stateVersion\` and full style, so no
+per-element read. (3) \`plitzi_apply\` with \`dryRun:true\` to preview. (4) \`plitzi_apply\` to persist, passing
+\`expectedResourceVersions\` (uri → the stateVersion you read) for every resource you change — omitting it lets a
+concurrent edit be lost. Use \`patchElement\`/\`patchDefinition\` to change only some props/CSS (upsert replaces all).
+
+**Refs & wiring:** a ref is the semantic \`idRef\` (letters/numbers/hyphens — **no dots or underscores**) or the raw
+id. The idRef is the runtime wiring key: a provider's source is \`<type>_<idRef>\`, and interactions target by it.
+
+**Styling:** CSS keys are **kebab-case** (\`background-color\`); \`var(--token)\` for style vars, \`{{name}}\` for schema
+vars. Shorthands \`border\`/\`padding\`/\`margin\`/\`gap\` are expanded for you. Write **atomically — no compound
+shorthands** (\`flex\`, \`background\`, \`font\`, \`transition\`, \`grid\` are rejected/warned): use their longhands, and
+express flex layout as \`display: flex\` + \`flex-direction\`/\`align-items\`/… Mind a type's \`defaultStyle\` (\`text\`
+is \`display: inline\`). Global styles (\`button {…}\`) and id styles (\`#id\`) have their own ops.
+
+**Data bindings** (\`upsertBinding\`, category attributes|style|initialState): connect a \`source\` to a \`to\` field.
+A source \`<type>_<idRef>\` is scoped to the provider's **DESCENDANTS only** — bind inside the provider's subtree
+(module sources state/space/navigation/auth/collection are global). \`apiContainer.mockData\` is builder-only; set a
+real \`query\` for production. \`transformers: [{action, params}]\` post-process the value — use exact action names
+from \`plitzi://data-sources\`; \`twigTemplate\` formats it (the value is \`{{source}}\`, not \`{{value}}\`). \`when\` is
+a QueryBuilder RuleGroup gating the binding.
+
+**Interactions** (\`upsertInteractionFlow\`): a \`trigger\` node first, then callbacks/utilities **in order** (links
+computed for you). Node types: \`callback\` (an element's own callback — \`elementId\` is that element), \`globalCallback\`
+(a source module — omit \`elementId\`, the MCP sets it), \`utility\` (no element). Element \`setState\`
+(category/key/value/revertOnFinish) ≠ global \`setState\` (source \`state\`, key/type/value). To turn a step off use
+\`patchInteractionNode {enabled:false}\` — \`deleteInteraction\` removes it (destructive; confirm first).
+
+**Pages:** \`upsertPage\` — always set a \`slug\`.
+
+**Touched resources must be malformation-free.** Editing an element/definition also checks its CURRENT stored content
+and BLOCKS the save on any \`Pre-existing malformation in <resource>\` error (a broken transformer, malformed node,
+invalid CSS) — even parts you did not touch. These are NOT from your change (the message says so); fix them in the
+SAME batch and re-apply (the check runs on the result, so the fix unblocks it). \`Pre-existing issue\` warnings advise
+but do not block.
+
+Read \`plitzi://guide\` before anything above is unclear.
+`;
 
 export const guideText = `# Plitzi AI MCP — usage guide
 
@@ -109,7 +159,8 @@ stateVersion) and returns any **style definitions** whose name matches the query
 When you do hold several refs to open (e.g. from a skeleton), read them together with \`plitzi_read\` rather than one at a time.
 
 ## Tools (write)
-- \`plitzi_validate\` — check a batch, returns teachable errors/warnings. Writes nothing.
+- \`plitzi_validate\` — check a batch, returns teachable errors/warnings. Writes nothing. Also reports **pre-existing
+  malformations** in any resource the batch touches (see below).
 - \`plitzi_apply\` — validate → apply → persist atomically. Rejects the whole batch on any error or conflict. Pass
   \`dryRun: true\` to apply in memory only and get the same result back (changed versions + full element detail)
   without persisting — inspect it, then re-run without \`dryRun\` to commit.
@@ -175,6 +226,12 @@ pointed at the old name is repointed with it, so the element stays wired. You do
 - CSS keys are **kebab-case** (\`background-color\`). camelCase is rejected — read \`plitzi://css-properties\`.
 - Common **shorthands are accepted** and expanded for you: \`border\`, \`border-{side}\`, \`border-radius\`,
   \`padding\`, \`margin\`, \`inset\`, \`gap\` (they persist as their longhand keys).
+- **Write CSS atomically — no multi-value compound shorthands.** Plitzi stores each property on its own so a
+  breakpoint/state/variant can override just that one, so \`flex\`, \`background\`, \`font\`, \`transition\`,
+  \`animation\`, \`grid\`, \`place-*\`, \`outline\`, \`columns\` are **rejected** (or warned) — use their longhands
+  instead: \`background\` → \`background-color\`/\`background-image\`/…, \`font\` → \`font-size\`/\`font-weight\`/
+  \`line-height\`, \`flex: 1\` → \`flex-grow\`/\`flex-shrink\`/\`flex-basis\`. **Flex layout is not a \`flex\` value**: set
+  \`display: flex\` **plus** \`flex-direction\`, \`align-items\`, \`justify-content\` as separate properties.
 - CSS is grouped by breakpoint: \`desktop\`, \`tablet\`, \`mobile\`.
 - Reference a style variable in CSS as \`var(--name)\`; a schema variable in a prop as \`{{name}}\`.
 - \`element.style.base\` is a list of definition refs; other slots go under \`element.style.slots\`.
@@ -213,9 +270,44 @@ Connect a data **source** to an element field. A binding is \`{ to, source, tran
 by **category**: \`attributes\` (a prop), \`style\` (a style value), \`initialState\` (an initial-state key).
 - \`upsertBinding\` adds one, or replaces the binding already feeding the same \`to\` (or \`id\`).
 - \`patchBinding\` edits an existing one (matched by \`to\`/\`id\`); \`deleteBinding\` removes it.
-Discover valid source paths in \`plitzi://data-sources/{env}\`. Example — feed an API list into a list element:
+Discover valid source paths **and the transformer catalog** in \`plitzi://data-sources/{env}\`. Example — feed an API
+list into a list element:
 \`{ "type": "upsertBinding", "pageRef": "home", "ref": "myList", "category": "attributes",
   "binding": { "to": "items", "source": "apiContainer_x.data" } }\`.
+
+**Source scope — a source is visible to the provider's DESCENDANTS only.** An element source named
+\`<type>_<idRef>\` (e.g. \`apiContainer_products\`, \`list_food-list\`) is published by that element into the scope of
+its **subtree**, so **only elements INSIDE the provider can bind to it**. Binding a sibling or an unrelated element
+to it resolves to nothing at runtime. So to consume \`apiContainer_products.data\`, the bound element must live under
+that apiContainer; inside a \`list\`, the repeated \`listItem\` and its children read the per-row source
+(\`list_<idRef>.item.<field>\`). Module sources (no \`<type>_<idRef>\` head — \`state\`, \`space\`, \`navigation\`,
+\`auth\`, \`collection\`) are global and bindable anywhere. Binding an element to an element source outside its
+provider's subtree is schema-valid but **broken at runtime** (the source is not in scope), so
+\`plitzi_validate\`/\`plitzi_apply\` treat it as an **error and reject the batch** — move the element under the
+provider, or bind a source that is in scope.
+
+**mockData is builder-only.** An \`apiContainer\`'s \`mockData\` prop feeds sample data **while editing in the
+builder**; the published runtime fetches the real \`query\` instead. Never rely on mockData as the production source —
+set a real \`query\`/\`method\` so the binding has data at runtime.
+
+**\`transformers\` — post-process the value before it reaches the field** (\`source → t₁ → t₂ → field\`). An array of
+\`{ action, params }\`; the runtime runs them in order and resolves each by its \`action\` alone, so an **unknown
+action is silently skipped** and the raw value passes through. Use the **exact** action names from
+\`plitzi://data-sources\` (\`transformers\`). The most common is **\`twigTemplate\`** to format a value — the incoming
+value is the **\`{{source}}\`** token (NOT \`{{value}}\`); \`{{sourceTo}}\` is the field's previous value. Example —
+show a number with units:
+\`{ "type": "upsertBinding", "pageRef": "home", "ref": "food-item-time", "category": "attributes",
+  "binding": { "to": "content", "source": "list_food-list.item.cookTimeMinutes",
+    "transformers": [ { "action": "twigTemplate", "params": { "template": "{{source}} min de cocción" } } ] } }\`.
+Other transformers: \`dateConverter\` (format a date/timestamp), \`capitalize\`, \`stringToArray\` (split on a
+separator), \`arrayMap\` (remap the keys of each object in an array), \`staticValue\`. Transformer \`params\` values are
+strings.
+
+**\`when\` — gate the binding** with a QueryBuilder RuleGroup: the binding only applies when the guard passes against
+the data source. Shape: \`{ "combinator": "and", "rules": [ { "field": "<path>", "operator": "=", "value": "x" } ] }\`
+(operators: \`=\`, \`!=\`, \`<\`, \`>\`, \`contains\`, \`beginsWith\`, \`empty\`, \`in\`, \`between\`, …; nest RuleGroups for
+and/or). The guard is validated structurally. Example — only bind when a flag is set:
+\`"when": { "combinator": "and", "rules": [ { "field": "status", "operator": "=", "value": "published" } ] }\`.
 
 ## Interactions
 An interaction **flow** is a **trigger** (an event like \`onClick\`, \`onPageLoad\`) followed by the callbacks/utilities
@@ -320,6 +412,15 @@ Space-level configuration lives in \`plitzi://settings/{env}\` and is edited wit
   Example — recolor one definition without resending it: \`{ "type": "patchDefinition", "ref": "btn-x",
   "desktop": { "background-color": "#111" } }\`.
 - **Atomic batches**: if any operation fails, \`plitzi_apply\` persists nothing.
+- **Every resource you touch must be malformation-free — pre-existing errors block the save.** When your batch edits
+  an element (or a definition/global/id style), the validator also checks the resource's **current stored content**
+  for malformations — a broken transformer action, a malformed interaction node, invalid CSS — even in parts your
+  edit does not touch. Such a finding is reported as a \`Pre-existing malformation in <resource>: …\` **error**, and
+  \`plitzi_apply\` rejects the batch until it is fixed. These are **not caused by your change** (the message says so)
+  — do not be confused; fix them **in the same batch** and re-apply. Because the check runs on the resulting state,
+  including the fix in your batch is exactly what unblocks the save. (Advisory issues — an unobserved source/action
+  name that may still be a valid plugin, a binding target a plugin manifest does not list — come back as
+  \`Pre-existing issue …\` **warnings** and do not block.)
 - **Optimistic concurrency — read before you write, and prove your read is current.** Editing a resource means you
   read it first, so you hold its \`stateVersion\`. **Always pass \`expectedResourceVersions\`** (URI → the stateVersion
   you read) for every resource your batch changes. If another agent edited it in the meantime, the live version no

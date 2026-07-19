@@ -8,6 +8,7 @@ import { cloneSpace } from '../../helpers';
 import { environment, operations } from '../operations';
 import { defineTool } from '../shared/tool';
 import { validateOperations } from '../shared/validator';
+import { auditResources } from '../shared/validator/audit';
 
 import type { Space } from '../../helpers';
 import type { ApplyInput, Env, Persisters, ValidationError, WriteResponse } from '../../types';
@@ -91,6 +92,23 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
     };
   }
 
+  // Pre-existing malformation guard: every resource this batch touches must be malformation-free in the resulting
+  // draft. A broken transformer / invalid CSS / malformed node already living in a touched element or definition
+  // (not written by this batch) blocks the save until the agent fixes it too — the audit runs on the post-apply
+  // draft, so the SAME batch may include the fix and pass. Its warnings ride along either way.
+  const audit = auditResources(draft, input.operations);
+  const warnings = [...validation.warnings, ...audit.warnings];
+  if (audit.errors.length > 0) {
+    return {
+      applied: false,
+      persisted: false,
+      summary: { created: 0, updated: 0, deleted: 0 },
+      changed: [],
+      errors: audit.errors,
+      warnings: noWarnings(warnings)
+    };
+  }
+
   // Dry run: everything is applied to the in-memory draft and reported (changed versions + full element detail),
   // but nothing is persisted — the agent inspects the outcome, then re-runs without dryRun to commit.
   if (input.dryRun) {
@@ -100,7 +118,7 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
       summary: { created: outcome.created, updated: outcome.updated, deleted: outcome.deleted },
       changed: changedResources(draft, env, outcome.staleResources),
       elements: resolvedElements(draft, env, outcome.elementRefs),
-      warnings: noWarnings(validation.warnings)
+      warnings: noWarnings(warnings)
     };
   }
 
@@ -128,7 +146,7 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
     summary: { created: outcome.created, updated: outcome.updated, deleted: outcome.deleted },
     changed: changedResources(draft, env, outcome.staleResources),
     elements: resolvedElements(draft, env, outcome.elementRefs),
-    warnings: noWarnings(validation.warnings)
+    warnings: noWarnings(warnings)
   };
 };
 
@@ -138,7 +156,8 @@ export const applyTool = defineTool({
   description:
     'Validate, apply and persist a batch of operations atomically. Returns the changed resources and their new ' +
     'versions, plus the full detail of every element it created or updated. Pass dryRun to apply in memory only ' +
-    '(inspect the outcome without committing). Rejects the whole batch on any error or version conflict.',
+    '(inspect the outcome without committing). Rejects the whole batch on any error or version conflict — INCLUDING ' +
+    'a pre-existing malformation in any resource the batch touches (fix it in the same batch to unblock the save).',
   inputShape: applyShape,
   access: 'write',
   run: (input, ctx) => apply({ ...input, environment: ctx.env }, ctx.space, ctx.persisters)

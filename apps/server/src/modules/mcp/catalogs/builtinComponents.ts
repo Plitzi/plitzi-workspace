@@ -65,7 +65,9 @@ export const BUILTIN_COMPONENTS: Partial<Record<string, BuiltinComponent>> = {
     category: 'provider',
     description:
       'Fetches data from a backend HTTP API (its `query`/`method`/`credentials`) and exposes the response as a ' +
-      'data source its descendants bind to. This is how you get backend data into the frontend.'
+      'data source ITS DESCENDANTS bind to (source `apiContainer_<idRef>.data`; only elements inside it can consume ' +
+      'it). This is how you get backend data into the frontend. Its `mockData` prop is builder-only sample data — ' +
+      'the published runtime fetches the real `query`, so always set a real query for production.'
   },
   collectionContainer: {
     label: 'Collection Container',

@@ -349,6 +349,262 @@ describe('mcp-ai variable-reference validation', () => {
   });
 });
 
+describe('mcp-ai atomic CSS (compound shorthands)', () => {
+  it('rejects an invalid compound shorthand with its atomic longhands', () => {
+    const r = validate(
+      { operations: [{ type: 'upsertDefinition', ref: 'btn', desktop: { flex: '1' } }] },
+      buildSpace()
+    );
+    expect(r.valid).toBe(false);
+    expect(r.errors[0].message).toContain('Compound CSS shorthand "flex"');
+    expect(r.errors[0].validValues).toEqual(['flex-grow', 'flex-shrink', 'flex-basis']);
+  });
+
+  it('warns (but accepts) a valid-but-compound shorthand', () => {
+    const r = validate(
+      { operations: [{ type: 'upsertDefinition', ref: 'btn', desktop: { overflow: 'hidden' } }] },
+      buildSpace()
+    );
+    expect(r.valid).toBe(true);
+    expect(r.warnings.some(w => w.includes('CSS shorthand "overflow"') && w.includes('overflow-x'))).toBe(true);
+  });
+});
+
+// A provider (apiContainer idRef "products") with a child inside its subtree and a sibling outside it, to exercise
+// the descendants-only source scope.
+const scopeSpace = (): Space => ({
+  schema: {
+    flat: {
+      page1: {
+        id: 'page1',
+        attributes: { slug: '', name: 'Home', default: true },
+        definition: {
+          rootId: 'page1',
+          label: 'Page',
+          type: 'page',
+          items: ['api1', 'outsider'],
+          styleSelectors: { base: 'p' }
+        }
+      },
+      api1: {
+        id: 'api1',
+        idRef: 'products',
+        attributes: {},
+        definition: {
+          rootId: 'page1',
+          parentId: 'page1',
+          label: 'Api',
+          type: 'apiContainer',
+          items: ['inner'],
+          styleSelectors: { base: 'a' }
+        }
+      },
+      inner: {
+        id: 'inner',
+        idRef: 'inner-text',
+        attributes: { content: '' },
+        definition: {
+          rootId: 'page1',
+          parentId: 'api1',
+          label: 'Inner',
+          type: 'text',
+          items: [],
+          styleSelectors: { base: 't' }
+        }
+      },
+      outsider: {
+        id: 'outsider',
+        idRef: 'out-text',
+        attributes: { content: '' },
+        definition: {
+          rootId: 'page1',
+          parentId: 'page1',
+          label: 'Out',
+          type: 'text',
+          items: [],
+          styleSelectors: { base: 't' }
+        }
+      }
+    },
+    definition: { name: 'T', permanentUrl: '' },
+    variables: [],
+    settings: { customCss: '' },
+    pages: ['page1'],
+    pageFolders: []
+  },
+  style: {
+    platform: { desktop: {}, tablet: {}, mobile: {} },
+    theme: { default: 'system', schemes: ['light'] },
+    variables: {},
+    cache: ''
+  } as unknown as Style
+});
+
+describe('mcp-ai binding source scope (descendants only)', () => {
+  const bind = (ref: string) =>
+    validate(
+      {
+        operations: [
+          {
+            type: 'upsertBinding',
+            pageRef: 'home',
+            ref,
+            category: 'attributes',
+            binding: { to: 'content', source: 'apiContainer_products.data' }
+          }
+        ]
+      },
+      scopeSpace()
+    );
+
+  it('accepts a binding from an element inside the provider subtree', () => {
+    const r = bind('inner-text');
+    expect(r.valid).toBe(true);
+    expect(r.errors.some(e => e.message.includes('subtree'))).toBe(false);
+  });
+
+  it('errors (blocks) when the bound element is outside the provider subtree', () => {
+    const r = bind('out-text');
+    expect(r.valid).toBe(false);
+    expect(
+      r.errors.some(e => e.message.includes('provided by element "products"') && e.message.includes('subtree'))
+    ).toBe(true);
+  });
+});
+
+describe('mcp-ai binding transformers', () => {
+  const withTransformer = (action: string, params: Record<string, string>) =>
+    validate(
+      {
+        operations: [
+          {
+            type: 'upsertBinding',
+            pageRef: 'home',
+            ref: 'c1',
+            category: 'attributes',
+            binding: { to: 'title', source: 'apiContainer_x.data', transformers: [{ action, params }] }
+          }
+        ]
+      },
+      buildSpace()
+    );
+
+  it('errors on an unknown transformer action and suggests the real one', () => {
+    const r = withTransformer('template', { template: '{{value}} min' });
+    expect(r.valid).toBe(false);
+    expect(
+      r.errors.some(e => e.message.includes('Unknown transformer action "template"') && e.hint.includes('twigTemplate'))
+    ).toBe(true);
+  });
+
+  it('accepts a valid transformer', () => {
+    const r = withTransformer('twigTemplate', { template: '{{source}} min' });
+    expect(r.errors.some(e => e.message.includes('transformer'))).toBe(false);
+  });
+
+  it('errors on a missing required param', () => {
+    const r = withTransformer('twigTemplate', {});
+    expect(r.valid).toBe(false);
+    expect(r.errors.some(e => e.message.includes('missing required param "template"'))).toBe(true);
+  });
+
+  it('errors on a select value outside its options', () => {
+    const r = withTransformer('dateConverter', { locale: 'fr' });
+    expect(r.valid).toBe(false);
+    expect(r.errors.some(e => e.message.includes('param "locale" is "fr"'))).toBe(true);
+  });
+});
+
+// An element carrying a PRE-EXISTING malformed transformer (action "template" instead of "twigTemplate"), to
+// exercise the post-apply resource audit.
+const malformedSpace = (): Space => ({
+  schema: {
+    flat: {
+      page1: {
+        id: 'page1',
+        attributes: { slug: '', name: 'Home', default: true },
+        definition: { rootId: 'page1', label: 'Page', type: 'page', items: ['txt'], styleSelectors: { base: 'p' } }
+      },
+      txt: {
+        id: 'txt',
+        idRef: 'txt',
+        attributes: { content: '' },
+        definition: {
+          rootId: 'page1',
+          parentId: 'page1',
+          label: 'Text',
+          type: 'text',
+          items: [],
+          styleSelectors: { base: 't' },
+          bindings: {
+            attributes: [
+              {
+                id: 'b1',
+                to: 'content',
+                source: 'list_x.item.name',
+                transformers: [{ action: 'template', params: { template: '{{value}}' } }]
+              }
+            ]
+          }
+        }
+      }
+    },
+    definition: { name: 'T', permanentUrl: '' },
+    variables: [],
+    settings: { customCss: '' },
+    pages: ['page1'],
+    pageFolders: []
+  },
+  style: {
+    platform: { desktop: {}, tablet: {}, mobile: {} },
+    theme: { default: 'system', schemes: ['light'] },
+    variables: {},
+    cache: ''
+  } as unknown as Style
+});
+
+describe('mcp-ai pre-existing malformation audit (blocks save until fixed)', () => {
+  it('blocks an unrelated valid edit while a touched element has a pre-existing malformed transformer', () => {
+    const r = validate(
+      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'txt', initialState: { visibility: true } }] },
+      malformedSpace()
+    );
+    expect(r.valid).toBe(false);
+    expect(
+      r.errors.some(
+        e => e.message.includes('Pre-existing malformation in element "txt"') && e.message.includes('template')
+      )
+    ).toBe(true);
+  });
+
+  it('passes when the SAME batch fixes the pre-existing malformation', () => {
+    const r = validate(
+      {
+        operations: [
+          {
+            type: 'patchBinding',
+            pageRef: 'home',
+            ref: 'txt',
+            category: 'attributes',
+            to: 'content',
+            transformers: [{ action: 'twigTemplate', params: { template: '{{source}}' } }]
+          }
+        ]
+      },
+      malformedSpace()
+    );
+    expect(r.valid).toBe(true);
+  });
+
+  it('does not audit an element the batch never touches', () => {
+    const r = validate(
+      { operations: [{ type: 'upsertDefinition', ref: 'unrelated', desktop: { color: 'red' } }] },
+      malformedSpace()
+    );
+    expect(r.errors.some(e => e.message.includes('Pre-existing'))).toBe(false);
+  });
+});
+
 describe('mcp-ai page skeleton route params', () => {
   it('exposes route params derived from the slug', () => {
     const sk = readResource(spaceWithRoute(), 'main', 'plitzi://schema/main/pages/spaceid')?.data as AIPageSkeleton;
@@ -1315,7 +1571,9 @@ describe('mcp-ai primer bootstrap (R4)', () => {
       pages: AIPageSummary[];
       definitions: string[];
     };
-    expect(primer.guide).toContain('plitzi://types');
+    // The primer carries the condensed quickstart (the full reference is read on demand at plitzi://guide).
+    expect(primer.guide).toContain('quickstart');
+    expect(primer.guide).toContain('plitzi://guide');
     expect(Object.keys(primer.types.types).sort()).toEqual(['container', 'page']);
     expect(primer.cssProperties.length).toBeGreaterThan(0);
     expect(primer.pages[0].ref).toBe('home');

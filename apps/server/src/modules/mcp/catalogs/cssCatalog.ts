@@ -54,6 +54,42 @@ const splitTokens = (value: string): string[] => {
   return tokens;
 };
 
+// --- Compound shorthands (atomic-only design) ------------------------------------------------------------------
+// Multi-value shorthands the style engine does NOT split into longhands (unlike the box/border set expanded above).
+// Plitzi's styling is atomic by design: each property is stored on its own so a breakpoint/state/variant can
+// override just that one. A compound value defeats that (and several of these are not even valid keys), so the
+// validator steers the agent to the longhands. Keyed by the shorthand → the atomic longhands to write instead.
+export const COMPOUND_SHORTHANDS: Record<string, string[]> = {
+  flex: ['flex-grow', 'flex-shrink', 'flex-basis'],
+  'flex-flow': ['flex-direction', 'flex-wrap'],
+  background: ['background-color', 'background-image', 'background-position', 'background-size', 'background-repeat'],
+  font: ['font-family', 'font-size', 'font-weight', 'line-height'],
+  transition: ['transition-property', 'transition-duration', 'transition-timing-function', 'transition-delay'],
+  animation: [
+    'animation-name',
+    'animation-duration',
+    'animation-timing-function',
+    'animation-delay',
+    'animation-iteration-count'
+  ],
+  grid: ['grid-template-columns', 'grid-template-rows', 'grid-template-areas'],
+  'grid-template': ['grid-template-columns', 'grid-template-rows', 'grid-template-areas'],
+  'grid-area': ['grid-row-start', 'grid-column-start', 'grid-row-end', 'grid-column-end'],
+  'place-content': ['align-content', 'justify-content'],
+  'place-items': ['align-items', 'justify-items'],
+  'place-self': ['align-self', 'justify-self'],
+  'list-style': ['list-style-type', 'list-style-position', 'list-style-image'],
+  'text-decoration': ['text-decoration-line', 'text-decoration-color', 'text-decoration-style'],
+  outline: ['outline-width', 'outline-style', 'outline-color'],
+  columns: ['column-width', 'column-count'],
+  overflow: ['overflow-x', 'overflow-y']
+};
+
+/** The atomic longhands to write instead of a compound shorthand, or undefined when the key is not a compound
+ *  shorthand. `flex` layout in particular is NOT `display` + `flex-direction` (those are their own properties). */
+export const compoundLonghands = (key: string): string[] | undefined =>
+  Object.hasOwn(COMPOUND_SHORTHANDS, key) ? COMPOUND_SHORTHANDS[key] : undefined;
+
 const SIDES = ['top', 'right', 'bottom', 'left'] as const;
 
 // The four values of a 1–4 value box shorthand (padding/margin/inset), in top/right/bottom/left order.

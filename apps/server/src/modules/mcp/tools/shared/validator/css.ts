@@ -1,5 +1,5 @@
-import { checkStyleVarRefs, checkVarRefs } from './context';
-import { expandShorthand, isCssProperty, suggestCssProperty } from '../../../resources';
+import { checkStyleVarRefs, checkVarRefs, warnOnce } from './context';
+import { compoundLonghands, expandShorthand, isCssProperty, suggestCssProperty } from '../../../resources';
 
 import type { ValidationCtx } from './context';
 import type { DefinitionSlotPatch } from '../../operations';
@@ -25,7 +25,27 @@ export const checkCss = (
   // Expand shorthands first (border, border-radius, padding…) so they validate as their longhand keys — matching
   // what persistence stores (RFC 0004 I4).
   for (const [key, value] of Object.entries(expandShorthand(declared))) {
-    if (!isCssProperty(key)) {
+    const longhands = compoundLonghands(key);
+    if (longhands) {
+      // A multi-value compound shorthand the style engine does not atomize. Plitzi styling is atomic, so steer to the
+      // longhands: a hard error when the key is not even valid (flex/background/font/…), a warning when it is
+      // accepted-but-compound (transition/overflow/…) so a breakpoint/state can override each property on its own.
+      if (!isCssProperty(key)) {
+        ctx.errors.push({
+          path: `${path}.${key}`,
+          message: `Compound CSS shorthand "${key}" is not supported — write its atomic longhand properties`,
+          hint: `Use: ${longhands.join(', ')}. (Note: flex layout is display + flex-direction + flex-grow/shrink/basis, not "flex".)`,
+          validValues: longhands
+        });
+      } else {
+        warnOnce(
+          ctx,
+          `CSS shorthand "${key}" at ${path}.${key} is accepted but stored as one compound value. Plitzi styling is ` +
+            `atomic — prefer the longhands (${longhands.join(', ')}) so a breakpoint/state/variant can override each ` +
+            'property independently.'
+        );
+      }
+    } else if (!isCssProperty(key)) {
       const suggestion = suggestCssProperty(key);
       ctx.errors.push({
         path: `${path}.${key}`,

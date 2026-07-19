@@ -4,6 +4,7 @@ import { resourceErrorMessage } from './canonical';
 import { envelope, jsonContents } from './envelope';
 import { readResource } from './router';
 import { cssProperties } from '../catalogs';
+import { logResourceRead } from '../helpers';
 import { guideText } from '../helpers/guide';
 
 import type { Space } from '../helpers';
@@ -14,12 +15,20 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
  *  loaded lazily via getSpace, so listing resources never touches the store — only reading one does. */
 export const registerResources = (server: McpServer, getSpace: () => Promise<Space>, env: Env): void => {
   const emit = async (uri: string) => {
-    const result = readResource(await getSpace(), env, uri);
-    if (!result) {
-      throw new Error(resourceErrorMessage(env, uri));
-    }
+    const start = performance.now();
+    try {
+      const result = readResource(await getSpace(), env, uri);
+      if (!result) {
+        throw new Error(resourceErrorMessage(env, uri));
+      }
 
-    return jsonContents(uri, result);
+      logResourceRead(uri, performance.now() - start);
+
+      return jsonContents(uri, result);
+    } catch (error) {
+      logResourceRead(uri, performance.now() - start, error);
+      throw error;
+    }
   };
 
   // Public, space-independent resources: served straight from static data so they resolve no spaceId and load

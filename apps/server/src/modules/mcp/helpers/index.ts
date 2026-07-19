@@ -4,4 +4,5 @@ export * from './space';
 export * from './uris';
 export * from './guide';
 export * from './interactions';
+export * from './log';
 export * from './opResult';

@@ -1,7 +1,9 @@
 import { BUILTIN_GLOBAL_CALLBACKS } from './builtinCallbacks';
 import { BUILTIN_ELEMENT_CALLBACKS } from './builtinElementCallbacks';
+import { transformerCatalog } from './builtinTransformers';
 import { BUILTIN_UTILITIES } from './builtinUtilities';
 
+import type { TransformerInfo } from './builtinTransformers';
 import type { BuiltinParam } from './paramSpec';
 import type { AIInteractionNodeType } from '../types';
 import type { Schema } from '@plitzi/sdk-shared';
@@ -56,8 +58,11 @@ export interface InteractionCatalog {
 
 export interface DataSourceCatalog {
   note: string;
+  scopeNote: string;
   sources: string[];
   targets: Record<string, string[]>;
+  transformersNote: string;
+  transformers: TransformerInfo[];
 }
 
 const INTERACTION_NOTE =
@@ -121,7 +126,22 @@ const builtinUtilities = (): BuiltinActionInfo[] =>
 
 const DATA_SOURCE_NOTE =
   'Data-source paths and binding targets observed on this space. Bind a source to an element field with ' +
-  'upsertBinding (category attributes|style|initialState). Paths not listed may still be valid.';
+  'upsertBinding (category attributes|style|initialState). Paths not listed may still be valid. A binding may ' +
+  'post-process its value through `transformers` (see below) and be gated by a `when` QueryBuilder guard.';
+
+const DATA_SOURCE_SCOPE_NOTE =
+  'SCOPE: an element source named `<type>_<idRef>` (e.g. `apiContainer_products`, `list_food-list`) is provided by ' +
+  'that element to its DESCENDANTS ONLY — the provider wraps its subtree in the source’s scope, so only elements ' +
+  'INSIDE the provider can bind to it. Binding a sibling or unrelated element to it is schema-valid but broken at ' +
+  'runtime (the source is not in scope), and validate/apply REJECT it as an error. To consume `apiContainer_x.data`, ' +
+  'the bound element must live under that apiContainer. Module sources (no `<type>_<idRef>` head — e.g. ' +
+  'state/space/navigation/auth/collection) are global and bindable anywhere.';
+
+const TRANSFORMERS_NOTE =
+  'Built-in transformers that post-process a binding value before it reaches the field: `source → t₁ → t₂ → field`. ' +
+  'Set them on a binding as `transformers: [{ action, params }]` (params are strings). The runtime resolves each by ' +
+  'its `action` alone, so an UNKNOWN action is silently skipped (the value passes through unchanged) — use the exact ' +
+  'action names below. Common formatting is `twigTemplate` (the value is the {{source}} token, not {{value}}).';
 
 export const buildInteractionCatalog = (schema: Schema): InteractionCatalog => {
   const actions: Record<string, Set<string>> = {};
@@ -168,7 +188,14 @@ export const buildDataSourceCatalog = (schema: Schema): DataSourceCatalog => {
     groupedTargets[category] = [...set].sort();
   }
 
-  return { note: DATA_SOURCE_NOTE, sources: [...sources].sort(), targets: groupedTargets };
+  return {
+    note: DATA_SOURCE_NOTE,
+    scopeNote: DATA_SOURCE_SCOPE_NOTE,
+    sources: [...sources].sort(),
+    targets: groupedTargets,
+    transformersNote: TRANSFORMERS_NOTE,
+    transformers: transformerCatalog()
+  };
 };
 
 export const observedInteractionActions = (schema: Schema): Set<string> => {

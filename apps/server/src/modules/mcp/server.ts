@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 
-import { emptySpaceMessage, serverInstructions, unauthorizedSpaceMessage } from './helpers';
+import { emptySpaceMessage, logToolCall, serverInstructions, unauthorizedSpaceMessage } from './helpers';
 import { registerResources } from './resources';
 import { tools } from './tools';
 import { isCallToolResult } from '../ai/toolkit';
@@ -96,9 +96,16 @@ export const createMcpServer = ({ adapters, getSpaceId, preview, screenshot }: M
       tool.name,
       { title: tool.title, description: tool.description, inputSchema: tool.inputShape },
       async (args: unknown) => {
-        const result = await tool.execute(args, await toolContext());
+        const start = performance.now();
+        try {
+          const result = await tool.execute(args, await toolContext());
+          logToolCall(tool.name, args, performance.now() - start);
 
-        return isCallToolResult(result) ? result : asText(result);
+          return isCallToolResult(result) ? result : asText(result);
+        } catch (error) {
+          logToolCall(tool.name, args, performance.now() - start, error);
+          throw error;
+        }
       }
     );
   }

@@ -1,4 +1,5 @@
 import { batchDeclaredFolders, batchDeclaredPages, batchDeclaredVariants, batchDeclaredVars } from './batch';
+import { checkBindingSourceScope, checkBindingTarget, checkBindingTransformers } from './bindings';
 import { checkObservedName, checkVarRefs, warnOnce } from './context';
 import { checkSlotCss } from './css';
 import { checkElementInput, checkTypeProps, checkVariantApplication } from './elements';
@@ -55,39 +56,11 @@ const buildTypeMeta = (catalog: ComponentCatalog | undefined): Map<string, TypeM
   return meta;
 };
 
-// When the bound element's type declares its allowed binding targets (a plugin manifest's `bindingsAllowed`), warn
-// if the `to` target is not among them. Lenient (warning): only plugin types carry this list, and a manifest is a
-// best-effort snapshot. Categories other than attributes/initialState (e.g. style) carry no such list.
-const checkBindingTarget = (
-  ref: string,
-  category: string | undefined,
-  to: string,
-  path: string,
-  ctx: ValidationCtx
-): void => {
-  if (category !== 'attributes' && category !== 'initialState') {
-    return;
-  }
-
-  const type = ctx.elementType(ref);
-  const targets = type ? ctx.typeMeta.get(type)?.bindingTargets?.[category] : undefined;
-  if (!targets || targets.size === 0 || targets.has(to)) {
-    return;
-  }
-
-  warnOnce(
-    ctx,
-    `Binding target "${to}" at ${path} is not among the "${category}" targets the type "${type}" declares ` +
-      `(${[...targets].sort().join(', ')}). Verify against plitzi://data-sources; it may still be valid.`
-  );
-};
-
-export const validateOperations = (space: Space, ops: Operation[]): ValidationResult => {
+/** The shared validation context, derived from a space (+ the batch's ops, for batch-declared names). Extracted so
+ *  the post-apply resource audit (auditResources) can run the same checks against the resulting draft. */
+export const buildValidationCtx = (space: Space, ops: Operation[]): ValidationCtx => {
   const registry = buildTypeRegistry(space.schema, space.catalog);
-  const batchPages = batchDeclaredPages(ops);
-  const batchFolders = batchDeclaredFolders(ops);
-  const folderRefs = (): unknown[] => pageFoldersOf(space.schema).map(f => f.id);
-  const ctx: ValidationCtx = {
+  return {
     errors: [],
     warnings: [],
     warned: new Set(),
@@ -106,6 +79,13 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
     observedActions: observedInteractionActions(space.schema),
     observedSources: observedDataSources(space.schema)
   };
+};
+
+export const validateOperations = (space: Space, ops: Operation[]): ValidationResult => {
+  const batchPages = batchDeclaredPages(ops);
+  const batchFolders = batchDeclaredFolders(ops);
+  const folderRefs = (): unknown[] => pageFoldersOf(space.schema).map(f => f.id);
+  const ctx = buildValidationCtx(space, ops);
 
   if (ops.length > MAX_OPS) {
     ctx.errors.push({
@@ -279,6 +259,8 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
           ctx
         );
         checkBindingTarget(op.ref, op.category, op.binding.to, `${base}.binding.to`, ctx);
+        checkBindingSourceScope(space, ctx, op.ref, op.binding.source, `${base}.binding.source`);
+        checkBindingTransformers(op.binding.transformers, `${base}.binding.transformers`, ctx);
         break;
       case 'patchBinding':
         checkRef(op.ref, `${base}.ref`, ctx);
@@ -291,6 +273,11 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
           ctx
         );
         checkBindingTarget(op.ref, op.category, op.to, `${base}.to`, ctx);
+        if (op.source !== undefined) {
+          checkBindingSourceScope(space, ctx, op.ref, op.source, `${base}.source`);
+        }
+
+        checkBindingTransformers(op.transformers, `${base}.transformers`, ctx);
         break;
       case 'deleteBinding':
         checkRef(op.ref, `${base}.ref`, ctx);

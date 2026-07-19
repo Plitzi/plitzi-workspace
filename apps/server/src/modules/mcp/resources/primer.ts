@@ -1,6 +1,6 @@
 import { envelope } from './envelope';
 import { buildDataSourceCatalog, buildInteractionCatalog, buildTypeRegistry, cssProperties } from '../catalogs';
-import { guideText } from '../helpers/guide';
+import { guideQuickstart } from '../helpers/guide';
 import {
   foldersToAI,
   pageSummariesToAI,
@@ -14,14 +14,15 @@ import type { Env, ResourceEnvelope } from '../types';
 
 /** The cold-start bundle: everything the guide says to read before the first write, in one round-trip.
  *  Summaries only — never full page/element trees (those are opened on demand), so it stays cheap even on a
- *  large space. Returns undefined when the URI is not the primer. */
+ *  large space. Carries the condensed `guideQuickstart` (not the full guideText, which the agent reads on demand at
+ *  plitzi://guide) to keep the bundle small. Returns undefined when the URI is not the primer. */
 export const readPrimerResource = (space: Space, env: Env, uri: string): ResourceEnvelope<unknown> | undefined => {
   if (uri !== `plitzi://primer/${env}`) {
     return undefined;
   }
 
   return envelope({
-    guide: guideText,
+    guide: guideQuickstart,
     types: buildTypeRegistry(space.schema, space.catalog),
     cssProperties,
     pages: pageSummariesToAI(space.schema),
