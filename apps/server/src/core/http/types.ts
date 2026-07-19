@@ -27,3 +27,11 @@ export interface SSRContext extends BaseContext {
 // false to fall through. Parameterised by the context its server provides: stages that only need `BaseContext`
 // run in any server, stages typed to `SSRContext` only in the SSR pipeline.
 export type Stage<C extends BaseContext = BaseContext> = (ctx: C) => boolean | Promise<boolean>;
+
+// A pipeline entry pairs a stage with the SERVICE category it belongs to (e.g. 'ssr', 'rsc', 'mcp', 'health').
+// The dispatcher reads it to tag the request log event with the service that actually answered — so logging is
+// consolidated in one place instead of each stage emitting its own, and every service is a distinct category.
+export interface PipelineStage<C extends BaseContext = BaseContext> {
+  service: string;
+  stage: Stage<C>;
+}

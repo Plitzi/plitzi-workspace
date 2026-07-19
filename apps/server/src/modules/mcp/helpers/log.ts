@@ -1,10 +1,10 @@
-import type { McpLogEvent, McpLogger } from '@plitzi/sdk-shared';
+import type { ServerLogEvent, ServerLogger } from '@plitzi/sdk-shared';
 
-// Request logging for the MCP server. The service is otherwise silent, which makes debugging a live agent session
-// hard (you cannot see what it called or why a call failed). Two ways to turn it on:
-//   - the CONSUMER passes a `mcpLogger` (SSRServerConfig.mcpLogger) — it receives a structured McpLogEvent per tool
-//     call / resource read and renders it however it likes (dev tooling, dashboards, structured logs); or
-//   - standalone, set `MCP_DEBUG=1` and events print to the console (the ALIAS_LOADER_DEBUG=1 convention).
+// Finer-grained request logging for the MCP server: one event per tool call and resource read, on top of the
+// consolidated `request` event the dispatcher emits for every server. Two ways to turn it on:
+//   - the CONSUMER passes a `logger` (SSRServerConfig.logger) — it receives a structured ServerLogEvent
+//     (service 'mcp', kind 'tool' | 'resource') and renders it however it likes; or
+//   - standalone, set `MCP_DEBUG=1` and the events print to the console (the ALIAS_LOADER_DEBUG=1 convention).
 // With neither active the sink is a no-op, so production stays silent and cheap.
 const MCP_DEBUG = process.env.MCP_DEBUG === '1';
 
@@ -26,11 +26,11 @@ const summarize = (value: unknown, max = 300): string | undefined => {
 
 const errorText = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
-const consoleRender = (event: McpLogEvent): void => {
-  const kind = event.kind === 'tool' ? 'tools/call' : 'resources/read';
-  const detail = event.argsSummary ? ` ${event.argsSummary}` : '';
+const consoleRender = (event: ServerLogEvent): void => {
   const status = event.ok ? 'ok' : `ERROR ${event.error ?? ''}`;
-  console.log(`[mcp] ${kind} ${event.name}${detail} ${Math.round(event.durationMs)}ms ${status}`);
+  const name = event.kind === 'request' ? `${event.method} ${event.path} ${event.status}` : event.name;
+  const detail = event.kind === 'tool' && event.argsSummary ? ` ${event.argsSummary}` : '';
+  console.log(`[mcp] ${event.kind} ${name}${detail} ${Math.round(event.durationMs)}ms ${status}`);
 };
 
 export interface McpLog {
@@ -41,14 +41,14 @@ export interface McpLog {
 const noop = (): void => undefined;
 const inertLog: McpLog = { toolCall: noop, resourceRead: noop };
 
-/** Build the request-log sink for one MCP server. Dispatches structured events to the consumer's `logger` when
- *  provided; otherwise renders to the console when MCP_DEBUG=1; otherwise a no-op. */
-export const createMcpLog = (logger?: McpLogger): McpLog => {
+/** Build the MCP request-log sink for one server. Dispatches structured events (service 'mcp') to the consumer's
+ *  `logger` when provided; otherwise renders to the console when MCP_DEBUG=1; otherwise a no-op. */
+export const createMcpLog = (logger?: ServerLogger): McpLog => {
   if (!logger && !MCP_DEBUG) {
     return inertLog;
   }
 
-  const emit = (event: McpLogEvent): void => {
+  const emit = (event: ServerLogEvent): void => {
     if (logger) {
       logger(event);
     } else {
@@ -59,6 +59,7 @@ export const createMcpLog = (logger?: McpLogger): McpLog => {
   return {
     toolCall: (name, args, ms, error) =>
       emit({
+        service: 'mcp',
         kind: 'tool',
         name,
         durationMs: ms,
@@ -69,6 +70,7 @@ export const createMcpLog = (logger?: McpLogger): McpLog => {
       }),
     resourceRead: (uri, ms, error) =>
       emit({
+        service: 'mcp',
         kind: 'resource',
         name: uri,
         durationMs: ms,

@@ -4,7 +4,7 @@ import { createMcpServer } from './server';
 
 import type { PreviewClient, ScreenshotClient } from './types';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
-import type { SSRAdapters, SSRRequest, McpLogger } from '@plitzi/sdk-shared';
+import type { SSRAdapters, SSRRequest, ServerLogger } from '@plitzi/sdk-shared';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
 export const readMcpBody = (req: IncomingMessage): Promise<unknown> =>
