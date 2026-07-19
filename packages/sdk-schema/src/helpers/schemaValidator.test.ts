@@ -559,12 +559,10 @@ describe('schemaValidator', () => {
       expect(error?.details).toEqual({ idRef: 'products-api', otherElementId: 'el-0' });
     });
 
-    it('rejects an idRef carrying a separator its own source grammar uses', () => {
-      for (const idRef of ['products.api', 'products_api']) {
-        const result = validateSchema(withIdRefs(idRef));
-        expect(result.valid).toBe(false);
-        expect(result.errors.some(e => e.code === 'INVALID_ID_REF')).toBe(true);
-      }
+    it('rejects an idRef carrying a dot separator the source grammar uses', () => {
+      const result = validateSchema(withIdRefs('products.api'));
+      expect(result.valid).toBe(false);
+      expect(result.errors.some(e => e.code === 'INVALID_ID_REF')).toBe(true);
     });
   });
 

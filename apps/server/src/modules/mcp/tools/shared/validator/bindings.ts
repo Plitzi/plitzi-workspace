@@ -19,8 +19,8 @@ import type { BindingTransformer } from '@plitzi/sdk-shared';
 //    `twigTemplate`), unknown params, a missing required param, or a select value outside its options.
 
 // The provider element a `<type>_<idRef>[.field...]` source resolves to, or undefined when the head is a module
-// source (no `<type>_` head) or the provider is not in the current space. An element source name has exactly one
-// `_` (a type is camelCase with no underscore; an idRef is [A-Za-z0-9-] with no underscore), so the split is safe.
+// source (no `<type>_` head) or the provider is not in the current space. An element source name splits on the
+// first `_` (element types are camelCase with no underscore), so underscores in the idRef are unambiguous.
 const providerOfSource = (space: Space, source: string): { ref: string; id: string } | undefined => {
   const head = source.split('.')[0];
   const sep = head.indexOf('_');

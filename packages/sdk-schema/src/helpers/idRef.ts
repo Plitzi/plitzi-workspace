@@ -8,13 +8,14 @@ import type { Element } from '@plitzi/sdk-shared';
 // or an agent writes it through the MCP, and until then it publishes no data source. Minting is therefore only
 // used where an existing ref has to be replaced — cloning a subtree that already carries refs.
 
-const ID_REF_RE = /^[A-Za-z](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/;
+const ID_REF_RE = /^[A-Za-z](?:[A-Za-z0-9_-]*[A-Za-z0-9_])?$/;
 
-/** True when an idRef is well formed: it starts with a letter and then carries letters, numbers and hyphens, the
- *  hyphen never leading or trailing. Leading letter keeps a source `<type>_<idRef>` a valid twig identifier. A '.'
- *  would split the `<type>_<idRef>.<field>` source path and an interaction target lookup; a '_' would collide with
- *  the `<type>_<idRef>` separator — so neither is allowed. A hyphen is allowed inside: a source doubles as a twig
- *  token, and `processTwig` resolves a hyphenated `<type>_<idRef>` through `_context` subscript access. */
+/** True when an idRef is well formed: it starts with a letter and then carries letters, numbers, hyphens and
+ *  underscores. Leading letter keeps a source `<type>_<idRef>` a valid twig identifier. A '.' would split the
+ *  `<type>_<idRef>.<field>` source path and an interaction target lookup — so it is not allowed. A source name
+ *  uses the first '_' as separator between `<type>` and `<idRef>` (element types are camelCase with no underscore),
+ *  so underscores inside the idRef are unambiguous. A hyphen is allowed too: a source doubles as a twig token, and
+ *  `processTwig` resolves a hyphenated `<type>_<idRef>` through `_context` subscript access. */
 export const isValidIdRef = (idRef: string): boolean => ID_REF_RE.test(idRef);
 
 /** Every idRef currently in use, so a new one can be checked or minted against it. */
@@ -37,7 +38,7 @@ export const idRefConflict = (
   ignoreElementId?: Element['id']
 ): string | null => {
   if (!isValidIdRef(idRef)) {
-    return `"${idRef}" is not a valid reference: start with a letter, then letters, numbers and hyphens (no hyphen at the start or end)`;
+    return `"${idRef}" is not a valid reference: start with a letter, then letters, numbers, hyphens and underscores`;
   }
 
   const owner = Object.values(flat).find(element => element.idRef === idRef && element.id !== ignoreElementId);
@@ -97,9 +98,11 @@ const remapSource = (source: string, mapRefs: Record<string, string>): string =>
 
 // A source name embedded inside free text: a twig token (`{{ apiContainer_card-1.data.name }}`), a transformer
 // param or a query-builder operand. `<type>_<idRef>` — the idRef the charset `isValidIdRef` states (starts with a
-// letter, then letters, numbers and internal hyphens). A bare idRef is never rewritten (that is the corruption
+// letter, then letters, numbers, hyphens and underscores). A bare idRef is never rewritten (that is the corruption
 // `repointIdRefs` guards against); only a full `<type>_<idRef>` token is, so a `node_<hexId>` survives untouched.
-const SOURCE_TOKEN_RE = /([A-Za-z][A-Za-z0-9]*)_([A-Za-z](?:[A-Za-z0-9-]*[A-Za-z0-9])?)/g;
+// The regex splits on the first `_` (element types are camelCase with no underscore), so idRef underscores are
+// unambiguous.
+const SOURCE_TOKEN_RE = /([A-Za-z][A-Za-z0-9]*)_([A-Za-z][A-Za-z0-9_-]*)/g;
 
 const remapTokenString = (value: string, mapRefs: Record<string, string>): string =>
   value.replace(SOURCE_TOKEN_RE, (match, type: string, ref: string) => {

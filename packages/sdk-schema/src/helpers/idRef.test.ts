@@ -27,9 +27,11 @@ const element = (
 });
 
 describe('isValidIdRef', () => {
-  it('accepts a letter start followed by letters, numbers and hyphens', () => {
+  it('accepts a letter start followed by letters, numbers, hyphens and underscores', () => {
     expect(isValidIdRef('products-api')).toBe(true);
     expect(isValidIdRef('Hero2')).toBe(true);
+    expect(isValidIdRef('hero_cta')).toBe(true);
+    expect(isValidIdRef('my_list_card')).toBe(true);
   });
 
   it('requires a letter start, rejecting a digit or hyphen first', () => {
@@ -44,10 +46,9 @@ describe('isValidIdRef', () => {
     expect(isValidIdRef('hero-')).toBe(false);
   });
 
-  it('rejects the separators the source grammar uses, and the empty ref', () => {
-    // A '.' splits `<type>_<idRef>.<field>`; a '_' collides with the `<type>_<idRef>` separator.
+  it('rejects the dot separator the source grammar uses, spaces, and the empty ref', () => {
+    // A '.' splits `<type>_<idRef>.<field>` — so it is not allowed.
     expect(isValidIdRef('hero.cta')).toBe(false);
-    expect(isValidIdRef('hero_cta')).toBe(false);
     expect(isValidIdRef('hero cta')).toBe(false);
     expect(isValidIdRef('')).toBe(false);
   });

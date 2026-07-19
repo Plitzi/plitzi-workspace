@@ -31,9 +31,9 @@ export const checkIdRef = (ref: string, path: string, ctx: ValidationCtx): void 
       path,
       message: `Ref "${ref}" is not a valid idRef`,
       hint:
-        'Use only letters, numbers and hyphens (e.g. "hero-cta"). This ref becomes the element idRef, which the ' +
-        'runtime embeds in source names like `apiContainer_<idRef>.field` and in interaction targets — a dot or ' +
-        'an underscore would break those paths.'
+        'Use only letters, numbers, hyphens and underscores (e.g. "hero-cta" or "my_list_card"). This ref becomes ' +
+        'the element idRef, which the runtime embeds in source names like `apiContainer_<idRef>.field` and in ' +
+        'interaction targets — a dot would break those paths.'
     });
   }
 };
