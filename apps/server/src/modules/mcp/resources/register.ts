@@ -4,16 +4,16 @@ import { resourceErrorMessage } from './canonical';
 import { envelope, jsonContents } from './envelope';
 import { readResource } from './router';
 import { cssProperties } from '../catalogs';
-import { logResourceRead } from '../helpers';
 import { guideText } from '../helpers/guide';
 
+import type { McpLog } from '../helpers';
 import type { Space } from '../helpers';
 import type { Env } from '../types';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 
 /** Register every resource on the MCP server: fixed listings plus templated per-item reads. The space is
  *  loaded lazily via getSpace, so listing resources never touches the store — only reading one does. */
-export const registerResources = (server: McpServer, getSpace: () => Promise<Space>, env: Env): void => {
+export const registerResources = (server: McpServer, getSpace: () => Promise<Space>, env: Env, log: McpLog): void => {
   const emit = async (uri: string) => {
     const start = performance.now();
     try {
@@ -22,11 +22,11 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
         throw new Error(resourceErrorMessage(env, uri));
       }
 
-      logResourceRead(uri, performance.now() - start);
+      log.resourceRead(uri, performance.now() - start);
 
       return jsonContents(uri, result);
     } catch (error) {
-      logResourceRead(uri, performance.now() - start, error);
+      log.resourceRead(uri, performance.now() - start, error);
       throw error;
     }
   };

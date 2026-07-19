@@ -219,6 +219,29 @@ export type SSRRscConfig = {
   cacheTtlMs?: number;
 };
 
+/** A structured log event the MCP server emits for each tool call and resource read, so a CONSUMER can render its
+ *  own request log (dev tooling, a dashboard, structured logging). Wire a sink via `SSRServerConfig.mcpLogger`;
+ *  without one the server prints to the console only when `MCP_DEBUG=1`. */
+export type McpLogEvent = {
+  /** 'tool' for a plitzi_* tool call, 'resource' for a plitzi:// resource read. */
+  kind: 'tool' | 'resource';
+  /** The tool name (e.g. 'plitzi_apply') or the resource URI that was read. */
+  name: string;
+  /** Wall-clock duration of the handler, in milliseconds. */
+  durationMs: number;
+  /** Whether the handler completed without throwing. */
+  ok: boolean;
+  /** The error message when `ok` is false. */
+  error?: string;
+  /** A compact, truncated JSON summary of the tool arguments (tool events only). */
+  argsSummary?: string;
+  /** ISO-8601 timestamp of when the event was emitted. */
+  timestamp: string;
+};
+
+/** A sink the consumer provides to receive every MCP {@link McpLogEvent} (see `SSRServerConfig.mcpLogger`). */
+export type McpLogger = (event: McpLogEvent) => void;
+
 export type SSRServerConfig = {
   port?: number;
   host?: string;
@@ -262,6 +285,10 @@ export type SSRServerConfig = {
     enabled?: boolean;
     path?: string;
   };
+  /** Receives a structured {@link McpLogEvent} for every MCP tool call and resource read, so the consumer can
+   *  render its own request log (e.g. in dev mode). Without it, the MCP server logs to the console only when
+   *  `MCP_DEBUG=1`. */
+  mcpLogger?: McpLogger;
   adapters: SSRAdapters;
   /** Draft-preview endpoint for the MCP visual-preview tools (the RENDERER side). Off unless `enabled`. */
   preview?: SSRPreviewConfig;

@@ -4,7 +4,7 @@ import { createMcpServer } from './server';
 
 import type { PreviewClient, ScreenshotClient } from './types';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
-import type { SSRAdapters, SSRRequest } from '@plitzi/sdk-shared';
+import type { SSRAdapters, SSRRequest, McpLogger } from '@plitzi/sdk-shared';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
 export const readMcpBody = (req: IncomingMessage): Promise<unknown> =>
@@ -75,7 +75,8 @@ export const handleMcp = (
   req: SSRRequest,
   adapters: SSRAdapters,
   preview?: PreviewClient,
-  screenshot?: ScreenshotClient
+  screenshot?: ScreenshotClient,
+  logger?: McpLogger
 ): Promise<void> =>
   serveMcp(
     raw,
@@ -84,7 +85,8 @@ export const handleMcp = (
       adapters,
       getSpaceId: () => adapters.getSpaceId?.(req) ?? Promise.resolve(undefined),
       preview,
-      screenshot
+      screenshot,
+      logger
     })
   );
 

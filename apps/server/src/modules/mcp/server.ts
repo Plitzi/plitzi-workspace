@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 
-import { emptySpaceMessage, logToolCall, serverInstructions, unauthorizedSpaceMessage } from './helpers';
+import { createMcpLog, emptySpaceMessage, serverInstructions, unauthorizedSpaceMessage } from './helpers';
 import { registerResources } from './resources';
 import { tools } from './tools';
 import { isCallToolResult } from '../ai/toolkit';
@@ -9,7 +9,7 @@ import type { Space } from './helpers';
 import type { Persisters, ToolContext } from './tools';
 import type { PreviewClient, ScreenshotClient } from './types';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { SSRAdapters, Environment } from '@plitzi/sdk-shared';
+import type { SSRAdapters, Environment, McpLogger } from '@plitzi/sdk-shared';
 
 /** The MCP service is stateless: every request resolves its own `spaceId` (from the request JWT) and reads the
  *  space fresh through the adapters — schema and style are two documents, read/written independently. Both the
@@ -25,6 +25,9 @@ export interface McpServerContext {
   /** The dedicated browser service for plitzi_screenshot. Absent → the tool is not registered (only the HTML
    *  plitzi_preview is offered). */
   screenshot?: ScreenshotClient;
+  /** Structured request-log sink. When set, every tool call and resource read emits an McpLogEvent to it (the
+   *  consumer renders them); otherwise logging falls back to the console when MCP_DEBUG=1. */
+  logger?: McpLogger;
 }
 
 // The MCP tools only ever operate on the active-editing environment.
@@ -32,7 +35,8 @@ const MCP_ENV: Environment = 'main';
 
 const asText = (data: unknown): CallToolResult => ({ content: [{ type: 'text', text: JSON.stringify(data) }] });
 
-export const createMcpServer = ({ adapters, getSpaceId, preview, screenshot }: McpServerContext): McpServer => {
+export const createMcpServer = ({ adapters, getSpaceId, preview, screenshot, logger }: McpServerContext): McpServer => {
+  const log = createMcpLog(logger);
   // Resolve the spaceId at most once, and only when a space-dependent operation actually needs it. A request
   // without a valid token fails here (not at connect time), so the public surface stays reachable.
   let spaceIdPromise: Promise<number> | undefined;
@@ -73,7 +77,7 @@ export const createMcpServer = ({ adapters, getSpaceId, preview, screenshot }: M
 
   const server = new McpServer({ name: 'plitzi-mcp', version: VERSION }, { instructions: serverInstructions });
 
-  registerResources(server, getSpace, MCP_ENV);
+  registerResources(server, getSpace, MCP_ENV, log);
 
   // Register every tool straight from the shared registry: identity + input schema + behavior come from each
   // tool's descriptor, so a new tool is picked up here with no per-tool wiring.
@@ -99,11 +103,11 @@ export const createMcpServer = ({ adapters, getSpaceId, preview, screenshot }: M
         const start = performance.now();
         try {
           const result = await tool.execute(args, await toolContext());
-          logToolCall(tool.name, args, performance.now() - start);
+          log.toolCall(tool.name, args, performance.now() - start);
 
           return isCallToolResult(result) ? result : asText(result);
         } catch (error) {
-          logToolCall(tool.name, args, performance.now() - start, error);
+          log.toolCall(tool.name, args, performance.now() - start, error);
           throw error;
         }
       }

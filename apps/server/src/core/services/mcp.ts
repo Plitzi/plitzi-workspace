@@ -18,7 +18,8 @@ const serveMcp = (ctx: Parameters<Stage>[0]): Promise<void> => {
     ctx.req,
     ctx.config.adapters,
     preview,
-    screenshotClient
+    screenshotClient,
+    ctx.config.mcpLogger
   );
 };
 
