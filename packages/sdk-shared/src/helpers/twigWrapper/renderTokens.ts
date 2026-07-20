@@ -1,5 +1,5 @@
 import { evalOperand } from './evalOperand';
-import { applyFilters } from './filters';
+import { applyFilters, isRawMarker, unwrapRaw } from './filters';
 import { TOKEN_INNER, TOKEN_MATCH } from './patterns';
 import { resolvePath } from './resolvePath';
 
@@ -122,6 +122,11 @@ export const renderTokens = (
       }
 
       value = applyFilters(value, filtersStr, context);
+
+      // `| raw` marks the value to bypass JSON serialization.
+      if (isRawMarker(value)) {
+        return stringify(unwrapRaw(value));
+      }
 
       // Triple braces: always raw toString (objects → `[object Object]`).
       if (isTriple) {
