@@ -22,7 +22,8 @@ export const processTwig = (
     let context = variables;
     if ('variables' in variables) {
       // Interactions carry a nested `variables` context that has to read at root level.
-      context = { ...variables, ...(variables.variables as Record<string, unknown>) };
+      // Root-level keys take precedence over nested `variables` keys.
+      context = { ...(variables.variables as Record<string, unknown>), ...variables };
     }
 
     // 1. Process {% set %} tags first — defines variables for subsequent steps.

@@ -198,6 +198,14 @@ const evalCondition = (expr: string, context: Record<string, unknown>): boolean 
     return !evalCondition(trimmed.slice(4), context);
   }
 
+  // Twig `is not` (negated test operator): `value is not null`, `value is not empty`, etc.
+  // Must check before `is` to avoid matching `is not` as just `is`.
+  const isNotMatch = /^(.+?)\s+is\s+not\s+(.+)$/.exec(trimmed);
+  if (isNotMatch) {
+    const value = evalOperand(isNotMatch[1], context);
+    return !evalTest(value, isNotMatch[2], context);
+  }
+
   // Twig `is` (test operator): `value is null`, `value is empty`, `value is iterable`, etc.
   const isMatch = /^(.+?)\s+is\s+(.+)$/.exec(trimmed);
   if (isMatch) {
@@ -219,7 +227,15 @@ const evalCondition = (expr: string, context: Record<string, unknown>): boolean 
     return compareValues(comparison[2], evalOperand(comparison[1], context), evalOperand(comparison[3], context));
   }
 
-  return Boolean(evalOperand(trimmed, context));
+  // Twig treats empty arrays and empty objects as falsy, unlike JavaScript where `Boolean([])` is true.
+  const operand = evalOperand(trimmed, context);
+  if (Array.isArray(operand) && operand.length === 0) {
+    return false;
+  }
+  if (operand !== null && typeof operand === 'object' && Object.keys(operand).length === 0) {
+    return false;
+  }
+  return Boolean(operand);
 };
 
 // Finds the index of a top-level `~` operator (not inside quotes).

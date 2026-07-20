@@ -65,12 +65,14 @@ const evalCycle = (args: string, context: Record<string, unknown>): unknown => {
   return values[((position % values.length) + values.length) % values.length];
 };
 
-// Evaluates `max(a, b, ...)` and returns the maximum value.
+// Evaluates `max(a, b, ...)` or `max(array)` and returns the maximum value.
+// When a single argument resolves to an array, it is flattened so max([1,2,3]) === max(1,2,3).
 const evalMax = (args: string, context: Record<string, unknown>): unknown => {
-  const values = splitFuncArgs(args).map(a => evalOperand(a.trim(), context));
-  if (values.length === 0) {
+  const resolved = splitFuncArgs(args).map(a => evalOperand(a.trim(), context));
+  if (resolved.length === 0) {
     return null;
   }
+  const values = resolved.flat(1);
   const nums = values.map(Number).filter(n => !Number.isNaN(n));
   if (nums.length === values.length) {
     return Math.max(...nums);
@@ -79,12 +81,14 @@ const evalMax = (args: string, context: Record<string, unknown>): unknown => {
   return strs.sort().at(-1) ?? null;
 };
 
-// Evaluates `min(a, b, ...)` and returns the minimum value.
+// Evaluates `min(a, b, ...)` or `min(array)` and returns the minimum value.
+// When a single argument resolves to an array, it is flattened so min([1,2,3]) === min(1,2,3).
 const evalMin = (args: string, context: Record<string, unknown>): unknown => {
-  const values = splitFuncArgs(args).map(a => evalOperand(a.trim(), context));
-  if (values.length === 0) {
+  const resolved = splitFuncArgs(args).map(a => evalOperand(a.trim(), context));
+  if (resolved.length === 0) {
     return null;
   }
+  const values = resolved.flat(1);
   const nums = values.map(Number).filter(n => !Number.isNaN(n));
   if (nums.length === values.length) {
     return Math.min(...nums);
