@@ -1,7 +1,7 @@
 /* eslint-disable quotes */
 import { expect, describe, it } from 'vitest';
 
-import { processTwig } from '.';
+import { processTwig } from '../..';
 import { applyFilters, filters } from './filters';
 
 const ctx = {};
@@ -352,7 +352,10 @@ describe('twig filters — batch', () => {
   });
 
   it('handles exact multiple via applyFilters', () => {
-    expect(applyFilters([1, 2, 3, 4], '| batch(2)', ctx)).toEqual([[1, 2], [3, 4]]);
+    expect(applyFilters([1, 2, 3, 4], '| batch(2)', ctx)).toEqual([
+      [1, 2],
+      [3, 4]
+    ]);
   });
 
   it('leaves non-array untouched', () => {
@@ -377,12 +380,7 @@ describe('twig filters — keys / values', () => {
 
 describe('twig filters — merge', () => {
   it('merges two arrays via applyFilters with variable', () => {
-    expect(applyFilters([1, 2], '| merge(other)', { other: [4, 5] })).toEqual([
-      1,
-      2,
-      4,
-      5
-    ]);
+    expect(applyFilters([1, 2], '| merge(other)', { other: [4, 5] })).toEqual([1, 2, 4, 5]);
   });
 
   it('merges two objects via applyFilters with variable', () => {

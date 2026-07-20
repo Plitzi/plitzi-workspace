@@ -1,5 +1,5 @@
-import { evalOperand } from './evalOperand';
-import { COMPARISON, IF_BLOCK } from './patterns';
+import { evalOperand } from '../expressions/evalOperand';
+import { COMPARISON, IF_BLOCK } from '../patterns/patterns';
 
 // Compares two condition operands. `==`/`!=` are loose and twig-like (compared by string form, so `5 == '5'` and
 // id juggling behave as before); the relational operators are numeric when both sides parse as numbers and

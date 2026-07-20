@@ -1,5 +1,5 @@
-import { evalOperand } from './evalOperand';
-import { FILTER_RE } from './patterns';
+import { evalOperand } from '../expressions/evalOperand';
+import { FILTER_RE } from '../patterns/patterns';
 
 // A twig filter: takes the piped value, its optional raw argument (e.g. the `', '` in `| join(', ')`) and the
 // render context, and returns the transformed value. Registered by name in `filters`, so the set is extensible —

@@ -1,7 +1,7 @@
-import { evalOperand } from './evalOperand';
-import { applyFilters, isRawMarker, unwrapRaw } from './filters';
-import { TOKEN_INNER, TOKEN_MATCH } from './patterns';
-import { resolvePath } from './resolvePath';
+import { evalOperand } from '../expressions/evalOperand';
+import { resolvePath } from '../expressions/resolvePath';
+import { applyFilters, isRawMarker, unwrapRaw } from '../filters/filters';
+import { TOKEN_INNER, TOKEN_MATCH } from '../patterns/patterns';
 
 // Matches `cycle(values, position)` — the Twig cycle function. The first argument can be an array literal
 // (`['odd', 'even']` or `["odd", "even"]`) or a variable path; the second is any expression (variable, number).

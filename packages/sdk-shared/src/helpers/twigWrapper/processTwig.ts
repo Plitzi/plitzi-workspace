@@ -1,6 +1,6 @@
-import { applyConditionals } from './conditionals';
-import { applyLoops } from './loops';
-import { renderTokens } from './renderTokens';
+import { applyConditionals } from './conditionals/conditionals';
+import { applyLoops } from './loops/loops';
+import { renderTokens } from './tokens/renderTokens';
 
 // Renders a user-written template: resolves `{% if %}` blocks, then `{{ token }}` interpolation. `keepEmptyTokens`
 // leaves an unresolved token as its literal text; `asRaw` JSON.parses the result back into typed data. Any error —

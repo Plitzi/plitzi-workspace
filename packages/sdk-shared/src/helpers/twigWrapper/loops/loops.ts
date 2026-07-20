@@ -1,7 +1,7 @@
-import { applyConditionals } from './conditionals';
-import { evalOperand } from './evalOperand';
-import { BREAK_TAG, CONTINUE_TAG, FOR_OPEN, FOR_TAG, RANGE_EXPR } from './patterns';
-import { renderTokens } from './renderTokens';
+import { applyConditionals } from '../conditionals/conditionals';
+import { evalOperand } from '../expressions/evalOperand';
+import { BREAK_TAG, CONTINUE_TAG, FOR_OPEN, FOR_TAG, RANGE_EXPR } from '../patterns/patterns';
+import { renderTokens } from '../tokens/renderTokens';
 
 type LoopMeta = {
   index: number;

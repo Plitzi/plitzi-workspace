@@ -1,7 +1,7 @@
 /* eslint-disable quotes */
 import { expect, describe, it } from 'vitest';
 
-import { processTwig, hasValidToken } from '.';
+import { processTwig, hasValidToken } from '../..';
 
 // Behavioural contract for twigWrapper. It pins the exact output every consumer relies on, captured from the
 // current Twig-backed implementation, so a custom interpreter can replace Twig and prove zero regression by

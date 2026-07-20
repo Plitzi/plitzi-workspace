@@ -1,5 +1,5 @@
-import { STRING_LITERAL } from './patterns';
 import { resolvePath } from './resolvePath';
+import { STRING_LITERAL } from '../patterns/patterns';
 
 // Evaluates a bare expression — a token default, a filter argument or an `{% if %}` operand — into a value: a
 // quoted string, a number, a boolean, or a path read out of the context.
