@@ -9,12 +9,16 @@ const TOKEN_PATH = `${TOKEN_SEGMENT}(?:\\??\\.${TOKEN_SEGMENT})*`;
 // A well-formed token, for detection: `{{ path [?? default] [| filter]... }}`, whitespace anywhere. Deliberately
 // strict and kept in step with TOKEN_INNER — templates are user-written, so `{{var 1}}`, `{{var.1}}`, `{{ x | }}`
 // and `{{}}` must read as malformed (not a token) exactly as renderTokens then declines to resolve them.
-const TOKEN_BASE = `\\{\\{\\s*${TOKEN_PATH}(?:\\s*\\?\\?\\s*[^|{}]+?)?(?:\\s*\\|\\s*[a-zA-Z_]+(?:\\([^)]*\\))?)*\\s*\\}\\}`;
+const TOKEN_BODY = `${TOKEN_PATH}(?:\\s*\\?\\?\\s*[^|{}]+?)?(?:\\s*\\|\\s*[a-zA-Z_]+(?:\\([^)]*\\))?)*`;
+const TOKEN_DOUBLE = `\\{\\{\\s*${TOKEN_BODY}\\s*\\}\\}`;
+const TOKEN_TRIPLE = `\\{\\{\\{\\s*${TOKEN_BODY}\\s*\\}\\}\\}`;
+const TOKEN_BASE = `(?:${TOKEN_TRIPLE}|${TOKEN_DOUBLE})`;
 export const TOKEN_REGEX = new RegExp(TOKEN_BASE, 'g');
 export const TOKEN_STRICT_REGEX = new RegExp(`^${TOKEN_BASE}$`);
 
-// A `{{ ... }}` occurrence, and the grammar of its contents: a path, an optional `?? default`, optional filters.
-export const TOKEN_MATCH = /\{\{([\s\S]*?)\}\}/g;
+// A `{{ ... }}` or `{{{ ... }}}` occurrence, and the grammar of its contents: a path, an optional `?? default`,
+// optional filters. Triple braces match first to avoid partial matches by the double-brace alternative.
+export const TOKEN_MATCH = /\{\{\{([\s\S]*?)\}\}\}|\{\{([\s\S]*?)\}\}/g;
 export const TOKEN_INNER = new RegExp(
   `^\\s*(${TOKEN_PATH})\\s*(?:\\?\\?\\s*([^|]+?)\\s*)?((?:\\|\\s*[a-zA-Z_]+(?:\\([^)]*\\))?\\s*)*)$`
 );

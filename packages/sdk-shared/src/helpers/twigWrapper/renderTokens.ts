@@ -70,52 +70,69 @@ const stringify = (value: unknown): string => {
   return String(value);
 };
 
-// Replaces every `{{ ... }}` occurrence with its resolved value. A `{{ ... }}` whose contents are not a valid token
-// (a JS object literal, a typo) is left exactly as written.
+// Replaces every `{{ ... }}` or `{{{ ... }}}` occurrence with its resolved value. Triple braces render the raw
+// toString form (`[object Object]` for objects); double braces JSON-serialise objects so the result can be
+// round-tripped. A `{{ ... }}` whose contents are not a valid token is left exactly as written.
 export const renderTokens = (
   template: string,
   context: Record<string, unknown>,
   keepEmptyTokens: boolean,
-  asRaw: boolean
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _asRaw: boolean
 ): string =>
-  template.replace(TOKEN_MATCH, (full: string, innerRaw: string) => {
-    const inner = TOKEN_INNER.exec(innerRaw);
-    if (!inner) {
-      // Try Twig `cycle(values, position)` function call before giving up.
-      const cycleMatch = CYCLE_CALL.exec(innerRaw.trim());
-      if (cycleMatch) {
-        const cycled = evalCycle(cycleMatch[1], context);
-        if (cycled !== null) {
-          return stringify(cycled);
-        }
+  template.replace(
+    TOKEN_MATCH,
+    (full: string, tripleContent: string | undefined, doubleContent: string | undefined) => {
+      const isTriple = tripleContent !== undefined;
+      const innerRaw = isTriple ? tripleContent : doubleContent;
+
+      if (innerRaw === undefined) {
+        return full;
       }
-      return full;
+
+      const inner = TOKEN_INNER.exec(innerRaw);
+      if (!inner) {
+        // Try Twig `cycle(values, position)` function call before giving up.
+        const cycleMatch = CYCLE_CALL.exec(innerRaw.trim());
+        if (cycleMatch) {
+          const cycled = evalCycle(cycleMatch[1], context);
+          if (cycled !== null) {
+            return stringify(cycled);
+          }
+        }
+        return full;
+      }
+
+      const path = inner[1];
+      const filtersStr = inner[3];
+      // The `?? default` group is optional at runtime, though the RegExp typing claims every group is a string.
+      const defaultExpr = inner[2] as string | undefined;
+
+      // keepEmptyTokens keeps the original token on a miss or an empty string, and ignores `??`/filters — matching
+      // the previous behaviour where only the bare path was resolved.
+      if (keepEmptyTokens) {
+        const resolved = resolvePath(context, path);
+
+        return resolved === undefined || resolved === null || resolved === '' ? full : stringify(resolved);
+      }
+
+      let value = resolvePath(context, path);
+      if (defaultExpr !== undefined && (value === undefined || value === null)) {
+        value = evalOperand(defaultExpr, context);
+      }
+
+      value = applyFilters(value, filtersStr, context);
+
+      // Triple braces: always raw toString (objects → `[object Object]`).
+      if (isTriple) {
+        return stringify(value);
+      }
+
+      // Double braces: objects are JSON-serialised so the result can be round-tripped; primitives use their string form.
+      if (typeof value === 'object' && value !== null) {
+        return JSON.stringify(value);
+      }
+
+      return stringify(value);
     }
-
-    const path = inner[1];
-    const filtersStr = inner[3];
-    // The `?? default` group is optional at runtime, though the RegExp typing claims every group is a string.
-    const defaultExpr = inner[2] as string | undefined;
-
-    // keepEmptyTokens keeps the original token on a miss or an empty string, and ignores `??`/filters — matching
-    // the previous behaviour where only the bare path was resolved.
-    if (keepEmptyTokens) {
-      const resolved = resolvePath(context, path);
-
-      return resolved === undefined || resolved === null || resolved === '' ? full : stringify(resolved);
-    }
-
-    let value = resolvePath(context, path);
-    if (defaultExpr !== undefined && (value === undefined || value === null)) {
-      value = evalOperand(defaultExpr, context);
-    }
-
-    value = applyFilters(value, filtersStr, context);
-
-    // asRaw serialises an object so the whole result can be JSON.parsed back into typed data.
-    if (asRaw && typeof value === 'object' && value !== null) {
-      value = JSON.stringify(value);
-    }
-
-    return stringify(value);
-  });
+  );

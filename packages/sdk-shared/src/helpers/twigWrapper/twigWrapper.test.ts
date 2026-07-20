@@ -103,10 +103,10 @@ describe('twigWrapper', () => {
 
     // NEW
 
-    it('returns [object Object] when asRaw=false', () => {
+    it('returns JSON object when asRaw=false (double braces now JSON-serialise objects)', () => {
       const template = 'Data: {{ data }}';
       const result = processTwig(template, { data: { key: 'value', nested: { a: 1 } } }, false, false);
-      expect(result).toBe('Data: [object Object]');
+      expect(result).toBe('Data: {"key":"value","nested":{"a":1}}');
     });
 
     it('returns parsed object when asRaw=true', () => {
@@ -146,6 +146,115 @@ describe('twigWrapper', () => {
 
     it('does not disturb a hyphen-free token', () => {
       expect(processTwig('Hello {{ user.name }}', { user: { name: 'Peter' } })).toBe('Hello Peter');
+    });
+  });
+
+  describe('triple braces {{{ variable }}}', () => {
+    it('renders object as toString (raw)', () => {
+      expect(processTwig('{{{ o }}}', { o: { a: 1 } })).toBe('[object Object]');
+    });
+
+    it('renders array as toString (comma-separated)', () => {
+      expect(processTwig('{{{ items }}}', { items: [1, 2, 3] })).toBe('1,2,3');
+    });
+
+    it('renders primitive same as double braces', () => {
+      expect(processTwig('{{{ name }}}', { name: 'Peter' })).toBe('Peter');
+      expect(processTwig('{{{ count }}}', { count: 42 })).toBe('42');
+      expect(processTwig('{{{ flag }}}', { flag: true })).toBe('true');
+      expect(processTwig('{{{ nothing }}}', { nothing: null })).toBe('');
+    });
+
+    it('renders undefined/null as empty', () => {
+      expect(processTwig('{{{ missing }}}', {})).toBe('');
+      expect(processTwig('{{{ val }}}', { val: null })).toBe('');
+    });
+
+    it('supports nested paths', () => {
+      const result = processTwig('{{{ user.profile.name }}}', {
+        user: { profile: { name: 'Alice' } }
+      });
+      expect(result).toBe('Alice');
+    });
+
+    it('supports nested path to object — raw toString', () => {
+      const result = processTwig('{{{ user.profile }}}', {
+        user: { profile: { name: 'Alice' } }
+      });
+      expect(result).toBe('[object Object]');
+    });
+
+    it('supports default expression', () => {
+      expect(processTwig('{{{ name ?? "Guest" }}}', {})).toBe('Guest');
+      expect(processTwig('{{{ name ?? "Guest" }}}', { name: 'Bob' })).toBe('Bob');
+    });
+
+    it('supports filters', () => {
+      expect(processTwig('{{{ name | upper }}}', { name: 'alice' })).toBe('ALICE');
+      expect(processTwig('{{{ name | default("N/A") }}}', {})).toBe('N/A');
+    });
+
+    it('supports whitespace flexibility', () => {
+      expect(processTwig('{{{name}}}', { name: 'X' })).toBe('X');
+      expect(processTwig('{{{  name  }}}', { name: 'X' })).toBe('X');
+      expect(processTwig('{{{ name }}}', { name: 'X' })).toBe('X');
+    });
+
+    it('mixed with double braces — different rendering for same object', () => {
+      const result = processTwig('JSON: {{ data }} RAW: {{{ data }}}', {
+        data: { key: 'value' }
+      });
+      expect(result).toBe('JSON: {"key":"value"} RAW: [object Object]');
+    });
+
+    it('inside a loop', () => {
+      const result = processTwig('{% for item in items %}{{{ item }}}|{% endfor %}', {
+        items: [{ a: 1 }, { b: 2 }]
+      });
+      expect(result).toBe('[object Object]|[object Object]|');
+    });
+
+    it('inside a conditional', () => {
+      const result = processTwig('{% if show %}{{{ data }}}{% endif %}', {
+        show: true,
+        data: { x: 1 }
+      });
+      expect(result).toBe('[object Object]');
+    });
+
+    it('left untouched when malformed', () => {
+      expect(processTwig('{{{}}}', {})).toBe('{{{}}}');
+      expect(processTwig('{{{ }}}', {})).toBe('{{{ }}}');
+      expect(processTwig('{{{ var1', {})).toBe('{{{ var1');
+    });
+
+    it('does not interfere with adjacent double braces', () => {
+      const result = processTwig('{{{ a }}} and {{ b }}', { a: { x: 1 }, b: 'hello' });
+      expect(result).toBe('[object Object] and hello');
+    });
+
+    it('multiple triple-brace tokens', () => {
+      const result = processTwig('{{{ a }}}-{{{ b }}}', { a: { x: 1 }, b: [1, 2] });
+      expect(result).toBe('[object Object]-1,2');
+    });
+
+    it('triple braces with keepEmptyTokens — unresolved token kept', () => {
+      const result = processTwig('Hello {{{ name }}}', {}, true);
+      expect(result).toBe('Hello {{{ name }}}');
+    });
+
+    it('cycle function still works inside triple braces context', () => {
+      const result = processTwig('{% for i in 0..2 %}{{ cycle(["X", "Y"], i) }}{% endfor %}', {});
+      expect(result).toBe('XYX');
+    });
+
+    it('token before and after triple braces resolves', () => {
+      const result = processTwig('{{ prefix }}{{{ obj }}}{{ suffix }}', {
+        prefix: '>>',
+        obj: { a: 1 },
+        suffix: '<<'
+      });
+      expect(result).toBe('>>[object Object]<<');
     });
   });
 
@@ -1003,14 +1112,14 @@ describe('twigWrapper', () => {
       expect(result).toBe('a-b-');
     });
 
-    it('loop with asRaw — objects in loop body rendered as [object Object] (loop hardcodes asRaw=false)', () => {
+    it('loop with double braces — objects in loop body rendered as JSON', () => {
       const result = processTwig(
         '{% for item in items %}{{ item }}{% endfor %}',
         { items: [{ a: 1 }, { b: 2 }] },
         false,
         true
       );
-      expect(result).toEqual('[object Object][object Object]');
+      expect(result).toEqual('{"a":1}{"b":2}');
     });
 
     it('nested loops with cycle in inner loop', () => {
@@ -1382,21 +1491,21 @@ describe('twigWrapper', () => {
       expect(result).toBe('NNN');
     });
 
-    it('loop with token that resolves to object — rendered via toString', () => {
+    it('loop with token that resolves to object — rendered as JSON via double braces', () => {
       const result = processTwig('{% for item in items %}{{ item }}{% endfor %}', {
         items: [{ a: 1 }, [1, 2], 'str']
       });
-      expect(result).toBe('[object Object]1,2str');
+      expect(result).toBe('{"a":1}[1,2]str');
     });
 
-    it('loop with token + asRaw — objects in loop rendered via toString (loop hardcodes asRaw=false)', () => {
+    it('loop with token + asRaw — objects in loop rendered as JSON via double braces', () => {
       const result = processTwig(
         '{% for item in items %}{{ item }}{% endfor %}',
         { items: [{ a: 1 }, [1, 2]] },
         false,
         true
       );
-      expect(result).toBe('[object Object]1,2');
+      expect(result).toBe('{"a":1}[1,2]');
     });
 
     it('keepEmptyTokens inside loop — tokens inside loop body are still resolved', () => {
@@ -1639,6 +1748,137 @@ describe('twigWrapper', () => {
 
     it('should allow default expression in strict mode', () => {
       expect(hasValidToken("{{ test.pp ?? 'nice' }}", true)).toBe(true);
+    });
+  });
+
+  describe('hasValidToken - triple braces non-strict', () => {
+    it('should detect simple triple-brace token', () => {
+      expect(hasValidToken('{{{ token }}}')).toBe(true);
+    });
+
+    it('should detect triple-brace token without spaces', () => {
+      expect(hasValidToken('{{{token}}}')).toBe(true);
+    });
+
+    it('should detect triple-brace token with irregular spacing', () => {
+      expect(hasValidToken('{{{   token   }}}')).toBe(true);
+      expect(hasValidToken('{{{\ttoken\t}}}')).toBe(true);
+      expect(hasValidToken('{{{\ntoken\n}}}')).toBe(true);
+    });
+
+    it('should detect triple-brace token with nested path', () => {
+      expect(hasValidToken('{{{ a.b.c }}}')).toBe(true);
+      expect(hasValidToken('{{{a.b.c}}}')).toBe(true);
+    });
+
+    it('should detect triple-brace token with default expression', () => {
+      expect(hasValidToken("{{{ token ?? 'fallback' }}}")).toBe(true);
+      expect(hasValidToken('{{{ token ?? 0 }}}')).toBe(true);
+    });
+
+    it('should detect triple-brace token with filter chain', () => {
+      expect(hasValidToken('{{{ token | upper }}}')).toBe(true);
+      expect(hasValidToken('{{{ token | upper | truncate(10) }}}')).toBe(true);
+    });
+
+    it('should detect triple-brace token with hyphenated path', () => {
+      expect(hasValidToken('{{{ my-var.item }}}')).toBe(true);
+    });
+
+    it('should detect triple-brace token inside surrounding text', () => {
+      expect(hasValidToken('Hello {{{ name }}, welcome!')).toBe(true);
+      expect(hasValidToken('prefix {{{ x }}} suffix')).toBe(true);
+    });
+
+    it('should detect multiple triple-brace tokens', () => {
+      expect(hasValidToken('{{{ a }}} and {{{ b }}}')).toBe(true);
+    });
+
+    it('should detect mixed double and triple-brace tokens', () => {
+      expect(hasValidToken('{{ a }} {{{ b }}}')).toBe(true);
+    });
+
+    it('should reject numeric path in triple braces', () => {
+      expect(hasValidToken('{{{123}}}')).toBe(false);
+      expect(hasValidToken('{{{ 123 }}}')).toBe(false);
+    });
+
+    it('should reject empty triple braces', () => {
+      expect(hasValidToken('{{{}}}')).toBe(false);
+      expect(hasValidToken('{{{  }}}')).toBe(false);
+    });
+
+    it('should reject path starting with number in triple braces', () => {
+      expect(hasValidToken('{{{1a}}}')).toBe(false);
+      expect(hasValidToken('{{{ 1a }}}')).toBe(false);
+    });
+  });
+
+  describe('hasValidToken - triple braces strict', () => {
+    it('should accept a whole-string triple-brace token', () => {
+      expect(hasValidToken('{{{ token }}}', true)).toBe(true);
+      expect(hasValidToken('{{{token}}}', true)).toBe(true);
+    });
+
+    it('should accept triple-brace token with nested path', () => {
+      expect(hasValidToken('{{{ a.b.c }}}', true)).toBe(true);
+    });
+
+    it('should accept triple-brace token with default', () => {
+      expect(hasValidToken("{{{ token ?? 'def' }}}", true)).toBe(true);
+    });
+
+    it('should accept triple-brace token with filter', () => {
+      expect(hasValidToken('{{{ token | upper }}}', true)).toBe(true);
+    });
+
+    it('should reject triple-brace token inside surrounding text', () => {
+      expect(hasValidToken('text {{{ token }}} text', true)).toBe(false);
+      expect(hasValidToken('prefix {{{ token }}}', true)).toBe(false);
+      expect(hasValidToken('{{{ token }}} suffix', true)).toBe(false);
+    });
+
+    it('should reject numeric path in triple braces strict', () => {
+      expect(hasValidToken('{{{123}}}', true)).toBe(false);
+      expect(hasValidToken('{{{ 123 }}}', true)).toBe(false);
+    });
+
+    it('should reject empty triple braces strict', () => {
+      expect(hasValidToken('{{{}}}', true)).toBe(false);
+      expect(hasValidToken('{{{  }}}', true)).toBe(false);
+    });
+  });
+
+  describe('hasValidToken - malformed tokens', () => {
+    const malformedTokens = [
+      // Double braces
+      '{{}}',
+      '{{ }}',
+      '{{ var',
+      '{{ var }',
+      '{ var }}',
+      '{{ var. }}',
+      '{{ .var }}',
+      '{{ var 1 }}',
+      '{{ var | }}',
+      // Triple braces
+      '{{{}}}',
+      '{{{ }}}',
+      '{{{ var',
+      '{{{ var }',
+      '{ var }}}',
+      '{{{ var. }}}',
+      '{{{ .var }}}',
+      '{{{ var 1 }}}',
+      '{{{ var | }}}'
+    ];
+
+    it.each(malformedTokens)('rejects %j in non-strict mode', template => {
+      expect(hasValidToken(template)).toBe(false);
+    });
+
+    it.each(malformedTokens)('rejects %j in strict mode', template => {
+      expect(hasValidToken(template, true)).toBe(false);
     });
   });
 });
