@@ -197,4 +197,147 @@ describe('conditionals', () => {
       );
     });
   });
+
+  describe('elseif', () => {
+    it('resolves the first matching elseif branch', () => {
+      const tpl = '{% if a %}A{% elseif b %}B{% endif %}';
+      expect(processTwig(tpl, { a: true, b: true })).toBe('A');
+      expect(processTwig(tpl, { a: false, b: true })).toBe('B');
+      expect(processTwig(tpl, { a: false, b: false })).toBe('');
+    });
+
+    it('resolves else when all conditions are false', () => {
+      const tpl = '{% if a %}A{% elseif b %}B{% else %}C{% endif %}';
+      expect(processTwig(tpl, { a: true })).toBe('A');
+      expect(processTwig(tpl, { b: true })).toBe('B');
+      expect(processTwig(tpl, {})).toBe('C');
+    });
+
+    it('supports three elseif branches', () => {
+      const tpl = '{% if x == 1 %}one{% elseif x == 2 %}two{% elseif x == 3 %}three{% else %}other{% endif %}';
+      expect(processTwig(tpl, { x: 1 })).toBe('one');
+      expect(processTwig(tpl, { x: 2 })).toBe('two');
+      expect(processTwig(tpl, { x: 3 })).toBe('three');
+      expect(processTwig(tpl, { x: 9 })).toBe('other');
+    });
+
+    it('picks only the first truthy branch', () => {
+      const tpl = '{% if a %}A{% elseif b %}B{% elseif c %}C{% endif %}';
+      expect(processTwig(tpl, { a: true, b: true, c: true })).toBe('A');
+      expect(processTwig(tpl, { a: false, b: true, c: true })).toBe('B');
+      expect(processTwig(tpl, { a: false, b: false, c: true })).toBe('C');
+    });
+
+    it('handles elseif with nested paths', () => {
+      const tpl =
+        '{% if user.role == "admin" %}Admin{% elseif user.role == "editor" %}Editor{% else %}Viewer{% endif %}';
+      expect(processTwig(tpl, { user: { role: 'admin' } })).toBe('Admin');
+      expect(processTwig(tpl, { user: { role: 'editor' } })).toBe('Editor');
+      expect(processTwig(tpl, { user: { role: 'viewer' } })).toBe('Viewer');
+    });
+
+    it('handles elseif with whitespace variations', () => {
+      const tpl = '{%if a%}A{%elseif b%}B{%else%}C{%endif%}';
+      expect(processTwig(tpl, { a: false, b: true })).toBe('B');
+      expect(processTwig(tpl, { a: false, b: false })).toBe('C');
+    });
+
+    it('handles elseif with tokens in body', () => {
+      const tpl = '{% if a %}{{ x }}{% elseif b %}{{ y }}{% else %}{{ z }}{% endif %}';
+      expect(processTwig(tpl, { a: true, x: 'XA' })).toBe('XA');
+      expect(processTwig(tpl, { a: false, b: true, y: 'YB' })).toBe('YB');
+      expect(processTwig(tpl, { a: false, b: false, z: 'ZC' })).toBe('ZC');
+    });
+
+    it('elseif inside a loop', () => {
+      const tpl = '{% for i in items %}{% if i > 5 %}big{% elseif i > 2 %}mid{% else %}small{% endif %},{% endfor %}';
+      expect(processTwig(tpl, { items: [1, 3, 7] })).toBe('small,mid,big,');
+    });
+
+    it('elseif with comparison operators', () => {
+      const tpl = '{% if n >= 10 %}high{% elseif n >= 5 %}mid{% else %}low{% endif %}';
+      expect(processTwig(tpl, { n: 15 })).toBe('high');
+      expect(processTwig(tpl, { n: 7 })).toBe('mid');
+      expect(processTwig(tpl, { n: 2 })).toBe('low');
+    });
+
+    it('elseif without else — empty when no branch matches', () => {
+      const tpl = '{% if a %}A{% elseif b %}B{% endif %}';
+      expect(processTwig(tpl, { a: false, b: false })).toBe('');
+    });
+  });
+
+  describe('and / or operators', () => {
+    it('and — both true', () => {
+      expect(processTwig('{% if a and b %}Y{% endif %}', { a: true, b: true })).toBe('Y');
+    });
+
+    it('and — one false', () => {
+      expect(processTwig('{% if a and b %}Y{% endif %}', { a: true, b: false })).toBe('');
+      expect(processTwig('{% if a and b %}Y{% endif %}', { a: false, b: true })).toBe('');
+    });
+
+    it('or — one true', () => {
+      expect(processTwig('{% if a or b %}Y{% endif %}', { a: true, b: false })).toBe('Y');
+      expect(processTwig('{% if a or b %}Y{% endif %}', { a: false, b: true })).toBe('Y');
+    });
+
+    it('or — both false', () => {
+      expect(processTwig('{% if a or b %}Y{% endif %}', { a: false, b: false })).toBe('');
+    });
+
+    it('and/or combined — or is lower precedence than and', () => {
+      // `a or b and c` should be `a or (b and c)`
+      expect(processTwig('{% if a or b and c %}Y{% endif %}', { a: false, b: true, c: true })).toBe('Y');
+      expect(processTwig('{% if a or b and c %}Y{% endif %}', { a: false, b: true, c: false })).toBe('');
+      expect(processTwig('{% if a or b and c %}Y{% endif %}', { a: true, b: false, c: false })).toBe('Y');
+    });
+
+    it('not has higher precedence than and', () => {
+      // `not a and b` should be `(not a) and b`
+      expect(processTwig('{% if not a and b %}Y{% endif %}', { a: false, b: true })).toBe('Y');
+      expect(processTwig('{% if not a and b %}Y{% endif %}', { a: true, b: true })).toBe('');
+      expect(processTwig('{% if not a and b %}Y{% endif %}', { a: false, b: false })).toBe('');
+    });
+
+    it('not has higher precedence than or', () => {
+      // `not a or b` should be `(not a) or b`
+      expect(processTwig('{% if not a or b %}Y{% endif %}', { a: false, b: false })).toBe('Y');
+      expect(processTwig('{% if not a or b %}Y{% endif %}', { a: true, b: true })).toBe('Y');
+      expect(processTwig('{% if not a or b %}Y{% endif %}', { a: true, b: false })).toBe('');
+    });
+
+    it('and with comparisons', () => {
+      const tpl = '{% if x > 5 and x < 10 %}ok{% endif %}';
+      expect(processTwig(tpl, { x: 7 })).toBe('ok');
+      expect(processTwig(tpl, { x: 3 })).toBe('');
+      expect(processTwig(tpl, { x: 12 })).toBe('');
+    });
+
+    it('or with comparisons', () => {
+      const tpl = '{% if x == "a" or x == "b" %}matched{% endif %}';
+      expect(processTwig(tpl, { x: 'a' })).toBe('matched');
+      expect(processTwig(tpl, { x: 'b' })).toBe('matched');
+      expect(processTwig(tpl, { x: 'c' })).toBe('');
+    });
+
+    it('complex expression with and, or, and not', () => {
+      const tpl = '{% if not a or b and c %}Y{% endif %}';
+      // `(not a) or (b and c)`
+      expect(processTwig(tpl, { a: true, b: true, c: true })).toBe('Y');
+      expect(processTwig(tpl, { a: true, b: true, c: false })).toBe('');
+      expect(processTwig(tpl, { a: true, b: false, c: true })).toBe('');
+      expect(processTwig(tpl, { a: false, b: false, c: false })).toBe('Y');
+    });
+
+    it('three operands with and', () => {
+      expect(processTwig('{% if a and b and c %}Y{% endif %}', { a: true, b: true, c: true })).toBe('Y');
+      expect(processTwig('{% if a and b and c %}Y{% endif %}', { a: true, b: true, c: false })).toBe('');
+    });
+
+    it('three operands with or', () => {
+      expect(processTwig('{% if a or b or c %}Y{% endif %}', { a: false, b: false, c: false })).toBe('');
+      expect(processTwig('{% if a or b or c %}Y{% endif %}', { a: false, b: true, c: false })).toBe('Y');
+    });
+  });
 });

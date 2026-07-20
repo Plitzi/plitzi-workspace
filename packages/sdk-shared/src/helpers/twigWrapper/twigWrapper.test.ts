@@ -582,9 +582,9 @@ describe('twigWrapper', () => {
       expect(result).toBe('onlyonlyonlyonly');
     });
 
-    it('cycle with empty array literal — left as raw token (array literal regex requires non-empty)', () => {
+    it('cycle with empty array literal — renders empty for each iteration', () => {
       const result = processTwig('{% for i in 0..2 %}{{ cycle([], loop.index0) }}{% endfor %}', {});
-      expect(result).toBe('{{ cycle([], loop.index0) }}{{ cycle([], loop.index0) }}{{ cycle([], loop.index0) }}');
+      expect(result).toBe('');
     });
 
     it('token with numeric-like value', () => {

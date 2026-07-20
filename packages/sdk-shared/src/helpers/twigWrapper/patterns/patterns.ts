@@ -24,13 +24,15 @@ export const TOKEN_INNER = new RegExp(
 );
 export const FILTER_RE = /\|\s*([a-zA-Z_]+)(?:\(([^)]*)\))?/g;
 
-// A single well-formed `{% if %}` block. The condition may not cross `%}`, and the then/else bodies hold no
-// structural tag (`if`/`else`/`endif`), so a match is always an innermost, correctly paired block — repeated
-// replacement then resolves inner blocks before their parents. A block missing its `%}` or `{% endif %}`, or with
-// an empty condition, simply never matches and is left in place rather than half-rendered. `else` is optional.
-const IF_BODY = '(?:(?!\\{%\\s*(?:if|else|endif)\\b)[\\s\\S])*?';
+// A single well-formed `{% if %}` block, with optional `{% elseif %}` chains and `{% else %}`. The condition
+// may not cross `%}`, and each body holds no structural tag (`if`/`else`/`elseif`/`endif`), so a match is always
+// an innermost, correctly paired block — repeated replacement then resolves inner blocks before their parents. A
+// block missing its `%}` or `{% endif %}`, or with an empty condition, simply never matches and is left in place
+// rather than half-rendered.
+const IF_BODY = '(?:(?!\\{%\\s*(?:if|else|elseif|endif)\\b)[\\s\\S])*?';
+const ELSEIF_SECTION = `(?:\\{%\\s*elseif\\s+(?:(?!%\\})[\\s\\S])+?\\s*%\\}${IF_BODY})`;
 export const IF_BLOCK = new RegExp(
-  `\\{%\\s*if\\s+((?:(?!%\\})[\\s\\S])+?)\\s*%\\}(${IF_BODY})(?:\\{%\\s*else\\s*%\\}(${IF_BODY}))?\\{%\\s*endif\\s*%\\}`
+  `\\{%\\s*if\\s+((?:(?!%\\})[\\s\\S])+?)\\s*%\\}(${IF_BODY})${ELSEIF_SECTION}*(?:\\{%\\s*else\\s*%\\}(${IF_BODY}))?\\{%\\s*endif\\s*%\\}`
 );
 export const COMPARISON = /^([\s\S]+?)\s*(==|!=|>=|<=|>|<)\s*([\s\S]+)$/;
 export const STRING_LITERAL = /^(['"])([\s\S]*)\1$/;

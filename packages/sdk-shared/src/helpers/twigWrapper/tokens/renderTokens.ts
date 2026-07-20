@@ -6,7 +6,7 @@ import { TOKEN_INNER, TOKEN_MATCH } from '../patterns/patterns';
 // Matches `cycle(values, position)` — the Twig cycle function. The first argument can be an array literal
 // (`['odd', 'even']` or `["odd", "even"]`) or a variable path; the second is any expression (variable, number).
 const CYCLE_CALL = /^cycle\((.+)\)$/;
-const CYCLE_ARRAY = /^\[(.+)\]$/;
+const CYCLE_ARRAY = /^\[(.*)\]$/;
 
 // Finds the comma that separates the two `cycle()` arguments, skipping commas inside brackets so
 // `cycle(['a, b'], 0)` splits correctly at the outer comma.
@@ -40,14 +40,14 @@ const evalCycle = (args: string, context: Record<string, unknown>): unknown => {
   let values: unknown[];
   const arrayMatch = CYCLE_ARRAY.exec(valuesArg);
   if (arrayMatch) {
-    values = arrayMatch[1].split(',').map(v => v.trim().replace(/^['"]|['"]$/g, ''));
+    values = arrayMatch[1] === '' ? [] : arrayMatch[1].split(',').map(v => v.trim().replace(/^['"]|['"]$/g, ''));
   } else {
     const resolved = evalOperand(valuesArg, context);
     values = Array.isArray(resolved) ? resolved : [];
   }
 
   if (values.length === 0) {
-    return null;
+    return '';
   }
 
   const position = Number(evalOperand(positionArg, context));
