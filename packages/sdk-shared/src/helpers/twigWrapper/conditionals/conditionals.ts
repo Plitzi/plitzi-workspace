@@ -40,6 +40,55 @@ const compareValues = (operator: string, left: unknown, right: unknown): boolean
   return operator === '>=' ? leftText >= rightText : leftText <= rightText;
 };
 
+// Evaluates a Twig `is` test: null, empty, iterable, defined, odd, even, divisible by(n).
+const evalTest = (value: unknown, testName: string, context: Record<string, unknown>): boolean => {
+  const name = testName.trim().toLowerCase();
+  if (name === 'null' || name === 'none') {
+    return value === undefined || value === null;
+  }
+
+  if (name === 'empty') {
+    if (value === undefined || value === null || value === '') {
+      return true;
+    }
+    if (Array.isArray(value) && value.length === 0) {
+      return true;
+    }
+    if (typeof value === 'object' && Object.keys(value).length === 0) {
+      return true;
+    }
+    return false;
+  }
+
+  if (name === 'iterable') {
+    return Array.isArray(value);
+  }
+
+  if (name === 'defined') {
+    return value !== undefined;
+  }
+
+  if (name === 'odd') {
+    return typeof value === 'number' && Math.abs(value) % 2 === 1;
+  }
+
+  if (name === 'even') {
+    return typeof value === 'number' && Math.abs(value) % 2 === 0;
+  }
+
+  const divMatch = /^divisible\s+by\s*\((.+)\)$/.exec(name);
+  if (divMatch) {
+    const divisor = Number(evalOperand(divMatch[1], context));
+    if (divisor === 0) {
+      return false;
+    }
+    return typeof value === 'number' && value % divisor === 0;
+  }
+
+  // Unknown test: fall through to falsy.
+  return false;
+};
+
 // Splits an expression by a logical keyword (`and`/`or`) at word boundaries, respecting quoted strings.
 // Returns a single-element array when the keyword is not present.
 const splitByKeyword = (expr: string, keyword: string): string[] => {
@@ -100,6 +149,7 @@ const splitByKeyword = (expr: string, keyword: string): string[] => {
 // left inside the operand, a malformed expression — collapses to a falsy result rather than throwing.
 //
 // Twig operator precedence: `not` (highest) > `and` > `or` (lowest).
+// Additional operators: `~` (concat), `in`/`not in`, `is` (test).
 const evalCondition = (expr: string, context: Record<string, unknown>): boolean => {
   const trimmed = expr.trim();
 
@@ -115,9 +165,53 @@ const evalCondition = (expr: string, context: Record<string, unknown>): boolean 
     return andParts.every(part => evalCondition(part, context));
   }
 
+  // Twig `not in` — membership test with negation. Must check before `not` to avoid splitting `not in`.
+  const notInMatch = /^(.+?)\s+not\s+in\s+(.+)$/.exec(trimmed);
+  if (notInMatch) {
+    const needle = evalOperand(notInMatch[1], context);
+    const haystack = evalOperand(notInMatch[2], context);
+    if (Array.isArray(haystack)) {
+      return !haystack.includes(needle);
+    }
+    if (typeof haystack === 'string') {
+      return !haystack.includes(String(needle));
+    }
+    return true;
+  }
+
+  // Twig `in` — membership test: `value in collection` or `value in string`.
+  const inMatch = /^(.+?)\s+in\s+(.+)$/.exec(trimmed);
+  if (inMatch) {
+    const needle = evalOperand(inMatch[1], context);
+    const haystack = evalOperand(inMatch[2], context);
+    if (Array.isArray(haystack)) {
+      return haystack.includes(needle);
+    }
+    if (typeof haystack === 'string') {
+      return haystack.includes(String(needle));
+    }
+    return false;
+  }
+
   // Twig `not` unary operator: `{% if not condition %}`
   if (trimmed.startsWith('not ')) {
     return !evalCondition(trimmed.slice(4), context);
+  }
+
+  // Twig `is` (test operator): `value is null`, `value is empty`, `value is iterable`, etc.
+  const isMatch = /^(.+?)\s+is\s+(.+)$/.exec(trimmed);
+  if (isMatch) {
+    const value = evalOperand(isMatch[1], context);
+    return evalTest(value, isMatch[2], context);
+  }
+
+  // Twig `~` (concatenation operator): `value ~ other` — joins both sides as strings, then returns as truthy.
+  // Check for `~` not inside quotes.
+  const tildeIdx = findTildeOperator(trimmed);
+  if (tildeIdx !== -1) {
+    const left = evalOperand(trimmed.slice(0, tildeIdx), context);
+    const right = evalOperand(trimmed.slice(tildeIdx + 1), context);
+    return Boolean(String(left) + String(right));
   }
 
   const comparison = COMPARISON.exec(trimmed);
@@ -126,6 +220,28 @@ const evalCondition = (expr: string, context: Record<string, unknown>): boolean 
   }
 
   return Boolean(evalOperand(trimmed, context));
+};
+
+// Finds the index of a top-level `~` operator (not inside quotes).
+const findTildeOperator = (expr: string): number => {
+  let inQuote: string | null = null;
+  for (let i = 0; i < expr.length; i++) {
+    const char = expr[i];
+    if (inQuote) {
+      if (char === inQuote) {
+        inQuote = null;
+      }
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      inQuote = char;
+      continue;
+    }
+    if (char === '~') {
+      return i;
+    }
+  }
+  return -1;
 };
 
 // Resolves a `{% if %}...{% elseif %}...{% else %}...{% endif %}` chain. Called when the if condition was false

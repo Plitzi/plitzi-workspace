@@ -1,9 +1,12 @@
 import { applyConditionals } from './conditionals/conditionals';
 import { applyLoops } from './loops/loops';
+import { applyApplyTag } from './tags/apply';
+import { applySet } from './tags/set';
 import { renderTokens } from './tokens/renderTokens';
 
-// Renders a user-written template: resolves `{% if %}` blocks, then `{{ token }}` interpolation. `keepEmptyTokens`
-// leaves an unresolved token as its literal text; `asRaw` JSON.parses the result back into typed data. Any error —
+// Renders a user-written template: resolves `{% set %}` variables, `{% if %}` blocks, `{% for %}` loops,
+// then `{{ token }}` interpolation, and finally `{% apply %}` filter blocks. `keepEmptyTokens` leaves an
+// unresolved token as its literal text; `asRaw` JSON.parses the result back into typed data. Any error —
 // or a non-string template — falls back to the original input rather than throwing.
 export const processTwig = (
   template: string,
@@ -22,25 +25,34 @@ export const processTwig = (
       context = { ...variables, ...(variables.variables as Record<string, unknown>) };
     }
 
-    const result = renderTokens(
-      applyConditionals(applyLoops(template, context), context),
-      context,
-      keepEmptyTokens,
-      asRaw
-    );
+    // 1. Process {% set %} tags first — defines variables for subsequent steps.
+    let step = applySet(template, context);
+
+    // 2. Process {% for %} loops.
+    step = applyLoops(step, context);
+
+    // 3. Process {% if %}/{% elseif %}/{% else %} conditionals.
+    step = applyConditionals(step, context);
+
+    // 4. Render {{ }} and {{{ }}} tokens with filters and function calls.
+    step = renderTokens(step, context, keepEmptyTokens, asRaw);
+
+    // 5. Process {% apply %} filter blocks last — applies filters to rendered content.
+    step = applyApplyTag(step, context);
+
     if (!asRaw) {
-      return result;
+      return step;
     }
 
     try {
-      const parsed = JSON.parse(result) as string | object;
+      const parsed = JSON.parse(step) as string | object;
       if (parsed) {
         return parsed;
       }
 
-      return result;
+      return step;
     } catch {
-      return result;
+      return step;
     }
   } catch {
     return template;

@@ -302,3 +302,91 @@ describe('hasValidToken - malformed tokens', () => {
     expect(hasValidToken(template, true)).toBe(false);
   });
 });
+
+describe('Twig functions', () => {
+  describe('cycle()', () => {
+    it('cycles through array values', () => {
+      expect(processTwig('{{ cycle(["odd", "even"], index) }}', { index: 0 })).toBe('odd');
+      expect(processTwig('{{ cycle(["odd", "even"], index) }}', { index: 1 })).toBe('even');
+      expect(processTwig('{{ cycle(["odd", "even"], index) }}', { index: 2 })).toBe('odd');
+    });
+
+    it('handles single-element array', () => {
+      expect(processTwig('{{ cycle(["only"], 0) }}', {})).toBe('only');
+      expect(processTwig('{{ cycle(["only"], 5) }}', {})).toBe('only');
+    });
+
+    it('handles empty array', () => {
+      expect(processTwig('{{ cycle([], 0) }}', {})).toBe('');
+    });
+  });
+
+  describe('max()', () => {
+    it('returns max of numbers', () => {
+      expect(processTwig('{{ max(1, 2, 3) }}', {})).toBe('3');
+      expect(processTwig('{{ max(10, 5, 8) }}', {})).toBe('10');
+    });
+
+    it('returns max of two arguments', () => {
+      expect(processTwig('{{ max(a, b) }}', { a: 5, b: 10 })).toBe('10');
+    });
+
+    it('returns max of variables and literals', () => {
+      expect(processTwig('{{ max(a, 20) }}', { a: 5 })).toBe('20');
+    });
+
+    it('returns max of single argument', () => {
+      expect(processTwig('{{ max(42) }}', {})).toBe('42');
+    });
+
+    it('returns empty for no arguments', () => {
+      expect(processTwig('{{ max() }}', {})).toBe('{{ max() }}');
+    });
+  });
+
+  describe('min()', () => {
+    it('returns min of numbers', () => {
+      expect(processTwig('{{ min(1, 2, 3) }}', {})).toBe('1');
+      expect(processTwig('{{ min(10, 5, 8) }}', {})).toBe('5');
+    });
+
+    it('returns min of two arguments', () => {
+      expect(processTwig('{{ min(a, b) }}', { a: 5, b: 10 })).toBe('5');
+    });
+
+    it('returns min of variables and literals', () => {
+      expect(processTwig('{{ min(a, 20) }}', { a: 5 })).toBe('5');
+    });
+
+    it('returns min of single argument', () => {
+      expect(processTwig('{{ min(42) }}', {})).toBe('42');
+    });
+  });
+
+  describe('range()', () => {
+    it('generates range 1..5', () => {
+      const result = processTwig('{{ range(1, 5) }}', {});
+      expect(result).toBe('[1,2,3,4,5]');
+    });
+
+    it('generates range with step', () => {
+      const result = processTwig('{{ range(0, 10, 2) }}', {});
+      expect(result).toBe('[0,2,4,6,8,10]');
+    });
+
+    it('generates reverse range', () => {
+      const result = processTwig('{{ range(5, 1) }}', {});
+      expect(result).toBe('[5,4,3,2,1]');
+    });
+
+    it('generates empty range when explicit step opposes direction', () => {
+      const result = processTwig('{{ range(5, 1, 1) }}', {});
+      expect(result).toBe('[]');
+    });
+
+    it('generates range with variables', () => {
+      const result = processTwig('{{ range(start, end) }}', { start: 1, end: 3 });
+      expect(result).toBe('[1,2,3]');
+    });
+  });
+});

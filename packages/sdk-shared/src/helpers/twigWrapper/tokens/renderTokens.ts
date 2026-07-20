@@ -8,6 +8,13 @@ import { TOKEN_INNER, TOKEN_MATCH } from '../patterns/patterns';
 const CYCLE_CALL = /^cycle\((.+)\)$/;
 const CYCLE_ARRAY = /^\[(.*)\]$/;
 
+// Matches `max(a, b, ...)` and `min(a, b, ...)` — Twig max/min functions.
+const MAX_CALL = /^max\((.+)\)$/;
+const MIN_CALL = /^min\((.+)\)$/;
+
+// Matches `range(start, end)` or `range(start, end, step)` — Twig range function.
+const RANGE_CALL = /^range\((.+)\)$/;
+
 // Finds the comma that separates the two `cycle()` arguments, skipping commas inside brackets so
 // `cycle(['a, b'], 0)` splits correctly at the outer comma.
 const findCycleSplitIndex = (args: string): number => {
@@ -58,6 +65,106 @@ const evalCycle = (args: string, context: Record<string, unknown>): unknown => {
   return values[((position % values.length) + values.length) % values.length];
 };
 
+// Evaluates `max(a, b, ...)` and returns the maximum value.
+const evalMax = (args: string, context: Record<string, unknown>): unknown => {
+  const values = splitFuncArgs(args).map(a => evalOperand(a.trim(), context));
+  if (values.length === 0) {
+    return null;
+  }
+  const nums = values.map(Number).filter(n => !Number.isNaN(n));
+  if (nums.length === values.length) {
+    return Math.max(...nums);
+  }
+  const strs = values.map(String);
+  return strs.sort().at(-1) ?? null;
+};
+
+// Evaluates `min(a, b, ...)` and returns the minimum value.
+const evalMin = (args: string, context: Record<string, unknown>): unknown => {
+  const values = splitFuncArgs(args).map(a => evalOperand(a.trim(), context));
+  if (values.length === 0) {
+    return null;
+  }
+  const nums = values.map(Number).filter(n => !Number.isNaN(n));
+  if (nums.length === values.length) {
+    return Math.min(...nums);
+  }
+  const strs = values.map(String);
+  return strs.sort().at(0) ?? null;
+};
+
+// Evaluates `range(start, end)` or `range(start, end, step)` and returns an array of numbers.
+const evalRange = (args: string, context: Record<string, unknown>): unknown => {
+  const parts = splitFuncArgs(args).map(a => Number(evalOperand(a.trim(), context)));
+  if (parts.length < 2) {
+    return null;
+  }
+
+  const start = parts[0];
+  const end = parts[1];
+  const hasExplicitStep = parts.length >= 3;
+  const step = hasExplicitStep ? parts[2] : (start <= end ? 1 : -1);
+
+  if (step === 0) {
+    return [];
+  }
+
+  const result: number[] = [];
+  if (step > 0) {
+    for (let i = start; i <= end; i += step) {
+      result.push(i);
+    }
+  } else {
+    for (let i = start; i >= end; i += step) {
+      result.push(i);
+    }
+  }
+
+  return result;
+};
+
+// Splits comma-separated function arguments while respecting quoted strings and brackets.
+const splitFuncArgs = (args: string): string[] => {
+  const parts: string[] = [];
+  let current = '';
+  let depth = 0;
+  let inQuote: string | null = null;
+
+  for (const char of args) {
+    if (inQuote) {
+      current += char;
+      if (char === inQuote) {
+        inQuote = null;
+      }
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      inQuote = char;
+      current += char;
+      continue;
+    }
+    if (char === '(' || char === '[') {
+      depth++;
+      current += char;
+      continue;
+    }
+    if (char === ')' || char === ']') {
+      depth--;
+      current += char;
+      continue;
+    }
+    if (char === ',' && depth === 0) {
+      parts.push(current);
+      current = '';
+      continue;
+    }
+    current += char;
+  }
+
+  parts.push(current);
+  return parts;
+};
+
 // Missing values render empty; everything else uses its string form, so `false`, `0` and an object read exactly
 // as twig produced them (`'false'`, `'0'`, `'[object Object]'`).
 const stringify = (value: unknown): string => {
@@ -92,14 +199,41 @@ export const renderTokens = (
 
       const inner = TOKEN_INNER.exec(innerRaw);
       if (!inner) {
-        // Try Twig `cycle(values, position)` function call before giving up.
-        const cycleMatch = CYCLE_CALL.exec(innerRaw.trim());
+        // Try Twig function calls before giving up.
+        const trimmed = innerRaw.trim();
+
+        const cycleMatch = CYCLE_CALL.exec(trimmed);
         if (cycleMatch) {
           const cycled = evalCycle(cycleMatch[1], context);
           if (cycled !== null) {
             return stringify(cycled);
           }
         }
+
+        const maxMatch = MAX_CALL.exec(trimmed);
+        if (maxMatch) {
+          const maxVal = evalMax(maxMatch[1], context);
+          if (maxVal !== null) {
+            return stringify(maxVal);
+          }
+        }
+
+        const minMatch = MIN_CALL.exec(trimmed);
+        if (minMatch) {
+          const minVal = evalMin(minMatch[1], context);
+          if (minVal !== null) {
+            return stringify(minVal);
+          }
+        }
+
+        const rangeMatch = RANGE_CALL.exec(trimmed);
+        if (rangeMatch) {
+          const rangeVal = evalRange(rangeMatch[1], context);
+          if (rangeVal !== null) {
+            return isTriple ? stringify(rangeVal) : JSON.stringify(rangeVal);
+          }
+        }
+
         return full;
       }
 

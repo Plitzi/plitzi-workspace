@@ -14,7 +14,10 @@ import {
   FOR_TAG,
   RANGE_EXPR,
   BREAK_TAG,
-  CONTINUE_TAG
+  CONTINUE_TAG,
+  SET_ASSIGN,
+  SET_BLOCK,
+  APPLY_TAG
 } from './patterns';
 
 describe('TOKEN_REGEX (non-strict detection)', () => {
@@ -328,6 +331,14 @@ describe('FILTER_RE', () => {
     const m = FILTER_RE.exec('|  upper  ');
     expect(m).not.toBeNull();
     expect(m![1]).toBe('upper');
+  });
+
+  it('matches filter names containing digits', () => {
+    FILTER_RE.lastIndex = 0;
+    const m = FILTER_RE.exec('| nl2br');
+    expect(m).not.toBeNull();
+    expect(m![1]).toBe('nl2br');
+    expect(m![2]).toBeUndefined();
   });
 
   it('returns null for non-filter string', () => {
@@ -854,5 +865,118 @@ describe('CONTINUE_TAG', () => {
 
   it('does not match {% break %}', () => {
     expect('{% break %}'.match(CONTINUE_TAG)).toBeNull();
+  });
+});
+
+describe('SET_ASSIGN', () => {
+  it('matches simple assignment', () => {
+    SET_ASSIGN.lastIndex = 0;
+    const result = SET_ASSIGN.exec('{% set name = "value" %}');
+    expect(result).not.toBeNull();
+    expect(result![1]).toBe('name');
+    expect(result![2]).toBe('"value"');
+  });
+
+  it('matches numeric expression', () => {
+    SET_ASSIGN.lastIndex = 0;
+    const result = SET_ASSIGN.exec('{% set count = 42 %}');
+    expect(result).not.toBeNull();
+    expect(result![1]).toBe('count');
+    expect(result![2]).toBe('42');
+  });
+
+  it('matches variable expression', () => {
+    SET_ASSIGN.lastIndex = 0;
+    const result = SET_ASSIGN.exec('{% set b = a %}');
+    expect(result).not.toBeNull();
+    expect(result![1]).toBe('b');
+    expect(result![2]).toBe('a');
+  });
+
+  it('matches with extra whitespace', () => {
+    SET_ASSIGN.lastIndex = 0;
+    const result = SET_ASSIGN.exec('{%  set   x  =  y  %}');
+    expect(result).not.toBeNull();
+    expect(result![1]).toBe('x');
+  });
+
+  it('does not match without braces', () => {
+    SET_ASSIGN.lastIndex = 0;
+    expect(SET_ASSIGN.exec('set x = y')).toBeNull();
+  });
+
+  it('does not match without equals sign', () => {
+    SET_ASSIGN.lastIndex = 0;
+    expect(SET_ASSIGN.exec('{% set x %}')).toBeNull();
+  });
+});
+
+describe('SET_BLOCK', () => {
+  it('matches block capture', () => {
+    SET_BLOCK.lastIndex = 0;
+    const result = SET_BLOCK.exec('{% set content %}Hello{% endset %}');
+    expect(result).not.toBeNull();
+    expect(result![1]).toBe('content');
+    expect(result![2]).toBe('Hello');
+  });
+
+  it('matches multiline content', () => {
+    SET_BLOCK.lastIndex = 0;
+    const result = SET_BLOCK.exec('{% set html %}<div>\n<p>Hi</p>\n</div>{% endset %}');
+    expect(result).not.toBeNull();
+    expect(result![1]).toBe('html');
+    expect(result![2]).toContain('<div>');
+  });
+
+  it('matches with extra whitespace', () => {
+    SET_BLOCK.lastIndex = 0;
+    const result = SET_BLOCK.exec('{%  set   content  %}test{%  endset  %}');
+    expect(result).not.toBeNull();
+    expect(result![1]).toBe('content');
+    expect(result![2]).toBe('test');
+  });
+
+  it('does not match without endset', () => {
+    SET_BLOCK.lastIndex = 0;
+    expect(SET_BLOCK.exec('{% set content %}Hello')).toBeNull();
+  });
+});
+
+describe('APPLY_TAG', () => {
+  it('matches single filter', () => {
+    APPLY_TAG.lastIndex = 0;
+    const result = APPLY_TAG.exec('{% apply upper %}hello{% endapply %}');
+    expect(result).not.toBeNull();
+    expect(result![1]).toBe('upper');
+    expect(result![2]).toBe('hello');
+  });
+
+  it('matches chained filters', () => {
+    APPLY_TAG.lastIndex = 0;
+    const result = APPLY_TAG.exec('{% apply upper|trim %}  hello  {% endapply %}');
+    expect(result).not.toBeNull();
+    expect(result![1]).toBe('upper|trim');
+    expect(result![2]).toBe('  hello  ');
+  });
+
+  it('matches multiline content', () => {
+    APPLY_TAG.lastIndex = 0;
+    const result = APPLY_TAG.exec('{% apply nl2br %}line1\nline2{% endapply %}');
+    expect(result).not.toBeNull();
+    expect(result![1]).toBe('nl2br');
+    expect(result![2]).toBe('line1\nline2');
+  });
+
+  it('matches with extra whitespace', () => {
+    APPLY_TAG.lastIndex = 0;
+    const result = APPLY_TAG.exec('{%  apply   upper  %}hi{%  endapply  %}');
+    expect(result).not.toBeNull();
+    expect(result![1]).toBe('upper');
+    expect(result![2]).toBe('hi');
+  });
+
+  it('does not match without endapply', () => {
+    APPLY_TAG.lastIndex = 0;
+    expect(APPLY_TAG.exec('{% apply upper %}hello')).toBeNull();
   });
 });

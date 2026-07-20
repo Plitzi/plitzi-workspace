@@ -22,7 +22,7 @@ export const TOKEN_MATCH = /\{\{\{([\s\S]*?)\}\}\}|\{\{([\s\S]*?)\}\}/g;
 export const TOKEN_INNER = new RegExp(
   `^\\s*(${TOKEN_PATH})\\s*(?:\\?\\?\\s*([^|]+?)\\s*)?((?:\\|\\s*[a-zA-Z_]+(?:\\([^)]*\\))?\\s*)*)$`
 );
-export const FILTER_RE = /\|\s*([a-zA-Z_]+)(?:\(([^)]*)\))?/g;
+export const FILTER_RE = /\|\s*([a-zA-Z0-9_]+)(?:\(([^)]*)\))?/g;
 
 // A single well-formed `{% if %}` block, with optional `{% elseif %}` chains and `{% else %}`. The condition
 // may not cross `%}`, and each body holds no structural tag (`if`/`else`/`elseif`/`endif`), so a match is always
@@ -54,3 +54,12 @@ export const RANGE_EXPR = /^(['"]?)(-?\w+)\1\s*\.\.\s*(['"]?)(-?\w+)\3$/;
 // Whitespace is fully flexible, matching Twig conventions.
 export const BREAK_TAG = /\{%\s*break\s*%\}/;
 export const CONTINUE_TAG = /\{%\s*continue\s*%\}/;
+
+// `{% set variable = expression %}` — assigns a value to a variable. Captures the variable name and the expression.
+export const SET_ASSIGN = /\{%\s*set\s+(\w+)\s*=\s*((?:(?!%\})[\s\S])+?)\s*%\}/g;
+
+// `{% set variable %}...{% endset %}` — captures a block of text into a variable.
+export const SET_BLOCK = /\{%\s*set\s+(\w+)\s*%\}([\s\S]*?)\{%\s*endset\s*%\}/g;
+
+// `{% apply filter1|filter2|... %}...{% endapply %}` — applies filters to a block of content.
+export const APPLY_TAG = /\{%\s*apply\s+((?:(?!%\})[\s\S])+?)\s*%\}([\s\S]*?)\{%\s*endapply\s*%\}/g;

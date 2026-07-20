@@ -852,4 +852,110 @@ describe('twigWrapper', () => {
       expect(result).toBe('c');
     });
   });
+
+  describe('{% set %} tag', () => {
+    it('sets variable from literal and uses it', () => {
+      const result = processTwig('{% set greeting = "Hello" %}{{ greeting }}', {});
+      expect(result).toBe('Hello');
+    });
+
+    it('sets variable from number', () => {
+      const result = processTwig('{% set count = 42 %}{{ count }}', {});
+      expect(result).toBe('42');
+    });
+
+    it('sets variable from another variable', () => {
+      const result = processTwig('{% set b = a %}{{ b }}', { a: 'fromA' });
+      expect(result).toBe('fromA');
+    });
+
+    it('sets variable from expression', () => {
+      const result = processTwig('{% set x = 10 %}{% set y = x %}{{ y }}', {});
+      expect(result).toBe('10');
+    });
+
+    it('block set captures content', () => {
+      const result = processTwig('{% set content %}Hello World{% endset %}{{ content }}', {});
+      expect(result).toBe('Hello World');
+    });
+
+    it('block set captures HTML', () => {
+      const result = processTwig('{% set html %}<div>test</div>{% endset %}{{ html }}', {});
+      expect(result).toBe('<div>test</div>');
+    });
+
+    it('set tag produces no output', () => {
+      const result = processTwig('{% set x = "value" %}after', {});
+      expect(result).toBe('after');
+    });
+
+    it('block set tag produces no output', () => {
+      const result = processTwig('{% set x %}captured{% endset %}after', {});
+      expect(result).toBe('after');
+    });
+
+    it('set variable available in subsequent tokens', () => {
+      const result = processTwig(
+        '{% set a = "hello" %}{% set b = "world" %}{{ a }} {{ b }}',
+        {}
+      );
+      expect(result).toBe('hello world');
+    });
+
+    it('set variable available in conditionals', () => {
+      const result = processTwig(
+        '{% set status = "active" %}{% if status == "active" %}ON{% else %}OFF{% endif %}',
+        {}
+      );
+      expect(result).toBe('ON');
+    });
+
+    it('set variable available in loops', () => {
+      const result = processTwig(
+        '{% set prefix = "item" %}{% for i in items %}{{ prefix }}-{{ i }} {% endfor %}',
+        { items: [1, 2, 3] }
+      );
+      expect(result).toBe('item-1 item-2 item-3 ');
+    });
+  });
+
+  describe('{% apply %} tag', () => {
+    it('applies upper filter to content', () => {
+      const result = processTwig('{% apply upper %}hello{% endapply %}', {});
+      expect(result).toBe('HELLO');
+    });
+
+    it('applies lower filter to content', () => {
+      const result = processTwig('{% apply lower %}HELLO{% endapply %}', {});
+      expect(result).toBe('hello');
+    });
+
+    it('applies chained filters', () => {
+      const result = processTwig('{% apply upper|trim %}  hello  {% endapply %}', {});
+      expect(result).toBe('HELLO');
+    });
+
+    it('applies default filter', () => {
+      const result = processTwig('{% apply default("fallback") %}{% endapply %}', {});
+      expect(result).toBe('fallback');
+    });
+
+    it('does not produce output outside filter', () => {
+      const result = processTwig('before{% apply upper %}middle{% endapply %}after', {});
+      expect(result).toBe('beforeMIDDLEafter');
+    });
+
+    it('applies nl2br filter', () => {
+      const result = processTwig(
+        '{% apply nl2br %}hello\nworld{% endapply %}',
+        {}
+      );
+      expect(result).toBe('hello<br>world');
+    });
+
+    it('applies striptags filter', () => {
+      const result = processTwig('{% apply striptags %}<b>bold</b>{% endapply %}', {});
+      expect(result).toBe('bold');
+    });
+  });
 });

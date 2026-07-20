@@ -333,6 +333,114 @@ export const filters: Record<string, TwigFilter> = {
 
       return Boolean(item);
     });
+  },
+
+  // ── New Twig filters ──────────────────────────────────────────────────────────────
+  // `| url_encode` — percent-encodes a string or converts an object to query-string format.
+  url_encode: value => {
+    if (typeof value === 'string') {
+      return encodeURIComponent(value);
+    }
+
+    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      return new URLSearchParams(
+        Object.fromEntries(
+          Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, String(v)])
+        )
+      ).toString();
+    }
+
+    return value;
+  },
+  // `| nl2br` — inserts HTML `<br>` before every newline.
+  nl2br: value => (typeof value === 'string' ? value.replace(/\n/g, '<br>') : value),
+  // `| striptags` — strips HTML/XML tags; optional `allowable` arg keeps specific tags.
+  striptags: (value, arg) => {
+    if (typeof value !== 'string') {
+      return value;
+    }
+
+    if (arg) {
+      const allowable = arg.replace(/^['"]|['"]$/g, '').trim();
+      const tagNames = allowable
+        .split(/(?:\s*>\s*<\s*|<\s*|>\s*)/)
+        .filter(Boolean)
+        .map(t => t.replace(/[\/>]/g, '').trim());
+      if (tagNames.length > 0) {
+        const pattern = new RegExp(`<(?!/?(?:${tagNames.join('|')})\\b)[^>]+>`, 'gi');
+        return value.replace(pattern, '').replace(/\s+/g, ' ').trim();
+      }
+    }
+
+    return value
+      .replace(/<[^>]+>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  },
+  // `| abs` — returns the absolute value of a number.
+  abs: value => (typeof value === 'number' ? Math.abs(value) : value),
+  // `| round(precision, mode)` — rounds a number; default precision is 0, mode is 'common' (Math.round).
+  round: (value, arg, context) => {
+    if (typeof value !== 'number') {
+      return value;
+    }
+
+    const args = arg ? splitFilterArgs(arg).map(a => evalOperand(a.trim(), context)) : [];
+    const precision = Number(args[0]) || 0;
+    const mode = args[1] != null ? String(args[1]) : 'common';
+    const factor = 10 ** precision;
+
+    if (mode === 'ceil') {
+      return Math.ceil(value * factor) / factor;
+    }
+
+    if (mode === 'floor') {
+      return Math.floor(value * factor) / factor;
+    }
+
+    return Math.round(value * factor) / factor;
+  },
+  // `| column(name)` — extracts a property from each item in an array of objects.
+  column: (value, arg) => {
+    if (!Array.isArray(value) || arg === undefined) {
+      return value;
+    }
+
+    const path = arg.replace(/^['"]|['"]$/g, '').trim();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return value.map(item => {
+      if (item !== null && typeof item === 'object') {
+        return (item as Record<string, unknown>)[path];
+      }
+
+      return undefined;
+    });
+  },
+  // `| format(args...)` — sprintf-like string formatting with positional placeholders.
+  format: (value, arg, context) => {
+    if (typeof value !== 'string' || arg === undefined) {
+      return value;
+    }
+
+    const args = splitFilterArgs(arg).map(a => evalOperand(a.trim(), context));
+    let index = 0;
+    return value.replace(/%s|%d|%f|%%/g, match => {
+      if (match === '%%') {
+        return '%';
+      }
+      const replacement = args[index];
+      index++;
+      if (replacement === undefined) {
+        return match;
+      }
+      if (match === '%d') {
+        return String(Math.floor(Number(replacement)));
+      }
+      if (match === '%f') {
+        return String(Number(replacement));
+      }
+      return String(replacement);
+    });
   }
 };
 
