@@ -97,15 +97,17 @@ const evalMin = (args: string, context: Record<string, unknown>): unknown => {
   return strs.sort().at(0) ?? null;
 };
 
-// Evaluates `range(start, end)` or `range(start, end, step)` and returns an array of numbers.
+// Evaluates `range(end)`, `range(start, end)` or `range(start, end, step)` and returns an array of numbers.
+// In Twig, `range(5)` returns [0, 1, 2, 3, 4, 5] (start defaults to 0).
 const evalRange = (args: string, context: Record<string, unknown>): unknown => {
   const parts = splitFuncArgs(args).map(a => Number(evalOperand(a.trim(), context)));
-  if (parts.length < 2) {
+  if (parts.length === 0) {
     return null;
   }
 
-  const start = parts[0];
-  const end = parts[1];
+  // Twig: range(end) → range(0, end)
+  const start = parts.length === 1 ? 0 : parts[0];
+  const end = parts.length === 1 ? parts[0] : parts[1];
   const hasExplicitStep = parts.length >= 3;
   const step = hasExplicitStep ? parts[2] : (start <= end ? 1 : -1);
 

@@ -1370,4 +1370,80 @@ describe('twigWrapper integration', () => {
       expect(result).toBe('hi');
     });
   });
+
+  // ──────────────────────────────────────────────
+  // 16. NESTING BUGS (fixed)
+  // ──────────────────────────────────────────────
+  describe('nested apply tags (inside-out processing)', () => {
+    it('double nested apply', () => {
+      const result = processTwig('{% apply upper %}{% apply trim %}  hi  {% endapply %}{% endapply %}', {});
+      expect(result).toBe('HI');
+    });
+
+    it('triple nested apply', () => {
+      const result = processTwig(
+        '{% apply upper %}{% apply trim %}{% apply title %}hello world{% endapply %}{% endapply %}{% endapply %}',
+        {}
+      );
+      expect(result).toBe('HELLO WORLD');
+    });
+
+    it('simple apply still works', () => {
+      expect(processTwig('{% apply upper %}hello{% endapply %}', {})).toBe('HELLO');
+    });
+
+    it('apply with tokens inside', () => {
+      expect(processTwig('{% apply upper %}{{ name }}{% endapply %}', { name: 'alice' })).toBe('ALICE');
+    });
+  });
+
+  describe('nested set blocks (inside-out processing)', () => {
+    it('double nested set blocks', () => {
+      const result = processTwig('{% set a %}{% set b %}inner{% endset %}{{ b }}{% endset %}{{ a }}', {});
+      expect(result).toBe('inner');
+    });
+
+    it('triple nested set blocks', () => {
+      const result = processTwig(
+        '{% set a %}{% set b %}{% set c %}deep{% endset %}{{ c }}{% endset %}{{ b }}{% endset %}{{ a }}',
+        {}
+      );
+      expect(result).toBe('deep');
+    });
+
+    it('set block with for inside', () => {
+      const result = processTwig('{% set x %}{% for i in items %}{{ i }}{% endfor %}{% endset %}{{ x }}', {
+        items: [1, 2, 3]
+      });
+      expect(result).toBe('123');
+    });
+
+    it('set block with apply inside', () => {
+      const result = processTwig('{% set x %}{% apply upper %}hello{% endapply %}{% endset %}{{ x }}', {});
+      expect(result).toBe('HELLO');
+    });
+
+    it('set block with if inside', () => {
+      const result = processTwig('{% set x %}{% if true %}yes{% else %}no{% endif %}{% endset %}{{ x }}', {});
+      expect(result).toBe('yes');
+    });
+  });
+
+  describe('range() single arg', () => {
+    it('range(0) returns [0]', () => {
+      expect(processTwig('{{ range(0) }}', {})).toBe('[0]');
+    });
+
+    it('range(5) returns 0..5', () => {
+      expect(processTwig('{{ range(5) }}', {})).toBe('[0,1,2,3,4,5]');
+    });
+
+    it('range() still works with 2 args', () => {
+      expect(processTwig('{{ range(1,3) }}', {})).toBe('[1,2,3]');
+    });
+
+    it('range() still works with 3 args', () => {
+      expect(processTwig('{{ range(0,10,2) }}', {})).toBe('[0,2,4,6,8,10]');
+    });
+  });
 });
