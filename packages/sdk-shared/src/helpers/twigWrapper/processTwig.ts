@@ -35,7 +35,8 @@ export const processTwig = (
     }
 
     // 1. Process {% set %} tags first — defines variables for subsequent steps.
-    let step = applySet(template, context);
+    // Skip when template has no set tags (most common case for rendered tokens).
+    let step = template.indexOf('{% set') !== -1 ? applySet(template, context) : template;
 
     // 2. Process {% for %} loops — skip when no loop tags exist.
     if (step.indexOf('{%') !== -1) {
@@ -47,7 +48,9 @@ export const processTwig = (
       step = applyConditionals(step, context);
 
       // 3b. Second pass for set tags that were inside conditional blocks and skipped by step 1.
-      step = applySet(step, context);
+      if (step.indexOf('{% set') !== -1) {
+        step = applySet(step, context);
+      }
     }
 
     // 4. Render {{ }} and {{{ }}} tokens with filters and function calls.

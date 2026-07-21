@@ -189,14 +189,287 @@ describe('no-op / trivial', () => {
   });
 });
 
+// ── New: deep set blocks ──────────────────────────────────────────────────────
+
+const deepSetBlocks = (() => {
+  let body = '{{ z }}';
+  for (let i = 2; i <= 20; i++) {
+    body = `{% set z${i} = z${i - 1} ~ "x" %}${body}`;
+  }
+  return `{% set z1 = "a" %}${body}`;
+})();
+
+const setChainConcat = `
+{% set a = "hello" %}{% set b = a ~ " " %}{% set c = b ~ "world" %}{% set d = c ~ "!" %}
+{% set e = d ~ " " %}{% set f = e ~ "end" %}{{ f }}
+`.trim();
+
+// ── New: apply-tag heavy ──────────────────────────────────────────────────────
+
+const applyTagSimple = '{{ content | upper }}';
+const applyTagChained = '{{ content | upper | trim | capitalize }}';
+const applyTagWithRaw = '{{ "<b>bold</b>" | striptags }}';
+
+const multipleApplyBlocks = `
+{% apply upper %}first{% endapply %}
+{% apply trim %}  second  {% endapply %}
+{% apply capitalize %}third{% endapply %}
+{% apply upper | trim %}  fourth  {% endapply %}
+`.trim();
+
+const applyInLoop = `
+{% for item in items %}
+  {% apply upper %}{{ item }}{% endapply %}
+{% endfor %}
+`.trim();
+
+const applyInLoopCtx = { items: ['alpha', 'beta', 'gamma', 'delta', 'epsilon'] };
+
+// ── New: many conditional branches ────────────────────────────────────────────
+
+const tenBranchIf = (() => {
+  const parts: string[] = [];
+  for (let i = 0; i < 10; i++) {
+    if (i === 0) {
+      parts.push(`{% if v == ${i} %}branch${i}`);
+    } else {
+      parts.push(`{% elseif v == ${i} %}branch${i}`);
+    }
+  }
+  parts.push('{% else %}other{% endif %}');
+  return parts.join('');
+})();
+
+const sequentialSmallIfs = Array.from({ length: 20 }, (_, i) => `{% if a${i} %}X{% endif %}`).join('');
+
+const sequentialSmallIfsCtx: Record<string, unknown> = {};
+for (let i = 0; i < 20; i++) {
+  sequentialSmallIfsCtx[`a${i}`] = i % 3 === 0;
+}
+
+// ── New: for loop with else ───────────────────────────────────────────────────
+
+const forLoopWithElse = '{% for item in items %}{{ item }} {% else %}empty{% endfor %}';
+const forLoopWithElseCtx = { items: ['a', 'b', 'c'] };
+const forLoopWithElseEmptyCtx = { items: [] as string[] };
+
+// ── New: ternary ──────────────────────────────────────────────────────────────
+
+const ternarySimple = '{{ active ? "yes" : "no" }}';
+const ternaryNested = '{{ status == "a" ? "alpha" : (status == "b" ? "beta" : "other") }}';
+
+// ── New: large context (resolvePath stress) ───────────────────────────────────
+
+const largeContextTemplate = '{{ deep.nested.value }}';
+const largeContextCtx: Record<string, unknown> = {};
+for (let i = 0; i < 200; i++) {
+  largeContextCtx[`key${i}`] = `val${i}`;
+}
+largeContextCtx.deep = { nested: { value: 'found' } };
+
+const shallowLookupTemplate = '{{ key42 }}';
+
+// ── New: edge cases ───────────────────────────────────────────────────────────
+
+const emptyTemplate = '';
+const singleToken = '{{ x }}';
+const whitespaceOnly = '   \n  \t  ';
+const pureHtml = '<div><p>Hello</p><span>World</span></div>';
+const mixedHtmlAndTokens = '<div class="{{ cls }}">{{ greeting }} {{ name }}</div>';
+const mixedHtmlAndTokensCtx = { cls: 'active', greeting: 'Hi', name: 'Alice' };
+
+const tokenWithDefault = '{{ missing | default("fallback") }}';
+const tokenWithDefaultPresent = '{{ present | default("fallback") }}';
+const tokenWithDefaultPresentCtx = { present: 'actual' };
+
+// ── New: string concatenation heavy ───────────────────────────────────────────
+
+const concatHeavy = '{{ a ~ b ~ c ~ d ~ e ~ f }}';
+const concatHeavyCtx = { a: 'A', b: 'B', c: 'C', d: 'D', e: 'E', f: 'F' };
+
+const concatWithFilters = '{{ (a ~ b) | upper }}';
+const concatWithFiltersCtx = { a: 'hello', b: 'world' };
+
+// ── New: mixed throughput ─────────────────────────────────────────────────────
+
+const complexTemplate = `
+{% set title = "Report" %}
+{% set total = 0 %}
+{% for item in items %}
+  {% if item.active %}
+    {{ title }}: {{ item.name | upper }} - {{ item.value | number_format }}
+    {% set total = total ~ item.value %}
+  {% endif %}
+{% endfor %}
+Total: {{ total }}
+`.trim();
+
+const complexCtx = {
+  items: Array.from({ length: 30 }, (_, i) => ({
+    name: `Item ${i}`,
+    value: (i + 1) * 10,
+    active: i % 2 === 0
+  }))
+};
+
+// ── Benchmarks ────────────────────────────────────────────────────────────────
+
+describe('deep set blocks', () => {
+  bench('20 nested set blocks', () => {
+    processTwig(deepSetBlocks, {});
+  });
+
+  bench('6 chained concat sets', () => {
+    processTwig(setChainConcat, {});
+  });
+});
+
+describe('apply-tag heavy', () => {
+  bench('single apply (upper)', () => {
+    processTwig(applyTagSimple, { content: 'hello world' });
+  });
+
+  bench('triple chained apply', () => {
+    processTwig(applyTagChained, { content: '  hello world  ' });
+  });
+
+  bench('striptags apply', () => {
+    processTwig(applyTagWithRaw, {});
+  });
+
+  bench('4 sequential apply blocks', () => {
+    processTwig(multipleApplyBlocks, {});
+  });
+
+  bench('apply inside 5-item loop', () => {
+    processTwig(applyInLoop, applyInLoopCtx);
+  });
+});
+
+describe('conditional density', () => {
+  bench('10-branch elseif chain (match at end)', () => {
+    processTwig(tenBranchIf, { v: 9 });
+  });
+
+  bench('10-branch elseif chain (match at start)', () => {
+    processTwig(tenBranchIf, { v: 0 });
+  });
+
+  bench('20 sequential small ifs', () => {
+    processTwig(sequentialSmallIfs, sequentialSmallIfsCtx);
+  });
+});
+
+describe('for loop variants', () => {
+  bench('for with else (non-empty)', () => {
+    processTwig(forLoopWithElse, forLoopWithElseCtx);
+  });
+
+  bench('for with else (empty → else branch)', () => {
+    processTwig(forLoopWithElse, forLoopWithElseEmptyCtx);
+  });
+});
+
+describe('ternary expressions', () => {
+  bench('simple ternary', () => {
+    processTwig(ternarySimple, { active: true });
+  });
+
+  bench('nested ternary', () => {
+    processTwig(ternaryNested, { status: 'b' });
+  });
+});
+
+describe('context lookup depth', () => {
+  bench('large context (200 keys) — deep path', () => {
+    processTwig(largeContextTemplate, largeContextCtx);
+  });
+
+  bench('large context (200 keys) — shallow lookup', () => {
+    processTwig(shallowLookupTemplate, largeContextCtx);
+  });
+});
+
+describe('edge cases / trivial', () => {
+  bench('empty string', () => {
+    processTwig(emptyTemplate, {});
+  });
+
+  bench('single token', () => {
+    processTwig(singleToken, { x: 'value' });
+  });
+
+  bench('whitespace only', () => {
+    processTwig(whitespaceOnly, {});
+  });
+
+  bench('pure HTML (no tokens)', () => {
+    processTwig(pureHtml, {});
+  });
+
+  bench('HTML + tokens', () => {
+    processTwig(mixedHtmlAndTokens, mixedHtmlAndTokensCtx);
+  });
+
+  bench('token with default (missing)', () => {
+    processTwig(tokenWithDefault, {});
+  });
+
+  bench('token with default (present)', () => {
+    processTwig(tokenWithDefaultPresent, tokenWithDefaultPresentCtx);
+  });
+});
+
+describe('string concatenation', () => {
+  bench('6-way concat', () => {
+    processTwig(concatHeavy, concatHeavyCtx);
+  });
+
+  bench('concat + filter', () => {
+    processTwig(concatWithFilters, concatWithFiltersCtx);
+  });
+});
+
 describe('throughput: process 1000 templates', () => {
   bench('mixed templates ×1000', () => {
-    const templates = [simpleTokens, conditionalSimple, conditionalChained, forLoopSimple, filterChain, noOpTemplate];
-    const contexts = [simpleTokensCtx, { active: true }, { status: 'c' }, forLoopSimpleCtx, filterChainCtx, {}];
+    const templates = [
+      simpleTokens,
+      conditionalSimple,
+      conditionalChained,
+      forLoopSimple,
+      filterChain,
+      noOpTemplate,
+      ternarySimple,
+      setChainConcat,
+      applyTagChained,
+      multipleApplyBlocks,
+      sequentialSmallIfs,
+      concatHeavy
+    ];
+    const contexts = [
+      simpleTokensCtx,
+      { active: true },
+      { status: 'c' },
+      forLoopSimpleCtx,
+      filterChainCtx,
+      {},
+      { active: true },
+      {},
+      { content: 'test' },
+      {},
+      sequentialSmallIfsCtx,
+      concatHeavyCtx
+    ];
 
     for (let i = 0; i < 1000; i++) {
       const idx = i % templates.length;
       processTwig(templates[idx], contexts[idx]);
+    }
+  });
+
+  bench('complex template ×500', () => {
+    for (let i = 0; i < 500; i++) {
+      processTwig(complexTemplate, complexCtx);
     }
   });
 });

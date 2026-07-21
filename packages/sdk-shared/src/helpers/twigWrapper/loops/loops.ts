@@ -128,15 +128,28 @@ const processBody = (body: string, context: Record<string, unknown>): string => 
     const afterSet = applySet(body, context);
     const afterLoops = applyLoops(afterSet, context);
 
-    const breakMatch = BREAK_TAG.exec(afterLoops);
-    if (breakMatch) {
-      const prefix = afterLoops.slice(0, breakMatch.index);
+    // Use indexOf for the common case (exact match), fall back to regex for whitespace variants.
+    let breakIdx = afterLoops.indexOf('{% break %}');
+    if (breakIdx === -1) {
+      const breakMatch = BREAK_TAG.exec(afterLoops);
+      if (breakMatch) {
+        breakIdx = breakMatch.index;
+      }
+    }
+    if (breakIdx !== -1) {
+      const prefix = afterLoops.slice(0, breakIdx);
       return renderTokens(prefix, context, false, false) + BREAK_SENTINEL;
     }
 
-    const continueMatch = CONTINUE_TAG.exec(afterLoops);
-    if (continueMatch) {
-      const prefix = afterLoops.slice(0, continueMatch.index);
+    let continueIdx = afterLoops.indexOf('{% continue %}');
+    if (continueIdx === -1) {
+      const continueMatch = CONTINUE_TAG.exec(afterLoops);
+      if (continueMatch) {
+        continueIdx = continueMatch.index;
+      }
+    }
+    if (continueIdx !== -1) {
+      const prefix = afterLoops.slice(0, continueIdx);
       return renderTokens(prefix, context, false, false) + CONTINUE_SENTINEL;
     }
 
@@ -146,16 +159,28 @@ const processBody = (body: string, context: Record<string, unknown>): string => 
   const afterLoops = applyLoops(body, context);
   const afterConditionals = applyConditionals(afterLoops, context);
 
-  const breakMatch = BREAK_TAG.exec(afterConditionals);
-  if (breakMatch) {
-    const prefix = afterConditionals.slice(0, breakMatch.index);
+  let breakIdx = afterConditionals.indexOf('{% break %}');
+  if (breakIdx === -1) {
+    const breakMatch = BREAK_TAG.exec(afterConditionals);
+    if (breakMatch) {
+      breakIdx = breakMatch.index;
+    }
+  }
+  if (breakIdx !== -1) {
+    const prefix = afterConditionals.slice(0, breakIdx);
     const afterSet = applySet(prefix, context);
     return renderTokens(afterSet, context, false, false) + BREAK_SENTINEL;
   }
 
-  const continueMatch = CONTINUE_TAG.exec(afterConditionals);
-  if (continueMatch) {
-    const prefix = afterConditionals.slice(0, continueMatch.index);
+  let continueIdx = afterConditionals.indexOf('{% continue %}');
+  if (continueIdx === -1) {
+    const continueMatch = CONTINUE_TAG.exec(afterConditionals);
+    if (continueMatch) {
+      continueIdx = continueMatch.index;
+    }
+  }
+  if (continueIdx !== -1) {
+    const prefix = afterConditionals.slice(0, continueIdx);
     const afterSet = applySet(prefix, context);
     return renderTokens(afterSet, context, false, false) + CONTINUE_SENTINEL;
   }

@@ -326,26 +326,15 @@ export const renderTokens = (
           const value = resolvePath(context, path);
 
           if (keepEmptyTokens) {
-            if (value === undefined || value === null || value === '') {
-              return full;
-            }
-
-            return stringify(value);
+            return value === undefined || value === null || value === '' ? full : stringify(value);
           }
 
           if (value === undefined || value === null) {
             return '';
           }
 
-          if (isTriple) {
-            return stringify(value);
-          }
-
-          if (typeof value === 'object') {
-            return JSON.stringify(value);
-          }
-
-          return stringify(value);
+          // Triple braces → raw toString; double braces → JSON for objects, string for primitives.
+          return isTriple || typeof value !== 'object' ? stringify(value) : JSON.stringify(value);
         }
       }
 

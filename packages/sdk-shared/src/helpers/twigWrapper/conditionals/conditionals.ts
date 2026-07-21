@@ -178,6 +178,87 @@ const splitByKeyword = (expr: string, keyword: string): string[] => {
 const evalCondition = (expr: string, context: Record<string, unknown>): boolean => {
   const trimmed = expr.trim();
 
+  // Fast path for the most common case: a simple expression without logical keywords.
+  // Avoids splitByKeyword overhead for conditions like `active`, `x == "y"`, `not foo`, etc.
+  const hasNoLogicalKeywords =
+    trimmed.indexOf(' or ') === -1 &&
+    trimmed.indexOf(' and ') === -1 &&
+    !trimmed.startsWith('or ') &&
+    !trimmed.startsWith('and ');
+
+  if (hasNoLogicalKeywords) {
+    // Twig `not in` — membership test with negation.
+    if (trimmed.indexOf(' not ') !== -1 || trimmed.indexOf(' in ') !== -1) {
+      const notInMatch = /^(.+?)\s+not\s+in\s+(.+)$/.exec(trimmed);
+      if (notInMatch) {
+        const needle = evalOperand(notInMatch[1], context);
+        const haystack = evalOperand(notInMatch[2], context);
+        if (Array.isArray(haystack)) {
+          return !haystack.includes(needle);
+        }
+        if (typeof haystack === 'string') {
+          return !haystack.includes(String(needle));
+        }
+        return true;
+      }
+
+      const inMatch = /^(.+?)\s+in\s+(.+)$/.exec(trimmed);
+      if (inMatch) {
+        const needle = evalOperand(inMatch[1], context);
+        const haystack = evalOperand(inMatch[2], context);
+        if (Array.isArray(haystack)) {
+          return haystack.includes(needle);
+        }
+        if (typeof haystack === 'string') {
+          return haystack.includes(String(needle));
+        }
+        return false;
+      }
+    }
+
+    // Twig `not` unary operator.
+    if (trimmed.startsWith('not ')) {
+      return !evalCondition(trimmed.slice(4), context);
+    }
+
+    // Twig `is not` / `is` test operators.
+    if (trimmed.indexOf(' is ') !== -1) {
+      const isNotMatch = /^(.+?)\s+is\s+not\s+(.+)$/.exec(trimmed);
+      if (isNotMatch) {
+        const value = evalOperand(isNotMatch[1], context);
+        return !evalTest(value, isNotMatch[2], context);
+      }
+
+      const isMatch = /^(.+?)\s+is\s+(.+)$/.exec(trimmed);
+      if (isMatch) {
+        const value = evalOperand(isMatch[1], context);
+        return evalTest(value, isMatch[2], context);
+      }
+    }
+
+    // Twig `~` (concatenation operator).
+    const tildeIdx = findTildeOperator(trimmed);
+    if (tildeIdx !== -1) {
+      const left = evalOperand(trimmed.slice(0, tildeIdx), context);
+      const right = evalOperand(trimmed.slice(tildeIdx + 1), context);
+      return Boolean(String(left) + String(right));
+    }
+
+    const comparison = COMPARISON.exec(trimmed);
+    if (comparison) {
+      return compareValues(comparison[2], evalOperand(comparison[1], context), evalOperand(comparison[3], context));
+    }
+
+    const operand = evalOperand(trimmed, context);
+    if (Array.isArray(operand) && operand.length === 0) {
+      return false;
+    }
+    if (operand !== null && typeof operand === 'object' && Object.keys(operand).length === 0) {
+      return false;
+    }
+    return Boolean(operand);
+  }
+
   // Twig `or` — lowest precedence: split by `or`, any truthy part makes the whole expression truthy.
   const orParts = splitByKeyword(trimmed, 'or');
   if (orParts.length > 1) {
@@ -190,8 +271,7 @@ const evalCondition = (expr: string, context: Record<string, unknown>): boolean 
     return andParts.every(part => evalCondition(part, context));
   }
 
-  // Twig `not in` — membership test with negation. Must check before `not` to avoid splitting `not in`.
-  // Fast path: skip regex when the keyword is absent.
+  // Twig `not in` — membership test with negation.
   if (trimmed.indexOf(' not ') !== -1 || trimmed.indexOf(' in ') !== -1) {
     const notInMatch = /^(.+?)\s+not\s+in\s+(.+)$/.exec(trimmed);
     if (notInMatch) {
@@ -206,7 +286,6 @@ const evalCondition = (expr: string, context: Record<string, unknown>): boolean 
       return true;
     }
 
-    // Twig `in` — membership test: `value in collection` or `value in string`.
     const inMatch = /^(.+?)\s+in\s+(.+)$/.exec(trimmed);
     if (inMatch) {
       const needle = evalOperand(inMatch[1], context);
@@ -221,14 +300,12 @@ const evalCondition = (expr: string, context: Record<string, unknown>): boolean 
     }
   }
 
-  // Twig `not` unary operator: `{% if not condition %}`
+  // Twig `not` unary operator.
   if (trimmed.startsWith('not ')) {
     return !evalCondition(trimmed.slice(4), context);
   }
 
-  // Twig `is not` (negated test operator): `value is not null`, `value is not empty`, etc.
-  // Must check before `is` to avoid matching `is not` as just `is`.
-  // Fast path: skip regex when the keyword is absent.
+  // Twig `is not` / `is` test operators.
   if (trimmed.indexOf(' is ') !== -1) {
     const isNotMatch = /^(.+?)\s+is\s+not\s+(.+)$/.exec(trimmed);
     if (isNotMatch) {
@@ -236,7 +313,6 @@ const evalCondition = (expr: string, context: Record<string, unknown>): boolean 
       return !evalTest(value, isNotMatch[2], context);
     }
 
-    // Twig `is` (test operator): `value is null`, `value is empty`, `value is iterable`, etc.
     const isMatch = /^(.+?)\s+is\s+(.+)$/.exec(trimmed);
     if (isMatch) {
       const value = evalOperand(isMatch[1], context);
@@ -244,12 +320,11 @@ const evalCondition = (expr: string, context: Record<string, unknown>): boolean 
     }
   }
 
-  // Twig `~` (concatenation operator): `value ~ other` — joins both sides as strings, then returns as truthy.
-  // Check for `~` not inside quotes.
-  const tildeIdx = findTildeOperator(trimmed);
-  if (tildeIdx !== -1) {
-    const left = evalOperand(trimmed.slice(0, tildeIdx), context);
-    const right = evalOperand(trimmed.slice(tildeIdx + 1), context);
+  // Twig `~` (concatenation operator).
+  const tildeIdx2 = findTildeOperator(trimmed);
+  if (tildeIdx2 !== -1) {
+    const left = evalOperand(trimmed.slice(0, tildeIdx2), context);
+    const right = evalOperand(trimmed.slice(tildeIdx2 + 1), context);
     return Boolean(String(left) + String(right));
   }
 
@@ -258,7 +333,6 @@ const evalCondition = (expr: string, context: Record<string, unknown>): boolean 
     return compareValues(comparison[2], evalOperand(comparison[1], context), evalOperand(comparison[3], context));
   }
 
-  // Twig treats empty arrays and empty objects as falsy, unlike JavaScript where `Boolean([])` is true.
   const operand = evalOperand(trimmed, context);
   if (Array.isArray(operand) && operand.length === 0) {
     return false;
@@ -371,9 +445,8 @@ export const applyConditionals = (template: string, context: Record<string, unkn
       }
 
       // If the block contains {% elseif %}, resolve the chain by parsing all sections.
-      if (SECTION_MARKER_RE.test(full)) {
-        SECTION_MARKER_RE.lastIndex = 0;
-
+      // Use indexOf instead of regex.test to avoid regex state management overhead.
+      if (full.indexOf('elseif') !== -1) {
         return resolveElseifChain(full, context);
       }
 
