@@ -1,6 +1,6 @@
 // The regex grammar shared across the twigWrapper modules.
 
-// A token segment allows internal hyphens (a source idRef is `<type>_<idRef>` and an idRef may carry them), but
+// A token segment allows internal hyphens (a source idRef is `<type>_<idIdRef>` and an idRef may carry them), but
 // never a leading or trailing one — the segment starts on `[a-zA-Z_]` and every '-' is followed by more word
 // chars. Resolution splits the path and reads each segment as a literal key, so a hyphen is never arithmetic.
 const TOKEN_SEGMENT = '[a-zA-Z_][a-zA-Z0-9_]*(?:-[a-zA-Z0-9_]+)*';
@@ -16,8 +16,8 @@ const TOKEN_BASE = `(?:${TOKEN_TRIPLE}|${TOKEN_DOUBLE})`;
 export const TOKEN_REGEX = new RegExp(TOKEN_BASE, 'g');
 export const TOKEN_STRICT_REGEX = new RegExp(`^${TOKEN_BASE}$`);
 
-// A `{{ ... }}` or `{{{ ... }}}` occurrence, and the grammar of its contents: a path, an optional `?? default`,
-// optional filters. Triple braces match first to avoid partial matches by the double-brace alternative.
+// A `{{ ... }}` or `{{{ ... }}}` occurrence, and the grammar of its contents: a path, an optional
+// `?? default`, optional filters. Triple braces match first to avoid partial matches by the double-brace alternative.
 export const TOKEN_MATCH = /\{\{\{([\s\S]*?)\}\}\}|\{\{([\s\S]*?)\}\}/g;
 export const TOKEN_INNER = new RegExp(
   `^\\s*(${TOKEN_PATH})\\s*(?:\\?\\?\\s*([^|]+?)\\s*)?((?:\\|\\s*[a-zA-Z_]+(?:\\([^)]*\\))?\\s*)*)$`

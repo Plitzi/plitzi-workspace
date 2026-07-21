@@ -249,7 +249,7 @@ export const renderTokens = (
       // keepEmptyTokens keeps the original token on a miss or an empty string, and ignores `??`/filters — matching
       // the previous behaviour where only the bare path was resolved.
       if (keepEmptyTokens) {
-        const resolved = resolvePath(context, path);
+        const resolved = evalOperand(path, context);
 
         return resolved === undefined || resolved === null || resolved === '' ? full : stringify(resolved);
       }
