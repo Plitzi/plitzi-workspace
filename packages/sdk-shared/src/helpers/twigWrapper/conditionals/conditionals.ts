@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import { evalOperand } from '../expressions/evalOperand';
 import { COMPARISON, IF_BLOCK } from '../patterns/patterns';
 
@@ -91,7 +92,14 @@ const evalTest = (value: unknown, testName: string, context: Record<string, unkn
 
 // Splits an expression by a logical keyword (`and`/`or`) at word boundaries, respecting quoted strings.
 // Returns a single-element array when the keyword is not present.
+// Uses inline character matching instead of regex for zero per-character allocations.
 const splitByKeyword = (expr: string, keyword: string): string[] => {
+  // Fast path: if the keyword is not present at all, return the expression as-is.
+  if (expr.indexOf(keyword) === -1) {
+    return [expr];
+  }
+
+  const kwLen = keyword.length;
   const parts: string[] = [];
   let current = '';
   let inQuote: string | null = null;
@@ -117,24 +125,41 @@ const splitByKeyword = (expr: string, keyword: string): string[] => {
       continue;
     }
 
-    // Check if the keyword starts at this position (word boundary + keyword + word boundary)
-    const remaining = expr.slice(i);
-    const re = new RegExp(`^(\\s+)${keyword}(\\s+|$)`, 'i');
-    const kwMatch = re.exec(remaining);
-
-    if (kwMatch) {
-      const trimmed = current.trim();
-      if (trimmed !== '') {
-        parts.push(trimmed);
+    // Inline keyword match: require whitespace before, keyword (case-insensitive), then whitespace or EOL after.
+    let matched = false;
+    if (i > 0 && /\s/.test(expr[i])) {
+      const kwStart = i;
+      // Skip whitespace.
+      while (i < expr.length && /\s/.test(expr[i])) {
+        i++;
       }
 
-      current = '';
-      i += kwMatch[0].length;
-      continue;
+      // Check if the keyword follows.
+      const candidate = expr.slice(i, i + kwLen).toLowerCase();
+      if (candidate === keyword) {
+        const afterKw = i + kwLen;
+        if (afterKw >= expr.length || /\s/.test(expr[afterKw])) {
+          const trimmed = current.trim();
+          if (trimmed !== '') {
+            parts.push(trimmed);
+          }
+
+          current = '';
+          i = afterKw;
+          matched = true;
+        }
+      }
+
+      if (!matched) {
+        // Not a keyword match — backtrack and include the whitespace.
+        i = kwStart;
+      }
     }
 
-    current += char;
-    i++;
+    if (!matched) {
+      current += char;
+      i++;
+    }
   }
 
   const trimmed = current.trim();
@@ -166,31 +191,34 @@ const evalCondition = (expr: string, context: Record<string, unknown>): boolean 
   }
 
   // Twig `not in` — membership test with negation. Must check before `not` to avoid splitting `not in`.
-  const notInMatch = /^(.+?)\s+not\s+in\s+(.+)$/.exec(trimmed);
-  if (notInMatch) {
-    const needle = evalOperand(notInMatch[1], context);
-    const haystack = evalOperand(notInMatch[2], context);
-    if (Array.isArray(haystack)) {
-      return !haystack.includes(needle);
+  // Fast path: skip regex when the keyword is absent.
+  if (trimmed.indexOf(' not ') !== -1 || trimmed.indexOf(' in ') !== -1) {
+    const notInMatch = /^(.+?)\s+not\s+in\s+(.+)$/.exec(trimmed);
+    if (notInMatch) {
+      const needle = evalOperand(notInMatch[1], context);
+      const haystack = evalOperand(notInMatch[2], context);
+      if (Array.isArray(haystack)) {
+        return !haystack.includes(needle);
+      }
+      if (typeof haystack === 'string') {
+        return !haystack.includes(String(needle));
+      }
+      return true;
     }
-    if (typeof haystack === 'string') {
-      return !haystack.includes(String(needle));
-    }
-    return true;
-  }
 
-  // Twig `in` — membership test: `value in collection` or `value in string`.
-  const inMatch = /^(.+?)\s+in\s+(.+)$/.exec(trimmed);
-  if (inMatch) {
-    const needle = evalOperand(inMatch[1], context);
-    const haystack = evalOperand(inMatch[2], context);
-    if (Array.isArray(haystack)) {
-      return haystack.includes(needle);
+    // Twig `in` — membership test: `value in collection` or `value in string`.
+    const inMatch = /^(.+?)\s+in\s+(.+)$/.exec(trimmed);
+    if (inMatch) {
+      const needle = evalOperand(inMatch[1], context);
+      const haystack = evalOperand(inMatch[2], context);
+      if (Array.isArray(haystack)) {
+        return haystack.includes(needle);
+      }
+      if (typeof haystack === 'string') {
+        return haystack.includes(String(needle));
+      }
+      return false;
     }
-    if (typeof haystack === 'string') {
-      return haystack.includes(String(needle));
-    }
-    return false;
   }
 
   // Twig `not` unary operator: `{% if not condition %}`
@@ -200,17 +228,20 @@ const evalCondition = (expr: string, context: Record<string, unknown>): boolean 
 
   // Twig `is not` (negated test operator): `value is not null`, `value is not empty`, etc.
   // Must check before `is` to avoid matching `is not` as just `is`.
-  const isNotMatch = /^(.+?)\s+is\s+not\s+(.+)$/.exec(trimmed);
-  if (isNotMatch) {
-    const value = evalOperand(isNotMatch[1], context);
-    return !evalTest(value, isNotMatch[2], context);
-  }
+  // Fast path: skip regex when the keyword is absent.
+  if (trimmed.indexOf(' is ') !== -1) {
+    const isNotMatch = /^(.+?)\s+is\s+not\s+(.+)$/.exec(trimmed);
+    if (isNotMatch) {
+      const value = evalOperand(isNotMatch[1], context);
+      return !evalTest(value, isNotMatch[2], context);
+    }
 
-  // Twig `is` (test operator): `value is null`, `value is empty`, `value is iterable`, etc.
-  const isMatch = /^(.+?)\s+is\s+(.+)$/.exec(trimmed);
-  if (isMatch) {
-    const value = evalOperand(isMatch[1], context);
-    return evalTest(value, isMatch[2], context);
+    // Twig `is` (test operator): `value is null`, `value is empty`, `value is iterable`, etc.
+    const isMatch = /^(.+?)\s+is\s+(.+)$/.exec(trimmed);
+    if (isMatch) {
+      const value = evalOperand(isMatch[1], context);
+      return evalTest(value, isMatch[2], context);
+    }
   }
 
   // Twig `~` (concatenation operator): `value ~ other` — joins both sides as strings, then returns as truthy.
@@ -326,6 +357,11 @@ const resolveElseifChain = (block: string, context: Record<string, unknown>): st
 // Replaces every `{% if %}` block with its chosen branch, innermost first. The guard caps pathological input; a
 // block that never matches (malformed) is simply left in place.
 export const applyConditionals = (template: string, context: Record<string, unknown>): string => {
+  // Fast path: no `{% if %}` tags at all — skip the entire conditional expansion.
+  if (template.indexOf('{%') === -1 || !IF_BLOCK.test(template)) {
+    return template;
+  }
+
   let result = template;
   let guard = 0;
   while (guard < 1000 && IF_BLOCK.test(result)) {

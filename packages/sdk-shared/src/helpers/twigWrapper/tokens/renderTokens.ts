@@ -1,9 +1,54 @@
+/* eslint-disable quotes */
 import { evalOperand } from '../expressions/evalOperand';
 import { resolvePath } from '../expressions/resolvePath';
 import { applyFilters, isRawMarker, unwrapRaw } from '../filters/filters';
 import { TOKEN_INNER, TOKEN_MATCH } from '../patterns/patterns';
 
 const CYCLE_ARRAY = /^\[(.*)\]$/;
+
+// Validates that a trimmed inner token looks like a simple path: starts with [a-zA-Z_], contains only
+// word chars, dots, hyphens, and question marks, has no whitespace, and conforms to basic path rules
+// (no trailing dot, no dot followed by digit). This gates the fast-path lookup so malformed tokens
+// like `{{1var}}`, `{{var 1}}`, `{{var.1}}`, or `{{ var1. }}` fall through to the strict TOKEN_INNER regex.
+const isValidSimplePath = (s: string): boolean => {
+  const len = s.length;
+  if (len === 0) {
+    return false;
+  }
+
+  const first = s.charCodeAt(0);
+  if (!((first >= 97 && first <= 122) || (first >= 65 && first <= 90) || first === 95)) {
+    return false; // must start with [a-zA-Z_]
+  }
+
+  for (let i = 1; i < len; i++) {
+    const c = s.charCodeAt(i);
+    // Allow: [a-zA-Z0-9_\-\.?]
+    if (
+      (c >= 97 && c <= 122) ||
+      (c >= 65 && c <= 90) ||
+      (c >= 48 && c <= 57) ||
+      c === 95 || // _
+      c === 45 || // -
+      c === 46 || // .
+      c === 63 // ?
+    ) {
+      // Reject trailing dot and digit after dot (e.g. `var.1` or `var1.`).
+      if (c === 46 && (i === len - 1 || s.charCodeAt(i + 1) === 46)) {
+        return false;
+      }
+      if (c === 46 && i + 1 < len && s.charCodeAt(i + 1) >= 48 && s.charCodeAt(i + 1) <= 57) {
+        return false;
+      }
+
+      continue;
+    }
+
+    return false;
+  }
+
+  return true;
+};
 
 // Finds the index of the matching `)` for a function call starting at `openIdx`, accounting for nested parens and
 // quoted strings (which may contain parens/commas). Returns the index of the matching `)` or -1 if not found.
@@ -140,7 +185,7 @@ const evalRange = (args: string, context: Record<string, unknown>): unknown => {
   const start = parts.length === 1 ? 0 : parts[0];
   const end = parts.length === 1 ? parts[0] : parts[1];
   const hasExplicitStep = parts.length >= 3;
-  const step = hasExplicitStep ? parts[2] : (start <= end ? 1 : -1);
+  const step = hasExplicitStep ? parts[2] : start <= end ? 1 : -1;
 
   if (step === 0) {
     return [];
@@ -266,6 +311,42 @@ export const renderTokens = (
 
       if (innerRaw === undefined) {
         return full;
+      }
+
+      // Fast path: if the inner content has no `|`, `??`, `~`, or `(`, treat it as a plain path lookup.
+      // This avoids the expensive TOKEN_INNER regex for the most common case.
+      if (
+        innerRaw.indexOf('|') === -1 &&
+        innerRaw.indexOf('?') === -1 &&
+        innerRaw.indexOf('~') === -1 &&
+        innerRaw.indexOf('(') === -1
+      ) {
+        const path = innerRaw.trim();
+        if (isValidSimplePath(path)) {
+          const value = resolvePath(context, path);
+
+          if (keepEmptyTokens) {
+            if (value === undefined || value === null || value === '') {
+              return full;
+            }
+
+            return stringify(value);
+          }
+
+          if (value === undefined || value === null) {
+            return '';
+          }
+
+          if (isTriple) {
+            return stringify(value);
+          }
+
+          if (typeof value === 'object') {
+            return JSON.stringify(value);
+          }
+
+          return stringify(value);
+        }
       }
 
       const inner = TOKEN_INNER.exec(innerRaw);

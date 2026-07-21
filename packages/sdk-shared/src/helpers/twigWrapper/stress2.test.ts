@@ -7,10 +7,7 @@ describe('stress tests round 2: deeper edge cases', () => {
   const has = (result: unknown, expected: string) => expect(result).toContain(expected);
 
   it('tilde concat with nested paths via set', () => {
-    const r = processTwig(
-      '{% set msg = a.x ~ " and " ~ b.y %}{{ msg }}',
-      { a: { x: 'hello' }, b: { y: 'world' } }
-    );
+    const r = processTwig('{% set msg = a.x ~ " and " ~ b.y %}{{ msg }}', { a: { x: 'hello' }, b: { y: 'world' } });
     pass(r, 'hello and world');
   });
 
@@ -65,36 +62,28 @@ describe('stress tests round 2: deeper edge cases', () => {
   });
 
   it('set block capture containing for loop', () => {
-    const r = processTwig(
-      '{% set result %}{% for i in nums %}{{ i }}{% endfor %}{% endset %}{{ result }}',
-      { nums: [1, 2, 3] }
-    );
+    const r = processTwig('{% set result %}{% for i in nums %}{{ i }}{% endfor %}{% endset %}{{ result }}', {
+      nums: [1, 2, 3]
+    });
     pass(r, '123');
   });
 
   it('set block capture containing if block', () => {
-    const r = processTwig(
-      '{% set result %}{% if show %}yes{% else %}no{% endif %}{% endset %}{{ result }}',
-      { show: true }
-    );
+    const r = processTwig('{% set result %}{% if show %}yes{% else %}no{% endif %}{% endset %}{{ result }}', {
+      show: true
+    });
     pass(r, 'yes');
   });
 
   it('for key-value destructuring on object', () => {
-    const r = processTwig(
-      '{% for key, value in data %}{{ key }}={{ value }} {% endfor %}',
-      { data: { a: 1, b: 2 } }
-    );
+    const r = processTwig('{% for key, value in data %}{{ key }}={{ value }} {% endfor %}', { data: { a: 1, b: 2 } });
     // Object key order in JS is deterministic for string keys
     has(r, 'a=1');
     has(r, 'b=2');
   });
 
   it('range with variable arguments', () => {
-    const r = processTwig(
-      '{% for i in range(start, end) %}{{ i }} {% endfor %}',
-      { start: 2, end: 5 }
-    );
+    const r = processTwig('{% for i in range(start, end) %}{{ i }} {% endfor %}', { start: 2, end: 5 });
     pass(r, '2 3 4 5 ');
   });
 
@@ -104,20 +93,18 @@ describe('stress tests round 2: deeper edge cases', () => {
   });
 
   it('multiple set modifications in same iteration', () => {
-    const r = processTwig(
-      '{% for i in nums %}{% set a = i * 10 %}{% set b = i * 100 %}{{ a }}+{{ b }} {% endfor %}',
-      { nums: [1, 2] }
-    );
+    const r = processTwig('{% for i in nums %}{% set a = i * 10 %}{% set b = i * 100 %}{{ a }}+{{ b }} {% endfor %}', {
+      nums: [1, 2]
+    });
     // a = i * 10 and b = i * 100 — but evalOperand doesn't support * operator
     // These will resolve as paths, failing silently
     expect(r).toBeDefined();
   });
 
   it('apply wrapping for with set inside', () => {
-    const r = processTwig(
-      '{% apply upper %}{% for item in items %}{{ item }} {% endfor %}{% endapply %}',
-      { items: ['a', 'b', 'c'] }
-    );
+    const r = processTwig('{% apply upper %}{% for item in items %}{{ item }} {% endfor %}{% endapply %}', {
+      items: ['a', 'b', 'c']
+    });
     pass(r, 'A B C ');
   });
 
@@ -137,10 +124,7 @@ describe('stress tests round 2: deeper edge cases', () => {
   });
 
   it('for loop over object values', () => {
-    const r = processTwig(
-      '{% for val in obj %}{{ val }} {% endfor %}',
-      { obj: { a: 'x', b: 'y' } }
-    );
+    const r = processTwig('{% for val in obj %}{{ val }} {% endfor %}', { obj: { a: 'x', b: 'y' } });
     has(r, 'x');
     has(r, 'y');
   });
@@ -152,18 +136,18 @@ describe('stress tests round 2: deeper edge cases', () => {
         items: [
           { name: 'A', active: true, important: true },
           { name: 'B', active: false, important: false },
-          { name: 'C', active: true, important: false },
-        ],
+          { name: 'C', active: true, important: false }
+        ]
       }
     );
     pass(r, '!AC');
   });
 
   it('cycle with variable array', () => {
-    const r = processTwig(
-      '{% for i in nums %}{{ cycle(colors, loop.index0) }} {% endfor %}',
-      { nums: [1, 2, 3, 4], colors: ['odd', 'even'] }
-    );
+    const r = processTwig('{% for i in nums %}{{ cycle(colors, loop.index0) }} {% endfor %}', {
+      nums: [1, 2, 3, 4],
+      colors: ['odd', 'even']
+    });
     pass(r, 'odd even odd even ');
   });
 
@@ -186,18 +170,14 @@ describe('stress tests round 2: deeper edge cases', () => {
   });
 
   it('empty for with else block', () => {
-    const r = processTwig(
-      '{% for item in items %}{{ item }}{% else %}nothing here{% endfor %}',
-      { items: [] }
-    );
+    const r = processTwig('{% for item in items %}{{ item }}{% else %}nothing here{% endfor %}', { items: [] });
     pass(r, 'nothing here');
   });
 
   it('for with only set tags in body (no output)', () => {
-    const r = processTwig(
-      '{% set total = "" %}{% for i in nums %}{% set total = total ~ i %}{% endfor %}{{ total }}',
-      { nums: [1, 2, 3] }
-    );
+    const r = processTwig('{% set total = "" %}{% for i in nums %}{% set total = total ~ i %}{% endfor %}{{ total }}', {
+      nums: [1, 2, 3]
+    });
     pass(r, '123');
   });
 

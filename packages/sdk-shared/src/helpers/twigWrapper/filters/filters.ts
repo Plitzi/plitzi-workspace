@@ -344,9 +344,7 @@ export const filters: Record<string, TwigFilter> = {
 
     if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
       return new URLSearchParams(
-        Object.fromEntries(
-          Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, String(v)])
-        )
+        Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, String(v)]))
       ).toString();
     }
 
@@ -365,7 +363,7 @@ export const filters: Record<string, TwigFilter> = {
       const tagNames = allowable
         .split(/(?:\s*>\s*<\s*|<\s*|>\s*)/)
         .filter(Boolean)
-        .map(t => t.replace(/[\/>]/g, '').trim());
+        .map(t => t.replace(/[/>]/g, '').trim());
       if (tagNames.length > 0) {
         const pattern = new RegExp(`<(?!/?(?:${tagNames.join('|')})\\b)[^>]+>`, 'gi');
         return value.replace(pattern, '').replace(/\s+/g, ' ').trim();
@@ -387,6 +385,7 @@ export const filters: Record<string, TwigFilter> = {
 
     const args = arg ? splitFilterArgs(arg).map(a => evalOperand(a.trim(), context)) : [];
     const precision = Number(args[0]) || 0;
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     const mode = args[1] != null ? String(args[1]) : 'common';
     const factor = 10 ** precision;
 
@@ -407,7 +406,7 @@ export const filters: Record<string, TwigFilter> = {
     }
 
     const path = arg.replace(/^['"]|['"]$/g, '').trim();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
     return value.map(item => {
       if (item !== null && typeof item === 'object') {
         return (item as Record<string, unknown>)[path];
@@ -439,6 +438,7 @@ export const filters: Record<string, TwigFilter> = {
       if (match === '%f') {
         return String(Number(replacement));
       }
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string
       return String(replacement);
     });
   }
@@ -502,6 +502,11 @@ const splitFilterArgs = (arg: string): string[] => {
 
 // Runs each `| name(arg)` filter in the token, in order. An unknown filter name is ignored so a typo never throws.
 export const applyFilters = (value: unknown, filtersStr: string, context: Record<string, unknown>): unknown => {
+  // Fast path: no filters to apply — return value as-is.
+  if (!filtersStr) {
+    return value;
+  }
+
   let current = value;
   for (const match of filtersStr.matchAll(FILTER_RE)) {
     const name = match[1];

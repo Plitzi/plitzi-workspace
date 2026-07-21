@@ -6,13 +6,27 @@ import { SET_ASSIGN } from '../patterns/patterns';
 import { renderTokens } from '../tokens/renderTokens';
 
 // Processes the content of a `{% set %}` block through the template pipeline (loops → conditionals →
-// tokens → apply) so that nested tags are evaluated before storing.
+// tokens → apply) so that nested tags are evaluated before storing. Only runs steps that the content
+// actually needs — a plain string skips the entire pipeline.
 const processSetBlockContent = (content: string, context: Record<string, unknown>): string => {
-  let processed = applySet(content, context);
-  processed = applyLoops(processed, context);
-  processed = applyConditionals(processed, context);
-  processed = renderTokens(processed, context, false, false);
-  processed = applyApplyTag(processed, context);
+  let processed = content;
+
+  if (processed.indexOf('{%') !== -1 || processed.indexOf('{{') !== -1) {
+    processed = applySet(processed, context);
+    if (processed.indexOf('{%') !== -1) {
+      processed = applyLoops(processed, context);
+      processed = applyConditionals(processed, context);
+    }
+
+    if (processed.indexOf('{{') !== -1) {
+      processed = renderTokens(processed, context, false, false);
+    }
+
+    if (processed.indexOf('{%') !== -1) {
+      processed = applyApplyTag(processed, context);
+    }
+  }
+
   return processed;
 };
 
@@ -64,15 +78,15 @@ const isInsideBlock = (pos: number, ranges: Array<[number, number]>): boolean =>
 export const applySet = (template: string, context: Record<string, unknown>): string => {
   let result = template;
 
-  // Compute which character ranges are inside block bodies (for, if, apply).
-  // Set tags inside these ranges are left untouched — they'll be processed when the block expands.
-  const blockRanges = computeBlockRanges(template);
+  // Fast path: skip block range computation when no block tags exist (most common case).
+  const hasBlockTags = template.indexOf('{%') !== -1;
+  const blockRanges = hasBlockTags ? computeBlockRanges(template) : [];
 
   // Process `{% set variable = expression %}` — simple assignment.
   // Skip tags that fall inside a block body.
   SET_ASSIGN.lastIndex = 0;
   result = result.replace(SET_ASSIGN, (_full, name: string, expr: string, offset: number) => {
-    if (isInsideBlock(offset, blockRanges)) {
+    if (blockRanges.length > 0 && isInsideBlock(offset, blockRanges)) {
       return _full;
     }
 
@@ -145,7 +159,7 @@ export const applySet = (template: string, context: Record<string, unknown>): st
     }
 
     // Skip set blocks that fall inside a for/if/apply body — they'll be processed when the block expands.
-    if (isInsideBlock(bestStart, blockRanges)) {
+    if (blockRanges.length > 0 && isInsideBlock(bestStart, blockRanges)) {
       break;
     }
 

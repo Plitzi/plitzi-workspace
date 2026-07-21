@@ -11,50 +11,32 @@ describe('twigWrapper integration', () => {
   // ──────────────────────────────────────────────
   describe('set + tokens + filters', () => {
     it('set a variable then render it through a filter chain', () => {
-      const result = processTwig(
-        '{% set greeting = "hello" %}{{ greeting | upper | trim }}',
-        {}
-      );
+      const result = processTwig('{% set greeting = "hello" %}{{ greeting | upper | trim }}', {});
       expect(result).toBe('HELLO');
     });
 
     it('multiple set declarations feed into a single token', () => {
-      const result = processTwig(
-        '{% set a = "foo" %}{% set b = "bar" %}{{ a }}-{{ b }}',
-        {}
-      );
+      const result = processTwig('{% set a = "foo" %}{% set b = "bar" %}{{ a }}-{{ b }}', {});
       expect(result).toBe('foo-bar');
     });
 
     it('set a variable from context and filter it', () => {
-      const result = processTwig(
-        '{% set name = user %}{{ name | capitalize }}',
-        { user: 'alice' }
-      );
+      const result = processTwig('{% set name = user %}{{ name | capitalize }}', { user: 'alice' });
       expect(result).toBe('Alice');
     });
 
     it('set captures block content then filters it', () => {
-      const result = processTwig(
-        '{% set msg %}  hello world  {% endset %}{{ msg | trim | upper }}',
-        {}
-      );
+      const result = processTwig('{% set msg %}  hello world  {% endset %}{{ msg | trim | upper }}', {});
       expect(result).toBe('HELLO WORLD');
     });
 
     it('set then use in default filter', () => {
-      const result = processTwig(
-        '{% set val = "" %}{{ val | default("fallback") }}',
-        {}
-      );
+      const result = processTwig('{% set val = "" %}{{ val | default("fallback") }}', {});
       expect(result).toBe('fallback');
     });
 
     it('set a number, use number_format filter', () => {
-      const result = processTwig(
-        '{% set amount = 1234567 %}{{ amount | number_format(2, ".", ",") }}',
-        {}
-      );
+      const result = processTwig('{% set amount = 1234567 %}{{ amount | number_format(2, ".", ",") }}', {});
       expect(result).toBe('1,234,567.00');
     });
 
@@ -67,18 +49,14 @@ describe('twigWrapper integration', () => {
     });
 
     it('set variable overwrites previous set', () => {
-      const result = processTwig(
-        '{% set x = "first" %}{% set x = "second" %}{{ x }}',
-        {}
-      );
+      const result = processTwig('{% set x = "first" %}{% set x = "second" %}{{ x }}', {});
       expect(result).toBe('second');
     });
 
     it('set from context variable, then reference it', () => {
-      const result = processTwig(
-        '{% set greeting = "Hi" %}{% set target = name %}{{ greeting }}, {{ target }}!',
-        { name: 'Carlos' }
-      );
+      const result = processTwig('{% set greeting = "Hi" %}{% set target = name %}{{ greeting }}, {{ target }}!', {
+        name: 'Carlos'
+      });
       expect(result).toBe('Hi, Carlos!');
     });
   });
@@ -104,18 +82,14 @@ describe('twigWrapper integration', () => {
     });
 
     it('set from context drives conditional logic', () => {
-      const result = processTwig(
-        '{% set active = isEnabled %}{% if active %}ACTIVE{% else %}INACTIVE{% endif %}',
-        { isEnabled: true }
-      );
+      const result = processTwig('{% set active = isEnabled %}{% if active %}ACTIVE{% else %}INACTIVE{% endif %}', {
+        isEnabled: true
+      });
       expect(result).toBe('ACTIVE');
     });
 
     it('nested set + if blocks', () => {
-      const result = processTwig(
-        '{% set x = 10 %}{% if x > 5 %}big{% if x > 8 %}very big{% endif %}{% endif %}',
-        {}
-      );
+      const result = processTwig('{% set x = 10 %}{% if x > 5 %}big{% if x > 8 %}very big{% endif %}{% endif %}', {});
       expect(result).toBe('bigvery big');
     });
 
@@ -133,10 +107,7 @@ describe('twigWrapper integration', () => {
   // ──────────────────────────────────────────────
   describe('loops + tokens + filters', () => {
     it('for loop renders items through a filter', () => {
-      const result = processTwig(
-        '{% for name in names %}{{ name | upper }},{% endfor %}',
-        { names: ['alice', 'bob'] }
-      );
+      const result = processTwig('{% for name in names %}{{ name | upper }},{% endfor %}', { names: ['alice', 'bob'] });
       expect(result).toBe('ALICE,BOB,');
     });
 
@@ -157,10 +128,7 @@ describe('twigWrapper integration', () => {
     });
 
     it('for loop over range renders each value', () => {
-      const result = processTwig(
-        '{% for i in 1..5 %}{{ i }}{% if not loop.last %}-{% endif %}{% endfor %}',
-        {}
-      );
+      const result = processTwig('{% for i in 1..5 %}{{ i }}{% if not loop.last %}-{% endif %}{% endfor %}', {});
       expect(result).toBe('1-2-3-4-5');
     });
 
@@ -175,7 +143,12 @@ describe('twigWrapper integration', () => {
     it('nested loops produce matrix output', () => {
       const result = processTwig(
         '{% for row in matrix %}{% for cell in row %}{{ cell }}{% if not loop.last %},{% endif %}{% endfor %}{% if not loop.last %} | {% endif %}{% endfor %}',
-        { matrix: [['a', 'b'], ['c', 'd']] }
+        {
+          matrix: [
+            ['a', 'b'],
+            ['c', 'd']
+          ]
+        }
       );
       expect(result).toBe('a,b | c,d');
     });
@@ -189,34 +162,28 @@ describe('twigWrapper integration', () => {
     });
 
     it('for loop over pre-reversed array', () => {
-      const result = processTwig(
-        '{% for item in items %}{{ item }}{% if not loop.last %},{% endif %}{% endfor %}',
-        { items: [3, 2, 1] }
-      );
+      const result = processTwig('{% for item in items %}{{ item }}{% if not loop.last %},{% endif %}{% endfor %}', {
+        items: [3, 2, 1]
+      });
       expect(result).toBe('3,2,1');
     });
 
     it('for loop over pre-sorted array', () => {
-      const result = processTwig(
-        '{% for item in items %}{{ item }}{% if not loop.last %}, {% endif %}{% endfor %}',
-        { items: ['a', 'b', 'c'] }
-      );
+      const result = processTwig('{% for item in items %}{{ item }}{% if not loop.last %}, {% endif %}{% endfor %}', {
+        items: ['a', 'b', 'c']
+      });
       expect(result).toBe('a, b, c');
     });
 
     it('for loop with length filter on array', () => {
-      const result = processTwig(
-        'Total: {{ items | length }}',
-        { items: [1, 2, 3, 4, 5] }
-      );
+      const result = processTwig('Total: {{ items | length }}', { items: [1, 2, 3, 4, 5] });
       expect(result).toBe('Total: 5');
     });
 
     it('for loop with first/last filters', () => {
-      const result = processTwig(
-        'First: {{ items | first }}, Last: {{ items | last }}',
-        { items: ['alpha', 'beta', 'gamma'] }
-      );
+      const result = processTwig('First: {{ items | first }}, Last: {{ items | last }}', {
+        items: ['alpha', 'beta', 'gamma']
+      });
       expect(result).toBe('First: alpha, Last: gamma');
     });
 
@@ -229,18 +196,12 @@ describe('twigWrapper integration', () => {
     });
 
     it('for with else when collection is empty', () => {
-      const result = processTwig(
-        '{% for item in items %}{{ item }}{% else %}No items{% endfor %}',
-        { items: [] }
-      );
+      const result = processTwig('{% for item in items %}{{ item }}{% else %}No items{% endfor %}', { items: [] });
       expect(result).toBe('No items');
     });
 
     it('for with else when collection is undefined', () => {
-      const result = processTwig(
-        '{% for item in missing %}{{ item }}{% else %}Nothing here{% endfor %}',
-        {}
-      );
+      const result = processTwig('{% for item in missing %}{{ item }}{% else %}Nothing here{% endfor %}', {});
       expect(result).toBe('Nothing here');
     });
   });
@@ -258,82 +219,56 @@ describe('twigWrapper integration', () => {
     });
 
     it('in operator with array', () => {
-      const result = processTwig(
-        '{% set fruit = "apple" %}{% if fruit in fruits %}YES{% endif %}',
-        { fruits: ['apple', 'banana', 'cherry'] }
-      );
+      const result = processTwig('{% set fruit = "apple" %}{% if fruit in fruits %}YES{% endif %}', {
+        fruits: ['apple', 'banana', 'cherry']
+      });
       expect(result).toBe('YES');
     });
 
     it('not in operator', () => {
-      const result = processTwig(
-        '{% set fruit = "grape" %}{% if fruit not in fruits %}MISSING{% endif %}',
-        { fruits: ['apple', 'banana'] }
-      );
+      const result = processTwig('{% set fruit = "grape" %}{% if fruit not in fruits %}MISSING{% endif %}', {
+        fruits: ['apple', 'banana']
+      });
       expect(result).toBe('MISSING');
     });
 
     it('is null test', () => {
-      const result = processTwig(
-        '{% if value is null %}NULL{% else %}NOT NULL{% endif %}',
-        {}
-      );
+      const result = processTwig('{% if value is null %}NULL{% else %}NOT NULL{% endif %}', {});
       expect(result).toBe('NULL');
     });
 
     it('is not null test', () => {
-      const result = processTwig(
-        '{% if value is not null %}DEFINED{% endif %}',
-        { value: 'hello' }
-      );
+      const result = processTwig('{% if value is not null %}DEFINED{% endif %}', { value: 'hello' });
       expect(result).toBe('DEFINED');
     });
 
     it('is empty test', () => {
-      const result = processTwig(
-        '{% if items is empty %}EMPTY{% endif %}',
-        { items: [] }
-      );
+      const result = processTwig('{% if items is empty %}EMPTY{% endif %}', { items: [] });
       expect(result).toBe('EMPTY');
     });
 
     it('is iterable test', () => {
-      const result = processTwig(
-        '{% if items is iterable %}LIST{% endif %}',
-        { items: [1, 2] }
-      );
+      const result = processTwig('{% if items is iterable %}LIST{% endif %}', { items: [1, 2] });
       expect(result).toBe('LIST');
     });
 
     it('is defined test', () => {
-      const result = processTwig(
-        '{% if name is defined %}YES{% endif %}',
-        { name: 'test' }
-      );
+      const result = processTwig('{% if name is defined %}YES{% endif %}', { name: 'test' });
       expect(result).toBe('YES');
     });
 
     it('is even test', () => {
-      const result = processTwig(
-        '{% if num is even %}EVEN{% endif %}',
-        { num: 4 }
-      );
+      const result = processTwig('{% if num is even %}EVEN{% endif %}', { num: 4 });
       expect(result).toBe('EVEN');
     });
 
     it('is odd test', () => {
-      const result = processTwig(
-        '{% if num is odd %}ODD{% endif %}',
-        { num: 7 }
-      );
+      const result = processTwig('{% if num is odd %}ODD{% endif %}', { num: 7 });
       expect(result).toBe('ODD');
     });
 
     it('is divisible by test', () => {
-      const result = processTwig(
-        '{% if num is divisible by(3) %}DIV3{% endif %}',
-        { num: 9 }
-      );
+      const result = processTwig('{% if num is divisible by(3) %}DIV3{% endif %}', { num: 9 });
       expect(result).toBe('DIV3');
     });
 
@@ -346,10 +281,7 @@ describe('twigWrapper integration', () => {
     });
 
     it('tilde concatenation in condition produces string', () => {
-      const result = processTwig(
-        '{% set x = 123 %}{% if x ~ "" == "123" %}STRING{% endif %}',
-        {}
-      );
+      const result = processTwig('{% set x = 123 %}{% if x ~ "" == "123" %}STRING{% endif %}', {});
       expect(result).toBe('STRING');
     });
 
@@ -362,34 +294,22 @@ describe('twigWrapper integration', () => {
     });
 
     it('conditional with comparison operators chain', () => {
-      const result = processTwig(
-        '{% set x = 5 %}{% if x >= 1 and x <= 10 %}IN{% else %}OUT{% endif %}',
-        {}
-      );
+      const result = processTwig('{% set x = 5 %}{% if x >= 1 and x <= 10 %}IN{% else %}OUT{% endif %}', {});
       expect(result).toBe('IN');
     });
 
     it('conditional with empty string is falsy', () => {
-      const result = processTwig(
-        '{% set val = "" %}{% if val %}TRUTHY{% else %}FALSY{% endif %}',
-        {}
-      );
+      const result = processTwig('{% set val = "" %}{% if val %}TRUTHY{% else %}FALSY{% endif %}', {});
       expect(result).toBe('FALSY');
     });
 
     it('conditional with zero is falsy', () => {
-      const result = processTwig(
-        '{% set val = 0 %}{% if val %}TRUTHY{% else %}FALSY{% endif %}',
-        {}
-      );
+      const result = processTwig('{% set val = 0 %}{% if val %}TRUTHY{% else %}FALSY{% endif %}', {});
       expect(result).toBe('FALSY');
     });
 
     it('conditional with undefined is falsy', () => {
-      const result = processTwig(
-        '{% if missing %}TRUTHY{% else %}FALSY{% endif %}',
-        {}
-      );
+      const result = processTwig('{% if missing %}TRUTHY{% else %}FALSY{% endif %}', {});
       expect(result).toBe('FALSY');
     });
   });
@@ -399,66 +319,46 @@ describe('twigWrapper integration', () => {
   // ──────────────────────────────────────────────
   describe('tokens + functions', () => {
     it('cycle with array variable in for loop', () => {
-      const result = processTwig(
-        '{% for i in items %}{{ cycle(["odd", "even"], loop.index0) }}-{{ i }} {% endfor %}',
-        { items: ['a', 'b', 'c'] }
-      );
+      const result = processTwig('{% for i in items %}{{ cycle(["odd", "even"], loop.index0) }}-{{ i }} {% endfor %}', {
+        items: ['a', 'b', 'c']
+      });
       expect(result).toBe('odd-a even-b odd-c ');
     });
 
     it('max with variable and literal', () => {
-      const result = processTwig(
-        'Max: {{ max(val, 100) }}',
-        { val: 42 }
-      );
+      const result = processTwig('Max: {{ max(val, 100) }}', { val: 42 });
       expect(result).toBe('Max: 100');
     });
 
     it('min with multiple values', () => {
-      const result = processTwig(
-        'Min: {{ min(a, b, c) }}',
-        { a: 5, b: 2, c: 8 }
-      );
+      const result = processTwig('Min: {{ min(a, b, c) }}', { a: 5, b: 2, c: 8 });
       expect(result).toBe('Min: 2');
     });
 
     it('range syntax used in for loop', () => {
-      const result = processTwig(
-        '{% for i in 1..4 %}{{ i }}{% if not loop.last %},{% endif %}{% endfor %}',
-        {}
-      );
+      const result = processTwig('{% for i in 1..4 %}{{ i }}{% if not loop.last %},{% endif %}{% endfor %}', {});
       expect(result).toBe('1,2,3,4');
     });
 
     it('for loop over pre-computed stepped range', () => {
-      const result = processTwig(
-        '{% for i in items %}{{ i }}{% if not loop.last %},{% endif %}{% endfor %}',
-        { items: [0, 3, 6] }
-      );
+      const result = processTwig('{% for i in items %}{{ i }}{% if not loop.last %},{% endif %}{% endfor %}', {
+        items: [0, 3, 6]
+      });
       expect(result).toBe('0,3,6');
     });
 
     it('max function without filter chain', () => {
-      const result = processTwig(
-        'Max: {{ max(a, b) }}',
-        { a: 1000, b: 2000 }
-      );
+      const result = processTwig('Max: {{ max(a, b) }}', { a: 1000, b: 2000 });
       expect(result).toBe('Max: 2000');
     });
 
     it('range in double-brace token renders as JSON array', () => {
-      const result = processTwig(
-        '{{ range(1, 5) }}',
-        {}
-      );
+      const result = processTwig('{{ range(1, 5) }}', {});
       expect(result).toBe('[1,2,3,4,5]');
     });
 
     it('min with single argument', () => {
-      const result = processTwig(
-        '{{ min(5) }}',
-        {}
-      );
+      const result = processTwig('{{ min(5) }}', {});
       expect(result).toBe('5');
     });
   });
@@ -468,26 +368,19 @@ describe('twigWrapper integration', () => {
   // ──────────────────────────────────────────────
   describe('break/continue + if inside loops', () => {
     it('break early from loop', () => {
-      const result = processTwig(
-        '{% for i in 0..9 %}{% if i == 3 %}{% break %}{% endif %}{{ i }}{% endfor %}',
-        {}
-      );
+      const result = processTwig('{% for i in 0..9 %}{% if i == 3 %}{% break %}{% endif %}{{ i }}{% endfor %}', {});
       expect(result).toBe('012');
     });
 
     it('continue skips iteration', () => {
-      const result = processTwig(
-        '{% for i in 0..4 %}{% if i == 2 %}{% continue %}{% endif %}{{ i }}{% endfor %}',
-        {}
-      );
+      const result = processTwig('{% for i in 0..4 %}{% if i == 2 %}{% continue %}{% endif %}{{ i }}{% endfor %}', {});
       expect(result).toBe('0134');
     });
 
     it('break with surrounding text preserves prefix', () => {
-      const result = processTwig(
-        '{% for i in items %}[{{ i }}]{% if i == "b" %}{% break %}{% endif %}{% endfor %}',
-        { items: ['a', 'b', 'c'] }
-      );
+      const result = processTwig('{% for i in items %}[{{ i }}]{% if i == "b" %}{% break %}{% endif %}{% endfor %}', {
+        items: ['a', 'b', 'c']
+      });
       expect(result).toBe('[a][b]');
     });
 
@@ -516,10 +409,9 @@ describe('twigWrapper integration', () => {
     });
 
     it('conditional guard with break stops at first match', () => {
-      const result = processTwig(
-        '{% for i in items %}{% if i == 4 %}{% break %}{% endif %}{{ i }}{% endfor %}',
-        { items: [1, 2, 3, 4, 5] }
-      );
+      const result = processTwig('{% for i in items %}{% if i == 4 %}{% break %}{% endif %}{{ i }}{% endfor %}', {
+        items: [1, 2, 3, 4, 5]
+      });
       expect(result).toBe('123');
     });
   });
@@ -529,26 +421,19 @@ describe('twigWrapper integration', () => {
   // ──────────────────────────────────────────────
   describe('apply tag + tokens + filters', () => {
     it('apply chains multiple filters to block content', () => {
-      const result = processTwig(
-        '{% apply upper | trim %}  hello world  {% endapply %}',
-        {}
-      );
+      const result = processTwig('{% apply upper | trim %}  hello world  {% endapply %}', {});
       expect(result).toBe('HELLO WORLD');
     });
 
     it('apply with variable content', () => {
-      const result = processTwig(
-        '{% set msg = "hello" %}{% apply upper %}{{ msg }}{% endapply %}',
-        {}
-      );
+      const result = processTwig('{% set msg = "hello" %}{% apply upper %}{{ msg }}{% endapply %}', {});
       expect(result).toBe('HELLO');
     });
 
     it('apply wraps around a for loop output', () => {
-      const result = processTwig(
-        '{% apply upper %}{% for i in items %}{{ i }}{% endfor %}{% endapply %}',
-        { items: ['a', 'b', 'c'] }
-      );
+      const result = processTwig('{% apply upper %}{% for i in items %}{{ i }}{% endfor %}{% endapply %}', {
+        items: ['a', 'b', 'c']
+      });
       expect(result).toBe('ABC');
     });
 
@@ -561,42 +446,27 @@ describe('twigWrapper integration', () => {
     });
 
     it('apply with striptags filter', () => {
-      const result = processTwig(
-        '{% apply striptags %}<p>Hello <b>World</b></p>{% endapply %}',
-        {}
-      );
+      const result = processTwig('{% apply striptags %}<p>Hello <b>World</b></p>{% endapply %}', {});
       expect(result).toBe('Hello World');
     });
 
     it('apply with default filter on empty block', () => {
-      const result = processTwig(
-        '{% apply default("empty") %}{% endapply %}',
-        {}
-      );
+      const result = processTwig('{% apply default("empty") %}{% endapply %}', {});
       expect(result).toBe('empty');
     });
 
     it('nested apply tags — outer processes content as text', () => {
-      const result = processTwig(
-        '{% apply upper %}{% apply lower %}HELLO{% endapply %}{% endapply %}',
-        {}
-      );
+      const result = processTwig('{% apply upper %}{% apply lower %}HELLO{% endapply %}{% endapply %}', {});
       expect(result).toContain('HELLO');
     });
 
     it('apply with nl2br filter', () => {
-      const result = processTwig(
-        '{% apply nl2br %}line1\nline2{% endapply %}',
-        {}
-      );
+      const result = processTwig('{% apply nl2br %}line1\nline2{% endapply %}', {});
       expect(result).toBe('line1<br>line2');
     });
 
     it('apply around tokens with filters', () => {
-      const result = processTwig(
-        '{% set val = "  hello  " %}{% apply upper %}{{ val | trim }}{% endapply %}',
-        {}
-      );
+      const result = processTwig('{% set val = "  hello  " %}{% apply upper %}{{ val | trim }}{% endapply %}', {});
       expect(result).toBe('HELLO');
     });
   });
@@ -606,90 +476,57 @@ describe('twigWrapper integration', () => {
   // ──────────────────────────────────────────────
   describe('raw and triple braces', () => {
     it('double brace serializes object as JSON', () => {
-      const result = processTwig(
-        '{{ data }}',
-        { data: { name: 'test', value: 42 } }
-      );
+      const result = processTwig('{{ data }}', { data: { name: 'test', value: 42 } });
       expect(result).toBe('{"name":"test","value":42}');
     });
 
     it('triple brace renders object as toString', () => {
-      const result = processTwig(
-        '{{{ data }}}',
-        { data: { name: 'test' } }
-      );
+      const result = processTwig('{{{ data }}}', { data: { name: 'test' } });
       expect(result).toBe('[object Object]');
     });
 
     it('triple brace renders array as comma-separated', () => {
-      const result = processTwig(
-        '{{{ items }}}',
-        { items: [1, 2, 3] }
-      );
+      const result = processTwig('{{{ items }}}', { items: [1, 2, 3] });
       expect(result).toBe('1,2,3');
     });
 
     it('raw filter on object bypasses JSON', () => {
-      const result = processTwig(
-        '{{ data | raw }}',
-        { data: { name: 'test' } }
-      );
+      const result = processTwig('{{ data | raw }}', { data: { name: 'test' } });
       expect(result).toBe('[object Object]');
     });
 
     it('to_json filter on object produces JSON', () => {
-      const result = processTwig(
-        '{{ data | to_json }}',
-        { data: { a: 1 } }
-      );
+      const result = processTwig('{{ data | to_json }}', { data: { a: 1 } });
       expect(result).toBe('{"a":1}');
     });
 
     it('to_json on primitive passes through', () => {
-      const result = processTwig(
-        '{{ val | to_json }}',
-        { val: 42 }
-      );
+      const result = processTwig('{{ val | to_json }}', { val: 42 });
       expect(result).toBe('42');
     });
 
     it('json_encode is alias for to_json', () => {
-      const result = processTwig(
-        '{{ data | json_encode }}',
-        { data: { x: 1 } }
-      );
+      const result = processTwig('{{ data | json_encode }}', { data: { x: 1 } });
       expect(result).toBe('{"x":1}');
     });
 
     it('null renders as empty string', () => {
-      const result = processTwig(
-        '{{ val }}',
-        { val: null }
-      );
+      const result = processTwig('{{ val }}', { val: null });
       expect(result).toBe('');
     });
 
     it('undefined renders as empty string', () => {
-      const result = processTwig(
-        '{{ missing }}',
-        {}
-      );
+      const result = processTwig('{{ missing }}', {});
       expect(result).toBe('');
     });
 
     it('boolean renders as string', () => {
-      const result = processTwig(
-        '{{ flag }}',
-        { flag: true }
-      );
+      const result = processTwig('{{ flag }}', { flag: true });
       expect(result).toBe('true');
     });
 
     it('false renders as "false"', () => {
-      const result = processTwig(
-        '{{ flag }}',
-        { flag: false }
-      );
+      const result = processTwig('{{ flag }}', { flag: false });
       expect(result).toBe('false');
     });
   });
@@ -699,146 +536,96 @@ describe('twigWrapper integration', () => {
   // ──────────────────────────────────────────────
   describe('filter chains', () => {
     it('trim + upper chain', () => {
-      const result = processTwig(
-        '{{ val | trim | upper }}',
-        { val: '  hello  ' }
-      );
+      const result = processTwig('{{ val | trim | upper }}', { val: '  hello  ' });
       expect(result).toBe('HELLO');
     });
 
     it('slice + upper + join on split', () => {
-      const result = processTwig(
-        '{{ val | split(",") | first | upper }}',
-        { val: 'hello,world' }
-      );
+      const result = processTwig('{{ val | split(",") | first | upper }}', { val: 'hello,world' });
       expect(result).toBe('HELLO');
     });
 
     it('default + upper chain', () => {
-      const result = processTwig(
-        '{{ missing | default("fallback") | upper }}',
-        {}
-      );
+      const result = processTwig('{{ missing | default("fallback") | upper }}', {});
       expect(result).toBe('FALLBACK');
     });
 
     it('length + number_format chain (no-op for number)', () => {
-      const result = processTwig(
-        '{{ items | length }}',
-        { items: [1, 2, 3] }
-      );
+      const result = processTwig('{{ items | length }}', { items: [1, 2, 3] });
       expect(result).toBe('3');
     });
 
     it('reverse + join chain', () => {
-      const result = processTwig(
-        '{{ items | reverse | join("-") }}',
-        { items: ['a', 'b', 'c'] }
-      );
+      const result = processTwig('{{ items | reverse | join("-") }}', { items: ['a', 'b', 'c'] });
       expect(result).toBe('c-b-a');
     });
 
     it('sort + join chain', () => {
-      const result = processTwig(
-        '{{ items | sort | join(", ") }}',
-        { items: ['c', 'a', 'b'] }
-      );
+      const result = processTwig('{{ items | sort | join(", ") }}', { items: ['c', 'a', 'b'] });
       expect(result).toBe('a, b, c');
     });
 
     it('batch produces grouped arrays rendered with join', () => {
-      const result = processTwig(
-        '{% for b in batches %}[{{ b | join("|") }}]{% endfor %}',
-        { batches: [[1, 2], [3, 4], [5]] }
-      );
+      const result = processTwig('{% for b in batches %}[{{ b | join("|") }}]{% endfor %}', {
+        batches: [[1, 2], [3, 4], [5]]
+      });
       expect(result).toBe('[1|2][3|4][5]');
     });
 
     it('contains filter returns true', () => {
-      const result = processTwig(
-        '{{ val | contains("ell") }}',
-        { val: 'hello' }
-      );
+      const result = processTwig('{{ val | contains("ell") }}', { val: 'hello' });
       expect(result).toBe('true');
     });
 
     it('contains filter returns false', () => {
-      const result = processTwig(
-        '{{ val | contains("xyz") }}',
-        { val: 'hello' }
-      );
+      const result = processTwig('{{ val | contains("xyz") }}', { val: 'hello' });
       expect(result).toBe('false');
     });
 
     it('startswith filter returns true', () => {
-      const result = processTwig(
-        '{{ val | startswith("hel") }}',
-        { val: 'hello' }
-      );
+      const result = processTwig('{{ val | startswith("hel") }}', { val: 'hello' });
       expect(result).toBe('true');
     });
 
     it('endswith filter returns true', () => {
-      const result = processTwig(
-        '{{ val | endswith("llo") }}',
-        { val: 'hello' }
-      );
+      const result = processTwig('{{ val | endswith("llo") }}', { val: 'hello' });
       expect(result).toBe('true');
     });
 
     it('url_encode filter', () => {
-      const result = processTwig(
-        '{{ val | url_encode }}',
-        { val: 'hello world' }
-      );
+      const result = processTwig('{{ val | url_encode }}', { val: 'hello world' });
       expect(result).toBe('hello%20world');
     });
 
     it('abs filter on negative', () => {
-      const result = processTwig(
-        '{{ val | abs }}',
-        { val: -42 }
-      );
+      const result = processTwig('{{ val | abs }}', { val: -42 });
       expect(result).toBe('42');
     });
 
     it('round filter default', () => {
-      const result = processTwig(
-        '{{ val | round }}',
-        { val: 3.7 }
-      );
+      const result = processTwig('{{ val | round }}', { val: 3.7 });
       expect(result).toBe('4');
     });
 
     it('round filter with precision', () => {
-      const result = processTwig(
-        '{{ val | round(2) }}',
-        { val: 3.14159 }
-      );
+      const result = processTwig('{{ val | round(2) }}', { val: 3.14159 });
       expect(result).toBe('3.14');
     });
 
     it('column filter on array of objects', () => {
-      const result = processTwig(
-        '{{ users | column("name") | join(", ") }}',
-        { users: [{ name: 'Alice' }, { name: 'Bob' }] }
-      );
+      const result = processTwig('{{ users | column("name") | join(", ") }}', {
+        users: [{ name: 'Alice' }, { name: 'Bob' }]
+      });
       expect(result).toBe('Alice, Bob');
     });
 
     it('format filter', () => {
-      const result = processTwig(
-        '{{ val | format("Hello", "%s") }}',
-        { val: '%s %s' }
-      );
+      const result = processTwig('{{ val | format("Hello", "%s") }}', { val: '%s %s' });
       expect(result).toBe('Hello %s');
     });
 
     it('number_format with defaults', () => {
-      const result = processTwig(
-        '{{ val | number_format(2) }}',
-        { val: 1234.5 }
-      );
+      const result = processTwig('{{ val | number_format(2) }}', { val: 1234.5 });
       expect(result).toBe('1234.50');
     });
   });
@@ -848,74 +635,47 @@ describe('twigWrapper integration', () => {
   // ──────────────────────────────────────────────
   describe('context merging', () => {
     it('variables.variables merges into root', () => {
-      const result = processTwig(
-        'Hello {{ name }}!',
-        { variables: { name: 'World' } }
-      );
+      const result = processTwig('Hello {{ name }}!', { variables: { name: 'World' } });
       expect(result).toBe('Hello World!');
     });
 
     it('root context takes precedence over variables', () => {
-      const result = processTwig(
-        '{{ name }}',
-        { name: 'root', variables: { name: 'fromVars' } }
-      );
+      const result = processTwig('{{ name }}', { name: 'root', variables: { name: 'fromVars' } });
       expect(result).toBe('root');
     });
 
     it('nested path access', () => {
-      const result = processTwig(
-        '{{ user.profile.name }}',
-        { user: { profile: { name: 'Alice' } } }
-      );
+      const result = processTwig('{{ user.profile.name }}', { user: { profile: { name: 'Alice' } } });
       expect(result).toBe('Alice');
     });
 
     it('nullish coalescing ?? for missing', () => {
-      const result = processTwig(
-        '{{ missing ?? "default" }}',
-        {}
-      );
+      const result = processTwig('{{ missing ?? "default" }}', {});
       expect(result).toBe('default');
     });
 
     it('nullish coalescing ?? does not trigger on empty string', () => {
-      const result = processTwig(
-        '{{ val ?? "default" }}',
-        { val: '' }
-      );
+      const result = processTwig('{{ val ?? "default" }}', { val: '' });
       expect(result).toBe('');
     });
 
     it('nullish coalescing ?? does not trigger on zero', () => {
-      const result = processTwig(
-        '{{ val ?? "default" }}',
-        { val: 0 }
-      );
+      const result = processTwig('{{ val ?? "default" }}', { val: 0 });
       expect(result).toBe('0');
     });
 
     it('nullish coalescing ?? triggers on null', () => {
-      const result = processTwig(
-        '{{ val ?? "default" }}',
-        { val: null }
-      );
+      const result = processTwig('{{ val ?? "default" }}', { val: null });
       expect(result).toBe('default');
     });
 
     it('default filter triggers on empty string too', () => {
-      const result = processTwig(
-        '{{ val | default("fallback") }}',
-        { val: '' }
-      );
+      const result = processTwig('{{ val | default("fallback") }}', { val: '' });
       expect(result).toBe('fallback');
     });
 
     it('filter on null passes through', () => {
-      const result = processTwig(
-        '{{ val | upper }}',
-        { val: null }
-      );
+      const result = processTwig('{{ val | upper }}', { val: null });
       expect(result).toBe('');
     });
   });
@@ -925,18 +685,12 @@ describe('twigWrapper integration', () => {
   // ──────────────────────────────────────────────
   describe('hyphenated paths', () => {
     it('hyphenated first segment', () => {
-      const result = processTwig(
-        '{{ my-var.value }}',
-        { 'my-var': { value: 'ok' } }
-      );
+      const result = processTwig('{{ my-var.value }}', { 'my-var': { value: 'ok' } });
       expect(result).toBe('ok');
     });
 
     it('hyphenated later segment', () => {
-      const result = processTwig(
-        '{{ obj.my-field }}',
-        { obj: { 'my-field': 42 } }
-      );
+      const result = processTwig('{{ obj.my-field }}', { obj: { 'my-field': 42 } });
       expect(result).toBe('42');
     });
   });
@@ -980,14 +734,14 @@ describe('twigWrapper integration', () => {
           '  [some items]',
           '{% else %}',
           '  few items',
-          '{% endif %}',
+          '{% endif %}'
         ].join('\n'),
         {
           items: [
             { name: '  widget  ', price: 25.5, qty: 2 },
             { name: 'gadget', price: 99.99, qty: 15 },
-            { name: 'doohickey', price: 5, qty: 50 },
-          ],
+            { name: 'doohickey', price: 5, qty: 50 }
+          ]
         }
       );
 
@@ -1018,14 +772,14 @@ describe('twigWrapper integration', () => {
           '</tr>',
           '{% if loop.first %}</thead>{% else %}</tbody>{% endif %}',
           '{% endfor %}',
-          '</table>',
+          '</table>'
         ].join('\n'),
         {
           matrix: [
             ['name', 'age'],
             ['alice', '30'],
-            ['bob', '25'],
-          ],
+            ['bob', '25']
+          ]
         }
       );
 
@@ -1048,14 +802,14 @@ describe('twigWrapper integration', () => {
           '{% if not loop.last %} | {% endif %}',
           '{% endfor %}',
           '</nav>',
-          'You are on: {{ current | upper }}',
+          'You are on: {{ current | upper }}'
         ].join('\n'),
         {
           links: [
             { slug: 'home', label: 'home' },
             { slug: 'about', label: 'about us' },
-            { slug: 'contact', label: 'contact' },
-          ],
+            { slug: 'contact', label: 'contact' }
+          ]
         }
       );
 
@@ -1076,11 +830,11 @@ describe('twigWrapper integration', () => {
           'Items ({{ items | length }}):',
           '{% for item in items %}{{ loop.index }}. {{ item | capitalize }}{% if loop.last %} (last){% endif %} {% endfor %}',
           'Min: {{ min(values) }}, Max: {{ max(values) }}',
-          '{% for i in 1..3 %}{{ i }}{% endfor %}',
+          '{% for i in 1..3 %}{{ i }}{% endfor %}'
         ].join(''),
         {
           items: ['charlie', 'alice', 'bob'],
-          values: [3, 1, 4, 1, 5, 9],
+          values: [3, 1, 4, 1, 5, 9]
         }
       );
 
@@ -1104,14 +858,14 @@ describe('twigWrapper integration', () => {
           '{% if user.tags %} tags={{ user.tags | join(", ") }}',
           '{% endif %}',
           '{% if not loop.last %} | {% endif %}',
-          '{% endfor %}',
+          '{% endfor %}'
         ].join(''),
         {
           users: [
             { name: 'alice', status: 'active', tags: ['admin', 'dev'] },
             { name: 'bob', status: 'inactive', tags: [] },
-            { name: 'charlie', status: 'error', tags: ['ops'] },
-          ],
+            { name: 'charlie', status: 'error', tags: ['ops'] }
+          ]
         }
       );
 
@@ -1133,7 +887,7 @@ describe('twigWrapper integration', () => {
           '{% if not loop.last %} | {% endif %}',
           '{% endfor %}',
           '',
-          'Range: {{ min(values) }} - {{ max(values) }}',
+          'Range: {{ min(values) }} - {{ max(values) }}'
         ].join('\n'),
         { days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], values: [10, 25, 15, 30, 20] }
       );
@@ -1160,14 +914,14 @@ describe('twigWrapper integration', () => {
           'Form has errors!',
           '{% else %}',
           'Form is valid',
-          '{% endif %}',
+          '{% endif %}'
         ].join('\n'),
         {
           fields: [
             { name: 'email', error: null },
             { name: 'password', error: 'too short' },
-            { name: 'age', error: null },
-          ],
+            { name: 'age', error: null }
+          ]
         }
       );
 
@@ -1178,13 +932,9 @@ describe('twigWrapper integration', () => {
 
     it('JSON + raw + triple braces in API response template', () => {
       const result = processTwig(
-        [
-          'JSON: {{ payload | to_json }}',
-          'Raw: {{{ payload }}}',
-          'Keys: {{ payload | keys | join(", ") }}',
-        ].join('\n'),
+        ['JSON: {{ payload | to_json }}', 'Raw: {{{ payload }}}', 'Keys: {{ payload | keys | join(", ") }}'].join('\n'),
         {
-          payload: { users: [{ name: 'A' }, { name: 'B' }], count: 2 },
+          payload: { users: [{ name: 'A' }, { name: 'B' }], count: 2 }
         }
       );
 
@@ -1196,14 +946,14 @@ describe('twigWrapper integration', () => {
     it('apply with nested loops and conditionals', () => {
       const result = processTwig(
         [
-          '{% apply upper %}{% for item in items %}{% if item.visible %}{{ item.label }} {% endif %}{% endfor %}{% endapply %}',
+          '{% apply upper %}{% for item in items %}{% if item.visible %}{{ item.label }} {% endif %}{% endfor %}{% endapply %}'
         ].join(''),
         {
           items: [
             { label: 'alpha', visible: true },
             { label: 'beta', visible: false },
-            { label: 'gamma', visible: true },
-          ],
+            { label: 'gamma', visible: true }
+          ]
         }
       );
 
@@ -1212,15 +962,12 @@ describe('twigWrapper integration', () => {
 
     it('merge filter to build dynamic list', () => {
       const result = processTwig(
-        [
-          '{% for item in extras %}',
-          '{{ item | upper }}',
-          '{% if not loop.last %}, {% endif %}',
-          '{% endfor %}',
-        ].join(''),
+        ['{% for item in extras %}', '{{ item | upper }}', '{% if not loop.last %}, {% endif %}', '{% endfor %}'].join(
+          ''
+        ),
         {
           base: ['a', 'b'],
-          extras: ['c', 'd', 'e'],
+          extras: ['c', 'd', 'e']
         }
       );
 
@@ -1233,7 +980,7 @@ describe('twigWrapper integration', () => {
           '{% for key, value in config %}',
           '{{ key }}={{ value }}',
           '{% if not loop.last %} | {% endif %}',
-          '{% endfor %}',
+          '{% endfor %}'
         ].join(''),
         { config: { a: 1, b: 2, c: 3 } }
       );
@@ -1263,7 +1010,7 @@ describe('twigWrapper integration', () => {
           '{{ i }}-{{ j }} ',
           '{% endfor %}',
           '|',
-          '{% endfor %}',
+          '{% endfor %}'
         ].join(''),
         {}
       );
@@ -1271,22 +1018,15 @@ describe('twigWrapper integration', () => {
     });
 
     it('set inside loop creates per-iteration scope', () => {
-      const result = processTwig(
-        [
-          '{% for i in items %}',
-          '{{ loop.index }}:{{ i }} ',
-          '{% endfor %}',
-        ].join(''),
-        { items: ['a', 'b', 'c'] }
-      );
+      const result = processTwig(['{% for i in items %}', '{{ loop.index }}:{{ i }} ', '{% endfor %}'].join(''), {
+        items: ['a', 'b', 'c']
+      });
       expect(result).toBe('1:a 2:b 3:c ');
     });
 
     it('apply + filter chain + loop', () => {
       const result = processTwig(
-        [
-          '{% apply upper | trim %}{% for item in items %}{{ item }} {% endfor %}{% endapply %}',
-        ].join(''),
+        ['{% apply upper | trim %}{% for item in items %}{{ item }} {% endfor %}{% endapply %}'].join(''),
         { items: ['x', 'a', 'm'] }
       );
       expect(result).toBe('X A M');
@@ -1301,7 +1041,7 @@ describe('twigWrapper integration', () => {
           'Min: {{ min(items) }}',
           '{% else %}',
           'No items',
-          '{% endif %}',
+          '{% endif %}'
         ].join(''),
         { items: [5, 0, 3, 0, 8] }
       );

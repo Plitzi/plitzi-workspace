@@ -10,6 +10,11 @@ const APPLY_CLOSE = /\{%\s*endapply\s*%\}/g;
 // Handles nested apply tags correctly by counting depth — the innermost pair is processed first,
 // then the result is used by the outer pair. This prevents the outer filter from corrupting inner tag syntax.
 export const applyApplyTag = (template: string, context: Record<string, unknown>): string => {
+  // Fast path: no `{% apply %}` tags at all — skip the entire apply expansion.
+  if (template.indexOf('{%') === -1) {
+    return template;
+  }
+
   let result = template;
   let prev = '';
 

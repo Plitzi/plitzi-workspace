@@ -895,10 +895,7 @@ describe('twigWrapper', () => {
     });
 
     it('set variable available in subsequent tokens', () => {
-      const result = processTwig(
-        '{% set a = "hello" %}{% set b = "world" %}{{ a }} {{ b }}',
-        {}
-      );
+      const result = processTwig('{% set a = "hello" %}{% set b = "world" %}{{ a }} {{ b }}', {});
       expect(result).toBe('hello world');
     });
 
@@ -911,10 +908,9 @@ describe('twigWrapper', () => {
     });
 
     it('set variable available in loops', () => {
-      const result = processTwig(
-        '{% set prefix = "item" %}{% for i in items %}{{ prefix }}-{{ i }} {% endfor %}',
-        { items: [1, 2, 3] }
-      );
+      const result = processTwig('{% set prefix = "item" %}{% for i in items %}{{ prefix }}-{{ i }} {% endfor %}', {
+        items: [1, 2, 3]
+      });
       expect(result).toBe('item-1 item-2 item-3 ');
     });
   });
@@ -946,10 +942,7 @@ describe('twigWrapper', () => {
     });
 
     it('applies nl2br filter', () => {
-      const result = processTwig(
-        '{% apply nl2br %}hello\nworld{% endapply %}',
-        {}
-      );
+      const result = processTwig('{% apply nl2br %}hello\nworld{% endapply %}', {});
       expect(result).toBe('hello<br>world');
     });
 

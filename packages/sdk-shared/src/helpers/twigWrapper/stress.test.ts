@@ -7,17 +7,22 @@ describe('stress tests: edge-case bugs', () => {
   const has = (result: unknown, expected: string) => expect(result).toContain(expected);
 
   it('nested for with set accumulation', () => {
-    const r = processTwig(
-      '{% set acc = "" %}{% for i in nums %}{% set acc = acc ~ i %}{% endfor %}{{ acc }}',
-      { nums: [1, 2, 3] }
-    );
+    const r = processTwig('{% set acc = "" %}{% for i in nums %}{% set acc = acc ~ i %}{% endfor %}{{ acc }}', {
+      nums: [1, 2, 3]
+    });
     pass(r, '123');
   });
 
   it('for + if + set accumulation', () => {
     const r = processTwig(
       '{% set total = "" %}{% for item in items %}{% if item.active %}{% set total = total ~ item.name %}{% endif %}{% endfor %}{{ total }}',
-      { items: [{ name: 'A', active: true }, { name: 'B', active: false }, { name: 'C', active: true }] }
+      {
+        items: [
+          { name: 'A', active: true },
+          { name: 'B', active: false },
+          { name: 'C', active: true }
+        ]
+      }
     );
     pass(r, 'AC');
   });
@@ -25,7 +30,12 @@ describe('stress tests: edge-case bugs', () => {
   it('nested for loops with set inside inner', () => {
     const r = processTwig(
       '{% set out = "" %}{% for row in grid %}{% for cell in row %}{% set out = out ~ cell %}{% endfor %}{% endfor %}{{ out }}',
-      { grid: [['a', 'b'], ['c', 'd']] }
+      {
+        grid: [
+          ['a', 'b'],
+          ['c', 'd']
+        ]
+      }
     );
     pass(r, 'abcd');
   });
@@ -64,9 +74,15 @@ describe('stress tests: edge-case bugs', () => {
       '{% set count = "" %}{% for row in grid %}{% for cell in row %}{% if cell.highlight %}{% set count = count ~ cell.val %}{% endif %}{% endfor %}{% endfor %}{{ count }}',
       {
         grid: [
-          [{ val: '1', highlight: true }, { val: '2', highlight: false }],
-          [{ val: '3', highlight: true }, { val: '4', highlight: true }],
-        ],
+          [
+            { val: '1', highlight: true },
+            { val: '2', highlight: false }
+          ],
+          [
+            { val: '3', highlight: true },
+            { val: '4', highlight: true }
+          ]
+        ]
       }
     );
     pass(r, '134');
@@ -76,7 +92,12 @@ describe('stress tests: edge-case bugs', () => {
     // Each inner loop has its own loop.index0 starting at 0, so cycle sees 0→O, 1→X per row.
     const r = processTwig(
       '{% for row in grid %}{% for cell in row %}{{ cycle(["O","X"], loop.index0) }}{% endfor %} | {% endfor %}',
-      { grid: [['a', 'b'], ['c', 'd']] }
+      {
+        grid: [
+          ['a', 'b'],
+          ['c', 'd']
+        ]
+      }
     );
     pass(r, 'OX | OX | ');
   });
@@ -84,19 +105,15 @@ describe('stress tests: edge-case bugs', () => {
   it('filter on for collection is not supported (known limitation)', () => {
     // Filters on the for iterable expression (e.g. `names | upper`) are not applied — the for loop
     // resolves the collection variable directly. Use a set tag to pre-filter instead.
-    const r = processTwig(
-      '{% for name in names | upper %}{{ name }} {% endfor %}',
-      { names: ['alice', 'bob'] }
-    );
+    const r = processTwig('{% for name in names | upper %}{{ name }} {% endfor %}', { names: ['alice', 'bob'] });
     // The filter is not applied; the raw array is iterated
     expect(r).toBeDefined();
   });
 
   it('multiple set in sequence inside for', () => {
-    const r = processTwig(
-      '{% for item in items %}{% set a = "X" %}{% set b = "Y" %}{{ a }}{{ b }} {% endfor %}',
-      { items: [1, 2] }
-    );
+    const r = processTwig('{% for item in items %}{% set a = "X" %}{% set b = "Y" %}{{ a }}{{ b }} {% endfor %}', {
+      items: [1, 2]
+    });
     pass(r, 'XY XY ');
   });
 
@@ -147,10 +164,9 @@ describe('stress tests: edge-case bugs', () => {
   });
 
   it('apply wrapping for', () => {
-    const r = processTwig(
-      '{% apply upper %}{% for item in items %}[{{ item }}] {% endfor %}{% endapply %}',
-      { items: ['a', 'b'] }
-    );
+    const r = processTwig('{% apply upper %}{% for item in items %}[{{ item }}] {% endfor %}{% endapply %}', {
+      items: ['a', 'b']
+    });
     pass(r, '[A] [B] ');
   });
 
@@ -194,25 +210,29 @@ describe('stress tests: edge-case bugs', () => {
   });
 
   it('set block capture inside for', () => {
-    const r = processTwig(
-      '{% for item in items %}{% set prefix %}[{{ item }}]{% endset %}{{ prefix }} {% endfor %}',
-      { items: ['a', 'b'] }
-    );
+    const r = processTwig('{% for item in items %}{% set prefix %}[{{ item }}]{% endset %}{{ prefix }} {% endfor %}', {
+      items: ['a', 'b']
+    });
     pass(r, '[a] [b] ');
   });
 
   it('apply inside for with token rendering', () => {
-    const r = processTwig(
-      '{% for item in items %}{% apply upper %}{{ item.name }}{% endapply %} {% endfor %}',
-      { items: [{ name: 'alice' }, { name: 'bob' }] }
-    );
+    const r = processTwig('{% for item in items %}{% apply upper %}{{ item.name }}{% endapply %} {% endfor %}', {
+      items: [{ name: 'alice' }, { name: 'bob' }]
+    });
     pass(r, 'ALICE BOB ');
   });
 
   it('chained if/elseif with for', () => {
     const r = processTwig(
       '{% for item in items %}{% if item.score >= 90 %}A{% elseif item.score >= 80 %}B{% else %}C{% endif %}:{{ item.name }} {% endfor %}',
-      { items: [{ name: 'X', score: 95 }, { name: 'Y', score: 82 }, { name: 'Z', score: 70 }] }
+      {
+        items: [
+          { name: 'X', score: 95 },
+          { name: 'Y', score: 82 },
+          { name: 'Z', score: 70 }
+        ]
+      }
     );
     pass(r, 'A:X B:Y C:Z ');
   });
@@ -220,7 +240,13 @@ describe('stress tests: edge-case bugs', () => {
   it('set inside if inside for with simple boolean condition', () => {
     const r = processTwig(
       '{% set count = "" %}{% for item in items %}{% if item.active %}{% set count = count ~ item.name %}{% endif %}{% endfor %}{{ count | join(",") }}',
-      { items: [{ name: 'hello', active: true }, { name: 'hi', active: false }, { name: 'world', active: true }] }
+      {
+        items: [
+          { name: 'hello', active: true },
+          { name: 'hi', active: false },
+          { name: 'world', active: true }
+        ]
+      }
     );
     pass(r, 'helloworld');
   });

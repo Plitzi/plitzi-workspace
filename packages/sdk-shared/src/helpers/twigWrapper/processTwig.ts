@@ -4,6 +4,9 @@ import { applyApplyTag } from './tags/apply';
 import { applySet } from './tags/set';
 import { renderTokens } from './tokens/renderTokens';
 
+// Fast check: does the template contain any twig syntax? A single indexOf scan covers `{{`, `{{{`, and `{%`.
+const hasTwigTags = (template: string): boolean => template.indexOf('{%') !== -1 || template.indexOf('{{') !== -1;
+
 // Renders a user-written template: resolves `{% set %}` variables, `{% if %}` blocks, `{% for %}` loops,
 // then `{{ token }}` interpolation, and finally `{% apply %}` filter blocks. `keepEmptyTokens` leaves an
 // unresolved token as its literal text; `asRaw` JSON.parses the result back into typed data. Any error —
@@ -19,6 +22,11 @@ export const processTwig = (
   }
 
   try {
+    // Fast path: no twig syntax at all — skip the full pipeline entirely.
+    if (!hasTwigTags(template)) {
+      return asRaw ? template : template;
+    }
+
     let context = variables;
     if ('variables' in variables) {
       // Interactions carry a nested `variables` context that has to read at root level.
@@ -29,20 +37,28 @@ export const processTwig = (
     // 1. Process {% set %} tags first — defines variables for subsequent steps.
     let step = applySet(template, context);
 
-    // 2. Process {% for %} loops.
-    step = applyLoops(step, context);
+    // 2. Process {% for %} loops — skip when no loop tags exist.
+    if (step.indexOf('{%') !== -1) {
+      step = applyLoops(step, context);
+    }
 
-    // 3. Process {% if %}/{% elseif %}/{% else %} conditionals.
-    step = applyConditionals(step, context);
+    // 3. Process {% if %}/{% elseif %}/{% else %} conditionals — skip when no block tags exist.
+    if (step.indexOf('{%') !== -1) {
+      step = applyConditionals(step, context);
 
-    // 3b. Second pass for set tags that were inside conditional blocks and skipped by step 1.
-    step = applySet(step, context);
+      // 3b. Second pass for set tags that were inside conditional blocks and skipped by step 1.
+      step = applySet(step, context);
+    }
 
     // 4. Render {{ }} and {{{ }}} tokens with filters and function calls.
-    step = renderTokens(step, context, keepEmptyTokens, asRaw);
+    if (step.indexOf('{{') !== -1) {
+      step = renderTokens(step, context, keepEmptyTokens, asRaw);
+    }
 
     // 5. Process {% apply %} filter blocks last — applies filters to rendered content.
-    step = applyApplyTag(step, context);
+    if (step.indexOf('{%') !== -1) {
+      step = applyApplyTag(step, context);
+    }
 
     if (!asRaw) {
       return step;

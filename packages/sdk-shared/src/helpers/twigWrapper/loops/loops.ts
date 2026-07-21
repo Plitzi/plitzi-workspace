@@ -49,14 +49,14 @@ const resolveCollection = (expr: string, context: Record<string, unknown>): unkn
 
   // Support `range(end)`, `range(start, end)` and `range(start, end, step)` function calls
   // in collection expressions, matching the same logic as the token-level range() function.
-  const rangeFuncMatch = /^\s*range\s*\((.+)\)\s*$/.exec(expr.trim());
+  const rangeFuncMatch = RANGE_FUNC_RE.exec(expr.trim());
   if (rangeFuncMatch) {
     const args = rangeFuncMatch[1].split(',').map(a => Number(evalOperand(a.trim(), context)));
     if (args.length >= 1 && args.every(a => !Number.isNaN(a))) {
       const start = args.length === 1 ? 0 : args[0];
       const end = args.length === 1 ? args[0] : args[1];
       const hasExplicitStep = args.length >= 3;
-      const step = hasExplicitStep ? args[2] : (start <= end ? 1 : -1);
+      const step = hasExplicitStep ? args[2] : start <= end ? 1 : -1;
 
       if (step === 0) {
         return [];
@@ -103,6 +103,9 @@ const resolveObjectEntries = (expr: string, context: Record<string, unknown>): [
 const BREAK_SENTINEL = '\x00TWIG_BREAK\x00';
 const CONTINUE_SENTINEL = '\x00TWIG_CONTINUE\x00';
 
+// Pre-compiled regex for detecting `range(end)` / `range(start, end)` / `range(start, end, step)` in collection expressions.
+const RANGE_FUNC_RE = /^\s*range\s*\((.+)\)\s*$/;
+
 // Processes the body of a single loop iteration. When the body contains conditional blocks (if/elseif/else),
 // set tags must be processed AFTER conditionals so that {% break %}/{% continue %} inside conditionals are
 // detected before side effects execute. The pipeline is:
@@ -113,6 +116,11 @@ const CONTINUE_SENTINEL = '\x00TWIG_CONTINUE\x00';
 // This ensures that {% set total = total ~ i %} after {% if i > 3 %}{% break %}{% endif %} does NOT
 // execute when the break fires.
 const processBody = (body: string, context: Record<string, unknown>): string => {
+  // Fast path: if the body has no twig syntax at all, skip the entire pipeline.
+  if (body.indexOf('{%') === -1 && body.indexOf('{{') === -1) {
+    return body;
+  }
+
   const hasConditionals = IF_BLOCK.test(body);
   IF_BLOCK.lastIndex = 0;
 
@@ -166,6 +174,9 @@ type ForBlock = {
   elseBody: string | undefined;
 };
 
+// Pre-compiled tag regex for scanning nesting depth inside for blocks.
+const FOR_TAG_SCAN = new RegExp(FOR_TAG.source, 'g');
+
 // Finds the outermost `{% for %}` block by tracking nesting depth. The first `{% for %}` tag found is
 // guaranteed to be outermost — subsequent tags at greater depth are skipped until the matching `{% endfor %}`.
 const findOuterForBlock = (template: string): ForBlock | null => {
@@ -179,8 +190,7 @@ const findOuterForBlock = (template: string): ForBlock | null => {
 
   let depth = 1;
   let ifDepth = 0;
-  const tagRegex = new RegExp(FOR_TAG.source, 'g');
-  tagRegex.lastIndex = openEnd;
+  FOR_TAG_SCAN.lastIndex = openEnd;
 
   let elseIdx = -1;
   let elseLen = 0;
@@ -188,7 +198,7 @@ const findOuterForBlock = (template: string): ForBlock | null => {
   let endLen = 0;
 
   while (depth > 0) {
-    const tag = tagRegex.exec(template);
+    const tag = FOR_TAG_SCAN.exec(template);
     if (!tag) {
       return null;
     }
@@ -309,6 +319,11 @@ const renderForBlock = (block: ForBlock, context: Record<string, unknown>): stri
 // that loop variables from parent loops are available in the context when inner loops are resolved. The guard
 // caps pathological input; a malformed block that never matches is left in place.
 export const applyLoops = (template: string, context: Record<string, unknown>): string => {
+  // Fast path: no `{% for %}` tags at all — skip the entire loop expansion.
+  if (template.indexOf('{%') === -1 || !FOR_OPEN.test(template)) {
+    return template;
+  }
+
   let result = template;
   let guard = 0;
   while (guard < 1000 && FOR_OPEN.test(result)) {
