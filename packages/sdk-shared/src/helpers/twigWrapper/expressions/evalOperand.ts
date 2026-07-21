@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import { resolvePath } from './resolvePath';
 import { STRING_LITERAL } from '../patterns/patterns';
 
