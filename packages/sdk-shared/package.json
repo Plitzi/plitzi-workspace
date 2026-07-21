@@ -1117,6 +1117,7 @@
   "scripts": {
     "lint": "eslint ./src",
     "test": "vitest run",
+    "bench": "vitest bench",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "build:dev": "vite build --mode development --minify false && node ./scripts/generate-exports.mjs",
     "build:dev-watch": "vite build --mode development --watch --minify false",
