@@ -20,6 +20,41 @@ const processSetBlockContent = (content: string, context: Record<string, unknown
 const SET_OPEN = /\{%\s*set\s+(\w+)\s*%\}/g;
 const SET_CLOSE = /\{%\s*endset\s*%\}/g;
 
+// Matches any structural tag used to track block depth: opening tags (for, if, apply) increment depth,
+// closing tags (endfor, endif, endapply) decrement it. This keeps applySet from stripping set tags
+// that live inside block bodies — those are processed later by the block's own body pipeline.
+const BLOCK_TAG = /\{%\s*(for|if|apply|endfor|endif|endapply)\b[\s\S]*?%\}/g;
+
+// Computes a set of character ranges that are inside block bodies (for, if, apply). A set tag
+// falling inside any of these ranges is skipped by the top-level applySet — the block's own
+// body pipeline will handle it when the block expands.
+const computeBlockRanges = (template: string): Array<[number, number]> => {
+  const ranges: Array<[number, number]> = [];
+  const stack: Array<{ tag: string; start: number }> = [];
+
+  BLOCK_TAG.lastIndex = 0;
+  let match;
+  while ((match = BLOCK_TAG.exec(template)) !== null) {
+    const tag = match[1];
+    const start = match.index;
+    const end = start + match[0].length;
+
+    if (tag === 'for' || tag === 'if' || tag === 'apply') {
+      stack.push({ tag, start });
+    } else {
+      const open = stack.pop();
+      if (open) {
+        ranges.push([open.start, end]);
+      }
+    }
+  }
+
+  return ranges;
+};
+
+const isInsideBlock = (pos: number, ranges: Array<[number, number]>): boolean =>
+  ranges.some(([start, end]) => pos >= start && pos < end);
+
 // Processes `{% set %}` tags: evaluates the expression and stores the result in the context.
 // Supports two forms:
 //   `{% set variable = expression %}` — assigns the expression result
@@ -29,9 +64,18 @@ const SET_CLOSE = /\{%\s*endset\s*%\}/g;
 export const applySet = (template: string, context: Record<string, unknown>): string => {
   let result = template;
 
-  // Process `{% set variable = expression %}` — simple assignment
+  // Compute which character ranges are inside block bodies (for, if, apply).
+  // Set tags inside these ranges are left untouched — they'll be processed when the block expands.
+  const blockRanges = computeBlockRanges(template);
+
+  // Process `{% set variable = expression %}` — simple assignment.
+  // Skip tags that fall inside a block body.
   SET_ASSIGN.lastIndex = 0;
-  result = result.replace(SET_ASSIGN, (_full, name: string, expr: string) => {
+  result = result.replace(SET_ASSIGN, (_full, name: string, expr: string, offset: number) => {
+    if (isInsideBlock(offset, blockRanges)) {
+      return _full;
+    }
+
     context[name] = evalOperand(expr, context);
     return '';
   });
@@ -97,6 +141,11 @@ export const applySet = (template: string, context: Record<string, unknown>): st
     }
 
     if (bestStart === -1) {
+      break;
+    }
+
+    // Skip set blocks that fall inside a for/if/apply body — they'll be processed when the block expands.
+    if (isInsideBlock(bestStart, blockRanges)) {
       break;
     }
 

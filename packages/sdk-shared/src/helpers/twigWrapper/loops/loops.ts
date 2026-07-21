@@ -1,6 +1,7 @@
 import { applyConditionals } from '../conditionals/conditionals';
 import { evalOperand } from '../expressions/evalOperand';
-import { BREAK_TAG, CONTINUE_TAG, FOR_OPEN, FOR_TAG, RANGE_EXPR } from '../patterns/patterns';
+import { BREAK_TAG, CONTINUE_TAG, FOR_OPEN, FOR_TAG, IF_BLOCK, RANGE_EXPR } from '../patterns/patterns';
+import { applySet } from '../tags/set';
 import { renderTokens } from '../tokens/renderTokens';
 
 type LoopMeta = {
@@ -25,6 +26,7 @@ const buildLoopMeta = (index: number, length: number): LoopMeta => ({
 
 // Resolves a `{% for %}` collection expression. Supports:
 // - Range syntax: `0..10`, `start..end` (numeric literals or variable paths)
+// - Function calls: `range(start, end)` or `range(start, end, step)`
 // - Array/object variables resolved from the context
 // Returns null when the expression cannot be resolved to an iterable.
 const resolveCollection = (expr: string, context: Record<string, unknown>): unknown[] | null => {
@@ -39,6 +41,36 @@ const resolveCollection = (expr: string, context: Record<string, unknown>): unkn
       const result: number[] = [];
       for (let i = start; step > 0 ? i <= end : i >= end; i += step) {
         result.push(i);
+      }
+      return result;
+    }
+    return null;
+  }
+
+  // Support `range(end)`, `range(start, end)` and `range(start, end, step)` function calls
+  // in collection expressions, matching the same logic as the token-level range() function.
+  const rangeFuncMatch = /^\s*range\s*\((.+)\)\s*$/.exec(expr.trim());
+  if (rangeFuncMatch) {
+    const args = rangeFuncMatch[1].split(',').map(a => Number(evalOperand(a.trim(), context)));
+    if (args.length >= 1 && args.every(a => !Number.isNaN(a))) {
+      const start = args.length === 1 ? 0 : args[0];
+      const end = args.length === 1 ? args[0] : args[1];
+      const hasExplicitStep = args.length >= 3;
+      const step = hasExplicitStep ? args[2] : (start <= end ? 1 : -1);
+
+      if (step === 0) {
+        return [];
+      }
+
+      const result: number[] = [];
+      if (step > 0) {
+        for (let i = start; i <= end; i += step) {
+          result.push(i);
+        }
+      } else {
+        for (let i = start; i >= end; i += step) {
+          result.push(i);
+        }
       }
       return result;
     }
@@ -71,28 +103,57 @@ const resolveObjectEntries = (expr: string, context: Record<string, unknown>): [
 const BREAK_SENTINEL = '\x00TWIG_BREAK\x00';
 const CONTINUE_SENTINEL = '\x00TWIG_CONTINUE\x00';
 
-// Processes the body of a single loop iteration: nested loops → conditionals → loop control → tokens.
-// When a break or continue tag is found after resolving conditionals, the text BEFORE the tag is rendered
-// and prepended to the sentinel, so renderForBlock can include it in the output before acting on the control flow.
+// Processes the body of a single loop iteration. When the body contains conditional blocks (if/elseif/else),
+// set tags must be processed AFTER conditionals so that {% break %}/{% continue %} inside conditionals are
+// detected before side effects execute. The pipeline is:
+//
+//   - No conditionals: set → loops → break check → tokens  (set runs eagerly)
+//   - Has conditionals: loops → conditionals → set → break check → tokens  (set deferred)
+//
+// This ensures that {% set total = total ~ i %} after {% if i > 3 %}{% break %}{% endif %} does NOT
+// execute when the break fires.
 const processBody = (body: string, context: Record<string, unknown>): string => {
+  const hasConditionals = IF_BLOCK.test(body);
+  IF_BLOCK.lastIndex = 0;
+
+  if (!hasConditionals) {
+    const afterSet = applySet(body, context);
+    const afterLoops = applyLoops(afterSet, context);
+
+    const breakMatch = BREAK_TAG.exec(afterLoops);
+    if (breakMatch) {
+      const prefix = afterLoops.slice(0, breakMatch.index);
+      return renderTokens(prefix, context, false, false) + BREAK_SENTINEL;
+    }
+
+    const continueMatch = CONTINUE_TAG.exec(afterLoops);
+    if (continueMatch) {
+      const prefix = afterLoops.slice(0, continueMatch.index);
+      return renderTokens(prefix, context, false, false) + CONTINUE_SENTINEL;
+    }
+
+    return renderTokens(afterLoops, context, false, false);
+  }
+
   const afterLoops = applyLoops(body, context);
   const afterConditionals = applyConditionals(afterLoops, context);
 
   const breakMatch = BREAK_TAG.exec(afterConditionals);
   if (breakMatch) {
     const prefix = afterConditionals.slice(0, breakMatch.index);
-    const rendered = renderTokens(prefix, context, false, false);
-    return rendered + BREAK_SENTINEL;
+    const afterSet = applySet(prefix, context);
+    return renderTokens(afterSet, context, false, false) + BREAK_SENTINEL;
   }
 
   const continueMatch = CONTINUE_TAG.exec(afterConditionals);
   if (continueMatch) {
     const prefix = afterConditionals.slice(0, continueMatch.index);
-    const rendered = renderTokens(prefix, context, false, false);
-    return rendered + CONTINUE_SENTINEL;
+    const afterSet = applySet(prefix, context);
+    return renderTokens(afterSet, context, false, false) + CONTINUE_SENTINEL;
   }
 
-  return renderTokens(afterConditionals, context, false, false);
+  const afterSet = applySet(afterConditionals, context);
+  return renderTokens(afterSet, context, false, false);
 };
 
 type ForBlock = {
@@ -193,19 +254,28 @@ const renderForBlock = (block: ForBlock, context: Record<string, unknown>): stri
       return elseBody !== undefined ? processBody(elseBody, context) : '';
     }
     const parts: string[] = [];
+    const prevVar = context[varName];
+    const prevSecond = context[secondVar];
+    const prevLoop = context.loop;
     for (let i = 0; i < entries.length; i++) {
       const [key, value] = entries[i];
       const meta = buildLoopMeta(i, entries.length);
-      const loopCtx = { ...context, [varName]: key, [secondVar]: value, loop: meta };
-      const rendered = processBody(body, loopCtx);
+      context[varName] = key;
+      context[secondVar] = value;
+      context.loop = meta;
+      const rendered = processBody(body, context);
       const control = pushAndControl(parts, rendered);
       if (control === 'break') {
         break;
       }
+
       if (control === 'continue') {
         continue;
       }
     }
+    context[varName] = prevVar;
+    context[secondVar] = prevSecond;
+    context.loop = prevLoop;
     return parts.join('');
   }
 
@@ -214,18 +284,24 @@ const renderForBlock = (block: ForBlock, context: Record<string, unknown>): stri
     return elseBody !== undefined ? processBody(elseBody, context) : '';
   }
   const parts: string[] = [];
+  const prevVar = context[varName];
+  const prevLoop = context.loop;
   for (let i = 0; i < collection.length; i++) {
     const meta = buildLoopMeta(i, collection.length);
-    const loopCtx = { ...context, [varName]: collection[i], loop: meta };
-    const rendered = processBody(body, loopCtx);
+    context[varName] = collection[i];
+    context.loop = meta;
+    const rendered = processBody(body, context);
     const control = pushAndControl(parts, rendered);
     if (control === 'break') {
       break;
     }
+
     if (control === 'continue') {
       continue;
     }
   }
+  context[varName] = prevVar;
+  context.loop = prevLoop;
   return parts.join('');
 };
 

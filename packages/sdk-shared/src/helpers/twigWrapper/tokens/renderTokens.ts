@@ -3,17 +3,48 @@ import { resolvePath } from '../expressions/resolvePath';
 import { applyFilters, isRawMarker, unwrapRaw } from '../filters/filters';
 import { TOKEN_INNER, TOKEN_MATCH } from '../patterns/patterns';
 
-// Matches `cycle(values, position)` — the Twig cycle function. The first argument can be an array literal
-// (`['odd', 'even']` or `["odd", "even"]`) or a variable path; the second is any expression (variable, number).
-const CYCLE_CALL = /^cycle\((.+)\)$/;
 const CYCLE_ARRAY = /^\[(.*)\]$/;
 
-// Matches `max(a, b, ...)` and `min(a, b, ...)` — Twig max/min functions.
-const MAX_CALL = /^max\((.+)\)$/;
-const MIN_CALL = /^min\((.+)\)$/;
+// Finds the index of the matching `)` for a function call starting at `openIdx`, accounting for nested parens and
+// quoted strings (which may contain parens/commas). Returns the index of the matching `)` or -1 if not found.
+const findFuncEnd = (s: string, openIdx: number): number => {
+  let depth = 0;
+  let inQuote: string | null = null;
+  for (let i = openIdx; i < s.length; i++) {
+    const c = s[i];
+    if (inQuote) {
+      if (c === inQuote) {
+        inQuote = null;
+      }
+      continue;
+    }
+    if (c === '"' || c === "'") {
+      inQuote = c;
+      continue;
+    }
+    if (c === '(') {
+      depth++;
+    } else if (c === ')') {
+      depth--;
+      if (depth === 0) {
+        return i;
+      }
+    }
+  }
+  return -1;
+};
 
-// Matches `range(start, end)` or `range(start, end, step)` — Twig range function.
-const RANGE_CALL = /^range\((.+)\)$/;
+// Splits `max(items) | upper` into `["max(items)", "| upper"]` — or `[trimmed, ""]` if no trailing filter.
+// The funcStart is the index of `(`. We find the matching `)` and slice the rest.
+const splitFuncAndFilters = (trimmed: string, funcStart: number): [string, string] => {
+  const endIdx = findFuncEnd(trimmed, funcStart);
+  if (endIdx === -1) {
+    return [trimmed, ''];
+  }
+  const funcCall = trimmed.slice(0, endIdx + 1).trim();
+  const filters = trimmed.slice(endIdx + 1).trim();
+  return [funcCall, filters];
+};
 
 // Finds the comma that separates the two `cycle()` arguments, skipping commas inside brackets so
 // `cycle(['a, b'], 0)` splits correctly at the outer comma.
@@ -129,6 +160,40 @@ const evalRange = (args: string, context: Record<string, unknown>): unknown => {
   return result;
 };
 
+// Finds the index of the first top-level `|` pipe character in a string, skipping pipes inside
+// quoted strings and parentheses. Returns -1 if no top-level pipe is found.
+const findTopLevelPipe = (s: string): number => {
+  let inQuote: string | null = null;
+  let parenDepth = 0;
+
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+
+    if (inQuote) {
+      if (c === inQuote) {
+        inQuote = null;
+      }
+      continue;
+    }
+    if (c === '"' || c === "'") {
+      inQuote = c;
+      continue;
+    }
+    if (c === '(') {
+      parenDepth++;
+      continue;
+    }
+    if (c === ')') {
+      parenDepth--;
+      continue;
+    }
+    if (c === '|' && parenDepth === 0) {
+      return i;
+    }
+  }
+  return -1;
+};
+
 // Splits comma-separated function arguments while respecting quoted strings and brackets.
 const splitFuncArgs = (args: string): string[] => {
   const parts: string[] = [];
@@ -207,36 +272,74 @@ export const renderTokens = (
       if (!inner) {
         // Try Twig function calls before giving up.
         const trimmed = innerRaw.trim();
+        const openParenIdx = trimmed.indexOf('(');
 
-        const cycleMatch = CYCLE_CALL.exec(trimmed);
-        if (cycleMatch) {
-          const cycled = evalCycle(cycleMatch[1], context);
-          if (cycled !== null) {
-            return stringify(cycled);
+        // Detect `funcName(` at the start — must start with a letter/underscore.
+        if (openParenIdx !== -1 && /^[a-zA-Z_]\w*\s*\(/.test(trimmed)) {
+          const funcName = trimmed.slice(0, openParenIdx).trim();
+          const [funcCall, filtersStr] = splitFuncAndFilters(trimmed, openParenIdx);
+          const args = funcCall.slice(funcName.length + 1, -1);
+
+          // Guard: empty args → treat as invalid (e.g. `max()` should leave the token as-is).
+          if (!args.trim()) {
+            return full;
+          }
+
+          let result: unknown = null;
+          if (funcName === 'cycle') {
+            result = evalCycle(args, context);
+          } else if (funcName === 'max') {
+            result = evalMax(args, context);
+          } else if (funcName === 'min') {
+            result = evalMin(args, context);
+          } else if (funcName === 'range') {
+            result = evalRange(args, context);
+          }
+
+          if (result !== null && result !== undefined) {
+            const filtered = applyFilters(result, filtersStr, context);
+
+            if (isRawMarker(filtered)) {
+              return stringify(unwrapRaw(filtered));
+            }
+
+            if (isTriple) {
+              return stringify(filtered);
+            }
+
+            if (typeof filtered === 'object' && filtered !== null) {
+              return JSON.stringify(filtered);
+            }
+
+            return stringify(filtered);
           }
         }
 
-        const maxMatch = MAX_CALL.exec(trimmed);
-        if (maxMatch) {
-          const maxVal = evalMax(maxMatch[1], context);
-          if (maxVal !== null) {
-            return stringify(maxVal);
-          }
-        }
+        // Tilde concatenation: `{{ a ~ " and " ~ b }}` — the `~` operator concatenates strings.
+        // evalOperand handles `~` natively, so we split off any trailing filter chain and pass the
+        // expression through evalOperand.
+        if (trimmed.includes('~')) {
+          const pipeIdx = findTopLevelPipe(trimmed);
+          const expr = pipeIdx === -1 ? trimmed : trimmed.slice(0, pipeIdx).trim();
+          const filtersPart = pipeIdx === -1 ? '' : trimmed.slice(pipeIdx);
 
-        const minMatch = MIN_CALL.exec(trimmed);
-        if (minMatch) {
-          const minVal = evalMin(minMatch[1], context);
-          if (minVal !== null) {
-            return stringify(minVal);
-          }
-        }
+          const result = evalOperand(expr, context);
+          if (result !== undefined) {
+            const filtered = applyFilters(result, filtersPart, context);
 
-        const rangeMatch = RANGE_CALL.exec(trimmed);
-        if (rangeMatch) {
-          const rangeVal = evalRange(rangeMatch[1], context);
-          if (rangeVal !== null) {
-            return isTriple ? stringify(rangeVal) : JSON.stringify(rangeVal);
+            if (isRawMarker(filtered)) {
+              return stringify(unwrapRaw(filtered));
+            }
+
+            if (isTriple) {
+              return stringify(filtered);
+            }
+
+            if (typeof filtered === 'object' && filtered !== null) {
+              return JSON.stringify(filtered);
+            }
+
+            return stringify(filtered);
           }
         }
 

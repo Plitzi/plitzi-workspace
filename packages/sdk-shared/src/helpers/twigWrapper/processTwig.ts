@@ -35,6 +35,9 @@ export const processTwig = (
     // 3. Process {% if %}/{% elseif %}/{% else %} conditionals.
     step = applyConditionals(step, context);
 
+    // 3b. Second pass for set tags that were inside conditional blocks and skipped by step 1.
+    step = applySet(step, context);
+
     // 4. Render {{ }} and {{{ }}} tokens with filters and function calls.
     step = renderTokens(step, context, keepEmptyTokens, asRaw);
 
