@@ -185,25 +185,141 @@
       "types": "./dist/helpers/twigWrapper/index.d.ts",
       "import": "./dist/helpers/twigWrapper/index.mjs"
     },
+    "./helpers/twigWrapper/Evaluator": {
+      "types": "./dist/helpers/twigWrapper/Evaluator/index.d.ts",
+      "import": "./dist/helpers/twigWrapper/Evaluator/index.mjs"
+    },
+    "./helpers/twigWrapper/Evaluator/Evaluator": {
+      "types": "./dist/helpers/twigWrapper/Evaluator/Evaluator.d.ts",
+      "import": "./dist/helpers/twigWrapper/Evaluator/Evaluator.mjs"
+    },
+    "./helpers/twigWrapper/Evaluator/helpers": {
+      "types": "./dist/helpers/twigWrapper/Evaluator/helpers.d.ts",
+      "import": "./dist/helpers/twigWrapper/Evaluator/helpers.mjs"
+    },
+    "./helpers/twigWrapper/Evaluator/index": {
+      "types": "./dist/helpers/twigWrapper/Evaluator/index.d.ts",
+      "import": "./dist/helpers/twigWrapper/Evaluator/index.mjs"
+    },
+    "./helpers/twigWrapper/Lexer": {
+      "types": "./dist/helpers/twigWrapper/Lexer/index.d.ts",
+      "import": "./dist/helpers/twigWrapper/Lexer/index.mjs"
+    },
+    "./helpers/twigWrapper/Lexer/Lexer": {
+      "types": "./dist/helpers/twigWrapper/Lexer/Lexer.d.ts",
+      "import": "./dist/helpers/twigWrapper/Lexer/Lexer.mjs"
+    },
+    "./helpers/twigWrapper/Lexer/index": {
+      "types": "./dist/helpers/twigWrapper/Lexer/index.d.ts",
+      "import": "./dist/helpers/twigWrapper/Lexer/index.mjs"
+    },
+    "./helpers/twigWrapper/Lexer/types": {
+      "types": "./dist/helpers/twigWrapper/Lexer/types.d.ts",
+      "import": "./dist/helpers/twigWrapper/Lexer/types.mjs"
+    },
+    "./helpers/twigWrapper/Parser": {
+      "types": "./dist/helpers/twigWrapper/Parser/index.d.ts",
+      "import": "./dist/helpers/twigWrapper/Parser/index.mjs"
+    },
+    "./helpers/twigWrapper/Parser/ExpressionParser": {
+      "types": "./dist/helpers/twigWrapper/Parser/ExpressionParser.d.ts",
+      "import": "./dist/helpers/twigWrapper/Parser/ExpressionParser.mjs"
+    },
+    "./helpers/twigWrapper/Parser/Parser": {
+      "types": "./dist/helpers/twigWrapper/Parser/Parser.d.ts",
+      "import": "./dist/helpers/twigWrapper/Parser/Parser.mjs"
+    },
+    "./helpers/twigWrapper/Parser/helpers": {
+      "types": "./dist/helpers/twigWrapper/Parser/helpers.d.ts",
+      "import": "./dist/helpers/twigWrapper/Parser/helpers.mjs"
+    },
+    "./helpers/twigWrapper/Parser/index": {
+      "types": "./dist/helpers/twigWrapper/Parser/index.d.ts",
+      "import": "./dist/helpers/twigWrapper/Parser/index.mjs"
+    },
+    "./helpers/twigWrapper/conditionals": {
+      "types": "./dist/helpers/twigWrapper/conditionals.d.ts",
+      "import": "./dist/helpers/twigWrapper/conditionals.mjs"
+    },
     "./helpers/twigWrapper/evalOperand": {
       "types": "./dist/helpers/twigWrapper/evalOperand.d.ts",
       "import": "./dist/helpers/twigWrapper/evalOperand.mjs"
+    },
+    "./helpers/twigWrapper/expressions": {
+      "types": "./dist/helpers/twigWrapper/expressions/index.d.ts",
+      "import": "./dist/helpers/twigWrapper/expressions/index.mjs"
+    },
+    "./helpers/twigWrapper/expressions/evalOperand": {
+      "types": "./dist/helpers/twigWrapper/expressions/evalOperand.d.ts",
+      "import": "./dist/helpers/twigWrapper/expressions/evalOperand.mjs"
+    },
+    "./helpers/twigWrapper/expressions/index": {
+      "types": "./dist/helpers/twigWrapper/expressions/index.d.ts",
+      "import": "./dist/helpers/twigWrapper/expressions/index.mjs"
+    },
+    "./helpers/twigWrapper/expressions/resolvePath": {
+      "types": "./dist/helpers/twigWrapper/expressions/resolvePath.d.ts",
+      "import": "./dist/helpers/twigWrapper/expressions/resolvePath.mjs"
     },
     "./helpers/twigWrapper/filters": {
       "types": "./dist/helpers/twigWrapper/filters.d.ts",
       "import": "./dist/helpers/twigWrapper/filters.mjs"
     },
+    "./helpers/twigWrapper/filters/filters": {
+      "types": "./dist/helpers/twigWrapper/filters/filters.d.ts",
+      "import": "./dist/helpers/twigWrapper/filters/filters.mjs"
+    },
+    "./helpers/twigWrapper/filters/index": {
+      "types": "./dist/helpers/twigWrapper/filters/index.d.ts",
+      "import": "./dist/helpers/twigWrapper/filters/index.mjs"
+    },
     "./helpers/twigWrapper/hasValidToken": {
       "types": "./dist/helpers/twigWrapper/hasValidToken.d.ts",
       "import": "./dist/helpers/twigWrapper/hasValidToken.mjs"
+    },
+    "./helpers/twigWrapper/index": {
+      "types": "./dist/helpers/twigWrapper/index.d.ts",
+      "import": "./dist/helpers/twigWrapper/index.mjs"
     },
     "./helpers/twigWrapper/patterns": {
       "types": "./dist/helpers/twigWrapper/patterns.d.ts",
       "import": "./dist/helpers/twigWrapper/patterns.mjs"
     },
+    "./helpers/twigWrapper/patterns/index": {
+      "types": "./dist/helpers/twigWrapper/patterns/index.d.ts",
+      "import": "./dist/helpers/twigWrapper/patterns/index.mjs"
+    },
+    "./helpers/twigWrapper/patterns/patterns": {
+      "types": "./dist/helpers/twigWrapper/patterns/patterns.d.ts",
+      "import": "./dist/helpers/twigWrapper/patterns/patterns.mjs"
+    },
     "./helpers/twigWrapper/processTwig": {
       "types": "./dist/helpers/twigWrapper/processTwig.d.ts",
       "import": "./dist/helpers/twigWrapper/processTwig.mjs"
+    },
+    "./helpers/twigWrapper/processTwig/fastPath": {
+      "types": "./dist/helpers/twigWrapper/processTwig/fastPath.d.ts",
+      "import": "./dist/helpers/twigWrapper/processTwig/fastPath.mjs"
+    },
+    "./helpers/twigWrapper/processTwig/index": {
+      "types": "./dist/helpers/twigWrapper/processTwig/index.d.ts",
+      "import": "./dist/helpers/twigWrapper/processTwig/index.mjs"
+    },
+    "./helpers/twigWrapper/processTwig/processTwig": {
+      "types": "./dist/helpers/twigWrapper/processTwig/processTwig.d.ts",
+      "import": "./dist/helpers/twigWrapper/processTwig/processTwig.mjs"
+    },
+    "./helpers/twigWrapper/renderTokens": {
+      "types": "./dist/helpers/twigWrapper/renderTokens.d.ts",
+      "import": "./dist/helpers/twigWrapper/renderTokens.mjs"
+    },
+    "./helpers/twigWrapper/resolvePath": {
+      "types": "./dist/helpers/twigWrapper/resolvePath.d.ts",
+      "import": "./dist/helpers/twigWrapper/resolvePath.mjs"
+    },
+    "./helpers/twigWrapper/tokens/hasValidToken": {
+      "types": "./dist/helpers/twigWrapper/tokens/hasValidToken.d.ts",
+      "import": "./dist/helpers/twigWrapper/tokens/hasValidToken.mjs"
     },
     "./helpers/utils": {
       "types": "./dist/helpers/utils.d.ts",
