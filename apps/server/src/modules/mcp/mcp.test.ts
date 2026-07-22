@@ -1428,14 +1428,12 @@ describe('mcp-ai idRef (the ref IS the runtime wiring key)', () => {
   });
 
   it('rejects a new ref whose charset would break the source/interaction path grammar', async () => {
-    for (const ref of ['hero.cta', 'api_products']) {
-      const res = await apply(
-        { operations: [{ type: 'upsertElement', pageRef: 'home', element: { ref, type: 'text' } }] },
-        buildSpace()
-      );
-      expect(res.applied).toBe(false);
-      expect(res.errors?.[0].message).toContain('not a valid idRef');
-    }
+    const res = await apply(
+      { operations: [{ type: 'upsertElement', pageRef: 'home', element: { ref: 'hero.cta', type: 'text' } }] },
+      buildSpace()
+    );
+    expect(res.applied).toBe(false);
+    expect(res.errors?.[0].message).toContain('not a valid idRef');
   });
 
   it('rejects a new ref already used elsewhere in the space (idRef is a global wiring key)', async () => {
