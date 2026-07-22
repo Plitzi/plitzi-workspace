@@ -43,6 +43,8 @@ export const evaluate = (
 class Evaluator {
   readonly variables: Record<string, unknown>;
   private readonly keepEmptyTokens: boolean;
+  private breakFlag = false;
+  private continueFlag = false;
 
   constructor(context: Record<string, unknown>, keepEmptyTokens = false) {
     this.variables = { ...context };
@@ -78,9 +80,11 @@ class Evaluator {
       case 'apply':
         return this.evalApply(node);
       case 'break':
-        return '\x00BREAK\x00';
+        this.breakFlag = true;
+        return '';
       case 'continue':
-        return '\x00CONTINUE\x00';
+        this.continueFlag = true;
+        return '';
     }
   }
 
@@ -163,10 +167,12 @@ class Evaluator {
         this.variables[node.valueVar] = value;
 
         const body = this.evalNodes(node.body);
-        if (body.includes('\x00BREAK\x00')) {
+        if (this.breakFlag) {
+          this.breakFlag = false;
           break;
         }
-        if (body.includes('\x00CONTINUE\x00')) {
+        if (this.continueFlag) {
+          this.continueFlag = false;
           continue;
         }
         parts.push(body);
@@ -203,10 +209,12 @@ class Evaluator {
       this.variables[node.valueVar] = item;
 
       const body = this.evalNodes(node.body);
-      if (body.includes('\x00BREAK\x00')) {
+      if (this.breakFlag) {
+        this.breakFlag = false;
         break;
       }
-      if (body.includes('\x00CONTINUE\x00')) {
+      if (this.continueFlag) {
+        this.continueFlag = false;
         continue;
       }
       parts.push(body);
@@ -292,12 +300,18 @@ class Evaluator {
   }
 
   private resolvePath(segments: readonly string[]): unknown {
-    if (segments.length === 0) {
+    const len = segments.length;
+    if (len === 0) {
       return undefined;
     }
 
+    // Fast path: single segment (most common — `{{ name }}`, `{{ age }}`).
+    if (len === 1) {
+      return this.variables[segments[0]];
+    }
+
     let current: unknown = this.variables[segments[0]];
-    for (let i = 1; i < segments.length; i++) {
+    for (let i = 1; i < len; i++) {
       if (current === null || current === undefined) {
         return undefined;
       }

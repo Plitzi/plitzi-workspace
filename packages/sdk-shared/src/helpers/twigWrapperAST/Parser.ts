@@ -31,6 +31,27 @@ const extractFirstWord = (s: string): string => {
   return s.slice(0, i);
 };
 
+// Checks if a string is a simple identifier (letters, digits, underscores only).
+// Used to fast-path variable parsing — avoids the full expression parser.
+const isSimpleIdentifier = (s: string): boolean => {
+  const len = s.length;
+  if (len === 0) {
+    return false;
+  }
+  const ch = s.charCodeAt(0);
+  if (!((ch >= 97 && ch <= 122) || (ch >= 65 && ch <= 90) || ch === 95)) {
+    return false;
+  }
+  for (let i = 1; i < len; i++) {
+    const c = s.charCodeAt(i);
+    if ((c >= 97 && c <= 122) || (c >= 65 && c <= 90) || (c >= 48 && c <= 57) || c === 95) {
+      continue;
+    }
+    return false;
+  }
+  return true;
+};
+
 // Parser: converts a flat token stream into an AST.
 // Uses recursive descent for nested blocks (if, for, set, apply).
 export const parse = (tokens: readonly Token[]): ParseResult => {
@@ -149,7 +170,17 @@ class ParseContext {
     if (!token || token.type !== 'variable') {
       return { type: 'variable', raw: false, expression: { type: 'literal', value: '' }, source: '' };
     }
-    const expr = parseExpression(token.content.trim());
+    const trimmed = token.content.trim();
+    // Fast path: single identifier (no dots, pipes, operators) — skip the expression parser.
+    if (isSimpleIdentifier(trimmed)) {
+      return {
+        type: 'variable',
+        raw: token.raw,
+        expression: { type: 'path', segments: [trimmed] },
+        source: reconstructSource(token.content, token.raw)
+      };
+    }
+    const expr = parseExpression(trimmed);
     return { type: 'variable', raw: token.raw, expression: expr, source: reconstructSource(token.content, token.raw) };
   }
 
