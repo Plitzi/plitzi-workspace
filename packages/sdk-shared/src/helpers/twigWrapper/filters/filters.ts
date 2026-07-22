@@ -476,28 +476,57 @@ const splitFilterArgs = (arg: string): string[] => {
   const args: string[] = [];
   let current = '';
   let inQuote = false;
-  let quoteChar = '';
+  let quoteChar = 0;
 
-  for (const char of arg) {
+  for (let i = 0; i < arg.length; i++) {
+    const c = arg.charCodeAt(i);
     if (inQuote) {
-      current += char;
-      if (char === quoteChar) {
+      current += arg[i];
+      if (c === quoteChar) {
         inQuote = false;
       }
-    } else if (/^['"]$/.test(char)) {
+    } else if (c === 39 || c === 34) {
+      // ' or "
       inQuote = true;
-      quoteChar = char;
-      current += char;
-    } else if (char === ',') {
+      quoteChar = c;
+      current += arg[i];
+    } else if (c === 44) {
+      // ,
       args.push(current.trim());
       current = '';
     } else {
-      current += char;
+      current += arg[i];
     }
   }
 
   args.push(current.trim());
   return args;
+};
+
+// Quick check: does the filters string contain a second pipe? If not, it's a single filter
+// and we can parse it directly without matchAll iterator overhead.
+const hasSecondPipe = (s: string): boolean => {
+  const first = s.indexOf('|');
+  return first !== -1 && s.indexOf('|', first + 1) !== -1;
+};
+
+// Parses a single `| name(arg)` filter and returns [name, arg | undefined].
+const parseSingleFilter = (filtersStr: string): [string, string | undefined] | null => {
+  const trimmed = filtersStr.trim();
+  if (!trimmed.startsWith('|')) {
+    return null;
+  }
+
+  const rest = trimmed.slice(1).trim();
+  const parenIdx = rest.indexOf('(');
+  if (parenIdx === -1) {
+    return [rest, undefined];
+  }
+
+  const name = rest.slice(0, parenIdx).trim();
+  const closeIdx = rest.lastIndexOf(')');
+  const arg = closeIdx > parenIdx ? rest.slice(parenIdx + 1, closeIdx) : undefined;
+  return [name, arg || undefined];
 };
 
 // Runs each `| name(arg)` filter in the token, in order. An unknown filter name is ignored so a typo never throws.
@@ -508,6 +537,19 @@ export const applyFilters = (value: unknown, filtersStr: string, context: Record
   }
 
   let current = value;
+
+  // Fast path: single filter (most common case) — avoid matchAll iterator overhead.
+  if (!hasSecondPipe(filtersStr)) {
+    const parsed = parseSingleFilter(filtersStr);
+    if (parsed) {
+      const [name, arg] = parsed;
+      if (Object.hasOwn(filters, name)) {
+        current = filters[name](current, arg, context);
+      }
+    }
+    return current;
+  }
+
   for (const match of filtersStr.matchAll(FILTER_RE)) {
     const name = match[1];
     if (Object.hasOwn(filters, name)) {

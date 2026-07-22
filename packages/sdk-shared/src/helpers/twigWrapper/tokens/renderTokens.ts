@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { evalOperand } from '../expressions/evalOperand';
 import { resolvePath } from '../expressions/resolvePath';
 import { applyFilters, isRawMarker, unwrapRaw } from '../filters/filters';
@@ -54,22 +53,27 @@ const isValidSimplePath = (s: string): boolean => {
 // quoted strings (which may contain parens/commas). Returns the index of the matching `)` or -1 if not found.
 const findFuncEnd = (s: string, openIdx: number): number => {
   let depth = 0;
-  let inQuote: string | null = null;
+  let inQuote = false;
+  let quoteChar = 0;
   for (let i = openIdx; i < s.length; i++) {
-    const c = s[i];
+    const c = s.charCodeAt(i);
     if (inQuote) {
-      if (c === inQuote) {
-        inQuote = null;
+      if (c === quoteChar) {
+        inQuote = false;
       }
       continue;
     }
-    if (c === '"' || c === "'") {
-      inQuote = c;
+    if (c === 34 || c === 39) {
+      // " or '
+      inQuote = true;
+      quoteChar = c;
       continue;
     }
-    if (c === '(') {
+    if (c === 40) {
+      // (
       depth++;
-    } else if (c === ')') {
+    } else if (c === 41) {
+      // )
       depth--;
       if (depth === 0) {
         return i;
@@ -96,13 +100,14 @@ const splitFuncAndFilters = (trimmed: string, funcStart: number): [string, strin
 const findCycleSplitIndex = (args: string): number => {
   let depth = 0;
   for (let i = args.length - 1; i >= 0; i--) {
-    if (args[i] === ']') {
+    const c = args.charCodeAt(i);
+    if (c === 93) {
       depth++;
     }
-    if (args[i] === '[') {
+    if (c === 91) {
       depth--;
     }
-    if (args[i] === ',' && depth === 0) {
+    if (c === 44 && depth === 0) {
       return i;
     }
   }
@@ -205,34 +210,95 @@ const evalRange = (args: string, context: Record<string, unknown>): unknown => {
   return result;
 };
 
+// Checks if a character is a word character (letter, digit, or underscore).
+const isWordChar = (c: number): boolean =>
+  (c >= 97 && c <= 122) || (c >= 65 && c <= 90) || (c >= 48 && c <= 57) || c === 95;
+
+// Detects `funcName(` at the start of a trimmed string without regex. Must start with [a-zA-Z_],
+// followed by word chars, optional whitespace, then `(`. Returns the index of `(` or -1.
+const detectFuncCall = (s: string): number => {
+  const len = s.length;
+  if (len === 0) {
+    return -1;
+  }
+
+  const first = s.charCodeAt(0);
+  if (!isWordChar(first)) {
+    return -1;
+  }
+
+  let i = 1;
+  while (i < len && isWordChar(s.charCodeAt(i))) {
+    i++;
+  }
+
+  // Skip optional whitespace before `(`.
+  while (i < len && s.charCodeAt(i) === 32) {
+    i++;
+  }
+
+  return i < len && s.charCodeAt(i) === 40 ? i : -1;
+};
+
+// Serializes a resolved value through the filter chain and returns the final string output.
+// Handles raw markers, triple-brace raw toString, double-brace JSON serialization.
+const serializeResult = (
+  value: unknown,
+  filtersPart: string,
+  isTriple: boolean,
+  context: Record<string, unknown>
+): string => {
+  const filtered = applyFilters(value, filtersPart, context);
+
+  if (isRawMarker(filtered)) {
+    return stringify(unwrapRaw(filtered));
+  }
+
+  if (isTriple) {
+    return stringify(filtered);
+  }
+
+  if (typeof filtered === 'object' && filtered !== null) {
+    return JSON.stringify(filtered);
+  }
+
+  return stringify(filtered);
+};
+
 // Finds the index of the first top-level `|` pipe character in a string, skipping pipes inside
 // quoted strings and parentheses. Returns -1 if no top-level pipe is found.
 const findTopLevelPipe = (s: string): number => {
-  let inQuote: string | null = null;
+  let inQuote = false;
+  let quoteChar = 0;
   let parenDepth = 0;
 
   for (let i = 0; i < s.length; i++) {
-    const c = s[i];
+    const c = s.charCodeAt(i);
 
     if (inQuote) {
-      if (c === inQuote) {
-        inQuote = null;
+      if (c === quoteChar) {
+        inQuote = false;
       }
       continue;
     }
-    if (c === '"' || c === "'") {
-      inQuote = c;
+    if (c === 34 || c === 39) {
+      // " or '
+      inQuote = true;
+      quoteChar = c;
       continue;
     }
-    if (c === '(') {
+    if (c === 40) {
+      // (
       parenDepth++;
       continue;
     }
-    if (c === ')') {
+    if (c === 41) {
+      // )
       parenDepth--;
       continue;
     }
-    if (c === '|' && parenDepth === 0) {
+    if (c === 124 && parenDepth === 0) {
+      // |
       return i;
     }
   }
@@ -244,37 +310,43 @@ const splitFuncArgs = (args: string): string[] => {
   const parts: string[] = [];
   let current = '';
   let depth = 0;
-  let inQuote: string | null = null;
+  let inQuote = false;
+  let quoteChar = 0;
 
-  for (const char of args) {
+  for (let i = 0; i < args.length; i++) {
+    const c = args.charCodeAt(i);
     if (inQuote) {
-      current += char;
-      if (char === inQuote) {
-        inQuote = null;
+      current += args[i];
+      if (c === quoteChar) {
+        inQuote = false;
       }
       continue;
     }
-    if (char === '"' || char === "'") {
-      inQuote = char;
-      current += char;
+    if (c === 34 || c === 39) {
+      // " or '
+      inQuote = true;
+      quoteChar = c;
+      current += args[i];
       continue;
     }
-    if (char === '(' || char === '[') {
+    if (c === 40 || c === 91) {
+      // ( or [
       depth++;
-      current += char;
+      current += args[i];
       continue;
     }
-    if (char === ')' || char === ']') {
+    if (c === 41 || c === 93) {
+      // ) or ]
       depth--;
-      current += char;
+      current += args[i];
       continue;
     }
-    if (char === ',' && depth === 0) {
+    if (c === 44 && depth === 0) {
       parts.push(current);
       current = '';
       continue;
     }
-    current += char;
+    current += args[i];
   }
 
   parts.push(current);
@@ -342,10 +414,9 @@ export const renderTokens = (
       if (!inner) {
         // Try Twig function calls before giving up.
         const trimmed = innerRaw.trim();
-        const openParenIdx = trimmed.indexOf('(');
+        const openParenIdx = detectFuncCall(trimmed);
 
-        // Detect `funcName(` at the start — must start with a letter/underscore.
-        if (openParenIdx !== -1 && /^[a-zA-Z_]\w*\s*\(/.test(trimmed)) {
+        if (openParenIdx !== -1) {
           const funcName = trimmed.slice(0, openParenIdx).trim();
           const [funcCall, filtersStr] = splitFuncAndFilters(trimmed, openParenIdx);
           const args = funcCall.slice(funcName.length + 1, -1);
@@ -367,21 +438,7 @@ export const renderTokens = (
           }
 
           if (result !== null && result !== undefined) {
-            const filtered = applyFilters(result, filtersStr, context);
-
-            if (isRawMarker(filtered)) {
-              return stringify(unwrapRaw(filtered));
-            }
-
-            if (isTriple) {
-              return stringify(filtered);
-            }
-
-            if (typeof filtered === 'object' && filtered !== null) {
-              return JSON.stringify(filtered);
-            }
-
-            return stringify(filtered);
+            return serializeResult(result, filtersStr, isTriple, context);
           }
         }
 
@@ -395,21 +452,7 @@ export const renderTokens = (
 
           const result = evalOperand(expr, context);
           if (result !== undefined) {
-            const filtered = applyFilters(result, filtersPart, context);
-
-            if (isRawMarker(filtered)) {
-              return stringify(unwrapRaw(filtered));
-            }
-
-            if (isTriple) {
-              return stringify(filtered);
-            }
-
-            if (typeof filtered === 'object' && filtered !== null) {
-              return JSON.stringify(filtered);
-            }
-
-            return stringify(filtered);
+            return serializeResult(result, filtersPart, isTriple, context);
           }
         }
 

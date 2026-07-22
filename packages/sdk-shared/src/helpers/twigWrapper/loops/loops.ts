@@ -24,13 +24,53 @@ const buildLoopMeta = (index: number, length: number): LoopMeta => ({
   revindex0: length - index - 1
 });
 
+// Fast path check: returns true when the expression is a simple identifier (no dots, no range, no parens).
+const isSimpleIdentifier = (expr: string): boolean => {
+  const len = expr.length;
+  if (len === 0) {
+    return false;
+  }
+
+  const first = expr.charCodeAt(0);
+  if (!((first >= 97 && first <= 122) || (first >= 65 && first <= 90) || first === 95)) {
+    return false;
+  }
+
+  for (let i = 1; i < len; i++) {
+    const c = expr.charCodeAt(i);
+    if ((c >= 97 && c <= 122) || (c >= 65 && c <= 90) || (c >= 48 && c <= 57) || c === 95) {
+      continue;
+    }
+
+    return false;
+  }
+
+  return true;
+};
+
 // Resolves a `{% for %}` collection expression. Supports:
 // - Range syntax: `0..10`, `start..end` (numeric literals or variable paths)
 // - Function calls: `range(start, end)` or `range(start, end, step)`
 // - Array/object variables resolved from the context
 // Returns null when the expression cannot be resolved to an iterable.
 const resolveCollection = (expr: string, context: Record<string, unknown>): unknown[] | null => {
-  const range = RANGE_EXPR.exec(expr.trim());
+  const trimmed = expr.trim();
+
+  // Fast path: simple identifier like `items` — skip all regex checks.
+  if (isSimpleIdentifier(trimmed)) {
+    const value = context[trimmed];
+    if (Array.isArray(value)) {
+      return value as unknown[];
+    }
+
+    if (value !== null && typeof value === 'object') {
+      return Object.values(value as Record<string, unknown>);
+    }
+
+    return null;
+  }
+
+  const range = RANGE_EXPR.exec(trimmed);
   if (range) {
     const startRaw = evalOperand(range[2], context);
     const endRaw = evalOperand(range[4], context);
@@ -49,7 +89,7 @@ const resolveCollection = (expr: string, context: Record<string, unknown>): unkn
 
   // Support `range(end)`, `range(start, end)` and `range(start, end, step)` function calls
   // in collection expressions, matching the same logic as the token-level range() function.
-  const rangeFuncMatch = RANGE_FUNC_RE.exec(expr.trim());
+  const rangeFuncMatch = RANGE_FUNC_RE.exec(trimmed);
   if (rangeFuncMatch) {
     const args = rangeFuncMatch[1].split(',').map(a => Number(evalOperand(a.trim(), context)));
     if (args.length >= 1 && args.every(a => !Number.isNaN(a))) {
@@ -77,7 +117,7 @@ const resolveCollection = (expr: string, context: Record<string, unknown>): unkn
     return null;
   }
 
-  const value = evalOperand(expr, context);
+  const value = evalOperand(trimmed, context);
   if (Array.isArray(value)) {
     return value as unknown[];
   }

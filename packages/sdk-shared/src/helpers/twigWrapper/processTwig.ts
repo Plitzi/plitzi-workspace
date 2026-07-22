@@ -24,7 +24,7 @@ export const processTwig = (
   try {
     // Fast path: no twig syntax at all — skip the full pipeline entirely.
     if (!hasTwigTags(template)) {
-      return asRaw ? template : template;
+      return template;
     }
 
     let context = variables;
