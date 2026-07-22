@@ -1,7 +1,7 @@
 import { evaluate } from '../Evaluator';
 import { lex } from '../Lexer';
 import { parse } from '../Parser';
-import { isSimpleIdentifier, resolveSimplePath, serializeValue, trySimpleFastPath } from './fastPath';
+import { isDottedPath, resolveDottedPath, resolveSimplePath, serializeValue, trySimpleFastPath } from './fastPath';
 
 export const processTwig = (
   template: string,
@@ -46,7 +46,7 @@ export const processTwig = (
           hasTags = true;
           break;
         }
-        if (t.type === 'variable' && !isSimpleIdentifier(t.content.trim())) {
+        if (t.type === 'variable' && !isDottedPath(t.content.trim())) {
           allSimple = false;
           break;
         }
@@ -59,7 +59,9 @@ export const processTwig = (
           if (t.type === 'text') {
             parts.push(t.value);
           } else if (t.type === 'variable') {
-            const value = resolveSimplePath(context, t.content.trim());
+            const trimmed = t.content.trim();
+            const value =
+              t.content.indexOf('.') === -1 ? resolveSimplePath(context, trimmed) : resolveDottedPath(context, trimmed);
             // eslint-disable-next-line @typescript-eslint/no-base-to-string
             parts.push(t.raw ? (value === null || value === undefined ? '' : String(value)) : serializeValue(value));
           }
@@ -85,9 +87,11 @@ export const processTwig = (
       return template;
     }
 
-    const { output, variables: updatedContext } = evaluate(parseResult.nodes, context, keepEmptyTokens);
+    const { output, variables: updatedContext, hasSet } = evaluate(parseResult.nodes, context, keepEmptyTokens);
 
-    Object.assign(variables, updatedContext);
+    if (hasSet) {
+      Object.assign(variables, updatedContext);
+    }
 
     if (keepEmptyTokens && output === template) {
       return template;

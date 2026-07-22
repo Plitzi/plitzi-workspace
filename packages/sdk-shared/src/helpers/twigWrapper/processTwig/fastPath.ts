@@ -19,6 +19,64 @@ export const isSimpleIdentifier = (s: string): boolean => {
 
 export const resolveSimplePath = (context: Record<string, unknown>, name: string): unknown => context[name];
 
+export const resolveDottedPath = (context: Record<string, unknown>, path: string): unknown => {
+  const firstEnd = path.indexOf('.');
+  if (firstEnd === -1) {
+    return context[path];
+  }
+
+  let current: unknown = context[path.slice(0, firstEnd)];
+  let start = firstEnd + 1;
+  const len = path.length;
+
+  while (start < len) {
+    if (current === null || current === undefined) {
+      return undefined;
+    }
+    const nextDot = path.indexOf('.', start);
+    if (nextDot === -1) {
+      return (current as Record<string, unknown>)[path.slice(start)];
+    }
+    current = (current as Record<string, unknown>)[path.slice(start, nextDot)];
+    start = nextDot + 1;
+  }
+  return current;
+};
+
+export const isDottedPath = (s: string): boolean => {
+  const len = s.length;
+  if (len === 0) {
+    return false;
+  }
+  let i = 0;
+  while (i < len) {
+    const c = s.charCodeAt(i);
+    if ((c >= 97 && c <= 122) || (c >= 65 && c <= 90) || c === 95) {
+      i++;
+      while (i < len) {
+        const ch = s.charCodeAt(i);
+        if ((ch >= 97 && ch <= 122) || (ch >= 65 && ch <= 90) || (ch >= 48 && ch <= 57) || ch === 95) {
+          i++;
+          continue;
+        }
+        break;
+      }
+    } else {
+      return false;
+    }
+    if (i < len) {
+      if (s.charCodeAt(i) !== 46) {
+        return false;
+      }
+      i++;
+      if (i >= len) {
+        return false;
+      }
+    }
+  }
+  return true;
+};
+
 export const serializeValue = (value: unknown): string => {
   if (value === null || value === undefined) {
     return '';
@@ -64,12 +122,14 @@ export const trySimpleFastPath = (template: string, context: Record<string, unkn
 
     const inner = template.slice(varStart + 2, varEnd);
     const trimmed = inner.trim();
-    if (!isSimpleIdentifier(trimmed)) {
+
+    if (isSimpleIdentifier(trimmed)) {
+      parts.push(serializeValue(resolveSimplePath(context, trimmed)));
+    } else if (isDottedPath(trimmed)) {
+      parts.push(serializeValue(resolveDottedPath(context, trimmed)));
+    } else {
       return null;
     }
-
-    const value = resolveSimplePath(context, trimmed);
-    parts.push(serializeValue(value));
 
     pos = varEnd + 2;
   }

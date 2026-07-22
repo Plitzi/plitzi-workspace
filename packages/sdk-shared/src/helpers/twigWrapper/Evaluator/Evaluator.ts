@@ -6,6 +6,7 @@ import type { ASTNode, Expression, IfNode, ForNode, SetNode, ApplyNode, Variable
 export type EvalResult = {
   readonly output: string;
   readonly variables: Record<string, unknown>;
+  readonly hasSet: boolean;
 };
 
 export const evaluate = (
@@ -15,7 +16,7 @@ export const evaluate = (
 ): EvalResult => {
   const ctx = new Evaluator(context, keepEmptyTokens);
   const output = ctx.evalNodes(nodes);
-  return { output, variables: ctx.variables };
+  return { output, variables: ctx.variables, hasSet: ctx.hasSet };
 };
 
 class Evaluator {
@@ -23,6 +24,15 @@ class Evaluator {
   private readonly keepEmptyTokens: boolean;
   private breakFlag = false;
   private continueFlag = false;
+  hasSet = false;
+  private readonly loopObj = {
+    index: 0,
+    index0: 0,
+    first: false,
+    last: false,
+    length: 0,
+    revindex: 0
+  };
 
   constructor(context: Record<string, unknown>, keepEmptyTokens = false) {
     this.variables = { ...context };
@@ -123,16 +133,17 @@ class Evaluator {
       }
 
       const parentLoop = this.variables['loop'];
-      for (let i = 0; i < entries.length; i++) {
+      const loopObj = this.loopObj;
+      const len = entries.length;
+      loopObj.length = len;
+      for (let i = 0; i < len; i++) {
+        loopObj.index = i + 1;
+        loopObj.index0 = i;
+        loopObj.first = i === 0;
+        loopObj.last = i === len - 1;
+        loopObj.revindex = len - i;
+        this.variables['loop'] = loopObj;
         const [key, value] = entries[i];
-        this.variables['loop'] = {
-          index: i + 1,
-          index0: i,
-          first: i === 0,
-          last: i === entries.length - 1,
-          length: entries.length,
-          revindex: entries.length - i
-        };
         this.variables[node.keyVar] = key;
         this.variables[node.valueVar] = value;
 
@@ -165,17 +176,17 @@ class Evaluator {
     }
 
     const parentLoop = this.variables['loop'];
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      this.variables['loop'] = {
-        index: i + 1,
-        index0: i,
-        first: i === 0,
-        last: i === items.length - 1,
-        length: items.length,
-        revindex: items.length - i
-      };
-      this.variables[node.valueVar] = item;
+    const loopObj = this.loopObj;
+    const len = items.length;
+    loopObj.length = len;
+    for (let i = 0; i < len; i++) {
+      loopObj.index = i + 1;
+      loopObj.index0 = i;
+      loopObj.first = i === 0;
+      loopObj.last = i === len - 1;
+      loopObj.revindex = len - i;
+      this.variables['loop'] = loopObj;
+      this.variables[node.valueVar] = items[i];
 
       const body = this.evalNodes(node.body);
       if (this.breakFlag) {
@@ -198,6 +209,7 @@ class Evaluator {
   }
 
   private evalSet(node: SetNode): string {
+    this.hasSet = true;
     if (Array.isArray(node.value)) {
       const body = this.evalNodes(node.value);
       this.variables[node.name] = body;
