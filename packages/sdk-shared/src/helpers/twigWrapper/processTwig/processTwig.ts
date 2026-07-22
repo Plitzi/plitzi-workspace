@@ -3,6 +3,87 @@ import { lex } from '../Lexer';
 import { parse } from '../Parser';
 import { isDottedPath, resolveDottedPath, resolveSimplePath, serializeValue, trySimpleFastPath } from './fastPath';
 
+import type { ASTNode } from '../AST';
+import type { Token } from '../Lexer';
+
+type CacheEntry = {
+  tokens: readonly Token[];
+  hasTags: boolean;
+  allSimpleOrDotted: boolean;
+  nodes: readonly ASTNode[] | null;
+};
+
+const cache = new Map<string, CacheEntry>();
+const MAX_CACHE_SIZE = 256;
+
+const resolveTokens = (template: string, keepEmptyTokens: boolean): CacheEntry | null => {
+  const cached = cache.get(template);
+  if (cached) {
+    if (keepEmptyTokens) {
+      // Always re-parse with keepEmptyTokens=true to populate source fields
+      const parseResult = parse(cached.tokens, true);
+      if (parseResult.error) {
+        return null;
+      }
+      return {
+        tokens: cached.tokens,
+        hasTags: cached.hasTags,
+        allSimpleOrDotted: cached.allSimpleOrDotted,
+        nodes: parseResult.nodes
+      };
+    }
+    return cached;
+  }
+
+  const lexResult = lex(template);
+  if (lexResult.error) {
+    return null;
+  }
+
+  const tokens = lexResult.tokens;
+  let hasTags = false;
+  let allSimpleOrDotted = true;
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+    if (t.type === 'tag') {
+      hasTags = true;
+      break;
+    }
+    if (t.type === 'variable' && !isDottedPath(t.content.trim())) {
+      allSimpleOrDotted = false;
+      break;
+    }
+  }
+
+  let nodes: readonly ASTNode[] | null = null;
+  if (hasTags || !allSimpleOrDotted) {
+    // Only cache with keepEmptyTokens=false (source fields not populated)
+    const parseResult = parse(tokens, false);
+    if (parseResult.error) {
+      return null;
+    }
+    nodes = parseResult.nodes;
+  }
+
+  if (cache.size >= MAX_CACHE_SIZE) {
+    const firstKey = cache.keys().next().value;
+    if (firstKey !== undefined) {
+      cache.delete(firstKey);
+    }
+  }
+  cache.set(template, { tokens, hasTags, allSimpleOrDotted, nodes });
+
+  // If keepEmptyTokens was requested, re-parse to populate source fields
+  if (keepEmptyTokens) {
+    const parseResult = parse(tokens, true);
+    if (!parseResult.error) {
+      return { tokens, hasTags, allSimpleOrDotted, nodes: parseResult.nodes };
+    }
+  }
+
+  return { tokens, hasTags, allSimpleOrDotted, nodes };
+};
+
 export const processTwig = (
   template: string,
   variables: Record<string, unknown> = {},
@@ -38,64 +119,45 @@ export const processTwig = (
       }
     }
 
-    const lexResult = lex(template);
-    if (lexResult.error) {
+    const entry = resolveTokens(template, keepEmptyTokens);
+    if (!entry) {
       return template;
     }
 
-    const tokens = lexResult.tokens;
-
-    if (!keepEmptyTokens) {
-      let hasTags = false;
-      let allSimple = true;
-      for (let i = 0; i < tokens.length; i++) {
-        const t = tokens[i];
-        if (t.type === 'tag') {
-          hasTags = true;
-          break;
-        }
-        if (t.type === 'variable' && !isDottedPath(t.content.trim())) {
-          allSimple = false;
-          break;
+    if (!keepEmptyTokens && !entry.hasTags && entry.allSimpleOrDotted) {
+      const parts: string[] = [];
+      for (let i = 0; i < entry.tokens.length; i++) {
+        const t = entry.tokens[i];
+        if (t.type === 'text') {
+          parts.push(t.value);
+        } else if (t.type === 'variable') {
+          const trimmed = t.content.trim();
+          const value =
+            t.content.indexOf('.') === -1 ? resolveSimplePath(context, trimmed) : resolveDottedPath(context, trimmed);
+          // eslint-disable-next-line @typescript-eslint/no-base-to-string
+          parts.push(t.raw ? (value === null || value === undefined ? '' : String(value)) : serializeValue(value));
         }
       }
-
-      if (!hasTags && allSimple) {
-        const parts: string[] = [];
-        for (let i = 0; i < tokens.length; i++) {
-          const t = tokens[i];
-          if (t.type === 'text') {
-            parts.push(t.value);
-          } else if (t.type === 'variable') {
-            const trimmed = t.content.trim();
-            const value =
-              t.content.indexOf('.') === -1 ? resolveSimplePath(context, trimmed) : resolveDottedPath(context, trimmed);
-            // eslint-disable-next-line @typescript-eslint/no-base-to-string
-            parts.push(t.raw ? (value === null || value === undefined ? '' : String(value)) : serializeValue(value));
-          }
+      const output = parts.join('');
+      if (!asRaw) {
+        return output;
+      }
+      try {
+        const parsed = JSON.parse(output) as string | object;
+        if (parsed) {
+          return parsed;
         }
-        const output = parts.join('');
-        if (!asRaw) {
-          return output;
-        }
-        try {
-          const parsed = JSON.parse(output) as string | object;
-          if (parsed) {
-            return parsed;
-          }
-          return output;
-        } catch {
-          return output;
-        }
+        return output;
+      } catch {
+        return output;
       }
     }
 
-    const parseResult = parse(tokens);
-    if (parseResult.error) {
+    if (!entry.nodes) {
       return template;
     }
 
-    const { output, variables: updatedContext, hasSet } = evaluate(parseResult.nodes, context, keepEmptyTokens);
+    const { output, variables: updatedContext, hasSet } = evaluate(entry.nodes, context, keepEmptyTokens);
 
     if (hasSet) {
       Object.assign(variables, updatedContext);

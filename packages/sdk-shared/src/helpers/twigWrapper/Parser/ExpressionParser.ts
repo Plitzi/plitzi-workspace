@@ -172,12 +172,12 @@ class ExpressionParser {
 
   private parseStringLiteral(): { type: 'literal'; value: string } {
     const quote = this.src[this.pos];
-    this.pos++;
-    let value = '';
+    const start = this.pos + 1;
+    this.pos = start;
     while (this.pos < this.src.length && this.src[this.pos] !== quote) {
-      value += this.src[this.pos];
       this.pos++;
     }
+    const value = this.src.slice(start, this.pos);
     if (this.pos < this.src.length) {
       this.pos++;
     }

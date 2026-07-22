@@ -16,8 +16,8 @@ import type {
 import type { Token } from '../Lexer';
 import type { ParseResult } from './types';
 
-export const parse = (tokens: readonly Token[]): ParseResult => {
-  const ctx = new ParseContext(tokens);
+export const parse = (tokens: readonly Token[], keepEmptyTokens = false): ParseResult => {
+  const ctx = new ParseContext(tokens, keepEmptyTokens);
   const nodes = ctx.parseBody();
 
   if (!ctx.error) {
@@ -42,11 +42,13 @@ export const parse = (tokens: readonly Token[]): ParseResult => {
 
 class ParseContext {
   private readonly tokens: readonly Token[];
+  private readonly keepEmptyTokens: boolean;
   private pos = 0;
   error: string | null = null;
 
-  constructor(tokens: readonly Token[]) {
+  constructor(tokens: readonly Token[], keepEmptyTokens = false) {
     this.tokens = tokens;
+    this.keepEmptyTokens = keepEmptyTokens;
   }
 
   peek(): Token | undefined {
@@ -127,16 +129,17 @@ class ParseContext {
       return { type: 'variable', raw: false, expression: { type: 'literal', value: '' }, source: '' };
     }
     const trimmed = token.content.trim();
+    const source = this.keepEmptyTokens ? reconstructSource(token.content, token.raw) : '';
     if (isSimpleIdentifier(trimmed)) {
       return {
         type: 'variable',
         raw: token.raw,
         expression: { type: 'path', segments: [trimmed] },
-        source: reconstructSource(token.content, token.raw)
+        source
       };
     }
     const expr = parseExpression(trimmed);
-    return { type: 'variable', raw: token.raw, expression: expr, source: reconstructSource(token.content, token.raw) };
+    return { type: 'variable', raw: token.raw, expression: expr, source };
   }
 
   private parseTag(): ASTNode | null {
