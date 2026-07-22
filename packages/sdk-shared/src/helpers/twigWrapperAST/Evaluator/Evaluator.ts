@@ -1,33 +1,11 @@
-import { filters, isRawMarker, unwrapRaw } from '../twigWrapper/filters/filters';
+import { isTruthy, valueIn, resolveCollection, resolveObjectEntries } from './helpers';
+import { filters, isRawMarker, unwrapRaw } from '../../twigWrapper/filters/filters';
 
-import type { ASTNode, Expression, IfNode, ForNode, SetNode, ApplyNode, VariableNode } from './AST';
-
-// Evaluator: walks the AST and produces a string output.
-// Each node type has a dedicated handler. The evaluator is stateless —
-// context is passed through and mutated only by {% set %} nodes.
+import type { ASTNode, Expression, IfNode, ForNode, SetNode, ApplyNode, VariableNode } from '../AST';
 
 export type EvalResult = {
   readonly output: string;
   readonly variables: Record<string, unknown>;
-};
-
-// Resolves a collection value into an array of items.
-const resolveCollection = (value: unknown): unknown[] | null => {
-  if (Array.isArray(value)) {
-    return value as unknown[];
-  }
-  if (value !== null && typeof value === 'object') {
-    return Object.values(value as Record<string, unknown>);
-  }
-  return null;
-};
-
-// Resolves an object collection into [key, value] pairs for `{% for key, value in obj %}`.
-const resolveObjectEntries = (value: unknown): [string, unknown][] | null => {
-  if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-    return Object.entries(value as Record<string, unknown>);
-  }
-  return null;
 };
 
 export const evaluate = (
@@ -51,10 +29,7 @@ class Evaluator {
     this.keepEmptyTokens = keepEmptyTokens;
   }
 
-  // ── Node Evaluation ──────────────────────────────────────────────────────
-
   evalNodes(nodes: readonly ASTNode[]): string {
-    // Fast path for single-node arrays (most common in simple interpolation).
     if (nodes.length === 1) {
       return this.evalNode(nodes[0]);
     }
@@ -91,18 +66,15 @@ class Evaluator {
   private evalVariable(node: VariableNode): string {
     const value = this.evalExpression(node.expression);
 
-    // keepEmptyTokens: preserve original token text for missing/empty values.
     if (this.keepEmptyTokens && (value === undefined || value === null || value === '')) {
       return node.source;
     }
 
-    // Fast path: non-object, non-null/undefined value (most common case).
     if (value !== null && value !== undefined && typeof value !== 'object') {
       // eslint-disable-next-line @typescript-eslint/no-base-to-string
       return String(value);
     }
 
-    // Raw mode (triple braces): output as toString.
     if (node.raw) {
       if (value === null || value === undefined) {
         return '';
@@ -111,7 +83,6 @@ class Evaluator {
       return String(value);
     }
 
-    // Normal mode (double braces): JSON-serialize objects, empty string for null/undefined.
     if (typeof value === 'object' && value !== null) {
       return JSON.stringify(value);
     }
@@ -142,7 +113,6 @@ class Evaluator {
     const collection = this.evalExpression(node.collection);
     const parts: string[] = [];
 
-    // Handle object iteration with key, value syntax.
     if (node.keyVar) {
       const entries = resolveObjectEntries(collection);
       if (!entries || entries.length === 0) {
@@ -186,7 +156,6 @@ class Evaluator {
       return parts.join('');
     }
 
-    // Array/simple iteration.
     const items = resolveCollection(collection);
     if (!items || items.length === 0) {
       if (node.elseBody) {
@@ -230,11 +199,9 @@ class Evaluator {
 
   private evalSet(node: SetNode): string {
     if (Array.isArray(node.value)) {
-      // Block set: `{% set var %}...{% endset %}`
       const body = this.evalNodes(node.value);
       this.variables[node.name] = body;
     } else {
-      // Assignment set: `{% set var = expr %}`
       this.variables[node.name] = this.evalExpression(node.value);
     }
     return '';
@@ -252,7 +219,6 @@ class Evaluator {
       }
     }
 
-    // Serialize result.
     if (isRawMarker(value)) {
       return String(unwrapRaw(value));
     }
@@ -265,8 +231,6 @@ class Evaluator {
     // eslint-disable-next-line @typescript-eslint/no-base-to-string
     return String(value);
   }
-
-  // ── Expression Evaluation ────────────────────────────────────────────────
 
   evalExpression(expr: Expression): unknown {
     switch (expr.type) {
@@ -305,7 +269,6 @@ class Evaluator {
       return undefined;
     }
 
-    // Fast path: single segment (most common — `{{ name }}`, `{{ age }}`).
     if (len === 1) {
       return this.variables[segments[0]];
     }
@@ -401,7 +364,6 @@ class Evaluator {
       return [];
     }
 
-    // Unknown function — return empty string.
     return '';
   }
 
@@ -429,7 +391,6 @@ class Evaluator {
   }
 
   private evalBinary(operator: string, leftExpr: Expression, rightExpr: Expression): unknown {
-    // Short-circuit for logical operators.
     if (operator === 'or') {
       const left = this.evalExpression(leftExpr);
       if (isTruthy(left)) {
@@ -475,28 +436,3 @@ class Evaluator {
     }
   }
 }
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-const isTruthy = (value: unknown): boolean => {
-  if (value === null || value === undefined || value === false || value === '' || value === 0) {
-    return false;
-  }
-  if (Array.isArray(value) && value.length === 0) {
-    return false;
-  }
-  return true;
-};
-
-const valueIn = (needle: unknown, haystack: unknown): boolean => {
-  if (typeof haystack === 'string') {
-    return haystack.includes(String(needle));
-  }
-  if (Array.isArray(haystack)) {
-    return haystack.includes(needle);
-  }
-  if (haystack !== null && typeof haystack === 'object') {
-    return Object.keys(haystack).includes(String(needle));
-  }
-  return false;
-};
