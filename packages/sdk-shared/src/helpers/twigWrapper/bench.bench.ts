@@ -473,3 +473,254 @@ describe('throughput: process 1000 templates', () => {
     }
   });
 });
+
+// ── New: cache performance ────────────────────────────────────────────────────
+
+describe('cache performance', () => {
+  bench('same template ×1000 (cache hit)', () => {
+    for (let i = 0; i < 1000; i++) {
+      processTwig(simpleTokens, simpleTokensCtx);
+    }
+  });
+
+  bench('same complex template ×500 (cache hit)', () => {
+    for (let i = 0; i < 500; i++) {
+      processTwig(megaTemplate, megaCtx);
+    }
+  });
+
+  bench('256 unique templates (cache full)', () => {
+    for (let i = 0; i < 256; i++) {
+      processTwig(`{{ item${i} }}`, { [`item${i}`]: `val${i}` });
+    }
+  });
+});
+
+// ── New: keepEmptyTokens mode ─────────────────────────────────────────────────
+
+describe('keepEmptyTokens mode', () => {
+  bench('simple token — present', () => {
+    processTwig('{{ name }}', { name: 'Alice' }, true);
+  });
+
+  bench('simple token — missing', () => {
+    processTwig('{{ missing }}', {}, true);
+  });
+
+  bench('mixed present + missing', () => {
+    processTwig('{{ a }} {{ b }} {{ c }}', { a: 'X' }, true);
+  });
+
+  bench('conditional — present', () => {
+    processTwig('{% if active %}ON{% endif %}', { active: true }, true);
+  });
+
+  bench('conditional — missing', () => {
+    processTwig('{% if active %}ON{% endif %}', {}, true);
+  });
+});
+
+// ── New: in operator stress ───────────────────────────────────────────────────
+
+describe('in operator', () => {
+  const arrayCtx = { items: Array.from({ length: 100 }, (_, i) => `item${i}`) };
+  const objectCtx = { obj: Object.fromEntries(Array.from({ length: 100 }, (_, i) => [`key${i}`, i])) };
+
+  bench('in array (hit, last element)', () => {
+    processTwig('{% if "item99" in items %}found{% endif %}', arrayCtx);
+  });
+
+  bench('in array (miss)', () => {
+    processTwig('{% if "missing" in items %}found{% endif %}', arrayCtx);
+  });
+
+  bench('in object (hit)', () => {
+    processTwig('{% if "key99" in obj %}found{% endif %}', objectCtx);
+  });
+
+  bench('in object (miss)', () => {
+    processTwig('{% if "missing" in obj %}found{% endif %}', objectCtx);
+  });
+
+  bench('not in array (miss)', () => {
+    processTwig('{% if "missing" not in items %}not found{% endif %}', arrayCtx);
+  });
+});
+
+// ── New: binary expression chains ─────────────────────────────────────────────
+
+describe('binary expression chains', () => {
+  bench('2-way and', () => {
+    processTwig('{% if a == 1 and b == 2 %}yes{% endif %}', { a: 1, b: 2 });
+  });
+
+  bench('3-way and', () => {
+    processTwig('{% if a == 1 and b == 2 and c == 3 %}yes{% endif %}', { a: 1, b: 2, c: 3 });
+  });
+
+  bench('2-way or', () => {
+    processTwig('{% if a == 1 or b == 2 %}yes{% endif %}', { a: 0, b: 2 });
+  });
+
+  bench('mixed and/or', () => {
+    processTwig('{% if a == 1 and b == 2 or c == 3 %}yes{% endif %}', { a: 0, b: 0, c: 3 });
+  });
+
+  bench('not + comparison', () => {
+    processTwig('{% if not (a == 1) %}yes{% endif %}', { a: 2 });
+  });
+
+  bench('string comparison ==', () => {
+    processTwig('{% if name == "Alice" %}yes{% endif %}', { name: 'Alice' });
+  });
+
+  bench('numeric > < >= <=', () => {
+    processTwig('{% if age >= 18 and age < 65 %}yes{% endif %}', { age: 30 });
+  });
+});
+
+// ── New: filter chain depth ───────────────────────────────────────────────────
+
+describe('filter chain depth', () => {
+  bench('5 chained filters', () => {
+    processTwig('{{ name | upper | trim | capitalize | reverse | title }}', { name: '  alice  ' });
+  });
+
+  bench('default filter — missing', () => {
+    processTwig('{{ missing | default("fallback") }}', {});
+  });
+
+  bench('default filter — present', () => {
+    processTwig('{{ present | default("fallback") }}', { present: 'actual' });
+  });
+
+  bench('length filter — array', () => {
+    processTwig('{{ items | length }}', { items: [1, 2, 3, 4, 5] });
+  });
+
+  bench('join filter', () => {
+    processTwig('{{ items | join(", ") }}', { items: ['a', 'b', 'c', 'd', 'e'] });
+  });
+
+  bench('slice filter', () => {
+    processTwig('{{ items | slice(0, 3) | join(", ") }}', { items: ['a', 'b', 'c', 'd', 'e'] });
+  });
+});
+
+// ── New: large context (1000 keys) ───────────────────────────────────────────
+
+describe('large context (1000 keys)', () => {
+  const hugeCtx: Record<string, unknown> = {};
+  for (let i = 0; i < 1000; i++) {
+    hugeCtx[`key${i}`] = `val${i}`;
+  }
+  hugeCtx.user = { profile: { name: 'Alice', address: { city: 'Madrid' } } };
+
+  bench('shallow lookup (key500)', () => {
+    processTwig('{{ key500 }}', hugeCtx);
+  });
+
+  bench('deep path (4 levels)', () => {
+    processTwig('{{ user.profile.name }}', hugeCtx);
+  });
+
+  bench('deep path (6 levels)', () => {
+    processTwig('{{ user.profile.address.city }}', hugeCtx);
+  });
+
+  bench('multiple shallow lookups', () => {
+    processTwig('{{ key0 }} {{ key100 }} {{ key200 }} {{ key300 }} {{ key400 }}', hugeCtx);
+  });
+});
+
+// ── New: string-heavy templates ───────────────────────────────────────────────
+
+describe('string-heavy templates', () => {
+  const longText = 'Lorem ipsum dolor sit amet. '.repeat(100);
+  const longTextWithToken = `${longText}{{ name }}`;
+  const longHtmlNoTokens = '<div>' + '<p>paragraph</p>'.repeat(50) + '</div>';
+  const longHtmlWithTokens = '<div>' + '<p>{{ title }}</p>'.repeat(20) + '</div>';
+
+  bench('long text, no tokens (5KB)', () => {
+    processTwig(longText, {});
+  });
+
+  bench('long text + single token at end', () => {
+    processTwig(longTextWithToken, { name: 'Alice' });
+  });
+
+  bench('long HTML, no tokens (2KB)', () => {
+    processTwig(longHtmlNoTokens, {});
+  });
+
+  bench('long HTML + 20 tokens', () => {
+    processTwig(longHtmlWithTokens, { title: 'Hello' });
+  });
+});
+
+// ── New: for loop with key-value iteration ────────────────────────────────────
+
+describe('for loop key-value', () => {
+  const kvCtx = {
+    data: Object.fromEntries(Array.from({ length: 20 }, (_, i) => [`key${i}`, `value${i}`]))
+  };
+
+  bench('key-value for loop (20 entries)', () => {
+    processTwig('{% for k, v in data %}{{ k }}={{ v }} {% endfor %}', kvCtx);
+  });
+
+  bench('array for loop (20 items)', () => {
+    processTwig('{% for item in items %}{{ item }} {% endfor %}', {
+      items: Array.from({ length: 20 }, (_, i) => `item${i}`)
+    });
+  });
+});
+
+// ── New: range function ──────────────────────────────────────────────────────
+
+describe('range function', () => {
+  bench('range(10) + for loop', () => {
+    processTwig('{% for i in range(10) %}{{ i }} {% endfor %}', {});
+  });
+
+  bench('range(1, 10, 2) + for loop', () => {
+    processTwig('{% for i in range(1, 10, 2) %}{{ i }} {% endfor %}', {});
+  });
+
+  bench('range literal syntax 1..10', () => {
+    processTwig('{% for i in 1..10 %}{{ i }} {% endfor %}', {});
+  });
+});
+
+// ── New: nested if/for interactions ──────────────────────────────────────────
+
+describe('nested if/for interactions', () => {
+  const usersCtx = {
+    users: Array.from({ length: 10 }, (_, i) => ({
+      name: `User${i}`,
+      role: i % 3 === 0 ? 'admin' : i % 3 === 1 ? 'editor' : 'viewer',
+      active: i % 2 === 0
+    }))
+  };
+
+  bench('for + nested if (3 branches, 10 users)', () => {
+    processTwig(
+      '{% for u in users %}{% if u.role == "admin" %}A{% elseif u.role == "editor" %}E{% else %}V{% endif %}{% endfor %}',
+      usersCtx
+    );
+  });
+
+  bench('for + nested for (3×3)', () => {
+    processTwig('{% for r in rows %}{% for c in cols %}{{ r }}-{{ c }} {% endfor %}{% endfor %}', {
+      rows: ['A', 'B', 'C'],
+      cols: ['1', '2', '3']
+    });
+  });
+
+  bench('for + if guard + set accumulator', () => {
+    processTwig(
+      '{% set total = 0 %}{% for u in users %}{% if u.active %}{% set total = total + 1 %}{% endif %}{% endfor %}{{ total }}',
+      usersCtx
+    );
+  });
+});

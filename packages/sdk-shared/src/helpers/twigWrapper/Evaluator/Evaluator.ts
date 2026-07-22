@@ -41,6 +41,9 @@ class Evaluator {
 
   evalNodes(nodes: readonly ASTNode[]): string {
     const len = nodes.length;
+    if (len === 0) {
+      return '';
+    }
     if (len === 1) {
       return this.evalNode(nodes[0]);
     }
@@ -50,11 +53,11 @@ class Evaluator {
     if (len === 3) {
       return this.evalNode(nodes[0]) + this.evalNode(nodes[1]) + this.evalNode(nodes[2]);
     }
-    const parts: string[] = [];
+    let output = '';
     for (let i = 0; i < len; i++) {
-      parts.push(this.evalNode(nodes[i]));
+      output += this.evalNode(nodes[i]);
     }
-    return parts.join('');
+    return output;
   }
 
   private evalNode(node: ASTNode): string {
@@ -128,7 +131,6 @@ class Evaluator {
 
   private evalFor(node: ForNode): string {
     const collection = this.evalExpression(node.collection);
-    const parts: string[] = [];
 
     if (node.keyVar) {
       const entries = resolveObjectEntries(collection);
@@ -143,6 +145,7 @@ class Evaluator {
       const loopObj = this.loopObj;
       const len = entries.length;
       loopObj.length = len;
+      let output = '';
       for (let i = 0; i < len; i++) {
         loopObj.index = i + 1;
         loopObj.index0 = i;
@@ -154,16 +157,14 @@ class Evaluator {
         this.variables[node.keyVar] = key;
         this.variables[node.valueVar] = value;
 
-        const body = this.evalNodes(node.body);
+        output += this.evalNodes(node.body);
         if (this.breakFlag) {
           this.breakFlag = false;
           break;
         }
         if (this.continueFlag) {
           this.continueFlag = false;
-          continue;
         }
-        parts.push(body);
       }
 
       if (parentLoop !== undefined) {
@@ -171,7 +172,7 @@ class Evaluator {
       } else {
         delete this.variables['loop'];
       }
-      return parts.join('');
+      return output;
     }
 
     const items = resolveCollection(collection);
@@ -186,6 +187,7 @@ class Evaluator {
     const loopObj = this.loopObj;
     const len = items.length;
     loopObj.length = len;
+    let output = '';
     for (let i = 0; i < len; i++) {
       loopObj.index = i + 1;
       loopObj.index0 = i;
@@ -195,16 +197,14 @@ class Evaluator {
       this.variables['loop'] = loopObj;
       this.variables[node.valueVar] = items[i];
 
-      const body = this.evalNodes(node.body);
+      output += this.evalNodes(node.body);
       if (this.breakFlag) {
         this.breakFlag = false;
         break;
       }
       if (this.continueFlag) {
         this.continueFlag = false;
-        continue;
       }
-      parts.push(body);
     }
 
     if (parentLoop !== undefined) {
@@ -212,7 +212,7 @@ class Evaluator {
     } else {
       delete this.variables['loop'];
     }
-    return parts.join('');
+    return output;
   }
 
   private evalSet(node: SetNode): string {
@@ -303,7 +303,16 @@ class Evaluator {
       return this.variables[segments[0]];
     }
 
-    let current: unknown = this.variables[segments[0]];
+    const first = this.variables[segments[0]];
+    if (first === null || first === undefined) {
+      return undefined;
+    }
+
+    if (len === 2) {
+      return (first as Record<string, unknown>)[segments[1]];
+    }
+
+    let current: unknown = first;
     for (let i = 1; i < len; i++) {
       if (current === null || current === undefined) {
         return undefined;
@@ -333,7 +342,11 @@ class Evaluator {
   }
 
   private evalFunction(name: string, args: readonly Expression[]): unknown {
-    const resolvedArgs = args.map(a => this.evalExpression(a));
+    const len = args.length;
+    const resolvedArgs = new Array<unknown>(len);
+    for (let i = 0; i < len; i++) {
+      resolvedArgs[i] = this.evalExpression(args[i]);
+    }
 
     if (name === 'cycle') {
       const values = resolvedArgs[0];
@@ -367,8 +380,8 @@ class Evaluator {
     if (name === 'range') {
       if (resolvedArgs.length === 1) {
         const end = Number(resolvedArgs[0]);
-        const result: number[] = [];
         const len = end + 1;
+        const result = new Array<number>(len);
         for (let i = 0; i < len; i++) {
           result[i] = i;
         }
@@ -378,19 +391,23 @@ class Evaluator {
         const start = Number(resolvedArgs[0]);
         const end = Number(resolvedArgs[1]);
         const step = resolvedArgs.length > 2 ? Number(resolvedArgs[2]) : start <= end ? 1 : -1;
-        const result: number[] = [];
         if (step > 0) {
           const len = Math.floor((end - start) / step) + 1;
+          const result = new Array<number>(len);
           for (let i = 0; i < len; i++) {
             result[i] = start + i * step;
           }
-        } else if (step < 0) {
-          const len = Math.floor((start - end) / -step) + 1;
-          for (let i = 0; i < len; i++) {
-            result[i] = start + i * step;
-          }
+          return result;
         }
-        return result;
+        if (step < 0) {
+          const len = Math.floor((start - end) / -step) + 1;
+          const result = new Array<number>(len);
+          for (let i = 0; i < len; i++) {
+            result[i] = start + i * step;
+          }
+          return result;
+        }
+        return [];
       }
       return [];
     }

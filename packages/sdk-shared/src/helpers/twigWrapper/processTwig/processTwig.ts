@@ -1,6 +1,6 @@
 import { evaluate } from '../Evaluator';
 import { resolveDottedPath, resolveSimplePath, serializeValue, trySimpleFastPath } from './fastPath';
-import { resolveTokens } from '../TemplateCache';
+import { getNodes, resolveTokens } from '../TemplateCache';
 
 export const processTwig = (
   template: string,
@@ -37,7 +37,7 @@ export const processTwig = (
       }
     }
 
-    const entry = resolveTokens(template, keepEmptyTokens);
+    const entry = resolveTokens(template);
     if (!entry) {
       return template;
     }
@@ -71,11 +71,12 @@ export const processTwig = (
       }
     }
 
-    if (!entry.nodes) {
+    const nodes = getNodes(entry, keepEmptyTokens);
+    if (!nodes) {
       return template;
     }
 
-    const { output, variables: updatedContext, hasSet } = evaluate(entry.nodes, context, keepEmptyTokens);
+    const { output, variables: updatedContext, hasSet } = evaluate(nodes, context, keepEmptyTokens);
 
     if (hasSet) {
       Object.assign(variables, updatedContext);

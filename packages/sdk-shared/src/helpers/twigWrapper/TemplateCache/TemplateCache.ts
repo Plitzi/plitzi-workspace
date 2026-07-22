@@ -10,10 +10,24 @@ export type CacheEntry = {
   hasTags: boolean;
   allSimpleOrDotted: boolean;
   nodes: readonly ASTNode[] | null;
+  nodesWithSource: readonly ASTNode[] | null;
+};
+
+export type CacheStats = {
+  hits: number;
+  misses: number;
 };
 
 const cache = new Map<string, CacheEntry>();
 const MAX_CACHE_SIZE = 256;
+const stats: CacheStats = { hits: 0, misses: 0 };
+
+export const getCacheStats = (): CacheStats => ({ hits: stats.hits, misses: stats.misses });
+
+export const resetCacheStats = (): void => {
+  stats.hits = 0;
+  stats.misses = 0;
+};
 
 const classifyTokens = (tokens: readonly Token[]): { hasTags: boolean; allSimpleOrDotted: boolean } => {
   let hasTags = false;
@@ -32,17 +46,6 @@ const classifyTokens = (tokens: readonly Token[]): { hasTags: boolean; allSimple
   return { hasTags, allSimpleOrDotted };
 };
 
-const parseFromTokens = (
-  tokens: readonly Token[],
-  keepEmptyTokens: boolean
-): { nodes: readonly ASTNode[] | null; error: string | null } => {
-  const { nodes, error } = parse(tokens, keepEmptyTokens);
-  if (error) {
-    return { nodes: null, error };
-  }
-  return { nodes, error: null };
-};
-
 const evictOldest = (): void => {
   if (cache.size >= MAX_CACHE_SIZE) {
     const firstKey = cache.keys().next().value;
@@ -52,24 +55,7 @@ const evictOldest = (): void => {
   }
 };
 
-export const resolveTokens = (template: string, keepEmptyTokens: boolean): CacheEntry | null => {
-  const cached = cache.get(template);
-  if (cached) {
-    if (keepEmptyTokens) {
-      const result = parseFromTokens(cached.tokens, true);
-      if (result.error) {
-        return null;
-      }
-      return {
-        tokens: cached.tokens,
-        hasTags: cached.hasTags,
-        allSimpleOrDotted: cached.allSimpleOrDotted,
-        nodes: result.nodes
-      };
-    }
-    return cached;
-  }
-
+const lexAndParse = (template: string): CacheEntry | null => {
   const lexResult = lex(template);
   if (lexResult.error) {
     return null;
@@ -77,25 +63,53 @@ export const resolveTokens = (template: string, keepEmptyTokens: boolean): Cache
 
   const tokens = lexResult.tokens;
   const { hasTags, allSimpleOrDotted } = classifyTokens(tokens);
+  const needsParse = hasTags || !allSimpleOrDotted;
 
   let nodes: readonly ASTNode[] | null = null;
-  if (hasTags || !allSimpleOrDotted) {
-    const result = parseFromTokens(tokens, false);
-    if (result.error) {
+  let nodesWithSource: readonly ASTNode[] | null = null;
+
+  if (needsParse) {
+    const baseResult = parse(tokens, false);
+    if (baseResult.error) {
       return null;
     }
-    nodes = result.nodes;
+    nodes = baseResult.nodes;
+
+    const sourceResult = parse(tokens, true);
+    if (!sourceResult.error) {
+      nodesWithSource = sourceResult.nodes;
+    }
+  } else {
+    // Simple variable templates: parse with source for keepEmptyTokens=true path
+    const sourceResult = parse(tokens, true);
+    if (!sourceResult.error) {
+      nodesWithSource = sourceResult.nodes;
+    }
+  }
+
+  return { tokens, hasTags, allSimpleOrDotted, nodes, nodesWithSource };
+};
+
+export const resolveTokens = (template: string): CacheEntry | null => {
+  const cached = cache.get(template);
+  if (cached) {
+    stats.hits++;
+    return cached;
+  }
+
+  stats.misses++;
+
+  const entry = lexAndParse(template);
+  if (!entry) {
+    return null;
   }
 
   evictOldest();
-  cache.set(template, { tokens, hasTags, allSimpleOrDotted, nodes });
+  cache.set(template, entry);
 
-  if (keepEmptyTokens) {
-    const result = parseFromTokens(tokens, true);
-    if (!result.error) {
-      return { tokens, hasTags, allSimpleOrDotted, nodes: result.nodes };
-    }
-  }
+  return entry;
+};
 
-  return { tokens, hasTags, allSimpleOrDotted, nodes };
+export const getNodes = (entry: CacheEntry, keepEmptyTokens: boolean): readonly ASTNode[] | null => {
+  return keepEmptyTokens ? entry.nodesWithSource : entry.nodes;
 };
