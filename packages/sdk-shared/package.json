@@ -237,13 +237,17 @@
       "types": "./dist/helpers/twigWrapper/Parser/index.d.ts",
       "import": "./dist/helpers/twigWrapper/Parser/index.mjs"
     },
-    "./helpers/twigWrapper/conditionals": {
-      "types": "./dist/helpers/twigWrapper/conditionals.d.ts",
-      "import": "./dist/helpers/twigWrapper/conditionals.mjs"
+    "./helpers/twigWrapper/TemplateCache": {
+      "types": "./dist/helpers/twigWrapper/TemplateCache/index.d.ts",
+      "import": "./dist/helpers/twigWrapper/TemplateCache/index.mjs"
     },
-    "./helpers/twigWrapper/evalOperand": {
-      "types": "./dist/helpers/twigWrapper/evalOperand.d.ts",
-      "import": "./dist/helpers/twigWrapper/evalOperand.mjs"
+    "./helpers/twigWrapper/TemplateCache/TemplateCache": {
+      "types": "./dist/helpers/twigWrapper/TemplateCache/TemplateCache.d.ts",
+      "import": "./dist/helpers/twigWrapper/TemplateCache/TemplateCache.mjs"
+    },
+    "./helpers/twigWrapper/TemplateCache/index": {
+      "types": "./dist/helpers/twigWrapper/TemplateCache/index.d.ts",
+      "import": "./dist/helpers/twigWrapper/TemplateCache/index.mjs"
     },
     "./helpers/twigWrapper/expressions": {
       "types": "./dist/helpers/twigWrapper/expressions/index.d.ts",
@@ -262,8 +266,8 @@
       "import": "./dist/helpers/twigWrapper/expressions/resolvePath.mjs"
     },
     "./helpers/twigWrapper/filters": {
-      "types": "./dist/helpers/twigWrapper/filters.d.ts",
-      "import": "./dist/helpers/twigWrapper/filters.mjs"
+      "types": "./dist/helpers/twigWrapper/filters/index.d.ts",
+      "import": "./dist/helpers/twigWrapper/filters/index.mjs"
     },
     "./helpers/twigWrapper/filters/filters": {
       "types": "./dist/helpers/twigWrapper/filters/filters.d.ts",
@@ -273,17 +277,13 @@
       "types": "./dist/helpers/twigWrapper/filters/index.d.ts",
       "import": "./dist/helpers/twigWrapper/filters/index.mjs"
     },
-    "./helpers/twigWrapper/hasValidToken": {
-      "types": "./dist/helpers/twigWrapper/hasValidToken.d.ts",
-      "import": "./dist/helpers/twigWrapper/hasValidToken.mjs"
-    },
     "./helpers/twigWrapper/index": {
       "types": "./dist/helpers/twigWrapper/index.d.ts",
       "import": "./dist/helpers/twigWrapper/index.mjs"
     },
     "./helpers/twigWrapper/patterns": {
-      "types": "./dist/helpers/twigWrapper/patterns.d.ts",
-      "import": "./dist/helpers/twigWrapper/patterns.mjs"
+      "types": "./dist/helpers/twigWrapper/patterns/index.d.ts",
+      "import": "./dist/helpers/twigWrapper/patterns/index.mjs"
     },
     "./helpers/twigWrapper/patterns/index": {
       "types": "./dist/helpers/twigWrapper/patterns/index.d.ts",
@@ -294,8 +294,8 @@
       "import": "./dist/helpers/twigWrapper/patterns/patterns.mjs"
     },
     "./helpers/twigWrapper/processTwig": {
-      "types": "./dist/helpers/twigWrapper/processTwig.d.ts",
-      "import": "./dist/helpers/twigWrapper/processTwig.mjs"
+      "types": "./dist/helpers/twigWrapper/processTwig/index.d.ts",
+      "import": "./dist/helpers/twigWrapper/processTwig/index.mjs"
     },
     "./helpers/twigWrapper/processTwig/fastPath": {
       "types": "./dist/helpers/twigWrapper/processTwig/fastPath.d.ts",
@@ -308,14 +308,6 @@
     "./helpers/twigWrapper/processTwig/processTwig": {
       "types": "./dist/helpers/twigWrapper/processTwig/processTwig.d.ts",
       "import": "./dist/helpers/twigWrapper/processTwig/processTwig.mjs"
-    },
-    "./helpers/twigWrapper/renderTokens": {
-      "types": "./dist/helpers/twigWrapper/renderTokens.d.ts",
-      "import": "./dist/helpers/twigWrapper/renderTokens.mjs"
-    },
-    "./helpers/twigWrapper/resolvePath": {
-      "types": "./dist/helpers/twigWrapper/resolvePath.d.ts",
-      "import": "./dist/helpers/twigWrapper/resolvePath.mjs"
     },
     "./helpers/twigWrapper/tokens/hasValidToken": {
       "types": "./dist/helpers/twigWrapper/tokens/hasValidToken.d.ts",

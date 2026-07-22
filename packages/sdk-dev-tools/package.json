@@ -310,21 +310,9 @@
       "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/StoreViewer.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/StoreViewer.mjs"
     },
-    "./components/DevToolsPanel/tabs/StoreViewer/helpers": {
-      "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/helpers.d.ts",
-      "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/helpers.mjs"
-    },
     "./components/DevToolsPanel/tabs/StoreViewer/index": {
       "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/index.mjs"
-    },
-    "./components/DevToolsPanel/tabs/StoreViewer/useDevStores": {
-      "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/useDevStores.d.ts",
-      "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/useDevStores.mjs"
-    },
-    "./components/DevToolsPanel/tabs/StoreViewer/useStoreState": {
-      "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/useStoreState.d.ts",
-      "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/useStoreState.mjs"
     },
     "./components/DevToolsPanel/tabs/TracingViewer": {
       "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/index.d.ts",
@@ -540,10 +528,6 @@
     "./components/List/index": {
       "types": "./dist/components/List/index.d.ts",
       "import": "./dist/components/List/index.mjs"
-    },
-    "./hooks/usePanelOwnership": {
-      "types": "./dist/hooks/usePanelOwnership.d.ts",
-      "import": "./dist/hooks/usePanelOwnership.mjs"
     },
     "./index": {
       "types": "./dist/index.d.ts",

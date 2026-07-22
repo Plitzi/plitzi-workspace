@@ -22,10 +22,6 @@
       "types": "./dist/helpers/idRef.d.ts",
       "import": "./dist/helpers/idRef.mjs"
     },
-    "./helpers/remapClonedRefs": {
-      "types": "./dist/helpers/remapClonedRefs.d.ts",
-      "import": "./dist/helpers/remapClonedRefs.mjs"
-    },
     "./helpers/schemaValidator": {
       "types": "./dist/helpers/schemaValidator.d.ts",
       "import": "./dist/helpers/schemaValidator.mjs"

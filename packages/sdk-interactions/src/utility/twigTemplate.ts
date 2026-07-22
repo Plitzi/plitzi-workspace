@@ -57,7 +57,7 @@ const delayTime: InteractionCallback<{ returnMode: 'jsonObject' | 'json' | 'text
   },
   callback: params => {
     const { template, returnMode } = params;
-    let content: string | object = '';
+    let content: unknown = '';
     try {
       content = processTwig(template, params);
     } catch (e) {
