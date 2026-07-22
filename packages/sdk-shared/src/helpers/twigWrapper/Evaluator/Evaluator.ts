@@ -1,5 +1,5 @@
 import { isTruthy, valueIn, resolveCollection, resolveObjectEntries } from './helpers';
-import { filters, isRawMarker, unwrapRaw } from '../../twigWrapper/filters/filters';
+import { filters, isRawMarker, unwrapRaw } from '../filters/filters';
 
 import type { ASTNode, Expression, IfNode, ForNode, SetNode, ApplyNode, VariableNode } from '../AST';
 

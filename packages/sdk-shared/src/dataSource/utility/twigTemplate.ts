@@ -11,7 +11,10 @@ const callback = (
   const { template } = params;
   let content: string | object = source;
   try {
-    content = processTwig(template, { source, ...dataSources });
+    const result = processTwig(template, { source, ...dataSources });
+    if (typeof result === 'string' || (typeof result === 'object' && result !== null)) {
+      content = result;
+    }
   } catch {
     content = source;
   }
