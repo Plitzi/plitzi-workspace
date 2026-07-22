@@ -16,7 +16,7 @@ export const valueIn = (needle: unknown, haystack: unknown): boolean => {
     return haystack.includes(needle);
   }
   if (haystack !== null && typeof haystack === 'object') {
-    return Object.keys(haystack).includes(String(needle));
+    return String(needle) in (haystack as Record<string, unknown>);
   }
   return false;
 };

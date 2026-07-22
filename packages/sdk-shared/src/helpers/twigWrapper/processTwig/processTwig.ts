@@ -20,7 +20,15 @@ export const processTwig = (
 
     let context = variables;
     if ('variables' in variables) {
-      context = { ...(variables.variables as Record<string, unknown>), ...variables };
+      const flattened: Record<string, unknown> = {};
+      const inner = variables.variables as Record<string, unknown>;
+      for (const key in inner) {
+        flattened[key] = inner[key];
+      }
+      for (const key in variables) {
+        flattened[key] = variables[key];
+      }
+      context = flattened;
     }
 
     if (!keepEmptyTokens && !asRaw) {

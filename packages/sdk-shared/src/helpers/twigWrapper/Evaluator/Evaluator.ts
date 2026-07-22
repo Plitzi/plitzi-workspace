@@ -40,11 +40,18 @@ class Evaluator {
   }
 
   evalNodes(nodes: readonly ASTNode[]): string {
-    if (nodes.length === 1) {
+    const len = nodes.length;
+    if (len === 1) {
       return this.evalNode(nodes[0]);
     }
+    if (len === 2) {
+      return this.evalNode(nodes[0]) + this.evalNode(nodes[1]);
+    }
+    if (len === 3) {
+      return this.evalNode(nodes[0]) + this.evalNode(nodes[1]) + this.evalNode(nodes[2]);
+    }
     const parts: string[] = [];
-    for (let i = 0; i < nodes.length; i++) {
+    for (let i = 0; i < len; i++) {
       parts.push(this.evalNode(nodes[i]));
     }
     return parts.join('');
@@ -248,8 +255,14 @@ class Evaluator {
     switch (expr.type) {
       case 'literal':
         return expr.value;
-      case 'array':
-        return expr.elements.map(e => this.evalExpression(e));
+      case 'array': {
+        const elems = expr.elements;
+        const arr = new Array<unknown>(elems.length);
+        for (let i = 0; i < elems.length; i++) {
+          arr[i] = this.evalExpression(elems[i]);
+        }
+        return arr;
+      }
       case 'range':
         return this.evalRange(expr);
       case 'path':
@@ -258,9 +271,14 @@ class Evaluator {
         return this.evalFunction(expr.name, expr.args);
       case 'filter':
         return this.evalFilterExpression(expr);
-      case 'concat':
-        // eslint-disable-next-line @typescript-eslint/no-base-to-string
-        return expr.parts.map(p => String(this.evalExpression(p) ?? '')).join('');
+      case 'concat': {
+        let s = '';
+        for (let i = 0; i < expr.parts.length; i++) {
+          // eslint-disable-next-line @typescript-eslint/no-base-to-string
+          s += String(this.evalExpression(expr.parts[i]) ?? '');
+        }
+        return s;
+      }
       case 'unary':
         return this.evalUnary(expr.operator, expr.operand);
       case 'binary':
@@ -298,17 +316,18 @@ class Evaluator {
   private evalRange(expr: { start: Expression; end: Expression }): number[] {
     const start = Number(this.evalExpression(expr.start));
     const end = Number(this.evalExpression(expr.end));
-    const result: number[] = [];
     if (start <= end) {
       const len = end - start + 1;
+      const result = new Array<number>(len);
       for (let i = 0; i < len; i++) {
         result[i] = start + i;
       }
-    } else {
-      const len = start - end + 1;
-      for (let i = 0; i < len; i++) {
-        result[i] = start - i;
-      }
+      return result;
+    }
+    const len = start - end + 1;
+    const result = new Array<number>(len);
+    for (let i = 0; i < len; i++) {
+      result[i] = start - i;
     }
     return result;
   }
@@ -424,9 +443,15 @@ class Evaluator {
 
     switch (operator) {
       case '==':
-        return left === right || String(left) === String(right);
+        if (left === right) {
+          return true;
+        }
+        return String(left) === String(right);
       case '!=':
-        return left !== right && String(left) !== String(right);
+        if (left === right) {
+          return false;
+        }
+        return String(left) !== String(right);
       case '>':
         return Number(left) > Number(right);
       case '<':
