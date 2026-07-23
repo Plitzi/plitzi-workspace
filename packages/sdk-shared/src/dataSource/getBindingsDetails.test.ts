@@ -95,6 +95,21 @@ describe('getBindingsDetails', () => {
     expect(result.attributes.text).toBe('Hello');
   });
 
+  it('skips a disabled transformer and passes the value through unchanged', () => {
+    const element = makeElement({
+      attributes: [
+        binding({
+          source: 'variables.title',
+          to: 'text',
+          transformers: [{ action: 'capitalize', params: { valueType: '', value: '' }, enabled: false }]
+        })
+      ]
+    });
+    const result = getBindingsDetails({ variables: { title: 'hello' } }, element);
+
+    expect(result.attributes.text).toBe('hello');
+  });
+
   describe('falsy write predicate (current behavior — no allowEmpty)', () => {
     it('does NOT write an empty string (keeps the design-time value)', () => {
       const element = makeElement(

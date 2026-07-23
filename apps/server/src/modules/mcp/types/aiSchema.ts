@@ -100,7 +100,7 @@ export interface AIBinding {
   id: string;
   to: string;
   source: string;
-  transformers?: Array<{ action: string; params: Record<string, string> }>;
+  transformers?: Array<{ action: string; params: Record<string, string>; enabled?: boolean }>;
   when?: unknown;
   enabled?: boolean;
 }

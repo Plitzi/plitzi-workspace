@@ -62,6 +62,10 @@ const getBindingWarnings = ({
   }
 
   for (const transformer of transformers) {
+    if (transformer.enabled === false) {
+      continue;
+    }
+
     if (transformer.action && !(transformer.action in utility)) {
       warnings.push({
         level: 'warning',

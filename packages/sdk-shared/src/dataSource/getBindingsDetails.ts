@@ -54,7 +54,11 @@ const getBindingsDetails = (
         let resultValue = fromValue;
         if (transformers && Array.isArray(transformers) && transformers.length > 0) {
           transformers.forEach(transformer => {
-            const { action, params } = transformer;
+            const { action, params, enabled: transformerEnabled = true } = transformer;
+            if (!transformerEnabled) {
+              return;
+            }
+
             const callback = get(utility, `${action}.callback`);
             if (typeof callback !== 'function') {
               return;

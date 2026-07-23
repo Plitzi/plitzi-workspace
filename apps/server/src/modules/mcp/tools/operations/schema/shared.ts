@@ -133,7 +133,11 @@ export const bindingCategory = z
 
 const bindingTransformer = z.object({
   action: z.string().describe('Transformer action name'),
-  params: z.record(z.string(), z.string())
+  params: z.record(z.string(), z.string()),
+  enabled: z
+    .boolean()
+    .optional()
+    .describe('Set false to keep the transformer in the chain but skip it at runtime (defaults to true)')
 });
 
 export const bindingInput = z.object({

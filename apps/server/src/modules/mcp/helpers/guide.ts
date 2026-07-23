@@ -315,7 +315,9 @@ show a number with units:
     "transformers": [ { "action": "twigTemplate", "params": { "template": "{{source}} min de cocción" } } ] } }\`.
 Other transformers: \`dateConverter\` (format a date/timestamp), \`capitalize\`, \`stringToArray\` (split on a
 separator), \`arrayMap\` (remap the keys of each object in an array), \`staticValue\`. Transformer \`params\` values are
-strings.
+strings. Each transformer also takes an optional \`enabled\` flag: set \`"enabled": false\` to keep it in the chain but
+skip it at runtime (defaults to true) — the value passes through untouched, and a disabled transformer is not
+validated.
 
 **\`when\` — gate the binding** with a QueryBuilder RuleGroup: the binding only applies when the guard passes against
 the data source. Shape: \`{ "combinator": "and", "rules": [ { "field": "<path>", "operator": "=", "value": "x" } ] }\`

@@ -102,13 +102,18 @@ export const checkBindingSourceScope = (
 // A transformer is resolved by its `action` alone against a CLOSED built-in set (no plugin transformer mechanism),
 // so a malformed transformer is DEFINITELY broken — an unknown action, a missing required param or a bad select
 // value all make the binding silently misbehave. These are ERRORS (they block a save until fixed), unlike the
-// lenient source/target checks. Unknown extra params stay a warning (the runtime just drops them).
+// lenient source/target checks. Unknown extra params stay a warning (the runtime just drops them). A transformer
+// with `enabled: false` is inert at runtime, so it is skipped here (not validated).
 export const checkBindingTransformers = (
   transformers: BindingTransformer[] | undefined,
   path: string,
   ctx: ValidationCtx
 ): void => {
   transformers?.forEach((transformer, i) => {
+    if (transformer.enabled === false) {
+      return;
+    }
+
     const base = `${path}[${i}]`;
     const spec = getTransformer(transformer.action);
     if (!spec) {

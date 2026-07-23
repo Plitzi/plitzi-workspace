@@ -23,7 +23,8 @@ export const bindingForm = z.object({
   transformers: z.array(
     z.object({
       action: z.string(),
-      params: z.record(z.string(), z.string())
+      params: z.record(z.string(), z.string()),
+      enabled: z.boolean().optional()
     })
   )
 });

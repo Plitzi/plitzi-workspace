@@ -22,6 +22,7 @@ export type BindingCategory = 'attributes' | 'style' | 'initialState';
 export type BindingTransformer = {
   action: string;
   params: Record<string, string>;
+  enabled?: boolean;
 };
 
 export type ElementBinding = {

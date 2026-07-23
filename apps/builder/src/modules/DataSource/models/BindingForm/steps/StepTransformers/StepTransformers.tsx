@@ -3,6 +3,7 @@ import Form, { useFormContext, useFormWatch } from '@plitzi/plitzi-ui/Form';
 import Heading from '@plitzi/plitzi-ui/Heading';
 import { get, set } from '@plitzi/plitzi-ui/helpers';
 import Select2 from '@plitzi/plitzi-ui/Select2';
+import Switch from '@plitzi/plitzi-ui/Switch';
 import { produce } from 'immer';
 import { useCallback, useRef } from 'react';
 
@@ -29,8 +30,20 @@ const StepTransformers = ({ element, dataSourceFields }: StepTransformersProps) 
   const [stylePlatform] = useBuilderStore('style.platform');
 
   const handleClickAdd = useCallback(
-    () => setValue('transformers', [...watchTransformers, { action: '', params: {} }]),
+    () => setValue('transformers', [...watchTransformers, { action: '', params: {}, enabled: true }]),
     [setValue, watchTransformers]
+  );
+
+  const handleChangeEnabled = useCallback(
+    (index: number) => () => {
+      setValue(
+        'transformers',
+        produce(watchTransformersRef.current, draft => {
+          set(draft, `${index}.enabled`, !(draft[index]?.enabled ?? true));
+        })
+      );
+    },
+    [setValue]
   );
 
   const handleClickRemove = useCallback(
@@ -89,12 +102,18 @@ const StepTransformers = ({ element, dataSourceFields }: StepTransformersProps) 
           <Heading as="h5">Transformers</Heading>
           <div className="flex flex-col gap-4">
             {value.map((transformer, i: number) => {
-              const { action, params } = transformer;
+              const { action, params, enabled = true } = transformer;
               const paramDefinitions = get(utility, `${action}.params`, {} as DataSourceUtilityParams);
 
               return (
                 <div key={i} className="flex flex-col gap-4 rounded-sm border border-gray-300 p-2 dark:border-zinc-700">
                   <div className="flex items-center gap-4">
+                    <Switch
+                      checked={enabled}
+                      size="xs"
+                      onChange={handleChangeEnabled(i)}
+                      title={enabled ? 'Disable transformer' : 'Enable transformer'}
+                    />
                     <Select2
                       size="xs"
                       placeholder="Select a Transformer"
