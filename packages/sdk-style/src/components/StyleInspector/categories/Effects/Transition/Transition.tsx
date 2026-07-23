@@ -51,7 +51,7 @@ const Transition = ({ value, onChange }: TransitionProps) => {
         <Icon className="cursor-pointer" icon="fas fa-plus" onClick={handleClickAddItem} />
       </div>
       {transitions.length > 0 && (
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-2">
           {transitions.map((transition, index) => (
             <TransitionItem
               key={index}

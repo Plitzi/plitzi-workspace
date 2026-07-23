@@ -51,7 +51,7 @@ const Filter = ({ value, onChange }: FilterProps) => {
         <Icon className="cursor-pointer" icon="fas fa-plus" onClick={handleClickAddItem} />
       </div>
       {filters.length > 0 && (
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-2">
           {filters.map((filter, index) => (
             <FilterItem
               key={index}

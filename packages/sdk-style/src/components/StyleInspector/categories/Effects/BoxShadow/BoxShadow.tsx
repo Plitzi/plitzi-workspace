@@ -52,7 +52,7 @@ const BoxShadow = ({ value = '', onChange }: BoxShadowProps) => {
         <Icon className="cursor-pointer" icon="fas fa-plus" onClick={handleClickAddItem} />
       </div>
       {boxShadows.length > 0 && (
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-2">
           {boxShadows.map((boxShadow, index) => (
             <BoxShadowItem
               key={index}
