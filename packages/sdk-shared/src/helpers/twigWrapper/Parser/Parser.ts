@@ -231,14 +231,15 @@ class ParseContext {
     }
     const content = prevToken.content.trim();
     const forBody = content.slice(content.indexOf(' ') + 1).trim();
-    const inIdx = forBody.indexOf(' in ');
-    if (inIdx === -1) {
+    // Match the `in` keyword surrounded by any whitespace, so a `{% for x in\n  items %}` split across lines works.
+    const inMatch = /\sin\s/.exec(forBody);
+    if (!inMatch) {
       this.error = 'Invalid {% for %} syntax: missing the `in` keyword';
       return emptyFor();
     }
 
-    const varsStr = forBody.slice(0, inIdx).trim();
-    const collectionStr = forBody.slice(inIdx + 4).trim();
+    const varsStr = forBody.slice(0, inMatch.index).trim();
+    const collectionStr = forBody.slice(inMatch.index + inMatch[0].length).trim();
 
     const range = splitRange(collectionStr);
     const collection: Expression = range

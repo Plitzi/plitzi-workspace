@@ -6,6 +6,7 @@
 export const Char = {
   Tab: 9,
   Newline: 10,
+  CarriageReturn: 13,
   Space: 32,
   Bang: 33, // !
   DoubleQuote: 34,
@@ -51,7 +52,10 @@ export const isPathPart = (c: number): boolean => isIdentPart(c) || c === Char.M
 
 export const isDigit = (c: number): boolean => c >= Char.Zero && c <= Char.Nine;
 
-export const isSpace = (c: number): boolean => c === Char.Space || c === Char.Tab;
+// Insignificant whitespace inside an expression or tag: spaces, tabs and line breaks. Newlines count so
+// expressions (arrow bodies, filter chains, argument lists) can span multiple lines.
+export const isSpace = (c: number): boolean =>
+  c === Char.Space || c === Char.Tab || c === Char.Newline || c === Char.CarriageReturn;
 
 // Whether the whole string is a bare identifier: `name`, `_id`, `item0` (no dots, no other characters).
 export const isSimpleIdentifier = (s: string): boolean => {

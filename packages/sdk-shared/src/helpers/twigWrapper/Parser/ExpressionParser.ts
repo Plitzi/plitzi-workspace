@@ -319,14 +319,13 @@ class ExpressionParser extends Cursor {
     return { type: 'filter', subject, filters: this.parseTrailingFilters() };
   }
 
-  // Parses an object literal `{ key: expr, "quoted": expr }` from a cursor sitting just past the `{`.
-  // Keys are static — a bare identifier or a quoted string; the closing `}` is consumed.
+  // Parses a hash literal `{ key: expr, … }` from a cursor sitting just past the `{`; the closing `}` is
+  // consumed. Keys may be a bare identifier, a quoted string, an integer, or a dynamic `(expr)` — see parseKey.
   private parseObjectLiteral(): Expression {
-    const entries: { key: string; value: Expression }[] = [];
+    const entries: { key: Expression; value: Expression }[] = [];
     this.skipWs();
     while (!this.eof() && this.peek() !== Char.RBrace) {
-      const quote = this.peek();
-      const key = quote === Char.SingleQuote || quote === Char.DoubleQuote ? this.scanStringLiteral() : this.scanName();
+      const key = this.parseObjectKey();
       this.skipWs();
       if (this.peek() === Char.Colon) {
         this.pos++;
@@ -346,6 +345,33 @@ class ExpressionParser extends Cursor {
     }
 
     return { type: 'object', entries };
+  }
+
+  // Parses a hash key: a quoted string, an integer, a dynamic `(expr)`, or a bare identifier (shorthand,
+  // treated as a string literal). Returns the key as an expression evaluated when the hash is built.
+  private parseObjectKey(): Expression {
+    const ch = this.peek();
+    if (ch === Char.SingleQuote || ch === Char.DoubleQuote) {
+      return { type: 'literal', value: this.scanStringLiteral() };
+    }
+
+    if (isDigit(ch)) {
+      return { type: 'literal', value: this.scanNumber() };
+    }
+
+    if (ch === Char.LParen) {
+      this.pos++;
+      this.skipWs();
+      const expr = this.parseTernary();
+      this.skipWs();
+      if (this.peek() === Char.RParen) {
+        this.pos++;
+      }
+
+      return expr;
+    }
+
+    return { type: 'literal', value: this.scanName() };
   }
 
   // Parses a comma-separated expression list up to (and consuming) the given closing char code (`)` or `]`).

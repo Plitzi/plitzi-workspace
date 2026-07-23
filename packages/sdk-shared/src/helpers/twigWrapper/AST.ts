@@ -92,11 +92,12 @@ export type ArrayLiteralNode = {
   readonly elements: readonly Expression[];
 };
 
-// Object literal: `{ k: value }` or `{ "label": expr, order: n }`. Keys are static (bare identifier or quoted
-// string), resolved at parse time; values are arbitrary expressions.
+// Object (hash) literal, mirroring Twig: `{ name: v }` (shorthand key), `{ "label": expr }` (string key),
+// `{ 2: v }` (integer key) or `{ (expr): v }` (dynamic key). The key is itself an expression — a literal for
+// the static forms, an arbitrary expression for the dynamic `(…)` form — and is coerced to a string on eval.
 export type ObjectLiteralNode = {
   readonly type: 'object';
-  readonly entries: readonly { readonly key: string; readonly value: Expression }[];
+  readonly entries: readonly { readonly key: Expression; readonly value: Expression }[];
 };
 
 // Range expression: `0..4` or `start..end`

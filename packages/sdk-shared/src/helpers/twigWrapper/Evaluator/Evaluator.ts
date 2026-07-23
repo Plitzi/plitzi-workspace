@@ -283,7 +283,14 @@ class Evaluator {
       case 'object': {
         const obj: Record<string, unknown> = {};
         for (const entry of expr.entries) {
-          obj[entry.key] = this.evalExpression(entry.value);
+          const rawKey = this.evalExpression(entry.key);
+          const key =
+            typeof rawKey === 'string'
+              ? rawKey
+              : typeof rawKey === 'number' || typeof rawKey === 'boolean'
+                ? String(rawKey)
+                : '';
+          obj[key] = this.evalExpression(entry.value);
         }
 
         return obj;

@@ -37,6 +37,31 @@ describe('AST processTwig — object literals', () => {
       })
     ).toBe('a=1, b=2');
   });
+
+  // ── Twig hash key forms (https://twig.symfony.com/doc/3.x/templates.html) ──────
+  it('supports shorthand (unquoted) keys', () => {
+    expect(processTwig('{{ { name: "Fabien", city: "Paris" } | to_json }}', {})).toBe(
+      '{"name":"Fabien","city":"Paris"}'
+    );
+  });
+
+  it('supports integer keys', () => {
+    expect(processTwig('{{ { 2: "Twig", 4: "Symfony" } | to_json }}', {})).toBe('{"2":"Twig","4":"Symfony"}');
+  });
+
+  it('supports dynamic keys from an expression', () => {
+    expect(processTwig('{{ { (k): "v", (1 + 1): "two" } | to_json }}', { k: 'name' })).toBe('{"2":"two","name":"v"}');
+  });
+
+  it('treats a shorthand key as a literal, not a variable lookup', () => {
+    expect(processTwig('{{ { name: name } | to_json }}', { name: 'Ada' })).toBe('{"name":"Ada"}');
+  });
+
+  it('mixes shorthand, dynamic and integer keys', () => {
+    expect(processTwig('{{ { id: x, (dyn): "d", 3: "three" } | to_json }}', { x: 9, dyn: 'label' })).toBe(
+      '{"3":"three","id":9,"label":"d"}'
+    );
+  });
 });
 
 describe('AST processTwig — sort with arrow', () => {
