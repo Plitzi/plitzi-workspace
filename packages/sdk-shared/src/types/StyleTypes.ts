@@ -65,6 +65,7 @@ export type StyleContextValue = {
   styleAddSelector?: unknown;
   styleUpdateSelector?: unknown;
   styleRemoveSelector?: unknown;
+  styleRemoveSelectors?: unknown;
   styleAddSelectorVariable?: unknown;
   styleUpdateSelectorVariable?: unknown;
   styleRemoveSelectorVariable?: unknown;

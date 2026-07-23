@@ -441,6 +441,10 @@
       "types": "./dist/network/graphql/builder/Mutations/Segment/style/selectors/SegmentStyleRemoveSelectorMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Segment/style/selectors/SegmentStyleRemoveSelectorMutation.mjs"
     },
+    "./network/graphql/builder/Mutations/Segment/style/selectors/SegmentStyleRemoveSelectorsMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Segment/style/selectors/SegmentStyleRemoveSelectorsMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Segment/style/selectors/SegmentStyleRemoveSelectorsMutation.mjs"
+    },
     "./network/graphql/builder/Mutations/Segment/style/selectors/SegmentStyleUpdateSelectorMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Segment/style/selectors/SegmentStyleUpdateSelectorMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Segment/style/selectors/SegmentStyleUpdateSelectorMutation.mjs"
@@ -621,6 +625,10 @@
       "types": "./dist/network/graphql/builder/Mutations/Style/selectors/StyleRemoveSelectorMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Style/selectors/StyleRemoveSelectorMutation.mjs"
     },
+    "./network/graphql/builder/Mutations/Style/selectors/StyleRemoveSelectorsMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Style/selectors/StyleRemoveSelectorsMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Style/selectors/StyleRemoveSelectorsMutation.mjs"
+    },
     "./network/graphql/builder/Mutations/Style/selectors/StyleUpdateSelectorMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Style/selectors/StyleUpdateSelectorMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Style/selectors/StyleUpdateSelectorMutation.mjs"
@@ -769,6 +777,10 @@
       "types": "./dist/network/graphql/builder/Subscriptions/Segment/style/selectors/SegmentStyleRemoveSelectorSubscription.d.ts",
       "import": "./dist/network/graphql/builder/Subscriptions/Segment/style/selectors/SegmentStyleRemoveSelectorSubscription.mjs"
     },
+    "./network/graphql/builder/Subscriptions/Segment/style/selectors/SegmentStyleRemoveSelectorsSubscription": {
+      "types": "./dist/network/graphql/builder/Subscriptions/Segment/style/selectors/SegmentStyleRemoveSelectorsSubscription.d.ts",
+      "import": "./dist/network/graphql/builder/Subscriptions/Segment/style/selectors/SegmentStyleRemoveSelectorsSubscription.mjs"
+    },
     "./network/graphql/builder/Subscriptions/Segment/style/selectors/SegmentStyleUpdateSelectorSubscription": {
       "types": "./dist/network/graphql/builder/Subscriptions/Segment/style/selectors/SegmentStyleUpdateSelectorSubscription.d.ts",
       "import": "./dist/network/graphql/builder/Subscriptions/Segment/style/selectors/SegmentStyleUpdateSelectorSubscription.mjs"
@@ -872,6 +884,10 @@
     "./network/graphql/builder/Subscriptions/Style/selector/StyleRemoveSelectorSubscription": {
       "types": "./dist/network/graphql/builder/Subscriptions/Style/selector/StyleRemoveSelectorSubscription.d.ts",
       "import": "./dist/network/graphql/builder/Subscriptions/Style/selector/StyleRemoveSelectorSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Style/selector/StyleRemoveSelectorsSubscription": {
+      "types": "./dist/network/graphql/builder/Subscriptions/Style/selector/StyleRemoveSelectorsSubscription.d.ts",
+      "import": "./dist/network/graphql/builder/Subscriptions/Style/selector/StyleRemoveSelectorsSubscription.mjs"
     },
     "./network/graphql/builder/Subscriptions/Style/selector/StyleUpdateSelectorSubscription": {
       "types": "./dist/network/graphql/builder/Subscriptions/Style/selector/StyleUpdateSelectorSubscription.d.ts",

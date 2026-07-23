@@ -36,6 +36,7 @@ export const SegmentsActions = {
   SEGMENTS_STYLE_ADD_SELECTOR: 'SEGMENTS_STYLE_ADD_SELECTOR',
   SEGMENTS_STYLE_UPDATE_SELECTOR: 'SEGMENTS_STYLE_UPDATE_SELECTOR',
   SEGMENTS_STYLE_REMOVE_SELECTOR: 'SEGMENTS_STYLE_REMOVE_SELECTOR',
+  SEGMENTS_STYLE_REMOVE_SELECTORS: 'SEGMENTS_STYLE_REMOVE_SELECTORS',
   SEGMENTS_STYLE_ADD_SELECTOR_VARIABLE: 'SEGMENTS_STYLE_ADD_SELECTOR_VARIABLE',
   SEGMENTS_STYLE_UPDATE_SELECTOR_VARIABLE: 'SEGMENTS_STYLE_UPDATE_SELECTOR_VARIABLE',
   SEGMENTS_STYLE_REMOVE_SELECTOR_VARIABLE: 'SEGMENTS_STYLE_REMOVE_SELECTOR_VARIABLE',
@@ -110,6 +111,11 @@ export type SegmentsReducerActions =
       type: 'SEGMENTS_STYLE_REMOVE_SELECTOR';
       displayMode: DisplayMode;
       selector: string;
+    } & SegmentsReducerActionsBase)
+  | ({
+      type: 'SEGMENTS_STYLE_REMOVE_SELECTORS';
+      displayMode: DisplayMode;
+      selectors: string[];
     } & SegmentsReducerActionsBase)
   | ({
       type: 'SEGMENTS_STYLE_ADD_SELECTOR_VARIABLE' | 'SEGMENTS_STYLE_UPDATE_SELECTOR_VARIABLE';
@@ -279,6 +285,20 @@ const SegmentsReducer = (state: Record<string, Segment>, action: SegmentsReducer
 
       return produce(state, draft => {
         if (StyleMap.removeSelector(draft[identifier].style, displayMode, selector)) {
+          set(draft, `${identifier}.style.cache`, generateCache(draft[identifier].style));
+        }
+      });
+    }
+
+    case SegmentsActions.SEGMENTS_STYLE_REMOVE_SELECTORS: {
+      const { displayMode, selectors } = action;
+
+      return produce(state, draft => {
+        const removed = selectors.reduce(
+          (changed, selector) => StyleMap.removeSelector(draft[identifier].style, displayMode, selector) || changed,
+          false
+        );
+        if (removed) {
           set(draft, `${identifier}.style.cache`, generateCache(draft[identifier].style));
         }
       });

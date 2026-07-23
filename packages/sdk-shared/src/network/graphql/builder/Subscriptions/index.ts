@@ -12,6 +12,7 @@ import SegmentSpaceAddVariableSubscription from './Segment/space/variables/Segme
 import SegmentSpaceRemoveVariableSubscription from './Segment/space/variables/SegmentSpaceRemoveVariableSubscription';
 import SegmentSpaceUpdateVariableSubscription from './Segment/space/variables/SegmentSpaceUpdateVariableSubscription';
 import SegmentStyleAddSelectorSubscription from './Segment/style/selectors/SegmentStyleAddSelectorSubscription';
+import SegmentStyleRemoveSelectorsSubscription from './Segment/style/selectors/SegmentStyleRemoveSelectorsSubscription';
 import SegmentStyleRemoveSelectorSubscription from './Segment/style/selectors/SegmentStyleRemoveSelectorSubscription';
 import SegmentStyleUpdateSelectorSubscription from './Segment/style/selectors/SegmentStyleUpdateSelectorSubscription';
 import SegmentStyleAddSelectorVariableSubscription from './Segment/style/selectorVariables/SegmentStyleAddSelectorVariableSubscription';
@@ -41,6 +42,7 @@ import SpaceRemoveVariableSubscription from './Space/variables/SpaceRemoveVariab
 import SpaceUpdateVariableSubscription from './Space/variables/SpaceUpdateVariableSubscription';
 // Style subscriptions
 import StyleAddSelectorSubscription from './Style/selector/StyleAddSelectorSubscription';
+import StyleRemoveSelectorsSubscription from './Style/selector/StyleRemoveSelectorsSubscription';
 import StyleRemoveSelectorSubscription from './Style/selector/StyleRemoveSelectorSubscription';
 import StyleUpdateSelectorSubscription from './Style/selector/StyleUpdateSelectorSubscription';
 import StyleAddSelectorVariableSubscription from './Style/selectorVariables/StyleAddSelectorVariableSubscription';
@@ -63,6 +65,7 @@ import type { TSegmentSpaceAddVariableSubscription } from './Segment/space/varia
 import type { TSegmentSpaceRemoveVariableSubscription } from './Segment/space/variables/SegmentSpaceRemoveVariableSubscription';
 import type { TSegmentSpaceUpdateVariableSubscription } from './Segment/space/variables/SegmentSpaceUpdateVariableSubscription';
 import type { TSegmentStyleAddSelectorSubscription } from './Segment/style/selectors/SegmentStyleAddSelectorSubscription';
+import type { TSegmentStyleRemoveSelectorsSubscription } from './Segment/style/selectors/SegmentStyleRemoveSelectorsSubscription';
 import type { TSegmentStyleRemoveSelectorSubscription } from './Segment/style/selectors/SegmentStyleRemoveSelectorSubscription';
 import type { TSegmentStyleUpdateSelectorSubscription } from './Segment/style/selectors/SegmentStyleUpdateSelectorSubscription';
 import type { TSegmentStyleAddSelectorVariableSubscription } from './Segment/style/selectorVariables/SegmentStyleAddSelectorVariableSubscription';
@@ -90,6 +93,7 @@ import type { TSpaceAddVariableSubscription } from './Space/variables/SpaceAddVa
 import type { TSpaceRemoveVariableSubscription } from './Space/variables/SpaceRemoveVariableSubscription';
 import type { TSpaceUpdateVariableSubscription } from './Space/variables/SpaceUpdateVariableSubscription';
 import type { TStyleAddSelectorSubscription } from './Style/selector/StyleAddSelectorSubscription';
+import type { TStyleRemoveSelectorsSubscription } from './Style/selector/StyleRemoveSelectorsSubscription';
 import type { TStyleRemoveSelectorSubscription } from './Style/selector/StyleRemoveSelectorSubscription';
 import type { TStyleUpdateSelectorSubscription } from './Style/selector/StyleUpdateSelectorSubscription';
 import type { TStyleAddSelectorVariableSubscription } from './Style/selectorVariables/StyleAddSelectorVariableSubscription';
@@ -128,6 +132,7 @@ export type BuilderSubscriptionsMap = {
   StyleAddSelector: TStyleAddSelectorSubscription;
   StyleUpdateSelector: TStyleUpdateSelectorSubscription;
   StyleRemoveSelector: TStyleRemoveSelectorSubscription;
+  StyleRemoveSelectors: TStyleRemoveSelectorsSubscription;
   StyleAddSelectorVariable: TStyleAddSelectorVariableSubscription;
   StyleUpdateSelectorVariable: TStyleUpdateSelectorVariableSubscription;
   StyleRemoveSelectorVariable: TStyleRemoveSelectorVariableSubscription;
@@ -148,6 +153,7 @@ export type BuilderSubscriptionsMap = {
   SegmentStyleAddSelector: TSegmentStyleAddSelectorSubscription;
   SegmentStyleUpdateSelector: TSegmentStyleUpdateSelectorSubscription;
   SegmentStyleRemoveSelector: TSegmentStyleRemoveSelectorSubscription;
+  SegmentStyleRemoveSelectors: TSegmentStyleRemoveSelectorsSubscription;
   SegmentStyleAddSelectorVariable: TSegmentStyleAddSelectorVariableSubscription;
   SegmentStyleUpdateSelectorVariable: TSegmentStyleUpdateSelectorVariableSubscription;
   SegmentStyleRemoveSelectorVariable: TSegmentStyleRemoveSelectorVariableSubscription;
@@ -183,6 +189,7 @@ const BuilderSubscriptions = {
   StyleAddSelector: StyleAddSelectorSubscription,
   StyleUpdateSelector: StyleUpdateSelectorSubscription,
   StyleRemoveSelector: StyleRemoveSelectorSubscription,
+  StyleRemoveSelectors: StyleRemoveSelectorsSubscription,
   StyleAddSelectorVariable: StyleAddSelectorVariableSubscription,
   StyleUpdateSelectorVariable: StyleUpdateSelectorVariableSubscription,
   StyleRemoveSelectorVariable: StyleRemoveSelectorVariableSubscription,
@@ -203,6 +210,7 @@ const BuilderSubscriptions = {
   SegmentStyleAddSelector: SegmentStyleAddSelectorSubscription,
   SegmentStyleUpdateSelector: SegmentStyleUpdateSelectorSubscription,
   SegmentStyleRemoveSelector: SegmentStyleRemoveSelectorSubscription,
+  SegmentStyleRemoveSelectors: SegmentStyleRemoveSelectorsSubscription,
   SegmentStyleAddSelectorVariable: SegmentStyleAddSelectorVariableSubscription,
   SegmentStyleUpdateSelectorVariable: SegmentStyleUpdateSelectorVariableSubscription,
   SegmentStyleRemoveSelectorVariable: SegmentStyleRemoveSelectorVariableSubscription,

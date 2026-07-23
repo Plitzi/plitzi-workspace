@@ -196,6 +196,12 @@ const useQueueManager = ({
           return mutate('StyleRemoveSelector', { displayMode, selector });
         }
 
+        case StyleActions.STYLE_REMOVE_SELECTORS: {
+          const { displayMode, selectors } = item.action;
+
+          return mutate('StyleRemoveSelectors', { displayMode, selectors });
+        }
+
         case StyleActions.STYLE_ADD_SELECTOR_VARIABLE: {
           const { displayMode, selector, category, name, value } = item.action;
 
@@ -356,6 +362,12 @@ const useQueueManager = ({
           const { selector, segmentId } = item.action;
 
           return mutate('SegmentStyleRemoveSelector', { selector, contextId: segmentId });
+        }
+
+        case SegmentsActions.SEGMENTS_STYLE_REMOVE_SELECTORS: {
+          const { selectors, segmentId } = item.action;
+
+          return mutate('SegmentStyleRemoveSelectors', { selectors, contextId: segmentId });
         }
 
         case SegmentsActions.SEGMENTS_STYLE_ADD_SELECTOR_VARIABLE: {

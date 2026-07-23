@@ -119,6 +119,12 @@ const BuilderStyleContextProvider = ({
     [dispatchStyle]
   );
 
+  const styleRemoveSelectors = useCallback(
+    (displayMode: DisplayMode | undefined, selectors: string[], fromSubscriptions = false) =>
+      dispatchStyle({ type: StyleActions.STYLE_REMOVE_SELECTORS, displayMode, selectors, fromSubscriptions }),
+    [dispatchStyle]
+  );
+
   const styleAddSelectorVariable = useCallback(
     (
       displayMode: DisplayMode,
@@ -264,6 +270,19 @@ const BuilderStyleContextProvider = ({
         styleRemoveSelector(displayMode, selector, true);
       });
 
+      subscriptionManager.subscribe('StyleRemoveSelectors', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
+        const { displayMode, selectors } = get(
+          data,
+          'data.StyleRemoveSelectors',
+          {}
+        ) as BuilderSubscriptionsMap['StyleRemoveSelectors'];
+        styleRemoveSelectors(displayMode, selectors, true);
+      });
+
       subscriptionManager.subscribe('StyleAddSelectorVariable', {}, data => {
         if (!data.data || data.error) {
           return;
@@ -363,6 +382,7 @@ const BuilderStyleContextProvider = ({
           'StyleAddSelector',
           'StyleUpdateSelector',
           'StyleRemoveSelector',
+          'StyleRemoveSelectors',
           'StyleAddSelectorVariable',
           'StyleUpdateSelectorVariable',
           'StyleRemoveSelectorVariable',
@@ -380,6 +400,7 @@ const BuilderStyleContextProvider = ({
     styleAddSelector,
     styleUpdateSelector,
     styleRemoveSelector,
+    styleRemoveSelectors,
     styleAddSelectorVariable,
     styleUpdateSelectorVariable,
     styleRemoveSelectorVariable,
@@ -395,6 +416,7 @@ const BuilderStyleContextProvider = ({
       styleAddSelector,
       styleUpdateSelector,
       styleRemoveSelector,
+      styleRemoveSelectors,
       styleAddSelectorVariable,
       styleUpdateSelectorVariable,
       styleRemoveSelectorVariable,
@@ -409,6 +431,7 @@ const BuilderStyleContextProvider = ({
       styleAddSelector,
       styleUpdateSelector,
       styleRemoveSelector,
+      styleRemoveSelectors,
       styleAddSelectorVariable,
       styleUpdateSelectorVariable,
       styleRemoveSelectorVariable,

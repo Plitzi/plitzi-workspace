@@ -454,6 +454,10 @@
       "types": "./dist/components/StyleInspector/categories/Effects/Transform/index.d.ts",
       "import": "./dist/components/StyleInspector/categories/Effects/Transform/index.mjs"
     },
+    "./components/StyleInspector/categories/Effects/Transform/transformFunctions": {
+      "types": "./dist/components/StyleInspector/categories/Effects/Transform/transformFunctions.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Effects/Transform/transformFunctions.mjs"
+    },
     "./components/StyleInspector/categories/Effects/Transition": {
       "types": "./dist/components/StyleInspector/categories/Effects/Transition/index.d.ts",
       "import": "./dist/components/StyleInspector/categories/Effects/Transition/index.mjs"

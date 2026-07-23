@@ -19,6 +19,7 @@ import SegmentSpaceRemoveVariableMutation from './Segment/space/variables/Segmen
 import SegmentSpaceUpdateVariableMutation from './Segment/space/variables/SegmentSpaceUpdateVariableMutation';
 import SegmentStyleAddSelectorMutation from './Segment/style/selectors/SegmentStyleAddSelectorMutation';
 import SegmentStyleRemoveSelectorMutation from './Segment/style/selectors/SegmentStyleRemoveSelectorMutation';
+import SegmentStyleRemoveSelectorsMutation from './Segment/style/selectors/SegmentStyleRemoveSelectorsMutation';
 import SegmentStyleUpdateSelectorMutation from './Segment/style/selectors/SegmentStyleUpdateSelectorMutation';
 import SegmentStyleAddSelectorVariableMutation from './Segment/style/selectorVariables/SegmentStyleAddSelectorVariableMutation';
 import SegmentStyleRemoveSelectorVariableMutation from './Segment/style/selectorVariables/SegmentStyleRemoveSelectorVariableMutation';
@@ -62,6 +63,7 @@ import SpaceRemoveVariableMutation from './Space/variables/SpaceRemoveVariableMu
 import SpaceUpdateVariableMutation from './Space/variables/SpaceUpdateVariableMutation';
 import StyleAddSelectorMutation from './Style/selectors/StyleAddSelectorMutation';
 import StyleRemoveSelectorMutation from './Style/selectors/StyleRemoveSelectorMutation';
+import StyleRemoveSelectorsMutation from './Style/selectors/StyleRemoveSelectorsMutation';
 import StyleUpdateSelectorMutation from './Style/selectors/StyleUpdateSelectorMutation';
 import StyleAddSelectorVariableMutation from './Style/selectorVariables/StyleAddSelectorVariableMutation';
 import StyleRemoveSelectorVariableMutation from './Style/selectorVariables/StyleRemoveSelectorVariableMutation';
@@ -139,6 +141,7 @@ export type BuilderMutationsMap = {
   StyleAddSelector: unknown;
   StyleUpdateSelector: unknown;
   StyleRemoveSelector: unknown;
+  StyleRemoveSelectors: unknown;
   StyleAddSelectorVariable: unknown;
   StyleUpdateSelectorVariable: unknown;
   StyleRemoveSelectorVariable: unknown;
@@ -163,6 +166,7 @@ export type BuilderMutationsMap = {
   SegmentStyleAddSelector: unknown;
   SegmentStyleUpdateSelector: unknown;
   SegmentStyleRemoveSelector: unknown;
+  SegmentStyleRemoveSelectors: unknown;
   SegmentStyleAddSelectorVariable: unknown;
   SegmentStyleRemoveSelectorVariable: unknown;
   SegmentStyleUpdateSelectorVariable: unknown;
@@ -218,6 +222,7 @@ const BuilderMutations = {
   StyleAddSelector: StyleAddSelectorMutation,
   StyleUpdateSelector: StyleUpdateSelectorMutation,
   StyleRemoveSelector: StyleRemoveSelectorMutation,
+  StyleRemoveSelectors: StyleRemoveSelectorsMutation,
   StyleAddSelectorVariable: StyleAddSelectorVariableMutation,
   StyleUpdateSelectorVariable: StyleUpdateSelectorVariableMutation,
   StyleRemoveSelectorVariable: StyleRemoveSelectorVariableMutation,
@@ -242,6 +247,7 @@ const BuilderMutations = {
   SegmentStyleAddSelector: SegmentStyleAddSelectorMutation,
   SegmentStyleUpdateSelector: SegmentStyleUpdateSelectorMutation,
   SegmentStyleRemoveSelector: SegmentStyleRemoveSelectorMutation,
+  SegmentStyleRemoveSelectors: SegmentStyleRemoveSelectorsMutation,
   SegmentStyleAddSelectorVariable: SegmentStyleAddSelectorVariableMutation,
   SegmentStyleRemoveSelectorVariable: SegmentStyleRemoveSelectorVariableMutation,
   SegmentStyleUpdateSelectorVariable: SegmentStyleUpdateSelectorVariableMutation,

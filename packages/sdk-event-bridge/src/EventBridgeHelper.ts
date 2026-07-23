@@ -29,6 +29,7 @@ const EventBridgeTypesPerModule: Record<EventBridgeModule, EventBridgeEvent[]> =
     'styleAddSelector',
     'styleUpdateSelector',
     'styleRemoveSelector',
+    'styleRemoveSelectors',
     'styleAddSelectorVariable',
     'styleUpdateSelectorVariable',
     'styleRemoveSelectorVariable',

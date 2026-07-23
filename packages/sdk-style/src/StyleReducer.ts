@@ -20,6 +20,7 @@ export const StyleActions = {
   STYLE_ADD_SELECTOR: 'STYLE_ADD_SELECTOR',
   STYLE_UPDATE_SELECTOR: 'STYLE_UPDATE_SELECTOR',
   STYLE_REMOVE_SELECTOR: 'STYLE_REMOVE_SELECTOR',
+  STYLE_REMOVE_SELECTORS: 'STYLE_REMOVE_SELECTORS',
   STYLE_ADD_SELECTOR_VARIABLE: 'STYLE_ADD_SELECTOR_VARIABLE',
   STYLE_UPDATE_SELECTOR_VARIABLE: 'STYLE_UPDATE_SELECTOR_VARIABLE',
   STYLE_REMOVE_SELECTOR_VARIABLE: 'STYLE_REMOVE_SELECTOR_VARIABLE',
@@ -53,6 +54,7 @@ export type StyleReducerActions = StyleReducerActionsBase &
         params: { componentType?: string; styleSelector: string; styleState?: StyleState; styleVariant?: string };
       }
     | { type: 'STYLE_REMOVE_SELECTOR'; displayMode?: DisplayMode; selector: string }
+    | { type: 'STYLE_REMOVE_SELECTORS'; displayMode?: DisplayMode; selectors: string[] }
     | {
         type: 'STYLE_ADD_SELECTOR_VARIABLE' | 'STYLE_UPDATE_SELECTOR_VARIABLE';
         displayMode: DisplayMode;
@@ -112,6 +114,20 @@ const StyleReducer = (state: Style, action: StyleReducerActions) => {
 
       return produce(state, draft => {
         if (StyleMap.removeSelector(draft, displayMode, selector)) {
+          set(draft, 'cache', generateCache(draft));
+        }
+      });
+    }
+
+    case StyleActions.STYLE_REMOVE_SELECTORS: {
+      const { displayMode, selectors } = action;
+
+      return produce(state, draft => {
+        const removed = selectors.reduce(
+          (changed, selector) => StyleMap.removeSelector(draft, displayMode, selector) || changed,
+          false
+        );
+        if (removed) {
           set(draft, 'cache', generateCache(draft));
         }
       });

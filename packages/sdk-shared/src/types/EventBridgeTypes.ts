@@ -30,6 +30,7 @@ export type EventBridgeEvent =
   | 'styleAddSelector'
   | 'styleUpdateSelector'
   | 'styleRemoveSelector'
+  | 'styleRemoveSelectors'
   | 'styleAddSelectorVariable'
   | 'styleUpdateSelectorVariable'
   | 'styleRemoveSelectorVariable'

@@ -353,6 +353,18 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
     [dispatchSegments]
   );
 
+  const segmentStyleRemoveSelectors = useCallback(
+    (segmentId: string, displayMode: DisplayMode, selectors: string[], fromSubscriptions = false) =>
+      dispatchSegments({
+        type: SegmentsActions.SEGMENTS_STYLE_REMOVE_SELECTORS,
+        segmentId,
+        displayMode,
+        selectors,
+        fromSubscriptions
+      }),
+    [dispatchSegments]
+  );
+
   const segmentStyleAddSelectorVariable = useCallback(
     (
       segmentId: string,
@@ -710,6 +722,18 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
         };
         segmentStyleRemoveSelector(contextId, displayMode, selector, true);
       });
+      subscriptionManager.subscribe('SegmentStyleRemoveSelectors', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
+        const { displayMode, selectors, contextId } = get(data, 'data.SegmentStyleRemoveSelectors', {}) as {
+          displayMode: DisplayMode;
+          selectors: string[];
+          contextId: string;
+        };
+        segmentStyleRemoveSelectors(contextId, displayMode, selectors, true);
+      });
 
       subscriptionManager.subscribe('SegmentStyleAddSelectorVariable', {}, data => {
         if (!data.data || data.error) {
@@ -800,6 +824,7 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
         'SegmentStyleAddSelector',
         'SegmentStyleUpdateSelector',
         'SegmentStyleRemoveSelector',
+        'SegmentStyleRemoveSelectors',
         'SegmentStyleAddSelectorVariable',
         'SegmentStyleUpdateSelectorVariable',
         'SegmentStyleRemoveSelectorVariable',
@@ -822,6 +847,7 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
     segmentStyleAddSelector,
     segmentStyleUpdateSelector,
     segmentStyleRemoveSelector,
+    segmentStyleRemoveSelectors,
     segmentStyleAddSelectorVariable,
     segmentStyleUpdateSelectorVariable,
     segmentStyleRemoveSelectorVariable,
@@ -866,6 +892,7 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
       styleAddSelector: segmentStyleAddSelector,
       styleUpdateSelector: segmentStyleUpdateSelector,
       styleRemoveSelector: segmentStyleRemoveSelector,
+      styleRemoveSelectors: segmentStyleRemoveSelectors,
       styleAddSelectorVariable: segmentStyleAddSelectorVariable,
       styleUpdateSelectorVariable: segmentStyleUpdateSelectorVariable,
       styleRemoveSelectorVariable: segmentStyleRemoveSelectorVariable,
@@ -887,6 +914,7 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
       segmentStyleAddSelector,
       segmentStyleUpdateSelector,
       segmentStyleRemoveSelector,
+      segmentStyleRemoveSelectors,
       segmentStyleAddSelectorVariable,
       segmentStyleUpdateSelectorVariable,
       segmentStyleRemoveSelectorVariable,

@@ -27,6 +27,7 @@ export type ManagerSelectorProps = {
 const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect }: ManagerSelectorProps) => {
   const selectorsArr = useMemo(() => Object.values(selectors ?? {}), [selectors]);
   const [searchInput, setSearchInput] = useState('');
+  const [checkedSelectors, setCheckedSelectors] = useState<string[]>([]);
   const { builderHandler } = use(BuilderContext);
   const { components } = use(ComponentContext);
   const componentsNotAvailables = useMemo(
@@ -101,39 +102,56 @@ const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect 
   }, []);
 
   const handleCloseDeleteSelector = useCallback(
-    (_e: MouseEvent | React.MouseEvent | undefined, value?: boolean, selector?: string) => {
-      if (!value || !selector) {
+    (_e: MouseEvent | React.MouseEvent | undefined, value?: boolean, selectorsToDelete?: string[]) => {
+      if (!value || !selectorsToDelete || selectorsToDelete.length === 0) {
         return;
       }
 
-      const elementsAffected = flatList.filter(element => elementHasSelector(element, selector));
+      const toDelete = new Set(selectorsToDelete);
+      const elementsAffected = flatList.filter(element =>
+        selectorsToDelete.some(selector => elementHasSelector(element, selector))
+      );
       elementsAffected.forEach(element => {
         builderHandler(
           'schemaUpdateElement',
           produce(element, draft => {
             Object.keys(element.definition.styleSelectors).forEach(styleSelector => {
-              if (get(draft, `definition.styleSelectors.${styleSelector}`, '') === selector) {
+              if (toDelete.has(get(draft, `definition.styleSelectors.${styleSelector}`, ''))) {
                 set(draft, `definition.styleSelectors.${styleSelector}`, '');
               }
             });
           })
         );
       });
-      builderHandler('styleRemoveSelector', displayMode, selector);
-      onSelect?.(undefined);
+      builderHandler('styleRemoveSelectors', displayMode, selectorsToDelete);
+      setCheckedSelectors(prev => prev.filter(selector => !toDelete.has(selector)));
+      onSelect?.(state => (state && toDelete.has(state.name) ? undefined : state));
     },
     [builderHandler, displayMode, elementHasSelector, flatList, onSelect]
   );
 
-  const [idDeleteSelector, openDeleteSelector, onOpenDeleteSelector, onCloseDeleteSelector] = useDisclosure<
-    boolean,
-    string
-  >({ id: 'delete-selector', onClose: handleCloseDeleteSelector });
+  const [idDeleteSelector, openDeleteSelector, onOpenDeleteSelector, onCloseDeleteSelector, , deleteState] =
+    useDisclosure<boolean, string[]>({ id: 'delete-selector', onClose: handleCloseDeleteSelector });
 
   const handleClickDelete = useCallback(
-    (selector: string) => onOpenDeleteSelector(undefined, selector),
+    (selector: string) => onOpenDeleteSelector(undefined, [selector]),
     [onOpenDeleteSelector]
   );
+
+  const handleToggleCheck = useCallback(
+    (selector: string) =>
+      setCheckedSelectors(prev => (prev.includes(selector) ? prev.filter(s => s !== selector) : [...prev, selector])),
+    []
+  );
+
+  const handleClearChecked = useCallback(() => setCheckedSelectors([]), []);
+
+  const handleDeleteChecked = useCallback(
+    () => onOpenDeleteSelector(undefined, checkedSelectors),
+    [onOpenDeleteSelector, checkedSelectors]
+  );
+
+  const deleteCount = Array.isArray(deleteState) ? deleteState.length : 0;
 
   const elementCounts = useMemo<Record<string, number>>(
     () =>
@@ -158,6 +176,20 @@ const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect 
         New Selector
       </Button>
       <Input placeholder="Search Selector" value={searchInput} onChange={handleChangeSearch} size="xs" />
+      {checkedSelectors.length > 0 && (
+        <div className="bg-secondary-50 dark:bg-secondary-900/30 flex items-center justify-between gap-2 rounded-sm px-2 py-1">
+          <span className="text-xs text-zinc-600 dark:text-zinc-300">{checkedSelectors.length} selected</span>
+          <div className="flex gap-1">
+            <Button size="xs" onClick={handleClearChecked}>
+              Clear
+            </Button>
+            <Button intent="danger" size="xs" iconPlacement="before" onClick={handleDeleteChecked}>
+              <Button.Icon icon="fas fa-trash" />
+              Delete
+            </Button>
+          </div>
+        </div>
+      )}
       <div className="flex grow basis-0 flex-col overflow-y-auto">
         {finalSelectors.map(selector => {
           const { name, type } = selector;
@@ -167,11 +199,13 @@ const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect 
               key={name}
               id={name}
               active={name === selected}
+              checked={checkedSelectors.includes(name)}
               label={name}
               type={type}
               elementsCount={elementCounts[name]}
               onSelect={handleClickSelect}
               onDelete={handleClickDelete}
+              onToggleCheck={handleToggleCheck}
             />
           );
         })}
@@ -194,7 +228,8 @@ const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect 
           <h4>Remove Selector</h4>
         </Modal.Header>
         <Modal.Body>
-          <h4>Do you want to remove this item ?</h4>
+          {deleteCount > 1 && <h4>Do you want to remove these {deleteCount} items ?</h4>}
+          {deleteCount <= 1 && <h4>Do you want to remove this item ?</h4>}
         </Modal.Body>
         <Modal.Footer justify="end">
           <Button onClick={handleCloseModal} size="sm">
