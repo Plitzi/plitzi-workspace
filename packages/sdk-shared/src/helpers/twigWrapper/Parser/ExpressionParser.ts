@@ -1,106 +1,80 @@
+import { Char, isDigit } from '../charClass';
+import { Cursor } from './Cursor';
+
 import type { Expression, FilterCall } from '../AST';
 
 // ── Expression Parser ────────────────────────────────────────────────────────
-// Parses a single expression string (from a variable tag or tag argument) into
-// an Expression AST node. Handles operator precedence:
-//   1. or
-//   2. and
-//   3. not (unary)
-//   4. comparisons (==, !=, >=, <=, >, <, in, not in, is, is not)
-//   5. ~ (concatenation)
-//   6. ?? (default)
-//   7. atoms (literals, paths, function calls, filter chains, parenthesized)
+// Recursive-descent parser turning an expression string (a variable tag or a tag argument) into an
+// Expression AST. Character-level scanning lives in the Cursor base class; this file is pure grammar.
+// Precedence, loosest first:
+//   ternary (? :) → or → and → not → comparisons (==,!=,>=,<=,>,<,in,not in,is,is not)
+//   → ~ (concat) → +,- → *,/,% → ?? (default) → atoms (literals, paths, calls, filters, parens)
 
-export const parseExpression = (expr: string): Expression => {
-  const parser = new ExpressionParser(expr);
-  return parser.parseTernary();
-};
+export const parseExpression = (expr: string): Expression => new ExpressionParser(expr).parseTernary();
 
-class ExpressionParser {
-  private readonly src: string;
-  private pos = 0;
+// Parses a bare `{% apply %}` filter chain such as `upper | trim | capitalize` (no leading pipe, no subject).
+export const parseApplyFilters = (expr: string): FilterCall[] => new ExpressionParser(expr).parseApplyChain();
 
-  constructor(src: string) {
-    this.src = src;
-  }
-
-  private skipWs(): void {
-    while (
-      this.pos < this.src.length &&
-      (this.src.charCodeAt(this.pos) === 32 || this.src.charCodeAt(this.pos) === 9)
-    ) {
-      this.pos++;
-    }
-  }
-
-  private peekChar(): number {
-    return this.pos < this.src.length ? this.src.charCodeAt(this.pos) : -1;
-  }
-
-  parseOr(): Expression {
-    let left = this.parseAnd();
-    this.skipWs();
-    while (this.matchKeyword('or')) {
-      const right = this.parseAnd();
-      left = { type: 'binary', operator: 'or', left, right };
-      this.skipWs();
-    }
-    return left;
-  }
-
+class ExpressionParser extends Cursor {
   parseTernary(): Expression {
     const condition = this.parseOr();
     this.skipWs();
-    if (this.peekChar() === 63) {
+    if (this.peek() === Char.Question) {
       this.pos++;
       this.skipWs();
       const trueExpr = this.parseOr();
       this.skipWs();
-      if (this.peekChar() === 58) {
+      if (this.peek() === Char.Colon) {
         this.pos++;
         this.skipWs();
         const falseExpr = this.parseOr();
         return { type: 'ternary', condition, trueExpr, falseExpr };
       }
     }
+
     return condition;
   }
 
-  parseAnd(): Expression {
-    let left = this.parseNot();
+  private parseOr(): Expression {
+    let left = this.parseAnd();
     this.skipWs();
-    while (this.matchKeyword('and')) {
-      const right = this.parseNot();
-      left = { type: 'binary', operator: 'and', left, right };
+    while (this.matchKeyword('or')) {
+      left = { type: 'binary', operator: 'or', left, right: this.parseAnd() };
       this.skipWs();
     }
+
     return left;
   }
 
-  parseNot(): Expression {
+  private parseAnd(): Expression {
+    let left = this.parseNot();
+    this.skipWs();
+    while (this.matchKeyword('and')) {
+      left = { type: 'binary', operator: 'and', left, right: this.parseNot() };
+      this.skipWs();
+    }
+
+    return left;
+  }
+
+  private parseNot(): Expression {
     this.skipWs();
     if (this.matchKeyword('not')) {
-      const operand = this.parseComparison();
-      return { type: 'unary', operator: 'not', operand };
+      return { type: 'unary', operator: 'not', operand: this.parseComparison() };
     }
+
     return this.parseComparison();
   }
 
-  parseComparison(): Expression {
+  private parseComparison(): Expression {
     let left = this.parseConcat();
     this.skipWs();
 
-    while (this.pos < this.src.length) {
+    while (!this.eof()) {
       if (this.matchKeyword('is')) {
         this.skipWs();
-        if (this.matchKeyword('not')) {
-          const right = this.parseConcat();
-          left = { type: 'binary', operator: 'is not', left, right };
-          this.skipWs();
-          continue;
-        }
-        const right = this.parseConcat();
-        left = { type: 'binary', operator: 'is', left, right };
+        const operator = this.matchKeyword('not') ? 'is not' : 'is';
+        left = { type: 'binary', operator, left, right: this.parseConcat() };
         this.skipWs();
         continue;
       }
@@ -108,20 +82,26 @@ class ExpressionParser {
       if (this.matchKeyword('not')) {
         this.skipWs();
         if (this.matchKeyword('in')) {
-          const right = this.parseConcat();
-          left = { type: 'binary', operator: 'not in', left, right };
+          left = { type: 'binary', operator: 'not in', left, right: this.parseConcat() };
           this.skipWs();
           continue;
         }
+
+        // A `not` that isn't `not in` is a unary operator over the rest of the expression.
         const rest = this.src.slice(this.pos - 4);
         this.pos = this.src.length;
         return { type: 'unary', operator: 'not', operand: parseExpression(rest) };
       }
 
+      if (this.matchKeyword('in')) {
+        left = { type: 'binary', operator: 'in', left, right: this.parseConcat() };
+        this.skipWs();
+        continue;
+      }
+
       const op = this.matchBinaryOp();
       if (op) {
-        const right = this.parseConcat();
-        left = { type: 'binary', operator: op, left, right };
+        left = { type: 'binary', operator: op, left, right: this.parseConcat() };
         this.skipWs();
         continue;
       }
@@ -132,359 +112,188 @@ class ExpressionParser {
     return left;
   }
 
-  parseConcat(): Expression {
+  private parseConcat(): Expression {
     let left = this.parseAdditive();
     this.skipWs();
-    while (this.pos < this.src.length && this.src.charCodeAt(this.pos) === 126) {
+    while (this.peek() === Char.Tilde) {
       this.pos++;
       const right = this.parseAdditive();
-      if (left.type === 'concat') {
-        left = { type: 'concat', parts: [...left.parts, right] };
-      } else {
-        left = { type: 'concat', parts: [left, right] };
-      }
+      left =
+        left.type === 'concat'
+          ? { type: 'concat', parts: [...left.parts, right] }
+          : { type: 'concat', parts: [left, right] };
       this.skipWs();
     }
+
     return left;
   }
 
-  parseAdditive(): Expression {
+  private parseAdditive(): Expression {
     let left = this.parseMultiplicative();
     this.skipWs();
-    while (this.pos < this.src.length) {
-      const ch = this.peekChar();
-      if (ch === 43 || ch === 45) {
-        const op = ch === 43 ? '+' : '-';
-        this.pos++;
-        const right = this.parseMultiplicative();
-        left = { type: 'binary', operator: op, left, right };
-        this.skipWs();
-        continue;
-      }
-      break;
+    for (let ch = this.peek(); ch === Char.Plus || ch === Char.Minus; ch = this.peek()) {
+      this.pos++;
+      left = { type: 'binary', operator: ch === Char.Plus ? '+' : '-', left, right: this.parseMultiplicative() };
+      this.skipWs();
     }
+
     return left;
   }
 
-  parseMultiplicative(): Expression {
+  private parseMultiplicative(): Expression {
     let left = this.parseDefault();
     this.skipWs();
-    while (this.pos < this.src.length) {
-      const ch = this.peekChar();
-      if (ch === 42 || ch === 47 || ch === 37) {
-        const op = ch === 42 ? '*' : ch === 47 ? '/' : '%';
-        this.pos++;
-        const right = this.parseDefault();
-        left = { type: 'binary', operator: op, left, right };
-        this.skipWs();
-        continue;
-      }
-      break;
+    for (let ch = this.peek(); ch === Char.Star || ch === Char.Slash || ch === Char.Percent; ch = this.peek()) {
+      this.pos++;
+      const operator = ch === Char.Star ? '*' : ch === Char.Slash ? '/' : '%';
+      left = { type: 'binary', operator, left, right: this.parseDefault() };
+      this.skipWs();
     }
+
     return left;
   }
 
-  parseDefault(): Expression {
+  private parseDefault(): Expression {
     let left = this.parseAtom();
     this.skipWs();
-    while (this.peekChar() === 63 && this.src.charCodeAt(this.pos + 1) === 63) {
+    while (this.peek() === Char.Question && this.at(1) === Char.Question) {
       this.pos += 2;
       this.skipWs();
-      const defaultExpr = this.parseAtom();
-      left = { type: 'default', value: left, defaultExpr };
+      left = { type: 'default', value: left, defaultExpr: this.parseAtom() };
       this.skipWs();
     }
+
     return left;
   }
 
-  parseAtom(): Expression {
+  private parseAtom(): Expression {
     this.skipWs();
-    const ch = this.peekChar();
+    const ch = this.peek();
 
-    if (ch === 40) {
+    if (ch === Char.LParen) {
       this.pos++;
       const expr = this.parseTernary();
       this.skipWs();
-      if (this.peekChar() === 41) {
+      if (this.peek() === Char.RParen) {
         this.pos++;
       }
-      return expr;
+
+      return this.maybeTrailingFilters(expr);
     }
 
-    if (ch === 39 || ch === 34) {
-      return this.parseStringLiteral();
+    if (ch === Char.SingleQuote || ch === Char.DoubleQuote) {
+      return this.maybeTrailingFilters({ type: 'literal', value: this.scanStringLiteral() });
     }
 
-    if (ch === 45 || (ch >= 48 && ch <= 57)) {
-      return this.parseNumberLiteral();
+    if (ch === Char.Minus || isDigit(ch)) {
+      return this.maybeTrailingFilters({ type: 'literal', value: this.scanNumber() });
     }
 
-    if (ch === 91) {
-      return this.parseArrayLiteral();
+    if (ch === Char.LBracket) {
+      this.pos++;
+      return this.maybeTrailingFilters({ type: 'array', elements: this.parseArgList(Char.RBracket) });
     }
 
     return this.parsePathOrFunction();
   }
 
-  private parseStringLiteral(): { type: 'literal'; value: string } {
-    const quote = this.src[this.pos];
-    const start = this.pos + 1;
-    this.pos = start;
-    while (this.pos < this.src.length && this.src[this.pos] !== quote) {
-      this.pos++;
-    }
-    const value = this.src.slice(start, this.pos);
-    if (this.pos < this.src.length) {
-      this.pos++;
-    }
-    return { type: 'literal', value };
-  }
-
-  private parseNumberLiteral(): { type: 'literal'; value: number } {
-    const start = this.pos;
-    if (this.src.charCodeAt(this.pos) === 45) {
-      this.pos++;
-    }
-    while (this.pos < this.src.length && this.src.charCodeAt(this.pos) >= 48 && this.src.charCodeAt(this.pos) <= 57) {
-      this.pos++;
-    }
-    if (this.pos < this.src.length && this.src.charCodeAt(this.pos) === 46) {
-      this.pos++;
-      while (this.pos < this.src.length && this.src.charCodeAt(this.pos) >= 48 && this.src.charCodeAt(this.pos) <= 57) {
-        this.pos++;
-      }
-    }
-    return { type: 'literal', value: Number(this.src.slice(start, this.pos)) };
-  }
-
-  private parseArrayLiteral(): Expression {
-    this.pos++;
-    const elements: Expression[] = [];
-    this.skipWs();
-    while (this.pos < this.src.length && this.peekChar() !== 93) {
-      elements.push(this.parseOr());
-      this.skipWs();
-      if (this.peekChar() === 44) {
-        this.pos++;
-        this.skipWs();
-      }
-    }
-    if (this.peekChar() === 93) {
-      this.pos++;
-    }
-    return { type: 'array', elements };
-  }
-
   private parsePathOrFunction(): Expression {
-    const start = this.pos;
-    while (
-      this.pos < this.src.length &&
-      ((this.src.charCodeAt(this.pos) >= 97 && this.src.charCodeAt(this.pos) <= 122) ||
-        (this.src.charCodeAt(this.pos) >= 65 && this.src.charCodeAt(this.pos) <= 90) ||
-        (this.src.charCodeAt(this.pos) >= 48 && this.src.charCodeAt(this.pos) <= 57) ||
-        this.src.charCodeAt(this.pos) === 95 ||
-        this.src.charCodeAt(this.pos) === 45)
-    ) {
-      this.pos++;
-    }
-
-    const name = this.src.slice(start, this.pos);
+    const name = this.scanName();
     if (!name) {
       this.pos++;
       return { type: 'literal', value: '' };
     }
 
-    if (name === 'true') {
-      return { type: 'literal', value: true };
-    }
-    if (name === 'false') {
-      return { type: 'literal', value: false };
+    if (name === 'true' || name === 'false') {
+      return this.maybeTrailingFilters({ type: 'literal', value: name === 'true' });
     }
 
     this.skipWs();
-    if (this.peekChar() === 40) {
+    if (this.peek() === Char.LParen) {
       this.pos++;
-      const args: Expression[] = [];
-      this.skipWs();
-      while (this.pos < this.src.length && this.peekChar() !== 41) {
-        args.push(this.parseOr());
-        this.skipWs();
-        if (this.peekChar() === 44) {
-          this.pos++;
-          this.skipWs();
-        }
-      }
-      if (this.peekChar() === 41) {
-        this.pos++;
-      }
-      this.skipWs();
-      if (this.peekChar() === 124) {
-        const filters = this.parseFilterChainFromPos();
-        return { type: 'filter', subject: { type: 'function', name, args }, filters };
-      }
-      return { type: 'function', name, args };
+      const args = this.parseArgList(Char.RParen);
+      return this.maybeTrailingFilters({ type: 'function', name, args });
     }
 
     const segments: string[] = [name];
-    while (this.peekChar() === 46) {
+    while (this.peek() === Char.Dot) {
       this.pos++;
-      const segStart = this.pos;
-      while (
-        this.pos < this.src.length &&
-        ((this.src.charCodeAt(this.pos) >= 97 && this.src.charCodeAt(this.pos) <= 122) ||
-          (this.src.charCodeAt(this.pos) >= 65 && this.src.charCodeAt(this.pos) <= 90) ||
-          (this.src.charCodeAt(this.pos) >= 48 && this.src.charCodeAt(this.pos) <= 57) ||
-          this.src.charCodeAt(this.pos) === 95 ||
-          this.src.charCodeAt(this.pos) === 45)
-      ) {
-        this.pos++;
-      }
-      if (this.pos > segStart) {
-        segments.push(this.src.slice(segStart, this.pos));
+      const segment = this.scanName();
+      if (segment) {
+        segments.push(segment);
       }
     }
 
-    this.skipWs();
-    if (this.peekChar() === 124) {
-      const filters = this.parseFilterChainFromPos();
-      return { type: 'filter', subject: { type: 'path', segments }, filters };
-    }
-
-    return { type: 'path', segments };
+    return this.maybeTrailingFilters({ type: 'path', segments });
   }
 
-  private parseFilterChainFromPos(): readonly FilterCall[] {
+  // Wraps a subject expression in a FilterExpression when a `| filter` chain follows it.
+  private maybeTrailingFilters(subject: Expression): Expression {
+    this.skipWs();
+    if (this.peek() !== Char.Pipe) {
+      return subject;
+    }
+
+    return { type: 'filter', subject, filters: this.parseTrailingFilters() };
+  }
+
+  // Parses a comma-separated expression list up to (and consuming) the given closing char code (`)` or `]`).
+  private parseArgList(closeChar: number): Expression[] {
+    const args: Expression[] = [];
+    this.skipWs();
+    while (!this.eof() && this.peek() !== closeChar) {
+      args.push(this.parseTernary());
+      this.skipWs();
+      if (this.peek() === Char.Comma) {
+        this.pos++;
+        this.skipWs();
+      }
+    }
+
+    if (this.peek() === closeChar) {
+      this.pos++;
+    }
+
+    return args;
+  }
+
+  // Reads a `| filter | filter(args)` chain from a cursor sitting on the first `|`.
+  private parseTrailingFilters(): FilterCall[] {
     const filters: FilterCall[] = [];
-    while (this.peekChar() === 124) {
+    while (this.peek() === Char.Pipe) {
       this.pos++;
       this.skipWs();
-      const filterStart = this.pos;
-      while (
-        this.pos < this.src.length &&
-        ((this.src.charCodeAt(this.pos) >= 97 && this.src.charCodeAt(this.pos) <= 122) ||
-          (this.src.charCodeAt(this.pos) >= 65 && this.src.charCodeAt(this.pos) <= 90) ||
-          (this.src.charCodeAt(this.pos) >= 48 && this.src.charCodeAt(this.pos) <= 57) ||
-          this.src.charCodeAt(this.pos) === 95)
-      ) {
-        this.pos++;
-      }
-      const filterName = this.src.slice(filterStart, this.pos);
-      this.skipWs();
-      let filterArg: string | null = null;
-      if (this.peekChar() === 40) {
-        let parenDepth = 1;
-        this.pos++;
-        const argStart = this.pos;
-        while (this.pos < this.src.length && parenDepth > 0) {
-          if (this.src.charCodeAt(this.pos) === 40) {
-            parenDepth++;
-          } else if (this.src.charCodeAt(this.pos) === 41) {
-            break;
-          }
-          this.pos++;
-        }
-        filterArg = this.src.slice(argStart, this.pos);
-        if (this.peekChar() === 41) {
-          this.pos++;
-        }
-      }
-      if (filterName) {
-        filters.push({ name: filterName, arg: filterArg || null });
-      }
+      filters.push(this.readFilter());
       this.skipWs();
     }
+
     return filters;
   }
 
-  private matchKeyword(kw: string): boolean {
-    const end = this.pos + kw.length;
-    if (end > this.src.length) {
-      return false;
-    }
-
-    // Fast-path for common short keywords: avoid per-char loop overhead
-    const klen = kw.length;
-    if (klen === 2) {
-      const c0 = this.src.charCodeAt(this.pos);
-      const c1 = this.src.charCodeAt(this.pos + 1);
-      if (c0 !== kw.charCodeAt(0) || c1 !== kw.charCodeAt(1)) {
-        return false;
-      }
-    } else if (klen === 3) {
-      const c0 = this.src.charCodeAt(this.pos);
-      const c1 = this.src.charCodeAt(this.pos + 1);
-      const c2 = this.src.charCodeAt(this.pos + 2);
-      if (c0 !== kw.charCodeAt(0) || c1 !== kw.charCodeAt(1) || c2 !== kw.charCodeAt(2)) {
-        return false;
-      }
-    } else {
-      for (let i = 0; i < klen; i++) {
-        if (this.src.charCodeAt(this.pos + i) !== kw.charCodeAt(i)) {
-          return false;
-        }
-      }
-    }
-
-    if (end < this.src.length) {
-      const next = this.src.charCodeAt(end);
-      if ((next >= 97 && next <= 122) || (next >= 65 && next <= 90) || (next >= 48 && next <= 57) || next === 95) {
-        return false;
-      }
-    }
-    this.pos = end;
+  // Reads an `{% apply %}` chain: a first filter with no leading pipe, then any number of `| filter`.
+  parseApplyChain(): FilterCall[] {
     this.skipWs();
-    return true;
+    const filters: FilterCall[] = [this.readFilter()];
+    this.skipWs();
+    while (this.peek() === Char.Pipe) {
+      this.pos++;
+      this.skipWs();
+      filters.push(this.readFilter());
+      this.skipWs();
+    }
+
+    return filters;
   }
 
-  private matchBinaryOp(): string | null {
+  // Reads a single filter: a name followed by an optional parenthesised argument list.
+  private readFilter(): FilterCall {
+    const name = this.scanName();
     this.skipWs();
-    const ch = this.peekChar();
-
-    if (this.pos + 1 < this.src.length) {
-      const c0 = ch;
-      const c1 = this.src.charCodeAt(this.pos + 1);
-
-      // == (61,61)  != (33,61)  >= (62,61)  <= (60,61)
-      if (c1 === 61) {
-        if (c0 === 61) {
-          this.pos += 2;
-          return '==';
-        }
-        if (c0 === 33) {
-          this.pos += 2;
-          return '!=';
-        }
-        if (c0 === 62) {
-          this.pos += 2;
-          return '>=';
-        }
-        if (c0 === 60) {
-          this.pos += 2;
-          return '<=';
-        }
-      }
-    }
-
-    if (ch === 62) {
+    if (this.peek() === Char.LParen) {
       this.pos++;
-      return '>';
-    }
-    if (ch === 60) {
-      this.pos++;
-      return '<';
+      return { name, args: this.parseArgList(Char.RParen) };
     }
 
-    return null;
+    return { name, args: [] };
   }
 }
-
-// Parse a filter chain string like `| upper | truncate(10)` into FilterCall[].
-export const parseFilterChain = (filtersStr: string): FilterCall[] => {
-  const filters: FilterCall[] = [];
-  const matches = filtersStr.matchAll(/\|\s*([a-zA-Z0-9_]+)(?:\(([^)]*)\))?/g);
-  for (const match of matches) {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    filters.push({ name: match[1], arg: match[2] ?? null });
-  }
-  return filters;
-};

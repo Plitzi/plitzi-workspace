@@ -1,27 +1,32 @@
+import { Char, isSpace } from '../charClass';
+
+// Returns the leading run of non-whitespace characters — the tag keyword (`if`, `for`, `endfor`, …).
 export const extractFirstWord = (s: string): string => {
-  const len = s.length;
   let i = 0;
-  while (i < len && s.charCodeAt(i) !== 32 && s.charCodeAt(i) !== 9) {
+  while (i < s.length && !isSpace(s.charCodeAt(i))) {
     i++;
   }
+
   return s.slice(0, i);
 };
 
-export const isSimpleIdentifier = (s: string): boolean => {
-  const len = s.length;
-  if (len === 0) {
-    return false;
-  }
-  const ch = s.charCodeAt(0);
-  if (!((ch >= 97 && ch <= 122) || (ch >= 65 && ch <= 90) || ch === 95)) {
-    return false;
-  }
-  for (let i = 1; i < len; i++) {
+// Splits a `{% for %}` collection on the Twig range operator `..`, ignoring `..` inside quotes and single dots
+// (decimals). Returns the two bound strings, or null when the collection is not a range. Each bound is then
+// parsed through the ordinary expression parser, so `0..n`, `-2..2` and `start..end` all work.
+export const splitRange = (s: string): [string, string] | null => {
+  let quote = 0;
+  for (let i = 0; i + 1 < s.length; i++) {
     const c = s.charCodeAt(i);
-    if ((c >= 97 && c <= 122) || (c >= 65 && c <= 90) || (c >= 48 && c <= 57) || c === 95) {
-      continue;
+    if (quote !== 0) {
+      if (c === quote) {
+        quote = 0;
+      }
+    } else if (c === Char.SingleQuote || c === Char.DoubleQuote) {
+      quote = c;
+    } else if (c === Char.Dot && s.charCodeAt(i + 1) === Char.Dot) {
+      return [s.slice(0, i).trim(), s.slice(i + 2).trim()];
     }
-    return false;
   }
-  return true;
+
+  return null;
 };

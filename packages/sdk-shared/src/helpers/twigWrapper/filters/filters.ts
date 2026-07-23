@@ -1,25 +1,30 @@
-import { evalOperand } from '../expressions/evalOperand';
-import { FILTER_RE } from '../patterns/patterns';
-
-// A twig filter: takes the piped value, its optional raw argument (e.g. the `', '` in `| join(', ')`) and the
-// render context, and returns the transformed value. Registered by name in `filters`, so the set is extensible —
-// an unknown filter is simply skipped rather than throwing.
-export type TwigFilter = (value: unknown, arg: string | undefined, context: Record<string, unknown>) => unknown;
+// A twig filter: takes the piped value plus its already-evaluated arguments and returns the transformed value.
+// Arguments are parsed and evaluated by the Evaluator before the filter runs, so a filter never parses raw
+// strings itself. Registered by name in `filters`, so the set is extensible — an unknown filter is simply
+// skipped rather than throwing.
+export type TwigFilter = (value: unknown, args: readonly unknown[]) => unknown;
 
 const isEmpty = (value: unknown): boolean => value === undefined || value === null || value === '';
 
-// Marker returned by `| raw` so that `renderTokens` bypasses JSON serialization and outputs the value as-is.
-export const RAW_MARKER = '__PLITZI_RAW__';
-export const isRawMarker = (value: unknown): value is { readonly __raw: unknown } =>
-  typeof value === 'object' &&
-  value !== null &&
-  '__marker' in value &&
-  (value as Record<string, unknown>).__marker === RAW_MARKER;
+const toStr = (value: unknown): string => {
+  if (value === null || value === undefined) {
+    return '';
+  }
 
-export const wrapRaw = (value: unknown): { readonly __raw: unknown; readonly __marker: string } => ({
-  __raw: value,
-  __marker: RAW_MARKER
-});
+  // eslint-disable-next-line @typescript-eslint/no-base-to-string
+  return String(value);
+};
+
+// ── Raw marker ───────────────────────────────────────────────────────────────
+// Marker returned by `| raw` so the Evaluator bypasses JSON serialization and outputs the value as-is.
+export type RawMarker = { readonly __raw: unknown; readonly __marker: typeof RAW_MARKER };
+
+export const RAW_MARKER = '__PLITZI_RAW__';
+
+export const isRawMarker = (value: unknown): value is RawMarker =>
+  typeof value === 'object' && value !== null && (value as { __marker?: unknown }).__marker === RAW_MARKER;
+
+export const wrapRaw = (value: unknown): RawMarker => ({ __raw: value, __marker: RAW_MARKER });
 
 export const unwrapRaw = (value: unknown): unknown => (isRawMarker(value) ? value.__raw : value);
 
@@ -29,14 +34,14 @@ export const filters: Record<string, TwigFilter> = {
   raw: value => wrapRaw(value),
 
   // ── Serialisation ────────────────────────────────────────────────────────────────
-  to_json: value => (typeof value === 'object' && value !== null ? JSON.stringify(value) : stringify(value)),
-  json_encode: value => (typeof value === 'object' && value !== null ? JSON.stringify(value) : stringify(value)),
+  to_json: value => (typeof value === 'object' && value !== null ? JSON.stringify(value) : toStr(value)),
+  json_encode: value => (typeof value === 'object' && value !== null ? JSON.stringify(value) : toStr(value)),
   // Serialises an object so an asRaw result can be JSON.parsed back into typed data; leaves primitives untouched.
   object_as_json: value => (typeof value === 'object' && value !== null ? JSON.stringify(value) : value),
 
   // ── Default ──────────────────────────────────────────────────────────────────────
   // The idiomatic default: substitutes the argument when the value is undefined, null or an empty string.
-  default: (value, arg, context) => (isEmpty(value) ? evalOperand(arg ?? '', context) : value),
+  default: (value, args) => (isEmpty(value) ? args[0] : value),
 
   // ── String transforms ────────────────────────────────────────────────────────────
   upper: value => (typeof value === 'string' ? value.toUpperCase() : value),
@@ -45,7 +50,7 @@ export const filters: Record<string, TwigFilter> = {
   // Twig-style: first character uppercase, the rest lowercase.
   capitalize: value =>
     typeof value === 'string' && value.length > 0 ? value[0].toUpperCase() + value.slice(1).toLowerCase() : value,
-  // Alias: `| title` uppercases the first letter of each word.
+  // `| title` uppercases the first letter of each word.
   title: value => (typeof value === 'string' ? value.replace(/\b\w/g, char => char.toUpperCase()) : value),
   // Converts to CamelCase (e.g. `foo_bar` → `fooBar`).
   camelize: value =>
@@ -70,30 +75,23 @@ export const filters: Record<string, TwigFilter> = {
       : value,
 
   // ── String operations ────────────────────────────────────────────────────────────
-  // `| replace('search', 'replacement')` — Twig accepts two string args separated by comma.
-  replace: (value, arg, context) => {
-    if (typeof value !== 'string' || arg === undefined) {
+  // `| replace('search', 'replacement')` — replaces every occurrence of search with replacement.
+  replace: (value, args) => {
+    if (typeof value !== 'string' || args.length === 0) {
       return value;
     }
 
-    const parts = parseReplaceArgs(arg, context);
-    let result = value;
-    for (const [search, replacement] of parts) {
-      result = result.split(search).join(replacement);
-    }
-
-    return result;
+    return value.split(toStr(args[0])).join(toStr(args[1]));
   },
   // `| slice(2)` or `| slice(2, 5)` — substring or sub-array via start/length.
-  slice: (value, arg, context) => {
-    if (arg === undefined) {
+  slice: (value, args) => {
+    if (args.length === 0) {
       return value;
     }
 
-    const nums = splitFilterArgs(arg).map(a => Number(evalOperand(a.trim(), context)));
-    const start = nums[0] ?? 0;
-    const hasLength = nums.length > 1 && Number.isFinite(nums[1]);
-    const end = hasLength ? start + nums[1] : undefined;
+    const start = Number(args[0]) || 0;
+    const hasLength = args.length > 1 && Number.isFinite(Number(args[1]));
+    const end = hasLength ? start + Number(args[1]) : undefined;
 
     if (typeof value === 'string') {
       return value.slice(start, end);
@@ -107,17 +105,9 @@ export const filters: Record<string, TwigFilter> = {
     return value;
   },
   // `| split(',')` — splits a string into an array.
-  split: (value, arg, context) => {
-    if (typeof value !== 'string' || arg === undefined) {
-      return value;
-    }
-
-    const delimiter = String(evalOperand(arg, context));
-    return value.split(delimiter);
-  },
+  split: (value, args) => (typeof value === 'string' && args.length > 0 ? value.split(toStr(args[0])) : value),
   // `| join(', ')` — joins an array into a string.
-  join: (value, arg, context) =>
-    Array.isArray(value) ? value.join(arg === undefined ? '' : String(evalOperand(arg, context))) : value,
+  join: (value, args) => (Array.isArray(value) ? value.join(args.length === 0 ? '' : toStr(args[0])) : value),
   // `| reverse` — reverses a string or array.
   reverse: value => {
     if (typeof value === 'string') {
@@ -170,16 +160,16 @@ export const filters: Record<string, TwigFilter> = {
 
     return value;
   },
-  // `| contains('substr')` or `| contains(item)` — checks if a string contains a substring or an array contains an item.
-  contains: (value, arg, context) => {
-    if (arg === undefined) {
+  // `| contains('substr')` or `| contains(item)` — checks string substring or array membership.
+  contains: (value, args) => {
+    if (args.length === 0) {
       return false;
     }
 
-    const needle = evalOperand(arg, context);
+    const needle = args[0];
 
     if (typeof value === 'string') {
-      return value.includes(String(needle));
+      return value.includes(toStr(needle));
     }
 
     if (Array.isArray(value)) {
@@ -189,35 +179,21 @@ export const filters: Record<string, TwigFilter> = {
     return false;
   },
   // `| startswith('prefix')` — checks if a string starts with a prefix.
-  startswith: (value, arg, context) => {
-    if (typeof value !== 'string' || arg === undefined) {
-      return false;
-    }
-
-    return value.startsWith(String(evalOperand(arg, context)));
-  },
+  startswith: (value, args) =>
+    typeof value === 'string' && args.length > 0 ? value.startsWith(toStr(args[0])) : false,
   // `| endswith('suffix')` — checks if a string ends with a suffix.
-  endswith: (value, arg, context) => {
-    if (typeof value !== 'string' || arg === undefined) {
-      return false;
-    }
-
-    return value.endsWith(String(evalOperand(arg, context)));
-  },
+  endswith: (value, args) => (typeof value === 'string' && args.length > 0 ? value.endsWith(toStr(args[0])) : false),
 
   // ── Number formatting ────────────────────────────────────────────────────────────
   // `| number_format(2, '.', ',')` — formats a number with decimals and separators.
-  number_format: (value, arg, context) => {
+  number_format: (value, args) => {
     if (typeof value !== 'number') {
       return value;
     }
 
-    const args = splitFilterArgs(arg ?? '').map(a => evalOperand(a.trim(), context));
     const decimals = Number(args[0]) || 0;
-    // eslint-disable-next-line @typescript-eslint/no-base-to-string
-    const decPoint = args[1] != null ? String(args[1]) : '.';
-    // eslint-disable-next-line @typescript-eslint/no-base-to-string
-    const thousandsSep = args[2] != null ? String(args[2]) : '';
+    const decPoint = args[1] != null ? toStr(args[1]) : '.';
+    const thousandsSep = args[2] != null ? toStr(args[2]) : '';
 
     const fixed = value.toFixed(decimals);
     if (thousandsSep === '') {
@@ -247,16 +223,17 @@ export const filters: Record<string, TwigFilter> = {
       if (b === null || b === undefined) {
         return 1;
       }
+
       return String(a).localeCompare(String(b));
     });
   },
   // `| batch(3)` — chunks an array into groups of N.
-  batch: (value, arg, context) => {
-    if (!Array.isArray(value) || arg === undefined) {
+  batch: (value, args) => {
+    if (!Array.isArray(value) || args.length === 0) {
       return value;
     }
 
-    const size = Number(evalOperand(arg, context));
+    const size = Number(args[0]);
     if (size <= 0) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return value;
@@ -270,12 +247,12 @@ export const filters: Record<string, TwigFilter> = {
     return chunks;
   },
   // `| merge(other)` — merges two arrays or objects.
-  merge: (value, arg, context) => {
-    if (arg === undefined) {
+  merge: (value, args) => {
+    if (args.length === 0) {
       return value;
     }
 
-    const other = evalOperand(arg, context);
+    const other = args[0];
 
     if (Array.isArray(value) && Array.isArray(other)) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
@@ -295,13 +272,7 @@ export const filters: Record<string, TwigFilter> = {
     return value;
   },
   // `| keys` — returns the keys of an object as an array.
-  keys: value => {
-    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-      return Object.keys(value);
-    }
-
-    return value;
-  },
+  keys: value => (value !== null && typeof value === 'object' && !Array.isArray(value) ? Object.keys(value) : value),
   // `| values` — returns the values of an object as an array.
   values: value => {
     if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
@@ -311,31 +282,42 @@ export const filters: Record<string, TwigFilter> = {
 
     return value;
   },
-  // `| filter('key')` — filters an array, keeping items that are truthy for the given key path.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  filter: (value, arg, _context) => {
+  // `| filter('key')` — filters an array, keeping items truthy for the given key (or the items themselves).
+  filter: (value, args) => {
     if (!Array.isArray(value)) {
       return value;
     }
 
-    if (arg === undefined) {
+    if (args.length === 0) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return value.filter(Boolean);
     }
 
-    const path = arg.replace(/^['"]|['"]$/g, '').trim();
+    const key = toStr(args[0]);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return value.filter(item => {
       if (item !== null && typeof item === 'object') {
-        const resolved = (item as Record<string, unknown>)[path];
+        const resolved = (item as Record<string, unknown>)[key];
         return resolved !== undefined && resolved !== null && resolved !== false && resolved !== '';
       }
 
       return Boolean(item);
     });
   },
+  // `| column(name)` — extracts a property from each item in an array of objects.
+  column: (value, args) => {
+    if (!Array.isArray(value) || args.length === 0) {
+      return value;
+    }
 
-  // ── New Twig filters ──────────────────────────────────────────────────────────────
+    const key = toStr(args[0]);
+
+    return value.map(item =>
+      item !== null && typeof item === 'object' ? (item as Record<string, unknown>)[key] : undefined
+    );
+  },
+
+  // ── Misc ──────────────────────────────────────────────────────────────────────────
   // `| url_encode` — percent-encodes a string or converts an object to query-string format.
   url_encode: value => {
     if (typeof value === 'string') {
@@ -344,7 +326,7 @@ export const filters: Record<string, TwigFilter> = {
 
     if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
       return new URLSearchParams(
-        Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, String(v)]))
+        Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, toStr(v)]))
       ).toString();
     }
 
@@ -353,13 +335,13 @@ export const filters: Record<string, TwigFilter> = {
   // `| nl2br` — inserts HTML `<br>` before every newline.
   nl2br: value => (typeof value === 'string' ? value.replace(/\n/g, '<br>') : value),
   // `| striptags` — strips HTML/XML tags; optional `allowable` arg keeps specific tags.
-  striptags: (value, arg) => {
+  striptags: (value, args) => {
     if (typeof value !== 'string') {
       return value;
     }
 
-    if (arg) {
-      const allowable = arg.replace(/^['"]|['"]$/g, '').trim();
+    const allowable = args.length > 0 ? toStr(args[0]).trim() : '';
+    if (allowable) {
       const tagNames = allowable
         .split(/(?:\s*>\s*<\s*|<\s*|>\s*)/)
         .filter(Boolean)
@@ -377,16 +359,14 @@ export const filters: Record<string, TwigFilter> = {
   },
   // `| abs` — returns the absolute value of a number.
   abs: value => (typeof value === 'number' ? Math.abs(value) : value),
-  // `| round(precision, mode)` — rounds a number; default precision is 0, mode is 'common' (Math.round).
-  round: (value, arg, context) => {
+  // `| round(precision, mode)` — rounds a number; default precision 0, mode 'common' (Math.round).
+  round: (value, args) => {
     if (typeof value !== 'number') {
       return value;
     }
 
-    const args = arg ? splitFilterArgs(arg).map(a => evalOperand(a.trim(), context)) : [];
     const precision = Number(args[0]) || 0;
-    // eslint-disable-next-line @typescript-eslint/no-base-to-string
-    const mode = args[1] != null ? String(args[1]) : 'common';
+    const mode = args[1] != null ? toStr(args[1]) : 'common';
     const factor = 10 ** precision;
 
     if (mode === 'ceil') {
@@ -399,34 +379,18 @@ export const filters: Record<string, TwigFilter> = {
 
     return Math.round(value * factor) / factor;
   },
-  // `| column(name)` — extracts a property from each item in an array of objects.
-  column: (value, arg) => {
-    if (!Array.isArray(value) || arg === undefined) {
-      return value;
-    }
-
-    const path = arg.replace(/^['"]|['"]$/g, '').trim();
-
-    return value.map(item => {
-      if (item !== null && typeof item === 'object') {
-        return (item as Record<string, unknown>)[path];
-      }
-
-      return undefined;
-    });
-  },
   // `| format(args...)` — sprintf-like string formatting with positional placeholders.
-  format: (value, arg, context) => {
-    if (typeof value !== 'string' || arg === undefined) {
+  format: (value, args) => {
+    if (typeof value !== 'string') {
       return value;
     }
 
-    const args = splitFilterArgs(arg).map(a => evalOperand(a.trim(), context));
     let index = 0;
     return value.replace(/%s|%d|%f|%%/g, match => {
       if (match === '%%') {
         return '%';
       }
+
       const replacement = args[index];
       index++;
       if (replacement === undefined) {
@@ -438,125 +402,8 @@ export const filters: Record<string, TwigFilter> = {
       if (match === '%f') {
         return String(Number(replacement));
       }
-      // eslint-disable-next-line @typescript-eslint/no-base-to-string
-      return String(replacement);
+
+      return toStr(replacement);
     });
   }
-};
-
-// ── Helpers ────────────────────────────────────────────────────────────────────────
-
-const stringify = (value: unknown): string => {
-  if (value === undefined || value === null) {
-    return '';
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-base-to-string
-  return String(value);
-};
-
-// Parses `replace` arguments: `'search', 'replacement'` or variable paths.
-const parseReplaceArgs = (arg: string, context: Record<string, unknown>): Array<[string, string]> => {
-  const literal = /^(['"])([\s\S]*)\1\s*,\s*(['"])([\s\S]*)\3$/.exec(arg);
-  if (literal) {
-    return [[literal[2], literal[4]]];
-  }
-
-  // Fallback: treat the whole arg as a single string for simple replacements
-  const resolved = String(evalOperand(arg, context));
-  return [[resolved, '']];
-};
-
-// Splits comma-separated filter args while respecting quoted strings.
-const splitFilterArgs = (arg: string): string[] => {
-  if (arg === '') {
-    return [];
-  }
-
-  const args: string[] = [];
-  let current = '';
-  let inQuote = false;
-  let quoteChar = 0;
-
-  for (let i = 0; i < arg.length; i++) {
-    const c = arg.charCodeAt(i);
-    if (inQuote) {
-      current += arg[i];
-      if (c === quoteChar) {
-        inQuote = false;
-      }
-    } else if (c === 39 || c === 34) {
-      // ' or "
-      inQuote = true;
-      quoteChar = c;
-      current += arg[i];
-    } else if (c === 44) {
-      // ,
-      args.push(current.trim());
-      current = '';
-    } else {
-      current += arg[i];
-    }
-  }
-
-  args.push(current.trim());
-  return args;
-};
-
-// Quick check: does the filters string contain a second pipe? If not, it's a single filter
-// and we can parse it directly without matchAll iterator overhead.
-const hasSecondPipe = (s: string): boolean => {
-  const first = s.indexOf('|');
-  return first !== -1 && s.indexOf('|', first + 1) !== -1;
-};
-
-// Parses a single `| name(arg)` filter and returns [name, arg | undefined].
-const parseSingleFilter = (filtersStr: string): [string, string | undefined] | null => {
-  const trimmed = filtersStr.trim();
-  if (!trimmed.startsWith('|')) {
-    return null;
-  }
-
-  const rest = trimmed.slice(1).trim();
-  const parenIdx = rest.indexOf('(');
-  if (parenIdx === -1) {
-    return [rest, undefined];
-  }
-
-  const name = rest.slice(0, parenIdx).trim();
-  const closeIdx = rest.lastIndexOf(')');
-  const arg = closeIdx > parenIdx ? rest.slice(parenIdx + 1, closeIdx) : undefined;
-  return [name, arg || undefined];
-};
-
-// Runs each `| name(arg)` filter in the token, in order. An unknown filter name is ignored so a typo never throws.
-export const applyFilters = (value: unknown, filtersStr: string, context: Record<string, unknown>): unknown => {
-  // Fast path: no filters to apply — return value as-is.
-  if (!filtersStr) {
-    return value;
-  }
-
-  let current = value;
-
-  // Fast path: single filter (most common case) — avoid matchAll iterator overhead.
-  if (!hasSecondPipe(filtersStr)) {
-    const parsed = parseSingleFilter(filtersStr);
-    if (parsed) {
-      const [name, arg] = parsed;
-      if (Object.hasOwn(filters, name)) {
-        current = filters[name](current, arg, context);
-      }
-    }
-    return current;
-  }
-
-  for (const match of filtersStr.matchAll(FILTER_RE)) {
-    const name = match[1];
-    if (Object.hasOwn(filters, name)) {
-      // match[2] is the optional filter argument (undefined at runtime when the filter takes none).
-      current = filters[name](current, match[2], context);
-    }
-  }
-
-  return current;
 };

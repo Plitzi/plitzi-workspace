@@ -1,13 +1,16 @@
 import { isTruthy, valueIn, resolveCollection, resolveObjectEntries } from './helpers';
 import { filters, isRawMarker, unwrapRaw } from '../filters/filters';
 
-import type { ASTNode, Expression, IfNode, ForNode, SetNode, ApplyNode, VariableNode } from '../AST';
+import type { ASTNode, Expression, FilterCall, IfNode, ForNode, SetNode, ApplyNode, VariableNode } from '../AST';
 
 export type EvalResult = {
   readonly output: string;
   readonly variables: Record<string, unknown>;
   readonly hasSet: boolean;
 };
+
+// Shared empty argument list for no-arg filters (`| upper`, `| trim`, …) — avoids a per-call allocation.
+const NO_ARGS: readonly unknown[] = [];
 
 export const evaluate = (
   nodes: readonly ASTNode[],
@@ -19,22 +22,28 @@ export const evaluate = (
   return { output, variables: ctx.variables, hasSet: ctx.hasSet };
 };
 
+// Loop metadata exposed as `{{ loop.* }}`. Each `{% for %}` gets its own instance, so a nested loop never
+// corrupts the enclosing loop's counters.
+type LoopState = {
+  index: number;
+  index0: number;
+  first: boolean;
+  last: boolean;
+  length: number;
+  revindex: number;
+};
+
 class Evaluator {
   readonly variables: Record<string, unknown>;
   private readonly keepEmptyTokens: boolean;
   private breakFlag = false;
   private continueFlag = false;
   hasSet = false;
-  private readonly loopObj = {
-    index: 0,
-    index0: 0,
-    first: false,
-    last: false,
-    length: 0,
-    revindex: 0
-  };
 
   constructor(context: Record<string, unknown>, keepEmptyTokens = false) {
+    // Shallow own-property copy for scratch (loop/`set` vars). A plain object keeps every variable read as a
+    // fast monomorphic own-property access — measurably faster than an `Object.create(context)` prototype
+    // chain for the common small-context template, which more than pays for the one-time copy.
     this.variables = { ...context };
     this.keepEmptyTokens = keepEmptyTokens;
   }
@@ -47,35 +56,17 @@ class Evaluator {
     if (len === 1) {
       return this.evalNode(nodes[0]);
     }
-    if (len === 2) {
-      const a = this.evalNode(nodes[0]);
-      if (this.breakFlag || this.continueFlag) {
-        return a;
-      }
-      return a + this.evalNode(nodes[1]);
-    }
-    if (len === 3) {
-      const a = this.evalNode(nodes[0]);
-      if (this.breakFlag || this.continueFlag) {
-        return a;
-      }
-      const b = this.evalNode(nodes[1]);
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- evalNode() mutates flags via nested calls
-      if (this.breakFlag || this.continueFlag) {
-        return a + b;
-      }
-      return a + b + this.evalNode(nodes[2]);
-    }
-    // 4+ nodes: use array builder to avoid O(n²) string concatenation in loops
-    const parts = new Array<string>(len);
+
+    // Build into an array only for larger bodies; small ones concatenate directly to skip the allocation.
+    let output = '';
     for (let i = 0; i < len; i++) {
-      parts[i] = this.evalNode(nodes[i]);
+      output += this.evalNode(nodes[i]);
       if (this.breakFlag || this.continueFlag) {
-        parts.length = i + 1;
         break;
       }
     }
-    return parts.join('');
+
+    return output;
   }
 
   private evalNode(node: ASTNode): string {
@@ -112,7 +103,7 @@ class Evaluator {
       return String(unwrapRaw(value));
     }
 
-    // Primitives: fast path (most common)
+    // Primitives: fast path (most common).
     if (value !== null && value !== undefined && typeof value !== 'object') {
       // eslint-disable-next-line @typescript-eslint/no-base-to-string
       return String(value);
@@ -131,139 +122,75 @@ class Evaluator {
   }
 
   private evalIf(node: IfNode): string {
-    const condValue = this.evalExpression(node.condition);
-    if (isTruthy(condValue)) {
+    if (isTruthy(this.evalExpression(node.condition))) {
       return this.evalNodes(node.body);
     }
 
     for (const elif of node.elseifClauses) {
-      const elifValue = this.evalExpression(elif.condition);
-      if (isTruthy(elifValue)) {
+      if (isTruthy(this.evalExpression(elif.condition))) {
         return this.evalNodes(elif.body);
       }
     }
 
-    if (node.elseBody) {
-      return this.evalNodes(node.elseBody);
-    }
-
-    return '';
+    return node.elseBody ? this.evalNodes(node.elseBody) : '';
   }
 
   private evalFor(node: ForNode): string {
     const collection = this.evalExpression(node.collection);
 
-    if (node.keyVar) {
-      // Fast path: iterate object keys directly — avoids Object.entries() allocation
-      if (collection !== null && typeof collection === 'object' && !Array.isArray(collection)) {
-        const obj = collection as Record<string, unknown>;
-        const keys = Object.keys(obj);
-        if (keys.length === 0) {
-          if (node.elseBody) {
-            return this.evalNodes(node.elseBody);
-          }
-          return '';
-        }
+    // Known limitation: in keepEmptyTokens mode a missing/empty collection renders '' (or the else body) rather
+    // than preserving the `{% for %}…{% endfor %}` verbatim — a ForNode carries no source text to re-emit, so
+    // unresolved loop bindings are not kept the way unresolved `{{ token }}`s are. See the complex test suite.
 
-        const parentLoop = this.variables['loop'];
-        const loopObj = this.loopObj;
-        const len = keys.length;
-        loopObj.length = len;
-        let output = '';
-        for (let i = 0; i < len; i++) {
-          loopObj.index = i + 1;
-          loopObj.index0 = i;
-          loopObj.first = i === 0;
-          loopObj.last = i === len - 1;
-          loopObj.revindex = len - i;
-          this.variables['loop'] = loopObj;
-          const key = keys[i];
-          this.variables[node.keyVar] = key;
-          this.variables[node.valueVar] = obj[key];
-
-          output += this.evalNodes(node.body);
-          if (this.breakFlag) {
-            this.breakFlag = false;
-            break;
-          }
-          if (this.continueFlag) {
-            this.continueFlag = false;
-          }
-        }
-
-        if (parentLoop !== undefined) {
-          this.variables['loop'] = parentLoop;
-        } else {
-          delete this.variables['loop'];
-        }
-        return output;
-      }
-
+    // Normalise both iteration shapes to parallel arrays: `values` always, `keys` only for `for k, v in obj`.
+    let values: unknown[];
+    let keys: unknown[] | null = null;
+    if (node.keyVar !== null) {
       const entries = resolveObjectEntries(collection);
       if (!entries || entries.length === 0) {
-        if (node.elseBody) {
-          return this.evalNodes(node.elseBody);
-        }
-        return '';
+        return node.elseBody ? this.evalNodes(node.elseBody) : '';
       }
 
-      const parentLoop = this.variables['loop'];
-      const loopObj = this.loopObj;
-      const len = entries.length;
-      loopObj.length = len;
-      let output = '';
-      for (let i = 0; i < len; i++) {
-        loopObj.index = i + 1;
-        loopObj.index0 = i;
-        loopObj.first = i === 0;
-        loopObj.last = i === len - 1;
-        loopObj.revindex = len - i;
-        this.variables['loop'] = loopObj;
-        const [key, value] = entries[i];
-        this.variables[node.keyVar] = key;
-        this.variables[node.valueVar] = value;
-
-        output += this.evalNodes(node.body);
-        if (this.breakFlag) {
-          this.breakFlag = false;
-          break;
-        }
-        if (this.continueFlag) {
-          this.continueFlag = false;
-        }
+      const length = entries.length;
+      keys = new Array<unknown>(length);
+      values = new Array<unknown>(length);
+      for (let i = 0; i < length; i++) {
+        keys[i] = entries[i][0];
+        values[i] = entries[i][1];
       }
-
-      if (parentLoop !== undefined) {
-        this.variables['loop'] = parentLoop;
-      } else {
-        delete this.variables['loop'];
+    } else {
+      const items = resolveCollection(collection);
+      if (!items || items.length === 0) {
+        return node.elseBody ? this.evalNodes(node.elseBody) : '';
       }
-      return output;
+      values = items;
     }
 
-    const items = resolveCollection(collection);
-    if (!items || items.length === 0) {
-      if (node.elseBody) {
-        return this.evalNodes(node.elseBody);
-      }
-      return '';
-    }
+    return this.runLoop(node, values, keys);
+  }
 
+  // Runs a loop body once per element, exposing `{{ loop.* }}` and honouring {% break %} / {% continue %}. Each
+  // loop owns its `loop` state, so a nested loop never corrupts the enclosing loop's counters.
+  private runLoop(node: ForNode, values: readonly unknown[], keys: readonly unknown[] | null): string {
+    const { valueVar, keyVar, body } = node;
+    const length = values.length;
     const parentLoop = this.variables['loop'];
-    const loopObj = this.loopObj;
-    const len = items.length;
-    loopObj.length = len;
-    let output = '';
-    for (let i = 0; i < len; i++) {
-      loopObj.index = i + 1;
-      loopObj.index0 = i;
-      loopObj.first = i === 0;
-      loopObj.last = i === len - 1;
-      loopObj.revindex = len - i;
-      this.variables['loop'] = loopObj;
-      this.variables[node.valueVar] = items[i];
+    const loop: LoopState = { index: 0, index0: 0, first: false, last: false, length, revindex: 0 };
+    this.variables['loop'] = loop;
 
-      output += this.evalNodes(node.body);
+    let output = '';
+    for (let i = 0; i < length; i++) {
+      loop.index = i + 1;
+      loop.index0 = i;
+      loop.first = i === 0;
+      loop.last = i === length - 1;
+      loop.revindex = length - i;
+      if (keys !== null && keyVar !== null) {
+        this.variables[keyVar] = keys[i];
+      }
+      this.variables[valueVar] = values[i];
+
+      output += this.evalNodes(body);
       if (this.breakFlag) {
         this.breakFlag = false;
         break;
@@ -278,31 +205,21 @@ class Evaluator {
     } else {
       delete this.variables['loop'];
     }
+
     return output;
   }
 
   private evalSet(node: SetNode): string {
     this.hasSet = true;
-    if (Array.isArray(node.value)) {
-      const body = this.evalNodes(node.value);
-      this.variables[node.name] = body;
-    } else {
-      this.variables[node.name] = this.evalExpression(node.value);
-    }
+    this.variables[node.name] = Array.isArray(node.value)
+      ? this.evalNodes(node.value)
+      : this.evalExpression(node.value);
+
     return '';
   }
 
   private evalApply(node: ApplyNode): string {
-    const body = this.evalNodes(node.body);
-    let value: unknown = body;
-
-    for (const filterCall of node.filters) {
-      const fn = filters[filterCall.name];
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (fn !== undefined) {
-        value = fn(value, filterCall.arg ?? undefined, this.variables);
-      }
-    }
+    const value = this.applyFilters(this.evalNodes(node.body), node.filters);
 
     if (isRawMarker(value)) {
       return String(unwrapRaw(value));
@@ -313,8 +230,32 @@ class Evaluator {
     if (value === null || value === undefined) {
       return '';
     }
+
     // eslint-disable-next-line @typescript-eslint/no-base-to-string
     return String(value);
+  }
+
+  private applyFilters(initial: unknown, calls: readonly FilterCall[]): unknown {
+    let value = initial;
+    for (const call of calls) {
+      const fn = filters[call.name];
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (fn !== undefined) {
+        value = fn(value, call.args.length === 0 ? NO_ARGS : this.evalArgs(call.args));
+      }
+    }
+
+    return value;
+  }
+
+  private evalArgs(exprs: readonly Expression[]): unknown[] {
+    const len = exprs.length;
+    const args = new Array<unknown>(len);
+    for (let i = 0; i < len; i++) {
+      args[i] = this.evalExpression(exprs[i]);
+    }
+
+    return args;
   }
 
   evalExpression(expr: Expression): unknown {
@@ -327,45 +268,41 @@ class Evaluator {
         for (let i = 0; i < elems.length; i++) {
           arr[i] = this.evalExpression(elems[i]);
         }
+
         return arr;
       }
       case 'range':
-        return this.evalRange(expr);
+        return this.evalRange(expr.start, expr.end);
       case 'path':
         return this.resolvePath(expr.segments);
       case 'function':
         return this.evalFunction(expr.name, expr.args);
       case 'filter':
-        return this.evalFilterExpression(expr);
+        return this.applyFilters(this.evalExpression(expr.subject), expr.filters);
       case 'concat': {
         const parts = expr.parts;
         const len = parts.length;
-        const strs = new Array<string>(len);
+        let out = '';
         for (let i = 0; i < len; i++) {
           const v = this.evalExpression(parts[i]);
           // eslint-disable-next-line @typescript-eslint/no-base-to-string
-          strs[i] = v === null || v === undefined ? '' : String(v);
+          out += v === null || v === undefined ? '' : String(v);
         }
-        return strs.join('');
+
+        return out;
       }
       case 'unary':
-        return this.evalUnary(expr.operator, expr.operand);
+        return !isTruthy(this.evalExpression(expr.operand));
       case 'binary':
         return this.evalBinary(expr.operator, expr.left, expr.right);
       case 'default': {
         const val = this.evalExpression(expr.value);
-        if (val === undefined || val === null) {
-          return this.evalExpression(expr.defaultExpr);
-        }
-        return val;
+        return val === undefined || val === null ? this.evalExpression(expr.defaultExpr) : val;
       }
-      case 'ternary': {
-        const condValue = this.evalExpression(expr.condition);
-        if (isTruthy(condValue)) {
-          return this.evalExpression(expr.trueExpr);
-        }
-        return this.evalExpression(expr.falseExpr);
-      }
+      case 'ternary':
+        return isTruthy(this.evalExpression(expr.condition))
+          ? this.evalExpression(expr.trueExpr)
+          : this.evalExpression(expr.falseExpr);
     }
   }
 
@@ -375,205 +312,135 @@ class Evaluator {
       return undefined;
     }
 
-    if (len === 1) {
-      return this.variables[segments[0]];
-    }
-
-    const first = this.variables[segments[0]];
-    if (first === null || first === undefined) {
-      return undefined;
-    }
-
-    if (len === 2) {
-      return (first as Record<string, unknown>)[segments[1]];
-    }
-
-    let current: unknown = first;
+    let current: unknown = this.variables[segments[0]];
     for (let i = 1; i < len; i++) {
       if (current === null || current === undefined) {
         return undefined;
       }
       current = (current as Record<string, unknown>)[segments[i]];
     }
+
     return current;
   }
 
-  private evalRange(expr: { start: Expression; end: Expression }): number[] {
-    const start = Number(this.evalExpression(expr.start));
-    const end = Number(this.evalExpression(expr.end));
-    if (start <= end) {
-      const len = end - start + 1;
-      const result = new Array<number>(len);
-      for (let i = 0; i < len; i++) {
-        result[i] = start + i;
-      }
-      return result;
-    }
-    const len = start - end + 1;
+  private evalRange(startExpr: Expression, endExpr: Expression): number[] {
+    const start = Number(this.evalExpression(startExpr));
+    const end = Number(this.evalExpression(endExpr));
+    const ascending = start <= end;
+    const len = (ascending ? end - start : start - end) + 1;
     const result = new Array<number>(len);
     for (let i = 0; i < len; i++) {
-      result[i] = start - i;
+      result[i] = ascending ? start + i : start - i;
     }
+
     return result;
   }
 
   private evalFunction(name: string, args: readonly Expression[]): unknown {
-    const len = args.length;
-    const resolvedArgs = new Array<unknown>(len);
-    for (let i = 0; i < len; i++) {
-      resolvedArgs[i] = this.evalExpression(args[i]);
-    }
+    const resolved = this.evalArgs(args);
 
-    if (name === 'cycle') {
-      const values = resolvedArgs[0];
-      const index = resolvedArgs[1];
-      if (Array.isArray(values) && typeof index === 'number') {
-        return values[index % values.length];
-      }
-      return '';
-    }
-
-    if (name === 'max') {
-      if (resolvedArgs.length === 0) {
-        return undefined;
-      }
-      if (resolvedArgs.length === 1 && Array.isArray(resolvedArgs[0])) {
-        return Math.max(...(resolvedArgs[0] as number[]));
-      }
-      return Math.max(...(resolvedArgs as number[]));
-    }
-
-    if (name === 'min') {
-      if (resolvedArgs.length === 0) {
-        return undefined;
-      }
-      if (resolvedArgs.length === 1 && Array.isArray(resolvedArgs[0])) {
-        return Math.min(...(resolvedArgs[0] as number[]));
-      }
-      return Math.min(...(resolvedArgs as number[]));
-    }
-
-    if (name === 'range') {
-      if (resolvedArgs.length === 1) {
-        const end = Number(resolvedArgs[0]);
-        const len = end + 1;
-        const result = new Array<number>(len);
-        for (let i = 0; i < len; i++) {
-          result[i] = i;
+    switch (name) {
+      case 'cycle': {
+        const values = resolved[0];
+        const index = resolved[1];
+        if (Array.isArray(values) && typeof index === 'number') {
+          return values[index % values.length];
         }
-        return result;
+
+        return '';
       }
-      if (resolvedArgs.length >= 2) {
-        const start = Number(resolvedArgs[0]);
-        const end = Number(resolvedArgs[1]);
-        const step = resolvedArgs.length > 2 ? Number(resolvedArgs[2]) : start <= end ? 1 : -1;
-        if (step > 0) {
-          const len = Math.floor((end - start) / step) + 1;
-          const result = new Array<number>(len);
-          for (let i = 0; i < len; i++) {
-            result[i] = start + i * step;
-          }
-          return result;
-        }
-        if (step < 0) {
-          const len = Math.floor((start - end) / -step) + 1;
-          const result = new Array<number>(len);
-          for (let i = 0; i < len; i++) {
-            result[i] = start + i * step;
-          }
-          return result;
-        }
-        return [];
-      }
+      case 'max':
+        return this.minMax(resolved, Math.max);
+      case 'min':
+        return this.minMax(resolved, Math.min);
+      case 'range':
+        return this.rangeFunction(resolved);
+      default:
+        return '';
+    }
+  }
+
+  private minMax(args: readonly unknown[], pick: (...n: number[]) => number): number | undefined {
+    if (args.length === 0) {
+      return undefined;
+    }
+
+    const nums = args.length === 1 && Array.isArray(args[0]) ? (args[0] as number[]) : (args as number[]);
+    return pick(...nums);
+  }
+
+  private rangeFunction(args: readonly unknown[]): number[] {
+    if (args.length === 0) {
       return [];
     }
 
-    return '';
-  }
-
-  private evalFilterExpression(expr: {
-    subject: Expression;
-    filters: readonly { name: string; arg: string | null }[];
-  }): unknown {
-    let value = this.evalExpression(expr.subject);
-    for (const filterCall of expr.filters) {
-      const fn = filters[filterCall.name];
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (fn !== undefined) {
-        value = fn(value, filterCall.arg ?? undefined, this.variables);
+    if (args.length === 1) {
+      const end = Number(args[0]);
+      const result = new Array<number>(end + 1);
+      for (let i = 0; i <= end; i++) {
+        result[i] = i;
       }
-    }
-    return value;
-  }
 
-  private evalUnary(operator: string, operand: Expression): unknown {
-    const value = this.evalExpression(operand);
-    if (operator === 'not') {
-      return !isTruthy(value);
+      return result;
     }
-    return value;
+
+    const start = Number(args[0]);
+    const end = Number(args[1]);
+    const step = args.length > 2 ? Number(args[2]) : start <= end ? 1 : -1;
+    if (step === 0) {
+      return [];
+    }
+
+    const len = Math.floor((step > 0 ? end - start : start - end) / Math.abs(step)) + 1;
+    if (len <= 0) {
+      return [];
+    }
+
+    const result = new Array<number>(len);
+    for (let i = 0; i < len; i++) {
+      result[i] = start + i * step;
+    }
+
+    return result;
   }
 
   private evalBinary(operator: string, leftExpr: Expression, rightExpr: Expression): unknown {
     if (operator === 'or') {
-      const left = this.evalExpression(leftExpr);
-      if (isTruthy(left)) {
-        return true;
-      }
-      return isTruthy(this.evalExpression(rightExpr));
+      return isTruthy(this.evalExpression(leftExpr)) || isTruthy(this.evalExpression(rightExpr));
     }
-
     if (operator === 'and') {
-      const left = this.evalExpression(leftExpr);
-      if (!isTruthy(left)) {
-        return false;
-      }
-      return isTruthy(this.evalExpression(rightExpr));
+      return isTruthy(this.evalExpression(leftExpr)) && isTruthy(this.evalExpression(rightExpr));
     }
 
     const left = this.evalExpression(leftExpr);
     const right = this.evalExpression(rightExpr);
 
-    // Fast path: when both operands are already numbers, skip Number() conversion
-    const leftIsNum = typeof left === 'number';
-    const rightIsNum = typeof right === 'number';
+    // Fast path: when both operands are already numbers, skip Number() conversion.
+    const bothNum = typeof left === 'number' && typeof right === 'number';
 
     switch (operator) {
       case '+':
-        return leftIsNum && rightIsNum ? left + right : Number(left) + Number(right);
+        return bothNum ? left + right : Number(left) + Number(right);
       case '-':
-        return leftIsNum && rightIsNum ? left - right : Number(left) - Number(right);
+        return bothNum ? left - right : Number(left) - Number(right);
       case '*':
-        return leftIsNum && rightIsNum ? left * right : Number(left) * Number(right);
+        return bothNum ? left * right : Number(left) * Number(right);
       case '/':
-        return leftIsNum && rightIsNum ? left / right : Number(left) / Number(right);
+        return bothNum ? left / right : Number(left) / Number(right);
       case '%':
-        return leftIsNum && rightIsNum ? left % right : Number(left) % Number(right);
+        return bothNum ? left % right : Number(left) % Number(right);
       case '==':
-        if (left === right) {
-          return true;
-        }
-        // Fast path: both strings — avoid String() allocation
-        if (typeof left === 'string' && typeof right === 'string') {
-          return left === right;
-        }
-        return String(left) === String(right);
+        return left === right || String(left) === String(right);
       case '!=':
-        if (left === right) {
-          return false;
-        }
-        if (typeof left === 'string' && typeof right === 'string') {
-          return left !== right;
-        }
-        return String(left) !== String(right);
+        return left !== right && String(left) !== String(right);
       case '>':
-        return leftIsNum && rightIsNum ? left > right : Number(left) > Number(right);
+        return bothNum ? left > right : Number(left) > Number(right);
       case '<':
-        return leftIsNum && rightIsNum ? left < right : Number(left) < Number(right);
+        return bothNum ? left < right : Number(left) < Number(right);
       case '>=':
-        return leftIsNum && rightIsNum ? left >= right : Number(left) >= Number(right);
+        return bothNum ? left >= right : Number(left) >= Number(right);
       case '<=':
-        return leftIsNum && rightIsNum ? left <= right : Number(left) <= Number(right);
+        return bothNum ? left <= right : Number(left) <= Number(right);
       case 'in':
         return valueIn(left, right);
       case 'not in':

@@ -1,4 +1,4 @@
-import { TOKEN_REGEX, TOKEN_STRICT_REGEX } from '../patterns/patterns';
+import { TOKEN_REGEX, TOKEN_STRICT_REGEX } from './tokenPatterns';
 
 // Whether a user-written string carries a well-formed token. Non-strict searches anywhere in the text (a token
 // mixed with prose); strict requires the whole string to be exactly one token — the builder uses it to decide

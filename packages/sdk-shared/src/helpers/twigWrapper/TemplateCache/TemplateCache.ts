@@ -1,6 +1,6 @@
+import { isDottedPath } from '../charClass';
 import { lex } from '../Lexer';
 import { parse } from '../Parser';
-import { isDottedPath } from '../processTwig/fastPath';
 
 import type { ASTNode } from '../AST';
 import type { Token } from '../Lexer';

@@ -1,18 +1,9 @@
+import { isSimpleIdentifier, isVariableName } from '../charClass';
 import { reconstructSource } from '../Lexer';
-import { parseExpression, parseFilterChain } from './ExpressionParser';
-import { extractFirstWord, isSimpleIdentifier } from './helpers';
+import { parseApplyFilters, parseExpression } from './ExpressionParser';
+import { extractFirstWord, splitRange } from './helpers';
 
-import type {
-  ASTNode,
-  Expression,
-  IfNode,
-  ForNode,
-  SetNode,
-  ApplyNode,
-  VariableNode,
-  TextNode,
-  RangeNode
-} from '../AST';
+import type { ASTNode, Expression, IfNode, ForNode, SetNode, ApplyNode, VariableNode, TextNode } from '../AST';
 import type { Token } from '../Lexer';
 import type { ParseResult } from './types';
 
@@ -24,14 +15,7 @@ export const parse = (tokens: readonly Token[], keepEmptyTokens = false): ParseR
     const remaining = ctx.peek();
     if (remaining && remaining.type === 'tag') {
       const kw = extractFirstWord(remaining.content.trim());
-      if (
-        kw === 'endif' ||
-        kw === 'endfor' ||
-        kw === 'endset' ||
-        kw === 'endapply' ||
-        kw === 'else' ||
-        kw === 'elseif'
-      ) {
+      if (CLOSING_KEYWORDS.has(kw)) {
         ctx.error = `Orphan closing tag: {% ${kw} %} without matching opening tag`;
       }
     }
@@ -39,6 +23,28 @@ export const parse = (tokens: readonly Token[], keepEmptyTokens = false): ParseR
 
   return { nodes, error: ctx.error };
 };
+
+// Tags that close or continue a block — they end the current body rather than starting a node.
+const CLOSING_KEYWORDS = new Set(['endif', 'endfor', 'endset', 'endapply', 'else', 'elseif']);
+
+// Placeholder nodes returned when a tag is malformed. `error` is set alongside so processTwig discards the
+// partial parse and leaves the original template untouched; these nodes are never actually evaluated.
+const emptyIf = (): IfNode => ({
+  type: 'if',
+  condition: { type: 'literal', value: false },
+  body: [],
+  elseifClauses: [],
+  elseBody: null
+});
+
+const emptyFor = (): ForNode => ({
+  type: 'for',
+  valueVar: '_item',
+  keyVar: null,
+  collection: { type: 'literal', value: '' },
+  body: [],
+  elseBody: null
+});
 
 class ParseContext {
   private readonly tokens: readonly Token[];
@@ -82,18 +88,8 @@ class ParseContext {
         break;
       }
 
-      if (token.type === 'tag') {
-        const kw = extractFirstWord(token.content.trim());
-        if (
-          kw === 'endif' ||
-          kw === 'endfor' ||
-          kw === 'endset' ||
-          kw === 'endapply' ||
-          kw === 'else' ||
-          kw === 'elseif'
-        ) {
-          break;
-        }
+      if (token.type === 'tag' && CLOSING_KEYWORDS.has(extractFirstWord(token.content.trim()))) {
+        break;
       }
 
       const node = this.parseNode();
@@ -176,38 +172,14 @@ class ParseContext {
     const prevToken = this.tokens[this.pos - 1];
     if (prevToken.type !== 'tag') {
       this.error = 'Malformed {% if %} tag';
-      return {
-        type: 'if',
-        condition: { type: 'literal', value: false },
-        body: [],
-        elseifClauses: [],
-        elseBody: null
-      };
+      return emptyIf();
     }
     const content = prevToken.content.trim();
-
-    if (content.indexOf(' ') === -1) {
-      this.error = 'Malformed {% if %} tag: missing condition';
-      return {
-        type: 'if',
-        condition: { type: 'literal', value: false },
-        body: [],
-        elseifClauses: [],
-        elseBody: null
-      };
-    }
-
-    const condExpr = content.slice(content.indexOf(' ') + 1).trim();
+    const condExpr = content.indexOf(' ') === -1 ? '' : content.slice(content.indexOf(' ') + 1).trim();
 
     if (!condExpr) {
       this.error = 'Malformed {% if %} tag: missing condition';
-      return {
-        type: 'if',
-        condition: { type: 'literal', value: false },
-        body: [],
-        elseifClauses: [],
-        elseBody: null
-      };
+      return emptyIf();
     }
 
     const condition = parseExpression(condExpr);
@@ -254,80 +226,35 @@ class ParseContext {
     this.advance();
     const prevToken = this.tokens[this.pos - 1];
     if (prevToken.type !== 'tag') {
-      return {
-        type: 'for',
-        valueVar: '_item',
-        keyVar: null,
-        collection: { type: 'literal', value: '' },
-        body: [],
-        elseBody: null
-      };
+      return emptyFor();
     }
     const content = prevToken.content.trim();
     const forBody = content.slice(content.indexOf(' ') + 1).trim();
     const inIdx = forBody.indexOf(' in ');
     if (inIdx === -1) {
-      this.error = 'Invalid {% for %} syntax: missing \'in\' keyword'; // eslint-disable-line prettier/prettier
-      return {
-        type: 'for',
-        valueVar: '_item',
-        keyVar: null,
-        collection: { type: 'literal', value: '' },
-        body: [],
-        elseBody: null
-      };
+      this.error = 'Invalid {% for %} syntax: missing the `in` keyword';
+      return emptyFor();
     }
 
     const varsStr = forBody.slice(0, inIdx).trim();
     const collectionStr = forBody.slice(inIdx + 4).trim();
 
-    const rangeMatch = /^(['"]?)(-?\w+)\1\s*\.\.\s*(['"]?)(-?\w+)\3$/.exec(collectionStr);
-    let collection: Expression;
-    if (rangeMatch) {
-      const start = rangeMatch[2];
-      const end = rangeMatch[4];
-      const startExpr: Expression = /^\d+$/.test(start)
-        ? { type: 'literal', value: Number(start) }
-        : { type: 'path', segments: [start] };
-      const endExpr: Expression = /^\d+$/.test(end)
-        ? { type: 'literal', value: Number(end) }
-        : { type: 'path', segments: [end] };
-      collection = { type: 'range', start: startExpr, end: endExpr } satisfies RangeNode;
-    } else {
-      collection = parseExpression(collectionStr);
-    }
+    const range = splitRange(collectionStr);
+    const collection: Expression = range
+      ? { type: 'range', start: parseExpression(range[0]), end: parseExpression(range[1]) }
+      : parseExpression(collectionStr);
 
     const commaIdx = varsStr.indexOf(',');
-    let valueVar: string;
-    let keyVar: string | null = null;
-    if (commaIdx !== -1) {
-      keyVar = varsStr.slice(0, commaIdx).trim();
-      valueVar = varsStr.slice(commaIdx + 1).trim();
-    } else {
-      valueVar = varsStr;
-    }
+    const keyVar = commaIdx === -1 ? null : varsStr.slice(0, commaIdx).trim();
+    const valueVar = commaIdx === -1 ? varsStr : varsStr.slice(commaIdx + 1).trim();
 
-    if (!valueVar || !/^\w+$/.test(valueVar)) {
+    if (!isVariableName(valueVar)) {
       this.error = `Invalid {% for %} variable name: "${valueVar}"`;
-      return {
-        type: 'for',
-        valueVar: '_item',
-        keyVar: null,
-        collection: { type: 'literal', value: '' },
-        body: [],
-        elseBody: null
-      };
+      return emptyFor();
     }
-    if (keyVar !== null && !/^\w+$/.test(keyVar)) {
+    if (keyVar !== null && !isVariableName(keyVar)) {
       this.error = `Invalid {% for %} key variable name: "${keyVar}"`;
-      return {
-        type: 'for',
-        valueVar: '_item',
-        keyVar: null,
-        collection: { type: 'literal', value: '' },
-        body: [],
-        elseBody: null
-      };
+      return emptyFor();
     }
 
     const body = this.parseBody();
@@ -385,7 +312,7 @@ class ParseContext {
     }
     const content = prevToken.content.trim();
     const filtersStr = content.slice(content.indexOf(' ') + 1).trim();
-    const filters = parseFilterChain('| ' + filtersStr);
+    const filters = parseApplyFilters(filtersStr);
     const body = this.parseBody();
 
     const endApplyToken = this.peek();

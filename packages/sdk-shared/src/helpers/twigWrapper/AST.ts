@@ -114,9 +114,11 @@ export type FilterExpression = {
   readonly filters: readonly FilterCall[];
 };
 
+// A single filter application. Arguments are parsed into expressions up front, so the Evaluator never
+// re-parses argument strings at render time (important inside loops, where a filter runs per iteration).
 export type FilterCall = {
   readonly name: string;
-  readonly arg: string | null; // raw argument string
+  readonly args: readonly Expression[];
 };
 
 // Concatenation: `a ~ b ~ c`
