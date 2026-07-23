@@ -409,6 +409,10 @@
       "types": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentUpdateElementMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentUpdateElementMutation.mjs"
     },
+    "./network/graphql/builder/Mutations/Segment/space/elements/SegmentUpdateElementsMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentUpdateElementsMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentUpdateElementsMutation.mjs"
+    },
     "./network/graphql/builder/Mutations/Segment/space/variables/SegmentSpaceAddVariableMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Segment/space/variables/SegmentSpaceAddVariableMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Segment/space/variables/SegmentSpaceAddVariableMutation.mjs"
@@ -500,6 +504,10 @@
     "./network/graphql/builder/Mutations/Space/SpaceUpdateElementMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/SpaceUpdateElementMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/SpaceUpdateElementMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/SpaceUpdateElementsMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/SpaceUpdateElementsMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/SpaceUpdateElementsMutation.mjs"
     },
     "./network/graphql/builder/Mutations/Space/SpaceUpdateMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/SpaceUpdateMutation.d.ts",
@@ -745,6 +753,10 @@
       "types": "./dist/network/graphql/builder/Subscriptions/Segment/space/elements/SegmentUpdateElementSubscription.d.ts",
       "import": "./dist/network/graphql/builder/Subscriptions/Segment/space/elements/SegmentUpdateElementSubscription.mjs"
     },
+    "./network/graphql/builder/Subscriptions/Segment/space/elements/SegmentUpdateElementsSubscription": {
+      "types": "./dist/network/graphql/builder/Subscriptions/Segment/space/elements/SegmentUpdateElementsSubscription.d.ts",
+      "import": "./dist/network/graphql/builder/Subscriptions/Segment/space/elements/SegmentUpdateElementsSubscription.mjs"
+    },
     "./network/graphql/builder/Subscriptions/Segment/space/variables/SegmentSpaceAddVariableSubscription": {
       "types": "./dist/network/graphql/builder/Subscriptions/Segment/space/variables/SegmentSpaceAddVariableSubscription.d.ts",
       "import": "./dist/network/graphql/builder/Subscriptions/Segment/space/variables/SegmentSpaceAddVariableSubscription.mjs"
@@ -828,6 +840,10 @@
     "./network/graphql/builder/Subscriptions/Space/elements/SpaceUpdateElementSubscription": {
       "types": "./dist/network/graphql/builder/Subscriptions/Space/elements/SpaceUpdateElementSubscription.d.ts",
       "import": "./dist/network/graphql/builder/Subscriptions/Space/elements/SpaceUpdateElementSubscription.mjs"
+    },
+    "./network/graphql/builder/Subscriptions/Space/elements/SpaceUpdateElementsSubscription": {
+      "types": "./dist/network/graphql/builder/Subscriptions/Space/elements/SpaceUpdateElementsSubscription.d.ts",
+      "import": "./dist/network/graphql/builder/Subscriptions/Space/elements/SpaceUpdateElementsSubscription.mjs"
     },
     "./network/graphql/builder/Subscriptions/Space/folders/SpaceAddPageFolderSubscription": {
       "types": "./dist/network/graphql/builder/Subscriptions/Space/folders/SpaceAddPageFolderSubscription.d.ts",

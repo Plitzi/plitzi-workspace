@@ -7,6 +7,7 @@ import SegmentAddElementSubscription from './Segment/space/elements/SegmentAddEl
 import SegmentCloneElementSubscription from './Segment/space/elements/SegmentCloneElementSubscription';
 import SegmentMoveElementSubscription from './Segment/space/elements/SegmentMoveElementSubscription';
 import SegmentRemoveElementSubscription from './Segment/space/elements/SegmentRemoveElementSubscription';
+import SegmentUpdateElementsSubscription from './Segment/space/elements/SegmentUpdateElementsSubscription';
 import SegmentUpdateElementSubscription from './Segment/space/elements/SegmentUpdateElementSubscription';
 import SegmentSpaceAddVariableSubscription from './Segment/space/variables/SegmentSpaceAddVariableSubscription';
 import SegmentSpaceRemoveVariableSubscription from './Segment/space/variables/SegmentSpaceRemoveVariableSubscription';
@@ -26,6 +27,7 @@ import SpaceAddElementSubscription from './Space/elements/SpaceAddElementSubscri
 import SpaceCloneElementSubscription from './Space/elements/SpaceCloneElementSubscription';
 import SpaceMoveElementSubscription from './Space/elements/SpaceMoveElementSubscription';
 import SpaceRemoveElementSubscription from './Space/elements/SpaceRemoveElementSubscription';
+import SpaceUpdateElementsSubscription from './Space/elements/SpaceUpdateElementsSubscription';
 import SpaceUpdateElementSubscription from './Space/elements/SpaceUpdateElementSubscription';
 import SpaceAddPageFolderSubscription from './Space/folders/SpaceAddPageFolderSubscription';
 import SpaceRemovePageFolderSubscription from './Space/folders/SpaceRemovePageFolderSubscription';
@@ -60,6 +62,7 @@ import type { TSegmentAddElementSubscription } from './Segment/space/elements/Se
 import type { TSegmentCloneElementSubscription } from './Segment/space/elements/SegmentCloneElementSubscription';
 import type { TSegmentMoveElementSubscription } from './Segment/space/elements/SegmentMoveElementSubscription';
 import type { TSegmentRemoveElementSubscription } from './Segment/space/elements/SegmentRemoveElementSubscription';
+import type { TSegmentUpdateElementsSubscription } from './Segment/space/elements/SegmentUpdateElementsSubscription';
 import type { TSegmentUpdateElementSubscription } from './Segment/space/elements/SegmentUpdateElementSubscription';
 import type { TSegmentSpaceAddVariableSubscription } from './Segment/space/variables/SegmentSpaceAddVariableSubscription';
 import type { TSegmentSpaceRemoveVariableSubscription } from './Segment/space/variables/SegmentSpaceRemoveVariableSubscription';
@@ -78,6 +81,7 @@ import type { TSpaceAddElementSubscription } from './Space/elements/SpaceAddElem
 import type { TSpaceCloneElementSubscription } from './Space/elements/SpaceCloneElementSubscription';
 import type { TSpaceMoveElementSubscription } from './Space/elements/SpaceMoveElementSubscription';
 import type { TSpaceRemoveElementSubscription } from './Space/elements/SpaceRemoveElementSubscription';
+import type { TSpaceUpdateElementsSubscription } from './Space/elements/SpaceUpdateElementsSubscription';
 import type { TSpaceUpdateElementSubscription } from './Space/elements/SpaceUpdateElementSubscription';
 import type { TSpaceAddPageFolderSubscription } from './Space/folders/SpaceAddPageFolderSubscription';
 import type { TSpaceRemovePageFolderSubscription } from './Space/folders/SpaceRemovePageFolderSubscription';
@@ -123,6 +127,7 @@ export type BuilderSubscriptionsMap = {
   SpaceRemoveVariable: TSpaceRemoveVariableSubscription;
   SpaceAddElement: TSpaceAddElementSubscription;
   SpaceUpdateElement: TSpaceUpdateElementSubscription;
+  SpaceUpdateElements: TSpaceUpdateElementsSubscription;
   SpaceRemoveElement: TSpaceRemoveElementSubscription;
   SpaceMoveElement: TSpaceMoveElementSubscription;
   SpaceCloneElement: TSpaceCloneElementSubscription;
@@ -143,6 +148,7 @@ export type BuilderSubscriptionsMap = {
 
   SegmentAddElement: TSegmentAddElementSubscription;
   SegmentUpdateElement: TSegmentUpdateElementSubscription;
+  SegmentUpdateElements: TSegmentUpdateElementsSubscription;
   SegmentRemoveElement: TSegmentRemoveElementSubscription;
   SegmentMoveElement: TSegmentMoveElementSubscription;
   SegmentCloneElement: TSegmentCloneElementSubscription;
@@ -180,6 +186,7 @@ const BuilderSubscriptions = {
   SpaceRemoveVariable: SpaceRemoveVariableSubscription,
   SpaceAddElement: SpaceAddElementSubscription,
   SpaceUpdateElement: SpaceUpdateElementSubscription,
+  SpaceUpdateElements: SpaceUpdateElementsSubscription,
   SpaceRemoveElement: SpaceRemoveElementSubscription,
   SpaceMoveElement: SpaceMoveElementSubscription,
   SpaceCloneElement: SpaceCloneElementSubscription,
@@ -200,6 +207,7 @@ const BuilderSubscriptions = {
 
   SegmentAddElement: SegmentAddElementSubscription,
   SegmentUpdateElement: SegmentUpdateElementSubscription,
+  SegmentUpdateElements: SegmentUpdateElementsSubscription,
   SegmentRemoveElement: SegmentRemoveElementSubscription,
   SegmentMoveElement: SegmentMoveElementSubscription,
   SegmentCloneElement: SegmentCloneElementSubscription,

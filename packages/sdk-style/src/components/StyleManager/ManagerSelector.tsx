@@ -108,12 +108,9 @@ const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect 
       }
 
       const toDelete = new Set(selectorsToDelete);
-      const elementsAffected = flatList.filter(element =>
-        selectorsToDelete.some(selector => elementHasSelector(element, selector))
-      );
-      elementsAffected.forEach(element => {
-        builderHandler(
-          'schemaUpdateElement',
+      const elementsUpdated = flatList
+        .filter(element => selectorsToDelete.some(selector => elementHasSelector(element, selector)))
+        .map(element =>
           produce(element, draft => {
             Object.keys(element.definition.styleSelectors).forEach(styleSelector => {
               if (toDelete.has(get(draft, `definition.styleSelectors.${styleSelector}`, ''))) {
@@ -122,7 +119,11 @@ const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect 
             });
           })
         );
-      });
+
+      if (elementsUpdated.length > 0) {
+        builderHandler('schemaUpdateElements', elementsUpdated);
+      }
+
       builderHandler('styleRemoveSelectors', displayMode, selectorsToDelete);
       setCheckedSelectors(prev => prev.filter(selector => !toDelete.has(selector)));
       onSelect?.(state => (state && toDelete.has(state.name) ? undefined : state));

@@ -14,6 +14,7 @@ import SegmentCloneElementMutation from './Segment/space/elements/SegmentCloneEl
 import SegmentMoveElementMutation from './Segment/space/elements/SegmentMoveElementMutation';
 import SegmentRemoveElementMutation from './Segment/space/elements/SegmentRemoveElementMutation';
 import SegmentUpdateElementMutation from './Segment/space/elements/SegmentUpdateElementMutation';
+import SegmentUpdateElementsMutation from './Segment/space/elements/SegmentUpdateElementsMutation';
 import SegmentSpaceAddVariableMutation from './Segment/space/variables/SegmentSpaceAddVariableMutation';
 import SegmentSpaceRemoveVariableMutation from './Segment/space/variables/SegmentSpaceRemoveVariableMutation';
 import SegmentSpaceUpdateVariableMutation from './Segment/space/variables/SegmentSpaceUpdateVariableMutation';
@@ -54,6 +55,7 @@ import SpacePublishMutation from './Space/SpacePublishMutation';
 import SpaceRemoveElementMutation from './Space/SpaceRemoveElementMutation';
 import SpaceRemovePluginMutation from './Space/SpaceRemovePluginMutation';
 import SpaceUpdateElementMutation from './Space/SpaceUpdateElementMutation';
+import SpaceUpdateElementsMutation from './Space/SpaceUpdateElementsMutation';
 import SpaceUpdateMutation from './Space/SpaceUpdateMutation';
 import SpaceUpdatePluginMutation from './Space/SpaceUpdatePluginMutation';
 import SpaceUpdateSchemaMutation from './Space/SpaceUpdateSchemaMutation';
@@ -117,6 +119,7 @@ export type BuilderMutationsMap = {
   SpaceRemoveVariable: unknown;
   SpaceAddElement: unknown;
   SpaceUpdateElement: unknown;
+  SpaceUpdateElements: unknown;
   SpaceRemoveElement: unknown;
   SpaceMoveElement: unknown;
   SpaceCloneElement: unknown;
@@ -156,6 +159,7 @@ export type BuilderMutationsMap = {
   SegmentRemove: unknown;
   SegmentAddElement: unknown;
   SegmentUpdateElement: unknown;
+  SegmentUpdateElements: unknown;
   SegmentRemoveElement: unknown;
   SegmentMoveElement: unknown;
   SegmentCloneElement: unknown;
@@ -198,6 +202,7 @@ const BuilderMutations = {
   SpaceRemoveVariable: SpaceRemoveVariableMutation,
   SpaceAddElement: SpaceAddElementMutation,
   SpaceUpdateElement: SpaceUpdateElementMutation,
+  SpaceUpdateElements: SpaceUpdateElementsMutation,
   SpaceRemoveElement: SpaceRemoveElementMutation,
   SpaceMoveElement: SpaceMoveElementMutation,
   SpaceCloneElement: SpaceCloneElementMutation,
@@ -237,6 +242,7 @@ const BuilderMutations = {
   SegmentRemove: SegmentRemoveMutation,
   SegmentAddElement: SegmentAddElementMutation,
   SegmentUpdateElement: SegmentUpdateElementMutation,
+  SegmentUpdateElements: SegmentUpdateElementsMutation,
   SegmentRemoveElement: SegmentRemoveElementMutation,
   SegmentMoveElement: SegmentMoveElementMutation,
   SegmentCloneElement: SegmentCloneElementMutation,

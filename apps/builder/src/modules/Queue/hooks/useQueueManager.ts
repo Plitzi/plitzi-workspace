@@ -132,6 +132,12 @@ const useQueueManager = ({
           return mutate('SpaceUpdateElement', { element });
         }
 
+        case SchemaActions.SCHEMA_UPDATE_ELEMENTS: {
+          const { elements } = item.action;
+
+          return mutate('SpaceUpdateElements', { elements });
+        }
+
         case SchemaActions.SCHEMA_REMOVE_ELEMENT: {
           const { elementId } = item.action;
 
@@ -299,6 +305,12 @@ const useQueueManager = ({
           const { element, segmentId } = item.action;
 
           return mutate('SegmentUpdateElement', { element, contextId: segmentId });
+        }
+
+        case SegmentsActions.SEGMENTS_UPDATE_ELEMENTS: {
+          const { elements, segmentId } = item.action;
+
+          return mutate('SegmentUpdateElements', { elements, contextId: segmentId });
         }
 
         case SegmentsActions.SEGMENTS_REMOVE_ELEMENT: {

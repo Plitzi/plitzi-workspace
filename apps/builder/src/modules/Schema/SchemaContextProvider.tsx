@@ -117,6 +117,12 @@ const SchemaContextProvider = ({
     [dispatchSchema]
   );
 
+  const schemaUpdateElements = useCallback(
+    (elements: Element[], fromSubscriptions = false) =>
+      dispatchSchema({ type: SchemaActions.SCHEMA_UPDATE_ELEMENTS, elements, fromSubscriptions }),
+    [dispatchSchema]
+  );
+
   const schemaMoveElement = useCallback(
     (from: string, to: string, elementId: string, dropPosition: DropPosition = 'inside', fromSubscriptions = false) =>
       dispatchSchema({ type: SchemaActions.SCHEMA_MOVE_ELEMENT, from, to, elementId, dropPosition, fromSubscriptions }),
@@ -423,6 +429,19 @@ const SchemaContextProvider = ({
         schemaUpdateElement(element, true);
       });
 
+      subscriptionManager.subscribe('SpaceUpdateElements', {}, data => {
+        if (!data.data || data.error) {
+          return;
+        }
+
+        const { elements } = get(
+          data,
+          'data.SpaceUpdateElements',
+          {}
+        ) as BuilderSubscriptionsMap['SpaceUpdateElements'];
+        schemaUpdateElements(elements, true);
+      });
+
       subscriptionManager.subscribe('SpaceRemoveElement', {}, data => {
         if (!data.data || data.error) {
           return;
@@ -518,6 +537,7 @@ const SchemaContextProvider = ({
           'SpaceUpdateSettings',
           'SpaceAddElement',
           'SpaceUpdateElement',
+          'SpaceUpdateElements',
           'SpaceRemoveElement',
           'SpaceMoveElement',
           'SpaceCloneElement',
@@ -542,6 +562,7 @@ const SchemaContextProvider = ({
     schemaUpdateSettings,
     schemaAddElement,
     schemaUpdateElement,
+    schemaUpdateElements,
     schemaRemoveElement,
     schemaMoveElement,
     schemaUpdate,
@@ -586,6 +607,7 @@ const SchemaContextProvider = ({
       schemaUpdate,
       schemaAddElement,
       schemaUpdateElement,
+      schemaUpdateElements,
       schemaMoveElement,
       schemaCloneElement,
       schemaRemoveElement,
@@ -595,6 +617,7 @@ const SchemaContextProvider = ({
       schemaUpdate,
       schemaAddElement,
       schemaUpdateElement,
+      schemaUpdateElements,
       schemaMoveElement,
       schemaCloneElement,
       schemaRemoveElement,
@@ -610,6 +633,7 @@ const SchemaContextProvider = ({
       schemaUpdate,
       schemaAddElement,
       schemaUpdateElement,
+      schemaUpdateElements,
       schemaMoveElement,
       schemaCloneElement,
       schemaRemoveElement,
@@ -631,6 +655,7 @@ const SchemaContextProvider = ({
     schemaUpdate,
     schemaAddElement,
     schemaUpdateElement,
+    schemaUpdateElements,
     schemaMoveElement,
     schemaCloneElement,
     schemaRemoveElement,

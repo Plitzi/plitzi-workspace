@@ -22,6 +22,7 @@ export const SchemaActions = {
   SCHEMA_MOVE_ELEMENT: 'SCHEMA_MOVE_ELEMENT',
   SCHEMA_CLONE_ELEMENT: 'SCHEMA_CLONE_ELEMENT',
   SCHEMA_UPDATE_ELEMENT: 'SCHEMA_UPDATE_ELEMENT',
+  SCHEMA_UPDATE_ELEMENTS: 'SCHEMA_UPDATE_ELEMENTS',
   SCHEMA_ADD_TEMPLATE: 'SCHEMA_ADD_TEMPLATE',
   SCHEMA_UPDATE_SETTINGS: 'SCHEMA_UPDATE_SETTINGS'
 } as const;
@@ -66,6 +67,7 @@ export type SchemaReducerActions = SchemaReducerActionsBase &
         initialItems: Record<string, Element>;
       }
     | { type: 'SCHEMA_UPDATE_ELEMENT'; element: Element }
+    | { type: 'SCHEMA_UPDATE_ELEMENTS'; elements: Element[] }
     | {
         type: 'SCHEMA_UPDATE_SETTINGS';
         path: string;
@@ -246,6 +248,14 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
 
       return produce(state, draft => {
         FlatMap.updateElement(draft.flat, element);
+      });
+    }
+
+    case SchemaActions.SCHEMA_UPDATE_ELEMENTS: {
+      const { elements } = action;
+
+      return produce(state, draft => {
+        elements.forEach(element => FlatMap.updateElement(draft.flat, element));
       });
     }
 

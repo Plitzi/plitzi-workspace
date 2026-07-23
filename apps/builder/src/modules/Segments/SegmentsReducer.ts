@@ -30,6 +30,7 @@ export const SegmentsActions = {
   SEGMENTS_MOVE_ELEMENT: 'SEGMENTS_MOVE_ELEMENT',
   SEGMENTS_CLONE_ELEMENT: 'SEGMENTS_CLONE_ELEMENT',
   SEGMENTS_UPDATE_ELEMENT: 'SEGMENTS_UPDATE_ELEMENT',
+  SEGMENTS_UPDATE_ELEMENTS: 'SEGMENTS_UPDATE_ELEMENTS',
   SEGMENTS_SPACE_ADD_VARIABLE: 'SEGMENTS_SPACE_ADD_VARIABLE',
   SEGMENTS_SPACE_UPDATE_VARIABLE: 'SEGMENTS_SPACE_UPDATE_VARIABLE',
   SEGMENTS_SPACE_REMOVE_VARIABLE: 'SEGMENTS_SPACE_REMOVE_VARIABLE',
@@ -75,6 +76,7 @@ export type SegmentsReducerActions =
       dropPosition: DropPosition;
     } & SegmentsReducerActionsBase)
   | ({ type: 'SEGMENTS_UPDATE_ELEMENT'; element: Element } & SegmentsReducerActionsBase)
+  | ({ type: 'SEGMENTS_UPDATE_ELEMENTS'; elements: Element[] } & SegmentsReducerActionsBase)
   | ({
       type: 'SEGMENTS_SPACE_ADD_VARIABLE' | 'SEGMENTS_SPACE_UPDATE_VARIABLE';
       variable: SchemaVariable;
@@ -221,6 +223,14 @@ const SegmentsReducer = (state: Record<string, Segment>, action: SegmentsReducer
 
       return produce(state, draft => {
         set(draft, `${identifier}.schema.flat[${element.id}]`, element);
+      });
+    }
+
+    case SegmentsActions.SEGMENTS_UPDATE_ELEMENTS: {
+      const { elements } = action;
+
+      return produce(state, draft => {
+        elements.forEach(element => set(draft, `${identifier}.schema.flat[${element.id}]`, element));
       });
     }
 

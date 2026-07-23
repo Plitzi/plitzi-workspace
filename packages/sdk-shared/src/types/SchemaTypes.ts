@@ -137,6 +137,7 @@ export type SchemaContextValue = {
     fromSubscriptions?: boolean
   ) => void;
   schemaUpdateElement?: (element: Element, fromSubscriptions?: boolean) => void;
+  schemaUpdateElements?: (elements: Element[], fromSubscriptions?: boolean) => void;
   schemaMoveElement?: (
     from: string,
     to: string,
