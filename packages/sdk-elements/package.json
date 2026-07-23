@@ -782,17 +782,17 @@
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "clsx": "^2.1.1",
-    "immer": "^11.1.11"
+    "immer": "^11.1.15"
   },
   "peerDependencies": {
     "react": "^19",
     "react-dom": "^19"
   },
   "devDependencies": {
-    "eslint": "^9.39.4",
-    "react": "^19.2.7",
+    "eslint": "^9.39.5",
+    "react": "^19.2.8",
     "typescript": "^6.0.3",
-    "vite": "^8.1.4",
+    "vite": "^8.1.5",
     "vitest": "^4.1.10"
   }
 }

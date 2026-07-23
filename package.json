@@ -32,14 +32,14 @@
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.6.17",
     "@plitzi/sdk-shared": "workspace:*",
-    "react-router": "^8.2.0"
+    "react-router": "^8.3.0"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.31.0",
+    "@changesets/cli": "^2.31.1",
     "@types/react": "^19.2.17",
-    "eslint": "^9.39.4",
-    "prettier-plugin-tailwindcss": "^0.8.0",
-    "turbo": "^2.10.4"
+    "eslint": "^9.39.5",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "turbo": "^2.10.6"
   },
   "engines": {
     "node": ">=20"

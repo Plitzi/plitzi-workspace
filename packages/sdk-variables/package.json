@@ -152,12 +152,12 @@
     "@plitzi/plitzi-ui": "^1.6.17",
     "@plitzi/sdk-shared": "workspace:*",
     "clsx": "^2.1.1",
-    "eslint": "^9.39.4",
+    "eslint": "^9.39.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "eslint": "^9.39.4",
+    "eslint": "^9.39.5",
     "typescript": "^6.0.3",
-    "vite": "^8.1.4"
+    "vite": "^8.1.5"
   }
 }
