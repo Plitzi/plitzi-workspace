@@ -1,7 +1,7 @@
 /* eslint-disable quotes */
 import { expect, describe, it } from 'vitest';
 
-import { processTwig } from './index';
+import { processTwig } from '../index';
 
 // Large / complex integration tests: deep feature combinations, sizeable data, and documented edge cases that
 // the focused unit suites do not exercise. These are the templates most likely to expose interaction bugs.

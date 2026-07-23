@@ -1,7 +1,7 @@
 /* eslint-disable quotes */
 import { expect, describe, it } from 'vitest';
 
-import { processTwig } from './index';
+import { processTwig } from '../index';
 
 // Tests for behaviours the contract suite did not cover, plus regressions fixed during the refactor:
 // per-loop metadata isolation, the `in` operator, filter arguments as full expressions, and the

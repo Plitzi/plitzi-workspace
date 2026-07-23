@@ -230,26 +230,29 @@ class ExpressionParser extends Cursor {
     return this.parsePathOrFunctionOrArrow();
   }
 
-  // Tries to parse arrow function params inside parentheses.
-  // Returns the param names if this is `(name1, name2) =>`, or null if not an arrow function.
+  // Tries to parse arrow function params inside parentheses (the cursor sits just past the `(`).
+  // Returns the param names for `() =>`, `(name) =>` or `(name1, name2) =>`, or null when this is not an arrow.
   private tryParseArrowParams(): string[] | null {
-    const params: string[] = [];
     const startPos = this.pos;
+    const params: string[] = [];
+    this.skipWs();
 
-    // Try to read identifier list
-    while (!this.eof()) {
-      this.skipWs();
+    // Read the identifier list; an empty list (`()`) is valid and falls straight through to the `) =>` check.
+    while (this.peek() !== Char.RParen) {
       const name = this.scanName();
       if (!name) {
         this.pos = startPos;
         return null;
       }
+
       params.push(name);
       this.skipWs();
       if (this.peek() === Char.Comma) {
         this.pos++;
+        this.skipWs();
         continue;
       }
+
       break;
     }
 

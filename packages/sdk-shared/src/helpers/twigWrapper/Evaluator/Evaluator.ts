@@ -333,18 +333,19 @@ class Evaluator {
   // The function captures the current variable scope and evaluates the body expression
   // with the arrow parameters bound to the provided arguments.
   private createArrowFunction(params: readonly string[], body: Expression): ArrowCallback {
+    // Snapshot the scope at creation time so a closure stored (e.g. via `{% set %}`) and invoked later still
+    // sees the variables it was defined with, not whatever the enclosing evaluator holds by then.
     const capturedVariables = { ...this.variables };
     const keepEmptyTokens = this.keepEmptyTokens;
 
     const callback: ArrowCallback = (...args: unknown[]) => {
-      // Create a new scope with the arrow parameters bound to arguments
-      const scope: Record<string, unknown> = { ...capturedVariables };
+      // The child evaluator copies capturedVariables in its constructor, giving the body an isolated scope;
+      // binding the parameters onto it therefore never leaks back into the captured outer scope.
+      const evaluator = new Evaluator(capturedVariables, keepEmptyTokens);
       for (let i = 0; i < params.length; i++) {
-        scope[params[i]] = args[i];
+        evaluator.variables[params[i]] = args[i];
       }
 
-      // Create a new evaluator with the scope and evaluate the body
-      const evaluator = new Evaluator(scope, keepEmptyTokens);
       return evaluator.evalExpression(body);
     };
     callback[ARROW_PARAMS] = params.length;
