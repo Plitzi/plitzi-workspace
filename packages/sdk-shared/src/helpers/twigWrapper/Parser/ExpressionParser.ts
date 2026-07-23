@@ -27,7 +27,7 @@ class ExpressionParser extends Cursor {
       if (this.peek() === Char.Colon) {
         this.pos++;
         this.skipWs();
-        const falseExpr = this.parseOr();
+        const falseExpr = this.parseTernary();
         return { type: 'ternary', condition, trueExpr, falseExpr };
       }
     }
@@ -154,6 +154,17 @@ class ExpressionParser extends Cursor {
   }
 
   private parseDefault(): Expression {
+    // Unary minus: `-expr` — must check before parseAtom to avoid consuming the `-` as part of a negative literal.
+    if (this.peek() === Char.Minus && isDigit(this.at(1))) {
+      // Negative number literal — let scanNumber handle it normally.
+      return this.maybeTrailingFilters({ type: 'literal', value: this.scanNumber() });
+    }
+
+    if (this.peek() === Char.Minus) {
+      this.pos++;
+      return { type: 'unary', operator: '-', operand: this.parseDefault() };
+    }
+
     let left = this.parseAtom();
     this.skipWs();
     while (this.peek() === Char.Question && this.at(1) === Char.Question) {
@@ -172,6 +183,18 @@ class ExpressionParser extends Cursor {
 
     if (ch === Char.LParen) {
       this.pos++;
+      this.skipWs();
+
+      // Check if this is an arrow function: (param1, param2) =>
+      const savedPos = this.pos;
+      const params = this.tryParseArrowParams();
+      if (params !== null) {
+        // It's an arrow function
+        return this.maybeTrailingFilters({ type: 'arrow', params, body: this.parseTernary() });
+      }
+
+      // Not an arrow function, parse as grouped expression
+      this.pos = savedPos;
       const expr = this.parseTernary();
       this.skipWs();
       if (this.peek() === Char.RParen) {
@@ -185,7 +208,7 @@ class ExpressionParser extends Cursor {
       return this.maybeTrailingFilters({ type: 'literal', value: this.scanStringLiteral() });
     }
 
-    if (ch === Char.Minus || isDigit(ch)) {
+    if (isDigit(ch)) {
       return this.maybeTrailingFilters({ type: 'literal', value: this.scanNumber() });
     }
 
@@ -194,10 +217,50 @@ class ExpressionParser extends Cursor {
       return this.maybeTrailingFilters({ type: 'array', elements: this.parseArgList(Char.RBracket) });
     }
 
-    return this.parsePathOrFunction();
+    // Check for single-param arrow function: param =>
+    return this.parsePathOrFunctionOrArrow();
   }
 
-  private parsePathOrFunction(): Expression {
+  // Tries to parse arrow function params inside parentheses.
+  // Returns the param names if this is `(name1, name2) =>`, or null if not an arrow function.
+  private tryParseArrowParams(): string[] | null {
+    const params: string[] = [];
+    const startPos = this.pos;
+
+    // Try to read identifier list
+    while (!this.eof()) {
+      this.skipWs();
+      const name = this.scanName();
+      if (!name) {
+        this.pos = startPos;
+        return null;
+      }
+      params.push(name);
+      this.skipWs();
+      if (this.peek() === Char.Comma) {
+        this.pos++;
+        continue;
+      }
+      break;
+    }
+
+    this.skipWs();
+
+    // Check for closing paren followed by =>
+    if (this.peek() === Char.RParen) {
+      this.pos++;
+      this.skipWs();
+      if (this.peek() === Char.Equals && this.at(1) === Char.Greater) {
+        this.pos += 2;
+        return params;
+      }
+    }
+
+    this.pos = startPos;
+    return null;
+  }
+
+  private parsePathOrFunctionOrArrow(): Expression {
     const name = this.scanName();
     if (!name) {
       this.pos++;
@@ -209,6 +272,13 @@ class ExpressionParser extends Cursor {
     }
 
     this.skipWs();
+
+    // Check for single-param arrow function: name =>
+    if (this.peek() === Char.Equals && this.at(1) === Char.Greater) {
+      this.pos += 2;
+      return this.maybeTrailingFilters({ type: 'arrow', params: [name], body: this.parseTernary() });
+    }
+
     if (this.peek() === Char.LParen) {
       this.pos++;
       const args = this.parseArgList(Char.RParen);

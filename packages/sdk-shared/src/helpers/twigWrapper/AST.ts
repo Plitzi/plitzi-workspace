@@ -76,7 +76,8 @@ export type Expression =
   | UnaryNode
   | BinaryNode
   | DefaultNode
-  | TernaryNode;
+  | TernaryNode
+  | ArrowFunctionNode;
 
 // Literal values: strings, numbers, booleans
 export type LiteralNode = {
@@ -130,10 +131,10 @@ export type ConcatNode = {
   readonly parts: readonly Expression[];
 };
 
-// Unary operators: `not expr`
+// Unary operators: `not expr` or `-expr`
 export type UnaryNode = {
   readonly type: 'unary';
-  readonly operator: 'not';
+  readonly operator: 'not' | '-';
   readonly operand: Expression;
 };
 
@@ -158,4 +159,11 @@ export type TernaryNode = {
   readonly condition: Expression;
   readonly trueExpr: Expression;
   readonly falseExpr: Expression;
+};
+
+// Arrow function: `item => expression` or `(item, index) => expression`
+export type ArrowFunctionNode = {
+  readonly type: 'arrow';
+  readonly params: readonly string[];
+  readonly body: Expression;
 };

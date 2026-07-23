@@ -103,6 +103,11 @@ class Evaluator {
       return String(unwrapRaw(value));
     }
 
+    // Functions (arrow callbacks) render as empty string when used standalone.
+    if (typeof value === 'function') {
+      return '';
+    }
+
     // Primitives: fast path (most common).
     if (value !== null && value !== undefined && typeof value !== 'object') {
       // eslint-disable-next-line @typescript-eslint/no-base-to-string
@@ -295,6 +300,10 @@ class Evaluator {
         return out;
       }
       case 'unary':
+        if (expr.operator === '-') {
+          return -Number(this.evalExpression(expr.operand));
+        }
+
         return !isTruthy(this.evalExpression(expr.operand));
       case 'binary':
         return this.evalBinary(expr.operator, expr.left, expr.right);
@@ -306,7 +315,29 @@ class Evaluator {
         return isTruthy(this.evalExpression(expr.condition))
           ? this.evalExpression(expr.trueExpr)
           : this.evalExpression(expr.falseExpr);
+      case 'arrow':
+        return this.createArrowFunction(expr.params, expr.body);
     }
+  }
+
+  // Creates a callable JavaScript function from an arrow function AST node.
+  // The function captures the current variable scope and evaluates the body expression
+  // with the arrow parameters bound to the provided arguments.
+  private createArrowFunction(params: readonly string[], body: Expression): (...args: unknown[]) => unknown {
+    const capturedVariables = { ...this.variables };
+    const keepEmptyTokens = this.keepEmptyTokens;
+
+    return (...args: unknown[]) => {
+      // Create a new scope with the arrow parameters bound to arguments
+      const scope: Record<string, unknown> = { ...capturedVariables };
+      for (let i = 0; i < params.length; i++) {
+        scope[params[i]] = args[i];
+      }
+
+      // Create a new evaluator with the scope and evaluate the body
+      const evaluator = new Evaluator(scope, keepEmptyTokens);
+      return evaluator.evalExpression(body);
+    };
   }
 
   private resolvePath(segments: readonly string[]): unknown {

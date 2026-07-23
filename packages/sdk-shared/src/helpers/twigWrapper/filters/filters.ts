@@ -112,9 +112,10 @@ export const filters: Record<string, TwigFilter> = {
     return value + padStr.repeat(repeat).slice(0, padLen);
   },
   // `| number` — extracts the first number from a string.
-  number: value => {
+  number: (value, args) => {
     if (typeof value === 'number') {
-      return value;
+      const decimals = Number(args[0]) || 0;
+      return value.toFixed(decimals);
     }
     if (typeof value !== 'string') {
       return value;
@@ -177,11 +178,15 @@ export const filters: Record<string, TwigFilter> = {
       return value.length;
     }
 
+    if (typeof value === 'number') {
+      return toStr(value).length;
+    }
+
     if (value !== null && typeof value === 'object') {
       return Object.keys(value).length;
     }
 
-    return value;
+    return 0;
   },
   // `| first` — first character of a string or first element of an array.
   first: value => {
@@ -295,6 +300,48 @@ export const filters: Record<string, TwigFilter> = {
 
     return chunks;
   },
+  // `| map(callback)` — applies a callback to each element and returns the results.
+  // The callback is an arrow function, e.g. `| map(item => item.name)`.
+  map: (value, args) => {
+    if (!Array.isArray(value) || args.length === 0) {
+      return value;
+    }
+
+    const callback = args[0];
+    if (typeof callback !== 'function') {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return value;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    return value.map((item, index) => callback(item, index));
+  },
+  // `| reduce(callback, initial)` — reduces an array to a single value.
+  // The callback is an arrow function, e.g. `| reduce((acc, item) => acc + item, 0)`.
+  reduce: (value, args) => {
+    if (!Array.isArray(value) || args.length === 0) {
+      return value;
+    }
+
+    const callback = args[0];
+    if (typeof callback !== 'function') {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return value;
+    }
+
+    const initial = args[1];
+    const startIndex = initial !== undefined ? 0 : 1;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    let accumulator = initial !== undefined ? initial : value[0];
+
+    for (let i = startIndex; i < value.length; i++) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      accumulator = callback(accumulator, value[i], i);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return accumulator;
+  },
   // `| merge(other)` — merges two arrays or objects.
   merge: (value, args) => {
     if (args.length === 0) {
@@ -331,7 +378,7 @@ export const filters: Record<string, TwigFilter> = {
 
     return value;
   },
-  // `| filter('key')` — filters an array, keeping items truthy for the given key (or the items themselves).
+  // `| filter('key')` or `| filter(callback)` — filters an array by key truthiness or arrow callback.
   filter: (value, args) => {
     if (!Array.isArray(value)) {
       return value;
@@ -342,7 +389,13 @@ export const filters: Record<string, TwigFilter> = {
       return value.filter(Boolean);
     }
 
-    const key = toStr(args[0]);
+    const callback = args[0];
+    if (typeof callback === 'function') {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return value.filter((item, index) => callback(item, index));
+    }
+
+    const key = toStr(callback);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return value.filter(item => {
       if (item !== null && typeof item === 'object') {
@@ -563,12 +616,23 @@ export const filters: Record<string, TwigFilter> = {
   },
 
   // ── Array/Object queries ──────────────────────────────────────────────────
-  // `| find('key', value)` — finds first array element where key matches value.
+  // `| find(callback)` or `| find('key', value)` — finds first array element matching criteria.
   find: (value, args) => {
-    if (!Array.isArray(value) || args.length < 2) {
+    if (!Array.isArray(value) || args.length === 0) {
       return undefined;
     }
-    const key = toStr(args[0]);
+
+    const callback = args[0];
+    if (typeof callback === 'function') {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return value.find((item, index) => callback(item, index));
+    }
+
+    if (args.length < 2) {
+      return undefined;
+    }
+
+    const key = toStr(callback);
     const target = args[1];
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return value.find(item => {
