@@ -156,7 +156,7 @@ const OverlayButtonResize = ({
         }, 1500)
       );
     },
-    [elementDOM.offsetHeight, elementDOM.offsetWidth, elementDOM.style, onChangeDebounced]
+    [elementDOM, onChangeDebounced]
   );
 
   const handleMouseDown = (direction: ResizeDirection) => (e: MouseEvent | React.MouseEvent) => {

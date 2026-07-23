@@ -55,7 +55,7 @@ const BuilderOverlayDrag = ({ refIframe, sizeOffset = 2, zoom = 1 }: BuilderOver
         ({ scrollX, scrollY, innerHeight, innerWidth } = refIframe.current.contentWindow);
       } else {
         elementDOM.current = window.document.querySelector(`[data-id="${id}"][data-root-id="${baseElementId}"]`);
-        ({ scrollX, scrollY, innerHeight } = window);
+        ({ scrollX, scrollY, innerHeight, innerWidth } = window);
       }
 
       if (!elementDOM.current) {

@@ -2,7 +2,7 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
-import { useCallback, use, useMemo } from 'react';
+import { memo, useCallback, use, useMemo } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
@@ -251,4 +251,4 @@ const OverlayButtonContainer = ({
   );
 };
 
-export default OverlayButtonContainer;
+export default memo(OverlayButtonContainer);

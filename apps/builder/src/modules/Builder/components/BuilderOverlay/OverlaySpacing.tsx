@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 
-import { useCallback, use, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
@@ -120,7 +120,7 @@ const OverlaySpacing = ({
         }
       }
     };
-  }, [rawStyle, zoom]);
+  }, [rawStyle]);
 
   return (
     <div className="overlay__spacing">
@@ -143,4 +143,4 @@ const OverlaySpacing = ({
   );
 };
 
-export default OverlaySpacing;
+export default memo(OverlaySpacing);

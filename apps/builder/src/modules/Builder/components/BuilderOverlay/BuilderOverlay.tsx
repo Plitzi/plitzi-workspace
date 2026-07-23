@@ -58,15 +58,15 @@ const BuilderOverlay = ({
     elementDOM: undefined
   });
 
-  const handleProcessContainer = useCallback(
+  const positionRoot = useCallback(
     (elementDOM?: HTMLElement | null) => {
       if (!elementDOM || !rootContainerRef.current) {
-        return;
+        return undefined;
       }
 
       const container = processContainer(elementDOM, refIframe.current, zoom);
       if (!container) {
-        return;
+        return undefined;
       }
 
       const { width, height, x, y } = container;
@@ -74,6 +74,20 @@ const BuilderOverlay = ({
       rootContainerRef.current.style.height = `${height}px`;
       rootContainerRef.current.style.top = `${y}px`;
       rootContainerRef.current.style.left = `${x}px`;
+
+      return container;
+    },
+    [refIframe, zoom]
+  );
+
+  const handleProcessContainer = useCallback(
+    (elementDOM?: HTMLElement | null) => {
+      const container = positionRoot(elementDOM);
+      if (!container) {
+        return;
+      }
+
+      const { width, height, x, y } = container;
       setContainer(state => {
         if (state.width === width && state.height === height && state.x === x && state.y === y) {
           return state;
@@ -82,7 +96,7 @@ const BuilderOverlay = ({
         return container;
       });
     },
-    [refIframe, zoom]
+    [positionRoot]
   );
 
   // eslint-disable-next-line react-hooks/use-memo
@@ -133,98 +147,74 @@ const BuilderOverlay = ({
       return undefined;
     }
 
-    const resizeObserver = new ResizeObserver(() => handleProcessContainer(elementDOM));
-    resizeObserver.observe(elementDOM);
-    if (elementDOM.parentNode) {
-      resizeObserver.observe(elementDOM.parentNode as HTMLElement);
-    }
-
-    const mutationObserver = new MutationObserver(() => handleProcessContainer(overlayProps.elementDOM));
-    if (elementDOM.parentNode) {
-      mutationObserver.observe(elementDOM.parentNode, { childList: true });
-    }
-
-    const scrollCallback = () => throttledHandleProcessContainer(overlayProps.elementDOM);
-    const iframeDOM = refIframe.current;
-    if (iframeDOM && iframeDOM.contentWindow) {
-      iframeDOM.contentWindow.document.addEventListener('scroll', scrollCallback, true);
-      iframeDOM.contentWindow.addEventListener('resize', scrollCallback, true);
-    }
-
-    return () => {
-      resizeObserver.unobserve(elementDOM);
-      if (elementDOM.parentNode) {
-        resizeObserver.unobserve(elementDOM.parentNode as HTMLElement);
-      }
-
-      resizeObserver.disconnect();
-      mutationObserver.disconnect();
-      if (iframeDOM && iframeDOM.contentWindow) {
-        iframeDOM.contentWindow.document.removeEventListener('scroll', scrollCallback, true);
-        iframeDOM.contentWindow.removeEventListener('resize', scrollCallback, true);
-      }
-    };
-  }, [
-    mode,
-    overlayProps.elementDOM,
-    overlayProps.elementDOM?.parentNode,
-    handleProcessContainer,
-    overlayProps,
-    refIframe,
-    throttledHandleProcessContainer
-  ]);
-
-  useEffect(() => {
-    const { elementDOM } = overlayProps;
-    if (!elementDOM || mode !== 'select') {
-      return undefined;
-    }
-
-    const targetDocument = refIframe.current?.contentWindow?.document ?? window.document;
     const targetWindow = refIframe.current?.contentWindow ?? window;
+    const targetDocument = targetWindow.document;
+    const parent = elementDOM.parentNode as HTMLElement | null;
+    const reposition = () => handleProcessContainer(elementDOM);
 
+    const resizeObserver = new ResizeObserver(reposition);
+    resizeObserver.observe(elementDOM);
+    const mutationObserver = new MutationObserver(reposition);
+    if (parent) {
+      resizeObserver.observe(parent);
+      mutationObserver.observe(parent, { childList: true });
+    }
+
+    const scrollCallback = () => throttledHandleProcessContainer(elementDOM);
+    targetDocument.addEventListener('scroll', scrollCallback, true);
+    targetWindow.addEventListener('resize', scrollCallback, true);
+
+    // CSS animations/transitions move the element without triggering the observers
+    // above, so run a rAF loop that repositions each frame while any are active.
+    // While animating we only move the root imperatively (children follow via CSS,
+    // no React re-render); once it settles we do one full sync to refresh state.
     let activeAnimations = 0;
     let rafId = 0;
     const tick = () => {
-      handleProcessContainer(elementDOM);
       if (activeAnimations > 0) {
+        positionRoot(elementDOM);
         rafId = targetWindow.requestAnimationFrame(tick);
       } else {
+        reposition();
         rafId = 0;
       }
     };
 
-    const onStart = () => {
+    const onAnimationStart = () => {
       activeAnimations += 1;
       if (!rafId) {
         rafId = targetWindow.requestAnimationFrame(tick);
       }
     };
 
-    const onEnd = () => {
+    const onAnimationEnd = () => {
       activeAnimations = Math.max(0, activeAnimations - 1);
     };
 
-    targetDocument.addEventListener('animationstart', onStart, true);
-    targetDocument.addEventListener('transitionrun', onStart, true);
-    targetDocument.addEventListener('animationend', onEnd, true);
-    targetDocument.addEventListener('animationcancel', onEnd, true);
-    targetDocument.addEventListener('transitionend', onEnd, true);
-    targetDocument.addEventListener('transitioncancel', onEnd, true);
+    targetDocument.addEventListener('animationstart', onAnimationStart, true);
+    targetDocument.addEventListener('transitionrun', onAnimationStart, true);
+    targetDocument.addEventListener('animationend', onAnimationEnd, true);
+    targetDocument.addEventListener('animationcancel', onAnimationEnd, true);
+    targetDocument.addEventListener('transitionend', onAnimationEnd, true);
+    targetDocument.addEventListener('transitioncancel', onAnimationEnd, true);
 
     return () => {
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
       if (rafId) {
         targetWindow.cancelAnimationFrame(rafId);
       }
 
-      targetDocument.removeEventListener('animationstart', onStart, true);
-      targetDocument.removeEventListener('transitionrun', onStart, true);
-      targetDocument.removeEventListener('animationend', onEnd, true);
-      targetDocument.removeEventListener('animationcancel', onEnd, true);
-      targetDocument.removeEventListener('transitionend', onEnd, true);
-      targetDocument.removeEventListener('transitioncancel', onEnd, true);
+      targetDocument.removeEventListener('scroll', scrollCallback, true);
+      targetWindow.removeEventListener('resize', scrollCallback, true);
+      targetDocument.removeEventListener('animationstart', onAnimationStart, true);
+      targetDocument.removeEventListener('transitionrun', onAnimationStart, true);
+      targetDocument.removeEventListener('animationend', onAnimationEnd, true);
+      targetDocument.removeEventListener('animationcancel', onAnimationEnd, true);
+      targetDocument.removeEventListener('transitionend', onAnimationEnd, true);
+      targetDocument.removeEventListener('transitioncancel', onAnimationEnd, true);
     };
-  }, [mode, overlayProps.elementDOM, overlayProps, refIframe, handleProcessContainer]);
+  }, [mode, overlayProps.elementDOM, refIframe, handleProcessContainer, positionRoot, throttledHandleProcessContainer]);
 
   useEffect(() => {
     if (mode !== 'select') {
@@ -261,7 +251,7 @@ const BuilderOverlay = ({
 
     // Special case where the element is not found in the DOM due lazy loading
     let retries = 10;
-    const retryHandler = setTimeout(() => {
+    const retryHandler = setInterval(() => {
       const elementDOM = getElementDOM(id) as HTMLElement | null;
       if (elementDOM) {
         setOverlayProps({ id, element, elementDOM });
@@ -273,12 +263,12 @@ const BuilderOverlay = ({
 
       retries -= 1;
       if (retries === 0) {
-        clearTimeout(retryHandler);
+        clearInterval(retryHandler);
       }
     }, 125);
 
     return () => {
-      clearTimeout(retryHandler);
+      clearInterval(retryHandler);
     };
   }, [id, overlayProps.element, overlayProps.elementDOM, getElementDOM, mode, element, handleProcessContainer]);
 
