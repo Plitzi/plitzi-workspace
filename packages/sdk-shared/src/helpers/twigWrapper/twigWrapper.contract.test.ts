@@ -858,3 +858,134 @@ describe('AST processTwig — string literal escape sequences', () => {
     expect(result).toBe('line1\nline2\nline3');
   });
 });
+
+describe('AST processTwig — new string filters', () => {
+  it('ltrim trims from start', () => {
+    expect(processTwig('{{ val | ltrim }}', { val: '  hello  ' })).toBe('hello  ');
+  });
+
+  it('rtrim trims from end', () => {
+    expect(processTwig('{{ val | rtrim }}', { val: '  hello  ' })).toBe('  hello');
+  });
+
+  it('pad pads from left', () => {
+    expect(processTwig('{{ val | pad(6, "0") }}', { val: '42' })).toBe('000042');
+  });
+
+  it('padRight pads from right', () => {
+    expect(processTwig('{{ val | padRight(6, ".") }}', { val: 'hi' })).toBe('hi....');
+  });
+
+  it('number extracts first number from string', () => {
+    expect(processTwig('{{ val | number }}', { val: 'price is 42.5 dollars' })).toBe('42.5');
+    expect(processTwig('{{ val | number }}', { val: 'no numbers' })).toBe('0');
+  });
+});
+
+describe('AST processTwig — spaceless filter', () => {
+  it('removes whitespace between tags', () => {
+    expect(processTwig('{{ val | spaceless }}', { val: '<div>  <span> hi </span>  </div>' })).toBe(
+      '<div><span> hi </span></div>'
+    );
+  });
+});
+
+describe('AST processTwig — date filter', () => {
+  it('formats a date string', () => {
+    const result = processTwig('{{ val | date("Y-m-d") }}', { val: '2025-01-15T10:30:00' });
+    expect(result).toBe('2025-01-15');
+  });
+
+  it('formats with time', () => {
+    const result = processTwig('{{ val | date("H:i:s") }}', { val: '2025-01-15T14:30:45' });
+    expect(result).toBe('14:30:45');
+  });
+
+  it('formats month and day names', () => {
+    const result = processTwig('{{ val | date("l, F d, Y") }}', { val: '2025-01-15' });
+    expect(result).toBe('Wednesday, January 15, 2025');
+  });
+});
+
+describe('AST processTwig — encoding filters', () => {
+  it('base64_encode encodes string', () => {
+    expect(processTwig('{{ val | base64_encode }}', { val: 'hello' })).toBe(btoa('hello'));
+  });
+
+  it('base64_decode decodes string', () => {
+    expect(processTwig('{{ val | base64_decode }}', { val: btoa('hello') })).toBe('hello');
+  });
+});
+
+describe('AST processTwig — object manipulation filters', () => {
+  it('without removes specified keys', () => {
+    expect(processTwig('{{ obj | without("b", "c") }}', { obj: { a: 1, b: 2, c: 3 } })).toBe('{"a":1}');
+  });
+
+  it('only keeps specified keys', () => {
+    expect(processTwig('{{ obj | only("a", "c") }}', { obj: { a: 1, b: 2, c: 3 } })).toBe('{"a":1,"c":3}');
+  });
+});
+
+describe('AST processTwig — array query filters', () => {
+  it('find finds first matching element', () => {
+    const result = processTwig('{{ items | find("name", "Bob") | to_json }}', {
+      items: [{ name: 'Alice' }, { name: 'Bob' }, { name: 'Charlie' }]
+    });
+    expect(result).toBe('{"name":"Bob"}');
+  });
+
+  it('pluck extracts values by key', () => {
+    expect(
+      processTwig('{{ items | pluck("name") | join(", ") }}', {
+        items: [{ name: 'Alice' }, { name: 'Bob' }]
+      })
+    ).toBe('Alice, Bob');
+  });
+
+  it('unique removes duplicates', () => {
+    expect(processTwig('{{ items | unique | join(", ") }}', { items: [1, 2, 2, 3, 3, 3] })).toBe('1, 2, 3');
+  });
+
+  it('flatten flattens one level', () => {
+    expect(
+      processTwig('{{ items | flatten | join(", ") }}', {
+        items: [
+          [1, 2],
+          [3, 4]
+        ]
+      })
+    ).toBe('1, 2, 3, 4');
+  });
+
+  it('sum sums array values', () => {
+    expect(processTwig('{{ items | sum }}', { items: [1, 2, 3, 4] })).toBe('10');
+  });
+
+  it('chunk splits array', () => {
+    expect(
+      processTwig('{% for g in items | chunk(2) %}[{{ g | join(",") }}]{% endfor %}', { items: [1, 2, 3, 4, 5] })
+    ).toBe('[1,2][3,4][5]');
+  });
+
+  it('index_by reindexes array', () => {
+    const result = processTwig('{{ items | index_by("id") | to_json }}', {
+      items: [
+        { id: 'a', v: 1 },
+        { id: 'b', v: 2 }
+      ]
+    });
+    expect(result).toBe('{"a":{"id":"a","v":1},"b":{"id":"b","v":2}}');
+  });
+
+  it('group_by groups array', () => {
+    const result = processTwig('{{ items | group_by("type") | to_json }}', {
+      items: [
+        { type: 'a', v: 1 },
+        { type: 'b', v: 2 },
+        { type: 'a', v: 3 }
+      ]
+    });
+    expect(result).toBe('{"a":[{"type":"a","v":1},{"type":"a","v":3}],"b":[{"type":"b","v":2}]}');
+  });
+});

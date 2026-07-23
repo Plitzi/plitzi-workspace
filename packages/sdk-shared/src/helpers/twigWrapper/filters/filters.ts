@@ -73,6 +73,55 @@ export const filters: Record<string, TwigFilter> = {
           .replace(/[\s-]+/g, '_')
           .toLowerCase()
       : value,
+  // `| ltrim` — trims whitespace from the start.
+  ltrim: value => (typeof value === 'string' ? value.trimStart() : value),
+  // `| rtrim` — trims whitespace from the end.
+  rtrim: value => (typeof value === 'string' ? value.trimEnd() : value),
+  // `| pad(length, 'char')` — pads string from left to given length.
+  pad: (value, args) => {
+    if (typeof value !== 'string') {
+      return value;
+    }
+    const length = Number(args[0]) || 0;
+    const padStr = args.length > 1 ? toStr(args[1]) : ' ';
+    if (padStr === '') {
+      return value;
+    }
+    const padLen = length - value.length;
+    if (padLen <= 0) {
+      return value;
+    }
+    const repeat = Math.ceil(padLen / padStr.length);
+    return padStr.repeat(repeat).slice(0, padLen) + value;
+  },
+  // `| padRight(length, 'char')` — pads string from right to given length.
+  padRight: (value, args) => {
+    if (typeof value !== 'string') {
+      return value;
+    }
+    const length = Number(args[0]) || 0;
+    const padStr = args.length > 1 ? toStr(args[1]) : ' ';
+    if (padStr === '') {
+      return value;
+    }
+    const padLen = length - value.length;
+    if (padLen <= 0) {
+      return value;
+    }
+    const repeat = Math.ceil(padLen / padStr.length);
+    return value + padStr.repeat(repeat).slice(0, padLen);
+  },
+  // `| number` — extracts the first number from a string.
+  number: value => {
+    if (typeof value === 'number') {
+      return value;
+    }
+    if (typeof value !== 'string') {
+      return value;
+    }
+    const match = value.match(/-?\d+(?:\.\d+)?/);
+    return match ? Number(match[0]) : 0;
+  },
 
   // ── String operations ────────────────────────────────────────────────────────────
   // `| replace('search', 'replacement')` — replaces every occurrence of search with replacement.
@@ -405,5 +454,201 @@ export const filters: Record<string, TwigFilter> = {
 
       return toStr(replacement);
     });
+  },
+
+  // ── Whitespace ────────────────────────────────────────────────────────────
+  // `| spaceless` — removes extra whitespace between HTML tags.
+  spaceless: value => (typeof value === 'string' ? value.replace(/>\s+</g, '><').trim() : value),
+
+  // ── Random ────────────────────────────────────────────────────────────────
+  // `| random` — returns a random element from an array or a random character from a string.
+  random: value => {
+    if (Array.isArray(value)) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return value.length > 0 ? value[Math.floor(Math.random() * value.length)] : undefined;
+    }
+    if (typeof value === 'string') {
+      return value.length > 0 ? value[Math.floor(Math.random() * value.length)] : '';
+    }
+    if (typeof value === 'number') {
+      return Math.floor(Math.random() * value);
+    }
+    return value;
+  },
+
+  // ── Date ──────────────────────────────────────────────────────────────────
+  // `| date(format)` — formats a date string/timestamp using Intl.DateTimeFormat.
+  // Supported format tokens: Y, m, d, H, i, s, l (day name), F (month name), M (short month).
+  date: (value, args) => {
+    if (args.length === 0) {
+      return value;
+    }
+    const format = toStr(args[0]);
+    const date = value instanceof Date ? value : new Date(String(value));
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const monthNames = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
+    ];
+    const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+    return format
+      .replace('Y', String(date.getFullYear()))
+      .replace('m', pad(date.getMonth() + 1))
+      .replace('d', pad(date.getDate()))
+      .replace('H', pad(date.getHours()))
+      .replace('i', pad(date.getMinutes()))
+      .replace('s', pad(date.getSeconds()))
+      .replace('l', dayNames[date.getDay()])
+      .replace('F', monthNames[date.getMonth()])
+      .replace('M', monthShort[date.getMonth()]);
+  },
+
+  // ── Encoding ──────────────────────────────────────────────────────────────
+  // `| base64_encode` — encodes string to base64.
+  base64_encode: value => (typeof value === 'string' ? btoa(value) : value),
+  // `| base64_decode` — decodes base64 string.
+  base64_decode: value => (typeof value === 'string' ? atob(value) : value),
+  // `| md5` — returns MD5 hash (simplified: returns hex of char codes).
+  md5: value =>
+    typeof value === 'string'
+      ? Array.from(value)
+          .map(c => c.charCodeAt(0).toString(16).padStart(2, '0'))
+          .join('')
+      : value,
+
+  // ── Object manipulation ───────────────────────────────────────────────────
+  // `| without('key1', 'key2')` — returns object without specified keys.
+  without: (value, args) => {
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+      return value;
+    }
+    const keys = args.map(toStr);
+    const result: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (!keys.includes(k)) {
+        result[k] = v;
+      }
+    }
+    return result;
+  },
+  // `| only('key1', 'key2')` — returns object with only specified keys.
+  only: (value, args) => {
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+      return value;
+    }
+    const keys = args.map(toStr);
+    const result: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (keys.includes(k)) {
+        result[k] = v;
+      }
+    }
+    return result;
+  },
+
+  // ── Array/Object queries ──────────────────────────────────────────────────
+  // `| find('key', value)` — finds first array element where key matches value.
+  find: (value, args) => {
+    if (!Array.isArray(value) || args.length < 2) {
+      return undefined;
+    }
+    const key = toStr(args[0]);
+    const target = args[1];
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return value.find(item => {
+      if (item !== null && typeof item === 'object') {
+        return (item as Record<string, unknown>)[key] === target;
+      }
+      return item === target;
+    });
+  },
+  // `| pluck('key')` — extracts all values for a given key from an array of objects.
+  pluck: (value, args) => {
+    if (!Array.isArray(value) || args.length === 0) {
+      return value;
+    }
+    const key = toStr(args[0]);
+
+    return value.map(item =>
+      item !== null && typeof item === 'object' ? (item as Record<string, unknown>)[key] : undefined
+    );
+  },
+  // `| unique` — removes duplicates from an array.
+  unique: value => (Array.isArray(value) ? [...new Set(value)] : value),
+  // `| flatten` — flattens a nested array by one level.
+  flatten: value => {
+    return Array.isArray(value) ? value.flat() : value;
+  },
+  // `| sum` — sums all numeric values in an array.
+  sum: value => {
+    if (!Array.isArray(value)) {
+      return value;
+    }
+    return value.reduce<number>((acc, item) => acc + (typeof item === 'number' ? item : 0), 0);
+  },
+  // `| chunk(size)` — splits array into chunks of given size.
+  chunk: (value, args) => {
+    if (!Array.isArray(value) || args.length === 0) {
+      return value;
+    }
+    const size = Number(args[0]);
+    if (size <= 0) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return value;
+    }
+    const chunks: unknown[][] = [];
+    for (let i = 0; i < value.length; i += size) {
+      chunks.push(value.slice(i, i + size));
+    }
+    return chunks;
+  },
+  // `| index_by(key)` — reindexes an array of objects by a key.
+  index_by: (value, args) => {
+    if (!Array.isArray(value) || args.length === 0) {
+      return value;
+    }
+    const key = toStr(args[0]);
+    const result: Record<string, unknown> = {};
+    for (const item of value) {
+      if (item !== null && typeof item === 'object') {
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+        const k = String((item as Record<string, unknown>)[key] ?? '');
+        result[k] = item;
+      }
+    }
+    return result;
+  },
+  // `| group_by(key)` — groups array elements by a key.
+  group_by: (value, args) => {
+    if (!Array.isArray(value) || args.length === 0) {
+      return value;
+    }
+    const key = toStr(args[0]);
+    const result: Record<string, unknown[]> = {};
+    for (const item of value) {
+      if (item !== null && typeof item === 'object') {
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+        const k = String((item as Record<string, unknown>)[key] ?? '');
+        result[k] = result[k] ?? [];
+        result[k].push(item);
+      }
+    }
+    return result;
   }
 };
