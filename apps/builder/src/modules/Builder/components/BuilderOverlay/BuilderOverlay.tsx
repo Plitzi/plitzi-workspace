@@ -175,6 +175,58 @@ const BuilderOverlay = ({
   ]);
 
   useEffect(() => {
+    const { elementDOM } = overlayProps;
+    if (!elementDOM || mode !== 'select') {
+      return undefined;
+    }
+
+    const targetDocument = refIframe.current?.contentWindow?.document ?? window.document;
+    const targetWindow = refIframe.current?.contentWindow ?? window;
+
+    let activeAnimations = 0;
+    let rafId = 0;
+    const tick = () => {
+      handleProcessContainer(elementDOM);
+      if (activeAnimations > 0) {
+        rafId = targetWindow.requestAnimationFrame(tick);
+      } else {
+        rafId = 0;
+      }
+    };
+
+    const onStart = () => {
+      activeAnimations += 1;
+      if (!rafId) {
+        rafId = targetWindow.requestAnimationFrame(tick);
+      }
+    };
+
+    const onEnd = () => {
+      activeAnimations = Math.max(0, activeAnimations - 1);
+    };
+
+    targetDocument.addEventListener('animationstart', onStart, true);
+    targetDocument.addEventListener('transitionrun', onStart, true);
+    targetDocument.addEventListener('animationend', onEnd, true);
+    targetDocument.addEventListener('animationcancel', onEnd, true);
+    targetDocument.addEventListener('transitionend', onEnd, true);
+    targetDocument.addEventListener('transitioncancel', onEnd, true);
+
+    return () => {
+      if (rafId) {
+        targetWindow.cancelAnimationFrame(rafId);
+      }
+
+      targetDocument.removeEventListener('animationstart', onStart, true);
+      targetDocument.removeEventListener('transitionrun', onStart, true);
+      targetDocument.removeEventListener('animationend', onEnd, true);
+      targetDocument.removeEventListener('animationcancel', onEnd, true);
+      targetDocument.removeEventListener('transitionend', onEnd, true);
+      targetDocument.removeEventListener('transitioncancel', onEnd, true);
+    };
+  }, [mode, overlayProps.elementDOM, overlayProps, refIframe, handleProcessContainer]);
+
+  useEffect(() => {
     if (mode !== 'select') {
       return;
     }
