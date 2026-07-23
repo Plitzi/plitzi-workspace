@@ -46,14 +46,35 @@ export class Cursor {
   }
 
   // Reads a quoted string literal's contents (cursor sits on the opening quote) and consumes the closing quote.
+  // Processes standard escape sequences: \n, \t, \r, \\, \', \".
   protected scanStringLiteral(): string {
     const quote = this.src.charCodeAt(this.pos);
-    const start = ++this.pos;
+    this.pos++;
+    let value = '';
     while (this.pos < this.src.length && this.src.charCodeAt(this.pos) !== quote) {
-      this.pos++;
+      if (this.src.charCodeAt(this.pos) === Char.Backslash && this.pos + 1 < this.src.length) {
+        this.pos++;
+        const escaped = this.src.charCodeAt(this.pos);
+        if (escaped === Char.LowerN) {
+          value += '\n';
+        } else if (escaped === Char.LowerT) {
+          value += '\t';
+        } else if (escaped === Char.LowerR) {
+          value += '\r';
+        } else if (escaped === Char.Backslash) {
+          value += '\\';
+        } else if (escaped === quote) {
+          value += String.fromCharCode(escaped);
+        } else {
+          value += String.fromCharCode(Char.Backslash) + String.fromCharCode(escaped);
+        }
+        this.pos++;
+      } else {
+        value += this.src[this.pos];
+        this.pos++;
+      }
     }
 
-    const value = this.src.slice(start, this.pos);
     if (this.pos < this.src.length) {
       this.pos++;
     }

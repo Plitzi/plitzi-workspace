@@ -817,3 +817,44 @@ describe('AST processTwig — default coalescing edge cases', () => {
     expect(processTwig("{{ a ?? b ?? 'fallback' }}", { b: 'second' })).toBe('second');
   });
 });
+
+describe('AST processTwig — string literal escape sequences', () => {
+  it('resolves \\n to a newline character', () => {
+    expect(processTwig("{{ items | join('\\n') }}", { items: ['a', 'b', 'c'] })).toBe('a\nb\nc');
+  });
+
+  it('resolves \\t to a tab character', () => {
+    expect(processTwig("{{ items | join('\\t') }}", { items: ['a', 'b'] })).toBe('a\tb');
+  });
+
+  it('resolves \\r to a carriage return', () => {
+    expect(processTwig("{{ val | replace('\\r', '') }}", { val: 'a\rb' })).toBe('ab');
+  });
+
+  it('resolves double backslash to a literal backslash', () => {
+    expect(processTwig("{{ val | replace('\\\\', '-') }}", { val: 'a\\b' })).toBe('a-b');
+  });
+
+  it('resolves escaped single quote inside single-quoted string', () => {
+    expect(processTwig("{{ 'it\\'s' }}", {})).toBe("it's");
+  });
+
+  it('resolves escaped double quote inside double-quoted string', () => {
+    expect(processTwig('{{ "say \\"hi\\"" }}', {})).toBe('say "hi"');
+  });
+
+  it('preserves unknown escape sequences as-is', () => {
+    expect(processTwig("{{ '\\x' }}", {})).toBe('\\x');
+  });
+
+  it('handles multiple escape sequences in one string', () => {
+    expect(processTwig("{{ 'a\\nb\\tc' }}", {})).toBe('a\nb\tc');
+  });
+
+  it('join with newline works end-to-end', () => {
+    const result = processTwig("{{ source | join('\\n') }}", {
+      source: ['line1', 'line2', 'line3']
+    });
+    expect(result).toBe('line1\nline2\nline3');
+  });
+});

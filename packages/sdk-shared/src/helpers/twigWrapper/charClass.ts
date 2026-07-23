@@ -29,9 +29,13 @@ export const Char = {
   LBracket: 91,
   RBracket: 93,
   Underscore: 95,
+  Backslash: 92,
   LBrace: 123,
   Pipe: 124,
-  Tilde: 126
+  Tilde: 126,
+  LowerN: 110,
+  LowerR: 114,
+  LowerT: 116
 } as const;
 
 // Valid first character of an identifier: [a-zA-Z_].
