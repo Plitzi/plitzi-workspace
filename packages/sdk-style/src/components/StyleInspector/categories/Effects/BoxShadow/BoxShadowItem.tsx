@@ -63,7 +63,7 @@ const BoxShadowItem = ({ value = '1px 1px 3px 1px black', onChange, onRemove }: 
   );
 
   return (
-    <ContainerFloating className="w-full" closeOnClick={false}>
+    <ContainerFloating className="w-full" closeOnClick={false} containerTopOffset={5}>
       <ContainerFloating.Trigger className="flex w-full cursor-pointer items-center justify-between rounded-sm border border-gray-300 bg-white px-2 py-0.5 select-none hover:bg-gray-100 dark:border-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700/60">
         <div className="flex items-center">
           <div className="mr-1 h-5 w-5 rounded-sm" style={{ backgroundColor: color }} />
