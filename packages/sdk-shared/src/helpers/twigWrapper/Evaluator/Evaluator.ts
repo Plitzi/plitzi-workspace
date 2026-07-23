@@ -138,9 +138,12 @@ class Evaluator {
   private evalFor(node: ForNode): string {
     const collection = this.evalExpression(node.collection);
 
-    // Known limitation: in keepEmptyTokens mode a missing/empty collection renders '' (or the else body) rather
-    // than preserving the `{% for %}…{% endfor %}` verbatim — a ForNode carries no source text to re-emit, so
-    // unresolved loop bindings are not kept the way unresolved `{{ token }}`s are. See the complex test suite.
+    // keepEmptyTokens: an unresolved collection (undefined binding) keeps the whole block verbatim for a later
+    // pass — the same contract as an unresolved `{{ token }}`. An empty array/object is a resolved value and
+    // still renders nothing (or the else body), so only `undefined` triggers preservation.
+    if (node.source !== undefined && collection === undefined) {
+      return node.source;
+    }
 
     // Normalise both iteration shapes to parallel arrays: `values` always, `keys` only for `for k, v in obj`.
     let values: unknown[];

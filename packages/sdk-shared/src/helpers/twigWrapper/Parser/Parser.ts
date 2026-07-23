@@ -1,5 +1,5 @@
 import { isSimpleIdentifier, isVariableName } from '../charClass';
-import { reconstructSource } from '../Lexer';
+import { reconstructSource, reconstructToken } from '../Lexer';
 import { parseApplyFilters, parseExpression } from './ExpressionParser';
 import { extractFirstWord, splitRange } from './helpers';
 
@@ -223,6 +223,7 @@ class ParseContext {
   }
 
   private parseFor(): ForNode {
+    const openIdx = this.pos; // the {% for %} token, for verbatim block reconstruction
     this.advance();
     const prevToken = this.tokens[this.pos - 1];
     if (prevToken.type !== 'tag') {
@@ -275,7 +276,19 @@ class ParseContext {
       this.error = 'Malformed {% for %} block: missing {% endfor %}';
     }
 
-    return { type: 'for', valueVar, keyVar, collection, body, elseBody };
+    // In keepEmptyTokens mode, keep the verbatim block so the evaluator can re-emit it when the collection is
+    // unresolved, exactly as unresolved `{{ tokens }}` are kept.
+    const source = this.keepEmptyTokens ? this.reconstructRange(openIdx, this.pos) : undefined;
+    return { type: 'for', valueVar, keyVar, collection, body, elseBody, source };
+  }
+
+  private reconstructRange(start: number, end: number): string {
+    let source = '';
+    for (let i = start; i < end; i++) {
+      source += reconstructToken(this.tokens[i]);
+    }
+
+    return source;
   }
 
   private parseSet(): SetNode {

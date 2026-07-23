@@ -166,7 +166,7 @@ describe('complex — break / continue with nested loops and metadata', () => {
   });
 });
 
-describe('complex — keepEmptyTokens behaviour and known limitations', () => {
+describe('complex — keepEmptyTokens behaviour', () => {
   it('keeps an unresolved token inside a resolved loop body', () => {
     expect(processTwig('{% for x in items %}[{{ x }}:{{ gone }}]{% endfor %}', { items: ['a', 'b'] }, true)).toBe(
       '[a:{{ gone }}][b:{{ gone }}]'
@@ -179,11 +179,42 @@ describe('complex — keepEmptyTokens behaviour and known limitations', () => {
     );
   });
 
-  it('LIMITATION: an unresolved loop collection renders empty, not the preserved block', () => {
-    // A ForNode carries no source text, so a missing collection cannot be re-emitted verbatim in keepEmptyTokens
-    // mode. Documented here so the behaviour is intentional and locked rather than silently surprising.
-    expect(processTwig('{% for x in missing %}{{ x }}{% endfor %}', {}, true)).toBe('');
-    expect(processTwig('pre {% for x in missing %}{{ x }}{% endfor %} post', {}, true)).toBe('pre  post');
+  it('preserves a loop block verbatim when its collection is unresolved', () => {
+    expect(processTwig('{% for x in missing %}{{ x }}{% endfor %}', {}, true)).toBe(
+      '{% for x in missing %}{{ x }}{% endfor %}'
+    );
+    expect(processTwig('pre {% for x in missing %}{{ x }}{% endfor %} post', {}, true)).toBe(
+      'pre {% for x in missing %}{{ x }}{% endfor %} post'
+    );
+  });
+
+  it('preserves the exact original spacing and else clause of an unresolved loop', () => {
+    const tpl = '{%for  item , key in data%}{{ item }}={{key}}{% else %}none{%endfor%}';
+    expect(processTwig(tpl, {}, true)).toBe(tpl);
+  });
+
+  it('preserves a nested loop block when the outer collection is unresolved', () => {
+    const tpl = '{% for a in outer %}{% for b in inner %}{{ b }}{% endfor %}!{% endfor %}';
+    expect(processTwig(tpl, {}, true)).toBe(tpl);
+  });
+
+  it('preserves an inner loop whose collection is unresolved inside a resolved outer loop', () => {
+    expect(
+      processTwig('{% for a in outer %}[{% for b in gone %}{{ b }}{% endfor %}]{% endfor %}', { outer: [1, 2] }, true)
+    ).toBe('[{% for b in gone %}{{ b }}{% endfor %}][{% for b in gone %}{{ b }}{% endfor %}]');
+  });
+
+  it('still renders nothing for a resolved-but-empty collection (empty array is not "unresolved")', () => {
+    expect(processTwig('{% for x in items %}{{ x }}{% endfor %}', { items: [] }, true)).toBe('');
+    expect(processTwig('{% for x in items %}{{ x }}{% else %}none{% endfor %}', { items: [] }, true)).toBe('none');
+  });
+
+  it('renders normally (no preservation) once the collection resolves', () => {
+    expect(processTwig('{% for x in items %}{{ x }}{% endfor %}', { items: ['a', 'b'] }, true)).toBe('ab');
+  });
+
+  it('does not preserve loop blocks when keepEmptyTokens is off (missing collection → empty)', () => {
+    expect(processTwig('{% for x in missing %}{{ x }}{% endfor %}', {})).toBe('');
   });
 });
 

@@ -34,6 +34,9 @@ export type ForNode = {
   readonly collection: Expression;
   readonly body: ASTNode[];
   readonly elseBody: ASTNode[] | null;
+  // Verbatim block source, only populated in the keepEmptyTokens parse. When the collection is unresolved
+  // (undefined), the whole block is re-emitted from this so a later pass can render it — mirrors VariableNode.source.
+  readonly source?: string;
 };
 
 // `{% set var = expr %}` or `{% set var %}...{% endset %}`
