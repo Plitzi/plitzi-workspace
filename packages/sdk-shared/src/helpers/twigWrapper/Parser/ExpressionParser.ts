@@ -401,11 +401,30 @@ class ExpressionParser {
     if (end > this.src.length) {
       return false;
     }
-    for (let i = 0; i < kw.length; i++) {
-      if (this.src.charCodeAt(this.pos + i) !== kw.charCodeAt(i)) {
+
+    // Fast-path for common short keywords: avoid per-char loop overhead
+    const klen = kw.length;
+    if (klen === 2) {
+      const c0 = this.src.charCodeAt(this.pos);
+      const c1 = this.src.charCodeAt(this.pos + 1);
+      if (c0 !== kw.charCodeAt(0) || c1 !== kw.charCodeAt(1)) {
         return false;
       }
+    } else if (klen === 3) {
+      const c0 = this.src.charCodeAt(this.pos);
+      const c1 = this.src.charCodeAt(this.pos + 1);
+      const c2 = this.src.charCodeAt(this.pos + 2);
+      if (c0 !== kw.charCodeAt(0) || c1 !== kw.charCodeAt(1) || c2 !== kw.charCodeAt(2)) {
+        return false;
+      }
+    } else {
+      for (let i = 0; i < klen; i++) {
+        if (this.src.charCodeAt(this.pos + i) !== kw.charCodeAt(i)) {
+          return false;
+        }
+      }
     }
+
     if (end < this.src.length) {
       const next = this.src.charCodeAt(end);
       if ((next >= 97 && next <= 122) || (next >= 65 && next <= 90) || (next >= 48 && next <= 57) || next === 95) {
@@ -422,22 +441,27 @@ class ExpressionParser {
     const ch = this.peekChar();
 
     if (this.pos + 1 < this.src.length) {
-      const two = this.src.slice(this.pos, this.pos + 2);
-      if (two === '==') {
-        this.pos += 2;
-        return '==';
-      }
-      if (two === '!=') {
-        this.pos += 2;
-        return '!=';
-      }
-      if (two === '>=') {
-        this.pos += 2;
-        return '>=';
-      }
-      if (two === '<=') {
-        this.pos += 2;
-        return '<=';
+      const c0 = ch;
+      const c1 = this.src.charCodeAt(this.pos + 1);
+
+      // == (61,61)  != (33,61)  >= (62,61)  <= (60,61)
+      if (c1 === 61) {
+        if (c0 === 61) {
+          this.pos += 2;
+          return '==';
+        }
+        if (c0 === 33) {
+          this.pos += 2;
+          return '!=';
+        }
+        if (c0 === 62) {
+          this.pos += 2;
+          return '>=';
+        }
+        if (c0 === 60) {
+          this.pos += 2;
+          return '<=';
+        }
       }
     }
 

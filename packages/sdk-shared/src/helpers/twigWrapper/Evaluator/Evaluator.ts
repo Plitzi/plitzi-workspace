@@ -66,14 +66,16 @@ class Evaluator {
       }
       return a + b + this.evalNode(nodes[2]);
     }
-    let output = '';
+    // 4+ nodes: use array builder to avoid O(n²) string concatenation in loops
+    const parts = new Array<string>(len);
     for (let i = 0; i < len; i++) {
-      output += this.evalNode(nodes[i]);
+      parts[i] = this.evalNode(nodes[i]);
       if (this.breakFlag || this.continueFlag) {
+        parts.length = i + 1;
         break;
       }
     }
-    return output;
+    return parts.join('');
   }
 
   private evalNode(node: ASTNode): string {
@@ -110,22 +112,21 @@ class Evaluator {
       return String(unwrapRaw(value));
     }
 
+    // Primitives: fast path (most common)
     if (value !== null && value !== undefined && typeof value !== 'object') {
       // eslint-disable-next-line @typescript-eslint/no-base-to-string
       return String(value);
     }
 
     if (node.raw) {
-      if (value === null || value === undefined) {
-        return '';
-      }
       // eslint-disable-next-line @typescript-eslint/no-base-to-string
-      return String(value);
+      return value === null || value === undefined ? '' : String(value);
     }
 
     if (typeof value === 'object' && value !== null) {
       return JSON.stringify(value);
     }
+
     return '';
   }
 
@@ -153,6 +154,51 @@ class Evaluator {
     const collection = this.evalExpression(node.collection);
 
     if (node.keyVar) {
+      // Fast path: iterate object keys directly — avoids Object.entries() allocation
+      if (collection !== null && typeof collection === 'object' && !Array.isArray(collection)) {
+        const obj = collection as Record<string, unknown>;
+        const keys = Object.keys(obj);
+        if (keys.length === 0) {
+          if (node.elseBody) {
+            return this.evalNodes(node.elseBody);
+          }
+          return '';
+        }
+
+        const parentLoop = this.variables['loop'];
+        const loopObj = this.loopObj;
+        const len = keys.length;
+        loopObj.length = len;
+        let output = '';
+        for (let i = 0; i < len; i++) {
+          loopObj.index = i + 1;
+          loopObj.index0 = i;
+          loopObj.first = i === 0;
+          loopObj.last = i === len - 1;
+          loopObj.revindex = len - i;
+          this.variables['loop'] = loopObj;
+          const key = keys[i];
+          this.variables[node.keyVar] = key;
+          this.variables[node.valueVar] = obj[key];
+
+          output += this.evalNodes(node.body);
+          if (this.breakFlag) {
+            this.breakFlag = false;
+            break;
+          }
+          if (this.continueFlag) {
+            this.continueFlag = false;
+          }
+        }
+
+        if (parentLoop !== undefined) {
+          this.variables['loop'] = parentLoop;
+        } else {
+          delete this.variables['loop'];
+        }
+        return output;
+      }
+
       const entries = resolveObjectEntries(collection);
       if (!entries || entries.length === 0) {
         if (node.elseBody) {
@@ -292,12 +338,15 @@ class Evaluator {
       case 'filter':
         return this.evalFilterExpression(expr);
       case 'concat': {
-        let s = '';
-        for (let i = 0; i < expr.parts.length; i++) {
+        const parts = expr.parts;
+        const len = parts.length;
+        const strs = new Array<string>(len);
+        for (let i = 0; i < len; i++) {
+          const v = this.evalExpression(parts[i]);
           // eslint-disable-next-line @typescript-eslint/no-base-to-string
-          s += String(this.evalExpression(expr.parts[i]) ?? '');
+          strs[i] = v === null || v === undefined ? '' : String(v);
         }
-        return s;
+        return strs.join('');
       }
       case 'unary':
         return this.evalUnary(expr.operator, expr.operand);
@@ -485,35 +534,46 @@ class Evaluator {
     const left = this.evalExpression(leftExpr);
     const right = this.evalExpression(rightExpr);
 
+    // Fast path: when both operands are already numbers, skip Number() conversion
+    const leftIsNum = typeof left === 'number';
+    const rightIsNum = typeof right === 'number';
+
     switch (operator) {
       case '+':
-        return Number(left) + Number(right);
+        return leftIsNum && rightIsNum ? left + right : Number(left) + Number(right);
       case '-':
-        return Number(left) - Number(right);
+        return leftIsNum && rightIsNum ? left - right : Number(left) - Number(right);
       case '*':
-        return Number(left) * Number(right);
+        return leftIsNum && rightIsNum ? left * right : Number(left) * Number(right);
       case '/':
-        return Number(left) / Number(right);
+        return leftIsNum && rightIsNum ? left / right : Number(left) / Number(right);
       case '%':
-        return Number(left) % Number(right);
+        return leftIsNum && rightIsNum ? left % right : Number(left) % Number(right);
       case '==':
         if (left === right) {
           return true;
+        }
+        // Fast path: both strings — avoid String() allocation
+        if (typeof left === 'string' && typeof right === 'string') {
+          return left === right;
         }
         return String(left) === String(right);
       case '!=':
         if (left === right) {
           return false;
         }
+        if (typeof left === 'string' && typeof right === 'string') {
+          return left !== right;
+        }
         return String(left) !== String(right);
       case '>':
-        return Number(left) > Number(right);
+        return leftIsNum && rightIsNum ? left > right : Number(left) > Number(right);
       case '<':
-        return Number(left) < Number(right);
+        return leftIsNum && rightIsNum ? left < right : Number(left) < Number(right);
       case '>=':
-        return Number(left) >= Number(right);
+        return leftIsNum && rightIsNum ? left >= right : Number(left) >= Number(right);
       case '<=':
-        return Number(left) <= Number(right);
+        return leftIsNum && rightIsNum ? left <= right : Number(left) <= Number(right);
       case 'in':
         return valueIn(left, right);
       case 'not in':
