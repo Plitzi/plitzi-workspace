@@ -16,8 +16,9 @@ const Transform = ({ value, onChange }: TransformProps) => {
   let transforms: string[] = [];
   if (value && value !== '') {
     transforms =
-      (value as string).match(/((translate3d|scale3d|skew)\([0-9a-z-, .%]+\))|(rotateX.*rotateZ\([0-9a-z%]+\))/gim) ??
-      [];
+      (value as string).match(
+        /((translate3d|translateX|translateY|scale3d|skew)\([0-9a-z-, .%]+\))|(rotateX.*rotateZ\([0-9a-z%]+\))/gim
+      ) ?? [];
   }
 
   const handleClickRemoveItem = (index: number) => (e: MouseEvent) => {
