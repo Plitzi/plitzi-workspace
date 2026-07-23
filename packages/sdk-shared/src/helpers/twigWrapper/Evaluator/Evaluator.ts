@@ -1,7 +1,8 @@
 import { isTruthy, valueIn, resolveCollection, resolveObjectEntries } from './helpers';
-import { filters, isRawMarker, unwrapRaw } from '../filters/filters';
+import { ARROW_PARAMS, filters, isRawMarker, unwrapRaw } from '../filters/filters';
 
 import type { ASTNode, Expression, FilterCall, IfNode, ForNode, SetNode, ApplyNode, VariableNode } from '../AST';
+import type { ArrowCallback } from '../filters/filters';
 
 export type EvalResult = {
   readonly output: string;
@@ -279,6 +280,14 @@ class Evaluator {
 
         return arr;
       }
+      case 'object': {
+        const obj: Record<string, unknown> = {};
+        for (const entry of expr.entries) {
+          obj[entry.key] = this.evalExpression(entry.value);
+        }
+
+        return obj;
+      }
       case 'range':
         return this.evalRange(expr.start, expr.end);
       case 'path':
@@ -323,11 +332,11 @@ class Evaluator {
   // Creates a callable JavaScript function from an arrow function AST node.
   // The function captures the current variable scope and evaluates the body expression
   // with the arrow parameters bound to the provided arguments.
-  private createArrowFunction(params: readonly string[], body: Expression): (...args: unknown[]) => unknown {
+  private createArrowFunction(params: readonly string[], body: Expression): ArrowCallback {
     const capturedVariables = { ...this.variables };
     const keepEmptyTokens = this.keepEmptyTokens;
 
-    return (...args: unknown[]) => {
+    const callback: ArrowCallback = (...args: unknown[]) => {
       // Create a new scope with the arrow parameters bound to arguments
       const scope: Record<string, unknown> = { ...capturedVariables };
       for (let i = 0; i < params.length; i++) {
@@ -338,6 +347,9 @@ class Evaluator {
       const evaluator = new Evaluator(scope, keepEmptyTokens);
       return evaluator.evalExpression(body);
     };
+    callback[ARROW_PARAMS] = params.length;
+
+    return callback;
   }
 
   private resolvePath(segments: readonly string[]): unknown {

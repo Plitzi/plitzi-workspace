@@ -502,6 +502,21 @@ describe('AST processTwig — ternary expressions', () => {
     );
   });
 
+  it('right-associates an unparenthesised nested ternary in the false branch', () => {
+    // Regression: the false branch must recurse into parseTernary, not parseOr, so `? :` can chain.
+    const tmpl = '{{ x == 1 ? "one" : x == 2 ? "two" : "other" }}';
+    expect(processTwig(tmpl, { x: 1 })).toBe('one');
+    expect(processTwig(tmpl, { x: 2 })).toBe('two');
+    expect(processTwig(tmpl, { x: 9 })).toBe('other');
+  });
+
+  it('unary minus negates a variable and a parenthesised expression', () => {
+    expect(processTwig('{{ -x }}', { x: 5 })).toBe('-5');
+    expect(processTwig('{{ -x }}', { x: -5 })).toBe('5');
+    expect(processTwig('{{ -(a + b) }}', { a: 2, b: 3 })).toBe('-5');
+    expect(processTwig('{{ 10 - -2 }}', {})).toBe('12');
+  });
+
   it('ternary with expressions on both sides', () => {
     expect(processTwig('{{ x > 0 ? x * 2 : 0 }}', { x: 5 })).toBe('10');
     expect(processTwig('{{ x > 0 ? x * 2 : 0 }}', { x: -1 })).toBe('0');
@@ -905,15 +920,82 @@ describe('AST processTwig — date filter', () => {
     const result = processTwig('{{ val | date("l, F d, Y") }}', { val: '2025-01-15' });
     expect(result).toBe('Wednesday, January 15, 2025');
   });
+
+  it('does not re-substitute letters inside an inserted month name', () => {
+    // "March" (from F) must not have its "M" turned into "Mar" by a later token pass → "Mararch".
+    expect(processTwig('{{ val | date("F") }}', { val: '2026-03-15' })).toBe('March');
+    expect(processTwig('{{ val | date("F") }}', { val: '2026-05-10' })).toBe('May');
+  });
+
+  it('substitutes every occurrence of a repeated token', () => {
+    expect(processTwig('{{ val | date("m/m") }}', { val: '2026-03-15' })).toBe('03/03');
+    expect(processTwig('{{ val | date("Y-Y") }}', { val: '2026-03-15' })).toBe('2026-2026');
+  });
+
+  it('keeps literal characters that are not tokens', () => {
+    expect(processTwig('{{ val | date("[Y] Y") }}', { val: '2026-03-15' })).toBe('[2026] 2026');
+  });
+
+  it('returns empty string for an unparseable date', () => {
+    expect(processTwig('{{ val | date("Y-m-d") }}', { val: 'not-a-date' })).toBe('');
+  });
 });
 
 describe('AST processTwig — encoding filters', () => {
   it('base64_encode encodes string', () => {
-    expect(processTwig('{{ val | base64_encode }}', { val: 'hello' })).toBe(btoa('hello'));
+    expect(processTwig('{{ val | base64_encode }}', { val: 'hello' })).toBe('aGVsbG8=');
   });
 
   it('base64_decode decodes string', () => {
-    expect(processTwig('{{ val | base64_decode }}', { val: btoa('hello') })).toBe('hello');
+    expect(processTwig('{{ val | base64_decode }}', { val: 'aGVsbG8=' })).toBe('hello');
+  });
+
+  it('base64_encode is UTF-8 safe for multibyte characters', () => {
+    // Latin1 btoa would yield "Y2Fm6Q==" (or throw); the UTF-8 encoding is "Y2Fmw6k=".
+    expect(processTwig('{{ val | base64_encode }}', { val: 'café' })).toBe('Y2Fmw6k=');
+  });
+
+  it('base64 round-trips multibyte strings', () => {
+    expect(processTwig('{{ val | base64_encode | base64_decode }}', { val: 'héllo wörld 🚀' })).toBe('héllo wörld 🚀');
+  });
+
+  it('base64 filters leave non-strings untouched', () => {
+    expect(processTwig('{{ val | base64_encode }}', { val: 42 })).toBe('42');
+  });
+});
+
+describe('AST processTwig — md5 filter', () => {
+  // Official RFC 1321 test vectors.
+  it('hashes the empty string', () => {
+    expect(processTwig('{{ "" | md5 }}', {})).toBe('d41d8cd98f00b204e9800998ecf8427e');
+  });
+
+  it('hashes "abc"', () => {
+    expect(processTwig('{{ "abc" | md5 }}', {})).toBe('900150983cd24fb0d6963f7d28e17f72');
+  });
+
+  it('hashes "hello"', () => {
+    expect(processTwig('{{ val | md5 }}', { val: 'hello' })).toBe('5d41402abc4b2a76b9719d911017c592');
+  });
+
+  it('hashes the classic pangram', () => {
+    expect(processTwig('{{ val | md5 }}', { val: 'The quick brown fox jumps over the lazy dog' })).toBe(
+      '9e107d9d372bb6826bd81d3542a419d6'
+    );
+  });
+
+  it('hashes across a message-block boundary (> 56 bytes)', () => {
+    expect(
+      processTwig('{{ val | md5 }}', { val: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789' })
+    ).toBe('d174ab98d277d9f5a5611c2c9f419d9f');
+  });
+
+  it('hashes multibyte input as UTF-8 bytes', () => {
+    expect(processTwig('{{ val | md5 }}', { val: 'café' })).toBe('07117fe4a1ebd544965dc19573183da2');
+  });
+
+  it('is deterministic and leaves non-strings untouched', () => {
+    expect(processTwig('{{ val | md5 }}', { val: 7 })).toBe('7');
   });
 });
 
@@ -1055,6 +1137,67 @@ describe('AST processTwig — array query filters', () => {
       ]
     });
     expect(result).toBe('a=1b=2');
+  });
+});
+
+describe('AST processTwig — object literals', () => {
+  it('builds an object with unquoted keys and reads a property via a set var', () => {
+    expect(processTwig('{% set o = { a: 1, b: 2 } %}{{ o.b }}', {})).toBe('2');
+  });
+
+  it('builds an object with quoted keys', () => {
+    expect(processTwig('{{ { "first name": name, "age": n } | to_json }}', { name: 'Ada', n: 36 })).toBe(
+      '{"first name":"Ada","age":36}'
+    );
+  });
+
+  it('evaluates expression values, paths and nested objects', () => {
+    expect(processTwig('{{ { total: a + b, meta: { label: name } } | to_json }}', { a: 2, b: 3, name: 'x' })).toBe(
+      '{"total":5,"meta":{"label":"x"}}'
+    );
+  });
+
+  it('serialises a bare object literal in double braces', () => {
+    expect(processTwig('{{ { k: v } }}', { v: 7 })).toBe('{"k":7}');
+  });
+
+  it('renders an empty object literal', () => {
+    expect(processTwig('{{ {} | to_json }}', {})).toBe('{}');
+  });
+
+  it('produces objects inside map then reads them back', () => {
+    expect(
+      processTwig('{{ items | map(i => { k: i.name, v: i.val }) | map(o => o.k ~ "=" ~ o.v) | join(", ") }}', {
+        items: [
+          { name: 'a', val: 1 },
+          { name: 'b', val: 2 }
+        ]
+      })
+    ).toBe('a=1, b=2');
+  });
+});
+
+describe('AST processTwig — sort with arrow', () => {
+  it('sorts by an extracted key (single-param arrow)', () => {
+    expect(
+      processTwig('{{ items | sort(i => i.order) | map(x => x.label) | join(", ") }}', {
+        items: [
+          { label: 'C', order: 3 },
+          { label: 'A', order: 1 },
+          { label: 'B', order: 2 }
+        ]
+      })
+    ).toBe('A, B, C');
+  });
+
+  it('sorts by a comparator (two-param arrow)', () => {
+    expect(processTwig('{{ nums | sort((a, b) => b - a) | join(", ") }}', { nums: [1, 3, 2, 5, 4] })).toBe(
+      '5, 4, 3, 2, 1'
+    );
+  });
+
+  it('sorts numbers numerically without an argument', () => {
+    expect(processTwig('{{ nums | sort | join(", ") }}', { nums: [10, 2, 1, 20] })).toBe('1, 2, 10, 20');
   });
 });
 
@@ -1424,7 +1567,7 @@ describe('AST processTwig — arrow functions comprehensive', () => {
       processTwig('{{ items | map(i => i.v | md5) | join(", ") }}', {
         items: [{ v: 'hello' }]
       })
-    ).toBe('68656c6c6f');
+    ).toBe('5d41402abc4b2a76b9719d911017c592');
   });
 
   it('body with ltrim filter', () => {
@@ -1631,8 +1774,7 @@ describe('AST processTwig — arrow functions comprehensive', () => {
 
   // ── Arrow producing objects / arrays ──────────────────────────────────────
 
-  it.skip('produces objects then accesses property', () => {
-    // object literal syntax { key: value } is not supported in the expression parser
+  it('produces objects then accesses property', () => {
     expect(
       processTwig('{{ items | map(i => { k: i.name, v: i.val }) | map(o => o.k ~ "=" ~ o.v) | join(", ") }}', {
         items: [
@@ -1672,8 +1814,7 @@ describe('AST processTwig — arrow functions comprehensive', () => {
     ).toBe('30, 50');
   });
 
-  it.skip('map then sort then map', () => {
-    // object literal syntax { "label": i.name, "order": i.order } is not supported
+  it('map then sort then map', () => {
     expect(
       processTwig(
         '{{ items | map(i => { "label": i.name, "order": i.order }) | sort(a => a.order) | map(x => x.label) | join(", ") }}',

@@ -4,7 +4,34 @@
 // skipped rather than throwing.
 export type TwigFilter = (value: unknown, args: readonly unknown[]) => unknown;
 
+// Arrow callbacks created by the Evaluator carry their declared parameter count, so a filter can tell a
+// key-extractor (`a => a.x`) from a comparator (`(a, b) => …`) — the created closures are all variadic, so
+// their runtime `.length` is 0 and can't be used for this.
+export const ARROW_PARAMS = Symbol('twigArrowParams');
+
+export type ArrowCallback = ((...args: unknown[]) => unknown) & { [ARROW_PARAMS]?: number };
+
 const isEmpty = (value: unknown): boolean => value === undefined || value === null || value === '';
+
+// Orders two values for sorting: numbers numerically, everything else by locale string comparison, with
+// null/undefined sorted first.
+const compareValues = (a: unknown, b: unknown): number => {
+  if (a === b) {
+    return 0;
+  }
+  if (a === null || a === undefined) {
+    return -1;
+  }
+  if (b === null || b === undefined) {
+    return 1;
+  }
+  if (typeof a === 'number' && typeof b === 'number') {
+    return a - b;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-base-to-string
+  return String(a).localeCompare(String(b));
+};
 
 const toStr = (value: unknown): string => {
   if (value === null || value === undefined) {
@@ -13,6 +40,110 @@ const toStr = (value: unknown): string => {
 
   // eslint-disable-next-line @typescript-eslint/no-base-to-string
   return String(value);
+};
+
+// btoa/atob operate on Latin1, so a raw multibyte string would be mis-encoded (and code points > 255 throw).
+// Round-tripping through the UTF-8 byte sequence keeps `base64_encode`/`base64_decode` correct for any string.
+const utf8ToBase64 = (str: string): string => {
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+
+  return btoa(binary);
+};
+
+const base64ToUtf8 = (str: string): string => {
+  const binary = atob(str);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+
+  return new TextDecoder().decode(bytes);
+};
+
+// RFC 1321 MD5 over the UTF-8 bytes of the input. Dependency-free so it behaves identically in the browser
+// (builder) and Node, and deterministic so template output stays stable.
+const md5Hex = (input: string): string => {
+  const shifts = [
+    7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20,
+    4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15,
+    21
+  ];
+  const sines = new Uint32Array(64);
+  for (let i = 0; i < 64; i++) {
+    sines[i] = Math.floor(Math.abs(Math.sin(i + 1)) * 4294967296);
+  }
+
+  const msg = new TextEncoder().encode(input);
+  const bitLen = msg.length * 8;
+  const paddedLen = (((msg.length + 8) >> 6) + 1) << 6;
+  const bytes = new Uint8Array(paddedLen);
+  bytes.set(msg);
+  bytes[msg.length] = 0x80;
+  const view = new DataView(bytes.buffer);
+  view.setUint32(paddedLen - 8, bitLen >>> 0, true);
+  view.setUint32(paddedLen - 4, Math.floor(bitLen / 4294967296) >>> 0, true);
+
+  let a0 = 0x67452301;
+  let b0 = 0xefcdab89;
+  let c0 = 0x98badcfe;
+  let d0 = 0x10325476;
+
+  const rotl = (x: number, c: number): number => (x << c) | (x >>> (32 - c));
+
+  for (let chunk = 0; chunk < paddedLen; chunk += 64) {
+    const words = new Uint32Array(16);
+    for (let i = 0; i < 16; i++) {
+      words[i] = view.getUint32(chunk + i * 4, true);
+    }
+
+    let a = a0;
+    let b = b0;
+    let c = c0;
+    let d = d0;
+    for (let i = 0; i < 64; i++) {
+      let f: number;
+      let g: number;
+      if (i < 16) {
+        f = (b & c) | (~b & d);
+        g = i;
+      } else if (i < 32) {
+        f = (d & b) | (~d & c);
+        g = (5 * i + 1) % 16;
+      } else if (i < 48) {
+        f = b ^ c ^ d;
+        g = (3 * i + 5) % 16;
+      } else {
+        f = c ^ (b | ~d);
+        g = (7 * i) % 16;
+      }
+
+      f = (f + a + sines[i] + words[g]) | 0;
+      a = d;
+      d = c;
+      c = b;
+      b = (b + rotl(f, shifts[i])) | 0;
+    }
+
+    a0 = (a0 + a) | 0;
+    b0 = (b0 + b) | 0;
+    c0 = (c0 + c) | 0;
+    d0 = (d0 + d) | 0;
+  }
+
+  const toHexLE = (x: number): string => {
+    let hex = '';
+    for (let i = 0; i < 4; i++) {
+      hex += ((x >>> (i * 8)) & 0xff).toString(16).padStart(2, '0');
+    }
+
+    return hex;
+  };
+
+  return toHexLE(a0) + toHexLE(b0) + toHexLE(c0) + toHexLE(d0);
 };
 
 // ── Raw marker ───────────────────────────────────────────────────────────────
@@ -260,26 +391,29 @@ export const filters: Record<string, TwigFilter> = {
   },
 
   // ── Array transforms ─────────────────────────────────────────────────────────────
-  // `| sort` — sorts an array.
-  sort: value => {
+  // `| sort` — sorts an array. Optional arrow argument: `sort(a => a.key)` sorts by an extracted key,
+  // `sort((a, b) => …)` uses the arrow as a comparator.
+  sort: (value, args) => {
     if (!Array.isArray(value)) {
       return value;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
-    return [...value].sort((a, b) => {
-      if (a === b) {
-        return 0;
-      }
-      if (a === null || a === undefined) {
-        return -1;
-      }
-      if (b === null || b === undefined) {
-        return 1;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const arr = [...value];
+    const callback = args[0];
+    if (typeof callback === 'function') {
+      const cb = callback as ArrowCallback;
+      if ((cb[ARROW_PARAMS] ?? 1) >= 2) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return arr.sort((a, b) => Number(cb(a, b)));
       }
 
-      return String(a).localeCompare(String(b));
-    });
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return arr.sort((a, b) => compareValues(cb(a), cb(b)));
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return arr.sort(compareValues);
   },
   // `| batch(3)` — chunks an array into groups of N.
   batch: (value, args) => {
@@ -560,30 +694,36 @@ export const filters: Record<string, TwigFilter> = {
     const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-    return format
-      .replace('Y', String(date.getFullYear()))
-      .replace('m', pad(date.getMonth() + 1))
-      .replace('d', pad(date.getDate()))
-      .replace('H', pad(date.getHours()))
-      .replace('i', pad(date.getMinutes()))
-      .replace('s', pad(date.getSeconds()))
-      .replace('l', dayNames[date.getDay()])
-      .replace('F', monthNames[date.getMonth()])
-      .replace('M', monthShort[date.getMonth()]);
+    const tokens: Record<string, string> = {
+      Y: String(date.getFullYear()),
+      m: pad(date.getMonth() + 1),
+      d: pad(date.getDate()),
+      H: pad(date.getHours()),
+      i: pad(date.getMinutes()),
+      s: pad(date.getSeconds()),
+      l: dayNames[date.getDay()],
+      F: monthNames[date.getMonth()],
+      M: monthShort[date.getMonth()]
+    };
+
+    // Single-pass substitution: replacing token letters sequentially with `String.replace` cross-contaminates
+    // (an inserted month name such as "March" would have its "M" re-substituted) and only replaces the first
+    // occurrence of a repeated token. Scanning char by char avoids both.
+    let out = '';
+    for (const char of format) {
+      out += Object.prototype.hasOwnProperty.call(tokens, char) ? tokens[char] : char;
+    }
+
+    return out;
   },
 
   // ── Encoding ──────────────────────────────────────────────────────────────
-  // `| base64_encode` — encodes string to base64.
-  base64_encode: value => (typeof value === 'string' ? btoa(value) : value),
-  // `| base64_decode` — decodes base64 string.
-  base64_decode: value => (typeof value === 'string' ? atob(value) : value),
-  // `| md5` — returns MD5 hash (simplified: returns hex of char codes).
-  md5: value =>
-    typeof value === 'string'
-      ? Array.from(value)
-          .map(c => c.charCodeAt(0).toString(16).padStart(2, '0'))
-          .join('')
-      : value,
+  // `| base64_encode` — encodes a string to base64 (UTF-8 safe).
+  base64_encode: value => (typeof value === 'string' ? utf8ToBase64(value) : value),
+  // `| base64_decode` — decodes a base64 string (UTF-8 safe).
+  base64_decode: value => (typeof value === 'string' ? base64ToUtf8(value) : value),
+  // `| md5` — returns the MD5 hash of a string as a lowercase hex digest.
+  md5: value => (typeof value === 'string' ? md5Hex(value) : value),
 
   // ── Object manipulation ───────────────────────────────────────────────────
   // `| without('key1', 'key2')` — returns object without specified keys.

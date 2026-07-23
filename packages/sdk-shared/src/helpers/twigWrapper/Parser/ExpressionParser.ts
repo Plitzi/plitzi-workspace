@@ -154,6 +154,10 @@ class ExpressionParser extends Cursor {
   }
 
   private parseDefault(): Expression {
+    // Skip leading whitespace so a unary minus is still recognised when it follows an operator, e.g. the
+    // right operand of `10 - -2` reaches here as ` -2`.
+    this.skipWs();
+
     // Unary minus: `-expr` — must check before parseAtom to avoid consuming the `-` as part of a negative literal.
     if (this.peek() === Char.Minus && isDigit(this.at(1))) {
       // Negative number literal — let scanNumber handle it normally.
@@ -215,6 +219,11 @@ class ExpressionParser extends Cursor {
     if (ch === Char.LBracket) {
       this.pos++;
       return this.maybeTrailingFilters({ type: 'array', elements: this.parseArgList(Char.RBracket) });
+    }
+
+    if (ch === Char.LBrace) {
+      this.pos++;
+      return this.maybeTrailingFilters(this.parseObjectLiteral());
     }
 
     // Check for single-param arrow function: param =>
@@ -305,6 +314,35 @@ class ExpressionParser extends Cursor {
     }
 
     return { type: 'filter', subject, filters: this.parseTrailingFilters() };
+  }
+
+  // Parses an object literal `{ key: expr, "quoted": expr }` from a cursor sitting just past the `{`.
+  // Keys are static — a bare identifier or a quoted string; the closing `}` is consumed.
+  private parseObjectLiteral(): Expression {
+    const entries: { key: string; value: Expression }[] = [];
+    this.skipWs();
+    while (!this.eof() && this.peek() !== Char.RBrace) {
+      const quote = this.peek();
+      const key = quote === Char.SingleQuote || quote === Char.DoubleQuote ? this.scanStringLiteral() : this.scanName();
+      this.skipWs();
+      if (this.peek() === Char.Colon) {
+        this.pos++;
+      }
+
+      this.skipWs();
+      entries.push({ key, value: this.parseTernary() });
+      this.skipWs();
+      if (this.peek() === Char.Comma) {
+        this.pos++;
+        this.skipWs();
+      }
+    }
+
+    if (this.peek() === Char.RBrace) {
+      this.pos++;
+    }
+
+    return { type: 'object', entries };
   }
 
   // Parses a comma-separated expression list up to (and consuming) the given closing char code (`)` or `]`).

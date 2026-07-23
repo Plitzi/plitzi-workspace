@@ -68,6 +68,7 @@ export type ContinueNode = {
 export type Expression =
   | LiteralNode
   | ArrayLiteralNode
+  | ObjectLiteralNode
   | RangeNode
   | PathNode
   | FunctionNode
@@ -89,6 +90,13 @@ export type LiteralNode = {
 export type ArrayLiteralNode = {
   readonly type: 'array';
   readonly elements: readonly Expression[];
+};
+
+// Object literal: `{ k: value }` or `{ "label": expr, order: n }`. Keys are static (bare identifier or quoted
+// string), resolved at parse time; values are arbitrary expressions.
+export type ObjectLiteralNode = {
+  readonly type: 'object';
+  readonly entries: readonly { readonly key: string; readonly value: Expression }[];
 };
 
 // Range expression: `0..4` or `start..end`
