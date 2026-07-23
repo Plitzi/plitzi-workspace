@@ -694,6 +694,281 @@ describe('range function', () => {
 
 // ── New: nested if/for interactions ──────────────────────────────────────────
 
+// ── New: break / continue ────────────────────────────────────────────────────
+
+const breakTemplate = '{% for i in items %}{% if i == 50 %}{% break %}{% endif %}{{ i }} {% endfor %}';
+const continueTemplate = '{% for i in items %}{% if i % 2 == 0 %}{% continue %}{% endif %}{{ i }} {% endfor %}';
+const breakCtx = { items: Array.from({ length: 100 }, (_, i) => i) };
+const continueCtx = { items: Array.from({ length: 100 }, (_, i) => i) };
+
+describe('break / continue', () => {
+  bench('break at item 50 (100 items)', () => {
+    processTwig(breakTemplate, breakCtx);
+  });
+
+  bench('continue skip even (100 items)', () => {
+    processTwig(continueTemplate, continueCtx);
+  });
+
+  bench('break in nested loop', () => {
+    processTwig(
+      '{% for a in outer %}{% for b in items %}{% if b == 50 %}{% break %}{% endif %}{{ b }}{% endfor %}{% endfor %}',
+      { outer: [1, 2, 3], items: Array.from({ length: 100 }, (_, i) => i) }
+    );
+  });
+});
+
+// ── New: apply tag variants ───────────────────────────────────────────────────
+
+const applyUpper = '{% apply upper %}hello world{% endapply %}';
+const applyChained = '{% apply upper | trim | capitalize %}  hello world  {% endapply %}';
+const applyInLoopBench = '{% for item in items %}{% apply upper %}{{ item }}{% endapply %} {% endfor %}';
+const applyInLoopBenchCtx = { items: ['alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta'] };
+
+describe('apply tag variants', () => {
+  bench('single apply (upper)', () => {
+    processTwig(applyUpper, {});
+  });
+
+  bench('chained apply (3 filters)', () => {
+    processTwig(applyChained, {});
+  });
+
+  bench('apply in 8-item loop', () => {
+    processTwig(applyInLoopBench, applyInLoopBenchCtx);
+  });
+});
+
+// ── New: nested ternary with variable resolution ─────────────────────────────
+
+const nestedTernaryVar = '{{ score >= 90 ? "A" : (score >= 80 ? "B" : (score >= 70 ? "C" : "F")) }}';
+
+describe('nested ternary expressions', () => {
+  bench('nested ternary (3-deep, var resolution)', () => {
+    processTwig(nestedTernaryVar, { score: 85 });
+  });
+
+  bench('simple ternary with arithmetic', () => {
+    processTwig('{{ x > 0 ? x * 2 : 0 }}', { x: 5 });
+  });
+});
+
+// ── New: object iteration ────────────────────────────────────────────────────
+
+describe('object iteration', () => {
+  const obj20 = Object.fromEntries(Array.from({ length: 20 }, (_, i) => [`k${i}`, `v${i}`]));
+  const obj100 = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [`k${i}`, `v${i}`]));
+
+  bench('for key, value in object (20 entries)', () => {
+    processTwig('{% for k, v in obj %}{{ k }}={{ v }} {% endfor %}', { obj: obj20 });
+  });
+
+  bench('for key, value in object (100 entries)', () => {
+    processTwig('{% for k, v in obj %}{{ k }}={{ v }} {% endfor %}', { obj: obj100 });
+  });
+
+  bench('for value in object values (20 entries)', () => {
+    processTwig('{% for v in obj %}{{ v }} {% endfor %}', { obj: obj20 });
+  });
+});
+
+// ── New: set with expression evaluation ──────────────────────────────────────
+
+const setArithmetic = '{% set x = a + b * c - d %}{{ x }}';
+const setConcat = '{% set s = a ~ " " ~ b ~ " " ~ c %}{{ s }}';
+const setNested = '{% set a = 1 %}{% set b = a + 1 %}{% set c = b + 1 %}{% set d = c + 1 %}{{ d }}';
+
+describe('set with expression evaluation', () => {
+  bench('set with arithmetic (4 vars)', () => {
+    processTwig(setArithmetic, { a: 10, b: 3, c: 2, d: 5 });
+  });
+
+  bench('set with concat (3 vars)', () => {
+    processTwig(setConcat, { a: 'hello', b: 'world', c: '!' });
+  });
+
+  bench('4 chained sets with dependency', () => {
+    processTwig(setNested, {});
+  });
+});
+
+// ── New: complex and/or/not conditions ───────────────────────────────────────
+
+describe('complex logical conditions', () => {
+  bench('3-way and with not', () => {
+    processTwig('{% if a and not b and c %}yes{% endif %}', { a: true, b: false, c: true });
+  });
+
+  bench('mixed and/or with comparisons', () => {
+    processTwig('{% if (x > 0 and x < 100) or (y == "special") %}yes{% endif %}', { x: 50, y: 'normal' });
+  });
+
+  bench('nested not in + and', () => {
+    processTwig('{% if "admin" not in roles and active %}yes{% endif %}', {
+      roles: ['viewer', 'editor'],
+      active: true
+    });
+  });
+});
+
+// ── New: loop metadata ───────────────────────────────────────────────────────
+
+describe('loop metadata access', () => {
+  bench('loop.index + loop.index0 (100 items)', () => {
+    processTwig('{% for i in items %}{{ loop.index }}:{{ loop.index0 }} {% endfor %}', {
+      items: Array.from({ length: 100 }, (_, i) => i)
+    });
+  });
+
+  bench('loop.first + loop.last (100 items)', () => {
+    processTwig('{% for i in items %}{% if loop.first %}F{% endif %}{% if loop.last %}L{% endif %}{% endfor %}', {
+      items: Array.from({ length: 100 }, (_, i) => i)
+    });
+  });
+
+  bench('loop.revindex (100 items)', () => {
+    processTwig('{% for i in items %}{{ loop.revindex }} {% endfor %}', {
+      items: Array.from({ length: 100 }, (_, i) => i)
+    });
+  });
+});
+
+// ── New: empty / trivial loop / if ──────────────────────────────────────────
+
+describe('empty loop and if bodies', () => {
+  bench('for with empty body (100 items)', () => {
+    processTwig('{% for i in items %}{% endfor %}', { items: Array.from({ length: 100 }, (_, i) => i) });
+  });
+
+  bench('if true with empty body', () => {
+    processTwig('{% if active %}{% endif %}', { active: true });
+  });
+
+  bench('for with else branch (empty array)', () => {
+    processTwig('{% for i in items %}X{% else %}empty{% endfor %}', { items: [] as number[] });
+  });
+});
+
+// ── New: deep path resolution with large context ─────────────────────────────
+
+describe('deep path with large context', () => {
+  const hugeCtx: Record<string, unknown> = {};
+  for (let i = 0; i < 500; i++) {
+    hugeCtx[`k${i}`] = `v${i}`;
+  }
+  hugeCtx.user = { profile: { settings: { theme: 'dark', lang: 'en', notifications: { email: true } } } };
+
+  bench('3-level deep path (500-key context)', () => {
+    processTwig('{{ user.profile.settings }}', hugeCtx);
+  });
+
+  bench('4-level deep path (500-key context)', () => {
+    processTwig('{{ user.profile.settings.theme }}', hugeCtx);
+  });
+
+  bench('5-level deep path (500-key context)', () => {
+    processTwig('{{ user.profile.settings.notifications.email }}', hugeCtx);
+  });
+});
+
+// ── New: filter stress ──────────────────────────────────────────────────────
+
+describe('filter stress', () => {
+  bench('column + join (20 items)', () => {
+    processTwig('{{ items | column("name") | join(", ") }}', {
+      items: Array.from({ length: 20 }, (_, i) => ({ name: `Item${i}` }))
+    });
+  });
+
+  bench('sort + join (20 items)', () => {
+    processTwig('{{ items | sort | join(", ") }}', {
+      items: ['z', 'm', 'a', 'k', 'b', 'y', 'c', 'x', 'd', 'w', 'e', 'v', 'f', 'u', 'g', 't', 'h', 's', 'i', 'r']
+    });
+  });
+
+  bench('batch + loop (20 items, batch 5)', () => {
+    processTwig('{% for batch in items | batch(5) %}[{{ batch | join(",") }}]{% endfor %}', {
+      items: Array.from({ length: 20 }, (_, i) => i)
+    });
+  });
+
+  bench('filter chain: split + map + join', () => {
+    processTwig('{{ data | split(",") | join(" | ") }}', { data: 'a,b,c,d,e,f,g,h' });
+  });
+});
+
+// ── New: range variants ──────────────────────────────────────────────────────
+
+describe('range variants', () => {
+  bench('range(50) + for loop', () => {
+    processTwig('{% for i in range(50) %}{{ i }} {% endfor %}', {});
+  });
+
+  bench('range(0, 100, 3) + for loop', () => {
+    processTwig('{% for i in range(0, 100, 3) %}{{ i }} {% endfor %}', {});
+  });
+
+  bench('literal range 1..20 + for', () => {
+    processTwig('{% for i in 1..20 %}{{ i }} {% endfor %}', {});
+  });
+});
+
+// ── New: mixed set + for + filter pipeline ──────────────────────────────────
+
+describe('set + for + filter pipeline', () => {
+  bench('set accumulator in loop (100 items)', () => {
+    processTwig('{% set total = 0 %}{% for i in items %}{% set total = total + i %}{% endfor %}{{ total }}', {
+      items: Array.from({ length: 100 }, (_, i) => i + 1)
+    });
+  });
+
+  bench('set string accumulator in loop (100 items)', () => {
+    processTwig('{% set r = "" %}{% for i in items %}{% set r = r ~ i ~ "," %}{% endfor %}{{ r }}', {
+      items: Array.from({ length: 100 }, (_, i) => i)
+    });
+  });
+
+  bench('set + filter pipeline (5 items)', () => {
+    processTwig('{% set names = items | column("name") | sort | join(", ") %}{{ names }}', {
+      items: [{ name: 'Z' }, { name: 'A' }, { name: 'M' }, { name: 'B' }, { name: 'K' }]
+    });
+  });
+});
+
+// ── New: deep set + for + if + filter mega template ────────────────────────
+
+const megaDeepTemplate = `
+{% set title = "Inventory" %}
+{% set totalValue = 0 %}
+{% set totalCount = 0 %}
+{% set categories = [] %}
+{% for product in products %}
+  {% if product.price > 100 %}
+    <div class="premium">
+      {{ product.name | upper }}
+      {{ product.price | number_format(2, '.', ',') }}
+    </div>
+    {% set totalValue = totalValue + product.price %}
+    {% set totalCount = totalCount + 1 %}
+  {% endif %}
+{% endfor %}
+{{ title }}: {{ totalCount }} items worth {{ totalValue | number_format(2, '.', ',') }}
+`.trim();
+
+const megaDeepCtx = {
+  products: Array.from({ length: 200 }, (_, i) => ({
+    name: `Product ${i}`,
+    price: 10 + i * 10,
+    inStock: i % 3 !== 0
+  }))
+};
+
+describe('mega deep template', () => {
+  bench('200 products: set + for + if + filters + number_format', () => {
+    processTwig(megaDeepTemplate, megaDeepCtx);
+  });
+});
+
 describe('nested if/for interactions', () => {
   const usersCtx = {
     users: Array.from({ length: 10 }, (_, i) => ({

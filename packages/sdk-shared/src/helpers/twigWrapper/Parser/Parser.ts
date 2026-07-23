@@ -385,7 +385,7 @@ class ParseContext {
     }
     const content = prevToken.content.trim();
     const filtersStr = content.slice(content.indexOf(' ') + 1).trim();
-    const filters = parseFilterChain(filtersStr);
+    const filters = parseFilterChain('| ' + filtersStr);
     const body = this.parseBody();
 
     const endApplyToken = this.peek();

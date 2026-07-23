@@ -13,7 +13,7 @@ import type { Expression, FilterCall } from '../AST';
 
 export const parseExpression = (expr: string): Expression => {
   const parser = new ExpressionParser(expr);
-  return parser.parseOr();
+  return parser.parseTernary();
 };
 
 class ExpressionParser {
@@ -46,6 +46,24 @@ class ExpressionParser {
       this.skipWs();
     }
     return left;
+  }
+
+  parseTernary(): Expression {
+    const condition = this.parseOr();
+    this.skipWs();
+    if (this.peekChar() === 63) {
+      this.pos++;
+      this.skipWs();
+      const trueExpr = this.parseOr();
+      this.skipWs();
+      if (this.peekChar() === 58) {
+        this.pos++;
+        this.skipWs();
+        const falseExpr = this.parseOr();
+        return { type: 'ternary', condition, trueExpr, falseExpr };
+      }
+    }
+    return condition;
   }
 
   parseAnd(): Expression {
@@ -115,11 +133,11 @@ class ExpressionParser {
   }
 
   parseConcat(): Expression {
-    let left = this.parseDefault();
+    let left = this.parseAdditive();
     this.skipWs();
     while (this.pos < this.src.length && this.src.charCodeAt(this.pos) === 126) {
       this.pos++;
-      const right = this.parseDefault();
+      const right = this.parseAdditive();
       if (left.type === 'concat') {
         left = { type: 'concat', parts: [...left.parts, right] };
       } else {
@@ -130,13 +148,51 @@ class ExpressionParser {
     return left;
   }
 
+  parseAdditive(): Expression {
+    let left = this.parseMultiplicative();
+    this.skipWs();
+    while (this.pos < this.src.length) {
+      const ch = this.peekChar();
+      if (ch === 43 || ch === 45) {
+        const op = ch === 43 ? '+' : '-';
+        this.pos++;
+        const right = this.parseMultiplicative();
+        left = { type: 'binary', operator: op, left, right };
+        this.skipWs();
+        continue;
+      }
+      break;
+    }
+    return left;
+  }
+
+  parseMultiplicative(): Expression {
+    let left = this.parseDefault();
+    this.skipWs();
+    while (this.pos < this.src.length) {
+      const ch = this.peekChar();
+      if (ch === 42 || ch === 47 || ch === 37) {
+        const op = ch === 42 ? '*' : ch === 47 ? '/' : '%';
+        this.pos++;
+        const right = this.parseDefault();
+        left = { type: 'binary', operator: op, left, right };
+        this.skipWs();
+        continue;
+      }
+      break;
+    }
+    return left;
+  }
+
   parseDefault(): Expression {
     let left = this.parseAtom();
     this.skipWs();
-    if (this.peekChar() === 63 && this.src.charCodeAt(this.pos + 1) === 63) {
+    while (this.peekChar() === 63 && this.src.charCodeAt(this.pos + 1) === 63) {
       this.pos += 2;
+      this.skipWs();
       const defaultExpr = this.parseAtom();
       left = { type: 'default', value: left, defaultExpr };
+      this.skipWs();
     }
     return left;
   }
@@ -147,7 +203,7 @@ class ExpressionParser {
 
     if (ch === 40) {
       this.pos++;
-      const expr = this.parseOr();
+      const expr = this.parseTernary();
       this.skipWs();
       if (this.peekChar() === 41) {
         this.pos++;
@@ -335,6 +391,7 @@ class ExpressionParser {
       if (filterName) {
         filters.push({ name: filterName, arg: filterArg || null });
       }
+      this.skipWs();
     }
     return filters;
   }

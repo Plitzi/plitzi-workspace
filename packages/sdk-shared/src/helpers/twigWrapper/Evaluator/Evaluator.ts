@@ -48,14 +48,30 @@ class Evaluator {
       return this.evalNode(nodes[0]);
     }
     if (len === 2) {
-      return this.evalNode(nodes[0]) + this.evalNode(nodes[1]);
+      const a = this.evalNode(nodes[0]);
+      if (this.breakFlag || this.continueFlag) {
+        return a;
+      }
+      return a + this.evalNode(nodes[1]);
     }
     if (len === 3) {
-      return this.evalNode(nodes[0]) + this.evalNode(nodes[1]) + this.evalNode(nodes[2]);
+      const a = this.evalNode(nodes[0]);
+      if (this.breakFlag || this.continueFlag) {
+        return a;
+      }
+      const b = this.evalNode(nodes[1]);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- evalNode() mutates flags via nested calls
+      if (this.breakFlag || this.continueFlag) {
+        return a + b;
+      }
+      return a + b + this.evalNode(nodes[2]);
     }
     let output = '';
     for (let i = 0; i < len; i++) {
       output += this.evalNode(nodes[i]);
+      if (this.breakFlag || this.continueFlag) {
+        break;
+      }
     }
     return output;
   }
@@ -88,6 +104,10 @@ class Evaluator {
 
     if (this.keepEmptyTokens && (value === undefined || value === null || value === '')) {
       return node.source;
+    }
+
+    if (isRawMarker(value)) {
+      return String(unwrapRaw(value));
     }
 
     if (value !== null && value !== undefined && typeof value !== 'object') {
@@ -290,6 +310,13 @@ class Evaluator {
         }
         return val;
       }
+      case 'ternary': {
+        const condValue = this.evalExpression(expr.condition);
+        if (isTruthy(condValue)) {
+          return this.evalExpression(expr.trueExpr);
+        }
+        return this.evalExpression(expr.falseExpr);
+      }
     }
   }
 
@@ -459,6 +486,16 @@ class Evaluator {
     const right = this.evalExpression(rightExpr);
 
     switch (operator) {
+      case '+':
+        return Number(left) + Number(right);
+      case '-':
+        return Number(left) - Number(right);
+      case '*':
+        return Number(left) * Number(right);
+      case '/':
+        return Number(left) / Number(right);
+      case '%':
+        return Number(left) % Number(right);
       case '==':
         if (left === right) {
           return true;

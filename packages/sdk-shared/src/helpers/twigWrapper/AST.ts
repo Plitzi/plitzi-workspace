@@ -72,7 +72,8 @@ export type Expression =
   | ConcatNode
   | UnaryNode
   | BinaryNode
-  | DefaultNode;
+  | DefaultNode
+  | TernaryNode;
 
 // Literal values: strings, numbers, booleans
 export type LiteralNode = {
@@ -144,4 +145,12 @@ export type DefaultNode = {
   readonly type: 'default';
   readonly value: Expression;
   readonly defaultExpr: Expression;
+};
+
+// Ternary operator: `condition ? trueExpr : falseExpr`
+export type TernaryNode = {
+  readonly type: 'ternary';
+  readonly condition: Expression;
+  readonly trueExpr: Expression;
+  readonly falseExpr: Expression;
 };
