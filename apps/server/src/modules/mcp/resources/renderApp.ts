@@ -166,12 +166,27 @@ const appHtml = (sdkBase: string, devMode: boolean): string => {
 </html>`;
 };
 
+// The shell HTML and its origin are constant for a given (sdkBase, devMode), but createMcpServer — and thus
+// registerRenderApp — runs once per request in the stateless server. Build the ~130-line string once per config
+// and reuse it instead of re-templating it on every MCP request.
+const appCache = new Map<string, { html: string; origin: string }>();
+
+const getApp = (sdkBase: string, devMode: boolean): { html: string; origin: string } => {
+  const key = `${devMode ? 'dev' : 'prod'}|${sdkBase}`;
+  let entry = appCache.get(key);
+  if (!entry) {
+    entry = { html: appHtml(sdkBase, devMode), origin: originOf(sdkBase) };
+    appCache.set(key, entry);
+  }
+
+  return entry;
+};
+
 // Register the render-app resource. `sdkBase` is this server's absolute origin (it serves the SDK bundle under
 // /sdk-assets); without it the iframe cannot load the SDK, so the app is skipped and plitzi_render still returns its
 // text summary + offlineData for hosts that consume it directly.
 export const registerRenderApp = (server: McpServer, sdkBase: string, devMode: boolean): void => {
-  const html = appHtml(sdkBase, devMode);
-  const origin = originOf(sdkBase);
+  const { html, origin } = getApp(sdkBase, devMode);
 
   server.registerResource(
     'plitzi-render-app',

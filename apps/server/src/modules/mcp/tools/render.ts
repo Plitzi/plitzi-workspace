@@ -121,14 +121,27 @@ export const renderTool = defineTool({
   name: 'plitzi_render',
   title: 'Render widget',
   description:
-    'Render a small self-contained UI widget the user can SEE, with the Plitzi SDK offline (no backend). Reach ' +
-    'for it in two cases: (1) the user asks you to create/design/build/show a piece of UI (a card, hero, form, ' +
-    'button, banner, pricing table…); (2) you are answering a content question and a visual layout communicates ' +
-    'better than prose — render the ANSWER as a widget (a recipe as a card, a comparison as a table, steps as a ' +
-    'checklist, a profile, a menu). Prefer showing it over a long text answer whenever the content is naturally ' +
-    'visual. You author the widget as operations targeting the pre-seeded host page `pageRef: "render"` (same ' +
-    'vocabulary as plitzi_apply: upsertElement, upsertDefinition, …). Returns a compact summary; the rendered ' +
-    'widget is shown to the user. To edit an existing space page instead, use plitzi_preview.',
+    'Show the user a real, rendered UI widget instead of describing one — cards, hero sections, pricing tables, ' +
+    'forms, menus, checklists, profiles, galleries. It runs the Plitzi SDK fully offline: no backend, account, or ' +
+    'setup. Reach for it whenever a visual layout beats prose: the user asks you to design/build/show something, ' +
+    'OR your answer is naturally visual (a recipe → a card, a comparison → a table, steps → a checklist). Prefer ' +
+    'showing over telling.\n\n' +
+    'Author the widget as an ordered list of `operations` that build an element tree under the pre-seeded root ' +
+    'page "render". Three rules:\n' +
+    '1. STRUCTURE — one upsertElement builds the whole tree: set pageRef:"render" and give element a nested ' +
+    '`children` array. Each element is { ref (unique), type, subType?, props?, style?, children? }; children render ' +
+    'in order. (To attach to something you already made, use a top-level parentRef:"<existing ref>" instead.)\n' +
+    '2. STYLE — declare reusable classes with upsertDefinition { ref, desktop:{ …CSS props in kebab-case… } }, then ' +
+    'attach via the element style:{ base:["<class ref>"] }. Lay containers out with flex/grid.\n' +
+    '3. CONTENT — visible copy goes in props.content (text, heading, paragraph, button); heading level is the ' +
+    'element subType ("h1".."h6"); image/video take props.src. An unknown prop comes back as a warning naming the ' +
+    'right one.\n\n' +
+    'Common types: container, heading, paragraph, text, button, link, image, video, list, listItem, markdown ' +
+    '(plitzi://render/types lists every built-in type with descriptions).\n' +
+    'READ the resource plitzi://render/guide first — it has the element/prop table, the style model and a full ' +
+    'worked example, and following it is the difference between a widget that renders and repeated failed calls.\n' +
+    'Returns a compact summary (the widget is shown to the user); on failure it returns teachable errors ' +
+    '(path + hint) — read them and retry.',
   inputShape: renderShape,
   access: 'read',
   spaceless: true,

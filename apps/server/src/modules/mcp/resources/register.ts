@@ -2,6 +2,7 @@ import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp';
 
 import { resourceErrorMessage } from './canonical';
 import { envelope, jsonContents } from './envelope';
+import { registerRenderResources } from './renderGuide';
 import { readResource } from './router';
 import { cssProperties } from '../catalogs';
 import { guideText } from '../helpers/guide';
@@ -46,6 +47,10 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
     { description: 'Valid kebab-case CSS property keys', mimeType: 'application/json' },
     () => jsonContents('plitzi://css-properties', envelope(cssProperties))
   );
+
+  // How to author a plitzi_render widget (guide + usable element-type catalog) — public, so a conversational agent
+  // holding only that tool can read them.
+  registerRenderResources(server);
 
   // Space-dependent listings: reading any of these resolves the spaceId and loads the space via getSpace.
   const fixed: Array<[string, string, string]> = [
