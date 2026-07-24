@@ -5,7 +5,7 @@ import { checkSlotCss } from './css';
 import { checkElementInput, checkTypeProps, checkVariantApplication } from './elements';
 import { checkInteractionNode } from './interactions';
 import { checkRef } from './refs';
-import { observedDataSources, observedInteractionActions } from '../../../catalogs';
+import { BUILTIN_COMPONENTS, observedDataSources, observedInteractionActions } from '../../../catalogs';
 import {
   findElementByRef,
   findFolderByRef,
@@ -64,7 +64,10 @@ export const buildValidationCtx = (space: Space, ops: Operation[]): ValidationCt
     errors: [],
     warnings: [],
     warned: new Set(),
-    knownTypes: new Set(Object.keys(registry.types)),
+    // Built-in element types (container, heading, image…) are always available from the SDK — no plugin needed — so
+    // they are always "known", even in a space that has no instance of them yet or (plitzi_render) a catalog-less seed
+    // space. Without this the render tool warns "ensure a plugin provides it" for every standard element.
+    knownTypes: new Set([...Object.keys(registry.types), ...Object.keys(BUILTIN_COMPONENTS)]),
     typeProps: new Map(Object.entries(registry.types).map(([type, info]) => [type, new Set(Object.keys(info.props))])),
     typeMeta: buildTypeMeta(space.catalog),
     elementType: ref => (findElementByRef(space.schema, ref) ?? findPageByRef(space.schema, ref))?.definition.type,
