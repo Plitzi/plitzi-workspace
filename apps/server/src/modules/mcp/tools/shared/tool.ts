@@ -43,6 +43,9 @@ export interface ToolSpec<Shape extends ZodRawShape> {
   access: 'read' | 'write';
   /** A host capability this tool needs; hosts that did not wire it skip registering the tool. */
   requires?: ToolRequires;
+  /** The tool operates on no space (plitzi_render authors a throwaway one), so the host must NOT resolve a spaceId
+   *  or load a space for it — that keeps it callable with no auth, on the public surface. */
+  spaceless?: boolean;
   run: (input: z.infer<ZodObject<Shape>>, ctx: ToolContext) => unknown;
 }
 
@@ -55,6 +58,7 @@ export interface ToolDef {
   inputShape: ZodRawShape;
   access: 'read' | 'write';
   requires?: ToolRequires;
+  spaceless?: boolean;
   execute: (args: unknown, ctx: ToolContext) => unknown;
 }
 
@@ -68,5 +72,6 @@ export const defineTool = <Shape extends ZodRawShape>(spec: ToolSpec<Shape>): To
   inputShape: spec.inputShape,
   access: spec.access,
   requires: spec.requires,
+  spaceless: spec.spaceless,
   execute: (args, ctx) => spec.run(z.object(spec.inputShape).parse(args), ctx)
 });

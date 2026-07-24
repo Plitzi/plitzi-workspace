@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 
-import { createMcpLog, emptySpaceMessage, serverInstructions, unauthorizedSpaceMessage } from './helpers';
+import { createMcpLog, emptySpace, emptySpaceMessage, serverInstructions, unauthorizedSpaceMessage } from './helpers';
 import { registerResources } from './resources';
 import { tools } from './tools';
 import { isCallToolResult } from '../ai/toolkit';
@@ -89,6 +89,10 @@ export const createMcpServer = ({ adapters, getSpaceId, preview, screenshot, log
     preview,
     screenshot
   });
+
+  // A space-independent tool (plitzi_render) must never trigger a spaceId/space load, so it stays callable with no
+  // auth: hand it an empty placeholder space instead of resolving the request's. It authors its own throwaway one.
+  const spacelessContext = (): ToolContext => ({ space: emptySpace(), env: MCP_ENV, persisters, preview, screenshot });
   for (const tool of tools) {
     // Skip a tool whose capability the host did not wire — e.g. plitzi_screenshot without a browser service, so
     // it never appears in tools/list when the feature is off.
@@ -102,7 +106,7 @@ export const createMcpServer = ({ adapters, getSpaceId, preview, screenshot, log
       async (args: unknown) => {
         const start = performance.now();
         try {
-          const result = await tool.execute(args, await toolContext());
+          const result = await tool.execute(args, tool.spaceless ? spacelessContext() : await toolContext());
           log.toolCall(tool.name, args, performance.now() - start);
 
           return isCallToolResult(result) ? result : asText(result);

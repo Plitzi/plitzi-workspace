@@ -58,7 +58,9 @@ export const isCallToolResult = (result: unknown): result is CallToolResult =>
 
 // Map a tool's CallToolResult into the engine's McpToolHandlerResult, keeping only the text and image blocks the
 // providers can forward. Used by the in-process bridge so a screenshot reaches the co-worker as real image content
-// instead of a JSON-stringified blob.
+// instead of a JSON-stringified blob. `structuredContent` rides along as `data` (host-facing, never sent to the
+// model), so a tool can hand the host a large payload — a render's offlineData — while the model pays only for the
+// compact text content.
 export const toolResponseFromResult = (result: CallToolResult): McpToolHandlerResult => {
   const content: McpContent[] = [];
   for (const block of result.content) {
@@ -69,7 +71,7 @@ export const toolResponseFromResult = (result: CallToolResult): McpToolHandlerRe
     }
   }
 
-  return { content, isError: result.isError ? true : undefined };
+  return { content, data: result.structuredContent, isError: result.isError ? true : undefined };
 };
 
 // A tool is usable when it carries a direct handler.

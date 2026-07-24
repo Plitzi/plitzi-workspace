@@ -19,6 +19,25 @@ export const cloneSpace = (space: Space): Space => ({
   ...(space.catalog ? { catalog: space.catalog } : {})
 });
 
+// A valid, fully-empty space — no cloud, no page, no styles. The seed a space-independent tool (plitzi_render)
+// builds on, and the placeholder context the server hands such a tool so it never triggers a spaceId/auth load.
+export const emptySpace = (): Space => ({
+  schema: {
+    flat: {},
+    definition: { name: '', permanentUrl: '' },
+    variables: [],
+    settings: { customCss: '' },
+    pages: [],
+    pageFolders: []
+  },
+  style: {
+    platform: { desktop: {}, tablet: {}, mobile: {} },
+    theme: { default: 'system', schemes: ['light', 'dark'] },
+    variables: {},
+    cache: ''
+  }
+});
+
 export const slugify = (value: string): string =>
   value
     .toLowerCase()

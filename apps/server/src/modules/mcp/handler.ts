@@ -38,27 +38,49 @@ export const serveMcp = async (raw: IncomingMessage, res: ServerResponse, server
     return;
   }
 
+  // OAuth discovery probes: answer with a clean 404 ("this resource is unprotected, connect directly") instead of
+  // letting the request fall through to the transport, which 406s on a non-event-stream Accept and can stall a
+  // client's auth negotiation (Claude Desktop connectors probe these before connecting).
+  if (raw.url?.startsWith('/.well-known/')) {
+    res.writeHead(404);
+    res.end();
+
+    return;
+  }
+
+  // The endpoint is stateless (JSON responses, no session), so it offers no server→client GET event stream. Reply
+  // to any non-POST method with 405 rather than opening a stream that never resolves — an open GET otherwise HANGS
+  // the client (Claude Desktop connectors, mcp-remote) until it times out. 405 is spec-compliant; clients handle it.
+  if (raw.method !== 'POST') {
+    res.writeHead(405, { 'Content-Type': 'application/json', Allow: 'POST, OPTIONS' });
+    res.end(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        error: { code: -32000, message: 'Method not allowed; this MCP endpoint accepts JSON-RPC over POST only.' },
+        id: null
+      })
+    );
+
+    return;
+  }
+
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
   await server.connect(transport);
 
   try {
-    if (raw.method === 'POST') {
-      let body: unknown = (raw as { body?: unknown }).body;
-      if (body === undefined) {
-        try {
-          body = await readMcpBody(raw);
-        } catch {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid JSON body' }));
+    let body: unknown = (raw as { body?: unknown }).body;
+    if (body === undefined) {
+      try {
+        body = await readMcpBody(raw);
+      } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON body' }));
 
-          return;
-        }
+        return;
       }
-
-      await transport.handleRequest(raw, res, body);
-    } else {
-      await transport.handleRequest(raw, res);
     }
+
+    await transport.handleRequest(raw, res, body);
   } finally {
     await transport.close();
   }
