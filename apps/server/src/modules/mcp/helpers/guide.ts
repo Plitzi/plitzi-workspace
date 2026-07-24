@@ -24,7 +24,9 @@ export const serverInstructions =
   'Elements also carry applied style variants + visibility (initialState), data bindings and interaction flows: ' +
   'edit them with patchElement (initialState), upsertBinding/patchBinding/deleteBinding, and ' +
   'upsertInteractionFlow/patchInteractionNode/deleteInteraction. An element read shows all three plus ' +
-  'availableVariants (which variant each of its classes offers).';
+  'availableVariants (which variant each of its classes offers). ' +
+  'Separately, to SHOW the user a small self-contained widget (offline, no space or backend) instead of editing ' +
+  'the space — a card, hero, pricing table, a visual answer — use plitzi_render; read plitzi://render/guide for it.';
 
 // The condensed guide the PRIMER carries — the essentials and the highest-frequency gotchas, kept short so the
 // cold-start bundle stays cheap. The full reference (every resource, op shape, and worked example) is guideText,

@@ -137,7 +137,9 @@ export const renderTool = defineTool({
     'element subType ("h1".."h6"); image/video take props.src. An unknown prop comes back as a warning naming the ' +
     'right one.\n\n' +
     'Common types: container, heading, paragraph, text, button, link, image, video, list, listItem, markdown ' +
-    '(plitzi://render/types lists every built-in type with descriptions).\n' +
+    '(plitzi://render/types lists every built-in type with descriptions). Widgets can also be data-driven and ' +
+    'interactive — an apiContainer fetches at runtime, upsertBinding wires data into elements, and ' +
+    'upsertInteractionFlow makes them react to clicks (see the guide).\n' +
     'READ the resource plitzi://render/guide first — it has the element/prop table, the style model and a full ' +
     'worked example, and following it is the difference between a widget that renders and repeated failed calls.\n' +
     'Returns a compact summary (the widget is shown to the user); on failure it returns teachable errors ' +

@@ -1,5 +1,13 @@
 # @plitzi/sdk-collections
 
+## 0.32.8
+
+### Patch Changes
+
+- v0.32.8
+- Updated dependencies
+  - @plitzi/sdk-shared@0.32.8
+
 ## 0.32.7
 
 ### Patch Changes

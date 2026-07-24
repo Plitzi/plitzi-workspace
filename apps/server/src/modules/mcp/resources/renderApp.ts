@@ -7,13 +7,15 @@ export const RENDER_APP_URI = 'ui://plitzi/render.html';
 // The MCP Apps resource mime type — the signal to the host that this HTML is an interactive app view.
 const RENDER_APP_MIME = 'text/html;profile=mcp-app';
 
-const originOf = (url: string): string => {
-  try {
-    return new URL(url).origin;
-  } catch {
-    return url;
-  }
-};
+// CSP the host applies to the widget's sandboxed iframe. It is deliberately open so the tool is ZERO-CONFIG: a
+// generative widget shows arbitrary images (recipe photos, product shots) and an apiContainer may fetch any API,
+// and both must "just work" the moment the MCP is installed — no per-deployment allowlist to maintain. The risk is
+// contained: the iframe runs on the host's throwaway sandbox origin, isolated from the host page, its cookies and
+// the user's data, so a broad resource/connect allowance cannot reach anything sensitive. `data:`/`blob:` cover
+// self-contained (base64/SVG) images, which `*` (network origins only) does not. resourceDomains is coarse in the
+// spec — one list feeds img/script/style/font/media — so images cannot be opened without scripts; that is acceptable
+// here because the sandbox is the security boundary, not the CSP.
+const RENDER_APP_CSP = { resourceDomains: ['*', 'data:', 'blob:'], connectDomains: ['*'] };
 
 // The iframe shell — a CLIENT-side render (no server SSR, no server CPU). It speaks the MCP Apps postMessage
 // protocol INLINE (window.parent, per spec) so the iframe reports "ready" instantly with nothing external to load —
@@ -166,27 +168,27 @@ const appHtml = (sdkBase: string, devMode: boolean): string => {
 </html>`;
 };
 
-// The shell HTML and its origin are constant for a given (sdkBase, devMode), but createMcpServer — and thus
-// registerRenderApp — runs once per request in the stateless server. Build the ~130-line string once per config
-// and reuse it instead of re-templating it on every MCP request.
-const appCache = new Map<string, { html: string; origin: string }>();
+// The shell HTML is constant for a given (sdkBase, devMode), but createMcpServer — and thus registerRenderApp —
+// runs once per request in the stateless server. Build the ~130-line string once per config and reuse it instead of
+// re-templating it on every MCP request.
+const appCache = new Map<string, string>();
 
-const getApp = (sdkBase: string, devMode: boolean): { html: string; origin: string } => {
+const getAppHtml = (sdkBase: string, devMode: boolean): string => {
   const key = `${devMode ? 'dev' : 'prod'}|${sdkBase}`;
-  let entry = appCache.get(key);
-  if (!entry) {
-    entry = { html: appHtml(sdkBase, devMode), origin: originOf(sdkBase) };
-    appCache.set(key, entry);
+  let html = appCache.get(key);
+  if (!html) {
+    html = appHtml(sdkBase, devMode);
+    appCache.set(key, html);
   }
 
-  return entry;
+  return html;
 };
 
 // Register the render-app resource. `sdkBase` is this server's absolute origin (it serves the SDK bundle under
 // /sdk-assets); without it the iframe cannot load the SDK, so the app is skipped and plitzi_render still returns its
 // text summary + offlineData for hosts that consume it directly.
 export const registerRenderApp = (server: McpServer, sdkBase: string, devMode: boolean): void => {
-  const { html, origin } = getApp(sdkBase, devMode);
+  const html = getAppHtml(sdkBase, devMode);
 
   server.registerResource(
     'plitzi-render-app',
@@ -194,7 +196,7 @@ export const registerRenderApp = (server: McpServer, sdkBase: string, devMode: b
     {
       description: 'Interactive view that renders a plitzi_render widget with the Plitzi SDK (client-side).',
       mimeType: RENDER_APP_MIME,
-      _meta: { ui: { csp: { resourceDomains: [origin], connectDomains: [origin] } } }
+      _meta: { ui: { csp: RENDER_APP_CSP } }
     },
     () => ({ contents: [{ uri: RENDER_APP_URI, mimeType: RENDER_APP_MIME, text: html }] })
   );
