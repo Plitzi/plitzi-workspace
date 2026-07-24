@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-auth",
-  "version": "0.32.6",
+  "version": "0.32.7",
   "license": "AGPL-3.0",
   "files": [
     "dist"
