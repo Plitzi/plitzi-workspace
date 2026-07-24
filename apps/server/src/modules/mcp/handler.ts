@@ -98,7 +98,8 @@ export const handleMcp = (
   adapters: SSRAdapters,
   preview?: PreviewClient,
   screenshot?: ScreenshotClient,
-  logger?: McpLogger
+  logger?: McpLogger,
+  renderApp?: { sdkBase: string; devMode?: boolean }
 ): Promise<void> =>
   serveMcp(
     raw,
@@ -108,7 +109,8 @@ export const handleMcp = (
       getSpaceId: () => adapters.getSpaceId?.(req) ?? Promise.resolve(undefined),
       preview,
       screenshot,
-      logger
+      logger,
+      renderApp
     })
   );
 

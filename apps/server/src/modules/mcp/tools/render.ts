@@ -4,6 +4,7 @@ import { generateCache } from '@plitzi/sdk-style';
 import { applyOperations } from './apply/dispatch';
 import { operations } from './operations';
 import { emptySpace } from '../helpers';
+import { RENDER_APP_URI } from '../resources/renderApp';
 import { defineTool } from './shared/tool';
 import { validateOperations } from './shared/validator';
 import { auditResources } from './shared/validator/audit';
@@ -131,5 +132,6 @@ export const renderTool = defineTool({
   inputShape: renderShape,
   access: 'read',
   spaceless: true,
+  ui: { resourceUri: RENDER_APP_URI },
   run: input => toRenderResult(render(input))
 });

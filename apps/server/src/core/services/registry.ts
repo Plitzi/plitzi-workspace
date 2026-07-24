@@ -44,7 +44,8 @@ export const buildSSRPipeline = (services: ResolvedServices): Stage<SSRContext>[
   return stages;
 };
 
-// The lean MCP-only pipeline: an optional health endpoint (k8s probes) then MCP for every other request — the
-// server owns its whole sub-domain, so MCP is served at the root, not under /mcp. No static, auth-routes,
-// middlewares or render stages: a dedicated MCP server carries none of that.
-export const buildMCPPipeline = (): Stage<BaseContext>[] => [healthStage, mcpOnlyStage];
+// The lean MCP-only pipeline: an optional health endpoint (k8s probes), then any configured static mounts (the MCP
+// Apps render view serves the Plitzi SDK bundle under /sdk-assets same-origin), then MCP for every other request —
+// the server owns its whole sub-domain, so MCP is served at the root, not under /mcp. configStaticStage falls
+// through (returns false) when no mount matches, so non-asset requests still reach MCP.
+export const buildMCPPipeline = (): Stage<BaseContext>[] => [healthStage, configStaticStage, mcpOnlyStage];

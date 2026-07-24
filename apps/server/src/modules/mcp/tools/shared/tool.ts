@@ -46,6 +46,9 @@ export interface ToolSpec<Shape extends ZodRawShape> {
   /** The tool operates on no space (plitzi_render authors a throwaway one), so the host must NOT resolve a spaceId
    *  or load a space for it — that keeps it callable with no auth, on the public surface. */
   spaceless?: boolean;
+  /** MCP Apps: link this tool to an interactive UI resource (a `ui://` HTML page the host renders in a sandboxed
+   *  iframe, receiving the tool result). The `_meta.ui` the host reads is built from this. */
+  ui?: { resourceUri: string };
   run: (input: z.infer<ZodObject<Shape>>, ctx: ToolContext) => unknown;
 }
 
@@ -59,6 +62,7 @@ export interface ToolDef {
   access: 'read' | 'write';
   requires?: ToolRequires;
   spaceless?: boolean;
+  ui?: { resourceUri: string };
   execute: (args: unknown, ctx: ToolContext) => unknown;
 }
 
@@ -73,5 +77,6 @@ export const defineTool = <Shape extends ZodRawShape>(spec: ToolSpec<Shape>): To
   access: spec.access,
   requires: spec.requires,
   spaceless: spec.spaceless,
+  ui: spec.ui,
   execute: (args, ctx) => spec.run(z.object(spec.inputShape).parse(args), ctx)
 });

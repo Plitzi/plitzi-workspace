@@ -302,6 +302,11 @@ export type SSRServerConfig = {
    *  the HTML plitzi_preview is available; when the service is unreachable at call time the tool degrades to
    *  returning the HTML preview with a warning. */
   screenshot?: { serviceUrl: string; renderBaseUrl: string };
+  /** MCP Apps: enables the interactive `ui://` render view plitzi_render links to. `sdkBase` is this server's
+   *  absolute origin (it must serve the Plitzi SDK bundle under /sdk-assets — see `static`); the iframe imports
+   *  the SDK from there and renders the widget client-side. When absent, the view is not registered. `devMode`
+   *  selects the SDK vendor bundle name (dev vs prod split), matching the SSR asset resolution. */
+  renderApp?: { sdkBase: string; devMode?: boolean };
   /** Backing store for draft-preview tokens. Defaults to an in-memory store (single replica); inject a shared
    *  store (e.g. Redis) for multi-replica correctness. */
   draftStore?: DraftStore;

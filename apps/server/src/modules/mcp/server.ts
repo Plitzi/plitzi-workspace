@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 
 import { createMcpLog, emptySpace, emptySpaceMessage, serverInstructions, unauthorizedSpaceMessage } from './helpers';
 import { registerResources } from './resources';
+import { registerRenderApp } from './resources/renderApp';
 import { tools } from './tools';
 import { isCallToolResult } from '../ai/toolkit';
 
@@ -28,6 +29,11 @@ export interface McpServerContext {
   /** Structured request-log sink. When set, every tool call and resource read emits an McpLogEvent to it (the
    *  consumer renders them); otherwise logging falls back to the console when MCP_DEBUG=1. */
   logger?: McpLogger;
+  /** MCP Apps: the interactive render view for plitzi_render. `sdkBase` is this server's absolute origin, which
+   *  serves the Plitzi SDK bundle under /sdk-assets; the iframe imports it and renders the widget client-side.
+   *  `devMode` picks the SDK vendor bundle name (dev vs prod split) to match the served bundle. Absent → the
+   *  ui:// view is not registered (the tool still returns its text summary + offlineData). */
+  renderApp?: { sdkBase: string; devMode?: boolean };
 }
 
 // The MCP tools only ever operate on the active-editing environment.
@@ -35,7 +41,14 @@ const MCP_ENV: Environment = 'main';
 
 const asText = (data: unknown): CallToolResult => ({ content: [{ type: 'text', text: JSON.stringify(data) }] });
 
-export const createMcpServer = ({ adapters, getSpaceId, preview, screenshot, logger }: McpServerContext): McpServer => {
+export const createMcpServer = ({
+  adapters,
+  getSpaceId,
+  preview,
+  screenshot,
+  logger,
+  renderApp
+}: McpServerContext): McpServer => {
   const log = createMcpLog(logger);
   // Resolve the spaceId at most once, and only when a space-dependent operation actually needs it. A request
   // without a valid token fails here (not at connect time), so the public surface stays reachable.
@@ -79,6 +92,12 @@ export const createMcpServer = ({ adapters, getSpaceId, preview, screenshot, log
 
   registerResources(server, getSpace, MCP_ENV, log);
 
+  // The MCP Apps view for plitzi_render — registered only when a Plitzi SDK bundle URL is wired, since the iframe
+  // needs it to mount the widget.
+  if (renderApp) {
+    registerRenderApp(server, renderApp.sdkBase, renderApp.devMode ?? false);
+  }
+
   // Register every tool straight from the shared registry: identity + input schema + behavior come from each
   // tool's descriptor, so a new tool is picked up here with no per-tool wiring.
   const toolContext = async (): Promise<ToolContext> => ({
@@ -102,7 +121,14 @@ export const createMcpServer = ({ adapters, getSpaceId, preview, screenshot, log
 
     server.registerTool(
       tool.name,
-      { title: tool.title, description: tool.description, inputSchema: tool.inputShape },
+      {
+        title: tool.title,
+        description: tool.description,
+        inputSchema: tool.inputShape,
+        // MCP Apps: advertise the interactive view only when its resource is actually registered (renderApp wired),
+        // so the tool never points at a ui:// that the host cannot fetch.
+        ...(tool.ui && renderApp ? { _meta: { ui: tool.ui } } : {})
+      },
       async (args: unknown) => {
         const start = performance.now();
         try {
