@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/nexus",
-  "version": "0.32.5",
+  "version": "0.32.6",
   "license": "Apache-2.0",
   "files": [
     "dist",

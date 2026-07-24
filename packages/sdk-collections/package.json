@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-collections",
-  "version": "0.32.5",
+  "version": "0.32.6",
   "license": "AGPL-3.0",
   "files": [
     "dist"

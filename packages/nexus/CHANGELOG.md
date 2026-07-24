@@ -1,5 +1,11 @@
 # @plitzi/nexus
 
+## 0.32.6
+
+### Patch Changes
+
+- v0.32.6
+
 ## 0.32.5
 
 ### Patch Changes
@@ -41,7 +47,7 @@
 - Added runnable examples (`examples/`) and integration docs (`docs/integrations/`) for React, Next.js, Astro 6 (LTS),
   Astro 7, Vue and Svelte.
 - **`unmount` write option.** Every write now takes an optional third argument `SetStateOptions = { canPropagate?;
-  unmount? }`. `set(path, undefined, { unmount: true })` **deletes** the key at `path` (splicing array indices) instead
+unmount? }`. `set(path, undefined, { unmount: true })` **deletes** the key at `path` (splicing array indices) instead
   of leaving a dead `undefined`, so registries keyed by dynamic id leave no stale entries. Nested deletes keep siblings
   with structural sharing, interceptors can veto them, and writing a value back recreates the path.
 - **Read-only paths.** `createStore(init, { readOnly: [...] })` freezes paths: a write to a read-only path — or to an
