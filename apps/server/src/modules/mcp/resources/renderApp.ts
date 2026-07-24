@@ -17,6 +17,20 @@ const RENDER_APP_MIME = 'text/html;profile=mcp-app';
 // here because the sandbox is the security boundary, not the CSP.
 const RENDER_APP_CSP = { resourceDomains: ['*', 'data:', 'blob:'], connectDomains: ['*'] };
 
+// The `_meta` the host reads to build the sandbox CSP. Two dialects, so it works across hosts:
+//   - `ui.csp` — the SEP-1865 standard (Claude, Claude Desktop, MCP Inspector).
+//   - `openai/widgetCSP` — ChatGPT's legacy snake_case key; without it ChatGPT falls back to a restrictive default
+//     CSP that blocks the widget from importing the Plitzi SDK cross-origin.
+// It is attached BOTH to the resource's listing metadata AND to the content item returned by resources/read —
+// ChatGPT reads the CSP from the content item, not the listing (community-confirmed), while others read the listing.
+const RENDER_APP_META = {
+  ui: { csp: RENDER_APP_CSP },
+  'openai/widgetCSP': {
+    resource_domains: RENDER_APP_CSP.resourceDomains,
+    connect_domains: RENDER_APP_CSP.connectDomains
+  }
+};
+
 // The iframe shell — a CLIENT-side render (no server SSR, no server CPU). It speaks the MCP Apps postMessage
 // protocol INLINE (window.parent, per spec) so the iframe reports "ready" instantly with nothing external to load —
 // no CDN, no bundler. It boots the real Plitzi SDK the same way ssr/views/template.ejs does (import map for React +
@@ -196,8 +210,8 @@ export const registerRenderApp = (server: McpServer, sdkBase: string, devMode: b
     {
       description: 'Interactive view that renders a plitzi_render widget with the Plitzi SDK (client-side).',
       mimeType: RENDER_APP_MIME,
-      _meta: { ui: { csp: RENDER_APP_CSP } }
+      _meta: RENDER_APP_META
     },
-    () => ({ contents: [{ uri: RENDER_APP_URI, mimeType: RENDER_APP_MIME, text: html }] })
+    () => ({ contents: [{ uri: RENDER_APP_URI, mimeType: RENDER_APP_MIME, text: html, _meta: RENDER_APP_META }] })
   );
 };
