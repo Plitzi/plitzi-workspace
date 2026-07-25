@@ -1,5 +1,7 @@
 import type { McpUiResourceCsp } from '@modelcontextprotocol/ext-apps';
 
+// Shape of an MCP App. The bundling and registration logic lives under apps/; only the contract lives here.
+
 /** A `ui://` page the host renders in a sandboxed iframe, linked from a tool through `_meta.ui.resourceUri`. */
 export interface McpApp {
   uri: string;

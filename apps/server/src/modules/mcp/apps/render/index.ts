@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 
 import { require } from '../shared';
 
-import type { McpApp } from '../shared';
+import type { McpApp } from '../../types';
 
 // The ui:// resource plitzi_render links to via _meta.ui.resourceUri. An MCP Apps host (Claude, Claude Desktop,
 // ChatGPT, Goose…) fetches it and renders it in a sandboxed iframe, then pushes the tool result in.

@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { McpApp } from '../shared';
+import type { McpApp } from '../../types';
 
 /** The reference app: the smallest definition that works, kept as the template a new app is copied from.
  *

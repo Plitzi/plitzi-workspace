@@ -4,7 +4,7 @@ import { exampleApp } from './example';
 import { apps, registerApps, RENDER_APP_URI } from './index';
 import { registerApp } from './shared';
 
-import type { McpApp } from './shared';
+import type { McpApp } from '../types';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 type ResourceMeta = { _meta: { ui: { csp: { resourceDomains: string[]; connectDomains: string[] } } } };

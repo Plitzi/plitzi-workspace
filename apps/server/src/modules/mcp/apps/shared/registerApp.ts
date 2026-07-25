@@ -2,7 +2,7 @@ import { registerAppResource, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/e
 
 import { page } from './page';
 
-import type { McpApp } from './types';
+import type { McpApp } from '../../types';
 import type { McpUiResourceCsp, McpUiResourceMeta } from '@modelcontextprotocol/ext-apps';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 

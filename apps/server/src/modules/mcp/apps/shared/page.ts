@@ -6,7 +6,7 @@ import ejs from 'ejs';
 
 import { bundle } from './bundle';
 
-import type { McpApp } from './types';
+import type { McpApp } from '../../types';
 
 const SHELL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'shell.ejs');
 
