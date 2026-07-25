@@ -1,6 +1,6 @@
 import { applySecurityHeaders } from './securityHeaders';
 import { buildResponseHelpers } from '../../helpers/buildResponseHelpers';
-import { parseRequest } from '../requestParser';
+import { clientIp, parseRequest } from '../requestParser';
 
 import type { BaseContext, Stage } from './types';
 import type { RawResponse } from '../../helpers/buildResponseHelpers';
@@ -49,6 +49,8 @@ const runPipeline = async <C extends BaseContext>(
   const res = buildResponseHelpers(rawRes, req.headers['accept-encoding']);
   const ctx = buildContext(raw, rawRes, req, res);
   const logger = ctx.config.logger;
+  // Read while the socket is still attached: a request logged from the catch block can outlive its connection.
+  const ip = logger ? clientIp(raw, req) : '';
 
   // Every exit below funnels through this, so a request shows up whether it was served, rejected or threw.
   const logRequest = (error?: unknown): void => {
@@ -63,6 +65,7 @@ const runPipeline = async <C extends BaseContext>(
       // From the parsed request, not the raw one: over HTTP/2 the method and URL live in pseudo-headers.
       method: req.method,
       path: safePath(req.url),
+      ...(ip ? { clientIp: ip } : {}),
       ...(ctx.operation === undefined ? {} : { operation: ctx.operation }),
       status,
       durationMs: Date.now() - startedAt,

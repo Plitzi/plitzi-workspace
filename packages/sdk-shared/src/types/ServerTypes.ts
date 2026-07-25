@@ -244,6 +244,9 @@ export type ServerRequestLogEvent = ServerLogEventBase & {
   operation?: string;
   /** The HTTP status the server answered with. */
   status: number;
+  /** The client the request came from, resolved through the proxies the deployment sits behind. Empty when no
+   *  address could be determined. It IS personal data — see the note on {@link ServerLogEvent}. */
+  clientIp?: string;
 };
 
 /** One plitzi_* tool call inside an MCP request. Reported separately from the request because a failing tool
@@ -268,10 +271,10 @@ export type McpResourceLogEvent = ServerLogEventBase & {
  *  the MCP tool calls and resource reads that happen inside them. Wire a single sink via `SSRServerConfig.logger`
  *  and switch on `kind` — a consumer can render it, ship it to a dashboard or drop the kinds it does not want.
  *
- *  PII-free by construction: no headers, cookies, tokens, request body nor client IP ever reach an event, query
- *  values are stripped from paths and tool arguments are reduced to their shape. The request path itself is kept
- *  verbatim — it is what makes the log usable — so consumers that route identifiers through the path should treat
- *  that field accordingly. */
+ *  Payload-free by construction: no headers, cookies, tokens nor request body ever reach an event, query values
+ *  are stripped from paths and tool arguments are reduced to their shape. Two fields are NOT anonymous and a
+ *  consumer shipping these events must handle them accordingly: `clientIp` on a request event, and the request
+ *  path, which is kept verbatim because it is what makes the log usable. */
 export type ServerLogEvent = ServerRequestLogEvent | McpToolLogEvent | McpResourceLogEvent;
 
 /** The sink a consumer provides to receive every {@link ServerLogEvent} (see `SSRServerConfig.logger`). */

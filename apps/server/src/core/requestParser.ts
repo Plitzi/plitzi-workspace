@@ -49,6 +49,30 @@ export const requestOrigin = (req: SSRRequest): string => {
   return AUTHORITY_RE.test(authority) ? `${req.protocol}://${authority}` : '';
 };
 
+const headerValue = (value: string | string[] | undefined): string =>
+  (Array.isArray(value) ? value[0] : value)?.trim() ?? '';
+
+// Node reports IPv4 peers of a dual-stack socket in the IPv4-mapped form; the plain address is what an operator
+// greps for.
+const unmapIpv4 = (address: string): string =>
+  address.startsWith('::ffff:') && address.includes('.') ? address.slice(7) : address;
+
+/** The address the request came from, seen through the proxies a deployment sits behind: Cloudflare states the
+ *  peer it accepted in `cf-connecting-ip`, the ingress in `x-real-ip`, and `x-forwarded-for` lists the chain with
+ *  the original client first. All three are plain headers a direct client can forge, so this is log/diagnostic
+ *  material — never an authorisation input. Falls back to the socket peer, which no client controls. */
+export const clientIp = (raw: IncomingMessage, req: SSRRequest): string => {
+  const forwardedFor = headerValue(req.headers['x-forwarded-for']).split(',')[0] ?? '';
+  const address =
+    headerValue(req.headers['cf-connecting-ip']) ||
+    headerValue(req.headers['x-real-ip']) ||
+    forwardedFor.trim() ||
+    raw.socket.remoteAddress ||
+    '';
+
+  return unmapIpv4(address);
+};
+
 const MAX_BODY_BYTES = 1024 * 1024; // 1 MB — login/logout payloads are tiny; cap guards against abuse.
 
 export const readRawBody = (raw: IncomingMessage): Promise<string> =>

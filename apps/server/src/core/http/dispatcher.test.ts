@@ -11,6 +11,15 @@ import type { IncomingMessage } from 'node:http';
 const fakeRequest = (url: string, method = 'GET'): IncomingMessage =>
   ({ url, method, headers: { host: 'example.test' }, socket: {} }) as unknown as IncomingMessage;
 
+// A request as it arrives through the proxy chain: forwarding headers plus the socket peer underneath them.
+const fakeClientRequest = (headers: Record<string, string>, remoteAddress?: string): IncomingMessage =>
+  ({
+    url: '/',
+    method: 'GET',
+    headers: { host: 'example.test', ...headers },
+    socket: { remoteAddress }
+  }) as unknown as IncomingMessage;
+
 const fakeResponse = (): RawResponse => ({
   headersSent: false,
   statusCode: 200,
@@ -117,5 +126,51 @@ describe('dispatcher request log', () => {
 
     expect(events).toHaveLength(1);
     expect(firstRequest(events).path).toBe('/nothing');
+  });
+});
+
+describe('dispatcher client IP', () => {
+  it('trusts the edge over the headers behind it', async () => {
+    const raw = fakeClientRequest(
+      { 'cf-connecting-ip': '203.0.113.7', 'x-real-ip': '10.0.0.5', 'x-forwarded-for': '10.0.0.9' },
+      '10.42.0.1'
+    );
+    const events = await run(raw, [answer(200)]);
+
+    expect(firstRequest(events).clientIp).toBe('203.0.113.7');
+  });
+
+  it('takes the original client from the head of the x-forwarded-for chain', async () => {
+    const raw = fakeClientRequest({ 'x-forwarded-for': '203.0.113.7, 70.41.3.18, 150.172.238.178' }, '10.42.0.1');
+    const events = await run(raw, [answer(200)]);
+
+    expect(firstRequest(events).clientIp).toBe('203.0.113.7');
+  });
+
+  it('falls back to the socket peer, in its plain IPv4 form', async () => {
+    const events = await run(fakeClientRequest({}, '::ffff:203.0.113.7'), [answer(200)]);
+
+    expect(firstRequest(events).clientIp).toBe('203.0.113.7');
+  });
+
+  it('keeps an IPv6 peer intact', async () => {
+    const events = await run(fakeClientRequest({}, '2001:db8::1'), [answer(200)]);
+
+    expect(firstRequest(events).clientIp).toBe('2001:db8::1');
+  });
+
+  it('omits the field when nothing identifies the peer', async () => {
+    const events = await run(fakeClientRequest({}), [answer(200)]);
+
+    expect(firstRequest(events).clientIp).toBeUndefined();
+  });
+
+  it('reports the client of a request whose stage threw', async () => {
+    const stage: Stage = () => {
+      throw new Error('render blew up');
+    };
+    const events = await run(fakeClientRequest({ 'cf-connecting-ip': '203.0.113.7' }), [stage]);
+
+    expect(firstRequest(events).clientIp).toBe('203.0.113.7');
   });
 });

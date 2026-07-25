@@ -3,10 +3,11 @@ import type { ServerLogEvent, ServerLogger } from '@plitzi/sdk-shared';
 const outcomeOf = (event: ServerLogEvent): string => (event.ok ? 'ok' : `ERROR ${event.error ?? ''}`.trim());
 
 const renderRequest = (event: Extract<ServerLogEvent, { kind: 'request' }>): string => {
+  const client = event.clientIp ? `${event.clientIp} ` : '';
   const operation = event.operation ? ` ${event.operation}` : '';
   const timing = `${Math.round(event.durationMs)}ms`;
 
-  return `[${event.server}] ${event.method} ${event.path}${operation} ${event.status} ${timing} ${outcomeOf(event)}`;
+  return `[${event.server}] ${client}${event.method} ${event.path}${operation} ${event.status} ${timing} ${outcomeOf(event)}`;
 };
 
 const renderTool = (event: Extract<ServerLogEvent, { kind: 'tool' }>): string => {
@@ -19,10 +20,10 @@ const renderResource = (event: Extract<ServerLogEvent, { kind: 'resource' }>): s
   `[mcp] resources/read ${event.name} ${Math.round(event.durationMs)}ms ${outcomeOf(event)}`;
 
 /** One line for any {@link ServerLogEvent}: an HTTP request reads as an access-log line
- *  (`[SSR] GET /pricing 200 12ms ok`), the MCP events as what happened inside one
- *  (`[mcp] tools/call plitzi_apply {operations:[3]} 41ms ok`). Events arrive PII-free — the dispatcher strips
- *  query values and collects no headers, cookies or IPs, and tool args are summarised by shape — so rendering is
- *  a pure format. */
+ *  (`[SSR] 203.0.113.7 GET /pricing 200 12ms ok`), the MCP events as what happened inside one
+ *  (`[mcp] tools/call plitzi_apply {operations:[3]} 41ms ok`). Rendering is a pure format — the dispatcher
+ *  already stripped query values, collected no headers, cookies or tokens and summarised tool args by shape;
+ *  the client IP it does carry is personal data, so a sink that persists these lines must say so. */
 export const renderLogEvent = (event: ServerLogEvent): string => {
   switch (event.kind) {
     case 'request':
