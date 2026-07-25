@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { createSSRServer } from '../core/createServer';
+import { consoleLogger } from '../helpers/serverLog';
 
 import type {
   OfflineDataRaw,
@@ -124,6 +125,9 @@ const server = createSSRServer({
   },
   httpVersion: 1,
   mcpAi: { enabled: true },
+  // This is the package's own dev harness, so the log is always on: every page, asset, RSC and MCP hit shows up in
+  // the terminal, tool calls and resource reads included. Set LOG_REQUESTS=0 for a quiet run.
+  logger: process.env.LOG_REQUESTS === '0' ? undefined : consoleLogger,
   // streaming: true,
   // ssrOnly: true,
   plugins: {

@@ -1,5 +1,6 @@
 export { createServer, createSSRServer, createMCPServer, resolveServices } from './core/createServer';
 export { registerHealthCheck, buildHealthPayload } from './core/health';
+export { consoleLogger, renderLogEvent } from './helpers/serverLog';
 export type { HealthCheckApp, HealthIdentity } from './core/health';
 export { createJsonAdapters } from './adapters/jsonAdapters';
 export {

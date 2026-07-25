@@ -11,7 +11,7 @@ import type { Space } from './helpers';
 import type { Persisters, ToolContext } from './tools';
 import type { PreviewClient, ScreenshotClient } from './types';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { SSRAdapters, Environment, McpLogger } from '@plitzi/sdk-shared';
+import type { SSRAdapters, Environment, ServerLogger } from '@plitzi/sdk-shared';
 
 /** The MCP service is stateless: every request resolves its own `spaceId` (from the request JWT) and reads the
  *  space fresh through the adapters — schema and style are two documents, read/written independently. Both the
@@ -29,7 +29,7 @@ export interface McpServerContext {
   screenshot?: ScreenshotClient;
   /** Structured request-log sink. When set, every tool call and resource read emits an McpLogEvent to it (the
    *  consumer renders them); otherwise logging falls back to the console when MCP_DEBUG=1. */
-  logger?: McpLogger;
+  logger?: ServerLogger;
 }
 
 // The MCP tools only ever operate on the active-editing environment.

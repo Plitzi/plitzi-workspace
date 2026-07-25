@@ -10,13 +10,15 @@ import type { ServerResponse } from 'node:http';
 // before SSR), so the documented default stands: /mcp, with mcpAi's own path winning when set.
 const mcpPathOf = (config: SSRServerConfig): string => config.mcpAi?.path ?? config.mcp?.path ?? '/mcp';
 
-const serveMcp = (ctx: Parameters<Stage>[0]): Promise<void> => {
-  const { previewClient, screenshot, adapters, mcpLogger } = ctx.config;
+// Records the JSON-RPC method it served on the context: every call shares one URL, so without it the access log
+// could only ever say `POST /`.
+const serveMcp = async (ctx: Parameters<Stage>[0]): Promise<void> => {
+  const { previewClient, screenshot, adapters, logger } = ctx.config;
 
-  return handleMcp(ctx.raw, ctx.rawRes as unknown as ServerResponse, ctx.req, adapters, {
+  ctx.operation = await handleMcp(ctx.raw, ctx.rawRes as unknown as ServerResponse, ctx.req, adapters, {
     preview: previewClient ? createHttpPreviewClient(previewClient) : undefined,
     screenshot: screenshot ? createHttpScreenshotClient(screenshot) : undefined,
-    logger: mcpLogger
+    logger
   });
 };
 

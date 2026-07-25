@@ -5,6 +5,8 @@ import type { SSRResponseHelpers } from '@plitzi/sdk-shared';
 
 export type RawResponse = {
   headersSent: boolean;
+  /** The status actually written to the wire — the access log reads it once the response is out. */
+  statusCode: number;
   setHeader(name: string, value: string | number | readonly string[]): unknown;
   getHeaders(): Record<string, string | number | readonly string[]>;
   writeHead(statusCode: number, headers?: Record<string, string | number | readonly string[]>): unknown;

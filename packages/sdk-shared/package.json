@@ -1184,9 +1184,6 @@
     "./types/SegmentTypes": {
       "types": "./dist/types/SegmentTypes.d.ts"
     },
-    "./types/ServerTypes": {
-      "types": "./dist/types/ServerTypes.d.ts"
-    },
     "./types/SpaceTypes": {
       "types": "./dist/types/SpaceTypes.d.ts"
     },

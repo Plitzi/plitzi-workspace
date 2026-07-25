@@ -219,28 +219,63 @@ export type SSRRscConfig = {
   cacheTtlMs?: number;
 };
 
-/** A structured log event the MCP server emits for each tool call and resource read, so a CONSUMER can render its
- *  own request log (dev tooling, a dashboard, structured logging). Wire a sink via `SSRServerConfig.mcpLogger`;
- *  without one the server prints to the console only when `MCP_DEBUG=1`. */
-export type McpLogEvent = {
-  /** 'tool' for a plitzi_* tool call, 'resource' for a plitzi:// resource read. */
-  kind: 'tool' | 'resource';
-  /** The tool name (e.g. 'plitzi_apply') or the resource URI that was read. */
-  name: string;
-  /** Wall-clock duration of the handler, in milliseconds. */
+/** What every log event carries, whatever layer it came from. */
+type ServerLogEventBase = {
+  /** Wall-clock duration of the work the event describes, in milliseconds. */
   durationMs: number;
-  /** Whether the handler completed without throwing. */
+  /** False when the work threw or answered an error status. */
   ok: boolean;
-  /** The error message when `ok` is false. */
+  /** The error message when `ok` is false — never the request payload. */
   error?: string;
-  /** A compact, truncated JSON summary of the tool arguments (tool events only). */
-  argsSummary?: string;
   /** ISO-8601 timestamp of when the event was emitted. */
   timestamp: string;
 };
 
-/** A sink the consumer provides to receive every MCP {@link McpLogEvent} (see `SSRServerConfig.mcpLogger`). */
-export type McpLogger = (event: McpLogEvent) => void;
+/** One HTTP request served by ANY Plitzi server — SSR pages, RSC, plugin assets, the preview endpoint, MCP —
+ *  emitted by the dispatcher once the request is answered, including the ones that failed or were rejected. */
+export type ServerRequestLogEvent = ServerLogEventBase & {
+  kind: 'request';
+  /** Which server answered — the dispatcher label, e.g. 'SSR' or 'MCP'. */
+  server: string;
+  method: string;
+  /** Request path with query VALUES stripped and only the keys kept, e.g. '/search?q&page'. */
+  path: string;
+  /** The operation inside the request, when the answering stage names one — e.g. the MCP JSON-RPC method. */
+  operation?: string;
+  /** The HTTP status the server answered with. */
+  status: number;
+};
+
+/** One plitzi_* tool call inside an MCP request. Reported separately from the request because a failing tool
+ *  still answers HTTP 200 — the failure lives in the JSON-RPC payload, so only this event exposes it. */
+export type McpToolLogEvent = ServerLogEventBase & {
+  kind: 'tool';
+  /** The tool name, e.g. 'plitzi_apply'. */
+  name: string;
+  /** A compact SHAPE summary of the arguments — keys, value types and array lengths, never values. Set
+   *  `MCP_LOG_ARGS=1` to dump the real arguments instead; they may carry user content, so it stays opt-in. */
+  argsSummary?: string;
+};
+
+/** One plitzi:// resource read inside an MCP request, named by the URI the request asked for. */
+export type McpResourceLogEvent = ServerLogEventBase & {
+  kind: 'resource';
+  /** The resource URI that was read, e.g. 'plitzi://element/hero_1'. */
+  name: string;
+};
+
+/** Everything a Plitzi server reports about the work it does, as ONE stream: the HTTP requests it answers, plus
+ *  the MCP tool calls and resource reads that happen inside them. Wire a single sink via `SSRServerConfig.logger`
+ *  and switch on `kind` — a consumer can render it, ship it to a dashboard or drop the kinds it does not want.
+ *
+ *  PII-free by construction: no headers, cookies, tokens, request body nor client IP ever reach an event, query
+ *  values are stripped from paths and tool arguments are reduced to their shape. The request path itself is kept
+ *  verbatim — it is what makes the log usable — so consumers that route identifiers through the path should treat
+ *  that field accordingly. */
+export type ServerLogEvent = ServerRequestLogEvent | McpToolLogEvent | McpResourceLogEvent;
+
+/** The sink a consumer provides to receive every {@link ServerLogEvent} (see `SSRServerConfig.logger`). */
+export type ServerLogger = (event: ServerLogEvent) => void;
 
 export type SSRServerConfig = {
   port?: number;
@@ -285,10 +320,10 @@ export type SSRServerConfig = {
     enabled?: boolean;
     path?: string;
   };
-  /** Receives a structured {@link McpLogEvent} for every MCP tool call and resource read, so the consumer can
-   *  render its own request log (e.g. in dev mode). Without it, the MCP server logs to the console only when
-   *  `MCP_DEBUG=1`. */
-  mcpLogger?: McpLogger;
+  /** Receives a {@link ServerLogEvent} for every HTTP request this server answers — whatever stage answered it
+   *  and whatever the outcome — plus every MCP tool call and resource read inside those requests. Without it the
+   *  server reports nothing per request (the MCP events still reach the console when `MCP_DEBUG=1`). */
+  logger?: ServerLogger;
   adapters: SSRAdapters;
   /** Draft-preview endpoint for the MCP visual-preview tools (the RENDERER side). Off unless `enabled`. */
   preview?: SSRPreviewConfig;

@@ -33,24 +33,36 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
   };
 
   // Public, space-independent resources: served straight from static data so they resolve no spaceId and load
-  // no space — reachable even on an unauthenticated connection.
+  // no space — reachable even on an unauthenticated connection. They cannot go through `emit` (it loads the
+  // space), so they log their own read: the log names the URI a client asked for, whether or not it needed a space.
+  const emitStatic = <T>(uri: string, read: () => T): T => {
+    const start = performance.now();
+    const result = read();
+    log.resourceRead(uri, performance.now() - start);
+
+    return result;
+  };
+
   server.registerResource(
     'Guide',
     'plitzi://guide',
     { description: 'How to read and write this space with mcp-ai', mimeType: 'text/markdown' },
-    () => ({ contents: [{ uri: 'plitzi://guide', mimeType: 'text/markdown', text: guideText }] })
+    () =>
+      emitStatic('plitzi://guide', () => ({
+        contents: [{ uri: 'plitzi://guide', mimeType: 'text/markdown', text: guideText }]
+      }))
   );
 
   server.registerResource(
     'CSS properties',
     'plitzi://css-properties',
     { description: 'Valid kebab-case CSS property keys', mimeType: 'application/json' },
-    () => jsonContents('plitzi://css-properties', envelope(cssProperties))
+    () => emitStatic('plitzi://css-properties', () => jsonContents('plitzi://css-properties', envelope(cssProperties)))
   );
 
   // How to author a plitzi_render widget (guide + usable element-type catalog) — public, so a conversational agent
   // holding only that tool can read them.
-  registerRenderResources(server);
+  registerRenderResources(server, log);
 
   // Space-dependent listings: reading any of these resolves the spaceId and loads the space via getSpace.
   const fixed: Array<[string, string, string]> = [

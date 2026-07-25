@@ -5,6 +5,7 @@
  *  React element packages its types come from — where this entry loads only the MCP server. */
 
 export { createMCPServer } from './core/server/mcpServer';
+export { consoleLogger, renderLogEvent } from './helpers/serverLog';
 export { createMcpServer, handleMcp, serveMcp, readMcpBody } from './modules/mcp/handler';
 export { createHttpPreviewClient } from './modules/mcp/previewClient';
 export { createHttpScreenshotClient } from './modules/mcp/screenshotClient';

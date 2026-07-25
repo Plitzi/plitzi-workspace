@@ -13,6 +13,9 @@ export interface BaseContext {
   res: SSRResponseHelpers;
   config: SSRServerConfig;
   port: number;
+  /** Set by the stage that answers when the path alone does not identify the work (the MCP endpoint serves every
+   *  JSON-RPC method on the same URL). The dispatcher folds it into the access log. */
+  operation?: string;
 }
 
 // The richer context an SSR server builds: the render template, caches and plugin manager that the page/RSC and

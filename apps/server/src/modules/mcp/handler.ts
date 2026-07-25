@@ -4,7 +4,7 @@ import { createMcpServer } from './server';
 
 import type { PreviewClient, ScreenshotClient } from './types';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { SSRAdapters, SSRRequest, McpLogger } from '@plitzi/sdk-shared';
+import type { SSRAdapters, SSRRequest, ServerLogger } from '@plitzi/sdk-shared';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
 /** Per-request wiring the MCP service does not resolve itself: the renderer clients and the log sink. Everything
@@ -12,7 +12,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 export type McpRequestOptions = {
   preview?: PreviewClient;
   screenshot?: ScreenshotClient;
-  logger?: McpLogger;
+  logger?: ServerLogger;
 };
 
 export const readMcpBody = (req: IncomingMessage): Promise<unknown> =>
@@ -31,9 +31,29 @@ export const readMcpBody = (req: IncomingMessage): Promise<unknown> =>
     req.on('error', reject);
   });
 
+// What the request did, for the server's access log: the JSON-RPC method carries the meaning ('initialize',
+// 'tools/call') where the URL cannot — every call lands on the same path. Undefined when the body names none
+// (a probe, a rejection, a malformed payload), which the path already describes.
+const operationOf = (body: unknown): string | undefined => {
+  if (Array.isArray(body)) {
+    return `batch(${body.length})`;
+  }
+
+  if (typeof body === 'object' && body !== null && 'method' in body && typeof body.method === 'string') {
+    return body.method;
+  }
+
+  return undefined;
+};
+
 // Drive one stateless request/response through a pre-built server. Callers that already hold the space
-// (e.g. the gateway, which resolves it from the request JWT) build the server and use this directly.
-export const serveMcp = async (raw: IncomingMessage, res: ServerResponse, server: McpServer): Promise<void> => {
+// (e.g. the gateway, which resolves it from the request JWT) build the server and use this directly. Returns the
+// JSON-RPC method it served, for the caller's access log; the HTTP status is on the response.
+export const serveMcp = async (
+  raw: IncomingMessage,
+  res: ServerResponse,
+  server: McpServer
+): Promise<string | undefined> => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', '*');
@@ -43,7 +63,7 @@ export const serveMcp = async (raw: IncomingMessage, res: ServerResponse, server
     res.writeHead(204);
     res.end();
 
-    return;
+    return undefined;
   }
 
   // OAuth discovery probes: answer with a clean 404 ("this resource is unprotected, connect directly") instead of
@@ -53,7 +73,7 @@ export const serveMcp = async (raw: IncomingMessage, res: ServerResponse, server
     res.writeHead(404);
     res.end();
 
-    return;
+    return undefined;
   }
 
   // The endpoint is stateless (JSON responses, no session), so it offers no server→client GET event stream. Reply
@@ -69,7 +89,7 @@ export const serveMcp = async (raw: IncomingMessage, res: ServerResponse, server
       })
     );
 
-    return;
+    return undefined;
   }
 
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
@@ -84,11 +104,13 @@ export const serveMcp = async (raw: IncomingMessage, res: ServerResponse, server
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Invalid JSON body' }));
 
-        return;
+        return undefined;
       }
     }
 
     await transport.handleRequest(raw, res, body);
+
+    return operationOf(body);
   } finally {
     await transport.close();
   }
@@ -105,7 +127,7 @@ export const handleMcp = (
   req: SSRRequest,
   adapters: SSRAdapters,
   options: McpRequestOptions = {}
-): Promise<void> =>
+): Promise<string | undefined> =>
   serveMcp(
     raw,
     res,

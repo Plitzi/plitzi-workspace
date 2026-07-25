@@ -1,6 +1,7 @@
 import { envelope, jsonContents } from './envelope';
 import { BUILTIN_COMPONENTS } from '../catalogs';
 
+import type { McpLog } from '../helpers';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 // A public, space-independent authoring guide scoped to plitzi_render — the conversational surface where an agent
@@ -182,7 +183,7 @@ retry — you never lose the rest of the batch.
 
 // Register the render support resources as public (no space, no auth) so a conversational agent holding only
 // plitzi_render can read them before authoring: the authoring guide and the catalog of usable element types.
-export const registerRenderResources = (server: McpServer): void => {
+export const registerRenderResources = (server: McpServer, log: McpLog): void => {
   server.registerResource(
     'Render guide',
     RENDER_GUIDE_URI,
@@ -190,7 +191,13 @@ export const registerRenderResources = (server: McpServer): void => {
       description: 'How to author a plitzi_render widget: operations, element types, styling, examples.',
       mimeType: 'text/markdown'
     },
-    () => ({ contents: [{ uri: RENDER_GUIDE_URI, mimeType: 'text/markdown', text: renderGuideText }] })
+    () => {
+      const start = performance.now();
+      const contents = { contents: [{ uri: RENDER_GUIDE_URI, mimeType: 'text/markdown', text: renderGuideText }] };
+      log.resourceRead(RENDER_GUIDE_URI, performance.now() - start);
+
+      return contents;
+    }
   );
 
   server.registerResource(
@@ -200,6 +207,12 @@ export const registerRenderResources = (server: McpServer): void => {
       description: 'Built-in element types a plitzi_render widget can use, with descriptions.',
       mimeType: 'application/json'
     },
-    () => jsonContents(RENDER_TYPES_URI, envelope(renderTypes()))
+    () => {
+      const start = performance.now();
+      const contents = jsonContents(RENDER_TYPES_URI, envelope(renderTypes()));
+      log.resourceRead(RENDER_TYPES_URI, performance.now() - start);
+
+      return contents;
+    }
   );
 };

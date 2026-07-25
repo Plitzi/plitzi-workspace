@@ -1,19 +1,45 @@
-import type { McpLogEvent, McpLogger } from '@plitzi/sdk-shared';
+import { renderLogEvent } from '../../../helpers/serverLog';
 
-// Request logging for the MCP server. The service is otherwise silent, which makes debugging a live agent session
-// hard (you cannot see what it called or why a call failed). Two ways to turn it on:
-//   - the CONSUMER passes a `mcpLogger` (SSRServerConfig.mcpLogger) — it receives a structured McpLogEvent per tool
-//     call / resource read and renders it however it likes (dev tooling, dashboards, structured logs); or
-//   - standalone, set `MCP_DEBUG=1` and events print to the console (the ALIAS_LOADER_DEBUG=1 convention).
+import type { ServerLogEvent, ServerLogger } from '@plitzi/sdk-shared';
+
+// The protocol half of the server's log: what the agent CALLED, which the HTTP request event cannot show (every
+// call shares one POST, and a failing tool still answers 200). Two ways to turn it on:
+//   - the CONSUMER passes a `logger` (SSRServerConfig.logger) — the same sink that receives the request events, so
+//     tool calls, resource reads and requests come out as one stream; or
+//   - standalone, set `MCP_DEBUG=1` and these events print to the console (the ALIAS_LOADER_DEBUG=1 convention).
 // With neither active the sink is a no-op, so production stays silent and cheap.
 const MCP_DEBUG = process.env.MCP_DEBUG === '1';
 
-// A one-line, truncated JSON summary of a call's args — enough to identify it without dumping a whole batch.
-const summarize = (value: unknown, max = 300): string | undefined => {
-  if (value === undefined) {
-    return undefined;
+// Tool arguments carry whatever the agent is writing into the space — copy, form labels, contact details — so the
+// log describes their SHAPE, never their content: keys, array lengths and value types. That identifies the call
+// ('plitzi_apply {operations:[3]}') without putting user data in a log file.
+const MCP_LOG_ARGS = process.env.MCP_LOG_ARGS === '1';
+
+const shapeOf = (value: unknown, depth = 0): string => {
+  if (value === null) {
+    return 'null';
   }
 
+  if (Array.isArray(value)) {
+    return `[${value.length}]`;
+  }
+
+  if (typeof value === 'object') {
+    if (depth >= 2) {
+      return '{…}';
+    }
+
+    const entries = Object.entries(value);
+    const shown = entries.slice(0, 8).map(([key, item]) => `${key}:${shapeOf(item, depth + 1)}`);
+
+    return `{${[...shown, ...(entries.length > shown.length ? ['…'] : [])].join(',')}}`;
+  }
+
+  return typeof value;
+};
+
+// The escape hatch for local debugging (MCP_LOG_ARGS=1): the real arguments, truncated. Never on by default.
+const rawSummary = (value: unknown, max = 300): string => {
   let json: string;
   try {
     json = JSON.stringify(value);
@@ -24,14 +50,15 @@ const summarize = (value: unknown, max = 300): string | undefined => {
   return json.length > max ? `${json.slice(0, max)}…` : json;
 };
 
-const errorText = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+const summarize = (value: unknown): string | undefined => {
+  if (value === undefined) {
+    return undefined;
+  }
 
-const consoleRender = (event: McpLogEvent): void => {
-  const kind = event.kind === 'tool' ? 'tools/call' : 'resources/read';
-  const detail = event.argsSummary ? ` ${event.argsSummary}` : '';
-  const status = event.ok ? 'ok' : `ERROR ${event.error ?? ''}`;
-  console.log(`[mcp] ${kind} ${event.name}${detail} ${Math.round(event.durationMs)}ms ${status}`);
+  return MCP_LOG_ARGS ? rawSummary(value) : shapeOf(value);
 };
+
+const errorText = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 export interface McpLog {
   toolCall(name: string, args: unknown, ms: number, error?: unknown): void;
@@ -41,18 +68,18 @@ export interface McpLog {
 const noop = (): void => undefined;
 const inertLog: McpLog = { toolCall: noop, resourceRead: noop };
 
-/** Build the request-log sink for one MCP server. Dispatches structured events to the consumer's `logger` when
+/** Build the protocol-log sink for one MCP server. Dispatches structured events to the consumer's `logger` when
  *  provided; otherwise renders to the console when MCP_DEBUG=1; otherwise a no-op. */
-export const createMcpLog = (logger?: McpLogger): McpLog => {
+export const createMcpLog = (logger?: ServerLogger): McpLog => {
   if (!logger && !MCP_DEBUG) {
     return inertLog;
   }
 
-  const emit = (event: McpLogEvent): void => {
+  const emit = (event: ServerLogEvent): void => {
     if (logger) {
       logger(event);
     } else {
-      consoleRender(event);
+      console.log(renderLogEvent(event));
     }
   };
 
