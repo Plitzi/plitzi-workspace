@@ -1,9 +1,9 @@
 import { registerAppTool } from '@modelcontextprotocol/ext-apps/server';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
+import { registerApps } from './apps';
 import { createMcpLog, emptySpace, emptySpaceMessage, serverInstructions, unauthorizedSpaceMessage } from './helpers';
 import { registerResources } from './resources';
-import { registerRenderApp } from './resources/renderApp';
 import { tools } from './tools';
 import { isCallToolResult } from '../ai/toolkit';
 
@@ -81,9 +81,9 @@ export const createMcpServer = ({ adapters, getSpaceId, preview, screenshot, log
 
   registerResources(server, getSpace, MCP_ENV, log);
 
-  // The MCP Apps view for plitzi_render. It carries its own app (SDK included), so it is always registered —
-  // no wiring, no configuration.
-  registerRenderApp(server);
+  // Every MCP App's ui:// page. They carry their own script and styles, so they are always registered — no
+  // wiring, no configuration.
+  registerApps(server);
 
   // Register every tool straight from the shared registry: identity + input schema + behavior come from each
   // tool's descriptor, so a new tool is picked up here with no per-tool wiring.

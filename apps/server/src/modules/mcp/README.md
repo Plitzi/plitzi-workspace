@@ -38,7 +38,7 @@ mcp/
 ├── helpers/            # Space access, versioning, the usage guide, interaction (de)serialization
 ├── resources/          # The read side — the plitzi://… resource catalog
 ├── tools/              # The write side — validate / apply / search / read / preview / screenshot
-├── views/              # The MCP Apps view (browser React app inlined into the ui:// resource)
+├── apps/               # MCP Apps: one folder per app (definition + view) over a shared bundler/registrar
 └── types/              # AI-facing shapes (aiSchema), tool/preview/screenshot types
 ```
 
@@ -65,22 +65,42 @@ The `plitzi://…` catalog the agent browses (`router.ts` dispatches a URI to `c
 `primer`; `register.ts` declares them on the server; `envelope.ts` wraps `{ stateVersion, data }`). Reads are
 cheap by design — list to navigate, read one item for detail.
 
-### `views/` — the MCP Apps view
+### `apps/` — the MCP Apps
 
-`plitzi_render` is an **MCP App**: the tool is registered with `registerAppTool` from
-[`@modelcontextprotocol/ext-apps`](https://modelcontextprotocol.io/extensions/apps/build) and linked through
-`_meta.ui.resourceUri` to the `ui://plitzi/render.html` resource (`resources/renderApp.ts`, registered with
-`registerAppResource`). A host that supports the extension fetches that HTML, renders it in a sandboxed iframe on
-**its own origin**, and pushes the tool result in; text-only clients just read the tool's JSON summary.
+An **MCP App** is a tool plus a `ui://` page: the tool is registered with `registerAppTool` from
+[`@modelcontextprotocol/ext-apps`](https://modelcontextprotocol.io/extensions/apps/build) and linked to the page
+through `_meta.ui.resourceUri`. A host that supports the extension fetches that HTML, renders it in a sandboxed
+iframe on **its own origin**, and pushes the tool result in; text-only clients just read the tool's JSON summary.
 
-[`views/renderView.tsx`](views/renderView.tsx) is that page's app, in full: a React component on the SDK's `useApp`
-/ `useHostStyles` hooks that receives the result, pulls `structuredContent.offlineData` out of it and renders the
-widget with `<PlitziSdk>` in offline mode. It is a real `.tsx` — typechecked and linted with the rest of the
-package — that the server **bundles with esbuild** (React, the MCP Apps runtime and the Plitzi SDK included) and
-inlines, together with the SDK stylesheet, into [`views/renderApp.ejs`](views/renderApp.ejs). The resulting page
-references nothing: no import map, no asset mounts, no cross-origin fetches, so the strictest host sandbox can run
-it and no deployment has to serve anything extra. The cost is its size — the SDK travels with every read — and the
-bundle is built once per process and memoized.
+```
+apps/
+├── index.ts         # The app registry: the `apps` list + registerApps (what server.ts calls)
+├── apps.test.ts
+├── shared/
+│   ├── app.ts       # McpApp + registerApp: bundle the view, inline it in the shell, register the resource
+│   └── shell.ejs    # The page shell every app shares (mounts the view on #app)
+├── example/         # The reference app: the same shape stripped to the minimum (not in `apps`)
+└── render/          # One folder per app
+    ├── index.ts     # Its definition: uri, name, title, description, entry, styles
+    └── view.tsx     # Its browser entry
+```
+
+[`shared/app.ts`](apps/shared/app.ts) is the whole machinery: it bundles a view with esbuild (dependencies
+included), inlines it with its stylesheets into the shell, and registers the result with `registerAppResource`.
+The page references nothing — no import map, no asset mounts, no cross-origin fetches — so the strictest host
+sandbox can run it and no deployment has to serve anything extra. The cost is its size, and each page is built
+once per process and memoized.
+
+**Adding an app**: copy [`example/`](apps/example/) — a view and a definition (`uri`, `name`, `title`,
+`description`, `entry`, optional `styles` / `csp`) — then add it to the `apps` list and point a tool at its `uri`
+with `ui: { resourceUri }`. The example itself is intentionally not in that list: no tool opens it, so it costs a
+deployment nothing, while the test suite builds it so it cannot rot. Its view is the whole client contract in ~60
+lines: connect, take the tool result, call a tool back, inherit the host's theme.
+
+The one app today is `plitzi_render`'s: [`render/view.tsx`](apps/render/view.tsx), a React component on the SDK's
+`useApp` / `useHostStyles` hooks that takes the result, pulls `structuredContent.offlineData` out of it and
+renders the widget with `<PlitziSdk>` in offline mode. It is a real `.tsx`, typechecked and linted with the rest
+of the package, and it mounts on `#app` — the shell's root.
 
 `yarn start` runs the standalone server on the sample space, MCP included: point an MCP Apps host (Claude via a
 tunnel, or the `basic-host` example from the ext-apps repo) at `http://localhost:3002/mcp` and call plitzi_render.

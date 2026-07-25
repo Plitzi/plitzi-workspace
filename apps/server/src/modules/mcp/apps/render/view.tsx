@@ -9,8 +9,9 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
-/** The MCP Apps view for plitzi_render: the entry the server bundles (React, the MCP Apps runtime and the Plitzi
- *  SDK included) and inlines in the ui:// page — which is what lets it run in a sandbox that can fetch nothing. */
+/** The view for plitzi_render: the entry the server bundles (React, the MCP Apps runtime and the Plitzi SDK
+ *  included) and inlines in the shared ui:// page shell — which is what lets it run in a sandbox that can fetch
+ *  nothing. It mounts on `#app`, the shell's root. */
 
 const panelStyle = { padding: 16, font: '13px/1.5 system-ui, sans-serif', color: '#b91c1c' } as const;
 
@@ -99,7 +100,9 @@ const RenderApp = () => {
   );
 };
 
-const root = document.getElementById('plitzi');
+const root = document.getElementById('app');
 if (root) {
+  // The SDK styles its tree from this container class down.
+  root.className = 'plitzi-root-container';
   createRoot(root).render(<RenderApp />);
 }

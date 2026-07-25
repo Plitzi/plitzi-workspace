@@ -19,20 +19,25 @@ const PACKAGE = require('./package.json') as {
 const baseUrl = new URL('.', import.meta.url);
 const root = baseUrl.pathname;
 
+// Everything an MCP App ships as source: its browser entry and the page shell, never its TypeScript definition
+// (that one the lib build compiles like any other module).
+const isAppAsset = (src: string): boolean =>
+  fs.statSync(src).isDirectory() || src.endsWith('.tsx') || src.endsWith('.ejs');
+
 const copyAssets = (): import('vite').Plugin => ({
   name: 'copy-assets',
   closeBundle() {
-    const copies: [string, string][] = [
+    const copies: [string, string, ((src: string) => boolean)?][] = [
       [path.resolve(root, 'src/ssr/views'), path.resolve(root, 'dist/ssr/views')],
       [path.resolve(root, 'src/modules/ssr/views'), path.resolve(root, 'dist/modules/ssr/views')],
-      // The MCP Apps view is shipped as SOURCE: the server bundles it with esbuild at runtime and inlines the
-      // result in the ui:// resource, so it is never part of the module graph this build bundles.
-      [path.resolve(root, 'src/modules/mcp/views'), path.resolve(root, 'dist/modules/mcp/views')],
+      // An MCP App's view and page shell ship as SOURCE: the server bundles the view with esbuild at runtime and
+      // inlines it, so neither is ever part of the module graph this build compiles.
+      [path.resolve(root, 'src/modules/mcp/apps'), path.resolve(root, 'dist/modules/mcp/apps'), isAppAsset],
       [path.resolve(root, 'public'), path.resolve(root, 'dist/public')]
     ];
-    for (const [src, dest] of copies) {
+    for (const [src, dest, filter] of copies) {
       if (fs.existsSync(src)) {
-        fs.cpSync(src, dest, { recursive: true });
+        fs.cpSync(src, dest, { recursive: true, filter });
       }
     }
   }
