@@ -37,6 +37,18 @@ export const parseRequest = (raw: IncomingMessage): SSRRequest => {
   return { method, path, search, url: rawUrl, hostname, protocol, headers, query, ctx: {} };
 };
 
+// Same guard as HOSTNAME_RE, keeping the port — an origin built from a forged Host header must stay inert in the
+// URLs and HTML attributes it ends up in.
+const AUTHORITY_RE = /^[a-zA-Z0-9.-]{1,253}(?::\d{1,5})?$/u;
+
+/** The public origin the request was addressed to (proxy-aware via x-forwarded-proto, port included), or an empty
+ *  string when the request carries no usable authority. */
+export const requestOrigin = (req: SSRRequest): string => {
+  const authority = req.headers[':authority'] ?? req.headers['host'] ?? '';
+
+  return AUTHORITY_RE.test(authority) ? `${req.protocol}://${authority}` : '';
+};
+
 const MAX_BODY_BYTES = 1024 * 1024; // 1 MB — login/logout payloads are tiny; cap guards against abuse.
 
 export const readRawBody = (raw: IncomingMessage): Promise<string> =>

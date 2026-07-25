@@ -1,5 +1,6 @@
 import { createHttpServer } from './baseServer';
 import { makeHandler } from '../http/dispatcher';
+import { withSdkAssets } from '../sdkAssets';
 import { buildMCPPipeline } from '../services/registry';
 
 import type { BuildContext } from '../http/dispatcher';
@@ -14,7 +15,9 @@ const noPlugins: PluginRegistry = {
 
 // MCP-only server: the lean mcp-ai pipeline over the bare context — no render template, caches or plugin
 // manager. Pair it with the MCP adapters (getSpaceId + getSchema/getStyle/saveSchema/saveStyle).
-export const createMCPServer = (config: SSRServerConfig): SSRServer => {
+export const createMCPServer = (rawConfig: SSRServerConfig): SSRServer => {
+  // The MCP Apps render view imports the SDK from /sdk-assets on this same origin, so the mount comes for free.
+  const config = withSdkAssets(rawConfig);
   const stages = buildMCPPipeline();
   const makeHandlerForPort = (port: number) => {
     const buildContext: BuildContext<BaseContext> = (raw, rawRes, req, res) => ({

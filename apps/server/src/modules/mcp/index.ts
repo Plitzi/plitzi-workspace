@@ -5,6 +5,7 @@ export { computeVersion, buildAgentGuide } from './helpers';
 export { createHttpPreviewClient } from './previewClient';
 export { createHttpScreenshotClient } from './screenshotClient';
 
+export type { McpRequestOptions } from './handler';
 export type { HttpPreviewClientConfig } from './previewClient';
 export type { HttpScreenshotClientConfig } from './screenshotClient';
 export type { McpServerContext } from './server';

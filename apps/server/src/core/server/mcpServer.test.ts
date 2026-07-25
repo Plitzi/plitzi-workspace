@@ -50,6 +50,33 @@ describe('createMCPServer (dedicated MCP server end-to-end)', () => {
     expect(JSON.parse(res.body)).toEqual({ role: 'mcp', ok: true });
   });
 
+  it('serves the Plitzi SDK dist under /sdk-assets with no static config', async () => {
+    const res = await request('GET', '/sdk-assets/plitzi-sdk.js');
+    expect(res.status).toBe(200);
+    expect(res.body).toContain('from"react"');
+  });
+
+  it('builds the render view around the request origin, with no bundling', async () => {
+    const read = JSON.stringify({
+      jsonrpc: '2.0',
+      id: 2,
+      method: 'resources/read',
+      params: { uri: 'ui://plitzi/render.html' }
+    });
+    const res = await request(
+      'POST',
+      '/',
+      { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream' },
+      read
+    );
+
+    expect(res.status).toBe(200);
+    const html = (JSON.parse(res.body) as { result: { contents: { text: string }[] } }).result.contents[0].text;
+    expect(html).toContain('"@plitzi/plitzi-sdk": "http://127.0.0.1:39217/sdk-assets/plitzi-sdk.js');
+    expect(html).toContain('"react/compiler-runtime": "http://127.0.0.1:39217/sdk-assets/plitzi-sdk-vendor.js');
+    expect(html).toContain('<script type="module">');
+  });
+
   it('serves the MCP handshake at the root (no /mcp path)', async () => {
     const initialize = JSON.stringify({
       jsonrpc: '2.0',
