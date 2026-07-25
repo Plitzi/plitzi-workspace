@@ -15,6 +15,10 @@ import type {
   SSRUser
 } from '@plitzi/sdk-shared';
 
+// The lib build replaces `VERSION` with the package version (see vite.config.ts `define`); running the sources
+// through tsx there is no such replacement, and the MCP server reports it in its handshake.
+(globalThis as typeof globalThis & { VERSION?: string }).VERSION ??= 'dev';
+
 const PORT = parseInt(process.env.SSR_PORT ?? '3002', 10);
 const HOST = process.env.SSR_HOST ?? '0.0.0.0';
 

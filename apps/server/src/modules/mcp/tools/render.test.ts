@@ -24,8 +24,9 @@ describe('plitzi_render', () => {
 
     expect(result.rootRef).toBe('render');
     expect(result.elementCount).toBe(1);
-    expect(result.offlineData.schema.flat['hero-cta']).toBeDefined();
-    expect(result.offlineData.schema.flat['hero-cta'].definition.type).toBe('button');
+    // Elements are keyed by generated id; the agent's `ref` lives on as the element's idRef.
+    const element = Object.values(result.offlineData.schema.flat).find(entry => entry.idRef === 'hero-cta');
+    expect(element?.definition.type).toBe('button');
     // The style cache is compiled into the payload, so the offline SDK can paint with no backend.
     expect(result.offlineData.style.cache).toContain('background-color');
   });

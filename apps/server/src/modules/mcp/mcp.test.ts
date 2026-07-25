@@ -1917,6 +1917,7 @@ describe('mcp-ai tool registry (defineTool descriptors)', () => {
       'plitzi_apply',
       'plitzi_preview',
       'plitzi_read',
+      'plitzi_render',
       'plitzi_screenshot',
       'plitzi_search',
       'plitzi_validate'

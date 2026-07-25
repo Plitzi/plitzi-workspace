@@ -1,0 +1,37 @@
+<%#
+  The MCP Apps view for plitzi_render. The host renders it in a sandboxed iframe on ITS OWN origin: the app and
+  the SDK stylesheet are inlined, so the page fetches NOTHING and runs under a deny-by-default sandbox CSP.
+-%>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Plitzi widget</title>
+
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      /* The app renders nothing until the host pushes the tool result in. */
+      #plitzi:empty::after {
+        content: 'Rendering…';
+        display: block;
+        padding: 16px;
+        font: 14px system-ui, sans-serif;
+        color: #64748b;
+      }
+    </style>
+    <style>
+<%- css %>
+    </style>
+  </head>
+  <body>
+    <div id="plitzi" class="plitzi-root-container"></div>
+
+    <script>
+<%- app %>
+    </script>
+  </body>
+</html>

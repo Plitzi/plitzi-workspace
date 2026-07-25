@@ -1,7 +1,7 @@
 import { envelope, jsonContents } from './envelope';
 import { BUILTIN_COMPONENTS } from '../catalogs';
 
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 // A public, space-independent authoring guide scoped to plitzi_render — the conversational surface where an agent
 // may hold this ONE tool and none of the space/editing context. The full plitzi://guide is editing-oriented (spaces,

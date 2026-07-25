@@ -50,13 +50,7 @@ describe('createMCPServer (dedicated MCP server end-to-end)', () => {
     expect(JSON.parse(res.body)).toEqual({ role: 'mcp', ok: true });
   });
 
-  it('serves the Plitzi SDK dist under /sdk-assets with no static config', async () => {
-    const res = await request('GET', '/sdk-assets/plitzi-sdk.js');
-    expect(res.status).toBe(200);
-    expect(res.body).toContain('from"react"');
-  });
-
-  it('builds the render view around the request origin, with no bundling', async () => {
+  it('serves the render view as one self-contained page', async () => {
     const read = JSON.stringify({
       jsonrpc: '2.0',
       id: 2,
@@ -72,9 +66,9 @@ describe('createMCPServer (dedicated MCP server end-to-end)', () => {
 
     expect(res.status).toBe(200);
     const html = (JSON.parse(res.body) as { result: { contents: { text: string }[] } }).result.contents[0].text;
-    expect(html).toContain('"@plitzi/plitzi-sdk": "http://127.0.0.1:39217/sdk-assets/plitzi-sdk.js');
-    expect(html).toContain('"react/compiler-runtime": "http://127.0.0.1:39217/sdk-assets/plitzi-sdk-vendor.js');
-    expect(html).toContain('<script type="module">');
+    // The page carries its app and its styles: it points at nothing, so no asset mount has to exist.
+    expect(html).not.toMatch(/<(?:script|link)[^>]+(?:src|href)=/u);
+    expect(html).toContain('ui/initialize');
   });
 
   it('serves the MCP handshake at the root (no /mcp path)', async () => {

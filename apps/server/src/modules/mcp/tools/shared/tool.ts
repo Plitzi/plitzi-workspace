@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Space } from '../../helpers';
 import type { PreviewClient, ScreenshotClient, ScreenshotImage } from '../../types';
 import type { Env, Persisters } from '../../types';
+import type { McpUiToolMeta } from '@modelcontextprotocol/ext-apps';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { ZodObject, ZodRawShape } from 'zod';
 
@@ -47,8 +48,8 @@ export interface ToolSpec<Shape extends ZodRawShape> {
    *  or load a space for it — that keeps it callable with no auth, on the public surface. */
   spaceless?: boolean;
   /** MCP Apps: link this tool to an interactive UI resource (a `ui://` HTML page the host renders in a sandboxed
-   *  iframe, receiving the tool result). The `_meta.ui` the host reads is built from this. */
-  ui?: { resourceUri: string };
+   *  iframe, receiving the tool result). Registered as the tool's `_meta.ui` — see registerAppTool. */
+  ui?: McpUiToolMeta;
   run: (input: z.infer<ZodObject<Shape>>, ctx: ToolContext) => unknown;
 }
 
@@ -62,7 +63,7 @@ export interface ToolDef {
   access: 'read' | 'write';
   requires?: ToolRequires;
   spaceless?: boolean;
-  ui?: { resourceUri: string };
+  ui?: McpUiToolMeta;
   execute: (args: unknown, ctx: ToolContext) => unknown;
 }
 

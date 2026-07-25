@@ -1,4 +1,5 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
+import { registerAppTool } from '@modelcontextprotocol/ext-apps/server';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 import { createMcpLog, emptySpace, emptySpaceMessage, serverInstructions, unauthorizedSpaceMessage } from './helpers';
 import { registerResources } from './resources';
@@ -8,7 +9,7 @@ import { isCallToolResult } from '../ai/toolkit';
 
 import type { Space } from './helpers';
 import type { Persisters, ToolContext } from './tools';
-import type { PreviewClient, ScreenshotClient, SdkAssetUrls } from './types';
+import type { PreviewClient, ScreenshotClient } from './types';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { SSRAdapters, Environment, McpLogger } from '@plitzi/sdk-shared';
 
@@ -29,32 +30,14 @@ export interface McpServerContext {
   /** Structured request-log sink. When set, every tool call and resource read emits an McpLogEvent to it (the
    *  consumer renders them); otherwise logging falls back to the console when MCP_DEBUG=1. */
   logger?: McpLogger;
-  /** Absolute URLs the MCP Apps render view imports the Plitzi SDK from. The server derives them from the
-   *  request's own origin; the same-origin fallback below only works for a host that serves the view itself. */
-  sdkAssets?: SdkAssetUrls;
 }
-
-// Relative fallback for a caller that wires createMcpServer by hand: hosts sandbox the widget on their own
-// origin, so a real deployment must pass absolute URLs (the MCP stage does).
-const SAME_ORIGIN_ASSETS: SdkAssetUrls = {
-  js: '/sdk-assets/plitzi-sdk.js',
-  css: '/sdk-assets/plitzi-sdk.css',
-  vendor: '/sdk-assets/plitzi-sdk-vendor.js'
-};
 
 // The MCP tools only ever operate on the active-editing environment.
 const MCP_ENV: Environment = 'main';
 
 const asText = (data: unknown): CallToolResult => ({ content: [{ type: 'text', text: JSON.stringify(data) }] });
 
-export const createMcpServer = ({
-  adapters,
-  getSpaceId,
-  preview,
-  screenshot,
-  logger,
-  sdkAssets
-}: McpServerContext): McpServer => {
+export const createMcpServer = ({ adapters, getSpaceId, preview, screenshot, logger }: McpServerContext): McpServer => {
   const log = createMcpLog(logger);
   // Resolve the spaceId at most once, and only when a space-dependent operation actually needs it. A request
   // without a valid token fails here (not at connect time), so the public surface stays reachable.
@@ -98,9 +81,9 @@ export const createMcpServer = ({
 
   registerResources(server, getSpace, MCP_ENV, log);
 
-  // The MCP Apps view for plitzi_render. It loads the Plitzi SDK from the server's own /sdk-assets mount, which
-  // is served by default, so it is always registered — no wiring, no configuration.
-  registerRenderApp(server, sdkAssets ?? SAME_ORIGIN_ASSETS);
+  // The MCP Apps view for plitzi_render. It carries its own app (SDK included), so it is always registered —
+  // no wiring, no configuration.
+  registerRenderApp(server);
 
   // Register every tool straight from the shared registry: identity + input schema + behavior come from each
   // tool's descriptor, so a new tool is picked up here with no per-tool wiring.
@@ -123,28 +106,28 @@ export const createMcpServer = ({
       continue;
     }
 
-    server.registerTool(
-      tool.name,
-      {
-        title: tool.title,
-        description: tool.description,
-        inputSchema: tool.inputShape,
-        // MCP Apps: advertise the interactive view (its ui:// resource is always registered — see registerRenderApp).
-        ...(tool.ui ? { _meta: { ui: tool.ui } } : {})
-      },
-      async (args: unknown) => {
-        const start = performance.now();
-        try {
-          const result = await tool.execute(args, tool.spaceless ? spacelessContext() : await toolContext());
-          log.toolCall(tool.name, args, performance.now() - start);
+    const run = async (args: unknown) => {
+      const start = performance.now();
+      try {
+        const result = await tool.execute(args, tool.spaceless ? spacelessContext() : await toolContext());
+        log.toolCall(tool.name, args, performance.now() - start);
 
-          return isCallToolResult(result) ? result : asText(result);
-        } catch (error) {
-          log.toolCall(tool.name, args, performance.now() - start, error);
-          throw error;
-        }
+        return isCallToolResult(result) ? result : asText(result);
+      } catch (error) {
+        log.toolCall(tool.name, args, performance.now() - start, error);
+        throw error;
       }
-    );
+    };
+
+    const config = { title: tool.title, description: tool.description, inputSchema: tool.inputShape };
+    if (tool.ui) {
+      // MCP Apps: advertise the interactive view (its ui:// resource is always registered — see registerRenderApp).
+      // registerAppTool also mirrors the URI onto the legacy flat `ui/resourceUri` key older hosts still read.
+      registerAppTool(server, tool.name, { ...config, _meta: { ui: tool.ui } }, run);
+      continue;
+    }
+
+    server.registerTool(tool.name, config, run);
   }
 
   return server;

@@ -28,10 +28,8 @@ export const wellKnownStage: Stage = ctx => {
   return true;
 };
 
-// Extra static mounts declared via config.static, each under its own URL prefix. These are loaded cross-origin:
-// the MCP Apps view runs in a sandboxed iframe on a HOST-owned origin and imports the Plitzi SDK bundle from this
-// server (a different origin), so the ESM module fetches (marked `crossorigin`) require CORS headers — without
-// them the sandbox cannot load the SDK and the widget never mounts. CORP lets the asset cross an isolated context.
+// Extra static mounts declared via config.static, each under its own URL prefix. Served CORS-open (plus CORP, for
+// an isolated context) so a document on another origin can load them — the SDK bundle a page hydrates with.
 export const configStaticStage: Stage = ctx => {
   const { static: mounts } = ctx.config;
   if (!mounts) {

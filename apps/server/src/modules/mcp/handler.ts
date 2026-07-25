@@ -1,19 +1,18 @@
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 
 import { createMcpServer } from './server';
 
-import type { PreviewClient, ScreenshotClient, SdkAssetUrls } from './types';
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
+import type { PreviewClient, ScreenshotClient } from './types';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { SSRAdapters, SSRRequest, McpLogger } from '@plitzi/sdk-shared';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
-/** Per-request wiring the MCP service does not resolve itself: the renderer clients, the log sink and where the
- *  MCP Apps view loads the SDK from. Everything here is optional — the service degrades feature by feature. */
+/** Per-request wiring the MCP service does not resolve itself: the renderer clients and the log sink. Everything
+ *  here is optional — the service degrades feature by feature. */
 export type McpRequestOptions = {
   preview?: PreviewClient;
   screenshot?: ScreenshotClient;
   logger?: McpLogger;
-  sdkAssets?: SdkAssetUrls;
 };
 
 export const readMcpBody = (req: IncomingMessage): Promise<unknown> =>

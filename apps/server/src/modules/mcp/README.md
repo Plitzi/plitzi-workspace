@@ -38,6 +38,7 @@ mcp/
 ├── helpers/            # Space access, versioning, the usage guide, interaction (de)serialization
 ├── resources/          # The read side — the plitzi://… resource catalog
 ├── tools/              # The write side — validate / apply / search / read / preview / screenshot
+├── views/              # The MCP Apps view (browser React app inlined into the ui:// resource)
 └── types/              # AI-facing shapes (aiSchema), tool/preview/screenshot types
 ```
 
@@ -63,6 +64,26 @@ it is obvious which files are reference data rather than behavior:
 The `plitzi://…` catalog the agent browses (`router.ts` dispatches a URI to `core` / `schema` / `style` /
 `primer`; `register.ts` declares them on the server; `envelope.ts` wraps `{ stateVersion, data }`). Reads are
 cheap by design — list to navigate, read one item for detail.
+
+### `views/` — the MCP Apps view
+
+`plitzi_render` is an **MCP App**: the tool is registered with `registerAppTool` from
+[`@modelcontextprotocol/ext-apps`](https://modelcontextprotocol.io/extensions/apps/build) and linked through
+`_meta.ui.resourceUri` to the `ui://plitzi/render.html` resource (`resources/renderApp.ts`, registered with
+`registerAppResource`). A host that supports the extension fetches that HTML, renders it in a sandboxed iframe on
+**its own origin**, and pushes the tool result in; text-only clients just read the tool's JSON summary.
+
+[`views/renderView.tsx`](views/renderView.tsx) is that page's app, in full: a React component on the SDK's `useApp`
+/ `useHostStyles` hooks that receives the result, pulls `structuredContent.offlineData` out of it and renders the
+widget with `<PlitziSdk>` in offline mode. It is a real `.tsx` — typechecked and linted with the rest of the
+package — that the server **bundles with esbuild** (React, the MCP Apps runtime and the Plitzi SDK included) and
+inlines, together with the SDK stylesheet, into [`views/renderApp.ejs`](views/renderApp.ejs). The resulting page
+references nothing: no import map, no asset mounts, no cross-origin fetches, so the strictest host sandbox can run
+it and no deployment has to serve anything extra. The cost is its size — the SDK travels with every read — and the
+bundle is built once per process and memoized.
+
+`yarn start` runs the standalone server on the sample space, MCP included: point an MCP Apps host (Claude via a
+tunnel, or the `basic-host` example from the ext-apps repo) at `http://localhost:3002/mcp` and call plitzi_render.
 
 ### `tools/` — the write side
 

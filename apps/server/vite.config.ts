@@ -25,6 +25,9 @@ const copyAssets = (): import('vite').Plugin => ({
     const copies: [string, string][] = [
       [path.resolve(root, 'src/ssr/views'), path.resolve(root, 'dist/ssr/views')],
       [path.resolve(root, 'src/modules/ssr/views'), path.resolve(root, 'dist/modules/ssr/views')],
+      // The MCP Apps view is shipped as SOURCE: the server bundles it with esbuild at runtime and inlines the
+      // result in the ui:// resource, so it is never part of the module graph this build bundles.
+      [path.resolve(root, 'src/modules/mcp/views'), path.resolve(root, 'dist/modules/mcp/views')],
       [path.resolve(root, 'public'), path.resolve(root, 'dist/public')]
     ];
     for (const [src, dest] of copies) {
@@ -43,6 +46,8 @@ export default defineConfig(({ mode }) => {
       react(),
       dts({
         include: ['src', 'package.json'],
+        // The MCP Apps view ships as source and nothing imports it: a declaration for it would be dead weight.
+        exclude: ['src/modules/mcp/views'],
         tsconfigPath: './tsconfig.app.json',
         insertTypesEntry: true
       }),
@@ -56,7 +61,8 @@ export default defineConfig(({ mode }) => {
       lib: {
         entry: {
           index: path.resolve(root, 'src/index.ts'),
-          server: path.resolve(root, 'src/standalone/server.ts')
+          // The MCP role's slim entry: importing the barrel would load every other service with it.
+          mcp: path.resolve(root, 'src/mcp.ts')
         },
         formats: ['es']
       },

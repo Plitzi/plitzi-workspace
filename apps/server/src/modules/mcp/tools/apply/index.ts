@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { validateSchema } from '@plitzi/sdk-schema';
+import { validateSchema } from '@plitzi/sdk-schema/helpers/schemaValidator';
 
 import { applyOperations } from './dispatch';
 import { changedResources, conflictMessage, detectConflicts, resolvedElements } from './writeResult';

@@ -1,5 +1,5 @@
-import { validateSchema } from '@plitzi/sdk-schema';
-import { generateCache } from '@plitzi/sdk-style';
+import { validateSchema } from '@plitzi/sdk-schema/helpers/schemaValidator';
+import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
 import { applyOperations } from './apply/dispatch';
 import { operations } from './operations';

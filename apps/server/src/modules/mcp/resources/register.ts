@@ -1,4 +1,4 @@
-import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp';
+import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 import { resourceErrorMessage } from './canonical';
 import { envelope, jsonContents } from './envelope';
@@ -10,7 +10,7 @@ import { guideText } from '../helpers/guide';
 import type { McpLog } from '../helpers';
 import type { Space } from '../helpers';
 import type { Env } from '../types';
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 /** Register every resource on the MCP server: fixed listings plus templated per-item reads. The space is
  *  loaded lazily via getSpace, so listing resources never touches the store — only reading one does. */

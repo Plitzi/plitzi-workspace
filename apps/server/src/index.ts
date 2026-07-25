@@ -45,7 +45,6 @@ export type { ResolvedServices } from './core/createServer';
 export type {
   McpServerContext,
   McpRequestOptions,
-  SdkAssetUrls,
   PreviewClient,
   PreviewRequestBody,
   PreviewResult,
