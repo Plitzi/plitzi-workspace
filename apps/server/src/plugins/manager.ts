@@ -4,6 +4,7 @@ import path from 'node:path';
 import { compilePlugin } from './compile';
 import { copyPlugin } from './copy';
 import { detectAction, isComponentSource } from './detect';
+import { assertPluginSources } from './validate';
 
 import type { PluginEntry, PluginSource } from '@plitzi/sdk-shared';
 
@@ -29,6 +30,7 @@ export class PluginManager {
   private readonly devMode: boolean = false;
 
   constructor(plugins: Record<string, PluginSource>, cacheDir?: string, ttlMs?: number, devMode: boolean = false) {
+    assertPluginSources(plugins);
     this.plugins = plugins;
     this.outputDir = path.resolve(process.cwd(), cacheDir ?? DEFAULT_CACHE_DIR);
     this.ttlMs = ttlMs ?? DEFAULT_TTL_MS;
