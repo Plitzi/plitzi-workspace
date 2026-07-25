@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import { exampleApp } from './example';
 import { apps, registerApps, RENDER_APP_URI } from './index';
-import { registerApp } from './shared/app';
+import { registerApp } from './shared';
 
-import type { McpApp } from './shared/app';
+import type { McpApp } from './shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 type ResourceMeta = { _meta: { ui: { csp: { resourceDomains: string[]; connectDomains: string[] } } } };
@@ -85,6 +85,15 @@ describe('MCP Apps (self-contained pages: they fetch nothing)', () => {
     // render app's (the MCP Apps runtime and React are the floor every app stands on).
     const render = await pageOf(apps.find(app => app.uri === RENDER_APP_URI) as McpApp);
     expect(text.length).toBeLessThan(render.text.length / 2);
+  });
+
+  it('ships zod with English messages only, not its 40 translations', async () => {
+    const script = scriptOf((await pageOf(apps[0])).text);
+
+    // The other ~40 survive tree-shaking and cost 194 KB, so the bundler drops them.
+    expect(script).toContain('Invalid input');
+    expect(script).not.toContain('Число');
+    expect(script).not.toContain('demasiado grande');
   });
 
   it('bundles the MCP Apps runtime and the SDK into the render app, stylesheet included', async () => {

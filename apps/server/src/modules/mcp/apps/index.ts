@@ -1,7 +1,7 @@
 import { renderApp } from './render';
-import { registerApp } from './shared/app';
+import { registerApp } from './shared';
 
-import type { McpApp } from './shared/app';
+import type { McpApp } from './shared';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 /** Every MCP App this server serves. A new one is a folder beside `render/` (its definition + its view) and one
@@ -16,4 +16,4 @@ export const registerApps = (server: McpServer): void => {
 };
 
 export { RENDER_APP_URI } from './render';
-export type { McpApp } from './shared/app';
+export type { McpApp } from './shared';

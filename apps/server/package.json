@@ -42,12 +42,14 @@
   },
   "devDependencies": {
     "@types/ejs": "^3.1.5",
+    "@types/jsdom": "^28.0.3",
     "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",
     "@vitejs/plugin-react": "^6.0.4",
     "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^9.39.5",
     "eslint-plugin-import": "^2.32.0",
+    "jsdom": "^29.1.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tsx": "^4.23.1",
@@ -66,6 +68,7 @@
     "lint": "TIMING=1 eslint ./src",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "test": "vitest run",
+    "test:e2e": "vitest run src/modules/mcp/e2e",
     "test:coverage": "vitest run --coverage",
     "bench": "vitest bench --run"
   }

@@ -3823,6 +3823,7 @@ __metadata:
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/ejs": "npm:^3.1.5"
+    "@types/jsdom": "npm:^28.0.3"
     "@types/node": "npm:^26.1.1"
     "@types/react": "npm:^19.2.17"
     "@vitejs/plugin-react": "npm:^6.0.4"
@@ -3831,6 +3832,7 @@ __metadata:
     esbuild: "npm:^0.28.1"
     eslint: "npm:^9.39.5"
     eslint-plugin-import: "npm:^2.32.0"
+    jsdom: "npm:^29.1.1"
     react: "npm:^19.2.8"
     react-dom: "npm:^19.2.8"
     tsx: "npm:^4.23.1"
@@ -4910,6 +4912,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/jsdom@npm:^28.0.3":
+  version: 28.0.3
+  resolution: "@types/jsdom@npm:28.0.3"
+  dependencies:
+    "@types/node": "npm:*"
+    "@types/tough-cookie": "npm:*"
+    parse5: "npm:^8.0.0"
+    undici-types: "npm:^7.21.0"
+  checksum: 10c0/08b1cd61ee3e9610676be3c68a782a94667b86a5f73b8a262095d05f84c9e864fc11b25ae53450cd519a0abd46c202906a735bd61aa176257a981964bc5b1166
+  languageName: node
+  linkType: hard
+
 "@types/jsesc@npm:^2.5.0":
   version: 2.5.1
   resolution: "@types/jsesc@npm:2.5.1"
@@ -5020,6 +5034,13 @@ __metadata:
   version: 0.2.6
   resolution: "@types/tmp@npm:0.2.6"
   checksum: 10c0/a11bfa2cd8eaa6c5d62f62a3569192d7a2c28efdc5c17af0b0551db85816b2afc8156f3ca15ac76f0b142ae1403f04f44279871424233a1f3390b2e5fc828cd0
+  languageName: node
+  linkType: hard
+
+"@types/tough-cookie@npm:*":
+  version: 4.0.5
+  resolution: "@types/tough-cookie@npm:4.0.5"
+  checksum: 10c0/68c6921721a3dcb40451543db2174a145ef915bc8bcbe7ad4e59194a0238e776e782b896c7a59f4b93ac6acefca9161fccb31d1ce3b3445cb6faa467297fb473
   languageName: node
   linkType: hard
 
@@ -13093,7 +13114,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"parse5@npm:^8.0.1":
+"parse5@npm:^8.0.0, parse5@npm:^8.0.1":
   version: 8.0.1
   resolution: "parse5@npm:8.0.1"
   dependencies:
@@ -16086,6 +16107,13 @@ __metadata:
     has-symbols: "npm:^1.1.0"
     which-boxed-primitive: "npm:^1.1.1"
   checksum: 10c0/7dbd35ab02b0e05fe07136c72cb9355091242455473ec15057c11430129bab38b7b3624019b8778d02a881c13de44d63cd02d122ee782fb519e1de7775b5b982
+  languageName: node
+  linkType: hard
+
+"undici-types@npm:^7.21.0":
+  version: 7.29.0
+  resolution: "undici-types@npm:7.29.0"
+  checksum: 10c0/1faf3a2a92f198a8d916cdd7f159e4fa8f74ca8eb391b43410e395c66217fb8769c9d74d84fefe88bdced822dba63533fb0d260adc76776fec07fb8c71d96b4a
   languageName: node
   linkType: hard
 
