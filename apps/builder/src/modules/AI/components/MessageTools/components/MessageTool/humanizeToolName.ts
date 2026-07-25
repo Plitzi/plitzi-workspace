@@ -15,8 +15,6 @@ const LABELS: Record<string, string> = {
   design_color_palette: 'Designing color palette',
   design_brand_identity: 'Designing brand identity',
   design_style_guide: 'Designing style guide',
-  get_element_types: 'Reading element types',
-  get_style_tokens: 'Reading style tokens',
   ask_question: 'Asking a question',
   flag_irrelevant: 'Reviewing relevance'
 };
