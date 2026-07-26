@@ -41,11 +41,16 @@ export type RefreshRecord = {
   target: OAuthGrantTarget;
 };
 
-/** A bearer this server handed out, kept so the resource side can tell one it issued from a string a client made
- *  up: the grant that carries no space mints an opaque token that resolves to nothing, and without a record there
- *  is nothing to check it against. The record expires with the token, which is what turns an expired bearer into
- *  the 401 a host answers by refreshing; dropping it early revokes the token. */
+/** A bearer this server handed out. The token a client holds is an opaque handle minted here, and this record is
+ *  what it stands for — including `credential`, the thing the deployment's own adapters understand, which never
+ *  leaves the server: a platform token is usually good against more than the MCP endpoint, and a remote host has
+ *  no business holding one. The record expires with the bearer, which is what turns an expired one into the 401 a
+ *  host answers by refreshing; dropping it early revokes the bearer outright. */
 export type AccessRecord = {
+  /** What {@link OAuthAdapters.issueToken} returned — swapped back onto the request once the bearer checks out.
+   *  Absent only in a record written before the bearer and the credential were separate things, where the bearer
+   *  WAS the credential: a live connector must survive that upgrade, so the reader falls back to the token itself. */
+  credential?: string;
   clientId: string;
   user: OAuthUser;
   target: OAuthGrantTarget;

@@ -23,26 +23,28 @@ const scopeOf = (config: OAuthConfig, requested?: string): string => requested ?
 const sendTokens = async (
   config: OAuthConfig,
   res: SSRResponseHelpers,
-  token: string,
+  credential: string,
   expiresInSeconds: number | undefined,
   grant: RefreshRecord
 ): Promise<void> => {
   const ttl = refreshTtlOf(config);
+  // What the client gets is a handle to the grant, not the credential behind it: the consumer's own token is
+  // usually good against more of the platform than this endpoint, and it stays on this side of the boundary.
+  // Recording it is also what lets the resource side recognise the bearer at all and challenge everything else.
+  // The TTL is never zero — a store cannot hold an entry for no time, and a bearer at its expiry must be refused.
+  const bearer = randomId();
+  await putAccess(
+    config.adapters.store,
+    bearer,
+    { credential, clientId: grant.clientId, user: grant.user, target: grant.target },
+    Math.max(expiresInSeconds ?? DEFAULT_ACCESS_TTL_SECONDS, 1)
+  );
+
   const body: Record<string, unknown> = {
-    access_token: token,
+    access_token: bearer,
     token_type: 'Bearer',
     scope: scopeOf(config, grant.scope)
   };
-
-  // Recorded before it is handed out: this is what lets the resource side recognise the bearer on the way back in
-  // (see records.AccessRecord) and answer anything else with a challenge. Never zero — a store cannot hold an
-  // entry for no time at all, and a bearer already at its expiry is one the guard should refuse anyway.
-  await putAccess(
-    config.adapters.store,
-    token,
-    { clientId: grant.clientId, user: grant.user, target: grant.target },
-    Math.max(expiresInSeconds ?? DEFAULT_ACCESS_TTL_SECONDS, 1)
-  );
 
   if (expiresInSeconds !== undefined) {
     body['expires_in'] = expiresInSeconds;

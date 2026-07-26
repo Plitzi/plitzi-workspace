@@ -45,8 +45,11 @@ const STYLES = `
   ul.targets span { color: var(--muted); font-size: 13px; }
   button { width: 100%; padding: 11px 16px; border: 0; border-radius: 8px; background: var(--accent);
     color: #fff; font: inherit; font-weight: 500; cursor: pointer; }
+  button.guest { margin-top: 10px; background: transparent; color: var(--accent);
+    border: 1px solid var(--line); }
   p.error { margin: 0 0 16px; padding: 10px 12px; border-radius: 8px; color: var(--danger);
     border: 1px solid currentColor; font-size: 14px; }
+  p.note { margin: 10px 0 0; color: var(--muted); font-size: 13px; text-align: center; }
 `;
 
 const hiddenFields = (hidden: Record<string, string>): string =>
@@ -54,12 +57,22 @@ const hiddenFields = (hidden: Record<string, string>): string =>
     .map(([name, value]) => `<input type="hidden" name="${escapeHtml(name)}" value="${escapeHtml(value)}">`)
     .join('\n      ');
 
-const credentialsFields = (): string => `<label for="username">Email or username</label>
+// `formnovalidate` is what makes the guest button work at all: the credential inputs are `required`, and without it
+// the browser refuses to submit the form for someone who deliberately typed nothing.
+const guestButton = (guest: NonNullable<OAuthConsentView['guest']>): string => {
+  const note = guest.description ? `\n      <p class="note">${escapeHtml(guest.description)}</p>` : '';
+
+  return `\n      <button class="guest" type="submit" name="guest" value="1" formnovalidate>${escapeHtml(
+    guest.label
+  )}</button>${note}`;
+};
+
+const credentialsFields = (view: OAuthConsentView): string => `<label for="username">Email or username</label>
       <input id="username" name="username" type="text" autocomplete="username" autocapitalize="none"
         spellcheck="false" required autofocus>
       <label for="password">Password</label>
       <input id="password" name="password" type="password" autocomplete="current-password" required>
-      <button type="submit">Sign in</button>`;
+      <button type="submit">Sign in</button>${view.guest ? guestButton(view.guest) : ''}`;
 
 const targetFields = (view: OAuthConsentView): string => {
   const options = view.targets
@@ -110,7 +123,7 @@ export const renderConsentPage = (view: OAuthConsentView): string => {
     ${error}
     <form method="post" action="${escapeHtml(view.action)}">
       ${hiddenFields(view.hidden)}
-      ${view.step === 'credentials' ? credentialsFields() : targetFields(view)}
+      ${view.step === 'credentials' ? credentialsFields(view) : targetFields(view)}
     </form>
   </main>
 </body>

@@ -442,6 +442,19 @@ export type OAuthAdapters = {
   store: OAuthStore;
 };
 
+/** A connection a visitor may take WITHOUT signing in, for a server whose public surface needs no identity — the
+ *  MCP App, the tool and resource listings, the guide. The consent screen offers it as a second button beside the
+ *  sign-in, and the grant is whatever `target` grants: point it at a target that carries no space, never at one
+ *  that does, since nobody proved who they are. */
+export type OAuthGuestConfig = {
+  /** Handed straight to {@link OAuthAdapters.issueToken} when a visitor takes the guest connection. */
+  target: OAuthGrantTarget;
+  /** Button text. Defaults to 'Continue without an account'. */
+  label?: string;
+  /** Who the grant is issued as. Defaults to `{ id: 'guest', label: 'Guest' }`. */
+  user?: OAuthUser;
+};
+
 /** What the built-in consent screen shows around the form. Ignored when `renderConsent` replaces the page. */
 export type OAuthBranding = {
   /** Shown as the heading, e.g. 'Plitzi'. Defaults to 'Plitzi'. */
@@ -463,6 +476,9 @@ export type OAuthConsentView = {
   hidden: Record<string, string>;
   /** Offered on the 'target' step only. */
   targets: OAuthGrantTarget[];
+  /** Offered on the 'credentials' step when the deployment allows a guest connection. The form must submit a
+   *  `guest` field for it (any non-empty value), which is what tells the server to skip authentication. */
+  guest?: { label: string; description?: string };
   /** Who logged in, on the 'target' step. */
   user?: OAuthUser;
   /** A message to show the user, e.g. after a failed login. */
@@ -493,6 +509,8 @@ export type OAuthConfig = {
   codeTtlSeconds?: number;
   /** How long a refresh grant lives, in seconds. Default 30 days. Set 0 to issue no refresh tokens. */
   refreshTtlSeconds?: number;
+  /** Offer a connection that needs no account — see {@link OAuthGuestConfig}. Omit to require sign-in. */
+  guest?: OAuthGuestConfig;
   branding?: OAuthBranding;
   /** Replaces the built-in consent screen — return a full HTML document for the given step. */
   renderConsent?: (view: OAuthConsentView) => string | Promise<string>;

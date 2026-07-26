@@ -121,11 +121,11 @@ export const oauthStage: Stage = async ctx => {
 /** Fail-closed on purpose: a credential this server cannot check right now — an unreachable store, an adapter that
  *  threw — is not one it may act on, and 401 is the answer a host can do something about (re-authorize) where a
  *  500 leaves it stuck. */
-const verified = async (check: () => Promise<boolean>): Promise<boolean> => {
+const verified = async <T>(check: () => Promise<T>): Promise<T | undefined> => {
   try {
     return await check();
   } catch {
-    return false;
+    return undefined;
   }
 };
 
@@ -133,13 +133,22 @@ const verified = async (check: () => Promise<boolean>): Promise<boolean> => {
 // is a space token the platform issued elsewhere (the builder and the CLI send those) — the resource adapters own
 // the secret those are signed with, so they are what can vouch for them.
 const isAuthorized = async (oauth: OAuthConfig, ctx: BaseContext, token: string): Promise<boolean> => {
-  if (await verified(async () => (await getAccess(oauth.adapters.store, token)) !== undefined)) {
+  const record = await verified(() => getAccess(oauth.adapters.store, token));
+  if (record) {
+    // The bearer the host holds is this server's handle for the grant; what everything downstream expects is the
+    // credential the consumer issued. Swapped onto the request here — the one place that knows the mapping — so
+    // `adapters.getSpaceId` keeps reading a request exactly as it always has, whoever the caller is. A record from
+    // before the split carries no credential because the bearer was one (see AccessRecord).
+    const credential = record.credential ?? token;
+    ctx.req.headers['x-access-token'] = credential;
+    ctx.req.headers.authorization = `Bearer ${credential}`;
+
     return true;
   }
 
   const { adapters } = ctx.config;
 
-  return verified(async () => (await adapters.getSpaceId?.(ctx.req)) !== undefined);
+  return (await verified(() => adapters.getSpaceId?.(ctx.req) ?? Promise.resolve(undefined))) !== undefined;
 };
 
 /** The protected-resource half of OAuth: an MCP call that presents no bearer this server can verify is refused

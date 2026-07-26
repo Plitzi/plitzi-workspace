@@ -6,10 +6,27 @@ import { dropPending, getClient, getPending, putCode, putPending } from './recor
 import { redirectWithCode, redirectWithError, sendErrorPage, sendHtml } from './respond';
 
 import type { OAuthParams } from './params';
-import type { PendingRecord } from './records';
-import type { OAuthConfig, OAuthConsentView, OAuthGrantTarget, SSRResponseHelpers } from '@plitzi/sdk-shared';
+import type {
+  OAuthConfig,
+  OAuthConsentView,
+  OAuthGrantTarget,
+  OAuthGuestConfig,
+  OAuthUser,
+  SSRResponseHelpers
+} from '@plitzi/sdk-shared';
 
 const DEFAULT_CODE_TTL_SECONDS = 60;
+
+const DEFAULT_GUEST_LABEL = 'Continue without an account';
+
+// Nobody proved who this is, and the record says so: what the connection may do comes from the configured target,
+// not from this identity.
+const DEFAULT_GUEST_USER: OAuthUser = { id: 'guest', label: 'Guest' };
+
+const guestView = (guest: OAuthGuestConfig): NonNullable<OAuthConsentView['guest']> => ({
+  label: guest.label ?? DEFAULT_GUEST_LABEL,
+  description: guest.target.description
+});
 
 /** The authorization request, as it survives the round trip through the consent form. Everything here comes from
  *  the client and is echoed back to it, so none of it is trusted beyond having been validated once on the way in. */
@@ -112,10 +129,10 @@ const completeGrant = async (
   config: OAuthConfig,
   res: SSRResponseHelpers,
   request: AuthorizationRequest,
-  pending: PendingRecord,
+  user: OAuthUser,
   target: OAuthGrantTarget
 ): Promise<void> => {
-  const issued = await config.adapters.issueToken(pending.user, target);
+  const issued = await config.adapters.issueToken(user, target);
   if (!issued) {
     redirectWithError(
       res,
@@ -139,7 +156,7 @@ const completeGrant = async (
       token: issued.token,
       expiresInSeconds: issued.expiresInSeconds,
       scope: request.scope,
-      user: pending.user,
+      user,
       target
     },
     config.codeTtlSeconds ?? DEFAULT_CODE_TTL_SECONDS
@@ -164,6 +181,7 @@ export const handleAuthorizeStart = async (
     action: AUTHORIZE_PATH,
     hidden: hiddenFieldsFor(request),
     targets: [],
+    guest: config.guest ? guestView(config.guest) : undefined,
     branding: config.branding ?? {}
   });
 };
@@ -213,7 +231,16 @@ export const handleAuthorizeSubmit = async (
     }
 
     await dropPending(config.adapters.store, pendingId);
-    await completeGrant(config, res, request, pending, chosen);
+    await completeGrant(config, res, request, pending.user, chosen);
+
+    return;
+  }
+
+  // The guest button. There is no identity to establish and nothing to choose, so the configured target is granted
+  // straight away — one screen, no password, and the connection can only ever do what that target allows.
+  const { guest } = config;
+  if (guest && optionalField(params, 'guest')) {
+    await completeGrant(config, res, request, guest.user ?? DEFAULT_GUEST_USER, guest.target);
 
     return;
   }
@@ -229,6 +256,7 @@ export const handleAuthorizeSubmit = async (
       action: AUTHORIZE_PATH,
       hidden: hiddenFieldsFor(request),
       targets: [],
+      guest: guest ? guestView(guest) : undefined,
       error: 'Those credentials did not match an account.',
       branding: config.branding ?? {}
     });

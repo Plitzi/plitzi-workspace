@@ -4,8 +4,21 @@ import { createServer } from 'node:http';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { createMCPServer } from '../../core/server/mcpServer';
+import { oauthGuardStage } from '../../core/services/oauth';
 
+import type { BaseContext } from '../../core/http/types';
 import type { OAuthAdapters, OAuthStore, SSRAdapters, SSRRequest, SSRServer } from '@plitzi/sdk-shared';
+
+// The stage under test falls through when the bearer checks out, so it never writes a response; anything reaching
+// this is a bug the test must not hide.
+const unusedResponse = new Proxy(
+  {},
+  {
+    get: (_target, property) => {
+      throw new Error(`The guard wrote to the response (${String(property)}) when it should have fallen through`);
+    }
+  }
+);
 
 /** The whole grant, driven exactly as a remote host drives it: register, open the consent screen, sign in, choose
  *  what to grant, redeem the code, refresh. Anything a host would hit as a dead end fails here first. */
@@ -20,11 +33,13 @@ let BASE = '';
 // grant, so the resource adapters are the only thing that can recognise it.
 const PLATFORM_TOKEN = 'platform-space-token';
 
+const credentialOf = (req: SSRRequest): string =>
+  String(req.headers['x-access-token'] ?? req.headers.authorization ?? '').replace(/^Bearer\s+/iu, '');
+
 const adapters = {
   getOfflineData: () => Promise.resolve(undefined),
   getSpaceDeployment: () => Promise.resolve({ spaceId: 1, environment: 'main', revision: 0 }),
-  getSpaceId: (req: SSRRequest) =>
-    Promise.resolve(req.headers.authorization === `Bearer ${PLATFORM_TOKEN}` ? 1 : undefined)
+  getSpaceId: (req: SSRRequest) => Promise.resolve(credentialOf(req) === PLATFORM_TOKEN ? 1 : undefined)
 } as unknown as SSRAdapters;
 
 const memoryStore = (): OAuthStore => {
@@ -51,6 +66,10 @@ const delegatingStore: OAuthStore = {
   get: key => store.get(key),
   drop: key => store.drop(key)
 };
+
+// What a guest connection grants here: a target that reaches nothing anyone owns, which is the only kind that may
+// be handed out without an identity.
+const GUEST_TARGET = { value: 'widgets-only', label: 'Widgets only', description: 'No access to any space.' };
 
 const oauthAdapters = (): OAuthAdapters => ({
   authenticate: ({ username, password }) =>
@@ -85,7 +104,11 @@ const freePort = (): Promise<number> =>
 beforeAll(async () => {
   const port = await freePort();
   BASE = `http://127.0.0.1:${port}`;
-  server = createMCPServer({ httpVersion: 1, adapters, oauth: { adapters: oauthAdapters() } });
+  server = createMCPServer({
+    httpVersion: 1,
+    adapters,
+    oauth: { adapters: oauthAdapters(), guest: { target: GUEST_TARGET } }
+  });
   server.listen(port, '127.0.0.1');
 });
 
@@ -258,7 +281,10 @@ describe('MCP OAuth authorization', () => {
 
     expect(response.status).toBe(200);
     expect(granted.token_type).toBe('Bearer');
-    expect(granted.access_token).toContain('token-42');
+    // Opaque on purpose: what the host receives is this server's handle for the grant, never the credential the
+    // consumer minted — that one is usually good against more of the platform than this endpoint.
+    expect(granted.access_token).toBeTruthy();
+    expect(granted.access_token).not.toContain('token-42');
   });
 
   it('re-shows the form on a wrong password instead of failing the flow', async () => {
@@ -407,6 +433,58 @@ describe('MCP OAuth token exchange', () => {
   });
 });
 
+/** A deployment that configured no guest connection. Its own server, because whether the button exists is decided
+ *  once when the server is built. */
+describe('MCP OAuth without a guest connection', () => {
+  let strictServer: SSRServer;
+  let strictBase = '';
+
+  beforeAll(async () => {
+    const port = await freePort();
+    strictBase = `http://127.0.0.1:${port}`;
+    strictServer = createMCPServer({ httpVersion: 1, adapters, oauth: { adapters: oauthAdapters() } });
+    strictServer.listen(port, '127.0.0.1');
+  });
+
+  afterAll(() => strictServer.close());
+
+  beforeEach(() => {
+    store = memoryStore();
+  });
+
+  it('offers no guest button, and refuses a request that submits one anyway', async () => {
+    const response = await fetch(`${strictBase}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_name: 'Claude', redirect_uris: [REDIRECT_URI] })
+    });
+    const { client_id: clientId } = (await response.json()) as { client_id: string };
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: clientId,
+      redirect_uri: REDIRECT_URI,
+      code_challenge: challengeFor(verifier()),
+      code_challenge_method: 'S256'
+    });
+    const consent = await fetch(`${strictBase}/authorize?${params.toString()}`);
+    const html = await consent.text();
+
+    expect(html).not.toContain('name="guest"');
+
+    const forced = await fetch(`${strictBase}/authorize`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ ...hiddenValues(html), guest: '1' }).toString(),
+      redirect: 'manual'
+    });
+
+    // Back to the sign-in form with an error, not a redirect carrying a code.
+    expect(forced.status).toBe(200);
+    expect(forced.headers.get('location')).toBeNull();
+    expect(await forced.text()).toContain('did not match an account');
+  });
+});
+
 /** The protected-resource side. A host runs its OAuth flow off the 401 and nothing else: served the public surface
  *  instead, it never learns the server takes credentials, and the grant a user completes has nowhere to land — the
  *  flow succeeds and the connector still reports that authorization failed. */
@@ -481,6 +559,86 @@ describe('MCP endpoint under OAuth', () => {
     const response = await callMcp(PLATFORM_TOKEN);
 
     expect(response.status).toBe(200);
+  });
+
+  // The bearer is a handle; the credential behind it is what the deployment's adapters read. Without the swap the
+  // grant would authorise a request that then resolves to no space at all. Driven through the stage itself because
+  // the swap happens before anything downstream is reached, and the handshake never asks for a space.
+  it('hands the request on carrying the credential the grant issued, not the handle', async () => {
+    const bearer = await bearerFromGrant();
+    const req = {
+      method: 'POST',
+      path: '/',
+      headers: { authorization: `Bearer ${bearer}` },
+      query: {},
+      ctx: {}
+    } as unknown as SSRRequest;
+
+    const answered = await oauthGuardStage({
+      req,
+      res: unusedResponse,
+      config: { adapters, oauth: { adapters: oauthAdapters() } }
+    } as unknown as BaseContext);
+
+    expect(answered).toBe(false);
+    expect(credentialOf(req)).toMatch(/^token-42/u);
+  });
+
+  // A connector that was already connected when this server upgraded holds a bearer whose record predates the
+  // split, and it must keep working: back then the bearer was the credential, so it stands in for itself.
+  it('keeps a bearer recorded before the credential was separated from it', async () => {
+    // Deliberately not a token the adapters can vouch for: the record is the only thing standing behind it, so the
+    // fallback is what this asserts and nothing else can carry the test.
+    const legacyBearer = 'legacy-opaque-bearer';
+    await store.put(
+      `oauth:access:${legacyBearer}`,
+      JSON.stringify({ clientId: 'old-client', user: { id: '7', label: 'ada' }, target: { value: '42', label: '' } }),
+      60
+    );
+
+    const req = {
+      method: 'POST',
+      path: '/',
+      headers: { authorization: `Bearer ${legacyBearer}` },
+      query: {},
+      ctx: {}
+    } as unknown as SSRRequest;
+
+    const answered = await oauthGuardStage({
+      req,
+      res: unusedResponse,
+      config: { adapters, oauth: { adapters: oauthAdapters() } }
+    } as unknown as BaseContext);
+
+    expect(answered).toBe(false);
+    expect(credentialOf(req)).toBe(legacyBearer);
+  });
+
+  it('connects a guest, so a host that needs no space never has to ask for an account', async () => {
+    const secret = verifier();
+    const clientId = await registerClient();
+    const consent = await fetch(authorizeUrl(clientId, challengeFor(secret)));
+    const html = await consent.text();
+
+    // The button is a submit that skips validation: the credential inputs are `required`, and a guest fills neither.
+    expect(html).toContain('name="guest"');
+    expect(html).toContain('formnovalidate');
+    expect(html).toContain('Continue without an account');
+
+    const done = await postForm({ ...hiddenValues(html), guest: '1' });
+    const redirect = new URL(done.headers.get('location') ?? '');
+    const granted = (await (
+      await exchange({
+        grant_type: 'authorization_code',
+        client_id: clientId,
+        code: redirect.searchParams.get('code') ?? '',
+        code_verifier: secret
+      })
+    ).json()) as { access_token: string };
+
+    expect(done.status).toBe(302);
+    expect(redirect.searchParams.get('error')).toBeNull();
+    expect((await callMcp(granted.access_token)).status).toBe(200);
   });
 
   it('leaves the CORS preflight answering, since a challenge on it tells a host nothing', async () => {

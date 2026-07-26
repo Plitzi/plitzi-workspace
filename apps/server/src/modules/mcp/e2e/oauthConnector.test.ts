@@ -181,7 +181,10 @@ beforeAll(async () => {
   server = createMCPServer({
     httpVersion: 1,
     adapters: publicAdapters,
-    oauth: { adapters: oauthAdapters }
+    oauth: {
+      adapters: oauthAdapters,
+      guest: { target: { value: WIDGETS_ONLY_TARGET, label: 'Widgets only' } }
+    }
   });
   server.listen(port, '127.0.0.1');
 });
@@ -226,15 +229,30 @@ const signIn = async (authorizationUrl: URL, target = SPACE_TARGET): Promise<str
   return code;
 };
 
+/** The other button on that screen: no account, no second step — the visitor gets whatever the guest target grants
+ *  and comes straight back with a code. */
+const continueAsGuest = async (authorizationUrl: URL): Promise<string> => {
+  const consent = await fetch(authorizationUrl);
+  const done = await postForm({ ...hiddenValues(await consent.text()), guest: '1' });
+  const code = new URL(done.headers.get('location') ?? '').searchParams.get('code');
+  if (!code) {
+    throw new Error('The guest connection came back without an authorization code');
+  }
+
+  return code;
+};
+
 const newTransport = (): StreamableHTTPClientTransport =>
   new StreamableHTTPClientTransport(new URL(BASE), { authProvider: provider });
 
 /** Everything a host does between "add this server" and a working session, in the order it does it: connect and be
- *  refused, follow the challenge, sign in, then connect again on the bearer. */
-const connectAuthorized = async (target = SPACE_TARGET): Promise<Client> => {
+ *  refused, follow the challenge, authorize, then connect again on the bearer. */
+const connectAuthorized = async (
+  authorize: (url: URL) => Promise<string> = url => signIn(url, SPACE_TARGET)
+): Promise<Client> => {
   const first = newTransport();
   await expect(new Client({ name: 'e2e-host', version: '1.0.0' }).connect(first)).rejects.toThrow(UnauthorizedError);
-  await first.finishAuth(await signIn(provider.authorizationUrl ?? new URL(BASE), target));
+  await first.finishAuth(await authorize(provider.authorizationUrl ?? new URL(BASE)));
 
   const client = new Client({ name: 'e2e-host', version: '1.0.0' });
   await client.connect(newTransport());
@@ -314,7 +332,7 @@ describe('MCP connector over OAuth (official client, real grant)', () => {
   });
 
   it('serves the grant that carries no space, which is what keeps plitzi_render reachable under OAuth', async () => {
-    const client = await connectAuthorized(WIDGETS_ONLY_TARGET);
+    const client = await connectAuthorized(url => signIn(url, WIDGETS_ONLY_TARGET));
 
     const result = await client.callTool({
       name: 'plitzi_render',
@@ -330,6 +348,18 @@ describe('MCP connector over OAuth (official client, real grant)', () => {
     });
 
     expect(result.structuredContent).toMatchObject({ rendered: true });
+
+    await client.close();
+  });
+
+  // The guest connection: same handshake, same bearer, no account. This is what a host needs for a server whose
+  // public surface is the point — one click on the consent screen instead of a sign-up.
+  it('connects a guest with no credentials at all, when the deployment offers it', async () => {
+    const client = await connectAuthorized(continueAsGuest);
+
+    expect(client.getServerVersion()?.name).toBe('plitzi-mcp');
+    expect((await client.listTools()).tools.length).toBeGreaterThan(0);
+    expect(minted).toBe(1);
 
     await client.close();
   });
