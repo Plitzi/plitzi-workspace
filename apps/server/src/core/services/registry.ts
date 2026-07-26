@@ -1,4 +1,5 @@
 import { mcpOnlyStage, mcpStage } from './mcp';
+import { oauthStage } from './oauth';
 import { previewStage } from './preview';
 import { rscStage } from './rsc';
 import { notFoundStage, ssrStage } from './ssr';
@@ -47,5 +48,6 @@ export const buildSSRPipeline = (services: ResolvedServices): Stage<SSRContext>[
 // The lean MCP-only pipeline: an optional health endpoint (k8s probes), then any static mounts the consumer
 // configured, then MCP for every other request — the server owns its whole sub-domain, so MCP is served at the
 // root, not under /mcp. configStaticStage falls through (returns false) when no mount matches, so non-asset
-// requests still reach MCP.
-export const buildMCPPipeline = (): Stage<BaseContext>[] => [healthStage, configStaticStage, mcpOnlyStage];
+// requests still reach MCP. oauthStage claims the discovery and grant endpoints before that catch-all, and is
+// inert unless the deployment configured `oauth`.
+export const buildMCPPipeline = (): Stage<BaseContext>[] => [healthStage, configStaticStage, oauthStage, mcpOnlyStage];

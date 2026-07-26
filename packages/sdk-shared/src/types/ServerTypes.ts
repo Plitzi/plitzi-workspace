@@ -354,6 +354,8 @@ export type SSRServerConfig = {
   health?: { path?: string; payload?: Record<string, unknown>; name?: string; version?: string; role?: string };
   /** Cache-buster appended as ?v=<assetVersion> to all default SDK asset URLs (jsPath, cssPath, react vendor). Compute from file mtime or package version at startup. */
   assetVersion?: string;
+  /** OAuth 2.1 authorization for the MCP server. Omit to keep the server anonymous — see {@link OAuthConfig}. */
+  oauth?: OAuthConfig;
 };
 
 export type ServerServices = {
@@ -394,6 +396,100 @@ export type SSRServer = {
   close: () => Promise<void>;
   readonly cache: CacheManager | null;
   readonly plugins: PluginRegistry;
+};
+
+/** A key/value store with per-entry expiry, backing the OAuth layer's short-lived protocol state (registered
+ *  clients, authorization codes, refresh grants). Values are opaque strings the SDK serialises itself. A
+ *  multi-replica deployment MUST inject a shared implementation — a code minted on one replica is redeemed on
+ *  whichever replica the token request lands on. */
+export type OAuthStore = {
+  put: (key: string, value: string, ttlSeconds: number) => void | Promise<void>;
+  get: (key: string) => (string | undefined) | Promise<string | undefined>;
+  drop: (key: string) => void | Promise<void>;
+};
+
+/** Someone who got through {@link OAuthAdapters.authenticate}. `id` is what the other adapters key off; `label`
+ *  is shown back on the consent screen so the user can see who they are about to grant access as. */
+export type OAuthUser = {
+  id: string;
+  label: string;
+};
+
+/** One thing the user may grant the client access to — a Plitzi space, or whatever else a deployment scopes its
+ *  tokens by. `value` is the opaque handle the SDK round-trips back to {@link OAuthAdapters.issueToken}; only the
+ *  consumer interprets it. A deployment whose public surface is useful on its own (plitzi_render needs no space)
+ *  can offer a target that grants nothing, so the user is never forced to pick one. */
+export type OAuthGrantTarget = {
+  value: string;
+  label: string;
+  description?: string;
+};
+
+/** What the OAuth layer cannot resolve on its own: who the user is, what they may grant, and the bearer to mint
+ *  for them. The SDK owns the protocol (discovery, registration, PKCE, code exchange); the consumer owns identity
+ *  and issues a token its own `adapters.getSpaceId` will accept back. */
+export type OAuthAdapters = {
+  /** Verify the credentials typed into the consent screen. Return undefined to re-show the form with an error —
+   *  never throw for a wrong password. */
+  authenticate: (credentials: { username: string; password: string }) => Promise<OAuthUser | undefined>;
+  /** What this user may grant access to. An empty list ends the flow with `access_denied`. */
+  grantTargets: (user: OAuthUser) => Promise<OAuthGrantTarget[]>;
+  /** Mint the bearer the client will send on every MCP request. Return undefined to deny the grant. */
+  issueToken: (
+    user: OAuthUser,
+    target: OAuthGrantTarget
+  ) => Promise<{ token: string; expiresInSeconds?: number } | undefined>;
+  store: OAuthStore;
+};
+
+/** What the built-in consent screen shows around the form. Ignored when `renderConsent` replaces the page. */
+export type OAuthBranding = {
+  /** Shown as the heading, e.g. 'Plitzi'. Defaults to 'Plitzi'. */
+  productName?: string;
+  /** Absolute or same-origin URL of a logo to show above the heading. */
+  logoUrl?: string;
+  /** Extra CSS appended to the page's own, for a deployment that wants its own look without replacing the page. */
+  css?: string;
+};
+
+/** Everything the consent screen needs to render itself, for a deployment that replaces the built-in page. Return
+ *  a full HTML document; the SDK serves it as-is and reads the same form fields back. */
+export type OAuthConsentView = {
+  /** 'credentials' asks for username + password; 'target' asks which space to grant, after a successful login. */
+  step: 'credentials' | 'target';
+  /** Where the form must POST to (the authorize endpoint). */
+  action: string;
+  /** Hidden fields the form MUST round-trip verbatim, or the flow cannot be resumed. */
+  hidden: Record<string, string>;
+  /** Offered on the 'target' step only. */
+  targets: OAuthGrantTarget[];
+  /** Who logged in, on the 'target' step. */
+  user?: OAuthUser;
+  /** A message to show the user, e.g. after a failed login. */
+  error?: string;
+  branding: OAuthBranding;
+};
+
+/** OAuth 2.1 authorization for the MCP server (RFC 9728 discovery + RFC 7591 dynamic client registration +
+ *  authorization code with PKCE). ENTIRELY OPTIONAL: without this config no endpoint is mounted, discovery keeps
+ *  answering 404 and the server stays anonymous, which is a working setup — the public surface (handshake, tool
+ *  and resource listing, the guide, plitzi_render) never needed a token. Configure it only to let a remote host
+ *  that cannot send custom headers — Claude Desktop, ChatGPT — obtain a space-scoped one. */
+export type OAuthConfig = {
+  adapters: OAuthAdapters;
+  /** The issuer/resource identifier published in the metadata documents. Defaults to the origin the request came
+   *  in on, which is correct whenever the server owns its sub-domain; set it when a proxy rewrites the host. */
+  issuer?: string;
+  /** Scope names advertised and echoed back on the token. Defaults to ['plitzi']. */
+  scopes?: string[];
+  /** How long an authorization code stays redeemable, in seconds. Default 60 — codes are one-shot and redeemed
+   *  immediately. */
+  codeTtlSeconds?: number;
+  /** How long a refresh grant lives, in seconds. Default 30 days. Set 0 to issue no refresh tokens. */
+  refreshTtlSeconds?: number;
+  branding?: OAuthBranding;
+  /** Replaces the built-in consent screen — return a full HTML document for the given step. */
+  renderConsent?: (view: OAuthConsentView) => string | Promise<string>;
 };
 
 /** A short-TTL, one-shot store for unsaved draft offline-data behind a preview token. The SDK ships an

@@ -76,6 +76,16 @@ export const serveMcp = async (
     return undefined;
   }
 
+  // A browser asking for the site icon, not a protocol violation — this server has HTML pages (the OAuth consent
+  // screen) and anyone may open its root. 204 is "there is no icon here": the browser stops asking, and the access
+  // log does not fill up with errors that mean nothing.
+  if (raw.url === '/favicon.ico') {
+    res.writeHead(204);
+    res.end();
+
+    return undefined;
+  }
+
   // The endpoint is stateless (JSON responses, no session), so it offers no server→client GET event stream. Reply
   // to any non-POST method with 405 rather than opening a stream that never resolves — an open GET otherwise HANGS
   // the client (Claude Desktop connectors, mcp-remote) until it times out. 405 is spec-compliant; clients handle it.

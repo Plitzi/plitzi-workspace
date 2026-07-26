@@ -89,4 +89,14 @@ describe('createMCPServer (dedicated MCP server end-to-end)', () => {
     expect(res.body).toContain('plitzi-mcp');
     expect(res.body).toContain('"result"');
   });
+
+  // OAuth is opt-in. Without `oauth` configured this server must stay exactly what it was: no discovery document,
+  // no grant endpoints, and a public surface that answers without a token.
+  it('mounts no OAuth endpoint when the deployment configured none', async () => {
+    const discovery = await request('GET', '/.well-known/oauth-protected-resource');
+    const register = await request('POST', '/register', { 'Content-Type': 'application/json' }, '{}');
+
+    expect(discovery.status).toBe(404);
+    expect(register.status).not.toBe(201);
+  });
 });

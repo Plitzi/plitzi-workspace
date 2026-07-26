@@ -10,6 +10,9 @@ export const rscStage: Stage<SSRContext> = async ctx => {
     return false;
   }
 
+  // Names itself in the access log: RSC rides the same server as the pages, so without this a consumer could only
+  // tell the two apart by matching the configured path.
+  ctx.operation = 'rsc';
   await handleRsc(req, ctx.res, config, ctx.pluginManager, ctx.caches.rsc);
 
   return true;
