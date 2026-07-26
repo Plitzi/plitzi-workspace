@@ -1,5 +1,7 @@
+import { createHash } from 'node:crypto';
+
 import { randomId } from './pkce';
-import { putClient } from './records';
+import { getClientByFingerprint, putClient, putClientFingerprint } from './records';
 import { sendErrorJson, sendJson } from './respond';
 
 import type { OAuthConfig, SSRResponseHelpers } from '@plitzi/sdk-shared';
@@ -24,6 +26,18 @@ const isUsableRedirectUri = (value: string): boolean => {
 const stringList = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : [];
 
+const nowSeconds = (): number => Math.floor(Date.now() / 1000);
+
+// What a client asked to be registered AS. Identical metadata resolves to one registration: RFC 7591 never requires
+// a fresh id per call, and a host that registers on every connection (Claude's DCR does, twice per attempt — once
+// per backend instance) would otherwise leave a new record behind each time. Worse, when two of its instances
+// register in parallel they walk away with DIFFERENT ids for the same client, so whichever one later has to make
+// sense of the grant may be holding an id the flow never used.
+const fingerprintOf = (clientName: string, redirectUris: string[]): string =>
+  createHash('sha256')
+    .update(JSON.stringify([clientName, [...redirectUris].sort()]))
+    .digest('base64url');
+
 /** RFC 7591 dynamic client registration. A remote host has no way to be configured into this server ahead of
  *  time, so it registers itself on first connect; the record it gets back is only ever used to pin the redirect
  *  target, since a public client authenticates with PKCE rather than with credentials. */
@@ -43,13 +57,19 @@ export const handleRegister = async (config: OAuthConfig, res: SSRResponseHelper
   }
 
   const clientName = typeof metadata['client_name'] === 'string' ? metadata['client_name'] : 'MCP client';
-  const clientId = randomId();
+  const { store } = config.adapters;
+  const fingerprint = fingerprintOf(clientName, redirectUris);
+  const existing = await getClientByFingerprint(store, fingerprint);
+  const client = existing ?? { clientId: randomId(), clientName, redirectUris, issuedAt: nowSeconds() };
 
-  await putClient(config.adapters.store, { clientId, clientName, redirectUris });
+  // Written on every call, existing or not, so an active client's record and its fingerprint keep their TTL rolling
+  // rather than expiring under a host that has been connected all along.
+  await putClient(store, client);
+  await putClientFingerprint(store, fingerprint, client.clientId);
 
   sendJson(res, 201, {
-    client_id: clientId,
-    client_id_issued_at: Math.floor(Date.now() / 1000),
+    client_id: client.clientId,
+    client_id_issued_at: client.issuedAt,
     client_name: clientName,
     redirect_uris: redirectUris,
     grant_types: config.refreshTtlSeconds === 0 ? ['authorization_code'] : ['authorization_code', 'refresh_token'],

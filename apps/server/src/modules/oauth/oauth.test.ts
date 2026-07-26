@@ -141,11 +141,13 @@ const verifier = (): string => randomBytes(32).toString('base64url');
 
 const challengeFor = (value: string): string => createHash('sha256').update(value).digest('base64url');
 
-const registerClient = async (): Promise<string> => {
+// The name is a parameter because identical metadata is now one registration: a test that needs a genuinely
+// different client has to ask to be registered as a different one.
+const registerClient = async (clientName = 'Claude'): Promise<string> => {
   const response = await fetch(`${BASE}/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ client_name: 'Claude', redirect_uris: [REDIRECT_URI] })
+    body: JSON.stringify({ client_name: clientName, redirect_uris: [REDIRECT_URI] })
   });
   const body = (await response.json()) as { client_id: string };
 
@@ -266,6 +268,27 @@ describe('MCP OAuth client registration', () => {
 
     expect(response.status).toBe(201);
     expect(await response.json()).toMatchObject({ client_name: 'Claude', redirect_uris: [REDIRECT_URI] });
+  });
+
+  // A host that registers on every connection — Claude's DCR does, twice per attempt, once per backend instance —
+  // must not walk away with two different ids for the same client, and must not leave a record behind each time.
+  it('hands back one registration for identical metadata, however often it is asked', async () => {
+    const body = JSON.stringify({ client_name: 'Claude', redirect_uris: [REDIRECT_URI] });
+    const register = async (): Promise<{ client_id: string; client_id_issued_at: number }> =>
+      (await (
+        await fetch(`${BASE}/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body })
+      ).json()) as { client_id: string; client_id_issued_at: number };
+
+    // Sequential, which is what a host actually does (Claude's two instances register about a second apart). Two
+    // registrations that truly overlap are last-writer-wins on the fingerprint and both records stay usable, so the
+    // race costs an extra record and nothing else.
+    const first = await register();
+    const second = await register();
+
+    expect(second.client_id).toBe(first.client_id);
+    expect(second.client_id_issued_at).toBe(first.client_id_issued_at);
+    // Different client, different registration: the redirect target a code is bound to still cannot be borrowed.
+    expect(await registerClient('Someone else')).not.toBe(first.client_id);
   });
 
   it('refuses a redirect URI the user cannot be sent to safely', async () => {
@@ -402,7 +425,7 @@ describe('MCP OAuth token exchange', () => {
   it('rejects a code presented by a different client', async () => {
     const secret = verifier();
     const clientId = await registerClient();
-    const other = await registerClient();
+    const other = await registerClient('Another app');
     const redirect = await grantCode(clientId, challengeFor(secret));
 
     const response = await exchange({

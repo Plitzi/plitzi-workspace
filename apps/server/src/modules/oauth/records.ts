@@ -6,6 +6,8 @@ export type ClientRecord = {
   clientId: string;
   clientName: string;
   redirectUris: string[];
+  /** When this registration was first handed out, so re-registering the same client keeps reporting its real age. */
+  issuedAt: number;
 };
 
 /** The authorization request, parked while the user logs in. `challenge` binds the eventual code to the client
@@ -91,6 +93,21 @@ export const putClient = (store: OAuthStore, client: ClientRecord): Promise<void
 
 export const getClient = (store: OAuthStore, clientId: string): Promise<ClientRecord | undefined> =>
   readJson<ClientRecord>(store, 'client', clientId);
+
+/** The id already handed out for an identical registration. Keyed by what the client asked to be registered AS,
+ *  so the same request always resolves to the same client — see handleRegister for why that matters. */
+export const getClientByFingerprint = async (
+  store: OAuthStore,
+  fingerprint: string
+): Promise<ClientRecord | undefined> => {
+  const clientId = await store.get(keyOf('clientfp', fingerprint));
+
+  return clientId ? getClient(store, clientId) : undefined;
+};
+
+export const putClientFingerprint = async (store: OAuthStore, fingerprint: string, clientId: string): Promise<void> => {
+  await store.put(keyOf('clientfp', fingerprint), clientId, CLIENT_TTL_SECONDS);
+};
 
 export const putPending = (store: OAuthStore, id: string, pending: PendingRecord): Promise<void> =>
   writeJson(store, 'pending', id, pending, PENDING_TTL_SECONDS);

@@ -15,17 +15,21 @@ export type OAuthErrorCode =
   | 'server_error';
 
 // Tokens and metadata must never be cached: one is a credential, the other changes with the deployment's host.
+// `no-transform` on top of that keeps an intermediary (a CDN in front of this server compresses small JSON on its
+// own) from re-encoding a body that carries a secret next to a value the client chose — the `scope` this endpoint
+// echoes back — which is the shape BREACH-style attacks need. It also keeps the response byte-for-byte what was
+// sent, so a strict client never has to decompress a credential to read it.
 export const sendJson = (res: SSRResponseHelpers, status: number, body: unknown): void => {
   res.setStatus(status);
   res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Cache-Control', 'no-store, no-transform');
   res.send(JSON.stringify(body));
 };
 
 export const sendHtml = (res: SSRResponseHelpers, status: number, html: string): void => {
   res.setStatus(status);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Cache-Control', 'no-store, no-transform');
   res.send(html);
 };
 
@@ -59,7 +63,7 @@ export const redirectWithError = (
 
   res.setStatus(302);
   res.setHeader('Location', url.toString());
-  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Cache-Control', 'no-store, no-transform');
   res.end();
 };
 
@@ -72,6 +76,6 @@ export const redirectWithCode = (res: SSRResponseHelpers, redirectUri: string, c
 
   res.setStatus(302);
   res.setHeader('Location', url.toString());
-  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Cache-Control', 'no-store, no-transform');
   res.end();
 };
