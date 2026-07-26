@@ -118,37 +118,53 @@ export const oauthStage: Stage = async ctx => {
   return true;
 };
 
-/** Fail-closed on purpose: a credential this server cannot check right now — an unreachable store, an adapter that
- *  threw — is not one it may act on, and 401 is the answer a host can do something about (re-authorize) where a
- *  500 leaves it stuck. */
-const verified = async <T>(check: () => Promise<T>): Promise<T | undefined> => {
-  try {
-    return await check();
-  } catch {
-    return undefined;
-  }
+/** Why a request was challenged. It ends up on the access-log line, because "401" on its own cannot tell a missing
+ *  header from a bearer the store lost — and from the outside both look like a connector that stopped working. */
+type ChallengeReason = 'no-credential' | 'unknown-credential' | 'store-unreachable' | 'adapter-failed';
+
+const CHALLENGE_DESCRIPTIONS: Record<ChallengeReason, string> = {
+  'no-credential': 'Authorization is required to use this server.',
+  'unknown-credential': 'The access token is invalid, expired or revoked.',
+  'store-unreachable': 'The access token could not be verified right now.',
+  'adapter-failed': 'The access token could not be verified right now.'
 };
 
-// Two ways a bearer is legitimate: this server minted it through the grant, which the access record proves, or it
-// is a space token the platform issued elsewhere (the builder and the CLI send those) — the resource adapters own
-// the secret those are signed with, so they are what can vouch for them.
-const isAuthorized = async (oauth: OAuthConfig, ctx: BaseContext, token: string): Promise<boolean> => {
-  const record = await verified(() => getAccess(oauth.adapters.store, token));
-  if (record) {
-    // The bearer the host holds is this server's handle for the grant; what everything downstream expects is the
-    // credential the consumer issued. Swapped onto the request here — the one place that knows the mapping — so
-    // `adapters.getSpaceId` keeps reading a request exactly as it always has, whoever the caller is. A record from
-    // before the split carries no credential because the bearer was one (see AccessRecord).
-    const credential = record.credential ?? token;
-    ctx.req.headers['x-access-token'] = credential;
-    ctx.req.headers.authorization = `Bearer ${credential}`;
-
-    return true;
+// Two ways a bearer is legitimate: this server minted it through the grant, which the access record proves, or it is
+// a space token the platform issued elsewhere (the builder and the CLI send those) — the resource adapters own the
+// secret those are signed with, so they are what can vouch for them. Failing to CHECK is not the same as checking
+// and finding nothing, so the two are told apart: both refuse the request (a credential this server cannot verify is
+// not one it may act on) but only one of them means the store is down, which is an operator's problem, not a host's.
+const challengeReason = async (
+  oauth: OAuthConfig,
+  ctx: BaseContext,
+  token: string
+): Promise<ChallengeReason | undefined> => {
+  if (!token) {
+    return 'no-credential';
   }
 
-  const { adapters } = ctx.config;
+  try {
+    const record = await getAccess(oauth.adapters.store, token);
+    if (record) {
+      // The bearer the host holds is this server's handle for the grant; what everything downstream expects is the
+      // credential the consumer issued. Swapped onto the request here — the one place that knows the mapping — so
+      // `adapters.getSpaceId` keeps reading a request exactly as it always has, whoever the caller is. A record from
+      // before the split carries no credential because the bearer was one (see AccessRecord).
+      const credential = record.credential ?? token;
+      ctx.req.headers['x-access-token'] = credential;
+      ctx.req.headers.authorization = `Bearer ${credential}`;
 
-  return (await verified(() => adapters.getSpaceId?.(ctx.req) ?? Promise.resolve(undefined))) !== undefined;
+      return undefined;
+    }
+  } catch {
+    return 'store-unreachable';
+  }
+
+  try {
+    return (await ctx.config.adapters.getSpaceId?.(ctx.req)) === undefined ? 'unknown-credential' : undefined;
+  } catch {
+    return 'adapter-failed';
+  }
 };
 
 /** The protected-resource half of OAuth: an MCP call that presents no bearer this server can verify is refused
@@ -166,17 +182,15 @@ export const oauthGuardStage: Stage = async ctx => {
     return false;
   }
 
-  const token = bearerOf(ctx.req);
-  if (token && (await isAuthorized(oauth, ctx, token))) {
+  const reason = await challengeReason(oauth, ctx, bearerOf(ctx.req));
+  if (!reason) {
     return false;
   }
 
-  sendChallenge(
-    oauth,
-    ctx.req,
-    ctx.res,
-    token ? 'The access token is invalid, expired or revoked.' : 'Authorization is required to use this server.'
-  );
+  // Named on the log line, where the request already is: a connector that fails after a grant it completed is
+  // otherwise diagnosed by guesswork, since the host only ever reports that authorization failed.
+  ctx.operation = `oauth-challenge:${reason}`;
+  sendChallenge(oauth, ctx.req, ctx.res, CHALLENGE_DESCRIPTIONS[reason]);
 
   return true;
 };

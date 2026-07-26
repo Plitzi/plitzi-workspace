@@ -7,7 +7,14 @@ import { createMCPServer } from '../../core/server/mcpServer';
 import { oauthGuardStage } from '../../core/services/oauth';
 
 import type { BaseContext } from '../../core/http/types';
-import type { OAuthAdapters, OAuthStore, SSRAdapters, SSRRequest, SSRServer } from '@plitzi/sdk-shared';
+import type {
+  OAuthAdapters,
+  OAuthStore,
+  SSRAdapters,
+  SSRRequest,
+  SSRResponseHelpers,
+  SSRServer
+} from '@plitzi/sdk-shared';
 
 // The stage under test falls through when the bearer checks out, so it never writes a response; anything reaching
 // this is a bug the test must not hide.
@@ -19,6 +26,22 @@ const unusedResponse = new Proxy(
     }
   }
 );
+
+const capturingResponse = (): SSRResponseHelpers => {
+  const headers: Record<string, string> = {};
+
+  return {
+    status: 0,
+    headers,
+    setHeader: (name, value) => {
+      headers[name] = value;
+    },
+    setStatus: () => undefined,
+    send: () => undefined,
+    write: () => undefined,
+    end: () => undefined
+  };
+};
 
 /** The whole grant, driven exactly as a remote host drives it: register, open the consent screen, sign in, choose
  *  what to grant, redeem the code, refresh. Anything a host would hit as a dead end fails here first. */
@@ -582,6 +605,39 @@ describe('MCP endpoint under OAuth', () => {
 
     expect(answered).toBe(false);
     expect(credentialOf(req)).toMatch(/^token-42/u);
+  });
+
+  // A 401 on its own cannot tell a missing header from a bearer the store lost, and a host never reports more than
+  // "authorization failed" — so the reason has to be on the server's own log line or nobody can diagnose it.
+  it('names on the request why it challenged', async () => {
+    const challengeFor = async (headers: Record<string, string>, oauth: OAuthAdapters): Promise<string | undefined> => {
+      const ctx = {
+        req: { method: 'POST', path: '/', headers, query: {}, ctx: {} },
+        res: capturingResponse(),
+        config: { adapters, oauth: { adapters: oauth } }
+      } as unknown as BaseContext;
+
+      expect(await oauthGuardStage(ctx)).toBe(true);
+
+      return ctx.operation;
+    };
+
+    const brokenStore: OAuthStore = {
+      put: () => undefined,
+      get: () => {
+        throw new Error('Redis is unavailable');
+      },
+      drop: () => undefined
+    };
+
+    expect(await challengeFor({}, oauthAdapters())).toBe('oauth-challenge:no-credential');
+    expect(await challengeFor({ authorization: 'Bearer made-up' }, oauthAdapters())).toBe(
+      'oauth-challenge:unknown-credential'
+    );
+    // The one an operator has to act on rather than the user: refused all the same, but not because of the token.
+    expect(await challengeFor({ authorization: 'Bearer anything' }, { ...oauthAdapters(), store: brokenStore })).toBe(
+      'oauth-challenge:store-unreachable'
+    );
   });
 
   // A connector that was already connected when this server upgraded holds a bearer whose record predates the
