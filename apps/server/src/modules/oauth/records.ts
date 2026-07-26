@@ -41,6 +41,16 @@ export type RefreshRecord = {
   target: OAuthGrantTarget;
 };
 
+/** A bearer this server handed out, kept so the resource side can tell one it issued from a string a client made
+ *  up: the grant that carries no space mints an opaque token that resolves to nothing, and without a record there
+ *  is nothing to check it against. The record expires with the token, which is what turns an expired bearer into
+ *  the 401 a host answers by refreshing; dropping it early revokes the token. */
+export type AccessRecord = {
+  clientId: string;
+  user: OAuthUser;
+  target: OAuthGrantTarget;
+};
+
 const CLIENT_TTL_SECONDS = 60 * 60 * 24 * 90;
 const PENDING_TTL_SECONDS = 60 * 10;
 
@@ -111,3 +121,9 @@ export const getRefresh = (store: OAuthStore, token: string): Promise<RefreshRec
 export const dropRefresh = async (store: OAuthStore, token: string): Promise<void> => {
   await store.drop(keyOf('refresh', token));
 };
+
+export const putAccess = (store: OAuthStore, token: string, record: AccessRecord, ttlSeconds: number): Promise<void> =>
+  writeJson(store, 'access', token, record, ttlSeconds);
+
+export const getAccess = (store: OAuthStore, token: string): Promise<AccessRecord | undefined> =>
+  readJson<AccessRecord>(store, 'access', token);

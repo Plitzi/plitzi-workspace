@@ -1,4 +1,5 @@
 import { handleAuthorizeStart, handleAuthorizeSubmit } from '../../modules/oauth/authorize';
+import { bearerOf, sendChallenge } from '../../modules/oauth/challenge';
 import {
   authorizationServerMetadata,
   AUTHORIZATION_SERVER_PATH,
@@ -8,14 +9,15 @@ import {
   REGISTER_PATH,
   TOKEN_PATH
 } from '../../modules/oauth/metadata';
+import { getAccess } from '../../modules/oauth/records';
 import { handleRegister } from '../../modules/oauth/register';
 import { sendErrorJson, sendJson } from '../../modules/oauth/respond';
 import { handleToken } from '../../modules/oauth/token';
 import { readRawBody } from '../requestParser';
 
 import type { OAuthParams } from '../../modules/oauth/params';
-import type { Stage } from '../http/types';
-import type { SSRRequest } from '@plitzi/sdk-shared';
+import type { BaseContext, Stage } from '../http/types';
+import type { OAuthConfig, SSRRequest } from '@plitzi/sdk-shared';
 
 // RFC 9728 allows the resource's path to be appended to the well-known path, so a client may ask for either
 // `/.well-known/oauth-protected-resource` or `/.well-known/oauth-protected-resource/<path>`.
@@ -112,6 +114,60 @@ export const oauthStage: Stage = async ctx => {
   }
 
   sendErrorJson(res, 405, 'invalid_request', `${method} is not allowed on ${path}.`);
+
+  return true;
+};
+
+/** Fail-closed on purpose: a credential this server cannot check right now — an unreachable store, an adapter that
+ *  threw — is not one it may act on, and 401 is the answer a host can do something about (re-authorize) where a
+ *  500 leaves it stuck. */
+const verified = async (check: () => Promise<boolean>): Promise<boolean> => {
+  try {
+    return await check();
+  } catch {
+    return false;
+  }
+};
+
+// Two ways a bearer is legitimate: this server minted it through the grant, which the access record proves, or it
+// is a space token the platform issued elsewhere (the builder and the CLI send those) — the resource adapters own
+// the secret those are signed with, so they are what can vouch for them.
+const isAuthorized = async (oauth: OAuthConfig, ctx: BaseContext, token: string): Promise<boolean> => {
+  if (await verified(async () => (await getAccess(oauth.adapters.store, token)) !== undefined)) {
+    return true;
+  }
+
+  const { adapters } = ctx.config;
+
+  return verified(async () => (await adapters.getSpaceId?.(ctx.req)) !== undefined);
+};
+
+/** The protected-resource half of OAuth: an MCP call that presents no bearer this server can verify is refused
+ *  with RFC 6750's challenge instead of being served the anonymous surface. That 401 is the whole handshake — it
+ *  is how a host learns the server needs authorization, where its metadata lives and which scopes to ask for, and
+ *  a 200 tells it none of that. Only the JSON-RPC POST is guarded: the CORS preflight, the GET 405 and the
+ *  discovery probes carry no credential and must keep answering as they do.
+ *
+ *  Mounted only when `oauth` is configured. A deployment that configures none keeps the open server it had, where
+ *  the whole public surface — handshake, listings, the guide, plitzi_render — answers without a token; with OAuth
+ *  on, the grant that carries no space is what covers that same ground. */
+export const oauthGuardStage: Stage = async ctx => {
+  const { oauth } = ctx.config;
+  if (!oauth || ctx.req.method !== 'POST') {
+    return false;
+  }
+
+  const token = bearerOf(ctx.req);
+  if (token && (await isAuthorized(oauth, ctx, token))) {
+    return false;
+  }
+
+  sendChallenge(
+    oauth,
+    ctx.req,
+    ctx.res,
+    token ? 'The access token is invalid, expired or revoked.' : 'Authorization is required to use this server.'
+  );
 
   return true;
 };

@@ -474,7 +474,13 @@ export type OAuthConsentView = {
  *  authorization code with PKCE). ENTIRELY OPTIONAL: without this config no endpoint is mounted, discovery keeps
  *  answering 404 and the server stays anonymous, which is a working setup — the public surface (handshake, tool
  *  and resource listing, the guide, plitzi_render) never needed a token. Configure it only to let a remote host
- *  that cannot send custom headers — Claude Desktop, ChatGPT — obtain a space-scoped one. */
+ *  that cannot send custom headers — Claude Desktop, ChatGPT — obtain a space-scoped one.
+ *
+ *  Configuring it also protects the MCP endpoint: a JSON-RPC call that presents no verifiable bearer is answered
+ *  with RFC 6750's 401 challenge rather than the anonymous surface, because that 401 is the only thing a host runs
+ *  its flow off — it ignores a `WWW-Authenticate` header on a 200, and a server that never sends one is treated as
+ *  needing no authorization at all, leaving a completed grant with nowhere to attach. Offer a grant target that
+ *  carries no space ({@link OAuthGrantTarget}) so the public surface stays one consent away. */
 export type OAuthConfig = {
   adapters: OAuthAdapters;
   /** The issuer/resource identifier published in the metadata documents. Defaults to the origin the request came

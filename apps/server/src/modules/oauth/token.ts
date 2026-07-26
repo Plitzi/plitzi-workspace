@@ -1,7 +1,7 @@
 import { scopesOf } from './metadata';
 import { field, optionalField } from './params';
 import { randomId, verifyChallenge } from './pkce';
-import { dropCode, dropRefresh, getCode, getRefresh, putRefresh } from './records';
+import { dropCode, dropRefresh, getCode, getRefresh, putAccess, putRefresh } from './records';
 import { sendErrorJson, sendJson } from './respond';
 
 import type { OAuthParams } from './params';
@@ -9,6 +9,10 @@ import type { RefreshRecord } from './records';
 import type { OAuthConfig, SSRResponseHelpers } from '@plitzi/sdk-shared';
 
 const DEFAULT_REFRESH_TTL_SECONDS = 60 * 60 * 24 * 30;
+
+// How long a bearer stays verifiable when the consumer states no lifetime for it. The record IS the expiry in
+// that case, and reaching it costs the client nothing worse than one 401 it answers by refreshing.
+const DEFAULT_ACCESS_TTL_SECONDS = 60 * 60 * 24 * 30;
 
 const refreshTtlOf = (config: OAuthConfig): number => config.refreshTtlSeconds ?? DEFAULT_REFRESH_TTL_SECONDS;
 
@@ -29,6 +33,16 @@ const sendTokens = async (
     token_type: 'Bearer',
     scope: scopeOf(config, grant.scope)
   };
+
+  // Recorded before it is handed out: this is what lets the resource side recognise the bearer on the way back in
+  // (see records.AccessRecord) and answer anything else with a challenge. Never zero — a store cannot hold an
+  // entry for no time at all, and a bearer already at its expiry is one the guard should refuse anyway.
+  await putAccess(
+    config.adapters.store,
+    token,
+    { clientId: grant.clientId, user: grant.user, target: grant.target },
+    Math.max(expiresInSeconds ?? DEFAULT_ACCESS_TTL_SECONDS, 1)
+  );
 
   if (expiresInSeconds !== undefined) {
     body['expires_in'] = expiresInSeconds;

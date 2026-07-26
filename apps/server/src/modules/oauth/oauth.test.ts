@@ -5,7 +5,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { createMCPServer } from '../../core/server/mcpServer';
 
-import type { OAuthAdapters, OAuthStore, SSRAdapters, SSRServer } from '@plitzi/sdk-shared';
+import type { OAuthAdapters, OAuthStore, SSRAdapters, SSRRequest, SSRServer } from '@plitzi/sdk-shared';
 
 /** The whole grant, driven exactly as a remote host drives it: register, open the consent screen, sign in, choose
  *  what to grant, redeem the code, refresh. Anything a host would hit as a dead end fails here first. */
@@ -16,9 +16,15 @@ const REDIRECT_URI = 'https://claude.ai/api/mcp/auth_callback';
 // port this binds to is also what the metadata documents must advertise.
 let BASE = '';
 
+// A platform-issued space token, the credential the builder and the CLI already hold: it never went through the
+// grant, so the resource adapters are the only thing that can recognise it.
+const PLATFORM_TOKEN = 'platform-space-token';
+
 const adapters = {
   getOfflineData: () => Promise.resolve(undefined),
-  getSpaceDeployment: () => Promise.resolve({ spaceId: 1, environment: 'main', revision: 0 })
+  getSpaceDeployment: () => Promise.resolve({ spaceId: 1, environment: 'main', revision: 0 }),
+  getSpaceId: (req: SSRRequest) =>
+    Promise.resolve(req.headers.authorization === `Bearer ${PLATFORM_TOKEN}` ? 1 : undefined)
 } as unknown as SSRAdapters;
 
 const memoryStore = (): OAuthStore => {
@@ -159,10 +165,13 @@ describe('MCP OAuth discovery', () => {
     expect(await response.json()).toMatchObject({ resource: BASE, authorization_servers: [BASE] });
   });
 
-  it('answers the same document under the resource path RFC 9728 allows', async () => {
+  // A host compares `resource` against the URL the user typed, path and all, so the document asked for under a
+  // path must describe THAT url — a dedicated MCP server answers JSON-RPC on every path, so both are real.
+  it('answers under the resource path RFC 9728 allows, naming that path as the resource', async () => {
     const response = await fetch(`${BASE}/.well-known/oauth-protected-resource/mcp`);
 
     expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ resource: `${BASE}/mcp`, authorization_servers: [BASE] });
   });
 
   // TLS is terminated by the dev gateway / k8s ingress and the hop to this server is plain HTTP, so the issuer can
@@ -189,6 +198,15 @@ describe('MCP OAuth discovery', () => {
       code_challenge_methods_supported: ['S256'],
       token_endpoint_auth_methods_supported: ['none']
     });
+  });
+
+  // A host only asks for a refresh token when the server says it grants them, and this is where it looks.
+  it('advertises offline_access while refresh grants are issued', async () => {
+    const response = await fetch(`${BASE}/.well-known/oauth-authorization-server`);
+    const metadata = (await response.json()) as { scopes_supported: string[]; grant_types_supported: string[] };
+
+    expect(metadata.scopes_supported).toContain('offline_access');
+    expect(metadata.grant_types_supported).toContain('refresh_token');
   });
 });
 
@@ -389,19 +407,86 @@ describe('MCP OAuth token exchange', () => {
   });
 });
 
-describe('MCP OAuth alongside the MCP endpoint', () => {
-  it('leaves the JSON-RPC endpoint answering at the root', async () => {
-    const response = await fetch(BASE, {
+/** The protected-resource side. A host runs its OAuth flow off the 401 and nothing else: served the public surface
+ *  instead, it never learns the server takes credentials, and the grant a user completes has nowhere to land — the
+ *  flow succeeds and the connector still reports that authorization failed. */
+describe('MCP endpoint under OAuth', () => {
+  const initialize = JSON.stringify({
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'initialize',
+    params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'probe', version: '1' } }
+  });
+
+  const callMcp = (token?: string): Promise<Response> =>
+    fetch(BASE, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'initialize',
-        params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'probe', version: '1' } }
-      })
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json, text/event-stream',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: initialize
     });
 
+  const bearerFromGrant = async (): Promise<string> => {
+    const secret = verifier();
+    const clientId = await registerClient();
+    const redirect = await grantCode(clientId, challengeFor(secret));
+    const granted = (await (
+      await exchange({
+        grant_type: 'authorization_code',
+        client_id: clientId,
+        code: redirect.searchParams.get('code') ?? '',
+        code_verifier: secret
+      })
+    ).json()) as { access_token: string };
+
+    return granted.access_token;
+  };
+
+  beforeEach(() => {
+    store = memoryStore();
+  });
+
+  it('challenges an unauthenticated call with a 401 that names the resource metadata', async () => {
+    const response = await callMcp();
+    const challenge = response.headers.get('www-authenticate') ?? '';
+
+    expect(response.status).toBe(401);
+    expect(challenge.startsWith('Bearer ')).toBe(true);
+    expect(challenge).toContain(`resource_metadata="${BASE}/.well-known/oauth-protected-resource"`);
+    expect(challenge).toContain('error="invalid_token"');
+    expect(challenge).toContain('scope="plitzi"');
+    // A host running in a browser must be allowed to read the header, not just receive it.
+    expect(response.headers.get('access-control-allow-origin')).toBe('*');
+    expect(response.headers.get('access-control-expose-headers')).toContain('WWW-Authenticate');
+  });
+
+  it('serves the endpoint once the bearer from the grant is presented', async () => {
+    const response = await callMcp(await bearerFromGrant());
+
     expect(response.status).toBe(200);
+    expect(await response.text()).toContain('"result"');
+  });
+
+  it('challenges a bearer it never issued, so a host refreshes instead of running as a guest', async () => {
+    const response = await callMcp('made-up-token');
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get('www-authenticate')).toContain('resource_metadata=');
+  });
+
+  it('accepts a token the resource adapters vouch for, which is how the builder and the CLI connect', async () => {
+    const response = await callMcp(PLATFORM_TOKEN);
+
+    expect(response.status).toBe(200);
+  });
+
+  it('leaves the CORS preflight answering, since a challenge on it tells a host nothing', async () => {
+    const response = await fetch(BASE, { method: 'OPTIONS' });
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get('access-control-allow-origin')).toBe('*');
   });
 });
