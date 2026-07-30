@@ -36,10 +36,17 @@ export const resourceMetadataUrl = (config: OAuthConfig, req: SSRRequest): strin
  *  describes `https://host/mcp` while the bare path describes the origin.
  *
  *  A server mounted at the ORIGIN is `https://host/`, WITH the trailing slash: a host parses the URL the user
- *  typed before it does anything with it, and an empty path renders as `/` — that normalized form is what the
- *  client sends back as the `resource` parameter (asserted in the connector e2e). A document claiming to be
- *  `https://host` then disagrees with the request made against it, and Claude's connector drops the grant it
- *  just completed — it takes the token and never opens the session. */
+ *  typed before it does anything with it, and an empty path renders as `/` — Claude's connector was observed
+ *  asking for exactly `resource=https%3A%2F%2Fhost%2F`, so that is the form the document must claim.
+ *
+ *  It does NOT make a bare-origin connector work, and nothing here can. Claude's remote-connector service will
+ *  not open a session against an MCP endpoint whose URL has no path: the whole grant succeeds — discovery,
+ *  registration, consent, a 200 from /token with the scope it asked for — and then it reports
+ *  `McpAuthorizationError` ("the integration rejected the credentials it just issued") without ever presenting
+ *  the bearer. Verified against the same deployment, minutes apart: at /mcp the token is followed by
+ *  `initialize`, at / nothing follows it, in the ingress log as well as this server's. Claiming `https://host/mcp`
+ *  from the bare document would only fail sooner — a client checks that the resource it is handed is no MORE
+ *  specific than the URL it holds. Publish the connector URL WITH its path. */
 export const protectedResourceMetadata = (config: OAuthConfig, req: SSRRequest): Record<string, unknown> => {
   const issuer = issuerOf(config, req);
   const suffix = canonicalPath(req.path.slice(PROTECTED_RESOURCE_PATH.length));

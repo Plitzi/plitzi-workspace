@@ -207,8 +207,8 @@ const exchange = (fields: Record<string, string>): Promise<Response> =>
 
 describe('MCP OAuth discovery', () => {
   // `resource` names the origin WITH its trailing slash, which is the form a client sends back in the `resource`
-  // parameter (it parses the URL first, and an empty path renders as `/`). Dropping the slash is what left the
-  // root-mounted connector taking the token and never opening a session, while the /mcp one below connected.
+  // parameter (it parses the URL first, and an empty path renders as `/`) — Claude was observed asking for
+  // exactly that. It is still no help to a bare-origin connector; see protectedResourceMetadata for why.
   it('publishes the protected-resource document a host asks for first', async () => {
     const response = await fetch(`${BASE}/.well-known/oauth-protected-resource`);
 
