@@ -133,6 +133,12 @@ export const renderTool = defineTool({
     'in order. (To attach to something you already made, use a top-level parentRef:"<existing ref>" instead.)\n' +
     '2. STYLE — declare reusable classes with upsertDefinition { ref, desktop:{ …CSS props in kebab-case… } }, then ' +
     'attach via the element style:{ base:["<class ref>"] }. Lay containers out with flex/grid.\n' +
+    '2b. LAYOUT — it renders in a side panel, so width is free and HEIGHT is scarce. Plain containers stack ' +
+    'children vertically, which is the tall half-empty default to avoid: put peers (metrics, plans, options, ' +
+    'image + text) in a wrapping row — display:flex, flex-direction:row, flex-wrap:wrap, children flex-grow:"1" + ' +
+    'flex-basis:"0%" + min-width — or a grid with grid-template-columns:"repeat(auto-fit, minmax(160px, 1fr))". ' +
+    'Keep padding 12-16px and gap 8-12px, and let the outer container fill the panel. Stack only what reads in ' +
+    'order (heading over paragraph, forms, steps, prose).\n' +
     '3. CONTENT — visible copy goes in props.content (text, heading, paragraph, button); heading level is the ' +
     'element subType ("h1".."h6"); image/video take props.src. An unknown prop comes back as a warning naming the ' +
     'right one.\n\n' +

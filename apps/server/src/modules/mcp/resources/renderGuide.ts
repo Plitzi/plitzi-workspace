@@ -80,7 +80,7 @@ Styling is separate from structure: declare a class, then attach it by ref.
 - CSS properties in **kebab-case** (\`background-color\`, \`font-size\`, \`border-radius\`), values as plain strings.
 - Attach to an element via \`style: { "base": ["card"] }\`. Stack classes: \`"base": ["card", "shadow"]\`.
 - One \`ref\` can name both an element and its class (as above) — they live in different namespaces.
-- Lay containers out with flexbox: \`{ "display": "flex", "flex-direction": "column", "gap": "12px" }\`.
+- Lay containers out with flexbox or grid — pick the direction on purpose, see **Fit the panel** below.
 - **Mind the intrinsic display.** Some types start non-block: \`text\` is \`display: inline\`, so to stack or size it,
   wrap it in a \`container\` (or set \`display: block\`). \`heading\` and \`paragraph\` are already block.
 - **Use atomic longhands.** \`padding\`, \`margin\`, \`border\`, \`border-radius\` are fine (they expand cleanly), but
@@ -91,6 +91,35 @@ Styling is separate from structure: declare a class, then attach it by ref.
 - **Interactive states:** nest under \`states\` keyed by pseudo-class, each with its own breakpoint block —
   \`{ "desktop": { "background-color": "#3b82f6" }, "states": { "hover": { "desktop": { "background-color": "#2563eb" } } } }\`
   (\`hover\`, \`active\`, \`focus\`).
+
+## Fit the panel — go wide, stay short
+
+The widget renders in a **side panel** (Claude Desktop, ChatGPT, the Plitzi builder), so it gets a usable width but
+very little height: everything past the first screenful costs the user a scroll. Height is the scarce resource —
+spend width instead.
+
+Plain containers are blocks, so doing nothing stacks children **vertically** and produces exactly the tall,
+half-empty widget to avoid. Choose the axis every time:
+
+- **Peers side by side** — metrics, plans, options, a comparison, an image next to its text: a row, wrapping when
+  it runs out of width, children sharing it (no fixed widths).
+  \`\`\`json
+  { "type": "upsertDefinition", "ref": "row", "desktop": { "display": "flex", "flex-direction": "row", "flex-wrap": "wrap", "gap": "12px", "align-items": "stretch" } }
+  { "type": "upsertDefinition", "ref": "col", "desktop": { "flex-grow": "1", "flex-basis": "0%", "min-width": "150px" } }
+  \`\`\`
+  \`flex-grow: 1\` + \`flex-basis: 0%\` splits the row evenly; \`min-width\` is the wrap threshold — under it the item
+  drops to the next line by itself, so a narrow panel degrades gracefully with no breakpoints.
+- **Many uniform items** — cards, tiles, a gallery: one grid line does it all.
+  \`\`\`json
+  { "type": "upsertDefinition", "ref": "grid", "desktop": { "display": "grid", "grid-template-columns": "repeat(auto-fit, minmax(160px, 1fr))", "gap": "12px" } }
+  \`\`\`
+- **Label + value pairs** stay on one line (\`display: flex\`, \`justify-content: space-between\`) instead of two.
+- **Vertical is right** for reading order: a heading over its paragraph, a form, a step list, long prose.
+- Force a stack on tiny screens with the \`mobile\` block: \`"mobile": { "flex-direction": "column" }\`.
+
+Keep it compact, and the numbers low: \`padding\` 12–16px (24+ only on a single hero card), \`gap\` 8–12px,
+\`font-size\` 13–15px for body and 16–20px for headings. Let the outer container **fill** the panel — no \`width\` on
+it — and reach for \`max-width\` only to stop one lone card from stretching across the whole panel.
 
 ## Element types (type → what to set)
 
@@ -115,21 +144,31 @@ that is not here (lists, tabs, dialogs, forms, icons…).
 \`image\`/\`video\` \`src\` accepts any \`https\` URL, or a \`data:\`/\`blob:\` URI for a fully self-contained graphic
 (e.g. an inline SVG icon or a base64 image) — both render with no extra setup.
 
-## Full worked example — a pricing card
+## Full worked example — two plans side by side
+
+The cards sit in a wrapping row and split it evenly, so the widget uses the panel's width and stays short; on a
+narrow panel \`min-width\` drops the second card under the first on its own.
 
 \`\`\`json
 {
   "operations": [
-    { "type": "upsertDefinition", "ref": "card", "desktop": { "display": "flex", "flex-direction": "column", "gap": "8px", "padding": "24px", "background-color": "#ffffff", "border-radius": "12px", "width": "260px", "text-align": "center", "box-shadow": "0 4px 20px rgba(0,0,0,0.08)" } },
-    { "type": "upsertDefinition", "ref": "price", "desktop": { "font-size": "36px", "font-weight": "800", "color": "#3b82f6" } },
-    { "type": "upsertDefinition", "ref": "cta", "desktop": { "background-color": "#3b82f6", "color": "#ffffff", "padding": "12px 20px", "border-radius": "8px", "font-weight": "600" }, "states": { "hover": { "desktop": { "background-color": "#2563eb" } } } },
+    { "type": "upsertDefinition", "ref": "plans", "desktop": { "display": "flex", "flex-direction": "row", "flex-wrap": "wrap", "gap": "12px", "align-items": "stretch" } },
+    { "type": "upsertDefinition", "ref": "card", "desktop": { "display": "flex", "flex-direction": "column", "gap": "6px", "flex-grow": "1", "flex-basis": "0%", "min-width": "150px", "padding": "16px", "background-color": "#ffffff", "border-radius": "12px", "text-align": "center", "box-shadow": "0 4px 20px rgba(0,0,0,0.08)" } },
+    { "type": "upsertDefinition", "ref": "price", "desktop": { "font-size": "28px", "font-weight": "800", "color": "#3b82f6" } },
+    { "type": "upsertDefinition", "ref": "cta", "desktop": { "background-color": "#3b82f6", "color": "#ffffff", "padding": "10px 16px", "border-radius": "8px", "font-weight": "600" }, "states": { "hover": { "desktop": { "background-color": "#2563eb" } } } },
     { "type": "upsertElement", "pageRef": "render", "element": {
-        "ref": "card", "type": "container", "style": { "base": ["card"] },
+        "ref": "plans", "type": "container", "style": { "base": ["plans"] },
         "children": [
-          { "ref": "plan",   "type": "heading",   "subType": "h3", "props": { "content": "Pro" } },
-          { "ref": "amount", "type": "text",      "props": { "content": "$29/mo" }, "style": { "base": ["price"] } },
-          { "ref": "feat",   "type": "paragraph", "props": { "content": "Unlimited projects" } },
-          { "ref": "buy",    "type": "button",    "props": { "content": "Start free trial" }, "style": { "base": ["cta"] } }
+          { "ref": "free", "type": "container", "style": { "base": ["card"] }, "children": [
+            { "ref": "free-plan",   "type": "heading", "subType": "h3", "props": { "content": "Starter" } },
+            { "ref": "free-amount", "type": "text",    "props": { "content": "$0" }, "style": { "base": ["price"] } },
+            { "ref": "free-buy",    "type": "button",  "props": { "content": "Start free" }, "style": { "base": ["cta"] } }
+          ] },
+          { "ref": "pro", "type": "container", "style": { "base": ["card"] }, "children": [
+            { "ref": "pro-plan",   "type": "heading", "subType": "h3", "props": { "content": "Pro" } },
+            { "ref": "pro-amount", "type": "text",    "props": { "content": "$29/mo" }, "style": { "base": ["price"] } },
+            { "ref": "pro-buy",    "type": "button",  "props": { "content": "Start free trial" }, "style": { "base": ["cta"] } }
+          ] }
         ]
     } }
   ]
