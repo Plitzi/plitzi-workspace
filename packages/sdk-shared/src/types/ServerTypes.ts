@@ -317,8 +317,10 @@ export type SSRServerConfig = {
   rsc?: SSRRscConfig;
   /** MCP (Model Context Protocol) server configuration — exposes schema tools to Claude. */
   mcp?: McpServerConfig;
-  /** AI-native MCP server — replaces the standard MCP with a zero-hallucination batch protocol.
-   *  When enabled, requests to the MCP path serve the AI-native server instead. */
+  /** AI-native MCP server — replaces the standard MCP with a zero-hallucination batch protocol. `path` is where
+   *  it answers inside a server that also serves pages (default /mcp); a dedicated MCP server (createMCPServer)
+   *  owns its whole origin and ignores it. Note that createSSRServer mounts no MCP whatever this says — a
+   *  process that serves both surfaces is built with createServer. */
   mcpAi?: {
     enabled?: boolean;
     path?: string;
@@ -346,7 +348,8 @@ export type SSRServerConfig = {
   /** Which request-handling services this server mounts. Each maps to an internal `create<Name>Server` unit,
    *  so new services scale without rewriting the dispatcher. Omitted flags fall back to sensible defaults:
    *  ssr on, rsc when `adapters.getRscData` exists, mcp from `mcpAi.enabled`. `ai` is a reserved slot (not
-   *  wired yet). The per-service presets (createSSRServer / createMCPServer) pin these flags for you. */
+   *  wired yet). Only createServer reads these as written — the surface factories pin what their name promises
+   *  (createSSRServer: no mcp; createMCPServer: mcp alone). */
   services?: ServerServices;
   /** Liveness/readiness endpoint for standalone servers (k8s probes). A stage always answers `path`
    *  (default /health) with 200. The body is the generic identity payload built from `name`/`version`/`role`

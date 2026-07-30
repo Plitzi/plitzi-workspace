@@ -206,11 +206,14 @@ const exchange = (fields: Record<string, string>): Promise<Response> =>
   });
 
 describe('MCP OAuth discovery', () => {
+  // `resource` names the origin WITH its trailing slash, which is the form a client sends back in the `resource`
+  // parameter (it parses the URL first, and an empty path renders as `/`). Dropping the slash is what left the
+  // root-mounted connector taking the token and never opening a session, while the /mcp one below connected.
   it('publishes the protected-resource document a host asks for first', async () => {
     const response = await fetch(`${BASE}/.well-known/oauth-protected-resource`);
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({ resource: BASE, authorization_servers: [BASE] });
+    expect(await response.json()).toMatchObject({ resource: `${BASE}/`, authorization_servers: [BASE] });
   });
 
   // A host compares `resource` against the URL the user typed, path and all, so the document asked for under a

@@ -17,8 +17,8 @@ export const issuerOf = (config: OAuthConfig, req: SSRRequest): string => config
 
 export const scopesOf = (config: OAuthConfig): string[] => config.scopes ?? DEFAULT_SCOPES;
 
-// A path as it belongs in a resource identifier: no trailing slash, and the root reduced to nothing — the
-// canonical form a host compares against (`https://host`, never `https://host/`).
+// A path as it belongs in a resource identifier: no trailing slash. An empty result means the root, which
+// {@link protectedResourceMetadata} renders as `/` — see there for why.
 const canonicalPath = (path: string): string => path.replace(/\/+$/, '');
 
 /** Where the challenge points a host, for an MCP endpoint served at `req.path`. RFC 9728 §3.1 appends the
@@ -33,13 +33,19 @@ export const resourceMetadataUrl = (config: OAuthConfig, req: SSRRequest): strin
  *
  *  `resource` echoes the path the document was asked for: Claude requires it to match the server URL the user
  *  typed, path included, and a dedicated MCP server answers JSON-RPC on every path — so `/.well-known/…/mcp`
- *  describes `https://host/mcp` while the bare path describes the origin. */
+ *  describes `https://host/mcp` while the bare path describes the origin.
+ *
+ *  A server mounted at the ORIGIN is `https://host/`, WITH the trailing slash: a host parses the URL the user
+ *  typed before it does anything with it, and an empty path renders as `/` — that normalized form is what the
+ *  client sends back as the `resource` parameter (asserted in the connector e2e). A document claiming to be
+ *  `https://host` then disagrees with the request made against it, and Claude's connector drops the grant it
+ *  just completed — it takes the token and never opens the session. */
 export const protectedResourceMetadata = (config: OAuthConfig, req: SSRRequest): Record<string, unknown> => {
   const issuer = issuerOf(config, req);
   const suffix = canonicalPath(req.path.slice(PROTECTED_RESOURCE_PATH.length));
 
   return {
-    resource: `${issuer}${suffix}`,
+    resource: `${issuer}${suffix || '/'}`,
     authorization_servers: [issuer],
     scopes_supported: scopesOf(config),
     bearer_methods_supported: ['header']

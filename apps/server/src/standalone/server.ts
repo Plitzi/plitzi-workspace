@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { createSSRServer } from '../core/createServer';
+import { createServer } from '../core/createServer';
 import { consoleLogger } from '../helpers/serverLog';
 
 import type {
@@ -22,6 +22,18 @@ import type {
 
 const PORT = parseInt(process.env.SSR_PORT ?? '3002', 10);
 const HOST = process.env.SSR_HOST ?? '0.0.0.0';
+
+const enabled = (name: string): boolean => !['0', 'false'].includes((process.env[name] ?? '').toLowerCase());
+
+/** Which surfaces this run serves — all three unless the environment says otherwise, so the harness can exercise
+ *  one at a time against the same sample space. Turning both page surfaces off (`SSR_ENABLED=0 RSC_ENABLED=0`)
+ *  leaves an MCP-only config, which createServer hands to the dedicated MCP server: it then answers JSON-RPC on
+ *  every path rather than under /mcp, which is the shape a real MCP deployment has. */
+const services = {
+  ssr: enabled('SSR_ENABLED'),
+  rsc: enabled('RSC_ENABLED'),
+  mcp: enabled('MCP_ENABLED')
+};
 
 const spacePath = () => path.resolve(__dirname, 'schemas/basic', 'space.json');
 const stylePath = () => path.resolve(__dirname, 'schemas/basic', 'style.json');
@@ -115,7 +127,9 @@ const adapters: SSRAdapters = {
   saveStyle
 };
 
-const server = createSSRServer({
+// The harness serves whichever surfaces `services` enables from a single port — pages, RSC and mcp-ai under
+// /mcp — so it is the general factory it asks for, not the page one.
+const server = createServer({
   port: PORT,
   host: HOST,
   frameOptions: 'SAMEORIGIN',
@@ -124,7 +138,7 @@ const server = createSSRServer({
     '/sdk-assets': path.resolve(process.cwd(), '../sdk/dist')
   },
   httpVersion: 1,
-  mcpAi: { enabled: true },
+  services,
   // This is the package's own dev harness, so the log is always on: every page, asset, RSC and MCP hit shows up in
   // the terminal, tool calls and resource reads included. Set LOG_REQUESTS=0 for a quiet run.
   logger: process.env.LOG_REQUESTS === '0' ? undefined : consoleLogger,
@@ -137,5 +151,11 @@ const server = createSSRServer({
   },
   adapters
 });
+
+// Says what this run actually serves: with the surfaces switchable, "listening on 3002" no longer tells you.
+const active = Object.entries(services)
+  .filter(([, on]) => on)
+  .map(([name]) => name);
+console.log(`[standalone] services: ${active.join(', ') || 'none'}`);
 
 server.listen(PORT, HOST);

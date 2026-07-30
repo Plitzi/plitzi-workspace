@@ -12,10 +12,12 @@ import { builtinPublicStage, configStaticStage, publicDirStage, wellKnownStage }
 import type { ResolvedServices } from './resolve';
 import type { BaseContext, SSRContext, Stage } from '../http/types';
 
-// The full page-serving pipeline. This is the single place that decides which stages a page server runs, so no
+// The page-serving pipeline. This is the single place that decides which stages a page server runs, so no
 // stage — and not the dispatcher — branches on which services are enabled. Order matters: static assets first,
-// then MCP (self-authenticating) before the auth middleware chain, then the data services.
-export const buildSSRPipeline = (services: ResolvedServices): Stage<SSRContext>[] => {
+// then MCP (self-authenticating) before the auth middleware chain, then the data services. `services.mcp` is
+// only ever set here by createServer: createSSRServer pins it off, and a dedicated MCP server runs the pipeline
+// below instead.
+export const buildPagePipeline = (services: ResolvedServices): Stage<SSRContext>[] => {
   const stages: Stage<SSRContext>[] = [
     healthStage,
     builtinPublicStage,
