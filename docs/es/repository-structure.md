@@ -19,7 +19,6 @@ plitzi-workspace/
 │   ├── sdk-plugins/
 │   ├── sdk-schema/
 │   ├── sdk-shared/      # ESLint, TSConfig, tipos y utilidades compartidas
-│   ├── nexus/     # Store React — Nexus (useSyncExternalStore)
 │   ├── sdk-style/
 │   └── sdk-variables/
 ├── docs/
@@ -51,5 +50,5 @@ Los paquetes en `packages/sdk-*` son librerías del workspace importadas por las
 |------|-----------|
 | Guías del monorepo | `docs/en/` o `docs/es/` |
 | API del servidor SSR | `apps/server/README.md` (inglés) |
-| API del store (Nexus) | `packages/nexus/README.md` (inglés) |
+| API del store (Nexus) | [Plitzi/nexus](https://github.com/Plitzi/nexus) (repositorio aparte, en inglés) |
 | Convenciones de código | `claude.md` |

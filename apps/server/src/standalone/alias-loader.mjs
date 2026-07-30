@@ -22,7 +22,6 @@ const packages = {
   '@plitzi/sdk-shared': path.join(root, '../../packages/sdk-shared/src'),
   '@plitzi/sdk-style': path.join(root, '../../packages/sdk-style/src'),
   '@plitzi/sdk-variables': path.join(root, '../../packages/sdk-variables/src'),
-  '@plitzi/nexus': path.join(root, '../../packages/nexus/src'),
   '@plitzi/plitzi-sdk': path.join(root, '../sdk/src'),
   '@plitzi/plitzi-builder': path.join(root, '../builder/src'),
   // '@plitzi/plitzi-ui': path.join(root, '../../../plitzi-ui/src')

@@ -45,7 +45,6 @@ Plitzi is an open-source **web application builder** designed to empower develop
 │  ├─ sdk-plugins/      # Plugin system
 │  ├─ sdk-schema/       # Schema utilities
 │  ├─ sdk-shared/       # Shared utilities and types
-│  ├─ nexus/        # Global state store (Nexus)
 │  ├─ sdk-style/        # Styling system
 │  └─ sdk-variables/    # Variable management
 ├─ docs/

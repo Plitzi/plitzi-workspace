@@ -772,7 +772,7 @@
   "type": "module",
   "sideEffects": false,
   "dependencies": {
-    "@plitzi/nexus": "workspace:*",
+    "@plitzi/nexus": "^1.0.0",
     "@plitzi/plitzi-ui": "^1.6.18",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
@@ -792,7 +792,7 @@
     "eslint": "^9.39.5",
     "react": "^19.2.8",
     "typescript": "^6.0.3",
-    "vite": "^8.1.5",
+    "vite": "^8.2.0",
     "vitest": "^4.1.10"
   }
 }

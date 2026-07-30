@@ -42,7 +42,6 @@ apps/
   server/           # Server app
 packages/
   sdk-shared/       # Shared ESLint + TSConfig base configs
-  nexus/        # State management library (Nexus)
   sdk-auth/
   sdk-collections/
   sdk-dev-tools/

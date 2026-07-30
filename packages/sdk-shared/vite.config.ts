@@ -97,7 +97,11 @@ export default defineConfig(({ mode, command }) => {
         //     '@hooks': path.resolve(__dirname, './src/hooks'),
         //     '@': resolve(__dirname, './src'),
       },
-      extensions: ['.js', '.ts', '.tsx', '.mjs']
+      extensions: ['.js', '.ts', '.tsx', '.mjs'],
+      // `@plitzi/nexus` lives in its own repo and is linked through a portal, so it carries its own
+      // node_modules/react. Without deduping, its hooks run against a second React copy and every
+      // useContext reads a null dispatcher.
+      dedupe: ['react', 'react-dom']
     },
     build: {
       // outDir: 'dist/src',

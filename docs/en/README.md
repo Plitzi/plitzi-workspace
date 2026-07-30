@@ -17,7 +17,7 @@ Some packages maintain their own README next to the source:
 | Package | Path |
 |---------|------|
 | SSR server | [apps/server/README.md](../../apps/server/README.md) |
-| Store (Nexus) | [packages/nexus/README.md](../../packages/nexus/README.md) |
+| Store (Nexus) | Its own repository: [Plitzi/nexus](https://github.com/Plitzi/nexus) |
 
 ## Other languages
 
