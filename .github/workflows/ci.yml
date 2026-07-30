@@ -24,7 +24,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          registry-url: https://npm.pkg.github.com
+          registry-url: https://registry.npmjs.org
           scope: '@plitzi'
           cache: 'yarn'
 
@@ -37,10 +37,10 @@ jobs:
           path: '**/node_modules'
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
 
-      - name: Yarn Token
-        run: |
-          yarn config set 'npmScopes["plitzi"]["npmRegistryServer"]' "https://npm.pkg.github.com/"
-          yarn config set 'npmScopes["plitzi"]["npmAuthToken"]' "${{ secrets.NPM_AUTH_TOKEN }}"
+      # - name: Yarn Token
+      #   run: |
+      #     yarn config set 'npmScopes["plitzi"]["npmRegistryServer"]' "https://npm.pkg.github.com/"
+      #     yarn config set 'npmScopes["plitzi"]["npmAuthToken"]' "${{ secrets.NPM_AUTH_TOKEN }}"
 
       - name: Yarn Install
         if: steps.cache-packages.outputs.cache-hit != 'true'
@@ -58,7 +58,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          registry-url: https://npm.pkg.github.com
+          registry-url: https://registry.npmjs.org
           scope: '@plitzi'
           cache: 'yarn'
 
@@ -94,7 +94,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          registry-url: https://npm.pkg.github.com
+          registry-url: https://registry.npmjs.org
           scope: '@plitzi'
           cache: 'yarn'
 
