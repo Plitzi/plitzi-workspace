@@ -19,9 +19,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apollo/client@npm:^4.2.8":
-  version: 4.2.8
-  resolution: "@apollo/client@npm:4.2.8"
+"@apollo/client@npm:^4.2.9":
+  version: 4.2.9
+  resolution: "@apollo/client@npm:4.2.9"
   dependencies:
     "@graphql-typed-document-node/core": "npm:^3.1.1"
     "@wry/caches": "npm:^1.0.0"
@@ -46,7 +46,7 @@ __metadata:
       optional: true
     subscriptions-transport-ws:
       optional: true
-  checksum: 10c0/ec98549965edc40eba5bd869f2633e6b1097ba5a87d92eb2d0325d8079663ca16cf856e1b1e7767bce47c0d9f617bcf82442fc6dcb3a00b28806be781b827c0a
+  checksum: 10c0/89d22061b58556da51c593fb2be0d8b930805f1c0ffb4720e79d723549777387b388831c3ca5dcc711961bc3ab9dbf0abf5885c5901fef29e7789aef9cead61c
   languageName: node
   linkType: hard
 
@@ -1560,7 +1560,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.28.4, @babel/runtime@npm:^7.29.2, @babel/runtime@npm:^7.5.5":
+"@babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.28.4, @babel/runtime@npm:^7.5.5":
   version: 7.29.7
   resolution: "@babel/runtime@npm:7.29.7"
   checksum: 10c0/ca11572f7146b21e0bde6a9ed4bb6a89eafbee5f0944c7eb54d0d8a2dac962c33638a1d611e14faa71dfbb92b4b5f9236232208568a6b7d5c6f3f39ddb91771e
@@ -2188,15 +2188,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@dr.pogodin/react-helmet@npm:^3.2.2":
-  version: 3.2.2
-  resolution: "@dr.pogodin/react-helmet@npm:3.2.2"
-  dependencies:
-    "@babel/runtime": "npm:^7.29.2"
-    react-compiler-runtime: "npm:^1.0.0"
+"@dr.pogodin/react-helmet@npm:^3.2.3":
+  version: 3.2.3
+  resolution: "@dr.pogodin/react-helmet@npm:3.2.3"
   peerDependencies:
     react: 19
-  checksum: 10c0/da7405774dc01259cddb2ff1c29d60b3cba008edbc07e91cd2c8a4e80b49a3711d87e2be1e2fd7e11c51d164f9bb41868573ab7fce6fb6b4ffdbd8533c75cb04
+  checksum: 10c0/67ce5e8a14ff990fd75ee1f95bb5ea6ac9b0fd83e2a83d77400fd06f1f910adf9e6d5bf16fccf7aaafb75755ac697f7ac809734aab25fe80c52b3bc7c852de6c
   languageName: node
   linkType: hard
 
@@ -3540,7 +3537,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/plitzi-builder@workspace:apps/builder"
   dependencies:
-    "@apollo/client": "npm:^4.2.8"
+    "@apollo/client": "npm:^4.2.9"
     "@babel/compat-data": "npm:^8.0.0"
     "@babel/core": "npm:^8.0.1"
     "@babel/helper-builder-react-jsx-experimental": "npm:^7.12.11"
@@ -3619,7 +3616,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/plitzi-sdk@workspace:apps/sdk"
   dependencies:
-    "@apollo/client": "npm:^4.2.8"
+    "@apollo/client": "npm:^4.2.9"
     "@auth0/auth0-react": "npm:^2.22.1"
     "@babel/compat-data": "npm:^8.0.0"
     "@babel/core": "npm:^8.0.1"
@@ -3633,7 +3630,7 @@ __metadata:
     "@babel/preset-env": "npm:^8.0.2"
     "@babel/preset-react": "npm:^8.0.1"
     "@babel/preset-typescript": "npm:^8.0.1"
-    "@dr.pogodin/react-helmet": "npm:^3.2.2"
+    "@dr.pogodin/react-helmet": "npm:^3.2.3"
     "@fortawesome/fontawesome-free": "npm:^7.3.1"
     "@plitzi/nexus": "npm:^1.0.0"
     "@plitzi/plitzi-ui": "npm:^1.6.18"
@@ -3739,7 +3736,7 @@ __metadata:
     "@changesets/cli": "npm:^2.31.1"
     "@plitzi/plitzi-ui": "npm:^1.6.18"
     "@plitzi/sdk-shared": "workspace:*"
-    "@types/react": "npm:^19.2.17"
+    "@types/react": "npm:^19.2.18"
     eslint: "npm:^9.39.5"
     prettier-plugin-tailwindcss: "npm:^0.8.1"
     react-router: "npm:^8.3.0"
@@ -3913,7 +3910,7 @@ __metadata:
     "@types/ejs": "npm:^3.1.5"
     "@types/jsdom": "npm:^28.0.3"
     "@types/node": "npm:^26.1.2"
-    "@types/react": "npm:^19.2.17"
+    "@types/react": "npm:^19.2.18"
     "@vitejs/plugin-react": "npm:^6.0.5"
     "@vitest/coverage-v8": "npm:^4.1.10"
     ejs: "npm:^6.0.1"
@@ -3954,8 +3951,8 @@ __metadata:
     "@testing-library/react": "npm:^16.3.2"
     "@testing-library/react-hooks": "npm:^8.0.1"
     "@testing-library/user-event": "npm:^14.6.1"
-    "@types/react": "npm:^19.2.17"
-    "@types/react-dom": "npm:^19.2.3"
+    "@types/react": "npm:^19.2.18"
+    "@types/react-dom": "npm:^19.2.4"
     "@vitejs/plugin-react": "npm:^6.0.5"
     "@vitest/coverage-v8": "npm:^4.1.10"
     babel-minify: "npm:^0.5.2"
@@ -5072,21 +5069,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:^19.2.3":
-  version: 19.2.3
-  resolution: "@types/react-dom@npm:19.2.3"
+"@types/react-dom@npm:^19.2.4":
+  version: 19.2.4
+  resolution: "@types/react-dom@npm:19.2.4"
   peerDependencies:
     "@types/react": ^19.2.0
-  checksum: 10c0/b486ebe0f4e2fb35e2e108df1d8fc0927ca5d6002d5771e8a739de11239fe62d0e207c50886185253c99eb9dedfeeb956ea7429e5ba17f6693c7acb4c02f8cd1
+  checksum: 10c0/b7d854ce17bb51a3a067168268a90f0123d10dc490f63f1ff5409f07ac715febeb8f5b7b473404a9d437106571e0312fc2937a945634d590abfc9aa46a14b01b
   languageName: node
   linkType: hard
 
-"@types/react@npm:^19.2.17":
-  version: 19.2.17
-  resolution: "@types/react@npm:19.2.17"
+"@types/react@npm:^19.2.18":
+  version: 19.2.18
+  resolution: "@types/react@npm:19.2.18"
   dependencies:
     csstype: "npm:^3.2.2"
-  checksum: 10c0/bc2c4af96b3e480604424de70d5ebda90c5f4b485df471858c0bc2d7d70364b606ec3c4d8579f94f01aa0c6c0591f56bcf14cba5689f5eea4b74250ccdc3a232
+  checksum: 10c0/d04216172b4b4362b310017c210dfbe019fb4f4e7dffd0313e70b3acb3051d5c3e76e7e84e3cf4c6a3c824993ffadfe3949e589a6398a09d4200e7670e2962de
   languageName: node
   linkType: hard
 
@@ -13662,15 +13659,6 @@ __metadata:
     iconv-lite: "npm:~0.7.0"
     unpipe: "npm:~1.0.0"
   checksum: 10c0/d266678d08e1e7abea62c0ce5864344e980fa81c64f6b481e9842c5beaed2cdcf975f658a3ccd67ad35fc919c1f6664ccc106067801850286a6cbe101de89f29
-  languageName: node
-  linkType: hard
-
-"react-compiler-runtime@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "react-compiler-runtime@npm:1.0.0"
-  peerDependencies:
-    react: ^17.0.0 || ^18.0.0 || ^19.0.0 || ^0.0.0-experimental
-  checksum: 10c0/e081192380ae32d18bebaf341071ae8aecf80f4401b188f80e4b77e8d8995bb4c7175b8c3f75e8307019eac2015edf45c7999f788dcfcd99fdbe2ba9a2d465a4
   languageName: node
   linkType: hard
 

@@ -13,15 +13,15 @@ const renderRequest = (event: Extract<ServerLogEvent, { kind: 'request' }>): str
 const renderTool = (event: Extract<ServerLogEvent, { kind: 'tool' }>): string => {
   const args = event.argsSummary ? ` ${event.argsSummary}` : '';
 
-  return `[mcp] tools/call ${event.name}${args} ${Math.round(event.durationMs)}ms ${outcomeOf(event)}`;
+  return `[MCP] tools/call ${event.name}${args} ${Math.round(event.durationMs)}ms ${outcomeOf(event)}`;
 };
 
 const renderResource = (event: Extract<ServerLogEvent, { kind: 'resource' }>): string =>
-  `[mcp] resources/read ${event.name} ${Math.round(event.durationMs)}ms ${outcomeOf(event)}`;
+  `[MCP] resources/read ${event.name} ${Math.round(event.durationMs)}ms ${outcomeOf(event)}`;
 
 /** One line for any {@link ServerLogEvent}: an HTTP request reads as an access-log line
  *  (`[SSR] 203.0.113.7 GET /pricing 200 12ms ok`), the MCP events as what happened inside one
- *  (`[mcp] tools/call plitzi_apply {operations:[3]} 41ms ok`). Rendering is a pure format — the dispatcher
+ *  (`[MCP] tools/call plitzi_apply {operations:[3]} 41ms ok`). Rendering is a pure format — the dispatcher
  *  already stripped query values, collected no headers, cookies or tokens and summarised tool args by shape;
  *  the client IP it does carry is personal data, so a sink that persists these lines must say so. */
 export const renderLogEvent = (event: ServerLogEvent): string => {
