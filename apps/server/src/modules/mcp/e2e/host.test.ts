@@ -86,14 +86,14 @@ describe('MCP Apps host (the ui:// page running against a real AppBridge)', () =
     'surfaces a failed render as a readable panel instead of a blank frame',
     async () => {
       const result = await callRender(endpoint, [
-        { type: 'upsertDefinition', ref: 'bad', desktop: { flex: '1 1 auto' } }
+        { type: 'upsertDefinition', ref: 'bad', desktop: { 'not-a-real-css-prop': 'value' } }
       ]);
       const host = await startRenderingHost(page);
 
       await host.showResult(result);
 
       expect(host.text()).toContain('Render failed');
-      expect(host.text()).toContain('flex-grow');
+      expect(host.text()).toContain('not-a-real-css-prop');
       host.close();
     },
     HANDSHAKE_TIMEOUT

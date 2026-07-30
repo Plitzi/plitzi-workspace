@@ -1,5 +1,5 @@
 import { envelope } from './envelope';
-import { buildTypeRegistry, cssProperties } from '../catalogs';
+import { buildTypeRegistry, cssProperties, cssShorthands } from '../catalogs';
 import { cssPropertiesUri, guideUri, typesUri } from '../helpers';
 import { guideText } from '../helpers/guide';
 
@@ -18,7 +18,7 @@ export const readCoreResource = (space: Space, uri: string): ResourceEnvelope<un
   }
 
   if (uri === cssPropertiesUri) {
-    return envelope(cssProperties);
+    return envelope({ properties: cssProperties, shorthands: cssShorthands });
   }
 
   return undefined;

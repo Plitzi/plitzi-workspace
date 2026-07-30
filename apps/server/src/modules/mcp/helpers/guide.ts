@@ -16,8 +16,9 @@ export const serverInstructions =
   'Refs accept a semantic idRef ([A-Za-z0-9_-] starting with a letter, unique, chosen by you) or the raw id — the ' +
   'idRef is ALSO the ' +
   'runtime wiring key, so a provider source is `<type>_<idRef>.<field>`, visible to the provider’s DESCENDANTS only ' +
-  '(bind inside its subtree). CSS is kebab-case and ATOMIC (shorthands like border/padding expanded; compound ones ' +
-  'like flex/background/font rejected — use longhands); style vars are var(--name), schema vars are {{name}}. ' +
+  '(bind inside its subtree). CSS is plain kebab-case — write shorthands freely (`border: 1px solid red`, ' +
+  '`padding: 8px 16px`, `font: bold 16px/1.5 Arial`), they are expanded to longhands for you and STORED that way, ' +
+  'so read-back shows the longhands; style vars are var(--name), schema vars are {{name}}. ' +
   'READERS — do not confuse them: MCP *resources* are the browsable catalog (list them, or open one by URI); ' +
   'plitzi_search FINDS refs by label/type/attribute; plitzi_read BATCH-fetches URIs you already hold. Reach for ' +
   'search/read to work; browse resources to discover. ' +
@@ -50,10 +51,12 @@ interactions target by it. A dot would split that path; an **underscore is fine*
 from the idRef (element types have none), so \`list_food_item\` reads unambiguously as type \`list\`, idRef \`food_item\`.
 
 **Styling:** CSS keys are **kebab-case** (\`background-color\`); \`var(--token)\` for style vars, \`{{name}}\` for schema
-vars. Shorthands \`border\`/\`padding\`/\`margin\`/\`gap\` are expanded for you. Write **atomically — no compound
-shorthands** (\`flex\`, \`background\`, \`font\`, \`transition\`, \`grid\` are rejected/warned): use their longhands, and
-express flex layout as \`display: flex\` + \`flex-direction\`/\`align-items\`/… Mind a type's \`defaultStyle\` (\`text\`
-is \`display: inline\`). Global styles (\`button {…}\`) and id styles (\`#id\`) have their own ops.
+vars. **Write plain CSS** — shorthands (\`border\`, \`padding\`, \`margin\`, \`gap\`, \`overflow\`, \`flex\`, \`background\`,
+\`font\`, \`transition\`, \`animation\`, \`grid\`, \`grid-row\`/\`grid-column\`, \`place-*\`, \`outline\`, \`columns\`,
+\`list-style\`, \`text-decoration\`) are expanded to their longhands for you, so \`border: 1px solid red\` is stored as
+\`border-top-color\`/\`border-top-width\`/\`border-top-style\`/… That is also how you read them back. Flex layout is
+still \`display: flex\` + \`flex-direction\`/\`align-items\`/…, not a \`flex\` value. Mind a type's \`defaultStyle\`
+(\`text\` is \`display: inline\`). Global styles (\`button {…}\`) and id styles (\`#id\`) have their own ops.
 
 **Data bindings** (\`upsertBinding\`, category attributes|style|initialState): connect a \`source\` to a \`to\` field.
 A source \`<type>_<idRef>\` is scoped to the provider's **DESCENDANTS only** — bind inside the provider's subtree
@@ -234,14 +237,22 @@ pointed at the old name is repointed with it, so the element stays wired. You do
 - A definition lives in the **style schema**; an element's \`style.base\` (element schema) is the link that applies
   it. Styling an element = upsertDefinition + upsertElement with that ref in \`style.base\`, in one batch.
 - CSS keys are **kebab-case** (\`background-color\`). camelCase is rejected — read \`plitzi://css-properties\`.
-- Common **shorthands are accepted** and expanded for you: \`border\`, \`border-{side}\`, \`border-radius\`,
-  \`padding\`, \`margin\`, \`inset\`, \`gap\` (they persist as their longhand keys).
-- **Write CSS atomically — no multi-value compound shorthands.** Plitzi stores each property on its own so a
-  breakpoint/state/variant can override just that one, so \`flex\`, \`background\`, \`font\`, \`transition\`,
-  \`animation\`, \`grid\`, \`place-*\`, \`outline\`, \`columns\` are **rejected** (or warned) — use their longhands
-  instead: \`background\` → \`background-color\`/\`background-image\`/…, \`font\` → \`font-size\`/\`font-weight\`/
-  \`line-height\`, \`flex: 1\` → \`flex-grow\`/\`flex-shrink\`/\`flex-basis\`. **Flex layout is not a \`flex\` value**: set
-  \`display: flex\` **plus** \`flex-direction\`, \`align-items\`, \`justify-content\` as separate properties.
+- **Write normal CSS — shorthands are accepted and expanded for you.** \`border\`, \`border-{side}\`,
+  \`border-width\`/\`-color\`/\`-style\`, \`border-radius\`, \`padding\`, \`margin\`, \`inset\`, \`gap\`, \`overflow\`,
+  \`flex\`, \`flex-flow\`, \`background\`, \`font\`, \`transition\`, \`animation\`, \`grid\`, \`grid-template\`,
+  \`grid-area\`, \`grid-row\`, \`grid-column\`, \`place-content\`, \`place-items\`, \`place-self\`, \`outline\`,
+  \`columns\`, \`list-style\`, \`text-decoration\` — the full list is in \`plitzi://css-properties\` under
+  \`shorthands\`. They **persist as longhand keys** (that is what a read gives back), so a breakpoint/state/variant
+  can still override one property at a time.
+  - \`border: 1px solid red\` → \`border-top-width: 1px\`, \`border-top-style: solid\`, \`border-top-color: red\`, …
+    for all four sides. A shorthand also RESETS what it omits, so \`border: none\` clears a width a previous
+    definition set.
+  - Comma-separated layers are kept per longhand: \`transition: opacity 200ms, transform 300ms\` →
+    \`transition-property: opacity, transform\` + \`transition-duration: 200ms, 300ms\`.
+  - In a **patch**, a shorthand replaces the longhands it controls (\`padding: 8px\` overwrites a previous
+    \`padding-left\`), and \`"border": null\` removes all twelve border longhands.
+- **Flex layout is not a \`flex\` value**: set \`display: flex\` **plus** \`flex-direction\`, \`align-items\`,
+  \`justify-content\` as separate properties.
 - CSS is grouped by breakpoint: \`desktop\`, \`tablet\`, \`mobile\`.
 - Reference a style variable in CSS as \`var(--name)\`; a schema variable in a prop as \`{{name}}\`.
 - \`element.style.base\` is a **list** of definition refs; other slots go under \`element.style.slots\`.

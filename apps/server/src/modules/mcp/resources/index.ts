@@ -4,8 +4,8 @@ export { resourceErrorMessage } from './canonical';
 
 export {
   buildTypeRegistry,
-  compoundLonghands,
   cssProperties,
+  cssShorthands,
   expandShorthand,
   isCssProperty,
   suggestCssProperty

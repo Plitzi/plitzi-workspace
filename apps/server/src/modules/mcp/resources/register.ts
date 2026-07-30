@@ -4,7 +4,7 @@ import { resourceErrorMessage } from './canonical';
 import { envelope, jsonContents } from './envelope';
 import { registerRenderResources } from './renderGuide';
 import { readResource } from './router';
-import { cssProperties } from '../catalogs';
+import { cssProperties, cssShorthands } from '../catalogs';
 import { guideText } from '../helpers/guide';
 
 import type { McpLog } from '../helpers';
@@ -56,8 +56,14 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
   server.registerResource(
     'CSS properties',
     'plitzi://css-properties',
-    { description: 'Valid kebab-case CSS property keys', mimeType: 'application/json' },
-    () => emitStatic('plitzi://css-properties', () => jsonContents('plitzi://css-properties', envelope(cssProperties)))
+    {
+      description: 'Valid kebab-case CSS property keys, plus the shorthands that are accepted and auto-expanded',
+      mimeType: 'application/json'
+    },
+    () =>
+      emitStatic('plitzi://css-properties', () =>
+        jsonContents('plitzi://css-properties', envelope({ properties: cssProperties, shorthands: cssShorthands }))
+      )
   );
 
   // How to author a plitzi_render widget (guide + usable element-type catalog) — public, so a conversational agent

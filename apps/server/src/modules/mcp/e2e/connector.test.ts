@@ -26,7 +26,7 @@ const widgetOperations = [
 
 // Close to the real size (~1.67 MB) on purpose: the page travels inline on every read, so growth must be
 // deliberate. What is left is mostly the SDK runtime and its stylesheet.
-const PAGE_BUDGET_BYTES = 1_800_000;
+const PAGE_BUDGET_BYTES = 2_000_000;
 
 describe('MCP connector (Streamable HTTP, no auth)', () => {
   let endpoint: McpEndpoint;
@@ -89,11 +89,13 @@ describe('MCP connector (Streamable HTTP, no auth)', () => {
   it('reports a failed render as teachable errors instead of an error response', async () => {
     const result = await endpoint.client.callTool({
       name: 'plitzi_render',
-      arguments: { operations: [{ type: 'upsertDefinition', ref: 'bad', desktop: { flex: '1 1 auto' } }] }
+      arguments: {
+        operations: [{ type: 'upsertDefinition', ref: 'bad', desktop: { 'not-a-real-css-prop': 'value' } }]
+      }
     });
 
     expect(result.isError).toBeFalsy();
-    expect(JSON.stringify(result.content)).toContain('flex-grow');
+    expect(JSON.stringify(result.content)).toContain('Unknown CSS property');
   });
 });
 

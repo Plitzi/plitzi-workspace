@@ -4,7 +4,12 @@ import { z } from 'zod';
 
 const cssMap = z
   .record(z.string(), z.union([z.string(), z.number()]))
-  .describe('kebab-case CSS props; use var(--name) for tokens and {{name}} for schema vars');
+  .describe(
+    'Plain kebab-case CSS. Shorthands are welcome — `border: 1px solid red`, `padding: 8px 16px`, ' +
+      '`font: bold 16px/1.5 Arial`, `transition: opacity 200ms ease` — and are stored as their longhands so a ' +
+      'breakpoint/state/variant can override each property on its own. Use var(--name) for style tokens and ' +
+      '{{name}} for schema vars.'
+  );
 
 export const displayModeCss = z.object({
   desktop: cssMap.optional(),
@@ -23,7 +28,11 @@ export type DefinitionSlotInput = z.infer<typeof definitionSlot>;
 // and unset individual keys while leaving every other declaration untouched (mirrors patchElement).
 const cssPatchMap = z
   .record(z.string(), z.union([z.string(), z.number(), z.null()]))
-  .describe('kebab-case CSS props; a value of null removes the property, others are merged onto the existing CSS');
+  .describe(
+    'Plain kebab-case CSS merged onto the existing declarations; shorthands are accepted and expanded, so ' +
+      '`padding: 8px` replaces all four sides. A value of null removes the property — null on a shorthand ' +
+      '(`border: null`) removes every longhand it controls.'
+  );
 
 export const displayModeCssPatch = z.object({
   desktop: cssPatchMap.optional(),

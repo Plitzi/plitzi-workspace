@@ -1,9 +1,10 @@
 import processSelector from '@plitzi/sdk-style/helpers/processSelector';
 
-import { expandShorthand } from '../../../catalogs';
+import { expandShorthand, expandShorthandPatch } from '../../../catalogs';
 import { fail } from '../../../helpers';
 
 import type { DefinitionSlotInput, DefinitionSlotPatch } from './shared';
+import type { CssPatch } from '../../../catalogs';
 import type { OpResult } from '../../../helpers';
 import type { AIDefinition, AIDefinitionSlot, CssProps, DisplayModeCss } from '../../../types';
 import type { DisplayMode, Style, StyleAttributes, StyleBlock, StyleItem, TagType } from '@plitzi/sdk-shared';
@@ -130,12 +131,12 @@ export const writeStyleItem = (
 
 type DisplayModeCssPatch = Pick<DefinitionSlotPatch, 'desktop' | 'tablet' | 'mobile'>;
 
-const mergeCss = (
-  base: CssProps | undefined,
-  patch: Record<string, string | number | null> | undefined
-): CssProps | undefined => {
+const mergeCss = (base: CssProps | undefined, patch: CssPatch | undefined): CssProps | undefined => {
   const merged: CssProps = { ...base };
-  for (const [key, value] of Object.entries(patch ?? {})) {
+  // The patch is atomized BEFORE it merges: what is already stored is longhand, so a shorthand would otherwise land
+  // beside the longhands it is meant to replace (`{ padding: 8 }` leaving a previous `padding-left` untouched) and a
+  // `{ padding: null }` removal would delete a key that was never stored.
+  for (const [key, value] of Object.entries(expandShorthandPatch(patch ?? {}))) {
     if (value === null) {
       Reflect.deleteProperty(merged, key);
     } else {

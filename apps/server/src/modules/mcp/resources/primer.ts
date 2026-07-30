@@ -1,5 +1,11 @@
 import { envelope } from './envelope';
-import { buildDataSourceCatalog, buildInteractionCatalog, buildTypeRegistry, cssProperties } from '../catalogs';
+import {
+  buildDataSourceCatalog,
+  buildInteractionCatalog,
+  buildTypeRegistry,
+  cssProperties,
+  cssShorthands
+} from '../catalogs';
 import { guideQuickstart } from '../helpers/guide';
 import {
   foldersToAI,
@@ -25,6 +31,7 @@ export const readPrimerResource = (space: Space, env: Env, uri: string): Resourc
     guide: guideQuickstart,
     types: buildTypeRegistry(space.schema, space.catalog),
     cssProperties,
+    cssShorthands,
     pages: pageSummariesToAI(space.schema),
     folders: foldersToAI(space.schema),
     definitions: definitionRefs(space.style),
