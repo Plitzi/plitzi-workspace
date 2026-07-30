@@ -1,5 +1,15 @@
 # @plitzi/sdk-style
 
+## 0.32.17
+
+### Patch Changes
+
+- v0.32.17
+- Updated dependencies
+  - @plitzi/sdk-plugins@0.32.17
+  - @plitzi/sdk-shared@0.32.17
+  - @plitzi/sdk-variables@0.32.17
+
 ## 0.32.16
 
 ### Patch Changes
