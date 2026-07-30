@@ -138,7 +138,9 @@ export const renderTool = defineTool({
     'image + text) in a wrapping row — display:flex, flex-direction:row, flex-wrap:wrap, children flex-grow:"1" + ' +
     'flex-basis:"0%" + min-width — or a grid with grid-template-columns:"repeat(auto-fit, minmax(160px, 1fr))". ' +
     'Keep padding 12-16px and gap 8-12px, and let the outer container fill the panel. Stack only what reads in ' +
-    'order (heading over paragraph, forms, steps, prose).\n' +
+    'order (heading over paragraph, forms, steps, prose). Watch the SDK defaults: every container has ' +
+    'min-width/min-height 50px (set them to "0" for rails, dividers, dots and any flex child that must shrink), ' +
+    'and heading/paragraph keep the browser\'s own margins (zero them and space with the parent\'s gap).\n' +
     '2c. THEME — it is embedded in the host UI, which MAY BE DARK, so never hardcode a light palette. Take colours ' +
     'from the host variables with a light-dark() fallback — background-color:"var(--color-background-secondary, ' +
     'light-dark(#ffffff, #1f2430))", color:"var(--color-text-primary, light-dark(#0f172a, #e8eaed))", ' +

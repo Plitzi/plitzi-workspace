@@ -81,6 +81,20 @@ Styling is separate from structure: declare a class, then attach it by ref.
 - Attach to an element via \`style: { "base": ["card"] }\`. Stack classes: \`"base": ["card", "shadow"]\`.
 - One \`ref\` can name both an element and its class (as above) — they live in different namespaces.
 - Lay containers out with flexbox or grid — pick the direction on purpose, see **Fit the panel** below.
+- **You are not styling from zero.** Each type lands on the page with CSS you did not write, and it is the usual
+  reason a widget does not look like the definitions say. The SDK stylesheet resets almost nothing (\`box-sizing\`,
+  \`border: 0 solid\`, \`body\` margin), so anything you leave unset comes from one of two places:
+  - The per-type rule the SDK ships — the one that changes layouts is \`container\`, which carries
+    \`min-width: 50px; min-height: 50px\`. A rail, a divider, a dot, a spacer or a narrow cell will NOT go below
+    50px until you say \`"min-width": "0"\` (and/or \`"min-height": "0"\`) on it: a 2px timeline line renders 50px
+    wide otherwise. Any flex child that must be allowed to shrink needs it too.
+  - The BROWSER's own defaults for the rest: \`heading\` keeps its UA font-size and ~0.67em top/bottom margins,
+    \`paragraph\` ~1em margins, \`list\` a 40px \`padding-left\`, \`button\` its native chrome, \`image\` its intrinsic
+    size, \`link\` its own colour and underline. In a compact widget set these explicitly — usually
+    \`"margin-top": "0"\`, \`"margin-bottom": "0"\` — and space things with the parent's \`gap\` instead.
+  - Borders start at \`0 solid\`, so \`border-color\` alone paints nothing: give \`border-width\` (and the colour).
+  - The \`defaultStyle\` a type reports in the EDITING catalog (\`plitzi://types\`) is authoring metadata for the
+    builder — it does not paint here, so do not count on it in a widget.
 - **Mind the intrinsic display.** Some types start non-block: \`text\` is \`display: inline\`, so to stack or size it,
   wrap it in a \`container\` (or set \`display: block\`). \`heading\` and \`paragraph\` are already block.
 - **Use atomic longhands.** \`padding\`, \`margin\`, \`border\`, \`border-radius\` are fine (they expand cleanly), but
