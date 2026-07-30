@@ -139,6 +139,11 @@ export const renderTool = defineTool({
     'flex-basis:"0%" + min-width — or a grid with grid-template-columns:"repeat(auto-fit, minmax(160px, 1fr))". ' +
     'Keep padding 12-16px and gap 8-12px, and let the outer container fill the panel. Stack only what reads in ' +
     'order (heading over paragraph, forms, steps, prose).\n' +
+    '2c. THEME — it is embedded in the host UI, which MAY BE DARK, so never hardcode a light palette. Take colours ' +
+    'from the host variables with a light-dark() fallback — background-color:"var(--color-background-secondary, ' +
+    'light-dark(#ffffff, #1f2430))", color:"var(--color-text-primary, light-dark(#0f172a, #e8eaed))", ' +
+    'border-color:"var(--color-border-primary, light-dark(#e2e8f0, #333a48))" — and always set `color` wherever ' +
+    'you set `background-color` (a brand accent states its own text colour too).\n' +
     '3. CONTENT — visible copy goes in props.content (text, heading, paragraph, button); heading level is the ' +
     'element subType ("h1".."h6"); image/video take props.src. An unknown prop comes back as a warning naming the ' +
     'right one.\n\n' +

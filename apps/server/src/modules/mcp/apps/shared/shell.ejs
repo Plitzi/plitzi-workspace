@@ -10,17 +10,34 @@
     <title><%= title %></title>
 
     <style>
+      /*
+        The page inherits the HOST's theme, which may be dark: nothing here paints a surface, so an app that sets no
+        colours would otherwise draw the browser's black default text over the host's own background — unreadable in
+        a dark chat. `light-dark()` picks the right side of every pair; `color-scheme` is what tells it which side,
+        and it follows the OS until useHostStyles replaces it with the theme the host actually reported (that hook
+        also fills the --color-* variables in, so the var() fallbacks below only apply on a host that sends none).
+      */
+      html {
+        color-scheme: light dark;
+      }
+
       html,
       body {
         margin: 0;
+      }
+
+      body {
+        background-color: transparent;
+        color: var(--color-text-primary, light-dark(#0f172a, #e8eaed));
+        font-family: var(--font-sans, system-ui, sans-serif);
       }
       /* The app renders nothing until the host pushes the tool result in. */
       #app:empty::after {
         content: 'Rendering…';
         display: block;
         padding: 16px;
-        font: 14px system-ui, sans-serif;
-        color: #64748b;
+        font-size: 14px;
+        color: var(--color-text-tertiary, light-dark(#64748b, #9aa4b2));
       }
     </style>
     <style>

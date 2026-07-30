@@ -121,6 +121,33 @@ Keep it compact, and the numbers low: \`padding\` 12–16px (24+ only on a singl
 \`font-size\` 13–15px for body and 16–20px for headings. Let the outer container **fill** the panel — no \`width\` on
 it — and reach for \`max-width\` only to stop one lone card from stretching across the whole panel.
 
+## Match the host theme — never hardcode a light palette
+
+The widget is embedded in the host's own UI (Claude Desktop, ChatGPT, the builder), and that UI **may be in dark
+mode**. A widget painted with fixed light colours is the most common way to ship something unusable: a white card
+in a dark chat glares, and — worse — text left at a dark default disappears against the host's dark background.
+
+The host publishes its palette as CSS variables on the page, so use them for every colour, with a
+\`light-dark(<light>, <dark>)\` fallback for hosts that send none:
+
+\`\`\`json
+{ "type": "upsertDefinition", "ref": "card", "desktop": {
+    "background-color": "var(--color-background-secondary, light-dark(#ffffff, #1f2430))",
+    "color": "var(--color-text-primary, light-dark(#0f172a, #e8eaed))",
+    "border-width": "1px", "border-style": "solid",
+    "border-color": "var(--color-border-primary, light-dark(#e2e8f0, #333a48))"
+} }
+\`\`\`
+
+- Surfaces: \`--color-background-primary\` (the page), \`--color-background-secondary\` / \`--color-background-tertiary\`
+  (cards, raised areas). Text: \`--color-text-primary\`, \`--color-text-secondary\`, \`--color-text-tertiary\` (muted).
+  Borders: \`--color-border-primary\` / \`--color-border-secondary\`. Status pairs: \`--color-background-danger\` |
+  \`success\` | \`warning\` | \`info\` with the matching \`--color-text-…\`. Also \`--font-sans\`, \`--border-radius-md\` /
+  \`lg\` / \`full\`, \`--shadow-sm\` / \`md\`.
+- **Set \`color\` wherever you set \`background-color\`** — the pair is what stays legible, either one alone is a
+  gamble. Same rule for a brand accent: a CTA on your own blue must state its own text colour (\`#ffffff\`).
+- Prefer a border to a drop shadow for separation: shadows all but vanish on a dark surface.
+
 ## Element types (type → what to set)
 
 | type | renders | set |
@@ -153,7 +180,7 @@ narrow panel \`min-width\` drops the second card under the first on its own.
 {
   "operations": [
     { "type": "upsertDefinition", "ref": "plans", "desktop": { "display": "flex", "flex-direction": "row", "flex-wrap": "wrap", "gap": "12px", "align-items": "stretch" } },
-    { "type": "upsertDefinition", "ref": "card", "desktop": { "display": "flex", "flex-direction": "column", "gap": "6px", "flex-grow": "1", "flex-basis": "0%", "min-width": "150px", "padding": "16px", "background-color": "#ffffff", "border-radius": "12px", "text-align": "center", "box-shadow": "0 4px 20px rgba(0,0,0,0.08)" } },
+    { "type": "upsertDefinition", "ref": "card", "desktop": { "display": "flex", "flex-direction": "column", "gap": "6px", "flex-grow": "1", "flex-basis": "0%", "min-width": "150px", "padding": "16px", "background-color": "var(--color-background-secondary, light-dark(#ffffff, #1f2430))", "color": "var(--color-text-primary, light-dark(#0f172a, #e8eaed))", "border-width": "1px", "border-style": "solid", "border-color": "var(--color-border-primary, light-dark(#e2e8f0, #333a48))", "border-radius": "var(--border-radius-lg, 12px)", "text-align": "center" } },
     { "type": "upsertDefinition", "ref": "price", "desktop": { "font-size": "28px", "font-weight": "800", "color": "#3b82f6" } },
     { "type": "upsertDefinition", "ref": "cta", "desktop": { "background-color": "#3b82f6", "color": "#ffffff", "padding": "10px 16px", "border-radius": "8px", "font-weight": "600" }, "states": { "hover": { "desktop": { "background-color": "#2563eb" } } } },
     { "type": "upsertElement", "pageRef": "render", "element": {

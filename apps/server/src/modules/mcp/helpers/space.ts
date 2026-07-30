@@ -493,8 +493,15 @@ export const emptySpaceMessage = 'Space data not available';
 
 // Thrown when a space-dependent tool/resource runs but the request carried no resolvable spaceId. The public
 // surface (handshake, listings, guide, css-properties) never triggers this.
+//
+// It is the ONE thing an agent connected without a space ever hears back, and every space tool is still advertised
+// to it (listings stay auth-less on purpose), so it has to say what to do instead: a guest / widgets-only grant
+// carries no space, and retrying the same tool — or any other space tool — will fail identically.
 export const unauthorizedSpaceMessage =
-  'This tool/resource needs a space, but no spaceId could be resolved from the Authorization token';
+  'This connection has no space attached (a guest or widgets-only grant, or a token that carries no space), so ' +
+  'NOTHING in a space can be read or edited — every other space tool will fail the same way, do not retry them. ' +
+  'Use plitzi_render instead: it builds a self-contained widget offline, with no space, backend or account (read ' +
+  'plitzi://render/guide). To edit a real space, the user must reconnect the integration and grant access to one.'
 
 export const generateObjectId = (): string => {
   const ts = Math.floor(Date.now() / 1000)
