@@ -29,6 +29,22 @@ export const serverInstructions =
   'Separately, to SHOW the user a small self-contained widget (offline, no space or backend) instead of editing ' +
   'the space — a card, hero, pricing table, a visual answer — use plitzi_render; read plitzi://render/guide for it.';
 
+// The same first thing an agent sees, on a connection that carries NO space (a guest connection, or a
+// widgets-only grant). The editing instructions above would describe a server this connection cannot reach, so it
+// is told what it actually holds — one offline tool and its docs — and how the user gets the rest. Kept in the
+// handshake, not left for a failed call to explain, so the agent never spends a turn discovering it.
+export const widgetsOnlyInstructions =
+  'Plitzi widget server (widgets-only connection). This connection carries NO Plitzi space: nothing can be read ' +
+  'or edited in one, and the space tools are not offered here — do not look for them. What it does do is build ' +
+  'self-contained UI widgets fully offline, with no backend, account or setup: call plitzi_render to SHOW the ' +
+  'user a real rendered layout (card, hero, pricing table, checklist, form, gallery) instead of describing one. ' +
+  'Read plitzi://render/guide first — the element/prop table, the style model and a worked example; ' +
+  'plitzi://render/types lists every element type you can author (plitzi_read fetches both). To change a widget ' +
+  'you already rendered, call plitzi_render again with patch:true and its renderId. ' +
+  'If the user wants to edit their real Plitzi space from here, that is a reconnection they make: the ' +
+  'integration must be re-authorized and granted a space (the consent screen lists theirs) — you cannot do it ' +
+  'from this connection, and no retry will change it.';
+
 // The condensed guide the PRIMER carries — the essentials and the highest-frequency gotchas, kept short so the
 // cold-start bundle stays cheap. The full reference (every resource, op shape, and worked example) is guideText,
 // served on demand at plitzi://guide; this quickstart links there for anything it does not cover.

@@ -109,19 +109,26 @@ describe('MCP connector (Streamable HTTP, no auth)', () => {
     expect(schema).toContain('upsertDefinitions');
   });
 
+  // Measured on a connection WITH a space: that is the full listing, and the one the budget is about — the guest
+  // surface advertises a fraction of it.
   it('keeps the whole tool listing inside its token budget, with the shared schemas factored out', async () => {
-    const { tools } = await endpoint.client.listTools();
-    const listing = tools.reduce(
-      (total, tool) => total + JSON.stringify(tool.inputSchema).length + (tool.description?.length ?? 0),
-      0
-    );
+    const attached = await startMcpEndpoint({ spaceId: 1 });
+    try {
+      const { tools } = await attached.client.listTools();
+      const listing = tools.reduce(
+        (total, tool) => total + JSON.stringify(tool.inputSchema).length + (tool.description?.length ?? 0),
+        0
+      );
 
-    expect(listing).toBeLessThan(TOOLS_BUDGET_BYTES);
-    // The op union must arrive as refs into `definitions`, not as N inlined copies of the same element/CSS shapes.
-    const apply = tools.find(tool => tool.name === 'plitzi_apply')?.inputSchema as {
-      definitions?: Record<string, unknown>;
-    };
-    expect(Object.keys(apply.definitions ?? {})).toEqual(expect.arrayContaining(['Element', 'Css', 'RuleGroup']));
+      expect(listing).toBeLessThan(TOOLS_BUDGET_BYTES);
+      // The op union must arrive as refs into `definitions`, not as N inlined copies of the same element/CSS shapes.
+      const apply = tools.find(tool => tool.name === 'plitzi_apply')?.inputSchema as {
+        definitions?: Record<string, unknown>;
+      };
+      expect(Object.keys(apply.definitions ?? {})).toEqual(expect.arrayContaining(['Element', 'Css', 'RuleGroup']));
+    } finally {
+      await attached.close();
+    }
   });
 
   it('renders a nested repeat over the wire — the shape a real list widget uses', async () => {
@@ -268,6 +275,68 @@ describe('MCP connector (Streamable HTTP, no auth)', () => {
 
     expect(result.isError).toBeFalsy();
     expect(JSON.stringify(result.content)).toContain('Unknown CSS property');
+  });
+});
+
+/** A connection carrying no space — a guest connection or a widgets-only grant. What it must never do is let the
+ *  agent spend its turn discovering that: an editing tool it can call but that always refuses reads to the host
+ *  (and its user) as a broken server, which is how "cannot connect to Plitzi MCP" ends up on screen. */
+describe('guest connection (a grant that carries no space)', () => {
+  let endpoint: McpEndpoint;
+
+  beforeAll(async () => {
+    endpoint = await startMcpEndpoint();
+  }, 30_000);
+
+  afterAll(async () => {
+    await endpoint.close();
+  });
+
+  it('says what this connection is in the handshake, before anything is called', () => {
+    const instructions = endpoint.client.getInstructions() ?? '';
+
+    expect(instructions).toContain('NO Plitzi space');
+    expect(instructions).toContain('plitzi_render');
+  });
+
+  it('offers only the tools that work without a space, so none of them is a dead end', async () => {
+    const { tools } = await endpoint.client.listTools();
+
+    expect(tools.map(tool => tool.name).sort()).toEqual(['plitzi_read', 'plitzi_render']);
+  });
+
+  it('lists only the resources it can actually open', async () => {
+    const { resources } = await endpoint.client.listResources();
+    const uris = resources.map(resource => resource.uri);
+
+    expect(uris).toContain('plitzi://render/guide');
+    expect(uris).not.toContain('plitzi://schema/main/pages');
+  });
+
+  it('reads the render docs through plitzi_read, the tool an agent reaches for', async () => {
+    const result = await endpoint.client.callTool({
+      name: 'plitzi_read',
+      arguments: { uris: ['plitzi://render/guide', 'plitzi://render/types'] }
+    });
+
+    expect(result.isError).toBeFalsy();
+    const [guide, types] = (JSON.parse((result.content as { text: string }[])[0].text) as { results: unknown[] })
+      .results as { data?: unknown; error?: string }[];
+    expect(typeof guide.data).toBe('string');
+    expect(types.error).toBeUndefined();
+  });
+
+  it('answers a space URI as a state of the connection, not as a failed call', async () => {
+    const result = await endpoint.client.callTool({
+      name: 'plitzi_read',
+      arguments: { uris: ['plitzi://schema/main/pages'] }
+    });
+
+    // isError is what a host renders as "cannot connect to this server", so the distinction is the whole point.
+    expect(result.isError).toBeFalsy();
+    const text = JSON.stringify(result.content);
+    expect(text).toContain('NO_SPACE_ATTACHED');
+    expect(text).toContain('plitzi_render');
   });
 });
 

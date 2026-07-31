@@ -16,10 +16,10 @@ const adapters = {
 // process configuration, so the thing to pin is that they behave like configuration: fixed at module load, equal
 // on every replica, and never touched by a request — the MCP builds a server per request and stays stateless.
 describe('shared schema ids (advertised schema dedup)', () => {
-  it('does not grow the registry as servers are built per request', () => {
+  it('does not grow the registry as servers are built per request', async () => {
     const before = idCount();
     for (let i = 0; i < 50; i += 1) {
-      createMcpServer({ adapters: adapters as never, getSpaceId: () => Promise.resolve(undefined) });
+      await createMcpServer({ adapters: adapters as never, getSpaceId: () => Promise.resolve(1) });
     }
 
     expect(idCount()).toBe(before);

@@ -51,6 +51,11 @@ export interface ToolSpec<Shape extends ZodRawShape> {
    *  iframe, receiving the tool result). Registered as the tool's `_meta.ui` — see registerAppTool. */
   ui?: McpUiToolMeta;
   run: (input: z.infer<ZodObject<Shape>>, ctx: ToolContext) => unknown;
+  /** What the tool still does on a connection that carries NO space (a guest / widgets-only grant): it keeps only
+   *  the part that needs none — plitzi_read serves the public documents and says so for the rest. A tool that
+   *  defines this stays advertised there; one that does not is not registered at all, so the agent never calls
+   *  something that cannot work. */
+  runPublic?: (input: z.infer<ZodObject<Shape>>, env: Env) => unknown;
 }
 
 /** What the registry holds and the hosts register from: the same metadata plus a type-erased `execute` that
@@ -65,19 +70,28 @@ export interface ToolDef {
   spaceless?: boolean;
   ui?: McpUiToolMeta;
   execute: (args: unknown, ctx: ToolContext) => unknown;
+  /** Present when the tool degrades to a space-less connection (see ToolSpec.runPublic); its absence is what tells
+   *  the host not to advertise the tool there. */
+  executePublic?: (args: unknown, env: Env) => unknown;
 }
 
 /** Author a tool: give it its metadata, its input shape and a typed `run`. The returned descriptor parses the
  *  raw args against the shape before handing them to `run`, so `run` is fully typed and no cast is needed.
  *  Adding a tool is: call defineTool in its own file and append it to the `tools` registry. */
-export const defineTool = <Shape extends ZodRawShape>(spec: ToolSpec<Shape>): ToolDef => ({
-  name: spec.name,
-  title: spec.title,
-  description: spec.description,
-  inputShape: spec.inputShape,
-  access: spec.access,
-  requires: spec.requires,
-  spaceless: spec.spaceless,
-  ui: spec.ui,
-  execute: (args, ctx) => spec.run(z.object(spec.inputShape).parse(args), ctx)
-});
+export const defineTool = <Shape extends ZodRawShape>(spec: ToolSpec<Shape>): ToolDef => {
+  const { runPublic } = spec;
+  const parse = (args: unknown) => z.object(spec.inputShape).parse(args);
+
+  return {
+    name: spec.name,
+    title: spec.title,
+    description: spec.description,
+    inputShape: spec.inputShape,
+    access: spec.access,
+    requires: spec.requires,
+    spaceless: spec.spaceless,
+    ui: spec.ui,
+    execute: (args, ctx) => spec.run(parse(args), ctx),
+    ...(runPublic ? { executePublic: (args: unknown, env: Env) => runPublic(parse(args), env) } : {})
+  };
+};

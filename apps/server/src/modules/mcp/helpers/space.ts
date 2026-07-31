@@ -491,17 +491,29 @@ export const descendantCount = (schema: Schema, rootId: string): number => desce
 
 export const emptySpaceMessage = 'Space data not available';
 
-// Thrown when a space-dependent tool/resource runs but the request carried no resolvable spaceId. The public
-// surface (handshake, listings, guide, css-properties) never triggers this.
-//
-// It is the ONE thing an agent connected without a space ever hears back, and every space tool is still advertised
-// to it (listings stay auth-less on purpose), so it has to say what to do instead: a guest / widgets-only grant
-// carries no space, and retrying the same tool — or any other space tool — will fail identically.
+/** The code a space-dependent answer carries when the connection reaches no space, so both the agent and a host UI
+ *  can tell "this connection cannot do that" from "the call failed". */
+export const noSpaceError = 'NO_SPACE_ATTACHED';
+
+// What an agent hears when it asks for something living in a space on a connection that carries none. A connection
+// without a space is not advertised the space tools at all (see createMcpServer), so this is the answer to the
+// residual cases: a host replaying a tool list it cached, a token that expired mid-session, and the URIs
+// plitzi_read is handed. It says what to do instead rather than only what went wrong.
 export const unauthorizedSpaceMessage =
   'This connection has no space attached (a guest or widgets-only grant, or a token that carries no space), so ' +
   'NOTHING in a space can be read or edited — every other space tool will fail the same way, do not retry them. ' +
   'Use plitzi_render instead: it builds a self-contained widget offline, with no space, backend or account (read ' +
   'plitzi://render/guide). To edit a real space, the user must reconnect the integration and grant access to one.';
+
+/** Raised when a space-dependent operation runs on a connection that resolves no spaceId. A type of its own so the
+ *  host answers it as a STATE of the connection — a plain result the agent reads — instead of letting it surface as
+ *  a failed call, which hosts render to the user as "cannot connect to this server". */
+export class NoSpaceError extends Error {
+  constructor() {
+    super(unauthorizedSpaceMessage);
+    this.name = 'NoSpaceError';
+  }
+}
 
 export const generateObjectId = (): string => {
   const ts = Math.floor(Date.now() / 1000)

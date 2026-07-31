@@ -3,8 +3,12 @@ import { build } from 'esbuild';
 import { require } from './resolve';
 import { zodEnglishOnly } from './zodEnglishOnly';
 
-export const bundle = async (entry: string): Promise<string> => {
-  const result = await build({
+import type { BuildOptions } from 'esbuild';
+
+// `satisfies` rather than an annotation: it keeps `write: false` a literal, which is what tells esbuild's typings
+// the result carries outputFiles.
+const options = (entry: string) =>
+  ({
     entryPoints: [entry],
     bundle: true,
     write: false,
@@ -19,7 +23,18 @@ export const bundle = async (entry: string): Promise<string> => {
     define: { 'process.env.NODE_ENV': '"production"' },
     plugins: [zodEnglishOnly],
     logLevel: 'silent'
-  });
+  }) satisfies BuildOptions;
+
+export const bundle = async (entry: string): Promise<string> => {
+  const result = await build(options(entry));
 
   return result.outputFiles[0].text;
+};
+
+/** Every file the view pulls in, resolved by the build that serves it. The suite asks for this to check each one
+ *  ships as source: a view-side module the package leaves behind resolves here, in the repo, and nowhere else. */
+export const bundleInputs = async (entry: string): Promise<string[]> => {
+  const result = await build({ ...options(entry), metafile: true });
+
+  return Object.keys(result.metafile.inputs);
 };

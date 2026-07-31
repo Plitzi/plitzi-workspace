@@ -13,8 +13,18 @@ import type { Env } from '../types';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 /** Register every resource on the MCP server: fixed listings plus templated per-item reads. The space is
- *  loaded lazily via getSpace, so listing resources never touches the store — only reading one does. */
-export const registerResources = (server: McpServer, getSpace: () => Promise<Space>, env: Env, log: McpLog): void => {
+ *  loaded lazily via getSpace, so listing resources never touches the store — only reading one does.
+ *
+ *  `hasSpace` is false when the connection reaches no space (a guest / widgets-only grant): the space-dependent
+ *  families are then not registered at all, so the catalog the agent browses holds only what it can actually
+ *  open — no listing that answers every read with the same refusal. */
+export const registerResources = (
+  server: McpServer,
+  getSpace: () => Promise<Space>,
+  env: Env,
+  log: McpLog,
+  hasSpace: boolean
+): void => {
   const emit = async (uri: string) => {
     const start = performance.now();
     try {
@@ -69,6 +79,10 @@ export const registerResources = (server: McpServer, getSpace: () => Promise<Spa
   // How to author a plitzi_render widget (guide + usable element-type catalog) — public, so a conversational agent
   // holding only that tool can read them.
   registerRenderResources(server, log);
+
+  if (!hasSpace) {
+    return;
+  }
 
   // Space-dependent listings: reading any of these resolves the spaceId and loads the space via getSpace.
   const fixed: Array<[string, string, string]> = [

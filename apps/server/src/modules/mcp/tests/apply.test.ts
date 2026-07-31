@@ -152,13 +152,14 @@ describe('mcp-ai AI-facing contract', () => {
     expect(operation.safeParse({ type: 'frobnicate' }).success).toBe(false);
   });
 
-  it('builds an MCP server (registers tools + resources) without throwing', () => {
+  it('builds an MCP server (registers tools + resources) without throwing', async () => {
     const s = buildSpace();
     const adapters = {
       getSchema: () => Promise.resolve(s.schema),
       getStyle: () => Promise.resolve(s.style)
     } as unknown as SSRAdapters;
-    expect(() => createMcpServer({ adapters, getSpaceId: () => Promise.resolve(1) })).not.toThrow();
+
+    await expect(createMcpServer({ adapters, getSpaceId: () => Promise.resolve(1) })).resolves.toBeDefined();
   });
 
   it('serves a human guide resource', () => {

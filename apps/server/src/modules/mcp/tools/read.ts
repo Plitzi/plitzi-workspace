@@ -1,6 +1,13 @@
 import { z } from 'zod';
 
-import { readResource, resourceErrorMessage } from '../resources';
+import { noSpaceError, unauthorizedSpaceMessage } from '../helpers';
+import {
+  RENDER_GUIDE_URI,
+  RENDER_TYPES_URI,
+  readPublicResource,
+  readResource,
+  resourceErrorMessage
+} from '../resources';
 import { defineTool } from './shared/tool';
 
 import type { Space } from '../helpers';
@@ -32,6 +39,24 @@ export const read = (input: ReadInput, space: Space, env: Env): ReadResponse => 
   return { results };
 };
 
+// What this tool answers on a connection carrying no space: the documents that need none still resolve, and every
+// other URI gets the same teachable per-hit error the batch already uses — so the agent reads WHY in the result it
+// asked for, and the call itself stays a success (nothing failed; this connection simply reaches no space).
+const publicHint =
+  `Readable on this connection: ${RENDER_GUIDE_URI}, ${RENDER_TYPES_URI}, plitzi://guide, plitzi://css-properties. ` +
+  'Everything else lives in a space this connection has none of.';
+
+export const readPublic = (input: ReadInput, env: Env): ReadResponse => ({
+  results: input.uris.map((uri): ReadHit => {
+    const found = readPublicResource(env, uri);
+    if (found) {
+      return { uri, stateVersion: found.stateVersion, data: found.data };
+    }
+
+    return { uri, error: noSpaceError, message: unauthorizedSpaceMessage, hint: publicHint };
+  })
+});
+
 export const readTool = defineTool({
   name: 'plitzi_read',
   title: 'Batch read',
@@ -44,5 +69,6 @@ export const readTool = defineTool({
     'to an element — search for it.',
   inputShape: readShape,
   access: 'read',
-  run: (input, ctx) => read(input, ctx.space, ctx.env)
+  run: (input, ctx) => read(input, ctx.space, ctx.env),
+  runPublic: readPublic
 });

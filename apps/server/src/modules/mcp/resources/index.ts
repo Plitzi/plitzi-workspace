@@ -1,6 +1,7 @@
-export { readResource, resourceVersion } from './router';
+export { readPublicResource, readResource, resourceVersion } from './router';
 export { registerResources } from './register';
 export { resourceErrorMessage } from './canonical';
+export { RENDER_GUIDE_URI, RENDER_TYPES_URI } from './renderGuide';
 
 export {
   buildTypeRegistry,

@@ -1,6 +1,8 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { VIEW_DIR } from '../shared';
+
 import type { McpApp } from '../../types';
 
 /** The reference app: the smallest definition that works, kept as the template a new app is copied from.
@@ -18,7 +20,7 @@ export const exampleApp: McpApp = {
   name: 'plitzi-example-app',
   title: 'Example app',
   description: 'Reference MCP App: shows a tool result and calls a tool back. Not linked to any tool.',
-  entry: path.join(HERE, 'view.tsx')
+  entry: path.join(HERE, VIEW_DIR, 'index.tsx')
   // `styles` and `csp` are optional: a view with no stylesheet of its own inherits the host's look through
   // useHostStyles, and the default CSP already allows the images, fonts and fetches a view may need.
 };

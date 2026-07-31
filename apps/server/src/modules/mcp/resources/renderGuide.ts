@@ -2,6 +2,7 @@ import { envelope, jsonContents } from './envelope';
 import { BUILTIN_COMPONENTS } from '../catalogs';
 
 import type { McpLog } from '../helpers';
+import type { ResourceEnvelope } from '../types';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 // A public, space-independent authoring guide scoped to plitzi_render — the conversational surface where an agent
@@ -367,6 +368,21 @@ connects that source to a descendant's field.
 The tool returns \`rendered: false\` with \`errors: [{ path, message, hint }]\`. Read the hint, fix that one op, and
 retry — you never lose the rest of the batch.
 `;
+
+/** The same two documents through the READ path (the router, hence plitzi_read), not only as MCP resources: an
+ *  agent that reaches for the batch-read tool — the reflex the guide itself teaches — must not be told its own
+ *  authoring guide does not exist. Space-independent, like the core singletons. */
+export const readRenderResource = (uri: string): ResourceEnvelope<unknown> | undefined => {
+  if (uri === RENDER_GUIDE_URI) {
+    return envelope(renderGuideText);
+  }
+
+  if (uri === RENDER_TYPES_URI) {
+    return envelope(renderTypes());
+  }
+
+  return undefined;
+};
 
 // Register the render support resources as public (no space, no auth) so a conversational agent holding only
 // plitzi_render can read them before authoring: the authoring guide and the catalog of usable element types.

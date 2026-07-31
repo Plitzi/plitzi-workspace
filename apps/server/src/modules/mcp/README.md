@@ -81,9 +81,17 @@ apps/
 │   └── shell.ejs    # The page shell every app shares (mounts the view on #app)
 ├── example/         # The reference app: the same shape stripped to the minimum (not in `apps`)
 └── render/          # One folder per app
-    ├── index.ts     # Its definition: uri, name, title, description, entry, styles
-    └── view.tsx     # Its browser entry
+    ├── index.ts     # Its definition: uri, name, title, description, entry, styles — COMPILED
+    └── view/        # Its browser side, SHIPPED AS SOURCE (dist gets it verbatim)
+        ├── index.tsx    # The entry esbuild bundles at request time
+        └── heldBatch.ts # …and every module that entry imports
 ```
+
+Only `view/` travels as source: nothing in the compiled graph imports it, so a view-side module left outside that
+folder builds and tests fine here and is simply **missing from the package** — the host meets it as
+`Could not resolve ./x` inside `node_modules`. The rule lives in [`shared/assets.ts`](apps/shared/assets.ts)
+(`shipsAsSource`), the build's copy step asks it, and `apps.test.ts` asks it of every real input of every view's
+bundle.
 
 [`shared/app.ts`](apps/shared/app.ts) is the whole machinery: it bundles a view with esbuild (dependencies
 included), inlines it with its stylesheets into the shell, and registers the result with `registerAppResource`.
@@ -97,7 +105,7 @@ with `ui: { resourceUri }`. The example itself is intentionally not in that list
 deployment nothing, while the test suite builds it so it cannot rot. Its view is the whole client contract in ~60
 lines: connect, take the tool result, call a tool back, inherit the host's theme.
 
-The one app today is `plitzi_render`'s: [`render/view.tsx`](apps/render/view.tsx), a React component on the SDK's
+The one app today is `plitzi_render`'s: [`render/view/index.tsx`](apps/render/view/index.tsx), a React component on the SDK's
 `useApp` / `useHostStyles` hooks that takes the result, pulls `structuredContent.offlineData` out of it and
 renders the widget with `<PlitziSdk>` in offline mode. It is a real `.tsx`, typechecked and linted with the rest
 of the package, and it mounts on `#app` — the shell's root.

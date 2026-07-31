@@ -1,11 +1,19 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
 import { exampleApp } from './example';
 import { apps, registerApps, RENDER_APP_URI } from './index';
-import { registerApp } from './shared';
+import { registerApp, shipsAsSource } from './shared';
+import { bundleInputs } from './shared/bundle';
 
 import type { McpApp } from '../types';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+
+// This package's source root: what the library build compiles, and the only place a missing view-side module
+// can be caught before it ships.
+const SRC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 
 type ResourceMeta = { _meta: { ui: { csp: { resourceDomains: string[]; connectDomains: string[] } } } };
 type ResourceContent = ResourceMeta & { uri: string; mimeType: string; text: string };
@@ -85,6 +93,25 @@ describe('MCP Apps (self-contained pages: they fetch nothing)', () => {
     // render app's (the MCP Apps runtime and React are the floor every app stands on).
     const render = await pageOf(apps.find(app => app.uri === RENDER_APP_URI) as McpApp);
     expect(text.length).toBeLessThan(render.text.length / 2);
+  });
+
+  // The library build compiles what the SERVER imports; a view is bundled at request time from files that must
+  // therefore reach dist verbatim. Nothing in the compiled graph points at them, so a view-side module outside
+  // view/ builds fine here and is simply absent from the package — the failure lands on the host, as
+  // "Could not resolve ./heldBatch" from inside node_modules.
+  it('ships every module its views bundle, so the package cannot arrive incomplete', async () => {
+    for (const app of [...apps, exampleApp]) {
+      // This package's own source only: a dependency travels inside the bundle wherever it resolves from (a
+      // workspace portal is not under node_modules), and a plugin's virtual module is not a file at all.
+      const own = (await bundleInputs(app.entry))
+        .map(input => path.resolve(input))
+        .filter(file => file.startsWith(SRC));
+
+      expect(own.length, `${app.name} bundles nothing of its own`).toBeGreaterThan(0);
+      for (const file of own) {
+        expect(shipsAsSource(file), `${file} is bundled into ${app.name} but never reaches dist`).toBe(true);
+      }
+    }
   });
 
   it('ships zod with English messages only, not its 40 translations', async () => {

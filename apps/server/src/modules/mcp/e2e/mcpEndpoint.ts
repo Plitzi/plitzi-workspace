@@ -33,6 +33,12 @@ const publicAdapters: SSRAdapters = {
   getSpaceDeployment: unreachable('getSpaceDeployment')
 };
 
+export interface McpEndpointOptions {
+  /** Attach a space to the connection, the way an authorized connector's token does — the server then offers its
+   *  editing surface. Omitted, the endpoint is the guest one: no space, so only what works without one. */
+  spaceId?: number;
+}
+
 const toSsrRequest = (raw: IncomingMessage): SSRRequest => {
   const url = new URL(raw.url ?? '/', `http://${raw.headers.host ?? 'localhost'}`);
 
@@ -58,9 +64,11 @@ const listen = (server: Server): Promise<number> =>
   });
 
 /** Start the endpoint and connect a real MCP client to it, as a remote connector does. */
-export const startMcpEndpoint = async (): Promise<McpEndpoint> => {
+export const startMcpEndpoint = async ({ spaceId }: McpEndpointOptions = {}): Promise<McpEndpoint> => {
+  const adapters: SSRAdapters =
+    spaceId === undefined ? publicAdapters : { ...publicAdapters, getSpaceId: () => Promise.resolve(spaceId) };
   const server = createServer((raw, res) => {
-    void handleMcp(raw, res, toSsrRequest(raw), publicAdapters);
+    void handleMcp(raw, res, toSsrRequest(raw), adapters);
   });
   const port = await listen(server);
   const url = `http://127.0.0.1:${port}/`;
