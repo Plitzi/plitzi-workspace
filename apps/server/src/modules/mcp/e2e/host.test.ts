@@ -167,6 +167,29 @@ describe('MCP Apps host (the ui:// page running against a real AppBridge)', () =
   );
 
   it(
+    'reports a patch it could not deliver instead of leaving the model waiting for a widget',
+    async () => {
+      const storage = memoryStorage();
+      const first = await callRender(endpoint, widget('Interrupted widget'));
+      // No client on this host: the re-call the patch needs cannot reach the server, exactly as it cannot when the
+      // connection drops or the view is torn down mid-flight.
+      const shown = await startRenderingHost(page, { storage });
+      await shown.showResult(first);
+      shown.close();
+
+      const patch = await callPatch(endpoint, renderIdOf(first), 'Never arrives');
+      const next = await startRenderingHost(page, { storage });
+      await next.showResult(patch);
+      await next.waitFor(() => next.contextUpdates.length > 0);
+
+      expect(next.contextUpdates.join(' ')).toContain('could not be delivered');
+      expect(next.text()).not.toContain('Never arrives');
+      next.close();
+    },
+    HANDSHAKE_TIMEOUT
+  );
+
+  it(
     'never renders a widget belonging to another session: an unknown renderId reports back instead of guessing',
     async () => {
       const mine = memoryStorage();

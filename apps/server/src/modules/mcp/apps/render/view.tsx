@@ -85,28 +85,44 @@ const RenderApp = () => {
     }
 
     const merged = [...base, ...delta];
-    const rendered = await app.callServerTool({
-      name: 'plitzi_render',
-      arguments: { operations: merged, renderId }
-    });
-    const offlineData = rendered.structuredContent?.offlineData;
-    if (offlineData) {
-      const applied = (rendered.structuredContent?.operations as unknown[] | undefined) ?? merged;
-      held.current = { renderId, operations: applied };
-      writeHeldBatch(renderId, applied);
-      setResult(rendered);
-    }
+    // The round trip can fail on its own: a host that forwards no tool calls, a connection dropped mid-patch, a
+    // view torn down while the answer is in flight. Unreported it would surface as an unhandled rejection inside
+    // the sandbox and the model would wait forever for a widget that is never coming.
+    try {
+      const rendered = await app.callServerTool({
+        name: 'plitzi_render',
+        arguments: { operations: merged, renderId }
+      });
+      const offlineData = rendered.structuredContent?.offlineData;
+      if (offlineData) {
+        const applied = (rendered.structuredContent?.operations as unknown[] | undefined) ?? merged;
+        held.current = { renderId, operations: applied };
+        writeHeldBatch(renderId, applied);
+        setResult(rendered);
+      }
 
-    await app.updateModelContext({
-      content: [
-        {
-          type: 'text',
-          text: offlineData
-            ? `Widget updated: ${summarise(rendered)}`
-            : `The patch did not apply, the widget is unchanged: ${summarise(rendered)}`
-        }
-      ]
-    });
+      await app.updateModelContext({
+        content: [
+          {
+            type: 'text',
+            text: offlineData
+              ? `Widget updated: ${summarise(rendered)}`
+              : `The patch did not apply, the widget is unchanged: ${summarise(rendered)}`
+          }
+        ]
+      });
+    } catch (reason) {
+      await app
+        .updateModelContext({
+          content: [
+            {
+              type: 'text',
+              text: `The patch could not be delivered (${reason instanceof Error ? reason.message : String(reason)}), so the widget is unchanged. Re-send the full batch without \`patch\` if it needs to change.`
+            }
+          ]
+        })
+        .catch(() => undefined);
+    }
   };
 
   // useApp creates the App, runs onAppCreated so every handler is in place BEFORE the handshake, and connects.

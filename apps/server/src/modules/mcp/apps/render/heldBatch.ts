@@ -9,6 +9,10 @@
 
 const PREFIX = 'plitzi.render.';
 const MAX_ENTRIES = 5;
+// A renderId only lives in one conversation's context, so a batch outlives its usefulness the moment that
+// conversation is over — and a conversation the user abandoned would otherwise leave its widget in the host's
+// storage for good. Generous enough that no live conversation loses its widget, short enough to be housekeeping.
+const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 type Stored = { savedAt: number; operations: unknown[] };
 
@@ -48,14 +52,17 @@ const ownKeys = (store: Storage): string[] => {
   return keys;
 };
 
-const dropOldest = (store: Storage, keep: string): void => {
+const dropStale = (store: Storage, keep: string): void => {
   const others = ownKeys(store)
     .filter(key => key !== keep)
     .map(key => ({ key, savedAt: parse(store.getItem(key))?.savedAt ?? 0 }))
     .sort((a, b) => b.savedAt - a.savedAt);
+  const expired = Date.now() - MAX_AGE_MS;
 
-  for (const entry of others.slice(MAX_ENTRIES - 1)) {
-    store.removeItem(entry.key);
+  for (const [index, entry] of others.entries()) {
+    if (index >= MAX_ENTRIES - 1 || entry.savedAt < expired) {
+      store.removeItem(entry.key);
+    }
   }
 };
 
@@ -64,7 +71,12 @@ export const readHeldBatch = (renderId: string, store = localStore()): unknown[]
     return undefined;
   }
 
-  return parse(store.getItem(`${PREFIX}${renderId}`))?.operations;
+  const stored = parse(store.getItem(`${PREFIX}${renderId}`));
+  if (!stored || stored.savedAt < Date.now() - MAX_AGE_MS) {
+    return undefined;
+  }
+
+  return stored.operations;
 };
 
 export const writeHeldBatch = (renderId: string, operations: unknown[], store = localStore()): void => {
@@ -76,7 +88,7 @@ export const writeHeldBatch = (renderId: string, operations: unknown[], store = 
   const payload = JSON.stringify({ savedAt: Date.now(), operations } satisfies Stored);
 
   try {
-    dropOldest(store, key);
+    dropStale(store, key);
     store.setItem(key, payload);
   } catch {
     // Out of quota: the widget just rendered is the only one still worth patching, so the rest go.
