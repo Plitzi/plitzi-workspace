@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { z } from 'zod';
 
 import { validateSchema } from '@plitzi/sdk-schema/helpers/schemaValidator';
@@ -193,9 +195,10 @@ const toPatchResult = (ops: Operation[], renderId: string | undefined): CallTool
   };
 };
 
-// The handle the model carries between calls. Random per render (any replica can mint one, none has to remember
-// it) and short, because the model pays for it in every patch it sends.
-const newRenderId = (): string => `r${Math.random().toString(36).slice(2, 8)}`;
+// The handle the model carries between calls. Random per render — any replica can mint one and none has to
+// remember it — and kept short, because the model pays for it in every patch. Uniform hex rather than
+// Math.random().toString(36), whose length varies and which is not meant to avoid collisions.
+const newRenderId = (): string => `r${randomUUID().slice(0, 8)}`;
 
 const toRenderResult = (res: RenderResponse, renderId: string): CallToolResult => {
   if (!res.rendered) {

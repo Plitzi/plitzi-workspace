@@ -2,7 +2,7 @@
  *  (a real MCP client over Streamable HTTP) and the RENDERER (the ui:// page in a DOM, driven by AppBridge). */
 
 export { readAppPage, startMcpEndpoint } from './mcpEndpoint';
-export { startRenderingHost } from './renderingHost';
+export { memoryStorage, startRenderingHost } from './renderingHost';
 
 export type { AppPage, McpEndpoint } from './mcpEndpoint';
-export type { RenderingHost } from './renderingHost';
+export type { RenderingHost, RenderingHostOptions } from './renderingHost';

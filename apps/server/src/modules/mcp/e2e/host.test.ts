@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { RENDER_APP_URI } from '../apps';
-import { readAppPage, startMcpEndpoint, startRenderingHost } from './index';
+import { memoryStorage, readAppPage, startMcpEndpoint, startRenderingHost } from './index';
 
 import type { McpEndpoint } from './index';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
@@ -14,6 +14,18 @@ const HANDSHAKE_TIMEOUT = 60_000;
 
 const callRender = (endpoint: McpEndpoint, operations: unknown[]): Promise<CallToolResult> =>
   endpoint.client.callTool({ name: 'plitzi_render', arguments: { operations } }) as Promise<CallToolResult>;
+
+const callPatch = (endpoint: McpEndpoint, renderId: string, content: string): Promise<CallToolResult> =>
+  endpoint.client.callTool({
+    name: 'plitzi_render',
+    arguments: {
+      patch: true,
+      renderId,
+      operations: [{ type: 'patchElement', pageRef: 'render', ref: 'greeting', props: { content } }]
+    }
+  }) as Promise<CallToolResult>;
+
+const renderIdOf = (result: CallToolResult): string => (result.structuredContent as { renderId: string }).renderId;
 
 const widget = (content: string) => [
   { type: 'upsertDefinition', ref: 'headline', desktop: { 'font-size': '32px', color: '#3b82f6' } },
@@ -99,12 +111,90 @@ describe('MCP Apps host (the ui:// page running against a real AppBridge)', () =
     HANDSHAKE_TIMEOUT
   );
 
+  /** The patch flow, through the door a real host uses. The spec gives every tool call its OWN view
+   *  (`ui/notifications/tool-input` is sent at most once), so the widget the model patches is never the instance
+   *  that will show the result — these tests run the second view from scratch, as the host does. */
+  it(
+    'patches from a brand-new view, which is the only kind of view a host ever gives it',
+    async () => {
+      const storage = memoryStorage();
+      const first = await callRender(endpoint, widget('Original title'));
+      const shown = await startRenderingHost(page, { storage, client: endpoint.client });
+      await shown.showResult(first);
+
+      expect(shown.text()).toContain('Original title');
+      // The host tears the view down when the turn ends; everything it held in memory goes with it.
+      shown.close();
+
+      const patch = await callPatch(endpoint, renderIdOf(first), 'Patched title');
+      const next = await startRenderingHost(page, { storage, client: endpoint.client });
+      await next.showResult(patch);
+      await next.waitFor(() => next.text().includes('Patched title'));
+
+      expect(next.text()).toContain('Patched title');
+      expect(next.contextUpdates.join(' ')).toContain('Widget updated');
+      next.close();
+    },
+    HANDSHAKE_TIMEOUT
+  );
+
+  it(
+    'keeps two widgets patchable at once, each by its own renderId',
+    async () => {
+      const storage = memoryStorage();
+      const alpha = await callRender(endpoint, widget('Alpha widget'));
+      const beta = await callRender(endpoint, widget('Beta widget'));
+
+      expect(renderIdOf(alpha)).not.toBe(renderIdOf(beta));
+
+      for (const result of [alpha, beta]) {
+        const view = await startRenderingHost(page, { storage, client: endpoint.client });
+        await view.showResult(result);
+        view.close();
+      }
+
+      // Patching the OLDER one must not pick up the newer widget's batch.
+      const patch = await callPatch(endpoint, renderIdOf(alpha), 'Alpha patched');
+      const view = await startRenderingHost(page, { storage, client: endpoint.client });
+      await view.showResult(patch);
+      await view.waitFor(() => view.text().includes('Alpha patched'));
+
+      expect(view.text()).toContain('Alpha patched');
+      expect(view.text()).not.toContain('Beta widget');
+      view.close();
+    },
+    HANDSHAKE_TIMEOUT
+  );
+
+  it(
+    'never renders a widget belonging to another session: an unknown renderId reports back instead of guessing',
+    async () => {
+      const mine = memoryStorage();
+      const theirs = memoryStorage();
+      const first = await callRender(endpoint, widget('Their widget'));
+      const theirView = await startRenderingHost(page, { storage: theirs, client: endpoint.client });
+      await theirView.showResult(first);
+      theirView.close();
+
+      const patch = await callPatch(endpoint, renderIdOf(first), 'Stolen title');
+      const myView = await startRenderingHost(page, { storage: mine, client: endpoint.client });
+      await myView.showResult(patch);
+      await myView.waitFor(() => myView.contextUpdates.length > 0);
+
+      expect(myView.contextUpdates.join(' ')).toContain('could not be recovered');
+      expect(myView.text()).not.toContain('Their widget');
+      expect(myView.text()).not.toContain('Stolen title');
+      myView.close();
+    },
+    HANDSHAKE_TIMEOUT
+  );
+
   it(
     'honours the safe-area insets the host reports',
     async () => {
       const result = await callRender(endpoint, widget('Inset widget'));
       const host = await startRenderingHost(page, {
-        safeAreaInsets: { top: 8, right: 9, bottom: 10, left: 11 }
+        hostContext: { safeAreaInsets: { top: 8, right: 9, bottom: 10, left: 11 } }
       });
 
       await host.showResult(result);

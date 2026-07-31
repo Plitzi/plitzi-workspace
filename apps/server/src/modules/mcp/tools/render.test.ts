@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { render, renderTool } from './render';
+import { emptySpace } from '../helpers';
 
 import type { Operation } from './operations';
+import type { ToolContext } from './shared/tool';
 
 const widget: Operation[] = [
   { type: 'upsertDefinition', ref: 'btn-hero', desktop: { 'background-color': '#3b82f6' } },
@@ -12,6 +14,9 @@ const widget: Operation[] = [
     element: { ref: 'hero-cta', type: 'button', props: { content: 'Go' }, style: { base: ['btn-hero'] } }
   }
 ] as Operation[];
+
+// plitzi_render is spaceless — it authors a throwaway space of its own — so the context it is handed is inert.
+const context: ToolContext = { space: emptySpace(), env: 'main', persisters: {} };
 
 describe('plitzi_render', () => {
   it('renders a self-contained widget from operations', () => {
@@ -44,6 +49,30 @@ describe('plitzi_render', () => {
     }
 
     expect(result.errors.length).toBeGreaterThan(0);
+  });
+
+  // The handle is what makes iterating stateless: the model carries it, so any replica can answer a patch and no
+  // server has to remember which widget "the last one" was.
+  it('mints a fresh handle per render, so two widgets are never confused for each other', () => {
+    const first = renderTool.execute({ operations: widget }, context) as { structuredContent: { renderId: string } };
+    const second = renderTool.execute({ operations: widget }, context) as { structuredContent: { renderId: string } };
+
+    expect(first.structuredContent.renderId).toMatch(/^r[0-9a-f]{8}$/u);
+    expect(first.structuredContent.renderId).not.toBe(second.structuredContent.renderId);
+  });
+
+  it('keeps the handle the view sends back, so a widget holds one id across every iteration', () => {
+    const result = renderTool.execute({ operations: widget, renderId: 'r0f1e2d' }, context) as {
+      structuredContent: { renderId: string };
+    };
+
+    expect(result.structuredContent.renderId).toBe('r0f1e2d');
+  });
+
+  it('refuses a patch that names no widget instead of merging it into whatever is there', () => {
+    const result = renderTool.execute({ operations: widget, patch: true }, context) as { structuredContent?: unknown };
+
+    expect(result.structuredContent).toBeUndefined();
   });
 
   it('is registered as a read-only, space-independent tool', () => {

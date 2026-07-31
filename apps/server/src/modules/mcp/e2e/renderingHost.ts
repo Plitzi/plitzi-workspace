@@ -4,15 +4,49 @@ import { JSDOM } from 'jsdom';
 import { HostBridgeTransport, parentStub } from './postMessageChannel';
 
 import type { McpUiHostContext, McpUiToolResultNotification } from '@modelcontextprotocol/ext-apps';
+import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
+
+export interface RenderingHostOptions {
+  hostContext?: McpUiHostContext;
+  /** The MCP client the App's own tool calls are forwarded to; without one the bridge answers nothing. */
+  client?: Client;
+  /** Storage shared with the other views of this host, which jsdom does not do on its own: each DOM gets a
+   *  private one, while a real host serves every view from the same origin. */
+  storage?: Storage;
+}
 
 export interface RenderingHost {
   bridge: AppBridge;
   window: JSDOM['window'];
   /** Deliver a tool result and let the App paint before assertions run. */
   showResult: (result: McpUiToolResultNotification['params']) => Promise<void>;
+  /** What the App reported back to the model with ui/update-model-context, in order. */
+  contextUpdates: string[];
+  /** Wait for work the App does after the result arrives — a server round trip does not settle in microtasks. */
+  waitFor: (predicate: () => boolean, timeoutMs?: number) => Promise<void>;
   text: () => string;
   close: () => void;
 }
+
+/** Stands in for one host origin's localStorage, so two views can be given the same one (or deliberately not). */
+export const memoryStorage = (): Storage => {
+  const entries = new Map<string, string>();
+
+  return {
+    get length() {
+      return entries.size;
+    },
+    key: index => [...entries.keys()][index] ?? null,
+    getItem: key => entries.get(key) ?? null,
+    setItem: (key, value) => {
+      entries.set(key, value);
+    },
+    removeItem: key => {
+      entries.delete(key);
+    },
+    clear: () => entries.clear()
+  };
+};
 
 // An opaque origin has no localStorage, and the SDK needs it.
 const DOM_URL = 'https://mcp-app.test/';
@@ -51,7 +85,8 @@ const settle = (window: JSDOM['window'], turns = 6): Promise<void> =>
 
 /** Load a ui:// page into a DOM and complete the MCP Apps handshake against it, through the official AppBridge.
  *  Resolves once the App is connected, so a test can push a tool result straight away. */
-export const startRenderingHost = async (html: string, hostContext?: McpUiHostContext): Promise<RenderingHost> => {
+export const startRenderingHost = async (html: string, options: RenderingHostOptions = {}): Promise<RenderingHost> => {
+  const { hostContext, client, storage } = options;
   const parent = parentStub();
   const dom = new JSDOM(html, {
     url: DOM_URL,
@@ -60,17 +95,44 @@ export const startRenderingHost = async (html: string, hostContext?: McpUiHostCo
     beforeParse(window) {
       installBrowserStubs(window);
       Object.defineProperty(window, 'parent', { configurable: true, value: parent });
+      if (storage) {
+        Object.defineProperty(window, 'localStorage', { configurable: true, value: storage });
+      }
     }
   });
 
   const { window } = dom;
-  const bridge = new AppBridge(null, { name: 'e2e-host', version: '1.0.0' }, { openLinks: {} }, { hostContext });
+  const contextUpdates: string[] = [];
+  const bridge = new AppBridge(
+    client ?? null,
+    { name: 'e2e-host', version: '1.0.0' },
+    { openLinks: {}, serverTools: {}, logging: {} },
+    { hostContext }
+  );
+  bridge.onupdatemodelcontext = params => {
+    contextUpdates.push(JSON.stringify(params.content));
+
+    return Promise.resolve({});
+  };
   await bridge.connect(new HostBridgeTransport(window, parent));
   await settle(window);
+
+  const waitFor = async (predicate: () => boolean, timeoutMs = 20_000): Promise<void> => {
+    const deadline = Date.now() + timeoutMs;
+    while (!predicate()) {
+      if (Date.now() > deadline) {
+        throw new Error('The App never reached the expected state');
+      }
+
+      await settle(window, 4);
+    }
+  };
 
   return {
     bridge,
     window,
+    contextUpdates,
+    waitFor,
     showResult: async result => {
       await bridge.sendToolResult(result);
       await settle(window, 12);
