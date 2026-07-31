@@ -73,9 +73,21 @@ export const styleVariablesToCss = (
       const cssVar = `--${name}`;
 
       if (typeof value === 'object') {
-        root.push(`${spacingInsideMedia}${cssVar}: ${value.default};`);
-        light.push(`${spacingInsideMedia}${cssVar}: ${value.light};`);
-        dark.push(`${spacingInsideMedia}${cssVar}: ${value.dark};`);
+        // Only the sides that were actually given. A missing one used to be written out as the literal text
+        // `undefined`, and a custom property accepts almost any token sequence — so instead of being ignored it
+        // OVERRODE the good value, and everything reading that var computed to nothing. A theme value with only
+        // `light`/`dark` must leave :root untouched, and one with only `default` must not be undone per scheme.
+        if (value.default !== undefined) {
+          root.push(`${spacingInsideMedia}${cssVar}: ${value.default};`);
+        }
+
+        if (value.light !== undefined) {
+          light.push(`${spacingInsideMedia}${cssVar}: ${value.light};`);
+        }
+
+        if (value.dark !== undefined) {
+          dark.push(`${spacingInsideMedia}${cssVar}: ${value.dark};`);
+        }
       } else {
         root.push(`${spacingInsideMedia}${cssVar}: ${value};`);
       }

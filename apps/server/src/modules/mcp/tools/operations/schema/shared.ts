@@ -103,13 +103,14 @@ export const elementShape = {
   ref: z
     .string()
     .describe(
-      'Semantic id you choose, or an existing element ref/id. On a new element this is stored as its idRef and ' +
-        'becomes the key everything else addresses it by — its data source is named `<type>_<ref>`, and an ' +
-        'interaction targets it by this ref. Start with a letter, then letters, numbers, hyphens and underscores ' +
-        '("hero-cta" or "food_item"): a dot would break the `<type>_<idRef>.<field>` grammar (an underscore is ' +
-        'fine — the first `_` separates the type from the idRef). Must be unique across the space.'
+      'Semantic id you choose, or an existing element ref/id. On a new element it becomes the idRef everything ' +
+        'addresses it by: its data source is `<type>_<ref>`, and interactions target it by this ref. Letters, ' +
+        'digits, `-` and `_`, starting with a letter — a dot would break the `<type>_<idRef>.<field>` grammar. ' +
+        'Unique across the space.'
     ),
-  type: z.string().describe('Type from plitzi://types'),
+  // Optional because `container` is what most nodes are — a widget's tree is mostly boxes, and spelling it out on
+  // every one of them is pure repetition in the batch the agent writes.
+  type: z.string().default('container').describe('Type from plitzi://types; defaults to container'),
   label: z.string().optional(),
   subType: z.string().optional(),
   props: z.record(z.string(), z.unknown()).optional().describe('Full replacement on update'),
@@ -172,9 +173,8 @@ export const interactionNode = z.object({
     .string()
     .optional()
     .describe(
-      'Element whose callback this step invokes; defaults to this element. Give its ref or its raw id — a raw id ' +
-        'is normalised to the element idRef the runtime looks callbacks up by, and a target without an idRef is ' +
-        'given one automatically.'
+      'Element whose callback this step invokes; defaults to this element. Its ref or raw id — a raw id is ' +
+        'normalised to the idRef the runtime looks callbacks up by, and a target without one is given it.'
     ),
   preview: z.record(z.string(), z.unknown()).optional()
 });

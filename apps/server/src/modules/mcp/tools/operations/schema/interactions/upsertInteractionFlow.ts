@@ -20,11 +20,10 @@ export const upsertInteractionFlowOp = z
       .describe('Ordered steps of the flow: the FIRST must be a trigger, the rest run after it in order')
   })
   .describe(
-    'Create or replace one interaction flow on an element from an ordered list of steps. The stored ' +
-      'beforeNode/afterNode/flowId links are computed for you — pass the steps in execution order. For a ' +
-      'globalCallback (addNotification, setState, navigate, auth*, *CollectionRecord) OMIT elementId: it is ' +
-      'registered on a source module, not the host element, and the MCP sets the right source and fills the ' +
-      'default param values for you. To edit a single step in place use patchInteractionNode.'
+    'Create or replace one interaction flow on an element from an ordered list of steps — pass them in execution ' +
+      'order, the beforeNode/afterNode/flowId links are computed for you. For a globalCallback OMIT elementId: it ' +
+      'is registered on a source module, not the host element, and the source and default params are filled in ' +
+      'for you. To edit a single step in place use patchInteractionNode.'
   );
 
 export type UpsertInteractionFlow = z.infer<typeof upsertInteractionFlowOp>;

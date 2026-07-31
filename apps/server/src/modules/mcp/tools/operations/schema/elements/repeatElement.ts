@@ -66,16 +66,13 @@ export const repeatElementOp = z
       .describe('One object per row; its fields fill the {{item.field}} placeholders of the template')
   })
   .describe(
-    'Build a LIST from one template plus its data, instead of repeating near-identical elements — cards, rows, ' +
-      'steps, tiles, a timeline. It creates a wrapper element (style it with the row/grid class) whose children ' +
-      'are the template rendered once per entry of `items`, so a 6-card list costs one card of text instead of ' +
-      'six. Inside the template, `{{item.<field>}}` is replaced by that row field (a placeholder alone as the ' +
-      'whole value keeps the field type; anything else is interpolated as text), and every ref gets the row ' +
-      'number appended — a template ref "day" becomes "day-1", "day-2"… which is how you address a row later. ' +
-      'A template node may carry `repeat: { items: "{{item.<list>}}", template: … }` to nest a list INSIDE each ' +
-      'row (a timeline of days, each with its own steps): that node becomes the wrapper of the sub-list, refs ' +
-      'number both levels ("step-2-3" = row 2, sub-row 3), and inside the sub-template `{{item.…}}` reads the ' +
-      'SUB-row. Other {{…}} names are left untouched, so schema variables still work.'
+    'Build a LIST from one template plus its `items` data, instead of repeating near-identical elements. Creates ' +
+      'a wrapper whose children are the template rendered once per row. `{{item.<field>}}` is replaced by that ' +
+      'row field — alone as the whole value it keeps the field type, mixed with text it interpolates. Every ref ' +
+      'gets the row number appended ("day" → "day-1"), which is how you address a row later. A template node may ' +
+      'carry `repeat: { items: "{{item.<list>}}", template: … }` to nest a list inside each row: it becomes the ' +
+      'sub-list wrapper, refs number both levels ("step-2-3"), and `{{item.…}}` there reads the SUB-row. Other ' +
+      '{{…}} names are untouched, so schema variables still work.'
   );
 
 export type RepeatElement = z.infer<typeof repeatElementOp>;

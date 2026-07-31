@@ -45,8 +45,21 @@ Most widgets are **presentation only** — the structure + styling below is all 
 runs the live Plitzi SDK though, so it can also **fetch data** (an \`apiContainer\`) and **react to events**
 (interaction flows); see "Data & interactivity" at the end when a widget needs them.
 
-Each call renders a **fresh** widget with no memory of previous calls — always send **every** operation the widget
-needs in the one call. To change a widget, re-send the whole thing.
+Each call renders a **fresh** widget: send **every** operation it needs in the one call.
+
+**To CHANGE the widget you just rendered, do not rebuild it** — call again with \`patch: true\` and only the
+operations that differ:
+
+\`\`\`json
+{ "patch": true, "operations": [
+  { "type": "patchDefinition", "ref": "tl-card", "desktop": { "border-radius": "20px" } },
+  { "type": "patchElement", "pageRef": "render", "ref": "title-2", "props": { "content": "EPCOT (día largo)" } }
+] }
+\`\`\`
+The widget on screen merges the delta into what it already holds and reports back what it applied — including the
+errors, if a ref does not exist. Address rows by the refs you already know (\`card-1\`, \`blk-2-3\`). If nothing
+reports back there is no widget on screen (a surface that renders none, or a fresh conversation): send the whole
+batch again without \`patch\`.
 
 ## Build the whole widget in ONE upsertElement (nest with \`children\`)
 
@@ -154,8 +167,7 @@ and \`patchDefinition\` still changes only some CSS of one class.
 - One \`ref\` can name both an element and its class (as above) — they live in different namespaces.
 - Lay containers out with flexbox or grid — pick the direction on purpose, see **Fit the panel** below.
 - **You are not styling from zero.** Each type lands on the page with CSS you did not write, and it is the usual
-  reason a widget does not look like the definitions say. The SDK stylesheet resets almost nothing (\`box-sizing\`,
-  \`border: 0 solid\`, \`body\` margin), so anything you leave unset comes from one of two places:
+  reason a widget does not look like the definitions say:
   - The per-type rule the SDK ships — the one that changes layouts is \`container\`, which carries
     \`min-width: 50px; min-height: 50px\`. A rail, a divider, a dot, a spacer or a narrow cell will NOT go below
     50px until you say \`"min-width": "0"\` (and/or \`"min-height": "0"\`) on it: a 2px timeline line renders 50px

@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 import { validateSchema } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
@@ -38,14 +40,33 @@ const seedSpace = (): Space => {
 const noWarnings = (warnings: string[]): string[] | undefined => (warnings.length > 0 ? warnings : undefined);
 
 export const renderShape = {
-  operations
+  operations,
+  patch: z
+    .boolean()
+    .optional()
+    .describe(
+      'Set true to CHANGE the widget you just rendered instead of rebuilding it: send ONLY the operations that ' +
+        'differ (patchDefinition, patchElement, deleteElement, a new repeatElement…) and the open widget merges ' +
+        'them into what it already holds, then reports back what it applied. The refs it already has (card-1, ' +
+        'blk-2-3) are the ones to address. Requires a widget currently on screen — on a surface that renders none, ' +
+        'or when there is nothing to patch, the answer says so and you re-send the whole batch.'
+    )
 };
 
-export type RenderInput = { operations: Operation[] };
+export type RenderInput = { operations: Operation[]; patch?: boolean };
 
 export type RenderResponse =
   | { rendered: false; errors: { path: string; message: string; hint?: string }[]; warnings?: string[] }
-  | { rendered: true; rootRef: string; elementCount: number; offlineData: OfflineDataRaw; warnings?: string[] };
+  | {
+      rendered: true;
+      rootRef: string;
+      elementCount: number;
+      offlineData: OfflineDataRaw;
+      /** The batch this render was built from, EXPANDED (repeats already unrolled). The view keeps it so a later
+       *  patch has something to merge into; it is never shown to the model. */
+      operations: Operation[];
+      warnings?: string[];
+    };
 
 // Build a self-contained render payload from agent-authored operations, WITHOUT any space or cloud. The ops are
 // applied to a throwaway seed space (one host page) using the exact same validate → apply → integrity → audit
@@ -95,6 +116,7 @@ export const render = (input: RenderInput): RenderResponse => {
 
   return {
     rendered: true,
+    operations: ops,
     rootRef: HOST_PAGE_REF,
     // Every flat entry except the host page is a real authored element.
     elementCount: Object.keys(space.schema.flat).length - 1,
@@ -107,6 +129,28 @@ export const render = (input: RenderInput): RenderResponse => {
 // model authored the operations, so it never needs the assembled payload echoed back — sending it as text would
 // cost thousands of tokens per widget and sit in history. The offlineData rides in `structuredContent`, delivered
 // to the host renderer out-of-band; a failed render returns its (already compact) errors as text so the model can fix it.
+/** A patch is not rendered here — it CANNOT be: this server keeps nothing between calls (no session, no store,
+ *  any replica answers any request), so the only place the previous widget still exists is the view that is
+ *  showing it. The delta therefore travels as a courier result: the model pays for the delta alone, the view
+ *  merges it into the batch it holds and re-calls this same tool with the whole thing — over the host bridge,
+ *  never through the model's context — and reports the outcome back with ui/update-model-context.
+ *
+ *  Validation is not skipped, only deferred: the re-call carries the full batch, so refs, integrity and the audit
+ *  all run exactly as they do on a first render, and their errors reach the model through that report. */
+const toPatchResult = (ops: Operation[]): CallToolResult => ({
+  content: [
+    {
+      type: 'text',
+      text: JSON.stringify({
+        patch: true,
+        operations: ops.length,
+        note: 'Handed to the open widget; it will report what it applied. If nothing reports back, no widget is on screen — re-send the full batch without patch.'
+      })
+    }
+  ],
+  structuredContent: { patch: true, operations: ops }
+});
+
 const toRenderResult = (res: RenderResponse): CallToolResult => {
   if (!res.rendered) {
     return {
@@ -118,7 +162,9 @@ const toRenderResult = (res: RenderResponse): CallToolResult => {
 
   return {
     content: [{ type: 'text', text: JSON.stringify(summary) }],
-    structuredContent: { ...summary, offlineData: res.offlineData }
+    // `operations` rides along for the view, not the model: it is what a later patch gets merged into. It never
+    // reaches the model (structuredContent is delivered to the renderer), so echoing it costs no tokens.
+    structuredContent: { ...summary, offlineData: res.offlineData, operations: res.operations }
   };
 };
 
@@ -169,11 +215,14 @@ export const renderTool = defineTool({
     'upsertInteractionFlow makes them react to clicks (see the guide).\n' +
     'READ the resource plitzi://render/guide first — it has the element/prop table, the style model and a full ' +
     'worked example, and following it is the difference between a widget that renders and repeated failed calls.\n' +
+    'ITERATING — to change the widget you just rendered, do NOT rebuild it: call again with patch:true and ONLY ' +
+    'the operations that differ (patchDefinition, patchElement, deleteElement…). The open widget merges them and ' +
+    'reports back what it applied; address rows by the refs you already know.\n' +
     'Returns a compact summary (the widget is shown to the user); on failure it returns teachable errors ' +
     '(path + hint) — read them and retry.',
   inputShape: renderShape,
   access: 'read',
   spaceless: true,
   ui: { resourceUri: RENDER_APP_URI },
-  run: input => toRenderResult(render(input))
+  run: input => (input.patch === true ? toPatchResult(input.operations) : toRenderResult(render(input)))
 });

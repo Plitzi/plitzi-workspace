@@ -1,10 +1,10 @@
 /* eslint-disable react-refresh/only-export-components -- one bundled entry: components cannot move out. */
 import { useApp, useHostStyles } from '@modelcontextprotocol/ext-apps/react';
 import PlitziSdk from '@plitzi/plitzi-sdk';
-import { Component, useEffect, useState } from 'react';
+import { Component, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import type { McpUiHostContext } from '@modelcontextprotocol/ext-apps';
+import type { App, McpUiHostContext } from '@modelcontextprotocol/ext-apps';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
@@ -39,17 +39,82 @@ class RenderBoundary extends Component<{ children: ReactNode }, { error?: Error 
   }
 }
 
+/** The batch the widget on screen was built from. It lives HERE, in the view, because the server keeps nothing
+ *  between calls — that is what lets any replica (or an edge deployment) answer any request. A patch is merged
+ *  into this and sent back through `callServerTool`, so the full batch never enters the model's context. */
+type Held = { operations: unknown[] };
+
+const summarise = (result: CallToolResult): string => {
+  const text = result.content.find(entry => entry.type === 'text');
+
+  return text?.text ?? 'no summary';
+};
+
 const RenderApp = () => {
   const [result, setResult] = useState<CallToolResult | null>(null);
   const [cancelled, setCancelled] = useState<string | undefined>(undefined);
   const [context, setContext] = useState<McpUiHostContext | undefined>(undefined);
+  const held = useRef<Held>({ operations: [] });
+  const appRef = useRef<App | null>(null);
+
+  // A patch carries only what changed. Merging it onto the held batch and re-calling the tool is what keeps the
+  // server stateless: it re-renders the WHOLE widget (so refs, integrity and the audit are all checked as usual)
+  // from a payload that travelled host↔server, and the model hears the outcome through updateModelContext.
+  const applyPatch = async (delta: unknown[]): Promise<void> => {
+    const app = appRef.current;
+    if (!app) {
+      return;
+    }
+
+    if (held.current.operations.length === 0) {
+      await app.updateModelContext({
+        content: [
+          {
+            type: 'text',
+            text: 'There is no widget on screen to patch. Call plitzi_render again with the complete batch and without `patch`.'
+          }
+        ]
+      });
+
+      return;
+    }
+
+    const merged = [...held.current.operations, ...delta];
+    const rendered = await app.callServerTool({ name: 'plitzi_render', arguments: { operations: merged } });
+    const offlineData = rendered.structuredContent?.offlineData;
+    if (offlineData) {
+      held.current = { operations: (rendered.structuredContent?.operations as unknown[] | undefined) ?? merged };
+      setResult(rendered);
+    }
+
+    await app.updateModelContext({
+      content: [
+        {
+          type: 'text',
+          text: offlineData
+            ? `Widget updated: ${summarise(rendered)}`
+            : `The patch did not apply, the widget is unchanged: ${summarise(rendered)}`
+        }
+      ]
+    });
+  };
 
   // useApp creates the App, runs onAppCreated so every handler is in place BEFORE the handshake, and connects.
   const { app, error } = useApp({
     appInfo: { name: 'Plitzi Widget', version: '1.0.0' },
     capabilities: {},
     onAppCreated: instance => {
-      instance.ontoolresult = setResult;
+      appRef.current = instance;
+      instance.ontoolresult = toolResult => {
+        if (toolResult.structuredContent?.patch === true) {
+          void applyPatch((toolResult.structuredContent.operations as unknown[] | undefined) ?? []);
+
+          return;
+        }
+
+        held.current = { operations: (toolResult.structuredContent?.operations as unknown[] | undefined) ?? [] };
+        setResult(toolResult);
+      };
       instance.ontoolcancelled = params => setCancelled(params.reason ?? 'The host cancelled the render.');
       instance.onhostcontextchanged = params => setContext(previous => ({ ...previous, ...params }));
       instance.onteardown = () => ({});

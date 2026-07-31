@@ -19,9 +19,8 @@ export const deleteInteractionOp = z
       .describe('Remove a single step; its neighbors are re-linked. Deleting a trigger removes its flow')
   })
   .describe(
-    'DESTRUCTIVE, not undoable — remove an interaction flow (by flowId) or a single step (by nodeId). Provide ' +
-      'exactly one. To merely turn a step OFF without removing it, use patchInteractionNode { enabled: false } ' +
-      'instead. Confirm with the user before deleting.'
+    'DESTRUCTIVE, not undoable — remove a flow (by flowId) or a single step (by nodeId); provide exactly one. ' +
+      'To turn a step OFF instead, patchInteractionNode { enabled: false }. Confirm with the user first.'
   );
 
 export type DeleteInteraction = z.infer<typeof deleteInteractionOp>;

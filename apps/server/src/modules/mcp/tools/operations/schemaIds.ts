@@ -31,6 +31,9 @@ import {
  *  in the global registry, so registering the shared ones here collapses those copies — without touching the ops,
  *  the tools, or the MCP SDK, whose own converter honours the registry (it is given no options otherwise).
  *
+ *  An id only pays when the schema is REUSED: giving one to a subschema that appears once makes the listing bigger,
+ *  because the `definitions` entry and the ref cost more than the single copy they replace (measured, and reverted).
+ *
  *  The ids are the names the MODEL reads in the refs, so they are written for it: `Element`, not `ElementInput`.
  *  This runs once, at module load of the op vocabulary, so every conversion path benefits — the MCP tools list and
  *  the co-worker's own tool-schema converter alike. */

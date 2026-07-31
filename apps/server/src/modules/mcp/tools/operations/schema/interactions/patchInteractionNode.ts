@@ -24,10 +24,9 @@ export const patchInteractionNodeOp = z
     preview
   })
   .describe(
-    'Partially update ONE step of an interaction flow (found by nodeId): only the fields you pass change; the ' +
-      'flow order/links are untouched. This is how you DISABLE/deactivate a step without removing it: pass ' +
-      '{ enabled: false } (re-enable with { enabled: true }) — the step stays in the flow. Use deleteInteraction ' +
-      'only to actually remove a step or a flow. Fails if the node does not exist.'
+    'Partially update ONE step of a flow (found by nodeId): only the fields you pass change, the order/links are ' +
+      'untouched. This is how you DISABLE a step without removing it — { enabled: false } keeps it in the flow. ' +
+      'deleteInteraction is for actually removing one. Fails if the node does not exist.'
   );
 
 export type PatchInteractionNode = z.infer<typeof patchInteractionNodeOp>;

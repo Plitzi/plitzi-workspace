@@ -31,10 +31,9 @@ export const upsertPageOp = z
       .string()
       .optional()
       .describe(
-        'The page URL path, RELATIVE — do NOT start it with "/" (the runtime and any parent folder slugs prepend ' +
-          'the path; a leading "/" is stripped). Good practice: always set one on create for a clean, stable route, ' +
-          'e.g. "pricing" or "posts/:postId" (a ":name" segment is a route param, readable as {{name}} and as the ' +
-          'source navigation.routeParams.name). Omitted on create → the page ref is used as the slug.'
+        'The page URL path, RELATIVE — never start it with "/" (parent folder slugs prepend it; a leading "/" is ' +
+          'stripped). Set one on create for a stable route: "pricing", "posts/:postId". A ":name" segment is a ' +
+          'route param, readable as {{name}} and as navigation.routeParams.name. Omitted → the page ref is used.'
       ),
     folder: z
       .string()

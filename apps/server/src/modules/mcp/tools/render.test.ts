@@ -52,3 +52,36 @@ describe('plitzi_render', () => {
     expect(renderTool.requires).toBeUndefined();
   });
 });
+
+// A design token declares any of default/light/dark. The side it does NOT declare must not be written out: a
+// custom property accepts almost any token sequence, so a literal `undefined` was not ignored — it overrode the
+// value that WAS given, and every declaration reading that var computed to nothing.
+describe('style variables (design tokens) compile per theme', () => {
+  const compile = (value: unknown): string => {
+    const res = render({
+      operations: [
+        { type: 'upsertStyleVariable', name: 'ink', value, category: 'color' },
+        { type: 'upsertDefinitions', definitions: { tone: { desktop: { color: 'var(--ink)' } } } }
+      ]
+    } as never);
+
+    expect(res.rendered).toBe(true);
+
+    return res.rendered ? res.offlineData.style.cache : '';
+  };
+
+  it('writes only the sides a light/dark token declares', () => {
+    const css = compile({ light: '#000', dark: '#fff' });
+
+    expect(css).not.toContain('undefined');
+    expect(css).toContain('--ink: #000;');
+    expect(css).toContain('--ink: #fff;');
+  });
+
+  it('leaves a default-only token alone instead of undoing it per scheme', () => {
+    const css = compile({ default: 'light-dark(#000, #fff)' });
+
+    expect(css).toContain('--ink: light-dark(#000, #fff);');
+    expect(css).not.toContain('prefers-color-scheme');
+  });
+});

@@ -163,6 +163,37 @@ describe('MCP connector (Streamable HTTP, no auth)', () => {
     expect(result.structuredContent).toMatchObject({ rendered: true, elementCount: 10 });
   });
 
+  // Iterating on a widget must not cost the whole widget again. The server cannot merge the delta itself (it keeps
+  // nothing between calls), so it answers with a courier result the open view merges and re-sends — these two tests
+  // pin the halves of that contract the model and the view depend on.
+  it('hands a patch back as a courier result instead of trying to render it', async () => {
+    const result = await endpoint.client.callTool({
+      name: 'plitzi_render',
+      arguments: {
+        patch: true,
+        operations: [{ type: 'patchDefinition', ref: 'headline', desktop: { color: 'red' } }]
+      }
+    });
+
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toMatchObject({ patch: true });
+    // The delta rides out-of-band for the view; the model only gets told what happened.
+    expect((result.structuredContent as { operations: unknown[] }).operations).toHaveLength(1);
+    expect(JSON.stringify(result.content)).not.toContain('offlineData');
+    expect(JSON.stringify(result.content)).toContain('patch');
+  });
+
+  it('returns the batch it rendered so the view can merge a later patch into it', async () => {
+    const result = await endpoint.client.callTool({
+      name: 'plitzi_render',
+      arguments: { operations: widgetOperations }
+    });
+
+    // Out-of-band only: the view needs it, the model must never pay for it.
+    expect((result.structuredContent as { operations: unknown[] }).operations).toHaveLength(widgetOperations.length);
+    expect(JSON.stringify(result.content)).not.toContain('upsertDefinition');
+  });
+
   it('reports a row missing a template field as a teachable error, naming the row', async () => {
     const result = await endpoint.client.callTool({
       name: 'plitzi_render',
