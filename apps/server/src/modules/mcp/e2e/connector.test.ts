@@ -183,6 +183,33 @@ describe('MCP connector (Streamable HTTP, no auth)', () => {
     expect(JSON.stringify(result.content)).toContain('patch');
   });
 
+  it('defers validation on a patch instead of judging the delta against an empty widget', async () => {
+    const result = await endpoint.client.callTool({
+      name: 'plitzi_render',
+      arguments: {
+        patch: true,
+        // `card-3` exists only in the widget the view is holding; validating here would reject a valid patch.
+        operations: [{ type: 'patchElement', pageRef: 'render', ref: 'card-3', props: { content: 'x' } }]
+      }
+    });
+
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toMatchObject({ patch: true });
+    expect(JSON.stringify(result.content)).not.toContain('not found');
+  });
+
+  it('refuses an empty patch, which would merge nothing and re-render the same widget', async () => {
+    const result = await endpoint.client.callTool({
+      name: 'plitzi_render',
+      arguments: { patch: true, operations: [] }
+    });
+
+    const text = JSON.stringify(result.content);
+    expect(text).toContain('no operations');
+    // Nothing to hand the view: no courier payload, so it never re-renders.
+    expect(result.structuredContent).toBeUndefined();
+  });
+
   it('returns the batch it rendered so the view can merge a later patch into it', async () => {
     const result = await endpoint.client.callTool({
       name: 'plitzi_render',

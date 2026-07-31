@@ -61,6 +61,11 @@ errors, if a ref does not exist. Address rows by the refs you already know (\`ca
 reports back there is no widget on screen (a surface that renders none, or a fresh conversation): send the whole
 batch again without \`patch\`.
 
+**Patch only to modify what is on screen.** A different subject, or a different kind of widget, is a FRESH render
+with no \`patch\` — the delta is merged into the previous widget, so patching a new idea leaves the user looking at
+both at once. Rebuilding when you could have patched only costs tokens; patching when you should have rebuilt costs
+the user a wrong widget.
+
 ## Build the whole widget in ONE upsertElement (nest with \`children\`)
 
 The simplest, least error-prone path: a single \`upsertElement\` whose \`element\` carries a nested \`children\` tree —

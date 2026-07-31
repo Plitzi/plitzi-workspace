@@ -112,6 +112,13 @@ const RenderApp = () => {
           return;
         }
 
+        // A result carrying no widget is a failed render or a refused patch. The model already reads its reasons
+        // as text, so it must not blank a widget that is on screen — nor drop the batch that widget was built
+        // from, which is the only copy of it anywhere. With nothing on screen yet, the error IS the view.
+        if (!toolResult.structuredContent?.offlineData && held.current.operations.length > 0) {
+          return;
+        }
+
         held.current = { operations: (toolResult.structuredContent?.operations as unknown[] | undefined) ?? [] };
         setResult(toolResult);
       };

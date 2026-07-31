@@ -137,19 +137,38 @@ export const render = (input: RenderInput): RenderResponse => {
  *
  *  Validation is not skipped, only deferred: the re-call carries the full batch, so refs, integrity and the audit
  *  all run exactly as they do on a first render, and their errors reach the model through that report. */
-const toPatchResult = (ops: Operation[]): CallToolResult => ({
-  content: [
-    {
-      type: 'text',
-      text: JSON.stringify({
-        patch: true,
-        operations: ops.length,
-        note: 'Handed to the open widget; it will report what it applied. If nothing reports back, no widget is on screen — re-send the full batch without patch.'
-      })
-    }
-  ],
-  structuredContent: { patch: true, operations: ops }
-});
+const toPatchResult = (ops: Operation[]): CallToolResult => {
+  // A patch is the one call whose emptiness is never intentional: it would travel to the view, merge nothing and
+  // re-render the same widget — a silent round trip the model would read as success. Said plainly instead.
+  if (ops.length === 0) {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            patch: false,
+            error: 'A patch carries no operations',
+            hint: 'Send the operations that differ from the widget on screen, or drop `patch` to render a new one.'
+          })
+        }
+      ]
+    };
+  }
+
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify({
+          patch: true,
+          operations: ops.length,
+          note: 'Handed to the open widget; it will report what it applied. If nothing reports back, no widget is on screen — re-send the full batch without patch.'
+        })
+      }
+    ],
+    structuredContent: { patch: true, operations: ops }
+  };
+};
 
 const toRenderResult = (res: RenderResponse): CallToolResult => {
   if (!res.rendered) {
@@ -217,7 +236,9 @@ export const renderTool = defineTool({
     'worked example, and following it is the difference between a widget that renders and repeated failed calls.\n' +
     'ITERATING — to change the widget you just rendered, do NOT rebuild it: call again with patch:true and ONLY ' +
     'the operations that differ (patchDefinition, patchElement, deleteElement…). The open widget merges them and ' +
-    'reports back what it applied; address rows by the refs you already know.\n' +
+    'reports back what it applied; address rows by the refs you already know. Patch ONLY to modify what is on ' +
+    'screen: a different subject or a different kind of widget is a fresh render, without patch — a patch is ' +
+    'merged into the previous widget, so patching a new idea leaves you with both.\n' +
     'Returns a compact summary (the widget is shown to the user); on failure it returns teachable errors ' +
     '(path + hint) — read them and retry.',
   inputShape: renderShape,
