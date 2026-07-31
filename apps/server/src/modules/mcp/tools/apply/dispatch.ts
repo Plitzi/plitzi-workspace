@@ -46,6 +46,8 @@ const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
       return schema.patchSettings(space, env, op);
     case 'upsertDefinition':
       return style.upsertDefinition(space, env, op);
+    case 'upsertDefinitions':
+      return style.upsertDefinitions(space, env, op);
     case 'patchDefinition':
       return style.patchDefinition(space, env, op);
     case 'deleteDefinition':

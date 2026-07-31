@@ -235,7 +235,12 @@ pointed at the old name is repointed with it, so the element stays wired. You do
   (prefer a unitless ratio like \`1.5\`, which tracks the font size). Changing one without the other leaves cramped or
   loosely-spaced text — they are a joint change, not two separate ones.
 - A definition lives in the **style schema**; an element's \`style.base\` (element schema) is the link that applies
-  it. Styling an element = upsertDefinition + upsertElement with that ref in \`style.base\`, in one batch.
+  it. Styling an element = upsertDefinitions + upsertElement with that ref in \`style.base\`, in one batch.
+- **Repeating siblings**: when a set of siblings shares a shape and differs only in data (a list, cards, rows,
+  steps), use \`repeatElement\` — the template once with \`{{item.field}}\` placeholders plus \`items\`, which
+  creates the wrapper and numbers each row's refs (\`step-1\`, \`step-2\`…). A list inside each row is the same op:
+  the wrapping node carries \`repeat: { items: "{{item.<list>}}", template: … }\` and its refs number both levels
+  (\`blk-2-3\`). Copy-pasting the subtree N times costs N times the tokens and drifts.
 - CSS keys are **kebab-case** (\`background-color\`). camelCase is rejected — read \`plitzi://css-properties\`.
 - **Write normal CSS — shorthands are accepted and expanded for you.** \`border\`, \`border-{side}\`,
   \`border-width\`/\`-color\`/\`-style\`, \`border-radius\`, \`padding\`, \`margin\`, \`inset\`, \`gap\`, \`overflow\`,
@@ -265,7 +270,9 @@ pointed at the old name is repointed with it, so the element stays wired. You do
 - **Three kinds of style live in the style schema — do not confuse them:**
   - **Definitions** = reusable CSS **classes** (\`upsertDefinition\`/\`patchDefinition\`/\`deleteDefinition\`, keyed by a
     class \`ref\`). Attach one to an element via \`style.base\` to style **that** element (and anything else that opts in).
-    This is the **default** way to style one element.
+    This is the **default** way to style one element. Declaring MORE than one class in a batch? Use
+    \`upsertDefinitions\` — one op carrying \`{ "<class>": { desktop: … }, … }\`, same result as the run of
+    \`upsertDefinition\` it replaces, without repeating the envelope once per class.
   - **Global styles** = the CSS equivalent of a bare element selector like \`button { … }\`
     (\`upsertGlobalStyle\`/\`patchGlobalStyle\`/\`deleteGlobalStyle\`, keyed by \`componentType\`). They style **every**
     element of that type at once. Use these for site-wide intent — e.g. "all buttons rounded":

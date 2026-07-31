@@ -127,6 +127,12 @@ const collectTouched = (ops: Operation[]): Touched => {
       case 'patchDefinition':
         touched.definitions.add(op.ref);
         break;
+      case 'upsertDefinitions':
+        for (const ref of Object.keys(op.definitions)) {
+          touched.definitions.add(ref);
+        }
+
+        break;
       case 'upsertGlobalStyle':
       case 'patchGlobalStyle':
         touched.globalStyles.add(op.componentType);

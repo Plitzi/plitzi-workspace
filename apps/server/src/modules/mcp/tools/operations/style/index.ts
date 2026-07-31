@@ -7,6 +7,7 @@ export { styleOps } from './operations';
 export type { DefinitionSlotInput, DefinitionSlotPatch } from './shared';
 
 export * from './definitions/upsertDefinition';
+export * from './definitions/upsertDefinitions';
 export * from './definitions/patchDefinition';
 export * from './definitions/deleteDefinition';
 export * from './globalStyles/upsertGlobalStyle';

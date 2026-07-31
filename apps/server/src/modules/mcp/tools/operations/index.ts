@@ -11,6 +11,7 @@ export type { DefinitionSlotInput, DefinitionSlotPatch } from './style';
 // ops (e.g. rename an element AND make it red) — applied atomically across both schemas.
 export const operation = z.discriminatedUnion('type', [
   elementOps.upsertElement,
+  elementOps.repeatElement,
   elementOps.patchElement,
   elementOps.deleteElement,
   elementOps.moveElement,
@@ -28,6 +29,7 @@ export const operation = z.discriminatedUnion('type', [
   elementOps.deleteInteraction,
   elementOps.patchSettings,
   styleOps.upsertDefinition,
+  styleOps.upsertDefinitions,
   styleOps.patchDefinition,
   styleOps.deleteDefinition,
   styleOps.upsertGlobalStyle,

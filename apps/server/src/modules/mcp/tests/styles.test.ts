@@ -413,3 +413,109 @@ describe('mcp-ai CSS shorthand expansion (I4)', () => {
     expect(def.desktop?.['border-top-color']).toBe('red');
   });
 });
+
+// The batched form of upsertDefinition: one op carries every class, keyed by name. It exists purely to stop a
+// widget from spending a third of its tokens on repeated `{"type":"upsertDefinition","ref":…}` envelopes, so what
+// matters is that it writes EXACTLY what the single ops write.
+describe('mcp-ai upsertDefinitions (one op, many classes)', () => {
+  const batch = {
+    type: 'upsertDefinitions',
+    definitions: {
+      row: { desktop: { display: 'flex', 'flex-direction': 'row' } },
+      pill: { desktop: { 'border-radius': '9999px', padding: '4px 8px' } },
+      cta: { desktop: { color: '#fff' }, states: { hover: { desktop: { color: '#eee' } } } }
+    }
+  } as const;
+
+  it('writes every class, identically to a run of upsertDefinition', async () => {
+    const batched = capturing(buildSpace());
+    const singles = capturing(buildSpace());
+
+    expect((await apply({ operations: [batch] }, buildSpace(), batched.persisters)).applied).toBe(true);
+    expect(
+      (
+        await apply(
+          {
+            operations: [
+              { type: 'upsertDefinition', ref: 'row', desktop: { display: 'flex', 'flex-direction': 'row' } },
+              { type: 'upsertDefinition', ref: 'pill', desktop: { 'border-radius': '9999px', padding: '4px 8px' } },
+              {
+                type: 'upsertDefinition',
+                ref: 'cta',
+                desktop: { color: '#fff' },
+                states: { hover: { desktop: { color: '#eee' } } }
+              }
+            ]
+          },
+          buildSpace(),
+          singles.persisters
+        )
+      ).applied
+    ).toBe(true);
+
+    expect(batched.saved().style.platform).toEqual(singles.saved().style.platform);
+  });
+
+  it('reports a bad property under the class it belongs to, and applies nothing', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      {
+        operations: [
+          {
+            type: 'upsertDefinitions',
+            definitions: { ok: { desktop: { color: 'red' } }, bad: { desktop: { fontSize: '10px' } } }
+          }
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+
+    expect(res.applied).toBe(false);
+    expect(res.errors?.[0]?.path).toBe('operations[0].definitions.bad.desktop.fontSize');
+    expect(res.errors?.[0]?.hint).toContain('font-size');
+  });
+
+  it('refuses a name already held by a global element style, like the single op does', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      { operations: [{ type: 'upsertGlobalStyle', componentType: 'button', desktop: { color: 'red' } }] },
+      buildSpace(),
+      cap.persisters
+    );
+    const res = await apply(
+      { operations: [{ type: 'upsertDefinitions', definitions: { button: { desktop: { color: 'blue' } } } }] },
+      cap.saved(),
+      cap.persisters
+    );
+
+    expect(res.applied).toBe(false);
+    expect(res.errors?.[0]?.path).toBe('operations[0].definitions.button');
+  });
+
+  it('counts a variant it declares as declared in this batch (no false warning on apply)', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      {
+        operations: [
+          {
+            type: 'upsertDefinitions',
+            definitions: { chip: { desktop: { color: 'red' }, variants: { lg: { desktop: { 'font-size': '20px' } } } } }
+          },
+          {
+            type: 'patchElement',
+            pageRef: 'home',
+            ref: 'c1',
+            style: { base: ['chip'] },
+            initialState: { styleVariant: { chip: { base: 'lg' } } }
+          }
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+
+    expect(res.applied).toBe(true);
+    expect((res.warnings ?? []).join(' ')).not.toContain('lg');
+  });
+});

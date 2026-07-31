@@ -97,27 +97,30 @@ export const initialStateInput = z.object({
   visibility: z.boolean().optional().describe('Initial visibility of the element')
 });
 
+// Every field of an element EXCEPT `children`, which each schema below closes over its own recursion. Shared so the
+// repeat template (which adds a `repeat` node) cannot drift from the element it renders.
+export const elementShape = {
+  ref: z
+    .string()
+    .describe(
+      'Semantic id you choose, or an existing element ref/id. On a new element this is stored as its idRef and ' +
+        'becomes the key everything else addresses it by — its data source is named `<type>_<ref>`, and an ' +
+        'interaction targets it by this ref. Start with a letter, then letters, numbers, hyphens and underscores ' +
+        '("hero-cta" or "food_item"): a dot would break the `<type>_<idRef>.<field>` grammar (an underscore is ' +
+        'fine — the first `_` separates the type from the idRef). Must be unique across the space.'
+    ),
+  type: z.string().describe('Type from plitzi://types'),
+  label: z.string().optional(),
+  subType: z.string().optional(),
+  props: z.record(z.string(), z.unknown()).optional().describe('Full replacement on update'),
+  style: styleRefs.optional().describe('Definition refs per slot; style the element by attaching a definition'),
+  initialState: initialStateInput
+    .optional()
+    .describe('Applied style variant(s) and initial visibility (see plitzi://guide styling)')
+};
+
 export const elementInput: z.ZodType<ElementInput> = z.lazy(() =>
-  z.object({
-    ref: z
-      .string()
-      .describe(
-        'Semantic id you choose, or an existing element ref/id. On a new element this is stored as its idRef and ' +
-          'becomes the key everything else addresses it by — its data source is named `<type>_<ref>`, and an ' +
-          'interaction targets it by this ref. Start with a letter, then letters, numbers, hyphens and underscores ' +
-          '("hero-cta" or "food_item"): a dot would break the `<type>_<idRef>.<field>` grammar (an underscore is ' +
-          'fine — the first `_` separates the type from the idRef). Must be unique across the space.'
-      ),
-    type: z.string().describe('Type from plitzi://types'),
-    label: z.string().optional(),
-    subType: z.string().optional(),
-    props: z.record(z.string(), z.unknown()).optional().describe('Full replacement on update'),
-    style: styleRefs.optional().describe('Definition refs per slot; style the element by attaching a definition'),
-    initialState: initialStateInput
-      .optional()
-      .describe('Applied style variant(s) and initial visibility (see plitzi://guide styling)'),
-    children: z.array(elementInput).optional()
-  })
+  z.object({ ...elementShape, children: z.array(elementInput).optional() })
 );
 
 export const position = z

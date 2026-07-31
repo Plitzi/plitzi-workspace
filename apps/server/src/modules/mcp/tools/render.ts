@@ -5,6 +5,7 @@ import { applyOperations } from './apply/dispatch';
 import { operations } from './operations';
 import { RENDER_APP_URI } from '../apps';
 import { emptySpace } from '../helpers';
+import { expandOperations } from './shared/expandOperations';
 import { defineTool } from './shared/tool';
 import { validateOperations } from './shared/validator';
 import { auditResources } from './shared/validator/audit';
@@ -53,12 +54,18 @@ export type RenderResponse =
 export const render = (input: RenderInput): RenderResponse => {
   const space = seedSpace();
 
-  const validation = validateOperations(space, input.operations);
+  const expansion = expandOperations(input.operations);
+  if (expansion.errors.length > 0) {
+    return { rendered: false, errors: expansion.errors };
+  }
+
+  const ops = expansion.operations;
+  const validation = validateOperations(space, ops);
   if (!validation.valid) {
     return { rendered: false, errors: validation.errors, warnings: noWarnings(validation.warnings) };
   }
 
-  const outcome = applyOperations(space, 'main', input.operations);
+  const outcome = applyOperations(space, 'main', ops);
   if (outcome.errors.length > 0) {
     return { rendered: false, errors: outcome.errors, warnings: noWarnings(validation.warnings) };
   }
@@ -76,7 +83,7 @@ export const render = (input: RenderInput): RenderResponse => {
     };
   }
 
-  const audit = auditResources(space, input.operations);
+  const audit = auditResources(space, ops);
   const warnings = [...validation.warnings, ...audit.warnings];
   if (audit.errors.length > 0) {
     return { rendered: false, errors: audit.errors, warnings: noWarnings(warnings) };
@@ -131,8 +138,15 @@ export const renderTool = defineTool({
     '1. STRUCTURE — one upsertElement builds the whole tree: set pageRef:"render" and give element a nested ' +
     '`children` array. Each element is { ref (unique), type, subType?, props?, style?, children? }; children render ' +
     'in order. (To attach to something you already made, use a top-level parentRef:"<existing ref>" instead.)\n' +
-    '2. STYLE — declare reusable classes with upsertDefinition { ref, desktop:{ …CSS props in kebab-case… } }, then ' +
-    'attach via the element style:{ base:["<class ref>"] }. Lay containers out with flex/grid.\n' +
+    '1b. REPEATS — the moment two siblings share a shape and differ only in data (list, steps, cards, table, ' +
+    'timeline), do NOT copy-paste them: use repeatElement { pageRef, ref (wrapper), style, template, items }. The ' +
+    'template is written once with {{item.field}} placeholders and rendered per row; refs come out numbered ' +
+    '("step-1", "step-2"…). A list INSIDE each row (days with their own steps) is the same op: give the wrapping ' +
+    'node repeat:{ items:"{{item.<list>}}", template:… } and put the sub-rows in the row data.\n' +
+    '2. STYLE — declare ALL the classes in ONE upsertDefinitions { definitions: { "<class>": { desktop:{ …CSS in ' +
+    'kebab-case… } }, … } }, then attach via the element style:{ base:["<class ref>"] }. Lay containers out with ' +
+    'flex/grid. Keep the call small: one class per look (not per property), and never hand-draw a scene in a ' +
+    'data: URI — it costs more than the whole widget; use an https image, a flat colour or a gradient.\n' +
     '2b. LAYOUT — it renders in a side panel, so width is free and HEIGHT is scarce. Plain containers stack ' +
     'children vertically, which is the tall half-empty default to avoid: put peers (metrics, plans, options, ' +
     'image + text) in a wrapping row — display:flex, flex-direction:row, flex-wrap:wrap, children flex-grow:"1" + ' +
@@ -140,7 +154,7 @@ export const renderTool = defineTool({
     'Keep padding 12-16px and gap 8-12px, and let the outer container fill the panel. Stack only what reads in ' +
     'order (heading over paragraph, forms, steps, prose). Watch the SDK defaults: every container has ' +
     'min-width/min-height 50px (set them to "0" for rails, dividers, dots and any flex child that must shrink), ' +
-    'and heading/paragraph keep the browser\'s own margins (zero them and space with the parent\'s gap).\n' +
+    'and heading/paragraph keep the margins the browser gives them (zero them, space with the parent gap).\n' +
     '2c. THEME — it is embedded in the host UI, which MAY BE DARK, so never hardcode a light palette. Take colours ' +
     'from the host variables with a light-dark() fallback — background-color:"var(--color-background-secondary, ' +
     'light-dark(#ffffff, #1f2430))", color:"var(--color-text-primary, light-dark(#0f172a, #e8eaed))", ' +

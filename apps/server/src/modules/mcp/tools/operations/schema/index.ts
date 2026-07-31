@@ -7,6 +7,7 @@ export { elementOps } from './operations';
 export type { ElementInput } from './shared';
 
 export * from './elements/upsertElement';
+export * from './elements/repeatElement';
 export * from './elements/patchElement';
 export * from './elements/deleteElement';
 export * from './elements/moveElement';

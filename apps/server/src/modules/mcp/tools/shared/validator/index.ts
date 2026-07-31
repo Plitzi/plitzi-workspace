@@ -149,6 +149,18 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
         checkVariantApplication(op.initialState, `${base}.initialState`, ctx);
         break;
       }
+      case 'upsertDefinitions': {
+        for (const [ref, { slots, ...slot }] of Object.entries(op.definitions)) {
+          const entry = `${base}.definitions.${ref}`;
+          checkRef(ref, entry, ctx);
+          checkSlotCss(slot, entry, ctx);
+          for (const [slotName, slotDef] of Object.entries(slots ?? {})) {
+            checkSlotCss(slotDef, `${entry}.slots.${slotName}`, ctx);
+          }
+        }
+
+        break;
+      }
       case 'upsertDefinition':
       case 'patchDefinition': {
         const { type, ref, slots, ...slot } = op;

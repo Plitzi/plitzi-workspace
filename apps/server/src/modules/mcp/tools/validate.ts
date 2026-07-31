@@ -1,6 +1,7 @@
 import { applyOperations } from './apply/dispatch';
 import { environment, operations } from './operations';
 import { cloneSpace } from '../helpers';
+import { expandOperations } from './shared/expandOperations';
 import { defineTool } from './shared/tool';
 import { validateOperations } from './shared/validator';
 import { auditResources } from './shared/validator/audit';
@@ -11,7 +12,13 @@ import type { Env, ValidateInput, ValidationResult } from '../types';
 export const validateShape = { environment, operations };
 
 export const validate = (input: ValidateInput, space: Space): ValidationResult => {
-  const validation = validateOperations(space, input.operations);
+  const expansion = expandOperations(input.operations);
+  if (expansion.errors.length > 0) {
+    return { valid: false, errors: expansion.errors, warnings: [] };
+  }
+
+  const ops = expansion.operations;
+  const validation = validateOperations(space, ops);
   if (!validation.valid) {
     return validation;
   }
@@ -21,12 +28,12 @@ export const validate = (input: ValidateInput, space: Space): ValidationResult =
   // node already living in a touched element or definition), without persisting.
   const env = (input.environment ?? 'main') as Env;
   const draft = cloneSpace(space);
-  const outcome = applyOperations(draft, env, input.operations);
+  const outcome = applyOperations(draft, env, ops);
   if (outcome.errors.length > 0) {
     return { valid: false, errors: outcome.errors, warnings: validation.warnings };
   }
 
-  const audit = auditResources(draft, input.operations);
+  const audit = auditResources(draft, ops);
 
   return {
     valid: audit.errors.length === 0,

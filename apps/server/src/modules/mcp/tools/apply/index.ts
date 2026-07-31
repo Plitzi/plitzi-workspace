@@ -6,6 +6,7 @@ import { applyOperations } from './dispatch';
 import { changedResources, conflictMessage, detectConflicts, resolvedElements } from './writeResult';
 import { cloneSpace } from '../../helpers';
 import { environment, operations } from '../operations';
+import { expandOperations } from '../shared/expandOperations';
 import { defineTool } from '../shared/tool';
 import { validateOperations } from '../shared/validator';
 import { auditResources } from '../shared/validator/audit';
@@ -44,7 +45,20 @@ const schemaErrorToValidation = (error: SchemaValidationError): ValidationError 
 export const apply = async (input: ApplyInput, space: Space, persisters?: Persisters): Promise<WriteResponse> => {
   const env = (input.environment ?? 'main') as Env;
 
-  const validation = validateOperations(space, input.operations);
+  // Sugar ops (repeatElement) become their plain equivalents before anything else looks at the batch.
+  const expansion = expandOperations(input.operations);
+  if (expansion.errors.length > 0) {
+    return {
+      applied: false,
+      persisted: false,
+      summary: { created: 0, updated: 0, deleted: 0 },
+      changed: [],
+      errors: expansion.errors
+    };
+  }
+
+  const ops = expansion.operations;
+  const validation = validateOperations(space, ops);
   if (!validation.valid) {
     return {
       applied: false,
@@ -68,7 +82,7 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
   }
 
   const draft = cloneSpace(space);
-  const outcome = applyOperations(draft, env, input.operations);
+  const outcome = applyOperations(draft, env, ops);
   if (outcome.errors.length > 0) {
     return {
       applied: false,
@@ -96,7 +110,7 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
   // draft. A broken transformer / invalid CSS / malformed node already living in a touched element or definition
   // (not written by this batch) blocks the save until the agent fixes it too — the audit runs on the post-apply
   // draft, so the SAME batch may include the fix and pass. Its warnings ride along either way.
-  const audit = auditResources(draft, input.operations);
+  const audit = auditResources(draft, ops);
   const warnings = [...validation.warnings, ...audit.warnings];
   if (audit.errors.length > 0) {
     return {

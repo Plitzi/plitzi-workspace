@@ -4,6 +4,7 @@ import { upsertBindingOp } from './bindings/upsertBinding';
 import { deleteElementOp } from './elements/deleteElement';
 import { moveElementOp } from './elements/moveElement';
 import { patchElementOp } from './elements/patchElement';
+import { repeatElementOp } from './elements/repeatElement';
 import { upsertElementOp } from './elements/upsertElement';
 import { deleteFolderOp } from './folders/deleteFolder';
 import { upsertFolderOp } from './folders/upsertFolder';
@@ -19,6 +20,7 @@ import { upsertVariableOp } from './variables/upsertVariable';
 // The element-schema write vocabulary, keyed by op type — feeds the discriminated union in tools/operations.ts.
 export const elementOps = {
   upsertElement: upsertElementOp,
+  repeatElement: repeatElementOp,
   patchElement: patchElementOp,
   deleteElement: deleteElementOp,
   moveElement: moveElementOp,

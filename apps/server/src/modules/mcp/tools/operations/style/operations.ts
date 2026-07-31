@@ -1,6 +1,7 @@
 import { deleteDefinitionOp } from './definitions/deleteDefinition';
 import { patchDefinitionOp } from './definitions/patchDefinition';
 import { upsertDefinitionOp } from './definitions/upsertDefinition';
+import { upsertDefinitionsOp } from './definitions/upsertDefinitions';
 import { deleteGlobalStyleOp } from './globalStyles/deleteGlobalStyle';
 import { patchGlobalStyleOp } from './globalStyles/patchGlobalStyle';
 import { upsertGlobalStyleOp } from './globalStyles/upsertGlobalStyle';
@@ -13,6 +14,7 @@ import { upsertStyleVariableOp } from './variables/upsertStyleVariable';
 // The style-schema write vocabulary, keyed by op type — feeds the discriminated union in tools/operations.ts.
 export const styleOps = {
   upsertDefinition: upsertDefinitionOp,
+  upsertDefinitions: upsertDefinitionsOp,
   patchDefinition: patchDefinitionOp,
   deleteDefinition: deleteDefinitionOp,
   upsertGlobalStyle: upsertGlobalStyleOp,

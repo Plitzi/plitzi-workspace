@@ -46,24 +46,44 @@ export const batchDeclaredFolders = (ops: Operation[]): Set<string> => {
   return refs;
 };
 
-// Variant names each class declares within this same batch (upsertDefinition/patchDefinition), so applying a
-// variant an earlier op in the batch just created does not false-warn.
+type VariantSource = {
+  variants?: Record<string, unknown>;
+  slots?: Record<string, { variants?: Record<string, unknown> }>;
+};
+
+// Every variant name one class declares, base slot and named slots together.
+const variantNamesOf = (source: VariantSource): Set<string> => {
+  const names = new Set<string>(Object.keys(source.variants ?? {}));
+  for (const slot of Object.values(source.slots ?? {})) {
+    for (const name of Object.keys(slot.variants ?? {})) {
+      names.add(name);
+    }
+  }
+
+  return names;
+};
+
+// Variant names each class declares within this same batch (upsertDefinition/upsertDefinitions/patchDefinition),
+// so applying a variant an earlier op in the batch just created does not false-warn.
 export const batchDeclaredVariants = (ops: Operation[]): Map<string, Set<string>> => {
   const map = new Map<string, Set<string>>();
+  const record = (ref: string, names: Set<string>): void => {
+    if (names.size > 0) {
+      map.set(ref, new Set([...(map.get(ref) ?? []), ...names]));
+    }
+  };
+
   for (const op of ops) {
-    if (op.type !== 'upsertDefinition' && op.type !== 'patchDefinition') {
+    if (op.type === 'upsertDefinitions') {
+      for (const [ref, definition] of Object.entries(op.definitions)) {
+        record(ref, variantNamesOf(definition));
+      }
+
       continue;
     }
 
-    const names = new Set<string>(Object.keys(op.variants ?? {}));
-    for (const slot of Object.values(op.slots ?? {})) {
-      for (const name of Object.keys(slot.variants ?? {})) {
-        names.add(name);
-      }
-    }
-
-    if (names.size > 0) {
-      map.set(op.ref, new Set([...(map.get(op.ref) ?? []), ...names]));
+    if (op.type === 'upsertDefinition' || op.type === 'patchDefinition') {
+      record(op.ref, variantNamesOf(op));
     }
   }
 

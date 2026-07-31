@@ -501,7 +501,7 @@ export const unauthorizedSpaceMessage =
   'This connection has no space attached (a guest or widgets-only grant, or a token that carries no space), so ' +
   'NOTHING in a space can be read or edited — every other space tool will fail the same way, do not retry them. ' +
   'Use plitzi_render instead: it builds a self-contained widget offline, with no space, backend or account (read ' +
-  'plitzi://render/guide). To edit a real space, the user must reconnect the integration and grant access to one.'
+  'plitzi://render/guide). To edit a real space, the user must reconnect the integration and grant access to one.';
 
 export const generateObjectId = (): string => {
   const ts = Math.floor(Date.now() / 1000)

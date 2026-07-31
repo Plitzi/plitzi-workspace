@@ -180,3 +180,162 @@ describe('mcp-ai legacy id addressing', () => {
     expect(page.tree).toHaveLength(0);
   });
 });
+
+// repeatElement: one template + its rows, instead of N near-identical subtrees. It is sugar — the batch is rewritten
+// into the upsertElement it stands for BEFORE validation — so these tests pin the two things that makes it usable:
+// the refs a row gets (predictable, so a later op can address them) and what happens to a row missing a field.
+describe('mcp-ai repeatElement (list from a template + rows)', () => {
+  const repeat: Operation = {
+    type: 'repeatElement',
+    pageRef: 'home',
+    ref: 'steps',
+    template: {
+      ref: 'step',
+      type: 'container',
+      children: [{ ref: 'label', type: 'text', props: { content: '{{item.title}}' } }]
+    },
+    items: [{ title: 'First' }, { title: 'Second' }]
+  };
+
+  it('creates the wrapper and one filled subtree per row, numbering every ref', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply({ operations: [repeat] }, buildSpace(), cap.persisters);
+
+    expect(res.applied).toBe(true);
+    const refs = Object.values(cap.saved().schema.flat).map(el => el.idRef);
+    expect(refs).toContain('steps');
+    expect(refs).toEqual(expect.arrayContaining(['step-1', 'label-1', 'step-2', 'label-2']));
+    const contents = Object.values(cap.saved().schema.flat).map(el => el.attributes.content);
+    expect(contents).toEqual(expect.arrayContaining(['First', 'Second']));
+  });
+
+  it('keeps a placeholder that is the whole value typed, and leaves schema vars alone', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      {
+        operations: [
+          {
+            type: 'repeatElement',
+            pageRef: 'home',
+            ref: 'cards',
+            template: {
+              ref: 'card',
+              type: 'container',
+              props: { count: '{{item.count}}', url: '{{apiUrl}}/x', label: 'Nº {{item.count}}' }
+            },
+            items: [{ count: 3 }]
+          }
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+
+    expect(res.applied).toBe(true);
+    const card = Object.values(cap.saved().schema.flat).find(el => el.idRef === 'card-1');
+    expect(card?.attributes.count).toBe(3);
+    expect(card?.attributes.url).toBe('{{apiUrl}}/x');
+    expect(card?.attributes.label).toBe('Nº 3');
+  });
+
+  it('refuses a row that lacks a field the template reads, naming the row and what it carries', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      { operations: [{ ...repeat, items: [{ title: 'First' }, { other: 'x' }] }] },
+      buildSpace(),
+      cap.persisters
+    );
+
+    expect(res.applied).toBe(false);
+    expect(res.errors?.[0]?.path).toBe('operations[0].items[1]');
+    expect(res.errors?.[0]?.message).toContain('"title"');
+    expect(res.errors?.[0]?.hint).toContain('other');
+  });
+
+  it('nests a list inside each row, numbering both levels', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      {
+        operations: [
+          {
+            type: 'repeatElement',
+            pageRef: 'home',
+            ref: 'timeline',
+            template: {
+              ref: 'day',
+              type: 'container',
+              children: [
+                { ref: 'title', type: 'text', props: { content: '{{item.park}}' } },
+                {
+                  ref: 'body',
+                  type: 'container',
+                  repeat: {
+                    items: '{{item.blocks}}',
+                    template: { ref: 'blk', type: 'text', props: { content: '{{item.text}}' } }
+                  }
+                }
+              ]
+            },
+            items: [
+              { park: 'Magic Kingdom', blocks: [{ text: 'Rope drop' }, { text: 'Space Mountain' }] },
+              { park: 'EPCOT', blocks: [{ text: 'Cosmic Rewind' }] }
+            ]
+          }
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+
+    expect(res.applied).toBe(true);
+    const refs = Object.values(cap.saved().schema.flat).map(el => el.idRef);
+    // Outer row first, sub-row second: blk-1-2 is the second block of the first day.
+    expect(refs).toEqual(expect.arrayContaining(['day-1', 'blk-1-1', 'blk-1-2', 'day-2', 'blk-2-1']));
+    expect(refs).not.toContain('blk-2-2');
+    const contents = Object.values(cap.saved().schema.flat).map(el => el.attributes.content);
+    expect(contents).toEqual(expect.arrayContaining(['Magic Kingdom', 'Space Mountain', 'Cosmic Rewind']));
+  });
+
+  it('refuses a nested repeat whose field is not a list', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      {
+        operations: [
+          {
+            type: 'repeatElement',
+            pageRef: 'home',
+            ref: 'timeline',
+            template: {
+              ref: 'day',
+              type: 'container',
+              repeat: { items: '{{item.blocks}}', template: { ref: 'blk', type: 'text' } }
+            },
+            items: [{ blocks: 'nope' }]
+          }
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+
+    expect(res.applied).toBe(false);
+    expect(res.errors?.[0]?.path).toBe('operations[0].items[0]');
+    expect(res.errors?.[0]?.message).toContain('no list at');
+  });
+
+  it('reports a bad element inside the template with the ordinary element errors', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      {
+        operations: [
+          { ...repeat, template: { ref: 'bad.ref', type: 'container', props: { content: '{{item.title}}' } } }
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+
+    expect(res.applied).toBe(false);
+    expect(JSON.stringify(res.errors)).toContain('bad.ref');
+  });
+});

@@ -70,13 +70,85 @@ An element is \`{ ref, type, subType?, props?, style?, children? }\`. Children r
 add elements one-by-one with a top-level \`parentRef: "<existing ref>"\` and optional \`position\` — useful to append to
 or restructure something you already created — but for a fresh widget the inline \`children\` tree is easier.)
 
-## Style with reusable classes — upsertDefinition
+## Repeating rows — repeatElement, never copy-paste
 
-Styling is separate from structure: declare a class, then attach it by ref.
+The moment two siblings have the same shape and different data — a list, steps, cards, a table, a timeline —
+**write the shape once** and hand over the rows. \`repeatElement\` creates the wrapper (style it with the row/grid
+class) and renders the template once per entry of \`items\`:
 
 \`\`\`json
-{ "type": "upsertDefinition", "ref": "card", "desktop": { "display": "flex", "flex-direction": "column", "gap": "8px", "padding": "24px", "border-radius": "12px" } }
+{ "type": "repeatElement", "pageRef": "render", "ref": "steps", "style": { "base": ["list"] },
+  "template": {
+    "ref": "step", "type": "container", "style": { "base": ["row"] },
+    "children": [
+      { "ref": "at",   "type": "paragraph", "style": { "base": ["time"] }, "props": { "content": "{{item.time}}" } },
+      { "ref": "what", "type": "paragraph", "style": { "base": ["txt"] },  "props": { "content": "{{item.text}}" } }
+    ]
+  },
+  "items": [
+    { "time": "08:00", "text": "Doors open, head straight to the main hall." },
+    { "time": "10:30", "text": "Workshops in the east wing." },
+    { "time": "13:00", "text": "Lunch, then the keynote." }
+  ]
+}
 \`\`\`
+- \`{{item.<field>}}\` is replaced by that row's field, anywhere in the template (props, a style ref, a param).
+  A placeholder that is the WHOLE value keeps the field's type (\`"{{item.count}}"\` with \`count: 3\` stays the
+  number 3); mixed with text it interpolates. Dotted paths work: \`{{item.author.name}}\`.
+- Every ref in the template gets the row number appended — \`step\` becomes \`step-1\`, \`step-2\`… — so rows never
+  collide and you can address one later without reading anything back.
+- Other \`{{…}}\` names are left untouched, so schema variables keep working inside a template.
+- A row missing a field the template reads fails the batch and names the row and the fields it does carry.
+- Up to 100 rows per op. Rows that differ in SHAPE (not just data) are not rows — write those as plain elements.
+
+**A list inside each row** — a timeline of days each with its own steps, a menu of sections each with its dishes —
+is one op too: give the node that should wrap the sub-list a \`repeat\`, and put the sub-rows in the row's data.
+
+\`\`\`json
+{ "type": "repeatElement", "pageRef": "render", "ref": "timeline", "style": { "base": ["tl"] },
+  "template": {
+    "ref": "day", "type": "container", "style": { "base": ["day"] },
+    "children": [
+      { "ref": "title", "type": "heading", "subType": "h3", "props": { "content": "{{item.park}}" } },
+      { "ref": "body", "type": "container", "style": { "base": ["body"] },
+        "repeat": { "items": "{{item.blocks}}", "template": {
+            "ref": "blk", "type": "container", "style": { "base": ["blk"] },
+            "children": [
+              { "ref": "at",   "type": "paragraph", "props": { "content": "{{item.time}}" } },
+              { "ref": "what", "type": "paragraph", "props": { "content": "{{item.text}}" } }
+            ]
+        } } }
+    ]
+  },
+  "items": [
+    { "park": "Magic Kingdom", "blocks": [ { "time": "08:00", "text": "Rope drop." }, { "time": "10:30", "text": "Space Mountain." } ] },
+    { "park": "EPCOT",         "blocks": [ { "time": "08:30", "text": "Cosmic Rewind." } ] }
+  ]
+}
+\`\`\`
+- The node carrying \`repeat\` becomes the WRAPPER of its sub-list (its own \`children\` are ignored), so put the
+  sub-list's layout class on it.
+- Inside the sub-template \`{{item.…}}\` reads the SUB-row; a field of the outer row is not reachable from there,
+  so repeat it in each sub-row if you need it.
+- Refs number both levels, outer first: \`blk-2-3\` is the third block of the second day.
+- **One level of nesting**: the sub-template is a plain element tree, so it cannot carry another \`repeat\`.
+- The whole op is capped at 500 rows across both levels.
+
+## Style with reusable classes — upsertDefinitions
+
+Styling is separate from structure: declare the classes, then attach them by ref. **Declare them all in ONE
+\`upsertDefinitions\`**, keyed by class name — a widget usually needs a dozen classes, and one op per class spends a
+noticeable slice of the call on repeated \`{"type":"upsertDefinition","ref":…}\` envelopes.
+
+\`\`\`json
+{ "type": "upsertDefinitions", "definitions": {
+    "card": { "desktop": { "display": "flex", "flex-direction": "column", "gap": "8px", "padding": "16px", "border-radius": "12px" } },
+    "title": { "desktop": { "font-size": "16px", "font-weight": "600", "margin-top": "0", "margin-bottom": "0" } }
+} }
+\`\`\`
+Each value is exactly what \`upsertDefinition\` takes minus \`type\`/\`ref\` (\`desktop\`/\`tablet\`/\`mobile\`, \`states\`,
+\`variants\`, \`slots\`), and the result is identical. The single \`upsertDefinition\` still exists for a one-off class,
+and \`patchDefinition\` still changes only some CSS of one class.
 - CSS properties in **kebab-case** (\`background-color\`, \`font-size\`, \`border-radius\`), values as plain strings.
 - Attach to an element via \`style: { "base": ["card"] }\`. Stack classes: \`"base": ["card", "shadow"]\`.
 - One \`ref\` can name both an element and its class (as above) — they live in different namespaces.
@@ -118,14 +190,16 @@ half-empty widget to avoid. Choose the axis every time:
 - **Peers side by side** — metrics, plans, options, a comparison, an image next to its text: a row, wrapping when
   it runs out of width, children sharing it (no fixed widths).
   \`\`\`json
-  { "type": "upsertDefinition", "ref": "row", "desktop": { "display": "flex", "flex-direction": "row", "flex-wrap": "wrap", "gap": "12px", "align-items": "stretch" } }
-  { "type": "upsertDefinition", "ref": "col", "desktop": { "flex-grow": "1", "flex-basis": "0%", "min-width": "150px" } }
+  { "type": "upsertDefinitions", "definitions": {
+      "row": { "desktop": { "display": "flex", "flex-direction": "row", "flex-wrap": "wrap", "gap": "12px", "align-items": "stretch" } },
+      "col": { "desktop": { "flex-grow": "1", "flex-basis": "0%", "min-width": "150px" } }
+  } }
   \`\`\`
   \`flex-grow: 1\` + \`flex-basis: 0%\` splits the row evenly; \`min-width\` is the wrap threshold — under it the item
   drops to the next line by itself, so a narrow panel degrades gracefully with no breakpoints.
 - **Many uniform items** — cards, tiles, a gallery: one grid line does it all.
   \`\`\`json
-  { "type": "upsertDefinition", "ref": "grid", "desktop": { "display": "grid", "grid-template-columns": "repeat(auto-fit, minmax(160px, 1fr))", "gap": "12px" } }
+  { "type": "upsertDefinitions", "definitions": { "grid": { "desktop": { "display": "grid", "grid-template-columns": "repeat(auto-fit, minmax(160px, 1fr))", "gap": "12px" } } } }
   \`\`\`
 - **Label + value pairs** stay on one line (\`display: flex\`, \`justify-content: space-between\`) instead of two.
 - **Vertical is right** for reading order: a heading over its paragraph, a form, a step list, long prose.
@@ -145,12 +219,12 @@ The host publishes its palette as CSS variables on the page, so use them for eve
 \`light-dark(<light>, <dark>)\` fallback for hosts that send none:
 
 \`\`\`json
-{ "type": "upsertDefinition", "ref": "card", "desktop": {
+{ "type": "upsertDefinitions", "definitions": { "card": { "desktop": {
     "background-color": "var(--color-background-secondary, light-dark(#ffffff, #1f2430))",
     "color": "var(--color-text-primary, light-dark(#0f172a, #e8eaed))",
     "border-width": "1px", "border-style": "solid",
     "border-color": "var(--color-border-primary, light-dark(#e2e8f0, #333a48))"
-} }
+} } } }
 \`\`\`
 
 - Surfaces: \`--color-background-primary\` (the page), \`--color-background-secondary\` / \`--color-background-tertiary\`
@@ -185,6 +259,19 @@ that is not here (lists, tabs, dialogs, forms, icons…).
 \`image\`/\`video\` \`src\` accepts any \`https\` URL, or a \`data:\`/\`blob:\` URI for a fully self-contained graphic
 (e.g. an inline SVG icon or a base64 image) — both render with no extra setup.
 
+## Keep the call small
+
+Everything in \`operations\` is text you write, and a widget that takes two calls because the first ran long is a
+widget the user waits twice for. Two habits pay for themselves:
+
+- **Do not draw pictures in \`data:\` URIs.** A hand-written SVG scene (a castle, a skyline, a logo) costs more than
+  the entire rest of the widget and renders worse than nothing at all. Use an \`https\` image the user gave you, a
+  flat colour or a two-stop \`linear-gradient\` as a banner, an emoji or an \`fontAwesome\` icon for a glyph — or drop
+  the decoration. A small self-contained \`data:\` SVG is fine for a **simple** shape (a check, an arrow, a dot).
+- **One class per look, not per property.** Classes like \`tone-blue\` + \`tone-blue-text\` + \`tone-blue-bg\` for the
+  same card triple the declarations and the attachments. Put everything the look needs in one class, add a second
+  only for the part that genuinely varies between siblings (a colour), and reuse it — the whole point of a class.
+
 ## Full worked example — two plans side by side
 
 The cards sit in a wrapping row and split it evenly, so the widget uses the panel's width and stays short; on a
@@ -193,10 +280,12 @@ narrow panel \`min-width\` drops the second card under the first on its own.
 \`\`\`json
 {
   "operations": [
-    { "type": "upsertDefinition", "ref": "plans", "desktop": { "display": "flex", "flex-direction": "row", "flex-wrap": "wrap", "gap": "12px", "align-items": "stretch" } },
-    { "type": "upsertDefinition", "ref": "card", "desktop": { "display": "flex", "flex-direction": "column", "gap": "6px", "flex-grow": "1", "flex-basis": "0%", "min-width": "150px", "padding": "16px", "background-color": "var(--color-background-secondary, light-dark(#ffffff, #1f2430))", "color": "var(--color-text-primary, light-dark(#0f172a, #e8eaed))", "border-width": "1px", "border-style": "solid", "border-color": "var(--color-border-primary, light-dark(#e2e8f0, #333a48))", "border-radius": "var(--border-radius-lg, 12px)", "text-align": "center" } },
-    { "type": "upsertDefinition", "ref": "price", "desktop": { "font-size": "28px", "font-weight": "800", "color": "#3b82f6" } },
-    { "type": "upsertDefinition", "ref": "cta", "desktop": { "background-color": "#3b82f6", "color": "#ffffff", "padding": "10px 16px", "border-radius": "8px", "font-weight": "600" }, "states": { "hover": { "desktop": { "background-color": "#2563eb" } } } },
+    { "type": "upsertDefinitions", "definitions": {
+        "plans": { "desktop": { "display": "flex", "flex-direction": "row", "flex-wrap": "wrap", "gap": "12px", "align-items": "stretch" } },
+        "card": { "desktop": { "display": "flex", "flex-direction": "column", "gap": "6px", "flex-grow": "1", "flex-basis": "0%", "min-width": "150px", "padding": "16px", "background-color": "var(--color-background-secondary, light-dark(#ffffff, #1f2430))", "color": "var(--color-text-primary, light-dark(#0f172a, #e8eaed))", "border-width": "1px", "border-style": "solid", "border-color": "var(--color-border-primary, light-dark(#e2e8f0, #333a48))", "border-radius": "var(--border-radius-lg, 12px)", "text-align": "center" } },
+        "price": { "desktop": { "font-size": "28px", "font-weight": "800", "color": "#3b82f6" } },
+        "cta": { "desktop": { "background-color": "#3b82f6", "color": "#ffffff", "padding": "10px 16px", "border-radius": "8px", "font-weight": "600" }, "states": { "hover": { "desktop": { "background-color": "#2563eb" } } } }
+    } },
     { "type": "upsertElement", "pageRef": "render", "element": {
         "ref": "plans", "type": "container", "style": { "base": ["plans"] },
         "children": [
