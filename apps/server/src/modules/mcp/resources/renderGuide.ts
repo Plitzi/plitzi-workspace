@@ -47,19 +47,19 @@ runs the live Plitzi SDK though, so it can also **fetch data** (an \`apiContaine
 
 Each call renders a **fresh** widget: send **every** operation it needs in the one call.
 
-**To CHANGE the widget you just rendered, do not rebuild it** — call again with \`patch: true\` and only the
-operations that differ:
+**To CHANGE a widget you already rendered, do not rebuild it** — every render answers with a \`renderId\`; call
+again with that id, \`patch: true\` and only the operations that differ:
 
 \`\`\`json
-{ "patch": true, "operations": [
+{ "patch": true, "renderId": "r7f3a2c", "operations": [
   { "type": "patchDefinition", "ref": "tl-card", "desktop": { "border-radius": "20px" } },
   { "type": "patchElement", "pageRef": "render", "ref": "title-2", "props": { "content": "EPCOT (día largo)" } }
 ] }
 \`\`\`
-The widget on screen merges the delta into what it already holds and reports back what it applied — including the
-errors, if a ref does not exist. Address rows by the refs you already know (\`card-1\`, \`blk-2-3\`). If nothing
-reports back there is no widget on screen (a surface that renders none, or a fresh conversation): send the whole
-batch again without \`patch\`.
+The widget merges the delta into the batch it was built from and reports back what it applied — including the
+errors, if a ref does not exist. Address rows by the refs you already know (\`card-1\`, \`blk-2-3\`). If it reports
+that the widget could not be recovered (a surface that renders none, a host that keeps no storage, a conversation
+resumed elsewhere), send the whole batch again without \`patch\`.
 
 **Patch only to modify what is on screen.** A different subject, or a different kind of widget, is a FRESH render
 with no \`patch\` — the delta is merged into the previous widget, so patching a new idea leaves the user looking at

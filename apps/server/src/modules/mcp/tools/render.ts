@@ -45,15 +45,19 @@ export const renderShape = {
     .boolean()
     .optional()
     .describe(
-      'Set true to CHANGE the widget you just rendered instead of rebuilding it: send ONLY the operations that ' +
-        'differ (patchDefinition, patchElement, deleteElement, a new repeatElement…) and the open widget merges ' +
-        'them into what it already holds, then reports back what it applied. The refs it already has (card-1, ' +
-        'blk-2-3) are the ones to address. Requires a widget currently on screen — on a surface that renders none, ' +
-        'or when there is nothing to patch, the answer says so and you re-send the whole batch.'
-    )
+      'Set true to CHANGE a widget you already rendered instead of rebuilding it: send its `renderId` and ONLY ' +
+        'the operations that differ (patchDefinition, patchElement, deleteElement, a new repeatElement…). The ' +
+        'widget merges them into the batch it was built from and reports back what it applied. The refs it ' +
+        'already has (card-1, blk-2-3) are the ones to address. If that widget cannot be recovered — a surface ' +
+        'that renders none, a host that keeps no storage — the answer says so and you re-send the whole batch.'
+    ),
+  renderId: z
+    .string()
+    .optional()
+    .describe('Handle returned by a previous render. Required with patch:true; it names the widget being changed.')
 };
 
-export type RenderInput = { operations: Operation[]; patch?: boolean };
+export type RenderInput = { operations: Operation[]; patch?: boolean; renderId?: string };
 
 export type RenderResponse =
   | { rendered: false; errors: { path: string; message: string; hint?: string }[]; warnings?: string[] }
@@ -130,14 +134,17 @@ export const render = (input: RenderInput): RenderResponse => {
 // cost thousands of tokens per widget and sit in history. The offlineData rides in `structuredContent`, delivered
 // to the host renderer out-of-band; a failed render returns its (already compact) errors as text so the model can fix it.
 /** A patch is not rendered here — it CANNOT be: this server keeps nothing between calls (no session, no store,
- *  any replica answers any request), so the only place the previous widget still exists is the view that is
- *  showing it. The delta therefore travels as a courier result: the model pays for the delta alone, the view
- *  merges it into the batch it holds and re-calls this same tool with the whole thing — over the host bridge,
- *  never through the model's context — and reports the outcome back with ui/update-model-context.
+ *  any replica answers any request), so the previous widget only exists on the host side. The delta therefore
+ *  travels as a courier result: the model pays for the delta alone, the view recovers the batch that widget was
+ *  built from (by renderId — see apps/render/heldBatch.ts), merges, and re-calls this same tool with the whole
+ *  thing over the host bridge, never through the model's context, then reports back with ui/update-model-context.
+ *
+ *  The renderId is the explicit handle the MCP RC asks for in place of implicit session state: the model carries
+ *  it, so a patch names the widget it means and any replica can serve it.
  *
  *  Validation is not skipped, only deferred: the re-call carries the full batch, so refs, integrity and the audit
  *  all run exactly as they do on a first render, and their errors reach the model through that report. */
-const toPatchResult = (ops: Operation[]): CallToolResult => {
+const toPatchResult = (ops: Operation[], renderId: string | undefined): CallToolResult => {
   // A patch is the one call whose emptiness is never intentional: it would travel to the view, merge nothing and
   // re-render the same widget — a silent round trip the model would read as success. Said plainly instead.
   if (ops.length === 0) {
@@ -155,29 +162,55 @@ const toPatchResult = (ops: Operation[]): CallToolResult => {
     };
   }
 
+  if (renderId === undefined) {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            patch: false,
+            error: 'A patch needs the renderId of the widget it changes',
+            hint: 'Pass the renderId the render answered with, or drop `patch` to render a new widget.'
+          })
+        }
+      ]
+    };
+  }
+
   return {
     content: [
       {
         type: 'text',
         text: JSON.stringify({
           patch: true,
+          renderId,
           operations: ops.length,
-          note: 'Handed to the open widget; it will report what it applied. If nothing reports back, no widget is on screen — re-send the full batch without patch.'
+          note: 'Handed to the widget; it will report what it applied. If nothing reports back, it could not be recovered — re-send the full batch without patch.'
         })
       }
     ],
-    structuredContent: { patch: true, operations: ops }
+    structuredContent: { patch: true, renderId, operations: ops }
   };
 };
 
-const toRenderResult = (res: RenderResponse): CallToolResult => {
+// The handle the model carries between calls. Random per render (any replica can mint one, none has to remember
+// it) and short, because the model pays for it in every patch it sends.
+const newRenderId = (): string => `r${Math.random().toString(36).slice(2, 8)}`;
+
+const toRenderResult = (res: RenderResponse, renderId: string): CallToolResult => {
   if (!res.rendered) {
     return {
       content: [{ type: 'text', text: JSON.stringify({ rendered: false, errors: res.errors, warnings: res.warnings }) }]
     };
   }
 
-  const summary = { rendered: true, rootRef: res.rootRef, elementCount: res.elementCount, warnings: res.warnings };
+  const summary = {
+    rendered: true,
+    renderId,
+    rootRef: res.rootRef,
+    elementCount: res.elementCount,
+    warnings: res.warnings
+  };
 
   return {
     content: [{ type: 'text', text: JSON.stringify(summary) }],
@@ -234,16 +267,22 @@ export const renderTool = defineTool({
     'upsertInteractionFlow makes them react to clicks (see the guide).\n' +
     'READ the resource plitzi://render/guide first — it has the element/prop table, the style model and a full ' +
     'worked example, and following it is the difference between a widget that renders and repeated failed calls.\n' +
-    'ITERATING — to change the widget you just rendered, do NOT rebuild it: call again with patch:true and ONLY ' +
-    'the operations that differ (patchDefinition, patchElement, deleteElement…). The open widget merges them and ' +
-    'reports back what it applied; address rows by the refs you already know. Patch ONLY to modify what is on ' +
-    'screen: a different subject or a different kind of widget is a fresh render, without patch — a patch is ' +
-    'merged into the previous widget, so patching a new idea leaves you with both.\n' +
-    'Returns a compact summary (the widget is shown to the user); on failure it returns teachable errors ' +
-    '(path + hint) — read them and retry.',
+    'ITERATING — to change a widget you already rendered, do NOT rebuild it: call again with patch:true, the ' +
+    '`renderId` that render answered with, and ONLY the operations that differ (patchDefinition, patchElement, ' +
+    'deleteElement…). The widget merges them and reports back what it applied; address rows by the refs you ' +
+    'already know. Patch ONLY to modify that widget: a different subject or a different kind of widget is a fresh ' +
+    'render, without patch — a patch is merged into the previous batch, so patching a new idea leaves you with ' +
+    'both.\n' +
+    'Returns a compact summary including the renderId (the widget itself is shown to the user); on failure it ' +
+    'returns teachable errors (path + hint) — read them and retry.',
   inputShape: renderShape,
   access: 'read',
   spaceless: true,
   ui: { resourceUri: RENDER_APP_URI },
-  run: input => (input.patch === true ? toPatchResult(input.operations) : toRenderResult(render(input)))
+  run: input =>
+    input.patch === true
+      ? toPatchResult(input.operations, input.renderId)
+      : // The view re-calls a merged patch WITH the id it already holds, so the widget keeps one handle across
+        // every iteration; a first render mints one.
+        toRenderResult(render(input), input.renderId ?? newRenderId())
 });

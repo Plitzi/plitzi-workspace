@@ -4,6 +4,8 @@ import PlitziSdk from '@plitzi/plitzi-sdk';
 import { Component, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { readHeldBatch, writeHeldBatch } from './heldBatch';
+
 import type { App, McpUiHostContext } from '@modelcontextprotocol/ext-apps';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
@@ -39,10 +41,12 @@ class RenderBoundary extends Component<{ children: ReactNode }, { error?: Error 
   }
 }
 
-/** The batch the widget on screen was built from. It lives HERE, in the view, because the server keeps nothing
- *  between calls — that is what lets any replica (or an edge deployment) answer any request. A patch is merged
- *  into this and sent back through `callServerTool`, so the full batch never enters the model's context. */
-type Held = { operations: unknown[] };
+/** The batch the widget on screen was built from. It lives on the HOST side — this ref plus localStorage — because
+ *  the server keeps nothing between calls, which is what lets any replica (or an edge deployment) answer any
+ *  request. A patch is merged into it and sent back through `callServerTool`, so the full batch never enters the
+ *  model's context. The ref alone would not do: the host gives each tool call its own view, so a patch usually
+ *  starts from an empty instance and reads the batch back from storage by renderId (see heldBatch.ts). */
+type Held = { renderId?: string; operations: unknown[] };
 
 const summarise = (result: CallToolResult): string => {
   const text = result.content.find(entry => entry.type === 'text');
@@ -60,18 +64,19 @@ const RenderApp = () => {
   // A patch carries only what changed. Merging it onto the held batch and re-calling the tool is what keeps the
   // server stateless: it re-renders the WHOLE widget (so refs, integrity and the audit are all checked as usual)
   // from a payload that travelled host↔server, and the model hears the outcome through updateModelContext.
-  const applyPatch = async (delta: unknown[]): Promise<void> => {
+  const applyPatch = async (renderId: string, delta: unknown[]): Promise<void> => {
     const app = appRef.current;
     if (!app) {
       return;
     }
 
-    if (held.current.operations.length === 0) {
+    const base = held.current.renderId === renderId ? held.current.operations : (readHeldBatch(renderId) ?? []);
+    if (base.length === 0) {
       await app.updateModelContext({
         content: [
           {
             type: 'text',
-            text: 'There is no widget on screen to patch. Call plitzi_render again with the complete batch and without `patch`.'
+            text: `The widget ${renderId} could not be recovered, so nothing was patched. Call plitzi_render again with the complete batch and without \`patch\`.`
           }
         ]
       });
@@ -79,11 +84,16 @@ const RenderApp = () => {
       return;
     }
 
-    const merged = [...held.current.operations, ...delta];
-    const rendered = await app.callServerTool({ name: 'plitzi_render', arguments: { operations: merged } });
+    const merged = [...base, ...delta];
+    const rendered = await app.callServerTool({
+      name: 'plitzi_render',
+      arguments: { operations: merged, renderId }
+    });
     const offlineData = rendered.structuredContent?.offlineData;
     if (offlineData) {
-      held.current = { operations: (rendered.structuredContent?.operations as unknown[] | undefined) ?? merged };
+      const applied = (rendered.structuredContent?.operations as unknown[] | undefined) ?? merged;
+      held.current = { renderId, operations: applied };
+      writeHeldBatch(renderId, applied);
       setResult(rendered);
     }
 
@@ -106,8 +116,9 @@ const RenderApp = () => {
     onAppCreated: instance => {
       appRef.current = instance;
       instance.ontoolresult = toolResult => {
-        if (toolResult.structuredContent?.patch === true) {
-          void applyPatch((toolResult.structuredContent.operations as unknown[] | undefined) ?? []);
+        const renderId = toolResult.structuredContent?.renderId as string | undefined;
+        if (toolResult.structuredContent?.patch === true && renderId) {
+          void applyPatch(renderId, (toolResult.structuredContent.operations as unknown[] | undefined) ?? []);
 
           return;
         }
@@ -119,7 +130,12 @@ const RenderApp = () => {
           return;
         }
 
-        held.current = { operations: (toolResult.structuredContent?.operations as unknown[] | undefined) ?? [] };
+        const operations = (toolResult.structuredContent?.operations as unknown[] | undefined) ?? [];
+        held.current = { renderId, operations };
+        if (renderId && operations.length > 0) {
+          writeHeldBatch(renderId, operations);
+        }
+
         setResult(toolResult);
       };
       instance.ontoolcancelled = params => setCancelled(params.reason ?? 'The host cancelled the render.');

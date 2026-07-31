@@ -171,12 +171,13 @@ describe('MCP connector (Streamable HTTP, no auth)', () => {
       name: 'plitzi_render',
       arguments: {
         patch: true,
+        renderId: 'r7f3a2c',
         operations: [{ type: 'patchDefinition', ref: 'headline', desktop: { color: 'red' } }]
       }
     });
 
     expect(result.isError).toBeFalsy();
-    expect(result.structuredContent).toMatchObject({ patch: true });
+    expect(result.structuredContent).toMatchObject({ patch: true, renderId: 'r7f3a2c' });
     // The delta rides out-of-band for the view; the model only gets told what happened.
     expect((result.structuredContent as { operations: unknown[] }).operations).toHaveLength(1);
     expect(JSON.stringify(result.content)).not.toContain('offlineData');
@@ -188,6 +189,7 @@ describe('MCP connector (Streamable HTTP, no auth)', () => {
       name: 'plitzi_render',
       arguments: {
         patch: true,
+        renderId: 'r7f3a2c',
         // `card-3` exists only in the widget the view is holding; validating here would reject a valid patch.
         operations: [{ type: 'patchElement', pageRef: 'render', ref: 'card-3', props: { content: 'x' } }]
       }
@@ -196,6 +198,19 @@ describe('MCP connector (Streamable HTTP, no auth)', () => {
     expect(result.isError).toBeFalsy();
     expect(result.structuredContent).toMatchObject({ patch: true });
     expect(JSON.stringify(result.content)).not.toContain('not found');
+  });
+
+  it('refuses a patch with no renderId: nothing names the widget it would be merged into', async () => {
+    const result = await endpoint.client.callTool({
+      name: 'plitzi_render',
+      arguments: {
+        patch: true,
+        operations: [{ type: 'patchDefinition', ref: 'headline', desktop: { color: 'red' } }]
+      }
+    });
+
+    expect(JSON.stringify(result.content)).toContain('renderId');
+    expect(result.structuredContent).toBeUndefined();
   });
 
   it('refuses an empty patch, which would merge nothing and re-render the same widget', async () => {
