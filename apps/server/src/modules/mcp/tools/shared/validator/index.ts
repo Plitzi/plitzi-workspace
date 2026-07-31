@@ -150,7 +150,16 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
         break;
       }
       case 'upsertDefinitions': {
-        for (const [ref, { slots, ...slot }] of Object.entries(op.definitions)) {
+        const entries = Object.entries(op.definitions);
+        if (entries.length === 0) {
+          ctx.errors.push({
+            path: `${base}.definitions`,
+            message: 'This operation declares no classes',
+            hint: 'Key each class by its name: { "definitions": { "card": { "desktop": { … } } } }'
+          });
+        }
+
+        for (const [ref, { slots, ...slot }] of entries) {
           const entry = `${base}.definitions.${ref}`;
           checkRef(ref, entry, ctx);
           checkSlotCss(slot, entry, ctx);

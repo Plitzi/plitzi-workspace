@@ -339,3 +339,148 @@ describe('mcp-ai repeatElement (list from a template + rows)', () => {
     expect(JSON.stringify(res.errors)).toContain('bad.ref');
   });
 });
+
+// The rest of what a real repeat runs into: where it hangs the wrapper, the shapes a placeholder can take, whether
+// a generated row is addressable afterwards, and the two ways a batch of rows can be wrong.
+describe('mcp-ai repeatElement edge cases', () => {
+  const rows = (op: Partial<Operation> = {}): Operation =>
+    ({
+      type: 'repeatElement',
+      pageRef: 'home',
+      ref: 'list',
+      template: { ref: 'row', type: 'text', props: { content: '{{item.text}}' } },
+      items: [{ text: 'a' }, { text: 'b' }],
+      ...op
+    }) as Operation;
+
+  it('hangs the wrapper where parentRef says, with the type, label and classes given', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      {
+        operations: [rows({ parentRef: 'c1', elementType: 'container', label: 'Steps', style: { base: ['box'] } })]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+
+    expect(res.applied).toBe(true);
+    const wrapper = Object.values(cap.saved().schema.flat).find(el => el.idRef === 'list');
+    expect(wrapper?.definition.parentId).toBe('c1');
+    expect(wrapper?.definition.type).toBe('container');
+    expect(wrapper?.definition.label).toBe('Steps');
+    expect(wrapper?.definition.styleSelectors.base).toBe('box');
+  });
+
+  it('reads dotted paths and fills a placeholder used as a style class', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      {
+        operations: [
+          {
+            type: 'upsertDefinitions',
+            definitions: { 'tone-warm': { desktop: { color: 'orange' } }, 'tone-cold': { desktop: { color: 'blue' } } }
+          },
+          rows({
+            template: {
+              ref: 'row',
+              type: 'text',
+              style: { base: ['{{item.tone}}'] },
+              props: { content: '{{item.author.name}}' }
+            },
+            items: [
+              { tone: 'tone-warm', author: { name: 'Ada' } },
+              { tone: 'tone-cold', author: { name: 'Alan' } }
+            ]
+          })
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+
+    expect(res.applied).toBe(true);
+    const first = Object.values(cap.saved().schema.flat).find(el => el.idRef === 'row-1');
+    const second = Object.values(cap.saved().schema.flat).find(el => el.idRef === 'row-2');
+    expect(first?.attributes.content).toBe('Ada');
+    expect(first?.definition.styleSelectors.base).toBe('tone-warm');
+    expect(second?.definition.styleSelectors.base).toBe('tone-cold');
+  });
+
+  it('leaves a generated row addressable by a later op in the same batch', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      {
+        operations: [rows(), { type: 'patchElement', pageRef: 'home', ref: 'row-2', props: { content: 'patched' } }]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+
+    expect(res.applied).toBe(true);
+    const row2 = Object.values(cap.saved().schema.flat).find(el => el.idRef === 'row-2');
+    expect(row2?.attributes.content).toBe('patched');
+  });
+
+  it('turns a sub-list of plain strings into rows read as {{item.value}}', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      {
+        operations: [
+          rows({
+            template: {
+              ref: 'day',
+              type: 'container',
+              repeat: {
+                items: '{{item.tags}}',
+                template: { ref: 'tag', type: 'text', props: { content: '{{item.value}}' } }
+              }
+            },
+            items: [{ tags: ['one', 'two'] }]
+          })
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+
+    expect(res.applied).toBe(true);
+    const contents = Object.values(cap.saved().schema.flat).map(el => el.attributes.content);
+    expect(contents).toEqual(expect.arrayContaining(['one', 'two']));
+  });
+
+  it('refuses two repeats that would generate the same ref', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply({ operations: [rows(), rows({ ref: 'other' })] }, buildSpace(), cap.persisters);
+
+    expect(res.applied).toBe(false);
+    expect(JSON.stringify(res.errors)).toContain('row-1');
+  });
+
+  it('refuses an expansion bigger than the row cap, instead of building 600 elements', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      {
+        operations: [
+          rows({
+            template: {
+              ref: 'day',
+              type: 'container',
+              repeat: { items: '{{item.blocks}}', template: { ref: 'blk', type: 'text' } }
+            },
+            items: Array.from({ length: 60 }, () => ({ blocks: Array.from({ length: 10 }, () => ({})) }))
+          })
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+
+    expect(res.applied).toBe(false);
+    expect(res.errors?.[0]?.path).toBe('operations[0].items');
+    expect(res.errors?.[0]?.message).toContain('max 500');
+  });
+
+  it('rejects a repeat with no rows at parse time', () => {
+    expect(operation.safeParse({ ...rows(), items: [] }).success).toBe(false);
+  });
+});

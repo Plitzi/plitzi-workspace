@@ -519,3 +519,90 @@ describe('mcp-ai upsertDefinitions (one op, many classes)', () => {
     expect((res.warnings ?? []).join(' ')).not.toContain('lg');
   });
 });
+
+// Edge cases of the batched form. The point of each: an empty batch is a mistake worth naming, an upsert REPLACES
+// (it does not merge), and every corner of a definition — breakpoints, states, variants, named slots — has to ride
+// through the batch exactly as it does through the single op.
+describe('mcp-ai upsertDefinitions edge cases', () => {
+  it('names an empty batch instead of silently doing nothing', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      { operations: [{ type: 'upsertDefinitions', definitions: {} }] },
+      buildSpace(),
+      cap.persisters
+    );
+
+    expect(res.applied).toBe(false);
+    expect(res.errors?.[0]?.path).toBe('operations[0].definitions');
+    expect(res.errors?.[0]?.hint).toContain('definitions');
+  });
+
+  it('REPLACES an existing class, like upsertDefinition (use patchDefinition to merge)', async () => {
+    const cap = capturing(buildSpace());
+    // `box` exists in the fixture with display:flex.
+    const res = await apply(
+      { operations: [{ type: 'upsertDefinitions', definitions: { box: { desktop: { color: 'red' } } } }] },
+      buildSpace(),
+      cap.persisters
+    );
+
+    expect(res.applied).toBe(true);
+    const def = readResource(cap.saved(), 'main', 'plitzi://definitions/main/box')?.data as AIDefinition;
+    expect(def.desktop?.color).toBe('red');
+    expect(def.desktop).not.toHaveProperty('display');
+  });
+
+  it('carries breakpoints, states, variants and named slots through', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      {
+        operations: [
+          {
+            type: 'upsertDefinitions',
+            definitions: {
+              rich: {
+                desktop: { 'font-size': '20px' },
+                mobile: { 'font-size': '14px' },
+                states: { hover: { desktop: { color: 'blue' } } },
+                variants: { lg: { desktop: { 'font-size': '40px' } } },
+                slots: { icon: { desktop: { width: '16px' } } }
+              }
+            }
+          }
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+
+    expect(res.applied).toBe(true);
+    const def = readResource(cap.saved(), 'main', 'plitzi://definitions/main/rich')?.data as AIDefinition & {
+      variants?: Record<string, unknown>;
+      slots?: Record<string, unknown>;
+    };
+    expect(def.desktop?.['font-size']).toBe('20px');
+    expect(def.mobile?.['font-size']).toBe('14px');
+    expect(def.states?.hover.desktop?.color).toBe('blue');
+    expect(def.variants).toHaveProperty('lg');
+    expect(def.slots).toHaveProperty('icon');
+  });
+
+  it('mixes with patchDefinition in the same batch, in order', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      {
+        operations: [
+          { type: 'upsertDefinitions', definitions: { chip: { desktop: { color: 'red', padding: '4px' } } } },
+          { type: 'patchDefinition', ref: 'chip', desktop: { color: 'green' } }
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+
+    expect(res.applied).toBe(true);
+    const def = readResource(cap.saved(), 'main', 'plitzi://definitions/main/chip')?.data as AIDefinition;
+    expect(def.desktop?.color).toBe('green');
+    expect(def.desktop?.['padding-top']).toBe('4px');
+  });
+});

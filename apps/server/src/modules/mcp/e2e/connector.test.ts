@@ -86,6 +86,84 @@ describe('MCP connector (Streamable HTTP, no auth)', () => {
     expect(result.structuredContent).toMatchObject({ rendered: true, rootRef: 'render', elementCount: 1 });
   });
 
+  // The op union travels to the host as JSON Schema, and a recursive op can make that conversion blow the stack —
+  // the server then answers tools/list with an internal error and the connector is dead. Only a real listing over
+  // the wire catches it: the unit tests never serialise the schema.
+  it('serialises every tool schema, including the recursive template ops', async () => {
+    const { tools } = await endpoint.client.listTools();
+
+    expect(tools.length).toBeGreaterThan(0);
+    for (const tool of tools) {
+      expect(tool.inputSchema, `${tool.name} has no input schema`).toBeTruthy();
+      expect(() => JSON.stringify(tool.inputSchema)).not.toThrow();
+    }
+
+    const schema = JSON.stringify(tools.find(tool => tool.name === 'plitzi_render')?.inputSchema);
+    expect(schema).toContain('repeatElement');
+    expect(schema).toContain('upsertDefinitions');
+  });
+
+  it('renders a nested repeat over the wire — the shape a real list widget uses', async () => {
+    const result = await endpoint.client.callTool({
+      name: 'plitzi_render',
+      arguments: {
+        operations: [
+          { type: 'upsertDefinitions', definitions: { list: { desktop: { display: 'flex' } } } },
+          {
+            type: 'repeatElement',
+            pageRef: 'render',
+            ref: 'timeline',
+            style: { base: ['list'] },
+            template: {
+              ref: 'day',
+              type: 'container',
+              children: [
+                { ref: 'title', type: 'heading', subType: 'h3', props: { content: '{{item.park}}' } },
+                {
+                  ref: 'body',
+                  type: 'container',
+                  repeat: {
+                    items: '{{item.blocks}}',
+                    template: { ref: 'blk', type: 'text', props: { content: '{{item.text}}' } }
+                  }
+                }
+              ]
+            },
+            items: [
+              { park: 'Magic Kingdom', blocks: [{ text: 'Rope drop' }, { text: 'Space Mountain' }] },
+              { park: 'EPCOT', blocks: [{ text: 'Cosmic Rewind' }] }
+            ]
+          }
+        ]
+      }
+    });
+
+    // 1 wrapper + 2 days × (title + body) + 3 blocks.
+    expect(result.structuredContent).toMatchObject({ rendered: true, elementCount: 10 });
+  });
+
+  it('reports a row missing a template field as a teachable error, naming the row', async () => {
+    const result = await endpoint.client.callTool({
+      name: 'plitzi_render',
+      arguments: {
+        operations: [
+          {
+            type: 'repeatElement',
+            pageRef: 'render',
+            ref: 'list',
+            template: { ref: 'row', type: 'text', props: { content: '{{item.text}}' } },
+            items: [{ text: 'ok' }, { nope: 'x' }]
+          }
+        ]
+      }
+    });
+
+    expect(result.isError).toBeFalsy();
+    const text = JSON.stringify(result.content);
+    expect(text).toContain('items[1]');
+    expect(text).toContain('Row 2');
+  });
+
   it('reports a failed render as teachable errors instead of an error response', async () => {
     const result = await endpoint.client.callTool({
       name: 'plitzi_render',
