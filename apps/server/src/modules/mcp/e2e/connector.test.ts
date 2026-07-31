@@ -24,6 +24,12 @@ const widgetOperations = [
   }
 ];
 
+// The advertised tool schemas sit in the model's context on EVERY request of every conversation this server is
+// connected to, so they are the most expensive thing the MCP owns — far more than any payload a tool ever carries.
+// Four tools take the op union; inlining it in each measured ~102k tokens until the shared subschemas were given
+// registry ids (see operations/schemaIds.ts). This budget is what stops that from creeping back silently.
+const TOOLS_BUDGET_BYTES = 170_000;
+
 // Close to the real size (~1.67 MB) on purpose: the page travels inline on every read, so growth must be
 // deliberate. What is left is mostly the SDK runtime and its stylesheet.
 const PAGE_BUDGET_BYTES = 2_000_000;
@@ -101,6 +107,21 @@ describe('MCP connector (Streamable HTTP, no auth)', () => {
     const schema = JSON.stringify(tools.find(tool => tool.name === 'plitzi_render')?.inputSchema);
     expect(schema).toContain('repeatElement');
     expect(schema).toContain('upsertDefinitions');
+  });
+
+  it('keeps the whole tool listing inside its token budget, with the shared schemas factored out', async () => {
+    const { tools } = await endpoint.client.listTools();
+    const listing = tools.reduce(
+      (total, tool) => total + JSON.stringify(tool.inputSchema).length + (tool.description?.length ?? 0),
+      0
+    );
+
+    expect(listing).toBeLessThan(TOOLS_BUDGET_BYTES);
+    // The op union must arrive as refs into `definitions`, not as N inlined copies of the same element/CSS shapes.
+    const apply = tools.find(tool => tool.name === 'plitzi_apply')?.inputSchema as {
+      definitions?: Record<string, unknown>;
+    };
+    expect(Object.keys(apply.definitions ?? {})).toEqual(expect.arrayContaining(['Element', 'Css', 'RuleGroup']));
   });
 
   it('renders a nested repeat over the wire — the shape a real list widget uses', async () => {

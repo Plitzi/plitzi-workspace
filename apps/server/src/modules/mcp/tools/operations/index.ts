@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { elementOps } from './schema';
+import { registerSharedSchemaIds } from './schemaIds';
 import { styleOps } from './style';
 
 export type { ElementInput } from './schema';
@@ -9,6 +10,10 @@ export type { DefinitionSlotInput, DefinitionSlotPatch } from './style';
 // The write vocabulary across both schemas — single source of truth for the tool input schema (compact, sent
 // to the agent), for runtime parsing, and for the `Operation` type. A single batch may mix element and style
 // ops (e.g. rename an element AND make it red) — applied atomically across both schemas.
+// Before the union is built: a shared subschema only collapses into a `definitions` entry if it carries its id by
+// the time anything converts it. See schemaIds.ts — it is worth ~57k tokens per conversation.
+registerSharedSchemaIds();
+
 export const operation = z.discriminatedUnion('type', [
   elementOps.upsertElement,
   elementOps.repeatElement,

@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 // Shared zod fragments for the style-schema operations (definitions, global element selectors, design tokens).
 
-const cssMap = z
+export const cssMap = z
   .record(z.string(), z.union([z.string(), z.number()]))
   .describe(
     'Plain kebab-case CSS. Shorthands are welcome — `border: 1px solid red`, `padding: 8px 16px`, ' +
@@ -17,7 +17,7 @@ export const displayModeCss = z.object({
   mobile: cssMap.optional()
 });
 
-const definitionSlot = displayModeCss.extend({
+export const definitionSlot = displayModeCss.extend({
   states: z.record(z.string(), displayModeCss).optional(),
   variants: z.record(z.string(), displayModeCss).optional()
 });
@@ -26,7 +26,7 @@ export type DefinitionSlotInput = z.infer<typeof definitionSlot>;
 
 // Patch variants of the same shapes: a CSS value of `null` removes that property, so a partial patch can both set
 // and unset individual keys while leaving every other declaration untouched (mirrors patchElement).
-const cssPatchMap = z
+export const cssPatchMap = z
   .record(z.string(), z.union([z.string(), z.number(), z.null()]))
   .describe(
     'Plain kebab-case CSS merged onto the existing declarations; shorthands are accepted and expanded, so ' +
@@ -40,7 +40,7 @@ export const displayModeCssPatch = z.object({
   mobile: cssPatchMap.optional()
 });
 
-const definitionSlotPatch = displayModeCssPatch.extend({
+export const definitionSlotPatch = displayModeCssPatch.extend({
   states: z.record(z.string(), displayModeCssPatch).optional(),
   variants: z.record(z.string(), displayModeCssPatch).optional()
 });
