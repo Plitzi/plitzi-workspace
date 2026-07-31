@@ -181,9 +181,10 @@ and \`patchDefinition\` still changes only some CSS of one class.
     builder — it does not paint here, so do not count on it in a widget.
 - **Mind the intrinsic display.** Some types start non-block: \`text\` is \`display: inline\`, so to stack or size it,
   wrap it in a \`container\` (or set \`display: block\`). \`heading\` and \`paragraph\` are already block.
-- **Use atomic longhands.** \`padding\`, \`margin\`, \`border\`, \`border-radius\` are fine (they expand cleanly), but
-  \`flex\`, \`background\` and \`font\` are rejected — write \`display\`+\`flex-direction\`, \`background-color\`,
-  \`font-size\`+\`font-weight\` instead. An unknown property errors with the correct kebab-case key suggested.
+- **Shorthands are welcome** and cheaper to write: \`padding: 8px 16px\`, \`border: 1px solid #ddd\`,
+  \`font: bold 16px/1.5 Arial\`, \`flex: 1 1 auto\`, \`transition: opacity 200ms ease\`. They are stored expanded to
+  their longhands, so a breakpoint, state or variant can override each property on its own — and a read-back shows
+  the longhands, not what you wrote. An unknown property errors with the correct kebab-case key suggested.
 - **Responsive:** add \`tablet\` and/or \`mobile\` blocks next to \`desktop\` (same shape); they override desktop on
   smaller screens — \`{ "desktop": { "font-size": "36px" }, "mobile": { "font-size": "24px" } }\`.
 - **Interactive states:** nest under \`states\` keyed by pseudo-class, each with its own breakpoint block —

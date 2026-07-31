@@ -108,9 +108,11 @@ export const elementShape = {
         'digits, `-` and `_`, starting with a letter — a dot would break the `<type>_<idRef>.<field>` grammar. ' +
         'Unique across the space.'
     ),
-  // Optional because `container` is what most nodes are — a widget's tree is mostly boxes, and spelling it out on
-  // every one of them is pure repetition in the batch the agent writes.
-  type: z.string().default('container').describe('Type from plitzi://types; defaults to container'),
+  // Required on purpose. Defaulting it to `container` saves a little repetition, but an agent that simply FORGOT
+  // the type then gets a silent box instead of a parse error — and a widget render has no component catalog, so
+  // the props it meant for a heading raise no warning either. A cheap batch is not worth a wrong widget nobody
+  // is told about.
+  type: z.string().describe('Type from plitzi://types'),
   label: z.string().optional(),
   subType: z.string().optional(),
   props: z.record(z.string(), z.unknown()).optional().describe('Full replacement on update'),
