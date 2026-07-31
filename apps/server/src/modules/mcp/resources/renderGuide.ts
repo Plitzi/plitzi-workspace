@@ -174,10 +174,10 @@ and \`patchDefinition\` still changes only some CSS of one class.
 - Lay containers out with flexbox or grid — pick the direction on purpose, see **Fit the panel** below.
 - **You are not styling from zero.** Each type lands on the page with CSS you did not write, and it is the usual
   reason a widget does not look like the definitions say:
-  - The per-type rule the SDK ships — the one that changes layouts is \`container\`, which carries
-    \`min-width: 50px; min-height: 50px\`. A rail, a divider, a dot, a spacer or a narrow cell will NOT go below
-    50px until you say \`"min-width": "0"\` (and/or \`"min-height": "0"\`) on it: a 2px timeline line renders 50px
-    wide otherwise. Any flex child that must be allowed to shrink needs it too.
+  - The per-type CSS the SDK ships imposes **no minimum size**: a rail, a divider, a dot or a narrow cell is
+    exactly as small as you make it, and no \`"min-width": "0"\` escape hatch is needed. The flip side is that an
+    element with no content and no size takes no space at all — give a spacer its own \`height\`. (The 50px box
+    empty containers show on the builder canvas is a drop target, scoped to it; it never reaches a widget.)
   - The BROWSER's own defaults for the rest: \`heading\` keeps its UA font-size and ~0.67em top/bottom margins,
     \`paragraph\` ~1em margins, \`list\` a 40px \`padding-left\`, \`button\` its native chrome, \`image\` its intrinsic
     size, \`link\` its own colour and underline. In a compact widget set these explicitly — usually

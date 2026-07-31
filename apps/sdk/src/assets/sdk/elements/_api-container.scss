@@ -1,7 +1,5 @@
 @mixin styles {
   .plitzi-component__api-container {
-    min-height: 50px;
-    min-width: 50px;
   }
 
   .plitzi-component__api-container-error {
@@ -10,5 +8,15 @@
     // border-radius: 5px;
     // background-color: #f44336;
     // color: #fff;
+  }
+
+  .builder-iframe.builder--display-component-border {
+    .plitzi-component__api-container {
+      &.container--empty {
+        // Render a placeholder for empty containers during build mode
+        min-height: 50px;
+        min-width: 50px;
+      }
+    }
   }
 }

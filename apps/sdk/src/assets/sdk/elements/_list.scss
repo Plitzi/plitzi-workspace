@@ -1,20 +1,11 @@
 @mixin styles {
   .plitzi-component__list {
-    min-height: 50px;
-    min-width: 50px;
     margin-bottom: 10px;
     margin-top: 0;
     padding-left: 40px;
   }
 
-  .plitzi-component__list-item {
-    min-height: 50px;
-    min-width: 50px;
-  }
-
   .plitzi-component__controlled-list {
-    min-height: 50px;
-    min-width: 50px;
     margin-bottom: 10px;
     margin-top: 0;
     padding-left: 40px;
@@ -65,6 +56,18 @@
         color: white;
         line-height: 14px;
         font-size: 12px;
+      }
+    }
+  }
+
+  .builder-iframe.builder--display-component-border {
+    .plitzi-component__list,
+    .plitzi-component__list-item,
+    .plitzi-component__controlled-list {
+      &.container--empty {
+        // Render a placeholder for empty containers during build mode
+        min-height: 50px;
+        min-width: 50px;
       }
     }
   }

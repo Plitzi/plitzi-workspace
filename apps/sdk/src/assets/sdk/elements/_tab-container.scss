@@ -1,26 +1,22 @@
 @mixin styles {
-  .plitzi-component__tab-container {
-    min-height: 50px;
-    min-width: 50px;
-  }
-
-  .plitzi-component__tab-container-header {
-    min-height: 50px;
-    min-width: 50px;
-  }
-
-  .plitzi-component__tab-container-body {
-    min-height: 50px;
-    min-width: 50px;
-  }
-
   .plitzi-component__tab-container-item {
-    min-height: 50px;
-    min-width: 50px;
     display: none;
 
     &.active {
       display: block;
+    }
+  }
+
+  .builder-iframe.builder--display-component-border {
+    .plitzi-component__tab-container,
+    .plitzi-component__tab-container-header,
+    .plitzi-component__tab-container-body,
+    .plitzi-component__tab-container-item {
+      &.container--empty {
+        // Render a placeholder for empty containers during build mode
+        min-height: 50px;
+        min-width: 50px;
+      }
     }
   }
 }

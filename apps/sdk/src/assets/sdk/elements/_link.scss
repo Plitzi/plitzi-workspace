@@ -1,7 +1,5 @@
 @mixin styles {
   .plitzi-component__link {
-    min-height: 30px;
-    min-width: 30px;
     display: inline-block;
     color: #333;
     text-decoration: none;
@@ -9,6 +7,17 @@
 
     &:hover {
       text-decoration: none;
+    }
+  }
+
+  .builder-iframe.builder--display-component-border {
+    .plitzi-component__link {
+      // A link paints nothing of its own — its label is a child — so an empty one really is empty.
+      &.container--empty {
+        // Render a placeholder for empty containers during build mode
+        min-height: 30px;
+        min-width: 30px;
+      }
     }
   }
 }

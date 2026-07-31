@@ -1,6 +1,14 @@
 @mixin styles {
   .plitzi-component__collection-container {
-    min-height: 50px;
-    min-width: 50px;
+  }
+
+  .builder-iframe.builder--display-component-border {
+    .plitzi-component__collection-container {
+      &.container--empty {
+        // Render a placeholder for empty containers during build mode
+        min-height: 50px;
+        min-width: 50px;
+      }
+    }
   }
 }

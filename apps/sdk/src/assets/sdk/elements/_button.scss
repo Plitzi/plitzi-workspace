@@ -1,7 +1,5 @@
 @mixin styles {
   .plitzi-component__button {
-    min-height: 30px;
-    min-width: 30px;
     padding-right: 12px;
     padding-bottom: 6px;
     padding-left: 12px;
@@ -14,5 +12,17 @@
     font-size: 16px;
     outline: none;
     cursor: pointer;
+  }
+
+  .builder-iframe.builder--display-component-border {
+    .plitzi-component__button {
+      // The component marks itself empty--skip when it paints its own label, so the placeholder only shows for a
+      // button that really has nothing in it.
+      &.container--empty:not(.container--empty--skip) {
+        // Render a placeholder for empty containers during build mode
+        min-height: 30px;
+        min-width: 30px;
+      }
+    }
   }
 }

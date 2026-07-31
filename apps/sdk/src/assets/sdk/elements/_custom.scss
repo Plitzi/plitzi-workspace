@@ -1,9 +1,16 @@
 @mixin styles {
   .plitzi-component__custom {
-    min-height: 50px;
-    min-width: 50px;
     display: flex;
     justify-content: center;
     align-items: center;
+  }
+
+  .builder-iframe.builder--display-component-border {
+    .plitzi-component__custom {
+      // It renders a plugin component, never children, so there is no empty state to key on: in build mode the
+      // element still needs a surface to select and drop onto.
+      min-height: 50px;
+      min-width: 50px;
+    }
   }
 }

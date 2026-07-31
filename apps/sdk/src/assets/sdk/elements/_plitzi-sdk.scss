@@ -1,8 +1,5 @@
 @mixin styles {
   .plitzi-component__plitzi-sdk {
-    min-height: 50px;
-    min-width: 50px;
-
     > .plitzi-sdk {
       overflow: auto;
     }
@@ -11,6 +8,15 @@
       > .plitzi-sdk {
         pointer-events: none;
       }
+    }
+  }
+
+  .builder-iframe.builder--display-component-border {
+    .plitzi-component__plitzi-sdk {
+      // The nested space renders itself, so this element has no empty state of its own: in build mode it still
+      // needs a surface to select.
+      min-height: 50px;
+      min-width: 50px;
     }
   }
 }
