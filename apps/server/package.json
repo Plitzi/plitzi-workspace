@@ -3,7 +3,8 @@
   "version": "0.32.18",
   "license": "AGPL-3.0",
   "files": [
-    "dist"
+    "dist",
+    "skills"
   ],
   "main": "dist/index.js",
   "module": "dist/index.js",

@@ -839,6 +839,24 @@ When `devMode: true`, per-phase timing is instrumented on every render and repor
 
 In production (`devMode: false`) timing instrumentation is skipped entirely — no `Server-Timing` header, no console output.
 
+## Agent skill
+
+This package ships an [Agent Skill](https://agentskills.io/) for `plitzi_render`, the MCP tool that renders a
+self-contained UI widget from a batch of operations. The skill teaches an agent when to show a widget instead of
+writing prose, the shape of a good call, the layout/theme traps that make a widget look wrong in a chat panel, and
+how to iterate on a widget it already rendered.
+
+It lives in [`skills/plitzi-render`](./skills/plitzi-render/SKILL.md) and is a plain `SKILL.md`, so it installs by
+copying that folder into the skills directory of the agent you use (Claude Code, VS Code / Copilot, Codex, Gemini
+CLI, Cline, Goose…):
+
+```bash
+cp -R node_modules/@plitzi/sdk-server/skills/plitzi-render ~/.claude/skills/
+```
+
+The skill only pays off with the Plitzi MCP server connected — it defers every detail to the `plitzi://render/guide`
+resource the server publishes, so the two never drift apart.
+
 ## Exported types
 
 ```ts
