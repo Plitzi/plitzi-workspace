@@ -73,7 +73,12 @@ describe('MCP connector (Streamable HTTP, no auth)', () => {
 
     expect(mimeType).toBe(RESOURCE_MIME_TYPE);
     // Pinned as SERVED (apps.test.ts pins it as registered): tightening it must be a visible change.
-    expect(meta?.ui).toEqual({ csp: { resourceDomains: ['*', 'data:', 'blob:'], connectDomains: ['*'] } });
+    expect(meta?.ui).toEqual({
+      csp: {
+        resourceDomains: ['*', 'https:', 'https://*', 'data:', 'blob:'],
+        connectDomains: ['*', 'https:', 'https://*']
+      }
+    });
     expect(html).not.toMatch(/<(?:script|link)[^>]+(?:src|href)=/u);
     expect(html).not.toContain('importmap');
     expect(Buffer.byteLength(html)).toBeLessThan(PAGE_BUDGET_BYTES);

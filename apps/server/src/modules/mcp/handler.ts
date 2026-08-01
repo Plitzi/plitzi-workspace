@@ -2,6 +2,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 
 import { createMcpServer } from './server';
 
+import type { ResourceProxy } from './proxy';
 import type { PreviewClient, ScreenshotClient } from './types';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { SSRAdapters, SSRRequest, ServerLogger } from '@plitzi/sdk-shared';
@@ -15,6 +16,9 @@ export type McpRequestOptions = {
   logger?: ServerLogger;
   /** Deployment switch for the plitzi_render view (see `mcpAi.renderStreaming`). Defaults to true. */
   renderStreaming?: boolean;
+  /** Where a rendered widget loads everything external from (see `mcpAi.proxy`). Absent → the URLs an agent
+   *  authored travel to the host exactly as written. */
+  proxy?: ResourceProxy;
 };
 
 export const readMcpBody = (req: IncomingMessage): Promise<unknown> =>

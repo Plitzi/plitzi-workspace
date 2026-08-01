@@ -300,6 +300,22 @@ that is not here (lists, tabs, dialogs, forms, icons…).
 base64 raster) — both render with no extra setup. For a **vector** graphic do not encode a \`data:\` URI: draw it
 inline, as below.
 
+**Anything loaded from the internet.** Write the real URL and nothing else: images, video, fonts and the endpoint
+an \`apiContainer\` reads are re-pointed at the render server after the widget is built, and it fetches them for
+the widget. That is invisible to you and there is nothing to opt into — it is what settles the redirects, the
+hotlink rules and the missing CORS headers that a widget, running in the surface's sandbox, cannot settle itself.
+What it cannot do is guess:
+
+- **Use URLs you have actually seen work.** A direct file URL, not a page about the picture, not a search result,
+  not a pattern you assembled from memory. A URL that 404s or answers with HTML instead of an image leaves a grey
+  placeholder box in the middle of an otherwise finished layout.
+- **With no URL you trust, do not invent one.** Draw that block instead: a \`linear-gradient\`, a flat colour, an
+  inline \`<svg>\` or a \`data:\` URI — none touch the network and all of them always render.
+- **A plain GET is the request that always works.** An \`apiContainer\` with a custom \`method\`, \`headers\` or
+  \`accessToken\` is called directly by the widget instead, so it is then subject to the surface's own network
+  policy and the API's CORS headers — the render warns you when that happens. \`{{tokens}}\` in the URL are fine.
+  When you are showing a shape rather than live data, \`mockData\` needs no network at all.
+
 ## Draw with inline SVG
 
 A widget can draw its own graphics, and it is often the difference between a plain block of text and something

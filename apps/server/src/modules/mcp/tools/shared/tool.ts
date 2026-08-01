@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { Space } from '../../helpers';
+import type { ResourceProxy } from '../../proxy';
 import type { PreviewClient, ScreenshotClient, ScreenshotImage } from '../../types';
 import type { Env, Persisters } from '../../types';
 import type { McpUiToolMeta } from '@modelcontextprotocol/ext-apps';
@@ -18,6 +19,10 @@ export interface ToolContext {
   spaceId?: number;
   preview?: PreviewClient;
   screenshot?: ScreenshotClient;
+  /** Where a rendered widget loads its external resources from, when the host wired one (see `mcpAi.proxy`). Only
+   *  plitzi_render uses it: a widget renders inside the host's sandbox, where an undeclared origin cannot be
+   *  reached at all. */
+  proxy?: ResourceProxy;
 }
 
 /** A capability a tool depends on; the host skips registering a tool whose capability it did not wire (so

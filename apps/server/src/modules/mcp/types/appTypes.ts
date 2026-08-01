@@ -22,4 +22,9 @@ export interface McpApp {
 export interface McpViewSettings {
   /** May the view paint from tool arguments the host is still streaming? See `mcpAi.renderStreaming`. */
   streaming: boolean;
+  /** Absolute resource endpoint of the server that served the page, when it serves one (see `mcpAi.proxy`). It
+   *  shapes the PAGE rather than the view: its origin is what the resource CSP declares, so the URLs a render
+   *  rewrote to it are allowed to load. The view needs nothing from it — every URL is rewritten server-side,
+   *  where the signing secret is. */
+  proxyEndpoint?: string;
 }

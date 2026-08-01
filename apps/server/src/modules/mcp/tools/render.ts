@@ -9,12 +9,14 @@ import { applyOperations } from './apply/dispatch';
 import { operations } from './operations';
 import { iconFontCss, RENDER_APP_URI } from '../apps';
 import { emptySpace } from '../helpers';
+import { proxifyResources } from '../proxy';
 import { expandOperations } from './shared/expandOperations';
 import { defineTool } from './shared/tool';
 import { validateOperations } from './shared/validator';
 import { auditResources } from './shared/validator/audit';
 
 import type { Space } from '../helpers';
+import type { ResourceProxy } from '../proxy';
 import type { Operation } from './operations';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
@@ -61,6 +63,11 @@ export const renderShape = {
 
 export type RenderInput = { operations: Operation[]; patch?: boolean; renderId?: string };
 
+/** What the render needs from its host beyond the operations. Optional: a host that wires no resource endpoint
+ *  still renders a widget — one whose external URLs travel as authored and load only where the surface allows
+ *  their origin. */
+export type RenderOptions = { proxy?: ResourceProxy };
+
 export type RenderResponse =
   | { rendered: false; errors: { path: string; message: string; hint?: string }[]; warnings?: string[] }
   | {
@@ -78,7 +85,7 @@ export type RenderResponse =
 // applied to a throwaway seed space (one host page) using the exact same validate → apply → integrity → audit
 // pipeline as plitzi_apply, then the style cache is compiled and the result returned as OfflineDataRaw — the SDK's
 // offline render input. The agent authors the widget by targeting `pageRef: "render"`.
-export const render = (input: RenderInput): RenderResponse => {
+export const render = (input: RenderInput, options: RenderOptions = {}): RenderResponse => {
   const space = seedSpace();
 
   const expansion = expandOperations(input.operations);
@@ -114,6 +121,15 @@ export const render = (input: RenderInput): RenderResponse => {
   const warnings = [...validation.warnings, ...audit.warnings];
   if (audit.errors.length > 0) {
     return { rendered: false, errors: audit.errors, warnings: noWarnings(warnings) };
+  }
+
+  // A widget renders inside the host's sandbox, under a CSP built from the origins this server declared BEFORE
+  // any widget existed (it belongs to the ui:// resource, and the protocol has no per-call CSP) — so an external
+  // URL stays blocked however good it is, unless it is loaded from an origin that IS declared. Point everything
+  // the widget loads at this server's endpoint, before the CSS is compiled so the concatenated cache comes out
+  // already rewritten. The agent is not part of this: it authored the real URLs and never sees the rewrite.
+  if (options.proxy) {
+    warnings.push(...proxifyResources(space, options.proxy));
   }
 
   // Compile the global style cache from the per-item caches the style ops just wrote — the offline SDK reads
@@ -279,8 +295,11 @@ export const renderTool = defineTool({
     'border-color:"var(--color-border-primary, light-dark(#e2e8f0, #333a48))" — and always set `color` wherever ' +
     'you set `background-color` (a brand accent states its own text colour too).\n' +
     '3. CONTENT — visible copy goes in props.content (text, heading, paragraph, button); heading level is the ' +
-    'element subType ("h1".."h6"); image/video take props.src. An unknown prop comes back as a warning naming the ' +
-    'right one.\n\n' +
+    'element subType ("h1".."h6"); image/video take props.src. Write real https URLs: everything the widget loads ' +
+    'from outside (images, media, fonts, an apiContainer endpoint) is fetched for it by the render server, so ' +
+    'redirects and hotlink rules are handled and there is nothing to configure. It must still point at the actual ' +
+    'file — use a URL you have seen work, and when you have none, draw the block with a gradient or an inline SVG ' +
+    'instead of guessing one. An unknown prop comes back as a warning naming the right one.\n\n' +
     'Common types: container, heading, paragraph, text, button, link, image, video, list, listItem, markdown ' +
     '(plitzi://render/types lists every built-in type with descriptions). Widgets can also be data-driven and ' +
     'interactive — an apiContainer fetches at runtime, upsertBinding wires data into elements, and ' +
@@ -299,10 +318,10 @@ export const renderTool = defineTool({
   access: 'read',
   spaceless: true,
   ui: { resourceUri: RENDER_APP_URI },
-  run: input =>
+  run: (input, ctx) =>
     input.patch === true
       ? toPatchResult(input.operations, input.renderId)
       : // The view re-calls a merged patch WITH the id it already holds, so the widget keeps one handle across
         // every iteration; a first render mints one.
-        toRenderResult(render(input), input.renderId ?? newRenderId())
+        toRenderResult(render(input, { proxy: ctx.proxy }), input.renderId ?? newRenderId())
 });

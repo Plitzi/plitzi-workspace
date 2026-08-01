@@ -329,6 +329,38 @@ export type SSRServerConfig = {
      *  long as the model takes to write the batch. Defaults to true; hosts that stream nothing are unaffected
      *  either way. Set false to keep every view blank until the finished widget arrives. */
     renderStreaming?: boolean;
+    /** How a rendered widget reaches ANYTHING outside its sandbox — images, media, fonts, and the endpoints an
+     *  apiContainer fetches. A widget runs in an iframe under a CSP the host builds from the origins this server
+     *  declares on its `ui://` resource, which is read before any widget exists (and the spec allows no per-call
+     *  CSP), so the origins an agent is about to author can never be declared. With a `secret` set, every external
+     *  URL a render authored is rewritten to this server's own endpoint — which IS declared — and fetched here,
+     *  which also settles the redirects, hotlink rules and missing CORS headers a null-origin sandbox cannot. The
+     *  agent never sees this: it authors the real URL. Without a secret there is no endpoint and the URLs travel
+     *  as authored, loading only where the host allows their origin. */
+    proxy?: {
+      /** Set false to serve no endpoint even with a secret configured. */
+      enabled?: boolean;
+      /** Where the endpoint answers. Default `/__proxy`. */
+      path?: string;
+      /** Signs each grant (target + kind + expiry + the connection that minted it), so the endpoint is not an open
+       *  proxy. Required to enable it; any value stable across replicas works. */
+      secret?: string;
+      /** Absolute base for the URLs handed to widgets (`https://mcp.example.com`). Default: the origin each MCP
+       *  request arrived on — right whenever the MCP server owns its sub-domain. */
+      baseUrl?: string;
+      /** Largest response the endpoint will pass through, in bytes. Default 8 MiB. */
+      maxBytes?: number;
+      /** How long a minted URL keeps working, in seconds. Default 7 days: a widget outlives the call that made it
+       *  (it stays in the conversation), but a leaked URL should not work forever. */
+      ttl?: number;
+      /** Which MCP tools may be handed the endpoint at all. Defaults to `['plitzi_render']`, and that default is
+       *  a guard rather than a convenience: a render is a throwaway widget, so a rewritten URL lives exactly as
+       *  long as it does, while a tool that WRITES a space (plitzi_apply) would persist proxied URLs into content
+       *  the user owns — their space would then depend on this server to show its own images, and those URLs
+       *  expire. Listing a tool only makes the endpoint reachable from it; rewriting is something the tool has to
+       *  implement, and today plitzi_render is the only one that does. */
+      tools?: string[];
+    };
   };
   /** Receives a {@link ServerLogEvent} for every HTTP request this server answers — whatever stage answered it
    *  and whatever the outcome — plus every MCP tool call and resource read inside those requests. Without it the

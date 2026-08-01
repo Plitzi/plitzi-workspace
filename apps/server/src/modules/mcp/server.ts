@@ -11,11 +11,13 @@ import {
   serverInstructions,
   widgetsOnlyInstructions
 } from './helpers';
+import { proxyForTool } from './proxy';
 import { registerResources } from './resources';
 import { tools } from './tools';
 import { isCallToolResult } from '../ai/toolkit';
 
 import type { Space } from './helpers';
+import type { ResourceProxy } from './proxy';
 import type { Persisters, ToolContext, ToolDef } from './tools';
 import type { PreviewClient, ScreenshotClient } from './types';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
@@ -42,6 +44,10 @@ export interface McpServerContext {
   /** May the plitzi_render view paint from tool arguments the host is still streaming (see `mcpAi.renderStreaming`)?
    *  Defaults to true. */
   renderStreaming?: boolean;
+  /** Where a rendered widget loads everything external from (see `mcpAi.proxy`). It reaches two places: the render
+   *  tool, which rewrites the URLs the agent authored, and the App's CSP, which declares the origin those URLs
+   *  point at. Absent → neither happens, and a widget's resources load only where the host allows their origin. */
+  proxy?: ResourceProxy;
 }
 
 // The MCP tools only ever operate on the active-editing environment.
@@ -55,7 +61,8 @@ export const createMcpServer = async ({
   preview,
   screenshot,
   logger,
-  renderStreaming = true
+  renderStreaming = true,
+  proxy
 }: McpServerContext): Promise<McpServer> => {
   const log = createMcpLog(logger);
   // What this connection reaches, resolved once for the whole request. A token that cannot be verified is not an
@@ -105,32 +112,40 @@ export const createMcpServer = async ({
 
   // Every MCP App's ui:// page. They carry their own script and styles, so they are always registered; the
   // settings are the deployment's, not the connection's, and only change what the page hands the view.
-  registerApps(server, { streaming: renderStreaming });
+  registerApps(server, { streaming: renderStreaming, proxyEndpoint: proxy?.endpoint });
 
   // Register every tool straight from the shared registry: identity + input schema + behavior come from each
   // tool's descriptor, so a new tool is picked up here with no per-tool wiring.
-  const toolContext = async (): Promise<ToolContext> => ({
+  const toolContext = async (tool: string): Promise<ToolContext> => ({
     space: await getSpace(),
     env: MCP_ENV,
     persisters,
     spaceId: requireSpaceId(),
     preview,
-    screenshot
+    screenshot,
+    proxy: proxyForTool(proxy, tool)
   });
 
   // A space-independent tool (plitzi_render) must never trigger a spaceId/space load, so it stays callable with no
   // auth: hand it an empty placeholder space instead of resolving the request's. It authors its own throwaway one.
-  const spacelessContext = (): ToolContext => ({ space: emptySpace(), env: MCP_ENV, persisters, preview, screenshot });
+  const spacelessContext = (tool: string): ToolContext => ({
+    space: emptySpace(),
+    env: MCP_ENV,
+    persisters,
+    preview,
+    screenshot,
+    proxy: proxyForTool(proxy, tool)
+  });
 
   // What a tool does on THIS connection: its own behavior when a space is attached; its public one (or nothing at
   // all, so it is never advertised) when none is.
   const behaviorOf = (tool: ToolDef): ((args: unknown) => unknown) | undefined => {
     if (tool.spaceless) {
-      return args => tool.execute(args, spacelessContext());
+      return args => tool.execute(args, spacelessContext(tool.name));
     }
 
     if (hasSpace) {
-      return async args => tool.execute(args, await toolContext());
+      return async args => tool.execute(args, await toolContext(tool.name));
     }
 
     return tool.executePublic ? args => tool.executePublic?.(args, MCP_ENV) : undefined;

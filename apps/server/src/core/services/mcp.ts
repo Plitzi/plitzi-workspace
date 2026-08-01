@@ -1,5 +1,6 @@
 import { handleMcp } from '../../modules/mcp/handler';
 import { createHttpPreviewClient } from '../../modules/mcp/previewClient';
+import { requestProxy } from '../../modules/mcp/proxy';
 import { createHttpScreenshotClient } from '../../modules/mcp/screenshotClient';
 
 import type { Stage } from '../http/types';
@@ -19,7 +20,8 @@ const serveMcp = async (ctx: Parameters<Stage>[0]): Promise<void> => {
     preview: previewClient ? createHttpPreviewClient(previewClient) : undefined,
     screenshot: screenshot ? createHttpScreenshotClient(screenshot) : undefined,
     logger,
-    renderStreaming: ctx.config.mcpAi?.renderStreaming
+    renderStreaming: ctx.config.mcpAi?.renderStreaming,
+    proxy: requestProxy(ctx.config, ctx.req)
   });
 };
 

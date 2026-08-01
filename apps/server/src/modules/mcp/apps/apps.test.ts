@@ -62,9 +62,11 @@ describe('MCP Apps (self-contained pages: they fetch nothing)', () => {
 
       expect(resource.uri).toBe(app.uri);
       expect(resource.mimeType).toBe('text/html;profile=mcp-app');
-      // Images, fonts and the view's own fetches are its business; nothing else is ever loaded.
-      expect(resource._meta.ui.csp.resourceDomains).toEqual(['*', 'data:', 'blob:']);
-      expect(resource._meta.ui.csp.connectDomains).toEqual(['*']);
+      // What a rendered WIDGET reaches is its business; the page itself loads nothing. All three spellings of
+      // "any https origin" travel because hosts disagree on which they accept, and the origins a widget uses are
+      // authored after this metadata is read, so they can never be listed here (see registerApp).
+      expect(resource._meta.ui.csp.resourceDomains).toEqual(['*', 'https:', 'https://*', 'data:', 'blob:']);
+      expect(resource._meta.ui.csp.connectDomains).toEqual(['*', 'https:', 'https://*']);
     }
   });
 
