@@ -112,6 +112,82 @@ describe('MCP Apps host (the ui:// page running against a real AppBridge)', () =
     HANDSHAKE_TIMEOUT
   );
 
+  /** The wait is the model typing the batch, not the render — a widget worth showing is thousands of tokens of
+   *  arguments, and the tool cannot run until the last brace. These pin the only thing the view can do about it:
+   *  read the arguments while they stream. */
+  it(
+    'stands in for the widget while the model is still writing the call',
+    async () => {
+      const host = await startRenderingHost(page);
+
+      // Healed JSON, as a host sends it: the batch is cut off mid-element and the last op is unusable.
+      await host.streamInput({
+        operations: [
+          {
+            type: 'upsertElement',
+            pageRef: 'render',
+            element: {
+              ref: 'panel',
+              type: 'container',
+              children: [
+                { ref: 'title', type: 'heading', props: { content: 'Pricing plans' } },
+                { ref: 'body', type: 'paragraph' }
+              ]
+            }
+          },
+          { type: 'upsertElement', pageRef: 'render' }
+        ]
+      });
+
+      expect(host.text()).toContain('Building the widget');
+      // The batch already names the widget, so the placeholder can say what is coming instead of just spinning.
+      expect(host.text()).toContain('Pricing plans');
+      expect(host.text()).toContain('3 elements');
+      host.close();
+    },
+    HANDSHAKE_TIMEOUT
+  );
+
+  // The deployment switch: a server that would rather show nothing than a placeholder gets a view that ignores
+  // the streamed arguments entirely, without a second bundle or a second view.
+  it(
+    'keeps the view blank while writing when the deployment turns streaming off',
+    async () => {
+      const quiet = await startMcpEndpoint({ renderStreaming: false });
+      try {
+        const quietPage = (await readAppPage(quiet, RENDER_APP_URI)).html;
+        const host = await startRenderingHost(quietPage);
+
+        await host.streamInput({
+          operations: [{ type: 'upsertElement', element: { ref: 'title', type: 'heading', props: { content: 'X' } } }]
+        });
+
+        expect(host.text()).toBe('');
+        host.close();
+      } finally {
+        await quiet.close();
+      }
+    },
+    HANDSHAKE_TIMEOUT
+  );
+
+  it(
+    'drops the placeholder for the real widget the moment the result lands',
+    async () => {
+      const result = await callRender(endpoint, widget('Hello from plitzi_render'));
+      const host = await startRenderingHost(page);
+
+      await host.streamInput({ operations: [{ type: 'upsertElement', pageRef: 'render' }] });
+      await host.completeInput({ operations: widget('Hello from plitzi_render') });
+      await host.showResult(result);
+
+      expect(host.text()).toContain('Hello from plitzi_render');
+      expect(host.text()).not.toContain('Building the widget');
+      host.close();
+    },
+    HANDSHAKE_TIMEOUT
+  );
+
   it(
     'surfaces a failed render as a readable panel instead of a blank frame',
     async () => {

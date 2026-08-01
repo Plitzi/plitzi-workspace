@@ -18,7 +18,8 @@ const serveMcp = async (ctx: Parameters<Stage>[0]): Promise<void> => {
   ctx.operation = await handleMcp(ctx.raw, ctx.rawRes as unknown as ServerResponse, ctx.req, adapters, {
     preview: previewClient ? createHttpPreviewClient(previewClient) : undefined,
     screenshot: screenshot ? createHttpScreenshotClient(screenshot) : undefined,
-    logger
+    logger,
+    renderStreaming: ctx.config.mcpAi?.renderStreaming
   });
 };
 

@@ -4,11 +4,11 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import { exampleApp } from './example';
-import { apps, registerApps, RENDER_APP_URI } from './index';
+import { apps, DEFAULT_VIEW_SETTINGS, registerApps, RENDER_APP_URI } from './index';
 import { registerApp, shipsAsSource } from './shared';
 import { bundleInputs } from './shared/bundle';
 
-import type { McpApp } from '../types';
+import type { McpApp, McpViewSettings } from '../types';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 // This package's source root: what the library build compiles, and the only place a missing view-side module
@@ -29,8 +29,8 @@ const collect = (register: (server: McpServer) => void): Map<string, ResourceRea
   return reads;
 };
 
-const pageOf = async (app: McpApp): Promise<ResourceContent> => {
-  const read = collect(server => registerApp(server, app)).get(app.uri);
+const pageOf = async (app: McpApp, settings: McpViewSettings = DEFAULT_VIEW_SETTINGS): Promise<ResourceContent> => {
+  const read = collect(server => registerApp(server, app, settings)).get(app.uri);
   if (!read) {
     throw new Error(`registerApp registered nothing for ${app.uri}`);
   }
@@ -38,6 +38,7 @@ const pageOf = async (app: McpApp): Promise<ResourceContent> => {
   return (await read()).contents[0];
 };
 
+// The view's own bundle: the settings script carries an id precisely so it is not mistaken for it.
 const scriptOf = (html: string): string => {
   const match = /<script>([\s\S]*?)<\/script>/u.exec(html);
   if (!match) {
@@ -79,6 +80,17 @@ describe('MCP Apps (self-contained pages: they fetch nothing)', () => {
       // The one assertion that matters for a deny-by-default sandbox: nothing in the page points anywhere.
       expect(text).not.toMatch(/<(?:script|link)[^>]+(?:src|href)=/u);
     }
+  });
+
+  // The deployment's switches reach the view through the page, not the bundle — which is what lets one server
+  // serve both settings without building the browser bundle twice.
+  it('hands each view the deployment settings, and serves both settings from one bundle', async () => {
+    const on = await pageOf(apps[0], { streaming: true });
+    const off = await pageOf(apps[0], { streaming: false });
+
+    expect(on.text).toContain('window.__PLITZI_VIEW__ = {"streaming":true}');
+    expect(off.text).toContain('window.__PLITZI_VIEW__ = {"streaming":false}');
+    expect(scriptOf(off.text)).toBe(scriptOf(on.text));
   });
 
   // The template a new app is copied from: built here so it cannot rot, though no tool opens it.

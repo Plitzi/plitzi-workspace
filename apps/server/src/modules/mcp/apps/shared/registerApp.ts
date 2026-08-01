@@ -2,7 +2,7 @@ import { registerAppResource, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/e
 
 import { page } from './page';
 
-import type { McpApp } from '../../types';
+import type { McpApp, McpViewSettings } from '../../types';
 import type { McpUiResourceCsp, McpUiResourceMeta } from '@modelcontextprotocol/ext-apps';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
@@ -12,10 +12,10 @@ const DEFAULT_CSP: McpUiResourceCsp = { resourceDomains: ['*', 'data:', 'blob:']
 
 /** Serves the app as a self-contained page: no import map, no asset mounts, no cross-origin fetches, so the
  *  strictest host sandbox runs it and no deployment has to serve anything extra. */
-export const registerApp = (server: McpServer, app: McpApp): void => {
+export const registerApp = (server: McpServer, app: McpApp, settings: McpViewSettings): void => {
   const meta: { ui: McpUiResourceMeta } = { ui: { csp: app.csp ?? DEFAULT_CSP } };
 
   registerAppResource(server, app.name, app.uri, { description: app.description, _meta: meta }, async () => ({
-    contents: [{ uri: app.uri, mimeType: RESOURCE_MIME_TYPE, text: await page(app), _meta: meta }]
+    contents: [{ uri: app.uri, mimeType: RESOURCE_MIME_TYPE, text: await page(app, settings), _meta: meta }]
   }));
 };

@@ -37,6 +37,8 @@ export interface McpEndpointOptions {
   /** Attach a space to the connection, the way an authorized connector's token does — the server then offers its
    *  editing surface. Omitted, the endpoint is the guest one: no space, so only what works without one. */
   spaceId?: number;
+  /** The deployment switch a consumer sets as `mcpAi.renderStreaming`. Omitted, the server's own default stands. */
+  renderStreaming?: boolean;
 }
 
 const toSsrRequest = (raw: IncomingMessage): SSRRequest => {
@@ -64,11 +66,11 @@ const listen = (server: Server): Promise<number> =>
   });
 
 /** Start the endpoint and connect a real MCP client to it, as a remote connector does. */
-export const startMcpEndpoint = async ({ spaceId }: McpEndpointOptions = {}): Promise<McpEndpoint> => {
+export const startMcpEndpoint = async ({ spaceId, renderStreaming }: McpEndpointOptions = {}): Promise<McpEndpoint> => {
   const adapters: SSRAdapters =
     spaceId === undefined ? publicAdapters : { ...publicAdapters, getSpaceId: () => Promise.resolve(spaceId) };
   const server = createServer((raw, res) => {
-    void handleMcp(raw, res, toSsrRequest(raw), adapters);
+    void handleMcp(raw, res, toSsrRequest(raw), adapters, { renderStreaming });
   });
   const port = await listen(server);
   const url = `http://127.0.0.1:${port}/`;

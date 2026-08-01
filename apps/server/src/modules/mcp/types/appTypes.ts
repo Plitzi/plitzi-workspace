@@ -15,3 +15,11 @@ export interface McpApp {
   styles?: () => string[];
   csp?: McpUiResourceCsp;
 }
+
+/** Deployment switches the page hands to the view. They travel in the HTML rather than the bundle so a server
+ *  that serves both settings still builds the (expensive) browser bundle once. The view reads them off
+ *  `window.__PLITZI_VIEW__`, and must treat every one as optional: an older page carries none. */
+export interface McpViewSettings {
+  /** May the view paint from tool arguments the host is still streaming? See `mcpAi.renderStreaming`. */
+  streaming: boolean;
+}

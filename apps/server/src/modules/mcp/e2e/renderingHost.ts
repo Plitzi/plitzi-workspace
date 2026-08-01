@@ -18,6 +18,11 @@ export interface RenderingHostOptions {
 export interface RenderingHost {
   bridge: AppBridge;
   window: JSDOM['window'];
+  /** Push arguments the way a host does while the model is still writing the call: healed JSON, sent zero or more
+   *  times, any field possibly missing. */
+  streamInput: (args: Record<string, unknown>) => Promise<void>;
+  /** The complete arguments, which the spec makes the host send once before any result. */
+  completeInput: (args: Record<string, unknown>) => Promise<void>;
   /** Deliver a tool result and let the App paint before assertions run. */
   showResult: (result: McpUiToolResultNotification['params']) => Promise<void>;
   /** What the App reported back to the model with ui/update-model-context, in order. */
@@ -133,6 +138,14 @@ export const startRenderingHost = async (html: string, options: RenderingHostOpt
     window,
     contextUpdates,
     waitFor,
+    streamInput: async args => {
+      await bridge.sendToolInputPartial({ arguments: args });
+      await settle(window, 6);
+    },
+    completeInput: async args => {
+      await bridge.sendToolInput({ arguments: args });
+      await settle(window, 6);
+    },
     showResult: async result => {
       await bridge.sendToolResult(result);
       await settle(window, 12);

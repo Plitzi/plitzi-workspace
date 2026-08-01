@@ -324,6 +324,11 @@ export type SSRServerConfig = {
   mcpAi?: {
     enabled?: boolean;
     path?: string;
+    /** Whether the plitzi_render view may paint from the tool arguments while the host is still STREAMING them:
+     *  a placeholder that grows with the widget being authored, instead of the static "Rendering…" held for as
+     *  long as the model takes to write the batch. Defaults to true; hosts that stream nothing are unaffected
+     *  either way. Set false to keep every view blank until the finished widget arrives. */
+    renderStreaming?: boolean;
   };
   /** Receives a {@link ServerLogEvent} for every HTTP request this server answers — whatever stage answered it
    *  and whatever the outcome — plus every MCP tool call and resource read inside those requests. Without it the

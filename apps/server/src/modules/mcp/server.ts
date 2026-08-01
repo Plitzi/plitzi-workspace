@@ -39,6 +39,9 @@ export interface McpServerContext {
   /** Structured request-log sink. When set, every tool call and resource read emits an McpLogEvent to it (the
    *  consumer renders them); otherwise logging falls back to the console when MCP_DEBUG=1. */
   logger?: ServerLogger;
+  /** May the plitzi_render view paint from tool arguments the host is still streaming (see `mcpAi.renderStreaming`)?
+   *  Defaults to true. */
+  renderStreaming?: boolean;
 }
 
 // The MCP tools only ever operate on the active-editing environment.
@@ -51,7 +54,8 @@ export const createMcpServer = async ({
   getSpaceId,
   preview,
   screenshot,
-  logger
+  logger,
+  renderStreaming = true
 }: McpServerContext): Promise<McpServer> => {
   const log = createMcpLog(logger);
   // What this connection reaches, resolved once for the whole request. A token that cannot be verified is not an
@@ -99,9 +103,9 @@ export const createMcpServer = async ({
 
   registerResources(server, getSpace, MCP_ENV, log, hasSpace);
 
-  // Every MCP App's ui:// page. They carry their own script and styles, so they are always registered — no
-  // wiring, no configuration.
-  registerApps(server);
+  // Every MCP App's ui:// page. They carry their own script and styles, so they are always registered; the
+  // settings are the deployment's, not the connection's, and only change what the page hands the view.
+  registerApps(server, { streaming: renderStreaming });
 
   // Register every tool straight from the shared registry: identity + input schema + behavior come from each
   // tool's descriptor, so a new tool is picked up here with no per-tool wiring.

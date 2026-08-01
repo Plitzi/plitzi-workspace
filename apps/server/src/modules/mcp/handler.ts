@@ -13,6 +13,8 @@ export type McpRequestOptions = {
   preview?: PreviewClient;
   screenshot?: ScreenshotClient;
   logger?: ServerLogger;
+  /** Deployment switch for the plitzi_render view (see `mcpAi.renderStreaming`). Defaults to true. */
+  renderStreaming?: boolean;
 };
 
 export const readMcpBody = (req: IncomingMessage): Promise<unknown> =>

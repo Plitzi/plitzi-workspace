@@ -47,6 +47,11 @@
   <body>
     <div id="app"></div>
 
+    <%# Deployment switches, before the app so the view reads them as it mounts. They ride in the page, not the
+        bundle, so a server serving both settings still builds the browser bundle once. -%>
+    <script id="plitzi-view-settings">
+      window.__PLITZI_VIEW__ = <%- settings %>;
+    </script>
     <script>
 <%- app %>
     </script>

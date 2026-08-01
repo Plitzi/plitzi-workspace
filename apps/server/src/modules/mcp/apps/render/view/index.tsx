@@ -5,7 +5,9 @@ import { Component, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { readHeldBatch, writeHeldBatch } from './heldBatch';
+import { streamProgress } from './streamProgress';
 
+import type { StreamProgress } from './streamProgress';
 import type { App, McpUiHostContext } from '@modelcontextprotocol/ext-apps';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
@@ -24,6 +26,57 @@ const ErrorPanel = ({ title, details }: { title: string; details: string }) => (
     <pre style={{ margin: '8px 0 0', whiteSpace: 'pre-wrap', color: '#7f1d1d', fontSize: 12 }}>{details}</pre>
   </div>
 );
+
+/** The wait a user reads as "this is slow" is the model TYPING the batch: the tool only runs once the last brace
+ *  is written, and until then the page shows its static "Rendering…". The host streams the arguments as they
+ *  arrive, so this stands in for the widget meanwhile — bars that grow with the elements already authored, and the
+ *  widget's own title as soon as the batch names it. It never shows a half-built widget: the real one replaces it
+ *  wholesale when the result lands. A host that streams nothing paints none of this and keeps the static text. */
+const SKELETON_BAR_WIDTHS = ['92%', '78%', '85%', '64%', '88%', '72%'];
+
+// The deployment's own switch (mcpAi.renderStreaming), handed over by the page. Absent means on: a page built
+// before the setting existed carries none, and a host that streams no arguments paints the same either way.
+const streamingEnabled =
+  (globalThis as { __PLITZI_VIEW__?: { streaming?: boolean } }).__PLITZI_VIEW__?.streaming !== false;
+
+const skeletonBarStyle = {
+  height: 10,
+  borderRadius: 5,
+  backgroundColor: 'var(--color-background-tertiary, light-dark(#e2e8f0, #333a48))',
+  animation: 'plitzi-skeleton-pulse 1.4s ease-in-out infinite'
+} as const;
+
+// One bar per few elements, so the block visibly grows while the model writes, and a ceiling so a 200-element
+// widget does not fill the panel with grey.
+const barCount = (elements: number): number => Math.min(Math.max(Math.ceil(elements / 3), 2), 6);
+
+const StreamSkeleton = ({ progress }: { progress: StreamProgress }) => {
+  const caption = progress.patch ? 'Updating the widget…' : 'Building the widget…';
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+        padding: 16,
+        font: '13px/1.5 var(--font-sans, system-ui, sans-serif)'
+      }}
+    >
+      <style>{'@keyframes plitzi-skeleton-pulse { 0%, 100% { opacity: 0.5 } 50% { opacity: 1 } }'}</style>
+      {progress.title && <strong style={{ fontSize: 15 }}>{progress.title}</strong>}
+      {SKELETON_BAR_WIDTHS.slice(0, barCount(progress.elements)).map(width => (
+        <div key={width} style={{ ...skeletonBarStyle, width }} />
+      ))}
+      <span style={{ color: 'var(--color-text-tertiary, light-dark(#64748b, #9aa4b2))' }}>
+        {caption}
+        {progress.elements > 0 && ` ${progress.elements} elements so far`}
+      </span>
+    </div>
+  );
+};
 
 class RenderBoundary extends Component<{ children: ReactNode }, { error?: Error }> {
   state: { error?: Error } = {};
@@ -56,6 +109,7 @@ const summarise = (result: CallToolResult): string => {
 
 const RenderApp = () => {
   const [result, setResult] = useState<CallToolResult | null>(null);
+  const [progress, setProgress] = useState<StreamProgress | undefined>(undefined);
   const [cancelled, setCancelled] = useState<string | undefined>(undefined);
   const [context, setContext] = useState<McpUiHostContext | undefined>(undefined);
   const held = useRef<Held>({ operations: [] });
@@ -131,6 +185,15 @@ const RenderApp = () => {
     capabilities: {},
     onAppCreated: instance => {
       appRef.current = instance;
+      // Streaming arguments (sent zero or more times while the model writes) and then the complete ones, which the
+      // host MUST send before the result: the last frame the placeholder gets covers the server render itself.
+      // The `on*` setters are the deprecated half of the API, kept because every other handler here uses them —
+      // mixing addEventListener for one of them would hide the lifecycle this component is built around.
+      if (streamingEnabled) {
+        instance.ontoolinputpartial = params => setProgress(streamProgress(params.arguments));
+        instance.ontoolinput = params => setProgress(streamProgress(params.arguments));
+      }
+
       instance.ontoolresult = toolResult => {
         const renderId = toolResult.structuredContent?.renderId as string | undefined;
         if (toolResult.structuredContent?.patch === true && renderId) {
@@ -174,8 +237,13 @@ const RenderApp = () => {
     return <ErrorPanel title="Could not render the widget" details={failure} />;
   }
 
-  // Still connecting, or connected and waiting for the result: the page's CSS placeholder covers both.
+  // Waiting for the result. Once the host has streamed any of the arguments the skeleton stands in for the widget
+  // being written; before that (and on a host that streams nothing) the page's own CSS placeholder covers it.
   if (!result) {
+    if (progress) {
+      return <StreamSkeleton progress={progress} />;
+    }
+
     return null;
   }
 
