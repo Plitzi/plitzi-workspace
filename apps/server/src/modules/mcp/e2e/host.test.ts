@@ -148,6 +148,72 @@ describe('MCP Apps host (the ui:// page running against a real AppBridge)', () =
     HANDSHAKE_TIMEOUT
   );
 
+  /** Streamed arguments are healed JSON about a call that has not happened yet — the one input in this view that
+   *  nothing validated. These two pin the fence around it: it decorates the wait and touches nothing else. */
+  it(
+    'never lets half-written arguments reach the batch a patch is built from',
+    async () => {
+      const storage = memoryStorage();
+      const host = await startRenderingHost(page, { storage, client: endpoint.client });
+
+      await host.streamInput({
+        operations: [{ type: 'upsertElement', element: { ref: 'a', type: 'heading', props: { content: 'Half' } } }]
+      });
+
+      // The batch is the only copy of a widget anywhere; a truncated one written there would corrupt every later
+      // patch, and it would be the model that got blamed for it.
+      expect(storage.length).toBe(0);
+      host.close();
+    },
+    HANDSHAKE_TIMEOUT
+  );
+
+  // Healing is best-effort, so a later frame can recover LESS than an earlier one. Through the real view, that
+  // must not walk the placeholder backwards — bars that shrink and grow are exactly the flicker to avoid.
+  it(
+    'never walks the placeholder backwards when a frame recovers less than the one before it',
+    async () => {
+      const host = await startRenderingHost(page);
+      const tree = (children: unknown[]) => ({
+        operations: [{ type: 'upsertElement', element: { ref: 'panel', type: 'container', children } }]
+      });
+
+      await host.streamInput(
+        tree([
+          { ref: 'title', type: 'heading', props: { content: 'Pricing plans' } },
+          { ref: 'a', type: 'text' },
+          { ref: 'b', type: 'text' },
+          { ref: 'c', type: 'text' }
+        ])
+      );
+      expect(host.text()).toContain('5 elements');
+
+      // The healer gave back a shorter tree, and dropped the heading's props entirely.
+      await host.streamInput(tree([{ ref: 'title', type: 'heading' }]));
+
+      expect(host.text()).toContain('5 elements');
+      expect(host.text()).toContain('Pricing plans');
+      host.close();
+    },
+    HANDSHAKE_TIMEOUT
+  );
+
+  it(
+    'ignores arguments that arrive once the widget is up, instead of covering it with a placeholder',
+    async () => {
+      const result = await callRender(endpoint, widget('Hello from plitzi_render'));
+      const host = await startRenderingHost(page);
+
+      await host.showResult(result);
+      await host.streamInput({ operations: [{ type: 'upsertElement', element: { ref: 'late', type: 'container' } }] });
+
+      expect(host.text()).toContain('Hello from plitzi_render');
+      expect(host.text()).not.toContain('Building the widget');
+      host.close();
+    },
+    HANDSHAKE_TIMEOUT
+  );
+
   // The deployment switch: a server that would rather show nothing than a placeholder gets a view that ignores
   // the streamed arguments entirely, without a second bundle or a second view.
   it(

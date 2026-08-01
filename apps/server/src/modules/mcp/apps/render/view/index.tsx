@@ -5,7 +5,7 @@ import { Component, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { readHeldBatch, writeHeldBatch } from './heldBatch';
-import { streamProgress } from './streamProgress';
+import { mergeProgress, streamProgress } from './streamProgress';
 
 import type { StreamProgress } from './streamProgress';
 import type { App, McpUiHostContext } from '@modelcontextprotocol/ext-apps';
@@ -47,8 +47,13 @@ const skeletonBarStyle = {
 } as const;
 
 // One bar per few elements, so the block visibly grows while the model writes, and a ceiling so a 200-element
-// widget does not fill the panel with grey.
-const barCount = (elements: number): number => Math.min(Math.max(Math.ceil(elements / 3), 2), 6);
+// widget does not fill the panel with grey. Total by construction: this paints a wait, and a placeholder that
+// renders nothing at all (an empty slice off a NaN) would read as the view having died.
+const barCount = (elements: number): number => {
+  const bars = Math.ceil(elements / 3);
+
+  return Number.isFinite(bars) ? Math.min(Math.max(bars, 2), 6) : 2;
+};
 
 const StreamSkeleton = ({ progress }: { progress: StreamProgress }) => {
   const caption = progress.patch ? 'Updating the widget…' : 'Building the widget…';
@@ -114,6 +119,31 @@ const RenderApp = () => {
   const [context, setContext] = useState<McpUiHostContext | undefined>(undefined);
   const held = useRef<Held>({ operations: [] });
   const appRef = useRef<App | null>(null);
+  // The handlers are registered once, so they close over the FIRST render's state: a ref is the only way they can
+  // tell whether a widget is already on screen.
+  const painted = useRef(false);
+
+  const showWidget = (toolResult: CallToolResult): void => {
+    painted.current = true;
+    setResult(toolResult);
+  };
+
+  /** Streamed arguments are the one input here nobody validated: healed JSON, from a host, about a call that does
+   *  not exist yet. So it is fenced off — it feeds the placeholder and NOTHING else (never the held batch, never
+   *  storage, never the server), it cannot run once a widget is up, and it cannot throw: a notification handler
+   *  that raises would break the App's dispatch, and this one exists only to decorate a wait. */
+  const trackInput = (args: unknown): void => {
+    if (painted.current) {
+      return;
+    }
+
+    try {
+      const next = streamProgress(args);
+      setProgress(previous => mergeProgress(previous, next));
+    } catch {
+      // A placeholder that stops growing is a non-event; the widget is still on its way.
+    }
+  };
 
   // A patch carries only what changed. Merging it onto the held batch and re-calling the tool is what keeps the
   // server stateless: it re-renders the WHOLE widget (so refs, integrity and the audit are all checked as usual)
@@ -152,7 +182,7 @@ const RenderApp = () => {
         const applied = (rendered.structuredContent?.operations as unknown[] | undefined) ?? merged;
         held.current = { renderId, operations: applied };
         writeHeldBatch(renderId, applied);
-        setResult(rendered);
+        showWidget(rendered);
       }
 
       await app.updateModelContext({
@@ -190,8 +220,8 @@ const RenderApp = () => {
       // The `on*` setters are the deprecated half of the API, kept because every other handler here uses them —
       // mixing addEventListener for one of them would hide the lifecycle this component is built around.
       if (streamingEnabled) {
-        instance.ontoolinputpartial = params => setProgress(streamProgress(params.arguments));
-        instance.ontoolinput = params => setProgress(streamProgress(params.arguments));
+        instance.ontoolinputpartial = params => trackInput(params.arguments);
+        instance.ontoolinput = params => trackInput(params.arguments);
       }
 
       instance.ontoolresult = toolResult => {
@@ -215,7 +245,7 @@ const RenderApp = () => {
           writeHeldBatch(renderId, operations);
         }
 
-        setResult(toolResult);
+        showWidget(toolResult);
       };
       instance.ontoolcancelled = params => setCancelled(params.reason ?? 'The host cancelled the render.');
       instance.onhostcontextchanged = params => setContext(previous => ({ ...previous, ...params }));
