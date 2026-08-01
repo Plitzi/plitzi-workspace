@@ -15,4 +15,4 @@ export const registerApps = (server: McpServer): void => {
   }
 };
 
-export { RENDER_APP_URI } from './render';
+export { iconFontCss, RENDER_APP_URI } from './render';

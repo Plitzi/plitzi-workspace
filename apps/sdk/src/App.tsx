@@ -61,6 +61,9 @@ export type AppProps = {
   debugMode?: boolean;
   isHydrating?: boolean;
   previewMode?: boolean;
+  /** Shows the "Made in Plitzi" link over the rendered space; off for embeds that are not a Plitzi site of their
+   *  own (an MCP widget rendered inside a chat, a component mounted in a host app). */
+  branding?: boolean;
   externalStyle?: string;
   state?: Record<string, unknown>;
   onInitStateManager?: (instance: RuntimeStateInstance) => void;

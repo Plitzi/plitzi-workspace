@@ -15,12 +15,20 @@ import type { RefObject } from 'react';
 export type IframeModeProps = {
   pageId?: string;
   style?: string;
+  branding?: boolean;
   plitziContextValue: PlitziServiceContextValue;
   assets: Record<string, Asset>;
   ref: RefObject<HTMLIFrameElement | null>;
 };
 
-const IframeMode = ({ pageId = '', style = '', plitziContextValue, assets = emptyObject, ref }: IframeModeProps) => {
+const IframeMode = ({
+  pageId = '',
+  style = '',
+  branding = true,
+  plitziContextValue,
+  assets = emptyObject,
+  ref
+}: IframeModeProps) => {
   const pageValueMemo = useMemo(() => ({ id: pageId, rootId: pageId }), [pageId]);
 
   return (
@@ -29,7 +37,7 @@ const IframeMode = ({ pageId = '', style = '', plitziContextValue, assets = empt
         <PlitziServiceProvider value={plitziContextValue}>
           {pageId && <Page key={pageId} internalProps={pageValueMemo} />}
         </PlitziServiceProvider>
-        <MadeInPlitzi pageId={pageId} />
+        {branding && <MadeInPlitzi pageId={pageId} />}
       </SpaceContainer>
     </ContainerFrame>
   );

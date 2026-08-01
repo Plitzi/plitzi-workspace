@@ -14,11 +14,19 @@ export type ShadowModeProps = {
   pageId?: string;
   sdkStylePath?: string;
   style?: string;
+  branding?: boolean;
   plitziContextValue: PlitziServiceContextValue;
   assets: Record<string, Asset>;
 };
 
-const ShadowMode = ({ pageId = '', sdkStylePath = '', style = '', plitziContextValue, assets }: ShadowModeProps) => {
+const ShadowMode = ({
+  pageId = '',
+  sdkStylePath = '',
+  style = '',
+  branding = true,
+  plitziContextValue,
+  assets
+}: ShadowModeProps) => {
   const pageValueMemo = useMemo(() => ({ id: pageId, rootId: pageId }), [pageId]);
   const assetsMemo = useMemo(() => Object.values(assets), [assets]);
 
@@ -34,7 +42,7 @@ const ShadowMode = ({ pageId = '', sdkStylePath = '', style = '', plitziContextV
           <PlitziServiceProvider value={plitziContextValue}>
             {pageId && <Page key={pageId} internalProps={pageValueMemo} />}
           </PlitziServiceProvider>
-          <MadeInPlitzi pageId={pageId} />
+          {branding && <MadeInPlitzi pageId={pageId} />}
         </SpaceContainer>
       </ContainerShadow.Content>
     </ContainerShadow>

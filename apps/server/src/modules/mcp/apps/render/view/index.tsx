@@ -190,6 +190,9 @@ const RenderApp = () => {
   }
 
   const insets = context?.safeAreaInsets;
+  // The icon fonts, ~330 KB of base64 woff2, are not in the page: they arrive with the widgets that draw an icon,
+  // so every other widget's iframe has that much less to load before it paints (see ../styles.ts).
+  const iconCss = result.structuredContent?.iconCss as string | undefined;
 
   return (
     <div
@@ -197,8 +200,9 @@ const RenderApp = () => {
         padding: `${insets?.top ?? 0}px ${insets?.right ?? 0}px ${insets?.bottom ?? 0}px ${insets?.left ?? 0}px`
       }}
     >
+      {iconCss && <style>{iconCss}</style>}
       <RenderBoundary>
-        <PlitziSdk offlineData={offlineData} offlineMode environment="main" renderMode="raw" />
+        <PlitziSdk offlineData={offlineData} offlineMode environment="main" renderMode="raw" branding={false} />
       </RenderBoundary>
     </div>
   );

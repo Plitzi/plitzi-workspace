@@ -16,10 +16,17 @@ export type RawModeProps = {
   renderMode?: RenderMode;
   pageId?: string;
   style?: string;
+  branding?: boolean;
   plitziContextValue: PlitziServiceContextValue;
 };
 
-const RawMode = ({ pageId = '', style = '', plitziContextValue, renderMode = 'raw' }: RawModeProps) => {
+const RawMode = ({
+  pageId = '',
+  style = '',
+  branding = true,
+  plitziContextValue,
+  renderMode = 'raw'
+}: RawModeProps) => {
   const pageValueMemo = useMemo(() => ({ id: pageId, rootId: pageId }), [pageId]);
   const [flat] = useSdkStore('schema.flat');
 
@@ -40,7 +47,7 @@ const RawMode = ({ pageId = '', style = '', plitziContextValue, renderMode = 'ra
         {pageId && renderMode !== 'widget' && <Page key={pageId} internalProps={pageValueMemo} />}
         {pageId && renderMode === 'widget' && <PluginManager key={pageId} type={type} internalProps={pageValueMemo} />}
       </PlitziServiceProvider>
-      <MadeInPlitzi pageId={pageId} />
+      {branding && <MadeInPlitzi pageId={pageId} />}
     </SpaceContainer>
   );
 };

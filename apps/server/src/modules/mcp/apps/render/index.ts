@@ -1,7 +1,8 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { require, VIEW_DIR } from '../shared';
+import { widgetCss } from './styles';
+import { VIEW_DIR } from '../shared';
 
 import type { McpApp } from '../../types';
 
@@ -19,6 +20,9 @@ export const renderApp: McpApp = {
   title: 'Plitzi widget',
   description: 'Interactive view that renders a plitzi_render widget with the Plitzi SDK.',
   entry: path.join(HERE, VIEW_DIR, 'index.tsx'),
-  // The widget paints with the SDK's own stylesheet, so it travels inline with the page.
-  styles: () => [path.join(path.dirname(require.resolve('@plitzi/plitzi-sdk')), 'plitzi-sdk.css')]
+  // The widget paints with the SDK's own stylesheet, so it travels inline with the page — minus the icon fonts,
+  // which only the renders that draw an icon pay for (see ./styles).
+  styles: () => [widgetCss()]
 };
+
+export { iconFontCss } from './styles';

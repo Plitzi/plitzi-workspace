@@ -7,7 +7,7 @@ import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
 import { applyOperations } from './apply/dispatch';
 import { operations } from './operations';
-import { RENDER_APP_URI } from '../apps';
+import { iconFontCss, RENDER_APP_URI } from '../apps';
 import { emptySpace } from '../helpers';
 import { expandOperations } from './shared/expandOperations';
 import { defineTool } from './shared/tool';
@@ -200,6 +200,13 @@ const toPatchResult = (ops: Operation[], renderId: string | undefined): CallTool
 // Math.random().toString(36), whose length varies and which is not meant to avoid collisions.
 const newRenderId = (): string => `r${randomUUID().slice(0, 8)}`;
 
+// The icon fonts are a third of the page shell, so they stay out of it and ride with the renders that need them:
+// a widget that authored a fontAwesome element gets them in its result, one that did not never downloads a glyph.
+const ICON_TYPE = 'fontAwesome';
+
+const drawsIcons = (offlineData: OfflineDataRaw): boolean =>
+  Object.values(offlineData.schema.flat).some(element => element.definition.type === ICON_TYPE);
+
 const toRenderResult = (res: RenderResponse, renderId: string): CallToolResult => {
   if (!res.rendered) {
     return {
@@ -218,8 +225,14 @@ const toRenderResult = (res: RenderResponse, renderId: string): CallToolResult =
   return {
     content: [{ type: 'text', text: JSON.stringify(summary) }],
     // `operations` rides along for the view, not the model: it is what a later patch gets merged into. It never
-    // reaches the model (structuredContent is delivered to the renderer), so echoing it costs no tokens.
-    structuredContent: { ...summary, offlineData: res.offlineData, operations: res.operations }
+    // reaches the model (structuredContent is delivered to the renderer), so echoing it costs no tokens — and
+    // neither does `iconCss`, the font payload the view injects when this widget draws icons.
+    structuredContent: {
+      ...summary,
+      offlineData: res.offlineData,
+      operations: res.operations,
+      ...(drawsIcons(res.offlineData) ? { iconCss: iconFontCss() } : {})
+    }
   };
 };
 

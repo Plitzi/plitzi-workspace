@@ -19,11 +19,7 @@ export const page = (app: McpApp): Promise<string> => {
   let html = pages.get(app.uri);
   if (!html) {
     html = bundle(app.entry).then(script =>
-      template()({
-        title: app.title,
-        app: script,
-        css: (app.styles?.() ?? []).map(file => readFileSync(file, 'utf-8')).join('\n')
-      })
+      template()({ title: app.title, app: script, css: (app.styles?.() ?? []).join('\n') })
     );
     pages.set(app.uri, html);
   }

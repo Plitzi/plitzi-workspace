@@ -83,6 +83,24 @@ describe('MCP Apps host (the ui:// page running against a real AppBridge)', () =
     HANDSHAKE_TIMEOUT
   );
 
+  // The widget is a panel inside someone else's chat, not a Plitzi site: the SDK's "Made in Plitzi" link would sit
+  // fixed over the host's own UI, so this render turns it off.
+  it(
+    'paints the widget alone, with no Plitzi badge over the host chrome',
+    async () => {
+      const result = await callRender(endpoint, widget('No badge here'));
+      const host = await startRenderingHost(page);
+
+      await host.showResult(result);
+
+      expect(host.text()).toContain('No badge here');
+      expect(host.text()).not.toContain('Made in Plitzi');
+      expect(host.window.document.querySelector('.made-in-plitzi')).toBeNull();
+      host.close();
+    },
+    HANDSHAKE_TIMEOUT
+  );
+
   it(
     'shows nothing until the result arrives, so a host never renders a half-built widget',
     async () => {

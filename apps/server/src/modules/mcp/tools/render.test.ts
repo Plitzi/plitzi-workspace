@@ -75,6 +75,26 @@ describe('plitzi_render', () => {
     expect(result.structuredContent).toBeUndefined();
   });
 
+  // The icon fonts are ~330 KB the page shell no longer carries, so every widget's iframe boots that much
+  // lighter — but a widget that draws an icon still has to get them from somewhere.
+  it('sends the icon fonts only with the widgets that draw an icon', () => {
+    const withIcon = renderTool.execute(
+      {
+        operations: [
+          { type: 'upsertElement', pageRef: 'render', element: { ref: 'star', type: 'fontAwesome', props: {} } }
+        ] as Operation[]
+      },
+      context
+    ) as { structuredContent: { iconCss?: string } };
+    const withoutIcon = renderTool.execute({ operations: widget }, context) as {
+      structuredContent: { iconCss?: string };
+    };
+
+    expect(withIcon.structuredContent.iconCss).toContain('@font-face');
+    expect(withIcon.structuredContent.iconCss).toContain('Font Awesome');
+    expect(withoutIcon.structuredContent.iconCss).toBeUndefined();
+  });
+
   it('is registered as a read-only, space-independent tool', () => {
     expect(renderTool.name).toBe('plitzi_render');
     expect(renderTool.access).toBe('read');

@@ -130,5 +130,8 @@ describe('MCP Apps (self-contained pages: they fetch nothing)', () => {
     expect(scriptOf(text)).toContain('offlineData');
     expect(scriptOf(text).length).toBeGreaterThan(500_000);
     expect(text).toContain('tailwindcss');
+    // Every byte here is parsed before a widget paints, and the icon fonts are ~330 KB of base64 no widget needs
+    // until it draws an icon — they travel with the render that does (apps/render/styles.ts).
+    expect(text).not.toContain('@font-face');
   });
 });

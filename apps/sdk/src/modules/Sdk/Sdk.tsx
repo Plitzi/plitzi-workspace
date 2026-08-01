@@ -32,6 +32,9 @@ export type SdkProps = {
   isHydrating?: boolean;
   previewMode?: boolean;
   debugMode?: boolean;
+  /** Shows the "Made in Plitzi" link over the rendered space. Off for embeds that are not a Plitzi site of their
+   *  own — an MCP widget inside a chat, a component mounted in a host app. */
+  branding?: boolean;
   sdkStylePath?: string;
   server?: Server;
 };
@@ -43,6 +46,7 @@ const Sdk = ({
   previewMode = true,
   isHydrating = false,
   debugMode = false,
+  branding = true,
   sdkStylePath = './plitzi-sdk.css',
   server
 }: SdkProps) => {
@@ -125,12 +129,19 @@ const Sdk = ({
   return (
     <RscProvider navigationKey={currentPageId} rscData={server?.rscData}>
       {(renderMode === 'raw' || renderMode === 'widget') && (
-        <RawMode renderMode={renderMode} style={css} plitziContextValue={plitziContextValue} pageId={currentPageId} />
+        <RawMode
+          renderMode={renderMode}
+          style={css}
+          branding={branding}
+          plitziContextValue={plitziContextValue}
+          pageId={currentPageId}
+        />
       )}
       {renderMode === 'shadow' && (
         <ShadowMode
           sdkStylePath={sdkStylePath}
           style={css}
+          branding={branding}
           plitziContextValue={plitziContextValue}
           pageId={currentPageId}
           assets={assets}
@@ -139,6 +150,7 @@ const Sdk = ({
       {!['raw', 'widget', 'shadow'].includes(renderMode) && (
         <IframeMode
           style={css}
+          branding={branding}
           plitziContextValue={plitziContextValue}
           pageId={currentPageId}
           assets={assets}

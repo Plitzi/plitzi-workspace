@@ -10,7 +10,8 @@ export interface McpApp {
   title: string;
   /** Absolute path to the view: the app's browser entry. */
   entry: string;
-  /** Stylesheets to inline, by absolute path — lazy so a missing one only fails on read. */
+  /** CSS to inline in the page, in order. Lazy, and the app produces the text itself: what a view needs is not
+   *  always a file as it sits on disk (the render app leaves the icon fonts out of its stylesheet). */
   styles?: () => string[];
   csp?: McpUiResourceCsp;
 }

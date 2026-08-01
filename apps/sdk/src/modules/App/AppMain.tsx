@@ -48,6 +48,7 @@ export type AppMainProps = {
   sdkDevToolsStylePath?: string;
   previewMode?: boolean;
   debugMode?: boolean;
+  branding?: boolean;
   state?: Record<string, unknown>;
   onInitStateManager?: (instance: RuntimeStateInstance) => void;
   onInitEventBridge?: (instance: EventBridgeContextValue) => void;
