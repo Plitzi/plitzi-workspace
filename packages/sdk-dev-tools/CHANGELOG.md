@@ -1,5 +1,16 @@
 # @plitzi/sdk-dev-tools
 
+## 0.32.23
+
+### Patch Changes
+
+- v0.32.23
+- Updated dependencies
+  - @plitzi/sdk-navigation@0.32.23
+  - @plitzi/sdk-schema@0.32.23
+  - @plitzi/sdk-shared@0.32.23
+  - @plitzi/sdk-style@0.32.23
+
 ## 0.32.22
 
 ### Patch Changes
