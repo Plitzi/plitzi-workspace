@@ -68,11 +68,21 @@ const TypographyTransform = ({ textTransform, direction, onChange }: TypographyT
 
   return (
     <>
-      <CategorySection label="Capitalize" keys={['text-transform']}>
-        <CategoryOption onChange={onChange?.('text-transform')} type="iconGroup" items={itemsTransform} />
-      </CategorySection>
-      <CategorySection label="Direction" keys={['direction']}>
-        <CategoryOption onChange={onChange?.('direction')} type="iconGroup" items={itemsDirection} />
+      <CategorySection label="">
+        <CategoryOption
+          keys={['text-transform']}
+          label="Capitalize"
+          onChange={onChange?.('text-transform')}
+          type="iconGroup"
+          items={itemsTransform}
+        />
+        <CategoryOption
+          keys={['direction']}
+          label="Direction"
+          onChange={onChange?.('direction')}
+          type="iconGroup"
+          items={itemsDirection}
+        />
       </CategorySection>
     </>
   );

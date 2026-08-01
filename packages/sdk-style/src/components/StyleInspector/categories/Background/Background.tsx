@@ -9,6 +9,7 @@ import {
   newStopId,
   serializeLayersToCSS
 } from './helpers/backgroundParser';
+import CategoryAdvanced from '../../components/CategoryAdvanced';
 import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
@@ -28,6 +29,7 @@ const DOT_KEYS = [
   'background-repeat',
   'background-clip',
   'background-size',
+  'background-blend-mode',
   'mask-image'
 ] as StyleCategory[];
 
@@ -39,6 +41,8 @@ const BG_LAYER_KEYS: StyleCategory[] = [
   'background-attachment',
   'background-clip'
 ];
+
+const ADVANCED_KEYS = ['background-blend-mode', 'mask-image'] as StyleCategory[];
 
 export type BackgroundProps = {
   replaceTokens?: boolean;
@@ -53,8 +57,12 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
   const { setValue } = use(StyleInspectorContext);
 
   const layerValues = useInspectorValues({ keys: BG_LAYER_KEYS, asValue: true, strictMode: true, replaceTokens });
-  const { 'background-color': bgColor, 'mask-image': maskImage } = useInspectorValues({
-    keys: ['background-color', 'mask-image'],
+  const {
+    'background-color': bgColor,
+    'background-blend-mode': bgBlendMode,
+    'mask-image': maskImage
+  } = useInspectorValues({
+    keys: ['background-color', 'background-blend-mode', 'mask-image'],
     asValue: true,
     replaceTokens
   });
@@ -140,6 +148,13 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
     [setValue]
   );
 
+  const handleBgBlendModeChange = useCallback(
+    (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => {
+      setValue('background-blend-mode', value as StyleValue);
+    },
+    [setValue]
+  );
+
   const handleMaskImageChange = useCallback(
     (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => {
       setValue('mask-image', value as StyleValue);
@@ -150,7 +165,13 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
   const handleCollapse = useCallback((collapsed: boolean) => onCollapse?.('background', collapsed), [onCollapse]);
 
   return (
-    <CategoryContainer title="Background" dotKeys={DOT_KEYS} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
+    <CategoryContainer
+      title="Background"
+      dotKeys={DOT_KEYS}
+      advancedKeys={ADVANCED_KEYS}
+      isCollapsed={isCollapsed}
+      onCollapse={handleCollapse}
+    >
       <div className="flex flex-col gap-2">
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between">
@@ -194,9 +215,35 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
           <CategoryOption type="color" value={bgColor} onChange={handleBgColorChange} />
         </CategorySection>
 
-        <CategorySection label="Mask" keys={['mask-image']}>
-          <CategoryOption value={maskImage} onChange={handleMaskImageChange} />
-        </CategorySection>
+        <CategoryAdvanced>
+          <CategorySection label="">
+            <CategoryOption
+              keys={['background-blend-mode']}
+              label="Blend"
+              value={bgBlendMode}
+              onChange={handleBgBlendModeChange}
+              type="select"
+            >
+              <option value="normal">Normal</option>
+              <option value="multiply">Multiply</option>
+              <option value="screen">Screen</option>
+              <option value="overlay">Overlay</option>
+              <option value="darken">Darken</option>
+              <option value="lighten">Lighten</option>
+              <option value="color-dodge">Color Dodge</option>
+              <option value="color-burn">Color Burn</option>
+              <option value="hard-light">Hard Light</option>
+              <option value="soft-light">Soft Light</option>
+              <option value="difference">Difference</option>
+              <option value="exclusion">Exclusion</option>
+              <option value="hue">Hue</option>
+              <option value="saturation">Saturation</option>
+              <option value="color">Color</option>
+              <option value="luminosity">Luminosity</option>
+            </CategoryOption>
+            <CategoryOption keys={['mask-image']} label="Mask" value={maskImage} onChange={handleMaskImageChange} />
+          </CategorySection>
+        </CategoryAdvanced>
       </div>
     </CategoryContainer>
   );

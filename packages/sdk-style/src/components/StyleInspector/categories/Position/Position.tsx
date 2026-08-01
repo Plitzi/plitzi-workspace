@@ -9,6 +9,7 @@ import PositionAdvanced from './PositionAdvanced';
 import PositionAdvancedButtons from './PositionAdvancedButtons';
 import PositionClear from './PositionClear';
 import PositionFloat from './PositionFloat';
+import CategoryAdvanced from '../../components/CategoryAdvanced';
 import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
@@ -19,6 +20,8 @@ import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 const dotKeys = ['position', 'top', 'bottom', 'z-index', 'float', 'clear', 'left', 'right'] as StyleCategory[];
 const keyValue = ['position', 'top', 'bottom', 'left', 'right'] as StyleCategory[];
+
+const advancedKeys = ['float', 'clear'] as StyleCategory[];
 
 export type PositionProps = {
   replaceTokens?: boolean;
@@ -94,7 +97,13 @@ const Position = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Pos
   );
 
   return (
-    <CategoryContainer title="Position" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
+    <CategoryContainer
+      title="Position"
+      dotKeys={dotKeys}
+      advancedKeys={advancedKeys}
+      isCollapsed={isCollapsed}
+      onCollapse={handleCollapse}
+    >
       <div className="flex flex-col gap-2">
         <CategorySection keys={keyValue} label="Position">
           <CategoryOption onChange={handleChange('position')} type="iconGroup" items={items} />
@@ -103,8 +112,10 @@ const Position = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Pos
           <PositionAdvancedButtons value={advancedbuttons} onChange={handleChange('position-path')} />
         )}
         <PositionAdvanced value={advancedbuttons} onChange={handleChange} />
-        <PositionFloat value={float} onChange={handleChange('float')} />
-        <PositionClear value={clear} onChange={handleChange('clear')} />
+        <CategoryAdvanced>
+          <PositionFloat value={float} onChange={handleChange('float')} />
+          <PositionClear value={clear} onChange={handleChange('clear')} />
+        </CategoryAdvanced>
         <CategorySection keys={['z-index']} label="Z-Index">
           <CategoryOption onChange={handleChange('z-index')} type="input" value={zIndex} />
         </CategorySection>

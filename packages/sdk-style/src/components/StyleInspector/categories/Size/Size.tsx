@@ -3,6 +3,7 @@ import { memo, useCallback, use } from 'react';
 import SizeFit from './SizeFit';
 import SizeOverflow from './SizeOverflow';
 import SizePosition from './SizePosition';
+import CategoryAdvanced from '../../components/CategoryAdvanced';
 import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
@@ -18,10 +19,14 @@ const dotKeys = [
   'min-height',
   'max-width',
   'max-height',
+  'aspect-ratio',
+  'box-sizing',
   'overflow',
   'object-fit',
   'object-position'
 ] as StyleCategory[];
+
+const advancedKeys = ['aspect-ratio', 'box-sizing', 'object-position', 'object-fit'] as StyleCategory[];
 
 const keyValueSize = ['width', 'height'] as StyleCategory[];
 const keyValueSizeMin = ['min-width', 'min-height'] as StyleCategory[];
@@ -42,6 +47,8 @@ const Size = ({ replaceTokens = false, isCollapsed = true, onCollapse }: SizePro
     'min-height': minHeight,
     'max-width': maxWidth,
     'max-height': maxHeight,
+    'aspect-ratio': aspectRatio,
+    'box-sizing': boxSizing,
     overflow,
     'object-position': objectPosition,
     'object-fit': objectFit
@@ -56,7 +63,13 @@ const Size = ({ replaceTokens = false, isCollapsed = true, onCollapse }: SizePro
   );
 
   return (
-    <CategoryContainer title="Size" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
+    <CategoryContainer
+      title="Size"
+      dotKeys={dotKeys}
+      advancedKeys={advancedKeys}
+      isCollapsed={isCollapsed}
+      onCollapse={handleCollapse}
+    >
       <CategorySection label="Size" keys={keyValueSize}>
         <CategoryOption keys={['width']} preffix="W" value={width} onChange={handleChange('width')} type="metric" />
         <CategoryOption keys={['height']} preffix="H" value={height} onChange={handleChange('height')} type="metric" />
@@ -93,9 +106,31 @@ const Size = ({ replaceTokens = false, isCollapsed = true, onCollapse }: SizePro
           type="metric"
         />
       </CategorySection>
+      <CategoryAdvanced>
+        <CategorySection label="">
+          <CategoryOption
+            keys={['aspect-ratio']}
+            label="Ratio"
+            value={aspectRatio}
+            onChange={handleChange('aspect-ratio')}
+          />
+          <CategoryOption
+            keys={['box-sizing']}
+            label="Box Sizing"
+            value={boxSizing}
+            onChange={handleChange('box-sizing')}
+            type="select"
+          >
+            <option value="border-box">Border Box</option>
+            <option value="content-box">Content Box</option>
+          </CategoryOption>
+        </CategorySection>
+      </CategoryAdvanced>
       <SizeOverflow value={overflow} onChange={handleChange} />
-      <SizePosition value={objectPosition} onChange={handleChange} />
-      <SizeFit value={objectFit} onChange={handleChange} />
+      <CategoryAdvanced>
+        <SizePosition value={objectPosition} onChange={handleChange} />
+        <SizeFit value={objectFit} onChange={handleChange} />
+      </CategoryAdvanced>
     </CategoryContainer>
   );
 };

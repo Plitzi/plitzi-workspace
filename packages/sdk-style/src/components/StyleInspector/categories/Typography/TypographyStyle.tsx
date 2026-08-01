@@ -2,6 +2,7 @@ import TextDecorationOverline from '@plitzi/plitzi-ui/icons/TextDecorationOverli
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { useMemo } from 'react';
 
+import CategoryAdvanced from '../../components/CategoryAdvanced';
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 
@@ -10,10 +11,18 @@ import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 export type TypographyStyleProps = {
   fontStyle?: StyleValue;
   textDecoration?: StyleValue;
+  textDecorationThickness?: StyleValue;
+  textUnderlineOffset?: StyleValue;
   onChange?: (category: StyleCategory) => (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => void;
 };
 
-const TypographyStyle = ({ fontStyle, textDecoration, onChange }: TypographyStyleProps) => {
+const TypographyStyle = ({
+  fontStyle,
+  textDecoration,
+  textDecorationThickness,
+  textUnderlineOffset,
+  onChange
+}: TypographyStyleProps) => {
   const itemsItalicize = useMemo(
     () => [
       {
@@ -64,12 +73,40 @@ const TypographyStyle = ({ fontStyle, textDecoration, onChange }: TypographyStyl
 
   return (
     <>
-      <CategorySection label="Italicize" keys={['font-style']}>
-        <CategoryOption onChange={onChange?.('font-style')} type="iconGroup" items={itemsItalicize} />
+      <CategorySection label="">
+        <CategoryOption
+          keys={['font-style']}
+          label="Italicize"
+          onChange={onChange?.('font-style')}
+          type="iconGroup"
+          items={itemsItalicize}
+        />
+        <CategoryOption
+          keys={['text-decoration']}
+          label="Decoration"
+          onChange={onChange?.('text-decoration')}
+          type="iconGroup"
+          items={itemsDecoration}
+        />
       </CategorySection>
-      <CategorySection label="Decoration" keys={['text-decoration']}>
-        <CategoryOption onChange={onChange?.('text-decoration')} type="iconGroup" items={itemsDecoration} />
-      </CategorySection>
+      <CategoryAdvanced>
+        <CategorySection label="">
+          <CategoryOption
+            keys={['text-decoration-thickness']}
+            label="Thickness"
+            value={textDecorationThickness}
+            onChange={onChange?.('text-decoration-thickness')}
+            type="metric"
+          />
+          <CategoryOption
+            keys={['text-underline-offset']}
+            label="Offset"
+            value={textUnderlineOffset}
+            onChange={onChange?.('text-underline-offset')}
+            type="metric"
+          />
+        </CategorySection>
+      </CategoryAdvanced>
     </>
   );
 };

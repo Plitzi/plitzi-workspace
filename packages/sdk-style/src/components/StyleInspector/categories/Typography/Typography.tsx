@@ -1,18 +1,21 @@
 import { memo, useCallback, use } from 'react';
 
 import TypographyAlign from './TypographyAlign';
+import TypographyBreaking from './TypographyBreaking';
+import TypographyClamp from './TypographyClamp';
 import { defaultFonts, weights } from './TypographyConstants';
 import TypographyFont from './TypographyFont';
 import TypographyStyle from './TypographyStyle';
 import TypographyTextShadow from './TypographyTextShadow';
 import TypographyTransform from './TypographyTransform';
+import CategoryAdvanced from '../../components/CategoryAdvanced';
 import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
 
-import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
+import type { StyleCategory, StyleObject, StyleValue } from '@plitzi/sdk-shared';
 
 const dotKeys = [
   'font-family',
@@ -23,17 +26,35 @@ const dotKeys = [
   'text-align',
   'font-style',
   'text-decoration',
+  'text-decoration-thickness',
+  'text-underline-offset',
   'letter-spacing',
+  'word-spacing',
   'text-indent',
   'text-transform',
   'direction',
   'text-shadow',
   'white-space',
   'text-wrap',
-  'text-overflow'
+  'word-break',
+  'overflow-wrap',
+  'hyphens',
+  'vertical-align',
+  'text-overflow',
+  'line-clamp'
 ] as StyleCategory[];
 
-const keyValueLetter = ['letter-spacing', 'text-indent'] as StyleCategory[];
+const advancedKeys = [
+  'text-decoration-thickness',
+  'text-underline-offset',
+  'word-break',
+  'overflow-wrap',
+  'hyphens',
+  'vertical-align',
+  'text-shadow'
+] as StyleCategory[];
+
+const keyValueLetter = ['letter-spacing', 'word-spacing', 'text-indent'] as StyleCategory[];
 
 export type TypographyProps = {
   replaceTokens?: boolean;
@@ -51,15 +72,23 @@ const Typography = ({ replaceTokens = false, isCollapsed = true, fonts, onCollap
     'font-style': fontStyle,
     'text-align': textAlign,
     'text-decoration': textDecoration,
+    'text-decoration-thickness': textDecorationThickness,
+    'text-underline-offset': textUnderlineOffset,
     'text-indent': textIndent,
     'text-transform': textTransform,
     'text-shadow': textShadow,
     'white-space': whiteSpace,
     'text-wrap': textWrap,
+    'word-break': wordBreak,
+    'overflow-wrap': overflowWrap,
+    hyphens,
+    'vertical-align': verticalAlign,
     'text-overflow': textOverflow,
+    'line-clamp': lineClamp,
     'line-height': lineHeight,
     color,
     'letter-spacing': letterSpacing,
+    'word-spacing': wordSpacing,
     direction
   } = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens });
 
@@ -73,18 +102,33 @@ const Typography = ({ replaceTokens = false, isCollapsed = true, fonts, onCollap
     [setValue]
   );
 
+  const handleChangeClamp = useCallback((values: StyleObject) => setValue(undefined, values), [setValue]);
+
   return (
-    <CategoryContainer title="Typography" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
+    <CategoryContainer
+      title="Typography"
+      dotKeys={dotKeys}
+      advancedKeys={advancedKeys}
+      isCollapsed={isCollapsed}
+      onCollapse={handleCollapse}
+    >
       <TypographyAlign partialValue={textAlign} onChange={handleChange('text-align')} />
       <TypographyFont partialValue={fontFamily} fonts={fonts} onChange={handleChange('font-family')} />
-      <CategorySection label="Weight" keys={['font-weight']}>
-        <CategoryOption value={fontWeight} onChange={handleChange('font-weight')} type="select">
+      <CategorySection label="">
+        <CategoryOption
+          keys={['font-weight']}
+          label="Weight"
+          value={fontWeight}
+          onChange={handleChange('font-weight')}
+          type="select"
+        >
           {Object.keys(weights).map(weight => (
             <option key={weight} value={weight} disabled={!fontSelected || !fontSelected.weights.includes(weight)}>
               {weights[Number(weight)]}
             </option>
           ))}
         </CategoryOption>
+        <CategoryOption keys={['color']} label="Color" type="color" value={color} onChange={handleChange('color')} />
       </CategorySection>
       <CategorySection label="">
         <CategoryOption
@@ -102,16 +146,26 @@ const Typography = ({ replaceTokens = false, isCollapsed = true, fonts, onCollap
           type="metric"
         />
       </CategorySection>
-      <CategorySection label="Color" keys={['color']}>
-        <CategoryOption type="color" value={color} onChange={handleChange('color')} />
-      </CategorySection>
-      <TypographyStyle fontStyle={fontStyle} textDecoration={textDecoration} onChange={handleChange} />
+      <TypographyStyle
+        fontStyle={fontStyle}
+        textDecoration={textDecoration}
+        textDecorationThickness={textDecorationThickness}
+        textUnderlineOffset={textUnderlineOffset}
+        onChange={handleChange}
+      />
       <CategorySection label="Letter" keys={keyValueLetter}>
         <CategoryOption
           keys={['letter-spacing']}
           label="Spacing"
           value={letterSpacing}
           onChange={handleChange('letter-spacing')}
+          type="metric"
+        />
+        <CategoryOption
+          keys={['word-spacing']}
+          label="Word"
+          value={wordSpacing}
+          onChange={handleChange('word-spacing')}
           type="metric"
         />
         <CategoryOption
@@ -123,35 +177,34 @@ const Typography = ({ replaceTokens = false, isCollapsed = true, fonts, onCollap
         />
       </CategorySection>
       <TypographyTransform textTransform={textTransform} direction={direction} onChange={handleChange} />
-      <CategorySection label="Breaking" keys={['white-space']}>
-        <CategoryOption value={whiteSpace} onChange={handleChange('white-space')} type="select">
-          <option value="normal">Normal</option>
-          <option value="nowrap">No Wrap</option>
-          <option value="pre">Pre</option>
-          <option value="pre-wrap">Pre Wrap</option>
-          <option value="pre-line">Pre Line</option>
-          <option value="break-spaces">Break Spaces</option>
-        </CategoryOption>
-      </CategorySection>
-      <CategorySection label="Wrap" keys={['text-wrap']}>
-        <CategoryOption value={textWrap} onChange={handleChange('text-wrap')} type="select">
-          <option value="wrap">Wrap</option>
-          <option value="nowrap">No Wrap</option>
-          <option value="balance">Balance</option>
-          <option value="pretty">Pretty</option>
-          <option value="stable">Stable</option>
-        </CategoryOption>
-      </CategorySection>
-      <CategorySection label="Overflow" keys={['text-overflow']}>
-        <CategoryOption value={textOverflow} onChange={handleChange('text-overflow')} type="select">
+      <TypographyBreaking
+        whiteSpace={whiteSpace}
+        textWrap={textWrap}
+        wordBreak={wordBreak}
+        overflowWrap={overflowWrap}
+        hyphens={hyphens}
+        verticalAlign={verticalAlign}
+        onChange={handleChange}
+      />
+      <CategorySection label="">
+        <CategoryOption
+          keys={['text-overflow']}
+          label="Overflow"
+          value={textOverflow}
+          onChange={handleChange('text-overflow')}
+          type="select"
+        >
           <option value="clip">Clip</option>
           <option value="ellipsis">Ellipsis</option>
           <option value="string">String</option>
           <option value="initial">Initial</option>
           <option value="inherit">Inherit</option>
         </CategoryOption>
+        <TypographyClamp value={lineClamp} onChange={handleChangeClamp} />
       </CategorySection>
-      <TypographyTextShadow value={textShadow} onChange={handleChange('text-shadow')} />
+      <CategoryAdvanced>
+        <TypographyTextShadow value={textShadow} onChange={handleChange('text-shadow')} />
+      </CategoryAdvanced>
     </CategoryContainer>
   );
 };

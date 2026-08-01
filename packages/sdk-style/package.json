@@ -502,6 +502,38 @@
       "types": "./dist/components/StyleInspector/categories/ListItem/index.d.ts",
       "import": "./dist/components/StyleInspector/categories/ListItem/index.mjs"
     },
+    "./components/StyleInspector/categories/Others": {
+      "types": "./dist/components/StyleInspector/categories/Others/index.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Others/index.mjs"
+    },
+    "./components/StyleInspector/categories/Others/Others": {
+      "types": "./dist/components/StyleInspector/categories/Others/Others.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Others/Others.mjs"
+    },
+    "./components/StyleInspector/categories/Others/OthersForm": {
+      "types": "./dist/components/StyleInspector/categories/Others/OthersForm.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Others/OthersForm.mjs"
+    },
+    "./components/StyleInspector/categories/Others/OthersInteraction": {
+      "types": "./dist/components/StyleInspector/categories/Others/OthersInteraction.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Others/OthersInteraction.mjs"
+    },
+    "./components/StyleInspector/categories/Others/OthersOutline": {
+      "types": "./dist/components/StyleInspector/categories/Others/OthersOutline.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Others/OthersOutline.mjs"
+    },
+    "./components/StyleInspector/categories/Others/OthersSvg": {
+      "types": "./dist/components/StyleInspector/categories/Others/OthersSvg.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Others/OthersSvg.mjs"
+    },
+    "./components/StyleInspector/categories/Others/OthersTable": {
+      "types": "./dist/components/StyleInspector/categories/Others/OthersTable.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Others/OthersTable.mjs"
+    },
+    "./components/StyleInspector/categories/Others/index": {
+      "types": "./dist/components/StyleInspector/categories/Others/index.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Others/index.mjs"
+    },
     "./components/StyleInspector/categories/Position": {
       "types": "./dist/components/StyleInspector/categories/Position/index.d.ts",
       "import": "./dist/components/StyleInspector/categories/Position/index.mjs"
@@ -606,6 +638,14 @@
       "types": "./dist/components/StyleInspector/categories/Typography/TypographyAlign.d.ts",
       "import": "./dist/components/StyleInspector/categories/Typography/TypographyAlign.mjs"
     },
+    "./components/StyleInspector/categories/Typography/TypographyBreaking": {
+      "types": "./dist/components/StyleInspector/categories/Typography/TypographyBreaking.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Typography/TypographyBreaking.mjs"
+    },
+    "./components/StyleInspector/categories/Typography/TypographyClamp": {
+      "types": "./dist/components/StyleInspector/categories/Typography/TypographyClamp.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Typography/TypographyClamp.mjs"
+    },
     "./components/StyleInspector/categories/Typography/TypographyConstants": {
       "types": "./dist/components/StyleInspector/categories/Typography/TypographyConstants.d.ts",
       "import": "./dist/components/StyleInspector/categories/Typography/TypographyConstants.mjs"
@@ -645,6 +685,22 @@
     "./components/StyleInspector/categories/Variables/index": {
       "types": "./dist/components/StyleInspector/categories/Variables/index.d.ts",
       "import": "./dist/components/StyleInspector/categories/Variables/index.mjs"
+    },
+    "./components/StyleInspector/components/CategoryAdvanced": {
+      "types": "./dist/components/StyleInspector/components/CategoryAdvanced/index.d.ts",
+      "import": "./dist/components/StyleInspector/components/CategoryAdvanced/index.mjs"
+    },
+    "./components/StyleInspector/components/CategoryAdvanced/CategoryAdvanced": {
+      "types": "./dist/components/StyleInspector/components/CategoryAdvanced/CategoryAdvanced.d.ts",
+      "import": "./dist/components/StyleInspector/components/CategoryAdvanced/CategoryAdvanced.mjs"
+    },
+    "./components/StyleInspector/components/CategoryAdvanced/CategoryAdvancedContext": {
+      "types": "./dist/components/StyleInspector/components/CategoryAdvanced/CategoryAdvancedContext.d.ts",
+      "import": "./dist/components/StyleInspector/components/CategoryAdvanced/CategoryAdvancedContext.mjs"
+    },
+    "./components/StyleInspector/components/CategoryAdvanced/index": {
+      "types": "./dist/components/StyleInspector/components/CategoryAdvanced/index.d.ts",
+      "import": "./dist/components/StyleInspector/components/CategoryAdvanced/index.mjs"
     },
     "./components/StyleInspector/components/CategoryContainer": {
       "types": "./dist/components/StyleInspector/components/CategoryContainer/index.d.ts",

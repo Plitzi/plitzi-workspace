@@ -1645,6 +1645,53 @@ describe('isCssProperty', () => {
     expect(isCssProperty('background-attachment')).toBe(true);
   });
 
+  // Every one of these is CSS an agent writes unprompted (or that the render guide itself teaches, like
+  // aspect-ratio); rejecting one fails the whole batch, so the vocabulary has to keep carrying them.
+  it('returns true for the interaction, effect and typography properties agents reach for', () => {
+    for (const property of [
+      'pointer-events',
+      'user-select',
+      'visibility',
+      'box-sizing',
+      'aspect-ratio',
+      'touch-action',
+      'resize',
+      'appearance',
+      'scroll-behavior',
+      'overscroll-behavior',
+      'accent-color',
+      'caret-color',
+      'color-scheme',
+      'backdrop-filter',
+      'mix-blend-mode',
+      'background-blend-mode',
+      'isolation',
+      'clip-path',
+      'transform-origin',
+      'perspective',
+      'will-change',
+      'outline-offset',
+      'word-break',
+      'overflow-wrap',
+      'word-spacing',
+      'hyphens',
+      'vertical-align',
+      'text-decoration-thickness',
+      'text-underline-offset',
+      'line-clamp',
+      '-webkit-line-clamp',
+      '-webkit-box-orient',
+      'border-collapse',
+      'border-spacing',
+      'table-layout',
+      'fill',
+      'stroke',
+      'stroke-width'
+    ]) {
+      expect(isCssProperty(property), property).toBe(true);
+    }
+  });
+
   it('returns false for unknown properties', () => {
     expect(isCssProperty('nonexistent')).toBe(false);
     expect(isCssProperty('overflow-z')).toBe(false);

@@ -14,6 +14,7 @@ import DisplayFlexChild from './categories/DisplayFlexChild';
 import Effects from './categories/Effects';
 import List from './categories/List';
 import ListItem from './categories/ListItem';
+import Others from './categories/Others';
 import Position from './categories/Position';
 import RawStyle from './categories/RawStyle';
 import Size from './categories/Size';
@@ -222,6 +223,11 @@ const Inspector = ({
           <Effects
             replaceTokens={replaceTokens}
             isCollapsed={collapsedCache.effects ?? true}
+            onCollapse={handleChangeCollapse}
+          />
+          <Others
+            replaceTokens={replaceTokens}
+            isCollapsed={collapsedCache.others ?? true}
             onCollapse={handleChangeCollapse}
           />
           <Variables isCollapsed={collapsedCache.variables ?? true} onCollapse={handleChangeCollapse} />

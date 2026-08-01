@@ -1,11 +1,15 @@
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import clsx from 'clsx';
+import { useCallback } from 'react';
 
+import useInspectorValues from '../../hooks/useInspectorValues';
+import CategoryAdvancedContext from '../CategoryAdvanced/CategoryAdvancedContext';
 import InspectorDots from '../InspectorDots';
 
 import type { StyleCategory } from '@plitzi/sdk-shared';
-import type { ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 
 export type CategoryContainerProps = {
   className?: string;
@@ -13,6 +17,7 @@ export type CategoryContainerProps = {
   children?: ReactNode;
   title?: string;
   dotKeys?: StyleCategory[];
+  advancedKeys?: StyleCategory[];
   isCollapsed?: boolean;
   onCollapse: (collapsed: boolean) => void;
 };
@@ -23,9 +28,22 @@ const CategoryContainer = ({
   children,
   title = 'Title',
   dotKeys,
+  advancedKeys,
   isCollapsed = true,
   onCollapse
 }: CategoryContainerProps) => {
+  const [showAdvanced, setShowAdvanced] = useStorage(`builder-state.styleInspector.advanced.${title}`, false);
+  const { hasValues: hasAdvancedValues } = useInspectorValues({ keys: advancedKeys, asValue: false });
+
+  const handleToggleAdvanced = useCallback(
+    (e: MouseEvent) => {
+      // The whole header toggles the category, so the button has to keep its click to itself.
+      e.stopPropagation();
+      setShowAdvanced(state => !state);
+    },
+    [setShowAdvanced]
+  );
+
   return (
     <ContainerCollapsable className={className} collapsed={isCollapsed} onChange={onCollapse}>
       <ContainerCollapsable.Header
@@ -38,7 +56,23 @@ const CategoryContainer = ({
         iconCollapsed={<Icon icon="fa-solid fa-angle-down" />}
         iconExpanded={<Icon icon="fa-solid fa-angle-up" />}
       >
-        <InspectorDots styleKeys={dotKeys} />
+        <div className="flex items-center gap-2">
+          <InspectorDots styleKeys={dotKeys} />
+          {!!advancedKeys?.length && !isCollapsed && (
+            <Icon
+              className={clsx('cursor-pointer text-xs', {
+                'text-blue-500': showAdvanced,
+                // A value living in a hidden row would be invisible otherwise, so the toggle carries the hint.
+                'text-orange-500': !showAdvanced && hasAdvancedValues,
+                'text-gray-400 hover:text-gray-600 dark:text-zinc-500 dark:hover:text-zinc-300':
+                  !showAdvanced && !hasAdvancedValues
+              })}
+              icon="fa-solid fa-sliders"
+              title={showAdvanced ? 'Hide advanced properties' : 'Show advanced properties'}
+              onClick={handleToggleAdvanced}
+            />
+          )}
+        </div>
       </ContainerCollapsable.Header>
       <ContainerCollapsable.Content
         className={clsx(
@@ -47,7 +81,7 @@ const CategoryContainer = ({
           classNameContent
         )}
       >
-        {children}
+        <CategoryAdvancedContext value={showAdvanced}>{children}</CategoryAdvancedContext>
       </ContainerCollapsable.Content>
     </ContainerCollapsable>
   );

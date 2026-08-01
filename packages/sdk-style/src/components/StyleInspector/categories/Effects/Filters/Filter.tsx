@@ -8,11 +8,13 @@ import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 export type FilterProps = {
+  styleKey?: StyleCategory;
+  label?: string;
   value?: StyleValue;
   onChange?: (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => void;
 };
 
-const Filter = ({ value, onChange }: FilterProps) => {
+const Filter = ({ styleKey = 'filter', label = 'Filters', value, onChange }: FilterProps) => {
   let filters: string[] = [];
   if (value && value !== '') {
     filters = (value as string).split(' ');
@@ -47,7 +49,7 @@ const Filter = ({ value, onChange }: FilterProps) => {
   return (
     <>
       <div className="flex w-full justify-between">
-        <InspectorLabel keyValue={['filter']}>Filters</InspectorLabel>
+        <InspectorLabel keyValue={[styleKey]}>{label}</InspectorLabel>
         <Icon className="cursor-pointer" icon="fas fa-plus" onClick={handleClickAddItem} />
       </div>
       {filters.length > 0 && (
