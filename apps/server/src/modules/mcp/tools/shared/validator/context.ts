@@ -13,6 +13,10 @@ const CSS_VAR = /var\(\s*--([A-Za-z_][\w-]*)\s*\)/g;
 // variable reference. Their props are skipped by the {{name}} check to avoid false positives.
 export const RAW_CODE_TYPES = new Set(['blockJsx', 'blockHtml', 'custom']);
 
+/** What the batch is authoring. A `widget` (plitzi_render) is embedded in a host's chat UI we do not own, so its
+ *  raw markup is held to a stricter rule than a space the account owns. */
+export type ValidationMode = 'space' | 'widget';
+
 /** Authoritative per-type metadata from the component catalog (default sdk-elements ∪ this space's plugins).
  *  `custom` drives strict-vs-lenient validation: a default type (custom:false) owns its full attribute set, so an
  *  unknown attribute/setState key on it is an error; a plugin type (custom:true) is best-effort (warnings). */
@@ -24,6 +28,7 @@ export interface TypeMeta {
 }
 
 export interface ValidationCtx {
+  mode: ValidationMode;
   errors: ValidationError[];
   warnings: string[];
   warned: Set<string>;

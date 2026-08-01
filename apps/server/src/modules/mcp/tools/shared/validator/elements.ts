@@ -82,7 +82,38 @@ export const checkVariantApplication = (
   }
 };
 
+// A raw-markup prop is injected verbatim (blockHtml renders it with dangerouslySetInnerHTML, and the SDK's
+// previewMode defaults on), so a <script>, a javascript: URL or an inline on* handler in it RUNS. In a space that
+// is the point of the escape hatch; in a WIDGET the markup lands inside the host's chat UI, where the only thing
+// worth authoring raw is inert markup — an inline <svg>. Behaviour there has its own ops (upsertInteractionFlow).
+const EXECUTABLE_MARKUP = /<script\b|\son[a-z]+\s*=|javascript:/i;
+
+export const checkRawMarkup = (
+  type: string,
+  props: Record<string, unknown> | undefined,
+  path: string,
+  ctx: ValidationCtx
+): void => {
+  if (ctx.mode !== 'widget' || !props || !RAW_CODE_TYPES.has(type)) {
+    return;
+  }
+
+  for (const [key, value] of Object.entries(props)) {
+    if (typeof value === 'string' && EXECUTABLE_MARKUP.test(value)) {
+      ctx.errors.push({
+        path: `${path}.props.${key}`,
+        message: `Executable markup in a "${type}" prop is not allowed in a widget`,
+        hint:
+          'A widget renders inside the host UI, so <script>, javascript: URLs and inline on* handlers are ' +
+          'rejected. Keep the markup inert (an inline <svg> is what this type is for) and wire behaviour with ' +
+          'upsertInteractionFlow.'
+      });
+    }
+  }
+};
+
 const checkElementProps = (element: ElementInput, path: string, ctx: ValidationCtx): void => {
+  checkRawMarkup(element.type, element.props, path, ctx);
   if (!element.props || RAW_CODE_TYPES.has(element.type)) {
     return;
   }

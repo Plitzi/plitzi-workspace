@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { render, renderTool } from './render';
 import { emptySpace } from '../helpers';
+import { validateOperations } from './shared/validator';
 
 import type { Operation } from './operations';
 import type { ToolContext } from './shared/tool';
@@ -93,6 +94,67 @@ describe('plitzi_render', () => {
     expect(withIcon.structuredContent.iconCss).toContain('@font-face');
     expect(withIcon.structuredContent.iconCss).toContain('Font Awesome');
     expect(withoutIcon.structuredContent.iconCss).toBeUndefined();
+  });
+
+  // Vector graphics are the one thing a widget cannot fake with CSS, and blockHtml is the only route to them —
+  // so the type has to survive validation intact, markup and all.
+  it('renders an inline svg authored in a blockHtml element', () => {
+    const result = render({
+      operations: [
+        {
+          type: 'upsertDefinitions',
+          definitions: { mark: { desktop: { display: 'flex', width: '32px', height: '32px', color: '#3b82f6' } } }
+        },
+        {
+          type: 'upsertElement',
+          pageRef: 'render',
+          element: {
+            ref: 'trend',
+            type: 'blockHtml',
+            style: { base: ['mark'] },
+            props: {
+              content:
+                '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor">' +
+                '<path d="M3 17l6-6 4 4 8-8"/></svg>'
+            }
+          }
+        }
+      ] as Operation[]
+    });
+
+    expect(result.rendered).toBe(true);
+    if (!result.rendered) {
+      return;
+    }
+
+    // Warnings are what the model reads back, so a legitimate drawing must produce none.
+    expect(result.warnings).toBeUndefined();
+    const element = Object.values(result.offlineData.schema.flat).find(entry => entry.idRef === 'trend');
+    expect(element?.attributes.content).toContain('<svg');
+  });
+
+  // The markup is injected with dangerouslySetInnerHTML into a view running inside the host's chat UI: inert
+  // drawings are the point of the escape hatch here, executable markup is not.
+  it.each([
+    ['a script tag', '<svg/><script>fetch("https://evil.test")</script>'],
+    ['an inline handler', '<svg onload="fetch(1)"></svg>'],
+    ['a javascript: url', '<svg><a href="javascript:alert(1)"><rect/></a></svg>']
+  ])('refuses %s in a widget’s raw markup', (_case, content) => {
+    const operations = [
+      { type: 'upsertElement', pageRef: 'render', element: { ref: 'mark', type: 'blockHtml', props: { content } } }
+    ] as Operation[];
+    const result = render({ operations });
+
+    expect(result.rendered).toBe(false);
+    if (result.rendered) {
+      return;
+    }
+
+    expect(result.errors[0]?.path).toBe('operations[0].element.props.content');
+    expect(result.errors[0]?.hint).toContain('upsertInteractionFlow');
+    // The same markup in a SPACE is the escape hatch working as intended — the rule is the widget's, not the type's.
+    const spaceErrors = validateOperations(emptySpace(), operations).errors;
+    expect(spaceErrors.some(error => error.path.endsWith('props.content'))).toBe(false);
   });
 
   it('is registered as a read-only, space-independent tool', () => {

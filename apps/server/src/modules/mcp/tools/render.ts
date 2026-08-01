@@ -87,7 +87,7 @@ export const render = (input: RenderInput): RenderResponse => {
   }
 
   const ops = expansion.operations;
-  const validation = validateOperations(space, ops);
+  const validation = validateOperations(space, ops, 'widget');
   if (!validation.valid) {
     return { rendered: false, errors: validation.errors, warnings: noWarnings(validation.warnings) };
   }
@@ -259,8 +259,12 @@ export const renderTool = defineTool({
     'node repeat:{ items:"{{item.<list>}}", template:… } and put the sub-rows in the row data.\n' +
     '2. STYLE — declare ALL the classes in ONE upsertDefinitions { definitions: { "<class>": { desktop:{ …CSS in ' +
     'kebab-case… } }, … } }, then attach via the element style:{ base:["<class ref>"] }. Lay containers out with ' +
-    'flex/grid. Keep the call small: one class per look (not per property), and never hand-draw a scene in a ' +
-    'data: URI — it costs more than the whole widget; use an https image, a flat colour or a gradient.\n' +
+    'flex/grid. Keep the call small: one class per look, not per property.\n' +
+    '2a. GRAPHICS — a logo, a sparkline, a badge, a decorative shape: draw it as an INLINE <svg> in a blockHtml ' +
+    'element (props.content), keeping a viewBox with width/height "100%" so its class sizes it, and fill/stroke ' +
+    '"currentColor" so it follows the host theme. Budget it: a handful of paths, drawn once and reused, never a ' +
+    'data: URI and never a full illustration — a photo-real scene costs more than the whole widget, so use an ' +
+    'https image, a flat colour or a gradient for that. Markup only: scripts and on* handlers are rejected.\n' +
     '2b. LAYOUT — it renders in a side panel, so width is free and HEIGHT is scarce. Plain containers stack ' +
     'children vertically, which is the tall half-empty default to avoid: put peers (metrics, plans, options, ' +
     'image + text) in a wrapping row — display:flex, flex-direction:row, flex-wrap:wrap, children flex-grow:"1" + ' +

@@ -2,7 +2,7 @@ import { batchDeclaredFolders, batchDeclaredPages, batchDeclaredVariants, batchD
 import { checkBindingSourceScope, checkBindingTarget, checkBindingTransformers } from './bindings';
 import { checkObservedName, checkVarRefs, warnOnce } from './context';
 import { checkSlotCss } from './css';
-import { checkElementInput, checkTypeProps, checkVariantApplication } from './elements';
+import { checkElementInput, checkRawMarkup, checkTypeProps, checkVariantApplication } from './elements';
 import { checkInteractionNode } from './interactions';
 import { checkRef } from './refs';
 import { BUILTIN_COMPONENTS, observedDataSources, observedInteractionActions } from '../../../catalogs';
@@ -20,7 +20,7 @@ import {
 import { buildTypeRegistry } from '../../../resources';
 import { MAX_OPS } from '../../operations';
 
-import type { TypeMeta, ValidationCtx } from './context';
+import type { TypeMeta, ValidationCtx, ValidationMode } from './context';
 import type { Space } from '../../../helpers';
 import type { ValidationResult } from '../../../types';
 import type { Operation } from '../../operations';
@@ -58,9 +58,10 @@ const buildTypeMeta = (catalog: ComponentCatalog | undefined): Map<string, TypeM
 
 /** The shared validation context, derived from a space (+ the batch's ops, for batch-declared names). Extracted so
  *  the post-apply resource audit (auditResources) can run the same checks against the resulting draft. */
-export const buildValidationCtx = (space: Space, ops: Operation[]): ValidationCtx => {
+export const buildValidationCtx = (space: Space, ops: Operation[], mode: ValidationMode = 'space'): ValidationCtx => {
   const registry = buildTypeRegistry(space.schema, space.catalog);
   return {
+    mode,
     errors: [],
     warnings: [],
     warned: new Set(),
@@ -84,11 +85,15 @@ export const buildValidationCtx = (space: Space, ops: Operation[]): ValidationCt
   };
 };
 
-export const validateOperations = (space: Space, ops: Operation[]): ValidationResult => {
+export const validateOperations = (
+  space: Space,
+  ops: Operation[],
+  mode: ValidationMode = 'space'
+): ValidationResult => {
   const batchPages = batchDeclaredPages(ops);
   const batchFolders = batchDeclaredFolders(ops);
   const folderRefs = (): unknown[] => pageFoldersOf(space.schema).map(f => f.id);
-  const ctx = buildValidationCtx(space, ops);
+  const ctx = buildValidationCtx(space, ops, mode);
 
   if (ops.length > MAX_OPS) {
     ctx.errors.push({
@@ -142,6 +147,7 @@ export const validateOperations = (space: Space, ops: Operation[]): ValidationRe
           }
 
           if (target && target.id !== page?.id) {
+            checkRawMarkup(target.definition.type, op.props, base, ctx);
             checkTypeProps(target.definition.type, op.props, base, ctx);
           }
         }

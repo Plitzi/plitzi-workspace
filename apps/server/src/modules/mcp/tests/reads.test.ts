@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest';
 
 import { buildSpace, capturing } from './helpers';
-import { buildTypeRegistry, readResource, resourceErrorMessage } from '../resources';
+import {
+  RENDER_TYPES_URI,
+  buildTypeRegistry,
+  readPublicResource,
+  readResource,
+  resourceErrorMessage
+} from '../resources';
 import { apply, read, search } from '../tools';
 
 import type {
@@ -357,5 +363,25 @@ describe('mcp-ai resource error messages (I2)', () => {
       error: string;
     };
     expect(parsed.error).toBe('NOT_FOUND');
+  });
+});
+
+// The widget catalog is an allowlist by category, and 'advanced' is not in it — so the ONE advanced type a widget
+// is meant to reach for has to be listed on purpose, or an agent reading the catalog concludes it cannot draw.
+describe('render element types (the widget catalog)', () => {
+  const catalog = (): { types: Record<string, { description?: string }> } =>
+    (readPublicResource('main', RENDER_TYPES_URI) as { data: { types: Record<string, { description?: string }> } })
+      .data;
+
+  it('offers blockHtml, the only route a widget has to an inline svg', () => {
+    expect(catalog().types.blockHtml.description).toContain('<svg>');
+  });
+
+  it('keeps the rest of the escape hatches out, since a widget cannot run their code', () => {
+    const types = Object.keys(catalog().types);
+
+    expect(types).not.toContain('blockJsx');
+    expect(types).not.toContain('custom');
+    expect(types).not.toContain('reference');
   });
 });

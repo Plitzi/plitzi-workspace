@@ -18,6 +18,17 @@ export const RENDER_TYPES_URI = 'plitzi://render/types';
 // runtime). Excluded — 'internal' (page/loading, not authorable) and 'advanced' (raw HTML/JSX/plugin escape hatches).
 const RENDER_TYPE_CATEGORIES = new Set(['structure', 'basic', 'media', 'form', 'provider']);
 
+// The one 'advanced' type a widget is offered, and only for what it is good at here: an inline <svg>. Vector marks,
+// sparklines and background shapes are what a widget cannot draw any other way, and every other route to one (a
+// data: URI, a stack of styled containers) costs more and themes worse. Its description is overridden because the
+// catalog's — a general-purpose escape hatch — invites exactly the raw scripting the widget validator rejects.
+const RENDER_RAW_HTML_TYPE = 'blockHtml';
+
+const rawHtmlDescription =
+  'Renders a raw HTML string (props.content) — in a widget, the way to draw an inline <svg>: a logo, an icon, a ' +
+  'sparkline, a decorative shape. Use fill/stroke "currentColor" so it takes the host theme. Markup only: ' +
+  '<script>, javascript: URLs and inline on* handlers are rejected.';
+
 const renderTypesNote =
   'The built-in element types you can put in a plitzi_render widget, grouped by category. Pick by `description`. ' +
   'For the props of each type and the full authoring model, read plitzi://render/guide. Types that need a backend ' +
@@ -31,6 +42,15 @@ const renderTypes = (): { note: string; types: Record<string, RenderTypeInfo> } 
     if (info && info.category && RENDER_TYPE_CATEGORIES.has(info.category)) {
       types[name] = { label: info.label, category: info.category, description: info.description };
     }
+  }
+
+  const rawHtml = BUILTIN_COMPONENTS[RENDER_RAW_HTML_TYPE];
+  if (rawHtml) {
+    types[RENDER_RAW_HTML_TYPE] = {
+      label: rawHtml.label,
+      category: rawHtml.category,
+      description: rawHtmlDescription
+    };
   }
 
   return { note: renderTypesNote, types };
@@ -269,24 +289,61 @@ The host publishes its palette as CSS variables on the page, so use them for eve
 | \`video\` | embedded video | \`props.src\` |
 | \`list\` / \`listItem\` | \`<ul>\` / \`<li>\` | nesting only |
 | \`markdown\` | rendered markdown | \`props.content\` |
+| \`blockHtml\` | a raw HTML string, as written | \`props.content\` — how you draw an inline \`<svg>\`, see below |
 
 \`subType\` is an element-level field (not a prop). Guessing is safe: an unknown prop for a type comes back as a
 **warning naming the right one**, not an error. This table covers the everyday types; the resource
 **plitzi://render/types** lists every built-in type you can use (with descriptions) — read it when you need one
 that is not here (lists, tabs, dialogs, forms, icons…).
 
-\`image\`/\`video\` \`src\` accepts any \`https\` URL, or a \`data:\`/\`blob:\` URI for a fully self-contained graphic
-(e.g. an inline SVG icon or a base64 image) — both render with no extra setup.
+\`image\`/\`video\` \`src\` accepts any \`https\` URL, or a \`data:\`/\`blob:\` URI for a fully self-contained graphic (a
+base64 raster) — both render with no extra setup. For a **vector** graphic do not encode a \`data:\` URI: draw it
+inline, as below.
+
+## Draw with inline SVG
+
+A widget can draw its own graphics, and it is often the difference between a plain block of text and something
+worth showing: a brand mark, a sparkline or donut, a badge, an empty-state glyph, a wave or blob behind a header,
+an arrow between two steps. Put the SVG **inline** in a \`blockHtml\` element — its \`props.content\` is rendered as
+written, so the markup needs no escaping, and the element is styled and laid out like any other box.
+
+\`\`\`json
+{
+  "operations": [
+    { "type": "upsertDefinitions", "definitions": {
+        "mark": { "desktop": { "display": "flex", "width": "32px", "height": "32px", "color": "var(--color-text-primary, light-dark(#0f172a, #e8eaed))" } }
+    } },
+    { "type": "upsertElement", "pageRef": "render", "element": {
+        "ref": "trend", "type": "blockHtml", "style": { "base": ["mark"] },
+        "props": { "content": "<svg viewBox='0 0 24 24' width='100%' height='100%' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'><path d='M3 17l6-6 4 4 8-8'/><path d='M21 7v6h-6'/></svg>" }
+    } }
+  ]
+}
+\`\`\`
+- **Size from the class, not the drawing**: keep a \`viewBox\` and set \`width\`/\`height\` to \`100%\`, then the
+  \`blockHtml\`'s own \`width\`/\`height\` decide how big it renders — one drawing, any size.
+- **Colour with \`currentColor\`** (\`fill\` and/or \`stroke\`) and set \`color\` on the class from a host variable. A hex
+  buried inside the path is the same mistake as a hardcoded light palette: it cannot follow the theme.
+- **Single quotes inside the markup** keep the JSON free of \`\\"\` escapes, as above.
+- **Markup only.** \`<script>\`, \`javascript:\` URLs and inline \`on*\` handlers are rejected with an error — a widget
+  runs inside the host's UI. Animate with CSS (a \`states\` block, a \`transition\`) and wire behaviour with
+  interaction flows.
+
+**The budget.** Every path is text you write, so an SVG earns its place only while it stays small: a handful of
+paths, a few hundred characters, drawn ONCE and reused (same class, same content, or a \`repeatElement\` row) rather
+than redrawn per card. Skip it entirely when something cheaper does the job — a \`fontAwesome\` icon, an emoji in a
+\`text\`, an \`https\` image the user gave you, a CSS gradient or a \`border-radius\` shape. And a full illustration or
+a photo-real scene (a castle, a skyline, a detailed mascot) is still the wrong trade: it costs more than the entire
+rest of the widget and renders worse than the image it is imitating.
 
 ## Keep the call small
 
 Everything in \`operations\` is text you write, and a widget that takes two calls because the first ran long is a
 widget the user waits twice for. Two habits pay for themselves:
 
-- **Do not draw pictures in \`data:\` URIs.** A hand-written SVG scene (a castle, a skyline, a logo) costs more than
-  the entire rest of the widget and renders worse than nothing at all. Use an \`https\` image the user gave you, a
-  flat colour or a two-stop \`linear-gradient\` as a banner, an emoji or an \`fontAwesome\` icon for a glyph — or drop
-  the decoration. A small self-contained \`data:\` SVG is fine for a **simple** shape (a check, an arrow, a dot).
+- **Keep a drawing to a drawing.** Inline SVG is allowed and often worth it (see above), but a graphic that runs
+  longer than the widget around it has stopped paying for itself: a handful of paths, drawn once and reused rather
+  than redrawn per card, and an \`https\` image, a flat colour or a two-stop \`linear-gradient\` for anything bigger.
 - **One class per look, not per property.** Classes like \`tone-blue\` + \`tone-blue-text\` + \`tone-blue-bg\` for the
   same card triple the declarations and the attachments. Put everything the look needs in one class, add a second
   only for the part that genuinely varies between siblings (a colour), and reuse it — the whole point of a class.

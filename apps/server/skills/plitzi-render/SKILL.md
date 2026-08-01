@@ -131,8 +131,12 @@ Everything the widget needs travels in ONE call, as `operations`. Three ops carr
 3. **Watch the SDK defaults.** Every container has `min-width`/`min-height: 50px` — set them to `0` for rails,
    dividers, dots and any flex child that must shrink. Headings and paragraphs keep the browser's margins; zero
    them and space with the parent's `gap`.
-4. **Never hand-draw a scene in a `data:` URI.** An inline SVG illustration costs more tokens than the entire rest
-   of the widget. Use an `https` image, a flat colour, or a CSS gradient.
+4. **Draw with inline SVG, on a budget.** A logo, a sparkline, a badge or a decorative shape goes in a `blockHtml`
+   element whose `props.content` is an `<svg>` — keep a `viewBox` with `width`/`height` `100%` so the element's
+   class sizes it, and `fill`/`stroke` `currentColor` so it follows the theme. A handful of paths, drawn once and
+   reused. Never a `data:` URI, and never a full illustration or a photo-real scene: that costs more than the rest
+   of the widget, so use an `https` image, a flat colour or a CSS gradient instead. Markup only — `<script>` and
+   inline `on*` handlers are rejected.
 5. **Write CSS plainly.** Kebab-case properties, shorthands welcome (`padding: 8px 16px`, `border: 1px solid red`,
    `font: bold 16px/1.5 Arial`) — they are expanded and stored as longhands, so a breakpoint or state can override
    one property on its own.
