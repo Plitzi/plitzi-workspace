@@ -65,9 +65,10 @@ export const handleProxyRequest = async (
   res.setStatus(200);
   res.setHeader('Content-Type', result.contentType);
   res.setHeader('Cache-Control', CACHE_CONTROL[grant.kind]);
-  if (result.contentLength) {
-    res.setHeader('Content-Length', String(result.contentLength));
-  }
+  // Deliberately no Content-Length. The upstream one measures the body as it travelled — gzip'd, most of the time
+  // for an API — while what is streamed below is what fetch already decoded, so forwarding it TRUNCATES the
+  // response at the compressed size and the widget receives half a JSON document. Chunked instead; the length
+  // upstream declared is still used, before this, to reject something too large without reading it.
 
   if (req.method === 'HEAD' || !result.body) {
     res.end();

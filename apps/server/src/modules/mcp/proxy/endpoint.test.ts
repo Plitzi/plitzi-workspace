@@ -106,6 +106,30 @@ describe('the widget resource endpoint', () => {
     expect(out.body.toString()).toBe('{"ok":true}');
   });
 
+  // An upstream content-length measures the ENCODED body (gzip, almost always, for an API). Forwarding it cut the
+  // response at the compressed size and the widget got half a JSON document — found by fetching a real API
+  // through a real endpoint, so it is pinned here.
+  it('does not forward a length that describes the encoded body', async () => {
+    const json = JSON.stringify({ items: Array.from({ length: 40 }, (_, index) => ({ index })) });
+    upstream(
+      new Response(json, {
+        status: 200,
+        // What a gzip'd response declares: far less than the bytes fetch hands over decoded.
+        headers: { 'content-type': 'application/json', 'content-length': '120' }
+      })
+    );
+    const { res, out } = recorder();
+
+    await handleProxyRequest(requestFor(grantUrl('https://api.example.com/items', proxy, 'data')), res, settings);
+
+    expect(out.status).toBe(200);
+    expect(out.headers['Content-Length']).toBeUndefined();
+    expect(out.body.toString()).toBe(json);
+    expect(() => {
+      JSON.parse(out.body.toString());
+    }).not.toThrow();
+  });
+
   it('refuses a URL it did not grant', async () => {
     upstream(new Response(PNG, { status: 200, headers: { 'content-type': 'image/png' } }));
     const { res, out } = recorder();
