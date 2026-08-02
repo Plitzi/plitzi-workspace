@@ -188,8 +188,9 @@ describe('the resource endpoint inside a real MCP server', () => {
   });
 
   // The origin a widget's URLs point at is the one the App's CSP declares — that pairing is the whole mechanism,
-  // so it is pinned end to end.
-  it('declares its own origin in the CSP of the render App', async () => {
+  // so it is pinned end to end. Declared ALONE, in the shape the spec documents: a host may validate this list,
+  // and a wildcard spelling next to the origin risks taking it down with it.
+  it('declares its own origin in the CSP of the render App, and nothing else', async () => {
     const read = JSON.stringify({
       jsonrpc: '2.0',
       id: 1,
@@ -203,7 +204,7 @@ describe('the resource endpoint inside a real MCP server', () => {
     };
     const csp = payload.result.contents[0]._meta.ui.csp;
 
-    expect(csp.resourceDomains[0]).toBe(`http://127.0.0.1:${defaults.port}`);
-    expect(csp.connectDomains[0]).toBe(`http://127.0.0.1:${defaults.port}`);
+    expect(csp.resourceDomains).toEqual([`http://127.0.0.1:${defaults.port}`]);
+    expect(csp.connectDomains).toEqual([`http://127.0.0.1:${defaults.port}`]);
   });
 });

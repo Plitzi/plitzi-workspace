@@ -15,17 +15,26 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 // read that carries this metadata has no idea which widget it is about. There is no per-result CSP: the spec types
 // `csp` as `never` on the tool meta and hosts ignore it there.
 //
-// So `proxyEndpoint`'s origin is the one that carries the feature: this server's own, a plain https origin every
-// host accepts, and every external URL a render authored is rewritten to it — a widget's images, fonts and API
-// calls therefore come from a declared origin whatever the agent wrote. The wildcards behind it only widen the
-// net for what no server can rewrite (a URL a widget builds at runtime out of fetched data), and they are spelled
-// three ways because hosts disagree on which they validate: `*` is the wildcard source, `https:` the
-// scheme-source, `https://*` a host-source with a wildcard host. A host that rejects a form drops it, keeps the
-// rest, and MUST NOT allow anything it was not told about.
-const defaultCsp = (proxyOrigin?: string): McpUiResourceCsp => ({
-  resourceDomains: [...(proxyOrigin ? [proxyOrigin] : []), '*', 'https:', 'https://*', 'data:', 'blob:'],
-  connectDomains: [...(proxyOrigin ? [proxyOrigin] : []), '*', 'https:', 'https://*']
-});
+// So `proxyEndpoint`'s origin is the one that carries the feature: this server's own, and every external URL a
+// render authored is rewritten to it — a widget's images, fonts and API calls come from a declared origin
+// whatever the agent wrote.
+//
+// With that origin present the declaration is EXACTLY it, in the shape the spec documents (`https://host`) and
+// nothing else. The wildcard spellings a previous version listed alongside it (`*`, `https:`, `https://*`) are
+// valid CSP source expressions but are not origins, and a host is free to validate this list and drop what it
+// cannot parse — including, if it validates the object as a whole, the good entry with them. That is the failure
+// mode this shape removes: one plain origin has nothing left to trip on. It also means a URL the widget builds at
+// RUNTIME from fetched data is no longer reachable; the wildcards only ever covered that, and only on hosts
+// permissive enough to accept them.
+//
+// Without an endpoint there is nothing to declare and nothing to lose, so the wildcards stay as the only chance
+// an authored URL has on a host that accepts them.
+const WILDCARDS = ['*', 'https:', 'https://*'];
+
+const defaultCsp = (proxyOrigin?: string): McpUiResourceCsp =>
+  proxyOrigin
+    ? { resourceDomains: [proxyOrigin], connectDomains: [proxyOrigin] }
+    : { resourceDomains: [...WILDCARDS, 'data:', 'blob:'], connectDomains: [...WILDCARDS] };
 
 const originOf = (endpoint?: string): string | undefined => {
   if (!endpoint) {
