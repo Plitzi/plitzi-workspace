@@ -1,17 +1,15 @@
-import { get, throttle } from '@plitzi/plitzi-ui/helpers';
+import { get } from '@plitzi/plitzi-ui/helpers';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
-import { use, useRef, useCallback, useMemo, useEffect, useImperativeHandle } from 'react';
+import { use, useRef, useCallback, useEffect, useImperativeHandle } from 'react';
 
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
-import { RTEvent } from '@plitzi/sdk-shared/websockets/RTCodec';
 import AppContext from '@pmodules/App/AppContext';
-import useNormalizedCursor from '@pmodules/Builder/hooks/useNormalizedCursor';
-import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
+import useCollaboratorCursor from '@pmodules/Collaboration/hooks/useCollaboratorCursor';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
 import { processPaste } from '../../BuilderHelper';
@@ -40,7 +38,6 @@ const BuilderAreaTracking = ({
 }: BuilderAreaTrackingProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(ref, () => containerRef.current, []);
-  const { supportRealTime, subscriptionsPush } = use(BuilderSubscriptionsContext);
   const {
     multiPagesMode,
     builderHandler,
@@ -62,21 +59,11 @@ const BuilderAreaTracking = ({
   const { mutate } = use(NetworkContext);
   const { componentDefinitions } = use(ComponentContext);
 
-  const handleMouseEnter = () => {
-    if (supportRealTime) {
-      subscriptionsPush({ type: RTEvent.MOUSE, payload: { action: 'mouseEnter', rootId: baseElementId } });
-    }
-  };
-
   const handleMouseLeave = useCallback(() => {
     if (elementHovered) {
       setHovered(undefined);
     }
-
-    if (supportRealTime) {
-      subscriptionsPush({ type: RTEvent.MOUSE, payload: { action: 'mouseLeave', rootId: baseElementId } });
-    }
-  }, [baseElementId, elementHovered, setHovered, subscriptionsPush, supportRealTime]);
+  }, [elementHovered, setHovered]);
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
@@ -330,18 +317,7 @@ const BuilderAreaTracking = ({
     };
   }, [previewMode, handleKeyDown, iframeDOM, multiPagesMode]);
 
-  const throttledSend = useMemo(
-    () =>
-      throttle((pos: { x: number; y: number }) => {
-        subscriptionsPush({
-          type: RTEvent.MOUSE,
-          payload: { ...pos, zoom, action: 'mouseMove', rootId: baseElementId }
-        });
-      }, 50),
-    [baseElementId, subscriptionsPush, zoom]
-  );
-
-  const { bind } = useNormalizedCursor(containerRef, { onMove: throttledSend, enabled: isActive && supportRealTime });
+  const { bind } = useCollaboratorCursor({ rootId: baseElementId, zoom, enabled: isActive });
 
   return (
     <div
@@ -352,7 +328,6 @@ const BuilderAreaTracking = ({
           displayBorderComponents === 'white' && !previewMode
       })}
       style={{ zoom }}
-      onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onMouseMove={handleMouseMove}
       onClick={handleClickElements}

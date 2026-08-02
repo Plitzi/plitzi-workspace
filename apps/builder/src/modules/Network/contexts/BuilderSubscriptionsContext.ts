@@ -6,8 +6,10 @@ export type BuilderSubscriptionsContextValue = {
   includeSubscriptions: boolean;
   supportRealTime: boolean;
   subscriptionsPush: (data: RTMessageManagedClient) => void;
-  subscriptionsRegisterCallback: (type: RTEvent, callback: RTCallback) => void;
-  subscriptionsUnregisterCallback: (type: RTEvent) => void;
+  // `subscriberId` namespaces the slot: several listeners of the same event (one per collaborator) have to
+  // coexist, and without it each registration replaced the previous one.
+  subscriptionsRegisterCallback: (type: RTEvent, callback: RTCallback, subscriberId?: string) => void;
+  subscriptionsUnregisterCallback: (type: RTEvent, subscriberId?: string) => void;
   subscriptionsCollaborators: SubscriptionCollaborator[];
 };
 

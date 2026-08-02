@@ -7,7 +7,7 @@ import { use, useState, useCallback, useMemo, memo } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { ThemeContext } from '@plitzi/sdk-shared/theme';
-import BuilderCollaboratorHeaderUser from '@pmodules/Builder/components/BuilderCollaborator/BuilderCollaboratorHeaderUser';
+import CollaboratorAvatar from '@pmodules/Collaboration/components/CollaboratorAvatar';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 
 import BorderButton from './BorderButton';
@@ -146,7 +146,7 @@ const AppHeader = () => {
               user: { firstName, surName }
             } = collaborator;
 
-            return <BuilderCollaboratorHeaderUser key={i} color={color} firstName={firstName} surName={surName} />;
+            return <CollaboratorAvatar key={i} color={color} firstName={firstName} surName={surName} />;
           })}
         </div>
         <PreviewModeButtons />

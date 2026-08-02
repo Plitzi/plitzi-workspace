@@ -13,10 +13,9 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { isInViewport } from '@plitzi/sdk-shared/helpers/utils';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore, useBuilderStoreGetter, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
-import { RTEvent } from '@plitzi/sdk-shared/websockets/RTCodec';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
+import useCollaboratorElements from '@pmodules/Collaboration/hooks/useCollaboratorElements';
 import { getInitialItems } from '@pmodules/Elements/ElementHelper';
-import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 
 import type { EventBridgeCallback } from '@plitzi/sdk-event-bridge';
 import type {
@@ -54,7 +53,6 @@ const BuilderProvider = ({
   const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
   const [baseContext, setBaseContext] = useStateMemo(() => ({ baseElementId: baseElementIdProp }), [baseElementIdProp]);
   const { componentDefinitions, getComponent } = use(ComponentContext);
-  const { supportRealTime, subscriptionsPush } = use(BuilderSubscriptionsContext);
   const [theme, setTheme] = useStorage<StyleThemeMode>('builder-state.theme-builder', 'light', 'localStorage');
   const { baseElementId } = baseContext;
   const [multiPagesMode, setMultiPagesMode] = useState(false);
@@ -454,29 +452,7 @@ const BuilderProvider = ({
     [builderHandler, getElement, getElementSelected]
   );
 
-  useEffect(() => {
-    if (!supportRealTime) {
-      return;
-    }
-
-    subscriptionsPush({
-      type: RTEvent.ELEMENT,
-      payload: { action: 'selected', rootId: baseElementId, id: elementSelected }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [elementSelected, subscriptionsPush, supportRealTime]);
-
-  useEffect(() => {
-    if (!supportRealTime) {
-      return;
-    }
-
-    subscriptionsPush({
-      type: RTEvent.ELEMENT,
-      payload: { action: 'hovered', rootId: baseElementId, id: elementHovered }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [elementHovered, subscriptionsPush, supportRealTime]);
+  useCollaboratorElements({ rootId: baseElementId, elementHovered, elementSelected });
 
   useEffect(() => {
     if (baseElementId) {

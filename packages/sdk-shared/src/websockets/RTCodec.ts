@@ -35,7 +35,21 @@ export type RTMessageManagedClient =
       payload:
         | { action: 'mouseEnter'; rootId: string }
         | { action: 'mouseLeave'; rootId: string }
-        | { action: 'mouseMove'; x: number; y: number; zoom: number; rootId: string };
+        // The position is relative to the element `anchorId`, never absolute: peers differ in viewport size,
+        // zoom and scroll, so only an element-relative value means the same thing on both ends. `x`/`y` are
+        // ratios inside its box (0..1) and `dx`/`dy` pixels outside it, which is what keeps a pointer hovering
+        // near an element from being scaled by a box the peer sizes differently. Absent `anchorId` the position
+        // cannot be resolved and is ignored.
+        | {
+            action: 'mouseMove';
+            x: number;
+            y: number;
+            dx: number;
+            dy: number;
+            zoom: number;
+            rootId: string;
+            anchorId?: string;
+          };
     }
   | {
       type: RTEvent.ELEMENT;
@@ -52,7 +66,17 @@ export type RTMessageManagedServer =
       payload:
         | { action: 'mouseEnter'; rootId: string; instanceId: string }
         | { action: 'mouseLeave'; rootId: string; instanceId: string }
-        | { action: 'mouseMove'; x: number; y: number; zoom: number; rootId: string; instanceId: string };
+        | {
+            action: 'mouseMove';
+            x: number;
+            y: number;
+            dx: number;
+            dy: number;
+            zoom: number;
+            rootId: string;
+            instanceId: string;
+            anchorId?: string;
+          };
     }
   | {
       type: RTEvent.ELEMENT;

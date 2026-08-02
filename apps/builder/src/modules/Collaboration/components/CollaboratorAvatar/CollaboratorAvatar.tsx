@@ -1,18 +1,14 @@
 import type { RefObject } from 'react';
 
-export type BuilderCollaboratorHeaderUserProps = {
+export type CollaboratorAvatarProps = {
   ref?: RefObject<HTMLDivElement | null>;
   color?: string;
   firstName: string;
   surName: string;
 };
 
-const BuilderCollaboratorHeaderUser = ({
-  ref,
-  color = '#000',
-  firstName = '',
-  surName = ''
-}: BuilderCollaboratorHeaderUserProps) => {
+/** The collaborator's initials in their presence color, as shown in the app header. */
+const CollaboratorAvatar = ({ ref, color = '#000', firstName = '', surName = '' }: CollaboratorAvatarProps) => {
   return (
     <div
       ref={ref}
@@ -31,4 +27,4 @@ const BuilderCollaboratorHeaderUser = ({
   );
 };
 
-export default BuilderCollaboratorHeaderUser;
+export default CollaboratorAvatar;

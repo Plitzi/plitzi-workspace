@@ -1,13 +1,15 @@
 import type { RefObject } from 'react';
 
-export type BuilderCollaboratorCursorProps = {
+export type CollaboratorCursorProps = {
   ref: RefObject<HTMLDivElement | null>;
   title?: string;
   color?: string;
   zoom?: number;
 };
 
-const BuilderCollaboratorCursor = ({ ref, title = '', color = '#000', zoom = 1 }: BuilderCollaboratorCursorProps) => {
+// Positioned imperatively by CollaboratorArea (see the canvas styles for how it sits on the canvas): a pointer
+// moving at 20 samples a second must never go through React state.
+const CollaboratorCursor = ({ ref, title = '', color = '#000', zoom = 1 }: CollaboratorCursorProps) => {
   return (
     <div ref={ref} className="builder-collaborator-cursor" style={{ color, scale: 1 / zoom }}>
       <i className="fas fa-mouse-pointer" />
@@ -18,4 +20,4 @@ const BuilderCollaboratorCursor = ({ ref, title = '', color = '#000', zoom = 1 }
   );
 };
 
-export default BuilderCollaboratorCursor;
+export default CollaboratorCursor;

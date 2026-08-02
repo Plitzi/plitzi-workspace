@@ -1,13 +1,11 @@
-import { set, omit } from '@plitzi/plitzi-ui/helpers';
-import { useToast } from '@plitzi/plitzi-ui/Toast';
-import { useCallback, use, useMemo, useState, useEffect } from 'react';
+import { useCallback, use, useMemo, useRef } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { isRTEvent, RTEvent } from '@plitzi/sdk-shared/websockets/RTCodec';
+import useCollaborators from '@pmodules/Collaboration/hooks/useCollaborators';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 import useWebsocket from '@pmodules/Network/hooks/useWebsocket';
 
-import type { SubscriptionCollaborator } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { RTCallback, RTMessageManagedServer } from '@plitzi/sdk-shared/websockets/RTCodec';
 import type { ReactNode } from 'react';
@@ -18,24 +16,47 @@ export type NetworkSubscriptionsContextProviderProps = {
   includeRealTime?: boolean;
 };
 
+/**
+ * The realtime transport: one socket, and the fan-out of its messages to whoever registered for them. What the
+ * messages MEAN belongs to the Collaboration module.
+ */
 const NetworkSubscriptionsContextProvider = ({
   children,
   includeRealTime = true,
   includeSubscriptions = true
 }: NetworkSubscriptionsContextProviderProps) => {
-  const { addToast } = useToast();
-  const [messageCallbacks, setMessageCallbacks] = useState<Partial<Record<RTEvent, Record<string, RTCallback>>>>({});
-  const [collaborators, setCollaborators] = useState<SubscriptionCollaborator[]>([]);
+  // A plain map, not state: registering a listener is not a render input, and several listeners per event
+  // (one collaborator area each) have to coexist without re-rendering the tree that holds them.
+  const callbacksRef = useRef(new Map<RTEvent, Map<string, RTCallback>>());
   const { webKey, instanceId, server, userKey } = use(NetworkContext) as BuilderNetworkContextValue;
+
+  const registerCallback = useCallback(
+    (type: RTEvent, callback: RTCallback, subscriberId: string = instanceId) => {
+      const callbacks = callbacksRef.current.get(type) ?? new Map<string, RTCallback>();
+      callbacks.set(subscriberId, callback);
+      callbacksRef.current.set(type, callbacks);
+    },
+    [instanceId]
+  );
+
+  const unregisterCallback = useCallback(
+    (type: RTEvent, subscriberId: string = instanceId) => {
+      callbacksRef.current.get(type)?.delete(subscriberId);
+    },
+    [instanceId]
+  );
+
+  const { collaborators, resetCollaborators } = useCollaborators({
+    enabled: includeSubscriptions,
+    instanceId,
+    registerCallback,
+    unregisterCallback
+  });
 
   const processMessage = useCallback(
     (data: RTMessageManagedServer) => {
       if (data.type === RTEvent.INIT) {
-        // Init Realtime
-        const collaborators = data.payload.collaborators.filter(collaborator => collaborator.instanceId !== instanceId);
-        if (collaborators.length > 0) {
-          setCollaborators(collaborators);
-        }
+        resetCollaborators(data.payload.collaborators);
 
         return;
       }
@@ -45,14 +66,14 @@ const NetworkSubscriptionsContextProvider = ({
         return;
       }
 
-      const callbacks = messageCallbacks[data.type];
+      const callbacks = callbacksRef.current.get(data.type);
       if (!callbacks || !data.payload || data.payload.instanceId === instanceId) {
         return;
       }
 
-      Object.keys(callbacks).forEach(callbackKey => callbacks[callbackKey](data.payload));
+      callbacks.forEach(callback => callback(data.payload));
     },
-    [instanceId, messageCallbacks]
+    [instanceId, resetCollaborators]
   );
 
   const { push } = useWebsocket({
@@ -62,66 +83,6 @@ const NetworkSubscriptionsContextProvider = ({
     processMessage,
     connectMode: includeRealTime ? 'auto' : 'manual'
   });
-
-  const registerCallback = useCallback(
-    (type: RTEvent, callback: RTCallback) => {
-      setMessageCallbacks(state => set(state, `${type}.${instanceId}`, callback));
-    },
-    [instanceId]
-  );
-
-  const unregisterCallback = useCallback(
-    (type: RTEvent) => {
-      setMessageCallbacks(state => omit(state, [`${type}.${instanceId}`]));
-    },
-    [instanceId]
-  );
-
-  useEffect(() => {
-    if (includeSubscriptions) {
-      registerCallback(
-        RTEvent.COLLABORATOR_CONNECTED,
-        (payload: Extract<RTMessageManagedServer, { type: RTEvent.COLLABORATOR_CONNECTED }>['payload']) => {
-          const {
-            user: { firstName, surName }
-          } = payload;
-          addToast(
-            <div>
-              Collaborator <b>{`${firstName} ${surName}`}</b> Joined into the WorkSpace
-            </div>,
-            { appeareance: 'info', autoDismiss: true, placement: 'top-right' }
-          );
-
-          setCollaborators(state => [...state, payload]);
-        }
-      );
-
-      registerCallback(
-        RTEvent.COLLABORATOR_DISCONNECTED,
-        (payload: Extract<RTMessageManagedServer, { type: RTEvent.COLLABORATOR_DISCONNECTED }>['payload']) => {
-          const {
-            user: { firstName, surName }
-          } = payload;
-          addToast(
-            <div>
-              Collaborator <b>{`${firstName} ${surName}`}</b> Left the WorkSpace
-            </div>,
-            { appeareance: 'info', autoDismiss: true, placement: 'top-right' }
-          );
-
-          setCollaborators(state => state.filter(item => item.instanceId !== payload.instanceId));
-        }
-      );
-    }
-
-    return () => {
-      if (includeSubscriptions) {
-        unregisterCallback(RTEvent.COLLABORATOR_CONNECTED);
-        unregisterCallback(RTEvent.COLLABORATOR_DISCONNECTED);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [includeSubscriptions]);
 
   const subscriptionsValue = useMemo(
     () => ({

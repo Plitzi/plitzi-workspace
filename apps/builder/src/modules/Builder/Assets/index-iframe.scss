@@ -549,7 +549,14 @@
   .builder-collaborator-cursor {
     left: 0;
     top: 0;
-    position: fixed;
+    // Absolute, like the overlays: it is placed in canvas coordinates, so it scrolls with the content instead
+    // of sticking to the viewport. `transform-origin` keeps the pointer tip on the anchor while the cursor is
+    // counter-scaled against the zoom.
+    position: absolute;
+    transform-origin: 0 0;
+    // Positions arrive ~20 times a second: interpolating between them turns the sampling (and the odd pixel of
+    // layout difference when the anchor changes) into movement instead of a jump.
+    transition: transform 90ms linear;
     z-index: $overlayZIndex + 90001;
     display: none;
     flex-direction: column;

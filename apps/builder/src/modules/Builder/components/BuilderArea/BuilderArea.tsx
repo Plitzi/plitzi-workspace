@@ -19,6 +19,7 @@ import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
 import BuilderContextMenu from '@pmodules/Builder/components/BuilderContextMenu';
+import CollaboratorArea from '@pmodules/Collaboration/components/CollaboratorArea';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 import SpaceContainer from '@pmodules/Space/SpaceContainer';
 
@@ -28,7 +29,6 @@ import BuilderAreaTracking from './BuilderAreaTracking';
 // eslint-disable-next-line
 // @ts-ignore
 import styleFrame from '../../Assets/index-iframe.scss?inline';
-import BuilderCollaboratorArea from '../BuilderCollaborator/BuilderCollaboratorArea';
 
 import type { ComponentPluginWithHOC, DisplayMode } from '@plitzi/sdk-shared';
 
@@ -202,9 +202,11 @@ const BuilderArea = ({
                   )}
                   {supportRealTime &&
                     !previewMode &&
-                    subscriptionsCollaborators.map((subscriptionsCollaborator, i) => (
-                      <BuilderCollaboratorArea
-                        key={i}
+                    subscriptionsCollaborators.map(subscriptionsCollaborator => (
+                      <CollaboratorArea
+                        key={subscriptionsCollaborator.instanceId}
+                        instanceId={subscriptionsCollaborator.instanceId}
+                        elementState={subscriptionsCollaborator.elementState}
                         trackingContainerRef={trackingContainerRef}
                         refIframe={ref}
                         baseElementId={baseElementId}
