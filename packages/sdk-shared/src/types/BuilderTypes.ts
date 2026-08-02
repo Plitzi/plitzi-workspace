@@ -14,6 +14,11 @@ export type Template = {
 
 export type SubscriptionCollaboratorElement = { elementId: string; rootId: string };
 
+// Where a collaborator's cursor currently is, in canvas coordinates, mirrored into the store for the devtools
+// ONLY. The cursor itself is drawn imperatively — a pointer must never take the render path — so nothing but an
+// inspector reads this, and nothing writes it unless debug mode is on.
+export type SubscriptionCollaboratorPointer = { rootId: string; anchorId?: string; x: number; y: number };
+
 export type SubscriptionCollaboratorElementState = {
   hovered?: SubscriptionCollaboratorElement;
   selected?: SubscriptionCollaboratorElement;

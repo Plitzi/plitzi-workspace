@@ -207,6 +207,7 @@ const BuilderArea = ({
                       <CollaboratorArea
                         key={collaborator.instanceId}
                         instanceId={collaborator.instanceId}
+                        debugMode={debugMode}
                         elementState={collaborator.elementState}
                         trackingContainerRef={trackingContainerRef}
                         refIframe={ref}

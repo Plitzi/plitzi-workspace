@@ -1,4 +1,4 @@
-import type { SubscriptionCollaborator } from './BuilderTypes';
+import type { SubscriptionCollaborator, SubscriptionCollaboratorPointer } from './BuilderTypes';
 import type { Source } from './DataSourceTypes';
 import type { Schema, Element } from './SchemaTypes';
 import type { Segment } from './SegmentTypes';
@@ -45,7 +45,12 @@ export type BuilderState = CommonState & {
   // Presence: who else is editing this space right now, and what they are pointing at. Not document state — it is
   // excluded from history and never persisted — but it lives in the store so it is observable in the devtools like
   // everything else, and so any surface can read it without threading it through the network provider.
-  collaboration: { collaborators: SubscriptionCollaborator[] };
+  // `pointers` is debug-only (see SubscriptionCollaboratorPointer): keyed by instanceId, written at a low rate
+  // while debug mode is on and absent otherwise.
+  collaboration: {
+    collaborators: SubscriptionCollaborator[];
+    pointers?: Record<string, SubscriptionCollaboratorPointer>;
+  };
   displayMode: DisplayMode;
   selector?: string;
   styleSelector?: string;

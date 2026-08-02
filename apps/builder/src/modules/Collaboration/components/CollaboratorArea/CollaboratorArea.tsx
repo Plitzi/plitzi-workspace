@@ -1,18 +1,26 @@
-import { memo, use, useCallback, useEffect, useRef, useState } from 'react';
+import { omit, throttle } from '@plitzi/plitzi-ui/helpers';
+import { memo, use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { RTEvent } from '@plitzi/sdk-shared';
+import { useBuilderStoreSetter } from '@plitzi/sdk-shared/store';
 import BuilderOverlay from '@pmodules/Builder/components/BuilderOverlay';
 import { resolveCursorPosition, resolveElementState } from '@pmodules/Collaboration/CollaborationHelper';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 
 import CollaboratorCursor from './CollaboratorCursor';
 
-import type { DisplayMode, RTMessageManagedServer, SubscriptionCollaboratorElementState } from '@plitzi/sdk-shared';
+import type {
+  DisplayMode,
+  RTMessageManagedServer,
+  SubscriptionCollaboratorElementState,
+  SubscriptionCollaboratorPointer
+} from '@plitzi/sdk-shared';
 import type { RefObject } from 'react';
 
 export type CollaboratorAreaProps = {
   baseElementId?: string;
   color?: string;
+  debugMode?: boolean;
   elementState?: SubscriptionCollaboratorElementState;
   instanceId: string;
   title?: string;
@@ -22,10 +30,15 @@ export type CollaboratorAreaProps = {
   displayMode?: DisplayMode;
 };
 
+// The cursor is drawn from the socket straight to the DOM; this only mirrors it into the store for the devtools,
+// slowly and only under debug mode, so inspecting a session never puts the pointer on the render path.
+const POINTER_MIRROR_INTERVAL = 200;
+
 /** One collaborator's presence on this canvas: their cursor and the overlays of what they have hovered/selected. */
 const CollaboratorArea = ({
   baseElementId = '',
   color = '#000',
+  debugMode = false,
   elementState,
   instanceId,
   title = '',
@@ -40,6 +53,23 @@ const CollaboratorArea = ({
   const refPositioned = useRef(false);
   const { supportRealTime, subscriptionsRegisterCallback, subscriptionsUnregisterCallback } =
     use(BuilderSubscriptionsContext);
+  const setState = useBuilderStoreSetter();
+
+  const mirrorPointer = useMemo(
+    () =>
+      throttle(
+        (pointer: SubscriptionCollaboratorPointer) =>
+          setState('collaboration.pointers', state => ({ ...state, [instanceId]: pointer })),
+        POINTER_MIRROR_INTERVAL
+      ),
+    [instanceId, setState]
+  );
+
+  const clearPointer = useCallback(() => {
+    // Same trailing-edge trap as the wire: a mirror still owed would resurrect the entry after it is gone.
+    mirrorPointer.cancel();
+    setState('collaboration.pointers', state => omit(state ?? {}, [instanceId]));
+  }, [instanceId, mirrorPointer, setState]);
 
   const realtimeCallbackMouse = useCallback(
     (payload: Extract<RTMessageManagedServer, { type: RTEvent.MOUSE }>['payload']) => {
@@ -53,6 +83,9 @@ const CollaboratorArea = ({
       if (baseElementId !== payload.rootId || payload.action === 'mouseLeave') {
         refCursor.current.style.display = 'none';
         refPositioned.current = false;
+        if (debugMode) {
+          clearPointer();
+        }
 
         return;
       }
@@ -96,13 +129,17 @@ const CollaboratorArea = ({
             usernameDOM.textContent = `${title}${collaboratorZoom !== 1 ? `(${collaboratorZoom * 100}%)` : ''}`;
           }
 
+          if (debugMode) {
+            mirrorPointer({ rootId: baseElementId, anchorId, x: position.x, y: position.y });
+          }
+
           break;
         }
 
         default:
       }
     },
-    [baseElementId, instanceId, refIframe, title, trackingContainerRef, zoom]
+    [baseElementId, clearPointer, debugMode, instanceId, mirrorPointer, refIframe, title, trackingContainerRef, zoom]
   );
 
   const realtimeCallbackElement = useCallback(
@@ -137,6 +174,15 @@ const CollaboratorArea = ({
     },
     [baseElementId, instanceId]
   );
+
+  // A collaborator that leaves (or a debug session that ends) must not leave a stale pointer in the store.
+  useEffect(() => {
+    if (!debugMode) {
+      return;
+    }
+
+    return () => clearPointer();
+  }, [clearPointer, debugMode]);
 
   // The snapshot the collaborator carries in the INIT payload: what they had hovered/selected before this
   // client existed, which no live event can deliver anymore.
