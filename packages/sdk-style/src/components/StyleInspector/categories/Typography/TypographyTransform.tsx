@@ -25,21 +25,21 @@ const TypographyTransform = ({ textTransform, direction, onChange }: TypographyT
       },
       {
         value: 'uppercase',
-        icon: <span>AA</span>,
+        icon: <span className="text-xs">AA</span>,
         size: 'custom' as const,
         description: 'All Caps',
         active: textTransform === 'uppercase'
       },
       {
         value: 'capitalize',
-        icon: <span>Aa</span>,
+        icon: <span className="text-xs">Aa</span>,
         size: 'custom' as const,
         description: 'Capitalize Every Word',
         active: textTransform === 'capitalize'
       },
       {
         value: 'lowercase',
-        icon: <span>aa</span>,
+        icon: <span className="text-xs">aa</span>,
         size: 'custom' as const,
         description: 'Lower Case',
         active: textTransform === 'lowercase'

@@ -43,14 +43,15 @@ const OthersOutline = ({ outlineWidth, outlineStyle, outlineColor, outlineOffset
       <CategorySection label="">
         <CategoryOption
           keys={['outline-width']}
-          label="Width"
+          label="Outline Width"
           value={outlineWidth}
           onChange={onChange?.('outline-width')}
           type="metric"
+          allowedWords={['thin', 'medium', 'thick']}
         />
         <CategoryOption
           keys={['outline-offset']}
-          label="Offset"
+          label="Outline Offset"
           value={outlineOffset}
           onChange={onChange?.('outline-offset')}
           type="metric"
