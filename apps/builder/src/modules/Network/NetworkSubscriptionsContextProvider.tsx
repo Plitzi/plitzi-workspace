@@ -46,7 +46,7 @@ const NetworkSubscriptionsContextProvider = ({
     [instanceId]
   );
 
-  const { collaborators, resetCollaborators } = useCollaborators({
+  const { resetCollaborators } = useCollaborators({
     enabled: includeSubscriptions,
     instanceId,
     registerCallback,
@@ -90,10 +90,9 @@ const NetworkSubscriptionsContextProvider = ({
       supportRealTime: includeRealTime,
       subscriptionsPush: push,
       subscriptionsRegisterCallback: registerCallback,
-      subscriptionsUnregisterCallback: unregisterCallback,
-      subscriptionsCollaborators: collaborators
+      subscriptionsUnregisterCallback: unregisterCallback
     }),
-    [includeSubscriptions, includeRealTime, push, registerCallback, unregisterCallback, collaborators]
+    [includeSubscriptions, includeRealTime, push, registerCallback, unregisterCallback]
   );
 
   return <BuilderSubscriptionsContext value={subscriptionsValue}>{children}</BuilderSubscriptionsContext>;

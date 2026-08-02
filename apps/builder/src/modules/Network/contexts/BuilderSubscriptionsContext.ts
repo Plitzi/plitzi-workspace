@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-import type { RTCallback, RTEvent, RTMessageManagedClient, SubscriptionCollaborator } from '@plitzi/sdk-shared';
+import type { RTCallback, RTEvent, RTMessageManagedClient } from '@plitzi/sdk-shared';
 
 export type BuilderSubscriptionsContextValue = {
   includeSubscriptions: boolean;
@@ -10,7 +10,6 @@ export type BuilderSubscriptionsContextValue = {
   // coexist, and without it each registration replaced the previous one.
   subscriptionsRegisterCallback: (type: RTEvent, callback: RTCallback, subscriberId?: string) => void;
   subscriptionsUnregisterCallback: (type: RTEvent, subscriberId?: string) => void;
-  subscriptionsCollaborators: SubscriptionCollaborator[];
 };
 
 const builderSubscriptionsContextDefaultValue = {
@@ -18,8 +17,7 @@ const builderSubscriptionsContextDefaultValue = {
   supportRealTime: true,
   subscriptionsPush: () => {},
   subscriptionsRegisterCallback: () => {},
-  subscriptionsUnregisterCallback: () => {},
-  subscriptionsCollaborators: []
+  subscriptionsUnregisterCallback: () => {}
 } as BuilderSubscriptionsContextValue;
 
 const BuilderSubscriptionsContext = createContext(builderSubscriptionsContextDefaultValue);

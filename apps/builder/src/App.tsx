@@ -337,7 +337,7 @@ const App = (props: AppProps) => {
     [client, debugMode, instanceId, localComponents, props, server, webId]
   );
 
-  const storeValue = useMemo(() => ({ styleSelector: 'base' }), []);
+  const storeValue = useMemo(() => ({ styleSelector: 'base', collaboration: { collaborators: [] } }), []);
 
   return (
     <StoreProvider
@@ -348,7 +348,11 @@ const App = (props: AppProps) => {
         ...(debugMode
           ? [
               tracingMiddleware<BuilderState>(),
-              historyMw<BuilderState>({ shouldRecord: p => !p?.startsWith('runtime.elements') })
+              historyMw<BuilderState>({
+                // Neither element UI state nor who else is connected is document state: time-travelling them
+                // would replay other people's presence as if it were an edit.
+                shouldRecord: p => !p?.startsWith('runtime.elements') && !p?.startsWith('collaboration')
+              })
             ]
           : [])
       ]}

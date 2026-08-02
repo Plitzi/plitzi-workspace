@@ -1,3 +1,4 @@
+import type { SubscriptionCollaborator } from './BuilderTypes';
 import type { Source } from './DataSourceTypes';
 import type { Schema, Element } from './SchemaTypes';
 import type { Segment } from './SegmentTypes';
@@ -41,6 +42,10 @@ export type CommonState = {
 };
 
 export type BuilderState = CommonState & {
+  // Presence: who else is editing this space right now, and what they are pointing at. Not document state — it is
+  // excluded from history and never persisted — but it lives in the store so it is observable in the devtools like
+  // everything else, and so any surface can read it without threading it through the network provider.
+  collaboration: { collaborators: SubscriptionCollaborator[] };
   displayMode: DisplayMode;
   selector?: string;
   styleSelector?: string;

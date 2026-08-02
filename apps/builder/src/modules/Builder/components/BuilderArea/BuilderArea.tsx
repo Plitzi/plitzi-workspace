@@ -77,7 +77,8 @@ const BuilderArea = ({
   const [iframeActive, setIframeActive] = useState(!multiPagesMode);
   const ref = useRef<HTMLIFrameElement>(null);
   const refContainer = useRef<HTMLDivElement>(null);
-  const { supportRealTime, subscriptionsCollaborators } = use(BuilderSubscriptionsContext);
+  const { supportRealTime } = use(BuilderSubscriptionsContext);
+  const [collaborators] = useBuilderStore('collaboration.collaborators');
   const { currentPageId } = use(NavigationContext);
   const { rootRef } = use(ContainerRootContext);
 
@@ -202,16 +203,16 @@ const BuilderArea = ({
                   )}
                   {supportRealTime &&
                     !previewMode &&
-                    subscriptionsCollaborators.map(subscriptionsCollaborator => (
+                    collaborators.map(collaborator => (
                       <CollaboratorArea
-                        key={subscriptionsCollaborator.instanceId}
-                        instanceId={subscriptionsCollaborator.instanceId}
-                        elementState={subscriptionsCollaborator.elementState}
+                        key={collaborator.instanceId}
+                        instanceId={collaborator.instanceId}
+                        elementState={collaborator.elementState}
                         trackingContainerRef={trackingContainerRef}
                         refIframe={ref}
                         baseElementId={baseElementId}
-                        color={subscriptionsCollaborator.color}
-                        title={`${subscriptionsCollaborator.user.firstName} ${subscriptionsCollaborator.user.surName}`}
+                        color={collaborator.color}
+                        title={`${collaborator.user.firstName} ${collaborator.user.surName}`}
                         displayMode={displayMode}
                         zoom={zoom}
                       />

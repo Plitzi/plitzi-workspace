@@ -6,9 +6,9 @@ import clsx from 'clsx';
 import { use, useState, useCallback, useMemo, memo } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { ThemeContext } from '@plitzi/sdk-shared/theme';
 import CollaboratorAvatar from '@pmodules/Collaboration/components/CollaboratorAvatar';
-import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 
 import BorderButton from './BorderButton';
 import DisplayModeButtons from './DisplayModeButtons';
@@ -28,7 +28,7 @@ const AppHeader = () => {
   const { addToast } = useToast();
   const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
   const [loadingDeployment, setLoadingDeployment] = useState(false);
-  const { subscriptionsCollaborators } = use(BuilderSubscriptionsContext);
+  const [collaborators] = useBuilderStore('collaboration.collaborators');
 
   const handleClickPublish = useCallback(async () => {
     const response = await showModal<{ environment: string; description: string }>(
@@ -140,7 +140,7 @@ const AppHeader = () => {
       </div>
       <div className="flex h-full items-center gap-6">
         <div className="flex items-center gap-1">
-          {subscriptionsCollaborators.map((collaborator, i) => {
+          {collaborators.map((collaborator, i) => {
             const {
               color,
               user: { firstName, surName }
