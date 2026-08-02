@@ -31,26 +31,44 @@ export const proxySettings = (config: SSRServerConfig): ResourceProxySettings | 
 
 /** The endpoint as a widget must address it: absolute, because the page runs on the host's origin and a relative
  *  URL there points at the host. Falls back to the origin this request came in on, which is the right one whenever
- *  the MCP server owns its sub-domain; a deployment reached under a different public name sets `proxy.baseUrl`.
- *  The grants it mints carry the fingerprint of THIS request's credential, so they belong to this connection. */
+ *  the MCP server owns its sub-domain; a deployment reached under a different public name sets `proxy.baseUrl`. */
+const endpointOf = (settings: ResourceProxySettings, req: SSRRequest): string | undefined => {
+  const base = (settings.baseUrl ?? requestOrigin(req)).replace(/\/$/, '');
+
+  return base ? `${base}${settings.path}` : undefined;
+};
+
+/** The proxy a tool rewrites through. The grants it mints carry the fingerprint of THIS request's credential, so
+ *  they belong to this connection. */
 export const requestProxy = (config: SSRServerConfig, req: SSRRequest): ResourceProxy | undefined => {
   const settings = proxySettings(config);
-  if (!settings) {
-    return undefined;
-  }
-
-  const base = (settings.baseUrl ?? requestOrigin(req)).replace(/\/$/, '');
-  if (!base) {
+  const endpoint = settings && endpointOf(settings, req);
+  if (!settings || !endpoint) {
     return undefined;
   }
 
   return {
-    endpoint: `${base}${settings.path}`,
+    endpoint,
     secret: settings.secret,
     identity: connectionId(req.headers.authorization, settings.secret),
     ttl: settings.ttl,
     tools: settings.tools
   };
+};
+
+/** The proxy the ENDPOINT itself mints with, while serving an API answer that carries URLs of its own. The request
+ *  it is serving comes from a sandboxed iframe and presents no credential, so the connection is the one signed into
+ *  the grant being served — the widget's own — rather than one read off a header. */
+export const grantingProxy = (
+  settings: ResourceProxySettings,
+  req: SSRRequest,
+  identity: string
+): ResourceProxy | undefined => {
+  const endpoint = endpointOf(settings, req);
+
+  return endpoint
+    ? { endpoint, secret: settings.secret, identity, ttl: settings.ttl, tools: settings.tools }
+    : undefined;
 };
 
 /** The proxy THIS tool may use, or undefined — the single place that decides it, so a tool cannot reach the

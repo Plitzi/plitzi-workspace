@@ -1,5 +1,7 @@
+import { grantingProxy } from './config';
 import { fetchResource } from './fetch';
 import { PROXY_PARAM, readGrant } from './grant';
+import { rewritablePayload, rewritePayload } from './payload';
 
 import type { ProxyKind, ResourceProxySettings } from './types';
 import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
@@ -10,6 +12,32 @@ import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
 const CACHE_CONTROL: Record<ProxyKind, string> = {
   asset: 'public, max-age=86400, immutable',
   data: 'no-store'
+};
+
+/** Read a response whole, or undefined once it is past the limit. Only a rewritable answer is read this way: it has
+ *  to be complete before a URL inside it can be swapped, and an API answer is small — which is exactly why the
+ *  streaming path below stays the rule for everything else. */
+const readAll = async (body: ReadableStream<Uint8Array>, maxBytes: number): Promise<Buffer | undefined> => {
+  const reader = body.getReader();
+  const chunks: Buffer[] = [];
+  let written = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+
+    written += value.byteLength;
+    if (written > maxBytes) {
+      await reader.cancel();
+
+      return undefined;
+    }
+
+    chunks.push(Buffer.from(value));
+  }
+
+  return Buffer.concat(chunks);
 };
 
 const fail = (res: SSRResponseHelpers, status: number, reason: string): void => {
@@ -72,6 +100,25 @@ export const handleProxyRequest = async (
 
   if (req.method === 'HEAD' || !result.body) {
     res.end();
+
+    return;
+  }
+
+  // An API answer is the one body whose CONTENT is loaded further: the widget binds the URLs inside it into image
+  // srcs, and those would be fetched straight from the API's CDN — the origin the host CSP does not declare. So it
+  // is read whole and its asset URLs are granted through here too, on the same connection that was granted this
+  // response. Everything else streams.
+  const rewrites = grant.kind === 'data' && rewritablePayload(result.contentType);
+  const payloadProxy = rewrites ? grantingProxy(settings, req, grant.identity) : undefined;
+  if (payloadProxy) {
+    const body = await readAll(result.body, settings.maxBytes);
+    if (!body) {
+      fail(res, 413, 'That response is too large to load in a widget.');
+
+      return;
+    }
+
+    res.send(rewritePayload(body.toString('utf8'), payloadProxy));
 
     return;
   }

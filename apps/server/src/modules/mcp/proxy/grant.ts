@@ -11,8 +11,9 @@ const CODE: Record<ProxyKind, string> = { asset: 'a', data: 'd' };
 const KIND: Record<string, ProxyKind | undefined> = { a: 'asset', d: 'data' };
 
 /** What a widget was granted. The kind is signed in too, so a URL minted for an image cannot be replayed as an
- *  API call (they answer with different content types, cache rules and request headers). */
-export type Grant = { kind: ProxyKind; target: string };
+ *  API call (they answer with different content types, cache rules and request headers). The connection comes back
+ *  out because a data answer may carry URLs of its own, and the grants minted for those belong to the same one. */
+export type Grant = { kind: ProxyKind; target: string; identity: string };
 
 // A runtime URL is not the URL that was signed: an apiContainer's `query` carries {{tokens}} the SDK substitutes
 // in the browser. Those grants are signed over the ORIGIN, which the substitution cannot change, so the widget
@@ -68,14 +69,14 @@ export const readGrant = (param: string | undefined, secret: string): Grant | un
 
   const payload = payloadOf(kind, expiresAt, identity, target);
   if (verify(payload, signature, secret)) {
-    return { kind, target };
+    return { kind, target, identity };
   }
 
   // The origin-scoped form: the target reaching us is what the widget built from a signed template.
   const origin = originOf(target);
 
   return origin && verify(payloadOf(kind, expiresAt, identity, origin), signature, secret)
-    ? { kind, target }
+    ? { kind, target, identity }
     : undefined;
 };
 

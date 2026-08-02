@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { grantUrl } from './grant';
+import { grantUrl, readGrant } from './grant';
 import { handleProxyRequest } from './handler';
 
 import type { ResourceProxy, ResourceProxySettings } from './types';
@@ -35,7 +35,9 @@ const requestFor = (url: string, method = 'GET'): SSRRequest => ({
   url,
   hostname: 'mcp.example.com',
   protocol: 'https',
-  headers: {},
+  // The endpoint mints grants of its own while serving an API answer, and it addresses itself by the origin the
+  // request arrived on.
+  headers: { host: 'mcp.example.com' },
   query: Object.fromEntries(new URL(url).searchParams.entries()),
   ctx: {}
 });
@@ -128,6 +130,43 @@ describe('the widget resource endpoint', () => {
     expect(() => {
       JSON.parse(out.body.toString());
     }).not.toThrow();
+  });
+
+  // The URLs a data-driven widget actually paints come from the API, not from the render — and they would be
+  // loaded straight from the API's CDN, which the host CSP does not declare.
+  it('grants the asset URLs an API answer carries', async () => {
+    const meals = JSON.stringify({
+      meals: [
+        {
+          name: 'Shakshuka',
+          strMealThumb: 'https://cdn.example.com/1.jpg',
+          source: 'https://recipes.example.com/shakshuka'
+        }
+      ]
+    });
+    upstream(new Response(meals, { status: 200, headers: { 'content-type': 'application/json' } }));
+    const { res, out } = recorder();
+
+    await handleProxyRequest(requestFor(grantUrl('https://api.example.com/meals', proxy, 'data')), res, settings);
+
+    const served = JSON.parse(out.body.toString()) as { meals: { strMealThumb: string; source: string }[] };
+    expect(served.meals[0]?.strMealThumb).toContain(`${proxy.endpoint}?i=`);
+    expect(
+      readGrant(new URL(served.meals[0]?.strMealThumb ?? '').searchParams.get('i') ?? '', settings.secret)
+    ).toEqual({ kind: 'asset', target: 'https://cdn.example.com/1.jpg', identity: proxy.identity });
+    // A link is a destination, not something the widget loads: proxying it would hand the browser bytes where it
+    // expected a page.
+    expect(served.meals[0]?.source).toBe('https://recipes.example.com/shakshuka');
+  });
+
+  it('serves a body that is not the JSON it claimed as it came', async () => {
+    upstream(new Response('not json at all', { status: 200, headers: { 'content-type': 'application/json' } }));
+    const { res, out } = recorder();
+
+    await handleProxyRequest(requestFor(grantUrl('https://api.example.com/items', proxy, 'data')), res, settings);
+
+    expect(out.status).toBe(200);
+    expect(out.body.toString()).toBe('not json at all');
   });
 
   it('refuses a URL it did not grant', async () => {

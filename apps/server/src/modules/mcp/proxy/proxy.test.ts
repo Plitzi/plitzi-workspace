@@ -23,8 +23,16 @@ describe('the grant a proxied URL carries', () => {
   it('round-trips the target and its kind', () => {
     const target = 'https://images.example.com/photo.jpg?w=800&h=600';
 
-    expect(readGrant(param(grantUrl(target, proxy)), proxy.secret)).toEqual({ kind: 'asset', target });
-    expect(readGrant(param(grantUrl(target, proxy, 'data')), proxy.secret)).toEqual({ kind: 'data', target });
+    expect(readGrant(param(grantUrl(target, proxy)), proxy.secret)).toEqual({
+      kind: 'asset',
+      target,
+      identity: proxy.identity
+    });
+    expect(readGrant(param(grantUrl(target, proxy, 'data')), proxy.secret)).toEqual({
+      kind: 'data',
+      target,
+      identity: proxy.identity
+    });
   });
 
   // The endpoint sits on a public origin: without this it would fetch anything for anyone who found it.
@@ -69,7 +77,11 @@ describe('the grant a proxied URL carries', () => {
     expect(url).toContain('{{id}}');
 
     const resolved = param(url).replace('{{id}}', '42');
-    expect(readGrant(resolved, proxy.secret)).toEqual({ kind: 'data', target: 'https://api.example.com/items/42' });
+    expect(readGrant(resolved, proxy.secret)).toEqual({
+      kind: 'data',
+      target: 'https://api.example.com/items/42',
+      identity: proxy.identity
+    });
 
     const elsewhere = param(url).replace('api.example.com', 'evil.example.com');
     expect(readGrant(elsewhere, proxy.secret)).toBeUndefined();
@@ -192,6 +204,68 @@ describe('a rendered widget', () => {
 
     expect(attributeOf(result.offlineData, 'writer', 'query')).toBe('https://api.example.com/items');
     expect(result.warnings?.join(' ')).toContain('POST');
+  });
+
+  // The bug this pass exists for: the first paint went through the endpoint and the first CLICK put the authored
+  // URL back, which the sandbox then blocked — a widget that worked until it was used.
+  it('grants the URLs an interaction swaps in at runtime', () => {
+    const result = render(
+      {
+        operations: [
+          { type: 'upsertElement', pageRef: 'render', element: { ref: 'shot', type: 'image', props: { src: '' } } },
+          {
+            type: 'upsertElement',
+            pageRef: 'render',
+            element: { ref: 'go', type: 'button', props: { content: 'Go' } }
+          },
+          {
+            type: 'upsertInteractionFlow',
+            pageRef: 'render',
+            ref: 'go',
+            nodes: [
+              { title: 'Click', nodeType: 'trigger', action: 'onClick' },
+              {
+                title: 'Swap',
+                nodeType: 'callback',
+                action: 'setState',
+                elementId: 'shot',
+                params: { category: 'attribute', key: 'src', value: 'https://cdn.example.com/next.jpg' }
+              },
+              {
+                title: 'Caption',
+                nodeType: 'callback',
+                action: 'setState',
+                elementId: 'shot',
+                params: { category: 'attribute', key: 'content', value: 'A photo' }
+              },
+              {
+                title: 'Leave',
+                nodeType: 'globalCallback',
+                action: 'navigate',
+                params: { urlType: 'external', url: 'https://example.com/page.png' }
+              }
+            ]
+          }
+        ] as Operation[]
+      },
+      { proxy }
+    );
+
+    expect(result.rendered).toBe(true);
+    if (!result.rendered) {
+      return;
+    }
+
+    const flat = result.offlineData.schema.flat;
+    const host = Object.values(flat).find(element => element.idRef === 'go');
+    const steps = Object.values(host?.definition.interactions ?? {});
+    const paramsOf = (title: string) => steps.find(step => step.title === title)?.params ?? {};
+
+    expect(paramsOf('Swap').value).toContain(`${proxy.endpoint}?i=`);
+    // Not a URL: only the value of a step that sets one is touched.
+    expect(paramsOf('Caption').value).toBe('A photo');
+    // A destination is not a resource — proxying it would hand the browser bytes where it expected a page.
+    expect(paramsOf('Leave').url).toBe('https://example.com/page.png');
   });
 
   // A host that wired no endpoint still renders: the URLs travel as authored.
