@@ -772,7 +772,7 @@
   "type": "module",
   "sideEffects": false,
   "dependencies": {
-    "@plitzi/nexus": "^1.0.0",
+    "@plitzi/nexus": "^1.0.1",
     "@plitzi/plitzi-ui": "^1.6.18",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",

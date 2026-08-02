@@ -28,7 +28,7 @@
   "dependencies": {
     "@apollo/client": "^4.2.9",
     "@fortawesome/fontawesome-free": "^7.3.1",
-    "@plitzi/nexus": "^1.0.0",
+    "@plitzi/nexus": "^1.0.1",
     "@plitzi/plitzi-sdk": "workspace:*",
     "@plitzi/plitzi-ui": "^1.6.18",
     "@plitzi/sdk-auth": "workspace:*",
@@ -51,7 +51,7 @@
     "graphql-ws": "^6.2.0",
     "immer": "^11.1.15",
     "jszip": "^3.10.1",
-    "react-hook-form": "^7.83.0",
+    "react-hook-form": "^7.84.0",
     "react-router-dom": "^7.18.2",
     "swr": "^2.4.2",
     "uuid": "^14.0.1",
