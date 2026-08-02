@@ -30,7 +30,11 @@ const CommitStrip = ({ commits, selectedIndex, hydrated, onSelect }: CommitStrip
   const maxDuration = useMemo(() => Math.max(1, ...commits.map(commit => commit.duration)), [commits]);
   const firstRealId = useMemo(() => commits.find(commit => commit.commitId !== SSR_COMMIT_ID)?.commitId, [commits]);
 
-  useEffect(() => selectedRef.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' }), [selectedIndex]);
+  // Block body on purpose: with a concise one the effect returns whatever `scrollIntoView` gives back, and React
+  // then tries to call that as the cleanup.
+  useEffect(() => {
+    selectedRef.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [selectedIndex]);
 
   const handleSelect = useCallback((commitId: number) => () => onSelect(commitId), [onSelect]);
 
