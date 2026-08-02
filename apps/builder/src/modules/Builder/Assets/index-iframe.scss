@@ -553,13 +553,13 @@
     // of sticking to the viewport. `transform-origin` keeps the pointer tip on the anchor while the cursor is
     // counter-scaled against the zoom.
     position: absolute;
-    transform-origin: 0 0;
-    // Positions arrive ~20 times a second: interpolating between them turns the sampling (and the odd pixel of
-    // layout difference when the anchor changes) into movement instead of a jump.
-    transition: transform 90ms linear;
     z-index: $overlayZIndex + 90001;
     display: none;
     flex-direction: column;
+    // Positions arrive ~20 times a second: interpolating between them turns the sampling (and the odd pixel of
+    // layout difference when the anchor changes) into movement instead of a jump.
+    transition: transform 90ms linear;
+    transform-origin: 0 0;
 
     .cursor-username {
       margin-left: 12px;
