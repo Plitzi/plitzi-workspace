@@ -5,7 +5,7 @@ import type { SpaceConnector } from '../../../../../../types';
 export type TSpaceUpdateConnectorMutation = { SpaceUpdateConnector: SpaceConnector };
 
 const SpaceUpdateConnectorMutation = gql`
-  mutation SpaceUpdateConnectorMutation($identifier: String!, $name: String!, $manifest: JSON!) {
+  mutation SpaceUpdateConnectorMutation($identifier: String!, $name: String!, $manifest: Json!) {
     SpaceUpdateConnector(identifier: $identifier, name: $name, manifest: $manifest) {
       id
       identifier
