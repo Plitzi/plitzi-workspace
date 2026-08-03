@@ -2,9 +2,8 @@ import { createContext } from 'react';
 
 import type { OfflineData } from '../types';
 
-export type NetworkInternalContextValue = Omit<OfflineData, 'collections' | 'segments'> & {
+export type NetworkInternalContextValue = Omit<OfflineData, 'segments'> & {
   segments: NonNullable<OfflineData['segments']>;
-  collections: NonNullable<OfflineData['collections']>;
 };
 
 const NetworkInternalContext = createContext({} as NetworkInternalContextValue);

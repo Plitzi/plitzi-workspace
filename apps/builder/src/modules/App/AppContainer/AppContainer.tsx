@@ -8,7 +8,6 @@ import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 
 import AppContext from '../AppContext';
 import AppHeader from '../components/AppHeader';
-import ContainerCollections from './containers/ContainerCollections';
 import ContainerDefault from './containers/ContainerDefault';
 import ContainerIntegrations from './containers/ContainerIntegrations';
 import ContainerMarketplace from './containers/ContainerMarketplace';
@@ -88,7 +87,6 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
               {!['collections', 'marketplace', 'integrations', 'settings', 'sitemap'].includes(popupsActiveLeft[0]) && (
                 <ContainerDefault externalStyle={externalStyle} previewMode={previewMode} />
               )}
-              {popupsActiveLeft[0] === 'collections' && <ContainerCollections />}
               {popupsActiveLeft[0] === 'marketplace' && <ContainerMarketplace />}
               {popupsActiveLeft[0] === 'integrations' && <ContainerIntegrations />}
               {popupsActiveLeft[0] === 'sitemap' && <ContainerSitemap />}

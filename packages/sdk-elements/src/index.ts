@@ -33,8 +33,7 @@ export const defaultElements = {
   markdown: elements.Markdown,
   form: elements.Form,
   formControl: elements.FormControl,
-  apiContainer: elements.ApiContainer,
-  collectionContainer: elements.CollectionContainer
+  apiContainer: elements.ApiContainer
 };
 
 export { useRscData, elements, elementSettings, JsxManager };

@@ -1,7 +1,6 @@
 import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
-import CollectionContextProvider from '@modules/Collection/CollectionContextProvider';
 import NavigationContextProvider from '@modules/Navigation/NavigationContextProvider';
 import NetworkContextProvider from '@modules/Network/NetworkContextProvider';
 import PluginsContextProvider from '@modules/Plugins/PluginsContextProvider';
@@ -115,7 +114,6 @@ const AppMain = ({
       debugMode={debugMode}
     >
       <SchemaContextProvider>
-        <CollectionContextProvider>
           <PluginsContextProvider renderMode={renderMode} sdkStylePath={styleUrl ? styleUrl : sdkStylePath}>
             <SdkStyleContextProvider>
               <EventBridgeContextProvider onInit={onInitEventBridge} debugMode={debugMode}>
@@ -160,7 +158,6 @@ const AppMain = ({
               </EventBridgeContextProvider>
             </SdkStyleContextProvider>
           </PluginsContextProvider>
-        </CollectionContextProvider>
       </SchemaContextProvider>
     </NetworkContextProvider>
   );

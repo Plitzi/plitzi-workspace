@@ -58,10 +58,10 @@ const NetworkContextProvider = ({
   const { components } = use(ComponentContext);
   const [internalData, setInternalData] = useState<NetworkInternalContextValue>(() => {
     if (offlineDataAvailable && offlineDataType === 'json') {
-      return { ...offlineData, plugins: {}, segments: {}, collections: {} };
+      return { ...offlineData, plugins: {}, segments: {} };
     }
 
-    return { plugins: {}, segments: {}, collections: {} } as NetworkInternalContextValue;
+    return { plugins: {}, segments: {} } as NetworkInternalContextValue;
   });
 
   const query = useCallback(
@@ -137,10 +137,8 @@ const NetworkContextProvider = ({
         return { success: false, result: undefined, error: 'Network Not Available, Please try again' };
       }
 
-      if (result.data && (result.data as Record<string, unknown>)[mutationKey] !== undefined) {
-        return { success: true, result: (result.data as unknown as SdkMutationsMap)[mutationKey] };
-      }
-
+      // No unwrapping by mutation key: the SDK exposes no mutations of its own any more (writes go through the
+      // server's /_action endpoint), so the raw payload is the result.
       return { success: true, result: result.data };
     },
     [client, environment]
@@ -152,7 +150,7 @@ const NetworkContextProvider = ({
       revisionAux = undefined;
     }
 
-    const response = await query('Init', { environment, revision: revisionAux, limit: 99 }, 'network-only');
+    const response = await query('Init', { environment, revision: revisionAux }, 'network-only');
     if (response.error) {
       setLoading(false);
       if (typeof response.error === 'string') {
@@ -170,7 +168,7 @@ const NetworkContextProvider = ({
 
     if (response.success && response.result) {
       const data = cloneDeep(response.result);
-      const { Space, Collections } = data;
+      const { Space } = data;
       if (!Space) {
         setError(
           <span>
@@ -197,7 +195,6 @@ const NetworkContextProvider = ({
         },
         plugins,
         style: Space.style,
-        collections: Collections.edges.reduce((obj, item) => ({ ...obj, [item.id]: item }), {}),
         segments:
           Space.segments
             ?.map(segment => ({

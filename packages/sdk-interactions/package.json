@@ -135,7 +135,6 @@
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.6.18",
     "@plitzi/sdk-auth": "workspace:*",
-    "@plitzi/sdk-collections": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
     "@plitzi/sdk-navigation": "workspace:*",

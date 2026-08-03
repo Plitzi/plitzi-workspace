@@ -5,7 +5,6 @@ import { createContext, use } from 'react';
 import type { BuilderContextValue } from '../builder';
 import type { NetworkContextValue } from '../network';
 import type {
-  CollectionContextValue,
   ComponentContextValue,
   EventBridgeContextValue,
   InteractionsContextValue,
@@ -33,7 +32,6 @@ export type PlitziServiceContextValue<TEventBridge = any, TInteractions = any> =
   contexts: {
     SegmentsContext: Context<SegmentsContextValue>;
     NavigationContext: Context<NavigationContextValue>;
-    CollectionContext: Context<CollectionContextValue>;
     ComponentContext: Context<ComponentContextValue>;
     EventBridgeContext: Context<EventBridgeContextValue<TEventBridge>>;
     PluginsContext: Context<PluginsContextValue>;

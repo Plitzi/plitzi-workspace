@@ -1,7 +1,7 @@
 // The SDK's built-in interaction sources register their `globalCallback` actions under a fixed module id, NOT under
 // the element that hosts the flow: the runtime resolves a global callback as `callbacksAvailables[elementId][action]`
 // (see sdk-interactions/InteractionsHelper), and these callbacks live on the source module — `space`, `state`,
-// `navigation`, `auth`, `collection`. A node that stored the host element's idRef here would resolve to nothing and
+// `navigation`, `auth`. A node that stored the host element's idRef here would resolve to nothing and
 // the flow would silently do nothing. SSR has no runtime handle on these React sources, so this catalog is a
 // faithful, hand-maintained mirror of what each source declares (source id + the FULL param schema each callback
 // exposes in the builder). Mirror any change to the sdk-interactions sources here.
@@ -15,8 +15,8 @@ export interface BuiltinGlobalCallback {
   source: string;
   title: string;
   // When true the param set is CLOSED: only the keys in `params` are valid, so any other key the agent supplies is a
-  // mistake (dropped on apply, warned in validation). When false (collection callbacks) the set is OPEN — the record
-  // carries arbitrary per-collection field values on top of the listed params — so extra keys are left untouched.
+  // mistake (dropped on apply, warned in validation). Every built-in closes its set: there is no callback whose
+  // params are open-ended, so an unknown key is always an error rather than a payload the server understands.
   strictParams: boolean;
   // The full param schema the builder exposes for this callback — the authoritative list of valid params, their
   // meaning, defaults, options and conditional visibility.
@@ -103,47 +103,7 @@ export const BUILTIN_GLOBAL_CALLBACKS: Record<string, BuiltinGlobalCallback> = {
   },
   authLogin: { source: 'auth', title: 'Auth Login', strictParams: true, params: {} },
   authLogout: { source: 'auth', title: 'Auth Logout', strictParams: true, params: {} },
-  authRefreshDetails: { source: 'auth', title: 'Auth Refresh Details', strictParams: true, params: {} },
-  // Collection callbacks carry arbitrary per-collection field values on top of the listed params, so their param set
-  // is OPEN (strictParams:false) — extra keys are the record's fields, not mistakes.
-  addCollectionRecord: {
-    source: 'collection',
-    title: 'Add Collection Record',
-    strictParams: false,
-    params: {
-      collectionId: { type: 'select', description: 'The collection to add the record to.' },
-      recordStatus: {
-        type: 'select',
-        description: 'Status of the new record.',
-        default: 'draft',
-        options: ['published', 'draft', 'archived', 'deleted', 'created']
-      }
-    }
-  },
-  updateCollectionRecord: {
-    source: 'collection',
-    title: 'Update Collection Record',
-    strictParams: false,
-    params: {
-      collectionId: { type: 'select', description: 'The collection the record belongs to.' },
-      recordId: { type: 'select', description: 'The record to update.' },
-      recordStatus: {
-        type: 'select',
-        description: 'New status for the record.',
-        default: 'draft',
-        options: ['published', 'draft', 'archived', 'deleted', 'created']
-      }
-    }
-  },
-  removeCollectionRecord: {
-    source: 'collection',
-    title: 'Remove Collection Record',
-    strictParams: false,
-    params: {
-      collectionId: { type: 'select', description: 'The collection the record belongs to.' },
-      recordId: { type: 'select', description: 'The record to remove.' }
-    }
-  }
+  authRefreshDetails: { source: 'auth', title: 'Auth Refresh Details', strictParams: true, params: {} }
 };
 
 /** The built-in globalCallback for an action, or undefined when the action is not a known built-in (a plugin
@@ -152,7 +112,7 @@ export const getGlobalCallback = (action: string): BuiltinGlobalCallback | undef
   Object.hasOwn(BUILTIN_GLOBAL_CALLBACKS, action) ? BUILTIN_GLOBAL_CALLBACKS[action] : undefined;
 
 /** Report the param keys the agent supplied that are not valid for a built-in callback: only for CLOSED
- *  (`strictParams`) callbacks; open ones (collection) accept arbitrary field keys so nothing is unknown. Returns []
+ *  (`strictParams`) callbacks. Returns []
  *  for an unknown action (a plugin callback whose schema is not known here). */
 export const unknownBuiltinParams = (action: string, params: Record<string, unknown>): string[] => {
   if (!(action in BUILTIN_GLOBAL_CALLBACKS)) {

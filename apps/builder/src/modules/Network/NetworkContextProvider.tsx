@@ -16,7 +16,6 @@ import useSubscriptionsManager from './hooks/useSubscriptionsManager';
 import type { ApolloClient, FetchPolicy } from '@apollo/client/core';
 import type {
   Server,
-  CollectionRecord,
   ComponentDefinition,
   Schema,
   BuilderNetworkContextValue,
@@ -167,9 +166,9 @@ const NetworkContextProvider = ({
 
   const initQuery = useCallback(async () => {
     try {
-      const response = await query('Init', { environment, limit: 99 }, 'network-only', true);
+      const response = await query('Init', { environment }, 'network-only', true);
       if (response.success && response.result) {
-        const { Space, Collections } = response.result;
+        const { Space } = response.result;
         if (!Space) {
           setError('Space Not Found');
           setLoading(false);
@@ -192,16 +191,6 @@ const NetworkContextProvider = ({
           },
           plugins,
           style: Space.style,
-          collections: Collections.edges.reduce(
-            (obj, item) => ({
-              ...obj,
-              [item.id]: {
-                ...item,
-                records: item.records.edges.reduce<CollectionRecord[]>((obj2, itemRecord) => [...obj2, itemRecord], [])
-              }
-            }),
-            {}
-          ),
           segments:
             Space.segments
               ?.map(segment => ({

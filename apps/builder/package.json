@@ -32,7 +32,6 @@
     "@plitzi/plitzi-sdk": "workspace:*",
     "@plitzi/plitzi-ui": "^1.6.18",
     "@plitzi/sdk-auth": "workspace:*",
-    "@plitzi/sdk-collections": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-elements": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",

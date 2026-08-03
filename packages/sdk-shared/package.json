@@ -34,18 +34,6 @@
       "types": "./dist/builder/index.d.ts",
       "import": "./dist/builder/index.mjs"
     },
-    "./collections": {
-      "types": "./dist/collections/index.d.ts",
-      "import": "./dist/collections/index.mjs"
-    },
-    "./collections/CollectionContext": {
-      "types": "./dist/collections/CollectionContext.d.ts",
-      "import": "./dist/collections/CollectionContext.mjs"
-    },
-    "./collections/index": {
-      "types": "./dist/collections/index.d.ts",
-      "import": "./dist/collections/index.mjs"
-    },
     "./dataSource": {
       "types": "./dist/dataSource/index.d.ts",
       "import": "./dist/dataSource/index.mjs"
@@ -320,6 +308,22 @@
     "./index": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
+    },
+    "./navigation": {
+      "types": "./dist/navigation/index.d.ts",
+      "import": "./dist/navigation/index.mjs"
+    },
+    "./navigation/index": {
+      "types": "./dist/navigation/index.d.ts",
+      "import": "./dist/navigation/index.mjs"
+    },
+    "./navigation/matchPath": {
+      "types": "./dist/navigation/matchPath.d.ts",
+      "import": "./dist/navigation/matchPath.mjs"
+    },
+    "./navigation/routes": {
+      "types": "./dist/navigation/routes.d.ts",
+      "import": "./dist/navigation/routes.mjs"
     },
     "./network": {
       "types": "./dist/network/index.d.ts",

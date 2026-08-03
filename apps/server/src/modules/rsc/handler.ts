@@ -71,7 +71,9 @@ export const handleRsc = async (
 
   // main is the development environment — never cache it.
   const cacheKey =
-    environment !== 'main' ? buildRscCacheKey(spaceId, environment, revision, req.ctx.user?.id, idsParam) : undefined;
+    environment !== 'main'
+      ? buildRscCacheKey(spaceId, environment, revision, req.ctx.user?.id, idsParam, req)
+      : undefined;
   const cached = cacheKey ? cache?.get(cacheKey) : undefined;
   if (cached) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');

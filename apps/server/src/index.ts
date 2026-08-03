@@ -28,6 +28,8 @@ export {
 } from './modules/mcp';
 // Draft-preview primitives: the in-process render + the default token store (consumers inject a shared store).
 export { createPreview, createMemoryDraftStore, PREVIEW_TOKEN_PARAM } from './modules/ssr/preview';
+export { resolveRscData } from './modules/rsc/resolveRscData';
+export { fetchConnectorRecords, writeConnectorRecord, createConnectorResolver } from './modules/connectors';
 export {
   apply,
   search,
@@ -42,6 +44,19 @@ export {
 } from './modules/mcp/tools';
 
 export type { JsonAdaptersConfig } from './adapters/jsonAdapters';
+export type { RscElementResolver, RscResolveContext, ResolveRscDataOptions } from './modules/rsc/resolveRscData';
+export type {
+  ConnectorAuth,
+  ConnectorCredential,
+  ConnectorFilter,
+  ConnectorList,
+  ConnectorLookups,
+  ConnectorManifest,
+  ConnectorPagination,
+  ConnectorQuery,
+  ConnectorRecord,
+  ConnectorResult
+} from './modules/connectors';
 export type { ResolvedServices } from './core/createServer';
 export type {
   McpServerContext,

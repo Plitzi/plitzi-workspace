@@ -26,7 +26,6 @@ import Image from './media/Image';
 import Video from './media/Video';
 // Provider
 import ApiContainer from './provider/ApiContainer';
-import CollectionContainer from './provider/CollectionContainer';
 // Structure
 import Container from './structure/Container';
 import DialogContainer from './structure/DialogContainer';
@@ -55,7 +54,6 @@ export * from './media/FontAwesome';
 export * from './media/Image';
 export * from './media/Video';
 export * from './provider/ApiContainer';
-export * from './provider/CollectionContainer';
 export * from './structure/Container';
 export * from './structure/DialogContainer';
 export * from './structure/List';
@@ -89,6 +87,5 @@ export {
   Markdown,
   Form,
   FormControl,
-  ApiContainer,
-  CollectionContainer
+  ApiContainer
 };

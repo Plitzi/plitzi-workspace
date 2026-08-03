@@ -1,6 +1,6 @@
 import { gql } from '@apollo/client/core';
 
-import type { CollectionRaw, PluginRaw, SchemaRaw, SegmentRaw, Style } from '../../../../types';
+import type { PluginRaw, SchemaRaw, SegmentRaw, Style } from '../../../../types';
 
 export type TInitQuery = {
   Space?: {
@@ -10,12 +10,11 @@ export type TInitQuery = {
     style: Style;
     segments?: SegmentRaw[];
   };
-  Collections: { edges: CollectionRaw[] };
 };
 
 const InitQuery = gql`
-  query InitQuery($environment: String!, $cursor: String, $limit: Int!) {
-    Space(environment: $environment) {
+  query InitQuery($environment: String!, $revision: Int) {
+    Space(environment: $environment, revision: $revision) {
       definition {
         name
         permanentUrl
@@ -106,37 +105,6 @@ const InitQuery = gql`
         variables
         mode
         cache
-      }
-    }
-    Collections(cursor: $cursor, limit: $limit) {
-      edges {
-        id
-        name
-        namePlural
-        description
-        privacy
-        fields
-        records(limit: 20) {
-          edges {
-            id
-            status
-            values
-            createdAt
-            updatedAt
-            publishedAt
-          }
-          pageInfo {
-            hasPrevPage
-            hasNextPage
-            prevCursor
-            nextCursor
-            from
-            to
-            total
-          }
-        }
-        createdAt
-        updatedAt
       }
     }
   }

@@ -21,7 +21,7 @@ export const BUILTIN_COMPONENTS: Partial<Record<string, BuiltinComponent>> = {
     category: 'structure',
     description:
       'Repeats a template (its listItem/link child) once per entry of a data array — the way to render a dynamic ' +
-      'collection. Bind its items to a data source (e.g. an apiContainer/collectionContainer response).'
+      'collection. Bind its items to a data source (e.g. an apiContainer response).'
   },
   listItem: {
     label: 'List Item',
@@ -68,13 +68,6 @@ export const BUILTIN_COMPONENTS: Partial<Record<string, BuiltinComponent>> = {
       'data source ITS DESCENDANTS bind to (source `apiContainer_<idRef>.data`; only elements inside it can consume ' +
       'it). This is how you get backend data into the frontend. Its `mockData` prop is builder-only sample data — ' +
       'the published runtime fetches the real `query`, so always set a real query for production.'
-  },
-  collectionContainer: {
-    label: 'Collection Container',
-    category: 'provider',
-    description:
-      'Exposes a Plitzi Collection (built-in CMS) as a data source for its descendants to bind to — the ' +
-      'CMS-backed counterpart of apiContainer.'
   },
 
   // Basic — text, actions, navigation.

@@ -14,7 +14,6 @@ import InteractionsSourcesProvider from '@plitzi/sdk-interactions/InteractionsSo
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import CollectionContext from '@plitzi/sdk-shared/collections/CollectionContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
@@ -63,7 +62,6 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
       utils: { getWindow, rootRef },
       customContexts: {},
       contexts: {
-        CollectionContext,
         ComponentContext,
         PluginsContext,
         NetworkContext,

@@ -5,7 +5,6 @@ import Sidebar from '@plitzi/plitzi-ui/Sidebar';
 import StyleAdvanceEditor from '@plitzi/sdk-style/StyleAdvanceEditor';
 import AiChat from '@pmodules/AI';
 import BuilderTree from '@pmodules/Builder/components/BuilderTree';
-import Collections from '@pmodules/Collection/Collections';
 import Elements from '@pmodules/Elements';
 import Resources from '@pmodules/Resources';
 import Segments from '@pmodules/Segments';
@@ -107,22 +106,6 @@ export const getPopups = ({
         allowLeftSide: true,
         allowRightSide: false,
         allowFloatingSide: true,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    },
-    {
-      id: 'collections',
-      component: <Collections />,
-      active: activeIds.includes('collections'),
-      placementSettings: { left: { position: 6, multi: false } },
-      settings: {
-        icon: 'fas fa-database',
-        title: 'Collections',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: false,
         allowClose: false,
         resizeHandles: ['se']
       }

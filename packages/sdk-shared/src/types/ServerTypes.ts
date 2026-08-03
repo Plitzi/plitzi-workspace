@@ -210,6 +210,19 @@ export type SSRAdapters = {
   ) => Promise<SSRRscData>;
 };
 
+export type SSRActionConfig = {
+  /** URL path for the write endpoint. Defaults to '/_action'. */
+  path?: string;
+  /** Connector manifest and credential lookups. Without them the endpoint stays inert: a write can only be
+   *  authorized against a manifest, and there is nothing to authorize against. Shaped as `ConnectorLookups`
+   *  in `@plitzi/sdk-server`; typed loosely here so the shared types stay free of the server's internals. */
+  lookups?: {
+    getConnector: (spaceId: number, connectorId: string) => Promise<unknown>;
+    getCredential?: (spaceId: number, identifier: string) => Promise<Record<string, string> | undefined>;
+    fetchImpl?: typeof fetch;
+  };
+};
+
 export type SSRRscConfig = {
   /** Whether the RSC endpoint is active. Defaults to true when adapters.getRscData is provided. */
   enabled?: boolean;
@@ -315,6 +328,8 @@ export type SSRServerConfig = {
   frameOptions?: 'DENY' | 'SAMEORIGIN' | string[] | false;
   /** RSC (React Server Components) endpoint configuration. */
   rsc?: SSRRscConfig;
+  /** Write endpoint for server-driven providers. Absent means the server serves reads only. */
+  action?: SSRActionConfig;
   /** MCP (Model Context Protocol) server configuration — exposes schema tools to Claude. */
   mcp?: McpServerConfig;
   /** AI-native MCP server — replaces the standard MCP with a zero-hallucination batch protocol. `path` is where

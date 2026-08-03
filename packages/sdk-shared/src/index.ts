@@ -9,7 +9,6 @@ export * from './dataSource';
 export * from './network';
 export * from './network/graphql';
 export * from './segments';
-export * from './collections';
 export * from './websockets';
 export * from './devTools';
 export * from './theme';

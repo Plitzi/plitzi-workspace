@@ -1,3 +1,4 @@
+import { actionStage } from './action';
 import { mcpOnlyStage, mcpStage } from './mcp';
 import { oauthGuardStage, oauthStage } from './oauth';
 import { previewStage } from './preview';
@@ -44,6 +45,9 @@ export const buildPagePipeline = (services: ResolvedServices): Stage<SSRContext>
   if (services.rsc) {
     stages.push(rscStage);
   }
+
+  // Sits with the data services and after the auth middleware chain: a write may depend on who the visitor is.
+  stages.push(actionStage);
 
   stages.push(services.ssr ? ssrStage : notFoundStage);
 

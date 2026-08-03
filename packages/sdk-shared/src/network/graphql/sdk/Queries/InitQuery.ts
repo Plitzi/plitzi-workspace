@@ -1,6 +1,6 @@
 import { gql } from 'graphql-tag';
 
-import type { CollectionRaw, PluginRaw, SchemaRaw, SegmentRaw, Style } from '../../../../types';
+import type { PluginRaw, SchemaRaw, SegmentRaw, Style } from '../../../../types';
 
 export type TInitQuery = {
   Space?: {
@@ -9,7 +9,6 @@ export type TInitQuery = {
     style: Style;
     segments?: SegmentRaw[];
   };
-  Collections: { edges: CollectionRaw[] };
 };
 
 const InitQuery = gql`
@@ -94,18 +93,6 @@ const InitQuery = gql`
       style {
         variables
         cache
-      }
-    }
-    Collections(limit: $limit) {
-      edges {
-        id
-        name
-        namePlural
-        description
-        privacy
-        fields
-        createdAt
-        updatedAt
       }
     }
   }

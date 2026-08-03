@@ -1,9 +1,3 @@
-import CollectionAddMutation from './Collection/CollectionAddMutation';
-import CollectionAddRecordMutation from './Collection/CollectionAddRecordMutation';
-import CollectionRemoveMutation from './Collection/CollectionRemoveMutation';
-import CollectionRemoveRecordMutation from './Collection/CollectionRemoveRecordMutation';
-import CollectionUpdateMutation from './Collection/CollectionUpdateMutation';
-import CollectionUpdateRecordMutation from './Collection/CollectionUpdateRecordMutation';
 import SegmentAddMutation from './Segment/SegmentAddMutation';
 import SegmentAddTemplateMutation from './Segment/SegmentAddTemplateMutation';
 import SegmentPublishMutation from './Segment/SegmentPublishMutation';
@@ -76,12 +70,6 @@ import StyleAddVariableMutation from './Style/variables/StyleAddVariableMutation
 import StyleRemoveVariableMutation from './Style/variables/StyleRemoveVariableMutation';
 import StyleUpdateVariableMutation from './Style/variables/StyleUpdateVariableMutation';
 
-import type { TCollectionAddMutation } from './Collection/CollectionAddMutation';
-import type { TCollectionAddRecordMutation } from './Collection/CollectionAddRecordMutation';
-import type { TCollectionRemoveMutation } from './Collection/CollectionRemoveMutation';
-import type { TCollectionRemoveRecordMutation } from './Collection/CollectionRemoveRecordMutation';
-import type { TCollectionUpdateMutation } from './Collection/CollectionUpdateMutation';
-import type { TCollectionUpdateRecordMutation } from './Collection/CollectionUpdateRecordMutation';
 import type { TSegmentAddMutation } from './Segment/SegmentAddMutation';
 import type { TSegmentPublishMutation } from './Segment/SegmentPublishMutation';
 import type { TSegmentUpdateMutation } from './Segment/SegmentUpdateMutation';
@@ -179,12 +167,6 @@ export type BuilderMutationsMap = {
   SegmentStyleRemoveVariable: unknown;
   SegmentPublish: TSegmentPublishMutation;
 
-  CollectionAdd: TCollectionAddMutation;
-  CollectionUpdate: TCollectionUpdateMutation;
-  CollectionRemove: TCollectionRemoveMutation;
-  CollectionAddRecord: TCollectionAddRecordMutation;
-  CollectionUpdateRecord: TCollectionUpdateRecordMutation;
-  CollectionRemoveRecord: TCollectionRemoveRecordMutation;
 };
 
 const BuilderMutations = {
@@ -262,12 +244,6 @@ const BuilderMutations = {
   SegmentStyleRemoveVariable: SegmentStyleRemoveVariableMutation,
   SegmentPublish: SegmentPublishMutation,
 
-  CollectionAdd: CollectionAddMutation,
-  CollectionUpdate: CollectionUpdateMutation,
-  CollectionRemove: CollectionRemoveMutation,
-  CollectionAddRecord: CollectionAddRecordMutation,
-  CollectionUpdateRecord: CollectionUpdateRecordMutation,
-  CollectionRemoveRecord: CollectionRemoveRecordMutation
 };
 
 export default BuilderMutations;

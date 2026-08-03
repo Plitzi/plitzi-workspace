@@ -13,8 +13,10 @@ import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/uti
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import useApi from './hooks/useApi';
+import useProviderWrite from './hooks/useProviderWrite';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
+import useRscData from '../../../Element/hooks/useRscData';
 import RootElement from '../../../Element/RootElement';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
@@ -28,12 +30,20 @@ export type ApiContainerProps = {
   children?: ReactNode;
   query?: string;
   method?: 'get' | 'post' | 'put' | 'delete' | 'patch';
+  /** Client-side bearer token. Meant to arrive through a binding (e.g. the signed-in user's token), which resolves
+   *  at runtime and never enters the schema. A static value typed here is persisted and therefore public — use a
+   *  server connector (`runtime: 'server'`) for anything secret. */
   accessToken?: string;
   when?: RuleGroup;
   headers?: Record<string, string>;
   mockData?: Record<string, unknown> | string;
   subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
   credentials?: RequestCredentials;
+  /** Identifier of the server-side connector that feeds this provider. Only meaningful with `runtime: 'server'`. */
+  connector?: string;
+  /** Content type / collection read through the connector. */
+  resource?: string;
+  singleRecord?: boolean;
 };
 
 const ApiContainer = ({
@@ -52,8 +62,12 @@ const ApiContainer = ({
   const {
     id,
     idRef,
-    definition: { label = 'Api Container' }
+    definition: { label = 'Api Container', runtime }
   } = useElement();
+  // A server-driven provider gets its data through the RSC payload: the request — and the credential behind it —
+  // stays on the server, so neither the token nor the backend URL is ever part of what ships to the browser.
+  const serverMode = runtime === 'server';
+  const { elementData, refresh } = useRscData<Record<string, unknown>>();
   const sourceName = getSourceName('apiContainer', { idRef });
   const {
     settings: { previewMode, debugMode },
@@ -100,6 +114,10 @@ const ApiContainer = ({
   }, [headers, accessToken]);
 
   const apiEnabled = useMemo(() => {
+    if (serverMode) {
+      return false;
+    }
+
     if (
       previewMode &&
       queryCompiled &&
@@ -113,9 +131,15 @@ const ApiContainer = ({
     }
 
     return false;
-  }, [previewMode, queryCompiled, when, routeParams, queryParams, mockData]);
+  }, [serverMode, previewMode, queryCompiled, when, routeParams, queryParams, mockData]);
 
-  const { isLoading, data, refetch, isSuccess, isError } = useApi({
+  const {
+    isLoading: isApiLoading,
+    data: apiData,
+    refetch: apiRefetch,
+    isSuccess,
+    isError
+  } = useApi({
     url: queryCompiled,
     method,
     credentials,
@@ -123,6 +147,39 @@ const ApiContainer = ({
     customHeaders,
     enabled: apiEnabled
   });
+
+  // In the builder there is no `/_rsc` for the live space, so a server provider keeps rendering from its mock data.
+  const data = useMemo<Record<string, unknown>>(() => {
+    if (!serverMode) {
+      return apiData ?? emptyObject;
+    }
+
+    if (elementData) {
+      return elementData;
+    }
+
+    if (typeof mockData !== 'string') {
+      return mockData;
+    }
+
+    try {
+      return JSON.parse(mockData || '{}') as Record<string, unknown>;
+    } catch {
+      return emptyObject;
+    }
+  }, [serverMode, apiData, elementData, mockData]);
+
+  const isLoading = serverMode ? false : isApiLoading;
+
+  const refetch = useCallback(async () => {
+    if (!serverMode) {
+      apiRefetch();
+
+      return;
+    }
+
+    await refresh?.([id]);
+  }, [serverMode, apiRefetch, refresh, id]);
 
   useEffect(() => {
     if (isLoading || !idRef) {
@@ -153,8 +210,14 @@ const ApiContainer = ({
 
   useRegisterSource({ id, source: sourceName, name: label ? label : `API - ${id}`, fields: sourceFields });
 
+  const { createRecord, updateRecord, removeRecord } = useProviderWrite({
+    elementId: id,
+    enabled: serverMode,
+    onDone: refetch
+  });
+
   const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
-    return {
+    const callbacks: Record<string, InteractionCallback> = {
       performQuery: {
         action: 'performQuery',
         title: `Perform Query ${label}`,
@@ -164,7 +227,38 @@ const ApiContainer = ({
         params: {}
       }
     };
-  }, [label, refetch]);
+
+    // Writes exist only for a server-driven provider: they go through the server, which owns the credential and
+    // decides whether the connector allows the action at all.
+    if (serverMode) {
+      callbacks.createRecord = {
+        action: 'createRecord',
+        title: `Create Record ${label}`,
+        type: 'callback',
+        callback: createRecord,
+        preview: {},
+        params: {}
+      };
+      callbacks.updateRecord = {
+        action: 'updateRecord',
+        title: `Update Record ${label}`,
+        type: 'callback',
+        callback: updateRecord,
+        preview: {},
+        params: {}
+      };
+      callbacks.removeRecord = {
+        action: 'removeRecord',
+        title: `Remove Record ${label}`,
+        type: 'callback',
+        callback: removeRecord,
+        preview: {},
+        params: {}
+      };
+    }
+
+    return callbacks;
+  }, [label, refetch, serverMode, createRecord, updateRecord, removeRecord]);
 
   const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
     () => ({

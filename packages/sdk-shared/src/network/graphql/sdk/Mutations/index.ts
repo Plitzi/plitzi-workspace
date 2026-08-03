@@ -1,21 +1,8 @@
-import CollectionAddRecordMutation from './Collection/CollectionAddRecordMutation';
-import CollectionRemoveRecordMutation from './Collection/CollectionRemoveRecordMutation';
-import CollectionUpdateRecordMutation from './Collection/CollectionUpdateRecordMutation';
+// The SDK has no mutations left: every one of them wrote to the built-in Collections store, which no longer exists.
+// Writes now go through the server's `/_action` endpoint, which resolves the target connector server-side instead of
+// exposing a mutation per operation. The map stays so the network layer's generic typing keeps compiling.
+export type SdkMutationsMap = Record<string, never>;
 
-import type { TCollectionAddRecordMutation } from './Collection/CollectionAddRecordMutation';
-import type { TCollectionRemoveRecordMutation } from './Collection/CollectionRemoveRecordMutation';
-import type { TCollectionUpdateRecordMutation } from './Collection/CollectionUpdateRecordMutation';
-
-export type SdkMutationsMap = {
-  CollectionAddRecord: TCollectionAddRecordMutation;
-  CollectionUpdateRecord: TCollectionUpdateRecordMutation;
-  CollectionRemoveRecord: TCollectionRemoveRecordMutation;
-};
-
-const SdkMutations = {
-  CollectionAddRecord: CollectionAddRecordMutation,
-  CollectionUpdateRecord: CollectionUpdateRecordMutation,
-  CollectionRemoveRecord: CollectionRemoveRecordMutation
-};
+const SdkMutations: Record<string, never> = {};
 
 export default SdkMutations;

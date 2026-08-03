@@ -3553,7 +3553,6 @@ __metadata:
     "@plitzi/plitzi-sdk": "workspace:*"
     "@plitzi/plitzi-ui": "npm:^1.6.18"
     "@plitzi/sdk-auth": "workspace:*"
-    "@plitzi/sdk-collections": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
     "@plitzi/sdk-elements": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
@@ -3635,7 +3634,6 @@ __metadata:
     "@plitzi/nexus": "npm:^1.0.1"
     "@plitzi/plitzi-ui": "npm:^1.6.18"
     "@plitzi/sdk-auth": "workspace:*"
-    "@plitzi/sdk-collections": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
     "@plitzi/sdk-elements": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
@@ -3759,19 +3757,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/sdk-collections@workspace:*, @plitzi/sdk-collections@workspace:packages/sdk-collections":
-  version: 0.0.0-use.local
-  resolution: "@plitzi/sdk-collections@workspace:packages/sdk-collections"
-  dependencies:
-    "@plitzi/plitzi-ui": "npm:^1.6.18"
-    "@plitzi/sdk-shared": "workspace:*"
-    eslint: "npm:^9.39.5"
-    immer: "npm:^11.1.15"
-    typescript: "npm:^6.0.3"
-    vite: "npm:^8.2.0"
-  languageName: unknown
-  linkType: soft
-
 "@plitzi/sdk-dev-tools@workspace:*, @plitzi/sdk-dev-tools@workspace:packages/sdk-dev-tools":
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-dev-tools@workspace:packages/sdk-dev-tools"
@@ -3839,7 +3824,6 @@ __metadata:
   dependencies:
     "@plitzi/plitzi-ui": "npm:^1.6.18"
     "@plitzi/sdk-auth": "workspace:*"
-    "@plitzi/sdk-collections": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
     "@plitzi/sdk-event-bridge": "workspace:*"
     "@plitzi/sdk-navigation": "workspace:*"
@@ -3860,7 +3844,6 @@ __metadata:
     eslint: "npm:^9.39.5"
     react: "npm:^19.2.8"
     react-dom: "npm:^19.2.8"
-    react-router: "npm:^8.3.0"
     react-router-dom: "npm:^7.18.2"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.2.0"

@@ -20,8 +20,8 @@ type SettingsProps = {
   query?: string;
   method?: 'get' | 'post';
   accessToken?: string;
-  when?: RuleGroup;
   headers?: object;
+  when?: RuleGroup;
   subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
   mockData?: string;
   credentials?: RequestCredentials;
@@ -32,8 +32,8 @@ const Settings = ({
   query = '',
   method = 'get',
   accessToken = '',
-  when,
   headers = emptyObject,
+  when,
   subType = 'div',
   mockData = '{}',
   credentials = 'same-origin',
