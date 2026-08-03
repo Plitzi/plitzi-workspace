@@ -545,6 +545,18 @@
       "types": "./dist/network/graphql/builder/Mutations/Space/cdns/SpaceUpdateCdnMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/cdns/SpaceUpdateCdnMutation.mjs"
     },
+    "./network/graphql/builder/Mutations/Space/connectors/SpaceAddConnectorMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/connectors/SpaceAddConnectorMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/connectors/SpaceAddConnectorMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/connectors/SpaceRemoveConnectorMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/connectors/SpaceRemoveConnectorMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/connectors/SpaceRemoveConnectorMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/connectors/SpaceUpdateConnectorMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/connectors/SpaceUpdateConnectorMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/connectors/SpaceUpdateConnectorMutation.mjs"
+    },
     "./network/graphql/builder/Mutations/Space/credentials/SpaceAddCredentialMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/credentials/SpaceAddCredentialMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/credentials/SpaceAddCredentialMutation.mjs"
@@ -700,6 +712,10 @@
     "./network/graphql/builder/Queries/Space/SpaceCdnsQuery": {
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceCdnsQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/Space/SpaceCdnsQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/Space/SpaceConnectorsQuery": {
+      "types": "./dist/network/graphql/builder/Queries/Space/SpaceConnectorsQuery.d.ts",
+      "import": "./dist/network/graphql/builder/Queries/Space/SpaceConnectorsQuery.mjs"
     },
     "./network/graphql/builder/Queries/Space/SpaceCredentialsQuery": {
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceCredentialsQuery.d.ts",

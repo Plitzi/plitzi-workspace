@@ -13,12 +13,14 @@ import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/uti
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import useApi from './hooks/useApi';
+import useProviderPagination from './hooks/useProviderPagination';
 import useProviderWrite from './hooks/useProviderWrite';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import useRscData from '../../../Element/hooks/useRscData';
 import RootElement from '../../../Element/RootElement';
 
+import type { ProviderPagination } from './hooks/useProviderPagination';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { SourceField, InteractionCallback } from '@plitzi/sdk-shared';
@@ -43,7 +45,25 @@ export type ApiContainerProps = {
   connector?: string;
   /** Content type / collection read through the connector. */
   resource?: string;
+  /** Records per window. Read server-side; a single-record provider is capped at one regardless. */
+  limit?: string;
+  /** Feeds a detail page: publishes `record` instead of `records`, filtered down to one entry. */
   singleRecord?: boolean;
+  /** Field / operator / value rows applied to the connector query. Values are templates resolved server-side, so
+   *  `{{routeParams.slug}}` is what turns a page into a detail page. */
+  filters?: { field: string; operator: string; value: string }[];
+  /** `url` pages through the address bar and stays indexable; `append` accumulates in the browser for a "load
+   *  more" list. Append needs a server-driven provider — a client-side query has no window to ask the server for. */
+  pagination?: ProviderPagination;
+  pageParam?: string;
+  /** Renders children while the first client-side request is still in flight, so a loading state can be bound. */
+  renderWhileLoading?: boolean;
+};
+
+type ProviderSlice = {
+  records?: unknown[];
+  record?: unknown;
+  pageInfo?: { page?: number };
 };
 
 const ApiContainer = ({
@@ -57,7 +77,11 @@ const ApiContainer = ({
   headers = emptyObject,
   mockData = '{}',
   subType = 'div',
-  credentials = 'same-origin'
+  credentials = 'same-origin',
+  singleRecord = false,
+  pagination = 'none',
+  pageParam = 'page',
+  renderWhileLoading = false
 }: ApiContainerProps) => {
   const {
     id,
@@ -67,14 +91,14 @@ const ApiContainer = ({
   // A server-driven provider gets its data through the RSC payload: the request — and the credential behind it —
   // stays on the server, so neither the token nor the backend URL is ever part of what ships to the browser.
   const serverMode = runtime === 'server';
-  const { elementData, refresh } = useRscData<Record<string, unknown>>();
+  const { serverData, elementData, refresh } = useRscData<Record<string, unknown>>();
   const sourceName = getSourceName('apiContainer', { idRef });
   const {
     settings: { previewMode, debugMode },
     contexts: { NavigationContext, InteractionsContext }
   } = usePlitziServiceContext();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
-  const { routeParams, queryParams } = use(NavigationContext);
+  const { routeParams, queryParams, navigate } = use(NavigationContext);
   const queryCompiled = useMemo(() => {
     if (!query) {
       return '';
@@ -148,6 +172,12 @@ const ApiContainer = ({
     enabled: apiEnabled
   });
 
+  // A server element whose key is missing from a payload that *did* arrive failed to resolve — its provider is
+  // down, misconfigured or timed out. Falling back to mock data there would dress a production outage up as
+  // content, so the two cases are kept apart: no payload at all means the builder, and that one does mock.
+  const rscResolved = serverData !== undefined;
+  const hasError = serverMode && rscResolved && elementData === null;
+
   // In the builder there is no `/_rsc` for the live space, so a server provider keeps rendering from its mock data.
   const data = useMemo<Record<string, unknown>>(() => {
     if (!serverMode) {
@@ -156,6 +186,10 @@ const ApiContainer = ({
 
     if (elementData) {
       return elementData;
+    }
+
+    if (rscResolved) {
+      return emptyObject;
     }
 
     if (typeof mockData !== 'string') {
@@ -167,7 +201,7 @@ const ApiContainer = ({
     } catch {
       return emptyObject;
     }
-  }, [serverMode, apiData, elementData, mockData]);
+  }, [serverMode, apiData, elementData, rscResolved, mockData]);
 
   const isLoading = serverMode ? false : isApiLoading;
 
@@ -180,6 +214,18 @@ const ApiContainer = ({
 
     await refresh?.([id]);
   }, [serverMode, apiRefetch, refresh, id]);
+
+  const slice = data as ProviderSlice;
+  const windowRecords = useMemo(() => (Array.isArray(slice.records) ? slice.records : []), [slice.records]);
+  const { records, isLoadingMore, goToPage, loadMore } = useProviderPagination({
+    elementId: id,
+    mode: pagination,
+    pageParam,
+    records: windowRecords,
+    page: slice.pageInfo?.page ?? 1,
+    refresh,
+    navigate
+  });
 
   useEffect(() => {
     if (isLoading || !idRef) {
@@ -195,9 +241,23 @@ const ApiContainer = ({
     return undefined;
   }, [data, idRef, interactionsManager, isError, isLoading, isSuccess, method, queryCompiled]);
 
+  // The published slice, not the raw response: state travels with the data so an empty result, a failed provider
+  // and an accumulated "load more" list are all readable through ordinary bindings, with no new slot mechanism.
+  const publishedData = useMemo<Record<string, unknown>>(
+    () => ({
+      ...data,
+      ...(Array.isArray(slice.records) ? { records } : emptyObject),
+      isLoading: isLoading || isLoadingMore,
+      isEmpty: singleRecord ? slice.record === undefined : records.length === 0,
+      hasError,
+      errorMessage: hasError ? 'The data provider could not be reached' : ''
+    }),
+    [data, slice.records, slice.record, records, isLoading, isLoadingMore, singleRecord, hasError]
+  );
+
   const sourceFields = useCallback(
     () =>
-      getPathsFromObeject(data).reduce<SourceField[]>((acum, path) => {
+      getPathsFromObeject(publishedData).reduce<SourceField[]>((acum, path) => {
         const name = path.split('.');
         if (name.length > 1) {
           return [...acum, { path, name: name.slice(name.length - 2).join(' ') }];
@@ -205,7 +265,7 @@ const ApiContainer = ({
 
         return [...acum, { path, name: name[name.length - 1] }];
       }, []),
-    [data]
+    [publishedData]
   );
 
   useRegisterSource({ id, source: sourceName, name: label ? label : `API - ${id}`, fields: sourceFields });
@@ -225,6 +285,22 @@ const ApiContainer = ({
         callback: refetch,
         preview: {},
         params: {}
+      },
+      loadMore: {
+        action: 'loadMore',
+        title: `Load More ${label}`,
+        type: 'callback',
+        callback: loadMore,
+        preview: {},
+        params: {}
+      },
+      goToPage: {
+        action: 'goToPage',
+        title: `Go To Page ${label}`,
+        type: 'callback',
+        callback: ({ page }: { page?: string | number }) => goToPage(Number(page) || 1),
+        preview: {},
+        params: { page: { label: 'Page', defaultValue: '1', type: 'text' } }
       }
     };
 
@@ -258,7 +334,7 @@ const ApiContainer = ({
     }
 
     return callbacks;
-  }, [label, refetch, serverMode, createRecord, updateRecord, removeRecord]);
+  }, [label, refetch, loadMore, goToPage, serverMode, createRecord, updateRecord, removeRecord]);
 
   const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
     () => ({
@@ -281,8 +357,8 @@ const ApiContainer = ({
   );
 
   const storeContext = useMemo(
-    () => (sourceName ? { runtime: { sources: { [sourceName]: data } } } : emptyObject),
-    [data, sourceName]
+    () => (sourceName ? { runtime: { sources: { [sourceName]: publishedData } } } : emptyObject),
+    [publishedData, sourceName]
   );
 
   return (
@@ -294,7 +370,7 @@ const ApiContainer = ({
       interactionCallbacks={interactionCallbacks}
     >
       <StoreProvider inherit="live" name={`Api:${id}`} value={storeContext}>
-        {!isLoading && children}
+        {(!isLoading || renderWhileLoading) && children}
       </StoreProvider>
     </RootElement>
   );

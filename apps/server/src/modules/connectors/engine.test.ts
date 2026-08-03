@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fetchConnectorRecords } from './engine';
+import { fetchConnectorRecords, rebaseMedia } from './engine';
 
 import type { ConnectorManifest } from './types';
 
@@ -226,5 +226,74 @@ describe('fetchConnectorRecords', () => {
     const { records } = await fetchConnectorRecords({ manifest: strapi, query: { resource: 'articles' }, fetchImpl });
 
     expect(records).toEqual([]);
+  });
+
+  it('reports the ordinal window so a pager can be rendered', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(strapiBody));
+
+    const { pageInfo } = await fetchConnectorRecords({
+      manifest: strapi,
+      query: { resource: 'articles', limit: 2, offset: 4 },
+      fetchImpl
+    });
+
+    expect(pageInfo.page).toBe(3);
+    expect(pageInfo.pageCount).toBe(4);
+  });
+
+  // A provider that reports no total cannot say how many pages exist. Guessing one would render a pager that lies.
+  it('leaves the page count unknown when the provider reports no total', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse([{ id: 1 }, { id: 2 }]));
+
+    const { pageInfo } = await fetchConnectorRecords({
+      manifest: wordpress,
+      query: { resource: 'posts', limit: 2 },
+      fetchImpl
+    });
+
+    expect(pageInfo.pageCount).toBe(0);
+  });
+});
+
+describe('rebaseMedia', () => {
+  const media: ConnectorManifest = { ...strapi, media: { baseUrl: 'https://cdn.example.com/' } };
+
+  it('rebases relative media paths onto the manifest media host', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(strapiBody));
+
+    const { records } = await fetchConnectorRecords({ manifest: media, query: { resource: 'articles' }, fetchImpl });
+
+    expect((records[0].values.cover as { url: string }).url).toBe('https://cdn.example.com/uploads/a.png');
+  });
+
+  it('walks nested objects and arrays', () => {
+    const result = rebaseMedia(
+      { formats: { thumbnail: { url: '/uploads/t.png' } }, gallery: [{ src: '/uploads/g.png' }] },
+      'https://cdn.example.com'
+    ) as { formats: { thumbnail: { url: string } }; gallery: { src: string }[] };
+
+    expect(result.formats.thumbnail.url).toBe('https://cdn.example.com/uploads/t.png');
+    expect(result.gallery[0].src).toBe('https://cdn.example.com/uploads/g.png');
+  });
+
+  // The rule is keyed on the property name precisely so prose that happens to start with a slash survives intact.
+  it('leaves values whose key does not name a location alone', () => {
+    const result = rebaseMedia({ body: '/not/a/media/path', slug: '/hello' }, 'https://cdn.example.com') as Record<
+      string,
+      string
+    >;
+
+    expect(result.body).toBe('/not/a/media/path');
+    expect(result.slug).toBe('/hello');
+  });
+
+  it('leaves absolute and protocol-relative URLs untouched', () => {
+    const result = rebaseMedia(
+      { url: 'https://other.example.com/a.png', src: '//cdn.other.com/b.png' },
+      'https://cdn.example.com'
+    ) as Record<string, string>;
+
+    expect(result.url).toBe('https://other.example.com/a.png');
+    expect(result.src).toBe('//cdn.other.com/b.png');
   });
 });

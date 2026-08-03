@@ -1,7 +1,11 @@
 import type { Element } from '@plitzi/sdk-shared';
 
-/** Structural keys a page needs regardless of what it binds, so paging never depends on static analysis. */
-const ALWAYS_KEPT = ['pageInfo'];
+/**
+ * Structural keys a page needs regardless of what it binds, so paging and empty states never depend on static
+ * analysis. A pager binds `pageInfo.*` and an empty state binds `isEmpty`; both would otherwise be projected away
+ * for any page that reads neither.
+ */
+const ALWAYS_KEPT = ['pageInfo', 'isEmpty', 'hasError', 'errorMessage'];
 
 type PathTrie = { leaf: boolean; children: Map<string, PathTrie> };
 

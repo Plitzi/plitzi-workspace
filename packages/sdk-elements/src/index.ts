@@ -31,6 +31,8 @@ export const defaultElements = {
   list: elements.List,
   link: elements.Link,
   markdown: elements.Markdown,
+  richText: elements.RichText,
+  pagination: elements.Pagination,
   form: elements.Form,
   formControl: elements.FormControl,
   apiContainer: elements.ApiContainer

@@ -9,8 +9,9 @@ export type RscContextValue = {
   serverData?: SSRRscData['serverData'];
   /** Re-fetch RSC data from the server.
    *  Pass `ids` to refresh only specific elements and merge into existing data.
-   *  Omit `ids` for a full refresh (replaces all serverData). */
-  refresh?: (ids?: string[]) => Promise<void>;
+   *  Omit `ids` for a full refresh (replaces all serverData).
+   *  `params` are appended to the request — this is how a provider asks for a different page window. */
+  refresh?: (ids?: string[], params?: Record<string, string>) => Promise<void>;
 };
 
 const RscContext = createContext<RscContextValue>({ enabled: false });

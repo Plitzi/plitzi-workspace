@@ -29,7 +29,12 @@ export {
 // Draft-preview primitives: the in-process render + the default token store (consumers inject a shared store).
 export { createPreview, createMemoryDraftStore, PREVIEW_TOKEN_PARAM } from './modules/ssr/preview';
 export { resolveRscData } from './modules/rsc/resolveRscData';
-export { fetchConnectorRecords, writeConnectorRecord, createConnectorResolver } from './modules/connectors';
+export {
+  fetchConnectorRecords,
+  rebaseMedia,
+  writeConnectorRecord,
+  createConnectorResolver
+} from './modules/connectors';
 export {
   apply,
   search,
@@ -52,10 +57,12 @@ export type {
   ConnectorList,
   ConnectorLookups,
   ConnectorManifest,
+  ConnectorPageInfo,
   ConnectorPagination,
   ConnectorQuery,
   ConnectorRecord,
-  ConnectorResult
+  ConnectorResult,
+  ProviderPagination
 } from './modules/connectors';
 export type { ResolvedServices } from './core/createServer';
 export type {

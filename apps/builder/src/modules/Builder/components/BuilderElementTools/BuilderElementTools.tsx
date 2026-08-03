@@ -154,7 +154,13 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
               onUpdate={handleChange}
               onUpdateRef={handleUpdateIdRef}
             />
-            <ElementSettings attributes={tempAttributes} id={elementSelected} type={type} handleChange={handleChange} />
+            <ElementSettings
+              attributes={tempAttributes}
+              id={elementSelected}
+              type={type}
+              runtime={tempDefinition.runtime}
+              handleChange={handleChange}
+            />
           </div>
         )}
         {selected === 'bindings' && (

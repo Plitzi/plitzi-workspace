@@ -43,7 +43,7 @@ export type ConnectorManifest = {
   pagination?: ConnectorPagination;
   /** Operator templates keyed by operator name, e.g. `{ eq: 'filters[{{field}}][$eq]={{value}}' }`. */
   operators?: Record<string, string>;
-  /** Base for relative media URLs returned by the provider. */
+  /** Base for relative media URLs returned by the provider. See `rebaseMedia` for exactly which values it rewrites. */
   media?: { baseUrl?: string };
   /** Field types, the only part of a connector the browser is allowed to see (it drives typed bindings). */
   fields?: Record<string, CollectionField['type']>;
@@ -90,9 +90,19 @@ export type ConnectorRecord = {
   values: Record<string, unknown>;
 };
 
+/**
+ * `PageInfo` is the cursor-shaped connection contract shared with GraphQL. A pager cannot be rendered from cursors
+ * alone, so a connector result also carries the ordinal window it just read.
+ */
+export type ConnectorPageInfo = PageInfo & {
+  page: number;
+  /** Total pages when the provider reports a total; `0` when it does not and paging relies on page size. */
+  pageCount: number;
+};
+
 export type ConnectorResult = {
   records: ConnectorRecord[];
-  pageInfo: PageInfo;
+  pageInfo: ConnectorPageInfo;
 };
 
 /** Resolved credential material. Values are interpolated into templates as `{{credential.<key>}}`. */

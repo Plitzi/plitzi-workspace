@@ -25,7 +25,8 @@ const element = (attributes: Record<string, unknown>, idRef?: string, items: str
 const context = (
   attributes: Record<string, unknown>,
   routeParams = {},
-  flat: Record<string, Element> = {}
+  flat: Record<string, Element> = {},
+  queryParams: Record<string, string> = {}
 ): RscResolveContext => {
   const provider = element(attributes, undefined, Object.keys(flat));
 
@@ -33,7 +34,7 @@ const context = (
     element: provider,
     flat: { provider1: provider, ...flat },
     routeParams,
-    queryParams: {},
+    queryParams,
     req: {} as SSRRequest,
     spaceId: 7,
     environment: 'production',
@@ -125,18 +126,91 @@ describe('createConnectorResolver', () => {
     expect(JSON.stringify(result)).not.toContain('sup3rs3cret');
   });
 
-  it('passes route params through to the connector query', async () => {
+  // This is the whole detail-page mechanism: `/blog/:slug` matched server-side, its param substituted into the
+  // filter, one record back. Asserting on the resolved value — not just on the parameter name — is the point.
+  it('resolves a route param inside a filter value before querying the provider', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(body));
     const resolve = createConnectorResolver({ getConnector: () => Promise.resolve(manifest), fetchImpl });
 
     await resolve(
       context(
-        { connector: 'cms', resource: 'articles', filters: [{ field: 'slug', operator: 'eq', value: '{{slug}}' }] },
+        {
+          connector: 'cms',
+          resource: 'articles',
+          singleRecord: true,
+          filters: [{ field: 'slug', operator: 'eq', value: '{{routeParams.slug}}' }]
+        },
         { slug: 'hello' }
       )
     );
 
-    expect(fetchImpl.mock.calls[0][0] as string).toContain('filters%5Bslug%5D%5B%24eq%5D=');
+    expect(fetchImpl.mock.calls[0][0] as string).toContain('filters%5Bslug%5D%5B%24eq%5D=hello');
+  });
+
+  // Falling back to an unfiltered query would render an arbitrary post at a URL that named a specific one, which
+  // reads as a working page and is worse than an empty one.
+  it('returns nothing rather than a broader query when a filter template cannot resolve', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(body));
+    const resolve = createConnectorResolver({ getConnector: () => Promise.resolve(manifest), fetchImpl });
+
+    const result = (await resolve(
+      context({
+        connector: 'cms',
+        resource: 'articles',
+        singleRecord: true,
+        filters: [{ field: 'slug', operator: 'eq', value: '{{routeParams.slug}}' }]
+      })
+    )) as { record?: unknown; isEmpty: boolean };
+
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(result.record).toBeUndefined();
+    expect(result.isEmpty).toBe(true);
+  });
+
+  it('reads the requested page from the query string and offsets the window', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(body));
+    const pagedManifest: ConnectorManifest = {
+      ...manifest,
+      list: { ...manifest.list, query: { 'pagination[start]': '{{offset}}', 'pagination[limit]': '{{limit}}' } }
+    };
+    const resolve = createConnectorResolver({ getConnector: () => Promise.resolve(pagedManifest), fetchImpl });
+
+    await resolve(
+      context({ connector: 'cms', resource: 'articles', limit: '10', pagination: 'url' }, {}, {}, { page: '3' })
+    );
+
+    const url = fetchImpl.mock.calls[0][0] as string;
+    expect(url).toContain('pagination%5Bstart%5D=20');
+    expect(url).toContain('pagination%5Blimit%5D=10');
+  });
+
+  it('pages each provider independently through its own page parameter', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(body));
+    const pagedManifest: ConnectorManifest = {
+      ...manifest,
+      list: { ...manifest.list, query: { 'pagination[start]': '{{offset}}' } }
+    };
+    const resolve = createConnectorResolver({ getConnector: () => Promise.resolve(pagedManifest), fetchImpl });
+
+    await resolve(
+      context(
+        { connector: 'cms', resource: 'articles', limit: '5', pagination: 'url', pageParam: 'newsPage' },
+        {},
+        {},
+        { page: '9', newsPage: '2' }
+      )
+    );
+
+    expect(fetchImpl.mock.calls[0][0] as string).toContain('pagination%5Bstart%5D=5');
+  });
+
+  it('reports an empty list so an empty state can be bound', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ data: [] }));
+    const resolve = createConnectorResolver({ getConnector: () => Promise.resolve(manifest), fetchImpl });
+
+    const result = (await resolve(context({ connector: 'cms', resource: 'articles' }))) as { isEmpty: boolean };
+
+    expect(result.isEmpty).toBe(true);
   });
 
   it('leaves an unconfigured provider out of the payload instead of failing the page', async () => {

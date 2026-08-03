@@ -2,6 +2,7 @@ import type { SubscriptionCollaborator, SubscriptionCollaboratorPointer } from '
 import type { Source } from './DataSourceTypes';
 import type { Schema, Element } from './SchemaTypes';
 import type { Segment } from './SegmentTypes';
+import type { SpaceConnector } from './SpaceTypes';
 import type { DisplayMode, Style, StyleState } from './StyleTypes';
 
 // Real VALUES of the global data sources, published at runtime and read by element bindings. Grouped under
@@ -51,6 +52,10 @@ export type BuilderState = CommonState & {
     collaborators: SubscriptionCollaborator[];
     pointers?: Record<string, SubscriptionCollaboratorPointer>;
   };
+  // Connector manifests available to this space, keyed by identifier. Editor-only: the builder needs endpoints and
+  // operator names to offer a connector picker and typed filters, and this store is never serialized into the
+  // published schema — which is what keeps the topology off the visitor's page (RFC 0008 §4.2).
+  connectors: Record<string, SpaceConnector>;
   displayMode: DisplayMode;
   selector?: string;
   styleSelector?: string;

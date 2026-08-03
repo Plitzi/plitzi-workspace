@@ -14,13 +14,20 @@ export type ConnectorLookups = {
   fetchImpl?: typeof fetch;
 };
 
+export type ProviderPagination = 'none' | 'url' | 'append';
+
 type ProviderAttributes = {
   connector?: string;
   resource?: string;
   limit?: string | number;
   singleRecord?: boolean;
   filters?: ConnectorFilter[];
+  pagination?: ProviderPagination;
+  /** Query-string key carrying the requested page. Distinct per element so two lists can page independently. */
+  pageParam?: string;
 };
+
+const DEFAULT_PAGE_PARAM = 'page';
 
 const toLimit = (limit: string | number | undefined, singleRecord: boolean) => {
   if (singleRecord) {
@@ -33,6 +40,24 @@ const toLimit = (limit: string | number | undefined, singleRecord: boolean) => {
 };
 
 /**
+ * Reads the requested page out of the request's query string.
+ *
+ * Both pagination modes arrive here: URL paging puts the parameter in the visitor's address bar, and append mode
+ * puts the same parameter on its `/_rsc` refresh. One code path, so a "load more" window and a shared link of the
+ * same page resolve to the same records.
+ */
+const toPage = (queryParams: Record<string, string>, attributes: ProviderAttributes) => {
+  if (attributes.pagination === 'none' || attributes.singleRecord) {
+    return 1;
+  }
+
+  const raw = queryParams[attributes.pageParam ?? DEFAULT_PAGE_PARAM];
+  const parsed = raw ? parseInt(raw, 10) : NaN;
+
+  return Number.isNaN(parsed) || parsed < 1 ? 1 : parsed;
+};
+
+/**
  * Bridges the connector engine into the RSC pipeline: reads the provider element's own configuration, resolves its
  * manifest and credential server-side, and returns the slice the element will publish as a binding source.
  *
@@ -42,13 +67,8 @@ const toLimit = (limit: string | number | undefined, singleRecord: boolean) => {
 export const createConnectorResolver =
   ({ getConnector, getCredential, fetchImpl }: ConnectorLookups): RscElementResolver =>
   async ({ element, flat, routeParams, queryParams, spaceId }) => {
-    const {
-      connector: connectorId,
-      resource,
-      limit,
-      singleRecord = false,
-      filters
-    } = element.attributes as ProviderAttributes;
+    const attributes = element.attributes as ProviderAttributes;
+    const { connector: connectorId, resource, limit, singleRecord = false, filters } = attributes;
     if (!connectorId) {
       return undefined;
     }
@@ -60,12 +80,20 @@ export const createConnectorResolver =
 
     const credential =
       manifest.credential && getCredential ? await getCredential(spaceId, manifest.credential) : undefined;
+    const pageSize = toLimit(limit, singleRecord);
+    const page = toPage(queryParams, attributes);
+    const pageParam = attributes.pageParam ?? DEFAULT_PAGE_PARAM;
     const { records, pageInfo } = await fetchConnectorRecords({
       manifest,
       credential,
       query: {
         resource,
-        limit: toLimit(limit, singleRecord),
+        limit: pageSize,
+        offset: pageSize === undefined ? undefined : (page - 1) * pageSize,
+        page,
+        // A cursor provider cannot address a window by ordinal, so the client echoes back the token it was handed
+        // under the element's own parameter rather than reusing the page number.
+        cursor: queryParams[`${pageParam}Cursor`],
         filters,
         routeParams,
         queryParams
@@ -73,7 +101,15 @@ export const createConnectorResolver =
       fetchImpl
     });
 
-    const slice = singleRecord ? { record: records[0], pageInfo } : { records, pageInfo };
+    // The state flags travel with the data so an empty or failed provider is authorable with the elements that
+    // already exist — a container binding its visibility to `isEmpty` needs no new slot mechanism.
+    const slice = {
+      ...(singleRecord ? { record: records[0] } : { records }),
+      pageInfo,
+      isEmpty: records.length === 0,
+      hasError: false,
+      errorMessage: ''
+    };
     if (manifest.projection === 'full') {
       return slice;
     }

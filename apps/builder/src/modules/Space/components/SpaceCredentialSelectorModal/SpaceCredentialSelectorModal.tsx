@@ -29,6 +29,19 @@ export type SpaceCredentialSelectorModalProps = {
   onSelect?: (identifier: string) => void;
 };
 
+/** Each provider stores a different bag; a custom credential carries whatever keys its connector manifest names. */
+const buildCredentialData = (values: z.infer<typeof spaceCredentialFormSchema>) => {
+  if (values.provider === 'r2' || values.provider === 's3') {
+    return { accessKeyId: values.accessKeyId, secretAccessKey: values.secretAccessKey };
+  }
+
+  if (values.provider === 'custom') {
+    return JSON.parse(values.data) as Record<string, string>;
+  }
+
+  return values.fields;
+};
+
 const SpaceCredentialSelectorModal = ({
   providersSupported,
   children,
@@ -68,10 +81,7 @@ const SpaceCredentialSelectorModal = ({
       const response = await mutateNetwork('SpaceAddCredential', {
         name: values.name,
         provider: values.provider,
-        data:
-          values.provider === 'r2' || values.provider === 's3'
-            ? { accessKeyId: values.accessKeyId, secretAccessKey: values.secretAccessKey }
-            : values.fields
+        data: buildCredentialData(values)
       });
       if (!response.success) {
         return;

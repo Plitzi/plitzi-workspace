@@ -20,7 +20,7 @@ import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { ThemeContext } from '@plitzi/sdk-shared/theme';
 import AppContext from '@pmodules/App/AppContext';
 
-import type { ComponentPlugin } from '@plitzi/sdk-shared';
+import type { ComponentPlugin, ElementRuntime } from '@plitzi/sdk-shared';
 import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import type { FC } from 'react';
 
@@ -28,10 +28,19 @@ export type ElementSettingsProps = {
   id?: string;
   type?: string;
   attributes?: Record<string, unknown>;
+  /** Where the element resolves its data. Lives on the definition, not the attributes, but a provider's settings
+   *  panel has to show and change it — everything else about that panel depends on which side is fetching. */
+  runtime?: ElementRuntime;
   handleChange?: (key: string, value: string | boolean | number | object, isDefinition?: boolean) => void;
 };
 
-const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleChange }: ElementSettingsProps) => {
+const ElementSettings = ({
+  id = '',
+  type = '',
+  attributes = emptyObject,
+  runtime,
+  handleChange
+}: ElementSettingsProps) => {
   const { previewMode, displayBorderComponents } = use(AppContext);
   const { getComponent } = use(ComponentContext);
   const { theme } = use(ThemeContext);
@@ -93,14 +102,14 @@ const ElementSettings = ({ id = '', type = '', attributes = emptyObject, handleC
               <Heading as="h5" className="m-0">
                 Settings
               </Heading>
-              <Settings {...attributes} id={id} variables={variables} onUpdate={handleChange} />
+              <Settings {...attributes} id={id} runtime={runtime} variables={variables} onUpdate={handleChange} />
             </div>
           )}
           {!Settings && <div className="element-tools--empty">Settings not available.</div>}
         </ErrorBoundary>
       </PlitziServiceProvider>
     ),
-    [plitziContextValue, Settings, theme, attributes, id, variables, handleChange]
+    [plitziContextValue, Settings, theme, attributes, id, runtime, variables, handleChange]
   );
 
   if (Plugin && pluginSettingsStyles?.[type] && pluginSettingsStyles[type].length > 0) {

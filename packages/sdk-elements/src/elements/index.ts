@@ -11,6 +11,7 @@ import Heading from './basic/Heading';
 import Link from './basic/Link';
 import Markdown from './basic/Markdown';
 import Paragraph from './basic/Paragraph';
+import RichText from './basic/RichText';
 import Text from './basic/Text';
 // Form
 import Form from './form/Form';
@@ -31,6 +32,7 @@ import Container from './structure/Container';
 import DialogContainer from './structure/DialogContainer';
 import List from './structure/List';
 import ModalContainer from './structure/ModalContainer';
+import Pagination from './structure/Pagination';
 import TabContainer from './structure/TabContainer';
 
 export * from './advanced/BlockHtml';
@@ -44,6 +46,7 @@ export * from './basic/Heading';
 export * from './basic/Link';
 export * from './basic/Markdown';
 export * from './basic/Paragraph';
+export * from './basic/RichText';
 export * from './basic/Text';
 export * from './form/Form';
 export * from './form/FormControl';
@@ -58,6 +61,7 @@ export * from './structure/Container';
 export * from './structure/DialogContainer';
 export * from './structure/List';
 export * from './structure/ModalContainer';
+export * from './structure/Pagination';
 export * from './structure/TabContainer';
 
 export {
@@ -81,10 +85,12 @@ export {
   FontAwesome,
   Button,
   Paragraph,
+  RichText,
   Text,
   List,
   Link,
   Markdown,
+  Pagination,
   Form,
   FormControl,
   ApiContainer

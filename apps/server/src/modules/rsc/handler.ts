@@ -13,6 +13,35 @@ type RscPayload = {
   revision: number;
 } & SSRRscData;
 
+/** Bounds the reflected location: it only ever selects one of this space's own pages, but it is still input. */
+const MAX_PAGE_LOCATION = 2048;
+
+/**
+ * Rewrites the request to the page the browser is actually on.
+ *
+ * A refresh is issued against `/_rsc`, not against `/blog/my-post`, so resolving straight from `req.path` matches
+ * nothing in `schema.pages` and every client-side refresh silently returns no data. The SDK sends the visitor's
+ * location as `?location=`, and route params plus the page parameter are read from that instead.
+ *
+ * Reflecting it is safe by construction: it is matched against this space's own page list, so the worst a forged
+ * value can do is resolve a page the same visitor could have loaded directly.
+ */
+const withPageLocation = (req: SSRRequest): SSRRequest => {
+  const location = req.query.location;
+  if (!location || !location.startsWith('/') || location.length > MAX_PAGE_LOCATION) {
+    return req;
+  }
+
+  const url = new URL(location, `${req.protocol}://${req.hostname}`);
+  const query = [...url.searchParams.entries()].reduce<Record<string, string>>((acum, [key, value]) => {
+    acum[key] = value;
+
+    return acum;
+  }, {});
+
+  return { ...req, path: url.pathname, search: url.search, url: `${url.pathname}${url.search}`, query };
+};
+
 /**
  * Handles GET /_rsc requests.
  *
@@ -59,6 +88,7 @@ export const handleRsc = async (
         .map(id => id.slice(0, 128))
     : undefined;
   const idsParam = ids?.join(',');
+  const pageRequest = withPageLocation(req);
 
   const ttlMs = config.rsc?.cacheTtlMs ?? DEFAULT_TTL_MS.rsc;
   const isAuthenticated = !!req.ctx.user;
@@ -86,7 +116,7 @@ export const handleRsc = async (
 
   let rscData: SSRRscData;
   try {
-    rscData = await config.adapters.getRscData(req, spaceId, environment, revision, req.ctx.user, ids);
+    rscData = await config.adapters.getRscData(pageRequest, spaceId, environment, revision, req.ctx.user, ids);
   } catch (err) {
     console.error('[RSC] getRscData error:', err);
     res.setStatus(500);

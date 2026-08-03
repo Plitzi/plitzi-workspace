@@ -22,9 +22,9 @@ const InteractionsSourcesProvider = ({ children, previewMode = false }: Interact
   return (
     <InteractionsContextProvider currentPageId={currentPageId} routeParams={routeParams} queryParams={queryParams}>
       <AuthInteractions authProvider={userProvider}>
-          <StateInteractions>
-            <NavigationInteractions previewMode={previewMode}>{children}</NavigationInteractions>
-          </StateInteractions>
+        <StateInteractions>
+          <NavigationInteractions previewMode={previewMode}>{children}</NavigationInteractions>
+        </StateInteractions>
       </AuthInteractions>
     </InteractionsContextProvider>
   );

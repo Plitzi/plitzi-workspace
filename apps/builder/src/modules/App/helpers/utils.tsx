@@ -111,6 +111,22 @@ export const getPopups = ({
       }
     },
     {
+      id: 'connectors',
+      component: undefined,
+      active: activeIds.includes('connectors'),
+      placementSettings: { left: { position: 6, multi: false } },
+      settings: {
+        icon: 'fas fa-plug',
+        title: 'Connectors',
+        width: 350,
+        allowLeftSide: true,
+        allowRightSide: false,
+        allowFloatingSide: false,
+        allowClose: false,
+        resizeHandles: ['se']
+      }
+    },
+    {
       id: 'segments',
       component: <Segments />,
       active: activeIds.includes('segments'),

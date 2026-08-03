@@ -114,50 +114,50 @@ const AppMain = ({
       debugMode={debugMode}
     >
       <SchemaContextProvider>
-          <PluginsContextProvider renderMode={renderMode} sdkStylePath={styleUrl ? styleUrl : sdkStylePath}>
-            <SdkStyleContextProvider>
-              <EventBridgeContextProvider onInit={onInitEventBridge} debugMode={debugMode}>
-                <SegmentsContextProvider>
-                  <AuthContextProvider
+        <PluginsContextProvider renderMode={renderMode} sdkStylePath={styleUrl ? styleUrl : sdkStylePath}>
+          <SdkStyleContextProvider>
+            <EventBridgeContextProvider onInit={onInitEventBridge} debugMode={debugMode}>
+              <SegmentsContextProvider>
+                <AuthContextProvider
+                  previewMode={previewMode}
+                  environment={environment}
+                  server={server}
+                  isHydrating={isHydrating}
+                >
+                  <NavigationContextProvider
+                    renderMode={renderMode}
+                    currentPageId={currentPageId}
                     previewMode={previewMode}
-                    environment={environment}
-                    server={server}
-                    isHydrating={isHydrating}
+                    ssrResult={ssrResult}
                   >
-                    <NavigationContextProvider
-                      renderMode={renderMode}
-                      currentPageId={currentPageId}
-                      previewMode={previewMode}
-                      ssrResult={ssrResult}
-                    >
-                      <GlobalSources environment={environment}>
-                        <InteractionsSourcesProvider previewMode={previewMode}>
-                          <DevToolsContainer
-                            enabled={debugMode}
-                            instanceId={instanceId}
-                            devToolsStyleLink={sdkDevToolsStylePath ? sdkDevToolsStylePath : devtoolsCssUrl}
-                            renderMode="shadow"
-                            innerClassName={clsx({ flex: renderMode === 'iframe' })}
-                          >
-                            <Sdk
-                              renderMode={renderMode}
-                              previewMode={previewMode}
-                              debugMode={debugMode}
-                              environment={environment}
-                              isHydrating={isHydrating}
-                              sdkStylePath={styleUrl ? styleUrl : sdkStylePath}
-                              server={server}
-                              {...sdkProps}
-                            />
-                          </DevToolsContainer>
-                        </InteractionsSourcesProvider>
-                      </GlobalSources>
-                    </NavigationContextProvider>
-                  </AuthContextProvider>
-                </SegmentsContextProvider>
-              </EventBridgeContextProvider>
-            </SdkStyleContextProvider>
-          </PluginsContextProvider>
+                    <GlobalSources environment={environment}>
+                      <InteractionsSourcesProvider previewMode={previewMode}>
+                        <DevToolsContainer
+                          enabled={debugMode}
+                          instanceId={instanceId}
+                          devToolsStyleLink={sdkDevToolsStylePath ? sdkDevToolsStylePath : devtoolsCssUrl}
+                          renderMode="shadow"
+                          innerClassName={clsx({ flex: renderMode === 'iframe' })}
+                        >
+                          <Sdk
+                            renderMode={renderMode}
+                            previewMode={previewMode}
+                            debugMode={debugMode}
+                            environment={environment}
+                            isHydrating={isHydrating}
+                            sdkStylePath={styleUrl ? styleUrl : sdkStylePath}
+                            server={server}
+                            {...sdkProps}
+                          />
+                        </DevToolsContainer>
+                      </InteractionsSourcesProvider>
+                    </GlobalSources>
+                  </NavigationContextProvider>
+                </AuthContextProvider>
+              </SegmentsContextProvider>
+            </EventBridgeContextProvider>
+          </SdkStyleContextProvider>
+        </PluginsContextProvider>
       </SchemaContextProvider>
     </NetworkContextProvider>
   );

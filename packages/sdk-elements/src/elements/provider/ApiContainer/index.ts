@@ -9,7 +9,15 @@ const ApiContainer = Object.assign(BaseApiContainer, {
       accessToken: '',
       mockData: '{}',
       subType: 'div',
-      credentials: 'same-origin'
+      credentials: 'same-origin',
+      connector: '',
+      resource: '',
+      limit: '10',
+      singleRecord: false,
+      filters: [],
+      pagination: 'none',
+      pageParam: 'page',
+      renderWhileLoading: false
     },
     definition: {
       label: 'Api Container',

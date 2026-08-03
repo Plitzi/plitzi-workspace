@@ -1,16 +1,17 @@
-export { fetchConnectorRecords, writeConnectorRecord } from './engine';
+export { fetchConnectorRecords, rebaseMedia, writeConnectorRecord } from './engine';
 export { createConnectorResolver } from './resolver';
 export { getByPath } from './getByPath';
 export { collectBoundPaths, projectSlice } from './projection';
 
 export type { FetchConnectorOptions, WriteConnectorOptions } from './engine';
-export type { ConnectorLookups } from './resolver';
+export type { ConnectorLookups, ProviderPagination } from './resolver';
 export type {
   ConnectorAuth,
   ConnectorCredential,
   ConnectorFilter,
   ConnectorList,
   ConnectorManifest,
+  ConnectorPageInfo,
   ConnectorPagination,
   ConnectorQuery,
   ConnectorRecord,

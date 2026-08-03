@@ -25,14 +25,21 @@ const RscProvider = ({ children, rscPath: rscPathProp, rscData, navigationKey }:
   const endpointPath = rscPathProp ?? schemaRsc?.path ?? '/_rsc';
 
   const fetchRsc = useCallback(
-    async (ids?: string[]) => {
+    async (ids?: string[], params?: Record<string, string>) => {
       if (!enabled || typeof window === 'undefined') {
         return;
       }
 
       try {
-        const url = ids?.length ? `${endpointPath}?ids=${ids.join(',')}` : endpointPath;
-        const res = await fetch(url, { headers: { Accept: 'application/json' } });
+        // The request goes to `/_rsc`, so the server cannot see which page the visitor is on: route params and the
+        // page parameter both come from the location travelling with it.
+        const search = new URLSearchParams({ location: `${window.location.pathname}${window.location.search}` });
+        if (ids?.length) {
+          search.set('ids', ids.join(','));
+        }
+
+        Object.entries(params ?? {}).forEach(([key, value]) => search.set(key, value));
+        const res = await fetch(`${endpointPath}?${search.toString()}`, { headers: { Accept: 'application/json' } });
         if (!res.ok) {
           return;
         }
@@ -60,16 +67,9 @@ const RscProvider = ({ children, rscPath: rscPathProp, rscData, navigationKey }:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, fetchRsc, navigationKey]);
 
-  const getElementData = useCallback((id: string) => rscState.serverData?.[id], [rscState.serverData]);
-
   const value = useMemo<RscContextValue>(
-    () => ({
-      enabled,
-      serverData: rscState.serverData,
-      getElementData,
-      refresh: fetchRsc
-    }),
-    [enabled, rscState.serverData, getElementData, fetchRsc]
+    () => ({ enabled, serverData: rscState.serverData, refresh: fetchRsc }),
+    [enabled, rscState.serverData, fetchRsc]
   );
 
   return <RscContext value={value}>{children}</RscContext>;

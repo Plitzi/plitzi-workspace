@@ -12,9 +12,15 @@ import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 
+import FiltersInput from './components/FiltersInput';
+
+import type { ConnectorFilterValue } from './components/FiltersInput';
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
+import type { ElementRuntime } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
+
+const emptyFilters: ConnectorFilterValue[] = [];
 
 type SettingsProps = {
   query?: string;
@@ -25,7 +31,16 @@ type SettingsProps = {
   subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
   mockData?: string;
   credentials?: RequestCredentials;
-  onUpdate?: (key: string, value: string | boolean | number | object) => void;
+  runtime?: ElementRuntime;
+  connector?: string;
+  resource?: string;
+  limit?: string;
+  singleRecord?: boolean;
+  filters?: ConnectorFilterValue[];
+  pagination?: 'none' | 'url' | 'append';
+  pageParam?: string;
+  renderWhileLoading?: boolean;
+  onUpdate?: (key: string, value: string | boolean | number | object, isDefinition?: boolean) => void;
 };
 
 const Settings = ({
@@ -37,12 +52,23 @@ const Settings = ({
   subType = 'div',
   mockData = '{}',
   credentials = 'same-origin',
+  runtime = 'client',
+  connector = '',
+  resource = '',
+  limit = '10',
+  singleRecord = false,
+  filters = emptyFilters,
+  pagination = 'none',
+  pageParam = 'page',
+  renderWhileLoading = false,
   onUpdate
 }: SettingsProps) => {
   const { theme } = use(ThemeContext);
   const [pageDefinitions] = useBuilderStore('pageDefinitions');
+  const [connectors] = useBuilderStore('connectors');
   const [advancedSettings, setAdvancedSettings] = useState(false);
   const { routeParams, queryParams, currentPageId } = use(NavigationContext);
+  const serverMode = runtime === 'server';
 
   const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
 
@@ -62,6 +88,31 @@ const Settings = ({
     [onUpdate]
   );
 
+  const handleChangeRuntime = useCallback((value: string) => onUpdate?.('runtime', value, true), [onUpdate]);
+
+  const handleChangeSingleRecord = useCallback(
+    (e: ChangeEvent) => onUpdate?.('singleRecord', (e.target as HTMLInputElement).checked),
+    [onUpdate]
+  );
+
+  const handleChangeRenderWhileLoading = useCallback(
+    (e: ChangeEvent) => onUpdate?.('renderWhileLoading', (e.target as HTMLInputElement).checked),
+    [onUpdate]
+  );
+
+  const handleChangeFilters = useCallback((value: ConnectorFilterValue[]) => onUpdate?.('filters', value), [onUpdate]);
+
+  const connectorOptions = useMemo(() => Object.values(connectors), [connectors]);
+
+  // Operators come from the selected manifest, so the filter rows only ever offer comparisons this provider can
+  // actually execute.
+  const operators = useMemo(() => {
+    const manifest = connectorOptions.find(item => item.identifier === connector)?.manifest;
+    const declared = manifest?.operators;
+
+    return declared && typeof declared === 'object' ? Object.keys(declared) : [];
+  }, [connectorOptions, connector]);
+
   const urlParams = useMemo(() => {
     const slug: string = get(pageDefinitions, `${currentPageId}.attributes.slug`, '');
 
@@ -79,29 +130,96 @@ const Settings = ({
 
   return (
     <div className="flex grow flex-col gap-4 py-2">
-      <div className="flex flex-col">
-        <label>Query</label>
-        <CodeMirror
-          className="font-rubik min-h-6.5 basis-auto rounded-sm border border-gray-300 px-1 text-xs"
-          value={query}
-          theme={theme === 'dark' ? 'dark' : 'light'}
-          mode="text"
-          autoComplete={queryParamsAutoComplete}
-          lineWrapping
-          multiline={false}
-          onChange={handleChangeQuery}
-        />
-      </div>
-      <Select value={method} label="Method" onChange={handleChange('method')} size="xs">
-        <option value="get">Get</option>
-        <option value="post">Post</option>
+      <Select value={runtime} label="Data Source" onChange={handleChangeRuntime} size="xs">
+        <option value="client">Browser request</option>
+        <option value="server">Connector (server-side)</option>
       </Select>
-      <Input value={accessToken} label="Access Token" onChange={handleChange('accessToken')} size="xs" />
-      <Select value={credentials} label="Include Credentials" onChange={handleChange('credentials')} size="xs">
-        <option value="include">Include</option>
-        <option value="omit">Omit</option>
-        <option value="same-origin">Same Origin</option>
-      </Select>
+      {serverMode && (
+        <>
+          <Select value={connector} label="Connector" onChange={handleChange('connector')} size="xs">
+            <option value="">Select a connector…</option>
+            {connectorOptions.map(item => (
+              <option key={item.identifier} value={item.identifier}>
+                {item.name}
+              </option>
+            ))}
+          </Select>
+          <Input
+            value={resource}
+            label="Resource"
+            placeholder="posts"
+            title="The content type read through the connector."
+            onChange={handleChange('resource')}
+            size="xs"
+          />
+          <FiltersInput value={filters} operators={operators} onChange={handleChangeFilters} />
+          <Switch
+            checked={singleRecord}
+            size="sm"
+            label="Single record (detail page)"
+            onChange={handleChangeSingleRecord}
+          />
+          {!singleRecord && (
+            <>
+              <Input value={limit} label="Records per page" onChange={handleChange('limit')} size="xs" />
+              <Select value={pagination} label="Pagination" onChange={handleChange('pagination')} size="xs">
+                <option value="none">None</option>
+                <option value="url">URL (indexable)</option>
+                <option value="append">Load more</option>
+              </Select>
+              {pagination !== 'none' && (
+                <Input
+                  value={pageParam}
+                  label="Page parameter"
+                  title="Query-string key this list pages on. Give each list its own so they page independently."
+                  onChange={handleChange('pageParam')}
+                  size="xs"
+                />
+              )}
+            </>
+          )}
+        </>
+      )}
+      {!serverMode && (
+        <>
+          <div className="flex flex-col">
+            <label>Query</label>
+            <CodeMirror
+              className="font-rubik min-h-6.5 basis-auto rounded-sm border border-gray-300 px-1 text-xs"
+              value={query}
+              theme={theme === 'dark' ? 'dark' : 'light'}
+              mode="text"
+              autoComplete={queryParamsAutoComplete}
+              lineWrapping
+              multiline={false}
+              onChange={handleChangeQuery}
+            />
+          </div>
+          <Select value={method} label="Method" onChange={handleChange('method')} size="xs">
+            <option value="get">Get</option>
+            <option value="post">Post</option>
+          </Select>
+          <Input
+            value={accessToken}
+            label="Access Token"
+            title="Bind this to the signed-in visitor's token. A value typed here is saved in the page and served to
+              every visitor — put anything secret behind a connector instead."
+            onChange={handleChange('accessToken')}
+            size="xs"
+          />
+          <Select value={credentials} label="Include Credentials" onChange={handleChange('credentials')} size="xs">
+            <option value="include">Include</option>
+            <option value="omit">Omit</option>
+            <option value="same-origin">Same Origin</option>
+          </Select>
+          <Switch
+            checked={renderWhileLoading}
+            size="sm"
+            label="Render children while loading"
+            onChange={handleChangeRenderWhileLoading}
+          />
+        </>
+      )}
       <Switch checked={advancedSettings} size="sm" label="Advanced Settings" onChange={handleChangeEnabled} />
       {advancedSettings && (
         <>

@@ -21,6 +21,24 @@ export const spaceCredentialFormSchema = z.discriminatedUnion('provider', [
     accessKeyId: z.string().min(1),
     secretAccessKey: z.string().min(1)
   }),
+  // A connector credential is a generic key/value bag on purpose: adding a CMS must never mean adding an enum
+  // value and a migration, so the shape stays open and the manifest decides what the keys mean.
+  z.object({
+    provider: z.literal('custom'),
+    name: z.string().min(2),
+    data: z
+      .string()
+      .min(2)
+      .refine(value => {
+        try {
+          const parsed: unknown = JSON.parse(value);
+
+          return parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed);
+        } catch {
+          return false;
+        }
+      }, 'Expected a JSON object, for example { "token": "…" }')
+  }),
   z.object({
     provider: z.literal('ssr'),
     name: z.string().min(2),
@@ -37,6 +55,41 @@ export const spaceCredentialFormSchema = z.discriminatedUnion('provider', [
     ])
   })
 ]);
+
+type DefaultValuesProps = {
+  name: string;
+  provider: SpaceCredentialProvider;
+  accessKeyId: string;
+  secretAccessKey: string;
+  type: 'basic' | 'token';
+  user: string;
+  pass: string;
+  token: string;
+};
+
+/** One branch per provider, because the form's schema is a discriminated union and each arm carries its own keys. */
+const getDefaultValues = ({
+  name,
+  provider,
+  accessKeyId,
+  secretAccessKey,
+  type,
+  user,
+  pass,
+  token
+}: DefaultValuesProps): z.infer<typeof spaceCredentialFormSchema> => {
+  if (provider === 'ssr') {
+    return { name, provider, fields: { type, ...(type === 'basic' ? { user, pass } : { token }) } } as z.infer<
+      typeof spaceCredentialFormSchema
+    >;
+  }
+
+  if (provider === 'custom') {
+    return { name, provider, data: '{\n  "token": ""\n}' };
+  }
+
+  return { name, provider, accessKeyId, secretAccessKey };
+};
 
 export type SpaceCredentialFormProps = {
   className?: string;
@@ -65,10 +118,7 @@ const SpaceCredentialForm = ({
   onClose
 }: SpaceCredentialFormProps) => {
   const form = useForm({
-    defaultValues:
-      provider === 'ssr'
-        ? { name, provider, fields: { type, ...(type === 'basic' ? { user, pass } : { token }) } }
-        : { name, provider, accessKeyId, secretAccessKey },
+    defaultValues: getDefaultValues({ name, provider, accessKeyId, secretAccessKey, type, user, pass, token }),
     config: { schema: spaceCredentialFormSchema }
   });
 
@@ -82,6 +132,11 @@ const SpaceCredentialForm = ({
       form.formMethods.resetField('fields');
       form.formMethods.resetField('accessKeyId');
       form.formMethods.resetField('secretAccessKey');
+      form.formMethods.resetField('data');
+      if (value === 'custom') {
+        form.formMethods.setValue('data', '{\n  "token": ""\n}');
+      }
+
       if (value === 'ssr') {
         form.formMethods.setValue('fields', { type: 'basic', user: '', pass: '' });
       }
@@ -97,10 +152,14 @@ const SpaceCredentialForm = ({
           <option value="s3">AWS S3</option>
           <option value="r2">Cloudflare R2</option>
           <option value="ssr">Plitzi SSR</option>
+          <option value="custom">CMS / Custom API</option>
         </Form.Select>
         <Form.Conditional when="provider" is={['s3', 'r2']}>
           <Form.Input name="accessKeyId" label="Access Key ID" size="xs" />
           <Form.Input name="secretAccessKey" label="Secret Access Key" size="xs" />
+        </Form.Conditional>
+        <Form.Conditional when="provider" is="custom">
+          <Form.TextArea name="data" label="Credential Data (JSON)" size="xs" />
         </Form.Conditional>
         <Form.Conditional when="provider" is="ssr">
           <Form.Select name="fields.type" label="Auth Type" size="xs">

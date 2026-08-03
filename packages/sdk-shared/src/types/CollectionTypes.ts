@@ -50,4 +50,3 @@ export type Collection = {
   fields: Record<string, CollectionField>;
   records: CollectionRecord[];
 };
-

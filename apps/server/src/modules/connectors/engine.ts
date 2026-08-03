@@ -6,12 +6,12 @@ import type {
   ConnectorCredential,
   ConnectorFilter,
   ConnectorManifest,
+  ConnectorPageInfo,
   ConnectorQuery,
   ConnectorRecord,
   ConnectorResult,
   ConnectorWriteAction
 } from './types';
-import type { PageInfo } from '@plitzi/sdk-shared';
 
 const DEFAULT_LIMIT = 10;
 
@@ -61,6 +61,36 @@ const renderEntries = (entries: Record<string, string>, variables: Record<string
     return acum;
   }, {});
 
+const isTemplate = (value: unknown): value is string => typeof value === 'string' && value.includes('{{');
+
+/**
+ * Resolves a filter's own field and value before the operator template ever sees them.
+ *
+ * A detail page filters on `{{routeParams.slug}}`; without this pass that token reaches the CMS verbatim and the
+ * page matches nothing — or worse, the token is dropped and the query returns the whole collection, so an
+ * arbitrary record renders at a URL that addressed a specific one.
+ *
+ * `unresolved` reports a template that produced nothing. The caller answers with an empty result rather than a
+ * broader query: a page that cannot identify its record has no record, and that is a 404, not a different post.
+ */
+const resolveFilters = (filters: ConnectorFilter[], variables: Record<string, unknown>) =>
+  filters.reduce<{ resolved: ConnectorFilter[]; unresolved: boolean }>(
+    (acum, filter) => {
+      const field = isTemplate(filter.field) ? render(filter.field, variables) : filter.field;
+      const value = isTemplate(filter.value) ? render(filter.value, variables) : filter.value;
+      if (!field || field.includes('{{') || value === '' || (typeof value === 'string' && value.includes('{{'))) {
+        acum.unresolved = true;
+
+        return acum;
+      }
+
+      acum.resolved.push({ ...filter, field, value });
+
+      return acum;
+    },
+    { resolved: [], unresolved: false }
+  );
+
 /** Turns a filter into `key=value` query entries through the manifest's operator templates. */
 const renderFilters = (
   filters: ConnectorFilter[],
@@ -83,6 +113,38 @@ const renderFilters = (
 
     return acum;
   }, {});
+
+/** A relative media path is only ever carried by a key that names a location. */
+const MEDIA_KEY = /(url|src|href)$/i;
+
+/**
+ * Rebases the relative media paths a CMS returns (`/uploads/cover.jpg`) onto the manifest's media host.
+ *
+ * The rule is keyed on the property name, not on the value: a body field whose text happens to start with a slash
+ * must never be rewritten, and only a name ending in `url`, `src` or `href` claims to hold a location. Protocol
+ * relative values are already absolute enough and are left alone.
+ */
+export const rebaseMedia = (value: unknown, baseUrl: string): unknown => {
+  if (Array.isArray(value)) {
+    return value.map(item => rebaseMedia(item, baseUrl));
+  }
+
+  if (value === null || typeof value !== 'object') {
+    return value;
+  }
+
+  return Object.entries(value as Record<string, unknown>).reduce<Record<string, unknown>>((acum, [key, item]) => {
+    if (typeof item === 'string' && MEDIA_KEY.test(key) && item.startsWith('/') && !item.startsWith('//')) {
+      acum[key] = `${baseUrl.replace(/\/+$/, '')}${item}`;
+
+      return acum;
+    }
+
+    acum[key] = rebaseMedia(item, baseUrl);
+
+    return acum;
+  }, {});
+};
 
 /** Builds the outbound headers and, for query-carried schemes, mutates `url` with the auth parameter. */
 const applyAuth = (
@@ -111,7 +173,7 @@ const buildPageInfo = (
   offset: number,
   limit: number,
   nextCursor: string
-): PageInfo => {
+): ConnectorPageInfo => {
   const to = offset + records.length;
   const hasNextPage = total === undefined ? records.length === limit : to < total;
 
@@ -122,9 +184,19 @@ const buildPageInfo = (
     nextCursor: hasNextPage ? nextCursor : '',
     from: offset,
     to,
-    total: total ?? to
+    total: total ?? to,
+    page: Math.floor(offset / Math.max(limit, 1)) + 1,
+    // Unknown rather than guessed: a provider that reports no total cannot say how many pages exist, and a pager
+    // must be able to tell "5 pages" from "keep going until next runs out".
+    pageCount: total === undefined ? 0 : Math.ceil(total / Math.max(limit, 1))
   };
 };
+
+/** The window a query addressed, when it is known before the provider is called (or instead of calling it). */
+const emptyResult = (offset: number, limit: number): ConnectorResult => ({
+  records: [],
+  pageInfo: buildPageInfo([], 0, offset, limit, '')
+});
 
 const toRecords = (items: unknown[], manifest: ConnectorManifest): ConnectorRecord[] =>
   items.reduce<ConnectorRecord[]>((acum, item, index) => {
@@ -171,10 +243,15 @@ export const fetchConnectorRecords = async ({
     params: { ...query.queryParams, ...query.routeParams }
   };
 
+  const { resolved, unresolved } = resolveFilters(query.filters ?? [], variables);
+  if (unresolved) {
+    return emptyResult(offset, limit);
+  }
+
   const url = new URL(render(manifest.list.path, variables), manifest.baseUrl);
   Object.entries({
     ...renderEntries(manifest.list.query ?? {}, variables),
-    ...renderFilters(query.filters ?? [], manifest.operators, variables)
+    ...renderFilters(resolved, manifest.operators, variables)
   }).forEach(([key, value]) => url.searchParams.set(key, value));
 
   const headers = applyAuth(manifest, variables, url);
@@ -188,7 +265,10 @@ export const fetchConnectorRecords = async ({
   const items = Array.isArray(rawItems) ? rawItems : [];
   const rawTotal = manifest.list.totalPath ? getByPath(payload, manifest.list.totalPath) : undefined;
   const total = typeof rawTotal === 'number' ? rawTotal : undefined;
-  const records = toRecords(items, manifest);
+  const mediaBaseUrl = manifest.media?.baseUrl;
+  const records = toRecords(items, manifest).map(record =>
+    mediaBaseUrl ? { ...record, values: rebaseMedia(record.values, mediaBaseUrl) as Record<string, unknown> } : record
+  );
 
   return {
     records,

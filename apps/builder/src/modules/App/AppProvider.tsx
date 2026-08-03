@@ -2,6 +2,7 @@ import { ModalProvider } from '@plitzi/plitzi-ui/Modal';
 
 import AuthContextProvider from '@plitzi/sdk-auth/AuthContextProvider';
 import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
+import ConnectorsContextProvider from '@pmodules/Connectors/ConnectorsContextProvider';
 import NavigationContextProvider from '@pmodules/Navigation/NavigationContextProvider';
 import NetworkContextProvider from '@pmodules/Network/NetworkContextProvider';
 import NetworkSubscriptionsContextProvider from '@pmodules/Network/NetworkSubscriptionsContextProvider';
@@ -59,6 +60,7 @@ const AppProvider = ({
           <UndoableContextProducer>
             <EventBridgeContextProvider debugMode={debugMode}>
               <SegmentsContextProvider>
+                <ConnectorsContextProvider>
                   <PluginsContextProvider>
                     <ModalProvider>
                       <SchemaContextProvider includeSubscriptions={includeSubscriptions}>
@@ -70,6 +72,7 @@ const AppProvider = ({
                       </SchemaContextProvider>
                     </ModalProvider>
                   </PluginsContextProvider>
+                </ConnectorsContextProvider>
               </SegmentsContextProvider>
             </EventBridgeContextProvider>
           </UndoableContextProducer>

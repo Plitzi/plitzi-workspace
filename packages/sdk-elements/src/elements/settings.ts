@@ -10,6 +10,7 @@ import Heading from './basic/Heading/Settings';
 import Link from './basic/Link/Settings';
 import Markdown from './basic/Markdown/Settings';
 import Paragraph from './basic/Paragraph/Settings';
+import RichText from './basic/RichText/Settings';
 import Text from './basic/Text/Settings';
 import Form from './form/Form/Settings';
 import FormControl from './form/FormControl/Settings';
@@ -24,6 +25,7 @@ import DialogContainer from './structure/DialogContainer/Settings';
 import ListItem from './structure/List/ListItem/Settings';
 import List from './structure/List/Settings';
 import ModalContainer from './structure/ModalContainer/Settings';
+import Pagination from './structure/Pagination/Settings';
 import TabContainer from './structure/TabContainer/Settings';
 import TabContainerBody from './structure/TabContainer/TabContainerBody/Settings';
 import TabContainerheader from './structure/TabContainer/TabContainerHeader/Settings';
@@ -58,6 +60,8 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   paragraph: Paragraph,
   text: Text,
   markdown: Markdown,
+  richText: RichText,
+  pagination: Pagination,
   nodeHtml: NodeHtml,
   list: List,
   listItem: ListItem,

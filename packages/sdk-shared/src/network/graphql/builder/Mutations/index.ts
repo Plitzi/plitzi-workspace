@@ -26,6 +26,9 @@ import SpaceAddCdnMutation from './Space/cdns/SpaceAddCdnMutation';
 import SpaceRemoveCdnMutation from './Space/cdns/SpaceRemoveCdnMutation';
 import SpaceSetCdnCredentialMutation from './Space/cdns/SpaceSetCdnCredentialMutation';
 import SpaceUpdateCdnMutation from './Space/cdns/SpaceUpdateCdnMutation';
+import SpaceAddConnectorMutation from './Space/connectors/SpaceAddConnectorMutation';
+import SpaceRemoveConnectorMutation from './Space/connectors/SpaceRemoveConnectorMutation';
+import SpaceUpdateConnectorMutation from './Space/connectors/SpaceUpdateConnectorMutation';
 import SpaceAddCredentialMutation from './Space/credentials/SpaceAddCredentialMutation';
 import SpaceRemoveCredentialMutation from './Space/credentials/SpaceRemoveCredentialMutation';
 import SpaceUpdateCredentialMutation from './Space/credentials/SpaceUpdateCredentialMutation';
@@ -77,6 +80,9 @@ import type { TSpaceAddCdnMutation } from './Space/cdns/SpaceAddCdnMutation';
 import type { TSpaceRemoveCdnMutation } from './Space/cdns/SpaceRemoveCdnMutation';
 import type { TSpaceSetCdnCredentialMutation } from './Space/cdns/SpaceSetCdnCredentialMutation';
 import type { TSpaceUpdateCdnMutation } from './Space/cdns/SpaceUpdateCdnMutation';
+import type { TSpaceAddConnectorMutation } from './Space/connectors/SpaceAddConnectorMutation';
+import type { TSpaceRemoveConnectorMutation } from './Space/connectors/SpaceRemoveConnectorMutation';
+import type { TSpaceUpdateConnectorMutation } from './Space/connectors/SpaceUpdateConnectorMutation';
 import type { TSpaceAddPageFolderMutation } from './Space/folders/SpaceAddPageFolderMutation';
 import type { TSpaceRemovePageFolderMutation } from './Space/folders/SpaceRemovePageFolderMutation';
 import type { TSpaceUpdatePageFolderMutation } from './Space/folders/SpaceUpdatePageFolderMutation';
@@ -122,6 +128,9 @@ export type BuilderMutationsMap = {
   SpaceUpdateCdn: TSpaceUpdateCdnMutation;
   SpaceSetCdnCredential: TSpaceSetCdnCredentialMutation;
   SpaceRemoveCdn: TSpaceRemoveCdnMutation;
+  SpaceAddConnector: TSpaceAddConnectorMutation;
+  SpaceUpdateConnector: TSpaceUpdateConnectorMutation;
+  SpaceRemoveConnector: TSpaceRemoveConnectorMutation;
   SpaceAddCredential: unknown;
   SpaceUpdateCredential: unknown;
   SpaceRemoveCredential: unknown;
@@ -166,7 +175,6 @@ export type BuilderMutationsMap = {
   SegmentStyleUpdateVariable: unknown;
   SegmentStyleRemoveVariable: unknown;
   SegmentPublish: TSegmentPublishMutation;
-
 };
 
 const BuilderMutations = {
@@ -199,6 +207,9 @@ const BuilderMutations = {
   SpaceUpdateCdn: SpaceUpdateCdnMutation,
   SpaceSetCdnCredential: SpaceSetCdnCredentialMutation,
   SpaceRemoveCdn: SpaceRemoveCdnMutation,
+  SpaceAddConnector: SpaceAddConnectorMutation,
+  SpaceUpdateConnector: SpaceUpdateConnectorMutation,
+  SpaceRemoveConnector: SpaceRemoveConnectorMutation,
   SpaceAddCredential: SpaceAddCredentialMutation,
   SpaceUpdateCredential: SpaceUpdateCredentialMutation,
   SpaceRemoveCredential: SpaceRemoveCredentialMutation,
@@ -242,8 +253,7 @@ const BuilderMutations = {
   SegmentStyleAddVariable: SegmentStyleAddVariableMutation,
   SegmentStyleUpdateVariable: SegmentStyleUpdateVariableMutation,
   SegmentStyleRemoveVariable: SegmentStyleRemoveVariableMutation,
-  SegmentPublish: SegmentPublishMutation,
-
+  SegmentPublish: SegmentPublishMutation
 };
 
 export default BuilderMutations;
