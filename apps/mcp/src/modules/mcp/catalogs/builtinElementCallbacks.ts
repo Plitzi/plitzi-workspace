@@ -1,4 +1,4 @@
-import { reconcileParams, unknownParams } from './paramSpec';
+import { reconcileParams } from './paramSpec';
 
 import type { ParamSpec } from './paramSpec';
 
@@ -75,17 +75,6 @@ export const BUILTIN_ELEMENT_CALLBACKS: Record<string, BuiltinElementCallback> =
  *  element-type-specific/plugin callback whose schema is not knowable here). */
 export const getElementCallback = (action: string): BuiltinElementCallback | undefined =>
   Object.hasOwn(BUILTIN_ELEMENT_CALLBACKS, action) ? BUILTIN_ELEMENT_CALLBACKS[action] : undefined;
-
-/** Param keys the agent supplied that are not valid for a built-in element callback (only for CLOSED sets). []
- *  for an unknown action (a plugin/element-specific callback whose schema is not known here). */
-export const unknownElementCallbackParams = (action: string, params: Record<string, unknown>): string[] => {
-  const builtin = getElementCallback(action);
-  if (!builtin || !builtin.strictParams) {
-    return [];
-  }
-
-  return unknownParams(params, builtin.params);
-};
 
 /** Reconcile a `callback` action against the element-callback catalog: unknown keys dropped for a closed callback,
  *  then missing defaults filled (category:"attribute", revertOnFinish:false). An unknown action yields unchanged

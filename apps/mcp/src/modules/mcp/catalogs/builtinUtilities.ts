@@ -1,4 +1,4 @@
-import { reconcileParams, unknownParams } from './paramSpec';
+import { reconcileParams } from './paramSpec';
 
 import type { ParamSpec } from './paramSpec';
 
@@ -69,17 +69,6 @@ export const BUILTIN_UTILITIES: Record<string, BuiltinUtility> = {
 /** The built-in utility for an action, or undefined when the action is not a known built-in utility. */
 export const getUtility = (action: string): BuiltinUtility | undefined =>
   Object.hasOwn(BUILTIN_UTILITIES, action) ? BUILTIN_UTILITIES[action] : undefined;
-
-/** Param keys the agent supplied that are not valid for a built-in utility (only for CLOSED sets). [] for an unknown
- *  action (a utility whose schema is not known here). */
-export const unknownUtilityParams = (action: string, params: Record<string, unknown>): string[] => {
-  const utility = getUtility(action);
-  if (!utility || !utility.strictParams) {
-    return [];
-  }
-
-  return unknownParams(params, utility.params);
-};
 
 /** Reconcile a `utility` action against the utility catalog: unknown keys dropped for a closed utility, then missing
  *  defaults filled. An unknown action yields unchanged params. */

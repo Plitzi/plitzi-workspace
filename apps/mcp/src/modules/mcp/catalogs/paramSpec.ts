@@ -32,11 +32,6 @@ export interface BuiltinParam {
 
 export type ParamSpec = Record<string, BuiltinParam>;
 
-/** Keys the agent supplied that are not declared params — mistakes for a CLOSED (strict) param set, dropped on
- *  apply. Callers decide whether a set is strict; an open set never reports unknown keys. */
-export const unknownParams = (params: Record<string, unknown>, spec: ParamSpec): string[] =>
-  Object.keys(params).filter(key => !(key in spec));
-
 /** Declared params the agent supplied that end up HIDDEN because their own `when` guard is false against the
  *  effective params — they are silently ignored (e.g. a global setState `value` with no `type`, or an
  *  addNotification `autoDismissTimeout` with autoDismiss:false). Evaluated against the effective params so a param

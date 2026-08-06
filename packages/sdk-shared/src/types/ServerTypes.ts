@@ -333,9 +333,9 @@ export type SSRServerConfig = {
   /** MCP (Model Context Protocol) server configuration — exposes schema tools to Claude. */
   mcp?: McpServerConfig;
   /** AI-native MCP server — replaces the standard MCP with a zero-hallucination batch protocol. `path` is where
-   *  it answers inside a server that also serves pages (default /mcp); a dedicated MCP server (createMCPServer)
-   *  owns its whole origin and ignores it. Note that a page server mounts no MCP whatever this says — a
-   *  process that serves both surfaces is built with createServer. */
+   *  it answers inside a server that also serves pages (default /mcp); a dedicated MCP server owns its whole
+   *  origin and ignores it. Note that a page server mounts no MCP whatever this says: the stages live in
+   *  `@plitzi/sdk-mcp`, and passing them to the page server IS what mounts them. */
   mcpAi?: {
     enabled?: boolean;
     path?: string;

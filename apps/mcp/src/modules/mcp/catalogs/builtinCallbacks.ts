@@ -6,7 +6,7 @@
 // faithful, hand-maintained mirror of what each source declares (source id + the FULL param schema each callback
 // exposes in the builder). Mirror any change to the sdk-interactions sources here.
 
-import { reconcileParams, unknownParams } from './paramSpec';
+import { reconcileParams } from './paramSpec';
 
 import type { ParamSpec } from './paramSpec';
 
@@ -110,22 +110,6 @@ export const BUILTIN_GLOBAL_CALLBACKS: Record<string, BuiltinGlobalCallback> = {
  *  callback whose source/schema is not knowable here). */
 export const getGlobalCallback = (action: string): BuiltinGlobalCallback | undefined =>
   Object.hasOwn(BUILTIN_GLOBAL_CALLBACKS, action) ? BUILTIN_GLOBAL_CALLBACKS[action] : undefined;
-
-/** Report the param keys the agent supplied that are not valid for a built-in callback: only for CLOSED
- *  (`strictParams`) callbacks. Returns []
- *  for an unknown action (a plugin callback whose schema is not known here). */
-export const unknownBuiltinParams = (action: string, params: Record<string, unknown>): string[] => {
-  if (!(action in BUILTIN_GLOBAL_CALLBACKS)) {
-    return [];
-  }
-
-  const builtin = BUILTIN_GLOBAL_CALLBACKS[action];
-  if (!builtin.strictParams) {
-    return [];
-  }
-
-  return unknownParams(params, builtin.params);
-};
 
 /** Resolve a `globalCallback` action against the built-in catalog: returns the module id it is registered under
  *  (`source`) and the params reconciled to the callback's schema — unknown keys dropped for a closed callback, then

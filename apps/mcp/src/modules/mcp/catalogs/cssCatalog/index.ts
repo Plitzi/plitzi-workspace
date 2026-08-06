@@ -86,8 +86,6 @@ for (const side of SIDES) {
 /** Every shorthand the MCP accepts and atomizes — advertised to the agent so it knows it may write plain CSS. */
 export const cssShorthands: string[] = Array.from(EXPANDERS.keys()).sort();
 
-export const isCssShorthand = (key: string): boolean => EXPANDERS.has(key);
-
 const expandOne = (key: string, raw: string | number, out: CssProps): boolean => {
   const expand = EXPANDERS.get(key);
   if (!expand) {

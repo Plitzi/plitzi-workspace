@@ -1,6 +1,7 @@
 import { createHttpServer } from './baseServer';
 import { buildCacheManager, createServerCaches, DEFAULT_TTL_MS, destroyServerCaches } from '../../helpers/cache';
 import normalizePlugins, { normalizePluginSource } from '../../helpers/normalizePlugins';
+import { invalidatePluginComponentCache } from '../../modules/ssr/loadPluginComponents';
 import { createMemoryDraftStore } from '../../modules/ssr/preview';
 import { compileTemplate } from '../../modules/ssr/template';
 import { PluginManager } from '../../plugins/manager';
@@ -43,7 +44,12 @@ export const createPageServer = (
       const normalized = normalizePluginSource(source);
       pluginManager.register(`${name}@${normalized.version}`, normalized);
     },
-    invalidate: (name?, version?) => pluginManager.invalidate(name, version)
+    // Clears every loaded component, not just this plugin's: the caches are keyed by filePath and the manager
+    // maps name@version → path internally. Re-importing an already-built file is cheap; serving a stale one is not.
+    invalidate: async (name?, version?) => {
+      await pluginManager.invalidate(name, version);
+      invalidatePluginComponentCache();
+    }
   };
 
   const stages = buildPagePipeline(services, extensions);
@@ -73,4 +79,3 @@ export const createPageServer = (
     }
   });
 };
-

@@ -5,7 +5,6 @@ import { BUILTIN_UTILITIES } from './builtinUtilities';
 
 import type { TransformerInfo } from './builtinTransformers';
 import type { BuiltinParam } from './paramSpec';
-import type { AIInteractionNodeType } from '../types';
 import type { Schema } from '@plitzi/sdk-shared';
 
 // Interaction actions and data-source paths are observed from what already exists in the space — the SSR runtime
@@ -221,6 +220,3 @@ export const observedDataSources = (schema: Schema): Set<string> => {
 
   return sources;
 };
-
-// Kept so a future grouped read/validation can address the node types without re-deriving the union.
-export const INTERACTION_NODE_TYPES: AIInteractionNodeType[] = ['trigger', 'globalCallback', 'callback', 'utility'];

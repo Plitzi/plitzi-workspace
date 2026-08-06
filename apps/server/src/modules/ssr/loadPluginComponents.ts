@@ -70,13 +70,11 @@ export const loadPluginComponents = async (
   return result;
 };
 
-/** Removes one or all entries from the component and failed-import caches. Call after plugin rebuild. */
-export const invalidatePluginComponentCache = (filePath?: string): void => {
-  if (filePath) {
-    componentCache.delete(filePath);
-    failedImports.delete(filePath);
-  } else {
-    componentCache.clear();
-    failedImports.clear();
-  }
+/** Drop the loaded-component and failed-import caches. These are keyed by absolute filePath, and a plugin
+ *  rebuilt at the SAME version lands back on the same path — so without this, invalidating a plugin refreshes
+ *  the build on disk while every render keeps serving the component imported before it. The plugin manager owns
+ *  its own caches and cannot reach these, which is why invalidation has to clear both. */
+export const invalidatePluginComponentCache = (): void => {
+  componentCache.clear();
+  failedImports.clear();
 };

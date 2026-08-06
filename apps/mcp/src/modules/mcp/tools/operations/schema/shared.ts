@@ -155,8 +155,6 @@ export const bindingInput = z.object({
   enabled: z.boolean().optional()
 });
 
-export type BindingInput = z.infer<typeof bindingInput>;
-
 // --- Interactions ---
 
 export const interactionNodeType = z

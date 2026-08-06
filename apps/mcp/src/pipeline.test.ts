@@ -1,5 +1,4 @@
 import { readFileSync } from 'node:fs';
-import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -11,6 +10,7 @@ import { buildMCPPipeline, mcpExtensions } from './pipeline';
 import { mcpOnlyStage, mcpStage } from './stages/mcp';
 import { previewStage } from './stages/preview';
 import { widgetProxyStage } from './stages/proxy';
+import { httpRequest, jsonRpc, RPC_HEADERS } from './tests/httpRequest';
 
 import type { OfflineDataRaw, Schema, SSRAdapters, SSRServer, Style } from '@plitzi/sdk-shared';
 
@@ -30,30 +30,6 @@ const adapters = {
   getSchema: () => Promise.resolve(schema),
   getStyle: () => Promise.resolve(style)
 } as unknown as SSRAdapters;
-
-const request = (
-  method: string,
-  path: string,
-  headers: Record<string, string> = {},
-  body?: string
-): Promise<{ status: number; body: string }> =>
-  new Promise((resolve, reject) => {
-    const req = http.request({ host: '127.0.0.1', port: PORT, method, path, headers }, res => {
-      let data = '';
-      res.on('data', (chunk: Buffer) => (data += chunk.toString()));
-      res.on('end', () => resolve({ status: res.statusCode ?? 0, body: data }));
-    });
-    req.on('error', reject);
-    if (body) {
-      req.write(body);
-    }
-
-    req.end();
-  });
-
-const jsonRpc = (method: string, params?: unknown) => JSON.stringify({ jsonrpc: '2.0', id: 1, method, params });
-
-const RPC_HEADERS = { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream' };
 
 describe('mcpExtensions (what this package hands a page server)', () => {
   // Every stage here gates itself, so all of them belong ahead of the auth middleware chain. Landing one in
@@ -95,7 +71,8 @@ describe('mcpExtensions mounted in a real sdk-server page server', () => {
   afterAll(() => server.close());
 
   it('answers the MCP handshake under /mcp', async () => {
-    const res = await request(
+    const res = await httpRequest(
+      PORT,
       'POST',
       '/mcp',
       RPC_HEADERS,
@@ -111,7 +88,7 @@ describe('mcpExtensions mounted in a real sdk-server page server', () => {
   });
 
   it('keeps serving pages: a route MCP does not claim falls through to the renderer', async () => {
-    const res = await request('GET', '/');
+    const res = await httpRequest(PORT, 'GET', '/');
 
     expect(res.status).toBe(200);
     expect(res.body).toContain('<html');
@@ -119,20 +96,27 @@ describe('mcpExtensions mounted in a real sdk-server page server', () => {
   });
 
   it('still answers the page server health endpoint', async () => {
-    const res = await request('GET', '/health');
+    const res = await httpRequest(PORT, 'GET', '/health');
 
     expect(res.status).toBe(200);
     expect(JSON.parse(res.body)).toEqual({ role: 'ssr+mcp', ok: true });
   });
 
   it('guards the draft-preview endpoint with the shared secret', async () => {
-    const withoutSecret = await request('POST', '/__preview', { 'Content-Type': 'application/json' }, '{"spaceId":1}');
+    const withoutSecret = await httpRequest(
+      PORT,
+      'POST',
+      '/__preview',
+      { 'Content-Type': 'application/json' },
+      '{"spaceId":1}'
+    );
 
     expect(withoutSecret.status).toBe(403);
   });
 
   it('renders a draft preview once the secret matches, minting a one-shot token', async () => {
-    const res = await request(
+    const res = await httpRequest(
+      PORT,
       'POST',
       '/__preview',
       { 'Content-Type': 'application/json', 'x-preview-secret': 'shh' },
@@ -150,7 +134,8 @@ describe('mcpExtensions mounted in a real sdk-server page server', () => {
   // The write side mints the draft; the read side is sdk-server's, and the token is what joins them across the
   // package boundary. A render carrying it must serve the draft rather than the persisted state.
   it('serves the minted draft back to a render carrying the token, exactly once', async () => {
-    const minted = await request(
+    const minted = await httpRequest(
+      PORT,
       'POST',
       '/__preview',
       { 'Content-Type': 'application/json', 'x-preview-secret': 'shh' },
@@ -161,8 +146,8 @@ describe('mcpExtensions mounted in a real sdk-server page server', () => {
     );
     const { token, pagePath } = JSON.parse(minted.body) as { token: string; pagePath: string };
 
-    const first = await request('GET', `${pagePath}?__pt=${token}`);
-    const second = await request('GET', `${pagePath}?__pt=${token}`);
+    const first = await httpRequest(PORT, 'GET', `${pagePath}?__pt=${token}`);
+    const second = await httpRequest(PORT, 'GET', `${pagePath}?__pt=${token}`);
 
     expect(first.status).toBe(200);
     expect(first.body).toContain('Drafted title');
