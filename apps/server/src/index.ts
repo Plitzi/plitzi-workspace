@@ -53,10 +53,12 @@ export type { RscElementResolver, RscResolveContext, ResolveRscDataOptions } fro
 export type {
   ConnectorAuth,
   ConnectorCredential,
+  ConnectorEndpoints,
   ConnectorFilter,
-  ConnectorList,
+  ConnectorListEndpoint,
   ConnectorLookups,
   ConnectorManifest,
+  ConnectorManifestDraft,
   ConnectorPageInfo,
   ConnectorPagination,
   ConnectorQuery,

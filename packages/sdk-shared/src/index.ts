@@ -6,6 +6,7 @@ export * from './style';
 export * from './schema';
 export * from './elements';
 export * from './dataSource';
+export * from './connectors';
 export * from './network';
 export * from './network/graphql';
 export * from './segments';

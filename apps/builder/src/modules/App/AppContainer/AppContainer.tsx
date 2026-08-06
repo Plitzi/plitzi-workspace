@@ -9,6 +9,7 @@ import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 import AppContext from '../AppContext';
 import AppHeader from '../components/AppHeader';
 import ContainerConnectors from './containers/ContainerConnectors';
+import ContainerCredentials from './containers/ContainerCredentials';
 import ContainerDefault from './containers/ContainerDefault';
 import ContainerIntegrations from './containers/ContainerIntegrations';
 import ContainerMarketplace from './containers/ContainerMarketplace';
@@ -85,10 +86,11 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
               />
             )}
             <div className="flex grow basis-0 flex-col overflow-hidden">
-              {!['connectors', 'marketplace', 'integrations', 'settings', 'sitemap'].includes(popupsActiveLeft[0]) && (
-                <ContainerDefault externalStyle={externalStyle} previewMode={previewMode} />
-              )}
+              {!['connectors', 'credentials', 'marketplace', 'integrations', 'settings', 'sitemap'].includes(
+                popupsActiveLeft[0]
+              ) && <ContainerDefault externalStyle={externalStyle} previewMode={previewMode} />}
               {popupsActiveLeft[0] === 'connectors' && <ContainerConnectors />}
+              {popupsActiveLeft[0] === 'credentials' && <ContainerCredentials />}
               {popupsActiveLeft[0] === 'marketplace' && <ContainerMarketplace />}
               {popupsActiveLeft[0] === 'integrations' && <ContainerIntegrations />}
               {popupsActiveLeft[0] === 'sitemap' && <ContainerSitemap />}

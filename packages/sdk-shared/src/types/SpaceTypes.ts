@@ -1,4 +1,5 @@
 import type { Environment } from './CommonTypes';
+import type { ConnectorManifestDraft } from './ConnectorTypes';
 
 export type SpaceCredentialProvider = 's3' | 'r2' | 'ssr' | 'custom';
 
@@ -13,7 +14,7 @@ export type SpaceConnector = {
   id: number;
   identifier: string;
   name: string;
-  manifest: Record<string, unknown>;
+  manifest: ConnectorManifestDraft;
   createdAt: number;
   updatedAt: number;
 };

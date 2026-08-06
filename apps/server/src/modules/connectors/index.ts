@@ -8,9 +8,11 @@ export type { ConnectorLookups, ProviderPagination } from './resolver';
 export type {
   ConnectorAuth,
   ConnectorCredential,
+  ConnectorEndpoints,
   ConnectorFilter,
-  ConnectorList,
+  ConnectorListEndpoint,
   ConnectorManifest,
+  ConnectorManifestDraft,
   ConnectorPageInfo,
   ConnectorPagination,
   ConnectorQuery,

@@ -10,10 +10,12 @@ const manifest: ConnectorManifest = {
   credential: 'cms-prod',
   baseUrl: 'https://cms.example.com',
   auth: { in: 'header', name: 'Authorization', value: 'Bearer {{credential.token}}' },
-  list: { path: '/api/{{resource}}', itemsPath: 'data', idPath: 'documentId' },
-  write: {
-    create: { method: 'POST', path: '/api/{{resource}}', bodyPath: 'data' },
-    update: { method: 'PUT', path: '/api/{{resource}}/{{id}}', bodyPath: 'data' }
+  endpoints: {
+    list: { path: '/api/{{resource}}', itemsPath: 'data', idPath: 'documentId' },
+    write: {
+      create: { method: 'POST', path: '/api/{{resource}}', bodyPath: 'data' },
+      update: { method: 'PUT', path: '/api/{{resource}}/{{id}}', bodyPath: 'data' }
+    }
   }
 };
 

@@ -11,7 +11,7 @@ const manifest: ConnectorManifest = {
   credential: 'cms-prod',
   baseUrl: 'https://cms.example.com',
   auth: { in: 'header', name: 'Authorization', value: 'Bearer {{credential.token}}' },
-  list: { path: '/api/{{resource}}', itemsPath: 'data', idPath: 'documentId' },
+  endpoints: { list: { path: '/api/{{resource}}', itemsPath: 'data', idPath: 'documentId' } },
   operators: { eq: 'filters[{{field}}][$eq]={{value}}' }
 };
 
@@ -171,7 +171,12 @@ describe('createConnectorResolver', () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(body));
     const pagedManifest: ConnectorManifest = {
       ...manifest,
-      list: { ...manifest.list, query: { 'pagination[start]': '{{offset}}', 'pagination[limit]': '{{limit}}' } }
+      endpoints: {
+        list: {
+          ...manifest.endpoints.list,
+          query: { 'pagination[start]': '{{offset}}', 'pagination[limit]': '{{limit}}' }
+        }
+      }
     };
     const resolve = createConnectorResolver({ getConnector: () => Promise.resolve(pagedManifest), fetchImpl });
 
@@ -188,7 +193,7 @@ describe('createConnectorResolver', () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(body));
     const pagedManifest: ConnectorManifest = {
       ...manifest,
-      list: { ...manifest.list, query: { 'pagination[start]': '{{offset}}' } }
+      endpoints: { list: { ...manifest.endpoints.list, query: { 'pagination[start]': '{{offset}}' } } }
     };
     const resolve = createConnectorResolver({ getConnector: () => Promise.resolve(pagedManifest), fetchImpl });
 

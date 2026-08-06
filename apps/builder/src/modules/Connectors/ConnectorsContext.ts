@@ -1,16 +1,18 @@
 import { createContext } from 'react';
 
-import type { SpaceConnector } from '@plitzi/sdk-shared';
+import type { ConnectorManifestDraft, SpaceConnector } from '@plitzi/sdk-shared';
 
 export type ConnectorsContextValue = {
   connectors: Record<string, SpaceConnector>;
   isLoading: boolean;
   error: string;
-  addConnector: (name: string, manifest: Record<string, unknown>) => Promise<SpaceConnector | undefined>;
+  /** True when the space has at least one deployment that can run server code, which is what resolves connectors. */
+  hasServerRendering: boolean;
+  addConnector: (name: string, manifest: ConnectorManifestDraft) => Promise<SpaceConnector | undefined>;
   updateConnector: (
     identifier: string,
     name: string,
-    manifest: Record<string, unknown>
+    manifest: ConnectorManifestDraft
   ) => Promise<SpaceConnector | undefined>;
   removeConnector: (identifier: string) => Promise<boolean>;
 };
@@ -19,6 +21,7 @@ const ConnectorsContext = createContext<ConnectorsContextValue>({
   connectors: {},
   isLoading: false,
   error: '',
+  hasServerRendering: false,
   addConnector: () => Promise.resolve(undefined),
   updateConnector: () => Promise.resolve(undefined),
   removeConnector: () => Promise.resolve(false)

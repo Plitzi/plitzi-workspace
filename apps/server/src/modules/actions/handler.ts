@@ -1,3 +1,5 @@
+import { normalizeManifest } from '@plitzi/sdk-shared/connectors';
+
 import { writeConnectorRecord } from '../connectors/engine';
 
 import type { ConnectorLookups } from '../connectors/resolver';
@@ -79,14 +81,15 @@ export const handleAction = async (
     return;
   }
 
-  const manifest = await lookups.getConnector(spaceId, connectorId);
-  if (!manifest) {
+  const stored = await lookups.getConnector(spaceId, connectorId);
+  if (!stored) {
     fail(res, 404, 'Unknown connector');
 
     return;
   }
 
-  if (!manifest.write?.[action]) {
+  const manifest = normalizeManifest(stored);
+  if (!manifest.endpoints.write?.[action]) {
     fail(res, 405, `Connector does not allow "${action}"`);
 
     return;

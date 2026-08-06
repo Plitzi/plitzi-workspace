@@ -1,3 +1,4 @@
+import { normalizeManifest } from '@plitzi/sdk-shared/connectors';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { getByPath } from './getByPath';
@@ -5,6 +6,7 @@ import { getByPath } from './getByPath';
 import type {
   ConnectorCredential,
   ConnectorFilter,
+  ConnectorListEndpoint,
   ConnectorManifest,
   ConnectorPageInfo,
   ConnectorQuery,
@@ -12,6 +14,9 @@ import type {
   ConnectorResult,
   ConnectorWriteAction
 } from './types';
+
+/** Everything that describes the connection rather than one call: the same for every endpoint the manifest holds. */
+type ConnectorConnection = Omit<ConnectorManifest, 'endpoints'>;
 
 const DEFAULT_LIMIT = 10;
 
@@ -148,20 +153,20 @@ export const rebaseMedia = (value: unknown, baseUrl: string): unknown => {
 
 /** Builds the outbound headers and, for query-carried schemes, mutates `url` with the auth parameter. */
 const applyAuth = (
-  manifest: ConnectorManifest,
+  connection: ConnectorConnection,
   variables: Record<string, unknown>,
   url: URL
 ): Record<string, string> => {
-  const headers = renderEntries(manifest.headers ?? {}, variables);
-  if (!manifest.auth) {
+  const headers = renderEntries(connection.headers ?? {}, variables);
+  if (!connection.auth) {
     return headers;
   }
 
-  const value = render(manifest.auth.value, variables);
-  if (manifest.auth.in === 'header') {
-    headers[manifest.auth.name] = value;
+  const value = render(connection.auth.value, variables);
+  if (connection.auth.in === 'header') {
+    headers[connection.auth.name] = value;
   } else {
-    url.searchParams.set(manifest.auth.name, value);
+    url.searchParams.set(connection.auth.name, value);
   }
 
   return headers;
@@ -198,14 +203,14 @@ const emptyResult = (offset: number, limit: number): ConnectorResult => ({
   pageInfo: buildPageInfo([], 0, offset, limit, '')
 });
 
-const toRecords = (items: unknown[], manifest: ConnectorManifest): ConnectorRecord[] =>
+const toRecords = (items: unknown[], list: ConnectorListEndpoint): ConnectorRecord[] =>
   items.reduce<ConnectorRecord[]>((acum, item, index) => {
     if (item === null || typeof item !== 'object') {
       return acum;
     }
 
-    const id = toScalar(getByPath(item, manifest.list.idPath ?? 'id'));
-    const values = getByPath(item, manifest.list.valuesPath ?? '.');
+    const id = toScalar(getByPath(item, list.idPath ?? 'id'));
+    const values = getByPath(item, list.valuesPath ?? '.');
 
     acum.push({
       // A provider that returns no usable id still yields addressable records: position within the window is the
@@ -229,6 +234,8 @@ export const fetchConnectorRecords = async ({
   query = {},
   fetchImpl = fetch
 }: FetchConnectorOptions): Promise<ConnectorResult> => {
+  const { endpoints, ...connection } = normalizeManifest(manifest);
+  const { list } = endpoints;
   const limit = query.limit ?? DEFAULT_LIMIT;
   const offset = query.offset ?? 0;
   const variables: Record<string, unknown> = {
@@ -248,25 +255,25 @@ export const fetchConnectorRecords = async ({
     return emptyResult(offset, limit);
   }
 
-  const url = new URL(render(manifest.list.path, variables), manifest.baseUrl);
+  const url = new URL(render(list.path, variables), connection.baseUrl);
   Object.entries({
-    ...renderEntries(manifest.list.query ?? {}, variables),
-    ...renderFilters(resolved, manifest.operators, variables)
+    ...renderEntries(list.query ?? {}, variables),
+    ...renderFilters(resolved, connection.operators, variables)
   }).forEach(([key, value]) => url.searchParams.set(key, value));
 
-  const headers = applyAuth(manifest, variables, url);
+  const headers = applyAuth(connection, variables, url);
   const response = await fetchImpl(url.toString(), { method: 'GET', headers });
   if (!response.ok) {
-    throw new Error(`Connector ${manifest.id} responded ${response.status} for ${url.pathname}`);
+    throw new Error(`Connector ${connection.id} responded ${response.status} for ${url.pathname}`);
   }
 
   const payload: unknown = await response.json();
-  const rawItems = getByPath(payload, manifest.list.itemsPath);
+  const rawItems = getByPath(payload, list.itemsPath);
   const items = Array.isArray(rawItems) ? rawItems : [];
-  const rawTotal = manifest.list.totalPath ? getByPath(payload, manifest.list.totalPath) : undefined;
+  const rawTotal = list.totalPath ? getByPath(payload, list.totalPath) : undefined;
   const total = typeof rawTotal === 'number' ? rawTotal : undefined;
-  const mediaBaseUrl = manifest.media?.baseUrl;
-  const records = toRecords(items, manifest).map(record =>
+  const mediaBaseUrl = connection.media?.baseUrl;
+  const records = toRecords(items, list).map(record =>
     mediaBaseUrl ? { ...record, values: rebaseMedia(record.values, mediaBaseUrl) as Record<string, unknown> } : record
   );
 
@@ -300,9 +307,10 @@ export const writeConnectorRecord = async ({
   values = {},
   fetchImpl = fetch
 }: WriteConnectorOptions): Promise<ConnectorRecord | undefined> => {
-  const operation = manifest.write?.[action];
+  const { endpoints, ...connection } = normalizeManifest(manifest);
+  const operation = endpoints.write?.[action];
   if (!operation) {
-    throw new Error(`Connector ${manifest.id} does not allow "${action}"`);
+    throw new Error(`Connector ${connection.id} does not allow "${action}"`);
   }
 
   const variables: Record<string, unknown> = {
@@ -311,8 +319,8 @@ export const writeConnectorRecord = async ({
     id: recordId ?? '',
     values
   };
-  const url = new URL(render(operation.path, variables), manifest.baseUrl);
-  const headers = applyAuth(manifest, variables, url);
+  const url = new URL(render(operation.path, variables), connection.baseUrl);
+  const headers = applyAuth(connection, variables, url);
   headers['Content-Type'] = 'application/json';
 
   const response = await fetchImpl(url.toString(), {
@@ -321,7 +329,7 @@ export const writeConnectorRecord = async ({
     body: operation.method === 'DELETE' ? undefined : JSON.stringify(wrapBody(values, operation.bodyPath))
   });
   if (!response.ok) {
-    throw new Error(`Connector ${manifest.id} responded ${response.status} for ${action} on ${url.pathname}`);
+    throw new Error(`Connector ${connection.id} responded ${response.status} for ${action} on ${url.pathname}`);
   }
 
   if (action === 'delete' || response.status === 204) {
@@ -329,7 +337,8 @@ export const writeConnectorRecord = async ({
   }
 
   const payload: unknown = await response.json();
-  const item = getByPath(payload, manifest.list.itemsPath === undefined ? '.' : manifest.list.itemsPath);
+  const { list } = endpoints;
+  const item = getByPath(payload, list.itemsPath === undefined ? '.' : list.itemsPath);
 
-  return toRecords(Array.isArray(item) ? item : [item], manifest)[0];
+  return toRecords(Array.isArray(item) ? item : [item], list)[0];
 };

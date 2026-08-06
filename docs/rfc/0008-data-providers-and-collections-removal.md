@@ -146,6 +146,8 @@ just no tokens — **no topology**.
   "credential": "strapi-prod",           // SpaceCredential.identifier — reference only
   "baseUrl": "https://cms.example.com",
   "auth": { "in": "header", "name": "Authorization", "value": "Bearer {{credential.token}}" },
+  // RFC 0009 §3.8 moved `list` and `write` under an `endpoints` key and dropped the authored `id`.
+  // Manifests in this shape are still read; the builder writes the current one.
   "list": {
     "path": "/api/{{resource}}",
     "query": { "pagination[start]": "{{offset}}", "pagination[limit]": "{{limit}}" },

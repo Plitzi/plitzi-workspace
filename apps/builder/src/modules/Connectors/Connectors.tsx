@@ -1,3 +1,4 @@
+import Alert from '@plitzi/plitzi-ui/Alert';
 import Card from '@plitzi/plitzi-ui/Card';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use, useMemo, useState } from 'react';
@@ -5,15 +6,20 @@ import { useCallback, use, useMemo, useState } from 'react';
 import ConnectorForm from './components/ConnectorForm';
 import ConnectorList from './components/ConnectorList';
 import ConnectorsContext from './ConnectorsContext';
+import { CONNECTOR_SERVER_ONLY_NOTE } from './helpers/manifestDoc';
+
+import type { ConnectorManifestDraft } from '@plitzi/sdk-shared';
 
 const Connectors = () => {
-  const { connectors, isLoading, error, addConnector, updateConnector, removeConnector } = use(ConnectorsContext);
+  const { connectors, isLoading, error, hasServerRendering, addConnector, updateConnector, removeConnector } =
+    use(ConnectorsContext);
   const { showDialog } = useModal();
   const [editing, setEditing] = useState<string | undefined>(undefined);
   const [isCreating, setIsCreating] = useState(false);
 
   const items = useMemo(() => Object.values(connectors), [connectors]);
   const connector = editing ? connectors[editing] : undefined;
+  const isEditing = isCreating || Boolean(connector);
 
   const handleCreate = useCallback(() => {
     setEditing(undefined);
@@ -26,7 +32,7 @@ const Connectors = () => {
   }, []);
 
   const handleSubmit = useCallback(
-    async (name: string, manifest: Record<string, unknown>) => {
+    async (name: string, manifest: ConnectorManifestDraft) => {
       if (connector) {
         await updateConnector(connector.identifier, name, manifest);
       } else {
@@ -65,10 +71,24 @@ const Connectors = () => {
       <Card.Body grow>
         {isLoading && <div className="p-4 text-sm text-gray-500">Loading connectors…</div>}
         {!isLoading && error && <div className="p-4 text-sm text-red-600">{error}</div>}
-        {!isLoading && !error && !isCreating && !connector && (
+        {!isLoading && !error && !hasServerRendering && (
+          <div className="p-4 pb-0">
+            <Alert intent="warning" size="sm" solid={false}>
+              <div className="flex flex-col gap-1 text-xs">
+                <span className="font-medium">This space has no server-rendered deployment.</span>
+                <span>{CONNECTOR_SERVER_ONLY_NOTE}</span>
+                <span>
+                  Connectors still work in the builder preview. To reach visitors, deploy the space with a Plitzi SSR
+                  credential.
+                </span>
+              </div>
+            </Alert>
+          </div>
+        )}
+        {!isLoading && !error && !isEditing && (
           <ConnectorList connectors={items} onSelect={setEditing} onRemove={handleRemove} onCreate={handleCreate} />
         )}
-        {!isLoading && !error && (isCreating || connector) && (
+        {!isLoading && !error && isEditing && (
           <ConnectorForm
             key={connector?.identifier ?? 'new'}
             connector={connector}

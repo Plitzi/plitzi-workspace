@@ -66,6 +66,7 @@ const Settings = ({
   const { theme } = use(ThemeContext);
   const [pageDefinitions] = useBuilderStore('pageDefinitions');
   const [connectors] = useBuilderStore('connectors');
+  const [hasServerRendering] = useBuilderStore('hasServerRendering');
   const [advancedSettings, setAdvancedSettings] = useState(false);
   const { routeParams, queryParams, currentPageId } = use(NavigationContext);
   const serverMode = runtime === 'server';
@@ -134,8 +135,26 @@ const Settings = ({
         <option value="client">Browser request</option>
         <option value="server">Connector (server-side)</option>
       </Select>
+      <span className="text-xs text-gray-500 dark:text-zinc-400">
+        {serverMode
+          ? 'The server reads the CMS and hands the page its records. The endpoint and the credential never reach the browser, and the content is in the HTML search engines see.'
+          : 'The browser calls the URL directly. Anything it needs to authenticate with is visible to the visitor, and the content is not in the initial HTML.'}
+      </span>
       {serverMode && (
         <>
+          {!hasServerRendering && (
+            <div className="rounded-sm border border-yellow-300 bg-yellow-50 p-2 text-xs text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950 dark:text-yellow-200">
+              This space has no server-rendered deployment. Connectors resolve here in the builder, but a published page
+              would have no server to resolve them — publish with a Plitzi SSR credential, or read the API from the
+              browser instead.
+            </div>
+          )}
+          {connectorOptions.length === 0 && (
+            <div className="rounded-sm border border-gray-300 p-2 text-xs text-gray-500 dark:border-zinc-600 dark:text-zinc-400">
+              No connectors yet. Add one in the Connectors panel — it holds the CMS endpoints, and the credential stays
+              on the server.
+            </div>
+          )}
           <Select value={connector} label="Connector" onChange={handleChange('connector')} size="xs">
             <option value="">Select a connector…</option>
             {connectorOptions.map(item => (

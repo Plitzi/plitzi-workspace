@@ -127,10 +127,26 @@ export const getPopups = ({
       }
     },
     {
+      id: 'credentials',
+      component: undefined,
+      active: activeIds.includes('credentials'),
+      placementSettings: { left: { position: 7, multi: false } },
+      settings: {
+        icon: 'fa-solid fa-key',
+        title: 'Credentials',
+        width: 350,
+        allowLeftSide: true,
+        allowRightSide: false,
+        allowFloatingSide: false,
+        allowClose: false,
+        resizeHandles: ['se']
+      }
+    },
+    {
       id: 'segments',
       component: <Segments />,
       active: activeIds.includes('segments'),
-      placementSettings: { left: { position: 7, minSize: 200 } },
+      placementSettings: { left: { position: 8, minSize: 200 } },
       settings: {
         icon: 'fa-solid fa-diamond',
         title: 'Segments',
@@ -146,7 +162,7 @@ export const getPopups = ({
       id: 'layerManager',
       component: <BuilderTree />,
       active: activeIds.includes('layerManager'),
-      placementSettings: { left: { position: 8, minSize: 200 } },
+      placementSettings: { left: { position: 9, minSize: 200 } },
       settings: {
         icon: 'fa-solid fa-layer-group',
         title: 'Layers',
@@ -163,7 +179,7 @@ export const getPopups = ({
       component: <StyleAdvanceEditor />,
       size: 'custom',
       active: activeIds.includes('advanceStyle'),
-      placementSettings: { left: { position: 9, minSize: 200 } },
+      placementSettings: { left: { position: 10, minSize: 200 } },
       settings: {
         icon: 'fa-solid fa-file-code text-base',
         title: 'Advance Style',
@@ -180,7 +196,7 @@ export const getPopups = ({
       size: 'custom',
       component: <StateManager />,
       active: activeIds.includes('stateManager'),
-      placementSettings: { left: { position: 10, minSize: 200 } },
+      placementSettings: { left: { position: 11, minSize: 200 } },
       settings: {
         icon: (
           <Sidebar.Icon className="p-2" title="State Manager">
@@ -200,7 +216,7 @@ export const getPopups = ({
       id: 'settings',
       component: undefined,
       active: activeIds.includes('settings'),
-      placementSettings: { left: { position: 11, multi: false } },
+      placementSettings: { left: { position: 12, multi: false } },
       settings: {
         icon: 'fas fa-cog',
         title: 'Settings',

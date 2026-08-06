@@ -18,6 +18,7 @@ const SpaceDeploymentsQuery = gql`
         default
         credential {
           identifier
+          provider
         }
         createdAt
         updatedAt

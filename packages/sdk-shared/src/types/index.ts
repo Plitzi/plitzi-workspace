@@ -9,6 +9,7 @@ export * from './SegmentTypes';
 export * from './BuilderTypes';
 export * from './NavigationTypes';
 export * from './CollectionTypes';
+export * from './ConnectorTypes';
 export * from './ComponentTypes';
 export * from './StateTypes';
 export * from './CommonTypes';

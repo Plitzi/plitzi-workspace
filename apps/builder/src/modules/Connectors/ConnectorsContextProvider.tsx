@@ -1,18 +1,26 @@
-import { useCallback, use, useEffect, useMemo, useState } from 'react';
+import { useCallback, use, useMemo } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStoreSync } from '@plitzi/sdk-shared/store';
+import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
 import ConnectorsContext from './ConnectorsContext';
 
 import type { ConnectorsContextValue } from './ConnectorsContext';
-import type { BuilderMutationsMap, BuilderQueriesMap, SpaceConnector } from '@plitzi/sdk-shared';
+import type {
+  BuilderMutationsMap,
+  BuilderQueriesMap,
+  ConnectorManifestDraft,
+  SpaceConnector
+} from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { ReactNode } from 'react';
 
 export type ConnectorsContextProviderProps = {
   children: ReactNode;
 };
+
+const emptyConnectors: SpaceConnector[] = [];
 
 const byIdentifier = (connectors: SpaceConnector[]) =>
   connectors.reduce<Record<string, SpaceConnector>>((acum, connector) => {
@@ -30,84 +38,74 @@ const byIdentifier = (connectors: SpaceConnector[]) =>
  * so putting endpoints there does not put them on a visitor's page.
  */
 const ConnectorsContextProvider = ({ children }: ConnectorsContextProviderProps) => {
-  const { query, mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
-  const [connectors, setConnectors] = useState<Record<string, SpaceConnector>>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<
+    BuilderQueriesMap,
+    BuilderMutationsMap
+  >;
+  const {
+    data = emptyConnectors,
+    error,
+    isLoading,
+    mutate
+  } = useGraphQL('SpaceConnectors', data => data?.SpaceConnectors.edges, { pageSize: 100 });
+  // A connector is worthless without a server to resolve it, and the space only has one when something it deploys to
+  // can run server code. Read it off the deployments rather than a flag, so the panel cannot claim otherwise.
+  const { data: deployments } = useGraphQL('SpaceDeployments', data => data?.SpaceDeployments.edges);
+
+  const connectors = useMemo(() => byIdentifier(data), [data]);
+  // Unknown counts as "has one": the deployments arrive a moment after the panel does, and a space that is correctly
+  // set up should not flash a warning telling its owner it is broken. A late warning beats a wrong one.
+  const hasServerRendering = useMemo(
+    () => deployments === undefined || deployments.some(deployment => deployment.credential?.provider === 'ssr'),
+    [deployments]
+  );
 
   useBuilderStoreSync('connectors', connectors);
-
-  useEffect(() => {
-    let cancelled = false;
-    const fetchConnectors = async () => {
-      try {
-        const response = await query('SpaceConnectors', { pageSize: 100 }, 'network-only');
-        if (cancelled) {
-          return;
-        }
-
-        setConnectors(byIdentifier(response.result?.SpaceConnectors.edges ?? []));
-      } catch (err) {
-        if (!cancelled) {
-          setError((err as Error).message);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    void fetchConnectors();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [query]);
+  useBuilderStoreSync('hasServerRendering', hasServerRendering);
 
   const addConnector = useCallback(
-    async (name: string, manifest: Record<string, unknown>) => {
-      const response = await mutate('SpaceAddConnector', { name, manifest });
-      const connector = response.result?.SpaceAddConnector;
-      if (connector) {
-        setConnectors(state => ({ ...state, [connector.identifier]: connector }));
-      }
+    async (name: string, manifest: ConnectorManifestDraft) => {
+      const response = await mutateNetwork('SpaceAddConnector', { name, manifest });
+      // Revalidating rather than merging the payload in: the list is a query, and one owner for it means a create
+      // that succeeded server-side can never leave the panel showing something else.
+      await mutate();
 
-      return connector;
+      return response.result;
     },
-    [mutate]
+    [mutate, mutateNetwork]
   );
 
   const updateConnector = useCallback(
-    async (identifier: string, name: string, manifest: Record<string, unknown>) => {
-      const response = await mutate('SpaceUpdateConnector', { identifier, name, manifest });
-      const connector = response.result?.SpaceUpdateConnector;
-      if (connector) {
-        setConnectors(state => ({ ...state, [connector.identifier]: connector }));
-      }
+    async (identifier: string, name: string, manifest: ConnectorManifestDraft) => {
+      const response = await mutateNetwork('SpaceUpdateConnector', { identifier, name, manifest });
+      await mutate();
 
-      return connector;
+      return response.result;
     },
-    [mutate]
+    [mutate, mutateNetwork]
   );
 
   const removeConnector = useCallback(
     async (identifier: string) => {
-      const response = await mutate('SpaceRemoveConnector', { identifier });
-      if (!response.result?.SpaceRemoveConnector) {
-        return false;
-      }
+      const response = await mutateNetwork('SpaceRemoveConnector', { identifier });
+      await mutate();
 
-      setConnectors(state => Object.fromEntries(Object.entries(state).filter(([key]) => key !== identifier)));
-
-      return true;
+      return Boolean(response.result);
     },
-    [mutate]
+    [mutate, mutateNetwork]
   );
 
   const value = useMemo<ConnectorsContextValue>(
-    () => ({ connectors, isLoading, error, addConnector, updateConnector, removeConnector }),
-    [connectors, isLoading, error, addConnector, updateConnector, removeConnector]
+    () => ({
+      connectors,
+      isLoading,
+      error: error?.message ?? '',
+      hasServerRendering,
+      addConnector,
+      updateConnector,
+      removeConnector
+    }),
+    [connectors, isLoading, error, hasServerRendering, addConnector, updateConnector, removeConnector]
   );
 
   return <ConnectorsContext value={value}>{children}</ConnectorsContext>;

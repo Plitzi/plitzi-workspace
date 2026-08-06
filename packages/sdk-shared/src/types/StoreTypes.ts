@@ -56,6 +56,10 @@ export type BuilderState = CommonState & {
   // operator names to offer a connector picker and typed filters, and this store is never serialized into the
   // published schema — which is what keeps the topology off the visitor's page (RFC 0008 §4.2).
   connectors: Record<string, SpaceConnector>;
+  // Whether the space deploys anywhere that can run server code. Connectors resolve before the page reaches the
+  // browser, so on a client-rendered deployment they resolve nowhere — the element settings say so rather than
+  // offering a picker that cannot work in production.
+  hasServerRendering: boolean;
   displayMode: DisplayMode;
   selector?: string;
   styleSelector?: string;

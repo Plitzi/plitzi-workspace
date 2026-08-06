@@ -40,13 +40,13 @@ Campos principales:
 
 | Campo | Finalidad |
 |-------|-----------|
-| `id` | Identifier del conector (lo referencia el elemento `ApiContainer`) |
+| `id` | Identifier del conector (lo referencia el elemento `ApiContainer`). **No se autora**: lo estampa el adapter al leer la fila |
 | `credential` | Identifier de la credencial a resolver. El secreto **nunca** forma parte del manifest |
 | `baseUrl` | Origen de la API |
 | `auth` | Esquema de autenticación: `in` (`header`\|`query`), `name`, `value` (plantilla, p. ej. `Bearer {{credential.token}}`) |
 | `headers` | Cabeceras estáticas con valores plantilla |
-| `list` | Cómo se leen registros: `path`, `query`, `itemsPath`, `totalPath`, `idPath`, `valuesPath` |
-| `write` | Operaciones de escritura declaradas (`create`/`update`/`delete`). **Ausente = read-only** |
+| `endpoints.list` | Cómo se leen registros: `path`, `query`, `itemsPath`, `totalPath`, `idPath`, `valuesPath` |
+| `endpoints.write` | Operaciones de escritura declaradas (`create`/`update`/`delete`). **Ausente = read-only** |
 | `pagination` | `offset` \| `page` \| `cursor` |
 | `operators` | Plantillas de filtro por operador, p. ej. `eq: 'filters[{{field}}][$eq]={{value}}'` |
 | `media` | `baseUrl` para rebasear URLs de media relativas (`/uploads/x.jpg` → absolutas) |
@@ -59,6 +59,16 @@ Campos principales:
 - Al cliente solo le baja el `identifier` del conector y sus `fields`.
 - La credencial se referencia por identifier pero se resuelve en el servidor.
 - Un conector es read-only hasta que su manifest declara `write`; una acción no declarada se **rechaza**, no se adivina.
+
+### Por qué las llamadas van bajo `endpoints`
+
+`list` y `write` describen **peticiones**; `auth`, `headers`, `operators` y `media` describen la **conexión** y
+aplican a todas. En plano las dos clases se leen como iguales y no hay sitio evidente donde añadir la siguiente
+operación, así que las peticiones viven agrupadas bajo `endpoints`.
+
+Los manifests escritos antes de ese cambio (con `list`/`write` en la raíz) se siguen leyendo: `normalizeManifest`
+(`packages/sdk-shared/src/connectors/`) los sube a `endpoints` al leerlos, y el builder guarda ya la forma nueva, así
+que el arreglo se apaga solo.
 
 ### Presets
 
@@ -117,12 +127,29 @@ sigue siendo editable. Un preset obsoleto se corrige editando una fila, nunca co
 
 ### Builder — `apps/builder/src/modules/Connectors/`
 
-- **`Connectors.tsx`** — panel de gestión (listado + formulario + confirmación de borrado).
-- **`ConnectorsContextProvider.tsx`** — carga `SpaceConnectors` vía GraphQL y sincroniza al store del builder (para
-  que el inspector de elementos vea los conectores y sus operadores).
-- **`ConnectorForm.tsx`** — nombre + presets + editor JSON del manifest.
+- **`Connectors.tsx`** — panel de gestión (listado + formulario + confirmación de borrado). Avisa cuando el space no
+  tiene despliegue con SSR: un conector se resuelve en el servidor, y sin servidor no se resuelve en ningún sitio.
+- **`ConnectorsContextProvider.tsx`** — carga `SpaceConnectors` vía SWR y sincroniza al store del builder (para que el
+  inspector de elementos vea los conectores y sus operadores). Cada mutación revalida la query, así que el panel no
+  puede quedarse mostrando otra cosa. También publica `hasServerRendering`, derivado de si algún `SpaceDeployment`
+  usa credencial `ssr`.
+- **`components/ConnectorForm/`** — nombre + preset + dos modos sobre el **mismo documento**:
+  - **Basic** (`ConnectorBasicEditor`): formulario por secciones — conexión, autenticación, lectura, paginación,
+    filtros, media, escrituras — con una línea de explicación por campo (`helpers/manifestDoc.ts`).
+  - **Advanced** (`ConnectorAdvancedEditor`): el JSON tal cual se guarda, para el proveedor que no encaja.
+  Cambiar de modo no convierte nada; se valida al guardar (`helpers/validateManifest.ts`).
+- **`components/TokenInput/`** — campo de una línea con autocompletado de los tokens del engine
+  (`getConnectorTokens`, en sdk-shared). Es la parte que un autor no puede adivinar: `{{offset}}` vs `{{page}}`
+  decide si la paginación funciona.
+- **Credencial**: se elige con `SpaceCredentialSelectorModal` filtrado a `custom`; el manifest solo guarda su
+  identifier.
 - GraphQL: `SpaceConnectorsQuery`, `SpaceAddConnectorMutation`, `SpaceUpdateConnectorMutation`,
   `SpaceRemoveConnectorMutation`.
+
+### Builder — `apps/builder/src/modules/Credentials/`
+
+Panel propio (icono llave) para crear, listar y borrar credenciales sin pasar por el modal de otra cosa. Un conector
+necesita ese orden: el token del CMS tiene que existir **antes** de que haya un manifest que lo referencie.
 
 ### Elementos SDK
 
@@ -319,22 +346,23 @@ El espacio se sirve con SSR/RSC activado. El servidor (`plitzi-sdk-server`) debe
 
 ### 1. Crear la credencial (el secreto)
 
-Settings → **Space Credentials** → *Add*. Provider **CMS / Custom API** (`SpaceCredentialForm.tsx`): nombre + JSON
-con las llaves que usará el manifest, p. ej. `{ "token": "…" }`. Queda guardada con un `identifier`. El secreto no
-baja al navegador.
+Panel lateral **Credentials** → *New Credential*. Provider **CMS / Custom API** (`SpaceCredentialForm.tsx`): nombre +
+JSON con las llaves que usará el manifest, p. ej. `{ "token": "…" }`. Queda guardada con un `identifier`, cifrada en
+reposo (`SpaceCredential.encryptedFields`). El secreto no baja al navegador ni entra nunca en el manifest.
 
 ### 2. Crear el conector
 
 Panel lateral **Connectors** (aparece en `AppContainer.tsx` cuando el popup activo es `connectors`):
 
-1. **Add Connector**.
-2. Elegir preset (**Strapi v5**, **WordPress REST**, **Directus**, **Contentful CDA**, **Blank**) o partir de JSON
-   vacío.
-3. Editar el manifest: `baseUrl`, `auth`, `list.*`, `operators`, `write` (opcional), `media.baseUrl`.
-4. Referenciar la credencial tecleando su `identifier` en el campo `credential`.
-5. Guardar (mutation `SpaceAddConnector`). El conector queda en el store del builder.
-
-> Nota: `ConnectorForm.tsx` no tiene selector de credencial hoy — se escribe el identifier a mano en el JSON.
+1. **New Connector**.
+2. Elegir preset (**Strapi v5**, **WordPress REST**, **Directus**, **Contentful CDA**, **Blank**).
+3. En **Basic**: `baseUrl`, credencial (botón *Choose*), autenticación, ruta y paths de lectura, paginación,
+   operadores, media y — si hace falta — las escrituras permitidas. Cada campo lleva su explicación debajo y los
+   campos de plantilla autocompletan tokens.
+4. En **Advanced** está el mismo documento en JSON, para lo que el formulario no cubra.
+5. Guardar (mutation `SpaceAddConnector`). Se valida antes: base URL, ruta de lectura, y que no se referencie
+   `{{credential.…}}` sin credencial elegida — que si no autentica como nadie y la página lo ve como "el CMS nos
+   rechazó".
 
 ### 3. Página índice (listado)
 

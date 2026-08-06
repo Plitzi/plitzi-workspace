@@ -1,6 +1,6 @@
 # RFC 0009 — CMS presentation elements
 
-- **Status:** Proposal
+- **Status:** Implemented
 - **Author:** Carlos Rodriguez
 - **Date:** 2026-08-03
 - **Scope:** `@plitzi/sdk-elements`, `@plitzi/sdk-shared`, `apps/server`, `apps/builder`, and `plitzi-sdk-server`
@@ -185,10 +185,49 @@ builder-role only, mirroring `SpaceCredential`. The builder gets a **Connectors*
 same place the Collections manager used to live — one screen listing connectors with a manifest
 editor and a credential picker.
 
-The manifest is edited as JSON with a schema-aware editor plus presets for common CMSs. Presets
-are *starting documents*, not code: picking "Strapi v5" fills the manifest fields in, and the
-author can edit every one of them. A preset that turns out to be wrong is a data fix, never a
+The manifest is edited in two modes over the same document. **Basic** is a sectioned form —
+connection, authentication, reading, pagination, filters, media, writes — with one line of prose
+per field, because the questions an author actually has ("where do the records live in the
+response?") are not answered by a JSON key. **Advanced** is the stored JSON, for the provider the
+form does not cover. Switching modes is not a conversion.
+
+Template fields complete the engine's tokens (`getConnectorTokens`, shared so the catalog and the
+engine cannot drift). This is the part an author cannot guess: `{{offset}}` versus `{{page}}`
+decides whether paging works at all, and nothing on screen says which one this provider wants.
+
+Presets are *starting documents*, not code: picking "Strapi v5" fills the manifest fields in, and
+the author can edit every one of them. A preset that turns out to be wrong is a data fix, never a
 release.
+
+**Credentials get their own panel.** They were reachable only from the modals that consume them —
+a deployment form, a CDN row — so a secret could not be created before the thing needing it
+existed. A connector requires exactly that ordering: the CMS token has to exist before there is a
+manifest to reference it from. The connector form picks a credential rather than taking a typed
+identifier; the manifest stores the reference and never the secret, which is also the only
+arrangement where the secret stays encrypted at rest (`SpaceCredential.data`) while the manifest
+does not.
+
+### 3.8 Manifest layout: `endpoints`
+
+`list` and `write` sit under `endpoints`, not at the root beside `auth`, `headers`, `operators`
+and `media`. Those describe the *connection* and apply to every call; `list` and `write` describe
+individual *calls*. Flat, the two kinds read as peers and there is no obvious place to put the
+next operation.
+
+Manifests written before the move are upgraded on read (`normalizeManifest`) rather than
+rejected, and the builder writes the current shape back — so the shim stops firing on its own.
+
+`id` leaves the authored document entirely. A connector's identity belongs to the row that stores
+it; a document carrying its own id can disagree with the identifier it was fetched by, and would
+then name the wrong connector in every error the engine reports. The adapter stamps it on read.
+
+### 3.9 Connectors need a server
+
+A connector resolves during the server render. A space published without server rendering has no
+server to resolve it, so both the Connectors panel and the provider element's settings say so,
+driven by whether any `SpaceDeployment` carries an `ssr` credential rather than by a flag. The
+builder preview still resolves connectors — which is exactly why the warning is worth showing:
+without it the feature works in the editor and silently returns nothing in production.
 
 ---
 
@@ -211,6 +250,7 @@ release.
 | **1** | Slice widening (`isLoading` / `isEmpty` / `hasError`, `page` / `pageCount`), pagination on the resolver, media rebasing, 404 signal |
 | **2** | `ApiContainer` authoring UI, `Pagination`, `RichText` |
 | **3** | `SpaceConnector` GraphQL CRUD + builder Connectors panel + presets |
+| **4** | Authoring usability: basic/advanced manifest editor, token completion, per-field prose, credential picker, Credentials panel, `endpoints` grouping, server-rendering warning |
 
 ---
 

@@ -6,6 +6,7 @@ import { use, useCallback, useState } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
+import buildCredentialData from '@pmodules/Space/helpers/buildCredentialData';
 import SpaceCredentialForm from '@pmodules/Space/Models/SpaceCredentialForm';
 
 import ModalBody from './ModalBody';
@@ -29,19 +30,6 @@ export type SpaceCredentialSelectorModalProps = {
   onSelect?: (identifier: string) => void;
 };
 
-/** Each provider stores a different bag; a custom credential carries whatever keys its connector manifest names. */
-const buildCredentialData = (values: z.infer<typeof spaceCredentialFormSchema>) => {
-  if (values.provider === 'r2' || values.provider === 's3') {
-    return { accessKeyId: values.accessKeyId, secretAccessKey: values.secretAccessKey };
-  }
-
-  if (values.provider === 'custom') {
-    return JSON.parse(values.data) as Record<string, string>;
-  }
-
-  return values.fields;
-};
-
 const SpaceCredentialSelectorModal = ({
   providersSupported,
   children,
@@ -61,9 +49,11 @@ const SpaceCredentialSelectorModal = ({
     e.stopPropagation();
   }, []);
 
+  // A caller that restricts the list restricts what it can use, so a credential created from here starts on a
+  // provider it will accept rather than on one it would immediately grey out.
   const handleClickNewCredential = useCallback(() => {
-    setNewCredential({ name: '', provider: 'r2', inUse: false, usedIn: [] });
-  }, []);
+    setNewCredential({ name: '', provider: providersSupported?.[0] ?? 'r2', inUse: false, usedIn: [] });
+  }, [providersSupported]);
 
   const handleCloseForm = useCallback(() => setNewCredential(undefined), []);
 
@@ -127,7 +117,13 @@ const SpaceCredentialSelectorModal = ({
           Space Credentials
         </Modal.Header>
         <Modal.Body gap={4}>
-          {newCredential && <SpaceCredentialForm onSubmit={handleSubmitForm} onClose={handleCloseForm} />}
+          {newCredential && (
+            <SpaceCredentialForm
+              provider={newCredential.provider}
+              onSubmit={handleSubmitForm}
+              onClose={handleCloseForm}
+            />
+          )}
           {!newCredential && (
             <ModalBody
               providersSupported={providersSupported}

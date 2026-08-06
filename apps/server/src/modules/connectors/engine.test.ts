@@ -8,12 +8,14 @@ const strapi: ConnectorManifest = {
   id: 'cms-main',
   baseUrl: 'https://cms.example.com',
   auth: { in: 'header', name: 'Authorization', value: 'Bearer {{credential.token}}' },
-  list: {
-    path: '/api/{{resource}}',
-    query: { 'pagination[start]': '{{offset}}', 'pagination[limit]': '{{limit}}', locale: '{{routeParams.lang}}' },
-    itemsPath: 'data',
-    totalPath: 'meta.pagination.total',
-    idPath: 'documentId'
+  endpoints: {
+    list: {
+      path: '/api/{{resource}}',
+      query: { 'pagination[start]': '{{offset}}', 'pagination[limit]': '{{limit}}', locale: '{{routeParams.lang}}' },
+      itemsPath: 'data',
+      totalPath: 'meta.pagination.total',
+      idPath: 'documentId'
+    }
   },
   pagination: 'offset',
   operators: { eq: 'filters[{{field}}][$eq]={{value}}' }
@@ -22,7 +24,7 @@ const strapi: ConnectorManifest = {
 const wordpress: ConnectorManifest = {
   id: 'wp',
   baseUrl: 'https://blog.example.com',
-  list: { path: '/wp-json/wp/v2/{{resource}}', query: { per_page: '{{limit}}', page: '{{page}}' } },
+  endpoints: { list: { path: '/wp-json/wp/v2/{{resource}}', query: { per_page: '{{limit}}', page: '{{page}}' } } },
   pagination: 'page'
 };
 
@@ -163,7 +165,7 @@ describe('fetchConnectorRecords', () => {
   it('unwraps values when the provider nests them', async () => {
     const manifest: ConnectorManifest = {
       ...strapi,
-      list: { ...strapi.list, idPath: 'id', valuesPath: 'attributes' }
+      endpoints: { list: { ...strapi.endpoints.list, idPath: 'id', valuesPath: 'attributes' } }
     };
     const fetchImpl = vi
       .fn()

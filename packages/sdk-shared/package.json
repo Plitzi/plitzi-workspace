@@ -34,6 +34,22 @@
       "types": "./dist/builder/index.d.ts",
       "import": "./dist/builder/index.mjs"
     },
+    "./connectors": {
+      "types": "./dist/connectors/index.d.ts",
+      "import": "./dist/connectors/index.mjs"
+    },
+    "./connectors/index": {
+      "types": "./dist/connectors/index.d.ts",
+      "import": "./dist/connectors/index.mjs"
+    },
+    "./connectors/manifestTokens": {
+      "types": "./dist/connectors/manifestTokens.d.ts",
+      "import": "./dist/connectors/manifestTokens.mjs"
+    },
+    "./connectors/normalizeManifest": {
+      "types": "./dist/connectors/normalizeManifest.d.ts",
+      "import": "./dist/connectors/normalizeManifest.mjs"
+    },
     "./dataSource": {
       "types": "./dist/dataSource/index.d.ts",
       "import": "./dist/dataSource/index.mjs"
@@ -1170,6 +1186,9 @@
     },
     "./types/ComponentTypes": {
       "types": "./dist/types/ComponentTypes.d.ts"
+    },
+    "./types/ConnectorTypes": {
+      "types": "./dist/types/ConnectorTypes.d.ts"
     },
     "./types/DataSourceTypes": {
       "types": "./dist/types/DataSourceTypes.d.ts"
