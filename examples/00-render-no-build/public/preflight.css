@@ -1,0 +1,4 @@
+/* Tailwind's preflight, wrapped in a layer. A <link> cannot name one, and the file ships unlayered — which
+   would put it above every layered rule the SDK has. Declaring `base` here first sorts it below the SDK's own
+   `plitzi-sdk-base`, so this clears the browser's defaults and nothing else. */
+@import url('/vendor/preflight.css') layer(base);

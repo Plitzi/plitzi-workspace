@@ -2,6 +2,7 @@ import { render } from '@plitzi/plitzi-sdk';
 
 import { offlineData } from '@plitzi/example-space/browser';
 
+import './preflight.css';
 import '@plitzi/plitzi-sdk/plitzi-sdk.css';
 
 /** The whole example.

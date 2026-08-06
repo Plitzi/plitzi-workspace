@@ -25,6 +25,10 @@
 
     <link rel="modulepreload" href="/sdk-assets/plitzi-sdk-vendor.js" />
     <link rel="modulepreload" href="/sdk-assets/plitzi-sdk.js" />
+    <!-- The page reset, before the SDK stylesheet. The SDK ships no global CSS on purpose — dropping a space
+         into an existing site must not restyle that site — so clearing the browser's defaults is the host's job,
+         and this file is the host. Just the stylesheet: no script, nothing to compile. -->
+    <link href="/preflight.css" rel="stylesheet" />
     <link href="/sdk-assets/plitzi-sdk.css" rel="stylesheet" />
   </head>
 

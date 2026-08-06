@@ -38,6 +38,26 @@ const offlineData = await fetch('/offline-data.json').then(res => res.json());
 render('plitzi', { offlineMode: true, offlineData, environment: 'main' });
 ```
 
+## The page reset
+
+`@plitzi/plitzi-sdk` ships **no global CSS on purpose**: dropping a space into an existing site must not restyle
+that site. So the browser's default margins are still there unless the host page clears them — and in this
+example the host page is yours.
+
+Tailwind's preflight is a plain stylesheet — no script, nothing to compile — served from `node_modules`:
+
+```html
+<link href="/preflight.css" rel="stylesheet" />
+```
+
+That one-line file wraps it: `@import url('/vendor/preflight.css') layer(base);`. A `<link>` cannot name a
+cascade layer, and preflight ships unlayered, which would put it above every layered rule the SDK has.
+
+It loads **before** the SDK stylesheet, and lands in Tailwind's `base` layer while the SDK's rules live in
+`plitzi-sdk-base`. Later-declared layers win, so on anything the two both touch, the SDK's own styling does.
+
+Without it you get a white gutter around the render — the `body` margin every browser applies by default.
+
 ## Requirements
 
 The SDK's built assets, which this serves under `/sdk-assets`:

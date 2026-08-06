@@ -6,5 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node serve.mjs"
+  },
+  "dependencies": {
+    "tailwindcss": "^4.3.3"
   }
 }

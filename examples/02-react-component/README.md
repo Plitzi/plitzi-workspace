@@ -25,6 +25,26 @@ root — right when Plitzi *is* the page. As a component it lives in your tree i
 
 The props are the same either way — `render()` just forwards them to this component.
 
+## The page reset
+
+`@plitzi/plitzi-sdk` ships **no global CSS on purpose**: dropping a space into an existing site must not restyle
+that site. So the browser's default margins are still there unless the host page clears them — and in this
+example the host page is yours.
+
+[`src/preflight.css`](./src/preflight.css) is one line:
+
+```css
+@import 'tailwindcss/preflight.css' layer(base);
+```
+
+Only the preflight — the utility generator would need a build step, and this example uses no utilities. The
+`layer(base)` is required: the file ships unlayered, and unlayered rules beat every layered one.
+
+It loads **before** the SDK stylesheet, and lands in Tailwind's `base` layer while the SDK's rules live in
+`plitzi-sdk-base`. Later-declared layers win, so on anything the two both touch, the SDK's own styling does.
+
+Without it you get a white gutter around the render — the `body` margin every browser applies by default.
+
 ## When to use which
 
 | | Use |
