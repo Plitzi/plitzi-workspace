@@ -1,0 +1,22 @@
+{
+  "name": "@plitzi/example-ssr-rsc",
+  "version": "0.0.0",
+  "private": true,
+  "description": "SSR plus React Server Components: per-element data resolved on the server.",
+  "type": "module",
+  "scripts": {
+    "start": "node --import tsx src/main.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@plitzi/example-space": "workspace:*",
+    "@plitzi/sdk-server": "workspace:*",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "tsx": "^4.23.4",
+    "typescript": "^6.0.3"
+  }
+}

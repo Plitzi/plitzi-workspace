@@ -892,6 +892,12 @@ When `devMode: true`, per-phase timing is instrumented on every render and repor
 
 In production (`devMode: false`) timing instrumentation is skipped entirely — no `Server-Timing` header, no console output.
 
+## Examples
+
+Runnable setups live in [`examples/`](../../examples): server-rendering a space, adding React Server Components,
+and mounting the MCP endpoint and draft preview alongside pages. Each one starts with `yarn start` and is a real
+package, not a snippet.
+
 ## Exported types
 
 ```ts

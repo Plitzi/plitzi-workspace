@@ -1,0 +1,20 @@
+{
+  "name": "@plitzi/example-space",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The sample Plitzi space every example renders, so each one shows its own wiring and not a copy of the data.",
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": "./index.js",
+    "./offline-data.json": "./offline-data.json",
+    "./browser": {
+      "types": "./browser.d.ts",
+      "default": "./browser.js"
+    }
+  },
+  "devDependencies": {
+    "@plitzi/sdk-shared": "workspace:*"
+  }
+}

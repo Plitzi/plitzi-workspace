@@ -1,0 +1,10 @@
+{
+  "name": "@plitzi/example-render-no-build",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Render a Plitzi space from a plain HTML file — no bundler, no build step, no npm install.",
+  "type": "module",
+  "scripts": {
+    "start": "node serve.mjs"
+  }
+}

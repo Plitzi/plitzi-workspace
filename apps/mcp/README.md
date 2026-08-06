@@ -156,6 +156,12 @@ yarn inspector    # the official MCP Inspector, to point at it
 `dev/` is not part of the published package and nothing in `src/` imports it — it consumes this package's public
 API exactly as a consumer would.
 
+## Examples
+
+Runnable setups live in [`examples/`](../../examples) — [05](../../examples/05-mcp-server) is a dedicated MCP
+server, [06](../../examples/06-ssr-mcp-preview) is the combined topology with draft preview. Each starts with
+`yarn start`.
+
 ## Entry points
 
 | Import | Carries |

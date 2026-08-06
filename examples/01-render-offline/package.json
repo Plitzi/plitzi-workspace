@@ -1,0 +1,27 @@
+{
+  "name": "@plitzi/example-render-offline",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Render a Plitzi space in the browser with no server at all.",
+  "type": "module",
+  "scripts": {
+    "start": "vite --port 4001",
+    "build": "vite build",
+    "preview": "vite preview --port 4001",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@plitzi/example-space": "workspace:*",
+    "@plitzi/plitzi-sdk": "workspace:*",
+    "@plitzi/sdk-shared": "workspace:*",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "typescript": "^6.0.3",
+    "vite": "^8.2.0"
+  }
+}

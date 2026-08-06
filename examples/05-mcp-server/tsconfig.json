@@ -1,0 +1,12 @@
+{
+  "extends": "../../packages/sdk-shared/tsconfig.app.json",
+  "compilerOptions": {
+    "rootDir": "./",
+    "noEmit": true,
+    "types": ["node"],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "resolveJsonModule": true
+  },
+  "include": ["src", "vite.config.ts"]
+}

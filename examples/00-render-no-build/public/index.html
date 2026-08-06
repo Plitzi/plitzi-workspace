@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Plitzi — no build</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- The whole trick. An import map tells the browser where the bare specifiers resolve, so the SDK's own
+         `import { render } from '@plitzi/plitzi-sdk'` works with no bundler in the picture.
+
+         React arrives as ONE vendor file mapped to every react specifier: the SDK and the elements it renders
+         must share a single React instance, and separate copies would break hooks. -->
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "/sdk-assets/plitzi-sdk-vendor.js",
+          "react-dom": "/sdk-assets/plitzi-sdk-vendor.js",
+          "react-dom/client": "/sdk-assets/plitzi-sdk-vendor.js",
+          "react/jsx-runtime": "/sdk-assets/plitzi-sdk-vendor.js",
+          "react/compiler-runtime": "/sdk-assets/plitzi-sdk-vendor.js",
+          "@plitzi/plitzi-sdk": "/sdk-assets/plitzi-sdk.js"
+        }
+      }
+    </script>
+
+    <link rel="modulepreload" href="/sdk-assets/plitzi-sdk-vendor.js" />
+    <link rel="modulepreload" href="/sdk-assets/plitzi-sdk.js" />
+    <link href="/sdk-assets/plitzi-sdk.css" rel="stylesheet" />
+  </head>
+
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+
+    <div id="plitzi" class="plitzi-root-container"></div>
+
+    <script type="module">
+      import { render } from '@plitzi/plitzi-sdk';
+
+      // The space is fetched at runtime, not compiled in — swap the URL for your own export.
+      const offlineData = await fetch('/offline-data.json').then(res => res.json());
+
+      render('plitzi', { offlineMode: true, offlineData, environment: 'main' });
+    </script>
+  </body>
+</html>
