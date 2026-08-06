@@ -84,7 +84,7 @@ const ConnectorBasicEditor = ({ manifest, onChange }: ConnectorBasicEditorProps)
 
   return (
     <div className="flex flex-col">
-      <FieldGrid>
+      <FieldGrid className="mb-4" columns={2}>
         <Input
           value={manifest.baseUrl}
           label="API URL"
