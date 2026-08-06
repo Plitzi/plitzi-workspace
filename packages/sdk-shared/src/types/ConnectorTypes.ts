@@ -23,15 +23,20 @@ export type ConnectorResponseMapping = {
 };
 
 /**
- * A request that returns records.
+ * The HTTP verb an endpoint uses.
  *
- * `method` exists because reading is not always a GET: search endpoints routinely take a POST body, and an
- * integration that cannot express that is not a REST client, it is a CMS client.
+ * The full REST vocabulary, on both reads and writes: what separates the two is what the endpoint is *for* — only
+ * writes are reachable through `/_action` — not which verb it happens to use. Search reads through POST, upsert
+ * writes through PUT, and an integration that cannot say so is a CMS client, not a REST one.
  */
+export type ConnectorHttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
+
+/** A request that returns records. */
 export type ConnectorReadEndpoint = ConnectorResponseMapping & {
   /** Template appended to `baseUrl`, e.g. `/api/{{resource}}`. */
   path: string;
-  method?: 'GET' | 'POST';
+  /** Defaults to `GET`. Any verb is allowed: reading through POST is how most search endpoints work. */
+  method?: ConnectorHttpMethod;
   /** Query parameters, values templated. Entries resolving to empty are dropped. */
   query?: Record<string, string>;
   /** Headers for this endpoint only, merged over the connection's own. */
@@ -49,7 +54,7 @@ export type ConnectorReadEndpoint = ConnectorResponseMapping & {
  * `/_action`, so a read can never be invoked as a mutation, and a write can never be mounted as a data source.
  */
 export type ConnectorWriteEndpoint = {
-  method: 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  method: ConnectorHttpMethod;
   /** Template appended to `baseUrl`, e.g. `/api/{{resource}}/{{id}}`. */
   path: string;
   query?: Record<string, string>;

@@ -13,6 +13,7 @@ import { summarize } from '../../helpers/summarizeManifest';
 import { setAuth, setConnection, setMediaBaseUrl } from '../../helpers/updateManifest';
 import ConnectorEndpointsEditor from '../ConnectorEndpointsEditor';
 import ConnectorSection from '../ConnectorSection';
+import FieldGrid from '../FieldGrid';
 import FieldHelp from '../FieldHelp';
 import TokenInput from '../TokenInput';
 
@@ -83,7 +84,7 @@ const ConnectorBasicEditor = ({ manifest, onChange }: ConnectorBasicEditorProps)
 
   return (
     <div className="flex flex-col">
-      <div className="flex flex-col gap-2 pb-3">
+      <FieldGrid>
         <Input
           value={manifest.baseUrl}
           label="API URL"
@@ -117,7 +118,7 @@ const ConnectorBasicEditor = ({ manifest, onChange }: ConnectorBasicEditorProps)
             )}
           </div>
         </div>
-      </div>
+      </FieldGrid>
 
       <ConnectorSection
         id="endpoints"
@@ -135,15 +136,12 @@ const ConnectorBasicEditor = ({ manifest, onChange }: ConnectorBasicEditorProps)
         summary={summarize.auth(manifest)}
         description="How Plitzi identifies itself on every request. Leave empty for a public API."
       >
-        <div className="flex gap-2">
-          <div className="w-24 shrink-0">
-            <Select value={manifest.auth?.in ?? 'header'} label="Send as" size="xs" onChange={handleChangeAuthIn}>
-              <option value="header">Header</option>
-              <option value="query">Query</option>
-            </Select>
-          </div>
+        <FieldGrid>
+          <Select value={manifest.auth?.in ?? 'header'} label="Send as" size="xs" onChange={handleChangeAuthIn}>
+            <option value="header">Header</option>
+            <option value="query">Query</option>
+          </Select>
           <Input
-            className="grow"
             value={manifest.auth?.name ?? ''}
             label="Name"
             placeholder="Authorization"
@@ -151,7 +149,7 @@ const ConnectorBasicEditor = ({ manifest, onChange }: ConnectorBasicEditorProps)
             size="xs"
             onChange={handleChangeAuthName}
           />
-        </div>
+        </FieldGrid>
         <TokenInput
           label="Value"
           title={fieldDocs.authValue}

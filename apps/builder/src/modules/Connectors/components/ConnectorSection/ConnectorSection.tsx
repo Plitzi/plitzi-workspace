@@ -2,10 +2,11 @@ import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import clsx from 'clsx';
-import { useCallback } from 'react';
+import { use, useCallback, useMemo } from 'react';
 
 import ConnectorSectionContext from './ConnectorSectionContext';
 
+import type { ConnectorSectionContextValue } from './ConnectorSectionContext';
 import type { MouseEvent, ReactNode } from 'react';
 
 export type ConnectorSectionProps = {
@@ -21,11 +22,26 @@ export type ConnectorSectionProps = {
 };
 
 /**
+ * Depth cues.
+ *
+ * A rail running down the whole nested block — header and content together — is what says which parent a section
+ * belongs to; indentation alone reads as ambiguous once two siblings are collapsed next to each other. The tint
+ * fades with depth so the outermost header stays the heaviest thing on screen.
+ */
+const RAILS = [
+  '',
+  'border-l-2 border-l-slate-300 pl-1 dark:border-l-zinc-600',
+  'border-l-2 border-l-slate-200 pl-1 dark:border-l-zinc-700'
+];
+
+const HEADER_TINTS = ['bg-slate-100 dark:bg-zinc-700/50', 'bg-slate-50 dark:bg-zinc-800/50', 'bg-transparent'];
+
+/**
  * One collapsible block of the manifest form.
  *
- * A connector has seven areas and a CMS preset fills six of them correctly, so the panel opens with the two an
- * author actually edits and keeps the rest one click away. Each closed header carries a summary of its own value —
- * collapsing that hid the information would only trade scrolling for clicking.
+ * A connector has more areas than anyone edits at once and a preset fills most of them correctly, so the panel
+ * opens with the ones an author actually touches and keeps the rest one click away. Each closed header carries a
+ * summary of its own value — collapsing that hid the information would only trade scrolling for clicking.
  *
  * The prose for each field is opt-in behind the header's `?`, because an explanation is read once and then becomes
  * the thing standing between the author and the next field.
@@ -39,8 +55,13 @@ const ConnectorSection = ({
   defaultOpen = false,
   children
 }: ConnectorSectionProps) => {
+  const { depth } = use(ConnectorSectionContext);
   const [isCollapsed, setIsCollapsed] = useStorage(`builder-state.connectors.section.${id}`, !defaultOpen);
   const [showHelp, setShowHelp] = useStorage(`builder-state.connectors.help.${id}`, false);
+
+  const value = useMemo<ConnectorSectionContextValue>(() => ({ showHelp, depth: depth + 1 }), [showHelp, depth]);
+  const rail = RAILS[Math.min(depth, RAILS.length - 1)];
+  const tint = HEADER_TINTS[Math.min(depth, HEADER_TINTS.length - 1)];
 
   const handleToggleHelp = useCallback(
     (e: MouseEvent) => {
@@ -52,15 +73,22 @@ const ConnectorSection = ({
   );
 
   return (
-    <ContainerCollapsable collapsed={isCollapsed} onChange={setIsCollapsed}>
+    <ContainerCollapsable className={rail} collapsed={isCollapsed} onChange={setIsCollapsed}>
       <ContainerCollapsable.Header
-        className={clsx('h-8 px-1', {
+        className={clsx('h-8 px-1', tint, {
           'border-b border-gray-200 hover:bg-slate-100 dark:border-zinc-700 dark:hover:bg-zinc-700/50': isCollapsed,
-          'bg-slate-100 dark:bg-zinc-700/50': !isCollapsed
+          'bg-transparent': isCollapsed && depth > 0
         })}
         title={
           <div className="flex min-w-0 items-baseline gap-2">
-            <span className="text-xs font-medium whitespace-nowrap">{title}</span>
+            <span
+              className={clsx('whitespace-nowrap', {
+                'text-xs font-medium': depth === 0,
+                'text-xs': depth > 0
+              })}
+            >
+              {title}
+            </span>
             <span
               className={clsx('truncate text-xs', {
                 'text-primary-500': highlight,
@@ -90,11 +118,11 @@ const ConnectorSection = ({
       </ContainerCollapsable.Header>
       <ContainerCollapsable.Content
         className={clsx('flex flex-col gap-2 p-2', {
-          'border-b border-gray-200 dark:border-zinc-700': !isCollapsed
+          'border-b border-gray-200 dark:border-zinc-700': !isCollapsed && depth === 0
         })}
       >
         {showHelp && description && <span className="text-xs text-gray-500 dark:text-zinc-400">{description}</span>}
-        <ConnectorSectionContext value={showHelp}>{children}</ConnectorSectionContext>
+        <ConnectorSectionContext value={value}>{children}</ConnectorSectionContext>
       </ContainerCollapsable.Content>
     </ContainerCollapsable>
   );

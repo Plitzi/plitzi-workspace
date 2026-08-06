@@ -1,31 +1,46 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import { useCallback, useMemo } from 'react';
 
-import { DEFAULT_READ_ENDPOINT } from '@plitzi/sdk-shared/connectors';
+import { READ_ENDPOINT_NAMES, WRITE_ENDPOINT_NAMES } from '@plitzi/sdk-shared/connectors';
 
 import { removeEndpoint, renameEndpoint, setReadEndpoint, setWriteEndpoint } from '../../helpers/updateManifest';
 import ConnectorEndpointEditor from '../ConnectorEndpointEditor';
 
 import type { EndpointKind } from '../../helpers/updateManifest';
-import type { ConnectorManifestDraft, ConnectorReadEndpoint, ConnectorWriteEndpoint } from '@plitzi/sdk-shared';
+import type {
+  ConnectorHttpMethod,
+  ConnectorManifestDraft,
+  ConnectorReadEndpoint,
+  ConnectorWriteEndpoint
+} from '@plitzi/sdk-shared';
 
 export type ConnectorEndpointsEditorProps = {
   manifest: ConnectorManifestDraft;
   onChange: (manifest: ConnectorManifestDraft) => void;
 };
 
-/** Free name for a new endpoint, so adding two in a row does not collide on the second. */
-const nextName = (taken: string[], base: string) => {
-  if (!taken.includes(base)) {
-    return base;
+/** The verb each suggested write name implies, so a fresh endpoint does not start on the wrong one. */
+const SUGGESTED_METHODS: Record<string, ConnectorHttpMethod> = { create: 'POST', update: 'PUT', delete: 'DELETE' };
+
+/**
+ * Picks the name an author was about to type.
+ *
+ * A connector's reads are almost always a list, then a single-record fetch, then a search — in that order — so the
+ * suggestions follow the vocabulary rather than counting. Past the vocabulary it falls back to a numbered name:
+ * inventing a fourth noun would be guessing at a domain we know nothing about.
+ */
+const nextName = (taken: string[], vocabulary: readonly string[], fallback: string) => {
+  const free = vocabulary.find(name => !taken.includes(name));
+  if (free) {
+    return free;
   }
 
-  let index = 2;
-  while (taken.includes(`${base}${index}`)) {
+  let index = taken.length + 1;
+  while (taken.includes(`${fallback}${index}`)) {
     index += 1;
   }
 
-  return `${base}${index}`;
+  return `${fallback}${index}`;
 };
 
 /**
@@ -41,17 +56,20 @@ const ConnectorEndpointsEditor = ({ manifest, onChange }: ConnectorEndpointsEdit
   const handleAddRead = useCallback(() => {
     const name = nextName(
       reads.map(([key]) => key),
-      reads.length ? 'detail' : DEFAULT_READ_ENDPOINT
+      READ_ENDPOINT_NAMES,
+      'read'
     );
-    onChange(setReadEndpoint(manifest, name, { path: '/{{resource}}', idPath: 'id' }));
+    // A second read is usually the single-record fetch a detail page needs, so it starts addressed by route param.
+    const path = reads.length ? '/{{resource}}/{{routeParams.id}}' : '/{{resource}}';
+    onChange(setReadEndpoint(manifest, name, { path, idPath: 'id' }));
   }, [manifest, reads, onChange]);
 
   const handleAddWrite = useCallback(() => {
-    const name = nextName(
-      writes.map(([key]) => key),
-      'create'
-    );
-    onChange(setWriteEndpoint(manifest, name, { method: 'POST', path: '/{{resource}}' }));
+    const taken = writes.map(([key]) => key);
+    const name = nextName(taken, WRITE_ENDPOINT_NAMES, 'write');
+    const method = SUGGESTED_METHODS[name] ?? 'POST';
+    const path = method === 'POST' ? '/{{resource}}' : '/{{resource}}/{{id}}';
+    onChange(setWriteEndpoint(manifest, name, { method, path }));
   }, [manifest, writes, onChange]);
 
   const handleChangeRead = useCallback(

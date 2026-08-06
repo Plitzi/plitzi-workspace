@@ -13,7 +13,7 @@ export type FieldHelpProps = {
  * This is the version for someone meeting the form for the first time.
  */
 const FieldHelp = ({ children }: FieldHelpProps) => {
-  const showHelp = use(ConnectorSectionContext);
+  const { showHelp } = use(ConnectorSectionContext);
   if (!showHelp) {
     return null;
   }

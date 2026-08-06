@@ -72,7 +72,7 @@ const Connectors = () => {
         {isLoading && <div className="p-4 text-sm text-gray-500">Loading connectors…</div>}
         {!isLoading && error && <div className="p-4 text-sm text-red-600">{error}</div>}
         {!isLoading && !error && !hasServerRendering && (
-          <div className="p-4 pb-0">
+          <div className="mx-auto w-full max-w-4xl p-4 pb-0">
             <Alert intent="warning" size="sm" solid={false}>
               <div className="flex flex-col gap-1 text-xs">
                 <span className="font-medium">This space has no server-rendered deployment.</span>

@@ -24,7 +24,7 @@ const ConnectorList = ({ connectors, onSelect, onRemove, onCreate }: ConnectorLi
   );
 
   return (
-    <div className="flex grow basis-0 flex-col p-4">
+    <div className="mx-auto flex w-full max-w-4xl grow basis-0 flex-col p-4">
       <div className="mb-4 flex w-full items-center justify-between">
         <Heading as="h5">Connectors</Heading>
         <Button size="sm" onClick={onCreate}>

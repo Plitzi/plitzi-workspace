@@ -45,7 +45,7 @@ Campos principales:
 | `baseUrl` | Origen de la API |
 | `auth` | Esquema de autenticación: `in` (`header`\|`query`), `name`, `value` (plantilla, p. ej. `Bearer {{credential.token}}`) |
 | `headers` | Cabeceras estáticas con valores plantilla |
-| `endpoints.read` | Mapa de endpoints de lectura **con nombre**: `method`, `path`, `query`, `headers`, `body` + mapeo de respuesta (`itemsPath`, `totalPath`, `idPath`, `valuesPath`) y `pagination` opcional |
+| `endpoints.read` | Mapa de endpoints de lectura **con nombre**: `method` (verbo REST completo, default `GET`), `path`, `query`, `headers`, `body` + mapeo de respuesta (`itemsPath`, `totalPath`, `idPath`, `valuesPath`) y `pagination` opcional |
 | `endpoints.write` | Mapa de endpoints de escritura **con nombre**: `method`, `path`, `query`, `headers`, `bodyPath`, `response`. **Ausente = read-only** |
 | `pagination` | `offset` \| `page` \| `cursor` |
 | `operators` | Plantillas de filtro por operador, p. ej. `eq: 'filters[{{field}}][$eq]={{value}}'` |
@@ -71,6 +71,10 @@ declarativo, y una API tiene tantas operaciones como tenga. Un CMS es solo el ca
 y las escrituras se llaman como el CRUD. Un endpoint de escritura puede llamarse `escalate`, `publish` o
 `sendInvoice`; el elemento o la interacción lo invocan **por nombre**, y lo que no está declarado el servidor lo
 rechaza (405).
+
+El verbo es el **vocabulario REST completo** (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`) en ambos
+lados: lo que separa lectura de escritura es para qué sirve el endpoint, no qué verbo usa. Buscar se lee con `POST`,
+un upsert se escribe con `PUT`. El body se manda salvo en los métodos que no lo llevan (`BODYLESS_METHODS`).
 
 Lectura y escritura son mapas separados a propósito: solo los de escritura son alcanzables por `/_action`, así que
 una lectura nunca puede invocarse como mutación ni una escritura montarse como fuente de datos.
@@ -149,7 +153,13 @@ sigue siendo editable. Un preset obsoleto se corrige editando una fila, nunca co
     el preset ya sabe el resto. Debajo, secciones plegables (Endpoints, Auth, Paging, Filters, Media) con
     **resumen en la cabecera cerrada** (`helpers/summarizeManifest.ts`), así que plegar no esconde información.
     **Endpoints** (`ConnectorEndpointsEditor` + `ConnectorEndpointEditor`) lista los de lectura y los de escritura,
-    con añadir / renombrar / borrar; cada uno pliega su propio mapeo de respuesta. La explicación de cada campo está
+    con añadir / renombrar / borrar; cada uno lleva nombre, verbo, ruta, query, headers, paginación propia (los de
+    lectura) y pliega su propio mapeo de respuesta. Al añadir, el nombre sugerido sigue el vocabulario real
+    (`list` → `detail` → `search`; `create` → `update` → `delete`) y el verbo va acorde; pasado eso, numera.
+    Las secciones anidadas se distinguen por un raíl vertical que recorre cabecera y contenido, más sangría y
+    tinte decreciente por profundidad — la sangría sola es ambigua con dos hermanas plegadas seguidas.
+    El panel se sirve en el área central, así que va centrado con ancho máximo y los campos cortos fluyen en
+    columnas (`FieldGrid`, `auto-fill`) en lugar de estirarse en un monitor ancho. La explicación de cada campo está
     en el `title` (hover) y, en prosa, tras el `?` de cada sección (`FieldHelp` + `ConnectorSectionContext`); el
     estado de plegado y de ayuda se recuerda por sección.
   - **Advanced** (`ConnectorAdvancedEditor`): el JSON tal cual se guarda, para el proveedor que no encaja.

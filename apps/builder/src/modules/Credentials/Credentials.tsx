@@ -82,12 +82,12 @@ const Credentials = () => {
       <Card.Body grow>
         {isLoading && <div className="p-4 text-sm text-gray-500">Loading credentials…</div>}
         {!isLoading && provider && (
-          <div className="p-4">
+          <div className="mx-auto w-full max-w-3xl p-4">
             <SpaceCredentialForm provider={provider} onSubmit={handleSubmitForm} onClose={handleCloseForm} />
           </div>
         )}
         {!isLoading && !provider && (
-          <div className="flex grow basis-0 flex-col gap-4 p-4">
+          <div className="mx-auto flex w-full max-w-4xl grow basis-0 flex-col gap-4 p-4">
             <div className="flex w-full items-center justify-between">
               <Heading as="h5">Credentials</Heading>
               <Button size="sm" onClick={handleCreate}>

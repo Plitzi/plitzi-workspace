@@ -4,14 +4,17 @@ import KVInput from '@plitzi/plitzi-ui/KVInput';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback } from 'react';
 
-import { fieldDocs } from '../../helpers/manifestDoc';
+import { BODYLESS_METHODS, CONNECTOR_HTTP_METHODS } from '@plitzi/sdk-shared/connectors';
+
+import { fieldDocs, paginationDocs } from '../../helpers/manifestDoc';
 import { hasResponseMapping, summarizeEndpoint } from '../../helpers/summarizeManifest';
 import ConnectorSection from '../ConnectorSection';
+import FieldGrid from '../FieldGrid';
 import FieldHelp from '../FieldHelp';
 import TokenInput from '../TokenInput';
 
 import type { EndpointKind } from '../../helpers/updateManifest';
-import type { ConnectorReadEndpoint, ConnectorWriteEndpoint } from '@plitzi/sdk-shared';
+import type { ConnectorPagination, ConnectorReadEndpoint, ConnectorWriteEndpoint } from '@plitzi/sdk-shared';
 
 export type ConnectorEndpointEditorProps = {
   kind: EndpointKind;
@@ -21,9 +24,6 @@ export type ConnectorEndpointEditorProps = {
   onRename: (from: string, to: string) => void;
   onRemove: (name: string) => void;
 };
-
-const READ_METHODS = ['GET', 'POST'];
-const WRITE_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
 /**
  * One named request.
@@ -84,6 +84,11 @@ const ConnectorEndpointEditor = ({
     [name, write, onChange]
   );
 
+  const handleChangePagination = useCallback(
+    (value: string) => onChange(name, { ...read, pagination: (value || undefined) as ConnectorPagination }),
+    [name, read, onChange]
+  );
+
   const handleRemove = useCallback(() => onRemove(name), [name, onRemove]);
 
   const mapping = isRead ? read : (write.response ?? {});
@@ -91,17 +96,9 @@ const ConnectorEndpointEditor = ({
   return (
     <ConnectorSection id={`${kind}.${name}`} title={name} summary={summarizeEndpoint(endpoint)}>
       <div className="flex items-end gap-2">
-        <Input className="grow" value={name} label="Name" size="xs" onChange={handleChangeName} />
-        <Button size="xs" intent="secondary" title="Remove this endpoint" onClick={handleRemove}>
-          <Button.Icon icon="fa-solid fa-trash" />
-        </Button>
-      </div>
-      <FieldHelp>
-        {isRead
-          ? 'Elements address this endpoint by name. "list" is the one they use when they name none.'
-          : 'Interactions invoke this endpoint by name. Anything not declared here is refused by the server.'}
-      </FieldHelp>
-      <div className="flex gap-2">
+        <div className="w-32 shrink-0">
+          <Input value={name} label="Name" size="xs" onChange={handleChangeName} />
+        </div>
         <div className="w-24 shrink-0">
           <Select
             value={endpoint.method ?? 'GET'}
@@ -110,7 +107,7 @@ const ConnectorEndpointEditor = ({
             title={fieldDocs.method}
             onChange={handleChangeMethod}
           >
-            {(isRead ? READ_METHODS : WRITE_METHODS).map(method => (
+            {CONNECTOR_HTTP_METHODS.map(method => (
               <option key={method} value={method}>
                 {method}
               </option>
@@ -127,13 +124,39 @@ const ConnectorEndpointEditor = ({
             onChange={handleChangePath}
           />
         </div>
+        <Button size="xs" intent="secondary" title="Remove this endpoint" onClick={handleRemove}>
+          <Button.Icon icon="fa-solid fa-trash" />
+        </Button>
       </div>
+      <FieldHelp>
+        {isRead
+          ? 'Elements address this endpoint by name. "list" is the one they use when they name none.'
+          : 'Interactions invoke this endpoint by name. Anything not declared here is refused by the server.'}
+      </FieldHelp>
       <FieldHelp>{fieldDocs.path}</FieldHelp>
-      <KVInput value={endpoint.query ?? {}} label="Query parameters" size="xs" onChange={handleChangeQuery} />
+      <FieldGrid>
+        <KVInput value={endpoint.query ?? {}} label="Query parameters" size="xs" onChange={handleChangeQuery} />
+        <KVInput value={endpoint.headers ?? {}} label="Headers" size="xs" onChange={handleChangeHeaders} />
+        {isRead && (
+          <Select
+            value={read.pagination ?? ''}
+            label="Paging"
+            size="xs"
+            title="Overrides the connector's paging style for this endpoint alone."
+            onChange={handleChangePagination}
+          >
+            <option value="">Connector default</option>
+            {paginationDocs.map(doc => (
+              <option key={doc.value} value={doc.value}>
+                {doc.label}
+              </option>
+            ))}
+          </Select>
+        )}
+      </FieldGrid>
       <FieldHelp>{isRead ? fieldDocs.listQuery : fieldDocs.writeQuery}</FieldHelp>
-      <KVInput value={endpoint.headers ?? {}} label="Headers" size="xs" onChange={handleChangeHeaders} />
       <FieldHelp>{fieldDocs.endpointHeaders}</FieldHelp>
-      {!isRead && write.method !== 'DELETE' && (
+      {!isRead && !BODYLESS_METHODS.includes(write.method) && (
         <>
           <Input
             value={write.bodyPath ?? ''}
@@ -153,17 +176,16 @@ const ConnectorEndpointEditor = ({
         highlight={isRead && hasResponseMapping(read)}
         description="Where the records sit inside this endpoint's response. The preset already knows; change it only if the API was customized."
       >
-        <Input
-          value={mapping.itemsPath ?? ''}
-          label="Records path"
-          placeholder="data"
-          title={fieldDocs.itemsPath}
-          size="xs"
-          onChange={handleChangeMapping('itemsPath')}
-        />
-        <FieldHelp>{fieldDocs.itemsPath}</FieldHelp>
-        {isRead && (
-          <>
+        <FieldGrid>
+          <Input
+            value={mapping.itemsPath ?? ''}
+            label="Records path"
+            placeholder="data"
+            title={fieldDocs.itemsPath}
+            size="xs"
+            onChange={handleChangeMapping('itemsPath')}
+          />
+          {isRead && (
             <Input
               value={mapping.totalPath ?? ''}
               label="Total path"
@@ -172,12 +194,8 @@ const ConnectorEndpointEditor = ({
               size="xs"
               onChange={handleChangeMapping('totalPath')}
             />
-            <FieldHelp>{fieldDocs.totalPath}</FieldHelp>
-          </>
-        )}
-        <div className="flex gap-2">
+          )}
           <Input
-            className="grow"
             value={mapping.idPath ?? ''}
             label="Id path"
             placeholder="id"
@@ -186,7 +204,6 @@ const ConnectorEndpointEditor = ({
             onChange={handleChangeMapping('idPath')}
           />
           <Input
-            className="grow"
             value={mapping.valuesPath ?? ''}
             label="Fields path"
             placeholder="."
@@ -194,7 +211,8 @@ const ConnectorEndpointEditor = ({
             size="xs"
             onChange={handleChangeMapping('valuesPath')}
           />
-        </div>
+        </FieldGrid>
+        <FieldHelp>{fieldDocs.itemsPath}</FieldHelp>
         <FieldHelp>{fieldDocs.valuesPath}</FieldHelp>
       </ConnectorSection>
     </ConnectorSection>

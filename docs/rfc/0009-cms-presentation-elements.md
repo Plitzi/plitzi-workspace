@@ -226,6 +226,11 @@ special case, not the model. A write can be called `escalate`, `publish` or `sen
 elements read through a named read endpoint (`endpoint`, defaulting to `list`) and interactions
 invoke a named write one. Anything undeclared is refused with a 405.
 
+The verb is the full REST vocabulary on both sides — `GET`, `POST`, `PUT`, `PATCH`, `DELETE`,
+`HEAD`, `OPTIONS`. What separates a read from a write is what the endpoint is *for*, not which
+verb it uses: search reads through POST, upsert writes through PUT, and narrowing the set would
+only describe the subset a CMS happens to need.
+
 Reads and writes are separate maps rather than one keyed by method, because only writes are
 reachable through `/_action`: a read can then never be invoked as a mutation, and a write can
 never be mounted as a data source.

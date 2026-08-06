@@ -95,7 +95,7 @@ const ConnectorForm = ({ connector, onSubmit, onCancel }: ConnectorFormProps) =>
 
   return (
     <div className="flex grow basis-0 flex-col">
-      <div className="flex flex-col gap-2 p-3 pb-2">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-2 p-3 pb-2">
         <div className="flex items-end gap-2">
           <Input className="grow" value={name} label="Name" placeholder="Blog CMS" onChange={setName} size="xs" />
           <Button
@@ -108,8 +108,8 @@ const ConnectorForm = ({ connector, onSubmit, onCancel }: ConnectorFormProps) =>
           </Button>
         </div>
         {!connector && !isAdvanced && (
-          <Select value="" label="CMS" onChange={handleChangePreset} size="xs">
-            <option value="">Choose your CMS…</option>
+          <Select value="" label="Start from" onChange={handleChangePreset} size="xs">
+            <option value="">Choose your API or CMS…</option>
             {connectorPresets.map(preset => (
               <option key={preset.id} value={preset.id}>
                 {preset.label}
@@ -118,11 +118,11 @@ const ConnectorForm = ({ connector, onSubmit, onCancel }: ConnectorFormProps) =>
           </Select>
         )}
       </div>
-      <div className="flex grow basis-0 flex-col overflow-auto px-3">
+      <div className="mx-auto flex w-full max-w-4xl grow basis-0 flex-col overflow-auto px-3">
         {isAdvanced && <ConnectorAdvancedEditor value={draft} onChange={setDraft} />}
         {!isAdvanced && <ConnectorBasicEditor manifest={manifest} onChange={setManifest} />}
       </div>
-      <div className="flex flex-col gap-2 border-t border-gray-200 p-3 dark:border-zinc-700">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-2 border-t border-gray-200 p-3 dark:border-zinc-700">
         {errors.length > 0 && (
           <Alert intent="error" size="sm" solid={false}>
             <div className="flex flex-col gap-1">

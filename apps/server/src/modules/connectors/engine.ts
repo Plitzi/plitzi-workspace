@@ -1,4 +1,4 @@
-import { DEFAULT_READ_ENDPOINT } from '@plitzi/sdk-shared/connectors';
+import { BODYLESS_METHODS, DEFAULT_READ_ENDPOINT, EMPTY_RESPONSE_METHODS } from '@plitzi/sdk-shared/connectors';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { getByPath } from './getByPath';
@@ -272,15 +272,16 @@ export const fetchConnectorRecords = async ({
 
   const method = read.method ?? 'GET';
   const headers = { ...applyAuth(connection, variables, url), ...renderEntries(read.headers ?? {}, variables) };
-  if (method === 'POST') {
+  // A search endpoint reads through POST; the body is templated the same way the query string is.
+  const sendsBody = !BODYLESS_METHODS.includes(method);
+  if (sendsBody) {
     headers['Content-Type'] = 'application/json';
   }
 
   const response = await fetchImpl(url.toString(), {
     method,
     headers,
-    // A search endpoint reads through POST; the body is templated the same way the query string is.
-    body: method === 'POST' ? JSON.stringify(renderEntries(read.body ?? {}, variables)) : undefined
+    body: sendsBody ? JSON.stringify(renderEntries(read.body ?? {}, variables)) : undefined
   });
   if (!response.ok) {
     throw new Error(`Connector ${connection.id} responded ${response.status} for ${url.pathname}`);
@@ -349,13 +350,13 @@ export const writeConnectorRecord = async ({
   const response = await fetchImpl(url.toString(), {
     method: operation.method,
     headers,
-    body: operation.method === 'DELETE' ? undefined : JSON.stringify(wrapBody(values, operation.bodyPath))
+    body: BODYLESS_METHODS.includes(operation.method) ? undefined : JSON.stringify(wrapBody(values, operation.bodyPath))
   });
   if (!response.ok) {
     throw new Error(`Connector ${connection.id} responded ${response.status} for ${action} on ${url.pathname}`);
   }
 
-  if (operation.method === 'DELETE' || response.status === 204) {
+  if (EMPTY_RESPONSE_METHODS.includes(operation.method) || response.status === 204) {
     return undefined;
   }
 
