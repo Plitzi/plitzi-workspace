@@ -1,8 +1,9 @@
 import Button from '@plitzi/plitzi-ui/Button';
+import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
 import Input from '@plitzi/plitzi-ui/Input';
 import KVInput from '@plitzi/plitzi-ui/KVInput';
 import Select from '@plitzi/plitzi-ui/Select';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import { BODYLESS_METHODS, CONNECTOR_HTTP_METHODS } from '@plitzi/sdk-shared/connectors';
 
@@ -15,15 +16,15 @@ import TokenInput from '../TokenInput';
 
 import type { EndpointKind } from '../../helpers/updateManifest';
 import type { ConnectorPagination, ConnectorReadEndpoint, ConnectorWriteEndpoint } from '@plitzi/sdk-shared';
+import type { KeyboardEvent } from 'react';
 
 export type ConnectorEndpointEditorProps = {
   kind: EndpointKind;
-  /** Position in its list. Identifies the section for persistence, so renaming does not re-key it. */
-  index: number;
   name: string;
   endpoint: ConnectorReadEndpoint | ConnectorWriteEndpoint;
   onChange: (name: string, endpoint: ConnectorReadEndpoint | ConnectorWriteEndpoint) => void;
-  onRename: (from: string, to: string) => void;
+  /** Returns false when the new name is empty or already taken, so the field can snap back. */
+  onRename: (from: string, to: string) => boolean;
   onRemove: (name: string) => void;
 };
 
@@ -36,7 +37,6 @@ export type ConnectorEndpointEditorProps = {
  */
 const ConnectorEndpointEditor = ({
   kind,
-  index,
   name,
   endpoint,
   onChange,
@@ -46,8 +46,24 @@ const ConnectorEndpointEditor = ({
   const isRead = kind === 'read';
   const read = endpoint as ConnectorReadEndpoint;
   const write = endpoint as ConnectorWriteEndpoint;
+  // The name is this endpoint's identity, so renaming it re-keys the row. Held locally and committed on blur, that
+  // happens once instead of once per keystroke — and the intermediate names, which are empty or half-typed and get
+  // rejected, never reach the manifest at all.
+  const [draftName, setDraftName] = useState(name);
 
-  const handleChangeName = useCallback((value: string) => onRename(name, value), [name, onRename]);
+  useDidUpdateEffect(() => setDraftName(name), [name]);
+
+  const handleCommitName = useCallback(() => {
+    if (draftName !== name && !onRename(name, draftName)) {
+      setDraftName(name);
+    }
+  }, [draftName, name, onRename]);
+
+  const handleKeyDownName = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.currentTarget.blur();
+    }
+  }, []);
 
   const handleChangeMethod = useCallback(
     (value: string) => onChange(name, { ...endpoint, method: value as ConnectorWriteEndpoint['method'] }),
@@ -97,10 +113,17 @@ const ConnectorEndpointEditor = ({
   const mapping = isRead ? read : (write.response ?? {});
 
   return (
-    <ConnectorSection id={`${kind}-${index}`} title={name} summary={summarizeEndpoint(endpoint)}>
+    <ConnectorSection id={`${kind}-${name}`} title={name} summary={summarizeEndpoint(endpoint)}>
       <div className="flex items-end gap-2">
         <div className="w-32 shrink-0">
-          <Input value={name} label="Name" size="xs" onChange={handleChangeName} />
+          <Input
+            value={draftName}
+            label="Name"
+            size="xs"
+            onChange={setDraftName}
+            onBlur={handleCommitName}
+            onKeyDown={handleKeyDownName}
+          />
         </div>
         <div className="w-24 shrink-0">
           <Select
@@ -173,7 +196,7 @@ const ConnectorEndpointEditor = ({
         </>
       )}
       <ConnectorSection
-        id={`${kind}-${index}-response`}
+        id={`${kind}-${name}-response`}
         title="Response"
         summary={isRead && hasResponseMapping(read) ? 'Customized' : 'Defaults'}
         highlight={isRead && hasResponseMapping(read)}

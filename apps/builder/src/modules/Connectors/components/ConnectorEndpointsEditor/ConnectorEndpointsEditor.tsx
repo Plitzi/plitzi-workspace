@@ -84,8 +84,19 @@ const ConnectorEndpointsEditor = ({ manifest, onChange }: ConnectorEndpointsEdit
     [manifest, onChange]
   );
 
+  // Rejects rather than silently ignores: the row snaps its field back, so a name that did not take is visible
+  // instead of leaving the editor showing something the manifest never stored.
   const handleRename = useCallback(
-    (kind: EndpointKind) => (from: string, to: string) => onChange(renameEndpoint(manifest, kind, from, to)),
+    (kind: EndpointKind) => (from: string, to: string) => {
+      const source = kind === 'read' ? manifest.endpoints.read : (manifest.endpoints.write ?? {});
+      if (!to.trim() || (to !== from && to in source)) {
+        return false;
+      }
+
+      onChange(renameEndpoint(manifest, kind, from, to));
+
+      return true;
+    },
     [manifest, onChange]
   );
 
@@ -103,14 +114,13 @@ const ConnectorEndpointsEditor = ({ manifest, onChange }: ConnectorEndpointsEdit
           Read endpoint
         </Button>
       </div>
-      {reads.map(([name, endpoint], index) => (
-        // Keyed by position, not by name: the name is the value being edited, so keying on it remounts the row on
-        // every keystroke — which drops focus mid-rename and resets the section. Order is insertion order and
-        // `renameEndpoint` preserves it, so position is the stable identity here.
+      {reads.map(([name, endpoint]) => (
+        // Keyed by name, which is what identifies an endpoint: keying by position would re-point every row after a
+        // deleted one at its neighbour's data and collapsed state. The row commits renames on blur, so this key
+        // changes once per rename rather than once per keystroke.
         <ConnectorEndpointEditor
-          key={`read-${index}`}
+          key={name}
           kind="read"
-          index={index}
           name={name}
           endpoint={endpoint}
           onChange={handleChangeRead}
@@ -131,11 +141,10 @@ const ConnectorEndpointsEditor = ({ manifest, onChange }: ConnectorEndpointsEdit
           Read-only. Anything not declared here is refused by the server.
         </div>
       )}
-      {writes.map(([name, endpoint], index) => (
+      {writes.map(([name, endpoint]) => (
         <ConnectorEndpointEditor
-          key={`write-${index}`}
+          key={name}
           kind="write"
-          index={index}
           name={name}
           endpoint={endpoint}
           onChange={handleChangeWrite}

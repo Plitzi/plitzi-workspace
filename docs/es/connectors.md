@@ -161,8 +161,10 @@ sigue siendo editable. Un preset obsoleto se corrige editando una fila, nunca co
     **Ojo con el id de sección**: `useStorage` parte la clave por el primer punto y trata el resto como *path*
     lodash dentro de un único blob, así que un id que sea prefijo de otro (`read.list` vs `read.list.response`) se
     pisan — uno escribe un booleano donde el otro necesita un objeto, y el perdedor relee `undefined` y se cierra.
-    Por eso el id se aplana a un solo segmento y las secciones de endpoint se identifican por **posición**, no por
-    nombre (renombrar re-clavearía y re-montaría la fila en cada tecla). Además van con `autoSync: false`: todas
+    Por eso el id se aplana a un solo segmento. La identidad de una fila de endpoint **es su nombre** (clavear por
+    posición re-apunta cada fila posterior a una borrada hacia los datos de su vecina), y para que renombrar no
+    re-monte en cada tecla el nombre se edita en estado local y se **confirma al salir del campo**; si está vacío o
+    repetido, `onRename` devuelve false y el campo vuelve al valor guardado. Además van con `autoSync: false`: todas
     comparten la raíz `builder-state` y si no, un toggle notifica y re-renderiza a todas.
     El panel se sirve en el área central, así que va centrado con ancho máximo y los campos cortos fluyen en
     columnas (`FieldGrid`, `auto-fill`) en lugar de estirarse en un monitor ancho. La explicación de cada campo está
