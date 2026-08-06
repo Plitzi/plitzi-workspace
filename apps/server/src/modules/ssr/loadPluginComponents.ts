@@ -1,8 +1,21 @@
+import { pathToFileURL } from 'node:url';
+
 import type { PluginEntry, SSRPlugin } from '@plitzi/sdk-shared';
 import type { FC } from 'react';
 
 /** Module-level cache: absolute filePath → loaded React component. */
 const componentCache = new Map<string, FC>();
+
+/** Bumped on invalidation and appended to the import URL. Node's ESM registry caches a module by URL for the
+ *  life of the process — clearing the Map above is not enough, since a rebuilt plugin lands back on the same
+ *  path and `import()` would hand back the module loaded before it. A changed URL is the only way to re-read.
+ *  Stays at 0 until something actually invalidates, so a normal render imports the plain path and every
+ *  subsequent one hits Node's cache. Superseded generations stay resident: the registry has no eviction, which
+ *  is the price of reloading at all and why this is driven by explicit invalidation rather than per-request. */
+let generation = 0;
+
+const importUrl = (filePath: string): string =>
+  generation === 0 ? filePath : `${pathToFileURL(filePath).href}?g=${generation}`;
 
 /**
  * Plugins that failed to import (e.g. browser-only code like `document`).
@@ -48,7 +61,7 @@ export const loadPluginComponents = async (
         if (!component) {
           try {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            const mod = await import(filePath);
+            const mod = await import(importUrl(filePath));
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             component = (mod.default ?? mod) as FC;
             componentCache.set(filePath, component);
@@ -70,11 +83,12 @@ export const loadPluginComponents = async (
   return result;
 };
 
-/** Drop the loaded-component and failed-import caches. These are keyed by absolute filePath, and a plugin
- *  rebuilt at the SAME version lands back on the same path — so without this, invalidating a plugin refreshes
- *  the build on disk while every render keeps serving the component imported before it. The plugin manager owns
- *  its own caches and cannot reach these, which is why invalidation has to clear both. */
+/** Drop the loaded-component and failed-import caches and force the next import to re-read from disk. A plugin
+ *  rebuilt at the SAME version lands back on the same path, so without this an invalidation refreshes the build
+ *  on disk while every render keeps serving the component imported before it. The plugin manager owns its own
+ *  caches and cannot reach these, which is why invalidation has to clear both sides. */
 export const invalidatePluginComponentCache = (): void => {
   componentCache.clear();
   failedImports.clear();
+  generation += 1;
 };
