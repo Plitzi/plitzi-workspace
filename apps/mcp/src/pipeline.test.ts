@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import { afterAll, describe, expect, it } from 'vitest';
 
-import { createSSRServer } from '@plitzi/sdk-server';
+import { createServer } from '@plitzi/sdk-server';
 
 import { buildMCPPipeline, mcpExtensions } from './pipeline';
 import { mcpOnlyStage, mcpStage } from './stages/mcp';
@@ -18,7 +18,7 @@ const PORT = 39231;
 
 // The sample space `yarn start` serves. A real one, not a stub: the preview endpoint RENDERS, so an empty
 // schema would only ever prove that the stage was reached, never that it works.
-const SAMPLE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'sample');
+const SAMPLE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dev/sample');
 const schema = (JSON.parse(readFileSync(path.join(SAMPLE, 'space.json'), 'utf-8')) as { schema: Schema }).schema;
 const style = JSON.parse(readFileSync(path.join(SAMPLE, 'style.json'), 'utf-8')) as Style;
 const offline = { schema, style } as unknown as OfflineDataRaw;
@@ -81,7 +81,7 @@ describe('buildMCPPipeline (the dedicated MCP server)', () => {
 // The seam the split created: sdk-mcp's stages running inside a page server built by sdk-server, across the
 // package boundary. Unit-testing the slot contract cannot catch a pipeline that assembles but does not serve.
 describe('mcpExtensions mounted in a real sdk-server page server', () => {
-  const server: SSRServer = createSSRServer(
+  const server: SSRServer = createServer(
     {
       httpVersion: 1,
       adapters,

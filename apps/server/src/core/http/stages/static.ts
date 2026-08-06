@@ -1,16 +1,7 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 import { serveStatic } from '../../staticFiles';
 
 import type { Stage } from '../types';
 import type { SSRRequest } from '@plitzi/sdk-shared';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const BUILTIN_PUBLIC_DIR = path.resolve(__dirname, '../../../public');
-
-// Assets shipped with the SDK (favicon, error pages…).
-export const builtinPublicStage: Stage = ctx => serveStatic(ctx.req, ctx.res, BUILTIN_PUBLIC_DIR);
 
 // The consumer's own public directory.
 export const publicDirStage: Stage = ctx =>

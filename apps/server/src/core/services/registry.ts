@@ -5,7 +5,7 @@ import { authRoutesStages } from '../http/stages/authRoutes';
 import { healthStage } from '../http/stages/health';
 import { middlewaresStage } from '../http/stages/middlewares';
 import { pluginAssetsStage } from '../http/stages/pluginAssets';
-import { builtinPublicStage, configStaticStage, publicDirStage, wellKnownStage } from '../http/stages/static';
+import { configStaticStage, publicDirStage, wellKnownStage } from '../http/stages/static';
 
 import type { ResolvedServices } from './resolve';
 import type { PipelineExtensions, SSRContext, Stage } from '../http/types';
@@ -19,7 +19,6 @@ export const buildPagePipeline = (
 ): Stage<SSRContext>[] => {
   const stages: Stage<SSRContext>[] = [
     healthStage,
-    builtinPublicStage,
     publicDirStage,
     wellKnownStage,
     pluginAssetsStage,

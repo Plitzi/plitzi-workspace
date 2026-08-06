@@ -20,7 +20,7 @@ export const buildHealthPayload = (identity: Partial<HealthIdentity> = {}): Reco
 });
 
 // Attach the generic /health endpoint to an Express-style app (the api/server roles, which do not run on the
-// sdk-server http pipeline). Servers built through createSSRServer/createMCPServer get the same payload from
+// sdk-server http pipeline). Every server built on this kernel gets the same payload from
 // healthStage instead.
 export const registerHealthCheck = (app: HealthCheckApp, identity: HealthIdentity): void => {
   const payload = buildHealthPayload(identity);

@@ -6,7 +6,6 @@ import { compileTemplate } from '../../modules/ssr/template';
 import { PluginManager } from '../../plugins/manager';
 import { makeHandler } from '../http/dispatcher';
 import { buildPagePipeline } from '../services/registry';
-import { resolveServices } from '../services/resolve';
 
 import type { BuildContext } from '../http/dispatcher';
 import type { PipelineExtensions, SSRContext } from '../http/types';
@@ -15,7 +14,7 @@ import type { CacheManager, PluginRegistry, SSRServer, SSRServerConfig } from '@
 
 /** The page-serving machinery: html/rsc caches, the render template and the plugin manager, driving the page
  *  pipeline. Which services it mounts is the CALLER's decision — {@link createServer} passes whatever the config
- *  enables, createSSRServer pins the page surface — so this unit never second-guesses a factory's promise. */
+ *  enables — so this unit never second-guesses a factory's promise. */
 export const createPageServer = (
   config: SSRServerConfig,
   services: ResolvedServices,
@@ -75,8 +74,3 @@ export const createPageServer = (
   });
 };
 
-/** The page server: SSR and RSC, and nothing else. A deployment that also wants the MCP endpoint, the widget
- *  proxy or draft-preview on this port passes those stages as {@link PipelineExtensions} — they live in
- *  `@plitzi/sdk-mcp`, so a page-only deployment never loads them. */
-export const createSSRServer = (config: SSRServerConfig, extensions?: PipelineExtensions): SSRServer =>
-  createPageServer(config, resolveServices(config), extensions);

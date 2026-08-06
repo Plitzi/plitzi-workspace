@@ -24,8 +24,7 @@ const copyAssets = (): import('vite').Plugin => ({
   closeBundle() {
     const copies: [string, string, ((src: string) => boolean)?][] = [
       [path.resolve(root, 'src/ssr/views'), path.resolve(root, 'dist/ssr/views')],
-      [path.resolve(root, 'src/modules/ssr/views'), path.resolve(root, 'dist/modules/ssr/views')],
-      [path.resolve(root, 'public'), path.resolve(root, 'dist/public')]
+      [path.resolve(root, 'src/modules/ssr/views'), path.resolve(root, 'dist/modules/ssr/views')]
     ];
     for (const [src, dest, filter] of copies) {
       if (fs.existsSync(src)) {

@@ -110,8 +110,9 @@ The one app today is `plitzi_render`'s: [`render/view/index.tsx`](apps/render/vi
 renders the widget with `<PlitziSdk>` in offline mode. It is a real `.tsx`, typechecked and linted with the rest
 of the package, and it mounts on `#app` — the shell's root.
 
-`yarn start` runs the standalone server on the sample space, MCP included: point an MCP Apps host (Claude via a
-tunnel, or the `basic-host` example from the ext-apps repo) at `http://localhost:3002/mcp` and call plitzi_render.
+`yarn start` runs this package's dev harness on the sample space: point an MCP Apps host (Claude via a tunnel, or
+the `basic-host` example from the ext-apps repo) at `http://localhost:3003/` and call plitzi_render. This server
+owns its whole origin, so MCP answers at the root — no `/mcp` path.
 
 ### `tools/` — the write side
 

@@ -334,7 +334,7 @@ export type SSRServerConfig = {
   mcp?: McpServerConfig;
   /** AI-native MCP server — replaces the standard MCP with a zero-hallucination batch protocol. `path` is where
    *  it answers inside a server that also serves pages (default /mcp); a dedicated MCP server (createMCPServer)
-   *  owns its whole origin and ignores it. Note that createSSRServer mounts no MCP whatever this says — a
+   *  owns its whole origin and ignores it. Note that a page server mounts no MCP whatever this says — a
    *  process that serves both surfaces is built with createServer. */
   mcpAi?: {
     enabled?: boolean;
@@ -401,7 +401,7 @@ export type SSRServerConfig = {
    *  so new services scale without rewriting the dispatcher. Omitted flags fall back to sensible defaults:
    *  ssr on, rsc when `adapters.getRscData` exists, mcp from `mcpAi.enabled`. `ai` is a reserved slot (not
    *  wired yet). Only createServer reads these as written — the surface factories pin what their name promises
-   *  (createSSRServer: no mcp; createMCPServer: mcp alone). */
+   *  (a page server serves pages; a dedicated MCP server serves MCP alone). */
   services?: ServerServices;
   /** Liveness/readiness endpoint for standalone servers (k8s probes). A stage always answers `path`
    *  (default /health) with 200. The body is the generic identity payload built from `name`/`version`/`role`

@@ -1,6 +1,11 @@
 # @plitzi/sdk-server
 
-Server-side rendering (SSR) server for Plitzi spaces. Ships as an HTTP/2 server by default with support for HTTP/1.1 and HTTP/3.
+The page server for Plitzi spaces: server-side rendering, React Server Components, plugins, connectors and the
+HTTP kernel they run on. Ships as an HTTP/2 server by default, with support for HTTP/1.1 and HTTP/3.
+
+This package serves **pages**. The AI surface — the MCP server, its tool engine and the draft-preview
+endpoint — lives in [`@plitzi/sdk-mcp`](../mcp/README.md), which builds on this one. A deployment that only
+renders pages never installs it, and never loads it.
 
 ## Installation
 
@@ -12,9 +17,9 @@ yarn add @plitzi/sdk-server
 
 ```ts
 import { readFileSync } from 'node:fs';
-import { createSSRServer } from '@plitzi/sdk-server';
+import { createServer } from '@plitzi/sdk-server';
 
-const server = createSSRServer({
+const server = createServer({
   httpVersion: 2,
   tls: {
     key: readFileSync('./certs/server-key.pem'),
@@ -45,7 +50,7 @@ server.listen(3001);
 | `pluginsCacheDir` | `string` | `.sdk-plugins` | Directory where compiled plugin files are stored. |
 | `pluginsTtlMs` | `number` | `604800000` | TTL in milliseconds for compiled plugins (default: 1 week). |
 | `autoLoadSchemaPlugins` | `boolean` | `true` | Auto-download and cache plugins declared in the schema's `offlineData.plugins` list. Set to `false` to manage plugin loading manually. |
-| `publicDir` | `string` | — | Absolute path to a directory served at the root URL level (e.g. `robots.txt`, `favicon.png`). Files are checked after the built-in public directory and before `static` prefix routes. |
+| `publicDir` | `string` | — | Absolute path to a directory served at the root URL level (e.g. `robots.txt`, `favicon.png`). Files are checked before `static` prefix routes. |
 | `static` | `Record<string, string>` | — | URL prefix → filesystem path mappings for static file serving. |
 | `ssrOnly` | `boolean` | `false` | Omit client-side JS from the rendered page. Useful for verifying SSR HTML without hydration. |
 | `streaming` | `boolean` | `false` | Stream HTML to the browser incrementally to reduce TTFB. See [Streaming](#streaming). |
@@ -97,9 +102,9 @@ type SSRAdapters = {
 `createJsonAdapters` provides a ready-made adapter set that reads data from local JSON files, useful for offline mode, integration tests, and static deployments.
 
 ```ts
-import { createSSRServer, createJsonAdapters } from '@plitzi/sdk-server';
+import { createServer, createJsonAdapters } from '@plitzi/sdk-server';
 
-const server = createSSRServer({
+const server = createServer({
   adapters: createJsonAdapters({
     offlineData: '/exports/offline.json',
     deployment: { spaceId: 1, environment: 'main', revision: 0 },
@@ -127,7 +132,7 @@ server.listen(3001);
 Map URL prefixes to local directories:
 
 ```ts
-createSSRServer({
+createServer({
   static: {
     '/sdk-assets': './node_modules/@plitzi/plitzi-sdk/dist',
     '/builder-assets': './node_modules/@plitzi/plitzi-builder/dist'
@@ -140,18 +145,16 @@ Static responses include `ETag`, `Last-Modified`, and `Cache-Control` headers. S
 
 ### Public directory
 
-Any file placed in the package's `public/` directory is served automatically at its root path (e.g. `public/favicon.png` → `/favicon.png`).
-
-Use `publicDir` to serve your own root-level files (e.g. `robots.txt`, `sitemap.xml`) without prefixes:
+Use `publicDir` to serve your own root-level files (e.g. `robots.txt`, `sitemap.xml`, `favicon.png`) without prefixes:
 
 ```ts
-createSSRServer({
+createServer({
   publicDir: path.resolve(process.cwd(), 'src/services/ssr/public'),
   adapters: { ... }
 });
 ```
 
-The lookup order for a request is: built-in `public/` → `publicDir` → `static` prefix routes → SSR renderer.
+The lookup order for a request is: `publicDir` → `static` prefix routes → SSR renderer.
 
 `/.well-known/` paths follow the same lookup order: served from `publicDir` if a matching file exists, otherwise `404 Not Found`. They are never handled by the SSR renderer.
 
@@ -171,13 +174,13 @@ Responses are compressed automatically based on the `Accept-Encoding` request he
 SSR output is cached in-memory per `(spaceId, environment, revision, hostname, path, search)`. The cache uses a 5-minute TTL by default. The `main` environment is always excluded from caching — it is the development environment and its schema changes frequently.
 
 ```ts
-createSSRServer({
+createServer({
   cacheTtlMs: 60_000,  // 1 minute
   adapters: { ... }
 });
 
 // Disable caching entirely
-createSSRServer({
+createServer({
   cacheTtlMs: 0,
   adapters: { ... }
 });
@@ -192,7 +195,7 @@ Responses include an `X-Cache: HIT` or `X-Cache: MISS` header for observability.
 `server.cache` exposes programmatic cache control, useful when content changes and you need to invalidate entries without restarting the server.
 
 ```ts
-const server = createSSRServer({ cacheTtlMs: 300_000, adapters });
+const server = createServer({ cacheTtlMs: 300_000, adapters });
 
 // Invalidate all entries for a specific space
 server.cache?.invalidate({ spaceId: 42 });
@@ -229,7 +232,7 @@ Plugins are React component bundles that extend the Plitzi schema renderer. They
 ```ts
 import type { SSRSpaceDeployment } from '@plitzi/sdk-server';
 
-const server = createSSRServer({
+const server = createServer({
   plugins: {
     // From a source file — compiled to ESM with esbuild
     'my-chart': {
@@ -310,7 +313,7 @@ Plugins listed in `pluginSources` are registered into the plugin manager on-the-
 
 ### Plugin versioning
 
-Every plugin registered through `createSSRServer` (or via `server.plugins.register`) is versioned. If you omit `version`, it defaults to `'1.0.0'`:
+Every plugin registered through `createServer` (or via `server.plugins.register`) is versioned. If you omit `version`, it defaults to `'1.0.0'`:
 
 ```ts
 plugins: {
@@ -364,7 +367,7 @@ To force recompilation without waiting for TTL expiry, call `server.plugins.inva
 Plugins can be registered after the server has started without restarting it. This is useful when plugins are loaded from a database or activated at runtime:
 
 ```ts
-const server = createSSRServer({ adapters });
+const server = createServer({ adapters });
 server.listen(3001);
 
 // Later — register a new plugin dynamically
@@ -523,7 +526,7 @@ The endpoint returns `400` if `spaceId` is missing or invalid, `500` if `getRscD
 ### RSC configuration
 
 ```ts
-createSSRServer({
+createServer({
   rsc: {
     enabled: true,   // default: true when getRscData is provided
     path: '/_rsc'    // default: '/_rsc'
@@ -597,7 +600,7 @@ const getUser = async (req: SSRRequest): Promise<SSRUser | undefined> => {
   };
 };
 
-createSSRServer({ adapters: { getOfflineData, getSpaceDeployment, getUser } });
+createServer({ adapters: { getOfflineData, getSpaceDeployment, getUser } });
 ```
 
 ### `SSRUser`
@@ -626,13 +629,13 @@ const onLogin = async (req: SSRRequest, res: SSRResponseHelpers): Promise<boolea
   return true;
 };
 
-createSSRServer({ adapters: { getOfflineData, getSpaceDeployment, onLogin } });
+createServer({ adapters: { getOfflineData, getSpaceDeployment, onLogin } });
 ```
 
 The path is configurable via `loginPath`. Set it to `false` to disable the endpoint entirely:
 
 ```ts
-createSSRServer({
+createServer({
   loginPath: '/api/login',   // custom path
   // loginPath: false,       // disable
   adapters: { ... }
@@ -653,13 +656,13 @@ const onLogout = async (req: SSRRequest, res: SSRResponseHelpers): Promise<void>
   res.setHeader('Set-Cookie', 'my_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
 };
 
-createSSRServer({ adapters: { getOfflineData, getSpaceDeployment, getUser, onLogout } });
+createServer({ adapters: { getOfflineData, getSpaceDeployment, getUser, onLogout } });
 ```
 
 The path is configurable via `logoutPath`. Set it to `false` to disable the endpoint entirely:
 
 ```ts
-createSSRServer({
+createServer({
   logoutPath: '/api/logout',   // custom path
   // logoutPath: false,        // disable
   adapters: { ... }
@@ -694,7 +697,7 @@ const rateLimitMiddleware: SSRMiddleware = async (req, res, next) => {
   return next();
 };
 
-createSSRServer({
+createServer({
   middlewares: [corsMiddleware, rateLimitMiddleware],
   adapters: { ... }
 });
@@ -702,12 +705,62 @@ createSSRServer({
 
 Middlewares run after the built-in auth checks (Basic auth, `spaceDeployment` resolution, `getUser`) and before RSC and the SSR renderer.
 
+## Extending the pipeline
+
+A page server runs a fixed, ordered pipeline of stages. Order is an invariant — static assets first, then stages
+that authenticate themselves, then the auth middleware chain, then the data services, then the renderer — so a
+companion package does not hand over a list of stages. It hands them over by **slot**, and this package decides
+where the slot lands:
+
+```ts
+import { createServer } from '@plitzi/sdk-server';
+import { mcpExtensions } from '@plitzi/sdk-mcp';
+
+const server = createServer({ adapters }, mcpExtensions());
+```
+
+| Slot | Runs | For |
+|---|---|---|
+| `preAuth` | after static assets, **before** the auth middleware chain | stages that gate themselves — on a shared secret, a bearer token, or nothing at all |
+| `data` | after the auth chain, before the page render | stages serving data to an already-identified visitor |
+
+Pass only the stages you want rather than the whole bundle:
+
+```ts
+import { previewStage } from '@plitzi/sdk-mcp';
+
+// Draft-preview, but no MCP endpoint on this port.
+const server = createServer({ adapters, preview: { enabled: true, secret } }, { preAuth: [previewStage] });
+```
+
+A stage receives the `SSRContext` — the request, the config, and the render singletons (`renderFn`,
+`pluginManager`, `caches`) — and returns `true` when it has answered, `false` to fall through. Passing the stages
+**is** the decision to mount them: there is no config flag mirroring it, and a server that never passes them
+never loads them.
+
+## Running it locally
+
+The package ships a small harness in [`dev/`](./dev) — file-backed adapters over a sample space, three demo
+plugins and a demo style document — so you can exercise SSR and RSC without standing up a platform:
+
+```bash
+yarn start        # pages + RSC on :3002 against dev/sample
+yarn start:dev    # same, resolving every @plitzi/* workspace package from source
+yarn start:watch  # same as start, restarting on change
+```
+
+`SSR_ENABLED=0` and `RSC_ENABLED=0` switch the surfaces off individually; `LOG_REQUESTS=0` quiets the request log.
+Writes land back in `dev/sample`, so `git restore dev/sample` resets a session.
+
+`dev/` is not part of the published package and nothing in `src/` imports it — it consumes this package's public
+API exactly as a consumer would.
+
 ## SSR-only mode
 
 Set `ssrOnly: true` to serve raw server-rendered HTML without any client-side scripts. Useful for inspecting SSR output or building purely static pages:
 
 ```ts
-createSSRServer({
+createServer({
   ssrOnly: true,
   adapters: { ... }
 });
@@ -724,7 +777,7 @@ import { statSync } from 'node:fs';
 
 const assetVersion = String(statSync('./node_modules/@plitzi/plitzi-sdk/dist/plitzi-sdk.js').mtimeMs | 0);
 
-createSSRServer({
+createServer({
   assetVersion,
   adapters: { ... }
 });
@@ -755,7 +808,7 @@ const templateFn: SSRTemplateFn = ({ html, offlineData, jsPath, cssPath, plugins
   </html>
 `;
 
-createSSRServer({ templateFn, adapters: { ... } });
+createServer({ templateFn, adapters: { ... } });
 ```
 
 The function is called once per render (cache misses only). The built-in `template.ejs` is used as fallback when `templateFn` is not set.
@@ -798,7 +851,7 @@ return {
 Enable streaming to reduce TTFB by sending the `<head>` section to the browser before React finishes rendering:
 
 ```ts
-createSSRServer({
+createServer({
   streaming: true,
   adapters: { ... }
 });
@@ -838,24 +891,6 @@ When `devMode: true`, per-phase timing is instrumented on every render and repor
 | `total` | Wall-clock time from request entry to response headers flushed. |
 
 In production (`devMode: false`) timing instrumentation is skipped entirely — no `Server-Timing` header, no console output.
-
-## Agent skill
-
-This package ships an [Agent Skill](https://agentskills.io/) for `plitzi_render`, the MCP tool that renders a
-self-contained UI widget from a batch of operations. The skill teaches an agent when to show a widget instead of
-writing prose, the shape of a good call, the layout/theme traps that make a widget look wrong in a chat panel, and
-how to iterate on a widget it already rendered.
-
-It lives in [`skills/plitzi-render`](./skills/plitzi-render/SKILL.md) and is a plain `SKILL.md`, so it installs by
-copying that folder into the skills directory of the agent you use (Claude Code, VS Code / Copilot, Codex, Gemini
-CLI, Cline, Goose…):
-
-```bash
-cp -R node_modules/@plitzi/sdk-server/skills/plitzi-render ~/.claude/skills/
-```
-
-The skill only pays off with the Plitzi MCP server connected — it defers every detail to the `plitzi://render/guide`
-resource the server publishes, so the two never drift apart.
 
 ## Exported types
 

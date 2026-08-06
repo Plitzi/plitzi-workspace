@@ -10,7 +10,7 @@
 export { createHttpServer } from './core/server/baseServer';
 export { makeHandler } from './core/http/dispatcher';
 export { healthStage } from './core/http/stages/health';
-export { builtinPublicStage, configStaticStage, publicDirStage, wellKnownStage } from './core/http/stages/static';
+export { configStaticStage, publicDirStage, wellKnownStage } from './core/http/stages/static';
 export { buildHealthPayload, registerHealthCheck } from './core/health';
 export { clientIp, parseRequest, readRawBody, requestOrigin } from './core/requestParser';
 export { consoleLogger, renderLogEvent } from './helpers/serverLog';

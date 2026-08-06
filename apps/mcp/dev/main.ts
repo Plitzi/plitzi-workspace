@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import { consoleLogger } from '@plitzi/sdk-server/kernel';
 
-import { createServer } from './createServer';
+import { createServer } from '../src/server';
 
 import type { Schema, SSRAdapters, SSRSpaceDeployment, Style } from '@plitzi/sdk-shared';
 

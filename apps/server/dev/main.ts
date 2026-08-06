@@ -2,8 +2,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { createServer } from '../core/createServer';
-import { consoleLogger } from '../helpers/serverLog';
+import { consoleLogger, createServer } from '../src';
 
 import type {
   OfflineDataRaw,
@@ -32,8 +31,8 @@ const services = {
   rsc: enabled('RSC_ENABLED')
 };
 
-const spacePath = () => path.resolve(__dirname, 'schemas/basic', 'space.json');
-const stylePath = () => path.resolve(__dirname, 'schemas/basic', 'style.json');
+const spacePath = () => path.resolve(__dirname, 'sample', 'space.json');
+const stylePath = () => path.resolve(__dirname, 'sample', 'style.json');
 
 const readSchema = (): Schema => (JSON.parse(readFileSync(spacePath(), 'utf-8')) as { schema: Schema }).schema;
 const readStyle = (): Style => JSON.parse(readFileSync(stylePath(), 'utf-8')) as Style;
@@ -153,6 +152,6 @@ const server = createServer({
 const active = Object.entries(services)
   .filter(([, on]) => on)
   .map(([name]) => name);
-console.log(`[standalone] services: ${active.join(', ') || 'none'}`);
+console.log(`[dev] services: ${active.join(', ') || 'none'}`);
 
 server.listen(PORT, HOST);

@@ -1,4 +1,4 @@
-export { createServer, createSSRServer, resolveServices } from './core/createServer';
+export { createServer, resolveServices } from './core/createServer';
 export { registerHealthCheck, buildHealthPayload } from './core/health';
 export { consoleLogger, renderLogEvent } from './helpers/serverLog';
 export type { HealthCheckApp, HealthIdentity } from './core/health';
