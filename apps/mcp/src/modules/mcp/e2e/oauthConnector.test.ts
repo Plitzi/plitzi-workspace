@@ -1,11 +1,11 @@
-import { createServer } from 'node:http';
+import { createServer as createHttpProbe } from 'node:http';
 
 import { UnauthorizedError } from '@modelcontextprotocol/sdk/client/auth.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { createMCPServer } from '../../../server/mcpServer';
+import { createServer } from '../../../createServer';
 
 import type { OAuthClientProvider } from '@modelcontextprotocol/sdk/client/auth.js';
 import type {
@@ -167,7 +167,7 @@ let server: SSRServer;
 
 const freePort = (): Promise<number> =>
   new Promise(resolve => {
-    const probe = createServer();
+    const probe = createHttpProbe();
     probe.listen(0, '127.0.0.1', () => {
       const address = probe.address();
       const port = typeof address === 'object' && address ? address.port : 0;
@@ -178,7 +178,7 @@ const freePort = (): Promise<number> =>
 beforeAll(async () => {
   const port = await freePort();
   BASE = `http://127.0.0.1:${port}`;
-  server = createMCPServer({
+  server = createServer({
     httpVersion: 1,
     adapters: publicAdapters,
     oauth: {

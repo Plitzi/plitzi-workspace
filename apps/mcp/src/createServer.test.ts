@@ -2,7 +2,7 @@ import http from 'node:http';
 
 import { afterAll, describe, expect, it } from 'vitest';
 
-import { createMCPServer } from './mcpServer';
+import { createServer } from './createServer';
 
 import type { SSRAdapters, SSRServer } from '@plitzi/sdk-shared';
 
@@ -14,7 +14,7 @@ const adapters = {
   getSpaceId: () => Promise.resolve(1)
 } as unknown as SSRAdapters;
 
-const server: SSRServer = createMCPServer({
+const server: SSRServer = createServer({
   httpVersion: 1,
   adapters,
   health: { payload: { role: 'mcp', ok: true } }
@@ -41,7 +41,7 @@ const request = (
     req.end();
   });
 
-describe('createMCPServer (dedicated MCP server end-to-end)', () => {
+describe('createServer (dedicated MCP server end-to-end)', () => {
   afterAll(() => server.close());
 
   it('answers the health endpoint with the configured payload', async () => {

@@ -1,6 +1,6 @@
 import { createHttpServer, makeHandler } from '@plitzi/sdk-server/kernel';
 
-import { buildMCPPipeline } from '../pipeline';
+import { buildMCPPipeline } from './pipeline';
 
 import type { BaseContext, BuildContext } from '@plitzi/sdk-server/kernel';
 import type { PluginRegistry, SSRServer, SSRServerConfig } from '@plitzi/sdk-shared';
@@ -11,9 +11,12 @@ const noPlugins: PluginRegistry = {
   invalidate: () => Promise.resolve()
 };
 
-// MCP-only server: the lean mcp-ai pipeline over the bare context — no render template, caches or plugin
-// manager. Pair it with the MCP adapters (getSpaceId + getSchema/getStyle/saveSchema/saveStyle).
-export const createMCPServer = (config: SSRServerConfig): SSRServer => {
+/** The server this package makes: the lean mcp-ai pipeline over the bare context — no render template, caches
+ *  or plugin manager. Pair it with the MCP adapters (getSpaceId + getSchema/getStyle/saveSchema/saveStyle).
+ *
+ *  It owns its whole sub-domain, answering JSON-RPC on every path rather than under /mcp. To serve MCP alongside
+ *  pages on one port instead, hand `mcpExtensions()` to createServer from `@plitzi/sdk-server`. */
+export const createServer = (config: SSRServerConfig): SSRServer => {
   const stages = buildMCPPipeline();
   const makeHandlerForPort = (port: number) => {
     const buildContext: BuildContext<BaseContext> = (raw, rawRes, req, res) => ({

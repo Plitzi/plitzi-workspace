@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { proxyForTool } from './config';
 import { DEFAULT_PROXY_TOOLS } from './types';
-import { createMCPServer } from '../../../server/mcpServer';
+import { createServer } from '../../../createServer';
 import { emptySpace } from '../helpers';
 
 import type { ResourceProxy } from './types';
@@ -64,7 +64,7 @@ const startServer = (port: number, tools?: string[]): Deployment => {
     saveStyle: () => Promise.resolve()
   } as unknown as SSRAdapters;
 
-  const server = createMCPServer({
+  const server = createServer({
     httpVersion: 1,
     adapters,
     mcpAi: { proxy: { secret: 'deployment-secret', ...(tools ? { tools } : {}) } }

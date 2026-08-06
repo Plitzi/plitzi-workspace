@@ -1,9 +1,9 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { createServer } from 'node:http';
+import { createServer as createHttpProbe } from 'node:http';
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { createMCPServer } from '../../server/mcpServer';
+import { createServer } from '../../createServer';
 import { oauthGuardStage } from '../../stages/oauth';
 
 import type { BaseContext } from '@plitzi/sdk-server/kernel';
@@ -116,7 +116,7 @@ let server: SSRServer;
 // a fixed one makes the suite fail on whatever else is already holding it.
 const freePort = (): Promise<number> =>
   new Promise(resolve => {
-    const probe = createServer();
+    const probe = createHttpProbe();
     probe.listen(0, '127.0.0.1', () => {
       const address = probe.address();
       const port = typeof address === 'object' && address ? address.port : 0;
@@ -127,7 +127,7 @@ const freePort = (): Promise<number> =>
 beforeAll(async () => {
   const port = await freePort();
   BASE = `http://127.0.0.1:${port}`;
-  server = createMCPServer({
+  server = createServer({
     httpVersion: 1,
     adapters,
     oauth: { adapters: oauthAdapters(), guest: { target: GUEST_TARGET } }
@@ -491,7 +491,7 @@ describe('MCP OAuth without a guest connection', () => {
   beforeAll(async () => {
     const port = await freePort();
     strictBase = `http://127.0.0.1:${port}`;
-    strictServer = createMCPServer({ httpVersion: 1, adapters, oauth: { adapters: oauthAdapters() } });
+    strictServer = createServer({ httpVersion: 1, adapters, oauth: { adapters: oauthAdapters() } });
     strictServer.listen(port, '127.0.0.1');
   });
 

@@ -4,7 +4,7 @@
  *  A dedicated MCP deployment wants `@plitzi/sdk-mcp/server` instead — this barrel also pulls the draft-preview
  *  endpoint, which reaches into the SSR renderer. */
 
-export { createMCPServer } from './server/mcpServer';
+export { createServer } from './createServer';
 export { buildMCPPipeline, mcpExtensions } from './pipeline';
 export { mcpOnlyStage, mcpStage } from './stages/mcp';
 export { oauthGuardStage, oauthStage } from './stages/oauth';
