@@ -1,4 +1,4 @@
-# 04 — SSR + React Server Components
+# SSR + React Server Components
 
 Elements that get their data from the server, both on the initial render and on later partial refreshes.
 
@@ -31,4 +31,4 @@ This code runs on the server only, so credentials and query cost never reach the
 
 ## Next
 
-The AI surface: [05 — mcp-server](../05-mcp-server).
+The AI surface: [03-ai](../../03-ai).

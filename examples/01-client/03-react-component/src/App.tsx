@@ -43,7 +43,11 @@ const App = () => {
         </aside>
 
         <section style={styles.canvas}>
-          {visible && <PlitziSdk offlineMode offlineData={offlineData} environment={environment} />}
+          {/* `renderMode="raw"` renders into this tree. The default is an iframe — the safe choice for a space
+              dropped into an unknown page, but pointless when the page is yours and already styled. */}
+          {visible && (
+            <PlitziSdk offlineMode offlineData={offlineData} environment={environment} renderMode="raw" />
+          )}
           {!visible && <p style={styles.asideText}>Plitzi is unmounted.</p>}
         </section>
       </main>

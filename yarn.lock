@@ -3515,9 +3515,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@plitzi/example-mcp-server@workspace:examples/05-mcp-server":
+"@plitzi/example-mcp-server@workspace:examples/03-ai/01-mcp-server":
   version: 0.0.0-use.local
-  resolution: "@plitzi/example-mcp-server@workspace:examples/05-mcp-server"
+  resolution: "@plitzi/example-mcp-server@workspace:examples/03-ai/01-mcp-server"
   dependencies:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/sdk-mcp": "workspace:*"
@@ -3530,9 +3530,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/example-react-component@workspace:examples/02-react-component":
+"@plitzi/example-react-component@workspace:examples/01-client/03-react-component":
   version: 0.0.0-use.local
-  resolution: "@plitzi/example-react-component@workspace:examples/02-react-component"
+  resolution: "@plitzi/example-react-component@workspace:examples/01-client/03-react-component"
   dependencies:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/plitzi-sdk": "workspace:*"
@@ -3548,17 +3548,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/example-render-no-build@workspace:examples/00-render-no-build":
+"@plitzi/example-render-no-build@workspace:examples/01-client/01-no-build":
   version: 0.0.0-use.local
-  resolution: "@plitzi/example-render-no-build@workspace:examples/00-render-no-build"
+  resolution: "@plitzi/example-render-no-build@workspace:examples/01-client/01-no-build"
   dependencies:
     tailwindcss: "npm:^4.3.3"
   languageName: unknown
   linkType: soft
 
-"@plitzi/example-render-offline@workspace:examples/01-render-offline":
+"@plitzi/example-render-offline@workspace:examples/01-client/02-render":
   version: 0.0.0-use.local
-  resolution: "@plitzi/example-render-offline@workspace:examples/01-render-offline"
+  resolution: "@plitzi/example-render-offline@workspace:examples/01-client/02-render"
   dependencies:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/plitzi-sdk": "workspace:*"
@@ -3582,9 +3582,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/example-ssr-mcp-preview@workspace:examples/06-ssr-mcp-preview":
+"@plitzi/example-ssr-mcp-preview@workspace:examples/03-ai/02-ssr-preview":
   version: 0.0.0-use.local
-  resolution: "@plitzi/example-ssr-mcp-preview@workspace:examples/06-ssr-mcp-preview"
+  resolution: "@plitzi/example-ssr-mcp-preview@workspace:examples/03-ai/02-ssr-preview"
   dependencies:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/sdk-mcp": "workspace:*"
@@ -3597,9 +3597,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/example-ssr-pages@workspace:examples/03-ssr-pages":
+"@plitzi/example-ssr-pages@workspace:examples/02-ssr/01-pages":
   version: 0.0.0-use.local
-  resolution: "@plitzi/example-ssr-pages@workspace:examples/03-ssr-pages"
+  resolution: "@plitzi/example-ssr-pages@workspace:examples/02-ssr/01-pages"
   dependencies:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
@@ -3611,9 +3611,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/example-ssr-rsc@workspace:examples/04-ssr-rsc":
+"@plitzi/example-ssr-rsc@workspace:examples/02-ssr/02-rsc":
   version: 0.0.0-use.local
-  resolution: "@plitzi/example-ssr-rsc@workspace:examples/04-ssr-rsc"
+  resolution: "@plitzi/example-ssr-rsc@workspace:examples/02-ssr/02-rsc"
   dependencies:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"

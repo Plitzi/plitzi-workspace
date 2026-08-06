@@ -12,6 +12,10 @@ import '@plitzi/plitzi-sdk/plitzi-sdk.css';
  *  `offlineData` at your own export and this renders that instead. */
 render('plitzi-root', {
   offlineMode: true,
+  // Without this the SDK renders the space inside an IFRAME — its default, because a space dropped into an
+  // unknown page is safest isolated from it. Here the page is ours, so render straight into the DOM: one
+  // document, one stylesheet, no frame borders and no scroll traps.
+  renderMode: 'raw',
   offlineData,
   environment: 'main'
 });

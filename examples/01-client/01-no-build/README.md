@@ -1,4 +1,4 @@
-# 00 — Render with no build
+# Render with no build
 
 A Plitzi space rendered from a plain HTML file. **No bundler, no build step, no npm install** — the same shape
 the SDK's own `index.html` uses.
@@ -71,4 +71,4 @@ yarn workspace @plitzi/plitzi-sdk build-vendor:prod
 
 ## Next
 
-The same call from a bundled app: [01 — render-offline](../01-render-offline).
+The same call from a bundled app: [render](../02-render).

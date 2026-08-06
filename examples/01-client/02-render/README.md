@@ -1,4 +1,4 @@
-# 01 — Render offline
+# Render offline
 
 The smallest thing that renders a Plitzi space: a Vite app, one file of code, no server, no account, no API key.
 
@@ -39,4 +39,4 @@ Without it you get a white gutter around the render — the `body` margin every 
 
 ## Next
 
-Compose it into your own React tree instead of owning the page: [02 — react-component](../02-react-component).
+Compose it into your own React tree instead of owning the page: [react-component](../03-react-component).

@@ -43,7 +43,9 @@
       // The space is fetched at runtime, not compiled in — swap the URL for your own export.
       const offlineData = await fetch('/offline-data.json').then(res => res.json());
 
-      render('plitzi', { offlineMode: true, offlineData, environment: 'main' });
+      // `renderMode: 'raw'` renders into this document. Without it the SDK uses its default, an iframe —
+      // the safe choice when a space lands on a page it knows nothing about, but here the page is ours.
+      render('plitzi', { offlineMode: true, offlineData, environment: 'main', renderMode: 'raw' });
     </script>
   </body>
 </html>

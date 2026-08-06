@@ -1,5 +1,5 @@
 {
-  "extends": "../../packages/sdk-shared/tsconfig.app.json",
+  "extends": "../../../packages/sdk-shared/tsconfig.app.json",
   "compilerOptions": {
     "rootDir": "./",
     "noEmit": true,

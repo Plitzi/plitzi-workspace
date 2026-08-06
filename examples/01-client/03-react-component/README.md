@@ -1,4 +1,4 @@
-# 02 — Plitzi as a React component
+# Plitzi as a React component
 
 Plitzi mounted **inside your own React tree**, next to your own components — not owning the page.
 
@@ -16,7 +16,7 @@ yarn start   # http://localhost:4002
 </section>
 ```
 
-That is the whole difference from [01](../01-render-offline). `render()` takes a container id and owns the React
+That is the whole difference from [render](../02-render). `render()` takes a container id and owns the React
 root — right when Plitzi *is* the page. As a component it lives in your tree instead, so it:
 
 - re-renders when your state changes (the header's `environment` select drives it directly),
@@ -49,9 +49,9 @@ Without it you get a white gutter around the render — the `body` margin every 
 
 | | Use |
 |---|---|
-| The page *is* the space | [`render()`](../01-render-offline) — or [no build at all](../00-render-no-build) |
+| The page *is* the space | [`render()`](../02-render) — or [no build at all](../01-no-build) |
 | The space is a region of your app | `<PlitziSdk>`, this example |
 
 ## Next
 
-Move the render to the server: [03 — ssr-pages](../03-ssr-pages).
+Move the render to the server: [02-ssr](../../02-ssr).

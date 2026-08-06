@@ -1,4 +1,4 @@
-# 05 — MCP server
+# MCP server
 
 A [Model Context Protocol](https://modelcontextprotocol.io) server an agent uses to read and edit the space.
 
@@ -29,4 +29,4 @@ Writes land in a temp copy of the space, so a session never dirties the shared f
 
 ## Next
 
-Both surfaces at once, plus preview: [06 — ssr-mcp-preview](../06-ssr-mcp-preview).
+Both surfaces at once, plus preview: [ssr-preview](../02-ssr-preview).

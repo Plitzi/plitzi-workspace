@@ -158,8 +158,8 @@ API exactly as a consumer would.
 
 ## Examples
 
-Runnable setups live in [`examples/`](../../examples) — [05](../../examples/05-mcp-server) is a dedicated MCP
-server, [06](../../examples/06-ssr-mcp-preview) is the combined topology with draft preview. Each starts with
+Runnable setups live in [`examples/`](../../examples) — [03-ai/01](../../examples/03-ai/01-mcp-server) is a dedicated MCP
+server, [03-ai/02](../../examples/03-ai/02-ssr-preview) is the combined topology with draft preview. Each starts with
 `yarn start`.
 
 ## Entry points

@@ -11,10 +11,10 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 
 const PUBLIC_DIR = path.join(here, 'public');
 // The SDK's built assets, served under the same /sdk-assets prefix a real Plitzi deployment uses.
-const SDK_DIST = path.resolve(here, '../../apps/sdk/dist');
-const SPACE = path.resolve(here, '../shared-space/offline-data.json');
+const SDK_DIST = path.resolve(here, '../../../apps/sdk/dist');
+const SPACE = path.resolve(here, '../../shared-space/offline-data.json');
 // Tailwind's preflight — a plain stylesheet, no JavaScript and nothing to compile.
-const TAILWIND = path.resolve(here, '../../node_modules/tailwindcss/preflight.css');
+const TAILWIND = path.resolve(here, '../../../node_modules/tailwindcss/preflight.css');
 
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json' };
 

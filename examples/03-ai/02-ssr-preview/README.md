@@ -1,4 +1,4 @@
-# 06 — Pages, MCP and draft preview on one port
+# Pages, MCP and draft preview on one port
 
 The full loop: an agent proposes edits, they render **without being saved**, and a normal page request serves
 that draft once.
