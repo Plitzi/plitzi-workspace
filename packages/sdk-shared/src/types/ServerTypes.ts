@@ -413,11 +413,11 @@ export type SSRServerConfig = {
   oauth?: OAuthConfig;
 };
 
+/** Which surfaces a page server mounts. Only what the page pipeline itself owns: the MCP endpoint and
+ *  draft-preview are stages a companion package hands in, so they are not flags here. */
 export type ServerServices = {
   ssr?: boolean;
   rsc?: boolean;
-  mcp?: boolean;
-  ai?: boolean;
 };
 
 export type PluginRegistry = {

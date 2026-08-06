@@ -17,7 +17,7 @@ import type {
 } from '@plitzi/sdk-shared';
 
 // The lib build replaces `VERSION` with the package version (see vite.config.ts `define`); running the sources
-// through tsx there is no such replacement, and the MCP server reports it in its handshake.
+// through tsx there is no such replacement, and the health payload reports it.
 (globalThis as typeof globalThis & { VERSION?: string }).VERSION ??= 'dev';
 
 const PORT = parseInt(process.env.SSR_PORT ?? '3002', 10);
@@ -25,14 +25,11 @@ const HOST = process.env.SSR_HOST ?? '0.0.0.0';
 
 const enabled = (name: string): boolean => !['0', 'false'].includes((process.env[name] ?? '').toLowerCase());
 
-/** Which surfaces this run serves — all three unless the environment says otherwise, so the harness can exercise
- *  one at a time against the same sample space. Turning both page surfaces off (`SSR_ENABLED=0 RSC_ENABLED=0`)
- *  leaves an MCP-only config, which createServer hands to the dedicated MCP server: it then answers JSON-RPC on
- *  every path rather than under /mcp, which is the shape a real MCP deployment has. */
+/** Which surfaces this run serves — both unless the environment says otherwise, so the harness can exercise one
+ *  at a time against the same sample space. The MCP endpoint is `@plitzi/sdk-mcp`'s harness, not this one. */
 const services = {
   ssr: enabled('SSR_ENABLED'),
-  rsc: enabled('RSC_ENABLED'),
-  mcp: enabled('MCP_ENABLED')
+  rsc: enabled('RSC_ENABLED')
 };
 
 const spacePath = () => path.resolve(__dirname, 'schemas/basic', 'space.json');
@@ -48,7 +45,7 @@ const getOfflineData = (): Promise<OfflineDataRaw | undefined> => {
   return Promise.resolve(offlineData);
 };
 
-// MCP reads/writes schema and style as separate documents (see SSRAdapters). The stub always resolves spaceId=1.
+// Schema and style as separate documents (see SSRAdapters); the stub always resolves spaceId=1.
 const getSpaceId = (): Promise<number> => Promise.resolve(1);
 const getSchema = (): Promise<Schema> => Promise.resolve(readSchema());
 const getStyle = (): Promise<Style> => Promise.resolve(readStyle());
@@ -106,8 +103,8 @@ const getRscData = async (
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Persists mcp-ai writes back to the sample space (git-restore to reset). A real platform adapter must also
-// recompute style.cache; the SDK renderer reads that cache, though mcp-ai reads/writes the structured source.
+// Persists writes back to the sample space (git-restore to reset). A real platform adapter must also recompute
+// style.cache; the SDK renderer reads that cache.
 const saveOfflineData = (_spaceId: number, _environment: string, data: OfflineDataRaw): Promise<void> => {
   writeFileSync(spacePath(), JSON.stringify({ schema: data.schema }, null, 2));
   writeFileSync(stylePath(), JSON.stringify(data.style, null, 2));
@@ -127,8 +124,8 @@ const adapters: SSRAdapters = {
   saveStyle
 };
 
-// The harness serves whichever surfaces `services` enables from a single port — pages, RSC and mcp-ai under
-// /mcp — so it is the general factory it asks for, not the page one.
+// The harness serves whichever surfaces `services` enables from a single port — pages and RSC — so it is the
+// general factory it asks for, not the page one.
 const server = createServer({
   port: PORT,
   host: HOST,
@@ -139,8 +136,8 @@ const server = createServer({
   },
   httpVersion: 1,
   services,
-  // This is the package's own dev harness, so the log is always on: every page, asset, RSC and MCP hit shows up in
-  // the terminal, tool calls and resource reads included. Set LOG_REQUESTS=0 for a quiet run.
+  // This is the package's own dev harness, so the log is always on: every page, asset and RSC hit shows up in
+  // the terminal. Set LOG_REQUESTS=0 for a quiet run.
   logger: process.env.LOG_REQUESTS === '0' ? undefined : consoleLogger,
   // streaming: true,
   // ssrOnly: true,

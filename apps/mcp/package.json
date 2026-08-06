@@ -1,9 +1,10 @@
 {
-  "name": "@plitzi/sdk-server",
+  "name": "@plitzi/sdk-mcp",
   "version": "0.32.25",
   "license": "AGPL-3.0",
   "files": [
-    "dist"
+    "dist",
+    "skills"
   ],
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -14,15 +15,10 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
-    "./kernel": {
-      "types": "./dist/kernel.d.ts",
-      "import": "./dist/kernel.js",
-      "default": "./dist/kernel.js"
-    },
-    "./ssr": {
-      "types": "./dist/ssr.d.ts",
-      "import": "./dist/ssr.js",
-      "default": "./dist/ssr.js"
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js",
+      "default": "./dist/server.js"
     }
   },
   "repository": {
@@ -32,10 +28,15 @@
   "type": "module",
   "sideEffects": false,
   "dependencies": {
+    "@modelcontextprotocol/ext-apps": "^1.7.5",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@plitzi/plitzi-sdk": "workspace:*",
+    "@plitzi/sdk-schema": "workspace:*",
+    "@plitzi/sdk-server": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "ejs": "^6.0.1",
-    "esbuild": "^0.28.1"
+    "esbuild": "^0.28.1",
+    "zod": "^4.4.3"
   },
   "peerDependencies": {
     "react": "^19",
@@ -64,11 +65,13 @@
     "start": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx src/standalone/server.ts",
     "start:watch": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx --watch src/standalone/server.ts",
     "start:inspect": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx --inspect src/standalone/server.ts",
+    "inspector": "yarn dlx @modelcontextprotocol/inspector@latest",
     "build:dev": "vite build --mode development",
     "build:prod": "vite build",
     "lint": "TIMING=1 eslint ./src",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "test": "vitest run",
+    "test:e2e": "vitest run src/modules/mcp/e2e",
     "test:coverage": "vitest run --coverage",
     "bench": "vitest bench --run"
   }

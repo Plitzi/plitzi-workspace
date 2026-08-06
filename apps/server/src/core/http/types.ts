@@ -30,3 +30,16 @@ export interface SSRContext extends BaseContext {
 // false to fall through. Parameterised by the context its server provides: stages that only need `BaseContext`
 // run in any server, stages typed to `SSRContext` only in the SSR pipeline.
 export type Stage<C extends BaseContext = BaseContext> = (ctx: C) => boolean | Promise<boolean>;
+
+/** Where a package built on this one hands its stages to a page server. Slots, not a list, because the ORDER is
+ *  the pipeline's invariant and cannot be expressed across a package boundary: a stage's slot states what it
+ *  needs from the pipeline, and the pipeline decides where that lands. `@plitzi/sdk-mcp` is the in-tree
+ *  consumer. Declared here, with the context types, so the kernel entry can carry it without reaching into the
+ *  registry — which imports every page stage. */
+export type PipelineExtensions = {
+  /** Stages that gate themselves — on a shared secret, a bearer token, or nothing at all — and so must run
+   *  BEFORE the auth middleware chain. The MCP endpoint, the widget proxy and the draft-preview endpoint. */
+  preAuth?: Stage<SSRContext>[];
+  /** Stages serving data to an already-identified visitor: after the auth chain, before the page render. */
+  data?: Stage<SSRContext>[];
+};
