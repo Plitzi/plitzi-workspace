@@ -103,10 +103,14 @@ const ConnectorEndpointsEditor = ({ manifest, onChange }: ConnectorEndpointsEdit
           Read endpoint
         </Button>
       </div>
-      {reads.map(([name, endpoint]) => (
+      {reads.map(([name, endpoint], index) => (
+        // Keyed by position, not by name: the name is the value being edited, so keying on it remounts the row on
+        // every keystroke — which drops focus mid-rename and resets the section. Order is insertion order and
+        // `renameEndpoint` preserves it, so position is the stable identity here.
         <ConnectorEndpointEditor
-          key={name}
+          key={`read-${index}`}
           kind="read"
+          index={index}
           name={name}
           endpoint={endpoint}
           onChange={handleChangeRead}
@@ -127,10 +131,11 @@ const ConnectorEndpointsEditor = ({ manifest, onChange }: ConnectorEndpointsEdit
           Read-only. Anything not declared here is refused by the server.
         </div>
       )}
-      {writes.map(([name, endpoint]) => (
+      {writes.map(([name, endpoint], index) => (
         <ConnectorEndpointEditor
-          key={name}
+          key={`write-${index}`}
           kind="write"
+          index={index}
           name={name}
           endpoint={endpoint}
           onChange={handleChangeWrite}

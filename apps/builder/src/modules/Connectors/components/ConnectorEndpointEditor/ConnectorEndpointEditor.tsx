@@ -18,6 +18,8 @@ import type { ConnectorPagination, ConnectorReadEndpoint, ConnectorWriteEndpoint
 
 export type ConnectorEndpointEditorProps = {
   kind: EndpointKind;
+  /** Position in its list. Identifies the section for persistence, so renaming does not re-key it. */
+  index: number;
   name: string;
   endpoint: ConnectorReadEndpoint | ConnectorWriteEndpoint;
   onChange: (name: string, endpoint: ConnectorReadEndpoint | ConnectorWriteEndpoint) => void;
@@ -34,6 +36,7 @@ export type ConnectorEndpointEditorProps = {
  */
 const ConnectorEndpointEditor = ({
   kind,
+  index,
   name,
   endpoint,
   onChange,
@@ -94,7 +97,7 @@ const ConnectorEndpointEditor = ({
   const mapping = isRead ? read : (write.response ?? {});
 
   return (
-    <ConnectorSection id={`${kind}.${name}`} title={name} summary={summarizeEndpoint(endpoint)}>
+    <ConnectorSection id={`${kind}-${index}`} title={name} summary={summarizeEndpoint(endpoint)}>
       <div className="flex items-end gap-2">
         <div className="w-32 shrink-0">
           <Input value={name} label="Name" size="xs" onChange={handleChangeName} />
@@ -170,7 +173,7 @@ const ConnectorEndpointEditor = ({
         </>
       )}
       <ConnectorSection
-        id={`${kind}.${name}.response`}
+        id={`${kind}-${index}-response`}
         title="Response"
         summary={isRead && hasResponseMapping(read) ? 'Customized' : 'Defaults'}
         highlight={isRead && hasResponseMapping(read)}

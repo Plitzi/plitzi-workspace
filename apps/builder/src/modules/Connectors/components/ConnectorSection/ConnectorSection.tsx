@@ -37,6 +37,16 @@ const RAILS = [
 const HEADER_TINTS = ['bg-slate-100 dark:bg-zinc-700/50', 'bg-slate-50 dark:bg-zinc-800/50', 'bg-transparent'];
 
 /**
+ * Flattens an id into a single storage segment.
+ *
+ * `useStorage` treats everything after the first dot as a lodash path into one shared blob, so a section keyed
+ * `read.list` writes a boolean where a section keyed `read.list.response` needs an object. Each toggle then
+ * overwrote the other, and the loser read back `undefined` and collapsed — which is every nested section closing at
+ * once. One segment per section keeps them independent leaves.
+ */
+const toStorageKey = (id: string) => id.replace(/[^a-zA-Z0-9_-]/g, '-');
+
+/**
  * One collapsible block of the manifest form.
  *
  * A connector has more areas than anyone edits at once and a preset fills most of them correctly, so the panel
@@ -56,8 +66,21 @@ const ConnectorSection = ({
   children
 }: ConnectorSectionProps) => {
   const { depth } = use(ConnectorSectionContext);
-  const [isCollapsed, setIsCollapsed] = useStorage(`builder-state.connectors.section.${id}`, !defaultOpen);
-  const [showHelp, setShowHelp] = useStorage(`builder-state.connectors.help.${id}`, false);
+  const storageKey = toStorageKey(id);
+  // Synced off: every section shares the `builder-state` root, so with it on one toggle notifies all of them and
+  // they all re-read and re-render. Nobody needs a collapsed section to follow along in another tab.
+  const [isCollapsed, setIsCollapsed] = useStorage(
+    `builder-state.connectors.section.${storageKey}`,
+    !defaultOpen,
+    'localStorage',
+    false
+  );
+  const [showHelp, setShowHelp] = useStorage(
+    `builder-state.connectors.help.${storageKey}`,
+    false,
+    'localStorage',
+    false
+  );
 
   const value = useMemo<ConnectorSectionContextValue>(() => ({ showHelp, depth: depth + 1 }), [showHelp, depth]);
   const rail = RAILS[Math.min(depth, RAILS.length - 1)];

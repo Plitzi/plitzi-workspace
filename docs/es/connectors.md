@@ -158,6 +158,12 @@ sigue siendo editable. Un preset obsoleto se corrige editando una fila, nunca co
     (`list` → `detail` → `search`; `create` → `update` → `delete`) y el verbo va acorde; pasado eso, numera.
     Las secciones anidadas se distinguen por un raíl vertical que recorre cabecera y contenido, más sangría y
     tinte decreciente por profundidad — la sangría sola es ambigua con dos hermanas plegadas seguidas.
+    **Ojo con el id de sección**: `useStorage` parte la clave por el primer punto y trata el resto como *path*
+    lodash dentro de un único blob, así que un id que sea prefijo de otro (`read.list` vs `read.list.response`) se
+    pisan — uno escribe un booleano donde el otro necesita un objeto, y el perdedor relee `undefined` y se cierra.
+    Por eso el id se aplana a un solo segmento y las secciones de endpoint se identifican por **posición**, no por
+    nombre (renombrar re-clavearía y re-montaría la fila en cada tecla). Además van con `autoSync: false`: todas
+    comparten la raíz `builder-state` y si no, un toggle notifica y re-renderiza a todas.
     El panel se sirve en el área central, así que va centrado con ancho máximo y los campos cortos fluyen en
     columnas (`FieldGrid`, `auto-fill`) en lugar de estirarse en un monitor ancho. La explicación de cada campo está
     en el `title` (hover) y, en prosa, tras el `?` de cada sección (`FieldHelp` + `ConnectorSectionContext`); el
