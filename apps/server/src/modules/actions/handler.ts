@@ -1,10 +1,7 @@
 import { writeConnectorRecord } from '../connectors/engine';
 
 import type { ConnectorLookups } from '../connectors/resolver';
-import type { ConnectorWriteAction } from '../connectors/types';
 import type { SSRRequest, SSRResponseHelpers, SSRServerConfig } from '@plitzi/sdk-shared';
-
-const WRITE_ACTIONS: ConnectorWriteAction[] = ['create', 'update', 'delete'];
 
 type ActionRequest = {
   elementId?: string;
@@ -57,8 +54,10 @@ export const handleAction = async (
   }
 
   const body = parseBody(req.body);
-  const action = body?.action as ConnectorWriteAction | undefined;
-  if (!body?.elementId || !action || !WRITE_ACTIONS.includes(action)) {
+  const action = body?.action;
+  // The set of actions is the manifest's, not a fixed CRUD list — a connector is a REST client, and which
+  // operations exist is decided by the API it talks to. `endpoints.write` is checked below.
+  if (!body?.elementId || !action) {
     fail(res, 400, 'Expected { elementId, action, values }');
 
     return;

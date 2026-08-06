@@ -38,6 +38,10 @@
       "types": "./dist/connectors/index.d.ts",
       "import": "./dist/connectors/index.mjs"
     },
+    "./connectors/constants": {
+      "types": "./dist/connectors/constants.d.ts",
+      "import": "./dist/connectors/constants.mjs"
+    },
     "./connectors/index": {
       "types": "./dist/connectors/index.d.ts",
       "import": "./dist/connectors/index.mjs"

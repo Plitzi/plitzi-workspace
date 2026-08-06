@@ -7,7 +7,7 @@ export type ParseManifestResult =
  * Reads the advanced editor's text back into a manifest.
  *
  * The basic editor can only produce a well-formed document; hand-typed JSON can produce anything, so the shape is
- * checked before it reaches code that assumes it. `endpoints.list` is the one part with no default worth guessing:
+ * checked before it reaches code that assumes it. `endpoints.read` is the one part with no default worth guessing:
  * a connector that cannot say how to read records is not a connector.
  */
 export const parseManifest = (value: string): ParseManifestResult => {
@@ -23,8 +23,8 @@ export const parseManifest = (value: string): ParseManifestResult => {
   }
 
   const draft = parsed as Partial<ConnectorManifestDraft>;
-  if (!draft.endpoints?.list) {
-    return { error: 'A manifest needs an "endpoints" block with a "list" describing how records are read.' };
+  if (!draft.endpoints?.read || typeof draft.endpoints.read !== 'object') {
+    return { error: 'A manifest needs an "endpoints" block with a "read" map of named endpoints.' };
   }
 
   return { manifest: draft as ConnectorManifestDraft };

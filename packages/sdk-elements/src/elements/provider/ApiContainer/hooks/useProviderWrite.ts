@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 /** Values a write callback receives from the interaction step, minus the keys the endpoint reads itself. */
-type WriteParams = Record<string, unknown> & { recordId?: string };
+type WriteParams = Record<string, unknown> & { action?: unknown; recordId?: string };
 
 export type UseProviderWriteProps = {
   elementId: string;
@@ -13,18 +13,22 @@ export type UseProviderWriteProps = {
 /**
  * Write callbacks for a server-driven provider.
  *
- * The browser posts an **element id and an action** — never a URL, a connector or a credential. The server resolves
- * the target from the published schema and refuses anything the connector has not declared, so a form can only ever
- * reach the backend its own page is already wired to.
+ * The browser posts an **element id and an action name** — never a URL, a connector or a credential. The server
+ * resolves the target from the published schema and refuses anything the connector has not declared, so a form can
+ * only ever reach the backend its own page is already wired to.
+ *
+ * There is one callback rather than one per CRUD verb because a connector's write endpoints are named by whoever
+ * wrote the manifest: `escalate` and `sendInvoice` are as legitimate as `create`, and three fixed verbs would only
+ * be able to reach a connector that happened to use them.
  */
 const useProviderWrite = ({ elementId, enabled, actionPath = '/_action', onDone }: UseProviderWriteProps) => {
-  const submit = useCallback(
-    async (action: 'create' | 'update' | 'delete', params: WriteParams = {}) => {
-      if (!enabled) {
+  const writeRecord = useCallback(
+    async (params: WriteParams = {}) => {
+      const { action, recordId, ...values } = params;
+      if (!enabled || typeof action !== 'string' || !action) {
         return undefined;
       }
 
-      const { recordId, ...values } = params;
       const response = await fetch(actionPath, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -43,11 +47,7 @@ const useProviderWrite = ({ elementId, enabled, actionPath = '/_action', onDone 
     [actionPath, elementId, enabled, onDone]
   );
 
-  const createRecord = useCallback((params?: WriteParams) => submit('create', params), [submit]);
-  const updateRecord = useCallback((params?: WriteParams) => submit('update', params), [submit]);
-  const removeRecord = useCallback((params?: WriteParams) => submit('delete', params), [submit]);
-
-  return { createRecord, updateRecord, removeRecord };
+  return { writeRecord };
 };
 
 export default useProviderWrite;

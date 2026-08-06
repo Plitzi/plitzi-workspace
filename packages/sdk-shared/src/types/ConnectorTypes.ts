@@ -10,11 +10,8 @@ export type ConnectorAuth = {
   value: string;
 };
 
-export type ConnectorListEndpoint = {
-  /** Template appended to `baseUrl`, e.g. `/api/{{resource}}`. */
-  path: string;
-  /** Query parameters, values templated. Entries resolving to empty are dropped. */
-  query?: Record<string, string>;
+/** Where a read endpoint's records and counts sit inside this provider's response. */
+export type ConnectorResponseMapping = {
   /** Where the records array lives in the response. Omitted means the response is the array. */
   itemsPath?: string;
   /** Where the total count lives. Omitted means the count is unknown and paging relies on page size. */
@@ -25,32 +22,58 @@ export type ConnectorListEndpoint = {
   valuesPath?: string;
 };
 
-export type ConnectorWriteAction = 'create' | 'update' | 'delete';
-
-export type ConnectorWriteOperation = {
-  method: 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-  /** Template appended to `baseUrl`, e.g. `/api/{{resource}}/{{id}}`. */
+/**
+ * A request that returns records.
+ *
+ * `method` exists because reading is not always a GET: search endpoints routinely take a POST body, and an
+ * integration that cannot express that is not a REST client, it is a CMS client.
+ */
+export type ConnectorReadEndpoint = ConnectorResponseMapping & {
+  /** Template appended to `baseUrl`, e.g. `/api/{{resource}}`. */
   path: string;
-  /** Wraps the submitted values, e.g. `data` produces `{ "data": { … } }`. Omitted sends them at the root. */
-  bodyPath?: string;
+  method?: 'GET' | 'POST';
+  /** Query parameters, values templated. Entries resolving to empty are dropped. */
+  query?: Record<string, string>;
+  /** Headers for this endpoint only, merged over the connection's own. */
+  headers?: Record<string, string>;
+  /** Body sent when `method` is POST. Values are templated; `{{values}}` carries the submitted record. */
+  body?: Record<string, string>;
+  /** Paging style for this endpoint, when it differs from the connection default. */
+  pagination?: ConnectorPagination;
 };
 
 /**
- * Write operations a connector exposes. Absent means read-only: an undeclared action is refused rather than
- * guessed, so a provider never gets written to by accident.
+ * A request that changes something.
+ *
+ * Writes are a separate map from reads rather than one map keyed by method: only these are reachable through
+ * `/_action`, so a read can never be invoked as a mutation, and a write can never be mounted as a data source.
  */
-export type ConnectorWrite = Partial<Record<ConnectorWriteAction, ConnectorWriteOperation>>;
+export type ConnectorWriteEndpoint = {
+  method: 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  /** Template appended to `baseUrl`, e.g. `/api/{{resource}}/{{id}}`. */
+  path: string;
+  query?: Record<string, string>;
+  headers?: Record<string, string>;
+  /** Wraps the submitted values, e.g. `data` produces `{ "data": { … } }`. Omitted sends them at the root. */
+  bodyPath?: string;
+  /** Where the written record sits in the response, when the caller wants it back. */
+  response?: ConnectorResponseMapping;
+};
 
 /**
- * Every request the connector knows how to make, grouped under one key.
+ * Every request the connector knows how to make, named by the author.
  *
- * They are nested rather than sitting beside `auth`, `operators` and `media` because those describe the connection
- * and apply to every call, while these describe individual calls. Flat, the two kinds read as peers and there is no
- * obvious place to add the next operation.
+ * Both sides are open maps, not a fixed `list` plus `create`/`update`/`delete`: a connector is a declarative REST
+ * client, and an API has as many operations as it has. The CMS case is just the one where the read is called
+ * `list` and the writes happen to be named after CRUD.
+ *
+ * They are nested under `endpoints` rather than sitting beside `auth`, `operators` and `media` because those
+ * describe the connection and apply to every call, while these describe individual calls.
  */
 export type ConnectorEndpoints = {
-  list: ConnectorListEndpoint;
-  write?: ConnectorWrite;
+  read: Record<string, ConnectorReadEndpoint>;
+  /** Absent or empty means read-only: an undeclared write is refused rather than guessed. */
+  write?: Record<string, ConnectorWriteEndpoint>;
 };
 
 /**

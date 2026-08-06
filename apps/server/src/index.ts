@@ -55,14 +55,15 @@ export type {
   ConnectorCredential,
   ConnectorEndpoints,
   ConnectorFilter,
-  ConnectorListEndpoint,
   ConnectorLookups,
   ConnectorManifest,
   ConnectorManifestDraft,
   ConnectorPageInfo,
   ConnectorPagination,
   ConnectorQuery,
+  ConnectorReadEndpoint,
   ConnectorRecord,
+  ConnectorResponseMapping,
   ConnectorResult,
   ProviderPagination
 } from './modules/connectors';

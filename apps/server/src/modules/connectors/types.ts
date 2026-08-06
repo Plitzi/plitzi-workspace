@@ -9,15 +9,14 @@ export type {
   ConnectorCredential,
   ConnectorEndpoints,
   ConnectorFilter,
-  ConnectorListEndpoint,
   ConnectorManifest,
   ConnectorManifestDraft,
   ConnectorPagination,
   ConnectorQuery,
+  ConnectorReadEndpoint,
   ConnectorRecord,
-  ConnectorWrite,
-  ConnectorWriteAction,
-  ConnectorWriteOperation
+  ConnectorResponseMapping,
+  ConnectorWriteEndpoint
 } from '@plitzi/sdk-shared';
 
 /**

@@ -45,8 +45,8 @@ Campos principales:
 | `baseUrl` | Origen de la API |
 | `auth` | Esquema de autenticación: `in` (`header`\|`query`), `name`, `value` (plantilla, p. ej. `Bearer {{credential.token}}`) |
 | `headers` | Cabeceras estáticas con valores plantilla |
-| `endpoints.list` | Cómo se leen registros: `path`, `query`, `itemsPath`, `totalPath`, `idPath`, `valuesPath` |
-| `endpoints.write` | Operaciones de escritura declaradas (`create`/`update`/`delete`). **Ausente = read-only** |
+| `endpoints.read` | Mapa de endpoints de lectura **con nombre**: `method`, `path`, `query`, `headers`, `body` + mapeo de respuesta (`itemsPath`, `totalPath`, `idPath`, `valuesPath`) y `pagination` opcional |
+| `endpoints.write` | Mapa de endpoints de escritura **con nombre**: `method`, `path`, `query`, `headers`, `bodyPath`, `response`. **Ausente = read-only** |
 | `pagination` | `offset` \| `page` \| `cursor` |
 | `operators` | Plantillas de filtro por operador, p. ej. `eq: 'filters[{{field}}][$eq]={{value}}'` |
 | `media` | `baseUrl` para rebasear URLs de media relativas (`/uploads/x.jpg` → absolutas) |
@@ -60,11 +60,22 @@ Campos principales:
 - La credencial se referencia por identifier pero se resuelve en el servidor.
 - Un conector es read-only hasta que su manifest declara `write`; una acción no declarada se **rechaza**, no se adivina.
 
-### Por qué las llamadas van bajo `endpoints`
+### Por qué las llamadas van bajo `endpoints`, y por qué son mapas
 
-`list` y `write` describen **peticiones**; `auth`, `headers`, `operators` y `media` describen la **conexión** y
+`read` y `write` describen **peticiones**; `auth`, `headers`, `operators` y `media` describen la **conexión** y
 aplican a todas. En plano las dos clases se leen como iguales y no hay sitio evidente donde añadir la siguiente
 operación, así que las peticiones viven agrupadas bajo `endpoints`.
+
+Y son **mapas abiertos**, no un `list` fijo más `create`/`update`/`delete`: un conector es un cliente REST
+declarativo, y una API tiene tantas operaciones como tenga. Un CMS es solo el caso donde la lectura se llama `list`
+y las escrituras se llaman como el CRUD. Un endpoint de escritura puede llamarse `escalate`, `publish` o
+`sendInvoice`; el elemento o la interacción lo invocan **por nombre**, y lo que no está declarado el servidor lo
+rechaza (405).
+
+Lectura y escritura son mapas separados a propósito: solo los de escritura son alcanzables por `/_action`, así que
+una lectura nunca puede invocarse como mutación ni una escritura montarse como fuente de datos.
+
+El elemento elige su endpoint de lectura con el atributo `endpoint` (por defecto `list`).
 
 No hay compatibilidad con la forma anterior (`list`/`write` en la raíz) a propósito: un manifest es un documento
 escrito a mano de una feature pre-release, y un shim que lo sube en silencio es una segunda forma que el engine tiene
@@ -134,12 +145,13 @@ sigue siendo editable. Un preset obsoleto se corrige editando una fila, nunca co
   puede quedarse mostrando otra cosa. También publica `hasServerRendering`, derivado de si algún `SpaceDeployment`
   usa credencial `ssr`.
 - **`components/ConnectorForm/`** — nombre + preset + dos modos sobre el **mismo documento**:
-  - **Basic** (`ConnectorBasicEditor`): arriba lo único que un usuario de un CMS conocido tiene que rellenar —
-    **CMS URL** y **credencial**; el preset ya sabe el resto. Debajo, secciones plegables (Auth, Read, Paging,
-    Filters, Media, Writes) con **resumen en la cabecera cerrada** (`helpers/summarizeManifest.ts`), así que plegar
-    no esconde información. Los paths de respuesta van anidados dentro de Read porque el preset ya los trae.
-    La explicación de cada campo está en el `title` (hover) y, en prosa, tras el `?` de cada sección
-    (`FieldHelp` + `ConnectorSectionContext`); el estado de plegado y de ayuda se recuerda por sección.
+  - **Basic** (`ConnectorBasicEditor`): arriba lo único que hay que rellenar sí o sí — **API URL** y **credencial**;
+    el preset ya sabe el resto. Debajo, secciones plegables (Endpoints, Auth, Paging, Filters, Media) con
+    **resumen en la cabecera cerrada** (`helpers/summarizeManifest.ts`), así que plegar no esconde información.
+    **Endpoints** (`ConnectorEndpointsEditor` + `ConnectorEndpointEditor`) lista los de lectura y los de escritura,
+    con añadir / renombrar / borrar; cada uno pliega su propio mapeo de respuesta. La explicación de cada campo está
+    en el `title` (hover) y, en prosa, tras el `?` de cada sección (`FieldHelp` + `ConnectorSectionContext`); el
+    estado de plegado y de ayuda se recuerda por sección.
   - **Advanced** (`ConnectorAdvancedEditor`): el JSON tal cual se guarda, para el proveedor que no encaja.
   Cambiar de modo no convierte nada; se valida al guardar (`helpers/validateManifest.ts`).
 - **`components/TokenInput/`** — campo de una línea con autocompletado de los tokens del engine
@@ -203,8 +215,8 @@ modos**, elegidos en Settings con **Data Source** (`definition.runtime`):
    `useRegisterSource` publica los `SourceField`s para el autocomplete de bindings. `isEmpty`/`hasError`/`isLoading`
    existen para autorar estados vacíos con bindings normales — sin slot mechanism.
 4. **Paginación** — `useProviderPagination` maneja los modos `url`/`append`/`none` (ver sección 6).
-5. **Interacciones** — callbacks `performQuery`, `loadMore`, `goToPage`; en modo server también `createRecord`,
-   `updateRecord`, `removeRecord` (que hacen `POST /_action`). Triggers `onApiSuccess` / `onApiError`.
+5. **Interacciones** — callbacks `performQuery`, `loadMore`, `goToPage`; en modo server también `writeRecord`
+   (parámetros `action` + `recordId`, hace `POST /_action`). Triggers `onApiSuccess` / `onApiError`.
 6. **Render** — `<RootElement tag={subType}>` envuelve un `<StoreProvider>` con los children.
 
 ### Cómo sabe que debe esperar el RSC
@@ -359,19 +371,21 @@ reposo (`SpaceCredential.encryptedFields`). El secreto no baja al navegador ni e
 Panel lateral **Connectors** (aparece en `AppContainer.tsx` cuando el popup activo es `connectors`):
 
 1. **New Connector**.
-2. Elegir preset (**Strapi v5**, **WordPress REST**, **Directus**, **Contentful CDA**, **Blank**).
-3. En **Basic**: `baseUrl`, credencial (botón *Choose*), autenticación, ruta y paths de lectura, paginación,
-   operadores, media y — si hace falta — las escrituras permitidas. Cada campo lleva su explicación debajo y los
-   campos de plantilla autocompletan tokens.
+2. Elegir preset (**REST API**, **Strapi v5**, **WordPress REST**, **Directus**, **Contentful CDA**, **Blank**).
+3. En **Basic**: **API URL** y credencial (botón de la llave). El resto ya viene del preset y está plegado:
+   **Endpoints** (añadir/renombrar/borrar los de lectura y los de escritura, cada uno con método, ruta, query,
+   headers y mapeo de respuesta), **Auth**, **Paging**, **Filters** y **Media**. Los campos de plantilla
+   autocompletan tokens; la explicación de cada uno está en el hover y en prosa tras el `?` de la sección.
 4. En **Advanced** está el mismo documento en JSON, para lo que el formulario no cubra.
-5. Guardar (mutation `SpaceAddConnector`). Se valida antes: base URL, ruta de lectura, y que no se referencie
-   `{{credential.…}}` sin credencial elegida — que si no autentica como nadie y la página lo ve como "el CMS nos
-   rechazó".
+5. Guardar (mutation `SpaceAddConnector`). Se valida antes: base URL, que haya al menos un endpoint de lectura y que
+   cada endpoint tenga ruta, y que no se referencie `{{credential.…}}` sin credencial elegida — que si no autentica
+   como nadie y la página lo ve como "la API nos rechazó".
 
 ### 3. Página índice (listado)
 
 1. Arrastrar **ApiContainer**.
-2. Settings (`ApiContainer/Settings.tsx`): **Data Source = Connector (server-side)**, elegir connector, `resource`
+2. Settings (`ApiContainer/Settings.tsx`): **Data Source = Connector (server-side)**, elegir connector, el
+   **endpoint** de lectura (solo aparece si el conector declara más de uno; por defecto `list`), `resource`
    (`posts`), `limit`, **Pagination = URL (indexable)**.
 3. Dentro, un **List** (source `controlled`) con una card por registro: heading bind
    `{{apiContainer_<idRef>.records.item.title}}`, imagen a `cover.url`, etc.
@@ -387,9 +401,12 @@ plantilla; se resuelve en el servidor — es todo el mecanismo del detalle), **R
 
 ### 5. Escrituras (opcional)
 
-Si el manifest declara `write`, el `ApiContainer` server expone callbacks `createRecord` / `updateRecord` /
-`removeRecord`. Conéctalos desde un botón o formulario vía interacciones. El navegador hace `POST /_action` y el
-servidor valida toda la cadena.
+Si el manifest declara endpoints de escritura, el `ApiContainer` server expone **un** callback `writeRecord` con
+parámetros `action` (el nombre del endpoint: `create`, `escalate`, `sendInvoice`…) y `recordId`. Es uno y no tres
+porque los nombres los pone quien escribe el manifest; tres verbos fijos solo servirían para conectores que
+casualmente los usaran. Conéctalo desde un botón o formulario vía interacciones: el navegador hace `POST /_action`
+con el id del elemento y el nombre de la acción — nunca una URL, un conector ni una credencial — y el servidor
+valida toda la cadena y rechaza (405) lo que el manifest no declare.
 
 ### 6. Publicar
 

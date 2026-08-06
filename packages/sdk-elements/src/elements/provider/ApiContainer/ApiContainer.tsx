@@ -43,6 +43,8 @@ export type ApiContainerProps = {
   credentials?: RequestCredentials;
   /** Identifier of the server-side connector that feeds this provider. Only meaningful with `runtime: 'server'`. */
   connector?: string;
+  /** Which of the connector's read endpoints to execute. Defaults to `list`. */
+  endpoint?: string;
   /** Content type / collection read through the connector. */
   resource?: string;
   /** Records per window. Read server-side; a single-record provider is capped at one regardless. */
@@ -270,7 +272,7 @@ const ApiContainer = ({
 
   useRegisterSource({ id, source: sourceName, name: label ? label : `API - ${id}`, fields: sourceFields });
 
-  const { createRecord, updateRecord, removeRecord } = useProviderWrite({
+  const { writeRecord } = useProviderWrite({
     elementId: id,
     enabled: serverMode,
     onDone: refetch
@@ -307,34 +309,21 @@ const ApiContainer = ({
     // Writes exist only for a server-driven provider: they go through the server, which owns the credential and
     // decides whether the connector allows the action at all.
     if (serverMode) {
-      callbacks.createRecord = {
-        action: 'createRecord',
-        title: `Create Record ${label}`,
+      callbacks.writeRecord = {
+        action: 'writeRecord',
+        title: `Write Record ${label}`,
         type: 'callback',
-        callback: createRecord,
-        preview: {},
-        params: {}
-      };
-      callbacks.updateRecord = {
-        action: 'updateRecord',
-        title: `Update Record ${label}`,
-        type: 'callback',
-        callback: updateRecord,
-        preview: {},
-        params: {}
-      };
-      callbacks.removeRecord = {
-        action: 'removeRecord',
-        title: `Remove Record ${label}`,
-        type: 'callback',
-        callback: removeRecord,
-        preview: {},
-        params: {}
+        callback: writeRecord,
+        preview: { action: 'create' },
+        params: {
+          action: { label: 'Endpoint', defaultValue: 'create', type: 'text' },
+          recordId: { label: 'Record Id', defaultValue: '', type: 'text' }
+        }
       };
     }
 
     return callbacks;
-  }, [label, refetch, loadMore, goToPage, serverMode, createRecord, updateRecord, removeRecord]);
+  }, [label, refetch, loadMore, goToPage, serverMode, writeRecord]);
 
   const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
     () => ({

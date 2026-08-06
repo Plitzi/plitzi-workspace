@@ -18,6 +18,8 @@ export type ProviderPagination = 'none' | 'url' | 'append';
 
 type ProviderAttributes = {
   connector?: string;
+  /** Which of the connector's read endpoints to execute. Defaults to `list`. */
+  endpoint?: string;
   resource?: string;
   limit?: string | number;
   singleRecord?: boolean;
@@ -68,7 +70,7 @@ export const createConnectorResolver =
   ({ getConnector, getCredential, fetchImpl }: ConnectorLookups): RscElementResolver =>
   async ({ element, flat, routeParams, queryParams, spaceId }) => {
     const attributes = element.attributes as ProviderAttributes;
-    const { connector: connectorId, resource, limit, singleRecord = false, filters } = attributes;
+    const { connector: connectorId, endpoint, resource, limit, singleRecord = false, filters } = attributes;
     if (!connectorId) {
       return undefined;
     }
@@ -85,6 +87,7 @@ export const createConnectorResolver =
     const pageParam = attributes.pageParam ?? DEFAULT_PAGE_PARAM;
     const { records, pageInfo } = await fetchConnectorRecords({
       manifest,
+      endpoint,
       credential,
       query: {
         resource,

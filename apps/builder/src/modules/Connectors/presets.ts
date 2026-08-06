@@ -1,11 +1,12 @@
 import type { ConnectorManifestDraft } from '@plitzi/sdk-shared';
 
 /**
- * Starting manifests for the CMSs people actually run.
+ * Starting manifests for the APIs people actually run.
  *
- * These are documents, not adapters: picking one fills the editor in and every field stays editable. A preset that
- * goes stale because a vendor changed a response shape is fixed by editing a row, never by shipping a release —
- * which is the entire reason connectors are declarative.
+ * A connector is a declarative REST client, so the presets cover both ends of what that means: the CMSs whose
+ * response shapes are worth remembering, and a plain REST service for everything else. Picking one fills the editor
+ * in and every field stays editable — a preset that goes stale because a vendor changed a response shape is fixed
+ * by editing a row, never by shipping a release, which is the entire reason connectors are data.
  */
 export type ConnectorPreset = {
   id: string;
@@ -21,7 +22,30 @@ const blank: ConnectorPreset = {
   credentialKeys: [],
   manifest: {
     baseUrl: '',
-    endpoints: { list: { path: '/{{resource}}', idPath: 'id' } },
+    endpoints: { read: { list: { path: '/{{resource}}', idPath: 'id' } } },
+    pagination: 'offset',
+    operators: { eq: '{{field}}={{value}}' }
+  }
+};
+
+const rest: ConnectorPreset = {
+  id: 'rest',
+  label: 'REST API',
+  credentialKeys: ['token'],
+  manifest: {
+    baseUrl: 'https://api.example.com',
+    auth: { in: 'header', name: 'Authorization', value: 'Bearer {{credential.token}}' },
+    endpoints: {
+      read: {
+        list: { path: '/{{resource}}', query: { limit: '{{limit}}', offset: '{{offset}}' }, idPath: 'id' },
+        detail: { path: '/{{resource}}/{{routeParams.id}}', idPath: 'id' }
+      },
+      write: {
+        create: { method: 'POST', path: '/{{resource}}' },
+        update: { method: 'PUT', path: '/{{resource}}/{{id}}' },
+        delete: { method: 'DELETE', path: '/{{resource}}/{{id}}' }
+      }
+    },
     pagination: 'offset',
     operators: { eq: '{{field}}={{value}}' }
   }
@@ -35,21 +59,33 @@ const strapi: ConnectorPreset = {
     baseUrl: 'https://cms.example.com',
     auth: { in: 'header', name: 'Authorization', value: 'Bearer {{credential.token}}' },
     endpoints: {
-      list: {
-        path: '/api/{{resource}}',
-        query: {
-          'pagination[start]': '{{offset}}',
-          'pagination[limit]': '{{limit}}',
-          populate: '*'
-        },
-        itemsPath: 'data',
-        totalPath: 'meta.pagination.total',
-        idPath: 'documentId',
-        valuesPath: '.'
+      read: {
+        list: {
+          path: '/api/{{resource}}',
+          query: {
+            'pagination[start]': '{{offset}}',
+            'pagination[limit]': '{{limit}}',
+            populate: '*'
+          },
+          itemsPath: 'data',
+          totalPath: 'meta.pagination.total',
+          idPath: 'documentId',
+          valuesPath: '.'
+        }
       },
       write: {
-        create: { method: 'POST', path: '/api/{{resource}}', bodyPath: 'data' },
-        update: { method: 'PUT', path: '/api/{{resource}}/{{id}}', bodyPath: 'data' },
+        create: {
+          method: 'POST',
+          path: '/api/{{resource}}',
+          bodyPath: 'data',
+          response: { itemsPath: 'data', idPath: 'documentId' }
+        },
+        update: {
+          method: 'PUT',
+          path: '/api/{{resource}}/{{id}}',
+          bodyPath: 'data',
+          response: { itemsPath: 'data', idPath: 'documentId' }
+        },
         delete: { method: 'DELETE', path: '/api/{{resource}}/{{id}}' }
       }
     },
@@ -72,10 +108,12 @@ const wordpress: ConnectorPreset = {
   manifest: {
     baseUrl: 'https://blog.example.com',
     endpoints: {
-      list: {
-        path: '/wp-json/wp/v2/{{resource}}',
-        query: { per_page: '{{limit}}', page: '{{page}}' },
-        idPath: 'id'
+      read: {
+        list: {
+          path: '/wp-json/wp/v2/{{resource}}',
+          query: { per_page: '{{limit}}', page: '{{page}}' },
+          idPath: 'id'
+        }
       }
     },
     pagination: 'page',
@@ -91,16 +129,18 @@ const directus: ConnectorPreset = {
     baseUrl: 'https://cms.example.com',
     auth: { in: 'header', name: 'Authorization', value: 'Bearer {{credential.token}}' },
     endpoints: {
-      list: {
-        path: '/items/{{resource}}',
-        query: { offset: '{{offset}}', limit: '{{limit}}', meta: 'filter_count' },
-        itemsPath: 'data',
-        totalPath: 'meta.filter_count',
-        idPath: 'id'
+      read: {
+        list: {
+          path: '/items/{{resource}}',
+          query: { offset: '{{offset}}', limit: '{{limit}}', meta: 'filter_count' },
+          itemsPath: 'data',
+          totalPath: 'meta.filter_count',
+          idPath: 'id'
+        }
       },
       write: {
-        create: { method: 'POST', path: '/items/{{resource}}' },
-        update: { method: 'PATCH', path: '/items/{{resource}}/{{id}}' },
+        create: { method: 'POST', path: '/items/{{resource}}', response: { itemsPath: 'data' } },
+        update: { method: 'PATCH', path: '/items/{{resource}}/{{id}}', response: { itemsPath: 'data' } },
         delete: { method: 'DELETE', path: '/items/{{resource}}/{{id}}' }
       }
     },
@@ -121,18 +161,20 @@ const contentful: ConnectorPreset = {
   manifest: {
     baseUrl: 'https://cdn.contentful.com',
     endpoints: {
-      list: {
-        path: '/spaces/{{credential.spaceId}}/environments/master/entries',
-        query: {
-          access_token: '{{credential.token}}',
-          content_type: '{{resource}}',
-          skip: '{{offset}}',
-          limit: '{{limit}}'
-        },
-        itemsPath: 'items',
-        totalPath: 'total',
-        idPath: 'sys.id',
-        valuesPath: 'fields'
+      read: {
+        list: {
+          path: '/spaces/{{credential.spaceId}}/environments/master/entries',
+          query: {
+            access_token: '{{credential.token}}',
+            content_type: '{{resource}}',
+            skip: '{{offset}}',
+            limit: '{{limit}}'
+          },
+          itemsPath: 'items',
+          totalPath: 'total',
+          idPath: 'sys.id',
+          valuesPath: 'fields'
+        }
       }
     },
     pagination: 'offset',
@@ -140,6 +182,6 @@ const contentful: ConnectorPreset = {
   }
 };
 
-export const connectorPresets: ConnectorPreset[] = [blank, strapi, wordpress, directus, contentful];
+export const connectorPresets: ConnectorPreset[] = [blank, rest, strapi, wordpress, directus, contentful];
 
 export const emptyManifest: ConnectorManifestDraft = blank.manifest;

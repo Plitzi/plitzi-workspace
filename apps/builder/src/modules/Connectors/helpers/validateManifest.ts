@@ -3,11 +3,13 @@ import type { ConnectorManifestDraft } from '@plitzi/sdk-shared';
 const CREDENTIAL_TOKEN = /\{\{\s*credential\./;
 
 const usesCredential = (manifest: ConnectorManifestDraft): boolean => {
+  const reads = Object.values(manifest.endpoints.read);
+  const writes = Object.values(manifest.endpoints.write ?? {});
   const templates = [
     manifest.auth?.value ?? '',
-    manifest.endpoints.list.path,
-    ...Object.values(manifest.endpoints.list.query ?? {}),
-    ...Object.values(manifest.headers ?? {})
+    ...Object.values(manifest.headers ?? {}),
+    ...reads.flatMap(read => [read.path, ...Object.values(read.query ?? {}), ...Object.values(read.headers ?? {})]),
+    ...writes.flatMap(write => [write.path, ...Object.values(write.query ?? {}), ...Object.values(write.headers ?? {})])
   ];
 
   return templates.some(template => CREDENTIAL_TOKEN.test(template));
@@ -28,17 +30,33 @@ export const validateManifest = (manifest: ConnectorManifestDraft): string[] => 
     errors.push('Base URL must start with http:// or https://.');
   }
 
-  if (!manifest.endpoints.list.path.trim()) {
-    errors.push('The list endpoint needs a path.');
+  const reads = Object.entries(manifest.endpoints.read);
+  if (!reads.length) {
+    errors.push('A connector needs at least one read endpoint.');
   }
+
+  reads.forEach(([name, read]) => {
+    if (!read.path.trim()) {
+      errors.push(`Read endpoint "${name}" needs a path.`);
+    }
+  });
+
+  Object.entries(manifest.endpoints.write ?? {}).forEach(([name, write]) => {
+    if (!write.path.trim()) {
+      errors.push(`Write endpoint "${name}" needs a path.`);
+    }
+  });
 
   if (usesCredential(manifest) && !manifest.credential) {
     errors.push('This manifest reads {{credential.…}} but no credential is selected.');
   }
 
-  if (manifest.pagination === 'cursor' && !JSON.stringify(manifest.endpoints.list.query ?? {}).includes('{{cursor}}')) {
-    errors.push('Cursor paging needs {{cursor}} in the list query, otherwise every page is the first one.');
-  }
+  reads.forEach(([name, read]) => {
+    const pagination = read.pagination ?? manifest.pagination;
+    if (pagination === 'cursor' && !JSON.stringify(read.query ?? {}).includes('{{cursor}}')) {
+      errors.push(`Cursor paging needs {{cursor}} in the query of "${name}", otherwise every page is the first one.`);
+    }
+  });
 
   return errors;
 };

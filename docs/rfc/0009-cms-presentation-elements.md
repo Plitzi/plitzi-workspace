@@ -41,7 +41,7 @@ What 0008 shipped and works:
   credential server-side, projects the slice down to the paths the subtree actually binds.
 - `POST /_action` — element-addressed writes, credential resolved server-side.
 - `ApiContainer` — publishes `runtime.sources[apiContainer_<idRef>]`, mounts a `StoreProvider`,
-  exposes `performQuery` / `createRecord` / `updateRecord` / `removeRecord`.
+  exposes `performQuery` and, in server mode, `writeRecord` (§3.8 — the endpoint is named by a parameter).
 - `List` with `source: 'controlled'` — renders one template per record under a per-row scope.
   **This is already the repeater; nothing new is needed to iterate records.**
 
@@ -212,12 +212,29 @@ identifier; the manifest stores the reference and never the secret, which is als
 arrangement where the secret stays encrypted at rest (`SpaceCredential.data`) while the manifest
 does not.
 
-### 3.8 Manifest layout: `endpoints`
+### 3.8 Manifest layout: `endpoints` as open maps
 
-`list` and `write` sit under `endpoints`, not at the root beside `auth`, `headers`, `operators`
-and `media`. Those describe the *connection* and apply to every call; `list` and `write` describe
-individual *calls*. Flat, the two kinds read as peers and there is no obvious place to put the
-next operation.
+Requests sit under `endpoints`, not at the root beside `auth`, `headers`, `operators` and
+`media`. Those describe the *connection* and apply to every call; these describe individual
+*calls*. Flat, the two kinds read as peers and there is no obvious place to put the next
+operation.
+
+`endpoints.read` and `endpoints.write` are **open maps keyed by a name the author chooses**, not
+a fixed `list` plus CRUD. A connector is a declarative REST client, and an API has as many
+operations as it has — one read called `list` and three writes named after CRUD is the CMS
+special case, not the model. A write can be called `escalate`, `publish` or `sendInvoice`;
+elements read through a named read endpoint (`endpoint`, defaulting to `list`) and interactions
+invoke a named write one. Anything undeclared is refused with a 405.
+
+Reads and writes are separate maps rather than one keyed by method, because only writes are
+reachable through `/_action`: a read can then never be invoked as a mutation, and a write can
+never be mounted as a data source.
+
+A read endpoint carries its own response mapping and may override the connection's paging style,
+since one endpoint can be a paginated list and another a single-object fetch. A write carries its
+own `response` mapping rather than borrowing the list endpoint's — a POST response is not
+necessarily shaped like a list item, and assuming it was is exactly the CMS-shaped assumption
+this section removes.
 
 There is no compatibility path: a manifest is a hand-authored document from a pre-release
 feature, and a shim that silently upgrades one is a second shape the engine has to keep
@@ -257,6 +274,7 @@ without it the feature works in the editor and silently returns nothing in produ
 | **2** | `ApiContainer` authoring UI, `Pagination`, `RichText` |
 | **3** | `SpaceConnector` GraphQL CRUD + builder Connectors panel + presets |
 | **4** | Authoring usability: basic/advanced manifest editor, token completion, per-field prose, credential picker, Credentials panel, `endpoints` grouping, server-rendering warning |
+| **5** | Connectors as a general REST client: named read/write endpoint maps, per-endpoint method, query, headers and response mapping, endpoint editor in the panel, endpoint picker on the provider element |
 
 ---
 

@@ -33,6 +33,7 @@ type SettingsProps = {
   credentials?: RequestCredentials;
   runtime?: ElementRuntime;
   connector?: string;
+  endpoint?: string;
   resource?: string;
   limit?: string;
   singleRecord?: boolean;
@@ -54,6 +55,7 @@ const Settings = ({
   credentials = 'same-origin',
   runtime = 'client',
   connector = '',
+  endpoint = '',
   resource = '',
   limit = '10',
   singleRecord = false,
@@ -105,14 +107,18 @@ const Settings = ({
 
   const connectorOptions = useMemo(() => Object.values(connectors), [connectors]);
 
+  const manifest = useMemo(
+    () => connectorOptions.find(item => item.identifier === connector)?.manifest,
+    [connectorOptions, connector]
+  );
+
   // Operators come from the selected manifest, so the filter rows only ever offer comparisons this provider can
   // actually execute.
-  const operators = useMemo(() => {
-    const manifest = connectorOptions.find(item => item.identifier === connector)?.manifest;
-    const declared = manifest?.operators;
+  const operators = useMemo(() => Object.keys(manifest?.operators ?? {}), [manifest]);
 
-    return declared && typeof declared === 'object' ? Object.keys(declared) : [];
-  }, [connectorOptions, connector]);
+  // Likewise the endpoints: a connector declares which reads it supports, and offering anything else would author
+  // an element that resolves to an error.
+  const readEndpoints = useMemo(() => Object.keys(manifest?.endpoints.read ?? {}), [manifest]);
 
   const urlParams = useMemo(() => {
     const slug: string = get(pageDefinitions, `${currentPageId}.attributes.slug`, '');
@@ -137,7 +143,7 @@ const Settings = ({
       </Select>
       <span className="text-xs text-gray-500 dark:text-zinc-400">
         {serverMode
-          ? 'The server reads the CMS and hands the page its records. The endpoint and the credential never reach the browser, and the content is in the HTML search engines see.'
+          ? 'The server calls the API and hands the page its records. The endpoint and the credential never reach the browser, and the content is in the HTML search engines see.'
           : 'The browser calls the URL directly. Anything it needs to authenticate with is visible to the visitor, and the content is not in the initial HTML.'}
       </span>
       {serverMode && (
@@ -151,7 +157,7 @@ const Settings = ({
           )}
           {connectorOptions.length === 0 && (
             <div className="rounded-sm border border-gray-300 p-2 text-xs text-gray-500 dark:border-zinc-600 dark:text-zinc-400">
-              No connectors yet. Add one in the Connectors panel — it holds the CMS endpoints, and the credential stays
+              No connectors yet. Add one in the Connectors panel — it holds the API endpoints, and the credential stays
               on the server.
             </div>
           )}
@@ -163,11 +169,20 @@ const Settings = ({
               </option>
             ))}
           </Select>
+          {readEndpoints.length > 1 && (
+            <Select value={endpoint} label="Endpoint" onChange={handleChange('endpoint')} size="xs">
+              {readEndpoints.map(name => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </Select>
+          )}
           <Input
             value={resource}
             label="Resource"
             placeholder="posts"
-            title="The content type read through the connector."
+            title="The collection read through the connector — what {{resource}} becomes in the endpoint path."
             onChange={handleChange('resource')}
             size="xs"
           />

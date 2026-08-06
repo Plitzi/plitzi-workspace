@@ -1,6 +1,6 @@
 import { paginationDocs } from './manifestDoc';
 
-import type { ConnectorManifestDraft } from '@plitzi/sdk-shared';
+import type { ConnectorManifestDraft, ConnectorReadEndpoint, ConnectorWriteEndpoint } from '@plitzi/sdk-shared';
 
 const EMPTY = '—';
 
@@ -8,7 +8,7 @@ const EMPTY = '—';
  * One short line per section, shown on its collapsed header.
  *
  * Collapsing is only an improvement if a closed section still answers "what is in there". Without these the panel
- * trades a wall of fields for a wall of chevrons, and the author has to open all seven to check their own work.
+ * trades a wall of fields for a wall of chevrons, and the author has to open all of them to check their own work.
  */
 export const summarize = {
   auth: (manifest: ConnectorManifestDraft) => {
@@ -19,7 +19,12 @@ export const summarize = {
     return `${manifest.auth.in === 'query' ? 'Query' : 'Header'} · ${manifest.auth.name}`;
   },
 
-  list: (manifest: ConnectorManifestDraft) => manifest.endpoints.list.path || EMPTY,
+  endpoints: (manifest: ConnectorManifestDraft) => {
+    const reads = Object.keys(manifest.endpoints.read).length;
+    const writes = Object.keys(manifest.endpoints.write ?? {}).length;
+
+    return `${reads} read · ${writes} write`;
+  },
 
   pagination: (manifest: ConnectorManifestDraft) => {
     const doc = paginationDocs.find(item => item.value === (manifest.pagination ?? 'offset'));
@@ -36,18 +41,13 @@ export const summarize = {
     return names.length <= 3 ? names.join(', ') : `${names.length} operators`;
   },
 
-  media: (manifest: ConnectorManifestDraft) => manifest.media?.baseUrl || EMPTY,
-
-  writes: (manifest: ConnectorManifestDraft) => {
-    const actions = Object.keys(manifest.endpoints.write ?? {});
-
-    return actions.length ? actions.join(', ') : 'Read-only';
-  }
+  media: (manifest: ConnectorManifestDraft) => manifest.media?.baseUrl || EMPTY
 };
 
-/** True when a section holds something the collapsed header cannot show, so its header can hint at it. */
-export const hasResponseMapping = (manifest: ConnectorManifestDraft): boolean => {
-  const { itemsPath, totalPath, idPath, valuesPath } = manifest.endpoints.list;
+/** `GET /api/posts` — the request itself, which is what identifies an endpoint at a glance. */
+export const summarizeEndpoint = (endpoint: ConnectorReadEndpoint | ConnectorWriteEndpoint): string =>
+  `${endpoint.method ?? 'GET'} ${endpoint.path || EMPTY}`;
 
-  return Boolean(itemsPath ?? totalPath ?? idPath ?? valuesPath);
-};
+/** True when a read endpoint maps the response by hand, so a collapsed header can say it was customized. */
+export const hasResponseMapping = (endpoint: ConnectorReadEndpoint): boolean =>
+  Boolean(endpoint.itemsPath ?? endpoint.totalPath ?? endpoint.idPath ?? endpoint.valuesPath);

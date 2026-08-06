@@ -1,3 +1,4 @@
+import { DEFAULT_READ_ENDPOINT } from '@plitzi/sdk-shared/connectors';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { getByPath } from './getByPath';
@@ -5,13 +6,12 @@ import { getByPath } from './getByPath';
 import type {
   ConnectorCredential,
   ConnectorFilter,
-  ConnectorListEndpoint,
   ConnectorManifest,
   ConnectorPageInfo,
   ConnectorQuery,
   ConnectorRecord,
-  ConnectorResult,
-  ConnectorWriteAction
+  ConnectorResponseMapping,
+  ConnectorResult
 } from './types';
 
 /** Everything that describes the connection rather than one call: the same for every endpoint the manifest holds. */
@@ -21,6 +21,8 @@ const DEFAULT_LIMIT = 10;
 
 export type FetchConnectorOptions = {
   manifest: ConnectorManifest;
+  /** Which read endpoint to execute. Defaults to `list`, the one an element addresses when it names none. */
+  endpoint?: string;
   credential?: ConnectorCredential;
   query?: ConnectorQuery;
   /** Injected so tests — and a future edge runtime — can supply their own transport. */
@@ -30,7 +32,8 @@ export type FetchConnectorOptions = {
 export type WriteConnectorOptions = {
   manifest: ConnectorManifest;
   credential?: ConnectorCredential;
-  action: ConnectorWriteAction;
+  /** Name of the write endpoint to execute, as declared in the manifest. */
+  action: string;
   resource?: string;
   recordId?: string;
   values?: Record<string, unknown>;
@@ -202,14 +205,14 @@ const emptyResult = (offset: number, limit: number): ConnectorResult => ({
   pageInfo: buildPageInfo([], 0, offset, limit, '')
 });
 
-const toRecords = (items: unknown[], list: ConnectorListEndpoint): ConnectorRecord[] =>
+const toRecords = (items: unknown[], mapping: ConnectorResponseMapping): ConnectorRecord[] =>
   items.reduce<ConnectorRecord[]>((acum, item, index) => {
     if (item === null || typeof item !== 'object') {
       return acum;
     }
 
-    const id = toScalar(getByPath(item, list.idPath ?? 'id'));
-    const values = getByPath(item, list.valuesPath ?? '.');
+    const id = toScalar(getByPath(item, mapping.idPath ?? 'id'));
+    const values = getByPath(item, mapping.valuesPath ?? '.');
 
     acum.push({
       // A provider that returns no usable id still yields addressable records: position within the window is the
@@ -229,12 +232,19 @@ const toRecords = (items: unknown[], list: ConnectorListEndpoint): ConnectorReco
  */
 export const fetchConnectorRecords = async ({
   manifest,
+  endpoint = DEFAULT_READ_ENDPOINT,
   credential = {},
   query = {},
   fetchImpl = fetch
 }: FetchConnectorOptions): Promise<ConnectorResult> => {
   const { endpoints, ...connection } = manifest;
-  const { list } = endpoints;
+  // Looked up by presence rather than by index: the map is open, and an element can name an endpoint that was
+  // since renamed or removed. Indexing alone would type that as present and blow up further down.
+  const read = Object.hasOwn(endpoints.read, endpoint) ? endpoints.read[endpoint] : undefined;
+  if (!read) {
+    throw new Error(`Connector ${connection.id} has no read endpoint named "${endpoint}"`);
+  }
+
   const limit = query.limit ?? DEFAULT_LIMIT;
   const offset = query.offset ?? 0;
   const variables: Record<string, unknown> = {
@@ -254,25 +264,35 @@ export const fetchConnectorRecords = async ({
     return emptyResult(offset, limit);
   }
 
-  const url = new URL(render(list.path, variables), connection.baseUrl);
+  const url = new URL(render(read.path, variables), connection.baseUrl);
   Object.entries({
-    ...renderEntries(list.query ?? {}, variables),
+    ...renderEntries(read.query ?? {}, variables),
     ...renderFilters(resolved, connection.operators, variables)
   }).forEach(([key, value]) => url.searchParams.set(key, value));
 
-  const headers = applyAuth(connection, variables, url);
-  const response = await fetchImpl(url.toString(), { method: 'GET', headers });
+  const method = read.method ?? 'GET';
+  const headers = { ...applyAuth(connection, variables, url), ...renderEntries(read.headers ?? {}, variables) };
+  if (method === 'POST') {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  const response = await fetchImpl(url.toString(), {
+    method,
+    headers,
+    // A search endpoint reads through POST; the body is templated the same way the query string is.
+    body: method === 'POST' ? JSON.stringify(renderEntries(read.body ?? {}, variables)) : undefined
+  });
   if (!response.ok) {
     throw new Error(`Connector ${connection.id} responded ${response.status} for ${url.pathname}`);
   }
 
   const payload: unknown = await response.json();
-  const rawItems = getByPath(payload, list.itemsPath);
+  const rawItems = getByPath(payload, read.itemsPath);
   const items = Array.isArray(rawItems) ? rawItems : [];
-  const rawTotal = list.totalPath ? getByPath(payload, list.totalPath) : undefined;
+  const rawTotal = read.totalPath ? getByPath(payload, read.totalPath) : undefined;
   const total = typeof rawTotal === 'number' ? rawTotal : undefined;
   const mediaBaseUrl = connection.media?.baseUrl;
-  const records = toRecords(items, list).map(record =>
+  const records = toRecords(items, read).map(record =>
     mediaBaseUrl ? { ...record, values: rebaseMedia(record.values, mediaBaseUrl) as Record<string, unknown> } : record
   );
 
@@ -319,7 +339,11 @@ export const writeConnectorRecord = async ({
     values
   };
   const url = new URL(render(operation.path, variables), connection.baseUrl);
-  const headers = applyAuth(connection, variables, url);
+  Object.entries(renderEntries(operation.query ?? {}, variables)).forEach(([key, value]) =>
+    url.searchParams.set(key, value)
+  );
+
+  const headers = { ...applyAuth(connection, variables, url), ...renderEntries(operation.headers ?? {}, variables) };
   headers['Content-Type'] = 'application/json';
 
   const response = await fetchImpl(url.toString(), {
@@ -331,13 +355,15 @@ export const writeConnectorRecord = async ({
     throw new Error(`Connector ${connection.id} responded ${response.status} for ${action} on ${url.pathname}`);
   }
 
-  if (action === 'delete' || response.status === 204) {
+  if (operation.method === 'DELETE' || response.status === 204) {
     return undefined;
   }
 
+  // A write that declares no response mapping still answers: the body is read as the record itself, which is what
+  // a REST endpoint returning the created object does.
+  const mapping = operation.response ?? {};
   const payload: unknown = await response.json();
-  const { list } = endpoints;
-  const item = getByPath(payload, list.itemsPath === undefined ? '.' : list.itemsPath);
+  const item = getByPath(payload, mapping.itemsPath === undefined ? '.' : mapping.itemsPath);
 
-  return toRecords(Array.isArray(item) ? item : [item], list)[0];
+  return toRecords(Array.isArray(item) ? item : [item], mapping)[0];
 };

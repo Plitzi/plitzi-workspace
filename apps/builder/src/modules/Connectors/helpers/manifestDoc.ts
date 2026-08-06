@@ -47,8 +47,11 @@ export const fieldDocs = {
   authName: 'The header or parameter name, e.g. Authorization.',
   authValue: 'The value to send. Reference the secret as {{credential.token}} — never paste the token itself.',
   headers: 'Extra headers sent with every request. Values accept the same tokens.',
-  listPath: 'Path to the collection, with {{resource}} where the content type goes, e.g. /api/{{resource}}.',
+  method: 'HTTP method this endpoint expects. Reading is usually GET; a search endpoint often takes POST.',
+  path: 'Path appended to the base URL, with {{resource}} where the collection name goes, e.g. /api/{{resource}}.',
   listQuery: 'Query parameters sent on every read. This is where paging tokens go, e.g. limit = {{limit}}.',
+  writeQuery: 'Query parameters sent with this write.',
+  endpointHeaders: 'Headers for this endpoint only, merged over the connection headers.',
   itemsPath: 'Where the records array lives in the response, e.g. data. Leave empty if the response is the array.',
   totalPath:
     'Where the total record count lives, e.g. meta.pagination.total. Without it a pager can only offer next and previous.',
@@ -58,8 +61,6 @@ export const fieldDocs = {
     'How this provider spells each comparison. The element picks an operator by name; this template turns it into a query parameter.',
   mediaBaseUrl:
     'Host to prepend to relative image and file URLs the CMS returns. Only values under keys ending in url, src or href are rewritten.',
-  writeMethod: 'HTTP method the provider expects for this action.',
-  writePath: 'Path for this action, with {{id}} where the record id goes.',
   writeBodyPath: 'Key to wrap the submitted values in, e.g. data. Leave empty to send them at the root.'
 } as const;
 

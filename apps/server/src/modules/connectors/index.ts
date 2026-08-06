@@ -10,15 +10,14 @@ export type {
   ConnectorCredential,
   ConnectorEndpoints,
   ConnectorFilter,
-  ConnectorListEndpoint,
   ConnectorManifest,
   ConnectorManifestDraft,
   ConnectorPageInfo,
   ConnectorPagination,
   ConnectorQuery,
+  ConnectorReadEndpoint,
   ConnectorRecord,
+  ConnectorResponseMapping,
   ConnectorResult,
-  ConnectorWrite,
-  ConnectorWriteAction,
-  ConnectorWriteOperation
+  ConnectorWriteEndpoint
 } from './types';

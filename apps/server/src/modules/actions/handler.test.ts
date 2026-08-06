@@ -11,10 +11,20 @@ const manifest: ConnectorManifest = {
   baseUrl: 'https://cms.example.com',
   auth: { in: 'header', name: 'Authorization', value: 'Bearer {{credential.token}}' },
   endpoints: {
-    list: { path: '/api/{{resource}}', itemsPath: 'data', idPath: 'documentId' },
+    read: { list: { path: '/api/{{resource}}', itemsPath: 'data', idPath: 'documentId' } },
     write: {
-      create: { method: 'POST', path: '/api/{{resource}}', bodyPath: 'data' },
-      update: { method: 'PUT', path: '/api/{{resource}}/{{id}}', bodyPath: 'data' }
+      create: {
+        method: 'POST',
+        path: '/api/{{resource}}',
+        bodyPath: 'data',
+        response: { itemsPath: 'data', idPath: 'documentId' }
+      },
+      update: {
+        method: 'PUT',
+        path: '/api/{{resource}}/{{id}}',
+        bodyPath: 'data',
+        response: { itemsPath: 'data', idPath: 'documentId' }
+      }
     }
   }
 };
@@ -185,12 +195,12 @@ describe('handleAction', () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
-  it('rejects an unknown action verb', async () => {
+  it('rejects a request that names no action', async () => {
     const fetchImpl = vi.fn();
     const { res, sent } = buildRes();
 
     await handleAction(
-      request({ elementId: 'form1', action: 'drop', values: {} }),
+      request({ elementId: 'form1', values: {} }),
       res,
       buildConfig(provider({ connector: 'cms' })),
       lookups(fetchImpl)
@@ -198,6 +208,26 @@ describe('handleAction', () => {
 
     expect(sent.status).toBe(400);
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it('allows a write named after the API rather than after CRUD', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ id: 'ticket-9' }));
+    const { res, sent } = buildRes();
+
+    await handleAction(
+      request({ elementId: 'form1', action: 'escalate', values: { priority: 'high' } }),
+      res,
+      buildConfig(provider({ connector: 'cms', resource: 'tickets' })),
+      lookups(fetchImpl, {
+        endpoints: {
+          ...manifest.endpoints,
+          write: { escalate: { method: 'POST', path: '/api/{{resource}}/escalate' } }
+        }
+      })
+    );
+
+    expect(sent.status).toBe(200);
+    expect(fetchImpl.mock.calls[0][0] as string).toBe('https://cms.example.com/api/tickets/escalate');
   });
 
   it('rejects a malformed body', async () => {

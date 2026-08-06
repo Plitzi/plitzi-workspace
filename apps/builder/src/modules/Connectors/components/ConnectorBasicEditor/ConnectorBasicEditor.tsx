@@ -9,33 +9,24 @@ import { useCallback, useMemo } from 'react';
 import SpaceCredentialSelectorModal from '@pmodules/Space/components/SpaceCredentialSelectorModal';
 
 import { fieldDocs, paginationDocs } from '../../helpers/manifestDoc';
-import { hasResponseMapping, summarize } from '../../helpers/summarizeManifest';
-import { setAuth, setConnection, setList, setMediaBaseUrl, setWrite } from '../../helpers/updateManifest';
+import { summarize } from '../../helpers/summarizeManifest';
+import { setAuth, setConnection, setMediaBaseUrl } from '../../helpers/updateManifest';
+import ConnectorEndpointsEditor from '../ConnectorEndpointsEditor';
 import ConnectorSection from '../ConnectorSection';
-import ConnectorWriteEditor from '../ConnectorWriteEditor';
 import FieldHelp from '../FieldHelp';
 import TokenInput from '../TokenInput';
 
-import type {
-  ConnectorManifestDraft,
-  ConnectorPagination,
-  ConnectorWriteAction,
-  ConnectorWriteOperation,
-  SpaceCredentialProvider
-} from '@plitzi/sdk-shared';
+import type { ConnectorManifestDraft, ConnectorPagination, SpaceCredentialProvider } from '@plitzi/sdk-shared';
+
+/** Connector secrets are generic key/value bags; the storage providers cannot authenticate an API. */
+const CREDENTIAL_PROVIDERS: SpaceCredentialProvider[] = ['custom'];
 
 export type ConnectorBasicEditorProps = {
   manifest: ConnectorManifestDraft;
   onChange: (manifest: ConnectorManifestDraft) => void;
 };
 
-const WRITE_ACTIONS: ConnectorWriteAction[] = ['create', 'update', 'delete'];
-
-/** Connector secrets are generic key/value bags; the storage providers cannot authenticate a CMS. */
-const CREDENTIAL_PROVIDERS: SpaceCredentialProvider[] = ['custom'];
-
 const ConnectorBasicEditor = ({ manifest, onChange }: ConnectorBasicEditorProps) => {
-  const { list } = manifest.endpoints;
   const pagination = manifest.pagination ?? 'offset';
   const paginationDoc = useMemo(() => paginationDocs.find(doc => doc.value === pagination), [pagination]);
 
@@ -75,36 +66,6 @@ const ConnectorBasicEditor = ({ manifest, onChange }: ConnectorBasicEditorProps)
     [manifest, onChange]
   );
 
-  const handleChangePath = useCallback(
-    (value: string) => onChange(setList(manifest, 'path', value)),
-    [manifest, onChange]
-  );
-
-  const handleChangeQuery = useCallback(
-    (_entries: [string, string][], obj: Record<string, string>) => onChange(setList(manifest, 'query', obj)),
-    [manifest, onChange]
-  );
-
-  const handleChangeItemsPath = useCallback(
-    (value: string) => onChange(setList(manifest, 'itemsPath', value)),
-    [manifest, onChange]
-  );
-
-  const handleChangeTotalPath = useCallback(
-    (value: string) => onChange(setList(manifest, 'totalPath', value)),
-    [manifest, onChange]
-  );
-
-  const handleChangeIdPath = useCallback(
-    (value: string) => onChange(setList(manifest, 'idPath', value)),
-    [manifest, onChange]
-  );
-
-  const handleChangeValuesPath = useCallback(
-    (value: string) => onChange(setList(manifest, 'valuesPath', value)),
-    [manifest, onChange]
-  );
-
   const handleChangePagination = useCallback(
     (value: string) => onChange(setConnection(manifest, 'pagination', value as ConnectorPagination)),
     [manifest, onChange]
@@ -120,19 +81,13 @@ const ConnectorBasicEditor = ({ manifest, onChange }: ConnectorBasicEditorProps)
     [manifest, onChange]
   );
 
-  const handleChangeWrite = useCallback(
-    (action: ConnectorWriteAction, operation: ConnectorWriteOperation | undefined) =>
-      onChange(setWrite(manifest, action, operation)),
-    [manifest, onChange]
-  );
-
   return (
     <div className="flex flex-col">
       <div className="flex flex-col gap-2 pb-3">
         <Input
           value={manifest.baseUrl}
-          label="CMS URL"
-          placeholder="https://cms.example.com"
+          label="API URL"
+          placeholder="https://api.example.com"
           title={fieldDocs.baseUrl}
           size="xs"
           onChange={handleChangeBaseUrl}
@@ -144,7 +99,7 @@ const ConnectorBasicEditor = ({ manifest, onChange }: ConnectorBasicEditorProps)
               className="flex h-7 grow items-center truncate rounded-sm border border-gray-300 px-2 text-xs dark:border-zinc-600"
               title={fieldDocs.credential}
             >
-              {manifest.credential || <span className="text-gray-400">None — public CMS</span>}
+              {manifest.credential || <span className="text-gray-400">None — public API</span>}
             </div>
             <SpaceCredentialSelectorModal
               providersSupported={CREDENTIAL_PROVIDERS}
@@ -165,10 +120,20 @@ const ConnectorBasicEditor = ({ manifest, onChange }: ConnectorBasicEditorProps)
       </div>
 
       <ConnectorSection
+        id="endpoints"
+        title="Endpoints"
+        summary={summarize.endpoints(manifest)}
+        description="Every request this connector can make. Elements read through a read endpoint; interactions invoke a write one."
+        defaultOpen
+      >
+        <ConnectorEndpointsEditor manifest={manifest} onChange={onChange} />
+      </ConnectorSection>
+
+      <ConnectorSection
         id="auth"
         title="Auth"
         summary={summarize.auth(manifest)}
-        description="How Plitzi identifies itself. Leave empty for a public CMS."
+        description="How Plitzi identifies itself on every request. Leave empty for a public API."
       >
         <div className="flex gap-2">
           <div className="w-24 shrink-0">
@@ -195,81 +160,15 @@ const ConnectorBasicEditor = ({ manifest, onChange }: ConnectorBasicEditorProps)
           onChange={handleChangeAuthValue}
         />
         <FieldHelp>{fieldDocs.authValue}</FieldHelp>
-        <KVInput value={manifest.headers ?? {}} label="Extra headers" size="xs" onChange={handleChangeHeaders} />
+        <KVInput value={manifest.headers ?? {}} label="Shared headers" size="xs" onChange={handleChangeHeaders} />
         <FieldHelp>{fieldDocs.headers}</FieldHelp>
-      </ConnectorSection>
-
-      <ConnectorSection
-        id="list"
-        title="Read"
-        summary={summarize.list(manifest)}
-        description="The request Plitzi makes to list a content type."
-        defaultOpen
-      >
-        <TokenInput
-          label="Path"
-          title={fieldDocs.listPath}
-          value={list.path}
-          placeholder="/api/{{resource}}"
-          onChange={handleChangePath}
-        />
-        <FieldHelp>{fieldDocs.listPath}</FieldHelp>
-        <KVInput value={list.query ?? {}} label="Query parameters" size="xs" onChange={handleChangeQuery} />
-        <FieldHelp>{fieldDocs.listQuery}</FieldHelp>
-        <ConnectorSection
-          id="mapping"
-          title="Response"
-          summary={hasResponseMapping(manifest) ? 'Customized' : 'Defaults'}
-          highlight={hasResponseMapping(manifest)}
-          description="Where the records sit inside this provider's response. The preset already knows; change it only if the CMS was customized."
-        >
-          <Input
-            value={list.itemsPath ?? ''}
-            label="Records path"
-            placeholder="data"
-            title={fieldDocs.itemsPath}
-            size="xs"
-            onChange={handleChangeItemsPath}
-          />
-          <FieldHelp>{fieldDocs.itemsPath}</FieldHelp>
-          <Input
-            value={list.totalPath ?? ''}
-            label="Total path"
-            placeholder="meta.pagination.total"
-            title={fieldDocs.totalPath}
-            size="xs"
-            onChange={handleChangeTotalPath}
-          />
-          <FieldHelp>{fieldDocs.totalPath}</FieldHelp>
-          <div className="flex gap-2">
-            <Input
-              className="grow"
-              value={list.idPath ?? ''}
-              label="Id path"
-              placeholder="id"
-              title={fieldDocs.idPath}
-              size="xs"
-              onChange={handleChangeIdPath}
-            />
-            <Input
-              className="grow"
-              value={list.valuesPath ?? ''}
-              label="Fields path"
-              placeholder="."
-              title={fieldDocs.valuesPath}
-              size="xs"
-              onChange={handleChangeValuesPath}
-            />
-          </div>
-          <FieldHelp>{fieldDocs.valuesPath}</FieldHelp>
-        </ConnectorSection>
       </ConnectorSection>
 
       <ConnectorSection
         id="pagination"
         title="Paging"
         summary={summarize.pagination(manifest)}
-        description="How this provider asks for the next window of records."
+        description="How this API asks for the next window of records. A read endpoint can override it."
       >
         <Select value={pagination} label="Style" size="xs" onChange={handleChangePagination}>
           {paginationDocs.map(doc => (
@@ -304,28 +203,11 @@ const ConnectorBasicEditor = ({ manifest, onChange }: ConnectorBasicEditorProps)
         <Input
           value={manifest.media?.baseUrl ?? ''}
           label="Media base URL"
-          placeholder="https://cms.example.com"
+          placeholder="https://api.example.com"
           title={fieldDocs.mediaBaseUrl}
           size="xs"
           onChange={handleChangeMedia}
         />
-      </ConnectorSection>
-
-      <ConnectorSection
-        id="writes"
-        title="Writes"
-        summary={summarize.writes(manifest)}
-        highlight={Boolean(manifest.endpoints.write)}
-        description="Forms can only reach actions declared here. Anything left off is refused by the server."
-      >
-        {WRITE_ACTIONS.map(action => (
-          <ConnectorWriteEditor
-            key={action}
-            action={action}
-            operation={manifest.endpoints.write?.[action]}
-            onChange={handleChangeWrite}
-          />
-        ))}
       </ConnectorSection>
     </div>
   );
