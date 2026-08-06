@@ -34,7 +34,16 @@ const RAILS = [
   'border-l-2 border-l-slate-200 pl-1 dark:border-l-zinc-700'
 ];
 
-const HEADER_TINTS = ['bg-slate-100 dark:bg-zinc-700/50', 'bg-slate-50 dark:bg-zinc-800/50', 'bg-transparent'];
+/**
+ * Every depth keeps a visible header, open or closed — the fade is in how strong it is, never in whether it is
+ * there. A transparent nested header reads as "this row is not a section", which is the one thing the header has
+ * to say.
+ */
+const HEADER_TINTS = [
+  'bg-slate-100 dark:bg-zinc-700/50',
+  'bg-slate-100/70 dark:bg-zinc-700/35',
+  'bg-slate-100/50 dark:bg-zinc-700/25'
+];
 
 /**
  * Flattens an id into a single storage segment.
@@ -98,9 +107,10 @@ const ConnectorSection = ({
   return (
     <ContainerCollapsable className={rail} collapsed={isCollapsed} onChange={setIsCollapsed}>
       <ContainerCollapsable.Header
-        className={clsx('h-8 px-1', tint, {
-          'border-b border-gray-200 hover:bg-slate-100 dark:border-zinc-700 dark:hover:bg-zinc-700/50': isCollapsed,
-          'bg-transparent': isCollapsed && depth > 0
+        // The hover shifts shade at every depth rather than only on the outermost one: an open header is still a
+        // click target, and a nested one that never reacts reads as a label.
+        className={clsx('h-8 px-1 hover:bg-slate-200/70 dark:hover:bg-zinc-700/60', tint, {
+          'border-b border-gray-200 dark:border-zinc-700': isCollapsed
         })}
         title={
           <div className="flex min-w-0 items-baseline gap-2">
