@@ -12,7 +12,7 @@ export type TInitQuery = {
 };
 
 const InitQuery = gql`
-  query InitQuery($environment: String!, $revision: Int, $limit: Int!) {
+  query InitQuery($environment: String!, $revision: Int) {
     Space(environment: $environment, revision: $revision) {
       schema {
         settings
