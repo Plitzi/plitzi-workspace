@@ -134,8 +134,12 @@ sigue siendo editable. Un preset obsoleto se corrige editando una fila, nunca co
   puede quedarse mostrando otra cosa. También publica `hasServerRendering`, derivado de si algún `SpaceDeployment`
   usa credencial `ssr`.
 - **`components/ConnectorForm/`** — nombre + preset + dos modos sobre el **mismo documento**:
-  - **Basic** (`ConnectorBasicEditor`): formulario por secciones — conexión, autenticación, lectura, paginación,
-    filtros, media, escrituras — con una línea de explicación por campo (`helpers/manifestDoc.ts`).
+  - **Basic** (`ConnectorBasicEditor`): arriba lo único que un usuario de un CMS conocido tiene que rellenar —
+    **CMS URL** y **credencial**; el preset ya sabe el resto. Debajo, secciones plegables (Auth, Read, Paging,
+    Filters, Media, Writes) con **resumen en la cabecera cerrada** (`helpers/summarizeManifest.ts`), así que plegar
+    no esconde información. Los paths de respuesta van anidados dentro de Read porque el preset ya los trae.
+    La explicación de cada campo está en el `title` (hover) y, en prosa, tras el `?` de cada sección
+    (`FieldHelp` + `ConnectorSectionContext`); el estado de plegado y de ayuda se recuerda por sección.
   - **Advanced** (`ConnectorAdvancedEditor`): el JSON tal cual se guarda, para el proveedor que no encaja.
   Cambiar de modo no convierte nada; se valida al guardar (`helpers/validateManifest.ts`).
 - **`components/TokenInput/`** — campo de una línea con autocompletado de los tokens del engine

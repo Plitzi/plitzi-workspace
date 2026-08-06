@@ -4,6 +4,7 @@ import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback } from 'react';
 
 import { fieldDocs } from '../../helpers/manifestDoc';
+import FieldHelp from '../FieldHelp';
 import TokenInput from '../TokenInput';
 
 import type { ConnectorWriteAction, ConnectorWriteOperation } from '@plitzi/sdk-shared';
@@ -85,21 +86,23 @@ const ConnectorWriteEditor = ({ action, operation, onChange }: ConnectorWriteEdi
       </Select>
       <TokenInput
         label="Path"
-        description={fieldDocs.writePath}
+        title={fieldDocs.writePath}
         value={operation.path}
         scope="write"
         onChange={handleChangePath}
       />
+      <FieldHelp>{fieldDocs.writePath}</FieldHelp>
       {action !== 'delete' && (
         <Input
           value={operation.bodyPath ?? ''}
           label="Body key"
           placeholder="data"
+          title={fieldDocs.writeBodyPath}
           size="xs"
           onChange={handleChangeBodyPath}
         />
       )}
-      {action !== 'delete' && <span className="text-xs text-gray-500">{fieldDocs.writeBodyPath}</span>}
+      {action !== 'delete' && <FieldHelp>{fieldDocs.writeBodyPath}</FieldHelp>}
     </div>
   );
 };

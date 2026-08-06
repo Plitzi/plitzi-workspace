@@ -2,15 +2,18 @@ import Button from '@plitzi/plitzi-ui/Button';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import Input from '@plitzi/plitzi-ui/Input';
 import KVInput from '@plitzi/plitzi-ui/KVInput';
+import Label from '@plitzi/plitzi-ui/Label';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, useMemo } from 'react';
 
 import SpaceCredentialSelectorModal from '@pmodules/Space/components/SpaceCredentialSelectorModal';
 
 import { fieldDocs, paginationDocs } from '../../helpers/manifestDoc';
+import { hasResponseMapping, summarize } from '../../helpers/summarizeManifest';
 import { setAuth, setConnection, setList, setMediaBaseUrl, setWrite } from '../../helpers/updateManifest';
 import ConnectorSection from '../ConnectorSection';
 import ConnectorWriteEditor from '../ConnectorWriteEditor';
+import FieldHelp from '../FieldHelp';
 import TokenInput from '../TokenInput';
 
 import type {
@@ -124,101 +127,150 @@ const ConnectorBasicEditor = ({ manifest, onChange }: ConnectorBasicEditorProps)
   );
 
   return (
-    <div className="flex flex-col gap-4">
-      <ConnectorSection title="Connection" description="Where the CMS is and how Plitzi identifies itself to it.">
+    <div className="flex flex-col">
+      <div className="flex flex-col gap-2 pb-3">
         <Input
           value={manifest.baseUrl}
-          label="Base URL"
+          label="CMS URL"
           placeholder="https://cms.example.com"
+          title={fieldDocs.baseUrl}
           size="xs"
           onChange={handleChangeBaseUrl}
         />
-        <span className="text-xs text-gray-500 dark:text-zinc-400">{fieldDocs.baseUrl}</span>
-        <div className="flex items-end gap-2">
-          <div className="flex grow flex-col gap-1">
-            <span className="text-xs font-medium">Credential</span>
-            <div className="flex h-8 items-center rounded-sm border border-gray-300 px-2 text-xs dark:border-zinc-600">
-              {manifest.credential || <span className="text-gray-400">None</span>}
+        <div className="flex flex-col gap-1">
+          <Label size="xs">Credential</Label>
+          <div className="flex items-center gap-2">
+            <div
+              className="flex h-7 grow items-center truncate rounded-sm border border-gray-300 px-2 text-xs dark:border-zinc-600"
+              title={fieldDocs.credential}
+            >
+              {manifest.credential || <span className="text-gray-400">None — public CMS</span>}
             </div>
+            <SpaceCredentialSelectorModal
+              providersSupported={CREDENTIAL_PROVIDERS}
+              selected={manifest.credential}
+              onSelect={handleSelectCredential}
+            >
+              <Button size="xs" intent="secondary" title="Choose or create a credential">
+                <Button.Icon icon="fa-solid fa-key" />
+              </Button>
+            </SpaceCredentialSelectorModal>
+            {manifest.credential && (
+              <Button size="xs" intent="secondary" onClick={handleClearCredential} title="Use no credential">
+                <Button.Icon icon="fa-solid fa-xmark" />
+              </Button>
+            )}
           </div>
-          <SpaceCredentialSelectorModal
-            providersSupported={CREDENTIAL_PROVIDERS}
-            selected={manifest.credential}
-            onSelect={handleSelectCredential}
-          >
-            <Button size="xs" intent="secondary">
-              Choose
-            </Button>
-          </SpaceCredentialSelectorModal>
-          {manifest.credential && (
-            <Button size="xs" intent="secondary" onClick={handleClearCredential} title="Use no credential">
-              <Button.Icon icon="fa-solid fa-xmark" />
-            </Button>
-          )}
         </div>
-        <span className="text-xs text-gray-500 dark:text-zinc-400">{fieldDocs.credential}</span>
-      </ConnectorSection>
+      </div>
 
-      <ConnectorSection title="Authentication" description="Leave empty for a public CMS that needs no credential.">
-        <Select value={manifest.auth?.in ?? 'header'} label="Send as" size="xs" onChange={handleChangeAuthIn}>
-          <option value="header">Header</option>
-          <option value="query">Query parameter</option>
-        </Select>
-        <Input
-          value={manifest.auth?.name ?? ''}
-          label="Name"
-          placeholder="Authorization"
-          size="xs"
-          onChange={handleChangeAuthName}
-        />
+      <ConnectorSection
+        id="auth"
+        title="Auth"
+        summary={summarize.auth(manifest)}
+        description="How Plitzi identifies itself. Leave empty for a public CMS."
+      >
+        <div className="flex gap-2">
+          <div className="w-24 shrink-0">
+            <Select value={manifest.auth?.in ?? 'header'} label="Send as" size="xs" onChange={handleChangeAuthIn}>
+              <option value="header">Header</option>
+              <option value="query">Query</option>
+            </Select>
+          </div>
+          <Input
+            className="grow"
+            value={manifest.auth?.name ?? ''}
+            label="Name"
+            placeholder="Authorization"
+            title={fieldDocs.authName}
+            size="xs"
+            onChange={handleChangeAuthName}
+          />
+        </div>
         <TokenInput
           label="Value"
-          description={fieldDocs.authValue}
+          title={fieldDocs.authValue}
           value={manifest.auth?.value ?? ''}
           placeholder="Bearer {{credential.token}}"
           onChange={handleChangeAuthValue}
         />
+        <FieldHelp>{fieldDocs.authValue}</FieldHelp>
         <KVInput value={manifest.headers ?? {}} label="Extra headers" size="xs" onChange={handleChangeHeaders} />
+        <FieldHelp>{fieldDocs.headers}</FieldHelp>
       </ConnectorSection>
 
-      <ConnectorSection title="Reading records" description="The request Plitzi makes to list a content type.">
+      <ConnectorSection
+        id="list"
+        title="Read"
+        summary={summarize.list(manifest)}
+        description="The request Plitzi makes to list a content type."
+        defaultOpen
+      >
         <TokenInput
           label="Path"
-          description={fieldDocs.listPath}
+          title={fieldDocs.listPath}
           value={list.path}
           placeholder="/api/{{resource}}"
           onChange={handleChangePath}
         />
+        <FieldHelp>{fieldDocs.listPath}</FieldHelp>
         <KVInput value={list.query ?? {}} label="Query parameters" size="xs" onChange={handleChangeQuery} />
-        <span className="text-xs text-gray-500 dark:text-zinc-400">{fieldDocs.listQuery}</span>
-        <Input
-          value={list.itemsPath ?? ''}
-          label="Records path"
-          placeholder="data"
-          size="xs"
-          onChange={handleChangeItemsPath}
-        />
-        <span className="text-xs text-gray-500 dark:text-zinc-400">{fieldDocs.itemsPath}</span>
-        <Input
-          value={list.totalPath ?? ''}
-          label="Total path"
-          placeholder="meta.pagination.total"
-          size="xs"
-          onChange={handleChangeTotalPath}
-        />
-        <span className="text-xs text-gray-500 dark:text-zinc-400">{fieldDocs.totalPath}</span>
-        <Input value={list.idPath ?? ''} label="Id path" placeholder="id" size="xs" onChange={handleChangeIdPath} />
-        <Input
-          value={list.valuesPath ?? ''}
-          label="Fields path"
-          placeholder="."
-          size="xs"
-          onChange={handleChangeValuesPath}
-        />
-        <span className="text-xs text-gray-500 dark:text-zinc-400">{fieldDocs.valuesPath}</span>
+        <FieldHelp>{fieldDocs.listQuery}</FieldHelp>
+        <ConnectorSection
+          id="mapping"
+          title="Response"
+          summary={hasResponseMapping(manifest) ? 'Customized' : 'Defaults'}
+          highlight={hasResponseMapping(manifest)}
+          description="Where the records sit inside this provider's response. The preset already knows; change it only if the CMS was customized."
+        >
+          <Input
+            value={list.itemsPath ?? ''}
+            label="Records path"
+            placeholder="data"
+            title={fieldDocs.itemsPath}
+            size="xs"
+            onChange={handleChangeItemsPath}
+          />
+          <FieldHelp>{fieldDocs.itemsPath}</FieldHelp>
+          <Input
+            value={list.totalPath ?? ''}
+            label="Total path"
+            placeholder="meta.pagination.total"
+            title={fieldDocs.totalPath}
+            size="xs"
+            onChange={handleChangeTotalPath}
+          />
+          <FieldHelp>{fieldDocs.totalPath}</FieldHelp>
+          <div className="flex gap-2">
+            <Input
+              className="grow"
+              value={list.idPath ?? ''}
+              label="Id path"
+              placeholder="id"
+              title={fieldDocs.idPath}
+              size="xs"
+              onChange={handleChangeIdPath}
+            />
+            <Input
+              className="grow"
+              value={list.valuesPath ?? ''}
+              label="Fields path"
+              placeholder="."
+              title={fieldDocs.valuesPath}
+              size="xs"
+              onChange={handleChangeValuesPath}
+            />
+          </div>
+          <FieldHelp>{fieldDocs.valuesPath}</FieldHelp>
+        </ConnectorSection>
       </ConnectorSection>
 
-      <ConnectorSection title="Pagination" description="How this provider asks for the next window of records.">
+      <ConnectorSection
+        id="pagination"
+        title="Paging"
+        summary={summarize.pagination(manifest)}
+        description="How this provider asks for the next window of records."
+      >
         <Select value={pagination} label="Style" size="xs" onChange={handleChangePagination}>
           {paginationDocs.map(doc => (
             <option key={doc.value} value={doc.value}>
@@ -234,22 +286,36 @@ const ConnectorBasicEditor = ({ manifest, onChange }: ConnectorBasicEditorProps)
         )}
       </ConnectorSection>
 
-      <ConnectorSection title="Filters" description={fieldDocs.operators}>
+      <ConnectorSection
+        id="filters"
+        title="Filters"
+        summary={summarize.filters(manifest)}
+        description={fieldDocs.operators}
+      >
         <KVInput value={manifest.operators ?? {}} label="Operators" size="xs" onChange={handleChangeOperators} />
       </ConnectorSection>
 
-      <ConnectorSection title="Media" description={fieldDocs.mediaBaseUrl}>
+      <ConnectorSection
+        id="media"
+        title="Media"
+        summary={summarize.media(manifest)}
+        description={fieldDocs.mediaBaseUrl}
+      >
         <Input
           value={manifest.media?.baseUrl ?? ''}
           label="Media base URL"
           placeholder="https://cms.example.com"
+          title={fieldDocs.mediaBaseUrl}
           size="xs"
           onChange={handleChangeMedia}
         />
       </ConnectorSection>
 
       <ConnectorSection
-        title="Writing records"
+        id="writes"
+        title="Writes"
+        summary={summarize.writes(manifest)}
+        highlight={Boolean(manifest.endpoints.write)}
         description="Forms can only reach actions declared here. Anything left off is refused by the server."
       >
         {WRITE_ACTIONS.map(action => (

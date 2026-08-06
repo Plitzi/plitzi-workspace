@@ -10,7 +10,8 @@ import type { ConnectorTokenScope } from '@plitzi/sdk-shared';
 
 export type TokenInputProps = {
   label: string;
-  description?: string;
+  /** Hover text. The same line is available in full under the section's help toggle via `FieldHelp`. */
+  title?: string;
   value: string;
   placeholder?: string;
   scope?: ConnectorTokenScope;
@@ -24,7 +25,7 @@ export type TokenInputProps = {
  * between `{{offset}}` and `{{page}}` decides whether paging works at all. Ctrl+Space (or typing a prefix) lists
  * what this position accepts, which is why these are CodeMirror fields rather than plain inputs.
  */
-const TokenInput = ({ label, description, value, placeholder, scope = 'request', onChange }: TokenInputProps) => {
+const TokenInput = ({ label, title, value, placeholder, scope = 'request', onChange }: TokenInputProps) => {
   const { theme } = use(ThemeContext);
   const autoComplete = useMemo<AutoComplete[]>(
     () => getConnectorTokens(scope).map(token => ({ type: 'token', value: token.value, detail: token.description })),
@@ -32,7 +33,7 @@ const TokenInput = ({ label, description, value, placeholder, scope = 'request',
   );
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1" title={title}>
       <Label size="xs">{label}</Label>
       <CodeMirror
         value={value}
@@ -44,7 +45,6 @@ const TokenInput = ({ label, description, value, placeholder, scope = 'request',
         size="xs"
         onChange={onChange}
       />
-      {description && <span className="text-xs text-gray-500 dark:text-zinc-400">{description}</span>}
     </div>
   );
 };

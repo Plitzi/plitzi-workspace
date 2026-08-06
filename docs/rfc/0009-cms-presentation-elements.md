@@ -185,11 +185,16 @@ builder-role only, mirroring `SpaceCredential`. The builder gets a **Connectors*
 same place the Collections manager used to live — one screen listing connectors with a manifest
 editor and a credential picker.
 
-The manifest is edited in two modes over the same document. **Basic** is a sectioned form —
-connection, authentication, reading, pagination, filters, media, writes — with one line of prose
-per field, because the questions an author actually has ("where do the records live in the
-response?") are not answered by a JSON key. **Advanced** is the stored JSON, for the provider the
-form does not cover. Switching modes is not a conversion.
+The manifest is edited in two modes over the same document. **Advanced** is the stored JSON, for
+the provider the form does not cover. **Basic** is a form, and its shape follows from who uses it:
+someone connecting a CMS the presets know has exactly two things to supply — where their CMS is
+and which credential opens it. Those two are the only fields the panel shows unprompted. The other
+six areas are collapsed, because the preset already answered them correctly.
+
+A collapsed section still carries a summary of its own value on its header, so folding trades
+scrolling for nothing rather than for clicking. Field prose is behind a per-section `?` and
+duplicated as hover text: an explanation is read once and then stands between the author and the
+next field. Switching modes is not a conversion.
 
 Template fields complete the engine's tokens (`getConnectorTokens`, shared so the catalog and the
 engine cannot drift). This is the part an author cannot guess: `{{offset}}` versus `{{page}}`
