@@ -147,7 +147,7 @@ just no tokens — **no topology**.
   "baseUrl": "https://cms.example.com",
   "auth": { "in": "header", "name": "Authorization", "value": "Bearer {{credential.token}}" },
   // RFC 0009 §3.8 moved `list` and `write` under an `endpoints` key and dropped the authored `id`.
-  // Manifests in this shape are still read; the builder writes the current one.
+  // This shape is no longer read — the sample below is historical.
   "list": {
     "path": "/api/{{resource}}",
     "query": { "pagination[start]": "{{offset}}", "pagination[limit]": "{{limit}}" },

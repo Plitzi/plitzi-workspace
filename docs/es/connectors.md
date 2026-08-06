@@ -66,9 +66,9 @@ Campos principales:
 aplican a todas. En plano las dos clases se leen como iguales y no hay sitio evidente donde añadir la siguiente
 operación, así que las peticiones viven agrupadas bajo `endpoints`.
 
-Los manifests escritos antes de ese cambio (con `list`/`write` en la raíz) se siguen leyendo: `normalizeManifest`
-(`packages/sdk-shared/src/connectors/`) los sube a `endpoints` al leerlos, y el builder guarda ya la forma nueva, así
-que el arreglo se apaga solo.
+No hay compatibilidad con la forma anterior (`list`/`write` en la raíz) a propósito: un manifest es un documento
+escrito a mano de una feature pre-release, y un shim que lo sube en silencio es una segunda forma que el engine tiene
+que seguir entendiendo para siempre. Un conector escrito con el layout viejo se vuelve a crear, una vez.
 
 ### Presets
 

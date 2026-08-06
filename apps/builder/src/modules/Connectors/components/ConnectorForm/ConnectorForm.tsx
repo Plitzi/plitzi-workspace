@@ -4,8 +4,7 @@ import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, useState } from 'react';
 
-import { normalizeManifest } from '@plitzi/sdk-shared/connectors';
-
+import { parseManifest } from '../../helpers/parseManifest';
 import { validateManifest } from '../../helpers/validateManifest';
 import { connectorPresets, emptyManifest } from '../../presets';
 import ConnectorAdvancedEditor from '../ConnectorAdvancedEditor';
@@ -21,10 +20,7 @@ export type ConnectorFormProps = {
 
 const ConnectorForm = ({ connector, onSubmit, onCancel }: ConnectorFormProps) => {
   const [name, setName] = useState(connector?.name ?? '');
-  // Normalized on load, so opening a manifest written before `endpoints` existed and saving it migrates the document.
-  const [manifest, setManifest] = useState<ConnectorManifestDraft>(() =>
-    connector ? normalizeManifest(connector.manifest) : emptyManifest
-  );
+  const [manifest, setManifest] = useState<ConnectorManifestDraft>(() => connector?.manifest ?? emptyManifest);
   const [isAdvanced, setIsAdvanced] = useState(false);
   const [draft, setDraft] = useState('');
   const [errors, setErrors] = useState<string[]>([]);
@@ -47,11 +43,13 @@ const ConnectorForm = ({ connector, onSubmit, onCancel }: ConnectorFormProps) =>
         return true;
       }
 
-      // Leaving advanced mode keeps whatever parsed last: a half-typed document would silently reset the form.
-      try {
-        setManifest(JSON.parse(draft) as ConnectorManifestDraft);
-      } catch {
-        setErrors(['The manifest is not valid JSON, so the basic editor still shows the last valid version.']);
+      // Leaving advanced mode keeps whatever parsed last: a half-typed document would silently reset the form, and
+      // the basic editor reads fields the malformed one may not have.
+      const result = parseManifest(draft);
+      if (result.manifest) {
+        setManifest(result.manifest);
+      } else {
+        setErrors([result.error, 'The basic editor still shows the last valid version.']);
       }
 
       return false;
@@ -67,17 +65,17 @@ const ConnectorForm = ({ connector, onSubmit, onCancel }: ConnectorFormProps) =>
 
     let parsed = manifest;
     if (isAdvanced) {
-      try {
-        parsed = JSON.parse(draft) as ConnectorManifestDraft;
-      } catch (err) {
-        setErrors([`The manifest is not valid JSON: ${(err as Error).message}`]);
+      const result = parseManifest(draft);
+      if (!result.manifest) {
+        setErrors([result.error]);
 
         return;
       }
+
+      parsed = result.manifest;
     }
 
-    const normalized = normalizeManifest(parsed);
-    const validation = validateManifest(normalized);
+    const validation = validateManifest(parsed);
     if (validation.length) {
       setErrors(validation);
 
@@ -87,7 +85,7 @@ const ConnectorForm = ({ connector, onSubmit, onCancel }: ConnectorFormProps) =>
     setErrors([]);
     setIsSaving(true);
     try {
-      await onSubmit(name.trim(), normalized);
+      await onSubmit(name.trim(), parsed);
     } catch (err) {
       setErrors([(err as Error).message]);
     } finally {

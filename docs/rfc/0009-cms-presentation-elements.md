@@ -214,8 +214,9 @@ and `media`. Those describe the *connection* and apply to every call; `list` and
 individual *calls*. Flat, the two kinds read as peers and there is no obvious place to put the
 next operation.
 
-Manifests written before the move are upgraded on read (`normalizeManifest`) rather than
-rejected, and the builder writes the current shape back — so the shim stops firing on its own.
+There is no compatibility path: a manifest is a hand-authored document from a pre-release
+feature, and a shim that silently upgrades one is a second shape the engine has to keep
+understanding forever. A connector written in the old layout is re-created, once.
 
 `id` leaves the authored document entirely. A connector's identity belongs to the row that stores
 it; a document carrying its own id can disagree with the identifier it was fetched by, and would

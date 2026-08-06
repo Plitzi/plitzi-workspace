@@ -1,4 +1,3 @@
-import { normalizeManifest } from '@plitzi/sdk-shared/connectors';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { getByPath } from './getByPath';
@@ -234,7 +233,7 @@ export const fetchConnectorRecords = async ({
   query = {},
   fetchImpl = fetch
 }: FetchConnectorOptions): Promise<ConnectorResult> => {
-  const { endpoints, ...connection } = normalizeManifest(manifest);
+  const { endpoints, ...connection } = manifest;
   const { list } = endpoints;
   const limit = query.limit ?? DEFAULT_LIMIT;
   const offset = query.offset ?? 0;
@@ -307,7 +306,7 @@ export const writeConnectorRecord = async ({
   values = {},
   fetchImpl = fetch
 }: WriteConnectorOptions): Promise<ConnectorRecord | undefined> => {
-  const { endpoints, ...connection } = normalizeManifest(manifest);
+  const { endpoints, ...connection } = manifest;
   const operation = endpoints.write?.[action];
   if (!operation) {
     throw new Error(`Connector ${connection.id} does not allow "${action}"`);
