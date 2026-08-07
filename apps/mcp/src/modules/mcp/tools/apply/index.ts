@@ -154,6 +154,25 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
     }
   }
 
+  // Connectors are rows, not a document: only the ones this batch touched are written, and a delete is its own
+  // call. A connector the batch created and then removed appears in neither list, so nothing is written for it.
+  for (const id of outcome.changedConnectors) {
+    const entry = draft.connectors.find(item => item.id === id);
+    if (entry && persisters?.saveConnector) {
+      await persisters.saveConnector(entry);
+    } else {
+      persisted = false;
+    }
+  }
+
+  for (const id of outcome.deletedConnectors) {
+    if (persisters?.deleteConnector) {
+      await persisters.deleteConnector(id);
+    } else {
+      persisted = false;
+    }
+  }
+
   return {
     applied: true,
     persisted,

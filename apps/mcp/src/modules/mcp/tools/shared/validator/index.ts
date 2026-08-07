@@ -1,5 +1,6 @@
 import { batchDeclaredFolders, batchDeclaredPages, batchDeclaredVariants, batchDeclaredVars } from './batch';
 import { checkBindingSourceScope, checkBindingTarget, checkBindingTransformers } from './bindings';
+import { batchDeclaredConnectors, checkConnectorOp, checkProviderElement } from './connectors';
 import { checkObservedName, checkVarRefs, warnOnce } from './context';
 import { checkSlotCss } from './css';
 import { checkElementInput, checkRawMarkup, checkTypeProps, checkVariantApplication } from './elements';
@@ -24,7 +25,7 @@ import type { TypeMeta, ValidationCtx, ValidationMode } from './context';
 import type { Space } from '../../../helpers';
 import type { ValidationResult } from '../../../types';
 import type { Operation } from '../../operations';
-import type { InteractionNodeInput } from '../../operations/schema/shared';
+import type { ElementInput, InteractionNodeInput } from '../../operations/schema/shared';
 import type { ComponentCatalog } from '@plitzi/sdk-shared';
 
 // The batch validator: builds the shared context from the space, then runs the per-op checks (split across the
@@ -32,6 +33,10 @@ import type { ComponentCatalog } from '@plitzi/sdk-shared';
 // consumer needs is validateOperations — importers reference the folder (./shared/validator), which resolves here.
 
 const STYLE_CATEGORIES = ['color', 'spacing', 'shadow', 'custom'];
+
+/** The element type that reads through a connector. Only this one carries the connector attributes, so only it is
+ *  worth cross-checking against the connector store. */
+const PROVIDER_TYPE = 'apiContainer';
 
 const buildTypeMeta = (catalog: ComponentCatalog | undefined): Map<string, TypeMeta> => {
   const meta = new Map<string, TypeMeta>();
@@ -92,8 +97,19 @@ export const validateOperations = (
 ): ValidationResult => {
   const batchPages = batchDeclaredPages(ops);
   const batchFolders = batchDeclaredFolders(ops);
+  const batchConnectors = batchDeclaredConnectors(ops);
   const folderRefs = (): unknown[] => pageFoldersOf(space.schema).map(f => f.id);
   const ctx = buildValidationCtx(space, ops, mode);
+
+  // Every provider element in an input tree, checked against the connector it names. Walks the nested children
+  // because upsertElement authors a subtree, and a provider is as often a child of the layout as its root.
+  const checkProviders = (input: ElementInput, base: string): void => {
+    if (input.type === PROVIDER_TYPE) {
+      checkProviderElement(space, ctx, input.ref, input.runtime, input.props, batchConnectors, base);
+    }
+
+    (input.children ?? []).forEach((child, i) => checkProviders(child, `${base}.children[${i}]`));
+  };
 
   if (ops.length > MAX_OPS) {
     ctx.errors.push({
@@ -134,6 +150,7 @@ export const validateOperations = (
       case 'upsertElement':
         checkElementInput(op.element, `${base}.element`, ctx, new Set());
         checkVariantApplication(op.element.initialState, `${base}.element.initialState`, ctx);
+        checkProviders(op.element, `${base}.element`);
         break;
       case 'patchElement': {
         checkRef(op.ref, `${base}.ref`, ctx);
@@ -153,6 +170,20 @@ export const validateOperations = (
         }
 
         checkVariantApplication(op.initialState, `${base}.initialState`, ctx);
+        // Checked on the MERGED element (stored props/runtime ∪ the patch): a patch that only flips runtime, or
+        // only names the connector, is exactly how a provider gets wired, and either half alone means nothing.
+        if (target && target.definition.type === PROVIDER_TYPE) {
+          checkProviderElement(
+            space,
+            ctx,
+            op.ref,
+            op.runtime ?? target.definition.runtime,
+            { ...target.attributes, ...op.props },
+            batchConnectors,
+            base
+          );
+        }
+
         break;
       }
       case 'upsertDefinitions': {
@@ -354,6 +385,14 @@ export const validateOperations = (
 
         break;
       }
+      case 'upsertConnector':
+      case 'deleteConnector':
+        checkRef(op.ref, `${base}.ref`, ctx);
+        checkConnectorOp(space, op, base, ctx);
+        break;
+      case 'patchConnector':
+        checkRef(op.ref, `${base}.ref`, ctx);
+        break;
       case 'deleteInteraction':
         checkRef(op.ref, `${base}.ref`, ctx);
         if (Boolean(op.flowId) === Boolean(op.nodeId)) {

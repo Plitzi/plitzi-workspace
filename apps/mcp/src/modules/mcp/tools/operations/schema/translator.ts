@@ -308,6 +308,12 @@ export const elementDetailToAI = (schema: Schema, el: Element, style?: Style): A
     childRefs: children.length > 0 ? children.map(elementRefOf) : undefined
   };
 
+  // Only when it is set: an absent runtime IS 'shared', and reporting that on every element would bury the one
+  // case that matters — a provider reading through a connector, which only works on 'server'.
+  if (el.definition.runtime) {
+    detail.runtime = el.definition.runtime;
+  }
+
   const initialState = initialStateToAI(el);
   if (initialState) {
     detail.initialState = initialState;

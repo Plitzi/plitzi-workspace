@@ -1,21 +1,23 @@
 import type { AIElementDetail } from '../types';
-import type { ComponentCatalog, Element, PageFolder, Schema, Style } from '@plitzi/sdk-shared';
+import type { ComponentCatalog, ConnectorEntry, Element, PageFolder, Schema, Style } from '@plitzi/sdk-shared';
 
 /** The working view the tools read and mutate: the two Plitzi schemas (elements + style), which the platform
- *  stores and persists as separate documents (Space model / Style model). `catalog` is read-only reference data
- *  (plugin element-type semantics), not persisted — used only to enrich the plitzi://types resource. */
+ *  stores and persists as separate documents (Space model / Style model), plus the space's `connectors` — a third
+ *  store (one row per connector) that a provider element points into by identifier. `catalog` is read-only
+ *  reference data (plugin element-type semantics), not persisted — used only to enrich the plitzi://types resource. */
 export interface Space {
   schema: Schema;
   style: Style;
+  connectors: ConnectorEntry[];
   catalog?: ComponentCatalog;
 }
 
-// Only the two schemas are mutated by an apply, so only they are deep-copied for the all-or-nothing draft. The
-// catalog is read-only reference data an op never touches — sharing its reference avoids a needless deep clone of
-// every plugin manifest on every write.
+// The three mutable documents are deep-copied for the all-or-nothing draft. The catalog is read-only reference data
+// an op never touches — sharing its reference avoids a needless deep clone of every plugin manifest on every write.
 export const cloneSpace = (space: Space): Space => ({
   schema: structuredClone(space.schema),
   style: structuredClone(space.style),
+  connectors: structuredClone(space.connectors),
   ...(space.catalog ? { catalog: space.catalog } : {})
 });
 
@@ -35,8 +37,13 @@ export const emptySpace = (): Space => ({
     theme: { default: 'system', schemes: ['light', 'dark'] },
     variables: {},
     cache: ''
-  }
+  },
+  connectors: []
 });
+
+/** A connector by the identifier a provider element stores in its `connector` attribute. */
+export const findConnectorEntry = (space: Space, ref: string): ConnectorEntry | undefined =>
+  space.connectors.find(entry => entry.id === ref);
 
 export const slugify = (value: string): string =>
   value

@@ -22,6 +22,13 @@ export const settingsUri = (env: Env): string => `plitzi://settings/${env}`;
 export const interactionsUri = (env: Env): string => `plitzi://interactions/${env}`;
 export const dataSourcesUri = (env: Env): string => `plitzi://data-sources/${env}`;
 
+// --- Connectors (a store of their own: one row per connector, not part of either schema) ---
+/** Worked manifests + the template vocabulary. Space-independent, hence no env — and a distinct root, so a
+ *  connector that happened to be named "presets" could never shadow it. */
+export const connectorPresetsUri = 'plitzi://connector-presets';
+export const connectorsUri = (env: Env): string => `plitzi://connectors/${env}`;
+export const connectorUri = (env: Env, ref: string): string => `plitzi://connectors/${env}/${ref}`;
+
 // --- Folders ---
 export const foldersUri = (env: Env): string => `plitzi://folders/${env}`;
 export const folderUri = (env: Env, ref: string): string => `plitzi://folders/${env}/${ref}`;
@@ -56,7 +63,8 @@ export const itemTemplates = (env: Env): string[] => [
   globalUri(env, '{componentType}'),
   idUri(env, '{targetId}'),
   styleVarUri(env, '{category}'),
-  folderUri(env, '{ref}')
+  folderUri(env, '{ref}'),
+  connectorUri(env, '{ref}')
 ];
 
 /** The remainder of `uri` after `prefix`, or undefined when it does not start with it — so a resolver matches a

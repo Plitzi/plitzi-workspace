@@ -4,9 +4,10 @@ import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, useState } from 'react';
 
+import { connectorPresets, emptyManifest } from '@plitzi/sdk-shared/connectors';
+
 import { parseManifest } from '../../helpers/parseManifest';
 import { validateManifest } from '../../helpers/validateManifest';
-import { connectorPresets, emptyManifest } from '../../presets';
 import ConnectorAdvancedEditor from '../ConnectorAdvancedEditor';
 import ConnectorBasicEditor from '../ConnectorBasicEditor';
 
@@ -24,6 +25,7 @@ const ConnectorForm = ({ connector, onSubmit, onCancel }: ConnectorFormProps) =>
   const [isAdvanced, setIsAdvanced] = useState(false);
   const [draft, setDraft] = useState('');
   const [errors, setErrors] = useState<string[]>([]);
+  const [warnings, setWarnings] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleChangePreset = useCallback((value: string) => {
@@ -76,8 +78,11 @@ const ConnectorForm = ({ connector, onSubmit, onCancel }: ConnectorFormProps) =>
     }
 
     const validation = validateManifest(parsed);
-    if (validation.length) {
-      setErrors(validation);
+    // Warnings survive the save on purpose: the commonest one is a manifest that reads {{credential.…}} before
+    // anyone has attached the secret, which is the normal order when an agent wrote the integration.
+    setWarnings(validation.warnings);
+    if (validation.errors.length) {
+      setErrors(validation.errors);
 
       return;
     }
@@ -129,6 +134,17 @@ const ConnectorForm = ({ connector, onSubmit, onCancel }: ConnectorFormProps) =>
               {errors.map(error => (
                 <span key={error} className="text-xs">
                   {error}
+                </span>
+              ))}
+            </div>
+          </Alert>
+        )}
+        {warnings.length > 0 && (
+          <Alert intent="warning" size="sm" solid={false}>
+            <div className="flex flex-col gap-1">
+              {warnings.map(warning => (
+                <span key={warning} className="text-xs">
+                  {warning}
                 </span>
               ))}
             </div>

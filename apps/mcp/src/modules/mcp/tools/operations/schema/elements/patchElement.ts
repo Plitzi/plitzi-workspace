@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { repointIdRefs } from '@plitzi/sdk-schema/helpers/idRef';
 
 import { empty, fail, findPageByRef, resolveRef } from '../../../../helpers';
-import { initialStateInput, styleRefs } from '../shared';
+import { elementRuntime, initialStateInput, styleRefs } from '../shared';
 import { guardNewRef, pageUri, writeInitialState } from '../write';
 
 import type { Space } from '../../../../helpers';
@@ -32,7 +32,8 @@ export const patchElementOp = z
     style: styleRefs.optional().describe('Merged onto existing style: base replaces base, listed slots replace slots'),
     initialState: initialStateInput
       .optional()
-      .describe('Merged onto existing initialState: styleVariant overlays per class/selector, visibility overrides')
+      .describe('Merged onto existing initialState: styleVariant overlays per class/selector, visibility overrides'),
+    runtime: elementRuntime.optional()
   })
   .describe(
     'Partially update an EXISTING element: only the fields you pass change (props/style/initialState are merged, ' +
@@ -110,6 +111,10 @@ export const patchElement = (space: Space, env: Env, op: PatchElement): OpResult
 
   if (op.initialState !== undefined) {
     writeInitialState(el, op.initialState, true);
+  }
+
+  if (op.runtime !== undefined) {
+    el.definition.runtime = op.runtime;
   }
 
   return { ...empty(), updated: 1, staleResources: [pageUri(env, op.pageRef)], elementRefs: [op.ref] };

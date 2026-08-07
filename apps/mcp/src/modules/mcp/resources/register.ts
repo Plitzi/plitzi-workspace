@@ -114,6 +114,19 @@ export const registerResources = (
       `plitzi://data-sources/${env}`,
       'Data-source paths and binding targets observed in this space — the vocabulary for upsertBinding'
     ],
+    [
+      'Connector presets',
+      'plitzi://connector-presets',
+      'Working starting manifests for Strapi, WordPress, Directus, Contentful and a plain REST API, plus every ' +
+        'template token the connector engine binds — read this before writing a connector by hand'
+    ],
+    [
+      'Connectors',
+      `plitzi://connectors/${env}`,
+      'Server-side CMS/API connectors configured for this space: each with the read/write endpoints it can ' +
+        'address, the filter operators it accepts and the fields it publishes — what a server-rendered ' +
+        'apiContainer points at'
+    ],
     // Aliases under the plitzi://schema/{env} root, so the analogous shape agents reach for also resolves (I3).
     ['Style definitions (schema alias)', `plitzi://schema/${env}/definitions`, 'Alias of plitzi://definitions/{env}'],
     [
@@ -140,6 +153,11 @@ export const registerResources = (
     ],
     ['Element', `plitzi://schema/${env}/elements/{ref}`, 'One element in full detail (props, style) by ref or id'],
     ['Folder', `plitzi://folders/${env}/{ref}`, 'One page folder (name, slug, parentId) by folder id'],
+    [
+      'Connector',
+      `plitzi://connectors/${env}/{ref}`,
+      'One connector manifest in full: baseUrl, auth template, every read/write endpoint and its response mapping'
+    ],
     ['Style definition', `plitzi://definitions/${env}/{ref}`, 'One style definition (CSS) by class ref'],
     [
       'Global style',

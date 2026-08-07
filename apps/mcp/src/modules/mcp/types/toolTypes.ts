@@ -1,17 +1,21 @@
 import type { AIDefinition, AIElementDetail, ValidationError } from './aiSchema';
 import type { Operation } from '../tools/operations';
-import type { Schema, Style } from '@plitzi/sdk-shared';
+import type { ConnectorEntry, Schema, Style } from '@plitzi/sdk-shared';
 
 // I/O contracts for the MCP tools (apply / validate / search / read) and the write engine. The runtime logic
 // lives under tools/; only the data shapes live here, so a tool file reads as just its behavior.
 
 // --- Shared write result ---
 
-/** The element schema and the style schema persist independently (Space model / Style model), so each has
- *  its own optional persister. When one is absent, that schema is applied in memory but reported unsaved. */
+/** The element schema, the style schema and the connectors persist independently (Space model / Style model / one
+ *  row per connector), so each has its own optional persister. When one is absent, that store is applied in memory
+ *  but reported unsaved. Connectors save and delete a row at a time — a batch touching two of them saves those two
+ *  and nothing else. */
 export interface Persisters {
   schema?: (schema: Schema) => Promise<void>;
   style?: (style: Style) => Promise<void>;
+  saveConnector?: (entry: ConnectorEntry) => Promise<void>;
+  deleteConnector?: (connectorId: string) => Promise<void>;
 }
 
 export interface Conflict {
@@ -55,6 +59,9 @@ export interface MutationOutcome {
   errors: ValidationError[];
   changedSchema: boolean;
   changedStyle: boolean;
+  /** Ids of the connectors the batch created or updated, and of those it removed — each persists as its own row. */
+  changedConnectors: string[];
+  deletedConnectors: string[];
 }
 
 // --- plitzi_apply ---

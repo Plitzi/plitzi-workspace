@@ -1,4 +1,4 @@
-import type { Environment } from '@plitzi/sdk-shared';
+import type { ElementRuntime, Environment } from '@plitzi/sdk-shared';
 
 export type Env = Environment;
 
@@ -154,6 +154,9 @@ export interface AIElementDetail {
   /** Variant names each attached class exposes (deduped across its selectors), so the agent knows a class HAS a
    *  variant (e.g. a button class with "primary") before applying it via `initialState.styleVariant`. */
   availableVariants?: Record<string, string[]>;
+  /** Where this element renders, when it is not the default 'shared'. An apiContainer reading through a connector
+   *  is 'server'; one showing 'client' (or nothing) fetches from the browser instead and ignores its connector. */
+  runtime?: ElementRuntime;
   /** Which variant/visibility this element applies today (element.definition.initialState). */
   initialState?: AIInitialState;
   /** Data bindings on this element, grouped by category. */

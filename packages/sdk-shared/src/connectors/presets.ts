@@ -1,12 +1,16 @@
-import type { ConnectorManifestDraft } from '@plitzi/sdk-shared';
+import type { ConnectorManifestDraft } from '../types/ConnectorTypes';
 
 /**
  * Starting manifests for the APIs people actually run.
  *
  * A connector is a declarative REST client, so the presets cover both ends of what that means: the CMSs whose
- * response shapes are worth remembering, and a plain REST service for everything else. Picking one fills the editor
- * in and every field stays editable — a preset that goes stale because a vendor changed a response shape is fixed
- * by editing a row, never by shipping a release, which is the entire reason connectors are data.
+ * response shapes are worth remembering, and a plain REST service for everything else. Every field stays editable
+ * — a preset that goes stale because a vendor changed a response shape is fixed by editing a row, never by
+ * shipping a release, which is the entire reason connectors are data.
+ *
+ * They live in shared code because both authors read them: the builder panel offers them as a starting point, and
+ * an agent writing a connector through the MCP reads them as the worked examples of how a real provider expresses
+ * paging, filters and its response shape. One copy, so neither learns a shape the other has since fixed.
  */
 export type ConnectorPreset = {
   id: string;

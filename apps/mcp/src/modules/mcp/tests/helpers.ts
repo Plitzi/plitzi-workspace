@@ -50,11 +50,11 @@ const buildSpace = (): Space => {
     cache: ''
   } as unknown as Space['style'];
 
-  return { schema, style } as Space;
+  return { schema, style, connectors: [] } as Space;
 };
 
 const capturing = (space: Space): { persisters: Persisters; saved: () => Space } => {
-  const state: Space = { schema: space.schema, style: space.style };
+  const state: Space = { schema: space.schema, style: space.style, connectors: space.connectors };
 
   return {
     persisters: {
@@ -65,6 +65,18 @@ const capturing = (space: Space): { persisters: Persisters; saved: () => Space }
       },
       style: style => {
         state.style = style;
+
+        return Promise.resolve();
+      },
+      // Connectors persist a row at a time, so the capture mirrors that rather than replacing a document: what a
+      // test asserts on is which rows were written, not that a whole store was handed over.
+      saveConnector: entry => {
+        state.connectors = [...state.connectors.filter(item => item.id !== entry.id), entry];
+
+        return Promise.resolve();
+      },
+      deleteConnector: id => {
+        state.connectors = state.connectors.filter(item => item.id !== id);
 
         return Promise.resolve();
       }
@@ -151,7 +163,8 @@ const scopeSpace = (): Space => ({
     theme: { default: 'system', schemes: ['light'] },
     variables: {},
     cache: ''
-  } as unknown as Space['style']
+  } as unknown as Space['style'],
+  connectors: []
 });
 
 const malformedSpace = (): Space => ({
@@ -197,7 +210,8 @@ const malformedSpace = (): Space => ({
     theme: { default: 'system', schemes: ['light'] },
     variables: {},
     cache: ''
-  } as unknown as Space['style']
+  } as unknown as Space['style'],
+  connectors: []
 });
 
 export { buildSpace, capturing, spaceWithRoute, varOp, scopeSpace, malformedSpace };

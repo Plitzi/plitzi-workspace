@@ -117,6 +117,21 @@ export type ConnectorManifest = {
  */
 export type ConnectorManifestDraft = Omit<ConnectorManifest, 'id'>;
 
+/**
+ * A connector as a server-side reader hands it over: the identity a provider element stores, the human name, and
+ * the manifest itself.
+ *
+ * Distinct from the builder's `SpaceConnector`, which also carries the storage row's numeric id and timestamps —
+ * a reader that had to invent those could answer from nothing but the database, and the MCP writes connectors
+ * through the same shape it reads them by.
+ */
+export type ConnectorEntry = {
+  /** The identifier a provider element stores in its `connector` attribute. Unique within the space. */
+  id: string;
+  name: string;
+  manifest: ConnectorManifest;
+};
+
 export type ConnectorFilter = {
   field: string;
   operator: string;

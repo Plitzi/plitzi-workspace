@@ -1,3 +1,4 @@
+import { connectorSummaries } from './connectors';
 import { envelope } from './envelope';
 import {
   buildDataSourceCatalog,
@@ -39,6 +40,9 @@ export const readPrimerResource = (space: Space, env: Env, uri: string): Resourc
     schemaVariables: schemaVariablesToAI(space.schema, false),
     settings: settingsToAI(space.schema),
     interactions: buildInteractionCatalog(space.schema),
-    dataSources: buildDataSourceCatalog(space.schema)
+    dataSources: buildDataSourceCatalog(space.schema),
+    // Summaries only (endpoint/operator NAMES, no manifests): enough to know a space reads a CMS and to wire an
+    // element to it, while a manifest stays one read away at plitzi://connectors/{env}/{ref}.
+    ...connectorSummaries(space)
   });
 };

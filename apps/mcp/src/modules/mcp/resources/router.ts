@@ -1,4 +1,5 @@
 import { canonicalUri } from './canonical';
+import { readConnectorResource } from './connectors';
 import { readCoreResource } from './core';
 import { readPrimerResource } from './primer';
 import { readRenderResource } from './renderGuide';
@@ -17,7 +18,8 @@ const resolvers = [
   (_space: Space, _env: Env, uri: string) => readRenderResource(uri),
   readPrimerResource,
   readSchemaResource,
-  readStyleResource
+  readStyleResource,
+  readConnectorResource
 ];
 
 /** Resolve a resource URI to its versioned envelope, or null if unknown / not found. */

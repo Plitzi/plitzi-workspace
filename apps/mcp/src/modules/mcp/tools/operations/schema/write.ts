@@ -136,7 +136,10 @@ export const createElement = (
       label: input.label ?? input.ref,
       type: input.type,
       items: [],
-      styleSelectors: styleSelectors as { base: string; [selector: string]: string }
+      styleSelectors: styleSelectors as { base: string; [selector: string]: string },
+      // Omitted rather than defaulted to 'shared': the element schema treats an absent runtime as shared already,
+      // and stamping every element with an explicit value would make a diff of a builder-authored page noisy.
+      ...(input.runtime === undefined ? {} : { runtime: input.runtime })
     }
   };
   space.schema.flat[id] = el;

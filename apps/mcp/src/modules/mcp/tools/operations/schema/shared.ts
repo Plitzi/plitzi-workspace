@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
+import type { ElementRuntime } from '@plitzi/sdk-shared';
 
 // Shared zod fragments for the element-schema operations (one file per op imports what it needs from here).
 
@@ -78,6 +79,7 @@ export interface ElementInput {
   props?: Record<string, unknown>;
   style?: { base?: string[]; slots?: Record<string, string[]> };
   initialState?: InitialStateInput;
+  runtime?: ElementRuntime;
   children?: ElementInput[];
 }
 
@@ -89,6 +91,16 @@ export const styleRefs = z.object({
 // Which variant each attached class uses: class ref → selector (base or slot) → variant name(s). Applying a
 // variant here is how an element opts into a variant declared on its definition (e.g. a button's "primary").
 export const styleVariantInput = z.record(z.string(), z.record(z.string(), z.union([z.string(), z.array(z.string())])));
+
+/** Where an element renders. It is the switch that decides whether an `apiContainer` fetches from the BROWSER
+ *  (its `query` URL, with anything it authenticates with visible to the visitor) or from the SERVER through a
+ *  connector — so a CMS integration is not wired until this says `server`. */
+export const elementRuntime = z
+  .enum(['server', 'client', 'shared'])
+  .describe(
+    'Where this element renders: "shared" (default, both), "client" (browser only), or "server" (SSR only). An ' +
+      'apiContainer MUST be "server" to read through a connector — a client one calls its own `query` URL instead.'
+  );
 
 export const initialStateInput = z.object({
   styleVariant: styleVariantInput
@@ -119,7 +131,8 @@ export const elementShape = {
   style: styleRefs.optional().describe('Definition refs per slot; style the element by attaching a definition'),
   initialState: initialStateInput
     .optional()
-    .describe('Applied style variant(s) and initial visibility (see plitzi://guide styling)')
+    .describe('Applied style variant(s) and initial visibility (see plitzi://guide styling)'),
+  runtime: elementRuntime.optional()
 };
 
 export const elementInput: z.ZodType<ElementInput> = z.lazy(() =>

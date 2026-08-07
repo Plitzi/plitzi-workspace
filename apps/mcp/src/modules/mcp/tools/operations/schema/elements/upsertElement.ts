@@ -53,6 +53,10 @@ export const upsertElement = (space: Space, env: Env, op: UpsertElement): OpResu
       writeInitialState(existing, op.element.initialState, false);
     }
 
+    if (op.element.runtime !== undefined) {
+      existing.definition.runtime = op.element.runtime;
+    }
+
     return { ...empty(), updated: 1, staleResources: [pageUri(env, op.pageRef)], elementRefs: [op.element.ref] };
   }
 

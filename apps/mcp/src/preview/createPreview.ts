@@ -52,7 +52,7 @@ export const createPreview = async (
 
   let draftOffline = offlineData;
   if (body.operations && body.operations.length > 0) {
-    const draft = cloneSpace({ schema: offlineData.schema, style: offlineData.style });
+    const draft = cloneSpace({ schema: offlineData.schema, style: offlineData.style, connectors: [] });
 
     const validation = validateOperations(draft, body.operations);
     if (!validation.valid) {

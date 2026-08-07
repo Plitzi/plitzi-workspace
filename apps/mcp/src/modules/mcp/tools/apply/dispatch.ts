@@ -1,5 +1,6 @@
 import { fail } from '../../helpers';
 import { isStyleOp } from '../operations';
+import * as connectors from '../operations/connectors';
 import * as schema from '../operations/schema';
 import * as style from '../operations/style';
 
@@ -68,6 +69,12 @@ const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
       return style.upsertStyleVariable(space, env, op);
     case 'deleteStyleVariable':
       return style.deleteStyleVariable(space, env, op);
+    case 'upsertConnector':
+      return connectors.upsertConnector(space, env, op);
+    case 'patchConnector':
+      return connectors.patchConnector(space, env, op);
+    case 'deleteConnector':
+      return connectors.deleteConnector(space, env, op);
     default:
       return fail('type', `Unknown operation "${(op as { type: string }).type}"`, 'See the Operation union');
   }
@@ -84,10 +91,14 @@ export const applyOperations = (space: Space, env: Env, ops: Operation[]): Mutat
     elementRefs: [],
     errors: [],
     changedSchema: false,
-    changedStyle: false
+    changedStyle: false,
+    changedConnectors: [],
+    deletedConnectors: []
   };
   const stale = new Set<string>();
   const elements = new Set<string>();
+  const savedConnectors = new Set<string>();
+  const droppedConnectors = new Set<string>();
 
   for (let i = 0; i < ops.length; i++) {
     const op = ops[i];
@@ -97,10 +108,25 @@ export const applyOperations = (space: Space, env: Env, ops: Operation[]): Mutat
       continue;
     }
 
-    if (isStyleOp(op.type)) {
-      outcome.changedStyle = true;
-    } else {
-      outcome.changedSchema = true;
+    // Which store this op dirtied, so the caller persists only what changed. Connectors are tracked by id rather
+    // than a flag: they are one row each, so a batch that touched two of them must save exactly those two — and a
+    // connector created and then deleted in the same batch has to leave both sets consistent.
+    switch (op.type) {
+      case 'upsertConnector':
+      case 'patchConnector':
+        droppedConnectors.delete(op.ref);
+        savedConnectors.add(op.ref);
+        break;
+      case 'deleteConnector':
+        savedConnectors.delete(op.ref);
+        droppedConnectors.add(op.ref);
+        break;
+      default:
+        if (isStyleOp(op.type)) {
+          outcome.changedStyle = true;
+        } else {
+          outcome.changedSchema = true;
+        }
     }
 
     // NOTE: the per-request index/memo is NOT dropped here. It only goes stale when an op changes what the index
@@ -122,6 +148,8 @@ export const applyOperations = (space: Space, env: Env, ops: Operation[]): Mutat
 
   outcome.staleResources = Array.from(stale);
   outcome.elementRefs = Array.from(elements);
+  outcome.changedConnectors = Array.from(savedConnectors);
+  outcome.deletedConnectors = Array.from(droppedConnectors);
 
   return outcome;
 };

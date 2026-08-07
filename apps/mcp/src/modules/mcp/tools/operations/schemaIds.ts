@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { connectorConnection, readEndpoint, writeEndpoint } from './connectors/manifest';
 import {
   bindingInput,
   elementInput,
@@ -52,7 +53,13 @@ const SHARED_SCHEMAS: [z.ZodType, string][] = [
   [definitionSlotPatch, 'StyleSlotPatch'],
   [displayModeCss, 'BreakpointCss'],
   [displayModeCssPatch, 'BreakpointCssPatch'],
-  [themeValue, 'ThemeValue']
+  [themeValue, 'ThemeValue'],
+  // The connector manifest is the heaviest shape in the union — its endpoints and connection settings appear in
+  // both upsertConnector and patchConnector, so without these three ids the listing carries each of them twice per
+  // tool (measured at ~6k of extra JSON per tool, four tools over).
+  [readEndpoint, 'ConnectorRead'],
+  [writeEndpoint, 'ConnectorWrite'],
+  [connectorConnection, 'ConnectorConnection']
 ];
 
 // The registry is zod's PROCESS-WIDE singleton and its id namespace is shared with everything else running here.

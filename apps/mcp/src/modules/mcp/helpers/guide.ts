@@ -22,6 +22,11 @@ export const serverInstructions =
   'READERS — do not confuse them: MCP *resources* are the browsable catalog (list them, or open one by URI); ' +
   'plitzi_search FINDS refs by label/type/attribute; plitzi_read BATCH-fetches URIs you already hold. Reach for ' +
   'search/read to work; browse resources to discover. ' +
+  'CMS / API integrations (Strapi, WordPress, Contentful, any REST service) go through a CONNECTOR: a manifest ' +
+  'you author declaring the base URL, endpoints and auth template, which the SERVER executes — read ' +
+  'plitzi://connector-presets for working ones and plitzi://connectors/{env} for this space’s. You never see or ' +
+  'create the credential; the space owner attaches it, and the connector saves without one. An apiContainer reads ' +
+  'through it only with runtime:"server". ' +
   'Elements also carry applied style variants + visibility (initialState), data bindings and interaction flows: ' +
   'edit them with patchElement (initialState), upsertBinding/patchBinding/deleteBinding, and ' +
   'upsertInteractionFlow/patchInteractionNode/deleteInteraction. An element read shows all three plus ' +
@@ -87,6 +92,16 @@ computed for you). Node types: \`callback\` (an element's own callback — \`ele
 (category/key/value/revertOnFinish) ≠ global \`setState\` (source \`state\`, key/type/value). To turn a step off use
 \`patchInteractionNode {enabled:false}\` — \`deleteInteraction\` removes it (destructive; confirm first). Any param
 **value** can be a binding token \`{{ source }}\` (e.g. notification \`content: "{{ list_<idRef>.item.name }}"\`).
+
+**CMS / API integrations** (\`upsertConnector\`): a **connector** is a manifest declaring a provider's base URL,
+endpoints, auth template and filter operators, executed by the **server** — so integrating Strapi, WordPress,
+Contentful or any REST API is configuration, not code. Read \`plitzi://connector-presets\` (working manifests + every
+template token) and \`plitzi://connectors/{env}\` (this space's). **You never create or see credentials** — write the
+manifest with \`{{credential.token}}\` and no \`connection.credential\`; it saves, and the space owner attaches the
+secret in the builder. To consume one, an \`apiContainer\` needs **\`runtime: "server"\`** plus \`connector\`,
+\`resource\`, optional \`endpoint\`/\`filters\`/\`limit\`/\`singleRecord\`/\`pagination\`; it then publishes
+\`apiContainer_<idRef>.records\` (or \`.record\`) \`.pageInfo .isEmpty .hasError\` to its **descendants**. Full worked
+flow — list page, detail page, paging, writes — in \`plitzi://guide\`.
 
 **Pages & navigation:** \`upsertPage\` — always set a **relative** \`slug\` (no leading \`/\`; the runtime and folder
 slugs prepend the path). A \`:name\` segment (\`"posts/:postId"\`) is a route param, readable as \`{{name}}\` and as the
@@ -157,6 +172,11 @@ Never download a whole tree you do not need.
   vocabulary for interaction flows.
 - \`plitzi://data-sources/{env}\` — data-source **paths** and binding targets observed in this space: the
   vocabulary for data bindings.
+- \`plitzi://connector-presets\` — working starting **manifests** (Strapi, WordPress, Directus, Contentful, plain
+  REST) with the credential keys each provider needs, plus every **template token** the connector engine binds.
+  Space-independent. Read it before writing a connector by hand.
+- \`plitzi://connectors/{env}\` — the **connectors this space has**: for each, its read/write endpoint names, its
+  filter operators and its published fields. \`/{ref}\` opens one manifest in full. See *Connectors* below.
 
 The style resources also answer under the \`plitzi://schema/{env}/…\` root as aliases — \`plitzi://schema/{env}/definitions/{ref}\`, \`plitzi://schema/{env}/style-variables/{category}\`, \`plitzi://schema/{env}/schema-variables\` — but prefer the ready-made \`uri\` from search / a write response over hand-building either form.
 
@@ -226,6 +246,11 @@ Rules for a **new** ref (both are enforced; a violation fails the batch):
   allowed**: the FIRST \`_\` separates \`<type>\` from \`<idRef>\` and element types are camelCase with none, so
   underscores inside the idRef are unambiguous (\`list_food_item\` → type \`list\`, idRef \`food_item\`).
 - **Unique across the space**; creating a ref that is taken is rejected (address the existing element instead).
+
+**Where an element renders** is its \`runtime\`, settable on \`upsertElement\`/\`patchElement\`: \`"shared"\` (the
+default, both sides), \`"client"\` (browser only) or \`"server"\` (SSR only). It matters for one thing above all — an
+\`apiContainer\` reads through a **connector** only when it is \`"server"\` (see *Connectors*). An element read
+reports it only when it is set.
 
 An idRef is **optional** on an element — one built in the builder may not have it. The consequence is specific: an
 element without an idRef **publishes no data source** and **holds no interactions**, because the runtime keys
@@ -337,8 +362,9 @@ provider's subtree is schema-valid but **broken at runtime** (the source is not 
 provider, or bind a source that is in scope.
 
 **mockData is builder-only.** An \`apiContainer\`'s \`mockData\` prop feeds sample data **while editing in the
-builder**; the published runtime fetches the real \`query\` instead. Never rely on mockData as the production source —
-set a real \`query\`/\`method\` so the binding has data at runtime.
+builder**; the published runtime fetches real data instead. Never rely on mockData as the production source — give
+the provider a real source: a **connector** with \`runtime: "server"\` (see *Connectors*, the right answer whenever
+the API needs a token or the content should be in the HTML), or a browser-side \`query\`/\`method\` for a public URL.
 
 **\`transformers\` — post-process the value before it reaches the field** (\`source → t₁ → t₂ → field\`). An array of
 \`{ action, params }\`; the runtime runs them in order and resolves each by its \`action\` alone, so an **unknown
@@ -432,6 +458,123 @@ Discover valid actions in \`plitzi://interactions/{env}\`: \`actions\` = observe
 \`elementCallbacks\` / \`utilities\` = the built-in vocabularies with their full param schema, so you know the exact
 node type and valid params per action. An element read lists its flows as ordered nodes (each with its \`id\` and
 \`enabled\`), so a follow-up patch/delete needs no extra read.
+
+## Connectors — CMS and API integrations
+A **connector** is how a space reads real content from Strapi, WordPress, Contentful, Directus or any REST service.
+It is **a manifest, not code**: you declare the base URL, the endpoints, the auth template and the filter operators,
+and the **server** executes it during the render. Integrating a new CMS never means shipping an adapter — it means
+writing one document, which you can do here with \`upsertConnector\`.
+
+Why the server and not the browser: the request (and the token behind it) never reaches the visitor, and the content
+is in the HTML search engines see. That is also the one hard rule below — a provider element that is not
+server-rendered ignores its connector entirely.
+
+**Read these two first:**
+- \`plitzi://connector-presets\` — **working manifests** for Strapi v5, WordPress, Directus, Contentful and a plain
+  REST API, each with the \`credentialKeys\` that provider needs, **plus every template token** the engine binds.
+  Start from the preset for the user's provider and edit it; do not invent a shape from memory.
+- \`plitzi://connectors/{env}\` — the connectors **this space already has**, each with its read/write endpoint names,
+  its filter operators and its published fields. \`plitzi://connectors/{env}/{ref}\` opens one manifest in full.
+
+### Credentials are NOT yours to write
+You never create, see or transmit a secret. Author the manifest with the token in place
+(\`"value": "Bearer {{credential.token}}"\`) and **leave \`connection.credential\` unset** unless the user hands you an
+identifier. The connector **saves fine that way** — validation reports it as a *warning*, not an error — and its
+requests go unauthenticated until the space owner creates the credential in the builder and attaches it. Say that to
+the user as the last step of any integration you build, naming the keys the preset lists (e.g. Strapi needs \`token\`).
+
+### The manifest
+Every string is a template the server renders per request. \`{{resource}}\` is the collection the element asked for;
+\`{{limit}}\`/\`{{offset}}\`/\`{{page}}\`/\`{{cursor}}\` the window; \`{{routeParams.x}}\`/\`{{queryParams.x}}\` the
+visitor's URL; \`{{credential.x}}\` the secret; \`{{field}}\`/\`{{value}}\` inside an operator; \`{{id}}\`/\`{{values}}\`
+inside a write. The op splits it in two, exactly as the engine does:
+- **\`connection\`** — what applies to every call: \`credential\`, \`auth\`, \`headers\`, \`pagination\`, \`operators\`,
+  \`mediaBaseUrl\`, \`fields\`, \`projection\`.
+- **\`endpoints\`** — the individual calls: \`read\` (named; **\`list\` is the one an element addresses when it names
+  none**) and \`write\` (named; **omit for read-only** — an undeclared write can never be executed).
+
+A read endpoint says where things live in *that* provider's response: \`itemsPath\` (the array), \`totalPath\` (the
+count), \`idPath\` (the record's id), \`valuesPath\` (its fields). Strapi's \`data\` + \`meta.pagination.total\` and
+Contentful's \`items\` + \`fields\` are the same manifest with different paths.
+
+Two traps the validator will catch for you, both silent at runtime otherwise:
+- An **operator template must render a whole \`key=value\` entry** (\`"eq": "filters[{{field}}][$eq]={{value}}"\`). A
+  filter naming an operator the manifest does not declare is **dropped** — the query then returns *unfiltered*
+  records, not none.
+- **Paging must appear in the request.** Declaring \`pagination: "page"\` without \`{{page}}\` in the query makes every
+  page resolve to the first one.
+
+Example — Strapi, from the preset:
+\`\`\`json
+{ "type": "upsertConnector", "ref": "strapi-blog", "name": "Blog CMS",
+  "baseUrl": "https://cms.example.com",
+  "connection": {
+    "auth": { "in": "header", "name": "Authorization", "value": "Bearer {{credential.token}}" },
+    "pagination": "offset",
+    "operators": { "eq": "filters[{{field}}][$eq]={{value}}", "contains": "filters[{{field}}][$containsi]={{value}}" },
+    "mediaBaseUrl": "https://cms.example.com" },
+  "endpoints": { "read": { "list": {
+    "path": "/api/{{resource}}",
+    "query": { "pagination[start]": "{{offset}}", "pagination[limit]": "{{limit}}", "populate": "*" },
+    "itemsPath": "data", "totalPath": "meta.pagination.total", "idPath": "documentId" } } } }
+\`\`\`
+\`patchConnector\` changes part of one (endpoints merge **by name**; \`null\` removes one) — that is how you add a
+\`detail\` read to a large manifest without resending it. \`deleteConnector\` is destructive: every element pointing
+at it stops resolving, so confirm first.
+
+### Using a connector on a page
+The provider element is \`apiContainer\`, and it needs **both halves**:
+1. \`runtime: "server"\` — set it on \`upsertElement\`/\`patchElement\`. **Without it the connector is ignored** and the
+   element falls back to fetching its own \`query\` URL from the browser. This is the single most common mistake; the
+   validator warns when it sees one half without the other.
+2. props: \`connector\` (the ref), \`resource\` (the collection → \`{{resource}}\`), and optionally \`endpoint\` (a read
+   other than \`list\`), \`filters\`, \`limit\`, \`singleRecord\`, \`pagination\`, \`pageParam\`.
+
+It then publishes one source **to its descendants only** (like any provider — bind *inside* its subtree):
+\`apiContainer_<idRef>.records\` (an array), \`.pageInfo\` (\`page\`, \`pageCount\`, \`total\`, \`hasNextPage\`…),
+\`.isEmpty\`, \`.hasError\`, \`.errorMessage\`, \`.isLoading\`. With \`singleRecord: true\` it publishes \`.record\`
+instead of \`.records\` — that is what a **detail page** uses. Bind an empty-state block's visibility to \`.isEmpty\`
+and an error block's to \`.hasError\`; they are ordinary bindings, no special mechanism.
+
+**A list page** — provider, then a \`list\` inside it bound to the records, then the row template reading the item:
+\`\`\`json
+{ "operations": [
+  { "type": "upsertElement", "pageRef": "blog", "element": {
+      "ref": "posts-api", "type": "apiContainer", "runtime": "server",
+      "props": { "connector": "strapi-blog", "resource": "articles", "limit": "9", "pagination": "url" },
+      "children": [ { "ref": "posts", "type": "list", "children": [
+        { "ref": "post-row", "type": "listItem", "children": [
+          { "ref": "post-title", "type": "text" } ] } ] } ] } },
+  { "type": "upsertBinding", "pageRef": "blog", "ref": "posts", "category": "attributes",
+    "binding": { "to": "items", "source": "apiContainer_posts-api.records" } },
+  { "type": "upsertBinding", "pageRef": "blog", "ref": "post-title", "category": "attributes",
+    "binding": { "to": "content", "source": "list_posts.item.title" } } ] }
+\`\`\`
+
+**A detail page** is the same provider with \`singleRecord\` and a filter resolved from the URL. Create the page with a
+route param (\`"slug": "blog/:postSlug"\`), then filter on it — the filter \`value\` is a template the server resolves:
+\`\`\`json
+{ "type": "upsertElement", "pageRef": "post-detail", "element": {
+    "ref": "post-api", "type": "apiContainer", "runtime": "server",
+    "props": { "connector": "strapi-blog", "resource": "articles", "singleRecord": true,
+      "filters": [ { "field": "slug", "operator": "eq", "value": "{{routeParams.postSlug}}" } ] } } }
+\`\`\`
+Its children then bind to \`apiContainer_post-api.record.<field>\`. A filter whose template resolves to nothing
+returns **no records** rather than the whole collection — a URL that addressed one post never renders a different one.
+
+**Paging** is the \`pagination\` prop: \`"none"\`, \`"url"\` (the page number rides the query string, so pages are
+shareable and indexable — prefer it) or \`"append"\` (a "load more" list). Give each list on a page its own
+\`pageParam\` so two lists page independently. The provider also offers the \`loadMore\` and \`goToPage\` callbacks to
+interaction flows, and \`performQuery\` to refetch.
+
+**Writing back** (a form, a "delete" button): declare the endpoint under \`endpoints.write\`, then call the provider's
+**\`writeRecord\`** callback from an interaction flow — nodeType \`callback\`, \`elementId\` the apiContainer's ref,
+params \`action\` (the write endpoint's name) and \`recordId\`. The write goes through the server, which owns the
+credential and refuses any action the manifest does not declare. Writes exist **only** on a server-rendered provider.
+
+**Connectors need a server.** A space published without server rendering has nowhere to resolve one: it works in the
+builder and renders empty when published. If the user has no SSR deployment, say so rather than leaving them to
+discover it — the alternative is a browser-side \`query\`, which cannot keep a secret.
 
 ## Pages & folders
 - **Always set a \`slug\` when creating a page** (\`upsertPage\`) — it is the page's URL path and good practice for a

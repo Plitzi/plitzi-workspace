@@ -54,6 +54,14 @@
       "types": "./dist/connectors/normalizeManifest.d.ts",
       "import": "./dist/connectors/normalizeManifest.mjs"
     },
+    "./connectors/presets": {
+      "types": "./dist/connectors/presets.d.ts",
+      "import": "./dist/connectors/presets.mjs"
+    },
+    "./connectors/validateManifest": {
+      "types": "./dist/connectors/validateManifest.d.ts",
+      "import": "./dist/connectors/validateManifest.mjs"
+    },
     "./dataSource": {
       "types": "./dist/dataSource/index.d.ts",
       "import": "./dist/dataSource/index.mjs"

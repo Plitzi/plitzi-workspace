@@ -6,7 +6,7 @@ import { validateSchema } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
 import { applyOperations } from './apply/dispatch';
-import { operations } from './operations';
+import { documentOperations } from './operations';
 import { iconFontCss, RENDER_APP_URI } from '../apps';
 import { emptySpace } from '../helpers';
 import { proxifyResources } from '../proxy';
@@ -44,7 +44,7 @@ const seedSpace = (): Space => {
 const noWarnings = (warnings: string[]): string[] | undefined => (warnings.length > 0 ? warnings : undefined);
 
 export const renderShape = {
-  operations,
+  operations: documentOperations,
   patch: z
     .boolean()
     .optional()

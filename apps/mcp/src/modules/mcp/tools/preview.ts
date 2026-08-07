@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
-import { operation } from './operations';
+import { documentOperation } from './operations';
 import { defineTool } from './shared/tool';
 
 export const previewShape = {
   pageRef: z.string().optional().describe('Page ref or id to preview; defaults to the space default page'),
   operations: z
-    .array(operation)
+    .array(documentOperation)
     .max(100)
     .optional()
     .describe(

@@ -1,62 +1,26 @@
+import { validateConnectorManifest } from '@plitzi/sdk-shared/connectors';
+
 import type { ConnectorManifestDraft } from '@plitzi/sdk-shared';
 
-const CREDENTIAL_TOKEN = /\{\{\s*credential\./;
-
-const usesCredential = (manifest: ConnectorManifestDraft): boolean => {
-  const reads = Object.values(manifest.endpoints.read);
-  const writes = Object.values(manifest.endpoints.write ?? {});
-  const templates = [
-    manifest.auth?.value ?? '',
-    ...Object.values(manifest.headers ?? {}),
-    ...reads.flatMap(read => [read.path, ...Object.values(read.query ?? {}), ...Object.values(read.headers ?? {})]),
-    ...writes.flatMap(write => [write.path, ...Object.values(write.query ?? {}), ...Object.values(write.headers ?? {})])
-  ];
-
-  return templates.some(template => CREDENTIAL_TOKEN.test(template));
+export type ManifestValidation = {
+  /** What blocks the save: the engine could not execute this manifest. */
+  errors: string[];
+  /** What saves but probably does not do what the author meant — shown, never blocking. */
+  warnings: string[];
 };
 
+const describe = (issue: { path: string; message: string }): string =>
+  issue.path ? `${issue.path}: ${issue.message}` : issue.message;
+
 /**
- * Catches the manifests that would save cleanly and then fail at request time.
+ * Panel-facing wrapper over the one shared manifest validator.
  *
- * Every check here is something the engine cannot recover from: an empty base URL makes `new URL` throw, and a
- * template referencing a credential that was never picked resolves to an empty string, which authenticates as
- * nobody and reads as "the CMS rejected us" from the page. Failing in the panel names the actual cause.
+ * The rules themselves live in sdk-shared because three places apply them — this form, the MCP write ops and the
+ * mutation that stores the row — and a manifest that the panel accepts but the server rejects is the worst of the
+ * three outcomes. All this adds is the flat strings the form renders.
  */
-export const validateManifest = (manifest: ConnectorManifestDraft): string[] => {
-  const errors: string[] = [];
-  if (!manifest.baseUrl.trim()) {
-    errors.push('Base URL is required.');
-  } else if (!/^https?:\/\//.test(manifest.baseUrl)) {
-    errors.push('Base URL must start with http:// or https://.');
-  }
+export const validateManifest = (manifest: ConnectorManifestDraft): ManifestValidation => {
+  const report = validateConnectorManifest(manifest);
 
-  const reads = Object.entries(manifest.endpoints.read);
-  if (!reads.length) {
-    errors.push('A connector needs at least one read endpoint.');
-  }
-
-  reads.forEach(([name, read]) => {
-    if (!read.path.trim()) {
-      errors.push(`Read endpoint "${name}" needs a path.`);
-    }
-  });
-
-  Object.entries(manifest.endpoints.write ?? {}).forEach(([name, write]) => {
-    if (!write.path.trim()) {
-      errors.push(`Write endpoint "${name}" needs a path.`);
-    }
-  });
-
-  if (usesCredential(manifest) && !manifest.credential) {
-    errors.push('This manifest reads {{credential.…}} but no credential is selected.');
-  }
-
-  reads.forEach(([name, read]) => {
-    const pagination = read.pagination ?? manifest.pagination;
-    if (pagination === 'cursor' && !JSON.stringify(read.query ?? {}).includes('{{cursor}}')) {
-      errors.push(`Cursor paging needs {{cursor}} in the query of "${name}", otherwise every page is the first one.`);
-    }
-  });
-
-  return errors;
+  return { errors: report.errors.map(describe), warnings: report.warnings.map(describe) };
 };

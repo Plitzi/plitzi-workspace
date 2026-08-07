@@ -80,23 +80,27 @@ export const createMcpServer = async ({
   const loadSpace = async (): Promise<Space> => {
     const id = requireSpaceId();
     // The catalog is optional reference data (plugin type semantics); a failure to load it must never block the
-    // space read, so it is fetched best-effort and degrades to built-in-only type descriptions.
-    const [schema, style, catalog] = await Promise.all([
+    // space read, so it is fetched best-effort and degrades to built-in-only type descriptions. Connectors are
+    // read the same way: a deployment that wires no connector adapter still edits pages and styles.
+    const [schema, style, catalog, connectors] = await Promise.all([
       adapters.getSchema?.(id, MCP_ENV),
       adapters.getStyle?.(id, MCP_ENV),
-      adapters.getComponentCatalog?.(id, MCP_ENV).catch(() => undefined)
+      adapters.getComponentCatalog?.(id, MCP_ENV).catch(() => undefined),
+      adapters.getConnectors?.(id).catch(() => undefined)
     ]);
     if (!schema || !style) {
       throw new Error(emptySpaceMessage);
     }
 
-    return { schema, style, catalog };
+    return { schema, style, catalog, connectors: connectors ?? [] };
   };
 
-  const { saveSchema, saveStyle } = adapters;
+  const { saveSchema, saveStyle, saveConnector, deleteConnector } = adapters;
   const persisters: Persisters = {
     schema: saveSchema ? schema => saveSchema(requireSpaceId(), MCP_ENV, schema) : undefined,
-    style: saveStyle ? style => saveStyle(requireSpaceId(), MCP_ENV, style) : undefined
+    style: saveStyle ? style => saveStyle(requireSpaceId(), MCP_ENV, style) : undefined,
+    saveConnector: saveConnector ? entry => saveConnector(requireSpaceId(), entry) : undefined,
+    deleteConnector: deleteConnector ? id => deleteConnector(requireSpaceId(), id) : undefined
   };
 
   // Load the space at most once per request, and only on first read/write — never for the handshake.

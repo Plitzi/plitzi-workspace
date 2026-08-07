@@ -1,4 +1,5 @@
 import type { Environment } from './CommonTypes';
+import type { ConnectorEntry } from './ConnectorTypes';
 import type { McpServerConfig } from './McpTypes';
 import type { Schema } from './SchemaTypes';
 import type { OfflineDataRaw } from './SdkTypes';
@@ -189,6 +190,16 @@ export type SSRAdapters = {
    *  each installed plugin's manifest — so the MCP `plitzi://types` resource can explain what custom elements do.
    *  The MCP already knows the built-in types. When omitted, custom types surface with their observed label only. */
   getComponentCatalog?: (spaceId: number, environment: Environment) => Promise<ComponentCatalog | undefined>;
+  /** Read every connector configured for the space, so the MCP can list them and author provider elements against
+   *  them. Connectors are space-level (not per environment) server-side state: the manifests name endpoints and an
+   *  auth scheme, so this must never feed a browser payload. When omitted, the MCP's connector resource is empty
+   *  and a provider element cannot be checked against the connector it names. */
+  getConnectors?: (spaceId: number) => Promise<ConnectorEntry[] | undefined>;
+  /** Create or replace one connector, keyed by `entry.id`. When omitted, connector ops apply in memory only and
+   *  `apply` reports `persisted: false`. */
+  saveConnector?: (spaceId: number, entry: ConnectorEntry) => Promise<void>;
+  /** Remove one connector by its identifier. Omitted alongside `saveConnector` for a read-only deployment. */
+  deleteConnector?: (spaceId: number, connectorId: string) => Promise<void>;
   /** Persist the element schema mutated by the MCP `apply` tool. When omitted, `apply` reports `persisted: false`. */
   saveSchema?: (spaceId: number, environment: Environment, schema: Schema) => Promise<void>;
   /** Persist the style document mutated by the MCP `apply` tool. Implementations must recompute `style.cache`
