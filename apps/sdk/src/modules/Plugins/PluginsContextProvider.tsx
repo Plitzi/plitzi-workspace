@@ -6,22 +6,22 @@ import { getStyle } from '@plitzi/sdk-plugins/PluginHelper';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
+import { useRenderSettings } from '@plitzi/sdk-shared/store';
 
-import type { Asset, ComponentDefinition, ComponentPlugin, RenderMode } from '@plitzi/sdk-shared';
+import type { Asset, ComponentDefinition, ComponentPlugin } from '@plitzi/sdk-shared';
 
 export type PluginsContextProviderProps = {
   children: React.ReactNode;
-  renderMode?: RenderMode;
   plugins?: Record<string, ComponentDefinition>;
   sdkStylePath?: string;
 };
 
 const PluginsContextProvider = ({
   children,
-  renderMode = 'iframe',
   plugins: pluginsProp,
   sdkStylePath = './plitzi-sdk.css'
 }: PluginsContextProviderProps) => {
+  const { renderMode } = useRenderSettings();
   const [temporalCustomStyles, setTemporalCustomStyles] = useState<Record<string, Asset>>({});
   const internalData = use(NetworkInternalContext);
   const plugins = useMemo(() => {

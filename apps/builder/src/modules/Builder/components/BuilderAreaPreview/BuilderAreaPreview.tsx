@@ -7,6 +7,7 @@ import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
+import { StoreProvider } from '@plitzi/nexus/react';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
@@ -18,7 +19,7 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
-import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import { useBuilderStore, useRenderOverride } from '@plitzi/sdk-shared/store';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
@@ -33,7 +34,10 @@ export type BuilderAreaPreviewProps = {
   previewMode?: boolean;
 };
 
+const previewOverride = { previewMode: true };
+
 const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: BuilderAreaPreviewProps) => {
+  const previewRender = useRenderOverride(previewOverride);
   const { routeParams, queryParams, hostname } = use(NavigationContext);
   const { environment } = use(NetworkContext);
   const { rootRef } = use(ContainerRootContext);
@@ -127,20 +131,25 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
       style={{ colorScheme: theme === 'system' ? 'light' : theme }}
     >
       <PlitziServiceProvider value={plitziContextValue}>
-        <GlobalSources>
-          <InteractionsSourcesProvider previewMode>
-            <div
-              className={clsx('builder-iframe', {
-                'builder--display-component-border display-component-border--black':
-                  displayBorderComponents === 'black',
-                'builder--display-component-border display-component-border--white': displayBorderComponents === 'white'
-              })}
-              style={{ width: '100%', display: 'flex', height: '100%' }}
-            >
-              {Plugin}
-            </div>
-          </InteractionsSourcesProvider>
-        </GlobalSources>
+        {/* This surface IS the preview, whatever the builder's own toggle says: a scope carrying the surrounding
+            settings with that one flag flipped beats threading it as a prop through every provider under here. */}
+        <StoreProvider value={previewRender}>
+          <GlobalSources>
+            <InteractionsSourcesProvider>
+              <div
+                className={clsx('builder-iframe', {
+                  'builder--display-component-border display-component-border--black':
+                    displayBorderComponents === 'black',
+                  'builder--display-component-border display-component-border--white':
+                    displayBorderComponents === 'white'
+                })}
+                style={{ width: '100%', display: 'flex', height: '100%' }}
+              >
+                {Plugin}
+              </div>
+            </InteractionsSourcesProvider>
+          </GlobalSources>
+        </StoreProvider>
       </PlitziServiceProvider>
     </ContainerFrame>
   );

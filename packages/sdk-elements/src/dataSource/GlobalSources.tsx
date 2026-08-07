@@ -6,19 +6,19 @@ import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
-import { useCommonStore, useCommonStoreSync } from '@plitzi/sdk-shared/store';
+import { useCommonStore, useCommonStoreSync, useRenderSettings } from '@plitzi/sdk-shared/store';
 
 import type { SchemaVariable, SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type GlobalSourcesProps = {
   children: ReactNode;
-  environment?: string;
 };
 
 // Mounts the global data sources at the right tree depth (under the Navigation/Auth/RuntimeState providers).
-const GlobalSources = ({ children, environment = 'main' }: GlobalSourcesProps) => {
+const GlobalSources = ({ children }: GlobalSourcesProps) => {
   const { routeParams, queryParams, hostname, currentPageId } = use(NavigationContext);
+  const { environment } = useRenderSettings();
 
   // --- variables ---
   const [variables] = useCommonStore('schema.variables');

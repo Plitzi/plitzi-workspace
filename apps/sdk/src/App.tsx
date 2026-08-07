@@ -27,6 +27,7 @@ import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider'
 import { createStoreDevToolsLogger, ThemeProvider, type SdkState } from '@plitzi/sdk-shared';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 import { runtimeStatePersist } from '@plitzi/sdk-shared/state/runtimeStatePersist';
+import { DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
 import { tracingCollector, tracingMiddleware } from '@plitzi/sdk-shared/store/tracing';
 
 import { getEnvironmentServer } from './config';
@@ -89,7 +90,7 @@ const App = ({
   // Server
   server = undefined,
   // Extra
-  renderMode = 'iframe',
+  renderMode = DEFAULT_RENDER_SETTINGS.renderMode,
   debugMode: debugModeProp = false,
   state,
   ...sdkProps
@@ -98,8 +99,14 @@ const App = ({
   // Initialize `runtime.state` once at the root from the host-provided initial state; persist/interactions own it
   // afterwards. Captured at mount (stable value → no re-sync that would reset the sibling `runtime.sources`).
   const initialState = useRef(state).current;
+  // `render` is initialized here so the slice exists — with the shared floor — from the store's very first state;
+  // `AppMain` syncs the values this render actually has over it, and keeps them true as debugMode toggles.
   const storeValue = useMemo<Partial<SdkState>>(
-    () => ({ segments: {}, runtime: { sources: {}, state: initialState ?? {} } }),
+    () => ({
+      segments: {},
+      runtime: { sources: {}, state: initialState ?? {} },
+      render: DEFAULT_RENDER_SETTINGS
+    }),
     [initialState]
   );
   // Cookie-backed so SSR reads the same value and hydration stays consistent. Name coupled with the

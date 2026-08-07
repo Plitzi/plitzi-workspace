@@ -210,7 +210,8 @@ modos**, elegidos en Settings con **Data Source** (`definition.runtime`):
 1. **Identidad** — `useElement()` da `id`, `idRef`, `runtime`. El nombre de fuente es `apiContainer_<idRef>`;
    todo lo que bindean los hijos cuelga de ahí.
 2. **Obtención del dato**
-   - **Server**: `useRscData()` lee `serverData[id]` de `RscContext` (payload del SSR o de un refresh `/_rsc`).
+   - **Server**: `useRscData()` lee su propia porción del store, `rsc.data.<elementId>` (payload del SSR o de un
+     refresh `/_rsc`). Se suscribe solo a su clave: un refresh parcial de otro provider no lo re-renderiza.
      El dato ya viene resuelto por el servidor (manifest + credencial + filtros + routeParams + paginación +
      proyección).
    - **Client**: `queryCompiled` resuelve la plantilla con `routeParams`/`queryParams` y `useApi` hace el fetch.
@@ -241,11 +242,11 @@ modos**, elegidos en Settings con **Data Source** (`definition.runtime`):
 
 1. **El flag compartido.** El autor pone `runtime: 'server'` en Settings. Ese mismo flag usa el servidor
    (`resolveRscData`) para decidir qué elementos resolver, y el elemento (`serverMode = runtime === 'server'`) para
-   decidir qué leer. No hay "espera": `useRscData` siempre lee `RscContext` y re-renderiza cuando `serverData` cambia.
-2. **La forma del payload distingue los casos** (`ApiContainer.tsx:178-204`):
-   - `serverData === undefined` → RSC nunca cargó (builder, render client-only o `schema.rsc.enabled` false) →
-     **mock**.
-   - `serverData` es objeto pero el `id` no está → el payload **sí** llegó pero este elemento no resolvió
+   decidir qué leer. No hay "espera": `useRscData` está suscrito a `rsc.data.<id>` en el store y re-renderiza cuando
+   ese slice cambia.
+2. **La forma del payload distingue los casos** (`ApiContainer.tsx`):
+   - `rsc.loaded === false` → RSC nunca cargó (builder, render client-only o `schema.rsc.enabled` false) → **mock**.
+   - `loaded` pero el `id` no está → el payload **sí** llegó pero este elemento no resolvió
      (provider caído/mal configurado) → `emptyObject` + `hasError = true` (a propósito **no** mock: no se disfraza
      una caída de producción como contenido).
    - `id in serverData` → el slice del servidor.
@@ -350,18 +351,19 @@ HTML y el cliente solo hace *hydrate*.
      plantilla de operador produce `filters[id][$eq]=123`.
    - Fetch al CMS → normaliza → `singleRecord` publica `{ record, pageInfo, isEmpty, ... }` → `projectSlice` lo
      recorta a los caminos que bindeaste.
-5. Ese slice entra en `serverData[elementId]` y se **incrusta en el HTML** como `server.rscData`. Junto a él viaja
-   `server.rscPath` (`buildServerInfo` → `resolveRscEndpoint`), que es cómo el cliente sabe que este origen tiene
-   endpoint RSC.
-6. Cliente: `Sdk.tsx:128` hace `<RscProvider endpoint={server?.rscPath} rscData={server?.rscData}>`, así que
-   `serverData` existe **desde el primer render**. El ApiContainer server encuentra `elementData` y pinta el post al
-   instante — no hay fetch ni estado de carga inicial.
+5. Ese slice entra en `serverData[elementId]` y se **incrusta en el HTML** dentro de `server.ssr.rscData`. Junto a él
+   viaja `server.ssr.rscPath` (`buildServerInfo` → `resolveRscEndpoint`), que es cómo el cliente sabe que este origen
+   tiene endpoint RSC.
+6. Cliente: `Sdk.tsx` llama `useRscSync(server?.ssr)`, que proyecta ese bootstrap al store (`rsc.enabled`,
+   `rsc.endpoint`, `rsc.data`, `rsc.loaded`) en el primer render. El ApiContainer server encuentra su `elementData` y
+   pinta el post al instante — no hay fetch ni estado de carga inicial.
 
 ### 7.3 Navegación posterior
 
-Si el visitante navega en SPA a `/posts/456`, `RscProvider` (navigationKey = `currentPageId`) hace
-`GET /_rsc?location=/posts/456`; el handler reescribe la petición a esa página (`rsc/handler.ts`), se repite toda la
-resolución y el slice nuevo se **fusiona** en `serverData`.
+Si el visitante navega en SPA a `/posts/456`, `useRscSync` lo detecta porque su clave es la **ubicación** (lee
+`runtime.sources.navigation`, no el `currentPageId`: `/posts/1` → `/posts/2` es la misma página con otro registro) y
+hace `GET /_rsc?location=/posts/456`; el handler reescribe la petición a esa página (`rsc/handler.ts`), se repite toda
+la resolución y el slice nuevo se **fusiona** en `rsc.data`.
 
 ### 7.4 Casos borde
 
@@ -370,8 +372,8 @@ resolución y el slice nuevo se **fusiona** en `serverData`.
   de un bloque "no encontrado" a `{{apiContainer_<idRef>.isEmpty}}`.
 - **Filtro sin resolver**: si `{{routeParams.id}}` no resuelve, `resolveFilters` marca `unresolved` y se devuelve una
   ventana vacía — mejor que devolver la colección entera.
-- **Render sin servidor** (embed client-only, builder, widget MCP): no hay `server.rscPath`, así que `RscProvider`
-  queda inerte — ni fetch a `/_rsc` (que sería un 404 contra el sitio anfitrión) ni congelado de los elementos
+- **Render sin servidor** (embed client-only, builder, widget MCP): no hay `server.ssr.rscPath`, así que `rsc.enabled`
+  queda en false — ni fetch a `/_rsc` (que sería un 404 contra el sitio anfitrión) ni congelado de los elementos
   `runtime: 'server'` contra un HTML de servidor que nunca existió. El proveedor server cae a su mock, igual que en
   el builder.
 - **Seguridad**: ni la URL del CMS ni la credencial bajan al navegador; el cliente solo ve el slice proyectado.
@@ -455,7 +457,7 @@ indexable).
 | Resolver (puente RSC) | `apps/server/src/modules/connectors/resolver.ts` |
 | Proyección del slice | `apps/server/src/modules/connectors/projection.ts` |
 | Resolución RSC | `apps/server/src/modules/rsc/resolveRscData.ts` |
-| Inyección de `rscData` + `rscPath` en SSR | `apps/server/src/helpers/buildServerInfo.ts` |
+| Inyección de `server.ssr` (rscData + rscPath) | `apps/server/src/helpers/buildServerInfo.ts` |
 | Publicación del endpoint RSC | `apps/server/src/core/services/resolve.ts` (`resolveRscEndpoint`) |
 | Matcher de rutas (cliente/servidor) | `packages/sdk-shared/src/navigation/matchPath.ts` + `routes.ts` |
 | Endpoint `/_rsc` | `apps/server/src/modules/rsc/handler.ts` |
@@ -469,7 +471,8 @@ indexable).
 | Escritura del provider | `packages/sdk-elements/src/elements/provider/ApiContainer/hooks/useProviderWrite.ts` |
 | Elemento Pagination | `packages/sdk-elements/src/elements/structure/Pagination/Pagination.tsx` |
 | Elemento RichText | `packages/sdk-elements/src/elements/basic/RichText/RichText.tsx` |
-| Refresh RSC (cliente) | `packages/sdk-shared/src/server/rsc/RscProvider.tsx` |
+| Bootstrap RSC → store (cliente) | `packages/sdk-shared/src/server/rsc/useRscSync.ts` |
+| Refresh RSC (cliente) | `packages/sdk-shared/src/server/rsc/refreshRsc.ts` + `useRscRefresh.ts` |
 | Fuente de interacciones | `packages/sdk-interactions/src/InteractionsSourcesProvider.tsx` |
 
 ---
@@ -482,5 +485,6 @@ indexable).
 - **Proyección** → el servidor solo envía lo que la página bindea.
 - **`/_action`** → el navegador nombra un *elemento*, nunca una URL ni una credencial; el servidor decide.
 - **`/_rsc`** → el refresco cliente viaja con `?location=` para que el servidor sepa en qué página está el visitante.
-- **`server.rscPath`** → lo publica el servidor que renderizó la página; sin él no hay RSC en ese render, por muy
+- **`server.ssr.rscPath`** → lo publica el servidor que renderizó la página; sin él no hay RSC en ese render, por muy
   `enabled` que esté el schema.
+- **`rsc` en el store** → la verdad viva del payload (`rsc.data.<elementId>`); `server.ssr` es solo el arranque.

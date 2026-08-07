@@ -70,7 +70,7 @@ export const buildServerInfo = async (req: SSRRequest, config: SSRServerConfig):
     authenticated: !!user,
     skipAuth: !!accessToken,
     user: user ? { details: user } : undefined,
-    render: {
+    ssr: {
       rscPath: resolveRscEndpoint(config),
       rscData: await config.adapters.getRscData?.(req, spaceId as number, environment, revision, user)
     }

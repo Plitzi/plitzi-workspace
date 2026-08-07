@@ -5,7 +5,7 @@ import { useStoreById } from '@plitzi/nexus/react';
 import refreshRsc from './refreshRsc';
 import { useCommonStore, useCommonStoreSync } from '../../store';
 
-import type { CommonState, ServerRender } from '../../types';
+import type { CommonState, ServerSSR } from '../../types';
 
 /**
  * Seeds `rsc` at the SDK root and keeps it fresh. Called once, where the server info is in hand; everything below
@@ -15,13 +15,13 @@ import type { CommonState, ServerRender } from '../../types';
  * the endpoint, so a client-only render (an embed, the builder, an offline widget) leaves the feature inert instead
  * of fetching a guaranteed 404 against whatever origin the page lives on.
  */
-const useRscSync = (render?: ServerRender) => {
+const useRscSync = (ssr?: ServerSSR) => {
   const store = useStoreById<CommonState>();
   const [schemaRsc] = useCommonStore('schema.rsc', { mode: 'mount' });
   // The server resolves the payload from the visitor's location, so the location is what a refresh keys off — not the
   // page id: `/posts/1` → `/posts/2` is the same page with a different record, and a `?page=` change is a new window.
   const [navigation] = useCommonStore('runtime.sources.navigation');
-  const { rscData, rscPath: endpoint } = render ?? {};
+  const { rscData, rscPath: endpoint } = ssr ?? {};
   const enabled = (schemaRsc?.enabled ?? false) && !!endpoint;
 
   useCommonStoreSync(['rsc.enabled', 'rsc.endpoint'], [enabled, endpoint]);

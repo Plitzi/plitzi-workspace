@@ -13,6 +13,7 @@ import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
 import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
 import InteractionsSourcesProvider from '@plitzi/sdk-interactions/InteractionsSourcesProvider';
+import { DEFAULT_RENDER_SETTINGS, useSdkStoreSync } from '@plitzi/sdk-shared/store';
 import SdkStyleContextProvider from '@plitzi/sdk-style/SdkStyleContextProvider';
 
 import devtoolsCssUrl from '../../assets/plitzi-sdk-devtools.scss?url';
@@ -67,7 +68,7 @@ const AppMain = ({
   offlineDataType = 'json',
   // Extra
   instanceId,
-  renderMode = 'iframe',
+  renderMode = DEFAULT_RENDER_SETTINGS.renderMode,
   sdkStylePath = './plitzi-sdk.css',
   sdkDevToolsStylePath,
   previewMode = true,
@@ -77,6 +78,13 @@ const AppMain = ({
   ...sdkProps
 }: AppMainProps) => {
   const store = use(StoreContext) as StoreApi<SdkState> | undefined;
+
+  // The surface this render happens on, published once for the whole tree. Every provider below used to take these as
+  // props — five flags threaded through nine components — and they are read from the store instead.
+  useSdkStoreSync(
+    ['render.previewMode', 'render.debugMode', 'render.renderMode', 'render.environment', 'render.isHydrating'],
+    [previewMode, debugMode, renderMode, environment, isHydrating]
+  );
 
   // Expose the imperative runtime-state handle to the host (consumed by `getStateManager()`). A nexus base-path view
   // binds every read/write to `runtime.state`, so call sites concatenate nothing and the updater form type-checks.
@@ -106,28 +114,17 @@ const AppMain = ({
       offlineMode={offlineMode}
       offlineData={offlineData}
       offlineDataType={offlineDataType}
-      environment={environment}
       revision={revision}
-      debugMode={debugMode}
     >
       <SchemaContextProvider>
-        <PluginsContextProvider renderMode={renderMode} sdkStylePath={styleUrl ? styleUrl : sdkStylePath}>
+        <PluginsContextProvider sdkStylePath={styleUrl ? styleUrl : sdkStylePath}>
           <SdkStyleContextProvider>
             <EventBridgeContextProvider onInit={onInitEventBridge} debugMode={debugMode}>
               <SegmentsContextProvider>
-                <AuthContextProvider
-                  previewMode={previewMode}
-                  environment={environment}
-                  server={server}
-                  isHydrating={isHydrating}
-                >
-                  <NavigationContextProvider
-                    renderMode={renderMode}
-                    currentPageId={currentPageId}
-                    previewMode={previewMode}
-                  >
-                    <GlobalSources environment={environment}>
-                      <InteractionsSourcesProvider previewMode={previewMode}>
+                <AuthContextProvider server={server}>
+                  <NavigationContextProvider currentPageId={currentPageId}>
+                    <GlobalSources>
+                      <InteractionsSourcesProvider>
                         <DevToolsContainer
                           enabled={debugMode}
                           instanceId={instanceId}
@@ -135,16 +132,7 @@ const AppMain = ({
                           renderMode="shadow"
                           innerClassName={clsx({ flex: renderMode === 'iframe' })}
                         >
-                          <Sdk
-                            renderMode={renderMode}
-                            previewMode={previewMode}
-                            debugMode={debugMode}
-                            environment={environment}
-                            isHydrating={isHydrating}
-                            sdkStylePath={styleUrl ? styleUrl : sdkStylePath}
-                            server={server}
-                            {...sdkProps}
-                          />
+                          <Sdk sdkStylePath={styleUrl ? styleUrl : sdkStylePath} server={server} {...sdkProps} />
                         </DevToolsContainer>
                       </InteractionsSourcesProvider>
                     </GlobalSources>

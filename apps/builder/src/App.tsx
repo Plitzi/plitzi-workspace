@@ -66,6 +66,7 @@ import { createStoreDevToolsLogger, ThemeProvider, type BuilderState } from '@pl
 import { createStripTypenameLink } from '@plitzi/sdk-shared/helpers/stripTypename';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 import { runtimeStatePersist } from '@plitzi/sdk-shared/state/runtimeStatePersist';
+import { DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
 import { tracingMiddleware } from '@plitzi/sdk-shared/store/tracing';
 import AppMain from '@pmodules/App/AppMain';
 import customFetch from '@pmodules/Network/helpers/customFetch';
@@ -337,7 +338,16 @@ const App = (props: AppProps) => {
     [client, debugMode, instanceId, localComponents, props, server, webId]
   );
 
-  const storeValue = useMemo(() => ({ styleSelector: 'base', collaboration: { collaborators: [] } }), []);
+  // Same floor as the SDK, minus the one thing the builder is not: an editor opens in edit mode, not preview.
+  // `AppMain` syncs the live values (its preview toggle, debugMode, environment) over this.
+  const storeValue = useMemo(
+    () => ({
+      styleSelector: 'base',
+      collaboration: { collaborators: [] },
+      render: { ...DEFAULT_RENDER_SETTINGS, previewMode: false }
+    }),
+    []
+  );
 
   return (
     <StoreProvider

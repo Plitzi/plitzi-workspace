@@ -27,3 +27,5 @@ export const {
   useStoreGetter: useBuilderStoreGetter,
   useStoreSetter: useBuilderStoreSetter
 } = createStoreHook<BuilderState>();
+
+export { default as useRenderSettings, useRenderOverride, DEFAULT_RENDER_SETTINGS } from './renderSettings';

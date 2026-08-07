@@ -10,7 +10,7 @@ import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import useRscSync from '@plitzi/sdk-shared/server/rsc/useRscSync';
-import { useSdkStore } from '@plitzi/sdk-shared/store';
+import { useRenderSettings, useSdkStore } from '@plitzi/sdk-shared/store';
 import { ThemeContext } from '@plitzi/sdk-shared/theme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
@@ -22,15 +22,10 @@ import SdkPlugin from './SdkPlugin';
 // eslint-disable-next-line
 // @ts-ignore
 
-import type { Environment, RenderMode, Server } from '@plitzi/sdk-shared';
+import type { Server } from '@plitzi/sdk-shared';
 
 export type SdkProps = {
-  renderMode?: RenderMode;
   externalStyle?: string;
-  environment?: Environment;
-  isHydrating?: boolean;
-  previewMode?: boolean;
-  debugMode?: boolean;
   /** Shows the "Made in Plitzi" link over the rendered space. Off for embeds that are not a Plitzi site of their
    *  own — an MCP widget inside a chat, a component mounted in a host app. */
   branding?: boolean;
@@ -38,25 +33,16 @@ export type SdkProps = {
   server?: Server;
 };
 
-const Sdk = ({
-  renderMode = 'iframe',
-  externalStyle = '',
-  environment = 'main',
-  previewMode = true,
-  isHydrating = false,
-  debugMode = false,
-  branding = true,
-  sdkStylePath = './plitzi-sdk.css',
-  server
-}: SdkProps) => {
+const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk.css', server }: SdkProps) => {
   const { theme } = use(ThemeContext);
   const { currentPageId } = use(NavigationContext);
   const { assets } = use(PluginsContext);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const { rootRef } = use(ContainerRootContext);
   const [[schemaSettings, styleCache, segments]] = useSdkStore(['schema.settings', 'style.cache', 'segments']);
+  const { renderMode, previewMode, debugMode, environment, isHydrating } = useRenderSettings();
   const [variables = emptyObject] = useSdkStore('runtime.sources.variables');
-  useRscSync(server?.render);
+  useRscSync(server?.ssr);
 
   const css = useMemo(() => {
     const segmentsCss = Object.values(segments).map(segment => segment.style.cache);

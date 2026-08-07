@@ -19,6 +19,7 @@ import RootElement from '@plitzi/sdk-elements/Element/RootElement';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { disableReactDevTools } from '@plitzi/sdk-shared/helpers/security';
 import baseUsePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
 
 import App from './App';
 
@@ -145,7 +146,7 @@ const PlitziSdk = ({
   webKey = '',
   environment = 'main',
   // Extra
-  renderMode = 'iframe',
+  renderMode = DEFAULT_RENDER_SETTINGS.renderMode,
   ...otherProps
 }: PlitziSdkProps) => {
   return (

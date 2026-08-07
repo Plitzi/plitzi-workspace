@@ -7,18 +7,18 @@ import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
 import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import { useBuilderStore, useRenderSettings } from '@plitzi/sdk-shared/store';
 
 import type { RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type NavigationContextProviderProps = {
   children?: ReactNode;
-  previewMode?: boolean;
 };
 
-const NavigationContextProvider = ({ previewMode = false, children }: NavigationContextProviderProps) => {
+const NavigationContextProvider = ({ children }: NavigationContextProviderProps) => {
   const [[pageFolders, pageDefinitions]] = useBuilderStore(['schema.pageFolders', 'pageDefinitions']);
+  const { previewMode } = useRenderSettings();
   const { server } = use(NetworkContext);
   const { authenticated } = use(AuthContext);
   const { queryParams, hostname, location } = useNavigation({ server });

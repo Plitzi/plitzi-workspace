@@ -1129,6 +1129,10 @@
       "types": "./dist/store/index.d.ts",
       "import": "./dist/store/index.mjs"
     },
+    "./store/renderSettings": {
+      "types": "./dist/store/renderSettings.d.ts",
+      "import": "./dist/store/renderSettings.mjs"
+    },
     "./store/tracing": {
       "types": "./dist/store/tracing/index.d.ts",
       "import": "./dist/store/tracing/index.mjs"

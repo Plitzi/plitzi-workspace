@@ -26,7 +26,6 @@ export type AppProviderProps = {
   server: Server;
   includeSubscriptions: boolean;
   includeRealTime: boolean;
-  previewMode: boolean;
   debugMode?: boolean;
 };
 
@@ -40,7 +39,6 @@ const AppProvider = ({
   server,
   includeSubscriptions = true,
   includeRealTime = true,
-  previewMode = false,
   debugMode = false
 }: AppProviderProps) => {
   return (
@@ -65,8 +63,8 @@ const AppProvider = ({
                     <ModalProvider>
                       <SchemaContextProvider includeSubscriptions={includeSubscriptions}>
                         <StyleContextProvider includeSubscriptions={includeSubscriptions}>
-                          <AuthContextProvider previewMode={previewMode} environment={environment} server={server}>
-                            <NavigationContextProvider previewMode={previewMode}>{children}</NavigationContextProvider>
+                          <AuthContextProvider server={server}>
+                            <NavigationContextProvider>{children}</NavigationContextProvider>
                           </AuthContextProvider>
                         </StyleContextProvider>
                       </SchemaContextProvider>

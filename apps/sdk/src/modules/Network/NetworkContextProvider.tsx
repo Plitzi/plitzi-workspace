@@ -8,10 +8,10 @@ import { SdkQueries, SdkMutations } from '@plitzi/sdk-shared/network/graphql/sdk
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
+import { useRenderSettings } from '@plitzi/sdk-shared/store';
 
 import type { ApolloClient, DocumentNode, FetchPolicy } from '@apollo/client';
 import type {
-  Environment,
   OfflineDataRaw,
   Server,
   SdkQueriesMap,
@@ -30,11 +30,9 @@ export type NetworkContextProviderProps = {
   webId: number;
   userKey?: string;
   instanceId?: string;
-  environment?: Environment;
   offlineMode?: boolean;
   offlineData?: OfflineDataRaw;
   offlineDataType?: 'json' | 'yaml';
-  debugMode?: boolean;
 };
 
 const NetworkContextProvider = ({
@@ -45,12 +43,11 @@ const NetworkContextProvider = ({
   webId,
   userKey = '',
   instanceId,
-  environment = 'development',
   offlineMode = false,
   offlineData,
-  offlineDataType = 'json',
-  debugMode = false
+  offlineDataType = 'json'
 }: NetworkContextProviderProps) => {
+  const { environment, debugMode } = useRenderSettings();
   const offlineDataAvailable = offlineMode && !!offlineData && !!offlineData.schema;
   const client = use(getApolloContext()).client;
   const [loading, setLoading] = useState(!(offlineMode && !!offlineData));

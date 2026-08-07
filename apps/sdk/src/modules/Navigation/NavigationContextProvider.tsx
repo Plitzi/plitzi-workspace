@@ -9,30 +9,24 @@ import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import { useBuilderStore, useRenderSettings } from '@plitzi/sdk-shared/store';
 
-import type { NavigationContextValue, NavigationStatus, RenderMode, RouteParams } from '@plitzi/sdk-shared';
+import type { NavigationContextValue, NavigationStatus, RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 import type { PathMatch } from 'react-router-dom';
 
 export type NavigationContextProviderProps = {
   children: ReactNode;
-  renderMode?: RenderMode;
   currentPageId?: string;
-  previewMode?: boolean;
 };
 
-const NavigationContextProvider = ({
-  children,
-  renderMode = 'iframe',
-  currentPageId: currentPageIdProp,
-  previewMode = true
-}: NavigationContextProviderProps) => {
+const NavigationContextProvider = ({ children, currentPageId: currentPageIdProp }: NavigationContextProviderProps) => {
   const { server } = use(NetworkContext);
+  const { renderMode, previewMode } = useRenderSettings();
+  const [[pageFolders, pageDefinitions]] = useBuilderStore(['schema.pageFolders', 'pageDefinitions']);
   // Written by reference during the SSR render and read back by the server to shape the response; undefined in the
   // browser, where the page has already been sent.
-  const ssrResult = server.render?.ssrResult;
-  const [[pageFolders, pageDefinitions]] = useBuilderStore(['schema.pageFolders', 'pageDefinitions']);
+  const ssrResult = server.ssr?.renderResult;
   const { queryParams, hostname, location } = useNavigation({ server });
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;

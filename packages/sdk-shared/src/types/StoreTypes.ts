@@ -1,4 +1,5 @@
 import type { SubscriptionCollaborator, SubscriptionCollaboratorPointer } from './BuilderTypes';
+import type { Environment, RenderMode } from './CommonTypes';
 import type { Source } from './DataSourceTypes';
 import type { Schema, Element } from './SchemaTypes';
 import type { Segment } from './SegmentTypes';
@@ -44,6 +45,20 @@ export type CommonState = {
   // an element scope that owns `runtime` would keep a delegated `runtime.rsc.*` write to itself, and nothing but the
   // root ever owns `rsc`, so every write from any depth lands where the whole tree reads it.
   rsc?: RscState;
+  // How THIS render is happening. Seeded once at the root of whichever surface is mounting (the SDK, the builder) and
+  // read from the store by everything below, instead of being threaded through every provider as five props.
+  render?: RenderSettings;
+};
+
+/** Not document state and not server data: the surface the schema is being rendered on. `previewMode` and
+ *  `debugMode` change at runtime (the builder's preview toggle, shift+F12), so reads of these are reactive; the rest
+ *  are fixed for the life of the render. */
+export type RenderSettings = {
+  previewMode?: boolean;
+  debugMode?: boolean;
+  renderMode?: RenderMode;
+  environment?: Environment;
+  isHydrating?: boolean;
 };
 
 // `enabled` is the single answer to "is RSC live in this render": the schema asking for it is not enough, a server

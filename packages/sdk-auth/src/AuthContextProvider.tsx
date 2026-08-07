@@ -3,30 +3,22 @@ import { useMemo } from 'react';
 
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import { useCommonStore } from '@plitzi/sdk-shared/store';
+import { useCommonStore, useRenderSettings } from '@plitzi/sdk-shared/store';
 
 import AuthContext from './AuthContext';
 import useAuth from './hooks/useAuth';
 
-import type { AuthContextValue, Environment, Server } from '@plitzi/sdk-shared';
+import type { AuthContextValue, Server } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type AuthContextProviderProps = {
   children?: ReactNode;
-  isHydrating?: boolean;
-  previewMode?: boolean;
   offlineMode?: boolean;
   server: Server;
-  environment?: Environment;
 };
 
-const AuthContextProvider = ({
-  previewMode = true,
-  isHydrating = false,
-  children,
-  server,
-  environment = 'production'
-}: AuthContextProviderProps) => {
+const AuthContextProvider = ({ children, server }: AuthContextProviderProps) => {
+  const { previewMode, isHydrating, environment } = useRenderSettings();
   const [
     [
       {

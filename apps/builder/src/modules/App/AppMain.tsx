@@ -51,6 +51,12 @@ const AppMain = ({
   const [displayMode, setDisplayMode] = useState<DisplayMode>('desktop');
   const [mobilePreview, setMobilePreview] = useState(false);
   useBuilderStoreSync('displayMode', displayMode);
+  // The surface this render happens on, published for the whole tree — the shared providers (auth, navigation,
+  // global sources, interactions) read it from here instead of taking it as props from each surface that mounts them.
+  useBuilderStoreSync(
+    ['render.previewMode', 'render.debugMode', 'render.environment'],
+    [previewMode, debugMode, environment]
+  );
 
   const appValueMemo = useMemo(
     () => ({
@@ -92,11 +98,10 @@ const AppMain = ({
         server={server}
         includeSubscriptions={includeSubscriptions}
         includeRealTime={includeRealTime}
-        previewMode={previewMode}
         debugMode={debugMode}
       >
-        <GlobalSources environment={environment}>
-          <InteractionsSourcesProvider previewMode={previewMode}>
+        <GlobalSources>
+          <InteractionsSourcesProvider>
             <PopupProvider renderLeftPopup={false} renderRightPopup={false} renderFloatingPopup={!previewMode}>
               <DevToolsContainer innerClassName="flex" enabled={debugMode} instanceId={instanceId}>
                 <AppContainer externalStyle={externalStyle} />
