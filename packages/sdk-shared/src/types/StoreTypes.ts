@@ -40,6 +40,21 @@ export type CommonState = {
   // Data-source REGISTRY (authoring metadata: which sources exist + their fields). Only definitions for
   // enumeration + the builder editor — NOT the real values (those are in `runtime.sources`).
   sources?: Record<string, Source>;
+  // Server-driven data (RSC), seeded at the SDK root from what the rendering server published. Top-level on purpose:
+  // an element scope that owns `runtime` would keep a delegated `runtime.rsc.*` write to itself, and nothing but the
+  // root ever owns `rsc`, so every write from any depth lands where the whole tree reads it.
+  rsc?: RscState;
+};
+
+// `enabled` is the single answer to "is RSC live in this render": the schema asking for it is not enough, a server
+// has to answer it (`endpoint`), which a client-only render has none of. `loaded` separates "no payload ever arrived"
+// (the builder, an embed → providers fall back to mock data) from "it arrived and this element is not in it" (a
+// provider that failed server-side → an error, never dressed up as content). `data` is keyed by element id.
+export type RscState = {
+  enabled?: boolean;
+  endpoint?: string;
+  loaded?: boolean;
+  data?: Record<string, unknown>;
 };
 
 export type BuilderState = CommonState & {

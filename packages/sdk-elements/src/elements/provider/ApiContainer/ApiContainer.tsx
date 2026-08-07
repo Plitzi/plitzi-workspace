@@ -93,7 +93,7 @@ const ApiContainer = ({
   // A server-driven provider gets its data through the RSC payload: the request — and the credential behind it —
   // stays on the server, so neither the token nor the backend URL is ever part of what ships to the browser.
   const serverMode = runtime === 'server';
-  const { serverData, elementData, refresh } = useRscData<Record<string, unknown>>();
+  const { loaded: rscResolved, elementData, refresh } = useRscData<Record<string, unknown>>();
   const sourceName = getSourceName('apiContainer', { idRef });
   const {
     settings: { previewMode, debugMode },
@@ -177,7 +177,6 @@ const ApiContainer = ({
   // A server element whose key is missing from a payload that *did* arrive failed to resolve — its provider is
   // down, misconfigured or timed out. Falling back to mock data there would dress a production outage up as
   // content, so the two cases are kept apart: no payload at all means the builder, and that one does mock.
-  const rscResolved = serverData !== undefined;
   const hasError = serverMode && rscResolved && elementData === null;
 
   // In the builder there is no `/_rsc` for the live space, so a server provider keeps rendering from its mock data.
@@ -214,7 +213,7 @@ const ApiContainer = ({
       return;
     }
 
-    await refresh?.([id]);
+    await refresh([id]);
   }, [serverMode, apiRefetch, refresh, id]);
 
   const slice = data as ProviderSlice;

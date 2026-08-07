@@ -4,7 +4,6 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import RscContext from '@plitzi/sdk-shared/server/rsc/RscContext';
 
 import useInternalItems from './useInternalItems';
 
@@ -49,15 +48,11 @@ const renderItems = (props: Props, storeValue: Record<string, unknown>, rscEnabl
   render(
     createElement(
       StoreProvider,
-      { value: storeValue },
+      { value: { ...storeValue, rsc: { enabled: rscEnabled } } },
       createElement(
-        RscContext,
-        { value: { enabled: rscEnabled } },
-        createElement(
-          ComponentContext,
-          { value: { components: { current: {} } } as unknown as ComponentContextValue },
-          createElement(Harness, props)
-        )
+        ComponentContext,
+        { value: { components: { current: {} } } as unknown as ComponentContextValue },
+        createElement(Harness, props)
       )
     )
   );
@@ -99,7 +94,7 @@ describe('useInternalItems', () => {
   it('freezes a server-runtime item as a static shell in preview on the client', () => {
     const { container } = renderItems(
       { id: 'host', definition: def(['s']), children: undefined, previewMode: true },
-      { schema: { flat: { s: el('s', 'text', 'server') }, rsc: { enabled: true } } },
+      { schema: { flat: { s: el('s', 'text', 'server') } } },
       true
     );
 
@@ -110,7 +105,7 @@ describe('useInternalItems', () => {
   it('mounts a server-runtime item as a plugin when RSC is not live for this render', () => {
     const { container } = renderItems(
       { id: 'host', definition: def(['s']), children: undefined, previewMode: true },
-      { schema: { flat: { s: el('s', 'text', 'server') }, rsc: { enabled: true } } }
+      { schema: { flat: { s: el('s', 'text', 'server') } } }
     );
 
     expect(container.querySelector('[data-static-shell]')).toBeNull();
@@ -120,7 +115,7 @@ describe('useInternalItems', () => {
   it('keeps a client-runtime item mounted (not frozen) in preview on the client', () => {
     const { container } = renderItems(
       { id: 'host', definition: def(['c']), children: undefined, previewMode: true },
-      { schema: { flat: { c: el('c', 'text', 'client') }, rsc: { enabled: true } } },
+      { schema: { flat: { c: el('c', 'text', 'client') } } },
       true
     );
 

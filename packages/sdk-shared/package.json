@@ -1097,6 +1097,18 @@
       "types": "./dist/server/rsc/RscProvider.d.ts",
       "import": "./dist/server/rsc/RscProvider.mjs"
     },
+    "./server/rsc/refreshRsc": {
+      "types": "./dist/server/rsc/refreshRsc.d.ts",
+      "import": "./dist/server/rsc/refreshRsc.mjs"
+    },
+    "./server/rsc/useRscRefresh": {
+      "types": "./dist/server/rsc/useRscRefresh.d.ts",
+      "import": "./dist/server/rsc/useRscRefresh.mjs"
+    },
+    "./server/rsc/useRscSync": {
+      "types": "./dist/server/rsc/useRscSync.d.ts",
+      "import": "./dist/server/rsc/useRscSync.mjs"
+    },
     "./state": {
       "types": "./dist/state/index.d.ts",
       "import": "./dist/state/index.mjs"

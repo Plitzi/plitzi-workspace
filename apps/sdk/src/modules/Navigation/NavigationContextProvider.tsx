@@ -11,13 +11,7 @@ import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
-import type {
-  NavigationContextValue,
-  NavigationStatus,
-  RenderMode,
-  RouteParams,
-  SSRRenderResult
-} from '@plitzi/sdk-shared';
+import type { NavigationContextValue, NavigationStatus, RenderMode, RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 import type { PathMatch } from 'react-router-dom';
 
@@ -26,17 +20,18 @@ export type NavigationContextProviderProps = {
   renderMode?: RenderMode;
   currentPageId?: string;
   previewMode?: boolean;
-  ssrResult?: SSRRenderResult;
 };
 
 const NavigationContextProvider = ({
   children,
   renderMode = 'iframe',
   currentPageId: currentPageIdProp,
-  previewMode = true,
-  ssrResult
+  previewMode = true
 }: NavigationContextProviderProps) => {
   const { server } = use(NetworkContext);
+  // Written by reference during the SSR render and read back by the server to shape the response; undefined in the
+  // browser, where the page has already been sent.
+  const ssrResult = server.render?.ssrResult;
   const [[pageFolders, pageDefinitions]] = useBuilderStore(['schema.pageFolders', 'pageDefinitions']);
   const { queryParams, hostname, location } = useNavigation({ server });
   const pageDefinitionsRef = useRef(pageDefinitions);

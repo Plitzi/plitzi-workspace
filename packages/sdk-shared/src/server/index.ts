@@ -1,7 +1,7 @@
-import RscContext from './rsc/RscContext';
-import RscProvider from './rsc/RscProvider';
+import refreshRsc from './rsc/refreshRsc';
+import useRscRefresh from './rsc/useRscRefresh';
+import useRscSync from './rsc/useRscSync';
 
-export * from './rsc/RscContext';
-export * from './rsc/RscProvider';
+export * from './rsc/refreshRsc';
 
-export { RscContext, RscProvider };
+export { refreshRsc, useRscRefresh, useRscSync };

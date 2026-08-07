@@ -25,15 +25,18 @@ const Component = ({
   sdkDevToolsStylePath,
   debugMode = false
 }: ComponentProps) => {
+  // The response channel travels inside the server surface rather than as a prop of its own. Merged here, after
+  // `prepareRender` has already serialized `server` for the browser, so this render-only object never ships.
+  const serverWithResult = { ...server, render: { ...server.render, ssrResult } };
+
   return (
     <PlitziSdk
       environment={environment}
-      server={server}
+      server={serverWithResult}
       previewMode={previewMode}
       renderMode={renderMode}
       offlineMode={!!offlineData && Object.keys(offlineData).length > 0}
       offlineData={offlineData}
-      ssrResult={ssrResult}
       sdkDevToolsStylePath={sdkDevToolsStylePath}
       debugMode={debugMode}
     >

@@ -41,8 +41,7 @@ import type {
   OfflineDataRaw,
   RenderMode,
   Server,
-  RuntimeStateInstance,
-  SSRRenderResult
+  RuntimeStateInstance
 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
@@ -68,7 +67,6 @@ export type AppProps = {
   state?: Record<string, unknown>;
   onInitStateManager?: (instance: RuntimeStateInstance) => void;
   onInitEventBridge?: (instance: EventBridgeContextValue) => void;
-  ssrResult?: SSRRenderResult;
 };
 
 const components = {
@@ -193,7 +191,11 @@ const App = ({
         ...(debugMode
           ? [
               tracingMiddleware<SdkState>(),
-              historyMw<SdkState>({ shouldRecord: p => !p?.startsWith('runtime.elements') })
+              // Neither element UI state nor the server payload is document state: time-travelling `rsc` would
+              // replay a stale server response as if it were an edit.
+              historyMw<SdkState>({
+                shouldRecord: p => !p?.startsWith('runtime.elements') && !p?.startsWith('rsc')
+              })
             ]
           : [])
       ]}

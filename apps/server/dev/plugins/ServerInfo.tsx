@@ -18,13 +18,13 @@ type ServerData = {
 };
 
 const ServerInfo = () => {
-  const { serverData, elementData } = useRscData<ServerData | null>();
+  const { loaded, elementData } = useRscData<ServerData | null>();
 
   useEffect(() => {
     console.log('Should not be triggered');
   }, []);
 
-  if (!serverData) {
+  if (!loaded) {
     return (
       <RootElement style={card('gray')}>
         <div style={titleStyle('gray')}>🖥 Server Info — runtime: &quot;server&quot;</div>

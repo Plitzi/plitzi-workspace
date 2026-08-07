@@ -9,7 +9,7 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
-import RscProvider from '@plitzi/sdk-shared/server/rsc/RscProvider';
+import useRscSync from '@plitzi/sdk-shared/server/rsc/useRscSync';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 import { ThemeContext } from '@plitzi/sdk-shared/theme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
@@ -56,6 +56,7 @@ const Sdk = ({
   const { rootRef } = use(ContainerRootContext);
   const [[schemaSettings, styleCache, segments]] = useSdkStore(['schema.settings', 'style.cache', 'segments']);
   const [variables = emptyObject] = useSdkStore('runtime.sources.variables');
+  useRscSync(server?.render);
 
   const css = useMemo(() => {
     const segmentsCss = Object.values(segments).map(segment => segment.style.cache);
@@ -125,7 +126,7 @@ const Sdk = ({
   );
 
   return (
-    <RscProvider navigationKey={currentPageId} endpoint={server?.rscPath} rscData={server?.rscData}>
+    <>
       {(renderMode === 'raw' || renderMode === 'widget') && (
         <RawMode
           renderMode={renderMode}
@@ -155,7 +156,7 @@ const Sdk = ({
           ref={iframeRef}
         />
       )}
-    </RscProvider>
+    </>
   );
 };
 

@@ -45,7 +45,6 @@ import type {
   RenderMode,
   Server,
   RuntimeStateInstance,
-  SSRRenderResult,
   PlitziServiceContextValue as BasePlitziServiceContextValue
 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
@@ -135,7 +134,6 @@ export type PlitziSdkProps = {
   externalStyle?: string;
   sdkDevToolsStylePath?: string;
   state?: Record<string, unknown>;
-  ssrResult?: SSRRenderResult;
 };
 
 const PlitziSdk = ({
