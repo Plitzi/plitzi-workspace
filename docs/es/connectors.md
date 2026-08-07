@@ -243,7 +243,8 @@ modos**, elegidos en Settings con **Data Source** (`definition.runtime`):
    (`resolveRscData`) para decidir qué elementos resolver, y el elemento (`serverMode = runtime === 'server'`) para
    decidir qué leer. No hay "espera": `useRscData` siempre lee `RscContext` y re-renderiza cuando `serverData` cambia.
 2. **La forma del payload distingue los casos** (`ApiContainer.tsx:178-204`):
-   - `serverData === undefined` → RSC nunca cargó (builder o `schema.rsc.enabled` false) → **mock**.
+   - `serverData === undefined` → RSC nunca cargó (builder, render client-only o `schema.rsc.enabled` false) →
+     **mock**.
    - `serverData` es objeto pero el `id` no está → el payload **sí** llegó pero este elemento no resolvió
      (provider caído/mal configurado) → `emptyObject` + `hasError = true` (a propósito **no** mock: no se disfraza
      una caída de producción como contenido).
@@ -349,10 +350,12 @@ HTML y el cliente solo hace *hydrate*.
      plantilla de operador produce `filters[id][$eq]=123`.
    - Fetch al CMS → normaliza → `singleRecord` publica `{ record, pageInfo, isEmpty, ... }` → `projectSlice` lo
      recorta a los caminos que bindeaste.
-5. Ese slice entra en `serverData[elementId]` y se **incrusta en el HTML** como `server.rscData`.
-6. Cliente: `Sdk.tsx:128` hace `<RscProvider rscData={server?.rscData}>`, así que `serverData` existe **desde el
-   primer render**. El ApiContainer server encuentra `elementData` y pinta el post al instante — no hay fetch ni
-   estado de carga inicial.
+5. Ese slice entra en `serverData[elementId]` y se **incrusta en el HTML** como `server.rscData`. Junto a él viaja
+   `server.rscPath` (`buildServerInfo` → `resolveRscEndpoint`), que es cómo el cliente sabe que este origen tiene
+   endpoint RSC.
+6. Cliente: `Sdk.tsx:128` hace `<RscProvider endpoint={server?.rscPath} rscData={server?.rscData}>`, así que
+   `serverData` existe **desde el primer render**. El ApiContainer server encuentra `elementData` y pinta el post al
+   instante — no hay fetch ni estado de carga inicial.
 
 ### 7.3 Navegación posterior
 
@@ -367,6 +370,10 @@ resolución y el slice nuevo se **fusiona** en `serverData`.
   de un bloque "no encontrado" a `{{apiContainer_<idRef>.isEmpty}}`.
 - **Filtro sin resolver**: si `{{routeParams.id}}` no resuelve, `resolveFilters` marca `unresolved` y se devuelve una
   ventana vacía — mejor que devolver la colección entera.
+- **Render sin servidor** (embed client-only, builder, widget MCP): no hay `server.rscPath`, así que `RscProvider`
+  queda inerte — ni fetch a `/_rsc` (que sería un 404 contra el sitio anfitrión) ni congelado de los elementos
+  `runtime: 'server'` contra un HTML de servidor que nunca existió. El proveedor server cae a su mock, igual que en
+  el builder.
 - **Seguridad**: ni la URL del CMS ni la credencial bajan al navegador; el cliente solo ve el slice proyectado.
 
 ---
@@ -448,7 +455,8 @@ indexable).
 | Resolver (puente RSC) | `apps/server/src/modules/connectors/resolver.ts` |
 | Proyección del slice | `apps/server/src/modules/connectors/projection.ts` |
 | Resolución RSC | `apps/server/src/modules/rsc/resolveRscData.ts` |
-| Inyección de `rscData` en SSR | `apps/server/src/helpers/buildServerInfo.ts` |
+| Inyección de `rscData` + `rscPath` en SSR | `apps/server/src/helpers/buildServerInfo.ts` |
+| Publicación del endpoint RSC | `apps/server/src/core/services/resolve.ts` (`resolveRscEndpoint`) |
 | Matcher de rutas (cliente/servidor) | `packages/sdk-shared/src/navigation/matchPath.ts` + `routes.ts` |
 | Endpoint `/_rsc` | `apps/server/src/modules/rsc/handler.ts` |
 | Endpoint `/_action` | `apps/server/src/modules/actions/handler.ts` |
@@ -474,3 +482,5 @@ indexable).
 - **Proyección** → el servidor solo envía lo que la página bindea.
 - **`/_action`** → el navegador nombra un *elemento*, nunca una URL ni una credencial; el servidor decide.
 - **`/_rsc`** → el refresco cliente viaja con `?location=` para que el servidor sepa en qué página está el visitante.
+- **`server.rscPath`** → lo publica el servidor que renderizó la página; sin él no hay RSC en ese render, por muy
+  `enabled` que esté el schema.

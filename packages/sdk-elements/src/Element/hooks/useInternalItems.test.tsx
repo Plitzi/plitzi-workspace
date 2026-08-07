@@ -4,6 +4,7 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import RscContext from '@plitzi/sdk-shared/server/rsc/RscContext';
 
 import useInternalItems from './useInternalItems';
 
@@ -44,15 +45,19 @@ type Props = Parameters<typeof useInternalItems>[0];
 
 const Harness = (props: Props) => createElement('div', { 'data-testid': 'out' }, useInternalItems(props));
 
-const renderItems = (props: Props, storeValue: Record<string, unknown>) =>
+const renderItems = (props: Props, storeValue: Record<string, unknown>, rscEnabled = false) =>
   render(
     createElement(
       StoreProvider,
       { value: storeValue },
       createElement(
-        ComponentContext,
-        { value: { components: { current: {} } } as unknown as ComponentContextValue },
-        createElement(Harness, props)
+        RscContext,
+        { value: { enabled: rscEnabled } },
+        createElement(
+          ComponentContext,
+          { value: { components: { current: {} } } as unknown as ComponentContextValue },
+          createElement(Harness, props)
+        )
       )
     )
   );
@@ -94,17 +99,29 @@ describe('useInternalItems', () => {
   it('freezes a server-runtime item as a static shell in preview on the client', () => {
     const { container } = renderItems(
       { id: 'host', definition: def(['s']), children: undefined, previewMode: true },
-      { schema: { flat: { s: el('s', 'text', 'server') }, rsc: { enabled: true } } }
+      { schema: { flat: { s: el('s', 'text', 'server') }, rsc: { enabled: true } } },
+      true
     );
 
     expect(container.querySelector('[data-static-shell="s"]')).not.toBeNull();
     expect(container.querySelector('[data-plugin]')).toBeNull();
   });
 
+  it('mounts a server-runtime item as a plugin when RSC is not live for this render', () => {
+    const { container } = renderItems(
+      { id: 'host', definition: def(['s']), children: undefined, previewMode: true },
+      { schema: { flat: { s: el('s', 'text', 'server') }, rsc: { enabled: true } } }
+    );
+
+    expect(container.querySelector('[data-static-shell]')).toBeNull();
+    expect(container.querySelector('[data-plugin="text"]')).not.toBeNull();
+  });
+
   it('keeps a client-runtime item mounted (not frozen) in preview on the client', () => {
     const { container } = renderItems(
       { id: 'host', definition: def(['c']), children: undefined, previewMode: true },
-      { schema: { flat: { c: el('c', 'text', 'client') }, rsc: { enabled: true } } }
+      { schema: { flat: { c: el('c', 'text', 'client') }, rsc: { enabled: true } } },
+      true
     );
 
     expect(container.querySelector('[data-static-shell]')).toBeNull();

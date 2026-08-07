@@ -10,8 +10,6 @@ export type SchemaRsc = {
   enabled?: boolean;
   /** Wire protocol for RSC updates. 'json' is the default (data-only). 'stream' uses the RSC wire format (requires react-server condition). */
   transport?: 'json' | 'stream';
-  /** Path for the RSC endpoint. Defaults to '/_rsc'. */
-  path?: string;
 };
 
 // FlatMap

@@ -21,6 +21,9 @@ export type Server<T extends Record<string, unknown> = Record<string, unknown>> 
     accessToken?: string | Promise<string>;
   };
   rscData?: SSRRscData;
+  /** Path where this origin answers RSC refreshes. Published only by a server that actually mounts the endpoint, so
+   *  its absence is what tells a client-only render (embed, builder, offline widget) not to fetch. */
+  rscPath?: string;
 } & T;
 
 export type RenderMode = 'raw' | 'iframe' | 'shadow' | 'widget';

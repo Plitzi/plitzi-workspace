@@ -354,6 +354,26 @@
       "types": "./dist/elements/basic/Paragraph/index.d.ts",
       "import": "./dist/elements/basic/Paragraph/index.mjs"
     },
+    "./elements/basic/RichText": {
+      "types": "./dist/elements/basic/RichText/index.d.ts",
+      "import": "./dist/elements/basic/RichText/index.mjs"
+    },
+    "./elements/basic/RichText/RichText": {
+      "types": "./dist/elements/basic/RichText/RichText.d.ts",
+      "import": "./dist/elements/basic/RichText/RichText.mjs"
+    },
+    "./elements/basic/RichText/Settings": {
+      "types": "./dist/elements/basic/RichText/Settings.d.ts",
+      "import": "./dist/elements/basic/RichText/Settings.mjs"
+    },
+    "./elements/basic/RichText/index": {
+      "types": "./dist/elements/basic/RichText/index.d.ts",
+      "import": "./dist/elements/basic/RichText/index.mjs"
+    },
+    "./elements/basic/RichText/sanitizeHtml": {
+      "types": "./dist/elements/basic/RichText/sanitizeHtml.d.ts",
+      "import": "./dist/elements/basic/RichText/sanitizeHtml.mjs"
+    },
     "./elements/basic/Text": {
       "types": "./dist/elements/basic/Text/index.d.ts",
       "import": "./dist/elements/basic/Text/index.mjs"
@@ -554,9 +574,29 @@
       "types": "./dist/elements/provider/ApiContainer/Settings.d.ts",
       "import": "./dist/elements/provider/ApiContainer/Settings.mjs"
     },
+    "./elements/provider/ApiContainer/components/FiltersInput": {
+      "types": "./dist/elements/provider/ApiContainer/components/FiltersInput/index.d.ts",
+      "import": "./dist/elements/provider/ApiContainer/components/FiltersInput/index.mjs"
+    },
+    "./elements/provider/ApiContainer/components/FiltersInput/FiltersInput": {
+      "types": "./dist/elements/provider/ApiContainer/components/FiltersInput/FiltersInput.d.ts",
+      "import": "./dist/elements/provider/ApiContainer/components/FiltersInput/FiltersInput.mjs"
+    },
+    "./elements/provider/ApiContainer/components/FiltersInput/index": {
+      "types": "./dist/elements/provider/ApiContainer/components/FiltersInput/index.d.ts",
+      "import": "./dist/elements/provider/ApiContainer/components/FiltersInput/index.mjs"
+    },
     "./elements/provider/ApiContainer/hooks/useApi": {
       "types": "./dist/elements/provider/ApiContainer/hooks/useApi.d.ts",
       "import": "./dist/elements/provider/ApiContainer/hooks/useApi.mjs"
+    },
+    "./elements/provider/ApiContainer/hooks/useProviderPagination": {
+      "types": "./dist/elements/provider/ApiContainer/hooks/useProviderPagination.d.ts",
+      "import": "./dist/elements/provider/ApiContainer/hooks/useProviderPagination.mjs"
+    },
+    "./elements/provider/ApiContainer/hooks/useProviderWrite": {
+      "types": "./dist/elements/provider/ApiContainer/hooks/useProviderWrite.d.ts",
+      "import": "./dist/elements/provider/ApiContainer/hooks/useProviderWrite.mjs"
     },
     "./elements/provider/ApiContainer/index": {
       "types": "./dist/elements/provider/ApiContainer/index.d.ts",
@@ -685,6 +725,26 @@
     "./elements/structure/ModalContainer/index": {
       "types": "./dist/elements/structure/ModalContainer/index.d.ts",
       "import": "./dist/elements/structure/ModalContainer/index.mjs"
+    },
+    "./elements/structure/Pagination": {
+      "types": "./dist/elements/structure/Pagination/index.d.ts",
+      "import": "./dist/elements/structure/Pagination/index.mjs"
+    },
+    "./elements/structure/Pagination/Pagination": {
+      "types": "./dist/elements/structure/Pagination/Pagination.d.ts",
+      "import": "./dist/elements/structure/Pagination/Pagination.mjs"
+    },
+    "./elements/structure/Pagination/Settings": {
+      "types": "./dist/elements/structure/Pagination/Settings.d.ts",
+      "import": "./dist/elements/structure/Pagination/Settings.mjs"
+    },
+    "./elements/structure/Pagination/buildPageWindow": {
+      "types": "./dist/elements/structure/Pagination/buildPageWindow.d.ts",
+      "import": "./dist/elements/structure/Pagination/buildPageWindow.mjs"
+    },
+    "./elements/structure/Pagination/index": {
+      "types": "./dist/elements/structure/Pagination/index.d.ts",
+      "import": "./dist/elements/structure/Pagination/index.mjs"
     },
     "./elements/structure/TabContainer": {
       "types": "./dist/elements/structure/TabContainer/index.d.ts",

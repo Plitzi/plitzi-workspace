@@ -3,7 +3,7 @@ import { createContext } from 'react';
 import type { SSRRscData } from '../../types';
 
 export type RscContextValue = {
-  /** Whether RSC is enabled for the current schema. */
+  /** Whether RSC is live for this render: the schema asks for it AND a server on this origin answers it. */
   enabled: boolean;
   /** Global server-side data returned by getRscData. */
   serverData?: SSRRscData['serverData'];

@@ -11,22 +11,24 @@ export type RscProviderProps = {
   children: ReactNode;
   /** Initial RSC Data in SSR mode */
   rscData?: SSRRscData;
-  /** Override the RSC endpoint path. Falls back to schema.rsc.path then '/_rsc'. */
-  rscPath?: string;
+  /** Path where the server that rendered this document answers RSC refreshes (`server.rscPath`). */
+  endpoint?: string;
   /** Change this value on SPA navigation to trigger an RSC re-fetch (e.g. pass currentPageId). */
   navigationKey?: string;
 };
 
-const RscProvider = ({ children, rscPath: rscPathProp, rscData, navigationKey }: RscProviderProps) => {
+const RscProvider = ({ children, endpoint, rscData, navigationKey }: RscProviderProps) => {
   const [schemaRsc] = useCommonStore('schema.rsc', { mode: 'mount' });
   const [rscState, setRscState] = useState<SSRRscData>(rscData ?? {});
 
-  const enabled = schemaRsc?.enabled ?? false;
-  const endpointPath = rscPathProp ?? schemaRsc?.path ?? '/_rsc';
+  // A schema asks for RSC, but only a server can answer it: an embed, the builder or an offline widget renders on an
+  // origin that has no such endpoint, so without this the schema flag alone would fetch a guaranteed 404 on every
+  // mount and navigation — and freeze every server element against server HTML that was never rendered.
+  const enabled = (schemaRsc?.enabled ?? false) && !!endpoint;
 
   const fetchRsc = useCallback(
     async (ids?: string[], params?: Record<string, string>) => {
-      if (!enabled || typeof window === 'undefined') {
+      if (!enabled || !endpoint || typeof window === 'undefined') {
         return;
       }
 
@@ -39,7 +41,7 @@ const RscProvider = ({ children, rscPath: rscPathProp, rscData, navigationKey }:
         }
 
         Object.entries(params ?? {}).forEach(([key, value]) => search.set(key, value));
-        const res = await fetch(`${endpointPath}?${search.toString()}`, { headers: { Accept: 'application/json' } });
+        const res = await fetch(`${endpoint}?${search.toString()}`, { headers: { Accept: 'application/json' } });
         if (!res.ok) {
           return;
         }
@@ -56,7 +58,7 @@ const RscProvider = ({ children, rscPath: rscPathProp, rscData, navigationKey }:
         // Network errors are silently ignored — RSC data is supplemental.
       }
     },
-    [enabled, endpointPath]
+    [enabled, endpoint]
   );
 
   // Fetch on mount and on every SPA navigation (navigationKey change).

@@ -3,6 +3,7 @@ import { isValidElement, use, useMemo, useRef, useSyncExternalStore } from 'reac
 
 import { usePlitziServiceContext } from '@plitzi/sdk-shared';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import RscContext from '@plitzi/sdk-shared/server/rsc/RscContext';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import pluginSelector from '../helpers/pluginSelector';
@@ -30,7 +31,10 @@ const useInternalItems = ({
   children: ReactNode | ReactNode[];
   previewMode?: boolean;
 }) => {
-  const [[flat, rscEnabled]] = useCommonStore(['schema.flat', 'schema.rsc.enabled'], { mode: 'mount' });
+  const [flat] = useCommonStore('schema.flat', { mode: 'mount' });
+  // From the context, not from `schema.rsc.enabled`: the schema flag alone is also true on a client-only render,
+  // where there is no server HTML to freeze a server element against and it would be dropped altogether.
+  const { enabled: rscEnabled } = use(RscContext);
   const { components } = use(ComponentContext);
   const {
     contexts: { PluginsContext }

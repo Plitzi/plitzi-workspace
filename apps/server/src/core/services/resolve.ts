@@ -13,3 +13,13 @@ export const resolveServices = (config: SSRServerConfig): ResolvedServices => {
     rsc: services.rsc ?? !!config.adapters.getRscData
   };
 };
+
+// Where this server answers RSC refreshes, or undefined when it answers none. The client is told which of the two it
+// is (`server.rscPath`), so a page rendered off any other origin never fetches an endpoint that is not there.
+export const resolveRscEndpoint = (config: SSRServerConfig): string | undefined => {
+  if (!resolveServices(config).rsc || !(config.rsc?.enabled ?? true) || !config.adapters.getRscData) {
+    return undefined;
+  }
+
+  return config.rsc?.path ?? '/_rsc';
+};

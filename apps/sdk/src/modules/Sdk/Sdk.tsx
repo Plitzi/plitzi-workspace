@@ -125,7 +125,7 @@ const Sdk = ({
   );
 
   return (
-    <RscProvider navigationKey={currentPageId} rscData={server?.rscData}>
+    <RscProvider navigationKey={currentPageId} endpoint={server?.rscPath} rscData={server?.rscData}>
       {(renderMode === 'raw' || renderMode === 'widget') && (
         <RawMode
           renderMode={renderMode}
