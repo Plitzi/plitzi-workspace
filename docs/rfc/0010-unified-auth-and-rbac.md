@@ -153,6 +153,18 @@ authority.** Neither alone is enough for a write.
 | `render` | Every space (the `isDefault` row) | Read published schema/style/segments; SSR preview; analytics ingest; subscribe to its own space | **Yes** — embedded in sites |
 | `agent` | MCP OAuth clients, after a member consents | Everything `render` may, plus MCP writes, bounded by the granting member's space role | No |
 
+**A `render` token does not expire, deliberately.** It is embedded in a published site — often a
+SPA deployed once and left alone — so an expiry is a scheduled outage: the site breaks weeks
+later with nobody having touched anything. What the deadline buys is close to nothing, because
+the token is public by construction; anyone who wanted it had it long before. What actually
+limits it is what it may do (read published content), where it may be presented (§4.3.2), and
+the row behind it. Revocation, not expiry, is the control: `POST /spaces/:id/token/rotate`
+replaces it and the previous one dies that instant — after which every site embedding it must
+be redeployed, which is exactly why this is an act rather than a timer.
+
+An `agent` grant keeps its ~30-day lifetime: it writes, it is held by a third-party host, and
+OAuth hosts renew on `expires_in`.
+
 An `agent` token is **bound to the granting user**: the `space_token` row stores `user_id`.
 Its authority is computed from that user's live membership on every request, so losing access
 to the space revokes every agent token they authorized (T6). `oauthAdapters` already
@@ -352,6 +364,23 @@ gets to paint.
 
 The server-wide `frameOptions` default cannot answer this — one static list cannot know which sites a given
 space's owner allowed — so the per-space policy overrides it once the deployment resolves.
+
+### 4.6.3 Self-hosting
+
+A customer can run `sdk-server` and the SDK on their own infrastructure, with their own MySQL,
+Mongo and Redis, and render their space from it. Nothing in the model changes shape — scopes,
+domain binding, RBAC and framing are properties of the code, not of who deployed it. What
+changes is **who issues**: their deployment has its own `JWT_ACCESS_TOKEN_SECRET` and its own
+`JWT_DEFAULT_ISSUER`, so it is its own credential universe. Nothing minted on either side
+verifies on the other, by the same mechanism that keeps dev out of production (§4.3.1).
+
+A self-hosted deployment is therefore not a *client* of the hosted platform; it **is** a
+platform, with its own accounts, spaces and tokens. The only thing that crosses the boundary is
+the space's content, carried by a deploy.
+
+Such a deployment must set, at minimum: its own secret and issuer, plus
+`JWT_DEFAULT_ALLOWED_ORIGIN` and `SSR_DEFAULT_DOMAINS_ALLOWED` naming its own hosts — those are
+the platform floor for both domain binding and framing.
 
 ### 4.7 Sessions and cookies
 
