@@ -22,7 +22,9 @@ const write = (data: OfflineDataRaw): void => writeFileSync(workingCopy, JSON.st
 const adapters: SSRAdapters = {
   getOfflineData: () => Promise.resolve(read()),
   getSpaceDeployment: () => Promise.resolve({ spaceId: 1, environment: 'main', revision: 0, pluginNames: [] }),
-  getSpaceId: () => Promise.resolve(1),
+  // The authorization boundary: which space, and whether this caller may change it. Normally decoded from a
+  // verified bearer; every caller getting write access to space 1 is fine for an example and nowhere else.
+  getGrant: () => Promise.resolve({ spaceId: 1, scope: 'agent', canWrite: true }),
   getSchema: () => Promise.resolve(read().schema),
   getStyle: () => Promise.resolve(read().style as Style),
   saveSchema: (_s, _e, schema: Schema) => {

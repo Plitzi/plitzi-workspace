@@ -21,13 +21,15 @@ const write = (data: OfflineDataRaw): void => writeFileSync(workingCopy, JSON.st
 /** What an MCP deployment has to supply. Two things make it different from the page-server adapters:
  *
  *  - schema and style are read and written as SEPARATE documents, because the tools edit them independently;
- *  - `getSpaceId` decides which space the caller is allowed to touch. It normally decodes a verified bearer,
- *    which is why the JWT secret stays on your side and this server can be stateless. Here every caller gets
- *    space 1, which is exactly what you must NOT ship. */
+ *  - `getGrant` is the authorization boundary. It answers which space the caller may touch and whether they may
+ *    change it, normally by decoding a verified bearer — which is why the JWT secret stays on your side and this
+ *    server can be stateless. `canWrite` is yours to decide: the MCP refuses every write tool without it and
+ *    never infers it from the token. Here every caller gets space 1 with write access, which is exactly what you
+ *    must NOT ship. */
 const adapters: SSRAdapters = {
   getOfflineData: () => Promise.resolve(read()),
   getSpaceDeployment: () => Promise.resolve({ spaceId: 1, environment: 'main', revision: 0, pluginNames: [] }),
-  getSpaceId: () => Promise.resolve(1),
+  getGrant: () => Promise.resolve({ spaceId: 1, scope: 'agent', canWrite: true }),
   getSchema: () => Promise.resolve(read().schema),
   getStyle: () => Promise.resolve(read().style as Style),
   saveSchema: (_spaceId, _environment, schema: Schema) => {

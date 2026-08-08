@@ -26,7 +26,7 @@ import { createServer } from '@plitzi/sdk-mcp/server';
 
 const server = createServer({
   httpVersion: 1,
-  adapters: { getSpaceId, getSchema, getStyle, saveSchema, saveStyle }
+  adapters: { getGrant, getSchema, getStyle, saveSchema, saveStyle }
 });
 
 server.listen(8891);
@@ -64,7 +64,7 @@ The server is stateless: it resolves the space per request and reads and writes 
 
 | Adapter | Required | Purpose |
 |---|---|---|
-| `getSpaceId(req)` | yes | The space this request operates on, decoded from the verified `Authorization` bearer. You own the JWT secret, so it is decoded on your side. |
+| `getGrant(req)` | yes | The space this request operates on **and whether the caller may change it** (`{ spaceId, scope, userId?, canWrite }`), decoded from the verified `Authorization` bearer. You own the JWT secret and the authorization model, so both are decided on your side. Return `undefined` for a missing or invalid token. |
 | `getSchema(spaceId, env)` | yes | The element schema the tools read and mutate. |
 | `getStyle(spaceId, env)` | yes | The full style document, including `platform`/`mode`. |
 | `saveSchema(spaceId, env, schema)` | for writes | Persist a mutated schema. Without it, `plitzi_apply` reports `persisted: false`. |
@@ -74,8 +74,9 @@ The server is stateless: it resolves the space per request and reads and writes 
 Schema and style are read as **separate documents** on purpose: `getOfflineData` is SSR-shaped and strips
 `style.platform`, which the style resources need.
 
-Without a `getSpaceId` that resolves, the server still answers its public surface — the handshake, the tool list,
-the guide, the CSS-property catalog — and asks for a space only when a tool or resource needs one.
+Without a `getGrant` that resolves, the server still answers its public surface — the handshake, the tool list,
+the guide, the CSS-property catalog — and asks for a space only when a tool or resource needs one. A grant that
+resolves with `canWrite: false` reads everything and is refused at every write tool.
 
 ## Tools
 
