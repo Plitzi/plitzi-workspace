@@ -4,6 +4,7 @@ Guías para trabajar con el monorepo `plitzi-workspace`.
 
 | Guía | Descripción |
 |------|-------------|
+| [Onboarding](./onboarding.md) | **Empieza aquí.** El mapa: qué existe, cómo encajan los repositorios y cómo levantar el stack completo |
 | [Primeros pasos](./getting-started.md) | Clonar, instalar dependencias y ejecutar las apps |
 | [Configuración local](./local-setup.md) | Servidores dev para contribuidores; hosts/HTTPS local opcional para maintainers |
 | [Estructura del repositorio](./repository-structure.md) | Organización de apps y paquetes |
