@@ -62,7 +62,10 @@ const credentialOf = (req: SSRRequest): string =>
 const adapters = {
   getOfflineData: () => Promise.resolve(undefined),
   getSpaceDeployment: () => Promise.resolve({ spaceId: 1, environment: 'main', revision: 0 }),
-  getSpaceId: (req: SSRRequest) => Promise.resolve(credentialOf(req) === PLATFORM_TOKEN ? 1 : undefined)
+  getGrant: (req: SSRRequest) =>
+    Promise.resolve(
+      credentialOf(req) === PLATFORM_TOKEN ? { spaceId: 1, scope: 'agent' as const, canWrite: true } : undefined
+    )
 } as unknown as SSRAdapters;
 
 const memoryStore = (): OAuthStore => {

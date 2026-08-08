@@ -149,7 +149,7 @@ const challengeReason = async (
     if (record) {
       // The bearer the host holds is this server's handle for the grant; what everything downstream expects is the
       // credential the consumer issued. Swapped onto the request here — the one place that knows the mapping — so
-      // `adapters.getSpaceId` keeps reading a request exactly as it always has, whoever the caller is. A record from
+      // `adapters.getGrant` keeps reading a request exactly as it always has, whoever the caller is. A record from
       // before the split carries no credential because the bearer was one (see AccessRecord).
       const credential = record.credential ?? token;
       ctx.req.headers['x-access-token'] = credential;
@@ -162,7 +162,7 @@ const challengeReason = async (
   }
 
   try {
-    return (await ctx.config.adapters.getSpaceId?.(ctx.req)) === undefined ? 'unknown-credential' : undefined;
+    return (await ctx.config.adapters.getGrant?.(ctx.req)) === undefined ? 'unknown-credential' : undefined;
   } catch {
     return 'adapter-failed';
   }

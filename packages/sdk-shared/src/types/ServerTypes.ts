@@ -110,6 +110,20 @@ export type SSRPlugin = {
   props: Record<string, unknown>;
 };
 
+/** What a space token is worth. `render` is the public credential every published site embeds — it is readable
+ *  by anyone who views the page, so it may only read. `agent` is the delegated grant an MCP connector receives
+ *  after a member consents, and is the only bearer that may write without a session behind it. */
+export type SpaceScope = 'render' | 'agent';
+
+/** A resolved space token: which space, what the bearer may do, and (for `agent`) the member who consented.
+ *  `canWrite` is computed by the consumer from its own authorization model — the MCP never derives it. */
+export type SSRGrant = {
+  spaceId: number;
+  scope: SpaceScope;
+  userId?: number;
+  canWrite: boolean;
+};
+
 export type SSRUser = {
   token: string; // e.g. JWT or opaque token from auth provider
   id: number;
@@ -121,6 +135,11 @@ export type SSRUser = {
 };
 
 export type SSRSpaceDeployment = {
+  /** Who may put this space in an iframe, as CSP `frame-ancestors` sources (e.g. `'self'`, `https://acme.com`,
+   *  or `*`). Resolved per space by the consumer, because only it knows the domains that space declares — a
+   *  published space must not be framable from a site its owner never allowed. Omitted → the server's own
+   *  `frameOptions` default stands. */
+  frameAncestors?: string[];
   environment?: Environment;
   credential?: SSRCredential;
   spaceId?: number | null;
@@ -177,10 +196,12 @@ export type SSRAdapters = {
    *  (notably `style.cache`) before storing. When omitted, mcp-ai runs read/preview/validate only and
    *  `apply` reports `persisted: false`. */
   saveOfflineData?: (spaceId: number, environment: string, data: OfflineDataRaw) => Promise<void>;
-  /** Resolve the spaceId the MCP request operates on, from the verified `Authorization` bearer. The consumer
-   *  owns the JWT secret, so it decodes here; the MCP service stays stateless. Returns undefined when the
-   *  token is missing or invalid. Required for the `mcp` service to serve any request. */
-  getSpaceId?: (req: SSRRequest) => Promise<number | undefined>;
+  /** Resolve the grant the MCP request operates under, from the verified `Authorization` bearer. The consumer
+   *  owns the JWT secret and the authorization model, so it decides here; the MCP service stays stateless.
+   *  Returns undefined when the token is missing or invalid. Required for the `mcp` service to serve any
+   *  request. `canWrite` is what separates a read-only bearer from one that may change the space — the MCP
+   *  refuses every write tool without it, and never infers the answer from the token itself. */
+  getGrant?: (req: SSRRequest) => Promise<SSRGrant | undefined>;
   /** Read the element schema for the MCP tools. Separate from `getOfflineData` (which is SSR/RSC shaped and
    *  strips `style.platform`); the MCP style resource needs the full documents, so schema and style split. */
   getSchema?: (spaceId: number, environment: Environment) => Promise<Schema | undefined>;
@@ -493,7 +514,7 @@ export type OAuthGrantTarget = {
 
 /** What the OAuth layer cannot resolve on its own: who the user is, what they may grant, and the bearer to mint
  *  for them. The SDK owns the protocol (discovery, registration, PKCE, code exchange); the consumer owns identity
- *  and issues a token its own `adapters.getSpaceId` will accept back. */
+ *  and issues a token its own `adapters.getGrant` will accept back. */
 export type OAuthAdapters = {
   /** Verify the credentials typed into the consent screen. Return undefined to re-show the form with an error —
    *  never throw for a wrong password. */

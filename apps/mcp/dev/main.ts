@@ -26,7 +26,7 @@ const readStyle = (): Style => JSON.parse(readFileSync(stylePath(), 'utf-8')) as
 
 // mcp-ai reads and writes schema and style as separate documents (see SSRAdapters). These file-backed adapters
 // always resolve spaceId=1, and writes land back in the sample space — git-restore it to reset a session.
-const getSpaceId = (): Promise<number> => Promise.resolve(1);
+const getGrant = () => Promise.resolve({ spaceId: 1, scope: 'agent' as const, canWrite: true });
 const getSchema = (): Promise<Schema> => Promise.resolve(readSchema());
 const getStyle = (): Promise<Style> => Promise.resolve(readStyle());
 const saveSchema = (_spaceId: number, _environment: string, schema: Schema): Promise<void> => {
@@ -49,7 +49,7 @@ const getSpaceDeployment = (): Promise<SSRSpaceDeployment> =>
 const adapters: SSRAdapters = {
   getOfflineData,
   getSpaceDeployment,
-  getSpaceId,
+  getGrant,
   getSchema,
   getStyle,
   saveSchema,

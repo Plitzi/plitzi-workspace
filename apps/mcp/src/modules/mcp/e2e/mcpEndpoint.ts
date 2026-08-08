@@ -68,7 +68,12 @@ const listen = (server: Server): Promise<number> =>
 /** Start the endpoint and connect a real MCP client to it, as a remote connector does. */
 export const startMcpEndpoint = async ({ spaceId, renderStreaming }: McpEndpointOptions = {}): Promise<McpEndpoint> => {
   const adapters: SSRAdapters =
-    spaceId === undefined ? publicAdapters : { ...publicAdapters, getSpaceId: () => Promise.resolve(spaceId) };
+    spaceId === undefined
+      ? publicAdapters
+      : {
+          ...publicAdapters,
+          getGrant: () => Promise.resolve({ spaceId, scope: 'agent' as const, canWrite: true })
+        };
   const server = createServer((raw, res) => {
     void handleMcp(raw, res, toSsrRequest(raw), adapters, { renderStreaming });
   });

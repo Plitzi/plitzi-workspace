@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { noSpaceError, unauthorizedSpaceMessage } from '../helpers';
+import { noSpaceErrorCode, unauthorizedSpaceMessage } from '../helpers';
 import {
   RENDER_GUIDE_URI,
   RENDER_TYPES_URI,
@@ -53,7 +53,7 @@ export const readPublic = (input: ReadInput, env: Env): ReadResponse => ({
       return { uri, stateVersion: found.stateVersion, data: found.data };
     }
 
-    return { uri, error: noSpaceError, message: unauthorizedSpaceMessage, hint: publicHint };
+    return { uri, error: noSpaceErrorCode, message: unauthorizedSpaceMessage, hint: publicHint };
   })
 });
 

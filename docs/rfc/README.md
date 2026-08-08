@@ -14,6 +14,7 @@ for discussion and is **not implemented** yet.
 | [0002](./0002-ai-schema-comprehension-and-improvement.md) | AI schema comprehension and improvement | Proposal | `sdk-schema`, `sdk-elements`, MCP/AI toolset |
 | [0008](./0008-data-providers-and-collections-removal.md) | Data providers, RSC connectors, and Collections removal | Implemented | `sdk-shared`, `sdk-elements`, `sdk-interactions`, builder, `apps/server`, `plitzi-sdk-server` |
 | [0009](./0009-cms-presentation-elements.md) | CMS presentation elements | Implemented | `sdk-elements`, `sdk-shared`, `apps/server`, builder, `plitzi-sdk-server` |
+| [0010](./0010-unified-auth-and-rbac.md) | Unified auth kernel, scoped tokens, and space RBAC | Implemented | `plitzi-sdk-server`, `apps/server`, `apps/mcp`, builder, `sdk-shared` |
 
 ## Conventions
 

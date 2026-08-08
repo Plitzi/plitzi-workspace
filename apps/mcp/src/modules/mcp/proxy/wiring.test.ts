@@ -53,7 +53,7 @@ const startServer = (port: number, tools?: string[]): Deployment => {
   const adapters = {
     getOfflineData: () => Promise.resolve(undefined),
     getSpaceDeployment: () => Promise.resolve({ spaceId: 1, environment: 'main', revision: 0 }),
-    getSpaceId: () => Promise.resolve(1),
+    getGrant: () => Promise.resolve({ spaceId: 1, scope: 'agent' as const, canWrite: true }),
     getSchema: () => Promise.resolve(structuredClone(stored.schema)),
     getStyle: () => Promise.resolve(structuredClone(stored.style)),
     saveSchema: (_id: number, _env: string, schema: Schema) => {

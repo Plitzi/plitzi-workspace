@@ -6,8 +6,10 @@ import {
   createMcpLog,
   emptySpace,
   emptySpaceMessage,
-  noSpaceError,
+  noSpaceErrorCode,
   NoSpaceError,
+  readOnlyGrantErrorCode,
+  ReadOnlyGrantError,
   serverInstructions,
   widgetsOnlyInstructions
 } from './helpers';
@@ -21,7 +23,7 @@ import type { ResourceProxy } from './proxy';
 import type { Persisters, ToolContext, ToolDef } from './tools';
 import type { PreviewClient, ScreenshotClient } from './types';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { SSRAdapters, Environment, ServerLogger } from '@plitzi/sdk-shared';
+import type { SSRAdapters, Environment, ServerLogger, SSRGrant } from '@plitzi/sdk-shared';
 
 /** The MCP service is stateless: every request resolves its own `spaceId` (from the request JWT) and reads the
  *  space fresh through the adapters — schema and style are two documents, read/written independently. The spaceId
@@ -31,7 +33,7 @@ import type { SSRAdapters, Environment, ServerLogger } from '@plitzi/sdk-shared'
  *  touch the store. */
 export interface McpServerContext {
   adapters: SSRAdapters;
-  getSpaceId: () => Promise<number | undefined>;
+  getGrant: () => Promise<SSRGrant | undefined>;
   /** How the visual-preview tools (plitzi_preview / plitzi_screenshot) reach the renderer. Absent → those tools
    *  report PREVIEW_UNAVAILABLE, so an MCP-only deployment without a renderer still runs every other tool. */
   preview?: PreviewClient;
@@ -57,7 +59,7 @@ const asText = (data: unknown): CallToolResult => ({ content: [{ type: 'text', t
 
 export const createMcpServer = async ({
   adapters,
-  getSpaceId,
+  getGrant,
   preview,
   screenshot,
   logger,
@@ -67,7 +69,8 @@ export const createMcpServer = async ({
   const log = createMcpLog(logger);
   // What this connection reaches, resolved once for the whole request. A token that cannot be verified is not an
   // error here — it is simply a connection with no space, which is a supported way to use this server.
-  const spaceId = await getSpaceId().catch(() => undefined);
+  const grant = await getGrant().catch(() => undefined);
+  const spaceId = grant?.spaceId;
   const hasSpace = spaceId !== undefined;
   const requireSpaceId = (): number => {
     if (spaceId === undefined) {
@@ -75,6 +78,18 @@ export const createMcpServer = async ({
     }
 
     return spaceId;
+  };
+
+  // Reading a space and changing it are different privileges, and the difference is not one this server may
+  // infer: the credential a published site embeds names a space perfectly well, so every read succeeds under it.
+  // The consumer decides (`grant.canWrite`); this only refuses.
+  const requireWritableSpaceId = (): number => {
+    const id = requireSpaceId();
+    if (!grant?.canWrite) {
+      throw new ReadOnlyGrantError();
+    }
+
+    return id;
   };
 
   const loadSpace = async (): Promise<Space> => {
@@ -95,12 +110,14 @@ export const createMcpServer = async ({
     return { schema, style, catalog, connectors: connectors ?? [] };
   };
 
+  // Every write in the server funnels through these four, which is why the check lives here rather than in each
+  // tool: a tool that forgot to ask is the bug this arrangement makes impossible.
   const { saveSchema, saveStyle, saveConnector, deleteConnector } = adapters;
   const persisters: Persisters = {
-    schema: saveSchema ? schema => saveSchema(requireSpaceId(), MCP_ENV, schema) : undefined,
-    style: saveStyle ? style => saveStyle(requireSpaceId(), MCP_ENV, style) : undefined,
-    saveConnector: saveConnector ? entry => saveConnector(requireSpaceId(), entry) : undefined,
-    deleteConnector: deleteConnector ? id => deleteConnector(requireSpaceId(), id) : undefined
+    schema: saveSchema ? schema => saveSchema(requireWritableSpaceId(), MCP_ENV, schema) : undefined,
+    style: saveStyle ? style => saveStyle(requireWritableSpaceId(), MCP_ENV, style) : undefined,
+    saveConnector: saveConnector ? entry => saveConnector(requireWritableSpaceId(), entry) : undefined,
+    deleteConnector: deleteConnector ? id => deleteConnector(requireWritableSpaceId(), id) : undefined
   };
 
   // Load the space at most once per request, and only on first read/write — never for the handshake.
@@ -180,7 +197,12 @@ export const createMcpServer = async ({
         // to this server", which tells the user their integration is broken when it is merely a guest grant. Said
         // as a plain result instead, so the agent reads it and the user is not misled.
         if (error instanceof NoSpaceError) {
-          return asText({ error: noSpaceError, message: error.message });
+          return asText({ error: noSpaceErrorCode, message: error.message });
+        }
+
+        // Same reasoning: a read-only bearer is a state of the connection, not a broken server.
+        if (error instanceof ReadOnlyGrantError) {
+          return asText({ error: readOnlyGrantErrorCode, message: error.message });
         }
 
         throw error;

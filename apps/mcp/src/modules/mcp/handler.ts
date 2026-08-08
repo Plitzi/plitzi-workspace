@@ -133,7 +133,8 @@ export const serveMcp = async (
 };
 
 // The MCP service is stateless: the spaceId comes from the request's verified `Authorization` bearer (the
-// consumer owns the JWT secret, so it decodes in getSpaceId), and is resolved once per request while the server
+// consumer owns the JWT secret and the authorization model, so it decides in getGrant), resolved once per request
+// while the server
 // is built — it decides which server this is (see createMcpServer). A request without a resolvable space is not
 // rejected: unauthenticated clients (MCP Inspector, capability probes) and guest connections still handshake and
 // get the surface that works without one. Reads/writes then go straight through the schema/style adapters — no
@@ -150,7 +151,7 @@ export const handleMcp = async (
     res,
     await createMcpServer({
       adapters,
-      getSpaceId: () => adapters.getSpaceId?.(req) ?? Promise.resolve(undefined),
+      getGrant: () => adapters.getGrant?.(req) ?? Promise.resolve(undefined),
       ...options
     })
   );

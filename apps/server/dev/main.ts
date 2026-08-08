@@ -45,7 +45,7 @@ const getOfflineData = (): Promise<OfflineDataRaw | undefined> => {
 };
 
 // Schema and style as separate documents (see SSRAdapters); the stub always resolves spaceId=1.
-const getSpaceId = (): Promise<number> => Promise.resolve(1);
+const getGrant = () => Promise.resolve({ spaceId: 1, scope: 'agent' as const, canWrite: true });
 const getSchema = (): Promise<Schema> => Promise.resolve(readSchema());
 const getStyle = (): Promise<Style> => Promise.resolve(readStyle());
 const saveSchema = (_spaceId: number, _environment: string, schema: Schema): Promise<void> => {
@@ -116,7 +116,7 @@ const adapters: SSRAdapters = {
   getSpaceDeployment,
   getRscData,
   saveOfflineData,
-  getSpaceId,
+  getGrant,
   getSchema,
   getStyle,
   saveSchema,

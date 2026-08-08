@@ -10,7 +10,7 @@ const PORT = 39217;
 const adapters = {
   getOfflineData: () => Promise.resolve(undefined),
   getSpaceDeployment: () => Promise.resolve({ spaceId: 1, environment: 'main', revision: 0 }),
-  getSpaceId: () => Promise.resolve(1)
+  getGrant: () => Promise.resolve({ spaceId: 1, scope: 'agent' as const, canWrite: true })
 } as unknown as SSRAdapters;
 
 const server: SSRServer = createServer({

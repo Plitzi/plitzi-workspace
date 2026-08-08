@@ -26,7 +26,7 @@ const offline = { schema, style } as unknown as OfflineDataRaw;
 const adapters = {
   getOfflineData: () => Promise.resolve(offline),
   getSpaceDeployment: () => Promise.resolve({ spaceId: 1, environment: 'main', revision: 0, pluginNames: [] }),
-  getSpaceId: () => Promise.resolve(1),
+  getGrant: () => Promise.resolve({ spaceId: 1, scope: 'agent' as const, canWrite: true }),
   getSchema: () => Promise.resolve(schema),
   getStyle: () => Promise.resolve(style)
 } as unknown as SSRAdapters;

@@ -36,7 +36,7 @@ const REDIRECT_URI = 'http://127.0.0.1:8765/callback';
 
 let BASE = '';
 
-// No getSpaceId at all: this deployment has nothing that can vouch for a token on its own, so every request that
+// No getGrant at all: this deployment has nothing that can vouch for a token on its own, so every request that
 // gets in does so on the strength of the grant — which is what the widgets-only case must prove.
 const publicAdapters = {
   getOfflineData: () => Promise.resolve(undefined),

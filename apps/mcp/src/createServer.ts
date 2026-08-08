@@ -12,7 +12,7 @@ const noPlugins: PluginRegistry = {
 };
 
 /** The server this package makes: the lean mcp-ai pipeline over the bare context — no render template, caches
- *  or plugin manager. Pair it with the MCP adapters (getSpaceId + getSchema/getStyle/saveSchema/saveStyle).
+ *  or plugin manager. Pair it with the MCP adapters (getGrant + getSchema/getStyle/saveSchema/saveStyle).
  *
  *  It owns its whole sub-domain, answering JSON-RPC on every path rather than under /mcp. To serve MCP alongside
  *  pages on one port instead, hand `mcpExtensions()` to createServer from `@plitzi/sdk-server`. */
