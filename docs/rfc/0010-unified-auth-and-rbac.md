@@ -165,6 +165,23 @@ be redeployed, which is exactly why this is an act rather than a timer.
 An `agent` grant keeps its ~30-day lifetime: it writes, it is held by a third-party host, and
 OAuth hosts renew on `expires_in`.
 
+**The public token is the only one allowed to live forever**, and expiry is not what protects
+any of them — every credential can be cut off the moment it leaks:
+
+| Credential | Expires | Revoked by |
+|---|---|---|
+| `space:render` | never | `POST /spaces/:id/token/rotate` — replaced; the old one dies at once |
+| `space:agent` | 30 d | `DELETE /spaces/:id/tokens/:tokenId`; also dies when the member who authorized it loses access |
+| `user` / `refresh` | 24 h / 30 d | `POST /auth/sessions/revoke` (by account, from a device that still has a good session) or `/auth/logout` (by credential) |
+| `widget` | 30 d | Reaches no space, so nothing to revoke it from |
+
+Two of those did not exist before: an `agent` grant — the only bearer that writes with no
+session behind it — could not be revoked by any endpoint, and a leaked session could only be
+killed by whoever held the leaked copy. `GET /spaces/:id/tokens` lists what a space holds, and
+deliberately never returns an agent secret: that would turn a read permission into a way to
+obtain one. Deleting the public token is refused (it would leave the site with no credential at
+all) and points at `rotate` instead.
+
 An `agent` token is **bound to the granting user**: the `space_token` row stores `user_id`.
 Its authority is computed from that user's live membership on every request, so losing access
 to the space revokes every agent token they authorized (T6). `oauthAdapters` already
