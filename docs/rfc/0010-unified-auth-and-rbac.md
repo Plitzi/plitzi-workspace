@@ -278,6 +278,15 @@ effect on their next request rather than at their next sign-in.
 Membership resolves `SpaceUser → SpaceRole → Role → RolePermission`, cached briefly and
 invalidated on membership writes.
 
+Exactly one membership is the **owner**. Whoever creates a space owns it, and may hand it to a
+member who is already accredited there — `PUT /spaces/:id/users/:userId/ownership`. Targeting an
+existing member is deliberate: a space cannot be given to a stranger by mistyping an id, and the
+new owner has already accepted being there. The two writes are one transaction, because a space
+with two owners or none is not a state anything else knows how to read — every
+`requireSpaceMember({ owner: true })` and every "cannot remove the owner" guard assumes exactly
+one. The new owner takes the space's admin role with the title; the previous owner stays a
+member, since handing a space over is not leaving it.
+
 **One correction this forced.** `spaceManage` was, in practice, the guard on the *plugin
 catalog* routes — a platform-wide catalog, not a space — and the ordinary `user` role therefore
 did not have it. Requiring it for deploys, settings and the domains API would have meant a
@@ -419,6 +428,32 @@ endpoint (step 3) must be live first.
 | `apps/sdk` | None — its three queries stay `render`-reachable |
 
 ---
+
+## 6.1 Test coverage
+
+The surface is wide enough that prose alone would not hold it, so each property has a test that
+fails if it is undone:
+
+| Suite | Holds |
+|---|---|
+| `auth/tokens.test.ts` | Registered-claim shape, `scope` keeping the five kinds apart, per-issuer environments, what is re-mintable |
+| `auth/grant.test.ts` | Row-vs-claim agreement, revocation, origin and domain binding, agent grants exempt |
+| `auth/domains.test.ts` | Canonicalising what a person typed; sub-domains are not the same host |
+| `auth/rbac.test.ts` | Both halves required, collaborators, agent grants dying with membership |
+| `graphql/authorize.test.ts` | Grant-only reads, session-required writes, per-operation overrides, subscriptions |
+| `apps/server` `spaceDeployment.test.ts` | Per-space `frame-ancestors` overriding the server-wide default |
+| E2E `auth/space-grants` | The real token a space is created with: read-only, domain-bound, revoked with its row |
+| E2E `auth/write-authorization` | The real schema's fields: a render token cannot write or read credentials |
+| E2E `auth/ai-authorization` | `/ai/*` needs both credentials; the space comes from the grant, not the body |
+| E2E `spaces/space-ownership` | Creator owns it; transfer only by the owner, only to a member, exactly one owner after |
+
+**One thing the e2e suite needed first.** It could not run at all: `@plitzi/plitzi-ui`'s barrel
+was imported in three places purely for a lodash helper (`omit`, `pick`, `get`/`set`/`camelCase`)
+— in `sdk-shared`, `sdk-elements` and this server — which dragged a React component library, its
+Markdown component and a syntax highlighter into every server process that resolved a binding.
+Node's ESM resolver then refused one of that library's extensionless imports. All three now use
+the leaf `@plitzi/plitzi-ui/helpers/lodash` subpath (or `lodash-es`), and the UI library is out
+of the server's import graph.
 
 ## 7. Open questions
 
