@@ -153,7 +153,7 @@ authority.** Neither alone is enough for a write.
 | `render` | Every space (the `isDefault` row) | Read published schema/style/segments; SSR preview; analytics ingest; subscribe to its own space | **Yes** — embedded in sites |
 | `agent` | MCP OAuth clients, after a member consents | Everything `render` may, plus MCP writes, bounded by the granting member's space role | No |
 
-**A `render` token does not expire, deliberately.** It is embedded in a published site — often a
+**A `render` token MAY live forever, and defaults to it.** It is embedded in a published site — often a
 SPA deployed once and left alone — so an expiry is a scheduled outage: the site breaks weeks
 later with nobody having touched anything. What the deadline buys is close to nothing, because
 the token is public by construction; anyone who wanted it had it long before. What actually
@@ -162,15 +162,26 @@ the row behind it. Revocation, not expiry, is the control: `POST /spaces/:id/tok
 replaces it and the previous one dies that instant — after which every site embedding it must
 be redeployed, which is exactly why this is an act rather than a timer.
 
-An `agent` grant keeps its ~30-day lifetime: it writes, it is held by a third-party host, and
-OAuth hosts renew on `expires_in`.
+A space that wants a deadline gets one anyway — a campaign page meant to go quiet, a token
+handed to an agency for a fixed engagement — through `PUT /spaces/:id/token/expiry`
+(`{ expiresInDays: n | null }`). The lifetime is a signed claim, so setting it re-mints the
+token; it is also stored on `space_token.expires_at`, so a later rotation or domain change
+carries the choice forward instead of quietly resetting it to never. Only this scope gets the
+choice: an `agent` grant always carries a lifetime — it writes, it is held by a third-party
+host, and OAuth hosts renew on `expires_in`.
 
-**The public token is the only one allowed to live forever**, and expiry is not what protects
-any of them — every credential can be cut off the moment it leaks:
+**Lifetimes follow one rule**: how much damage the credential can do, and whether anything can
+renew it. The public token is the only one that may live forever; everything else expires at a
+30-day baseline; and the credential that rides on every request — the session access token — is
+the shortest at 24 h, which costs nobody anything because the refresh token renews it. That
+pairing is precisely what lets it be that short.
+
+Expiry is not what protects any of them, though — every credential can be cut off the moment it
+leaks:
 
 | Credential | Expires | Revoked by |
 |---|---|---|
-| `space:render` | never | `POST /spaces/:id/token/rotate` — replaced; the old one dies at once |
+| `space:render` | never (default) or a date the space sets | `POST /spaces/:id/token/rotate` — replaced; the old one dies at once |
 | `space:agent` | 30 d | `DELETE /spaces/:id/tokens/:tokenId`; also dies when the member who authorized it loses access |
 | `user` / `refresh` | 24 h / 30 d | `POST /auth/sessions/revoke` (by account, from a device that still has a good session) or `/auth/logout` (by credential) |
 | `widget` | 30 d | Reaches no space, so nothing to revoke it from |
