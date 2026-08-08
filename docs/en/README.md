@@ -4,6 +4,7 @@ Guides for working with the `plitzi-workspace` monorepo.
 
 | Guide | Description |
 |-------|-------------|
+| [Onboarding](./onboarding.md) | **Start here.** The map: what exists, how the repositories fit together, and a stack running end to end |
 | [Getting started](./getting-started.md) | Clone, install dependencies, and run apps |
 | [Local setup](./local-setup.md) | Dev servers for contributors; optional local hosts/HTTPS for maintainers |
 | [Repository structure](./repository-structure.md) | Apps and packages layout |

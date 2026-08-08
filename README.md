@@ -67,6 +67,9 @@ Plitzi is an open-source **web application builder** designed to empower develop
 | English  | [docs/en/README.md](./docs/en/README.md) |
 | Español  | [docs/es/README.md](./docs/es/README.md) |
 
+**New to the project?** Start with [Onboarding](./docs/en/onboarding.md) — the map of how the repositories fit
+together and how to get a stack running end to end.
+
 Quick links: [Getting started (EN)](./docs/en/getting-started.md) · [Primeros pasos (ES)](./docs/es/getting-started.md) · [Local setup](./docs/en/local-setup.md) · [Configuración local](./docs/es/local-setup.md)
 
 ---

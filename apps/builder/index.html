@@ -57,7 +57,10 @@
         'plitzi',
         {
           webKey:
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InNwYWNlSWQiOjF9LCJpc3MiOiJodHRwczovL3NlcnZlci5wbGl0emkubG9jYWwiLCJhdWQiOlsiaHR0cHM6Ly9hcHAucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9zc3IucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9zZXJ2ZXIucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9hcGkucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9tY3AucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9hcHAucGxpdHppLmxvY2FsOjMwMDAiLCJodHRwczovL2FwcC5wbGl0emkubG9jYWw6MzAwMSIsImh0dHBzOi8vd2Vic2l0ZS5wbGl0emkuYXBwIl0sInZlcnNpb24iOjEsImV4cCI6MTc4NzUxNzU3OSwiaWF0IjoxNzg0ODg3NTgzLCJuYmYiOjE3ODQ4ODc1ODN9.p5IEtdMhZrpampKtiWVuAUI6keMAAqtXmpdgL10A-6k',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwib3JpZ2lucyI6WyJodHRwczovL3dlYnNpdGUucGxpdHppLmFwcCIsImh0dHBzOi8vcGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9hcHAucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9hcHAucGxpdHppLmxvY2FsOjMwMDAiLCJodHRwczovL2FwcC5wbGl0emkubG9jYWw6MzAwMSIsImh0dHBzOi8vc3NyLnBsaXR6aS5sb2NhbCIsImh0dHBzOi8vc2VydmVyLnBsaXR6aS5sb2NhbCIsImh0dHA6Ly9sb2NhbGhvc3Q6MzAwMCIsImh0dHA6Ly9sb2NhbGhvc3Q6ODA4MCIsImh0dHA6Ly8xMjcuMC4wLjE6ODA4MCJdLCJpc3MiOiJodHRwczovL3NlcnZlci5wbGl0emkubG9jYWwiLCJhdWQiOlsiaHR0cHM6Ly9hcHAucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9zc3IucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9zZXJ2ZXIucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9hcGkucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9tY3AucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9hcHAucGxpdHppLmxvY2FsOjMwMDAiLCJodHRwczovL2FwcC5wbGl0emkubG9jYWw6MzAwMSJdLCJzY29wZSI6InNwYWNlOnJlbmRlciIsImlhdCI6MTc4NjIxODQxNiwianRpIjoiMGY2ODY2MDA2MjZmMzMwZSIsIm5iZiI6MTc4NjIxODQxNn0.tQxtCv32Q6NKvgqj-nB0maQmAwAGiXdwq3ys28HvhyU',
+          // The actor. Without it the builder loads and every write is refused, since authorization is
+          // can(actor, space, permission). Both halves come from `yarn token 1 --user admin` in plitzi-sdk-server.
+          userKey: '',
           environment: 'main',
           server: {
             basePath: '',
