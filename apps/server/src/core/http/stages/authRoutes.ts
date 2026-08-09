@@ -1,3 +1,4 @@
+import { exchangeStage } from './exchangeRoute';
 import { clearSessionCookies, writeSessionCookies } from '../../auth/session';
 import { readRawBody } from '../../requestParser';
 
@@ -99,4 +100,4 @@ export const logoutStage: Stage = async ctx => {
   return true;
 };
 
-export const authRoutesStages: Stage[] = [loginStage, logoutStage];
+export const authRoutesStages: Stage[] = [loginStage, logoutStage, exchangeStage];
