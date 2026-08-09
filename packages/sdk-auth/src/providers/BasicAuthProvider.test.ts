@@ -32,7 +32,7 @@ const storeSession = (expiresAt: number, validatedAt = inSeconds(0)) => {
 
 const plitziApi = {
   loginUrl: 'https://api.example.com/auth/login',
-  userUrl: 'https://api.example.com/users/me',
+  userUrl: 'https://api.example.com/auth/session',
   refreshUrl: 'https://api.example.com/auth/refresh',
   logoutUrl: 'https://api.example.com/auth/logout'
 };
@@ -141,19 +141,43 @@ describe('BasicAuthProvider boot', () => {
     expect(provider.getState()).toBe('authenticated');
   });
 
-  it('does not re-ask about a signed-out visitor on the next load', async () => {
-    const first = new BasicAuthProvider({ ...plitziApi });
-    mockFetch.mockResolvedValueOnce(jsonResponse({ error: 'Not authenticated', reason: 'missing' }, 401));
+  // The rule: no evidence, no request. A page that calls the API "just in case" collects a 401 for every
+  // signed-out visitor on every load — a request that could never have succeeded, and noise in the logs that says
+  // nothing. Evidence is a stored credential or the hint cookie; the backend judges whether it is any good.
+  it('never asks anyone when the browser shows no sign of a session', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
 
-    await first.init();
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(first.getState()).toBe('guest');
+    await provider.init();
 
-    const second = new BasicAuthProvider({ ...plitziApi });
-    await second.init();
+    expect(provider.getState()).toBe('guest');
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
 
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(second.getState()).toBe('guest');
+  it('does not go looking for a 401 when a signed-out tab is focused again', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    await provider.init();
+
+    await provider.revalidate();
+    document.dispatchEvent(new Event('visibilitychange'));
+    await Promise.resolve();
+
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(provider.getState()).toBe('guest');
+  });
+
+  // Evidence appearing later is picked up: sign in on a sibling app and this tab notices on its next focus,
+  // without having polled for it.
+  it('picks up a session that appeared elsewhere when revalidating', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi, sessionHintCookie: 'plitzi_auth_hint' });
+    await provider.init();
+    expect(mockFetch).not.toHaveBeenCalled();
+
+    document.cookie = `plitzi_auth_hint=${inSeconds(3600)}.${inSeconds(7200)}`;
+    mockFetch.mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+
+    await provider.revalidate();
+
+    expect(provider.getState()).toBe('authenticated');
   });
 
   it('trusts a server-rendered identity over everything, and stores it', async () => {
@@ -226,6 +250,66 @@ describe('AuthProvider redirect sign-in', () => {
 
     expect(provider.consumed).toBe(1);
     expect(provider.user).toMatchObject({ username: 'ada' });
+  });
+});
+
+// A credential obtained in the browser is invisible to the server that renders the pages, which then renders every
+// one of them as a guest — and the page changes under the visitor as it hydrates. Handing it over is what closes
+// that gap, so this is the seam that decides whether a space using a client-side provider flickers.
+describe('AuthProvider handing a browser-obtained credential to the server', () => {
+  const exchangeUrl = 'https://api.example.com/auth/exchange';
+
+  it('hands the credential over after a login and keeps the session the server issued', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi, sessionExchangeUrl: exchangeUrl, spaceKey: 'web-key' });
+    mockFetch
+      .mockResolvedValueOnce(jsonResponse({ details: { id: 1, username: 'ada' }, access_token: 'idp-token' }))
+      .mockResolvedValueOnce(
+        jsonResponse({ details: { id: 1, username: 'ada' }, access_token: 'server-token', expire_at: inSeconds(3600) })
+      );
+
+    await provider.login({ username: 'ada', password: 'pw' });
+
+    const [url, init] = mockFetch.mock.calls[1];
+    expect(url).toBe(exchangeUrl);
+    expect(JSON.parse((init as RequestInit).body as string)).toEqual({ provider: 'basic', token: 'idp-token' });
+    // The space credential rides along: the backend cannot check the provider against the space without it.
+    expect((init as RequestInit).headers).toMatchObject({ 'x-access-token': 'web-key' });
+    // The server's session wins — it is the one its cookies and its renderer will honour.
+    expect(provider.token?.accessToken).toBe('server-token');
+  });
+
+  it('ends the session when the server refuses the credential, rather than failing on every later call', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi, sessionExchangeUrl: exchangeUrl, spaceKey: 'web-key' });
+    mockFetch
+      .mockResolvedValueOnce(jsonResponse({ details: { id: 1 }, access_token: 'idp-token' }))
+      .mockResolvedValueOnce(jsonResponse({ error: 'Token Invalid', reason: 'revoked' }, 401));
+
+    await provider.login({ username: 'ada', password: 'pw' });
+
+    expect(provider.getState()).toBe('guest');
+  });
+
+  it('keeps a good sign-in when the hand-off cannot reach the server', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi, sessionExchangeUrl: exchangeUrl, spaceKey: 'web-key' });
+    mockFetch
+      .mockResolvedValueOnce(
+        jsonResponse({ details: { id: 1 }, access_token: 'idp-token', expire_at: inSeconds(3600) })
+      )
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+    await provider.login({ username: 'ada', password: 'pw' });
+
+    expect(provider.getState()).toBe('authenticated');
+    expect(provider.token?.accessToken).toBe('idp-token');
+  });
+
+  it('does nothing at all when the space declares no exchange', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    mockFetch.mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+
+    await provider.login({ username: 'ada', password: 'pw' });
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });
 

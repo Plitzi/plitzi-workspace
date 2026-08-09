@@ -1,8 +1,9 @@
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
-import { useMemo } from 'react';
+import { use, useMemo } from 'react';
 
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useCommonStore, useRenderSettings } from '@plitzi/sdk-shared/store';
 
 import AuthContext from './AuthContext';
@@ -30,11 +31,14 @@ const TEMPLATED = [
   'refreshTokenPath',
   'expirationTimePath',
   'refreshExpirationTimePath',
-  'sessionHintCookie'
+  'sessionHintCookie',
+  'sessionExchangeUrl'
 ] as const;
 
 const AuthContextProvider = ({ children, server }: AuthContextProviderProps) => {
   const { previewMode, isHydrating, environment } = useRenderSettings();
+  // Which space this is. Only the exchange sends it, and only a space can say which identity provider it trusts.
+  const { webKey } = use(NetworkContext);
   const [[schemaSettings, variables]] = useCommonStore(['schema.settings', 'schema.variables']);
   const { queryParams, hostname } = useNavigation({ server });
 
@@ -74,16 +78,17 @@ const AuthContextProvider = ({ children, server }: AuthContextProviderProps) => 
     }
   }, [schemaSettings, variablesParsed]);
 
-  const settings = useMemo<AuthProviderSettings>(
+  const settings = useMemo<AuthProviderSettings & { spaceKey: string }>(
     () => ({
       ...templated,
+      spaceKey: webKey,
       tokenStorage: schemaSettings.tokenStorage ?? 'localStorage',
       sessionGate: schemaSettings.sessionGate,
       sessionRevalidateSeconds: schemaSettings.sessionRevalidateSeconds,
       auth0Domain: schemaSettings.auth0Domain,
       auth0ClientId: schemaSettings.auth0ClientId
     }),
-    [templated, schemaSettings]
+    [templated, schemaSettings, webKey]
   );
 
   const { manager, loading, authenticated, state } = useAuth({

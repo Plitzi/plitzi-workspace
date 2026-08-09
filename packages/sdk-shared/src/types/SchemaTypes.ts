@@ -125,6 +125,14 @@ export type Schema = {
      */
     sessionHintCookie?: string;
     /**
+     * Where to hand a credential this browser obtained on its own, so the rendering server can establish a session
+     * of its own for it. Declaring it is how a space says "my sign-in happens in the browser" — a client-side
+     * identity provider (Auth0 and the like) leaves the server rendering pages as a guest while the browser knows
+     * who this is, and the page changes under the visitor as it hydrates. Leave empty when your backend issues the
+     * session itself, which is the case whenever `loginUrl` is your own API.
+     */
+    sessionExchangeUrl?: string;
+    /**
      * What to do on a page that requires a session while the stored one is being re-checked. `optimistic` (the
      * default) renders from the stored session and signs out if the check disagrees; `strict` waits for the answer,
      * trading a round trip for never showing a signed-in page to someone whose session has just ended.

@@ -4,7 +4,6 @@ import { readSessionHint } from './helpers/sessionHint';
 import SessionStore from './helpers/SessionStore';
 import { nowInSeconds, toSeconds, tokenExpiresAt } from './helpers/tokenClaims';
 
-import type { SessionHint } from './helpers/sessionHint';
 import type { StoredSession } from './helpers/SessionStore';
 import type { AuthFailureReason, AuthResult, AuthState, Schema, TokenResult } from '@plitzi/sdk-shared';
 
@@ -25,6 +24,9 @@ export type AuthBootstrap<U> = {
 };
 
 export type AuthProviderProps = {
+  /** The credential naming the space this SDK instance renders, forwarded on requests made on the space's behalf —
+   *  the exchange is one, since only the space can say which identity provider its credentials may come from. */
+  spaceKey?: string;
   tokenStorage?: Schema['settings']['tokenStorage'];
   sessionHintCookie?: Schema['settings']['sessionHintCookie'];
   sessionGate?: Schema['settings']['sessionGate'];
@@ -65,13 +67,17 @@ abstract class AuthProvider<U = Record<string, unknown>> {
   /** Set when a request failed to reach the backend, so the next `online` event retries instead of waiting. */
   private offline = false;
 
+  protected readonly spaceKey: string;
+
   constructor({
+    spaceKey = '',
     tokenStorage = 'localStorage',
     sessionHintCookie,
     sessionGate = 'optimistic',
     sessionRevalidateSeconds = DEFAULT_REVALIDATE_SECONDS,
     storageKey = 'plitzi_auth_session'
   }: AuthProviderProps = {}) {
+    this.spaceKey = spaceKey;
     this.store = new SessionStore<U>(tokenStorage, storageKey);
     this.gate = sessionGate;
     this.hintCookie = sessionHintCookie;
@@ -93,6 +99,15 @@ abstract class AuthProvider<U = Record<string, unknown>> {
   protected abstract requestRenewal(refreshToken?: string): Promise<AuthResult<U>>;
   protected abstract requestIdentity(): Promise<AuthResult<U>>;
   protected abstract requestLogout(): Promise<void>;
+
+  /**
+   * Hands the credential this browser just obtained to the rendering server, so it can establish a session of its
+   * own — see `handOffToServer`. Returning undefined, the default, means this provider's grants already come from
+   * the server and there is nothing to hand over.
+   */
+  protected requestExchange(): Promise<AuthResult<U> | undefined> {
+    return Promise.resolve(undefined);
+  }
 
   /**
    * A grant waiting in the current URL, for providers whose sign-in is a redirect rather than a request: OAuth and
@@ -163,6 +178,7 @@ abstract class AuthProvider<U = Record<string, unknown>> {
     if (redirected) {
       if (redirected.ok) {
         this.adopt(redirected);
+        await this.handOffToServer();
         this.emit({ type: 'login', token: this.session.token });
       } else {
         this.endSession(redirected.reason);
@@ -209,7 +225,7 @@ abstract class AuthProvider<U = Record<string, unknown>> {
       return;
     }
 
-    if (!this.sessionMayExist(hint)) {
+    if (!this.hasEvidence()) {
       this.endSession();
 
       return;
@@ -260,6 +276,13 @@ abstract class AuthProvider<U = Record<string, unknown>> {
     }
 
     this.adopt(result);
+    await this.handOffToServer();
+
+    // The hand-off can end the session outright — the server refused the credential — and there is then nothing
+    // left to fill in and nobody to ask about.
+    if (this.state === 'guest') {
+      return undefined;
+    }
 
     if (!this.session.user && this.capabilities.identity) {
       await this.loadIdentity();
@@ -268,6 +291,40 @@ abstract class AuthProvider<U = Record<string, unknown>> {
     this.emit({ type: 'login', token: this.session.token });
 
     return this.session.token;
+  }
+
+  /**
+   * A credential obtained in the browser — by a client-side identity provider, or by a redirect coming back from
+   * one — is unknown to the server that renders the pages. It therefore renders every one of them as a guest while
+   * the browser knows perfectly well who this is, and the page changes under the visitor the moment it hydrates.
+   *
+   * Handing the credential over closes that gap: the server verifies it with the provider and establishes its own
+   * session, cookie and all, so the next server-rendered page already knows. Providers whose grants came from that
+   * same server return undefined here and nothing happens.
+   */
+  private async handOffToServer(): Promise<void> {
+    const exchanged = await this.requestExchange();
+    if (!exchanged) {
+      return;
+    }
+
+    if (exchanged.ok) {
+      // The server's own session supersedes: it is the one its cookies and its renderer will honour.
+      this.adopt(exchanged);
+
+      return;
+    }
+
+    // Nothing was learned — try again on the next revalidation rather than throwing away a good sign-in.
+    if (exchanged.reason === 'network') {
+      this.offline = true;
+
+      return;
+    }
+
+    // The server will not accept this credential. Whatever the identity provider thinks, a session the backend
+    // refuses cannot load a page or call an API, so it ends here instead of failing on every later request.
+    this.endSession(exchanged.reason);
   }
 
   async refresh(): Promise<TokenResult | undefined> {
@@ -281,6 +338,16 @@ abstract class AuthProvider<U = Record<string, unknown>> {
    * not lapsed, unless forced — which is what a caller does before an action it cannot take back.
    */
   async revalidate(force = false): Promise<boolean> {
+    // No sign of a session, so there is nothing to confirm and nobody worth asking. This is the guard that keeps a
+    // signed-out visitor from firing a refused request every time they come back to the tab.
+    if (!this.hasEvidence()) {
+      if (this.state !== 'guest') {
+        this.endSession();
+      }
+
+      return false;
+    }
+
     if (!force && this.isFresh() && this.hasLiveToken()) {
       return this.state === 'authenticated';
     }
@@ -471,21 +538,23 @@ abstract class AuthProvider<U = Record<string, unknown>> {
     return nowInSeconds() - this.session.validatedAt < this.revalidateSeconds;
   }
 
-  /** Whether asking the backend could plausibly turn up a session. When it could not, nothing is asked at all. */
-  private sessionMayExist(hint?: SessionHint): boolean {
-    // Configured, the hint is authoritative in both directions — and the caller already handled its absence.
-    if (this.hintCookie) {
-      return true;
-    }
-
+  /**
+   * Whether this browser shows any sign of holding a session: a stored credential, or the hint cookie the backend
+   * publishes beside its httpOnly one.
+   *
+   * **Nothing is ever asked without it.** A page that calls an API "just in case" gets a 401 for every signed-out
+   * visitor on every load and every tab focus — noise in the logs that says nothing, and a request that could never
+   * have succeeded. Evidence is cheap to produce and the backend decides whether it is any good.
+   *
+   * The hint is read live rather than at boot, so a sign-in that happened in another app on this domain is picked
+   * up by the next revalidation instead of waiting for a reload.
+   */
+  private hasEvidence(): boolean {
     if (this.session.token?.accessToken || this.session.token?.refreshToken) {
       return true;
     }
 
-    // Nothing stored and no hint published: the browser may still hold a session cookie, and only the backend can
-    // say. Ask — but no more often than the revalidate window, so being signed out costs one request, not one per
-    // page load. Publishing a hint cookie removes even that one.
-    return !this.isFresh() || !!hint;
+    return !!readSessionHint(this.hintCookie);
   }
 
   // Renewal timing

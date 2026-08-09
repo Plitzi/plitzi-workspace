@@ -12,6 +12,7 @@ export type BasicAuthProviderProps = AuthProviderProps & {
   userUrl?: string;
   refreshUrl?: string;
   logoutUrl?: string;
+  sessionExchangeUrl?: Schema['settings']['sessionExchangeUrl'];
   detailsPath?: Schema['settings']['detailsPath'];
   tokenPath?: Schema['settings']['tokenPath'];
   refreshTokenPath?: Schema['settings']['refreshTokenPath'];
@@ -63,6 +64,7 @@ class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
     userUrl = '',
     refreshUrl = '',
     logoutUrl = '',
+    sessionExchangeUrl = '',
     detailsPath = 'details',
     tokenPath = 'access_token',
     refreshTokenPath = 'refresh_token',
@@ -76,6 +78,7 @@ class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
       userUrl,
       refreshUrl,
       logoutUrl,
+      sessionExchangeUrl,
       detailsPath,
       tokenPath,
       refreshTokenPath,
@@ -114,6 +117,28 @@ class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
     const res = await this.request<Record<string, unknown>>(this.options.refreshUrl, {
       method: 'POST',
       body: JSON.stringify(refreshToken ? { [this.options.refreshTokenPath]: refreshToken } : {})
+    });
+
+    return this.toResult(res);
+  }
+
+  /**
+   * Only happens when the space declares `sessionExchangeUrl`, which is how it says its credentials are obtained in
+   * the browser rather than issued by the server that renders it. The server is handed the credential and the name
+   * of the provider that issued it — it has to know who to verify it with, and it must refuse anything else.
+   */
+  protected async requestExchange(): Promise<AuthResult<U> | undefined> {
+    const accessToken = this.token?.accessToken;
+    if (!this.options.sessionExchangeUrl || !accessToken) {
+      return undefined;
+    }
+
+    const res = await this.request<Record<string, unknown>>(this.options.sessionExchangeUrl, {
+      method: 'POST',
+      // The space credential rides along: the backend has to know which space is asking before it can decide
+      // whether this provider is one that space signs people in with.
+      headers: { 'Content-Type': 'application/json', ...(this.spaceKey ? { 'x-access-token': this.spaceKey } : {}) },
+      body: JSON.stringify({ provider: this.name, token: accessToken })
     });
 
     return this.toResult(res);
