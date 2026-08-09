@@ -8,6 +8,8 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 
+import { skipUnchangedDts } from './scripts/skipUnchangedDts.mjs';
+
 const importedPackages = new Set();
 
 type Options = {
@@ -51,7 +53,8 @@ export default defineConfig(({ mode, command }) => {
       dts({
         entryRoot: 'src',
         exclude: ['**/*.test.(ts|tsx)', '**/*.stories.(ts|tsx)', 'vite.config.ts', 'setupTests.ts'],
-        tsconfigPath: './tsconfig.app.json'
+        tsconfigPath: './tsconfig.app.json',
+        beforeWriteFile: skipUnchangedDts
       }),
       // {
       //   name: 'trace-import-chain',

@@ -42,7 +42,7 @@ const requestFor = (url: string, method = 'GET'): SSRRequest => ({
   ctx: {}
 });
 
-type Recorded = { status: number; headers: Record<string, string>; body: Buffer };
+type Recorded = { status: number; headers: Record<string, string | string[]>; body: Buffer };
 
 const recorder = (): { res: SSRResponseHelpers; out: Recorded } => {
   const out: Recorded = { status: 200, headers: {}, body: Buffer.alloc(0) };

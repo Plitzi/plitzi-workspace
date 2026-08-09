@@ -28,7 +28,7 @@ const unusedResponse = new Proxy(
 );
 
 const capturingResponse = (): SSRResponseHelpers => {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string | string[]> = {};
 
   return {
     status: 0,

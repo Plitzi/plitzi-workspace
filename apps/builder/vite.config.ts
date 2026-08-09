@@ -72,6 +72,21 @@ function ejsPlugin(devMode?: boolean): Plugin {
   };
 }
 
+/** Skips rewriting a declaration whose content is already on disk. Every build regenerates every `.d.ts`, unchanged
+ *  ones included, and replacing hundreds of files at once is what makes the editors holding them open fall over.
+ *  Inlined rather than shared: a vite config importing across packages breaks `composite` type-checking (TS6059). */
+const skipUnchangedDts = (filePath: string, content: string) => {
+  try {
+    if (fs.readFileSync(filePath, 'utf8') === content) {
+      return false as const;
+    }
+  } catch {
+    // Not there yet — first build, or a new module. Write it.
+  }
+
+  return undefined;
+};
+
 export default defineConfig(({ mode, command }) => {
   const devMode = mode !== 'production';
   const onlyAnalyze = !!process.env.ONLY_ANALYZE;
@@ -102,7 +117,8 @@ export default defineConfig(({ mode, command }) => {
         outDir: 'dist',
         rollupTypes: false,
         exclude: ['**/*.test.tsx', '**/*.stories.ts', '**/*.stories.tsx', 'vite.config.ts', 'setupTests.ts'],
-        tsconfigPath: './tsconfig.app.json'
+        tsconfigPath: './tsconfig.app.json',
+        beforeWriteFile: skipUnchangedDts
       }),
       // {
       //   name: 'debug-resolve',

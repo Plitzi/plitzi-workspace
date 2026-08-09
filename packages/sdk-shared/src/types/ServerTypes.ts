@@ -32,7 +32,8 @@ export type SSRRequest = {
 
 export type SSRResponseHelpers = {
   status: number;
-  headers: Record<string, string>;
+  /** Multi-valued for the headers that genuinely are, `Set-Cookie` above all — see `setHeader`. */
+  headers: Record<string, string | string[]>;
   /** An array sets the header once per entry, which `Set-Cookie` needs: a response that grants a session writes
    *  several, and collapsing them into one string would produce a single malformed cookie. */
   setHeader: (name: string, value: string | string[]) => void;

@@ -41,6 +41,21 @@ const copyAssets = (): import('vite').Plugin => ({
   }
 });
 
+/** Skips rewriting a declaration whose content is already on disk. Every build regenerates every `.d.ts`, unchanged
+ *  ones included, and replacing hundreds of files at once is what makes the editors holding them open fall over.
+ *  Inlined rather than shared: a vite config importing across packages breaks `composite` type-checking (TS6059). */
+const skipUnchangedDts = (filePath: string, content: string) => {
+  try {
+    if (fs.readFileSync(filePath, 'utf8') === content) {
+      return false as const;
+    }
+  } catch {
+    // Not there yet — first build, or a new module. Write it.
+  }
+
+  return undefined;
+};
+
 export default defineConfig(({ mode }) => {
   const devMode = mode !== 'production';
 
@@ -49,10 +64,12 @@ export default defineConfig(({ mode }) => {
       react(),
       dts({
         include: ['src', 'package.json'],
+        entryRoot: 'src',
         // An MCP App's view/ ships as source and nothing imports it: declarations for it would be dead weight.
         exclude: [`src/modules/mcp/apps/**/${VIEW_DIR}/**`],
         tsconfigPath: './tsconfig.app.json',
-        insertTypesEntry: true
+        insertTypesEntry: true,
+        beforeWriteFile: skipUnchangedDts
       }),
       copyAssets()
     ],
@@ -61,6 +78,9 @@ export default defineConfig(({ mode }) => {
       VERSION: JSON.stringify(PACKAGE.version)
     },
     build: {
+      // Keep the previous output in place during development so `beforeWriteFile` has something to compare against:
+      // wiping dist means every declaration is written afresh, and the editors holding them open re-parse the lot.
+      emptyOutDir: !devMode,
       lib: {
         entry: {
           index: path.resolve(root, 'src/index.ts'),
