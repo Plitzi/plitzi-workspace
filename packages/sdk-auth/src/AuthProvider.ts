@@ -94,6 +94,18 @@ abstract class AuthProvider<U = Record<string, unknown>> {
   protected abstract requestIdentity(): Promise<AuthResult<U>>;
   protected abstract requestLogout(): Promise<void>;
 
+  /**
+   * A grant waiting in the current URL, for providers whose sign-in is a redirect rather than a request: OAuth and
+   * OIDC (Auth0 among them) send the browser away and bring it back with a code to exchange. That is the freshest
+   * evidence a page can have, so it is consulted before anything stored — and it is the provider's job to clean the
+   * code out of the URL once taken.
+   *
+   * Returning undefined, the default, means this provider does not sign in by redirect.
+   */
+  protected consumeRedirect(): Promise<AuthResult<U> | undefined> {
+    return Promise.resolve(undefined);
+  }
+
   // Reads
 
   get user(): U | undefined {
@@ -123,9 +135,38 @@ abstract class AuthProvider<U = Record<string, unknown>> {
    */
   async init(bootstrap: AuthBootstrap<U> = {}): Promise<void> {
     this.attach();
+    await this.decide(bootstrap);
+    this.settle();
+  }
 
+  /**
+   * No path may leave a page waiting. Every branch below either settles the state itself or comes back through here,
+   * so a backend that answers something nobody anticipated costs a visitor a wrong guess about their session — never
+   * a page that renders nothing at all.
+   */
+  private settle(): void {
+    if (this.state === 'init' || this.state === 'initLoading') {
+      this.setState(this.session.user || this.hasLiveToken() ? 'authenticated' : 'guest');
+    }
+  }
+
+  private async decide(bootstrap: AuthBootstrap<U>): Promise<void> {
     if (bootstrap.skipAuth) {
       this.setState('guest');
+
+      return;
+    }
+
+    // Coming back from an identity provider outranks everything below, including a server-rendered answer: the page
+    // was rendered before this person finished signing in.
+    const redirected = await this.consumeRedirect();
+    if (redirected) {
+      if (redirected.ok) {
+        this.adopt(redirected);
+        this.emit({ type: 'login', token: this.session.token });
+      } else {
+        this.endSession(redirected.reason);
+      }
 
       return;
     }

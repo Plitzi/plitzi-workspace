@@ -183,6 +183,52 @@ describe('BasicAuthProvider boot', () => {
   });
 });
 
+// The base class has to serve providers that do not sign in with a request at all — OAuth and OIDC send the browser
+// to an identity provider and get it back with a code. This is the seam they hang off.
+describe('AuthProvider redirect sign-in', () => {
+  class RedirectProvider extends BasicAuthProvider {
+    consumed = 0;
+
+    protected consumeRedirect() {
+      this.consumed += 1;
+      const code = new URLSearchParams(window.location.search).get('code');
+      if (!code) {
+        return Promise.resolve(undefined);
+      }
+
+      return Promise.resolve({
+        ok: true as const,
+        user: { id: 5, username: 'redirected' },
+        token: { accessToken: `exchanged-${code}`, expiresAt: inSeconds(3600), refreshToken: null }
+      });
+    }
+  }
+
+  it('takes a grant out of the URL before anything stored, and never asks the backend', async () => {
+    window.history.replaceState({}, '', '/?code=abc123');
+    storeSession(inSeconds(3600));
+    const provider = new RedirectProvider({ ...plitziApi });
+
+    await provider.init({ user: { id: 1, username: 'ada' } });
+
+    expect(provider.getState()).toBe('authenticated');
+    expect(provider.user).toMatchObject({ username: 'redirected' });
+    expect(provider.token?.accessToken).toBe('exchanged-abc123');
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it('falls through to the normal decision when the URL carries no grant', async () => {
+    window.history.replaceState({}, '', '/');
+    storeSession(inSeconds(3600));
+    const provider = new RedirectProvider({ ...plitziApi });
+
+    await provider.init();
+
+    expect(provider.consumed).toBe(1);
+    expect(provider.user).toMatchObject({ username: 'ada' });
+  });
+});
+
 describe('BasicAuthProvider failures', () => {
   it('keeps the session when the backend cannot be reached', async () => {
     const provider = new BasicAuthProvider({ ...plitziApi });
