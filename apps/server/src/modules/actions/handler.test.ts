@@ -36,7 +36,7 @@ const provider = (attributes: Record<string, unknown>, runtime: 'server' | 'clie
 });
 
 const buildRes = () => {
-  const sent: { status: number; body: string; headers: Record<string, string> } = {
+  const sent: { status: number; body: string; headers: Record<string, string | string[]> } = {
     status: 200,
     body: '',
     headers: {}

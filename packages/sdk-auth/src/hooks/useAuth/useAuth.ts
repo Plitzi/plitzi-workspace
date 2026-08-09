@@ -3,105 +3,61 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AuthManager } from '../../AuthManager';
 
 import type { AuthEvent } from '../../AuthProvider';
-import type { AuthContextValue, Schema, Server } from '@plitzi/sdk-shared';
+import type { AuthProviderSettings } from '../../types';
+import type { AuthContextValue, AuthState, Server } from '@plitzi/sdk-shared';
 
 export type UseAuthProps = {
   server?: Server;
   isHydrating?: boolean;
-  tokenStorage?: Schema['settings']['tokenStorage'];
-  provider?: Schema['settings']['userProvider'];
-  loginUrl?: Schema['settings']['loginUrl'];
-  userUrl?: Schema['settings']['userUrl'];
-  refreshUrl?: Schema['settings']['refreshUrl'];
-  logoutUrl?: Schema['settings']['logoutUrl'];
-  detailsPath?: Schema['settings']['detailsPath'];
-  tokenPath?: Schema['settings']['tokenPath'];
-  expirationTimePath?: Schema['settings']['expirationTimePath'];
+  provider?: string;
+  /** Held stable by the caller: a new object here builds a new provider and re-runs the whole boot decision. */
+  settings: AuthProviderSettings;
 };
 
 type User = Exclude<Exclude<AuthContextValue['user'], undefined>['details'], undefined>;
 
-const useAuth = ({
-  server,
-  isHydrating = false,
-  tokenStorage = 'localStorage',
-  provider = '',
-  loginUrl = '',
-  userUrl = '',
-  refreshUrl = '',
-  logoutUrl = '',
-  detailsPath = 'details',
-  tokenPath = 'access_token',
-  expirationTimePath = 'expire_at'
-}: UseAuthProps) => {
-  const isSSR = typeof window === 'undefined' || isHydrating || (!!server?.user && server.authenticated);
-  const [loading, setLoading] = useState(!!userUrl && !isSSR);
-  const [authenticated, setAuthenticated] = useState(false);
+/**
+ * `loading` is what a space's pages are held back by, so it is deliberately narrow: it means "this page cannot be
+ * rendered yet", not "auth is doing something". A session restored from storage renders immediately and confirms
+ * itself behind the render, which is the difference between a page that appears at once and one that waits on a
+ * round trip to be told what it already knew.
+ */
+const useAuth = ({ server, isHydrating = false, provider = '', settings }: UseAuthProps) => {
+  const bootstrapUser = server?.authenticated ? server.user?.details : undefined;
+  const [state, setState] = useState<AuthState>('init');
 
-  const handleState = useCallback((event: AuthEvent) => {
+  const handleEvent = useCallback((event: AuthEvent) => {
     if (event.type === 'state') {
-      setLoading(event.state === 'initLoading');
-      setAuthenticated(event.state === 'authenticated');
+      setState(event.state);
     }
   }, []);
 
-  const manager = useMemo(() => {
-    let props = {};
-    if (provider === 'basic') {
-      props = {
-        tokenStorage,
-        loginUrl,
-        userUrl,
-        refreshUrl,
-        logoutUrl,
-        detailsPath,
-        tokenPath,
-        expirationTimePath,
-        isSSR
-      };
-    }
-
-    const manager = new AuthManager<User>(provider as 'basic' | 'auth0', handleState, props);
-    void manager.init(server?.authenticated ? server.user?.details : undefined, server?.skipAuth);
-
-    return manager;
-  }, [
-    provider,
-    handleState,
-    server?.authenticated,
-    server?.user?.details,
-    server?.skipAuth,
-    tokenStorage,
-    loginUrl,
-    userUrl,
-    refreshUrl,
-    logoutUrl,
-    detailsPath,
-    tokenPath,
-    expirationTimePath,
-    isSSR
-  ]);
+  const manager = useMemo(
+    () => new AuthManager<User>(provider, handleEvent, settings),
+    [provider, handleEvent, settings]
+  );
 
   useEffect(() => {
-    const providerInstance = manager.getProvider();
-    if (!providerInstance || !providerInstance.token?.expiresAt) {
-      return;
-    }
+    void manager.init({
+      user: bootstrapUser,
+      accessToken: typeof server?.user?.accessToken === 'string' ? server.user.accessToken : undefined,
+      expiresAt: server?.user?.expiresAt,
+      skipAuth: server?.skipAuth
+    });
 
-    const currentTime = Math.floor(Date.now() / 1000);
-    if (providerInstance.token.expiresAt) {
-      const handler = setTimeout(
-        () => {
-          void manager.logout();
-        },
-        Math.abs(currentTime - providerInstance.token.expiresAt) * 1000
-      );
+    return () => manager.dispose();
+  }, [manager, bootstrapUser, server?.user?.accessToken, server?.user?.expiresAt, server?.skipAuth]);
 
-      return () => clearTimeout(handler);
-    }
-  }, [manager, authenticated]);
-
-  const hookValue = useMemo(() => ({ manager, loading, authenticated }), [manager, loading, authenticated]);
+  // A server-rendered page arrives with its answer already in hand, and the browser has nothing to wait for.
+  const hookValue = useMemo(
+    () => ({
+      manager,
+      state,
+      loading: state === 'initLoading' || (state === 'init' && !bootstrapUser && !isHydrating),
+      authenticated: state === 'authenticated'
+    }),
+    [manager, state, bootstrapUser, isHydrating]
+  );
 
   return hookValue;
 };

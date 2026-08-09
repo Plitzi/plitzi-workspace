@@ -19,11 +19,24 @@
       "import": "./dist/AuthContextProvider.mjs"
     },
     "./AuthManager": {
+      "types": "./dist/AuthManager.d.ts",
       "import": "./dist/AuthManager.mjs"
     },
     "./AuthProvider": {
       "types": "./dist/AuthProvider.d.ts",
       "import": "./dist/AuthProvider.mjs"
+    },
+    "./helpers/SessionStore": {
+      "types": "./dist/helpers/SessionStore.d.ts",
+      "import": "./dist/helpers/SessionStore.mjs"
+    },
+    "./helpers/sessionHint": {
+      "types": "./dist/helpers/sessionHint.d.ts",
+      "import": "./dist/helpers/sessionHint.mjs"
+    },
+    "./helpers/tokenClaims": {
+      "types": "./dist/helpers/tokenClaims.d.ts",
+      "import": "./dist/helpers/tokenClaims.mjs"
     },
     "./hooks/useAuth": {
       "types": "./dist/hooks/useAuth/index.d.ts",
@@ -48,6 +61,9 @@
     "./providers/BasicAuthProvider": {
       "types": "./dist/providers/BasicAuthProvider.d.ts",
       "import": "./dist/providers/BasicAuthProvider.mjs"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts"
     }
   },
   "type": "module",

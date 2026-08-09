@@ -2,186 +2,254 @@ import { describe, it, expect, beforeEach, beforeAll, vi } from 'vitest';
 
 import BasicAuthProvider from './BasicAuthProvider';
 
-import type { TokenResult } from '@plitzi/sdk-shared';
-
 const mockFetch = vi.fn<typeof fetch>();
+
+const STORAGE_KEY = 'plitzi_auth_session';
+
+const inSeconds = (offset: number) => Math.floor(Date.now() / 1000) + offset;
+
+const jsonResponse = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
+
+const session = (expiresAt: number) => ({
+  details: { id: 1, username: 'ada', permissions: ['spaceManage'] },
+  access_token: 'token',
+  expire_at: expiresAt,
+  refresh_token: 'refresh',
+  refresh_expire_at: expiresAt + 3600
+});
+
+const storeSession = (expiresAt: number, validatedAt = inSeconds(0)) => {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({
+      version: 1,
+      user: { id: 1, username: 'ada', permissions: ['spaceManage'] },
+      token: { accessToken: 'stored', expiresAt, refreshToken: 'stored-refresh' },
+      validatedAt
+    })
+  );
+};
+
+const plitziApi = {
+  loginUrl: 'https://api.example.com/auth/login',
+  userUrl: 'https://api.example.com/users/me',
+  refreshUrl: 'https://api.example.com/auth/refresh',
+  logoutUrl: 'https://api.example.com/auth/logout'
+};
 
 beforeAll(() => {
   vi.stubGlobal('fetch', mockFetch);
 });
 
-describe('BasicAuthProvider', () => {
-  beforeEach(() => {
-    mockFetch.mockReset();
+beforeEach(() => {
+  mockFetch.mockReset();
+  localStorage.clear();
+  document.cookie = 'plitzi_auth_hint=; Max-Age=0';
+});
+
+describe('BasicAuthProvider grants', () => {
+  it('takes identity and both tokens from a login response', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    mockFetch.mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+
+    const token = await provider.login({ username: 'ada', password: 'pw' });
+
+    expect(token?.accessToken).toBe('token');
+    expect(token?.refreshToken).toBe('refresh');
+    expect(provider.user).toMatchObject({ username: 'ada' });
+    expect(provider.getState()).toBe('authenticated');
+    // The grant carried the user, so nothing had to ask who signed in.
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
-  it('logs in successfully and returns TokenResult', async () => {
-    const provider = new BasicAuthProvider({
-      loginUrl: '/login',
-      tokenPath: 'accessToken',
-      refreshTokenPath: 'refreshToken',
-      expirationTimePath: 'expiresIn'
-    });
+  it('asks the identity endpoint only when the grant did not say who it was for', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    mockFetch
+      .mockResolvedValueOnce(jsonResponse({ access_token: 'token', expire_at: inSeconds(3600) }))
+      .mockResolvedValueOnce(jsonResponse({ details: { id: 1, username: 'ada' } }));
 
-    mockFetch.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({ accessToken: 'token-123', refreshToken: 'refresh-123', expiresIn: Date.now() + 3600 }),
-        { status: 200 }
-      )
-    );
+    await provider.login({ username: 'ada', password: 'pw' });
 
-    const token = await provider.login({ username: 'demo', password: '123' });
-
-    expect(token?.accessToken).toBe('token-123');
-    expect(token?.refreshToken).toBe('refresh-123');
-    expect(token?.expiresAt).toBeGreaterThan(Date.now());
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(provider.user).toMatchObject({ username: 'ada' });
   });
 
-  it('logout calls backend and clears state', async () => {
-    const provider = new BasicAuthProvider({
-      logoutUrl: '/logout'
+  it('sends the refresh token under the name the backend reads it by', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi, refreshTokenPath: 'refresh_token' });
+    storeSession(inSeconds(-10));
+    mockFetch.mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+
+    await provider.init();
+
+    expect(mockFetch.mock.calls[0][1]).toMatchObject({
+      method: 'POST',
+      body: JSON.stringify({ refresh_token: 'stored-refresh' })
     });
-
-    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({}), { status: 200 }));
-
-    await expect(provider.logout()).resolves.toBeUndefined();
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      '/logout',
-      expect.objectContaining({
-        method: 'POST',
-        credentials: 'include'
-      })
-    );
   });
 
-  it('refresh returns a new token when backend responds', async () => {
-    const provider = new BasicAuthProvider({
-      refreshUrl: '/refresh',
-      tokenPath: 'accessToken',
-      refreshTokenPath: 'refreshToken',
-      expirationTimePath: 'expiresIn'
-    });
+  it('reports a failed login without ending up authenticated', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    mockFetch.mockResolvedValueOnce(jsonResponse({ error: 'Invalid credentials', reason: 'missing' }, 401));
 
-    const expiredToken: TokenResult = {
-      accessToken: 'old',
-      refreshToken: 'refresh-old',
-      expiresAt: Date.now() - 1000
-    };
+    expect(await provider.login({ username: 'ada', password: 'wrong' })).toBeUndefined();
+    expect(provider.getState()).toBe('guest');
+  });
+});
 
-    // @ts-expect-error testing internal cache
-    provider.cache = { token: expiredToken };
+describe('BasicAuthProvider boot', () => {
+  it('restores a stored session without asking anyone', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    storeSession(inSeconds(3600));
 
-    mockFetch.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({ accessToken: 'new-token', refreshToken: 'new-refresh', expiresIn: Date.now() + 3600 }),
-        { status: 200 }
-      )
-    );
+    await provider.init();
 
-    const refreshed = await provider.refresh();
-
-    expect(refreshed?.accessToken).toBe('new-token');
-    expect(refreshed?.expiresAt).toBeGreaterThan(Date.now());
+    expect(provider.getState()).toBe('authenticated');
+    expect(provider.can('spaceManage')).toBe(true);
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it('throws error on failed request', async () => {
-    const provider = new BasicAuthProvider({
-      loginUrl: '/login'
-    });
+  it('renews a stored session whose token has lapsed, and gets the identity back with it', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    storeSession(inSeconds(-10));
+    mockFetch.mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
 
-    mockFetch.mockResolvedValueOnce(new Response(null, { status: 401 }));
-    const response = await provider.login({ username: 'x', password: 'y' });
-    expect(response).toBe(undefined);
+    await provider.init();
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch.mock.calls[0][0]).toBe(plitziApi.refreshUrl);
+    expect(provider.getState()).toBe('authenticated');
   });
 
-  // it('login → refresh uses cached token when still valid', async () => {
-  //   const provider = new BasicAuthProvider({});
+  it('renders as a guest with no request when the hint cookie says nobody is signed in', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi, sessionHintCookie: 'plitzi_auth_hint' });
+    storeSession(inSeconds(3600));
 
-  //   const token: TokenResult = {
-  //     accessToken: 'cached',
-  //     refreshToken: 'refresh',
-  //     expiresAt: Date.now() + 60_000
-  //   };
+    await provider.init();
 
-  //   // @ts-expect-error test cache
-  //   provider.cache = { token };
+    expect(provider.getState()).toBe('guest');
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
 
-  //   const refreshed = await provider.refresh();
+  it('picks up a session established by another app on the domain, with nothing in storage', async () => {
+    document.cookie = `plitzi_auth_hint=${inSeconds(3600)}.${inSeconds(7200)}`;
+    const provider = new BasicAuthProvider({ ...plitziApi, sessionHintCookie: 'plitzi_auth_hint' });
+    mockFetch.mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
 
-  //   expect(refreshed).toBe(token);
-  //   expect(mockFetch).not.toHaveBeenCalled();
-  // });
+    await provider.init();
 
-  // it('expired token triggers refresh and updates cache', async () => {
-  //   const provider = new BasicAuthProvider({
-  //     refreshUrl: '/refresh'
-  //   });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(provider.getState()).toBe('authenticated');
+  });
 
-  //   const expired: TokenResult = {
-  //     accessToken: 'old',
-  //     refreshToken: 'old-refresh',
-  //     expiresAt: Date.now() - 1
-  //   };
+  it('does not re-ask about a signed-out visitor on the next load', async () => {
+    const first = new BasicAuthProvider({ ...plitziApi });
+    mockFetch.mockResolvedValueOnce(jsonResponse({ error: 'Not authenticated', reason: 'missing' }, 401));
 
-  //   // @ts-expect-error test cache
-  //   provider.cache = { token: expired };
+    await first.init();
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(first.getState()).toBe('guest');
 
-  //   mockFetch.mockResolvedValueOnce(
-  //     new Response(
-  //       JSON.stringify({
-  //         accessToken: 'new',
-  //         refreshToken: 'new-refresh',
-  //         expiresIn: 3600
-  //       }),
-  //       { status: 200 }
-  //     )
-  //   );
+    const second = new BasicAuthProvider({ ...plitziApi });
+    await second.init();
 
-  //   const refreshed = await provider.refresh();
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(second.getState()).toBe('guest');
+  });
 
-  //   expect(refreshed?.accessToken).toBe('new');
-  // });
+  it('trusts a server-rendered identity over everything, and stores it', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
 
-  // it('expired token without refresh auto-logs out', async () => {
-  //   const provider = new BasicAuthProvider({
-  //     // enableRefresh: false
-  //   });
+    await provider.init({ user: { id: 9, username: 'grace' }, accessToken: 'ssr', expiresAt: inSeconds(3600) });
 
-  //   const expired: TokenResult = {
-  //     accessToken: 'dead',
-  //     refreshToken: 'dead-refresh',
-  //     expiresAt: Date.now() - 1
-  //   };
+    expect(provider.getState()).toBe('authenticated');
+    expect(provider.token?.accessToken).toBe('ssr');
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(localStorage.getItem(STORAGE_KEY)).toContain('grace');
+  });
 
-  //   // @ts-expect-error test cache
-  //   provider.cache = { token: expired };
+  it('reads the lifetime off the token when the backend states none', async () => {
+    const jwt = `x.${btoa(JSON.stringify({ exp: inSeconds(3600) }))}.y`;
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    mockFetch.mockResolvedValueOnce(jsonResponse({ details: { id: 1 }, access_token: jwt }));
 
-  //   const refreshed = await provider.refresh();
+    await provider.login({ username: 'ada', password: 'pw' });
+    mockFetch.mockClear();
 
-  //   expect(refreshed).toBeUndefined();
-  //   expect(provider.authenticated).toBe(false);
-  // });
+    const restored = new BasicAuthProvider({ ...plitziApi });
+    await restored.init();
 
-  it('logout clears token and state even if backend fails', async () => {
-    const provider = new BasicAuthProvider({
-      logoutUrl: '/logout'
-    });
+    expect(restored.getState()).toBe('authenticated');
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
 
-    const token: TokenResult = {
-      accessToken: 't',
-      refreshToken: 'r',
-      expiresAt: Date.now() + 1000
-    };
+describe('BasicAuthProvider failures', () => {
+  it('keeps the session when the backend cannot be reached', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    storeSession(inSeconds(3600), inSeconds(-9999));
+    mockFetch.mockRejectedValueOnce(new Error('offline'));
 
-    // @ts-expect-error test cache
-    provider.cache = { token };
+    await provider.init();
 
-    mockFetch.mockResolvedValueOnce(new Response(null, { status: 500 }));
+    expect(provider.getState()).toBe('authenticated');
+    expect(provider.user).toMatchObject({ username: 'ada' });
+  });
 
-    await provider.logout();
+  it('keeps the session when the backend answers 500', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    storeSession(inSeconds(3600), inSeconds(-9999));
+    mockFetch.mockResolvedValueOnce(jsonResponse({ error: 'boom' }, 500));
 
-    // @ts-expect-error test cache
-    expect(provider.cache).toBeUndefined();
+    await provider.init();
+
+    expect(provider.getState()).toBe('authenticated');
+  });
+
+  // The confirmation of a stored session happens behind the render, so these assert what it settles on rather than
+  // what `init` returns — that gap is the point of the optimistic gate.
+  it('ends the session when the backend says the credential was revoked', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    storeSession(inSeconds(3600), inSeconds(-9999));
+    mockFetch.mockResolvedValueOnce(jsonResponse({ error: 'Token Invalid', reason: 'revoked' }, 401));
+
+    await provider.init();
+    expect(provider.getState()).toBe('authenticated');
+
+    await vi.waitFor(() => expect(provider.getState()).toBe('guest'));
+    expect(provider.user).toBeUndefined();
+  });
+
+  it('renews rather than signing out when a refusal is renewable', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    storeSession(inSeconds(3600), inSeconds(-9999));
+    mockFetch
+      .mockResolvedValueOnce(jsonResponse({ error: 'Token expired', reason: 'expired' }, 401))
+      .mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+
+    await provider.init();
+
+    await vi.waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(2));
+    expect(mockFetch.mock.calls[1][0]).toBe(plitziApi.refreshUrl);
+    expect(provider.getState()).toBe('authenticated');
+  });
+
+  it('waits for the confirmation before rendering when the space asks it to', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi, sessionGate: 'strict' });
+    storeSession(inSeconds(3600), inSeconds(-9999));
+    mockFetch.mockResolvedValueOnce(jsonResponse({ error: 'Token Invalid', reason: 'revoked' }, 401));
+
+    await provider.init();
+
+    expect(provider.getState()).toBe('guest');
+  });
+
+  it('shares one renewal between concurrent callers', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    storeSession(inSeconds(-10));
+    mockFetch.mockResolvedValue(jsonResponse(session(inSeconds(3600))));
+
+    await Promise.all([provider.init(), provider.refresh(), provider.refresh()]);
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });

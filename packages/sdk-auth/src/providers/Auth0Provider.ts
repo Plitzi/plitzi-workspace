@@ -1,48 +1,41 @@
 import AuthProvider from '../AuthProvider';
 
-import type { AuthProviderProps } from '../AuthProvider';
-import type { Schema, TokenResult } from '@plitzi/sdk-shared';
+import type { AuthProviderSettings } from '../types';
+import type { AuthResult } from '@plitzi/sdk-shared';
 
-export type Auth0ProviderProps = AuthProviderProps & {
-  tokenStorage?: Schema['settings']['tokenStorage'];
-  loginUrl?: string;
-  userUrl?: string;
-  refreshUrl?: string;
-  logoutUrl?: string;
-  detailsPath?: string;
-  tokenPath?: string;
-  expirationTimePath?: string;
+const unimplemented = (): never => {
+  throw new Error('The auth0 provider is declared but not implemented yet — select `basic`, or register your own.');
 };
 
-class Auth0Provider<T = Record<string, unknown>> extends AuthProvider<T> {
+/**
+ * Placeholder for the Auth0 flow. It is a named option in the space settings and in the element sources, so it exists
+ * as a provider that refuses clearly rather than as a silent no-op that leaves a space looking signed out.
+ */
+class Auth0Provider<U = Record<string, unknown>> extends AuthProvider<U> {
   readonly name = 'auth0';
 
-  init(): Promise<void> {
-    throw new Error('Method not implemented.');
+  constructor(settings: AuthProviderSettings = {}) {
+    super(settings);
   }
 
-  // Methods
-
-  login(...args: unknown[]): Promise<TokenResult | undefined> {
-    console.log(args);
-    throw new Error('Method not implemented.');
+  protected get capabilities() {
+    return { renew: false, identity: false };
   }
 
-  getUser(): Promise<T | undefined> {
-    throw new Error('Method not implemented.');
+  protected requestLogin(): Promise<AuthResult<U>> {
+    return unimplemented();
   }
 
-  refresh(): Promise<TokenResult | undefined> {
-    throw new Error('Method not implemented.');
+  protected requestRenewal(): Promise<AuthResult<U>> {
+    return unimplemented();
   }
 
-  can(permission: string): boolean {
-    console.log(permission);
-    throw new Error('Method not implemented.');
+  protected requestIdentity(): Promise<AuthResult<U>> {
+    return unimplemented();
   }
 
-  logout(): Promise<void> {
-    throw new Error('Method not implemented.');
+  protected requestLogout(): Promise<void> {
+    return unimplemented();
   }
 }
 

@@ -14,6 +14,22 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
     },
+    "./auth": {
+      "types": "./dist/auth/index.d.ts",
+      "import": "./dist/auth/index.mjs"
+    },
+    "./auth/authFailureLink": {
+      "types": "./dist/auth/authFailureLink.d.ts",
+      "import": "./dist/auth/authFailureLink.mjs"
+    },
+    "./auth/failureChannel": {
+      "types": "./dist/auth/failureChannel.d.ts",
+      "import": "./dist/auth/failureChannel.mjs"
+    },
+    "./auth/index": {
+      "types": "./dist/auth/index.d.ts",
+      "import": "./dist/auth/index.mjs"
+    },
     "./builder": {
       "types": "./dist/builder/index.d.ts",
       "import": "./dist/builder/index.mjs"

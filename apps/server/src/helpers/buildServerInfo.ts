@@ -69,7 +69,23 @@ export const buildServerInfo = async (req: SSRRequest, config: SSRServerConfig):
     },
     authenticated: !!user,
     skipAuth: !!accessToken,
-    user: user ? { details: user } : undefined,
+    // The token is handed over beside the details rather than buried in them: the SDK stores it as the session's
+    // credential, so a hydrated page can authenticate its own requests and renew before it lapses instead of
+    // discovering the expiry through a refused call.
+    user: user
+      ? {
+          details: {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            verified: user.verified,
+            permissions: user.permissions,
+            roles: user.roles
+          },
+          accessToken: user.token,
+          expiresAt: user.expiresAt
+        }
+      : undefined,
     ssr: {
       rscPath: resolveRscEndpoint(config),
       rscData: await config.adapters.getRscData?.(req, spaceId as number, environment, revision, user)

@@ -63,6 +63,7 @@ import { historyMiddleware as historyMw, loggerMiddleware as loggerMw } from '@p
 import { StoreProvider } from '@plitzi/nexus/react';
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
 import { createStoreDevToolsLogger, ThemeProvider, type BuilderState } from '@plitzi/sdk-shared';
+import { createAuthFailureLink } from '@plitzi/sdk-shared/auth';
 import { createStripTypenameLink } from '@plitzi/sdk-shared/helpers/stripTypename';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 import { runtimeStatePersist } from '@plitzi/sdk-shared/state/runtimeStatePersist';
@@ -216,7 +217,12 @@ const App = (props: AppProps) => {
         return { headers };
       });
 
-      const mainLink = ApolloLink.from([createStripTypenameLink(), authLink, httpWithUploadLink]);
+      const mainLink = ApolloLink.from([
+        createAuthFailureLink(server.serverUrl),
+        createStripTypenameLink(),
+        authLink,
+        httpWithUploadLink
+      ]);
       if (!includeSubscriptions || !server.subscriptionServer) {
         return new ApolloClient({ link: mainLink, cache });
       }

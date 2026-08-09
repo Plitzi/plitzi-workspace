@@ -1,56 +1,77 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 
+import { authFailureFromResponse } from '@plitzi/sdk-shared/auth';
+
 import AuthProvider from '../AuthProvider';
 
 import type { AuthProviderProps } from '../AuthProvider';
-import type { Schema, TokenResult } from '@plitzi/sdk-shared';
+import type { AuthFailureReason, AuthResult, Schema, TokenResult } from '@plitzi/sdk-shared';
 
 export type BasicAuthProviderProps = AuthProviderProps & {
-  tokenStorage?: Schema['settings']['tokenStorage'];
   loginUrl?: string;
   userUrl?: string;
   refreshUrl?: string;
   logoutUrl?: string;
-  detailsPath?: string;
-  tokenPath?: string;
-  refreshTokenPath?: string;
-  expirationTimePath?: string;
-  isSSR?: boolean;
+  detailsPath?: Schema['settings']['detailsPath'];
+  tokenPath?: Schema['settings']['tokenPath'];
+  refreshTokenPath?: Schema['settings']['refreshTokenPath'];
+  expirationTimePath?: Schema['settings']['expirationTimePath'];
+  refreshExpirationTimePath?: Schema['settings']['refreshExpirationTimePath'];
 };
 
-class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
+type Options = Required<Omit<BasicAuthProviderProps, keyof AuthProviderProps>>;
+
+type Response<T> = { data?: T; status: number; reason?: AuthFailureReason };
+
+// The paths are authored by whoever configured the space, so what comes back at one is genuinely unknown: reading it
+// as the wrong type is a misconfiguration to absorb, not a crash to hand the visitor.
+const valueAt = (data: Record<string, unknown> | undefined, path: string): unknown => get(data, path, undefined);
+
+const stringAt = (data: Record<string, unknown> | undefined, path: string): string | null => {
+  const value = valueAt(data, path);
+
+  return typeof value === 'string' && value !== '' ? value : null;
+};
+
+const secondsAt = (data: Record<string, unknown> | undefined, path: string): number | null => {
+  const value = valueAt(data, path);
+  const seconds = typeof value === 'string' ? Number(value) : value;
+
+  return typeof seconds === 'number' && Number.isFinite(seconds) ? seconds : null;
+};
+
+/**
+ * A session over HTTP+JSON: the shape almost every auth backend already speaks, described rather than assumed. Which
+ * endpoints exist and where the interesting values sit in their responses come from the space's settings, so a
+ * customer points this at their own API without writing any code.
+ *
+ * Two properties of that backend decide how little this costs at runtime, and both are worth having:
+ *
+ * - **A grant that answers with the user.** When login and refresh return identity along with the tokens, a returning
+ *   visitor is restored in one request instead of two, and often none — and the identity endpoint becomes a fallback
+ *   rather than the way sessions are checked.
+ * - **A published session hint** (see `sessionHintCookie`). It is what lets "nobody is signed in" be answered without
+ *   asking, which is the common case on a public page.
+ */
+class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
   readonly name = 'basic';
 
-  protected baseUrl?: string;
-  protected options: {
-    tokenStorage: Exclude<Schema['settings']['tokenStorage'], undefined>;
-    loginUrl: string;
-    userUrl: string;
-    refreshUrl: string;
-    logoutUrl: string;
-    detailsPath: string;
-    tokenPath: string;
-    refreshTokenPath: string;
-    expirationTimePath: string;
-    isSSR: boolean;
-  };
+  private readonly options: Options;
 
   constructor({
-    tokenStorage = 'localStorage',
-    enableRefresh = true,
     loginUrl = '',
     userUrl = '',
     refreshUrl = '',
     logoutUrl = '',
-    detailsPath = '',
-    tokenPath = '',
-    refreshTokenPath = '',
-    expirationTimePath = '',
-    isSSR = false
+    detailsPath = 'details',
+    tokenPath = 'access_token',
+    refreshTokenPath = 'refresh_token',
+    expirationTimePath = 'expire_at',
+    refreshExpirationTimePath = 'refresh_expire_at',
+    ...providerProps
   }: BasicAuthProviderProps = {}) {
-    super({ enableRefresh, tokenStorage });
+    super(providerProps);
     this.options = {
-      tokenStorage,
       loginUrl,
       userUrl,
       refreshUrl,
@@ -59,126 +80,119 @@ class BasicAuthProvider<T = Record<string, unknown>> extends AuthProvider<T> {
       tokenPath,
       refreshTokenPath,
       expirationTimePath,
-      isSSR
+      refreshExpirationTimePath
     };
   }
 
-  async init(user?: T, skipAuth?: boolean) {
-    if (skipAuth) {
-      this.setState('guest');
-
-      return;
-    }
-
-    this.setState('initLoading');
-    if (!this.options.isSSR) {
-      await this.getUser();
-
-      return;
-    }
-
-    if (user) {
-      super.internalGetUser(user);
-    } else {
-      this.setState('guest');
-    }
+  protected get capabilities() {
+    return { renew: !!this.options.refreshUrl, identity: !!this.options.userUrl };
   }
 
-  // Methods
+  protected get endpoints(): string[] {
+    const { loginUrl, userUrl, refreshUrl, logoutUrl } = this.options;
 
-  async login(authParams: Record<string, string>): Promise<TokenResult | undefined> {
-    const { username = '', password = '' } = authParams;
-    super.setState('authenticating');
+    return [loginUrl, userUrl, refreshUrl, logoutUrl];
+  }
+
+  protected async requestLogin(params: Record<string, unknown>): Promise<AuthResult<U>> {
     const res = await this.request<Record<string, unknown>>(this.options.loginUrl, {
-      credentials: 'include',
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({
+        username: typeof params.username === 'string' ? params.username : '',
+        password: typeof params.password === 'string' ? params.password : ''
+      })
     });
 
-    const result = this.getTokenFromResponse(res);
-    super.internalLogin(get(res.data, this.options.detailsPath) as T, result);
-
-    return result;
+    return this.toResult(res);
   }
 
-  async getUser(): Promise<T | undefined> {
-    if (this.cache?.user && this.state !== 'init') {
-      return this.cache.user;
-    }
-
-    if (!this.options.userUrl) {
-      super.internalGetUser(undefined);
-
-      return undefined;
-    }
-
-    const res = await this.request<T>(this.options.userUrl, {
-      method: 'GET',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    super.internalGetUser(get(res.data, this.options.detailsPath) as T);
-
-    return res.data;
-  }
-
-  async refresh(): Promise<TokenResult | undefined> {
+  /**
+   * The refresh token travels in the body under the name the backend reads it by, and by cookie when the backend
+   * keeps it in one — a browser session normally does, which is why this works with nothing in storage at all.
+   */
+  protected async requestRenewal(refreshToken?: string): Promise<AuthResult<U>> {
     const res = await this.request<Record<string, unknown>>(this.options.refreshUrl, {
       method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: this.cache?.token?.refreshToken ?? '' })
+      body: JSON.stringify(refreshToken ? { [this.options.refreshTokenPath]: refreshToken } : {})
     });
 
-    const tokenResult = this.getTokenFromResponse(res);
-    super.internalRefresh(tokenResult);
-
-    return tokenResult;
+    return this.toResult(res);
   }
 
-  can(permission: string): boolean {
-    if (!this.cache?.user) {
-      return false;
+  protected async requestIdentity(): Promise<AuthResult<U>> {
+    const res = await this.request<Record<string, unknown>>(this.options.userUrl, { method: 'GET' });
+
+    return this.toResult(res);
+  }
+
+  protected async requestLogout(): Promise<void> {
+    if (!this.options.logoutUrl) {
+      return;
     }
 
-    return get(this.cache.user as { permissions?: string[] }, 'permissions', [] as string[]).includes(permission);
-  }
-
-  async logout(): Promise<void> {
-    await this.request(this.options.logoutUrl, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    super.internalLogout();
+    await this.request(this.options.logoutUrl, { method: 'POST' });
   }
 
   // Helpers
 
-  private getTokenFromResponse(res: { data?: Record<string, unknown>; status: number }) {
-    if (res.status >= 400) {
+  private async request<T>(input: string, init: RequestInit): Promise<Response<T>> {
+    let res: globalThis.Response;
+
+    try {
+      res = await fetch(input, {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        ...init
+      });
+    } catch {
+      // The backend was not reached, so it said nothing — which is not the same as saying no.
+      return { status: 0, reason: 'network' };
+    }
+
+    let data: T | undefined;
+
+    try {
+      data = (await res.json()) as T;
+    } catch {
+      data = undefined;
+    }
+
+    // A refusal that is not about the session (a 4xx from a bad request, a 5xx from a backend having a bad day) leaves
+    // the session exactly as it was — `ok` is false but there is nothing to conclude, so it reads as unreachable.
+    return {
+      data,
+      status: res.status,
+      reason: res.ok ? undefined : (authFailureFromResponse(res.status, data) ?? 'network')
+    };
+  }
+
+  private toResult(res: Response<Record<string, unknown>>): AuthResult<U> {
+    if (res.reason) {
+      return { ok: false, reason: res.reason };
+    }
+
+    const details = valueAt(res.data, this.options.detailsPath);
+    const user = details !== null && typeof details === 'object' ? (details as U) : undefined;
+
+    return { ok: true, user, token: this.tokenFrom(res.data) };
+  }
+
+  private tokenFrom(data?: Record<string, unknown>): TokenResult | undefined {
+    const accessToken = stringAt(data, this.options.tokenPath);
+    if (!accessToken) {
       return undefined;
     }
 
-    const result = {
-      errors: get(res.data, 'errors', {}),
-      accessToken: get(res.data, this.options.tokenPath, ''),
-      refreshToken: get(res.data, this.options.refreshTokenPath, ''),
-      expiresAt: get(res.data, this.options.expirationTimePath, 0)
-    } as {
-      errors?: Record<string, unknown>;
-      accessToken: string | null;
-      refreshToken: string | null;
-      expiresAt: number | null;
+    const errors = valueAt(data, 'errors');
+
+    return {
+      ...(errors !== null && typeof errors === 'object' ? { errors: errors as Record<string, unknown> } : {}),
+      accessToken,
+      // Absent is fine: the base reads the lifetime off the token itself when a backend does not state one.
+      expiresAt: secondsAt(data, this.options.expirationTimePath),
+      refreshToken: stringAt(data, this.options.refreshTokenPath),
+      refreshExpiresAt: secondsAt(data, this.options.refreshExpirationTimePath)
     };
-
-    if (res.data && !('errors' in res.data)) {
-      delete result.errors;
-    }
-
-    return result as TokenResult;
   }
 }
 

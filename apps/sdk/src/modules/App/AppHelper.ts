@@ -2,6 +2,7 @@ import { InMemoryCache } from '@apollo/client/cache';
 import { ApolloClient, HttpLink } from '@apollo/client/core';
 import { SetContextLink } from '@apollo/client/link/context';
 
+import { createAuthFailureLink } from '@plitzi/sdk-shared/auth';
 import { createStripTypenameLink } from '@plitzi/sdk-shared/helpers/stripTypename';
 
 import type { Server } from '@plitzi/sdk-shared';
@@ -20,5 +21,8 @@ export const initClient = (finalServer: Server, webKey: string) => {
   }));
 
   // Init Client
-  return new ApolloClient({ link: authLink.concat(createStripTypenameLink(), httpLink), cache });
+  return new ApolloClient({
+    link: authLink.concat(createAuthFailureLink(finalServer.serverUrl), createStripTypenameLink(), httpLink),
+    cache
+  });
 };

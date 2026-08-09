@@ -1,4 +1,5 @@
 export * from './types';
+export * from './auth';
 export * from './helpers';
 export * from './hooks';
 export * from './builder';

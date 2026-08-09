@@ -33,7 +33,9 @@ export type SSRRequest = {
 export type SSRResponseHelpers = {
   status: number;
   headers: Record<string, string>;
-  setHeader: (name: string, value: string) => void;
+  /** An array sets the header once per entry, which `Set-Cookie` needs: a response that grants a session writes
+   *  several, and collapsing them into one string would produce a single malformed cookie. */
+  setHeader: (name: string, value: string | string[]) => void;
   setStatus: (code: number) => void;
   send: (body: string) => void;
   write: (chunk: string | Buffer) => void;
@@ -126,6 +128,8 @@ export type SSRGrant = {
 
 export type SSRUser = {
   token: string; // e.g. JWT or opaque token from auth provider
+  /** Unix seconds the token dies at, so the rendered page can renew ahead of it rather than on a refusal. */
+  expiresAt?: number;
   id: number;
   username: string;
   email: string;

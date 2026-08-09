@@ -19,6 +19,8 @@ export type Server<T extends Record<string, unknown> = Record<string, unknown>> 
   user?: {
     details?: User;
     accessToken?: string | Promise<string>;
+    /** Unix seconds the session token dies at, so a hydrated page schedules its renewal without decoding anything. */
+    expiresAt?: number;
   };
   ssr?: ServerSSR;
 } & T;

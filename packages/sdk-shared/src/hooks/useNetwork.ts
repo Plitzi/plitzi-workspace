@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
 
+import { authFailureFromResponse, reportAuthFailure } from '../auth';
+
 import type { Server } from '../types';
 
 export type UseNetworkProps = {
@@ -63,8 +65,16 @@ const useNetwork = ({ initLoading = false, server, webKey, internalUsage = true,
         }
 
         const res = await fetch(`${baseURL}${url}`, fetchOptions);
+        const data = (await res.json()) as T;
 
-        return (await res.json()) as T;
+        // A refused credential is the earliest evidence that a session ended, so it is passed to auth rather than
+        // left for a timer to discover. Auth ignores refusals from backends that are not its own.
+        const reason = authFailureFromResponse(res.status, data);
+        if (reason) {
+          reportAuthFailure({ reason, url: `${baseURL}${url}` });
+        }
+
+        return data;
       } catch (e) {
         console.error(e);
       } finally {

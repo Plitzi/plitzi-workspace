@@ -11,6 +11,23 @@ import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import type { ChangeEvent } from 'react';
 
+// Everything that describes one auth backend, cleared as a unit when the provider changes. Listed once: settings left
+// behind by a previous provider are read by the next one, which is how a space ends up pointed at half of an old API.
+const PROVIDER_SETTINGS = [
+  'auth0Domain',
+  'auth0ClientId',
+  'loginUrl',
+  'userUrl',
+  'refreshUrl',
+  'logoutUrl',
+  'detailsPath',
+  'tokenPath',
+  'refreshTokenPath',
+  'expirationTimePath',
+  'refreshExpirationTimePath',
+  'sessionHintCookie'
+] as const;
+
 const ContainerSettings = () => {
   const [[settingsProp, styleMode]] = useBuilderStore(['schema.settings', 'style.mode']);
   const { eventBridge } = use(EventBridgeContext);
@@ -32,7 +49,12 @@ const ContainerSettings = () => {
     logoutUrl,
     detailsPath = 'details',
     tokenPath = 'access_token',
-    expirationTimePath = 'expire_at'
+    refreshTokenPath = 'refresh_token',
+    expirationTimePath = 'expire_at',
+    refreshExpirationTimePath = 'refresh_expire_at',
+    sessionHintCookie = '',
+    sessionGate = 'optimistic',
+    sessionRevalidateSeconds = 300
   } = settings;
 
   const handleChangeKeepState = useCallback(
@@ -47,27 +69,13 @@ const ContainerSettings = () => {
   const handleChange = useCallback(
     (name: string) => (value: string) => {
       if (name === 'userProvider') {
-        void eventBridge.emit('main', 'schemaUpdateSettings', '', 'auth0Domain');
-        void eventBridge.emit('main', 'schemaUpdateSettings', '', 'auth0ClientId');
-        void eventBridge.emit('main', 'schemaUpdateSettings', '', 'loginUrl');
-        void eventBridge.emit('main', 'schemaUpdateSettings', '', 'userUrl');
-        void eventBridge.emit('main', 'schemaUpdateSettings', '', 'logoutUrl');
-        void eventBridge.emit('main', 'schemaUpdateSettings', '', 'refreshUrl');
-        void eventBridge.emit('main', 'schemaUpdateSettings', '', 'detailsPath');
-        void eventBridge.emit('main', 'schemaUpdateSettings', '', 'tokenPath');
-        void eventBridge.emit('main', 'schemaUpdateSettings', '', 'expirationTimePath');
+        PROVIDER_SETTINGS.forEach(setting => {
+          void eventBridge.emit('main', 'schemaUpdateSettings', '', setting);
+        });
         setSettings(state => ({
           ...state,
-          [name]: value as 'basic' | 'auth0' | '',
-          auth0Domain: '',
-          auth0ClientId: '',
-          loginUrl: '',
-          userUrl: '',
-          refreshUrl: '',
-          logoutUrl: '',
-          detailsPath: '',
-          tokenPath: '',
-          expirationTimePath: ''
+          ...Object.fromEntries(PROVIDER_SETTINGS.map(setting => [setting, ''])),
+          [name]: value as 'basic' | 'auth0' | ''
         }));
         void eventBridge.emit('main', 'schemaUpdateSettings', value, name);
       } else if (name === 'head') {
@@ -77,6 +85,16 @@ const ContainerSettings = () => {
         setSettings(state => ({ ...state, [name]: value }));
         void eventBridge.emit('main', 'schemaUpdateSettings', value, name);
       }
+    },
+    [eventBridge]
+  );
+
+  const handleChangeNumber = useCallback(
+    (name: string) => (value: string) => {
+      const parsed = Number(value);
+      const next = Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+      setSettings(state => ({ ...state, [name]: next }));
+      void eventBridge.emit('main', 'schemaUpdateSettings', next, name);
     },
     [eventBridge]
   );
@@ -135,6 +153,10 @@ const ContainerSettings = () => {
           )}
           {userProvider === 'basic' && (
             <>
+              <Alert intent="info" size="xs" solid={false}>
+                Every field below accepts schema variables, so one <code>{'{{baseUrl}}/auth/login'}</code> follows the
+                environment its variable is defined for.
+              </Alert>
               <Input
                 size="sm"
                 name="loginUrl"
@@ -179,10 +201,53 @@ const ContainerSettings = () => {
               />
               <Input
                 size="sm"
+                name="refreshTokenPath"
+                value={refreshTokenPath}
+                onChange={handleChange('refreshTokenPath')}
+                label="API Refresh Token Object Path - Default: [refresh_token]"
+              />
+              <Input
+                size="sm"
                 name="expirationTimePath"
                 value={expirationTimePath}
                 onChange={handleChange('expirationTimePath')}
                 label="API Expiration Time Object Path - Default: [expire_at] - example: [user.expire_at]"
+              />
+              <Input
+                size="sm"
+                name="refreshExpirationTimePath"
+                value={refreshExpirationTimePath}
+                onChange={handleChange('refreshExpirationTimePath')}
+                label="API Refresh Expiration Time Object Path - Default: [refresh_expire_at]"
+              />
+              <Alert intent="info" size="xs" solid={false}>
+                Name a readable cookie your API sets beside its session cookie (value <code>expiry.refreshExpiry</code>,
+                in seconds) and pages know whether anyone is signed in without asking — including when nobody is.
+              </Alert>
+              <Input
+                size="sm"
+                name="sessionHintCookie"
+                value={sessionHintCookie}
+                onChange={handleChange('sessionHintCookie')}
+                label="Session Hint Cookie (Optional)"
+              />
+              <Select
+                size="sm"
+                name="sessionGate"
+                value={sessionGate}
+                onChange={handleChange('sessionGate')}
+                label="Pages Requiring A Session"
+              >
+                <option value="optimistic">Render from the stored session, confirm in background</option>
+                <option value="strict">Wait for the API to confirm the session</option>
+              </Select>
+              <Input
+                size="sm"
+                type="number"
+                name="sessionRevalidateSeconds"
+                value={String(sessionRevalidateSeconds)}
+                onChange={handleChangeNumber('sessionRevalidateSeconds')}
+                label="Re-check The Session After (seconds) - Default: [300]"
               />
             </>
           )}
