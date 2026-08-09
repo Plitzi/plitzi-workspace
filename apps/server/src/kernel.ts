@@ -13,6 +13,13 @@ export { healthStage } from './core/http/stages/health';
 export { configStaticStage, publicDirStage, wellKnownStage } from './core/http/stages/static';
 export { buildHealthPayload, registerHealthCheck } from './core/health';
 export { clientIp, parseRequest, readRawBody, requestOrigin } from './core/requestParser';
+export {
+  clearSessionCookies,
+  readSessionToken,
+  sessionCookieParams,
+  sessionHintValue,
+  writeSessionCookies
+} from './core/auth/session';
 export { consoleLogger, renderLogEvent } from './helpers/serverLog';
 export { PREVIEW_TOKEN_PARAM } from './core/previewToken';
 
@@ -20,3 +27,4 @@ export type { HttpServerParts } from './core/server/baseServer';
 export type { BuildContext } from './core/http/dispatcher';
 export type { HealthCheckApp, HealthIdentity } from './core/health';
 export type { BaseContext, PipelineExtensions, SSRContext, Stage } from './core/http/types';
+export type { SessionCookieParams } from './core/auth/session';

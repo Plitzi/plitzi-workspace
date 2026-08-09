@@ -126,6 +126,36 @@ export type SSRGrant = {
   canWrite: boolean;
 };
 
+/**
+ * A session, as the thing that issued it describes it. Deliberately free of transport: whoever mints one says what
+ * the credentials are and when they die, and the server decides how they are carried — which is what lets a
+ * deployment bring its own identity source without also reimplementing cookies.
+ */
+export type SSRSession = {
+  token: string;
+  /** Unix seconds. */
+  expiresAt: number;
+  refreshToken?: string;
+  refreshExpiresAt?: number;
+};
+
+/**
+ * How this deployment's session cookies are named and scoped. Every field has a working default derived from the
+ * request host, so a server that says nothing still gets a correct cookie; the function forms exist for deployments
+ * whose naming varies by environment or host, which is a policy only they know.
+ */
+export type SSRAuthCookie = {
+  name?: string | ((hostname: string) => string);
+  /** Return undefined for a host-only cookie. Defaults to the registrable domain, so sibling sub-domains share it. */
+  domain?: string | ((hostname: string) => string | undefined);
+  sameSite?: 'lax' | 'none';
+  secure?: boolean;
+  /** Path the refresh credential is confined to, so it never rides along on ordinary traffic. Defaults to `/auth`. */
+  refreshPath?: string;
+  /** Suffix of the readable companion cookie that carries only expiries. Defaults to `_hint`. */
+  hintSuffix?: string;
+};
+
 export type SSRUser = {
   token: string; // e.g. JWT or opaque token from auth provider
   /** Unix seconds the token dies at, so the rendered page can renew ahead of it rather than on a refusal. */
@@ -230,9 +260,36 @@ export type SSRAdapters = {
   /** Persist the style document mutated by the MCP `apply` tool. Implementations must recompute `style.cache`
    *  before storing. When omitted, `apply` reports `persisted: false`. */
   saveStyle?: (spaceId: number, environment: Environment, style: Style) => Promise<void>;
+  /** Who this request carries, if anyone. The adapter reads the credential and resolves it; the cookie it arrived
+   *  in was written by the server, from {@link SSRAuthCookie}. */
   getUser?: (req: SSRRequest) => Promise<SSRUser | undefined>;
-  onLogin?: (req: SSRRequest, res: SSRResponseHelpers) => Promise<boolean>;
-  onLogout?: (req: SSRRequest, res: SSRResponseHelpers) => Promise<void>;
+  /**
+   * Verify credentials and mint a session — identity, and nothing else. The server writes the cookies, clears them,
+   * and keeps the readable hint in step, because those are properties of how sessions travel rather than of who
+   * anyone is. A deployment bringing its own user database implements this and gets the rest for free.
+   *
+   * Return undefined to refuse. Never throw for a wrong password.
+   */
+  authenticate?: (credentials: Record<string, string>, req: SSRRequest) => Promise<SSRSession | undefined>;
+  /** Revoke whatever session this request carries, at the source. The cookies are the server's to clear. */
+  endSession?: (req: SSRRequest) => Promise<void>;
+  /**
+   * Turn a credential the browser obtained from an identity provider into a session here — see the exchange stage.
+   * Everything that decides whether it is any good lives in this adapter, because only the deployment knows:
+   *
+   * - which providers it trusts, and which one the space in question actually signs people in with;
+   * - that the token was minted for **this** application. Anyone who has signed into any other site with the same
+   *   provider holds a valid token for that user, so accepting one merely because the provider recognises it lets
+   *   that site sign in here as them. A provider that cannot prove it must be refused outright.
+   */
+  exchangeCredential?: (
+    provider: string,
+    token: string,
+    req: SSRRequest
+  ) => Promise<
+    | { ok: true; session: SSRSession; user?: SSRUser }
+    | { ok: false; error: string; status?: number; reason?: string }
+  >;
   /** Called by the RSC endpoint to fetch server-side data for server components.
    *  When `ids` is provided the adapter should return data only for those element IDs.
    *  Omitting `ids` (initial SSR fetch or full refresh) must return data for all elements. */
@@ -346,6 +403,11 @@ export type SSRServerConfig = {
   loginPath?: string | false;
   middlewares?: SSRMiddleware[];
   logoutPath?: string | false;
+  /** Where a browser-obtained credential is handed over. Defaults to `/auth/exchange`; served only when the
+   *  `exchangeCredential` adapter is supplied. */
+  exchangePath?: string | false;
+  /** Naming and scope of the session cookies this server writes. See {@link SSRAuthCookie}. */
+  authCookie?: SSRAuthCookie;
   templateFn?: SSRTemplateFn;
   plugins?: Record<string, PluginSource>;
   pluginsCacheDir?: string;
