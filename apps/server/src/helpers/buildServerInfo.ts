@@ -1,5 +1,6 @@
 import { resolveRscEndpoint } from '../core/services/resolve';
 
+import type { OfflineDataLoader } from './offlineDataLoader';
 import type { Server, SSRRequest, SSRServerConfig } from '@plitzi/sdk-shared';
 
 const getEnvironment = (env: string = 'production', server?: Record<string, unknown>): Server => {
@@ -52,7 +53,11 @@ const getEnvironment = (env: string = 'production', server?: Record<string, unkn
   }
 };
 
-export const buildServerInfo = async (req: SSRRequest, config: SSRServerConfig): Promise<Partial<Server>> => {
+export const buildServerInfo = async (
+  req: SSRRequest,
+  config: SSRServerConfig,
+  loadOfflineData: OfflineDataLoader
+): Promise<Partial<Server>> => {
   const accessToken = req.query['access-token'];
   const origin = `${req.protocol}://${req.hostname}`;
   const user = req.ctx.user;
@@ -88,7 +93,14 @@ export const buildServerInfo = async (req: SSRRequest, config: SSRServerConfig):
       : undefined,
     ssr: {
       rscPath: resolveRscEndpoint(config),
-      rscData: await config.adapters.getRscData?.(req, spaceId as number, environment, revision, user)
+      rscData: await config.adapters.getRscData?.({
+        req,
+        spaceId: spaceId as number,
+        environment,
+        revision,
+        user,
+        loadOfflineData
+      })
     }
   });
 };

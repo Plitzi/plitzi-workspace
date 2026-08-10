@@ -290,18 +290,37 @@ export type SSRAdapters = {
   ) => Promise<
     { ok: true; session: SSRSession; user?: SSRUser } | { ok: false; error: string; status?: number; reason?: string }
   >;
-  /** Called by the RSC endpoint to fetch server-side data for server components.
-   *  When `ids` is provided the adapter should return data only for those element IDs.
-   *  Omitting `ids` (initial SSR fetch or full refresh) must return data for all elements. */
-  getRscData?: (
-    req: SSRRequest,
-    spaceId: number,
-    environment: Environment,
-    revision: number,
-    user: SSRUser | undefined,
-    ids?: string[]
-  ) => Promise<SSRRscData>;
+  /** Called by the RSC endpoint, and once per page render, to fetch server-side data for server components.
+   *  See {@link SSRRscContext} for what it is given. */
+  getRscData?: (context: SSRRscContext) => Promise<SSRRscData>;
 };
+
+/**
+ * Everything an RSC read is given: which space and revision, who is asking, and which elements want data.
+ *
+ * One object rather than six positional parameters, because the reason to add to it is exactly the reason the
+ * positional form failed — `loadOfflineData` is a seventh thing to know, and nobody should have to count commas to
+ * reach it, nor rewrite their adapter when an eighth arrives.
+ */
+export interface SSRRscContext {
+  req: SSRRequest;
+  spaceId: number;
+  environment: Environment;
+  revision: number;
+  /** Whoever the request carries, already resolved. */
+  user?: SSRUser;
+  /** On a partial refresh, the only element ids that want data. Absent means every one — the initial render. */
+  ids?: string[];
+  /**
+   * The space itself, read at most once per request however many times this is called.
+   *
+   * It is here because an adapter almost always needs the schema (to know which elements are server-rendered, or
+   * whether RSC is on at all) and the server is already loading it for the page — in parallel with this very call.
+   * Without a shared handle every deployment fetched it a second time, or wrote its own in-flight dedup to avoid
+   * doing so. Awaiting this joins the read already under way; it never starts a second one.
+   */
+  loadOfflineData: () => Promise<OfflineDataRaw | undefined>;
+}
 
 export type SSRActionConfig = {
   /** URL path for the write endpoint. Defaults to '/_action'. */
@@ -479,6 +498,15 @@ export type SSRServerConfig = {
    *  and whatever the outcome — plus every MCP tool call and resource read inside those requests. Without it the
    *  server reports nothing per request (the MCP events still reach the console when `MCP_DEBUG=1`). */
   logger?: ServerLogger;
+  /**
+   * What to do when the server cannot take its port. Without it the server prints what went wrong, what to do about
+   * it, and exits non-zero — because a process whose server never bound is not running, and the alternative is a raw
+   * `EADDRINUSE` stack that says nothing about which port or which server.
+   *
+   * Supply this to keep the process alive and decide for yourself: an embedder that starts several servers, a
+   * supervisor that retries, a test that asserts the failure. Handling it here replaces the exit entirely.
+   */
+  onListenError?: (error: NodeJS.ErrnoException, context: { port: number; host: string; label: string }) => void;
   adapters: SSRAdapters;
   /** Draft-preview endpoint for the MCP visual-preview tools (the RENDERER side). Off unless `enabled`. */
   preview?: SSRPreviewConfig;

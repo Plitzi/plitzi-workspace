@@ -1,4 +1,5 @@
 import { buildRscCacheKey, DEFAULT_TTL_MS } from '../../helpers/cache';
+import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
 
 import type { TtlCache } from '../../helpers/cache';
 import type { PluginManager } from '../../plugins/manager';
@@ -116,7 +117,17 @@ export const handleRsc = async (
 
   let rscData: SSRRscData;
   try {
-    rscData = await config.adapters.getRscData(pageRequest, spaceId, environment, revision, req.ctx.user, ids);
+    rscData = await config.adapters.getRscData({
+      req: pageRequest,
+      spaceId,
+      environment,
+      revision,
+      user: req.ctx.user,
+      ids,
+      // No page render alongside this one, so the loader has nothing to join — it is here so an adapter reads the
+      // same way on both paths, and still never fetches the space twice within the one request.
+      loadOfflineData: createOfflineDataLoader(() => config.adapters.getOfflineData(spaceId, environment, revision))
+    });
   } catch (err) {
     console.error('[RSC] getRscData error:', err);
     res.setStatus(500);

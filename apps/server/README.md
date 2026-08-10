@@ -61,6 +61,7 @@ createServer({
 | `middlewares` | `SSRMiddleware[]` | — | Array of custom middleware functions executed before the SSR renderer on every request (see [Custom middlewares](#custom-middlewares)). |
 | `rsc` | `SSRRscConfig` | — | React Server Components endpoint configuration (see [RSC](#react-server-components-rsc)). |
 | `adapters` | `SSRAdapters` | — | Required. Adapter callbacks for data fetching. |
+| `onListenError` | `(error, { port, host, label }) => void` | exits non-zero | What to do when the server cannot take its port. By default it prints what went wrong and what to do about it, then exits — a process whose server never bound is not running. Supply this to keep it alive and decide yourself. |
 
 ### HTTP version behaviour
 
@@ -83,14 +84,7 @@ type SSRAdapters = {
   getUser?: (req: SSRRequest) => Promise<SSRUser | undefined>;
   authenticate?: (credentials: Record<string, string>, req: SSRRequest) => Promise<SSRSession | undefined>;
   endSession?: (req: SSRRequest) => Promise<void>;
-  getRscData?: (
-    req: SSRRequest,
-    spaceId: number,
-    environment: Environment,
-    revision: number,
-    user: SSRUser | undefined,
-    ids?: string[]  // present on partial refresh; absent for full fetch
-  ) => Promise<SSRRscData>;
+  getRscData?: (context: SSRRscContext) => Promise<SSRRscData>;
 };
 ```
 
@@ -99,7 +93,7 @@ type SSRAdapters = {
 - **`getUser`** *(optional)* — resolves the authenticated user from the inbound request (e.g. via a session cookie or `Authorization` header). Called in parallel with `getOfflineData` on every cache miss. The returned user is forwarded to the SDK as `authenticated: true` and `user.details`, which controls page-level access for guest vs. registered users. Return `undefined` for unauthenticated requests.
 - **`authenticate`** *(optional)* — called when `POST {loginPath}` is received, with the credentials already parsed from the body (a posted form or JSON), whatever fields they are. Return a session to grant one, `undefined` to refuse — and never throw for a wrong password. **Identity only**: the cookies, their lifetimes and the readable hint are the server's, which is what keeps a session established here visible to the API side and the other way round. For a navigation (full-page form submit, `Sec-Fetch-Mode: navigate`) the server answers a `303` so the view re-renders via a GET; for a fetch it answers `200` with `{ success, access_token, expire_at }` or `401` with `{ error, reason }` — never a bodyless status, which leaves a caller holding nothing. This route knows a session and not the account behind it; `createServer({ auth })` serves the same path from the auth kernel instead, which answers the full grant.
 - **`endSession`** *(optional)* — called when `POST {logoutPath}` is received. Revoke the session at the source; the server clears the cookies. Clearing them alone would leave the credential itself working for anyone who had already copied it. A navigation receives a `303` redirect; a fetch receives `204 No Content`.
-- **`getRscData`** *(optional)* — called by the RSC endpoint (`/_rsc`) to fetch server-side data for schema elements with `runtime: 'server'`. Receives the full request, space context, and the resolved user so that authenticated operations can be performed. When `ids` is provided the adapter should return data only for those element IDs (partial refresh); omitting `ids` means a full fetch for all elements. Return `{}` when there is no server data for the current request (see [RSC](#react-server-components-rsc)).
+- **`getRscData`** *(optional)* — called by the RSC endpoint (`/_rsc`), and once per page render, to fetch server-side data for schema elements with `runtime: 'server'`. Takes one `SSRRscContext`: the request, the space context, the resolved user so authenticated operations are safe, `ids` on a partial refresh (absent means every element), and `loadOfflineData`. That last one is the space itself, shared with the page render happening alongside — await it instead of fetching the schema again, and it is read once per request however many callers ask. Return `{}` when there is no server data for the current request (see [RSC](#react-server-components-rsc)).
 
 ## JSON adapters (offline mode)
 
@@ -472,18 +466,12 @@ Implement `getRscData` in your adapters to serve data from the `/_rsc` endpoint.
 When `ids` is provided the client is performing a **partial refresh** — only return data for those element IDs. When `ids` is absent, return data for all elements (full fetch):
 
 ```ts
-import type { SSRAdapters, SSRRscData, SSRUser } from '@plitzi/sdk-server';
+import type { SSRAdapters, SSRRscContext, SSRRscData } from '@plitzi/sdk-server';
 
-const getRscData = async (
-  req: SSRRequest,
-  spaceId: number,
-  environment: string,
-  revision: number,
-  user: SSRUser | undefined,
-  ids?: string[]
-): Promise<SSRRscData> => {
-  // Only serve data when the schema has RSC enabled
-  const offlineData = await getOfflineData(spaceId, environment, revision);
+const getRscData = async ({ user, ids, loadOfflineData }: SSRRscContext): Promise<SSRRscData> => {
+  // Only serve data when the schema has RSC enabled. `loadOfflineData` joins the read the page render already
+  // started — it never costs a second trip to your database.
+  const offlineData = await loadOfflineData();
   if (!offlineData?.schema.rsc?.enabled) {
     return {};
   }
@@ -548,7 +536,7 @@ The server automatically registers `GET /_rsc` when `adapters.getRscData` is pro
 1. Reads `spaceId`, `environment`, and `revision` from the resolved `spaceDeployment` context.
 2. Reads the authenticated user from `ctx.user`.
 3. Reads optional `?ids=elem1,elem2` for partial refresh.
-4. Calls `adapters.getRscData(req, spaceId, environment, revision, user, ids?)`.
+4. Calls `adapters.getRscData({ req, spaceId, environment, revision, user, ids, loadOfflineData })`.
 5. Returns a JSON payload:
 
 ```json
@@ -635,6 +623,46 @@ wants to assemble or replace one piece.
 
 Nothing here assumes a web framework: a request is `{ headers, hostname, cookies?, query?, body? }` and a response is
 anything that can carry `Set-Cookie`, both true of bare `node:http`.
+
+### Serving the flows from your own server
+
+A page server gets the `/auth` surface from `createServer({ auth })`. A deployment that serves its API elsewhere —
+its own HTTP server, or one behind a router — gets the same flows as ready-made handlers from
+`@plitzi/sdk-server/handlers`.
+
+**That entry imports no framework and does not add one as a dependency.** The request, response and router are
+described by the few properties the handlers touch, which an Express, Connect or Koa object already satisfies and a
+`node:http` server satisfies with a few lines of its own.
+
+```ts
+import { createAuthGuard, mountAuthRoutes } from '@plitzi/sdk-server/handlers';
+
+// Every request: resolves the credential against your policy and puts it on `req.user` / `req.grant`,
+// or answers `{ error, reason }` with the right status.
+app.use(createAuthGuard(auth.identity, policy));
+
+// The twelve flows, on whatever has `get` and `post`.
+const router = Router();
+mountAuthRoutes(router, { api: auth.api, cookies: auth.cookies });
+app.use('/auth', router);
+```
+
+Without a router, `createAuthHandlers` returns the same flows as a list — `{ method, path, handle }` — and
+dispatching them is yours:
+
+```ts
+import { createAuthHandlers } from '@plitzi/sdk-server/handlers';
+import { parseRequest } from '@plitzi/sdk-server/kernel';
+
+const routes = createAuthHandlers({ api: auth.api, cookies: auth.cookies });
+const route = routes.find(r => r.method === req.method && `/auth${r.path}` === req.path);
+await route?.handle(req, res);
+```
+
+What is *not* here is anything a deployment must decide: its accounts, its policy, its cookie naming. Those stay
+`createAuth`'s. What is here is the part that was identical in every deployment that wrote it by hand — including
+one real trap: `hostname` is a prototype getter on several frameworks, so building the carrier with a spread drops
+it, and every cookie is then named for nowhere.
 
 ### What you implement
 

@@ -3,6 +3,36 @@ import { buildTransport, protoLabel } from '../transports';
 import type { Handler } from '../transports';
 import type { CacheManager, PluginRegistry, SSRServer, SSRServerConfig } from '@plitzi/sdk-shared';
 
+/**
+ * What went wrong taking the port, and what to do about it.
+ *
+ * A server that cannot bind used to surface as an unhandled `error` event: a stack trace through `node:net` naming
+ * neither the port nor the server, printed as if the process had crashed at random. It is the first thing a new
+ * deployment hits — two roles configured on one port, or a previous run still holding it — so it is worth saying
+ * plainly.
+ */
+const bindFailure = (error: NodeJS.ErrnoException, port: number, label: string): string => {
+  if (error.code === 'EADDRINUSE') {
+    return (
+      `[${label}] cannot bind port ${port}: already in use. Another server is running, or the previous one has ` +
+      `not released it yet — find it with \`lsof -iTCP:${port} -sTCP:LISTEN\`, or start this one on another port.`
+    );
+  }
+
+  if (error.code === 'EACCES') {
+    return (
+      `[${label}] cannot bind port ${port}: permission denied. Ports below 1024 need privileges — run elevated, ` +
+      'or use a port above 1024 and put a proxy in front.'
+    );
+  }
+
+  if (error.code === 'EADDRNOTAVAIL') {
+    return `[${label}] cannot bind port ${port}: the requested host is not an address of this machine.`;
+  }
+
+  return `[${label}] failed to bind port ${port}: ${error.message}`;
+};
+
 export interface HttpServerParts {
   // Names the server in logs and errors (e.g. SSR, MCP) — this module is service-agnostic.
   label: string;
@@ -37,6 +67,21 @@ export const createHttpServer = (
     listen(port: number, host = '0.0.0.0') {
       const handler = makeHandlerForPort(port);
       ({ primary, h3 } = buildTransport(config, handler, port, label));
+
+      primary.on('error', (error: NodeJS.ErrnoException) => {
+        if (config.onListenError) {
+          config.onListenError(error, { port, host, label });
+
+          return;
+        }
+
+        console.error(bindFailure(error, port, label));
+        // Set as well as exit: the code is what a supervisor reads, and it is already right if something the
+        // deployment installed swallows the exit.
+        process.exitCode = 1;
+        process.exit(1);
+      });
+
       primary.listen(port, host, () => {
         console.log(`[${label}] ${protoLabel(version, !!config.tls)} - listening on ${host}:${port}`);
       });

@@ -9,10 +9,9 @@ import type {
   Schema,
   Style,
   SSRAdapters,
-  SSRRequest,
+  SSRRscContext,
   SSRRscData,
-  SSRSpaceDeployment,
-  SSRUser
+  SSRSpaceDeployment
 } from '@plitzi/sdk-shared';
 
 // The lib build replaces `VERSION` with the package version (see vite.config.ts `define`); running the sources
@@ -70,15 +69,8 @@ const getSpaceDeployment = (): Promise<SSRSpaceDeployment> => {
   });
 };
 
-const getRscData = async (
-  _req: SSRRequest,
-  _spaceId: number,
-  _environment: string,
-  _revision: number,
-  user: SSRUser | undefined,
-  ids?: string[]
-  // eslint-disable-next-line @typescript-eslint/require-await
-): Promise<SSRRscData> => {
+// eslint-disable-next-line @typescript-eslint/require-await
+const getRscData = async ({ user, ids }: SSRRscContext): Promise<SSRRscData> => {
   const all: Record<string, unknown> = {
     'rsc-server': {
       message: 'Hello from the Node.js SSR server!',

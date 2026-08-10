@@ -9,6 +9,9 @@ import type { IncomingMessage, RequestListener } from 'node:http';
 export type CloseableServer = {
   close: (cb?: (err?: Error) => void) => unknown;
   listen: (port: number, host: string, cb: () => void) => unknown;
+  /** Bind failures arrive here. Without a listener Node throws the `error` event as an uncaught exception, which
+   *  is how a taken port used to read as a crash in `node:net` rather than as this server not starting. */
+  on: (event: 'error', listener: (error: NodeJS.ErrnoException) => void) => unknown;
 };
 
 export type Handler = (req: IncomingMessage, res: RawResponse) => void;

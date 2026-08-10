@@ -66,4 +66,27 @@ describe('createHttpServer lifecycle', () => {
   it('refuses HTTP/3 without TLS, naming the server', () => {
     expect(() => build({ httpVersion: 3 } as SSRServerConfig)).toThrow(/\[TEST\].*httpVersion: 3.*tls/u);
   });
+
+  /**
+   * A port already taken is the first thing a new deployment hits, and it used to arrive as an unhandled `error`
+   * event: a stack through node:net naming neither the port nor the server. The handler is what makes it reportable
+   * at all — without one there is nothing to hand to `onListenError` either.
+   */
+  it('reports a port it cannot take, naming the server and the port', async () => {
+    const holder = build();
+    holder.listen(39303, '127.0.0.1');
+    await vi.waitFor(async () => expect(await isBound(39303)).toBe(true));
+
+    const onListenError = vi.fn();
+    const blocked = build({ httpVersion: 1, onListenError } as unknown as SSRServerConfig);
+    blocked.listen(39303, '127.0.0.1');
+
+    await vi.waitFor(() => expect(onListenError).toHaveBeenCalled());
+    const [error, context] = onListenError.mock.calls[0] as [NodeJS.ErrnoException, { port: number; label: string }];
+    expect(error.code).toBe('EADDRINUSE');
+    expect(context).toMatchObject({ port: 39303, host: '127.0.0.1', label: 'TEST' });
+
+    await blocked.close();
+    await holder.close();
+  });
 });

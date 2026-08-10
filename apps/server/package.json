@@ -19,6 +19,11 @@
       "import": "./dist/kernel.js",
       "default": "./dist/kernel.js"
     },
+    "./handlers": {
+      "types": "./dist/handlers.d.ts",
+      "import": "./dist/handlers.js",
+      "default": "./dist/handlers.js"
+    },
     "./ssr": {
       "types": "./dist/ssr.d.ts",
       "import": "./dist/ssr.js",

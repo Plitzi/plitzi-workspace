@@ -4,6 +4,7 @@ import { sdkAssetVersion } from '../../core/sdkAssets';
 import { buildServerInfo } from '../../helpers/buildServerInfo';
 import { buildOfflineDataCacheKey } from '../../helpers/cache';
 import { escapeJson } from '../../helpers/escapeJson';
+import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
 import { readCookie } from '../../helpers/readCookie';
 
 import type { ComponentProps } from './Component';
@@ -45,13 +46,22 @@ export const prepareRender = async (
   const cachedOfflineStr =
     offlineDataOverride === undefined && offlineCacheKey ? offlineDataCache?.get(offlineCacheKey) : undefined;
 
+  // Shared with the RSC read that runs alongside this one, so the space is fetched once however many of them ask.
+  const loadOfflineData = createOfflineDataLoader(() => {
+    if (offlineDataOverride !== undefined) {
+      return Promise.resolve<OfflineDataRaw | undefined>(offlineDataOverride);
+    }
+
+    if (cachedOfflineStr) {
+      return Promise.resolve(JSON.parse(cachedOfflineStr) as OfflineDataRaw | undefined);
+    }
+
+    return m('schema', () => config.adapters.getOfflineData(spaceId, environment, revision));
+  });
+
   const [offlineData, server] = await Promise.all([
-    offlineDataOverride !== undefined
-      ? Promise.resolve<OfflineDataRaw | undefined>(offlineDataOverride)
-      : cachedOfflineStr
-        ? (JSON.parse(cachedOfflineStr) as OfflineDataRaw | undefined)
-        : m('schema', () => config.adapters.getOfflineData(spaceId, environment, revision)),
-    m('rsc', () => buildServerInfo(req, config))
+    loadOfflineData(),
+    m('rsc', () => buildServerInfo(req, config, loadOfflineData))
   ]);
 
   if (offlineDataOverride === undefined && !cachedOfflineStr && offlineCacheKey && offlineData !== undefined) {

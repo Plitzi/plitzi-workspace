@@ -2,7 +2,7 @@ import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-ser
 
 import { offlineDataPath } from '@plitzi/example-space';
 
-import type { SSRRequest, SSRRscData, SSRUser } from '@plitzi/sdk-shared';
+import type { SSRRscContext, SSRRscData, SSRUser } from '@plitzi/sdk-shared';
 
 const PORT = Number(process.env.PORT ?? 4004);
 
@@ -25,16 +25,12 @@ const serverDataFor = (user: SSRUser | undefined): Record<string, unknown> => ({
 });
 
 /** Called once per page render, and again for each partial refresh the client asks for. `ids` is set on those
- *  partial calls — honour it and you do only the work that was requested instead of rebuilding every slice. */
+ *  partial calls — honour it and you do only the work that was requested instead of rebuilding every slice.
+ *
+ *  Everything arrives in one object, `loadOfflineData` included: that one is the space this render is already
+ *  loading, so an adapter that needs the schema awaits it rather than fetching a second copy. */
 // eslint-disable-next-line @typescript-eslint/require-await
-const getRscData = async (
-  _req: SSRRequest,
-  _spaceId: number,
-  _environment: string,
-  _revision: number,
-  user: SSRUser | undefined,
-  ids?: string[]
-): Promise<SSRRscData> => {
+const getRscData = async ({ user, ids }: SSRRscContext): Promise<SSRRscData> => {
   const all = serverDataFor(user);
   const serverData = ids?.length ? Object.fromEntries(ids.filter(id => id in all).map(id => [id, all[id]])) : all;
 
