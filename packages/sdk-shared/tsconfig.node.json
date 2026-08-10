@@ -1,6 +1,11 @@
 {
   "compilerOptions": {
     "composite": true,
+    // `composite` writes a .tsbuildinfo whatever `incremental` says, and it lands beside the config unless there is
+    // an outDir to put it in. Every other package sets its own; this one is both the base and a project, and had
+    // none — which is why a stray file kept appearing here. Not `tsBuildInfoFile`: a relative path in an extended
+    // config resolves against the file that DECLARES it, so every package would write over this one.
+    "outDir": "./dist",
     "emitDeclarationOnly": true,
     "strictNullChecks": true,
     "module": "ESNext",

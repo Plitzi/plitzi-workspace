@@ -36,6 +36,7 @@
       // "@hooks/*": ["./src/hooks/*"],
       // "@/*": ["./src/*"]
     },
+    "incremental": false,
     "rootDir": "./",
     "outDir": "./dist"
   },
