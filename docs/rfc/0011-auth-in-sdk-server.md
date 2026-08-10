@@ -92,7 +92,7 @@ against mocked Prisma in Plitzi.
 barrel — inside a module the API depends on — closes a cycle and leaves `authGuard` undefined at route-mounting
 time. Import the leaf (`prisma/client`). The old code got away with it by accident of import order.
 
-### Stage 4 — the REST API
+### Stage 4 — the REST API (implemented, except social OAuth)
 
 The `/auth/*` surface becomes framework-neutral handlers in `sdk-server`, driven by adapters for accounts,
 identities and email: login, refresh, logout, `GET /auth/session`, `sessions/revoke`, exchange, signup, password
@@ -114,6 +114,28 @@ actually answers instead of a signup button that 404s.
 
 Policy that is Plitzi's — role names (`user`, `unverifiedUser`), email templates, default settings — is
 configuration, never code in the generic package.
+
+**What landed**: `createAuthApi({ tokens, identity, adapters, config })` in `core/auth/api.ts` — session, login,
+refresh, logout, revoke, exchange, signup, forgot/reset password, validate, resend, capabilities. A handler is given
+what the request carried and answers what should be sent, including whether the session cookies should be written or
+cleared; nothing in it knows about Express. Plitzi's whole `/auth` router is now that binding, twelve routes of
+`handle(req => authApi.x(...))`, and its `api/auth/session.ts` is gone — the mint lives in the server, and the SSR
+login, the social callback and the dev CLI all reach for the same one.
+
+Two things fell out of it, both worth keeping:
+
+- **`POST /auth/forgot-password` stopped answering 404 for an unknown address.** It answers identically either way
+  now: whether an address has an account here is not something a stranger may establish by asking. The e2e that
+  pinned the old behaviour was rewritten to pin the new one.
+- **`services/prisma/index.ts` no longer mounts the API router** (it moved to `api/mount.ts`). A data-access barrel
+  that also composes HTTP puts the API upstream of everything that reads the database, so any module the API depends
+  on closed a cycle merely by asking for a Prisma client. That is what had `authGuard` arriving undefined.
+
+**Still to move: social OAuth.** `oauth/{client,state,redirects,registry,router}` — the authorization-code flow, PKCE,
+the CSRF nonce, the sanitised redirect — is ~350 lines of entirely generic protocol still living in Plitzi. The
+provider adapters (`google`, `github`) and their credentials stay configuration either way. `resolveOAuthUser`'s
+three-way rule (linked identity → verified email match → new account) is generic; the rows it reads are not, so it
+splits like everything else here.
 
 ### Stage 5 — plitzi-sdk-server as a data layer
 

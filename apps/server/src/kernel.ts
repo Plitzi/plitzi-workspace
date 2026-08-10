@@ -25,6 +25,7 @@ export { createCarriers, presentedOrigin } from './core/auth/credentials';
 export { ANY_DOMAIN, domainAllowed, hostnameOf, normalizeDomain } from './core/auth/domains';
 export { createIdentity } from './core/auth/identity';
 export { createAuthorizer, requirementFor } from './core/auth/authorize';
+export { createAuthApi } from './core/auth/api';
 export { consoleLogger, renderLogEvent } from './helpers/serverLog';
 export { PREVIEW_TOKEN_PARAM } from './core/previewToken';
 
@@ -47,6 +48,15 @@ export type {
   StoredSpaceToken
 } from './core/auth/identity';
 export type { AuthPolicy, AuthorizeResult, Authorizer, PathMatcher, Requirement } from './core/auth/authorize';
+export type {
+  AccountAccess,
+  AccountAdapters,
+  AccountRecord,
+  AuthApi,
+  AuthApiConfig,
+  AuthFeatures,
+  AuthOutcome
+} from './core/auth/api';
 export type {
   AuthFailure,
   RefreshTokenPayload,
