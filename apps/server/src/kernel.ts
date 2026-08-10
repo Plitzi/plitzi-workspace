@@ -26,6 +26,7 @@ export { ANY_DOMAIN, domainAllowed, hostnameOf, normalizeDomain } from './core/a
 export { createIdentity } from './core/auth/identity';
 export { createAuthorizer, requirementFor } from './core/auth/authorize';
 export { createAuthApi } from './core/auth/api';
+export { BUILT_IN_PROVIDERS, OAuthFailure, createSocialAuth, requestProfileJson } from './core/auth/oauth';
 export { consoleLogger, renderLogEvent } from './helpers/serverLog';
 export { PREVIEW_TOKEN_PARAM } from './core/previewToken';
 
@@ -48,6 +49,17 @@ export type {
   StoredSpaceToken
 } from './core/auth/identity';
 export type { AuthPolicy, AuthorizeResult, Authorizer, PathMatcher, Requirement } from './core/auth/authorize';
+export type {
+  CompletedFlow,
+  OAuthFailureReason,
+  OAuthProfile,
+  OAuthProvider,
+  OAuthProviderConfig,
+  SocialAuth,
+  SocialAuthAdapters,
+  SocialAuthConfig,
+  StartedFlow
+} from './core/auth/oauth';
 export type {
   AccountAccess,
   AccountAdapters,

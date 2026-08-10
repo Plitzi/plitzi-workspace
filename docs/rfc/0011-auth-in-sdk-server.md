@@ -1,6 +1,6 @@
 # RFC 0011 — Auth belongs to sdk-server
 
-**Status**: stage 1 implemented, stages 2–5 planned
+**Status**: implemented
 **Supersedes the placement decisions of** [RFC 0010](./0010-unified-auth-and-rbac.md), not its design
 
 ## The problem
@@ -53,10 +53,10 @@ A deployment says who someone is; the server decides how that travels. Plitzi's 
 naming (one name per environment, on the registrable domain) as configuration, so the api role, SSR and the auth
 kernel still agree byte for byte.
 
-## Stages 2–5 — planned
+## Stages 2–5
 
 Roughly 3,700 lines across `src/services/auth/` and `src/services/api/auth/`, 18 consumers, 20 test files. Each stage
-leaves both repositories working; none is worth starting before the previous one is green.
+left both repositories working and green before the next one started.
 
 ### Stage 2 — the credential kernel (implemented)
 
@@ -92,7 +92,7 @@ against mocked Prisma in Plitzi.
 barrel — inside a module the API depends on — closes a cycle and leaves `authGuard` undefined at route-mounting
 time. Import the leaf (`prisma/client`). The old code got away with it by accident of import order.
 
-### Stage 4 — the REST API (implemented, except social OAuth)
+### Stage 4 — the REST API (implemented)
 
 The `/auth/*` surface becomes framework-neutral handlers in `sdk-server`, driven by adapters for accounts,
 identities and email: login, refresh, logout, `GET /auth/session`, `sessions/revoke`, exchange, signup, password
@@ -131,11 +131,39 @@ Two things fell out of it, both worth keeping:
   that also composes HTTP puts the API upstream of everything that reads the database, so any module the API depends
   on closed a cycle merely by asking for a Prisma client. That is what had `authGuard` arriving undefined.
 
-**Still to move: social OAuth.** `oauth/{client,state,redirects,registry,router}` — the authorization-code flow, PKCE,
-the CSRF nonce, the sanitised redirect — is ~350 lines of entirely generic protocol still living in Plitzi. The
-provider adapters (`google`, `github`) and their credentials stay configuration either way. `resolveOAuthUser`'s
-three-way rule (linked identity → verified email match → new account) is generic; the rows it reads are not, so it
-splits like everything else here.
+### Stage 4b — social OAuth (implemented)
+
+`createSocialAuth({ providers, config, adapters })` owns the authorization-code grant end to end: the CSRF nonce,
+PKCE, the token exchange, reading the profile, and the redirect target — which is an open redirect the moment it is
+trusted, so relative paths pass, protocol-relative and backslash lookalikes do not, and absolute URLs must match an
+allowed origin. The `google` and `github` adapters ship with the server (they are knowledge about Google and GitHub,
+not about Plitzi); `customProviders` takes any other.
+
+Two functions and a list, none of which touch a response: `start` hands back where to send the browser and the state
+to store, `complete` hands back where to send it next and **who came back**. Minting the session is deliberately not
+the flow's job — that is what keeps it independent of the API that mints, and it is the seam the Express binding
+fills in twelve lines.
+
+Plitzi keeps its credentials, `resolveOAuthUser` (the three-way rule — linked identity → provider-verified email →
+new account — reads Plitzi's rows), and the binding.
+
+## Stage 5 — what is left in plitzi-sdk-server
+
+775 lines under `api/auth`, and every one of them is either data or Plitzi policy:
+
+| | |
+|---|---|
+| `accountAdapters.ts` | the account store, as the server's flows need to see it |
+| `cookies.ts` | Express bindings over the cookie shapes the server defines |
+| `accounts.ts` | role names, default settings — product policy |
+| `oauth/accounts.ts` | linking a provider identity onto a `user` row |
+| `password.ts` | which hashing algorithm this deployment chose |
+| `index.ts` | twelve routes of `handle(req => authApi.x(...))` |
+
+Plus `services/auth/` (127 lines, tests aside): configuration for the mint, the three identity adapters over Prisma
+and Redis, and the Express binding for the guard.
+
+Nothing in either list is a rule. The rules are all in `sdk-server` now, which is the test this RFC set itself.
 
 ### Stage 5 — plitzi-sdk-server as a data layer
 
