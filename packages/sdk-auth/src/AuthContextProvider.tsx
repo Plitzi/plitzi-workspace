@@ -89,7 +89,7 @@ const AuthContextProvider = ({ children, server }: AuthContextProviderProps) => 
     [templated, schemaSettings, webKey]
   );
 
-  const { manager, loading, authenticated, state } = useAuth({
+  const { manager, loading, authenticated, state, bootstrapUser, bootstrapToken } = useAuth({
     server,
     isHydrating,
     provider: schemaSettings.userProvider ?? '',
@@ -106,11 +106,18 @@ const AuthContextProvider = ({ children, server }: AuthContextProviderProps) => 
       logout: manager.logout.bind(manager),
       state,
       authenticated: authenticated || !previewMode,
-      user: manager.getProvider()
+      /**
+       * The provider's session once it has one, and until then whatever the server rendered with.
+       *
+       * The provider is filled in by `init()`, which is an effect — so during a server render it holds nothing, and
+       * reading it alone published an EMPTY auth data source on a page the server had just resolved a user for.
+       * Every `{{user.*}}` binding rendered blank in the HTML and then filled in after hydration.
+       */
+      user: manager.getProvider()?.user
         ? { details: manager.getProvider()?.user, accessToken: manager.getProvider()?.token?.accessToken }
-        : undefined
+        : bootstrapUser && { details: bootstrapUser, accessToken: bootstrapToken }
     }),
-    [manager, state, authenticated, previewMode]
+    [manager, state, authenticated, previewMode, bootstrapUser, bootstrapToken]
   );
 
   return <AuthContext value={valueMemo}>{!loading && children}</AuthContext>;

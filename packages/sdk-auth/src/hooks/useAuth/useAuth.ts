@@ -31,6 +31,8 @@ const useAuth = ({ server, isHydrating = false, provider = '', settings }: UseAu
    * about the entire tree, which React reports as a hydration mismatch on every signed-out page.
    */
   const serverAnswered = server !== undefined;
+  // `Server` allows a promise here (a token resolved later); only a settled string is a credential this can hand on.
+  const bootstrapToken = typeof server?.user?.accessToken === 'string' ? server.user.accessToken : undefined;
   const [state, setState] = useState<AuthState>('init');
 
   const handleEvent = useCallback((event: AuthEvent) => {
@@ -47,23 +49,33 @@ const useAuth = ({ server, isHydrating = false, provider = '', settings }: UseAu
   useEffect(() => {
     void manager.init({
       user: bootstrapUser,
-      accessToken: typeof server?.user?.accessToken === 'string' ? server.user.accessToken : undefined,
+      accessToken: bootstrapToken,
       expiresAt: server?.user?.expiresAt,
       skipAuth: server?.skipAuth
     });
 
     return () => manager.dispose();
-  }, [manager, bootstrapUser, server?.user?.accessToken, server?.user?.expiresAt, server?.skipAuth]);
+  }, [manager, bootstrapUser, bootstrapToken, server?.user?.expiresAt, server?.skipAuth]);
 
   // A server-rendered page arrives with its answer already in hand, and the browser has nothing to wait for.
   const hookValue = useMemo(
     () => ({
       manager,
       state,
+      /** Who the server rendered this page for, so a consumer can stand on it until the browser has decided. */
+      bootstrapUser,
+      bootstrapToken,
       loading: state === 'initLoading' || (state === 'init' && !bootstrapUser && !serverAnswered && !isHydrating),
-      authenticated: state === 'authenticated'
+      /**
+       * Before the browser has decided, the server's answer stands. `state` only becomes `authenticated` from
+       * `init()`, which runs in an effect — and effects do not run during a server render, so this read was false on
+       * the server for a visitor the server had just resolved. Page-level access rules are evaluated against it, so
+       * an `accessLevel: 'authenticated'` page never won on the server, and the browser then picked a different page
+       * than the HTML it was hydrating.
+       */
+      authenticated: state === 'authenticated' || (state === 'init' && !!bootstrapUser)
     }),
-    [manager, state, bootstrapUser, serverAnswered, isHydrating]
+    [manager, state, bootstrapUser, bootstrapToken, serverAnswered, isHydrating]
   );
 
   return hookValue;

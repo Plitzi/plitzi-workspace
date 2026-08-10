@@ -3,7 +3,12 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import type { OfflineDataRaw, SSRAdapters, SSRRequest, SSRSpaceDeployment, SSRUser } from '@plitzi/sdk-shared';
 
 export type JsonAdaptersConfig = {
-  offlineData: string | ((spaceId: number, environment: string, revision?: number) => string);
+  /**
+   * The space: a path to a `{ schema, style }` JSON, a function returning one per request, or the data itself for a
+   * consumer that already holds it (composed at startup, fetched once, built in a test). Only a path can be written
+   * back to, so `saveOfflineData` is offered only when one was given.
+   */
+  offlineData: OfflineDataRaw | string | ((spaceId: number, environment: string, revision?: number) => string);
   deployment?: string | SSRSpaceDeployment | Record<string, SSRSpaceDeployment>;
   user?: SSRUser | ((req: SSRRequest) => SSRUser | undefined | Promise<SSRUser | undefined>);
 };
@@ -14,16 +19,24 @@ const isDeploymentObject = (v: NonNullable<JsonAdaptersConfig['deployment']>): v
 const readJson = (filePath: string): unknown => JSON.parse(readFileSync(filePath, 'utf-8'));
 
 export const createJsonAdapters = (config: JsonAdaptersConfig): SSRAdapters => {
+  const pathFor = (spaceId: number, environment: string, revision?: number): string | undefined => {
+    if (typeof config.offlineData === 'function') {
+      return config.offlineData(spaceId, environment, revision);
+    }
+
+    return typeof config.offlineData === 'string' ? config.offlineData : undefined;
+  };
+
   const getOfflineData = (
     spaceId: number,
     environment: string,
     revision?: number
   ): Promise<OfflineDataRaw | undefined> => {
     try {
-      const filePath =
-        typeof config.offlineData === 'function'
-          ? config.offlineData(spaceId, environment, revision)
-          : config.offlineData;
+      const filePath = pathFor(spaceId, environment, revision);
+      if (!filePath) {
+        return Promise.resolve(config.offlineData as OfflineDataRaw);
+      }
 
       return Promise.resolve(readJson(filePath) as OfflineDataRaw);
     } catch (err: unknown) {
@@ -34,8 +47,11 @@ export const createJsonAdapters = (config: JsonAdaptersConfig): SSRAdapters => {
   };
 
   const saveOfflineData = (spaceId: number, environment: string, data: OfflineDataRaw): Promise<void> => {
-    const filePath =
-      typeof config.offlineData === 'function' ? config.offlineData(spaceId, environment) : config.offlineData;
+    const filePath = pathFor(spaceId, environment);
+    if (!filePath) {
+      return Promise.resolve();
+    }
+
     writeFileSync(filePath, JSON.stringify(data, null, 2));
 
     return Promise.resolve();
@@ -73,5 +89,15 @@ export const createJsonAdapters = (config: JsonAdaptersConfig): SSRAdapters => {
         Promise.resolve(typeof config.user === 'function' ? config.user(req) : config.user)
     : undefined;
 
-  return { getOfflineData, saveOfflineData, getSpaceDeployment, getUser };
+  // No path, nowhere to write: the adapter is simply not offered, which is the same rule everything else follows —
+  // an absent adapter means the capability is absent, rather than one that throws when somebody finds it.
+  const canSave = typeof config.offlineData !== 'object';
+
+  return {
+    getOfflineData,
+    getSpaceDeployment,
+    ...(canSave ? { saveOfflineData } : {}),
+    // Omitted rather than left undefined: a key that is present but empty overrides whatever else composed it in.
+    ...(getUser ? { getUser } : {})
+  };
 };

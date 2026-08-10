@@ -1,9 +1,8 @@
 import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 import { createAuth } from '@plitzi/sdk-server/kernel';
 
-import { offlineDataPath } from '@plitzi/example-space';
-
 import { accounts, verifyPassword } from './accounts';
+import { offlineData } from './space';
 
 const PORT = Number(process.env.PORT ?? 4007);
 
@@ -25,7 +24,7 @@ const auth = createAuth({
   api: { verifyPassword }
 });
 
-const space = createJsonAdapters({ offlineData: offlineDataPath });
+const space = createJsonAdapters({ offlineData: offlineData() });
 
 const server = createServer({
   port: PORT,

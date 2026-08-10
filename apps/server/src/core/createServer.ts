@@ -35,10 +35,18 @@ export const createServer = ({ auth, ...config }: ServerConfig, extensions?: Pip
     return createPageServer(config, resolveServices(config), extensions);
   }
 
+  // Only what the deployment actually supplied overrides auth's answers. A plain spread would let a `getUser: undefined`
+  // — which is what an adapter factory emits for a capability it does not provide — silently unwire the session, and
+  // the page would render every visitor as a guest while `/auth/session` insisted they were signed in.
+  // Read as `unknown` on purpose: the type says an optional adapter is either present or absent, while an object can
+  // perfectly well carry the key with `undefined` in it — which is exactly the case being filtered out.
+  const entries = Object.entries(config.adapters) as [string, unknown][];
+  const supplied = Object.fromEntries(entries.filter(([, value]) => value !== undefined)) as SSRServerConfig['adapters'];
+
   const resolved: SSRServerConfig = {
     ...config,
     authCookie: config.authCookie ?? auth.cookieConfig,
-    adapters: { ...auth.ssrAdapters, ...config.adapters }
+    adapters: { ...auth.ssrAdapters, ...supplied }
   };
 
   // `preAuth`, because these gate themselves: each flow already states what a caller must present, and half of

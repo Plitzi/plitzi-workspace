@@ -35,9 +35,10 @@ these build on.
 | 01 | [mcp-server](./04-with-an-agent/01-mcp-server) | A dedicated MCP server an agent edits the space through | 4005 |
 | 02 | [ssr-preview](./04-with-an-agent/02-ssr-preview) | MCP and pages on one port, plus draft preview | 4006 |
 
-Every example renders [`shared-space`](./shared-space), so the difference between any two is the wiring alone. None
-of them needs a database: where a real deployment reads rows, these hand the server static data through the same
-adapters, which is exactly how your own store plugs in.
+Every example renders [`shared-space`](./shared-space), so the difference between any two is the wiring alone — bar
+`02-with-users`, which adds two pages to it, because a space with people in it has somewhere to sign in. None of them
+needs a database: where a real deployment reads rows, these hand the server static data through the same adapters,
+which is exactly how your own store plugs in.
 
 ## Running one
 
