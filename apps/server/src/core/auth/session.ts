@@ -227,3 +227,57 @@ export const readRefreshToken = (
   req: SSRRequest | { headers: { cookie?: string }; hostname: string },
   config?: SSRAuthCookie
 ): string | undefined => readCookie(req, `${sessionCookieParams(req.hostname, config).name}_refresh`);
+
+/** Anything a credential can be read off: this server's own request, an Express one, a bare `node:http` one. */
+export type CookieCarrier = SSRRequest | { headers: { cookie?: string; authorization?: string }; hostname: string };
+
+/**
+ * The cookie side of a session with this deployment's naming already bound in.
+ *
+ * The functions above take the naming on every call, which is right for the server's own internals and tedious for a
+ * host that answers dozens of requests with the same configuration. Nothing here knows about any framework: it takes
+ * a request that can be read and something that can carry `Set-Cookie`, which is as true of `node:http` as it is of
+ * Express — a self-hoster running neither still gets the whole cycle.
+ */
+export const createSessionCookies = (config?: SSRAuthCookie) => ({
+  write: (req: { hostname: string }, res: CookieSink, session: SSRSession): void =>
+    writeSessionCookies(req, res, session, config),
+
+  clear: (req: { hostname: string }, res: CookieSink): void => clearSessionCookies(req, res, config),
+
+  /** Holds a social sign-in between its two legs: the CSRF nonce and the PKCE verifier. */
+  writeFlow: (req: { hostname: string }, res: CookieSink, value: string, ttlSeconds: number): void =>
+    writeFlowCookie(req, res, value, ttlSeconds, config),
+
+  clearFlow: (req: { hostname: string }, res: CookieSink): void => clearFlowCookie(req, res, config),
+
+  readFlow: (req: CookieCarrier): string | undefined => readFlowCookie(req, config),
+
+  /**
+   * The session credential from `Authorization: Bearer` or the cookie, so one endpoint serves a bearer client and a
+   * browser. The header wins: a caller that went to the trouble of presenting one means it.
+   */
+  resolveSessionToken: (req: CookieCarrier): string | undefined => {
+    const header = req.headers.authorization;
+    const presented = header?.startsWith('Bearer ') ? header.slice(7).trim() : '';
+
+    return presented || readSessionToken(req, config);
+  },
+
+  /**
+   * The renewal credential from the request body (`refresh_token`, for API clients) or its cookie (for browsers).
+   * The body wins when both are present, mirroring how the session credential is resolved. `body` is whatever the
+   * host parsed — this only reads one field off it, so a host that parses JSON its own way still fits.
+   */
+  resolveRefreshToken: (req: CookieCarrier, body?: unknown): string | undefined => {
+    const presented = (body as { refresh_token?: unknown } | undefined)?.refresh_token;
+
+    if (typeof presented === 'string' && presented.trim() !== '') {
+      return presented.trim();
+    }
+
+    return readRefreshToken(req, config);
+  }
+});
+
+export type SessionCookies = ReturnType<typeof createSessionCookies>;

@@ -16,6 +16,7 @@ export { clientIp, parseRequest, readRawBody, requestOrigin } from './core/reque
 export {
   clearFlowCookie,
   clearSessionCookies,
+  createSessionCookies,
   readFlowCookie,
   readRefreshToken,
   readSessionToken,
@@ -35,8 +36,9 @@ export {
   normalizeDomain
 } from './core/auth/domains';
 export { createIdentity } from './core/auth/identity';
-export { createAuthorizer, requirementFor } from './core/auth/authorize';
+export { checkPermission, checkSpaceAccess, createAuthorizer, requirementFor } from './core/auth/authorize';
 export { createAuthApi } from './core/auth/api';
+export { applySessionOutcome, authPolicyRules, authRoutes } from './core/auth/routes';
 export { createSpaceTokenApi } from './core/auth/spaceTokens';
 export { BUILT_IN_PROVIDERS, OAuthFailure, createSocialAuth, requestProfileJson } from './core/auth/oauth';
 export { consoleLogger, renderLogEvent } from './helpers/serverLog';
@@ -46,7 +48,7 @@ export type { HttpServerParts } from './core/server/baseServer';
 export type { BuildContext } from './core/http/dispatcher';
 export type { HealthCheckApp, HealthIdentity } from './core/health';
 export type { BaseContext, PipelineExtensions, SSRContext, Stage } from './core/http/types';
-export type { CookieSink, SessionCookieParams } from './core/auth/session';
+export type { CookieCarrier, CookieSink, SessionCookieParams, SessionCookies } from './core/auth/session';
 export type { CredentialCarrier } from './core/auth/credentials';
 export type {
   Actor,
@@ -60,7 +62,17 @@ export type {
   SpaceMembership,
   StoredSpaceToken
 } from './core/auth/identity';
-export type { AuthPolicy, AuthorizeResult, Authorizer, PathMatcher, Requirement } from './core/auth/authorize';
+export type {
+  AuthPolicy,
+  AuthorizeResult,
+  Authorizer,
+  MembershipFacts,
+  PathMatcher,
+  PermissionCheck,
+  Requirement,
+  SpaceAccessCheck
+} from './core/auth/authorize';
+export type { AuthRequest, AuthRoute } from './core/auth/routes';
 export type {
   CompletedFlow,
   OAuthFailureReason,

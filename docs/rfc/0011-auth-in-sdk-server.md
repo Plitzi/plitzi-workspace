@@ -209,6 +209,44 @@ Plitzi's `api/spaces/tokens.ts` is now adapters over Prisma and eight routes. It
 deployment, not a rule, which is why the handler's body is typed and the binding narrows it rather than the server
 guessing the wire format. 18 tests moved with the rules.
 
+## Stage 7 — reusable without being frameworkful (implemented)
+
+The first attempt at stage 6's sibling was an `@plitzi/sdk-server/express` entry point holding the guard binding,
+`requirePermission`, the cookie helpers and the whole `/auth` router. It was rejected, correctly: a self-hoster runs
+this under plain Node, and a package that ships an Express subpath reads as one that expects Express — a false signal
+about what the thing needs, quite apart from `express` appearing in its dependency graph at all.
+
+The distinction that was missing: *reusable* is not the same as *bound to a framework*. Everything genuinely shared
+can be stated without one, and what is left over is small enough that no abstraction pays for itself:
+
+| Helper | The rule it states once |
+|---|---|
+| `createSessionCookies(config)` | this deployment's cookie naming, bound once; and the credential precedence — header over cookie for the session, body over cookie for the renewal |
+| `authRoutes({ api, cookies })` | the twelve `/auth` flows as **descriptors** — method, path, handler — for any host to mount |
+| `applySessionOutcome(req, res, outcome, cookies)` | what a flow's answer means for the cookies (writing the session but not its readable hint is a session that exists and then does not) |
+| `checkPermission(actor, permission)` | the global half of RBAC, as an answer: 401 and 403 are different facts |
+| `checkSpaceAccess(actor, membership, { owner })` | the space half: a non-member is told **404, not 403**, because 403 confirms the space exists |
+| `authPolicyRules(prefix)` | which of those twelve flows a stranger may reach, derived from the same table |
+
+That last one closed a real hazard rather than saving lines. `plitzi-sdk-server` kept its own list of public `/auth`
+paths, which had to be edited in step with a route table it does not own: forget in one direction and a sign-in
+endpoint sits behind the session it exists to create; forget in the other and something opens that never should have.
+It is now derived, and a test asserts the two describe exactly the same set of paths. Both lists agreed at the time
+of the change — verified before replacing them — so nothing moved, which is the point.
+
+None of them names a framework. A request is `{ headers, hostname, cookies?, query?, body? }` — true of `node:http`,
+Express, Fastify and this server's own — and a response is anything that can carry `Set-Cookie`. The Express glue in
+`plitzi-sdk-server` is ~40 lines: a `for` loop over the descriptors, and four-line middlewares.
+
+**Gotcha the loop found**: building the neutral request by spreading Express's `Request` silently loses `hostname`,
+which is a getter on its prototype rather than an own property — every cookie would have been named for nowhere. It
+is built field by field.
+
+A second gotcha, from the discarded attempt, is worth keeping written down: **a library must not augment
+`express-serve-static-core`**. It only merges when library and consumer resolve the identical copy of
+`@types/express`, which a workspace portal plus a separate repo do not — the augmentation fails silently and every
+`req.user` in the consumer stops type-checking. Deployments declare their own request state.
+
 ## Consequences
 
 - A self-hoster runs `sdk-server`, implements a handful of adapters over whatever they already have, and gets the

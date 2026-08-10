@@ -94,3 +94,63 @@ export const createAuthorizer =
   };
 
 export type Authorizer = ReturnType<typeof createAuthorizer>;
+
+export type PermissionCheck = { ok: true } | { ok: false; status: number; error: string };
+
+/**
+ * A global capability, checked off the actor the guard already resolved — no query. This is the whole of RBAC that
+ * applies outside a space: platform-wide routes rather than "may you touch this space", which is `identity.can()` and
+ * needs the membership half too.
+ *
+ * An answer rather than a middleware, so it reads the same from any host. The distinction it exists to make is 401
+ * against 403: "nobody is here" and "you are here and this is not yours" are different facts, and collapsing them
+ * tells a signed-in caller to sign in again.
+ */
+export const checkPermission = (actor: Actor | undefined, permission: string): PermissionCheck => {
+  if (!actor?.id) {
+    return { ok: false, status: 401, error: 'Not authenticated' };
+  }
+
+  if (!actor.permissions.includes(permission)) {
+    return { ok: false, status: 403, error: 'Insufficient permissions' };
+  }
+
+  return { ok: true };
+};
+
+/** What a membership row has to say for the check below. A deployment's own row will carry far more. */
+export interface MembershipFacts {
+  isOwner: boolean;
+}
+
+export type SpaceAccessCheck = { ok: true } | { ok: false; status: number; error: string };
+
+/**
+ * The space half: may this actor act on this space at all, and is being its owner required?
+ *
+ * The answer that matters is the middle one. A non-member gets **404, not 403** — telling a stranger "you may not
+ * touch this space" confirms the space exists, and whether a given slug belongs to somebody is not a fact an
+ * outsider gets to establish by asking. Owners and members are told apart afterwards, because by then the caller has
+ * already proved they belong there and 403 gives away nothing.
+ *
+ * Resolving the membership is the deployment's — its tables, and whether a route names a space by id or by slug.
+ */
+export const checkSpaceAccess = (
+  actor: Actor | undefined,
+  membership: MembershipFacts | undefined,
+  { owner = false }: { owner?: boolean } = {}
+): SpaceAccessCheck => {
+  if (!actor?.id) {
+    return { ok: false, status: 401, error: 'Not authenticated' };
+  }
+
+  if (!membership) {
+    return { ok: false, status: 404, error: 'Space not found' };
+  }
+
+  if (owner && !membership.isOwner) {
+    return { ok: false, status: 403, error: 'Insufficient permissions' };
+  }
+
+  return { ok: true };
+};

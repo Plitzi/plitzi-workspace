@@ -228,3 +228,4 @@ describe('what an actor may do in a space', () => {
     expect(await identity.can(account(), 42, 'spaceUpdate')).toBe(false);
   });
 });
+
