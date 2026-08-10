@@ -22,7 +22,9 @@ const parseBody = (req: SSRRequest): { provider?: string; token?: string } => {
 };
 
 /**
- * Turns a credential the browser obtained on its own into a session of this server's.
+ * Turns a credential the browser obtained on its own into a session of this server's, through the
+ * `exchangeCredential` adapter. A deployment running the auth kernel gets `POST /auth/exchange` from the flows
+ * instead, and `createServer` stands this one down so the two never answer on the same path.
  *
  * It exists for identity providers that live in the front-end — Auth0 and the like — where this server never sees
  * the sign-in and would go on rendering every page as a guest while the browser knows perfectly well who the

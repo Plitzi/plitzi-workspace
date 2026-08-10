@@ -45,7 +45,14 @@ export const createServer = ({ auth, ...config }: ServerConfig, extensions?: Pip
     entries.filter(([, value]) => value !== undefined)
   ) as SSRServerConfig['adapters'];
 
+  // The adapter-only login/logout stages answer on these same paths and run first, and all they can say about a
+  // successful sign-in is a bodyless 200 — they hold a session, not the account behind it. Left standing they
+  // shadow the flows below, so a client that signed in correctly got nothing back to prove it. A deployment that
+  // named its own paths keeps them: it asked for those endpoints, and they are then somewhere else entirely.
   const resolved: SSRServerConfig = {
+    loginPath: false,
+    logoutPath: false,
+    exchangePath: false,
     ...config,
     authCookie: config.authCookie ?? auth.cookieConfig,
     adapters: { ...auth.ssrAdapters, ...supplied }
@@ -55,7 +62,7 @@ export const createServer = ({ auth, ...config }: ServerConfig, extensions?: Pip
   // them are what a signed-out visitor uses to sign in.
   const withAuthRoutes: PipelineExtensions = {
     ...extensions,
-    preAuth: [...(extensions?.preAuth ?? []), createAuthApiStage(auth)]
+    preAuth: [...(extensions?.preAuth ?? []), createAuthApiStage(auth, auth.basePath)]
   };
 
   return createPageServer(resolved, resolveServices(resolved), withAuthRoutes);

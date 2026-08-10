@@ -97,13 +97,13 @@ type SSRAdapters = {
 - **`getOfflineData`** — returns the space snapshot (schema, plugins, styles, segments, collections) for SSR.
 - **`getSpaceDeployment`** — resolves which space and environment to render for a given inbound request. Return `{ error: { code, message } }` to abort with an HTTP error. Optionally include `templateProps` to override template variables, or `pluginNames` to activate plugins for the space (see [Plugins](#plugins) and [Template props](#template-props)).
 - **`getUser`** *(optional)* — resolves the authenticated user from the inbound request (e.g. via a session cookie or `Authorization` header). Called in parallel with `getOfflineData` on every cache miss. The returned user is forwarded to the SDK as `authenticated: true` and `user.details`, which controls page-level access for guest vs. registered users. Return `undefined` for unauthenticated requests.
-- **`authenticate`** *(optional)* — called when `POST {loginPath}` is received, with the credentials already parsed from the body (a posted form or JSON), whatever fields they are. Return a session to grant one, `undefined` to refuse — and never throw for a wrong password. **Identity only**: the cookies, their lifetimes and the readable hint are the server's, which is what keeps a session established here visible to the API side and the other way round. For a navigation (full-page form submit, `Sec-Fetch-Mode: navigate`) the server answers a `303` so the view re-renders via a GET; for a fetch it answers `200`/`401`.
+- **`authenticate`** *(optional)* — called when `POST {loginPath}` is received, with the credentials already parsed from the body (a posted form or JSON), whatever fields they are. Return a session to grant one, `undefined` to refuse — and never throw for a wrong password. **Identity only**: the cookies, their lifetimes and the readable hint are the server's, which is what keeps a session established here visible to the API side and the other way round. For a navigation (full-page form submit, `Sec-Fetch-Mode: navigate`) the server answers a `303` so the view re-renders via a GET; for a fetch it answers `200` with `{ success, access_token, expire_at }` or `401` with `{ error, reason }` — never a bodyless status, which leaves a caller holding nothing. This route knows a session and not the account behind it; `createServer({ auth })` serves the same path from the auth kernel instead, which answers the full grant.
 - **`endSession`** *(optional)* — called when `POST {logoutPath}` is received. Revoke the session at the source; the server clears the cookies. Clearing them alone would leave the credential itself working for anyone who had already copied it. A navigation receives a `303` redirect; a fetch receives `204 No Content`.
 - **`getRscData`** *(optional)* — called by the RSC endpoint (`/_rsc`) to fetch server-side data for schema elements with `runtime: 'server'`. Receives the full request, space context, and the resolved user so that authenticated operations can be performed. When `ids` is provided the adapter should return data only for those element IDs (partial refresh); omitting `ids` means a full fetch for all elements. Return `{}` when there is no server data for the current request (see [RSC](#react-server-components-rsc)).
 
 ## JSON adapters (offline mode)
 
-`createJsonAdapters` provides a ready-made adapter set that reads data from local JSON files, useful for offline mode, integration tests, and static deployments.
+`createJsonAdapters` provides a ready-made adapter set that reads a space from local JSON files, useful for offline mode, integration tests, and static deployments.
 
 ```ts
 import { createServer, createJsonAdapters } from '@plitzi/sdk-server';
@@ -111,8 +111,7 @@ import { createServer, createJsonAdapters } from '@plitzi/sdk-server';
 const server = createServer({
   adapters: createJsonAdapters({
     offlineData: '/exports/offline.json',
-    deployment: { spaceId: 1, environment: 'main', revision: 0 },
-    user: { id: 1, username: 'admin', email: 'admin@example.com', verified: true, permissions: [], roles: [] }
+    deployment: { spaceId: 1, environment: 'main', revision: 0 }
   })
 });
 
@@ -125,11 +124,38 @@ server.listen(3001);
 |---|---|---|
 | `offlineData` | `string` | Path to a single JSON file used for every request. |
 | `offlineData` | `(spaceId, environment, revision?) => string` | Function returning the path for the requested space. |
+| `offlineData` | `OfflineDataRaw` | The space itself, for a consumer that already holds it. Read-only: `saveOfflineData` is offered only for a path. |
 | `deployment` | `string` | Path to a JSON file containing an `SSRSpaceDeployment` object. |
 | `deployment` | `SSRSpaceDeployment` | Inline deployment object used for every request. |
 | `deployment` | `Record<hostname, SSRSpaceDeployment>` | Per-hostname map. Use `'*'` as a catch-all. |
+
+## Auth adapters
+
+Where a space comes from and who is looking at it are two integrations, so they are two factories. `createAuthAdapters` answers the identity half, and the two compose with a spread:
+
+```ts
+import { createAuthAdapters, createJsonAdapters, createServer } from '@plitzi/sdk-server';
+
+createServer({
+  adapters: {
+    ...createJsonAdapters({ offlineData: '/exports/offline.json' }),
+    ...createAuthAdapters({ user: req => sessionsFor(req) })
+  }
+});
+```
+
+### `AuthAdaptersConfig`
+
+| Option | Type | Description |
+|---|---|---|
 | `user` | `SSRUser` | Fixed user returned for every request. Useful for testing authenticated flows. |
-| `user` | `(req) => SSRUser \| undefined \| Promise<SSRUser \| undefined>` | Function for dynamic user resolution per request. |
+| `user` | `(req) => SSRUser \| undefined \| Promise<SSRUser \| undefined>` | Dynamic resolution per request. |
+| `authenticate` | `(credentials, req) => Promise<SSRSession \| undefined>` | Verify credentials and mint a session for `POST {loginPath}`. |
+| `endSession` | `(req) => Promise<void>` | Revoke this request's session for `POST {logoutPath}`. |
+
+Anything left out is omitted rather than set to `undefined`, so composing these never unwires an adapter another factory supplied.
+
+A deployment running the auth kernel needs none of this: `createServer({ auth })` fills the same three in from `createAuth(...).ssrAdapters`, and serves the full `/auth` surface instead of just login and logout.
 
 ## What the server does without being asked
 
@@ -947,6 +973,8 @@ import type {
   PluginRegistry,
   CacheFilter,
   CacheManager,
-  JsonAdaptersConfig
+  JsonAdaptersConfig,
+  AuthAdapters,
+  AuthAdaptersConfig
 } from '@plitzi/sdk-server';
 ```

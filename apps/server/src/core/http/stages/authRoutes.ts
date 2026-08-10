@@ -1,16 +1,10 @@
 import { exchangeStage } from './exchangeRoute';
 import { clearSessionCookies, writeSessionCookies } from '../../auth/session';
 import { readRawBody } from '../../requestParser';
+import { isNavigation, safeRedirectTarget } from '../navigation';
 
 import type { Stage } from '../types';
 import type { SSRRequest } from '@plitzi/sdk-shared';
-
-// Same-origin only: reject absolute URLs and protocol-relative `//host` to avoid open redirects.
-const safeRedirectTarget = (req: SSRRequest): string => {
-  const redirectParam = req.query['redirect'];
-
-  return redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//') ? redirectParam : '/';
-};
 
 /**
  * Credentials as they arrive from a page: a posted form, or JSON from a script. Every field is handed to the
@@ -56,7 +50,7 @@ export const loginStage: Stage = async ctx => {
 
   // A full-page form submission (navigation) must not be answered with a bodyless 401/200, or the browser
   // shows its own error page instead of the view. Redirect so the view re-renders via a GET.
-  if (req.headers['sec-fetch-mode'] === 'navigate') {
+  if (isNavigation(req)) {
     res.setStatus(303);
     res.setHeader('Location', session ? safeRedirectTarget(req) : loginPath);
     res.end();
@@ -64,8 +58,19 @@ export const loginStage: Stage = async ctx => {
     return true;
   }
 
+  // A body, because a bodyless 200 leaves a caller unable to do anything with the session it just established —
+  // and unable to tell this apart from an endpoint that answered nothing at all. Only what the adapter returned
+  // is in it: this path knows a session, never the account behind it. That is `createAuth`, which answers the
+  // whole grant here instead.
   res.setStatus(session ? 200 : 401);
-  res.end();
+  res.setHeader('Content-Type', 'application/json');
+  res.send(
+    JSON.stringify(
+      session
+        ? { success: true, access_token: session.token, expire_at: session.expiresAt }
+        : { error: 'Invalid credentials', reason: 'invalid' }
+    )
+  );
 
   return true;
 };
@@ -86,7 +91,7 @@ export const logoutStage: Stage = async ctx => {
 
   // On a navigation a 204 keeps the browser on the stale (still logged-in) page. Redirect so the view
   // re-renders in its logged-out state; a fetch can keep the lean 204.
-  if (req.headers['sec-fetch-mode'] === 'navigate') {
+  if (isNavigation(req)) {
     res.setStatus(303);
     res.setHeader('Location', safeRedirectTarget(req));
     res.end();

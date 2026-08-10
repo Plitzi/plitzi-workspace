@@ -1,7 +1,11 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
-import type { OfflineDataRaw, SSRAdapters, SSRRequest, SSRSpaceDeployment, SSRUser } from '@plitzi/sdk-shared';
+import type { OfflineDataRaw, SSRAdapters, SSRRequest, SSRSpaceDeployment } from '@plitzi/sdk-shared';
 
+/**
+ * Where a space comes from, and nothing else. Who is looking at it is `createAuthAdapters` (or the auth kernel's
+ * own `ssrAdapters`) — a deployment composes the two with a spread, and swaps either without disturbing the other.
+ */
 export type JsonAdaptersConfig = {
   /**
    * The space: a path to a `{ schema, style }` JSON, a function returning one per request, or the data itself for a
@@ -10,7 +14,6 @@ export type JsonAdaptersConfig = {
    */
   offlineData: OfflineDataRaw | string | ((spaceId: number, environment: string, revision?: number) => string);
   deployment?: string | SSRSpaceDeployment | Record<string, SSRSpaceDeployment>;
-  user?: SSRUser | ((req: SSRRequest) => SSRUser | undefined | Promise<SSRUser | undefined>);
 };
 
 const isDeploymentObject = (v: NonNullable<JsonAdaptersConfig['deployment']>): v is SSRSpaceDeployment =>
@@ -84,11 +87,6 @@ export const createJsonAdapters = (config: JsonAdaptersConfig): SSRAdapters => {
     );
   };
 
-  const getUser = config.user
-    ? (req: SSRRequest): Promise<SSRUser | undefined> =>
-        Promise.resolve(typeof config.user === 'function' ? config.user(req) : config.user)
-    : undefined;
-
   // No path, nowhere to write: the adapter is simply not offered, which is the same rule everything else follows —
   // an absent adapter means the capability is absent, rather than one that throws when somebody finds it.
   const canSave = typeof config.offlineData !== 'object';
@@ -96,8 +94,6 @@ export const createJsonAdapters = (config: JsonAdaptersConfig): SSRAdapters => {
   return {
     getOfflineData,
     getSpaceDeployment,
-    ...(canSave ? { saveOfflineData } : {}),
-    // Omitted rather than left undefined: a key that is present but empty overrides whatever else composed it in.
-    ...(getUser ? { getUser } : {})
+    ...(canSave ? { saveOfflineData } : {})
   };
 };

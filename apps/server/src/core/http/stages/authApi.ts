@@ -1,4 +1,5 @@
 import { readRawBody } from '../../requestParser';
+import { isNavigation, safeRedirectTarget } from '../navigation';
 
 import type { Auth } from '../../auth/createAuth';
 import type { AuthRequest } from '../../auth/routes';
@@ -21,17 +22,20 @@ const parseBody = (raw: string | undefined, contentType: string | undefined): un
 };
 
 /**
- * Serves the `/auth` flows a session needs beyond signing in and out: renewing before the credential lapses,
- * answering who this is, revoking every session, and whichever of signup and password reset the deployment offers.
+ * Serves the whole `/auth` surface: signing in and out, renewing before the credential lapses, answering who this
+ * is, revoking every session, and whichever of signup and password reset the deployment offers.
  *
  * A page server that stops at login and logout leaves a space unable to keep anybody signed in — the SDK renews
  * against `refreshUrl`, and with nothing there a visitor is signed out the moment their access token ages out. So
  * `createServer({ auth })` mounts these, and a deployment gets the whole cycle rather than the two ends of it.
  *
- * Login and logout keep the dedicated stages that run before this one: they redirect a form submission instead of
- * answering a bodyless 200, which is what a browser posting a `<form>` needs and an API client does not care about.
+ * It owns login and logout too, rather than leaving them to the adapter-only stages that can also answer on those
+ * paths: those know how to establish a session and nothing about the account behind it, so they can only answer a
+ * bodyless 200 where this one returns the grant — the token, its expiry and who it belongs to. Whichever runs is
+ * what a caller gets, so having both live meant a signed-in client that could not tell it had signed in.
+ * `createServer` stands the adapter-only pair down when an auth kernel is present.
  */
-export const createAuthApiStage = (auth: Auth, basePath = '/auth'): Stage<BaseContext> => {
+export const createAuthApiStage = (auth: Auth, basePath = auth.basePath): Stage<BaseContext> => {
   const byPath = new Map(auth.routes.map(route => [`${basePath}${route.path}`, route]));
 
   return async ctx => {
@@ -66,6 +70,17 @@ export const createAuthApiStage = (auth: Auth, basePath = '/auth'): Stage<BaseCo
     const outcome = await route.handler(authRequest);
 
     auth.applySession(req, res, outcome, auth.cookies);
+
+    // A posted `<form>` has left the page it was on: it needs a view, not a body it cannot render. Back to where
+    // it asked to go when the flow succeeded, back to the flow's own path when it did not, so the form reappears.
+    if (isNavigation(req)) {
+      res.setStatus(303);
+      res.setHeader('Location', outcome.ok ? safeRedirectTarget(req) : req.path);
+      res.end();
+
+      return true;
+    }
+
     res.setStatus(outcome.ok ? (outcome.status ?? 200) : outcome.status);
     res.setHeader('Content-Type', 'application/json');
     res.send(JSON.stringify(outcome.body));

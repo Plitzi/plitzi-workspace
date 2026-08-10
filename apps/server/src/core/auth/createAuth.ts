@@ -85,8 +85,10 @@ export const createAuth = (config: AuthConfig) => {
 
   const api = createAuthApi({ tokens, identity, adapters: config.adapters, config: config.api });
 
+  const basePath = config.basePath ?? '/auth';
+
   const policy: AuthPolicy = {
-    rules: [...(config.rules ?? []), ...authPolicyRules(config.basePath ?? '/auth')],
+    rules: [...(config.rules ?? []), ...authPolicyRules(basePath)],
     fallback: config.fallback ?? 'actor'
   };
 
@@ -96,6 +98,9 @@ export const createAuth = (config: AuthConfig) => {
     api,
     cookies,
     policy,
+    /** Where these flows were mounted, so whatever serves them reads it here rather than defaulting to `/auth`
+     *  on its own — a host that guessed would serve the routes somewhere the policy above does not guard. */
+    basePath,
     /** The naming this was built with, so a page server takes it from here instead of being told a second time. */
     cookieConfig: config.cookie,
     /** The `/auth` flows as descriptors, ready for whatever serves HTTP here. */

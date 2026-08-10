@@ -42,6 +42,11 @@ const server = createServer({ port, adapters: space, auth });
 `auth` on the server is the whole of the wiring. It mounts the `/auth` flows, fills in the three adapters a page
 server asks about identity, and carries the cookie naming with it — so there is no second place to keep in step.
 
+Note what `adapters` is *not* asked about: `createJsonAdapters` says where the space comes from and stops there.
+What a request renders and who is looking at it are two integrations, and either can be swapped without touching
+the other. Without an auth kernel the identity half is `createAuthAdapters({ user, authenticate, endSession })`,
+spread in beside the space.
+
 ## Try it in a browser
 
 http://127.0.0.1:4007 — sign in as `ada / password`, or as `grace / password` to see the other half of the model:
@@ -54,7 +59,8 @@ question.
 # nobody is signed in — no request needed to know that, but here is the endpoint
 curl -s localhost:4007/auth/session                       # 401 {"reason":"missing"}
 
-# sign in
+# sign in. The answer is the grant — the token, when it expires, and who it belongs
+# to — so a client that is not a browser comes away with something it can use
 curl -sc jar -X POST localhost:4007/auth/login \
   -H 'content-type: application/json' \
   -d '{"username":"ada","password":"password"}'
