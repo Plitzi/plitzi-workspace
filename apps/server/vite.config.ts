@@ -78,7 +78,9 @@ export default defineConfig(({ mode }) => {
           // Narrow entries for packages that build on this one. The barrel re-exports the whole render path and
           // ESM re-exports load eagerly, so a sibling server importing from it would load React with them.
           kernel: path.resolve(root, 'src/kernel.ts'),
-          ssr: path.resolve(root, 'src/ssr.ts')
+          ssr: path.resolve(root, 'src/ssr.ts'),
+          // Opt-in: importing this entry is what loads Express. Nothing else in the package touches it.
+          express: path.resolve(root, 'src/express.ts')
         },
         formats: ['es']
       },

@@ -8,7 +8,9 @@ import type { OpResult } from '../../../../helpers';
 import type { Env } from '../../../../types';
 import type { Schema } from '@plitzi/sdk-shared';
 
-const userProvider = z.enum(['auth0', 'basic', 'custom', '']);
+// Open on purpose: `basic` covers any HTTP+JSON backend by configuration, and anything else is the name of a
+// provider someone registered in the page. An enum here would refuse valid names it cannot know.
+const userProvider = z.string();
 const storage = z.enum(['localStorage', 'sessionStorage', '']);
 
 // Every field optional and merged onto the existing settings — a patch touches only the keys it sends. `customCss`
@@ -20,9 +22,9 @@ export const patchSettingsOp = z
     customCss: z.string().optional().describe('Raw global CSS for the whole space (keyframes, @font-face, resets)'),
     keepState: z.boolean().optional().describe('Persist element state across reloads'),
     stateStorage: z.enum(['localStorage', 'sessionStorage']).optional(),
-    userProvider: userProvider.optional().describe('Auth provider; "" disables authentication'),
-    auth0Domain: z.string().optional(),
-    auth0ClientId: z.string().optional(),
+    userProvider: userProvider
+      .optional()
+      .describe('Auth provider: "basic" for an HTTP+JSON backend, a registered name, or "" to disable auth'),
     tokenStorage: storage.optional(),
     loginUrl: z.string().optional(),
     userUrl: z.string().optional(),
@@ -30,7 +32,22 @@ export const patchSettingsOp = z
     logoutUrl: z.string().optional(),
     detailsPath: z.string().optional(),
     tokenPath: z.string().optional(),
-    expirationTimePath: z.string().optional()
+    refreshTokenPath: z.string().optional(),
+    expirationTimePath: z.string().optional(),
+    refreshExpirationTimePath: z.string().optional(),
+    sessionHintCookie: z
+      .string()
+      .optional()
+      .describe('Readable cookie holding only session expiries, so a page can tell nobody is signed in with no request'),
+    sessionExchangeUrl: z
+      .string()
+      .optional()
+      .describe('Where to hand a browser-obtained credential so the server issues its own session (client-side IdPs)'),
+    sessionGate: z
+      .enum(['optimistic', 'strict'])
+      .optional()
+      .describe('Render from the stored session and confirm behind it (default), or wait for the confirmation'),
+    sessionRevalidateSeconds: z.number().optional()
   })
   .describe(
     'Merge space-level settings: the global CSS (customCss) and the state/auth (user-provider) configuration. ' +

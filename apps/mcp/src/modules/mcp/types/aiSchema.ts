@@ -214,9 +214,8 @@ export interface AISettings {
   customCss?: string;
   keepState?: boolean;
   stateStorage?: 'localStorage' | 'sessionStorage';
-  userProvider?: 'auth0' | 'basic' | 'custom' | '';
-  auth0Domain?: string;
-  auth0ClientId?: string;
+  /** `basic` covers any HTTP+JSON backend by configuration; anything else is a name someone registered. */
+  userProvider?: 'basic' | 'custom' | '' | (string & {});
   tokenStorage?: 'localStorage' | 'sessionStorage' | '';
   loginUrl?: string;
   userUrl?: string;
@@ -224,7 +223,13 @@ export interface AISettings {
   logoutUrl?: string;
   detailsPath?: string;
   tokenPath?: string;
+  refreshTokenPath?: string;
   expirationTimePath?: string;
+  refreshExpirationTimePath?: string;
+  sessionHintCookie?: string;
+  sessionExchangeUrl?: string;
+  sessionGate?: 'optimistic' | 'strict';
+  sessionRevalidateSeconds?: number;
 }
 
 export interface ValidationError {

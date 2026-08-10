@@ -37,6 +37,7 @@ export {
 export { createIdentity } from './core/auth/identity';
 export { createAuthorizer, requirementFor } from './core/auth/authorize';
 export { createAuthApi } from './core/auth/api';
+export { createSpaceTokenApi } from './core/auth/spaceTokens';
 export { BUILT_IN_PROVIDERS, OAuthFailure, createSocialAuth, requestProfileJson } from './core/auth/oauth';
 export { consoleLogger, renderLogEvent } from './helpers/serverLog';
 export { PREVIEW_TOKEN_PARAM } from './core/previewToken';
@@ -80,6 +81,14 @@ export type {
   AuthFeatures,
   AuthOutcome
 } from './core/auth/api';
+export type {
+  SpaceTokenAdapters,
+  SpaceTokenApi,
+  SpaceTokenContext,
+  SpaceTokenOutcome,
+  SpaceTokenRecord,
+  SpaceTokenSummary
+} from './core/auth/spaceTokens';
 export type {
   AuthFailure,
   RefreshTokenPayload,

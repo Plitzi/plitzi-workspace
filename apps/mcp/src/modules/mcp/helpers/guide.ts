@@ -621,9 +621,12 @@ Space-level configuration lives in \`plitzi://settings/{env}\` and is edited wit
 - \`customCss\` — **raw global CSS** injected for the whole space. Use it only for genuinely site-wide rules
   (\`@keyframes\`, \`@font-face\`, resets). To style an element, write a **definition** and attach it — never customCss.
 - \`keepState\` / \`stateStorage\` — persist element state across reloads (\`localStorage\`/\`sessionStorage\`).
-- **User provider / auth**: \`userProvider\` (\`auth0\`|\`basic\`|\`custom\`|\`""\` to disable), \`auth0Domain\`,
-  \`auth0ClientId\`, \`tokenStorage\`, and the \`loginUrl\`/\`userUrl\`/\`refreshUrl\`/\`logoutUrl\` + \`detailsPath\`/
-  \`tokenPath\`/\`expirationTimePath\` mapping. Example — inject a keyframe globally:
+- **User provider / auth**: \`userProvider\` — \`basic\` for any HTTP+JSON backend, the name of a provider registered
+  in the page, or \`""\` to disable auth — plus \`tokenStorage\`, the \`loginUrl\`/\`userUrl\`/\`refreshUrl\`/\`logoutUrl\`
+  endpoints and the \`detailsPath\`/\`tokenPath\`/\`refreshTokenPath\`/\`expirationTimePath\` mapping that says where the
+  values sit in their responses. \`sessionHintCookie\` is worth setting whenever the backend can: it names a readable
+  cookie carrying only expiries, which is what lets a page answer "nobody is signed in" without a request.
+  Example — inject a keyframe globally:
   \`{ "type": "patchSettings", "customCss": "@keyframes spin { to { transform: rotate(360deg); } }" }\`.
 
 ## Semantics

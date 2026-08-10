@@ -179,6 +179,36 @@ and Redis, and the Express binding for the guard.
 
 Nothing in either list is a rule. The rules are all in `sdk-server` now, which is the test this RFC set itself.
 
+## Stage 6 — the space credential's lifecycle (implemented)
+
+One thing survived stages 2–5 by looking like a REST resource rather than a rule: the ~350 lines behind
+`GET/PUT /spaces/:id/token*`. Minting a space credential was already the server's (`generateSpaceToken`); everything
+around it was not, and it is exactly what a self-hoster would have to rediscover:
+
+- **Every edit re-mints.** The domains and the lifetime are signed claims, so changing either produces a *different*
+  credential and the previous one stops working the instant the call returns. Sites embedding it must be redeployed —
+  which is why every one of those answers carries the warning.
+- **Rotation happens on outdated, not only on expired.** Without that, a site stranded on a credential from a previous
+  token version has no way back: nothing else can hand it a working one. Garbage in the row is deliberately *not*
+  rotated — it was never a credential of ours.
+- **The platform domain is a floor, never a choice.** It is merged into every list, so narrowing to a custom domain
+  cannot lock a published site out of its own credential. `*` opts out of the binding and is stored alone.
+- **The public credential is replaced, never deleted.** Deleting it leaves the published site with no credential at
+  all; a leak of that one calls for rotation. Agent grants *are* deletable — dropping the row is the revocation.
+- **Secrets are never listed.** An `agent` grant writes, so listing it would turn permission to read into a way to
+  obtain it.
+
+`createSpaceTokenApi({ tokens, adapters })` in `core/auth/spaceTokens.ts`, with five adapters over whatever stores the
+rows plus an optional `onDomainsChanged` — the list is two policies at once (where the credential may be presented,
+and who may frame the space), so a deployment that caches either is told the moment it changes. The floor domains
+arrive per call in a `SpaceTokenContext`: *that* the floor is never dropped is the rule, *which* domains it holds is
+the deployment's.
+
+Plitzi's `api/spaces/tokens.ts` is now adapters over Prisma and eight routes. Its one deliberate reshaping is
+`GET /token`, which answers a **bare JSON string** to match its own older API — a compatibility concern of this
+deployment, not a rule, which is why the handler's body is typed and the binding narrows it rather than the server
+guessing the wire format. 18 tests moved with the rules.
+
 ## Consequences
 
 - A self-hoster runs `sdk-server`, implements a handful of adapters over whatever they already have, and gets the

@@ -75,25 +75,26 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
   // --- auth ---
   const { user, authenticated } = use(AuthContext);
   const [userProvider = 'basic'] = useCommonStore('schema.settings.userProvider');
+  // Keyed on whether the space authenticates at all, never on which provider it picked: the context is the same
+  // shape whoever filled it, so a space on a registered provider binds `user.*` exactly like one on `basic`.
+  // Reading the name here is what used to leave every non-Plitzi space with an empty auth source while signed in.
   const authValue = useMemo<Record<string, unknown>>(() => {
-    switch (userProvider) {
-      case 'basic':
-        return {
-          isAuthenticated: authenticated,
-          accessToken: user?.accessToken ?? '',
-          details: {
-            username: '',
-            email: '',
-            roles: '',
-            permissions: '',
-            verified: '',
-            ...(user?.details ?? {})
-          }
-        };
-
-      default:
-        return {};
+    if (userProvider === '') {
+      return {};
     }
+
+    return {
+      isAuthenticated: authenticated,
+      accessToken: user?.accessToken ?? '',
+      details: {
+        username: '',
+        email: '',
+        roles: '',
+        permissions: '',
+        verified: '',
+        ...(user?.details ?? {})
+      }
+    };
   }, [userProvider, user, authenticated]);
   const authFields = useCallback(
     () => getPathsFromObeject(authValue).map(path => ({ path, name: `user.${path}` })),
