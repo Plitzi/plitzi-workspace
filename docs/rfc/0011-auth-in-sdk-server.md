@@ -165,11 +165,6 @@ and Redis, and the Express binding for the guard.
 
 Nothing in either list is a rule. The rules are all in `sdk-server` now, which is the test this RFC set itself.
 
-### Stage 5 — plitzi-sdk-server as a data layer
-
-What remains: Prisma/Mongo/Redis adapters, Plitzi's configuration and seeds, the roles that compose the servers, and
-the parts of the product that are genuinely Plitzi's (spaces, deployments, billing, analytics).
-
 ## Consequences
 
 - A self-hoster runs `sdk-server`, implements a handful of adapters over whatever they already have, and gets the
