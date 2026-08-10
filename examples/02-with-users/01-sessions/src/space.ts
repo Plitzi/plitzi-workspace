@@ -203,8 +203,13 @@ export const offlineData = (): OfflineDataRaw => {
     schema: {
       ...data.schema,
       flat: { ...data.schema.flat, ...signedOutPage, ...signedInPage },
-      // Ahead of the sample page, so `/` lands on one of these two.
-      pages: ['signed-out', 'signed-in', ...data.schema.pages],
+      /**
+       * These two REPLACE the sample page rather than joining it. All three would sit at `/`, and a page with no
+       * `accessLevel` matches whether or not anybody is signed in — so it competes with both of these for the same
+       * path, and which one wins comes down to sort order. Two pages at one path is the point here; three is an
+       * ambiguity nobody can read off the schema.
+       */
+      pages: ['signed-out', 'signed-in'],
       /**
        * What the browser half of auth needs to know. `basic` is the built-in provider — HTTP + JSON — and these are
        * the endpoints it calls; same origin, because this server serves both the page and the API.
