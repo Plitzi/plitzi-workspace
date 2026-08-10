@@ -8,7 +8,24 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 
-import { skipUnchangedDts } from './scripts/skipUnchangedDts.mjs';
+
+/**
+ * Skips rewriting a declaration whose content is already on disk. Every build regenerates every `.d.ts`, unchanged
+ * ones included, and replacing hundreds of files at once is what makes the editors holding them open fall over.
+ * Inlined rather than shared: a vite config that imports across the project boundary is not in its own `tsconfig`'s
+ * file list, which is a build error (TS6307) — and the apps, which cannot import this one at all, do the same.
+ */
+const skipUnchangedDts = (filePath: string, content: string) => {
+  try {
+    if (fs.readFileSync(filePath, 'utf8') === content) {
+      return false as const;
+    }
+  } catch {
+    // Not there yet — first build, or a new module. Write it.
+  }
+
+  return undefined;
+};
 
 const importedPackages = new Set();
 
