@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 
-import { get, set, omit } from '@plitzi/plitzi-ui/helpers';
+import { get, set, omit, capitalize } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -47,7 +47,7 @@ const WorkflowContextProvider = ({
 
           const newNode = {
             id,
-            title: `New ${nodeType}`,
+            title: `New ${capitalize(nodeType)}`,
             type: nodeType,
             action: '',
             params: {},
