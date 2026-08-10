@@ -288,8 +288,7 @@ export type SSRAdapters = {
     token: string,
     req: SSRRequest
   ) => Promise<
-    | { ok: true; session: SSRSession; user?: SSRUser }
-    | { ok: false; error: string; status?: number; reason?: string }
+    { ok: true; session: SSRSession; user?: SSRUser } | { ok: false; error: string; status?: number; reason?: string }
   >;
   /** Called by the RSC endpoint to fetch server-side data for server components.
    *  When `ids` is provided the adapter should return data only for those element IDs.

@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import { describe, expect, it, vi } from 'vitest';
 
 import { spaceDeploymentMiddleware } from './spaceDeployment';
@@ -11,7 +12,7 @@ import type { SSRAdapters, SSRRequest, SSRResponseHelpers, SSRSpaceDeployment } 
  */
 
 const run = async (deployment: SSRSpaceDeployment) => {
-  const headers: Record<string, string> = { 'Content-Security-Policy': 'frame-ancestors \'none\'' };
+  const headers: Record<string, string> = { 'Content-Security-Policy': "frame-ancestors 'none'" };
   const res = {
     status: 200,
     headers,
@@ -37,20 +38,20 @@ describe('spaceDeploymentMiddleware — framing', () => {
   it('lets the space widen the policy to the domains its owner declared', async () => {
     const { headers, next } = await run({
       spaceId: 42,
-      frameAncestors: ['\'self\'', 'https://ssr-dev.plitzi.com', 'https://acme.com']
+      frameAncestors: ["'self'", 'https://ssr-dev.plitzi.com', 'https://acme.com']
     });
 
     expect(headers['Content-Security-Policy']).toBe(
-      'frame-ancestors \'self\' https://ssr-dev.plitzi.com https://acme.com'
+      "frame-ancestors 'self' https://ssr-dev.plitzi.com https://acme.com"
     );
     expect(next).toHaveBeenCalled();
   });
 
   // The server-wide header is set before any stage runs and cannot know the space; this one does, so it wins.
   it('overrides the server-wide default rather than appending to it', async () => {
-    const { headers } = await run({ spaceId: 42, frameAncestors: ['\'self\''] });
+    const { headers } = await run({ spaceId: 42, frameAncestors: ["'self'"] });
 
-    expect(headers['Content-Security-Policy']).toBe('frame-ancestors \'self\'');
+    expect(headers['Content-Security-Policy']).toBe("frame-ancestors 'self'");
   });
 
   // A space whose owner opted into the wildcard is framable anywhere, deliberately — the domains API says so
@@ -64,7 +65,7 @@ describe('spaceDeploymentMiddleware — framing', () => {
   it('leaves the default alone when the consumer resolves no policy', async () => {
     const { headers } = await run({ spaceId: 42 });
 
-    expect(headers['Content-Security-Policy']).toBe('frame-ancestors \'none\'');
+    expect(headers['Content-Security-Policy']).toBe("frame-ancestors 'none'");
   });
 
   it('answers the request and sets nothing when the space does not resolve', async () => {

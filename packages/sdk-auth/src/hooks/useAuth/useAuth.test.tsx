@@ -85,12 +85,14 @@ describe('who the page thinks is looking at it', () => {
  */
 describe('signing in from the page', () => {
   it('reports the visitor as authenticated once the request succeeds', async () => {
-    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(
-        JSON.stringify({ details: { id: 1, username: 'ada' }, access_token: 'tok', expire_at: inSeconds(3600) }),
-        { status: 200 }
-      )
-    );
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ details: { id: 1, username: 'ada' }, access_token: 'tok', expire_at: inSeconds(3600) }),
+          { status: 200 }
+        )
+      );
     vi.stubGlobal('fetch', fetchMock);
 
     const { result } = renderHook(() =>

@@ -38,7 +38,9 @@ export const patchSettingsOp = z
     sessionHintCookie: z
       .string()
       .optional()
-      .describe('Readable cookie holding only session expiries, so a page can tell nobody is signed in with no request'),
+      .describe(
+        'Readable cookie holding only session expiries, so a page can tell nobody is signed in with no request'
+      ),
     sessionExchangeUrl: z
       .string()
       .optional()

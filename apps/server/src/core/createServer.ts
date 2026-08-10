@@ -41,7 +41,9 @@ export const createServer = ({ auth, ...config }: ServerConfig, extensions?: Pip
   // Read as `unknown` on purpose: the type says an optional adapter is either present or absent, while an object can
   // perfectly well carry the key with `undefined` in it — which is exactly the case being filtered out.
   const entries = Object.entries(config.adapters) as [string, unknown][];
-  const supplied = Object.fromEntries(entries.filter(([, value]) => value !== undefined)) as SSRServerConfig['adapters'];
+  const supplied = Object.fromEntries(
+    entries.filter(([, value]) => value !== undefined)
+  ) as SSRServerConfig['adapters'];
 
   const resolved: SSRServerConfig = {
     ...config,

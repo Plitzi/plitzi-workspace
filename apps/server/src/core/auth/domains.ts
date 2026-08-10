@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 /**
  * Declared domains are stored and signed as full origins (`https://site.example.com`) while a request host is bare
  * (`site.example.com`), so both sides are reduced to a hostname before being compared. A value that is not a URL at
@@ -79,7 +80,7 @@ export const frameAncestors = (declared: string[], platformHosts: string[] = [])
   }
 
   // CSP keywords carry their own quotes inside the header value, hence the escaping.
-  return [...new Set(['\'self\'', ...platformHosts, ...declared])];
+  return [...new Set(["'self'", ...platformHosts, ...declared])];
 };
 
 /**

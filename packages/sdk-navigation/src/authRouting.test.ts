@@ -10,12 +10,11 @@ import type { Element } from '@plitzi/sdk-shared';
  * browser alike, so this pins the rule both sides evaluate.
  */
 
-const page = (id: string, accessLevel?: string): Element =>
-  ({
-    id,
-    attributes: { slug: '', name: id, ...(accessLevel ? { accessLevel } : {}) },
-    definition: { label: id, type: 'page', rootId: id, styleSelectors: { base: '' } }
-  }) as unknown as Element;
+const page = (id: string, accessLevel?: string): Element => ({
+  id,
+  attributes: { slug: '', name: id, ...(accessLevel ? { accessLevel } : {}) },
+  definition: { label: id, type: 'page', rootId: id, styleSelectors: { base: '' } }
+});
 
 const pick = (pages: Record<string, Element>, authenticated: boolean) =>
   matchRoutePath(getPaths(pages, [], authenticated, '', true), '/', authenticated).pageId;

@@ -19,7 +19,10 @@ describe('shared schema ids (advertised schema dedup)', () => {
   it('does not grow the registry as servers are built per request', async () => {
     const before = idCount();
     for (let i = 0; i < 50; i += 1) {
-      await createMcpServer({ adapters: adapters as never, getGrant: () => Promise.resolve({ spaceId: 1, scope: 'agent' as const, canWrite: true }) });
+      await createMcpServer({
+        adapters: adapters as never,
+        getGrant: () => Promise.resolve({ spaceId: 1, scope: 'agent' as const, canWrite: true })
+      });
     }
 
     expect(idCount()).toBe(before);
