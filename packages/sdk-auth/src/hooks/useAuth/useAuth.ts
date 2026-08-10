@@ -24,6 +24,13 @@ type User = Exclude<Exclude<AuthContextValue['user'], undefined>['details'], und
  */
 const useAuth = ({ server, isHydrating = false, provider = '', settings }: UseAuthProps) => {
   const bootstrapUser = server?.authenticated ? server.user?.details : undefined;
+  /**
+   * A server-rendered page arrives already knowing who the visitor is — **including when the answer is nobody**.
+   * That distinction is the whole of this flag: `bootstrapUser` is absent for a guest, so keying "we know" off it
+   * made the server hold the page back while the browser, hydrating, rendered it. The two sides then disagreed
+   * about the entire tree, which React reports as a hydration mismatch on every signed-out page.
+   */
+  const serverAnswered = server !== undefined;
   const [state, setState] = useState<AuthState>('init');
 
   const handleEvent = useCallback((event: AuthEvent) => {
@@ -53,10 +60,10 @@ const useAuth = ({ server, isHydrating = false, provider = '', settings }: UseAu
     () => ({
       manager,
       state,
-      loading: state === 'initLoading' || (state === 'init' && !bootstrapUser && !isHydrating),
+      loading: state === 'initLoading' || (state === 'init' && !bootstrapUser && !serverAnswered && !isHydrating),
       authenticated: state === 'authenticated'
     }),
-    [manager, state, bootstrapUser, isHydrating]
+    [manager, state, bootstrapUser, serverAnswered, isHydrating]
   );
 
   return hookValue;

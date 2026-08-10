@@ -383,3 +383,39 @@ describe('BasicAuthProvider failures', () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });
+
+// The interaction offers a `token` mode, and the provider has to honour it. A rewrite that mapped only
+// username/password turned every token sign-in into `{ username: '', password: '' }` — the backend answered 400
+// saying credentials were required, for a flow that was never meant to send any.
+describe('signing in with a token the page already holds', () => {
+  it('adopts it after confirming who it belongs to, and posts nothing', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    mockFetch.mockResolvedValueOnce(jsonResponse({ details: { id: 1, username: 'ada' } }));
+
+    const token = await provider.login({ mode: 'token', token: 'handed-over' });
+
+    expect(token?.accessToken).toBe('handed-over');
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+
+    const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
+
+    expect(url).toBe(plitziApi.userUrl);
+    expect(init.method).toBe('GET');
+    expect((init.headers as Record<string, string>).Authorization).toBe('Bearer handed-over');
+  });
+
+  it('refuses one nothing vouches for, rather than reporting a session', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    mockFetch.mockResolvedValueOnce(jsonResponse({ error: 'Token Invalid', reason: 'revoked' }, 401));
+
+    expect(await provider.login({ mode: 'token', token: 'stale' })).toBeUndefined();
+    expect(provider.token).toBeUndefined();
+  });
+
+  it('refuses an empty token without asking anyone', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+
+    expect(await provider.login({ mode: 'token', token: '   ' })).toBeUndefined();
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+});

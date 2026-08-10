@@ -97,7 +97,21 @@ class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
     return [loginUrl, userUrl, refreshUrl, logoutUrl];
   }
 
+  /**
+   * Two ways in, because a page may already hold a credential.
+   *
+   * `mode: 'token'` adopts one the page obtained some other way — handed over by a host application, carried in a
+   * link, minted by a CLI — and confirms it against the identity endpoint rather than posting anything. Nothing is
+   * taken on trust: an unusable token is refused here rather than becoming a session that fails on its first real
+   * request. `mode: 'normal'` (the default) posts the credentials.
+   */
   protected async requestLogin(params: Record<string, unknown>): Promise<AuthResult<U>> {
+    const token = typeof params.token === 'string' ? params.token.trim() : '';
+
+    if (params.mode === 'token') {
+      return token ? this.adoptToken(token) : { ok: false, reason: 'missing' };
+    }
+
     const res = await this.request<Record<string, unknown>>(this.options.loginUrl, {
       method: 'POST',
       body: JSON.stringify({
@@ -107,6 +121,28 @@ class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
     });
 
     return this.toResult(res);
+  }
+
+  /** Confirms a token by asking who it belongs to, and only then reports it as a session. */
+  private async adoptToken(token: string): Promise<AuthResult<U>> {
+    if (!this.options.userUrl) {
+      // Nothing can vouch for it, and a credential this provider cannot check is one it must not adopt.
+      return { ok: false, reason: 'missing' };
+    }
+
+    const res = await this.request<Record<string, unknown>>(this.options.userUrl, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+    });
+
+    const identity = this.toResult(res);
+    if (!identity.ok) {
+      return identity;
+    }
+
+    // The identity endpoint answers who, not with what — the credential is the one that was handed in. `exp` comes
+    // off the token when it is a JWT, which the base class reads.
+    return { ok: true, user: identity.user, token: { accessToken: token, expiresAt: null, refreshToken: null } };
   }
 
   /**
