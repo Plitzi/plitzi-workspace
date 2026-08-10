@@ -3515,9 +3515,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@plitzi/example-mcp-server@workspace:examples/03-ai/01-mcp-server":
+"@plitzi/example-mcp-server@workspace:examples/04-with-an-agent/01-mcp-server":
   version: 0.0.0-use.local
-  resolution: "@plitzi/example-mcp-server@workspace:examples/03-ai/01-mcp-server"
+  resolution: "@plitzi/example-mcp-server@workspace:examples/04-with-an-agent/01-mcp-server"
   dependencies:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/sdk-mcp": "workspace:*"
@@ -3530,9 +3530,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/example-react-component@workspace:examples/01-client/03-react-component":
+"@plitzi/example-react-component@workspace:examples/01-my-first-space/03-react-component":
   version: 0.0.0-use.local
-  resolution: "@plitzi/example-react-component@workspace:examples/01-client/03-react-component"
+  resolution: "@plitzi/example-react-component@workspace:examples/01-my-first-space/03-react-component"
   dependencies:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/plitzi-sdk": "workspace:*"
@@ -3548,17 +3548,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/example-render-no-build@workspace:examples/01-client/01-no-build":
+"@plitzi/example-render-no-build@workspace:examples/01-my-first-space/01-no-build":
   version: 0.0.0-use.local
-  resolution: "@plitzi/example-render-no-build@workspace:examples/01-client/01-no-build"
+  resolution: "@plitzi/example-render-no-build@workspace:examples/01-my-first-space/01-no-build"
   dependencies:
     tailwindcss: "npm:^4.3.3"
   languageName: unknown
   linkType: soft
 
-"@plitzi/example-render-offline@workspace:examples/01-client/02-render":
+"@plitzi/example-render-offline@workspace:examples/01-my-first-space/02-render":
   version: 0.0.0-use.local
-  resolution: "@plitzi/example-render-offline@workspace:examples/01-client/02-render"
+  resolution: "@plitzi/example-render-offline@workspace:examples/01-my-first-space/02-render"
   dependencies:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/plitzi-sdk": "workspace:*"
@@ -3582,9 +3582,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/example-ssr-mcp-preview@workspace:examples/03-ai/02-ssr-preview":
+"@plitzi/example-ssr-mcp-preview@workspace:examples/04-with-an-agent/02-ssr-preview":
   version: 0.0.0-use.local
-  resolution: "@plitzi/example-ssr-mcp-preview@workspace:examples/03-ai/02-ssr-preview"
+  resolution: "@plitzi/example-ssr-mcp-preview@workspace:examples/04-with-an-agent/02-ssr-preview"
   dependencies:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/sdk-mcp": "workspace:*"
@@ -3597,9 +3597,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/example-ssr-pages@workspace:examples/02-ssr/01-pages":
+"@plitzi/example-ssr-pages@workspace:examples/01-my-first-space/04-server-rendered":
   version: 0.0.0-use.local
-  resolution: "@plitzi/example-ssr-pages@workspace:examples/02-ssr/01-pages"
+  resolution: "@plitzi/example-ssr-pages@workspace:examples/01-my-first-space/04-server-rendered"
   dependencies:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
@@ -3611,9 +3611,23 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/example-ssr-rsc@workspace:examples/02-ssr/02-rsc":
+"@plitzi/example-ssr-rsc@workspace:examples/03-with-data/01-server-components":
   version: 0.0.0-use.local
-  resolution: "@plitzi/example-ssr-rsc@workspace:examples/02-ssr/02-rsc"
+  resolution: "@plitzi/example-ssr-rsc@workspace:examples/03-with-data/01-server-components"
+  dependencies:
+    "@plitzi/example-space": "workspace:*"
+    "@plitzi/sdk-server": "workspace:*"
+    "@types/node": "npm:^26.1.2"
+    react: "npm:^19.2.8"
+    react-dom: "npm:^19.2.8"
+    tsx: "npm:^4.23.4"
+    typescript: "npm:^6.0.3"
+  languageName: unknown
+  linkType: soft
+
+"@plitzi/example-with-users@workspace:examples/02-with-users/01-sessions":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/example-with-users@workspace:examples/02-with-users/01-sessions"
   dependencies:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"

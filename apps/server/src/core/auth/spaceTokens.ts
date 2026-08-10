@@ -191,7 +191,9 @@ export const createSpaceTokenApi = ({ tokens, adapters }: { tokens: Tokens; adap
       };
     },
 
-    async readExpiry(context: SpaceTokenContext): Promise<SpaceTokenOutcome<{ expiresAt: number | null; neverExpires: boolean }>> {
+    async readExpiry(
+      context: SpaceTokenContext
+    ): Promise<SpaceTokenOutcome<{ expiresAt: number | null; neverExpires: boolean }>> {
       const record = await adapters.loadDefault(context.spaceId);
 
       return record
@@ -257,7 +259,10 @@ export const createSpaceTokenApi = ({ tokens, adapters }: { tokens: Tokens; adap
      * The public credential is deliberately not revocable this way — removing it leaves the published site with no
      * credential at all, and replacing it is what a leak of that one calls for.
      */
-    async revoke(context: SpaceTokenContext, tokenId: number): Promise<SpaceTokenOutcome<{ message: string; tokenId: number }>> {
+    async revoke(
+      context: SpaceTokenContext,
+      tokenId: number
+    ): Promise<SpaceTokenOutcome<{ message: string; tokenId: number }>> {
       if (!Number.isFinite(tokenId)) {
         return { ok: false, status: 400, body: { error: 'tokenId must be a number' } };
       }

@@ -1,8 +1,8 @@
-# AI surface
+# My space with an agent
 
-`@plitzi/sdk-mcp`: an [MCP](https://modelcontextprotocol.io) server an agent reads and edits a space through.
+`@plitzi/sdk-mcp`: an [MCP](https://modelcontextprotocol.io) server an agent reads and edits the space through.
 
-| | Example | Difference | Port |
+| | Example | What it is | Port |
 |---|---|---|---|
 | 01 | [mcp-server](./01-mcp-server) | A dedicated MCP server, owning its whole origin | 4005 |
 | 02 | [ssr-preview](./02-ssr-preview) | MCP and pages on one port, plus draft preview | 4006 |

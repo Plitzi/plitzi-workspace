@@ -193,8 +193,10 @@ export const clearFlowCookie = (req: { hostname: string }, res: CookieSink, conf
 };
 
 /** The value that flow cookie carries, for the callback leg. */
-export const readFlowCookie = (req: SSRRequest | { headers: { cookie?: string }; hostname: string }, config?: SSRAuthCookie): string | undefined =>
-  readCookie(req, `${sessionCookieParams(req.hostname, config).name}_oauth`);
+export const readFlowCookie = (
+  req: SSRRequest | { headers: { cookie?: string }; hostname: string },
+  config?: SSRAuthCookie
+): string | undefined => readCookie(req, `${sessionCookieParams(req.hostname, config).name}_oauth`);
 
 const parseCookieHeader = (header: string): Record<string, string> => {
   const cookies: Record<string, string> = {};

@@ -1,6 +1,6 @@
 # SSR pages
 
-The same space as [01-client](../../01-client), rendered on the server and delivered as HTML.
+The same space as the three browser examples beside it, rendered on the server and delivered as HTML.
 
 ```bash
 yarn start                       # http://127.0.0.1:4003
@@ -24,4 +24,5 @@ the server never learns where a space came from.
 
 ## Next
 
-Give individual elements server-resolved data: [rsc](../02-rsc).
+Give the space people: [02-with-users](../../02-with-users) — or give elements server-resolved data:
+[03-with-data](../../03-with-data).

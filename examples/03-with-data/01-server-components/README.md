@@ -31,4 +31,4 @@ This code runs on the server only, so credentials and query cost never reach the
 
 ## Next
 
-The AI surface: [03-ai](../../03-ai).
+Let an agent edit it: [04-with-an-agent](../../04-with-an-agent).

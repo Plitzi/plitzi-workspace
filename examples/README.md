@@ -1,33 +1,43 @@
 # Examples
 
-Runnable Plitzi setups, grouped by what does the rendering. Each one is a real workspace package you can start
-and hit — no pseudo-code, no snippets that assume a step not shown.
+Runnable Plitzi setups, ordered as a space actually grows: put it on a page, give it people, give it data, let an
+agent edit it. Each one is a real workspace package you can start and hit — no pseudo-code, no snippets that assume
+a step not shown.
 
-## [`01-client`](./01-client) — the browser, with `@plitzi/plitzi-sdk` alone
+## [`01-my-first-space`](./01-my-first-space) — getting it onto a page
 
-No server, no account, no API key.
-
-| | Example | Difference | Port |
+| | Example | What it is | Port |
 |---|---|---|---|
-| 01 | [no-build](./01-client/01-no-build) | A plain HTML file: no bundler, no build step | 4000 |
-| 02 | [render](./01-client/02-render) | The same `render()` call from a bundled app | 4001 |
-| 03 | [react-component](./01-client/03-react-component) | `<PlitziSdk>` inside your own React tree | 4002 |
+| 01 | [no-build](./01-my-first-space/01-no-build) | A plain HTML file: no bundler, no build step | 4000 |
+| 02 | [render](./01-my-first-space/02-render) | The same `render()` call from a bundled app | 4001 |
+| 03 | [react-component](./01-my-first-space/03-react-component) | `<PlitziSdk>` inside your own React tree | 4002 |
+| 04 | [server-rendered](./01-my-first-space/04-server-rendered) | The same space, rendered by the server | 4003 |
 
-## [`02-ssr`](./02-ssr) — the server, with `@plitzi/sdk-server`
+01–03 need no server at all. 04 is the same space with the render moved to the server, which is what the rest of
+these build on.
 
-| | Example | Difference | Port |
+## [`02-with-users`](./02-with-users) — the space knows who is looking
+
+| | Example | What it is | Port |
 |---|---|---|---|
-| 01 | [pages](./02-ssr/01-pages) | Server-render a space over HTTP | 4003 |
-| 02 | [rsc](./02-ssr/02-rsc) | Per-element server data via React Server Components | 4004 |
+| 01 | [sessions](./02-with-users/01-sessions) | Sign in, renew, sign out — over an account store you provide | 4007 |
 
-## [`03-ai`](./03-ai) — agents, with `@plitzi/sdk-mcp`
+## [`03-with-data`](./03-with-data) — elements that resolve data on the server
 
-| | Example | Difference | Port |
+| | Example | What it is | Port |
 |---|---|---|---|
-| 01 | [mcp-server](./03-ai/01-mcp-server) | A dedicated MCP server an agent edits the space through | 4005 |
-| 02 | [ssr-preview](./03-ai/02-ssr-preview) | MCP and pages on one port, plus draft preview | 4006 |
+| 01 | [server-components](./03-with-data/01-server-components) | Per-element server data via React Server Components | 4004 |
 
-Every example renders [`shared-space`](./shared-space), so the difference between any two is the wiring alone.
+## [`04-with-an-agent`](./04-with-an-agent) — an agent edits it
+
+| | Example | What it is | Port |
+|---|---|---|---|
+| 01 | [mcp-server](./04-with-an-agent/01-mcp-server) | A dedicated MCP server an agent edits the space through | 4005 |
+| 02 | [ssr-preview](./04-with-an-agent/02-ssr-preview) | MCP and pages on one port, plus draft preview | 4006 |
+
+Every example renders [`shared-space`](./shared-space), so the difference between any two is the wiring alone. None
+of them needs a database: where a real deployment reads rows, these hand the server static data through the same
+adapters, which is exactly how your own store plugs in.
 
 ## Running one
 
@@ -36,25 +46,22 @@ Examples consume the workspace packages as **built output**, so build once from 
 ```bash
 yarn install
 yarn build:dev
-yarn workspace @plitzi/plitzi-sdk build-vendor:prod   # only 01-client/01-no-build needs this
+yarn workspace @plitzi/plitzi-sdk build-vendor:prod   # only 01-my-first-space/01-no-build needs this
 ```
 
 Then start whichever you want:
 
 ```bash
-yarn workspace @plitzi/example-ssr-pages start
+yarn workspace @plitzi/example-with-users start
 # or
-cd examples/02-ssr/01-pages && yarn start
+cd examples/02-with-users/01-sessions && yarn start
 ```
 
-Every example takes `PORT` if the default collides. `yarn start` at the repo root does **not** boot the
-examples — it is the package dev loop, and seven extra servers fighting for ports would only get in the way.
+Every example takes `PORT` if the default collides. `yarn start` at the repo root does **not** boot the examples —
+it is the package dev loop, and eight extra servers fighting for ports would only get in the way.
 
 ## Where to go next
 
-Read the categories in order. `01-client` is three ways to put a space on a page; `02-ssr` moves the render to
-the server and gives elements server-resolved data; `03-ai` ends with the topology where an agent\'s unsaved
-edits render behind a one-shot preview token.
-
-The packages themselves are documented in [`@plitzi/sdk-server`](../apps/server/README.md) and
+Read them in order: each category is the previous one plus the next thing a real space needs. The packages
+themselves are documented in [`@plitzi/sdk-server`](../apps/server/README.md) and
 [`@plitzi/sdk-mcp`](../apps/mcp/README.md).

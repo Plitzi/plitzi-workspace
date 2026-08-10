@@ -54,4 +54,4 @@ Without it you get a white gutter around the render — the `body` margin every 
 
 ## Next
 
-Move the render to the server: [02-ssr](../../02-ssr).
+Move the render to the server: [server-rendered](../04-server-rendered).

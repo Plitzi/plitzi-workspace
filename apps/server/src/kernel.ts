@@ -37,6 +37,7 @@ export {
 } from './core/auth/domains';
 export { createIdentity } from './core/auth/identity';
 export { checkPermission, checkSpaceAccess, createAuthorizer, requirementFor } from './core/auth/authorize';
+export { createAuth } from './core/auth/createAuth';
 export { createAuthApi } from './core/auth/api';
 export { applySessionOutcome, authPolicyRules, authRoutes } from './core/auth/routes';
 export { createSpaceTokenApi } from './core/auth/spaceTokens';
@@ -73,6 +74,7 @@ export type {
   SpaceAccessCheck
 } from './core/auth/authorize';
 export type { AuthRequest, AuthRoute } from './core/auth/routes';
+export type { Auth, AuthConfig } from './core/auth/createAuth';
 export type {
   CompletedFlow,
   OAuthFailureReason,

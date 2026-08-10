@@ -50,8 +50,12 @@ export interface IdentityAdapters {
    * revoked however valid its signature still is.
    */
   findAccountByToken: (token: string) => Promise<Actor | undefined>;
-  /** The stored space token. No row, no grant. */
-  findSpaceToken: (token: string) => Promise<StoredSpaceToken | undefined>;
+  /**
+   * The stored space token. No row, no grant — which is also what its absence means: a deployment that serves only
+   * its own pages issues no space credentials, and omitting this refuses every grant instead of forcing a stub that
+   * returns undefined.
+   */
+  findSpaceToken?: (token: string) => Promise<StoredSpaceToken | undefined>;
   /** Membership of one space. Without it, every space-level permission check refuses. */
   findMembership?: (userId: number, spaceId: number) => Promise<SpaceMembership | undefined>;
 }
@@ -163,7 +167,7 @@ export const createIdentity = ({
     const { spaceId, spaceScope: scope, origins } = verified.payload;
 
     // The row is the revocation switch — deleting it kills the token regardless of its expiry.
-    const stored = await adapters.findSpaceToken(token);
+    const stored = await adapters.findSpaceToken?.(token);
     if (!stored || stored.spaceId !== spaceId) {
       return { ok: false, reason: 'revoked' };
     }

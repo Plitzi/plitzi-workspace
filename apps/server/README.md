@@ -70,15 +70,15 @@ HTTP/3 requires Node.js ≥ 23 started with `--experimental-quic`. When unavaila
 
 ## Adapters
 
-The `adapters` option is the integration point between the SSR server and your data layer.
+The `adapters` option is the integration point between the SSR server and your data layer. For the auth ones, `createAuth` answers all three for you — see [User authentication](#user-authentication).
 
 ```ts
 type SSRAdapters = {
   getOfflineData: (spaceId: number, environment: string, revision?: number) => Promise<OfflineDataRaw | undefined>;
   getSpaceDeployment: (req: SSRRequest) => Promise<SSRSpaceDeployment>;
   getUser?: (req: SSRRequest) => Promise<SSRUser | undefined>;
-  onLogin?: (req: SSRRequest, res: SSRResponseHelpers) => Promise<boolean>;
-  onLogout?: (req: SSRRequest, res: SSRResponseHelpers) => Promise<void>;
+  authenticate?: (credentials: Record<string, string>, req: SSRRequest) => Promise<SSRSession | undefined>;
+  endSession?: (req: SSRRequest) => Promise<void>;
   getRscData?: (
     req: SSRRequest,
     spaceId: number,
@@ -93,8 +93,8 @@ type SSRAdapters = {
 - **`getOfflineData`** — returns the space snapshot (schema, plugins, styles, segments, collections) for SSR.
 - **`getSpaceDeployment`** — resolves which space and environment to render for a given inbound request. Return `{ error: { code, message } }` to abort with an HTTP error. Optionally include `templateProps` to override template variables, or `pluginNames` to activate plugins for the space (see [Plugins](#plugins) and [Template props](#template-props)).
 - **`getUser`** *(optional)* — resolves the authenticated user from the inbound request (e.g. via a session cookie or `Authorization` header). Called in parallel with `getOfflineData` on every cache miss. The returned user is forwarded to the SDK as `authenticated: true` and `user.details`, which controls page-level access for guest vs. registered users. Return `undefined` for unauthenticated requests.
-- **`onLogin`** *(optional)* — called when `POST {loginPath}` is received. Responsible for establishing a session or issuing tokens. The raw request body is available on `req.body` (e.g. `JSON.stringify({ username, password })`), and `res` lets the adapter set the session cookie via `res.setHeader('Set-Cookie', …)`. Return `true` if login succeeded; return `false` to reject it. For a navigation (full-page form submit, `Sec-Fetch-Mode: navigate`) the server responds with a `303` redirect so the view re-renders via a GET; for a fetch it responds `200`/`401`.
-- **`onLogout`** *(optional)* — called when `POST {logoutPath}` is received. Responsible for invalidating any server-side user session or cache entry, and may clear the session cookie via `res`. A navigation receives a `303` redirect; a fetch receives `204 No Content`.
+- **`authenticate`** *(optional)* — called when `POST {loginPath}` is received, with the credentials already parsed from the body (a posted form or JSON), whatever fields they are. Return a session to grant one, `undefined` to refuse — and never throw for a wrong password. **Identity only**: the cookies, their lifetimes and the readable hint are the server's, which is what keeps a session established here visible to the API side and the other way round. For a navigation (full-page form submit, `Sec-Fetch-Mode: navigate`) the server answers a `303` so the view re-renders via a GET; for a fetch it answers `200`/`401`.
+- **`endSession`** *(optional)* — called when `POST {logoutPath}` is received. Revoke the session at the source; the server clears the cookies. Clearing them alone would leave the credential itself working for anyone who had already copied it. A navigation receives a `303` redirect; a fetch receives `204 No Content`.
 - **`getRscData`** *(optional)* — called by the RSC endpoint (`/_rsc`) to fetch server-side data for schema elements with `runtime: 'server'`. Receives the full request, space context, and the resolved user so that authenticated operations can be performed. When `ids` is provided the adapter should return data only for those element IDs (partial refresh); omitting `ids` means a full fetch for all elements. Return `{}` when there is no server data for the current request (see [RSC](#react-server-components-rsc)).
 
 ## JSON adapters (offline mode)
@@ -568,46 +568,88 @@ The hook is backed by `RscProvider`, which fetches `/_rsc` once on mount and upd
 
 ## User authentication
 
-The server supports per-request user resolution to enable page-level access control within a space. Schemas can have pages restricted to registered users; the SDK uses `authenticated` and `user.details` to decide which pages to render.
-
-### `getUser` adapter
-
-Implement `getUser` to resolve the current visitor from the request. The server calls it on every render (cache misses only) in parallel with `getOfflineData`, so there is no sequential overhead.
+Sessions, in one call. `createAuth` takes what only your deployment knows — the signing secret, what you call your
+cookies, and the store your accounts live in — and returns the whole cycle wired together.
 
 ```ts
-import type { SSRUser } from '@plitzi/sdk-server';
+import { createServer } from '@plitzi/sdk-server';
+import { createAuth } from '@plitzi/sdk-server/kernel';
 
-const getUser = async (req: SSRRequest): Promise<SSRUser | undefined> => {
-  const token = req.headers['authorization']?.replace('Bearer ', '')
-    ?? parseCookies(req.headers['cookie'] ?? '')['my_session'];
+const auth = createAuth({
+  tokens: { secret: process.env.AUTH_SECRET, issuer: 'https://acme.com', audience: ['https://acme.com'] },
+  cookie: { name: 'acme_session' },
+  adapters: accounts,
+  api: { verifyPassword }
+});
 
-  if (!token) {
-    return undefined;
-  }
-
-  const user = await db.users.findByToken(token);
-  if (!user || user.tokenExpiredAt < Date.now() / 1000) {
-    return undefined;
-  }
-
-  return {
-    id: user.id,
-    username: user.username,
-    email: user.email,
-    verified: user.isActive,
-    permissions: user.permissions,
-    roles: user.roles
-  };
-};
-
-createServer({ adapters: { getOfflineData, getSpaceDeployment, getUser } });
+createServer({ port: 443, adapters: { getOfflineData, getSpaceDeployment }, auth });
 ```
+
+`auth` on the server is the whole of the wiring: it mounts the `/auth` flows, answers the identity adapters a page
+server asks for, and carries the cookie naming with it — so there is no second place to keep in step. Everything is
+still exported separately (`createTokens`, `createIdentity`, `createAuthApi`, `authRoutes`, …) for a deployment that
+wants to assemble or replace one piece.
+
+Nothing here assumes a web framework: a request is `{ headers, hostname, cookies?, query?, body? }` and a response is
+anything that can carry `Set-Cookie`, both true of bare `node:http`.
+
+### What you implement
+
+An account store. These are the only functions the server needs from it, and it never learns whether they read
+Postgres, MySQL, Mongo or an identity service:
+
+| Adapter | Needed for |
+|---|---|
+| `findAccountByToken(token)` | every request — the row **is** the revocation switch, so look accounts up *by token* |
+| `saveSession(userId, session)` | signing in and renewing. Storing the new pair retires the previous one; that is rotation |
+| `clearSession(target)` | signing out |
+| `loadAccess(userId)` | the roles and permissions a grant answers with |
+| `findByUsername(username)` | password sign-in |
+| `findByRefreshToken(token)` | renewal. Answer with `refreshExpiresAt`, or every renewal is refused as expired |
+| `findMembership(userId, spaceId)` | space-level permission checks (`auth.can`) |
+| `createAccount`, `findByEmail`, `setResetToken`, `sendMail`, … | signup, password reset, verification |
+
+**What is absent decides what the deployment offers.** No `createAccount`, no signup — and the route answers 404
+rather than failing at runtime. `GET /auth/capabilities` publishes the result, so a sign-in page renders what the
+backend actually answers instead of a button that dead-ends. `api.features` can only ever close what the adapters
+would otherwise allow:
+
+```ts
+createAuth({ …, api: { features: { signup: false } } });   // invitation-only
+```
+
+### What you get
+
+`POST /auth/login`, `/auth/refresh`, `/auth/logout`, `/auth/sessions/revoke`, `/auth/exchange`, `GET /auth/session`,
+`GET /auth/capabilities`, plus signup, password reset and verification where the adapters support them. Sign-in and
+sign-out also answer a full-page form submission with a `303` so the view re-renders, which a `fetch` client does
+not need and a `<form>` does.
+
+Behaviour you do not have to get right yourself: the credential is renewed ahead of expiry and rotated when it is;
+signing out revokes at the source rather than only clearing the browser's copy; a readable hint cookie rides beside
+the session carrying nothing but expiry timestamps, so a page can tell that nobody is signed in without a request;
+and every refusal names a machine-readable `reason`, so a client can tell "renew me" from "you are gone".
+
+### Beyond the defaults
+
+| Config | Effect |
+|---|---|
+| `cookie` | Name, domain, `SameSite`, `Secure`, the refresh path, the hint suffix. Defaults derive from the request host |
+| `basePath` | Where the flows are mounted. The guard's rules follow it |
+| `rules` / `fallback` | Extra authorization rules, applied before the derived ones, and what an unlisted path requires |
+| `identity` | Your own hosts and origins — the floor for domain binding and framing |
+| `tokens.lifetimes` | How long each credential lives |
+
+A working example is [`examples/02-with-users`](../../examples/02-with-users).
 
 ### `SSRUser`
 
+What a rendered page sees, so a schema can restrict pages to signed-in visitors — the SDK reads `authenticated` and
+`user.details`.
+
 | Field | Type | Description |
 |---|---|---|
-| `token` | `string` | Opaque token or JWT from the auth provider. |
+| `token` | `string` | Opaque token or JWT. |
 | `id` | `number` | Unique user identifier. |
 | `username` | `string` | Display name. |
 | `email` | `string` | Email address. |
@@ -615,59 +657,26 @@ createServer({ adapters: { getOfflineData, getSpaceDeployment, getUser } });
 | `permissions` | `string[]` | Permission keys for fine-grained access control. |
 | `roles` | `string[]` | Role names. |
 
-### Login endpoint
+### Bringing your own identity entirely
 
-The server exposes a built-in `POST /auth/login` endpoint. When hit, it calls `adapters.onLogin(req, res)`. The raw request body is on `req.body`, and `res` is used to set the session cookie. A navigation (full-page form submit) gets a `303` redirect so the view re-renders; a fetch gets `200 OK` on success or `401 Unauthorized` when the adapter returns `false`:
-
-```ts
-const onLogin = async (req: SSRRequest, res: SSRResponseHelpers): Promise<boolean> => {
-  const { username, password } = JSON.parse(req.body ?? '{}');
-  const session = await db.users.authenticate(username, password);
-  if (!session) return false;
-
-  res.setHeader('Set-Cookie', `my_session=${session.token}; Path=/; HttpOnly; SameSite=Lax`);
-  return true;
-};
-
-createServer({ adapters: { getOfflineData, getSpaceDeployment, onLogin } });
-```
-
-The path is configurable via `loginPath`. Set it to `false` to disable the endpoint entirely:
+Skip `createAuth` and implement three adapters directly — the server then knows only what you tell it:
 
 ```ts
 createServer({
-  loginPath: '/api/login',   // custom path
-  // loginPath: false,       // disable
-  adapters: { ... }
+  adapters: {
+    getOfflineData,
+    getSpaceDeployment,
+    getUser: async req => /* … resolve the visitor, or undefined */,
+    authenticate: async (credentials, req) => /* … a session, or undefined to refuse */,
+    endSession: async req => /* … revoke it */
+  },
+  loginPath: '/api/login',   // or false to serve no endpoint
+  logoutPath: false
 });
 ```
 
-### Logout endpoint
-
-The server exposes a built-in `POST /auth/logout` endpoint. When hit, it calls `adapters.onLogout(req, res)`. A navigation gets a `303` redirect so the view re-renders logged out; a fetch gets `204 No Content`. Implement `onLogout` to invalidate the session or cached user entry and clear the cookie:
-
-```ts
-const onLogout = async (req: SSRRequest, res: SSRResponseHelpers): Promise<void> => {
-  const token = parseCookies(req.headers['cookie'] ?? '')['my_session'];
-  if (token) {
-    await cache.delete(`user-${token}`);
-  }
-
-  res.setHeader('Set-Cookie', 'my_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
-};
-
-createServer({ adapters: { getOfflineData, getSpaceDeployment, getUser, onLogout } });
-```
-
-The path is configurable via `logoutPath`. Set it to `false` to disable the endpoint entirely:
-
-```ts
-createServer({
-  logoutPath: '/api/logout',   // custom path
-  // logoutPath: false,        // disable
-  adapters: { ... }
-});
-```
+`authenticate` returns identity and nothing else: the cookies, their lifetimes and the readable hint are the
+server's, which is what keeps a session established on the API side visible to the renderer and the other way round.
 
 ## Basic auth
 
