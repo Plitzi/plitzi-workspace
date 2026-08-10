@@ -13,9 +13,10 @@ export type BodyHeaderProps = {
   endTime: number;
   duration?: string;
   elementId?: string;
+  elementRef?: string;
 };
 
-const BodyHeader = ({ triggerName, startTime, endTime, duration, elementId }: BodyHeaderProps) => {
+const BodyHeader = ({ triggerName, startTime, endTime, duration, elementId, elementRef }: BodyHeaderProps) => {
   const [flat] = useCommonStore('schema.flat');
   const element = useMemo(() => (elementId ? get(flat, elementId) : undefined), [elementId, flat]);
   const startTimeParsed = useMemo(() => formatDate(startTime, 'HH:mm:ss.SSS'), [startTime]);
@@ -81,6 +82,14 @@ const BodyHeader = ({ triggerName, startTime, endTime, duration, elementId }: Bo
             <span className="shrink-0 text-zinc-400 dark:text-zinc-500">Trigger</span>
             <span className="truncate">{triggerName}</span>
           </div>
+          {elementRef && (
+            <div className="flex min-w-0 gap-1">
+              {/* Which element fired it. `Element` below names the SOURCE for a global callback, so for those two
+                  it says `space` or `state` — this is the only row that tells two identical triggers apart. */}
+              <span className="shrink-0 text-zinc-400 dark:text-zinc-500">Fired on</span>
+              <span className="truncate font-mono">{elementRef}</span>
+            </div>
+          )}
           <div className="flex min-w-0 gap-1">
             <span className="shrink-0 text-zinc-400 dark:text-zinc-500">Element</span>
             <span

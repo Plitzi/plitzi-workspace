@@ -50,10 +50,32 @@ describe('what the server renders and what the browser hydrates', () => {
   });
 });
 
-// Without a server render nobody has answered yet, so the page does wait — that is the case `loading` exists for.
+/**
+ * What `loading` is for: a space whose pages differ only by `accessLevel` picks between them from `authenticated`,
+ * and `RawMode` keys the page on its id — so rendering before the answer is settled does not merely show the wrong
+ * page, it MOUNTS it, and then unmounts it again when the answer arrives. Both pages run their `onLoad`.
+ *
+ * So the rule is not "did a server render this" but "does anyone know yet". The browser counts: a live session in
+ * storage answers it, and so does the absence of any evidence at all. Only a credential that needs confirming is
+ * worth waiting for.
+ */
 describe('a page rendered in the browser alone', () => {
-  it('waits until auth has decided', () => {
-    expect(loadingOn(undefined, false)).toBe(true);
+  it('does not wait when there is nothing to confirm', () => {
+    expect(loadingOn(undefined, false)).toBe(false);
+  });
+
+  it('waits while the one thing that could answer needs a request', () => {
+    // A hint cookie says this browser holds a session, but the credential itself is httpOnly — only `init()` can
+    // turn that into an identity, and until it does, which page to show is genuinely unknown.
+    document.cookie = 'plitzi_session_hint=9999999999.9999999999';
+    const settingsWithHint = { ...basicSettings, sessionHintCookie: 'plitzi_session_hint' } as AuthProviderSettings;
+
+    const { result } = renderHook(() =>
+      useAuth({ server: undefined, isHydrating: false, provider: 'basic', settings: settingsWithHint })
+    );
+
+    expect(result.current.loading).toBe(true);
+    document.cookie = 'plitzi_session_hint=; Max-Age=0';
   });
 });
 

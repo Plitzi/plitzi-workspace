@@ -11,7 +11,10 @@ export type LogEventBridge = { category: 'eventBridge'; params: Record<string, u
 export type LogInteraction = {
   category: 'interactions';
   params: {
+    /** The SOURCE a global callback or utility named — `space`, `state` — not the element it ran on. */
     elementId: string;
+    /** The idRef of the element the interaction fired on. What tells two identical-looking entries apart. */
+    elementRef?: string;
     startTime: number;
     endTime: number;
     node: ElementInteraction;

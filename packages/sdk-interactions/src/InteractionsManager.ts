@@ -75,7 +75,8 @@ class InteractionsManager {
               interactions,
               this.getCallbacksAvailables(),
               { [trigger.id]: params },
-              { ...this.interactionsData, ...dataSource }
+              { ...this.interactionsData, ...dataSource },
+              subscriptorId
             )
           )
         );

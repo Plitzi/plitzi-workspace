@@ -7,8 +7,27 @@ import { nowInSeconds, toSeconds, tokenExpiresAt } from './helpers/tokenClaims';
 import type { StoredSession } from './helpers/SessionStore';
 import type { AuthFailureReason, AuthResult, AuthState, Schema, TokenResult } from '@plitzi/sdk-shared';
 
+/** Why a state changed. Not control flow — it is what makes an auth trace readable, and every transition below
+ *  names one, because "it went to guest" is not a diagnosis and "the hint cookie was gone" is. */
+export type AuthStateReason =
+  | 'bootstrap'
+  | 'restored'
+  | 'granted'
+  | 'renewed'
+  | 'identity'
+  | 'redirect'
+  | 'exchanged'
+  | 'no-provider'
+  | 'skip-auth'
+  | 'hint-missing'
+  | 'no-evidence'
+  | 'signed-out'
+  | 'another-tab'
+  | 'settled'
+  | 'authenticating';
+
 export type AuthEvent =
-  | { type: 'state'; state: AuthState }
+  | { type: 'state'; state: AuthState; reason?: AuthStateReason }
   | { type: 'login'; token?: TokenResult }
   | { type: 'logout' }
   | { type: 'expired'; reason: AuthFailureReason };
@@ -144,6 +163,47 @@ abstract class AuthProvider<U = Record<string, unknown>> {
   // Lifecycle
 
   /**
+   * What this browser can be seen to hold, right now, without asking anyone or changing anything.
+   *
+   * `init()` reaches the same conclusion, but it runs in an effect — so the first paint of a client-rendered page
+   * happens before it, and a visitor whose session was sitting in storage the whole time saw the signed-out page
+   * flash past. There is nothing to wait for: the credential is in `localStorage` and the hint is a cookie, both
+   * synchronous. This is the same evidence `decide()` acts on, read a few milliseconds earlier.
+   *
+   * `init` means "cannot say yet" — there is evidence, but confirming it needs a request. Only `authenticated` and
+   * `guest` are claims, and both are ones the browser can make on its own.
+   */
+  peekState(): AuthState {
+    return this.peek().state;
+  }
+
+  /** The same read, with the identity it found — so a page can render the visitor, not just know there is one. */
+  peek(): { state: AuthState; user?: U; token?: TokenResult } {
+    const stored = this.store.read();
+    const hint = readSessionHint(this.hintCookie);
+
+    // The hint outranks storage in both directions — see `decide()`. Gone means signed out, wherever it happened.
+    if (this.hintCookie && !hint) {
+      return { state: 'guest' };
+    }
+
+    const token = stored?.token;
+    const expiresAt = toSeconds(token?.expiresAt) ?? tokenExpiresAt(token?.accessToken);
+    // A token whose lifetime nobody states is taken at face value, exactly as `hasLiveToken` does.
+    const live = !!token?.accessToken && (expiresAt === undefined || expiresAt - RENEWAL_SKEW_SECONDS > nowInSeconds());
+
+    if (live && stored?.user) {
+      return { state: 'authenticated', user: stored.user, token: stored.token };
+    }
+
+    if (token?.accessToken || token?.refreshToken || hint) {
+      return { state: 'init', user: stored?.user, token: stored?.token };
+    }
+
+    return { state: 'guest' };
+  }
+
+  /**
    * Decides what this page already knows and what, if anything, it has to ask. Resolves once the answer is good
    * enough to render with — which under the default gate means as soon as a stored session says so, with the
    * confirmation happening behind the render rather than in front of it.
@@ -161,13 +221,13 @@ abstract class AuthProvider<U = Record<string, unknown>> {
    */
   private settle(): void {
     if (this.state === 'init' || this.state === 'initLoading') {
-      this.setState(this.session.user || this.hasLiveToken() ? 'authenticated' : 'guest');
+      this.setState(this.session.user || this.hasLiveToken() ? 'authenticated' : 'guest', 'settled');
     }
   }
 
   private async decide(bootstrap: AuthBootstrap<U>): Promise<void> {
     if (bootstrap.skipAuth) {
-      this.setState('guest');
+      this.setState('guest', 'skip-auth');
 
       return;
     }
@@ -190,13 +250,17 @@ abstract class AuthProvider<U = Record<string, unknown>> {
     // The page was rendered by a server that resolved this visitor's identity for this very request. Asking again
     // would be putting the same question to the same authority a few milliseconds later.
     if (bootstrap.user) {
-      this.adopt({
-        ok: true,
-        user: bootstrap.user,
-        token: bootstrap.accessToken
-          ? { accessToken: bootstrap.accessToken, expiresAt: bootstrap.expiresAt ?? null, refreshToken: null }
-          : this.session.token
-      });
+      this.adopt(
+        {
+          ok: true,
+          user: bootstrap.user,
+          token: bootstrap.accessToken
+            ? { accessToken: bootstrap.accessToken, expiresAt: bootstrap.expiresAt ?? null, refreshToken: null }
+            : this.session.token
+        },
+        true,
+        'bootstrap'
+      );
 
       return;
     }
@@ -208,13 +272,13 @@ abstract class AuthProvider<U = Record<string, unknown>> {
     // A configured hint is the browser's own answer about whether a session cookie lives here, and it outranks
     // storage in both directions: it appears when a sibling app signs in, and it is gone the moment one signs out.
     if (this.hintCookie && !hint) {
-      this.endSession();
+      this.endSession(undefined, 'hint-missing');
 
       return;
     }
 
     if (this.hasLiveToken() && this.session.user) {
-      this.setState('authenticated');
+      this.setState('authenticated', 'restored');
       this.scheduleRenewal();
 
       const confirmation = this.isFresh() && this.gate !== 'strict' ? undefined : this.revalidate(true);
@@ -226,12 +290,12 @@ abstract class AuthProvider<U = Record<string, unknown>> {
     }
 
     if (!this.hasEvidence()) {
-      this.endSession();
+      this.endSession(undefined, 'no-evidence');
 
       return;
     }
 
-    this.setState('initLoading');
+    this.setState('initLoading', 'no-evidence');
 
     // A live token with no user is the cheaper repair: identity reads, renewal rotates. Otherwise renewal is both
     // the repair and the answer, because a grant response says who it was granted to.
@@ -267,7 +331,7 @@ abstract class AuthProvider<U = Record<string, unknown>> {
   // Actions
 
   async login(params: Record<string, unknown>): Promise<TokenResult | undefined> {
-    this.setState('authenticating');
+    this.setState('authenticating', 'authenticating');
     const result = await this.requestLogin(params);
     if (!result.ok) {
       this.endSession(result.reason);
@@ -413,10 +477,10 @@ abstract class AuthProvider<U = Record<string, unknown>> {
     }
   }
 
-  protected setState(state: AuthState): void {
+  protected setState(state: AuthState, reason?: AuthStateReason): void {
     if (this.state !== state) {
       this.state = state;
-      this.emit({ type: 'state', state });
+      this.emit({ type: 'state', state, reason });
     }
   }
 
@@ -481,7 +545,7 @@ abstract class AuthProvider<U = Record<string, unknown>> {
   }
 
   /** Takes on what a grant or an identity call returned, and records that the backend confirmed it just now. */
-  private adopt(result: AuthResult<U> & { ok: true }, persist = true): void {
+  private adopt(result: AuthResult<U> & { ok: true }, persist = true, reason: AuthStateReason = 'granted'): void {
     this.session = {
       user: result.user ?? this.session.user,
       token: result.token ?? this.session.token,
@@ -494,7 +558,7 @@ abstract class AuthProvider<U = Record<string, unknown>> {
     }
 
     this.scheduleRenewal();
-    this.setState(this.session.user || this.hasLiveToken() ? 'authenticated' : 'guest');
+    this.setState(this.session.user || this.hasLiveToken() ? 'authenticated' : 'guest', reason);
   }
 
   /**
@@ -504,12 +568,12 @@ abstract class AuthProvider<U = Record<string, unknown>> {
    * The cleared entry is written back rather than removed, because "nobody is signed in, confirmed just now" is
    * worth remembering: it is what keeps a signed-out visitor from paying for the same refused request on every load.
    */
-  private endSession(reason?: AuthFailureReason): void {
+  private endSession(reason?: AuthFailureReason, cause: AuthStateReason = 'signed-out'): void {
     clearTimeout(this.renewalTimer);
     this.renewalTimer = undefined;
     this.session = { validatedAt: nowInSeconds() };
     this.store.write(this.session);
-    this.setState('guest');
+    this.setState('guest', cause);
 
     if (reason) {
       this.emit({ type: 'expired', reason });
@@ -640,7 +704,7 @@ abstract class AuthProvider<U = Record<string, unknown>> {
       clearTimeout(this.renewalTimer);
       this.renewalTimer = undefined;
       this.session = { validatedAt: nowInSeconds() };
-      this.setState('guest');
+      this.setState('guest', 'another-tab');
       this.emit({ type: 'logout' });
 
       return;

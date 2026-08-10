@@ -33,6 +33,7 @@ export const getAuthProviderNames = (): string[] => [...providers.keys()];
 export class AuthManager<U = Record<string, unknown>> {
   private readonly providerType: string;
   private readonly provider?: AuthProvider<U>;
+  private readonly settings: AuthProviderSettings;
 
   private readonly listeners: AuthEventListener[];
 
@@ -42,6 +43,7 @@ export class AuthManager<U = Record<string, unknown>> {
     settings: AuthProviderSettings
   ) {
     this.providerType = providerType;
+    this.settings = settings;
     this.listeners = Array.isArray(listeners) ? listeners : [listeners];
     const factory = providers.get(providerType) as AuthProviderFactory<U> | undefined;
     if (factory) {
@@ -62,6 +64,22 @@ export class AuthManager<U = Record<string, unknown>> {
 
   getState(): AuthState {
     return this.provider?.getState() ?? 'guest';
+  }
+
+  /**
+   * What this browser can be seen to hold before anything has run.
+   *
+   * Answered even when no provider has been named yet, which is the state every page is in while its schema loads:
+   * where the credential is kept is a matter of settings — the storage key, the hint cookie — and not of which
+   * provider will end up using it, so it can be read now. Doing that read only after the schema arrived is what
+   * made a signed-in page paint its signed-out version first on every reload.
+   */
+  peekState(): AuthState {
+    return this.peek().state;
+  }
+
+  peek(): { state: AuthState; user?: U; token?: TokenResult } {
+    return (this.provider ?? new BasicAuthProvider<U>(this.settings)).peek();
   }
 
   can(permission: string): boolean {
@@ -85,8 +103,13 @@ export class AuthManager<U = Record<string, unknown>> {
    */
   init(bootstrap?: AuthBootstrap<U>): Promise<void> {
     if (!this.provider) {
-      const state: AuthState = bootstrap?.user ? 'authenticated' : 'guest';
-      this.listeners.forEach(listener => listener({ type: 'state', state }));
+      // Nothing here can confirm a session, but it can still see one. The order is what the page must not
+      // contradict: what the server resolved for this request, then what this browser demonstrably holds, and only
+      // failing both, nobody. A flat `guest` here claimed the last of those on the strength of the first two never
+      // having been looked at.
+      const seen = this.peekState();
+      const state: AuthState = bootstrap?.user || seen === 'authenticated' ? 'authenticated' : 'guest';
+      this.listeners.forEach(listener => listener({ type: 'state', state, reason: 'no-provider' }));
 
       return Promise.resolve();
     }

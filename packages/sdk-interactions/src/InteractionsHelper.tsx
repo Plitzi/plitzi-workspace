@@ -217,7 +217,13 @@ const flowCallbacks = async (
   );
 };
 
-const storeLog = (triggerNode: ElementInteraction, startTime: number, nodes = {}, status: InteractionStatus) => {
+const storeLog = (
+  triggerNode: ElementInteraction,
+  startTime: number,
+  nodes = {},
+  status: InteractionStatus,
+  elementRef?: string
+) => {
   const endTime = pConsole.getTime().valueOf();
   let nodeStatus = 'skipped';
   if (status === 'completed') {
@@ -228,11 +234,24 @@ const storeLog = (triggerNode: ElementInteraction, startTime: number, nodes = {}
     'interactions',
     <span>
       Interaction triggered <b>{`${triggerNode.title} [${triggerNode.action}]`}</b>
+      {elementRef ? (
+        <>
+          {' on '}
+          <b>{elementRef}</b>
+        </>
+      ) : null}
     </span>,
     {
       status,
       node: triggerNode,
       elementId: triggerNode.elementId,
+      /**
+       * The element the interaction actually ran ON, which is not `node.elementId`: that one carries the SOURCE for
+       * a global callback or a utility, so for those it names `space` or `state` rather than anything on the page.
+       * Without this, two entries reading `[onLoad]` were indistinguishable — same title, same action, and no way
+       * to tell whether one element fired twice or two elements fired once.
+       */
+      elementRef,
       nodes: {
         ...nodes,
         [triggerNode.id]: {
@@ -256,12 +275,14 @@ const flowTrigger = async (
   callbacksAvailables = {},
   flowParams: Record<string, unknown> = {},
   globalParams = {},
+  /** The idRef of the element this fired on, carried through purely so the log can name it. */
+  elementRef?: string,
   postCallbacksTotal = []
 ) => {
   const startTime = pConsole.getTime().valueOf();
   const { action, enabled, when } = triggerNode;
   if (!action || !enabled || (when && !QueryBuilderEvaluator(when, { ...globalParams, ...flowParams }))) {
-    storeLog(triggerNode, startTime, {}, 'skipped');
+    storeLog(triggerNode, startTime, {}, 'skipped', elementRef);
 
     return;
   }
@@ -274,7 +295,7 @@ const flowTrigger = async (
     globalParams,
     postCallbacksTotal
   );
-  storeLog(triggerNode, startTime, nodesProcessed, 'completed');
+  storeLog(triggerNode, startTime, nodesProcessed, 'completed', elementRef);
 };
 
 // eslint-disable-next-line react-refresh/only-export-components

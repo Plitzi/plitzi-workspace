@@ -24,7 +24,7 @@ export type LogInteractionProps = {
 const LogInteraction = ({
   time,
   message,
-  params: { elementId, status, node, nodes, startTime = 0, endTime = 0 }
+  params: { elementId, elementRef, status, node, nodes, startTime = 0, endTime = 0 }
 }: LogInteractionProps) => {
   const duration = useMemo(() => `${getDurationMs(startTime, endTime)}ms`, [startTime, endTime]);
   const nodesSkipped = Object.values(nodes).filter(node => node.status === 'skipped').length;
@@ -62,6 +62,7 @@ const LogInteraction = ({
       <ContainerCollapsable.Content>
         <LogInteractionBody
           elementId={elementId}
+          elementRef={elementRef}
           node={node}
           nodes={nodes}
           startTime={startTime}
