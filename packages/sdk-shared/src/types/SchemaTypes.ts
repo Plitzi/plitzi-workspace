@@ -104,9 +104,8 @@ export type Schema = {
     keepState?: boolean;
     stateStorage?: 'localStorage' | 'sessionStorage';
     customCss: string;
-    userProvider?: 'auth0' | 'basic' | 'custom' | '';
-    auth0Domain?: string;
-    auth0ClientId?: string;
+    /** `basic` covers any HTTP+JSON backend by configuration; anything else is a name someone registered. */
+    userProvider?: 'basic' | 'custom' | '' | (string & {});
     tokenStorage?: 'localStorage' | 'sessionStorage' | '';
     loginUrl?: string;
     userUrl?: string;

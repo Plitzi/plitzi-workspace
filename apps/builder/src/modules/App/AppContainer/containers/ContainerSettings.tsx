@@ -14,8 +14,6 @@ import type { ChangeEvent } from 'react';
 // Everything that describes one auth backend, cleared as a unit when the provider changes. Listed once: settings left
 // behind by a previous provider are read by the next one, which is how a space ends up pointed at half of an old API.
 const PROVIDER_SETTINGS = [
-  'auth0Domain',
-  'auth0ClientId',
   'loginUrl',
   'userUrl',
   'refreshUrl',
@@ -39,8 +37,6 @@ const ContainerSettings = () => {
     keepState,
     stateStorage,
     // Provider - Auth0
-    auth0Domain,
-    auth0ClientId,
     // Provider - Basic
     tokenStorage = 'localStorage',
     loginUrl,
@@ -75,7 +71,7 @@ const ContainerSettings = () => {
         setSettings(state => ({
           ...state,
           ...Object.fromEntries(PROVIDER_SETTINGS.map(setting => [setting, ''])),
-          [name]: value as 'basic' | 'auth0' | ''
+          [name]: value
         }));
         void eventBridge.emit('main', 'schemaUpdateSettings', value, name);
       } else if (name === 'head') {
@@ -120,7 +116,6 @@ const ContainerSettings = () => {
             placeholder="None"
           >
             <option value="basic">Basic</option>
-            <option value="auth0">Auth0</option>
           </Select>
           <Select
             size="sm"
@@ -133,24 +128,6 @@ const ContainerSettings = () => {
             <option value="localStorage">Local Storage</option>
             <option value="sessionStorage">Session Storage</option>
           </Select>
-          {userProvider === 'auth0' && (
-            <>
-              <Input
-                size="sm"
-                name="auth0Domain"
-                value={auth0Domain}
-                onChange={handleChange('auth0Domain')}
-                label="Auth0 Domain"
-              />
-              <Input
-                size="sm"
-                name="auth0ClientId"
-                value={auth0ClientId}
-                onChange={handleChange('auth0ClientId')}
-                label="Auth0 Client ID"
-              />
-            </>
-          )}
           {userProvider === 'basic' && (
             <>
               <Alert intent="info" size="xs" solid={false}>

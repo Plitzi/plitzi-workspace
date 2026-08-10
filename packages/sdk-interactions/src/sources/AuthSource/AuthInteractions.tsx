@@ -9,7 +9,7 @@ import type { ReactNode } from 'react';
 
 export type AuthInteractionsProps = {
   children?: ReactNode;
-  authProvider?: '' | 'auth0' | 'basic' | 'custom';
+  authProvider?: string;
 };
 
 const AuthInteractions = ({ children, authProvider = 'basic' }: AuthInteractionsProps) => {
@@ -30,24 +30,7 @@ const AuthInteractions = ({ children, authProvider = 'basic' }: AuthInteractions
 
   const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
     let authCallbacks: Record<string, InteractionCallback> = {};
-    if (authProvider === 'auth0') {
-      authCallbacks = {
-        login: {
-          action: 'authLogin',
-          title: 'Auth Login',
-          type: 'globalCallback',
-          callback: handleLogin,
-          params: {}
-        },
-        logout: {
-          action: 'authLogout',
-          title: 'Auth Logout',
-          type: 'globalCallback',
-          callback: handleLogout,
-          params: {}
-        }
-      };
-    } else if (authProvider === 'basic') {
+    if (authProvider === 'basic') {
       authCallbacks = {
         login: {
           action: 'authLogin',

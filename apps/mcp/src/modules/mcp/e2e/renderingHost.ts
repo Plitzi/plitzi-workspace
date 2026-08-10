@@ -1,5 +1,5 @@
 import { AppBridge } from '@modelcontextprotocol/ext-apps/app-bridge';
-import { JSDOM } from 'jsdom';
+import { JSDOM, VirtualConsole } from 'jsdom';
 
 import { HostBridgeTransport, parentStub } from './postMessageChannel';
 
@@ -13,6 +13,11 @@ export interface RenderingHostOptions {
   /** Storage shared with the other views of this host, which jsdom does not do on its own: each DOM gets a
    *  private one, while a real host serves every view from the same origin. */
   storage?: Storage;
+  /**
+   * Surfaces what the page logs and throws. jsdom swallows both by default, so a widget that fails to paint looks
+   * from the outside exactly like one that painted nothing — which is a long way to walk for a stack trace.
+   */
+  verbose?: boolean;
 }
 
 export interface RenderingHost {
@@ -91,9 +96,19 @@ const settle = (window: JSDOM['window'], turns = 6): Promise<void> =>
 /** Load a ui:// page into a DOM and complete the MCP Apps handshake against it, through the official AppBridge.
  *  Resolves once the App is connected, so a test can push a tool result straight away. */
 export const startRenderingHost = async (html: string, options: RenderingHostOptions = {}): Promise<RenderingHost> => {
-  const { hostContext, client, storage } = options;
+  const { hostContext, client, storage, verbose = !!process.env.MCP_HOST_DEBUG } = options;
   const parent = parentStub();
+  const virtualConsole = new VirtualConsole();
+
+  if (verbose) {
+    virtualConsole.on('jsdomError', (error: Error) => console.log('[view] threw:', error.message, error.stack));
+    for (const level of ['error', 'warn', 'log'] as const) {
+      virtualConsole.on(level, (...args: unknown[]) => console.log(`[view] ${level}:`, ...args));
+    }
+  }
+
   const dom = new JSDOM(html, {
+    virtualConsole,
     url: DOM_URL,
     runScripts: 'dangerously',
     pretendToBeVisual: true,

@@ -77,24 +77,6 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
   const [userProvider = 'basic'] = useCommonStore('schema.settings.userProvider');
   const authValue = useMemo<Record<string, unknown>>(() => {
     switch (userProvider) {
-      case 'auth0':
-        return {
-          isAuthenticated: authenticated,
-          user: {
-            given_name: '',
-            family_name: '',
-            nickname: '',
-            name: '',
-            picture: '',
-            locale: '',
-            updated_at: '',
-            email: '',
-            email_verified: false,
-            sub: '',
-            ...user
-          }
-        };
-
       case 'basic':
         return {
           isAuthenticated: authenticated,

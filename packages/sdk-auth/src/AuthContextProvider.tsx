@@ -84,9 +84,7 @@ const AuthContextProvider = ({ children, server }: AuthContextProviderProps) => 
       spaceKey: webKey,
       tokenStorage: schemaSettings.tokenStorage ?? 'localStorage',
       sessionGate: schemaSettings.sessionGate,
-      sessionRevalidateSeconds: schemaSettings.sessionRevalidateSeconds,
-      auth0Domain: schemaSettings.auth0Domain,
-      auth0ClientId: schemaSettings.auth0ClientId
+      sessionRevalidateSeconds: schemaSettings.sessionRevalidateSeconds
     }),
     [templated, schemaSettings, webKey]
   );

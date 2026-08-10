@@ -1,4 +1,3 @@
-import Auth0Provider from './providers/Auth0Provider';
 import BasicAuthProvider from './providers/BasicAuthProvider';
 
 import type AuthProvider from './AuthProvider';
@@ -10,10 +9,7 @@ export type AuthProviderFactory<U = Record<string, unknown>> = (settings: AuthPr
 
 // A factory rather than a constructor, so a provider that needs something the settings do not carry — an SDK client,
 // a shared instance — closes over it instead of forcing it into everyone else's signature.
-const providers = new Map<string, AuthProviderFactory>([
-  ['basic', settings => new BasicAuthProvider(settings)],
-  ['auth0', settings => new Auth0Provider(settings)]
-]);
+const providers = new Map<string, AuthProviderFactory>([['basic', settings => new BasicAuthProvider(settings)]]);
 
 /**
  * Adds an auth provider a space can then select by name in its settings. Spaces run against whichever backend their

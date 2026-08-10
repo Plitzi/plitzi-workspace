@@ -6,8 +6,6 @@ import type { Schema } from '@plitzi/sdk-shared';
  */
 export type AuthProviderSettings = Pick<
   Schema['settings'],
-  | 'auth0Domain'
-  | 'auth0ClientId'
   | 'tokenStorage'
   | 'loginUrl'
   | 'userUrl'
