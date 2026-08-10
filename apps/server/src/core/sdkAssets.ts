@@ -1,3 +1,4 @@
+import { statSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
@@ -24,4 +25,30 @@ export const resolveSdkAssetsDir = (): string | undefined => {
   } catch {
     return undefined;
   }
+};
+
+/**
+ * A cache-buster for the SDK URLs, taken from the bundle's own mtime.
+ *
+ * The assets are served with a long `Cache-Control`, so something has to change in the URL when the bundle does or
+ * browsers keep the old one. Since the version a deployment runs IS the version of this package, the server can work
+ * it out — nobody should have to compute it and pass it in, and forgetting to is a stale bundle nobody can explain.
+ */
+let cachedVersion: string | undefined;
+
+export const sdkAssetVersion = (): string => {
+  // Read once: it cannot change while this process runs, and the alternative is a `statSync` on every page render.
+  if (cachedVersion !== undefined) {
+    return cachedVersion;
+  }
+
+  const dir = resolveSdkAssetsDir();
+
+  try {
+    cachedVersion = dir ? Math.floor(statSync(path.join(dir, 'plitzi-sdk.js')).mtimeMs).toString(36) : '';
+  } catch {
+    cachedVersion = '';
+  }
+
+  return cachedVersion;
 };

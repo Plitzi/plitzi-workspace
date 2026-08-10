@@ -1,5 +1,6 @@
 import { loadPluginComponents } from './loadPluginComponents';
 import { registerExternalPlugins } from './registerExternalPlugins';
+import { sdkAssetVersion } from '../../core/sdkAssets';
 import { buildServerInfo } from '../../helpers/buildServerInfo';
 import { buildOfflineDataCacheKey } from '../../helpers/cache';
 import { escapeJson } from '../../helpers/escapeJson';
@@ -57,7 +58,9 @@ export const prepareRender = async (
     offlineDataCache?.set(offlineCacheKey, JSON.stringify(offlineData));
   }
 
-  const v = config.assetVersion ? `?v=${config.assetVersion}` : '';
+  // Falls back to the bundle's own mtime, so the cache-buster is right without anybody supplying one.
+  const version = config.assetVersion ?? sdkAssetVersion();
+  const v = version ? `?v=${version}` : '';
   const sdkDevToolsStylePath = `/sdk-assets/plitzi-sdk-devtools.css${v}`;
 
   // debugMode is owned by the client (shift+F12) and persisted in the 'plitzi_debug' cookie so this SSR
