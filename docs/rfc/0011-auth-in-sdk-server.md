@@ -147,6 +147,20 @@ fills in twelve lines.
 Plitzi keeps its credentials, `resolveOAuthUser` (the three-way rule — linked identity → provider-verified email →
 new account — reads Plitzi's rows), and the binding.
 
+### Stage 4c — the last shared surfaces
+
+Three things stayed behind because they looked like bindings and were not:
+
+- **Writing cookies.** Two implementations agreed by inspection — `res.cookie` on the api role, serialised headers on
+  SSR — and the day they disagreed about `Domain` or `SameSite` would have looked like a session that silently did
+  not exist. One writer now, in `core/auth/session.ts`, over a `CookieSink` that both an Express `Response` and this
+  server's helpers satisfy. It **appends** to `Set-Cookie` rather than replacing it, which is what a handler that
+  clears an OAuth flow before granting the session it produced needs.
+- **`frame-ancestors`.** Who may put a space in an iframe is a rule (deployment hosts as the floor, widened by the
+  space's declared domains, `*` opting out), and a self-hoster should not have to rediscover it. `frameAncestors()`.
+- **CORS origins.** Same shape: `corsOrigins(declared, platformOrigins, allowWithoutOrigin)` is the rule; the `cors`
+  middleware wrapped around it stays with Express.
+
 ## Stage 5 — what is left in plitzi-sdk-server
 
 775 lines under `api/auth`, and every one of them is either data or Plitzi policy:
