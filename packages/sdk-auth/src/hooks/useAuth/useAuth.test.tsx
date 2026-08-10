@@ -129,6 +129,47 @@ describe('a page the server already resolved the visitor for', () => {
     expect(result.current.manager.getProvider()?.token?.accessToken).toBe('from-ssr');
   });
 
+  /**
+   * The flicker this pins, in the order a person saw it: the page arrives signed in, blinks to its signed-out
+   * version, and comes back.
+   *
+   * `userProvider` is read off the schema, and the schema is not there on the first render of any page that fetches
+   * it — so `provider` is `''` for a moment. The manager had no provider to hand the bootstrap to and reported
+   * `guest`, which outranked the identity the server had already resolved; the router then picked the `public` page
+   * over the `authenticated` one for those commits. Recorded as a sequence, because the end state was always right
+   * and only the middle was wrong.
+   */
+  it('does not blink to signed-out while the schema is still loading', async () => {
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>());
+    const signedIn = {
+      authenticated: true,
+      user: { details: { id: 1, username: 'ada' }, accessToken: 'from-ssr', expiresAt: inSeconds(3600) }
+    } as unknown as Server;
+
+    const seen: boolean[] = [];
+    const { rerender } = renderHook(
+      ({ provider }: { provider: string }) => {
+        const auth = useAuth({ server: signedIn, isHydrating: true, provider, settings: basicSettings });
+        seen.push(auth.authenticated);
+
+        return auth;
+      },
+      // No `userProvider` yet — the schema has not arrived.
+      { initialProps: { provider: '' } }
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    rerender({ provider: 'basic' });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(seen).not.toContain(false);
+  });
+
   // A guest is an answer too, but only about credentials the server can see — a token in storage is not one of
   // them, so the browser still gets to decide. What it must not do is treat "guest" as "ask again anyway".
   it('leaves a guest page to the browser rather than inventing a session for it', async () => {

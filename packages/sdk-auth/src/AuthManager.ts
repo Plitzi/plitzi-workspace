@@ -74,10 +74,19 @@ export class AuthManager<U = Record<string, unknown>> {
    * A space that names no provider — a widget, an offline render, anything that does not sign people in — has no
    * session to settle, and must say so. Without this it never reports a state at all, and a caller waiting for one
    * (the SDK holds its whole tree back until auth has decided) waits forever and renders nothing.
+   *
+   * What it must not say is that nobody is signed in when the server just rendered this page for somebody. There are
+   * two ways to arrive here holding a bootstrap: a space that genuinely names no provider, and — the common one — a
+   * space whose schema has not loaded yet, because `userProvider` is read from it and is empty for the first render
+   * of every page that fetches its schema over the network. Answering `guest` there contradicted the HTML that had
+   * just been sent: the page flipped to its signed-out version, then back once the schema arrived and a real
+   * provider adopted the same identity. The server's answer stands until something that can actually check it
+   * disagrees.
    */
   init(bootstrap?: AuthBootstrap<U>): Promise<void> {
     if (!this.provider) {
-      this.listeners.forEach(listener => listener({ type: 'state', state: 'guest' }));
+      const state: AuthState = bootstrap?.user ? 'authenticated' : 'guest';
+      this.listeners.forEach(listener => listener({ type: 'state', state }));
 
       return Promise.resolve();
     }

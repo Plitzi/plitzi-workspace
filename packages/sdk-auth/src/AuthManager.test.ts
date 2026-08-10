@@ -28,6 +28,23 @@ describe('a space that names no provider', () => {
     expect(manager.getState()).toBe('guest');
   });
 
+  /**
+   * "No provider" and "no visitor" are different facts, and only the first one is known here.
+   *
+   * The reason this matters is that a page arrives here with no provider far more often than a space actually lacks
+   * one: `userProvider` comes off the schema, so it is empty for the first render of every page that fetches its
+   * schema. Reporting `guest` there contradicted the server, which had already resolved this visitor and rendered
+   * the page for them — the page blinked to its signed-out version and back once the schema landed.
+   */
+  it('does not contradict an identity the server already resolved', async () => {
+    const { seen, listener } = states();
+    const manager = new AuthManager('', listener, {});
+
+    await manager.init({ user: { id: 1, username: 'ada' }, accessToken: 'from-ssr' });
+
+    expect(seen).toEqual(['authenticated']);
+  });
+
   it('answers every call without a provider behind it', async () => {
     const manager = new AuthManager('', () => undefined, {});
 
