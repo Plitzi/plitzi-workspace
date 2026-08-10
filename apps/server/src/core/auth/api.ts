@@ -87,7 +87,20 @@ const refuse = (status: number, error: string, reason?: AuthFailure): AuthOutcom
 
 const NOT_OFFERED = refuse(404, 'Not found');
 
-const asString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
+/**
+ * A field from a request body, as a string. Numbers count: JSON carries an all-digits password as a number, and a
+ * client that sends one has supplied a password — refusing it as "credentials are required" is a lie about what
+ * arrived. Objects and arrays do not, since `[object Object]` is not a value anybody sent.
+ */
+const asText = (value: unknown): string => {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  return typeof value === 'number' && Number.isFinite(value) ? String(value) : '';
+};
+
+const asString = (value: unknown): string => asText(value).trim();
 
 /**
  * The HTTP surface of authentication, as functions rather than routes.
@@ -211,7 +224,8 @@ export const createAuthApi = ({
       }
 
       const username = asString(credentials.username);
-      const password = typeof credentials.password === 'string' ? credentials.password : '';
+      // Not trimmed: whitespace can be part of a password.
+      const password = asText(credentials.password);
       if (!username || !password) {
         return refuse(400, 'A username and a password are required');
       }
@@ -313,7 +327,7 @@ export const createAuthApi = ({
 
       const username = asString(fields.username);
       const email = asString(fields.email);
-      const password = typeof fields.password === 'string' ? fields.password : '';
+      const password = asText(fields.password);
       if (!username || !email || !password) {
         return refuse(400, 'A username, an email and a password are required');
       }

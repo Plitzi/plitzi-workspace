@@ -419,3 +419,53 @@ describe('signing in with a token the page already holds', () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 });
+
+// The binding layer resolves `{{…}}` and casts what looks numeric, so an all-digits password reaches the provider as
+// a number. Requiring `typeof === 'string'` sent an EMPTY password and the backend answered "credentials are
+// required" — for a form the person had plainly filled in.
+describe('credentials that do not arrive as strings', () => {
+  it('sends an all-digits password rather than dropping it', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    mockFetch.mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+
+    await provider.login({ username: 'ada', password: 123456 });
+
+    const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
+
+    expect(JSON.parse(init.body as string)).toEqual({ username: 'ada', password: '123456' });
+  });
+
+  it('sends an all-digits username too', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    mockFetch.mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+
+    await provider.login({ username: 42, password: 'pw' });
+
+    const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
+
+    expect((JSON.parse(init.body as string) as { username: string }).username).toBe('42');
+  });
+
+  it('keeps a password exactly as typed, spaces included', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    mockFetch.mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+
+    await provider.login({ username: 'ada', password: '  spaced  ' });
+
+    const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
+
+    expect((JSON.parse(init.body as string) as { password: string }).password).toBe('  spaced  ');
+  });
+
+  // `[object Object]` is not a credential anybody typed, so it is refused rather than sent.
+  it('sends nothing for a value that is not a credential', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    mockFetch.mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+
+    await provider.login({ username: 'ada', password: { nested: true } });
+
+    const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
+
+    expect((JSON.parse(init.body as string) as { password: string }).password).toBe('');
+  });
+});

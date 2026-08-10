@@ -54,6 +54,24 @@ const secondsAt = (data: Record<string, unknown> | undefined, path: string): num
  * - **A published session hint** (see `sessionHintCookie`). It is what lets "nobody is signed in" be answered without
  *   asking, which is the common case on a public page.
  */
+/**
+ * A credential as it arrives from an interaction, as a string.
+ *
+ * Values reach here through the binding layer, which resolves `{{…}}` tokens and casts what looks numeric — so an
+ * all-digits password arrives as a `number`. Demanding `typeof === 'string'` therefore dropped it in silence: the
+ * request went out with an empty password and the backend answered that credentials were required, for a form that
+ * had plainly been filled in. Numbers are stringified; objects and arrays are not, because `[object Object]` is not
+ * a credential anybody typed.
+ */
+const credential = (value: unknown): string => {
+  if (typeof value === 'string') {
+    // Never trimmed: whitespace can be part of a password, and silently altering one is worse than refusing it.
+    return value;
+  }
+
+  return typeof value === 'number' && Number.isFinite(value) ? String(value) : '';
+};
+
 class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
   readonly name = 'basic';
 
@@ -106,18 +124,15 @@ class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
    * request. `mode: 'normal'` (the default) posts the credentials.
    */
   protected async requestLogin(params: Record<string, unknown>): Promise<AuthResult<U>> {
-    const token = typeof params.token === 'string' ? params.token.trim() : '';
-
+    // A token is a handle rather than a typed secret, so whitespace from a copy-paste is noise.
+    const token = credential(params.token).trim();
     if (params.mode === 'token') {
       return token ? this.adoptToken(token) : { ok: false, reason: 'missing' };
     }
 
     const res = await this.request<Record<string, unknown>>(this.options.loginUrl, {
       method: 'POST',
-      body: JSON.stringify({
-        username: typeof params.username === 'string' ? params.username : '',
-        password: typeof params.password === 'string' ? params.password : ''
-      })
+      body: JSON.stringify({ username: credential(params.username), password: credential(params.password) })
     });
 
     return this.toResult(res);

@@ -202,3 +202,24 @@ describe('recovering a password', () => {
     expect(outcome.ok && outcome.endSession).toBe(true);
   });
 });
+
+// JSON carries an all-digits password as a number. Refusing it as "credentials are required" is a lie about what
+// arrived, and the client that sent it has no way to tell what it did wrong.
+describe('credentials that do not arrive as strings', () => {
+  it('accepts an all-digits password', async () => {
+    const api = build({ findByUsername: () => Promise.resolve({ ...ada, passwordHash: '123456-hashed' }) });
+
+    const outcome = await api.login({ username: 'ada', password: 123456 });
+
+    expect(outcome.ok).toBe(true);
+  });
+
+  it('still refuses a body that carries no credential at all', async () => {
+    const api = build({ findByUsername: () => Promise.resolve(ada) });
+
+    expect(await api.login({ username: 'ada', password: { nested: true } })).toMatchObject({
+      ok: false,
+      status: 400
+    });
+  });
+});
