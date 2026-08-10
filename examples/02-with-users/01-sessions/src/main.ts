@@ -17,8 +17,7 @@ const PORT = Number(process.env.PORT ?? 4007);
 const auth = createAuth({
   tokens: {
     secret: process.env.AUTH_SECRET ?? 'example-secret-do-not-ship',
-    issuer: `http://127.0.0.1:${PORT}`,
-    audience: [`http://127.0.0.1:${PORT}`]
+    issuer: `http://127.0.0.1:${PORT}`
   },
   // Say it once. The code that writes a session cookie and the code that reads one back both take it from here.
   cookie: { name: 'example_session' },
@@ -26,14 +25,10 @@ const auth = createAuth({
   api: { verifyPassword }
 });
 
-const space = createJsonAdapters({
-  offlineData: offlineDataPath,
-  deployment: { spaceId: 1, environment: 'main', revision: 0 }
-});
+const space = createJsonAdapters({ offlineData: offlineDataPath });
 
 const server = createServer({
   port: PORT,
-  httpVersion: 1,
   devMode: true,
   logger: consoleLogger,
   adapters: space,

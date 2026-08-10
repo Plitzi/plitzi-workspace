@@ -45,7 +45,7 @@ const adapters: SSRAdapters = {
 };
 
 // A dedicated MCP server owns its whole origin: it answers JSON-RPC on every path, not under /mcp.
-const server = createServer({ port: PORT, httpVersion: 1, devMode: true, adapters, logger: consoleLogger });
+const server = createServer({ port: PORT, devMode: true, adapters, logger: consoleLogger });
 
 server.listen(PORT, '127.0.0.1');
 console.log(`[example] MCP on http://127.0.0.1:${PORT}/   (space copy: ${workingCopy})`);

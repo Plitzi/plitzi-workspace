@@ -19,7 +19,10 @@ export const createHttpServer = (
   parts: HttpServerParts
 ): SSRServer => {
   const { label } = parts;
-  const version = config.httpVersion ?? 2;
+  // Defaults to what the transport can actually serve: HTTP/2 when there are certificates, HTTP/1.1 when there are
+  // not. No browser speaks cleartext h2, so defaulting to 2 unconditionally meant every local run had to say so —
+  // and the ones that forgot got a server that started fine and answered nothing.
+  const version = config.httpVersion ?? (config.tls ? 2 : 1);
   if (version >= 3 && !config.tls) {
     throw new Error(`[${label}] httpVersion: ${version} requires a tls config with key and cert`);
   }

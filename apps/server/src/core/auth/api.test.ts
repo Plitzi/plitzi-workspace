@@ -60,15 +60,22 @@ describe('what a deployment ends up offering', () => {
     expect(api.capabilities).toMatchObject({ passwordLogin: true, refresh: true });
   });
 
-  // A space signing people in through an external provider wants no signup and no password reset, even though its
-  // account store could support them.
-  it('lets a deployment turn off what its adapters would otherwise allow', () => {
+  // A space signing people in through an external provider wants no signup and no password reset. Declining one is
+  // a single act — leave the adapter out — rather than an adapter and a flag that can disagree with each other.
+  it('offers only what was actually supplied', () => {
     const api = build(
-      { findByUsername: () => Promise.resolve(ada), createAccount: () => Promise.resolve(ada) },
-      { hashPassword: p => Promise.resolve(`${p}-hashed`), features: { passwordLogin: false, signup: false } }
+      { createAccount: () => Promise.resolve(ada) },
+      { hashPassword: p => Promise.resolve(`${p}-hashed`) }
     );
 
-    expect(api.capabilities).toMatchObject({ passwordLogin: false, signup: false });
+    expect(api.capabilities).toMatchObject({ signup: true, passwordLogin: false, passwordReset: false });
+  });
+
+  // The half-wired case: an adapter without the piece it needs. Offering the endpoint anyway would fail inside it.
+  it('does not offer a flow whose other half is missing', () => {
+    const api = build({ findByUsername: () => Promise.resolve(ada) }, { verifyPassword: undefined });
+
+    expect(api.capabilities).toMatchObject({ passwordLogin: false });
   });
 
   it('publishes the result, so a client renders a form that matches', () => {

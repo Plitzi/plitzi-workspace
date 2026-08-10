@@ -94,10 +94,23 @@ describe('dispatcher request log', () => {
     expect(firstRequest(events).path).toBe('/search?email&page');
   });
 
-  it('marks a 4xx answer as not ok', async () => {
-    const events = await run(fakeRequest('/missing'), [answer(404)]);
+  // A 4xx is an answer, not a fault. Flagging them as errors buried the ones that mean something under Chrome
+  // probing /.well-known on every devtools open and under every signed-out visitor; the status is on the line
+  // either way, so nothing is hidden by saying the server did not go wrong.
+  it('does not call a 4xx answer an error', async () => {
+    const notFound = await run(fakeRequest('/missing'), [answer(404)]);
 
-    expect(firstRequest(events)).toMatchObject({ status: 404, ok: false });
+    expect(firstRequest(notFound)).toMatchObject({ status: 404, ok: true });
+
+    const unauthorized = await run(fakeRequest('/private'), [answer(401)]);
+
+    expect(firstRequest(unauthorized)).toMatchObject({ status: 401, ok: true });
+  });
+
+  it('marks a 5xx answer as not ok', async () => {
+    const events = await run(fakeRequest('/broken'), [answer(503)]);
+
+    expect(firstRequest(events)).toMatchObject({ status: 503, ok: false });
   });
 
   it('reports the operation a stage recorded', async () => {

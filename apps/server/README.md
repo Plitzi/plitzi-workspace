@@ -16,29 +16,33 @@ yarn add @plitzi/sdk-server
 ## Usage
 
 ```ts
-import { readFileSync } from 'node:fs';
 import { createServer } from '@plitzi/sdk-server';
 
-const server = createServer({
-  httpVersion: 2,
-  tls: {
-    key: readFileSync('./certs/server-key.pem'),
-    cert: readFileSync('./certs/server.pem')
-  },
-  adapters: {
-    getOfflineData,
-    getSpaceDeployment
-  }
-});
+const server = createServer({ adapters: { getOfflineData, getSpaceDeployment } });
 
 server.listen(3001);
+```
+
+That is a whole page server: two adapters saying which space to render and where its content lives. The SDK bundle,
+the transport and the rest have defaults the server can work out for itself — see
+[What the server does without being asked](#what-the-server-does-without-being-asked).
+
+Add TLS and it speaks HTTP/2:
+
+```ts
+import { readFileSync } from 'node:fs';
+
+createServer({
+  tls: { key: readFileSync('./certs/server-key.pem'), cert: readFileSync('./certs/server.pem') },
+  adapters: { getOfflineData, getSpaceDeployment }
+});
 ```
 
 ## Configuration
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `httpVersion` | `1 \| 2 \| 3` | `2` | HTTP protocol version. Falls back to the nearest available lower version. |
+| `httpVersion` | `1 \| 2 \| 3` | `2` with `tls`, else `1` | HTTP protocol version. Falls back to the nearest available lower version. |
 | `tls` | `{ key, cert, minVersion? }` | — | TLS key and certificate. Required for versions 2 and 3; optional for version 1. |
 | `devMode` | `boolean` | `NODE_ENV !== 'production'` | Enables development mode: appends `?dev` to esm.sh CDN URLs for React, and activates per-request timing metrics (see [Dev metrics](#dev-metrics)). |
 | `assetVersion` | `string` | — | Cache-buster appended as `?v=<assetVersion>` to all default SDK asset URLs. Compute from file mtime or package version at startup. |
@@ -126,6 +130,19 @@ server.listen(3001);
 | `deployment` | `Record<hostname, SSRSpaceDeployment>` | Per-hostname map. Use `'*'` as a catch-all. |
 | `user` | `SSRUser` | Fixed user returned for every request. Useful for testing authenticated flows. |
 | `user` | `(req) => SSRUser \| undefined \| Promise<SSRUser \| undefined>` | Function for dynamic user resolution per request. |
+
+## What the server does without being asked
+
+Four things it used to make every deployment declare, each of which it can answer itself:
+
+| | |
+|---|---|
+| **The SDK bundle** | The rendered page is told to fetch `/sdk-assets/plitzi-sdk.js`, so the server serves it, from its own copy of `@plitzi/plitzi-sdk`. Declaring `static: { '/sdk-assets': … }` still wins — a pinned build, a CDN mirror |
+| **The transport** | `httpVersion` defaults to HTTP/2 with `tls` and HTTP/1.1 without. No browser speaks cleartext h2, so the old default of `2` meant every local run had to say otherwise |
+| **The audience** | `tokens.audience` defaults to the issuer, which is right for a deployment that is its own audience |
+| **The space** | `createJsonAdapters({ offlineData })` alone resolves to space 1, `main`, revision 0 |
+
+A page server therefore needs `port`, `adapters`, and nothing else.
 
 ## Static files
 
@@ -610,13 +627,8 @@ Postgres, MySQL, Mongo or an identity service:
 | `createAccount`, `findByEmail`, `setResetToken`, `sendMail`, … | signup, password reset, verification |
 
 **What is absent decides what the deployment offers.** No `createAccount`, no signup — and the route answers 404
-rather than failing at runtime. `GET /auth/capabilities` publishes the result, so a sign-in page renders what the
-backend actually answers instead of a button that dead-ends. `api.features` can only ever close what the adapters
-would otherwise allow:
-
-```ts
-createAuth({ …, api: { features: { signup: false } } });   // invitation-only
-```
+rather than failing at runtime. Declining a flow is one act: do not implement it. `GET /auth/capabilities` publishes
+the result, so a sign-in page renders what the backend actually answers instead of a button that dead-ends.
 
 ### What you get
 

@@ -87,7 +87,12 @@ export type TokenConfig = {
   issuer: string;
   /** Extra issuers to honour — a migration, or a sibling deployment whose credentials are meant to work here. */
   alsoAccept?: string[];
-  audience: string[];
+  /**
+   * The API audiences a credential is meant for. Defaults to the issuer, which is right for the common case of a
+   * deployment that is its own audience — and stops it being a required field that everyone fills in by copying
+   * `issuer` into it.
+   */
+  audience?: string[];
   algorithms?: Algorithm[];
   lifetimes?: TokenLifetimes;
 };
@@ -180,7 +185,7 @@ export const createTokens = (config: TokenConfig) => {
 
     return {
       iss: config.issuer,
-      aud: config.audience,
+      aud: config.audience ?? [config.issuer],
       scope,
       ...(ttlSeconds === undefined ? {} : { exp: now + ttlSeconds }),
       iat: now,

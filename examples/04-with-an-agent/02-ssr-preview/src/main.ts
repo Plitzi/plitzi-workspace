@@ -48,7 +48,6 @@ const adapters: SSRAdapters = {
 const server = createServer(
   {
     port: PORT,
-    httpVersion: 1,
     devMode: true,
     adapters,
     logger: consoleLogger,

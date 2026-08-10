@@ -43,7 +43,6 @@ const getRscData = async (
 
 const server = createServer({
   port: PORT,
-  httpVersion: 1,
   devMode: true,
   // RSC turns itself on because `getRscData` exists — there is no separate flag to remember.
   adapters: { ...createJsonAdapters({ offlineData: offlineDataPath }), getRscData },

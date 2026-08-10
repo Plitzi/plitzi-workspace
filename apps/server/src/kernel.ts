@@ -92,7 +92,6 @@ export type {
   AccountRecord,
   AuthApi,
   AuthApiConfig,
-  AuthFeatures,
   AuthOutcome
 } from './core/auth/api';
 export type {

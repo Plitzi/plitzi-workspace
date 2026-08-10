@@ -69,7 +69,11 @@ const runPipeline = async <C extends BaseContext>(
       ...(ctx.operation === undefined ? {} : { operation: ctx.operation }),
       status,
       durationMs: Date.now() - startedAt,
-      ok: !error && status < 400,
+      // A 4xx is an ANSWER, not a fault: "no such page", "renew your session", "not yours". Flagging those as
+      // errors buried the ones that mean something under Chrome probing /.well-known on every devtools open and
+      // under every signed-out visitor. The status is on the line either way — this only decides what reads as
+      // the server having gone wrong, which is 5xx and a thrown exception.
+      ok: !error && status < 500,
       ...(error ? { error: errorText(error) } : {}),
       timestamp: new Date().toISOString()
     });

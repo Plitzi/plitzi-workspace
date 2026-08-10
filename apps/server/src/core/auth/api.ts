@@ -64,17 +64,7 @@ export interface AccountAdapters {
   ) => Promise<AccountRecord | { error: string; status?: number } | undefined>;
 }
 
-/** What a deployment chooses to offer, on top of what its adapters make possible. */
-export interface AuthFeatures {
-  passwordLogin?: boolean;
-  signup?: boolean;
-  passwordReset?: boolean;
-  emailVerification?: boolean;
-  exchange?: boolean;
-}
-
 export interface AuthApiConfig {
-  features?: AuthFeatures;
   /** Compare a password against a stored hash. A deployment picks its own algorithm; nothing here assumes one. */
   verifyPassword?: (plain: string, hash: string) => Promise<boolean>;
   hashPassword?: (plain: string) => Promise<string>;
@@ -118,19 +108,23 @@ export const createAuthApi = ({
   adapters: AccountAdapters;
   config?: AuthApiConfig;
 }) => {
-  const { verifyPassword, hashPassword, generateToken, verifyOnSignup = false, features = {} } = config;
+  const { verifyPassword, hashPassword, generateToken, verifyOnSignup = false } = config;
 
-  // A capability is what the adapters make possible AND what the deployment chose to keep. Absent adapters win:
-  // offering an endpoint that cannot work is worse than not offering it.
+  /**
+   * What this deployment offers, decided by what it supplied and nothing else.
+   *
+   * There used to be a parallel set of `features` switches. They were redundant in every case — each flow reads
+   * adapters that no other flow reads, so leaving one out is already how you decline it — and two ways of saying
+   * the same thing invite the state where they disagree: an adapter wired up, the flag forgotten, and an endpoint
+   * that answers 404 for no reason anyone can see. Declining a flow is now one act: do not implement it.
+   */
   const capabilities = {
-    passwordLogin: features.passwordLogin !== false && !!adapters.findByUsername && !!verifyPassword,
+    passwordLogin: !!adapters.findByUsername && !!verifyPassword,
     refresh: !!adapters.findByRefreshToken,
-    signup: features.signup !== false && !!adapters.createAccount && !!hashPassword,
-    passwordReset:
-      features.passwordReset !== false && !!adapters.findByEmail && !!adapters.setResetToken && !!hashPassword,
-    emailVerification:
-      features.emailVerification !== false && !!adapters.findByValidationToken && !!adapters.markVerified,
-    exchange: features.exchange !== false && !!adapters.exchangeCredential
+    signup: !!adapters.createAccount && !!hashPassword,
+    passwordReset: !!adapters.findByEmail && !!adapters.setResetToken && !!hashPassword,
+    emailVerification: !!adapters.findByValidationToken && !!adapters.markVerified,
+    exchange: !!adapters.exchangeCredential
   };
 
   const issue = async (userId: number): Promise<SSRSession> => {
