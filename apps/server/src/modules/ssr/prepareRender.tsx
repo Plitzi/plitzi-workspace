@@ -66,7 +66,7 @@ export const prepareRender = async (
   // debugMode is owned by the client (shift+F12) and persisted in the 'plitzi_debug' cookie so this SSR
   // render matches what the client will hydrate with. Falls back to devMode when the cookie is unset.
   const debugCookie = readCookie(req.headers.cookie, 'plitzi_debug');
-  const debugMode = debugCookie === undefined ? config.devMode : debugCookie === 'true';
+  const debugMode = config.devMode || debugCookie === 'true';
 
   const offlineDataStr = escapeJson(
     JSON.stringify({ offlineData, offlineMode: true, environment, renderMode: 'raw', server, sdkDevToolsStylePath })
