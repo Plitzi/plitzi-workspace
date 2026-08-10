@@ -34,16 +34,19 @@ export class AuthManager<U = Record<string, unknown>> {
   private readonly providerType: string;
   private readonly provider?: AuthProvider<U>;
 
+  private readonly listeners: AuthEventListener[];
+
   constructor(
     providerType: string,
     listeners: AuthEventListener | AuthEventListener[],
     settings: AuthProviderSettings
   ) {
     this.providerType = providerType;
+    this.listeners = Array.isArray(listeners) ? listeners : [listeners];
     const factory = providers.get(providerType) as AuthProviderFactory<U> | undefined;
     if (factory) {
       this.provider = factory(settings);
-      this.provider.on(listeners);
+      this.provider.on(this.listeners);
     }
   }
 
@@ -67,8 +70,19 @@ export class AuthManager<U = Record<string, unknown>> {
 
   // Actions
 
+  /**
+   * A space that names no provider — a widget, an offline render, anything that does not sign people in — has no
+   * session to settle, and must say so. Without this it never reports a state at all, and a caller waiting for one
+   * (the SDK holds its whole tree back until auth has decided) waits forever and renders nothing.
+   */
   init(bootstrap?: AuthBootstrap<U>): Promise<void> {
-    return this.provider?.init(bootstrap) ?? Promise.resolve();
+    if (!this.provider) {
+      this.listeners.forEach(listener => listener({ type: 'state', state: 'guest' }));
+
+      return Promise.resolve();
+    }
+
+    return this.provider.init(bootstrap);
   }
 
   login(...args: Parameters<AuthProvider<U>['login']>): Promise<TokenResult | undefined> {
