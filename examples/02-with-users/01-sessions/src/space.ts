@@ -51,9 +51,13 @@ const step = (
 });
 
 /**
- * Submitting the form runs `authLogin`. The credentials are read off the trigger's own payload — a form fires
+ * Submitting the form runs auth's `login`. The credentials are read off the trigger's own payload — a form fires
  * `onSubmit` with `values`, keyed by each control's `name` — which is why the controls below are named `username`
  * and `password`.
+ *
+ * `action` is the name the callback is REGISTERED under (`login`, `logout`), not the label the builder shows for it
+ * (`Auth Login`): a step is resolved as `callbacks[elementId][action]`, and a name that resolves to nothing fails
+ * the step silently — the button appears to do nothing at all.
  */
 const loginFlow = {
   'login-trigger': step('login-trigger', 'login-flow', 'trigger', 'onSubmit', 'login-form', {}, {
@@ -63,7 +67,7 @@ const loginFlow = {
     'login-call',
     'login-flow',
     'globalCallback',
-    'authLogin',
+    'login',
     // A global callback names the module that registered it, not an element: auth's callbacks live on `auth`.
     'auth',
     { mode: 'normal', username: '{{login-trigger.values.username}}', password: '{{login-trigger.values.password}}' },
@@ -75,7 +79,7 @@ const logoutFlow = {
   'logout-trigger': step('logout-trigger', 'logout-flow', 'trigger', 'onClick', 'logout-button', {}, {
     afterNode: 'logout-call'
   }),
-  'logout-call': step('logout-call', 'logout-flow', 'globalCallback', 'authLogout', 'auth', {}, {
+  'logout-call': step('logout-call', 'logout-flow', 'globalCallback', 'logout', 'auth', {}, {
     beforeNode: 'logout-trigger'
   })
 };
@@ -177,10 +181,16 @@ const signedInPage: Record<string, Element> = {
   }, { subType: 'button', content: 'Sign out' })
 };
 
+/**
+ * The sample space defines `--foreground` and `--background-inner` and flips both per colour scheme. Using one
+ * without the other is what makes a page unreadable in dark mode: near-white text on the browser's white default.
+ * So the page paints its own background from the same pair the text colour comes from.
+ */
 const CSS = `
-.auth-page{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;min-height:100vh;font-family:system-ui,sans-serif;}
+.auth-page{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;min-height:100vh;font-family:system-ui,sans-serif;background:var(--background-inner,#fff);color:var(--foreground,#17171c);}
 .auth-form{display:flex;flex-direction:column;gap:12px;min-width:280px;}
-.auth-input{width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;}
+.auth-form label{color:var(--foreground,#17171c);}
+.auth-input{width:100%;padding:8px 10px;border:1px solid #94a3b8;border-radius:6px;font-size:14px;background:var(--background-inner,#fff);color:var(--foreground,#17171c);}
 .auth-button{padding:8px 16px;border-radius:6px;border:0;background:#5c3df5;color:#fff;font-size:14px;cursor:pointer;}
 `;
 

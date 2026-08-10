@@ -87,11 +87,29 @@ const processNode = async (
       case 'callback':
       case 'globalCallback': {
         if (!elementId) {
+          pConsole.warning(
+            'interactions',
+            <span>
+              Step <b>{action}</b> names no element, so there is nothing to run it on
+            </span>,
+            { node }
+          );
+
           return { status: 'failed', result, postCallbacks, whenParams };
         }
 
         const receptorCallback = get(callbacksAvailables, `${elementId}.${action}`) as InteractionCallback | undefined;
         if (!receptorCallback) {
+          // The step is wired to something that does not exist, and the only symptom is a control that appears to do
+          // nothing at all — so say which name was looked for and what was actually registered there.
+          pConsole.warning(
+            'interactions',
+            <span>
+              Nothing is registered as <b>{`${elementId}.${action}`}</b>, so this step did nothing
+            </span>,
+            { node, available: Object.keys(get(callbacksAvailables, elementId, {})) }
+          );
+
           return { status: 'failed', result, postCallbacks, whenParams };
         }
 

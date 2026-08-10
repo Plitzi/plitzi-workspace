@@ -1,6 +1,8 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { describe, it, expect, vi } from 'vitest';
 
+import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
+
 import InteractionsManager from './InteractionsManager';
 
 import type { ElementInteraction, InteractionCallback } from '@plitzi/sdk-shared';
@@ -79,5 +81,49 @@ describe('InteractionsManager re-entrancy guard', () => {
 
     expect(boom).toHaveBeenCalledTimes(1);
     expect(ok).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * A step naming a callback nothing registered used to fail in total silence: the control appeared to do nothing, and
+ * there was no way to tell a mis-wired flow from a broken one. The name in a step is the key a callback was
+ * REGISTERED under, which is not the label shown for it — an easy thing to get wrong and, until this, an invisible one.
+ */
+describe('a step wired to something that does not exist', () => {
+  it('says so, naming what it looked for and what is actually there', async () => {
+    const manager = new InteractionsManager('page1');
+    const warning = vi.spyOn(pConsole, 'warning').mockImplementation(() => undefined);
+
+    manager.subscribe('el1', makeInteractions('el1', 'click', 'authLogin'), triggerDef, {
+      login: { action: 'authLogin', title: 'Auth Login', type: 'callback', callback: vi.fn(), params: {} }
+    });
+
+    await manager.interactionTrigger('el1', 'click', {});
+
+    expect(warning).toHaveBeenCalledTimes(1);
+
+    const [scope, , meta] = warning.mock.calls[0] as [string, unknown, { available: string[] }];
+
+    expect(scope).toBe('interactions');
+    expect(meta.available).toEqual(['login']);
+
+    warning.mockRestore();
+  });
+
+  it('stays quiet when the step resolves', async () => {
+    const manager = new InteractionsManager('page1');
+    const warning = vi.spyOn(pConsole, 'warning').mockImplementation(() => undefined);
+    const login = vi.fn();
+
+    manager.subscribe('el1', makeInteractions('el1', 'click', 'login'), triggerDef, {
+      login: { action: 'authLogin', title: 'Auth Login', type: 'callback', callback: login, params: {} }
+    });
+
+    await manager.interactionTrigger('el1', 'click', {});
+
+    expect(login).toHaveBeenCalledTimes(1);
+    expect(warning).not.toHaveBeenCalled();
+
+    warning.mockRestore();
   });
 });
