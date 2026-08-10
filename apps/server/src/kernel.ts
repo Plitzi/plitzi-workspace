@@ -14,15 +14,26 @@ export { configStaticStage, publicDirStage, wellKnownStage } from './core/http/s
 export { buildHealthPayload, registerHealthCheck } from './core/health';
 export { clientIp, parseRequest, readRawBody, requestOrigin } from './core/requestParser';
 export {
+  clearFlowCookie,
   clearSessionCookies,
+  readFlowCookie,
+  readRefreshToken,
   readSessionToken,
   sessionCookieParams,
   sessionHintValue,
+  writeFlowCookie,
   writeSessionCookies
 } from './core/auth/session';
 export { SCOPES, authFailureMessage, createTokens, userIdOf } from './core/auth/tokens';
 export { createCarriers, presentedOrigin } from './core/auth/credentials';
-export { ANY_DOMAIN, domainAllowed, hostnameOf, normalizeDomain } from './core/auth/domains';
+export {
+  ANY_DOMAIN,
+  corsOrigins,
+  domainAllowed,
+  frameAncestors,
+  hostnameOf,
+  normalizeDomain
+} from './core/auth/domains';
 export { createIdentity } from './core/auth/identity';
 export { createAuthorizer, requirementFor } from './core/auth/authorize';
 export { createAuthApi } from './core/auth/api';
@@ -34,7 +45,7 @@ export type { HttpServerParts } from './core/server/baseServer';
 export type { BuildContext } from './core/http/dispatcher';
 export type { HealthCheckApp, HealthIdentity } from './core/health';
 export type { BaseContext, PipelineExtensions, SSRContext, Stage } from './core/http/types';
-export type { SessionCookieParams } from './core/auth/session';
+export type { CookieSink, SessionCookieParams } from './core/auth/session';
 export type { CredentialCarrier } from './core/auth/credentials';
 export type {
   Actor,

@@ -1,4 +1,15 @@
-import type { SSRAuthCookie, SSRRequest, SSRResponseHelpers, SSRSession } from '@plitzi/sdk-shared';
+import type { SSRAuthCookie, SSRRequest, SSRSession } from '@plitzi/sdk-shared';
+
+/**
+ * Anything that can carry `Set-Cookie`. Express `Response` and this server's own helpers both satisfy it, which is
+ * what lets one writer serve both — a deployment that wrote its own would drift from the one SSR uses, and a session
+ * established on one side would be invisible to the other.
+ */
+export interface CookieSink {
+  setHeader: (name: string, value: string | string[]) => void;
+  getHeader?: (name: string) => string | string[] | number | undefined;
+  headers?: Record<string, string | string[] | number | undefined>;
+}
 
 export type SessionCookieParams = {
   name: string;
@@ -95,13 +106,24 @@ const serializeCookie = (
 const nowInSeconds = (): number => Math.floor(Date.now() / 1000);
 
 /**
+ * Adds to `Set-Cookie` rather than replacing it. A handler may already have written one — clearing an OAuth flow
+ * before granting the session it produced is exactly that — and replacing the header would silently drop it.
+ */
+const appendCookies = (res: CookieSink, cookies: string[]): void => {
+  const existing = res.getHeader?.('set-cookie') ?? res.headers?.['set-cookie'];
+  const previous = Array.isArray(existing) ? existing : typeof existing === 'string' ? [existing] : [];
+
+  res.setHeader('Set-Cookie', [...previous, ...cookies]);
+};
+
+/**
  * Writes a granted session onto the response: the credential itself, the refresh half confined to its own path, and
  * the readable hint. One call, because the three only make sense together — a hint that outlives its session sends
  * clients to renew something that is gone, and one that dies early signs out a live session.
  */
 export const writeSessionCookies = (
-  req: SSRRequest,
-  res: SSRResponseHelpers,
+  req: { hostname: string },
+  res: CookieSink,
   session: SSRSession,
   config?: SSRAuthCookie
 ): void => {
@@ -133,19 +155,46 @@ export const writeSessionCookies = (
     )
   );
 
-  res.setHeader('Set-Cookie', cookies);
+  appendCookies(res, cookies);
 };
 
 /** Ends the session in this browser. Every cookie the grant wrote is cleared, the readable one included. */
-export const clearSessionCookies = (req: SSRRequest, res: SSRResponseHelpers, config?: SSRAuthCookie): void => {
+export const clearSessionCookies = (req: { hostname: string }, res: CookieSink, config?: SSRAuthCookie): void => {
   const params = sessionCookieParams(req.hostname, config);
 
-  res.setHeader('Set-Cookie', [
+  appendCookies(res, [
     serializeCookie(params.name, '', 0, params),
     serializeCookie(`${params.name}_refresh`, '', 0, params, { path: params.refreshPath }),
     serializeCookie(`${params.name}${params.hintSuffix}`, '', 0, params, { httpOnly: false })
   ]);
 };
+
+/**
+ * The cookie a social sign-in leaves behind while the browser is away at the provider. Same family, same policy, so
+ * it is written here rather than by whoever happens to be driving the flow. Path `/` because a deployment may serve
+ * its API under a prefix, and the callback would then miss a cookie scoped to `/auth`.
+ */
+export const writeFlowCookie = (
+  req: { hostname: string },
+  res: CookieSink,
+  value: string,
+  ttlSeconds: number,
+  config?: SSRAuthCookie
+): void => {
+  const params = sessionCookieParams(req.hostname, config);
+
+  appendCookies(res, [serializeCookie(`${params.name}_oauth`, value, ttlSeconds, params)]);
+};
+
+export const clearFlowCookie = (req: { hostname: string }, res: CookieSink, config?: SSRAuthCookie): void => {
+  const params = sessionCookieParams(req.hostname, config);
+
+  appendCookies(res, [serializeCookie(`${params.name}_oauth`, '', 0, params)]);
+};
+
+/** The value that flow cookie carries, for the callback leg. */
+export const readFlowCookie = (req: SSRRequest | { headers: { cookie?: string }; hostname: string }, config?: SSRAuthCookie): string | undefined =>
+  readCookie(req, `${sessionCookieParams(req.hostname, config).name}_oauth`);
 
 const parseCookieHeader = (header: string): Record<string, string> => {
   const cookies: Record<string, string> = {};
@@ -161,12 +210,20 @@ const parseCookieHeader = (header: string): Record<string, string> => {
   return cookies;
 };
 
-/** The session credential this request carries, for an adapter that resolves identity from it. */
-export const readSessionToken = (req: SSRRequest, config?: SSRAuthCookie): string | undefined => {
+const readCookie = (req: { headers: { cookie?: string } }, name: string): string | undefined => {
   const header = req.headers.cookie;
-  if (!header) {
-    return undefined;
-  }
 
-  return parseCookieHeader(header)[sessionCookieParams(req.hostname, config).name] || undefined;
+  return header ? parseCookieHeader(header)[name] || undefined : undefined;
 };
+
+/** The session credential this request carries, for an adapter that resolves identity from it. */
+export const readSessionToken = (
+  req: SSRRequest | { headers: { cookie?: string }; hostname: string },
+  config?: SSRAuthCookie
+): string | undefined => readCookie(req, sessionCookieParams(req.hostname, config).name);
+
+/** The renewal credential, which rides in its own cookie confined to the refresh path. */
+export const readRefreshToken = (
+  req: SSRRequest | { headers: { cookie?: string }; hostname: string },
+  config?: SSRAuthCookie
+): string | undefined => readCookie(req, `${sessionCookieParams(req.hostname, config).name}_refresh`);

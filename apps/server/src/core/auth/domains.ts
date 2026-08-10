@@ -62,3 +62,43 @@ export const normalizeDomain = (value: string): string | undefined => {
     return undefined;
   }
 };
+
+/**
+ * Who may put this space in an iframe, as CSP `frame-ancestors` sources.
+ *
+ * The deployment's own hosts are the floor — a builder previews every space in one — and a space widens it with the
+ * domains its owner declared. `*` opts out entirely. Without this a published space is framable from any site on the
+ * web, which is how one customer wraps another's space inside their own page and passes it off as theirs.
+ *
+ * Unlike the token's domain binding, this one is enforced by the browser, which is why it is worth stating even
+ * though a determined caller can ignore the header: it stops the attack that needs a real visitor's browser.
+ */
+export const frameAncestors = (declared: string[], platformHosts: string[] = []): string[] => {
+  if (declared.includes(ANY_DOMAIN)) {
+    return [ANY_DOMAIN];
+  }
+
+  // CSP keywords carry their own quotes inside the header value, hence the escaping.
+  return [...new Set(['\'self\'', ...platformHosts, ...declared])];
+};
+
+/**
+ * Which origins a request bearing this grant may be answered for.
+ *
+ * A space is reachable from the origins its own token declares, plus this deployment's own apps; `*` means anywhere,
+ * and a grant that declares nothing at all falls back to the deployment's own unless it allows anonymous origins.
+ * Returning `true` means "reflect whatever asked", which is what a CORS layer wants for the wildcard case.
+ */
+export const corsOrigins = (
+  declared: string[] | undefined,
+  platformOrigins: string[] = [],
+  allowWithoutOrigin = false
+): true | string[] => {
+  const origins = declared ?? [];
+
+  if (origins.includes(ANY_DOMAIN) || (origins.length === 0 && allowWithoutOrigin)) {
+    return true;
+  }
+
+  return [...new Set([...platformOrigins, ...origins])];
+};
