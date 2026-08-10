@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createAuthHandlers, mountAuthRoutes } from './authRoutes';
-import { createAuthGuard } from './guard';
+import { createAuthMiddleware } from './authMiddleware';
+import { createAuthRouteHandlers, mountAuthRoutes } from './authRouteHandlers';
 import { createAuth } from '../auth/createAuth';
 
-import type { AuthedRequest, HandlerResponse, RouteHandler } from './types';
+import type { AuthedRequest, JsonResponse, RouteHandler } from './types';
 import type { AccountAdapters, AccountRecord } from '../auth/api';
 import type { IdentityAdapters } from '../auth/identity';
 import type { SSRSession } from '@plitzi/sdk-shared';
@@ -60,7 +60,7 @@ const response = () => {
     headers: {}
   };
 
-  const res: HandlerResponse = {
+  const res: JsonResponse = {
     status: code => {
       sent.status = code;
 
@@ -86,7 +86,7 @@ const request = (over: Partial<AuthedRequest> = {}): AuthedRequest => ({
 describe('auth handlers on a plain object request', () => {
   it('answers a sign-in with the grant and the cookies, through no framework at all', async () => {
     const auth = build();
-    const routes = createAuthHandlers({ api: auth.api, cookies: auth.cookies });
+    const routes = createAuthRouteHandlers({ api: auth.api, cookies: auth.cookies });
     const login = routes.find(route => route.path === '/login' && route.method === 'POST');
     const { res, sent } = response();
 
@@ -99,7 +99,7 @@ describe('auth handlers on a plain object request', () => {
 
   it('reports a refusal with a reason rather than only a status', async () => {
     const auth = build();
-    const routes = createAuthHandlers({ api: auth.api, cookies: auth.cookies });
+    const routes = createAuthRouteHandlers({ api: auth.api, cookies: auth.cookies });
     const login = routes.find(route => route.path === '/login');
     const { res, sent } = response();
 
@@ -113,14 +113,16 @@ describe('auth handlers on a plain object request', () => {
    *  drops it — and every cookie is then named for nowhere. Reading it through a getter proves it is read, not copied. */
   it('reads hostname off the request rather than spreading it', async () => {
     const auth = build();
-    const routes = createAuthHandlers({ api: auth.api, cookies: auth.cookies });
+    const routes = createAuthRouteHandlers({ api: auth.api, cookies: auth.cookies });
     const login = routes.find(route => route.path === '/login');
     const { res, sent } = response();
 
     const req = Object.create(
-      { get hostname() {
+      {
+        get hostname() {
           return 'acme.test';
-        } },
+        }
+      },
       Object.getOwnPropertyDescriptors(request({ body: { username: 'ada', password: 'password' } }))
     ) as AuthedRequest;
     delete (req as { hostname?: string }).hostname;
@@ -135,7 +137,7 @@ describe('auth handlers on a plain object request', () => {
     const auth = build();
     const onError = vi.fn();
     vi.spyOn(auth.api, 'login').mockRejectedValueOnce(new Error('store is down'));
-    const routes = createAuthHandlers({ api: auth.api, cookies: auth.cookies, onError });
+    const routes = createAuthRouteHandlers({ api: auth.api, cookies: auth.cookies, onError });
     const { res, sent } = response();
 
     await routes.find(route => route.path === '/login')?.handle(request({ body: {} }), res);
@@ -167,15 +169,14 @@ describe('auth handlers on a plain object request', () => {
 describe('the auth guard as middleware', () => {
   it('puts what it resolved on the request and calls on', async () => {
     const auth = build();
-    const routes = createAuthHandlers({ api: auth.api, cookies: auth.cookies });
+    const routes = createAuthRouteHandlers({ api: auth.api, cookies: auth.cookies });
     const login = response();
-    await routes.find(route => route.path === '/login')?.handle(
-      request({ body: { username: 'ada', password: 'password' } }),
-      login.res
-    );
+    await routes
+      .find(route => route.path === '/login')
+      ?.handle(request({ body: { username: 'ada', password: 'password' } }), login.res);
     const token = (login.sent.body as { access_token: string }).access_token;
 
-    const guard = createAuthGuard(auth.identity, { rules: [], fallback: 'actor' });
+    const guard = createAuthMiddleware(auth.identity, { rules: [], fallback: 'actor' });
     const req = request({ path: '/private', headers: { authorization: `Bearer ${token}` } });
     const next = vi.fn();
 
@@ -187,7 +188,7 @@ describe('the auth guard as middleware', () => {
 
   it('refuses with the reason a client acts on, and does not call on', async () => {
     const auth = build();
-    const guard = createAuthGuard(auth.identity, { rules: [], fallback: 'actor' });
+    const guard = createAuthMiddleware(auth.identity, { rules: [], fallback: 'actor' });
     const { res, sent } = response();
     const next = vi.fn();
 
@@ -201,7 +202,7 @@ describe('the auth guard as middleware', () => {
   // Some APIs answer `message`, some `error`. Only the wording moves: `reason` is beside it either way.
   it('answers the refusal under the key the deployment already uses', async () => {
     const auth = build();
-    const guard = createAuthGuard(auth.identity, { rules: [], fallback: 'actor' }, { errorKey: 'message' });
+    const guard = createAuthMiddleware(auth.identity, { rules: [], fallback: 'actor' }, { errorKey: 'message' });
     const { res, sent } = response();
 
     await guard(request({ path: '/private' }), res, vi.fn());
@@ -211,7 +212,7 @@ describe('the auth guard as middleware', () => {
 
   it('lets a public path through without reading a credential', async () => {
     const auth = build();
-    const guard = createAuthGuard(auth.identity, {
+    const guard = createAuthMiddleware(auth.identity, {
       rules: [{ match: ['/health'], requirement: 'public' }],
       fallback: 'actor'
     });

@@ -335,6 +335,40 @@ export type SSRActionConfig = {
   };
 };
 
+export type SSRHealthConfig = {
+  path?: string;
+  /** Replaces the identity payload entirely. `check` still merges over it. */
+  payload?: Record<string, unknown>;
+  name?: string;
+  version?: string;
+  role?: string;
+  /**
+   * Live state, read on every probe and merged over the payload — the stores this process depends on, a queue
+   * depth, whatever only this deployment can know. Returning `healthy: false` answers **503**, which is what turns
+   * the endpoint from a liveness check into a readiness one: an orchestrator stops routing to a replica whose
+   * database has gone, instead of sending it traffic it can only fail.
+   *
+   * A check that throws is itself an unhealthy answer, and is reported as one rather than as a 500.
+   */
+  check?: () => Record<string, unknown> | Promise<Record<string, unknown>>;
+};
+
+/** Response compression. Every field has a default; supply only what this deployment wants different. */
+export type SSRCompressionConfig = {
+  /**
+   * Which encodings this server will use, most preferred first — the first one the client accepts wins. Default
+   * `['br', 'gzip']`. `['gzip']` for a client or proxy that mishandles Brotli; `[]` disables compression, same as
+   * `compression: false`.
+   */
+  encodings?: ('br' | 'gzip')[];
+  /** Responses smaller than this many bytes go out uncompressed. Default 1024. */
+  threshold?: number;
+  /** Brotli quality, 0–11. Default 4 — past that the CPU cost outgrows the bytes saved on HTML. */
+  brotliQuality?: number;
+  /** Gzip level, 0–9. Default 6. */
+  gzipLevel?: number;
+};
+
 export type SSRRscConfig = {
   /** Whether the RSC endpoint is active. Defaults to true when adapters.getRscData is provided. */
   enabled?: boolean;
@@ -497,6 +531,11 @@ export type SSRServerConfig = {
   /** Receives a {@link ServerLogEvent} for every HTTP request this server answers — whatever stage answered it
    *  and whatever the outcome — plus every MCP tool call and resource read inside those requests. Without it the
    *  server reports nothing per request (the MCP events still reach the console when `MCP_DEBUG=1`). */
+  /**
+   * How responses are compressed. Omit for Brotli where the client takes it and gzip otherwise; `false` never
+   * compresses, which is what to use when a proxy or CDN in front already does it.
+   */
+  compression?: SSRCompressionConfig | false;
   logger?: ServerLogger;
   /**
    * What to do when the server cannot take its port. Without it the server prints what went wrong, what to do about
@@ -530,9 +569,10 @@ export type SSRServerConfig = {
    *  (a page server serves pages; a dedicated MCP server serves MCP alone). */
   services?: ServerServices;
   /** Liveness/readiness endpoint for standalone servers (k8s probes). A stage always answers `path`
-   *  (default /health) with 200. The body is the generic identity payload built from `name`/`version`/`role`
-   *  ({ Server, Version, role }); pass an explicit `payload` to override it entirely. */
-  health?: { path?: string; payload?: Record<string, unknown>; name?: string; version?: string; role?: string };
+   *  (default /health) with the generic identity payload built from `name`/`version`/`role`
+   *  ({ Server, Version, role }); pass an explicit `payload` to override it entirely, or `check` to add what can
+   *  only be known per request. See {@link SSRHealthConfig}. */
+  health?: SSRHealthConfig;
   /** Cache-buster appended as ?v=<assetVersion> to all default SDK asset URLs (jsPath, cssPath, react vendor). Compute from file mtime or package version at startup. */
   assetVersion?: string;
   /** OAuth 2.1 authorization for the MCP server. Omit to keep the server anonymous — see {@link OAuthConfig}. */

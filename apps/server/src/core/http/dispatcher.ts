@@ -1,11 +1,13 @@
 import { applySecurityHeaders } from './securityHeaders';
 import { buildResponseHelpers } from '../../helpers/buildResponseHelpers';
+import { resolveCompression } from '../../helpers/compress';
 import { clientIp, parseRequest } from '../requestParser';
 
 import type { BaseContext, Stage } from './types';
 import type { RawResponse } from '../../helpers/buildResponseHelpers';
+import type { ResolvedCompression } from '../../helpers/compress';
 import type { Handler } from '../transports';
-import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
+import type { SSRRequest, SSRResponseHelpers, SSRServerConfig } from '@plitzi/sdk-shared';
 import type { IncomingMessage } from 'node:http';
 
 // Builds the per-request context for a given server. Each server supplies its own — an SSR server folds in the
@@ -42,11 +44,12 @@ const runPipeline = async <C extends BaseContext>(
   rawRes: RawResponse,
   buildContext: BuildContext<C>,
   stages: Stage<C>[],
-  server: string
+  server: string,
+  compression: ResolvedCompression
 ): Promise<void> => {
   const startedAt = Date.now();
   const req = parseRequest(raw);
-  const res = buildResponseHelpers(rawRes, req.headers['accept-encoding']);
+  const res = buildResponseHelpers(rawRes, req.headers['accept-encoding'], compression);
   const ctx = buildContext(raw, rawRes, req, res);
   const logger = ctx.config.logger;
   // Read while the socket is still attached: a request logged from the catch block can outlive its connection.
@@ -112,10 +115,15 @@ const runPipeline = async <C extends BaseContext>(
 export const makeHandler = <C extends BaseContext>(
   label: string,
   buildContext: BuildContext<C>,
-  stages: Stage<C>[]
+  stages: Stage<C>[],
+  compressionConfig?: SSRServerConfig['compression']
 ): Handler => {
+  // Resolved once per server rather than per request: the policy cannot change between requests, and the
+  // defaults would otherwise be re-merged on every one of them.
+  const compression = resolveCompression(compressionConfig);
+
   return (raw, rawRes) => {
-    runPipeline(raw, rawRes, buildContext, stages, label).catch((err: unknown) => {
+    runPipeline(raw, rawRes, buildContext, stages, label, compression).catch((err: unknown) => {
       console.error(`[${label}] Unhandled error:`, err);
       try {
         if (!rawRes.headersSent) {

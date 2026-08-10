@@ -336,7 +336,8 @@ HTML y el cliente solo hace *hydrate*.
 ### 7.2 Qué ocurre al cargar (el preload)
 
 1. Llega `GET /posts/123` al server SSR (`plitzi-sdk-server`).
-2. `buildServerInfo` (`apps/server/src/helpers/buildServerInfo.ts:71`) llama a `config.adapters.getRscData(req, …)`,
+2. `buildServerInfo` (`apps/server/src/helpers/buildServerInfo.ts`) llama a `config.adapters.getRscData({ req, … })`
+   — un solo `SSRRscContext`, con `loadOfflineData` para compartir la lectura del space que el render ya arrancó —,
    que invoca `resolveRscData`.
 3. `resolveRscData` (`apps/server/src/modules/rsc/resolveRscData.ts`):
    - `getPaths` produce `/posts/:id` (el slug se parsea: `{{id}}` → `:id`).

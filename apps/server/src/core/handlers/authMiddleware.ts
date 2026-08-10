@@ -1,11 +1,11 @@
 import { createAuthorizer } from '../auth/authorize';
 import { authFailureMessage } from '../auth/tokens';
 
-import type { AuthedRequest, HandlerResponse } from './types';
+import type { AuthedRequest, JsonResponse } from './types';
 import type { AuthPolicy } from '../auth/authorize';
 import type { Identity } from '../auth/identity';
 
-export interface AuthGuardOptions {
+export interface AuthMiddlewareOptions {
   /**
    * Which key carries the human-readable refusal. `error` by convention; `message` for an API whose clients already
    * read that. Only the wording moves — `reason` is always beside it, because that is the half a client acts on.
@@ -14,7 +14,7 @@ export interface AuthGuardOptions {
 }
 
 /**
- * The authorizer, as middleware.
+ * The authorizer, as middleware: `(req, res, next)`.
  *
  * The decision itself is `createAuthorizer` and is the same on every transport — that is why it lives a level down,
  * and why a host that has no middleware chain should call that instead. What is here is the binding: put what was
@@ -26,14 +26,14 @@ export interface AuthGuardOptions {
  * retries a dead session forever.
  *
  * ```ts
- * app.use(createAuthGuard(auth.identity, policy));
+ * app.use(createAuthMiddleware(auth.identity, policy));
  * ```
  */
-export const createAuthGuard = (identity: Identity, policy: AuthPolicy, options: AuthGuardOptions = {}) => {
+export const createAuthMiddleware = (identity: Identity, policy: AuthPolicy, options: AuthMiddlewareOptions = {}) => {
   const { errorKey = 'error' } = options;
   const authorize = createAuthorizer(identity, policy);
 
-  return async (req: AuthedRequest, res: HandlerResponse, next: () => void): Promise<void> => {
+  return async (req: AuthedRequest, res: JsonResponse, next: () => void): Promise<void> => {
     const result = await authorize(req, req.path);
 
     if (!result.ok) {

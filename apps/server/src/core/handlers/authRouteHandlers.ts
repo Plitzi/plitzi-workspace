@@ -1,11 +1,11 @@
 import { applySessionOutcome, authRoutes } from '../auth/routes';
 
-import type { AuthedRequest, HandlerResponse, MountableRoute, RouteSink } from './types';
+import type { AuthedRequest, JsonResponse, HttpRoute, RouterLike } from './types';
 import type { AuthApi } from '../auth/api';
 import type { AuthRequest } from '../auth/routes';
 import type { SessionCookies } from '../auth/session';
 
-export interface AuthHandlersOptions {
+export interface AuthRouteHandlersOptions {
   api: AuthApi;
   cookies: SessionCookies;
   /** Reports a flow that threw. Without it the failure goes to `console.error`; the caller still gets a 500. */
@@ -40,7 +40,7 @@ const carrier = (req: AuthedRequest): AuthRequest => ({
  * A list, so nothing has to be a router. On a bare `node:http` server, dispatch it yourself:
  *
  * ```ts
- * const routes = createAuthHandlers({ api: auth.api, cookies: auth.cookies });
+ * const routes = createAuthRouteHandlers({ api: auth.api, cookies: auth.cookies });
  * const route = routes.find(r => r.method === req.method && `/auth${r.path}` === url.pathname);
  * await route?.handle(request, response);
  * ```
@@ -50,11 +50,11 @@ const carrier = (req: AuthedRequest): AuthRequest => ({
  * Which flows actually answer is decided by the adapters, not here — no `createAccount`, no signup, and the route
  * reports 404 rather than failing at runtime. Mounting all of them is correct for a deployment that offers three.
  */
-export const createAuthHandlers = ({ api, cookies, onError }: AuthHandlersOptions): MountableRoute[] =>
+export const createAuthRouteHandlers = ({ api, cookies, onError }: AuthRouteHandlersOptions): HttpRoute[] =>
   authRoutes({ api, cookies }).map(({ method, path, handler }) => ({
     method,
     path,
-    handle: async (req: AuthedRequest, res: HandlerResponse): Promise<void> => {
+    handle: async (req: AuthedRequest, res: JsonResponse): Promise<void> => {
       try {
         const outcome = await handler(carrier(req));
 
@@ -73,7 +73,7 @@ export const createAuthHandlers = ({ api, cookies, onError }: AuthHandlersOption
   }));
 
 /**
- * {@link createAuthHandlers}, hung on anything with `get` and `post`.
+ * {@link createAuthRouteHandlers}, hung on anything with `get` and `post`.
  *
  * ```ts
  * const router = Router();
@@ -81,8 +81,8 @@ export const createAuthHandlers = ({ api, cookies, onError }: AuthHandlersOption
  * app.use('/auth', router);
  * ```
  */
-export const mountAuthRoutes = (router: RouteSink, options: AuthHandlersOptions): void => {
-  for (const { method, path, handle } of createAuthHandlers(options)) {
+export const mountAuthRoutes = (router: RouterLike, options: AuthRouteHandlersOptions): void => {
+  for (const { method, path, handle } of createAuthRouteHandlers(options)) {
     if (method === 'GET') {
       router.get(path, handle);
     } else {

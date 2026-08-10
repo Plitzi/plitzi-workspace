@@ -15,29 +15,29 @@ export interface AuthedRequest extends CredentialCarrier {
   path: string;
   /** The parsed body, when there is one. The flows read fields off it; how it got parsed is the host's business. */
   body?: unknown;
-  /** The account this request proved, once the guard has run. */
+  /** The account this request proved, once the auth middleware has run. */
   user?: Actor;
   /** The space this request is addressed to, and what its bearer may do with it. */
   grant?: Grant;
 }
 
-export interface HandlerResponse extends CookieSink {
-  status: (code: number) => HandlerResponse;
+export interface JsonResponse extends CookieSink {
+  status: (code: number) => JsonResponse;
   json: (body: unknown) => unknown;
 }
 
-export type RouteHandler = (req: AuthedRequest, res: HandlerResponse) => Promise<void>;
+export type RouteHandler = (req: AuthedRequest, res: JsonResponse) => Promise<void>;
 
 /** One flow, ready to serve: where it answers, and what to call when it does. */
-export interface MountableRoute {
+export interface HttpRoute {
   method: 'GET' | 'POST';
   /** Relative to wherever the host mounts the set — `/auth`, conventionally. */
   path: string;
   handle: RouteHandler;
 }
 
-/** Anything routes can be hung on: a router, an app, or a stand-in in a test. */
-export interface RouteSink {
+/** Anything routes can be hung on: a router, an app, or a stand-in in a test — `get` and `post`, nothing else. */
+export interface RouterLike {
   get: (path: string, handler: RouteHandler) => unknown;
   post: (path: string, handler: RouteHandler) => unknown;
 }

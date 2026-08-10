@@ -66,7 +66,7 @@ export const createPageServer = (
       pluginManager
     });
 
-    return makeHandler('SSR', buildContext, stages);
+    return makeHandler('SSR', buildContext, stages, config.compression);
   };
 
   return createHttpServer(config, makeHandlerForPort, {

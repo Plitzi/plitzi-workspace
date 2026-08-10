@@ -60,6 +60,8 @@ createServer({
 | `streaming` | `boolean` | `false` | Stream HTML to the browser incrementally to reduce TTFB. See [Streaming](#streaming). |
 | `middlewares` | `SSRMiddleware[]` | — | Array of custom middleware functions executed before the SSR renderer on every request (see [Custom middlewares](#custom-middlewares)). |
 | `rsc` | `SSRRscConfig` | — | React Server Components endpoint configuration (see [RSC](#react-server-components-rsc)). |
+| `compression` | `SSRCompressionConfig \| false` | Brotli, then gzip | Response compression (see [Compression](#compression)). `false` never compresses. |
+| `health` | `SSRHealthConfig` | identity payload | The `/health` endpoint. `check` adds live state per probe and turns it into a readiness probe (see [Health](#health)). |
 | `adapters` | `SSRAdapters` | — | Required. Adapter callbacks for data fetching. |
 | `onListenError` | `(error, { port, host, label }) => void` | exits non-zero | What to do when the server cannot take its port. By default it prints what went wrong and what to do about it, then exits — a process whose server never bound is not running. Supply this to keep it alive and decide yourself. |
 
@@ -164,6 +166,31 @@ Four things it used to make every deployment declare, each of which it can answe
 
 A page server therefore needs `port`, `adapters`, and nothing else.
 
+## Health
+
+Every server answers `GET /health` with its identity — no wiring needed:
+
+```json
+{ "Server": "SDK Server", "Version": "v1.2.3", "role": "ssr" }
+```
+
+`check` adds what only the deployment can know, read on every probe. Returning `healthy: false` answers **503**,
+which is what makes this a readiness probe rather than a liveness one: an orchestrator stops routing to a replica
+whose database has gone, instead of sending it traffic it can only fail. A check that throws is itself an unhealthy
+answer, reported as one rather than as a 500.
+
+```ts
+createServer({
+  health: {
+    role: 'ssr',
+    name: 'Acme Renderer',
+    version: pkg.version,
+    check: () => ({ Databases: { mongo: mongo.status() }, healthy: mongo.healthy })
+  },
+  adapters
+});
+```
+
 ## Static files
 
 Map URL prefixes to local directories:
@@ -197,14 +224,33 @@ The lookup order for a request is: `publicDir` → `static` prefix routes → SS
 
 ## Compression
 
-Responses are compressed automatically based on the `Accept-Encoding` request header. The server prefers Brotli (`br`) over gzip, and skips compression for payloads under 1 KB.
+Responses are compressed based on the `Accept-Encoding` request header. By default the server offers Brotli, then
+gzip, and leaves payloads under 1 KB alone — below that the compressed body plus its headers is no smaller.
 
-| Encoding | Algorithm | Settings |
-|---|---|---|
-| `br` | Brotli | Quality 4 |
-| `gzip` | Gzip | Level 6 |
+`Content-Encoding` and `Vary: Accept-Encoding` are set on every compressed response. An encoding the client refused
+with `q=0` is never used.
 
-`Content-Encoding` and `Vary: Accept-Encoding` are set on all compressed responses.
+```ts
+createServer({
+  compression: { encodings: ['gzip'], threshold: 2048, gzipLevel: 9 },
+  adapters
+});
+
+// Nothing at all — for a CDN or proxy in front that already compresses.
+createServer({ compression: false, adapters });
+```
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `encodings` | `('br' \| 'gzip')[]` | `['br', 'gzip']` | What this server offers, most preferred first; the first one the client accepts wins. `[]` disables compression. |
+| `threshold` | `number` | `1024` | Responses smaller than this many bytes go out uncompressed. |
+| `brotliQuality` | `number` | `4` | Brotli quality, 0–11. Past 4 the CPU cost outgrows the bytes saved on HTML. |
+| `gzipLevel` | `number` | `6` | Gzip level, 0–9. |
+
+A response that sets `Cache-Control: no-transform` is never compressed, whatever the settings say — that header is
+how a handler declares its body must reach the client byte for byte. The OAuth token endpoint in
+[`@plitzi/sdk-mcp`](../mcp/README.md) relies on it: a credential travelling beside a caller-chosen value is the
+shape a BREACH-style attack needs.
 
 ## Render cache
 
@@ -635,11 +681,11 @@ described by the few properties the handlers touch, which an Express, Connect or
 `node:http` server satisfies with a few lines of its own.
 
 ```ts
-import { createAuthGuard, mountAuthRoutes } from '@plitzi/sdk-server/handlers';
+import { createAuthMiddleware, mountAuthRoutes } from '@plitzi/sdk-server/handlers';
 
 // Every request: resolves the credential against your policy and puts it on `req.user` / `req.grant`,
 // or answers `{ error, reason }` with the right status.
-app.use(createAuthGuard(auth.identity, policy));
+app.use(createAuthMiddleware(auth.identity, policy));
 
 // The twelve flows, on whatever has `get` and `post`.
 const router = Router();
@@ -647,14 +693,14 @@ mountAuthRoutes(router, { api: auth.api, cookies: auth.cookies });
 app.use('/auth', router);
 ```
 
-Without a router, `createAuthHandlers` returns the same flows as a list — `{ method, path, handle }` — and
+Without a router, `createAuthRouteHandlers` returns the same flows as a list — `{ method, path, handle }` — and
 dispatching them is yours:
 
 ```ts
-import { createAuthHandlers } from '@plitzi/sdk-server/handlers';
+import { createAuthRouteHandlers } from '@plitzi/sdk-server/handlers';
 import { parseRequest } from '@plitzi/sdk-server/kernel';
 
-const routes = createAuthHandlers({ api: auth.api, cookies: auth.cookies });
+const routes = createAuthRouteHandlers({ api: auth.api, cookies: auth.cookies });
 const route = routes.find(r => r.method === req.method && `/auth${r.path}` === req.path);
 await route?.handle(req, res);
 ```
