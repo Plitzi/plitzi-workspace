@@ -469,3 +469,26 @@ describe('credentials that do not arrive as strings', () => {
     expect((JSON.parse(init.body as string) as { password: string }).password).toBe('');
   });
 });
+
+/**
+ * An undeclared endpoint is an empty string, and `fetch('')` is a request to the CURRENT page — which answers with
+ * the page. The flow then "succeeded" against HTML, or failed for a reason nobody could read. A space that declared
+ * no endpoint cannot perform the flow, and says so without touching the network.
+ */
+describe('a space that declared no endpoint', () => {
+  it('does not sign in against the page it is rendered on', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi, loginUrl: '' });
+
+    expect(await provider.login({ username: 'ada', password: 'pw' })).toBeUndefined();
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it('does not renew or ask for identity against it either', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi, refreshUrl: '', userUrl: '' });
+
+    await provider.refresh();
+    await provider.revalidate(true);
+
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+});

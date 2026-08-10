@@ -130,6 +130,12 @@ class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
       return token ? this.adoptToken(token) : { ok: false, reason: 'missing' };
     }
 
+    if (!this.options.loginUrl) {
+      // `fetch('')` is a POST to the CURRENT page, which answers with the page and looks like a login that quietly
+      // did nothing. A space that declared no endpoint cannot sign anybody in, and says so.
+      return { ok: false, reason: 'missing' };
+    }
+
     const res = await this.request<Record<string, unknown>>(this.options.loginUrl, {
       method: 'POST',
       body: JSON.stringify({ username: credential(params.username), password: credential(params.password) })
@@ -165,6 +171,10 @@ class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
    * keeps it in one — a browser session normally does, which is why this works with nothing in storage at all.
    */
   protected async requestRenewal(refreshToken?: string): Promise<AuthResult<U>> {
+    if (!this.options.refreshUrl) {
+      return { ok: false, reason: 'missing' };
+    }
+
     const res = await this.request<Record<string, unknown>>(this.options.refreshUrl, {
       method: 'POST',
       body: JSON.stringify(refreshToken ? { [this.options.refreshTokenPath]: refreshToken } : {})
@@ -196,6 +206,10 @@ class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
   }
 
   protected async requestIdentity(): Promise<AuthResult<U>> {
+    if (!this.options.userUrl) {
+      return { ok: false, reason: 'missing' };
+    }
+
     const res = await this.request<Record<string, unknown>>(this.options.userUrl, { method: 'GET' });
 
     return this.toResult(res);

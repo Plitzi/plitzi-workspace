@@ -205,7 +205,22 @@ export const offlineData = (): OfflineDataRaw => {
       flat: { ...data.schema.flat, ...signedOutPage, ...signedInPage },
       // Ahead of the sample page, so `/` lands on one of these two.
       pages: ['signed-out', 'signed-in', ...data.schema.pages],
-      settings: { ...data.schema.settings, userProvider: 'basic' }
+      /**
+       * What the browser half of auth needs to know. `basic` is the built-in provider — HTTP + JSON — and these are
+       * the endpoints it calls; same origin, because this server serves both the page and the API.
+       *
+       * `sessionHintCookie` is the one worth understanding: a readable cookie carrying only expiry timestamps, so a
+       * page can tell that nobody is signed in — the common case — without asking the server at all.
+       */
+      settings: {
+        ...data.schema.settings,
+        userProvider: 'basic',
+        loginUrl: '/auth/login',
+        userUrl: '/auth/session',
+        refreshUrl: '/auth/refresh',
+        logoutUrl: '/auth/logout',
+        sessionHintCookie: 'example_session_hint'
+      }
     },
     style: { ...data.style, cache: `${data.style.cache ?? ''}${CSS}` }
   };
