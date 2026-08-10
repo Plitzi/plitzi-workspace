@@ -20,6 +20,11 @@ export {
   sessionHintValue,
   writeSessionCookies
 } from './core/auth/session';
+export { SCOPES, authFailureMessage, createTokens, userIdOf } from './core/auth/tokens';
+export { createCarriers, presentedOrigin } from './core/auth/credentials';
+export { ANY_DOMAIN, domainAllowed, hostnameOf, normalizeDomain } from './core/auth/domains';
+export { createIdentity } from './core/auth/identity';
+export { createAuthorizer, requirementFor } from './core/auth/authorize';
 export { consoleLogger, renderLogEvent } from './helpers/serverLog';
 export { PREVIEW_TOKEN_PARAM } from './core/previewToken';
 
@@ -28,3 +33,30 @@ export type { BuildContext } from './core/http/dispatcher';
 export type { HealthCheckApp, HealthIdentity } from './core/health';
 export type { BaseContext, PipelineExtensions, SSRContext, Stage } from './core/http/types';
 export type { SessionCookieParams } from './core/auth/session';
+export type { CredentialCarrier } from './core/auth/credentials';
+export type {
+  Actor,
+  ActorResult,
+  Grant,
+  GrantOptions,
+  GrantResult,
+  Identity,
+  IdentityAdapters,
+  IdentityConfig,
+  SpaceMembership,
+  StoredSpaceToken
+} from './core/auth/identity';
+export type { AuthPolicy, AuthorizeResult, Authorizer, PathMatcher, Requirement } from './core/auth/authorize';
+export type {
+  AuthFailure,
+  RefreshTokenPayload,
+  SpaceScope,
+  SpaceTokenOptions,
+  SpaceTokenPayload,
+  TokenConfig,
+  TokenScope,
+  Tokens,
+  UserTokenPayload,
+  VerifyResult,
+  WidgetTokenPayload
+} from './core/auth/tokens';

@@ -20,6 +20,10 @@ The line this RFC draws:
 > How a session is carried, renewed, ended and checked is the same everywhere and belongs to the server. Who a
 > person is, what they may do, and where that is stored belongs to the deployment.
 
+The test of whether the line is in the right place: **Plitzi builds Plitzi.** The dashboard is a Plitzi space,
+self-hosted, served by `plitzi-sdk-server` consuming `sdk-server` — the same way a customer would. Anything Plitzi
+can do that a customer cannot is a mistake in this split, not a feature.
+
 ## Stage 1 — the session cycle (implemented)
 
 Moved into `sdk-server`:
@@ -54,28 +58,62 @@ kernel still agree byte for byte.
 Roughly 3,700 lines across `src/services/auth/` and `src/services/api/auth/`, 18 consumers, 20 test files. Each stage
 leaves both repositories working; none is worth starting before the previous one is green.
 
-### Stage 2 — the credential kernel
+### Stage 2 — the credential kernel (implemented)
 
-`tokens.ts` (minting and verification, scopes, lifetimes) and `credentials.ts` (where a credential may ride) are pure
-functions with no database behind them, which makes them the easiest real move. `settings.jwt` becomes configuration:
-secret, issuer, audiences, lifetimes.
+`createTokens(config)` in `core/auth/tokens.ts`: minting and verification, the scopes, the lifetimes. A factory
+rather than a module of functions because the configuration is the deployment's — its secret, and the issuer that
+separates its universe of credentials from every other's. `core/auth/credentials.ts` (where a credential may ride)
+and `core/auth/domains.ts` (what a declared domain matches) went with it.
 
-Resolution splits. `sdk-server` gets `resolveActor(token, adapters)`; the adapters are `findUserByToken` and
-`findSpaceToken`, which is exactly the part that touches Plitzi's tables.
+Plitzi's `services/auth/tokens.ts` is now nine lines of configuration and a re-export.
 
-### Stage 3 — the guard and the RBAC contract
+### Stage 3 — identity, RBAC and the guard (implemented)
 
-`authGuard`, `AuthPolicy` and `Requirement` move. The guard is Express-shaped today and the server's own pipeline is
-not, so it needs a transport-neutral core with a thin Express binding.
+`createIdentity({ tokens, carriers, adapters, config })` resolves actors and grants and answers `can()`. Three
+adapters are the entire database surface authorization needs:
 
-RBAC moves as a **contract**: `can(actor, spaceId, permission)` with a `getMembership` adapter. The tables it reads
-(`space_user`, `role`, `role_permission`) stay Plitzi's — they are data, and data is the other side of the line.
+```ts
+findAccountByToken(token)        // the row is the revocation switch
+findSpaceToken(token)            // no row, no grant
+findMembership?(userId, spaceId) // omit it and every space-level check refuses
+```
+
+`can(actor, spaceId, permission)` keeps both halves — a global capability is a property of an account and never an
+assertion about a particular space — with the membership half behind the adapter. Plitzi's tables stay Plitzi's.
+
+`createAuthorizer(identity, policy)` is the guard, transport-neutral: it answers *may this proceed, and as whom*.
+Express is not a dependency of `sdk-server` and must not become one, so the api role binds it in ~15 lines that put
+the result on `req` and answer in its own error shape.
+
+The rules moved with their tests: 30 of them now run against real tokens and fake stores in `sdk-server`, instead of
+against mocked Prisma in Plitzi.
+
+**Gotcha found on the way**: `services/prisma/index.ts` also mounts the API router, so importing `getPrisma` from the
+barrel — inside a module the API depends on — closes a cycle and leaves `authGuard` undefined at route-mounting
+time. Import the leaf (`prisma/client`). The old code got away with it by accident of import order.
 
 ### Stage 4 — the REST API
 
-The `/auth/*` router becomes a mountable router in `sdk-server`, driven by adapters for users, identities and email:
-login, refresh, logout, signup, password reset, `sessions/revoke`, `GET /auth/session`, and the social OAuth flow
-(the registry, PKCE state, redirects — all generic; the provider adapters and their credentials are configuration).
+The `/auth/*` surface becomes framework-neutral handlers in `sdk-server`, driven by adapters for accounts,
+identities and email: login, refresh, logout, `GET /auth/session`, `sessions/revoke`, exchange, signup, password
+reset, verification, and the social OAuth flow (registry, PKCE state, redirects — all generic; the provider
+credentials are configuration).
+
+**Not every deployment wants all of it**, and a space signing people in through an external provider wants very
+little of it: signup, password login and password reset are meaningless there. So the surface is decided by two
+things, in this order:
+
+1. **What the deployment can do.** No adapter, no endpoint. A deployment that supplies no `createAccount` has no
+   signup, and the route answers 404 rather than 500 — the same rule the exchange already follows.
+2. **What it chooses to offer.** `auth.features` turns off what the adapters would otherwise allow:
+   `{ passwordLogin, signup, passwordReset, emailVerification, exchange, social }`. Everything a self-hoster would
+   plausibly want is on by default; anything they cannot serve is off without being asked.
+
+`GET /auth/capabilities` publishes the result, so a space renders a sign-in page that matches what its backend
+actually answers instead of a signup button that 404s.
+
+Policy that is Plitzi's — role names (`user`, `unverifiedUser`), email templates, default settings — is
+configuration, never code in the generic package.
 
 ### Stage 5 — plitzi-sdk-server as a data layer
 
