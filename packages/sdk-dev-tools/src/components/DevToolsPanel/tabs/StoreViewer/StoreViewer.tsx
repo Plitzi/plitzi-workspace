@@ -2,11 +2,13 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import JsonView from '@uiw/react-json-view';
 import * as vscode from '@uiw/react-json-view/vscode';
 import clsx from 'clsx';
-import { use, useCallback } from 'react';
+import { use, useCallback, useMemo } from 'react';
 
 import DevToolsContext from '@plitzi/sdk-shared/devTools/DevToolsContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
+import mapFunctionValues from './helpers/mapFunctionValues';
+import renderFunctionValue from './helpers/renderFunctionValue';
 import { useSelectedStore } from '../../../../scope/useScope';
 import useStoreState from '../../../../scope/useStoreState';
 
@@ -46,6 +48,7 @@ const StoreViewer = ({ elementSelected }: StoreViewerProps) => {
 
   // With an element selected show its resolved data source; otherwise the store chosen in the header dropdown.
   const value = elementSelected ? getData?.(`getElementDataSource-${elementSelected}`) : storeState;
+  const displayValue = useMemo(() => mapFunctionValues(value), [value]);
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -65,14 +68,16 @@ const StoreViewer = ({ elementSelected }: StoreViewerProps) => {
         </div>
       )}
       <JsonView
-        value={value ?? emptyObject}
+        value={displayValue ?? emptyObject}
         style={jsonViewStyle}
         enableClipboard={false}
         indentWidth={15}
         collapsed={2}
         displayObjectSize={false}
         displayDataTypes={false}
-      />
+      >
+        <JsonView.String render={renderFunctionValue} />
+      </JsonView>
     </div>
   );
 };

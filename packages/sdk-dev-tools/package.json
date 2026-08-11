@@ -310,6 +310,14 @@
       "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/StoreViewer.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/StoreViewer.mjs"
     },
+    "./components/DevToolsPanel/tabs/StoreViewer/helpers/mapFunctionValues": {
+      "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/helpers/mapFunctionValues.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/helpers/mapFunctionValues.mjs"
+    },
+    "./components/DevToolsPanel/tabs/StoreViewer/helpers/renderFunctionValue": {
+      "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/helpers/renderFunctionValue.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/helpers/renderFunctionValue.mjs"
+    },
     "./components/DevToolsPanel/tabs/StoreViewer/index": {
       "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/index.mjs"
