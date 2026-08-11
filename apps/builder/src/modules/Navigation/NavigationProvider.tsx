@@ -93,7 +93,8 @@ const NavigationProvider = ({ children }: NavigationProviderProps) => {
       'navigation.currentPageId',
       'navigation.navigate'
     ],
-    [urlSearchParams, routeParams, queryParams, hostname, currentPageId ?? '', handleNavigate]
+    [urlSearchParams, routeParams, queryParams, hostname, currentPageId ?? '', handleNavigate],
+    { raw: true }
   );
 
   if (action.type === 'notFound') {

@@ -149,7 +149,7 @@
     "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.18",
+    "@plitzi/plitzi-ui": "^1.6.19",
     "@plitzi/sdk-shared": "workspace:*",
     "clsx": "^2.1.1",
     "eslint": "^9.39.5",
@@ -158,6 +158,6 @@
   "devDependencies": {
     "eslint": "^9.39.5",
     "typescript": "^6.0.3",
-    "vite": "^8.2.0"
+    "vite": "^8.2.1"
   }
 }
