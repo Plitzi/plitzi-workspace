@@ -88,6 +88,7 @@ const ApiContainer = ({
   const {
     id,
     idRef,
+    elementState,
     definition: { label = 'Api Container', runtime }
   } = useElement();
   // A server-driven provider gets its data through the RSC payload: the request — and the credential behind it —
@@ -140,7 +141,7 @@ const ApiContainer = ({
   }, [headers, accessToken]);
 
   const apiEnabled = useMemo(() => {
-    if (serverMode) {
+    if (serverMode || elementState.visibility === false) {
       return false;
     }
 
@@ -157,7 +158,7 @@ const ApiContainer = ({
     }
 
     return false;
-  }, [serverMode, previewMode, queryCompiled, when, routeParams, queryParams, mockData]);
+  }, [serverMode, elementState.visibility, previewMode, queryCompiled, when, routeParams, queryParams, mockData]);
 
   const {
     isLoading: isApiLoading,
