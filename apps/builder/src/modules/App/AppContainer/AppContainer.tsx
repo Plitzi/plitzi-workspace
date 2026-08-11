@@ -3,7 +3,7 @@ import { PopupProvider, PopupSidePanel } from '@plitzi/plitzi-ui/Popup';
 import { use, useMemo, useCallback } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 
 import AppContext from '../AppContext';
@@ -29,7 +29,7 @@ const separatorsBefore = ['layerManager', 'settings'];
 const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
   const { previewMode } = use(AppContext);
   const { eventBridge } = use(EventBridgeContext);
-  const { currentPageId } = use(NavigationContext);
+  const [currentPageId] = useBuilderStore('navigation.currentPageId');
   const [popupsActiveLeft, setPopupsActiveLeft] = useStorage<string[]>(
     'builder-state.popupSidePanel.popupsActive.left',
     []

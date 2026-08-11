@@ -3,7 +3,7 @@ import { ModalProvider } from '@plitzi/plitzi-ui/Modal';
 import AuthContextProvider from '@plitzi/sdk-auth/AuthContextProvider';
 import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
 import ConnectorsContextProvider from '@pmodules/Connectors/ConnectorsContextProvider';
-import NavigationContextProvider from '@pmodules/Navigation/NavigationContextProvider';
+import NavigationProvider from '@pmodules/Navigation/NavigationProvider';
 import NetworkContextProvider from '@pmodules/Network/NetworkContextProvider';
 import NetworkSubscriptionsContextProvider from '@pmodules/Network/NetworkSubscriptionsContextProvider';
 import PluginsContextProvider from '@pmodules/Plugins/PluginsContextProvider';
@@ -64,7 +64,7 @@ const AppProvider = ({
                       <SchemaContextProvider includeSubscriptions={includeSubscriptions}>
                         <StyleContextProvider includeSubscriptions={includeSubscriptions}>
                           <AuthContextProvider server={server}>
-                            <NavigationContextProvider>{children}</NavigationContextProvider>
+                            <NavigationProvider>{children}</NavigationProvider>
                           </AuthContextProvider>
                         </StyleContextProvider>
                       </SchemaContextProvider>

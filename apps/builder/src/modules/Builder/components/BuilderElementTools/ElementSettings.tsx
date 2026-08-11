@@ -8,7 +8,6 @@ import { useCallback, use, useMemo } from 'react';
 import { defaultElementsSettings } from '@plitzi/sdk-elements/elements/settings';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
@@ -46,7 +45,10 @@ const ElementSettings = ({
   const { theme } = use(ThemeContext);
   const Plugin = getComponent(type) as ComponentPlugin | undefined;
   const { pluginSettingsStyles } = use(PluginsContext);
-  const { currentPageId } = use(NavigationContext);
+  const [[variables = emptyObject, currentPageId]] = useBuilderStore([
+    'runtime.sources.variables',
+    'navigation.currentPageId'
+  ]);
   const {
     baseContext: { baseElementId }
   } = use(BuilderContext);
@@ -80,7 +82,6 @@ const ElementSettings = ({
         ComponentContext,
         NetworkContext,
         PluginsContext,
-        NavigationContext,
         SegmentsContext,
         EventBridgeContext,
         InteractionsContext
@@ -91,7 +92,6 @@ const ElementSettings = ({
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Settings = (Plugin?.pluginSettings ?? defaultElementsSettings[type]) as FC<any> | undefined;
-  const [variables = emptyObject] = useBuilderStore('runtime.sources.variables');
 
   const children = useMemo(
     () => (

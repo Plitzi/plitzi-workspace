@@ -4,19 +4,18 @@ import { Navigate, useNavigate } from 'react-router-dom';
 
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import { useBuilderStore, useRenderSettings } from '@plitzi/sdk-shared/store';
+import { useBuilderStore, useRenderSettings, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 
 import type { RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
-export type NavigationContextProviderProps = {
+export type NavigationProviderProps = {
   children?: ReactNode;
 };
 
-const NavigationContextProvider = ({ children }: NavigationContextProviderProps) => {
+const NavigationProvider = ({ children }: NavigationProviderProps) => {
   const [[pageFolders, pageDefinitions]] = useBuilderStore(['schema.pageFolders', 'pageDefinitions']);
   const { previewMode } = useRenderSettings();
   const { server } = use(NetworkContext);
@@ -85,16 +84,16 @@ const NavigationContextProvider = ({ children }: NavigationContextProviderProps)
     [navigate]
   );
 
-  const navigationValue = useMemo(
-    () => ({
-      navigate: handleNavigate,
-      urlSearchParams,
-      routeParams,
-      queryParams,
-      hostname,
-      currentPageId: currentPageId ?? ''
-    }),
-    [handleNavigate, urlSearchParams, routeParams, queryParams, hostname, currentPageId]
+  useBuilderStoreSync(
+    [
+      'navigation.urlSearchParams',
+      'navigation.routeParams',
+      'navigation.queryParams',
+      'navigation.hostname',
+      'navigation.currentPageId',
+      'navigation.navigate'
+    ],
+    [urlSearchParams, routeParams, queryParams, hostname, currentPageId ?? '', handleNavigate]
   );
 
   if (action.type === 'notFound') {
@@ -110,11 +109,11 @@ const NavigationContextProvider = ({ children }: NavigationContextProviderProps)
   }
 
   return (
-    <NavigationContext value={navigationValue}>
+    <>
       {action.type === 'redirect' && action.path && <Navigate to={action.path} replace />}
       {children}
-    </NavigationContext>
+    </>
   );
 };
 
-export default NavigationContextProvider;
+export default NavigationProvider;

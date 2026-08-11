@@ -11,6 +11,7 @@ import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSo
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import useApi from './hooks/useApi';
 import useProviderPagination from './hooks/useProviderPagination';
@@ -98,10 +99,14 @@ const ApiContainer = ({
   const sourceName = getSourceName('apiContainer', { idRef });
   const {
     settings: { previewMode, debugMode },
-    contexts: { NavigationContext, InteractionsContext }
+    contexts: { InteractionsContext }
   } = usePlitziServiceContext();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
-  const { routeParams, queryParams, navigate } = use(NavigationContext);
+  const [[routeParams, queryParams, navigate]] = useSdkStore([
+    'navigation.routeParams',
+    'navigation.queryParams',
+    'navigation.navigate'
+  ]);
   const queryCompiled = useMemo(() => {
     if (!query) {
       return '';

@@ -1,6 +1,7 @@
 import type { SubscriptionCollaborator, SubscriptionCollaboratorPointer } from './BuilderTypes';
 import type { Environment, RenderMode } from './CommonTypes';
 import type { Source } from './DataSourceTypes';
+import type { QueryParams, RouteParams } from './NavigationTypes';
 import type { Schema, Element } from './SchemaTypes';
 import type { Segment } from './SegmentTypes';
 import type { SpaceConnector } from './SpaceTypes';
@@ -48,6 +49,17 @@ export type CommonState = {
   // How THIS render is happening. Seeded once at the root of whichever surface is mounting (the SDK, the builder) and
   // read from the store by everything below, instead of being threaded through every provider as five props.
   render?: RenderSettings;
+
+  // Navigation state, mirrored from the navigation provider so element bindings can read it as `navigation.*`. It is
+  // ephemeral — excluded from persist and history — and exists so navigation state is uniformly observable in devtools.
+  navigation: {
+    urlSearchParams?: URLSearchParams;
+    routeParams: RouteParams;
+    queryParams: QueryParams;
+    hostname: string;
+    currentPageId: string;
+    navigate: (url: string, isExternal?: boolean) => void;
+  };
 };
 
 /** Not document state and not server data: the surface the schema is being rendered on. `previewMode` and

@@ -8,7 +8,6 @@ import type {
   ComponentContextValue,
   EventBridgeContextValue,
   InteractionsContextValue,
-  NavigationContextValue,
   PluginsContextValue,
   SegmentsContextValue,
   Theme
@@ -31,7 +30,6 @@ export type PlitziServiceContextValue<TEventBridge = any, TInteractions = any> =
   customContexts: Record<string, Context<any>>;
   contexts: {
     SegmentsContext: Context<SegmentsContextValue>;
-    NavigationContext: Context<NavigationContextValue>;
     ComponentContext: Context<ComponentContextValue>;
     EventBridgeContext: Context<EventBridgeContextValue<TEventBridge>>;
     PluginsContext: Context<PluginsContextValue>;

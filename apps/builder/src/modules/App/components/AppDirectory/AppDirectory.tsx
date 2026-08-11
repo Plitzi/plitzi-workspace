@@ -1,15 +1,17 @@
 import Flex from '@plitzi/plitzi-ui/Flex';
-import { use, useMemo } from 'react';
+import { useMemo } from 'react';
 
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import Directory from './Directory';
 import DirectoryHeader from './DirectoryHeader';
 
 const AppDirectory = () => {
-  const { currentPageId } = use(NavigationContext);
-  const [[flat, pageFolders]] = useBuilderStore(['schema.flat', 'schema.pageFolders']);
+  const [[flat, pageFolders, currentPageId]] = useBuilderStore([
+    'schema.flat',
+    'schema.pageFolders',
+    'navigation.currentPageId'
+  ]);
   const elements = useMemo(
     () =>
       Object.values(flat)

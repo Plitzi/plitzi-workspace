@@ -19,7 +19,7 @@ import RootElement from '@plitzi/sdk-elements/Element/RootElement';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { disableReactDevTools } from '@plitzi/sdk-shared/helpers/security';
 import baseUsePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import { DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
+import { useSdkStore, DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
 
 import App from './App';
 
@@ -173,6 +173,7 @@ type PlitziServiceContextValue = BasePlitziServiceContextValue<
 const usePlitziServiceContext = baseUsePlitziServiceContext as () => PlitziServiceContextValue;
 
 export {
+  useSdkStore as useStore,
   ComponentProvider,
   ComponentContext,
   usePlitziServiceContext,

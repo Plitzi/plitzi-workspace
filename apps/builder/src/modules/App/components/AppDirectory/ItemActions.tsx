@@ -7,7 +7,6 @@ import clsx from 'clsx';
 import { useCallback, use } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import type { Element } from '@plitzi/sdk-shared';
@@ -30,9 +29,12 @@ const ItemActions = ({
   defaultPage = false,
   onZoom
 }: PageActionsProps) => {
-  const [element] = useBuilderStore(`schema.flat.${id}`);
+  const [[element, currentPageId, navigate]] = useBuilderStore([
+    `schema.flat.${id}`,
+    'navigation.currentPageId',
+    'navigation.navigate'
+  ]);
   const { eventBridge } = use(EventBridgeContext);
-  const { navigate, currentPageId } = use(NavigationContext);
   const { showDialog } = useModal();
   const { addToast } = useToast();
 

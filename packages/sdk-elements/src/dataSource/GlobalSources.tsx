@@ -3,7 +3,6 @@ import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import { useCallback, use, useMemo } from 'react';
 
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import { useCommonStore, useCommonStoreSync, useRenderSettings } from '@plitzi/sdk-shared/store';
@@ -17,11 +16,16 @@ export type GlobalSourcesProps = {
 
 // Mounts the global data sources at the right tree depth (under the Navigation/Auth/RuntimeState providers).
 const GlobalSources = ({ children }: GlobalSourcesProps) => {
-  const { routeParams, queryParams, hostname, currentPageId } = use(NavigationContext);
   const { environment } = useRenderSettings();
 
   // --- variables ---
-  const [variables] = useCommonStore('schema.variables');
+  const [[variables, routeParams, queryParams, hostname, currentPageId]] = useCommonStore([
+    'schema.variables',
+    'navigation.routeParams',
+    'navigation.queryParams',
+    'navigation.hostname',
+    'navigation.currentPageId'
+  ]);
   const variablesValue = useMemo<Record<string, unknown>>(() => {
     if (!(variables as SchemaVariable[] | undefined)) {
       return {};

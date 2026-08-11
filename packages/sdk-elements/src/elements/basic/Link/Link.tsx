@@ -1,11 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import { useMemo, use } from 'react';
+import { useMemo } from 'react';
 
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import { useCommonStore } from '@plitzi/sdk-shared/store';
+import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
@@ -25,11 +25,15 @@ export type LinkProps = {
 const Link = ({ ref, children, className = '', href = '#', target = 'self', mode = 'page' }: LinkProps) => {
   const { style } = useElement();
   const {
-    settings: { previewMode },
-    contexts: { NavigationContext }
+    settings: { previewMode }
   } = usePlitziServiceContext();
-  const { navigate, routeParams, queryParams } = use(NavigationContext);
-  const [[pageDefinitions, pageFolders]] = useCommonStore(['pageDefinitions', 'schema.pageFolders']);
+  const [[pageDefinitions, pageFolders, routeParams, queryParams, navigate]] = useSdkStore([
+    'pageDefinitions',
+    'schema.pageFolders',
+    'navigation.routeParams',
+    'navigation.queryParams',
+    'navigation.navigate'
+  ]);
 
   const url = useMemo(() => {
     if (mode === 'external') {

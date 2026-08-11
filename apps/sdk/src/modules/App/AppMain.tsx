@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
-import NavigationContextProvider from '@modules/Navigation/NavigationContextProvider';
+import NavigationProvider from '@modules/Navigation/NavigationProvider';
 import NetworkContextProvider from '@modules/Network/NetworkContextProvider';
 import PluginsContextProvider from '@modules/Plugins/PluginsContextProvider';
 import SchemaContextProvider from '@modules/Schema/SchemaContextProvider';
@@ -122,7 +122,7 @@ const AppMain = ({
             <EventBridgeContextProvider onInit={onInitEventBridge} debugMode={debugMode}>
               <SegmentsContextProvider>
                 <AuthContextProvider server={server}>
-                  <NavigationContextProvider currentPageId={currentPageId}>
+                  <NavigationProvider currentPageId={currentPageId}>
                     <GlobalSources>
                       <InteractionsSourcesProvider>
                         <DevToolsContainer
@@ -136,7 +136,7 @@ const AppMain = ({
                         </DevToolsContainer>
                       </InteractionsSourcesProvider>
                     </GlobalSources>
-                  </NavigationContextProvider>
+                  </NavigationProvider>
                 </AuthContextProvider>
               </SegmentsContextProvider>
             </EventBridgeContextProvider>

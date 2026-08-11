@@ -4,6 +4,7 @@ import { useCallback, use, useMemo } from 'react';
 
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import buildPageWindow from './buildPageWindow';
 import withElement from '../../../Element/hocs/withElement';
@@ -80,10 +81,10 @@ const Pagination = ({
   const { idRef } = useElement();
   const {
     settings: { previewMode },
-    contexts: { NavigationContext, InteractionsContext }
+    contexts: { InteractionsContext }
   } = usePlitziServiceContext();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
-  const { navigate } = use(NavigationContext);
+  const [navigate] = useSdkStore('navigation.navigate');
 
   const page = pageInfo.page ?? 1;
   const pageCount = pageInfo.pageCount ?? 0;

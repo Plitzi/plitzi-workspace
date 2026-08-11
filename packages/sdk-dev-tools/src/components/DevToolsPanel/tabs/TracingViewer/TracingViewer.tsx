@@ -1,7 +1,6 @@
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
-import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 import { useTracing } from '@plitzi/sdk-shared/store/tracing';
 
@@ -19,8 +18,7 @@ import type { KeyboardEvent } from 'react';
 
 const TracingViewer = () => {
   const { enabled, hydrated, commits, tree, clear } = useTracing();
-  const [flat] = useCommonStore('schema.flat');
-  const { currentPageId } = use(NavigationContext);
+  const [[flat, currentPageId]] = useCommonStore(['schema.flat', 'navigation.currentPageId']);
   const [view, setView] = useStorage<TracingView>('plitzi-sdk.dev-tools.tracing.view', 'ranked');
   const [persist, setPersist] = useStorage<boolean>('plitzi-sdk.dev-tools.tracing.persist', false);
   const [sidebarOpen, setSidebarOpen] = useStorage<boolean>('plitzi-sdk.dev-tools.tracing.sidebar-open', false);

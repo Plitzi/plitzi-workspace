@@ -6,7 +6,6 @@ import { memo, useCallback, use, useMemo, useRef, useState } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
@@ -77,8 +76,7 @@ const BuilderArea = ({
   const ref = useRef<HTMLIFrameElement>(null);
   const refContainer = useRef<HTMLDivElement>(null);
   const { supportRealTime } = use(BuilderSubscriptionsContext);
-  const [collaborators] = useBuilderStore('collaboration.collaborators');
-  const { currentPageId } = use(NavigationContext);
+  const [[collaborators, currentPageId]] = useBuilderStore(['collaboration.collaborators', 'navigation.currentPageId']);
   const { rootRef } = use(ContainerRootContext);
 
   const getWindow = useCallback(() => {
@@ -116,7 +114,6 @@ const BuilderArea = ({
         SegmentsContext,
         NetworkContext,
         PluginsContext,
-        NavigationContext,
         InteractionsContext,
         EventBridgeContext,
         BuilderContext

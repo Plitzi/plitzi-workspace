@@ -1,8 +1,10 @@
 /* eslint-disable react-refresh/only-export-components */
+import { Helmet } from '@dr.pogodin/react-helmet';
 import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
@@ -37,10 +39,10 @@ const Page = ({
   const { id, idRef } = useElement();
   const {
     settings: { previewMode },
-    contexts: { NavigationContext, InteractionsContext }
+    contexts: { InteractionsContext }
   } = usePlitziServiceContext();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
-  const { Helmet, routeParams, queryParams } = use(NavigationContext);
+  const [[routeParams, queryParams]] = useSdkStore(['navigation.routeParams', 'navigation.queryParams']);
 
   const layoutInternalProps = useMemo(
     () => ({
@@ -84,7 +86,7 @@ const Page = ({
       className={clsx('plitzi-component__page', className)}
       interactionTriggers={interactionTriggers}
     >
-      {seoEnabled && previewMode && Helmet && (
+      {seoEnabled && previewMode && (
         <Helmet>
           {!!seoPageTitle && <title>{seoPageTitle}</title>}
           {!!seoPageDescription && <meta name="description" content={seoPageDescription} />}

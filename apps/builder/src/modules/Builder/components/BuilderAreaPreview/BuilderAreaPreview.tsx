@@ -12,7 +12,6 @@ import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import InteractionsSourcesProvider from '@plitzi/sdk-interactions/InteractionsSourcesProvider';
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
@@ -38,16 +37,28 @@ const previewOverride = { previewMode: true };
 
 const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: BuilderAreaPreviewProps) => {
   const previewRender = useRenderOverride(previewOverride);
-  const { routeParams, queryParams, hostname } = use(NavigationContext);
   const { environment } = use(NetworkContext);
   const { rootRef } = use(ContainerRootContext);
   const { displayBorderComponents } = use(AppContext);
   const { theme } = use(BuilderContext);
-  const [[settings = undefined, variables = undefined, element = undefined, styleCache = '']] = useBuilderStore([
+  const [
+    [
+      settings = undefined,
+      variables = undefined,
+      element = undefined,
+      styleCache = '',
+      routeParams,
+      queryParams,
+      hostname
+    ]
+  ] = useBuilderStore([
     'schema.settings',
     'schema.variables',
     `schema.flat.${id}`,
-    'style.cache'
+    'style.cache',
+    'navigation.routeParams',
+    'navigation.queryParams',
+    'navigation.hostname'
   ]);
 
   const getWindow = useCallback(() => {
@@ -69,7 +80,6 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
         ComponentContext,
         PluginsContext,
         NetworkContext,
-        NavigationContext,
         InteractionsContext,
         SegmentsContext,
         EventBridgeContext

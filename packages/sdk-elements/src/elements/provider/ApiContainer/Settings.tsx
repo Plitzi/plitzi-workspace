@@ -7,8 +7,8 @@ import Select from '@plitzi/plitzi-ui/Select';
 import Switch from '@plitzi/plitzi-ui/Switch';
 import { useCallback, use, useMemo, useState } from 'react';
 
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { useSdkStore } from '@plitzi/sdk-shared/store';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 
@@ -70,8 +70,12 @@ const Settings = ({
   const [connectors] = useBuilderStore('connectors');
   const [hasServerRendering] = useBuilderStore('hasServerRendering');
   const [advancedSettings, setAdvancedSettings] = useState(false);
-  const { routeParams, queryParams, currentPageId } = use(NavigationContext);
   const serverMode = runtime === 'server';
+  const [[routeParams, queryParams, currentPageId]] = useSdkStore([
+    'navigation.routeParams',
+    'navigation.queryParams',
+    'navigation.currentPageId'
+  ]);
 
   const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
 

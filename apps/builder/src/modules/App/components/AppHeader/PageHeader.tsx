@@ -1,13 +1,11 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
-import { useCallback, use, memo } from 'react';
+import { useCallback, memo } from 'react';
 
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 const PageHeader = () => {
-  const [pageDefinitions] = useBuilderStore('pageDefinitions');
-  const { currentPageId } = use(NavigationContext);
+  const [[pageDefinitions, currentPageId]] = useBuilderStore(['pageDefinitions', 'navigation.currentPageId']);
   const [, setPopupsActiveLeft] = useStorage<string[]>('builder-state.popupSidePanel.popupsActive.left', []);
 
   const handleClick = useCallback(() => {

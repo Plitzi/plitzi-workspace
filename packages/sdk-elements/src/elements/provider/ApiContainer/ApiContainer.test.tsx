@@ -17,8 +17,7 @@ vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
     settings: { previewMode: true },
     root: { baseElementId: '' },
     contexts: {
-      InteractionsContext: createContext({ useInteractions: () => ({}) }),
-      NavigationContext: createContext({})
+      InteractionsContext: createContext({ useInteractions: () => ({}) })
     }
   })
 }));

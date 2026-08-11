@@ -1,29 +1,27 @@
-import { Helmet } from '@dr.pogodin/react-helmet';
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo, useRef, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import { useBuilderStore, useRenderSettings } from '@plitzi/sdk-shared/store';
+import { useSdkStore, useSdkStoreSync, useRenderSettings } from '@plitzi/sdk-shared/store';
 
-import type { NavigationContextValue, NavigationStatus, RouteParams } from '@plitzi/sdk-shared';
+import type { NavigationStatus, RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 import type { PathMatch } from 'react-router-dom';
 
-export type NavigationContextProviderProps = {
+export type NavigationProviderProps = {
   children: ReactNode;
   currentPageId?: string;
 };
 
-const NavigationContextProvider = ({ children, currentPageId: currentPageIdProp }: NavigationContextProviderProps) => {
+const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: NavigationProviderProps) => {
   const { server } = use(NetworkContext);
   const { renderMode, previewMode } = useRenderSettings();
-  const [[pageFolders, pageDefinitions]] = useBuilderStore(['schema.pageFolders', 'pageDefinitions']);
+  const [[pageFolders, pageDefinitions]] = useSdkStore(['schema.pageFolders', 'pageDefinitions']);
   // Written by reference during the SSR render and read back by the server to shape the response; undefined in the
   // browser, where the page has already been sent.
   const ssrResult = server.ssr?.renderResult;
@@ -111,21 +109,18 @@ const NavigationContextProvider = ({ children, currentPageId: currentPageIdProp 
     };
   }, [paths, pathMatch, currentPageId]);
   const urlSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
-  const navigationValue = useMemo<NavigationContextValue>(() => {
-    if (renderMode === 'widget') {
-      return { urlSearchParams, routeParams, queryParams, currentPageId } as NavigationContextValue;
-    }
 
-    return {
-      navigate: handleNavigate,
-      urlSearchParams,
-      routeParams,
-      queryParams,
-      hostname,
-      currentPageId,
-      Helmet
-    };
-  }, [renderMode, handleNavigate, urlSearchParams, routeParams, queryParams, hostname, currentPageId]);
+  useSdkStoreSync(
+    [
+      'navigation.urlSearchParams',
+      'navigation.routeParams',
+      'navigation.queryParams',
+      'navigation.hostname',
+      'navigation.currentPageId',
+      'navigation.navigate'
+    ],
+    [urlSearchParams, routeParams, queryParams, hostname, currentPageId, handleNavigate]
+  );
 
   if (action.type === 'notFound') {
     // @todo: In the future this should navigate to page 404
@@ -157,7 +152,7 @@ const NavigationContextProvider = ({ children, currentPageId: currentPageIdProp 
     return <Navigate to={action.path ?? ''} replace />;
   }
 
-  return <NavigationContext value={navigationValue}>{children}</NavigationContext>;
+  return children;
 };
 
-export default NavigationContextProvider;
+export default NavigationProvider;

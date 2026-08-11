@@ -3,7 +3,6 @@ import { use, useMemo, useRef, useCallback } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
@@ -35,13 +34,17 @@ export type SdkProps = {
 
 const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk.css', server }: SdkProps) => {
   const { theme } = use(ThemeContext);
-  const { currentPageId } = use(NavigationContext);
   const { assets } = use(PluginsContext);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const { rootRef } = use(ContainerRootContext);
-  const [[schemaSettings, styleCache, segments]] = useSdkStore(['schema.settings', 'style.cache', 'segments']);
+  const [[schemaSettings, styleCache, segments, currentPageId, variables = emptyObject]] = useSdkStore([
+    'schema.settings',
+    'style.cache',
+    'segments',
+    'navigation.currentPageId',
+    'runtime.sources.variables'
+  ]);
   const { renderMode, previewMode, debugMode, environment, isHydrating } = useRenderSettings();
-  const [variables = emptyObject] = useSdkStore('runtime.sources.variables');
   useRscSync(server?.ssr);
 
   const css = useMemo(() => {
@@ -92,7 +95,6 @@ const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk
         SegmentsContext,
         NetworkContext,
         PluginsContext,
-        NavigationContext,
         EventBridgeContext,
         InteractionsContext
       }

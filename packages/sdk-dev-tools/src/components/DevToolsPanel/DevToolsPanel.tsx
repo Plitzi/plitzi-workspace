@@ -1,9 +1,9 @@
 import ContainerResizable from '@plitzi/plitzi-ui/ContainerResizable';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import clsx from 'clsx';
-import { useCallback, useMemo, useState, use, useRef } from 'react';
+import { useCallback, useMemo, useState, useRef } from 'react';
 
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import DevToolsBody from './DevToolsBody';
 import DevToolsHeader from './DevToolsHeader';
@@ -24,7 +24,7 @@ export type DevToolsPanelProps = {
 const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientation }: DevToolsPanelProps) => {
   const [tabSelected, setTabSelected] = useStorage('plitzi-sdk.dev-tools.tab', 'logs');
   const [size, setSize] = useStorage('plitzi-sdk.dev-tools.size', { width: 500, height: 200 });
-  const { currentPageId } = use(NavigationContext);
+  const [currentPageId] = useCommonStore('navigation.currentPageId');
   const [elementSelected, setElementSelected] = useState<string | undefined>();
   const resizeHandles = useMemo<ResizeHandle[]>(() => (orientation === 'vertical' ? ['w'] : ['n']), [orientation]);
   const parentRef = useRef(

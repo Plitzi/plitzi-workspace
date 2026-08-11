@@ -1,7 +1,4 @@
-import { use } from 'react';
-
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import { useCommonStore, useRenderSettings } from '@plitzi/sdk-shared/store';
+import { useSdkStore, useRenderSettings } from '@plitzi/sdk-shared/store';
 
 import InteractionsContextProvider from './InteractionsContextProvider';
 import AuthInteractions from './sources/AuthSource/AuthInteractions';
@@ -15,8 +12,12 @@ export type InteractionsSourcesProviderProps = {
 };
 
 const InteractionsSourcesProvider = ({ children }: InteractionsSourcesProviderProps) => {
-  const { currentPageId, routeParams, queryParams } = use(NavigationContext);
-  const [userProvider = 'basic'] = useCommonStore('schema.settings.userProvider');
+  const [[userProvider = 'basic', routeParams, queryParams, currentPageId]] = useSdkStore([
+    'schema.settings.userProvider',
+    'navigation.routeParams',
+    'navigation.queryParams',
+    'navigation.currentPageId'
+  ]);
   const { previewMode } = useRenderSettings();
 
   return (

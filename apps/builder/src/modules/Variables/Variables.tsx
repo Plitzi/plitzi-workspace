@@ -5,7 +5,6 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { use, useCallback, useMemo, useState } from 'react';
 
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
@@ -18,14 +17,19 @@ const Variables = () => {
   const { showDialog } = useModal();
   const { addToast } = useToast();
   const { environment } = use(NetworkContext);
-  const { routeParams, queryParams, hostname } = use(NavigationContext);
   const { builderHandler } = use(BuilderContext);
   const [filter, setFilter] = useState('');
+  const [[schemaVariables, styleVariables, routeParams = {}, queryParams = {}, hostname = '']] = useBuilderStore([
+    'schema.variables',
+    'style.variables',
+    'navigation.routeParams',
+    'navigation.queryParams',
+    'navigation.hostname'
+  ]);
   const whenData = useMemo(
     () => ({ routeParams, queryParams, hostname, environment }),
     [routeParams, queryParams, hostname, environment]
   );
-  const [[schemaVariables, styleVariables]] = useBuilderStore(['schema.variables', 'style.variables']);
 
   const variablesFiltered = useMemo(
     () =>

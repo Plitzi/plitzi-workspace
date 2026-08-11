@@ -15,6 +15,7 @@ import RootElement from '@plitzi/sdk-elements/Element/RootElement';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { disableReactDevTools } from '@plitzi/sdk-shared/helpers/security';
 import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import Builder from '@pmodules/Builder';
 
 import App from './App';
@@ -93,6 +94,7 @@ export const { version } = packageSettings;
 // SDK Exports
 
 export {
+  useBuilderStore,
   ComponentProvider,
   ComponentContext,
   usePlitziServiceContext,

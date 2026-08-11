@@ -3,19 +3,18 @@ import { describe, expect, it } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import GlobalSources from './GlobalSources';
 
-import type { AuthContextValue, NavigationContextValue } from '@plitzi/sdk-shared';
+import type { AuthContextValue } from '@plitzi/sdk-shared';
 
 const navigation = {
   routeParams: {},
   queryParams: {},
   hostname: 'example.test',
   currentPageId: 'page-1'
-} as unknown as NavigationContextValue;
+};
 
 const authValue = {
   authenticated: true,
@@ -32,14 +31,12 @@ const authSourceFor = (userProvider: string): Record<string, unknown> => {
   };
 
   render(
-    <StoreProvider value={{ schema: { settings: { userProvider }, variables: [] }, pageDefinitions: {} }}>
-      <NavigationContext value={navigation}>
-        <AuthContext value={authValue}>
-          <GlobalSources>
-            <Probe />
-          </GlobalSources>
-        </AuthContext>
-      </NavigationContext>
+    <StoreProvider value={{ schema: { settings: { userProvider }, variables: [] }, pageDefinitions: {}, navigation }}>
+      <AuthContext value={authValue}>
+        <GlobalSources>
+          <Probe />
+        </GlobalSources>
+      </AuthContext>
     </StoreProvider>
   );
 

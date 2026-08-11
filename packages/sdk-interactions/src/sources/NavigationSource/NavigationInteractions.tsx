@@ -1,8 +1,7 @@
 import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo } from 'react';
 
-import NavigationContext from '@plitzi/sdk-navigation/NavigationContext';
-import { useCommonStore } from '@plitzi/sdk-shared/store';
+import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import InteractionsContext from '../../InteractionsContext';
 
@@ -16,8 +15,11 @@ export type NavigationInteractionsProps = {
 
 const NavigationInteractions = ({ children, previewMode = false }: NavigationInteractionsProps) => {
   const { useInteractions } = use(InteractionsContext);
-  const { navigate } = use(NavigationContext);
-  const [[pageIds, pageDefinitions]] = useCommonStore(['schema.pages', 'pageDefinitions']);
+  const [[pageIds, pageDefinitions, navigate]] = useSdkStore([
+    'schema.pages',
+    'pageDefinitions',
+    'navigation.navigate'
+  ]);
 
   const pageUrls = useMemo(() => {
     const pages = pick(pageDefinitions, pageIds);

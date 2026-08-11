@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react';
-import { createContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
@@ -15,16 +14,21 @@ vi.mock('../../../Element/hocs/withElement', () => ({
 vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
   default: () => ({
     settings: { previewMode: true },
-    contexts: {
-      NavigationContext: createContext({ navigate: () => {}, routeParams: {}, queryParams: {}, currentPageId: '' })
-    }
+    contexts: {}
   })
 }));
+
+const navigation = {
+  routeParams: {},
+  queryParams: {},
+  hostname: 'example.test',
+  currentPageId: 'page-1'
+};
 
 describe('Link Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
-      <StoreProvider>
+      <StoreProvider value={{ navigation }}>
         <ElementContext value={skipHocEntry()}>
           <Link />
         </ElementContext>

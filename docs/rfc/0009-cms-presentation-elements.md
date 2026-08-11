@@ -123,7 +123,7 @@ schemes and credentials stay server-side, per 0008 §4.2.
 Both modes, because they answer different needs and share one server path.
 
 **URL mode** (default for indexes). The pager writes `?<pageParam>=N` through
-`NavigationContext`. The resolver reads it from `queryParams`, computes `offset = (page-1) * limit`,
+`useStore('navigation.queryParams')`. The resolver reads it from `queryParams`, computes `offset = (page-1) * limit`,
 and the page renders server-side with that window: indexable, shareable, back-button correct.
 Two lists on one page get distinct `pageParam`s.
 

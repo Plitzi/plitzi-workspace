@@ -17,8 +17,7 @@ vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
       InteractionsContext: createContext({
         useInteractions: () => ({}),
         interactionsManager: { interactionTrigger: () => {} }
-      }),
-      NavigationContext: createContext({})
+      })
     }
   })
 }));
