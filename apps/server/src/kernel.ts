@@ -17,6 +17,7 @@ export {
   clearFlowCookie,
   clearSessionCookies,
   createSessionCookies,
+  isLocalHost,
   readFlowCookie,
   readRefreshToken,
   readSessionToken,

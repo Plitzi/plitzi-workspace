@@ -58,6 +58,14 @@ describe('session cookie defaults', () => {
 
     expect(params.name).toBe('plitzi_auth_dev');
   });
+
+  // An address has no registrable domain to share cookies across, so a Domain written for one would never be sent
+  // back to it and the browser would silently drop the cookie.
+  it('gives an IP host no domain at all', () => {
+    const params = sessionCookieParams('192.168.1.5');
+
+    expect(params).toMatchObject({ domain: undefined });
+  });
 });
 
 describe('writing a granted session', () => {

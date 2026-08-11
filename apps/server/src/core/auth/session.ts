@@ -1,3 +1,5 @@
+import { isIP } from 'node:net';
+
 import type { SSRAuthCookie, SSRRequest, SSRSession } from '@plitzi/sdk-shared';
 
 /**
@@ -22,15 +24,24 @@ export type SessionCookieParams = {
 
 const LOCAL_HOSTS = ['localhost', '127.0.0.1', '::1'];
 
-const isLocal = (hostname: string): boolean => LOCAL_HOSTS.includes(hostname) || hostname.endsWith('.localhost');
+/**
+ * Whether the host is a loopback name or a `.localhost` sibling. Local hosts get no Domain on their cookies (browsers
+ * refuse one on a single-label host) and lax SameSite, because Secure + SameSite=None over plain http is dropped.
+ */
+export const isLocalHost = (hostname: string): boolean =>
+  LOCAL_HOSTS.includes(hostname) || hostname.endsWith('.localhost');
+
+// An address has no registrable domain: there is nothing to share the cookie across, and the labels an IP splits
+// into are not a domain any browser would match a Domain against.
+const isIpAddress = (hostname: string): boolean => isIP(hostname) !== 0;
 
 /**
  * The last two labels of the host, so a session established on one sub-domain is carried by its siblings — an app
- * and the API it talks to are rarely the same host. Localhost gets no domain at all: browsers refuse a Domain on a
- * single-label host, and setting one there silently drops the cookie.
+ * and the API it talks to are rarely the same host. Local and IP hosts get no domain at all: browsers refuse a
+ * Domain on a single-label host, and one written for an address would never be sent back to it.
  */
 const registrableDomain = (hostname: string): string | undefined => {
-  if (isLocal(hostname)) {
+  if (isLocalHost(hostname) || isIpAddress(hostname)) {
     return undefined;
   }
 
@@ -54,7 +65,7 @@ const resolve = <T>(value: T | ((hostname: string) => T) | undefined, hostname: 
  * opposite, because Secure + SameSite=None over plain http is dropped by every browser.
  */
 export const sessionCookieParams = (hostname: string, config: SSRAuthCookie = {}): SessionCookieParams => {
-  const local = isLocal(hostname);
+  const local = isLocalHost(hostname);
 
   return {
     name: resolve(config.name, hostname, 'plitzi_session'),
