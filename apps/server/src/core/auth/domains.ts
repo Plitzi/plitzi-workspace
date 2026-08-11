@@ -1,8 +1,9 @@
 /* eslint-disable quotes */
 /**
  * Declared domains are stored and signed as full origins (`https://site.example.com`) while a request host is bare
- * (`site.example.com`), so both sides are reduced to a hostname before being compared. A value that is not a URL at
- * all (`plitzi-desktop`, `chrome-extension://…`) has no hostname and simply never matches a host.
+ * (`site.example.com`), so both sides are reduced to a hostname before being compared. A non-web value still reduces
+ * to something — `plitzi-desktop` to itself, `chrome-extension://…` to its authority — but neither is a host a
+ * request ever reports, so it never matches.
  */
 export const hostnameOf = (value: string): string => {
   const trimmed = value.trim().toLowerCase();

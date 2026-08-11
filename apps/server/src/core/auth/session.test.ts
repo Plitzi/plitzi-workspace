@@ -2,7 +2,13 @@ import { Readable } from 'node:stream';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { clearSessionCookies, readSessionToken, sessionCookieParams, writeSessionCookies } from './session';
+import {
+  clearSessionCookies,
+  isLocalHost,
+  readSessionToken,
+  sessionCookieParams,
+  writeSessionCookies
+} from './session';
 
 import type { SSRRequest, SSRResponseHelpers, SSRSession } from '@plitzi/sdk-shared';
 
@@ -202,5 +208,91 @@ describe('the login route', () => {
     expect(status.code).toBe(401);
     expect(cookies()).toHaveLength(0);
     expect(body).toEqual({ error: 'Invalid credentials', reason: 'invalid' });
+  });
+});
+
+// A plitzi deployment names its cookies per environment (one name per browser open, so a dev session is never sent
+// to staging) and hosts its apps on `.plitzi.local` in dev — a host the kernel's isLocalHost does not know, as it
+// recognizes only loopback and `.localhost`. So the deployment picks the local cookie name itself, while the
+// domain, Secure and SameSite policy still come from here: a real registrable host gets the strict profile even
+// when its name says local.
+describe('a plitzi deployment', () => {
+  const plitziCookieName = (hostname: string): string => {
+    if (isLocalHost(hostname) || hostname.endsWith('.plitzi.local')) {
+      return 'plitzi_auth_local';
+    }
+
+    if (hostname.includes('-stg.')) {
+      return 'plitzi_auth_stg';
+    }
+
+    if (hostname.includes('-dev.')) {
+      return 'plitzi_auth_dev';
+    }
+
+    return 'plitzi_auth';
+  };
+
+  const config = { name: plitziCookieName };
+
+  // host, expected name, expected domain, secure, sameSite
+  const deployments: Array<[string, string, string | undefined, boolean, 'lax' | 'none']> = [
+    ['localhost', 'plitzi_auth_local', undefined, false, 'lax'],
+    ['127.0.0.1', 'plitzi_auth_local', undefined, false, 'lax'],
+    ['::1', 'plitzi_auth_local', undefined, false, 'lax'],
+    ['app.plitzi.local', 'plitzi_auth_local', '.plitzi.local', true, 'none'],
+    ['server.plitzi.local', 'plitzi_auth_local', '.plitzi.local', true, 'none'],
+    ['ssr.plitzi.local', 'plitzi_auth_local', '.plitzi.local', true, 'none'],
+    ['mcp.plitzi.local', 'plitzi_auth_local', '.plitzi.local', true, 'none'],
+    ['plitzi.com', 'plitzi_auth', '.plitzi.com', true, 'none'],
+    // The -stg. / -dev. naming matches hosts like app.plitzi-stg.com, not a bare stg.plitzi.com label.
+    ['stg.plitzi.com', 'plitzi_auth', '.plitzi.com', true, 'none'],
+    ['dev.plitzi.com', 'plitzi_auth', '.plitzi.com', true, 'none'],
+    ['api.plitzi.com', 'plitzi_auth', '.plitzi.com', true, 'none'],
+    ['app.plitzi-stg.com', 'plitzi_auth_stg', '.plitzi-stg.com', true, 'none'],
+    ['app.plitzi-dev.com', 'plitzi_auth_dev', '.plitzi-dev.com', true, 'none'],
+    ['website.plitzi.app', 'plitzi_auth', '.plitzi.app', true, 'none'],
+    ['192.168.1.5', 'plitzi_auth', undefined, true, 'none']
+  ];
+
+  it.each(deployments)('derives cookies for %s', (host, name, domain, secure, sameSite) => {
+    expect(sessionCookieParams(host, config)).toEqual({
+      name,
+      domain,
+      secure,
+      sameSite,
+      refreshPath: '/auth',
+      hintSuffix: '_hint'
+    });
+  });
+
+  it('writes and reads back a session on the dev app host', () => {
+    const { res, cookies } = responseSpy();
+
+    writeSessionCookies(requestFrom('app.plitzi.local'), res, session, config);
+
+    expect(cookies()[0]).toContain('plitzi_auth_local=access');
+    expect(cookies()[0]).toContain('Domain=.plitzi.local');
+    expect(cookies()[0]).toContain('SameSite=None');
+    expect(cookies()[0]).toContain('Secure');
+
+    const jar = cookies()
+      .map(cookie => cookie.split(';')[0])
+      .join('; ');
+    expect(readSessionToken(requestFrom('app.plitzi.local', jar), config)).toBe('access');
+  });
+
+  it('keeps a production session apart from a staging one in one browser', () => {
+    const { res: prod, cookies: prodCookies } = responseSpy();
+    const { res: staging, cookies: stagingCookies } = responseSpy();
+    const { res: dev, cookies: devCookies } = responseSpy();
+
+    writeSessionCookies(requestFrom('plitzi.com'), prod, session, config);
+    writeSessionCookies(requestFrom('app.plitzi-stg.com'), staging, session, config);
+    writeSessionCookies(requestFrom('app.plitzi-dev.com'), dev, session, config);
+
+    expect(prodCookies()[0]).toContain('plitzi_auth=');
+    expect(stagingCookies()[0]).toContain('plitzi_auth_stg=');
+    expect(devCookies()[0]).toContain('plitzi_auth_dev=');
   });
 });
