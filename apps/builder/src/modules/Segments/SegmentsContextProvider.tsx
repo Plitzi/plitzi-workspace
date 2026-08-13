@@ -638,30 +638,34 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
       segmentStyleRemoveVariable(contextId, category, name, true)
     );
 
-    return () => {
-      subscriptionManager.unsubscribe([
-        'SEGMENT_ADD_ELEMENT',
-        'SEGMENT_UPDATE_ELEMENT',
-        'SEGMENT_UPDATE_ELEMENTS',
-        'SEGMENT_REMOVE_ELEMENT',
-        'SEGMENT_MOVE_ELEMENT',
-        'SEGMENT_CLONE_ELEMENT',
-        'SEGMENT_ADD_TEMPLATE',
-        'SEGMENT_SPACE_ADD_VARIABLE',
-        'SEGMENT_SPACE_UPDATE_VARIABLE',
-        'SEGMENT_SPACE_REMOVE_VARIABLE',
-        'SEGMENT_STYLE_ADD_SELECTOR',
-        'SEGMENT_STYLE_UPDATE_SELECTOR',
-        'SEGMENT_STYLE_REMOVE_SELECTOR',
-        'SEGMENT_STYLE_REMOVE_SELECTORS',
-        'SEGMENT_STYLE_ADD_SELECTOR_VARIABLE',
-        'SEGMENT_STYLE_UPDATE_SELECTOR_VARIABLE',
-        'SEGMENT_STYLE_REMOVE_SELECTOR_VARIABLE',
-        'SEGMENT_STYLE_ADD_VARIABLE',
-        'SEGMENT_STYLE_UPDATE_VARIABLE',
-        'SEGMENT_STYLE_REMOVE_VARIABLE'
-      ]);
-    };
+    // The cleanup names the events and clears every listener on them: this effect owns them all, and the
+    // flag says so out loud rather than leaving it to whichever handler happened to register last.
+    return () =>
+      subscriptionManager.unsubscribe(
+        [
+          'SEGMENT_ADD_ELEMENT',
+          'SEGMENT_UPDATE_ELEMENT',
+          'SEGMENT_UPDATE_ELEMENTS',
+          'SEGMENT_REMOVE_ELEMENT',
+          'SEGMENT_MOVE_ELEMENT',
+          'SEGMENT_CLONE_ELEMENT',
+          'SEGMENT_ADD_TEMPLATE',
+          'SEGMENT_SPACE_ADD_VARIABLE',
+          'SEGMENT_SPACE_UPDATE_VARIABLE',
+          'SEGMENT_SPACE_REMOVE_VARIABLE',
+          'SEGMENT_STYLE_ADD_SELECTOR',
+          'SEGMENT_STYLE_UPDATE_SELECTOR',
+          'SEGMENT_STYLE_REMOVE_SELECTOR',
+          'SEGMENT_STYLE_REMOVE_SELECTORS',
+          'SEGMENT_STYLE_ADD_SELECTOR_VARIABLE',
+          'SEGMENT_STYLE_UPDATE_SELECTOR_VARIABLE',
+          'SEGMENT_STYLE_REMOVE_SELECTOR_VARIABLE',
+          'SEGMENT_STYLE_ADD_VARIABLE',
+          'SEGMENT_STYLE_UPDATE_VARIABLE',
+          'SEGMENT_STYLE_REMOVE_VARIABLE'
+        ],
+        true
+      );
   }, [
     subscriptionManager,
     includeSubscriptions,

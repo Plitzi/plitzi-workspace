@@ -19,6 +19,7 @@ import { BrowserRouter, StaticRouter } from 'react-router-dom';
 
 import { initClient } from '@modules/App/AppHelper';
 import AppMain from '@modules/App/AppMain';
+import useDebugShortcut from '@modules/App/useDebugShortcut';
 import sdkComponents from '@modules/Element';
 import SdkPlugin from '@modules/Sdk/SdkPlugin';
 import { historyMiddleware as historyMw, loggerMiddleware as loggerMw } from '@plitzi/nexus';
@@ -109,9 +110,18 @@ const App = ({
     }),
     [initialState]
   );
-  // Cookie-backed so SSR reads the same value and hydration stays consistent. Name coupled with the
-  // server (apps/server prepareRender reads 'plitzi_debug').
-  const [debugMode, setDebugMode] = useStorage('plitzi_debug', debugModeProp, 'cookie');
+  /**
+   * Two different things, and only one of them is trusted. The `debugMode` prop is the page's authorization —
+   * whoever embedded the SDK decided this site may be inspected. The cookie is the visitor's preference *within*
+   * that, kept in a cookie so the SSR render matches what the client hydrates with (apps/server prepareRender reads
+   * 'plitzi_debug').
+   *
+   * A cookie can therefore turn debugging OFF, never ON: it is client-owned, and a published site whose visitors
+   * could set it would hand any of them the panel, the element ids and the store. The shortcut below is only one of
+   * the ways to write it.
+   */
+  const [debugPreference, setDebugPreference] = useStorage('plitzi_debug', debugModeProp, 'cookie');
+  const debugMode = debugModeProp && debugPreference;
   const finalServer = useMemo(() => getEnvironmentServer(server), [server]);
   const client = useMemo<ApolloClient>(() => initClient(finalServer, webKey), [finalServer, webKey]);
 
@@ -122,24 +132,8 @@ const App = ({
     );
   }, []);
 
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.shiftKey && e.key === 'F12') {
-        setDebugMode(state => !state);
-      }
-    },
-    [setDebugMode]
-  );
-
-  useEffect(() => {
-    if (sdkProps.environment === 'production') {
-      return;
-    }
-
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown, sdkProps.environment]);
+  const handleToggleDebug = useCallback(() => setDebugPreference(state => !state), [setDebugPreference]);
+  useDebugShortcut({ authorized: debugModeProp, onToggle: handleToggleDebug });
 
   // Tells the render profiler this app hydrated SSR output, so it can label the hydration commit (a pure client mount
   // looks identical at the React-phase level).

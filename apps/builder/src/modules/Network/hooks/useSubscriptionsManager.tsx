@@ -83,10 +83,46 @@ const useSubscriptionsManager = ({ onMessage, client, environment, disabled }: U
     stream.current = undefined;
   }, []);
 
+  /**
+   * Drops listeners from one event or a list of them. `all` is what says how far it reaches: every callback on the
+   * event, or only the one passed — which is how the function `subscribe` returns undoes just its own registration.
+   * The socket goes with the last listener, whichever way it left.
+   */
+  const unsubscribe = useCallback(
+    <T extends SpaceEventName>(event: T | T[], all = true, callback?: SpaceEventHandler<T>) => {
+      const events = typeof event === 'string' ? [event] : event;
+      events.forEach(eventName => {
+        const eventHandlers = handlers.current.get(eventName);
+        if (!eventHandlers) {
+          return;
+        }
+
+        if (all || !callback) {
+          eventHandlers.clear();
+        } else {
+          eventHandlers.delete(callback as RegisteredHandler);
+        }
+
+        if (eventHandlers.size === 0) {
+          handlers.current.delete(eventName);
+        }
+      });
+
+      if (handlers.current.size === 0) {
+        closeStream();
+      }
+    },
+    [closeStream]
+  );
+
+  /**
+   * Returns the way to undo itself, for a caller that would rather not name the event twice. `all` reaches the other
+   * listeners of that event too, the same flag `unsubscribe` takes.
+   */
   const subscribe = useCallback(
     <T extends SpaceEventName>(event: T, callback: SpaceEventHandler<T>) => {
       if (disabled) {
-        return false;
+        return () => undefined;
       }
 
       const eventHandlers = handlers.current.get(event) ?? new Set<RegisteredHandler>();
@@ -94,21 +130,9 @@ const useSubscriptionsManager = ({ onMessage, client, environment, disabled }: U
       handlers.current.set(event, eventHandlers);
       openStream();
 
-      return true;
+      return (all = false) => unsubscribe(event, all, callback);
     },
-    [disabled, openStream]
-  );
-
-  const unsubscribe = useCallback(
-    (event: SpaceEventName | SpaceEventName[]) => {
-      const events = typeof event === 'string' ? [event] : event;
-      events.forEach(eventName => handlers.current.delete(eventName));
-
-      if (handlers.current.size === 0) {
-        closeStream();
-      }
-    },
-    [closeStream]
+    [disabled, openStream, unsubscribe]
   );
 
   const stop = useCallback(() => {

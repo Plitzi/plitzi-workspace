@@ -6,6 +6,7 @@ import { buildOfflineDataCacheKey } from '../../helpers/cache';
 import { escapeJson } from '../../helpers/escapeJson';
 import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
 import { readCookie } from '../../helpers/readCookie';
+import { resolveDebugMode } from '../../helpers/resolveDebugMode';
 
 import type { ComponentProps } from './Component';
 import type { TtlCache } from '../../helpers/cache';
@@ -73,10 +74,10 @@ export const prepareRender = async (
   const v = version ? `?v=${version}` : '';
   const sdkDevToolsStylePath = `/sdk-assets/plitzi-sdk-devtools.css${v}`;
 
-  // debugMode is owned by the client (shift+F12) and persisted in the 'plitzi_debug' cookie so this SSR
-  // render matches what the client will hydrate with. Falls back to devMode when the cookie is unset.
-  const debugCookie = readCookie(req.headers.cookie, 'plitzi_debug');
-  const debugMode = debugCookie === undefined ? config.devMode : debugCookie === 'true';
+  const debugMode = resolveDebugMode(
+    config.debugMode ?? config.devMode,
+    readCookie(req.headers.cookie, 'plitzi_debug')
+  );
 
   const offlineDataStr = escapeJson(
     JSON.stringify({ offlineData, offlineMode: true, environment, renderMode: 'raw', server, sdkDevToolsStylePath })

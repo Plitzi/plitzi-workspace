@@ -70,7 +70,8 @@ describe('the space stream', () => {
     const { client, streams } = createClient();
     const { result } = renderHook(() => useSubscriptionsManager({ client, environment: 'dev', disabled: true }));
 
-    expect(result.current.subscribe('SPACE_ADD_PAGE', vi.fn())).toBe(false);
+    // Still hands back a cleanup, so a caller never has to ask whether it got one.
+    expect(() => result.current.subscribe('SPACE_ADD_PAGE', vi.fn())()).not.toThrow();
     expect(streams).toHaveLength(0);
   });
 
@@ -85,6 +86,66 @@ describe('the space stream', () => {
     expect(streams[0].closed).toBe(false);
 
     result.current.unsubscribe(['SPACE_UPDATE_ELEMENT']);
+    expect(streams[0].closed).toBe(true);
+  });
+
+  it('drops only the caller that unsubscribes, leaving the others on the event', () => {
+    const { client, streams } = createClient();
+    const { result } = renderManager(client);
+    const staying = vi.fn();
+
+    const off = result.current.subscribe('SPACE_REMOVE_PAGE', vi.fn());
+    result.current.subscribe('SPACE_REMOVE_PAGE', staying);
+    off();
+    emit(streams[0], 'SPACE_REMOVE_PAGE', { pageId: 'p1' });
+
+    expect(staying).toHaveBeenCalledOnce();
+    expect(streams[0].closed).toBe(false);
+  });
+
+  it('drops everyone on an event when told to, through its own cleanup', () => {
+    const { client, streams } = createClient();
+    const { result } = renderManager(client);
+    const other = vi.fn();
+
+    const off = result.current.subscribe('SPACE_REMOVE_PAGE', vi.fn());
+    result.current.subscribe('SPACE_REMOVE_PAGE', other);
+    off(true);
+    emit(streams[0], 'SPACE_REMOVE_PAGE', { pageId: 'p1' });
+
+    expect(other).not.toHaveBeenCalled();
+    expect(streams[0].closed).toBe(true);
+  });
+
+  it('drops everyone on an event by name', () => {
+    const { client, streams } = createClient();
+    const { result } = renderManager(client);
+    const first = vi.fn();
+    const second = vi.fn();
+
+    result.current.subscribe('SPACE_REMOVE_PAGE', first);
+    result.current.subscribe('SPACE_REMOVE_PAGE', second);
+    result.current.unsubscribe('SPACE_REMOVE_PAGE');
+    emit(streams[0], 'SPACE_REMOVE_PAGE', { pageId: 'p1' });
+
+    expect(first).not.toHaveBeenCalled();
+    expect(second).not.toHaveBeenCalled();
+    expect(streams[0].closed).toBe(true);
+  });
+
+  it('closes the socket when the last registration undoes itself', () => {
+    const { client, streams } = createClient();
+    const { result } = renderManager(client);
+
+    const off = [
+      result.current.subscribe('SPACE_ADD_PAGE', vi.fn()),
+      result.current.subscribe('SPACE_UPDATE_ELEMENT', vi.fn())
+    ];
+
+    off[0]();
+    expect(streams[0].closed).toBe(false);
+
+    off[1]();
     expect(streams[0].closed).toBe(true);
   });
 

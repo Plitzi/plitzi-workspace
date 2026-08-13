@@ -36,8 +36,10 @@ export type NetworkContextValueBuilder<
   // Registering interest in an event, not opening a subscription: the whole space arrives on one stream, so `S` is
   // the map of event names to the payload each one carries.
   subscriptionManager: {
-    subscribe: <T extends keyof S>(event: T, callback: (payload: S[T]) => void) => boolean;
-    unsubscribe: (event: keyof S | (keyof S)[]) => void;
+    /** Returns the way to undo this one registration; `all` reaches the other listeners of the event too. */
+    subscribe: <T extends keyof S>(event: T, callback: (payload: S[T]) => void) => (all?: boolean) => void;
+    /** Drops listeners from one event or a list of them: everyone on it, or only the callback passed. */
+    unsubscribe: <T extends keyof S>(event: T | T[], all?: boolean, callback?: (payload: S[T]) => void) => void;
     stop: () => void;
   };
 };

@@ -279,10 +279,9 @@ const SchemaContextProvider = ({
     subscriptionManager.subscribe('SPACE_REMOVE_PAGE', ({ pageId }) => schemaRemovePage(pageId, true));
 
     // Page Folders
-    subscriptionManager.subscribe(
-      'SPACE_ADD_PAGE_FOLDER',
-      ({ pageFolder }) => void schemaAddPageFolder(pageFolder, true)
-    );
+    subscriptionManager.subscribe('SPACE_ADD_PAGE_FOLDER', ({ pageFolder }) => {
+      void schemaAddPageFolder(pageFolder, true);
+    });
     subscriptionManager.subscribe('SPACE_UPDATE_PAGE_FOLDER', ({ pageFolder }) =>
       schemaUpdatePageFolder(pageFolder, true)
     );
@@ -345,29 +344,33 @@ const SchemaContextProvider = ({
         )
     );
 
-    return () => {
-      subscriptionManager.unsubscribe([
-        'SPACE_ADD_PAGE',
-        'SPACE_SET_HOME_PAGE',
-        'SPACE_UPDATE_PAGE',
-        'SPACE_REMOVE_PAGE',
-        'SPACE_ADD_PAGE_FOLDER',
-        'SPACE_UPDATE_PAGE_FOLDER',
-        'SPACE_REMOVE_PAGE_FOLDER',
-        'SPACE_ADD_VARIABLE',
-        'SPACE_UPDATE_VARIABLE',
-        'SPACE_REMOVE_VARIABLE',
-        'SPACE_UPDATE_SETTINGS',
-        'SPACE_ADD_ELEMENT',
-        'SPACE_UPDATE_ELEMENT',
-        'SPACE_UPDATE_ELEMENTS',
-        'SPACE_REMOVE_ELEMENT',
-        'SPACE_MOVE_ELEMENT',
-        'SPACE_CLONE_ELEMENT',
-        'SPACE_UPDATED',
-        'SPACE_ADD_TEMPLATE'
-      ]);
-    };
+    // The cleanup names the events and clears every listener on them: this effect owns them all, and the
+    // flag says so out loud rather than leaving it to whichever handler happened to register last.
+    return () =>
+      subscriptionManager.unsubscribe(
+        [
+          'SPACE_ADD_PAGE',
+          'SPACE_SET_HOME_PAGE',
+          'SPACE_UPDATE_PAGE',
+          'SPACE_REMOVE_PAGE',
+          'SPACE_ADD_PAGE_FOLDER',
+          'SPACE_UPDATE_PAGE_FOLDER',
+          'SPACE_REMOVE_PAGE_FOLDER',
+          'SPACE_ADD_VARIABLE',
+          'SPACE_UPDATE_VARIABLE',
+          'SPACE_REMOVE_VARIABLE',
+          'SPACE_ADD_ELEMENT',
+          'SPACE_UPDATE_ELEMENT',
+          'SPACE_UPDATE_ELEMENTS',
+          'SPACE_REMOVE_ELEMENT',
+          'SPACE_MOVE_ELEMENT',
+          'SPACE_CLONE_ELEMENT',
+          'SPACE_UPDATED',
+          'SPACE_UPDATE_SETTINGS',
+          'SPACE_ADD_TEMPLATE'
+        ],
+        true
+      );
   }, [
     subscriptionManager,
     includeSubscriptions,

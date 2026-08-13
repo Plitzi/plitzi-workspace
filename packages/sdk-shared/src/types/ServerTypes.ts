@@ -462,6 +462,10 @@ export type SSRServerConfig = {
   publicDir?: string;
   static?: Record<string, string>;
   devMode?: boolean;
+  /** Authorizes debugging on the pages this server renders. An SSR page loads the very same SDK, so this is the
+   *  server-side face of the SDK's `debugMode` prop: the page decides, and the visitor's 'plitzi_debug' cookie can
+   *  only narrow it. Defaults to `devMode`, so a development server debugs without being told to. */
+  debugMode?: boolean;
   cacheTtlMs?: number;
   loginPath?: string | false;
   middlewares?: SSRMiddleware[];
