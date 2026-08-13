@@ -25,10 +25,14 @@ const navigation = {
   currentPageId: 'page-1'
 };
 
+// `pageDefinitions` and `schema.pageFolders` are what a link resolves its href against: the component reads both
+// unconditionally, so an empty store is not a smaller case of the real one, it is a crash.
+const storeValue = { navigation, pageDefinitions: {}, schema: { pageFolders: [] } };
+
 describe('Link Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
-      <StoreProvider value={{ navigation }}>
+      <StoreProvider value={storeValue}>
         <ElementContext value={skipHocEntry()}>
           <Link />
         </ElementContext>
