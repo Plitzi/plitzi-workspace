@@ -2,12 +2,14 @@ import { memo } from 'react';
 
 import LogInteraction from './categories/LogInteraction';
 import LogNavigation from './categories/LogNavigation';
+import LogNetwork from './categories/LogNetwork';
 import LogStore from './categories/LogStore';
 
 import type {
   LogParams,
   LogInteraction as TLogInteraction,
   LogNavigation as TLogNavigation,
+  LogNetwork as TLogNetwork,
   LogStore as TLogStore
 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
@@ -30,6 +32,7 @@ const Log = ({ category, message, time, params }: LogProps) => {
         <LogNavigation message={message} params={params as TLogNavigation['params']} time={time} />
       )}
       {category === 'store' && <LogStore message={message} params={params as TLogStore['params']} time={time} />}
+      {category === 'network' && <LogNetwork message={message} params={params as TLogNetwork['params']} time={time} />}
     </>
   );
 };

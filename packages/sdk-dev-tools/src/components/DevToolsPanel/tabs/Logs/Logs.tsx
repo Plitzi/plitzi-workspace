@@ -11,11 +11,13 @@ export type LogsProps = {
   items: TLog[];
   autoScrollOffset?: number;
   orientation: Orientation;
+  /** Filter the tab opens on. Read once, on mount: from there the summary owns the filter. */
+  logTypeFilter?: LogType;
   onClear?: () => void;
 };
 
-const Logs = ({ items = [], autoScrollOffset = 40, orientation = 'horizontal', onClear }: LogsProps) => {
-  const [logTypeSelected, setLogTypeSelected] = useState<LogType>();
+const Logs = ({ items = [], autoScrollOffset = 40, orientation = 'horizontal', logTypeFilter, onClear }: LogsProps) => {
+  const [logTypeSelected, setLogTypeSelected] = useState<LogType | undefined>(logTypeFilter);
   const listRef = useRef<HTMLDivElement | null>(null);
   const isUserNearTopRef = useRef(true);
 

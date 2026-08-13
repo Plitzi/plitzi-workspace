@@ -7,6 +7,13 @@ export type ElementContextValue<T extends 'skipHOC' | 'full' = 'full'> = {
   id: string;
   idRef?: string;
   rootId?: string;
+  /**
+   * Whether this element is on screen: its own `visibility` state AND every ancestor's, chained through this context.
+   * A hidden element still renders its subtree (it is hidden in CSS, not unmounted), so anything that DOES something
+   * rather than just paint — fetching, polling, submitting — reads this instead of its own state to stay inert while
+   * the branch it lives in is hidden.
+   */
+  visible: boolean;
 } & (T extends 'skipHOC'
   ? { plitziJsxSkipHOC: true }
   : {

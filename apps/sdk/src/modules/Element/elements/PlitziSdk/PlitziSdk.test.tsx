@@ -27,6 +27,7 @@ describe('PlitziSdk', () => {
     const value = {
       id: 'sdk',
       rootId: 'root',
+      visible: true,
       attributes: {},
       definition: { label: 'Button' },
       elementState: {},

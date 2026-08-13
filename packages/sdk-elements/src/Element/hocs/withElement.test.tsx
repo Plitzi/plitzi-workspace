@@ -6,6 +6,7 @@ import { StoreProvider } from '@plitzi/nexus/react';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 
 import withElement from './withElement';
+import ElementContext from '../ElementContext';
 import useElement from '../hooks/useElement';
 
 import type { ElementContextValue } from '../ElementContext';
@@ -30,6 +31,9 @@ vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
   default: () => ({ settings: { previewMode: true }, root: { baseElementId: 'root' } })
 }));
 
+// Mutable so a test can hide the element through its own state without re-mocking the module.
+const elementState: Record<string, unknown> = { foo: 'bar' };
+
 vi.mock('../hooks/useElementInternal', () => ({
   default: ({ children }: { children?: unknown }) => ({
     internalProps: {
@@ -38,7 +42,7 @@ vi.mock('../hooks/useElementInternal', () => ({
       attributes: { text: 'hello' },
       definition,
       style: { color: 'red' },
-      elementState: { foo: 'bar' },
+      elementState,
       plitziElementLayout: undefined,
       setElementState
     },
@@ -72,6 +76,7 @@ describe('withElement', () => {
   beforeEach(() => {
     captured.props = undefined;
     captured.ctx = undefined;
+    delete elementState.visibility;
     vi.clearAllMocks();
   });
 
@@ -121,5 +126,59 @@ describe('withElement', () => {
     expect(captured.ctx?.rootId).toBe('root');
     expect((captured.ctx as { plitziJsxSkipHOC?: boolean }).plitziJsxSkipHOC).toBe(true);
     expect(useEventBridge).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * A hidden element is hidden in CSS, not unmounted, so its subtree keeps running: a provider inside a hidden branch
+ * went on fetching. The chain is what lets a descendant see that an ancestor — not itself — is the one hiding it.
+ */
+describe('the visibility chain', () => {
+  const renderUnderParent = (parentVisible: boolean, ui: ReactElement) =>
+    render(
+      createElement(
+        StoreProvider,
+        { value: { schema: { flat: { el1: element } } } },
+        <ElementContext value={{ id: 'parent', rootId: 'root', visible: parentVisible } as ElementContextValue}>
+          {ui}
+        </ElementContext>
+      )
+    );
+
+  beforeEach(() => {
+    captured.ctx = undefined;
+    delete elementState.visibility;
+  });
+
+  it('is visible with nothing hiding it', () => {
+    renderWrapped(<Wrapped internalProps={{ id: 'el1', rootId: 'root' }} />);
+
+    expect(captured.ctx?.visible).toBe(true);
+  });
+
+  it('is not visible when its own state hides it', () => {
+    elementState.visibility = false;
+    renderWrapped(<Wrapped internalProps={{ id: 'el1', rootId: 'root' }} />);
+
+    expect(captured.ctx?.visible).toBe(false);
+  });
+
+  it('is not visible when a binding hid it with the string "false"', () => {
+    elementState.visibility = 'false';
+    renderWrapped(<Wrapped internalProps={{ id: 'el1', rootId: 'root' }} />);
+
+    expect(captured.ctx?.visible).toBe(false);
+  });
+
+  it('is not visible when an ancestor is hidden, whatever its own state says', () => {
+    renderUnderParent(false, <Wrapped internalProps={{ id: 'el1', rootId: 'root' }} />);
+
+    expect(captured.ctx?.visible).toBe(false);
+  });
+
+  it('carries the ancestor answer through a plitziJsxSkipHOC element', () => {
+    renderUnderParent(false, <Wrapped internalProps={{ id: 'el1', rootId: 'root' }} plitziJsxSkipHOC />);
+
+    expect(captured.ctx?.visible).toBe(false);
   });
 });

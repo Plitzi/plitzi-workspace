@@ -21,6 +21,7 @@ export type DevToolsHeaderProps = {
   tabSelected?: string;
   orientation: Orientation;
   onChangeOrientation?: (orientation: Orientation) => void;
+  onCollapse?: () => void;
   onTabSelect?: (tabIndex: string) => void;
 };
 
@@ -28,6 +29,7 @@ const DevToolsHeader = ({
   tabSelected,
   orientation = 'vertical',
   onChangeOrientation,
+  onCollapse,
   onTabSelect
 }: DevToolsHeaderProps) => {
   const { options: scopeOptions, value: scopeValue, onSelect: onSelectScope } = useScopeSelector();
@@ -96,6 +98,13 @@ const DevToolsHeader = ({
           onClick={handleClickOrientation}
         >
           <i className={clsx('fa-solid fa-table-columns text-xs', { 'rotate-90': orientation === 'vertical' })} />
+        </button>
+        <button
+          className="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
+          title="Collapse to the indicator"
+          onClick={onCollapse}
+        >
+          <i className="fa-solid fa-xmark text-xs" />
         </button>
       </div>
     </div>

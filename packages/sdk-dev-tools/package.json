@@ -18,6 +18,30 @@
       "types": "./dist/DevToolsContextProvider.d.ts",
       "import": "./dist/DevToolsContextProvider.mjs"
     },
+    "./components/DevToolsIndicator": {
+      "types": "./dist/components/DevToolsIndicator/index.d.ts",
+      "import": "./dist/components/DevToolsIndicator/index.mjs"
+    },
+    "./components/DevToolsIndicator/DevToolsIndicator": {
+      "types": "./dist/components/DevToolsIndicator/DevToolsIndicator.d.ts",
+      "import": "./dist/components/DevToolsIndicator/DevToolsIndicator.mjs"
+    },
+    "./components/DevToolsIndicator/index": {
+      "types": "./dist/components/DevToolsIndicator/index.d.ts",
+      "import": "./dist/components/DevToolsIndicator/index.mjs"
+    },
+    "./components/DevToolsOverlay": {
+      "types": "./dist/components/DevToolsOverlay/index.d.ts",
+      "import": "./dist/components/DevToolsOverlay/index.mjs"
+    },
+    "./components/DevToolsOverlay/DevToolsOverlay": {
+      "types": "./dist/components/DevToolsOverlay/DevToolsOverlay.d.ts",
+      "import": "./dist/components/DevToolsOverlay/DevToolsOverlay.mjs"
+    },
+    "./components/DevToolsOverlay/index": {
+      "types": "./dist/components/DevToolsOverlay/index.d.ts",
+      "import": "./dist/components/DevToolsOverlay/index.mjs"
+    },
     "./components/DevToolsPanel": {
       "types": "./dist/components/DevToolsPanel/index.d.ts",
       "import": "./dist/components/DevToolsPanel/index.mjs"
@@ -245,6 +269,18 @@
     "./components/DevToolsPanel/tabs/Logs/categories/LogNavigation/index": {
       "types": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogNavigation/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/Logs/categories/LogNetwork": {
+      "types": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogNetwork/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogNetwork/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/Logs/categories/LogNetwork/LogNetwork": {
+      "types": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogNetwork/LogNetwork.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogNetwork/LogNetwork.mjs"
+    },
+    "./components/DevToolsPanel/tabs/Logs/categories/LogNetwork/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogNetwork/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogNetwork/index.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogStore": {
       "types": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogStore/index.d.ts",

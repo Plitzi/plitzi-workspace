@@ -11,6 +11,7 @@ import DevToolsSubHeader from './DevToolsSubHeader';
 
 import type { Orientation } from '../../DevToolsContainer';
 import type { ResizeHandle } from '@plitzi/plitzi-ui/ContainerResizable';
+import type { LogType } from '@plitzi/sdk-shared';
 
 export const ORIENTATION_VERTICAL = 'vertical';
 export const ORIENTATION_HORIZONTAL = 'horizontal';
@@ -18,11 +19,23 @@ export const ORIENTATION_HORIZONTAL = 'horizontal';
 export type DevToolsPanelProps = {
   className?: string;
   orientation?: Orientation;
+  tabSelected: string;
+  /** Seeds the Logs filter when the panel is opened from the indicator, so a badge counting errors lands on them. */
+  logTypeFilter?: LogType;
+  onCollapse?: () => void;
+  onTabSelect: (tabSelected: string) => void;
   onChangeOrientation?: (orientation: Orientation) => void;
 };
 
-const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientation }: DevToolsPanelProps) => {
-  const [tabSelected, setTabSelected] = useStorage('plitzi-sdk.dev-tools.tab', 'logs');
+const DevToolsPanel = ({
+  className,
+  orientation = 'vertical',
+  tabSelected,
+  logTypeFilter,
+  onCollapse,
+  onTabSelect,
+  onChangeOrientation
+}: DevToolsPanelProps) => {
   const [size, setSize] = useStorage('plitzi-sdk.dev-tools.size', { width: 500, height: 200 });
   const [currentPageId] = useCommonStore('navigation.currentPageId');
   const [elementSelected, setElementSelected] = useState<string | undefined>();
@@ -31,7 +44,6 @@ const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientatio
     typeof document !== 'undefined' ? (document.querySelector('.plitzi-sdk') as HTMLElement) : null
   );
 
-  const handleTabSelect = useCallback((tabIndex: string) => setTabSelected(tabIndex), [setTabSelected]);
   const handleSelectElement = useCallback((id?: string) => setElementSelected(id), [setElementSelected]);
   // Only one axis resizes per orientation (width when vertical, height when horizontal); the other arrives as Infinity.
   const handleResize = useCallback(
@@ -65,7 +77,8 @@ const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientatio
         <DevToolsHeader
           orientation={orientation}
           onChangeOrientation={onChangeOrientation}
-          onTabSelect={handleTabSelect}
+          onCollapse={onCollapse}
+          onTabSelect={onTabSelect}
           tabSelected={tabSelected}
         />
         {['store', 'elements'].includes(tabSelected) && (
@@ -78,6 +91,7 @@ const DevToolsPanel = ({ className, orientation = 'vertical', onChangeOrientatio
         <DevToolsBody
           orientation={orientation}
           tabSelected={tabSelected}
+          logTypeFilter={logTypeFilter}
           elementSelected={elementSelected}
           onSelectElement={handleSelectElement}
         />

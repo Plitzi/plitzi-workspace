@@ -66,6 +66,10 @@
       "types": "./dist/Element/helpers/getInteractions.d.ts",
       "import": "./dist/Element/helpers/getInteractions.mjs"
     },
+    "./Element/helpers/isVisible": {
+      "types": "./dist/Element/helpers/isVisible.d.ts",
+      "import": "./dist/Element/helpers/isVisible.mjs"
+    },
     "./Element/helpers/loadComponent": {
       "types": "./dist/Element/helpers/loadComponent.d.ts",
       "import": "./dist/Element/helpers/loadComponent.mjs"

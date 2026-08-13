@@ -11,21 +11,33 @@ import StoreViewer from './tabs/StoreViewer';
 import TracingViewer from './tabs/TracingViewer';
 import VariablesViewer from './tabs/VariablesViewer';
 
+import type { LogType } from '@plitzi/sdk-shared';
+
 export type DevToolsBodyProps = {
   className?: string;
   tabSelected?: string;
   orientation: 'horizontal' | 'vertical';
+  logTypeFilter?: LogType;
   elementSelected?: string;
   onSelectElement: (id?: string) => void;
 };
 
-const DevToolsBody = ({ className, tabSelected, orientation, elementSelected, onSelectElement }: DevToolsBodyProps) => {
+const DevToolsBody = ({
+  className,
+  tabSelected,
+  orientation,
+  logTypeFilter,
+  elementSelected,
+  onSelectElement
+}: DevToolsBodyProps) => {
   const { logs, clearLogs } = use(DevToolsContext);
 
   return (
     <div className={clsx('flex h-full w-full grow overflow-auto bg-white dark:bg-zinc-900', className)}>
       <div className="flex w-full flex-col">
-        {tabSelected === 'logs' && <Logs items={logs} orientation={orientation} onClear={clearLogs} />}
+        {tabSelected === 'logs' && (
+          <Logs items={logs} orientation={orientation} logTypeFilter={logTypeFilter} onClear={clearLogs} />
+        )}
         {tabSelected === 'store' && <StoreViewer elementSelected={elementSelected} />}
         {tabSelected === 'history' && <HistoryViewer />}
         {tabSelected === 'variables' && <VariablesViewer />}

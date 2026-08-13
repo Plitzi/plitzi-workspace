@@ -4,7 +4,9 @@ import type { ElementInteraction } from './SchemaTypes';
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 
 export type InteractionCallbackType = 'trigger' | 'globalCallback' | 'callback' | 'utility';
-export type InteractionStatus = 'completed' | 'skipped';
+// `failed` means the flow ran to the end but at least one of its steps did: a flow does not abort on a failed step,
+// so the aggregate status reports the worst outcome rather than the fact that the traversal finished.
+export type InteractionStatus = 'completed' | 'skipped' | 'failed';
 export type InteractionNodeStatus = 'success' | 'failed' | 'skipped' | 'disabled';
 
 export type InteractionPostCallback<T extends Record<string, unknown> = Record<string, unknown>> = (

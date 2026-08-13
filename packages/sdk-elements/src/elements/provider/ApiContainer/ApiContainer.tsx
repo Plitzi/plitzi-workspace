@@ -89,7 +89,7 @@ const ApiContainer = ({
   const {
     id,
     idRef,
-    elementState,
+    visible,
     definition: { label = 'Api Container', runtime }
   } = useElement();
   // A server-driven provider gets its data through the RSC payload: the request — and the credential behind it —
@@ -146,7 +146,9 @@ const ApiContainer = ({
   }, [headers, accessToken]);
 
   const apiEnabled = useMemo(() => {
-    if (serverMode || elementState.visibility === false) {
+    // `visible` is the whole ancestor chain, not just this provider's own state: a provider inside a hidden tab or
+    // step is still mounted, and without this it kept requesting for a branch nobody is looking at.
+    if (serverMode || !visible) {
       return false;
     }
 
@@ -163,7 +165,7 @@ const ApiContainer = ({
     }
 
     return false;
-  }, [serverMode, elementState.visibility, previewMode, queryCompiled, when, routeParams, queryParams, mockData]);
+  }, [serverMode, visible, previewMode, queryCompiled, when, routeParams, queryParams, mockData]);
 
   const {
     isLoading: isApiLoading,

@@ -23,7 +23,7 @@ import type {
   BuilderMutationsMap,
   BuilderNetworkContextValue,
   BuilderQueriesMap,
-  BuilderSubscriptionsMap,
+  SpaceEventMap,
   DropPosition,
   Element,
   PageFolder,
@@ -66,7 +66,7 @@ const SchemaContextProvider = ({
   const { mutate, subscriptionManager } = use(NetworkContext) as BuilderNetworkContextValue<
     BuilderQueriesMap,
     BuilderMutationsMap,
-    BuilderSubscriptionsMap
+    SpaceEventMap
   >;
   useBuilderStoreSync('schema', schema);
   const getSchemaFlat = useBuilderStoreGetter('schema.flat');
@@ -268,148 +268,37 @@ const SchemaContextProvider = ({
   );
 
   useEffect(() => {
-    if (includeSubscriptions) {
-      // Pages
+    if (!includeSubscriptions) {
+      return undefined;
+    }
 
-      subscriptionManager.subscribe('SpaceAddPage', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
+    // Pages
+    subscriptionManager.subscribe('SPACE_ADD_PAGE', ({ page }) => void schemaAddPage(page, true));
+    subscriptionManager.subscribe('SPACE_SET_HOME_PAGE', ({ page }) => schemaHomePage(page.id, true));
+    subscriptionManager.subscribe('SPACE_UPDATE_PAGE', ({ page }) => schemaUpdatePage(page, true));
+    subscriptionManager.subscribe('SPACE_REMOVE_PAGE', ({ pageId }) => schemaRemovePage(pageId, true));
 
-        const { page } = get(data, 'data.SpaceAddPage', {}) as BuilderSubscriptionsMap['SpaceAddPage'];
-        void schemaAddPage(page, true);
-      });
+    // Page Folders
+    subscriptionManager.subscribe(
+      'SPACE_ADD_PAGE_FOLDER',
+      ({ pageFolder }) => void schemaAddPageFolder(pageFolder, true)
+    );
+    subscriptionManager.subscribe('SPACE_UPDATE_PAGE_FOLDER', ({ pageFolder }) =>
+      schemaUpdatePageFolder(pageFolder, true)
+    );
+    subscriptionManager.subscribe('SPACE_REMOVE_PAGE_FOLDER', ({ pageFolderId }) =>
+      schemaRemovePageFolder(pageFolderId, true)
+    );
 
-      subscriptionManager.subscribe('SpaceHomePage', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
+    // Variables
+    subscriptionManager.subscribe('SPACE_ADD_VARIABLE', ({ variable }) => schemaAddVariable(variable, true));
+    subscriptionManager.subscribe('SPACE_UPDATE_VARIABLE', ({ variable }) => schemaUpdateVariable(variable, true));
+    subscriptionManager.subscribe('SPACE_REMOVE_VARIABLE', ({ name }) => schemaRemoveVariable(name, true));
 
-        const { page } = get(data, 'data.SpaceHomePage', {}) as BuilderSubscriptionsMap['SpaceHomePage'];
-        schemaHomePage(page.id, true);
-      });
-
-      subscriptionManager.subscribe('SpaceUpdatePage', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { page } = get(data, 'data.SpaceUpdatePage', {}) as BuilderSubscriptionsMap['SpaceUpdatePage'];
-        schemaUpdatePage(page, true);
-      });
-
-      subscriptionManager.subscribe('SpaceRemovePage', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { pageId } = get(data, 'data.SpaceRemovePage', {}) as BuilderSubscriptionsMap['SpaceRemovePage'];
-        schemaRemovePage(pageId, true);
-      });
-
-      // Page Folders
-
-      subscriptionManager.subscribe('SpaceAddPageFolder', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { pageFolder } = get(
-          data,
-          'data.SpaceAddPageFolder',
-          {}
-        ) as BuilderSubscriptionsMap['SpaceAddPageFolder'];
-        void schemaAddPageFolder(pageFolder, true);
-      });
-
-      subscriptionManager.subscribe('SpaceUpdatePageFolder', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { pageFolder } = get(
-          data,
-          'data.SpaceUpdatePageFolder',
-          {}
-        ) as BuilderSubscriptionsMap['SpaceUpdatePageFolder'];
-        schemaUpdatePageFolder(pageFolder, true);
-      });
-
-      subscriptionManager.subscribe('SpaceRemovePageFolder', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { pageFolderId } = get(
-          data,
-          'data.SpaceRemovePageFolder',
-          {}
-        ) as BuilderSubscriptionsMap['SpaceRemovePageFolder'];
-        schemaRemovePageFolder(pageFolderId, true);
-      });
-
-      // Variables
-
-      subscriptionManager.subscribe('SpaceAddVariable', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { variable } = get(data, 'data.SpaceAddVariable', {}) as BuilderSubscriptionsMap['SpaceAddVariable'];
-        schemaAddVariable(variable, true);
-      });
-
-      subscriptionManager.subscribe('SpaceUpdateVariable', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { variable } = get(
-          data,
-          'data.SpaceUpdateVariable',
-          {}
-        ) as BuilderSubscriptionsMap['SpaceUpdateVariable'];
-        schemaUpdateVariable(variable, true);
-      });
-
-      subscriptionManager.subscribe('SpaceRemoveVariable', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { name } = get(data, 'data.SpaceRemoveVariable', {}) as BuilderSubscriptionsMap['SpaceRemoveVariable'];
-        schemaRemoveVariable(name, true);
-      });
-
-      // Others
-
-      subscriptionManager.subscribe('SpaceUpdateSettings', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { value, path } = get(
-          data,
-          'data.SpaceUpdateSettings',
-          {}
-        ) as BuilderSubscriptionsMap['SpaceUpdateSettings'];
-        schemaUpdateSettings(value, path, true);
-      });
-
-      // Elements
-
-      subscriptionManager.subscribe('SpaceAddElement', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const {
-          element,
-          to,
-          dropPosition,
-          initialItems = [],
-          variables = []
-        } = get(data, 'data.SpaceAddElement', {}) as BuilderSubscriptionsMap['SpaceAddElement'];
+    // Elements
+    subscriptionManager.subscribe(
+      'SPACE_ADD_ELEMENT',
+      ({ element, to, dropPosition, initialItems = [], variables = [] }) =>
         schemaAddElement(
           to,
           element,
@@ -417,98 +306,34 @@ const SchemaContextProvider = ({
           initialItems.reduce((acum, item) => ({ ...acum, [item.id]: item }), {}),
           variables,
           true
-        );
-      });
+        )
+    );
+    subscriptionManager.subscribe('SPACE_UPDATE_ELEMENT', ({ element }) => schemaUpdateElement(element, true));
+    subscriptionManager.subscribe('SPACE_UPDATE_ELEMENTS', ({ elements }) => schemaUpdateElements(elements, true));
+    subscriptionManager.subscribe('SPACE_REMOVE_ELEMENT', ({ elementId }) => schemaRemoveElement(elementId, true));
+    subscriptionManager.subscribe('SPACE_MOVE_ELEMENT', ({ from, to, elementId, dropPosition }) =>
+      schemaMoveElement(from, to, elementId, dropPosition, true)
+    );
+    subscriptionManager.subscribe('SPACE_CLONE_ELEMENT', ({ element, to, dropPosition, initialItems = [] }) =>
+      // @todo: the server does not send the clone's variables yet
+      schemaAddElement(
+        to,
+        element,
+        dropPosition,
+        initialItems.reduce((acum, item) => ({ ...acum, [item.id]: item }), {}),
+        [],
+        true
+      )
+    );
 
-      subscriptionManager.subscribe('SpaceUpdateElement', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { element } = get(data, 'data.SpaceUpdateElement', {}) as BuilderSubscriptionsMap['SpaceUpdateElement'];
-        schemaUpdateElement(element, true);
-      });
-
-      subscriptionManager.subscribe('SpaceUpdateElements', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { elements } = get(
-          data,
-          'data.SpaceUpdateElements',
-          {}
-        ) as BuilderSubscriptionsMap['SpaceUpdateElements'];
-        schemaUpdateElements(elements, true);
-      });
-
-      subscriptionManager.subscribe('SpaceRemoveElement', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { elementId } = get(data, 'data.SpaceRemoveElement', {}) as BuilderSubscriptionsMap['SpaceRemoveElement'];
-        schemaRemoveElement(elementId, true);
-      });
-
-      subscriptionManager.subscribe('SpaceMoveElement', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { from, to, elementId, dropPosition } = get(
-          data,
-          'data.SpaceMoveElement',
-          {}
-        ) as BuilderSubscriptionsMap['SpaceMoveElement'];
-        schemaMoveElement(from, to, elementId, dropPosition, true);
-      });
-
-      subscriptionManager.subscribe('SpaceCloneElement', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const {
-          element,
-          to,
-          dropPosition,
-          initialItems = []
-        } = get(data, 'data.SpaceCloneElement', {}) as BuilderSubscriptionsMap['SpaceCloneElement'];
-        schemaAddElement(
-          to,
-          element,
-          dropPosition,
-          initialItems.reduce((acum, item) => ({ ...acum, [item.id]: item }), {}),
-          [], // variables, @todo: implement this in the server
-          true
-        );
-      });
-
-      // Others
-
-      subscriptionManager.subscribe('SpaceUpdated', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { schema } = get(data, 'data.SpaceUpdated', {}) as BuilderSubscriptionsMap['SpaceUpdated'];
-        schemaUpdate(schema, true);
-      });
-
-      subscriptionManager.subscribe('SpaceAddTemplate', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const {
-          element,
-          style,
-          to,
-          dropPosition,
-          initialItems = [],
-          variables = []
-        } = get(data, 'data.SpaceAddTemplate', {}) as BuilderSubscriptionsMap['SpaceAddTemplate'];
+    // Others
+    subscriptionManager.subscribe('SPACE_UPDATED', ({ schema }) => schemaUpdate(schema, true));
+    subscriptionManager.subscribe('SPACE_UPDATE_SETTINGS', ({ value, path }) =>
+      schemaUpdateSettings(value, path, true)
+    );
+    subscriptionManager.subscribe(
+      'SPACE_ADD_TEMPLATE',
+      ({ element, style, to, dropPosition, initialItems = [], variables = [] }) =>
         schemaAddTemplate(
           to,
           element,
@@ -517,34 +342,31 @@ const SchemaContextProvider = ({
           style,
           variables,
           true
-        );
-      });
-    }
+        )
+    );
 
     return () => {
-      if (includeSubscriptions) {
-        subscriptionManager.unsubscribe([
-          'SpaceAddPage',
-          'SpaceHomePage',
-          'SpaceUpdatePage',
-          'SpaceRemovePage',
-          'SpaceAddPageFolder',
-          'SpaceUpdatePageFolder',
-          'SpaceRemovePageFolder',
-          'SpaceAddVariable',
-          'SpaceUpdateVariable',
-          'SpaceRemoveVariable',
-          'SpaceUpdateSettings',
-          'SpaceAddElement',
-          'SpaceUpdateElement',
-          'SpaceUpdateElements',
-          'SpaceRemoveElement',
-          'SpaceMoveElement',
-          'SpaceCloneElement',
-          'SpaceUpdated',
-          'SpaceAddTemplate'
-        ]);
-      }
+      subscriptionManager.unsubscribe([
+        'SPACE_ADD_PAGE',
+        'SPACE_SET_HOME_PAGE',
+        'SPACE_UPDATE_PAGE',
+        'SPACE_REMOVE_PAGE',
+        'SPACE_ADD_PAGE_FOLDER',
+        'SPACE_UPDATE_PAGE_FOLDER',
+        'SPACE_REMOVE_PAGE_FOLDER',
+        'SPACE_ADD_VARIABLE',
+        'SPACE_UPDATE_VARIABLE',
+        'SPACE_REMOVE_VARIABLE',
+        'SPACE_UPDATE_SETTINGS',
+        'SPACE_ADD_ELEMENT',
+        'SPACE_UPDATE_ELEMENT',
+        'SPACE_UPDATE_ELEMENTS',
+        'SPACE_REMOVE_ELEMENT',
+        'SPACE_MOVE_ELEMENT',
+        'SPACE_CLONE_ELEMENT',
+        'SPACE_UPDATED',
+        'SPACE_ADD_TEMPLATE'
+      ]);
     };
   }, [
     subscriptionManager,

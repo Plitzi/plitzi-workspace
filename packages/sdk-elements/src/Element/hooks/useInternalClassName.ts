@@ -1,6 +1,8 @@
 import clsx from 'clsx';
 import { useMemo } from 'react';
 
+import { isVisible } from '../helpers/isVisible';
+
 import type { Element, ElementLayout } from '@plitzi/sdk-shared';
 
 export type UseInternalClassNameProps = {
@@ -23,14 +25,14 @@ const useInternalClassName = ({
   elementState
 }: UseInternalClassNameProps) => {
   const { items } = definition;
-  const visibility = elementState.visibility as boolean | string;
+  const visible = isVisible(elementState.visibility);
 
   return useMemo(
     () =>
       clsx(
         className,
         {
-          'plitzi-component--hidden': visibility === false || visibility === 'false',
+          'plitzi-component--hidden': !visible,
           'plitzi-component': !previewMode && !plitziElementLayout,
           'plitzi-component--layout': !previewMode && !!plitziElementLayout,
           with__container: !previewMode && !!items,
@@ -40,7 +42,7 @@ const useInternalClassName = ({
         },
         definition.styleSelectors.base
       ),
-    [className, visibility, previewMode, plitziElementLayout, items, baseElementId, id, definition.styleSelectors.base]
+    [className, visible, previewMode, plitziElementLayout, items, baseElementId, id, definition.styleSelectors.base]
   );
 };
 

@@ -127,3 +127,73 @@ describe('a step wired to something that does not exist', () => {
     warning.mockRestore();
   });
 });
+
+/**
+ * The flow's own entry used to read `completed` as soon as the traversal finished, whatever its steps did — so a
+ * broken step showed up as a green badge with the failure buried in a separate entry.
+ */
+describe('the status a flow reports', () => {
+  const logStatus = (call: unknown[] | undefined) => (call?.[2] as { status: string } | undefined)?.status;
+
+  it('is failed when a step throws', async () => {
+    const manager = new InteractionsManager('page1');
+    const info = vi.spyOn(pConsole, 'info').mockImplementation(() => undefined);
+    const danger = vi.spyOn(pConsole, 'danger').mockImplementation(() => undefined);
+
+    manager.subscribe('el1', makeInteractions('el1', 'click', 'boom'), triggerDef, {
+      boom: {
+        action: 'boom',
+        title: 'Boom',
+        type: 'callback',
+        callback: () => {
+          throw new Error('boom');
+        },
+        params: {}
+      }
+    });
+
+    await manager.interactionTrigger('el1', 'click', {});
+
+    expect(logStatus(danger.mock.calls.at(-1))).toBe('failed');
+    expect(info).not.toHaveBeenCalled();
+
+    info.mockRestore();
+    danger.mockRestore();
+  });
+
+  it('is failed when a step names a callback nothing registered', async () => {
+    const manager = new InteractionsManager('page1');
+    const info = vi.spyOn(pConsole, 'info').mockImplementation(() => undefined);
+    const danger = vi.spyOn(pConsole, 'danger').mockImplementation(() => undefined);
+    vi.spyOn(pConsole, 'warning').mockImplementation(() => undefined);
+
+    manager.subscribe('el1', makeInteractions('el1', 'click', 'authLogin'), triggerDef, {
+      login: { action: 'authLogin', title: 'Auth Login', type: 'callback', callback: vi.fn(), params: {} }
+    });
+
+    await manager.interactionTrigger('el1', 'click', {});
+
+    expect(logStatus(danger.mock.calls.at(-1))).toBe('failed');
+    expect(info).not.toHaveBeenCalled();
+
+    vi.restoreAllMocks();
+  });
+
+  it('is completed when every step resolves', async () => {
+    const manager = new InteractionsManager('page1');
+    const info = vi.spyOn(pConsole, 'info').mockImplementation(() => undefined);
+    const danger = vi.spyOn(pConsole, 'danger').mockImplementation(() => undefined);
+
+    manager.subscribe('el1', makeInteractions('el1', 'click', 'login'), triggerDef, {
+      login: { action: 'login', title: 'Auth Login', type: 'callback', callback: vi.fn(), params: {} }
+    });
+
+    await manager.interactionTrigger('el1', 'click', {});
+
+    expect(logStatus(info.mock.calls.at(-1))).toBe('completed');
+    expect(danger).not.toHaveBeenCalled();
+
+    info.mockRestore();
+    danger.mockRestore();
+  });
+});

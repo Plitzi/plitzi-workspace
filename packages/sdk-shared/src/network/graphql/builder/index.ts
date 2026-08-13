@@ -1,9 +1,9 @@
 import BuilderMutations from './Mutations';
 import BuilderQueries from './Queries';
-import BuilderSubscriptions from './Subscriptions';
+import SpaceEventSubscription from './Subscriptions';
 
 export * from './Queries';
 export * from './Mutations';
 export * from './Subscriptions';
 
-export { BuilderQueries, BuilderMutations, BuilderSubscriptions };
+export { BuilderQueries, BuilderMutations, SpaceEventSubscription };

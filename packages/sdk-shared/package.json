@@ -949,6 +949,10 @@
       "types": "./dist/network/graphql/builder/Subscriptions/Space/variables/SpaceUpdateVariableSubscription.d.ts",
       "import": "./dist/network/graphql/builder/Subscriptions/Space/variables/SpaceUpdateVariableSubscription.mjs"
     },
+    "./network/graphql/builder/Subscriptions/SpaceEventSubscription": {
+      "types": "./dist/network/graphql/builder/Subscriptions/SpaceEventSubscription.d.ts",
+      "import": "./dist/network/graphql/builder/Subscriptions/SpaceEventSubscription.mjs"
+    },
     "./network/graphql/builder/Subscriptions/Style/StyleUpdateSettingsSubscription": {
       "types": "./dist/network/graphql/builder/Subscriptions/Style/StyleUpdateSettingsSubscription.d.ts",
       "import": "./dist/network/graphql/builder/Subscriptions/Style/StyleUpdateSettingsSubscription.mjs"
@@ -1076,6 +1080,10 @@
     "./network/index": {
       "types": "./dist/network/index.d.ts",
       "import": "./dist/network/index.mjs"
+    },
+    "./network/spaceEvents": {
+      "types": "./dist/network/spaceEvents.d.ts",
+      "import": "./dist/network/spaceEvents.mjs"
     },
     "./schema": {
       "types": "./dist/schema/index.d.ts",

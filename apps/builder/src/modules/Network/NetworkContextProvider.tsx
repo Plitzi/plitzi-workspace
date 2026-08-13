@@ -22,7 +22,7 @@ import type {
   Environment,
   BuilderQueriesMap,
   BuilderMutationsMap,
-  BuilderSubscriptionsMap,
+  SpaceEventMap,
   NetworkInternalContextValue
 } from '@plitzi/sdk-shared';
 import type { DocumentNode } from 'graphql';
@@ -237,9 +237,7 @@ const NetworkContextProvider = ({
 
   const subscriptionManager = useSubscriptionsManager({ client, environment, onMessage: handleMessage });
 
-  const networkValue = useMemo<
-    BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap, BuilderSubscriptionsMap>
-  >(
+  const networkValue = useMemo<BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap, SpaceEventMap>>(
     () => ({
       mutate,
       query,

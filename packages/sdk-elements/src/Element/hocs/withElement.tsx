@@ -8,6 +8,7 @@ import { useCommonStore } from '@plitzi/sdk-shared/store';
 import { diffProps, tracingCollector } from '@plitzi/sdk-shared/store/tracing';
 
 import ElementContext from '../ElementContext';
+import { isVisible } from '../helpers/isVisible';
 import { omitKeys } from '../helpers/omitKeys';
 import useElementInternal from '../hooks/useElementInternal';
 
@@ -37,9 +38,14 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     // Declared unconditionally (hooks rules) even though only the debug branch reads it.
     const prevInputsRef = useRef<Record<string, unknown> | undefined>(undefined);
     const { id, rootId } = props.internalProps;
+    // The enclosing element context is this element's real render-tree parent (nests across schemas/rootIds). Read
+    // before the skipHOC branch so both branches keep the visibility chain going: a skipHOC element resolves no state
+    // of its own, but its descendants still have to see that an ancestor hid them.
+    const parentElement = use(ElementContext) as ElementContextValue | undefined;
+    const parentVisible = parentElement?.visible ?? true;
     const skipEntry = useMemo<ElementContextValue<'skipHOC'>>(
-      () => ({ id, rootId, plitziJsxSkipHOC: true }),
-      [id, rootId]
+      () => ({ id, rootId, visible: parentVisible, plitziJsxSkipHOC: true }),
+      [id, rootId, parentVisible]
     );
 
     if (props.plitziJsxSkipHOC) {
@@ -50,8 +56,6 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       );
     }
 
-    // The enclosing element context is this element's real render-tree parent (nests across schemas/rootIds).
-    const parentElement = use(ElementContext) as ElementContextValue | undefined;
     const {
       settings: { previewMode, debugMode },
       root: { baseElementId }
@@ -73,9 +77,21 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     useEventBridge('element', eventCallbacks);
 
     const idRef = element.idRef;
+    const visible = parentVisible && isVisible(elementState.visibility);
     const elementData = useMemo<ElementContextValue>(
-      () => ({ id, idRef, rootId, attributes, definition, plitziElementLayout, style, elementState, setElementState }),
-      [attributes, definition, elementState, id, idRef, plitziElementLayout, rootId, style, setElementState]
+      () => ({
+        id,
+        idRef,
+        rootId,
+        visible,
+        attributes,
+        definition,
+        plitziElementLayout,
+        style,
+        elementState,
+        setElementState
+      }),
+      [attributes, definition, elementState, id, idRef, plitziElementLayout, rootId, style, setElementState, visible]
     );
 
     const content = useMemo(() => {

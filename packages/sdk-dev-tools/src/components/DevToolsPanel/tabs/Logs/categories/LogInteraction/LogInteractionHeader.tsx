@@ -1,10 +1,11 @@
 import LogStatus from '../../LogStatus';
 
+import type { InteractionStatus } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type LogInteractionHeaderProps = {
   className?: string;
-  status: string;
+  status: InteractionStatus;
   message?: ReactNode;
   time?: string;
 };
@@ -14,6 +15,7 @@ const LogInteractionHeader = ({ status, message, time }: LogInteractionHeaderPro
     <div className="flex w-full items-center gap-2 overflow-hidden">
       <span className="shrink-0 font-mono text-zinc-400 tabular-nums dark:text-zinc-500">{time}</span>
       {status === 'completed' && <LogStatus logType="success">Completed</LogStatus>}
+      {status === 'failed' && <LogStatus logType="danger">Failed</LogStatus>}
       {status === 'skipped' && (
         <LogStatus logType="custom" iconClassName="fa-solid fa-forward-step">
           Skipped

@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createContext } from 'react';
 
 import type { Environment, Server } from '../types';
-import type { ApolloClient, ApolloLink, FetchPolicy, Observable } from '@apollo/client/core';
+import type { FetchPolicy } from '@apollo/client/core';
 
 type NetworkContextValueBase<
   Q extends Record<string, unknown> = Record<string, unknown>,
@@ -34,13 +33,11 @@ export type NetworkContextValueBuilder<
   S extends Record<string, unknown> = Record<string, unknown>
 > = NetworkContextValueBase<Q, M> & {
   instanceId: string;
+  // Registering interest in an event, not opening a subscription: the whole space arrives on one stream, so `S` is
+  // the map of event names to the payload each one carries.
   subscriptionManager: {
-    subscribe: <T extends keyof S>(
-      subscriptionKey: T,
-      variables: Record<string, unknown>,
-      callback: (result: ApolloClient.SubscribeResult<S[T]>) => void
-    ) => false | Observable<ApolloLink.Result<any>> | null;
-    unsubscribe: (subscriptionKey: keyof S | (keyof S)[]) => void;
+    subscribe: <T extends keyof S>(event: T, callback: (payload: S[T]) => void) => boolean;
+    unsubscribe: (event: keyof S | (keyof S)[]) => void;
     stop: () => void;
   };
 };

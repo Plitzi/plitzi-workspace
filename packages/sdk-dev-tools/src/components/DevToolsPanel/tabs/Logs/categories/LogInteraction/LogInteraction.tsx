@@ -27,6 +27,7 @@ const LogInteraction = ({
   params: { elementId, elementRef, status, node, nodes, startTime = 0, endTime = 0 }
 }: LogInteractionProps) => {
   const duration = useMemo(() => `${getDurationMs(startTime, endTime)}ms`, [startTime, endTime]);
+  const nodesFailed = Object.values(nodes).filter(node => node.status === 'failed').length;
   const nodesSkipped = Object.values(nodes).filter(node => node.status === 'skipped').length;
   const nodesDisabled = Object.values(nodes).filter(node => node.status === 'disabled').length;
 
@@ -34,7 +35,11 @@ const LogInteraction = ({
     <ContainerCollapsable
       className={clsx(
         'last:border-b-none w-full border-b border-l-2 border-b-zinc-200 px-2 py-1 transition-colors hover:bg-zinc-50 dark:border-b-zinc-700 dark:hover:bg-zinc-800/50',
-        { 'border-l-emerald-500': status === 'completed', 'border-l-red-500': status === 'skipped' }
+        {
+          'border-l-emerald-500': status === 'completed',
+          'border-l-red-500': status === 'failed',
+          'border-l-zinc-300 dark:border-l-zinc-600': status === 'skipped'
+        }
       )}
       collapsed
     >
@@ -46,12 +51,17 @@ const LogInteraction = ({
         iconExpanded={iconExpanded}
       >
         <div className="flex gap-3 text-zinc-400 dark:text-zinc-500">
-          {status === 'completed' && !!nodesSkipped && (
+          {!!nodesFailed && (
+            <LogStatusIcon logType="danger" title="Failed">
+              {nodesFailed}
+            </LogStatusIcon>
+          )}
+          {status !== 'skipped' && !!nodesSkipped && (
             <LogStatusIcon logType="warning" title="Skipped">
               {nodesSkipped}
             </LogStatusIcon>
           )}
-          {status === 'completed' && !!nodesDisabled && (
+          {status !== 'skipped' && !!nodesDisabled && (
             <LogStatusIcon logType="custom" iconClassName="fa-solid fa-ban" title="Disabled">
               {nodesDisabled}
             </LogStatusIcon>

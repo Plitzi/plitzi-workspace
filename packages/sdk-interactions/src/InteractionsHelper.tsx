@@ -220,18 +220,16 @@ const flowCallbacks = async (
 const storeLog = (
   triggerNode: ElementInteraction,
   startTime: number,
-  nodes = {},
+  nodes: Record<string, InteractionNode> = {},
   status: InteractionStatus,
   elementRef?: string
 ) => {
   const endTime = pConsole.getTime().valueOf();
-  let nodeStatus = 'skipped';
-  if (status === 'completed') {
-    nodeStatus = 'success';
-  }
+  // The trigger itself only fails to run when it is skipped; a step failing further down the flow says nothing
+  // about whether the trigger fired.
+  const nodeStatus: InteractionNodeStatus = status === 'skipped' ? 'skipped' : 'success';
 
-  pConsole.info(
-    'interactions',
+  const message = (
     <span>
       Interaction triggered <b>{`${triggerNode.title} [${triggerNode.action}]`}</b>
       {elementRef ? (
@@ -240,34 +238,48 @@ const storeLog = (
           <b>{elementRef}</b>
         </>
       ) : null}
-    </span>,
-    {
-      status,
-      node: triggerNode,
-      elementId: triggerNode.elementId,
-      /**
-       * The element the interaction actually ran ON, which is not `node.elementId`: that one carries the SOURCE for
-       * a global callback or a utility, so for those it names `space` or `state` rather than anything on the page.
-       * Without this, two entries reading `[onLoad]` were indistinguishable — same title, same action, and no way
-       * to tell whether one element fired twice or two elements fired once.
-       */
-      elementRef,
-      nodes: {
-        ...nodes,
-        [triggerNode.id]: {
-          node: triggerNode,
-          status: nodeStatus,
-          result: undefined,
-          postCallbacks: [],
-          startTime,
-          endTime
-        }
-      },
-      startTime,
-      endTime
-    }
+    </span>
   );
+
+  const params = {
+    status,
+    node: triggerNode,
+    elementId: triggerNode.elementId,
+    /**
+     * The element the interaction actually ran ON, which is not `node.elementId`: that one carries the SOURCE for
+     * a global callback or a utility, so for those it names `space` or `state` rather than anything on the page.
+     * Without this, two entries reading `[onLoad]` were indistinguishable — same title, same action, and no way
+     * to tell whether one element fired twice or two elements fired once.
+     */
+    elementRef,
+    nodes: {
+      ...nodes,
+      [triggerNode.id]: {
+        node: triggerNode,
+        status: nodeStatus,
+        result: undefined,
+        postCallbacks: [],
+        startTime,
+        endTime
+      }
+    },
+    startTime,
+    endTime
+  };
+
+  if (status === 'failed') {
+    pConsole.danger('interactions', message, params);
+
+    return;
+  }
+
+  pConsole.info('interactions', message, params);
 };
+
+// A flow does not stop at a failed step, so its outcome is the worst status any of its steps reported. Without
+// this the entry read `completed` whenever the traversal finished, which is exactly what hides a broken step.
+const flowStatus = (nodes: Record<string, InteractionNode>): InteractionStatus =>
+  Object.values(nodes).some(({ status }) => status === 'failed') ? 'failed' : 'completed';
 
 const flowTrigger = async (
   triggerNode: ElementInteraction,
@@ -295,7 +307,7 @@ const flowTrigger = async (
     globalParams,
     postCallbacksTotal
   );
-  storeLog(triggerNode, startTime, nodesProcessed, 'completed', elementRef);
+  storeLog(triggerNode, startTime, nodesProcessed, flowStatus(nodesProcessed), elementRef);
 };
 
 // eslint-disable-next-line react-refresh/only-export-components

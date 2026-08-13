@@ -5,6 +5,7 @@ import type { ElementContextValue } from '../Element/ElementContext';
 const elementEntry = (id: string, overrides: Partial<ElementContextValue> = {}): ElementContextValue => ({
   id,
   rootId: 'root',
+  visible: true,
   attributes: {},
   definition: { rootId: 'root', label: id, type: '', styleSelectors: { base: '' } },
   elementState: {},

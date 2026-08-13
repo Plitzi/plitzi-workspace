@@ -1,15 +1,16 @@
 import ContainerShadow from '@plitzi/plitzi-ui/ContainerShadow';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import clsx from 'clsx';
-import { useCallback, use, useRef } from 'react';
+import { useCallback, use, useRef, useState } from 'react';
 
 import { DevStoreScopeContext } from '@plitzi/nexus/react';
 import { ThemeContext } from '@plitzi/sdk-shared';
 
-import DevToolsPanel from './components/DevToolsPanel';
+import DevToolsOverlay from './components/DevToolsOverlay';
 import DevToolsContextProvider from './DevToolsContextProvider';
 import { useIsSelectedInstance } from './instanceRegistry';
 
+import type { LogType } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type Orientation = 'horizontal' | 'vertical';
@@ -42,6 +43,11 @@ const DevToolsContainer = ({
 }: DevToolsContainerProps) => {
   const { theme } = use(ThemeContext);
   const [orientation, setOrientation] = useStorage<Orientation>('plitzi-sdk.dev-tools.orientation', 'horizontal');
+  const [collapsed, setCollapsed] = useStorage('plitzi-sdk.dev-tools.collapsed', true);
+  const [tabSelected, setTabSelected] = useStorage('plitzi-sdk.dev-tools.tab', 'logs');
+  // Which filter the Logs tab opens on. Lives here because the indicator — outside the panel — is what asks for it,
+  // and it is dropped as soon as the user picks a tab themselves.
+  const [logTypeFilter, setLogTypeFilter] = useState<LogType | undefined>();
   const fallbackIdRef = useRef<string>(undefined);
   if (!fallbackIdRef.current) {
     fallbackIdRef.current = `sdk-instance-${++fallbackInstanceSeq}`;
@@ -54,6 +60,28 @@ const DevToolsContainer = ({
   const handleChangeOrientation = useCallback(
     (orientation: Orientation) => setOrientation(orientation),
     [setOrientation]
+  );
+
+  const handleOpen = useCallback(
+    (logType?: LogType) => {
+      if (logType) {
+        setTabSelected('logs');
+      }
+
+      setLogTypeFilter(logType);
+      setCollapsed(false);
+    },
+    [setCollapsed, setTabSelected]
+  );
+
+  const handleCollapse = useCallback(() => setCollapsed(true), [setCollapsed]);
+
+  const handleTabSelect = useCallback(
+    (tab: string) => {
+      setLogTypeFilter(undefined);
+      setTabSelected(tab);
+    },
+    [setTabSelected]
   );
 
   if (!enabled) {
@@ -75,16 +103,31 @@ const DevToolsContainer = ({
       {isSelected && (
         <DevToolsContextProvider>
           {renderMode === 'default' && (
-            <DevToolsPanel orientation={orientation} onChangeOrientation={handleChangeOrientation} />
+            <DevToolsOverlay
+              collapsed={collapsed}
+              orientation={orientation}
+              tabSelected={tabSelected}
+              logTypeFilter={logTypeFilter}
+              onOpen={handleOpen}
+              onCollapse={handleCollapse}
+              onTabSelect={handleTabSelect}
+              onChangeOrientation={handleChangeOrientation}
+            />
           )}
           {renderMode === 'shadow' && (
             <ContainerShadow>
               {devToolsStyleLink && <ContainerShadow.Link href={devToolsStyleLink} />}
               <ContainerShadow.Content>
                 <style dangerouslySetInnerHTML={{ __html: devToolsStyle }} />
-                <DevToolsPanel
+                <DevToolsOverlay
                   className={clsx({ dark: theme === 'dark' })}
+                  collapsed={collapsed}
                   orientation={orientation}
+                  tabSelected={tabSelected}
+                  logTypeFilter={logTypeFilter}
+                  onOpen={handleOpen}
+                  onCollapse={handleCollapse}
+                  onTabSelect={handleTabSelect}
                   onChangeOrientation={handleChangeOrientation}
                 />
               </ContainerShadow.Content>
