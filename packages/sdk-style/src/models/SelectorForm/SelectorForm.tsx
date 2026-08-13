@@ -1,6 +1,6 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import Form, { useForm, useFormWatch } from '@plitzi/plitzi-ui/Form';
-import { capitalize } from '@plitzi/plitzi-ui/helpers/lodash';
+import { capitalize } from '@plitzi/plitzi-ui/helpers/lodash/index.js';
 import { useCallback, useMemo } from 'react';
 import { z } from 'zod';
 

@@ -1,4 +1,4 @@
-import { set } from '@plitzi/plitzi-ui/helpers/lodash';
+import { set } from '@plitzi/plitzi-ui/helpers/lodash/index.js';
 
 import type { DataSourceUtility, DataSourceUtilityParamsValue, Element, Style, StyleItem } from '../../types';
 

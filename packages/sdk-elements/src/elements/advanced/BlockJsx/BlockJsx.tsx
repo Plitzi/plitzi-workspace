@@ -1,4 +1,4 @@
-import { omit } from '@plitzi/plitzi-ui/helpers/lodash';
+import { omit } from '@plitzi/plitzi-ui/helpers/lodash/index.js';
 import clsx from 'clsx';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 
