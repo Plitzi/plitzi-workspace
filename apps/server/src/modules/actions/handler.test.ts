@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { handleAction } from './handler';
 
 import type { ConnectorManifest } from '../connectors/types';
-import type { Element, SSRRequest, SSRResponseHelpers, SSRServerConfig } from '@plitzi/sdk-shared';
+import type { Element, SSRPageServerConfig, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
 
 const manifest: ConnectorManifest = {
   id: 'cms',
@@ -60,13 +60,13 @@ const buildRes = () => {
   return { res, sent };
 };
 
-const buildConfig = (element: Element | undefined): SSRServerConfig =>
+const buildConfig = (element: Element | undefined): SSRPageServerConfig =>
   ({
     adapters: {
       getOfflineData: () =>
         Promise.resolve(element ? { schema: { flat: { form1: element } } } : { schema: { flat: {} } })
     }
-  }) as unknown as SSRServerConfig;
+  }) as unknown as SSRPageServerConfig;
 
 const request = (body: unknown): SSRRequest =>
   ({

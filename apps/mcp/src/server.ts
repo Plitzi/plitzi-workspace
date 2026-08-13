@@ -14,3 +14,4 @@ export { createHttpScreenshotClient } from './modules/mcp/screenshotClient';
 export type { McpRequestOptions } from './modules/mcp/handler';
 export type { McpServerContext } from './modules/mcp/server';
 export type { PreviewClient, ScreenshotClient } from './modules/mcp/types';
+export type { McpOptions, McpProxyOptions } from './options';

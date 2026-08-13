@@ -7,7 +7,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { invalidatePluginComponentCache, loadPluginComponents } from './loadPluginComponents';
 import { createServer } from '../../core/createServer';
 
-import type { PluginEntry, SSRAdapters } from '@plitzi/sdk-shared';
+import type { PluginEntry, SSRPageAdapters } from '@plitzi/sdk-shared';
 
 let dir: string;
 
@@ -131,7 +131,7 @@ describe('page server plugin registry', () => {
     const adapters = {
       getOfflineData: () => Promise.resolve(undefined),
       getSpaceDeployment: () => Promise.resolve({ spaceId: 1, environment: 'main', revision: 0 })
-    } as unknown as SSRAdapters;
+    } as unknown as SSRPageAdapters;
     // Never listens: the registry is built by the factory, so the wiring is reachable without a socket. Nothing
     // to close either — and the cache sweep timers are unref'd, so they hold nothing open.
     const server = createServer({ adapters });

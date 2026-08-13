@@ -64,11 +64,10 @@ const startServer = (port: number, tools?: string[]): Deployment => {
     saveStyle: () => Promise.resolve()
   } as unknown as SSRAdapters;
 
-  const server = createServer({
-    httpVersion: 1,
-    adapters,
-    mcpAi: { proxy: { secret: 'deployment-secret', ...(tools ? { tools } : {}) } }
-  });
+  const server = createServer(
+    { httpVersion: 1, adapters },
+    { proxy: { secret: 'deployment-secret', ...(tools ? { tools } : {}) } }
+  );
   server.listen(port, '127.0.0.1');
 
   return { server, port, saved: () => saved };

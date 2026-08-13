@@ -4,7 +4,8 @@ import { connectionId } from './sign';
 import { DEFAULT_PROXY_TOOLS } from './types';
 
 import type { ResourceProxy, ResourceProxySettings } from './types';
-import type { SSRRequest, SSRServerConfig } from '@plitzi/sdk-shared';
+import type { McpProxyOptions } from '../../../options';
+import type { SSRRequest } from '@plitzi/sdk-shared';
 
 export const PROXY_PATH = '/__proxy';
 
@@ -14,8 +15,7 @@ const TTL_SECONDS = 60 * 60 * 24 * 7;
 /** What this deployment serves at its widget endpoint, or undefined when it serves none. A secret is what turns it
  *  on: without one the endpoint could not tell its own widgets' URLs from anyone else's, and an unsigned fetcher
  *  on a public origin is an open proxy. */
-export const proxySettings = (config: SSRServerConfig): ResourceProxySettings | undefined => {
-  const proxy = config.mcpAi?.proxy;
+export const proxySettings = (proxy: McpProxyOptions | undefined): ResourceProxySettings | undefined => {
   if (!proxy?.secret || proxy.enabled === false) {
     return undefined;
   }
@@ -41,8 +41,8 @@ const endpointOf = (settings: ResourceProxySettings, req: SSRRequest): string | 
 
 /** The proxy a tool rewrites through. The grants it mints carry the fingerprint of THIS request's credential, so
  *  they belong to this connection. */
-export const requestProxy = (config: SSRServerConfig, req: SSRRequest): ResourceProxy | undefined => {
-  const settings = proxySettings(config);
+export const requestProxy = (proxy: McpProxyOptions | undefined, req: SSRRequest): ResourceProxy | undefined => {
+  const settings = proxySettings(proxy);
   const endpoint = settings && endpointOf(settings, req);
   if (!settings || !endpoint) {
     return undefined;

@@ -178,14 +178,15 @@ const freePort = (): Promise<number> =>
 beforeAll(async () => {
   const port = await freePort();
   BASE = `http://127.0.0.1:${port}`;
-  server = createServer({
-    httpVersion: 1,
-    adapters: publicAdapters,
-    oauth: {
-      adapters: oauthAdapters,
-      guest: { target: { value: WIDGETS_ONLY_TARGET, label: 'Widgets only' } }
+  server = createServer(
+    { httpVersion: 1, adapters: publicAdapters },
+    {
+      oauth: {
+        adapters: oauthAdapters,
+        guest: { target: { value: WIDGETS_ONLY_TARGET, label: 'Widgets only' } }
+      }
     }
-  });
+  );
   server.listen(port, '127.0.0.1');
 });
 

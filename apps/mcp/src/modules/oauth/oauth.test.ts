@@ -4,7 +4,7 @@ import { createServer as createHttpProbe } from 'node:http';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { createServer } from '../../createServer';
-import { oauthGuardStage } from '../../stages/oauth';
+import { createOAuthGuardStage } from '../../stages/oauth';
 
 import type { BaseContext } from '@plitzi/sdk-server/kernel';
 import type {
@@ -130,11 +130,10 @@ const freePort = (): Promise<number> =>
 beforeAll(async () => {
   const port = await freePort();
   BASE = `http://127.0.0.1:${port}`;
-  server = createServer({
-    httpVersion: 1,
-    adapters,
-    oauth: { adapters: oauthAdapters(), guest: { target: GUEST_TARGET } }
-  });
+  server = createServer(
+    { httpVersion: 1, adapters },
+    { oauth: { adapters: oauthAdapters(), guest: { target: GUEST_TARGET } } }
+  );
   server.listen(port, '127.0.0.1');
 });
 
@@ -494,7 +493,7 @@ describe('MCP OAuth without a guest connection', () => {
   beforeAll(async () => {
     const port = await freePort();
     strictBase = `http://127.0.0.1:${port}`;
-    strictServer = createServer({ httpVersion: 1, adapters, oauth: { adapters: oauthAdapters() } });
+    strictServer = createServer({ httpVersion: 1, adapters }, { oauth: { adapters: oauthAdapters() } });
     strictServer.listen(port, '127.0.0.1');
   });
 
@@ -626,10 +625,10 @@ describe('MCP endpoint under OAuth', () => {
       ctx: {}
     } as unknown as SSRRequest;
 
-    const answered = await oauthGuardStage({
+    const answered = await createOAuthGuardStage({ adapters: oauthAdapters() })({
       req,
       res: unusedResponse,
-      config: { adapters, oauth: { adapters: oauthAdapters() } }
+      config: { adapters }
     } as unknown as BaseContext);
 
     expect(answered).toBe(false);
@@ -643,10 +642,10 @@ describe('MCP endpoint under OAuth', () => {
       const ctx = {
         req: { method: 'POST', path: '/', headers, query: {}, ctx: {} },
         res: capturingResponse(),
-        config: { adapters, oauth: { adapters: oauth } }
+        config: { adapters }
       } as unknown as BaseContext;
 
-      expect(await oauthGuardStage(ctx)).toBe(true);
+      expect(await createOAuthGuardStage({ adapters: oauth })(ctx)).toBe(true);
 
       return ctx.operation;
     };
@@ -689,10 +688,10 @@ describe('MCP endpoint under OAuth', () => {
       ctx: {}
     } as unknown as SSRRequest;
 
-    const answered = await oauthGuardStage({
+    const answered = await createOAuthGuardStage({ adapters: oauthAdapters() })({
       req,
       res: unusedResponse,
-      config: { adapters, oauth: { adapters: oauthAdapters() } }
+      config: { adapters }
     } as unknown as BaseContext);
 
     expect(answered).toBe(false);

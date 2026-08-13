@@ -12,10 +12,10 @@ import type { PluginManager } from '../../plugins/manager';
 import type {
   Environment,
   OfflineDataRaw,
+  SSRPageServerConfig,
   SSRRenderResult,
   SSRRequest,
   SSRResponseHelpers,
-  SSRServerConfig,
   SSRTemplateFn
 } from '@plitzi/sdk-shared';
 
@@ -25,7 +25,7 @@ const SSR_SENTINEL = '<!--SSR_CONTENT-->';
 export const streamBody = async (
   req: SSRRequest,
   res: SSRResponseHelpers,
-  config: SSRServerConfig,
+  config: SSRPageServerConfig,
   spaceId: number,
   environment: Environment,
   revision: number,

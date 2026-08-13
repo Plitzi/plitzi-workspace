@@ -8,7 +8,7 @@ import type {
   OfflineDataRaw,
   Schema,
   Style,
-  SSRAdapters,
+  SSRPageAdapters,
   SSRRscContext,
   SSRRscData,
   SSRSpaceDeployment
@@ -103,7 +103,7 @@ const saveOfflineData = (_spaceId: number, _environment: string, data: OfflineDa
   return Promise.resolve();
 };
 
-const adapters: SSRAdapters = {
+const adapters: SSRPageAdapters = {
   getOfflineData,
   getSpaceDeployment,
   getRscData,

@@ -7,12 +7,12 @@ import { RequestMetrics } from '../../helpers/metrics';
 
 import type { ServerCaches } from '../../helpers/cache';
 import type { PluginManager } from '../../plugins/manager';
-import type { SSRRequest, SSRResponseHelpers, SSRServerConfig, SSRTemplateFn } from '@plitzi/sdk-shared';
+import type { SSRPageServerConfig, SSRRequest, SSRResponseHelpers, SSRTemplateFn } from '@plitzi/sdk-shared';
 
 export const renderSSR = async (
   req: SSRRequest,
   res: SSRResponseHelpers,
-  config: SSRServerConfig,
+  config: SSRPageServerConfig,
   renderFn: SSRTemplateFn,
   pluginManager: PluginManager,
   caches: ServerCaches

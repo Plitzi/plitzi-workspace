@@ -1,6 +1,5 @@
 import type { Environment } from './CommonTypes';
 import type { ConnectorEntry } from './ConnectorTypes';
-import type { McpServerConfig } from './McpTypes';
 import type { Schema } from './SchemaTypes';
 import type { OfflineDataRaw } from './SdkTypes';
 import type { Style } from './StyleTypes';
@@ -225,8 +224,13 @@ export type ComponentCatalogEntry = {
 export type ComponentCatalog = Record<string, ComponentCatalogEntry>;
 
 export type SSRAdapters = {
-  getOfflineData: (spaceId: number, environment: string, revision?: number) => Promise<OfflineDataRaw | undefined>;
-  getSpaceDeployment: (req: SSRRequest) => Promise<SSRSpaceDeployment>;
+  /** The space's render payload. Optional HERE and required by a page server (see {@link SSRPageAdapters}): a
+   *  dedicated MCP server renders nothing, reads schema and style through its own adapters, and had to hand this
+   *  one over anyway for the type to be satisfied — an adapter it never called. */
+  getOfflineData?: (spaceId: number, environment: string, revision?: number) => Promise<OfflineDataRaw | undefined>;
+  /** Which space, environment and revision a request resolves to. Optional here for the same reason as
+   *  `getOfflineData`: MCP resolves its space from the request token (`getGrant`), never from the host. */
+  getSpaceDeployment?: (req: SSRRequest) => Promise<SSRSpaceDeployment>;
   /** Persist a space mutated by the mcp-ai `apply` tool. Implementations must recompute derived caches
    *  (notably `style.cache`) before storing. When omitted, mcp-ai runs read/preview/validate only and
    *  `apply` reports `persisted: false`. */
@@ -294,6 +298,12 @@ export type SSRAdapters = {
    *  See {@link SSRRscContext} for what it is given. */
   getRscData?: (context: SSRRscContext) => Promise<SSRRscData>;
 };
+
+/** What a server that RENDERS PAGES must answer: the two adapters every page request goes through, on top of the
+ *  optional rest. Stated as its own type rather than by making them required for everyone, because "required" is
+ *  a property of the surface being served and not of the adapter set — a dedicated MCP server has no page request
+ *  to resolve, and the old shape made it hand over two adapters nothing would ever call. */
+export type SSRPageAdapters = SSRAdapters & Required<Pick<SSRAdapters, 'getOfflineData' | 'getSpaceDeployment'>>;
 
 /**
  * Everything an RSC read is given: which space and revision, who is asking, and which elements want data.
@@ -481,62 +491,15 @@ export type SSRServerConfig = {
   rsc?: SSRRscConfig;
   /** Write endpoint for server-driven providers. Absent means the server serves reads only. */
   action?: SSRActionConfig;
-  /** MCP (Model Context Protocol) server configuration — exposes schema tools to Claude. */
-  mcp?: McpServerConfig;
-  /** AI-native MCP server — replaces the standard MCP with a zero-hallucination batch protocol. `path` is where
-   *  it answers inside a server that also serves pages (default /mcp); a dedicated MCP server owns its whole
-   *  origin and ignores it. Note that a page server mounts no MCP whatever this says: the stages live in
-   *  `@plitzi/sdk-mcp`, and passing them to the page server IS what mounts them. */
-  mcpAi?: {
-    enabled?: boolean;
-    path?: string;
-    /** Whether the plitzi_render view may paint from the tool arguments while the host is still STREAMING them:
-     *  a placeholder that grows with the widget being authored, instead of the static "Rendering…" held for as
-     *  long as the model takes to write the batch. Defaults to true; hosts that stream nothing are unaffected
-     *  either way. Set false to keep every view blank until the finished widget arrives. */
-    renderStreaming?: boolean;
-    /** How a rendered widget reaches ANYTHING outside its sandbox — images, media, fonts, and the endpoints an
-     *  apiContainer fetches. A widget runs in an iframe under a CSP the host builds from the origins this server
-     *  declares on its `ui://` resource, which is read before any widget exists (and the spec allows no per-call
-     *  CSP), so the origins an agent is about to author can never be declared. With a `secret` set, every external
-     *  URL a render authored is rewritten to this server's own endpoint — which IS declared — and fetched here,
-     *  which also settles the redirects, hotlink rules and missing CORS headers a null-origin sandbox cannot. The
-     *  agent never sees this: it authors the real URL. Without a secret there is no endpoint and the URLs travel
-     *  as authored, loading only where the host allows their origin. */
-    proxy?: {
-      /** Set false to serve no endpoint even with a secret configured. */
-      enabled?: boolean;
-      /** Where the endpoint answers. Default `/__proxy`. */
-      path?: string;
-      /** Signs each grant (target + kind + expiry + the connection that minted it), so the endpoint is not an open
-       *  proxy. Required to enable it; any value stable across replicas works. */
-      secret?: string;
-      /** Absolute base for the URLs handed to widgets (`https://mcp.example.com`). Default: the origin each MCP
-       *  request arrived on — right whenever the MCP server owns its sub-domain. */
-      baseUrl?: string;
-      /** Largest response the endpoint will pass through, in bytes. Default 8 MiB. */
-      maxBytes?: number;
-      /** How long a minted URL keeps working, in seconds. Default 7 days: a widget outlives the call that made it
-       *  (it stays in the conversation), but a leaked URL should not work forever. */
-      ttl?: number;
-      /** Which MCP tools may be handed the endpoint at all. Defaults to `['plitzi_render']`, and that default is
-       *  a guard rather than a convenience: a render is a throwaway widget, so a rewritten URL lives exactly as
-       *  long as it does, while a tool that WRITES a space (plitzi_apply) would persist proxied URLs into content
-       *  the user owns — their space would then depend on this server to show its own images, and those URLs
-       *  expire. Listing a tool only makes the endpoint reachable from it; rewriting is something the tool has to
-       *  implement, and today plitzi_render is the only one that does. */
-      tools?: string[];
-    };
-  };
   /** Receives a {@link ServerLogEvent} for every HTTP request this server answers — whatever stage answered it
    *  and whatever the outcome — plus every MCP tool call and resource read inside those requests. Without it the
    *  server reports nothing per request (the MCP events still reach the console when `MCP_DEBUG=1`). */
+  logger?: ServerLogger;
   /**
    * How responses are compressed. Omit for Brotli where the client takes it and gzip otherwise; `false` never
    * compresses, which is what to use when a proxy or CDN in front already does it.
    */
   compression?: SSRCompressionConfig | false;
-  logger?: ServerLogger;
   /**
    * What to do when the server cannot take its port. Without it the server prints what went wrong, what to do about
    * it, and exits non-zero — because a process whose server never bound is not running, and the alternative is a raw
@@ -547,26 +510,10 @@ export type SSRServerConfig = {
    */
   onListenError?: (error: NodeJS.ErrnoException, context: { port: number; host: string; label: string }) => void;
   adapters: SSRAdapters;
-  /** Draft-preview endpoint for the MCP visual-preview tools (the RENDERER side). Off unless `enabled`. */
-  preview?: SSRPreviewConfig;
-  /** For an MCP server that runs separately from the renderer (the CLIENT side): where to reach the SSR
-   *  `/preview` endpoint so the visual-preview tools work. The SDK builds an HTTP preview client from this;
-   *  absent → those tools report PREVIEW_UNAVAILABLE. */
-  previewClient?: { url: string; secret?: string };
-  /** Dedicated headless-browser service for plitzi_screenshot (off unless set). `serviceUrl` is the browser
-   *  service that turns a URL into PNG(s); `renderBaseUrl` is the SSR base the browser navigates to (a page
-   *  path + the one-shot `__pt` token are appended). When absent, plitzi_screenshot is not registered and only
-   *  the HTML plitzi_preview is available; when the service is unreachable at call time the tool degrades to
-   *  returning the HTML preview with a warning. */
-  screenshot?: { serviceUrl: string; renderBaseUrl: string };
-  /** Backing store for draft-preview tokens. Defaults to an in-memory store (single replica); inject a shared
-   *  store (e.g. Redis) for multi-replica correctness. */
-  draftStore?: DraftStore;
-  /** Which request-handling services this server mounts. Each maps to an internal `create<Name>Server` unit,
-   *  so new services scale without rewriting the dispatcher. Omitted flags fall back to sensible defaults:
-   *  ssr on, rsc when `adapters.getRscData` exists, mcp from `mcpAi.enabled`. `ai` is a reserved slot (not
-   *  wired yet). Only createServer reads these as written — the surface factories pin what their name promises
-   *  (a page server serves pages; a dedicated MCP server serves MCP alone). */
+  /** Which request-handling services this server mounts: `ssr` on by default, `rsc` whenever
+   *  `adapters.getRscData` exists. Stages a companion package contributes are deliberately NOT flags here —
+   *  handing them over is the decision. Only createServer reads these as written; the surface factories pin what
+   *  their name promises (a page server serves pages; a dedicated MCP server serves MCP alone). */
   services?: ServerServices;
   /** Liveness/readiness endpoint for standalone servers (k8s probes). A stage always answers `path`
    *  (default /health) with the generic identity payload built from `name`/`version`/`role`
@@ -575,9 +522,22 @@ export type SSRServerConfig = {
   health?: SSRHealthConfig;
   /** Cache-buster appended as ?v=<assetVersion> to all default SDK asset URLs (jsPath, cssPath, react vendor). Compute from file mtime or package version at startup. */
   assetVersion?: string;
-  /** OAuth 2.1 authorization for the MCP server. Omit to keep the server anonymous — see {@link OAuthConfig}. */
-  oauth?: OAuthConfig;
+
+  /** The draft-preview endpoint, and the store behind it. The draft is WRITTEN by an MCP tool and RENDERED here,
+   *  so this is the one piece of that feature the page server owns: `@plitzi/sdk-mcp` carries everything else in
+   *  its own options, and a deployment that never installs it leaves both unset.
+   *
+   *  `preview` mounts the endpoint (off unless `enabled`); `draftStore` backs the tokens and defaults to an
+   *  in-memory store — inject a shared one (e.g. Redis) for multi-replica correctness. */
+  preview?: SSRPreviewConfig;
+  draftStore?: DraftStore;
 };
+
+/** The same config as seen by a server that serves PAGES: its adapters answer for a page request. This is what
+ *  `createServer` from `@plitzi/sdk-server` takes and what the SSR stages are handed, so a page stage reaches
+ *  `getOfflineData` without asking whether it is there — while a stage typed to the bare context (anything from
+ *  `@plitzi/sdk-mcp`, which also runs in servers that have neither) still has to check. */
+export type SSRPageServerConfig = SSRServerConfig & { adapters: SSRPageAdapters };
 
 /** Which surfaces a page server mounts. Only what the page pipeline itself owns: the MCP endpoint and
  *  draft-preview are stages a companion package hands in, so they are not flags here. */

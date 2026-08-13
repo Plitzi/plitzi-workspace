@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
-import type { OfflineDataRaw, SSRAdapters, SSRRequest, SSRSpaceDeployment } from '@plitzi/sdk-shared';
+import type { OfflineDataRaw, SSRPageAdapters, SSRRequest, SSRSpaceDeployment } from '@plitzi/sdk-shared';
 
 /**
  * Where a space comes from, and nothing else. Who is looking at it is `createAuthAdapters` (or the auth kernel's
@@ -21,7 +21,7 @@ const isDeploymentObject = (v: NonNullable<JsonAdaptersConfig['deployment']>): v
 
 const readJson = (filePath: string): unknown => JSON.parse(readFileSync(filePath, 'utf-8'));
 
-export const createJsonAdapters = (config: JsonAdaptersConfig): SSRAdapters => {
+export const createJsonAdapters = (config: JsonAdaptersConfig): SSRPageAdapters => {
   const pathFor = (spaceId: number, environment: string, revision?: number): string | undefined => {
     if (typeof config.offlineData === 'function') {
       return config.offlineData(spaceId, environment, revision);

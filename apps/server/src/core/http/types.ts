@@ -1,7 +1,13 @@
 import type { RawResponse } from '../../helpers/buildResponseHelpers';
 import type { ServerCaches } from '../../helpers/cache';
 import type { PluginManager } from '../../plugins/manager';
-import type { SSRRequest, SSRResponseHelpers, SSRServerConfig, SSRTemplateFn } from '@plitzi/sdk-shared';
+import type {
+  SSRPageServerConfig,
+  SSRRequest,
+  SSRResponseHelpers,
+  SSRServerConfig,
+  SSRTemplateFn
+} from '@plitzi/sdk-shared';
 import type { IncomingMessage } from 'node:http';
 
 // The minimum every stage can rely on: the request/response and the server's config. MCP-only servers run on
@@ -19,8 +25,11 @@ export interface BaseContext {
 }
 
 // The richer context an SSR server builds: the render template, caches and plugin manager that the page/RSC and
-// plugin-asset stages need. A leaner server (e.g. MCP-only) never constructs these.
+// plugin-asset stages need, and a config whose adapters answer for a page request. A leaner server (e.g.
+// MCP-only) never constructs these — which is exactly why the page adapters are narrowed here and optional on
+// `BaseContext`: a stage that runs in any server cannot assume them.
 export interface SSRContext extends BaseContext {
+  config: SSRPageServerConfig;
   renderFn: SSRTemplateFn;
   caches: ServerCaches;
   pluginManager: PluginManager;

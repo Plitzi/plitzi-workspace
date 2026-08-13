@@ -7,7 +7,7 @@ import { applyOperations, validateOperations } from '../modules/mcp/tools';
 
 import type { PreviewRequestBody, PreviewResult } from '../modules/mcp/types';
 import type { PluginManager, ServerCaches } from '@plitzi/sdk-server/ssr';
-import type { Environment, Schema, SSRRequest, SSRServerConfig, SSRTemplateFn } from '@plitzi/sdk-shared';
+import type { Environment, Schema, SSRPageServerConfig, SSRRequest, SSRTemplateFn } from '@plitzi/sdk-shared';
 
 const resolvePagePath = (schema: Schema, pageRef?: string): string => {
   const pages = getPageElements(schema);
@@ -37,7 +37,7 @@ const syntheticRequest = (pagePath: string): SSRRequest => ({
  *  building any: this runs as a stage INSIDE an SSR server, not in the MCP process that calls it over HTTP. */
 export const createPreview = async (
   body: PreviewRequestBody,
-  config: SSRServerConfig,
+  config: SSRPageServerConfig,
   renderFn: SSRTemplateFn,
   pluginManager: PluginManager,
   caches: ServerCaches

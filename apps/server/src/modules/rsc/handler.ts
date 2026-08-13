@@ -3,7 +3,7 @@ import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
 
 import type { TtlCache } from '../../helpers/cache';
 import type { PluginManager } from '../../plugins/manager';
-import type { Environment, SSRRequest, SSRResponseHelpers, SSRRscData, SSRServerConfig } from '@plitzi/sdk-shared';
+import type { Environment, SSRPageServerConfig, SSRRequest, SSRResponseHelpers, SSRRscData } from '@plitzi/sdk-shared';
 
 /** Payload returned by the /_rsc endpoint. */
 type RscPayload = {
@@ -59,7 +59,7 @@ const withPageLocation = (req: SSRRequest): SSRRequest => {
 export const handleRsc = async (
   req: SSRRequest,
   res: SSRResponseHelpers,
-  config: SSRServerConfig,
+  config: SSRPageServerConfig,
 
   _pluginManager: PluginManager,
   cache?: TtlCache<string>

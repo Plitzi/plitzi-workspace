@@ -6,10 +6,10 @@
 
 export { createServer } from './createServer';
 export { buildMCPPipeline, mcpExtensions } from './pipeline';
-export { mcpOnlyStage, mcpStage } from './stages/mcp';
-export { oauthGuardStage, oauthStage } from './stages/oauth';
+export { createMcpOnlyStage, createMcpStage } from './stages/mcp';
+export { createOAuthGuardStage, createOAuthStage } from './stages/oauth';
 export { previewStage } from './stages/preview';
-export { widgetProxyStage } from './stages/proxy';
+export { createWidgetProxyStage } from './stages/proxy';
 export { createPreview } from './preview/createPreview';
 
 export {
@@ -79,3 +79,4 @@ export type {
 } from './modules/mcp/tools';
 export type { Space } from './modules/mcp/helpers';
 export type { Env } from './modules/mcp/types';
+export type { McpOptions, McpProxyOptions } from './options';

@@ -1,7 +1,7 @@
 import { writeConnectorRecord } from '../connectors/engine';
 
 import type { ConnectorLookups } from '../connectors/resolver';
-import type { SSRRequest, SSRResponseHelpers, SSRServerConfig } from '@plitzi/sdk-shared';
+import type { SSRPageServerConfig, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
 
 type ActionRequest = {
   elementId?: string;
@@ -43,7 +43,7 @@ const fail = (res: SSRResponseHelpers, status: number, error: string) => {
 export const handleAction = async (
   req: SSRRequest,
   res: SSRResponseHelpers,
-  config: SSRServerConfig,
+  config: SSRPageServerConfig,
   lookups: ConnectorLookups
 ): Promise<void> => {
   const { environment = 'main', spaceId, revision = 0 } = req.ctx.spaceDeployment ?? {};

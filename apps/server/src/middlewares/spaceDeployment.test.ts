@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { spaceDeploymentMiddleware } from './spaceDeployment';
 
-import type { SSRAdapters, SSRRequest, SSRResponseHelpers, SSRSpaceDeployment } from '@plitzi/sdk-shared';
+import type { SSRPageAdapters, SSRRequest, SSRResponseHelpers, SSRSpaceDeployment } from '@plitzi/sdk-shared';
 
 /**
  * Framing is a per-space question — one static list cannot know which sites a given space's owner allowed — so it
@@ -26,7 +26,7 @@ const run = async (deployment: SSRSpaceDeployment) => {
   } as unknown as SSRResponseHelpers;
 
   const req = { ctx: {} } as unknown as SSRRequest;
-  const adapters = { getSpaceDeployment: () => Promise.resolve(deployment) } as unknown as SSRAdapters;
+  const adapters = { getSpaceDeployment: () => Promise.resolve(deployment) } as unknown as SSRPageAdapters;
   const next = vi.fn(() => Promise.resolve());
 
   await spaceDeploymentMiddleware(adapters)(req, res, next);

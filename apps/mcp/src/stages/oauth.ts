@@ -56,68 +56,69 @@ const parseJson = (body: string): unknown => {
  *
  *  It sits before the MCP stage because that one answers every path on a dedicated MCP server — these endpoints
  *  would otherwise be swallowed by the JSON-RPC transport, which is exactly the 406 a host hits on /register. */
-export const oauthStage: Stage = async ctx => {
-  const { oauth } = ctx.config;
-  const { path, method } = ctx.req;
-  if (!oauth || !isOAuthPath(path)) {
-    return false;
-  }
+export const createOAuthStage =
+  (oauth?: OAuthConfig): Stage =>
+  async ctx => {
+    const { path, method } = ctx.req;
+    if (!oauth || !isOAuthPath(path)) {
+      return false;
+    }
 
-  const { res } = ctx;
-  // The consent screen is a top-level navigation, never a cross-origin fetch; the machine endpoints are both.
-  if (path !== AUTHORIZE_PATH) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  }
+    const { res } = ctx;
+    // The consent screen is a top-level navigation, never a cross-origin fetch; the machine endpoints are both.
+    if (path !== AUTHORIZE_PATH) {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Headers', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    }
 
-  if (method === 'OPTIONS') {
-    res.setStatus(204);
-    res.end();
+    if (method === 'OPTIONS') {
+      res.setStatus(204);
+      res.end();
+
+      return true;
+    }
+
+    if (method === 'GET' && matchesWellKnown(path, PROTECTED_RESOURCE_PATH)) {
+      sendJson(res, 200, protectedResourceMetadata(oauth, ctx.req));
+
+      return true;
+    }
+
+    if (method === 'GET' && matchesWellKnown(path, AUTHORIZATION_SERVER_PATH)) {
+      sendJson(res, 200, authorizationServerMetadata(oauth, ctx.req));
+
+      return true;
+    }
+
+    if (path === AUTHORIZE_PATH && method === 'GET') {
+      await handleAuthorizeStart(oauth, res, ctx.req.query);
+
+      return true;
+    }
+
+    if (path === AUTHORIZE_PATH && method === 'POST') {
+      await handleAuthorizeSubmit(oauth, res, formParams(ctx.req, await readRawBody(ctx.raw)));
+
+      return true;
+    }
+
+    if (path === TOKEN_PATH && method === 'POST') {
+      await handleToken(oauth, res, formParams(ctx.req, await readRawBody(ctx.raw)));
+
+      return true;
+    }
+
+    if (path === REGISTER_PATH && method === 'POST') {
+      await handleRegister(oauth, res, parseJson(await readRawBody(ctx.raw)));
+
+      return true;
+    }
+
+    sendErrorJson(res, 405, 'invalid_request', `${method} is not allowed on ${path}.`);
 
     return true;
-  }
-
-  if (method === 'GET' && matchesWellKnown(path, PROTECTED_RESOURCE_PATH)) {
-    sendJson(res, 200, protectedResourceMetadata(oauth, ctx.req));
-
-    return true;
-  }
-
-  if (method === 'GET' && matchesWellKnown(path, AUTHORIZATION_SERVER_PATH)) {
-    sendJson(res, 200, authorizationServerMetadata(oauth, ctx.req));
-
-    return true;
-  }
-
-  if (path === AUTHORIZE_PATH && method === 'GET') {
-    await handleAuthorizeStart(oauth, res, ctx.req.query);
-
-    return true;
-  }
-
-  if (path === AUTHORIZE_PATH && method === 'POST') {
-    await handleAuthorizeSubmit(oauth, res, formParams(ctx.req, await readRawBody(ctx.raw)));
-
-    return true;
-  }
-
-  if (path === TOKEN_PATH && method === 'POST') {
-    await handleToken(oauth, res, formParams(ctx.req, await readRawBody(ctx.raw)));
-
-    return true;
-  }
-
-  if (path === REGISTER_PATH && method === 'POST') {
-    await handleRegister(oauth, res, parseJson(await readRawBody(ctx.raw)));
-
-    return true;
-  }
-
-  sendErrorJson(res, 405, 'invalid_request', `${method} is not allowed on ${path}.`);
-
-  return true;
-};
+  };
 
 /** Why a request was challenged. It ends up on the access-log line, because "401" on its own cannot tell a missing
  *  header from a bearer the store lost — and from the outside both look like a connector that stopped working. */
@@ -177,21 +178,22 @@ const challengeReason = async (
  *  Mounted only when `oauth` is configured. A deployment that configures none keeps the open server it had, where
  *  the whole public surface — handshake, listings, the guide, plitzi_render — answers without a token; with OAuth
  *  on, the grant that carries no space is what covers that same ground. */
-export const oauthGuardStage: Stage = async ctx => {
-  const { oauth } = ctx.config;
-  if (!oauth || ctx.req.method !== 'POST') {
-    return false;
-  }
+export const createOAuthGuardStage =
+  (oauth?: OAuthConfig): Stage =>
+  async ctx => {
+    if (!oauth || ctx.req.method !== 'POST') {
+      return false;
+    }
 
-  const reason = await challengeReason(oauth, ctx, bearerOf(ctx.req));
-  if (!reason) {
-    return false;
-  }
+    const reason = await challengeReason(oauth, ctx, bearerOf(ctx.req));
+    if (!reason) {
+      return false;
+    }
 
-  // Named on the log line, where the request already is: a connector that fails after a grant it completed is
-  // otherwise diagnosed by guesswork, since the host only ever reports that authorization failed.
-  ctx.operation = `oauth-challenge:${reason}`;
-  sendChallenge(oauth, ctx.req, ctx.res, CHALLENGE_DESCRIPTIONS[reason]);
+    // Named on the log line, where the request already is: a connector that fails after a grant it completed is
+    // otherwise diagnosed by guesswork, since the host only ever reports that authorization failed.
+    ctx.operation = `oauth-challenge:${reason}`;
+    sendChallenge(oauth, ctx.req, ctx.res, CHALLENGE_DESCRIPTIONS[reason]);
 
-  return true;
-};
+    return true;
+  };

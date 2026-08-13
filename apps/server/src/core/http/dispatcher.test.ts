@@ -5,7 +5,7 @@ import { makeHandler } from './dispatcher';
 import type { BuildContext } from './dispatcher';
 import type { BaseContext, Stage } from './types';
 import type { RawResponse } from '../../helpers/buildResponseHelpers';
-import type { ServerLogEvent, ServerRequestLogEvent, SSRServerConfig } from '@plitzi/sdk-shared';
+import type { ServerLogEvent, ServerRequestLogEvent } from '@plitzi/sdk-shared';
 import type { IncomingMessage } from 'node:http';
 
 const fakeRequest = (url: string, method = 'GET'): IncomingMessage =>
@@ -44,7 +44,7 @@ const run = async (raw: IncomingMessage, stages: Stage[], rawRes: RawResponse = 
     rawRes: res,
     req,
     res: helpers,
-    config: config as unknown as SSRServerConfig,
+    config,
     port: 0
   });
 

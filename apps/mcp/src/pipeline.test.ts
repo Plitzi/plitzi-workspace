@@ -5,14 +5,13 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { createServer } from '@plitzi/sdk-server';
+import { healthStage } from '@plitzi/sdk-server/kernel';
 
 import { buildMCPPipeline, mcpExtensions } from './pipeline';
-import { mcpOnlyStage, mcpStage } from './stages/mcp';
 import { previewStage } from './stages/preview';
-import { widgetProxyStage } from './stages/proxy';
 import { httpRequest, jsonRpc, RPC_HEADERS } from './tests/httpRequest';
 
-import type { OfflineDataRaw, Schema, SSRAdapters, SSRServer, Style } from '@plitzi/sdk-shared';
+import type { OfflineDataRaw, Schema, SSRPageAdapters, SSRServer, Style } from '@plitzi/sdk-shared';
 
 const PORT = 39231;
 
@@ -29,28 +28,33 @@ const adapters = {
   getGrant: () => Promise.resolve({ spaceId: 1, scope: 'agent' as const, canWrite: true }),
   getSchema: () => Promise.resolve(schema),
   getStyle: () => Promise.resolve(style)
-} as unknown as SSRAdapters;
+} as unknown as SSRPageAdapters;
 
+// The stages are built per call now (each closes over the options it was given), so what these assert is the
+// SHAPE of each pipeline — how many stages, in which slot, and which ones are absent. That the assembled thing
+// actually serves is the seam test below, which runs a real page server.
 describe('mcpExtensions (what this package hands a page server)', () => {
   // Every stage here gates itself, so all of them belong ahead of the auth middleware chain. Landing one in
   // `data` instead would put it behind that chain and break a caller that legitimately carries no credential.
   it('offers every stage in the preAuth slot and claims no other', () => {
     const extensions = mcpExtensions();
 
-    expect(extensions.preAuth).toEqual([widgetProxyStage, mcpStage, previewStage]);
+    expect(extensions.preAuth).toHaveLength(3);
+    expect(extensions.preAuth?.at(-1)).toBe(previewStage);
     expect(extensions.data).toBeUndefined();
   });
 });
 
 describe('buildMCPPipeline (the dedicated MCP server)', () => {
-  // mcpOnlyStage answers every request that reaches it, so anything that must stay reachable — health probes,
-  // static mounts, the widget resource endpoint, the OAuth grant endpoints — has to precede it.
-  it('ends with the MCP catch-all, with the self-gating stages ahead of it', () => {
+  // The MCP catch-all answers every request that reaches it, so anything that must stay reachable — health probes,
+  // static mounts, the widget resource endpoint, the OAuth grant endpoints — has to precede it. Draft-preview is
+  // not among them: it renders, which a dedicated MCP server cannot do.
+  it('is the six self-gating stages, and carries no draft-preview', () => {
     const stages = buildMCPPipeline();
 
-    expect(stages.at(-1)).toBe(mcpOnlyStage);
-    expect(stages.indexOf(widgetProxyStage)).toBeLessThan(stages.length - 1);
-    expect(stages).not.toContain(mcpStage);
+    expect(stages[0]).toBe(healthStage);
+    expect(stages).toHaveLength(6);
+    expect(stages).not.toContain(previewStage);
   });
 });
 

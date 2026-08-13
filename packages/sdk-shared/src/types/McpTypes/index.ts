@@ -68,8 +68,3 @@ export type McpTool = {
   };
   handler?: McpToolHandler;
 };
-
-export type McpServerConfig = {
-  enabled?: boolean; // Whether the MCP endpoint is active. Defaults to true.
-  path?: string; // URL path for the MCP endpoint. Defaults to '/mcp'.
-};

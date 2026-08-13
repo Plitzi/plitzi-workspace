@@ -15,8 +15,8 @@ import type {
   Environment,
   OfflineDataRaw,
   PluginEntry,
+  SSRPageServerConfig,
   SSRRequest,
-  SSRServerConfig,
   SSRTemplateProps
 } from '@plitzi/sdk-shared';
 
@@ -28,7 +28,7 @@ export type RenderPrep = {
 
 export const prepareRender = async (
   req: SSRRequest,
-  config: SSRServerConfig,
+  config: SSRPageServerConfig,
   spaceId: number,
   environment: Environment,
   revision: number,

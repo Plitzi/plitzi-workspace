@@ -9,9 +9,9 @@ import type { PluginManager } from '../../plugins/manager';
 import type {
   Environment,
   OfflineDataRaw,
+  SSRPageServerConfig,
   SSRRenderResult,
   SSRRequest,
-  SSRServerConfig,
   SSRTemplateFn
 } from '@plitzi/sdk-shared';
 
@@ -19,7 +19,7 @@ export type BuildBodyResult = { body?: string; result: SSRRenderResult };
 
 export const buildBody = async (
   req: SSRRequest,
-  config: SSRServerConfig,
+  config: SSRPageServerConfig,
   spaceId: number,
   environment: Environment,
   revision: number,

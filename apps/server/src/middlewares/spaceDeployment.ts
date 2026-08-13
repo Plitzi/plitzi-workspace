@@ -1,6 +1,6 @@
-import type { SSRAdapters, SSRMiddleware } from '@plitzi/sdk-shared';
+import type { SSRMiddleware, SSRPageAdapters } from '@plitzi/sdk-shared';
 
-export const spaceDeploymentMiddleware = (adapters: SSRAdapters): SSRMiddleware => {
+export const spaceDeploymentMiddleware = (adapters: SSRPageAdapters): SSRMiddleware => {
   return async (req, res, next) => {
     const deployment = await adapters.getSpaceDeployment(req);
     req.ctx.spaceDeployment = deployment;

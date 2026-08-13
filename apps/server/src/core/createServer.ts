@@ -4,14 +4,17 @@ import { resolveServices } from './services/resolve';
 
 import type { Auth } from './auth/createAuth';
 import type { PipelineExtensions } from './http/types';
-import type { SSRServer, SSRServerConfig } from '@plitzi/sdk-shared';
+import type { SSRPageAdapters, SSRPageServerConfig, SSRServer, SSRServerConfig } from '@plitzi/sdk-shared';
 
 export { resolveServices } from './services/resolve';
 export type { PipelineExtensions } from './http/types';
 export type { ResolvedServices } from './services/resolve';
 
 export type ServerConfig = Omit<SSRServerConfig, 'adapters'> & {
-  adapters: SSRServerConfig['adapters'];
+  /** A page server resolves and renders a space on every request, so the two adapters that do it are required
+   *  here — see {@link SSRPageAdapters}. They are optional on the shared type because a server that renders no
+   *  page (a dedicated MCP one) has nothing to answer them with. */
+  adapters: SSRPageAdapters;
   /**
    * A `createAuth(...)` result, and the whole of wiring sessions into a page server: the three adapters it answers
    * for get filled in, and the cookie naming comes with them.
@@ -40,16 +43,16 @@ export const createServer = ({ auth, ...config }: ServerConfig, extensions?: Pip
   // the page would render every visitor as a guest while `/auth/session` insisted they were signed in.
   // Read as `unknown` on purpose: the type says an optional adapter is either present or absent, while an object can
   // perfectly well carry the key with `undefined` in it — which is exactly the case being filtered out.
+  // The cast is what TS cannot derive: dropping only the `undefined` values leaves the two adapters a page server
+  // requires exactly where they were, since neither can have been undefined to begin with.
   const entries = Object.entries(config.adapters) as [string, unknown][];
-  const supplied = Object.fromEntries(
-    entries.filter(([, value]) => value !== undefined)
-  ) as SSRServerConfig['adapters'];
+  const supplied = Object.fromEntries(entries.filter(([, value]) => value !== undefined)) as SSRPageAdapters;
 
   // The adapter-only login/logout stages answer on these same paths and run first, and all they can say about a
   // successful sign-in is a bodyless 200 — they hold a session, not the account behind it. Left standing they
   // shadow the flows below, so a client that signed in correctly got nothing back to prove it. A deployment that
   // named its own paths keeps them: it asked for those endpoints, and they are then somewhere else entirely.
-  const resolved: SSRServerConfig = {
+  const resolved: SSRPageServerConfig = {
     loginPath: false,
     logoutPath: false,
     exchangePath: false,

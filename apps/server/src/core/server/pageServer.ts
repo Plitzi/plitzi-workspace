@@ -11,13 +11,13 @@ import { buildPagePipeline } from '../services/registry';
 import type { BuildContext } from '../http/dispatcher';
 import type { PipelineExtensions, SSRContext } from '../http/types';
 import type { ResolvedServices } from '../services/resolve';
-import type { CacheManager, PluginRegistry, SSRServer, SSRServerConfig } from '@plitzi/sdk-shared';
+import type { CacheManager, PluginRegistry, SSRPageServerConfig, SSRServer } from '@plitzi/sdk-shared';
 
 /** The page-serving machinery: html/rsc caches, the render template and the plugin manager, driving the page
  *  pipeline. Which services it mounts is the CALLER's decision — {@link createServer} passes whatever the config
  *  enables — so this unit never second-guesses a factory's promise. */
 export const createPageServer = (
-  config: SSRServerConfig,
+  config: SSRPageServerConfig,
   services: ResolvedServices,
   extensions?: PipelineExtensions
 ): SSRServer => {
