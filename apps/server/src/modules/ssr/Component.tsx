@@ -12,6 +12,9 @@ export type ComponentProps = {
   ssrResult?: SSRRenderResult;
   sdkDevToolsStylePath?: string;
   debugMode?: boolean;
+  /** Forced on when the metering adapter degrades this render; otherwise left to the SDK's own default so the
+   *  markup here matches what the browser hydrates with. */
+  branding?: boolean;
 };
 
 const Component = ({
@@ -23,7 +26,8 @@ const Component = ({
   plugins,
   ssrResult,
   sdkDevToolsStylePath,
-  debugMode = false
+  debugMode = false,
+  branding
 }: ComponentProps) => {
   // The response channel travels inside the server surface rather than as a prop of its own. Merged here, after
   // `prepareRender` has already serialized `server` for the browser, so this render-only object never ships.
@@ -39,6 +43,7 @@ const Component = ({
       offlineData={offlineData}
       sdkDevToolsStylePath={sdkDevToolsStylePath}
       debugMode={debugMode}
+      {...(branding === undefined ? {} : { branding })}
     >
       {plugins &&
         Object.keys(plugins).map(key => (

@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
+import { AnalyticsReporter } from '@modules/Analytics';
 import NavigationProvider from '@modules/Navigation/NavigationProvider';
 import NetworkContextProvider from '@modules/Network/NetworkContextProvider';
 import PluginsContextProvider from '@modules/Plugins/PluginsContextProvider';
@@ -21,6 +22,7 @@ import styleUrl from '../../assets/plitzi-sdk.scss?url';
 
 import type { StoreApi } from '@plitzi/nexus';
 import type {
+  AnalyticsConfig,
   Environment,
   Server,
   RenderMode,
@@ -48,6 +50,7 @@ export type AppMainProps = {
   previewMode?: boolean;
   debugMode?: boolean;
   branding?: boolean;
+  analytics?: AnalyticsConfig;
   state?: Record<string, unknown>;
   onInitStateManager?: (instance: RuntimeStateInstance) => void;
   onInitEventBridge?: (instance: EventBridgeContextValue) => void;
@@ -73,6 +76,7 @@ const AppMain = ({
   sdkDevToolsStylePath,
   previewMode = true,
   debugMode = false,
+  analytics,
   onInitEventBridge,
   onInitStateManager,
   ...sdkProps
@@ -123,6 +127,7 @@ const AppMain = ({
               <SegmentsContextProvider>
                 <AuthContextProvider server={server}>
                   <NavigationProvider currentPageId={currentPageId}>
+                    <AnalyticsReporter analytics={analytics} />
                     <GlobalSources>
                       <InteractionsSourcesProvider>
                         <DevToolsContainer

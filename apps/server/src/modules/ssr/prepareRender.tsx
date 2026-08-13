@@ -79,8 +79,25 @@ export const prepareRender = async (
     readCookie(req.headers.cookie, 'plitzi_debug')
   );
 
+  // What the metering adapter decided for this page (see SSRAdapters.pageView). `firstViewCounted` is forced on
+  // whatever the adapter returned: this render was already counted server-side, so the browser reporting the
+  // same view again would double it. Degrading pins the badge on rather than merely defaulting it, so a space
+  // over its quota cannot turn it off from its own settings.
+  const { degrade, analytics } = req.ctx.pageView ?? {};
+  const clientAnalytics = analytics ? { ...analytics, firstViewCounted: true } : undefined;
+  const branding = degrade ? true : undefined;
+
   const offlineDataStr = escapeJson(
-    JSON.stringify({ offlineData, offlineMode: true, environment, renderMode: 'raw', server, sdkDevToolsStylePath })
+    JSON.stringify({
+      offlineData,
+      offlineMode: true,
+      environment,
+      renderMode: 'raw',
+      server,
+      sdkDevToolsStylePath,
+      ...(clientAnalytics ? { analytics: clientAnalytics } : {}),
+      ...(branding ? { branding } : {})
+    })
   );
 
   const pluginNames = req.ctx.spaceDeployment?.pluginNames ?? [];
@@ -118,7 +135,8 @@ export const prepareRender = async (
       server,
       environment: req.ctx.spaceDeployment?.environment ?? environment,
       debugMode,
-      sdkDevToolsStylePath
+      sdkDevToolsStylePath,
+      branding
     },
     entries,
     templateParams: {

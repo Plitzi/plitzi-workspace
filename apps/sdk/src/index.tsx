@@ -22,6 +22,8 @@ import baseUsePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-
 import { useSdkStore, DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
 
 import App from './App';
+import { getEnvironmentServer } from './config';
+import { track } from './modules/Analytics';
 
 // SDK Style
 import './assets/plitzi-sdk.scss';
@@ -33,6 +35,7 @@ import type { ElementContextValue } from '@plitzi/sdk-elements/Element/ElementCo
 import type EventBridge from '@plitzi/sdk-event-bridge';
 import type InteractionsManager from '@plitzi/sdk-interactions/InteractionsManager';
 import type {
+  AnalyticsConfig,
   Element,
   Schema,
   Style,
@@ -53,6 +56,33 @@ import type { ReactNode } from 'react';
 let stateManager: RuntimeStateInstance;
 let eventBridge: EventBridgeContextValue;
 
+/**
+ * Fills in the reporting channel for a page that renders entirely in the browser.
+ *
+ * A server-rendered page is handed its `analytics` config in the bootstrap, because the server that rendered
+ * it is the one that knows where its collector lives. A client-side render has no such moment — but it does
+ * have the two things the config is made of: the space's public token, and the API it already talks to.
+ *
+ * Only for a real page: an offline render (an exported widget, an embed carrying its own data) has no backend
+ * to report to and must not acquire one by default. And nothing is derived when the host passed a config of
+ * its own — a deployment that says where to report is not overridden by a guess.
+ */
+const withDerivedAnalytics = (params: PlitziSdkProps): PlitziSdkProps => {
+  if (params.analytics || params.offlineMode || !params.webKey) {
+    return params;
+  }
+
+  const { apiServer } = getEnvironmentServer(params.server);
+  if (!apiServer) {
+    return params;
+  }
+
+  return {
+    ...params,
+    analytics: { endpoint: `${apiServer.replace(/\/+$/, '')}/v1/collect`, key: params.webKey }
+  };
+};
+
 export function render(
   widgetContainer: string,
   params = {} as PlitziSdkProps,
@@ -60,6 +90,8 @@ export function render(
   debugMode = false,
   ssrMode = false
 ) {
+  const renderParams = withDerivedAnalytics(params);
+
   const Widget = ({ isHydrating = false }: { isHydrating?: boolean }) => {
     const pluginKeys = Object.keys(plugins);
     if (process.env.NODE_ENV === 'production' && !debugMode) {
@@ -76,7 +108,7 @@ export function render(
 
     return (
       <App
-        {...params}
+        {...renderParams}
         debugMode={debugMode}
         isHydrating={isHydrating}
         onInitStateManager={handleInitStateManager}
@@ -134,6 +166,9 @@ export type PlitziSdkProps = {
   branding?: boolean;
   externalStyle?: string;
   sdkDevToolsStylePath?: string;
+  /** Where this render reports SPA navigations and interactions, and with what key. Injected by a server that
+   *  renders the page; derived from `server` + `webKey` for a client-side render; absent means report nothing. */
+  analytics?: AnalyticsConfig;
   state?: Record<string, unknown>;
 };
 
@@ -173,6 +208,7 @@ type PlitziServiceContextValue = BasePlitziServiceContextValue<
 const usePlitziServiceContext = baseUsePlitziServiceContext as () => PlitziServiceContextValue;
 
 export {
+  track,
   useSdkStore as useStore,
   ComponentProvider,
   ComponentContext,
@@ -190,6 +226,7 @@ export {
 };
 
 export type {
+  AnalyticsConfig,
   ElementContextValue,
   Element,
   Schema,

@@ -7,7 +7,37 @@ import { RequestMetrics } from '../../helpers/metrics';
 
 import type { ServerCaches } from '../../helpers/cache';
 import type { PluginManager } from '../../plugins/manager';
-import type { SSRPageServerConfig, SSRRequest, SSRResponseHelpers, SSRTemplateFn } from '@plitzi/sdk-shared';
+import type {
+  Environment,
+  SSRPageServerConfig,
+  SSRPageView,
+  SSRRequest,
+  SSRResponseHelpers,
+  SSRTemplateFn
+} from '@plitzi/sdk-shared';
+
+// Metering a page must never be able to fail one. An adapter that throws (its store is down, its tables are
+// missing) leaves the request uncounted and the render untouched, which is the only acceptable direction for
+// the error: the alternative trades revenue accounting for an outage. Reporting it belongs to the adapter,
+// which knows what went wrong and has the deployment's logger; here it is simply not fatal.
+const resolvePageView = async (
+  req: SSRRequest,
+  config: SSRPageServerConfig,
+  spaceId: number,
+  environment: Environment,
+  revision: number,
+  cached: boolean
+): Promise<SSRPageView | undefined> => {
+  if (!config.adapters.pageView) {
+    return undefined;
+  }
+
+  try {
+    return await config.adapters.pageView({ req, spaceId, environment, revision, cached });
+  } catch {
+    return undefined;
+  }
+};
 
 export const renderSSR = async (
   req: SSRRequest,
@@ -36,9 +66,20 @@ export const renderSSR = async (
       if (devMode) {
         res.setHeader('Server-Timing', 'html;desc="cache-hit";dur=0');
       }
+
+      // A cached page is still a page served, so it is still counted — a space that stopped being metered the
+      // moment it got popular enough to hit the cache would be metered backwards. What the meter is told is that
+      // this one was cheap to serve, the same fact `X-Cache` puts on the wire.
+      await resolvePageView(req, config, spaceId as number, environment, revision, true);
       res.send(cached);
+
       return;
     }
+  }
+
+  // A draft preview is not a visit: it is the author looking at their own unsaved edits, and it is never cached.
+  if (!offlineDataOverride) {
+    req.ctx.pageView = await resolvePageView(req, config, spaceId as number, environment, revision, false);
   }
 
   // Allocate metrics after the cache-hit early return — never wasted on hits.

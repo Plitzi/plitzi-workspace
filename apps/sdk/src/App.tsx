@@ -36,6 +36,7 @@ import { getEnvironmentServer } from './config';
 import type { ApolloClient } from '@apollo/client/core';
 import type { SdkPluginProps } from '@modules/Sdk/SdkPlugin';
 import type {
+  AnalyticsConfig,
   ComponentPlugin,
   ComponentPluginFC,
   Environment,
@@ -66,6 +67,8 @@ export type AppProps = {
    *  own (an MCP widget rendered inside a chat, a component mounted in a host app). */
   branding?: boolean;
   externalStyle?: string;
+  /** Reporting channel for this render — see {@link AnalyticsConfig}. Absent means report nothing. */
+  analytics?: AnalyticsConfig;
   state?: Record<string, unknown>;
   onInitStateManager?: (instance: RuntimeStateInstance) => void;
   onInitEventBridge?: (instance: EventBridgeContextValue) => void;

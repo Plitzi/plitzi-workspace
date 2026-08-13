@@ -1,7 +1,7 @@
 import type { Environment } from './CommonTypes';
 import type { ConnectorEntry } from './ConnectorTypes';
 import type { Schema } from './SchemaTypes';
-import type { OfflineDataRaw } from './SdkTypes';
+import type { AnalyticsConfig, OfflineDataRaw } from './SdkTypes';
 import type { Style } from './StyleTypes';
 import type { IncomingHttpHeaders } from 'node:http';
 import type { FC } from 'react';
@@ -297,6 +297,40 @@ export type SSRAdapters = {
   /** Called by the RSC endpoint, and once per page render, to fetch server-side data for server components.
    *  See {@link SSRRscContext} for what it is given. */
   getRscData?: (context: SSRRscContext) => Promise<SSRRscData>;
+  /**
+   * One served page. This is where a deployment meters usage, because it is the moment it actually spends
+   * bandwidth on a visitor and the one place a visitor cannot reach around: the browser is told what happened,
+   * never asked. It runs before the HTML cache is consulted, so a cached page still counts.
+   *
+   * What comes back shapes the render — degrade the free tier, hand the browser its reporting channel — and a
+   * deployment that meters nothing simply omits it. Never throw from here: a metering outage must not take a
+   * site down, so failures should degrade to "served, uncounted".
+   */
+  pageView?: (context: SSRPageViewContext) => Promise<SSRPageView | undefined>;
+};
+
+/** The page being served, for {@link SSRAdapters.pageView}. */
+export interface SSRPageViewContext {
+  req: SSRRequest;
+  spaceId: number;
+  environment: Environment;
+  revision: number;
+  /**
+   * Whether this page came out of the HTML cache instead of being rendered. Both are page views and both are
+   * reported, because both spend bandwidth on a visitor — but they do not cost the same thing to serve, and a
+   * meter that cannot tell them apart can never price them apart. It is the same distinction a CDN reports as
+   * `X-Cache: HIT`, which is exactly the header the server answers with.
+   */
+  cached: boolean;
+}
+
+/** What the deployment decided about this page view. */
+export type SSRPageView = {
+  /** This space is over the quota its plan allows and the render should say so — the "Made with Plitzi" badge
+   *  on the free tier. Paid plans accrue overage instead and never set this. */
+  degrade?: boolean;
+  /** Client reporting channel, injected into the page bootstrap. Omitted → the page reports nothing. */
+  analytics?: AnalyticsConfig;
 };
 
 /** What a server that RENDERS PAGES must answer: the two adapters every page request goes through, on top of the
@@ -574,6 +608,9 @@ export type SSRMiddleware = (req: SSRRequest, res: SSRResponseHelpers, next: SSR
 export type SSRContext = {
   spaceDeployment?: SSRSpaceDeployment;
   user?: SSRUser;
+  /** What {@link SSRAdapters.pageView} answered for this request, so the render reads the decision instead of
+   *  asking for it a second time. */
+  pageView?: SSRPageView;
 };
 
 export type SSRServer = {
