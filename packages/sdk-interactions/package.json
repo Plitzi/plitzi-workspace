@@ -54,18 +54,6 @@
       "types": "./dist/sources/AuthSource/index.d.ts",
       "import": "./dist/sources/AuthSource/index.mjs"
     },
-    "./sources/CollectionSource": {
-      "types": "./dist/sources/CollectionSource/index.d.ts",
-      "import": "./dist/sources/CollectionSource/index.mjs"
-    },
-    "./sources/CollectionSource/CollectionInteractions": {
-      "types": "./dist/sources/CollectionSource/CollectionInteractions.d.ts",
-      "import": "./dist/sources/CollectionSource/CollectionInteractions.mjs"
-    },
-    "./sources/CollectionSource/index": {
-      "types": "./dist/sources/CollectionSource/index.d.ts",
-      "import": "./dist/sources/CollectionSource/index.mjs"
-    },
     "./sources/NavigationSource": {
       "types": "./dist/sources/NavigationSource/index.d.ts",
       "import": "./dist/sources/NavigationSource/index.mjs"

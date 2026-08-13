@@ -10,10 +10,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
     },
-    "./NavigationContext": {
-      "types": "./dist/NavigationContext.d.ts",
-      "import": "./dist/NavigationContext.mjs"
-    },
     "./NavigationHelper": {
       "types": "./dist/NavigationHelper.d.ts",
       "import": "./dist/NavigationHelper.mjs"

@@ -606,26 +606,6 @@
       "types": "./dist/elements/provider/ApiContainer/index.d.ts",
       "import": "./dist/elements/provider/ApiContainer/index.mjs"
     },
-    "./elements/provider/CollectionContainer": {
-      "types": "./dist/elements/provider/CollectionContainer/index.d.ts",
-      "import": "./dist/elements/provider/CollectionContainer/index.mjs"
-    },
-    "./elements/provider/CollectionContainer/CollectionContainer": {
-      "types": "./dist/elements/provider/CollectionContainer/CollectionContainer.d.ts",
-      "import": "./dist/elements/provider/CollectionContainer/CollectionContainer.mjs"
-    },
-    "./elements/provider/CollectionContainer/Settings": {
-      "types": "./dist/elements/provider/CollectionContainer/Settings.d.ts",
-      "import": "./dist/elements/provider/CollectionContainer/Settings.mjs"
-    },
-    "./elements/provider/CollectionContainer/hooks/useCollectionContext": {
-      "types": "./dist/elements/provider/CollectionContainer/hooks/useCollectionContext.d.ts",
-      "import": "./dist/elements/provider/CollectionContainer/hooks/useCollectionContext.mjs"
-    },
-    "./elements/provider/CollectionContainer/index": {
-      "types": "./dist/elements/provider/CollectionContainer/index.d.ts",
-      "import": "./dist/elements/provider/CollectionContainer/index.mjs"
-    },
     "./elements/settings": {
       "types": "./dist/elements/settings.d.ts",
       "import": "./dist/elements/settings.mjs"
