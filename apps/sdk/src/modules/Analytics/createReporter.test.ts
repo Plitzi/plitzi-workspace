@@ -6,7 +6,7 @@ import type { AnalyticsConfig } from '@plitzi/sdk-shared';
 
 const config: AnalyticsConfig = { endpoint: 'https://api.test/v1/collect', key: 'space-token' };
 
-const sendBeacon = vi.fn((_url: string, _body?: BodyInit | null) => true);
+const sendBeacon = vi.fn<(url: string, body?: BodyInit | null) => boolean>(() => true);
 
 // What was posted, parsed back out of the Blob the beacon carried.
 const sentEvents = async (call = 0): Promise<{ type: string; name?: string; page: { path: string } }[]> => {

@@ -35,7 +35,7 @@ export type StyleReducerActionsBase = { fromSubscriptions?: boolean };
 
 export type StyleReducerActions = StyleReducerActionsBase &
   (
-    | { type: 'STYLE_UPDATE'; style: Style }
+    | { type: 'STYLE_UPDATE'; style: Partial<Style> }
     | {
         type: 'STYLE_ADD_SELECTOR';
         displayMode: DisplayMode;

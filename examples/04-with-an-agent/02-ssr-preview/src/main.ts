@@ -7,7 +7,7 @@ import { consoleLogger, createServer } from '@plitzi/sdk-server';
 
 import { offlineDataPath } from '@plitzi/example-space';
 
-import type { OfflineDataRaw, Schema, SSRAdapters, Style } from '@plitzi/sdk-shared';
+import type { OfflineDataRaw, Schema, SSRPageAdapters, Style } from '@plitzi/sdk-shared';
 
 const PORT = Number(process.env.PORT ?? 4006);
 const PREVIEW_SECRET = 'example-secret';
@@ -19,7 +19,7 @@ const read = (): OfflineDataRaw => JSON.parse(readFileSync(workingCopy, 'utf-8')
 const write = (data: OfflineDataRaw): void => writeFileSync(workingCopy, JSON.stringify(data, null, 2));
 
 // One adapter set feeds both surfaces: the renderer reads offline data, the tools read and write schema/style.
-const adapters: SSRAdapters = {
+const adapters: SSRPageAdapters = {
   getOfflineData: () => Promise.resolve(read()),
   getSpaceDeployment: () => Promise.resolve({ spaceId: 1, environment: 'main', revision: 0, pluginNames: [] }),
   // The authorization boundary: which space, and whether this caller may change it. Normally decoded from a

@@ -1,4 +1,3 @@
-import { get } from '@plitzi/plitzi-ui/helpers';
 import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import React, { useCallback, use, useEffect, useMemo } from 'react';
 
@@ -16,7 +15,7 @@ import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReduc
 import type {
   BuilderQueriesMap,
   BuilderMutationsMap,
-  BuilderSubscriptionsMap,
+  SpaceEventMap,
   BuilderNetworkContextValue,
   DisplayMode,
   Style,
@@ -44,7 +43,7 @@ const BuilderStyleContextProvider = ({
   const { subscriptionManager } = use(NetworkContext) as BuilderNetworkContextValue<
     BuilderQueriesMap,
     BuilderMutationsMap,
-    BuilderSubscriptionsMap
+    SpaceEventMap
   >;
   const middlewares = useMemo(
     () =>
@@ -59,7 +58,7 @@ const BuilderStyleContextProvider = ({
   useCommonStoreSync('style', style);
 
   const styleUpdate = useCallback(
-    (style: Style, fromSubscriptions = false) =>
+    (style: Partial<Style>, fromSubscriptions = false) =>
       dispatchStyle({ type: StyleActions.STYLE_UPDATE, style, fromSubscriptions }),
     [dispatchStyle]
   );
@@ -221,178 +220,72 @@ const BuilderStyleContextProvider = ({
   );
 
   useEffect(() => {
-    if (includeSubscriptions) {
-      subscriptionManager.subscribe('StyleUpdated', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const style = get(data, 'data.StyleUpdated', {}) as BuilderSubscriptionsMap['StyleUpdated'];
-        styleUpdate(style, true);
-      });
-
-      subscriptionManager.subscribe('StyleAddSelector', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { displayMode, selector, type, path, style, params } = get(
-          data,
-          'data.StyleAddSelector',
-          {}
-        ) as BuilderSubscriptionsMap['StyleAddSelector'];
-        styleAddSelector(displayMode, selector, type, path, style, params, true);
-      });
-
-      subscriptionManager.subscribe('StyleUpdateSelector', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { displayMode, selector, path, style, params } = get(
-          data,
-          'data.StyleUpdateSelector',
-          {}
-        ) as BuilderSubscriptionsMap['StyleUpdateSelector'];
-        styleUpdateSelector(displayMode, selector, path, style, params, true);
-      });
-
-      subscriptionManager.subscribe('StyleRemoveSelector', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { displayMode, selector } = get(
-          data,
-          'data.StyleRemoveSelector',
-          {}
-        ) as BuilderSubscriptionsMap['StyleRemoveSelector'];
-        styleRemoveSelector(displayMode, selector, true);
-      });
-
-      subscriptionManager.subscribe('StyleRemoveSelectors', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { displayMode, selectors } = get(
-          data,
-          'data.StyleRemoveSelectors',
-          {}
-        ) as BuilderSubscriptionsMap['StyleRemoveSelectors'];
-        styleRemoveSelectors(displayMode, selectors, true);
-      });
-
-      subscriptionManager.subscribe('StyleAddSelectorVariable', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { displayMode, selector, category, name, value } = get(
-          data,
-          'data.StyleAddSelectorVariable',
-          {}
-        ) as BuilderSubscriptionsMap['StyleAddSelectorVariable'];
-        styleAddSelectorVariable(displayMode, selector, category, name, value, true);
-      });
-
-      subscriptionManager.subscribe('StyleUpdateSelectorVariable', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { displayMode, selector, category, name, value } = get(
-          data,
-          'data.StyleUpdateSelectorVariable',
-          {}
-        ) as BuilderSubscriptionsMap['StyleUpdateSelectorVariable'];
-        styleUpdateSelectorVariable(displayMode, selector, category, name, value, true);
-      });
-
-      subscriptionManager.subscribe('StyleRemoveSelectorVariable', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { displayMode, selector, category, name } = get(
-          data,
-          'data.StyleRemoveSelectorVariable',
-          {}
-        ) as BuilderSubscriptionsMap['StyleRemoveSelectorVariable'];
-        styleRemoveSelectorVariable(displayMode, selector, category, name, true);
-      });
-
-      subscriptionManager.subscribe('StyleAddVariable', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { category, name, value } = get(
-          data,
-          'data.StyleAddVariable',
-          {}
-        ) as BuilderSubscriptionsMap['StyleAddVariable'];
-        styleAddVariable(category, name, value, true);
-      });
-
-      subscriptionManager.subscribe('StyleUpdateVariable', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { category, name, value } = get(
-          data,
-          'data.StyleUpdateVariable',
-          {}
-        ) as BuilderSubscriptionsMap['StyleUpdateVariable'];
-        styleUpdateVariable(category, name, value, true);
-      });
-
-      subscriptionManager.subscribe('StyleRemoveVariable', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { category, name } = get(
-          data,
-          'data.StyleRemoveVariable',
-          {}
-        ) as BuilderSubscriptionsMap['StyleRemoveVariable'];
-        styleRemoveVariable(category, name, true);
-      });
-
-      subscriptionManager.subscribe('StyleUpdateSettings', {}, data => {
-        if (!data.data || data.error) {
-          return;
-        }
-
-        const { path, value } = get(
-          data,
-          'data.StyleUpdateSettings',
-          {}
-        ) as BuilderSubscriptionsMap['StyleUpdateSettings'];
-        styleUpdateSettings(path, value, true);
-      });
+    if (!includeSubscriptions) {
+      return undefined;
     }
 
-    return () => {
-      if (includeSubscriptions) {
-        subscriptionManager.unsubscribe([
-          'StyleUpdated',
-          'StyleAddSelector',
-          'StyleUpdateSelector',
-          'StyleRemoveSelector',
-          'StyleRemoveSelectors',
-          'StyleAddSelectorVariable',
-          'StyleUpdateSelectorVariable',
-          'StyleRemoveSelectorVariable',
-          'StyleAddVariable',
-          'StyleUpdateVariable',
-          'StyleRemoveVariable',
-          'StyleUpdateSettings'
-        ]);
-      }
-    };
+    // A style edit publishes the parts a live builder re-applies, not a whole Style: the reducer merges them.
+    subscriptionManager.subscribe('STYLE_UPDATED', style => styleUpdate(style, true));
+
+    // Selectors
+    subscriptionManager.subscribe('STYLE_ADD_SELECTOR', ({ displayMode, selector, type, path, style, params }) =>
+      styleAddSelector(displayMode, selector, type, path, style, params, true)
+    );
+    subscriptionManager.subscribe('STYLE_UPDATE_SELECTOR', ({ displayMode, selector, path, style, params }) =>
+      styleUpdateSelector(displayMode, selector, path, style, params, true)
+    );
+    subscriptionManager.subscribe('STYLE_REMOVE_SELECTOR', ({ displayMode, selector }) =>
+      styleRemoveSelector(displayMode, selector, true)
+    );
+    subscriptionManager.subscribe('STYLE_REMOVE_SELECTORS', ({ displayMode, selectors }) =>
+      styleRemoveSelectors(displayMode, selectors, true)
+    );
+
+    // Selector variables
+    subscriptionManager.subscribe('STYLE_ADD_SELECTOR_VARIABLE', ({ displayMode, selector, category, name, value }) =>
+      styleAddSelectorVariable(displayMode, selector, category, name, value, true)
+    );
+    subscriptionManager.subscribe(
+      'STYLE_UPDATE_SELECTOR_VARIABLE',
+      ({ displayMode, selector, category, name, value }) =>
+        styleUpdateSelectorVariable(displayMode, selector, category, name, value, true)
+    );
+    subscriptionManager.subscribe('STYLE_REMOVE_SELECTOR_VARIABLE', ({ displayMode, selector, category, name }) =>
+      styleRemoveSelectorVariable(displayMode, selector, category, name, true)
+    );
+
+    // Variables
+    subscriptionManager.subscribe('STYLE_ADD_VARIABLE', ({ category, name, value }) =>
+      styleAddVariable(category, name, value, true)
+    );
+    subscriptionManager.subscribe('STYLE_UPDATE_VARIABLE', ({ category, name, value }) =>
+      styleUpdateVariable(category, name, value, true)
+    );
+    subscriptionManager.subscribe('STYLE_REMOVE_VARIABLE', ({ category, name }) =>
+      styleRemoveVariable(category, name, true)
+    );
+
+    // Others
+    subscriptionManager.subscribe('STYLE_UPDATE_SETTINGS', ({ path, value }) => styleUpdateSettings(path, value, true));
+
+    return () =>
+      subscriptionManager.unsubscribe(
+        [
+          'STYLE_UPDATED',
+          'STYLE_ADD_SELECTOR',
+          'STYLE_UPDATE_SELECTOR',
+          'STYLE_REMOVE_SELECTOR',
+          'STYLE_REMOVE_SELECTORS',
+          'STYLE_ADD_SELECTOR_VARIABLE',
+          'STYLE_UPDATE_SELECTOR_VARIABLE',
+          'STYLE_REMOVE_SELECTOR_VARIABLE',
+          'STYLE_ADD_VARIABLE',
+          'STYLE_UPDATE_VARIABLE',
+          'STYLE_REMOVE_VARIABLE',
+          'STYLE_UPDATE_SETTINGS'
+        ],
+        true
+      );
   }, [
     subscriptionManager,
     includeSubscriptions,
