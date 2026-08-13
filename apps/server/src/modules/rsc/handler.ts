@@ -17,6 +17,26 @@ type RscPayload = {
 /** Bounds the reflected location: it only ever selects one of this space's own pages, but it is still input. */
 const MAX_PAGE_LOCATION = 2048;
 
+// Same contract as the page meter: never throws, and a deployment that meters nothing omits the adapter.
+const meterRsc = async (
+  req: SSRRequest,
+  config: SSRPageServerConfig,
+  spaceId: number,
+  environment: Environment,
+  revision: number,
+  cached: boolean
+): Promise<void> => {
+  if (!config.adapters.meter) {
+    return;
+  }
+
+  try {
+    await config.adapters.meter({ kind: 'rsc_query', cached, req, spaceId, environment, revision });
+  } catch {
+    // Metering must never fail the read it is measuring.
+  }
+};
+
 /**
  * Rewrites the request to the page the browser is actually on.
  *
@@ -106,6 +126,13 @@ export const handleRsc = async (
       ? buildRscCacheKey(spaceId, environment, revision, req.ctx.user?.id, idsParam, req)
       : undefined;
   const cached = cacheKey ? cache?.get(cacheKey) : undefined;
+
+  // An RSC read is a server request of its own — a partial refresh the page asks for after it loaded — so it
+  // is metered like one, at whatever a deployment prices a data refresh against a whole page. Before the
+  // cache lookup and on both branches, for the same reason page renders are: a response served from cache is
+  // still a response served.
+  await meterRsc(req, config, spaceId, environment, revision, !!cached);
+
   if (cached) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.setHeader('Cache-Control', cacheControl);

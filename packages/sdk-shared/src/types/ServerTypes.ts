@@ -298,38 +298,51 @@ export type SSRAdapters = {
    *  See {@link SSRRscContext} for what it is given. */
   getRscData?: (context: SSRRscContext) => Promise<SSRRscData>;
   /**
-   * One served page. This is where a deployment meters usage, because it is the moment it actually spends
-   * bandwidth on a visitor and the one place a visitor cannot reach around: the browser is told what happened,
-   * never asked. It runs before the HTML cache is consulted, so a cached page still counts.
+   * One billable server request. This is where a deployment meters usage, because these are the moments it
+   * actually spends bandwidth on a visitor and the ones a visitor cannot reach around: the browser is told
+   * what happened, never asked. Each runs before its cache is consulted, so a cached response still counts.
    *
-   * What comes back shapes the render — degrade the free tier, hand the browser its reporting channel — and a
-   * deployment that meters nothing simply omits it. Never throw from here: a metering outage must not take a
-   * site down, so failures should degrade to "served, uncounted".
+   * What comes back shapes the response — degrade the free tier, hand the browser its reporting channel — and
+   * a deployment that meters nothing simply omits the adapter. Never throw from here: a metering outage must
+   * not take a site down, so failures should degrade to "served, uncounted".
    */
-  pageView?: (context: SSRPageViewContext) => Promise<SSRPageView | undefined>;
+  meter?: (event: SSRMeterEvent) => Promise<SSRMeterDecision | undefined>;
 };
 
-/** The page being served, for {@link SSRAdapters.pageView}. */
-export interface SSRPageViewContext {
+/**
+ * Which area of server work is being metered. One name per area, because that is the unit a deployment prices
+ * — a full page render does not cost what a partial data refresh costs, and both are cheaper when a cache
+ * answered them than when the origin did.
+ */
+export type MeteredKind =
+  | 'page_view'
+  | 'rsc_query'
+  /** Reserved: nothing emits this yet. Server actions are not implemented — the area exists so wiring them
+   *  later is a call site, not a schema change. */
+  | 'server_action';
+
+/** The request being metered, for {@link SSRAdapters.meter}. */
+export interface SSRMeterEvent {
+  kind: MeteredKind;
+  /**
+   * Whether a cache answered this instead of the origin. Reported rather than inferred: only the handler knows,
+   * it is the same fact the response puts on the wire as `X-Cache: HIT`, and what it is worth is the
+   * deployment's to decide — an area may price a hit lower, or not distinguish one at all.
+   */
+  cached: boolean;
   req: SSRRequest;
   spaceId: number;
   environment: Environment;
   revision: number;
-  /**
-   * Whether this page came out of the HTML cache instead of being rendered. Both are page views and both are
-   * reported, because both spend bandwidth on a visitor — but they do not cost the same thing to serve, and a
-   * meter that cannot tell them apart can never price them apart. It is the same distinction a CDN reports as
-   * `X-Cache: HIT`, which is exactly the header the server answers with.
-   */
-  cached: boolean;
 }
 
-/** What the deployment decided about this page view. */
-export type SSRPageView = {
+/** What the deployment decided about this request. */
+export type SSRMeterDecision = {
   /** This space is over the quota its plan allows and the render should say so — the "Made with Plitzi" badge
    *  on the free tier. Paid plans accrue overage instead and never set this. */
   degrade?: boolean;
-  /** Client reporting channel, injected into the page bootstrap. Omitted → the page reports nothing. */
+  /** Client reporting channel, injected into the page bootstrap. Omitted → the page reports nothing. Only a
+   *  page render has anywhere to put it; the other kinds answer data, not a document. */
   analytics?: AnalyticsConfig;
 };
 
@@ -608,9 +621,9 @@ export type SSRMiddleware = (req: SSRRequest, res: SSRResponseHelpers, next: SSR
 export type SSRContext = {
   spaceDeployment?: SSRSpaceDeployment;
   user?: SSRUser;
-  /** What {@link SSRAdapters.pageView} answered for this request, so the render reads the decision instead of
+  /** What {@link SSRAdapters.meter} answered for this request, so the render reads the decision instead of
    *  asking for it a second time. */
-  pageView?: SSRPageView;
+  meter?: SSRMeterDecision;
 };
 
 export type SSRServer = {

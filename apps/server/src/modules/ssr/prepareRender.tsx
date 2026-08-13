@@ -83,7 +83,7 @@ export const prepareRender = async (
   // whatever the adapter returned: this render was already counted server-side, so the browser reporting the
   // same view again would double it. Degrading pins the badge on rather than merely defaulting it, so a space
   // over its quota cannot turn it off from its own settings.
-  const { degrade, analytics } = req.ctx.pageView ?? {};
+  const { degrade, analytics } = req.ctx.meter ?? {};
   const clientAnalytics = analytics ? { ...analytics, firstViewCounted: true } : undefined;
   const branding = degrade ? true : undefined;
 
