@@ -178,6 +178,16 @@ export type SSRSpaceDeployment = {
   credential?: SSRCredential;
   spaceId?: number | null;
   revision?: number;
+  /**
+   * This render is an author looking at their own work — the builder's preview — rather than a visitor being
+   * served. Metering skips it: nobody should be billed for editing.
+   *
+   * It is a property of HOW the request resolved, not of the environment it renders. Those two look the same
+   * from the render's side and are not: a space's free preview sub-domain serves the live editing environment
+   * to the public, so "which environment" cannot tell an author apart from a visitor. Only the resolver knows,
+   * which is why it says so here.
+   */
+  authoring?: boolean;
   templateProps?: SSRTemplateProps;
   pluginNames?: string[];
   pluginSources?: Record<string, PluginSource>;
