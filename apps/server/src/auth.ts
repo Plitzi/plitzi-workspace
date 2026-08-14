@@ -23,6 +23,7 @@
 
 export { createAuth } from './core/auth/createAuth';
 export { createAuthApi } from './core/auth/api';
+export { createCsrf, csrfFailureMessage } from './core/auth/csrf';
 export { createAuthorizer, checkPermission, checkSpaceAccess, requirementFor } from './core/auth/authorize';
 export { createCarriers, presentedOrigin } from './core/auth/credentials';
 export {
@@ -37,6 +38,7 @@ export { createIdentity } from './core/auth/identity';
 export { BUILT_IN_PROVIDERS, OAuthFailure, createSocialAuth, requestProfileJson } from './core/auth/oauth';
 export { applySessionOutcome, authPolicyRules, authRoutes } from './core/auth/routes';
 export {
+  appendCookies,
   clearFlowCookie,
   clearSessionCookies,
   createSessionCookies,
@@ -92,6 +94,7 @@ export type {
   SpaceAccessCheck
 } from './core/auth/authorize';
 export type { CredentialCarrier } from './core/auth/credentials';
+export type { Csrf, CsrfCarrier, CsrfConfig, CsrfFailure, CsrfResult } from './core/auth/csrf';
 export type {
   Actor,
   ActorResult,

@@ -1,15 +1,19 @@
 import { createAuthApi } from './api';
 import { createAuthorizer } from './authorize';
 import { createCarriers, presentedOrigin } from './credentials';
+import { createCsrf } from './csrf';
 import { createIdentity } from './identity';
 import { applySessionOutcome, authPolicyRules, authRoutes } from './routes';
 import { createSessionCookies, sessionCookieParams } from './session';
 import { createTokens } from './tokens';
 
 import type { AccountAdapters, AuthApiConfig } from './api';
+import type { AuthOutcome } from './api';
 import type { AuthPolicy, Requirement } from './authorize';
 import type { CredentialCarrier } from './credentials';
+import type { CsrfConfig } from './csrf';
 import type { IdentityAdapters, IdentityConfig } from './identity';
+import type { CookieSink } from './session';
 import type { TokenConfig } from './tokens';
 import type { SSRAuthCookie, SSRSession, SSRUser } from '@plitzi/sdk-shared';
 
@@ -49,6 +53,16 @@ export interface AuthConfig {
   fallback?: Requirement;
   /** Extra rules, applied BEFORE the derived `/auth` ones so a deployment can always widen its own surface. */
   rules?: AuthPolicy['rules'];
+  /**
+   * Cross-site request forgery protection for cookie-authenticated writes.
+   *
+   * **On by default**, and it should be: the session cookie defaults to `SameSite=None` off localhost — a Plitzi
+   * space is embedded in an iframe on somebody else's domain — which is precisely the setting that lets another
+   * site cause an authenticated request. Bearer clients are never asked for a token and are unaffected.
+   *
+   * `false` turns it off, for a deployment that has its own. The secret defaults to the token secret.
+   */
+  csrf?: (Omit<CsrfConfig, 'secret'> & { secret?: string }) | false;
 }
 
 /**
@@ -83,7 +97,17 @@ export const createAuth = (config: AuthConfig) => {
     config: config.identity
   });
 
-  const api = createAuthApi({ tokens, identity, adapters: config.adapters, config: config.api });
+  const csrf =
+    config.csrf === false
+      ? undefined
+      : createCsrf({ secret: config.tokens.secret, cookie: config.cookie, ...config.csrf });
+
+  const api = createAuthApi({
+    tokens,
+    identity,
+    adapters: config.adapters,
+    config: { ...config.api, ...(csrf ? { csrf } : {}) }
+  });
 
   const basePath = config.basePath ?? '/auth';
 
@@ -103,12 +127,21 @@ export const createAuth = (config: AuthConfig) => {
     basePath,
     /** The naming this was built with, so a page server takes it from here instead of being told a second time. */
     cookieConfig: config.cookie,
+    /**
+     * Cross-site request forgery: issuing tokens, writing the readable cookie, and the check. `undefined` when the
+     * deployment turned it off. The `/auth` routes below already enforce it.
+     */
+    csrf,
     /** The `/auth` flows as descriptors, ready for whatever serves HTTP here. */
-    routes: authRoutes({ api, cookies }),
+    routes: authRoutes({ api, cookies, csrf }),
     /** May this request proceed, and as whom. */
     authorize: createAuthorizer(identity, policy),
-    /** Does what a flow's answer says about the session cookies. */
-    applySession: applySessionOutcome,
+    /**
+     * Does what a flow's answer says about the cookies — the session, and the CSRF token that has to be re-issued
+     * alongside it. Bound to this deployment's `csrf`, so a caller cannot forget to pass it.
+     */
+    applySession: (req: { hostname: string }, res: CookieSink, outcome: AuthOutcome): void =>
+      applySessionOutcome(req, res, outcome, cookies, csrf),
     /** Both halves of a space permission: a global capability, and membership of that space. */
     can: identity.can,
 

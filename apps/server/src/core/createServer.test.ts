@@ -103,7 +103,30 @@ const expectJson = async (res: Response): Promise<Record<string, unknown>> => {
   return JSON.parse(text) as Record<string, unknown>;
 };
 
-const post = (path: string, body: unknown, headers: Record<string, string> = {}): Promise<Response> =>
+/**
+ * A CSRF token for whoever this cookie belongs to, or for nobody. Every cookie-authenticated write needs one — that
+ * is the point of it — so the helper below fetches one rather than each test remembering to.
+ */
+const csrfToken = async (cookie?: string): Promise<string> => {
+  const res = await fetch(`${BASE}/auth/csrf`, { headers: cookie ? { cookie } : {} });
+
+  return ((await res.json()) as { token: string }).token;
+};
+
+const post = async (path: string, body: unknown, headers: Record<string, string> = {}): Promise<Response> =>
+  fetch(`${BASE}${path}`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-csrf-token': await csrfToken(headers.cookie),
+      ...headers
+    },
+    body: JSON.stringify(body),
+    redirect: 'manual'
+  });
+
+/** Deliberately without one, for the tests that prove the check is really there. */
+const postWithoutCsrf = (path: string, body: unknown, headers: Record<string, string> = {}): Promise<Response> =>
   fetch(`${BASE}${path}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', ...headers },
@@ -115,11 +138,17 @@ const post = (path: string, body: unknown, headers: Record<string, string> = {})
  * A posted `<form>`, as a browser sends one. Not `fetch`: it rewrites `Sec-Fetch-Mode` to `cors` — the header is
  * the browser's to set — so a test built on it would assert the redirect behaviour while never once triggering it.
  */
-const navigate = (
+/**
+ * A posted `<form>`, which carries its token in the body rather than a header — a form without JavaScript cannot
+ * set one. Exercising that path here is the point: it is the half of the design a fetch client never touches.
+ */
+const navigate = async (
   path: string,
-  body: string
-): Promise<{ status: number; location: string | undefined; cookies: string[] }> =>
-  new Promise((resolve, reject) => {
+  formBody: string
+): Promise<{ status: number; location: string | undefined; cookies: string[] }> => {
+  const body = `${formBody}&_csrf=${encodeURIComponent(await csrfToken())}`;
+
+  return new Promise((resolve, reject) => {
     const req = request(
       `${BASE}${path}`,
       {
@@ -143,6 +172,7 @@ const navigate = (
     req.on('error', reject);
     req.end(body);
   });
+};
 
 const sessionCookie = (res: Response): string =>
   res.headers
@@ -218,6 +248,75 @@ describe('createServer with auth', () => {
 
     // Cleared at the browser as well as at the source; a cookie left in place is a session that looks alive.
     expect(loggedOut.headers.getSetCookie().some(cookie => /^test_session=;/u.test(cookie))).toBe(true);
+  });
+
+  /**
+   * The session cookie defaults to `SameSite=None` off localhost — a space is embedded in an iframe on somebody
+   * else's domain — so the browser attaches it to cross-site requests. Without this check, any page on the
+   * internet could cause an authenticated write.
+   */
+  it('refuses a cookie-authenticated write with no CSRF token', async () => {
+    const login = await post('/auth/login', { username: 'ada', password: 'password' });
+    const cookie = sessionCookie(login);
+
+    const res = await postWithoutCsrf('/auth/sessions/revoke', {}, { cookie });
+
+    expect(res.status).toBe(403);
+    expect(await expectJson(res)).toMatchObject({ reason: 'missing' });
+  });
+
+  it('refuses a token minted for somebody else’s session', async () => {
+    const mine = sessionCookie(await post('/auth/login', { username: 'ada', password: 'password' }));
+    const theirs = sessionCookie(await post('/auth/login', { username: 'grace', password: 'password' }));
+
+    const res = await postWithoutCsrf(
+      '/auth/sessions/revoke',
+      {},
+      { cookie: mine, 'x-csrf-token': await csrfToken(theirs) }
+    );
+
+    expect(res.status).toBe(403);
+    expect(await expectJson(res)).toMatchObject({ reason: 'mismatch' });
+  });
+
+  /** A bearer client cannot be forged into — no cross-origin page can set the header — so it is never asked. */
+  it('asks a bearer client for no token at all', async () => {
+    const granted = await expectJson(await post('/auth/login', { username: 'ada', password: 'password' }));
+
+    const res = await postWithoutCsrf(
+      '/auth/sessions/revoke',
+      {},
+      { authorization: `Bearer ${granted.access_token as string}` }
+    );
+
+    expect(res.status).toBe(200);
+  });
+
+  /**
+   * Signing in carries no session, so there is nothing for a browser to attach and nothing to forge. Covering it
+   * anyway — login CSRF — is `protectSignIn`, and it is off because it costs every client a round trip.
+   */
+  it('lets a sessionless sign-in through without one', async () => {
+    const res = await postWithoutCsrf('/auth/login', { username: 'ada', password: 'password' });
+
+    expect(res.status).toBe(200);
+  });
+
+  /** After signing in, the unbound token the page was holding is stale — the grant must hand over a fresh one. */
+  it('re-issues a token bound to the session it just granted', async () => {
+    const login = await post('/auth/login', { username: 'ada', password: 'password' });
+    const issued = login.headers.getSetCookie().find(cookie => cookie.startsWith('test_session_csrf='));
+
+    expect(issued).toBeDefined();
+
+    const token = decodeURIComponent(issued?.split(';')[0].split('=')[1] ?? '');
+    const res = await postWithoutCsrf(
+      '/auth/sessions/revoke',
+      {},
+      { cookie: sessionCookie(login), 'x-csrf-token': token }
+    );
+
+    expect(res.status).toBe(200);
   });
 
   it('answers a request for a session it does not have with 401 and a reason', async () => {

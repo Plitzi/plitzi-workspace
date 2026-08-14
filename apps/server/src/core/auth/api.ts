@@ -5,6 +5,7 @@ import { authFailureMessage } from './tokens';
 import { generateRecoveryCodes, generateTotpSecret, normalizeRecoveryCode, totpUri, verifyTotp } from './totp';
 
 import type { CredentialCarrier } from './credentials';
+import type { Csrf } from './csrf';
 import type { Actor, Identity } from './identity';
 import type { AuthFailure, Tokens } from './tokens';
 import type { SSRSession } from '@plitzi/sdk-shared';
@@ -290,6 +291,8 @@ export interface AuthApiConfig {
   mfaIssuer?: string;
   /** How long a sign-in code is good for, in seconds. Default 600 — long enough to find the email, short enough. */
   passwordlessTtl?: number;
+  /** Set by `createAuth`, so `GET /auth/csrf` can mint one. Nothing here enforces the check — the routes do. */
+  csrf?: Csrf;
 }
 
 /** What an exchange came to, before it is turned into either an HTTP body or a rendered page's session. */
@@ -299,7 +302,7 @@ export type ExchangeResult =
 
 /** What a handler answers: a body, and optionally what should happen to the session cookies. */
 export type AuthOutcome =
-  | { ok: true; status?: number; body: object; session?: SSRSession; endSession?: boolean }
+  | { ok: true; status?: number; body: object; session?: SSRSession; endSession?: boolean; csrf?: string }
   | { ok: false; status: number; body: object };
 
 const refuse = (status: number, error: string, reason?: AuthFailure): AuthOutcome => ({
@@ -368,7 +371,8 @@ export const createAuthApi = ({
     onMailError,
     onEvent,
     mfaIssuer,
-    passwordlessTtl = 600
+    passwordlessTtl = 600,
+    csrf
   } = config;
 
   /** Never awaited, never able to throw: a logging outage must not become an authentication outage. */
@@ -1191,16 +1195,19 @@ export const createAuthApi = ({
       });
 
       /**
-       * A new address is an unverified address.
+       * A confirmation goes to the new address — and the account stays verified.
        *
-       * Otherwise changing it is a way to inherit the old one's confirmation: point the account at an address you
-       * do not control and it arrives already trusted, which is exactly what verification existed to prevent. So
-       * the flag comes off and a fresh confirmation goes out — and a deployment that does not verify emails at all
-       * is unaffected, because none of those adapters are there.
+       * Taking the flag away was the obvious move and it was wrong here: `verified` in this server gates ACCESS,
+       * not merely trust in an address (`createAuthorizer` refuses to present an unverified account as an actor at
+       * all). Clearing it locks somebody out of the account they are sitting in because they corrected a typo in
+       * their email, which is a far worse failure than the one it was guarding against — and the attack it guarded
+       * against needs a live session, from which the same person could simply change the password.
+       *
+       * The right shape is a PENDING address that only takes effect once confirmed, leaving the old one working
+       * until it does. That needs somewhere to keep it and is its own change; this note is the seam.
        */
       if (changingEmail && capabilities.emailVerification && generateToken && adapters.setValidationToken) {
         const validationToken = generateToken();
-        await adapters.setVerified?.(actor.id, false);
         await adapters.setValidationToken(actor.id, validationToken);
         await deliver({
           to: account.email,
@@ -1212,8 +1219,8 @@ export const createAuthApi = ({
           ok: true,
           body: {
             success: true,
-            details: { ...profileOf(account), verified: false },
-            message: 'Confirm the new address to finish changing it'
+            details: profileOf(account),
+            message: 'A confirmation was sent to the new address'
           }
         };
       }
@@ -1451,6 +1458,20 @@ export const createAuthApi = ({
 
         return { ok: true, body: { success: true } };
       }
+    },
+
+    /**
+     * A CSRF token for whoever is asking, bound to their session when they have one. Answered as a body AND as the
+     * cookie the binding writes, so a page can take whichever it finds easier to read.
+     */
+    issueCsrf: (sessionToken?: string): AuthOutcome => {
+      if (!csrf) {
+        return NOT_OFFERED;
+      }
+
+      const token = csrf.issue(sessionToken);
+
+      return { ok: true, body: { token, headerName: csrf.headerName }, csrf: token };
     },
 
     /** Exposed so a deployment can mint a session outside the flows above — a rendered page's login form. */

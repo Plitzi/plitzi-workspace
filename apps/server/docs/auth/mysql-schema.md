@@ -195,6 +195,9 @@ it:
 - **An administrator cannot act on their own account** through the admin routes. That is how a deployment loses its
   last administrator, and it is never what was meant.
 
+Cross-site request forgery is on by default for cookie-authenticated writes; see the README. Nothing about it
+touches these tables — the token is signed, not stored.
+
 The admin routes check one global permission, named by `createAuth({ api: { adminPermission } })` and defaulting to
 `userManage` — the server does not presume to know your vocabulary. They are otherwise ordinary `actor` routes, so a
 deployment that grants that permission to nobody has them refuse everyone.

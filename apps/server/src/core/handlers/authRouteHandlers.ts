@@ -2,12 +2,20 @@ import { applySessionOutcome, authRoutes } from '../auth/routes';
 
 import type { AuthedRequest, JsonResponse, HttpRoute, RouterLike } from './types';
 import type { AuthApi } from '../auth/api';
+import type { Csrf } from '../auth/csrf';
 import type { AuthRequest } from '../auth/routes';
 import type { SessionCookies } from '../auth/session';
 
 export interface AuthRouteHandlersOptions {
   api: AuthApi;
   cookies: SessionCookies;
+  /**
+   * Enforces the CSRF check on these flows, and re-issues the token when a session is granted. Pass `auth.csrf`.
+   *
+   * Omitting it leaves the `/auth` surface unprotected, which is why `createAuth` hands one over by default — a
+   * deployment that means to go without says so with `csrf: false` there rather than by forgetting here.
+   */
+  csrf?: Csrf;
   /** Reports a flow that threw. Without it the failure goes to `console.error`; the caller still gets a 500. */
   onError?: (error: unknown, context: { method: string; path: string }) => void;
 }
@@ -50,15 +58,15 @@ const carrier = (req: AuthedRequest): AuthRequest => ({
  * Which flows actually answer is decided by the adapters, not here — no `createAccount`, no signup, and the route
  * reports 404 rather than failing at runtime. Mounting all of them is correct for a deployment that offers three.
  */
-export const createAuthRouteHandlers = ({ api, cookies, onError }: AuthRouteHandlersOptions): HttpRoute[] =>
-  authRoutes({ api, cookies }).map(({ method, path, handler }) => ({
+export const createAuthRouteHandlers = ({ api, cookies, csrf, onError }: AuthRouteHandlersOptions): HttpRoute[] =>
+  authRoutes({ api, cookies, csrf }).map(({ method, path, handler }) => ({
     method,
     path,
     handle: async (req: AuthedRequest, res: JsonResponse): Promise<void> => {
       try {
         const outcome = await handler(carrier(req));
 
-        applySessionOutcome(req, res, outcome, cookies);
+        applySessionOutcome(req, res, outcome, cookies, csrf);
         res.status(outcome.ok ? (outcome.status ?? 200) : outcome.status).json(outcome.body);
       } catch (error: unknown) {
         if (onError) {

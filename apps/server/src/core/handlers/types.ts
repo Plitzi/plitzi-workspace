@@ -13,6 +13,8 @@ import type { CookieSink } from '../auth/session';
 export interface AuthedRequest extends CredentialCarrier {
   /** The path alone, without the query string — what the policy matches on. */
   path: string;
+  /** Read by the CSRF check, which asks nothing of a safe method. Absent is treated as `GET`. */
+  method?: string;
   /** The parsed body, when there is one. The flows read fields off it; how it got parsed is the host's business. */
   body?: unknown;
   /** The account this request proved, once the auth middleware has run. */

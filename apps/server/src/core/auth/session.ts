@@ -120,7 +120,7 @@ const nowInSeconds = (): number => Math.floor(Date.now() / 1000);
  * Adds to `Set-Cookie` rather than replacing it. A handler may already have written one — clearing an OAuth flow
  * before granting the session it produced is exactly that — and replacing the header would silently drop it.
  */
-const appendCookies = (res: CookieSink, cookies: string[]): void => {
+export const appendCookies = (res: CookieSink, cookies: string[]): void => {
   const existing = res.getHeader?.('set-cookie') ?? res.headers?.['set-cookie'];
   const previous = Array.isArray(existing) ? existing : typeof existing === 'string' ? [existing] : [];
 

@@ -591,33 +591,41 @@ describe('changing the email that was verified', () => {
     });
   };
 
-  /**
-   * Otherwise changing an address inherits the old one's confirmation: point the account at something you do not
-   * control and it arrives already trusted, which is what verification existed to prevent.
-   */
-  it('takes the verification away and sends a fresh confirmation', async () => {
-    const setVerified = vi.fn(() => Promise.resolve());
+  it('sends a confirmation to the new address', async () => {
     const setValidationToken = vi.fn(() => Promise.resolve());
     const sendMail = vi.fn(() => Promise.resolve());
-    const api = withVerification({ setVerified, setValidationToken, sendMail });
+    const api = withVerification({ setValidationToken, sendMail });
 
-    const outcome = await api.updateProfile(actorFor(ada), { email: 'elsewhere@example.test' });
+    await api.updateProfile(actorFor(ada), { email: 'elsewhere@example.test' });
 
-    expect(setVerified).toHaveBeenCalledWith(1, false);
     expect(setValidationToken).toHaveBeenCalledWith(1, 'fresh-token');
     expect(sendMail).toHaveBeenCalledWith(
       expect.objectContaining({ to: 'elsewhere@example.test', template: 'validation' })
     );
-    expect(body(outcome)).toMatchObject({ details: { verified: false } });
   });
 
-  it('leaves it alone when the address did not change', async () => {
+  /**
+   * The regression this guards. `verified` gates ACCESS here — `createAuthorizer` will not present an unverified
+   * account as an actor at all — so clearing it on an email change locks somebody out of the account they are
+   * sitting in for correcting a typo.
+   */
+  it('does not lock the account out by un-verifying it', async () => {
     const setVerified = vi.fn(() => Promise.resolve());
     const api = withVerification({ setVerified });
 
-    await api.updateProfile(actorFor(ada), { email: ada.email, username: 'ada-renamed' });
+    const outcome = await api.updateProfile(actorFor(ada), { email: 'elsewhere@example.test' });
 
     expect(setVerified).not.toHaveBeenCalled();
+    expect(body(outcome)).toMatchObject({ details: { verified: true } });
+  });
+
+  it('sends nothing when the address did not change', async () => {
+    const sendMail = vi.fn(() => Promise.resolve());
+    const api = withVerification({ sendMail });
+
+    await api.updateProfile(actorFor(ada), { email: ada.email, username: 'ada-renamed' });
+
+    expect(sendMail).not.toHaveBeenCalled();
   });
 
   /** A deployment that does not verify emails has none of those adapters, and nothing here should appear. */

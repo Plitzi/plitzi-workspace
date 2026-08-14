@@ -164,7 +164,7 @@ describe('auth handlers on a plain object request', () => {
     expect(get.map(([path]) => path)).toContain('/sessions');
     expect(post.map(([path]) => path)).toContain('/login');
     expect(post.map(([path]) => path)).toContain('/admin/account/delete');
-    expect(get.length + post.length).toBe(30);
+    expect(get.length + post.length).toBe(31);
   });
 });
 

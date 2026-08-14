@@ -839,6 +839,53 @@ and every refusal names a machine-readable `reason`, so a client can tell "renew
 Working examples are in [`examples/02-with-users`](../../examples/02-with-users): `01-sessions` over a store you
 write, `02-mysql` over one you do not.
 
+### Cross-site request forgery
+
+**On by default.** The session cookie defaults to `SameSite=None` off localhost — a space is embedded in an iframe
+on somebody else's domain — so the browser attaches it to requests another site caused. That is the attack, and
+`Lax` is what would otherwise prevent it.
+
+Three kinds of request are never asked for a token, and each is one that cannot be forged into:
+
+| Not asked | Why |
+|---|---|
+| `GET`, `HEAD`, `OPTIONS` | They change nothing |
+| Anything with `Authorization: Bearer` | A cross-origin page cannot set that header without a preflight you would have to allow. **Every API client is unaffected** |
+| Anything carrying no session cookie | It carries no credentials for a browser to attach. Signing in is the case that matters; `csrf: { protectSignIn: true }` covers it, at the cost of a round trip before every sign-in |
+
+So what needs a token is exactly: **a cookie-authenticated write**.
+
+#### What a browser client does
+
+```js
+// Once, or whenever a write is refused with 403 and reason "mismatch".
+const { token } = await (await fetch('/auth/csrf', { credentials: 'include' })).json();
+
+await fetch('/auth/profile', {
+  method: 'POST',
+  credentials: 'include',
+  headers: { 'content-type': 'application/json', 'x-csrf-token': token },
+  body: JSON.stringify({ email })
+});
+```
+
+The same token is also written to a **readable cookie** (`<session cookie>_csrf`), so a page that would rather read
+it out of `document.cookie` than call an endpoint can. A `<form>` without JavaScript posts it as `_csrf` instead.
+
+**Signing in re-issues it.** The token a signed-out page held is bound to nobody, and every write it attempted
+afterwards would be refused — so the grant that creates a session writes a fresh cookie bound to it. A client that
+re-reads the cookie after signing in never notices this exists.
+
+#### Why it is a signed token and not just a matching cookie
+
+Plain double-submit compares a cookie to a header, which fails against anyone who can *write* a cookie — a
+sub-domain they took over. Here the token is an HMAC over a nonce **and the session it belongs to**, so forging one
+needs the secret, and a token minted for one session is refused for another. A refusal always names a `reason`:
+`missing`, `malformed`, `expired` or `mismatch`.
+
+Turn it off with `csrf: false` on `createAuth`. Outside this package, `createCsrfMiddleware` from
+`@plitzi/sdk-server/handlers` applies the same check to your own routes.
+
 ### `SSRUser`
 
 What a rendered page sees, so a schema can restrict pages to signed-in visitors — the SDK reads `authenticated` and

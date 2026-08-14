@@ -62,6 +62,7 @@ describe('the route table', () => {
 
     expect(authRoutes({ api, cookies }).map(route => `${route.method} ${route.path}`)).toEqual([
       'GET /capabilities',
+      'GET /csrf',
       'GET /session',
       'POST /login',
       'POST /refresh',

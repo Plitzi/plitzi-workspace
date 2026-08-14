@@ -54,7 +54,9 @@
 
 export { createAuthRouteHandlers, mountAuthRoutes } from './core/handlers/authRouteHandlers';
 export { createAuthMiddleware } from './core/handlers/authMiddleware';
+export { createCsrfMiddleware } from './core/handlers/csrfMiddleware';
 
 export type { AuthRouteHandlersOptions } from './core/handlers/authRouteHandlers';
 export type { AuthMiddlewareOptions } from './core/handlers/authMiddleware';
+export type { CsrfMiddlewareOptions } from './core/handlers/csrfMiddleware';
 export type { AuthedRequest, JsonResponse, HttpRoute, RouteHandler, RouterLike } from './core/handlers/types';

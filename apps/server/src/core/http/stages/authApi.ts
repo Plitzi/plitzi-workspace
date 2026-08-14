@@ -69,7 +69,7 @@ export const createAuthApiStage = (auth: Auth, basePath = auth.basePath): Stage<
 
     const outcome = await route.handler(authRequest);
 
-    auth.applySession(req, res, outcome, auth.cookies);
+    auth.applySession(req, res, outcome);
 
     // A posted `<form>` has left the page it was on: it needs a view, not a body it cannot render. Back to where
     // it asked to go when the flow succeeded, back to the flow's own path when it did not, so the form reappears.

@@ -1,6 +1,9 @@
+import { csrfFailureMessage } from './csrf';
+
 import type { AccountStatus, AuthApi, AuthOutcome } from './api';
 import type { AuthPolicy, Requirement } from './authorize';
 import type { CredentialCarrier } from './credentials';
+import type { Csrf } from './csrf';
 import type { Actor } from './identity';
 import type { CookieSink, SessionCookies } from './session';
 
@@ -88,6 +91,16 @@ type Flow = Omit<AuthRoute, 'handler'> & {
  */
 const FLOWS: Flow[] = [
   { method: 'GET', path: '/capabilities', requirement: 'public', run: api => api.describe() },
+  /**
+   * A token to write with, for a page that has none. Public because signing IN needs one: without a token before
+   * anybody is authenticated, another site can log a visitor into an account it controls.
+   */
+  {
+    method: 'GET',
+    path: '/csrf',
+    requirement: 'public',
+    run: (api, cookies, req) => api.issueCsrf(cookies.resolveSessionToken(req))
+  },
   { method: 'GET', path: '/session', requirement: 'actor', run: (api, _cookies, req) => api.session(req.actor) },
   { method: 'POST', path: '/login', requirement: 'public', run: (api, _cookies, req) => api.login(body(req), req) },
   {
@@ -260,10 +273,47 @@ const FLOWS: Flow[] = [
   }
 ];
 
+/**
+ * Which flows are exempt from the CSRF check, and why each one is.
+ *
+ * `/refresh` and `/logout` authenticate with the refresh credential itself and must work when the access token has
+ * lapsed — including from a page that never obtained a token. Forging either buys an attacker nothing: renewing
+ * somebody's session hands the new credential to their browser, and forcing a sign-out is a nuisance, not a
+ * takeover. `/passwordless/complete` and `/mfa/complete` finish a sign-in the caller began, and the code they
+ * carry is the unguessable part.
+ */
+const CSRF_EXEMPT = new Set(['/refresh', '/logout', '/passwordless/complete', '/mfa/complete']);
+
 /** The flows, ready to mount. Which of them actually answer is decided by the API itself — no adapter, no endpoint —
  *  so mounting all of them is correct even for a deployment that offers three. */
-export const authRoutes = ({ api, cookies }: { api: AuthApi; cookies: SessionCookies }): AuthRoute[] =>
-  FLOWS.map(({ run, ...route }) => ({ ...route, handler: (req: AuthRequest) => run(api, cookies, req) }));
+export const authRoutes = ({
+  api,
+  cookies,
+  csrf
+}: {
+  api: AuthApi;
+  cookies: SessionCookies;
+  csrf?: Csrf;
+}): AuthRoute[] =>
+  FLOWS.map(({ run, ...route }) => ({
+    ...route,
+    handler: async (req: AuthRequest) => {
+      /**
+       * Checked before the flow runs, and only for a request a cookie could have authenticated: `required` says no
+       * for safe methods and no for anything presenting `Authorization: Bearer`, which a cross-origin page cannot
+       * set. The session the token must be bound to is whatever this request carries — an unbound token satisfies
+       * a signed-out caller, which is how signing in is itself protected.
+       */
+      if (csrf && !CSRF_EXEMPT.has(route.path) && csrf.required({ ...req, method: route.method })) {
+        const result = csrf.verify({ ...req, method: route.method }, cookies.resolveSessionToken(req));
+        if (!result.ok) {
+          return { ok: false, status: 403, body: { error: csrfFailureMessage[result.reason], reason: result.reason } };
+        }
+      }
+
+      return run(api, cookies, req);
+    }
+  }));
 
 /**
  * The same flows as authorization rules, for the guard that runs in front of them.
@@ -291,7 +341,8 @@ export const applySessionOutcome = (
   req: { hostname: string },
   res: CookieSink,
   outcome: AuthOutcome,
-  cookies: SessionCookies
+  cookies: SessionCookies,
+  csrf?: Csrf
 ): void => {
   if (!outcome.ok) {
     return;
@@ -299,9 +350,22 @@ export const applySessionOutcome = (
 
   if (outcome.session) {
     cookies.write(req, res, outcome.session);
+    /**
+     * A fresh CSRF token, bound to the session that was just granted.
+     *
+     * Not optional housekeeping: the token a signed-out page was holding is bound to nobody, and every write it
+     * attempts after signing in would be refused as a mismatch. Re-issuing here is what makes signing in and then
+     * doing something work without the client knowing this exists.
+     */
+    csrf?.write(req, res, csrf.issue(outcome.session.token));
   }
 
   if (outcome.endSession) {
     cookies.clear(req, res);
+  }
+
+  // A token issued on its own — `GET /auth/csrf` — with no session involved.
+  if (outcome.csrf !== undefined) {
+    csrf?.write(req, res, outcome.csrf);
   }
 };
