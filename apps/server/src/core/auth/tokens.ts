@@ -22,7 +22,9 @@ export const SCOPES = {
   refresh: 'refresh',
   widget: 'widget',
   spaceRender: 'space:render',
-  spaceAgent: 'space:agent'
+  spaceAgent: 'space:agent',
+  /** A sign-in that got the password right and still owes a second factor. Carries no authority of its own. */
+  mfa: 'mfa'
 } as const;
 
 export type TokenScope = (typeof SCOPES)[keyof typeof SCOPES];
@@ -76,10 +78,27 @@ export const DEFAULT_LIFETIMES = {
   access: DAY,
   refresh: 30 * DAY,
   agent: 30 * DAY,
-  widget: 30 * DAY
+  widget: 30 * DAY,
+  /**
+   * Long enough to fetch a code out of an app, short enough that a stolen one is worthless. It authorises nothing
+   * on its own — only finishing the sign-in it belongs to, which still needs the code.
+   */
+  mfaChallenge: 300,
+  /**
+   * The longest a session may live no matter how often it renews, counted from when it began. `0` means no cap,
+   * which is the default and what most deployments want: the renewal window is already an idle timeout, since a
+   * session nobody refreshes dies with its refresh token. This is the other half — the one that ends a session
+   * that has been renewing quietly for a year.
+   */
+  session: 0
 } as const;
 
-export type TokenLifetimes = Partial<typeof DEFAULT_LIFETIMES>;
+/**
+ * Seconds, per credential. Written as a record of `number` rather than `Partial<typeof DEFAULT_LIFETIMES>`: the
+ * defaults are `as const`, so that shape narrowed every field to the literal it happens to default to and made
+ * `{ access: 3600 }` a type error. The option existed and could not be used.
+ */
+export type TokenLifetimes = Partial<Record<keyof typeof DEFAULT_LIFETIMES, number>>;
 
 export type TokenConfig = {
   secret: string;
@@ -118,6 +137,12 @@ export interface RefreshTokenPayload extends BaseClaims {
   sub: string;
 }
 
+/** Half a sign-in: the password is proven, the second factor is not. Authorises finishing that login and nothing else. */
+export interface MfaChallengePayload extends BaseClaims {
+  scope: typeof SCOPES.mfa;
+  sub: string;
+}
+
 export interface SpaceTokenPayload extends BaseClaims {
   scope: typeof SCOPES.spaceRender | typeof SCOPES.spaceAgent;
   sub: string;
@@ -130,7 +155,8 @@ export interface WidgetTokenPayload extends BaseClaims {
   scope: typeof SCOPES.widget;
 }
 
-export type TokenPayload = UserTokenPayload | RefreshTokenPayload | SpaceTokenPayload | WidgetTokenPayload;
+export type TokenPayload =
+  UserTokenPayload | RefreshTokenPayload | SpaceTokenPayload | WidgetTokenPayload | MfaChallengePayload;
 
 export type VerifyResult<T> = { ok: true; payload: T } | { ok: false; reason: AuthFailure };
 
@@ -174,7 +200,7 @@ const subjectId = (payload: { sub?: unknown }): number | undefined => {
  * server issues under their own and nothing they mint is worth anything here, or the other way round.
  */
 export const createTokens = (config: TokenConfig) => {
-  const lifetimes = { ...DEFAULT_LIFETIMES, ...config.lifetimes };
+  const lifetimes: Record<keyof typeof DEFAULT_LIFETIMES, number> = { ...DEFAULT_LIFETIMES, ...config.lifetimes };
   const allowedIssuers = [config.issuer, ...(config.alsoAccept ?? [])];
   const algorithms: Algorithm[] = config.algorithms ?? ['HS256'];
 
@@ -255,6 +281,8 @@ export const createTokens = (config: TokenConfig) => {
 
   return {
     lifetimes,
+    /** What this deployment mints under. Read by anything that has to name the deployment — an enrolment URI, say. */
+    issuer: config.issuer,
 
     generateUserToken: (userId: number | string): string =>
       sign({ sub: String(userId), ...baseClaims(SCOPES.user, lifetimes.access) }),
@@ -265,6 +293,10 @@ export const createTokens = (config: TokenConfig) => {
       sign({ sub: String(userId), ...baseClaims(SCOPES.refresh, lifetimes.refresh) }),
 
     generateWidgetToken: (): string => sign(baseClaims(SCOPES.widget, lifetimes.widget)),
+
+    /** Says "this person proved their password"; nothing more, and only for a few minutes. */
+    generateMfaChallenge: (userId: number | string): string =>
+      sign({ sub: String(userId), ...baseClaims(SCOPES.mfa, lifetimes.mfaChallenge) }),
 
     /**
      * A `render` token may live forever, and defaults to it, because it is embedded in a published site — often a
@@ -294,6 +326,9 @@ export const createTokens = (config: TokenConfig) => {
 
     verifyRefreshToken: (token: string): VerifyResult<RefreshTokenPayload> =>
       withSubject(verifyScoped<RefreshTokenPayload>(token, [SCOPES.refresh])),
+
+    verifyMfaChallenge: (token: string): VerifyResult<MfaChallengePayload> =>
+      withSubject(verifyScoped<MfaChallengePayload>(token, [SCOPES.mfa])),
 
     verifyWidgetToken: (token: string): VerifyResult<WidgetTokenPayload> =>
       verifyScoped<WidgetTokenPayload>(token, [SCOPES.widget]),

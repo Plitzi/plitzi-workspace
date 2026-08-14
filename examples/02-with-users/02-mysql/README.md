@@ -63,12 +63,15 @@ The defaults point at `plitzi-db-1` on `:33006` — the same MySQL server the pl
 
 ## The tables
 
-Nine, created on first run and documented in
+Twelve, created on first run and documented in
 [`apps/server/docs/auth/mysql-schema.md`](../../../apps/server/docs/auth/mysql-schema.md):
 
 ```
 account          the person, their password hash, and their single-use tokens
 session          one row per signed-in device
+account_identity the same person at another provider — unique on (provider, subject), never on email
+account_mfa      a TOTP secret, when it was proven, and hashed recovery codes
+account_otp      one-time codes, for signing in by email
 account_role     which global roles an account has
 role             a named bundle of permissions
 permission       one capability
@@ -77,6 +80,10 @@ space_member     membership of ONE space, with the role that applies inside it
 space_token      a space's own credentials, for published sites and agents
 schema_version   what version of this schema the database is at
 ```
+
+Every one of them is **prefixed**, and `tablePrefix` is required. `account`, `role` and `session` are names
+anything might already have; a prefix you chose is what makes a collision mean a real collision rather than a
+coincidence. Point a second install at the same database under another prefix and the two coexist untouched.
 
 `space_id` carries no foreign key on purpose: spaces are not this schema's to own — you keep them wherever you keep
 them, and auth only ever asks who belongs to one.
@@ -197,6 +204,48 @@ how a deployment loses its last administrator; closing your own account is the s
 for a password.
 
 Never returned, to anyone, including an administrator: password hashes and session credentials.
+
+## A second factor
+
+```bash
+curl -sb jar -X POST localhost:4008/auth/mfa/begin      # → { secret, uri }  — the URI is what an app scans
+curl -sb jar -X POST localhost:4008/auth/mfa/confirm \
+  -H 'content-type: application/json' -d '{"code":"123456"}'   # → { recoveryCodes: [ …ten… ] }
+```
+
+From then on signing in is two steps: the password answers `{ mfaRequired: true, mfaToken }` and no session, and
+`POST /auth/mfa/complete` with the app's code finishes it. A recovery code works too, once — it is spent when it is
+used, because one that survives being used is a password with extra steps.
+
+Three things the server decided: an enrolment does nothing until a real code confirms it (a scan that failed must
+not lock you out); the challenge is a signed token that verifies as nothing else, not a session; and the recovery
+codes are stored hashed and shown once, so reading the database is not a way around the factor.
+
+## Signing in without a password
+
+```bash
+curl -s -X POST localhost:4008/auth/passwordless/request \
+  -H 'content-type: application/json' -d '{"email":"grace@example.test"}'
+# { "message": "If that address has an account, a sign-in link is on its way" }
+```
+
+The code goes to `sendMail`, which in this example prints to the console — that is the one adapter the store cannot
+supply, and supplying it is what turns this flow on. Then:
+
+```bash
+curl -s -X POST localhost:4008/auth/passwordless/complete \
+  -H 'content-type: application/json' -d '{"email":"grace@example.test","code":"…"}'
+```
+
+The request answers **identically for an address with no account**, or the endpoint becomes a way to ask which
+addresses have one. It never creates an account, and a second factor still applies: arriving by email proves the
+address, which is one factor.
+
+## Watching what happens
+
+`api.onEvent` is every act worth recording in one feed — sign-ins and failed ones, password changes, admin
+actions. An audit trail, a webhook and an alert are the same thing, so the server emits and never decides which.
+The example prints them; it is never awaited and never able to fail a request.
 
 ## What this deployment offers
 

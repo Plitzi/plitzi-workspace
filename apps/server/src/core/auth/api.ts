@@ -1,4 +1,8 @@
+import { createHash } from 'node:crypto';
+
 import { checkPermission } from './authorize';
+import { authFailureMessage } from './tokens';
+import { generateRecoveryCodes, generateTotpSecret, normalizeRecoveryCode, totpUri, verifyTotp } from './totp';
 
 import type { CredentialCarrier } from './credentials';
 import type { Actor, Identity } from './identity';
@@ -21,6 +25,14 @@ export interface AccountRecord {
   passwordHash?: string;
   /** Unix seconds, for the refresh credential this account currently holds. */
   refreshExpiresAt?: number;
+  /**
+   * Unix seconds the session being renewed BEGAN, for `lifetimes.session` — the cap on how long one may live
+   * however often it renews. Only `findByRefreshToken` needs to report it, and only a deployment that sets a cap.
+   *
+   * The renewal window is already an idle timeout: a session nobody refreshes dies with its refresh token. This is
+   * the other half, and without it a session that renews quietly renews forever.
+   */
+  sessionStartedAt?: number;
 }
 
 export interface AccountAccess {
@@ -49,6 +61,42 @@ export interface SessionSummary {
   expiresAt: number;
   /** The session asking. A device list without it invites someone to revoke the one they are using. */
   current: boolean;
+}
+
+/** A second factor as the store keeps it. `secret` is the TOTP seed; `recoveryCodes` are already hashed. */
+export interface MfaRecord {
+  secret: string;
+  /** Unix seconds the enrolment was proven with a real code. Absent means started and never finished. */
+  confirmedAt?: number;
+  recoveryCodes?: string[];
+}
+
+/** Something worth writing down. Fed to an audit log, a webhook, a SIEM — whatever the deployment has. */
+export interface SecurityEvent {
+  type:
+    | 'login'
+    | 'login.failed'
+    | 'login.mfa-required'
+    | 'logout'
+    | 'signup'
+    | 'password.changed'
+    | 'password.reset'
+    | 'profile.changed'
+    | 'account.deleted'
+    | 'session.revoked'
+    | 'mfa.enabled'
+    | 'mfa.disabled'
+    | 'mfa.failed'
+    | 'admin.status-changed'
+    | 'admin.roles-changed'
+    | 'admin.account-deleted';
+  /** Who it happened to. Absent when the attempt named nobody that exists. */
+  userId?: number;
+  /** Who did it, when that is somebody else — an administrator acting on an account. */
+  actorId?: number;
+  at: number;
+  detail?: Record<string, unknown>;
+  carrier?: CredentialCarrier;
 }
 
 export interface AccountQuery {
@@ -144,6 +192,28 @@ export interface AccountAdapters {
    * to take verification away — a `markVerified` that only ever set it made that impossible to express.
    */
   setVerified?: (userId: number, verified: boolean) => Promise<void>;
+  /**
+   * A one-time code, hashed. `purpose` separates a sign-in link from anything else that uses the same table, and
+   * `identifier` is what it was issued against — an email address, usually.
+   */
+  saveOtp?: (code: {
+    purpose: string;
+    identifier: string;
+    codeHash: string;
+    expiresAt: number;
+    userId?: number;
+  }) => Promise<void>;
+  /** The live code for this purpose and identifier, if there is one. Expired rows may be returned or not. */
+  findOtp?: (
+    purpose: string,
+    identifier: string
+  ) => Promise<{ id: number; codeHash: string; expiresAt: number; userId?: number } | undefined>;
+  /** Spend it. Deleting rather than flagging: a spent code that still exists is one a lookup can forget to exclude. */
+  consumeOtp?: (id: number) => Promise<void>;
+  /** The second factor for this account, if it has one. Without it, no MFA is offered at all. */
+  loadMfa?: (userId: number) => Promise<MfaRecord | undefined>;
+  saveMfa?: (userId: number, record: MfaRecord) => Promise<void>;
+  deleteMfa?: (userId: number) => Promise<void>;
   /** Called for validation and password-reset mail. Without it neither flow is offered. */
   sendMail?: (message: { to: string; template: string; data: Record<string, string> }) => Promise<void>;
   /**
@@ -160,12 +230,7 @@ export interface AccountAdapters {
 
 /** What a flow was asked to do, for the throttle below. */
 export type ThrottledAction =
-  | 'login'
-  | 'signup'
-  | 'forgotPassword'
-  | 'resetPassword'
-  | 'changePassword'
-  | 'exchange';
+  'login' | 'signup' | 'forgotPassword' | 'resetPassword' | 'changePassword' | 'exchange' | 'mfa' | 'passwordless';
 
 export interface ThrottleAttempt {
   action: ThrottledAction;
@@ -213,6 +278,18 @@ export interface AuthApiConfig {
   rateLimit?: (attempt: ThrottleAttempt) => Promise<boolean | { allowed: boolean; retryAfter?: number }>;
   /** Where a failed delivery is reported. Defaults to `console.error`; it is never thrown — see `deliver`. */
   onMailError?: (error: unknown, message: { to: string; template: string }) => void;
+  /**
+   * Every act worth recording, as it happens.
+   *
+   * An audit trail, a webhook, an alert on ten failed sign-ins — all the same feed, and none of them something the
+   * server should decide the shape of. Never awaited and never allowed to fail a request: a logging outage must
+   * not become an authentication outage.
+   */
+  onEvent?: (event: SecurityEvent) => void;
+  /** What an authenticator app calls this deployment when somebody enrols. Defaults to the token issuer. */
+  mfaIssuer?: string;
+  /** How long a sign-in code is good for, in seconds. Default 600 — long enough to find the email, short enough. */
+  passwordlessTtl?: number;
 }
 
 /** What an exchange came to, before it is turned into either an HTTP body or a rendered page's session. */
@@ -247,6 +324,8 @@ const asText = (value: unknown): string => {
 };
 
 const asString = (value: unknown): string => asText(value).trim();
+
+const now = (): number => Math.floor(Date.now() / 1000);
 
 const STATUSES: AccountStatus[] = ['active', 'inactive', 'blocked'];
 
@@ -286,8 +365,28 @@ export const createAuthApi = ({
     adminPermission = 'userManage',
     password: policy = {},
     rateLimit,
-    onMailError
+    onMailError,
+    onEvent,
+    mfaIssuer,
+    passwordlessTtl = 600
   } = config;
+
+  /** Never awaited, never able to throw: a logging outage must not become an authentication outage. */
+  const record = (event: Omit<SecurityEvent, 'at'>): void => {
+    if (!onEvent) {
+      return;
+    }
+
+    try {
+      onEvent({ ...event, at: Math.floor(Date.now() / 1000) });
+    } catch (error: unknown) {
+      console.error('[auth] security event handler threw:', error);
+    }
+  };
+
+  /** Recovery codes are high-entropy, so a fast digest is right — scrypt ten times per sign-in would not be. */
+  const digestRecoveryCode = (code: string): string =>
+    createHash('sha256').update(normalizeRecoveryCode(code)).digest('hex');
 
   /**
    * Sends, and never fails the flow if it cannot.
@@ -360,6 +459,8 @@ export const createAuthApi = ({
     passwordReset: !!adapters.findByEmail && !!adapters.setResetToken && !!hashPassword,
     emailVerification: !!adapters.findByValidationToken && !!adapters.setVerified,
     exchange: !!adapters.exchangeCredential,
+    mfa: !!adapters.loadMfa && !!adapters.saveMfa,
+    passwordless: !!adapters.saveOtp && !!adapters.findOtp && !!adapters.findByEmail && !!adapters.sendMail,
     profile: !!adapters.updateAccount,
     passwordChange: !!adapters.findById && !!verifyPassword && !!hashPassword && !!adapters.setPassword,
     accountDeletion: !!adapters.deleteAccount,
@@ -535,12 +636,298 @@ export const createAuthApi = ({
       // An account created through an identity provider carries no password. Never compare an empty hash: password
       // sign-in stays closed for it until its owner sets one through the reset flow.
       if (!account.passwordHash || !(await verifyPassword?.(password, account.passwordHash))) {
+        record({ type: 'login.failed', userId: account.id, carrier, detail: { username } });
+
         return refuse(401, 'Invalid credentials');
       }
 
+      /**
+       * The password was right. If there is a proven second factor, that buys a CHALLENGE and not a session — an
+       * enrolment that was started and never confirmed does not count, or a scan that failed would lock the
+       * account out of itself.
+       */
+      const mfa = capabilities.mfa ? await adapters.loadMfa?.(account.id) : undefined;
+      if (mfa?.confirmedAt) {
+        record({ type: 'login.mfa-required', userId: account.id, carrier });
+
+        return {
+          ok: true,
+          body: { success: false, mfaRequired: true, mfaToken: tokens.generateMfaChallenge(account.id) }
+        };
+      }
+
       const session = await issue(account.id, { client: clientOf(carrier) });
+      record({ type: 'login', userId: account.id, carrier });
 
       return { ok: true, body: await grantBody(account, session), session };
+    },
+
+    /**
+     * The second half of a sign-in that owed a factor.
+     *
+     * Takes a TOTP code or a recovery code. A recovery code is SPENT — removed from the stored list — because one
+     * that survives being used is a password with extra steps.
+     */
+    completeMfa: async (mfaToken: string, code: string, carrier?: CredentialCarrier): Promise<AuthOutcome> => {
+      if (!capabilities.mfa) {
+        return NOT_OFFERED;
+      }
+
+      const verified = tokens.verifyMfaChallenge(mfaToken);
+      if (!verified.ok) {
+        return refuse(401, authFailureMessage[verified.reason], verified.reason);
+      }
+
+      const userId = Number(verified.payload.sub);
+      const limited = await throttled({ action: 'mfa', key: String(userId), carrier });
+      if (limited) {
+        return limited;
+      }
+
+      const account = await adapters.findById?.(userId);
+      const mfa = await adapters.loadMfa?.(userId);
+      if (!account || !mfa?.confirmedAt) {
+        return refuse(401, 'Invalid credentials');
+      }
+
+      if (!account.active) {
+        return refuse(401, 'Account is not active', 'inactive');
+      }
+
+      const stored = mfa.recoveryCodes ?? [];
+      const supplied = digestRecoveryCode(code);
+      const usedRecovery = stored.includes(supplied);
+
+      if (!usedRecovery && !verifyTotp(mfa.secret, code)) {
+        record({ type: 'mfa.failed', userId, carrier });
+
+        return refuse(401, 'Invalid code');
+      }
+
+      if (usedRecovery) {
+        await adapters.saveMfa?.(userId, { ...mfa, recoveryCodes: stored.filter(entry => entry !== supplied) });
+      }
+
+      const session = await issue(userId, { client: clientOf(carrier) });
+      record({ type: 'login', userId, carrier, detail: { recoveryCode: usedRecovery } });
+
+      return {
+        ok: true,
+        body: { ...(await grantBody(account, session)), ...(usedRecovery ? { recoveryCodeUsed: true } : {}) },
+        session
+      };
+    },
+
+    /**
+     * Signing in with a code sent to an email address, and no password at all.
+     *
+     * Two decisions worth stating. **The request answers the same whether the address exists or not** — anything
+     * else turns this endpoint into a way to ask which addresses have accounts. And **it never creates an
+     * account**: a sign-in flow that silently registers whoever asks is a different feature, and one a deployment
+     * should choose deliberately rather than inherit.
+     */
+    passwordless: {
+      request: async (email: string, carrier?: CredentialCarrier): Promise<AuthOutcome> => {
+        if (!capabilities.passwordless || !generateToken) {
+          return NOT_OFFERED;
+        }
+
+        const address = asString(email).toLowerCase();
+        if (!address) {
+          return refuse(400, 'An email is required');
+        }
+
+        const limited = await throttled({ action: 'passwordless', key: address, carrier });
+        if (limited) {
+          return limited;
+        }
+
+        const account = await adapters.findByEmail?.(address);
+        if (account?.active) {
+          const code = generateToken();
+          await adapters.saveOtp?.({
+            purpose: 'signin',
+            identifier: address,
+            codeHash: digestRecoveryCode(code),
+            expiresAt: now() + passwordlessTtl,
+            userId: account.id
+          });
+          await deliver({
+            to: account.email,
+            template: 'signin-code',
+            data: { username: account.username, code }
+          });
+        }
+
+        // Identical either way, deliberately: see above.
+        return { ok: true, body: { message: 'If that address has an account, a sign-in link is on its way' } };
+      },
+
+      complete: async (email: string, code: string, carrier?: CredentialCarrier): Promise<AuthOutcome> => {
+        if (!capabilities.passwordless) {
+          return NOT_OFFERED;
+        }
+
+        const address = asString(email).toLowerCase();
+        if (!address || !code) {
+          return refuse(400, 'An email and a code are required');
+        }
+
+        const limited = await throttled({ action: 'passwordless', key: address, carrier });
+        if (limited) {
+          return limited;
+        }
+
+        const stored = await adapters.findOtp?.('signin', address);
+        if (!stored || stored.expiresAt < now() || stored.codeHash !== digestRecoveryCode(code)) {
+          record({ type: 'login.failed', carrier, detail: { method: 'passwordless', email: address } });
+
+          return refuse(401, 'Invalid or expired code');
+        }
+
+        // Spent before the session is minted: a code that survives being redeemed is a password sent by email.
+        await adapters.consumeOtp?.(stored.id);
+
+        const account = stored.userId === undefined ? undefined : await adapters.findById?.(stored.userId);
+        if (!account?.active) {
+          return refuse(401, 'Account is not active', 'inactive');
+        }
+
+        /**
+         * A second factor still applies. Arriving by email proves the address, which is one factor — enrolling a
+         * second one and then having it skipped by asking for a link would make it decorative.
+         */
+        const mfa = capabilities.mfa ? await adapters.loadMfa?.(account.id) : undefined;
+        if (mfa?.confirmedAt) {
+          record({ type: 'login.mfa-required', userId: account.id, carrier });
+
+          return {
+            ok: true,
+            body: { success: false, mfaRequired: true, mfaToken: tokens.generateMfaChallenge(account.id) }
+          };
+        }
+
+        const session = await issue(account.id, { client: clientOf(carrier) });
+        record({ type: 'login', userId: account.id, carrier, detail: { method: 'passwordless' } });
+
+        return { ok: true, body: await grantBody(account, session), session };
+      }
+    },
+
+    /**
+     * Everything about this account's second factor. `begin` hands back a secret and the URI an app scans; nothing
+     * is in force until `confirm` proves a code from it.
+     */
+    mfa: {
+      status: async (actor: Actor | undefined): Promise<AuthOutcome> => {
+        if (!capabilities.mfa) {
+          return NOT_OFFERED;
+        }
+
+        if (!actor) {
+          return refuse(401, 'Not authenticated', 'missing');
+        }
+
+        const mfa = await adapters.loadMfa?.(actor.id);
+
+        return {
+          ok: true,
+          body: {
+            enabled: Boolean(mfa?.confirmedAt),
+            pending: Boolean(mfa && !mfa.confirmedAt),
+            recoveryCodesRemaining: mfa?.recoveryCodes?.length ?? 0
+          }
+        };
+      },
+
+      begin: async (actor: Actor | undefined): Promise<AuthOutcome> => {
+        if (!capabilities.mfa) {
+          return NOT_OFFERED;
+        }
+
+        if (!actor) {
+          return refuse(401, 'Not authenticated', 'missing');
+        }
+
+        const existing = await adapters.loadMfa?.(actor.id);
+        if (existing?.confirmedAt) {
+          return refuse(409, 'A second factor is already set up. Remove it before enrolling another.');
+        }
+
+        // A fresh secret every time enrolment restarts: reusing an abandoned one would let a half-finished scan
+        // from an old device keep working.
+        const secret = generateTotpSecret();
+        await adapters.saveMfa?.(actor.id, { secret });
+
+        return {
+          ok: true,
+          body: {
+            secret,
+            uri: totpUri({ secret, account: actor.email || actor.username, issuer: mfaIssuer ?? tokens.issuer })
+          }
+        };
+      },
+
+      /** Proves the app was actually set up, and only then does the factor start being required. */
+      confirm: async (actor: Actor | undefined, code: string): Promise<AuthOutcome> => {
+        if (!capabilities.mfa) {
+          return NOT_OFFERED;
+        }
+
+        if (!actor) {
+          return refuse(401, 'Not authenticated', 'missing');
+        }
+
+        const mfa = await adapters.loadMfa?.(actor.id);
+        if (!mfa) {
+          return refuse(400, 'Start the enrolment first');
+        }
+
+        if (mfa.confirmedAt) {
+          return refuse(409, 'A second factor is already set up');
+        }
+
+        if (!verifyTotp(mfa.secret, code)) {
+          record({ type: 'mfa.failed', userId: actor.id });
+
+          return refuse(401, 'Invalid code');
+        }
+
+        // Shown once and stored hashed, which is what makes them worth having: a deployment that could print them
+        // again is a deployment where reading the database is enough to bypass the second factor.
+        const plain = generateRecoveryCodes();
+        await adapters.saveMfa?.(actor.id, {
+          ...mfa,
+          confirmedAt: Math.floor(Date.now() / 1000),
+          recoveryCodes: plain.map(digestRecoveryCode)
+        });
+        record({ type: 'mfa.enabled', userId: actor.id });
+
+        return { ok: true, body: { success: true, recoveryCodes: plain } };
+      },
+
+      /** Removing a factor is a security downgrade, so it asks for the password the way deleting an account does. */
+      disable: async (actor: Actor | undefined, password?: string): Promise<AuthOutcome> => {
+        if (!capabilities.mfa || !adapters.deleteMfa) {
+          return NOT_OFFERED;
+        }
+
+        if (!actor) {
+          return refuse(401, 'Not authenticated', 'missing');
+        }
+
+        const account = await adapters.findById?.(actor.id);
+        if (account?.passwordHash) {
+          if (!password || !(await verifyPassword?.(password, account.passwordHash))) {
+            return refuse(401, 'Invalid credentials');
+          }
+        }
+
+        await adapters.deleteMfa(actor.id);
+        record({ type: 'mfa.disabled', userId: actor.id });
+
+        return { ok: true, body: { success: true } };
+      }
     },
 
     refresh: async (refreshToken?: string, carrier?: CredentialCarrier): Promise<AuthOutcome> => {
@@ -559,6 +946,14 @@ export const createAuthApi = ({
 
       if (!account.active) {
         return refuse(401, 'Account is not active', 'inactive');
+      }
+
+      const cap = tokens.lifetimes.session;
+      if (cap > 0 && account.sessionStartedAt !== undefined && account.sessionStartedAt + cap < now()) {
+        // Ended rather than merely refused, or the row lingers until its refresh token ages out.
+        await adapters.clearSession({ refreshToken });
+
+        return refuse(401, 'This session has reached its maximum lifetime', 'expired');
       }
 
       const session = await issue(account.id, { replaces: { refreshToken }, client: clientOf(carrier) });
@@ -653,6 +1048,8 @@ export const createAuthApi = ({
         await deliver({ to: email, template: 'validation', data: { username, validationToken } });
       }
 
+      record({ type: 'signup', userId: account.id });
+
       return { ok: true, status: 201, body: { message: 'User created successfully', userId: account.id } };
     },
 
@@ -711,6 +1108,8 @@ export const createAuthApi = ({
       await adapters.setResetToken?.(account.id, '');
       // Whoever forced the reset — or stole the old password — must not keep a working session.
       await adapters.clearSession({ userId: account.id });
+
+      record({ type: 'password.reset', userId: account.id });
 
       return { ok: true, body: { message: 'Password reset successfully' }, endSession: true };
     },
@@ -863,6 +1262,7 @@ export const createAuthApi = ({
 
       await adapters.setPassword?.(actor.id, await hashPassword(newPassword));
       await adapters.revokeOtherSessions?.(actor.id, actor.token);
+      record({ type: 'password.changed', userId: actor.id });
 
       return { ok: true, body: { success: true, message: 'Password changed. Other sessions were signed out.' } };
     },
@@ -891,6 +1291,7 @@ export const createAuthApi = ({
       }
 
       await adapters.deleteAccount(actor.id);
+      record({ type: 'account.deleted', userId: actor.id });
 
       return { ok: true, body: { success: true, message: 'Account deleted' }, endSession: true };
     },
@@ -1000,6 +1401,8 @@ export const createAuthApi = ({
           await adapters.clearSession({ userId });
         }
 
+        record({ type: 'admin.status-changed', userId, actorId: actor?.id, detail: { status } });
+
         return { ok: true, body: { success: true, status } };
       },
 
@@ -1024,6 +1427,7 @@ export const createAuthApi = ({
         }
 
         await adapters.setRoles(userId, names);
+        record({ type: 'admin.roles-changed', userId, actorId: actor?.id, detail: { roles: names } });
 
         return { ok: true, body: { success: true, roles: names } };
       },
@@ -1043,6 +1447,7 @@ export const createAuthApi = ({
         }
 
         await adapters.deleteAccount(userId);
+        record({ type: 'admin.account-deleted', userId, actorId: actor?.id });
 
         return { ok: true, body: { success: true } };
       }

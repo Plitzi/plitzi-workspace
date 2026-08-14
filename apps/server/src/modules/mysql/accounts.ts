@@ -9,6 +9,7 @@ import type {
   AccountQuery,
   AccountRecord,
   AccountStatus,
+  MfaRecord,
   SessionContext
 } from '../../core/auth/api';
 import type { Actor, IdentityAdapters, SpaceMembership, StoredSpaceToken } from '../../core/auth/identity';
@@ -25,6 +26,7 @@ interface AccountRow {
   /** Joined from the session this lookup came in on, where there is one. */
   session_expires_at?: number | null;
   refresh_expires_at?: number | null;
+  session_started_at?: number | null;
 }
 
 const ACCOUNT_COLUMNS = 'a.id, a.username, a.email, a.password_hash, a.status, a.verified';
@@ -38,6 +40,9 @@ const toRecord = (row: AccountRow): AccountRecord => ({
   ...(row.password_hash ? { passwordHash: row.password_hash } : {}),
   ...(row.refresh_expires_at !== null && row.refresh_expires_at !== undefined
     ? { refreshExpiresAt: row.refresh_expires_at }
+    : {}),
+  ...(row.session_started_at !== null && row.session_started_at !== undefined
+    ? { sessionStartedAt: row.session_started_at }
     : {})
 });
 
@@ -266,7 +271,7 @@ export const createAccountStore = (db: Queryable, t: Tables): IdentityAdapters &
     findByRefreshToken: async (token: string): Promise<AccountRecord | undefined> => {
       const row = await selectOne<AccountRow>(
         db,
-        `SELECT ${ACCOUNT_COLUMNS}, s.refresh_expires_at
+        `SELECT ${ACCOUNT_COLUMNS}, s.refresh_expires_at, UNIX_TIMESTAMP(s.created_at) AS session_started_at
            FROM ${t.session} s
            JOIN ${t.account} a ON a.id = s.account_id
           WHERE s.refresh_token = ?
@@ -438,6 +443,83 @@ export const createAccountStore = (db: Queryable, t: Tables): IdentityAdapters &
          SELECT ?, id FROM ${t.role} WHERE name IN (${placeholders})`,
         [userId, ...roles]
       );
+    },
+
+    saveOtp: async (code: {
+      purpose: string;
+      identifier: string;
+      codeHash: string;
+      expiresAt: number;
+      userId?: number;
+    }): Promise<void> => {
+      // The previous code for the same purpose and address stops working the moment a new one is asked for: two
+      // live codes means the older one is a second, quieter way in.
+      await execute(db, `DELETE FROM ${t.otp} WHERE purpose = ? AND identifier = ?`, [code.purpose, code.identifier]);
+      await execute(
+        db,
+        `INSERT INTO ${t.otp} (account_id, purpose, identifier, code_hash, expires_at) VALUES (?, ?, ?, ?, ?)`,
+        [code.userId ?? null, code.purpose, code.identifier, code.codeHash, code.expiresAt]
+      );
+    },
+
+    findOtp: async (purpose: string, identifier: string) => {
+      const row = await selectOne<{ id: number; code_hash: string; expires_at: number; account_id: number | null }>(
+        db,
+        `SELECT id, code_hash, expires_at, account_id FROM ${t.otp}
+          WHERE purpose = ? AND identifier = ? ORDER BY id DESC LIMIT 1`,
+        [purpose, identifier]
+      );
+
+      if (!row) {
+        return undefined;
+      }
+
+      return {
+        id: row.id,
+        codeHash: row.code_hash,
+        expiresAt: row.expires_at,
+        ...(row.account_id !== null ? { userId: row.account_id } : {})
+      };
+    },
+
+    consumeOtp: async (id: number): Promise<void> => {
+      await execute(db, `DELETE FROM ${t.otp} WHERE id = ?`, [id]);
+    },
+
+    /**
+     * The second factor. `recovery_codes` is a newline-separated list of digests, not a JSON blob: it is only ever
+     * read whole and written whole, and a text column that a human can read in a crisis beats one they cannot.
+     */
+    loadMfa: async (userId: number): Promise<MfaRecord | undefined> => {
+      const row = await selectOne<{ secret: string; confirmed_at: number | null; recovery_codes: string | null }>(
+        db,
+        `SELECT secret, confirmed_at, recovery_codes FROM ${t.mfa} WHERE account_id = ? LIMIT 1`,
+        [userId]
+      );
+
+      if (!row) {
+        return undefined;
+      }
+
+      return {
+        secret: row.secret,
+        ...(row.confirmed_at !== null ? { confirmedAt: row.confirmed_at } : {}),
+        recoveryCodes: (row.recovery_codes ?? '').split('\n').filter(Boolean)
+      };
+    },
+
+    saveMfa: async (userId: number, mfaRecord: MfaRecord): Promise<void> => {
+      await execute(
+        db,
+        `INSERT INTO ${t.mfa} (account_id, secret, confirmed_at, recovery_codes) VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           secret = VALUES(secret), confirmed_at = VALUES(confirmed_at), recovery_codes = VALUES(recovery_codes)`,
+        [userId, mfaRecord.secret, mfaRecord.confirmedAt ?? null, (mfaRecord.recoveryCodes ?? []).join('\n')]
+      );
+    },
+
+    deleteMfa: async (userId: number): Promise<void> => {
+      await execute(db, `DELETE FROM ${t.mfa} WHERE account_id = ?`, [userId]);
     },
 
     listSessions: (userId: number, currentToken?: string) => sessions.list(userId, currentToken),

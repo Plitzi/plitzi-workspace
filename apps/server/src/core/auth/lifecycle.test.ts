@@ -4,8 +4,17 @@ import { createAuthApi } from './api';
 import { createCarriers, presentedOrigin } from './credentials';
 import { createIdentity } from './identity';
 import { createTokens } from './tokens';
+import { totpCode } from './totp';
 
-import type { AccountAdapters, AccountRecord, AuthApiConfig, AuthOutcome, SessionSummary } from './api';
+import type {
+  AccountAdapters,
+  AccountRecord,
+  AuthApiConfig,
+  AuthOutcome,
+  MfaRecord,
+  SecurityEvent,
+  SessionSummary
+} from './api';
 import type { Actor } from './identity';
 
 /**
@@ -657,5 +666,448 @@ describe('when the mail provider is down', () => {
       ok: true
     });
     expect(onMailError).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('a second factor', () => {
+  const withMfa = (initial?: MfaRecord, extra: Partial<AccountAdapters> = {}) => {
+    let stored = initial;
+    const tokens = createTokens({ secret: 's', issuer: 'https://acme.test' });
+    const identity = createIdentity({
+      tokens,
+      carriers: createCarriers(() => 'sess'),
+      presentedOrigin,
+      adapters: { findAccountByToken: () => Promise.resolve(undefined) }
+    });
+
+    const api = createAuthApi({
+      tokens,
+      identity,
+      adapters: {
+        saveSession: () => Promise.resolve(),
+        clearSession: () => Promise.resolve(),
+        loadAccess: () => Promise.resolve({ roles: [], permissions: [] }),
+        findById: () => Promise.resolve(ada),
+        findByUsername: () => Promise.resolve(ada),
+        loadMfa: () => Promise.resolve(stored),
+        saveMfa: (_id, next) => {
+          stored = next;
+
+          return Promise.resolve();
+        },
+        deleteMfa: () => {
+          stored = undefined;
+
+          return Promise.resolve();
+        },
+        ...extra
+      },
+      config: {
+        verifyPassword: (plain, hash) => Promise.resolve(hash === `hash:${plain}`),
+        hashPassword: plain => Promise.resolve(`hash:${plain}`)
+      }
+    });
+
+    return { api, tokens, current: () => stored };
+  };
+
+  const enrol = async () => {
+    const harness = withMfa();
+    const begun = body(await harness.api.mfa.begin(actorFor(ada)));
+    const secret = begun.secret as string;
+    await harness.api.mfa.confirm(actorFor(ada), totpCode(secret));
+
+    return { ...harness, secret };
+  };
+
+  it('is not offered by a store that cannot keep one', async () => {
+    expect(build().capabilities.mfa).toBe(false);
+    expect(await build().mfa.begin(actorFor(ada))).toMatchObject({ status: 404 });
+  });
+
+  it('hands back a secret and a URI an app can scan', async () => {
+    const { api } = withMfa();
+    const outcome = body(await api.mfa.begin(actorFor(ada)));
+
+    expect(outcome.secret).toMatch(/^[A-Z2-7]{32}$/);
+    expect(outcome.uri).toContain('otpauth://totp/');
+    expect(outcome.uri).toContain('issuer=https%3A%2F%2Facme.test');
+  });
+
+  /** An enrolment nobody proved must not be enforced, or a scan that failed locks the account out of itself. */
+  it('does not take effect until a real code confirms it', async () => {
+    const { api, current } = withMfa();
+    await api.mfa.begin(actorFor(ada));
+
+    expect(current()?.confirmedAt).toBeUndefined();
+    expect(body(await api.mfa.status(actorFor(ada)))).toMatchObject({ enabled: false, pending: true });
+    expect(body(await api.login({ username: 'ada', password: 'pw' }))).not.toHaveProperty('mfaRequired');
+  });
+
+  it('refuses to confirm with the wrong code', async () => {
+    const { api, current } = withMfa();
+    await api.mfa.begin(actorFor(ada));
+
+    expect(await api.mfa.confirm(actorFor(ada), '000000')).toMatchObject({ status: 401 });
+    expect(current()?.confirmedAt).toBeUndefined();
+  });
+
+  it('hands the recovery codes over exactly once, and stores them hashed', async () => {
+    const { api, current, secret } = await enrol();
+    const codes = (body(await api.mfa.confirm(actorFor(ada), totpCode(secret))) as { recoveryCodes?: string[] })
+      .recoveryCodes;
+
+    // Already confirmed, so a second confirm is refused rather than minting a new set.
+    expect(codes).toBeUndefined();
+    for (const digest of current()?.recoveryCodes ?? []) {
+      expect(digest).toMatch(/^[a-f0-9]{64}$/);
+    }
+  });
+
+  it('turns sign-in into two steps once it is on', async () => {
+    const { api } = await enrol();
+    const outcome = await api.login({ username: 'ada', password: 'pw' });
+
+    expect(body(outcome)).toMatchObject({ mfaRequired: true });
+    expect(body(outcome).mfaToken).toEqual(expect.any(String));
+    // No session yet: the password alone bought a challenge, not authority.
+    expect(outcome.ok && outcome.session).toBeUndefined();
+  });
+
+  it('finishes the sign-in with a code from the app', async () => {
+    const { api, secret } = await enrol();
+    const challenge = body(await api.login({ username: 'ada', password: 'pw' })).mfaToken as string;
+
+    const outcome = await api.completeMfa(challenge, totpCode(secret));
+
+    expect(outcome).toMatchObject({ ok: true });
+    expect(outcome.ok && outcome.session?.token).toEqual(expect.any(String));
+  });
+
+  it('refuses the wrong code, and anything that is not a challenge', async () => {
+    const { api } = await enrol();
+    const challenge = body(await api.login({ username: 'ada', password: 'pw' })).mfaToken as string;
+
+    expect(await api.completeMfa(challenge, '000000')).toMatchObject({ status: 401 });
+    expect(await api.completeMfa('not-a-token', '000000')).toMatchObject({ status: 401 });
+  });
+
+  /** A challenge is not a session: it must not be usable as one anywhere else. */
+  it('mints a challenge that does not verify as a session token', async () => {
+    const { api, tokens } = await enrol();
+    const challenge = body(await api.login({ username: 'ada', password: 'pw' })).mfaToken as string;
+
+    expect(tokens.verifyUserToken(challenge).ok).toBe(false);
+  });
+
+  it('accepts a recovery code and spends it', async () => {
+    const { api, current } = withMfa();
+    const begun = body(await api.mfa.begin(actorFor(ada)));
+    const codes = (
+      body(await api.mfa.confirm(actorFor(ada), totpCode(begun.secret as string))) as {
+        recoveryCodes: string[];
+      }
+    ).recoveryCodes;
+
+    const challenge = body(await api.login({ username: 'ada', password: 'pw' })).mfaToken as string;
+    const before = current()?.recoveryCodes?.length ?? 0;
+
+    const outcome = await api.completeMfa(challenge, codes[0]);
+
+    expect(outcome).toMatchObject({ ok: true });
+    expect(body(outcome)).toMatchObject({ recoveryCodeUsed: true });
+    expect(current()?.recoveryCodes).toHaveLength(before - 1);
+  });
+
+  it('refuses a recovery code that has already been spent', async () => {
+    const { api } = withMfa();
+    const begun = body(await api.mfa.begin(actorFor(ada)));
+    const codes = (
+      body(await api.mfa.confirm(actorFor(ada), totpCode(begun.secret as string))) as {
+        recoveryCodes: string[];
+      }
+    ).recoveryCodes;
+
+    const first = body(await api.login({ username: 'ada', password: 'pw' })).mfaToken as string;
+    await api.completeMfa(first, codes[0]);
+
+    const second = body(await api.login({ username: 'ada', password: 'pw' })).mfaToken as string;
+    expect(await api.completeMfa(second, codes[0])).toMatchObject({ status: 401 });
+  });
+
+  it('asks for the password before removing the factor', async () => {
+    const { api, current } = await enrol();
+
+    expect(await api.mfa.disable(actorFor(ada), 'wrong')).toMatchObject({ status: 401 });
+    expect(current()?.confirmedAt).toEqual(expect.any(Number));
+
+    expect(await api.mfa.disable(actorFor(ada), 'pw')).toMatchObject({ ok: true });
+    expect(current()).toBeUndefined();
+  });
+
+  it('refuses to enrol a second factor over a confirmed one', async () => {
+    const { api } = await enrol();
+
+    expect(await api.mfa.begin(actorFor(ada))).toMatchObject({ status: 409 });
+  });
+});
+
+describe('security events', () => {
+  const withEvents = (adapters: Partial<AccountAdapters> = {}) => {
+    const seen: SecurityEvent[] = [];
+    const tokens = createTokens({ secret: 's', issuer: 'https://test' });
+    const identity = createIdentity({
+      tokens,
+      carriers: createCarriers(() => 'sess'),
+      presentedOrigin,
+      adapters: { findAccountByToken: () => Promise.resolve(undefined) }
+    });
+    const api = createAuthApi({
+      tokens,
+      identity,
+      adapters: {
+        saveSession: () => Promise.resolve(),
+        clearSession: () => Promise.resolve(),
+        loadAccess: () => Promise.resolve({ roles: [], permissions: [] }),
+        findByUsername: () => Promise.resolve(ada),
+        findById: () => Promise.resolve(ada),
+        ...adapters
+      },
+      config: {
+        verifyPassword: (plain, hash) => Promise.resolve(hash === `hash:${plain}`),
+        hashPassword: plain => Promise.resolve(`hash:${plain}`),
+        onEvent: event => seen.push(event)
+      }
+    });
+
+    return { api, seen };
+  };
+
+  it('reports a sign-in and a failed one differently', async () => {
+    const { api, seen } = withEvents();
+
+    await api.login({ username: 'ada', password: 'pw' });
+    await api.login({ username: 'ada', password: 'wrong' });
+
+    expect(seen.map(event => event.type)).toEqual(['login', 'login.failed']);
+    expect(seen[0]).toMatchObject({ userId: 1, at: expect.any(Number) as number });
+  });
+
+  it('names the administrator as well as the account, when they differ', async () => {
+    const { api, seen } = withEvents({ setStatus: () => Promise.resolve() });
+    const admin = actorFor({ ...ada, id: 9 }, ['userManage']);
+
+    await api.admin.setStatus(admin, 1, 'blocked');
+
+    expect(seen[0]).toMatchObject({ type: 'admin.status-changed', userId: 1, actorId: 9 });
+  });
+
+  /** A logging outage must not become an authentication outage. */
+  it('survives a handler that throws', async () => {
+    const tokens = createTokens({ secret: 's', issuer: 'https://test' });
+    const identity = createIdentity({
+      tokens,
+      carriers: createCarriers(() => 'sess'),
+      presentedOrigin,
+      adapters: { findAccountByToken: () => Promise.resolve(undefined) }
+    });
+    const api = createAuthApi({
+      tokens,
+      identity,
+      adapters: {
+        saveSession: () => Promise.resolve(),
+        clearSession: () => Promise.resolve(),
+        loadAccess: () => Promise.resolve({ roles: [], permissions: [] }),
+        findByUsername: () => Promise.resolve(ada)
+      },
+      config: {
+        verifyPassword: () => Promise.resolve(true),
+        onEvent: () => {
+          throw new Error('the SIEM is down');
+        }
+      }
+    });
+
+    expect(await api.login({ username: 'ada', password: 'pw' })).toMatchObject({ ok: true });
+  });
+});
+
+describe('the longest a session may live', () => {
+  const capped = (sessionStartedAt: number) => {
+    const tokens = createTokens({ secret: 's', issuer: 'https://test', lifetimes: { session: 3600 } });
+    const identity = createIdentity({
+      tokens,
+      carriers: createCarriers(() => 'sess'),
+      presentedOrigin,
+      adapters: { findAccountByToken: () => Promise.resolve(undefined) }
+    });
+    const clearSession = vi.fn(() => Promise.resolve());
+
+    const api = createAuthApi({
+      tokens,
+      identity,
+      adapters: {
+        saveSession: () => Promise.resolve(),
+        clearSession,
+        loadAccess: () => Promise.resolve({ roles: [], permissions: [] }),
+        findByRefreshToken: () =>
+          Promise.resolve({ ...ada, refreshExpiresAt: Math.floor(Date.now() / 1000) + 9999, sessionStartedAt })
+      },
+      config: {}
+    });
+
+    return { api, clearSession };
+  };
+
+  /** The renewal window is already an idle timeout. This is the other half: the session that renews forever. */
+  it('ends a session that has been renewing past the cap', async () => {
+    const { api, clearSession } = capped(Math.floor(Date.now() / 1000) - 7200);
+    const outcome = await api.refresh('r-1');
+
+    expect(outcome).toMatchObject({ ok: false, status: 401 });
+    expect(body(outcome)).toMatchObject({ reason: 'expired' });
+    // Ended, not merely refused — otherwise the row lingers until its refresh token ages out.
+    expect(clearSession).toHaveBeenCalledWith({ refreshToken: 'r-1' });
+  });
+
+  it('renews one that is still inside it', async () => {
+    const { api } = capped(Math.floor(Date.now() / 1000) - 60);
+
+    expect(await api.refresh('r-1')).toMatchObject({ ok: true });
+  });
+
+  it('is off by default, so a session renews for as long as somebody uses it', async () => {
+    const api = build({
+      findByRefreshToken: () =>
+        Promise.resolve({ ...ada, refreshExpiresAt: Math.floor(Date.now() / 1000) + 9999, sessionStartedAt: 0 })
+    });
+
+    expect(await api.refresh('r-1')).toMatchObject({ ok: true });
+  });
+});
+
+describe('signing in with a code instead of a password', () => {
+  const passwordless = (extra: Partial<AccountAdapters> = {}) => {
+    const codes: {
+      id: number;
+      purpose: string;
+      identifier: string;
+      codeHash: string;
+      expiresAt: number;
+      userId?: number;
+    }[] = [];
+    const sent: { to: string; data: Record<string, string> }[] = [];
+    const tokens = createTokens({ secret: 's', issuer: 'https://test' });
+    const identity = createIdentity({
+      tokens,
+      carriers: createCarriers(() => 'sess'),
+      presentedOrigin,
+      adapters: { findAccountByToken: () => Promise.resolve(undefined) }
+    });
+
+    const api = createAuthApi({
+      tokens,
+      identity,
+      adapters: {
+        saveSession: () => Promise.resolve(),
+        clearSession: () => Promise.resolve(),
+        loadAccess: () => Promise.resolve({ roles: [], permissions: [] }),
+        findByEmail: address => Promise.resolve(address === ada.email ? ada : undefined),
+        findById: () => Promise.resolve(ada),
+        sendMail: message => {
+          sent.push({ to: message.to, data: message.data });
+
+          return Promise.resolve();
+        },
+        saveOtp: entry => {
+          codes.push({ id: codes.length + 1, ...entry });
+
+          return Promise.resolve();
+        },
+        findOtp: (purpose, identifier) =>
+          Promise.resolve(codes.filter(entry => entry.purpose === purpose && entry.identifier === identifier).at(-1)),
+        consumeOtp: id => {
+          const index = codes.findIndex(entry => entry.id === id);
+          if (index >= 0) {
+            codes.splice(index, 1);
+          }
+
+          return Promise.resolve();
+        },
+        ...extra
+      },
+      config: { generateToken: () => 'CODE123', hashPassword: plain => Promise.resolve(`hash:${plain}`) }
+    });
+
+    return { api, codes, sent };
+  };
+
+  it('is not offered by a store that cannot keep a code or send mail', () => {
+    expect(build().capabilities.passwordless).toBe(false);
+  });
+
+  it('emails a code and signs the person in with it', async () => {
+    const { api, sent } = passwordless();
+
+    expect(await api.passwordless.request(ada.email)).toMatchObject({ ok: true });
+    expect(sent[0]).toMatchObject({ to: ada.email });
+
+    const outcome = await api.passwordless.complete(ada.email, sent[0].data.code);
+
+    expect(outcome).toMatchObject({ ok: true });
+    expect(outcome.ok && outcome.session?.token).toEqual(expect.any(String));
+  });
+
+  /** Anything else makes this endpoint a way to ask which addresses have accounts. */
+  it('answers a stranger’s address identically, and sends nothing', async () => {
+    const { api, sent } = passwordless();
+
+    const known = await api.passwordless.request(ada.email);
+    const unknown = await api.passwordless.request('nobody@example.test');
+
+    expect(unknown.ok && unknown.body).toEqual(known.ok && known.body);
+    expect(sent).toHaveLength(1);
+  });
+
+  it('spends the code, so it cannot be used twice', async () => {
+    const { api, sent } = passwordless();
+    await api.passwordless.request(ada.email);
+    const code = sent[0].data.code;
+
+    expect(await api.passwordless.complete(ada.email, code)).toMatchObject({ ok: true });
+    expect(await api.passwordless.complete(ada.email, code)).toMatchObject({ status: 401 });
+  });
+
+  it('refuses the wrong code and an expired one', async () => {
+    const { api, codes, sent } = passwordless();
+    await api.passwordless.request(ada.email);
+
+    expect(await api.passwordless.complete(ada.email, 'WRONG')).toMatchObject({ status: 401 });
+
+    codes[0].expiresAt = Math.floor(Date.now() / 1000) - 1;
+    expect(await api.passwordless.complete(ada.email, sent[0].data.code)).toMatchObject({ status: 401 });
+  });
+
+  it('never creates an account for an address that has none', async () => {
+    const createAccount = vi.fn();
+    const { api } = passwordless({ createAccount });
+
+    await api.passwordless.request('nobody@example.test');
+
+    expect(createAccount).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Arriving by email proves the address, which is ONE factor. Skipping the second because somebody asked for a
+   * link would make enrolling it decorative.
+   */
+  it('still owes a second factor when one is enrolled', async () => {
+    const { api, sent } = passwordless({
+      loadMfa: () => Promise.resolve({ secret: 'x', confirmedAt: 1 }),
+      saveMfa: () => Promise.resolve()
+    });
+    await api.passwordless.request(ada.email);
+
+    expect(body(await api.passwordless.complete(ada.email, sent[0].data.code))).toMatchObject({ mfaRequired: true });
   });
 });

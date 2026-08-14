@@ -180,6 +180,44 @@ const FLOWS: Flow[] = [
     run: (api, _cookies, req) => api.revokeOtherSessions(req.actor)
   },
 
+  /* Signing in with a code sent by email, and no password. Both halves are public: the caller has no session, and
+     having one is the point of the exchange. */
+  {
+    method: 'POST',
+    path: '/passwordless/request',
+    requirement: 'public',
+    run: (api, _cookies, req) => api.passwordless.request(field(req, 'email'), req)
+  },
+  {
+    method: 'POST',
+    path: '/passwordless/complete',
+    requirement: 'public',
+    run: (api, _cookies, req) => api.passwordless.complete(field(req, 'email'), field(req, 'code'), req)
+  },
+
+  /* The second factor. `mfa/complete` is public because it is the other half of a sign-in — the caller has no
+     session yet, and the challenge token is what stands in for one. */
+  {
+    method: 'POST',
+    path: '/mfa/complete',
+    requirement: 'public',
+    run: (api, _cookies, req) => api.completeMfa(field(req, 'mfaToken'), field(req, 'code'), req)
+  },
+  { method: 'GET', path: '/mfa', requirement: 'actor', run: (api, _cookies, req) => api.mfa.status(req.actor) },
+  { method: 'POST', path: '/mfa/begin', requirement: 'actor', run: (api, _cookies, req) => api.mfa.begin(req.actor) },
+  {
+    method: 'POST',
+    path: '/mfa/confirm',
+    requirement: 'actor',
+    run: (api, _cookies, req) => api.mfa.confirm(req.actor, field(req, 'code'))
+  },
+  {
+    method: 'POST',
+    path: '/mfa/disable',
+    requirement: 'actor',
+    run: (api, _cookies, req) => api.mfa.disable(req.actor, field(req, 'password'))
+  },
+
   /* Somebody else's account. The requirement is only `actor` because the permission is checked inside — the guard
      knows whether a session is good, not what this deployment calls the capability to administer accounts. Ids
      travel in the body rather than the path so the table stays flat and every host can mount it unchanged. */

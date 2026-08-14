@@ -51,6 +51,15 @@ export {
 } from './core/auth/session';
 export { createSpaceTokenApi } from './core/auth/spaceTokens';
 export { SCOPES, authFailureMessage, createTokens, userIdOf } from './core/auth/tokens';
+export {
+  generateRecoveryCodes,
+  generateTotpSecret,
+  normalizeRecoveryCode,
+  randomCode,
+  totpCode,
+  totpUri,
+  verifyTotp
+} from './core/auth/totp';
 
 export type { Auth, AuthConfig } from './core/auth/createAuth';
 export type {
@@ -63,9 +72,14 @@ export type {
   AuthApiConfig,
   AuthOutcome,
   ExchangeResult,
+  MfaRecord,
+  PasswordPolicy,
+  SecurityEvent,
   SessionClient,
   SessionContext,
-  SessionSummary
+  SessionSummary,
+  ThrottleAttempt,
+  ThrottledAction
 } from './core/auth/api';
 export type {
   AuthPolicy,
@@ -113,6 +127,7 @@ export type {
 } from './core/auth/spaceTokens';
 export type {
   AuthFailure,
+  MfaChallengePayload,
   RefreshTokenPayload,
   SpaceScope,
   SpaceTokenOptions,

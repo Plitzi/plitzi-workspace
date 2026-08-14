@@ -22,7 +22,7 @@ const fakeDb = (answers: unknown[][] = []) => {
   return { db: db as unknown as Queryable, calls };
 };
 
-const tables = resolveTables();
+const tables = resolveTables('plitzi_');
 
 describe('clearSession', () => {
   it('clears by whichever half the caller holds', async () => {
@@ -30,7 +30,7 @@ describe('clearSession', () => {
     await createAccountStore(db, tables).clearSession({ refreshToken: 'r-1' });
 
     expect(calls).toHaveLength(1);
-    expect(calls[0].sql).toContain('DELETE FROM `session` WHERE refresh_token = ?');
+    expect(calls[0].sql).toContain('DELETE FROM `plitzi_session` WHERE refresh_token = ?');
     expect(calls[0].params).toEqual(['r-1']);
   });
 
@@ -155,7 +155,7 @@ describe('saveSession', () => {
     const { db, calls } = fakeDb();
     await createAccountStore(db, tables).saveSession(1, session, { client: { userAgent: 'Firefox' } });
 
-    expect(calls[0].sql).toContain('INSERT INTO `session`');
+    expect(calls[0].sql).toContain('INSERT INTO `plitzi_session`');
     expect(calls[0].params).toContain('Firefox');
   });
 
@@ -168,7 +168,7 @@ describe('saveSession', () => {
     const { db, calls } = fakeDb();
     await createAccountStore(db, tables).saveSession(1, session, { replaces: { refreshToken: 'r-1' } });
 
-    expect(calls[0].sql).toContain('UPDATE `session`');
+    expect(calls[0].sql).toContain('UPDATE `plitzi_session`');
     expect(calls[0].sql).toContain('WHERE refresh_token = ? AND account_id = ?');
     expect(calls[0].params.slice(-2)).toEqual(['r-1', 1]);
   });

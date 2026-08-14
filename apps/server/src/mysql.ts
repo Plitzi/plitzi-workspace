@@ -29,6 +29,8 @@ export type {
   AccountSeed,
   MysqlAdmin,
   MysqlConfig,
+  IdentityStore,
+  LinkedIdentity,
   MysqlStore,
   SessionStore,
   SessionSummary,

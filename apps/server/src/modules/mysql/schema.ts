@@ -135,6 +135,68 @@ const step1 = (t: Tables): string[] => [
 ];
 
 /**
+ * Everything an account can be besides a password: an identity at another provider, a second factor, and a
+ * one-time code. Added as step 2 rather than folded into step 1 — step 1 is released.
+ */
+const step2 = (t: Tables): string[] => [
+  /**
+   * The same person, at somebody else's identity provider.
+   *
+   * `(provider, subject)` is unique, and that pair is the whole of the linkage: an email is not, because a
+   * provider that does not verify one lets anybody claim any account by signing up with its address.
+   */
+  `CREATE TABLE IF NOT EXISTS ${t.identity} (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    account_id INT UNSIGNED NOT NULL,
+    provider VARCHAR(64) NOT NULL,
+    subject VARCHAR(191) NOT NULL,
+    email VARCHAR(191) NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY identity_provider_subject (provider, subject),
+    KEY identity_account (account_id),
+    FOREIGN KEY (account_id) REFERENCES ${t.account} (id) ON DELETE CASCADE
+  ) ${CHARSET}`,
+
+  /**
+   * A second factor, and the codes that get somebody back in without one.
+   *
+   * `confirmed_at` is what separates an enrolment somebody started from one that works: a secret stored the
+   * moment it is generated, and treated as active, locks out anyone whose authenticator app failed to scan it.
+   */
+  `CREATE TABLE IF NOT EXISTS ${t.mfa} (
+    account_id INT UNSIGNED NOT NULL,
+    secret VARCHAR(191) NOT NULL,
+    confirmed_at BIGINT NULL,
+    recovery_codes TEXT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (account_id),
+    FOREIGN KEY (account_id) REFERENCES ${t.account} (id) ON DELETE CASCADE
+  ) ${CHARSET}`,
+
+  /**
+   * One-time codes: the sign-in link in an email, and the challenge a half-finished MFA login is waiting on.
+   *
+   * Rows are deleted when spent, never flagged — a spent code that still exists is one every lookup has to
+   * remember to exclude, and the first that forgets makes it reusable.
+   */
+  `CREATE TABLE IF NOT EXISTS ${t.otp} (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    account_id INT UNSIGNED NULL,
+    purpose VARCHAR(32) NOT NULL,
+    identifier VARCHAR(191) NOT NULL,
+    code_hash VARCHAR(191) NOT NULL,
+    expires_at BIGINT NOT NULL,
+    attempts INT UNSIGNED NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY otp_lookup (purpose, identifier),
+    KEY otp_expires_at (expires_at),
+    FOREIGN KEY (account_id) REFERENCES ${t.account} (id) ON DELETE CASCADE
+  ) ${CHARSET}`
+];
+
+/**
  * DDL that can be run twice.
  *
  * MySQL has `CREATE TABLE IF NOT EXISTS` and nothing else: `ADD COLUMN IF NOT EXISTS` is MariaDB's, and a plain
@@ -189,7 +251,10 @@ interface Step {
 }
 
 /** Append only. A released version is never edited — the deployments that already ran it would never see the change. */
-const STEPS: Step[] = [{ version: 1, statements: step1 }];
+const STEPS: Step[] = [
+  { version: 1, statements: step1 },
+  { version: 2, statements: step2 }
+];
 
 export const SCHEMA_VERSION = STEPS[STEPS.length - 1].version;
 
@@ -206,6 +271,9 @@ export const schemaStatements = (tables: Tables, fromVersion = 0): string[] =>
  * silent mess, but the error names a constraint and not what to do about it.
  */
 const DROP_ORDER: TableKey[] = [
+  'otp',
+  'mfa',
+  'identity',
   'spaceToken',
   'spaceMember',
   'accountRole',
@@ -250,9 +318,9 @@ const readVersion = async (pool: Pool, tables: Tables): Promise<number> => {
 export const migrate = async (
   pool: Pool,
   tables: Tables,
-  options: { prefix?: string; adoptExisting?: boolean; log?: (message: string) => void } = {}
+  options: { prefix: string; adoptExisting?: boolean; log?: (message: string) => void }
 ): Promise<number> => {
-  const { prefix = '', adoptExisting = false, log } = options;
+  const { prefix, adoptExisting = false, log } = options;
 
   /**
    * A database this schema has never been migrated into, that already has tables with these names, is almost
@@ -365,9 +433,9 @@ export const migrate = async (
 export const dropSchema = async (
   pool: Pool,
   tables: Tables,
-  options: { prefix?: string; force?: boolean; log?: (message: string) => void } = {}
+  options: { prefix: string; force?: boolean; log?: (message: string) => void }
 ): Promise<string[]> => {
-  const { prefix = '', force = false, log } = options;
+  const { prefix, force = false, log } = options;
   const present = await existingTables(pool, prefix);
 
   if (present.length === 0) {

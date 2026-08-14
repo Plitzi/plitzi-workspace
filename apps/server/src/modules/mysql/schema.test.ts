@@ -14,17 +14,18 @@ describe('table naming', () => {
     expect(tableNames('acme_').account).toBe('acme_account');
   });
 
-  it('names nothing when no prefix was asked for', () => {
-    expect(resolveTables().account).toBe('`account`');
+  /** The empty string is still allowed as a deliberate choice; what is not allowed is forgetting to choose. */
+  it('honours an empty prefix when one is chosen on purpose', () => {
+    expect(resolveTables('').account).toBe('`account`');
   });
 });
 
 describe('schema statements', () => {
-  const sql = schemaStatements(resolveTables()).join('\n');
+  const sql = schemaStatements(resolveTables('plitzi_')).join('\n');
 
   it('creates every table the adapters read', () => {
-    for (const name of Object.values(tableNames())) {
-      if (name !== 'schema_version') {
+    for (const name of Object.values(tableNames('plitzi_'))) {
+      if (name !== 'plitzi_schema_version') {
         expect(sql).toContain(`CREATE TABLE IF NOT EXISTS \`${name}\``);
       }
     }
@@ -62,17 +63,20 @@ describe('schema statements', () => {
    * out on a laptop, and "sign out my other devices" cannot be built at all.
    */
   it('keeps sessions out of the account table', () => {
-    const account = sql.slice(sql.indexOf('`account` ('), sql.indexOf('CREATE TABLE IF NOT EXISTS `session`'));
+    const account = sql.slice(
+      sql.indexOf('`plitzi_account` ('),
+      sql.indexOf('CREATE TABLE IF NOT EXISTS `plitzi_session`')
+    );
 
     expect(account).not.toContain('access_token');
     expect(account).not.toContain('refresh_token');
-    expect(sql).toContain('CREATE TABLE IF NOT EXISTS `session`');
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS `plitzi_session`');
   });
 
   it('deletes an account\u2019s sessions with it', () => {
-    const session = sql.slice(sql.indexOf('`session` ('));
+    const session = sql.slice(sql.indexOf('`plitzi_session` ('));
 
-    expect(session).toMatch(/FOREIGN KEY \(account_id\) REFERENCES `account` \(id\) ON DELETE CASCADE/);
+    expect(session).toMatch(/FOREIGN KEY \(account_id\) REFERENCES `plitzi_account` \(id\) ON DELETE CASCADE/);
   });
 
   /** Spaces are not this schema's — a deployment keeps them wherever it keeps them. */
@@ -81,7 +85,7 @@ describe('schema statements', () => {
   });
 
   it('applies nothing when the database is already current', () => {
-    expect(schemaStatements(resolveTables(), SCHEMA_VERSION)).toEqual([]);
+    expect(schemaStatements(resolveTables('plitzi_'), SCHEMA_VERSION)).toEqual([]);
   });
 });
 

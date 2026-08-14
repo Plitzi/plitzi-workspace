@@ -1,6 +1,7 @@
 import { createAccountStore } from './accounts';
 import { createAdmin } from './admin';
 import { resolveTables, tableNames } from './config';
+import { createIdentityStore } from './identities';
 import { generateToken, hashPassword, verifyPassword } from './passwords';
 import { createPool } from './pool';
 import { SCHEMA_VERSION, dropSchema, migrate, schemaStatements } from './schema';
@@ -9,6 +10,7 @@ import { createSpaceTokenStore } from './spaceTokens';
 
 import type { MysqlAdmin } from './admin';
 import type { MysqlConfig } from './config';
+import type { IdentityStore } from './identities';
 import type { SessionStore } from './sessions';
 import type { AccountAdapters } from '../../core/auth/api';
 import type { IdentityAdapters } from '../../core/auth/identity';
@@ -30,6 +32,8 @@ export interface MysqlStore {
   spaceTokenAdapters: SpaceTokenAdapters;
   /** The account's signed-in devices: list them, end one, end the others. */
   sessions: SessionStore;
+  /** Accounts at other identity providers. Storage only — whether two are the same person is your judgement. */
+  identities: IdentityStore;
   /** Ready for `createAuth({ api })`. Replaceable: nothing here assumes an algorithm. */
   passwords: { hashPassword: typeof hashPassword; verifyPassword: typeof verifyPassword; generateToken: () => string };
   /** Seeding and administration — roles, permissions, memberships, a space's first credential. */
@@ -64,7 +68,7 @@ export interface MysqlStore {
  * something a library should be launching behind your back.
  */
 export const createMysqlStore = async (config: MysqlConfig): Promise<MysqlStore> => {
-  const { tablePrefix = '', autoMigrate = true, log } = config;
+  const { tablePrefix, autoMigrate = true, log } = config;
   const tables = resolveTables(tablePrefix);
   const pool = await createPool(config);
   const owned = !config.pool;
@@ -80,6 +84,7 @@ export const createMysqlStore = async (config: MysqlConfig): Promise<MysqlStore>
     authAdapters: createAccountStore(pool, tables),
     spaceTokenAdapters: createSpaceTokenStore(pool, tables),
     sessions: createSessionStore(pool, tables),
+    identities: createIdentityStore(pool, tables),
     passwords: { hashPassword, verifyPassword, generateToken },
     admin: createAdmin(pool, tables),
     uninstall: (options = {}) => dropSchema(pool, tables, { prefix: tablePrefix, force: options.force, log }),
@@ -95,7 +100,7 @@ export const createMysqlStore = async (config: MysqlConfig): Promise<MysqlStore>
 export { dropSchema };
 
 /** The DDL, for a deployment whose database user may not run it — see `MysqlConfig.autoMigrate`. */
-export const mysqlSchemaStatements = (tablePrefix = '', fromVersion = 0): string[] =>
+export const mysqlSchemaStatements = (tablePrefix: string, fromVersion = 0): string[] =>
   schemaStatements(resolveTables(tablePrefix), fromVersion);
 
 export { hashPassword, verifyPassword, generateToken };
@@ -105,3 +110,4 @@ export { SCHEMA_VERSION } from './schema';
 export type { MysqlConfig, TableKey, Tables } from './config';
 export type { AccountSeed, MysqlAdmin, SpaceTokenSeed } from './admin';
 export type { SessionStore, SessionSummary } from './sessions';
+export type { IdentityStore, LinkedIdentity } from './identities';

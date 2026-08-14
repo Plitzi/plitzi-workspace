@@ -25,6 +25,9 @@ const store = await createMysqlStore({
   password: process.env.MYSQL_PASSWORD ?? 'password',
   // Its own database on a server that has others. Nothing here touches anything outside it.
   database: process.env.MYSQL_DATABASE ?? 'plitzi_example',
+  // Required, and the reason is the line above: `account`, `role` and `session` are names anything might already
+  // have. A prefix you chose makes a collision mean a real collision.
+  tablePrefix: process.env.MYSQL_TABLE_PREFIX ?? 'plitzi_',
   // Both are development conveniences and both say so: the point of an example is that it runs, and neither
   // creating a database nor altering tables is something a production application should be able to do.
   ensureDatabase: true,
@@ -48,8 +51,26 @@ const auth = createAuth({
     issuer: `http://127.0.0.1:${PORT}`
   },
   cookie: { name: COOKIE },
-  adapters: store.authAdapters,
-  api: store.passwords
+  adapters: {
+    ...store.authAdapters,
+    /**
+     * The one adapter the store cannot supply: where mail goes. A real deployment hands this to its provider —
+     * here it prints, so the sign-in code and the verification link are readable without an SMTP account.
+     *
+     * Supplying it is what turns `passwordless` and the reset flows on. `GET /auth/capabilities` reports the
+     * result, and there is no second switch that could disagree with it.
+     */
+    sendMail: message => {
+      console.log(`[example] mail → ${message.to} (${message.template}):`, message.data);
+
+      return Promise.resolve();
+    }
+  },
+  api: {
+    ...store.passwords,
+    // Every act worth recording, in one feed: an audit trail, a webhook and an alert are the same thing.
+    onEvent: event => console.log(`[example] ${event.type}`, { userId: event.userId, actorId: event.actorId })
+  }
 });
 
 const server = createServer({

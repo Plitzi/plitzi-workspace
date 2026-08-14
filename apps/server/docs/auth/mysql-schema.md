@@ -33,6 +33,9 @@ Eight. Names are the kernel's vocabulary — an `AccountRecord` is stored in `ac
 ```
 account          the person, their password hash, and their single-use tokens
 session          one row per signed-in device
+account_identity the same person at somebody else's provider — unique on (provider, subject), never on email
+account_mfa      the second factor: a TOTP secret, when it was proven, and hashed recovery codes
+account_otp      one-time codes, for signing in by email
 account_role     which global roles an account has
 role             a named bundle of permissions
 permission       one capability
@@ -157,6 +160,27 @@ account's life, and every one of these is an optional adapter whose absence remo
 | Suspend, block, restore | `POST /auth/admin/account/status` | `setStatus` |
 | Set global roles | `POST /auth/admin/account/roles` | `setRoles` |
 | Delete somebody's account | `POST /auth/admin/account/delete` | `deleteAccount` |
+| Enrol / confirm / remove a second factor | `POST /auth/mfa/{begin,confirm,disable}`, `GET /auth/mfa` | `loadMfa`, `saveMfa`, `deleteMfa` |
+| Finish a sign-in that owes one | `POST /auth/mfa/complete` | the same |
+| Sign in by emailed code | `POST /auth/passwordless/{request,complete}` | `saveOtp`, `findOtp`, `consumeOtp`, `findByEmail`, `sendMail` |
+
+### The second factor
+
+TOTP (RFC 6238), six digits, thirty-second steps — what every authenticator app assumes. Three properties are the
+server's and worth knowing:
+
+- **An enrolment does nothing until it is confirmed with a real code.** A secret treated as active the moment it is
+  generated locks out anybody whose app failed to scan it.
+- **The challenge is a signed token, not a session.** Getting the password right buys five minutes and the right to
+  finish that one sign-in; it verifies as nothing else.
+- **Recovery codes are stored hashed and shown once**, and a used one is spent. One that survives being used is a
+  password with extra steps.
+
+### Signing in by email
+
+The request answers identically whether the address has an account or not — anything else makes the endpoint a way
+to ask which addresses do. It never creates an account, and a second factor still applies: arriving by email proves
+the address, which is one factor.
 
 Four rules are the server's, and each of them is the difference between the feature and a convincing imitation of
 it:

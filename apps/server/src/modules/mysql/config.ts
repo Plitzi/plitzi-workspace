@@ -19,10 +19,17 @@ export interface MysqlConfig {
   ssl?: PoolOptions['ssl'];
   connectionLimit?: number;
   /**
-   * Prefix for every table below, so this schema can share a database with something else. Say it once and never
-   * again: nothing outside this module ever writes a table name.
+   * Prefix for every table below. **Required**, and deliberately so.
+   *
+   * `account`, `role`, `permission` and `session` are among the most ordinary table names there are, and this
+   * module exists to be pointed at a database that has other things in it. Optional, the default was the empty
+   * string — the one value guaranteed to collide — so the guard that refuses to adopt somebody else's tables fired
+   * on the common case rather than the dangerous one. A prefix you chose makes a collision mean what it says.
+   *
+   * `'plitzi_'` is a fine answer. So is your product's name. Say it once: nothing outside this module ever writes
+   * a table name.
    */
-  tablePrefix?: string;
+  tablePrefix: string;
   /**
    * Create and update the tables at startup. On by default, which is what makes a fresh database work with no step
    * before it. A deployment whose database user cannot run DDL — the usual arrangement in production — turns it off
@@ -59,6 +66,9 @@ export const TABLE_NAMES = {
   schemaVersion: 'schema_version',
   account: 'account',
   session: 'session',
+  identity: 'account_identity',
+  mfa: 'account_mfa',
+  otp: 'account_otp',
   role: 'role',
   permission: 'permission',
   rolePermission: 'role_permission',
@@ -72,14 +82,14 @@ export type TableKey = keyof typeof TABLE_NAMES;
 /** Table names, already prefixed and already backticked — the only form the rest of the module ever sees. */
 export type Tables = Record<TableKey, string>;
 
-export const resolveTables = (prefix = ''): Tables => {
+export const resolveTables = (prefix: string): Tables => {
   const entries = Object.entries(TABLE_NAMES).map(([key, name]) => [key, `\`${prefix}${name}\``]);
 
   return Object.fromEntries(entries) as Tables;
 };
 
 /** The bare, unquoted names — for a migration tool, or an error that has to say which table it meant. */
-export const tableNames = (prefix = ''): Record<TableKey, string> => {
+export const tableNames = (prefix: string): Record<TableKey, string> => {
   const entries = Object.entries(TABLE_NAMES).map(([key, name]) => [key, `${prefix}${name}`]);
 
   return Object.fromEntries(entries) as Record<TableKey, string>;
