@@ -35,6 +35,7 @@ export {
   normalizeDomain
 } from './core/auth/domains';
 export { createIdentity } from './core/auth/identity';
+export { generateToken, hashPassword, verifyPassword } from './core/auth/passwords';
 export { BUILT_IN_PROVIDERS, OAuthFailure, createSocialAuth, requestProfileJson } from './core/auth/oauth';
 export { applySessionOutcome, authPolicyRules, authRoutes } from './core/auth/routes';
 export {
@@ -51,6 +52,7 @@ export {
   writeFlowCookie,
   writeSessionCookies
 } from './core/auth/session';
+export { createMemoryRateLimit } from './core/auth/throttle';
 export { createSpaceTokenApi } from './core/auth/spaceTokens';
 export { SCOPES, authFailureMessage, createTokens, userIdOf } from './core/auth/tokens';
 export {

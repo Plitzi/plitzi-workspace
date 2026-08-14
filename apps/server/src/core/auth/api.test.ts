@@ -71,11 +71,15 @@ describe('what a deployment ends up offering', () => {
     expect(api.capabilities).toMatchObject({ signup: true, passwordLogin: false, passwordReset: false });
   });
 
-  // The half-wired case: an adapter without the piece it needs. Offering the endpoint anyway would fail inside it.
-  it('does not offer a flow whose other half is missing', () => {
-    const api = build({ findByUsername: () => Promise.resolve(ada) }, { verifyPassword: undefined });
+  /**
+   * What a deployment offers is decided by its ADAPTERS and nothing else. Password hashing used to count too, and
+   * that made "I wired up a user table and signup answers 404" a thing that happened for a reason nobody could see
+   * — the missing piece was a function they had no reason to know they owed. It has a default now.
+   */
+  it('needs no crypto supplied to offer the flows the adapters support', () => {
+    const api = build({ findByUsername: () => Promise.resolve(ada), createAccount: () => Promise.resolve(ada) });
 
-    expect(api.capabilities).toMatchObject({ passwordLogin: false });
+    expect(api.capabilities).toMatchObject({ passwordLogin: true, signup: true });
   });
 
   it('publishes the result, so a client renders a form that matches', () => {

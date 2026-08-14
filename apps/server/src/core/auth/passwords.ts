@@ -6,7 +6,8 @@ const scrypt = promisify(scryptCallback) as (password: string, salt: string, key
 const KEY_LENGTH = 64;
 
 /**
- * Password hashing that a deployment does not have to choose.
+ * Password hashing that a deployment does not have to choose, and by default does not even have to know about:
+ * this is what `createAuthApi` uses when nobody says otherwise.
  *
  * `scrypt` from the standard library, so this costs no dependency and nothing has to be compiled. It is a memory-hard
  * KDF and an entirely respectable answer; argon2 or bcrypt are better ones, and a deployment that wants either passes

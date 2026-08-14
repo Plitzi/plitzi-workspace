@@ -2,7 +2,6 @@ import { createAccountStore } from './accounts';
 import { createAdmin } from './admin';
 import { resolveTables, tableNames } from './config';
 import { createIdentityStore } from './identities';
-import { generateToken, hashPassword, verifyPassword } from './passwords';
 import { createPool } from './pool';
 import { SCHEMA_VERSION, dropSchema, migrate, schemaStatements } from './schema';
 import { createSessionStore } from './sessions';
@@ -34,8 +33,6 @@ export interface MysqlStore {
   sessions: SessionStore;
   /** Accounts at other identity providers. Storage only — whether two are the same person is your judgement. */
   identities: IdentityStore;
-  /** Ready for `createAuth({ api })`. Replaceable: nothing here assumes an algorithm. */
-  passwords: { hashPassword: typeof hashPassword; verifyPassword: typeof verifyPassword; generateToken: () => string };
   /** Seeding and administration — roles, permissions, memberships, a space's first credential. */
   admin: MysqlAdmin;
   /**
@@ -59,7 +56,6 @@ export interface MysqlStore {
  * const auth = createAuth({
  *   tokens: { secret, issuer },
  *   adapters: store.authAdapters,
- *   api: store.passwords
  * });
  * ```
  *
@@ -85,7 +81,6 @@ export const createMysqlStore = async (config: MysqlConfig): Promise<MysqlStore>
     spaceTokenAdapters: createSpaceTokenStore(pool, tables),
     sessions: createSessionStore(pool, tables),
     identities: createIdentityStore(pool, tables),
-    passwords: { hashPassword, verifyPassword, generateToken },
     admin: createAdmin(pool, tables),
     uninstall: (options = {}) => dropSchema(pool, tables, { prefix: tablePrefix, force: options.force, log }),
     // A pool that was handed in is not ours to end: the deployment that opened it has other things using it.
@@ -103,7 +98,6 @@ export { dropSchema };
 export const mysqlSchemaStatements = (tablePrefix: string, fromVersion = 0): string[] =>
   schemaStatements(resolveTables(tablePrefix), fromVersion);
 
-export { hashPassword, verifyPassword, generateToken };
 export { TABLE_NAMES, tableNames } from './config';
 export { SCHEMA_VERSION } from './schema';
 

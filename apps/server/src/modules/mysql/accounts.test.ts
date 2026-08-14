@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createAccountStore } from './accounts';
 import { resolveTables } from './config';
-import { hashPassword, verifyPassword } from './passwords';
+import { hashPassword, verifyPassword } from '../../core/auth/passwords';
 
 import type { Queryable } from './query';
 

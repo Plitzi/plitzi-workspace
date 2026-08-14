@@ -706,12 +706,17 @@ import { createAuth } from '@plitzi/sdk-server/auth';
 const auth = createAuth({
   tokens: { secret: process.env.AUTH_SECRET, issuer: 'https://acme.com', audience: ['https://acme.com'] },
   cookie: { name: 'acme_session' },
-  adapters: accounts,
-  api: { verifyPassword }
+  adapters: accounts
 });
 
 createServer({ port: 443, adapters: { getOfflineData, getSpaceDeployment }, auth });
 ```
+
+There is no third argument for the security-relevant parts, on purpose: password hashing defaults to scrypt, sign-in
+is rate-limited in memory, mailed links expire, and CSRF is on. Each of those used to be an option with no default —
+which meant the ordinary deployment went without, because nobody configures what they have not read about. Supply
+`api.hashPassword`/`verifyPassword` to keep an existing algorithm (a store of bcrypt hashes needs bcrypt), and
+`api.rateLimit` to put one counter behind a fleet.
 
 `auth` on the server is the whole of the wiring: it mounts the `/auth` flows, answers the identity adapters a page
 server asks for, and carries the cookie naming with it — so there is no second place to keep in step. Everything is
@@ -794,7 +799,6 @@ const store = await createMysqlStore({ url: process.env.DATABASE_URL });
 const auth = createAuth({
   tokens: { secret, issuer },
   adapters: store.authAdapters,   // spread your own on top: { ...store.authAdapters, sendMail }
-  api: store.passwords            // scrypt, replaceable
 });
 ```
 
@@ -836,15 +840,11 @@ and every refusal names a machine-readable `reason`, so a client can tell "renew
 |---|---|
 | `cookie` | Name, domain, `SameSite`, `Secure`, the refresh path, the hint suffix. Defaults derive from the request host |
 | `api.password` | What a password has to be. `minLength` defaults to 8 (NIST SP 800-63B's floor); `validate` is where a breach-list lookup or a strength estimator goes. Applied wherever one is set — signing up, resetting, changing |
-| `api.rateLimit` | May this attempt proceed? Called before the password is checked, so a throttled attempt costs no hash. **There is no default**: where the counter lives is a deployment decision, and an unthrottled password endpoint is a credential-stuffing target |
+| `api.rateLimit` | May this attempt proceed? **Defaults to an in-memory sliding window**, so no deployment is unthrottled by omission; supply one to put a single counter behind a whole fleet. Called before the password is checked, so a throttled attempt costs no hash |
 | `api.adminPermission` | The global capability the `/auth/admin/*` routes require. Default `userManage` |
 | `api.impersonationPermission` | The capability it takes to obtain a session **as** another account, and the switch that offers the flow at all — **absent, there is no impersonation**. Its own permission on purpose: suspending an account and becoming one are not the same grant |
-| `api.impersonationTtl` | How long a borrowed session lives. Default 900 seconds, and it cannot renew |
 | `api.onEvent` | Every act worth recording — sign-ins, failures, password changes, admin actions — as a `SecurityEvent`. An audit trail, a webhook and an alert are the same feed. Never awaited and never able to fail a request |
 | `api.mfaIssuer` | What an authenticator app calls this deployment. Defaults to the token issuer |
-| `api.passwordlessTtl` | How long an emailed sign-in code lasts. Default 600 seconds |
-| `api.linkTtl` | How long a mailed **link** stays usable: `reset` (default 3600 — a reset link is a password, and one lives in an inbox), `validation` and `emailChange` (86400). The deadline rides inside the token rather than in a column, so a deployment with its own store cannot be quietly without it, and links minted before it existed keep working |
-| `csrf.allowedOrigins` | Origins that count as this deployment's own when deciding whether a sign-in came from another site. Filled from `identity.platformOrigins` |
 | `tokens.lifetimes.session` | The longest a session may live however often it renews. `0` (default) means no cap — the renewal window is already an idle timeout, since a session nobody refreshes dies with its refresh token |
 | `api.onMailError` | Where a failed delivery is reported. It is never thrown: every one of these sends after something has already been committed, so letting the provider decide whether the request succeeded reports a change that did happen as a 500 |
 | `basePath` | Where the flows are mounted. The guard's rules follow it |
@@ -877,15 +877,11 @@ After that it depends on what the flow does, because there are two different att
 | **`/auth/exchange`** | Its own grant | It acts for a space and is already refused unless the origin is one that space declared — narrower than any list here. A space is embedded on somebody else's domain by design |
 | **`/auth/refresh`, `/auth/logout`** | Nothing | Both authenticate with the refresh credential and must work when the access token has lapsed. Forging either gains an attacker nothing: renewing somebody's session hands the new credential to their own browser |
 
-**"A site this deployment recognises"** is decided by two headers a page cannot set: `Sec-Fetch-Site` — the browser's
-own account of where the request came from — and, where that is absent, `Origin`, compared by registrable domain
-(the same rule that decides how far the session cookie travels) plus `csrf.allowedOrigins`, which `createAuth` fills
-from `identity.platformOrigins`. **Neither header present means the caller is not a browser**, and a client that is
-not a browser has no victim's session in it to forge with — which is what lets every API client, mobile app and
-script sign in with nothing extra to send.
-
-`csrf: { protectSignIn: true }` is the stricter form: demand a token from *everybody* on those flows rather than
-relying on the headers, at the cost of a round trip before every sign-in.
+**"A site this deployment recognises"** is decided by two headers a page cannot set: `Sec-Fetch-Site` — the
+browser's own account of where the request came from — and, where that is absent, `Origin`, matched exactly against
+this host or `identity.platformOrigins`, the hosts you already declared. **Neither header present means the caller
+is not a browser**, and a client that is not a browser has no victim's session in it to forge with — which is what
+lets every API client, mobile app and script sign in with nothing extra to send.
 
 #### What a browser client does
 
@@ -915,7 +911,8 @@ sub-domain they took over. Here the token is an HMAC over a nonce **and the sess
 needs the secret, and a token minted for one session is refused for another. A refusal always names a `reason`:
 `missing`, `malformed`, `expired` or `mismatch`.
 
-Turn it off with `csrf: false` on `createAuth`. Outside this package, `createCsrfMiddleware` from
+There is nothing to configure: the secret, the cookie scope and the origins all come from what you already told
+`createAuth`. Turn it off entirely with `csrf: false`. Outside this package, `createCsrfMiddleware` from
 `@plitzi/sdk-server/handlers` applies the same check to your own routes.
 
 ### `SSRUser`

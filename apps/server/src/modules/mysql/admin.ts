@@ -1,5 +1,5 @@
-import { hashPassword } from './passwords';
 import { execute, selectOne, selectRows } from './query';
+import { hashPassword } from '../../core/auth/passwords';
 
 import type { Tables } from './config';
 import type { SpaceScope } from '../../core/auth/tokens';

@@ -87,7 +87,12 @@ const auth = createAuth({
   tokens: { secret: 'test-secret', issuer: BASE, audience: [BASE] },
   cookie: { name: 'test_session' },
   adapters: store(),
-  api: { verifyPassword: (plain, hash) => Promise.resolve(plain === 'password' && hash === 'stored-hash') }
+  api: {
+    verifyPassword: (plain, hash) => Promise.resolve(plain === 'password' && hash === 'stored-hash'),
+    // A whole suite signs the same account in dozens of times, which is exactly what the default in-memory limit
+    // exists to stop. The limiter has its own tests; here it would only make the run order matter.
+    rateLimit: () => Promise.resolve(true)
+  }
 });
 
 const offlineData = { schema: { elements: {} }, style: {} } as unknown as OfflineDataRaw;

@@ -35,36 +35,26 @@ const VERSION = 'v1';
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 export interface CsrfConfig {
-  /** Signs the tokens. Distinct from the session secret is fine; `createAuth` reuses that one by default. */
+  /** Signs the tokens. `createAuth` uses the token secret, so a deployment never states this either. */
   secret: string;
-  /** The readable cookie the token is handed over in. Defaults to the session cookie's name plus `_csrf`. */
-  cookieName?: string | ((hostname: string) => string);
-  /** Where the echo is looked for. Defaults to `x-csrf-token`. */
-  headerName?: string;
-  /** A body field to accept it in as well, for a form that posts without JavaScript. Defaults to `_csrf`. */
-  fieldName?: string;
-  /** Seconds. Default 43200 (twelve hours) — long enough for a working day, short enough to bound a leak. */
-  ttlSeconds?: number;
   /** Naming and scope for the cookie, so it lands beside the session one. */
   cookie?: SSRAuthCookie;
   /**
    * Origins that count as this deployment's own, beyond the request's own site.
    *
    * What it decides is which cross-site page may hand out a session — see `foreign` below. `createAuth` fills it
-   * from `identity.platformOrigins`, so a deployment that already declared its hosts has said this too.
+   * from `identity.platformOrigins`, so a deployment that already declared its hosts has said this too, and this
+   * whole module ends up configuring itself.
    */
   allowedOrigins?: string[] | ((origin: string) => boolean);
-  /**
-   * Demand a token on the sign-in flows **unconditionally**, rather than only from a site this deployment does
-   * not recognise.
-   *
-   * The default already covers login CSRF, and covers it without costing anybody a round trip: a request from
-   * another site is refused because it cannot produce a token, and a first-party page never has to. This is the
-   * stricter form, for a deployment that would rather not depend on `Origin` and `Sec-Fetch-Site` at all — the
-   * price is that **every** client, browser or not, must fetch a token before it can sign in.
-   */
-  protectSignIn?: boolean;
 }
+
+/** Where the echo is looked for, and the field a `<form>` may carry it in instead. */
+const HEADER_NAME = 'x-csrf-token';
+const FIELD_NAME = '_csrf';
+
+/** Twelve hours: long enough for a working day, short enough to bound a leak. */
+const TOKEN_LIFETIME = 43_200;
 
 /**
  * What kind of flow a request is reaching, which is what decides when a token is demanded.
@@ -144,15 +134,7 @@ const originHost = (origin: string): string | undefined => {
 };
 
 export const createCsrf = (config: CsrfConfig) => {
-  const {
-    secret,
-    headerName = 'x-csrf-token',
-    fieldName = '_csrf',
-    ttlSeconds = 43_200,
-    cookie,
-    allowedOrigins = [],
-    protectSignIn = false
-  } = config;
+  const { secret, cookie, allowedOrigins = [] } = config;
 
   const permitted = (origin: string): boolean =>
     typeof allowedOrigins === 'function' ? allowedOrigins(origin) : allowedOrigins.includes(origin);
@@ -199,13 +181,7 @@ export const createCsrf = (config: CsrfConfig) => {
     return originHost(origin) !== carrier.hostname && !allowed;
   };
 
-  const nameFor = (hostname: string): string => {
-    if (typeof config.cookieName === 'function') {
-      return config.cookieName(hostname);
-    }
-
-    return config.cookieName ?? `${sessionCookieParams(hostname, cookie).name}_csrf`;
-  };
+  const nameFor = (hostname: string): string => `${sessionCookieParams(hostname, cookie).name}_csrf`;
 
   const sign = (nonce: string, expiry: number, binding: string): string =>
     createHmac('sha256', secret).update(`${nonce}.${expiry}.${binding}`).digest('base64url');
@@ -226,7 +202,7 @@ export const createCsrf = (config: CsrfConfig) => {
    */
   const issue = (sessionToken?: string): string => {
     const nonce = randomBytes(16).toString('base64url');
-    const expiry = Math.floor(Date.now() / 1000) + ttlSeconds;
+    const expiry = Math.floor(Date.now() / 1000) + TOKEN_LIFETIME;
 
     return `${VERSION}.${nonce}.${expiry}.${sign(nonce, expiry, bind(sessionToken))}`;
   };
@@ -268,7 +244,8 @@ export const createCsrf = (config: CsrfConfig) => {
     /** The name the cookie lands under, for a client that reads it by hand. */
     cookieName: nameFor,
 
-    headerName,
+    /** The header the echo is expected in, published by `GET /auth/csrf` so a client is never told it twice. */
+    headerName: HEADER_NAME,
 
     /** Readable on purpose: `httpOnly` would make it impossible for a page to echo it back. It is not a credential. */
     write: (req: { hostname: string }, res: CookieSink, token: string): void => {
@@ -277,7 +254,7 @@ export const createCsrf = (config: CsrfConfig) => {
         `${nameFor(req.hostname)}=${encodeURIComponent(token)}`,
         'Path=/',
         `SameSite=${params.sameSite === 'none' ? 'None' : 'Lax'}`,
-        `Max-Age=${ttlSeconds}`,
+        `Max-Age=${TOKEN_LIFETIME}`,
         ...(params.domain ? [`Domain=${params.domain}`] : []),
         ...(params.secure ? ['Secure'] : [])
       ];
@@ -305,8 +282,9 @@ export const createCsrf = (config: CsrfConfig) => {
         return false;
       }
 
+      // The flow checks the caller's origin itself, against something narrower than anything here.
       if (subject === 'delegated') {
-        return protectSignIn;
+        return false;
       }
 
       if (subject === 'signIn') {
@@ -315,7 +293,7 @@ export const createCsrf = (config: CsrfConfig) => {
          * REPLACES it — so a browser still holding a stale one was being refused the very request that fixes
          * that. What matters is whether another site caused this.
          */
-        return protectSignIn || foreign(carrier);
+        return foreign(carrier);
       }
 
       return readCookieHeader(carrier, sessionCookieParams(carrier.hostname, cookie).name) !== undefined;
@@ -327,8 +305,8 @@ export const createCsrf = (config: CsrfConfig) => {
      * the cookie did not.
      */
     verify: (carrier: CsrfCarrier, sessionToken?: string): CsrfResult => {
-      const field = (carrier.body as Record<string, unknown> | undefined)?.[fieldName];
-      const echoed = header(carrier, headerName) ?? (typeof field === 'string' ? field : undefined);
+      const field = (carrier.body as Record<string, unknown> | undefined)?.[FIELD_NAME];
+      const echoed = header(carrier, HEADER_NAME) ?? (typeof field === 'string' ? field : undefined);
 
       const result = check(echoed, sessionToken);
       if (!result.ok) {

@@ -225,9 +225,9 @@ describe('the policy derived from the same table', () => {
  * Which flows the CSRF check is applied to, and — the part that took a bug to get right — which it must not be.
  */
 describe('the CSRF guard in front of the flows', () => {
-  const build = (protectSignIn = false) => {
+  const build = () => {
     const { api, calls } = recordingApi();
-    const csrf = createCsrf({ secret: 'csrf-secret', cookie: { name: 'sess' }, protectSignIn });
+    const csrf = createCsrf({ secret: 'csrf-secret', cookie: { name: 'sess' } });
     const routes = authRoutes({ api, cookies, csrf });
 
     const call = (path: string, req: Partial<AuthRequest> = {}) => {
@@ -290,26 +290,17 @@ describe('the CSRF guard in front of the flows', () => {
     expect(await call('/exchange', { headers: { origin: 'https://a-customer.test' } })).toMatchObject({ ok: true });
   });
 
-  it('does demand one from everybody where the deployment asked for that', async () => {
-    const { call, csrf } = build(true);
-
-    expect(await call('/login', {})).toMatchObject({ status: 403 });
-    expect(await call('/login', { headers: { 'x-csrf-token': csrf.issue() } })).toMatchObject({ ok: true });
-  });
-
   /** Both authenticate with the refresh credential and must work when the access token has already lapsed. */
-  it('leaves refresh and logout alone whatever the deployment asked for', async () => {
-    for (const protectSignIn of [false, true]) {
-      const { call } = build(protectSignIn);
+  it('leaves refresh and logout alone', async () => {
+    const { call } = build();
 
-      expect(await call('/refresh', { headers: signedIn })).toMatchObject({ ok: true });
-      expect(await call('/logout', { headers: signedIn })).toMatchObject({ ok: true });
-    }
+    expect(await call('/refresh', { headers: signedIn })).toMatchObject({ ok: true });
+    expect(await call('/logout', { headers: signedIn })).toMatchObject({ ok: true });
   });
 
   /** A cross-origin page cannot set `Authorization`, so asking an API client for a token protects nobody. */
-  it('never asks a bearer client, not even under protectSignIn', async () => {
-    const { call } = build(true);
+  it('never asks a bearer client', async () => {
+    const { call } = build();
 
     expect(await call('/login', { headers: { authorization: 'Bearer abc' } })).toMatchObject({ ok: true });
     expect(await call('/profile', { headers: { authorization: 'Bearer abc' } })).toMatchObject({ ok: true });

@@ -1,8 +1,21 @@
 import { createHash } from 'node:crypto';
 
 import { checkPermission } from './authorize';
+import {
+  generateToken as defaultGenerateToken,
+  hashPassword as defaultHashPassword,
+  verifyPassword as defaultVerifyPassword
+} from './passwords';
+import { createMemoryRateLimit } from './throttle';
 import { authFailureMessage } from './tokens';
-import { generateRecoveryCodes, generateTotpSecret, normalizeRecoveryCode, totpUri, verifyTotp } from './totp';
+import {
+  generateRecoveryCodes,
+  generateTotpSecret,
+  normalizeRecoveryCode,
+  randomCode,
+  totpUri,
+  verifyTotp
+} from './totp';
 
 import type { CredentialCarrier } from './credentials';
 import type { Csrf } from './csrf';
@@ -253,6 +266,15 @@ export interface ThrottleAttempt {
   /** What is being attempted against — a username, an email, a token. Never a password. */
   key: string;
   carrier?: CredentialCarrier;
+  /**
+   * Not a question but a report: this one worked, so whatever was counted against the key can be forgotten. The
+   * return value is ignored.
+   *
+   * It matters because the check happens BEFORE the password is examined — which is what makes a throttled attempt
+   * cost no hash — so without this the counter cannot tell ten failures from ten sign-ins. An app that signs the
+   * same account in repeatedly would lock it out by succeeding. A limiter that ignores this is simply stricter.
+   */
+  succeeded?: boolean;
 }
 
 export interface PasswordPolicy {
@@ -266,10 +288,16 @@ export interface PasswordPolicy {
 }
 
 export interface AuthApiConfig {
-  /** Compare a password against a stored hash. A deployment picks its own algorithm; nothing here assumes one. */
+  /**
+   * How passwords are hashed and checked. **Defaults to scrypt from the standard library**, so a deployment that
+   * has no opinion does not have to have one — and, more to the point, cannot end up with password login quietly
+   * switched off because it did not supply a function it had no reason to know about.
+   *
+   * Supply both to keep an existing algorithm: a store full of bcrypt hashes needs bcrypt.
+   */
   verifyPassword?: (plain: string, hash: string) => Promise<boolean>;
   hashPassword?: (plain: string) => Promise<string>;
-  /** Opaque, single-use strings for validation and reset links. */
+  /** Opaque, single-use strings for validation and reset links. Defaults to 128 random bits, hex. */
   generateToken?: () => string;
   /** Whether a new account may sign in immediately or has to confirm its address first. */
   verifyOnSignup?: boolean;
@@ -287,20 +315,17 @@ export interface AuthApiConfig {
    * it out to everybody who already had the first — a power that appears from an upgrade nobody read.
    */
   impersonationPermission?: string;
-  /** How long a borrowed session lives, in seconds. Default 900. It cannot be renewed — see `admin.impersonate`. */
-  impersonationTtl?: number;
   /** What a password has to be. Applied wherever one is set: signing up, resetting, changing. */
   password?: PasswordPolicy;
   /**
-   * May this attempt proceed?
+   * May this attempt proceed? Answered **in memory by default**, so no deployment is unthrottled by omission.
    *
-   * Nothing here counts anything: where the counter lives is a deployment decision (one process wants memory, a
-   * cluster wants Redis) and getting it wrong silently is worse than not having it. What the server does own is
-   * WHICH acts are worth throttling and what a refusal looks like — a 429 with `retryAfter`, before any password
-   * is checked, so a throttled attempt costs no hash.
+   * There used to be no default, on the reasoning that where the counter lives is a deployment decision. It is —
+   * but the consequence of leaving it out was that the ordinary deployment shipped an unmetered password oracle,
+   * because nobody configures an option they have not read about. The counting is per process; supply this to put
+   * one counter behind the whole fleet, which is what a cluster wants.
    *
-   * Without one, sign-in is unlimited. That is the right default for a library and the wrong one for a deployment
-   * on the internet: an unthrottled password endpoint is a credential-stuffing target.
+   * A refusal is a 429 with `retryAfter`, raised before any password is checked so it costs no hash.
    */
   rateLimit?: (attempt: ThrottleAttempt) => Promise<boolean | { allowed: boolean; retryAfter?: number }>;
   /** Where a failed delivery is reported. Defaults to `console.error`; it is never thrown — see `deliver`. */
@@ -315,16 +340,6 @@ export interface AuthApiConfig {
   onEvent?: (event: SecurityEvent) => void;
   /** What an authenticator app calls this deployment when somebody enrols. Defaults to the token issuer. */
   mfaIssuer?: string;
-  /** How long a sign-in code is good for, in seconds. Default 600 — long enough to find the email, short enough. */
-  passwordlessTtl?: number;
-  /**
-   * How long a link mailed out stays usable, in seconds.
-   *
-   * A password-reset link that works forever is one sitting in an inbox, a mail archive or a support ticket, and
-   * it is a password. An hour is the usual answer and the default here. Confirming an address is not a credential
-   * in the same way and gets a day, which survives somebody reading their mail tomorrow.
-   */
-  linkTtl?: { reset?: number; validation?: number; emailChange?: number };
   /** Set by `createAuth`, so `GET /auth/csrf` can mint one. Nothing here enforces the check — the routes do. */
   csrf?: Csrf;
 }
@@ -364,6 +379,25 @@ const asString = (value: unknown): string => asText(value).trim();
 
 const now = (): number => Math.floor(Date.now() / 1000);
 
+const MINUTE = 60;
+const HOUR = 3600;
+
+/**
+ * How long the things this server mails or hands out stay good for. Constants rather than configuration: each is a
+ * security answer with one sensible value, and an option here is a question every deployment has to work out an
+ * answer to before it can start.
+ */
+const LIFETIME = {
+  /** A code from an email. Long enough to go and find it, short enough that a stolen one is worthless. */
+  signInCode: 10 * MINUTE,
+  /** A reset link IS a password, and it sits in an inbox, a mail archive, a forwarded ticket. */
+  resetLink: HOUR,
+  /** Confirming an address is not a credential in the same way, and people read their mail tomorrow. */
+  confirmLink: 24 * HOUR,
+  /** A borrowed session — see `admin.impersonate`. Short, and it cannot renew. */
+  impersonation: 15 * MINUTE
+};
+
 const STATUSES: AccountStatus[] = ['active', 'inactive', 'blocked'];
 
 /** An account as it may be shown. Never the password hash, and never the credentials — not even to an admin. */
@@ -395,24 +429,19 @@ export const createAuthApi = ({
   config?: AuthApiConfig;
 }) => {
   const {
-    verifyPassword,
-    hashPassword,
-    generateToken,
+    verifyPassword = defaultVerifyPassword,
+    hashPassword = defaultHashPassword,
+    generateToken = defaultGenerateToken,
     verifyOnSignup = false,
     adminPermission = 'userManage',
     impersonationPermission,
-    impersonationTtl = 900,
     password: policy = {},
-    rateLimit,
+    rateLimit = createMemoryRateLimit(),
     onMailError,
     onEvent,
     mfaIssuer,
-    passwordlessTtl = 600,
     csrf
   } = config;
-
-  const HOUR = 3600;
-  const linkTtl = { reset: HOUR, validation: 24 * HOUR, emailChange: 24 * HOUR, ...config.linkTtl };
 
   /** Never awaited, never able to throw: a logging outage must not become an authentication outage. */
   const record = (event: Omit<SecurityEvent, 'at'>): void => {
@@ -472,11 +501,12 @@ export const createAuthApi = ({
    * Checked before the password is, so a throttled attempt costs no hash — which is the difference between a rate
    * limit and a slightly slower way to be brute-forced.
    */
-  const throttled = async (attempt: ThrottleAttempt): Promise<AuthOutcome | undefined> => {
-    if (!rateLimit) {
-      return undefined;
-    }
+  /** Whatever was counted against this key is forgiven: the attempt it was guarding against succeeded. */
+  const throttleSucceeded = (attempt: Omit<ThrottleAttempt, 'succeeded'>): void => {
+    void Promise.resolve(rateLimit({ ...attempt, succeeded: true })).catch(() => undefined);
+  };
 
+  const throttled = async (attempt: ThrottleAttempt): Promise<AuthOutcome | undefined> => {
     const verdict = await rateLimit(attempt);
     const allowed = typeof verdict === 'boolean' ? verdict : verdict.allowed;
     if (allowed) {
@@ -516,16 +546,16 @@ export const createAuthApi = ({
    * that answers 404 for no reason anyone can see. Declining a flow is now one act: do not implement it.
    */
   const capabilities = {
-    passwordLogin: !!adapters.findByUsername && !!verifyPassword,
+    passwordLogin: !!adapters.findByUsername,
     refresh: !!adapters.findByRefreshToken,
-    signup: !!adapters.createAccount && !!hashPassword,
-    passwordReset: !!adapters.findByEmail && !!adapters.setResetToken && !!hashPassword,
+    signup: !!adapters.createAccount,
+    passwordReset: !!adapters.findByEmail && !!adapters.setResetToken,
     emailVerification: !!adapters.findByValidationToken && !!adapters.setVerified,
     exchange: !!adapters.exchangeCredential,
     mfa: !!adapters.loadMfa && !!adapters.saveMfa,
     passwordless: !!adapters.saveOtp && !!adapters.findOtp && !!adapters.findByEmail && !!adapters.sendMail,
     profile: !!adapters.updateAccount,
-    passwordChange: !!adapters.findById && !!verifyPassword && !!hashPassword && !!adapters.setPassword,
+    passwordChange: !!adapters.findById && !!adapters.setPassword,
     accountDeletion: !!adapters.deleteAccount,
     sessionList: !!adapters.listSessions,
     administration: !!adapters.listAccounts && !!adapters.findById,
@@ -535,8 +565,7 @@ export const createAuthApi = ({
       !!adapters.findByPendingEmail &&
       !!adapters.clearPendingEmail &&
       !!adapters.updateAccount &&
-      !!adapters.sendMail &&
-      !!generateToken,
+      !!adapters.sendMail,
     /** Off unless the deployment named the capability it takes — see `impersonationPermission`. */
     impersonation: !!impersonationPermission && !!adapters.findById
   };
@@ -722,7 +751,7 @@ export const createAuthApi = ({
 
       // An account created through an identity provider carries no password. Never compare an empty hash: password
       // sign-in stays closed for it until its owner sets one through the reset flow.
-      if (!account.passwordHash || !(await verifyPassword?.(password, account.passwordHash))) {
+      if (!account.passwordHash || !(await verifyPassword(password, account.passwordHash))) {
         record({ type: 'login.failed', userId: account.id, carrier, detail: { username } });
 
         return refuse(401, 'Invalid credentials');
@@ -744,6 +773,7 @@ export const createAuthApi = ({
       }
 
       const session = await issue(account.id, { client: clientOf(carrier) });
+      throttleSucceeded({ action: 'login', key: username, carrier });
       record({ type: 'login', userId: account.id, carrier });
 
       return { ok: true, body: await grantBody(account, session), session };
@@ -796,6 +826,7 @@ export const createAuthApi = ({
       }
 
       const session = await issue(userId, { client: clientOf(carrier) });
+      throttleSucceeded({ action: 'mfa', key: String(userId), carrier });
       record({ type: 'login', userId, carrier, detail: { recoveryCode: usedRecovery } });
 
       return {
@@ -815,7 +846,7 @@ export const createAuthApi = ({
      */
     passwordless: {
       request: async (email: string, carrier?: CredentialCarrier): Promise<AuthOutcome> => {
-        if (!capabilities.passwordless || !generateToken) {
+        if (!capabilities.passwordless) {
           return NOT_OFFERED;
         }
 
@@ -831,12 +862,18 @@ export const createAuthApi = ({
 
         const account = await adapters.findByEmail?.(address);
         if (account?.active) {
-          const code = generateToken();
+          /**
+           * Six characters somebody reads out of an email and types, not a link token — `generateToken` mints 128
+           * random bits, which is right for something clicked and hostile for something retyped. Two different jobs
+           * that were sharing one function, and the deployment that fixed the code for typing quietly weakened
+           * every reset link it mailed.
+           */
+          const code = randomCode(6);
           await adapters.saveOtp?.({
             purpose: 'signin',
             identifier: address,
             codeHash: digestRecoveryCode(code),
-            expiresAt: now() + passwordlessTtl,
+            expiresAt: now() + LIFETIME.signInCode,
             userId: account.id
           });
           await deliver({
@@ -895,6 +932,7 @@ export const createAuthApi = ({
         }
 
         const session = await issue(account.id, { client: clientOf(carrier) });
+        throttleSucceeded({ action: 'passwordless', key: address, carrier });
         record({ type: 'login', userId: account.id, carrier, detail: { method: 'passwordless' } });
 
         return { ok: true, body: await grantBody(account, session), session };
@@ -1005,7 +1043,7 @@ export const createAuthApi = ({
 
         const account = await adapters.findById?.(actor.id);
         if (account?.passwordHash) {
-          if (!password || !(await verifyPassword?.(password, account.passwordHash))) {
+          if (!password || !(await verifyPassword(password, account.passwordHash))) {
             return refuse(401, 'Invalid credentials');
           }
         }
@@ -1119,7 +1157,7 @@ export const createAuthApi = ({
       }
 
       // Both are guaranteed by `capabilities.signup`; asserting it here keeps that guarantee where it is decided.
-      if (!adapters.createAccount || !hashPassword) {
+      if (!adapters.createAccount) {
         return NOT_OFFERED;
       }
 
@@ -1129,8 +1167,8 @@ export const createAuthApi = ({
         passwordHash: await hashPassword(password)
       });
 
-      if (!verifyOnSignup && capabilities.emailVerification && generateToken && adapters.setValidationToken) {
-        const validationToken = mintLink(generateToken(), linkTtl.validation);
+      if (!verifyOnSignup && capabilities.emailVerification && adapters.setValidationToken) {
+        const validationToken = mintLink(generateToken(), LIFETIME.confirmLink);
         await adapters.setValidationToken(account.id, validationToken);
         await deliver({ to: email, template: 'validation', data: { username, validationToken } });
       }
@@ -1142,7 +1180,7 @@ export const createAuthApi = ({
 
     /** Answers the same either way: whether an address has an account here is not something a stranger may probe. */
     forgotPassword: async (email: string): Promise<AuthOutcome> => {
-      if (!capabilities.passwordReset || !generateToken) {
+      if (!capabilities.passwordReset) {
         return NOT_OFFERED;
       }
 
@@ -1154,7 +1192,7 @@ export const createAuthApi = ({
 
       const account = await adapters.findByEmail?.(asString(email));
       if (account) {
-        const resetToken = mintLink(generateToken(), linkTtl.reset);
+        const resetToken = mintLink(generateToken(), LIFETIME.resetLink);
         await adapters.setResetToken?.(account.id, resetToken);
         await deliver({
           to: account.email,
@@ -1167,7 +1205,7 @@ export const createAuthApi = ({
     },
 
     resetPassword: async (token: string, password: string): Promise<AuthOutcome> => {
-      if (!capabilities.passwordReset || !hashPassword) {
+      if (!capabilities.passwordReset) {
         return NOT_OFFERED;
       }
 
@@ -1219,13 +1257,13 @@ export const createAuthApi = ({
     },
 
     resendVerification: async (email: string): Promise<AuthOutcome> => {
-      if (!capabilities.emailVerification || !generateToken) {
+      if (!capabilities.emailVerification) {
         return NOT_OFFERED;
       }
 
       const account = await adapters.findByEmail?.(asString(email));
       if (account && !account.verified) {
-        const validationToken = mintLink(generateToken(), linkTtl.validation);
+        const validationToken = mintLink(generateToken(), LIFETIME.confirmLink);
         await adapters.setValidationToken?.(account.id, validationToken);
         await deliver({
           to: account.email,
@@ -1292,8 +1330,8 @@ export const createAuthApi = ({
         ...(email && !parking ? { email } : {})
       });
 
-      if (parking && generateToken && adapters.setPendingEmail) {
-        const confirmationToken = mintLink(generateToken(), linkTtl.emailChange);
+      if (parking && adapters.setPendingEmail) {
+        const confirmationToken = mintLink(generateToken(), LIFETIME.confirmLink);
         await adapters.setPendingEmail(actor.id, email, confirmationToken);
         await deliver({
           to: email,
@@ -1312,8 +1350,8 @@ export const createAuthApi = ({
         };
       }
 
-      if (changingEmail && capabilities.emailVerification && generateToken && adapters.setValidationToken) {
-        const validationToken = mintLink(generateToken(), linkTtl.validation);
+      if (changingEmail && capabilities.emailVerification && adapters.setValidationToken) {
+        const validationToken = mintLink(generateToken(), LIFETIME.confirmLink);
         await adapters.setValidationToken(actor.id, validationToken);
         await deliver({
           to: account.email,
@@ -1393,7 +1431,7 @@ export const createAuthApi = ({
       currentPassword: string,
       newPassword: string
     ): Promise<AuthOutcome> => {
-      if (!capabilities.passwordChange || !adapters.findById || !hashPassword || !verifyPassword) {
+      if (!capabilities.passwordChange || !adapters.findById) {
         return NOT_OFFERED;
       }
 
@@ -1422,6 +1460,7 @@ export const createAuthApi = ({
 
       await adapters.setPassword?.(actor.id, await hashPassword(newPassword));
       await adapters.revokeOtherSessions?.(actor.id, actor.token);
+      throttleSucceeded({ action: 'changePassword', key: String(actor.id) });
       record({ type: 'password.changed', userId: actor.id });
 
       return { ok: true, body: { success: true, message: 'Password changed. Other sessions were signed out.' } };
@@ -1445,7 +1484,7 @@ export const createAuthApi = ({
 
       const account = await adapters.findById?.(actor.id);
       if (account?.passwordHash) {
-        if (!password || !(await verifyPassword?.(password, account.passwordHash))) {
+        if (!password || !(await verifyPassword(password, account.passwordHash))) {
           return refuse(401, 'Invalid credentials');
         }
       }
@@ -1664,7 +1703,7 @@ export const createAuthApi = ({
         const session = await issue(
           userId,
           { client: clientOf(carrier) },
-          { actingAs: actor.id, ttlSeconds: impersonationTtl, renewable: false }
+          { actingAs: actor.id, ttlSeconds: LIFETIME.impersonation, renewable: false }
         );
 
         record({ type: 'admin.impersonated', userId, actorId: actor.id });

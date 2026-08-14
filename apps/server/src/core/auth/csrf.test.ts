@@ -128,15 +128,6 @@ describe('what a sign-in has to present', () => {
     expect(signIn({ headers: { origin: 'https://evil.test', authorization: 'Bearer abc' } })).toBe(false);
   });
 
-  /** The stricter form: no reliance on either header, at the cost of a round trip for every client. */
-  it('asks everyone when the deployment says so', () => {
-    const strict = createCsrf({ secret: 'test-secret', cookie: { name: 'sess' }, protectSignIn: true });
-
-    expect(strict.required(carrier(), 'signIn')).toBe(true);
-    expect(strict.required(carrier({ method: 'GET' }), 'signIn')).toBe(false);
-    expect(strict.required(carrier({ headers: { authorization: 'Bearer abc' } }), 'signIn')).toBe(false);
-  });
-
   /**
    * `/auth/exchange` acts for a space and is already refused unless the origin is one that space declared — which
    * is narrower than any list here. Asking again would refuse every legitimate embed, since a space is embedded on
@@ -144,9 +135,6 @@ describe('what a sign-in has to present', () => {
    */
   it('leaves a flow that checks the origin itself alone', () => {
     expect(csrf.required(carrier({ headers: { origin: 'https://a-customer.test' } }), 'delegated')).toBe(false);
-
-    const strict = createCsrf({ secret: 'test-secret', cookie: { name: 'sess' }, protectSignIn: true });
-    expect(strict.required(carrier(), 'delegated')).toBe(true);
   });
 });
 
@@ -212,13 +200,12 @@ describe('verifying', () => {
   });
 
   it('refuses one that has aged out', () => {
-    const short = createCsrf({ secret: 'test-secret', ttlSeconds: 1, cookie: { name: 'sess' } });
-    const token = short.issue('session-a');
+    const token = csrf.issue('session-a');
 
     vi.useFakeTimers();
-    vi.setSystemTime(Date.now() + 5_000);
+    vi.setSystemTime(Date.now() + 13 * 3600 * 1000);
 
-    expect(short.verify(carrier({ headers: { 'x-csrf-token': token } }), 'session-a')).toEqual({
+    expect(csrf.verify(carrier({ headers: { 'x-csrf-token': token } }), 'session-a')).toEqual({
       ok: false,
       reason: 'expired'
     });

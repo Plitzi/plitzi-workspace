@@ -11,7 +11,6 @@ import type { AccountAdapters, AuthApiConfig } from './api';
 import type { AuthOutcome } from './api';
 import type { AuthPolicy, Requirement } from './authorize';
 import type { CredentialCarrier } from './credentials';
-import type { CsrfConfig } from './csrf';
 import type { IdentityAdapters, IdentityConfig } from './identity';
 import type { CookieSink } from './session';
 import type { TokenConfig } from './tokens';
@@ -54,15 +53,14 @@ export interface AuthConfig {
   /** Extra rules, applied BEFORE the derived `/auth` ones so a deployment can always widen its own surface. */
   rules?: AuthPolicy['rules'];
   /**
-   * Cross-site request forgery protection for cookie-authenticated writes.
+   * Cross-site request forgery. **On, and it configures itself** from what is already here: the token secret signs
+   * it, the cookie naming above scopes it, and `identity.platformOrigins` says which sites are this deployment's.
    *
-   * **On by default**, and it should be: the session cookie defaults to `SameSite=None` off localhost — a Plitzi
-   * space is embedded in an iframe on somebody else's domain — which is precisely the setting that lets another
-   * site cause an authenticated request. Bearer clients are never asked for a token and are unaffected.
-   *
-   * `false` turns it off, for a deployment that has its own. The secret defaults to the token secret.
+   * `false` turns it off, for a deployment that has its own. There is nothing else to say about it, deliberately —
+   * every dial this used to have was one more thing to understand before you could start, and none of them had a
+   * second answer worth having.
    */
-  csrf?: (Omit<CsrfConfig, 'secret'> & { secret?: string }) | false;
+  csrf?: false;
 }
 
 /**
@@ -97,19 +95,18 @@ export const createAuth = (config: AuthConfig) => {
     config: config.identity
   });
 
+  /**
+   * The hosts this deployment already declared are the ones its own pages are served from, which is exactly the
+   * question the sign-in check asks. Taken from there rather than asked for again: two lists that have to agree
+   * are two lists that will not.
+   */
   const csrf =
     config.csrf === false
       ? undefined
       : createCsrf({
           secret: config.tokens.secret,
           cookie: config.cookie,
-          /**
-           * The hosts this deployment already declared are the ones its own pages are served from, which is
-           * exactly the question the sign-in check asks. Taken from there rather than asked for again: two lists
-           * that have to agree are two lists that will not.
-           */
-          allowedOrigins: config.identity?.platformOrigins,
-          ...config.csrf
+          allowedOrigins: config.identity?.platformOrigins
         });
 
   const api = createAuthApi({

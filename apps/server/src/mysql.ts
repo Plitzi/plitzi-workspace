@@ -11,7 +11,7 @@
  *  import { createMysqlStore } from '@plitzi/sdk-server/mysql';
  *
  *  const store = await createMysqlStore({ url: process.env.DATABASE_URL });
- *  const auth = createAuth({ tokens: { secret, issuer }, adapters: store.authAdapters, api: store.passwords });
+ *  const auth = createAuth({ tokens: { secret, issuer }, adapters: store.authAdapters });
  *
  *  createServer({ adapters: space, auth }).listen(3000);
  *  ```
@@ -23,7 +23,7 @@
  *  its existing schema onto the adapters has to be able to answer. */
 
 export { createMysqlStore, mysqlSchemaStatements } from './modules/mysql';
-export { SCHEMA_VERSION, TABLE_NAMES, generateToken, hashPassword, tableNames, verifyPassword } from './modules/mysql';
+export { SCHEMA_VERSION, TABLE_NAMES, tableNames } from './modules/mysql';
 
 export type {
   AccountSeed,

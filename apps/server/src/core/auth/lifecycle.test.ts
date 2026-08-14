@@ -548,7 +548,7 @@ describe('throttling', () => {
         findById: () => Promise.resolve(ada)
       },
       attempt => {
-        seen.push(attempt.action);
+        seen.push(attempt.succeeded ? `${attempt.action}:ok` : attempt.action);
 
         return Promise.resolve(true);
       }
@@ -560,7 +560,47 @@ describe('throttling', () => {
     await api.resetPassword('tok', 'longenoughpw');
     await api.changePassword(actorFor(ada), 'pw', 'longenoughpw');
 
-    expect(seen).toEqual(['login', 'signup', 'forgotPassword', 'resetPassword', 'changePassword']);
+    expect(seen.filter(action => !action.endsWith(':ok'))).toEqual([
+      'login',
+      'signup',
+      'forgotPassword',
+      'resetPassword',
+      'changePassword'
+    ]);
+  });
+
+  /**
+   * The check runs before the password is examined — that is what makes a throttled attempt cost no hash — so the
+   * counter cannot tell ten failures from ten sign-ins unless success is reported back. Without it an app that
+   * signs the same account in repeatedly locks it out by succeeding.
+   */
+  it('reports a success, so the counter is not spent by working', async () => {
+    const seen: { action: string; succeeded?: boolean }[] = [];
+    const api = limited({ findByUsername: () => Promise.resolve(ada) }, attempt => {
+      seen.push({ action: attempt.action, succeeded: attempt.succeeded });
+
+      return Promise.resolve(true);
+    });
+
+    await api.login({ username: 'ada', password: 'pw' });
+
+    expect(seen).toEqual([
+      { action: 'login', succeeded: undefined },
+      { action: 'login', succeeded: true }
+    ]);
+  });
+
+  it('says nothing back when the attempt failed', async () => {
+    const seen: (boolean | undefined)[] = [];
+    const api = limited({ findByUsername: () => Promise.resolve(ada) }, attempt => {
+      seen.push(attempt.succeeded);
+
+      return Promise.resolve(true);
+    });
+
+    await api.login({ username: 'ada', password: 'wrong' });
+
+    expect(seen).toEqual([undefined]);
   });
 });
 
@@ -1334,11 +1374,11 @@ describe('impersonation', () => {
 
   /** Fifteen minutes and no way to extend it. A borrowed session that renews is a second key to the account. */
   it('cannot be renewed, and expires on its own', async () => {
-    const { api } = impersonating({}, { impersonationTtl: 60 });
+    const { api } = impersonating();
     const outcome = await api.admin.impersonate(admin, bob.id);
 
     expect(body(outcome).refresh_token).toBeUndefined();
-    expect(body(outcome).expire_in).toBeLessThanOrEqual(60);
+    expect(body(outcome).expire_in).toBeLessThanOrEqual(15 * 60);
   });
 
   /**
@@ -1466,14 +1506,6 @@ describe('links that expire', () => {
 
     vi.useRealTimers();
     expect(await api.validateAccount(link)).toMatchObject({ ok: true });
-  });
-
-  it('takes the deadline from the deployment where it names one', async () => {
-    const { api, sent } = mailing({ linkTtl: { reset: 60 } });
-    await api.forgotPassword(ada.email);
-
-    travel(120);
-    expect(await api.resetPassword(sent[0].data.resetToken, 'n3wPassw0rd')).toMatchObject({ ok: false });
   });
 
   /** The links already in people's inboxes when a deployment upgrades. No `~`, no deadline, still good. */

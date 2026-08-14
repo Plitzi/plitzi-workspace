@@ -26,7 +26,6 @@ const store = await createMysqlStore({
 const auth = createAuth({
   tokens: { secret, issuer },
   adapters: store.authAdapters,
-  api: store.passwords
 });
 
 createServer({ adapters: space, auth }).listen(PORT);
