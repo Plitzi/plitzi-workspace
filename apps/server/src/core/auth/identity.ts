@@ -14,6 +14,12 @@ export interface Actor {
   token: string;
   /** Unix seconds the presented credential dies at, off the stored row rather than the claim. */
   expiresAt: number;
+  /**
+   * The administrator behind this session, when somebody is acting AS this account — see `admin.impersonate`. Off
+   * the credential's `act` claim, so it survives into anything that reads an actor: an audit line that says who
+   * really did it, a UI banner, a flow that declines to run while borrowed.
+   */
+  impersonatedBy?: number;
 }
 
 /** A space token, resolved. `userId` is set for `agent` grants and names the member who consented. */
@@ -125,7 +131,11 @@ export const createIdentity = ({
       return { ok: false, reason: 'expired' };
     }
 
-    return { ok: true, actor };
+    // Off the claim rather than the row: who is borrowing this account is a property of the credential presented,
+    // and the account store has no way to know — the same account may be signed into by its owner at the same time.
+    const actingId = Number(verified.payload.act?.sub);
+
+    return { ok: true, actor: Number.isInteger(actingId) ? { ...actor, impersonatedBy: actingId } : actor };
   };
 
   // Tries every place a user token can ride. `Authorization: Bearer` carries a space token on some transports, so a

@@ -94,7 +94,7 @@ export type {
   SpaceAccessCheck
 } from './core/auth/authorize';
 export type { CredentialCarrier } from './core/auth/credentials';
-export type { Csrf, CsrfCarrier, CsrfConfig, CsrfFailure, CsrfResult } from './core/auth/csrf';
+export type { Csrf, CsrfCarrier, CsrfConfig, CsrfFailure, CsrfResult, CsrfSubject } from './core/auth/csrf';
 export type {
   Actor,
   ActorResult,
@@ -138,6 +138,7 @@ export type {
   TokenConfig,
   TokenScope,
   Tokens,
+  UserTokenOptions,
   UserTokenPayload,
   VerifyResult,
   WidgetTokenPayload

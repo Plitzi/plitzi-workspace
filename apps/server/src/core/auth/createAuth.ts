@@ -100,7 +100,17 @@ export const createAuth = (config: AuthConfig) => {
   const csrf =
     config.csrf === false
       ? undefined
-      : createCsrf({ secret: config.tokens.secret, cookie: config.cookie, ...config.csrf });
+      : createCsrf({
+          secret: config.tokens.secret,
+          cookie: config.cookie,
+          /**
+           * The hosts this deployment already declared are the ones its own pages are served from, which is
+           * exactly the question the sign-in check asks. Taken from there rather than asked for again: two lists
+           * that have to agree are two lists that will not.
+           */
+          allowedOrigins: config.identity?.platformOrigins,
+          ...config.csrf
+        });
 
   const api = createAuthApi({
     tokens,

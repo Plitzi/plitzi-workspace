@@ -68,6 +68,12 @@ const auth = createAuth({
   },
   api: {
     ...store.passwords,
+    /**
+     * Support acting as a customer, and the switch that offers it at all: with no permission named there is no
+     * `/auth/admin/impersonate`. The session it hands out carries `act` (RFC 8693) so every request made with it
+     * can be told from one the account holder made, lives fifteen minutes, and cannot renew.
+     */
+    impersonationPermission: 'impersonate',
     // Every act worth recording, in one feed: an audit trail, a webhook and an alert are the same thing.
     onEvent: event => console.log(`[example] ${event.type}`, { userId: event.userId, actorId: event.actorId })
   }

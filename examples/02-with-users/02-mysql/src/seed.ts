@@ -29,10 +29,13 @@ export const seed = async (store: MysqlStore): Promise<void> => {
   /**
    * `userManage` is the capability the `/auth/admin/*` flows check for. The name is this deployment's — the server
    * takes it from `createAuth({ api: { adminPermission } })` and assumes nothing about what you call yours.
+   *
+   * `impersonate` is deliberately a SECOND capability rather than part of the first: being able to suspend an
+   * account and being able to become one are different grants, and this role happens to hold both.
    */
   await admin.ensureRole('admin', {
     description: 'May administer accounts',
-    permissions: ['spaceRead', 'spaceUpdate', 'userManage']
+    permissions: ['spaceRead', 'spaceUpdate', 'userManage', 'impersonate']
   });
 
   const ada = await admin.ensureAccount({

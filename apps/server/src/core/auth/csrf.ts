@@ -1,26 +1,32 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
-import { appendCookies, sessionCookieParams } from './session';
+import { appendCookies, registrableDomain, sessionCookieParams } from './session';
 
 import type { CookieSink } from './session';
 import type { SSRAuthCookie } from '@plitzi/sdk-shared';
 
 /**
- * Cross-site request forgery, for the requests that are authenticated by a COOKIE.
+ * Cross-site request forgery: a page on another site causing a request here that the visitor did not mean to make.
  *
- * A cookie is attached by the browser to every request to its origin, including ones another site caused. That is
- * the whole attack, and the reason it is not hypothetical here: `sessionCookieParams` defaults `SameSite` to
- * `None` off localhost, because a Plitzi space is embedded in an iframe on somebody else's domain. `None` means
- * the browser sends the session cookie on cross-site requests, which is exactly what `Lax` exists to prevent.
+ * There are **two** attacks under that name, and they need different answers — conflating them is how a server
+ * ends up either refusing legitimate sign-ins or leaving login CSRF wide open.
  *
- * A request carrying `Authorization: Bearer` is NOT at risk and is never asked for a token: a cross-origin page
- * cannot set that header without a preflight the server would have to allow. Requiring one there would break every
- * API client to protect nobody.
+ * 1. **An action taken as somebody.** A cookie is attached by the browser to every request to its origin,
+ *    including ones another site caused. Not hypothetical here: `sessionCookieParams` defaults `SameSite` to
+ *    `None` off localhost, because a Plitzi space is embedded in an iframe on somebody else's domain — which is
+ *    exactly what `Lax` exists to prevent. Answered by a token, demanded whenever a session cookie is present.
+ * 2. **Login CSRF.** Another site signs the visitor into an account IT controls, so what they do next is recorded
+ *    against it. There is no cookie yet to look for, so the first answer does not apply at all. Answered by
+ *    `foreign` below: where the request came from, which is what separates it from a legitimate sign-in.
  *
- * The design is the signed double-submit cookie. The token is an HMAC over a nonce **and the session it belongs
- * to**, handed to the page in a readable cookie and echoed back in a header. An attacker's page cannot read the
- * cookie, so it cannot produce the header; and unlike plain double-submit, somebody who can merely *write* a
- * cookie — a sub-domain they took over — still cannot forge one, because they do not have the secret.
+ * A request carrying `Authorization: Bearer` is at risk from neither and is never asked for a token: a
+ * cross-origin page cannot set that header without a preflight the server would have to allow. Requiring one
+ * there would break every API client to protect nobody.
+ *
+ * The token is a signed double-submit cookie: an HMAC over a nonce **and the session it belongs to**, handed to
+ * the page in a readable cookie and echoed back in a header. An attacker's page cannot read the cookie, so it
+ * cannot produce the header; and unlike plain double-submit, somebody who can merely *write* a cookie — a
+ * sub-domain they took over — still cannot forge one, because they do not have the secret.
  */
 
 const VERSION = 'v1';
@@ -42,18 +48,36 @@ export interface CsrfConfig {
   /** Naming and scope for the cookie, so it lands beside the session one. */
   cookie?: SSRAuthCookie;
   /**
-   * Also demand a token on requests that carry NO session — signing in, above all.
+   * Origins that count as this deployment's own, beyond the request's own site.
    *
-   * Off by default, and the reason is what CSRF actually is: the attack is that the browser attaches the victim's
-   * credentials to a request another site caused. A request with no session cookie carries no credentials, so
-   * there is nothing to forge, and demanding a token there costs every client a round trip before it can sign in.
+   * What it decides is which cross-site page may hand out a session — see `foreign` below. `createAuth` fills it
+   * from `identity.platformOrigins`, so a deployment that already declared its hosts has said this too.
+   */
+  allowedOrigins?: string[] | ((origin: string) => boolean);
+  /**
+   * Demand a token on the sign-in flows **unconditionally**, rather than only from a site this deployment does
+   * not recognise.
    *
-   * What it *does* buy is protection from login CSRF — another site signing a visitor into an account it controls,
-   * so that what they do next is recorded against it. A real attack, a lesser one, and one whose cost lands on
-   * every client. So it is a deployment's choice rather than a default.
+   * The default already covers login CSRF, and covers it without costing anybody a round trip: a request from
+   * another site is refused because it cannot produce a token, and a first-party page never has to. This is the
+   * stricter form, for a deployment that would rather not depend on `Origin` and `Sec-Fetch-Site` at all — the
+   * price is that **every** client, browser or not, must fetch a token before it can sign in.
    */
   protectSignIn?: boolean;
 }
+
+/**
+ * What kind of flow a request is reaching, which is what decides when a token is demanded.
+ *
+ * - **`write`** — an action taken as somebody. Guarded whenever a cookie could have authenticated it.
+ * - **`signIn`** — hands out a session. There is no cookie to protect yet, and the attack is different: another
+ *   site signing a visitor into an account IT controls, so that what they do next is recorded against it. Guarded
+ *   by where the request came from, since that is what separates the attack from every legitimate sign-in.
+ * - **`delegated`** — also hands out a session, but the flow checks the caller's origin itself against something
+ *   narrower than any list here: `/auth/exchange` acts for a space and is refused unless the origin is one that
+ *   space declared. Applying the check below on top would refuse every legitimate embed.
+ */
+export type CsrfSubject = 'write' | 'signIn' | 'delegated';
 
 export type CsrfFailure = 'missing' | 'malformed' | 'expired' | 'mismatch';
 
@@ -109,6 +133,16 @@ const readCookieHeader = (carrier: CsrfCarrier, name: string): string | undefine
   return undefined;
 };
 
+/** The host out of an `Origin`, which is a serialized origin (`https://acme.test:8443`) and never a bare host. */
+const originHost = (origin: string): string | undefined => {
+  try {
+    return new URL(origin).hostname;
+  } catch {
+    // `null` — a sandboxed iframe, a `data:` document. Not a host, and deliberately not one anything may allow.
+    return undefined;
+  }
+};
+
 export const createCsrf = (config: CsrfConfig) => {
   const {
     secret,
@@ -116,8 +150,57 @@ export const createCsrf = (config: CsrfConfig) => {
     fieldName = '_csrf',
     ttlSeconds = 43_200,
     cookie,
+    allowedOrigins = [],
     protectSignIn = false
   } = config;
+
+  const permitted = (origin: string): boolean =>
+    typeof allowedOrigins === 'function' ? allowedOrigins(origin) : allowedOrigins.includes(origin);
+
+  /**
+   * Did this request come from a site this deployment does not recognise?
+   *
+   * This is what protects signing in, where there is no session to bind a token to and no cookie to look for. It
+   * rests on two headers a page CANNOT set — the browser attaches both, and script may not override either:
+   *
+   * - **`Sec-Fetch-Site`** is the browser's own account of where the request came from, and is believed first.
+   *   Anything but `cross-site` (`same-origin`, `same-site`, or `none` for a typed URL) is this deployment's own.
+   * - **`Origin`** is the fallback, sent by every browser on an unsafe request for at least a decade. Same site —
+   *   by the registrable domain, which is the same rule that decides the session cookie's own scope, so "same
+   *   site" here means precisely "the browser would send our cookie" — or an origin the deployment allowed.
+   *
+   * **Neither header means this is not a browser**, and a client that is not a browser cannot be made to forge
+   * anything: there is no victim's session sitting in it. That is what keeps every API client, mobile app and
+   * script signing in with nothing extra to send.
+   */
+  const foreign = (carrier: CsrfCarrier): boolean => {
+    const site = header(carrier, 'sec-fetch-site');
+    const origin = header(carrier, 'origin');
+
+    if (site !== undefined) {
+      // The browser has answered the question. `same-origin`, `same-site` and `none` (a typed URL, a bookmark)
+      // are all this deployment's own; a `cross-site` one is foreign unless its origin was explicitly allowed.
+      return site === 'cross-site' && !(origin !== undefined && permitted(origin));
+    }
+
+    if (!origin) {
+      return false;
+    }
+
+    const host = originHost(origin);
+    // An opaque origin — a sandboxed iframe, a `data:` document. Nothing can vouch for it.
+    if (host === undefined) {
+      return true;
+    }
+
+    if (host === carrier.hostname || permitted(origin)) {
+      return false;
+    }
+
+    const domain = registrableDomain(carrier.hostname);
+
+    return domain === undefined || registrableDomain(host) !== domain;
+  };
 
   const nameFor = (hostname: string): string => {
     if (typeof config.cookieName === 'function') {
@@ -210,22 +293,32 @@ export const createCsrf = (config: CsrfConfig) => {
     /**
      * Does this request need a token at all?
      *
-     * Three noes, and each is a request that cannot be forged into:
+     * Two requests can never be forged into, whatever they are reaching, and neither is ever asked:
      *
      * - a **safe method**, which changes nothing;
      * - one presenting **`Authorization: Bearer`** — a cross-origin page cannot set that header without a
      *   preflight this server would have to allow, so requiring a token would break every API client to protect
-     *   nobody;
-     * - one carrying **no session cookie**, which carries no credentials for a browser to attach. Signing in is
-     *   the case that matters here, and `protectSignIn` is how a deployment opts into covering it too.
+     *   nobody.
+     *
+     * After that it depends on what the flow does, which is what `subject` says — an action taken as somebody is
+     * protected by the session cookie's presence, a sign-in by where the request came from. See {@link CsrfSubject}.
      */
-    required: (carrier: CsrfCarrier): boolean => {
+    required: (carrier: CsrfCarrier, subject: CsrfSubject = 'write'): boolean => {
       if (SAFE_METHODS.has((carrier.method ?? 'GET').toUpperCase()) || header(carrier, 'authorization')) {
         return false;
       }
 
-      if (protectSignIn) {
-        return true;
+      if (subject === 'delegated') {
+        return protectSignIn;
+      }
+
+      if (subject === 'signIn') {
+        /**
+         * Not "is there a session cookie". A sign-in does not act on the session the request carries — it
+         * REPLACES it — so a browser still holding a stale one was being refused the very request that fixes
+         * that. What matters is whether another site caused this.
+         */
+        return protectSignIn || foreign(carrier);
       }
 
       return readCookieHeader(carrier, sessionCookieParams(carrier.hostname, cookie).name) !== undefined;

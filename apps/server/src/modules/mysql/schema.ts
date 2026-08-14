@@ -245,6 +245,26 @@ export const dropColumn = (table: string, column: string): string[] =>
 export const addIndex = (table: string, index: string, definition: string): string[] =>
   conditional(`(${indexExists(table, index)}) = 0`, `ALTER TABLE \`${table}\` ADD INDEX \`${index}\` ${definition}`);
 
+/** The bare name, for the `information_schema` lookups above — they compare against a string, not an identifier. */
+const unquote = (name: string): string => name.replace(/`/g, '');
+
+/**
+ * An address the account asked to move to, and the token that will confirm it.
+ *
+ * Parked in two columns rather than applied, so the account keeps a working sign-in identifier until the new one
+ * answers a confirmation — see `confirmEmailChange`. Written with the idempotent helpers, being a step after the
+ * first: this is the migration path every later change to these tables takes.
+ */
+const step3 = (t: Tables): string[] => {
+  const account = unquote(t.account);
+
+  return [
+    ...addColumn(account, 'pending_email', 'VARCHAR(191) NULL AFTER email'),
+    ...addColumn(account, 'pending_email_token', 'VARCHAR(191) NULL AFTER pending_email'),
+    ...addIndex(account, 'account_pending_email_token', '(pending_email_token)')
+  ];
+};
+
 interface Step {
   version: number;
   statements: (tables: Tables) => string[];
@@ -253,7 +273,8 @@ interface Step {
 /** Append only. A released version is never edited — the deployments that already ran it would never see the change. */
 const STEPS: Step[] = [
   { version: 1, statements: step1 },
-  { version: 2, statements: step2 }
+  { version: 2, statements: step2 },
+  { version: 3, statements: step3 }
 ];
 
 export const SCHEMA_VERSION = STEPS[STEPS.length - 1].version;

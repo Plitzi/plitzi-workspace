@@ -83,6 +83,7 @@ export interface SecurityEvent {
     | 'password.changed'
     | 'password.reset'
     | 'profile.changed'
+    | 'email.changed'
     | 'account.deleted'
     | 'session.revoked'
     | 'mfa.enabled'
@@ -90,7 +91,8 @@ export interface SecurityEvent {
     | 'mfa.failed'
     | 'admin.status-changed'
     | 'admin.roles-changed'
-    | 'admin.account-deleted';
+    | 'admin.account-deleted'
+    | 'admin.impersonated';
   /** Who it happened to. Absent when the attempt named nobody that exists. */
   userId?: number;
   /** Who did it, when that is somebody else — an administrator acting on an account. */
@@ -189,6 +191,19 @@ export interface AccountAdapters {
   setValidationToken?: (userId: number, token: string) => Promise<void>;
   findByValidationToken?: (token: string) => Promise<AccountRecord | undefined>;
   /**
+   * Park an address the account asked to move to, with the token that will confirm it. It is NOT the account's
+   * address yet, and nothing may sign in with it — the whole point is that the old one keeps working until the new
+   * one is proven, so a typo is a nuisance instead of a lockout.
+   *
+   * Supplying these three (with `sendMail`) is what turns an email change into a confirmed one. A deployment that
+   * leaves them out changes the address on the spot, which is the simpler thing and a legitimate choice.
+   */
+  setPendingEmail?: (userId: number, email: string, token: string) => Promise<void>;
+  /** The account waiting on this confirmation, and the address it is waiting for. */
+  findByPendingEmail?: (token: string) => Promise<{ account: AccountRecord; email: string } | undefined>;
+  /** Forget the parked address — it was confirmed, superseded, or the account was closed. */
+  clearPendingEmail?: (userId: number) => Promise<void>;
+  /**
    * Confirm or un-confirm the address. Both directions from one adapter, because changing an email has to be able
    * to take verification away — a `markVerified` that only ever set it made that impossible to express.
    */
@@ -263,6 +278,17 @@ export interface AuthApiConfig {
    * because what a deployment calls its permissions is its own vocabulary. Default `userManage`.
    */
   adminPermission?: string;
+  /**
+   * The capability that lets somebody obtain a session AS another account, and the switch that offers the flow at
+   * all: **absent, there is no impersonation** and `/auth/admin/impersonate` answers 404.
+   *
+   * Deliberately its own permission rather than part of `adminPermission`. Support staff who can suspend an account
+   * and support staff who can become one are not the same grant, and defaulting the second to the first would hand
+   * it out to everybody who already had the first — a power that appears from an upgrade nobody read.
+   */
+  impersonationPermission?: string;
+  /** How long a borrowed session lives, in seconds. Default 900. It cannot be renewed — see `admin.impersonate`. */
+  impersonationTtl?: number;
   /** What a password has to be. Applied wherever one is set: signing up, resetting, changing. */
   password?: PasswordPolicy;
   /**
@@ -366,6 +392,8 @@ export const createAuthApi = ({
     generateToken,
     verifyOnSignup = false,
     adminPermission = 'userManage',
+    impersonationPermission,
+    impersonationTtl = 900,
     password: policy = {},
     rateLimit,
     onMailError,
@@ -469,7 +497,17 @@ export const createAuthApi = ({
     passwordChange: !!adapters.findById && !!verifyPassword && !!hashPassword && !!adapters.setPassword,
     accountDeletion: !!adapters.deleteAccount,
     sessionList: !!adapters.listSessions,
-    administration: !!adapters.listAccounts && !!adapters.findById
+    administration: !!adapters.listAccounts && !!adapters.findById,
+    /** Changing an address by confirming it, rather than on the spot. Needs somewhere to park it and a way to write. */
+    emailChange:
+      !!adapters.setPendingEmail &&
+      !!adapters.findByPendingEmail &&
+      !!adapters.clearPendingEmail &&
+      !!adapters.updateAccount &&
+      !!adapters.sendMail &&
+      !!generateToken,
+    /** Off unless the deployment named the capability it takes — see `impersonationPermission`. */
+    impersonation: !!impersonationPermission && !!adapters.findById
   };
 
   /**
@@ -492,13 +530,24 @@ export const createAuthApi = ({
     return undefined;
   };
 
-  const issue = async (userId: number, context?: SessionContext): Promise<SSRSession> => {
+  /**
+   * A session for this account. `options` is only for the one that is not an ordinary sign-in: a borrowed session
+   * carries who borrowed it and cannot renew itself, so it dies at its deadline instead of quietly living for a
+   * month behind a refresh token.
+   */
+  const issue = async (
+    userId: number,
+    context?: SessionContext,
+    options: { actingAs?: number; ttlSeconds?: number; renewable?: boolean } = {}
+  ): Promise<SSRSession> => {
+    const { actingAs, ttlSeconds, renewable = true } = options;
     const now = Math.floor(Date.now() / 1000);
     const session: SSRSession = {
-      token: tokens.generateUserToken(userId),
-      expiresAt: now + tokens.lifetimes.access,
-      refreshToken: tokens.generateRefreshToken(userId),
-      refreshExpiresAt: now + tokens.lifetimes.refresh
+      token: tokens.generateUserToken(userId, { actingAs, ttlSeconds }),
+      expiresAt: now + (ttlSeconds ?? tokens.lifetimes.access),
+      ...(renewable
+        ? { refreshToken: tokens.generateRefreshToken(userId), refreshExpiresAt: now + tokens.lifetimes.refresh }
+        : {})
     };
 
     await adapters.saveSession(userId, session, context);
@@ -602,7 +651,10 @@ export const createAuthApi = ({
             email: actor.email,
             verified: actor.verified,
             roles: actor.roles,
-            permissions: actor.permissions
+            permissions: actor.permissions,
+            // Only when somebody is being acted for. A UI that shows whose account this is has to be able to say
+            // "you are viewing as", and it can only do that if the session endpoint admits it.
+            ...(actor.impersonatedBy === undefined ? {} : { impersonatedBy: actor.impersonatedBy })
           },
           access_token: actor.token,
           expire_in: Math.max(0, actor.expiresAt - now),
@@ -1189,23 +1241,44 @@ export const createAuthApi = ({
 
       const changingEmail = Boolean(email) && email !== actor.email;
 
+      /**
+       * A new address is PARKED, not applied: the account keeps the one it has until the new one answers a
+       * confirmation. That is what makes a typo survivable — `n@exmaple.com` costs a resend, not the account.
+       *
+       * The alternative, applying it and taking `verified` away, was tried and reverted: `verified` in this server
+       * gates ACCESS (`createAuthorizer` refuses to present an unverified account as an actor at all), so it locked
+       * people out of the account they were sitting in. And the attack it guarded against needs a live session,
+       * from which the same person could simply change the password.
+       *
+       * A deployment that supplies nowhere to park it changes the address on the spot, as it always did.
+       */
+      const parking = changingEmail && capabilities.emailChange;
+
       const account = await adapters.updateAccount(actor.id, {
         ...(username ? { username } : {}),
-        ...(email ? { email } : {})
+        ...(email && !parking ? { email } : {})
       });
 
-      /**
-       * A confirmation goes to the new address — and the account stays verified.
-       *
-       * Taking the flag away was the obvious move and it was wrong here: `verified` in this server gates ACCESS,
-       * not merely trust in an address (`createAuthorizer` refuses to present an unverified account as an actor at
-       * all). Clearing it locks somebody out of the account they are sitting in because they corrected a typo in
-       * their email, which is a far worse failure than the one it was guarding against — and the attack it guarded
-       * against needs a live session, from which the same person could simply change the password.
-       *
-       * The right shape is a PENDING address that only takes effect once confirmed, leaving the old one working
-       * until it does. That needs somewhere to keep it and is its own change; this note is the seam.
-       */
+      if (parking && generateToken && adapters.setPendingEmail) {
+        const confirmationToken = generateToken();
+        await adapters.setPendingEmail(actor.id, email, confirmationToken);
+        await deliver({
+          to: email,
+          template: 'email-change',
+          data: { username: account.username, email, confirmationToken }
+        });
+
+        return {
+          ok: true,
+          body: {
+            success: true,
+            details: profileOf(account),
+            pendingEmail: email,
+            message: 'A confirmation was sent to the new address. It takes effect once confirmed.'
+          }
+        };
+      }
+
       if (changingEmail && capabilities.emailVerification && generateToken && adapters.setValidationToken) {
         const validationToken = generateToken();
         await adapters.setValidationToken(actor.id, validationToken);
@@ -1226,6 +1299,52 @@ export const createAuthApi = ({
       }
 
       return { ok: true, body: { success: true, details: profileOf(account) } };
+    },
+
+    /**
+     * Takes the parked address, having proved somebody reads it.
+     *
+     * Public, and it has to be: the link is opened from a mail client, in whatever browser that happens to be, with
+     * no session. The token is the whole credential — which is why it is single-use and why confirming also marks
+     * the account verified: an address that answered a link is an address that was proven.
+     */
+    confirmEmailChange: async (token: string): Promise<AuthOutcome> => {
+      if (!capabilities.emailChange || !adapters.findByPendingEmail || !adapters.clearPendingEmail) {
+        return NOT_OFFERED;
+      }
+
+      const pending = await adapters.findByPendingEmail(asString(token));
+      if (!pending) {
+        return refuse(400, 'Invalid or expired token');
+      }
+
+      // Between asking and confirming, somebody else may have signed up with it. Sign-in identifiers are unique, so
+      // this has to be refused here rather than surfacing as a driver error from the write below.
+      const taken = await adapters.findByEmail?.(pending.email);
+      if (taken && taken.id !== pending.account.id) {
+        await adapters.clearPendingEmail(pending.account.id);
+
+        return refuse(409, 'That email is taken');
+      }
+
+      const account = await adapters.updateAccount?.(pending.account.id, { email: pending.email });
+      await adapters.clearPendingEmail(pending.account.id);
+
+      if (adapters.setVerified) {
+        await adapters.setVerified(pending.account.id, true);
+      }
+
+      record({ type: 'email.changed', userId: pending.account.id, detail: { email: pending.email } });
+
+      const confirmed = { ...(account ?? pending.account), email: pending.email };
+
+      return {
+        ok: true,
+        body: {
+          success: true,
+          details: profileOf(adapters.setVerified ? { ...confirmed, verified: true } : confirmed)
+        }
+      };
     },
 
     /**
@@ -1457,6 +1576,66 @@ export const createAuthApi = ({
         record({ type: 'admin.account-deleted', userId, actorId: actor?.id });
 
         return { ok: true, body: { success: true } };
+      },
+
+      /**
+       * A session AS somebody else, for support that has to see what they see.
+       *
+       * Three properties make it something a deployment can live with, and all three are deliberate:
+       *
+       * - **It says so.** The credential carries `act` (RFC 8693), so every request made with it can be told from
+       *   one the account holder made — `Actor.impersonatedBy` is that claim, read back. A borrowed session that
+       *   is indistinguishable from a real one turns an audit log into fiction.
+       * - **It is short and cannot renew.** Fifteen minutes by default and no refresh token, so it expires rather
+       *   than becoming a permanent second key to somebody's account.
+       * - **It is off unless asked for**, behind its own permission — see `impersonationPermission`.
+       *
+       * The session is answered in the BODY and no cookie is written. Swapping the administrator's own session
+       * cookie for this one would sign them out of the account they administer from, and getting back would mean
+       * signing in again; whoever asked decides where to put a credential they were handed.
+       *
+       * One caveat a deployment has to know: a store that keeps a single session per account — no `session` table —
+       * will overwrite the subject's own session with this one, signing them out. Anything with per-session rows,
+       * which is what `createMysqlStore` builds, does not.
+       */
+      impersonate: async (
+        actor: Actor | undefined,
+        userId: number,
+        carrier?: CredentialCarrier
+      ): Promise<AuthOutcome> => {
+        if (!capabilities.impersonation || !impersonationPermission || !adapters.findById) {
+          return NOT_OFFERED;
+        }
+
+        const check = checkPermission(actor, impersonationPermission);
+        if (!check.ok) {
+          return refuse(check.status, check.error, check.status === 401 ? 'missing' : undefined);
+        }
+
+        if (!actor || userId === actor.id) {
+          return refuse(400, 'You are already signed in as yourself');
+        }
+
+        const account = await adapters.findById(userId);
+        if (!account) {
+          return refuse(404, 'No such account');
+        }
+
+        // A suspended account cannot hold a session, and an administrator borrowing one would be the way around
+        // that — which is exactly what a ban is for.
+        if (!account.active) {
+          return refuse(403, 'That account is not active');
+        }
+
+        const session = await issue(
+          userId,
+          { client: clientOf(carrier) },
+          { actingAs: actor.id, ttlSeconds: impersonationTtl, renewable: false }
+        );
+
+        record({ type: 'admin.impersonated', userId, actorId: actor.id });
+
+        return { ok: true, body: { ...(await grantBody(account, session)), impersonatedBy: actor.id } };
       }
     },
 

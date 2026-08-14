@@ -40,7 +40,7 @@ const isIpAddress = (hostname: string): boolean => isIP(hostname) !== 0;
  * and the API it talks to are rarely the same host. Local and IP hosts get no domain at all: browsers refuse a
  * Domain on a single-label host, and one written for an address would never be sent back to it.
  */
-const registrableDomain = (hostname: string): string | undefined => {
+export const registrableDomain = (hostname: string): string | undefined => {
   if (isLocalHost(hostname) || isIpAddress(hostname)) {
     return undefined;
   }

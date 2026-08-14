@@ -813,6 +813,18 @@ schema, because it is written as the set of questions your adapters have to answ
 sign-out also answer a full-page form submission with a `303` so the view re-renders, which a `fetch` client does
 not need and a `<form>` does.
 
+**Changing an email is a confirmation, not a write.** Supply `setPendingEmail` / `findByPendingEmail` /
+`clearPendingEmail` (the MySQL store has them) and `POST /auth/profile` parks the new address instead of applying
+it: the account keeps signing in with the old one until `POST /auth/confirm-email` proves somebody reads the new
+one, which also marks it verified. A typo then costs a resend rather than the account. Leave them out and the
+address changes on the spot, as before.
+
+**Impersonation is off until you name its permission.** With `api.impersonationPermission` set,
+`POST /auth/admin/impersonate` answers a session as another account — one that carries `act` (RFC 8693) so every
+request made with it is distinguishable from the account holder's, lives fifteen minutes, cannot renew, and is
+returned in the body rather than written over the administrator's own cookie. `Actor.impersonatedBy` is that claim
+read back, and `GET /auth/session` reports it.
+
 Behaviour you do not have to get right yourself: the credential is renewed ahead of expiry and rotated when it is;
 signing out revokes at the source rather than only clearing the browser's copy; a readable hint cookie rides beside
 the session carrying nothing but expiry timestamps, so a page can tell that nobody is signed in without a request;
@@ -826,6 +838,8 @@ and every refusal names a machine-readable `reason`, so a client can tell "renew
 | `api.password` | What a password has to be. `minLength` defaults to 8 (NIST SP 800-63B's floor); `validate` is where a breach-list lookup or a strength estimator goes. Applied wherever one is set — signing up, resetting, changing |
 | `api.rateLimit` | May this attempt proceed? Called before the password is checked, so a throttled attempt costs no hash. **There is no default**: where the counter lives is a deployment decision, and an unthrottled password endpoint is a credential-stuffing target |
 | `api.adminPermission` | The global capability the `/auth/admin/*` routes require. Default `userManage` |
+| `api.impersonationPermission` | The capability it takes to obtain a session **as** another account, and the switch that offers the flow at all — **absent, there is no impersonation**. Its own permission on purpose: suspending an account and becoming one are not the same grant |
+| `api.impersonationTtl` | How long a borrowed session lives. Default 900 seconds, and it cannot renew |
 | `api.onEvent` | Every act worth recording — sign-ins, failures, password changes, admin actions — as a `SecurityEvent`. An audit trail, a webhook and an alert are the same feed. Never awaited and never able to fail a request |
 | `api.mfaIssuer` | What an authenticator app calls this deployment. Defaults to the token issuer |
 | `api.passwordlessTtl` | How long an emailed sign-in code lasts. Default 600 seconds |
@@ -845,15 +859,31 @@ write, `02-mysql` over one you do not.
 on somebody else's domain — so the browser attaches it to requests another site caused. That is the attack, and
 `Lax` is what would otherwise prevent it.
 
-Three kinds of request are never asked for a token, and each is one that cannot be forged into:
+Two requests can never be forged into whatever they are reaching, and neither is ever asked for a token:
 
-| Not asked | Why |
+| Never asked | Why |
 |---|---|
 | `GET`, `HEAD`, `OPTIONS` | They change nothing |
 | Anything with `Authorization: Bearer` | A cross-origin page cannot set that header without a preflight you would have to allow. **Every API client is unaffected** |
-| Anything carrying no session cookie | It carries no credentials for a browser to attach. Signing in is the case that matters; `csrf: { protectSignIn: true }` covers it, at the cost of a round trip before every sign-in |
 
-So what needs a token is exactly: **a cookie-authenticated write**.
+After that it depends on what the flow does, because there are two different attacks:
+
+| Flow | Guarded by | Because |
+|---|---|---|
+| **An action taken as somebody** — profile, password, sessions, admin | A token, whenever a **session cookie** is present | The attack is the browser attaching the victim's credentials. No cookie, nothing to forge |
+| **A sign-in** — login, signup, the password-reset pair, the passwordless and MFA halves, `confirm-email` | A token, whenever the request came from **a site this deployment does not recognise** | There is no cookie to protect yet. The attack is login CSRF: another site signing a visitor into an account *it* controls. What separates that from a legitimate sign-in is not a cookie — it is where the request came from |
+| **`/auth/exchange`** | Its own grant | It acts for a space and is already refused unless the origin is one that space declared — narrower than any list here. A space is embedded on somebody else's domain by design |
+| **`/auth/refresh`, `/auth/logout`** | Nothing | Both authenticate with the refresh credential and must work when the access token has lapsed. Forging either gains an attacker nothing: renewing somebody's session hands the new credential to their own browser |
+
+**"A site this deployment recognises"** is decided by two headers a page cannot set: `Sec-Fetch-Site` — the browser's
+own account of where the request came from — and, where that is absent, `Origin`, compared by registrable domain
+(the same rule that decides how far the session cookie travels) plus `csrf.allowedOrigins`, which `createAuth` fills
+from `identity.platformOrigins`. **Neither header present means the caller is not a browser**, and a client that is
+not a browser has no victim's session in it to forge with — which is what lets every API client, mobile app and
+script sign in with nothing extra to send.
+
+`csrf: { protectSignIn: true }` is the stricter form: demand a token from *everybody* on those flows rather than
+relying on the headers, at the cost of a round trip before every sign-in.
 
 #### What a browser client does
 

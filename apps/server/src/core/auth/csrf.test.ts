@@ -35,21 +35,99 @@ describe('when a token is asked for', () => {
     expect(csrf.required(carrier())).toBe(false);
   });
 
-  /** Login CSRF is real and lesser: another site signing a visitor into an account it controls. Opt-in. */
-  it('asks even a sessionless request when the deployment opts into protecting sign-in', () => {
-    const strict = createCsrf({ secret: 'test-secret', cookie: { name: 'sess' }, protectSignIn: true });
-
-    expect(strict.required(carrier())).toBe(true);
-    expect(strict.required(carrier({ method: 'GET' }))).toBe(false);
-    expect(strict.required(carrier({ headers: { authorization: 'Bearer abc' } }))).toBe(false);
-  });
-
   /**
    * A cross-origin page cannot set `Authorization` without a preflight the server would have to allow, so there is
    * nothing to forge. Asking a bearer client for a token would break every API client to protect nobody.
    */
   it('never asks a request carrying a bearer token', () => {
     expect(csrf.required(carrier({ headers: { authorization: 'Bearer abc', cookie: 'sess=abc' } }))).toBe(false);
+  });
+});
+
+/**
+ * Signing in cannot be judged by "is there a session cookie" — the flow replaces that cookie, and a browser still
+ * holding a stale one was being refused the very request that fixes it. What separates login CSRF from an ordinary
+ * sign-in is not the cookie; it is that another site caused the request. So that is what is asked.
+ */
+describe('what a sign-in has to present', () => {
+  const signIn = (over: Partial<CsrfCarrier> = {}) => csrf.required(carrier(over), 'signIn');
+
+  it('asks nothing of a page on this deployment, cookie or no cookie', () => {
+    expect(signIn()).toBe(false);
+    expect(signIn({ headers: { cookie: 'sess=stale' } })).toBe(false);
+    expect(signIn({ headers: { origin: 'https://acme.test' } })).toBe(false);
+    expect(signIn({ headers: { 'sec-fetch-site': 'same-origin' } })).toBe(false);
+  });
+
+  /** The registrable domain, which is the same rule that decides how far the session cookie itself travels. */
+  it('counts a sibling sub-domain as this deployment', () => {
+    expect(signIn({ headers: { origin: 'https://app.acme.test' } })).toBe(false);
+    expect(
+      csrf.required(carrier({ hostname: 'api.acme.test', headers: { origin: 'https://app.acme.test' } }), 'signIn')
+    ).toBe(false);
+  });
+
+  /** The attack: a page on another site posting credentials it controls, so the visitor is signed into them. */
+  it('demands a token from another site', () => {
+    expect(signIn({ headers: { origin: 'https://evil.test' } })).toBe(true);
+    expect(signIn({ headers: { 'sec-fetch-site': 'cross-site', origin: 'https://evil.test' } })).toBe(true);
+  });
+
+  /** `Sec-Fetch-Site` is the browser's own account and cannot be set by script, so it is believed over `Origin`. */
+  it('believes the browser over a header a page could have chosen', () => {
+    expect(signIn({ headers: { 'sec-fetch-site': 'cross-site', origin: 'https://acme.test' } })).toBe(true);
+    expect(signIn({ headers: { 'sec-fetch-site': 'same-site', origin: 'https://evil.test' } })).toBe(false);
+  });
+
+  it('lets the deployment name origins that are also its own', () => {
+    const withApp = createCsrf({
+      secret: 'test-secret',
+      cookie: { name: 'sess' },
+      allowedOrigins: ['https://console.other.test']
+    });
+
+    expect(withApp.required(carrier({ headers: { origin: 'https://console.other.test' } }), 'signIn')).toBe(false);
+    expect(withApp.required(carrier({ headers: { origin: 'https://evil.test' } }), 'signIn')).toBe(true);
+  });
+
+  /** A sandboxed iframe or a `data:` document. There is plainly a browser, and nothing can vouch for it. */
+  it('demands one from an opaque origin', () => {
+    expect(signIn({ headers: { origin: 'null', 'sec-fetch-site': 'cross-site' } })).toBe(true);
+    expect(signIn({ headers: { 'sec-fetch-site': 'cross-site' } })).toBe(true);
+  });
+
+  /**
+   * Neither header means this is not a browser — and a client that is not a browser has no victim's session in it
+   * to forge with. This is what keeps every API client, mobile app and script signing in with nothing extra.
+   */
+  it('asks nothing of a client that is not a browser', () => {
+    expect(signIn({ headers: { 'user-agent': 'curl/8.4.0' } })).toBe(false);
+  });
+
+  it('never asks a safe method or a bearer client, whatever the origin', () => {
+    expect(signIn({ method: 'GET', headers: { origin: 'https://evil.test' } })).toBe(false);
+    expect(signIn({ headers: { origin: 'https://evil.test', authorization: 'Bearer abc' } })).toBe(false);
+  });
+
+  /** The stricter form: no reliance on either header, at the cost of a round trip for every client. */
+  it('asks everyone when the deployment says so', () => {
+    const strict = createCsrf({ secret: 'test-secret', cookie: { name: 'sess' }, protectSignIn: true });
+
+    expect(strict.required(carrier(), 'signIn')).toBe(true);
+    expect(strict.required(carrier({ method: 'GET' }), 'signIn')).toBe(false);
+    expect(strict.required(carrier({ headers: { authorization: 'Bearer abc' } }), 'signIn')).toBe(false);
+  });
+
+  /**
+   * `/auth/exchange` acts for a space and is already refused unless the origin is one that space declared — which
+   * is narrower than any list here. Asking again would refuse every legitimate embed, since a space is embedded on
+   * somebody else's domain by design.
+   */
+  it('leaves a flow that checks the origin itself alone', () => {
+    expect(csrf.required(carrier({ headers: { origin: 'https://a-customer.test' } }), 'delegated')).toBe(false);
+
+    const strict = createCsrf({ secret: 'test-secret', cookie: { name: 'sess' }, protectSignIn: true });
+    expect(strict.required(carrier(), 'delegated')).toBe(true);
   });
 });
 

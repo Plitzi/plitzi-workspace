@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { createCsrf } from './csrf';
 import { applySessionOutcome, authPolicyRules, authRoutes } from './routes';
 import { createSessionCookies } from './session';
 
@@ -40,7 +41,10 @@ const recordingApi = () => {
     forgotPassword: record('forgotPassword'),
     resetPassword: record('resetPassword'),
     validateAccount: record('validateAccount'),
-    resendVerification: record('resendVerification')
+    resendVerification: record('resendVerification'),
+    updateProfile: record('updateProfile'),
+    confirmEmailChange: record('confirmEmailChange'),
+    passwordless: { request: record('passwordless.request'), complete: record('passwordless.complete') }
   } as unknown as AuthApi;
 
   return { api, calls };
@@ -73,6 +77,7 @@ describe('the route table', () => {
       'POST /forgot-password',
       'POST /reset-password',
       'POST /validate-account',
+      'POST /confirm-email',
       'POST /resend-verification-email',
       'POST /profile',
       'POST /password',
@@ -91,7 +96,8 @@ describe('the route table', () => {
       'GET /admin/account',
       'POST /admin/account/status',
       'POST /admin/account/roles',
-      'POST /admin/account/delete'
+      'POST /admin/account/delete',
+      'POST /admin/impersonate'
     ]);
   });
 
@@ -212,5 +218,107 @@ describe('the policy derived from the same table', () => {
 
     expect(publicPaths).toContain('/auth/refresh');
     expect(publicPaths).toContain('/auth/logout');
+  });
+});
+
+/**
+ * Which flows the CSRF check is applied to, and — the part that took a bug to get right — which it must not be.
+ */
+describe('the CSRF guard in front of the flows', () => {
+  const build = (protectSignIn = false) => {
+    const { api, calls } = recordingApi();
+    const csrf = createCsrf({ secret: 'csrf-secret', cookie: { name: 'sess' }, protectSignIn });
+    const routes = authRoutes({ api, cookies, csrf });
+
+    const call = (path: string, req: Partial<AuthRequest> = {}) => {
+      const route = routes.find(candidate => candidate.path === path);
+      if (!route) {
+        throw new Error(`no route for ${path}`);
+      }
+
+      return route.handler(carrier(req));
+    };
+
+    return { call, calls, csrf };
+  };
+
+  const signedIn = { cookie: 'sess=live-token' };
+
+  it('refuses a cookie-authenticated write that brought no token', async () => {
+    const { call, calls } = build();
+
+    expect(await call('/profile', { headers: signedIn })).toMatchObject({ status: 403, body: { reason: 'missing' } });
+    expect(calls).toHaveLength(0);
+  });
+
+  it('lets one through with a token bound to that session', async () => {
+    const { call, csrf } = build();
+    const headers = { ...signedIn, 'x-csrf-token': csrf.issue('live-token') };
+
+    expect(await call('/profile', { headers })).toMatchObject({ ok: true });
+  });
+
+  /**
+   * The bug this exists for. A browser that still holds a lapsed session cookie — or somebody signing into a second
+   * account — was refused a sign-in with a 403, because the default check only asks whether a session cookie is
+   * there. The flow does not act on that session; it replaces it.
+   */
+  it('never demands a token to sign in, even from a browser holding a stale session', async () => {
+    const { call } = build();
+
+    for (const path of ['/login', '/signup', '/passwordless/request', '/reset-password', '/confirm-email']) {
+      expect(await call(path, { headers: signedIn })).toMatchObject({ ok: true });
+    }
+  });
+
+  /** Login CSRF: another site posting credentials it controls, so the visitor is signed into the attacker's account. */
+  it('refuses a sign-in another site caused', async () => {
+    const { call, calls } = build();
+    const fromEvil = { origin: 'https://evil.test', 'sec-fetch-site': 'cross-site' };
+
+    for (const path of ['/login', '/passwordless/complete', '/mfa/complete']) {
+      expect(await call(path, { headers: fromEvil })).toMatchObject({ status: 403 });
+    }
+
+    expect(calls).toHaveLength(0);
+  });
+
+  /** The exchange is refused unless the origin is one the space declared, which is narrower than anything here. */
+  it('leaves the exchange to the origin check its own grant does', async () => {
+    const { call } = build();
+
+    expect(await call('/exchange', { headers: { origin: 'https://a-customer.test' } })).toMatchObject({ ok: true });
+  });
+
+  it('does demand one from everybody where the deployment asked for that', async () => {
+    const { call, csrf } = build(true);
+
+    expect(await call('/login', {})).toMatchObject({ status: 403 });
+    expect(await call('/login', { headers: { 'x-csrf-token': csrf.issue() } })).toMatchObject({ ok: true });
+  });
+
+  /** Both authenticate with the refresh credential and must work when the access token has already lapsed. */
+  it('leaves refresh and logout alone whatever the deployment asked for', async () => {
+    for (const protectSignIn of [false, true]) {
+      const { call } = build(protectSignIn);
+
+      expect(await call('/refresh', { headers: signedIn })).toMatchObject({ ok: true });
+      expect(await call('/logout', { headers: signedIn })).toMatchObject({ ok: true });
+    }
+  });
+
+  /** A cross-origin page cannot set `Authorization`, so asking an API client for a token protects nobody. */
+  it('never asks a bearer client, not even under protectSignIn', async () => {
+    const { call } = build(true);
+
+    expect(await call('/login', { headers: { authorization: 'Bearer abc' } })).toMatchObject({ ok: true });
+    expect(await call('/profile', { headers: { authorization: 'Bearer abc' } })).toMatchObject({ ok: true });
+  });
+
+  it('is absent entirely when the deployment turned it off', async () => {
+    const { api } = recordingApi();
+    const route = authRoutes({ api, cookies }).find(candidate => candidate.path === '/profile');
+
+    expect(await route?.handler(carrier({ headers: signedIn }))).toMatchObject({ ok: true });
   });
 });

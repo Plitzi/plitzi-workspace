@@ -87,6 +87,28 @@ describe('schema statements', () => {
   it('applies nothing when the database is already current', () => {
     expect(schemaStatements(resolveTables('plitzi_'), SCHEMA_VERSION)).toEqual([]);
   });
+
+  /**
+   * The step that proves the migration path works on a schema that has already shipped: a database at version 2 gets
+   * exactly the new columns, through the guarded DDL, and a database at 3 gets nothing.
+   */
+  it('adds the pending address as an upgrade, not a rewrite', () => {
+    const upgrade = schemaStatements(resolveTables('plitzi_'), 2).join('\n');
+
+    expect(upgrade).not.toContain('CREATE TABLE');
+    expect(upgrade).toContain('ADD COLUMN `pending_email`');
+    expect(upgrade).toContain('ADD COLUMN `pending_email_token`');
+    expect(upgrade).toContain('ADD INDEX `account_pending_email_token`');
+    // Guarded, so a retry after a half-applied step meets its own columns and carries on.
+    expect(upgrade).toContain('information_schema.COLUMNS');
+    expect(upgrade).toMatch(/TABLE_NAME = 'plitzi_account'/);
+  });
+
+  /** It is not the account's address until it is confirmed, so it cannot be the column anything signs in against. */
+  it('keeps the pending address out of the unique email index', () => {
+    expect(sql).toContain('UNIQUE KEY account_email (email)');
+    expect(sql).not.toContain('UNIQUE KEY account_pending_email');
+  });
 });
 
 describe('idempotent DDL, for the steps that come after the first', () => {

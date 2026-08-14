@@ -130,6 +130,20 @@ interface BaseClaims {
 export interface UserTokenPayload extends BaseClaims {
   scope: typeof SCOPES.user;
   sub: string;
+  /**
+   * Who is really behind this credential, when it is not the subject: an administrator acting AS somebody. `act` is
+   * the registered claim for exactly that (RFC 8693 §4.1), so a log line, an audit trail or a downstream service can
+   * tell a session somebody was given from one they signed into — and nothing has to invent a claim to say it.
+   */
+  act?: { sub: string };
+}
+
+/** What a session credential is, beyond who it is for. */
+export interface UserTokenOptions {
+  /** The id of whoever obtained this session on the subject's behalf. Becomes the `act` claim. */
+  actingAs?: number | string;
+  /** Overrides `lifetimes.access`. A borrowed session is worth keeping short. */
+  ttlSeconds?: number;
 }
 
 export interface RefreshTokenPayload extends BaseClaims {
@@ -284,8 +298,12 @@ export const createTokens = (config: TokenConfig) => {
     /** What this deployment mints under. Read by anything that has to name the deployment — an enrolment URI, say. */
     issuer: config.issuer,
 
-    generateUserToken: (userId: number | string): string =>
-      sign({ sub: String(userId), ...baseClaims(SCOPES.user, lifetimes.access) }),
+    generateUserToken: (userId: number | string, { actingAs, ttlSeconds }: UserTokenOptions = {}): string =>
+      sign({
+        sub: String(userId),
+        ...(actingAs === undefined ? {} : { act: { sub: String(actingAs) } }),
+        ...baseClaims(SCOPES.user, ttlSeconds ?? lifetimes.access)
+      }),
 
     // Its authority comes entirely from the stored row (issuing a session overwrites it, which is what makes
     // rotation work); the claims only let a refusal say why before the database is touched.

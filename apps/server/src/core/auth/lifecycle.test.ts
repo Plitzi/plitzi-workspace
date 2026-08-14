@@ -43,7 +43,7 @@ const actorFor = (account: AccountRecord, permissions: string[] = []): Actor => 
   expiresAt: Math.floor(Date.now() / 1000) + 3600
 });
 
-const build = (adapters: Partial<AccountAdapters> = {}) => {
+const build = (adapters: Partial<AccountAdapters> = {}, config: AuthApiConfig = {}) => {
   const tokens = createTokens({ secret: 'test-secret', issuer: 'https://test' });
   const full: AccountAdapters = {
     saveSession: () => Promise.resolve(),
@@ -65,7 +65,8 @@ const build = (adapters: Partial<AccountAdapters> = {}) => {
     adapters: full,
     config: {
       verifyPassword: (plain, hash) => Promise.resolve(hash === `hash:${plain}`),
-      hashPassword: plain => Promise.resolve(`hash:${plain}`)
+      hashPassword: plain => Promise.resolve(`hash:${plain}`),
+      ...config
     }
   });
 };
@@ -638,6 +639,143 @@ describe('changing the email that was verified', () => {
   });
 });
 
+/**
+ * The shape an email change should have had all along: the new address is parked until somebody proves they read
+ * it, and the account signs in with the old one until then.
+ */
+describe('changing the email by confirming it', () => {
+  const parked = { account: ada, email: 'elsewhere@example.test' };
+
+  const withPending = (overrides: Partial<AccountAdapters> = {}) => {
+    const tokens = createTokens({ secret: 's', issuer: 'https://test' });
+    const identity = createIdentity({
+      tokens,
+      carriers: createCarriers(() => 'sess'),
+      presentedOrigin,
+      adapters: { findAccountByToken: () => Promise.resolve(undefined) }
+    });
+
+    return createAuthApi({
+      tokens,
+      identity,
+      adapters: {
+        saveSession: () => Promise.resolve(),
+        clearSession: () => Promise.resolve(),
+        loadAccess: () => Promise.resolve({ roles: [], permissions: [] }),
+        updateAccount: (_id, changes) => Promise.resolve({ ...ada, ...changes }),
+        findByEmail: () => Promise.resolve(undefined),
+        setPendingEmail: () => Promise.resolve(),
+        findByPendingEmail: token => Promise.resolve(token === 'fresh-token' ? parked : undefined),
+        clearPendingEmail: () => Promise.resolve(),
+        setVerified: () => Promise.resolve(),
+        sendMail: () => Promise.resolve(),
+        ...overrides
+      },
+      config: { generateToken: () => 'fresh-token' }
+    });
+  };
+
+  it('is offered exactly when there is somewhere to park an address', () => {
+    expect(withPending().capabilities.emailChange).toBe(true);
+    expect(build().capabilities.emailChange).toBe(false);
+  });
+
+  /** The whole point: until it is confirmed, the account's address — the thing it signs in with — is untouched. */
+  it('does not change the address yet', async () => {
+    const updateAccount = vi.fn((_id: number, changes: { username?: string; email?: string }) =>
+      Promise.resolve({ ...ada, ...changes })
+    );
+    const setPendingEmail = vi.fn(() => Promise.resolve());
+    const api = withPending({ updateAccount, setPendingEmail });
+
+    const outcome = await api.updateProfile(actorFor(ada), { email: 'elsewhere@example.test' });
+
+    expect(updateAccount).toHaveBeenCalledWith(1, {});
+    expect(setPendingEmail).toHaveBeenCalledWith(1, 'elsewhere@example.test', 'fresh-token');
+    expect(body(outcome)).toMatchObject({ pendingEmail: 'elsewhere@example.test', details: { email: ada.email } });
+  });
+
+  it('still applies a username changed in the same request', async () => {
+    const updateAccount = vi.fn((_id: number, changes: { username?: string; email?: string }) =>
+      Promise.resolve({ ...ada, ...changes })
+    );
+    const api = withPending({ updateAccount });
+
+    await api.updateProfile(actorFor(ada), { username: 'ada-renamed', email: 'elsewhere@example.test' });
+
+    expect(updateAccount).toHaveBeenCalledWith(1, { username: 'ada-renamed' });
+  });
+
+  it('sends the confirmation to the new address, never the old one', async () => {
+    const sendMail = vi.fn(() => Promise.resolve());
+    await withPending({ sendMail }).updateProfile(actorFor(ada), { email: 'elsewhere@example.test' });
+
+    expect(sendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'elsewhere@example.test',
+        template: 'email-change',
+        data: { username: 'ada', email: 'elsewhere@example.test', confirmationToken: 'fresh-token' }
+      })
+    );
+  });
+
+  it('applies it once the token comes back, and takes the address as proven', async () => {
+    const updateAccount = vi.fn((_id: number, changes: { username?: string; email?: string }) =>
+      Promise.resolve({ ...ada, ...changes })
+    );
+    const clearPendingEmail = vi.fn(() => Promise.resolve());
+    const setVerified = vi.fn(() => Promise.resolve());
+    const api = withPending({ updateAccount, clearPendingEmail, setVerified });
+
+    const outcome = await api.confirmEmailChange('fresh-token');
+
+    expect(updateAccount).toHaveBeenCalledWith(1, { email: 'elsewhere@example.test' });
+    expect(clearPendingEmail).toHaveBeenCalledWith(1);
+    expect(setVerified).toHaveBeenCalledWith(1, true);
+    expect(body(outcome)).toMatchObject({ details: { email: 'elsewhere@example.test', verified: true } });
+  });
+
+  it('refuses a token nobody is waiting on', async () => {
+    expect(await withPending().confirmEmailChange('nonsense')).toMatchObject({ ok: false, status: 400 });
+    expect(await withPending().confirmEmailChange('')).toMatchObject({ ok: false, status: 400 });
+  });
+
+  /** Somebody else may have signed up with it in the meantime, and the address is a sign-in identifier. */
+  it('refuses to take an address that was claimed while it waited', async () => {
+    const clearPendingEmail = vi.fn(() => Promise.resolve());
+    const updateAccount = vi.fn(() => Promise.resolve(ada));
+    const api = withPending({
+      clearPendingEmail,
+      updateAccount,
+      findByEmail: () => Promise.resolve({ ...ada, id: 99 })
+    });
+
+    expect(await api.confirmEmailChange('fresh-token')).toMatchObject({ ok: false, status: 409 });
+    expect(updateAccount).not.toHaveBeenCalled();
+    // The dead pending change goes with it, or every later attempt hits the same 409 forever.
+    expect(clearPendingEmail).toHaveBeenCalledWith(1);
+  });
+
+  it('is spent: the same token does not work twice', async () => {
+    let pending: typeof parked | undefined = parked;
+    const api = withPending({
+      findByPendingEmail: () => Promise.resolve(pending),
+      clearPendingEmail: () => {
+        pending = undefined;
+
+        return Promise.resolve();
+      }
+    });
+
+    expect(await api.confirmEmailChange('fresh-token')).toMatchObject({ ok: true });
+    expect(await api.confirmEmailChange('fresh-token')).toMatchObject({ ok: false, status: 400 });
+  });
+
+  it('answers 404 where no address can be parked', async () => {
+    expect(await build().confirmEmailChange('fresh-token')).toMatchObject({ ok: false, status: 404 });
+  });
+});
+
 describe('when the mail provider is down', () => {
   /**
    * Every one of these sends AFTER something has been committed. Letting the provider decide whether the request
@@ -1117,5 +1255,100 @@ describe('signing in with a code instead of a password', () => {
     await api.passwordless.request(ada.email);
 
     expect(body(await api.passwordless.complete(ada.email, sent[0].data.code))).toMatchObject({ mfaRequired: true });
+  });
+});
+
+/**
+ * Support acting AS somebody. The flow is small; what has to hold is that the session it hands out is visibly
+ * borrowed, cannot outlive its errand, and is not something an ordinary administrator quietly acquired.
+ */
+describe('impersonation', () => {
+  const verifier = createTokens({ secret: 'test-secret', issuer: 'https://test' });
+  const bob: AccountRecord = { id: 2, username: 'bob', email: 'bob@example.test', active: true, verified: true };
+
+  const impersonating = (overrides: Partial<AccountAdapters> = {}, config: AuthApiConfig = {}) => {
+    const events: SecurityEvent[] = [];
+    const api = build(
+      { findById: id => Promise.resolve(id === bob.id ? bob : undefined), ...overrides },
+      { impersonationPermission: 'impersonate', onEvent: event => events.push(event), ...config }
+    );
+
+    return { api, events };
+  };
+
+  const admin = actorFor(ada, ['userManage', 'impersonate']);
+
+  /** The default is no impersonation at all — naming the capability is how a deployment asks for it. */
+  it('is not offered until the deployment names the permission it takes', async () => {
+    const api = build({ findById: () => Promise.resolve(bob) });
+
+    expect(api.capabilities.impersonation).toBe(false);
+    expect(await api.admin.impersonate(admin, bob.id)).toMatchObject({ ok: false, status: 404 });
+  });
+
+  /** Being able to suspend an account and being able to become one are not the same grant. */
+  it('refuses an administrator who only holds the ordinary admin permission', async () => {
+    const { api } = impersonating();
+
+    expect(await api.admin.impersonate(actorFor(ada, ['userManage']), bob.id)).toMatchObject({
+      ok: false,
+      status: 403
+    });
+  });
+
+  it('refuses a stranger and refuses yourself', async () => {
+    const { api } = impersonating();
+
+    expect(await api.admin.impersonate(undefined, bob.id)).toMatchObject({ ok: false, status: 401 });
+    expect(await api.admin.impersonate(admin, ada.id)).toMatchObject({ ok: false, status: 400 });
+  });
+
+  it('refuses an account that does not exist, or one that is not allowed a session', async () => {
+    const { api } = impersonating({ findById: () => Promise.resolve(undefined) });
+    expect(await api.admin.impersonate(admin, 404)).toMatchObject({ ok: false, status: 404 });
+
+    const blocked = impersonating({ findById: () => Promise.resolve({ ...bob, active: false }) });
+    expect(await blocked.api.admin.impersonate(admin, bob.id)).toMatchObject({ ok: false, status: 403 });
+  });
+
+  /** `act` is the registered claim for delegation, so a borrowed session can be told from a real one downstream. */
+  it('mints a session that says who is really behind it', async () => {
+    const { api } = impersonating();
+    const outcome = await api.admin.impersonate(admin, bob.id);
+    const token = body(outcome).access_token as string;
+
+    const verified = verifier.verifyUserToken(token);
+
+    expect(verified.ok && verified.payload.sub).toBe('2');
+    expect(verified.ok && verified.payload.act).toEqual({ sub: '1' });
+    expect(body(outcome)).toMatchObject({ impersonatedBy: 1, details: { username: 'bob' } });
+  });
+
+  /** Fifteen minutes and no way to extend it. A borrowed session that renews is a second key to the account. */
+  it('cannot be renewed, and expires on its own', async () => {
+    const { api } = impersonating({}, { impersonationTtl: 60 });
+    const outcome = await api.admin.impersonate(admin, bob.id);
+
+    expect(body(outcome).refresh_token).toBeUndefined();
+    expect(body(outcome).expire_in).toBeLessThanOrEqual(60);
+  });
+
+  /**
+   * No cookie. Writing this session over the administrator's own would sign them out of the account they administer
+   * from — so the credential is answered, and whoever asked decides where to put it.
+   */
+  it('does not touch the cookies of whoever asked', async () => {
+    const { api } = impersonating();
+    const outcome = await api.admin.impersonate(admin, bob.id);
+
+    expect(outcome).toMatchObject({ ok: true });
+    expect(outcome.ok && outcome.session).toBeUndefined();
+  });
+
+  it('is written down, naming both sides', async () => {
+    const { api, events } = impersonating();
+    await api.admin.impersonate(admin, bob.id);
+
+    expect(events).toContainEqual(expect.objectContaining({ type: 'admin.impersonated', userId: 2, actorId: 1 }));
   });
 });

@@ -3,7 +3,7 @@ import { csrfFailureMessage } from './csrf';
 import type { AccountStatus, AuthApi, AuthOutcome } from './api';
 import type { AuthPolicy, Requirement } from './authorize';
 import type { CredentialCarrier } from './credentials';
-import type { Csrf } from './csrf';
+import type { Csrf, CsrfSubject } from './csrf';
 import type { Actor } from './identity';
 import type { CookieSink, SessionCookies } from './session';
 
@@ -73,7 +73,26 @@ const queryNumber = (req: AuthRequest, name: string): number | undefined => {
  */
 const rolesOf = (req: AuthRequest): unknown => body(req).roles;
 
+/**
+ * How a flow is guarded against cross-site forgery, for the kinds that are not an ordinary authenticated write.
+ * What each one means is in {@link CsrfSubject}; which flows are which is the judgement recorded here.
+ *
+ * - **`signIn`** — establishes or recovers a session. It does not act on whatever session the request happens to
+ *   carry: it replaces it. Guarded by where the request came from rather than by the presence of a cookie, which
+ *   both covers login CSRF by default and stops a browser holding a stale cookie being refused the very request
+ *   that would fix that.
+ * - **`grant`** — the same, except the flow already refuses an origin the space it acts for did not declare, which
+ *   is narrower than anything this layer knows.
+ * - **`none`** — authenticates itself with the refresh credential and must work when the access token has lapsed,
+ *   including from a page that never obtained a token. Forging either buys an attacker nothing: renewing somebody's
+ *   session hands the new credential to their own browser, and forcing a sign-out is a nuisance, not a takeover.
+ */
+type CsrfPolicy = 'signIn' | 'grant' | 'none';
+
+const SUBJECT_OF: Record<Exclude<CsrfPolicy, 'none'>, CsrfSubject> = { signIn: 'signIn', grant: 'delegated' };
+
 type Flow = Omit<AuthRoute, 'handler'> & {
+  csrf?: CsrfPolicy;
   run: (api: AuthApi, cookies: SessionCookies, req: AuthRequest) => Promise<AuthOutcome> | AuthOutcome;
 };
 
@@ -102,17 +121,25 @@ const FLOWS: Flow[] = [
     run: (api, cookies, req) => api.issueCsrf(cookies.resolveSessionToken(req))
   },
   { method: 'GET', path: '/session', requirement: 'actor', run: (api, _cookies, req) => api.session(req.actor) },
-  { method: 'POST', path: '/login', requirement: 'public', run: (api, _cookies, req) => api.login(body(req), req) },
+  {
+    method: 'POST',
+    path: '/login',
+    requirement: 'public',
+    csrf: 'signIn',
+    run: (api, _cookies, req) => api.login(body(req), req)
+  },
   {
     method: 'POST',
     path: '/refresh',
     requirement: 'public',
+    csrf: 'none',
     run: (api, cookies, req) => api.refresh(cookies.resolveRefreshToken(req, req.body), req)
   },
   {
     method: 'POST',
     path: '/logout',
     requirement: 'public',
+    csrf: 'none',
     run: (api, cookies, req) =>
       api.logout({
         accessToken: cookies.resolveSessionToken(req),
@@ -131,31 +158,53 @@ const FLOWS: Flow[] = [
     // A stranger — establishing a session is the point — but never an anonymous one: the exchange acts for a space,
     // and the space is what says which identity provider its credentials may come from.
     requirement: 'grant',
+    csrf: 'grant',
     run: (api, _cookies, req) => api.exchange(field(req, 'provider'), field(req, 'token'), req)
   },
-  { method: 'POST', path: '/signup', requirement: 'public', run: (api, _cookies, req) => api.signup(body(req)) },
+  {
+    method: 'POST',
+    path: '/signup',
+    requirement: 'public',
+    csrf: 'signIn',
+    run: (api, _cookies, req) => api.signup(body(req))
+  },
   {
     method: 'POST',
     path: '/forgot-password',
     requirement: 'public',
+    csrf: 'signIn',
     run: (api, _cookies, req) => api.forgotPassword(field(req, 'email'))
   },
   {
     method: 'POST',
     path: '/reset-password',
     requirement: 'public',
+    csrf: 'signIn',
     run: (api, _cookies, req) => api.resetPassword(field(req, 'token'), field(req, 'password'))
   },
   {
     method: 'POST',
     path: '/validate-account',
     requirement: 'public',
+    csrf: 'signIn',
     run: (api, _cookies, req) => api.validateAccount(field(req, 'token'))
+  },
+  {
+    /**
+     * Confirms an address change the account asked for. Public and `signIn`-guarded because the link lands in a
+     * mail client, and the browser that opens it may be one that has never seen this deployment.
+     */
+    method: 'POST',
+    path: '/confirm-email',
+    requirement: 'public',
+    csrf: 'signIn',
+    run: (api, _cookies, req) => api.confirmEmailChange(field(req, 'token'))
   },
   {
     method: 'POST',
     path: '/resend-verification-email',
     requirement: 'public',
+    csrf: 'signIn',
     run: (api, _cookies, req) => api.resendVerification(field(req, 'email'))
   },
 
@@ -199,12 +248,14 @@ const FLOWS: Flow[] = [
     method: 'POST',
     path: '/passwordless/request',
     requirement: 'public',
+    csrf: 'signIn',
     run: (api, _cookies, req) => api.passwordless.request(field(req, 'email'), req)
   },
   {
     method: 'POST',
     path: '/passwordless/complete',
     requirement: 'public',
+    csrf: 'signIn',
     run: (api, _cookies, req) => api.passwordless.complete(field(req, 'email'), field(req, 'code'), req)
   },
 
@@ -214,6 +265,7 @@ const FLOWS: Flow[] = [
     method: 'POST',
     path: '/mfa/complete',
     requirement: 'public',
+    csrf: 'signIn',
     run: (api, _cookies, req) => api.completeMfa(field(req, 'mfaToken'), field(req, 'code'), req)
   },
   { method: 'GET', path: '/mfa', requirement: 'actor', run: (api, _cookies, req) => api.mfa.status(req.actor) },
@@ -270,19 +322,18 @@ const FLOWS: Flow[] = [
     path: '/admin/account/delete',
     requirement: 'actor',
     run: (api, _cookies, req) => api.admin.remove(req.actor, numberField(req, 'userId'))
+  },
+  {
+    method: 'POST',
+    path: '/admin/impersonate',
+    requirement: 'actor',
+    run: (api, _cookies, req) => api.admin.impersonate(req.actor, numberField(req, 'userId'), req)
   }
 ];
 
-/**
- * Which flows are exempt from the CSRF check, and why each one is.
- *
- * `/refresh` and `/logout` authenticate with the refresh credential itself and must work when the access token has
- * lapsed — including from a page that never obtained a token. Forging either buys an attacker nothing: renewing
- * somebody's session hands the new credential to their browser, and forcing a sign-out is a nuisance, not a
- * takeover. `/passwordless/complete` and `/mfa/complete` finish a sign-in the caller began, and the code they
- * carry is the unguessable part.
- */
-const CSRF_EXEMPT = new Set(['/refresh', '/logout', '/passwordless/complete', '/mfa/complete']);
+/** Whether this request has to present a token, which is `csrf`'s judgement — given what the flow does. */
+const csrfNeeded = (csrf: Csrf, policy: CsrfPolicy | undefined, carrier: Parameters<Csrf['required']>[0]): boolean =>
+  policy === 'none' ? false : csrf.required(carrier, policy ? SUBJECT_OF[policy] : 'write');
 
 /** The flows, ready to mount. Which of them actually answer is decided by the API itself — no adapter, no endpoint —
  *  so mounting all of them is correct even for a deployment that offers three. */
@@ -295,17 +346,17 @@ export const authRoutes = ({
   cookies: SessionCookies;
   csrf?: Csrf;
 }): AuthRoute[] =>
-  FLOWS.map(({ run, ...route }) => ({
+  FLOWS.map(({ run, csrf: policy, ...route }) => ({
     ...route,
     handler: async (req: AuthRequest) => {
       /**
-       * Checked before the flow runs, and only for a request a cookie could have authenticated: `required` says no
-       * for safe methods and no for anything presenting `Authorization: Bearer`, which a cross-origin page cannot
-       * set. The session the token must be bound to is whatever this request carries — an unbound token satisfies
-       * a signed-out caller, which is how signing in is itself protected.
+       * Checked before the flow runs. The session the token must be bound to is whatever this request carries — an
+       * unbound token satisfies a signed-out caller, which is how signing in is protected when a deployment asks
+       * for that.
        */
-      if (csrf && !CSRF_EXEMPT.has(route.path) && csrf.required({ ...req, method: route.method })) {
-        const result = csrf.verify({ ...req, method: route.method }, cookies.resolveSessionToken(req));
+      const carrier = { ...req, method: route.method };
+      if (csrf && csrfNeeded(csrf, policy, carrier)) {
+        const result = csrf.verify(carrier, cookies.resolveSessionToken(req));
         if (!result.ok) {
           return { ok: false, status: 403, body: { error: csrfFailureMessage[result.reason], reason: result.reason } };
         }

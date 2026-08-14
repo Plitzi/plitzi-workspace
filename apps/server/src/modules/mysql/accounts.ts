@@ -337,6 +337,41 @@ export const createAccountStore = (db: Queryable, t: Tables): IdentityAdapters &
       return row ? toRecord(row) : undefined;
     },
 
+    /**
+     * The address is parked in its own column, so nothing that resolves an account by email can find it: it is not
+     * this account's address until it is confirmed, and a lookup that matched it would let an unconfirmed change
+     * take over a sign-in identifier.
+     */
+    setPendingEmail: async (userId: number, email: string, token: string): Promise<void> => {
+      await execute(db, `UPDATE ${t.account} SET pending_email = ?, pending_email_token = ? WHERE id = ?`, [
+        email,
+        asLookup(token) ?? null,
+        userId
+      ]);
+    },
+
+    findByPendingEmail: async (token: string): Promise<{ account: AccountRecord; email: string } | undefined> => {
+      const lookup = asLookup(token);
+      if (!lookup) {
+        return undefined;
+      }
+
+      const row = await selectOne<AccountRow & { pending_email: string | null }>(
+        db,
+        `SELECT ${ACCOUNT_COLUMNS}, a.pending_email FROM ${t.account} a WHERE a.pending_email_token = ? LIMIT 1`,
+        [lookup]
+      );
+
+      // A token with no address beside it is a half-written row, not a confirmation anybody can act on.
+      return row?.pending_email ? { account: toRecord(row), email: row.pending_email } : undefined;
+    },
+
+    clearPendingEmail: async (userId: number): Promise<void> => {
+      await execute(db, `UPDATE ${t.account} SET pending_email = NULL, pending_email_token = NULL WHERE id = ?`, [
+        userId
+      ]);
+    },
+
     setVerified: async (userId: number, verified: boolean): Promise<void> => {
       await execute(db, `UPDATE ${t.account} SET verified = ?, validation_token = NULL WHERE id = ?`, [
         verified ? 1 : 0,

@@ -63,6 +63,7 @@ console.log(mysqlSchemaStatements().join(';\n\n'));
 | `status` | ENUM active/inactive/blocked | Only `active` resolves to an actor — see below. |
 | `verified` | TINYINT(1) | Confirmed their address. Separate from `status`: an unverified account may still sign in; what it may *do* is RBAC's question. |
 | `reset_token`, `validation_token` | VARCHAR(191) NULL | Opaque, single-use. Deliberately VARCHAR: these are short strings this server generates, not JWTs. |
+| `pending_email`, `pending_email_token` | VARCHAR(191) NULL | An address the account asked to move to, and what will confirm it. **Not** covered by the unique index on `email` and invisible to `findByEmail`: it is not a sign-in identifier until it is confirmed. |
 
 **A suspended account resolves to nothing.** `findAccountByToken` filters on `status = 'active'`, so deactivating
 somebody ends the session they are already holding rather than only their next sign-in.
@@ -194,6 +195,10 @@ it:
   should not be able to do it.
 - **An administrator cannot act on their own account** through the admin routes. That is how a deployment loses its
   last administrator, and it is never what was meant.
+- **A new email address is parked, not applied.** It goes to `pending_email` and takes effect only when
+  `POST /auth/confirm-email` proves somebody reads it, so a typo costs a resend rather than the account. The
+  opposite — applying it and clearing `verified` — was tried and reverted: `verified` gates *access* here, so it
+  locked people out of the account they were sitting in.
 
 Cross-site request forgery is on by default for cookie-authenticated writes; see the README. Nothing about it
 touches these tables — the token is signed, not stored.

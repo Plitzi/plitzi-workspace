@@ -261,6 +261,33 @@ describe.skipIf(!available)('the MySQL store, against a real database', () => {
       expect(await store.authAdapters.findAccountByToken('t4')).toBeUndefined();
     });
 
+    /**
+     * The property the whole design rests on: a parked address is invisible to every lookup that resolves an
+     * account, so it cannot take over a sign-in identifier before it is confirmed.
+     */
+    it('parks an address without letting anything sign in with it', async () => {
+      const id = await store.admin.ensureAccount({ username: 'itest5', email: 'itest5@example.test', password: 'pw' });
+
+      await store.authAdapters.setPendingEmail?.(id, 'moved@example.test', 'confirm-me');
+
+      expect(await store.authAdapters.findByEmail?.('moved@example.test')).toBeUndefined();
+      expect(await store.authAdapters.findById?.(id)).toMatchObject({ email: 'itest5@example.test' });
+
+      const pending = await store.authAdapters.findByPendingEmail?.('confirm-me');
+      expect(pending).toMatchObject({ email: 'moved@example.test', account: { id } });
+
+      await store.authAdapters.updateAccount?.(id, { email: 'moved@example.test' });
+      await store.authAdapters.clearPendingEmail?.(id);
+
+      expect(await store.authAdapters.findByEmail?.('moved@example.test')).toMatchObject({ id });
+      expect(await store.authAdapters.findByPendingEmail?.('confirm-me')).toBeUndefined();
+    });
+
+    it('never resolves a blank confirmation token, however many rows have none', async () => {
+      expect(await store.authAdapters.findByPendingEmail?.('')).toBeUndefined();
+      expect(await store.authAdapters.findByPendingEmail?.('   ')).toBeUndefined();
+    });
+
     it('searches accounts without tripping over LIKE wildcards', async () => {
       await store.admin.ensureAccount({ username: 'per%cent', email: 'percent@example.test' });
 
