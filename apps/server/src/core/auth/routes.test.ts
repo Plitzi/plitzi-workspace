@@ -313,3 +313,39 @@ describe('the CSRF guard in front of the flows', () => {
     expect(await route?.handler(carrier({ headers: signedIn }))).toMatchObject({ ok: true });
   });
 });
+
+describe('a refusal that clears the cookies', () => {
+  const sink = (): CookieSink & { written: string[] } => {
+    const written: string[] = [];
+
+    return {
+      written,
+      getHeader: () => written,
+      setHeader: (_name, value) => {
+        written.length = 0;
+        written.push(...(Array.isArray(value) ? value : [value]));
+      }
+    };
+  };
+
+  /**
+   * The hint cookie is the browser's own reason to keep asking, and it outlives the access token deliberately. A
+   * refused renewal that leaves it there is one 401 per page load for a session that ended weeks ago.
+   */
+  it('clears them when the flow says the session is gone', () => {
+    const res = sink();
+
+    applySessionOutcome(carrier(), res, { ok: false, status: 401, body: {}, endSession: true }, cookies);
+
+    expect(res.written).toHaveLength(3);
+    expect(res.written.every(cookie => cookie.includes('Max-Age=0'))).toBe(true);
+  });
+
+  it('still grants nothing from a failure', () => {
+    const res = sink();
+
+    applySessionOutcome(carrier(), res, { ok: false, status: 401, body: {} }, cookies);
+
+    expect(res.written).toHaveLength(0);
+  });
+});

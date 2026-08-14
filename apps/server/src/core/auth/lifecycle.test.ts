@@ -1525,3 +1525,42 @@ describe('links that expire', () => {
     expect(await api.resetPassword(forged, 'n3wPassw0rd')).toMatchObject({ ok: false, status: 400 });
   });
 });
+
+/**
+ * The noise this exists to stop: a browser holding the readable hint cookie, whose refresh token is dead.
+ *
+ * The hint outlives the access token ON PURPOSE — it advertises the renewal window, which is what lets a page know
+ * a lapsed session can still be recovered without asking. So a visitor who is NOT signed in, and knows it, still
+ * has a reason to call `/auth/refresh` on every page load, and gets a 401 every time. Only the server can retract
+ * that claim, and until now a refusal retracted nothing.
+ */
+describe('a refusal that ends the session', () => {
+  const live = { ...ada, refreshExpiresAt: Math.floor(Date.now() / 1000) + 3600 };
+
+  it('says so when the credential can never work again', async () => {
+    const gone = await build({ findByRefreshToken: () => Promise.resolve(undefined) }).refresh('r');
+    const lapsed = await build({
+      findByRefreshToken: () => Promise.resolve({ ...ada, refreshExpiresAt: 1 })
+    }).refresh('r');
+    const blocked = await build({
+      findByRefreshToken: () => Promise.resolve({ ...live, active: false })
+    }).refresh('r');
+
+    for (const outcome of [gone, lapsed, blocked]) {
+      expect(outcome).toMatchObject({ ok: false, status: 401 });
+      expect(!outcome.ok && outcome.endSession).toBe(true);
+    }
+  });
+
+  /** A renewal that worked, and one that was never offered, have nothing to clear. */
+  it('says nothing of the sort when there is a session to keep', async () => {
+    const renewed = await build({ findByRefreshToken: () => Promise.resolve(live) }).refresh('r');
+    const notOffered = await build().refresh('r');
+    const noToken = await build({ findByRefreshToken: () => Promise.resolve(live) }).refresh('');
+
+    expect(renewed.ok).toBe(true);
+    expect(notOffered).toMatchObject({ ok: false, status: 404 });
+    expect(!notOffered.ok && notOffered.endSession).toBeUndefined();
+    expect(!noToken.ok && noToken.endSession).toBeUndefined();
+  });
+});

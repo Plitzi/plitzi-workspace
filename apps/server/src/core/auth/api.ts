@@ -352,7 +352,13 @@ export type ExchangeResult =
 /** What a handler answers: a body, and optionally what should happen to the session cookies. */
 export type AuthOutcome =
   | { ok: true; status?: number; body: object; session?: SSRSession; endSession?: boolean; csrf?: string }
-  | { ok: false; status: number; body: object };
+  /**
+   * `endSession` on a REFUSAL is not a contradiction: it is how a flow says "what this browser is holding is
+   * dead, stop holding it". Without it the cookies survive the refusal that proved them worthless, and the
+   * readable hint — which outlives the access token on purpose, to advertise the renewal window — sends the page
+   * back to renew on every single load. One 401 per page view, forever, for a session that ended weeks ago.
+   */
+  | { ok: false; status: number; body: object; endSession?: boolean };
 
 const refuse = (status: number, error: string, reason?: AuthFailure): AuthOutcome => ({
   ok: false,
@@ -1064,13 +1070,18 @@ export const createAuthApi = ({
         return refuse(400, 'Refresh token is required');
       }
 
+      /**
+       * Every refusal below ends the session in this browser, because each of them means the credential it just
+       * presented can never work again: no such row, past its deadline, or an account that may not hold one. What
+       * is being cleared is not authority — the row is already gone — it is the browser's reason to keep asking.
+       */
       const account = await adapters.findByRefreshToken?.(refreshToken);
       if (!account || !account.refreshExpiresAt || account.refreshExpiresAt < Math.floor(Date.now() / 1000)) {
-        return refuse(401, 'Invalid or expired refresh token', 'expired');
+        return { ...refuse(401, 'Invalid or expired refresh token', 'expired'), endSession: true };
       }
 
       if (!account.active) {
-        return refuse(401, 'Account is not active', 'inactive');
+        return { ...refuse(401, 'Account is not active', 'inactive'), endSession: true };
       }
 
       const cap = tokens.lifetimes.session;
@@ -1078,7 +1089,7 @@ export const createAuthApi = ({
         // Ended rather than merely refused, or the row lingers until its refresh token ages out.
         await adapters.clearSession({ refreshToken });
 
-        return refuse(401, 'This session has reached its maximum lifetime', 'expired');
+        return { ...refuse(401, 'This session has reached its maximum lifetime', 'expired'), endSession: true };
       }
 
       const session = await issue(account.id, { replaces: { refreshToken }, client: clientOf(carrier) });

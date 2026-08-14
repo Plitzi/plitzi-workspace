@@ -618,7 +618,21 @@ abstract class AuthProvider<U = Record<string, unknown>> {
       return true;
     }
 
-    return !!readSessionHint(this.hintCookie);
+    const hint = readSessionHint(this.hintCookie);
+
+    /**
+     * A hint whose renewal window has already closed is not evidence — it is a note about a session that ended.
+     * Asking anyway is a request that CANNOT succeed, and the visitor pays for it on every page load: the backend
+     * answers 401 and the only thing learned is what the cookie already said.
+     *
+     * The browser normally drops the cookie at that moment (its `Max-Age` is the renewal deadline), so this is
+     * the case where the two disagree — a clock that moved, a cookie restored from a session snapshot.
+     */
+    if (hint?.refreshExpiresAt !== undefined && hint.refreshExpiresAt <= nowInSeconds()) {
+      return false;
+    }
+
+    return !!hint;
   }
 
   // Renewal timing

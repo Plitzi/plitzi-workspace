@@ -395,7 +395,15 @@ export const applySessionOutcome = (
   cookies: SessionCookies,
   csrf?: Csrf
 ): void => {
+  /**
+   * A refusal can still have something to say about the cookies — see `endSession` on the failing outcome. It is
+   * the only thing it may say: nothing is granted from a flow that failed.
+   */
   if (!outcome.ok) {
+    if (outcome.endSession) {
+      cookies.clear(req, res);
+    }
+
     return;
   }
 

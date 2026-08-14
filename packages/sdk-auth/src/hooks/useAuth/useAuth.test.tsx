@@ -210,6 +210,57 @@ describe('a page the server already resolved the visitor for', () => {
     // Nothing in storage and no hint cookie: no evidence, so no request either.
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  /**
+   * The noise a visitor who is NOT signed in was paying for on every page load: a hint cookie left behind whose
+   * renewal window has already closed. It says a session lived here; it does not say one can be recovered, and
+   * asking anyway is a request that cannot succeed. The 401 was never the problem — the call was.
+   */
+  it('asks nothing when the hint says the renewal window has already closed', async () => {
+    const fetchMock = vi.fn<typeof fetch>();
+    vi.stubGlobal('fetch', fetchMock);
+    document.cookie = `plitzi_session_hint=${inSeconds(-7200)}.${inSeconds(-3600)}`;
+
+    const { result } = renderHook(() =>
+      useAuth({
+        server: guestRender,
+        isHydrating: true,
+        provider: 'basic',
+        settings: { ...basicSettings, sessionHintCookie: 'plitzi_session_hint' }
+      })
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(result.current.authenticated).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+    document.cookie = 'plitzi_session_hint=; Max-Age=0';
+  });
+
+  /** A window still open is evidence, and the backend is the only thing that can say whether it is any good. */
+  it('still asks while the window is open', async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response('{}', { status: 401 }));
+    vi.stubGlobal('fetch', fetchMock);
+    document.cookie = `plitzi_session_hint=${inSeconds(-3600)}.${inSeconds(3600)}`;
+
+    renderHook(() =>
+      useAuth({
+        server: guestRender,
+        isHydrating: true,
+        provider: 'basic',
+        settings: { ...basicSettings, sessionHintCookie: 'plitzi_session_hint' }
+      })
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(fetchMock).toHaveBeenCalled();
+    document.cookie = 'plitzi_session_hint=; Max-Age=0';
+  });
 });
 
 /**
