@@ -1,0 +1,661 @@
+import { describe, expect, it, vi } from 'vitest';
+
+import { createAuthApi } from './api';
+import { createCarriers, presentedOrigin } from './credentials';
+import { createIdentity } from './identity';
+import { createTokens } from './tokens';
+
+import type { AccountAdapters, AccountRecord, AuthApiConfig, AuthOutcome, SessionSummary } from './api';
+import type { Actor } from './identity';
+
+/**
+ * The account's life after it exists: what it may change about itself, what an administrator may change about it,
+ * and what each of those does to the sessions it is holding. Everything here is a rule the server owns, so it is
+ * asserted against fake adapters rather than a database.
+ */
+
+const ada: AccountRecord = {
+  id: 1,
+  username: 'ada',
+  email: 'ada@example.test',
+  active: true,
+  verified: true,
+  passwordHash: 'hash:pw'
+};
+
+const actorFor = (account: AccountRecord, permissions: string[] = []): Actor => ({
+  id: account.id,
+  username: account.username,
+  email: account.email,
+  verified: account.verified,
+  roles: [],
+  permissions,
+  token: `token-${account.id}`,
+  expiresAt: Math.floor(Date.now() / 1000) + 3600
+});
+
+const build = (adapters: Partial<AccountAdapters> = {}) => {
+  const tokens = createTokens({ secret: 'test-secret', issuer: 'https://test' });
+  const full: AccountAdapters = {
+    saveSession: () => Promise.resolve(),
+    clearSession: () => Promise.resolve(),
+    loadAccess: () => Promise.resolve({ roles: [], permissions: [] }),
+    ...adapters
+  };
+
+  const identity = createIdentity({
+    tokens,
+    carriers: createCarriers(() => 'sess'),
+    presentedOrigin,
+    adapters: { findAccountByToken: () => Promise.resolve(undefined) }
+  });
+
+  return createAuthApi({
+    tokens,
+    identity,
+    adapters: full,
+    config: {
+      verifyPassword: (plain, hash) => Promise.resolve(hash === `hash:${plain}`),
+      hashPassword: plain => Promise.resolve(`hash:${plain}`)
+    }
+  });
+};
+
+const body = (outcome: AuthOutcome): Record<string, unknown> => outcome.body as Record<string, unknown>;
+
+describe('capabilities follow the adapters', () => {
+  it('offers nothing extra to a store that implements nothing extra', () => {
+    expect(build().capabilities).toMatchObject({
+      profile: false,
+      passwordChange: false,
+      accountDeletion: false,
+      sessionList: false,
+      administration: false
+    });
+  });
+
+  it('offers each flow exactly when its adapters are there', () => {
+    const api = build({
+      findById: () => Promise.resolve(ada),
+      updateAccount: () => Promise.resolve(ada),
+      setPassword: () => Promise.resolve(),
+      deleteAccount: () => Promise.resolve(),
+      listSessions: () => Promise.resolve([]),
+      listAccounts: () => Promise.resolve({ accounts: [], total: 0 })
+    });
+
+    expect(api.capabilities).toMatchObject({
+      profile: true,
+      passwordChange: true,
+      accountDeletion: true,
+      sessionList: true,
+      administration: true
+    });
+  });
+
+  it('answers 404 rather than failing when a flow is not offered', async () => {
+    const api = build();
+
+    expect(await api.updateProfile(actorFor(ada), { username: 'x' })).toMatchObject({ ok: false, status: 404 });
+    expect(await api.changePassword(actorFor(ada), 'a', 'n3wPassw0rd')).toMatchObject({ ok: false, status: 404 });
+    expect(await api.deleteSelf(actorFor(ada))).toMatchObject({ ok: false, status: 404 });
+    expect(await api.listSessions(actorFor(ada))).toMatchObject({ ok: false, status: 404 });
+  });
+});
+
+describe('updating a profile', () => {
+  const updateAccount = (_userId: number, changes: { username?: string; email?: string }) =>
+    Promise.resolve({ ...ada, ...changes });
+
+  it('changes only what was named', async () => {
+    const update = vi.fn(updateAccount);
+    const api = build({ updateAccount: update, findByEmail: () => Promise.resolve(undefined) });
+
+    await api.updateProfile(actorFor(ada), { email: 'new@example.test' });
+
+    expect(update).toHaveBeenCalledWith(1, { email: 'new@example.test' });
+  });
+
+  it('refuses a username somebody else holds', async () => {
+    const api = build({
+      updateAccount,
+      findByUsername: () => Promise.resolve({ ...ada, id: 2, username: 'grace' })
+    });
+
+    expect(await api.updateProfile(actorFor(ada), { username: 'grace' })).toMatchObject({ ok: false, status: 409 });
+  });
+
+  /** Their own name is not a collision — re-submitting an unchanged form must not be an error. */
+  it('accepts the caller keeping the name they already have', async () => {
+    const api = build({ updateAccount, findByUsername: () => Promise.resolve(ada) });
+
+    expect(await api.updateProfile(actorFor(ada), { username: 'ada' })).toMatchObject({ ok: true });
+  });
+
+  it('refuses an empty change rather than writing nothing and claiming success', async () => {
+    const api = build({ updateAccount });
+
+    expect(await api.updateProfile(actorFor(ada), {})).toMatchObject({ ok: false, status: 400 });
+  });
+
+  it('never answers with the password hash', async () => {
+    const api = build({ updateAccount, findByEmail: () => Promise.resolve(undefined) });
+    const outcome = await api.updateProfile(actorFor(ada), { email: 'new@example.test' });
+
+    expect(JSON.stringify(body(outcome))).not.toContain('hash:');
+  });
+});
+
+describe('changing a password', () => {
+  const adapters = {
+    findById: () => Promise.resolve(ada),
+    setPassword: vi.fn(() => Promise.resolve()),
+    revokeOtherSessions: vi.fn(() => Promise.resolve(2))
+  };
+
+  it('refuses without the current one', async () => {
+    const api = build(adapters);
+
+    expect(await api.changePassword(actorFor(ada), 'wrong', 'n3wPassw0rd')).toMatchObject({ ok: false, status: 401 });
+    expect(adapters.setPassword).not.toHaveBeenCalled();
+  });
+
+  /**
+   * The half that makes it mean something. Changing a password is what somebody does when they think a credential
+   * escaped; leaving the other sessions signed in does not do what they asked for.
+   */
+  it('signs out the other devices, and not the one asking', async () => {
+    const setPassword = vi.fn(() => Promise.resolve());
+    const revokeOtherSessions = vi.fn(() => Promise.resolve(2));
+    const clearSession = vi.fn(() => Promise.resolve());
+    const api = build({ findById: () => Promise.resolve(ada), setPassword, revokeOtherSessions, clearSession });
+    const actor = actorFor(ada);
+
+    expect(await api.changePassword(actor, 'pw', 'n3wPassw0rd')).toMatchObject({ ok: true });
+    expect(setPassword).toHaveBeenCalledWith(1, 'hash:n3wPassw0rd');
+    expect(revokeOtherSessions).toHaveBeenCalledWith(1, actor.token);
+    expect(clearSession).not.toHaveBeenCalled();
+  });
+});
+
+describe('closing an account', () => {
+  it('asks for the password when the account has one', async () => {
+    const deleteAccount = vi.fn(() => Promise.resolve());
+    const api = build({ findById: () => Promise.resolve(ada), deleteAccount });
+
+    expect(await api.deleteSelf(actorFor(ada), 'wrong')).toMatchObject({ ok: false, status: 401 });
+    expect(await api.deleteSelf(actorFor(ada))).toMatchObject({ ok: false, status: 401 });
+    expect(deleteAccount).not.toHaveBeenCalled();
+  });
+
+  it('deletes and ends the session when it is right', async () => {
+    const deleteAccount = vi.fn(() => Promise.resolve());
+    const api = build({ findById: () => Promise.resolve(ada), deleteAccount });
+    const outcome = await api.deleteSelf(actorFor(ada), 'pw');
+
+    expect(outcome).toMatchObject({ ok: true, endSession: true });
+    expect(deleteAccount).toHaveBeenCalledWith(1);
+  });
+
+  /** An account created through an identity provider has no password to be asked for; the session is the proof. */
+  it('accepts the session alone for an account with no password', async () => {
+    const passwordless = { ...ada, passwordHash: undefined };
+    const api = build({ findById: () => Promise.resolve(passwordless), deleteAccount: () => Promise.resolve() });
+
+    expect(await api.deleteSelf(actorFor(passwordless))).toMatchObject({ ok: true });
+  });
+});
+
+describe('sessions', () => {
+  const sessions: SessionSummary[] = [
+    { id: 1, userAgent: 'laptop', createdAt: 1, expiresAt: 2, current: true },
+    { id: 2, userAgent: 'phone', createdAt: 1, expiresAt: 2, current: false }
+  ];
+
+  it('lists them, marking the one asking', async () => {
+    const listSessions = vi.fn(() => Promise.resolve(sessions));
+    const api = build({ listSessions });
+    const actor = actorFor(ada);
+
+    expect(body(await api.listSessions(actor))).toEqual({ sessions });
+    expect(listSessions).toHaveBeenCalledWith(1, actor.token);
+  });
+
+  /** Scoped to the caller's own account: a session id from somebody else must not resolve. */
+  it('revokes one, scoped to the caller', async () => {
+    const revokeSession = vi.fn(() => Promise.resolve(true));
+    const api = build({ revokeSession });
+
+    expect(await api.revokeSession(actorFor(ada), 2)).toMatchObject({ ok: true });
+    expect(revokeSession).toHaveBeenCalledWith(1, 2);
+  });
+
+  it('404s for a session that is not the caller’s', async () => {
+    const api = build({ revokeSession: () => Promise.resolve(false) });
+
+    expect(await api.revokeSession(actorFor(ada), 99)).toMatchObject({ ok: false, status: 404 });
+  });
+
+  it('refuses an id that is not one', async () => {
+    const revokeSession = vi.fn(() => Promise.resolve(true));
+    const api = build({ revokeSession });
+
+    expect(await api.revokeSession(actorFor(ada), Number.NaN)).toMatchObject({ ok: false, status: 400 });
+    expect(revokeSession).not.toHaveBeenCalled();
+  });
+
+  it('ends the others and says how many', async () => {
+    const api = build({ revokeOtherSessions: () => Promise.resolve(3) });
+
+    expect(body(await api.revokeOtherSessions(actorFor(ada)))).toMatchObject({ revoked: 3 });
+  });
+});
+
+describe('administration', () => {
+  const adminActor = actorFor({ ...ada, id: 9, username: 'root' }, ['userManage']);
+
+  const adminApi = (extra: Partial<AccountAdapters> = {}) =>
+    build({
+      findById: (id: number) => Promise.resolve(id === 1 ? ada : undefined),
+      listAccounts: () => Promise.resolve({ accounts: [ada], total: 1 }),
+      setStatus: () => Promise.resolve(),
+      setRoles: () => Promise.resolve(),
+      deleteAccount: () => Promise.resolve(),
+      ...extra
+    });
+
+  it('refuses an actor without the permission, and a stranger differently', async () => {
+    const api = adminApi();
+
+    expect(await api.admin.list(actorFor(ada), {})).toMatchObject({ ok: false, status: 403 });
+    expect(await api.admin.list(undefined, {})).toMatchObject({ ok: false, status: 401 });
+  });
+
+  it('honours a deployment’s own permission name', async () => {
+    const tokens = createTokens({ secret: 's', issuer: 'https://test' });
+    const identity = createIdentity({
+      tokens,
+      carriers: createCarriers(() => 'sess'),
+      presentedOrigin,
+      adapters: { findAccountByToken: () => Promise.resolve(undefined) }
+    });
+    const api = createAuthApi({
+      tokens,
+      identity,
+      adapters: {
+        saveSession: () => Promise.resolve(),
+        clearSession: () => Promise.resolve(),
+        loadAccess: () => Promise.resolve({ roles: [], permissions: [] }),
+        findById: () => Promise.resolve(ada),
+        listAccounts: () => Promise.resolve({ accounts: [], total: 0 })
+      },
+      config: { adminPermission: 'staff' }
+    });
+
+    expect(await api.admin.list(actorFor(ada, ['userManage']), {})).toMatchObject({ status: 403 });
+    expect(await api.admin.list(actorFor(ada, ['staff']), {})).toMatchObject({ ok: true });
+  });
+
+  it('lists accounts without their hashes', async () => {
+    expect(JSON.stringify(body(await adminApi().admin.list(adminActor, {})))).not.toContain('hash:');
+  });
+
+  it('404s for an account that is not there', async () => {
+    expect(await adminApi().admin.get(adminActor, 404)).toMatchObject({ ok: false, status: 404 });
+  });
+
+  /**
+   * The rule that makes a ban a ban. Without it the person stays signed in until their token happens to lapse,
+   * and the row saying `blocked` is a note in a database.
+   */
+  it('ends every session when an account stops being active', async () => {
+    const clearSession = vi.fn(() => Promise.resolve());
+    const api = adminApi({ clearSession });
+
+    expect(await api.admin.setStatus(adminActor, 1, 'blocked')).toMatchObject({ ok: true });
+    expect(clearSession).toHaveBeenCalledWith({ userId: 1 });
+  });
+
+  it('does not end sessions when an account is restored', async () => {
+    const clearSession = vi.fn(() => Promise.resolve());
+    const api = adminApi({ clearSession });
+
+    await api.admin.setStatus(adminActor, 1, 'active');
+
+    expect(clearSession).not.toHaveBeenCalled();
+  });
+
+  it('refuses a status it does not have', async () => {
+    const api = adminApi();
+
+    expect(await api.admin.setStatus(adminActor, 1, 'sleepy' as 'active')).toMatchObject({ ok: false, status: 400 });
+  });
+
+  /** How a deployment loses its last administrator. Closing your own account is the self-service flow. */
+  it('refuses an administrator acting on their own account', async () => {
+    const api = adminApi({ findById: () => Promise.resolve(ada) });
+
+    expect(await api.admin.setStatus(adminActor, 9, 'blocked')).toMatchObject({ ok: false, status: 400 });
+    expect(await api.admin.remove(adminActor, 9)).toMatchObject({ ok: false, status: 400 });
+  });
+
+  it('sets roles to exactly the list given', async () => {
+    const setRoles = vi.fn(() => Promise.resolve());
+    const api = adminApi({ setRoles });
+
+    expect(await api.admin.setRoles(adminActor, 1, ['editor'])).toMatchObject({ ok: true });
+    expect(setRoles).toHaveBeenCalledWith(1, ['editor']);
+  });
+
+  /**
+   * `roles: "editor"` is the obvious client mistake, and it used to be coerced to an empty list — every role
+   * removed, reported as success. The wrong shape has to be a refusal, not a silent wipe.
+   */
+  it('refuses roles that are not a list of names', async () => {
+    const setRoles = vi.fn(() => Promise.resolve());
+    const api = adminApi({ setRoles });
+
+    expect(await api.admin.setRoles(adminActor, 1, [3])).toMatchObject({ status: 400 });
+    expect(await api.admin.setRoles(adminActor, 1, 'editor')).toMatchObject({ status: 400 });
+    expect(await api.admin.setRoles(adminActor, 1, undefined)).toMatchObject({ status: 400 });
+    expect(setRoles).not.toHaveBeenCalled();
+  });
+
+  it('deletes somebody else', async () => {
+    const deleteAccount = vi.fn(() => Promise.resolve());
+    const api = adminApi({ deleteAccount });
+
+    expect(await api.admin.remove(adminActor, 1)).toMatchObject({ ok: true });
+    expect(deleteAccount).toHaveBeenCalledWith(1);
+  });
+});
+
+describe('what a password has to be', () => {
+  const store = {
+    createAccount: vi.fn((account: { username: string; email: string; passwordHash: string }) =>
+      Promise.resolve({ ...ada, ...account })
+    ),
+    findByResetToken: () => Promise.resolve(ada),
+    setPassword: vi.fn(() => Promise.resolve()),
+    setResetToken: () => Promise.resolve(),
+    findByEmail: () => Promise.resolve(undefined),
+    findById: () => Promise.resolve(ada)
+  };
+
+  /** NIST SP 800-63B's floor. Deliberately no composition rules: those measurably produce `Password1!`. */
+  it('is at least eight characters, everywhere one is set', async () => {
+    const api = build(store);
+
+    expect(await api.signup({ username: 'new', email: 'n@e.test', password: 'short' })).toMatchObject({ status: 400 });
+    expect(await api.resetPassword('tok', 'short')).toMatchObject({ status: 400 });
+    expect(await api.changePassword(actorFor(ada), 'pw', 'short')).toMatchObject({ status: 400 });
+    expect(store.createAccount).not.toHaveBeenCalled();
+    expect(store.setPassword).not.toHaveBeenCalled();
+  });
+
+  it('says how long it needed to be', async () => {
+    const outcome = await build(store).signup({ username: 'new', email: 'n@e.test', password: 'short' });
+
+    expect(body(outcome).error).toContain('8 characters');
+  });
+
+  it('takes the deployment’s own minimum', async () => {
+    const tokens = createTokens({ secret: 's', issuer: 'https://test' });
+    const identity = createIdentity({
+      tokens,
+      carriers: createCarriers(() => 'sess'),
+      presentedOrigin,
+      adapters: { findAccountByToken: () => Promise.resolve(undefined) }
+    });
+    const api = createAuthApi({
+      tokens,
+      identity,
+      adapters: {
+        saveSession: () => Promise.resolve(),
+        clearSession: () => Promise.resolve(),
+        loadAccess: () => Promise.resolve({ roles: [], permissions: [] }),
+        createAccount: account => Promise.resolve({ ...ada, ...account })
+      },
+      config: { hashPassword: plain => Promise.resolve(`hash:${plain}`), password: { minLength: 16 } }
+    });
+
+    expect(await api.signup({ username: 'n', email: 'n@e.test', password: 'elevenchars' })).toMatchObject({
+      status: 400
+    });
+  });
+
+  /** The hook is where a breach-list lookup or a strength estimator goes; the reason it gives reaches the caller. */
+  it('reports what a deployment’s own rule refused, and what it was given', async () => {
+    const validate = vi.fn(() => Promise.resolve('That password is in a breach list'));
+    const tokens = createTokens({ secret: 's', issuer: 'https://test' });
+    const identity = createIdentity({
+      tokens,
+      carriers: createCarriers(() => 'sess'),
+      presentedOrigin,
+      adapters: { findAccountByToken: () => Promise.resolve(undefined) }
+    });
+    const api = createAuthApi({
+      tokens,
+      identity,
+      adapters: {
+        saveSession: () => Promise.resolve(),
+        clearSession: () => Promise.resolve(),
+        loadAccess: () => Promise.resolve({ roles: [], permissions: [] }),
+        createAccount: account => Promise.resolve({ ...ada, ...account })
+      },
+      config: { hashPassword: plain => Promise.resolve(`hash:${plain}`), password: { validate } }
+    });
+
+    const outcome = await api.signup({ username: 'ada2', email: 'a2@e.test', password: 'correcthorsebattery' });
+
+    expect(body(outcome).error).toBe('That password is in a breach list');
+    expect(validate).toHaveBeenCalledWith('correcthorsebattery', { username: 'ada2', email: 'a2@e.test' });
+  });
+});
+
+describe('throttling', () => {
+  const carrier = { headers: {}, hostname: 'test' };
+
+  const limited = (adapters: Partial<AccountAdapters>, rateLimit: AuthApiConfig['rateLimit']) => {
+    const tokens = createTokens({ secret: 's', issuer: 'https://test' });
+    const identity = createIdentity({
+      tokens,
+      carriers: createCarriers(() => 'sess'),
+      presentedOrigin,
+      adapters: { findAccountByToken: () => Promise.resolve(undefined) }
+    });
+
+    return createAuthApi({
+      tokens,
+      identity,
+      adapters: {
+        saveSession: () => Promise.resolve(),
+        clearSession: () => Promise.resolve(),
+        loadAccess: () => Promise.resolve({ roles: [], permissions: [] }),
+        ...adapters
+      },
+      config: {
+        verifyPassword: (plain, hash) => Promise.resolve(hash === `hash:${plain}`),
+        hashPassword: plain => Promise.resolve(`hash:${plain}`),
+        generateToken: () => 'tok',
+        rateLimit
+      }
+    });
+  };
+
+  it('is absent by default, because where the counter lives is the deployment’s call', async () => {
+    const findByUsername = vi.fn(() => Promise.resolve(ada));
+    const api = build({ findByUsername });
+
+    await api.login({ username: 'ada', password: 'wrong' });
+    await api.login({ username: 'ada', password: 'wrong' });
+
+    expect(findByUsername).toHaveBeenCalledTimes(2);
+  });
+
+  /**
+   * Before the password is checked, which is the whole point: a throttled attempt must cost no hash, or the limit
+   * is only a slightly slower way to be brute-forced.
+   */
+  it('refuses a sign-in before it looks the account up at all', async () => {
+    const findByUsername = vi.fn(() => Promise.resolve(ada));
+    const verifyPassword = vi.fn(() => Promise.resolve(true));
+    const api = limited({ findByUsername }, () => Promise.resolve(false));
+
+    expect(await api.login({ username: 'ada', password: 'pw' }, carrier)).toMatchObject({ status: 429 });
+    expect(findByUsername).not.toHaveBeenCalled();
+    expect(verifyPassword).not.toHaveBeenCalled();
+  });
+
+  it('passes the attempt along so a deployment can key it however it likes', async () => {
+    const rateLimit = vi.fn(() => Promise.resolve(true));
+    const api = limited({ findByUsername: () => Promise.resolve(undefined) }, rateLimit);
+
+    await api.login({ username: 'ada', password: 'pw' }, carrier);
+
+    expect(rateLimit).toHaveBeenCalledWith({ action: 'login', key: 'ada', carrier });
+  });
+
+  it('tells the caller when to come back', async () => {
+    const api = limited({ findByUsername: () => Promise.resolve(ada) }, () =>
+      Promise.resolve({ allowed: false, retryAfter: 42 })
+    );
+    const outcome = await api.login({ username: 'ada', password: 'pw' });
+
+    expect(body(outcome)).toMatchObject({ retryAfter: 42 });
+  });
+
+  it('throttles every act worth throttling, not only sign-in', async () => {
+    const seen: string[] = [];
+    const api = limited(
+      {
+        findByUsername: () => Promise.resolve(ada),
+        createAccount: account => Promise.resolve({ ...ada, ...account }),
+        findByEmail: () => Promise.resolve(ada),
+        findByResetToken: () => Promise.resolve(ada),
+        setResetToken: () => Promise.resolve(),
+        setPassword: () => Promise.resolve(),
+        findById: () => Promise.resolve(ada)
+      },
+      attempt => {
+        seen.push(attempt.action);
+
+        return Promise.resolve(true);
+      }
+    );
+
+    await api.login({ username: 'ada', password: 'pw' });
+    await api.signup({ username: 'n', email: 'n@e.test', password: 'longenoughpw' });
+    await api.forgotPassword('ada@example.test');
+    await api.resetPassword('tok', 'longenoughpw');
+    await api.changePassword(actorFor(ada), 'pw', 'longenoughpw');
+
+    expect(seen).toEqual(['login', 'signup', 'forgotPassword', 'resetPassword', 'changePassword']);
+  });
+});
+
+describe('changing the email that was verified', () => {
+  const withVerification = (overrides: Partial<AccountAdapters> = {}) => {
+    const tokens = createTokens({ secret: 's', issuer: 'https://test' });
+    const identity = createIdentity({
+      tokens,
+      carriers: createCarriers(() => 'sess'),
+      presentedOrigin,
+      adapters: { findAccountByToken: () => Promise.resolve(undefined) }
+    });
+
+    return createAuthApi({
+      tokens,
+      identity,
+      adapters: {
+        saveSession: () => Promise.resolve(),
+        clearSession: () => Promise.resolve(),
+        loadAccess: () => Promise.resolve({ roles: [], permissions: [] }),
+        updateAccount: (_id, changes) => Promise.resolve({ ...ada, ...changes }),
+        findByEmail: () => Promise.resolve(undefined),
+        findByValidationToken: () => Promise.resolve(ada),
+        setValidationToken: () => Promise.resolve(),
+        setVerified: () => Promise.resolve(),
+        ...overrides
+      },
+      config: { generateToken: () => 'fresh-token' }
+    });
+  };
+
+  /**
+   * Otherwise changing an address inherits the old one's confirmation: point the account at something you do not
+   * control and it arrives already trusted, which is what verification existed to prevent.
+   */
+  it('takes the verification away and sends a fresh confirmation', async () => {
+    const setVerified = vi.fn(() => Promise.resolve());
+    const setValidationToken = vi.fn(() => Promise.resolve());
+    const sendMail = vi.fn(() => Promise.resolve());
+    const api = withVerification({ setVerified, setValidationToken, sendMail });
+
+    const outcome = await api.updateProfile(actorFor(ada), { email: 'elsewhere@example.test' });
+
+    expect(setVerified).toHaveBeenCalledWith(1, false);
+    expect(setValidationToken).toHaveBeenCalledWith(1, 'fresh-token');
+    expect(sendMail).toHaveBeenCalledWith(
+      expect.objectContaining({ to: 'elsewhere@example.test', template: 'validation' })
+    );
+    expect(body(outcome)).toMatchObject({ details: { verified: false } });
+  });
+
+  it('leaves it alone when the address did not change', async () => {
+    const setVerified = vi.fn(() => Promise.resolve());
+    const api = withVerification({ setVerified });
+
+    await api.updateProfile(actorFor(ada), { email: ada.email, username: 'ada-renamed' });
+
+    expect(setVerified).not.toHaveBeenCalled();
+  });
+
+  /** A deployment that does not verify emails has none of those adapters, and nothing here should appear. */
+  it('does nothing extra for a deployment that does not verify emails', async () => {
+    const api = build({ updateAccount: (_id, changes) => Promise.resolve({ ...ada, ...changes }) });
+    const outcome = await api.updateProfile(actorFor(ada), { email: 'elsewhere@example.test' });
+
+    expect(outcome).toMatchObject({ ok: true });
+    expect(body(outcome)).not.toHaveProperty('message');
+  });
+});
+
+describe('when the mail provider is down', () => {
+  /**
+   * Every one of these sends AFTER something has been committed. Letting the provider decide whether the request
+   * succeeded reports a change that DID happen as a 500, and the caller retries against the new state.
+   */
+  it('does not fail a change that already happened', async () => {
+    const onMailError = vi.fn();
+    const tokens = createTokens({ secret: 's', issuer: 'https://test' });
+    const identity = createIdentity({
+      tokens,
+      carriers: createCarriers(() => 'sess'),
+      presentedOrigin,
+      adapters: { findAccountByToken: () => Promise.resolve(undefined) }
+    });
+    const api = createAuthApi({
+      tokens,
+      identity,
+      adapters: {
+        saveSession: () => Promise.resolve(),
+        clearSession: () => Promise.resolve(),
+        loadAccess: () => Promise.resolve({ roles: [], permissions: [] }),
+        updateAccount: (_id, changes) => Promise.resolve({ ...ada, ...changes }),
+        createAccount: account => Promise.resolve({ ...ada, ...account }),
+        findByValidationToken: () => Promise.resolve(ada),
+        setValidationToken: () => Promise.resolve(),
+        setVerified: () => Promise.resolve(),
+        sendMail: () => Promise.reject(new Error('no API key'))
+      },
+      config: { hashPassword: plain => Promise.resolve(`hash:${plain}`), generateToken: () => 'tok', onMailError }
+    });
+
+    expect(await api.updateProfile(actorFor(ada), { email: 'elsewhere@example.test' })).toMatchObject({ ok: true });
+    expect(await api.signup({ username: 'n', email: 'n@e.test', password: 'longenoughpw' })).toMatchObject({
+      ok: true
+    });
+    expect(onMailError).toHaveBeenCalledTimes(2);
+  });
+});

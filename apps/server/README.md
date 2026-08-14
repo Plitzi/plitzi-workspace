@@ -823,6 +823,10 @@ and every refusal names a machine-readable `reason`, so a client can tell "renew
 | Config | Effect |
 |---|---|
 | `cookie` | Name, domain, `SameSite`, `Secure`, the refresh path, the hint suffix. Defaults derive from the request host |
+| `api.password` | What a password has to be. `minLength` defaults to 8 (NIST SP 800-63B's floor); `validate` is where a breach-list lookup or a strength estimator goes. Applied wherever one is set — signing up, resetting, changing |
+| `api.rateLimit` | May this attempt proceed? Called before the password is checked, so a throttled attempt costs no hash. **There is no default**: where the counter lives is a deployment decision, and an unthrottled password endpoint is a credential-stuffing target |
+| `api.adminPermission` | The global capability the `/auth/admin/*` routes require. Default `userManage` |
+| `api.onMailError` | Where a failed delivery is reported. It is never thrown: every one of these sends after something has already been committed, so letting the provider decide whether the request succeeded reports a change that did happen as a 500 |
 | `basePath` | Where the flows are mounted. The guard's rules follow it |
 | `rules` / `fallback` | Extra authorization rules, applied before the derived ones, and what an unlisted path requires |
 | `identity` | Your own hosts and origins — the floor for domain binding and framing |

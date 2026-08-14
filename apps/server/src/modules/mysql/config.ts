@@ -36,6 +36,16 @@ export interface MysqlConfig {
    * made by somebody holding rights the application should not have.
    */
   ensureDatabase?: boolean;
+  /**
+   * Use tables with these names that already exist and were not created here.
+   *
+   * Off by default, and the default is the safe one: this module is meant to be pointed at a database that has
+   * unrelated tables in it, and `role`, `permission` and `session` are among the most ordinary names there are.
+   * `CREATE TABLE IF NOT EXISTS` would silently adopt somebody else's, and the failure would surface much later as
+   * a query against columns that are not there. Turn it on only when re-attaching to tables that really are this
+   * schema's — a restored backup whose `schema_version` row was lost, say.
+   */
+  adoptExisting?: boolean;
   /** An existing pool, for a deployment that already has one. Given, nothing here creates or ends a connection. */
   pool?: Pool;
   log?: (message: string) => void;

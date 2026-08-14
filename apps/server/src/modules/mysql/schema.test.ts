@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { resolveTables, tableNames } from './config';
-import { SCHEMA_VERSION, schemaStatements } from './schema';
+import { SCHEMA_VERSION, addColumn, addIndex, dropColumn, schemaStatements } from './schema';
 
 describe('table naming', () => {
   it('prefixes every table, and quotes every name', () => {
@@ -82,5 +82,50 @@ describe('schema statements', () => {
 
   it('applies nothing when the database is already current', () => {
     expect(schemaStatements(resolveTables(), SCHEMA_VERSION)).toEqual([]);
+  });
+});
+
+describe('idempotent DDL, for the steps that come after the first', () => {
+  /**
+   * MySQL has no `ADD COLUMN IF NOT EXISTS` and cannot roll back DDL, so a step that fails halfway has already
+   * applied some of its statements. Every one of them has to survive meeting itself on the retry.
+   */
+  it('guards an added column on information_schema', () => {
+    const statements = addColumn('account', 'locale', 'VARCHAR(16) NULL');
+
+    expect(statements[0]).toContain('information_schema.COLUMNS');
+    expect(statements[0]).toMatch(/TABLE_NAME = 'account'/);
+    expect(statements[0]).toMatch(/COLUMN_NAME = 'locale'/);
+    expect(statements[0]).toContain('= 0');
+    expect(statements[0]).toContain('ALTER TABLE `account` ADD COLUMN `locale` VARCHAR(16) NULL');
+    expect(statements).toHaveLength(4);
+  });
+
+  it('guards a dropped column the other way round', () => {
+    const statements = dropColumn('account', 'locale');
+
+    expect(statements[0]).toContain('> 0');
+    expect(statements[0]).toContain('ALTER TABLE `account` DROP COLUMN `locale`');
+  });
+
+  it('guards an added index on the index name', () => {
+    const statements = addIndex('session', 'session_ip', '(ip)');
+
+    expect(statements[0]).toContain('information_schema.STATISTICS');
+    expect(statements[0]).toMatch(/INDEX_NAME = 'session_ip'/);
+    expect(statements[0]).toContain('ALTER TABLE `session` ADD INDEX `session_ip` (ip)');
+  });
+
+  /** A no-op has to be a statement MySQL accepts, or the "already applied" branch is itself an error. */
+  it('falls back to a statement that does nothing', () => {
+    expect(addColumn('account', 'locale', 'INT')[0]).toContain('DO 0');
+  });
+
+  it('prepares, executes and deallocates, so nothing is left behind on the connection', () => {
+    const statements = addColumn('account', 'locale', 'INT');
+
+    expect(statements[1]).toContain('PREPARE');
+    expect(statements[2]).toContain('EXECUTE');
+    expect(statements[3]).toContain('DEALLOCATE');
   });
 });

@@ -3,7 +3,7 @@ import { createAdmin } from './admin';
 import { resolveTables, tableNames } from './config';
 import { generateToken, hashPassword, verifyPassword } from './passwords';
 import { createPool } from './pool';
-import { SCHEMA_VERSION, migrate, schemaStatements } from './schema';
+import { SCHEMA_VERSION, dropSchema, migrate, schemaStatements } from './schema';
 import { createSessionStore } from './sessions';
 import { createSpaceTokenStore } from './spaceTokens';
 
@@ -34,6 +34,11 @@ export interface MysqlStore {
   passwords: { hashPassword: typeof hashPassword; verifyPassword: typeof verifyPassword; generateToken: () => string };
   /** Seeding and administration — roles, permissions, memberships, a space's first credential. */
   admin: MysqlAdmin;
+  /**
+   * Removes this schema and nothing else — for a deployment that shared a database with other things and has
+   * stopped using it. Returns the tables it dropped. Refuses a database it was never migrated into.
+   */
+  uninstall: (options?: { force?: boolean }) => Promise<string[]>;
   close: () => Promise<void>;
 }
 
@@ -65,7 +70,7 @@ export const createMysqlStore = async (config: MysqlConfig): Promise<MysqlStore>
   const owned = !config.pool;
 
   if (autoMigrate) {
-    await migrate(pool, tables, log);
+    await migrate(pool, tables, { prefix: tablePrefix, adoptExisting: config.adoptExisting, log });
   }
 
   return {
@@ -77,6 +82,7 @@ export const createMysqlStore = async (config: MysqlConfig): Promise<MysqlStore>
     sessions: createSessionStore(pool, tables),
     passwords: { hashPassword, verifyPassword, generateToken },
     admin: createAdmin(pool, tables),
+    uninstall: (options = {}) => dropSchema(pool, tables, { prefix: tablePrefix, force: options.force, log }),
     // A pool that was handed in is not ours to end: the deployment that opened it has other things using it.
     close: async (): Promise<void> => {
       if (owned) {
@@ -85,6 +91,8 @@ export const createMysqlStore = async (config: MysqlConfig): Promise<MysqlStore>
     }
   };
 };
+
+export { dropSchema };
 
 /** The DDL, for a deployment whose database user may not run it — see `MysqlConfig.autoMigrate`. */
 export const mysqlSchemaStatements = (tablePrefix = '', fromVersion = 0): string[] =>

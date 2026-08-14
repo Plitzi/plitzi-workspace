@@ -61,12 +61,14 @@ const queryNumber = (req: AuthRequest, name: string): number | undefined => {
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
-/** Whatever arrived as `roles`, as a list. The handler refuses anything that is not one, rather than coercing. */
-const rolesOf = (req: AuthRequest): string[] => {
-  const value = body(req).roles;
-
-  return Array.isArray(value) ? (value as string[]) : [];
-};
+/**
+ * Whatever arrived as `roles`, unexamined.
+ *
+ * Deliberately NOT coerced to a list here. It was, and a client sending `roles: "editor"` — the obvious mistake —
+ * got an empty list, which `setRoles` faithfully applied: every role removed, and a 200 saying it worked. The
+ * handler validates instead, so the wrong shape is a 400.
+ */
+const rolesOf = (req: AuthRequest): unknown => body(req).roles;
 
 type Flow = Omit<AuthRoute, 'handler'> & {
   run: (api: AuthApi, cookies: SessionCookies, req: AuthRequest) => Promise<AuthOutcome> | AuthOutcome;

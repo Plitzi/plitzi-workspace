@@ -175,6 +175,45 @@ The admin routes check one global permission, named by `createAuth({ api: { admi
 `userManage` — the server does not presume to know your vocabulary. They are otherwise ordinary `actor` routes, so a
 deployment that grants that permission to nobody has them refuse everyone.
 
+## Sharing a database with things that are not ours
+
+This module is meant to be pointed at a database that already has other tables in it, and `role`, `permission` and
+`session` are among the most ordinary names there are. So:
+
+- **It refuses to adopt tables it did not create.** `CREATE TABLE IF NOT EXISTS` would silently take somebody
+  else's `role` and fail much later, on a query against columns that are not there. Instead the first migration
+  into a database that already has any of these names stops, lists them, and names the fix.
+- **`tablePrefix` is the fix.** `tablePrefix: 'acme_'` gives `acme_account`, `acme_session` and so on, and the two
+  schemas coexist untouched.
+- **`adoptExisting: true`** is the escape hatch for the one honest case: re-attaching to tables that really are
+  this schema's, after a restore that lost the `schema_version` row.
+
+### Uninstalling
+
+```ts
+const dropped = await store.uninstall();
+```
+
+Drops **only** the nine names above, children first so the foreign keys allow it, and returns what it dropped.
+It refuses a database with no `schema_version` of ours in it — without that check, a typo in `tablePrefix` turns
+this into a tool that deletes somebody else's tables. `force: true` overrides, and should be rare.
+
+## Changing the schema later
+
+It will change. Three things make that safe:
+
+- **Steps are append-only and versioned.** A released step is never edited: the deployments that ran it would
+  never see the change.
+- **The version is recorded after EACH step, not at the end.** MySQL cannot roll back DDL, so a step that fails
+  halfway has already applied some of its statements. Bumping once at the end would make the retry start over and
+  meet them again; recording per step means it resumes where it stopped.
+- **Steps after the first are written with `addColumn`, `dropColumn` and `addIndex`**, which check
+  `information_schema` and prepare either the real statement or a no-op. MySQL has no `ADD COLUMN IF NOT EXISTS`;
+  this is how a step survives being run twice.
+
+A build older than the database is refused outright, naming both versions: an older process reading rows a newer
+schema wrote is worse than a process that will not start.
+
 ## Running it
 
 ```ts

@@ -332,8 +332,11 @@ export const createAccountStore = (db: Queryable, t: Tables): IdentityAdapters &
       return row ? toRecord(row) : undefined;
     },
 
-    markVerified: async (userId: number): Promise<void> => {
-      await execute(db, `UPDATE ${t.account} SET verified = 1, validation_token = NULL WHERE id = ?`, [userId]);
+    setVerified: async (userId: number, verified: boolean): Promise<void> => {
+      await execute(db, `UPDATE ${t.account} SET verified = ?, validation_token = NULL WHERE id = ?`, [
+        verified ? 1 : 0,
+        userId
+      ]);
     },
 
     findById: async (userId: number): Promise<AccountRecord | undefined> => {

@@ -139,7 +139,11 @@ export interface AccountAdapters {
   findByResetToken?: (token: string) => Promise<AccountRecord | undefined>;
   setValidationToken?: (userId: number, token: string) => Promise<void>;
   findByValidationToken?: (token: string) => Promise<AccountRecord | undefined>;
-  markVerified?: (userId: number) => Promise<void>;
+  /**
+   * Confirm or un-confirm the address. Both directions from one adapter, because changing an email has to be able
+   * to take verification away — a `markVerified` that only ever set it made that impossible to express.
+   */
+  setVerified?: (userId: number, verified: boolean) => Promise<void>;
   /** Called for validation and password-reset mail. Without it neither flow is offered. */
   sendMail?: (message: { to: string; template: string; data: Record<string, string> }) => Promise<void>;
   /**
@@ -152,6 +156,32 @@ export interface AccountAdapters {
     token: string,
     carrier: CredentialCarrier
   ) => Promise<AccountRecord | { error: string; status?: number } | undefined>;
+}
+
+/** What a flow was asked to do, for the throttle below. */
+export type ThrottledAction =
+  | 'login'
+  | 'signup'
+  | 'forgotPassword'
+  | 'resetPassword'
+  | 'changePassword'
+  | 'exchange';
+
+export interface ThrottleAttempt {
+  action: ThrottledAction;
+  /** What is being attempted against — a username, an email, a token. Never a password. */
+  key: string;
+  carrier?: CredentialCarrier;
+}
+
+export interface PasswordPolicy {
+  /**
+   * Default 8, which is NIST SP 800-63B's floor. There are deliberately no composition rules: requiring a digit
+   * and a symbol measurably produces `Password1!` and nothing safer.
+   */
+  minLength?: number;
+  /** Anything else this deployment decides — a breach-list lookup, a strength estimator. Return why, or nothing. */
+  validate?: (password: string, context: { username?: string; email?: string }) => Promise<string | undefined>;
 }
 
 export interface AuthApiConfig {
@@ -167,6 +197,22 @@ export interface AuthApiConfig {
    * because what a deployment calls its permissions is its own vocabulary. Default `userManage`.
    */
   adminPermission?: string;
+  /** What a password has to be. Applied wherever one is set: signing up, resetting, changing. */
+  password?: PasswordPolicy;
+  /**
+   * May this attempt proceed?
+   *
+   * Nothing here counts anything: where the counter lives is a deployment decision (one process wants memory, a
+   * cluster wants Redis) and getting it wrong silently is worse than not having it. What the server does own is
+   * WHICH acts are worth throttling and what a refusal looks like — a 429 with `retryAfter`, before any password
+   * is checked, so a throttled attempt costs no hash.
+   *
+   * Without one, sign-in is unlimited. That is the right default for a library and the wrong one for a deployment
+   * on the internet: an unthrottled password endpoint is a credential-stuffing target.
+   */
+  rateLimit?: (attempt: ThrottleAttempt) => Promise<boolean | { allowed: boolean; retryAfter?: number }>;
+  /** Where a failed delivery is reported. Defaults to `console.error`; it is never thrown — see `deliver`. */
+  onMailError?: (error: unknown, message: { to: string; template: string }) => void;
 }
 
 /** What an exchange came to, before it is turned into either an HTTP body or a rendered page's session. */
@@ -237,8 +283,67 @@ export const createAuthApi = ({
     hashPassword,
     generateToken,
     verifyOnSignup = false,
-    adminPermission = 'userManage'
+    adminPermission = 'userManage',
+    password: policy = {},
+    rateLimit,
+    onMailError
   } = config;
+
+  /**
+   * Sends, and never fails the flow if it cannot.
+   *
+   * Every one of these goes out AFTER something has already been committed — an account created, an address
+   * changed, a reset token stored. Letting the mail provider decide whether that request succeeded turns an
+   * outage at Brevo into a 500 on a change that did happen, which is the worst of both: the caller is told it
+   * failed and retries against the new state. Reported instead, and the person can ask for another.
+   */
+  const deliver = async (message: { to: string; template: string; data: Record<string, string> }): Promise<void> => {
+    try {
+      await adapters.sendMail?.(message);
+    } catch (error: unknown) {
+      const report = onMailError ?? ((cause: unknown) => console.error('[auth] could not send mail:', cause));
+      report(error, { to: message.to, template: message.template });
+    }
+  };
+
+  /**
+   * Checked before the password is, so a throttled attempt costs no hash — which is the difference between a rate
+   * limit and a slightly slower way to be brute-forced.
+   */
+  const throttled = async (attempt: ThrottleAttempt): Promise<AuthOutcome | undefined> => {
+    if (!rateLimit) {
+      return undefined;
+    }
+
+    const verdict = await rateLimit(attempt);
+    const allowed = typeof verdict === 'boolean' ? verdict : verdict.allowed;
+    if (allowed) {
+      return undefined;
+    }
+
+    const retryAfter = typeof verdict === 'boolean' ? undefined : verdict.retryAfter;
+
+    return {
+      ok: false,
+      status: 429,
+      body: { error: 'Too many attempts', ...(retryAfter !== undefined ? { retryAfter } : {}) }
+    };
+  };
+
+  /** The one place a new password is judged, so signing up, resetting and changing cannot disagree about it. */
+  const rejectPassword = async (
+    value: string,
+    context: { username?: string; email?: string } = {}
+  ): Promise<AuthOutcome | undefined> => {
+    const minLength = policy.minLength ?? 8;
+    if (value.length < minLength) {
+      return refuse(400, `The password must be at least ${minLength} characters`);
+    }
+
+    const reason = await policy.validate?.(value, context);
+
+    return reason ? refuse(400, reason) : undefined;
+  };
 
   /**
    * What this deployment offers, decided by what it supplied and nothing else.
@@ -253,7 +358,7 @@ export const createAuthApi = ({
     refresh: !!adapters.findByRefreshToken,
     signup: !!adapters.createAccount && !!hashPassword,
     passwordReset: !!adapters.findByEmail && !!adapters.setResetToken && !!hashPassword,
-    emailVerification: !!adapters.findByValidationToken && !!adapters.markVerified,
+    emailVerification: !!adapters.findByValidationToken && !!adapters.setVerified,
     exchange: !!adapters.exchangeCredential,
     profile: !!adapters.updateAccount,
     passwordChange: !!adapters.findById && !!verifyPassword && !!hashPassword && !!adapters.setPassword,
@@ -342,6 +447,11 @@ export const createAuthApi = ({
       return { ok: false, offered: true, status: 400, error: 'A provider and a token are required' };
     }
 
+    const limited = await throttled({ action: 'exchange', key: provider, carrier });
+    if (limited) {
+      return { ok: false, offered: true, status: 429, error: 'Too many attempts' };
+    }
+
     const result = await adapters.exchangeCredential?.(provider, token, carrier);
     if (!result) {
       return { ok: false, offered: true, status: 401, error: 'Token Invalid', reason: 'revoked' };
@@ -406,6 +516,11 @@ export const createAuthApi = ({
       const password = asText(credentials.password);
       if (!username || !password) {
         return refuse(400, 'A username and a password are required');
+      }
+
+      const limited = await throttled({ action: 'login', key: username, carrier });
+      if (limited) {
+        return limited;
       }
 
       const account = await adapters.findByUsername?.(username);
@@ -507,6 +622,16 @@ export const createAuthApi = ({
         return refuse(400, 'A username, an email and a password are required');
       }
 
+      const weak = await rejectPassword(password, { username, email });
+      if (weak) {
+        return weak;
+      }
+
+      const limited = await throttled({ action: 'signup', key: email });
+      if (limited) {
+        return limited;
+      }
+
       if ((await adapters.findByUsername?.(username)) ?? (await adapters.findByEmail?.(email))) {
         return refuse(400, 'User already exists');
       }
@@ -525,7 +650,7 @@ export const createAuthApi = ({
       if (!verifyOnSignup && capabilities.emailVerification && generateToken && adapters.setValidationToken) {
         const validationToken = generateToken();
         await adapters.setValidationToken(account.id, validationToken);
-        await adapters.sendMail?.({ to: email, template: 'validation', data: { username, validationToken } });
+        await deliver({ to: email, template: 'validation', data: { username, validationToken } });
       }
 
       return { ok: true, status: 201, body: { message: 'User created successfully', userId: account.id } };
@@ -537,11 +662,17 @@ export const createAuthApi = ({
         return NOT_OFFERED;
       }
 
+      // Throttled by address, or this endpoint is a way to send somebody a hundred emails.
+      const limited = await throttled({ action: 'forgotPassword', key: asString(email) });
+      if (limited) {
+        return limited;
+      }
+
       const account = await adapters.findByEmail?.(asString(email));
       if (account) {
         const resetToken = generateToken();
         await adapters.setResetToken?.(account.id, resetToken);
-        await adapters.sendMail?.({
+        await deliver({
           to: account.email,
           template: 'password-reset',
           data: { username: account.username, resetToken }
@@ -560,9 +691,20 @@ export const createAuthApi = ({
         return refuse(400, 'A token and a password are required');
       }
 
+      // Throttled by token: without it a reset token is guessable by trying, however opaque it is.
+      const limited = await throttled({ action: 'resetPassword', key: token });
+      if (limited) {
+        return limited;
+      }
+
       const account = await adapters.findByResetToken?.(token);
       if (!account) {
         return refuse(400, 'Invalid or expired token');
+      }
+
+      const weak = await rejectPassword(password, { username: account.username, email: account.email });
+      if (weak) {
+        return weak;
       }
 
       await adapters.setPassword?.(account.id, await hashPassword(password));
@@ -583,7 +725,7 @@ export const createAuthApi = ({
         return refuse(400, 'Invalid or expired token');
       }
 
-      await adapters.markVerified?.(account.id);
+      await adapters.setVerified?.(account.id, true);
 
       return { ok: true, body: { message: 'Account validated successfully' } };
     },
@@ -597,7 +739,7 @@ export const createAuthApi = ({
       if (account && !account.verified) {
         const validationToken = generateToken();
         await adapters.setValidationToken?.(account.id, validationToken);
-        await adapters.sendMail?.({
+        await deliver({
           to: account.email,
           template: 'validation',
           data: { username: account.username, validationToken }
@@ -642,10 +784,40 @@ export const createAuthApi = ({
         }
       }
 
+      const changingEmail = Boolean(email) && email !== actor.email;
+
       const account = await adapters.updateAccount(actor.id, {
         ...(username ? { username } : {}),
         ...(email ? { email } : {})
       });
+
+      /**
+       * A new address is an unverified address.
+       *
+       * Otherwise changing it is a way to inherit the old one's confirmation: point the account at an address you
+       * do not control and it arrives already trusted, which is exactly what verification existed to prevent. So
+       * the flag comes off and a fresh confirmation goes out — and a deployment that does not verify emails at all
+       * is unaffected, because none of those adapters are there.
+       */
+      if (changingEmail && capabilities.emailVerification && generateToken && adapters.setValidationToken) {
+        const validationToken = generateToken();
+        await adapters.setVerified?.(actor.id, false);
+        await adapters.setValidationToken(actor.id, validationToken);
+        await deliver({
+          to: account.email,
+          template: 'validation',
+          data: { username: account.username, validationToken }
+        });
+
+        return {
+          ok: true,
+          body: {
+            success: true,
+            details: { ...profileOf(account), verified: false },
+            message: 'Confirm the new address to finish changing it'
+          }
+        };
+      }
 
       return { ok: true, body: { success: true, details: profileOf(account) } };
     },
@@ -672,6 +844,16 @@ export const createAuthApi = ({
 
       if (!currentPassword || !newPassword) {
         return refuse(400, 'The current and the new password are required');
+      }
+
+      const weak = await rejectPassword(newPassword, { username: actor.username, email: actor.email });
+      if (weak) {
+        return weak;
+      }
+
+      const limited = await throttled({ action: 'changePassword', key: String(actor.id) });
+      if (limited) {
+        return limited;
       }
 
       const account = await adapters.findById(actor.id);
@@ -821,7 +1003,7 @@ export const createAuthApi = ({
         return { ok: true, body: { success: true, status } };
       },
 
-      setRoles: async (actor: Actor | undefined, userId: number, roles: string[]): Promise<AuthOutcome> => {
+      setRoles: async (actor: Actor | undefined, userId: number, roles: unknown): Promise<AuthOutcome> => {
         const denial = requireAdmin(actor);
         if (denial) {
           return denial;
@@ -835,13 +1017,15 @@ export const createAuthApi = ({
           return refuse(400, 'Roles must be a list of names');
         }
 
+        const names = roles as string[];
+
         if (!(await adapters.findById?.(userId))) {
           return refuse(404, 'No such account');
         }
 
-        await adapters.setRoles(userId, roles);
+        await adapters.setRoles(userId, names);
 
-        return { ok: true, body: { success: true, roles } };
+        return { ok: true, body: { success: true, roles: names } };
       },
 
       remove: async (actor: Actor | undefined, userId: number): Promise<AuthOutcome> => {
