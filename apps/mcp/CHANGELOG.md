@@ -1,5 +1,16 @@
 # @plitzi/sdk-mcp
 
+## 0.33.2
+
+### Patch Changes
+
+- v0.33.2
+- Updated dependencies
+  - @plitzi/plitzi-sdk@0.33.2
+  - @plitzi/sdk-schema@0.33.2
+  - @plitzi/sdk-server@0.33.2
+  - @plitzi/sdk-shared@0.33.2
+
 ## 0.33.1
 
 ### Patch Changes
