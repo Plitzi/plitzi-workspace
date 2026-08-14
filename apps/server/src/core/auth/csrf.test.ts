@@ -59,12 +59,31 @@ describe('what a sign-in has to present', () => {
     expect(signIn({ headers: { 'sec-fetch-site': 'same-origin' } })).toBe(false);
   });
 
-  /** The registrable domain, which is the same rule that decides how far the session cookie itself travels. */
-  it('counts a sibling sub-domain as this deployment', () => {
-    expect(signIn({ headers: { origin: 'https://app.acme.test' } })).toBe(false);
+  /**
+   * The regression that matters most here. This used to compare REGISTRABLE DOMAINS — last two labels, the same
+   * helper that scopes the session cookie — and that helper has no public suffix list: on a deployment at
+   * `acme.co.uk`, every other `.co.uk` in the world counted as the same site and could sign a visitor in.
+   *
+   * The `Origin` fallback is now an exact match, so a sibling sub-domain that must be trusted is named rather than
+   * guessed at. `Sec-Fetch-Site` still covers the ordinary case, because the browser works it out with the real
+   * list — this path is only reached on one too old to send it.
+   */
+  it('does not guess where a domain boundary falls', () => {
     expect(
-      csrf.required(carrier({ hostname: 'api.acme.test', headers: { origin: 'https://app.acme.test' } }), 'signIn')
-    ).toBe(false);
+      csrf.required(carrier({ hostname: 'acme.co.uk', headers: { origin: 'https://evil.co.uk' } }), 'signIn')
+    ).toBe(true);
+    expect(signIn({ headers: { origin: 'https://app.acme.test' } })).toBe(true);
+
+    // Named, not guessed — and `createAuth` fills this from `identity.platformOrigins`.
+    const withSibling = createCsrf({
+      secret: 'test-secret',
+      cookie: { name: 'sess' },
+      allowedOrigins: ['https://app.acme.test']
+    });
+    expect(withSibling.required(carrier({ headers: { origin: 'https://app.acme.test' } }), 'signIn')).toBe(false);
+
+    // A browser that says so is still believed: it decided with the real public suffix list.
+    expect(signIn({ headers: { origin: 'https://app.acme.test', 'sec-fetch-site': 'same-site' } })).toBe(false);
   });
 
   /** The attack: a page on another site posting credentials it controls, so the visitor is signed into them. */

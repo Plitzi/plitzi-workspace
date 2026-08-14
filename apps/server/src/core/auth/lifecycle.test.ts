@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createAuthApi } from './api';
 import { createCarriers, presentedOrigin } from './credentials';
@@ -599,7 +599,7 @@ describe('changing the email that was verified', () => {
 
     await api.updateProfile(actorFor(ada), { email: 'elsewhere@example.test' });
 
-    expect(setValidationToken).toHaveBeenCalledWith(1, 'fresh-token');
+    expect(setValidationToken).toHaveBeenCalledWith(1, expect.stringMatching(/^fresh-token~\d+$/));
     expect(sendMail).toHaveBeenCalledWith(
       expect.objectContaining({ to: 'elsewhere@example.test', template: 'validation' })
     );
@@ -691,7 +691,11 @@ describe('changing the email by confirming it', () => {
     const outcome = await api.updateProfile(actorFor(ada), { email: 'elsewhere@example.test' });
 
     expect(updateAccount).toHaveBeenCalledWith(1, {});
-    expect(setPendingEmail).toHaveBeenCalledWith(1, 'elsewhere@example.test', 'fresh-token');
+    expect(setPendingEmail).toHaveBeenCalledWith(
+      1,
+      'elsewhere@example.test',
+      expect.stringMatching(/^fresh-token~\d+$/)
+    );
     expect(body(outcome)).toMatchObject({ pendingEmail: 'elsewhere@example.test', details: { email: ada.email } });
   });
 
@@ -714,7 +718,11 @@ describe('changing the email by confirming it', () => {
       expect.objectContaining({
         to: 'elsewhere@example.test',
         template: 'email-change',
-        data: { username: 'ada', email: 'elsewhere@example.test', confirmationToken: 'fresh-token' }
+        data: {
+          username: 'ada',
+          email: 'elsewhere@example.test',
+          confirmationToken: expect.stringMatching(/^fresh-token~\d+$/) as unknown as string
+        }
       })
     );
   });
@@ -1350,5 +1358,138 @@ describe('impersonation', () => {
     await api.admin.impersonate(admin, bob.id);
 
     expect(events).toContainEqual(expect.objectContaining({ type: 'admin.impersonated', userId: 2, actorId: 1 }));
+  });
+});
+
+/**
+ * A link mailed out has to stop working. One sitting in an inbox, a mail archive or a support ticket is a password
+ * — and until now every one of them was good forever.
+ *
+ * The deadline rides INSIDE the token rather than in a column, which is what makes it impossible for a deployment
+ * with its own store to be quietly without it. It is not a secret: the token is compared against the stored copy,
+ * so editing the deadline produces a string that matches no row.
+ */
+describe('links that expire', () => {
+  const stored: { reset?: string; validation?: string; pending?: string } = {};
+
+  const mailing = (config: AuthApiConfig = {}, account: AccountRecord = ada) => {
+    const sent: { template: string; data: Record<string, string> }[] = [];
+    const api = build(
+      {
+        findByEmail: () => Promise.resolve(account),
+        findById: () => Promise.resolve(ada),
+        updateAccount: (_id, changes) => Promise.resolve({ ...ada, ...changes }),
+        setPassword: () => Promise.resolve(),
+        setResetToken: (_id, token) => {
+          stored.reset = token;
+
+          return Promise.resolve();
+        },
+        findByResetToken: token => Promise.resolve(token === stored.reset ? account : undefined),
+        setValidationToken: (_id, token) => {
+          stored.validation = token;
+
+          return Promise.resolve();
+        },
+        findByValidationToken: token => Promise.resolve(token === stored.validation ? account : undefined),
+        setVerified: () => Promise.resolve(),
+        setPendingEmail: (_id, _email, token) => {
+          stored.pending = token;
+
+          return Promise.resolve();
+        },
+        findByPendingEmail: token =>
+          Promise.resolve(token === stored.pending ? { account, email: 'elsewhere@example.test' } : undefined),
+        clearPendingEmail: () => Promise.resolve(),
+        sendMail: message => {
+          sent.push(message);
+
+          return Promise.resolve();
+        }
+      },
+      { generateToken: () => `r${sent.length}`, ...config }
+    );
+
+    return { api, sent };
+  };
+
+  const travel = (seconds: number) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(Date.now() + seconds * 1000);
+  };
+
+  afterEach(() => vi.useRealTimers());
+
+  const unverified: AccountRecord = { ...ada, verified: false };
+
+  it('stamps a deadline on every link it mails', async () => {
+    const { api, sent } = mailing({}, unverified);
+
+    await api.forgotPassword(ada.email);
+    await api.resendVerification(ada.email);
+
+    expect(sent[0].data.resetToken).toMatch(/~\d+$/);
+    expect(sent[1].data.validationToken).toMatch(/~\d+$/);
+  });
+
+  it('resets a password within the hour and not after it', async () => {
+    const { api, sent } = mailing();
+    await api.forgotPassword(ada.email);
+    const link = sent[0].data.resetToken;
+
+    travel(2 * 3600);
+    expect(await api.resetPassword(link, 'n3wPassw0rd')).toMatchObject({ ok: false, status: 400 });
+
+    vi.useRealTimers();
+    expect(await api.resetPassword(link, 'n3wPassw0rd')).toMatchObject({ ok: true });
+  });
+
+  it('confirms an address within the day and not after it', async () => {
+    const { api, sent } = mailing();
+    await api.updateProfile(actorFor(ada), { email: 'elsewhere@example.test' });
+    const link = sent[0].data.confirmationToken;
+
+    travel(48 * 3600);
+    expect(await api.confirmEmailChange(link)).toMatchObject({ ok: false, status: 400 });
+
+    vi.useRealTimers();
+    expect(await api.confirmEmailChange(link)).toMatchObject({ ok: true });
+  });
+
+  it('validates an account within the day and not after it', async () => {
+    const { api, sent } = mailing({}, unverified);
+    await api.resendVerification(ada.email);
+    const link = sent[0].data.validationToken;
+
+    travel(48 * 3600);
+    expect(await api.validateAccount(link)).toMatchObject({ ok: false, status: 400 });
+
+    vi.useRealTimers();
+    expect(await api.validateAccount(link)).toMatchObject({ ok: true });
+  });
+
+  it('takes the deadline from the deployment where it names one', async () => {
+    const { api, sent } = mailing({ linkTtl: { reset: 60 } });
+    await api.forgotPassword(ada.email);
+
+    travel(120);
+    expect(await api.resetPassword(sent[0].data.resetToken, 'n3wPassw0rd')).toMatchObject({ ok: false });
+  });
+
+  /** The links already in people's inboxes when a deployment upgrades. No `~`, no deadline, still good. */
+  it('keeps honouring a token minted before any of this existed', async () => {
+    const { api } = mailing();
+    stored.reset = 'an-old-token';
+
+    expect(await api.resetPassword('an-old-token', 'n3wPassw0rd')).toMatchObject({ ok: true });
+  });
+
+  /** Editing the deadline just produces a string that matches no stored row. */
+  it('cannot be extended by rewriting it', async () => {
+    const { api, sent } = mailing();
+    await api.forgotPassword(ada.email);
+    const forged = `${sent[0].data.resetToken.split('~')[0]}~${Math.floor(Date.now() / 1000) + 999_999}`;
+
+    expect(await api.resetPassword(forged, 'n3wPassw0rd')).toMatchObject({ ok: false, status: 400 });
   });
 });

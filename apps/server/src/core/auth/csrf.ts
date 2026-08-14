@@ -1,6 +1,6 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
-import { appendCookies, registrableDomain, sessionCookieParams } from './session';
+import { appendCookies, sessionCookieParams } from './session';
 
 import type { CookieSink } from './session';
 import type { SSRAuthCookie } from '@plitzi/sdk-shared';
@@ -165,9 +165,16 @@ export const createCsrf = (config: CsrfConfig) => {
    *
    * - **`Sec-Fetch-Site`** is the browser's own account of where the request came from, and is believed first.
    *   Anything but `cross-site` (`same-origin`, `same-site`, or `none` for a typed URL) is this deployment's own.
-   * - **`Origin`** is the fallback, sent by every browser on an unsafe request for at least a decade. Same site —
-   *   by the registrable domain, which is the same rule that decides the session cookie's own scope, so "same
-   *   site" here means precisely "the browser would send our cookie" — or an origin the deployment allowed.
+   *   The browser works that out with the real public suffix list, which is why it is worth more than anything
+   *   derivable here.
+   * - **`Origin`** is the fallback, for a browser too old to send the above — Safari only did from 16.4. Matched
+   *   **exactly**, against this host or an origin the deployment named.
+   *
+   * That exactness is deliberate and was a bug once: this compared *registrable domains*, last-two-labels, the
+   * same helper that scopes the session cookie. It has no public suffix list, so on a deployment at `acme.co.uk`
+   * every other `.co.uk` in the world counted as the same site and could sign a visitor in. Guessing where a
+   * domain boundary falls is not something to do in a security decision — a sibling sub-domain that needs to be
+   * trusted is one line in `allowedOrigins`, which `createAuth` already fills from `identity.platformOrigins`.
    *
    * **Neither header means this is not a browser**, and a client that is not a browser cannot be made to forge
    * anything: there is no victim's session sitting in it. That is what keeps every API client, mobile app and
@@ -176,30 +183,20 @@ export const createCsrf = (config: CsrfConfig) => {
   const foreign = (carrier: CsrfCarrier): boolean => {
     const site = header(carrier, 'sec-fetch-site');
     const origin = header(carrier, 'origin');
+    const allowed = origin !== undefined && permitted(origin);
 
     if (site !== undefined) {
       // The browser has answered the question. `same-origin`, `same-site` and `none` (a typed URL, a bookmark)
       // are all this deployment's own; a `cross-site` one is foreign unless its origin was explicitly allowed.
-      return site === 'cross-site' && !(origin !== undefined && permitted(origin));
+      return site === 'cross-site' && !allowed;
     }
 
     if (!origin) {
       return false;
     }
 
-    const host = originHost(origin);
-    // An opaque origin — a sandboxed iframe, a `data:` document. Nothing can vouch for it.
-    if (host === undefined) {
-      return true;
-    }
-
-    if (host === carrier.hostname || permitted(origin)) {
-      return false;
-    }
-
-    const domain = registrableDomain(carrier.hostname);
-
-    return domain === undefined || registrableDomain(host) !== domain;
+    // An opaque origin — a sandboxed iframe, a `data:` document — has no host at all, and nothing can vouch for it.
+    return originHost(origin) !== carrier.hostname && !allowed;
   };
 
   const nameFor = (hostname: string): string => {

@@ -317,6 +317,14 @@ export interface AuthApiConfig {
   mfaIssuer?: string;
   /** How long a sign-in code is good for, in seconds. Default 600 — long enough to find the email, short enough. */
   passwordlessTtl?: number;
+  /**
+   * How long a link mailed out stays usable, in seconds.
+   *
+   * A password-reset link that works forever is one sitting in an inbox, a mail archive or a support ticket, and
+   * it is a password. An hour is the usual answer and the default here. Confirming an address is not a credential
+   * in the same way and gets a day, which survives somebody reading their mail tomorrow.
+   */
+  linkTtl?: { reset?: number; validation?: number; emailChange?: number };
   /** Set by `createAuth`, so `GET /auth/csrf` can mint one. Nothing here enforces the check — the routes do. */
   csrf?: Csrf;
 }
@@ -403,6 +411,9 @@ export const createAuthApi = ({
     csrf
   } = config;
 
+  const HOUR = 3600;
+  const linkTtl = { reset: HOUR, validation: 24 * HOUR, emailChange: 24 * HOUR, ...config.linkTtl };
+
   /** Never awaited, never able to throw: a logging outage must not become an authentication outage. */
   const record = (event: Omit<SecurityEvent, 'at'>): void => {
     if (!onEvent) {
@@ -414,6 +425,26 @@ export const createAuthApi = ({
     } catch (error: unknown) {
       console.error('[auth] security event handler threw:', error);
     }
+  };
+
+  /**
+   * A single-use link token that stops working.
+   *
+   * The deadline is carried **inside the token**, after a `~`, and that is what makes this cost nothing: no column,
+   * no adapter argument, and nothing a deployment with its own store has to remember to enforce — which is the
+   * failure mode of putting the check in the adapters, where forgetting it is silent and looks like everything
+   * working. It is not a secret and does not need to be: the token is compared against the stored copy, so editing
+   * the deadline just produces a string that matches no row.
+   *
+   * A token issued before this existed has no `~`, reads as no deadline, and keeps working — the links already in
+   * people's inboxes when a deployment upgrades.
+   */
+  const mintLink = (random: string, lifetime: number): string => `${random}~${now() + lifetime}`;
+
+  const linkExpired = (token: string): boolean => {
+    const deadline = Number(token.slice(token.lastIndexOf('~') + 1));
+
+    return Number.isFinite(deadline) && token.includes('~') && deadline < now();
   };
 
   /** Recovery codes are high-entropy, so a fast digest is right — scrypt ten times per sign-in would not be. */
@@ -1099,7 +1130,7 @@ export const createAuthApi = ({
       });
 
       if (!verifyOnSignup && capabilities.emailVerification && generateToken && adapters.setValidationToken) {
-        const validationToken = generateToken();
+        const validationToken = mintLink(generateToken(), linkTtl.validation);
         await adapters.setValidationToken(account.id, validationToken);
         await deliver({ to: email, template: 'validation', data: { username, validationToken } });
       }
@@ -1123,7 +1154,7 @@ export const createAuthApi = ({
 
       const account = await adapters.findByEmail?.(asString(email));
       if (account) {
-        const resetToken = generateToken();
+        const resetToken = mintLink(generateToken(), linkTtl.reset);
         await adapters.setResetToken?.(account.id, resetToken);
         await deliver({
           to: account.email,
@@ -1150,7 +1181,9 @@ export const createAuthApi = ({
         return limited;
       }
 
-      const account = await adapters.findByResetToken?.(token);
+      // The deadline first: an expired token must not be looked up as though it were live, and the answer is the
+      // same either way — telling the two apart would say whether the token ever existed.
+      const account = linkExpired(token) ? undefined : await adapters.findByResetToken?.(token);
       if (!account) {
         return refuse(400, 'Invalid or expired token');
       }
@@ -1175,7 +1208,7 @@ export const createAuthApi = ({
         return NOT_OFFERED;
       }
 
-      const account = await adapters.findByValidationToken?.(token);
+      const account = linkExpired(token) ? undefined : await adapters.findByValidationToken?.(token);
       if (!account) {
         return refuse(400, 'Invalid or expired token');
       }
@@ -1192,7 +1225,7 @@ export const createAuthApi = ({
 
       const account = await adapters.findByEmail?.(asString(email));
       if (account && !account.verified) {
-        const validationToken = generateToken();
+        const validationToken = mintLink(generateToken(), linkTtl.validation);
         await adapters.setValidationToken?.(account.id, validationToken);
         await deliver({
           to: account.email,
@@ -1260,7 +1293,7 @@ export const createAuthApi = ({
       });
 
       if (parking && generateToken && adapters.setPendingEmail) {
-        const confirmationToken = generateToken();
+        const confirmationToken = mintLink(generateToken(), linkTtl.emailChange);
         await adapters.setPendingEmail(actor.id, email, confirmationToken);
         await deliver({
           to: email,
@@ -1280,7 +1313,7 @@ export const createAuthApi = ({
       }
 
       if (changingEmail && capabilities.emailVerification && generateToken && adapters.setValidationToken) {
-        const validationToken = generateToken();
+        const validationToken = mintLink(generateToken(), linkTtl.validation);
         await adapters.setValidationToken(actor.id, validationToken);
         await deliver({
           to: account.email,
@@ -1313,7 +1346,8 @@ export const createAuthApi = ({
         return NOT_OFFERED;
       }
 
-      const pending = await adapters.findByPendingEmail(asString(token));
+      const confirmation = asString(token);
+      const pending = linkExpired(confirmation) ? undefined : await adapters.findByPendingEmail(confirmation);
       if (!pending) {
         return refuse(400, 'Invalid or expired token');
       }

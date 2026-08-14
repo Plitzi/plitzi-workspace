@@ -843,6 +843,8 @@ and every refusal names a machine-readable `reason`, so a client can tell "renew
 | `api.onEvent` | Every act worth recording — sign-ins, failures, password changes, admin actions — as a `SecurityEvent`. An audit trail, a webhook and an alert are the same feed. Never awaited and never able to fail a request |
 | `api.mfaIssuer` | What an authenticator app calls this deployment. Defaults to the token issuer |
 | `api.passwordlessTtl` | How long an emailed sign-in code lasts. Default 600 seconds |
+| `api.linkTtl` | How long a mailed **link** stays usable: `reset` (default 3600 — a reset link is a password, and one lives in an inbox), `validation` and `emailChange` (86400). The deadline rides inside the token rather than in a column, so a deployment with its own store cannot be quietly without it, and links minted before it existed keep working |
+| `csrf.allowedOrigins` | Origins that count as this deployment's own when deciding whether a sign-in came from another site. Filled from `identity.platformOrigins` |
 | `tokens.lifetimes.session` | The longest a session may live however often it renews. `0` (default) means no cap — the renewal window is already an idle timeout, since a session nobody refreshes dies with its refresh token |
 | `api.onMailError` | Where a failed delivery is reported. It is never thrown: every one of these sends after something has already been committed, so letting the provider decide whether the request succeeded reports a change that did happen as a 500 |
 | `basePath` | Where the flows are mounted. The guard's rules follow it |
