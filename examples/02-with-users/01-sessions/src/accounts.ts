@@ -1,6 +1,6 @@
 import { scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
 
-import type { AccountAdapters, AccountRecord, IdentityAdapters } from '@plitzi/sdk-server/kernel';
+import type { AccountAdapters, AccountRecord, IdentityAdapters } from '@plitzi/sdk-server/auth';
 import type { SSRSession } from '@plitzi/sdk-shared';
 
 /**

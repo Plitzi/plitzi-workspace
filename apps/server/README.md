@@ -97,6 +97,57 @@ type SSRAdapters = {
 - **`endSession`** *(optional)* — called when `POST {logoutPath}` is received. Revoke the session at the source; the server clears the cookies. Clearing them alone would leave the credential itself working for anyone who had already copied it. A navigation receives a `303` redirect; a fetch receives `204 No Content`.
 - **`getRscData`** *(optional)* — called by the RSC endpoint (`/_rsc`), and once per page render, to fetch server-side data for schema elements with `runtime: 'server'`. Takes one `SSRRscContext`: the request, the space context, the resolved user so authenticated operations are safe, `ids` on a partial refresh (absent means every element), and `loadOfflineData`. That last one is the space itself, shared with the page render happening alongside — await it instead of fetching the schema again, and it is read once per request however many callers ask. Return `{}` when there is no server data for the current request (see [RSC](#react-server-components-rsc)).
 
+## Space adapters (a space per domain)
+
+`getSpaceDeployment` looks like glue and is not: the same handful of rules turn up in every deployment that serves
+more than one space, and getting any of them wrong is a real failure. `createSpaceAdapters` states them once and
+asks you only for the lookups.
+
+```ts
+import { authoringPreview, createSpaceAdapters, verifiedDomain, wildcardSubdomain } from '@plitzi/sdk-server';
+
+const spaces = createSpaceAdapters({
+  resolvers: [
+    authoringPreview({ hosts: platformHosts, resolveGrant: auth.identity.resolveGrant, find: findSpace }),
+    wildcardSubdomain({ suffix: 'example.app', find: findSpaceBySlug }),
+    verifiedDomain(findDeploymentByDomain)
+  ],
+  cache: redisCache,
+  frameAncestors: { find: findSpaceDomains, floor: platformHosts, cache: true },
+  decorate: resolution => Promise.resolve({ pluginNames: pluginsFor(resolution.spaceId) })
+});
+
+createServer({ adapters: { ...spaces.adapters, getOfflineData } });
+```
+
+**Resolvers are an ordered list**, and the order is the policy. Each returns a resolution, a refusal, or nothing —
+and the difference between the last two is the point: a refusal ENDS the chain, so a request that tried to act for
+a space and failed is never quietly served as an anonymous visitor of whatever else that host resolves to. Three
+are built in and a fourth is `(req) => …` of your own, which is how a deployment that identifies tenants by header,
+by path prefix or by a table nobody else has still gets everything below.
+
+| Built in | What it is |
+|---|---|
+| `authoringPreview` | An author looking at their own space through a builder, on a host you own. Marks the render `authoring` so metering skips it. Put it first. |
+| `wildcardSubdomain` | `<slug>.example.app`, with no per-space row to configure. Refuses to read a deeper sub-domain as a slug. |
+| `verifiedDomain` | A custom domain, through a row that says it was proven. |
+| `fixedSpace` | Always this one — a single-space deployment, or a catch-all last in the chain. |
+
+What it decides for you:
+
+- **A credentialed request is never served from, nor written to, the shared cache.** It is keyed by host, and a
+  credential resolves the same host to a different space — so a hit would serve one author's preview to the next.
+- **`frame-ancestors` is derived on every resolution**, from the domains the space declared plus your floor.
+  Deriving it per branch is how a deployment ends up with one branch that forgets, and that branch serves a space
+  framable by anyone.
+- **Refusals are not cached**, so fixing a row fixes the site rather than fixing it in five minutes.
+- **A resolver that throws is a 404 for that request**, reported through `onError`, not a dead server.
+
+`cache` is any `get`/`set`/`delete` of strings — Redis, Memcached, whatever you have — or `createMemoryCache()` for
+a single-process deployment. `invalidate.resolution(host)` and `invalidate.domains(spaceId)` drop what a change made
+untrue, which matters the moment an owner edits a domain list: until then the old framing policy stands, and a TTL
+is not a security boundary.
+
 ## JSON adapters (offline mode)
 
 `createJsonAdapters` provides a ready-made adapter set that reads a space from local JSON files, useful for offline mode, integration tests, and static deployments.
@@ -650,7 +701,7 @@ cookies, and the store your accounts live in — and returns the whole cycle wir
 
 ```ts
 import { createServer } from '@plitzi/sdk-server';
-import { createAuth } from '@plitzi/sdk-server/kernel';
+import { createAuth } from '@plitzi/sdk-server/auth';
 
 const auth = createAuth({
   tokens: { secret: process.env.AUTH_SECRET, issuer: 'https://acme.com', audience: ['https://acme.com'] },
@@ -730,6 +781,31 @@ Postgres, MySQL, Mongo or an identity service:
 rather than failing at runtime. Declining a flow is one act: do not implement it. `GET /auth/capabilities` publishes
 the result, so a sign-in page renders what the backend actually answers instead of a button that dead-ends.
 
+### …or don't: `@plitzi/sdk-server/mysql`
+
+If you are standing a user store up rather than adapting one you have, the table above is ceremony. Import the
+store instead — it is every adapter in it, already written, over tables it creates:
+
+```ts
+import { createMysqlStore } from '@plitzi/sdk-server/mysql';
+
+const store = await createMysqlStore({ url: process.env.DATABASE_URL });
+
+const auth = createAuth({
+  tokens: { secret, issuer },
+  adapters: store.authAdapters,   // spread your own on top: { ...store.authAdapters, sendMail }
+  api: store.passwords            // scrypt, replaceable
+});
+```
+
+It connects to a MySQL server; it does not start one. `store.admin` seeds the roles, permissions and memberships
+that no request creates. `mysql2` is an optional peer dependency, since this is the only part of the package that
+touches a database.
+
+The tables, the contract they satisfy, and the four traps that fail somewhere other than where they were caused
+are in [`docs/auth/mysql-schema.md`](./docs/auth/mysql-schema.md) — worth reading even if you are mapping your own
+schema, because it is written as the set of questions your adapters have to answer.
+
 ### What you get
 
 `POST /auth/login`, `/auth/refresh`, `/auth/logout`, `/auth/sessions/revoke`, `/auth/exchange`, `GET /auth/session`,
@@ -752,7 +828,8 @@ and every refusal names a machine-readable `reason`, so a client can tell "renew
 | `identity` | Your own hosts and origins — the floor for domain binding and framing |
 | `tokens.lifetimes` | How long each credential lives |
 
-A working example is [`examples/02-with-users`](../../examples/02-with-users).
+Working examples are in [`examples/02-with-users`](../../examples/02-with-users): `01-sessions` over a store you
+write, `02-mysql` over one you do not.
 
 ### `SSRUser`
 

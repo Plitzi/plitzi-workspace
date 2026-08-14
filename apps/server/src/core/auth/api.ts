@@ -1,3 +1,5 @@
+import { checkPermission } from './authorize';
+
 import type { CredentialCarrier } from './credentials';
 import type { Actor, Identity } from './identity';
 import type { AuthFailure, Tokens } from './tokens';
@@ -26,6 +28,59 @@ export interface AccountAccess {
   permissions: string[];
 }
 
+/** What a session was created from, so a "your devices" list can name it. */
+export interface SessionClient {
+  userAgent?: string;
+  ip?: string;
+}
+
+/**
+ * What an account is allowed to be. `inactive` is the account's own doing (deactivated, never confirmed);
+ * `blocked` is the deployment's. Neither may hold a session — the distinction is for whoever has to explain it.
+ */
+export type AccountStatus = 'active' | 'inactive' | 'blocked';
+
+/** One live session, as its owner may see it. Never the credential itself. */
+export interface SessionSummary {
+  id: number;
+  userAgent?: string;
+  ip?: string;
+  createdAt: number;
+  expiresAt: number;
+  /** The session asking. A device list without it invites someone to revoke the one they are using. */
+  current: boolean;
+}
+
+export interface AccountQuery {
+  /** Matched against username and email. */
+  search?: string;
+  status?: AccountStatus;
+  limit?: number;
+  offset?: number;
+}
+
+/**
+ * Why a session is being written — which is not something the pair itself can say, and the difference matters to
+ * any store that keeps more than one session per account.
+ *
+ * A sign-in creates a session. A renewal **replaces one**, and a store that cannot tell them apart grows a row per
+ * renewal: a device list that fills with ghosts of the same browser, and a revoked session that comes back because
+ * the row it was meant to overwrite is still there. A store that keeps a single pair on the account row ignores
+ * this and overwrites either way, which is what it always did.
+ */
+export interface SessionContext {
+  /** The credential being renewed. Absent for a fresh sign-in. */
+  replaces?: { refreshToken?: string; accessToken?: string };
+  client?: SessionClient;
+}
+
+/** The user agent, off whatever carried the request. Nothing else here reads headers, so it is done once. */
+const clientOf = (carrier?: CredentialCarrier): SessionClient | undefined => {
+  const userAgent = carrier?.headers['user-agent'];
+
+  return typeof userAgent === 'string' && userAgent ? { userAgent } : undefined;
+};
+
 /**
  * The account store, as auth needs to see it. Every method is optional except the three the session cycle cannot do
  * without, and **what is absent decides what this server offers**: a deployment with no `createAccount` has no
@@ -33,12 +88,47 @@ export interface AccountAccess {
  * deployment with its own user table and one that signs everybody in through an external provider.
  */
 export interface AccountAdapters {
-  /** Persist a freshly minted pair. Storing it is what retires the previous one — the whole of rotation. */
-  saveSession: (userId: number, session: SSRSession) => Promise<void>;
+  /**
+   * Persist a freshly minted pair.
+   *
+   * `context` says whether this is a new session or one replacing another — see {@link SessionContext}. A store
+   * with one pair per account may ignore it and overwrite; a store with a `session` table must not, or every
+   * renewal leaves a row behind.
+   */
+  saveSession: (userId: number, session: SSRSession, context?: SessionContext) => Promise<void>;
   /** Clear the pair, by whichever half the caller holds, or by account. */
   clearSession: (target: { accessToken?: string; refreshToken?: string; userId?: number }) => Promise<void>;
   /** Global roles and permissions, for the body a grant answers with. */
   loadAccess: (userId: number) => Promise<AccountAccess>;
+
+  /** By id. Needed wherever a flow acts on the account already signed in — changing a password, deleting itself. */
+  findById?: (userId: number) => Promise<AccountRecord | undefined>;
+  /**
+   * Change what an account says about itself. Only the keys present are touched — an absent `email` means "leave
+   * it", never "clear it", which is what an implementation writing every column unconditionally would do.
+   */
+  updateAccount?: (userId: number, changes: { username?: string; email?: string }) => Promise<AccountRecord>;
+  /**
+   * Suspend, block or restore. Separate from `deleteAccount` because they are different acts with different
+   * consequences: a suspension is reversible and keeps everything the account made.
+   */
+  setStatus?: (userId: number, status: AccountStatus) => Promise<void>;
+  /**
+   * Erase the account. Whether that means deleting a row or anonymising one is the deployment's call and it is a
+   * real one — content, audit logs and invoices usually have to outlive the person. Either way it must end every
+   * session, which deleting the account's sessions does.
+   */
+  deleteAccount?: (userId: number) => Promise<void>;
+  /** Page through accounts, for an administrator. `total` is the count before the page was taken. */
+  listAccounts?: (query: AccountQuery) => Promise<{ accounts: AccountRecord[]; total: number }>;
+  /** Replace an account's global roles with exactly these. */
+  setRoles?: (userId: number, roles: string[]) => Promise<void>;
+  /** The account's live sessions. `currentToken` marks the one asking, so a device list can say "this device". */
+  listSessions?: (userId: number, currentToken?: string) => Promise<SessionSummary[]>;
+  /** End one session. Scoped by account: a session id from another account must not resolve. */
+  revokeSession?: (userId: number, sessionId: number) => Promise<boolean>;
+  /** End every session except the one asking. */
+  revokeOtherSessions?: (userId: number, currentToken: string) => Promise<number>;
 
   findByUsername?: (username: string) => Promise<AccountRecord | undefined>;
   findByRefreshToken?: (token: string) => Promise<AccountRecord | undefined>;
@@ -72,7 +162,17 @@ export interface AuthApiConfig {
   generateToken?: () => string;
   /** Whether a new account may sign in immediately or has to confirm its address first. */
   verifyOnSignup?: boolean;
+  /**
+   * The global capability an administrator must hold to act on somebody else's account. Named rather than fixed,
+   * because what a deployment calls its permissions is its own vocabulary. Default `userManage`.
+   */
+  adminPermission?: string;
 }
+
+/** What an exchange came to, before it is turned into either an HTTP body or a rendered page's session. */
+export type ExchangeResult =
+  | { ok: true; account: AccountRecord; access: AccountAccess; session: SSRSession }
+  | { ok: false; offered: boolean; status: number; error: string; reason?: AuthFailure };
 
 /** What a handler answers: a body, and optionally what should happen to the session cookies. */
 export type AuthOutcome =
@@ -102,6 +202,17 @@ const asText = (value: unknown): string => {
 
 const asString = (value: unknown): string => asText(value).trim();
 
+const STATUSES: AccountStatus[] = ['active', 'inactive', 'blocked'];
+
+/** An account as it may be shown. Never the password hash, and never the credentials — not even to an admin. */
+const profileOf = (account: AccountRecord) => ({
+  id: account.id,
+  username: account.username,
+  email: account.email,
+  active: account.active,
+  verified: account.verified
+});
+
 /**
  * The HTTP surface of authentication, as functions rather than routes.
  *
@@ -121,7 +232,13 @@ export const createAuthApi = ({
   adapters: AccountAdapters;
   config?: AuthApiConfig;
 }) => {
-  const { verifyPassword, hashPassword, generateToken, verifyOnSignup = false } = config;
+  const {
+    verifyPassword,
+    hashPassword,
+    generateToken,
+    verifyOnSignup = false,
+    adminPermission = 'userManage'
+  } = config;
 
   /**
    * What this deployment offers, decided by what it supplied and nothing else.
@@ -137,10 +254,35 @@ export const createAuthApi = ({
     signup: !!adapters.createAccount && !!hashPassword,
     passwordReset: !!adapters.findByEmail && !!adapters.setResetToken && !!hashPassword,
     emailVerification: !!adapters.findByValidationToken && !!adapters.markVerified,
-    exchange: !!adapters.exchangeCredential
+    exchange: !!adapters.exchangeCredential,
+    profile: !!adapters.updateAccount,
+    passwordChange: !!adapters.findById && !!verifyPassword && !!hashPassword && !!adapters.setPassword,
+    accountDeletion: !!adapters.deleteAccount,
+    sessionList: !!adapters.listSessions,
+    administration: !!adapters.listAccounts && !!adapters.findById
   };
 
-  const issue = async (userId: number): Promise<SSRSession> => {
+  /**
+   * An administrator acting on somebody else.
+   *
+   * `subject` refuses the case where that somebody is themselves. Banning or deleting your own account through the
+   * admin surface is how a deployment loses its last administrator, and it is never what was meant: closing your
+   * own account is the self-service flow, which asks for a password precisely because it is irreversible.
+   */
+  const requireAdmin = (actor: Actor | undefined, subject?: number): AuthOutcome | undefined => {
+    const check = checkPermission(actor, adminPermission);
+    if (!check.ok) {
+      return refuse(check.status, check.error, check.status === 401 ? 'missing' : undefined);
+    }
+
+    if (subject !== undefined && subject === actor?.id) {
+      return refuse(400, 'Use the self-service route to act on your own account');
+    }
+
+    return undefined;
+  };
+
+  const issue = async (userId: number, context?: SessionContext): Promise<SSRSession> => {
     const now = Math.floor(Date.now() / 1000);
     const session: SSRSession = {
       token: tokens.generateUserToken(userId),
@@ -149,7 +291,7 @@ export const createAuthApi = ({
       refreshExpiresAt: now + tokens.lifetimes.refresh
     };
 
-    await adapters.saveSession(userId, session);
+    await adapters.saveSession(userId, session, context);
 
     return session;
   };
@@ -158,8 +300,8 @@ export const createAuthApi = ({
    * The body a grant answers with. `details` is the same object the session endpoint returns, deliberately: it makes
    * a grant an identity, so a client that has just signed in or renewed knows who it is without a second request.
    */
-  const grantBody = async (account: AccountRecord, session: SSRSession): Promise<object> => {
-    const access = await adapters.loadAccess(account.id);
+  const grantBody = async (account: AccountRecord, session: SSRSession, loaded?: AccountAccess): Promise<object> => {
+    const access = loaded ?? (await adapters.loadAccess(account.id));
     const now = Math.floor(Date.now() / 1000);
 
     return {
@@ -178,6 +320,42 @@ export const createAuthApi = ({
       refresh_token: session.refreshToken,
       refresh_expire_in: Math.max(0, (session.refreshExpiresAt ?? 0) - now),
       refresh_expire_at: session.refreshExpiresAt
+    };
+  };
+
+  /**
+   * Turning a credential from an external identity provider into a session here, answered in accounts.
+   *
+   * `offered` separates "this deployment does not do exchanges" from "that credential was refused" — a 404 and a
+   * 401 respectively, and a caller that cannot tell them apart reports a misconfiguration as a bad password.
+   */
+  const exchangeAccount = async (
+    provider: string,
+    token: string,
+    carrier: CredentialCarrier
+  ): Promise<ExchangeResult> => {
+    if (!capabilities.exchange) {
+      return { ok: false, offered: false, status: 404, error: 'Not found' };
+    }
+
+    if (!provider || !token) {
+      return { ok: false, offered: true, status: 400, error: 'A provider and a token are required' };
+    }
+
+    const result = await adapters.exchangeCredential?.(provider, token, carrier);
+    if (!result) {
+      return { ok: false, offered: true, status: 401, error: 'Token Invalid', reason: 'revoked' };
+    }
+
+    if ('error' in result) {
+      return { ok: false, offered: true, status: result.status ?? 400, error: result.error, reason: 'revoked' };
+    }
+
+    return {
+      ok: true,
+      account: result,
+      access: await adapters.loadAccess(result.id),
+      session: await issue(result.id, { client: clientOf(carrier) })
     };
   };
 
@@ -218,7 +396,7 @@ export const createAuthApi = ({
       };
     },
 
-    login: async (credentials: Record<string, unknown>): Promise<AuthOutcome> => {
+    login: async (credentials: Record<string, unknown>, carrier?: CredentialCarrier): Promise<AuthOutcome> => {
       if (!capabilities.passwordLogin) {
         return NOT_OFFERED;
       }
@@ -245,12 +423,12 @@ export const createAuthApi = ({
         return refuse(401, 'Invalid credentials');
       }
 
-      const session = await issue(account.id);
+      const session = await issue(account.id, { client: clientOf(carrier) });
 
       return { ok: true, body: await grantBody(account, session), session };
     },
 
-    refresh: async (refreshToken?: string): Promise<AuthOutcome> => {
+    refresh: async (refreshToken?: string, carrier?: CredentialCarrier): Promise<AuthOutcome> => {
       if (!capabilities.refresh) {
         return NOT_OFFERED;
       }
@@ -268,7 +446,7 @@ export const createAuthApi = ({
         return refuse(401, 'Account is not active', 'inactive');
       }
 
-      const session = await issue(account.id);
+      const session = await issue(account.id, { replaces: { refreshToken }, client: clientOf(carrier) });
 
       return { ok: true, body: await grantBody(account, session), session };
     },
@@ -298,27 +476,24 @@ export const createAuthApi = ({
     },
 
     exchange: async (provider: string, token: string, carrier: CredentialCarrier): Promise<AuthOutcome> => {
-      if (!capabilities.exchange) {
-        return NOT_OFFERED;
+      const result = await exchangeAccount(provider, token, carrier);
+      if (!result.ok) {
+        return result.offered ? refuse(result.status, result.error, result.reason) : NOT_OFFERED;
       }
 
-      if (!provider || !token) {
-        return refuse(400, 'A provider and a token are required');
-      }
+      const { account, access, session } = result;
 
-      const result = await adapters.exchangeCredential?.(provider, token, carrier);
-      if (!result) {
-        return refuse(401, 'Token Invalid', 'revoked');
-      }
-
-      if ('error' in result) {
-        return refuse(result.status ?? 400, result.error, 'revoked');
-      }
-
-      const session = await issue(result.id);
-
-      return { ok: true, body: await grantBody(result, session), session };
+      return { ok: true, body: await grantBody(account, session, access), session };
     },
+
+    /**
+     * The same exchange, answering in accounts rather than in HTTP.
+     *
+     * A page server needs who came back and the session they got; the flow above needs a body and a status. They
+     * are the same act, and the translation between them has one correct answer — so it is made once, here, rather
+     * than by every deployment that wires an external identity provider into a rendered page.
+     */
+    exchangeAccount,
 
     signup: async (fields: Record<string, unknown>): Promise<AuthOutcome> => {
       if (!capabilities.signup) {
@@ -430,6 +605,263 @@ export const createAuthApi = ({
       }
 
       return { ok: true, body: { message: 'Verification email resent' } };
+    },
+
+    /**
+     * Change what an account says about itself.
+     *
+     * Both fields are sign-in identifiers, so both are checked for collision first — a store that only has a unique
+     * index reports the clash as a driver error five hundred lines away.
+     */
+    updateProfile: async (actor: Actor | undefined, fields: Record<string, unknown>): Promise<AuthOutcome> => {
+      if (!capabilities.profile || !adapters.updateAccount) {
+        return NOT_OFFERED;
+      }
+
+      if (!actor) {
+        return refuse(401, 'Not authenticated', 'missing');
+      }
+
+      const username = asString(fields.username);
+      const email = asString(fields.email);
+      if (!username && !email) {
+        return refuse(400, 'Nothing to change');
+      }
+
+      if (username && username !== actor.username) {
+        const taken = await adapters.findByUsername?.(username);
+        if (taken && taken.id !== actor.id) {
+          return refuse(409, 'That username is taken');
+        }
+      }
+
+      if (email && email !== actor.email) {
+        const taken = await adapters.findByEmail?.(email);
+        if (taken && taken.id !== actor.id) {
+          return refuse(409, 'That email is taken');
+        }
+      }
+
+      const account = await adapters.updateAccount(actor.id, {
+        ...(username ? { username } : {}),
+        ...(email ? { email } : {})
+      });
+
+      return { ok: true, body: { success: true, details: profileOf(account) } };
+    },
+
+    /**
+     * Change a password, having proved you know the current one.
+     *
+     * Then **every other session ends**. Changing a password is what somebody does when they think a credential
+     * escaped, and one that leaves the other sessions signed in has not done the thing they asked for. The session
+     * making the change survives, or the act of securing the account would sign them out of it.
+     */
+    changePassword: async (
+      actor: Actor | undefined,
+      currentPassword: string,
+      newPassword: string
+    ): Promise<AuthOutcome> => {
+      if (!capabilities.passwordChange || !adapters.findById || !hashPassword || !verifyPassword) {
+        return NOT_OFFERED;
+      }
+
+      if (!actor) {
+        return refuse(401, 'Not authenticated', 'missing');
+      }
+
+      if (!currentPassword || !newPassword) {
+        return refuse(400, 'The current and the new password are required');
+      }
+
+      const account = await adapters.findById(actor.id);
+      if (!account?.passwordHash || !(await verifyPassword(currentPassword, account.passwordHash))) {
+        return refuse(401, 'Invalid credentials');
+      }
+
+      await adapters.setPassword?.(actor.id, await hashPassword(newPassword));
+      await adapters.revokeOtherSessions?.(actor.id, actor.token);
+
+      return { ok: true, body: { success: true, message: 'Password changed. Other sessions were signed out.' } };
+    },
+
+    /**
+     * Close the account.
+     *
+     * Confirmed with the password when there is one — this is irreversible, and a borrowed session should not be
+     * able to do it. An account with no password (one that signs in through a provider) cannot be asked, so the
+     * session alone has to be enough.
+     */
+    deleteSelf: async (actor: Actor | undefined, password?: string): Promise<AuthOutcome> => {
+      if (!capabilities.accountDeletion || !adapters.deleteAccount) {
+        return NOT_OFFERED;
+      }
+
+      if (!actor) {
+        return refuse(401, 'Not authenticated', 'missing');
+      }
+
+      const account = await adapters.findById?.(actor.id);
+      if (account?.passwordHash) {
+        if (!password || !(await verifyPassword?.(password, account.passwordHash))) {
+          return refuse(401, 'Invalid credentials');
+        }
+      }
+
+      await adapters.deleteAccount(actor.id);
+
+      return { ok: true, body: { success: true, message: 'Account deleted' }, endSession: true };
+    },
+
+    /** The devices this account is signed in on, with the one asking marked. */
+    listSessions: async (actor: Actor | undefined): Promise<AuthOutcome> => {
+      if (!capabilities.sessionList || !adapters.listSessions) {
+        return NOT_OFFERED;
+      }
+
+      if (!actor) {
+        return refuse(401, 'Not authenticated', 'missing');
+      }
+
+      return { ok: true, body: { sessions: await adapters.listSessions(actor.id, actor.token) } };
+    },
+
+    /** End one of them. Scoped to the caller's own account, or a session id would be an IDOR. */
+    revokeSession: async (actor: Actor | undefined, sessionId: number): Promise<AuthOutcome> => {
+      if (!adapters.revokeSession) {
+        return NOT_OFFERED;
+      }
+
+      if (!actor) {
+        return refuse(401, 'Not authenticated', 'missing');
+      }
+
+      if (!Number.isInteger(sessionId)) {
+        return refuse(400, 'A session id is required');
+      }
+
+      const removed = await adapters.revokeSession(actor.id, sessionId);
+
+      return removed ? { ok: true, body: { success: true } } : refuse(404, 'No such session');
+    },
+
+    /** "Sign out everywhere else" — the thing to do from a device you still hold after losing one you do not. */
+    revokeOtherSessions: async (actor: Actor | undefined): Promise<AuthOutcome> => {
+      if (!adapters.revokeOtherSessions) {
+        return NOT_OFFERED;
+      }
+
+      if (!actor) {
+        return refuse(401, 'Not authenticated', 'missing');
+      }
+
+      return { ok: true, body: { success: true, revoked: await adapters.revokeOtherSessions(actor.id, actor.token) } };
+    },
+
+    admin: {
+      list: async (actor: Actor | undefined, query: AccountQuery): Promise<AuthOutcome> => {
+        const denial = requireAdmin(actor);
+        if (denial) {
+          return denial;
+        }
+
+        if (!adapters.listAccounts) {
+          return NOT_OFFERED;
+        }
+
+        const { accounts, total } = await adapters.listAccounts(query);
+
+        return { ok: true, body: { accounts: accounts.map(profileOf), total } };
+      },
+
+      get: async (actor: Actor | undefined, userId: number): Promise<AuthOutcome> => {
+        const denial = requireAdmin(actor);
+        if (denial) {
+          return denial;
+        }
+
+        const account = await adapters.findById?.(userId);
+        if (!account) {
+          return refuse(404, 'No such account');
+        }
+
+        return { ok: true, body: { account: profileOf(account), access: await adapters.loadAccess(userId) } };
+      },
+
+      /**
+       * Suspend, block or restore an account — and **end its sessions when it stops being active**.
+       *
+       * That second half is the whole point. A ban that leaves the credential working is not a ban, it is a note
+       * in a database; the person stays signed in until their token happens to lapse.
+       */
+      setStatus: async (actor: Actor | undefined, userId: number, status: AccountStatus): Promise<AuthOutcome> => {
+        const denial = requireAdmin(actor, userId);
+        if (denial) {
+          return denial;
+        }
+
+        if (!adapters.setStatus) {
+          return NOT_OFFERED;
+        }
+
+        if (!STATUSES.includes(status)) {
+          return refuse(400, `Status must be one of ${STATUSES.join(', ')}`);
+        }
+
+        if (!(await adapters.findById?.(userId))) {
+          return refuse(404, 'No such account');
+        }
+
+        await adapters.setStatus(userId, status);
+
+        if (status !== 'active') {
+          await adapters.clearSession({ userId });
+        }
+
+        return { ok: true, body: { success: true, status } };
+      },
+
+      setRoles: async (actor: Actor | undefined, userId: number, roles: string[]): Promise<AuthOutcome> => {
+        const denial = requireAdmin(actor);
+        if (denial) {
+          return denial;
+        }
+
+        if (!adapters.setRoles) {
+          return NOT_OFFERED;
+        }
+
+        if (!Array.isArray(roles) || roles.some(role => typeof role !== 'string')) {
+          return refuse(400, 'Roles must be a list of names');
+        }
+
+        if (!(await adapters.findById?.(userId))) {
+          return refuse(404, 'No such account');
+        }
+
+        await adapters.setRoles(userId, roles);
+
+        return { ok: true, body: { success: true, roles } };
+      },
+
+      remove: async (actor: Actor | undefined, userId: number): Promise<AuthOutcome> => {
+        const denial = requireAdmin(actor, userId);
+        if (denial) {
+          return denial;
+        }
+
+        if (!adapters.deleteAccount) {
+          return NOT_OFFERED;
+        }
+
+        if (!(await adapters.findById?.(userId))) {
+          return refuse(404, 'No such account');
+        }
+
+        await adapters.deleteAccount(userId);
+
+        return { ok: true, body: { success: true } };
+      }
     },
 
     /** Exposed so a deployment can mint a session outside the flows above — a rendered page's login form. */

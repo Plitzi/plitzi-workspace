@@ -1,0 +1,16 @@
+{
+  "extends": "../../../packages/sdk-shared/tsconfig.app.json",
+  "compilerOptions": {
+    // `rootDir` reaches up because the pages come from the sibling example. With `composite` left on, that also
+    // moves where TypeScript puts its build state — it landed in `packages/` — and a check emits nothing anyway.
+    "rootDir": "..",
+    "composite": false,
+    "emitDeclarationOnly": false,
+    "noEmit": true,
+    "types": ["node"],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "resolveJsonModule": true
+  },
+  "include": ["src", "../01-sessions/src/space.ts"]
+}

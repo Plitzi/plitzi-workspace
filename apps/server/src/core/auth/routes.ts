@@ -1,4 +1,4 @@
-import type { AuthApi, AuthOutcome } from './api';
+import type { AccountStatus, AuthApi, AuthOutcome } from './api';
 import type { AuthPolicy, Requirement } from './authorize';
 import type { CredentialCarrier } from './credentials';
 import type { Actor } from './identity';
@@ -38,6 +38,36 @@ const field = (req: AuthRequest, name: string): string => {
   return typeof value === 'string' ? value : '';
 };
 
+/** A body field as a whole number. `NaN` for anything else, which every handler refuses as a missing id. */
+const numberField = (req: AuthRequest, name: string): number => {
+  const value = body(req)[name];
+
+  if (typeof value === 'number') {
+    return value;
+  }
+
+  return typeof value === 'string' ? Number.parseInt(value, 10) : Number.NaN;
+};
+
+const queryText = (req: AuthRequest, name: string): string | undefined => {
+  const value = req.query?.[name];
+
+  return typeof value === 'string' && value ? value : undefined;
+};
+
+const queryNumber = (req: AuthRequest, name: string): number | undefined => {
+  const parsed = Number.parseInt(queryText(req, name) ?? '', 10);
+
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+/** Whatever arrived as `roles`, as a list. The handler refuses anything that is not one, rather than coercing. */
+const rolesOf = (req: AuthRequest): string[] => {
+  const value = body(req).roles;
+
+  return Array.isArray(value) ? (value as string[]) : [];
+};
+
 type Flow = Omit<AuthRoute, 'handler'> & {
   run: (api: AuthApi, cookies: SessionCookies, req: AuthRequest) => Promise<AuthOutcome> | AuthOutcome;
 };
@@ -57,12 +87,12 @@ type Flow = Omit<AuthRoute, 'handler'> & {
 const FLOWS: Flow[] = [
   { method: 'GET', path: '/capabilities', requirement: 'public', run: api => api.describe() },
   { method: 'GET', path: '/session', requirement: 'actor', run: (api, _cookies, req) => api.session(req.actor) },
-  { method: 'POST', path: '/login', requirement: 'public', run: (api, _cookies, req) => api.login(body(req)) },
+  { method: 'POST', path: '/login', requirement: 'public', run: (api, _cookies, req) => api.login(body(req), req) },
   {
     method: 'POST',
     path: '/refresh',
     requirement: 'public',
-    run: (api, cookies, req) => api.refresh(cookies.resolveRefreshToken(req, req.body))
+    run: (api, cookies, req) => api.refresh(cookies.resolveRefreshToken(req, req.body), req)
   },
   {
     method: 'POST',
@@ -112,6 +142,81 @@ const FLOWS: Flow[] = [
     path: '/resend-verification-email',
     requirement: 'public',
     run: (api, _cookies, req) => api.resendVerification(field(req, 'email'))
+  },
+
+  /* The account, managed by the person it belongs to. Every one of these needs a live session and acts on the
+     account that session names — never on an id from the body, which would be somebody else's account. */
+  {
+    method: 'POST',
+    path: '/profile',
+    requirement: 'actor',
+    run: (api, _cookies, req) => api.updateProfile(req.actor, body(req))
+  },
+  {
+    method: 'POST',
+    path: '/password',
+    requirement: 'actor',
+    run: (api, _cookies, req) => api.changePassword(req.actor, field(req, 'currentPassword'), field(req, 'password'))
+  },
+  {
+    method: 'POST',
+    path: '/delete-account',
+    requirement: 'actor',
+    run: (api, _cookies, req) => api.deleteSelf(req.actor, field(req, 'password'))
+  },
+  { method: 'GET', path: '/sessions', requirement: 'actor', run: (api, _cookies, req) => api.listSessions(req.actor) },
+  {
+    method: 'POST',
+    path: '/sessions/revoke-one',
+    requirement: 'actor',
+    run: (api, _cookies, req) => api.revokeSession(req.actor, numberField(req, 'sessionId'))
+  },
+  {
+    method: 'POST',
+    path: '/sessions/revoke-others',
+    requirement: 'actor',
+    run: (api, _cookies, req) => api.revokeOtherSessions(req.actor)
+  },
+
+  /* Somebody else's account. The requirement is only `actor` because the permission is checked inside — the guard
+     knows whether a session is good, not what this deployment calls the capability to administer accounts. Ids
+     travel in the body rather than the path so the table stays flat and every host can mount it unchanged. */
+  {
+    method: 'GET',
+    path: '/admin/accounts',
+    requirement: 'actor',
+    run: (api, _cookies, req) =>
+      api.admin.list(req.actor, {
+        search: queryText(req, 'search'),
+        status: queryText(req, 'status') as AccountStatus | undefined,
+        limit: queryNumber(req, 'limit'),
+        offset: queryNumber(req, 'offset')
+      })
+  },
+  {
+    method: 'GET',
+    path: '/admin/account',
+    requirement: 'actor',
+    run: (api, _cookies, req) => api.admin.get(req.actor, queryNumber(req, 'id') ?? Number.NaN)
+  },
+  {
+    method: 'POST',
+    path: '/admin/account/status',
+    requirement: 'actor',
+    run: (api, _cookies, req) =>
+      api.admin.setStatus(req.actor, numberField(req, 'userId'), field(req, 'status') as AccountStatus)
+  },
+  {
+    method: 'POST',
+    path: '/admin/account/roles',
+    requirement: 'actor',
+    run: (api, _cookies, req) => api.admin.setRoles(req.actor, numberField(req, 'userId'), rolesOf(req))
+  },
+  {
+    method: 'POST',
+    path: '/admin/account/delete',
+    requirement: 'actor',
+    run: (api, _cookies, req) => api.admin.remove(req.actor, numberField(req, 'userId'))
   }
 ];
 

@@ -4,6 +4,16 @@ export { consoleLogger, renderLogEvent } from './helpers/serverLog';
 export type { HealthCheckApp, HealthIdentity } from './core/health';
 export { createJsonAdapters } from './adapters/jsonAdapters';
 export { createAuthAdapters } from './adapters/authAdapters';
+export {
+  authoringPreview,
+  createMemoryCache,
+  createSpaceAdapters,
+  fixedSpace,
+  presentsCredential,
+  refuse,
+  verifiedDomain,
+  wildcardSubdomain
+} from './adapters/space';
 // Draft-preview primitives: the token param and the default store. The endpoint that MINTS a draft lives in
 // `@plitzi/sdk-mcp` — applying unsaved operations is the tool engine's job, not the renderer's.
 export { createMemoryDraftStore, takeDraftOverride } from './modules/ssr/preview';
@@ -18,6 +28,18 @@ export {
 
 export type { JsonAdaptersConfig } from './adapters/jsonAdapters';
 export type { AuthAdapters, AuthAdaptersConfig } from './adapters/authAdapters';
+export type {
+  AuthoringPreviewOptions,
+  DeploymentRow,
+  FrameAncestorsConfig,
+  SpaceAdapters,
+  SpaceAdaptersConfig,
+  SpaceCache,
+  SpaceRefusal,
+  SpaceResolution,
+  SpaceResolver,
+  WildcardSubdomainOptions
+} from './adapters/space';
 export type { RscElementResolver, RscResolveContext, ResolveRscDataOptions } from './modules/rsc/resolveRscData';
 export type {
   ConnectorAuth,

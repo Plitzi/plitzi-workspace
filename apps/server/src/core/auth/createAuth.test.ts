@@ -53,7 +53,8 @@ describe('createAuth', () => {
   it('hands back a working cycle from one call', () => {
     const auth = build();
 
-    expect(auth.routes).toHaveLength(12);
+    expect(auth.routes.map(route => route.path)).toContain('/login');
+    expect(auth.routes.map(route => route.path)).toContain('/admin/account/status');
     expect(auth.policy.fallback).toBe('actor');
     expect(typeof auth.authorize).toBe('function');
     expect(typeof auth.can).toBe('function');

@@ -1,5 +1,5 @@
 import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
-import { createAuth } from '@plitzi/sdk-server/kernel';
+import { createAuth } from '@plitzi/sdk-server/auth';
 
 import { accounts, verifyPassword } from './accounts';
 import { offlineData } from './space';

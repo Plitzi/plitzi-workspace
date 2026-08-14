@@ -141,7 +141,48 @@ export const createAuth = (config: AuthConfig) => {
 
       endSession: async (req: CredentialCarrier): Promise<void> => {
         await api.logout({ accessToken: cookies.resolveSessionToken(req) });
-      }
+      },
+
+      /**
+       * Omitted entirely when no `exchangeCredential` adapter was supplied. A key that is present but inert would
+       * make the page server advertise `sessionExchangeUrl` for a flow that answers 404 — and a browser-side
+       * identity provider handing its credential to an endpoint that is not there fails as a hydration mismatch,
+       * which is nowhere near where the mistake was made.
+       */
+      ...(api.capabilities.exchange
+        ? {
+            exchangeCredential: async (
+              provider: string,
+              token: string,
+              req: CredentialCarrier
+            ): Promise<
+              | { ok: true; session: SSRSession; user?: SSRUser }
+              | { ok: false; error: string; status?: number; reason?: string }
+            > => {
+              const result = await api.exchangeAccount(provider, token, req);
+              if (!result.ok) {
+                return { ok: false, error: result.error, status: result.status, reason: result.reason };
+              }
+
+              const { account, access, session } = result;
+
+              return {
+                ok: true,
+                session,
+                user: {
+                  token: session.token,
+                  expiresAt: session.expiresAt,
+                  id: account.id,
+                  username: account.username,
+                  email: account.email,
+                  verified: account.verified,
+                  roles: access.roles,
+                  permissions: access.permissions
+                }
+              };
+            }
+          }
+        : {})
     }
   };
 };

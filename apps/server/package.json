@@ -14,10 +14,20 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
+    "./auth": {
+      "types": "./dist/auth.d.ts",
+      "import": "./dist/auth.js",
+      "default": "./dist/auth.js"
+    },
     "./kernel": {
       "types": "./dist/kernel.d.ts",
       "import": "./dist/kernel.js",
       "default": "./dist/kernel.js"
+    },
+    "./mysql": {
+      "types": "./dist/mysql.d.ts",
+      "import": "./dist/mysql.js",
+      "default": "./dist/mysql.js"
     },
     "./handlers": {
       "types": "./dist/handlers.d.ts",
@@ -44,8 +54,14 @@
     "jsonwebtoken": "^9.0.3"
   },
   "peerDependencies": {
+    "mysql2": "^3",
     "react": "^19",
     "react-dom": "^19"
+  },
+  "peerDependenciesMeta": {
+    "mysql2": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/ejs": "^3.1.5",
@@ -56,6 +72,7 @@
     "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^9.39.5",
     "eslint-plugin-import": "^2.32.0",
+    "mysql2": "^3.23.3",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tsx": "^4.23.12",

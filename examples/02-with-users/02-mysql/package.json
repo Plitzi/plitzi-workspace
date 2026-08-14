@@ -1,0 +1,23 @@
+{
+  "name": "@plitzi/example-with-users-mysql",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A Plitzi space whose users live in your own MySQL, with the tables created for you.",
+  "type": "module",
+  "scripts": {
+    "start": "node --import tsx src/main.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@plitzi/example-space": "workspace:*",
+    "@plitzi/sdk-server": "workspace:*",
+    "mysql2": "^3.23.3",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typescript": "^6.0.3"
+  }
+}

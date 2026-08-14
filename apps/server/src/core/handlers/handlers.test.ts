@@ -160,9 +160,11 @@ describe('auth handlers on a plain object request', () => {
       { api: auth.api, cookies: auth.cookies }
     );
 
-    expect(get.map(([path]) => path)).toEqual(['/capabilities', '/session']);
+    expect(get.map(([path]) => path)).toContain('/capabilities');
+    expect(get.map(([path]) => path)).toContain('/sessions');
     expect(post.map(([path]) => path)).toContain('/login');
-    expect(get.length + post.length).toBe(12);
+    expect(post.map(([path]) => path)).toContain('/admin/account/delete');
+    expect(get.length + post.length).toBe(23);
   });
 });
 

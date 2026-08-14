@@ -72,7 +72,18 @@ describe('the route table', () => {
       'POST /forgot-password',
       'POST /reset-password',
       'POST /validate-account',
-      'POST /resend-verification-email'
+      'POST /resend-verification-email',
+      'POST /profile',
+      'POST /password',
+      'POST /delete-account',
+      'GET /sessions',
+      'POST /sessions/revoke-one',
+      'POST /sessions/revoke-others',
+      'GET /admin/accounts',
+      'GET /admin/account',
+      'POST /admin/account/status',
+      'POST /admin/account/roles',
+      'POST /admin/account/delete'
     ]);
   });
 
@@ -91,12 +102,12 @@ describe('the route table', () => {
     const fromBody = routeFor('/refresh');
     await fromBody.route.handler(carrier({ body: { refresh_token: 'body-token' } }));
 
-    expect(fromBody.calls[0]?.args).toEqual(['body-token']);
+    expect(fromBody.calls[0]?.args[0]).toBe('body-token');
 
     const fromCookie = routeFor('/refresh');
     await fromCookie.route.handler(carrier({ headers: { cookie: 'sess_refresh=cookie-token' } }));
 
-    expect(fromCookie.calls[0]?.args).toEqual(['cookie-token']);
+    expect(fromCookie.calls[0]?.args[0]).toBe('cookie-token');
   });
 
   it('reads the session credential from the header first, then the cookie', async () => {

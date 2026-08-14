@@ -100,7 +100,16 @@ describe('signing in', () => {
     const outcome = await api.login({ username: 'ada', password: 'pw' });
 
     expect(outcome.ok).toBe(true);
-    expect(saveSession).toHaveBeenCalledWith(1, expect.objectContaining({ token: expect.any(String) as string }));
+    const [userId, saved, context] = saveSession.mock.calls[0] as unknown as [
+      number,
+      { token: string },
+      { replaces?: unknown }
+    ];
+
+    expect(userId).toBe(1);
+    expect(saved.token).toEqual(expect.any(String));
+    // A sign-in CREATES a session rather than replacing one, which is the distinction a session table depends on.
+    expect(context.replaces).toBeUndefined();
     // A grant is an identity: the client knows who it is without a follow-up call.
     expect(outcome.ok && outcome.body).toMatchObject({
       details: { id: 1, username: 'ada', permissions: ['spaceUpdate'] }

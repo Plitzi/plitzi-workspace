@@ -194,8 +194,13 @@ const CSS = `
 .auth-button{padding:8px 16px;border-radius:6px;border:0;background:#5c3df5;color:#fff;font-size:14px;cursor:pointer;}
 `;
 
-/** The sample space with the two auth pages added, as the server's adapters want it. */
-export const offlineData = (): OfflineDataRaw => {
+/**
+ * The sample space with the two auth pages added, as the server's adapters want it.
+ *
+ * `sessionHintCookie` is a parameter because it has to match the session cookie the server was configured with, and
+ * that is the deployment's name for it — the sibling MySQL example renders these same two pages under its own.
+ */
+export const offlineData = (options: { sessionHintCookie?: string } = {}): OfflineDataRaw => {
   const data = readOfflineData() as OfflineDataRaw;
 
   return {
@@ -224,7 +229,7 @@ export const offlineData = (): OfflineDataRaw => {
         userUrl: '/auth/session',
         refreshUrl: '/auth/refresh',
         logoutUrl: '/auth/logout',
-        sessionHintCookie: 'example_session_hint'
+        sessionHintCookie: options.sessionHintCookie ?? 'example_session_hint'
       }
     },
     style: { ...data.style, cache: `${data.style.cache ?? ''}${CSS}` }

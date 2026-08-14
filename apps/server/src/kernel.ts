@@ -5,7 +5,11 @@
  *  from there would load that whole graph. This entry's closure is the dispatcher, the transports and the base
  *  stages: no React, no template, no plugin manager.
  *
- *  A server built on it supplies its own pipeline; `@plitzi/sdk-mcp` is the in-tree example. */
+ *  A server built on it supplies its own pipeline; `@plitzi/sdk-mcp` is the in-tree example.
+ *
+ *  Auth is **not** here — it is `@plitzi/sdk-server/auth`. The two shared this entry for a while and the name
+ *  described neither: a deployment wiring up sessions loaded the dispatcher to get them, and a server that wants
+ *  the dispatcher and no auth at all had to name the entry that carried both. */
 
 export { createHttpServer } from './core/server/baseServer';
 export { makeHandler } from './core/http/dispatcher';
@@ -13,36 +17,6 @@ export { healthStage } from './core/http/stages/health';
 export { configStaticStage, publicDirStage, wellKnownStage } from './core/http/stages/static';
 export { buildHealthPayload, registerHealthCheck } from './core/health';
 export { clientIp, parseRequest, readRawBody, requestOrigin } from './core/requestParser';
-export {
-  clearFlowCookie,
-  clearSessionCookies,
-  createSessionCookies,
-  isLocalHost,
-  readFlowCookie,
-  readRefreshToken,
-  readSessionToken,
-  sessionCookieParams,
-  sessionHintValue,
-  writeFlowCookie,
-  writeSessionCookies
-} from './core/auth/session';
-export { SCOPES, authFailureMessage, createTokens, userIdOf } from './core/auth/tokens';
-export { createCarriers, presentedOrigin } from './core/auth/credentials';
-export {
-  ANY_DOMAIN,
-  corsOrigins,
-  domainAllowed,
-  frameAncestors,
-  hostnameOf,
-  normalizeDomain
-} from './core/auth/domains';
-export { createIdentity } from './core/auth/identity';
-export { checkPermission, checkSpaceAccess, createAuthorizer, requirementFor } from './core/auth/authorize';
-export { createAuth } from './core/auth/createAuth';
-export { createAuthApi } from './core/auth/api';
-export { applySessionOutcome, authPolicyRules, authRoutes } from './core/auth/routes';
-export { createSpaceTokenApi } from './core/auth/spaceTokens';
-export { BUILT_IN_PROVIDERS, OAuthFailure, createSocialAuth, requestProfileJson } from './core/auth/oauth';
 export { consoleLogger, renderLogEvent } from './helpers/serverLog';
 export { PREVIEW_TOKEN_PARAM } from './core/previewToken';
 
@@ -50,69 +24,3 @@ export type { HttpServerParts } from './core/server/baseServer';
 export type { BuildContext } from './core/http/dispatcher';
 export type { HealthCheckApp, HealthIdentity } from './core/health';
 export type { BaseContext, PipelineExtensions, SSRContext, Stage } from './core/http/types';
-export type { CookieCarrier, CookieSink, SessionCookieParams, SessionCookies } from './core/auth/session';
-export type { CredentialCarrier } from './core/auth/credentials';
-export type {
-  Actor,
-  ActorResult,
-  Grant,
-  GrantOptions,
-  GrantResult,
-  Identity,
-  IdentityAdapters,
-  IdentityConfig,
-  SpaceMembership,
-  StoredSpaceToken
-} from './core/auth/identity';
-export type {
-  AuthPolicy,
-  AuthorizeResult,
-  Authorizer,
-  MembershipFacts,
-  PathMatcher,
-  PermissionCheck,
-  Requirement,
-  SpaceAccessCheck
-} from './core/auth/authorize';
-export type { AuthRequest, AuthRoute } from './core/auth/routes';
-export type { Auth, AuthConfig } from './core/auth/createAuth';
-export type {
-  CompletedFlow,
-  OAuthFailureReason,
-  OAuthProfile,
-  OAuthProvider,
-  OAuthProviderConfig,
-  SocialAuth,
-  SocialAuthAdapters,
-  SocialAuthConfig,
-  StartedFlow
-} from './core/auth/oauth';
-export type {
-  AccountAccess,
-  AccountAdapters,
-  AccountRecord,
-  AuthApi,
-  AuthApiConfig,
-  AuthOutcome
-} from './core/auth/api';
-export type {
-  SpaceTokenAdapters,
-  SpaceTokenApi,
-  SpaceTokenContext,
-  SpaceTokenOutcome,
-  SpaceTokenRecord,
-  SpaceTokenSummary
-} from './core/auth/spaceTokens';
-export type {
-  AuthFailure,
-  RefreshTokenPayload,
-  SpaceScope,
-  SpaceTokenOptions,
-  SpaceTokenPayload,
-  TokenConfig,
-  TokenScope,
-  Tokens,
-  UserTokenPayload,
-  VerifyResult,
-  WidgetTokenPayload
-} from './core/auth/tokens';

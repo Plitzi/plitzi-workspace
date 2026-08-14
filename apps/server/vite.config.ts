@@ -78,6 +78,10 @@ export default defineConfig(({ mode }) => {
           // Narrow entries for packages that build on this one. The barrel re-exports the whole render path and
           // ESM re-exports load eagerly, so a sibling server importing from it would load React with them.
           kernel: path.resolve(root, 'src/kernel.ts'),
+          auth: path.resolve(root, 'src/auth.ts'),
+          // The account store, implemented. Its own entry because it is the only thing in the package that reaches
+          // for a database driver: a deployment bringing its own store never loads `mysql2` to find that out.
+          mysql: path.resolve(root, 'src/mysql.ts'),
           ssr: path.resolve(root, 'src/ssr.ts'),
           // Ready-made request handlers for the auth flows. Depends on no framework — see src/handlers.ts —
           // but keeping it out of the barrels is what makes it opt-in rather than something a page server drags in.
