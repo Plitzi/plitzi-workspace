@@ -1,4 +1,4 @@
-import { camelCase, get, set } from '@plitzi/plitzi-ui/helpers/lodash/index.js';
+import { camelCase, get, set } from '@plitzi/plitzi-ui/helpers/lodash';
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import { produce } from 'immer';
 

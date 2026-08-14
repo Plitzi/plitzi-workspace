@@ -1,4 +1,4 @@
-import { omit } from '@plitzi/plitzi-ui/helpers/lodash/index.js';
+import { omit } from '@plitzi/plitzi-ui/helpers/lodash';
 import FormIcon from '@plitzi/plitzi-ui/icons/Form';
 
 import BaseFormControl from './FormControl';

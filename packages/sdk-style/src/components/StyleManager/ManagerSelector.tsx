@@ -1,5 +1,5 @@
 import Button from '@plitzi/plitzi-ui/Button';
-import { get, set, isEmpty } from '@plitzi/plitzi-ui/helpers/lodash/index.js';
+import { get, set, isEmpty } from '@plitzi/plitzi-ui/helpers/lodash';
 import useDisclosure from '@plitzi/plitzi-ui/hooks/useDisclosure';
 import Input from '@plitzi/plitzi-ui/Input';
 import Modal from '@plitzi/plitzi-ui/Modal';

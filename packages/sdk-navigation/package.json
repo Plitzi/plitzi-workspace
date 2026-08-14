@@ -50,7 +50,7 @@
     "react-dom": "^19"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.19",
+    "@plitzi/plitzi-ui": "^1.6.20",
     "@plitzi/sdk-shared": "workspace:*"
   }
 }

@@ -47,7 +47,7 @@ import {
   treeTheme
 } from '@plitzi/plitzi-ui/components';
 import ContainerRoot from '@plitzi/plitzi-ui/ContainerRoot';
-import { omit } from '@plitzi/plitzi-ui/helpers/lodash/index.js';
+import { omit } from '@plitzi/plitzi-ui/helpers/lodash';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Provider from '@plitzi/plitzi-ui/Provider';
 import { ToastProvider } from '@plitzi/plitzi-ui/Toast';
