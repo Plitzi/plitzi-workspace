@@ -184,6 +184,12 @@ browser instead — [`mock/graphql.ts`](./mock/graphql.ts), shaped from a record
 operations. A mocked run makes a deliberately narrower claim: the app mounts, loads a space and renders it.
 Anything whose subject is the server says `onlyLiveBackend()` and skips rather than passing vacuously.
 
+**The WebSockets are mocked too**, and separately: `page.route` does not see them, so the builder's two boot
+sockets — graphql-ws and collaborator presence — went straight to the network. That is invisible on a laptop,
+where `server.plitzi.local` resolves and something answers, and red on every CI runner, where it does not. They
+are answered in [`mock/index.ts`](./mock/index.ts) through `page.routeWebSocket`: the handshake is acknowledged
+and nothing else is pretended to work, because there is no server to publish anything.
+
 Nothing else is a flag. **A gate asks whether the thing is there** rather than reading a variable, so a target
 runs when it can and says what is missing when it cannot — the vendor bundle on disk, `MYSQL_URL` pointing
 somewhere, a builder token exported.

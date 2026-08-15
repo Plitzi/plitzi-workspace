@@ -7,13 +7,24 @@ import type { Page, TestInfo } from '@playwright/test';
  *  a unit test never sees and a screenshot never shows — so every spec fails on one unless it says otherwise.
  *
  *  Opt out per spec with `test.use({ allowedConsoleErrors: [/pattern/] })`, and only for noise you have read. */
+/** The one thing no spec has to opt out of, because no product code can produce it.
+ *
+ *  `504 (Outdated Optimize Dep)` comes from Vite and only from Vite: it is what a dev server answers to requests
+ *  already in flight when it discovers a dependency it had not pre-bundled, before reloading the page. The
+ *  `warm-up` project exists to make it happen before the specs rather than during them — but which runner runs
+ *  that setup, and when, is Playwright's decision, and a test must not go red because of a decision made outside
+ *  it. Narrow on purpose: this exact string, and nothing near it. */
+const DEV_SERVER_REBUILD = /504 \(Outdated Optimize Dep\)/;
+
 export const watchForPageErrors = (page: Page, allowed: RegExp[]): string[] => {
   const problems: string[] = [];
 
   const record = (entry: string) => {
-    if (!allowed.some(pattern => pattern.test(entry))) {
-      problems.push(entry);
+    if (DEV_SERVER_REBUILD.test(entry) || allowed.some(pattern => pattern.test(entry))) {
+      return;
     }
+
+    problems.push(entry);
   };
 
   page.on('console', message => {
