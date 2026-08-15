@@ -5,8 +5,11 @@ import { defineConfig, devices } from '@playwright/test';
 import { backendSummary } from './backend';
 import { categories } from './categories';
 import { selectedTargets } from './targets';
+import { WARM_UP_ENV } from './warmUp';
 
 import type { Target } from './targets';
+
+const WARM_UP = 'warm-up';
 
 /** One Playwright for the whole monorepo, run from the root with `yarn e2e`.
  *
@@ -38,6 +41,13 @@ const toWebServer = (target: Target) => ({
 
 const servers = selectedTargets();
 
+/** Handed to the setup project through the environment, because it runs in a worker: `--project` lives on the
+ *  command line the run was started with, and a worker's own command line is not that. */
+process.env[WARM_UP_ENV] = servers
+  .filter(server => server.warmUp)
+  .map(server => server.id)
+  .join(',');
+
 /** Playwright says nothing at all while it starts these, and until they are up it has nothing to show — an empty
  *  test list that looks broken rather than busy. One line, so the wait is legible.
  *
@@ -52,9 +62,6 @@ export default defineConfig({
   // No top-level `testDir`: every project declares its own, and a parent that also claims the whole tree makes
   // UI mode attribute files to the wrong project.
   outputDir: `${artifacts}/test-results`,
-  /** Runs after the servers are up and before the first spec: one page load per Vite dev server, so the
-   *  optimizer's first-load rebuild is not charged to whichever test happened to arrive first. */
-  globalSetup: path.resolve(import.meta.dirname, 'warmUp.ts'),
   fullyParallel: true,
   /** Assertions auto-wait, so a high ceiling costs nothing when the page is quick and removes a whole class of
    *  cold-start flake: a Vite dev server optimises its dependency graph on the first request, which on a fresh
@@ -81,9 +88,15 @@ export default defineConfig({
   },
   // Absolute: a relative testDir is resolved against the config's directory by the CLI and against the watcher's
   // cwd by UI mode, and the two are not the same place.
-  projects: categories.map(category => ({
-    name: category.name,
-    testDir: path.resolve(import.meta.dirname, 'tests', category.name)
-  })),
+  projects: [
+    { name: WARM_UP, testDir: import.meta.dirname, testMatch: /warmUp\.setup\.ts$/ },
+    ...categories.map(category => ({
+      name: category.name,
+      testDir: path.resolve(import.meta.dirname, 'tests', category.name),
+      /** Every category waits for the warm-up, so it runs in UI mode too — the runner that most needed it, and
+       *  the one `globalSetup` does not reliably cover. */
+      dependencies: [WARM_UP]
+    }))
+  ],
   webServer: servers.map(toWebServer)
 });

@@ -32,6 +32,16 @@ what cannot be expressed as a flag.
 > an empty panel for the better part of a minute. `yarn e2e:ui --project=examples` brings those up when they are
 > what you are working on.
 
+### The `warm-up` project
+
+Every category depends on one setup test, so it runs first and you will see it in the list. It loads each Vite
+dev server once, because Vite pre-bundles dependencies while serving the **first** page that asks for them: mid
+crawl it answers requests already in flight with `504 (Outdated Optimize Dep)` and reloads the page. Charged to a
+spec, that is a red run followed by a green re-run with nothing changed in between — the failure shape that
+teaches you to press play again instead of to read. Charged here, it is ten seconds once.
+
+It is a setup project rather than a `globalSetup` for one reason: only the setup project also runs in UI mode.
+
 ## Categories
 
 **One per app, sub-categories inside.** The top level answers *which app is this about*; the level below answers

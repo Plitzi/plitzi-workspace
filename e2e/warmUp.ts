@@ -1,6 +1,6 @@
 import { chromium } from '@playwright/test';
 
-import { selectedTargets } from './targets';
+import { targets } from './targets';
 
 import type { Target } from './targets';
 import type { Browser } from '@playwright/test';
@@ -13,8 +13,17 @@ import type { Browser } from '@playwright/test';
  *  console errors, and the reload lands in the middle of whatever the spec was asserting.
  *
  *  None of that is the product. On a warm cache the builder category passes in six seconds; on a fresh checkout —
- *  or any CI runner, where the cache is always fresh — the same three specs failed. A test that fails only the
- *  first time is the worst shape a failure can have: it teaches you to re-run instead of to read. */
+ *  or any CI runner, where the cache is always fresh — the same three specs failed, then passed when re-run. A
+ *  test that only fails the first time is the worst shape a failure can have: it teaches you to press play again
+ *  instead of to read.
+ *
+ *  This runs as a **setup project** the categories depend on, not as `globalSetup`. Both work from the command
+ *  line; only the setup project also runs in UI mode, which is exactly where "red, then green on the re-run" is
+ *  most confusing and least likely to be investigated. */
+
+/** Which servers to warm, handed over by the config rather than recomputed here: the selection is read off the
+ *  command line, and a worker process does not have the command line the run was started with. */
+export const WARM_UP_ENV = 'PLITZI_WARM_UP';
 
 /** One load, reporting whether the optimizer interrupted it. */
 const visit = async (browser: Browser, target: Target): Promise<boolean> => {
@@ -41,8 +50,9 @@ const visit = async (browser: Browser, target: Target): Promise<boolean> => {
   return !reoptimized;
 };
 
-export default async function warmUp(): Promise<void> {
-  const cold = selectedTargets().filter(target => target.warmUp);
+export const warmUpDevServers = async (): Promise<void> => {
+  const ids = (process.env[WARM_UP_ENV] ?? '').split(',').filter(Boolean);
+  const cold = targets.filter(target => ids.includes(target.id));
 
   if (!cold.length) {
     return;
@@ -63,4 +73,4 @@ export default async function warmUp(): Promise<void> {
   );
 
   await browser.close();
-}
+};

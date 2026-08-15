@@ -15,6 +15,7 @@
     "targets.ts",
     "playwright.config.ts",
     "warmUp.ts",
+    "warmUp.setup.ts",
     "vite.config.ts",
     "fixtures",
     "helpers",
