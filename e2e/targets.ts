@@ -73,8 +73,11 @@ export const targets: Target[] = [
   {
     id: 'no-build',
     workspace: '@plitzi/example-render-no-build',
-    command: 'PORT=5000 yarn workspace @plitzi/example-render-no-build start',
-    origin: 'http://127.0.0.1:5000',
+    /** 5009 and not 5000: on macOS, port 5000 belongs to ControlCenter's AirPlay Receiver. Readiness here is an
+     *  open socket, so a port somebody else already holds reads as "the server is up" — the example never starts,
+     *  and the spec fails against a stranger's empty response with a blank screenshot and nothing to explain it. */
+    command: 'PORT=5009 yarn workspace @plitzi/example-render-no-build start',
+    origin: 'http://127.0.0.1:5009',
     what: 'A plain HTML file: no bundler, no build step',
     gate: {
       open: () => existsSync(VENDOR_BUNDLE),

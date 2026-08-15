@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
       outDir: 'dist',
       cssCodeSplit: false,
       rollupOptions: {
-        input: path.resolve(__dirname, './src/vendor-entry.ts'),
+        input: path.resolve(import.meta.dirname, './src/vendor-entry.ts'),
         external: [],
         preserveEntrySignatures: 'strict',
         output: {

@@ -42,17 +42,34 @@ const packages = {
 
 // const importedPackages = new Set();
 
+/** The credentials and endpoints `index.html` boots with, overridable from the environment — the same contract
+ *  the builder uses, so one command can point either app at a different backend. Set nothing and the values are
+ *  exactly the ones that were always there.
+ *
+ *  Defined once because TWO renderers use the template: the dev server's EJS plugin and the build's own
+ *  `generateBundle`. EJS throws on a variable it was not given, so a list that lives in one of them and not the
+ *  other is a build that fails while the dev server is perfectly happy. */
+const bootstrap = () => ({
+  webKey: process.env.PLITZI_WEB_KEY ?? '',
+  apiServer: process.env.PLITZI_API_SERVER ?? 'https://api.plitzi.local',
+  ssrServer: process.env.PLITZI_SSR_SERVER ?? 'https://ssr.plitzi.local',
+  serverUrl: process.env.PLITZI_SERVER_URL ?? 'https://server.plitzi.local',
+  websocketServer: process.env.PLITZI_WS_SERVER ?? 'wss://server.plitzi.local',
+  subscriptionServer: process.env.PLITZI_SUBSCRIPTION_SERVER ?? 'wss://server.plitzi.local/subscriptions'
+});
+
 function ejsPlugin(devMode?: boolean): Plugin {
   return {
     name: 'vite-plugin-ejs-index',
 
     generateBundle() {
-      const templatePath = path.resolve(__dirname, './index.html');
+      const templatePath = path.resolve(import.meta.dirname, './index.html');
       if (fs.existsSync(templatePath)) {
         const template = fs.readFileSync(templatePath, 'utf-8');
         const html = ejs.render(
           template,
           {
+            ...bootstrap(),
             title: 'Plitzi Demo',
             jsPath: '/plitzi-sdk.js',
             cssPath: '/plitzi-sdk.css',
@@ -76,7 +93,7 @@ function renameCssPlugin(): Plugin {
     enforce: 'post',
 
     closeBundle() {
-      const outDir = path.resolve(__dirname, 'dist');
+      const outDir = path.resolve(import.meta.dirname, 'dist');
       const cssFiles = fs.readdirSync(outDir).filter(f => f.endsWith('.css') && f !== 'plitzi-sdk-devtools.css');
 
       for (const file of cssFiles) {
@@ -117,15 +134,7 @@ export default defineConfig(({ mode, command }) => {
       mkcert(),
       react(),
       ViteEjsPlugin({
-        /** The dev bootstrap's credentials and endpoints, overridable from the environment — the same contract the
-         *  builder uses, so one command can point either app at a different backend. Anyone who sets nothing gets
-         *  exactly the values that were there before. */
-        webKey: process.env.PLITZI_WEB_KEY ?? '',
-        apiServer: process.env.PLITZI_API_SERVER ?? 'https://api.plitzi.local',
-        ssrServer: process.env.PLITZI_SSR_SERVER ?? 'https://ssr.plitzi.local',
-        serverUrl: process.env.PLITZI_SERVER_URL ?? 'https://server.plitzi.local',
-        websocketServer: process.env.PLITZI_WS_SERVER ?? 'wss://server.plitzi.local',
-        subscriptionServer: process.env.PLITZI_SUBSCRIPTION_SERVER ?? 'wss://server.plitzi.local/subscriptions',
+        ...bootstrap(),
         title: 'Plitzi SDK',
         description: '',
         jsPath: devMode ? '/src/index.tsx' : '/plitzi-sdk.js',
@@ -213,14 +222,14 @@ export default defineConfig(({ mode, command }) => {
     },
     resolve: {
       alias: {
-        // react: path.resolve(__dirname, '../../node_modules/react'),
-        // 'react/jsx-runtime': path.resolve(__dirname, '../../node_modules/react'),
-        // 'react-dom': path.resolve(__dirname, '../../node_modules/react-dom'),
-        // 'react-dom/client': path.resolve(__dirname, '../../node_modules/react-dom'),
+        // react: path.resolve(import.meta.dirname, '../../node_modules/react'),
+        // 'react/jsx-runtime': path.resolve(import.meta.dirname, '../../node_modules/react'),
+        // 'react-dom': path.resolve(import.meta.dirname, '../../node_modules/react-dom'),
+        // 'react-dom/client': path.resolve(import.meta.dirname, '../../node_modules/react-dom'),
         '@modules': path.resolve('./src/modules'),
         '@components': path.resolve('./src/components'),
         'decode-named-character-reference': path.resolve(
-          __dirname,
+          import.meta.dirname,
           '../../node_modules/decode-named-character-reference/index.js'
         ),
         ...(devMode ? packages : {})
