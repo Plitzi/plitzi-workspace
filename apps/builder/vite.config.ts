@@ -92,13 +92,29 @@ export default defineConfig(({ mode, command }) => {
   const onlyAnalyze = !!process.env.ONLY_ANALYZE;
   const onlyGzip = !!process.env.ONLY_GZIP;
   const isWatch = process.argv.includes('--watch');
+  /** The browser suite runs this app on plain HTTP, on a port of its own: a CI runner has no `app.plitzi.local`
+   *  in its hosts file and no locally-trusted certificate authority, and minting one per run to talk to a mocked
+   *  backend would be ceremony for nothing. Unset — which is every normal `yarn start` — nothing changes. */
+  const plainHttp = !!process.env.PLITZI_BUILDER_HTTP;
   // const isSSR = process.argv.includes('--ssr');
 
   return {
     plugins: [
-      mkcert(),
+      !plainHttp && mkcert(),
       react(),
       ViteEjsPlugin({
+        /** The dev bootstrap's credentials and endpoints, overridable from the environment.
+         *
+         *  They used to be literals in `index.html`, pasted from `yarn token` and expiring a day later — fine to
+         *  do by hand, impossible for anything automated to depend on. Anyone who sets nothing gets exactly the
+         *  values that were there before. */
+        webKey: process.env.PLITZI_WEB_KEY ?? '',
+        userKey: process.env.PLITZI_USER_KEY ?? '',
+        apiServer: process.env.PLITZI_API_SERVER ?? 'https://api.plitzi.local',
+        ssrServer: process.env.PLITZI_SSR_SERVER ?? 'https://ssr.plitzi.local',
+        serverUrl: process.env.PLITZI_SERVER_URL ?? 'https://server.plitzi.local',
+        websocketServer: process.env.PLITZI_WS_SERVER ?? 'wss://server.plitzi.local',
+        subscriptionServer: process.env.PLITZI_SUBSCRIPTION_SERVER ?? 'wss://server.plitzi.local/subscriptions',
         title: 'Plitzi SDK Builder',
         description: '',
         jsPath: devMode ? '/src/index.tsx' : '/plitzi-builder.js',
@@ -172,8 +188,8 @@ export default defineConfig(({ mode, command }) => {
       }
     },
     server: {
-      host: 'app.plitzi.local',
-      port: 3000,
+      host: plainHttp ? '127.0.0.1' : 'app.plitzi.local',
+      port: Number(process.env.PLITZI_BUILDER_PORT ?? 3000),
       open: false
     },
     resolve: {

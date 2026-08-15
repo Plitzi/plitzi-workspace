@@ -87,11 +87,18 @@ una comprobación escrita contra ellos pasa en SSR y parece un renderer roto en 
 `e2e/harness` es una página que renderiza el `{ schema, style }` que se le pase, sin backend y sin cuenta:
 
 ```bash
-yarn workspace @plitzi/e2e start    # http://127.0.0.1:4100
+yarn workspace @plitzi/e2e start    # http://127.0.0.1:5100
 ```
 
 Úsalo para reproducir un schema reportado o para mirar una variante sin tocar un example — modificar un example
 para responder una pregunta rompe justo lo que ese example existe para demostrar.
+
+## En CI
+
+La suite de navegador corre en cada push (`.github/workflows/ci.yml`), después de lint y sobre la misma caché de
+build. No aprovisiona nada — cada servidor que necesita lo arranca ella — y los targets que necesitarían una base
+de datos, una entrada en /etc/hosts o un certificado están con gate y se saltan indicando cómo habilitarlos. El
+informe HTML se sube como artefacto, así que un fallo se puede reproducir en local con su traza.
 
 ## Antes de abrir un PR
 

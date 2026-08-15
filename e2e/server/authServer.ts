@@ -10,7 +10,7 @@ import { authSpace } from '../spaces/auth';
  *  through those specs would make every one of them depend on auth. Here auth is the subject, so it is the only
  *  thing switched on beyond the pages. */
 
-export const PORT = Number(process.env.PORT ?? 4201);
+export const PORT = Number(process.env.PORT ?? 5201);
 const COOKIE = 'e2e_session';
 
 /** Two things make this deployment its own: the signing secret and the issuer. Credentials minted here verify

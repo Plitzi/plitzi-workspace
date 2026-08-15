@@ -22,7 +22,7 @@ that is already up gets reused.
 | `yarn e2e:codegen` | Click around the harness and get the code for what you did |
 | `yarn e2e:report` | The last run's report, with screenshots and traces |
 
-`e2e:codegen` opens the harness at <http://127.0.0.1:4100>, so start it first with
+`e2e:codegen` opens the harness at <http://127.0.0.1:5100>, so start it first with
 `yarn workspace @plitzi/e2e start` (or point codegen at any other target).
 
 > **Launch the UI scoped: `yarn e2e:ui --project=server`.** Opened with no project, Playwright's own project
@@ -44,7 +44,7 @@ that is already up gets reused.
 | `sdk` | `@plitzi/plitzi-sdk` | `rendering`, `viewports` | harness |
 | `server` | `@plitzi/sdk-server` | `ssr`, `rsc`, `preview`, `auth` | e2e server + auth server |
 | `mcp` | `@plitzi/sdk-mcp` | `endpoint` | e2e server |
-| `builder` | `@plitzi/plitzi-builder` | `boot` | builder (gated) |
+| `builder` | `@plitzi/plitzi-builder` | `boot` | its own builder on 8080 (gated) |
 | `cross` | — more than one | `parity`, `agent`, `auth` | harness + both servers |
 | `examples` | — onboarding | one per example | the examples |
 
@@ -73,14 +73,14 @@ demonstrate.
   await renderSpace(page, minimalSpace({ heading: 'anything' }));
   ```
 
-  Open it by hand too: `yarn workspace @plitzi/e2e start` → <http://127.0.0.1:4100>. It is also the fastest way
+  Open it by hand too: `yarn workspace @plitzi/e2e start` → <http://127.0.0.1:5100>. It is also the fastest way
   to look at a reported schema without a backend, an account or a fixture file.
 
 - **`server/`** — a page server with everything on at once: pages, RSC (with its three probe elements), draft
-  preview and the MCP endpoint, on <http://127.0.0.1:4200>. Its space lives in memory, so a write through MCP is
+  preview and the MCP endpoint, on <http://127.0.0.1:5200>. Its space lives in memory, so a write through MCP is
   visible to the run and never touches anything on disk. `yarn workspace @plitzi/e2e start:server`.
 
-- **`server/authServer.ts`** — the same, with people in it, on <http://127.0.0.1:4201>: real password hashing, a
+- **`server/authServer.ts`** — the same, with people in it, on <http://127.0.0.1:5201>: real password hashing, a
   session per account, and a space carrying both ways a site keeps a visitor out — two pages sharing `/` that
   differ by `accessLevel`, and a protected `/account` that redirects a guest to `/login`.
   `yarn workspace @plitzi/e2e start:auth`.
@@ -110,6 +110,11 @@ Three layers, in the order a failure is most useful to read:
 > Assert on classes (`.plitzi-component__heading`), never on `data-id`. Those attributes are **server-side only** —
 > they exist so hydration can find what the server rendered, and a client-side render emits none. A check written
 > against them can only ever pass against SSR, and looks like a broken renderer everywhere else.
+
+**No run touches the public internet.** The sample space points its logo at `cdn.plitzi.com` and the server
+template pulls Material Icons from Google Fonts; both are answered locally by a fixture. What a spec asserts is
+that the SDK rendered an image and the browser could load it — not that somebody else's CDN is up — and a runner
+with no egress would otherwise never go green.
 
 On top of that, **every spec fails on a console error or an unhandled rejection**. React turns a failing effect
 into a console error and keeps the last good tree on screen — the exact bug that renders correctly and is broken.
@@ -155,6 +160,41 @@ They are **artifacts to look at, not baselines to compare against**: there are n
 fails because a font rendered half a pixel differently on another machine.
 
 To watch a run live instead of replaying it: `yarn e2e:headed --project=server tests/server/auth`.
+
+## Live backend, or mocked
+
+```
+PLITZI_E2E_BACKEND=live|mock       # default: live everywhere but CI
+```
+
+**live** is the real `plitzi-sdk-server`, and the only mode that proves anything about it: its GraphQL contract,
+its authorization, what it persists. **mock** answers those three boot operations in the browser
+([`mock/graphql.ts`](./mock/graphql.ts), shaped from a recording of the real thing) — for CI, where there is no
+sibling repository, no databases and no certificates.
+
+A mocked run makes a deliberately narrower claim: the app mounts, loads a space and renders it. Anything whose
+subject is the server says `onlyLiveBackend()` and skips rather than passing vacuously.
+
+Running the builder live needs the stack up and credentials:
+
+```bash
+cd ../plitzi-sdk-server && yarn start                       # and yarn token 1 --user admin
+PLITZI_E2E_BUILDER=1 PLITZI_WEB_KEY=… PLITZI_USER_KEY=… yarn e2e --project=builder
+```
+
+> The suite runs **its own** builder on `127.0.0.1:8080`, over plain HTTP — never the one you are developing in.
+> 8080 rather than the 5xxx band for one reason: a space token is bound to the origins it was minted for, and
+> that is one the platform already trusts.
+
+## In CI
+
+`.github/workflows/ci.yml` runs the suite on every push, after `lint`, on the same `node_modules` and `dist`
+caches — the examples render built output, so an e2e run on an unbuilt tree tests nothing.
+
+Nothing is provisioned for it: **no database, no hosts file, no certificates**. Playwright starts every server
+itself, and the targets that would need those are gated off and skip with an explanation instead of failing. The
+HTML report is uploaded on every run and the screenshots on failure, so a red build can be stepped through
+locally with the trace of what broke.
 
 ## Gates
 

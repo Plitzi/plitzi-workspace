@@ -51,6 +51,11 @@ export default defineConfig({
   // UI mode attribute files to the wrong project.
   outputDir: `${artifacts}/test-results`,
   fullyParallel: true,
+  /** Assertions auto-wait, so a high ceiling costs nothing when the page is quick and removes a whole class of
+   *  cold-start flake: a Vite dev server optimises its dependency graph on the first request, which on a fresh
+   *  CI runner takes longer than the 5s default — and the failure that produces looks like a broken renderer
+   *  rather than a slow one. */
+  expect: { timeout: isCI ? 20_000 : 10_000 },
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
   workers: isCI ? 2 : undefined,

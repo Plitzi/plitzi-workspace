@@ -7,7 +7,7 @@ export default defineConfig({
   root: 'harness',
   // Bound explicitly rather than through `localhost`, which resolves to ::1 first on macOS and leaves nothing
   // listening on the loopback address every target in `e2e/targets.ts` is addressed by.
-  server: { host: '127.0.0.1', port: 4100, strictPort: true },
+  server: { host: '127.0.0.1', port: 5100, strictPort: true },
   resolve: { dedupe: ['react', 'react-dom'] },
   plugins: [react()]
 });

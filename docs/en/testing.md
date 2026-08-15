@@ -84,11 +84,18 @@ passes under SSR and looks like a broken renderer everywhere else.
 `e2e/harness` is a page that renders whatever `{ schema, style }` it is handed, with no backend and no account:
 
 ```bash
-yarn workspace @plitzi/e2e start    # http://127.0.0.1:4100
+yarn workspace @plitzi/e2e start    # http://127.0.0.1:5100
 ```
 
 Use it to reproduce a reported schema, or to look at a variant without changing an example — changing an example
 to answer a question breaks what that example exists to demonstrate.
+
+## In CI
+
+The browser suite runs on every push (`.github/workflows/ci.yml`), after lint and on the same build cache.
+It provisions nothing — every server it needs, it starts — and the targets that would need a database, an
+/etc/hosts entry or a certificate are gated off and skip with the instruction to enable them. The HTML report is
+uploaded as an artifact, so a failure can be replayed locally with its trace.
 
 ## Before opening a PR
 

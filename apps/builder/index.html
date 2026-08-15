@@ -56,21 +56,20 @@
       render(
         'plitzi',
         {
-          webKey:
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwib3JpZ2lucyI6WyJodHRwczovL3dlYnNpdGUucGxpdHppLmFwcCIsImh0dHBzOi8vcGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9hcHAucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9hcHAucGxpdHppLmxvY2FsOjMwMDAiLCJodHRwczovL2FwcC5wbGl0emkubG9jYWw6MzAwMSIsImh0dHBzOi8vc3NyLnBsaXR6aS5sb2NhbCIsImh0dHBzOi8vc2VydmVyLnBsaXR6aS5sb2NhbCIsImh0dHA6Ly9sb2NhbGhvc3Q6MzAwMCIsImh0dHA6Ly9sb2NhbGhvc3Q6ODA4MCIsImh0dHA6Ly8xMjcuMC4wLjE6ODA4MCJdLCJpc3MiOiJodHRwczovL3NlcnZlci5wbGl0emkubG9jYWwiLCJhdWQiOlsiaHR0cHM6Ly9wbGl0emkubG9jYWwiLCJodHRwczovL2FwcC5wbGl0emkubG9jYWwiLCJodHRwczovL2FwcC5wbGl0emkubG9jYWw6MzAwMCIsImh0dHBzOi8vYXBwLnBsaXR6aS5sb2NhbDozMDAxIiwiaHR0cHM6Ly9hcGkucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9zc3IucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9zZXJ2ZXIucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9tY3AucGxpdHppLmxvY2FsIl0sInNjb3BlIjoic3BhY2U6cmVuZGVyIiwiaWF0IjoxNzg2NjU5NTg5LCJqdGkiOiJjMjRhZjMwN2Q1YTgzZmNjIiwibmJmIjoxNzg2NjU5NTg5fQ.q3-yIi5TmY8SLghX5q3jpN2qqsGJbDIF9dcVJvfLbfY',
+          webKey: '<%= webKey || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwib3JpZ2lucyI6WyJodHRwczovL3dlYnNpdGUucGxpdHppLmFwcCIsImh0dHBzOi8vcGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9hcHAucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9hcHAucGxpdHppLmxvY2FsOjMwMDAiLCJodHRwczovL2FwcC5wbGl0emkubG9jYWw6MzAwMSIsImh0dHBzOi8vc3NyLnBsaXR6aS5sb2NhbCIsImh0dHBzOi8vc2VydmVyLnBsaXR6aS5sb2NhbCIsImh0dHA6Ly9sb2NhbGhvc3Q6MzAwMCIsImh0dHA6Ly9sb2NhbGhvc3Q6ODA4MCIsImh0dHA6Ly8xMjcuMC4wLjE6ODA4MCJdLCJpc3MiOiJodHRwczovL3NlcnZlci5wbGl0emkubG9jYWwiLCJhdWQiOlsiaHR0cHM6Ly9wbGl0emkubG9jYWwiLCJodHRwczovL2FwcC5wbGl0emkubG9jYWwiLCJodHRwczovL2FwcC5wbGl0emkubG9jYWw6MzAwMCIsImh0dHBzOi8vYXBwLnBsaXR6aS5sb2NhbDozMDAxIiwiaHR0cHM6Ly9hcGkucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9zc3IucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9zZXJ2ZXIucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9tY3AucGxpdHppLmxvY2FsIl0sInNjb3BlIjoic3BhY2U6cmVuZGVyIiwiaWF0IjoxNzg2NjU5NTg5LCJqdGkiOiJjMjRhZjMwN2Q1YTgzZmNjIiwibmJmIjoxNzg2NjU5NTg5fQ.q3-yIi5TmY8SLghX5q3jpN2qqsGJbDIF9dcVJvfLbfY" %>',
           // The actor. Without it the builder loads and every write is refused, since authorization is
           // can(actor, space, permission). Both halves come from `yarn token 1 --user admin` in plitzi-sdk-server.
-          userKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiaXNzIjoiaHR0cHM6Ly9zZXJ2ZXIucGxpdHppLmxvY2FsIiwiYXVkIjpbImh0dHBzOi8vcGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9hcHAucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9hcHAucGxpdHppLmxvY2FsOjMwMDAiLCJodHRwczovL2FwcC5wbGl0emkubG9jYWw6MzAwMSIsImh0dHBzOi8vYXBpLnBsaXR6aS5sb2NhbCIsImh0dHBzOi8vc3NyLnBsaXR6aS5sb2NhbCIsImh0dHBzOi8vc2VydmVyLnBsaXR6aS5sb2NhbCIsImh0dHBzOi8vbWNwLnBsaXR6aS5sb2NhbCJdLCJzY29wZSI6InVzZXIiLCJleHAiOjE3ODY3NDU5OTYsImlhdCI6MTc4NjY1OTU5NiwianRpIjoiNzYzOWUxNTAwN2RkMjE1OCIsIm5iZiI6MTc4NjY1OTU5Nn0.z4MIFGgjwsULzmWQx-ICM-R-GxovVYz8An4u2Vfcfms',
+          userKey: '<%= userKey || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiaXNzIjoiaHR0cHM6Ly9zZXJ2ZXIucGxpdHppLmxvY2FsIiwiYXVkIjpbImh0dHBzOi8vcGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9hcHAucGxpdHppLmxvY2FsIiwiaHR0cHM6Ly9hcHAucGxpdHppLmxvY2FsOjMwMDAiLCJodHRwczovL2FwcC5wbGl0emkubG9jYWw6MzAwMSIsImh0dHBzOi8vYXBpLnBsaXR6aS5sb2NhbCIsImh0dHBzOi8vc3NyLnBsaXR6aS5sb2NhbCIsImh0dHBzOi8vc2VydmVyLnBsaXR6aS5sb2NhbCIsImh0dHBzOi8vbWNwLnBsaXR6aS5sb2NhbCJdLCJzY29wZSI6InVzZXIiLCJleHAiOjE3ODY3NDU5OTYsImlhdCI6MTc4NjY1OTU5NiwianRpIjoiNzYzOWUxNTAwN2RkMjE1OCIsIm5iZiI6MTc4NjY1OTU5Nn0.z4MIFGgjwsULzmWQx-ICM-R-GxovVYz8An4u2Vfcfms" %>',
           environment: 'main',
           server: {
             basePath: '',
             // Dashboard
-            apiServer: 'https://api.plitzi.local',
-            ssrServer: 'https://ssr.plitzi.local',
+            apiServer: '<%= apiServer %>',
+            ssrServer: '<%= ssrServer %>',
             // SDK
-            serverUrl: 'https://server.plitzi.local',
-            websocketServer: 'wss://server.plitzi.local',
-            subscriptionServer: 'wss://server.plitzi.local/subscriptions'
+            serverUrl: '<%= serverUrl %>',
+            websocketServer: '<%= websocketServer %>',
+            subscriptionServer: '<%= subscriptionServer %>'
           },
           state: {}
         },

@@ -117,6 +117,15 @@ export default defineConfig(({ mode, command }) => {
       mkcert(),
       react(),
       ViteEjsPlugin({
+        /** The dev bootstrap's credentials and endpoints, overridable from the environment — the same contract the
+         *  builder uses, so one command can point either app at a different backend. Anyone who sets nothing gets
+         *  exactly the values that were there before. */
+        webKey: process.env.PLITZI_WEB_KEY ?? '',
+        apiServer: process.env.PLITZI_API_SERVER ?? 'https://api.plitzi.local',
+        ssrServer: process.env.PLITZI_SSR_SERVER ?? 'https://ssr.plitzi.local',
+        serverUrl: process.env.PLITZI_SERVER_URL ?? 'https://server.plitzi.local',
+        websocketServer: process.env.PLITZI_WS_SERVER ?? 'wss://server.plitzi.local',
+        subscriptionServer: process.env.PLITZI_SUBSCRIPTION_SERVER ?? 'wss://server.plitzi.local/subscriptions',
         title: 'Plitzi SDK',
         description: '',
         jsPath: devMode ? '/src/index.tsx' : '/plitzi-sdk.js',

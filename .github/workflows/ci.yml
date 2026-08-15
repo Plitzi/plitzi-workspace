@@ -128,6 +128,92 @@ jobs:
       - name: Yarn Typecheck
         run: yarn typecheck
 
+  # The browser suite. Runs after `lint` because it needs the same two caches: node_modules, and the `dist` the
+  # examples are rendered from — they consume built output, so an e2e run on an unbuilt tree tests nothing.
+  #
+  # Every server it needs is started by Playwright itself (see e2e/targets.ts), so there is nothing to provision
+  # here: no database, no hosts file, no certificates. The builder is included too — in CI it runs against the
+  # mocked backend (see e2e/backend.ts), which is the narrower claim that environment can honestly make.
+  e2e:
+    if: github.event_name == 'push'
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          scope: '@plitzi'
+          cache: 'yarn'
+
+      - name: Restore Cache node_modules
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Restore Cache build
+        id: cache-build
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-build
+        with:
+          path: '**/dist'
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ github.sha }}
+
+      - name: Validate Cache
+        if: steps.cache-build.outputs.cache-hit != 'true'
+        run: exit 1
+
+      # Keyed on the lockfile, so the download happens again only when the Playwright version moves.
+      - name: Restore Cache browsers
+        id: cache-browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Install browser
+        if: steps.cache-browsers.outputs.cache-hit != 'true'
+        run: yarn playwright install --with-deps chromium
+
+      # A cached browser still needs the system libraries Chromium links against.
+      - name: Install browser system dependencies
+        if: steps.cache-browsers.outputs.cache-hit == 'true'
+        run: yarn playwright install-deps chromium
+
+      # The builder is included because CI runs against the mocked backend, which needs nothing provisioned. The
+      # remaining gates — the MySQL example, the no-build vendor bundle — stay off and skip with an explanation.
+      - name: Yarn E2E
+        run: yarn e2e
+        env:
+          PLITZI_E2E_BUILDER: '1'
+
+      # The report carries the trace of every failure: open it and step through the run that broke.
+      - name: Upload report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/.artifacts/report
+          retention-days: 14
+
+      - name: Upload screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-screenshots
+          path: e2e/.artifacts/screenshots
+          retention-days: 14
+
   # tests:
   #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
   #   needs: lint

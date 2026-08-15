@@ -20,7 +20,7 @@ import type { OfflineDataRaw, Schema, SSRPageAdapters, SSRRscContext, SSRRscData
  *  Its space lives in memory: writes through MCP are visible to the run and never touch the fixture on disk. Specs
  *  that need a pristine space should prefer `/__preview`, which renders a draft without saving anything. */
 
-export const PORT = Number(process.env.PORT ?? 4200);
+export const PORT = Number(process.env.PORT ?? 5200);
 export const PREVIEW_SECRET = 'e2e-preview-secret';
 
 const here = path.dirname(fileURLToPath(import.meta.url));

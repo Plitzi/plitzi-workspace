@@ -23,8 +23,12 @@ export type Target = {
   id: string;
   /** Workspace package name — `yarn workspace <workspace> start` is what boots it, unless `command` says otherwise. */
   workspace: string;
-  /** Overrides the default `start` script, for a workspace that serves more than one surface. */
+  /** Overrides the default `start` script — for a workspace that serves more than one surface, or an example that
+   *  has to be told which port to take. */
   command?: string;
+  /** The suite never starts this one: it is somebody's own dev server, already running on its own port. Starting a
+   *  second copy is what makes it hop to the next port and collide with a different app. */
+  external?: boolean;
   /** Written the way the target actually listens. The node servers bind `127.0.0.1` explicitly; Vite binds the
    *  name `localhost`, which resolves to ::1 first on macOS — addressing either one by the other's spelling finds
    *  nothing listening. */
@@ -38,27 +42,28 @@ export const targets: Target[] = [
   {
     id: 'harness',
     workspace: '@plitzi/e2e',
-    origin: 'http://127.0.0.1:4100',
+    origin: 'http://127.0.0.1:5100',
     what: 'The browser harness — renders any schema handed to it, with no server behind it'
   },
   {
     id: 'server',
     workspace: '@plitzi/e2e',
     command: 'yarn workspace @plitzi/e2e start:server',
-    origin: 'http://127.0.0.1:4200',
+    origin: 'http://127.0.0.1:5200',
     what: 'The page server this suite owns — pages, RSC, draft preview and MCP, all on at once'
   },
   {
     id: 'auth-server',
     workspace: '@plitzi/e2e',
     command: 'yarn workspace @plitzi/e2e start:auth',
-    origin: 'http://127.0.0.1:4201',
+    origin: 'http://127.0.0.1:5201',
     what: 'The same server with people in it — guest and member pages, sessions, bindings onto the account'
   },
   {
     id: 'no-build',
     workspace: '@plitzi/example-render-no-build',
-    origin: 'http://127.0.0.1:4000',
+    command: 'PORT=5000 yarn workspace @plitzi/example-render-no-build start',
+    origin: 'http://127.0.0.1:5000',
     what: 'A plain HTML file: no bundler, no build step',
     gate: {
       env: 'PLITZI_E2E_VENDOR',
@@ -68,60 +73,75 @@ export const targets: Target[] = [
   {
     id: 'render',
     workspace: '@plitzi/example-render-offline',
-    origin: 'http://localhost:4001',
+    command: 'yarn workspace @plitzi/example-render-offline start --port 5001',
+    origin: 'http://localhost:5001',
     what: 'The same render() call from a bundled app'
   },
   {
     id: 'react-component',
     workspace: '@plitzi/example-react-component',
-    origin: 'http://localhost:4002',
+    command: 'yarn workspace @plitzi/example-react-component start --port 5002',
+    origin: 'http://localhost:5002',
     what: '<PlitziSdk> inside your own React tree'
   },
   {
     id: 'server-rendered',
     workspace: '@plitzi/example-ssr-pages',
-    origin: 'http://127.0.0.1:4003',
+    command: 'PORT=5003 yarn workspace @plitzi/example-ssr-pages start',
+    origin: 'http://127.0.0.1:5003',
     what: 'The same space, rendered by the server'
   },
   {
     id: 'server-components',
     workspace: '@plitzi/example-ssr-rsc',
-    origin: 'http://127.0.0.1:4004',
+    command: 'PORT=5004 yarn workspace @plitzi/example-ssr-rsc start',
+    origin: 'http://127.0.0.1:5004',
     what: 'Per-element server data via React Server Components'
   },
   {
     id: 'mcp-server',
     workspace: '@plitzi/example-mcp-server',
-    origin: 'http://127.0.0.1:4005',
+    command: 'PORT=5005 yarn workspace @plitzi/example-mcp-server start',
+    origin: 'http://127.0.0.1:5005',
     what: 'A dedicated MCP server an agent edits the space through'
   },
   {
     id: 'ssr-preview',
     workspace: '@plitzi/example-ssr-mcp-preview',
-    origin: 'http://127.0.0.1:4006',
+    command: 'PORT=5006 yarn workspace @plitzi/example-ssr-mcp-preview start',
+    origin: 'http://127.0.0.1:5006',
     what: 'MCP and pages on one port, plus draft preview'
   },
   {
     id: 'sessions',
     workspace: '@plitzi/example-with-users',
-    origin: 'http://127.0.0.1:4007',
+    command: 'PORT=5007 yarn workspace @plitzi/example-with-users start',
+    origin: 'http://127.0.0.1:5007',
     what: 'Sign in, renew, sign out — over an account store you provide'
   },
   {
     id: 'mysql',
     workspace: '@plitzi/example-with-users-mysql',
-    origin: 'http://127.0.0.1:4008',
+    command: 'PORT=5008 yarn workspace @plitzi/example-with-users-mysql start',
+    origin: 'http://127.0.0.1:5008',
     what: 'The same sessions, over a MySQL account store',
     gate: { env: 'PLITZI_E2E_MYSQL', hint: 'point MYSQL_URL at a reachable database, then set PLITZI_E2E_MYSQL=1' }
   },
   {
     id: 'builder',
     workspace: '@plitzi/plitzi-builder',
-    origin: 'https://app.plitzi.local:3000',
-    what: 'The visual builder itself',
+    /** Plain HTTP on a port of its own, so the same command works on a laptop and on a CI runner that has no
+     *  `app.plitzi.local` and no locally-trusted certificate authority. A developer's own `yarn start` is
+     *  untouched — it still serves HTTPS on 3000. */
+    command: 'PLITZI_BUILDER_HTTP=1 PLITZI_BUILDER_PORT=8080 yarn workspace @plitzi/plitzi-builder start',
+    /** 8080 rather than the 5xxx band the rest of the suite uses, for one reason: a space token is bound to the
+     *  origins it was minted for, and this is one the platform already trusts. Anywhere else, a live run gets a
+     *  401 on its first call until somebody adds the origin to PLATFORM_ORIGINS. */
+    origin: 'http://127.0.0.1:8080',
+    what: 'The visual builder — its own instance, never the one you are developing in',
     gate: {
       env: 'PLITZI_E2E_BUILDER',
-      hint: 'add app.plitzi.local to /etc/hosts (see docs/en/local-setup.md), then set PLITZI_E2E_BUILDER=1'
+      hint: 'set PLITZI_E2E_BUILDER=1 (live mode also needs the stack up and PLITZI_WEB_KEY/PLITZI_USER_KEY from `yarn token`)'
     }
   }
 ];
@@ -171,5 +191,5 @@ export const skipReason = (candidate: Target): string => {
 export const selectedTargets = (): Target[] => {
   narrowedIds().forEach(id => target(id));
 
-  return targets.filter(candidate => isOpen(candidate) && isSelected(candidate));
+  return targets.filter(candidate => isOpen(candidate) && isSelected(candidate) && !candidate.external);
 };
