@@ -281,6 +281,22 @@ describe('the cookie it is handed over in', () => {
     expect(cookies()[0]).toBe('sess=abc');
   });
 
+  /**
+   * Dropped on the same attributes it was written with. A `Set-Cookie` that differs in Domain or Path does not
+   * replace the original — it adds a second one, and the browser keeps sending the first.
+   */
+  it('drops the cookie on the scope it was written with', () => {
+    const { res, cookies } = sink();
+    csrf.clear({ hostname: 'acme.test' }, res);
+
+    const [dropped] = cookies();
+
+    expect(dropped).toContain('sess_csrf=;');
+    expect(dropped).toContain('Max-Age=0');
+    expect(dropped).toContain('Domain=.acme.test');
+    expect(dropped).toContain('Path=/');
+  });
+
   it('reads back what it wrote', () => {
     const token = csrf.issue();
 

@@ -207,6 +207,20 @@ export const createCsrf = (config: CsrfConfig) => {
     return `${VERSION}.${nonce}.${expiry}.${sign(nonce, expiry, bind(sessionToken))}`;
   };
 
+  /** One place the cookie's attributes are decided, so writing it and dropping it cannot disagree about them. */
+  const serialize = (hostname: string, value: string, maxAge: number): string => {
+    const params = sessionCookieParams(hostname, cookie);
+
+    return [
+      `${nameFor(hostname)}=${value}`,
+      'Path=/',
+      `SameSite=${params.sameSite === 'none' ? 'None' : 'Lax'}`,
+      `Max-Age=${maxAge}`,
+      ...(params.domain ? [`Domain=${params.domain}`] : []),
+      ...(params.secure ? ['Secure'] : [])
+    ].join('; ');
+  };
+
   const check = (token: string | undefined, sessionToken?: string): CsrfResult => {
     if (!token) {
       return { ok: false, reason: 'missing' };
@@ -249,17 +263,20 @@ export const createCsrf = (config: CsrfConfig) => {
 
     /** Readable on purpose: `httpOnly` would make it impossible for a page to echo it back. It is not a credential. */
     write: (req: { hostname: string }, res: CookieSink, token: string): void => {
-      const params = sessionCookieParams(req.hostname, cookie);
-      const parts = [
-        `${nameFor(req.hostname)}=${encodeURIComponent(token)}`,
-        'Path=/',
-        `SameSite=${params.sameSite === 'none' ? 'None' : 'Lax'}`,
-        `Max-Age=${TOKEN_LIFETIME}`,
-        ...(params.domain ? [`Domain=${params.domain}`] : []),
-        ...(params.secure ? ['Secure'] : [])
-      ];
+      appendCookies(res, [serialize(req.hostname, encodeURIComponent(token), TOKEN_LIFETIME)]);
+    },
 
-      appendCookies(res, [parts.join('; ')]);
+    /**
+     * Drops the cookie, on the same attributes it was written with — anything else leaves the original in place and
+     * adds a second one the browser then has to choose between.
+     *
+     * Called when a session ends. Nothing depended on it going: the token is signed over the session it belongs to,
+     * so once that session is revoked it verifies against nothing, and a write is only ever asked for a token when a
+     * session cookie is present. But a logout that leaves a cookie behind is one somebody has to reason about to
+     * dismiss, and on a shared browser "signed out" should mean nothing of the session is still sitting there.
+     */
+    clear: (req: { hostname: string }, res: CookieSink): void => {
+      appendCookies(res, [serialize(req.hostname, '', 0)]);
     },
 
     read: (carrier: CsrfCarrier): string | undefined => readCookieHeader(carrier, nameFor(carrier.hostname)),

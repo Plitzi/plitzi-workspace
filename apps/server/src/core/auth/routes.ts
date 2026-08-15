@@ -421,6 +421,9 @@ export const applySessionOutcome = (
 
   if (outcome.endSession) {
     cookies.clear(req, res);
+    // The CSRF cookie belongs to the session that just ended: it is signed over that session's token, so it now
+    // verifies against nothing. Dropped with it so a logout leaves nothing of the session behind.
+    csrf?.clear(req, res);
   }
 
   // A token issued on its own — `GET /auth/csrf` — with no session involved.

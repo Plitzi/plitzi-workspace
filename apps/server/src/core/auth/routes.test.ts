@@ -178,6 +178,23 @@ describe('applying an outcome to the cookies', () => {
     expect(res.written.every(cookie => cookie.includes('Max-Age=0'))).toBe(true);
   });
 
+  /**
+   * The CSRF token is signed over the session it belongs to, so once that session is revoked it verifies against
+   * nothing and nothing depended on it going. It goes anyway: a logout that leaves a cookie behind is one somebody
+   * has to reason about to dismiss.
+   */
+  it('drops the CSRF cookie with the session on sign-out', () => {
+    const res = sink();
+    const csrf = createCsrf({ secret: 'test-secret', cookie: { name: 'sess' } });
+
+    applySessionOutcome(carrier(), res, { ok: true, body: {}, endSession: true }, cookies, csrf);
+
+    const csrfCookie = res.written.find(cookie => cookie.startsWith('sess_csrf='));
+
+    expect(csrfCookie).toBeDefined();
+    expect(csrfCookie).toContain('Max-Age=0');
+  });
+
   it('touches nothing when the flow failed', () => {
     const res = sink();
 
