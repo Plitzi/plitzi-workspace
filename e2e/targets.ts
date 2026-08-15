@@ -49,6 +49,13 @@ export const targets: Target[] = [
     what: 'The page server this suite owns — pages, RSC, draft preview and MCP, all on at once'
   },
   {
+    id: 'auth-server',
+    workspace: '@plitzi/e2e',
+    command: 'yarn workspace @plitzi/e2e start:auth',
+    origin: 'http://127.0.0.1:4201',
+    what: 'The same server with people in it — guest and member pages, sessions, bindings onto the account'
+  },
+  {
     id: 'no-build',
     workspace: '@plitzi/example-render-no-build',
     origin: 'http://127.0.0.1:4000',

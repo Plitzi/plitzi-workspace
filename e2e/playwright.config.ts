@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 import { defineConfig, devices } from '@playwright/test';
 
 import { categories } from './categories';
@@ -33,8 +35,15 @@ const toWebServer = (target: Target) => ({
   stderr: 'pipe' as const
 });
 
+const servers = selectedTargets();
+
+/** Playwright says nothing at all while it starts these, and until they are up it has nothing to show — an empty
+ *  test list that looks broken rather than busy. One line, so the wait is legible. */
+console.log(`[e2e] starting ${servers.length} server(s): ${servers.map(server => server.id).join(', ')}`);
+
 export default defineConfig({
-  testDir: './tests',
+  // No top-level `testDir`: every project declares its own, and a parent that also claims the whole tree makes
+  // UI mode attribute files to the wrong project.
   outputDir: `${artifacts}/test-results`,
   fullyParallel: true,
   forbidOnly: isCI,
@@ -51,9 +60,11 @@ export default defineConfig({
     ignoreHTTPSErrors: true,
     ...devices['Desktop Chrome']
   },
+  // Absolute: a relative testDir is resolved against the config's directory by the CLI and against the watcher's
+  // cwd by UI mode, and the two are not the same place.
   projects: categories.map(category => ({
     name: category.name,
-    testDir: `./tests/${category.name}`
+    testDir: path.resolve(import.meta.dirname, 'tests', category.name)
   })),
-  webServer: selectedTargets().map(toWebServer)
+  webServer: servers.map(toWebServer)
 });

@@ -27,28 +27,31 @@ detalle completo está en [`e2e/README.md`](../../e2e/README.md); la versión co
 ```bash
 yarn e2e:install               # descarga el navegador, una vez tras clonar
 yarn e2e                       # corre todo — los servidores se levantan solos
-yarn e2e --project=rsc         # una categoría, y solo los servidores que necesita
+yarn e2e --project=server      # una app, y solo los servidores que necesita
 yarn e2e:ui                    # verlo ocurrir, y retroceder por cada acción
 yarn e2e:report                # abre el último informe
 ```
 
 ### Categorías
 
-| Categoría | Qué cubre |
-|---|---|
-| `sdk` | El SDK renderizando en navegador: elementos, la hoja de estilos del space, viewports, schemas arbitrarios |
-| `ssr` | Páginas renderizadas por el servidor |
-| `rsc` | Datos de servidor por elemento: los tres runtimes, las slices, el refresco parcial |
-| `preview` | Renders en borrador que nunca se guardan |
-| `mcp` | El endpoint al que se conecta un agente |
-| `combined` | Flujos que cruzan superficies — donde vive la mayoría de lo que se rompe de verdad |
-| `examples` | Cada example sigue haciendo lo que promete su propio README |
-| `builder` | El builder visual (con gate) |
+**Una categoría por app, y sub-categorías dentro** — una lista plana de cada feature deja de ser legible mucho
+antes de estar completa.
 
-Las seis primeras corren contra **superficies propias de la suite**: un harness de navegador que renderiza
-cualquier schema, y un servidor de páginas con pages, RSC, preview y MCP encendidos a la vez. Los examples no son
-esas superficies — están escritos para una persona, una decisión de cableado cada uno, y torcer uno para que un
-test sea posible rompe justo lo que ese example existe para enseñar.
+| Categoría | App | Sub-categorías |
+|---|---|---|
+| `sdk` | `@plitzi/plitzi-sdk` | `rendering`, `viewports` |
+| `server` | `@plitzi/sdk-server` | `ssr`, `rsc`, `preview`, `auth` |
+| `mcp` | `@plitzi/sdk-mcp` | `endpoint` |
+| `builder` | `@plitzi/plitzi-builder` | `boot` (con gate) |
+| `cross` | más de una app | `parity`, `agent`, `auth` |
+| `examples` | — | una por example |
+
+Los dos niveles se direccionan: `yarn e2e --project=server` para la app, `yarn e2e tests/server/rsc` para una parte.
+
+Todas salvo `examples` corren contra **superficies propias de la suite**: un harness de navegador que renderiza
+cualquier schema, un servidor de páginas con pages, RSC, preview y MCP encendidos a la vez, y un segundo con
+cuentas y sesiones. Los examples no son esas superficies — están escritos para una persona, una decisión de
+cableado cada uno, y torcer uno para que un test sea posible rompe justo lo que ese example existe para enseñar.
 
 **La categoría `examples` tiene su propio trabajo.** Un example al que se manda a un usuario nuevo es una promesa,
 y una promesa que nadie comprueba es una promesa que se rompe. Cada uno tiene un spec que afirma lo que dice su
@@ -60,6 +63,9 @@ terminal.
 `yarn e2e:ui` es el que hay que usar: eliges tests, los ves correr y retrocedes por cada acción con el DOM tal
 como estaba en ese instante. `yarn e2e:headed` corre en una ventana visible, `yarn e2e:debug` abre el Inspector y
 `yarn e2e:codegen` convierte tus clics en código de spec.
+
+Ábrelo acotado — `yarn e2e:ui --project=server` — porque el filtro de proyectos de Playwright arranca sobre uno
+solo, y una ventana sin acotar parece vacía en vez de filtrada.
 
 ### Lo que solo se ve en un navegador
 

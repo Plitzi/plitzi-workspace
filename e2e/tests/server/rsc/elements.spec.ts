@@ -1,5 +1,5 @@
-import { describeTarget, expect, test } from '../../fixtures';
-import { rscElement } from '../../helpers/space';
+import { describeTarget, expect, test } from '../../../fixtures';
+import { rscElement } from '../../../helpers/space';
 
 /** The three runtimes, told apart by where they appear.
  *

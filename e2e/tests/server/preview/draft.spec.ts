@@ -1,6 +1,6 @@
-import { describeTarget, expect, test } from '../../fixtures';
-import { mintPreview, previewUrl, PREVIEW_SECRET } from '../../helpers/preview';
-import { SAMPLE_IDS } from '../../spaces';
+import { describeTarget, expect, test } from '../../../fixtures';
+import { mintPreview, previewUrl, PREVIEW_SECRET } from '../../../helpers/preview';
+import { SAMPLE_IDS } from '../../../spaces';
 
 /** Draft preview closes the agent loop: edits are rendered WITHOUT being saved, and a normal page request carrying
  *  the token serves that render once. Asserting it on a visible element rather than on a settings field is the

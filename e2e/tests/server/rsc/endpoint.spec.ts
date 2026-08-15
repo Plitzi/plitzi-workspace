@@ -1,4 +1,4 @@
-import { describeTarget, expect, test } from '../../fixtures';
+import { describeTarget, expect, test } from '../../../fixtures';
 
 type RscResponse = { serverData: Record<string, unknown> };
 

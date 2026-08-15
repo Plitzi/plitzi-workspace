@@ -8,7 +8,8 @@
     "start": "vite",
     "start:server": "node --import tsx server/main.ts",
     "lint": "TIMING=1 eslint .",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start:auth": "node --import tsx server/authServer.ts"
   },
   "dependencies": {
     "@plitzi/example-space": "workspace:*",

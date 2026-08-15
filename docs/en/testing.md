@@ -27,27 +27,30 @@ One suite at the repo root, because what it tests is the repo rather than any on
 ```bash
 yarn e2e:install               # download the browser, once after cloning
 yarn e2e                       # run everything — servers boot themselves
-yarn e2e --project=rsc         # one category, and only the servers it needs
+yarn e2e --project=server      # one app, and only the servers it needs
 yarn e2e:ui                    # watch it happen, and step back through any action
 yarn e2e:report                # open the last report
 ```
 
 ### Categories
 
-| Category | What it covers |
-|---|---|
-| `sdk` | The SDK rendering in a browser: elements, the space stylesheet, viewports, arbitrary schemas |
-| `ssr` | Pages rendered by the server |
-| `rsc` | Per-element server data: the three runtimes, the slices, the partial refresh |
-| `preview` | Draft renders that are never saved |
-| `mcp` | The endpoint an agent connects to |
-| `combined` | Flows that cross surfaces — where most real breakage lives |
-| `examples` | Every example still does what its own README says |
-| `builder` | The visual builder (gated) |
+**One category per app, sub-categories inside** — a flat list of every feature stops being readable long before
+it is complete.
 
-The first six run against **surfaces the suite owns**: a browser harness that renders any schema, and a page
-server with pages, RSC, preview and MCP all on at once. The examples are not those surfaces — they are written
-for a person, one wiring decision each, and bending one to make a test possible breaks what it exists to show.
+| Category | App | Sub-categories |
+|---|---|---|
+| `sdk` | `@plitzi/plitzi-sdk` | `rendering`, `viewports` |
+| `server` | `@plitzi/sdk-server` | `ssr`, `rsc`, `preview`, `auth` |
+| `mcp` | `@plitzi/sdk-mcp` | `endpoint` |
+| `builder` | `@plitzi/plitzi-builder` | `boot` (gated) |
+| `cross` | more than one app | `parity`, `agent`, `auth` |
+| `examples` | — | one per example |
+
+Both levels are addressable: `yarn e2e --project=server` for the app, `yarn e2e tests/server/rsc` for one part.
+
+Everything but `examples` runs against **surfaces the suite owns**: a browser harness that renders any schema, a
+page server with pages, RSC, preview and MCP all on at once, and a second one with accounts and sessions. The examples are not those surfaces — they are written for a person, one wiring decision each, and
+bending one to make a test possible breaks what it exists to show.
 
 **The `examples` category has its own job.** An example a new user is told to run is a promise, and a promise
 nothing checks is a promise that breaks. Each one has a spec asserting what its own README claims, so a change
@@ -58,6 +61,9 @@ that quietly breaks the first thing a new user runs fails here instead of in the
 `yarn e2e:ui` is the one to reach for: pick tests, watch them run, step back through every action with the DOM as
 it was at that moment. `yarn e2e:headed` runs in a visible browser, `yarn e2e:debug` opens the Inspector, and
 `yarn e2e:codegen` turns clicking around into spec code.
+
+Launch it scoped — `yarn e2e:ui --project=server` — because Playwright's project filter starts on a single
+project, and an unscoped window looks empty rather than filtered.
 
 ### What a browser can see that nothing else can
 
