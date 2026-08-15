@@ -20,7 +20,13 @@ adapters: { ...createJsonAdapters({ offlineData: offlineDataPath }), getRscData 
 `rsc-client` and `rsc-shared`, and each element reads its own slice. **RSC turns itself on because the adapter
 exists**; there is no separate flag.
 
-Two details worth copying:
+**An RSC element has two halves.** `getRscData` is the data; a component still has to render it. `serverInfo`,
+`clientInfo` and `sharedInfo` are element types this space uses and the SDK does not ship, so this deployment
+supplies them itself — [`src/plugins/`](./src/plugins), registered under `plugins` and named in the deployment's
+`pluginNames`. Provide one half and not the other and the elements resolve to nothing: the page renders, their
+section is empty, and nothing anywhere reports an error.
+
+Two more details worth copying:
 
 - **Honour `ids`.** It is set on partial refreshes. Ignoring it means rebuilding every slice to answer a request
   for one.

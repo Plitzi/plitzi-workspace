@@ -31,9 +31,7 @@ export const expectNoHorizontalOverflow = async (page: Page): Promise<void> => {
     const culprits = [...document.querySelectorAll('*')]
       .filter(node => node.getBoundingClientRect().right > viewport + 1)
       .slice(0, 5)
-      .map(
-        node => `${node.tagName.toLowerCase()}${node.getAttribute('data-id') ? `#${node.getAttribute('data-id')}` : ''}`
-      );
+      .map(node => `${node.tagName.toLowerCase()}.${node.className.split(' ')[0]}`);
 
     return { scrollWidth, viewport, culprits };
   });
@@ -68,7 +66,7 @@ export const expectTextIsLegible = async (page: Page): Promise<void> => {
       return [255, 255, 255, 1];
     };
 
-    return [...document.querySelectorAll('[data-id]')]
+    return [...document.querySelectorAll('[class*="plitzi-component__"]')]
       .filter(node => {
         const text = node.textContent?.trim();
         if (!text || node.children.length) {
@@ -93,7 +91,7 @@ export const expectTextIsLegible = async (page: Page): Promise<void> => {
 
         return distance < 24;
       })
-      .map(node => `${node.getAttribute('data-id')}: "${node.textContent?.trim().slice(0, 40)}"`);
+      .map(node => `${node.className.split(' ')[0]}: "${node.textContent?.trim().slice(0, 40)}"`);
   });
 
   expect(invisible, 'text rendered in the colour of what is behind it').toEqual([]);

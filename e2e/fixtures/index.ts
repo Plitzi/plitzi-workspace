@@ -44,7 +44,7 @@ export { expect } from '@playwright/test';
 export const describeTarget = (id: string, define: (subject: Target) => void): void => {
   const subject = target(id);
 
-  test.describe(`${subject.id} — ${subject.what}`, () => {
+  test.describe(subject.id, () => {
     test.skip(!isOpen(subject) || !isSelected(subject), skipReason(subject));
 
     define(subject);

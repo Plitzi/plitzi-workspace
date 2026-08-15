@@ -1,19 +1,19 @@
 import { defineConfig, devices } from '@playwright/test';
 
+import { categories } from './categories';
 import { selectedTargets } from './targets';
 
 import type { Target } from './targets';
 
-/** One Playwright for the whole monorepo, run from the root with `yarn e2e`: what it tests is the repo — the
- *  examples a new user is pointed at, the SDK rendering underneath them, and the builder on top. A per-app runner
- *  would only ever see one of those.
+/** One Playwright for the whole monorepo, run from the root with `yarn e2e`.
  *
- *  The config sits beside the specs rather than at the root so that config, fixtures and specs are all one module
- *  format; a root config is CJS (the root package has no `type`) and would load `targets.ts` as a second, CJS copy
- *  of a file the ESM specs import.
+ *  It is cut into categories — `sdk`, `ssr`, `rsc`, `preview`, `mcp`, `builder`, `examples`, `combined` — each of
+ *  which is a Playwright project, so `yarn e2e --project=rsc` runs one slice and starts only the servers that
+ *  slice declares. See `categories.ts`.
  *
- *  Everything it needs is booted from `targets.ts` — no server has to be running first, and one that already is
- *  gets reused. */
+ *  The config sits beside the specs rather than at the repo root so that config, fixtures and specs are all one
+ *  module format; a root config is CJS (the root package has no `type`) and would load `targets.ts` as a second,
+ *  CJS copy of a file the ESM specs import. */
 
 const isCI = !!process.env.CI;
 
@@ -21,11 +21,11 @@ const isCI = !!process.env.CI;
  *  compare against, so a stable path matters more than a clean one. */
 const artifacts = './.artifacts';
 
-/** Readiness is the open port, not a successful GET. The MCP examples answer JSON-RPC and nothing else — `GET /`
- *  is a 405 there by design, which Playwright's URL probe never accepts and would sit retrying until it times out.
- *  A listening socket means the same thing for all of them and misreads none. */
+/** Readiness is the open port, not a successful GET. An MCP server answers JSON-RPC and nothing else — `GET /` is
+ *  a 405 there by design, which Playwright's URL probe never accepts and would sit retrying until it times out. A
+ *  listening socket means the same thing for all of them and misreads none. */
 const toWebServer = (target: Target) => ({
-  command: `yarn workspace ${target.workspace} start`,
+  command: target.command ?? `yarn workspace ${target.workspace} start`,
   port: Number(new URL(target.origin).port),
   reuseExistingServer: !isCI,
   timeout: 180_000,
@@ -48,24 +48,12 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'off',
     // The builder serves itself over a locally-minted certificate; nothing here is a real trust decision.
-    ignoreHTTPSErrors: true
+    ignoreHTTPSErrors: true,
+    ...devices['Desktop Chrome']
   },
-  projects: [
-    {
-      name: 'examples',
-      testDir: './tests/examples',
-      use: { ...devices['Desktop Chrome'] }
-    },
-    {
-      name: 'harness',
-      testDir: './tests/harness',
-      use: { ...devices['Desktop Chrome'] }
-    },
-    {
-      name: 'builder',
-      testDir: './tests/builder',
-      use: { ...devices['Desktop Chrome'] }
-    }
-  ],
+  projects: categories.map(category => ({
+    name: category.name,
+    testDir: `./tests/${category.name}`
+  })),
   webServer: selectedTargets().map(toWebServer)
 });

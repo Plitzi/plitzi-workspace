@@ -25,16 +25,39 @@ One suite at the repo root, because what it tests is the repo rather than any on
 [`e2e/README.md`](../../e2e/README.md); the short version:
 
 ```bash
-yarn e2e:install                       # download the browser, once after cloning
-yarn e2e                               # run everything — servers boot themselves
-PLITZI_E2E_TARGETS=render yarn e2e     # boot one target while iterating
-yarn e2e:report                        # open the last report
+yarn e2e:install               # download the browser, once after cloning
+yarn e2e                       # run everything — servers boot themselves
+yarn e2e --project=rsc         # one category, and only the servers it needs
+yarn e2e:ui                    # watch it happen, and step back through any action
+yarn e2e:report                # open the last report
 ```
 
-**The examples are the suite's backbone.** Each one is a runnable setup the documentation points a new user at,
-which makes it a promise — and a promise nothing checks is a promise that breaks. Every example in
-[`examples/`](../../examples) has a spec asserting what its own README claims, so a change that quietly breaks
-the first thing a new user runs fails here instead of in their terminal.
+### Categories
+
+| Category | What it covers |
+|---|---|
+| `sdk` | The SDK rendering in a browser: elements, the space stylesheet, viewports, arbitrary schemas |
+| `ssr` | Pages rendered by the server |
+| `rsc` | Per-element server data: the three runtimes, the slices, the partial refresh |
+| `preview` | Draft renders that are never saved |
+| `mcp` | The endpoint an agent connects to |
+| `combined` | Flows that cross surfaces — where most real breakage lives |
+| `examples` | Every example still does what its own README says |
+| `builder` | The visual builder (gated) |
+
+The first six run against **surfaces the suite owns**: a browser harness that renders any schema, and a page
+server with pages, RSC, preview and MCP all on at once. The examples are not those surfaces — they are written
+for a person, one wiring decision each, and bending one to make a test possible breaks what it exists to show.
+
+**The `examples` category has its own job.** An example a new user is told to run is a promise, and a promise
+nothing checks is a promise that breaks. Each one has a spec asserting what its own README claims, so a change
+that quietly breaks the first thing a new user runs fails here instead of in their terminal.
+
+### Seeing it happen
+
+`yarn e2e:ui` is the one to reach for: pick tests, watch them run, step back through every action with the DOM as
+it was at that moment. `yarn e2e:headed` runs in a visible browser, `yarn e2e:debug` opens the Inspector, and
+`yarn e2e:codegen` turns clicking around into spec code.
 
 ### What a browser can see that nothing else can
 
@@ -45,6 +68,10 @@ failing effect into a console error and leaves the last good tree on screen.
 
 There are **no committed screenshot baselines**. Screenshots are written to `e2e/.artifacts/screenshots/` to be
 looked at; the assertions that gate a run are the ones that mean the same thing on every machine.
+
+One rule worth knowing before writing a spec: **assert on classes, never on `data-id`.** Those attributes are
+server-side only — they exist so hydration can find what the server rendered — so a check written against them
+passes under SSR and looks like a broken renderer everywhere else.
 
 ### Rendering an arbitrary schema
 

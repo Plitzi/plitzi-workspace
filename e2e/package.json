@@ -6,12 +6,16 @@
   "type": "module",
   "scripts": {
     "start": "vite",
+    "start:server": "node --import tsx server/main.ts",
     "lint": "TIMING=1 eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@plitzi/example-space": "workspace:*",
     "@plitzi/plitzi-sdk": "workspace:*",
+    "@plitzi/sdk-mcp": "workspace:*",
+    "@plitzi/sdk-server": "workspace:*",
+    "@plitzi/sdk-shared": "workspace:*",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
@@ -22,6 +26,7 @@
     "@vitejs/plugin-react": "^6.0.5",
     "eslint": "^9.39.5",
     "tailwindcss": "^4.3.3",
+    "tsx": "^4.20.7",
     "typescript": "^6.0.3",
     "vite": "^8.2.1"
   }

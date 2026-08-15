@@ -11,13 +11,16 @@
     "resolveJsonModule": true
   },
   "include": [
+    "categories.ts",
     "targets.ts",
     "playwright.config.ts",
     "vite.config.ts",
     "fixtures",
     "helpers",
+    "spaces",
     "tests",
-    "harness/src"
+    "harness/src",
+    "server"
   ],
   "exclude": ["node_modules", ".artifacts"]
 }

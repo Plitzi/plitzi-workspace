@@ -1,11 +1,16 @@
-/** Every browser-reachable surface of the monorepo, in one list.
+/** Every server the suite can start, in one list.
  *
- *  This is the manifest Playwright starts servers from, and it is deliberately the same set the examples README
- *  publishes: an example that a new user is told to run is a promise, and a promise nothing checks is a promise
- *  that breaks. Adding an example here is what turns it into a checked one.
+ *  Two kinds. The first two are the suite's OWN surfaces — a browser harness and a page server it controls
+ *  completely — and they are what the testing categories run against, because a test that needs two features at
+ *  once should not have to bend somebody's teaching example to get them.
+ *
+ *  The rest ARE those examples. They are checked, not built on: an example a new user is told to run is a promise,
+ *  and the `examples` category is that promise being kept. Nothing else depends on them.
  *
  *  A target with a `gate` needs something this machine may not have — a database, an /etc/hosts entry — so it
  *  stays out of the default run instead of failing it. The gate's `hint` is what gets printed when a spec skips. */
+
+import { targetsForRun } from './categories';
 
 export type TargetGate = {
   /** Set this to `1` to include the target. */
@@ -16,18 +21,33 @@ export type TargetGate = {
 
 export type Target = {
   id: string;
-  /** Workspace package name — `yarn workspace <workspace> start` is what boots it. */
+  /** Workspace package name — `yarn workspace <workspace> start` is what boots it, unless `command` says otherwise. */
   workspace: string;
-  /** Written the way the target actually listens. The node examples bind `127.0.0.1` explicitly; Vite binds the
+  /** Overrides the default `start` script, for a workspace that serves more than one surface. */
+  command?: string;
+  /** Written the way the target actually listens. The node servers bind `127.0.0.1` explicitly; Vite binds the
    *  name `localhost`, which resolves to ::1 first on macOS — addressing either one by the other's spelling finds
    *  nothing listening. */
   origin: string;
-  /** What a reader gets out of this surface, one line. */
+  /** What this surface is for, one line. */
   what: string;
   gate?: TargetGate;
 };
 
 export const targets: Target[] = [
+  {
+    id: 'harness',
+    workspace: '@plitzi/e2e',
+    origin: 'http://127.0.0.1:4100',
+    what: 'The browser harness — renders any schema handed to it, with no server behind it'
+  },
+  {
+    id: 'server',
+    workspace: '@plitzi/e2e',
+    command: 'yarn workspace @plitzi/e2e start:server',
+    origin: 'http://127.0.0.1:4200',
+    what: 'The page server this suite owns — pages, RSC, draft preview and MCP, all on at once'
+  },
   {
     id: 'no-build',
     workspace: '@plitzi/example-render-no-build',
@@ -88,12 +108,6 @@ export const targets: Target[] = [
     gate: { env: 'PLITZI_E2E_MYSQL', hint: 'point MYSQL_URL at a reachable database, then set PLITZI_E2E_MYSQL=1' }
   },
   {
-    id: 'harness',
-    workspace: '@plitzi/e2e',
-    origin: 'http://127.0.0.1:4100',
-    what: 'Renders any schema handed to it — the surface visual specs drive'
-  },
-  {
     id: 'builder',
     workspace: '@plitzi/plitzi-builder',
     origin: 'https://app.plitzi.local:3000',
@@ -119,33 +133,36 @@ export const target = (id: string): Target => {
 /** A gated target is open when its env var is set; an ungated one always is. */
 export const isOpen = (candidate: Target): boolean => !candidate.gate || process.env[candidate.gate.env] === '1';
 
-/** Narrows the run while iterating: `PLITZI_E2E_TARGETS=render,harness yarn e2e` boots two servers instead of ten.
- *  Unset means every target, which is what a full run and CI both want. */
-const requestedIds = (): string[] =>
+/** Which targets this run boots.
+ *
+ *  Normally the categories decide: `--project=rsc` needs one server, so one server starts. `PLITZI_E2E_TARGETS`
+ *  narrows it further by hand, for the times you are iterating on a single surface. */
+const narrowedIds = (): string[] =>
   process.env.PLITZI_E2E_TARGETS?.split(',')
     .map(id => id.trim())
     .filter(Boolean) ?? [];
 
 export const isSelected = (candidate: Target): boolean => {
-  const requested = requestedIds();
+  const byCategory = targetsForRun();
+  const byHand = narrowedIds();
 
-  return !requested.length || requested.includes(candidate.id);
+  return byCategory.includes(candidate.id) && (!byHand.length || byHand.includes(candidate.id));
 };
 
 /** Why a target's specs are being skipped, phrased as the thing to do about it. */
 export const skipReason = (candidate: Target): string => {
   if (!isSelected(candidate)) {
-    return `${candidate.id}: not in PLITZI_E2E_TARGETS`;
+    return `${candidate.id}: not in this run — drop --project / PLITZI_E2E_TARGETS to include it`;
   }
 
   return candidate.gate ? `${candidate.id}: ${candidate.gate.hint}` : '';
 };
 
-/** The targets this run boots a server for — and, through `describeTarget`, the only ones whose specs run. The two
- *  have to agree: a spec left running against a server that was never started fails on a refused connection, which
- *  says nothing about the code it was written to check. */
+/** The targets this run starts a server for — and, through `describeTarget`, the only ones whose specs run. The
+ *  two have to agree: a spec left running against a server that was never started fails on a refused connection,
+ *  which says nothing about the code it was written to check. */
 export const selectedTargets = (): Target[] => {
-  requestedIds().forEach(id => target(id));
+  narrowedIds().forEach(id => target(id));
 
   return targets.filter(candidate => isOpen(candidate) && isSelected(candidate));
 };

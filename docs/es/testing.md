@@ -25,16 +25,41 @@ Una sola suite en la raíz del repositorio, porque lo que prueba es el repositor
 detalle completo está en [`e2e/README.md`](../../e2e/README.md); la versión corta:
 
 ```bash
-yarn e2e:install                       # descarga el navegador, una vez tras clonar
-yarn e2e                               # corre todo — los servidores se levantan solos
-PLITZI_E2E_TARGETS=render yarn e2e     # levanta un único target mientras iteras
-yarn e2e:report                        # abre el último informe
+yarn e2e:install               # descarga el navegador, una vez tras clonar
+yarn e2e                       # corre todo — los servidores se levantan solos
+yarn e2e --project=rsc         # una categoría, y solo los servidores que necesita
+yarn e2e:ui                    # verlo ocurrir, y retroceder por cada acción
+yarn e2e:report                # abre el último informe
 ```
 
-**Los examples son la columna vertebral de la suite.** Cada uno es un montaje ejecutable al que la documentación
-manda a un usuario nuevo, y eso lo convierte en una promesa — una promesa que nadie comprueba es una promesa que
-se rompe. Cada example de [`examples/`](../../examples) tiene un spec que afirma lo que su propio README promete,
-así que un cambio que rompa en silencio lo primero que ejecuta un usuario nuevo falla aquí y no en su terminal.
+### Categorías
+
+| Categoría | Qué cubre |
+|---|---|
+| `sdk` | El SDK renderizando en navegador: elementos, la hoja de estilos del space, viewports, schemas arbitrarios |
+| `ssr` | Páginas renderizadas por el servidor |
+| `rsc` | Datos de servidor por elemento: los tres runtimes, las slices, el refresco parcial |
+| `preview` | Renders en borrador que nunca se guardan |
+| `mcp` | El endpoint al que se conecta un agente |
+| `combined` | Flujos que cruzan superficies — donde vive la mayoría de lo que se rompe de verdad |
+| `examples` | Cada example sigue haciendo lo que promete su propio README |
+| `builder` | El builder visual (con gate) |
+
+Las seis primeras corren contra **superficies propias de la suite**: un harness de navegador que renderiza
+cualquier schema, y un servidor de páginas con pages, RSC, preview y MCP encendidos a la vez. Los examples no son
+esas superficies — están escritos para una persona, una decisión de cableado cada uno, y torcer uno para que un
+test sea posible rompe justo lo que ese example existe para enseñar.
+
+**La categoría `examples` tiene su propio trabajo.** Un example al que se manda a un usuario nuevo es una promesa,
+y una promesa que nadie comprueba es una promesa que se rompe. Cada uno tiene un spec que afirma lo que dice su
+README, así que un cambio que rompa en silencio lo primero que ejecuta un usuario nuevo falla aquí y no en su
+terminal.
+
+### Verlo ocurrir
+
+`yarn e2e:ui` es el que hay que usar: eliges tests, los ves correr y retrocedes por cada acción con el DOM tal
+como estaba en ese instante. `yarn e2e:headed` corre en una ventana visible, `yarn e2e:debug` abre el Inspector y
+`yarn e2e:codegen` convierte tus clics en código de spec.
 
 ### Lo que solo se ve en un navegador
 
@@ -46,6 +71,10 @@ pantalla el último árbol bueno.
 
 **No hay baselines de screenshot en git.** Las capturas se escriben en `e2e/.artifacts/screenshots/` para
 mirarlas; lo que decide si un run pasa son las aserciones que significan lo mismo en cualquier máquina.
+
+Una regla que conviene saber antes de escribir un spec: **afirma sobre clases, nunca sobre `data-id`.** Esos
+atributos son solo de servidor — existen para que la hidratación encuentre lo que renderizó el servidor — así que
+una comprobación escrita contra ellos pasa en SSR y parece un renderer roto en todo lo demás.
 
 ### Renderizar un schema cualquiera
 

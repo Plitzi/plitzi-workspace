@@ -1,3 +1,6 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 
 import { offlineDataPath } from '@plitzi/example-space';
@@ -5,6 +8,7 @@ import { offlineDataPath } from '@plitzi/example-space';
 import type { SSRRscContext, SSRRscData, SSRUser } from '@plitzi/sdk-shared';
 
 const PORT = Number(process.env.PORT ?? 4004);
+const here = path.dirname(fileURLToPath(import.meta.url));
 
 /** Server data, keyed by the schema element id that consumes it. The sample space carries three RSC elements —
  *  `rsc-server`, `rsc-client` and `rsc-shared` — and each reads its own slice through the SDK's `useRscData`.
@@ -37,11 +41,30 @@ const getRscData = async ({ user, ids }: SSRRscContext): Promise<SSRRscData> => 
   return { serverData };
 };
 
+/** The other half of an RSC element, and the one that is easy to forget: `getRscData` supplies the DATA, and a
+ *  component still has to render it. `serverInfo`, `clientInfo` and `sharedInfo` are element types this space uses
+ *  and the SDK does not ship — so this deployment provides them, and names them in its deployment record.
+ *
+ *  Miss either half and the elements resolve to nothing: the page renders, the section they live in is empty, and
+ *  no error is raised anywhere. */
+const plugins = {
+  serverInfo: { js: path.resolve(here, 'plugins/ServerInfo.tsx'), action: 'compile' as const },
+  clientInfo: { js: path.resolve(here, 'plugins/ClientInfo.tsx'), action: 'compile' as const },
+  sharedInfo: { js: path.resolve(here, 'plugins/SharedInfo.tsx'), action: 'compile' as const }
+};
+
 const server = createServer({
   port: PORT,
   devMode: true,
   // RSC turns itself on because `getRscData` exists — there is no separate flag to remember.
-  adapters: { ...createJsonAdapters({ offlineData: offlineDataPath }), getRscData },
+  adapters: {
+    ...createJsonAdapters({
+      offlineData: offlineDataPath,
+      deployment: { spaceId: 1, environment: 'main', revision: 0, pluginNames: Object.keys(plugins) }
+    }),
+    getRscData
+  },
+  plugins,
   logger: consoleLogger
 });
 

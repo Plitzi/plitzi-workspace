@@ -3395,6 +3395,9 @@ __metadata:
     "@playwright/test": "npm:^1.62.1"
     "@plitzi/example-space": "workspace:*"
     "@plitzi/plitzi-sdk": "workspace:*"
+    "@plitzi/sdk-mcp": "workspace:*"
+    "@plitzi/sdk-server": "workspace:*"
+    "@plitzi/sdk-shared": "workspace:*"
     "@types/react": "npm:^19.2.18"
     "@types/react-dom": "npm:^19.2.4"
     "@vitejs/plugin-react": "npm:^6.0.5"
@@ -3402,6 +3405,7 @@ __metadata:
     react: "npm:^19.2.8"
     react-dom: "npm:^19.2.8"
     tailwindcss: "npm:^4.3.3"
+    tsx: "npm:^4.20.7"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.2.1"
   languageName: unknown
@@ -15040,7 +15044,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tsx@npm:^4.23.12":
+"tsx@npm:^4.20.7, tsx@npm:^4.23.12":
   version: 4.23.12
   resolution: "tsx@npm:4.23.12"
   dependencies:

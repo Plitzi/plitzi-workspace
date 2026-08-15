@@ -1,0 +1,30 @@
+import { describeTarget, expect, test } from '../../fixtures';
+
+type RscResponse = { serverData: Record<string, unknown> };
+
+describeTarget('server', subject => {
+  test('serves every slice for a page', async ({ request }) => {
+    const response = await request.get(`${subject.origin}/_rsc?location=%2F`);
+
+    expect(response.status()).toBe(200);
+    expect(Object.keys(((await response.json()) as RscResponse).serverData).sort()).toEqual([
+      'rsc-server',
+      'rsc-shared'
+    ]);
+  });
+
+  /** `ids` is what a partial refresh sends. An adapter that ignores it rebuilds every slice to answer a request
+   *  for one — correct output, and the cost the whole mechanism exists to avoid. */
+  test('rebuilds only the slice a partial refresh asks for', async ({ request }) => {
+    const response = await request.get(`${subject.origin}/_rsc?location=%2F&ids=rsc-server`);
+
+    expect(Object.keys(((await response.json()) as RscResponse).serverData)).toEqual(['rsc-server']);
+  });
+
+  test('ignores an id no element claims', async ({ request }) => {
+    const response = await request.get(`${subject.origin}/_rsc?location=%2F&ids=not-an-element`);
+
+    expect(response.status()).toBe(200);
+    expect(((await response.json()) as RscResponse).serverData).toEqual({});
+  });
+});
