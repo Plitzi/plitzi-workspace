@@ -3,9 +3,9 @@ import { createAuthApiStage } from './http/stages/authApi';
 import { createPageServer } from './server/pageServer';
 import { resolveServices } from './services/resolve';
 
-import type { ConnectorLookups } from '../modules/connectors/resolver';
 import type { Auth } from './auth/createAuth';
 import type { PipelineExtensions } from './http/types';
+import type { ConnectorLookups } from '../modules/connectors/resolver';
 import type { SSRPageAdapters, SSRPageServerConfig, SSRServer, SSRServerConfig } from '@plitzi/sdk-shared';
 
 export { resolveServices } from './services/resolve';
