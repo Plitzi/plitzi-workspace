@@ -13,8 +13,8 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
-import { canRunBuilder } from './backend';
 import { targetsForRun } from './categories';
+import { builderCredentials } from './credentials';
 
 /** The prebuilt bundle the no-build example loads straight from a script tag. */
 const VENDOR_BUNDLE = path.resolve(import.meta.dirname, '../apps/sdk/dist/plitzi-sdk-vendor.js');
@@ -42,6 +42,9 @@ export type Target = {
   origin: string;
   /** What this surface is for, one line. */
   what: string;
+  /** Loaded once before the specs, because it is a Vite dev server: the first page load is what makes Vite
+   *  discover and pre-bundle dependencies, and it charges that work to whoever asks first. See `warmUp.ts`. */
+  warmUp?: boolean;
   gate?: TargetGate;
 };
 
@@ -50,7 +53,8 @@ export const targets: Target[] = [
     id: 'harness',
     workspace: '@plitzi/e2e',
     origin: 'http://127.0.0.1:5100',
-    what: 'The browser harness — renders any schema handed to it, with no server behind it'
+    what: 'The browser harness — renders any schema handed to it, with no server behind it',
+    warmUp: true
   },
   {
     id: 'server',
@@ -82,14 +86,16 @@ export const targets: Target[] = [
     workspace: '@plitzi/example-render-offline',
     command: 'yarn workspace @plitzi/example-render-offline start --port 5001',
     origin: 'http://localhost:5001',
-    what: 'The same render() call from a bundled app'
+    what: 'The same render() call from a bundled app',
+    warmUp: true
   },
   {
     id: 'react-component',
     workspace: '@plitzi/example-react-component',
     command: 'yarn workspace @plitzi/example-react-component start --port 5002',
     origin: 'http://localhost:5002',
-    what: '<PlitziSdk> inside your own React tree'
+    what: '<PlitziSdk> inside your own React tree',
+    warmUp: true
   },
   {
     id: 'server-rendered',
@@ -140,18 +146,23 @@ export const targets: Target[] = [
     /** Plain HTTP on a port of its own, so the same command works on a laptop and on a CI runner that has no
      *  `app.plitzi.local` and no locally-trusted certificate authority. A developer's own `yarn start` is
      *  untouched — it still serves HTTPS on 3000. */
-    command: 'PLITZI_BUILDER_HTTP=1 PLITZI_BUILDER_PORT=8080 yarn workspace @plitzi/plitzi-builder start',
+    /** The credentials go in as environment, minted by the suite when nothing better was exported — so the
+     *  builder boots with a token that is current rather than one pasted into `index.html` a day ago. */
+    get command() {
+      const { webKey, userKey } = builderCredentials();
+
+      return `PLITZI_BUILDER_HTTP=1 PLITZI_BUILDER_PORT=8080 PLITZI_WEB_KEY=${webKey} PLITZI_USER_KEY=${userKey} yarn workspace @plitzi/plitzi-builder start`;
+    },
     /** 8080 rather than the 5xxx band the rest of the suite uses, for one reason: a space token is bound to the
      *  origins it was minted for, and this is one the platform already trusts. Anywhere else, a live run gets a
      *  401 on its first call until somebody adds the origin to PLATFORM_ORIGINS. */
     origin: 'http://127.0.0.1:8080',
+    /** No gate: mocked it needs nothing, so it always runs. Exporting a token from `yarn token 1 --user admin`
+     *  is what upgrades the same specs to a real server. */
     what: 'The visual builder — its own instance, never the one you are developing in',
-    /** Mocked it needs nothing, so a CI run always includes it. Live it needs a server and a token, so it runs
-     *  when those are there and says what is missing when they are not — no flag to remember either way. */
-    gate: {
-      open: canRunBuilder,
-      hint: 'use `yarn e2e:ci` for the mocked builder, or export PLITZI_WEB_KEY/PLITZI_USER_KEY from `yarn token 1 --user admin` with the stack up'
-    }
+    /** The one that needs it most: the largest module graph in the repo, and the only target whose whole category
+     *  failed on a cold dependency cache. */
+    warmUp: true
   }
 ];
 

@@ -43,7 +43,7 @@ antes de estar completa.
 | `sdk` | `@plitzi/plitzi-sdk` | `rendering`, `viewports` |
 | `server` | `@plitzi/sdk-server` | `ssr`, `rsc`, `preview`, `auth` |
 | `mcp` | `@plitzi/sdk-mcp` | `endpoint` |
-| `builder` | `@plitzi/plitzi-builder` | `boot` (con gate) |
+| `builder` | `@plitzi/plitzi-builder` | `boot` |
 | `cross` | más de una app | `parity`, `agent`, `auth` |
 | `examples` | — | una por example |
 
@@ -62,8 +62,8 @@ terminal.
 ### Verlo ocurrir
 
 `yarn e2e:ui` es el que hay que usar: eliges tests, los ves correr y retrocedes por cada acción con el DOM tal
-como estaba en ese instante. `yarn e2e:headed` corre en una ventana visible, `yarn e2e:debug` abre el Inspector y
-`yarn e2e:codegen` convierte tus clics en código de spec.
+como estaba en ese instante. El resto son flags del mismo comando en vez de scripts propios: `--headed` para una
+ventana visible, `--debug` para el Inspector, `--list` para la lista de tests.
 
 Ábrelo acotado — `yarn e2e:ui --project=server` — porque el filtro de proyectos de Playwright arranca sobre uno
 solo, y una ventana sin acotar parece vacía en vez de filtrada.

@@ -43,7 +43,7 @@ it is complete.
 | `sdk` | `@plitzi/plitzi-sdk` | `rendering`, `viewports` |
 | `server` | `@plitzi/sdk-server` | `ssr`, `rsc`, `preview`, `auth` |
 | `mcp` | `@plitzi/sdk-mcp` | `endpoint` |
-| `builder` | `@plitzi/plitzi-builder` | `boot` (gated) |
+| `builder` | `@plitzi/plitzi-builder` | `boot` |
 | `cross` | more than one app | `parity`, `agent`, `auth` |
 | `examples` | — | one per example |
 
@@ -60,8 +60,8 @@ that quietly breaks the first thing a new user runs fails here instead of in the
 ### Seeing it happen
 
 `yarn e2e:ui` is the one to reach for: pick tests, watch them run, step back through every action with the DOM as
-it was at that moment. `yarn e2e:headed` runs in a visible browser, `yarn e2e:debug` opens the Inspector, and
-`yarn e2e:codegen` turns clicking around into spec code.
+it was at that moment. The rest are flags on the same command rather than scripts of their own: `--headed` for a
+visible browser, `--debug` for the Inspector, `--list` for the test list.
 
 Launch it scoped — `yarn e2e:ui --project=server` — because Playwright's project filter starts on a single
 project, and an unscoped window looks empty rather than filtered.

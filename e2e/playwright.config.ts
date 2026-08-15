@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import { defineConfig, devices } from '@playwright/test';
 
+import { backendSummary } from './backend';
 import { categories } from './categories';
 import { selectedTargets } from './targets';
 
@@ -43,6 +44,7 @@ const servers = selectedTargets();
  *  Only from the process that actually starts them: workers re-load this config, and a worker's copy of the list
  *  is not what is running. */
 if (process.env.TEST_WORKER_INDEX === undefined) {
+  console.log(`[e2e] ${backendSummary()}`);
   console.log(`[e2e] starting ${servers.length} server(s): ${servers.map(server => server.id).join(', ')}`);
 }
 
@@ -50,6 +52,9 @@ export default defineConfig({
   // No top-level `testDir`: every project declares its own, and a parent that also claims the whole tree makes
   // UI mode attribute files to the wrong project.
   outputDir: `${artifacts}/test-results`,
+  /** Runs after the servers are up and before the first spec: one page load per Vite dev server, so the
+   *  optimizer's first-load rebuild is not charged to whichever test happened to arrive first. */
+  globalSetup: path.resolve(import.meta.dirname, 'warmUp.ts'),
   fullyParallel: true,
   /** Assertions auto-wait, so a high ceiling costs nothing when the page is quick and removes a whole class of
    *  cold-start flake: a Vite dev server optimises its dependency graph on the first request, which on a fresh

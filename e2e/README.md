@@ -6,7 +6,7 @@ One Playwright for the whole monorepo, cut into categories you can run on their 
 yarn e2e:install               # download the browser (once, after cloning)
 yarn e2e                       # everything
 yarn e2e --project=server      # one app — and only the servers it needs
-yarn e2e:list                  # what exists, without running it
+yarn e2e --list                # what exists, without running it
 ```
 
 Nothing has to be running first: every category declares the servers it needs and Playwright starts them. One
@@ -17,13 +17,11 @@ that is already up gets reused.
 | Command | What you get |
 |---|---|
 | `yarn e2e:ui` | **The one to reach for.** Playwright's UI: pick tests, watch them run, step back through every action with the DOM as it was at that moment |
-| `yarn e2e:headed` | The same run, in a browser window you can watch |
-| `yarn e2e:debug` | The Inspector — pause, step, try selectors against the live page |
-| `yarn e2e:codegen` | Click around the harness and get the code for what you did |
 | `yarn e2e:report` | The last run's report, with screenshots and traces |
 
-`e2e:codegen` opens the harness at <http://127.0.0.1:5100>, so start it first with
-`yarn workspace @plitzi/e2e start` (or point codegen at any other target).
+Everything else Playwright can do is a flag on `yarn e2e`, not a script of its own: `--headed` for a window you
+can watch, `--debug` for the Inspector, `--list` for the test list. There are four `e2e` scripts because four is
+what cannot be expressed as a flag.
 
 > **Launch the UI scoped: `yarn e2e:ui --project=server`.** Opened with no project, Playwright's own project
 > filter starts on a single one — the panel shows two files and looks broken rather than filtered. The filter
@@ -159,7 +157,7 @@ renders, passes every assertion and still looks wrong — and it needs no UI ope
 They are **artifacts to look at, not baselines to compare against**: there are no committed snapshots, so nothing
 fails because a font rendered half a pixel differently on another machine.
 
-To watch a run live instead of replaying it: `yarn e2e:headed --project=server tests/server/auth`.
+To watch a run live instead of replaying it: `yarn e2e --headed --project=server tests/server/auth`.
 
 ## Two ways to run it
 
@@ -180,13 +178,37 @@ Nothing else is a flag. **A gate asks whether the thing is there** rather than r
 runs when it can and says what is missing when it cannot — the vendor bundle on disk, `MYSQL_URL` pointing
 somewhere, a builder token exported.
 
-To drive the builder against a live server:
+**The builder always runs.** With nothing exported it boots against the mock, and the suite mints its own
+credentials for it ([`credentials.ts`](./credentials.ts), through the SDK's own `createTokens`) — a mocked run
+needs them readable, not valid, and nothing there ever verifies a signature. That is what replaced the token
+pasted into `index.html` and expiring a day later.
+
+To point the same specs at a real server:
 
 ```bash
 cd ../plitzi-sdk-server && yarn start          # then: yarn token 1 --user admin
 export PLITZI_WEB_KEY=… PLITZI_USER_KEY=…
 yarn e2e --project=builder
 ```
+
+Every run prints which it used, so nobody has to guess:
+
+```
+[e2e] backend: live at https://server.plitzi.local
+[e2e] backend: mocked — export PLITZI_WEB_KEY/PLITZI_USER_KEY to run against a real server
+```
+
+### Generating specs by clicking
+
+Playwright's recorder needs a running target and nothing else, so it needs no script here:
+
+```bash
+yarn e2e --project=builder --ui     # or leave a target up, then:
+yarn playwright codegen http://127.0.0.1:8080
+```
+
+Click through the editor and Playwright writes the calls. Paste what it gives you into a spec under
+`tests/builder/` and keep the assertions that matter.
 
 > The suite runs **its own** builder on `127.0.0.1:8080`, over plain HTTP — never the one you are developing in.
 > 8080 rather than the 5xxx band for one reason: a space token is bound to the origins it was minted for, and

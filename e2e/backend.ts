@@ -11,9 +11,6 @@
 
 export const isCiRun = (): boolean => process.env.PLITZI_CI === '1' || !!process.env.CI;
 
-/** What a CI run cannot reach, said once. */
-export const isMockBackend = (): boolean => isCiRun();
-
 /** Where a live backend answers. Overridable, because a test stack should not have to occupy the same ports as
  *  the one somebody is developing against. */
 export const liveBackend = {
@@ -33,6 +30,15 @@ export const liveCredentials = {
 
 export const hasLiveCredentials = (): boolean => !!liveCredentials.webKey && !!liveCredentials.userKey;
 
-/** Whether the builder can run at all: mocked it needs nothing, live it needs a server and a token. Derived
- *  rather than declared, so there is no flag to remember and no way to ask for a run that cannot happen. */
-export const canRunBuilder = (): boolean => isCiRun() || hasLiveCredentials();
+/** Whether the backend is answered in the browser rather than by a server.
+ *
+ *  True when this is a CI run, and true when there is simply nothing to talk to: a live run needs credentials,
+ *  and without them the alternative to mocking is not "a stronger test" but "no test at all". So the builder
+ *  always runs — mocked by default, live the moment you export a token. */
+export const isMockBackend = (): boolean => isCiRun() || !hasLiveCredentials();
+
+/** One line for the run header, so nobody has to guess which half of the product was actually exercised. */
+export const backendSummary = (): string =>
+  isMockBackend()
+    ? `backend: mocked${isCiRun() ? ' (CI run)' : ' — export PLITZI_WEB_KEY/PLITZI_USER_KEY to run against a real server'}`
+    : `backend: live at ${liveBackend.serverUrl}`;
