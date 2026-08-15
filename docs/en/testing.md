@@ -26,7 +26,8 @@ One suite at the repo root, because what it tests is the repo rather than any on
 
 ```bash
 yarn e2e:install               # download the browser, once after cloning
-yarn e2e                       # run everything — servers boot themselves
+yarn e2e                       # the full run — against a real plitzi-sdk-server
+yarn e2e:ci                    # what a machine with nothing provisioned can do
 yarn e2e --project=server      # one app, and only the servers it needs
 yarn e2e:ui                    # watch it happen, and step back through any action
 yarn e2e:report                # open the last report
@@ -92,10 +93,10 @@ to answer a question breaks what that example exists to demonstrate.
 
 ## In CI
 
-The browser suite runs on every push (`.github/workflows/ci.yml`), after lint and on the same build cache.
-It provisions nothing — every server it needs, it starts — and the targets that would need a database, an
-/etc/hosts entry or a certificate are gated off and skip with the instruction to enable them. The HTML report is
-uploaded as an artifact, so a failure can be replayed locally with its trace.
+The browser suite runs on every push (`.github/workflows/ci.yml`), **alongside lint** rather than after it —
+both need the build, neither needs the other. It provisions nothing: every server it needs, it starts, and
+`yarn e2e:ci` answers the backend in the browser. Targets that need something the runner does not have skip with
+the reason. The HTML report is uploaded as an artifact, so a failure can be replayed locally with its trace.
 
 ## Before opening a PR
 

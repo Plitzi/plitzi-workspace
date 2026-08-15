@@ -26,7 +26,8 @@ detalle completo está en [`e2e/README.md`](../../e2e/README.md); la versión co
 
 ```bash
 yarn e2e:install               # descarga el navegador, una vez tras clonar
-yarn e2e                       # corre todo — los servidores se levantan solos
+yarn e2e                       # el run completo — contra un plitzi-sdk-server real
+yarn e2e:ci                    # lo que puede hacer una máquina sin nada aprovisionado
 yarn e2e --project=server      # una app, y solo los servidores que necesita
 yarn e2e:ui                    # verlo ocurrir, y retroceder por cada acción
 yarn e2e:report                # abre el último informe
@@ -95,10 +96,10 @@ para responder una pregunta rompe justo lo que ese example existe para demostrar
 
 ## En CI
 
-La suite de navegador corre en cada push (`.github/workflows/ci.yml`), después de lint y sobre la misma caché de
-build. No aprovisiona nada — cada servidor que necesita lo arranca ella — y los targets que necesitarían una base
-de datos, una entrada en /etc/hosts o un certificado están con gate y se saltan indicando cómo habilitarlos. El
-informe HTML se sube como artefacto, así que un fallo se puede reproducir en local con su traza.
+La suite de navegador corre en cada push (`.github/workflows/ci.yml`), **en paralelo con lint** en vez de después
+— ambas necesitan el build, ninguna necesita a la otra. No aprovisiona nada: cada servidor que necesita lo
+arranca ella, y `yarn e2e:ci` responde el backend en el navegador. Los targets que necesitan algo que el runner
+no tiene se saltan indicando qué falta. El informe HTML se sube como artefacto.
 
 ## Antes de abrir un PR
 

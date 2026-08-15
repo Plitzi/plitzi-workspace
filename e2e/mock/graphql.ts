@@ -1,6 +1,6 @@
-import { sampleSpace } from '../spaces';
+import { plainSpace } from '../spaces';
 
-import type { OfflineDataRaw } from '@plitzi/sdk-shared';
+import type { OfflineDataRaw, Style } from '@plitzi/sdk-shared';
 
 /** The backend the builder talks to, answered in the browser.
  *
@@ -17,12 +17,23 @@ import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 type GraphQLBody = { operationName?: string; variables?: Record<string, unknown> };
 
-const space = (): OfflineDataRaw => sampleSpace();
+/** What the mocked backend serves. A whole page from element types the SDK ships — a space needing plugin
+ *  components would render "Component … Not Found" here, since a mock has no deployment behind it to provide
+ *  them. A spec that needs a different one says so: `test.use({ mockSpace: minimalSpace() })`. */
+export const defaultMockSpace = (): OfflineDataRaw => plainSpace();
 
 /** Everything the builder needs to draw a space: what it is called, its elements, its stylesheet. */
 /** Apollo normalises what it stores, and it reports every field the query asked for but the response did not
  *  carry — as a console error, which the suite's guard then fails on. So the mock has to answer with the SHAPE
  *  the schema declares, not merely with data that happens to render: `idRef` and the `__typename`s included. */
+const asList = (value: unknown): Record<string, unknown>[] => {
+  if (Array.isArray(value)) {
+    return value as Record<string, unknown>[];
+  }
+
+  return value && typeof value === 'object' ? Object.values(value as Record<string, Record<string, unknown>>) : [];
+};
+
 const asElement = (id: string, node: Record<string, unknown>) => {
   const definition = (node.definition ?? {}) as Record<string, unknown>;
 
@@ -46,8 +57,11 @@ const asElement = (id: string, node: Record<string, unknown>) => {
   };
 };
 
-const initQuery = () => {
-  const { schema, style } = space();
+const initQuery = (space: OfflineDataRaw) => {
+  const { schema } = space;
+  /** Read as partial on purpose: the type says a space always carries a whole stylesheet, and a space built by
+   *  hand for one spec carries the one rule it is about. The mock has to answer for both. */
+  const style: Partial<Style> = space.style;
   /** A LIST over the wire, keyed only once it reaches the client. The offline shape is a map, so this is where
    *  the two representations of the same space meet — and returning the map is a response Apollo reads as one
    *  element missing every field it asked for. */
@@ -63,20 +77,24 @@ const initQuery = () => {
           settings: schema.settings,
           flat,
           pages: schema.pages,
-          pageFolders: schema.pageFolders,
-          variables: schema.variables,
+          // Lists over the wire, both of them. A space that declares neither still has to answer with an empty
+          // one: an empty OBJECT is read as a single record missing every field the query selected.
+          pageFolders: asList(schema.pageFolders).map(folder => ({ ...folder, __typename: 'SpacePageFolder' })),
+          variables: asList(schema.variables),
           __typename: 'SpaceSchema'
         },
         segments: [],
         // No remote plugins: every element in the sample space is one the SDK ships, and a resource fetched from
         // a CDN is the one thing a run without network cannot have.
         plugins: [],
+        /** Every field the query selects, present even when the space left it out — a space small enough to be
+         *  readable in a spec defines a stylesheet and nothing else. */
         style: {
           id: 'e2e-style',
-          platform: style.platform,
-          variables: style.variables,
-          mode: style.mode,
-          cache: style.cache,
+          platform: style.platform ?? {},
+          variables: style.variables ?? {},
+          mode: style.mode ?? 'desktop-first',
+          cache: style.cache ?? '',
           __typename: 'Style'
         },
         __typename: 'Space'
@@ -91,7 +109,7 @@ const emptyConnection = (typename: string) => ({
   __typename: typename
 });
 
-const handlers: Record<string, (() => unknown) | undefined> = {
+const handlers: Record<string, ((space: OfflineDataRaw) => unknown) | undefined> = {
   InitQuery: initQuery,
   SpaceConnectorsQuery: () => ({ data: { SpaceConnectors: emptyConnection('SpaceConnectorListType') } }),
   SpaceDeploymentsQuery: () => ({
@@ -122,7 +140,7 @@ const handlers: Record<string, (() => unknown) | undefined> = {
  *  spec then asserts is the state the app itself holds, which is where an unsaved edit lives anyway. */
 const acknowledge = (operationName: string) => ({ data: { [operationName.replace(/Mutation$/, '')]: true } });
 
-export const answerGraphQL = (raw: string | null): unknown => {
+export const answerGraphQL = (raw: string | null, space: OfflineDataRaw): unknown => {
   if (!raw) {
     return { data: {} };
   }
@@ -134,7 +152,7 @@ export const answerGraphQL = (raw: string | null): unknown => {
     const name = operation.operationName ?? '';
     const handler = handlers[name];
 
-    return handler ? handler() : acknowledge(name);
+    return handler ? handler(space) : acknowledge(name);
   });
 
   return Array.isArray(body) ? answers : answers[0];

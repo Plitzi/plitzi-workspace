@@ -128,15 +128,16 @@ jobs:
       - name: Yarn Typecheck
         run: yarn typecheck
 
-  # The browser suite. Runs after `lint` because it needs the same two caches: node_modules, and the `dist` the
-  # examples are rendered from — they consume built output, so an e2e run on an unbuilt tree tests nothing.
+  # The browser suite. Needs the build — the examples render built output, so an e2e run on an unbuilt tree tests
+  # nothing — but NOT lint: a formatting complaint says nothing about whether the app works, and waiting for one
+  # only makes the pipeline longer. Runs alongside `lint` instead.
   #
   # Every server it needs is started by Playwright itself (see e2e/targets.ts), so there is nothing to provision
-  # here: no database, no hosts file, no certificates. The builder is included too — in CI it runs against the
-  # mocked backend (see e2e/backend.ts), which is the narrower claim that environment can honestly make.
+  # here: no database, no hosts file, no certificates. `yarn e2e:ci` is what says so — the backend is answered in
+  # the browser, which is the narrower claim this environment can honestly make.
   e2e:
     if: github.event_name == 'push'
-    needs: lint
+    needs: build-packages
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -190,12 +191,10 @@ jobs:
         if: steps.cache-browsers.outputs.cache-hit == 'true'
         run: yarn playwright install-deps chromium
 
-      # The builder is included because CI runs against the mocked backend, which needs nothing provisioned. The
-      # remaining gates — the MySQL example, the no-build vendor bundle — stay off and skip with an explanation.
+      # Every target that can run without provisioning does, the builder included. The rest — the MySQL example —
+      # skips with the reason, because the gate asks whether the thing is there rather than reading a flag.
       - name: Yarn E2E
-        run: yarn e2e
-        env:
-          PLITZI_E2E_BUILDER: '1'
+        run: yarn e2e:ci
 
       # The report carries the trace of every failure: open it and step through the run that broke.
       - name: Upload report
@@ -243,6 +242,7 @@ jobs:
 
   publish:
     if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
+    # Only lint: `e2e` does not run on a release event, and a job that waits on a skipped one never starts.
     needs: lint
     runs-on: ubuntu-latest
     strategy:

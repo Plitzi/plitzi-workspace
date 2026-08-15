@@ -161,30 +161,57 @@ fails because a font rendered half a pixel differently on another machine.
 
 To watch a run live instead of replaying it: `yarn e2e:headed --project=server tests/server/auth`.
 
-## Live backend, or mocked
-
-```
-PLITZI_E2E_BACKEND=live|mock       # default: live everywhere but CI
-```
-
-**live** is the real `plitzi-sdk-server`, and the only mode that proves anything about it: its GraphQL contract,
-its authorization, what it persists. **mock** answers those three boot operations in the browser
-([`mock/graphql.ts`](./mock/graphql.ts), shaped from a recording of the real thing) — for CI, where there is no
-sibling repository, no databases and no certificates.
-
-A mocked run makes a deliberately narrower claim: the app mounts, loads a space and renders it. Anything whose
-subject is the server says `onlyLiveBackend()` and skips rather than passing vacuously.
-
-Running the builder live needs the stack up and credentials:
+## Two ways to run it
 
 ```bash
-cd ../plitzi-sdk-server && yarn start                       # and yarn token 1 --user admin
-PLITZI_E2E_BUILDER=1 PLITZI_WEB_KEY=… PLITZI_USER_KEY=… yarn e2e --project=builder
+yarn e2e        # the full run: a real plitzi-sdk-server on the other end
+yarn e2e:ci     # what a machine with nothing provisioned can still do
+```
+
+`yarn e2e` is the strong one, and the default: a live server is the only thing that proves anything about the
+server — its GraphQL contract, its authorization, what it persists.
+
+`yarn e2e:ci` sets `PLITZI_CI=1` (implied by `CI`, so a pipeline says nothing). The backend is answered in the
+browser instead — [`mock/graphql.ts`](./mock/graphql.ts), shaped from a recording of the real boot, three
+operations. A mocked run makes a deliberately narrower claim: the app mounts, loads a space and renders it.
+Anything whose subject is the server says `onlyLiveBackend()` and skips rather than passing vacuously.
+
+Nothing else is a flag. **A gate asks whether the thing is there** rather than reading a variable, so a target
+runs when it can and says what is missing when it cannot — the vendor bundle on disk, `MYSQL_URL` pointing
+somewhere, a builder token exported.
+
+To drive the builder against a live server:
+
+```bash
+cd ../plitzi-sdk-server && yarn start          # then: yarn token 1 --user admin
+export PLITZI_WEB_KEY=… PLITZI_USER_KEY=…
+yarn e2e --project=builder
 ```
 
 > The suite runs **its own** builder on `127.0.0.1:8080`, over plain HTTP — never the one you are developing in.
 > 8080 rather than the 5xxx band for one reason: a space token is bound to the origins it was minted for, and
 > that is one the platform already trusts.
+
+## Which space a test renders
+
+Pick the smallest one that can still show what the test is about — see [`spaces/`](./spaces).
+
+| Space | What it is for |
+|---|---|
+| `plainSpace()` | **The default.** A whole page from element types the SDK ships, and nothing else |
+| `minimalSpace()` | Two elements and a stylesheet |
+| `authSpace()` | Four pages, guest and member, with bindings onto the session |
+| `sampleSpace()` | The one the examples ship — a parity check with what a reader sees |
+
+Only `sampleSpace()` carries **custom plugins** (its three RSC elements), and only a deployment that provides
+their components renders it whole; anywhere else it draws "Component … Not Found" in their place. So it belongs
+in the specs that are about RSC, and nowhere else.
+
+Under a mocked backend the space is a per-test option:
+
+```ts
+test.use({ mockSpace: minimalSpace({ heading: 'just this' }) });
+```
 
 ## In CI
 
@@ -198,16 +225,16 @@ locally with the trace of what broke.
 
 ## Gates
 
-A gated target needs something this machine may not have, so it skips with the instruction to fix it rather than
-failing the run:
+A gated target needs something this machine may not have. It asks whether that thing is present, so it runs the
+moment you provide it and skips with the instruction otherwise — there is no flag to set:
 
 ```bash
-PLITZI_E2E_VENDOR=1 yarn e2e     # after `yarn workspace @plitzi/plitzi-sdk build-vendor:prod`
-PLITZI_E2E_MYSQL=1 yarn e2e      # with MYSQL_URL pointing somewhere reachable
-PLITZI_E2E_BUILDER=1 yarn e2e    # with app.plitzi.local in /etc/hosts
+yarn workspace @plitzi/plitzi-sdk build-vendor:prod   # unlocks the no-build example
+MYSQL_URL=… yarn e2e                                  # unlocks the MySQL example
+export PLITZI_WEB_KEY=… PLITZI_USER_KEY=…             # unlocks the builder, live
 ```
 
-`PLITZI_E2E_TARGETS=harness yarn e2e` narrows further by hand, for iterating on one surface.
+`PLITZI_TARGETS=harness yarn e2e` narrows further by hand, for iterating on one surface.
 
 ## Adding to it
 

@@ -1,4 +1,5 @@
 import { describeTarget, expect, isMockBackend, test } from '../../fixtures';
+import { PLAIN_IDS, plainSpace } from '../../spaces';
 
 /** The builder, as far as this session takes it: it mounts, it loads a space, and that space is on screen.
  *
@@ -51,14 +52,22 @@ describeTarget('builder', subject => {
 
   /** Against a mock the space is the suite's own, so its copy can be named. Against a live backend it is whatever
    *  that deployment holds, and asserting on the text would be asserting on somebody's content. */
-  test('renders the mocked space, by name', async ({ page }) => {
-    test.skip(!isMockBackend(), 'the live backend serves a space this spec knows nothing about');
+  test.describe('the mocked space', () => {
+    // Named here rather than taken by default, because the point of this spec is the copy it then asserts on.
+    test.use({ mockSpace: plainSpace({ title: 'Edited in a spec' }) });
 
-    await page.goto(subject.origin, { waitUntil: 'domcontentloaded' });
+    test('is the one this spec asked for', async ({ page }) => {
+      test.skip(!isMockBackend(), 'the live backend serves a space this spec knows nothing about');
 
-    // By text, not by role: the builder wraps editable copy in its own element, so the heading a reader sees is
-    // not a heading the accessibility tree reports.
-    await expect(canvas(page).getByText('Welcome To Plitzi')).toBeVisible({ timeout: 60_000 });
-    await expect(canvas(page).getByText('Explore the Plitzi playground')).toBeVisible();
+      await page.goto(subject.origin, { waitUntil: 'domcontentloaded' });
+
+      // By text, not by role: the builder wraps editable copy in its own element, so the heading a reader sees is
+      // not a heading the accessibility tree reports.
+      await expect(canvas(page).getByText('Edited in a spec')).toBeVisible({ timeout: 60_000 });
+      await expect(canvas(page).getByText('Explore the playground')).toBeVisible();
+      // A space with no plugin-backed elements leaves nothing for the builder to report as missing.
+      await expect(canvas(page).getByText('Not Found')).toBeHidden();
+      await expect(canvas(page).locator(`.${PLAIN_IDS.logo}`)).toBeVisible();
+    });
   });
 });

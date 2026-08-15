@@ -10,11 +10,18 @@
  *  A target with a `gate` needs something this machine may not have — a database, an /etc/hosts entry — so it
  *  stays out of the default run instead of failing it. The gate's `hint` is what gets printed when a spec skips. */
 
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+
+import { canRunBuilder } from './backend';
 import { targetsForRun } from './categories';
 
+/** The prebuilt bundle the no-build example loads straight from a script tag. */
+const VENDOR_BUNDLE = path.resolve(import.meta.dirname, '../apps/sdk/dist/plitzi-sdk-vendor.js');
+
 export type TargetGate = {
-  /** Set this to `1` to include the target. */
-  env: string;
+  /** Whether this machine can run the target at all — asked, not declared, so there is no flag to remember. */
+  open: () => boolean;
   /** What the reader has to do first, phrased as an instruction. */
   hint: string;
 };
@@ -66,8 +73,8 @@ export const targets: Target[] = [
     origin: 'http://127.0.0.1:5000',
     what: 'A plain HTML file: no bundler, no build step',
     gate: {
-      env: 'PLITZI_E2E_VENDOR',
-      hint: 'run `yarn workspace @plitzi/plitzi-sdk build-vendor:prod`, then set PLITZI_E2E_VENDOR=1'
+      open: () => existsSync(VENDOR_BUNDLE),
+      hint: 'run `yarn workspace @plitzi/plitzi-sdk build-vendor:prod` — this example loads the built bundle'
     }
   },
   {
@@ -125,7 +132,7 @@ export const targets: Target[] = [
     command: 'PORT=5008 yarn workspace @plitzi/example-with-users-mysql start',
     origin: 'http://127.0.0.1:5008',
     what: 'The same sessions, over a MySQL account store',
-    gate: { env: 'PLITZI_E2E_MYSQL', hint: 'point MYSQL_URL at a reachable database, then set PLITZI_E2E_MYSQL=1' }
+    gate: { open: () => !!process.env.MYSQL_URL, hint: 'point MYSQL_URL at a reachable database' }
   },
   {
     id: 'builder',
@@ -139,9 +146,11 @@ export const targets: Target[] = [
      *  401 on its first call until somebody adds the origin to PLATFORM_ORIGINS. */
     origin: 'http://127.0.0.1:8080',
     what: 'The visual builder — its own instance, never the one you are developing in',
+    /** Mocked it needs nothing, so a CI run always includes it. Live it needs a server and a token, so it runs
+     *  when those are there and says what is missing when they are not — no flag to remember either way. */
     gate: {
-      env: 'PLITZI_E2E_BUILDER',
-      hint: 'set PLITZI_E2E_BUILDER=1 (live mode also needs the stack up and PLITZI_WEB_KEY/PLITZI_USER_KEY from `yarn token`)'
+      open: canRunBuilder,
+      hint: 'use `yarn e2e:ci` for the mocked builder, or export PLITZI_WEB_KEY/PLITZI_USER_KEY from `yarn token 1 --user admin` with the stack up'
     }
   }
 ];
@@ -157,15 +166,15 @@ export const target = (id: string): Target => {
   return found;
 };
 
-/** A gated target is open when its env var is set; an ungated one always is. */
-export const isOpen = (candidate: Target): boolean => !candidate.gate || process.env[candidate.gate.env] === '1';
+/** A gated target is open when whatever it needs is actually there; an ungated one always is. */
+export const isOpen = (candidate: Target): boolean => !candidate.gate || candidate.gate.open();
 
 /** Which targets this run boots.
  *
- *  Normally the categories decide: `--project=rsc` needs one server, so one server starts. `PLITZI_E2E_TARGETS`
+ *  Normally the categories decide: `--project=rsc` needs one server, so one server starts. `PLITZI_TARGETS`
  *  narrows it further by hand, for the times you are iterating on a single surface. */
 const narrowedIds = (): string[] =>
-  process.env.PLITZI_E2E_TARGETS?.split(',')
+  process.env.PLITZI_TARGETS?.split(',')
     .map(id => id.trim())
     .filter(Boolean) ?? [];
 
@@ -179,7 +188,7 @@ export const isSelected = (candidate: Target): boolean => {
 /** Why a target's specs are being skipped, phrased as the thing to do about it. */
 export const skipReason = (candidate: Target): string => {
   if (!isSelected(candidate)) {
-    return `${candidate.id}: not in this run — drop --project / PLITZI_E2E_TARGETS to include it`;
+    return `${candidate.id}: not in this run — drop --project / PLITZI_TARGETS to include it`;
   }
 
   return candidate.gate ? `${candidate.id}: ${candidate.gate.hint}` : '';

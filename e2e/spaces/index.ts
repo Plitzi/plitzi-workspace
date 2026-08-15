@@ -1,17 +1,27 @@
 import { readOfflineData } from '@plitzi/example-space';
 
 import { minimalSpace } from './minimal';
+import { plainSpace } from './plain';
 
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 export * from './minimal';
+export * from './plain';
 
 /** The spaces the suite renders.
  *
- *  Two kinds, and the difference matters. The **sample space** is the one the examples ship, so rendering it here
- *  is a parity check: what a reader following the docs sees is what these specs see. The **built spaces** are the
- *  suite's own — small, hand-written and free to change — for the cases a test wants to isolate one element type,
- *  one binding, one style rule, without touching an artifact that exists to teach somebody. */
+ *  Pick per test — a spec should render the smallest space that can still show what it is about.
+ *
+ *  | Space | What it is for |
+ *  |---|---|
+ *  | `plainSpace()` | **The default.** A whole page — headings, copy, cards, an image — from element types the SDK ships and nothing else |
+ *  | `minimalSpace()` | Two elements and a stylesheet, for when thirty around them would only add thirty possible causes to a failure |
+ *  | `authSpace()` | Four pages, guest and member, with bindings onto the session |
+ *  | `sampleSpace()` | The one the examples ship. A parity check — what a reader following the docs sees |
+ *
+ *  Only `sampleSpace()` carries **custom plugins** (its three RSC elements), and only a deployment that provides
+ *  their components can render it whole. Anywhere else it draws "Component … Not Found" where they should be, so
+ *  it belongs in the specs that are about RSC and nowhere else. */
 
 export const sampleSpace = (): OfflineDataRaw => readOfflineData();
 
@@ -41,4 +51,4 @@ export const SAMPLE_IDS = {
   logo: '655226c2a62ab65a53302504'
 };
 
-export { minimalSpace };
+export { minimalSpace, plainSpace };
