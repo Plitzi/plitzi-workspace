@@ -2,10 +2,14 @@
   "name": "@plitzi/plitzi-workspace",
   "license": "AGPL-3.0",
   "scripts": {
-    "start": "turbo start --parallel --filter='!./examples/**'",
+    "start": "turbo start --parallel --filter='!./examples/**' --filter='!./e2e'",
     "start:debug": "turbo start:debug --parallel --concurrency=20",
     "test": "TURBO_RUN=1 turbo test --parallel",
     "test:coverage": "TURBO_RUN=1 turbo test:coverage --parallel --concurrency=20",
+    "e2e": "playwright test --config e2e/playwright.config.ts",
+    "e2e:ui": "playwright test --config e2e/playwright.config.ts --ui",
+    "e2e:report": "playwright show-report e2e/.artifacts/report",
+    "e2e:install": "playwright install chromium",
     "lint": "turbo lint --parallel",
     "lint-style": "turbo lint-style --parallel",
     "lint-style:fix": "turbo lint-style:fix --parallel --concurrency=20",
@@ -36,6 +40,7 @@
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.0",
+    "@playwright/test": "^1.62.1",
     "@types/react": "^19.2.18",
     "eslint": "^9.39.5",
     "prettier-plugin-tailwindcss": "^0.8.1",
@@ -48,6 +53,7 @@
   "workspaces": [
     "apps/*",
     "packages/*",
+    "e2e",
     "examples/shared-space",
     "examples/*/*"
   ]

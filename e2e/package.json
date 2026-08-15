@@ -1,0 +1,28 @@
+{
+  "name": "@plitzi/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Browser tests for the whole monorepo, and the harness they render schemas in.",
+  "type": "module",
+  "scripts": {
+    "start": "vite",
+    "lint": "TIMING=1 eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@plitzi/example-space": "workspace:*",
+    "@plitzi/plitzi-sdk": "workspace:*",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "eslint": "^9.39.5",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3",
+    "vite": "^8.2.1"
+  }
+}

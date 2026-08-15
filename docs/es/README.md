@@ -9,6 +9,7 @@ Guías para trabajar con el monorepo `plitzi-workspace`.
 | [Configuración local](./local-setup.md) | Servidores dev para contribuidores; hosts/HTTPS local opcional para maintainers |
 | [Estructura del repositorio](./repository-structure.md) | Organización de apps y paquetes |
 | [Desarrollo](./development.md) | Stack, comandos y flujo de contribución |
+| [Pruebas](./testing.md) | Vitest para unidades, Playwright para lo que abre un navegador |
 | [Publicaciones](./releases.md) | Versionado y publicación con Changesets |
 | [Conectores y elementos de contenido](./connectors.md) | Cómo conectar un CMS externo y publicar páginas índice/detalle |
 

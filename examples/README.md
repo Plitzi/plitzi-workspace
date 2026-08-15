@@ -61,6 +61,15 @@ cd examples/02-with-users/01-sessions && yarn start
 Every example takes `PORT` if the default collides. `yarn start` at the repo root does **not** boot the examples —
 it is the package dev loop, and eight extra servers fighting for ports would only get in the way.
 
+## These are checked
+
+Each example has a browser spec asserting what its own README claims — the pages it says it serves, the flows it
+says it supports, the response it says it returns. Run them with `yarn e2e` from the repo root; the servers boot
+themselves. See [`e2e/README.md`](../e2e/README.md).
+
+An example that stops working is a new user blocked at step one, so the suite treats each of these as a promise
+rather than a demo.
+
 ## Where to go next
 
 Read them in order: each category is the previous one plus the next thing a real space needs. The packages

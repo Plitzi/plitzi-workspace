@@ -1,0 +1,23 @@
+{
+  "extends": "../packages/sdk-shared/tsconfig.app.json",
+  "compilerOptions": {
+    "rootDir": "./",
+    "composite": false,
+    "emitDeclarationOnly": false,
+    "noEmit": true,
+    "types": ["node"],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "resolveJsonModule": true
+  },
+  "include": [
+    "targets.ts",
+    "playwright.config.ts",
+    "vite.config.ts",
+    "fixtures",
+    "helpers",
+    "tests",
+    "harness/src"
+  ],
+  "exclude": ["node_modules", ".artifacts"]
+}

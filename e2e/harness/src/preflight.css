@@ -1,0 +1,4 @@
+/* The same reset the examples apply, for the same reason: the SDK ships no global CSS, so clearing the browser's
+   defaults is the host's job and the harness is the host. Layering keeps it below the SDK's own rules — see
+   examples/01-my-first-space/02-render/src/preflight.css for the whole of why. */
+@import 'tailwindcss/preflight.css' layer(base);

@@ -16,3 +16,6 @@ yarn-error.log
 .sdk-plugins
 .mcp.json
 opencode.json
+
+# Playwright run output — screenshots and traces to look at, never baselines to compare against.
+e2e/.artifacts

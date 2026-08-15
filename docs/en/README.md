@@ -9,6 +9,7 @@ Guides for working with the `plitzi-workspace` monorepo.
 | [Local setup](./local-setup.md) | Dev servers for contributors; optional local hosts/HTTPS for maintainers |
 | [Repository structure](./repository-structure.md) | Apps and packages layout |
 | [Development](./development.md) | Stack, commands, and contribution workflow |
+| [Testing](./testing.md) | Vitest for units, Playwright for what a browser opens |
 | [Releases](./releases.md) | Versioning and publishing with Changesets |
 
 ## Package documentation
