@@ -22,57 +22,63 @@ describeTarget('auth-server', subject => {
     await page.getByRole('button', { name: 'Sign in' }).click();
   };
 
-  test('the whole journey: guest, sign in, member pages, bindings, sign out', async ({ page, capture }) => {
-    // 1. A visitor gets the guest page. Both pages live at `/` and the router picks by session — nothing
-    //    conditional is written into either one.
-    await page.goto(subject.origin);
+  /** Written as named steps, so the journey can be WATCHED rather than only asserted: each one is its own entry in
+   *  Playwright's UI timeline and its own numbered PNG under `.artifacts/screenshots/`. A page that passes every
+   *  assertion and still looks wrong is caught by looking, and nowhere else. */
+  test('the whole journey: guest, sign in, member pages, bindings, sign out', async ({ page, step }) => {
+    await step('guest home', async () => {
+      // Both pages live at `/` and the router picks by session — nothing conditional is written into either one.
+      await page.goto(subject.origin);
 
-    await expect(page.getByRole('heading', { name: 'Welcome, guest' })).toBeVisible();
-    await expect(page.getByText('You are not signed in.')).toBeVisible();
-    await capture('1-guest-home');
+      await expect(page.getByRole('heading', { name: 'Welcome, guest' })).toBeVisible();
+      await expect(page.getByText('You are not signed in.')).toBeVisible();
+    });
 
-    // 2. The member-only page does not exist for them: asking for it lands on the sign-in page.
-    await page.goto(`${subject.origin}/account`);
+    await step('member page turns a guest away', async () => {
+      await page.goto(`${subject.origin}/account`);
 
-    await expect(page).toHaveURL(/\/login$/);
-    await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
-    await capture('2-redirected-to-login');
+      await expect(page).toHaveURL(/\/login$/);
+      await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+    });
 
-    // 3. Sign in. The page they are standing on is guests-only, so the session itself is what moves them off it.
-    await signIn(page, editor);
+    await step('sign in', async () => {
+      // The page they are standing on is guests-only, so the session itself is what moves them off it.
+      await signIn(page, editor);
 
-    await expect(page).toHaveURL(new RegExp(`^${subject.origin}/?$`));
+      await expect(page).toHaveURL(new RegExp(`^${subject.origin}/?$`));
+    });
 
-    // 4. The member home, with the heading BOUND to the session rather than told what to say.
-    await expect(page.getByRole('heading', { name: editor.username })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Welcome, guest' })).toBeHidden();
-    await capture('3-member-home');
+    await step('member home, heading bound to the session', async () => {
+      await expect(page.getByRole('heading', { name: editor.username })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Welcome, guest' })).toBeHidden();
+    });
 
-    // 5. Navigate the way a visitor does — a link, not an address bar.
-    await page.getByText('Your account').click();
+    await step('account page, reached by a link', async () => {
+      await page.getByText('Your account').click();
 
-    await expect(page).toHaveURL(/\/account$/);
-    await expect(page.getByRole('heading', { name: 'Your account' })).toBeVisible();
+      await expect(page).toHaveURL(/\/account$/);
+      await expect(page.getByRole('heading', { name: 'Your account' })).toBeVisible();
+      // Two more bindings, onto two different fields of the same identity.
+      await expect(page.getByText(editor.username, { exact: true })).toBeVisible();
+      await expect(page.getByText(editor.email)).toBeVisible();
+    });
 
-    // 6. Two more bindings, onto two different fields of the same identity.
-    await expect(page.getByText(editor.username, { exact: true })).toBeVisible();
-    await expect(page.getByText(editor.email)).toBeVisible();
-    await capture('4-account-bindings');
+    await step('sign out', async () => {
+      // Members-only page: losing the session moves them off it the same way gaining one did — by the page's own
+      // redirect rule, not by anything the button knows.
+      await page.getByRole('button', { name: 'Sign out' }).click();
 
-    // 7. Sign out. The page they are standing on is members-only, so losing the session moves them off it the
-    //    same way gaining one did — by the page's own redirect rule, not by anything the button knows.
-    await page.getByRole('button', { name: 'Sign out' }).click();
+      await expect(page).toHaveURL(/\/login$/);
+      await expect(page.getByText(editor.email)).toBeHidden();
+    });
 
-    await expect(page).toHaveURL(/\/login$/);
-    await expect(page.getByText(editor.email)).toBeHidden();
-    await capture('5-signed-out');
+    await step('everything is somebody else’s again', async () => {
+      await page.goto(subject.origin);
+      await expect(page.getByRole('heading', { name: 'Welcome, guest' })).toBeVisible();
 
-    // 8. And every one of those pages is somebody else's again.
-    await page.goto(subject.origin);
-    await expect(page.getByRole('heading', { name: 'Welcome, guest' })).toBeVisible();
-
-    await page.goto(`${subject.origin}/account`);
-    await expect(page, 'the protected page was still reachable after signing out').toHaveURL(/\/login$/);
+      await page.goto(`${subject.origin}/account`);
+      await expect(page, 'the protected page was still reachable after signing out').toHaveURL(/\/login$/);
+    });
   });
 
   /** The bindings have to be resolved by the time the HTML leaves the server. Painted in afterwards they would

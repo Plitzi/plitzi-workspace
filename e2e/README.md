@@ -119,11 +119,42 @@ A spec that has read its noise and accepts it says so:
 test.use({ allowedConsoleErrors: [/third-party script/] });
 ```
 
-## Screenshots
+## Seeing every step
 
-Every spec captures at least one, to `e2e/.artifacts/screenshots/<category>/<spec>--<name>.png`, and attaches it
-to the report. They are **artifacts to look at, not baselines to compare against** — there are no committed
-snapshots, so nothing fails because a font rendered half a pixel differently on another machine.
+Two things make a run watchable rather than merely green.
+
+**Traces are recorded for passing tests too** (locally — CI keeps only failures). The trace carries the DOM at
+every action, which is what Playwright's UI replays in its right-hand pane. Kept only on failure, a test that
+passed leaves nothing to replay and the pane sits on `about:blank`, which is what an invisible run looks like.
+
+**Named steps leave pictures.** The `step` fixture wraps a piece of a test: it becomes its own entry in the UI
+timeline *and* a numbered PNG on disk.
+
+```ts
+test('the whole journey', async ({ page, step }) => {
+  await step('guest home', async () => {
+    await page.goto(origin);
+    await expect(page.getByRole('heading', { name: 'Welcome, guest' })).toBeVisible();
+  });
+
+  await step('sign in', async () => { … });
+});
+```
+
+```
+.artifacts/screenshots/server/the-whole-journey--01-guest-home.png
+.artifacts/screenshots/server/the-whole-journey--02-member-page-turns-a-guest-away.png
+.artifacts/screenshots/server/the-whole-journey--03-sign-in.png
+…
+```
+
+Numbered in execution order, so the folder reads as the journey. That is the only way to catch a page that
+renders, passes every assertion and still looks wrong — and it needs no UI open.
+
+They are **artifacts to look at, not baselines to compare against**: there are no committed snapshots, so nothing
+fails because a font rendered half a pixel differently on another machine.
+
+To watch a run live instead of replaying it: `yarn e2e:headed --project=server tests/server/auth`.
 
 ## Gates
 

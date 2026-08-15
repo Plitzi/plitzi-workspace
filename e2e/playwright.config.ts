@@ -9,9 +9,9 @@ import type { Target } from './targets';
 
 /** One Playwright for the whole monorepo, run from the root with `yarn e2e`.
  *
- *  It is cut into categories — `sdk`, `ssr`, `rsc`, `preview`, `mcp`, `builder`, `examples`, `combined` — each of
- *  which is a Playwright project, so `yarn e2e --project=rsc` runs one slice and starts only the servers that
- *  slice declares. See `categories.ts`.
+ *  It is cut one category per app — `sdk`, `server`, `mcp`, `builder`, plus `cross` and `examples` — each of which
+ *  is a Playwright project, so `yarn e2e --project=server` runs one app and starts only the servers that app
+ *  declares. Sub-categories are the directories inside. See `categories.ts`.
  *
  *  The config sits beside the specs rather than at the repo root so that config, fixtures and specs are all one
  *  module format; a root config is CJS (the root package has no `type`) and would load `targets.ts` as a second,
@@ -38,8 +38,13 @@ const toWebServer = (target: Target) => ({
 const servers = selectedTargets();
 
 /** Playwright says nothing at all while it starts these, and until they are up it has nothing to show — an empty
- *  test list that looks broken rather than busy. One line, so the wait is legible. */
-console.log(`[e2e] starting ${servers.length} server(s): ${servers.map(server => server.id).join(', ')}`);
+ *  test list that looks broken rather than busy. One line, so the wait is legible.
+ *
+ *  Only from the process that actually starts them: workers re-load this config, and a worker's copy of the list
+ *  is not what is running. */
+if (process.env.TEST_WORKER_INDEX === undefined) {
+  console.log(`[e2e] starting ${servers.length} server(s): ${servers.map(server => server.id).join(', ')}`);
+}
 
 export default defineConfig({
   // No top-level `testDir`: every project declares its own, and a parent that also claims the whole tree makes
@@ -53,7 +58,11 @@ export default defineConfig({
     ? [['github'], ['html', { outputFolder: `${artifacts}/report`, open: 'never' }]]
     : [['list'], ['html', { outputFolder: `${artifacts}/report`, open: 'never' }]],
   use: {
-    trace: 'retain-on-failure',
+    /** The DOM the UI replays in its right-hand pane comes from the trace, and a trace kept only on failure means
+     *  a test that PASSED has nothing to show — the pane sits on `about:blank` and the run looks invisible.
+     *  Locally that is the whole point of watching, so record always; CI has no one watching and keeps the ones
+     *  that failed. */
+    trace: isCI ? 'retain-on-failure' : 'on',
     screenshot: 'only-on-failure',
     video: 'off',
     // The builder serves itself over a locally-minted certificate; nothing here is a real trust decision.

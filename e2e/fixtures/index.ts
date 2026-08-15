@@ -3,8 +3,10 @@ import { test as base } from '@playwright/test';
 import { isOpen, isSelected, skipReason, target } from '../targets';
 import { createCapture } from './capture';
 import { assertNoPageErrors, watchForPageErrors } from './consoleGuard';
+import { createStep } from './step';
 
 import type { Capture } from './capture';
+import type { Step } from './step';
 import type { Target } from '../targets';
 
 export type PlitziFixtures = {
@@ -15,6 +17,9 @@ export type PlitziFixtures = {
   pageErrorGuard: string[];
   /** Writes a PNG to a predictable path and attaches it to the report. */
   capture: Capture;
+  /** A named step that captures the page when it finishes — one entry in the UI timeline, one numbered PNG on
+   *  disk. Use it for anything a person would want to LOOK at, not just assert on. */
+  step: Step;
 };
 
 export const test = base.extend<PlitziFixtures>({
@@ -33,6 +38,10 @@ export const test = base.extend<PlitziFixtures>({
 
   capture: async ({ page }, use, testInfo) => {
     await use(await createCapture(page, testInfo));
+  },
+
+  step: async ({ capture }, use) => {
+    await use(createStep(capture));
   }
 });
 
