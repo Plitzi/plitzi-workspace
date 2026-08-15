@@ -241,9 +241,9 @@ export type SSRAdapters = {
   /** Which space, environment and revision a request resolves to. Optional here for the same reason as
    *  `getOfflineData`: MCP resolves its space from the request token (`getGrant`), never from the host. */
   getSpaceDeployment?: (req: SSRRequest) => Promise<SSRSpaceDeployment>;
-  /** Persist a space mutated by the mcp-ai `apply` tool. Implementations must recompute derived caches
-   *  (notably `style.cache`) before storing. When omitted, mcp-ai runs read/preview/validate only and
-   *  `apply` reports `persisted: false`. */
+  /** Persist a space mutated by the mcp-ai `apply` tool — store it as given; derived caches (notably `style.cache`)
+   *  arrive already compiled. When omitted, mcp-ai runs read/preview/validate only and `apply` reports
+   *  `persisted: false`. */
   saveOfflineData?: (spaceId: number, environment: string, data: OfflineDataRaw) => Promise<void>;
   /** Resolve the grant the MCP request operates under, from the verified `Authorization` bearer. The consumer
    *  owns the JWT secret and the authorization model, so it decides here; the MCP service stays stateless.
@@ -272,8 +272,10 @@ export type SSRAdapters = {
   deleteConnector?: (spaceId: number, connectorId: string) => Promise<void>;
   /** Persist the element schema mutated by the MCP `apply` tool. When omitted, `apply` reports `persisted: false`. */
   saveSchema?: (spaceId: number, environment: Environment, schema: Schema) => Promise<void>;
-  /** Persist the style document mutated by the MCP `apply` tool. Implementations must recompute `style.cache`
-   *  before storing. When omitted, `apply` reports `persisted: false`. */
+  /** Persist the style document mutated by the MCP `apply` tool — store it as given. `style.cache` arrives already
+   *  compiled: the renderer serves that string and nothing else, so recomputing it is not a detail to delegate, and
+   *  asking every deployment to remember it was one bug each of them could write alone. When omitted, `apply`
+   *  reports `persisted: false`. */
   saveStyle?: (spaceId: number, environment: Environment, style: Style) => Promise<void>;
   /** Who this request carries, if anyone. The adapter reads the credential and resolves it; the cookie it arrived
    *  in was written by the server, from {@link SSRAuthCookie}. */
@@ -392,14 +394,24 @@ export interface SSRRscContext {
 export type SSRActionConfig = {
   /** URL path for the write endpoint. Defaults to '/_action'. */
   path?: string;
-  /** Connector manifest and credential lookups. Without them the endpoint stays inert: a write can only be
-   *  authorized against a manifest, and there is nothing to authorize against. Shaped as `ConnectorLookups`
-   *  in `@plitzi/sdk-server`; typed loosely here so the shared types stay free of the server's internals. */
-  lookups?: {
-    getConnector: (spaceId: number, connectorId: string) => Promise<unknown>;
-    getCredential?: (spaceId: number, identifier: string) => Promise<Record<string, string> | undefined>;
-    fetchImpl?: typeof fetch;
-  };
+};
+
+/**
+ * How the server reaches a space's connectors: the manifest that describes one, and the credential it authenticates
+ * with. Shaped as `ConnectorLookups` in `@plitzi/sdk-server`; typed loosely here so the shared types stay free of the
+ * server's internals.
+ *
+ * Top-level, and not under `action`, because BOTH directions need them. Supplying them is what makes the write
+ * endpoint able to authorize a write — a write can only be checked against a manifest — and it is also all the server
+ * needs to answer a server-driven element's READ, so `adapters.getRscData` is derived from them unless a deployment
+ * supplies its own. They lived under `action` when writes were the only caller, which left every deployment building
+ * that read half by hand out of `createConnectorResolver` and `resolveRscData` — from these very lookups, passed a
+ * second time.
+ */
+export type ConnectorLookupsConfig = {
+  getConnector: (spaceId: number, connectorId: string) => Promise<unknown>;
+  getCredential?: (spaceId: number, identifier: string) => Promise<Record<string, string> | undefined>;
+  fetchImpl?: typeof fetch;
 };
 
 export type SSRHealthConfig = {
@@ -552,6 +564,9 @@ export type SSRServerConfig = {
   rsc?: SSRRscConfig;
   /** Write endpoint for server-driven providers. Absent means the server serves reads only. */
   action?: SSRActionConfig;
+  /** Connector manifest and credential lookups — see {@link ConnectorLookupsConfig}. They serve the RSC read path
+   *  and the `/_action` write endpoint alike; without them neither can reach a connector. */
+  connectors?: ConnectorLookupsConfig;
   /** Receives a {@link ServerLogEvent} for every HTTP request this server answers — whatever stage answered it
    *  and whatever the outcome — plus every MCP tool call and resource read inside those requests. Without it the
    *  server reports nothing per request (the MCP events still reach the console when `MCP_DEBUG=1`). */

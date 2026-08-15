@@ -123,6 +123,63 @@ export const createAuth = (config: AuthConfig) => {
     fallback: config.fallback ?? 'actor'
   };
 
+  /**
+   * Identity as a page server sees it, kept apart from the sign-in flows so a deployment can take one without the
+   * other — see the `ssrIdentityAdapters` note below.
+   *
+   * `exchangeCredential` is omitted entirely when no exchange adapter was supplied. A key that is present but inert
+   * would make the page server advertise `sessionExchangeUrl` for a flow that answers 404 — and a browser-side
+   * identity provider handing its credential to an endpoint that is not there fails as a hydration mismatch, which
+   * is nowhere near where the mistake was made.
+   */
+  const ssrIdentityAdapters = {
+    getUser: async (req: CredentialCarrier): Promise<SSRUser | undefined> => {
+      const resolved = await identity.resolveActor(req);
+      if (!resolved.ok) {
+        return undefined;
+      }
+
+      const { id, username, email, verified, permissions, roles, token, expiresAt } = resolved.actor;
+
+      return { id, username, email, verified, permissions, roles, token, expiresAt };
+    },
+
+    ...(api.capabilities.exchange
+      ? {
+          exchangeCredential: async (
+            provider: string,
+            token: string,
+            req: CredentialCarrier
+          ): Promise<
+            | { ok: true; session: SSRSession; user?: SSRUser }
+            | { ok: false; error: string; status?: number; reason?: string }
+          > => {
+            const result = await api.exchangeAccount(provider, token, req);
+            if (!result.ok) {
+              return { ok: false, error: result.error, status: result.status, reason: result.reason };
+            }
+
+            const { account, access, session } = result;
+
+            return {
+              ok: true,
+              session,
+              user: {
+                token: session.token,
+                expiresAt: session.expiresAt,
+                id: account.id,
+                username: account.username,
+                email: account.email,
+                verified: account.verified,
+                roles: access.roles,
+                permissions: access.permissions
+              }
+            };
+          }
+        }
+      : {})
+  };
+
   return {
     tokens,
     identity,
@@ -153,9 +210,23 @@ export const createAuth = (config: AuthConfig) => {
     can: identity.can,
 
     /**
-     * The three adapters a page server asks for, already answered. Spread these into `createServer`'s `adapters`
+     * WHO a page request carries, and nothing about signing anyone in or out.
+     *
+     * This is the set a deployment wants when its renderer and its sign-in live in different processes — a page
+     * server that must know who is looking at it, while the `/auth` flows are served by an API tier next to it.
+     * That shape had no name, so a deployment expressed it by reaching into `ssrAdapters` and lifting two keys out
+     * by hand: correct until a third identity adapter appears, which it then silently does not get.
+     *
+     * `exchangeCredential` belongs here rather than with the flows: turning a credential a browser already holds
+     * into a session is a question about identity, and it is the one the page server itself answers.
+     */
+    ssrIdentityAdapters,
+
+    /**
+     * Every adapter a page server asks for, already answered. Spread these into `createServer`'s `adapters`
      * and a rendered page knows who is looking at it, `POST /auth/login` signs them in, `POST /auth/logout` signs
-     * them out, and the cookies are written and cleared by the same code that reads them back.
+     * them out, and the cookies are written and cleared by the same code that reads them back. A renderer that
+     * serves no login of its own wants {@link ssrIdentityAdapters} instead.
      *
      * They exist because the page server speaks in sessions and users while the flows above answer in outcomes,
      * and translating between the two is a step with exactly one right answer — which makes it the server's, not
@@ -168,61 +239,10 @@ export const createAuth = (config: AuthConfig) => {
         return outcome.ok ? outcome.session : undefined;
       },
 
-      getUser: async (req: CredentialCarrier): Promise<SSRUser | undefined> => {
-        const resolved = await identity.resolveActor(req);
-        if (!resolved.ok) {
-          return undefined;
-        }
-
-        const { id, username, email, verified, permissions, roles, token, expiresAt } = resolved.actor;
-
-        return { id, username, email, verified, permissions, roles, token, expiresAt };
-      },
-
       endSession: async (req: CredentialCarrier): Promise<void> => {
         await api.logout({ accessToken: cookies.resolveSessionToken(req) });
       },
-
-      /**
-       * Omitted entirely when no `exchangeCredential` adapter was supplied. A key that is present but inert would
-       * make the page server advertise `sessionExchangeUrl` for a flow that answers 404 — and a browser-side
-       * identity provider handing its credential to an endpoint that is not there fails as a hydration mismatch,
-       * which is nowhere near where the mistake was made.
-       */
-      ...(api.capabilities.exchange
-        ? {
-            exchangeCredential: async (
-              provider: string,
-              token: string,
-              req: CredentialCarrier
-            ): Promise<
-              | { ok: true; session: SSRSession; user?: SSRUser }
-              | { ok: false; error: string; status?: number; reason?: string }
-            > => {
-              const result = await api.exchangeAccount(provider, token, req);
-              if (!result.ok) {
-                return { ok: false, error: result.error, status: result.status, reason: result.reason };
-              }
-
-              const { account, access, session } = result;
-
-              return {
-                ok: true,
-                session,
-                user: {
-                  token: session.token,
-                  expiresAt: session.expiresAt,
-                  id: account.id,
-                  username: account.username,
-                  email: account.email,
-                  verified: account.verified,
-                  roles: access.roles,
-                  permissions: access.permissions
-                }
-              };
-            }
-          }
-        : {})
+      ...ssrIdentityAdapters
     }
   };
 };

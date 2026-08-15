@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { validateSchema } from '@plitzi/sdk-schema/helpers/schemaValidator';
+import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
 import { applyOperations } from './dispatch';
 import { changedResources, conflictMessage, detectConflicts, resolvedElements } from './writeResult';
@@ -148,6 +149,12 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
 
   if (outcome.changedStyle) {
     if (persisters?.style) {
+      // Compiled here, not left to the persister. The renderer serves `style.cache` and nothing else, so a document
+      // stored without recompiling it is a page that keeps showing the old CSS — and the adapter contract asking
+      // every deployment to remember `generateCache` made that a bug each of them could write independently, in
+      // the one place where getting it wrong looks like the edit never happened. `plitzi_render` already compiled
+      // it on its own path; this is the same line on the path that persists.
+      draft.style.cache = generateCache(draft.style);
       await persisters.style(draft.style);
     } else {
       persisted = false;

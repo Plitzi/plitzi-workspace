@@ -1,7 +1,9 @@
+import { connectorRscData } from '../modules/rsc/connectorRscData';
 import { createAuthApiStage } from './http/stages/authApi';
 import { createPageServer } from './server/pageServer';
 import { resolveServices } from './services/resolve';
 
+import type { ConnectorLookups } from '../modules/connectors/resolver';
 import type { Auth } from './auth/createAuth';
 import type { PipelineExtensions } from './http/types';
 import type { SSRPageAdapters, SSRPageServerConfig, SSRServer, SSRServerConfig } from '@plitzi/sdk-shared';
@@ -33,9 +35,29 @@ export type ServerConfig = Omit<SSRServerConfig, 'adapters'> & {
  *
  *  A dedicated MCP server is `createServer` from `@plitzi/sdk-mcp` — it builds none of the render template,
  *  caches or plugin manager this one does. */
+/**
+ * Fills in `getRscData` from `connectors` when the deployment did not write one.
+ *
+ * The lookups are already here and the assembly is entirely this package's — `createConnectorResolver` over
+ * `resolveRscData`. Leaving it out meant every deployment passed the same lookups twice: once as config, for the
+ * write endpoint, and once folded by hand into an adapter, for the read.
+ */
+const withConnectorRsc = <T extends { adapters: SSRPageAdapters; connectors?: unknown }>(config: T): T => {
+  if (config.adapters.getRscData || !config.connectors) {
+    return config;
+  }
+
+  return {
+    ...config,
+    adapters: { ...config.adapters, getRscData: connectorRscData(config.connectors as ConnectorLookups) }
+  };
+};
+
 export const createServer = ({ auth, ...config }: ServerConfig, extensions?: PipelineExtensions): SSRServer => {
   if (!auth) {
-    return createPageServer(config, resolveServices(config), extensions);
+    const resolvedConfig = withConnectorRsc(config);
+
+    return createPageServer(resolvedConfig, resolveServices(resolvedConfig), extensions);
   }
 
   // Only what the deployment actually supplied overrides auth's answers. A plain spread would let a `getUser: undefined`
@@ -52,14 +74,14 @@ export const createServer = ({ auth, ...config }: ServerConfig, extensions?: Pip
   // successful sign-in is a bodyless 200 — they hold a session, not the account behind it. Left standing they
   // shadow the flows below, so a client that signed in correctly got nothing back to prove it. A deployment that
   // named its own paths keeps them: it asked for those endpoints, and they are then somewhere else entirely.
-  const resolved: SSRPageServerConfig = {
+  const resolved: SSRPageServerConfig = withConnectorRsc({
     loginPath: false,
     logoutPath: false,
     exchangePath: false,
     ...config,
     authCookie: config.authCookie ?? auth.cookieConfig,
     adapters: { ...auth.ssrAdapters, ...supplied }
-  };
+  });
 
   // `preAuth`, because these gate themselves: each flow already states what a caller must present, and half of
   // them are what a signed-out visitor uses to sign in.

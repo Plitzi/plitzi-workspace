@@ -14,7 +14,7 @@ import type { SSRContext, Stage } from '../http/types';
 export const actionStage: Stage<SSRContext> = async ctx => {
   const { config, req } = ctx;
   const actionPath = config.action?.path ?? '/_action';
-  if (!config.action?.lookups || req.method !== 'POST' || req.path !== actionPath) {
+  if (!config.connectors || req.method !== 'POST' || req.path !== actionPath) {
     return false;
   }
 
@@ -22,7 +22,7 @@ export const actionStage: Stage<SSRContext> = async ctx => {
   req.body = await readRawBody(ctx.raw);
   // The shared config types the lookups structurally (they return `unknown`) so sdk-shared stays free of the
   // connector internals; the manifest shape is this package's contract, and this is the single seam between them.
-  await handleAction(req, ctx.res, config, config.action.lookups as ConnectorLookups);
+  await handleAction(req, ctx.res, config, config.connectors as ConnectorLookups);
 
   return true;
 };
