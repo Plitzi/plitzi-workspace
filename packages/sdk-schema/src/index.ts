@@ -3,6 +3,7 @@ import SchemaReducer from './SchemaReducer';
 
 export * from './SchemaReducer';
 export * from './helpers/FlatMap';
+export * from './helpers/authoring';
 export * from './helpers/schemaValidator';
 
 export { FlatMap, SchemaReducer };
