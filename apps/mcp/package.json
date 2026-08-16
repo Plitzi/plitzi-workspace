@@ -65,6 +65,7 @@
     "start:dev": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx --watch dev/main.ts",
     "start:inspect": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx --inspect dev/main.ts",
     "inspector": "yarn dlx @modelcontextprotocol/inspector@latest",
+    "inspector:legacy": "yarn dlx @modelcontextprotocol/inspector@1.0.1",
     "build:dev": "vite build --mode development",
     "build:prod": "vite build",
     "lint": "TIMING=1 eslint ./src ./dev",
