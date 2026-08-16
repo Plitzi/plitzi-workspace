@@ -1,3 +1,4 @@
+import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { get } from '@plitzi/plitzi-ui/helpers';
@@ -183,7 +184,9 @@ const BuilderArea = ({
                 >
                   <SpaceContainer>
                     <PlitziServiceProvider value={plitziContextValue}>
-                      <Plugin key={baseElementId} internalProps={baseElementValueMemo} />
+                      <HelmetProvider>
+                        <Plugin key={baseElementId} internalProps={baseElementValueMemo} />
+                      </HelmetProvider>
                     </PlitziServiceProvider>
                   </SpaceContainer>
 
