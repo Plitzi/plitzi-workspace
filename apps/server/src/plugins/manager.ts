@@ -108,6 +108,27 @@ export class PluginManager {
     };
   }
 
+  /**
+   * A plugin served from where it was published, with nothing on this server's disk.
+   *
+   * No `filePath`, which is the whole point: `loadPluginComponents` only imports entries that have one, so a
+   * bundle this server did not build never enters the render process — and cannot bring a second copy of React
+   * in with it. The template already imports `js` in the browser, so the plugin still renders, just on the
+   * client.
+   */
+  private toRemoteEntry(name: string, source: PluginSource): PluginEntry {
+    const keyName = name.split('@')[0];
+
+    return {
+      name,
+      varName: keyName.split('-').join('_').split('.').join('_'),
+      keyName,
+      js: source.js,
+      css: source.css,
+      props: source.props ?? {}
+    };
+  }
+
   private isWebUrl(s: string): boolean {
     return s.startsWith('/') || s.startsWith('http://') || s.startsWith('https://');
   }
@@ -131,6 +152,12 @@ export class PluginManager {
 
     if (isComponentSource(source) && !source.js) {
       return this.toEntry(key, false, undefined, source.props);
+    }
+
+    // Before every cache and disk check below, because a CDN plugin has no build: there is nothing to write, to
+    // expire, or to find missing on disk.
+    if (!isComponentSource(source) && source.action === 'cdn') {
+      return this.toRemoteEntry(key, source);
     }
 
     const cached = this.mem.get(key);

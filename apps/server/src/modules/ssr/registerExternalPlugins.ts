@@ -126,10 +126,14 @@ const registerPlugin = async (pluginManager: PluginManager, plugin: PluginRaw): 
     return null;
   }
 
+  // Served from where the plugin was published rather than downloaded and imported here. A space's external
+  // plugins are third-party bundles on immutable, versioned URLs: fetching one only to import it into the render
+  // process buys server-rendered markup at the price of running that bundle's own React inside the renderer,
+  // which is an invalid hook call and a 500 for the whole page instead of a blank component.
   const source: PluginSourceFile = {
     js: jsUrl,
     css: findAsset(manifest, 'style', plugin.resource),
-    action: 'download',
+    action: 'cdn',
     version: manifest.version
   };
 

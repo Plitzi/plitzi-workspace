@@ -2,6 +2,7 @@ import { hasServerElements } from '@plitzi/sdk-shared/schema/serverElements';
 
 import { loadPluginComponents } from './loadPluginComponents';
 import { registerExternalPlugins } from './registerExternalPlugins';
+import { resolvePageSeo } from './resolvePageSeo';
 import { sdkAssetVersion } from '../../core/sdkAssets';
 import { resolveRscEndpoint } from '../../core/services/resolve';
 import { buildServerInfo } from '../../helpers/buildServerInfo';
@@ -24,6 +25,9 @@ import type {
   SSRRequest,
   SSRTemplateProps
 } from '@plitzi/sdk-shared';
+
+/** Last resort only: used for a page that declares no SEO title and a deployment that supplies none either. */
+const DEFAULT_TITLE = 'Plitzi App';
 
 export type RenderPrep = {
   componentProps: ComponentProps;
@@ -73,14 +77,14 @@ export const prepareRender = async (
   // the read itself would have returned, and the client treats a missing payload as one still to fetch.
   const rscPath = resolveRscEndpoint(config);
   const schema = offlineData?.schema;
+  // Which page this URL addresses is now needed whatever the RSC settings say — the document's own title and
+  // description come from it — so the match runs first and the RSC gates below read its answer.
+  const pageMatch = schema !== undefined ? matchRscPage(schema, req.path, req.ctx.user) : undefined;
   // Only the explicit `false` is treated as an opt-out here. Whether an ABSENT flag means on or off is the adapter's
   // to decide and the two shipped ones disagree — `resolveRscData` reads it as on, `connectorRscData` as off — so
   // this gate skips on the one answer both of them agree about.
-  const pageMatch =
-    rscPath !== undefined && schema !== undefined && schema.rsc?.enabled !== false
-      ? matchRscPage(schema, req.path, req.ctx.user)
-      : undefined;
-  const hasTargets = schema !== undefined && pageMatch !== undefined && hasServerElements(schema, pageMatch.pageId);
+  const rscEnabled = rscPath !== undefined && schema !== undefined && schema.rsc?.enabled !== false;
+  const hasTargets = rscEnabled && pageMatch !== undefined && hasServerElements(schema, pageMatch.pageId);
   // Timed around the adapter alone, and from after the schema is in hand. An RSC read opens by joining that read —
   // the whole point of sharing the loader — and those milliseconds are already billed to `schema`; timing from the
   // call would report one read under two names and make a page that resolved nothing look like it cost a pass.
@@ -99,6 +103,8 @@ export const prepareRender = async (
       : rscPath
         ? { serverData: {} }
         : undefined;
+
+  const pageSeo = resolvePageSeo(schema, pageMatch?.pageId);
 
   const server = buildServerInfo(req, config, { rscPath, rscData });
 
@@ -162,7 +168,11 @@ export const prepareRender = async (
 
   const pluginComponents = await m('plugins', () => loadPluginComponents(entries, pluginManager.getComponents()));
 
-  const templatePlugins = entries.length > 0 ? entries : req.ctx.spaceDeployment?.templateProps?.plugins;
+  const templateEntries = entries.length > 0 ? entries : req.ctx.spaceDeployment?.templateProps?.plugins;
+  // `pluginComponents` is the exact set this render had a component for, so it is the only honest answer to
+  // "was this plugin in the HTML" — it accounts for the ones served from a CDN and for the ones whose import
+  // failed, without either of them having to declare it.
+  const templatePlugins = templateEntries?.map(entry => ({ ...entry, ssr: entry.keyName in pluginComponents }));
   const vendorJs = (config.devMode ? '/sdk-assets/plitzi-sdk-dev-vendor.js' : '/sdk-assets/plitzi-sdk-vendor.js') + v;
 
   return {
@@ -177,7 +187,7 @@ export const prepareRender = async (
     },
     entries,
     templateParams: {
-      title: 'Plitzi App',
+      title: DEFAULT_TITLE,
       jsPath: `/sdk-assets/plitzi-sdk.js${v}`,
       cssPath: `/sdk-assets/plitzi-sdk.css${v}`,
       react: vendorJs,
@@ -186,6 +196,10 @@ export const prepareRender = async (
       reactDomClient: vendorJs,
       reactCompilerRuntime: vendorJs,
       ...req.ctx.spaceDeployment?.templateProps,
+      // Applied last on purpose: the page speaks for itself. A deployment's `templateProps` is a space-wide
+      // default and stays in charge of pages that declare nothing, which is what makes this safe to turn on for
+      // deployments that already set a title of their own.
+      ...pageSeo,
       plugins: templatePlugins,
       debugMode,
       ssrOnly: config.ssrOnly === true,

@@ -56,7 +56,18 @@ export type SSRCredential = {
   data: unknown;
 };
 
-export type PluginAction = 'copy' | 'compile' | 'download';
+/**
+ * How a plugin's build reaches the page.
+ *
+ * `copy`, `compile` and `download` all end with a file on this server's disk, which is also what lets the SSR
+ * render import the component and put its output in the HTML. `cdn` deliberately does not: the published URL is
+ * handed straight to the browser and the plugin renders on the client only.
+ *
+ * That trade is worth taking for a plugin this server did not build. Importing a third-party bundle into the
+ * render process means the bundle's own copy of React runs inside the renderer, and two copies of React is an
+ * invalid hook call — a crash that takes the whole page down rather than the one component.
+ */
+export type PluginAction = 'copy' | 'compile' | 'download' | 'cdn';
 
 export type PluginSourceFile<T = Record<string, unknown>> = {
   js: string;
@@ -88,10 +99,20 @@ export type PluginEntry = {
   filePath?: string;
   css?: string;
   props: Record<string, unknown>;
+  /**
+   * Whether the SSR render actually included this plugin's own output.
+   *
+   * False for a plugin served straight from its CDN, and for one whose server-side import failed. Either way the
+   * client must not render it on the hydration pass: the markup would not be in the document React is hydrating
+   * against, and the mismatch throws away the whole tree it happens in.
+   */
+  ssr?: boolean;
 };
 
 export type SSRTemplateProps = {
   title?: string;
+  /** Meta description for the document, and the share-preview text derived from it. */
+  description?: string;
   jsPath?: string;
   cssPath?: string;
   builderJsPath?: string;

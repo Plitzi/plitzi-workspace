@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 
 // This one it is important due that there its a circular import, so we need to import ComponentProvider in a specific order
@@ -86,14 +86,23 @@ const withDerivedAnalytics = (params: PlitziSdkProps): PlitziSdkProps => {
 export function render(
   widgetContainer: string,
   params = {} as PlitziSdkProps,
-  plugins: Record<string, { component: ComponentPlugin; props?: Record<string, unknown> }> = {},
+  plugins: Record<
+    string,
+    { component: ComponentPlugin; props?: Record<string, unknown>; clientOnly?: boolean }
+  > = {},
   debugMode = false,
   ssrMode = false
 ) {
   const renderParams = withDerivedAnalytics(params);
 
   const Widget = ({ isHydrating = false }: { isHydrating?: boolean }) => {
-    const pluginKeys = Object.keys(plugins);
+    // A plugin the server did not render has no markup in the document being hydrated, so mounting it on the first
+    // pass is a mismatch — and React answers a mismatch by discarding the whole tree it happened in, not just the
+    // offending node. Holding it back for one commit costs a frame and keeps the rest of the page hydrated.
+    const [hydrated, setHydrated] = useState(!isHydrating);
+    useEffect(() => setHydrated(true), []);
+
+    const pluginKeys = Object.keys(plugins).filter(key => hydrated || !plugins[key].clientOnly);
     if (process.env.NODE_ENV === 'production' && !debugMode) {
       disableReactDevTools();
     }

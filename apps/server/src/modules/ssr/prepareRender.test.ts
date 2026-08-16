@@ -12,9 +12,9 @@ const element = (id: string, items: string[] = [], runtime?: 'server' | 'client'
   definition: { type: id, label: id, rootId: 'root', items, styleSelectors: { base: '' }, runtime }
 });
 
-const page = (id: string, slug: string, items: string[]): Element => ({
+const page = (id: string, slug: string, items: string[], seo: Record<string, unknown> = {}): Element => ({
   id,
-  attributes: { slug, folder: '', default: false },
+  attributes: { slug, folder: '', default: false, ...seo },
   definition: { type: 'page', label: id, rootId: 'root', items, styleSelectors: { base: '' } }
 });
 
@@ -30,7 +30,11 @@ const offlineData = (
   ({
     schema: {
       flat: {
-        home: page('home', '', ['homeText']),
+        home: page('home', '', ['homeText'], {
+          seoEnabled: true,
+          seoPageTitle: 'Home — test space',
+          seoPageDescription: 'What the home page says about itself.'
+        }),
         homeText: element('homeText', [], homeRuntime),
         blog: page('blog', 'blog/{{slug}}', ['blogApi']),
         blogApi: element('blogApi', [], 'server'),
@@ -93,7 +97,7 @@ const render = async (
     }
   } as unknown as SSRPageServerConfig;
 
-  const { componentProps } = await prepareRender(
+  const { componentProps, templateParams } = await prepareRender(
     request(path),
     config,
     42,
@@ -104,7 +108,13 @@ const render = async (
     metrics
   );
 
-  return { getRscData, getOfflineData, ssr: componentProps.server.ssr, timing: metrics.toServerTimingHeader() };
+  return {
+    getRscData,
+    getOfflineData,
+    templateParams,
+    ssr: componentProps.server.ssr,
+    timing: metrics.toServerTimingHeader()
+  };
 };
 
 describe('prepareRender / the RSC gate', () => {
@@ -183,5 +193,33 @@ describe('prepareRender / the RSC gate', () => {
     // And when it does happen it is timed apart from the read it joins, not on top of it.
     const resolved = await render('/blog/hello');
     expect(resolved.timing).toContain('rsc;dur=');
+  });
+});
+
+describe('prepareRender / the document the crawler reads', () => {
+  it('titles the document with what the addressed page declares', async () => {
+    const { templateParams } = await render('/');
+
+    expect(templateParams.title).toBe('Home — test space');
+    expect(templateParams.description).toBe('What the home page says about itself.');
+  });
+
+  it('falls back for a page that declares nothing, rather than titling it after another page', async () => {
+    const { templateParams } = await render('/about');
+
+    expect(templateParams.title).toBe('Plitzi App');
+    expect(templateParams.description).toBeUndefined();
+  });
+
+  it('resolves the page even when RSC is off, since the title does not depend on it', async () => {
+    const { templateParams } = await render('/', { rsc: { enabled: false } });
+
+    expect(templateParams.title).toBe('Home — test space');
+  });
+
+  it('leaves a URL that matches no page on the fallback', async () => {
+    const { templateParams } = await render('/nowhere');
+
+    expect(templateParams.title).toBe('Plitzi App');
   });
 });

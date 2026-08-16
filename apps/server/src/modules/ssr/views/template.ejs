@@ -3,6 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <title><%= locals.title || '' %></title>
+    <% if (locals.description) { %>
+    <meta name="description" content="<%= locals.description %>" />
+    <% } %>
+    <meta property="og:type" content="website" />
+    <% if (locals.title) { %>
+    <meta property="og:title" content="<%= locals.title %>" />
+    <meta name="twitter:title" content="<%= locals.title %>" />
+    <% } %>
+    <% if (locals.description) { %>
+    <meta property="og:description" content="<%= locals.description %>" />
+    <meta name="twitter:description" content="<%= locals.description %>" />
+    <% } %>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="shortcut icon" href="https://cdn.plitzi.com/resources/img/favicon.svg" />
 
@@ -63,7 +75,7 @@
       <% for (const plugin of activePlugins) { %>
       import { default as <%= plugin.varName %> } from '<%= plugin.js %>';
       <% } %>
-      const __plitziPlugins = { <%- activePlugins.map(p => `'${p.keyName}': {component: ${p.varName}, props: ${JSON.stringify(p.props)}}`).join(', ') %> };
+      const __plitziPlugins = { <%- activePlugins.map(p => `'${p.keyName}': {component: ${p.varName}, props: ${JSON.stringify(p.props)}, clientOnly: ${p.ssr === false}}`).join(', ') %> };
       render('plitzi', <%- locals.offlineData || '{}' %>, __plitziPlugins, <%= locals.debugMode ? true : false %>, true);
       <% } else { %>
       render('plitzi', <%- locals.offlineData || '{}' %>, {}, <%= locals.debugMode ? true : false %>, true);
