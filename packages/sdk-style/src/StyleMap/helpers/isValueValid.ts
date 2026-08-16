@@ -112,7 +112,11 @@ const isValidValue = (
       return false;
     }
 
-    return isStyleObject(value as StyleObject) || isStyleBlock(value as StyleBlock);
+    return (
+      isStyleObject(value as StyleObject) ||
+      isStyleBlock(value as StyleBlock) ||
+      isStyleBlock((value as StyleAttributes)[styleSelector])
+    );
   }
 
   return false;

@@ -79,6 +79,10 @@ describe('isValidValue (context-based)', () => {
       expect(isValidValue(undefined, { default: { color: 'red' } }, params)).toBe(true);
     });
 
+    it('accepts StyleAttributes', () => {
+      expect(isValidValue(undefined, { base: { default: { color: 'red' } } }, params)).toBe(true);
+    });
+
     it('accepts flat StyleObject (merge)', () => {
       expect(isValidValue(undefined, { color: 'red' }, params)).toBe(true);
     });

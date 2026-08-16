@@ -140,7 +140,7 @@ const StyleInspector = ({
           name,
           type,
           undefined,
-          get(selectors, `${originalSelector.name}.attributes`, {}),
+          get(selectors, `${originalSelector.name}.attributes.${styleSelector}.default`, {}),
           { styleSelector, componentType: type === 'element' ? componentType : undefined }
         );
       }
