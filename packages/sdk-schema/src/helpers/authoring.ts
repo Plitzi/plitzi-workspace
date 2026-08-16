@@ -89,6 +89,14 @@ export interface PageSpec {
   isDefault?: boolean;
   seoTitle?: string;
   seoDescription?: string;
+  /**
+   * Who this page is FOR, and the trap is that omitting it is not the same as `public`.
+   *
+   * A page with no `accessLevel` is authored for everybody and matches in both states. `public` means *signed-out
+   * visitors only* — it is one half of the pair that lets a space put a sign-in page and the page behind it on the
+   * same path — so a lone `public` page vanishes from the route table the moment anyone has a session, and the
+   * space answers 403 to its own owner. Left undefined unless the author means it.
+   */
   accessLevel?: 'public' | 'authenticated';
   style?: ResponsiveStyle;
   flows?: StepSpec[][];
@@ -326,7 +334,7 @@ class SpaceAuthor {
         slug: page.slug,
         default: page.isDefault ?? index === 0,
         name: page.name,
-        accessLevel: page.accessLevel ?? 'public',
+        ...(page.accessLevel ? { accessLevel: page.accessLevel } : {}),
         seoEnabled: Boolean(page.seoTitle ?? page.seoDescription),
         ...(page.seoTitle ? { seoPageTitle: page.seoTitle } : {}),
         ...(page.seoDescription ? { seoPageDescription: page.seoDescription } : {})
@@ -390,67 +398,3 @@ class SpaceAuthor {
 
 /** Build a space's two documents from a declaration. Throws if the result would not be a valid schema. */
 export const authorSpace = (spec: SpaceSpec): AuthoredSpace => new SpaceAuthor(spec).author();
-
-/**
- * Thin constructors for the element types every space uses.
- *
- * Deliberately unopinionated — they set `type` and the one attribute that type is about, and nothing else. Layout
- * and looks stay in the caller's `style`, because a factory that decided padding for you would be a design system
- * wearing a schema's clothes.
- */
-export const container = (
-  children: ElementSpec[],
-  style?: ResponsiveStyle,
-  rest: Partial<ElementSpec> = {}
-): ElementSpec => ({
-  type: 'container',
-  label: 'Container',
-  attributes: { subType: 'div', ...rest.attributes },
-  children,
-  ...(style ? { style } : {}),
-  ...rest
-});
-
-export const heading = (content: string, subType: string, style?: ResponsiveStyle, variant?: string): ElementSpec => ({
-  type: 'heading',
-  label: 'Heading',
-  attributes: { subType, content },
-  ...(variant ? { variant } : {}),
-  ...(style ? { style } : {})
-});
-
-export const paragraph = (content: string, style?: ResponsiveStyle): ElementSpec => ({
-  type: 'paragraph',
-  label: 'Paragraph',
-  attributes: { content },
-  ...(style ? { style } : {})
-});
-
-export const text = (content: string, style?: ResponsiveStyle): ElementSpec => ({
-  type: 'text',
-  label: 'Text',
-  attributes: { content },
-  ...(style ? { style } : {})
-});
-
-export const link = (href: string, children: ElementSpec[], style?: ResponsiveStyle): ElementSpec => ({
-  type: 'link',
-  label: 'Link',
-  attributes: { href },
-  children,
-  ...(style ? { style } : {})
-});
-
-export const image = (src: string, alt: string, style?: ResponsiveStyle): ElementSpec => ({
-  type: 'image',
-  label: 'Image',
-  attributes: { src, alt, srcLink: '', linkTarget: '_self' },
-  ...(style ? { style } : {})
-});
-
-export const icon = (name: string, style?: ResponsiveStyle): ElementSpec => ({
-  type: 'fontAwesome',
-  label: 'Icon',
-  attributes: { icon: name, size: 'fa-1x' },
-  ...(style ? { style } : {})
-});

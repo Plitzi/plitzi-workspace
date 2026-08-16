@@ -134,6 +134,14 @@
       "types": "./dist/Element/hooks/useRscData.d.ts",
       "import": "./dist/Element/hooks/useRscData.mjs"
     },
+    "./authoring": {
+      "types": "./dist/authoring/index.d.ts",
+      "import": "./dist/authoring/index.mjs"
+    },
+    "./authoring/index": {
+      "types": "./dist/authoring/index.d.ts",
+      "import": "./dist/authoring/index.mjs"
+    },
     "./components/ElementAdvancedEditor": {
       "types": "./dist/components/ElementAdvancedEditor.d.ts",
       "import": "./dist/components/ElementAdvancedEditor.mjs"
@@ -170,6 +178,10 @@
       "types": "./dist/elements/advanced/BlockHtml/Settings.d.ts",
       "import": "./dist/elements/advanced/BlockHtml/Settings.mjs"
     },
+    "./elements/advanced/BlockHtml/declaration": {
+      "types": "./dist/elements/advanced/BlockHtml/declaration.d.ts",
+      "import": "./dist/elements/advanced/BlockHtml/declaration.mjs"
+    },
     "./elements/advanced/BlockHtml/index": {
       "types": "./dist/elements/advanced/BlockHtml/index.d.ts",
       "import": "./dist/elements/advanced/BlockHtml/index.mjs"
@@ -185,6 +197,10 @@
     "./elements/advanced/BlockJsx/Settings": {
       "types": "./dist/elements/advanced/BlockJsx/Settings.d.ts",
       "import": "./dist/elements/advanced/BlockJsx/Settings.mjs"
+    },
+    "./elements/advanced/BlockJsx/declaration": {
+      "types": "./dist/elements/advanced/BlockJsx/declaration.d.ts",
+      "import": "./dist/elements/advanced/BlockJsx/declaration.mjs"
     },
     "./elements/advanced/BlockJsx/index": {
       "types": "./dist/elements/advanced/BlockJsx/index.d.ts",
@@ -202,6 +218,10 @@
       "types": "./dist/elements/advanced/Custom/Settings.d.ts",
       "import": "./dist/elements/advanced/Custom/Settings.mjs"
     },
+    "./elements/advanced/Custom/declaration": {
+      "types": "./dist/elements/advanced/Custom/declaration.d.ts",
+      "import": "./dist/elements/advanced/Custom/declaration.mjs"
+    },
     "./elements/advanced/Custom/index": {
       "types": "./dist/elements/advanced/Custom/index.d.ts",
       "import": "./dist/elements/advanced/Custom/index.mjs"
@@ -217,6 +237,10 @@
     "./elements/advanced/NodeHtml/Settings": {
       "types": "./dist/elements/advanced/NodeHtml/Settings.d.ts",
       "import": "./dist/elements/advanced/NodeHtml/Settings.mjs"
+    },
+    "./elements/advanced/NodeHtml/declaration": {
+      "types": "./dist/elements/advanced/NodeHtml/declaration.d.ts",
+      "import": "./dist/elements/advanced/NodeHtml/declaration.mjs"
     },
     "./elements/advanced/NodeHtml/index": {
       "types": "./dist/elements/advanced/NodeHtml/index.d.ts",
@@ -238,6 +262,10 @@
       "types": "./dist/elements/advanced/Reference/Settings.d.ts",
       "import": "./dist/elements/advanced/Reference/Settings.mjs"
     },
+    "./elements/advanced/Reference/declaration": {
+      "types": "./dist/elements/advanced/Reference/declaration.d.ts",
+      "import": "./dist/elements/advanced/Reference/declaration.mjs"
+    },
     "./elements/advanced/Reference/index": {
       "types": "./dist/elements/advanced/Reference/index.d.ts",
       "import": "./dist/elements/advanced/Reference/index.mjs"
@@ -253,6 +281,10 @@
     "./elements/basic/Button/Settings": {
       "types": "./dist/elements/basic/Button/Settings.d.ts",
       "import": "./dist/elements/basic/Button/Settings.mjs"
+    },
+    "./elements/basic/Button/declaration": {
+      "types": "./dist/elements/basic/Button/declaration.d.ts",
+      "import": "./dist/elements/basic/Button/declaration.mjs"
     },
     "./elements/basic/Button/index": {
       "types": "./dist/elements/basic/Button/index.d.ts",
@@ -286,6 +318,10 @@
       "types": "./dist/elements/basic/Dropdown/Settings.d.ts",
       "import": "./dist/elements/basic/Dropdown/Settings.mjs"
     },
+    "./elements/basic/Dropdown/declaration": {
+      "types": "./dist/elements/basic/Dropdown/declaration.d.ts",
+      "import": "./dist/elements/basic/Dropdown/declaration.mjs"
+    },
     "./elements/basic/Dropdown/index": {
       "types": "./dist/elements/basic/Dropdown/index.d.ts",
       "import": "./dist/elements/basic/Dropdown/index.mjs"
@@ -306,6 +342,10 @@
       "types": "./dist/elements/basic/Heading/Settings.d.ts",
       "import": "./dist/elements/basic/Heading/Settings.mjs"
     },
+    "./elements/basic/Heading/declaration": {
+      "types": "./dist/elements/basic/Heading/declaration.d.ts",
+      "import": "./dist/elements/basic/Heading/declaration.mjs"
+    },
     "./elements/basic/Heading/index": {
       "types": "./dist/elements/basic/Heading/index.d.ts",
       "import": "./dist/elements/basic/Heading/index.mjs"
@@ -321,6 +361,10 @@
     "./elements/basic/Link/Settings": {
       "types": "./dist/elements/basic/Link/Settings.d.ts",
       "import": "./dist/elements/basic/Link/Settings.mjs"
+    },
+    "./elements/basic/Link/declaration": {
+      "types": "./dist/elements/basic/Link/declaration.d.ts",
+      "import": "./dist/elements/basic/Link/declaration.mjs"
     },
     "./elements/basic/Link/index": {
       "types": "./dist/elements/basic/Link/index.d.ts",
@@ -338,6 +382,10 @@
       "types": "./dist/elements/basic/Markdown/Settings.d.ts",
       "import": "./dist/elements/basic/Markdown/Settings.mjs"
     },
+    "./elements/basic/Markdown/declaration": {
+      "types": "./dist/elements/basic/Markdown/declaration.d.ts",
+      "import": "./dist/elements/basic/Markdown/declaration.mjs"
+    },
     "./elements/basic/Markdown/index": {
       "types": "./dist/elements/basic/Markdown/index.d.ts",
       "import": "./dist/elements/basic/Markdown/index.mjs"
@@ -354,6 +402,10 @@
       "types": "./dist/elements/basic/Paragraph/Settings.d.ts",
       "import": "./dist/elements/basic/Paragraph/Settings.mjs"
     },
+    "./elements/basic/Paragraph/declaration": {
+      "types": "./dist/elements/basic/Paragraph/declaration.d.ts",
+      "import": "./dist/elements/basic/Paragraph/declaration.mjs"
+    },
     "./elements/basic/Paragraph/index": {
       "types": "./dist/elements/basic/Paragraph/index.d.ts",
       "import": "./dist/elements/basic/Paragraph/index.mjs"
@@ -369,6 +421,10 @@
     "./elements/basic/RichText/Settings": {
       "types": "./dist/elements/basic/RichText/Settings.d.ts",
       "import": "./dist/elements/basic/RichText/Settings.mjs"
+    },
+    "./elements/basic/RichText/declaration": {
+      "types": "./dist/elements/basic/RichText/declaration.d.ts",
+      "import": "./dist/elements/basic/RichText/declaration.mjs"
     },
     "./elements/basic/RichText/index": {
       "types": "./dist/elements/basic/RichText/index.d.ts",
@@ -390,9 +446,17 @@
       "types": "./dist/elements/basic/Text/Text.d.ts",
       "import": "./dist/elements/basic/Text/Text.mjs"
     },
+    "./elements/basic/Text/declaration": {
+      "types": "./dist/elements/basic/Text/declaration.d.ts",
+      "import": "./dist/elements/basic/Text/declaration.mjs"
+    },
     "./elements/basic/Text/index": {
       "types": "./dist/elements/basic/Text/index.d.ts",
       "import": "./dist/elements/basic/Text/index.mjs"
+    },
+    "./elements/declarations": {
+      "types": "./dist/elements/declarations.d.ts",
+      "import": "./dist/elements/declarations.mjs"
     },
     "./elements/form/Form": {
       "types": "./dist/elements/form/Form/index.d.ts",
@@ -470,6 +534,10 @@
       "types": "./dist/elements/internal/LayoutContainer/Settings.d.ts",
       "import": "./dist/elements/internal/LayoutContainer/Settings.mjs"
     },
+    "./elements/internal/LayoutContainer/declaration": {
+      "types": "./dist/elements/internal/LayoutContainer/declaration.d.ts",
+      "import": "./dist/elements/internal/LayoutContainer/declaration.mjs"
+    },
     "./elements/internal/LayoutContainer/index": {
       "types": "./dist/elements/internal/LayoutContainer/index.d.ts",
       "import": "./dist/elements/internal/LayoutContainer/index.mjs"
@@ -482,6 +550,10 @@
       "types": "./dist/elements/internal/Loading/Loading.d.ts",
       "import": "./dist/elements/internal/Loading/Loading.mjs"
     },
+    "./elements/internal/Loading/declaration": {
+      "types": "./dist/elements/internal/Loading/declaration.d.ts",
+      "import": "./dist/elements/internal/Loading/declaration.mjs"
+    },
     "./elements/internal/Loading/index": {
       "types": "./dist/elements/internal/Loading/index.d.ts",
       "import": "./dist/elements/internal/Loading/index.mjs"
@@ -493,6 +565,10 @@
     "./elements/internal/NotFound/NotFound": {
       "types": "./dist/elements/internal/NotFound/NotFound.d.ts",
       "import": "./dist/elements/internal/NotFound/NotFound.mjs"
+    },
+    "./elements/internal/NotFound/declaration": {
+      "types": "./dist/elements/internal/NotFound/declaration.d.ts",
+      "import": "./dist/elements/internal/NotFound/declaration.mjs"
     },
     "./elements/internal/NotFound/index": {
       "types": "./dist/elements/internal/NotFound/index.d.ts",
@@ -510,6 +586,10 @@
       "types": "./dist/elements/internal/Page/Settings.d.ts",
       "import": "./dist/elements/internal/Page/Settings.mjs"
     },
+    "./elements/internal/Page/declaration": {
+      "types": "./dist/elements/internal/Page/declaration.d.ts",
+      "import": "./dist/elements/internal/Page/declaration.mjs"
+    },
     "./elements/internal/Page/index": {
       "types": "./dist/elements/internal/Page/index.d.ts",
       "import": "./dist/elements/internal/Page/index.mjs"
@@ -525,6 +605,10 @@
     "./elements/media/FontAwesome/Settings": {
       "types": "./dist/elements/media/FontAwesome/Settings.d.ts",
       "import": "./dist/elements/media/FontAwesome/Settings.mjs"
+    },
+    "./elements/media/FontAwesome/declaration": {
+      "types": "./dist/elements/media/FontAwesome/declaration.d.ts",
+      "import": "./dist/elements/media/FontAwesome/declaration.mjs"
     },
     "./elements/media/FontAwesome/index": {
       "types": "./dist/elements/media/FontAwesome/index.d.ts",
@@ -546,6 +630,10 @@
       "types": "./dist/elements/media/Image/Settings.d.ts",
       "import": "./dist/elements/media/Image/Settings.mjs"
     },
+    "./elements/media/Image/declaration": {
+      "types": "./dist/elements/media/Image/declaration.d.ts",
+      "import": "./dist/elements/media/Image/declaration.mjs"
+    },
     "./elements/media/Image/index": {
       "types": "./dist/elements/media/Image/index.d.ts",
       "import": "./dist/elements/media/Image/index.mjs"
@@ -561,6 +649,10 @@
     "./elements/media/Video/Video": {
       "types": "./dist/elements/media/Video/Video.d.ts",
       "import": "./dist/elements/media/Video/Video.mjs"
+    },
+    "./elements/media/Video/declaration": {
+      "types": "./dist/elements/media/Video/declaration.d.ts",
+      "import": "./dist/elements/media/Video/declaration.mjs"
     },
     "./elements/media/Video/index": {
       "types": "./dist/elements/media/Video/index.d.ts",
@@ -589,6 +681,10 @@
     "./elements/provider/ApiContainer/components/FiltersInput/index": {
       "types": "./dist/elements/provider/ApiContainer/components/FiltersInput/index.d.ts",
       "import": "./dist/elements/provider/ApiContainer/components/FiltersInput/index.mjs"
+    },
+    "./elements/provider/ApiContainer/declaration": {
+      "types": "./dist/elements/provider/ApiContainer/declaration.d.ts",
+      "import": "./dist/elements/provider/ApiContainer/declaration.mjs"
     },
     "./elements/provider/ApiContainer/hooks/useApi": {
       "types": "./dist/elements/provider/ApiContainer/hooks/useApi.d.ts",
@@ -622,6 +718,10 @@
       "types": "./dist/elements/structure/Container/Settings.d.ts",
       "import": "./dist/elements/structure/Container/Settings.mjs"
     },
+    "./elements/structure/Container/declaration": {
+      "types": "./dist/elements/structure/Container/declaration.d.ts",
+      "import": "./dist/elements/structure/Container/declaration.mjs"
+    },
     "./elements/structure/Container/index": {
       "types": "./dist/elements/structure/Container/index.d.ts",
       "import": "./dist/elements/structure/Container/index.mjs"
@@ -637,6 +737,10 @@
     "./elements/structure/DialogContainer/Settings": {
       "types": "./dist/elements/structure/DialogContainer/Settings.d.ts",
       "import": "./dist/elements/structure/DialogContainer/Settings.mjs"
+    },
+    "./elements/structure/DialogContainer/declaration": {
+      "types": "./dist/elements/structure/DialogContainer/declaration.d.ts",
+      "import": "./dist/elements/structure/DialogContainer/declaration.mjs"
     },
     "./elements/structure/DialogContainer/index": {
       "types": "./dist/elements/structure/DialogContainer/index.d.ts",
@@ -669,6 +773,10 @@
     "./elements/structure/List/Settings": {
       "types": "./dist/elements/structure/List/Settings.d.ts",
       "import": "./dist/elements/structure/List/Settings.mjs"
+    },
+    "./elements/structure/List/declaration": {
+      "types": "./dist/elements/structure/List/declaration.d.ts",
+      "import": "./dist/elements/structure/List/declaration.mjs"
     },
     "./elements/structure/List/index": {
       "types": "./dist/elements/structure/List/index.d.ts",
@@ -706,6 +814,10 @@
       "types": "./dist/elements/structure/ModalContainer/Settings.d.ts",
       "import": "./dist/elements/structure/ModalContainer/Settings.mjs"
     },
+    "./elements/structure/ModalContainer/declaration": {
+      "types": "./dist/elements/structure/ModalContainer/declaration.d.ts",
+      "import": "./dist/elements/structure/ModalContainer/declaration.mjs"
+    },
     "./elements/structure/ModalContainer/index": {
       "types": "./dist/elements/structure/ModalContainer/index.d.ts",
       "import": "./dist/elements/structure/ModalContainer/index.mjs"
@@ -725,6 +837,10 @@
     "./elements/structure/Pagination/buildPageWindow": {
       "types": "./dist/elements/structure/Pagination/buildPageWindow.d.ts",
       "import": "./dist/elements/structure/Pagination/buildPageWindow.mjs"
+    },
+    "./elements/structure/Pagination/declaration": {
+      "types": "./dist/elements/structure/Pagination/declaration.d.ts",
+      "import": "./dist/elements/structure/Pagination/declaration.mjs"
     },
     "./elements/structure/Pagination/index": {
       "types": "./dist/elements/structure/Pagination/index.d.ts",
@@ -793,6 +909,10 @@
     "./elements/structure/TabContainer/TabContainerItem/index": {
       "types": "./dist/elements/structure/TabContainer/TabContainerItem/index.d.ts",
       "import": "./dist/elements/structure/TabContainer/TabContainerItem/index.mjs"
+    },
+    "./elements/structure/TabContainer/declaration": {
+      "types": "./dist/elements/structure/TabContainer/declaration.d.ts",
+      "import": "./dist/elements/structure/TabContainer/declaration.mjs"
     },
     "./elements/structure/TabContainer/index": {
       "types": "./dist/elements/structure/TabContainer/index.d.ts",

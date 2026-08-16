@@ -1,8 +1,28 @@
 import { describe, expect, it } from 'vitest';
 
-import { authorBinding, authorFlow, authorSpace, authoringId, container, heading, text } from './authoring';
+import { authorBinding, authorFlow, authorSpace, authoringId } from './authoring';
 
+import type { ElementSpec } from './authoring';
 import type { SpaceSpec } from './authoring';
+
+const text = (content: string, style?: ElementSpec['style']): ElementSpec => ({
+  type: 'text',
+  attributes: { content },
+  ...(style ? { style } : {})
+});
+
+const heading = (content: string, subType: string, style?: ElementSpec['style']): ElementSpec => ({
+  type: 'heading',
+  attributes: { subType, content },
+  ...(style ? { style } : {})
+});
+
+const container = (children: ElementSpec[], style?: ElementSpec['style']): ElementSpec => ({
+  type: 'container',
+  attributes: { subType: 'div' },
+  children,
+  ...(style ? { style } : {})
+});
 
 const minimal = (overrides: Partial<SpaceSpec> = {}): SpaceSpec => ({
   name: 'Test Space',
@@ -58,6 +78,21 @@ describe('authorSpace', () => {
 
     expect(refs).toEqual(['page-1', 'container-1', 'heading-1']);
     expect(new Set(refs).size).toBe(refs.length);
+  });
+
+  it('leaves a page unrestricted unless an access level was asked for', () => {
+    // `public` is not "for everyone" — it is the signed-out half of an access-controlled pair, so a lone public
+    // page disappears from the route table for anyone with a session and the space answers 403 to its own owner.
+    const { schema } = authorSpace(minimal());
+    expect(schema.flat[schema.pages[0]].attributes.accessLevel).toBeUndefined();
+
+    const gated = authorSpace({
+      name: 'Gated',
+      permanentUrl: 'gated',
+      pages: [{ name: 'Members', slug: '', accessLevel: 'authenticated', body: [text('hi')] }]
+    });
+
+    expect(gated.schema.flat[gated.schema.pages[0]].attributes.accessLevel).toBe('authenticated');
   });
 
   it('carries the page SEO fields, and marks SEO off when none were declared', () => {
