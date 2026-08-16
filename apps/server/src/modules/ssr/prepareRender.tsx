@@ -73,8 +73,14 @@ export const prepareRender = async (
   // the read itself would have returned, and the client treats a missing payload as one still to fetch.
   const rscPath = resolveRscEndpoint(config);
   const schema = offlineData?.schema;
-  const pageMatch = rscPath && schema ? matchRscPage(schema, req.path, req.ctx.user) : undefined;
-  const hasTargets = !!schema && !!pageMatch && hasServerElements(schema, pageMatch.pageId);
+  // Only the explicit `false` is treated as an opt-out here. Whether an ABSENT flag means on or off is the adapter's
+  // to decide and the two shipped ones disagree — `resolveRscData` reads it as on, `connectorRscData` as off — so
+  // this gate skips on the one answer both of them agree about.
+  const pageMatch =
+    rscPath !== undefined && schema !== undefined && schema.rsc?.enabled !== false
+      ? matchRscPage(schema, req.path, req.ctx.user)
+      : undefined;
+  const hasTargets = schema !== undefined && pageMatch !== undefined && hasServerElements(schema, pageMatch.pageId);
   // Timed around the adapter alone, and from after the schema is in hand. An RSC read opens by joining that read —
   // the whole point of sharing the loader — and those milliseconds are already billed to `schema`; timing from the
   // call would report one read under two names and make a page that resolved nothing look like it cost a pass.

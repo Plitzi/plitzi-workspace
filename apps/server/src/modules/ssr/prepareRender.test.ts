@@ -1,14 +1,15 @@
 import { describe, it, expect, vi } from 'vitest';
 
 import { prepareRender } from './prepareRender';
+import { RequestMetrics } from '../../helpers/metrics';
 
 import type { PluginManager } from '../../plugins/manager';
-import type { Element, OfflineDataRaw, SSRPageServerConfig, SSRRequest } from '@plitzi/sdk-shared';
+import type { Element, OfflineDataRaw, SchemaRsc, SSRPageServerConfig, SSRRequest } from '@plitzi/sdk-shared';
 
 const element = (id: string, items: string[] = [], runtime?: 'server' | 'client'): Element => ({
   id,
   attributes: {},
-  definition: { type: id, label: id, rootId: 'home', items, styleSelectors: { base: '' }, runtime }
+  definition: { type: id, label: id, rootId: 'root', items, styleSelectors: { base: '' }, runtime }
 });
 
 const page = (id: string, slug: string, items: string[]): Element => ({
@@ -17,27 +18,44 @@ const page = (id: string, slug: string, items: string[]): Element => ({
   definition: { type: 'page', label: id, rootId: 'root', items, styleSelectors: { base: '' } }
 });
 
-const offlineData = (runtime?: 'server' | 'client'): OfflineDataRaw =>
+/**
+ * The arrangement this gate exists for: a space where one page is backed by a provider and the next one is not.
+ * `/blog/{{slug}}` resolves server-side; `/` and `/about` are ordinary pages that happen to live in the same space,
+ * and rendering either of them must not reach the provider that only `/blog` has.
+ */
+const offlineData = (
+  rsc: SchemaRsc | undefined = { enabled: true },
+  homeRuntime: 'server' | 'client' = 'client'
+): OfflineDataRaw =>
   ({
     schema: {
-      flat: { home: page('home', '', ['child']), child: element('child', [], runtime) },
-      pages: ['home'],
+      flat: {
+        home: page('home', '', ['homeText']),
+        homeText: element('homeText', [], homeRuntime),
+        blog: page('blog', 'blog/{{slug}}', ['blogApi']),
+        blogApi: element('blogApi', [], 'server'),
+        about: page('about', 'about', ['aboutBox']),
+        aboutBox: element('aboutBox', ['aboutInner']),
+        aboutInner: element('aboutInner', ['aboutApi']),
+        aboutApi: element('aboutApi', [], 'server')
+      },
+      pages: ['home', 'blog', 'about'],
       pageFolders: [],
       definition: { name: 'test', permanentUrl: 'test' },
       variables: [],
       settings: { customCss: '' },
-      rsc: { enabled: true }
+      rsc
     },
     plugins: [],
     style: { cache: '', variables: [] }
   }) as unknown as OfflineDataRaw;
 
-const request = (): SSRRequest =>
+const request = (path: string): SSRRequest =>
   ({
     method: 'GET',
-    path: '/',
+    path,
     search: '',
-    url: '/',
+    url: path,
     protocol: 'https',
     hostname: 'x.test',
     headers: {},
@@ -48,41 +66,122 @@ const request = (): SSRRequest =>
 const pluginManager = () =>
   ({ getEntries: () => Promise.resolve([]), getComponents: () => ({}), ensure: () => '' }) as unknown as PluginManager;
 
-const render = (runtime?: 'server' | 'client') => {
-  const getRscData = vi.fn().mockResolvedValue({ serverData: { child: { ok: true } } });
+type Options = {
+  rsc?: SchemaRsc;
+  /** What the deployment configured, as opposed to what the schema asks for. */
+  configRsc?: { enabled?: boolean };
+  withAdapter?: boolean;
+  homeRuntime?: 'server' | 'client';
+};
+
+const render = async (
+  path: string,
+  { rsc = { enabled: true }, configRsc, withAdapter = true, homeRuntime }: Options = {}
+) => {
+  const getRscData = vi.fn().mockResolvedValue({ serverData: { resolved: true } });
+  const getOfflineData = vi.fn().mockResolvedValue(offlineData(rsc, homeRuntime));
+  const metrics = new RequestMetrics();
   const config = {
     environment: 'production',
     assetVersion: '1',
     autoLoadSchemaPlugins: false,
+    rsc: configRsc,
     adapters: {
-      getOfflineData: () => Promise.resolve(offlineData(runtime)),
+      getOfflineData,
       getSpaceDeployment: () => Promise.resolve(undefined),
-      getRscData
+      ...(withAdapter ? { getRscData } : {})
     }
   } as unknown as SSRPageServerConfig;
 
-  return {
-    getRscData,
-    prep: prepareRender(request(), config, 42, 'production', 0, pluginManager())
-  };
+  const { componentProps } = await prepareRender(
+    request(path),
+    config,
+    42,
+    'production',
+    0,
+    pluginManager(),
+    undefined,
+    metrics
+  );
+
+  return { getRscData, getOfflineData, ssr: componentProps.server.ssr, timing: metrics.toServerTimingHeader() };
 };
 
 describe('prepareRender / the RSC gate', () => {
-  it('asks the adapter for a page that has a server element', async () => {
-    const { getRscData, prep } = render('server');
-    const { componentProps } = await prep;
+  it('asks the adapter for the page that actually has a server element', async () => {
+    const { getRscData, ssr } = await render('/blog/hello');
 
     expect(getRscData).toHaveBeenCalledTimes(1);
-    expect(componentProps.server.ssr?.rscData).toEqual({ serverData: { child: { ok: true } } });
+    expect(ssr?.rscData).toEqual({ serverData: { resolved: true } });
   });
 
-  it('never reaches the adapter for a page that has none — that is the API call this saves', async () => {
-    const { getRscData, prep } = render('client');
-    const { componentProps } = await prep;
+  it('still asks when the server element is buried under plain containers', async () => {
+    const { getRscData } = await render('/about');
+
+    expect(getRscData).toHaveBeenCalledTimes(1);
+  });
+
+  // Pins the negative test below to the gate rather than to a route that failed to match: the root path resolves to
+  // the same page in both, and the only thing that differs is what is on it.
+  it('asks for the root page when that is the one with the server element', async () => {
+    const { getRscData } = await render('/', { homeRuntime: 'server' });
+
+    expect(getRscData).toHaveBeenCalledTimes(1);
+  });
+
+  it('never reaches the adapter for a page of its own, even though another page has a provider', async () => {
+    const { getRscData, ssr } = await render('/');
 
     expect(getRscData).not.toHaveBeenCalled();
-    // Still a payload, and an empty one: a client told nothing arrived would go and fetch it.
-    expect(componentProps.server.ssr?.rscData).toEqual({ serverData: {} });
-    expect(componentProps.server.ssr?.rscPath).toBe('/_rsc');
+    // A payload all the same, and an empty one: a client told nothing arrived treats it as still to fetch.
+    expect(ssr?.rscData).toEqual({ serverData: {} });
+    expect(ssr?.rscPath).toBe('/_rsc');
+  });
+
+  it('never reaches the adapter when the URL matches no page at all', async () => {
+    const { getRscData, ssr } = await render('/nothing/here');
+
+    expect(getRscData).not.toHaveBeenCalled();
+    expect(ssr?.rscData).toEqual({ serverData: {} });
+  });
+
+  it('never reaches the adapter for a schema that opted out, server elements or not', async () => {
+    const { getRscData } = await render('/blog/hello', { rsc: { enabled: false } });
+
+    expect(getRscData).not.toHaveBeenCalled();
+  });
+
+  it('never reaches the adapter when the deployment publishes no endpoint', async () => {
+    const { getRscData, ssr } = await render('/blog/hello', { configRsc: { enabled: false } });
+
+    expect(getRscData).not.toHaveBeenCalled();
+    expect(ssr?.rscPath).toBeUndefined();
+    // Nothing to seed and nothing to fetch: the client is told the feature has no server behind it.
+    expect(ssr?.rscData).toBeUndefined();
+  });
+
+  it('renders a space that configured no adapter at all', async () => {
+    const { ssr } = await render('/blog/hello', { withAdapter: false });
+
+    expect(ssr?.rscPath).toBeUndefined();
+    expect(ssr?.rscData).toBeUndefined();
+  });
+
+  it('reads the space once per render, whether or not the adapter is asked', async () => {
+    const resolved = await render('/blog/hello');
+    const skipped = await render('/');
+
+    expect(resolved.getOfflineData).toHaveBeenCalledTimes(1);
+    expect(skipped.getOfflineData).toHaveBeenCalledTimes(1);
+  });
+
+  it('bills the schema read to `schema`, and reports no rsc phase when none happened', async () => {
+    const skipped = await render('/');
+    expect(skipped.timing).toContain('schema;dur=');
+    expect(skipped.timing).not.toContain('rsc;dur=');
+
+    // And when it does happen it is timed apart from the read it joins, not on top of it.
+    const resolved = await render('/blog/hello');
+    expect(resolved.timing).toContain('rsc;dur=');
   });
 });

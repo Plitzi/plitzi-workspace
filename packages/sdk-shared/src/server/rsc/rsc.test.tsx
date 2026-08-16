@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { act, render, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { createStore } from '@plitzi/nexus';
@@ -16,12 +16,23 @@ const element = (id: string, items: string[] = [], runtime?: 'server' | 'client'
   definition: { type: id, label: id, rootId: 'home', items, styleSelectors: { base: '' }, runtime }
 });
 
-// The page on screen, and whether anything on it consumes a payload — together they are what decides whether a
-// refresh has somewhere to land, so every store here has to state both.
-const pageWith = (runtime?: 'server' | 'client') => ({
-  flat: { home: element('home', ['child']), child: element('child', [], runtime) },
-  pages: ['home']
-});
+/**
+ * A space with a mix, which is the whole reason the gate exists: `blog` is backed by a provider, `home` is not, and
+ * `deep` buries its provider under plain containers. Which of them is on screen is what decides whether a refresh
+ * has anywhere to land, so every store here states both the schema and the page.
+ */
+const space = {
+  flat: {
+    home: element('home', ['homeText']),
+    homeText: element('homeText', [], 'client'),
+    blog: element('blog', ['blogApi']),
+    blogApi: element('blogApi', [], 'server'),
+    deep: element('deep', ['deepBox']),
+    deepBox: element('deepBox', ['deepApi']),
+    deepApi: element('deepApi', [], 'server')
+  },
+  pages: ['home', 'blog', 'deep']
+};
 
 const Harness = ({ ssr }: { ssr?: ServerSSR }) => {
   useRscSync(ssr);
@@ -36,10 +47,10 @@ const renderSync = (ssr: ServerSSR | undefined, store: StoreApi<CommonState>) =>
     </StoreProvider>
   );
 
-const makeStore = (rsc?: SchemaRsc, runtime: 'server' | 'client' = 'server') =>
+const makeStore = (rsc?: SchemaRsc, currentPageId = 'blog') =>
   createStore<CommonState>({
-    schema: { ...pageWith(runtime), rsc },
-    navigation: { currentPageId: 'home' }
+    schema: { ...space, rsc },
+    navigation: { currentPageId }
   } as unknown as CommonState);
 
 describe('useRscSync', () => {
@@ -87,10 +98,42 @@ describe('useRscSync', () => {
     expect((fetchMock.mock.calls[0][0] as string).startsWith('/_rsc?location=')).toBe(true);
   });
 
-  it('never fetches for a page whose elements all render client-side', async () => {
-    renderSync({ rscPath: '/_rsc' }, makeStore({ enabled: true }, 'client'));
+  it('never fetches for a page of its own, even though another page in the space has a provider', async () => {
+    renderSync({ rscPath: '/_rsc' }, makeStore({ enabled: true }, 'home'));
 
     await waitFor(() => expect(fetchMock).not.toHaveBeenCalled());
+  });
+
+  it('never fetches when the location matched no page — there is nothing to name', async () => {
+    renderSync({ rscPath: '/_rsc' }, makeStore({ enabled: true }, ''));
+
+    await waitFor(() => expect(fetchMock).not.toHaveBeenCalled());
+  });
+
+  it('still fetches when the page buries its provider under plain containers', async () => {
+    renderSync({ rscPath: '/_rsc' }, makeStore({ enabled: true }, 'deep'));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+  });
+
+  it('spends nothing on navigating to a page with no provider, and pays again on one that has', async () => {
+    const store = makeStore({ enabled: true });
+    // Mounted with the payload already in hand, so nothing is owed for the page that was rendered.
+    renderSync({ rscPath: '/_rsc', rscData: { serverData: { blogApi: 1 } } }, store);
+
+    act(() => {
+      store.set('navigation.currentPageId', 'home');
+      store.set('runtime.sources.navigation', { routeParams: {}, queryParams: { to: 'home' } });
+    });
+
+    await waitFor(() => expect(fetchMock).not.toHaveBeenCalled());
+
+    act(() => {
+      store.set('navigation.currentPageId', 'deep');
+      store.set('runtime.sources.navigation', { routeParams: {}, queryParams: { to: 'deep' } });
+    });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
   });
 
   it('seeds the payload the server already resolved and asks for nothing more', async () => {
@@ -116,10 +159,10 @@ describe('refreshRsc', () => {
     vi.unstubAllGlobals();
   });
 
-  const liveStore = (runtime: 'server' | 'client' = 'server') =>
+  const liveStore = (currentPageId = 'blog') =>
     createStore<CommonState>({
-      schema: pageWith(runtime),
-      navigation: { currentPageId: 'home' },
+      schema: space,
+      navigation: { currentPageId },
       rsc: { enabled: true, endpoint: '/_rsc', loaded: true, data: { a: 1, b: 2 } }
     } as unknown as CommonState);
 
@@ -165,11 +208,33 @@ describe('refreshRsc', () => {
   });
 
   it('spends no request on a page with nothing to put the answer in, and keeps what it already had', async () => {
-    const store = liveStore('client');
+    const store = liveStore('home');
 
     await refreshRsc(store);
 
     expect(fetchMock).not.toHaveBeenCalled();
     expect(store.get('rsc.data')).toEqual({ a: 1, b: 2 });
+  });
+
+  it('spends no request on a page it cannot name, nor on a store carrying no schema', async () => {
+    await refreshRsc(liveStore(''));
+    await refreshRsc(
+      createStore<CommonState>({
+        navigation: { currentPageId: 'blog' },
+        rsc: { enabled: true, endpoint: '/_rsc' }
+      } as unknown as CommonState)
+    );
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('does not gate out the element asking for itself on a page that does have a provider', async () => {
+    const store = liveStore();
+    fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve({ serverData: { blogApi: 9 } }) });
+
+    await refreshRsc(store, ['blogApi']);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(store.get('rsc.data')).toEqual({ a: 1, b: 2, blogApi: 9 });
   });
 });
