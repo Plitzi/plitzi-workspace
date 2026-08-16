@@ -817,6 +817,10 @@
       "types": "./dist/schema/schemaConstants.d.ts",
       "import": "./dist/schema/schemaConstants.mjs"
     },
+    "./schema/serverElements": {
+      "types": "./dist/schema/serverElements.d.ts",
+      "import": "./dist/schema/serverElements.mjs"
+    },
     "./segments": {
       "types": "./dist/segments/index.d.ts",
       "import": "./dist/segments/index.mjs"

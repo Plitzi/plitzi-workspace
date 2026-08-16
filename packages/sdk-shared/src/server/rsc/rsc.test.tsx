@@ -7,8 +7,21 @@ import { StoreProvider } from '@plitzi/nexus/react';
 import refreshRsc from './refreshRsc';
 import useRscSync from './useRscSync';
 
-import type { CommonState, SchemaRsc, ServerSSR } from '../../types';
+import type { CommonState, Element, SchemaRsc, ServerSSR } from '../../types';
 import type { StoreApi } from '@plitzi/nexus';
+
+const element = (id: string, items: string[] = [], runtime?: 'server' | 'client'): Element => ({
+  id,
+  attributes: {},
+  definition: { type: id, label: id, rootId: 'home', items, styleSelectors: { base: '' }, runtime }
+});
+
+// The page on screen, and whether anything on it consumes a payload — together they are what decides whether a
+// refresh has somewhere to land, so every store here has to state both.
+const pageWith = (runtime?: 'server' | 'client') => ({
+  flat: { home: element('home', ['child']), child: element('child', [], runtime) },
+  pages: ['home']
+});
 
 const Harness = ({ ssr }: { ssr?: ServerSSR }) => {
   useRscSync(ssr);
@@ -23,7 +36,11 @@ const renderSync = (ssr: ServerSSR | undefined, store: StoreApi<CommonState>) =>
     </StoreProvider>
   );
 
-const makeStore = (rsc?: SchemaRsc) => createStore<CommonState>({ schema: { rsc } } as CommonState);
+const makeStore = (rsc?: SchemaRsc, runtime: 'server' | 'client' = 'server') =>
+  createStore<CommonState>({
+    schema: { ...pageWith(runtime), rsc },
+    navigation: { currentPageId: 'home' }
+  } as unknown as CommonState);
 
 describe('useRscSync', () => {
   const fetchMock = vi.fn();
@@ -70,6 +87,12 @@ describe('useRscSync', () => {
     expect((fetchMock.mock.calls[0][0] as string).startsWith('/_rsc?location=')).toBe(true);
   });
 
+  it('never fetches for a page whose elements all render client-side', async () => {
+    renderSync({ rscPath: '/_rsc' }, makeStore({ enabled: true }, 'client'));
+
+    await waitFor(() => expect(fetchMock).not.toHaveBeenCalled());
+  });
+
   it('seeds the payload the server already resolved and asks for nothing more', async () => {
     const store = makeStore({ enabled: true });
     renderSync({ rscPath: '/_rsc', rscData: { serverData: { a: 1 } } }, store);
@@ -93,10 +116,12 @@ describe('refreshRsc', () => {
     vi.unstubAllGlobals();
   });
 
-  const liveStore = () =>
+  const liveStore = (runtime: 'server' | 'client' = 'server') =>
     createStore<CommonState>({
+      schema: pageWith(runtime),
+      navigation: { currentPageId: 'home' },
       rsc: { enabled: true, endpoint: '/_rsc', loaded: true, data: { a: 1, b: 2 } }
-    });
+    } as unknown as CommonState);
 
   it('merges a partial refresh over the existing payload and replaces it on a full one', async () => {
     const store = liveStore();
@@ -137,5 +162,14 @@ describe('refreshRsc', () => {
     await refreshRsc(store);
 
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('spends no request on a page with nothing to put the answer in, and keeps what it already had', async () => {
+    const store = liveStore('client');
+
+    await refreshRsc(store);
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(store.get('rsc.data')).toEqual({ a: 1, b: 2 });
   });
 });

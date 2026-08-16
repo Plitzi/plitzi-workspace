@@ -1,3 +1,5 @@
+import { hasServerElements } from '../../schema/serverElements';
+
 import type { CommonState } from '../../types';
 import type { PathOf, StoreApi } from '@plitzi/nexus';
 
@@ -23,6 +25,16 @@ export const refreshRsc = async (
 ): Promise<void> => {
   const { enabled, endpoint } = store.get('rsc') ?? {};
   if (!enabled || !endpoint || typeof window === 'undefined') {
+    return;
+  }
+
+  // Nothing on this page consumes a payload, so the request would be answered and thrown away — and answering it
+  // costs the server a resolution pass it only has to make because someone asked. The page id comes from the same
+  // route match the server resolves with, so a page the client cannot name is one the server would have resolved
+  // nothing for either. Whatever `rsc.data` still holds is left alone: no element here reads it, and the next
+  // refresh that does run replaces it wholesale.
+  const schema = store.get('schema');
+  if (!schema || !hasServerElements(schema, store.get('navigation.currentPageId'))) {
     return;
   }
 

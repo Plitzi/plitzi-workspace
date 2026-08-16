@@ -1,7 +1,4 @@
-import { resolveRscEndpoint } from '../core/services/resolve';
-
-import type { OfflineDataLoader } from './offlineDataLoader';
-import type { Server, SSRRequest, SSRServerConfig } from '@plitzi/sdk-shared';
+import type { Server, ServerSSR, SSRRequest, SSRServerConfig } from '@plitzi/sdk-shared';
 
 const getEnvironment = (env: string = 'production', server?: Record<string, unknown>): Server => {
   switch (env) {
@@ -53,15 +50,16 @@ const getEnvironment = (env: string = 'production', server?: Record<string, unkn
   }
 };
 
-export const buildServerInfo = async (
-  req: SSRRequest,
-  config: SSRServerConfig,
-  loadOfflineData: OfflineDataLoader
-): Promise<Partial<Server>> => {
+/**
+ * The endpoints, the session and the location this render happens at.
+ *
+ * Synchronous, and takes the RSC bootstrap already resolved rather than resolving it: the only async thing here was
+ * ever the `getRscData` call, so the caller starting that read is also what decides whether it happens at all.
+ */
+export const buildServerInfo = (req: SSRRequest, config: SSRServerConfig, ssr: ServerSSR): Partial<Server> => {
   const accessToken = req.query['access-token'];
   const origin = `${req.protocol}://${req.hostname}`;
   const user = req.ctx.user;
-  const { environment = 'main', spaceId, revision = 0 } = req.ctx.spaceDeployment ?? {};
 
   return getEnvironment(config.environment, {
     basePath: '/',
@@ -91,16 +89,6 @@ export const buildServerInfo = async (
           expiresAt: user.expiresAt
         }
       : undefined,
-    ssr: {
-      rscPath: resolveRscEndpoint(config),
-      rscData: await config.adapters.getRscData?.({
-        req,
-        spaceId: spaceId as number,
-        environment,
-        revision,
-        user,
-        loadOfflineData
-      })
-    }
+    ssr
   });
 };

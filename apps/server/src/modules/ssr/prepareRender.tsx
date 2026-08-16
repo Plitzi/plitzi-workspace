@@ -1,12 +1,16 @@
+import { hasServerElements } from '@plitzi/sdk-shared/schema/serverElements';
+
 import { loadPluginComponents } from './loadPluginComponents';
 import { registerExternalPlugins } from './registerExternalPlugins';
 import { sdkAssetVersion } from '../../core/sdkAssets';
+import { resolveRscEndpoint } from '../../core/services/resolve';
 import { buildServerInfo } from '../../helpers/buildServerInfo';
 import { buildOfflineDataCacheKey } from '../../helpers/cache';
 import { escapeJson } from '../../helpers/escapeJson';
 import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
 import { readCookie } from '../../helpers/readCookie';
 import { resolveDebugMode } from '../../helpers/resolveDebugMode';
+import { matchRscPage } from '../rsc/matchRscPage';
 
 import type { ComponentProps } from './Component';
 import type { TtlCache } from '../../helpers/cache';
@@ -60,10 +64,37 @@ export const prepareRender = async (
     return m('schema', () => config.adapters.getOfflineData(spaceId, environment, revision));
   });
 
-  const [offlineData, server] = await Promise.all([
-    loadOfflineData(),
-    m('rsc', () => buildServerInfo(req, config, loadOfflineData))
-  ]);
+  const offlineData = await loadOfflineData();
+
+  // The adapter is asked only when this page has somewhere to put the answer. A space is normally a mix — one page
+  // backed by a CMS, the next one static — and resolving is what costs: the providers of THIS page's server
+  // elements, each an API call or a connector read. A page holding none of them would pay them for a payload no
+  // element ever reads, so it is not asked at all. `{ serverData: {} }` rather than nothing, because that is what
+  // the read itself would have returned, and the client treats a missing payload as one still to fetch.
+  const rscPath = resolveRscEndpoint(config);
+  const schema = offlineData?.schema;
+  const pageMatch = rscPath && schema ? matchRscPage(schema, req.path, req.ctx.user) : undefined;
+  const hasTargets = !!schema && !!pageMatch && hasServerElements(schema, pageMatch.pageId);
+  // Timed around the adapter alone, and from after the schema is in hand. An RSC read opens by joining that read —
+  // the whole point of sharing the loader — and those milliseconds are already billed to `schema`; timing from the
+  // call would report one read under two names and make a page that resolved nothing look like it cost a pass.
+  const rscData =
+    hasTargets && config.adapters.getRscData
+      ? await m('rsc', () =>
+          config.adapters.getRscData?.({
+            req,
+            spaceId: req.ctx.spaceDeployment?.spaceId ?? spaceId,
+            environment: req.ctx.spaceDeployment?.environment ?? environment,
+            revision: req.ctx.spaceDeployment?.revision ?? revision,
+            user: req.ctx.user,
+            loadOfflineData
+          })
+        )
+      : rscPath
+        ? { serverData: {} }
+        : undefined;
+
+  const server = buildServerInfo(req, config, { rscPath, rscData });
 
   if (offlineDataOverride === undefined && !cachedOfflineStr && offlineCacheKey && offlineData !== undefined) {
     offlineDataCache?.set(offlineCacheKey, JSON.stringify(offlineData));

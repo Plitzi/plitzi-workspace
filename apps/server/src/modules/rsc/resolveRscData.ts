@@ -1,4 +1,6 @@
-import { getPaths, matchRoutePath } from '@plitzi/sdk-shared/navigation';
+import { collectServerElements } from '@plitzi/sdk-shared/schema/serverElements';
+
+import { matchRscPage } from './matchRscPage';
 
 import type { Element, Environment, Schema, SSRRequest, SSRRscData, SSRUser } from '@plitzi/sdk-shared';
 
@@ -32,33 +34,6 @@ export type ResolveRscDataOptions = {
 };
 
 const DEFAULT_ELEMENT_TIMEOUT_MS = 5000;
-
-/** Depth-first walk of a page subtree. Iterative to stay safe on deeply nested schemas. */
-const collectSubtree = (flat: Record<string, Element>, rootId: string): Element[] => {
-  const collected: Element[] = [];
-  const seen = new Set<string>();
-  const pending = [rootId];
-  while (pending.length > 0) {
-    const id = pending.pop();
-    if (id === undefined || seen.has(id)) {
-      continue;
-    }
-
-    seen.add(id);
-    const element = flat[id] as Element | undefined;
-    if (!element) {
-      continue;
-    }
-
-    collected.push(element);
-    const { items } = element.definition;
-    if (items) {
-      pending.push(...items);
-    }
-  }
-
-  return collected;
-};
 
 const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> => {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -100,26 +75,13 @@ export const resolveRscData = async ({
     return {};
   }
 
-  const pages = schema.pages.reduce<Record<string, Element>>((acum, pageId) => {
-    const page = schema.flat[pageId] as Element | undefined;
-    if (page) {
-      acum[pageId] = page;
-    }
-
-    return acum;
-  }, {});
-  const paths = getPaths(pages, schema.pageFolders, !!user);
-  const { pageId, pathMatch } = matchRoutePath(paths, req.path, !!user);
-  if (!pageId) {
+  const match = matchRscPage(schema, req.path, user);
+  if (!match) {
     return { serverData: {} };
   }
 
-  const routeParams = pathMatch?.params ?? {};
-  const requested = ids ? new Set(ids) : undefined;
-  const targets = collectSubtree(schema.flat, pageId).filter(
-    element => element.definition.runtime === 'server' && (!requested || requested.has(element.id))
-  );
-
+  const { pageId, routeParams } = match;
+  const targets = collectServerElements(schema, pageId, ids);
   if (targets.length === 0) {
     return { serverData: {} };
   }
