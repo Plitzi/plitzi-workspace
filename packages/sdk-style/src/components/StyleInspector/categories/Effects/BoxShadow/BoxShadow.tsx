@@ -2,6 +2,7 @@ import Icon from '@plitzi/plitzi-ui/Icon';
 import { useCallback } from 'react';
 
 import BoxShadowItem from './BoxShadowItem';
+import { splitByCommaOutsideParens } from './helpers';
 import InspectorLabel from '../../../components/InspectorLabel';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
@@ -13,10 +14,9 @@ export type BoxShadowProps = {
 };
 
 const BoxShadow = ({ value = '', onChange }: BoxShadowProps) => {
-  const boxShadowRegex = /,(?![^(]*\))/gim;
   let boxShadows: string[] = [];
   if (value && value !== '') {
-    boxShadows = (value as string).split(boxShadowRegex);
+    boxShadows = splitByCommaOutsideParens(value as string);
   }
 
   const handleClickRemoveItem = (index: number) => (e: MouseEvent) => {

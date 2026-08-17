@@ -2,6 +2,7 @@ import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import { useCallback, useMemo, useRef } from 'react';
 
+import { splitBySpaceOutsideParens } from './helpers';
 import CategoryOption from '../../../components/CategoryOption';
 import CategorySection from '../../../components/CategorySection';
 
@@ -15,7 +16,7 @@ export type BoxShadowItemProps = {
 };
 
 const BoxShadowItem = ({ value = '1px 1px 3px 1px black', onChange, onRemove }: BoxShadowItemProps) => {
-  const valueParts = value.split(/ (?![^(]*\))/gim);
+  const valueParts = splitBySpaceOutsideParens(value);
   let { type = '', posX = '1px', posY = '1px', blur = '3px', size = '1px', color = 'black' } = {};
   if (valueParts.length === 6) {
     [type, posX, posY, blur, size, color] = valueParts;
