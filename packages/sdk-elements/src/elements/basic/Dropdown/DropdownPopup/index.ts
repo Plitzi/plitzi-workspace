@@ -40,8 +40,6 @@ const DropdownPopup = Object.assign(BaseDropdownPopup, {
         base: {
           default: {
             'background-color': 'white',
-            'min-height': '50px',
-            'min-width': '50px',
             'padding-right': '4px',
             'padding-bottom': '4px',
             'padding-left': '4px',

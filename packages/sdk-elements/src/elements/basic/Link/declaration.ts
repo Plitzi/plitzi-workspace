@@ -45,8 +45,6 @@ const declaration = {
         base: {
           default: {
             display: 'inline-block',
-            'min-height': '30px',
-            'min-width': '30px',
             color: '#333',
             cursor: 'pointer'
           }

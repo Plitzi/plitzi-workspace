@@ -52,9 +52,7 @@ const declaration = {
               default: {
                 'margin-top': '0px',
                 'margin-bottom': '10px',
-                'padding-left': '40px',
-                'min-width': '50px',
-                'min-height': '50px'
+                'padding-left': '40px'
               }
             }
           }
@@ -67,9 +65,7 @@ const declaration = {
               default: {
                 'margin-top': '0px',
                 'margin-bottom': '10px',
-                'padding-left': '40px',
-                'min-width': '50px',
-                'min-height': '50px'
+                'padding-left': '40px'
               }
             }
           }

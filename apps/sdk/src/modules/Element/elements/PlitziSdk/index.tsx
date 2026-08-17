@@ -44,10 +44,7 @@ const PlitziSdk = Object.assign(BasePlitziSdk, {
       displayMode: 'desktop',
       style: {
         base: {
-          default: {
-            'min-width': '50px',
-            'min-height': '50px'
-          }
+          default: {}
         }
       }
     },

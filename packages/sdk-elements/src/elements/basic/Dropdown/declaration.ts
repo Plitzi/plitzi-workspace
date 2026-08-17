@@ -49,8 +49,6 @@ const declaration = {
       style: {
         base: {
           default: {
-            'min-height': '50px',
-            'min-width': '50px',
             cursor: 'pointer',
             'user-select': 'none'
           }

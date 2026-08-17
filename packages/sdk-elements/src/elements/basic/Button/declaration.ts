@@ -49,8 +49,6 @@ const declaration = {
           style: {
             base: {
               default: {
-                'min-height': '30px',
-                'min-width': '30px',
                 'padding-top': '6px',
                 'padding-left': '12px',
                 'padding-right': '12px',
@@ -72,8 +70,6 @@ const declaration = {
           style: {
             base: {
               default: {
-                'min-height': '30px',
-                'min-width': '30px',
                 'padding-top': '6px',
                 'padding-left': '12px',
                 'padding-right': '12px',
@@ -95,8 +91,6 @@ const declaration = {
           style: {
             base: {
               default: {
-                'min-height': '30px',
-                'min-width': '30px',
                 'padding-top': '6px',
                 'padding-left': '12px',
                 'padding-right': '12px',

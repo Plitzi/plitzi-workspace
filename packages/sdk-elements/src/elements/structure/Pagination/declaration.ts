@@ -52,9 +52,7 @@ const declaration = {
           default: {
             display: 'flex',
             'align-items': 'center',
-            gap: '8px',
-            'min-width': '50px',
-            'min-height': '50px'
+            gap: '8px'
           }
         }
       },
