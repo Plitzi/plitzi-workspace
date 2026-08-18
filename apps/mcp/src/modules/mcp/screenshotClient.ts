@@ -28,7 +28,7 @@ export const createHttpScreenshotClient = ({
   renderBaseUrl,
   fetchImpl = fetch
 }: HttpScreenshotClientConfig): ScreenshotClient => ({
-  async capture({ pagePath, token, viewports }: ScreenshotInput): Promise<ScreenshotResult> {
+  async capture({ pagePath, token, viewports, fullPage }: ScreenshotInput): Promise<ScreenshotResult> {
     const url = composeUrl(renderBaseUrl, pagePath, token);
 
     let res: Response;
@@ -36,7 +36,7 @@ export const createHttpScreenshotClient = ({
       res = await fetchImpl(serviceUrl, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ url, viewports })
+        body: JSON.stringify({ url, viewports, fullPage })
       });
     } catch (err) {
       return { ok: false, error: 'SCREENSHOT_UNREACHABLE', message: `Browser service unreachable: ${String(err)}` };

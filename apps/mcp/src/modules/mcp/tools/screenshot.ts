@@ -37,7 +37,11 @@ export const screenshotShape = {
     .optional()
     .describe(
       'Which viewport(s) to capture. "both" catches responsive issues (e.g. overflow at one width). Default desktop.'
-    )
+    ),
+  fullPage: z
+    .boolean()
+    .optional()
+    .describe('Capture the full scrollable page instead of only the visible viewport. Default false.')
 };
 
 // Renders a page to a real IMAGE via the dedicated browser service, so a vision-capable agent can SEE the layout
@@ -87,7 +91,7 @@ export const screenshotTool = defineTool({
       };
     }
 
-    const shot = await ctx.screenshot.capture({ pagePath: pv.pagePath, token: pv.token, viewports });
+    const shot = await ctx.screenshot.capture({ pagePath: pv.pagePath, token: pv.token, viewports, fullPage: input.fullPage });
     if (!shot.ok) {
       return {
         warning: 'SCREENSHOT_UNAVAILABLE',
