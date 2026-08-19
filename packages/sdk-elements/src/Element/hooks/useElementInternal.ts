@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import getBindingsDetails from '@plitzi/sdk-shared/dataSource/getBindingsDetails';
 import { processTwig, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import useElementDataSource from './useElementDataSource';
 import useElementState from './useElementState';
@@ -35,9 +36,12 @@ export const getProps = (
   }
 
   // Variables and navigation params injection, for example twig interpolation
-  const { navigation = {}, variables = {} } = dataSource as Record<string, Record<string, Record<string, unknown>>>;
-  const { queryParams = {}, routeParams = {} } = navigation;
-  const data = { ...variables, ...routeParams, ...queryParams } as Record<string, unknown>;
+  const {
+    queryParams = {},
+    routeParams = {},
+    variables = {}
+  } = dataSource as Record<string, Record<string, Record<string, unknown>>>;
+  const data = { ...variables, ...routeParams, ...queryParams };
   if (Object.keys(data).length > 0) {
     const interpolated: Element['attributes'] = {};
     for (const key of Object.keys(attributes)) {
@@ -87,14 +91,15 @@ export type UseElementInternalProps = {
 const useElementInternal = ({ element, children, internalProps, previewMode = false }: UseElementInternalProps) => {
   const { id } = internalProps;
   const { state, setElementState } = useElementState({ id, bindings: element.definition.bindings, previewMode });
-  const dataSource = useElementDataSource({
-    bindings: element.definition.bindings,
-    sources: ['variables', 'navigation']
-  });
+  const [[routeParams, queryParams]] = useCommonStore(['navigation.routeParams', 'navigation.queryParams']);
+  const dataSource = useElementDataSource({ bindings: element.definition.bindings, sources: ['variables'] });
 
   const internalPropsParsed = useMemo(
-    () => ({ ...getProps(element, internalProps, dataSource, state), setElementState }),
-    [element, internalProps, dataSource, state, setElementState]
+    () => ({
+      ...getProps(element, internalProps, { ...dataSource, routeParams, queryParams }, state),
+      setElementState
+    }),
+    [element, internalProps, dataSource, routeParams, queryParams, state, setElementState]
   );
 
   return {
