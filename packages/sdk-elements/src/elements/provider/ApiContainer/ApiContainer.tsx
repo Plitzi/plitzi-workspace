@@ -333,9 +333,11 @@ const ApiContainer = ({
       interactionTriggers={interactionTriggers}
       interactionCallbacks={interactionCallbacks}
     >
-      <StoreProvider inherit="live" name={`Api:${id}`} value={storeContext}>
-        {(!isLoading || renderWhileLoading) && children}
-      </StoreProvider>
+      {(!isLoading || renderWhileLoading) && (
+        <StoreProvider inherit="live" name={`Api:${id}`} value={storeContext}>
+          {children}
+        </StoreProvider>
+      )}
     </RootElement>
   );
 };
