@@ -34,16 +34,15 @@ export const getProps = (
     ({ attributes, definition, style } = bindingData);
   }
 
-  // Variables
-  const { variables } = dataSource;
-  if (variables && Object.keys(variables).length > 0) {
+  // Variables and navigation params injection, for example twig interpolation
+  const { navigation = {}, variables = {} } = dataSource as Record<string, Record<string, Record<string, unknown>>>;
+  const { queryParams = {}, routeParams = {} } = navigation;
+  const data = { ...variables, ...routeParams, ...queryParams } as Record<string, unknown>;
+  if (Object.keys(data).length > 0) {
     const interpolated: Element['attributes'] = {};
     for (const key of Object.keys(attributes)) {
       const value = attributes[key];
-      interpolated[key] =
-        typeof value === 'string' && hasValidToken(value)
-          ? processTwig(value, variables as Record<string, unknown>, true)
-          : value;
+      interpolated[key] = typeof value === 'string' && hasValidToken(value) ? processTwig(value, data, true) : value;
     }
 
     attributes = interpolated;
@@ -88,7 +87,10 @@ export type UseElementInternalProps = {
 const useElementInternal = ({ element, children, internalProps, previewMode = false }: UseElementInternalProps) => {
   const { id } = internalProps;
   const { state, setElementState } = useElementState({ id, bindings: element.definition.bindings, previewMode });
-  const dataSource = useElementDataSource({ bindings: element.definition.bindings, sources: ['variables'] });
+  const dataSource = useElementDataSource({
+    bindings: element.definition.bindings,
+    sources: ['variables', 'navigation']
+  });
 
   const internalPropsParsed = useMemo(
     () => ({ ...getProps(element, internalProps, dataSource, state), setElementState }),

@@ -1,6 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
 
-import { get } from '@plitzi/plitzi-ui/helpers';
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import clsx from 'clsx';
 import { useCallback, use, useEffect, useMemo } from 'react';
@@ -8,7 +7,6 @@ import { useCallback, use, useEffect, useMemo } from 'react';
 import { StoreProvider } from '@plitzi/nexus/react';
 import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
-import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
@@ -98,7 +96,7 @@ const ApiContainer = ({
   const { loaded: rscResolved, elementData, refresh } = useRscData<Record<string, unknown>>();
   const sourceName = getSourceName('apiContainer', { idRef });
   const {
-    settings: { previewMode, debugMode },
+    settings: { previewMode },
     contexts: { InteractionsContext }
   } = usePlitziServiceContext();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
@@ -107,35 +105,6 @@ const ApiContainer = ({
     'navigation.queryParams',
     'navigation.navigate'
   ]);
-  const queryCompiled = useMemo(() => {
-    if (!query) {
-      return '';
-    }
-
-    try {
-      const params = { ...queryParams, ...routeParams };
-      // Check if Tokens required are defined first, if not skip fetch
-      if (debugMode) {
-        [...query.matchAll(/{{([ ]+|)(?<token>[a-zA-Z0-9-_:*/]+)([ ]+|)}}/gim)].forEach(({ groups }) => {
-          const token = groups?.token.trim();
-          if (!token || !get(params, token)) {
-            console.log(`Token ${token} is required`);
-          }
-        });
-      }
-
-      const result = processTwig(query, params, true);
-      if (typeof result !== 'string') {
-        return query;
-      }
-
-      return result;
-    } catch (e) {
-      console.error((e as Error).message);
-    }
-
-    return '';
-  }, [query, queryParams, routeParams, debugMode]);
 
   const customHeaders = useMemo(() => {
     if (!accessToken) {
@@ -154,18 +123,18 @@ const ApiContainer = ({
 
     if (
       previewMode &&
-      queryCompiled &&
+      query &&
       (when === emptyObject || QueryBuilderEvaluator(when, { ...routeParams, ...queryParams }))
     ) {
       return true;
     }
 
-    if (!previewMode && (queryCompiled || (mockData && mockData !== '{}' && mockData !== emptyObject))) {
+    if (!previewMode && (query || (mockData && mockData !== '{}' && mockData !== emptyObject))) {
       return true;
     }
 
     return false;
-  }, [serverMode, visible, previewMode, queryCompiled, when, routeParams, queryParams, mockData]);
+  }, [serverMode, visible, previewMode, query, when, routeParams, queryParams, mockData]);
 
   const {
     isLoading: isApiLoading,
@@ -174,7 +143,7 @@ const ApiContainer = ({
     isSuccess,
     isError
   } = useApi({
-    url: queryCompiled,
+    url: query,
     method,
     credentials,
     mock: !previewMode ? mockData : undefined,
@@ -242,14 +211,13 @@ const ApiContainer = ({
     }
 
     if (isSuccess) {
-      void interactionsManager.interactionTrigger(idRef, 'onApiSuccess', { url: queryCompiled, method, ...data });
+      void interactionsManager.interactionTrigger(idRef, 'onApiSuccess', { url: query, method, ...data });
     } else if (isError) {
-      void interactionsManager.interactionTrigger(idRef, 'onApiError', { url: queryCompiled, method, ...data });
+      void interactionsManager.interactionTrigger(idRef, 'onApiError', { url: query, method, ...data });
     }
 
     return undefined;
-  }, [data, idRef, interactionsManager, isError, isLoading, isSuccess, method, queryCompiled]);
-
+  }, [data, idRef, interactionsManager, isError, isLoading, isSuccess, method, query]);
   // The published slice, not the raw response: state travels with the data so an empty result, a failed provider
   // and an accumulated "load more" list are all readable through ordinary bindings, with no new slot mechanism.
   const publishedData = useMemo<Record<string, unknown>>(
