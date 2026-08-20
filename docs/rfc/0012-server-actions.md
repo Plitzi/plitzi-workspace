@@ -750,6 +750,10 @@ closest existing sibling: a per-space server-side document with a list, a form a
 The task catalog comes from the server (`GET /_action/catalog`, session-gated), never from a hardcoded list —
 that is what makes a self-hoster's custom task appear in their builder with no fork.
 
+**Docs** — [`docs/en/server-actions.md`](../en/server-actions.md) is the using-it guide: authoring, the three
+call modes, the flow triggers, webhooks, schedules, the limits table, and a symptom→cause list for when a flow
+does not do what its author expected.
+
 **MCP** — mirrors the connector operations in `apps/mcp/src/modules/mcp/tools/operations/connectors/`:
 `upsertAction`, `patchAction`, `deleteAction`, reading `plitzi://actions/{env}` for what exists and
 `plitzi://actions/{env}/tasks` for the steps THIS deployment can run. Two properties the implementation pinned:
@@ -788,7 +792,7 @@ Plitzi's own deployment is a consumer of every one of these. No private path.
 | **2** ✅ | `webhook` trigger with HMAC verification over the raw body, per-caller rate limiting, delivery-id idempotency; `ai.complete` on the deployment | Stripe/CMS inbound |
 | **3** ✅ | SSE negotiation, `stream.emit`, heartbeat, `DELETE /_action/run/:runId`, `stream` mode + `onFlowProgress` | Long work that shows progress |
 | **4** ✅ | `render` trigger: a `runtime: 'server'` element names an action, fed the page's route and query params | Reads a manifest cannot express |
-| **5** ✅ | `schedule` trigger + cron matcher + Redis leader lock in the api role; `db.query` with bound parameters and deployment-registered drivers | Digests, syncs, customer databases |
+| **5** ✅ | `schedule` trigger + cron matcher (shared, so the validator refuses an expression that would never fire) + Redis leader lock in the api role; `db.query` with bound parameters, and the MySQL/MariaDB driver the deployment registers | Digests, syncs, customer databases |
 
 Phase 0 was the whole architectural risk; everything after it was surface. Two things the phases did NOT
 deliver, and why:

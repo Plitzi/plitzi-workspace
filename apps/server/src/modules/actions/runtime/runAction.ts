@@ -9,6 +9,7 @@ import { precheckRun } from './precheck';
 import { buildRedactor, projectUser, resolveCredentials } from './scope';
 
 import type {
+  ActionRunRecord,
   ActionRunRequest,
   ActionRunResult,
   ActionsConfig,
@@ -150,6 +151,15 @@ export const createActionRunner = (
   baseFetch: typeof fetch = fetch
 ): ActionRunner => {
   const kv = config.kv ?? createMemoryKv();
+
+  /** Never allowed to fail a run: a logging outage must not take an action down, the same rule metering follows. */
+  const record = async (entry: ActionRunRecord) => {
+    try {
+      await config.onRun?.(entry);
+    } catch (error) {
+      console.error('[Actions] run record failed:', error);
+    }
+  };
   const runAction = async (request: ActionRunRequest): Promise<ActionRunResult> => {
     const { entry, runId } = request;
     const { document } = entry;
@@ -220,6 +230,8 @@ export const createActionRunner = (
     });
 
     const trace: InteractionNode[] = [];
+    const startedAt = Date.now();
+    let failure: string | undefined;
     /**
      * What every step can see.
      *
@@ -288,6 +300,7 @@ export const createActionRunner = (
         throw error;
       }
 
+      failure = error instanceof Error ? error.message : String(error);
       trace.push({
         node: { id: 'error', title: 'Error', action: 'error' } as ElementInteraction,
         status: 'failed',
@@ -304,6 +317,21 @@ export const createActionRunner = (
     // What the `flow.output` step named, and nothing else. No second contract to disagree with it: a key that step
     // did not name never existed as far as the caller is concerned.
     const output = (returned ?? {}) as Record<string, unknown>;
+
+    // Recorded here rather than at each transport, so a run started by a webhook, a schedule or a deployment's own
+    // trigger leaves the same trace as one started by a page.
+    await record({
+      runId,
+      actionId: entry.id,
+      spaceId: request.spaceId,
+      environment: request.environment,
+      trigger: request.trigger,
+      status,
+      durationMs: Date.now() - startedAt,
+      ...(request.user ? { userId: request.user.id } : {}),
+      nodes: trace.map(step => ({ id: step.node.id, action: step.node.action, status: step.status })),
+      ...(failure === undefined ? {} : { error: redact(failure) })
+    });
 
     return { runId, status, output: redact(output), trace };
   };

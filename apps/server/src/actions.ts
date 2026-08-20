@@ -25,8 +25,10 @@ export { describeCatalog, describeTask } from './modules/actions/taskCatalog';
 
 export type {
   ActionCredential,
+  ActionDbDriver,
   ActionKvStore,
   ActionLookups,
+  ActionRunRecord,
   ActionRunRequest,
   ActionRunResult,
   ActionsConfig,

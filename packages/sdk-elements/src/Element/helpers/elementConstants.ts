@@ -74,6 +74,15 @@ export const interactionBasicTriggers: Record<string, InteractionCallback> = {
     type: 'trigger',
     preview: { actionId: '', runId: '', error: '', reason: '' },
     params: {}
+  },
+  /** A streaming run reporting as it goes. Fires once per chunk the flow emitted, which is what a progress bar or
+   *  a token-by-token answer is built from — the run is still going when this arrives. */
+  onFlowProgress: {
+    action: 'onFlowProgress',
+    title: 'On Server Action Progress',
+    type: 'trigger',
+    preview: { actionId: '', runId: '', chunk: '' },
+    params: {}
   }
 };
 

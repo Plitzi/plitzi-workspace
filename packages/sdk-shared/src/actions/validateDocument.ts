@@ -1,3 +1,5 @@
+import { parseCron } from './cron';
+
 /**
  * The one server-action validator.
  *
@@ -108,8 +110,18 @@ const validateTriggers = (
       return;
     }
 
-    if (trigger.type === 'schedule' && !isFilledString(trigger.cron)) {
-      errors.push({ path: `${path}.cron`, message: 'a scheduled trigger needs a cron expression' });
+    if (trigger.type === 'schedule') {
+      if (!isFilledString(trigger.cron)) {
+        errors.push({ path: `${path}.cron`, message: 'a scheduled trigger needs a cron expression' });
+      } else if (!parseCron(trigger.cron)) {
+        // Checked against the very parser the runner uses. An expression it cannot read does not fail loudly at
+        // run time — it simply never matches a minute, and the schedule sits silent for as long as nobody looks.
+        errors.push({
+          path: `${path}.cron`,
+          message: `"${trigger.cron}" is not an expression this server can read, so it would never fire`,
+          hint: 'five fields — minute hour day-of-month month day-of-week — with *, lists, ranges and steps'
+        });
+      }
     }
 
     if (trigger.type === 'custom' && !isFilledString(trigger.name)) {

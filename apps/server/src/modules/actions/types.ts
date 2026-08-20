@@ -143,7 +143,39 @@ export type ActionsConfig = {
   rateLimit?: { webhookPerMinute?: number };
   /** Database engines this deployment lets a flow reach. Empty → the `db.query` task is not offered at all. */
   dbDrivers?: ActionDbDriver[];
+  /**
+   * Called once per run that started, for a deployment that keeps a record.
+   *
+   * Best-effort by contract: it is awaited but never allowed to fail a run — a logging outage must not take an
+   * action down, which is the same rule metering follows.
+   */
+  onRun?: (record: ActionRunRecord) => void | Promise<void>;
   fetchImpl?: typeof fetch;
+};
+
+/**
+ * What one run was, for whoever keeps the record.
+ *
+ * Emitted for every run that STARTED — completed, failed or aborted — and never for one that was refused before
+ * it began: a 409 is not a run, and logging it would bury the real ones under retries.
+ *
+ * Deliberately not the trace: the step results are the space's own data and can be large, so what leaves here is
+ * the shape of what happened. The trace goes to the author who asked for it, in the test-run panel.
+ */
+export type ActionRunRecord = {
+  runId: string;
+  actionId: string;
+  spaceId: number;
+  environment: Environment;
+  trigger: ActionTriggerType;
+  status: ActionRunStatus;
+  durationMs: number;
+  /** Who asked, when a session carried it. Absent for a webhook, a schedule or an anonymous visitor. */
+  userId?: number;
+  /** One entry per step that ran, in order — enough to see where a flow stopped without keeping its data. */
+  nodes: { id: string; action: string; status: InteractionNodeStatus }[];
+  /** Present when the run ended badly. Already redacted of credential values. */
+  error?: string;
 };
 
 export type ResolvedActionLimits = Required<ActionLimits>;

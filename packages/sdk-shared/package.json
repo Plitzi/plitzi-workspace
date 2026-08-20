@@ -18,6 +18,10 @@
       "types": "./dist/actions/index.d.ts",
       "import": "./dist/actions/index.mjs"
     },
+    "./actions/cron": {
+      "types": "./dist/actions/cron.d.ts",
+      "import": "./dist/actions/cron.mjs"
+    },
     "./actions/index": {
       "types": "./dist/actions/index.d.ts",
       "import": "./dist/actions/index.mjs"

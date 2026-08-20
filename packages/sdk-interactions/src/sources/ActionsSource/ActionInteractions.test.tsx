@@ -37,7 +37,10 @@ const mount = () => {
     </InteractionsContext>
   );
 
-  return registered.runServerAction.callback as unknown as RunCallback;
+  return {
+    run: registered.runServerAction.callback as unknown as RunCallback,
+    cancel: registered.cancelServerAction.callback as unknown as RunCallback
+  };
 };
 
 const jsonResponse = (status: number, payload: Record<string, unknown>) =>
@@ -56,7 +59,7 @@ describe('ActionInteractions', () => {
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    const result = await mount()({ actionId: 'quote', input: '{"amount": 3}', mode: 'await' });
+    const result = await mount().run({ actionId: 'quote', input: '{"amount": 3}', mode: 'await' });
 
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit & { body: string }];
     expect(url).toBe('/_action');
@@ -75,7 +78,7 @@ describe('ActionInteractions', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     // Resolves while the request is still in flight — that is the whole difference between the two modes.
-    const result = await mount()({ actionId: 'send-email', input: '{}', mode: 'detached' });
+    const result = await mount().run({ actionId: 'send-email', input: '{}', mode: 'detached' });
 
     expect(result).toMatchObject({ accepted: true });
     const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
@@ -90,7 +93,7 @@ describe('ActionInteractions', () => {
       vi.fn(() => Promise.resolve(jsonResponse(200, { runId: 'r9', status: 'completed', output: { sent: true } })))
     );
 
-    await mount()({ actionId: 'send-email', input: '{}', mode: 'detached' }, { elementRef: 'button1' });
+    await mount().run({ actionId: 'send-email', input: '{}', mode: 'detached' }, { elementRef: 'button1' });
     // The step already returned; the report lands when the server answers, which is the whole point of onFlowEnd.
     await new Promise(resolve => setTimeout(resolve, 0));
 
@@ -107,7 +110,7 @@ describe('ActionInteractions', () => {
       vi.fn(() => Promise.resolve(jsonResponse(409, { error: 'already running', reason: 'duplicate' })))
     );
 
-    await mount()({ actionId: 'send-email', input: '{}', mode: 'detached' }, { elementRef: 'button1' });
+    await mount().run({ actionId: 'send-email', input: '{}', mode: 'detached' }, { elementRef: 'button1' });
     await new Promise(resolve => setTimeout(resolve, 0));
 
     expect(interactionTrigger).toHaveBeenCalledWith(
@@ -123,10 +126,30 @@ describe('ActionInteractions', () => {
       vi.fn(() => Promise.resolve(jsonResponse(409, { error: 'already running', reason: 'duplicate' })))
     );
 
-    const result = await mount()({ actionId: 'quote', input: '{}', mode: 'await' });
+    const result = await mount().run({ actionId: 'quote', input: '{}', mode: 'await' });
 
     expect(result).toMatchObject({ status: 'failed', reason: 'duplicate' });
     expect(warning).toHaveBeenCalled();
+  });
+
+  it('cancels a run by id, and reads the server’s answer', async () => {
+    const fetchMock = vi.fn(() => Promise.resolve({ ok: true, status: 204, json: () => Promise.resolve({}) } as Response));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await mount().cancel({ runId: 'run-7' });
+
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe('/_action/run/run-7');
+    expect(init.method).toBe('DELETE');
+    expect(result).toEqual({ cancelled: true });
+  });
+
+  it('reports a run it was not allowed to cancel as not cancelled', async () => {
+    // The server answers 404 for a run that is not there AND for one that is not yours: telling them apart would
+    // be an oracle for which run ids are live.
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) } as Response)));
+
+    expect(await mount().cancel({ runId: 'someone-elses' })).toEqual({ cancelled: false });
   });
 
   it('stays inert, and says so once, when the page has no server tier', async () => {
@@ -134,7 +157,7 @@ describe('ActionInteractions', () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
 
-    const result = await mount()({ actionId: 'quote', input: '{}', mode: 'await' });
+    const result = await mount().run({ actionId: 'quote', input: '{}', mode: 'await' });
 
     expect(result).toMatchObject({ status: 'skipped' });
     expect(fetchMock).not.toHaveBeenCalled();

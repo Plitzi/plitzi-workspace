@@ -11,6 +11,7 @@ Guides for working with the `plitzi-workspace` monorepo.
 | [Development](./development.md) | Stack, commands, and contribution workflow |
 | [Testing](./testing.md) | Vitest for units, Playwright for what a browser opens |
 | [Releases](./releases.md) | Versioning and publishing with Changesets |
+| [Server actions](./server-actions.md) | Work a page cannot do in the browser: authoring flows the server runs, and calling them from a page |
 
 ## Package documentation
 

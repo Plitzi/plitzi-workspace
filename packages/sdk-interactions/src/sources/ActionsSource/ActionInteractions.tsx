@@ -261,8 +261,41 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
     [endpoint, reportFlow]
   );
 
+  /**
+   * Stops a run this page started.
+   *
+   * The socket closing already aborts an awaited run, so this is for what that cannot cover: a `detached` or
+   * `stream` run the visitor wants to call off, and a run started in another tab. The server checks that the
+   * caller owns it — a run id travels to the browser, and holding one must not let anybody stop somebody else's.
+   */
+  const handleCancelAction = useCallback(
+    async (params: { runId: string }) => {
+      if (!endpoint || !params.runId) {
+        return { cancelled: false };
+      }
+
+      const response = await fetch(`${endpoint}/run/${params.runId}`, {
+        method: 'DELETE',
+        credentials: 'same-origin'
+      });
+
+      return { cancelled: response.status === 204 };
+    },
+    [endpoint]
+  );
+
   const interactionCallbacks = useMemo(
     (): Record<string, InteractionCallback> => ({
+      cancelServerAction: {
+        action: 'cancelServerAction',
+        title: 'Cancel Server Action',
+        type: 'globalCallback',
+        callback: handleCancelAction as InteractionCallback['callback'],
+        preview: { cancelled: '' },
+        params: {
+          runId: { type: 'text', canBind: true, defaultValue: '', label: 'Run id' }
+        }
+      },
       runServerAction: {
         action: 'runServerAction',
         title: 'Run Server Action',
@@ -293,7 +326,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         }
       }
     }),
-    [handleRunAction]
+    [handleRunAction, handleCancelAction]
   );
 
   useInteractions({ id: 'actions', callbacks: interactionCallbacks });

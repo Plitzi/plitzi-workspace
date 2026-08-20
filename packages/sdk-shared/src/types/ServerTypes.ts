@@ -464,6 +464,13 @@ export type SSRActionConfig = {
    */
   dbDrivers?: unknown[];
   /**
+   * Called once per run that STARTED — completed, failed or aborted — for a deployment that keeps a record.
+   * Shaped as `ActionRunRecord` in `@plitzi/sdk-server/actions`.
+   *
+   * A refused run is not reported: a 409 is not a run, and logging one would bury the real ones under retries.
+   */
+  onRun?: (record: unknown) => void | Promise<void>;
+  /**
    * Backs the `kv` tasks — shaped as `ActionKvStore` in `@plitzi/sdk-server/actions`.
    *
    * Omitted leaves an in-process store, which counts only its own replica. That is fine for one; for a cluster it

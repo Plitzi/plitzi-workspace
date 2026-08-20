@@ -62,8 +62,10 @@ export type { ScheduleResult, ScheduleRunner, ScheduleTick } from './runtime/sch
 export type { ActionTaskDescriptor } from './taskCatalog';
 export type {
   ActionCredential,
+  ActionDbDriver,
   ActionKvStore,
   ActionLookups,
+  ActionRunRecord,
   ActionRunRequest,
   ActionRunResult,
   ActionsConfig,
