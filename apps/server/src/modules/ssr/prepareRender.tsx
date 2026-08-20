@@ -4,7 +4,7 @@ import { loadPluginComponents } from './loadPluginComponents';
 import { registerExternalPlugins } from './registerExternalPlugins';
 import { resolvePageSeo } from './resolvePageSeo';
 import { sdkAssetVersion } from '../../core/sdkAssets';
-import { resolveRscEndpoint } from '../../core/services/resolve';
+import { resolveActionEndpoint, resolveRscEndpoint } from '../../core/services/resolve';
 import { buildServerInfo } from '../../helpers/buildServerInfo';
 import { buildOfflineDataCacheKey } from '../../helpers/cache';
 import { escapeJson } from '../../helpers/escapeJson';
@@ -106,7 +106,7 @@ export const prepareRender = async (
 
   const pageSeo = resolvePageSeo(schema, pageMatch?.pageId);
 
-  const server = buildServerInfo(req, config, { rscPath, rscData });
+  const server = buildServerInfo(req, config, { rscPath, rscData, actionPath: resolveActionEndpoint(config) });
 
   if (offlineDataOverride === undefined && !cachedOfflineStr && offlineCacheKey && offlineData !== undefined) {
     offlineDataCache?.set(offlineCacheKey, JSON.stringify(offlineData));

@@ -1,6 +1,7 @@
 import { createHttpServer } from './baseServer';
 import { buildCacheManager, createServerCaches, DEFAULT_TTL_MS, destroyServerCaches } from '../../helpers/cache';
 import normalizePlugins, { normalizePluginSource } from '../../helpers/normalizePlugins';
+import { createActionsModule } from '../../modules/actions';
 import { invalidatePluginComponentCache } from '../../modules/ssr/loadPluginComponents';
 import { createMemoryDraftStore } from '../../modules/ssr/preview';
 import { compileTemplate } from '../../modules/ssr/template';
@@ -8,6 +9,7 @@ import { PluginManager } from '../../plugins/manager';
 import { makeHandler } from '../http/dispatcher';
 import { buildPagePipeline } from '../services/registry';
 
+import type { ActionsConfig } from '../../modules/actions';
 import type { BuildContext } from '../http/dispatcher';
 import type { PipelineExtensions, SSRContext } from '../http/types';
 import type { ResolvedServices } from '../services/resolve';
@@ -52,6 +54,18 @@ export const createPageServer = (
     }
   };
 
+  // Built here rather than on first use so a malformed task set fails at BOOT, where someone is watching, instead
+  // of on the first visitor's click. The lookups are typed structurally in the shared config (they answer
+  // `unknown`) — this is the single seam where they become this package's own contract.
+  const actions = config.action?.lookups
+    ? createActionsModule({
+        lookups: config.action.lookups as ActionsConfig['lookups'],
+        tasks: config.action.tasks as ActionsConfig['tasks'],
+        limits: config.action.limits,
+        concurrency: config.action.concurrency
+      })
+    : undefined;
+
   const stages = buildPagePipeline(services, extensions);
   const makeHandlerForPort = (port: number) => {
     const buildContext: BuildContext<SSRContext> = (raw, rawRes, req, res) => ({
@@ -63,7 +77,8 @@ export const createPageServer = (
       port,
       renderFn,
       caches,
-      pluginManager
+      pluginManager,
+      actions
     });
 
     return makeHandler('SSR', buildContext, stages, config.compression);

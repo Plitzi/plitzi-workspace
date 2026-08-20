@@ -46,6 +46,9 @@ export type CommonState = {
   // an element scope that owns `runtime` would keep a delegated `runtime.rsc.*` write to itself, and nothing but the
   // root ever owns `rsc`, so every write from any depth lands where the whole tree reads it.
   rsc?: RscState;
+  // Where this origin runs server actions, seeded at the root from what the rendering server published. Top-level
+  // beside `rsc` and for the same reason: nothing but the root owns it, and every depth reads it.
+  actions?: ActionsState;
   // How THIS render is happening. Seeded once at the root of whichever surface is mounting (the SDK, the builder) and
   // read from the store by everything below, instead of being threaded through every provider as five props.
   render?: RenderSettings;
@@ -77,6 +80,12 @@ export type RenderSettings = {
 // has to answer it (`endpoint`), which a client-only render has none of. `loaded` separates "no payload ever arrived"
 // (the builder, an embed → providers fall back to mock data) from "it arrived and this element is not in it" (a
 // provider that failed server-side → an error, never dressed up as content). `data` is keyed by element id.
+/** Absent `endpoint` is the whole feature switch: a render with no server tier leaves every `serverAction` step
+ *  inert instead of letting each click discover a 404. */
+export type ActionsState = {
+  endpoint?: string;
+};
+
 export type RscState = {
   enabled?: boolean;
   endpoint?: string;

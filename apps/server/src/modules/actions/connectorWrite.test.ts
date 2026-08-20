@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { handleAction } from './handler';
+import { handleAction } from './connectorWrite';
 
 import type { ConnectorManifest } from '../connectors/types';
 import type { Element, SSRPageServerConfig, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';

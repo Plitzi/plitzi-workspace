@@ -1,3 +1,4 @@
+import type { ActionLimits } from './ActionTypes';
 import type { Environment } from './CommonTypes';
 import type { ConnectorEntry } from './ConnectorTypes';
 import type { Schema } from './SchemaTypes';
@@ -412,9 +413,34 @@ export interface SSRRscContext {
   loadOfflineData: () => Promise<OfflineDataRaw | undefined>;
 }
 
+/**
+ * How the server reaches a space's actions, and what it may run.
+ *
+ * Typed loosely for the same reason `ConnectorLookupsConfig` is — the document is executed by
+ * `@plitzi/sdk-server`'s actions module and the shared types stay free of its internals. Shaped as `ActionLookups`
+ * there.
+ */
+export type ActionLookupsConfig = {
+  getAction: (spaceId: number, actionId: string) => Promise<unknown>;
+  listActions?: (spaceId: number) => Promise<unknown[]>;
+  getCredential?: (spaceId: number, identifier: string) => Promise<Record<string, string> | undefined>;
+  getConnector?: (spaceId: number, connectorId: string) => Promise<unknown>;
+};
+
 export type SSRActionConfig = {
-  /** URL path for the write endpoint. Defaults to '/_action'. */
+  /** URL path for the write endpoint, and the base for the action-addressed routes. Defaults to '/_action'. */
   path?: string;
+  /**
+   * Supplying these is what turns server actions on: without a way to read a document there is nothing to run, and
+   * the endpoint keeps answering element-addressed connector writes alone.
+   */
+  lookups?: ActionLookupsConfig;
+  /** Deployment-owned tasks, shaped as `ActionTask` in `@plitzi/sdk-server/actions`. Validated at boot. */
+  tasks?: unknown[];
+  /** Ceilings for every run this server accepts. A document may tighten them, never widen them. */
+  limits?: ActionLimits;
+  /** Concurrency ceilings, counted per space. */
+  concurrency?: { perSpace?: number; perProcess?: number };
 };
 
 /**

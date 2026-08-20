@@ -1,5 +1,6 @@
 import type { RawResponse } from '../../helpers/buildResponseHelpers';
 import type { ServerCaches } from '../../helpers/cache';
+import type { ActionsModule } from '../../modules/actions';
 import type { PluginManager } from '../../plugins/manager';
 import type {
   SSRPageServerConfig,
@@ -22,6 +23,14 @@ export interface BaseContext {
   /** Set by the stage that answers when the path alone does not identify the work (the MCP endpoint serves every
    *  JSON-RPC method on the same URL). The dispatcher folds it into the access log. */
   operation?: string;
+  /**
+   * Aborted when the client goes away.
+   *
+   * The pipeline had no request lifecycle at all before this: a stage that kept working after the socket closed
+   * had no way to find out, which is affordable for a page render and is not for anything long-lived. Stages that
+   * spend real work on behalf of a caller should hand this to whatever they call.
+   */
+  signal: AbortSignal;
 }
 
 // The richer context an SSR server builds: the render template, caches and plugin manager that the page/RSC and
@@ -30,6 +39,9 @@ export interface BaseContext {
 // `BaseContext`: a stage that runs in any server cannot assume them.
 export interface SSRContext extends BaseContext {
   config: SSRPageServerConfig;
+  /** Built at boot when the deployment configured `action.lookups`, so its task registry is validated once and
+   *  its guards are a single set for the process. Absent means this server runs no actions. */
+  actions?: ActionsModule;
   renderFn: SSRTemplateFn;
   caches: ServerCaches;
   pluginManager: PluginManager;

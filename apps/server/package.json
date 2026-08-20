@@ -38,6 +38,11 @@
       "types": "./dist/ssr.d.ts",
       "import": "./dist/ssr.js",
       "default": "./dist/ssr.js"
+    },
+    "./actions": {
+      "types": "./dist/actions.d.ts",
+      "import": "./dist/actions.js",
+      "default": "./dist/actions.js"
     }
   },
   "repository": {

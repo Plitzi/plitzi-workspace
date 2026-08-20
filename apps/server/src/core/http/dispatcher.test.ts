@@ -9,7 +9,7 @@ import type { ServerLogEvent, ServerRequestLogEvent } from '@plitzi/sdk-shared';
 import type { IncomingMessage } from 'node:http';
 
 const fakeRequest = (url: string, method = 'GET'): IncomingMessage =>
-  ({ url, method, headers: { host: 'example.test' }, socket: {} }) as unknown as IncomingMessage;
+  ({ url, method, headers: { host: 'example.test' }, socket: {}, once: () => undefined }) as unknown as IncomingMessage;
 
 // A request as it arrives through the proxy chain: forwarding headers plus the socket peer underneath them.
 const fakeClientRequest = (headers: Record<string, string>, remoteAddress?: string): IncomingMessage =>
@@ -17,7 +17,9 @@ const fakeClientRequest = (headers: Record<string, string>, remoteAddress?: stri
     url: '/',
     method: 'GET',
     headers: { host: 'example.test', ...headers },
-    socket: { remoteAddress }
+    socket: { remoteAddress },
+    // The dispatcher listens for the peer hanging up, so a fake request has to be able to carry a listener.
+    once: () => undefined
   }) as unknown as IncomingMessage;
 
 const fakeResponse = (): RawResponse => ({

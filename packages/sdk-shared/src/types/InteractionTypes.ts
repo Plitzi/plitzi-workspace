@@ -3,7 +3,10 @@
 import type { ElementInteraction } from './SchemaTypes';
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 
-export type InteractionCallbackType = 'trigger' | 'globalCallback' | 'callback' | 'utility';
+// `task` is server-only: it runs inside a server action, never in the browser. It is not a `utility` — those are
+// resolved by action alone and offered in CLIENT flows, where a task has nothing to run on — and not a
+// `globalCallback`, which names a client source module.
+export type InteractionCallbackType = 'trigger' | 'globalCallback' | 'callback' | 'utility' | 'task';
 // `failed` means the flow ran to the end but at least one of its steps did: a flow does not abort on a failed step,
 // so the aggregate status reports the worst outcome rather than the fact that the traversal finished.
 export type InteractionStatus = 'completed' | 'skipped' | 'failed';

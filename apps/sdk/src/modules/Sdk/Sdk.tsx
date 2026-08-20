@@ -8,6 +8,7 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import useActionsSync from '@plitzi/sdk-shared/server/actions/useActionsSync';
 import useRscSync from '@plitzi/sdk-shared/server/rsc/useRscSync';
 import { useRenderSettings, useSdkStore } from '@plitzi/sdk-shared/store';
 import { ThemeContext } from '@plitzi/sdk-shared/theme';
@@ -46,6 +47,7 @@ const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk
   ]);
   const { renderMode, previewMode, debugMode, environment, isHydrating } = useRenderSettings();
   useRscSync(server?.ssr);
+  useActionsSync(server?.ssr);
 
   const css = useMemo(() => {
     const segmentsCss = Object.values(segments).map(segment => segment.style.cache);
