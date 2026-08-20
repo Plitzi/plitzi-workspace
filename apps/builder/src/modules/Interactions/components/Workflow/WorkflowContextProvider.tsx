@@ -18,6 +18,14 @@ export type WorkflowContextProviderProps = {
   direction: 'horizontal' | 'vertical';
   dataSource?: Record<string, Source['meta']>;
   nodeDefinitions?: InteractionCallback[];
+  /**
+   * What a new TRIGGER starts as, when there is an obvious answer.
+   *
+   * A server action is nearly always called by a page, so a new flow that opens on "Select a trigger" asks a
+   * question with one sensible answer. An element's interactions have no such default — an `onClick` is no more
+   * likely than an `onSubmit` — so this stays optional and they pass nothing.
+   */
+  defaultTrigger?: string;
   onChange: (nodes: Record<string, ElementInteraction>, debounced?: boolean) => void;
   setFlowId: (flowId: string) => void;
 };
@@ -28,6 +36,7 @@ const WorkflowContextProvider = ({
   direction = 'horizontal',
   dataSource = {},
   nodeDefinitions,
+  defaultTrigger,
   setFlowId,
   onChange
 }: WorkflowContextProviderProps) => {
@@ -45,18 +54,30 @@ const WorkflowContextProvider = ({
             return;
           }
 
+          // A preset trigger comes ready to use: its action, its params at their declared defaults, and switched
+          // on — otherwise "new flow" leaves an author picking the only option and then flipping a toggle before
+          // anything can run.
+          const preset =
+            nodeType === 'trigger' && defaultTrigger
+              ? nodeDefinitions?.find(definition => definition.type === 'trigger' && definition.action === defaultTrigger)
+              : undefined;
+          const presetParams = Object.keys(preset?.params ?? {}).reduce(
+            (acum, key) => ({ ...acum, [key]: get(preset?.params, `${key}.defaultValue`, '') }),
+            {}
+          );
+
           const newNode = {
             id,
-            title: `New ${capitalize(nodeType)}`,
+            title: preset ? preset.title : `New ${capitalize(nodeType)}`,
             type: nodeType,
-            action: '',
-            params: {},
+            action: preset?.action ?? '',
+            params: presetParams,
             preview: {},
             elementId: '',
             beforeNode: '',
             afterNode: '',
             flowId: nodeType === 'trigger' ? id : flowId,
-            enabled: false
+            enabled: !!preset
           };
 
           const siblingNodeBefore = draft[siblingNodeId];
@@ -89,7 +110,7 @@ const WorkflowContextProvider = ({
         setFlowId(id);
       }
     },
-    [onChange, setFlowId]
+    [onChange, setFlowId, defaultTrigger, nodeDefinitions]
   );
 
   const updateNode = useCallback(
@@ -103,7 +124,7 @@ const WorkflowContextProvider = ({
         true
       );
     },
-    [onChange]
+    [onChange, defaultTrigger, nodeDefinitions]
   );
 
   const removeNode = useCallback(

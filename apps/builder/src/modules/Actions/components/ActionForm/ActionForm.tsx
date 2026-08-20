@@ -1,7 +1,6 @@
 import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Input from '@plitzi/plitzi-ui/Input';
-import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, useMemo, useState } from 'react';
 
 import { triggerInput, validateActionDocument } from '@plitzi/sdk-shared/actions';
@@ -27,7 +26,7 @@ export type ActionFormProps = {
   onCancel: () => void;
 };
 
-const emptyDocument = (): ActionDocument => ({ name: '', enabled: true, nodes: {} });
+const emptyDocument = (): ActionDocument => ({ name: '', enabled: false, nodes: {} });
 
 const TRIGGER_TITLES: Record<string, string> = {
   call: 'When a page calls it',
@@ -134,14 +133,26 @@ const deriveOutput = (nodes: Record<string, ElementInteraction>): Record<string,
   }
 };
 
+/**
+ * Whether this action is on at all: whether ANY way into it is.
+ *
+ * Derived rather than asked for, because the trigger step already carries the switch — one per way in, which is
+ * finer than one per action and is the thing an author actually reaches for. A form field beside it was the same
+ * fact in two places, and the two could disagree.
+ */
+const isEnabled = (nodes: Record<string, ElementInteraction>): boolean =>
+  Object.values(nodes).some(node => node.type === 'trigger' && node.enabled);
+
 const ActionForm = ({ action, tasks, onRun, onSubmit, onCancel }: ActionFormProps) => {
   const [name, setName] = useState(action?.name ?? '');
-  const [enabled, setEnabled] = useState(action?.enabled ?? true);
   const [document, setDocument] = useState<ActionDocument>(() => action?.document ?? emptyDocument());
   const [isSaving, setIsSaving] = useState(false);
 
   const nodeDefinitions = useMemo(() => asNodeDefinitions(tasks), [tasks]);
-  const report = useMemo(() => validateActionDocument({ ...document, name: name || document.name }), [document, name]);
+  const report = useMemo(
+    () => validateActionDocument({ ...document, name: name || document.name, enabled: isEnabled(document.nodes) }),
+    [document, name]
+  );
 
   const patch = useCallback(
     (changes: Partial<ActionDocument>) => setDocument(current => ({ ...current, ...changes })),
@@ -161,12 +172,13 @@ const ActionForm = ({ action, tasks, onRun, onSubmit, onCancel }: ActionFormProp
 
   const handleSubmit = useCallback(async () => {
     setIsSaving(true);
+    const enabled = isEnabled(document.nodes);
     try {
       await onSubmit(name, { ...document, name, enabled }, enabled);
     } finally {
       setIsSaving(false);
     }
-  }, [name, document, enabled, onSubmit]);
+  }, [name, document, onSubmit]);
 
   // The `call` trigger's own contract: what a test run asks for is what a page would send.
   const callTrigger = Object.values(document.nodes).find(node => node.type === 'trigger' && node.action === 'call');
@@ -174,13 +186,7 @@ const ActionForm = ({ action, tasks, onRun, onSubmit, onCancel }: ActionFormProp
 
   return (
     <div className="mx-auto flex w-full max-w-4xl grow basis-0 flex-col gap-4 overflow-auto p-4">
-      <div className="flex items-end gap-2">
-        <Input value={name} label="Name" size="xs" placeholder="Send quote" onChange={setName} />
-        <Select value={enabled ? 'on' : 'off'} label="State" size="xs" onChange={value => setEnabled(value === 'on')}>
-          <option value="on">Enabled</option>
-          <option value="off">Disabled</option>
-        </Select>
-      </div>
+      <Input value={name} label="Name" size="xs" placeholder="Send quote" onChange={setName} />
 
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium">The flow</span>
@@ -188,6 +194,7 @@ const ActionForm = ({ action, tasks, onRun, onSubmit, onCancel }: ActionFormProp
           nodes={document.nodes}
           nodeDefinitions={nodeDefinitions}
           stepType="task"
+          defaultTrigger="call"
           triggerTitle="When this happens..."
           callbackTitle="The server does this..."
           onChange={handleChangeNodes}

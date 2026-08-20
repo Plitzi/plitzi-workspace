@@ -198,7 +198,10 @@ const NodeHeader = ({
             {
               'bg-blue-400 text-white': type === 'trigger',
               'bg-purple-400 text-white': type === 'callback' || type === 'globalCallback',
-              'bg-orange-400 text-white': type === 'utility'
+              'bg-orange-400 text-white': type === 'utility',
+              // A server-action step. It had no colour and no icon at all: the union grew a member and this list
+              // did not, so every task in an action drew as an empty box.
+              'bg-emerald-500 text-white': type === 'task'
             }
           )}
           onClick={onClickOpen}
@@ -206,6 +209,7 @@ const NodeHeader = ({
           {type === 'trigger' && <i className="fa-solid fa-wand-magic-sparkles" />}
           {(type === 'callback' || type === 'globalCallback') && <i className="fa-solid fa-puzzle-piece" />}
           {type === 'utility' && <i className="fa-solid fa-screwdriver-wrench" />}
+          {type === 'task' && <i className="fa-solid fa-server" />}
         </div>
         <Switch
           checked={enabled}
