@@ -17,7 +17,13 @@
  */
 export { createActionsModule } from './modules/actions';
 export { createScheduleRunner } from './modules/actions/runtime/schedule';
-export { cronMatches, parseCron } from './modules/actions/runtime/cron';
+/**
+ * Cron, straight from `sdk-shared`, where the parser lives because the validator needs it too.
+ *
+ * Re-exported HERE and nowhere in between: a deployment mounting its own scheduler reaches for one package, and
+ * the file that used to sit in `runtime/` existed only so a neighbouring import could look local.
+ */
+export { cronMatches, parseCron } from '@plitzi/sdk-shared/actions';
 export { ActionRunError } from './modules/actions/runtime/errors';
 export { DEFAULT_LIMITS } from './modules/actions/runtime/limits';
 export { createTaskRegistry, taskName } from './modules/actions/tasks/registry';

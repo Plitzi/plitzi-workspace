@@ -1,4 +1,5 @@
-import { cronMatches } from './cron';
+import { cronMatches } from '@plitzi/sdk-shared/actions';
+
 import { ActionRunError } from './errors';
 import { findTriggerNode, triggerParams } from './triggers';
 

@@ -13,9 +13,5 @@ export const findTriggerNode = (
   kind: ActionTriggerType
 ): ElementInteraction | undefined => Object.values(nodes).find(node => node.type === 'trigger' && node.action === kind);
 
-/** Every way in this document declares. For the builder's list and for the scheduler's sweep. */
-export const triggerNodes = (nodes: Record<string, ElementInteraction>): ElementInteraction[] =>
-  Object.values(nodes).filter(node => node.type === 'trigger');
-
 /** What a trigger step carries: who may start it, what it takes, and whatever its kind needs. */
 export const triggerParams = (node: ElementInteraction): ActionTriggerParams => node.params;

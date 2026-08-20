@@ -48,7 +48,6 @@ export { precheckRun } from './runtime/precheck';
 export { DEFAULT_LIMITS, resolveLimits } from './runtime/limits';
 export { createRunGuards, deriveRunKey } from './runtime/guards';
 export { createScheduleRunner } from './runtime/schedule';
-export { cronMatches, parseCron } from './runtime/cron';
 export { createMemoryKv } from './runtime/memoryKv';
 export { createTaskRegistry, taskName } from './tasks/registry';
 export { describeCatalog, describeTask } from './taskCatalog';
