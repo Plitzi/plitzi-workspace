@@ -433,9 +433,18 @@ export interface SSRRscContext {
  * `@plitzi/sdk-server`'s actions module and the shared types stay free of its internals. Shaped as `ActionLookups`
  * there.
  */
+/**
+ * Which published version of a space is asking.
+ *
+ * Absent means the live one — the document the builder edits. Present means a page that was PUBLISHED at that
+ * revision, which must run the flow it was published against: a page shipped yesterday calling whatever the action
+ * says today is the discrepancy versioning exists to remove.
+ */
+export type ActionRevision = { environment: Environment; revision: number };
+
 export type ActionLookupsConfig = {
-  getAction: (spaceId: number, actionId: string) => Promise<unknown>;
-  listActions?: (spaceId: number) => Promise<unknown[]>;
+  getAction: (spaceId: number, actionId: string, at?: ActionRevision) => Promise<unknown>;
+  listActions?: (spaceId: number, at?: ActionRevision) => Promise<unknown[]>;
   getCredential?: (spaceId: number, identifier: string) => Promise<Record<string, string> | undefined>;
   getConnector?: (spaceId: number, connectorId: string) => Promise<unknown>;
 };

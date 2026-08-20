@@ -80,6 +80,9 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
     return;
   }
 
+  // The LIVE document, deliberately. A webhook URL belongs to the space, not to a published page: nothing about
+  // the sender says which revision it means, and pinning one would leave a fixed flow answering an integration
+  // its author has since corrected.
   const entry = (await config.action?.lookups?.getAction(spaceId, actionId)) as ActionEntry | undefined;
   // `find` narrows to the webhook member, so the trigger's own `verify` is reachable below without a re-check.
   const trigger = entry?.document.triggers.find(item => item.type === 'webhook');

@@ -181,8 +181,9 @@ Consequences worth stating because they are load-bearing:
 
 - The schema stores an **action id** on the calling node, never a copy of the flow. Deleting an action makes
   the call fail closed; it cannot leave a stale executable behind.
-- Actions are **not part of the space revision** (connectors are not either). An edit is live immediately.
-  §8 records this as the one open asymmetry.
+- Actions **are** part of the space revision: publishing copies each one into a row tagged with the environment
+  and revision, and a page reads the copy belonging to the revision it was published at. The live row is the
+  draft the builder edits. Connectors are not versioned yet — see §8.1.
 
 #### 4.2.1 The private half of a space
 
@@ -808,11 +809,24 @@ deliver, and why:
 
 ## 8. Open questions
 
-1. **Revision coupling.** Actions are live documents; the schema is versioned. Publishing a page whose flow
-   depends on an action edited since is a real footgun. Framed as §4.2.1 puts it: **is the private document
-   versioned with the deploy?** Options: leave as-is (matches connectors), snapshot the private namespace
-   into the deployment revision, or version each document with a `publishedAt`. Whatever we choose applies to
-   connectors and actions together, or the asymmetry is worse than either.
+1. ~~**Revision coupling.**~~ **Answered: actions are versioned with the deploy.** Publishing COPIES every action
+   into a row tagged with the environment and revision, exactly as the schema and style documents are snapshotted,
+   and the live row (`main`, revision 0) stays the one the builder edits. A page published at revision N calls the
+   flow as it read at revision N.
+
+   Which version a run reads is decided by **who started it**:
+
+   | Trigger | Reads | Why |
+   |---|---|---|
+   | `call`, `render` | the page's revision | the page and the flows it calls ship together |
+   | `webhook`, `schedule`, `custom` | live | nothing about a sender or a clock names a revision, and pinning one would leave a fixed flow answering an integration its author has since corrected |
+
+   A revision with no copy falls back to live: a space published before this existed has no snapshots, and
+   refusing every call on those pages would be a correctness fix that breaks what it was meant to protect. The
+   fallback ages out on its own as spaces republish.
+
+   **Connectors still have the asymmetry.** The same discrepancy applies — a published page reads whatever the
+   manifest says today — and the mechanism now exists to close it the same way.
 2. **Idempotency.** Answered for the live case and still open for the completed one. The webhook path keys
    single-flight on the sender's own delivery id (`x-github-delivery`, `idempotency-key`, …), so a retry arriving
    while the first run is going is refused — and answered **202**, because from the sender's side the work is

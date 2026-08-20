@@ -24,13 +24,22 @@ type ActionElementAttributes = {
  */
 export const createActionResolver =
   (lookups: ActionLookups, module: ActionsModule): RscElementResolver =>
-  async ({ element, routeParams, queryParams, spaceId, environment, user }) => {
+  async ({ element, routeParams, queryParams, spaceId, environment, user, req }) => {
+    /**
+     * Which version of the space is being rendered — environment AND revision from the same record.
+     *
+     * Reading one from the deployment and the other from the resolve context would let them disagree, and the
+     * combination "this environment, that revision" names a snapshot nobody published.
+     */
+    const deployment = req.ctx.spaceDeployment;
+    const at = { environment: deployment?.environment ?? environment, revision: deployment?.revision ?? 0 };
     const { action: actionId, input = {} } = element.attributes as ActionElementAttributes;
     if (!actionId) {
       return undefined;
     }
 
-    const entry = await lookups.getAction(spaceId, actionId);
+    // The render's own revision: the element and the action it names were published together.
+    const entry = await lookups.getAction(spaceId, actionId, at);
     if (!entry) {
       throw new Error(`Action "${actionId}" is not configured for space ${spaceId}`);
     }

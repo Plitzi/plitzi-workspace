@@ -97,10 +97,21 @@ const buildRes = () => {
   return { res, sent };
 };
 
+/** Records how the handler asked, so the revision it passes can be asserted. */
+const asked: { spaceId?: number; actionId?: string; at?: { environment: string; revision: number } }[] = [];
+
 const buildConfig = (action: ActionEntry | undefined, extra: Record<string, unknown> = {}): SSRPageServerConfig =>
   ({
     adapters: {},
-    action: { lookups: { getAction: () => Promise.resolve(action) } },
+    action: {
+      lookups: {
+        getAction: (spaceId: number, actionId: string, at?: { environment: string; revision: number }) => {
+          asked.push({ spaceId, actionId, at });
+
+          return Promise.resolve(action);
+        }
+      }
+    },
     ...extra
   }) as unknown as SSRPageServerConfig;
 
@@ -143,6 +154,16 @@ const call = async (
 };
 
 describe('handleActionCall', () => {
+  // A page and the flows it calls ship together: a page published at revision 1 must call the action as it read
+  // when it was published, not whatever the draft says now.
+  it('reads the action as of the revision the page was published at', async () => {
+    asked.length = 0;
+
+    await call(buildConfig(entry()), { actionId: 'quote', input: { amount: 1 } });
+
+    expect(asked[0]).toMatchObject({ actionId: 'quote', at: { environment: 'production', revision: 1 } });
+  });
+
   it('runs the named action and answers its declared output', async () => {
     const { sent, payload } = await call(buildConfig(entry()), { actionId: 'quote', input: { amount: 42 } });
 

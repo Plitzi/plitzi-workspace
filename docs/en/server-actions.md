@@ -181,7 +181,27 @@ that depends on who is looking. If the work is "fetch records to bind", a connec
 
 ---
 
-## 8. Limits, and what stops a runaway flow
+## 8. Versions
+
+Actions are versioned with the space. **Publishing copies every action** into the revision it published, the same
+way the schema and styles are snapshotted, and what you keep editing afterwards is the draft.
+
+So a page published on Monday calls the flow as it read on Monday, however many times the action is edited since.
+Ship the change by publishing again.
+
+Which version a run reads depends on what started it:
+
+| Started by | Reads |
+|---|---|
+| A page (a step, or a `render` element) | the version that page was published with |
+| A webhook, a schedule, a deployment's own trigger | the draft — nothing about a sender or a clock names a revision, and a webhook pinned to an old revision would keep answering with a flow you already fixed |
+
+The **Test run** panel runs the draft, which is what you are editing.
+
+A space published before actions were versioned has no copies; those pages fall back to the draft, which is what
+they did before. Publishing once puts them on their own version.
+
+## 9. Limits, and what stops a runaway flow
 
 | Guard | Default | What it prevents |
 |---|---|---|
@@ -197,7 +217,7 @@ callers to retry harder.
 
 ---
 
-## 9. When something does not work
+## 10. When something does not work
 
 | What you see | What it usually is |
 |---|---|
@@ -212,7 +232,7 @@ For anything else, the **Test run** panel shows the trace step by step, with cre
 
 ---
 
-## 10. For a self-hosted deployment
+## 11. For a self-hosted deployment
 
 Everything above is configuration; the two extension points are code you own:
 

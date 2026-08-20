@@ -100,7 +100,10 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
     return;
   }
 
-  const entry = (await config.action?.lookups?.getAction(spaceId, body.actionId)) as ActionEntry | undefined;
+  // As of the revision this page was published at. A page and the flows it calls ship together, or a page shipped
+  // yesterday runs whatever the action says today.
+  const entry = (await config.action?.lookups?.getAction(spaceId, body.actionId, { environment, revision })) as
+    ActionEntry | undefined;
   if (!entry) {
     fail(res, 'not_found', 'Unknown action');
 

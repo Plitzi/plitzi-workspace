@@ -33,6 +33,8 @@ export type ScheduleRunner = { tick: (params: ScheduleTick) => Promise<ScheduleR
 export const createScheduleRunner = (lookups: ActionLookups, module: ActionsModule): ScheduleRunner => {
   const tick = async ({ spaceId, environment = 'main', at = new Date() }: ScheduleTick): Promise<ScheduleResult> => {
     const result: ScheduleResult = { ran: [], skipped: [] };
+    // The live documents, for the same reason a webhook reads live: a schedule is the space's, not a page's, and
+    // a cron pinned to an old revision would keep running a flow its author already replaced.
     const entries = (await lookups.listActions?.(spaceId)) ?? [];
 
     for (const entry of entries) {

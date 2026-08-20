@@ -85,12 +85,18 @@ const buildRes = () => {
   return { res, sent };
 };
 
+const asked: { at?: unknown }[] = [];
+
 const config = (action: ActionEntry | undefined, extra: Record<string, unknown> = {}): SSRPageServerConfig =>
   ({
     adapters: {},
     action: {
       lookups: {
-        getAction: () => Promise.resolve(action),
+        getAction: (_spaceId: number, _actionId: string, at?: unknown) => {
+          asked.push({ at });
+
+          return Promise.resolve(action);
+        },
         getCredential: () => Promise.resolve({ hookSecret: SECRET })
       },
       ...extra
@@ -138,6 +144,17 @@ describe('handleActionWebhook', () => {
 
     expect(sent.status).toBe(200);
     expect(payload.accepted).toBe(true);
+  });
+
+  // A webhook URL belongs to the space, not to a published page: nothing about the sender says which revision it
+  // means, and pinning one would leave a fixed flow answering an integration its author has since corrected.
+  it('reads the LIVE action, not a published revision', async () => {
+    asked.length = 0;
+    const body = '{"id":"evt_live"}';
+
+    await post(config(entry()), body, { 'x-signature': sign(body) });
+
+    expect(asked[0].at).toBeUndefined();
   });
 
   it('refuses a body that was signed with another secret', async () => {

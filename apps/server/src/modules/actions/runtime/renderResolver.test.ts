@@ -59,17 +59,27 @@ const element = (attributes: Record<string, unknown>): Element =>
 
 // `null` means the space does not have it. An explicit `undefined` would fall back to the default parameter,
 // which is how the "missing action" case quietly tested the opposite of what it says.
+const asked: { at?: { environment: string; revision: number } }[] = [];
+
 const resolve = (attributes: Record<string, unknown>, action: ActionEntry | null = entry) => {
   const found = action ?? undefined;
-  const module = createActionsModule({ lookups: { getAction: () => Promise.resolve(found) } });
-  const resolver = createActionResolver({ getAction: () => Promise.resolve(found) }, module);
+  const lookups = {
+    getAction: (_spaceId: number, _actionId: string, at?: { environment: string; revision: number }) => {
+      asked.push({ at });
+
+      return Promise.resolve(found);
+    }
+  };
+  const module = createActionsModule({ lookups });
+  const resolver = createActionResolver(lookups, module);
 
   return resolver({
     element: element(attributes),
     flat: {},
     routeParams: { slug: 'hello-world' },
     queryParams: {},
-    req: {} as SSRRequest,
+    // The render carries the revision it is being served at, and the resolver reads the action as of it.
+    req: { ctx: { spaceDeployment: { environment: 'production', revision: 4 } } } as unknown as SSRRequest,
     spaceId: 1,
     environment: 'main',
     user: undefined
@@ -95,6 +105,17 @@ describe('createActionResolver', () => {
     const slice = (await resolve({ action: 'post-page' })) as { slug: string };
 
     expect(slice.slug).toBe('hello-world');
+  });
+
+  // The element and the action it names were published together, so a page rendered at revision 4 reads the flow
+  // as it was at revision 4.
+  it('reads the action as of the revision being rendered', async () => {
+    asked.length = 0;
+
+    await resolve({ action: 'post-page' });
+
+    // Both halves from the deployment record, so they can never name a snapshot nobody published.
+    expect(asked[0].at).toEqual({ environment: 'production', revision: 4 });
   });
 
   it('leaves an element that names no action alone', async () => {
