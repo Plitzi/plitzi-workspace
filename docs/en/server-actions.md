@@ -251,3 +251,65 @@ Both, plus the lookups and the versioning rule above, are wired end to end and r
 
 Also yours: the key/value store behind `kv` (in-process by default, which counts only its own replica — a cluster
 supplies a shared one), the database drivers `db.query` may use, the per-run limits, and what a run costs.
+
+**Every store here is yours.** `sdk-server` opens a connection to nothing at all: it reads a space through an
+adapter, keeps runs wherever you tell it to, and reaches a database through a driver you register. What it ships
+is the mechanism around those seams and one thing that needs no store:
+
+| | What it is |
+|---|---|
+| `createRunLogger(logger)` | An `onRun` reporting each run on the log stream the server already uses. Without an `onRun` a deployment sees nothing: the request log says a call was answered, and a run started by a webhook or a schedule has no request to say anything about |
+
+### The `kv` store
+
+`kv` falls back to an in-process Map, which is honest for one replica and a rate limit that multiplies by however
+many you run. A cluster passes an **adapter** over whatever it already runs — Redis, Memcached, a table:
+
+```ts
+const kv: ActionKvAdapter = {
+  get: async key => (await redis.get(key)) ?? undefined,
+  set: async (key, value, ttl) => { ttl ? await redis.set(key, value, 'EX', ttl) : await redis.set(key, value); },
+  delete: async key => { await redis.del(key); },
+  increment: (key, amount) => redis.incrby(key, amount),
+  expire: async (key, ttl) => { await redis.expire(key, ttl); }
+};
+
+createServer({ action: { lookups, kv } });
+```
+
+Five operations over strings, and **no rule to remember**. How a counter behaves is the server's, the same for
+every deployment — the key prefixing, the JSON round trip, and the one that a rate limit lives or dies by: a
+window's lifetime is set once, by whoever created the counter, and never extended. Refreshed on every hit, a
+one-minute window never closes while traffic keeps arriving.
+
+Two things your adapter does owe:
+
+- **`increment` must be atomic.** It is the one thing get-then-set cannot be, and the reason it is an operation
+  rather than something the server composes.
+- **Throw when the store is unreachable.** Nothing above catches, deliberately: this is not a cache, and a miss
+  here means the rate limit did not count and the idempotency key was not seen.
+
+### The database driver
+
+A `db.query` step runs through a driver you register, which is three fields:
+
+```ts
+const mysql: ActionDbDriver = {
+  engine: 'mysql',
+  query: async (dsn, sql, params, signal) => { /* your client, your pool */ }
+};
+
+createServer({ action: { lookups, dbDrivers: [mysql] } });
+```
+
+Four things are worth copying from a working one, because each fails in a way that does not point at itself:
+
+- **Parse the DSN.** Both `mysql2` and `mariadb` take *either* a URI string *or* an options object — passing a
+  `uri` field alongside options is silently ignored, and the pool then connects to the driver's own defaults.
+- **Refuse stacked statements** (`multipleStatements: false`). One `;` inside a bound value and the second
+  statement runs.
+- **Dates, decimals and BIGINT in shapes JSON can carry.** A flow serializes what it gets, and JSON has no BigInt:
+  the first `SELECT COUNT(*)` otherwise dies far from the step that ran it.
+- **Let the abort destroy the connection**, not merely stop waiting on it. A query left running on the far side
+  keeps its locks after the run is gone. (A per-query `timeout` is not the answer: `mariadb`'s works only against
+  a MariaDB server and refuses every statement against MySQL.)

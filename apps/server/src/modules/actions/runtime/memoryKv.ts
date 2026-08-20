@@ -1,15 +1,18 @@
-import type { ActionKvStore } from '../types';
+import type { ActionKvAdapter } from '../types';
 
-type Entry = { value: unknown; expiresAt?: number };
+type Entry = { value: string; expiresAt?: number };
 
 /**
  * The `kv` tasks' fallback store: in this process, and nowhere else.
  *
  * Real enough for a single replica and for local work, and deliberately not pretending otherwise — a deployment
- * running several replicas passes a Redis-backed store, because a counter that only counts its own replica is a
- * rate limit that multiplies by the number of them.
+ * running several replicas passes an adapter over something shared, because a counter that only counts its own
+ * replica is a rate limit that multiplies by the number of them.
+ *
+ * An adapter like any other: it stores strings and obeys no rules of its own. What a counter DOES lives in
+ * `createKvStore`, so the in-process store and a deployment's own behave identically rather than nearly so.
  */
-export const createMemoryKv = (): ActionKvStore => {
+export const createMemoryKv = (): ActionKvAdapter => {
   const entries = new Map<string, Entry>();
 
   const read = (key: string): Entry | undefined => {
@@ -18,6 +21,8 @@ export const createMemoryKv = (): ActionKvStore => {
       return undefined;
     }
 
+    // Expiry is the store's own job everywhere else — Redis answers nothing for a key past its TTL — so this one
+    // has to do it too, or the same code reads a stale counter here and an absent one in production.
     if (entry.expiresAt !== undefined && entry.expiresAt <= Date.now()) {
       entries.delete(key);
 
@@ -41,15 +46,21 @@ export const createMemoryKv = (): ActionKvStore => {
 
       return Promise.resolve();
     },
-    increment: (key, amount, ttlSeconds) => {
+    increment: (key, amount) => {
       const current = read(key);
-      const base = typeof current?.value === 'number' ? current.value : 0;
-      const next = base + amount;
-      // The TTL is set by whoever creates the counter and is NOT extended by later increments: a rate-limit window
-      // that slides forward on every hit never ends, which is the opposite of what a window is for.
-      entries.set(key, { value: next, expiresAt: current?.expiresAt ?? expiry(ttlSeconds) });
+      const base = Number(current?.value ?? 0);
+      const next = (Number.isFinite(base) ? base : 0) + amount;
+      entries.set(key, { value: String(next), expiresAt: current?.expiresAt });
 
       return Promise.resolve(next);
+    },
+    expire: (key, ttlSeconds) => {
+      const current = read(key);
+      if (current) {
+        entries.set(key, { ...current, expiresAt: expiry(ttlSeconds) });
+      }
+
+      return Promise.resolve();
     }
   };
 };

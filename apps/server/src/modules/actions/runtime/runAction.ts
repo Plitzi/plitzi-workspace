@@ -2,6 +2,7 @@ import { evaluateRuleGroup } from '@plitzi/sdk-shared/helpers/ruleEvaluator';
 import { hasValidToken, processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { ActionRunError } from './errors';
+import { createKvStore } from './kvStore';
 import { resolveLimits } from './limits';
 import { createMemoryKv } from './memoryKv';
 import { namespaceKv } from './namespaceKv';
@@ -150,7 +151,7 @@ export const createActionRunner = (
   registry: ActionTaskRegistry,
   baseFetch: typeof fetch = fetch
 ): ActionRunner => {
-  const kv = config.kv ?? createMemoryKv();
+  const kv = createKvStore(config.kv ?? createMemoryKv());
 
   /** Never allowed to fail a run: a logging outage must not take an action down, the same rule metering follows. */
   const record = async (entry: ActionRunRecord) => {

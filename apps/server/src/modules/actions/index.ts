@@ -1,4 +1,5 @@
 import { createRunGuards } from './runtime/guards';
+import { createKvStore } from './runtime/kvStore';
 import { resolveLimits } from './runtime/limits';
 import { createMemoryKv } from './runtime/memoryKv';
 import { namespaceKv } from './runtime/namespaceKv';
@@ -31,7 +32,7 @@ export const createActionsModule = (config: ActionsConfig): ActionsModule => {
   const registry = createTaskRegistry(config.tasks, (config.dbDrivers?.length ?? 0) > 0);
   const { runAction } = createActionRunner(config, registry, config.fetchImpl);
   const guards = createRunGuards(config.concurrency);
-  const kv = config.kv ?? createMemoryKv();
+  const kv = createKvStore(config.kv ?? createMemoryKv());
 
   return {
     runAction,

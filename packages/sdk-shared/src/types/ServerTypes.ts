@@ -1,4 +1,11 @@
-import type { ActionEntry, ActionLimits, ActionRunRecord, ActionTaskDescriptor } from './ActionTypes';
+import type {
+  ActionEntry,
+  ActionLimits,
+  ActionRunRecord,
+  ActionRunStatus,
+  ActionTaskDescriptor,
+  ActionTriggerType
+} from './ActionTypes';
 import type { Environment } from './CommonTypes';
 import type { ConnectorEntry } from './ConnectorTypes';
 import type { Schema } from './SchemaTypes';
@@ -483,16 +490,21 @@ export type SSRActionConfig = {
    */
   onRun?: (record: ActionRunRecord) => void | Promise<void>;
   /**
-   * Backs the `kv` tasks — shaped as `ActionKvStore` in `@plitzi/sdk-server/actions`.
+   * Where the `kv` tasks keep things — shaped as `ActionKvAdapter` in `@plitzi/sdk-server/actions`.
    *
-   * Omitted leaves an in-process store, which counts only its own replica. That is fine for one; for a cluster it
-   * is a rate limit that multiplies by the number of them, so a multi-replica deployment supplies a shared one.
+   * Five operations over strings, with no rule to obey: Redis, Memcached, a table, whatever this deployment
+   * already runs. How a counter BEHAVES — the key prefixing, the JSON round trip, and the rule that a window's
+   * lifetime is set once by whoever created it — belongs to the server, not to the thing it writes into.
+   *
+   * Omitted leaves an in-process Map, which counts only its own replica. That is fine for one; for a cluster it is
+   * a rate limit that multiplies by the number of them, so a multi-replica deployment supplies a shared one.
    */
   kv?: {
-    get: (key: string) => Promise<unknown>;
-    set: (key: string, value: unknown, ttlSeconds?: number) => Promise<void>;
+    get: (key: string) => Promise<string | undefined>;
+    set: (key: string, value: string, ttlSeconds?: number) => Promise<void>;
     delete: (key: string) => Promise<void>;
-    increment: (key: string, amount: number, ttlSeconds?: number) => Promise<number>;
+    increment: (key: string, amount: number) => Promise<number>;
+    expire: (key: string, ttlSeconds: number) => Promise<void>;
   };
 };
 
@@ -605,15 +617,40 @@ export type McpResourceLogEvent = ServerLogEventBase & {
   name: string;
 };
 
+/** One server action run that STARTED — completed, failed or aborted.
+ *
+ *  Its own event rather than a line on the request that triggered it, for the same reason a tool call is: the
+ *  request is answered either way, and a run started by a schedule or a webhook has a request that says nothing
+ *  about it. Where the request log answers "was this call served", this answers "what did the flow do".
+ *
+ *  Carries the SHAPE of the run and never its data: which steps ran and how each ended, never what they
+ *  returned. A refused run is absent by design — a 409 is not a run, and logging one buries the real ones under
+ *  retries. */
+export type ActionRunLogEvent = ServerLogEventBase & {
+  kind: 'run';
+  /** The action's identifier, as the space stores it. */
+  name: string;
+  spaceId: number;
+  environment: Environment;
+  /** What started it: a page call, a webhook, a schedule, a render, a trigger the deployment mounted. */
+  trigger: ActionTriggerType;
+  status: ActionRunStatus;
+  /** Who asked, when a session carried it. Absent for a webhook, a schedule or an anonymous visitor. */
+  userId?: number;
+  /** Each step as `action:status`, in order — enough to see where a flow stopped without keeping what it held. */
+  steps: string[];
+};
+
 /** Everything a Plitzi server reports about the work it does, as ONE stream: the HTTP requests it answers, plus
- *  the MCP tool calls and resource reads that happen inside them. Wire a single sink via `SSRServerConfig.logger`
- *  and switch on `kind` — a consumer can render it, ship it to a dashboard or drop the kinds it does not want.
+ *  the MCP tool calls, resource reads and server-action runs that happen inside them. Wire a single sink via
+ *  `SSRServerConfig.logger` and switch on `kind` — a consumer can render it, ship it to a dashboard or drop the
+ *  kinds it does not want.
  *
  *  Payload-free by construction: no headers, cookies, tokens nor request body ever reach an event, query values
- *  are stripped from paths and tool arguments are reduced to their shape. Two fields are NOT anonymous and a
- *  consumer shipping these events must handle them accordingly: `clientIp` on a request event, and the request
- *  path, which is kept verbatim because it is what makes the log usable. */
-export type ServerLogEvent = ServerRequestLogEvent | McpToolLogEvent | McpResourceLogEvent;
+ *  are stripped from paths, tool arguments are reduced to their shape and a run to its steps. Two fields are NOT
+ *  anonymous and a consumer shipping these events must handle them accordingly: `clientIp` on a request event, and
+ *  the request path, which is kept verbatim because it is what makes the log usable. */
+export type ServerLogEvent = ServerRequestLogEvent | McpToolLogEvent | McpResourceLogEvent | ActionRunLogEvent;
 
 /** The sink a consumer provides to receive every {@link ServerLogEvent} (see `SSRServerConfig.logger`). */
 export type ServerLogger = (event: ServerLogEvent) => void;

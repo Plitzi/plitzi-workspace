@@ -23,9 +23,28 @@ export { DEFAULT_LIMITS } from './modules/actions/runtime/limits';
 export { createTaskRegistry, taskName } from './modules/actions/tasks/registry';
 export { describeCatalog, describeTask } from './modules/actions/taskCatalog';
 
+/**
+ * The `kv` seam: an ADAPTER a deployment fills, and the logic that sits on top of it.
+ *
+ * There is deliberately nothing here that talks to a store — no Redis, no database, no client of any kind. A
+ * deployment passes five string operations over whatever it already runs, and `createKvStore` supplies everything
+ * that decides how a counter behaves, so the rule a rate limit depends on is written once rather than once per
+ * deployment. The in-process Map is the same shape, which is why the default and a cluster's store behave
+ * identically instead of nearly so.
+ */
+export { createMemoryKv } from './modules/actions/runtime/memoryKv';
+export { createKvStore } from './modules/actions/runtime/kvStore';
+
+/**
+ * `onRun` for a deployment that wants to SEE its flows without building somewhere to keep them: a run becomes one
+ * more event on the log stream the server already reports through.
+ */
+export { createRunLogger } from './modules/actions/runtime/runLogger';
+
 export type {
   ActionCredential,
   ActionDbDriver,
+  ActionKvAdapter,
   ActionKvStore,
   ActionLookups,
   ActionRunRecord,

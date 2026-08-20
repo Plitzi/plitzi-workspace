@@ -45,10 +45,32 @@ export type ActionDbDriver = {
 };
 
 /**
- * A namespaced key/value store for the `kv` tasks.
+ * Where a deployment keeps the `kv` tasks' data — Redis, Memcached, a table, whatever it already runs.
  *
- * The seam a deployment fills with Redis. The in-process default is honest for one replica, and making it a seam
- * is what keeps rate limiting and idempotency across replicas a deployment decision rather than a silent no-op.
+ * Deliberately the DUMBEST possible surface: five operations over strings, with no rule to obey. Everything that
+ * decides how a counter behaves — the key prefixing, the JSON round trip, and the one rule a rate limit lives or
+ * dies by — is `createKvStore`'s, above this. An adapter that had to remember "extend the TTL only when the
+ * counter did not exist" would be an adapter each deployment gets to write that rule wrongly in.
+ *
+ * Making it a seam at all is what keeps rate limiting and idempotency across replicas a deployment's decision
+ * rather than a silent no-op: the in-process default counts only its own replica, and honestly says so.
+ */
+export type ActionKvAdapter = {
+  /** The stored string, or undefined when the key is absent OR has expired. */
+  get: (key: string) => Promise<string | undefined>;
+  set: (key: string, value: string, ttlSeconds?: number) => Promise<void>;
+  delete: (key: string) => Promise<void>;
+  /** Adds to a counter and answers the NEW total. Must be atomic — this is what get-then-set cannot be. */
+  increment: (key: string, amount: number) => Promise<number>;
+  /** Sets a lifetime on a key that already exists. When to call it is decided above, never here. */
+  expire: (key: string, ttlSeconds: number) => Promise<void>;
+};
+
+/**
+ * The `kv` tasks' own view: values rather than strings, and a TTL that means what a caller expects.
+ *
+ * Built by `createKvStore` over an {@link ActionKvAdapter}, and then narrowed to one space by `namespaceKv`. A
+ * task never sees an adapter.
  */
 export type ActionKvStore = {
   get: (key: string) => Promise<unknown>;
@@ -142,8 +164,8 @@ export type ActionsConfig = {
   limits?: ActionLimits;
   /** How many runs may be in flight at once. Counted per space and for the process as a whole. */
   concurrency?: { perSpace?: number; perProcess?: number };
-  /** Backs the `kv` tasks. Omitted → an in-process store, which is per-replica by definition. */
-  kv?: ActionKvStore;
+  /** Where the `kv` tasks keep things. Omitted → an in-process Map, which is per-replica by definition. */
+  kv?: ActionKvAdapter;
   /** Inbound webhooks are public, so they are counted per caller per minute. Default 60. */
   rateLimit?: { webhookPerMinute?: number };
   /** Database engines this deployment lets a flow reach. Empty → the `db.query` task is not offered at all. */

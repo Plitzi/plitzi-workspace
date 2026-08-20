@@ -50,6 +50,10 @@ with it — and everything the flow produced and did not name stays where it was
 **Undeclared input is dropped** before a single step runs. Send `"discount":"free"` and it is gone by the time any
 `{{ input.* }}` is interpolated, which is what makes interpolation into a step's params safe at all.
 
+**The `kv` steps count in this process only**, which is honest for one replica and a rate limit that multiplies by
+however many you run. A cluster passes its own store — `action.kv`, four methods over whatever it already has
+open. The SDK connects to nothing itself.
+
 **Your own tasks are the extension point.** [`src/tasks.ts`](./src/tasks.ts) registers `example.shippingRate`, and
 it appears in the builder's step catalog with no fork of anything — that catalog is served by *this* server, so
 what a space can do server-side is decided by the process running it.
