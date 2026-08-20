@@ -78,18 +78,23 @@ export const createPreview = async (
   }
 
   const pagePath = resolvePagePath(draftOffline.schema, body.pageRef);
-  const { body: html } = await buildBody(
-    syntheticRequest(pagePath),
-    config,
-    body.spaceId,
-    env,
-    revision,
-    renderFn,
-    pluginManager,
-    caches.offlineData,
-    undefined,
-    draftOffline
-  );
+  // The render is the expensive half, and a caller heading for a screenshot never reads it — the browser renders
+  // the same draft again from the token. So it is done only when asked for.
+  let html: string | undefined;
+  if (body.includeHtml !== false) {
+    ({ body: html } = await buildBody(
+      syntheticRequest(pagePath),
+      config,
+      body.spaceId,
+      env,
+      revision,
+      renderFn,
+      pluginManager,
+      caches.offlineData,
+      undefined,
+      draftOffline
+    ));
+  }
 
   let token: string | undefined;
   if (config.draftStore) {

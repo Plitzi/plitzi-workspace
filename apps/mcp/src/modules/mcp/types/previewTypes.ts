@@ -10,9 +10,19 @@ export type PreviewRequestBody = {
   env?: string;
   pageRef?: string;
   operations?: Operation[];
+  /**
+   * Whether the response should carry the rendered HTML. Default true.
+   *
+   * Rendering it is the expensive half of a preview, and a caller on the way to a screenshot does not read it:
+   * the browser fetches the same draft at `?__pt=<token>` and renders it again. `false` asks for the token and
+   * the page path only — one server render instead of two. An older SSR ignores the field and still renders,
+   * which costs time but never correctness.
+   */
+  includeHtml?: boolean;
 };
 
 export type PreviewResult =
+  // `html` is empty when the request asked for `includeHtml: false` — the token and the path are what it wanted.
   | { ok: true; token?: string; pagePath: string; html: string; stateVersion: string }
   | { ok: false; error: string; message: string; errors?: ValidationError[] };
 

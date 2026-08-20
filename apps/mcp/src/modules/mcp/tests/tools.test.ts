@@ -87,6 +87,30 @@ describe('mcp-ai createPreview (draft build, pre-render error paths)', () => {
       expect(res.errors?.length).toBeGreaterThan(0);
     }
   });
+
+  // A caller on the way to a screenshot reads the token and the path, never the HTML: the browser renders the
+  // same draft again from the token, so rendering it here would be the second of two server renders per image.
+  it('skips the render for includeHtml:false, and still mints the token and the path', async () => {
+    const offline = { schema: buildSpace().schema, style: buildSpace().style };
+    const draftStore = createMemoryDraftStore();
+    const config = {
+      adapters: { getOfflineData: () => Promise.resolve(offline) },
+      draftStore
+    } as unknown as Parameters<typeof createPreview>[1];
+    const render = (() => {
+      throw new Error('the page must not be rendered when the caller did not ask for the HTML');
+    }) as unknown as Parameters<typeof createPreview>[2];
+
+    const res = await createPreview({ spaceId: 1, includeHtml: false }, config, render, unusedPlugins, unusedCaches);
+
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      expect(res.html).toBe('');
+      expect(res.pagePath).toMatch(/^\//);
+      expect(res.token).toBeTruthy();
+      expect(draftStore.take(res.token as string)).toBeTruthy();
+    }
+  });
 });
 
 describe('mcp-ai plitzi_preview tool', () => {
@@ -157,6 +181,57 @@ describe('mcp-ai plitzi_screenshot tool', () => {
       { space: buildSpace(), env: 'main', persisters: {}, spaceId: 1, preview: okPreview, screenshot }
     )) as { warning?: string; html?: string };
     expect(res.warning).toBe('SCREENSHOT_UNAVAILABLE');
+    expect(res.html).toContain('<!doctype html>');
+  });
+
+  // The image path never reads the HTML, and rendering it means the server renders the page twice per screenshot.
+  it('asks the preview not to render the HTML when it is going to capture an image', async () => {
+    const asked: Array<boolean | undefined> = [];
+    const preview = {
+      render: (body: { includeHtml?: boolean }) => {
+        asked.push(body.includeHtml);
+
+        return Promise.resolve({ ok: true as const, token: 't', pagePath: '/', html: '', stateVersion: 'v1' });
+      }
+    };
+    const screenshot = {
+      capture: () =>
+        Promise.resolve({ ok: true as const, images: [{ label: 'desktop', mimeType: 'image/png', data: 'AAAA' }] })
+    };
+
+    await screenshotToolDef()?.execute(
+      {},
+      { space: buildSpace(), env: 'main', persisters: {}, spaceId: 1, preview, screenshot }
+    );
+
+    expect(asked).toEqual([false]);
+  });
+
+  it('renders the HTML only on the fallback, once the capture has already failed', async () => {
+    const asked: Array<boolean | undefined> = [];
+    const preview = {
+      render: (body: { includeHtml?: boolean }) => {
+        asked.push(body.includeHtml);
+
+        return Promise.resolve({
+          ok: true as const,
+          token: 't',
+          pagePath: '/',
+          html: body.includeHtml === false ? '' : '<!doctype html><html></html>',
+          stateVersion: 'v1'
+        });
+      }
+    };
+    const screenshot = {
+      capture: () => Promise.resolve({ ok: false as const, error: 'SCREENSHOT_UNREACHABLE', message: 'pod down' })
+    };
+
+    const res = (await screenshotToolDef()?.execute(
+      {},
+      { space: buildSpace(), env: 'main', persisters: {}, spaceId: 1, preview, screenshot }
+    )) as { warning?: string; html?: string };
+
+    expect(asked).toEqual([false, undefined]);
     expect(res.html).toContain('<!doctype html>');
   });
 

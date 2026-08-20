@@ -66,20 +66,19 @@ export const screenshotTool = defineTool({
       };
     }
 
-    const pv = await ctx.preview.render({
-      spaceId: ctx.spaceId,
-      env: ctx.env,
-      pageRef: input.pageRef,
-      operations: input.operations
-    });
+    const draft = { spaceId: ctx.spaceId, env: ctx.env, pageRef: input.pageRef, operations: input.operations };
+
+    // On the way to an image the HTML is dead weight: the browser renders the same draft again from the token, so
+    // asking for it would have the server render the page twice. It is only rendered on the paths that read it.
+    const pv = await ctx.preview.render({ ...draft, includeHtml: !ctx.screenshot });
     if (!pv.ok) {
       return pv;
     }
 
     const viewports = resolveViewports(input.viewport);
 
-    // Degrade gracefully rather than fail: if the browser service is not wired or is unreachable, return the
-    // already-rendered HTML preview with a warning so the agent still gets something actionable.
+    // Degrade gracefully rather than fail: if the browser service is not wired or is unreachable, return the HTML
+    // preview with a warning so the agent still gets something actionable.
     if (!ctx.screenshot) {
       return {
         warning: 'SCREENSHOT_DISABLED',
@@ -91,8 +90,17 @@ export const screenshotTool = defineTool({
       };
     }
 
-    const shot = await ctx.screenshot.capture({ pagePath: pv.pagePath, token: pv.token, viewports, fullPage: input.fullPage });
+    const shot = await ctx.screenshot.capture({
+      pagePath: pv.pagePath,
+      token: pv.token,
+      viewports,
+      fullPage: input.fullPage
+    });
     if (!shot.ok) {
+      // The HTML was skipped above, so the fallback renders it now — the cost lands on the failing call rather
+      // than on every successful one. Same draft, same operations, so it is the same page.
+      const fallback = await ctx.preview.render(draft);
+
       return {
         warning: 'SCREENSHOT_UNAVAILABLE',
         message: `The screenshot service failed (${shot.message}); returning the HTML preview instead.`,
@@ -100,7 +108,7 @@ export const screenshotTool = defineTool({
         pageRef: input.pageRef ?? 'default',
         pagePath: pv.pagePath,
         stateVersion: pv.stateVersion,
-        html: pv.html
+        html: fallback.ok ? fallback.html : ''
       };
     }
 
