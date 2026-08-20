@@ -1,6 +1,6 @@
 import { authTasks } from './auth';
 import { connectorTasks } from './connector';
-import { flowTasks } from './flow';
+import { flowTasks, streamTasks } from './flow';
 import { httpTasks } from './http';
 import { kvTasks } from './kv';
 import { transformTasks } from './transform';
@@ -19,5 +19,6 @@ export const builtinTasks: ActionTask<Record<string, unknown>>[] = [
   ...httpTasks,
   ...connectorTasks,
   ...authTasks,
-  ...kvTasks
+  ...kvTasks,
+  ...streamTasks
 ];

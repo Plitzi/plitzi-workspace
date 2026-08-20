@@ -127,6 +127,18 @@ export const registerResources = (
         'address, the filter operators it accepts and the fields it publishes — what a server-rendered ' +
         'apiContainer points at'
     ],
+    [
+      'Server tasks',
+      `plitzi://actions/${env}/tasks`,
+      'The steps a server action can be built from on THIS deployment: each with its parameters — read before ' +
+        'authoring a flow, since a task this server does not have cannot run'
+    ],
+    [
+      'Server actions',
+      `plitzi://actions/${env}`,
+      'Server actions this space runs: what starts each one, who may run it, and the input/output contract a ' +
+        'caller is held to — what a runServerAction step points at'
+    ],
     // Aliases under the plitzi://schema/{env} root, so the analogous shape agents reach for also resolves (I3).
     ['Style definitions (schema alias)', `plitzi://schema/${env}/definitions`, 'Alias of plitzi://definitions/{env}'],
     [
@@ -157,6 +169,11 @@ export const registerResources = (
       'Connector',
       `plitzi://connectors/${env}/{ref}`,
       'One connector manifest in full: baseUrl, auth template, every read/write endpoint and its response mapping'
+    ],
+    [
+      'Server action',
+      `plitzi://actions/${env}/{ref}`,
+      'One action document in full: its access rule, triggers, declared credentials and connectors, and every step'
     ],
     ['Style definition', `plitzi://definitions/${env}/{ref}`, 'One style definition (CSS) by class ref'],
     [

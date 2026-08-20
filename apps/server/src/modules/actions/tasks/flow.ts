@@ -46,16 +46,23 @@ const fail: ActionTask<{ message: string }> = {
 };
 
 /**
- * Declares what the caller gets back.
+ * Declares what the caller gets back — and IS the declaration.
  *
  * The flow scope is not the answer: it holds every node's raw result, including whatever a fetch happened to
- * return. This is the one node that decides what leaves the server, and the runner validates its keys against the
- * document's declared `output` — a key nobody declared is dropped rather than returned.
+ * return. This step is the one place that decides what leaves the server, and what it names is exactly what the
+ * caller receives.
+ *
+ * There is no separate output contract on the document, deliberately. Declaring the shape before the steps exist
+ * asks an author to know what a flow returns before writing it, and leaves two places to keep in step; the values
+ * here are the contract, and the builder derives the field list from them for bindings.
+ *
+ * It must be the LAST step: the runner reads the last one that ran, so a step after it is work whose result
+ * nobody asked for — the validator says so.
  */
-const returnValues: ActionTask<{ values: string }> = {
+const output: ActionTask<{ values: string }> = {
   namespace: 'flow',
-  action: 'return',
-  title: 'Return',
+  action: 'output',
+  title: 'Output',
   params: {
     values: { type: 'codemirror-json', canBind: true, defaultValue: '{}', label: 'Values' }
   },
@@ -67,9 +74,30 @@ const returnValues: ActionTask<{ values: string }> = {
     try {
       return JSON.parse(values) as unknown;
     } catch {
-      throw new Error('Return values are not valid JSON');
+      throw new Error('Output values are not valid JSON');
     }
   }
 };
 
-export const flowTasks = [delay, fail, returnValues] as ActionTask<Record<string, unknown>>[];
+/**
+ * Pushes progress to a caller watching the run.
+ *
+ * A no-op when nobody negotiated a stream, and deliberately so: a flow is authored once and runs both ways, so a
+ * step that reported progress must not fail on the request/response path just because nobody is listening.
+ */
+const emit: ActionTask<{ chunk: string }> = {
+  namespace: 'stream',
+  action: 'emit',
+  title: 'Report Progress',
+  params: {
+    chunk: { type: 'codemirror-text', canBind: true, defaultValue: '', label: 'Chunk' }
+  },
+  run: ({ chunk }, ctx) => {
+    ctx.emit(chunk);
+
+    return { emitted: true };
+  }
+};
+
+export const flowTasks = [delay, fail, output] as ActionTask<Record<string, unknown>>[];
+export const streamTasks = [emit] as ActionTask<Record<string, unknown>>[];

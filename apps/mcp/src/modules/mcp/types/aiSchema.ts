@@ -109,7 +109,14 @@ export interface AIBinding {
  *  or initial-state keys (`initialState`). */
 export type AIBindings = Partial<Record<'attributes' | 'style' | 'initialState', AIBinding[]>>;
 
-export type AIInteractionNodeType = 'trigger' | 'globalCallback' | 'callback' | 'utility';
+/**
+ * What a stored step is.
+ *
+ * `task` only ever belongs to a SERVER ACTION, and the write vocabulary for element flows (`interactionNodeType`)
+ * deliberately does not offer it. It is here because a read projects what is stored, and a page flow that somehow
+ * holds one should say so rather than being shown as something it is not — the validator flags it.
+ */
+export type AIInteractionNodeType = 'trigger' | 'globalCallback' | 'callback' | 'utility' | 'task';
 
 /** One step of an interaction flow, projected from the stored doubly-linked node. Order is conveyed by the
  *  position in `AIInteractionFlow.nodes`; the stored beforeNode/afterNode/flowId links are computed on write. */

@@ -4,7 +4,7 @@ import type { ActionTask } from '../types';
  * Who the request carries.
  *
  * Projected, never passed through: `SSRUser` holds the visitor's `token`, and a flow that could read it could
- * also `flow.return` it or post it to a third party. Identity is what an action needs; the credential is not.
+ * also `flow.output` it or post it to a third party. Identity is what an action needs; the credential is not.
  */
 const currentUser: ActionTask<Record<string, never>> = {
   namespace: 'auth',

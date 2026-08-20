@@ -16,6 +16,8 @@
  * runner, same checks: a trigger that skipped them would be a weaker path to the same work.
  */
 export { createActionsModule } from './modules/actions';
+export { createScheduleRunner } from './modules/actions/runtime/schedule';
+export { cronMatches, parseCron } from './modules/actions/runtime/cron';
 export { ActionRunError } from './modules/actions/runtime/errors';
 export { DEFAULT_LIMITS } from './modules/actions/runtime/limits';
 export { createTaskRegistry, taskName } from './modules/actions/tasks/registry';
@@ -37,4 +39,5 @@ export type {
 
 export type { ActionsModule } from './modules/actions';
 export type { ActiveRun, RunGuards } from './modules/actions/runtime/guards';
+export type { ScheduleResult, ScheduleRunner, ScheduleTick } from './modules/actions/runtime/schedule';
 export type { ActionTaskDescriptor } from './modules/actions/taskCatalog';

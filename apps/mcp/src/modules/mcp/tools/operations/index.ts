@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { actionOps } from './actions';
 import { connectorOps } from './connectors';
 import { elementOps } from './schema';
 import { registerSharedSchemaIds } from './schemaIds';
@@ -52,25 +53,31 @@ const documentOps = [
 
 export const documentOperation = z.discriminatedUnion('type', documentOps);
 
-// The full write vocabulary: the two schemas plus the connector store, which is neither of them (its own rows,
-// its own persister). Only the tools that can actually reach that store offer these.
+// The full write vocabulary: the two schemas plus the connector and action stores, which are neither of them
+// (their own rows, their own persisters). Only the tools that can actually reach those stores offer these.
 export const operation = z.discriminatedUnion('type', [
   ...documentOps,
   connectorOps.upsertConnector,
   connectorOps.patchConnector,
-  connectorOps.deleteConnector
+  connectorOps.deleteConnector,
+  actionOps.upsertAction,
+  actionOps.patchAction,
+  actionOps.deleteAction
 ]);
 
 export type Operation = z.infer<typeof operation>;
 export type OperationType = Operation['type'];
 
-// The style/connector op type names are exactly the keys of those maps, so adding an op needs no change here.
+// The style/connector/action op type names are exactly the keys of those maps, so adding an op needs no change here.
 const STYLE_OP_TYPES = new Set<string>(Object.keys(styleOps));
 const CONNECTOR_OP_TYPES = new Set<string>(Object.keys(connectorOps));
+const ACTION_OP_TYPES = new Set<string>(Object.keys(actionOps));
 
 export const isStyleOp = (type: OperationType): boolean => STYLE_OP_TYPES.has(type);
 
 export const isConnectorOp = (type: OperationType): boolean => CONNECTOR_OP_TYPES.has(type);
+
+export const isActionOp = (type: OperationType): boolean => ACTION_OP_TYPES.has(type);
 
 // The maximum number of operations one apply/validate batch may carry — the single source of truth, enforced by
 // the zod shape below (parse-time) and re-checked with a teachable message by the batch validator.

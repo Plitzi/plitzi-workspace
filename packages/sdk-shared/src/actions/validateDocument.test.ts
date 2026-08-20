@@ -11,7 +11,7 @@ const document = (overrides: Record<string, unknown> = {}) => ({
   output: { total: { type: 'number' } },
   nodes: {
     start: { id: 'start', type: 'trigger', action: 'call', afterNode: 'ret' },
-    ret: { id: 'ret', type: 'task', action: 'flow.return', params: { values: '{}' } }
+    ret: { id: 'ret', type: 'task', action: 'flow.output', params: { values: '{}' } }
   },
   ...overrides
 });
@@ -78,7 +78,7 @@ describe('validateActionDocument', () => {
       document({
         nodes: {
           start: { id: 'start', type: 'trigger', action: 'call', afterNode: 'ret' },
-          ret: { id: 'ret', type: 'task', action: 'flow.return', afterNode: 'ghost' }
+          ret: { id: 'ret', type: 'task', action: 'flow.output', afterNode: 'ghost' }
         }
       })
     );
@@ -106,14 +106,44 @@ describe('validateActionDocument', () => {
     expect(messages(report.warnings)).toContain('unsigned requests');
   });
 
-  it('warns when output is declared but nothing returns it', () => {
+  it('warns when values are expected but no step names any', () => {
     const report = validateActionDocument(
       document({
         nodes: { start: { id: 'start', type: 'trigger', action: 'call' } }
       })
     );
 
-    expect(messages(report.warnings)).toContain('no step returns anything');
+    expect(messages(report.warnings)).toContain('no step names any');
+  });
+
+  // The output step IS the contract, so a step after it is work whose result nobody can ever read.
+  it('warns when the output step is not the last one', () => {
+    const report = validateActionDocument(
+      document({
+        nodes: {
+          start: { id: 'start', type: 'trigger', action: 'call', afterNode: 'out' },
+          out: { id: 'out', type: 'task', action: 'flow.output', params: { values: '{}' }, afterNode: 'after' },
+          after: { id: 'after', type: 'task', action: 'http.request', params: {} }
+        }
+      })
+    );
+
+    expect(report.valid).toBe(true);
+    expect(messages(report.warnings)).toContain('not the last one');
+  });
+
+  it('warns about a second output step, since only the last to run is answered', () => {
+    const report = validateActionDocument(
+      document({
+        nodes: {
+          start: { id: 'start', type: 'trigger', action: 'call', afterNode: 'a' },
+          a: { id: 'a', type: 'task', action: 'flow.output', params: { values: '{}' }, afterNode: 'b' },
+          b: { id: 'b', type: 'task', action: 'flow.output', params: { values: '{}' } }
+        }
+      })
+    );
+
+    expect(messages(report.warnings)).toContain('2 output steps');
   });
 
   it('warns about a connector step naming a connector the document does not declare', () => {

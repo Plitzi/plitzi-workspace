@@ -1,3 +1,4 @@
+import { actionsModuleFor } from '../modules/actions/moduleFor';
 import { connectorRscData } from '../modules/rsc/connectorRscData';
 import { createAuthApiStage } from './http/stages/authApi';
 import { createPageServer } from './server/pageServer';
@@ -5,8 +6,15 @@ import { resolveServices } from './services/resolve';
 
 import type { Auth } from './auth/createAuth';
 import type { PipelineExtensions } from './http/types';
+import type { ActionLookups } from '../modules/actions/types';
 import type { ConnectorLookups } from '../modules/connectors/resolver';
-import type { SSRPageAdapters, SSRPageServerConfig, SSRServer, SSRServerConfig } from '@plitzi/sdk-shared';
+import type {
+  SSRActionConfig,
+  SSRPageAdapters,
+  SSRPageServerConfig,
+  SSRServer,
+  SSRServerConfig
+} from '@plitzi/sdk-shared';
 
 export { resolveServices } from './services/resolve';
 export type { PipelineExtensions } from './http/types';
@@ -42,14 +50,25 @@ export type ServerConfig = Omit<SSRServerConfig, 'adapters'> & {
  * `resolveRscData`. Leaving it out meant every deployment passed the same lookups twice: once as config, for the
  * write endpoint, and once folded by hand into an adapter, for the read.
  */
-const withConnectorRsc = <T extends { adapters: SSRPageAdapters; connectors?: unknown }>(config: T): T => {
+const withConnectorRsc = <T extends { adapters: SSRPageAdapters; connectors?: unknown; action?: SSRActionConfig }>(
+  config: T
+): T => {
   if (config.adapters.getRscData || !config.connectors) {
     return config;
   }
 
+  // The same module the endpoint runs on, so a `render` element and a call share one guard set and one task
+  // registry. `actionsModuleFor` memoizes on this very config object.
+  const module = actionsModuleFor(config as SSRServerConfig);
+  const actions =
+    module && config.action?.lookups ? { lookups: config.action.lookups as ActionLookups, module } : undefined;
+
   return {
     ...config,
-    adapters: { ...config.adapters, getRscData: connectorRscData(config.connectors as ConnectorLookups) }
+    adapters: {
+      ...config.adapters,
+      getRscData: connectorRscData(config.connectors as ConnectorLookups, actions)
+    }
   };
 };
 

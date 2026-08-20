@@ -39,7 +39,6 @@ const emptyDocument = (): ActionDocument => ({
   access: { mode: 'session' },
   triggers: [{ type: 'call' }],
   input: {},
-  output: {},
   nodes: {}
 });
 
@@ -50,14 +49,61 @@ const emptyDocument = (): ActionDocument => ({
  * client callback declare their parameters the same way, so the editor an author already knows is the editor they
  * get here — with a different set of steps in it.
  */
-const asNodeDefinitions = (tasks: ActionTaskDescriptor[]): InteractionCallback[] =>
-  tasks.map(task => ({
+const asNodeDefinitions = (tasks: ActionTaskDescriptor[], triggers: ActionTrigger['type'][]): InteractionCallback[] => [
+  // The entry step picks from the triggers this action declares above, so the flow can only start the ways the
+  // document says it can.
+  ...triggers.map(type => ({
+    action: type,
+    title: TRIGGER_TITLES[type],
+    type: 'trigger' as const,
+    params: {},
+    preview: {}
+  })),
+  ...tasks.map(task => ({
     action: task.name,
     title: task.title,
-    type: 'task',
+    type: 'task' as const,
     params: task.params as InteractionCallback['params'],
     preview: {}
-  }));
+  }))
+];
+
+const TRIGGER_TITLES: Record<string, string> = {
+  call: 'When a page calls it',
+  webhook: 'When a webhook arrives',
+  schedule: 'On a schedule',
+  render: 'While a page renders',
+  custom: 'When the server raises it'
+};
+
+/**
+ * The field list a binding editor offers on this action's result, read off the output step.
+ *
+ * Derived, never authored: the step is the contract, and a second list beside it is a second thing to keep in
+ * step. Types are what the step's own JSON says — a token in quotes is text, an unquoted one keeps its type.
+ */
+const deriveOutput = (nodes: Record<string, ElementInteraction>): Record<string, ActionField> => {
+  const step = Object.values(nodes)
+    .filter(node => node.action === 'flow.output')
+    .at(-1);
+  const raw = step?.params.values;
+  if (typeof raw !== 'string') {
+    return {};
+  }
+
+  try {
+    // Parsed with the tokens still in place: what matters here are the KEYS and whether each value was quoted.
+    const parsed = JSON.parse(raw.replace(/\{\{[^}]*\}\}/g, '0')) as Record<string, unknown>;
+
+    return Object.entries(parsed).reduce<Record<string, ActionField>>((acum, [key, value]) => {
+      acum[key] = { type: typeof value === 'number' ? 'number' : typeof value === 'boolean' ? 'boolean' : 'text' };
+
+      return acum;
+    }, {});
+  } catch {
+    return {};
+  }
+};
 
 const ActionForm = ({ action, tasks, onRun, onSubmit, onCancel }: ActionFormProps) => {
   const [name, setName] = useState(action?.name ?? '');
@@ -65,7 +111,14 @@ const ActionForm = ({ action, tasks, onRun, onSubmit, onCancel }: ActionFormProp
   const [document, setDocument] = useState<ActionDocument>(() => action?.document ?? emptyDocument());
   const [isSaving, setIsSaving] = useState(false);
 
-  const nodeDefinitions = useMemo(() => asNodeDefinitions(tasks), [tasks]);
+  const nodeDefinitions = useMemo(
+    () =>
+      asNodeDefinitions(
+        tasks,
+        document.triggers.map(trigger => trigger.type)
+      ),
+    [tasks, document.triggers]
+  );
   const report = useMemo(() => validateActionDocument({ ...document, name: name || document.name }), [document, name]);
 
   const patch = useCallback(
@@ -117,12 +170,13 @@ const ActionForm = ({ action, tasks, onRun, onSubmit, onCancel }: ActionFormProp
     [document.triggers, patch]
   );
 
-  const handleChangeFields = useCallback(
-    (key: 'input' | 'output') => (fields: Record<string, ActionField>) => patch({ [key]: fields }),
+  const handleChangeInput = useCallback((fields: Record<string, ActionField>) => patch({ input: fields }), [patch]);
+
+  // The derived output travels with the flow, so the two can never disagree: one edit, one write.
+  const handleChangeNodes = useCallback(
+    (nodes: Record<string, ElementInteraction>) => patch({ nodes, output: deriveOutput(nodes) }),
     [patch]
   );
-
-  const handleChangeNodes = useCallback((nodes: Record<string, ElementInteraction>) => patch({ nodes }), [patch]);
 
   const handleRun = useCallback(
     (input: Record<string, unknown>) => onRun(action?.identifier ?? '', input),
@@ -196,15 +250,8 @@ const ActionForm = ({ action, tasks, onRun, onSubmit, onCancel }: ActionFormProp
         label="Input"
         hint="What the caller may send. Anything not declared here is dropped before the flow runs."
         fields={document.input}
-        onChange={handleChangeFields('input')}
+        onChange={handleChangeInput}
       />
-      <ActionFields
-        label="Output"
-        hint="The only values the caller gets back. Everything else a step produced stays on the server."
-        fields={document.output}
-        onChange={handleChangeFields('output')}
-      />
-
       <ActionResources
         credentials={document.credentials ?? []}
         connectors={document.connectors ?? []}
@@ -216,10 +263,15 @@ const ActionForm = ({ action, tasks, onRun, onSubmit, onCancel }: ActionFormProp
         <Workflow
           nodes={document.nodes}
           nodeDefinitions={nodeDefinitions}
-          triggerTitle="When this is called..."
+          stepType="task"
+          triggerTitle="When this happens..."
           callbackTitle="The server does this..."
           onChange={handleChangeNodes}
         />
+        <span className="text-xs text-gray-500">
+          End with an <b>Output</b> step naming what the caller gets back — that step is the contract, and only the last
+          one that runs is answered.
+        </span>
       </div>
 
       {report.errors.length > 0 && (

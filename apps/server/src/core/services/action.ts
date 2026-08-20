@@ -1,4 +1,4 @@
-import { handleActionCall, handleActionCancel, handleActionCatalog } from '../../modules/actions';
+import { handleActionCall, handleActionCancel, handleActionCatalog, handleActionWebhook } from '../../modules/actions';
 import { handleAction } from '../../modules/actions/connectorWrite';
 import { clientIp, readRawBody } from '../requestParser';
 
@@ -70,6 +70,25 @@ export const actionStage: Stage<SSRContext> = async ctx => {
     return true;
   }
 
+  // Public by construction — no session, and gated on its own signature instead. It reads the RAW body because a
+  // signature covers bytes, so nothing may parse or re-serialize it on the way in.
+  if (actions && req.method === 'POST' && req.path.startsWith(`${actionPath}/hook/`)) {
+    ctx.operation = 'action:webhook';
+    req.body = await readRawBody(ctx.raw);
+    await handleActionWebhook({
+      req,
+      res: ctx.res,
+      config,
+      module: actions,
+      signal: ctx.signal,
+      actionId: req.path.slice(`${actionPath}/hook/`.length),
+      callerId: `ip:${clientIp(ctx.raw, req)}`,
+      lineage: lineageOf(req)
+    });
+
+    return true;
+  }
+
   if (actions && req.method === 'DELETE' && req.path.startsWith(`${actionPath}/run/`)) {
     ctx.operation = 'action:cancel';
     handleActionCancel({
@@ -95,6 +114,7 @@ export const actionStage: Stage<SSRContext> = async ctx => {
     await handleActionCall({
       req,
       res: ctx.res,
+      raw: ctx.rawRes,
       config,
       module: actions,
       signal: ctx.signal,

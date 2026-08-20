@@ -28,7 +28,12 @@ const widgetOperations = [
 // connected to, so they are the most expensive thing the MCP owns — far more than any payload a tool ever carries.
 // Four tools take the op union; inlining it in each measured ~102k tokens until the shared subschemas were given
 // registry ids (see operations/schemaIds.ts). This budget is what stops that from creeping back silently.
-const TOOLS_BUDGET_BYTES = 170_000;
+//
+// Raised from 170k when the server-action ops landed: three ops with their own document vocabulary cost ~5k, and
+// that is what a new WRITE DOMAIN is worth. It is deliberately not headroom — the same ops cost 13k before their
+// subschemas were registered, and the failing test is what caught that. Raise it only for a domain, never to make
+// a duplicated shape fit.
+const TOOLS_BUDGET_BYTES = 176_000;
 
 // Close to the real size (~1.67 MB) on purpose: the page travels inline on every read, so growth must be
 // deliberate. What is left is mostly the SDK runtime and its stylesheet.

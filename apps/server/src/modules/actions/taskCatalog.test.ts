@@ -35,7 +35,8 @@ describe('task catalog', () => {
       lookups: { getAction: () => Promise.resolve(undefined) },
       tasks: [task]
     });
-    const described = describeTask(withCustom.get('x.y')!);
+    const registered = withCustom.get('x.y');
+    const described = describeTask(registered as NonNullable<typeof registered>);
 
     expect('run' in described).toBe(false);
   });

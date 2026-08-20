@@ -52,7 +52,7 @@ const run = (entry: ActionEntry, spaceId = 1) => {
 const incrementFlow = counterAction({
   start: node('start', { type: 'trigger', action: 'call', afterNode: 'inc' }),
   inc: node('inc', { action: 'kv.increment', afterNode: 'ret', params: { key: 'hits', amount: '1' } }),
-  ret: node('ret', { action: 'flow.return', params: { values: '{"value": "{{ inc.value }}"}' } })
+  ret: node('ret', { action: 'flow.output', params: { values: '{"value": {{ inc.value }}}' } })
 });
 
 describe('kv tasks', () => {
@@ -83,10 +83,10 @@ describe('kv tasks', () => {
           start: node('start', { type: 'trigger', action: 'call', afterNode: 'set' }),
           set: node('set', { action: 'kv.set', afterNode: 'get', params: { key: 'greeting', value: 'hola' } }),
           get: node('get', { action: 'kv.get', afterNode: 'ret', params: { key: 'greeting' } }),
-          ret: node('ret', { action: 'flow.return', params: { values: '{"value": "{{ get.value }}"}' } })
+          ret: node('ret', { action: 'flow.output', params: { values: '{"value": "{{ get.value }}"}' } })
         },
-        // Declared as text: the output contract coerces, so a number-typed key would drop this string rather than
-        // return it — which is the projection doing its job, not a bug worth working around.
+        // Quoted on purpose: the output step's JSON IS the shape now, so a token in quotes answers text and an
+        // unquoted one keeps its own type. There is no contract left to coerce it into something else.
         'text'
       )
     );

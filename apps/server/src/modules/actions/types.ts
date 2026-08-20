@@ -7,6 +7,7 @@ import type {
   Environment,
   InteractionCallbackParam,
   InteractionNode,
+  InteractionNodeStatus,
   SSRUser
 } from '@plitzi/sdk-shared';
 
@@ -23,6 +24,22 @@ export type ActionCredential = Record<string, string>;
 export type ResolvedConnector = {
   manifest: ConnectorManifest;
   credential?: ActionCredential;
+};
+
+/**
+ * A connection to a database that is NOT this deployment's.
+ *
+ * Registered by the deployment, one per engine it supports, and reached only through a credential the space
+ * declared — which is the whole security position of `db.query`: a flow queries a database its owner configured,
+ * never the one holding other tenants' spaces.
+ *
+ * `params` are BOUND, never interpolated. The task refuses a statement containing a template for exactly that
+ * reason, and a driver that pastes them into the SQL itself would undo the rule from the other end.
+ */
+export type ActionDbDriver = {
+  /** Engine name a credential names, e.g. `mysql`, `postgres`. */
+  engine: string;
+  query: (dsn: string, sql: string, params: unknown[], signal: AbortSignal) => Promise<unknown[]>;
 };
 
 /**
@@ -75,6 +92,8 @@ export type ActionTaskContext = {
   fetch: typeof fetch;
   /** Key/value storage, namespaced to this space by the runner — a key one space writes is a key only it reads. */
   kv: ActionKvStore;
+  /** The database engines this deployment registered, for the `db.query` task. */
+  dbDrivers: ActionDbDriver[];
   /** Pushes a `data` frame to a streaming caller. A no-op when nobody negotiated a stream. */
   emit: (chunk: unknown) => void;
 };
@@ -120,6 +139,10 @@ export type ActionsConfig = {
   concurrency?: { perSpace?: number; perProcess?: number };
   /** Backs the `kv` tasks. Omitted → an in-process store, which is per-replica by definition. */
   kv?: ActionKvStore;
+  /** Inbound webhooks are public, so they are counted per caller per minute. Default 60. */
+  rateLimit?: { webhookPerMinute?: number };
+  /** Database engines this deployment lets a flow reach. Empty → the `db.query` task is not offered at all. */
+  dbDrivers?: ActionDbDriver[];
   fetchImpl?: typeof fetch;
 };
 
@@ -136,6 +159,8 @@ export type ActionRunRequest = {
   /** Chain of run ids that caused this one; a run naming its own action is refused before its first node. */
   lineage?: string[];
   emit?: (chunk: unknown) => void;
+  /** Reports each step as it settles, for a caller watching the run happen. Absent for a plain request/response. */
+  onNode?: (id: string, status: InteractionNodeStatus) => void;
   signal?: AbortSignal;
 };
 

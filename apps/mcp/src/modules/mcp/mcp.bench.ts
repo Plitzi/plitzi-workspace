@@ -103,7 +103,7 @@ const buildSpace = (pages: number, elementsPerPage: number, definitions: number)
     cache: ''
   } as unknown as Style;
 
-  return { schema, style, connectors: [] };
+  return { schema, style, connectors: [], actions: [] };
 };
 
 // --- Primary fixture: 30 pages × 100 elements (~3000), the baseline scale. ---

@@ -67,6 +67,18 @@ export type InteractionCallbackPreview = string | Record<string, unknown>;
 
 export type InteractionCallbackPreviews = Record<string, InteractionCallbackPreview>;
 
+/**
+ * What a callback learns about the flow running it.
+ *
+ * Only the element the flow fired on, and only because a step that starts something asynchronous has to be able to
+ * report back TO that element — a server action running detached finishes long after the flow that launched it
+ * returned, and `onFlowEnd` has to fire somewhere specific.
+ */
+export type InteractionCallbackContext = {
+  /** idRef of the element this flow fired on. Absent for a flow with no host element. */
+  elementRef?: string;
+};
+
 export type InteractionCallback<T extends Record<string, unknown> = Record<string, unknown>> = {
   elementId?: string; // When is globalCallback or utility, we just put the source as elementId
   action: string;
@@ -79,7 +91,7 @@ export type InteractionCallback<T extends Record<string, unknown> = Record<strin
   params:
     | Record<keyof T, InteractionCallbackParam<T>>
     | ((params: InteractionCallbackParamValues<T>) => Record<keyof T, InteractionCallbackParam<T>>);
-  callback?: (params: InteractionCallbackParamValues<T>) => unknown;
+  callback?: (params: InteractionCallbackParamValues<T>, context?: InteractionCallbackContext) => unknown;
   postCallback?: InteractionPostCallback<T>;
   preview?: InteractionCallbackPreviews | ((params: InteractionCallbackParamValues<T>) => InteractionCallbackPreviews);
 };

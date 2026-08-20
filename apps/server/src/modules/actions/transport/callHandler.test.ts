@@ -37,7 +37,7 @@ const document = (overrides: Partial<ActionDocument> = {}): ActionDocument => ({
   output: { total: { type: 'number' } },
   nodes: {
     start: node('start', { type: 'trigger', action: 'call', afterNode: 'compute' }),
-    compute: node('compute', { action: 'flow.return', params: { values: '{"total": "{{ input.amount }}"}' } })
+    compute: node('compute', { action: 'flow.output', params: { values: '{"total": {{ input.amount }}}' } })
   },
   ...overrides
 });
@@ -46,6 +46,31 @@ const entry = (overrides: Partial<ActionDocument> = {}): ActionEntry => ({
   id: 'quote',
   document: document(overrides)
 });
+
+/** A raw response the streaming path can write into, recording the frames a caller would have received. */
+const buildRaw = () => {
+  const written: string[] = [];
+  const raw = {
+    headersSent: false,
+    statusCode: 200,
+    setHeader: () => undefined,
+    getHeaders: () => ({}),
+    writeHead(status: number) {
+      this.statusCode = status;
+      this.headersSent = true;
+
+      return undefined;
+    },
+    write: (chunk: string) => {
+      written.push(chunk);
+
+      return undefined;
+    },
+    end: () => undefined
+  };
+
+  return { raw, written };
+};
 
 const buildRes = () => {
   const sent: { status: number; body: string; headers: Record<string, string | string[]> } = {
@@ -92,13 +117,21 @@ const request = (body: unknown, authoring = false): SSRRequest =>
 const call = async (
   config: SSRPageServerConfig,
   body: unknown,
-  options: { module?: ActionsModule; authoring?: boolean; signal?: AbortSignal; lineage?: string[] } = {}
+  options: {
+    module?: ActionsModule;
+    authoring?: boolean;
+    signal?: AbortSignal;
+    lineage?: string[];
+    headers?: Record<string, string>;
+  } = {}
 ) => {
   const { res, sent } = buildRes();
+  const { raw, written } = buildRaw();
   const module = options.module ?? createActionsModule({ lookups: { getAction: () => Promise.resolve(undefined) } });
   await handleActionCall({
-    req: request(body, options.authoring),
+    req: { ...request(body, options.authoring), headers: options.headers ?? {} },
     res,
+    raw: raw,
     config,
     module,
     signal: options.signal ?? new AbortController().signal,
@@ -106,7 +139,7 @@ const call = async (
     lineage: options.lineage ?? []
   });
 
-  return { sent, payload: JSON.parse(sent.body || '{}') as Record<string, unknown>, module };
+  return { sent, written, payload: JSON.parse(sent.body || '{}') as Record<string, unknown>, module };
 };
 
 describe('handleActionCall', () => {
@@ -230,5 +263,111 @@ describe('handleActionCall', () => {
     await call(config, { actionId: 'quote', input: {} });
 
     expect(meter).not.toHaveBeenCalled();
+  });
+});
+
+describe('handleActionCall (streaming)', () => {
+  // Lowercase, as Node normalizes every inbound header name — reading `Accept` here would pass a test the real
+  // request could never satisfy.
+  const streaming = { accept: 'text/event-stream' };
+
+  const frames = (written: string[]) =>
+    written
+      .join('')
+      .split('\n\n')
+      .filter(Boolean)
+      .map(block => {
+        const event = /event: (\w+)/.exec(block)?.[1];
+        const data = /data: (.*)/.exec(block)?.[1];
+
+        return { event, data: data ? (JSON.parse(data) as Record<string, unknown>) : undefined };
+      })
+      .filter(frame => frame.event);
+
+  it('reports each step as it settles, then the result', async () => {
+    const { written } = await call(
+      buildConfig(entry()),
+      { actionId: 'quote', input: { amount: 7 } },
+      { headers: streaming }
+    );
+
+    const sent = frames(written);
+    expect(sent.map(frame => frame.event)).toEqual(['node', 'done']);
+    expect(sent[1].data).toMatchObject({ status: 'completed', output: { total: 7 } });
+  });
+
+  it('tells a hand-rolled EventSource to wait a day before reconnecting', async () => {
+    // EventSource reconnects when a stream ENDS, success included — which without this is a run that restarts
+    // itself forever. Our own client reads the stream with fetch and never reconnects at all.
+    const { written } = await call(
+      buildConfig(entry()),
+      { actionId: 'quote', input: { amount: 1 } },
+      { headers: streaming }
+    );
+
+    expect(written.join('')).toContain('retry: 86400000');
+  });
+
+  it('sends a failure as a frame, since the status line is long gone', async () => {
+    const failing = entry({
+      nodes: {
+        start: node('start', { type: 'trigger', action: 'call', afterNode: 'boom' }),
+        boom: node('boom', { action: 'flow.fail', params: { message: 'nope' } })
+      }
+    });
+
+    const { written } = await call(
+      buildConfig(failing),
+      { actionId: 'quote', input: { amount: 1 } },
+      { headers: streaming }
+    );
+
+    const sent = frames(written);
+    expect(sent.at(-1)?.event).toBe('done');
+    expect(sent.at(-1)?.data).toMatchObject({ status: 'failed' });
+  });
+
+  it('carries what a step emitted while it ran', async () => {
+    const emitting = {
+      namespace: 'test',
+      action: 'progress',
+      title: 'Progress',
+      params: {},
+      run: (_params: Record<string, unknown>, ctx: { emit: (chunk: unknown) => void }) => {
+        ctx.emit({ step: 1 });
+        ctx.emit({ step: 2 });
+
+        return {};
+      }
+    };
+    const module = createActionsModule({
+      lookups: { getAction: () => Promise.resolve(undefined) },
+      tasks: [emitting]
+    });
+    const config = buildConfig(
+      entry({
+        nodes: {
+          start: node('start', { type: 'trigger', action: 'call', afterNode: 'p' }),
+          p: node('p', { action: 'test.progress' })
+        }
+      })
+    );
+
+    const { written } = await call(config, { actionId: 'quote', input: { amount: 1 } }, { module, headers: streaming });
+
+    const data = frames(written).filter(frame => frame.event === 'data');
+    expect(data.map(frame => (frame.data as { chunk: { step: number } }).chunk.step)).toEqual([1, 2]);
+  });
+
+  it('answers a refusal with a status code, not a stream', async () => {
+    // Nothing has been written yet at that point, so the caller still gets a code it can act on.
+    const { sent, written } = await call(
+      buildConfig(entry()),
+      { actionId: 'quote', input: {} },
+      { headers: streaming }
+    );
+
+    expect(sent.status).toBe(422);
+    expect(written).toEqual([]);
   });
 });

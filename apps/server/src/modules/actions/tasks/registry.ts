@@ -1,4 +1,5 @@
 import { builtinTasks } from './builtins';
+import { dbTasks } from './db';
 
 import type { ActionTask, ActionTaskRegistry, RegisteredTask } from '../types';
 
@@ -6,7 +7,7 @@ const NAME_PATTERN = /^[a-z][a-zA-Z0-9]*$/;
 
 export const taskName = (task: Pick<ActionTask, 'namespace' | 'action'>): string => `${task.namespace}.${task.action}`;
 
-const reservedNamespaces = new Set(builtinTasks.map(task => task.namespace));
+const reservedNamespaces = new Set([...builtinTasks, ...dbTasks].map(task => task.namespace));
 
 /**
  * Builds the set of tasks this server can run.
@@ -15,10 +16,13 @@ const reservedNamespaces = new Set(builtinTasks.map(task => task.namespace));
  * name is unreachable from any document, and one shadowing a built-in silently changes what every existing action
  * in that deployment does. Both are invisible until a run misbehaves in production.
  */
-export const createTaskRegistry = (custom: ActionTask<never>[] = []): ActionTaskRegistry => {
+export const createTaskRegistry = (custom: ActionTask<never>[] = [], hasDbDrivers = false): ActionTaskRegistry => {
   const tasks = new Map<string, RegisteredTask>();
 
-  builtinTasks.forEach(task => tasks.set(taskName(task), { ...task, name: taskName(task) }));
+  // `db.query` is only real when this deployment registered an engine to run it against. Offering it otherwise
+  // would put a step in the editor whose only possible outcome is "this server has no driver".
+  const shipped = hasDbDrivers ? [...builtinTasks, ...dbTasks] : builtinTasks;
+  shipped.forEach(task => tasks.set(taskName(task), { ...task, name: taskName(task) }));
 
   (custom as ActionTask<Record<string, unknown>>[]).forEach(task => {
     if (!NAME_PATTERN.test(task.namespace) || !NAME_PATTERN.test(task.action)) {

@@ -50,11 +50,11 @@ const buildSpace = (): Space => {
     cache: ''
   } as unknown as Space['style'];
 
-  return { schema, style, connectors: [] } as Space;
+  return { schema, style, connectors: [], actions: [] } as Space;
 };
 
 const capturing = (space: Space): { persisters: Persisters; saved: () => Space } => {
-  const state: Space = { schema: space.schema, style: space.style, connectors: space.connectors };
+  const state: Space = { schema: space.schema, style: space.style, connectors: space.connectors, actions: [] };
 
   return {
     persisters: {
@@ -164,7 +164,8 @@ const scopeSpace = (): Space => ({
     variables: {},
     cache: ''
   } as unknown as Space['style'],
-  connectors: []
+  connectors: [],
+  actions: []
 });
 
 const malformedSpace = (): Space => ({
@@ -211,7 +212,8 @@ const malformedSpace = (): Space => ({
     variables: {},
     cache: ''
   } as unknown as Space['style'],
-  connectors: []
+  connectors: [],
+  actions: []
 });
 
 export { buildSpace, capturing, spaceWithRoute, varOp, scopeSpace, malformedSpace };

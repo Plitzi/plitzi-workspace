@@ -10,6 +10,7 @@ import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 import type {
   ElementInteraction,
   InteractionCallback,
+  InteractionCallbackContext,
   InteractionNode,
   InteractionNodeStatus,
   InteractionStatus,
@@ -58,7 +59,10 @@ const processNode = async (
   node: ElementInteraction,
   callbacksAvailables: Record<string, InteractionCallback> = {},
   flowParams = {},
-  globalParams = {}
+  globalParams = {},
+  // The element this flow fired on. Threaded through so a step that starts something asynchronous — a detached
+  // server action — can report back to it when it finishes, long after this flow returned.
+  context: InteractionCallbackContext = {}
 ): Promise<{
   status: InteractionNodeStatus;
   result: unknown;
@@ -115,7 +119,7 @@ const processNode = async (
 
         const { callback, postCallback } = receptorCallback;
         if (callback) {
-          result = await callback(paramsToCallback);
+          result = await callback(paramsToCallback, context);
         }
 
         if (postCallback) {
@@ -128,7 +132,7 @@ const processNode = async (
       case 'utility': {
         const { callback, postCallback } = get(utility, action, {}) as InteractionCallback;
         if (callback) {
-          result = await callback(paramsToCallback);
+          result = await callback(paramsToCallback, context);
         }
 
         if (postCallback) {
@@ -173,7 +177,8 @@ const flowCallbacks = async (
   flowParams = {},
   globalParams = {},
   postCallbacksTotal: PostCallbackNode[] = [],
-  executionResults: Record<string, InteractionNode> = {}
+  executionResults: Record<string, InteractionNode> = {},
+  context: InteractionCallbackContext = {}
 ) => {
   if (!parentNode) {
     return executionResults;
@@ -193,7 +198,8 @@ const flowCallbacks = async (
     node,
     callbacksAvailables,
     flowParams,
-    globalParams
+    globalParams,
+    context
   );
   executionResults[node.id] = {
     node,
@@ -213,7 +219,8 @@ const flowCallbacks = async (
     { ...flowParams, [node.id]: result },
     globalParams,
     postCallbacksTotal,
-    executionResults
+    executionResults,
+    context
   );
 };
 
@@ -305,7 +312,9 @@ const flowTrigger = async (
     callbacksAvailables,
     flowParams,
     globalParams,
-    postCallbacksTotal
+    postCallbacksTotal,
+    {},
+    { elementRef }
   );
   storeLog(triggerNode, startTime, nodesProcessed, flowStatus(nodesProcessed), elementRef);
 };

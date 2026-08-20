@@ -74,16 +74,6 @@ export const applyFields = (fields: Record<string, ActionField>, raw: Record<str
   return { values, missing, invalid };
 };
 
-/**
- * Narrows what a run returns to the keys its document declares.
- *
- * The same coercion as an input, and deliberately forgiving where an input is strict: a step that produced
- * nothing for a declared key answers without it, rather than failing a run whose work is already done. What it
- * never does is pass a key through that nobody declared.
- */
-export const projectOutput = (fields: Record<string, ActionField>, raw: Record<string, unknown>) =>
-  applyFields(fields, raw).values;
-
 /** The visitor as a flow sees them. The token is deliberately absent — see the `auth.currentUser` task. */
 export const projectUser = (user?: SSRUser) => {
   if (!user) {

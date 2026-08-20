@@ -16,7 +16,7 @@ for discussion and is **not implemented** yet.
 | [0009](./0009-cms-presentation-elements.md) | CMS presentation elements | Implemented | `sdk-elements`, `sdk-shared`, `apps/server`, builder, `plitzi-sdk-server` |
 | [0010](./0010-unified-auth-and-rbac.md) | Unified auth kernel, scoped tokens, and space RBAC | Implemented | `plitzi-sdk-server`, `apps/server`, `apps/mcp`, builder, `sdk-shared` |
 | [0011](./0011-auth-in-sdk-server.md) | Auth belongs to sdk-server | Implemented | `apps/server`, `plitzi-sdk-server` |
-| [0012](./0012-server-actions.md) | Server actions | Proposal | `sdk-shared`, `sdk-server`, `sdk-interactions`, `apps/mcp`, builder, `plitzi-sdk-server` |
+| [0012](./0012-server-actions.md) | Server actions | Implemented | `sdk-shared`, `sdk-server`, `sdk-interactions`, `apps/mcp`, builder, `plitzi-sdk-server` |
 
 ## Conventions
 

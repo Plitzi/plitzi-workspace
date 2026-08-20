@@ -1,4 +1,4 @@
-import type { ActionLimits } from './ActionTypes';
+import type { ActionEntry, ActionLimits, ActionTaskDescriptor } from './ActionTypes';
 import type { Environment } from './CommonTypes';
 import type { ConnectorEntry } from './ConnectorTypes';
 import type { Schema } from './SchemaTypes';
@@ -292,6 +292,19 @@ export type SSRAdapters = {
   saveConnector?: (spaceId: number, entry: ConnectorEntry) => Promise<void>;
   /** Remove one connector by its identifier. Omitted alongside `saveConnector` for a read-only deployment. */
   deleteConnector?: (spaceId: number, connectorId: string) => Promise<void>;
+  /** Read every server action configured for the space, so the MCP can list them and author flows against them.
+   *  Space-level server-side state like connectors: the documents name credentials, connectors and steps, so this
+   *  must never feed a browser payload. When omitted, the MCP's action resource is empty. */
+  getActions?: (spaceId: number) => Promise<ActionEntry[] | undefined>;
+  /** The server tasks a flow can be built from — what THIS deployment can run, which is the SDK's built-ins plus
+   *  whatever tasks it registered. Shaped as `ActionTaskDescriptor` in `@plitzi/sdk-server/actions`. Without it an
+   *  agent authoring an action is guessing at the step vocabulary. */
+  getActionTasks?: (spaceId: number) => Promise<ActionTaskDescriptor[] | undefined>;
+  /** Create or replace one action, keyed by `entry.id`. When omitted, action ops apply in memory only and `apply`
+   *  reports `persisted: false`. */
+  saveAction?: (spaceId: number, entry: ActionEntry) => Promise<void>;
+  /** Remove one action by its identifier. Omitted alongside `saveAction` for a read-only deployment. */
+  deleteAction?: (spaceId: number, actionId: string) => Promise<void>;
   /** Persist the element schema mutated by the MCP `apply` tool. When omitted, `apply` reports `persisted: false`. */
   saveSchema?: (spaceId: number, environment: Environment, schema: Schema) => Promise<void>;
   /** Persist the style document mutated by the MCP `apply` tool — store it as given. `style.cache` arrives already
@@ -441,6 +454,15 @@ export type SSRActionConfig = {
   limits?: ActionLimits;
   /** Concurrency ceilings, counted per space. */
   concurrency?: { perSpace?: number; perProcess?: number };
+  /** Inbound webhooks are public by construction, so they are counted per caller per minute. Default 60. */
+  rateLimit?: { webhookPerMinute?: number };
+  /**
+   * Database engines a flow may reach, shaped as `ActionDbDriver` in `@plitzi/sdk-server/actions`.
+   *
+   * Omitted leaves the `db.query` task unregistered entirely. What a driver connects to is always a database the
+   * SPACE declared as a credential — never this deployment's own, which no credential a space holds can name.
+   */
+  dbDrivers?: unknown[];
   /**
    * Backs the `kv` tasks — shaped as `ActionKvStore` in `@plitzi/sdk-server/actions`.
    *

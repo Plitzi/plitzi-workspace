@@ -13,21 +13,25 @@ export type WorkflowFlowProps = {
   nodes?: Record<string, ElementInteraction>;
   triggerTitle?: string;
   callbackTitle?: string;
+  /** What a new step is. `callback` in a page flow; a server action's steps are `task`, and adding the wrong kind
+   *  produces a node the runner refuses — which is what happened before this was a prop. */
+  stepType?: ElementInteraction['type'];
 };
 
 const WorkflowFlow = ({
   trigger,
   nodes = emptyObject,
   triggerTitle = 'When this happens...',
-  callbackTitle = 'Do this...'
+  callbackTitle = 'Do this...',
+  stepType = 'callback'
 }: WorkflowFlowProps) => {
   const { addNode, removeNode } = use(WorkflowContext);
   const callbacks = useMemo(() => Object.values(nodes).filter(node => node.type !== 'trigger'), [nodes]);
   const [nodesOpened, setNodesOpened] = useState<Record<string, boolean>>({});
 
   const handleClickAddCallback = useCallback(
-    (siblingNodeId: string) => addNode('callback', siblingNodeId, trigger.id),
-    [addNode, trigger]
+    (siblingNodeId: string) => addNode(stepType, siblingNodeId, trigger.id),
+    [addNode, stepType, trigger]
   );
 
   const handleNodeOpened = useCallback(

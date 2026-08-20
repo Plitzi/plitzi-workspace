@@ -1,6 +1,6 @@
 # RFC 0012 — Server actions
 
-- **Status:** Proposal
+- **Status:** Implemented (2026-08-20)
 - **Author:** Carlos Rodriguez
 - **Date:** 2026-08-20
 - **Scope:** `@plitzi/sdk-shared`, `@plitzi/sdk-server`, `@plitzi/sdk-interactions`, `@plitzi/sdk-elements`, `apps/mcp`, `apps/builder`, `plitzi-sdk-server`
@@ -276,9 +276,17 @@ Two conventions the implementation settled, worth stating because a reader of th
 
 - **The entry point is the flow's single `trigger` node**, exactly what the builder's Workflow editor already
   draws a flow from. The runner walks `afterNode` from there.
-- **`flow.return` decides what leaves the server.** The flow scope holds every node's raw result; the returning
-  node names the subset, and the runner then projects that against the declared `output`, dropping anything
-  nobody declared. A run with no `flow.return` answers `{}` rather than leaking its last step's result.
+- **`flow.output` decides what leaves the server, and IS the contract.** The flow scope holds every node's raw
+  result; this step names the subset, and what it names is exactly what the caller receives. A run with no output
+  step answers `{}` rather than leaking its last step's result.
+
+  The original design declared an `output` map on the document beside the flow, and that was wrong: it asks an
+  author to know what a flow returns before the steps that produce it exist, and leaves two places to keep in
+  step. The document's `output` is now **derived** from that step for typed bindings, and the runner ignores it.
+  The step must be LAST — only the last one that runs is answered — which the validator says out loud.
+
+  A consequence worth knowing: the step's JSON is the shape, so `{"total": {{ input.amount }}}` answers a number
+  and `{"total": "{{ input.amount }}"}` answers text. There is no contract left to coerce one into the other.
 - **The cheap checks are one function, called twice.** `precheckRun` — enabled, declared trigger, lineage,
   access, input contract — is called by the ENDPOINT before it takes a concurrency slot or emits a metering
   event, and by the RUNNER because a custom trigger goes straight there. One implementation, so the two paths
@@ -742,9 +750,13 @@ closest existing sibling: a per-space server-side document with a list, a form a
 The task catalog comes from the server (`GET /_action/catalog`, session-gated), never from a hardcoded list —
 that is what makes a self-hoster's custom task appear in their builder with no fork.
 
-**MCP** — mirrors the connector operations that already exist in
-`apps/mcp/src/modules/mcp/tools/operations/connectors/`: `upsertAction`, `patchAction`, `deleteAction`, plus
-action entries in the shared validator. The agent that already authors a whole CMS integration
+**MCP** — mirrors the connector operations in `apps/mcp/src/modules/mcp/tools/operations/connectors/`:
+`upsertAction`, `patchAction`, `deleteAction`, reading `plitzi://actions/{env}` for what exists and
+`plitzi://actions/{env}/tasks` for the steps THIS deployment can run. Two properties the implementation pinned:
+the ops validate through the same `validateActionDocument` the panel and the mutation use (and `patchAction`
+validates the MERGED document, since removing the step that returned the output is how a flow breaks one field
+at a time), and every subschema they share is registered in `schemaIds.ts` — unregistered they cost 13k of tool
+listing instead of 5k, which the listing budget test caught. The agent that already authors a whole CMS integration
 (`project_mcp_connectors_authoring`) should be able to author the checkout flow that uses it. The validator
 gains the rules stated above: no server task in a client flow, no twig in `sql`, no undeclared credential, no
 public webhook without verification.
@@ -771,14 +783,21 @@ Plitzi's own deployment is a consumer of every one of these. No private path.
 
 | # | Delivers | Unblocks |
 |---|---|---|
-| **0** ✅ | Types in `sdk-shared`; runner + task registry + `flow`/`transform`/`http`/`auth` tasks; `call` trigger on `/_action`; `runServerAction` client step with `await`/`detached`; `SpaceAction` + lookups; metering; per-request `AbortController` in the dispatcher; single-flight `runKey`, lineage and cancellation | An action authored by hand and called from a button |
-| **1** | ✅ Builder module reusing the Workflow editor, catalog served over GraphQL, `validateActionDocument`, GraphQL CRUD, `connector.*` and `kv.*` tasks. Left: test-run panel, MCP ops, `onFlowEnd`/`onFlowError` triggers (needs the element trigger catalog) | Anyone can author one |
-| **2** | `webhook` trigger, HMAC verification, rate limiting; deployment tasks (`email`, `ai`, `storage`) | Stripe/CMS inbound, notifications |
-| **3** | SSE negotiation, `stream.emit`, `ai.stream`, heartbeat + stream caps, `DELETE /_action/run/:runId`, `onFlowProgress`, `cancelFlow` step | Long AI actions that feel alive, and cancellable |
-| **4** | `render` trigger + RSC projection | Reads a manifest cannot express |
-| **5** | `schedule` trigger + leader lock; `db.query` + drivers | Digests, syncs, customer databases |
+| **0** ✅ | Types; runner + task registry; `call` trigger on `/_action`; `runServerAction` step with `await`/`detached`; `SpaceAction` + lookups; metering; per-request `AbortController`; single-flight, lineage and cancellation | An action authored by hand and called from a button |
+| **1** ✅ | Builder module reusing the Workflow editor, catalog over GraphQL, `validateActionDocument`, GraphQL CRUD, `connector.*`/`kv.*` tasks, test-run panel, MCP ops + `plitzi://actions/{env}` resources, `onFlowEnd`/`onFlowError` triggers | Anyone can author one |
+| **2** ✅ | `webhook` trigger with HMAC verification over the raw body, per-caller rate limiting, delivery-id idempotency; `ai.complete` on the deployment | Stripe/CMS inbound |
+| **3** ✅ | SSE negotiation, `stream.emit`, heartbeat, `DELETE /_action/run/:runId`, `stream` mode + `onFlowProgress` | Long work that shows progress |
+| **4** ✅ | `render` trigger: a `runtime: 'server'` element names an action, fed the page's route and query params | Reads a manifest cannot express |
+| **5** ✅ | `schedule` trigger + cron matcher + Redis leader lock in the api role; `db.query` with bound parameters and deployment-registered drivers | Digests, syncs, customer databases |
 
-Phase 0 is the whole architectural risk. Everything after it is surface.
+Phase 0 was the whole architectural risk; everything after it was surface. Two things the phases did NOT
+deliver, and why:
+
+- **`email.send` and `storage.put`.** The deployment has no mail transport at all, and which bucket a flow may
+  write into is a product decision — the space's deploy bucket holds published assets. A step whose only outcome
+  is failure is worse than no step: the catalog is a promise about what a server can do.
+- **Attaching a second viewer to one live stream.** Refusing a duplicate is honest and reversible; fan-out is a
+  second lifecycle to get wrong.
 
 ## 8. Open questions
 
@@ -787,10 +806,11 @@ Phase 0 is the whole architectural risk. Everything after it is surface.
    versioned with the deploy?** Options: leave as-is (matches connectors), snapshot the private namespace
    into the deployment revision, or version each document with a `publishedAt`. Whatever we choose applies to
    connectors and actions together, or the asymmetry is worse than either.
-2. **Idempotency.** A retried webhook must not charge twice. The `runKey` of §4.6.2 is already the
-   mechanism — a caller-supplied `idempotencyKey` replaces the derived key — but single-flight only refuses a
-   run while the first is *live*. Whether a completed run's result should be replayed for a TTL, and whether
-   that is opt-in or mandatory for `webhook`, is open.
+2. **Idempotency.** Answered for the live case and still open for the completed one. The webhook path keys
+   single-flight on the sender's own delivery id (`x-github-delivery`, `idempotency-key`, …), so a retry arriving
+   while the first run is going is refused — and answered **202**, because from the sender's side the work is
+   happening and an error would only make a well-behaved provider retry harder. What is still open is replaying a
+   COMPLETED run's result for a TTL, which is what protects against a retry that arrives a minute later.
 3. **Environment scoping.** Does an action belong to a space, or to a space **and environment**? Connectors
    are per-space today. A staging action pointing at a production database is the failure mode to avoid.
 4. **Quota shape.** `server_action` weight is flat at 0.25. An action making twenty outbound requests costs

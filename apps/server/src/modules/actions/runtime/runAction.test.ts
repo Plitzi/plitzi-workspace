@@ -32,9 +32,9 @@ const buildEntry = (overrides: Partial<ActionDocument> = {}): ActionEntry => ({
     nodes: {
       start: node('start', { type: 'trigger', action: 'call', afterNode: 'compute' }),
       compute: node('compute', {
-        action: 'flow.return',
+        action: 'flow.output',
         afterNode: '',
-        params: { values: '{"total": "{{ input.amount }}", "leaked": "internal"}' }
+        params: { values: '{"total": {{ input.amount }}, "leaked": "internal"}' }
       })
     },
     ...overrides
@@ -64,15 +64,36 @@ const user = (permissions: string[]): SSRUser => ({
 });
 
 describe('runAction', () => {
-  it('runs the flow and returns only declared output', async () => {
+  it('answers exactly what the output step named', async () => {
     const { runAction } = createActionsModule({ lookups });
 
     const result = await runAction(request(buildEntry()));
 
     expect(result.status).toBe('completed');
-    // `leaked` was produced by the step but nobody declared it, so it does not leave the server.
-    expect(result.output).toEqual({ total: 42 });
+    expect(result.output).toEqual({ total: 42, leaked: 'internal' });
     expect(result.trace).toHaveLength(1);
+  });
+
+  // The property that matters: the flow scope holds every step's raw result, and none of it reaches the caller
+  // unless the output step names it.
+  it('leaves everything the output step did not name on the server', async () => {
+    const entry = buildEntry({
+      nodes: {
+        start: node('start', { type: 'trigger', action: 'call', afterNode: 'fetchish' }),
+        fetchish: node('fetchish', {
+          action: 'transform.json',
+          afterNode: 'out',
+          params: { value: '{"public":"ok","internalToken":"tok_live_should_not_travel"}' }
+        }),
+        out: node('out', { action: 'flow.output', params: { values: '{"ok": "{{ fetchish.value.public }}"}' } })
+      }
+    });
+    const { runAction } = createActionsModule({ lookups });
+
+    const result = await runAction(request(entry));
+
+    expect(result.output).toEqual({ ok: 'ok' });
+    expect(JSON.stringify(result.output)).not.toContain('tok_live_should_not_travel');
   });
 
   it('refuses a trigger the document does not declare', async () => {
@@ -126,7 +147,7 @@ describe('runAction', () => {
           params: { message: 'never' },
           when: { combinator: 'and', rules: [{ field: 'input.amount', operator: '=', value: 0 }] } as never
         }),
-        compute: node('compute', { action: 'flow.return', params: { values: '{"total": 1}' } })
+        compute: node('compute', { action: 'flow.output', params: { values: '{"total": 1}' } })
       }
     });
     const { runAction } = createActionsModule({ lookups });
@@ -142,7 +163,7 @@ describe('runAction', () => {
       nodes: {
         start: node('start', { type: 'trigger', action: 'call', afterNode: 'boom' }),
         boom: node('boom', { action: 'flow.fail', afterNode: 'compute', params: { message: 'nope' } }),
-        compute: node('compute', { action: 'flow.return', params: { values: '{"total": 99}' } })
+        compute: node('compute', { action: 'flow.output', params: { values: '{"total": 99}' } })
       }
     });
     const { runAction } = createActionsModule({ lookups });
@@ -189,7 +210,7 @@ describe('runAction', () => {
     const result = await runAction(request(entry));
 
     // The token resolves to nothing because credentials are not ambient: a task asks for one by name and gets it
-    // inside its OWN execution. Otherwise any step — `flow.return` included — could hand a secret to the browser.
+    // inside its OWN execution. Otherwise any step — `flow.output` included — could hand a secret to the browser.
     expect(JSON.stringify(result.trace)).not.toContain(secret);
   });
 

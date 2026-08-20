@@ -15,12 +15,17 @@ const warning = vi.hoisted(() => vi.fn());
 
 vi.mock('@plitzi/sdk-shared/devTools/utils/PlitziConsole', () => ({ pConsole: { warning } }));
 
-type RunCallback = (params: Record<string, unknown>) => Promise<Record<string, unknown>>;
+type RunCallback = (
+  params: Record<string, unknown>,
+  context?: { elementRef?: string }
+) => Promise<Record<string, unknown>>;
+
+const interactionTrigger = vi.fn();
 
 const mount = () => {
   let registered: Record<string, InteractionCallback> = {};
   const interactions = {
-    interactionsManager: {},
+    interactionsManager: { interactionTrigger },
     useInteractions: ({ callbacks }: { callbacks?: Record<string, InteractionCallback> }) => {
       registered = callbacks ?? {};
     }
@@ -42,6 +47,7 @@ describe('ActionInteractions', () => {
   beforeEach(() => {
     endpoint.value = '/_action';
     warning.mockClear();
+    interactionTrigger.mockClear();
   });
 
   it('posts the action by name and answers its output', async () => {
@@ -76,6 +82,39 @@ describe('ActionInteractions', () => {
     expect(init.keepalive).toBe(true);
 
     settle(jsonResponse(200, {}));
+  });
+
+  it('reports a detached run back to the element that launched it', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(jsonResponse(200, { runId: 'r9', status: 'completed', output: { sent: true } })))
+    );
+
+    await mount()({ actionId: 'send-email', input: '{}', mode: 'detached' }, { elementRef: 'button1' });
+    // The step already returned; the report lands when the server answers, which is the whole point of onFlowEnd.
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(interactionTrigger).toHaveBeenCalledWith(
+      'button1',
+      'onFlowEnd',
+      expect.objectContaining({ actionId: 'send-email', runId: 'r9', status: 'completed' })
+    );
+  });
+
+  it('reports a refused detached run as an error, with the server’s reason', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(jsonResponse(409, { error: 'already running', reason: 'duplicate' })))
+    );
+
+    await mount()({ actionId: 'send-email', input: '{}', mode: 'detached' }, { elementRef: 'button1' });
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(interactionTrigger).toHaveBeenCalledWith(
+      'button1',
+      'onFlowError',
+      expect.objectContaining({ reason: 'duplicate' })
+    );
   });
 
   it('names the server’s reason when a run is refused', async () => {

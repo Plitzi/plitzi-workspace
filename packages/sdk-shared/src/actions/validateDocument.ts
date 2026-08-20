@@ -197,7 +197,7 @@ const validateNodes = (
       errors.push({
         path: `${path}.action`,
         message: 'must name a task as <namespace>.<action>',
-        hint: 'for example flow.return or http.request'
+        hint: 'for example flow.output or http.request'
       });
 
       return;
@@ -208,16 +208,33 @@ const validateNodes = (
     }
   });
 
-  // Read off the steps rather than tracked with a flag through the loop above: a variable a callback assigns is a
-  // variable the type checker cannot narrow, and the check would silently become dead.
-  const returns = entries.some(([, node]) => isRecord(node) && node.action === 'flow.return');
-  // The runner answers `{}` when nothing returned, which looks to the caller exactly like a flow that ran and
-  // produced nothing — the most confusing failure this design has.
-  if (!returns && isRecord(output) && Object.keys(output).length > 0) {
+  // The output step is the contract, so where it sits in the chain is part of it: the runner reads the last one
+  // that ran, and a step after it is work whose result nobody will ever see.
+  const outputs = entries.filter(([, node]) => isRecord(node) && node.action === 'flow.output');
+  for (const [key, node] of outputs) {
+    if (isFilledString(node.afterNode) && Object.hasOwn(nodes, node.afterNode)) {
+      warnings.push({
+        path: `nodes.${key}.afterNode`,
+        message: 'the output step is not the last one, so the steps after it run for nothing',
+        hint: 'move flow.output to the end of the flow'
+      });
+    }
+  }
+
+  if (outputs.length > 1) {
     warnings.push({
       path: 'nodes',
-      message: 'this action declares output but no step returns anything',
-      hint: 'add a flow.return step naming the values the caller should get'
+      message: `this flow has ${outputs.length} output steps, and only the last one that runs is answered`,
+      hint: 'keep one flow.output at the end, and gate what it returns with `when` if it varies'
+    });
+  }
+
+  // Not an error: an action that only does something — sends, writes, charges — legitimately answers nothing.
+  if (outputs.length === 0 && isRecord(output) && Object.keys(output).length > 0) {
+    warnings.push({
+      path: 'nodes',
+      message: 'this action is expected to answer values but no step names any',
+      hint: 'add a flow.output step at the end naming what the caller should get'
     });
   }
 };
@@ -227,7 +244,7 @@ const CREDENTIAL_TOKEN = /\{\{\s*credential\./;
 /**
  * A credential token only means something inside the step that asked for the credential.
  *
- * Credentials are not part of the flow scope — an ambient one would be interpolable by every node, `flow.return`
+ * Credentials are not part of the flow scope — an ambient one would be interpolable by every node, `flow.output`
  * included, which is a secret handed to the browser. So a token anywhere else silently renders to nothing, and
  * the symptom is an outbound call that goes out unauthenticated and reports whatever the provider says about it.
  */
@@ -291,6 +308,8 @@ export const validateActionDocument = (document: unknown): ActionDocumentReport 
   validateAccess(document.access, errors);
   validateTriggers(document.triggers, document.access, errors, warnings);
   validateFields(document.input, 'input', errors);
+  // Derived from the output step rather than authored, so it is checked for shape and never for agreement: the
+  // step is the source of truth and the runner never reads this.
   validateFields(document.output, 'output', errors);
   validateNodes(document.nodes, document.output, errors, warnings);
   validateDeclarations(document, warnings);

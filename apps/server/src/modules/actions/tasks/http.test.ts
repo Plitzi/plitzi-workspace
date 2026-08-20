@@ -32,7 +32,7 @@ const entry = (params: Record<string, unknown>, credentials: string[] = []): Act
     nodes: {
       start: node('start', { type: 'trigger', action: 'call', afterNode: 'call' }),
       call: node('call', { action: 'http.request', afterNode: 'ret', params }),
-      ret: node('ret', { action: 'flow.return', params: { values: '{"status": "{{ call.status }}"}' } })
+      ret: node('ret', { action: 'flow.output', params: { values: '{"status": {{ call.status }}}' } })
     }
   }
 });

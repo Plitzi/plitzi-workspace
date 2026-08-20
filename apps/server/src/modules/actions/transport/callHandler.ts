@@ -1,6 +1,8 @@
+import { openStream, wantsStream } from './stream';
 import { ActionRunError } from '../runtime/errors';
 import { precheckRun } from '../runtime/precheck';
 
+import type { RawResponse } from '../../../helpers/buildResponseHelpers';
 import type { ActionsModule } from '../index';
 import type { ActionRunResult } from '../types';
 import type {
@@ -15,6 +17,8 @@ import type {
 export type ActionCallDeps = {
   req: SSRRequest;
   res: SSRResponseHelpers;
+  /** The raw response, for the streaming path alone: SSE cannot go through the one-shot helpers. */
+  raw: RawResponse;
   config: SSRPageServerConfig;
   module: ActionsModule;
   /** The request's own signal: a caller that hangs up stops the run rather than paying for it to finish. */
@@ -81,7 +85,7 @@ const fail = (res: SSRResponseHelpers, reason: ActionErrorReason, error: string,
  * trigger cannot end up with a weaker set of checks than this endpoint applies.
  */
 export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
-  const { req, res, config, module, signal, callerId, lineage } = deps;
+  const { req, res, raw, config, module, signal, callerId, lineage } = deps;
   const { environment = 'main', spaceId, revision = 0, authoring } = req.ctx.spaceDeployment ?? {};
   if (typeof spaceId !== 'number') {
     fail(res, 'not_found', 'Invalid space deployment');
@@ -131,6 +135,10 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
   const abortRun = () => run.controller.abort();
   signal.addEventListener('abort', abortRun);
 
+  // Negotiated by the caller, and only for a run that is already allowed to start: everything above answers with a
+  // status code, which a stream has already spent by the time it could say anything.
+  const stream = wantsStream(req.headers.accept) ? openStream(raw, abortRun) : undefined;
+
   try {
     const result: ActionRunResult = await module.runAction({
       entry,
@@ -141,8 +149,21 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
       user: req.ctx.user,
       runId: run.runId,
       lineage,
-      signal: run.controller.signal
+      signal: run.controller.signal,
+      ...(stream
+        ? {
+            emit: chunk => stream.send({ event: 'data', data: { chunk } }),
+            onNode: (id, status) => stream.send({ event: 'node', data: { id, status } })
+          }
+        : {})
     });
+
+    if (stream) {
+      stream.send({ event: 'done', data: { runId: result.runId, status: result.status, output: result.output } });
+      stream.close();
+
+      return;
+    }
 
     // The trace names steps, and its results are the author's own data; a visitor gets the answer alone. Sending
     // it to an authoring request is what puts a SERVER run in the same Workflow debugger as a client one.
@@ -153,16 +174,24 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
 
     send(res, 200, payload, result.runId);
   } catch (error) {
-    if (error instanceof ActionRunError) {
-      fail(res, error.reason, error.message, run.runId);
+    const reason = error instanceof ActionRunError ? error.reason : 'failed';
+    const message = error instanceof ActionRunError ? error.message : 'Action failed';
+    if (!(error instanceof ActionRunError)) {
+      // A provider's own message can carry its URL or internal details, so the caller gets a flat failure and the
+      // detail stays in the server's log.
+      console.error('[Actions] run failed:', error);
+    }
+
+    if (stream) {
+      // The status line is long gone by the time a stream fails, so the failure travels as a frame. Same reason
+      // vocabulary either way, so a client reads one shape.
+      stream.send({ event: 'error', data: { runId: run.runId, error: message, reason } });
+      stream.close();
 
       return;
     }
 
-    // A provider's own message can carry its URL or internal details, so the caller gets a flat failure and the
-    // detail stays in the server's log.
-    console.error('[Actions] run failed:', error);
-    fail(res, 'failed', 'Action failed', run.runId);
+    fail(res, reason, message, run.runId);
   } finally {
     signal.removeEventListener('abort', abortRun);
     module.guards.end(run);

@@ -28,6 +28,11 @@ export const dataSourcesUri = (env: Env): string => `plitzi://data-sources/${env
 export const connectorPresetsUri = 'plitzi://connector-presets';
 export const connectorsUri = (env: Env): string => `plitzi://connectors/${env}`;
 export const connectorUri = (env: Env, ref: string): string => `plitzi://connectors/${env}/${ref}`;
+export const actionsUri = (env: Env): string => `plitzi://actions/${env}`;
+export const actionUri = (env: Env, ref: string): string => `plitzi://actions/${env}/${ref}`;
+/** The step vocabulary. Under the actions root because that is where an author looks for it, and resolved before
+ *  the `{ref}` shape so an action can never be named `tasks`. */
+export const actionTasksUri = (env: Env): string => `plitzi://actions/${env}/tasks`;
 
 // --- Folders ---
 export const foldersUri = (env: Env): string => `plitzi://folders/${env}`;

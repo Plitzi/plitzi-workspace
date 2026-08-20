@@ -42,7 +42,15 @@ export type ActionWebhookVerification = {
   algorithm: 'sha256' | 'sha1';
   /** Template resolved against the declared credentials, e.g. `{{credential.stripe.webhookSecret}}`. */
   secret: string;
-  /** Rejects a replayed body whose timestamp is older than this. */
+  /**
+   * Header carrying the moment the sender signed, when it sends one separately (the Stripe shape). The signed
+   * payload is then `<timestamp>.<body>` rather than the body alone.
+   *
+   * Without it `toleranceSeconds` has nothing to compare against: a signature over the body alone is valid
+   * forever, so a captured request can be replayed until the secret rotates.
+   */
+  timestampHeader?: string;
+  /** Rejects a signature older than this many seconds. Needs `timestampHeader`. */
   toleranceSeconds?: number;
 };
 
@@ -81,8 +89,15 @@ export type ActionDocument = {
   access: ActionAccess;
   triggers: ActionTrigger[];
   input: Record<string, ActionField>;
-  /** The only keys a caller gets back. Everything else a node produced stays on the server. */
-  output: Record<string, ActionField>;
+  /**
+   * The keys the `flow.output` step names, DERIVED from it — never authored beside it.
+   *
+   * It exists so the builder can offer typed bindings on a call's result without opening the flow. Declaring it by
+   * hand was the original design and it was wrong: it asks an author to know what a flow returns before the steps
+   * that produce it exist, and it leaves two places to keep in step. The runner ignores this entirely and answers
+   * exactly what the output step named.
+   */
+  output?: Record<string, ActionField>;
   /** Credential identifiers this action may resolve. Its templates can reach nothing else. */
   credentials?: string[];
   /** Connector identifiers this action may call. */

@@ -4,11 +4,11 @@ import { hasValidToken, processTwig } from '@plitzi/sdk-shared/helpers/twigWrapp
 import { ActionRunError } from './errors';
 import { resolveLimits } from './limits';
 import { createMemoryKv } from './memoryKv';
+import { namespaceKv } from './namespaceKv';
 import { precheckRun } from './precheck';
-import { buildRedactor, projectOutput, projectUser, resolveCredentials } from './scope';
+import { buildRedactor, projectUser, resolveCredentials } from './scope';
 
 import type {
-  ActionKvStore,
   ActionRunRequest,
   ActionRunResult,
   ActionsConfig,
@@ -99,24 +99,6 @@ const withDefaults = (task: RegisteredTask, params: Record<string, unknown>): Re
     },
     { ...params }
   );
-
-/**
- * Prefixes every key with the space that wrote it.
- *
- * A shared store with unprefixed keys is one space reading — or overwriting — another's counters, which is the
- * cross-tenant leak this whole design exists to avoid. Done at the runner rather than in each task so a
- * deployment's own tasks inherit it too.
- */
-const namespaceKv = (store: ActionKvStore, spaceId: number): ActionKvStore => {
-  const scoped = (key: string) => `action:${spaceId}:${key}`;
-
-  return {
-    get: key => store.get(scoped(key)),
-    set: (key, value, ttlSeconds) => store.set(scoped(key), value, ttlSeconds),
-    delete: key => store.delete(scoped(key)),
-    increment: (key, amount, ttlSeconds) => store.increment(scoped(key), amount, ttlSeconds)
-  };
-};
 
 /** The entry node is the flow's single trigger, which is what the builder's Workflow editor already draws from. */
 const findTriggerNode = (nodes: Record<string, ElementInteraction>): ElementInteraction | undefined =>
@@ -233,6 +215,7 @@ export const createActionRunner = (
       },
       fetch: runFetch,
       kv: scopedKv,
+      dbDrivers: config.dbDrivers ?? [],
       emit: chunk => request.emit?.(redact(chunk))
     });
 
@@ -242,7 +225,7 @@ export const createActionRunner = (
      *
      * The run itself carries only the basics — which space, which environment, who asked, what came in — and
      * everything else a flow can reach is whatever a TASK chose to return into it. Credentials are deliberately
-     * NOT here: an ambient `{{credential.*}}` would be interpolable by any node, including `flow.return`, which
+     * NOT here: an ambient `{{credential.*}}` would be interpolable by any node, including `flow.output`, which
      * is a secret handed to the browser through a step nobody would think to audit. A task that needs one asks
      * for it by identifier and resolves it inside its own execution.
      */
@@ -288,8 +271,9 @@ export const createActionRunner = (
           endTime: Date.now()
         });
 
+        request.onNode?.(next.id, outcome.status);
         scope[next.id] = outcome.result;
-        if (next.action === 'flow.return' && outcome.status === 'success') {
+        if (next.action === 'flow.output' && outcome.status === 'success') {
           returned = outcome.result;
         }
 
@@ -317,9 +301,11 @@ export const createActionRunner = (
       request.signal?.removeEventListener('abort', abortOuter);
     }
 
-    const projected = projectOutput(document.output, (returned ?? {}) as Record<string, unknown>);
+    // What the `flow.output` step named, and nothing else. No second contract to disagree with it: a key that step
+    // did not name never existed as far as the caller is concerned.
+    const output = (returned ?? {}) as Record<string, unknown>;
 
-    return { runId, status, output: redact(projected), trace };
+    return { runId, status, output: redact(output), trace };
   };
 
   return { runAction };

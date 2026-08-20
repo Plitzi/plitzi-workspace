@@ -192,4 +192,8 @@ export const interactionNode = z.object({
   preview: z.record(z.string(), z.unknown()).optional()
 });
 
-export type InteractionNodeInput = z.infer<typeof interactionNode>;
+/** What the validator checks: an authored node, or one read back from storage — which may carry a `task` type the
+ *  write vocabulary above does not offer. Checking the stored shape is the point; refusing it is the validator's. */
+export type InteractionNodeInput = Omit<z.infer<typeof interactionNode>, 'nodeType'> & {
+  nodeType: z.infer<typeof interactionNodeType> | 'task';
+};
