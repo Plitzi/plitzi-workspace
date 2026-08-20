@@ -9,6 +9,7 @@ import type {
   InteractionCallbackParam,
   InteractionNode,
   InteractionNodeStatus,
+  SpaceRevision,
   SSRUser
 } from '@plitzi/sdk-shared';
 
@@ -56,25 +57,19 @@ export type ActionKvStore = {
   increment: (key: string, amount: number, ttlSeconds?: number) => Promise<number>;
 };
 
+/** Re-exported so the module's files import one place. One type for actions and connectors: it is one concept. */
+export type { SpaceRevision } from '@plitzi/sdk-shared';
+
 /**
  * How the server reaches a space's actions. Structurally identical in spirit to `ConnectorLookups`: the module
  * never learns where a deployment stores anything.
  */
-/**
- * Which published version of a space is asking. Absent means the live document, the one the builder edits.
- *
- * A page carries the revision it was published at, and a run it starts must read the action AS OF that revision —
- * otherwise a page shipped yesterday runs whatever the flow says today. A run that no page started (a webhook, a
- * schedule) has no revision to speak of and reads the live one.
- */
-export type ActionRevision = { environment: Environment; revision: number };
-
 export type ActionLookups = {
-  getAction: (spaceId: number, actionId: string, at?: ActionRevision) => Promise<ActionEntry | undefined>;
+  getAction: (spaceId: number, actionId: string, at?: SpaceRevision) => Promise<ActionEntry | undefined>;
   /** Only the builder's catalog, the MCP and the scheduler need the list; a page call never asks for it. */
-  listActions?: (spaceId: number, at?: ActionRevision) => Promise<ActionEntry[]>;
+  listActions?: (spaceId: number, at?: SpaceRevision) => Promise<ActionEntry[]>;
   getCredential?: (spaceId: number, identifier: string) => Promise<ActionCredential | undefined>;
-  getConnector?: (spaceId: number, connectorId: string) => Promise<ConnectorManifest | undefined>;
+  getConnector?: (spaceId: number, connectorId: string, at?: SpaceRevision) => Promise<ConnectorManifest | undefined>;
 };
 
 /**
@@ -179,6 +174,14 @@ export type ActionRunRequest = {
   runId: string;
   /** Chain of run ids that caused this one; a run naming its own action is refused before its first node. */
   lineage?: string[];
+  /**
+   * The published version this run belongs to, when a page started it.
+   *
+   * The action was read as of this revision, so the connectors it calls are read as of it too — a flow and the
+   * manifests it goes through are one published thing, and mixing versions inside one run is the discrepancy in
+   * miniature.
+   */
+  at?: SpaceRevision;
   emit?: (chunk: unknown) => void;
   /** Reports each step as it settles, for a caller watching the run happen. Absent for a plain request/response. */
   onNode?: (id: string, status: InteractionNodeStatus) => void;

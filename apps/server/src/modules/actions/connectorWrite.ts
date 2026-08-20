@@ -78,7 +78,9 @@ export const handleAction = async (
     return;
   }
 
-  const manifest = await lookups.getConnector(spaceId, connectorId);
+  // As of the revision this page was published at: the element, the connector it names and the endpoint it calls
+  // shipped together.
+  const manifest = await lookups.getConnector(spaceId, connectorId, { environment, revision });
   if (!manifest) {
     fail(res, 404, 'Unknown connector');
 

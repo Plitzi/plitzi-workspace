@@ -427,26 +427,29 @@ export interface SSRRscContext {
 }
 
 /**
+ * Which published version of a space is asking.
+ *
+ * Absent means the live one — the document the builder edits. Present means a page PUBLISHED at that revision,
+ * which must read the private documents it was published against: a page shipped yesterday running whatever the
+ * action says today, or reading through a manifest since pointed at a different API, is the discrepancy
+ * versioning exists to remove.
+ *
+ * One type for actions and connectors, because it is one concept: a version of a space.
+ */
+export type SpaceRevision = { environment: Environment; revision: number };
+
+/**
  * How the server reaches a space's actions, and what it may run.
  *
  * Typed loosely for the same reason `ConnectorLookupsConfig` is — the document is executed by
  * `@plitzi/sdk-server`'s actions module and the shared types stay free of its internals. Shaped as `ActionLookups`
  * there.
  */
-/**
- * Which published version of a space is asking.
- *
- * Absent means the live one — the document the builder edits. Present means a page that was PUBLISHED at that
- * revision, which must run the flow it was published against: a page shipped yesterday calling whatever the action
- * says today is the discrepancy versioning exists to remove.
- */
-export type ActionRevision = { environment: Environment; revision: number };
-
 export type ActionLookupsConfig = {
-  getAction: (spaceId: number, actionId: string, at?: ActionRevision) => Promise<unknown>;
-  listActions?: (spaceId: number, at?: ActionRevision) => Promise<unknown[]>;
+  getAction: (spaceId: number, actionId: string, at?: SpaceRevision) => Promise<unknown>;
+  listActions?: (spaceId: number, at?: SpaceRevision) => Promise<unknown[]>;
   getCredential?: (spaceId: number, identifier: string) => Promise<Record<string, string> | undefined>;
-  getConnector?: (spaceId: number, connectorId: string) => Promise<unknown>;
+  getConnector?: (spaceId: number, connectorId: string, at?: SpaceRevision) => Promise<unknown>;
 };
 
 export type SSRActionConfig = {
@@ -506,7 +509,7 @@ export type SSRActionConfig = {
  * second time.
  */
 export type ConnectorLookupsConfig = {
-  getConnector: (spaceId: number, connectorId: string) => Promise<unknown>;
+  getConnector: (spaceId: number, connectorId: string, at?: SpaceRevision) => Promise<unknown>;
   getCredential?: (spaceId: number, identifier: string) => Promise<Record<string, string> | undefined>;
   fetchImpl?: typeof fetch;
 };

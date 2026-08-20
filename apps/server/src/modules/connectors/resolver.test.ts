@@ -35,7 +35,8 @@ const context = (
     flat: { provider1: provider, ...flat },
     routeParams,
     queryParams,
-    req: {} as SSRRequest,
+    // A real RSC resolve always carries the deployment it is rendering: the resolver reads the manifest as of it.
+    req: { ctx: { spaceDeployment: { environment: 'production', revision: 2 } } } as unknown as SSRRequest,
     spaceId: 7,
     environment: 'production',
     user: undefined
@@ -62,7 +63,8 @@ const boundContext = (attributes: Record<string, unknown>, boundSource: string):
     flat: { provider1: provider, text1: text },
     routeParams: {},
     queryParams: {},
-    req: {} as SSRRequest,
+    // A real RSC resolve always carries the deployment it is rendering: the resolver reads the manifest as of it.
+    req: { ctx: { spaceDeployment: { environment: 'production', revision: 2 } } } as unknown as SSRRequest,
     spaceId: 7,
     environment: 'production',
     user: undefined
@@ -79,6 +81,24 @@ const body = {
 };
 
 describe('createConnectorResolver', () => {
+  // A page and the manifests it reads through ship together: a page published at revision 2 must not start
+  // reading a connector somebody has since pointed at a different API.
+  it('reads the manifest as of the revision being rendered', async () => {
+    const asked: { at?: unknown }[] = [];
+    const resolve = createConnectorResolver({
+      getConnector: (_spaceId: number, _connectorId: string, at?: unknown) => {
+        asked.push({ at });
+
+        return Promise.resolve(manifest);
+      },
+      fetchImpl: vi.fn().mockResolvedValue(jsonResponse(body))
+    });
+
+    await resolve(context({ connector: 'cms', resource: 'articles' }));
+
+    expect(asked[0].at).toEqual({ environment: 'production', revision: 2 });
+  });
+
   it('resolves an element into records and page info', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(body));
     const resolve = createConnectorResolver({ getConnector: () => Promise.resolve(manifest), fetchImpl });

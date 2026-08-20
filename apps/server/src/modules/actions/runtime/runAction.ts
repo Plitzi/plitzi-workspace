@@ -210,7 +210,7 @@ export const createActionRunner = (
           throw new ActionRunError('forbidden', `This action does not declare connector "${connectorId}"`);
         }
 
-        const manifest = await config.lookups.getConnector?.(request.spaceId, connectorId);
+        const manifest = await config.lookups.getConnector?.(request.spaceId, connectorId, request.at);
         if (!manifest) {
           return undefined;
         }

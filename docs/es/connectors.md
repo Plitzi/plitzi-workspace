@@ -441,6 +441,28 @@ valida toda la cadena y rechaza (405) lo que el manifest no declare.
 `resolveRscData` matchea la URL → `routeParams` → resuelve cada elemento `runtime: 'server'` (timeout por elemento)
 → slice proyectado solo a lo bindeado → HTML + store. El cliente solo refresca con `/_rsc?location=…&page=N`.
 
+Publicar además **copia cada manifest** a una fila etiquetada `(environment, revision)`, igual que hace con el
+schema, el style y las acciones. La fila viva —`main`, revisión 0— sigue siendo el borrador que edita el builder.
+
+### 6.1 Los manifests se versionan con el deploy
+
+Qué versión se lee lo decide quién arranca la lectura:
+
+| Lo arranca | Lee |
+| --- | --- |
+| Una página — un elemento `runtime: 'server'`, un `/_rsc`, un `/_action` | el manifest con el que esa página se publicó |
+| Un webhook, un cron, un trigger propio del deployment | el borrador |
+
+La segunda fila es deliberada: nada en un emisor externo ni en un reloj nombra una revisión, y fijar una dejaría un
+flow congelado hablando con una integración que su autor ya corrigió. Una acción y los manifests que atraviesan sus
+pasos salen de la **misma** revisión: mezclar versiones dentro de un run es la misma discrepancia en miniatura.
+
+Una revisión sin copia —un space publicado antes de que esto existiera— cae al borrador, que es lo que hacía antes.
+Se extingue sola: en cuanto ese space vuelve a publicar, pasa a tener su propia versión.
+
+**Consecuencia operativa:** arreglar un manifest porque el CMS cambió su API arregla el borrador. Las páginas ya
+publicadas siguen leyendo por el manifest con el que salieron **hasta que vuelves a publicar**.
+
 ### Variante "load more"
 
 En el `ApiContainer`, **Pagination = Load more**; añade un `Pagination` en modo `loadMore` con target
@@ -480,7 +502,8 @@ indexable).
 
 ## 10. Conceptos clave en una frase
 
-- **Manifest** → el único documento que hay que tocar para conectar un CMS o arreglar uno que cambió su API.
+- **Manifest** → el único documento que hay que tocar para conectar un CMS o arreglar uno que cambió su API; el
+  arreglo llega a las páginas publicadas al publicar de nuevo, no antes.
 - **Slice** → el objeto que publica el provider; es el contrato que bindean List, Pagination y RichText.
 - **`runtime: 'server'`** → el flag compartido entre el servidor (qué resolver) y el elemento (qué esperar).
 - **Proyección** → el servidor solo envía lo que la página bindea.

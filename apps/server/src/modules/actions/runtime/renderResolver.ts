@@ -61,6 +61,7 @@ export const createActionResolver =
         trigger: 'render',
         user,
         runId: run.runId,
+        at,
         signal: run.controller.signal
       });
 

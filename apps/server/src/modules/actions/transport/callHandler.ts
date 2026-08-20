@@ -152,6 +152,7 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
       user: req.ctx.user,
       runId: run.runId,
       lineage,
+      at: { environment, revision },
       signal: run.controller.signal,
       ...(stream
         ? {

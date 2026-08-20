@@ -183,7 +183,7 @@ Consequences worth stating because they are load-bearing:
   the call fail closed; it cannot leave a stale executable behind.
 - Actions **are** part of the space revision: publishing copies each one into a row tagged with the environment
   and revision, and a page reads the copy belonging to the revision it was published at. The live row is the
-  draft the builder edits. Connectors are not versioned yet — see §8.1.
+  draft the builder edits. Connector manifests are versioned in the same publish and by the same rule.
 
 #### 4.2.1 The private half of a space
 
@@ -825,8 +825,10 @@ deliver, and why:
    refusing every call on those pages would be a correctness fix that breaks what it was meant to protect. The
    fallback ages out on its own as spaces republish.
 
-   **Connectors still have the asymmetry.** The same discrepancy applies — a published page reads whatever the
-   manifest says today — and the mechanism now exists to close it the same way.
+   **Connectors are versioned the same way**, in the same publish: a page reads through the manifest it shipped
+   with rather than whatever that connector points at today, and a run keeps ONE version end to end — the action a
+   page called and the manifests its steps read through all come from the revision that page was published at.
+   Mixing versions inside a single run is the same discrepancy in miniature.
 2. **Idempotency.** Answered for the live case and still open for the completed one. The webhook path keys
    single-flight on the sender's own delivery id (`x-github-delivery`, `idempotency-key`, …), so a retry arriving
    while the first run is going is refused — and answered **202**, because from the sender's side the work is

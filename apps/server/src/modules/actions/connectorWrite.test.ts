@@ -88,6 +88,30 @@ const lookups = (fetchImpl: typeof fetch, override?: Partial<ConnectorManifest>)
 });
 
 describe('handleAction', () => {
+  // The element, the connector it names and the endpoint it writes to shipped together: a page published at
+  // revision 1 must not start writing through a manifest somebody has since pointed at a different API.
+  it('reads the manifest as of the revision the page was published at', async () => {
+    const asked: unknown[] = [];
+    const { res } = buildRes();
+
+    await handleAction(
+      request({ elementId: 'form1', action: 'create', values: { title: 'Hello' } }),
+      res,
+      buildConfig(provider({ connector: 'cms', resource: 'messages' })),
+      {
+        getConnector: (_spaceId: number, _connectorId: string, at?: unknown) => {
+          asked.push(at);
+
+          return Promise.resolve(manifest);
+        },
+        getCredential: () => Promise.resolve({ token: 'sup3rs3cret' }),
+        fetchImpl: vi.fn().mockResolvedValue(jsonResponse({ data: { documentId: 'new1' } }))
+      }
+    );
+
+    expect(asked[0]).toEqual({ environment: 'production', revision: 1 });
+  });
+
   it('writes through the connector and returns the created record', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ data: { documentId: 'new1', title: 'Hello' } }));
     const { res, sent } = buildRes();

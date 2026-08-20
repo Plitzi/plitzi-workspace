@@ -198,8 +198,12 @@ Which version a run reads depends on what started it:
 
 The **Test run** panel runs the draft, which is what you are editing.
 
-A space published before actions were versioned has no copies; those pages fall back to the draft, which is what
-they did before. Publishing once puts them on their own version.
+**Connector manifests are versioned in the same publish**, so a page reads through the manifest it shipped with
+too — and one run keeps one version end to end: the action a page called and the manifests its steps read through
+all come from that page's revision.
+
+A space published before this existed has no copies; those pages fall back to the draft, which is what they did
+before. Publishing once puts them on their own version.
 
 ## 9. Limits, and what stops a runaway flow
 
