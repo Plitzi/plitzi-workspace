@@ -1,4 +1,4 @@
-import type { ActionEntry, ActionLimits, ActionTaskDescriptor } from './ActionTypes';
+import type { ActionEntry, ActionLimits, ActionRunRecord, ActionTaskDescriptor } from './ActionTypes';
 import type { Environment } from './CommonTypes';
 import type { ConnectorEntry } from './ConnectorTypes';
 import type { Schema } from './SchemaTypes';
@@ -469,7 +469,7 @@ export type SSRActionConfig = {
    *
    * A refused run is not reported: a 409 is not a run, and logging one would bury the real ones under retries.
    */
-  onRun?: (record: unknown) => void | Promise<void>;
+  onRun?: (record: ActionRunRecord) => void | Promise<void>;
   /**
    * Backs the `kv` tasks — shaped as `ActionKvStore` in `@plitzi/sdk-server/actions`.
    *

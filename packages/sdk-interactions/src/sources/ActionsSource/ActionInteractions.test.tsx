@@ -12,8 +12,10 @@ const endpoint = vi.hoisted<{ value: string | undefined }>(() => ({ value: '/_ac
 vi.mock('@plitzi/sdk-shared/store', () => ({ useCommonStore: () => [endpoint.value] }));
 
 const warning = vi.hoisted(() => vi.fn());
+const info = vi.hoisted(() => vi.fn());
+const success = vi.hoisted(() => vi.fn());
 
-vi.mock('@plitzi/sdk-shared/devTools/utils/PlitziConsole', () => ({ pConsole: { warning } }));
+vi.mock('@plitzi/sdk-shared/devTools/utils/PlitziConsole', () => ({ pConsole: { warning, info, success } }));
 
 type RunCallback = (
   params: Record<string, unknown>,
@@ -50,6 +52,8 @@ describe('ActionInteractions', () => {
   beforeEach(() => {
     endpoint.value = '/_action';
     warning.mockClear();
+    info.mockClear();
+    success.mockClear();
     interactionTrigger.mockClear();
   });
 
@@ -104,6 +108,21 @@ describe('ActionInteractions', () => {
     );
   });
 
+  // A detached run is invisible by construction: the flow returned and the page moved on. Without a log entry the
+  // only honest answer to "did anything happen?" is a network tab.
+  it('shows a detached run in the dev-tools log, as it starts and when it lands', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(jsonResponse(200, { runId: 'r1', status: 'completed', output: {} })))
+    );
+
+    await mount().run({ actionId: 'send-email', input: '{}', mode: 'detached' }, { elementRef: 'button1' });
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(info).toHaveBeenCalledTimes(1);
+    expect(success).toHaveBeenCalledTimes(1);
+  });
+
   it('reports a refused detached run as an error, with the server’s reason', async () => {
     vi.stubGlobal(
       'fetch',
@@ -133,7 +152,9 @@ describe('ActionInteractions', () => {
   });
 
   it('cancels a run by id, and reads the server’s answer', async () => {
-    const fetchMock = vi.fn(() => Promise.resolve({ ok: true, status: 204, json: () => Promise.resolve({}) } as Response));
+    const fetchMock = vi.fn(() =>
+      Promise.resolve({ ok: true, status: 204, json: () => Promise.resolve({}) } as Response)
+    );
     vi.stubGlobal('fetch', fetchMock);
 
     const result = await mount().cancel({ runId: 'run-7' });
@@ -147,7 +168,10 @@ describe('ActionInteractions', () => {
   it('reports a run it was not allowed to cancel as not cancelled', async () => {
     // The server answers 404 for a run that is not there AND for one that is not yours: telling them apart would
     // be an oracle for which run ids are live.
-    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) } as Response)));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) } as Response))
+    );
 
     expect(await mount().cancel({ runId: 'someone-elses' })).toEqual({ cancelled: false });
   });

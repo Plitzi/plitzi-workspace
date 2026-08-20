@@ -683,7 +683,10 @@ pass keyed on the resolved credential values, not on field names.
   preview); a visitor gets `{ status, output }`. This gives the Workflow debugger a **server** run in the
   same UI as a client one, which is the single biggest usability win available here and costs almost nothing.
 - **Log:** one `SpaceLog` row per run at `category: 'action'` with the id, trigger, status, duration and node
-  statuses. Bodies are not logged.
+  statuses. Bodies are not logged. The runner emits an `ActionRunRecord` and the deployment writes it — so a
+  webhook, a schedule and a page call all leave the same entry, in the activity feed a space owner already reads.
+  Emitted for runs that STARTED only: a refused run is not a run, and recording one would bury the real entries
+  under whatever a client retries. Never allowed to fail a run.
 
 ### 4.9 One module, one entry
 

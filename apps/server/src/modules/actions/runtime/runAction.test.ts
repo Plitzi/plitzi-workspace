@@ -258,3 +258,68 @@ describe('runAction', () => {
     expect(() => createActionsModule({ lookups, tasks: [shadow as unknown as ActionTask<never>] })).toThrow(/reserved/);
   });
 });
+
+describe('run records', () => {
+  const recordsOf = async (entry: ReturnType<typeof buildEntry>, extra: Record<string, unknown> = {}) => {
+    const records: Record<string, unknown>[] = [];
+    const { runAction } = createActionsModule({
+      lookups,
+      onRun: record => {
+        records.push(record);
+      },
+      ...extra
+    });
+
+    try {
+      await runAction(request(entry));
+    } catch {
+      // A refusal is not a run; the assertions below are about what was recorded either way.
+    }
+
+    return records;
+  };
+
+  it('records a run that happened, with the shape of what it did', async () => {
+    const [record] = await recordsOf(buildEntry());
+
+    expect(record).toMatchObject({
+      actionId: 'quote',
+      trigger: 'call',
+      status: 'completed',
+      spaceId: 1,
+      nodes: [{ action: 'flow.output', status: 'success' }]
+    });
+    expect(record.durationMs).toEqual(expect.any(Number));
+  });
+
+  it('records a failed run, and says where it stopped', async () => {
+    const failing = buildEntry({
+      nodes: {
+        start: node('start', { type: 'trigger', action: 'call', afterNode: 'boom' }),
+        boom: node('boom', { action: 'flow.fail', params: { message: 'nope' } })
+      }
+    });
+
+    const [record] = await recordsOf(failing);
+
+    expect(record).toMatchObject({ status: 'failed', error: 'nope' });
+  });
+
+  // A refusal is not a run. Recording one would bury the real entries under whatever a client retries.
+  it('records nothing for a run that was refused before it started', async () => {
+    expect(await recordsOf(buildEntry({ enabled: false }))).toEqual([]);
+  });
+
+  it('never lets a failing recorder fail the run', async () => {
+    const { runAction } = createActionsModule({
+      lookups,
+      onRun: () => {
+        throw new Error('log store is down');
+      }
+    });
+
+    const result = await runAction(request(buildEntry()));
+
+    expect(result.status).toBe('completed');
+  });
+});

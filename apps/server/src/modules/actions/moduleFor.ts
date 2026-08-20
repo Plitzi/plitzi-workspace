@@ -38,7 +38,7 @@ export const actionsModuleFor = (config: SSRServerConfig): ActionsModule | undef
     kv: config.action?.kv,
     rateLimit: config.action?.rateLimit,
     dbDrivers: config.action?.dbDrivers as ActionsConfig['dbDrivers'],
-    onRun: config.action?.onRun as ActionsConfig['onRun']
+    onRun: config.action?.onRun
   });
   modules.set(config, module);
 

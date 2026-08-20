@@ -109,8 +109,9 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         return;
       }
 
-      void (interactionsManager as { interactionTrigger: (id: string, name: string, params: object) => unknown })
-        .interactionTrigger(elementRef, event, params);
+      void (
+        interactionsManager as { interactionTrigger: (id: string, name: string, params: object) => unknown }
+      ).interactionTrigger(elementRef, event, params);
     },
     [interactionsManager]
   );
@@ -143,6 +144,17 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
       });
 
       if (mode === 'detached') {
+        // Announced as it starts, not only when it fails. A detached run is invisible by construction — the flow
+        // returned, the page moved on — so without this the honest answer to "did anything happen?" is a network
+        // tab. It lands in the dev-tools log beside the client flows, which is where an author already looks.
+        pConsole.info(
+          'interactions',
+          <span>
+            Server action <b>{actionId}</b> sent
+          </span>,
+          { actionId, mode }
+        );
+
         // `keepalive` so a navigation right after "Send" does not kill the request: the flow is not waiting for
         // the answer, which is exactly when the page is most likely to move on. It caps the body at ~64KB, which
         // is a limit on INPUTS and generous for them.
@@ -166,6 +178,13 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
               return;
             }
 
+            pConsole.success(
+              'interactions',
+              <span>
+                Server action <b>{actionId}</b> finished
+              </span>,
+              { actionId, runId: payload.runId, status: payload.status, output: payload.output }
+            );
             reportFlow(context?.elementRef, 'onFlowEnd', {
               actionId,
               runId: payload.runId ?? '',
@@ -174,20 +193,28 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
             });
           })
           .catch((error: unknown) => {
-          pConsole.warning(
-            'interactions',
-            <span>
-              Server action <b>{actionId}</b> could not be sent
-            </span>,
-            { actionId, error: error instanceof Error ? error.message : String(error) }
-          );
-          reportFlow(context?.elementRef, 'onFlowError', { actionId, runId: '', error: '', reason: 'failed' });
-        });
+            pConsole.warning(
+              'interactions',
+              <span>
+                Server action <b>{actionId}</b> could not be sent
+              </span>,
+              { actionId, error: error instanceof Error ? error.message : String(error) }
+            );
+            reportFlow(context?.elementRef, 'onFlowError', { actionId, runId: '', error: '', reason: 'failed' });
+          });
 
         return { accepted: true, status: 'accepted', runId: '', output: {} };
       }
 
       if (mode === 'stream') {
+        pConsole.info(
+          'interactions',
+          <span>
+            Server action <b>{actionId}</b> streaming
+          </span>,
+          { actionId, mode }
+        );
+
         // `fetch` + a reader, never `EventSource`: that reconnects whenever a stream ends — success included — and
         // each reconnect would start another run of the same action, forever.
         const response = await fetch(endpoint, {

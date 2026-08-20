@@ -1,3 +1,4 @@
+import type { Environment } from './CommonTypes';
 import type { ElementInteraction } from './SchemaTypes';
 
 /**
@@ -186,6 +187,31 @@ export type ActionErrorReason =
   | 'timeout'
   | 'aborted'
   | 'failed';
+
+/**
+ * What one run was, for whoever keeps the record.
+ *
+ * Emitted for every run that STARTED — completed, failed or aborted — and never for one refused before it began:
+ * a 409 is not a run, and logging it would bury the real ones under retries.
+ *
+ * Deliberately not the trace: step results are the space's own data and can be large, so what travels here is the
+ * shape of what happened. The trace goes to the author who asked for it, in the test-run panel.
+ */
+export type ActionRunRecord = {
+  runId: string;
+  actionId: string;
+  spaceId: number;
+  environment: Environment;
+  trigger: ActionTriggerType;
+  status: ActionRunStatus;
+  durationMs: number;
+  /** Who asked, when a session carried it. Absent for a webhook, a schedule or an anonymous visitor. */
+  userId?: number;
+  /** One entry per step that ran, in order — enough to see where a flow stopped without keeping its data. */
+  nodes: { id: string; action: string; status: string }[];
+  /** Present when the run ended badly. Already redacted of credential values. */
+  error?: string;
+};
 
 /** Action-addressed call. The element-addressed connector write keeps its own shape on the same endpoint. */
 export type ActionCallRequest = {
