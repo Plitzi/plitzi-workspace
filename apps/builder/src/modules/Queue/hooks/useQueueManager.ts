@@ -168,10 +168,7 @@ const useQueueManager = ({
         }
 
         case SchemaActions.SCHEMA_UPDATE: {
-          const { schema, queryFailed } = item.action as typeof item.action & { queryFailed?: boolean };
-          if (queryFailed) {
-            return null;
-          }
+          const { schema } = item.action;
 
           return mutate('SpaceUpdateSchema', { schema });
         }
@@ -245,10 +242,7 @@ const useQueueManager = ({
         }
 
         case StyleActions.STYLE_UPDATE: {
-          const { style, queryFailed } = item.action as typeof item.action & { queryFailed?: boolean };
-          if (queryFailed) {
-            return null;
-          }
+          const { style } = item.action;
 
           return mutate('StyleUpdate', { style });
         }
@@ -465,8 +459,8 @@ const useQueueManager = ({
         }
 
         case SegmentsActions.SEGMENTS_UPDATE: {
-          const { segment, queryFailed } = item.action as typeof item.action & { queryFailed?: boolean };
-          if (queryFailed || !segment || !segment.id) {
+          const { segment } = item.action;
+          if (!segment?.id) {
             return null;
           }
 
@@ -487,6 +481,9 @@ const useQueueManager = ({
     [mutate]
   );
 
+  // Putting back the state a rejected mutation left behind. `queryFailed` is what keeps this dispatch out of both
+  // middlewares (`isUserEdit`): the user did not make this change, so it is not undoable, and re-queueing it would
+  // send the server the very state it just refused.
   const revertItem = useCallback(
     (
       item:
@@ -497,22 +494,14 @@ const useQueueManager = ({
       switch (item.action.type) {
         case SchemaActions[item.action.type as keyof typeof SchemaActions]: {
           const schemaItem = item as QueueItem<Schema, SchemaReducerActions>;
-          schemaItem.dispatch({
-            type: SchemaActions.SCHEMA_UPDATE,
-            schema: schemaItem.prevState,
-            queryFailed: true
-          } as SchemaReducerActions);
+          schemaItem.dispatch({ type: SchemaActions.SCHEMA_UPDATE, schema: schemaItem.prevState, queryFailed: true });
 
           return;
         }
 
         case StyleActions[item.action.type as keyof typeof StyleActions]: {
           const styleItem = item as QueueItem<Style, StyleReducerActions>;
-          styleItem.dispatch({
-            type: StyleActions.STYLE_UPDATE,
-            style: styleItem.prevState,
-            queryFailed: true
-          } as StyleReducerActions);
+          styleItem.dispatch({ type: StyleActions.STYLE_UPDATE, style: styleItem.prevState, queryFailed: true });
 
           return;
         }
@@ -525,7 +514,7 @@ const useQueueManager = ({
             segment: segmentsItem.prevState[segmentId],
             segmentId,
             queryFailed: true
-          } as SegmentsReducerActions);
+          });
 
           return;
         }

@@ -6,6 +6,7 @@ import StyleMap from './StyleMap';
 
 import type {
   DisplayMode,
+  ReducerActionOrigin,
   Style,
   StyleCategory,
   StyleItem,
@@ -31,7 +32,8 @@ export const StyleActions = {
   STYLE_UPDATE_SETTINGS: 'STYLE_UPDATE_SETTINGS'
 } as const;
 
-export type StyleReducerActionsBase = { fromSubscriptions?: boolean };
+// `queryFailed` marks the save queue putting back the state a rejected mutation left behind — see `isUserEdit`.
+export type StyleReducerActionsBase = ReducerActionOrigin;
 
 export type StyleReducerActions = StyleReducerActionsBase &
   (

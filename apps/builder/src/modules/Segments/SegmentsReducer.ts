@@ -8,6 +8,7 @@ import StyleMap from '@plitzi/sdk-style/StyleMap';
 import type {
   DisplayMode,
   Element,
+  ReducerActionOrigin,
   SchemaVariable,
   Segment,
   Style,
@@ -46,7 +47,7 @@ export const SegmentsActions = {
   SEGMENTS_STYLE_REMOVE_VARIABLE: 'SEGMENTS_STYLE_REMOVE_VARIABLE'
 } as const;
 
-type SegmentsReducerActionsBase = { segmentId: string; segment?: Segment; fromSubscriptions?: boolean };
+type SegmentsReducerActionsBase = ReducerActionOrigin & { segmentId: string; segment?: Segment };
 
 export type SegmentsReducerActions =
   | ({ type: 'SEGMENTS_ADD' } & SegmentsReducerActionsBase)

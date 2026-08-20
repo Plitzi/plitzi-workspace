@@ -11,7 +11,10 @@ import { makeSelector } from './StyleHelper';
 import StyleReducer, { StyleActions } from './StyleReducer';
 
 import type { StyleReducerActions } from './StyleReducer';
-import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
+import type {
+  ReducerFilterCallback,
+  ReducerMiddlewareCallback
+} from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import type {
   BuilderQueriesMap,
   BuilderMutationsMap,
@@ -27,11 +30,21 @@ import type {
   StyleState
 } from '@plitzi/sdk-shared';
 
+/**
+ * A middleware and what it is shown. The filter belongs to the caller, not here: a save queue must never see another
+ * session's edit, and an undo history has to see it — it is how it learns its snapshots no longer describe the space.
+ * This provider deciding for both is what silently taught the history to ignore them.
+ */
+export type BuilderStyleMiddleware = {
+  middleware: ReducerMiddlewareCallback<Style, [action: StyleReducerActions]>;
+  filterCallback?: ReducerFilterCallback<[action: StyleReducerActions]>;
+};
+
 export type BuilderStyleContextProviderProps = {
   children: React.ReactNode;
   style?: Style;
   includeSubscriptions?: boolean;
-  middlewares?: ReducerMiddlewareCallback<Style, [action: StyleReducerActions]>[];
+  middlewares?: BuilderStyleMiddleware[];
 };
 
 const BuilderStyleContextProvider = ({
@@ -45,15 +58,11 @@ const BuilderStyleContextProvider = ({
     BuilderMutationsMap,
     SpaceEventMap
   >;
-  const middlewares = useMemo(
-    () =>
-      middlewaresProp.map(middleware => ({
-        middleware,
-        filterCallback: (action: StyleReducerActions) => !action.fromSubscriptions
-      })),
-    [middlewaresProp]
+  const [style, dispatchStyle] = useReducerWithMiddleware(
+    StyleReducer,
+    styleProp ?? EMPTY_STYLE_SCHEMA,
+    middlewaresProp
   );
-  const [style, dispatchStyle] = useReducerWithMiddleware(StyleReducer, styleProp ?? EMPTY_STYLE_SCHEMA, middlewares);
 
   useCommonStoreSync('style', style);
 

@@ -3,7 +3,15 @@ import { produce } from 'immer';
 
 import FlatMap from './helpers/FlatMap';
 
-import type { Element, PageFolder, Schema, SchemaVariable, DropPosition, Style } from '@plitzi/sdk-shared';
+import type {
+  Element,
+  PageFolder,
+  ReducerActionOrigin,
+  Schema,
+  SchemaVariable,
+  DropPosition,
+  Style
+} from '@plitzi/sdk-shared';
 
 export const SchemaActions = {
   SCHEMA_UPDATE: 'SCHEMA_UPDATE',
@@ -27,7 +35,8 @@ export const SchemaActions = {
   SCHEMA_UPDATE_SETTINGS: 'SCHEMA_UPDATE_SETTINGS'
 } as const;
 
-export type SchemaReducerActionsBase = { fromSubscriptions?: boolean };
+// `queryFailed` marks the save queue putting back the state a rejected mutation left behind — see `isUserEdit`.
+export type SchemaReducerActionsBase = ReducerActionOrigin;
 
 export type SchemaReducerActions = SchemaReducerActionsBase &
   (

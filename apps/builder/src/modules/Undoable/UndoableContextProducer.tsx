@@ -1,13 +1,14 @@
 import { useCallback, useMemo, useReducer, useRef } from 'react';
 
 import { SchemaActions } from '@plitzi/sdk-schema/SchemaReducer';
+import { isUserEdit } from '@plitzi/sdk-shared/helpers';
 import { StyleActions } from '@plitzi/sdk-style/StyleReducer';
 import { SegmentsActions } from '@pmodules/Segments/SegmentsReducer';
 
 import UndoableContext from './UndoableContext';
 import UndoableReducer, { initialState } from './UndoableReducer';
 
-import type { UndoableItem } from './UndoableContext';
+import type { UndoableContextValue, UndoableItem } from './UndoableContext';
 import type { SchemaReducerActions } from '@plitzi/sdk-schema/SchemaReducer';
 import type { Schema, Segment, Style } from '@plitzi/sdk-shared';
 import type { StyleReducerActions } from '@plitzi/sdk-style/StyleReducer';
@@ -113,14 +114,32 @@ const UndoableContextProducer = ({ children }: UndoableContextProducerProps) => 
     dispatchUndoable({ type: 'undoableClearHistory' });
   }, [dispatchUndoable]);
 
-  const undoableMiddleware = useCallback(
-    (
-      prevState: UndoableItem['prevState'],
-      state: UndoableItem['nextState'],
-      dispatch: UndoableItem['dispatch'],
-      action: UndoableItem['action']
-    ) => undoableAddUndo(prevState, action, state, dispatch),
-    [undoableAddUndo]
+  /**
+   * What the history is allowed to remember.
+   *
+   * It sees every action, not only the user's, because an entry holds a whole-state snapshot: undoing does not replay
+   * an inverse, it puts the entire document back the way it was. That is sound while this session is the only writer
+   * and false the instant it is not — after an agent writes through the MCP, or a collaborator saves, one click on
+   * undo would restore a document from before their work and take it with it. So their edit ends the history rather
+   * than being added to it. The user loses their own earlier steps, which is the honest price: those steps were taken
+   * against a document that has since changed underneath them.
+   *
+   * A `queryFailed` revert is neither: the queue is putting back what a rejected mutation left behind, which the user
+   * did not do and which invalidates nothing.
+   */
+  const undoableMiddleware = useCallback<UndoableContextValue['undoableMiddleware']>(
+    (prevState, state, dispatch, action) => {
+      if (isUserEdit(action)) {
+        undoableAddUndo(prevState, action, state, dispatch);
+
+        return;
+      }
+
+      if (action.fromSubscriptions) {
+        undoableClearHistory();
+      }
+    },
+    [undoableAddUndo, undoableClearHistory]
   );
 
   const { canUndo, canRedo } = undoable;

@@ -47,7 +47,9 @@ const UndoableReducer = (state: UndoableState = initialState, action: UndoableRe
     }
 
     case 'undoableClearHistory': {
-      return initialState;
+      // Same object when there was nothing to clear: every remote edit asks for this, and a fresh state object would
+      // re-render every consumer of the context for nothing.
+      return state.past.length === 0 && state.future.length === 0 ? state : initialState;
     }
 
     default:

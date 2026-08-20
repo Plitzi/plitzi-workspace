@@ -198,6 +198,10 @@
       "types": "./dist/helpers/index.d.ts",
       "import": "./dist/helpers/index.mjs"
     },
+    "./helpers/reducerOrigin": {
+      "types": "./dist/helpers/reducerOrigin.d.ts",
+      "import": "./dist/helpers/reducerOrigin.mjs"
+    },
     "./helpers/security": {
       "types": "./dist/helpers/security.d.ts",
       "import": "./dist/helpers/security.mjs"

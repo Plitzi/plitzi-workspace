@@ -414,6 +414,10 @@
       "types": "./dist/components/StyleInspector/categories/Effects/BoxShadow/BoxShadowItem.d.ts",
       "import": "./dist/components/StyleInspector/categories/Effects/BoxShadow/BoxShadowItem.mjs"
     },
+    "./components/StyleInspector/categories/Effects/BoxShadow/helpers": {
+      "types": "./dist/components/StyleInspector/categories/Effects/BoxShadow/helpers.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Effects/BoxShadow/helpers.mjs"
+    },
     "./components/StyleInspector/categories/Effects/BoxShadow/index": {
       "types": "./dist/components/StyleInspector/categories/Effects/BoxShadow/index.d.ts",
       "import": "./dist/components/StyleInspector/categories/Effects/BoxShadow/index.mjs"

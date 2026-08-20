@@ -4,6 +4,7 @@ import { useCallback, use, useEffect, useMemo } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
+import { isUserEdit } from '@plitzi/sdk-shared/helpers';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
@@ -59,15 +60,14 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
       middleware: undoableMiddleware as ReducerMiddlewareCallback<
         Record<string, Segment>,
         [action: SegmentsReducerActions]
-      >,
-      filterCallback: action => !action.fromSubscriptions
+      >
     },
     {
       middleware: enqueueMiddleware as ReducerMiddlewareCallback<
         Record<string, Segment>,
         [action: SegmentsReducerActions]
       >,
-      filterCallback: action => !action.fromSubscriptions
+      filterCallback: isUserEdit
     }
   ]);
 
