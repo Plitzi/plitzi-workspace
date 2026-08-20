@@ -26,6 +26,10 @@
       "types": "./dist/actions/index.d.ts",
       "import": "./dist/actions/index.mjs"
     },
+    "./actions/triggerParams": {
+      "types": "./dist/actions/triggerParams.d.ts",
+      "import": "./dist/actions/triggerParams.mjs"
+    },
     "./actions/validateDocument": {
       "types": "./dist/actions/validateDocument.d.ts",
       "import": "./dist/actions/validateDocument.mjs"

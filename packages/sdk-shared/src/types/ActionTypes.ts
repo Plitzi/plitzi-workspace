@@ -72,20 +72,25 @@ export type ActionWebhookVerification = {
 export type ActionTriggerType = 'call' | 'webhook' | 'schedule' | 'render' | 'custom';
 
 /**
- * What a trigger step carries, by kind.
+ * What a trigger step carries, in its `params`.
  *
- * This is the whole of what used to sit beside the flow as `triggers`, `access` and `input`. It lives on the step
- * for the reason an element's `onClick` carries its own: the thing that starts a flow is the thing that knows what
- * may start it and with what. Two ways in are two trigger steps, each heading its own chain — exactly how one
- * element holds an `onClick` flow and an `onSubmit` flow in one node map.
+ * FLAT and stringy, because that is what a step's params are everywhere in this product: the flow editor renders
+ * `text`, `select` and `codemirror-json` controls over primitives, and a trigger authored anywhere else would be a
+ * second editor to build and to keep in step. So the two contracts an action has are both JSON on a step — `input`
+ * here, and the output step's `values` at the other end.
+ *
+ * Read it with the helpers in `@plitzi/sdk-shared/actions` rather than by hand: they are what the validator and
+ * the runner share, so what the editor accepts is exactly what the runner will do.
  */
 export type ActionTriggerParams = {
-  /** Who may start it. Required for every kind but `schedule`, which has no caller to authorize. */
-  access?: ActionAccess;
-  /** What a caller may send. **Anything undeclared is dropped** before a single step runs. */
-  input?: Record<string, ActionField>;
-  /** `webhook`: how an inbound request proves itself. */
-  verify?: ActionWebhookVerification;
+  /** Who may start a run this way. Required for every kind but `schedule`, which has no caller. */
+  access?: ActionAccess['mode'];
+  /** Comma-separated, and only meaningful for `access: 'role'`. */
+  permissions?: string;
+  /** JSON map of {@link ActionField} by name: what a caller may send THIS way. Undeclared keys are dropped. */
+  input?: string;
+  /** `webhook`: JSON {@link ActionWebhookVerification}. Absent means an endpoint anyone who learns it can start. */
+  verify?: string;
   /** `schedule`: five fields — minute hour day-of-month month day-of-week. UTC. */
   cron?: string;
   timezone?: string;

@@ -1,3 +1,5 @@
+import { triggerVerify } from '@plitzi/sdk-shared/actions';
+
 import { verifySignature } from './verifySignature';
 import { ActionRunError } from '../runtime/errors';
 import { precheckRun } from '../runtime/precheck';
@@ -84,7 +86,7 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
     return;
   }
 
-  const { verify } = triggerParams(trigger);
+  const verify = triggerVerify(triggerParams(trigger));
 
   // Counted before the signature is checked: verifying costs a hash over an attacker-supplied body, and a flood of
   // unsigned requests must not be free just because none of them verifies.

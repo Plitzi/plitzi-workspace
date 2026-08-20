@@ -1,3 +1,5 @@
+import { triggerAccess, triggerInput } from '@plitzi/sdk-shared/actions';
+
 import { actionTasksUri, actionUri, actionsUri, afterPrefix, findActionEntry } from '../helpers';
 import { envelope } from './envelope';
 
@@ -22,8 +24,8 @@ const summarize = (entry: ActionEntry) => {
 
       return {
         kind: node.action,
-        ...(params.access === undefined ? {} : { access: params.access }),
-        ...(params.input === undefined ? {} : { input: params.input })
+        ...(params.access === undefined ? {} : { access: triggerAccess(params) }),
+        input: triggerInput(params)
       };
     });
 

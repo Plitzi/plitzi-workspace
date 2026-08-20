@@ -22,7 +22,7 @@ const base = (overrides: Partial<UpsertAction> = {}): UpsertAction => ({
       type: 'trigger',
       action: 'call',
       // Everything about this way in is on the step: who may use it, and what they may send.
-      params: { access: { mode: 'session' }, input: { amount: { type: 'number', required: true } } },
+      params: { access: 'session', input: '{"amount":{"type":"number","required":true}}' },
       afterNode: 'ret',
       beforeNode: '',
       enabled: true
@@ -130,8 +130,8 @@ describe('action ops', () => {
     expect(Object.keys(space.actions[0].document.nodes)).toEqual(['start', 'ret']);
     expect(space.actions[0].document.nodes.ret.params).toEqual({ values: '{"total": 0}' });
     expect(space.actions[0].document.nodes.start.params).toEqual({
-      access: { mode: 'session' },
-      input: { amount: { type: 'number', required: true } }
+      access: 'session',
+      input: '{"amount":{"type":"number","required":true}}'
     });
   });
 

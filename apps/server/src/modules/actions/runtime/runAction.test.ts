@@ -25,7 +25,7 @@ const callTrigger = (params: Record<string, unknown> = {}, afterNode = 'compute'
   node('start', {
     type: 'trigger',
     action: 'call',
-    params: { access: { mode: 'public' }, input: { amount: { type: 'number', required: true } }, ...params },
+    params: { access: 'public', input: '{"amount":{"type":"number","required":true}}', ...params },
     afterNode
   });
 
@@ -133,7 +133,7 @@ describe('runAction', () => {
   it('requires the declared permissions', async () => {
     const entry = buildEntry({
       nodes: {
-        start: callTrigger({ access: { mode: 'role', permissions: ['space.write'] } }),
+        start: callTrigger({ access: 'role', permissions: 'space.write' }),
         compute: node('compute', { action: 'flow.output', params: { values: '{"total": 1}' } })
       }
     });

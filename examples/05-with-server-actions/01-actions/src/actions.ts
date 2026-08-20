@@ -53,11 +53,11 @@ const shippingQuote = (ratePerKg: number, label: string): ActionEntry => ({
         type: 'trigger',
         action: 'call',
         params: {
-          access: { mode: 'public' },
-          input: {
+          access: 'public',
+          input: JSON.stringify({
             city: { type: 'text', required: true, label: 'Destination city' },
             weightKg: { type: 'number', defaultValue: 1, label: 'Weight (kg)' }
-          }
+          })
         },
         afterNode: 'rate'
       }),
@@ -102,18 +102,18 @@ const visitDigest: ActionEntry = {
         type: 'trigger',
         action: 'webhook',
         params: {
-          access: { mode: 'public' },
-          input: { event: { type: 'text', required: true, label: 'Event name' } },
+          access: 'public',
+          input: JSON.stringify({ event: { type: 'text', required: true, label: 'Event name' } }),
           // The credential is NAMED here, not templated. This check runs before the body is parsed and before a
           // run exists, so there is no flow scope for a token to resolve against — and one that rendered to
           // nothing would leave the endpoint verifying every request against an empty secret.
-          verify: {
+          verify: JSON.stringify({
             type: 'hmac',
             header: 'x-example-signature',
             algorithm: 'sha256',
             credential: 'example',
             secretField: 'webhookSecret'
-          }
+          })
         },
         afterNode: 'count'
       }),

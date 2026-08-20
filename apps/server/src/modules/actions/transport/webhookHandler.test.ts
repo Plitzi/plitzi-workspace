@@ -43,17 +43,12 @@ const entry = (overrides: Partial<ActionDocument> = {}): ActionEntry => ({
         type: 'trigger',
         action: 'webhook',
         params: {
-          access: { mode: 'public' },
-          input: { payload: { type: 'json' } },
+          access: 'public',
+          input: '{"payload":{"type":"json"}}',
           // The credential is NAMED, not templated: this runs before a run exists, so there is no scope for a
           // token to resolve against and one that rendered empty would verify against nothing.
-          verify: {
-            type: 'hmac',
-            header: 'x-signature',
-            algorithm: 'sha256',
-            credential: 'stripe',
-            secretField: 'hookSecret'
-          }
+          verify:
+            '{"type":"hmac","header":"x-signature","algorithm":"sha256","credential":"stripe","secretField":"hookSecret"}'
         },
         afterNode: 'ret'
       }),

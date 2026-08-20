@@ -47,7 +47,7 @@ const run = (entry: ActionEntry, spaceId = 1) => {
 };
 
 const incrementFlow = counterAction({
-  start: node('start', { type: 'trigger', action: 'call', params: { access: { mode: 'public' } }, afterNode: 'inc' }),
+  start: node('start', { type: 'trigger', action: 'call', params: { access: 'public' }, afterNode: 'inc' }),
   inc: node('inc', { action: 'kv.increment', afterNode: 'ret', params: { key: 'hits', amount: '1' } }),
   ret: node('ret', { action: 'flow.output', params: { values: '{"value": {{ inc.value }}}' } })
 });
@@ -80,7 +80,7 @@ describe('kv tasks', () => {
           start: node('start', {
             type: 'trigger',
             action: 'call',
-            params: { access: { mode: 'public' } },
+            params: { access: 'public' },
             afterNode: 'set'
           }),
           set: node('set', { action: 'kv.set', afterNode: 'get', params: { key: 'greeting', value: 'hola' } }),

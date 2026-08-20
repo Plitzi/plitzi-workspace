@@ -29,7 +29,7 @@ const entry: ActionEntry = {
       start: node('start', {
         type: 'trigger',
         action: 'render',
-        params: { access: { mode: 'public' }, input: { slug: { type: 'text', required: true } } },
+        params: { access: 'public', input: '{"slug":{"type":"text","required":true}}' },
         afterNode: 'load'
       }),
       load: node('load', {

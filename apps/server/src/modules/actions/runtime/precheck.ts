@@ -1,3 +1,5 @@
+import { triggerAccess, triggerInput } from '@plitzi/sdk-shared/actions';
+
 import { ActionRunError } from './errors';
 import { applyFields } from './scope';
 import { findTriggerNode, triggerParams } from './triggers';
@@ -71,10 +73,10 @@ export const precheckRun = (entry: ActionEntry, params: PrecheckParams): Prechec
     throw new ActionRunError('recursion', 'This action already appears in the run lineage');
   }
 
-  const { access, input = {} } = triggerParams(trigger);
-  authorize(access, params.trigger, params.user);
+  const stepParams = triggerParams(trigger);
+  authorize(triggerAccess(stepParams), params.trigger, params.user);
 
-  const { values, missing, invalid } = applyFields(input, params.input);
+  const { values, missing, invalid } = applyFields(triggerInput(stepParams), params.input);
   if (missing.length > 0 || invalid.length > 0) {
     throw new ActionRunError('invalid_input', `Invalid input: ${[...missing, ...invalid].join(', ')}`);
   }

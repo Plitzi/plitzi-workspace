@@ -29,7 +29,7 @@ const entry = (params: Record<string, unknown>): ActionEntry => ({
       start: node('start', {
         type: 'trigger',
         action: 'call',
-        params: { access: { mode: 'public' }, input: { email: { type: 'text' } } },
+        params: { access: 'public', input: '{"email":{"type":"text"}}' },
         afterNode: 'q'
       }),
       q: node('q', { action: 'db.query', afterNode: 'out', params }),

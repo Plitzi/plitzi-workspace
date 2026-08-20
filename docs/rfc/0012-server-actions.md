@@ -105,14 +105,24 @@ export type ActionAccess =
 /** The ways in, as the `action` of a trigger STEP rather than a list beside the flow. */
 export type ActionTriggerType = 'call' | 'webhook' | 'schedule' | 'render' | 'custom';
 
-/** What a trigger step carries in its `params`. */
+/**
+ * What a trigger step carries in its `params`.
+ *
+ * FLAT and stringy, because that is what every step's params are: the flow editor renders `text`, `select` and
+ * `codemirror-json` controls over primitives, so a trigger authored any other way would need a second editor
+ * beside the first — which is exactly what the first attempt built, and it left the same trigger configurable in
+ * two places that could disagree. Read through the helpers in `@plitzi/sdk-shared/actions`, which the validator
+ * and the runner share.
+ */
 export type ActionTriggerParams = {
   /** Required for every kind but `schedule`, which has no caller to authorize. */
-  access?: ActionAccess;
-  /** What a caller may send through THIS way in. Anything undeclared is dropped before a step runs. */
-  input?: Record<string, ActionField>;
-  /** `webhook`: how an inbound request proves itself. Its secret NAMES a credential — see §4.2.1. */
-  verify?: ActionWebhookVerification;
+  access?: ActionAccess['mode'];
+  /** Comma-separated; only meaningful for `access: 'role'`. */
+  permissions?: string;
+  /** JSON map of `ActionField` by name. What a caller may send THIS way; undeclared keys are dropped. */
+  input?: string;
+  /** `webhook`: JSON `ActionWebhookVerification`. Its secret NAMES a credential — see §4.2.1. */
+  verify?: string;
   /** `schedule`: five fields, UTC. */
   cron?: string;
   timezone?: string;

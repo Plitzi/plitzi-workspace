@@ -18,28 +18,27 @@ export const actionAccess = z
 
 export const actionTriggerParams = z
   .object({
-    access: actionAccess.optional().describe('Required for every kind but schedule, which has no caller'),
+    access: z
+      .enum(['public', 'session', 'role'])
+      .optional()
+      .describe('Who may start a run THIS way. Required for every kind but schedule, which has no caller'),
+    permissions: z.string().optional().describe('Comma separated; only for access "role"'),
     input: z
-      .record(z.string(), z.lazy(() => actionField))
+      .string()
       .optional()
-      .describe('What a caller may send through this way in. Anything undeclared is DROPPED'),
+      .describe('JSON map of ActionField by name: what a caller may send this way. Undeclared keys are DROPPED'),
     verify: z
-      .object({
-        type: z.literal('hmac'),
-        header: z.string().describe('Header carrying the signature, e.g. "stripe-signature"'),
-        algorithm: z.enum(['sha256', 'sha1']),
-        credential: z.string().describe('Credential holding the signing secret'),
-        secretField: z.string().optional().describe('Key of that credential. Defaults to "secret"'),
-        timestampHeader: z.string().optional(),
-        toleranceSeconds: z.number().optional()
-      })
+      .string()
       .optional()
-      .describe('webhook only. Without it, anyone who learns the URL can start a run'),
+      .describe(
+        'webhook only. JSON: {type:"hmac",header,algorithm,credential,secretField?,timestampHeader?,' +
+          'toleranceSeconds?}. Without it, anyone who learns the URL can start a run'
+      ),
     cron: z.string().optional().describe('schedule only: minute hour day-of-month month day-of-week, UTC'),
     timezone: z.string().optional(),
     name: z.string().optional().describe('custom only: the name the deployment mounts it under')
   })
-  .describe('What a TRIGGER step carries. A task step carries its own task params instead');
+  .describe('What a TRIGGER step carries. Flat and stringy, as every step param is');
 
 export const actionField = z
   .object({

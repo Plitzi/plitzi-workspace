@@ -11,8 +11,9 @@ const trigger = (action: string, params: Record<string, unknown> = {}, afterNode
   afterNode
 });
 
+/** Flat and stringy, as the flow editor writes them: a select for access, JSON for the input contract. */
 const callTrigger = (params: Record<string, unknown> = {}) =>
-  trigger('call', { access: { mode: 'session' }, input: { amount: { type: 'number', required: true } }, ...params });
+  trigger('call', { access: 'session', input: '{"amount":{"type":"number","required":true}}', ...params });
 
 const document = (overrides: Record<string, unknown> = {}) => ({
   name: 'Send quote',
@@ -53,18 +54,18 @@ describe('validateActionDocument', () => {
 
   it('requires access on the trigger rather than guessing it', () => {
     const report = validateActionDocument(
-      document({ nodes: { start: trigger('call', { input: {} }), ret: { id: 'ret', type: 'task', action: 'flow.output' } } })
+      document({ nodes: { start: trigger('call', {}), ret: { id: 'ret', type: 'task', action: 'flow.output' } } })
     );
 
     expect(report.valid).toBe(false);
-    expect(messages(report.errors)).toContain('must declare a mode');
+    expect(messages(report.errors)).toContain('must say who may start a run');
   });
 
   it('requires role access to name permissions', () => {
     const report = validateActionDocument(
       document({
         nodes: {
-          start: callTrigger({ access: { mode: 'role', permissions: [] } }),
+          start: callTrigger({ access: 'role', permissions: '' }),
           ret: { id: 'ret', type: 'task', action: 'flow.output' }
         }
       })
@@ -111,8 +112,8 @@ describe('validateActionDocument', () => {
           ret: { id: 'ret', type: 'task', action: 'flow.output', params: {}, flowId: 'a' },
           onHook: {
             ...trigger('webhook', {
-              access: { mode: 'public' },
-              verify: { type: 'hmac', header: 'x-sig', algorithm: 'sha256', credential: 'stripe' }
+              access: 'public',
+              verify: '{"type":"hmac","header":"x-sig","algorithm":"sha256","credential":"stripe"}'
             }),
             id: 'onHook',
             afterNode: 'count',
@@ -201,7 +202,7 @@ describe('validateActionDocument', () => {
     const report = validateActionDocument(
       document({
         nodes: {
-          start: trigger('webhook', { access: { mode: 'public' } }),
+          start: trigger('webhook', { access: 'public' }),
           ret: { id: 'ret', type: 'task', action: 'flow.output', params: {} }
         }
       })
@@ -216,8 +217,8 @@ describe('validateActionDocument', () => {
       document({
         nodes: {
           start: trigger('webhook', {
-            access: { mode: 'public' },
-            verify: { type: 'hmac', header: 'x-sig', algorithm: 'sha256' }
+            access: 'public',
+            verify: '{"type":"hmac","header":"x-sig","algorithm":"sha256"}'
           }),
           ret: { id: 'ret', type: 'task', action: 'flow.output', params: {} }
         }
@@ -232,7 +233,7 @@ describe('validateActionDocument', () => {
     const report = validateActionDocument(
       document({
         nodes: {
-          start: callTrigger({ access: { mode: 'public' } }),
+          start: callTrigger({ access: 'public' }),
           ret: { id: 'ret', type: 'task', action: 'flow.output', params: {} }
         }
       })

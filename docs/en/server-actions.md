@@ -35,9 +35,12 @@ Everything about how a run begins lives on the step that begins it:
 
 | On the trigger step | What it decides |
 |---|---|
-| Its kind | `call` from a page, `webhook`, `schedule`, `render`, or one the deployment mounts |
+| Its kind | `call` from a page, `webhook`, `schedule`, `render` |
 | Who may | Anyone / signed-in visitors / visitors holding named permissions. No default — an unstated rule is either a lock-out or a hole. A `schedule` has no caller, so it has no rule |
-| Input | What a caller may send **through that way in**. Anything undeclared is dropped before a single step runs |
+| Input it accepts | What a caller may send **through that way in**, as a JSON field map. Anything undeclared is dropped before a single step runs |
+
+Which means authoring one is: **open the flow, pick a trigger, fill in its two fields, chain the tasks.** There is
+no form above the editor repeating any of it — the trigger step is the only place a way in is configured.
 
 **One action can have several ways in**, exactly as one element has an `onClick` and an `onSubmit`: add a second
 trigger step and it heads its own chain. That is also what lets a signed webhook and a session-only page call live
@@ -144,6 +147,8 @@ interpolable by every step, including the one that answers the browser.
 
 Add a **webhook** trigger step and the action answers at `POST /_action/hook/<actionId>` on the space's own
 origin. It is public by construction, so the signature is the security boundary:
+
+Its **Signature check** field, on the trigger step:
 
 ```json
 {

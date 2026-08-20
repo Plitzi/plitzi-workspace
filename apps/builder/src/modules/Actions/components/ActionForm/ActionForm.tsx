@@ -4,19 +4,16 @@ import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, useMemo, useState } from 'react';
 
-import { validateActionDocument } from '@plitzi/sdk-shared/actions';
+import { triggerInput, validateActionDocument } from '@plitzi/sdk-shared/actions';
 
 import Workflow from '../../../Interactions/components/Workflow';
 import ActionTestRun from '../ActionTestRun';
-import ActionTriggers from '../ActionTriggers';
 
 import type {
   ActionRunReport,
   ActionDocument,
   ActionField,
   ActionTaskDescriptor,
-  ActionTriggerParams,
-  ActionTriggerType,
   ElementInteraction,
   InteractionCallback,
   SpaceAction
@@ -32,21 +29,71 @@ export type ActionFormProps = {
 
 const emptyDocument = (): ActionDocument => ({ name: '', enabled: true, nodes: {} });
 
+const TRIGGER_TITLES: Record<string, string> = {
+  call: 'When a page calls it',
+  webhook: 'When a webhook arrives',
+  schedule: 'On a schedule',
+  render: 'While a page renders'
+};
+
+const ACCESS_OPTIONS = [
+  { label: 'Signed-in visitors', value: 'session' },
+  { label: 'Visitors with permissions', value: 'role' },
+  { label: 'Anyone, signed out included', value: 'public' }
+];
+
+/**
+ * What a way in carries, on the step that IS that way in.
+ *
+ * A schedule has none of it: a clock is not a caller, so there is nobody to authorize and nothing to send.
+ */
+const callerParams: InteractionCallback['params'] = {
+  access: { type: 'select', defaultValue: 'session', label: 'Who may', canBind: false, options: ACCESS_OPTIONS },
+  permissions: {
+    type: 'text',
+    defaultValue: '',
+    label: 'Permissions (comma separated)',
+    canBind: false,
+    when: params => params.access === 'role'
+  },
+  input: { type: 'codemirror-json', defaultValue: '{}', label: 'Input it accepts', canBind: false }
+};
+
+const TRIGGER_PARAMS: Record<string, InteractionCallback['params']> = {
+  call: callerParams,
+  render: callerParams,
+  webhook: {
+    ...callerParams,
+    verify: {
+      type: 'codemirror-json',
+      defaultValue: '{"type":"hmac","header":"x-signature","algorithm":"sha256","credential":""}',
+      label: 'Signature check',
+      canBind: false
+    }
+  },
+  schedule: {
+    cron: { type: 'text', defaultValue: '0 * * * *', label: 'Cron (UTC)', canBind: false },
+    timezone: { type: 'text', defaultValue: '', label: 'Timezone', canBind: false }
+  }
+};
+
 /**
  * The catalog, in the shape the flow editor already draws.
  *
  * `Workflow` renders `InteractionCallback`s, which is what makes this reuse possible at all: a server task and a
  * client callback declare their parameters the same way, so the editor an author already knows is the editor they
  * get here — with a different set of steps in it.
+ *
+ * The TRIGGERS declare parameters too, and that is the whole of authoring a way in: pick one, say who may use it
+ * and what it takes, chain the tasks. There is no panel above the flow repeating any of it — there was, and it
+ * left the same trigger configurable in two places that could disagree.
  */
-const asNodeDefinitions = (tasks: ActionTaskDescriptor[], triggers: ActionTriggerType[]): InteractionCallback[] => [
-  // The entry steps are the ones this action already declares above, so the flow editor offers exactly the ways
-  // in that exist rather than inviting a second one nobody configured.
-  ...triggers.map(type => ({
-    action: type,
-    title: TRIGGER_TITLES[type],
+const asNodeDefinitions = (tasks: ActionTaskDescriptor[]): InteractionCallback[] => [
+  ...Object.keys(TRIGGER_TITLES).map(kind => ({
+    action: kind,
+    title: TRIGGER_TITLES[kind],
     type: 'trigger' as const,
-    params: {},
+    params: TRIGGER_PARAMS[kind],
     preview: {}
   })),
   ...tasks.map(task => ({
@@ -57,14 +104,6 @@ const asNodeDefinitions = (tasks: ActionTaskDescriptor[], triggers: ActionTrigge
     preview: {}
   }))
 ];
-
-const TRIGGER_TITLES: Record<string, string> = {
-  call: 'When a page calls it',
-  webhook: 'When a webhook arrives',
-  schedule: 'On a schedule',
-  render: 'While a page renders',
-  custom: 'When the server raises it'
-};
 
 /**
  * The field list a binding editor offers on this action's result, read off the output step.
@@ -101,14 +140,7 @@ const ActionForm = ({ action, tasks, onRun, onSubmit, onCancel }: ActionFormProp
   const [document, setDocument] = useState<ActionDocument>(() => action?.document ?? emptyDocument());
   const [isSaving, setIsSaving] = useState(false);
 
-  const triggerKinds = useMemo(
-    () =>
-      Object.values(document.nodes)
-        .filter(node => node.type === 'trigger')
-        .map(node => node.action as ActionTriggerType),
-    [document.nodes]
-  );
-  const nodeDefinitions = useMemo(() => asNodeDefinitions(tasks, triggerKinds), [tasks, triggerKinds]);
+  const nodeDefinitions = useMemo(() => asNodeDefinitions(tasks), [tasks]);
   const report = useMemo(() => validateActionDocument({ ...document, name: name || document.name }), [document, name]);
 
   const patch = useCallback(
@@ -138,7 +170,7 @@ const ActionForm = ({ action, tasks, onRun, onSubmit, onCancel }: ActionFormProp
 
   // The `call` trigger's own contract: what a test run asks for is what a page would send.
   const callTrigger = Object.values(document.nodes).find(node => node.type === 'trigger' && node.action === 'call');
-  const callInput = ((callTrigger?.params ?? {}) as ActionTriggerParams).input ?? {};
+  const callInput = callTrigger ? triggerInput(callTrigger.params) : {};
 
   return (
     <div className="mx-auto flex w-full max-w-4xl grow basis-0 flex-col gap-4 overflow-auto p-4">
@@ -149,8 +181,6 @@ const ActionForm = ({ action, tasks, onRun, onSubmit, onCancel }: ActionFormProp
           <option value="off">Disabled</option>
         </Select>
       </div>
-
-      <ActionTriggers nodes={document.nodes} onChange={handleChangeNodes} />
 
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium">The flow</span>

@@ -1,4 +1,7 @@
 import { parseCron } from './cron';
+import { triggerAccess, triggerVerify } from './triggerParams';
+
+import type { ActionTriggerParams } from '../types';
 
 /**
  * The one server-action validator.
@@ -36,6 +39,17 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isFilledString = (value: unknown): value is string => typeof value === 'string' && value.trim() !== '';
 
+/** `undefined` means it did not parse, which is different from an empty contract and reported as such. */
+const parseMap = (raw: string): Record<string, unknown> | undefined => {
+  try {
+    const parsed: unknown = JSON.parse(raw);
+
+    return isRecord(parsed) ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 const validateFields = (fields: unknown, path: string, errors: ActionDocumentIssue[]) => {
   if (fields === undefined) {
     return;
@@ -64,31 +78,12 @@ const validateFields = (fields: unknown, path: string, errors: ActionDocumentIss
   });
 };
 
-const validateAccess = (access: unknown, path: string, errors: ActionDocumentIssue[]) => {
-  if (!isRecord(access) || !isFilledString(access.mode)) {
-    // No default: a way in whose access nobody wrote down would have to be guessed at, and every guess is either
-    // a lock-out or a hole.
-    errors.push({ path, message: 'must declare a mode', hint: `one of ${ACCESS_MODES.join(', ')}` });
-
-    return;
-  }
-
-  if (!ACCESS_MODES.includes(access.mode)) {
-    errors.push({ path: `${path}.mode`, message: `unknown access mode "${access.mode}"` });
-
-    return;
-  }
-
-  if (access.mode === 'role' && (!Array.isArray(access.permissions) || access.permissions.length === 0)) {
-    errors.push({ path: `${path}.permissions`, message: 'role access must list at least one permission' });
-  }
-};
-
 /**
- * One way into the action: what starts it, who may, and with what.
+ * One way into the action: what starts it, who may, and with what — all in the trigger STEP's own params.
  *
- * All three live on the STEP, which is what makes them answerable per entry point — a webhook gated on its
- * signature and a page call requiring a session, in one action, without either loosening the other.
+ * They are flat and stringy because the flow editor authors them with the controls it already has, so this is also
+ * where a half-written JSON contract is caught: it is read through the same helpers the runner uses, and anything
+ * that does not parse is reported here rather than silently meaning "no contract".
  */
 const validateTrigger = (
   key: string,
@@ -108,13 +103,34 @@ const validateTrigger = (
     return;
   }
 
-  const params = isRecord(node.params) ? node.params : {};
-  validateFields(params.input, `${path}.params.input`, errors);
+  const params = (isRecord(node.params) ? node.params : {}) as ActionTriggerParams;
+
+  if (isFilledString(params.input)) {
+    const parsed = parseMap(params.input);
+    if (parsed === undefined) {
+      errors.push({ path: `${path}.params.input`, message: 'is not valid JSON' });
+    } else {
+      validateFields(parsed, `${path}.params.input`, errors);
+    }
+  }
 
   // A schedule has no caller to authorize: nothing about a clock is a session, and asking for an access rule here
   // would only invite one that means nothing.
   if (kind !== 'schedule') {
-    validateAccess(params.access, `${path}.params.access`, errors);
+    if (!isFilledString(params.access) || !ACCESS_MODES.includes(params.access)) {
+      // No default: a way in whose access nobody wrote down would have to be guessed at, and every guess is
+      // either a lock-out or a hole.
+      errors.push({
+        path: `${path}.params.access`,
+        message: 'must say who may start a run this way',
+        hint: `one of ${ACCESS_MODES.join(', ')}`
+      });
+    } else if (params.access === 'role' && triggerAccess(params)?.mode === 'role') {
+      const access = triggerAccess(params);
+      if (access?.mode === 'role' && access.permissions.length === 0) {
+        errors.push({ path: `${path}.params.permissions`, message: 'role access must name at least one permission' });
+      }
+    }
   }
 
   if (kind === 'schedule') {
@@ -136,23 +152,28 @@ const validateTrigger = (
   }
 
   if (kind === 'webhook') {
-    // A webhook is reachable by anyone who learns the URL. Without a signature it is an open endpoint into
-    // whatever the flow does, so this is called out even though the document is technically runnable.
-    if (!isRecord(params.verify)) {
-      warnings.push({
-        path: `${path}.params.verify`,
-        message: 'this webhook accepts unsigned requests',
-        hint: 'declare an hmac verification so only the sender you expect can start a run'
-      });
-    } else if (!isFilledString(params.verify.credential)) {
-      errors.push({
-        path: `${path}.params.verify.credential`,
-        message: 'the verification names no credential to read the signing secret from'
-      });
+    if (isFilledString(params.verify) && parseMap(params.verify) === undefined) {
+      errors.push({ path: `${path}.params.verify`, message: 'is not valid JSON' });
+    } else {
+      const verify = triggerVerify(params);
+      // A webhook is reachable by anyone who learns the URL. Without a signature it is an open endpoint into
+      // whatever the flow does, so this is called out even though the document is technically runnable.
+      if (!verify) {
+        warnings.push({
+          path: `${path}.params.verify`,
+          message: 'this webhook accepts unsigned requests',
+          hint: 'declare an hmac verification so only the sender you expect can start a run'
+        });
+      } else if (!isFilledString(verify.credential)) {
+        errors.push({
+          path: `${path}.params.verify`,
+          message: 'the verification names no credential to read the signing secret from'
+        });
+      }
     }
   }
 
-  if (kind === 'call' && isRecord(params.access) && params.access.mode === 'public') {
+  if (kind === 'call' && params.access === 'public') {
     warnings.push({
       path: `${path}.params.access`,
       message: 'anyone can run this action, including signed-out visitors',
