@@ -1,8 +1,8 @@
 # Examples
 
 Runnable Plitzi setups, ordered as a space actually grows: put it on a page, give it people, give it data, let an
-agent edit it. Each one is a real workspace package you can start and hit — no pseudo-code, no snippets that assume
-a step not shown.
+agent edit it, have it do work on the server. Each one is a real workspace package you can start and hit — no
+pseudo-code, no snippets that assume a step not shown.
 
 ## [`01-my-first-space`](./01-my-first-space) — getting it onto a page
 
@@ -21,6 +21,7 @@ these build on.
 | | Example | What it is | Port |
 |---|---|---|---|
 | 01 | [sessions](./02-with-users/01-sessions) | Sign in, renew, sign out — over an account store you provide | 4007 |
+| 02 | [mysql](./02-with-users/02-mysql) | The same, over a MySQL of your own — tables and adapters included | 4008 |
 
 ## [`03-with-data`](./03-with-data) — elements that resolve data on the server
 
@@ -35,10 +36,17 @@ these build on.
 | 01 | [mcp-server](./04-with-an-agent/01-mcp-server) | A dedicated MCP server an agent edits the space through | 4005 |
 | 02 | [ssr-preview](./04-with-an-agent/02-ssr-preview) | MCP and pages on one port, plus draft preview | 4006 |
 
+## [`05-with-server-actions`](./05-with-server-actions) — it does work on the server
+
+| | Example | What it is | Port |
+|---|---|---|---|
+| 01 | [actions](./05-with-server-actions/01-actions) | A declarative flow the server runs, called from a page | 4009 + 4010 |
+
 Every example renders [`shared-space`](./shared-space), so the difference between any two is the wiring alone — bar
-`02-with-users`, which adds two pages to it, because a space with people in it has somewhere to sign in. None of them
-needs a database: where a real deployment reads rows, these hand the server static data through the same adapters,
-which is exactly how your own store plugs in.
+the two that need a page of their own: `02-with-users`, because a space with people in it has somewhere to sign in,
+and `05-with-server-actions`, because something has to press the button. Only `02-with-users/02-mysql` needs a
+database; everywhere else a real deployment reads rows and these hand the server static data through the same
+adapters, which is exactly how your own store plugs in.
 
 ## Running one
 

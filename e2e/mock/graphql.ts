@@ -112,6 +112,13 @@ const emptyConnection = (typename: string) => ({
 const handlers: Record<string, ((space: OfflineDataRaw) => unknown) | undefined> = {
   InitQuery: initQuery,
   SpaceConnectorsQuery: () => ({ data: { SpaceConnectors: emptyConnection('SpaceConnectorListType') } }),
+  /** A space with no server actions still has to ANSWER: the builder reads `.edges` off whatever comes back, and
+   *  the fallback acknowledgement gives it `true`. That crashed the panel's provider on boot — which took the
+   *  whole app down, since it mounts above the canvas. */
+  SpaceActionsQuery: () => ({ data: { SpaceActions: emptyConnection('SpaceActionListType') } }),
+  /** The step catalog, which is SERVED rather than compiled in — so a mocked backend serves an empty one. A
+   *  builder with no tasks offers no server steps, which is exactly right for a run with no server behind it. */
+  SpaceActionTasksQuery: () => ({ data: { SpaceActionTasks: [] } }),
   SpaceDeploymentsQuery: () => ({
     data: {
       SpaceDeployments: {

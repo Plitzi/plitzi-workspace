@@ -38,7 +38,8 @@ const EXAMPLE_TARGETS = [
   'mcp-server',
   'ssr-preview',
   'sessions',
-  'mysql'
+  'mysql',
+  'server-actions'
 ];
 
 export const categories: Category[] = [

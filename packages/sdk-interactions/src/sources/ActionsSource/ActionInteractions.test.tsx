@@ -71,6 +71,19 @@ describe('ActionInteractions', () => {
     expect(result).toEqual({ status: 'completed', runId: 'r1', output: { total: 9 } });
   });
 
+  /** A param carrying twig is resolved before the callback runs, and the resolver hands back the result's own
+   *  type — so an input with a binding in it arrives as an OBJECT. Taking only the string posted `{}`, which is
+   *  every real input: the ones with no token are the exception, not the rule. */
+  it('posts an input the flow engine already resolved into an object', async () => {
+    const fetchMock = vi.fn(() => Promise.resolve(jsonResponse(200, { runId: 'r2', status: 'completed', output: {} })));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await mount().run({ actionId: 'quote', input: { city: 'Berlin', weightKg: 2 }, mode: 'await' });
+
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit & { body: string }];
+    expect(JSON.parse(init.body)).toEqual({ actionId: 'quote', input: { city: 'Berlin', weightKg: 2 } });
+  });
+
   it('does not wait for a detached run, and keeps it alive across a navigation', async () => {
     let settle: (value: Response) => void = () => undefined;
     const fetchMock = vi.fn(

@@ -1,3 +1,5 @@
+import { createHmac } from 'node:crypto';
+
 import { describeTarget, expect, test } from '../../fixtures';
 import { expectSampleSpaceContent, expectSpaceRendered } from '../../helpers/space';
 import { expectVisuallyHealthy } from '../../helpers/visualHealth';
@@ -127,6 +129,81 @@ describeTarget('mysql', subject => {
     await page.getByRole('button', { name: 'Sign in' }).click();
 
     await expect(page.getByRole('heading', { name: 'ada' })).toBeVisible();
+  });
+});
+
+describeTarget('server-actions', subject => {
+  /** The published site is the target's own origin; the draft is the next port up. Same process, same space, same
+   *  action store — the deployment record is the only thing that differs, which is what makes the pair a
+   *  demonstration rather than two servers. */
+  const draftOrigin = () => {
+    const url = new URL(subject.origin);
+    url.port = String(Number(url.port) + 1);
+
+    return url.origin;
+  };
+
+  const call = { actionId: 'shipping-quote', input: { city: 'Berlin', weightKg: 2 } };
+
+  test('a page runs the action and shows what came back', async ({ page, capture }) => {
+    await page.goto(subject.origin);
+
+    await expect(page.getByRole('heading', { name: 'Shipping quote' })).toBeVisible();
+    await capture('before-the-run');
+
+    await page.getByLabel('Destination city').fill('Berlin');
+    await page.getByRole('button', { name: 'Get a quote' }).click();
+
+    // The whole promise of the README: the browser sent a name and two values, and the answer is on the page.
+    await expect(page.getByText('quoted by the copy published at revision 2')).toBeVisible();
+    await capture('after-the-run');
+  });
+
+  test('the output step is the contract — what it did not name never leaves', async ({ request }) => {
+    const response = await request.post(`${subject.origin}/_action`, { data: call });
+    const { output } = (await response.json()) as { output: Record<string, unknown> };
+
+    expect(response.status()).toBe(200);
+    expect(Object.keys(output).sort()).toEqual(['currency', 'summary', 'total']);
+    // The task returned it; no step named it. That is the mechanism, not an omission in the example.
+    expect(output, 'the README says `band` stays on the server').not.toHaveProperty('band');
+  });
+
+  test('input the document did not declare is dropped', async ({ request }) => {
+    const response = await request.post(`${subject.origin}/_action`, {
+      data: { ...call, input: { ...call.input, discount: 'free' } }
+    });
+    const { output } = (await response.json()) as { output: { total: number } };
+
+    expect(output.total, 'an undeclared key reached a step').toBe(8);
+  });
+
+  /** The rule the example exists to show: a page reads the version it was published with, and the draft is what
+   *  its author is editing now. Both answers come from one action id and one process. */
+  test('the published site and the draft answer with their own version', async ({ request }) => {
+    const shipped = await request.post(`${subject.origin}/_action`, { data: call });
+    const editing = await request.post(`${draftOrigin()}/_action`, { data: call });
+
+    const shippedOutput = (await shipped.json()) as { output: { total: number; summary: string } };
+    const editingOutput = (await editing.json()) as { output: { total: number; summary: string } };
+
+    expect(shippedOutput.output.summary).toContain('published at revision 2');
+    expect(editingOutput.output.summary).toContain('draft');
+    expect(shippedOutput.output.total, 'both revisions quoted the same price').not.toBe(editingOutput.output.total);
+  });
+
+  test('the webhook takes a signed delivery and refuses an unsigned one', async ({ request }) => {
+    const body = JSON.stringify({ event: 'page_view' });
+    const signature = createHmac('sha256', 'example-webhook-secret').update(body).digest('hex');
+    const hook = `${subject.origin}/_action/hook/visit-digest`;
+    const headers = { 'content-type': 'application/json' };
+
+    const signed = await request.post(hook, { headers: { ...headers, 'x-example-signature': signature }, data: body });
+    const unsigned = await request.post(hook, { headers, data: body });
+
+    expect(signed.status()).toBe(200);
+    expect((await signed.json()) as { accepted: boolean }).toMatchObject({ accepted: true });
+    expect(unsigned.status(), 'an unsigned delivery ran the flow').toBe(401);
   });
 });
 

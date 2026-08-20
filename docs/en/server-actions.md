@@ -246,5 +246,8 @@ Everything above is configuration; the two extension points are code you own:
 - **Your own triggers** — mount a stage (or a queue consumer, or a CLI) and call the runner. Every check lives in
   the runner, so a trigger you add cannot end up with a weaker set of rules than the built-in ones.
 
+Both, plus the lookups and the versioning rule above, are wired end to end and runnable in
+[`examples/05-with-server-actions/01-actions`](../../examples/05-with-server-actions/01-actions).
+
 Also yours: the key/value store behind `kv` (in-process by default, which counts only its own replica — a cluster
 supplies a shared one), the database drivers `db.query` may use, the per-run limits, and what a run costs.

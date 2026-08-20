@@ -14,7 +14,8 @@ export type ActionInteractionsProps = {
 
 type RunParams = {
   actionId: string;
-  input: string;
+  /** Authored as JSON text, and arriving as an object whenever the flow engine already parsed it — see below. */
+  input: string | Record<string, unknown>;
   mode: ActionCallMode;
   idempotencyKey: string;
 };
@@ -66,9 +67,22 @@ const readStream = async (body: ReadableStream<Uint8Array>, onFrame: (frame: Str
   }
 };
 
-const parseInput = (input: string): Record<string, unknown> => {
+/**
+ * The step's `input`, however the engine happened to hand it over.
+ *
+ * It is authored as JSON text, but a param carrying twig is resolved before this callback sees it and the resolver
+ * returns the RESULT's own type — so an input with a binding in it (`{"city": "{{form.values.city}}"}`) arrives
+ * already parsed, while one with no token at all arrives as the string it was written as. Accepting only the
+ * string was a bound input silently posting nothing: the common case, and the one that looks like the server
+ * dropping the values.
+ */
+const parseInput = (input: string | Record<string, unknown>): Record<string, unknown> => {
   if (!input) {
     return {};
+  }
+
+  if (typeof input === 'object') {
+    return input;
   }
 
   try {

@@ -144,6 +144,16 @@ export const targets: Target[] = [
     gate: { open: () => !!process.env.MYSQL_URL, hint: 'point MYSQL_URL at a reachable database' }
   },
   {
+    id: 'server-actions',
+    workspace: '@plitzi/example-server-actions',
+    /** One command, two listeners: the example serves the PUBLISHED space here and its draft on the next port up,
+     *  which is the only way to see the versioning rule rather than read about it. The spec derives the second
+     *  origin from this one — Playwright only ever waits on the first. */
+    command: 'PORT=5010 yarn workspace @plitzi/example-server-actions start',
+    origin: 'http://127.0.0.1:5010',
+    what: 'A declarative flow the server runs, called from a page'
+  },
+  {
     id: 'builder',
     workspace: '@plitzi/plitzi-builder',
     /** Plain HTTP on a port of its own, so the same command works on a laptop and on a CI runner that has no

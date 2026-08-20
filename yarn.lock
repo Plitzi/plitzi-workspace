@@ -3470,6 +3470,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@plitzi/example-server-actions@workspace:examples/05-with-server-actions/01-actions":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/example-server-actions@workspace:examples/05-with-server-actions/01-actions"
+  dependencies:
+    "@plitzi/example-space": "workspace:*"
+    "@plitzi/sdk-server": "workspace:*"
+    "@types/node": "npm:^26.2.0"
+    react: "npm:^19.2.8"
+    react-dom: "npm:^19.2.8"
+    tsx: "npm:^4.23.12"
+    typescript: "npm:^6.0.3"
+  languageName: unknown
+  linkType: soft
+
 "@plitzi/example-space@workspace:*, @plitzi/example-space@workspace:examples/shared-space":
   version: 0.0.0-use.local
   resolution: "@plitzi/example-space@workspace:examples/shared-space"
