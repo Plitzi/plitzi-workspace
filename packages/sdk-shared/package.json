@@ -14,6 +14,18 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
     },
+    "./actions": {
+      "types": "./dist/actions/index.d.ts",
+      "import": "./dist/actions/index.mjs"
+    },
+    "./actions/index": {
+      "types": "./dist/actions/index.d.ts",
+      "import": "./dist/actions/index.mjs"
+    },
+    "./actions/validateDocument": {
+      "types": "./dist/actions/validateDocument.d.ts",
+      "import": "./dist/actions/validateDocument.mjs"
+    },
     "./auth": {
       "types": "./dist/auth/index.d.ts",
       "import": "./dist/auth/index.mjs"
@@ -553,6 +565,22 @@
       "types": "./dist/network/graphql/builder/Mutations/Space/SpaceUpdateSettingsMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/SpaceUpdateSettingsMutation.mjs"
     },
+    "./network/graphql/builder/Mutations/Space/actions/SpaceAddActionMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/actions/SpaceAddActionMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/actions/SpaceAddActionMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/actions/SpaceRemoveActionMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/actions/SpaceRemoveActionMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/actions/SpaceRemoveActionMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/actions/SpaceRunActionMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/actions/SpaceRunActionMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/actions/SpaceRunActionMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/actions/SpaceUpdateActionMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/actions/SpaceUpdateActionMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/actions/SpaceUpdateActionMutation.mjs"
+    },
     "./network/graphql/builder/Mutations/Space/cdns/SpaceAddCdnMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/cdns/SpaceAddCdnMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/cdns/SpaceAddCdnMutation.mjs"
@@ -716,6 +744,14 @@
     "./network/graphql/builder/Queries/Segment/SegmentsQuery": {
       "types": "./dist/network/graphql/builder/Queries/Segment/SegmentsQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/Segment/SegmentsQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/Space/SpaceActionTasksQuery": {
+      "types": "./dist/network/graphql/builder/Queries/Space/SpaceActionTasksQuery.d.ts",
+      "import": "./dist/network/graphql/builder/Queries/Space/SpaceActionTasksQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/Space/SpaceActionsQuery": {
+      "types": "./dist/network/graphql/builder/Queries/Space/SpaceActionsQuery.d.ts",
+      "import": "./dist/network/graphql/builder/Queries/Space/SpaceActionsQuery.mjs"
     },
     "./network/graphql/builder/Queries/Space/SpaceCdnsQuery": {
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceCdnsQuery.d.ts",

@@ -1,3 +1,5 @@
+import { renderTaskParams } from './helpers';
+
 import type { ActionTask } from '../types';
 
 const BODYLESS = ['GET', 'HEAD'];
@@ -64,20 +66,27 @@ type HttpRequestParams = {
   method: string;
   headers: string;
   body: string;
+  /** Identifier of the credential whose values this call may interpolate as `{{credential.<key>}}`. */
+  credential: string;
 };
 
 /**
  * An outbound HTTP call with credentials resolved server-side.
  *
  * The successor to the `webHook` interaction utility, which runs this in the BROWSER with a token that — when it
- * is typed rather than bound — was persisted in the schema and shipped to every visitor (RFC 0008 §4.3.1). Here
- * the token comes from `{{credential.*}}`, which the runner resolves only for identifiers the document declared.
+ * is typed rather than bound — was persisted in the schema and shipped to every visitor (RFC 0008 §4.3.1).
+ *
+ * Here the token never leaves the server, and it never leaves this STEP either: `credential` names it, and its
+ * values are in scope only while these params render. Nothing else in the flow can see it.
  */
 const request: ActionTask<HttpRequestParams> = {
   namespace: 'http',
   action: 'request',
   title: 'HTTP Request',
+  // The params carry `{{credential.*}}` tokens that only this task can resolve, so it renders them itself.
+  rawParams: true,
   params: {
+    credential: { type: 'text', canBind: true, defaultValue: '', label: 'Credential' },
     url: { type: 'text', canBind: true, defaultValue: '', label: 'URL' },
     method: {
       type: 'select',
@@ -100,7 +109,9 @@ const request: ActionTask<HttpRequestParams> = {
       when: params => params.method !== 'GET'
     }
   },
-  run: async (params, ctx) => {
+  run: async (raw, ctx) => {
+    // Rendered here, not by the runner: `{{credential.*}}` only exists inside this step's own scope.
+    const params = await renderTaskParams(raw, ctx, raw.credential || undefined);
     const method = (params.method || 'GET').toUpperCase();
     let url: URL;
     try {

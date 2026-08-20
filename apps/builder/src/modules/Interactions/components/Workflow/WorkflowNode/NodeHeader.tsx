@@ -10,14 +10,15 @@ import { WARNING_ICON, getNodeWarnings, isTargetUnreferenced, worstLevel } from 
 import WorkflowContext from '../WorkflowContext';
 
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
-import type { ElementInteraction, InteractionCallback } from '@plitzi/sdk-shared';
+import type { ElementInteraction, InteractionCallback, InteractionCallbackType } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
 
 export type NodeHeaderProps = {
   className?: string;
   id?: string;
   title?: string;
-  type?: 'trigger' | 'callback' | 'utility' | 'globalCallback';
+  // The shared union, not a hand-narrowed copy: server-action steps are `task` nodes and draw the same way.
+  type?: InteractionCallbackType;
   action?: string;
   elementId?: string;
   canDelete?: boolean;

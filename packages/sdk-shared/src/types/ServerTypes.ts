@@ -441,6 +441,18 @@ export type SSRActionConfig = {
   limits?: ActionLimits;
   /** Concurrency ceilings, counted per space. */
   concurrency?: { perSpace?: number; perProcess?: number };
+  /**
+   * Backs the `kv` tasks — shaped as `ActionKvStore` in `@plitzi/sdk-server/actions`.
+   *
+   * Omitted leaves an in-process store, which counts only its own replica. That is fine for one; for a cluster it
+   * is a rate limit that multiplies by the number of them, so a multi-replica deployment supplies a shared one.
+   */
+  kv?: {
+    get: (key: string) => Promise<unknown>;
+    set: (key: string, value: unknown, ttlSeconds?: number) => Promise<void>;
+    delete: (key: string) => Promise<void>;
+    increment: (key: string, amount: number, ttlSeconds?: number) => Promise<number>;
+  };
 };
 
 /**

@@ -39,13 +39,18 @@ export { ActionRunError } from './runtime/errors';
 export { precheckRun } from './runtime/precheck';
 export { DEFAULT_LIMITS, resolveLimits } from './runtime/limits';
 export { createRunGuards, deriveRunKey } from './runtime/guards';
-export { taskName } from './tasks/registry';
+export { createMemoryKv } from './runtime/memoryKv';
+export { createTaskRegistry, taskName } from './tasks/registry';
+export { describeCatalog, describeTask } from './taskCatalog';
 export { handleActionCall } from './transport/callHandler';
+export { handleActionCatalog } from './transport/catalogHandler';
 export { handleActionCancel } from './transport/cancelHandler';
 
 export type { ActiveRun, RunGuards } from './runtime/guards';
+export type { ActionTaskDescriptor } from './taskCatalog';
 export type {
   ActionCredential,
+  ActionKvStore,
   ActionLookups,
   ActionRunRequest,
   ActionRunResult,
@@ -53,5 +58,6 @@ export type {
   ActionTask,
   ActionTaskContext,
   ActionTaskRegistry,
-  RegisteredTask
+  RegisteredTask,
+  ResolvedConnector
 } from './types';

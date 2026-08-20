@@ -22,6 +22,10 @@ import SegmentStyleUpdateSelectorVariableMutation from './Segment/style/selector
 import SegmentStyleAddVariableMutation from './Segment/style/variables/SegmentStyleAddVariableMutation';
 import SegmentStyleRemoveVariableMutation from './Segment/style/variables/SegmentStyleRemoveVariableMutation';
 import SegmentStyleUpdateVariableMutation from './Segment/style/variables/SegmentStyleUpdateVariableMutation';
+import SpaceAddActionMutation from './Space/actions/SpaceAddActionMutation';
+import SpaceRemoveActionMutation from './Space/actions/SpaceRemoveActionMutation';
+import SpaceRunActionMutation from './Space/actions/SpaceRunActionMutation';
+import SpaceUpdateActionMutation from './Space/actions/SpaceUpdateActionMutation';
 import SpaceAddCdnMutation from './Space/cdns/SpaceAddCdnMutation';
 import SpaceRemoveCdnMutation from './Space/cdns/SpaceRemoveCdnMutation';
 import SpaceSetCdnCredentialMutation from './Space/cdns/SpaceSetCdnCredentialMutation';
@@ -76,6 +80,10 @@ import StyleUpdateVariableMutation from './Style/variables/StyleUpdateVariableMu
 import type { TSegmentAddMutation } from './Segment/SegmentAddMutation';
 import type { TSegmentPublishMutation } from './Segment/SegmentPublishMutation';
 import type { TSegmentUpdateMutation } from './Segment/SegmentUpdateMutation';
+import type { TSpaceAddActionMutation } from './Space/actions/SpaceAddActionMutation';
+import type { TSpaceRemoveActionMutation } from './Space/actions/SpaceRemoveActionMutation';
+import type { TSpaceRunActionMutation } from './Space/actions/SpaceRunActionMutation';
+import type { TSpaceUpdateActionMutation } from './Space/actions/SpaceUpdateActionMutation';
 import type { TSpaceAddCdnMutation } from './Space/cdns/SpaceAddCdnMutation';
 import type { TSpaceRemoveCdnMutation } from './Space/cdns/SpaceRemoveCdnMutation';
 import type { TSpaceSetCdnCredentialMutation } from './Space/cdns/SpaceSetCdnCredentialMutation';
@@ -128,6 +136,10 @@ export type BuilderMutationsMap = {
   SpaceUpdateCdn: TSpaceUpdateCdnMutation;
   SpaceSetCdnCredential: TSpaceSetCdnCredentialMutation;
   SpaceRemoveCdn: TSpaceRemoveCdnMutation;
+  SpaceAddAction: TSpaceAddActionMutation;
+  SpaceUpdateAction: TSpaceUpdateActionMutation;
+  SpaceRemoveAction: TSpaceRemoveActionMutation;
+  SpaceRunAction: TSpaceRunActionMutation;
   SpaceAddConnector: TSpaceAddConnectorMutation;
   SpaceUpdateConnector: TSpaceUpdateConnectorMutation;
   SpaceRemoveConnector: TSpaceRemoveConnectorMutation;
@@ -207,6 +219,10 @@ const BuilderMutations = {
   SpaceUpdateCdn: SpaceUpdateCdnMutation,
   SpaceSetCdnCredential: SpaceSetCdnCredentialMutation,
   SpaceRemoveCdn: SpaceRemoveCdnMutation,
+  SpaceAddAction: SpaceAddActionMutation,
+  SpaceUpdateAction: SpaceUpdateActionMutation,
+  SpaceRemoveAction: SpaceRemoveActionMutation,
+  SpaceRunAction: SpaceRunActionMutation,
   SpaceAddConnector: SpaceAddConnectorMutation,
   SpaceUpdateConnector: SpaceUpdateConnectorMutation,
   SpaceRemoveConnector: SpaceRemoveConnectorMutation,

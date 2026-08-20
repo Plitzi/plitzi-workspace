@@ -1,3 +1,4 @@
+import type { ActionDocument } from './ActionTypes';
 import type { Environment } from './CommonTypes';
 import type { ConnectorManifestDraft } from './ConnectorTypes';
 
@@ -15,6 +16,23 @@ export type SpaceConnector = {
   identifier: string;
   name: string;
   manifest: ConnectorManifestDraft;
+  createdAt: number;
+  updatedAt: number;
+};
+
+/**
+ * A server action as the builder sees it.
+ *
+ * The document is server-side state — it names credentials, connectors and steps — so this shape exists for the
+ * editor and the API that maintains it, never for a published page. What reaches a visitor is the action's
+ * identifier and its input/output fields, derived server-side.
+ */
+export type SpaceAction = {
+  id: number;
+  identifier: string;
+  name: string;
+  enabled: boolean;
+  document: ActionDocument;
   createdAt: number;
   updatedAt: number;
 };

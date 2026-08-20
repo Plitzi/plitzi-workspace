@@ -14,6 +14,31 @@ import type {
 export type ActionCredential = Record<string, string>;
 
 /**
+ * A connector with its secret already resolved.
+ *
+ * Handed over as one thing because the engine needs both, and a task holding only the manifest would have to go
+ * looking for the credential itself — which is exactly the lookup that must not be open to a task. Authorizing
+ * the connector authorizes the credential it names: that is what the `/_action` write endpoint has always done.
+ */
+export type ResolvedConnector = {
+  manifest: ConnectorManifest;
+  credential?: ActionCredential;
+};
+
+/**
+ * A namespaced key/value store for the `kv` tasks.
+ *
+ * The seam a deployment fills with Redis. The in-process default is honest for one replica, and making it a seam
+ * is what keeps rate limiting and idempotency across replicas a deployment decision rather than a silent no-op.
+ */
+export type ActionKvStore = {
+  get: (key: string) => Promise<unknown>;
+  set: (key: string, value: unknown, ttlSeconds?: number) => Promise<void>;
+  delete: (key: string) => Promise<void>;
+  increment: (key: string, amount: number, ttlSeconds?: number) => Promise<number>;
+};
+
+/**
  * How the server reaches a space's actions. Structurally identical in spirit to `ConnectorLookups`: the module
  * never learns where a deployment stores anything.
  */
@@ -46,8 +71,10 @@ export type ActionTaskContext = {
    */
   scope: Readonly<Record<string, unknown>>;
   credential: (identifier: string) => Promise<ActionCredential | undefined>;
-  connector: (connectorId: string) => Promise<ConnectorManifest | undefined>;
+  connector: (connectorId: string) => Promise<ResolvedConnector | undefined>;
   fetch: typeof fetch;
+  /** Key/value storage, namespaced to this space by the runner — a key one space writes is a key only it reads. */
+  kv: ActionKvStore;
   /** Pushes a `data` frame to a streaming caller. A no-op when nobody negotiated a stream. */
   emit: (chunk: unknown) => void;
 };
@@ -91,6 +118,8 @@ export type ActionsConfig = {
   limits?: ActionLimits;
   /** How many runs may be in flight at once. Counted per space and for the process as a whole. */
   concurrency?: { perSpace?: number; perProcess?: number };
+  /** Backs the `kv` tasks. Omitted → an in-process store, which is per-replica by definition. */
+  kv?: ActionKvStore;
   fetchImpl?: typeof fetch;
 };
 

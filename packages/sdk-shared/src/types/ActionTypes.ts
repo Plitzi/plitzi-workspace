@@ -116,6 +116,36 @@ export type ActionProjection = {
 };
 
 /**
+ * One server task, as the builder's flow editor receives it.
+ *
+ * The catalog is served by the deployment rather than hardcoded, which is what lets a self-hoster's own task show
+ * up in their editor. `params` is the same `InteractionCallbackParam` map an interaction callback declares — but
+ * anything function-valued in it (a `when`, options computed from another param) does not survive the wire, so a
+ * task meant to be authored visually declares static params.
+ */
+export type ActionTaskDescriptor = {
+  name: string;
+  namespace: string;
+  action: string;
+  title: string;
+  description?: string;
+  params: Record<string, unknown>;
+};
+
+/**
+ * One run as an authoring caller receives it — the builder's test run.
+ *
+ * `trace` is the same `InteractionNode[]` the dev-tools panel renders, redacted of credential values. A visitor
+ * never sees it; an author looking at their own flow should see nothing less than the steps that ran.
+ */
+export type ActionRunReport = {
+  runId: string;
+  status: ActionRunStatus;
+  output: Record<string, unknown>;
+  trace: Record<string, unknown>[];
+};
+
+/**
  * Whether the CLIENT flow waits. The server side is synchronous in every mode: `detached` means the step does not
  * await its own request, not that the run outlives it.
  */

@@ -8,6 +8,7 @@ import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 
 import AppContext from '../AppContext';
 import AppHeader from '../components/AppHeader';
+import ContainerActions from './containers/ContainerActions';
 import ContainerConnectors from './containers/ContainerConnectors';
 import ContainerCredentials from './containers/ContainerCredentials';
 import ContainerDefault from './containers/ContainerDefault';
@@ -86,9 +87,10 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
               />
             )}
             <div className="flex grow basis-0 flex-col overflow-hidden">
-              {!['connectors', 'credentials', 'marketplace', 'integrations', 'settings', 'sitemap'].includes(
+              {!['actions', 'connectors', 'credentials', 'marketplace', 'integrations', 'settings', 'sitemap'].includes(
                 popupsActiveLeft[0]
               ) && <ContainerDefault externalStyle={externalStyle} previewMode={previewMode} />}
+              {popupsActiveLeft[0] === 'actions' && <ContainerActions />}
               {popupsActiveLeft[0] === 'connectors' && <ContainerConnectors />}
               {popupsActiveLeft[0] === 'credentials' && <ContainerCredentials />}
               {popupsActiveLeft[0] === 'marketplace' && <ContainerMarketplace />}

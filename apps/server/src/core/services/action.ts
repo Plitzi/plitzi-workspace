@@ -1,4 +1,4 @@
-import { handleActionCall, handleActionCancel } from '../../modules/actions';
+import { handleActionCall, handleActionCancel, handleActionCatalog } from '../../modules/actions';
 import { handleAction } from '../../modules/actions/connectorWrite';
 import { clientIp, readRawBody } from '../requestParser';
 
@@ -52,6 +52,22 @@ export const actionStage: Stage<SSRContext> = async ctx => {
   const hasConnectors = !!config.connectors;
   if (!hasConnectors && !actions) {
     return false;
+  }
+
+  // Behind the auth middleware like the rest of this stage, so the catalog is never anonymous: it names what this
+  // deployment can do server-side, which is not a visitor's business.
+  if (actions && req.method === 'GET' && req.path === `${actionPath}/catalog`) {
+    ctx.operation = 'action:catalog';
+    if (!req.ctx.user) {
+      ctx.res.setStatus(401);
+      ctx.res.send('');
+
+      return true;
+    }
+
+    handleActionCatalog({ res: ctx.res, module: actions });
+
+    return true;
   }
 
   if (actions && req.method === 'DELETE' && req.path.startsWith(`${actionPath}/run/`)) {

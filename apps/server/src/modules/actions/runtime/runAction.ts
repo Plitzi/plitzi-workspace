@@ -3,10 +3,12 @@ import { hasValidToken, processTwig } from '@plitzi/sdk-shared/helpers/twigWrapp
 
 import { ActionRunError } from './errors';
 import { resolveLimits } from './limits';
+import { createMemoryKv } from './memoryKv';
 import { precheckRun } from './precheck';
 import { buildRedactor, projectOutput, projectUser, resolveCredentials } from './scope';
 
 import type {
+  ActionKvStore,
   ActionRunRequest,
   ActionRunResult,
   ActionsConfig,
@@ -98,6 +100,24 @@ const withDefaults = (task: RegisteredTask, params: Record<string, unknown>): Re
     { ...params }
   );
 
+/**
+ * Prefixes every key with the space that wrote it.
+ *
+ * A shared store with unprefixed keys is one space reading — or overwriting — another's counters, which is the
+ * cross-tenant leak this whole design exists to avoid. Done at the runner rather than in each task so a
+ * deployment's own tasks inherit it too.
+ */
+const namespaceKv = (store: ActionKvStore, spaceId: number): ActionKvStore => {
+  const scoped = (key: string) => `action:${spaceId}:${key}`;
+
+  return {
+    get: key => store.get(scoped(key)),
+    set: (key, value, ttlSeconds) => store.set(scoped(key), value, ttlSeconds),
+    delete: key => store.delete(scoped(key)),
+    increment: (key, amount, ttlSeconds) => store.increment(scoped(key), amount, ttlSeconds)
+  };
+};
+
 /** The entry node is the flow's single trigger, which is what the builder's Workflow editor already draws from. */
 const findTriggerNode = (nodes: Record<string, ElementInteraction>): ElementInteraction | undefined =>
   Object.values(nodes).find(node => node.type === 'trigger');
@@ -147,6 +167,7 @@ export const createActionRunner = (
   registry: ActionTaskRegistry,
   baseFetch: typeof fetch = fetch
 ): ActionRunner => {
+  const kv = config.kv ?? createMemoryKv();
   const runAction = async (request: ActionRunRequest): Promise<ActionRunResult> => {
     const { entry, runId } = request;
     const { document } = entry;
@@ -170,6 +191,7 @@ export const createActionRunner = (
     const abortOuter = () => controller.abort();
     request.signal?.addEventListener('abort', abortOuter);
 
+    const scopedKv = namespaceKv(kv, request.spaceId);
     const runFetch = createRunFetch(baseFetch, controller.signal, limits.maxRequests, [
       ...(request.lineage ?? []),
       entry.id
@@ -191,22 +213,46 @@ export const createActionRunner = (
         // here a second time.
         return Promise.resolve(credentials[identifier]);
       },
-      connector: connectorId => {
+      connector: async connectorId => {
         if (!document.connectors?.includes(connectorId)) {
           throw new ActionRunError('forbidden', `This action does not declare connector "${connectorId}"`);
         }
 
-        return Promise.resolve(config.lookups.getConnector?.(request.spaceId, connectorId));
+        const manifest = await config.lookups.getConnector?.(request.spaceId, connectorId);
+        if (!manifest) {
+          return undefined;
+        }
+
+        // The connector's own credential, not one the document listed: authorizing the connector is what
+        // authorizes the secret it names, exactly as the element-addressed write endpoint has always done.
+        const credential = manifest.credential
+          ? await config.lookups.getCredential?.(request.spaceId, manifest.credential)
+          : undefined;
+
+        return { manifest, credential };
       },
       fetch: runFetch,
+      kv: scopedKv,
       emit: chunk => request.emit?.(redact(chunk))
     });
 
     const trace: InteractionNode[] = [];
+    /**
+     * What every step can see.
+     *
+     * The run itself carries only the basics — which space, which environment, who asked, what came in — and
+     * everything else a flow can reach is whatever a TASK chose to return into it. Credentials are deliberately
+     * NOT here: an ambient `{{credential.*}}` would be interpolable by any node, including `flow.return`, which
+     * is a secret handed to the browser through a step nobody would think to audit. A task that needs one asks
+     * for it by identifier and resolves it inside its own execution.
+     */
     const scope: Record<string, unknown> = {
       input: values,
       user: projectUser(request.user),
-      credential: credentials
+      spaceId: request.spaceId,
+      environment: request.environment,
+      trigger: request.trigger,
+      runId
     };
 
     let status: ActionRunResult['status'] = 'completed';

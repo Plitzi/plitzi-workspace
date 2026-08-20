@@ -287,10 +287,28 @@ Two conventions the implementation settled, worth stating because a reader of th
   called. Without it a document written before a param existed hands the task `undefined` for something its
   signature calls a string — and tasks fill up with defensive conversions that hide the gap.
 
-The scope handed to templates is closed and named — `{{input.*}}`, `{{node.<id>.*}}`, `{{user.*}}`,
-`{{credential.<id>.<key>}}`, `{{env.*}}` for a deployment-whitelisted set — and `credential` resolves only
-identifiers listed in `document.credentials`. A flow cannot reach a secret it did not declare, and the
-declaration is reviewable in the builder.
+**What a flow can see is what its tasks hand back.** The run itself carries only the basics — `{{input.*}}`,
+`{{user.*}}`, `{{spaceId}}`, `{{environment}}`, `{{trigger}}`, `{{runId}}` — plus every previous step's result
+under its own node id. Everything else a flow can reach is something a task chose to return into that scope.
+
+Credentials are deliberately **not** in it. An ambient `{{credential.*}}` is interpolable by every node,
+`flow.return` included — which is a secret handed to the browser through a step nobody would think to audit.
+Instead a task that needs one **names it** (`http.request` takes a `credential` parameter) and resolves it
+inside its own execution, with the secret in scope only while that step's own parameters render. The
+document's `credentials` list still gates which identifiers a task may ask for at all, so the two checks
+compose: the document says which secrets exist for this action, and the step says which one it is using.
+
+This is the rule to hold as the catalog grows — `apiCall` and everything after it takes the same shape, and
+`renderTaskParams` exists so each of them does not answer the question differently.
+
+And if a case ever genuinely needs credential material *in* a flow, the answer is **a task built for that**,
+carrying whatever guarantees that exposure requires, rather than relaxing the scope for every step at once. A
+capability that one task grants deliberately is reviewable; an ambient one is not.
+
+In the builder, credentials and connectors are **picked, never typed** — the same
+`SpaceCredentialSelectorModal` the connector panel uses. An identifier written by hand is a run that fails at
+request time with "credential not available", and nothing distinguishes a typo from a credential that was never
+created.
 
 ### 4.4 Tasks
 
@@ -754,7 +772,7 @@ Plitzi's own deployment is a consumer of every one of these. No private path.
 | # | Delivers | Unblocks |
 |---|---|---|
 | **0** ✅ | Types in `sdk-shared`; runner + task registry + `flow`/`transform`/`http`/`auth` tasks; `call` trigger on `/_action`; `runServerAction` client step with `await`/`detached`; `SpaceAction` + lookups; metering; per-request `AbortController` in the dispatcher; single-flight `runKey`, lineage and cancellation | An action authored by hand and called from a button |
-| **1** | Builder module, Workflow editor with the server catalog, catalog endpoint, test-run panel; MCP ops + validator; `onFlowEnd`/`onFlowError` triggers (needs the element trigger catalog); `connector.*` and `kv.*` tasks | Anyone can author one |
+| **1** | ✅ Builder module reusing the Workflow editor, catalog served over GraphQL, `validateActionDocument`, GraphQL CRUD, `connector.*` and `kv.*` tasks. Left: test-run panel, MCP ops, `onFlowEnd`/`onFlowError` triggers (needs the element trigger catalog) | Anyone can author one |
 | **2** | `webhook` trigger, HMAC verification, rate limiting; deployment tasks (`email`, `ai`, `storage`) | Stripe/CMS inbound, notifications |
 | **3** | SSE negotiation, `stream.emit`, `ai.stream`, heartbeat + stream caps, `DELETE /_action/run/:runId`, `onFlowProgress`, `cancelFlow` step | Long AI actions that feel alive, and cancellable |
 | **4** | `render` trigger + RSC projection | Reads a manifest cannot express |

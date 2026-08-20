@@ -62,7 +62,8 @@ export const createPageServer = (
         lookups: config.action.lookups as ActionsConfig['lookups'],
         tasks: config.action.tasks as ActionsConfig['tasks'],
         limits: config.action.limits,
-        concurrency: config.action.concurrency
+        concurrency: config.action.concurrency,
+        kv: config.action.kv
       })
     : undefined;
 

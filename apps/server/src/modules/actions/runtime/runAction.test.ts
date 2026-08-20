@@ -165,7 +165,7 @@ describe('runAction', () => {
     await expect(runAction(request(entry))).rejects.toMatchObject({ reason: 'failed' });
   });
 
-  it('redacts resolved credential values out of the trace', async () => {
+  it('does not let a step read a credential out of the flow scope', async () => {
     const secret = 'sk-live-01234567890';
     const echo: ActionTask<{ value: string }> = {
       namespace: 'test',
@@ -184,6 +184,36 @@ describe('runAction', () => {
     const { runAction } = createActionsModule({
       lookups: { ...lookups, getCredential: () => Promise.resolve({ apiKey: secret }) },
       tasks: [echo]
+    });
+
+    const result = await runAction(request(entry));
+
+    // The token resolves to nothing because credentials are not ambient: a task asks for one by name and gets it
+    // inside its OWN execution. Otherwise any step — `flow.return` included — could hand a secret to the browser.
+    expect(JSON.stringify(result.trace)).not.toContain(secret);
+  });
+
+  it('redacts a secret a task returned, wherever it ended up', async () => {
+    const secret = 'sk-live-01234567890';
+    const leaky: ActionTask<Record<string, never>> = {
+      namespace: 'test',
+      action: 'leak',
+      title: 'Leak',
+      params: {},
+      // A task legitimately holding a credential can still put it somewhere it should not be — in a header it
+      // built, or in an error a provider echoed back. Redaction is keyed on the VALUE for exactly that reason.
+      run: async (_params, ctx) => ({ echoed: (await ctx.credential('stripe'))?.apiKey })
+    };
+    const entry = buildEntry({
+      credentials: ['stripe'],
+      nodes: {
+        start: node('start', { type: 'trigger', action: 'call', afterNode: 'call' }),
+        call: node('call', { action: 'test.leak' })
+      }
+    });
+    const { runAction } = createActionsModule({
+      lookups: { ...lookups, getCredential: () => Promise.resolve({ apiKey: secret }) },
+      tasks: [leaky]
     });
 
     const result = await runAction(request(entry));
