@@ -14,9 +14,6 @@ const base = (overrides: Partial<UpsertAction> = {}): UpsertAction => ({
   type: 'upsertAction',
   ref: 'send-quote',
   name: 'Send quote',
-  access: { mode: 'session' },
-  triggers: [{ type: 'call' }],
-  input: { amount: { type: 'number', required: true } },
   output: { total: { type: 'number' } },
   nodes: [
     {
@@ -24,7 +21,8 @@ const base = (overrides: Partial<UpsertAction> = {}): UpsertAction => ({
       title: 'Called',
       type: 'trigger',
       action: 'call',
-      params: {},
+      // Everything about this way in is on the step: who may use it, and what they may send.
+      params: { access: { mode: 'session' }, input: { amount: { type: 'number', required: true } } },
       afterNode: 'ret',
       beforeNode: '',
       enabled: true
@@ -131,7 +129,10 @@ describe('action ops', () => {
     expect(result.updated).toBe(1);
     expect(Object.keys(space.actions[0].document.nodes)).toEqual(['start', 'ret']);
     expect(space.actions[0].document.nodes.ret.params).toEqual({ values: '{"total": 0}' });
-    expect(space.actions[0].document.input).toEqual({ amount: { type: 'number', required: true } });
+    expect(space.actions[0].document.nodes.start.params).toEqual({
+      access: { mode: 'session' },
+      input: { amount: { type: 'number', required: true } }
+    });
   });
 
   it('validates the MERGED document, not the patch alone', () => {
@@ -156,7 +157,7 @@ describe('action ops', () => {
       ]
     });
 
-    expect(result.errors?.[0].message).toContain('no trigger step');
+    expect(result.errors?.[0].message).toContain('no way in');
     expect(space.actions[0].document.nodes.start).toBeDefined();
   });
 

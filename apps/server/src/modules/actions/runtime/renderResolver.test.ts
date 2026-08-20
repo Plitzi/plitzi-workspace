@@ -25,11 +25,13 @@ const entry: ActionEntry = {
   document: {
     name: 'Post page',
     enabled: true,
-    access: { mode: 'public' },
-    triggers: [{ type: 'render' }],
-    input: { slug: { type: 'text', required: true } },
     nodes: {
-      start: node('start', { type: 'trigger', action: 'render', afterNode: 'load' }),
+      start: node('start', {
+        type: 'trigger',
+        action: 'render',
+        params: { access: { mode: 'public' }, input: { slug: { type: 'text', required: true } } },
+        afterNode: 'load'
+      }),
       load: node('load', {
         action: 'transform.json',
         afterNode: 'out',
@@ -127,7 +129,14 @@ describe('createActionResolver', () => {
   });
 
   it('refuses an action that does not declare the render trigger', async () => {
-    const callOnly: ActionEntry = { ...entry, document: { ...entry.document, triggers: [{ type: 'call' }] } };
+    // The trigger STEP is the declaration: swap its kind and the action has no way in from a render.
+    const callOnly: ActionEntry = {
+      ...entry,
+      document: {
+        ...entry.document,
+        nodes: { ...entry.document.nodes, start: { ...entry.document.nodes.start, action: 'call' } }
+      }
+    };
 
     await expect(resolve({ action: 'post-page' }, callOnly)).rejects.toThrow(/refused this render/);
   });

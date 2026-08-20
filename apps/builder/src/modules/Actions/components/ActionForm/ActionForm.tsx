@@ -7,17 +7,16 @@ import { useCallback, useMemo, useState } from 'react';
 import { validateActionDocument } from '@plitzi/sdk-shared/actions';
 
 import Workflow from '../../../Interactions/components/Workflow';
-import ActionFields from '../ActionFields';
-import ActionResources from '../ActionResources';
 import ActionTestRun from '../ActionTestRun';
+import ActionTriggers from '../ActionTriggers';
 
 import type {
-  ActionAccess,
   ActionRunReport,
   ActionDocument,
   ActionField,
   ActionTaskDescriptor,
-  ActionTrigger,
+  ActionTriggerParams,
+  ActionTriggerType,
   ElementInteraction,
   InteractionCallback,
   SpaceAction
@@ -31,16 +30,7 @@ export type ActionFormProps = {
   onCancel: () => void;
 };
 
-const TRIGGER_TYPES: ActionTrigger['type'][] = ['call', 'webhook', 'schedule', 'render'];
-
-const emptyDocument = (): ActionDocument => ({
-  name: '',
-  enabled: true,
-  access: { mode: 'session' },
-  triggers: [{ type: 'call' }],
-  input: {},
-  nodes: {}
-});
+const emptyDocument = (): ActionDocument => ({ name: '', enabled: true, nodes: {} });
 
 /**
  * The catalog, in the shape the flow editor already draws.
@@ -49,9 +39,9 @@ const emptyDocument = (): ActionDocument => ({
  * client callback declare their parameters the same way, so the editor an author already knows is the editor they
  * get here — with a different set of steps in it.
  */
-const asNodeDefinitions = (tasks: ActionTaskDescriptor[], triggers: ActionTrigger['type'][]): InteractionCallback[] => [
-  // The entry step picks from the triggers this action declares above, so the flow can only start the ways the
-  // document says it can.
+const asNodeDefinitions = (tasks: ActionTaskDescriptor[], triggers: ActionTriggerType[]): InteractionCallback[] => [
+  // The entry steps are the ones this action already declares above, so the flow editor offers exactly the ways
+  // in that exist rather than inviting a second one nobody configured.
   ...triggers.map(type => ({
     action: type,
     title: TRIGGER_TITLES[type],
@@ -111,66 +101,20 @@ const ActionForm = ({ action, tasks, onRun, onSubmit, onCancel }: ActionFormProp
   const [document, setDocument] = useState<ActionDocument>(() => action?.document ?? emptyDocument());
   const [isSaving, setIsSaving] = useState(false);
 
-  const nodeDefinitions = useMemo(
+  const triggerKinds = useMemo(
     () =>
-      asNodeDefinitions(
-        tasks,
-        document.triggers.map(trigger => trigger.type)
-      ),
-    [tasks, document.triggers]
+      Object.values(document.nodes)
+        .filter(node => node.type === 'trigger')
+        .map(node => node.action as ActionTriggerType),
+    [document.nodes]
   );
+  const nodeDefinitions = useMemo(() => asNodeDefinitions(tasks, triggerKinds), [tasks, triggerKinds]);
   const report = useMemo(() => validateActionDocument({ ...document, name: name || document.name }), [document, name]);
 
   const patch = useCallback(
     (changes: Partial<ActionDocument>) => setDocument(current => ({ ...current, ...changes })),
     []
   );
-
-  const handleChangeAccess = useCallback(
-    (value: string) => {
-      const mode = value as ActionAccess['mode'];
-      patch({ access: mode === 'role' ? { mode, permissions: [] } : { mode } });
-    },
-    [patch]
-  );
-
-  const handleChangePermissions = useCallback(
-    (value: string) =>
-      patch({
-        access: {
-          mode: 'role',
-          permissions: value
-            .split(',')
-            .map(item => item.trim())
-            .filter(Boolean)
-        }
-      }),
-    [patch]
-  );
-
-  const handleToggleTrigger = useCallback(
-    (type: ActionTrigger['type']) => () => {
-      const current = document.triggers;
-      const has = current.some(trigger => trigger.type === type);
-      const next = has
-        ? current.filter(trigger => trigger.type !== type)
-        : [...current, (type === 'schedule' ? { type, cron: '0 * * * *' } : { type }) as ActionTrigger];
-      patch({ triggers: next });
-    },
-    [document.triggers, patch]
-  );
-
-  const handleChangeCron = useCallback(
-    (value: string) =>
-      patch({
-        triggers: document.triggers.map(trigger =>
-          trigger.type === 'schedule' ? { ...trigger, cron: value } : trigger
-        )
-      }),
-    [document.triggers, patch]
-  );
-
-  const handleChangeInput = useCallback((fields: Record<string, ActionField>) => patch({ input: fields }), [patch]);
 
   // The derived output travels with the flow, so the two can never disagree: one edit, one write.
   const handleChangeNodes = useCallback(
@@ -192,8 +136,9 @@ const ActionForm = ({ action, tasks, onRun, onSubmit, onCancel }: ActionFormProp
     }
   }, [name, document, enabled, onSubmit]);
 
-  const schedule = document.triggers.find(trigger => trigger.type === 'schedule');
-  const permissions = document.access.mode === 'role' ? document.access.permissions.join(', ') : '';
+  // The `call` trigger's own contract: what a test run asks for is what a page would send.
+  const callTrigger = Object.values(document.nodes).find(node => node.type === 'trigger' && node.action === 'call');
+  const callInput = ((callTrigger?.params ?? {}) as ActionTriggerParams).input ?? {};
 
   return (
     <div className="mx-auto flex w-full max-w-4xl grow basis-0 flex-col gap-4 overflow-auto p-4">
@@ -205,58 +150,7 @@ const ActionForm = ({ action, tasks, onRun, onSubmit, onCancel }: ActionFormProp
         </Select>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium">Who may run it</span>
-        <Select value={document.access.mode} size="xs" onChange={handleChangeAccess}>
-          <option value="session">Signed-in visitors</option>
-          <option value="role">Visitors with permissions</option>
-          <option value="public">Anyone</option>
-        </Select>
-        {document.access.mode === 'role' && (
-          <Input
-            value={permissions}
-            label="Permissions"
-            size="xs"
-            placeholder="spaceManage, orders.write"
-            onChange={handleChangePermissions}
-          />
-        )}
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium">What starts it</span>
-        <div className="flex flex-wrap gap-2">
-          {TRIGGER_TYPES.map(type => {
-            const active = document.triggers.some(trigger => trigger.type === type);
-
-            return (
-              <Button
-                key={type}
-                size="xs"
-                intent={active ? 'primary' : 'secondary'}
-                onClick={handleToggleTrigger(type)}
-              >
-                {type}
-              </Button>
-            );
-          })}
-        </div>
-        {schedule?.type === 'schedule' && (
-          <Input value={schedule.cron} label="Cron" size="xs" placeholder="0 * * * *" onChange={handleChangeCron} />
-        )}
-      </div>
-
-      <ActionFields
-        label="Input"
-        hint="What the caller may send. Anything not declared here is dropped before the flow runs."
-        fields={document.input}
-        onChange={handleChangeInput}
-      />
-      <ActionResources
-        credentials={document.credentials ?? []}
-        connectors={document.connectors ?? []}
-        onChange={patch}
-      />
+      <ActionTriggers nodes={document.nodes} onChange={handleChangeNodes} />
 
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium">The flow</span>
@@ -301,7 +195,7 @@ const ActionForm = ({ action, tasks, onRun, onSubmit, onCancel }: ActionFormProp
 
       {action && (
         <ActionTestRun
-          input={document.input}
+          input={callInput}
           disabled={false}
           disabledReason="Runs the saved version, not the edits above."
           onRun={handleRun}

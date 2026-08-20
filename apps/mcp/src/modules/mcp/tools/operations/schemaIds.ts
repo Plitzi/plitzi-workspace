@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { actionAccess, actionField, actionLimits, actionNode, actionTrigger } from './actions/document';
+import { actionAccess, actionField, actionLimits, actionNode, actionTriggerParams } from './actions/document';
 import { connectorConnection, readEndpoint, writeEndpoint } from './connectors/manifest';
 import {
   bindingInput,
@@ -65,7 +65,7 @@ const SHARED_SCHEMAS: [z.ZodType, string][] = [
   // appear in both upsertAction and patchAction, so without these ids the listing carries each of them twice per
   // tool — and the trigger union alone is large enough to push the whole listing past its budget (it did).
   [actionAccess, 'ActionAccess'],
-  [actionTrigger, 'ActionTrigger'],
+  [actionTriggerParams, 'ActionTriggerParams'],
   [actionField, 'ActionField'],
   [actionNode, 'ActionStep'],
   [actionLimits, 'ActionLimits']

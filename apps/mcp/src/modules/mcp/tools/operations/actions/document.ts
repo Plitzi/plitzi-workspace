@@ -10,35 +10,36 @@ import { z } from 'zod';
  */
 export const actionAccess = z
   .discriminatedUnion('mode', [
-    z.object({ mode: z.literal('public') }).describe('Anyone, signed out included. Required for a webhook'),
+    z.object({ mode: z.literal('public') }).describe('Anyone, signed out included. What a webhook needs'),
     z.object({ mode: z.literal('session') }).describe('Any visitor with a session'),
     z.object({ mode: z.literal('role'), permissions: z.array(z.string()).min(1) }).describe('Holding all of these')
   ])
-  .describe('Who may run this action. No default: an unstated rule is either a lock-out or a hole');
+  .describe('Who may start a run through THIS way in. No default: an unstated rule is a lock-out or a hole');
 
-export const actionTrigger = z
-  .discriminatedUnion('type', [
-    z.object({ type: z.literal('call') }).describe('A client flow calls it by name'),
-    z
+export const actionTriggerParams = z
+  .object({
+    access: actionAccess.optional().describe('Required for every kind but schedule, which has no caller'),
+    input: z
+      .record(z.string(), z.lazy(() => actionField))
+      .optional()
+      .describe('What a caller may send through this way in. Anything undeclared is DROPPED'),
+    verify: z
       .object({
-        type: z.literal('webhook'),
-        verify: z
-          .object({
-            type: z.literal('hmac'),
-            header: z.string().describe('Header carrying the signature, e.g. "stripe-signature"'),
-            algorithm: z.enum(['sha256', 'sha1']),
-            secret: z.string().describe('Over a declared credential, e.g. "{{credential.stripe.hookSecret}}"'),
-            toleranceSeconds: z.number().optional()
-          })
-          .optional()
-          .describe('Without it, anyone who learns the URL can start a run')
+        type: z.literal('hmac'),
+        header: z.string().describe('Header carrying the signature, e.g. "stripe-signature"'),
+        algorithm: z.enum(['sha256', 'sha1']),
+        credential: z.string().describe('Credential holding the signing secret'),
+        secretField: z.string().optional().describe('Key of that credential. Defaults to "secret"'),
+        timestampHeader: z.string().optional(),
+        toleranceSeconds: z.number().optional()
       })
-      .describe('An external system posts to a public URL'),
-    z.object({ type: z.literal('schedule'), cron: z.string(), timezone: z.string().optional() }),
-    z.object({ type: z.literal('render') }).describe('Produces data while a page renders'),
-    z.object({ type: z.literal('custom'), name: z.string() }).describe('Mounted by the deployment')
-  ])
-  .describe('What starts a run');
+      .optional()
+      .describe('webhook only. Without it, anyone who learns the URL can start a run'),
+    cron: z.string().optional().describe('schedule only: minute hour day-of-month month day-of-week, UTC'),
+    timezone: z.string().optional(),
+    name: z.string().optional().describe('custom only: the name the deployment mounts it under')
+  })
+  .describe('What a TRIGGER step carries. A task step carries its own task params instead');
 
 export const actionField = z
   .object({
@@ -53,14 +54,18 @@ export const actionNode = z
   .object({
     id: z.string(),
     title: z.string(),
-    type: z.enum(['trigger', 'task']).describe('Exactly ONE trigger starts the chain; the rest are tasks'),
+    type: z.enum(['trigger', 'task']).describe('A trigger heads a chain; the rest are tasks'),
     action: z
       .string()
       .describe(
-        'A trigger names its trigger type ("call"); a task names "<namespace>.<action>" from ' +
+        'A trigger names its KIND — call | webhook | schedule | render | custom — and one action may have ' +
+          'several, one per kind, each heading its own chain. A task names "<namespace>.<action>" from ' +
           'plitzi://actions/{env}/tasks. A browser step (setState, navigate) cannot run here'
       ),
-    params: z.record(z.string(), z.unknown()).default({}),
+    params: z
+      .record(z.string(), z.unknown())
+      .default({})
+      .describe('A task: that task\'s params. A trigger: ActionTriggerParams — access, input, verify, cron'),
     afterNode: z.string().default('').describe('Id of the next step; empty ends the chain'),
     beforeNode: z.string().default(''),
     enabled: z.boolean().default(true),

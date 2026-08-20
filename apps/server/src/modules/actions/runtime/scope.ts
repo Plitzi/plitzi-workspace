@@ -1,4 +1,4 @@
-import type { ActionCredential, ActionLookups } from '../types';
+import type { ActionCredential } from '../types';
 import type { ActionField, ActionFieldType, SSRUser } from '@plitzi/sdk-shared';
 
 const coerce = (type: ActionFieldType, value: unknown): unknown => {
@@ -86,56 +86,33 @@ export const projectUser = (user?: SSRUser) => {
 };
 
 /**
- * Resolves the credentials a document declared, and only those.
- *
- * Resolved once, up front, and the run fails closed when a declared identifier is missing: a template that
- * silently interpolates an empty secret sends an unauthenticated request to a customer's backend and reports
- * whatever that backend says about it, which is a far worse diagnostic than "credential not found".
- */
-export const resolveCredentials = async (
-  lookups: ActionLookups,
-  spaceId: number,
-  declared: string[] = []
-): Promise<Record<string, ActionCredential>> => {
-  if (declared.length === 0 || !lookups.getCredential) {
-    return {};
-  }
-
-  const entries = await Promise.all(
-    declared.map(async identifier => [identifier, await lookups.getCredential?.(spaceId, identifier)] as const)
-  );
-
-  return entries.reduce<Record<string, ActionCredential>>((acum, [identifier, credential]) => {
-    if (!credential) {
-      throw new Error(`Credential "${identifier}" is not available for this space`);
-    }
-
-    acum[identifier] = credential;
-
-    return acum;
-  }, {});
-};
-
-/**
- * Replaces every resolved secret value wherever it appears, at any depth.
+ * Redacts every secret the run has actually resolved, wherever it appears, at any depth.
  *
  * Keyed on the VALUES rather than on field names, because a secret does not stay in the field it came from: it
  * travels into a header a node built, into an error a provider echoed back, and from there into the trace and the
  * log. Matching names would redact the one place it was already safe.
+ *
+ * It learns as the run goes rather than being built up front from a declared list. That is what makes dropping
+ * the declaration safe: a credential is registered the moment the task that needed it resolved one, which is
+ * always before that task's own result is redacted — and what was never resolved was never at risk.
  */
-export const buildRedactor = (credentials: Record<string, ActionCredential>) => {
-  const secrets = Object.values(credentials)
-    .flatMap(credential => Object.values(credential))
-    .filter(secret => typeof secret === 'string' && secret.length >= 8);
+export const createRedactor = () => {
+  const secrets = new Set<string>();
 
-  if (secrets.length === 0) {
-    return <T>(value: T): T => value;
-  }
+  const redactString = (value: string) => {
+    let output = value;
+    for (const secret of secrets) {
+      output = output.split(secret).join('«redacted»');
+    }
 
-  const redactString = (value: string) =>
-    secrets.reduce<string>((acum, secret) => acum.split(secret).join('«redacted»'), value);
+    return output;
+  };
 
   const redact = <T>(value: T): T => {
+    if (secrets.size === 0) {
+      return value;
+    }
+
     if (typeof value === 'string') {
       return redactString(value) as T;
     }
@@ -160,5 +137,15 @@ export const buildRedactor = (credentials: Record<string, ActionCredential>) => 
     return value;
   };
 
-  return redact;
+  return {
+    /** Everything long enough to be a secret rather than a flag. Short values would redact ordinary text. */
+    add: (credential: ActionCredential) => {
+      Object.values(credential).forEach(value => {
+        if (typeof value === 'string' && value.length >= 8) {
+          secrets.add(value);
+        }
+      });
+    },
+    redact
+  };
 };

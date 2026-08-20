@@ -1,5 +1,6 @@
 import { cronMatches } from './cron';
 import { ActionRunError } from './errors';
+import { findTriggerNode, triggerParams } from './triggers';
 
 import type { ActionsModule } from '../index';
 import type { ActionLookups } from '../types';
@@ -38,13 +39,15 @@ export const createScheduleRunner = (lookups: ActionLookups, module: ActionsModu
     const entries = (await lookups.listActions?.(spaceId)) ?? [];
 
     for (const entry of entries) {
-      // `find` narrows to the schedule member, so its cron is reachable below without a second check.
-      const schedule = entry.document.triggers.find(trigger => trigger.type === 'schedule');
-      if (!entry.document.enabled || !schedule) {
+      // The step that declares the schedule. No step, no clock: an action reachable only from a page is never
+      // swept, which is what makes this loop cheap over a space with many actions.
+      const schedule = findTriggerNode(entry.document.nodes, 'schedule');
+      const cron = schedule ? triggerParams(schedule).cron : undefined;
+      if (!entry.document.enabled || !schedule?.enabled || !cron) {
         continue;
       }
 
-      if (!cronMatches(schedule.cron, at)) {
+      if (!cronMatches(cron, at)) {
         continue;
       }
 

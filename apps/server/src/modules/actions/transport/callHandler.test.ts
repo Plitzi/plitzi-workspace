@@ -28,15 +28,21 @@ const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementI
   ...overrides
 });
 
+/** The `call` trigger step: what starts the action, who may, and what it takes — all on the step. */
+const callTrigger = (params: Record<string, unknown> = {}, afterNode = 'compute') =>
+  node('start', {
+    type: 'trigger',
+    action: 'call',
+    params: { access: { mode: 'public' }, input: { amount: { type: 'number', required: true } }, ...params },
+    afterNode
+  });
+
 const document = (overrides: Partial<ActionDocument> = {}): ActionDocument => ({
   name: 'Quote',
   enabled: true,
-  access: { mode: 'public' },
-  triggers: [{ type: 'call' }],
-  input: { amount: { type: 'number', required: true } },
   output: { total: { type: 'number' } },
   nodes: {
-    start: node('start', { type: 'trigger', action: 'call', afterNode: 'compute' }),
+    start: callTrigger(),
     compute: node('compute', { action: 'flow.output', params: { values: '{"total": {{ input.amount }}}' } })
   },
   ...overrides
@@ -196,7 +202,14 @@ describe('handleActionCall', () => {
   });
 
   it('answers 403 when the caller lacks the declared permissions', async () => {
-    const config = buildConfig(entry({ access: { mode: 'role', permissions: ['space.write'] } }));
+    const config = buildConfig(
+      entry({
+        nodes: {
+          start: callTrigger({ access: { mode: 'role', permissions: ['space.write'] } }),
+          compute: node('compute', { action: 'flow.output', params: { values: '{"total": 1}' } })
+        }
+      })
+    );
 
     const { sent, payload } = await call(config, { actionId: 'quote', input: { amount: 1 } });
 
@@ -236,7 +249,7 @@ describe('handleActionCall', () => {
     const config = buildConfig(
       entry({
         nodes: {
-          start: node('start', { type: 'trigger', action: 'call', afterNode: 'hang' }),
+          start: callTrigger({}, 'hang'),
           hang: node('hang', { action: 'test.hang' })
         }
       })
@@ -332,7 +345,7 @@ describe('handleActionCall (streaming)', () => {
   it('sends a failure as a frame, since the status line is long gone', async () => {
     const failing = entry({
       nodes: {
-        start: node('start', { type: 'trigger', action: 'call', afterNode: 'boom' }),
+        start: callTrigger({}, 'boom'),
         boom: node('boom', { action: 'flow.fail', params: { message: 'nope' } })
       }
     });
@@ -368,7 +381,7 @@ describe('handleActionCall (streaming)', () => {
     const config = buildConfig(
       entry({
         nodes: {
-          start: node('start', { type: 'trigger', action: 'call', afterNode: 'p' }),
+          start: callTrigger({}, 'p'),
           p: node('p', { action: 'test.progress' })
         }
       })

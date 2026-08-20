@@ -24,9 +24,6 @@ const counterAction = (nodes: ActionDocument['nodes'], valueType: 'number' | 'te
   document: {
     name: 'Counter',
     enabled: true,
-    access: { mode: 'public' },
-    triggers: [{ type: 'call' }],
-    input: {},
     output: { value: { type: valueType } },
     nodes
   }
@@ -50,7 +47,7 @@ const run = (entry: ActionEntry, spaceId = 1) => {
 };
 
 const incrementFlow = counterAction({
-  start: node('start', { type: 'trigger', action: 'call', afterNode: 'inc' }),
+  start: node('start', { type: 'trigger', action: 'call', params: { access: { mode: 'public' } }, afterNode: 'inc' }),
   inc: node('inc', { action: 'kv.increment', afterNode: 'ret', params: { key: 'hits', amount: '1' } }),
   ret: node('ret', { action: 'flow.output', params: { values: '{"value": {{ inc.value }}}' } })
 });
@@ -80,7 +77,12 @@ describe('kv tasks', () => {
     const { call } = run(
       counterAction(
         {
-          start: node('start', { type: 'trigger', action: 'call', afterNode: 'set' }),
+          start: node('start', {
+            type: 'trigger',
+            action: 'call',
+            params: { access: { mode: 'public' } },
+            afterNode: 'set'
+          }),
           set: node('set', { action: 'kv.set', afterNode: 'get', params: { key: 'greeting', value: 'hola' } }),
           get: node('get', { action: 'kv.get', afterNode: 'ret', params: { key: 'greeting' } }),
           ret: node('ret', { action: 'flow.output', params: { values: '{"value": "{{ get.value }}"}' } })

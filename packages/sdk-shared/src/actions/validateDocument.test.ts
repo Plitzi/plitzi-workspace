@@ -2,15 +2,24 @@ import { describe, expect, it } from 'vitest';
 
 import { validateActionDocument } from './validateDocument';
 
+/** A trigger STEP, which is where what-starts-it, who-may and with-what all live now. */
+const trigger = (action: string, params: Record<string, unknown> = {}, afterNode = 'ret') => ({
+  id: 'start',
+  type: 'trigger',
+  action,
+  params,
+  afterNode
+});
+
+const callTrigger = (params: Record<string, unknown> = {}) =>
+  trigger('call', { access: { mode: 'session' }, input: { amount: { type: 'number', required: true } }, ...params });
+
 const document = (overrides: Record<string, unknown> = {}) => ({
   name: 'Send quote',
   enabled: true,
-  access: { mode: 'session' },
-  triggers: [{ type: 'call' }],
-  input: { amount: { type: 'number', required: true } },
   output: { total: { type: 'number' } },
   nodes: {
-    start: { id: 'start', type: 'trigger', action: 'call', afterNode: 'ret' },
+    start: callTrigger(),
     ret: { id: 'ret', type: 'task', action: 'flow.output', params: { values: '{}' } }
   },
   ...overrides
@@ -33,17 +42,104 @@ describe('validateActionDocument', () => {
     expect(validateActionDocument([]).valid).toBe(false);
   });
 
-  it('requires access to be declared rather than guessed', () => {
-    const report = validateActionDocument(document({ access: undefined }));
+  it('requires a way in', () => {
+    const report = validateActionDocument(
+      document({ nodes: { ret: { id: 'ret', type: 'task', action: 'flow.output', params: {} } } })
+    );
+
+    expect(report.valid).toBe(false);
+    expect(messages(report.errors)).toContain('no way in');
+  });
+
+  it('requires access on the trigger rather than guessing it', () => {
+    const report = validateActionDocument(
+      document({ nodes: { start: trigger('call', { input: {} }), ret: { id: 'ret', type: 'task', action: 'flow.output' } } })
+    );
 
     expect(report.valid).toBe(false);
     expect(messages(report.errors)).toContain('must declare a mode');
   });
 
   it('requires role access to name permissions', () => {
-    const report = validateActionDocument(document({ access: { mode: 'role', permissions: [] } }));
+    const report = validateActionDocument(
+      document({
+        nodes: {
+          start: callTrigger({ access: { mode: 'role', permissions: [] } }),
+          ret: { id: 'ret', type: 'task', action: 'flow.output' }
+        }
+      })
+    );
 
     expect(messages(report.errors)).toContain('at least one permission');
+  });
+
+  /** A clock is not a caller. Asking a schedule for an access rule only invites one that means nothing. */
+  it('asks a schedule for a cron and not for access', () => {
+    const report = validateActionDocument(
+      document({
+        nodes: {
+          start: trigger('schedule', { cron: '0 6 * * *' }),
+          ret: { id: 'ret', type: 'task', action: 'flow.output' }
+        }
+      })
+    );
+
+    expect(report.valid).toBe(true);
+  });
+
+  it('refuses a cron this server could never fire', () => {
+    const report = validateActionDocument(
+      document({
+        nodes: {
+          start: trigger('schedule', { cron: 'every morning' }),
+          ret: { id: 'ret', type: 'task', action: 'flow.output' }
+        }
+      })
+    );
+
+    expect(report.valid).toBe(false);
+    expect(messages(report.errors)).toContain('would never fire');
+  });
+
+  /** Two ways into one action, each on its own terms — the thing a single document-level access rule could not
+   *  express: the webhook is gated on its signature while the page call still needs a session. */
+  it('accepts several triggers, each with its own access', () => {
+    const report = validateActionDocument(
+      document({
+        nodes: {
+          onCall: { ...callTrigger(), id: 'onCall', afterNode: 'ret', flowId: 'a' },
+          ret: { id: 'ret', type: 'task', action: 'flow.output', params: {}, flowId: 'a' },
+          onHook: {
+            ...trigger('webhook', {
+              access: { mode: 'public' },
+              verify: { type: 'hmac', header: 'x-sig', algorithm: 'sha256', credential: 'stripe' }
+            }),
+            id: 'onHook',
+            afterNode: 'count',
+            flowId: 'b'
+          },
+          count: { id: 'count', type: 'task', action: 'kv.increment', params: {}, flowId: 'b' }
+        }
+      })
+    );
+
+    expect(report.valid).toBe(true);
+    expect(report.warnings).toEqual([]);
+  });
+
+  it('refuses two triggers of the same kind, which would make the entry point a matter of key order', () => {
+    const report = validateActionDocument(
+      document({
+        nodes: {
+          onCall: { ...callTrigger(), id: 'onCall', afterNode: 'ret' },
+          alsoCall: { ...callTrigger(), id: 'alsoCall', afterNode: 'ret' },
+          ret: { id: 'ret', type: 'task', action: 'flow.output', params: {} }
+        }
+      })
+    );
+
+    expect(report.valid).toBe(false);
+    expect(messages(report.errors)).toContain('2 "call" triggers');
   });
 
   // The rule the whole validator exists for: a client step in a server flow is shaped correctly and can never run.
@@ -51,7 +147,7 @@ describe('validateActionDocument', () => {
     const report = validateActionDocument(
       document({
         nodes: {
-          start: { id: 'start', type: 'trigger', action: 'call', afterNode: 'set' },
+          start: callTrigger(),
           set: { id: 'set', type: 'globalCallback', action: 'setState' }
         }
       })
@@ -61,161 +157,120 @@ describe('validateActionDocument', () => {
     expect(messages(report.errors)).toContain('cannot run on the server');
   });
 
-  it('refuses a flow with no entry, and one with several', () => {
-    expect(messages(validateActionDocument(document({ nodes: {} })).errors)).toContain('no trigger step');
+  it('refuses a step that does not name a task', () => {
+    const report = validateActionDocument(
+      document({
+        nodes: { start: callTrigger(), ret: { id: 'ret', type: 'task', action: 'notATask' } }
+      })
+    );
 
-    const two = document({
-      nodes: {
-        a: { id: 'a', type: 'trigger', action: 'call' },
-        b: { id: 'b', type: 'trigger', action: 'webhook' }
-      }
-    });
-    expect(messages(validateActionDocument(two).errors)).toContain('2 trigger steps');
+    expect(report.valid).toBe(false);
+    expect(messages(report.errors)).toContain('<namespace>.<action>');
   });
 
-  it('refuses a step pointing at one that does not exist', () => {
+  it('refuses a step chained to one that is not there', () => {
     const report = validateActionDocument(
       document({
         nodes: {
-          start: { id: 'start', type: 'trigger', action: 'call', afterNode: 'ret' },
+          start: callTrigger(),
           ret: { id: 'ret', type: 'task', action: 'flow.output', afterNode: 'ghost' }
         }
       })
     );
 
+    expect(report.valid).toBe(false);
     expect(messages(report.errors)).toContain('not a step here');
   });
 
-  it('refuses a task name that is not <namespace>.<action>', () => {
+  it('warns about a step no trigger reaches', () => {
     const report = validateActionDocument(
       document({
         nodes: {
-          start: { id: 'start', type: 'trigger', action: 'call', afterNode: 'x' },
-          x: { id: 'x', type: 'task', action: 'sendEmail' }
+          start: callTrigger(),
+          ret: { id: 'ret', type: 'task', action: 'flow.output', params: {} },
+          orphan: { id: 'orphan', type: 'task', action: 'kv.set', params: {} }
         }
       })
     );
 
-    expect(messages(report.errors)).toContain('<namespace>.<action>');
+    expect(report.valid).toBe(true);
+    expect(messages(report.warnings)).toContain('never runs');
   });
 
   it('warns about a webhook anyone can call unsigned', () => {
-    const report = validateActionDocument(document({ triggers: [{ type: 'webhook' }] }));
+    const report = validateActionDocument(
+      document({
+        nodes: {
+          start: trigger('webhook', { access: { mode: 'public' } }),
+          ret: { id: 'ret', type: 'task', action: 'flow.output', params: {} }
+        }
+      })
+    );
 
     expect(report.valid).toBe(true);
     expect(messages(report.warnings)).toContain('unsigned requests');
   });
 
-  it('warns when values are expected but no step names any', () => {
+  it('refuses a verification that names no credential to read the secret from', () => {
     const report = validateActionDocument(
       document({
-        nodes: { start: { id: 'start', type: 'trigger', action: 'call' } }
+        nodes: {
+          start: trigger('webhook', {
+            access: { mode: 'public' },
+            verify: { type: 'hmac', header: 'x-sig', algorithm: 'sha256' }
+          }),
+          ret: { id: 'ret', type: 'task', action: 'flow.output', params: {} }
+        }
       })
     );
 
-    expect(messages(report.warnings)).toContain('no step names any');
+    expect(report.valid).toBe(false);
+    expect(messages(report.errors)).toContain('names no credential');
   });
 
-  // The output step IS the contract, so a step after it is work whose result nobody can ever read.
+  it('warns that a public call is reachable by signed-out visitors', () => {
+    const report = validateActionDocument(
+      document({
+        nodes: {
+          start: callTrigger({ access: { mode: 'public' } }),
+          ret: { id: 'ret', type: 'task', action: 'flow.output', params: {} }
+        }
+      })
+    );
+
+    expect(messages(report.warnings)).toContain('signed-out visitors');
+  });
+
   it('warns when the output step is not the last one', () => {
     const report = validateActionDocument(
       document({
         nodes: {
-          start: { id: 'start', type: 'trigger', action: 'call', afterNode: 'out' },
-          out: { id: 'out', type: 'task', action: 'flow.output', params: { values: '{}' }, afterNode: 'after' },
-          after: { id: 'after', type: 'task', action: 'http.request', params: {} }
+          start: callTrigger(),
+          ret: { id: 'ret', type: 'task', action: 'flow.output', params: {}, afterNode: 'after' },
+          after: { id: 'after', type: 'task', action: 'kv.set', params: {} }
         }
       })
     );
 
     expect(report.valid).toBe(true);
-    expect(messages(report.warnings)).toContain('not the last one');
+    expect(messages(report.warnings)).toContain('run for nothing');
   });
 
-  it('warns about a second output step, since only the last to run is answered', () => {
+  it('warns when a step reads a credential it never asked for', () => {
     const report = validateActionDocument(
       document({
         nodes: {
-          start: { id: 'start', type: 'trigger', action: 'call', afterNode: 'a' },
-          a: { id: 'a', type: 'task', action: 'flow.output', params: { values: '{}' }, afterNode: 'b' },
-          b: { id: 'b', type: 'task', action: 'flow.output', params: { values: '{}' } }
-        }
-      })
-    );
-
-    expect(messages(report.warnings)).toContain('2 output steps');
-  });
-
-  it('warns about a connector step naming a connector the document does not declare', () => {
-    const report = validateActionDocument(
-      document({
-        connectors: ['cms'],
-        nodes: {
-          start: { id: 'start', type: 'trigger', action: 'call', afterNode: 'read' },
-          read: { id: 'read', type: 'task', action: 'connector.read', params: { connector: 'crm' } }
-        }
-      })
-    );
-
-    expect(messages(report.warnings)).toContain('not listed in this action');
-  });
-
-  it('warns about a credential token in a step that never asked for one', () => {
-    const report = validateActionDocument(
-      document({
-        credentials: ['stripe'],
-        nodes: {
-          start: { id: 'start', type: 'trigger', action: 'call', afterNode: 'call' },
-          call: {
-            id: 'call',
+          start: callTrigger(),
+          ret: {
+            id: 'ret',
             type: 'task',
             action: 'http.request',
-            params: {
-              url: 'https://api.stripe.com',
-              headers: '{"Authorization": "Bearer {{ credential.stripe.key }}"}'
-            }
+            params: { url: 'https://x', headers: '{{ credential.api.token }}' }
           }
         }
       })
     );
 
     expect(messages(report.warnings)).toContain('resolves to nothing');
-  });
-
-  it('says nothing when the step names the credential it reads', () => {
-    const report = validateActionDocument(
-      document({
-        credentials: ['stripe'],
-        nodes: {
-          start: { id: 'start', type: 'trigger', action: 'call', afterNode: 'call' },
-          call: {
-            id: 'call',
-            type: 'task',
-            action: 'http.request',
-            params: {
-              url: 'https://api.stripe.com',
-              credential: 'stripe',
-              headers: '{"Authorization": "Bearer {{ credential.key }}"}'
-            }
-          }
-        }
-      })
-    );
-
-    expect(report.warnings.filter(issue => issue.message.includes('resolves to nothing'))).toEqual([]);
-  });
-
-  it('says nothing about a connector chosen at run time', () => {
-    const report = validateActionDocument(
-      document({
-        connectors: ['cms'],
-        nodes: {
-          start: { id: 'start', type: 'trigger', action: 'call', afterNode: 'read' },
-          read: { id: 'read', type: 'task', action: 'connector.read', params: { connector: '{{ input.target }}' } }
-        }
-      })
-    );
-
-    expect(report.warnings.filter(issue => issue.path.includes('connector'))).toEqual([]);
   });
 });

@@ -25,11 +25,8 @@ const scheduled = (cron: string, enabled = true): ActionEntry => ({
   document: {
     name: 'Digest',
     enabled,
-    access: { mode: 'public' },
-    triggers: [{ type: 'schedule', cron }],
-    input: {},
     nodes: {
-      start: node('start', { type: 'trigger', action: 'schedule', afterNode: 'out' }),
+      start: node('start', { type: 'trigger', action: 'schedule', params: { cron }, afterNode: 'out' }),
       out: node('out', { action: 'flow.output', params: { values: '{"ok": true}' } })
     }
   }

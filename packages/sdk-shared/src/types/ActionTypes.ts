@@ -19,13 +19,17 @@ export type ActionField = {
 };
 
 /**
- * Who may invoke an action. Resolved against the auth kernel (RFC 0010) — never re-implemented here.
+ * Who may start a run through ONE way in. Resolved against the auth kernel (RFC 0010) — never re-implemented here.
  *
- * There is no implicit default: a document that declares no access is refused at save time rather than falling back
+ * It belongs to the trigger and not to the action, because the two are different questions: a webhook is reachable
+ * by anyone who learns its URL and is gated on its signature, while the same flow called from a page may well
+ * require a session. Stating it once for the action forced the loosest of its ways in onto all of them.
+ *
+ * There is no implicit default: a trigger that declares no access is refused at save time rather than falling back
  * to something a reader has to guess at.
  */
 export type ActionAccess =
-  /** Anyone, including an anonymous visitor. Required for a webhook; anywhere else it is a deliberate choice. */
+  /** Anyone, including an anonymous visitor. Implicit for a webhook; anywhere else it is a deliberate choice. */
   | { mode: 'public' }
   /** Any request carrying a valid session for this space. */
   | { mode: 'session' }
@@ -41,8 +45,11 @@ export type ActionWebhookVerification = {
   /** Header carrying the signature, e.g. `stripe-signature`. */
   header: string;
   algorithm: 'sha256' | 'sha1';
-  /** Template resolved against the declared credentials, e.g. `{{credential.stripe.webhookSecret}}`. */
-  secret: string;
+  /** The credential holding the signing secret. Named outright rather than templated: this runs before anything
+   *  else does, and a token that renders to nothing here is an endpoint that verifies against an empty secret. */
+  credential: string;
+  /** Which key of that credential is the secret. Defaults to `secret`. */
+  secretField?: string;
   /**
    * Header carrying the moment the sender signed, when it sends one separately (the Stripe shape). The signed
    * payload is then `<timestamp>.<body>` rather than the body alone.
@@ -55,17 +62,36 @@ export type ActionWebhookVerification = {
   toleranceSeconds?: number;
 };
 
-export type ActionTrigger =
-  /** Invoked by a client flow through the action endpoint. */
-  | { type: 'call' }
-  | { type: 'webhook'; verify?: ActionWebhookVerification }
-  | { type: 'schedule'; cron: string; timezone?: string }
-  /** Produces data during a page render, addressed by a `runtime: 'server'` element. */
-  | { type: 'render' }
-  /** Mounted by the deployment itself. The runner does not care who called it. */
-  | { type: 'custom'; name: string };
+/**
+ * The ways into an action, as the `action` of a trigger STEP rather than a list beside the flow.
+ *
+ * `call` — a client flow through the action endpoint. `webhook` — an inbound request, public by construction.
+ * `schedule` — a cron tick. `render` — a `runtime: 'server'` element naming this action. `custom` — a trigger the
+ * deployment mounted itself.
+ */
+export type ActionTriggerType = 'call' | 'webhook' | 'schedule' | 'render' | 'custom';
 
-export type ActionTriggerType = ActionTrigger['type'];
+/**
+ * What a trigger step carries, by kind.
+ *
+ * This is the whole of what used to sit beside the flow as `triggers`, `access` and `input`. It lives on the step
+ * for the reason an element's `onClick` carries its own: the thing that starts a flow is the thing that knows what
+ * may start it and with what. Two ways in are two trigger steps, each heading its own chain — exactly how one
+ * element holds an `onClick` flow and an `onSubmit` flow in one node map.
+ */
+export type ActionTriggerParams = {
+  /** Who may start it. Required for every kind but `schedule`, which has no caller to authorize. */
+  access?: ActionAccess;
+  /** What a caller may send. **Anything undeclared is dropped** before a single step runs. */
+  input?: Record<string, ActionField>;
+  /** `webhook`: how an inbound request proves itself. */
+  verify?: ActionWebhookVerification;
+  /** `schedule`: five fields — minute hour day-of-month month day-of-week. UTC. */
+  cron?: string;
+  timezone?: string;
+  /** `custom`: the name the deployment mounts it under. */
+  name?: string;
+};
 
 /** Ceilings for one run. A per-action value may only tighten the deployment's own. */
 export type ActionLimits = {
@@ -79,17 +105,24 @@ export type ActionLimits = {
 /**
  * A server action: a declarative flow, stored per space, executed by the server.
  *
+ * It is the SAME document an element's interactions are — a map of steps, each naming a task, chained by
+ * `afterNode` — and it is deliberately nothing more. Everything that used to be declared beside the flow now lives
+ * on the step that starts it, so there is one place to read and one place to author, and the editor is the one
+ * already in the product.
+ *
  * It lives in shared types because the builder authors the very document the server executes — the same reason
- * `ConnectorManifest` does. It is server-side state and must never be serialized into a page: what the browser gets
- * is {@link ActionProjection}, derived at request time.
+ * `ConnectorManifest` does. It is server-side state and must never be serialized into a page: what the browser
+ * gets is {@link ActionProjection}, derived at request time.
  */
 export type ActionDocument = {
   name: string;
   description?: string;
   enabled: boolean;
-  access: ActionAccess;
-  triggers: ActionTrigger[];
-  input: Record<string, ActionField>;
+  /**
+   * The flows. One or more `trigger` steps, each heading a chain of `task` steps — the same node map an element's
+   * `interactions` holds, so one editor authors both.
+   */
+  nodes: Record<string, ElementInteraction>;
   /**
    * The keys the `flow.output` step names, DERIVED from it — never authored beside it.
    *
@@ -99,12 +132,6 @@ export type ActionDocument = {
    * exactly what the output step named.
    */
   output?: Record<string, ActionField>;
-  /** Credential identifiers this action may resolve. Its templates can reach nothing else. */
-  credentials?: string[];
-  /** Connector identifiers this action may call. */
-  connectors?: string[];
-  /** The flow itself — the same node map an element's `interactions` holds, so one editor authors both. */
-  nodes: Record<string, ElementInteraction>;
   limits?: ActionLimits;
 };
 

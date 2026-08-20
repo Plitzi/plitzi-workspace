@@ -19,18 +19,19 @@ const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementI
   ...overrides
 });
 
-const entry = (params: Record<string, unknown>, credentials: string[] = []): ActionEntry => ({
+const entry = (params: Record<string, unknown>): ActionEntry => ({
   id: 'fetcher',
   document: {
     name: 'Fetcher',
     enabled: true,
-    access: { mode: 'public' },
-    triggers: [{ type: 'call' }],
-    input: { id: { type: 'text' } },
     output: { status: { type: 'number' } },
-    credentials,
     nodes: {
-      start: node('start', { type: 'trigger', action: 'call', afterNode: 'call' }),
+      start: node('start', {
+        type: 'trigger',
+        action: 'call',
+        params: { access: { mode: 'public' }, input: { id: { type: 'text' } } },
+        afterNode: 'call'
+      }),
       call: node('call', { action: 'http.request', afterNode: 'ret', params }),
       ret: node('ret', { action: 'flow.output', params: { values: '{"status": {{ call.status }}}' } })
     }
@@ -75,15 +76,12 @@ describe('http.request', () => {
     const fetchMock = vi.fn(ok);
 
     await run(
-      entry(
-        {
-          url: 'https://api.example.com/items',
-          method: 'GET',
-          credential: 'api',
-          headers: '{"Authorization": "Bearer {{ credential.token }}"}'
-        },
-        ['api']
-      ),
+      entry({
+        url: 'https://api.example.com/items',
+        method: 'GET',
+        credential: 'api',
+        headers: '{"Authorization": "Bearer {{ credential.token }}"}'
+      }),
       fetchMock,
       { token: 's3cr3t-value' }
     );
@@ -94,16 +92,18 @@ describe('http.request', () => {
     expect(new Headers(init.headers).get('Authorization')).toBe('Bearer s3cr3t-value');
   });
 
-  it('refuses a credential the document never declared', async () => {
+  /** There is no allow-list to check against any more — the step names what it needs and gets it. What still
+   *  cannot happen is a request going out with an empty Authorization header because the credential was not
+   *  there: the step fails first, and the provider never sees an unauthenticated call to explain. */
+  it('fails the step rather than calling out with a credential this space has not got', async () => {
     const fetchMock = vi.fn(ok);
 
-    // Raised as a run-level refusal rather than a failed step: naming a credential the document does not declare
-    // is a configuration mistake, and the caller gets a 403 saying so instead of a generic failure.
-    await expect(
-      run(entry({ url: 'https://api.example.com/items', method: 'GET', credential: 'api' }, []), fetchMock, {
-        token: 's3cr3t-value'
-      })
-    ).rejects.toMatchObject({ reason: 'forbidden' });
+    const result = await run(
+      entry({ url: 'https://api.example.com/items', method: 'GET', credential: 'api' }),
+      fetchMock
+    );
+
+    expect(result.status).toBe('failed');
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

@@ -1,8 +1,7 @@
-import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
-
 import { verifySignature } from './verifySignature';
 import { ActionRunError } from '../runtime/errors';
 import { precheckRun } from '../runtime/precheck';
+import { findTriggerNode, triggerParams } from '../runtime/triggers';
 
 import type { ActionsModule } from '../index';
 import type { ActionCredential } from '../types';
@@ -35,29 +34,22 @@ const send = (res: SSRResponseHelpers, status: number, payload: Record<string, u
   res.send(JSON.stringify(payload));
 };
 
-/** The secret the verification template names, resolved from the credentials the DOCUMENT declared and nothing
- *  else — the same rule every task obeys. */
+/**
+ * The signing secret, from the credential the verification NAMES.
+ *
+ * Named outright rather than templated. This runs before anything else does — before the body is parsed, before a
+ * run exists — so there is no flow scope for a token to resolve against, and one that rendered to nothing would
+ * leave the endpoint verifying every request against an empty secret.
+ */
 const resolveSecret = async (
   verification: ActionWebhookVerification,
-  entry: ActionEntry,
   spaceId: number,
   getCredential?: (spaceId: number, identifier: string) => Promise<ActionCredential | undefined>
 ): Promise<string> => {
-  const declared = entry.document.credentials ?? [];
-  const resolved = await Promise.all(
-    declared.map(async identifier => [identifier, await getCredential?.(spaceId, identifier)] as const)
-  );
-  const credential = resolved.reduce<Record<string, ActionCredential>>((acum, [identifier, value]) => {
-    if (value) {
-      acum[identifier] = value;
-    }
+  const credential = await getCredential?.(spaceId, verification.credential);
+  const secret = credential?.[verification.secretField ?? 'secret'];
 
-    return acum;
-  }, {});
-
-  const rendered = processTwig(verification.secret, { credential });
-
-  return typeof rendered === 'string' ? rendered : '';
+  return typeof secret === 'string' ? secret : '';
 };
 
 /**
@@ -84,13 +76,15 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
   // the sender says which revision it means, and pinning one would leave a fixed flow answering an integration
   // its author has since corrected.
   const entry = (await config.action?.lookups?.getAction(spaceId, actionId)) as ActionEntry | undefined;
-  // `find` narrows to the webhook member, so the trigger's own `verify` is reachable below without a re-check.
-  const trigger = entry?.document.triggers.find(item => item.type === 'webhook');
+  // The step that declares this way in. No step, no webhook — an action reachable only from a page has no URL.
+  const trigger = entry ? findTriggerNode(entry.document.nodes, 'webhook') : undefined;
   if (!entry || !trigger) {
     send(res, 404, { error: 'Not found' });
 
     return;
   }
+
+  const { verify } = triggerParams(trigger);
 
   // Counted before the signature is checked: verifying costs a hash over an attacker-supplied body, and a flood of
   // unsigned requests must not be free just because none of them verifies.
@@ -113,9 +107,9 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
   }
 
   const rawBody = req.body ?? '';
-  if (trigger.verify) {
-    const secret = await resolveSecret(trigger.verify, entry, spaceId, config.action?.lookups?.getCredential);
-    const check = verifySignature(trigger.verify, secret, req.headers, rawBody);
+  if (verify) {
+    const secret = await resolveSecret(verify, spaceId, config.action?.lookups?.getCredential);
+    const check = verifySignature(verify, secret, req.headers, rawBody);
     if (!check.ok) {
       // The reason goes to the log, not the wire: telling a caller which half of the check failed helps only the
       // caller who should not be here.

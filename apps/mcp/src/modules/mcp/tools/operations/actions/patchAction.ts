@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { validateActionDocument } from '@plitzi/sdk-shared/actions';
 
-import { actionAccess, actionField, actionLimits, actionNode, actionTrigger } from './document';
+import { actionField, actionLimits, actionNode } from './document';
 import { actionUri, actionsUri, empty, fail, findActionEntry } from '../../../helpers';
 
 import type { OpResult, Space } from '../../../helpers';
@@ -16,12 +16,7 @@ export const patchActionOp = z
     name: z.string().optional(),
     description: z.string().optional(),
     enabled: z.boolean().optional(),
-    access: actionAccess.optional(),
-    triggers: z.array(actionTrigger).optional().describe('Replaces the whole list'),
-    input: z.record(z.string(), actionField.nullable()).optional().describe('Merged by name; null removes one'),
     output: z.record(z.string(), actionField.nullable()).optional().describe('Merged by name; null removes one'),
-    credentials: z.array(z.string()).optional(),
-    connectors: z.array(z.string()).optional(),
     nodes: z
       .array(actionNode)
       .optional()
@@ -95,12 +90,7 @@ export const patchAction = (space: Space, env: Env, op: PatchAction): OpResult =
     ...(op.name === undefined ? {} : { name: op.name }),
     ...(op.description === undefined ? {} : { description: op.description }),
     ...(op.enabled === undefined ? {} : { enabled: op.enabled }),
-    ...(op.access === undefined ? {} : { access: op.access }),
-    ...(op.triggers === undefined ? {} : { triggers: op.triggers }),
-    ...(op.credentials === undefined ? {} : { credentials: op.credentials }),
-    ...(op.connectors === undefined ? {} : { connectors: op.connectors }),
     ...(op.limits === undefined ? {} : { limits: op.limits }),
-    input: mergeMap(document.input, op.input),
     // Derived from the output step, so a document may simply not carry it yet.
     output: mergeMap(document.output ?? {}, op.output),
     nodes

@@ -25,12 +25,13 @@ const entry = (params: Record<string, unknown>): ActionEntry => ({
   document: {
     name: 'Lookup',
     enabled: true,
-    access: { mode: 'public' },
-    triggers: [{ type: 'call' }],
-    input: { email: { type: 'text' } },
-    credentials: ['crm-db'],
     nodes: {
-      start: node('start', { type: 'trigger', action: 'call', afterNode: 'q' }),
+      start: node('start', {
+        type: 'trigger',
+        action: 'call',
+        params: { access: { mode: 'public' }, input: { email: { type: 'text' } } },
+        afterNode: 'q'
+      }),
       q: node('q', { action: 'db.query', afterNode: 'out', params }),
       out: node('out', { action: 'flow.output', params: { values: '{"count": {{ q.count }}}' } })
     }
@@ -51,10 +52,18 @@ const driver = (): ActionDbDriver & { calls: unknown[][] } => {
   };
 };
 
-const run = (params: Record<string, unknown>, drivers: ActionDbDriver[], credential?: Record<string, string>) => {
+/** `null` is the space not having the credential at all, which `undefined` cannot say — that is the default. */
+const run = (
+  params: Record<string, unknown>,
+  drivers: ActionDbDriver[],
+  credential?: Record<string, string> | null
+) => {
   const lookups = {
     getAction: () => Promise.resolve(undefined),
-    getCredential: () => Promise.resolve(credential ?? { engine: 'mysql', dsn: 'mysql://user@customer/db' })
+    getCredential: () =>
+      Promise.resolve(
+        credential === null ? undefined : (credential ?? { engine: 'mysql', dsn: 'mysql://user@customer/db' })
+      )
   };
   const { runAction } = createActionsModule({ lookups, dbDrivers: drivers });
 
@@ -102,12 +111,15 @@ describe('db.query', () => {
     expect(engine.calls).toEqual([]);
   });
 
-  it('refuses a credential the document never declared', async () => {
+  /** A step names the connection it wants and the space either has it or does not. What must not happen is the
+   *  query running against something nobody named. */
+  it('fails the step when the space has no such connection credential', async () => {
     const engine = driver();
 
-    await expect(run({ credential: 'other-db', sql: 'SELECT 1', params: '[]' }, [engine])).rejects.toMatchObject({
-      reason: 'forbidden'
-    });
+    const result = await run({ credential: 'other-db', sql: 'SELECT 1', params: '[]' }, [engine], null);
+
+    expect(result.status).toBe('failed');
+    expect(engine.calls).toEqual([]);
   });
 
   it('says so when this server has no driver for the credential’s engine', async () => {

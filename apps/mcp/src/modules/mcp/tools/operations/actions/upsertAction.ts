@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { validateActionDocument } from '@plitzi/sdk-shared/actions';
 
-import { actionAccess, actionField, actionLimits, actionNode, actionTrigger } from './document';
+import { actionField, actionLimits, actionNode } from './document';
 import { actionUri, actionsUri, empty, fail, findActionEntry } from '../../../helpers';
 
 import type { OpResult, Space } from '../../../helpers';
@@ -20,34 +20,41 @@ export const upsertActionOp = z
     name: z.string().describe('Human name shown in the builder'),
     description: z.string().optional(),
     enabled: z.boolean().optional().describe('Defaults to true'),
-    access: actionAccess,
-    triggers: z.array(actionTrigger).min(1),
-    input: z.record(z.string(), actionField).describe('What a caller may send. Anything undeclared is DROPPED'),
     output: z
       .record(z.string(), actionField)
       .optional()
       .describe('Derived from the `flow.output` step for typed bindings. THAT step is the contract; this is a hint'),
-    credentials: z
-      .array(z.string())
-      .optional()
-      .describe('Credentials this action may use. A STEP still names the one it uses, and sees no other'),
-    connectors: z.array(z.string()).optional().describe('Connector identifiers this action may call'),
-    nodes: z.array(actionNode).describe('The flow: one trigger step, then a chain linked by afterNode'),
+    nodes: z
+      .array(actionNode)
+      .describe('The flow: a trigger step per way in, each heading a chain linked by afterNode'),
     limits: actionLimits.optional()
   })
   .describe(
     'Create a server action, or REPLACE one whole (use patchAction to change part). An action is a declarative ' +
-      'flow the SERVER runs: it reaches credentials and systems a browser must not, and the page only names it.'
+      'flow the SERVER runs — the same node map an element\'s interactions are, with tasks instead of callbacks. ' +
+      'What starts it, who may and what they send all live on its TRIGGER steps, not beside the flow.'
   );
 
 export type UpsertAction = z.infer<typeof upsertActionOp>;
 
-/** The node array becomes the map the runner walks, keyed by id — the same shape an element's interactions hold. */
+/**
+ * The node array becomes the map the runner walks, keyed by id — the same shape an element's interactions hold.
+ *
+ * `flowId` is stamped by walking each trigger's chain, because an action may hold several: a step belongs to the
+ * flow whose trigger reaches it, and guessing "the first trigger" would label a webhook's steps as the call's.
+ */
 const toNodes = (nodes: UpsertAction['nodes']): Record<string, ElementInteraction> => {
-  // Every step belongs to the flow its trigger starts. A document with no trigger is refused by the validator a
-  // moment later, so the fallback here only has to be harmless.
-  const trigger = nodes.find(item => item.type === 'trigger');
-  const triggerId = trigger ? trigger.id : '';
+  const byId = new Map(nodes.map(node => [node.id, node]));
+  const flowOf = new Map<string, string>();
+  nodes
+    .filter(node => node.type === 'trigger')
+    .forEach(trigger => {
+      let current: string | undefined = trigger.id;
+      while (current && !flowOf.has(current)) {
+        flowOf.set(current, trigger.id);
+        current = byId.get(current)?.afterNode || undefined;
+      }
+    });
 
   return nodes.reduce<Record<string, ElementInteraction>>((acum, node) => {
     acum[node.id] = {
@@ -60,7 +67,7 @@ const toNodes = (nodes: UpsertAction['nodes']): Record<string, ElementInteractio
       elementId: null,
       beforeNode: node.beforeNode,
       afterNode: node.afterNode,
-      flowId: node.type === 'trigger' ? node.id : triggerId,
+      flowId: flowOf.get(node.id) ?? node.id,
       enabled: node.enabled,
       ...(node.when === undefined ? {} : { when: node.when as ElementInteraction['when'] })
     };
@@ -73,12 +80,7 @@ export const toDocument = (op: UpsertAction): ActionDocument => ({
   name: op.name,
   ...(op.description === undefined ? {} : { description: op.description }),
   enabled: op.enabled ?? true,
-  access: op.access,
-  triggers: op.triggers,
-  input: op.input,
   ...(op.output === undefined ? {} : { output: op.output }),
-  ...(op.credentials === undefined ? {} : { credentials: op.credentials }),
-  ...(op.connectors === undefined ? {} : { connectors: op.connectors }),
   nodes: toNodes(op.nodes),
   ...(op.limits === undefined ? {} : { limits: op.limits })
 });

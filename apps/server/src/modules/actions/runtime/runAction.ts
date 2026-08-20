@@ -7,7 +7,7 @@ import { resolveLimits } from './limits';
 import { createMemoryKv } from './memoryKv';
 import { namespaceKv } from './namespaceKv';
 import { precheckRun } from './precheck';
-import { buildRedactor, projectUser, resolveCredentials } from './scope';
+import { createRedactor, projectUser } from './scope';
 
 import type {
   ActionRunRecord,
@@ -102,10 +102,6 @@ const withDefaults = (task: RegisteredTask, params: Record<string, unknown>): Re
     { ...params }
   );
 
-/** The entry node is the flow's single trigger, which is what the builder's Workflow editor already draws from. */
-const findTriggerNode = (nodes: Record<string, ElementInteraction>): ElementInteraction | undefined =>
-  Object.values(nodes).find(node => node.type === 'trigger');
-
 type NodeOutcome = { status: InteractionNodeStatus; result: unknown };
 
 const runNode = async (
@@ -166,8 +162,9 @@ export const createActionRunner = (
     const { document } = entry;
 
     // The endpoint already ran this; a custom trigger may not have. It is pure and cheap, and being the only
-    // implementation is what keeps the two paths from drifting into different rules.
-    const values = precheckRun(entry, {
+    // implementation is what keeps the two paths from drifting into different rules. It also answers WHICH step
+    // starts the run — the trigger for the kind that fired, not whichever one comes first in the map.
+    const { trigger: triggerNode, values } = precheckRun(entry, {
       trigger: request.trigger,
       input: request.input,
       user: request.user,
@@ -175,8 +172,10 @@ export const createActionRunner = (
     });
 
     const limits: ResolvedActionLimits = resolveLimits(config.limits, document.limits);
-    const credentials = await resolveCredentials(config.lookups, request.spaceId, document.credentials);
-    const redact = buildRedactor(credentials);
+    // Learns as the run goes: a credential is registered by the task that resolved it, always before that task's
+    // own result is redacted. Nothing is resolved up front because nothing is declared up front any more.
+    const redactor = createRedactor();
+    const redact = redactor.redact;
 
     const controller = new AbortController();
     const timeoutMs = request.emit ? limits.streamTimeoutMs : limits.timeoutMs;
@@ -197,30 +196,36 @@ export const createActionRunner = (
       user: request.user,
       signal: controller.signal,
       scope,
-      credential: identifier => {
-        if (!document.credentials?.includes(identifier)) {
-          throw new ActionRunError('forbidden', `This action does not declare credential "${identifier}"`);
+      /**
+       * The secret a STEP asked for, resolved inside that step and never in the flow scope.
+       *
+       * There is no allow-list to check it against, deliberately: an action is authored by someone who may edit
+       * every action in the space, so a list they can edit is not a boundary — it only ever told the redactor what
+       * to look for, and the redactor now learns from what was actually resolved. What IS a boundary is that a
+       * credential reaches only the params of the step that named it, which is `renderTaskParams`' whole job.
+       */
+      credential: async identifier => {
+        const credential = await config.lookups.getCredential?.(request.spaceId, identifier);
+        if (credential) {
+          redactor.add(credential);
         }
 
-        // Already resolved up front, and the run failed closed if it was missing — so there is nothing to look up
-        // here a second time.
-        return Promise.resolve(credentials[identifier]);
+        return credential;
       },
       connector: async connectorId => {
-        if (!document.connectors?.includes(connectorId)) {
-          throw new ActionRunError('forbidden', `This action does not declare connector "${connectorId}"`);
-        }
-
         const manifest = await config.lookups.getConnector?.(request.spaceId, connectorId, request.at);
         if (!manifest) {
           return undefined;
         }
 
-        // The connector's own credential, not one the document listed: authorizing the connector is what
-        // authorizes the secret it names, exactly as the element-addressed write endpoint has always done.
+        // The connector's own credential: naming the connector is what reaches the secret it declares, exactly as
+        // the element-addressed write endpoint has always done.
         const credential = manifest.credential
           ? await config.lookups.getCredential?.(request.spaceId, manifest.credential)
           : undefined;
+        if (credential) {
+          redactor.add(credential);
+        }
 
         return { manifest, credential };
       },
@@ -255,11 +260,7 @@ export const createActionRunner = (
     let returned: unknown;
 
     try {
-      let current = findTriggerNode(document.nodes);
-      if (!current) {
-        throw new ActionRunError('failed', 'This action has no trigger node to start from');
-      }
-
+      let current = triggerNode;
       let executed = 0;
       let next = document.nodes[current.afterNode] as ElementInteraction | undefined;
       while (next) {

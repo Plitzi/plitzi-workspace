@@ -37,23 +37,26 @@ const entry = (overrides: Partial<ActionDocument> = {}): ActionEntry => ({
   document: {
     name: 'Stripe hook',
     enabled: true,
-    access: { mode: 'public' },
-    triggers: [
-      {
-        type: 'webhook',
-        verify: {
-          type: 'hmac',
-          header: 'x-signature',
-          algorithm: 'sha256',
-          secret: '{{ credential.stripe.hookSecret }}'
-        }
-      }
-    ],
-    input: { payload: { type: 'json' } },
     output: {},
-    credentials: ['stripe'],
     nodes: {
-      start: node('start', { type: 'trigger', action: 'webhook', afterNode: 'ret' }),
+      start: node('start', {
+        type: 'trigger',
+        action: 'webhook',
+        params: {
+          access: { mode: 'public' },
+          input: { payload: { type: 'json' } },
+          // The credential is NAMED, not templated: this runs before a run exists, so there is no scope for a
+          // token to resolve against and one that rendered empty would verify against nothing.
+          verify: {
+            type: 'hmac',
+            header: 'x-signature',
+            algorithm: 'sha256',
+            credential: 'stripe',
+            secretField: 'hookSecret'
+          }
+        },
+        afterNode: 'ret'
+      }),
       ret: node('ret', { action: 'flow.output', params: { values: '{}' } })
     },
     ...overrides
@@ -184,7 +187,9 @@ describe('handleActionWebhook', () => {
   });
 
   it('answers 404 for an action that does not declare a webhook', async () => {
-    const { sent } = await post(config(entry({ triggers: [{ type: 'call' }] })), '{}', { 'x-signature': sign('{}') });
+    const callOnly = entry();
+    callOnly.document.nodes.start = { ...callOnly.document.nodes.start, action: 'call', params: {} };
+    const { sent } = await post(config(callOnly), '{}', { 'x-signature': sign('{}') });
 
     // Deliberately the same answer as an action that does not exist: telling them apart is an oracle.
     expect(sent.status).toBe(404);

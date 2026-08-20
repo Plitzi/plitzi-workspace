@@ -64,96 +64,107 @@ const validateFields = (fields: unknown, path: string, errors: ActionDocumentIss
   });
 };
 
-const validateAccess = (access: unknown, errors: ActionDocumentIssue[]) => {
+const validateAccess = (access: unknown, path: string, errors: ActionDocumentIssue[]) => {
   if (!isRecord(access) || !isFilledString(access.mode)) {
-    // No default: an action whose access nobody wrote down would have to be guessed at, and every guess is either
+    // No default: a way in whose access nobody wrote down would have to be guessed at, and every guess is either
     // a lock-out or a hole.
-    errors.push({ path: 'access', message: 'must declare a mode', hint: `one of ${ACCESS_MODES.join(', ')}` });
+    errors.push({ path, message: 'must declare a mode', hint: `one of ${ACCESS_MODES.join(', ')}` });
 
     return;
   }
 
   if (!ACCESS_MODES.includes(access.mode)) {
-    errors.push({ path: 'access.mode', message: `unknown access mode "${access.mode}"` });
+    errors.push({ path: `${path}.mode`, message: `unknown access mode "${access.mode}"` });
 
     return;
   }
 
   if (access.mode === 'role' && (!Array.isArray(access.permissions) || access.permissions.length === 0)) {
-    errors.push({ path: 'access.permissions', message: 'role access must list at least one permission' });
+    errors.push({ path: `${path}.permissions`, message: 'role access must list at least one permission' });
   }
 };
 
-const validateTriggers = (
-  triggers: unknown,
-  access: unknown,
+/**
+ * One way into the action: what starts it, who may, and with what.
+ *
+ * All three live on the STEP, which is what makes them answerable per entry point — a webhook gated on its
+ * signature and a page call requiring a session, in one action, without either loosening the other.
+ */
+const validateTrigger = (
+  key: string,
+  node: Record<string, unknown>,
   errors: ActionDocumentIssue[],
   warnings: ActionDocumentIssue[]
 ) => {
-  if (!Array.isArray(triggers) || triggers.length === 0) {
-    errors.push({ path: 'triggers', message: 'must declare at least one trigger' });
+  const path = `nodes.${key}`;
+  const kind = node.action;
+  if (!isFilledString(kind) || !TRIGGER_TYPES.includes(kind)) {
+    errors.push({
+      path: `${path}.action`,
+      message: `"${String(kind)}" is not a way an action can be started`,
+      hint: `one of ${TRIGGER_TYPES.join(', ')}`
+    });
 
     return;
   }
 
-  triggers.forEach((trigger, index) => {
-    const path = `triggers.${index}`;
-    if (!isRecord(trigger) || !isFilledString(trigger.type)) {
-      errors.push({ path, message: 'must declare a type' });
+  const params = isRecord(node.params) ? node.params : {};
+  validateFields(params.input, `${path}.params.input`, errors);
 
-      return;
+  // A schedule has no caller to authorize: nothing about a clock is a session, and asking for an access rule here
+  // would only invite one that means nothing.
+  if (kind !== 'schedule') {
+    validateAccess(params.access, `${path}.params.access`, errors);
+  }
+
+  if (kind === 'schedule') {
+    if (!isFilledString(params.cron)) {
+      errors.push({ path: `${path}.params.cron`, message: 'a scheduled trigger needs a cron expression' });
+    } else if (!parseCron(params.cron)) {
+      // Checked against the very parser the runner uses. An expression it cannot read does not fail loudly at
+      // run time — it simply never matches a minute, and the schedule sits silent for as long as nobody looks.
+      errors.push({
+        path: `${path}.params.cron`,
+        message: `"${params.cron}" is not an expression this server can read, so it would never fire`,
+        hint: 'five fields — minute hour day-of-month month day-of-week — with *, lists, ranges and steps'
+      });
     }
+  }
 
-    if (!TRIGGER_TYPES.includes(trigger.type)) {
-      errors.push({ path: `${path}.type`, message: `unknown trigger "${trigger.type}"` });
+  if (kind === 'custom' && !isFilledString(params.name)) {
+    errors.push({ path: `${path}.params.name`, message: 'a custom trigger needs a name to be mounted under' });
+  }
 
-      return;
-    }
-
-    if (trigger.type === 'schedule') {
-      if (!isFilledString(trigger.cron)) {
-        errors.push({ path: `${path}.cron`, message: 'a scheduled trigger needs a cron expression' });
-      } else if (!parseCron(trigger.cron)) {
-        // Checked against the very parser the runner uses. An expression it cannot read does not fail loudly at
-        // run time — it simply never matches a minute, and the schedule sits silent for as long as nobody looks.
-        errors.push({
-          path: `${path}.cron`,
-          message: `"${trigger.cron}" is not an expression this server can read, so it would never fire`,
-          hint: 'five fields — minute hour day-of-month month day-of-week — with *, lists, ranges and steps'
-        });
-      }
-    }
-
-    if (trigger.type === 'custom' && !isFilledString(trigger.name)) {
-      errors.push({ path: `${path}.name`, message: 'a custom trigger needs a name to be mounted under' });
-    }
-
+  if (kind === 'webhook') {
     // A webhook is reachable by anyone who learns the URL. Without a signature it is an open endpoint into
     // whatever the flow does, so this is called out even though the document is technically runnable.
-    if (trigger.type === 'webhook' && !isRecord(trigger.verify)) {
+    if (!isRecord(params.verify)) {
       warnings.push({
-        path: `${path}.verify`,
+        path: `${path}.params.verify`,
         message: 'this webhook accepts unsigned requests',
         hint: 'declare an hmac verification so only the sender you expect can start a run'
       });
+    } else if (!isFilledString(params.verify.credential)) {
+      errors.push({
+        path: `${path}.params.verify.credential`,
+        message: 'the verification names no credential to read the signing secret from'
+      });
     }
-  });
+  }
 
-  const isPublic = isRecord(access) && access.mode === 'public';
-  const onlyCall = triggers.every(trigger => isRecord(trigger) && trigger.type === 'call');
-  if (isPublic && onlyCall) {
+  if (kind === 'call' && isRecord(params.access) && params.access.mode === 'public') {
     warnings.push({
-      path: 'access',
+      path: `${path}.params.access`,
       message: 'anyone can run this action, including signed-out visitors',
       hint: 'use session access unless the page needs it before anyone signs in'
     });
   }
 };
 
-type NodeShape = { id?: unknown; type?: unknown; action?: unknown; afterNode?: unknown; enabled?: unknown };
+type NodeShape = { id?: unknown; type?: unknown; action?: unknown; afterNode?: unknown; flowId?: unknown };
 
 /**
- * The flow itself: one entry, a reachable chain, and steps that can actually run on a server.
+ * The flows themselves: every one starts at a trigger, and every step can actually run on a server.
  *
  * The last rule is the one worth having a validator for. Client and server flows share a node type, so nothing in
  * the shape stops someone from dropping a `setState` into an action — it just fails at run time, in a place with
@@ -172,16 +183,32 @@ const validateNodes = (
   }
 
   const entries = Object.entries(nodes) as [string, NodeShape][];
-  const triggerNodes = entries.filter(([, node]) => isRecord(node) && node.type === 'trigger');
-  if (triggerNodes.length === 0) {
-    errors.push({ path: 'nodes', message: 'the flow has no trigger step to start from' });
-  } else if (triggerNodes.length > 1) {
+  const triggers = entries.filter(([, node]) => isRecord(node) && node.type === 'trigger');
+  if (triggers.length === 0) {
     errors.push({
       path: 'nodes',
-      message: `the flow has ${triggerNodes.length} trigger steps`,
-      hint: 'a server action runs one chain, so exactly one step starts it'
+      message: 'this action has no way in',
+      hint: 'add a trigger step — call, webhook, schedule, render or custom'
     });
   }
+
+  // Two ways in of the same kind is not a second flow, it is an ambiguity: the runner starts at the trigger
+  // matching what fired, and two of them would make which chain runs a matter of key order.
+  const kinds = new Map<string, string[]>();
+  triggers.forEach(([key, node]) => {
+    if (isFilledString(node.action)) {
+      kinds.set(node.action, [...(kinds.get(node.action) ?? []), key]);
+    }
+  });
+  kinds.forEach((keys, kind) => {
+    if (keys.length > 1) {
+      errors.push({
+        path: `nodes.${keys[1]}`,
+        message: `this action has ${keys.length} "${kind}" triggers`,
+        hint: 'one step per way in — a second flow starts from a different kind of trigger'
+      });
+    }
+  });
 
   entries.forEach(([key, node]) => {
     const path = `nodes.${key}`;
@@ -192,6 +219,8 @@ const validateNodes = (
     }
 
     if (node.type === 'trigger') {
+      validateTrigger(key, node, errors, warnings);
+
       return;
     }
 
@@ -220,6 +249,27 @@ const validateNodes = (
     }
   });
 
+  // A step nothing points at never runs, and looks exactly like one that does. Reachability is walked from every
+  // trigger rather than assumed, which is the only check that catches a chain left detached by an edit.
+  const reachable = new Set<string>();
+  triggers.forEach(([key]) => {
+    let current = key;
+    while (current && !reachable.has(current)) {
+      reachable.add(current);
+      const node = nodes[current] as NodeShape | undefined;
+      current = isFilledString(node?.afterNode) ? node.afterNode : '';
+    }
+  });
+  entries.forEach(([key]) => {
+    if (!reachable.has(key)) {
+      warnings.push({
+        path: `nodes.${key}`,
+        message: 'no trigger reaches this step, so it never runs',
+        hint: 'chain it with `afterNode` from a trigger, or delete it'
+      });
+    }
+  });
+
   // The output step is the contract, so where it sits in the chain is part of it: the runner reads the last one
   // that ran, and a step after it is work whose result nobody will ever see.
   const outputs = entries.filter(([, node]) => isRecord(node) && node.action === 'flow.output');
@@ -231,14 +281,6 @@ const validateNodes = (
         hint: 'move flow.output to the end of the flow'
       });
     }
-  }
-
-  if (outputs.length > 1) {
-    warnings.push({
-      path: 'nodes',
-      message: `this flow has ${outputs.length} output steps, and only the last one that runs is answered`,
-      hint: 'keep one flow.output at the end, and gate what it returns with `when` if it varies'
-    });
   }
 
   // Not an error: an action that only does something — sends, writes, charges — legitimately answers nothing.
@@ -281,30 +323,6 @@ const validateCredentialTokens = (nodes: Record<string, unknown>, warnings: Acti
   });
 };
 
-/** Steps that name a connector the document never declared cannot resolve one at run time. */
-const validateDeclarations = (document: Record<string, unknown>, warnings: ActionDocumentIssue[]) => {
-  const declared = new Set(Array.isArray(document.connectors) ? (document.connectors as string[]) : []);
-  const nodes = isRecord(document.nodes) ? document.nodes : {};
-
-  Object.entries(nodes).forEach(([key, node]) => {
-    if (!isRecord(node) || typeof node.action !== 'string' || !node.action.startsWith('connector.')) {
-      return;
-    }
-
-    const params = isRecord(node.params) ? node.params : {};
-    const connector = params.connector;
-    // Only a literal can be checked: a bound value resolves from the flow scope at run time, and refusing those
-    // would forbid the legitimate case of choosing a connector from input.
-    if (isFilledString(connector) && !connector.includes('{{') && !declared.has(connector)) {
-      warnings.push({
-        path: `nodes.${key}.params.connector`,
-        message: `"${connector}" is not listed in this action's connectors`,
-        hint: 'add it to `connectors` or the step will be refused at run time'
-      });
-    }
-  });
-};
-
 export const validateActionDocument = (document: unknown): ActionDocumentReport => {
   const errors: ActionDocumentIssue[] = [];
   const warnings: ActionDocumentIssue[] = [];
@@ -317,14 +335,10 @@ export const validateActionDocument = (document: unknown): ActionDocumentReport 
     errors.push({ path: 'name', message: 'must have a name' });
   }
 
-  validateAccess(document.access, errors);
-  validateTriggers(document.triggers, document.access, errors, warnings);
-  validateFields(document.input, 'input', errors);
   // Derived from the output step rather than authored, so it is checked for shape and never for agreement: the
   // step is the source of truth and the runner never reads this.
   validateFields(document.output, 'output', errors);
   validateNodes(document.nodes, document.output, errors, warnings);
-  validateDeclarations(document, warnings);
   validateCredentialTokens(isRecord(document.nodes) ? document.nodes : {}, warnings);
 
   return { valid: errors.length === 0, errors, warnings };

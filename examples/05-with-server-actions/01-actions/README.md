@@ -39,9 +39,11 @@ action: { lookups, tasks: [shippingRate] }
 deployment reads rows and this one reads an array. Without it there is no endpoint at all, rather than one whose
 behaviour somebody has to guess at.
 
-**An action is data.** [`src/actions.ts`](./src/actions.ts) holds two documents — the same shape the builder
-authors and the runner executes. Four parts decide everything: who may run it, what starts it, what a caller may
-send, and the flow itself. There is no default access rule, because an unstated one is either a lock-out or a hole.
+**An action is a name and a flow.** [`src/actions.ts`](./src/actions.ts) holds two documents — the same node map
+an element's interactions are, with tasks where a page has callbacks. What starts a run, who may start it and what
+they may send all live on the **trigger step**, exactly as an element's `onClick` carries its own: a second way in
+is a second trigger step, not another field. There is no default access rule, because an unstated one is either a
+lock-out or a hole.
 
 **The output step is the contract.** The task returns `{ city, band, total, currency }`; the flow's last step names
 three of them, and `band` never leaves the server. Nothing else declares the shape, so nothing else can disagree

@@ -93,38 +93,48 @@ export type ActionField = {
   label?: string;
 };
 
-/** Who may invoke this action. Resolved against the RFC 0010 kernel — never re-implemented here. */
+/** Who may start a run through ONE way in. Resolved against the RFC 0010 kernel — never re-implemented here. */
 export type ActionAccess =
-  /** Anyone, including an anonymous visitor. Required for a webhook; a deliberate choice anywhere else. */
+  /** Anyone, including an anonymous visitor. What a webhook needs; a deliberate choice anywhere else. */
   | { mode: 'public' }
-  /** Any request carrying a valid session for this space. The default. */
+  /** Any request carrying a valid session for this space. */
   | { mode: 'session' }
   /** A session holding every one of these space permissions. */
   | { mode: 'role'; permissions: string[] };
 
-export type ActionTrigger =
-  | { type: 'call' }
-  | { type: 'webhook'; verify?: ActionWebhookVerification }
-  | { type: 'schedule'; cron: string; timezone?: string }
-  | { type: 'render' }
-  /** Anything a deployment mounts itself. The runner does not care who called it. */
-  | { type: 'custom'; name: string };
+/** The ways in, as the `action` of a trigger STEP rather than a list beside the flow. */
+export type ActionTriggerType = 'call' | 'webhook' | 'schedule' | 'render' | 'custom';
 
+/** What a trigger step carries in its `params`. */
+export type ActionTriggerParams = {
+  /** Required for every kind but `schedule`, which has no caller to authorize. */
+  access?: ActionAccess;
+  /** What a caller may send through THIS way in. Anything undeclared is dropped before a step runs. */
+  input?: Record<string, ActionField>;
+  /** `webhook`: how an inbound request proves itself. Its secret NAMES a credential — see §4.2.1. */
+  verify?: ActionWebhookVerification;
+  /** `schedule`: five fields, UTC. */
+  cron?: string;
+  timezone?: string;
+  /** `custom`: the name the deployment mounts it under. */
+  name?: string;
+};
+
+/**
+ * An action is a NAME and a FLOW. Nothing else.
+ *
+ * It is the same node map an element's `interactions` are, and that is the whole design: what starts a run, who
+ * may start it and what they may send are properties of the STEP that starts it, exactly as an element's
+ * `onClick` carries its own. One action may hold several trigger steps, each heading its own chain.
+ */
 export type ActionDocument = {
   name: string;
   description?: string;
   enabled: boolean;
-  access: ActionAccess;
-  triggers: ActionTrigger[];
-  input: Record<string, ActionField>;
-  /** The only keys the caller gets back. Everything else a node produced stays on the server. */
-  output: Record<string, ActionField>;
-  /** Credential identifiers this action may resolve. Nothing else is in scope for its templates. */
-  credentials?: string[];
-  /** Connector identifiers this action may call. */
-  connectors?: string[];
-  /** The flow itself — the same node map an element's `interactions` holds. */
+  /** The flow(s): trigger steps, each heading a chain of task steps. */
   nodes: Record<string, ElementInteraction>;
+  /** DERIVED from the `flow.output` step, for typed bindings in the builder. The step is the contract. */
+  output?: Record<string, ActionField>;
   limits?: { timeoutMs?: number; maxNodes?: number; maxRequests?: number };
 };
 
@@ -303,9 +313,12 @@ under its own node id. Everything else a flow can reach is something a task chos
 Credentials are deliberately **not** in it. An ambient `{{credential.*}}` is interpolable by every node,
 `flow.return` included — which is a secret handed to the browser through a step nobody would think to audit.
 Instead a task that needs one **names it** (`http.request` takes a `credential` parameter) and resolves it
-inside its own execution, with the secret in scope only while that step's own parameters render. The
-document's `credentials` list still gates which identifiers a task may ask for at all, so the two checks
-compose: the document says which secrets exist for this action, and the step says which one it is using.
+inside its own execution, with the secret in scope only while that step's own parameters render.
+
+There is no second list beside the flow gating which identifiers a step may ask for. There was, and it bought
+nothing: an action is authored by somebody who may edit every action in the space, so a list they can edit is not
+a boundary against them — its only real job was telling the redactor what to look for, and the redactor now learns
+from what each step actually resolved, which is both narrower and always current.
 
 This is the rule to hold as the catalog grows — `apiCall` and everything after it takes the same shape, and
 `renderTaskParams` exists so each of them does not answer the question differently.
@@ -478,7 +491,7 @@ computed field, a permission-dependent shape.
 
 **`custom`** — a deployment mounts a stage in `PipelineExtensions.data` (or any other listener: a queue
 consumer, a Redis subscriber on `SpaceEvent`, a CLI) and calls `runAction` with `trigger: 'custom'`. The
-runner authorizes on the document's `access` exactly as for any other caller; a custom trigger cannot grant
+runner authorizes on that trigger step's own `access` exactly as for any other caller; a custom trigger cannot grant
 itself more than a webhook has.
 
 #### 4.5.1 Call modes: what the client flow waits for
@@ -656,7 +669,7 @@ Three gates, in this order, before a single node runs:
 1. **Access.** `session` (default) resolves the kernel's identity from the request; `role` intersects global
    and space permissions exactly as RFC 0010 defines; `public` skips it and is only reachable for an action
    that declared it. No action is invocable by default.
-2. **Inputs.** Coerced and validated against `document.input`: unknown keys dropped, missing required keys
+2. **Inputs.** Coerced and validated against the trigger step's own `input`: unknown keys dropped, missing required keys
    refused, types enforced. Templates therefore interpolate only values that survived a declared contract —
    this is the property that makes twig-in-params safe.
 3. **Resources.** `credentials` and `connectors` are resolved once, up front, and the run fails closed if a
@@ -746,7 +759,7 @@ not run. Silently re-executing a flow in the browser is how a credential ends up
 **Builder** — a new `modules/Actions`, mirroring `modules/Connectors` almost file for file (it is the
 closest existing sibling: a per-space server-side document with a list, a form and a validator):
 
-- list + form (name, access, triggers, input/output fields, declared credentials and connectors);
+- list + form (name, enabled, the ways in with their access and input, and the flow itself);
 - the **existing** `Workflow` editor for `nodes`, fed a server task catalog instead of the client one;
 - a **Test run** panel: fill the declared inputs, run against the draft, see the returned trace in the same
   node UI. This is what makes the feature learnable.

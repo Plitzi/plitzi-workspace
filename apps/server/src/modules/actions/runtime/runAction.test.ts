@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { createActionsModule } from '../index';
 
@@ -20,17 +20,23 @@ const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementI
   ...overrides
 });
 
+/** The `call` trigger step, whose params are now where access and the input contract live. */
+const callTrigger = (params: Record<string, unknown> = {}, afterNode = 'compute') =>
+  node('start', {
+    type: 'trigger',
+    action: 'call',
+    params: { access: { mode: 'public' }, input: { amount: { type: 'number', required: true } }, ...params },
+    afterNode
+  });
+
 const buildEntry = (overrides: Partial<ActionDocument> = {}): ActionEntry => ({
   id: 'quote',
   document: {
     name: 'Quote',
     enabled: true,
-    access: { mode: 'public' },
-    triggers: [{ type: 'call' }],
-    input: { amount: { type: 'number', required: true } },
     output: { total: { type: 'number' } },
     nodes: {
-      start: node('start', { type: 'trigger', action: 'call', afterNode: 'compute' }),
+      start: callTrigger(),
       compute: node('compute', {
         action: 'flow.output',
         afterNode: '',
@@ -79,7 +85,7 @@ describe('runAction', () => {
   it('leaves everything the output step did not name on the server', async () => {
     const entry = buildEntry({
       nodes: {
-        start: node('start', { type: 'trigger', action: 'call', afterNode: 'fetchish' }),
+        start: callTrigger({}, 'fetchish'),
         fetchish: node('fetchish', {
           action: 'transform.json',
           afterNode: 'out',
@@ -125,7 +131,12 @@ describe('runAction', () => {
   });
 
   it('requires the declared permissions', async () => {
-    const entry = buildEntry({ access: { mode: 'role', permissions: ['space.write'] } });
+    const entry = buildEntry({
+      nodes: {
+        start: callTrigger({ access: { mode: 'role', permissions: ['space.write'] } }),
+        compute: node('compute', { action: 'flow.output', params: { values: '{"total": 1}' } })
+      }
+    });
     const { runAction } = createActionsModule({ lookups });
 
     await expect(runAction(request(entry))).rejects.toMatchObject({ reason: 'forbidden' });
@@ -140,7 +151,7 @@ describe('runAction', () => {
   it('skips a step whose `when` does not match, and keeps walking', async () => {
     const entry = buildEntry({
       nodes: {
-        start: node('start', { type: 'trigger', action: 'call', afterNode: 'skipped' }),
+        start: callTrigger({}, 'skipped'),
         skipped: node('skipped', {
           action: 'flow.fail',
           afterNode: 'compute',
@@ -161,7 +172,7 @@ describe('runAction', () => {
   it('ends the run at a failed step instead of carrying on', async () => {
     const entry = buildEntry({
       nodes: {
-        start: node('start', { type: 'trigger', action: 'call', afterNode: 'boom' }),
+        start: callTrigger({}, 'boom'),
         boom: node('boom', { action: 'flow.fail', afterNode: 'compute', params: { message: 'nope' } }),
         compute: node('compute', { action: 'flow.output', params: { values: '{"total": 99}' } })
       }
@@ -177,7 +188,7 @@ describe('runAction', () => {
   it('refuses a client-side step that wandered into a server flow', async () => {
     const entry = buildEntry({
       nodes: {
-        start: node('start', { type: 'trigger', action: 'call', afterNode: 'clientStep' }),
+        start: callTrigger({}, 'clientStep'),
         clientStep: node('clientStep', { type: 'globalCallback', action: 'setState' })
       }
     });
@@ -196,9 +207,8 @@ describe('runAction', () => {
       run: ({ value }) => ({ sent: value })
     };
     const entry = buildEntry({
-      credentials: ['stripe'],
       nodes: {
-        start: node('start', { type: 'trigger', action: 'call', afterNode: 'call' }),
+        start: callTrigger({}, 'call'),
         call: node('call', { action: 'test.echo', params: { value: '{{ credential.stripe.apiKey }}' } })
       }
     });
@@ -226,9 +236,8 @@ describe('runAction', () => {
       run: async (_params, ctx) => ({ echoed: (await ctx.credential('stripe'))?.apiKey })
     };
     const entry = buildEntry({
-      credentials: ['stripe'],
       nodes: {
-        start: node('start', { type: 'trigger', action: 'call', afterNode: 'call' }),
+        start: callTrigger({}, 'call'),
         call: node('call', { action: 'test.leak' })
       }
     });
@@ -243,13 +252,29 @@ describe('runAction', () => {
     expect(JSON.stringify(result.trace)).toContain('«redacted»');
   });
 
-  it('fails closed when a declared credential is missing', async () => {
-    const entry = buildEntry({ credentials: ['stripe'] });
+  /** No list is resolved up front any more, so the failure lands where the credential was asked for. What must
+   *  not happen is the step going out unauthenticated and reporting whatever the provider says about it. */
+  it('fails the run at the step that names a credential this space has not got', async () => {
+    const fetchImpl = vi.fn();
+    const entry = buildEntry({
+      nodes: {
+        start: callTrigger({}, 'call'),
+        call: node('call', {
+          action: 'http.request',
+          params: { url: 'https://api.example.com', method: 'GET', credential: 'stripe' }
+        })
+      }
+    });
     const { runAction } = createActionsModule({
-      lookups: { ...lookups, getCredential: () => Promise.resolve(undefined) }
+      lookups: { ...lookups, getCredential: () => Promise.resolve(undefined) },
+      fetchImpl: fetchImpl
     });
 
-    await expect(runAction(request(entry))).rejects.toThrow(/stripe/);
+    const result = await runAction(request(entry));
+
+    expect(result.status).toBe('failed');
+    expect(JSON.stringify(result.trace)).toContain('stripe');
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 
   it('refuses a custom task that shadows a built-in namespace', () => {
@@ -295,7 +320,7 @@ describe('run records', () => {
   it('records a failed run, and says where it stopped', async () => {
     const failing = buildEntry({
       nodes: {
-        start: node('start', { type: 'trigger', action: 'call', afterNode: 'boom' }),
+        start: callTrigger({}, 'boom'),
         boom: node('boom', { action: 'flow.fail', params: { message: 'nope' } })
       }
     });

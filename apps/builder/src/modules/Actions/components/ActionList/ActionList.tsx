@@ -12,9 +12,13 @@ export type ActionListProps = {
   onCreate: () => void;
 };
 
-/** What each action is reachable BY, at a glance: a flow nobody can trigger is the commonest way to lose an hour. */
+/** What each action is reachable BY, at a glance: a flow nobody can trigger is the commonest way to lose an hour.
+ *  Read off the trigger STEPS, which is where a way in is declared. */
 const triggerSummary = (action: SpaceAction) =>
-  action.document.triggers.map(trigger => trigger.type).join(', ') || 'no triggers';
+  Object.values(action.document.nodes)
+    .filter(node => node.type === 'trigger')
+    .map(node => node.action)
+    .join(', ') || 'no triggers';
 
 const ActionList = ({ actions, onSelect, onRemove, onCreate }: ActionListProps) => {
   const handleSelect = useCallback((identifier: string) => () => onSelect(identifier), [onSelect]);

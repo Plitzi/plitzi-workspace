@@ -28,17 +28,24 @@ Three properties everything else follows from:
 
 ## 2. Authoring one
 
-**Server Actions** in the builder's left panel. An action has four parts:
+**Server Actions** in the builder's left panel. An action is a **name and a flow**, and nothing else — the same
+node map an element's interactions are, with tasks where a page has callbacks.
 
-| Part | What it decides |
+Everything about how a run begins lives on the step that begins it:
+
+| On the trigger step | What it decides |
 |---|---|
-| Who may run it | Anyone / signed-in visitors / visitors holding named permissions. There is no default — an unstated rule is either a lock-out or a hole |
-| What starts it | A page calling it, an inbound webhook, a schedule, or a page render. One action can declare several |
-| Input | What a caller may send. **Anything undeclared is dropped** before a single step runs |
-| The flow | A trigger step, then a chain of tasks |
+| Its kind | `call` from a page, `webhook`, `schedule`, `render`, or one the deployment mounts |
+| Who may | Anyone / signed-in visitors / visitors holding named permissions. No default — an unstated rule is either a lock-out or a hole. A `schedule` has no caller, so it has no rule |
+| Input | What a caller may send **through that way in**. Anything undeclared is dropped before a single step runs |
 
-Credentials and connectors are **picked, not typed** — the same picker the connector panel uses. Declaring one here
-says the action *may ask for it*; a step still names which one it uses, and sees no other.
+**One action can have several ways in**, exactly as one element has an `onClick` and an `onSubmit`: add a second
+trigger step and it heads its own chain. That is also what lets a signed webhook and a session-only page call live
+in the same action without either loosening the other — the thing a single rule beside the flow could not express.
+
+There is no list of credentials or connectors to declare. A step **names** the one it needs and resolves it inside
+its own execution, which is the only boundary that ever mattered: a secret reaches the params of the step that
+asked for it and nothing else. A list the author could edit was never a boundary against the author.
 
 ### The output step
 
@@ -135,7 +142,7 @@ interpolable by every step, including the one that answers the browser.
 
 ## 5. Webhooks
 
-Declare the **webhook** trigger and the action answers at `POST /_action/hook/<actionId>` on the space's own
+Add a **webhook** trigger step and the action answers at `POST /_action/hook/<actionId>` on the space's own
 origin. It is public by construction, so the signature is the security boundary:
 
 ```json
@@ -143,11 +150,16 @@ origin. It is public by construction, so the signature is the security boundary:
   "type": "hmac",
   "header": "stripe-signature",
   "algorithm": "sha256",
-  "secret": "{{credential.stripe.webhookSecret}}",
+  "credential": "stripe",
+  "secretField": "webhookSecret",
   "timestampHeader": "stripe-timestamp",
   "toleranceSeconds": 300
 }
 ```
+
+The credential is **named, not templated**. This check runs before the body is parsed and before a run exists, so
+there is no flow scope for a token to resolve against — and one that rendered to nothing would leave the endpoint
+verifying every request against an empty secret.
 
 - The signature is checked against the **raw body**, before parsing. (This is why you cannot re-serialize a webhook
   body and verify it afterwards — the digest is over bytes.)
@@ -162,7 +174,7 @@ origin. It is public by construction, so the signature is the security boundary:
 
 ## 6. Schedules
 
-Declare the **schedule** trigger with a five-field cron — `minute hour day-of-month month day-of-week`, with `*`,
+Add a **schedule** trigger step with a five-field cron — `minute hour day-of-month month day-of-week`, with `*`,
 lists, ranges and steps. An expression the server cannot read is refused at save time, because one that merely
 never matches would sit silent until somebody noticed the digest missing.
 
@@ -227,7 +239,7 @@ callers to retry harder.
 |---|---|
 | The step reports itself inert | The page has no server tier — a static export or an embed. Deploy the space with an SSR credential |
 | `duplicate` | The same call is already running. Give the step an idempotency key if the repeat is legitimate |
-| `forbidden` | The action does not declare that trigger, the caller lacks the permissions, or a step named a credential the document did not declare |
+| `forbidden` | The action has no trigger step of that kind, or the caller does not meet that trigger's access rule |
 | `recursion` | The flow reached its own webhook |
 | A `{{ credential.… }}` that renders empty | The step did not name a credential — set its `credential` field |
 | An empty section on a rendered page | A `render` action failed; the reason is in the server log, and one slice failing never takes the page down |

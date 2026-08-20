@@ -38,17 +38,29 @@ const shippingQuote = (ratePerKg: number, label: string): ActionEntry => ({
     name: 'Shipping quote',
     description: 'Prices a parcel for the visitor filling in the form.',
     enabled: true,
-    // No default anywhere: an unstated access rule is either a lock-out or a hole, so the document states one.
-    access: { mode: 'public' },
-    triggers: [{ type: 'call' }],
-    // Anything a caller sends that is not declared here is DROPPED before a single step runs, which is what makes
-    // interpolating `{{ input.* }}` into a step's params safe.
-    input: {
-      city: { type: 'text', required: true, label: 'Destination city' },
-      weightKg: { type: 'number', defaultValue: 1, label: 'Weight (kg)' }
-    },
     nodes: {
-      start: node('start', { type: 'trigger', action: 'call', afterNode: 'rate' }),
+      /**
+       * The way in, and everything about it: what starts the run, who may start it, and what they may send.
+       *
+       * It is a STEP, exactly as an element's `onClick` is — which is why a second way in is a second trigger step
+       * rather than another field beside the flow. There is no default access: an unstated rule is either a
+       * lock-out or a hole, so the step states one.
+       *
+       * Anything a caller sends that `input` does not declare is DROPPED before a single step runs, which is what
+       * makes interpolating `{{ input.* }}` into a later step's params safe.
+       */
+      start: node('start', {
+        type: 'trigger',
+        action: 'call',
+        params: {
+          access: { mode: 'public' },
+          input: {
+            city: { type: 'text', required: true, label: 'Destination city' },
+            weightKg: { type: 'number', defaultValue: 1, label: 'Weight (kg)' }
+          }
+        },
+        afterNode: 'rate'
+      }),
       rate: node('rate', {
         action: 'example.shippingRate',
         params: { city: '{{input.city}}', weightKg: '{{input.weightKg}}', ratePerKg },
@@ -85,22 +97,26 @@ const visitDigest: ActionEntry = {
   document: {
     name: 'Visit digest',
     enabled: true,
-    access: { mode: 'public' },
-    triggers: [
-      {
-        type: 'webhook',
-        verify: {
-          type: 'hmac',
-          header: 'x-example-signature',
-          algorithm: 'sha256',
-          secret: '{{credential.example.webhookSecret}}'
-        }
-      }
-    ],
-    credentials: ['example'],
-    input: { event: { type: 'text', required: true, label: 'Event name' } },
     nodes: {
-      start: node('start', { type: 'trigger', action: 'webhook', afterNode: 'count' }),
+      start: node('start', {
+        type: 'trigger',
+        action: 'webhook',
+        params: {
+          access: { mode: 'public' },
+          input: { event: { type: 'text', required: true, label: 'Event name' } },
+          // The credential is NAMED here, not templated. This check runs before the body is parsed and before a
+          // run exists, so there is no flow scope for a token to resolve against — and one that rendered to
+          // nothing would leave the endpoint verifying every request against an empty secret.
+          verify: {
+            type: 'hmac',
+            header: 'x-example-signature',
+            algorithm: 'sha256',
+            credential: 'example',
+            secretField: 'webhookSecret'
+          }
+        },
+        afterNode: 'count'
+      }),
       count: node('count', {
         action: 'kv.increment',
         params: { key: 'visits:{{input.event}}', amount: '1' },
