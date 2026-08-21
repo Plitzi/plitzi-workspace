@@ -15,12 +15,15 @@ import type {
   ActionTaskDescriptor,
   ElementInteraction,
   InteractionCallback,
-  SpaceAction
+  InteractionCallbackParam,
+  SpaceAction,
+  SpaceCredential
 } from '@plitzi/sdk-shared';
 
 export type ActionFormProps = {
   action?: SpaceAction;
   tasks: ActionTaskDescriptor[];
+  credentials: SpaceCredential[];
   onRun: (identifier: string, input: Record<string, unknown>) => Promise<ActionRunReport | undefined>;
   onSubmit: (name: string, document: ActionDocument) => Promise<void> | void;
   onCancel: () => void;
@@ -42,11 +45,20 @@ const ACCESS_OPTIONS = [
 ];
 
 /**
+ * The half of `InteractionCallback['params']` a trigger ever uses.
+ *
+ * That type is a record OR a function returning one — the function form is for a callback whose parameters
+ * depend on what has been filled in so far, which no trigger needs. Naming the record half is what lets these be
+ * composed with a spread.
+ */
+type TriggerParams = Record<string, InteractionCallbackParam>;
+
+/**
  * What a way in carries, on the step that IS that way in.
  *
  * A schedule has none of it: a clock is not a caller, so there is nobody to authorize and nothing to send.
  */
-const callerParams: InteractionCallback['params'] = {
+const callerParams: TriggerParams = {
   access: { type: 'select', defaultValue: 'session', label: 'Who may', canBind: false, options: ACCESS_OPTIONS },
   permissions: {
     type: 'text',
@@ -58,7 +70,87 @@ const callerParams: InteractionCallback['params'] = {
   input: { type: 'codemirror-json', defaultValue: '{}', label: 'Input it accepts', canBind: false }
 };
 
-const TRIGGER_PARAMS: Record<string, InteractionCallback['params']> = {
+/**
+ * How a webhook proves who is calling it: one question at a time, and the first one is a list.
+ *
+ * It was a single `codemirror-json` control holding the whole verification, offered with an empty `credential`
+ * in it — a JSON object that explained nothing and refused to save. Even split into fields, the one that matters
+ * asked for a credential IDENTIFIER, which is a value the panel knows and the author would have to go and look
+ * up. So it is the space's own credentials, and nothing else appears until one is picked.
+ *
+ * `allowCreateOptions` on the select means an identifier can still be typed — an action authored before the
+ * credential it names exists is a legitimate order to work in, and the validator says so rather than blocking it.
+ */
+const signatureParams = (credentials: SpaceCredential[]): TriggerParams => ({
+  signatureCredential: {
+    type: 'select',
+    defaultValue: '',
+    // The empty case is the one worth spelling out: an author with nothing to pick needs to be told where to go,
+    // and this label is the only place the panel can say it.
+    label: credentials.length > 0 ? 'Signing secret' : 'Signing secret — add one in Credentials first',
+    canBind: false,
+    options: credentials.map(credential => ({
+      label: `${credential.name} (${credential.identifier})`,
+      value: credential.identifier
+    }))
+  },
+  /**
+   * The header names senders actually use, and still free to type.
+   *
+   * Not a "provider preset": picking one of these changes nothing else, because for these senders nothing else
+   * DOES change — a bare hex digest, a `sha256=` prefix and a base64 one are all read the same way. A list that
+   * quietly reconfigured the rest would be promising vendor knowledge this check does not have.
+   */
+  signatureHeader: {
+    type: 'select',
+    defaultValue: 'x-signature',
+    label: 'Header the signature arrives in',
+    canBind: false,
+    options: [
+      { label: 'x-signature (the default)', value: 'x-signature' },
+      { label: 'x-hub-signature-256 — GitHub', value: 'x-hub-signature-256' },
+      { label: 'x-shopify-hmac-sha256 — Shopify', value: 'x-shopify-hmac-sha256' }
+    ],
+    when: params => Boolean(params.signatureCredential)
+  },
+  signatureAlgorithm: {
+    type: 'select',
+    defaultValue: 'sha256',
+    label: 'Algorithm',
+    canBind: false,
+    options: [
+      { label: 'SHA-256 (almost always this)', value: 'sha256' },
+      { label: 'SHA-1', value: 'sha1' }
+    ],
+    when: params => Boolean(params.signatureCredential)
+  },
+  signatureSecretField: {
+    type: 'text',
+    defaultValue: '',
+    label: 'Which key of that credential holds the secret — blank means secret',
+    canBind: false,
+    when: params => Boolean(params.signatureCredential)
+  },
+  signatureTimestampHeader: {
+    type: 'text',
+    defaultValue: '',
+    label: 'Only if the sender puts the signing time in its own header',
+    canBind: false,
+    when: params => Boolean(params.signatureCredential)
+  },
+  // Only once there is a timestamp to compare against: without one, a signature never gets old.
+  signatureToleranceSeconds: {
+    type: 'text',
+    defaultValue: '',
+    label: 'Reject deliveries signed more than N seconds ago',
+    canBind: false,
+    when: params => Boolean(params.signatureCredential) && Boolean(params.signatureTimestampHeader)
+  }
+});
+
+/** What each way in asks for. A function, because the webhook's first question is a list of THIS space's
+ *  credentials — the panel knows them, so nobody should have to remember an identifier. */
+const triggerParamsFor = (credentials: SpaceCredential[]): Record<string, TriggerParams> => ({
   call: callerParams,
   /**
    * A render is a READ, repeated once per visitor — so it is the one way in that may answer twice from the same
@@ -74,68 +166,12 @@ const TRIGGER_PARAMS: Record<string, InteractionCallback['params']> = {
       canBind: false
     }
   },
-  /**
-   * How a webhook proves who is calling it, as FIELDS — one per thing a sender does differently.
-   *
-   * It was one `codemirror-json` control holding the whole verification, offered with an empty `credential` in
-   * it: an author picking this trigger was shown a JSON object explaining nothing and an error refusing to save
-   * it, before typing a character. Naming the credential is now the whole of turning it on, and the rest only
-   * appears once there is something to configure.
-   */
-  webhook: {
-    ...callerParams,
-    signatureCredential: {
-      type: 'text',
-      defaultValue: '',
-      label: 'Signing secret (credential)',
-      canBind: false
-    },
-    signatureHeader: {
-      type: 'text',
-      defaultValue: '',
-      label: 'Signature header — defaults to x-signature',
-      canBind: false,
-      when: params => Boolean(params.signatureCredential)
-    },
-    signatureAlgorithm: {
-      type: 'select',
-      defaultValue: 'sha256',
-      label: 'Algorithm',
-      canBind: false,
-      options: [
-        { label: 'SHA-256', value: 'sha256' },
-        { label: 'SHA-1', value: 'sha1' }
-      ],
-      when: params => Boolean(params.signatureCredential)
-    },
-    signatureSecretField: {
-      type: 'text',
-      defaultValue: '',
-      label: 'Key of the credential holding the secret — defaults to secret',
-      canBind: false,
-      when: params => Boolean(params.signatureCredential)
-    },
-    signatureTimestampHeader: {
-      type: 'text',
-      defaultValue: '',
-      label: 'Timestamp header, if the sender signs one separately',
-      canBind: false,
-      when: params => Boolean(params.signatureCredential)
-    },
-    // Only once there is a timestamp to compare it against: without one, a signature never gets old.
-    signatureToleranceSeconds: {
-      type: 'text',
-      defaultValue: '',
-      label: 'Reject signatures older than (seconds)',
-      canBind: false,
-      when: params => Boolean(params.signatureCredential) && Boolean(params.signatureTimestampHeader)
-    }
-  },
+  webhook: { ...callerParams, ...signatureParams(credentials) },
   schedule: {
     cron: { type: 'text', defaultValue: '0 * * * *', label: 'Cron (UTC)', canBind: false },
     timezone: { type: 'text', defaultValue: '', label: 'Timezone', canBind: false }
   }
-};
+});
 
 /**
  * The catalog, in the shape the flow editor already draws.
@@ -148,22 +184,26 @@ const TRIGGER_PARAMS: Record<string, InteractionCallback['params']> = {
  * and what it takes, chain the tasks. There is no panel above the flow repeating any of it — there was, and it
  * left the same trigger configurable in two places that could disagree.
  */
-const asNodeDefinitions = (tasks: ActionTaskDescriptor[]): InteractionCallback[] => [
-  ...Object.keys(TRIGGER_TITLES).map(kind => ({
-    action: kind,
-    title: TRIGGER_TITLES[kind],
-    type: 'trigger' as const,
-    params: TRIGGER_PARAMS[kind],
-    preview: {}
-  })),
-  ...tasks.map(task => ({
-    action: task.name,
-    title: task.title,
-    type: 'task' as const,
-    params: task.params as InteractionCallback['params'],
-    preview: {}
-  }))
-];
+const asNodeDefinitions = (tasks: ActionTaskDescriptor[], credentials: SpaceCredential[]): InteractionCallback[] => {
+  const triggerParams = triggerParamsFor(credentials);
+
+  return [
+    ...Object.keys(TRIGGER_TITLES).map(kind => ({
+      action: kind,
+      title: TRIGGER_TITLES[kind],
+      type: 'trigger' as const,
+      params: triggerParams[kind],
+      preview: {}
+    })),
+    ...tasks.map(task => ({
+      action: task.name,
+      title: task.title,
+      type: 'task' as const,
+      params: task.params as InteractionCallback['params'],
+      preview: {}
+    }))
+  ];
+};
 
 /**
  * The field list a binding editor offers on this action's result, read off the output step.
@@ -194,12 +234,12 @@ const deriveOutput = (nodes: Record<string, ElementInteraction>): Record<string,
   }
 };
 
-const ActionForm = ({ action, tasks, onRun, onSubmit, onCancel }: ActionFormProps) => {
+const ActionForm = ({ action, tasks, credentials, onRun, onSubmit, onCancel }: ActionFormProps) => {
   const [name, setName] = useState(action?.name ?? '');
   const [document, setDocument] = useState<ActionDocument>(() => action?.document ?? emptyDocument());
   const [isSaving, setIsSaving] = useState(false);
 
-  const nodeDefinitions = useMemo(() => asNodeDefinitions(tasks), [tasks]);
+  const nodeDefinitions = useMemo(() => asNodeDefinitions(tasks, credentials), [tasks, credentials]);
   const report = useMemo(() => validateActionDocument({ ...document, name: name || document.name }), [document, name]);
 
   const patch = useCallback(

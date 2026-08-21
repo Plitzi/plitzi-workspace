@@ -10,8 +10,18 @@ import ActionList from './components/ActionList';
 import type { ActionDocument } from '@plitzi/sdk-shared';
 
 const Actions = () => {
-  const { actions, tasks, isLoading, error, hasServerRendering, addAction, updateAction, removeAction, runAction } =
-    use(ActionsContext);
+  const {
+    actions,
+    tasks,
+    credentials,
+    isLoading,
+    error,
+    hasServerRendering,
+    addAction,
+    updateAction,
+    removeAction,
+    runAction
+  } = use(ActionsContext);
   const { showDialog } = useModal();
   const [editing, setEditing] = useState<string | undefined>(undefined);
   const [isCreating, setIsCreating] = useState(false);
@@ -92,6 +102,7 @@ const Actions = () => {
             key={action?.identifier ?? 'new'}
             action={action}
             tasks={tasks}
+            credentials={credentials}
             onRun={runAction}
             onSubmit={handleSubmit}
             onCancel={handleCancel}

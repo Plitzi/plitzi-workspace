@@ -11,7 +11,8 @@ import type {
   ActionTaskDescriptor,
   BuilderMutationsMap,
   BuilderQueriesMap,
-  SpaceAction
+  SpaceAction,
+  SpaceCredential
 } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { ReactNode } from 'react';
@@ -22,6 +23,7 @@ export type ActionsContextProviderProps = {
 
 const emptyActions: SpaceAction[] = [];
 const emptyTasks: ActionTaskDescriptor[] = [];
+const emptyCredentials: SpaceCredential[] = [];
 
 const byIdentifier = (actions: SpaceAction[]) =>
   actions.reduce<Record<string, SpaceAction>>((acum, action) => {
@@ -49,6 +51,14 @@ const ActionsContextProvider = ({ children }: ActionsContextProviderProps) => {
     mutate
   } = useGraphQL('SpaceActions', data => data?.SpaceActions.edges, { pageSize: 100 });
   const { data: tasks = emptyTasks } = useGraphQL('SpaceActionTasks', data => data?.SpaceActionTasks);
+  // What a step can NAME, never what it holds: the panel offers the list so nobody has to remember an identifier,
+  // and the secret behind it stays where it always was. Asked for in one page, because a picker that silently
+  // stops at the server's default of ten is a credential an author cannot choose.
+  const { data: credentials = emptyCredentials } = useGraphQL(
+    'SpaceCredentials',
+    data => data?.SpaceCredentials.edges,
+    { pageSize: 100 }
+  );
   // An action is worthless without a server to run it, and the space only has one when something it deploys to can
   // run server code. Read off the deployments rather than a flag, so the panel cannot claim otherwise.
   const { data: deployments } = useGraphQL('SpaceDeployments', data => data?.SpaceDeployments.edges);
@@ -106,6 +116,7 @@ const ActionsContextProvider = ({ children }: ActionsContextProviderProps) => {
     () => ({
       actions,
       tasks,
+      credentials,
       isLoading,
       error: error?.message ?? '',
       hasServerRendering,
@@ -114,7 +125,18 @@ const ActionsContextProvider = ({ children }: ActionsContextProviderProps) => {
       removeAction,
       runAction
     }),
-    [actions, tasks, isLoading, error, hasServerRendering, addAction, updateAction, removeAction, runAction]
+    [
+      actions,
+      tasks,
+      credentials,
+      isLoading,
+      error,
+      hasServerRendering,
+      addAction,
+      updateAction,
+      removeAction,
+      runAction
+    ]
   );
 
   return <ActionsContext value={value}>{children}</ActionsContext>;

@@ -152,12 +152,19 @@ How it is checked lives on the trigger step, one field per thing a sender does d
 
 | Field | What it is |
 |---|---|
-| **Signing secret (credential)** | The credential holding the secret. **Naming it is what turns verification on** — everything below has a working default, so a webhook is either signed or it is not |
-| Signature header | Where the signature arrives. Defaults to `x-signature`; Stripe sends `stripe-signature` |
+| **Signing secret** | Picked from the space's credentials. **Choosing one is what turns verification on** — everything below has a working default, so a webhook is either signed or it is not, and nothing else appears until you have chosen |
+| Header the signature arrives in | `x-signature` by default, with GitHub's and Shopify's in the list and anything else typeable |
 | Algorithm | `sha256` or `sha1` |
-| Key of the credential | Which of its keys is the secret. Defaults to `secret` |
-| Timestamp header | For a sender that signs `<timestamp>.<body>` and sends the timestamp separately |
-| Reject signatures older than | Seconds. Only appears once there is a timestamp header to measure against |
+| Which key of that credential | Defaults to `secret` |
+| Timestamp header | Only if the sender puts the signing time in a header of its own |
+| Reject deliveries older than | Seconds. Only appears once there is a timestamp header to measure against |
+
+The digest itself is read in whatever dressing the sender uses — bare hex, base64, `sha256=<hex>`, or a
+comma-separated list of `k=v` pairs — so these fields cover a real webhook and not only a tidy one.
+
+> **A sender that packs the timestamp INSIDE the signature header is not covered.** Stripe's `t=…,v1=…` and
+> Slack's `v0:…` sign `<timestamp>.<body>` with the timestamp in the same header, and the check reads a timestamp
+> from a header of its own. Those two verify only if the sender is configured to sign the body alone.
 
 The credential is **named, not templated**. This check runs before the body is parsed and before a run exists, so
 there is no flow scope for a token to resolve against — and one that rendered to nothing would leave the endpoint
