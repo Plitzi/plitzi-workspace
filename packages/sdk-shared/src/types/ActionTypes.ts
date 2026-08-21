@@ -116,8 +116,9 @@ export type ActionLimits = {
  * already in the product.
  *
  * It lives in shared types because the builder authors the very document the server executes — the same reason
- * `ConnectorManifest` does. It is server-side state and must never be serialized into a page: what the browser
- * gets is {@link ActionProjection}, derived at request time.
+ * `ConnectorManifest` does. It is server-side state: it goes to the BUILDER, which is authorized to edit it, and
+ * never into a page. What a visitor's page holds is the action's identifier, and what it gets back is whatever the
+ * output step named.
  */
 export type ActionDocument = {
   name: string;
@@ -149,18 +150,6 @@ export type ActionDocument = {
 export type ActionEntry = {
   id: string;
   document: ActionDocument;
-};
-
-/**
- * The only part of an action the browser is allowed to see: enough for the builder to offer typed bindings on a
- * call's result, and nothing about what the action does. Derived server-side from the document at request time —
- * never a copy saved into the schema, which would keep whatever a later edit adds.
- */
-export type ActionProjection = {
-  id: string;
-  name: string;
-  input: Record<string, ActionField>;
-  output: Record<string, ActionField>;
 };
 
 /**
@@ -257,11 +246,6 @@ export type ActionCallResult = {
   runId: string;
   status: ActionRunStatus;
   output: Record<string, unknown>;
-};
-
-export type ActionCallAccepted = {
-  runId: string;
-  accepted: true;
 };
 
 export type ActionCallError = {

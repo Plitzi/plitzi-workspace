@@ -192,10 +192,14 @@ export type ActionLookups = {
 createServer({ /* … */ connectors: connectorLookups, actions: actionLookups });
 ```
 
-**What reaches the browser is the projection, and only the projection**: `{ id, name, input, output }`. The
-node list, the credentials, the connectors and every URL stay server-side. That is what lets the builder
-offer typed bindings on an action's result without the page learning what the action does — the same split
-the connector `fields` projection makes.
+**What reaches a visitor's page is the action's identifier, and what comes back is what the output step
+named.** The node list and every URL stay server-side: a page names an action and learns nothing about what
+happens on the other side.
+
+There is deliberately no derived projection of the document. There was one in the first draft, on the theory
+that the builder needed a safe field list to offer typed bindings — but the BUILDER is authorized to edit the
+document and simply reads it whole over the authenticated GraphQL, and derives the output fields from the
+`flow.output` step itself. A second, narrower copy of the same document had no reader, so it is not built.
 
 Consequences worth stating because they are load-bearing:
 
@@ -229,8 +233,8 @@ visitor's page". Actions join that half. Naming it buys three things:
    should be about the *namespace*, so the next private thing inherits it rather than needing its own.
 2. **Projections are derived, never copied.** What the browser does need — a connector's `fields`, an
    action's `{ id, name, input, output }` — is computed server-side from the private document at request
-   time. A projection that is *derived* cannot silently start carrying a field someone adds later; a
-   projection that is *pasted into the schema at save time* will.
+   time. A field list that is *derived from the output step* cannot silently start carrying a field someone
+   adds later; one *pasted into the schema at save time* will.
 3. **One place to answer the revision question.** §8.1 stops being "should actions be versioned?" and becomes
    "is the private document versioned with the deploy?", answered once for connectors and actions together.
 
