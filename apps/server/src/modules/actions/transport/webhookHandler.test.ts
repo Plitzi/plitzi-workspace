@@ -36,7 +36,6 @@ const entry = (overrides: Partial<ActionDocument> = {}): ActionEntry => ({
   id: 'stripe-hook',
   document: {
     name: 'Stripe hook',
-    enabled: true,
     output: {},
     nodes: {
       start: node('start', {

@@ -37,10 +37,11 @@ const shippingQuote = (ratePerKg: number, label: string): ActionEntry => ({
   document: {
     name: 'Shipping quote',
     description: 'Prices a parcel for the visitor filling in the form.',
-    enabled: true,
     nodes: {
       /**
-       * The way in, and everything about it: what starts the run, who may start it, and what they may send.
+       * The way in, and everything about it: what starts the run, who may start it, what they may send — and,
+       * in the step's own `enabled`, whether it is open at all. There is no second switch beside the flow: an
+       * action is on when a way into it is.
        *
        * It is a STEP, exactly as an element's `onClick` is — which is why a second way in is a second trigger step
        * rather than another field beside the flow. There is no default access: an unstated rule is either a
@@ -96,7 +97,6 @@ const visitDigest: ActionEntry = {
   id: 'visit-digest',
   document: {
     name: 'Visit digest',
-    enabled: true,
     nodes: {
       start: node('start', {
         type: 'trigger',

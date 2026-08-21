@@ -23,7 +23,6 @@ const entry = (params: Record<string, unknown>): ActionEntry => ({
   id: 'fetcher',
   document: {
     name: 'Fetcher',
-    enabled: true,
     output: { status: { type: 'number' } },
     nodes: {
       start: node('start', {

@@ -24,7 +24,6 @@ const entry: ActionEntry = {
   id: 'post-page',
   document: {
     name: 'Post page',
-    enabled: true,
     nodes: {
       start: node('start', {
         type: 'trigger',

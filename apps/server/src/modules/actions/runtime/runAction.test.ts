@@ -33,7 +33,6 @@ const buildEntry = (overrides: Partial<ActionDocument> = {}): ActionEntry => ({
   id: 'quote',
   document: {
     name: 'Quote',
-    enabled: true,
     output: { total: { type: 'number' } },
     nodes: {
       start: callTrigger(),
@@ -46,6 +45,14 @@ const buildEntry = (overrides: Partial<ActionDocument> = {}): ActionEntry => ({
     ...overrides
   }
 });
+
+/** The whole action off is every way into it off — there is no switch beside the flow to turn. */
+const disabledEntry = (): ActionEntry => {
+  const entry = buildEntry();
+  entry.document.nodes.start.enabled = false;
+
+  return entry;
+};
 
 const request = (entry: ActionEntry, overrides: Partial<ActionRunRequest> = {}): ActionRunRequest => ({
   entry,
@@ -110,10 +117,10 @@ describe('runAction', () => {
     });
   });
 
-  it('refuses a disabled action', async () => {
+  it('refuses a run through a trigger that is switched off', async () => {
     const { runAction } = createActionsModule({ lookups });
 
-    await expect(runAction(request(buildEntry({ enabled: false })))).rejects.toMatchObject({ reason: 'disabled' });
+    await expect(runAction(request(disabledEntry()))).rejects.toMatchObject({ reason: 'disabled' });
   });
 
   it('refuses a run whose lineage already names the action', async () => {
@@ -332,7 +339,7 @@ describe('run records', () => {
 
   // A refusal is not a run. Recording one would bury the real entries under whatever a client retries.
   it('records nothing for a run that was refused before it started', async () => {
-    expect(await recordsOf(buildEntry({ enabled: false }))).toEqual([]);
+    expect(await recordsOf(disabledEntry())).toEqual([]);
   });
 
   it('never lets a failing recorder fail the run', async () => {

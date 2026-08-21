@@ -138,8 +138,8 @@ export type ActionRunner = { runAction: (request: ActionRunRequest) => Promise<A
 /**
  * Builds the runner every trigger goes through.
  *
- * Every check that decides whether a run may happen at all — enabled, declared trigger, access, lineage, input
- * contract — lives HERE rather than in a transport, because a deployment mounting its own trigger calls this
+ * Every check that decides whether a run may happen at all — the trigger and whether it is on, access, lineage,
+ * input contract — lives HERE rather than in a transport, because a deployment mounting its own trigger calls this
  * directly. A check in the endpoint would be a check a custom trigger silently skips.
  */
 export const createActionRunner = (

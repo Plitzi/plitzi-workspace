@@ -24,9 +24,8 @@ const scheduled = (cron: string, enabled = true): ActionEntry => ({
   id: 'digest',
   document: {
     name: 'Digest',
-    enabled,
     nodes: {
-      start: node('start', { type: 'trigger', action: 'schedule', params: { cron }, afterNode: 'out' }),
+      start: node('start', { type: 'trigger', action: 'schedule', params: { cron }, enabled, afterNode: 'out' }),
       out: node('out', { action: 'flow.output', params: { values: '{"ok": true}' } })
     }
   }
@@ -52,7 +51,7 @@ describe('createScheduleRunner', () => {
     expect(quiet.ran).toEqual([]);
   });
 
-  it('leaves a disabled action alone', async () => {
+  it('leaves a switched-off schedule alone', async () => {
     const runner = runnerFor([scheduled('* * * * *', false)]);
 
     expect((await runner.tick({ spaceId: 1, at: at('2026-08-20T10:30:00Z') })).ran).toEqual([]);

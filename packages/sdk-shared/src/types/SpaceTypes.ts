@@ -31,7 +31,6 @@ export type SpaceAction = {
   id: number;
   identifier: string;
   name: string;
-  enabled: boolean;
   document: ActionDocument;
   createdAt: number;
   updatedAt: number;

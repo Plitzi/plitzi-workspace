@@ -39,7 +39,6 @@ const callTrigger = (params: Record<string, unknown> = {}, afterNode = 'compute'
 
 const document = (overrides: Partial<ActionDocument> = {}): ActionDocument => ({
   name: 'Quote',
-  enabled: true,
   output: { total: { type: 'number' } },
   nodes: {
     start: callTrigger(),

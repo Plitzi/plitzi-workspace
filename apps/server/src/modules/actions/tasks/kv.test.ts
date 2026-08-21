@@ -23,7 +23,6 @@ const counterAction = (nodes: ActionDocument['nodes'], valueType: 'number' | 'te
   id: 'counter',
   document: {
     name: 'Counter',
-    enabled: true,
     output: { value: { type: valueType } },
     nodes
   }

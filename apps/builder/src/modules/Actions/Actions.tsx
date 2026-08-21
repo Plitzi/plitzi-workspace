@@ -31,9 +31,9 @@ const Actions = () => {
   }, []);
 
   const handleSubmit = useCallback(
-    async (name: string, document: ActionDocument, enabled: boolean) => {
+    async (name: string, document: ActionDocument) => {
       if (action) {
-        await updateAction(action.identifier, name, document, enabled);
+        await updateAction(action.identifier, name, document);
       } else {
         await addAction(name, document);
       }

@@ -1,4 +1,4 @@
-import { triggerAccess, triggerInput } from '@plitzi/sdk-shared/actions';
+import { actionTriggers, isActionEnabled, triggerAccess, triggerInput } from '@plitzi/sdk-shared/actions';
 
 import { actionTasksUri, actionUri, actionsUri, afterPrefix, findActionEntry } from '../helpers';
 import { envelope } from './envelope';
@@ -17,23 +17,22 @@ import type { ActionEntry, ActionTriggerParams } from '@plitzi/sdk-shared';
  */
 const summarize = (entry: ActionEntry) => {
   const { document } = entry;
-  const triggers = Object.values(document.nodes)
-    .filter(node => node.type === 'trigger')
-    .map(node => {
-      const params = node.params as ActionTriggerParams;
+  const triggers = actionTriggers(document).map(node => {
+    const params = node.params as ActionTriggerParams;
 
-      return {
-        kind: node.action,
-        ...(params.access === undefined ? {} : { access: triggerAccess(params) }),
-        input: triggerInput(params)
-      };
-    });
+    return {
+      kind: node.action,
+      enabled: node.enabled,
+      ...(params.access === undefined ? {} : { access: triggerAccess(params) }),
+      input: triggerInput(params)
+    };
+  });
 
   return {
     ref: entry.id,
     name: document.name,
     ...(document.description === undefined ? {} : { description: document.description }),
-    enabled: document.enabled,
+    enabled: isActionEnabled(document),
     triggers,
     output: document.output
   };

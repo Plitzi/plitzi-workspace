@@ -44,7 +44,7 @@ export const createScheduleRunner = (lookups: ActionLookups, module: ActionsModu
       // swept, which is what makes this loop cheap over a space with many actions.
       const schedule = findTriggerNode(entry.document.nodes, 'schedule');
       const cron = schedule ? triggerParams(schedule).cron : undefined;
-      if (!entry.document.enabled || !schedule?.enabled || !cron) {
+      if (!schedule?.enabled || !cron) {
         continue;
       }
 

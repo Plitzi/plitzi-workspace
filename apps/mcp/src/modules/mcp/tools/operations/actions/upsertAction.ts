@@ -19,7 +19,6 @@ export const upsertActionOp = z
       ),
     name: z.string().describe('Human name shown in the builder'),
     description: z.string().optional(),
-    enabled: z.boolean().optional().describe('Defaults to true'),
     output: z
       .record(z.string(), actionField)
       .optional()
@@ -32,7 +31,8 @@ export const upsertActionOp = z
   .describe(
     'Create a server action, or REPLACE one whole (use patchAction to change part). An action is a declarative ' +
       'flow the SERVER runs — the same node map an element\'s interactions are, with tasks instead of callbacks. ' +
-      'What starts it, who may and what they send all live on its TRIGGER steps, not beside the flow.'
+      'What starts it, who may, what they send and whether it runs at all live on its TRIGGER steps, not ' +
+      'beside the flow.'
   );
 
 export type UpsertAction = z.infer<typeof upsertActionOp>;
@@ -79,7 +79,6 @@ const toNodes = (nodes: UpsertAction['nodes']): Record<string, ElementInteractio
 export const toDocument = (op: UpsertAction): ActionDocument => ({
   name: op.name,
   ...(op.description === undefined ? {} : { description: op.description }),
-  enabled: op.enabled ?? true,
   ...(op.output === undefined ? {} : { output: op.output }),
   nodes: toNodes(op.nodes),
   ...(op.limits === undefined ? {} : { limits: op.limits })

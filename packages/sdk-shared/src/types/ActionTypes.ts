@@ -119,11 +119,15 @@ export type ActionLimits = {
  * `ConnectorManifest` does. It is server-side state: it goes to the BUILDER, which is authorized to edit it, and
  * never into a page. What a visitor's page holds is the action's identifier, and what it gets back is whatever the
  * output step named.
+ *
+ * There is no `enabled` here. Whether an action can run is whether any way INTO it is switched on, and that switch
+ * is the trigger step's own — one per way in, which is finer than one per action and is the control an author
+ * actually reaches for. A field beside the flow was the same fact written twice, with no rule for which won.
+ * Read it with `isActionEnabled` from `@plitzi/sdk-shared/actions`.
  */
 export type ActionDocument = {
   name: string;
   description?: string;
-  enabled: boolean;
   /**
    * The flows. One or more `trigger` steps, each heading a chain of `task` steps — the same node map an element's
    * `interactions` holds, so one editor authors both.

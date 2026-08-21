@@ -11,12 +11,7 @@ export type ActionsContextValue = {
   /** True when the space has a deployment that can run server code, which is what runs an action at all. */
   hasServerRendering: boolean;
   addAction: (name: string, document: ActionDocument) => Promise<SpaceAction | undefined>;
-  updateAction: (
-    identifier: string,
-    name: string,
-    document: ActionDocument,
-    enabled?: boolean
-  ) => Promise<SpaceAction | undefined>;
+  updateAction: (identifier: string, name: string, document: ActionDocument) => Promise<SpaceAction | undefined>;
   removeAction: (identifier: string) => Promise<boolean>;
   /** Runs the STORED action through the same runner a visitor's call goes through, and returns its trace. */
   runAction: (identifier: string, input: Record<string, unknown>) => Promise<ActionRunReport | undefined>;

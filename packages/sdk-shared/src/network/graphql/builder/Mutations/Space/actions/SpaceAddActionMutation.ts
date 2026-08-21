@@ -14,7 +14,6 @@ const SpaceAddActionMutation = gql`
       id
       identifier
       name
-      enabled
       document
       createdAt
       updatedAt

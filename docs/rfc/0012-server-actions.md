@@ -140,7 +140,6 @@ export type ActionTriggerParams = {
 export type ActionDocument = {
   name: string;
   description?: string;
-  enabled: boolean;
   /** The flow(s): trigger steps, each heading a chain of task steps. */
   nodes: Record<string, ElementInteraction>;
   /** DERIVED from the `flow.output` step, for typed bindings in the builder. The step is the contract. */
@@ -152,6 +151,12 @@ export type ActionDocument = {
  *  same rule as `ConnectorManifestDraft`. */
 export type ActionEntry = { id: string; document: ActionDocument };
 ```
+
+There is no `enabled` on the document. Whether an action runs is whether any way INTO it is switched
+on, and that switch is the trigger step's own `enabled` — one per way in, which is finer than one per action
+and is the control an author reaches for. A field beside the flow was the same fact written twice: the builder
+computed it from the steps, the store overwrote it from its own column, and nothing said which won.
+`isActionEnabled(document)` answers it wherever it is asked.
 
 `nodes` being `Record<string, ElementInteraction>` is the whole bet. The node already carries `action`,
 `params`, `when`, `beforeNode`/`afterNode`, `enabled` and `preview`; the traversal already exists; the
@@ -168,6 +173,8 @@ model SpaceAction {
   identifier String @db.VarChar(255)
   name       String @db.VarChar(255)
   document   Json
+  // Derived from the flow on every write — the index the schedule sweep filters on, never a second answer to
+  // "is this on?". What decides that is the trigger step.
   enabled    Boolean @default(true)
   createdAt  Int    @map("created_at")
   updatedAt  Int    @map("updated_at")
@@ -312,7 +319,7 @@ Two conventions the implementation settled, worth stating because a reader of th
 
   A consequence worth knowing: the step's JSON is the shape, so `{"total": {{ input.amount }}}` answers a number
   and `{"total": "{{ input.amount }}"}` answers text. There is no contract left to coerce one into the other.
-- **The cheap checks are one function, called twice.** `precheckRun` — enabled, declared trigger, lineage,
+- **The cheap checks are one function, called twice.** `precheckRun` — the trigger and whether it is on, lineage,
   access, input contract — is called by the ENDPOINT before it takes a concurrency slot or emits a metering
   event, and by the RUNNER because a custom trigger goes straight there. One implementation, so the two paths
   cannot drift into different rules, and a refusal costs the caller nothing.
@@ -773,7 +780,7 @@ not run. Silently re-executing a flow in the browser is how a credential ends up
 **Builder** — a new `modules/Actions`, mirroring `modules/Connectors` almost file for file (it is the
 closest existing sibling: a per-space server-side document with a list, a form and a validator):
 
-- list + form (name, enabled, the ways in with their access and input, and the flow itself);
+- list + form (name, the ways in with their access, input and their own on/off, and the flow itself);
 - the **existing** `Workflow` editor for `nodes`, fed a server task catalog instead of the client one;
 - a **Test run** panel: fill the declared inputs, run against the draft, see the returned trace in the same
   node UI. This is what makes the feature learnable.

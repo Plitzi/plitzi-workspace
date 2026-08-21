@@ -15,7 +15,6 @@ export const patchActionOp = z
     ref: z.string().describe('Identifier of the action to change'),
     name: z.string().optional(),
     description: z.string().optional(),
-    enabled: z.boolean().optional(),
     output: z.record(z.string(), actionField.nullable()).optional().describe('Merged by name; null removes one'),
     nodes: z
       .array(actionNode)
@@ -89,7 +88,6 @@ export const patchAction = (space: Space, env: Env, op: PatchAction): OpResult =
     ...document,
     ...(op.name === undefined ? {} : { name: op.name }),
     ...(op.description === undefined ? {} : { description: op.description }),
-    ...(op.enabled === undefined ? {} : { enabled: op.enabled }),
     ...(op.limits === undefined ? {} : { limits: op.limits }),
     // Derived from the output step, so a document may simply not carry it yet.
     output: mergeMap(document.output ?? {}, op.output),

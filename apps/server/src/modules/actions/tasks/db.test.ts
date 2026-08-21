@@ -24,7 +24,6 @@ const entry = (params: Record<string, unknown>): ActionEntry => ({
   id: 'lookup',
   document: {
     name: 'Lookup',
-    enabled: true,
     nodes: {
       start: node('start', {
         type: 'trigger',

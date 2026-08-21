@@ -13,7 +13,6 @@ const SpaceActionsQuery = gql`
         id
         identifier
         name
-        enabled
         document
         createdAt
         updatedAt

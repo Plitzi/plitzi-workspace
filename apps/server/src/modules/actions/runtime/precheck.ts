@@ -59,13 +59,15 @@ const authorize = (access: ActionAccess | undefined, kind: ActionTriggerType, us
  */
 export const precheckRun = (entry: ActionEntry, params: PrecheckParams): PrecheckResult => {
   const { document } = entry;
-  if (!document.enabled) {
-    throw new ActionRunError('disabled', 'This action is disabled');
+  const trigger = findTriggerNode(document.nodes, params.trigger);
+  if (!trigger) {
+    throw new ActionRunError('forbidden', `This action cannot be started by a "${params.trigger}" trigger`);
   }
 
-  const trigger = findTriggerNode(document.nodes, params.trigger);
-  if (!trigger || !trigger.enabled) {
-    throw new ActionRunError('forbidden', `This action cannot be started by a "${params.trigger}" trigger`);
+  // Switched off rather than absent, and the caller hears which: an action is on when a way into it is, so there
+  // is no second, action-wide switch that could disagree with this one.
+  if (!trigger.enabled) {
+    throw new ActionRunError('disabled', `This action's "${params.trigger}" trigger is switched off`);
   }
 
   // Catches the loop through the outside world: an action whose HTTP step reaches its own webhook.

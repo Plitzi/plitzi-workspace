@@ -74,8 +74,8 @@ const ActionsContextProvider = ({ children }: ActionsContextProviderProps) => {
   );
 
   const updateAction = useCallback(
-    async (identifier: string, name: string, document: ActionDocument, enabled?: boolean) => {
-      const response = await mutateNetwork('SpaceUpdateAction', { identifier, name, document, enabled });
+    async (identifier: string, name: string, document: ActionDocument) => {
+      const response = await mutateNetwork('SpaceUpdateAction', { identifier, name, document });
       await mutate();
 
       return response.result;

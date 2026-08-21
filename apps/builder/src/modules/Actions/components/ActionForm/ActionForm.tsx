@@ -22,11 +22,11 @@ export type ActionFormProps = {
   action?: SpaceAction;
   tasks: ActionTaskDescriptor[];
   onRun: (identifier: string, input: Record<string, unknown>) => Promise<ActionRunReport | undefined>;
-  onSubmit: (name: string, document: ActionDocument, enabled: boolean) => Promise<void> | void;
+  onSubmit: (name: string, document: ActionDocument) => Promise<void> | void;
   onCancel: () => void;
 };
 
-const emptyDocument = (): ActionDocument => ({ name: '', enabled: false, nodes: {} });
+const emptyDocument = (): ActionDocument => ({ name: '', nodes: {} });
 
 const TRIGGER_TITLES: Record<string, string> = {
   call: 'When a page calls it',
@@ -133,26 +133,13 @@ const deriveOutput = (nodes: Record<string, ElementInteraction>): Record<string,
   }
 };
 
-/**
- * Whether this action is on at all: whether ANY way into it is.
- *
- * Derived rather than asked for, because the trigger step already carries the switch — one per way in, which is
- * finer than one per action and is the thing an author actually reaches for. A form field beside it was the same
- * fact in two places, and the two could disagree.
- */
-const isEnabled = (nodes: Record<string, ElementInteraction>): boolean =>
-  Object.values(nodes).some(node => node.type === 'trigger' && node.enabled);
-
 const ActionForm = ({ action, tasks, onRun, onSubmit, onCancel }: ActionFormProps) => {
   const [name, setName] = useState(action?.name ?? '');
   const [document, setDocument] = useState<ActionDocument>(() => action?.document ?? emptyDocument());
   const [isSaving, setIsSaving] = useState(false);
 
   const nodeDefinitions = useMemo(() => asNodeDefinitions(tasks), [tasks]);
-  const report = useMemo(
-    () => validateActionDocument({ ...document, name: name || document.name, enabled: isEnabled(document.nodes) }),
-    [document, name]
-  );
+  const report = useMemo(() => validateActionDocument({ ...document, name: name || document.name }), [document, name]);
 
   const patch = useCallback(
     (changes: Partial<ActionDocument>) => setDocument(current => ({ ...current, ...changes })),
@@ -172,9 +159,8 @@ const ActionForm = ({ action, tasks, onRun, onSubmit, onCancel }: ActionFormProp
 
   const handleSubmit = useCallback(async () => {
     setIsSaving(true);
-    const enabled = isEnabled(document.nodes);
     try {
-      await onSubmit(name, { ...document, name, enabled }, enabled);
+      await onSubmit(name, { ...document, name });
     } finally {
       setIsSaving(false);
     }

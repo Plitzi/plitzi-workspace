@@ -484,7 +484,7 @@ is a stored flow the SERVER runs; a page names it and never learns what it does.
 \`upsertAction\` / \`patchAction\`, then call it from a page flow with the \`runServerAction\` step (mode
 \`await\` to use the result, \`detached\` to fire and carry on).
 
-Three rules the validator enforces, worth knowing before you write:
+Four rules worth knowing before you write:
 
 - **Steps are server tasks.** \`plitzi://actions/{env}/tasks\` lists what this deployment can run — a browser step
   (\`setState\`, \`navigate\`) has nothing to act on here, and the reverse is true too: a task cannot run in a page
@@ -492,6 +492,9 @@ Three rules the validator enforces, worth knowing before you write:
 - **The contracts.** \`input\` is coerced and anything undeclared is DROPPED. The OUTPUT is whatever the final
   \`flow.output\` step names — there is no separate list to keep in step with it — and that step must be LAST,
   since only the last one that runs is answered. Everything else a step produced stays on the server.
+- **Whether it runs lives on its TRIGGERS.** Each trigger step carries \`enabled\`, and the action is on when any
+  way into it is — there is no switch beside the flow. So "pause this action" means disabling its trigger step(s),
+  never deleting them.
 - **A step names the credential it uses**, and sees no other. \`credentials\` on the document says which ones the
   action may ask for at all; the secret itself is never yours to see, exactly as with a connector.
 

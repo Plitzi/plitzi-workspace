@@ -10,7 +10,6 @@ const SpaceRemoveActionMutation = gql`
       id
       identifier
       name
-      enabled
       document
       createdAt
       updatedAt
