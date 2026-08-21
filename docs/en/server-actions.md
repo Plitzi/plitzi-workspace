@@ -69,11 +69,24 @@ Two things worth knowing:
 Everything the flow produced and did not name stays on the server. That is the mechanism that keeps an API's
 internal fields, draft rows and tokens out of the page.
 
-### Testing it
+### Checking and testing it
 
-The form has a **Test run** panel: fill the declared inputs, run, and read the trace step by step. It runs the
-**saved** action through the same runner a visitor's call goes through — same access rule, same limits, same
-single-flight — because a test path that skipped them would be rehearsing something other than what ships.
+Three panels, answering three different questions:
+
+- **Check against this server** — what is wrong before anything runs: a task this deployment does not register, a
+  credential the space has not got, a key missing from the one it has, a connector that was deleted, a database
+  engine with no driver, a cron that would never fire. None of it is visible from the document, and all of it
+  otherwise fails on the first real delivery.
+- **Test run** — rehearses the action through whichever way in you pick: a page call, a **webhook** (paste a
+  delivery body), a **schedule** (run it now), a render. It runs the **saved** document through the same runner a
+  visitor's call goes through — same access rule, same limits, same single-flight — because a test path that
+  skipped them would be rehearsing something other than what ships. The signature is not checked, because there
+  is no sender to sign with; whether it WOULD verify is what the check answers.
+- **Recent activity** — what happened when nobody was watching: runs started by a webhook, a schedule or a page,
+  and the deliveries that were refused before anything ran.
+
+The trace comes back step by step, with credential values redacted and the message of whatever step stopped the
+run.
 
 ---
 
@@ -104,6 +117,12 @@ Three triggers fire on the element that launched the run:
 - **On Server Action End** — `actionId`, `runId`, `status`, `output`
 - **On Server Action Error** — plus `reason`: `duplicate`, `over_capacity`, `recursion`, `forbidden`, `timeout`…
 - **On Server Action Progress** — one per chunk a streaming run emitted
+
+**In the browser, the dev-tools panel has an `Actions` tab.** Every run this page starts is recorded there as it
+is SENT — which is the only evidence a `detached` or `stream` run leaves, since one is never awaited and the other
+returns before its frames arrive. It shows the action, the mode, the input, the answer or the refusal reason, the
+progress chunks, and — on a dev server, which is the only deployment that sends it — **the steps the flow ran on
+the server**. The same events also appear in the `Logs` tab under their own `actions` category.
 
 `actionId` is a parameter, so one element can launch several actions and each trigger filters with its own `when`.
 
@@ -156,7 +175,9 @@ interpolable by every step, including the one that answers the browser.
 ## 5. Webhooks
 
 Add a **webhook** trigger step and the action answers at `POST /_action/hook/<actionId>` on the space's own
-origin. It is public by construction, so the signature is the security boundary:
+origin. **The panel shows the URL** — one per deployment, because a sender is configured per environment and a
+single "the URL" is how a staging integration ends up delivering into production. It is public by construction, so
+the signature is the security boundary:
 
 How it is checked lives on the trigger step, one field per thing a sender does differently:
 
@@ -293,13 +314,42 @@ things somebody meant to happen twice.
 | A webhook that appears to do nothing at all | Open the action and read **Recent activity**. A delivery refused for a signature that does not match is recorded there with the reason — it is the most common cause, and it never reaches a run |
 | A step that reports `failed` with no server answer behind it | The server was unreachable — down, restarting, or the connection dropped. A run that never left the browser is reported like a refusal, so the flow still gets a status to bind |
 
-The **Test run** panel shows the trace step by step, with credential values redacted and the message of whatever
-step stopped the run. Below it, **Recent activity** shows what happened when nobody was watching: the runs a
-webhook, a schedule or a page started, and the deliveries that were refused before anything ran.
+Three panels answer three different questions:
+
+- **Check against this server** — what is wrong before anything runs: a task this deployment does not register, a
+  credential the space has not got, a key missing from the one it has, a connector that was deleted, a database
+  engine with no driver, a cron that would never fire. The editor cannot see any of it, and it is what otherwise
+  fails on somebody else's first delivery.
+- **Test run** — rehearses the action through whichever way in you pick. A page call is the one you can already
+  try by clicking the page; a **webhook** (paste a delivery body) and a **schedule** (run it now) are the ones
+  nobody is watching. It runs the SAVED document, through the same runner, subject to that trigger's own access
+  rule and every limit. The signature is not checked — there is no sender to sign with, which is what the check
+  above answers instead.
+- **Recent activity** — what happened when nobody was watching: the runs a webhook, a schedule or a page started,
+  and the deliveries that were refused before anything ran.
+
+The trace comes back step by step with credential values redacted and the message of whatever step stopped the run.
 
 ---
 
-## 11. What is deliberately not here
+## 11. Reading the history from outside the builder
+
+The same feed the panel shows is available over HTTP, for everything that is not the builder — a status page, a
+dashboard, a support script, a terminal at 3am:
+
+```
+GET /spaces/:spaceId/actions/runs?actionId=&status=&limit=&offset=
+GET /spaces/:spaceId/actions/runs/:runId
+```
+
+Both need a session with `spaceView` on the space. They answer runs and refusals in one shape (`status: 'refused'`
+carries the `reason` that turned a delivery away), and never the trace: step results are the space's own data, and
+a history is which steps ran and how each ended. A `runId` is what a caller already holds — it comes back on the
+answer, on the `X-Plitzi-Run-Id` header, and on the trigger that fires when a detached run lands.
+
+---
+
+## 12. What is deliberately not here
 
 Four decisions that are open rather than forgotten, so nobody re-derives them from scratch:
 
@@ -318,7 +368,7 @@ Four decisions that are open rather than forgotten, so nobody re-derives them fr
 
 ---
 
-## 12. For a self-hosted deployment
+## 13. For a self-hosted deployment
 
 Everything above is configuration; the two extension points are code you own:
 

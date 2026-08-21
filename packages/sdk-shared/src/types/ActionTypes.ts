@@ -320,6 +320,29 @@ export type ActionRunRecord = {
 };
 
 /**
+ * One thing a CHECK found about an action, before anybody runs it.
+ *
+ * The complement to `validateActionDocument`, which reads the document alone and therefore cannot know whether
+ * the credential a step names exists, whether this server registers that task, or whether the cron would ever
+ * fire. Those are the failures that only show up at 3am on the first real delivery, and they are exactly what an
+ * author cannot see from the editor.
+ */
+export type ActionCheckIssue = {
+  /** `error` — it cannot work as written. `warning` — it will run, and somebody should know. */
+  level: 'error' | 'warning';
+  /** Where it is, in the same `nodes.<id>.params.<field>` shape the document validator uses. */
+  path: string;
+  message: string;
+  hint?: string;
+};
+
+/** What the deployment answered about one action. `valid` is "nothing here is fatal", not "it will succeed". */
+export type ActionCheckReport = {
+  valid: boolean;
+  issues: ActionCheckIssue[];
+};
+
+/**
  * One thing that happened to an action, as the builder reads it back.
  *
  * A run and a refusal in one shape, because the question an author asks is "what happened", and the most common

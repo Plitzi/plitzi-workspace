@@ -14,6 +14,7 @@ const Actions = () => {
     actions,
     tasks,
     credentials,
+    deployments,
     isLoading,
     error,
     hasServerRendering,
@@ -103,6 +104,7 @@ const Actions = () => {
             action={action}
             tasks={tasks}
             credentials={credentials}
+            deployments={deployments}
             onRun={runAction}
             onSubmit={handleSubmit}
             onCancel={handleCancel}

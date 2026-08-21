@@ -119,6 +119,11 @@ const handlers: Record<string, ((space: OfflineDataRaw) => unknown) | undefined>
   /** Same rule as the actions above, and the panel reads this one at boot too: a space with no credentials still
    *  has to answer with a connection, because `true` is not something `.edges` can be read off. */
   SpaceCredentialsQuery: () => ({ data: { SpaceCredentials: emptyConnection('SpaceCredentialListType') } }),
+  /** What the server can tell about an action without running it. Nothing is wrong with an offline space's
+   *  nothing, and the panel reads `.issues` off whatever comes back. */
+  SpaceCheckActionQuery: () => ({
+    data: { SpaceCheckAction: { valid: true, issues: [], __typename: 'SpaceActionCheck' } }
+  }),
   /** The action feed, read by the panel whenever one is open. Same rule again: `.edges` off `true` is a crash. */
   SpaceActionEventsQuery: () => ({ data: { SpaceActionEvents: emptyConnection('SpaceActionEventListType') } }),
   /** The step catalog, which is SERVED rather than compiled in — so a mocked backend serves an empty one. A

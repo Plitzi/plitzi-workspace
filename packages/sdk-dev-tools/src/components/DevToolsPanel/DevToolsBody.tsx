@@ -3,6 +3,7 @@ import { use } from 'react';
 
 import DevToolsContext from '@plitzi/sdk-shared/devTools/DevToolsContext';
 
+import ActionsViewer from './tabs/ActionsViewer';
 import ElementsViewer from './tabs/ElementsViewer';
 import HistoryViewer from './tabs/HistoryViewer';
 import Logs from './tabs/Logs';
@@ -46,6 +47,7 @@ const DevToolsBody = ({
         )}
         {tabSelected === 'plugins' && <PluginsViewer />}
         {tabSelected === 'tracing' && <TracingViewer />}
+        {tabSelected === 'actions' && <ActionsViewer />}
       </div>
     </div>
   );

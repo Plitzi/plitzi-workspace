@@ -2,21 +2,33 @@ import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Input from '@plitzi/plitzi-ui/Input';
 import Label from '@plitzi/plitzi-ui/Label';
+import Select from '@plitzi/plitzi-ui/Select';
 import Switch from '@plitzi/plitzi-ui/Switch';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import type { ActionField, ActionRunReport } from '@plitzi/sdk-shared';
+import { actionTriggers, triggerInput } from '@plitzi/sdk-shared/actions';
+
+import type { ActionDocument, ActionRunReport, ActionTriggerType } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
 
 export type ActionTestRunProps = {
-  input: Record<string, ActionField>;
+  /** The STORED document — the one a run would actually execute. */
+  document: ActionDocument;
   disabled: boolean;
   disabledReason?: string;
-  onRun: (input: Record<string, unknown>) => Promise<ActionRunReport | undefined>;
+  onRun: (input: Record<string, unknown>, trigger: ActionTriggerType) => Promise<ActionRunReport | undefined>;
 };
 
 const statusIntent = (status: string) => (status === 'completed' ? 'success' : 'error');
+
+const TRIGGER_TITLES: Record<string, string> = {
+  call: 'As a page calling it',
+  webhook: 'As an inbound webhook',
+  schedule: 'As its schedule firing now',
+  render: 'As a page rendering',
+  custom: 'As the trigger this deployment mounts'
+};
 
 /**
  * What a step left behind, when it is worth reading.
@@ -36,20 +48,34 @@ const failureOf = (result: unknown): string => {
 };
 
 /**
- * Runs the saved action and shows what happened, step by step.
+ * Rehearses the action — through whichever way in the author wants to try.
  *
- * It runs the STORED document, not the form's draft, and says so — a rehearsal of unsaved edits would be a
- * rehearsal of something that does not exist yet, and the run is subject to the same access rule and the same
- * limits a visitor's call is.
+ * It runs the STORED document, not the form's draft, and says so: a rehearsal of unsaved edits would be a
+ * rehearsal of something that does not exist yet. It goes through the same runner a visitor's call goes through,
+ * so the trigger's own access rule, the input contract and every limit apply.
  *
- * The trace is the point: a server flow is otherwise a thing that either worked or did not, with the interesting
- * part on a machine the author cannot see.
+ * Being able to pick the trigger is the point. A page call is the one an author can already try by clicking the
+ * page; a **webhook** and a **schedule** are the ones nobody is watching, that fail at 3am on somebody else's
+ * delivery — and until this existed the only way to find out that a credential was wrong was to wait for one.
  */
-const ActionTestRun = ({ input, disabled, disabledReason, onRun }: ActionTestRunProps) => {
+const ActionTestRun = ({ document, disabled, disabledReason, onRun }: ActionTestRunProps) => {
+  const triggers = useMemo(
+    () => actionTriggers(document).filter(node => node.action) as { id: string; action: string; params: object }[],
+    [document]
+  );
+  const [trigger, setTrigger] = useState<string>(() => triggers[0]?.action ?? 'call');
   const [values, setValues] = useState<Record<string, string>>({});
+  const [body, setBody] = useState('{}');
   const [report, setReport] = useState<ActionRunReport | undefined>(undefined);
   const [error, setError] = useState('');
   const [isRunning, setIsRunning] = useState(false);
+
+  // Undefined when the action has no way in at all, which is a document somebody is still writing.
+  const selected = useMemo<(typeof triggers)[number] | undefined>(
+    () => triggers.find(node => node.action === trigger) ?? triggers[0],
+    [triggers, trigger]
+  );
+  const input = useMemo(() => (selected ? triggerInput(selected.params) : {}), [selected]);
 
   const handleChange = useCallback(
     (key: string) => (value: string) => setValues(current => ({ ...current, [key]: value })),
@@ -64,18 +90,39 @@ const ActionTestRun = ({ input, disabled, disabledReason, onRun }: ActionTestRun
     []
   );
 
+  const handleChangeTrigger = useCallback((value: string) => {
+    setTrigger(value);
+    setReport(undefined);
+    setError('');
+  }, []);
+
   const handleRun = useCallback(async () => {
     setIsRunning(true);
     setError('');
     try {
-      setReport(await onRun(values));
+      /**
+       * A webhook is fed its BODY, exactly as the endpoint feeds it: the body's own keys, plus the whole thing
+       * under `payload`. Sending the declared fields instead would rehearse a shape no sender produces.
+       *
+       * What this cannot rehearse is the signature, because there is no sender to sign with — that is what the
+       * check above answers instead.
+       */
+      if (trigger === 'webhook') {
+        const parsed: unknown = JSON.parse(body || '{}');
+        const payload = parsed !== null && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+        setReport(await onRun({ ...payload, payload }, 'webhook'));
+
+        return;
+      }
+
+      setReport(await onRun(values, trigger as ActionTriggerType));
     } catch (err: unknown) {
       setReport(undefined);
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setIsRunning(false);
     }
-  }, [onRun, values]);
+  }, [body, onRun, trigger, values]);
 
   const fields = Object.entries(input);
 
@@ -83,12 +130,37 @@ const ActionTestRun = ({ input, disabled, disabledReason, onRun }: ActionTestRun
     <div className="flex flex-col gap-2 rounded-sm border border-gray-300 p-3 dark:border-zinc-600">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium">Test run</span>
-        <Button size="xs" disabled={disabled || isRunning} onClick={handleRun}>
+        <Button size="xs" disabled={disabled || isRunning || !selected} onClick={handleRun}>
           {isRunning ? 'Running…' : 'Run'}
         </Button>
       </div>
       {disabled && disabledReason && <span className="text-xs text-gray-500">{disabledReason}</span>}
-      {fields.length > 0 && (
+      {triggers.length === 0 && (
+        <span className="text-xs text-gray-500 dark:text-zinc-400">
+          This action has no way in yet. Add a trigger step to the flow — that is what decides who may start it and what
+          they may send.
+        </span>
+      )}
+      {triggers.length > 1 && (
+        <Select value={trigger} label="Start it" size="xs" onChange={handleChangeTrigger}>
+          {triggers.map(node => (
+            <option key={node.id} value={node.action}>
+              {TRIGGER_TITLES[node.action] ?? node.action}
+            </option>
+          ))}
+        </Select>
+      )}
+      {trigger === 'webhook' && (
+        <div className="flex flex-col gap-1">
+          <Label size="xs">Delivery body (JSON)</Label>
+          <TextArea className="w-full font-mono" size="xs" value={body} placeholder="{ }" onChange={setBody} />
+          <span className="text-xs text-gray-500 dark:text-zinc-400">
+            The signature is not checked here — there is no sender to sign with. Whether it WOULD verify is what the
+            check above answers.
+          </span>
+        </div>
+      )}
+      {trigger !== 'webhook' && fields.length > 0 && (
         <div className="flex flex-col gap-2">
           {fields.map(([key, field]) => (
             <div key={key} className="flex flex-col gap-1">

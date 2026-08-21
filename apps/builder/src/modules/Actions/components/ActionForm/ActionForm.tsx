@@ -3,17 +3,20 @@ import Button from '@plitzi/plitzi-ui/Button';
 import Input from '@plitzi/plitzi-ui/Input';
 import { useCallback, useMemo, useState } from 'react';
 
-import { triggerInput, validateActionDocument } from '@plitzi/sdk-shared/actions';
+import { validateActionDocument } from '@plitzi/sdk-shared/actions';
 
 import Workflow from '../../../Interactions/components/Workflow';
+import ActionCheck from '../ActionCheck';
 import ActionEvents from '../ActionEvents';
 import ActionTestRun from '../ActionTestRun';
+import ActionWebhookUrl from '../ActionWebhookUrl';
 
 import type {
   ActionRunReport,
   ActionDocument,
   ActionField,
   ActionTaskDescriptor,
+  ActionTriggerType,
   ElementInteraction,
   InteractionCallback,
   InteractionCallbackParam,
@@ -25,7 +28,13 @@ export type ActionFormProps = {
   action?: SpaceAction;
   tasks: ActionTaskDescriptor[];
   credentials: SpaceCredential[];
-  onRun: (identifier: string, input: Record<string, unknown>) => Promise<ActionRunReport | undefined>;
+  /** Where this space answers — what turns an action identifier into a URL a sender can be given. */
+  deployments: { environment: string; domain: string; isDefault: boolean }[];
+  onRun: (
+    identifier: string,
+    input: Record<string, unknown>,
+    trigger: ActionTriggerType
+  ) => Promise<ActionRunReport | undefined>;
   onSubmit: (name: string, document: ActionDocument) => Promise<void> | void;
   onCancel: () => void;
 };
@@ -235,13 +244,18 @@ const deriveOutput = (nodes: Record<string, ElementInteraction>): Record<string,
   }
 };
 
-const ActionForm = ({ action, tasks, credentials, onRun, onSubmit, onCancel }: ActionFormProps) => {
+const ActionForm = ({ action, tasks, credentials, deployments, onRun, onSubmit, onCancel }: ActionFormProps) => {
   const [name, setName] = useState(action?.name ?? '');
   const [document, setDocument] = useState<ActionDocument>(() => action?.document ?? emptyDocument());
   const [isSaving, setIsSaving] = useState(false);
 
   const nodeDefinitions = useMemo(() => asNodeDefinitions(tasks, credentials), [tasks, credentials]);
   const report = useMemo(() => validateActionDocument({ ...document, name: name || document.name }), [document, name]);
+  // Read off the flow as it is being edited: the URL is worth showing the moment somebody adds the way in.
+  const hasWebhook = useMemo(
+    () => Object.values(document.nodes).some(node => node.type === 'trigger' && node.action === 'webhook'),
+    [document]
+  );
 
   const patch = useCallback(
     (changes: Partial<ActionDocument>) => setDocument(current => ({ ...current, ...changes })),
@@ -255,7 +269,7 @@ const ActionForm = ({ action, tasks, credentials, onRun, onSubmit, onCancel }: A
   );
 
   const handleRun = useCallback(
-    (input: Record<string, unknown>) => onRun(action?.identifier ?? '', input),
+    (input: Record<string, unknown>, trigger: ActionTriggerType) => onRun(action?.identifier ?? '', input, trigger),
     [action, onRun]
   );
 
@@ -267,10 +281,6 @@ const ActionForm = ({ action, tasks, credentials, onRun, onSubmit, onCancel }: A
       setIsSaving(false);
     }
   }, [name, document, onSubmit]);
-
-  // The `call` trigger's own contract: what a test run asks for is what a page would send.
-  const callTrigger = Object.values(document.nodes).find(node => node.type === 'trigger' && node.action === 'call');
-  const callInput = callTrigger ? triggerInput(callTrigger.params) : {};
 
   return (
     <div className="mx-auto flex w-full max-w-4xl grow basis-0 flex-col gap-4 overflow-auto p-4">
@@ -318,9 +328,17 @@ const ActionForm = ({ action, tasks, credentials, onRun, onSubmit, onCancel }: A
         </Alert>
       )}
 
+      {/* A webhook has an address, and it is the one thing about it an author cannot work out from the flow. It
+          shows as soon as the trigger exists — before saving, because the identifier is what it is built from. */}
+      {action && hasWebhook && <ActionWebhookUrl identifier={action.identifier} deployments={deployments} />}
+
+      {/* Before running anything: what this server can already tell is wrong. It is the half the editor cannot
+          see, and the half that otherwise surfaces on somebody else's first delivery. */}
+      {action && <ActionCheck actionId={action.identifier} />}
+
       {action && (
         <ActionTestRun
-          input={callInput}
+          document={action.document}
           disabled={false}
           disabledReason="Runs the saved version, not the edits above."
           onRun={handleRun}

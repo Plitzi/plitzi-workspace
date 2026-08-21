@@ -229,6 +229,40 @@ export type TracingTreeNode = {
 // real (possibly non-rendered) ancestors and self time isn't misattributed, and untouched branches show as hatched.
 export type TracingTree = Record<string, TracingTreeNode>;
 
+/**
+ * One server action this page started, as the dev-tools show it back.
+ *
+ * Recorded by the `runServerAction` step itself, so it covers what no network tab makes legible: which action was
+ * named, in which mode, what the server answered, and — when the deployment is a dev one, which is the only time
+ * the server sends it — the STEPS the flow ran on the other side. A `detached` run has no answer to await and a
+ * `stream` returns before its frames arrive, so both are invisible without a record of their own.
+ */
+export type ActionRunEntry = {
+  /** Local to this page: assigned when the run is SENT, which is before any server run id exists. */
+  id: string;
+  actionId: string;
+  mode: 'await' | 'detached' | 'stream';
+  /** The server's own id, once it answers. Absent for a run that never reached one. */
+  runId?: string;
+  status: 'running' | 'completed' | 'failed' | 'accepted' | 'streaming' | 'skipped' | 'aborted';
+  /** The server's vocabulary when it refused: `duplicate`, `over_capacity`, `recursion`, `forbidden`… */
+  reason?: string;
+  /** What went wrong, when anything says so. Never a credential — the server redacts before answering. */
+  error?: string;
+  input?: Record<string, unknown>;
+  output?: Record<string, unknown>;
+  /** Chunks a streaming run emitted, in order. */
+  progress: unknown[];
+  /** The server-side steps, when the deployment sent them: authoring requests and dev servers only. */
+  trace?: Record<string, unknown>[];
+  startedAt: number;
+  endedAt?: number;
+};
+
+export type ActionRunsState = {
+  runs: ActionRunEntry[];
+};
+
 export type TracingState = {
   // True once any profiled element has committed — i.e. `debugMode` is on in the element tree, so instrumentation is
   // live. The devtools panel renders outside the service provider and can't read `debugMode` directly, so it relies

@@ -15,11 +15,21 @@ const authoring = vi.hoisted<{ catalog: unknown[]; available: boolean | undefine
   available: undefined
 }));
 
+/** Every run is recorded for the dev-tools as it is SENT; these are the calls that go to that store. */
+const recorded = vi.hoisted(() => ({
+  start: vi.fn(() => 'run-1'),
+  update: vi.fn(),
+  progress: vi.fn()
+}));
+
 vi.mock('@plitzi/sdk-shared/store', () => ({
   // The real hook answers one value for a path and a tuple for a list of them. The component asks for both
   // shapes, so the stand-in has to as well.
   useCommonStore: (path: string | string[]) =>
-    Array.isArray(path) ? [[authoring.catalog, authoring.available]] : [endpoint.value]
+    Array.isArray(path) ? [[authoring.catalog, authoring.available]] : [endpoint.value],
+  recordActionRun: recorded.start,
+  updateActionRun: recorded.update,
+  recordActionProgress: recorded.progress
 }));
 
 const warning = vi.hoisted(() => vi.fn());
@@ -82,6 +92,9 @@ describe('ActionInteractions', () => {
     endpoint.value = '/_action';
     authoring.catalog = [];
     authoring.available = undefined;
+    recorded.start.mockClear();
+    recorded.update.mockClear();
+    recorded.progress.mockClear();
     warning.mockClear();
     info.mockClear();
     success.mockClear();
@@ -294,6 +307,41 @@ describe('ActionInteractions', () => {
     const result = await mount().run({ actionId: 'quote', input: '{}', mode: 'stream' }, { elementRef: 'button1' });
 
     expect(result).toMatchObject({ status: 'streaming', runId: 'run-42' });
+  });
+
+  /**
+   * The dev-tools panel is the only place a `detached` or `stream` run is visible at all: one is not awaited and
+   * the other returns before its frames arrive, so neither leaves anything in the flow to bind to.
+   */
+  it('records every run for the dev-tools, and how it ended', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          jsonResponse(200, { runId: 'r9', status: 'completed', output: { total: 3 }, trace: [{ status: 'success' }] })
+        )
+      )
+    );
+
+    await mount().run({ actionId: 'quote', input: '{"city":"Berlin"}', mode: 'await' });
+
+    expect(recorded.start).toHaveBeenCalledWith(
+      expect.objectContaining({ actionId: 'quote', mode: 'await', input: { city: 'Berlin' } })
+    );
+    // The server's own steps, which only a dev server or an authoring request is sent — this is what puts a
+    // SERVER run in the dev-tools beside the client flows.
+    expect(recorded.update).toHaveBeenCalledWith(
+      'run-1',
+      expect.objectContaining({ status: 'completed', runId: 'r9', trace: [{ status: 'success' }] })
+    );
+  });
+
+  it('records a refusal with the server’s own reason', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(jsonResponse(409, { reason: 'duplicate', runId: 'r1' }))));
+
+    await mount().run({ actionId: 'quote', input: '{}', mode: 'await' });
+
+    expect(recorded.update).toHaveBeenCalledWith('run-1', expect.objectContaining({ status: 'failed', reason: 'duplicate' }));
   });
 
   it('reports a stream it could not open the same way', async () => {

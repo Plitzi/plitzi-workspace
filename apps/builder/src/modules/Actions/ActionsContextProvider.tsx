@@ -12,6 +12,7 @@ import type {
   ActionCatalogEntry,
   ActionDocument,
   ActionTaskDescriptor,
+  ActionTriggerType,
   BuilderMutationsMap,
   BuilderQueriesMap,
   SpaceAction,
@@ -95,6 +96,24 @@ const ActionsContextProvider = ({ children }: ActionsContextProviderProps) => {
     [deployments]
   );
 
+  /**
+   * The origins this space answers on, for the one thing an author cannot derive: a webhook's URL.
+   *
+   * Every deployment gets its own, because a sender is configured per environment — the staging integration must
+   * not deliver into production, and a single "the URL" would invite exactly that.
+   */
+  const origins = useMemo(
+    () =>
+      (deployments ?? [])
+        .filter(deployment => deployment.domain)
+        .map(deployment => ({
+          environment: deployment.environment,
+          domain: deployment.domain,
+          isDefault: deployment.default
+        })),
+    [deployments]
+  );
+
   // Both halves of what an editor needs to author a call: which actions exist, and whether anything will ever run
   // them. The second is what lets a step say so while it is being authored rather than at the first click in
   // production.
@@ -133,8 +152,8 @@ const ActionsContextProvider = ({ children }: ActionsContextProviderProps) => {
   );
 
   const runAction = useCallback(
-    async (identifier: string, input: Record<string, unknown>) => {
-      const response = await mutateNetwork('SpaceRunAction', { identifier, input });
+    async (identifier: string, input: Record<string, unknown>, trigger: ActionTriggerType = 'call') => {
+      const response = await mutateNetwork('SpaceRunAction', { identifier, input, trigger });
 
       return response.result;
     },
@@ -149,6 +168,7 @@ const ActionsContextProvider = ({ children }: ActionsContextProviderProps) => {
       isLoading,
       error: error?.message ?? '',
       hasServerRendering,
+      deployments: origins,
       addAction,
       updateAction,
       removeAction,
@@ -161,6 +181,7 @@ const ActionsContextProvider = ({ children }: ActionsContextProviderProps) => {
       isLoading,
       error,
       hasServerRendering,
+      origins,
       addAction,
       updateAction,
       removeAction,

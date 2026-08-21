@@ -24,6 +24,13 @@ export { createScheduleRunner } from './modules/actions/runtime/schedule';
  * the file that used to sit in `runtime/` existed only so a neighbouring import could look local.
  */
 export { cronMatches, parseCron } from '@plitzi/sdk-shared/actions';
+/**
+ * What only this deployment can answer about an action, before anybody runs it: a task it does not register, a
+ * credential the space has not got, a key missing from the one it has, a connector that was deleted, an engine
+ * with no driver, a cron that will never fire. The document validator in `sdk-shared` catches the other half.
+ */
+export { checkAction } from './modules/actions/runtime/check';
+export type { ActionCheckDeps } from './modules/actions/runtime/check';
 export { ActionRunError } from './modules/actions/runtime/errors';
 export { DEFAULT_LIMITS } from './modules/actions/runtime/limits';
 export { createTaskRegistry, taskName } from './modules/actions/tasks/registry';

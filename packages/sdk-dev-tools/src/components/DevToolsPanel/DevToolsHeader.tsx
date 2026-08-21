@@ -13,7 +13,10 @@ const TABS = [
   { id: 'elements', label: 'Elements', icon: 'fa-solid fa-layer-group' },
   { id: 'variables', label: 'Variables', icon: 'fa-solid fa-code' },
   { id: 'plugins', label: 'Plugins', icon: 'fa-solid fa-puzzle-piece' },
-  { id: 'tracing', label: 'Tracing', icon: 'fa-solid fa-gauge-high' }
+  { id: 'tracing', label: 'Tracing', icon: 'fa-solid fa-gauge-high' },
+  // Server actions started from this page. Its own tab rather than a Logs filter: a run has an input, an output,
+  // progress and — in development — the steps the server took, none of which is a log line.
+  { id: 'actions', label: 'Actions', icon: 'fa-solid fa-bolt' }
 ] as const;
 
 export type DevToolsHeaderProps = {

@@ -50,6 +50,7 @@ export const createActionsModule = (config: ActionsConfig): ActionsModule => {
 
 export { ActionRunError } from './runtime/errors';
 export { precheckRun } from './runtime/precheck';
+export { checkAction } from './runtime/check';
 export { DEFAULT_LIMITS, resolveLimits } from './runtime/limits';
 export { createRunGuards, deriveRunKey } from './runtime/guards';
 export { createScheduleRunner } from './runtime/schedule';

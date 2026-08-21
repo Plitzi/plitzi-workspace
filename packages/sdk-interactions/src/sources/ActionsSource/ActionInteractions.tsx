@@ -1,7 +1,7 @@
 import { useCallback, use, useMemo } from 'react';
 
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
-import { useCommonStore } from '@plitzi/sdk-shared/store';
+import { recordActionProgress, recordActionRun, updateActionRun, useCommonStore } from '@plitzi/sdk-shared/store';
 
 import InteractionsContext from '../../InteractionsContext';
 
@@ -26,6 +26,8 @@ type ActionResponse = {
   output?: Record<string, unknown>;
   error?: string;
   reason?: string;
+  /** The server-side steps. Only ever sent to an authoring request or by a dev server. */
+  trace?: Record<string, unknown>[];
 };
 
 type StreamFrame = { event: string; data: Record<string, unknown> };
@@ -162,11 +164,11 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         // Said once, plainly: the step is not broken, this render simply has no server tier to run it on. A silent
         // no-op here is a button that does nothing for a reason nobody can see.
         pConsole.warning(
-          'interactions',
+          'actions',
           <span>
             Server action <b>{actionId}</b> was skipped: this page is served without a Plitzi server
           </span>,
-          { actionId }
+          { actionId, status: 'skipped' }
         );
 
         return { status: 'skipped', runId: '', output: {} };
@@ -176,22 +178,26 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         return { status: 'skipped', runId: '', output: {} };
       }
 
-      const body = JSON.stringify({
-        actionId,
-        input: parseInput(params.input),
-        ...(idempotencyKey ? { idempotencyKey } : {})
-      });
+      const input = parseInput(params.input);
+      const body = JSON.stringify({ actionId, input, ...(idempotencyKey ? { idempotencyKey } : {}) });
+      /**
+       * Recorded when the request is SENT, not when it answers.
+       *
+       * The runs worth looking at are the ones with no answer to look at: a detached run nobody awaits, a stream
+       * that returns before its frames arrive, a server that is not there. The dev-tools read this store.
+       */
+      const record = recordActionRun({ actionId, mode, input });
 
       if (mode === 'detached') {
         // Announced as it starts, not only when it fails. A detached run is invisible by construction — the flow
         // returned, the page moved on — so without this the honest answer to "did anything happen?" is a network
         // tab. It lands in the dev-tools log beside the client flows, which is where an author already looks.
         pConsole.info(
-          'interactions',
+          'actions',
           <span>
             Server action <b>{actionId}</b> sent
           </span>,
-          { actionId, mode }
+          { actionId, mode, status: 'accepted' }
         );
 
         // `keepalive` so a navigation right after "Send" does not kill the request: the flow is not waiting for
@@ -207,6 +213,13 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
           .then(async response => {
             const payload = (await response.json().catch(() => ({}))) as ActionResponse;
             if (!response.ok) {
+              updateActionRun(record, {
+                status: 'failed',
+                endedAt: Date.now(),
+                ...(payload.runId ? { runId: payload.runId } : {}),
+                ...(payload.reason ? { reason: payload.reason } : {}),
+                ...(payload.error ? { error: payload.error } : {})
+              });
               reportFlow(context?.elementRef, 'onFlowError', {
                 actionId,
                 runId: payload.runId ?? '',
@@ -217,12 +230,19 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
               return;
             }
 
+            updateActionRun(record, {
+              status: payload.status === 'completed' ? 'completed' : 'accepted',
+              endedAt: Date.now(),
+              ...(payload.runId ? { runId: payload.runId } : {}),
+              ...(payload.output ? { output: payload.output } : {}),
+              ...(payload.trace ? { trace: payload.trace } : {})
+            });
             pConsole.success(
-              'interactions',
+              'actions',
               <span>
                 Server action <b>{actionId}</b> finished
               </span>,
-              { actionId, runId: payload.runId, status: payload.status, output: payload.output }
+              { actionId, mode, runId: payload.runId, status: payload.status, output: payload.output }
             );
             reportFlow(context?.elementRef, 'onFlowEnd', {
               actionId,
@@ -232,26 +252,33 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
             });
           })
           .catch((error: unknown) => {
+            updateActionRun(record, {
+              status: 'failed',
+              endedAt: Date.now(),
+              error: error instanceof Error ? error.message : String(error)
+            });
             pConsole.warning(
-              'interactions',
+              'actions',
               <span>
                 Server action <b>{actionId}</b> could not be sent
               </span>,
-              { actionId, error: error instanceof Error ? error.message : String(error) }
+              { actionId, mode, error: error instanceof Error ? error.message : String(error) }
             );
             reportFlow(context?.elementRef, 'onFlowError', { actionId, runId: '', error: '', reason: 'failed' });
           });
+
+        updateActionRun(record, { status: 'accepted' });
 
         return { accepted: true, status: 'accepted', runId: '', output: {} };
       }
 
       if (mode === 'stream') {
         pConsole.info(
-          'interactions',
+          'actions',
           <span>
             Server action <b>{actionId}</b> streaming
           </span>,
-          { actionId, mode }
+          { actionId, mode, status: 'streaming' }
         );
 
         // `fetch` + a reader, never `EventSource`: that reconnects whenever a stream ends — success included — and
@@ -265,12 +292,17 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
             body
           });
         } catch (error: unknown) {
+          updateActionRun(record, {
+            status: 'failed',
+            endedAt: Date.now(),
+            error: error instanceof Error ? error.message : String(error)
+          });
           pConsole.warning(
-            'interactions',
+            'actions',
             <span>
               Server action <b>{actionId}</b> could not be reached
             </span>,
-            { actionId, error: error instanceof Error ? error.message : String(error) }
+            { actionId, mode, error: error instanceof Error ? error.message : String(error) }
           );
           reportFlow(context?.elementRef, 'onFlowError', { actionId, runId: '', error: '', reason: 'failed' });
 
@@ -279,6 +311,13 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
 
         if (!response.ok || !response.body) {
           const payload = (await response.json().catch(() => ({}))) as ActionResponse;
+          updateActionRun(record, {
+            status: 'failed',
+            endedAt: Date.now(),
+            ...(payload.runId ? { runId: payload.runId } : {}),
+            ...(payload.reason ? { reason: payload.reason } : {}),
+            ...(payload.error ? { error: payload.error } : {})
+          });
           reportFlow(context?.elementRef, 'onFlowError', {
             actionId,
             runId: payload.runId ?? '',
@@ -297,23 +336,36 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
          * opens, which is exactly when the step needs it.
          */
         const runId = response.headers.get('X-Plitzi-Run-Id') ?? '';
+        updateActionRun(record, { status: 'streaming', ...(runId ? { runId } : {}) });
 
         // Frames are consumed in the background: the STEP returns as soon as the stream opens, so the flow carries
         // on and the page hears about progress through its triggers.
         void readStream(response.body, frame => {
           if (frame.event === 'data') {
+            recordActionProgress(record, frame.data.chunk ?? frame.data);
             reportFlow(context?.elementRef, 'onFlowProgress', { actionId, runId, ...frame.data });
 
             return;
           }
 
           if (frame.event === 'error') {
+            updateActionRun(record, {
+              status: 'failed',
+              endedAt: Date.now(),
+              ...(typeof frame.data.reason === 'string' ? { reason: frame.data.reason } : {}),
+              ...(typeof frame.data.error === 'string' ? { error: frame.data.error } : {})
+            });
             reportFlow(context?.elementRef, 'onFlowError', { actionId, runId, ...frame.data });
 
             return;
           }
 
           if (frame.event === 'done') {
+            updateActionRun(record, {
+              status: frame.data.status === 'completed' ? 'completed' : 'failed',
+              endedAt: Date.now(),
+              ...(frame.data.output ? { output: frame.data.output as Record<string, unknown> } : {})
+            });
             reportFlow(context?.elementRef, 'onFlowEnd', { actionId, runId, ...frame.data });
           }
         });
@@ -330,6 +382,11 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
           body
         });
       } catch (error: unknown) {
+        updateActionRun(record, {
+          status: 'failed',
+          endedAt: Date.now(),
+          error: error instanceof Error ? error.message : String(error)
+        });
         // A server that is down, a connection that dropped, a page kept open through a deploy. Reported like a
         // refusal rather than thrown, so the rest of the flow — and the element that fired it — hear about it.
         pConsole.warning(
@@ -346,18 +403,47 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
 
       const payload = (await response.json().catch(() => ({}))) as ActionResponse;
       if (!response.ok) {
+        updateActionRun(record, {
+          status: 'failed',
+          endedAt: Date.now(),
+          ...(payload.runId ? { runId: payload.runId } : {}),
+          ...(payload.reason ? { reason: payload.reason } : {}),
+          ...(payload.error ? { error: payload.error } : {})
+        });
         // The reason is the server's own vocabulary — `duplicate`, `over_capacity`, `recursion` — and naming it is
         // what lets an author tell "my flow is wrong" from "I clicked twice".
         pConsole.warning(
-          'interactions',
+          'actions',
           <span>
             Server action <b>{actionId}</b> was refused
           </span>,
-          { actionId, reason: payload.reason, error: payload.error, status: response.status }
+          {
+            actionId,
+            mode,
+            runId: payload.runId,
+            reason: payload.reason,
+            error: payload.error,
+            status: String(response.status)
+          }
         );
 
         return { status: 'failed', reason: payload.reason ?? 'failed', runId: payload.runId ?? '', output: {} };
       }
+
+      /**
+       * The server's own steps, when it sent them.
+       *
+       * A dev server and an authoring request get the trace; a visitor's does not, and must not. Keeping it here
+       * is what puts a SERVER run in the dev-tools beside the client flows — the same trace the builder's test-run
+       * panel draws, for the run that actually happened on this page.
+       */
+      updateActionRun(record, {
+        status: payload.status === 'completed' ? 'completed' : 'failed',
+        endedAt: Date.now(),
+        ...(payload.runId ? { runId: payload.runId } : {}),
+        ...(payload.output ? { output: payload.output } : {}),
+        ...(payload.trace ? { trace: payload.trace } : {})
+      });
 
       return {
         status: payload.status ?? 'completed',
@@ -386,8 +472,19 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
           method: 'DELETE',
           credentials: 'same-origin'
         });
+        const cancelled = response.status === 204;
+        // Said either way, because "nothing happened" is the same thing to look at as "it stopped": a cancel is
+        // refused when the run is over, was never this caller's, or lives on a replica with no shared store to
+        // read the flag from.
+        pConsole.info(
+          'actions',
+          <span>
+            Server action run <b>{params.runId}</b> {cancelled ? 'cancelled' : 'was not cancelled'}
+          </span>,
+          { actionId: '', mode: 'cancel', runId: params.runId, status: cancelled ? 'aborted' : 'failed' }
+        );
 
-        return { cancelled: response.status === 204 };
+        return { cancelled };
       } catch {
         // Unreachable is not cancelled, and it is not an exception either: the caller asked whether the run was
         // stopped, and the honest answer to that is no.
