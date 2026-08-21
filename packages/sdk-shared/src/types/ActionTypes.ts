@@ -91,6 +91,17 @@ export type ActionTriggerParams = {
   input?: string;
   /** `webhook`: JSON {@link ActionWebhookVerification}. Absent means an endpoint anyone who learns it can start. */
   verify?: string;
+  /**
+   * `render`: how long an answer may be reused, in seconds. Absent or `0` means every render runs the flow.
+   *
+   * It belongs to the trigger for the same reason access does: it is a property of THIS way in. A call is
+   * somebody asking for something to happen and must not be served from a cache; a render is a read repeated
+   * once per visitor, and the difference between one outbound request and ten thousand of them is this number.
+   *
+   * Renders that arrive while one is already in flight are answered by it whatever this says — that is not a
+   * cache, it is the same run being shared, and it can never serve an answer older than the request.
+   */
+  cacheSeconds?: string;
   /** `schedule`: five fields — minute hour day-of-month month day-of-week. UTC. */
   cron?: string;
   timezone?: string;

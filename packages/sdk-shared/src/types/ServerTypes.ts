@@ -574,6 +574,18 @@ export type SSRRscConfig = {
   path?: string;
   /** Server-side cache TTL for RSC responses in milliseconds. Defaults to 30 000. Set to 0 to disable. */
   cacheTtlMs?: number;
+  /**
+   * How long ONE server element may take before the page is answered without it. Defaults to 5 000.
+   *
+   * It is the page's ceiling, and it wins over the producer's own: an action may be allowed ten seconds of its
+   * own (`action.limits.timeoutMs`) and still be cut off here, because a section is worth waiting for only as
+   * long as the visitor is. Whichever is tighter decides, and now that the budget CANCELS what it stops waiting
+   * for, being cut here ends the run rather than leaving it to finish for nobody.
+   *
+   * Raise it for a deployment whose sections are genuinely slow and worth the wait; lower it to keep a page fast
+   * at the cost of showing more empty sections when a provider is having a bad day.
+   */
+  elementTimeoutMs?: number;
 };
 
 /** What every log event carries, whatever layer it came from. */

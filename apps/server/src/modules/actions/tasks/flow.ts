@@ -1,3 +1,5 @@
+import { onAbort } from '../../../helpers/onAbort';
+
 import type { ActionTask } from '../types';
 
 const MAX_DELAY_MS = 5000;
@@ -22,7 +24,9 @@ const delay: ActionTask<{ milliseconds: string | number }> = {
     await new Promise<void>(resolve => {
       const timer = setTimeout(resolve, waitMs);
       // A cancelled run must not keep the slot for the rest of the delay: the abort resolves the wait immediately.
-      ctx.signal.addEventListener('abort', () => {
+      // Through `onAbort`, because a run cancelled BEFORE this step was reached would otherwise wait it out in
+      // full — the listener is attached here, and by then the event it is waiting for has already happened.
+      onAbort(ctx.signal, () => {
         clearTimeout(timer);
         resolve();
       });

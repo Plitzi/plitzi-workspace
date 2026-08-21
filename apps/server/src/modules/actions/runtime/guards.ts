@@ -23,6 +23,18 @@ export type ActiveRun = {
   expiresAt: number;
 };
 
+/**
+ * The half of a key/value store single-flight needs, and nothing more.
+ *
+ * The same three methods `ActionKvAdapter` already declares, so a deployment that configured `action.kv` has
+ * already provided this: no second store to stand up, and no adapter change.
+ */
+export type RunKeyStore = {
+  increment: (key: string, amount: number) => Promise<number>;
+  expire: (key: string, ttlSeconds: number) => Promise<void>;
+  delete: (key: string) => Promise<void>;
+};
+
 export type RunGuardsConfig = {
   /** Concurrent CALLS one space may have in flight. Renders are not counted here — see {@link RunKind}. */
   perSpace?: number;
@@ -50,14 +62,17 @@ export type BeginRunParams = {
 };
 
 export type RunGuards = {
-  begin: (params: BeginRunParams) => ActiveRun;
-  end: (run: ActiveRun) => void;
+  begin: (params: BeginRunParams) => Promise<ActiveRun>;
+  end: (run: ActiveRun) => Promise<void>;
   get: (runId: string) => ActiveRun | undefined;
   cancel: (runId: string, callerId: string) => boolean;
   active: () => number;
 };
 
 const DEFAULTS = { perSpace: 10, perProcess: 100, renderPerProcess: 1000 };
+
+/** Kept away from the `kv` tasks' own prefix: a flow writing `run:…` must not be able to release a run. */
+const keyPrefix = 'action:run:';
 
 /** Stable regardless of key order, so the same call from the same caller derives the same key every time. */
 const canonical = (value: unknown): string => {
@@ -98,11 +113,20 @@ export const deriveRunKey = ({ spaceId, actionId, callerId, input, idempotencyKe
  * a client that retries, reconnects or simply double-clicks turns one intent into many runs, and a streaming
  * caller can turn it into an unbounded loop.
  *
- * In-process, deliberately: it is honest for a single replica and it is the seam a deployment replaces with a
- * Redis-backed store when it runs several. What it must never become is a silent no-op across replicas — hence
- * the store being a construction parameter later, rather than something callers can forget to pass.
+ * **What is shared and what is not**, when a store is handed over:
+ *
+ * - **Single-flight is**, because per replica it is not a guarantee at all: the same double-click behind a load
+ *   balancer lands on two of them and both run. The key is taken with `increment`, which is the one atomic
+ *   test-and-set every adapter already has to provide — the holder is whoever's increment answered `1` — and it
+ *   carries the run's own timeout as its lifetime, so a replica that dies holding one frees it by expiring.
+ * - **The caps are not.** Counting them across replicas needs a decrementing counter, and a run that dies without
+ *   decrementing throttles a healthy space until somebody notices. A ceiling that is per replica is a number a
+ *   deployment can multiply and reason about; one that leaks is not. So `perSpace` is per replica, deliberately,
+ *   and a cluster's real ceiling is that times the number of them.
+ * - **Cancellation is not, and cannot be**: only the process running a flow holds the `AbortController` that
+ *   stops it.
  */
-export const createRunGuards = (config: RunGuardsConfig = {}): RunGuards => {
+export const createRunGuards = (config: RunGuardsConfig = {}, store?: RunKeyStore): RunGuards => {
   const perSpace = config.perSpace ?? DEFAULTS.perSpace;
   const perProcess = config.perProcess ?? DEFAULTS.perProcess;
   const renderPerProcess = config.renderPerProcess ?? DEFAULTS.renderPerProcess;
@@ -132,7 +156,31 @@ export const createRunGuards = (config: RunGuardsConfig = {}): RunGuards => {
     return total;
   };
 
-  const begin = (params: BeginRunParams): ActiveRun => {
+  /**
+   * Takes the key, here and — when there is one — everywhere.
+   *
+   * `increment` is the primitive because it is the only atomic one the adapter contract has, and it says exactly
+   * what is needed: the caller whose increment answers `1` created the key and holds it. The lifetime is set by
+   * that same caller, which is the rule `createKvStore` already follows for a rate-limit window; the gap between
+   * the two calls is a key that outlives its holder if the process dies inside it, and it is the same gap that
+   * idiom has always had.
+   */
+  const takeShared = async (runKey: string, ttlMs: number): Promise<boolean> => {
+    if (!store) {
+      return true;
+    }
+
+    const held = await store.increment(`${keyPrefix}${runKey}`, 1);
+    if (held !== 1) {
+      return false;
+    }
+
+    await store.expire(`${keyPrefix}${runKey}`, Math.max(1, Math.ceil(ttlMs / 1000)));
+
+    return true;
+  };
+
+  const begin = async (params: BeginRunParams): Promise<ActiveRun> => {
     sweep();
 
     const runKey = deriveRunKey(params);
@@ -168,15 +216,38 @@ export const createRunGuards = (config: RunGuardsConfig = {}): RunGuards => {
       controller: new AbortController(),
       expiresAt: Date.now() + params.ttlMs
     };
+    /**
+     * The local slot is taken BEFORE anything is awaited, and that ordering is the guarantee.
+     *
+     * Everything above this line runs in one synchronous stretch, so two callers in the same process cannot both
+     * pass it — which is what made this work when `begin` was synchronous throughout. Reach for the store first
+     * and both of them would sail through the local check while the other was suspended on it.
+     */
     byKey.set(runKey, run);
     byId.set(run.runId, run);
+
+    try {
+      // And only THEN the shared one, so a run refused locally never leaves a key another replica has to wait out.
+      if (!(await takeShared(runKey, params.ttlMs))) {
+        throw new ActionRunError('duplicate', 'This action is already running');
+      }
+    } catch (error) {
+      byKey.delete(runKey);
+      byId.delete(run.runId);
+
+      throw error;
+    }
 
     return run;
   };
 
-  const end = (run: ActiveRun) => {
+  const end = async (run: ActiveRun) => {
     byKey.delete(run.runKey);
     byId.delete(run.runId);
+    // Released rather than left to expire: the next caller of this key is usually the same person retrying, and
+    // making them wait out a timeout for a run that is already over is the failure single-flight exists to avoid.
+    // A store that cannot answer must not fail a run that has already finished its work.
+    await store?.delete(`${keyPrefix}${run.runKey}`).catch(() => undefined);
   };
 
   /**

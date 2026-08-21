@@ -147,6 +147,21 @@ const validateTrigger = (
     }
   }
 
+  // Only a render may declare one: a call is somebody asking for something to happen, and answering that from a
+  // cache is answering a question nobody asked twice.
+  if (isFilledString(params.cacheSeconds)) {
+    const seconds = Number.parseFloat(params.cacheSeconds);
+    if (!Number.isFinite(seconds) || seconds < 0) {
+      errors.push({ path: `${path}.params.cacheSeconds`, message: 'must be a number of seconds, or left empty' });
+    } else if (kind !== 'render') {
+      warnings.push({
+        path: `${path}.params.cacheSeconds`,
+        message: `a "${kind}" trigger is never answered from a cache`,
+        hint: 'reuse only applies to a render, where the same page is built for one visitor after another'
+      });
+    }
+  }
+
   if (kind === 'custom' && !isFilledString(params.name)) {
     errors.push({ path: `${path}.params.name`, message: 'a custom trigger needs a name to be mounted under' });
   }

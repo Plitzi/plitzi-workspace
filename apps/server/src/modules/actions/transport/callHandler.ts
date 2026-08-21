@@ -1,4 +1,5 @@
 import { openStream, wantsStream } from './stream';
+import { onAbort } from '../../../helpers/onAbort';
 import { ActionRunError } from '../runtime/errors';
 import { precheckRun } from '../runtime/precheck';
 
@@ -116,7 +117,7 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
   try {
     // Before anything is spent: a refusal here has taken no slot and no metering event.
     precheckRun(entry, { trigger: 'call', input, user: req.ctx.user, lineage });
-    run = module.guards.begin({
+    run = await module.guards.begin({
       spaceId,
       actionId: entry.id,
       callerId,
@@ -136,7 +137,7 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
   await config.adapters.meter?.({ kind: 'server_action', cached: false, req, spaceId, environment, revision });
 
   const abortRun = () => run.controller.abort();
-  signal.addEventListener('abort', abortRun);
+  const releaseAbort = onAbort(signal, abortRun);
 
   // Negotiated by the caller, and only for a run that is already allowed to start: everything above answers with a
   // status code, which a stream has already spent by the time it could say anything.
@@ -197,7 +198,7 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
 
     fail(res, reason, message, run.runId);
   } finally {
-    signal.removeEventListener('abort', abortRun);
-    module.guards.end(run);
+    releaseAbort();
+    await module.guards.end(run);
   }
 };

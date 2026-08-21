@@ -25,7 +25,9 @@ import type { SSRAdapters } from '@plitzi/sdk-shared';
  */
 export const connectorRscData = (
   lookups?: ConnectorLookups,
-  actions?: { lookups: ActionLookups; module: ActionsModule }
+  actions?: { lookups: ActionLookups; module: ActionsModule },
+  /** The deployment's per-element ceiling, when it set one. `resolveRscData` decides the default. */
+  elementTimeoutMs?: number
 ): NonNullable<SSRAdapters['getRscData']> => {
   const resolveConnector = lookups ? createConnectorResolver(lookups) : undefined;
   const resolveAction = actions ? createActionResolver(actions.lookups, actions.module) : undefined;
@@ -53,6 +55,15 @@ export const connectorRscData = (
       return {};
     }
 
-    return resolveRscData({ schema: offlineData.schema, req, spaceId, environment, user, ids, resolveElement });
+    return resolveRscData({
+      schema: offlineData.schema,
+      req,
+      spaceId,
+      environment,
+      user,
+      ids,
+      resolveElement,
+      ...(elementTimeoutMs === undefined ? {} : { timeoutMs: elementTimeoutMs })
+    });
   };
 };

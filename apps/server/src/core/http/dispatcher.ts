@@ -52,10 +52,24 @@ const runPipeline = async <C extends BaseContext>(
   const startedAt = Date.now();
   const req = parseRequest(raw);
   const res = buildResponseHelpers(rawRes, req.headers['accept-encoding'], compression);
-  // One controller per request, aborted when the peer hangs up. `once` so a request that ends normally does not
-  // leave a listener on a socket the runtime may keep alive for the next one.
+  /**
+   * One controller per request, aborted when the PEER goes away.
+   *
+   * Watched on the RESPONSE, not on the request: `IncomingMessage` emits `close` as soon as its body has been
+   * read, so a POST aborted itself the millisecond the server finished parsing it — measurably, at 9ms of a
+   * 300ms request. Everything downstream either ignored that (a listener attached after the event never fires,
+   * which is what kept actions working at all) or acted on it and cancelled work nobody had abandoned.
+   *
+   * `writableFinished` is what tells the two apart: a response that closed after finishing was SERVED, and one
+   * that closed before is a caller who left. `once` so a request that ends normally leaves no listener on a
+   * socket the runtime may keep alive for the next one.
+   */
   const controller = new AbortController();
-  raw.once('close', () => controller.abort());
+  rawRes.once?.('close', () => {
+    if (!rawRes.writableFinished) {
+      controller.abort();
+    }
+  });
   // The cast is the price of assembling a generic context from its parts: TypeScript cannot see that adding the
   // one omitted key back reconstructs `C`.
   const ctx = { ...buildContext(raw, rawRes, req, res), signal: controller.signal } as C;

@@ -199,6 +199,37 @@ describe('refreshRsc', () => {
     expect(store.get('rsc.data')).toEqual({ a: 1, b: 2 });
   });
 
+  /**
+   * Keeping what is on screen when a refresh cannot get through is right; saying nothing about it is not.
+   *
+   * The page goes on showing numbers from before the server went away, and looks exactly as current as it did a
+   * second earlier. So the fact is published — `isStale` on every server-driven provider — and an author with
+   * somewhere to put it can tell their visitor.
+   */
+  it('says the payload is stale when the server could not be reached, and takes it back when it can', async () => {
+    const store = liveStore();
+    fetchMock.mockRejectedValue(new Error('Failed to fetch'));
+
+    await refreshRsc(store, ['a']);
+    expect(store.get('rsc.stale')).toBe(true);
+    expect(store.get('rsc.data'), 'the page lost the data it was showing').toEqual({ a: 1, b: 2 });
+
+    fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve({ serverData: { a: 9 } }) });
+    await refreshRsc(store, ['a']);
+
+    expect(store.get('rsc.stale')).toBe(false);
+    expect(store.get('rsc.data')).toEqual({ a: 9, b: 2 });
+  });
+
+  it('says so for an endpoint that answered badly, too', async () => {
+    const store = liveStore();
+    fetchMock.mockResolvedValue({ ok: false, json: () => Promise.resolve({}) });
+
+    await refreshRsc(store, ['a']);
+
+    expect(store.get('rsc.stale')).toBe(true);
+  });
+
   it('does nothing when RSC is not live for this render', async () => {
     const store = createStore<CommonState>({ rsc: { enabled: false, endpoint: '/_rsc' } });
 

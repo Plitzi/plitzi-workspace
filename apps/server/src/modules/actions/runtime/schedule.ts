@@ -56,7 +56,7 @@ export const createScheduleRunner = (lookups: ActionLookups, module: ActionsModu
       try {
         // The single-flight key is the minute itself, so two replicas racing the same tick — or a leader lock that
         // handed over mid-minute — start one run between them rather than one each.
-        run = module.guards.begin({
+        run = await module.guards.begin({
           spaceId,
           actionId: entry.id,
           callerId: 'schedule',
@@ -89,7 +89,7 @@ export const createScheduleRunner = (lookups: ActionLookups, module: ActionsModu
           reason: error instanceof ActionRunError ? error.reason : 'failed'
         });
       } finally {
-        module.guards.end(run);
+        await module.guards.end(run);
       }
     }
 

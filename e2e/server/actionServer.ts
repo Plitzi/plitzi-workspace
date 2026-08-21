@@ -1,6 +1,6 @@
 import { createServer } from '@plitzi/sdk-server';
 
-import { actionSpace, FEED_ACTION, UNREACHABLE_ACTION } from '../spaces';
+import { actionSpace, FEED_ACTION, SLOW_ACTION, UNREACHABLE_ACTION } from '../spaces';
 
 import type { ActionEntry } from '@plitzi/sdk-shared';
 
@@ -21,7 +21,7 @@ export const PORT = Number(process.env.PORT ?? 5202);
 
 const space = actionSpace();
 
-const actions = [FEED_ACTION, UNREACHABLE_ACTION] as ActionEntry[];
+const actions = [FEED_ACTION, SLOW_ACTION, UNREACHABLE_ACTION] as ActionEntry[];
 
 const lookups = {
   getAction: (_spaceId: number, actionId: string): Promise<ActionEntry | undefined> =>
@@ -40,7 +40,11 @@ const server = createServer({
    * cache would answer the second one with the first one's page.
    */
   cacheTtlMs: 0,
-  rsc: { cacheTtlMs: 0 },
+  /**
+   * The page's own ceiling for one section, set low on purpose: `SLOW_ACTION` is allowed two seconds of its own
+   * and must still be cut off here, because a section is worth waiting for only as long as the visitor is.
+   */
+  rsc: { cacheTtlMs: 0, elementTimeoutMs: 800 },
   // Nothing raised here on purpose: the suite loads this page from every worker at once, and the defaults are
   // expected to carry that. They did not until renders stopped drawing on the per-space CALL budget.
   action: { lookups }

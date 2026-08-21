@@ -31,7 +31,12 @@ export type ActionsModule = ActionRunner & {
 export const createActionsModule = (config: ActionsConfig): ActionsModule => {
   const registry = createTaskRegistry(config.tasks, (config.dbDrivers?.length ?? 0) > 0);
   const { runAction } = createActionRunner(config, registry, config.fetchImpl);
-  const guards = createRunGuards(config.concurrency);
+  /**
+   * Single-flight over the store the deployment already gave the `kv` tasks — its own Redis, table or whatever it
+   * runs — because per process it is not a guarantee: the same double-click behind a load balancer lands on two
+   * replicas and both run. With none configured this is one process's Map, which is exactly right for one.
+   */
+  const guards = createRunGuards(config.concurrency, config.kv);
   const kv = createKvStore(config.kv ?? createMemoryKv());
 
   return {

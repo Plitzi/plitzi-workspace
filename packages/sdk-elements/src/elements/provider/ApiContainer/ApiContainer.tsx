@@ -93,7 +93,7 @@ const ApiContainer = ({
   // A server-driven provider gets its data through the RSC payload: the request — and the credential behind it —
   // stays on the server, so neither the token nor the backend URL is ever part of what ships to the browser.
   const serverMode = runtime === 'server';
-  const { loaded: rscResolved, elementData, refresh } = useRscData<Record<string, unknown>>();
+  const { loaded: rscResolved, stale: rscStale, elementData, refresh } = useRscData<Record<string, unknown>>();
   const sourceName = getSourceName('apiContainer', { idRef });
   const {
     settings: { previewMode },
@@ -227,9 +227,12 @@ const ApiContainer = ({
       isLoading: isLoading || isLoadingMore,
       isEmpty: singleRecord ? slice.record === undefined : records.length === 0,
       hasError,
-      errorMessage: hasError ? 'The data provider could not be reached' : ''
+      errorMessage: hasError ? 'The data provider could not be reached' : '',
+      // A refresh that could not reach the server leaves what is on screen standing, which is the right thing to
+      // do and a lie if nobody can say it: this is how a page tells its visitor the numbers are from before.
+      isStale: serverMode && rscStale
     }),
-    [data, slice.records, slice.record, records, isLoading, isLoadingMore, singleRecord, hasError]
+    [data, slice.records, slice.record, records, isLoading, isLoadingMore, singleRecord, hasError, serverMode, rscStale]
   );
 
   const sourceFields = useCallback(

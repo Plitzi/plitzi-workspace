@@ -64,3 +64,15 @@ export const triggerVerify = (params: ActionTriggerParams): ActionWebhookVerific
 
   return isRecord(parsed) ? (parsed as ActionWebhookVerification) : undefined;
 };
+
+/**
+ * How long a `render` answer may be reused, in milliseconds.
+ *
+ * Read through here rather than parsed at the call site so the validator and the runtime agree on what an
+ * unparseable value means: nothing, which is the same as not caching — never an accidental eternity.
+ */
+export const triggerCacheMs = (params: ActionTriggerParams): number => {
+  const seconds = Number.parseFloat(params.cacheSeconds ?? '');
+
+  return Number.isFinite(seconds) && seconds > 0 ? Math.round(seconds * 1000) : 0;
+};

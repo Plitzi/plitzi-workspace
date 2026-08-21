@@ -29,7 +29,7 @@ describeTarget('action-server', subject => {
     const { serverData } = (await response.json()) as { serverData: Record<string, Record<string, unknown>> };
 
     expect(response.status()).toBe(200);
-    expect(serverData[ACTION_IDS.provider]).toEqual(ACTION_OUTPUT);
+    expect(serverData[ACTION_IDS.provider]).toMatchObject(ACTION_OUTPUT);
   });
 
   /** The trigger's input contract, reached from the URL: the page wires nothing up for it. */
@@ -50,10 +50,37 @@ describeTarget('action-server', subject => {
    * The action holds its run for 250ms, so these really are in flight together.
    */
   test('a page read by many visitors at once serves every one of them', async ({ request }) => {
-    const visitors = Array.from({ length: 16 }, (_, index) => index);
-    const pages = await Promise.all(visitors.map(async () => (await request.get(subject.origin)).text()));
+    // Each visitor asks a different question, so none of them can be answered by another's run: sixteen real
+    // renders at once, which is over the per-space CALL budget on purpose.
+    const visitors = Array.from({ length: 16 }, (_, index) => `visitor-${index}`);
+    const pages = await Promise.all(
+      visitors.map(async who => (await request.get(`${subject.origin}/?who=${who}`)).text())
+    );
 
     expect(pages.filter(slice), 'a render lost its section to another visitor').toHaveLength(pages.length);
+    expect(
+      pages.filter(page => page.includes('visitor-15')),
+      'a visitor got somebody else’s answer'
+    ).toHaveLength(1);
+  });
+
+  /**
+   * The same question asked by many people at once is answered once.
+   *
+   * Without it, a thousand visitors of one URL are a thousand identical flows hitting whatever the action reads
+   * in the same instant — the stampede that takes down the thing being read, not the thing reading it.
+   */
+  test('visitors asking the same thing at the same time share one run', async ({ request }) => {
+    const runIds = await Promise.all(
+      Array.from({ length: 12 }, async () => {
+        const response = await request.get(`${subject.origin}/_rsc?location=%2F&ids=${ACTION_IDS.provider}`);
+        const { serverData } = (await response.json()) as { serverData: Record<string, { run: string }> };
+
+        return serverData[ACTION_IDS.provider].run;
+      })
+    );
+
+    expect(new Set(runIds).size, 'the same page was built from scratch for every visitor').toBe(1);
   });
 
   /** The server is up; what it cannot reach is the rest of the world. The action's own `http.request` resolves
@@ -82,6 +109,23 @@ describeTarget('action-server', subject => {
 
   /** The other half of "an element names ONE producer": this one names a connector the deployment cannot read.
    *  It must cost that element and nothing else — the page renders, and the action-fed section is untouched. */
+  /**
+   * The budget is the PAGE's, and it wins over the producer's own.
+   *
+   * This action is allowed two seconds of its own and the deployment gives a section 800ms, so the page is
+   * answered without it — and, since the budget now cancels what it stops waiting for, the run ends there too
+   * rather than finishing for a page that has already been sent.
+   */
+  test('a section slower than the page will wait for is dropped, on the page’s terms', async ({ page, capture }) => {
+    const startedAt = Date.now();
+    await page.goto(`${subject.origin}/slow`);
+
+    await expect(page.locator(`[data-id="${ACTION_IDS.slowText}"]`)).toHaveText(PROVIDER_ERROR);
+    expect(Date.now() - startedAt, 'the page waited for the action instead of for its own budget').toBeLessThan(2_000);
+
+    await capture('section-over-budget');
+  });
+
   test('an element naming a producer this deployment does not have costs only itself', async ({ page, capture }) => {
     await page.goto(subject.origin);
 

@@ -91,6 +91,15 @@ export type RscState = {
   endpoint?: string;
   loaded?: boolean;
   data?: Record<string, unknown>;
+  /**
+   * True when the last refresh could not reach the server, so what every server element is showing is from before
+   * that.
+   *
+   * A refresh failing is not an error — the payload is supplemental, and dropping it keeps the page working — but
+   * silently keeping the old data is a page that looks current and is not. Published so an author can bind it and
+   * say so; cleared by the first refresh that gets through.
+   */
+  stale?: boolean;
 };
 
 export type BuilderState = CommonState & {

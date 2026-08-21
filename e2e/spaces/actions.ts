@@ -10,6 +10,7 @@ import type { Element, ElementInteraction, OfflineDataRaw } from '@plitzi/sdk-sh
  */
 
 const PAGE_ID = 'action-page';
+const SLOW_PAGE_ID = 'action-slow-page';
 
 export const ACTION_IDS = {
   page: PAGE_ID,
@@ -18,6 +19,9 @@ export const ACTION_IDS = {
   who: 'action-who',
   orphan: 'action-orphan',
   orphanText: 'action-orphan-text',
+  slowPage: 'action-slow-page',
+  slow: 'action-slow',
+  slowText: 'action-slow-text',
   offline: 'action-offline',
   offlineText: 'action-offline-text',
   button: 'action-button',
@@ -53,12 +57,12 @@ const element = (
   }
 });
 
-const bound = (id: string, source: string, parentId: string): Element =>
+const bound = (id: string, source: string, parentId: string, rootId = PAGE_ID): Element =>
   element(
     id,
     'paragraph',
     { content: '' },
-    { parentId, bindings: { attributes: [{ id: `b-${id}`, source, to: 'content' }] } }
+    { parentId, rootId, bindings: { attributes: [{ id: `b-${id}`, source, to: 'content' }] } }
   );
 
 const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementInteraction => ({
@@ -109,7 +113,7 @@ export const actionSpace = (): OfflineDataRaw =>
       variables: [],
       settings: { customCss: '' },
       rsc: { enabled: true },
-      pages: [PAGE_ID],
+      pages: [PAGE_ID, SLOW_PAGE_ID],
       pageFolders: {},
       flat: {
         [PAGE_ID]: element(
@@ -138,6 +142,36 @@ export const actionSpace = (): OfflineDataRaw =>
         ),
         [ACTION_IDS.orphanText]: bound(ACTION_IDS.orphanText, 'apiContainer_orphan.title', ACTION_IDS.orphan),
         /** Fed by an action whose own outbound call cannot resolve — the server is up, the internet is not. */
+        /**
+         * A page of its own, so only the spec about it pays for it.
+         *
+         * Its action takes longer than the deployment's per-element budget — the PAGE's ceiling, which wins over
+         * whatever the action itself is allowed — and nothing else on the site should be slower for that.
+         */
+        [SLOW_PAGE_ID]: element(
+          SLOW_PAGE_ID,
+          'page',
+          { slug: 'slow', default: false, name: 'Slow' },
+          { parentId: undefined, rootId: SLOW_PAGE_ID, items: [ACTION_IDS.slow] }
+        ),
+        [ACTION_IDS.slow]: element(
+          ACTION_IDS.slow,
+          'apiContainer',
+          { action: 'e2e-slow', subType: 'section' },
+          {
+            idRef: 'slow',
+            rootId: SLOW_PAGE_ID,
+            parentId: SLOW_PAGE_ID,
+            runtime: 'server',
+            items: [ACTION_IDS.slowText]
+          }
+        ),
+        [ACTION_IDS.slowText]: bound(
+          ACTION_IDS.slowText,
+          'apiContainer_slow.errorMessage',
+          ACTION_IDS.slow,
+          SLOW_PAGE_ID
+        ),
         [ACTION_IDS.offline]: element(
           ACTION_IDS.offline,
           'apiContainer',
@@ -189,9 +223,11 @@ export const FEED_ACTION = {
         afterNode: 'hold'
       }),
       hold: node('hold', { action: 'flow.delay', params: { milliseconds: '250' }, afterNode: 'answer' }),
+      /** `runId` rides along so a spec can see WHICH run answered: two responses carrying the same one were
+       *  served by one run of the flow, which is the whole of "a page being read by many is read once". */
       answer: node('answer', {
         action: 'flow.output',
-        params: { values: `{"title": "${ACTION_OUTPUT.title}", "who": "{{input.who}}"}` },
+        params: { values: `{"title": "${ACTION_OUTPUT.title}", "who": "{{input.who}}", "run": "{{runId}}"}` },
         beforeNode: 'hold'
       })
     }
@@ -225,6 +261,28 @@ export const UNREACHABLE_ACTION = {
         action: 'flow.output',
         params: { values: '{"title": "{{ fetch.data.title }}"}' },
         beforeNode: 'fetch'
+      })
+    }
+  }
+};
+
+/** Slower than the page will wait for, so what ends it is the deployment's per-element budget and not its own. */
+export const SLOW_ACTION = {
+  id: 'e2e-slow',
+  document: {
+    name: 'Slow feed',
+    nodes: {
+      start: node('start', {
+        type: 'trigger',
+        action: 'render',
+        params: { access: 'public' },
+        afterNode: 'hold'
+      }),
+      hold: node('hold', { action: 'flow.delay', params: { milliseconds: '2000' }, afterNode: 'answer' }),
+      answer: node('answer', {
+        action: 'flow.output',
+        params: { values: '{"title": "too late"}' },
+        beforeNode: 'hold'
       })
     }
   }

@@ -60,7 +60,20 @@ const callerParams: InteractionCallback['params'] = {
 
 const TRIGGER_PARAMS: Record<string, InteractionCallback['params']> = {
   call: callerParams,
-  render: callerParams,
+  /**
+   * A render is a READ, repeated once per visitor — so it is the one way in that may answer twice from the same
+   * work. Everyone arriving while a run is in flight is served by it whatever this says; this is how long the
+   * answer may keep being served AFTER that, and it is the difference between one outbound call and ten thousand.
+   */
+  render: {
+    ...callerParams,
+    cacheSeconds: {
+      type: 'text',
+      defaultValue: '',
+      label: 'Reuse the answer for (seconds)',
+      canBind: false
+    }
+  },
   webhook: {
     ...callerParams,
     verify: {

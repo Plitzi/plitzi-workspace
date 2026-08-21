@@ -39,7 +39,8 @@ const context = (
     req: { ctx: { spaceDeployment: { environment: 'production', revision: 2 } } } as unknown as SSRRequest,
     spaceId: 7,
     environment: 'production',
-    user: undefined
+    user: undefined,
+    signal: new AbortController().signal
   };
 };
 
@@ -67,7 +68,8 @@ const boundContext = (attributes: Record<string, unknown>, boundSource: string):
     req: { ctx: { spaceDeployment: { environment: 'production', revision: 2 } } } as unknown as SSRRequest,
     spaceId: 7,
     environment: 'production',
-    user: undefined
+    user: undefined,
+    signal: new AbortController().signal
   };
 };
 

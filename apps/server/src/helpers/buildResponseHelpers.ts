@@ -12,6 +12,14 @@ export type RawResponse = {
   writeHead(statusCode: number, headers?: Record<string, string | number | readonly string[]>): unknown;
   write(chunk: string | Buffer): unknown;
   end(chunk?: string | Buffer): unknown;
+  /**
+   * Optional, because this type is the MINIMUM a host has to provide — node's own, http2's, or a fake in a test.
+   *
+   * They are how the dispatcher tells "the caller left" from "the answer was sent": a host that exposes neither
+   * simply never cancels early, which is the behaviour of every host that had no such notion to begin with.
+   */
+  once?(event: 'close', listener: () => void): unknown;
+  writableFinished?: boolean;
 };
 
 export const buildResponseHelpers = (

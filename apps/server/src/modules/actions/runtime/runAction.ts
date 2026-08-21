@@ -8,6 +8,7 @@ import { createMemoryKv } from './memoryKv';
 import { namespaceKv } from './namespaceKv';
 import { precheckRun } from './precheck';
 import { createRedactor, projectUser } from './scope';
+import { onAbort } from '../../../helpers/onAbort';
 
 import type {
   ActionRunRecord,
@@ -180,8 +181,7 @@ export const createActionRunner = (
     const controller = new AbortController();
     const timeoutMs = request.emit ? limits.streamTimeoutMs : limits.timeoutMs;
     const timer = setTimeout(() => controller.abort(), timeoutMs);
-    const abortOuter = () => controller.abort();
-    request.signal?.addEventListener('abort', abortOuter);
+    const releaseOuter = onAbort(request.signal, () => controller.abort());
 
     const scopedKv = namespaceKv(kv, request.spaceId);
     const runFetch = createRunFetch(baseFetch, controller.signal, limits.maxRequests, [
@@ -313,7 +313,7 @@ export const createActionRunner = (
       });
     } finally {
       clearTimeout(timer);
-      request.signal?.removeEventListener('abort', abortOuter);
+      releaseOuter();
     }
 
     // What the `flow.output` step named, and nothing else. No second contract to disagree with it: a key that step

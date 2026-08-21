@@ -1,6 +1,7 @@
 import { triggerVerify } from '@plitzi/sdk-shared/actions';
 
 import { verifySignature } from './verifySignature';
+import { onAbort } from '../../../helpers/onAbort';
 import { ActionRunError } from '../runtime/errors';
 import { precheckRun } from '../runtime/precheck';
 import { findTriggerNode, triggerParams } from '../runtime/triggers';
@@ -140,7 +141,7 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
   let run;
   try {
     precheckRun(entry, { trigger: 'webhook', input, lineage });
-    run = module.guards.begin({
+    run = await module.guards.begin({
       spaceId,
       actionId: entry.id,
       callerId,
@@ -162,7 +163,7 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
   await config.adapters.meter?.({ kind: 'server_action', cached: false, req, spaceId, environment, revision });
 
   const abortRun = () => run.controller.abort();
-  signal.addEventListener('abort', abortRun);
+  const releaseAbort = onAbort(signal, abortRun);
 
   try {
     const result = await module.runAction({
@@ -183,8 +184,8 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
     // exactly the one worth retrying.
     send(res, 500, { accepted: false });
   } finally {
-    signal.removeEventListener('abort', abortRun);
-    module.guards.end(run);
+    releaseAbort();
+    await module.guards.end(run);
   }
 };
 

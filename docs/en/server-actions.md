@@ -248,6 +248,9 @@ callers to retry harder.
 | `over_capacity` | Too many runs at once. Calls are capped per space (`concurrency.perSpace`) and renders per process (`concurrency.renderPerProcess`) — a busy page is never counted against the space's call budget |
 | `recursion` | The flow reached its own webhook |
 | A `{{ credential.… }}` that renders empty | The step did not name a credential — set its `credential` field |
+| `Request host is not allowed` | The URL points inside the network the server runs in — a private address, `localhost`, or a public name whose DNS answers one. An authored request may only reach the public internet |
+| A section showing data from before | The last refresh could not reach the server. The provider publishes `isStale` alongside its records — bind it and the page can say so instead of looking current |
+| A section that is always missing on a slow provider | The page's own ceiling for one section — `rsc.elementTimeoutMs`, 5 s by default — is tighter than what the action is allowed. Whichever is tighter wins, and being cut there now ends the run rather than leaving it to finish for nobody |
 | A section reporting it could not be reached | A `render` action did not complete; the reason is in the server log, and one slice failing never takes the page down. The element publishes `hasError` and `errorMessage` — bind them and the page says what a visitor can act on |
 | A step that reports `failed` with no server answer behind it | The server was unreachable — down, restarting, or the connection dropped. A run that never left the browser is reported like a refusal, so the flow still gets a status to bind |
 

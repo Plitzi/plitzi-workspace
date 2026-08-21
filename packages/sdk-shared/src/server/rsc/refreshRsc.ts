@@ -49,6 +49,8 @@ export const refreshRsc = async (
     Object.entries(params ?? {}).forEach(([key, value]) => search.set(key, value));
     const res = await fetch(`${endpoint}?${search.toString()}`, { headers: { Accept: 'application/json' } });
     if (!res.ok) {
+      store.set('rsc.stale', true);
+
       return;
     }
 
@@ -61,9 +63,15 @@ export const refreshRsc = async (
       }
 
       store.set('rsc.loaded', true);
+      store.set('rsc.stale', false);
     });
   } catch {
-    // Network errors are silently ignored — RSC data is supplemental.
+    /**
+     * A refresh that could not reach the server is not an error: the payload is supplemental, and what is on the
+     * page keeps working. But keeping the old data with no way to say so is a page that looks current and is not —
+     * so the fact is published, and an element with somewhere to show it can.
+     */
+    store.set('rsc.stale', true);
   }
 };
 

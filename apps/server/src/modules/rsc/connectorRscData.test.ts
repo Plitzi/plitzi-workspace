@@ -76,6 +76,32 @@ const resolve = (attributes: Record<string, unknown>) => {
 };
 
 describe('connectorRscData', () => {
+  /** The page's ceiling, and the deployment's to set: a section is worth waiting for only as long as its visitor
+   *  is, and how long that is depends on the site. */
+  it('gives an element the budget the deployment configured', async () => {
+    const lookups = {
+      getAction: () =>
+        new Promise<ActionEntry>(() => {
+          // Never answers, so the only thing that can end this render is the budget.
+        })
+    };
+    const getRscData = connectorRscData(undefined, { lookups, module: createActionsModule({ lookups }) }, 20);
+
+    const startedAt = Date.now();
+    const payload = await getRscData({
+      req,
+      spaceId: 1,
+      environment: 'main',
+      user: undefined,
+      ids: undefined,
+      loadOfflineData: () => Promise.resolve({ schema: schema({ action: 'cat-gallery' }) })
+    } as unknown as Parameters<typeof getRscData>[0]);
+
+    expect(payload.serverData).toEqual({});
+    // The margin is what makes this an assertion rather than a stopwatch: the default is five SECONDS.
+    expect(Date.now() - startedAt, 'the configured budget was ignored').toBeLessThan(1_000);
+  });
+
   // A space whose server elements name actions configures no connectors, so keying the whole adapter on those left
   // its render elements resolving to nothing with no configuration missing anywhere.
   it('resolves an action-fed element with no connectors configured', async () => {

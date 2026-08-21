@@ -12,13 +12,20 @@ import useElement from './useElement';
 // payload; `isServerElement` is the distinction for callers that want to know whether the key was there at all.
 const useRscData = <T>() => {
   const { id } = useElement();
-  const [[enabled = false, loaded = false, value]] = useCommonStore(['rsc.enabled', 'rsc.loaded', rscDataPath(id)]);
+  const [[enabled = false, loaded = false, stale = false, value]] = useCommonStore([
+    'rsc.enabled',
+    'rsc.loaded',
+    'rsc.stale',
+    rscDataPath(id)
+  ]);
   const refresh = useRscRefresh();
 
   return {
     enabled,
     /** Whether a payload has arrived at all — the builder and client-only renders never see one. */
     loaded,
+    /** True when the last refresh could not reach the server: what is on screen is from before that. */
+    stale,
     elementData: (value as T | undefined) ?? null,
     isServerElement: value !== undefined,
     refresh

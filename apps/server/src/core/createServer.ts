@@ -11,6 +11,7 @@ import type { ConnectorLookups } from '../modules/connectors/resolver';
 import type {
   SSRActionConfig,
   SSRPageAdapters,
+  SSRRscConfig,
   SSRPageServerConfig,
   SSRServer,
   SSRServerConfig
@@ -55,7 +56,9 @@ export type ServerConfig = Omit<SSRServerConfig, 'adapters'> & {
  * configure under `connectors`, and keying this on that alone left its `render` elements resolving to nothing
  * with no configuration missing anywhere.
  */
-const withConnectorRsc = <T extends { adapters: SSRPageAdapters; connectors?: unknown; action?: SSRActionConfig }>(
+const withConnectorRsc = <
+  T extends { adapters: SSRPageAdapters; connectors?: unknown; action?: SSRActionConfig; rsc?: SSRRscConfig }
+>(
   config: T
 ): T => {
   if (config.adapters.getRscData || (!config.connectors && !config.action?.lookups)) {
@@ -72,7 +75,11 @@ const withConnectorRsc = <T extends { adapters: SSRPageAdapters; connectors?: un
     ...config,
     adapters: {
       ...config.adapters,
-      getRscData: connectorRscData(config.connectors as ConnectorLookups | undefined, actions)
+      getRscData: connectorRscData(
+        config.connectors as ConnectorLookups | undefined,
+        actions,
+        config.rsc?.elementTimeoutMs
+      )
     }
   };
 };

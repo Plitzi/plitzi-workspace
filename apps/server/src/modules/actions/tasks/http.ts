@@ -1,43 +1,9 @@
 import { renderTaskParams } from './helpers';
+import { assertOutboundAllowed } from '../../../helpers/outboundGuard';
 
 import type { ActionTask } from '../types';
 
 const BODYLESS = ['GET', 'HEAD'];
-
-/**
- * Hosts a server action may never call.
- *
- * The endpoint runs inside the cluster, so an authored URL is a request issued from a trusted network position:
- * without this, `http://169.254.169.254/` reads the instance's cloud credentials and `http://localhost:6379`
- * talks to Redis. Literal forms are what an authored document can hold, and they are what this refuses.
- *
- * What it does NOT stop is a hostname that RESOLVES to a private address — that needs resolve-then-connect, which
- * belongs in the transport and not in a string check. Stated rather than implied, so nobody reads this as complete.
- */
-const isBlockedHost = (hostname: string): boolean => {
-  const host = hostname.toLowerCase().replace(/^\[|\]$/g, '');
-  if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.internal') || host === '::1') {
-    return true;
-  }
-
-  const ipv4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
-  if (!ipv4) {
-    // Unique-local IPv6 (fc00::/7) and link-local (fe80::/10).
-    return /^f[cd]/.test(host) || host.startsWith('fe8') || host.startsWith('fe9') || /^fe[ab]/.test(host);
-  }
-
-  const [a = 0, b = 0] = ipv4.slice(1).map(part => Number.parseInt(part, 10));
-
-  return (
-    a === 0 ||
-    a === 10 ||
-    a === 127 ||
-    (a === 100 && b >= 64 && b <= 127) ||
-    (a === 169 && b === 254) ||
-    (a === 172 && b >= 16 && b <= 31) ||
-    (a === 192 && b === 168)
-  );
-};
 
 const parseJsonParam = (value: unknown, label: string): Record<string, unknown> => {
   if (value === undefined || value === '') {
@@ -120,13 +86,9 @@ const request: ActionTask<HttpRequestParams> = {
       throw new Error('Request URL is not a valid absolute URL');
     }
 
-    if (url.protocol !== 'https:' && url.protocol !== 'http:') {
-      throw new Error(`Request protocol "${url.protocol}" is not allowed`);
-    }
-
-    if (isBlockedHost(url.hostname)) {
-      throw new Error('Request host is not allowed');
-    }
+    // Protocol, literal address and what the NAME resolves to — one rule, shared with the connector engine, which
+    // reaches the outside world on a manifest's say-so exactly as this does on a flow's.
+    await assertOutboundAllowed(url);
 
     const headers = Object.entries(parseJsonParam(params.headers, 'Headers')).reduce<Record<string, string>>(
       (acum, [key, value]) => {
@@ -162,4 +124,3 @@ const request: ActionTask<HttpRequestParams> = {
 };
 
 export const httpTasks = [request] as ActionTask<Record<string, unknown>>[];
-export { isBlockedHost };

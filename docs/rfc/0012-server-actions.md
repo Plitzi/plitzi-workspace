@@ -621,7 +621,16 @@ runKey = idempotencyKey ?? sha256(spaceId, actionId, callerId, canonical(input))
 ```
 
 `callerId` is the session subject, or the client IP for a `public` action. The key is taken as a `kv` lock
-with TTL equal to the run's timeout, released on completion.
+with TTL equal to the run's timeout, released on completion — over the store the deployment already gave the
+`kv` tasks, because per process this is not a guarantee at all: the same double-click behind a load balancer
+lands on two replicas and both run. `increment` is what takes it (the holder is whoever's answer was `1`), since
+that is the one atomic primitive the adapter contract has. With no store configured it is one process's map,
+which is exactly right for one process.
+
+The **caps stay per replica**, deliberately. Counting them across replicas needs a decrementing counter, and a
+run that dies without decrementing throttles a healthy space until somebody notices; a ceiling that is per
+replica is a number a deployment can multiply and reason about, one that leaks is not. Cancellation is local for
+a harder reason: only the process running a flow holds the controller that stops it.
 
 - A second **streaming** run for a live key is **refused with 409** and a `Retry-After`, carrying the live
   `runId` so the caller can report it. It is not queued and it is not started.
