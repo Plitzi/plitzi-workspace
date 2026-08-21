@@ -205,6 +205,13 @@ export const targets: Target[] = [
     warmUp: true
   },
   {
+    id: 'blog',
+    workspace: '@plitzi/example-blog',
+    command: 'PORT=5014 yarn workspace @plitzi/example-blog start',
+    origin: 'http://127.0.0.1:5014',
+    what: 'A whole small blog — posts, sessions, and who may publish'
+  },
+  {
     id: 'builder',
     workspace: '@plitzi/plitzi-builder',
     /** Plain HTTP on a port of its own, so the same command works on a laptop and on a CI runner that has no

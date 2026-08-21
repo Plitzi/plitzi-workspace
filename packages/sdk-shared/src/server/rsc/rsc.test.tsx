@@ -136,6 +136,30 @@ describe('useRscSync', () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
   });
 
+  it('fetches again on coming back to the page it was rendered on', async () => {
+    const store = makeStore({ enabled: true });
+    const rendered = { routeParams: {}, queryParams: { to: 'blog' } };
+    store.set('runtime.sources.navigation', rendered);
+    renderSync({ rscPath: '/_rsc', rscData: { serverData: { blogApi: 1 } } }, store);
+
+    act(() => {
+      store.set('navigation.currentPageId', 'deep');
+      store.set('runtime.sources.navigation', { routeParams: {}, queryParams: { to: 'deep' } });
+    });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+    // Back where it started — and the payload for it is gone, replaced by the one fetched above. Treating this as
+    // "already loaded" is a page that renders its providers empty and asks nobody for the data.
+    act(() => {
+      store.set('navigation.currentPageId', 'blog');
+      // The very location this was rendered on, to the byte — the case the old check called "already loaded".
+      store.set('runtime.sources.navigation', { ...rendered });
+    });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  });
+
   it('seeds the payload the server already resolved and asks for nothing more', async () => {
     const store = makeStore({ enabled: true });
     renderSync({ rscPath: '/_rsc', rscData: { serverData: { a: 1 } } }, store);

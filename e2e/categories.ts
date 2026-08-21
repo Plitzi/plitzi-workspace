@@ -41,7 +41,8 @@ const EXAMPLE_TARGETS = [
   'mysql',
   'server-actions',
   'server-actions-render',
-  'server-actions-no-server'
+  'server-actions-no-server',
+  'blog'
 ];
 
 export const categories: Category[] = [

@@ -32,16 +32,24 @@ const useRscSync = (ssr?: ServerSSR) => {
   });
 
   const navigationKey = JSON.stringify(navigation ?? {});
-  // The location the server rendered: its payload is already in the store, so that first view costs no request.
-  const renderedKey = useRef(rscData === undefined ? undefined : navigationKey).current;
+  /**
+   * The location whose payload is in the store.
+   *
+   * It starts as the one the server rendered, so that first view costs no request — and it MOVES with every
+   * refresh, because a refresh replaces the payload wholesale. Pinned to the mount-time location instead, coming
+   * back to where you started was treated as "already loaded" while the store held some other page's data: the
+   * providers on it published nothing, and the page came back empty with no request made.
+   */
+  const loadedKey = useRef(rscData === undefined ? undefined : navigationKey);
 
   useEffect(() => {
-    if (!enabled || navigationKey === renderedKey) {
+    if (!enabled || navigationKey === loadedKey.current) {
       return;
     }
 
+    loadedKey.current = navigationKey;
     void refreshRsc(store);
-  }, [enabled, navigationKey, renderedKey, store]);
+  }, [enabled, navigationKey, store]);
 };
 
 export default useRscSync;

@@ -44,9 +44,19 @@ these build on.
 | 02 | [render](./05-with-server-actions/02-render) | The server fetches an API while the page renders | 4011 |
 | 03 | [no-server](./05-with-server-actions/03-no-server) | The same page with no server tier: every server-side step inert | 4012 |
 
+## [`06-full-examples`](./06-full-examples) — a whole small product
+
+| | Example | What it is | Port |
+|---|---|---|---|
+| 01 | [blog](./06-full-examples/01-blog) | Posts, a home page, a post page, sessions, and who may publish | 4013 |
+
+Everything above, assembled: this is the one to read when the question is not "how does X work" but "what does it
+take to build something".
+
 Every example renders [`shared-space`](./shared-space), so the difference between any two is the wiring alone — bar
-the two that need a page of their own: `02-with-users`, because a space with people in it has somewhere to sign in,
-and `05-with-server-actions`, because something has to press the button. Only `02-with-users/02-mysql` needs a
+the ones that need pages of their own: `02-with-users`, because a space with people in it has somewhere to sign in,
+`05-with-server-actions`, because something has to press the button, and `06-full-examples`, which is a space of
+its own by definition. Only `02-with-users/02-mysql` needs a
 database; everywhere else a real deployment reads rows and these hand the server static data through the same
 adapters, which is exactly how your own store plugs in.
 

@@ -3411,6 +3411,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@plitzi/example-blog@workspace:examples/06-full-examples/01-blog":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/example-blog@workspace:examples/06-full-examples/01-blog"
+  dependencies:
+    "@plitzi/sdk-elements": "workspace:*"
+    "@plitzi/sdk-schema": "workspace:*"
+    "@plitzi/sdk-server": "workspace:*"
+    "@types/node": "npm:^26.2.0"
+    react: "npm:^19.2.8"
+    react-dom: "npm:^19.2.8"
+    tsx: "npm:^4.23.12"
+    typescript: "npm:^6.0.3"
+  languageName: unknown
+  linkType: soft
+
 "@plitzi/example-mcp-server@workspace:examples/04-with-an-agent/01-mcp-server":
   version: 0.0.0-use.local
   resolution: "@plitzi/example-mcp-server@workspace:examples/04-with-an-agent/01-mcp-server"

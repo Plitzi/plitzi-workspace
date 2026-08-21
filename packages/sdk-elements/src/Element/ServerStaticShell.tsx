@@ -1,6 +1,6 @@
 import { createElement, useState } from 'react';
 
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 type Snapshot = {
   tag: string;
@@ -40,8 +40,14 @@ const parseStyleString = (styleStr: string): CSSProperties => {
  * The actual plugin component is never mounted in the browser, so no useEffect or
  * useState from the plugin ever runs. React hydrates the snapshot element without
  * touching its children (dangerouslySetInnerHTML takes ownership of innerHTML).
+ *
+ * When there is nothing to freeze, `children` — the element itself — is rendered instead. That is not the
+ * hydration case, where the server always sent the markup; it is the SPA one: a route change mounts a page whose
+ * server elements were never in this document, and freezing an element against markup that does not exist used to
+ * render nothing at all. The element then resolves the way it does anywhere else, from the payload `useRscSync`
+ * fetches for the new location.
  */
-const ServerStaticShell = ({ id }: { id: string }) => {
+const ServerStaticShell = ({ id, children }: { id: string; children?: ReactNode }) => {
   const [snapshot] = useState<Snapshot>(() => {
     if (typeof document === 'undefined') {
       return null;
@@ -73,7 +79,7 @@ const ServerStaticShell = ({ id }: { id: string }) => {
   });
 
   if (!snapshot) {
-    return null;
+    return children;
   }
 
   return createElement(snapshot.tag, {
