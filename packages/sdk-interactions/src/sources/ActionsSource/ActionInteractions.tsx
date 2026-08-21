@@ -1,7 +1,14 @@
 import { useCallback, use, useMemo } from 'react';
 
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
-import { recordActionProgress, recordActionRun, updateActionRun, useCommonStore } from '@plitzi/sdk-shared/store';
+import {
+  recordActionProgress,
+  recordActionRun,
+  registerActionCanceller,
+  releaseActionCanceller,
+  updateActionRun,
+  useCommonStore
+} from '@plitzi/sdk-shared/store';
 
 import InteractionsContext from '../../InteractionsContext';
 
@@ -114,6 +121,17 @@ const parseInput = (input: string | Record<string, unknown>): Record<string, unk
 const unreachable = { status: 'failed', reason: 'failed', runId: '', output: {} };
 
 /**
+ * A request that ended without an answer, told apart by WHO ended it.
+ *
+ * A cancel from the panel and a server that fell over both land in the same `catch`, and calling the first one a
+ * failure would be reporting the developer's own button as a fault.
+ */
+const aborted = (controller: AbortController, error: unknown) =>
+  controller.signal.aborted
+    ? ({ status: 'aborted', error: 'Cancelled' } as const)
+    : ({ status: 'failed', error: error instanceof Error ? error.message : String(error) } as const);
+
+/**
  * Running a server action from a client flow.
  *
  * The step names an action and hands it inputs — never a URL, a connector or a credential. Which one it can reach
@@ -187,6 +205,29 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
        * that returns before its frames arrive, a server that is not there. The dev-tools read this store.
        */
       const record = recordActionRun({ actionId, mode, input });
+      /**
+       * The handle that stops this run, for as long as stopping it means anything.
+       *
+       * Two halves, because a run lives in two places. Aborting the request is what this side can always do, and
+       * on a socket close the server stops the flow at its next step boundary — which is the only lever a run
+       * that has not answered yet gives anybody, since its id does not exist here until it does. Once the server
+       * HAS named it, the `DELETE` is what reaches a run that outlives this request: a detached one, or a stream
+       * running on another replica.
+       */
+      const controller = new AbortController();
+      let serverRunId = '';
+      registerActionCanceller(record, () => {
+        controller.abort();
+        updateActionRun(record, { status: 'aborted', endedAt: Date.now(), cancellable: false });
+        if (serverRunId) {
+          void fetch(`${endpoint}/run/${serverRunId}`, { method: 'DELETE', credentials: 'same-origin' });
+        }
+      });
+      /** Settles the record and gives up the handle: a run that has ended is not one anybody can stop. */
+      const settle = (patch: Parameters<typeof updateActionRun>[1]) => {
+        releaseActionCanceller(record);
+        updateActionRun(record, { endedAt: Date.now(), cancellable: false, ...patch });
+      };
 
       if (mode === 'detached') {
         // Announced as it starts, not only when it fails. A detached run is invisible by construction — the flow
@@ -208,14 +249,14 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
           headers: { 'Content-Type': 'application/json' },
           credentials: 'same-origin',
           keepalive: true,
+          signal: controller.signal,
           body
         })
           .then(async response => {
             const payload = (await response.json().catch(() => ({}))) as ActionResponse;
             if (!response.ok) {
-              updateActionRun(record, {
+              settle({
                 status: 'failed',
-                endedAt: Date.now(),
                 ...(payload.runId ? { runId: payload.runId } : {}),
                 ...(payload.reason ? { reason: payload.reason } : {}),
                 ...(payload.error ? { error: payload.error } : {})
@@ -230,9 +271,8 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
               return;
             }
 
-            updateActionRun(record, {
+            settle({
               status: payload.status === 'completed' ? 'completed' : 'accepted',
-              endedAt: Date.now(),
               ...(payload.runId ? { runId: payload.runId } : {}),
               ...(payload.output ? { output: payload.output } : {}),
               ...(payload.trace ? { trace: payload.trace } : {})
@@ -252,11 +292,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
             });
           })
           .catch((error: unknown) => {
-            updateActionRun(record, {
-              status: 'failed',
-              endedAt: Date.now(),
-              error: error instanceof Error ? error.message : String(error)
-            });
+            settle(aborted(controller, error));
             pConsole.warning(
               'actions',
               <span>
@@ -266,8 +302,6 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
             );
             reportFlow(context?.elementRef, 'onFlowError', { actionId, runId: '', error: '', reason: 'failed' });
           });
-
-        updateActionRun(record, { status: 'accepted' });
 
         return { accepted: true, status: 'accepted', runId: '', output: {} };
       }
@@ -289,14 +323,11 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
             credentials: 'same-origin',
+            signal: controller.signal,
             body
           });
         } catch (error: unknown) {
-          updateActionRun(record, {
-            status: 'failed',
-            endedAt: Date.now(),
-            error: error instanceof Error ? error.message : String(error)
-          });
+          settle(aborted(controller, error));
           pConsole.warning(
             'actions',
             <span>
@@ -311,9 +342,8 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
 
         if (!response.ok || !response.body) {
           const payload = (await response.json().catch(() => ({}))) as ActionResponse;
-          updateActionRun(record, {
+          settle({
             status: 'failed',
-            endedAt: Date.now(),
             ...(payload.runId ? { runId: payload.runId } : {}),
             ...(payload.reason ? { reason: payload.reason } : {}),
             ...(payload.error ? { error: payload.error } : {})
@@ -336,6 +366,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
          * opens, which is exactly when the step needs it.
          */
         const runId = response.headers.get('X-Plitzi-Run-Id') ?? '';
+        serverRunId = runId;
         updateActionRun(record, { status: 'streaming', ...(runId ? { runId } : {}) });
 
         // Frames are consumed in the background: the STEP returns as soon as the stream opens, so the flow carries
@@ -349,9 +380,8 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
           }
 
           if (frame.event === 'error') {
-            updateActionRun(record, {
+            settle({
               status: 'failed',
-              endedAt: Date.now(),
               ...(typeof frame.data.reason === 'string' ? { reason: frame.data.reason } : {}),
               ...(typeof frame.data.error === 'string' ? { error: frame.data.error } : {})
             });
@@ -361,9 +391,8 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
           }
 
           if (frame.event === 'done') {
-            updateActionRun(record, {
+            settle({
               status: frame.data.status === 'completed' ? 'completed' : 'failed',
-              endedAt: Date.now(),
               ...(frame.data.output ? { output: frame.data.output as Record<string, unknown> } : {})
             });
             reportFlow(context?.elementRef, 'onFlowEnd', { actionId, runId, ...frame.data });
@@ -379,14 +408,11 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'same-origin',
+          signal: controller.signal,
           body
         });
       } catch (error: unknown) {
-        updateActionRun(record, {
-          status: 'failed',
-          endedAt: Date.now(),
-          error: error instanceof Error ? error.message : String(error)
-        });
+        settle(aborted(controller, error));
         // A server that is down, a connection that dropped, a page kept open through a deploy. Reported like a
         // refusal rather than thrown, so the rest of the flow — and the element that fired it — hear about it.
         pConsole.warning(
@@ -403,9 +429,8 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
 
       const payload = (await response.json().catch(() => ({}))) as ActionResponse;
       if (!response.ok) {
-        updateActionRun(record, {
+        settle({
           status: 'failed',
-          endedAt: Date.now(),
           ...(payload.runId ? { runId: payload.runId } : {}),
           ...(payload.reason ? { reason: payload.reason } : {}),
           ...(payload.error ? { error: payload.error } : {})
@@ -437,9 +462,8 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
        * is what puts a SERVER run in the dev-tools beside the client flows — the same trace the builder's test-run
        * panel draws, for the run that actually happened on this page.
        */
-      updateActionRun(record, {
+      settle({
         status: payload.status === 'completed' ? 'completed' : 'failed',
-        endedAt: Date.now(),
         ...(payload.runId ? { runId: payload.runId } : {}),
         ...(payload.output ? { output: payload.output } : {}),
         ...(payload.trace ? { trace: payload.trace } : {})

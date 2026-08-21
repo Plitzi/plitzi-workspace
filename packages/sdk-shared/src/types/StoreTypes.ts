@@ -255,6 +255,13 @@ export type ActionRunEntry = {
   progress: unknown[];
   /** The server-side steps, when the deployment sent them: authoring requests and dev servers only. */
   trace?: Record<string, unknown>[];
+  /**
+   * Whether this run can still be stopped from the panel.
+   *
+   * True while it is in flight and the step that started it is still holding the handle. It is what lets the
+   * dev-tools offer a Cancel on a run that is happening rather than on one that already ended.
+   */
+  cancellable?: boolean;
   startedAt: number;
   endedAt?: number;
 };

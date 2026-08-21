@@ -32,9 +32,12 @@ export { default as useRenderSettings, useRenderOverride, DEFAULT_RENDER_SETTING
 
 export {
   actionRunsStore,
+  cancelActionRun,
   clearActionRuns,
   recordActionProgress,
   recordActionRun,
+  registerActionCanceller,
+  releaseActionCanceller,
   updateActionRun,
   useActionRuns
 } from './actionRuns';

@@ -19,7 +19,10 @@ const authoring = vi.hoisted<{ catalog: unknown[]; available: boolean | undefine
 const recorded = vi.hoisted(() => ({
   start: vi.fn(() => 'run-1'),
   update: vi.fn(),
-  progress: vi.fn()
+  progress: vi.fn(),
+  /** The handle the dev-tools panel stops a live run with. */
+  register: vi.fn(),
+  release: vi.fn()
 }));
 
 vi.mock('@plitzi/sdk-shared/store', () => ({
@@ -29,7 +32,9 @@ vi.mock('@plitzi/sdk-shared/store', () => ({
     Array.isArray(path) ? [[authoring.catalog, authoring.available]] : [endpoint.value],
   recordActionRun: recorded.start,
   updateActionRun: recorded.update,
-  recordActionProgress: recorded.progress
+  recordActionProgress: recorded.progress,
+  registerActionCanceller: recorded.register,
+  releaseActionCanceller: recorded.release
 }));
 
 const warning = vi.hoisted(() => vi.fn());
@@ -95,6 +100,8 @@ describe('ActionInteractions', () => {
     recorded.start.mockClear();
     recorded.update.mockClear();
     recorded.progress.mockClear();
+    recorded.register.mockClear();
+    recorded.release.mockClear();
     warning.mockClear();
     info.mockClear();
     success.mockClear();
@@ -342,6 +349,38 @@ describe('ActionInteractions', () => {
     await mount().run({ actionId: 'quote', input: '{}', mode: 'await' });
 
     expect(recorded.update).toHaveBeenCalledWith('run-1', expect.objectContaining({ status: 'failed', reason: 'duplicate' }));
+  });
+
+  /**
+   * The dev-tools' Cancel is the handle a run gives back while it is still happening — which for an awaited or
+   * detached run is the ONLY handle there is, since the server's id does not exist on this side until it answers.
+   * Aborting the request is what the socket close turns into a stopped flow on the server.
+   */
+  it('hands the panel a way to stop a run that is still going', async () => {
+    let settled: (value: Response) => void = () => undefined;
+    const inFlight = new Promise<Response>(resolve => {
+      settled = resolve;
+    });
+    const fetchMock = vi.fn(() => inFlight);
+    vi.stubGlobal('fetch', fetchMock);
+
+    const running = mount().run({ actionId: 'quote', input: '{}', mode: 'await' });
+
+    expect(recorded.register).toHaveBeenCalledWith('run-1', expect.any(Function));
+
+    // The panel presses Cancel: the request is aborted, and the run says so rather than reading as a failure.
+    (recorded.register.mock.calls[0] as unknown as [string, () => void])[1]();
+
+    expect(recorded.update).toHaveBeenCalledWith(
+      'run-1',
+      expect.objectContaining({ status: 'aborted', cancellable: false })
+    );
+
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect((init.signal as AbortSignal).aborted, 'the request was left running').toBe(true);
+
+    settled(jsonResponse(200, { runId: 'r1', status: 'completed', output: {} }));
+    await running;
   });
 
   it('reports a stream it could not open the same way', async () => {

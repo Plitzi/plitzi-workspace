@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createActionsModule } from '../index';
 
-import type { ActionRunRequest, ActionTask } from '../types';
+import type { ActionRunRecord, ActionRunRequest, ActionTask } from '../types';
 import type { ActionDocument, ActionEntry, ElementInteraction, SSRUser } from '@plitzi/sdk-shared';
 
 const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementInteraction => ({
@@ -85,6 +85,89 @@ describe('runAction', () => {
     expect(result.status).toBe('completed');
     expect(result.output).toEqual({ total: 42, leaked: 'internal' });
     expect(result.trace).toHaveLength(1);
+  });
+
+  /**
+   * The stuck run this ceiling exists for.
+   *
+   * Aborting the controller is the polite half and covers a task that watches its signal. A task that does NOT —
+   * a driver that takes no signal, a client that swallows it, a loop somebody wrote by accident — would otherwise
+   * leave the run awaiting something that never returns, holding a caller, a slot and a connection with nothing
+   * in the process able to tell it apart from work in progress.
+   */
+  it('ends a run whose step never returns, and says why', async () => {
+    const stuck: ActionTask<Record<string, never>> = {
+      namespace: 'test',
+      action: 'stuck',
+      title: 'Never returns',
+      params: {},
+      // Deliberately ignores `ctx.signal`: that is the whole case.
+      run: () => new Promise(() => undefined)
+    };
+    const entry = buildEntry({
+      limits: { timeoutMs: 40 },
+      nodes: {
+        start: callTrigger({}, 'hang'),
+        hang: node('hang', { action: 'test.stuck', afterNode: 'out' }),
+        out: node('out', { action: 'flow.output', params: { values: '{}' } })
+      }
+    });
+    const { runAction } = createActionsModule({ lookups, tasks: [stuck] });
+
+    await expect(runAction(request(entry))).rejects.toMatchObject({ reason: 'timeout' });
+  });
+
+  /** A run that hit a ceiling is the one somebody has to be able to find afterwards — it used to leave nothing,
+   *  because the refusal was rethrown before the record was written. */
+  it('records a run that hit its deadline instead of vanishing', async () => {
+    const onRun = vi.fn();
+    const stuck: ActionTask<Record<string, never>> = {
+      namespace: 'test',
+      action: 'stuck',
+      title: 'Never returns',
+      params: {},
+      run: () => new Promise(() => undefined)
+    };
+    const entry = buildEntry({
+      limits: { timeoutMs: 40 },
+      nodes: {
+        start: callTrigger({}, 'hang'),
+        hang: node('hang', { action: 'test.stuck', afterNode: 'out' }),
+        out: node('out', { action: 'flow.output', params: { values: '{}' } })
+      }
+    });
+    const { runAction } = createActionsModule({ lookups, tasks: [stuck], onRun });
+
+    await expect(runAction(request(entry))).rejects.toThrow(/40ms budget/);
+    const recorded = onRun.mock.calls[0][0] as ActionRunRecord;
+    expect(recorded.status).toBe('aborted');
+    expect(recorded.error).toContain('40ms budget');
+  });
+
+  /** A document may only ever TIGHTEN what the deployment allows: an authored ceiling is customer input. */
+  it('takes the tighter of the deployment’s budget and the document’s', async () => {
+    const slow: ActionTask<Record<string, never>> = {
+      namespace: 'test',
+      action: 'slow',
+      title: 'Slow',
+      params: {},
+      run: () => new Promise(resolve => setTimeout(() => resolve({ ok: true }), 200))
+    };
+    const entry = buildEntry({
+      limits: { timeoutMs: 5_000 },
+      nodes: {
+        start: callTrigger({}, 'slow'),
+        slow: node('slow', { action: 'test.slow', afterNode: 'out' }),
+        out: node('out', { action: 'flow.output', params: { values: '{}' } })
+      }
+    });
+    const { runAction } = createActionsModule({
+      lookups,
+      tasks: [slow],
+      limits: { timeoutMs: 40 }
+    });
+
+    await expect(runAction(request(entry))).rejects.toThrow(/40ms budget/);
   });
 
   // The property that matters: the flow scope holds every step's raw result, and none of it reaches the caller

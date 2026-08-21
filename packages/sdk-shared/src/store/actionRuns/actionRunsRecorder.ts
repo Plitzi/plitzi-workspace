@@ -7,6 +7,35 @@ let seq = 0;
 const write = (runs: ActionRunEntry[]) => actionRunsStore.setState('runs', runs);
 
 /**
+ * How to stop each live run, kept OUT of the store.
+ *
+ * The store is data a panel renders and a devtool may serialize; an abort controller and a fetch are neither. The
+ * step that started the run owns the handle and registers it here, which is also what keeps this module free of
+ * any idea of how a run is transported.
+ */
+const cancellers = new Map<string, () => void>();
+
+/** Registered by whatever started the run, for as long as stopping it means anything. */
+export const registerActionCanceller = (id: string, cancel: () => void): void => {
+  cancellers.set(id, cancel);
+};
+
+export const releaseActionCanceller = (id: string): void => {
+  cancellers.delete(id);
+};
+
+/**
+ * Stops a run from outside the flow that started it — the dev-tools panel, today.
+ *
+ * It is deliberately the step's own canceller rather than a request built here: a run is stopped by aborting the
+ * request that carries it AND, when the server has already named it, by telling the server so. Which of those
+ * apply is something only the step knows.
+ */
+export const cancelActionRun = (id: string): void => {
+  cancellers.get(id)?.();
+};
+
+/**
  * Records a run this page STARTED, the moment it is sent.
  *
  * Written when the request leaves rather than when it answers, because the interesting failures are the ones with
@@ -16,7 +45,14 @@ const write = (runs: ActionRunEntry[]) => actionRunsStore.setState('runs', runs)
 export const recordActionRun = (entry: Omit<ActionRunEntry, 'id' | 'startedAt' | 'status' | 'progress'>): string => {
   seq += 1;
   const id = `run-${seq}`;
-  const run: ActionRunEntry = { ...entry, id, status: 'running', startedAt: Date.now(), progress: [] };
+  const run: ActionRunEntry = {
+    ...entry,
+    id,
+    status: 'running',
+    startedAt: Date.now(),
+    progress: [],
+    cancellable: true
+  };
   write([run, ...actionRunsStore.getState().runs].slice(0, MAX_RUNS));
 
   return id;
@@ -38,4 +74,7 @@ export const recordActionProgress = (id: string, chunk: unknown): void => {
   write(runs.map(run => (run.id === id ? { ...run, progress: [...run.progress, chunk] } : run)));
 };
 
-export const clearActionRuns = (): void => write([]);
+export const clearActionRuns = (): void => {
+  cancellers.clear();
+  write([]);
+};

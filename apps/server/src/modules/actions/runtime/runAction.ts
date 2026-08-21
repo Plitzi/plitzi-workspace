@@ -32,6 +32,34 @@ const MAX_TWIG_RESOLUTION_PASSES = 5;
 const CANCEL_POLL_MS = 1_000;
 
 /**
+ * The run's deadline, as a promise that loses patience.
+ *
+ * Aborting the controller is the polite half: a task that watches its signal stops, and the loop refuses to start
+ * the next step. It is not enough on its own, because a step that ignores the signal — a driver that does not
+ * take one, a provider client that swallows it, a `while (true)` inside a task — leaves the run awaiting something
+ * that never returns. That is the stuck run this exists to end: nothing else in the process can tell the
+ * difference between a flow that is working hard and one that will never finish.
+ *
+ * Racing the flow against this means the RUN always ends, even when a step does not. What the step does after
+ * that is beyond anybody's reach in a single-threaded runtime — but it no longer holds a caller, a slot, or a
+ * connection while it does it.
+ */
+const createDeadline = (timeoutMs: number, controller: AbortController) => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const promise = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      reject(new ActionRunError('timeout', `Action exceeded its ${timeoutMs}ms budget`));
+    }, timeoutMs);
+  });
+
+  return {
+    promise,
+    clear: () => clearTimeout(timer)
+  };
+};
+
+/**
  * Whether somebody has asked this run to stop, from wherever the request landed.
  *
  * The socket closing aborts a run in the process that is running it, and a `DELETE` that happens to reach that
@@ -267,8 +295,10 @@ export const createActionRunner = (
     const redact = redactor.redact;
 
     const controller = new AbortController();
+    // A streaming run is allowed to be longer-lived than a request/response one; both are ceilings the deployment
+    // sets and a document may only tighten.
     const timeoutMs = request.emit ? limits.streamTimeoutMs : limits.timeoutMs;
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const deadline = createDeadline(timeoutMs, controller);
     const releaseOuter = onAbort(request.signal, () => controller.abort());
 
     const scopedKv = namespaceKv(kv, request.spaceId);
@@ -346,7 +376,14 @@ export const createActionRunner = (
 
     const isCancelled = createCancelWatch(config.kv, runId);
 
-    try {
+    /**
+     * The flow itself, as something that can be raced.
+     *
+     * Separated from the `try` around it for one reason: what awaits it must be able to stop awaiting. A run that
+     * hits its deadline answers, releases its slot and closes its connection while whatever step ignored the abort
+     * carries on in the background — which is the difference between a stuck STEP and a stuck server.
+     */
+    const runFlow = async () => {
       let current = triggerNode;
       let executed = 0;
       let next = document.nodes[current.afterNode] as ElementInteraction | undefined;
@@ -390,25 +427,49 @@ export const createActionRunner = (
         current = next;
         next = document.nodes[current.afterNode];
       }
+    };
+
+    /** Set when the run ends in a way the CALLER has to hear as a status code rather than as a result. */
+    let fatal: ActionRunError | undefined;
+
+    try {
+      await Promise.race([runFlow(), deadline.promise]);
     } catch (error) {
       // A failed step ENDS the run. The client engine carries on past one because a broken button leaves a page
       // usable; a server flow that keeps going after a failed authorization or a failed charge does damage.
       status = controller.signal.aborted ? 'aborted' : 'failed';
       if (error instanceof ActionRunError) {
-        throw error;
+        /**
+         * Recorded before it is rethrown.
+         *
+         * A run refused before it began is not a run and leaves nothing; a run that STARTED and then hit a
+         * ceiling — its deadline, its step budget, its request budget — is exactly the one somebody needs to find
+         * afterwards. Rethrowing straight from here used to skip the record, so the runs hardest to explain were
+         * the ones that left no trace at all.
+         */
+        fatal = error;
+        failure = error.message;
+        trace.push({
+          node: { id: 'error', title: 'Error', action: error.reason } as ElementInteraction,
+          status: 'failed',
+          result: redact({ error: error.message, reason: error.reason }),
+          postCallbacks: [],
+          startTime: Date.now(),
+          endTime: Date.now()
+        });
+      } else {
+        failure = error instanceof Error ? error.message : String(error);
+        trace.push({
+          node: { id: 'error', title: 'Error', action: 'error' } as ElementInteraction,
+          status: 'failed',
+          result: redact({ error: error instanceof Error ? error.message : String(error) }),
+          postCallbacks: [],
+          startTime: Date.now(),
+          endTime: Date.now()
+        });
       }
-
-      failure = error instanceof Error ? error.message : String(error);
-      trace.push({
-        node: { id: 'error', title: 'Error', action: 'error' } as ElementInteraction,
-        status: 'failed',
-        result: redact({ error: error instanceof Error ? error.message : String(error) }),
-        postCallbacks: [],
-        startTime: Date.now(),
-        endTime: Date.now()
-      });
     } finally {
-      clearTimeout(timer);
+      deadline.clear();
       releaseOuter();
     }
 
@@ -431,7 +492,19 @@ export const createActionRunner = (
       ...(failure === undefined ? {} : { error: redact(failure) })
     });
 
-    return { runId, status, output: redact(output), trace };
+    // Only now, with the record written: the caller hears a status code, and the space's history still has the
+    // run that produced it.
+    if (fatal) {
+      throw fatal;
+    }
+
+    /**
+     * The trace is COPIED out.
+     *
+     * A run that hit its deadline is no longer awaited, and whatever step ignored the abort may still push into
+     * this array while the answer is being serialized. The caller gets what was true when it asked.
+     */
+    return { runId, status, output: redact(output), trace: [...trace] };
   };
 
   return { runAction };

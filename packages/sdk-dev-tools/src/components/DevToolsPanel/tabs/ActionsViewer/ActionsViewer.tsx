@@ -2,7 +2,7 @@ import Button from '@plitzi/plitzi-ui/Button';
 import clsx from 'clsx';
 import { useCallback, useState } from 'react';
 
-import { useCommonStore, useActionRuns } from '@plitzi/sdk-shared/store';
+import { cancelActionRun, useCommonStore, useActionRuns } from '@plitzi/sdk-shared/store';
 
 import type { ActionRunEntry } from '@plitzi/sdk-shared';
 
@@ -20,6 +20,9 @@ const at = (value: number) => new Date(value).toLocaleTimeString();
 
 const took = (run: ActionRunEntry) => (run.endedAt ? `${run.endedAt - run.startedAt}ms` : '…');
 
+/** Still happening: no end time, and the step that started it still holds the handle. */
+const isLive = (run: ActionRunEntry) => run.endedAt === undefined;
+
 /**
  * The server actions this page has run.
  *
@@ -36,17 +39,37 @@ const ActionsViewer = () => {
   const { runs, clear } = useActionRuns();
   const [endpoint] = useCommonStore('actions.endpoint');
   const [expanded, setExpanded] = useState<string | undefined>();
+  const live = runs.filter(isLive);
 
   const handleToggle = useCallback((id: string) => () => setExpanded(current => (current === id ? undefined : id)), []);
+
+  /**
+   * Stops a run from here — which is the point of having it here at all.
+   *
+   * A long flow is otherwise something a developer can only wait out: the page has moved on, the trigger that
+   * would cancel it is not on any element yet, and the run id is on a server. `stopPropagation` because the row
+   * is a toggle and cancelling is not opening.
+   */
+  const handleCancel = useCallback((id: string) => () => cancelActionRun(id), []);
 
   return (
     <div className="flex h-full w-full flex-col overflow-auto">
       <div className="flex items-center justify-between border-b border-gray-200 px-2 py-1 dark:border-zinc-700">
-        <span className="text-xs text-gray-500 dark:text-zinc-400">
-          {endpoint
-            ? `Server actions run at ${endpoint}`
-            : 'This page is served without a Plitzi server: every action step is inert'}
-        </span>
+        <div className="flex items-center gap-2">
+          {/* A run in flight is the one thing this panel has to say without being asked: a flow that never comes
+              back looks exactly like a page that did nothing at all. */}
+          {live.length > 0 && (
+            <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
+              <i className="fa-solid fa-circle-notch fa-spin" />
+              {live.length} running
+            </span>
+          )}
+          <span className="text-xs text-gray-500 dark:text-zinc-400">
+            {endpoint
+              ? `Server actions run at ${endpoint}`
+              : 'This page is served without a Plitzi server: every action step is inert'}
+          </span>
+        </div>
         <Button size="xs" disabled={runs.length === 0} onClick={clear}>
           Clear
         </Button>
@@ -60,17 +83,26 @@ const ActionsViewer = () => {
       <div className="flex flex-col">
         {runs.map(run => (
           <div key={run.id} className="border-b border-gray-100 dark:border-zinc-800">
-            <button
-              type="button"
-              className="flex w-full items-center gap-2 px-2 py-1 text-left text-xs hover:bg-gray-50 dark:hover:bg-zinc-800"
-              onClick={handleToggle(run.id)}
-            >
-              <span className="text-gray-400">{at(run.startedAt)}</span>
-              <span className="font-medium">{run.actionId || '(no action named)'}</span>
-              <span className="rounded-sm bg-gray-100 px-1 text-[10px] uppercase dark:bg-zinc-800">{run.mode}</span>
-              <span className={clsx('ml-auto', TONE[run.status] ?? '')}>{run.reason ?? run.status}</span>
-              <span className="text-gray-400">{took(run)}</span>
-            </button>
+            {/* The row is a toggle and Cancel is a button of its own: one nested inside the other is invalid
+                markup, and a click that opened a run while stopping it is not what anybody meant. */}
+            <div className="flex w-full items-center gap-2 px-2 hover:bg-gray-50 dark:hover:bg-zinc-800">
+              <button
+                type="button"
+                className="flex grow items-center gap-2 py-1 text-left text-xs"
+                onClick={handleToggle(run.id)}
+              >
+                <span className="text-gray-400">{at(run.startedAt)}</span>
+                <span className="font-medium">{run.actionId || '(no action named)'}</span>
+                <span className="rounded-sm bg-gray-100 px-1 text-[10px] uppercase dark:bg-zinc-800">{run.mode}</span>
+                <span className={clsx('ml-auto', TONE[run.status] ?? '')}>{run.reason ?? run.status}</span>
+                <span className="text-gray-400">{took(run)}</span>
+              </button>
+              {isLive(run) && run.cancellable && (
+                <Button size="xs" intent="secondary" onClick={handleCancel(run.id)}>
+                  Cancel
+                </Button>
+              )}
+            </div>
             {expanded === run.id && (
               <div className="flex flex-col gap-2 bg-gray-50 px-3 py-2 text-xs dark:bg-zinc-800/50">
                 {run.runId && (

@@ -124,6 +124,12 @@ returns before its frames arrive. It shows the action, the mode, the input, the 
 progress chunks, and — on a dev server, which is the only deployment that sends it — **the steps the flow ran on
 the server**. The same events also appear in the `Logs` tab under their own `actions` category.
 
+It also says **how many runs are in flight**, and offers **Cancel** on each of them. A long flow is otherwise
+something you can only wait out: the page has moved on, no element carries a cancel step yet, and the run id is on
+a server. Cancelling aborts the request — which the server reads as the caller hanging up, and stops the flow at
+its next step boundary — and, once the server has named the run, sends the `DELETE` as well, which is what reaches
+a run that outlives its request.
+
 `actionId` is a parameter, so one element can launch several actions and each trigger filters with its own `when`.
 
 A **Cancel Server Action** step stops a run by its id. Every mode gives you one to bind: `await` and `stream`
@@ -272,13 +278,23 @@ before. Publishing once puts them on their own version.
 
 | Guard | Default | What it prevents |
 |---|---|---|
-| Wall clock | 10 s (120 s streaming) | a step that never answers holding a connection |
+| Wall clock | 10 s (120 s streaming) | a flow that never ends — an authored loop, a provider that never answers, a step that ignores its abort |
 | Steps per run | 50 | an authored loop |
 | Outbound requests per run | 20 | one run turning into a hundred calls |
 | Bytes per outbound response | 5 MB | a backend answering a gigabyte, which no timeout catches |
 | Concurrency | 10 per space | one space starving the rest |
 | Single-flight | per caller + input | a double click, a retry, a reconnect becoming several runs |
 | Lineage | — | an action whose HTTP step reaches its own webhook (answered **508 Loop Detected**) |
+
+**The wall clock is a hard deadline, not a request to stop.** When it expires the run is aborted — a step that
+watches its signal stops, and the flow refuses to start the next one — and the run ANSWERS whether or not the step
+that was in flight ever returns. That is the difference between a stuck step and a stuck server: a task that
+ignores its abort keeps burning in the background, but it no longer holds a caller, a concurrency slot or a
+connection while it does. The caller gets **504**, and the run is written to the space's history like any other,
+with the budget it exceeded as its reason.
+
+Every ceiling here is the deployment's (`action.limits`, and on Plitzi's own the `ACTIONS_*` environment
+variables), and a per-action `limits` block may tighten any of them and widen none.
 
 A run is billed once, as a `server_action`. A run that was refused is not billed — billing a 409 only teaches
 callers to retry harder — and neither is one answered from an earlier run's result. A **test run from the builder
@@ -312,6 +328,7 @@ things somebody meant to happen twice.
 | A section that is always missing on a slow provider | The page's own ceiling for one section — `rsc.elementTimeoutMs`, 5 s by default — is tighter than what the action is allowed. Whichever is tighter wins, and being cut there now ends the run rather than leaving it to finish for nobody |
 | A section reporting it could not be reached | A `render` action did not complete; the reason is in the server log, and one slice failing never takes the page down. The element publishes `hasError` and `errorMessage` — bind them and the page says what a visitor can act on |
 | A webhook that appears to do nothing at all | Open the action and read **Recent activity**. A delivery refused for a signature that does not match is recorded there with the reason — it is the most common cause, and it never reaches a run |
+| A run that ends at exactly 10 s (or 120 s streaming) with `timeout` | It hit its wall clock. Either the flow is doing more than it can in that budget — raise it for that action, or for the deployment — or a step is not coming back at all. The history says which step it stopped at |
 | A step that reports `failed` with no server answer behind it | The server was unreachable — down, restarting, or the connection dropped. A run that never left the browser is reported like a refusal, so the flow still gets a status to bind |
 
 Three panels answer three different questions:
