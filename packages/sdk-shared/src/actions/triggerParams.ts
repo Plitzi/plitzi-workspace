@@ -59,10 +59,58 @@ export const triggerInput = (params: ActionTriggerParams): Record<string, Action
 };
 
 /** How an inbound webhook proves itself, or nothing — which is an endpoint anyone who learns the URL can start. */
+/**
+ * How this webhook proves who is calling it — assembled from the trigger's own fields, not parsed out of a blob.
+ *
+ * **Naming the credential is what turns it on.** Everything else has a working default, so there is no state
+ * between "unsigned" and "verified" for an author to get stuck in: it was a JSON object with an empty
+ * `credential` in it, which the editor offered by default and the validator then refused, so picking the webhook
+ * trigger produced an error before anybody had typed anything.
+ */
 export const triggerVerify = (params: ActionTriggerParams): ActionWebhookVerification | undefined => {
-  const parsed = parseJson(params.verify);
+  const credential = params.signatureCredential?.trim();
+  if (!credential) {
+    return undefined;
+  }
 
-  return isRecord(parsed) ? (parsed as ActionWebhookVerification) : undefined;
+  const secretField = params.signatureSecretField?.trim();
+  const timestampHeader = params.signatureTimestampHeader?.trim();
+  const tolerance = Number.parseFloat(params.signatureToleranceSeconds ?? '');
+
+  return {
+    type: 'hmac',
+    header: params.signatureHeader?.trim() || 'x-signature',
+    // Anything else is read as the default rather than refused: the check must not fall back to "no verification"
+    // because of a typo, and `sha256` is what a sender that did not say uses.
+    algorithm: params.signatureAlgorithm?.trim() === 'sha1' ? 'sha1' : 'sha256',
+    credential,
+    ...(secretField ? { secretField } : {}),
+    ...(timestampHeader ? { timestampHeader } : {}),
+    ...(Number.isFinite(tolerance) && tolerance > 0 ? { toleranceSeconds: Math.round(tolerance) } : {})
+  };
+};
+
+/**
+ * Whether this trigger carries a signature check that USED TO VERIFY something and no longer does.
+ *
+ * A guard, not a compatibility layer: nothing here interprets the old shape, and the only question it answers is
+ * whether ignoring it would fail OPEN. A stored `verify: '{…}'` that named a credential was a protected endpoint;
+ * read as "unsigned" it becomes a public one with nothing in the document changing, which is the one degradation
+ * that must never happen by omission — so it is refused until somebody moves it across.
+ *
+ * A leftover blob that named NO credential verified nothing to begin with. It is not a downgrade, it is a field
+ * the editor used to offer filled in with a default and never completed — and treating it as an error would be an
+ * error about something the editor no longer shows, on a webhook that was always unsigned. That one is simply
+ * unsigned, and warned about like any other.
+ */
+export const triggerHasStaleVerify = (params: ActionTriggerParams): boolean => {
+  if (params.signatureCredential?.trim()) {
+    return false;
+  }
+
+  const parsed = parseJson((params as { verify?: unknown }).verify as string | undefined);
+
+  return isRecord(parsed) && typeof parsed.credential === 'string' && parsed.credential.trim() !== '';
 };
 
 /**

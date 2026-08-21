@@ -46,8 +46,8 @@ const entry = (overrides: Partial<ActionDocument> = {}): ActionEntry => ({
           input: '{"payload":{"type":"json"}}',
           // The credential is NAMED, not templated: this runs before a run exists, so there is no scope for a
           // token to resolve against and one that rendered empty would verify against nothing.
-          verify:
-            '{"type":"hmac","header":"x-signature","algorithm":"sha256","credential":"stripe","secretField":"hookSecret"}'
+          signatureCredential: 'stripe',
+          signatureSecretField: 'hookSecret'
         },
         afterNode: 'ret'
       }),
@@ -134,6 +134,26 @@ const post = async (
 const sign = (body: string, secret = SECRET) => createHmac('sha256', secret).update(body).digest('hex');
 
 describe('handleActionWebhook', () => {
+  /**
+   * A verification nothing reads is a broken webhook, not an unsigned one.
+   *
+   * The check used to be a JSON blob and is now fields on the trigger step. Reading a document stored before that
+   * as "unsigned" would turn a protected endpoint into a public one with nothing in it changing — the one
+   * degradation that must never happen quietly — so it is refused instead.
+   */
+  it('refuses a webhook whose signature check is in a format nothing reads', async () => {
+    const stale = entry();
+    stale.document.nodes.start.params = {
+      access: 'public',
+      verify: '{"type":"hmac","header":"x-signature","algorithm":"sha256","credential":"stripe"}'
+    };
+    const body = '{"id":"evt_1"}';
+
+    const { sent } = await post(config(stale), body, {});
+
+    expect(sent.status, 'an endpoint that verifies nothing answered as though it had').toBe(503);
+  });
+
   it('runs the action when the signature checks out', async () => {
     const body = '{"id":"evt_1","type":"payment"}';
 

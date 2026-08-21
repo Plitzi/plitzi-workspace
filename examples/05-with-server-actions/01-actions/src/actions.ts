@@ -107,13 +107,12 @@ const visitDigest: ActionEntry = {
           // The credential is NAMED here, not templated. This check runs before the body is parsed and before a
           // run exists, so there is no flow scope for a token to resolve against — and one that rendered to
           // nothing would leave the endpoint verifying every request against an empty secret.
-          verify: JSON.stringify({
-            type: 'hmac',
-            header: 'x-example-signature',
-            algorithm: 'sha256',
-            credential: 'example',
-            secretField: 'webhookSecret'
-          })
+          //
+          // Naming it is also the whole of turning verification on: the rest of these fields have defaults, so
+          // there is no half-configured state where the endpoint looks protected and is not.
+          signatureCredential: 'example',
+          signatureSecretField: 'webhookSecret',
+          signatureHeader: 'x-example-signature'
         },
         afterNode: 'count'
       }),

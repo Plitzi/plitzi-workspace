@@ -89,8 +89,28 @@ export type ActionTriggerParams = {
   permissions?: string;
   /** JSON map of {@link ActionField} by name: what a caller may send THIS way. Undeclared keys are dropped. */
   input?: string;
-  /** `webhook`: JSON {@link ActionWebhookVerification}. Absent means an endpoint anyone who learns it can start. */
-  verify?: string;
+  /**
+   * `webhook`: the credential holding the signing secret.
+   *
+   * **Naming one is what turns verification on**, and it is the only field that has to be set — everything below
+   * has a default that works. That is deliberate: a half-filled verification is an endpoint that looks protected
+   * and is not, so the shape does not allow one. Absent means an endpoint anyone who learns the URL can start,
+   * which the validator warns about.
+   */
+  signatureCredential?: string;
+  /** Header the signature arrives in. Defaults to `x-signature`; a provider that uses its own says so here. */
+  signatureHeader?: string;
+  /** `sha256` (the default) or `sha1`. */
+  signatureAlgorithm?: string;
+  /** Which key of the credential holds the secret. Defaults to `secret`. */
+  signatureSecretField?: string;
+  /**
+   * Header carrying the moment the sender signed, when it sends one separately (the Stripe shape). The signed
+   * payload is then `<timestamp>.<body>` rather than the body alone.
+   */
+  signatureTimestampHeader?: string;
+  /** Rejects a signature older than this many seconds. Means nothing without the timestamp header. */
+  signatureToleranceSeconds?: string;
   /**
    * `render`: how long an answer may be reused, in seconds. Absent or `0` means every render runs the flow.
    *

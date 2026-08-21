@@ -1,5 +1,5 @@
 import { parseCron } from './cron';
-import { triggerAccess, triggerVerify } from './triggerParams';
+import { triggerAccess, triggerHasStaleVerify, triggerVerify } from './triggerParams';
 
 import type { ActionTriggerParams } from '../types';
 
@@ -31,6 +31,7 @@ export type ActionDocumentReport = {
 const FIELD_TYPES = ['text', 'number', 'boolean', 'date', 'json', 'file'];
 const ACCESS_MODES = ['public', 'session', 'role'];
 const TRIGGER_TYPES = ['call', 'webhook', 'schedule', 'render', 'custom'];
+const SIGNATURE_ALGORITHMS = ['sha256', 'sha1'];
 /** `<namespace>.<action>`, which is how the registry addresses a task. */
 const TASK_NAME = /^[a-z][a-zA-Z0-9]*\.[a-z][a-zA-Z0-9]*$/;
 
@@ -167,24 +168,45 @@ const validateTrigger = (
   }
 
   if (kind === 'webhook') {
-    if (isFilledString(params.verify) && parseMap(params.verify) === undefined) {
-      errors.push({ path: `${path}.params.verify`, message: 'is not valid JSON' });
-    } else {
-      const verify = triggerVerify(params);
-      // A webhook is reachable by anyone who learns the URL. Without a signature it is an open endpoint into
-      // whatever the flow does, so this is called out even though the document is technically runnable.
-      if (!verify) {
-        warnings.push({
-          path: `${path}.params.verify`,
-          message: 'this webhook accepts unsigned requests',
-          hint: 'declare an hmac verification so only the sender you expect can start a run'
-        });
-      } else if (!isFilledString(verify.credential)) {
-        errors.push({
-          path: `${path}.params.verify`,
-          message: 'the verification names no credential to read the signing secret from'
-        });
-      }
+    // Refused rather than warned about: this endpoint is running unverified right now, and the document says
+    // otherwise. Nothing here reads the old shape — moving the credential across is what fixes it.
+    if (triggerHasStaleVerify(params)) {
+      errors.push({
+        path: `${path}.params.signatureCredential`,
+        message: 'this signature check is in a format nothing reads any more, so the webhook is unverified',
+        hint: 'name the credential holding the signing secret in "Signing secret", and its header beside it'
+      });
+    }
+
+    const verify = triggerVerify(params);
+    // A webhook is reachable by anyone who learns the URL. Without a signature it is an open endpoint into
+    // whatever the flow does, so this is called out even though the document is technically runnable.
+    if (!verify) {
+      warnings.push({
+        path: `${path}.params.signatureCredential`,
+        message: 'this webhook accepts unsigned requests',
+        hint: 'name the credential holding the signing secret, and only the sender you expect can start a run'
+      });
+    }
+
+    if (isFilledString(params.signatureAlgorithm) && !SIGNATURE_ALGORITHMS.includes(params.signatureAlgorithm)) {
+      // Read as `sha256` rather than refused — a check must not fall back to none because of a typo — which is
+      // exactly why it is worth saying out loud.
+      warnings.push({
+        path: `${path}.params.signatureAlgorithm`,
+        message: `"${params.signatureAlgorithm}" is not an algorithm this server signs with, so sha256 is used`,
+        hint: `one of ${SIGNATURE_ALGORITHMS.join(', ')}`
+      });
+    }
+
+    if (isFilledString(params.signatureToleranceSeconds) && !isFilledString(params.signatureTimestampHeader)) {
+      // A signature over the body alone is valid forever, so there is nothing for an age to be measured against:
+      // a captured request replays until the secret rotates, and the tolerance says otherwise.
+      warnings.push({
+        path: `${path}.params.signatureToleranceSeconds`,
+        message: 'a tolerance with no timestamp header expires nothing',
+        hint: 'name the header the sender puts the signing time in, or drop the tolerance'
+      });
     }
   }
 

@@ -1,4 +1,4 @@
-import { triggerVerify } from '@plitzi/sdk-shared/actions';
+import { triggerHasStaleVerify, triggerVerify } from '@plitzi/sdk-shared/actions';
 
 import { verifySignature } from './verifySignature';
 import { onAbort } from '../../../helpers/onAbort';
@@ -87,7 +87,28 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
     return;
   }
 
-  const verify = triggerVerify(triggerParams(trigger));
+  const stepParams = triggerParams(trigger);
+  const verify = triggerVerify(stepParams);
+
+  /**
+   * A verification nothing reads is not an unsigned webhook — it is a broken one, and it is refused.
+   *
+   * The check used to be a JSON blob and is now fields on the step. A document stored before that carries the
+   * blob and no signing credential, and reading it as "unsigned" would turn a protected endpoint into a public
+   * one without a single line of it changing. Fail closed, and say which document to fix.
+   */
+  if (triggerHasStaleVerify(stepParams)) {
+    // To the console, like a failed RSC slice, because no log event describes a document that cannot be run — and
+    // to the SENDER, nothing but "unavailable": telling a caller the signature check is misconfigured tells them
+    // the endpoint is currently unverified.
+    console.error(
+      `[Actions] webhook "${actionId}" in space ${spaceId} carries a signature check in a format nothing reads any ` +
+        'more, so it is refused. Name the signing credential on the trigger step.'
+    );
+    send(res, 503, { error: 'Unavailable' });
+
+    return;
+  }
 
   // Counted before the signature is checked: verifying costs a hash over an attacker-supplied body, and a flood of
   // unsigned requests must not be free just because none of them verifies.

@@ -74,13 +74,61 @@ const TRIGGER_PARAMS: Record<string, InteractionCallback['params']> = {
       canBind: false
     }
   },
+  /**
+   * How a webhook proves who is calling it, as FIELDS — one per thing a sender does differently.
+   *
+   * It was one `codemirror-json` control holding the whole verification, offered with an empty `credential` in
+   * it: an author picking this trigger was shown a JSON object explaining nothing and an error refusing to save
+   * it, before typing a character. Naming the credential is now the whole of turning it on, and the rest only
+   * appears once there is something to configure.
+   */
   webhook: {
     ...callerParams,
-    verify: {
-      type: 'codemirror-json',
-      defaultValue: '{"type":"hmac","header":"x-signature","algorithm":"sha256","credential":""}',
-      label: 'Signature check',
+    signatureCredential: {
+      type: 'text',
+      defaultValue: '',
+      label: 'Signing secret (credential)',
       canBind: false
+    },
+    signatureHeader: {
+      type: 'text',
+      defaultValue: '',
+      label: 'Signature header — defaults to x-signature',
+      canBind: false,
+      when: params => Boolean(params.signatureCredential)
+    },
+    signatureAlgorithm: {
+      type: 'select',
+      defaultValue: 'sha256',
+      label: 'Algorithm',
+      canBind: false,
+      options: [
+        { label: 'SHA-256', value: 'sha256' },
+        { label: 'SHA-1', value: 'sha1' }
+      ],
+      when: params => Boolean(params.signatureCredential)
+    },
+    signatureSecretField: {
+      type: 'text',
+      defaultValue: '',
+      label: 'Key of the credential holding the secret — defaults to secret',
+      canBind: false,
+      when: params => Boolean(params.signatureCredential)
+    },
+    signatureTimestampHeader: {
+      type: 'text',
+      defaultValue: '',
+      label: 'Timestamp header, if the sender signs one separately',
+      canBind: false,
+      when: params => Boolean(params.signatureCredential)
+    },
+    // Only once there is a timestamp to compare it against: without one, a signature never gets old.
+    signatureToleranceSeconds: {
+      type: 'text',
+      defaultValue: '',
+      label: 'Reject signatures older than (seconds)',
+      canBind: false,
+      when: params => Boolean(params.signatureCredential) && Boolean(params.signatureTimestampHeader)
     }
   },
   schedule: {

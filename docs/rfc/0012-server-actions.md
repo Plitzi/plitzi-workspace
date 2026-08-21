@@ -122,7 +122,9 @@ export type ActionTriggerParams = {
   /** JSON map of `ActionField` by name. What a caller may send THIS way; undeclared keys are dropped. */
   input?: string;
   /** `webhook`: JSON `ActionWebhookVerification`. Its secret NAMES a credential — see §4.2.1. */
-  verify?: string;
+  /** `webhook`: naming the credential holding the signing secret is what turns verification on. The header,
+   *  algorithm, secret key, timestamp header and tolerance are fields of their own, each with a default. */
+  signatureCredential?: string;
   /** `schedule`: five fields, UTC. */
   cron?: string;
   timezone?: string;
@@ -489,7 +491,10 @@ export type ActionWebhookVerification = {
 ```
 
 Verification runs against the **raw body**, before parsing, before the runner starts. An action with
-`{ mode: 'public' }` and no `verify` is a save-time warning in the builder and a boot-time one in the logs.
+`{ mode: 'public' }` and no signing credential is a save-time warning in the builder and a boot-time one in the
+logs. It is a WARNING and never an error, which is the whole reason the verification is a set of fields rather
+than a JSON object: as a blob the editor had to offer a default, the default had an empty `credential` in it, and
+picking the webhook trigger produced a save-blocking error before the author had typed anything.
 Rate limited per space and per action off `kv`.
 
 **`schedule`** — the one trigger needing infrastructure that does not exist: there is no queue and no

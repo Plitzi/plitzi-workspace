@@ -148,19 +148,16 @@ interpolable by every step, including the one that answers the browser.
 Add a **webhook** trigger step and the action answers at `POST /_action/hook/<actionId>` on the space's own
 origin. It is public by construction, so the signature is the security boundary:
 
-Its **Signature check** field, on the trigger step:
+How it is checked lives on the trigger step, one field per thing a sender does differently:
 
-```json
-{
-  "type": "hmac",
-  "header": "stripe-signature",
-  "algorithm": "sha256",
-  "credential": "stripe",
-  "secretField": "webhookSecret",
-  "timestampHeader": "stripe-timestamp",
-  "toleranceSeconds": 300
-}
-```
+| Field | What it is |
+|---|---|
+| **Signing secret (credential)** | The credential holding the secret. **Naming it is what turns verification on** — everything below has a working default, so a webhook is either signed or it is not |
+| Signature header | Where the signature arrives. Defaults to `x-signature`; Stripe sends `stripe-signature` |
+| Algorithm | `sha256` or `sha1` |
+| Key of the credential | Which of its keys is the secret. Defaults to `secret` |
+| Timestamp header | For a sender that signs `<timestamp>.<body>` and sends the timestamp separately |
+| Reject signatures older than | Seconds. Only appears once there is a timestamp header to measure against |
 
 The credential is **named, not templated**. This check runs before the body is parsed and before a run exists, so
 there is no flow scope for a token to resolve against — and one that rendered to nothing would leave the endpoint
@@ -168,8 +165,8 @@ verifying every request against an empty secret.
 
 - The signature is checked against the **raw body**, before parsing. (This is why you cannot re-serialize a webhook
   body and verify it afterwards — the digest is over bytes.)
-- Without `timestampHeader`, `toleranceSeconds` has nothing to compare against and a captured request stays valid
-  until the secret rotates.
+- Without the timestamp header, a tolerance has nothing to compare against and a captured request stays valid
+  until the secret rotates — the validator says so rather than letting the field imply otherwise.
 - The body arrives as input: a document naming the two fields it cares about gets those, and one declaring
   `payload: json` gets the whole envelope.
 - Retries are handled: a redelivery carrying the same delivery id is answered **202** rather than run twice.

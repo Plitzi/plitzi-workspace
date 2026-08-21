@@ -113,7 +113,8 @@ describe('validateActionDocument', () => {
           onHook: {
             ...trigger('webhook', {
               access: 'public',
-              verify: '{"type":"hmac","header":"x-sig","algorithm":"sha256","credential":"stripe"}'
+              signatureCredential: 'stripe',
+              signatureHeader: 'x-sig'
             }),
             id: 'onHook',
             afterNode: 'count',
@@ -212,13 +213,54 @@ describe('validateActionDocument', () => {
     expect(messages(report.warnings)).toContain('unsigned requests');
   });
 
-  it('refuses a verification that names no credential to read the secret from', () => {
+  /**
+   * Naming the credential is the whole of turning verification on, so a webhook is either signed or it is not —
+   * there is no half-filled state left to refuse. It used to be a JSON object the editor offered by default with
+   * an empty `credential` in it, which meant picking the webhook trigger produced an error before anyone had
+   * typed a thing.
+   */
+  it('warns rather than refuses when a webhook names no credential', () => {
+    const report = validateActionDocument(
+      document({
+        nodes: {
+          start: trigger('webhook', { access: 'public', signatureHeader: 'x-sig' }),
+          ret: { id: 'ret', type: 'task', action: 'flow.output', params: {} }
+        }
+      })
+    );
+
+    expect(report.valid, 'a webhook nobody has signed yet cannot be saved').toBe(true);
+    expect(messages(report.warnings)).toContain('accepts unsigned requests');
+  });
+
+  /** What the editor used to offer by default, never filled in: it verified nothing then and verifies nothing
+   *  now, so it is the ordinary unsigned case — not an error about a field the editor no longer shows. */
+  it('treats a leftover signature check that named no credential as simply unsigned', () => {
     const report = validateActionDocument(
       document({
         nodes: {
           start: trigger('webhook', {
             access: 'public',
-            verify: '{"type":"hmac","header":"x-sig","algorithm":"sha256"}'
+            verify: '{"type":"hmac","header":"x-signature","algorithm":"sha256","credential":""}'
+          }),
+          ret: { id: 'ret', type: 'task', action: 'flow.output', params: {} }
+        }
+      })
+    );
+
+    expect(report.valid, 'an author was blocked by a field the editor does not show').toBe(true);
+    expect(messages(report.warnings)).toContain('accepts unsigned requests');
+  });
+
+  /** One that DID name a credential is a different thing entirely: that endpoint was protected, and reading it as
+   *  unsigned would make it public with nothing in the document changing. */
+  it('refuses a signature check that used to verify something and no longer does', () => {
+    const report = validateActionDocument(
+      document({
+        nodes: {
+          start: trigger('webhook', {
+            access: 'public',
+            verify: '{"type":"hmac","header":"x-sig","algorithm":"sha256","credential":"stripe"}'
           }),
           ret: { id: 'ret', type: 'task', action: 'flow.output', params: {} }
         }
@@ -226,7 +268,43 @@ describe('validateActionDocument', () => {
     );
 
     expect(report.valid).toBe(false);
-    expect(messages(report.errors)).toContain('names no credential');
+    expect(messages(report.errors)).toContain('nothing reads any more');
+  });
+
+  it('warns about an algorithm it does not sign with, because it falls back rather than refusing', () => {
+    const report = validateActionDocument(
+      document({
+        nodes: {
+          start: trigger('webhook', {
+            access: 'public',
+            signatureCredential: 'stripe',
+            signatureAlgorithm: 'sha512'
+          }),
+          ret: { id: 'ret', type: 'task', action: 'flow.output', params: {} }
+        }
+      })
+    );
+
+    expect(report.valid).toBe(true);
+    expect(messages(report.warnings)).toContain('sha256 is used');
+  });
+
+  /** A signature over the body alone never gets old, so an age with nothing to measure against expires nothing. */
+  it('warns about a tolerance with no timestamp header', () => {
+    const report = validateActionDocument(
+      document({
+        nodes: {
+          start: trigger('webhook', {
+            access: 'public',
+            signatureCredential: 'stripe',
+            signatureToleranceSeconds: '300'
+          }),
+          ret: { id: 'ret', type: 'task', action: 'flow.output', params: {} }
+        }
+      })
+    );
+
+    expect(messages(report.warnings)).toContain('expires nothing');
   });
 
   it('warns that a public call is reachable by signed-out visitors', () => {

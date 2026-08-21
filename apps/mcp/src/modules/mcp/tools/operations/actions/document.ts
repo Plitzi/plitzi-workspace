@@ -27,13 +27,18 @@ export const actionTriggerParams = z
       .string()
       .optional()
       .describe('JSON map of ActionField by name: what a caller may send this way. Undeclared keys are DROPPED'),
-    verify: z
+    signatureCredential: z
       .string()
       .optional()
       .describe(
-        'webhook only. JSON: {type:"hmac",header,algorithm,credential,secretField?,timestampHeader?,' +
-          'toleranceSeconds?}. Without it, anyone who learns the URL can start a run'
+        'webhook only: the credential holding the signing secret. NAMING it is what turns verification on; ' +
+          'without it anyone who learns the URL can start a run'
       ),
+    signatureHeader: z.string().optional().describe('webhook: defaults to x-signature'),
+    signatureAlgorithm: z.string().optional().describe('webhook: sha256 (default) or sha1'),
+    signatureSecretField: z.string().optional().describe('webhook: key of the credential; defaults to secret'),
+    signatureTimestampHeader: z.string().optional().describe('webhook: for a sender that signs <timestamp>.<body>'),
+    signatureToleranceSeconds: z.string().optional().describe('webhook: needs the timestamp header to mean anything'),
     cron: z.string().optional().describe('schedule only: minute hour day-of-month month day-of-week, UTC'),
     timezone: z.string().optional(),
     name: z.string().optional().describe('custom only: the name the deployment mounts it under')
@@ -64,7 +69,7 @@ export const actionNode = z
     params: z
       .record(z.string(), z.unknown())
       .default({})
-      .describe('A task: that task\'s params. A trigger: ActionTriggerParams — access, input, verify, cron'),
+      .describe('A task: that task\'s params. A trigger: ActionTriggerParams — access, input, signature*, cron'),
     afterNode: z.string().default('').describe('Id of the next step; empty ends the chain'),
     beforeNode: z.string().default(''),
     enabled: z.boolean().default(true).describe('On a trigger: whether that way in is open. No trigger open, no run'),
