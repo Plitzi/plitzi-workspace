@@ -91,6 +91,13 @@ export const targets: Target[] = [
     what: 'The same server with people in it — guest and member pages, sessions, bindings onto the account'
   },
   {
+    id: 'action-server',
+    workspace: '@plitzi/e2e',
+    command: 'yarn workspace @plitzi/e2e start:actions',
+    origin: 'http://127.0.0.1:5202',
+    what: 'A page server wired for actions ALONE — no connectors, no RSC adapter of its own'
+  },
+  {
     id: 'no-build',
     workspace: '@plitzi/example-render-no-build',
     /** 5009 and not 5000: on macOS, port 5000 belongs to ControlCenter's AirPlay Receiver. Readiness here is an
