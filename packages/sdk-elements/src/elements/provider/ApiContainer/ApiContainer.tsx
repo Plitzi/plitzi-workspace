@@ -9,6 +9,7 @@ import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { currentRscLocation } from '@plitzi/sdk-shared/server/rsc/refreshRsc';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import useApi from './hooks/useApi';
@@ -102,7 +103,13 @@ const ApiContainer = ({
   // A server-driven provider gets its data through the RSC payload: the request — and the credential behind it —
   // stays on the server, so neither the token nor the backend URL is ever part of what ships to the browser.
   const serverMode = runtime === 'server';
-  const { loaded: rscResolved, stale: rscStale, elementData, refresh } = useRscData<Record<string, unknown>>();
+  const {
+    loaded: rscResolved,
+    stale: rscStale,
+    location: rscLocation,
+    elementData,
+    refresh
+  } = useRscData<Record<string, unknown>>();
   const sourceName = getSourceName('apiContainer', { idRef });
   const {
     settings: { previewMode },
@@ -160,10 +167,24 @@ const ApiContainer = ({
     enabled: apiEnabled
   });
 
+  /**
+   * The payload in the store is for another page: this provider's own answer is still in flight.
+   *
+   * A route change in the browser renders the new page at once, and its data cannot possibly be there yet. Read
+   * as "no slice for me", every binding under here resolves to nothing — and a binding with no value leaves its
+   * element exactly as authored, which for a visibility binding means visible. That is a section drawn empty and
+   * then corrected, and a link shown to somebody the server is about to say may not see it.
+   *
+   * `routeParams` and `queryParams` above are what re-render this on a navigation, so the comparison is made
+   * against where the visitor is now.
+   */
+  const rscPending = serverMode && !!rscLocation && rscLocation !== currentRscLocation();
+
   // A server element whose key is missing from a payload that *did* arrive failed to resolve — its provider is
   // down, misconfigured or timed out. Falling back to mock data there would dress a production outage up as
-  // content, so the two cases are kept apart: no payload at all means the builder, and that one does mock.
-  const hasError = serverMode && rscResolved && elementData === null;
+  // content, so the two cases are kept apart: no payload at all means the builder, and that one does mock. A
+  // payload for somewhere else is neither: nobody has answered for this element yet.
+  const hasError = serverMode && rscResolved && !rscPending && elementData === null;
 
   // In the builder there is no `/_rsc` for the live space, so a server provider keeps rendering from its mock data.
   const data = useMemo<Record<string, unknown>>(() => {
@@ -190,7 +211,13 @@ const ApiContainer = ({
     }
   }, [serverMode, apiData, elementData, rscResolved, mockData]);
 
-  const isLoading = serverMode ? false : isApiLoading;
+  /**
+   * A server provider is never "loading" in the client sense — it does not fetch — but between a route change and
+   * the payload for the new page it has nothing to render with, and that is the same thing to a page: it renders
+   * its children only when it can render them truthfully. `renderWhileLoading` is the opt-out, for a provider
+   * whose children draw a skeleton from `isLoading`.
+   */
+  const isLoading = serverMode ? rscPending : isApiLoading;
 
   const refetch = useCallback(async () => {
     if (!serverMode) {

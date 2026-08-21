@@ -129,6 +129,16 @@ export type RscState = {
    * say so; cleared by the first refresh that gets through.
    */
   stale?: boolean;
+  /**
+   * The location the payload in `data` was resolved for — `pathname + search`, as the request carried it.
+   *
+   * A route change in the browser renders the new page immediately, while the answer for it is still in flight.
+   * Without this the payload sitting in the store is indistinguishable from one belonging to the page being
+   * shown, and every element on it reads "no slice for me": a binding with no value leaves the element as it was
+   * authored, so a visibility binding paints *visible* and an empty section is drawn and then corrected. Elements
+   * compare this against where the visitor actually is, and a mismatch means "not mine yet" rather than "gone".
+   */
+  location?: string;
 };
 
 export type BuilderState = CommonState & {

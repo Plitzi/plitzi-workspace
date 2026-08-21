@@ -1,6 +1,7 @@
 import { createHmac } from 'node:crypto';
 
 import { describeTarget, expect, test } from '../../fixtures';
+import { paintTrace, resetPaint, watchPaint } from '../../helpers/flicker';
 import { expectSampleSpaceContent, expectSpaceRendered } from '../../helpers/space';
 import { expectVisuallyHealthy } from '../../helpers/visualHealth';
 import { sampleSpace } from '../../spaces';
@@ -408,6 +409,61 @@ describeTarget('blog', subject => {
 
     await expect(page.getByRole('heading', { name: 'That post does not exist.' })).toBeVisible();
     await expect(page.getByText('Keep reading')).toBeHidden();
+  });
+
+  /**
+   * What a client-side navigation is allowed to PAINT.
+   *
+   * The sections of these pages are resolved on the server, so a route change has to fetch the new page's answer.
+   * Until it arrives the page knows nothing — and an element whose binding has no value keeps whatever it was
+   * authored with, which for a visibility binding means *visible*. That is how a signed-out visitor came to see
+   * an editor link for a tenth of a second, and an account button with no name in it.
+   *
+   * Sampled per animation frame, so this is about what the browser actually put on screen: a state React passed
+   * through between two commits was never seen by anybody and is not what is being guarded here.
+   */
+  test('a navigation paints no state the server contradicts', async ({ page }) => {
+    // Each of these is a state that contradicts what the server answers for this visitor: an editor link nobody
+    // signed in may use, an account button with no initial in it, a headline with no words, a strip of related
+    // posts with nothing in it. `.prose` is the control — the body of the post, which must be painted.
+    const WRITE_LINK = 'a[href="/write"].navLink';
+    const EMPTY_PILL = '.accountPill .avatarSm:empty';
+    const EMPTY_TITLE = '.articleTitle:empty';
+    const EMPTY_STRIP = '.moreGrid:empty';
+    const PROBES = [WRITE_LINK, EMPTY_PILL, EMPTY_TITLE, EMPTY_STRIP, '.prose'];
+
+    await watchPaint(page, PROBES);
+    await page.goto(subject.origin);
+    await expect(page.getByRole('heading', { name: 'The button that does real work' })).toBeVisible();
+
+    await resetPaint(page);
+    await page.getByRole('heading', { name: 'The button that does real work' }).click();
+    await expect(page.getByRole('heading', { name: 'What that changes' }).or(page.locator('.prose'))).toBeVisible();
+    await page.waitForTimeout(400);
+
+    /**
+     * `.prose` is the control and is expected in both directions — on the way in it is the post that loaded, and
+     * on the way out it is the post still on screen while the route changes. Everything else in the list is a
+     * state the server contradicts, and none of it may reach a painted frame.
+     */
+    const offenders = async () =>
+      (await paintTrace(page, PROBES))
+        .filter(entry => entry.frames > 0 && entry.selector !== '.prose')
+        .map(entry => `${entry.selector} (${entry.frames} frames)`);
+
+    expect(await offenders(), 'the new page was painted before its own answer arrived').toEqual([]);
+    expect((await paintTrace(page, ['.prose']))[0].frames, 'the post never rendered at all').toBeGreaterThan(0);
+
+    /**
+     * And the way back, which is the half a prefetch cannot cover: the URL has already changed by the time
+     * anything hears about it. What holds there is the other half — a provider whose payload is for another page
+     * knows it has not been answered yet, and renders nothing rather than its authored defaults.
+     */
+    await resetPaint(page);
+    await page.goBack();
+    await expect(page.getByRole('heading', { name: 'The button that does real work' })).toBeVisible();
+
+    expect(await offenders(), 'going back painted a state the server contradicts').toEqual([]);
   });
 
   /** Reading a post and going back to the list — all in the browser, with the sections resolved on the way. */

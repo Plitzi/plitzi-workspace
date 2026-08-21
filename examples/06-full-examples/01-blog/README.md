@@ -142,6 +142,12 @@ coming back to the list refetches it.
 The division is worth stating plainly: **`runtime: 'server'` decides where the DATA is resolved, not whether the
 page is interactive.** `getRscData` runs on the server and only what it published ever reaches the browser.
 
+A route change asks for the destination's answer **before** it commits, so a page arrives whole rather than
+arriving empty and correcting itself a frame later. Where that is not possible — the back button, which changes
+the URL before anything can be asked — a section whose answer has not arrived says nothing instead of showing its
+authored defaults. The difference is visible in this blog: the editor link would otherwise appear for a moment to
+a visitor who may not use it. There is a browser test that watches the painted frames and fails if it does.
+
 That is also why bindings do the work a template language would: the byline, the excerpt, the reading time and the
 URL are composed on the server, because a binding names one field.
 

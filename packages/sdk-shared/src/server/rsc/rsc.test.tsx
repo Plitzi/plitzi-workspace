@@ -160,6 +160,19 @@ describe('useRscSync', () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
   });
 
+  /**
+   * The bookkeeping the browser's own route change depends on: a payload knows which location it answers for, so
+   * an element can tell "my answer has not arrived yet" from "there is nothing here". Without it a route change
+   * paints the new page against the previous page's payload.
+   */
+  it('records which location the payload it fetched belongs to', async () => {
+    const store = makeStore({ enabled: true });
+    renderSync({ rscPath: '/_rsc' }, store);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(store.get('rsc.location')).toBe('/'));
+  });
+
   it('seeds the payload the server already resolved and asks for nothing more', async () => {
     const store = makeStore({ enabled: true });
     renderSync({ rscPath: '/_rsc', rscData: { serverData: { a: 1 } } }, store);
@@ -168,6 +181,52 @@ describe('useRscSync', () => {
     expect(store.get('rsc.data')).toEqual({ a: 1 });
 
     await waitFor(() => expect(fetchMock).not.toHaveBeenCalled());
+  });
+});
+
+describe('refreshRsc / prefetching a destination', () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve({ serverData: { deepApi: 2 } }) });
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const ready = (currentPageId: string) => {
+    const store = createStore<CommonState>({
+      schema: { ...space, rsc: { enabled: true } },
+      navigation: { currentPageId },
+      rsc: { enabled: true, endpoint: '/_rsc' }
+    } as unknown as CommonState);
+
+    return store;
+  };
+
+  /**
+   * A navigation asks for where it is GOING, before it goes there — which is the whole point: rendering first and
+   * fetching after is the flicker. So the location travels with the request and decides which page is checked for
+   * server elements, rather than the one still on screen.
+   */
+  it('fetches for the destination, not for the page still on screen', async () => {
+    const store = ready('home');
+    await refreshRsc(store, undefined, undefined, '/blog?page=2');
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe('/_rsc?location=%2Fblog%3Fpage%3D2');
+    expect(store.get('rsc.location')).toBe('/blog?page=2');
+  });
+
+  /** The page being LEFT has a provider and the destination has none: there is nothing to ask for. */
+  it('asks for nothing when the destination has no server element', async () => {
+    const store = ready('blog');
+    await refreshRsc(store, undefined, undefined, '/home');
+
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

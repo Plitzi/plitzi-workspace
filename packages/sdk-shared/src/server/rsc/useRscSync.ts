@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 
 import { useStoreById } from '@plitzi/nexus/react';
 
-import refreshRsc from './refreshRsc';
+import refreshRsc, { currentRscLocation } from './refreshRsc';
 import { useCommonStore, useCommonStoreSync } from '../../store';
 
 import type { CommonState, ServerSSR } from '../../types';
@@ -27,9 +27,11 @@ const useRscSync = (ssr?: ServerSSR) => {
   useCommonStoreSync(['rsc.enabled', 'rsc.endpoint'], [enabled, endpoint]);
   // Mount-only: what the server handed over is the starting payload, and every later write belongs to `refreshRsc`.
   // Re-syncing it would replay the initial payload over refreshed data.
-  useCommonStoreSync(['rsc.data', 'rsc.loaded'], [rscData?.serverData ?? {}, rscData !== undefined], {
-    mode: 'mount'
-  });
+  useCommonStoreSync(
+    ['rsc.data', 'rsc.loaded', 'rsc.location'],
+    [rscData?.serverData ?? {}, rscData !== undefined, currentRscLocation()],
+    { mode: 'mount' }
+  );
 
   const navigationKey = JSON.stringify(navigation ?? {});
   /**

@@ -10,12 +10,14 @@ import useElement from './useElement';
 // to the whole payload — is what keeps a refresh of one provider from re-rendering every other server element.
 // `elementData` is `null` (not `undefined`) when the element is registered as a server element but carries no extra
 // payload; `isServerElement` is the distinction for callers that want to know whether the key was there at all.
+// `pending` is the third case and the one a route change creates: the payload in the store is for another page.
 const useRscData = <T>() => {
   const { id } = useElement();
-  const [[enabled = false, loaded = false, stale = false, value]] = useCommonStore([
+  const [[enabled = false, loaded = false, stale = false, location, value]] = useCommonStore([
     'rsc.enabled',
     'rsc.loaded',
     'rsc.stale',
+    'rsc.location',
     rscDataPath(id)
   ]);
   const refresh = useRscRefresh();
@@ -26,6 +28,14 @@ const useRscData = <T>() => {
     loaded,
     /** True when the last refresh could not reach the server: what is on screen is from before that. */
     stale,
+    /**
+     * The location the payload in the store was resolved for.
+     *
+     * A caller compares it with where the visitor is now: a route change renders the new page long before its
+     * data can arrive, and an element that cannot tell "nobody has asked for me yet" from "there is nothing here"
+     * paints the second one. Compared by whoever already re-renders on navigation, which this hook does not.
+     */
+    location,
     elementData: (value as T | undefined) ?? null,
     isServerElement: value !== undefined,
     refresh
