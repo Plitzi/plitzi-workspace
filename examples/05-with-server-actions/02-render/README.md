@@ -36,8 +36,14 @@ declares. `?limit=3` arrives as `input.limit`, coerced to a number by the trigge
 which is what makes interpolating it into a URL safe. Send `?limit=nonsense` and the run is refused as invalid
 input rather than passing it on.
 
-**No task was written for this.** The flow is `http.request` and `flow.output`, both shipped by `sdk-server`. An
-action that reads an HTTP API is authored, not coded — and the URL it reads never reaches the browser.
+**No task was written for this.** The flow is `http.request`, `flow.fail` and `flow.output`, all shipped by
+`sdk-server`. An action that reads an HTTP API is authored, not coded — and the URL it reads never reaches the
+browser.
+
+**A bad answer is not an answer.** `http.request` does not throw on a 4xx — the status is data, and plenty of
+flows want to read it — so the guard step in the middle fails the run when it is not `ok`. Without it a refusal
+from the provider would arrive as `records` and the page would show an empty grid, cheerfully reporting that
+nothing went wrong.
 
 **The output step is the element's contract too.** A provider element reads `records`, so that is what the last
 step names:
@@ -88,6 +94,8 @@ can act on through the `errorMessage` binding — never the URL, the status or t
 
 ## Next
 
-Nothing — this is the end of the tour. The mechanism is documented in
-[`server-actions.md`](../../../docs/en/server-actions.md), and the reasoning behind each rule in
-[RFC 0012](../../../docs/rfc/0012-server-actions.md).
+Take the server away: [03-no-server](../03-no-server) renders this same page in the browser alone, where the
+action has nowhere to run — and nothing tries.
+
+The mechanism is documented in [`server-actions.md`](../../../docs/en/server-actions.md), and the reasoning
+behind each rule in [RFC 0012](../../../docs/rfc/0012-server-actions.md).

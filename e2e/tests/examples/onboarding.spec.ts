@@ -207,6 +207,73 @@ describeTarget('server-actions', subject => {
   });
 });
 
+describeTarget('server-actions-render', subject => {
+  /** The claim on the box: the pictures are IN the document. Fetched with no JavaScript running, so what comes
+   *  back is what a crawler — or a visitor on a dead connection — would get. */
+  test('the HTML arrives with the cats already in it', async ({ request }) => {
+    const html = await (await request.get(subject.origin)).text();
+
+    expect(html).toContain('thecatapi.com/images/');
+    expect(html.match(/<img/g)?.length, 'the default is eight cats').toBe(8);
+  });
+
+  test('the page renders what the server fetched', async ({ page, capture }) => {
+    await page.goto(subject.origin);
+
+    await expect(page.getByRole('heading', { name: 'Cats, fetched on the server' })).toBeVisible();
+    await expect(page.locator('img.cat-photo').first()).toBeVisible();
+    await expect(page.getByText('8 cats came back')).toBeVisible();
+
+    await capture('server-fetched-cats');
+  });
+
+  /** The trigger's input contract, end to end: a query param the page never wired up reaches the action, coerced
+   *  to the type the step declared. */
+  test('a query param reaches the action through the render trigger', async ({ request }) => {
+    const html = await (await request.get(`${subject.origin}/?limit=3`)).text();
+
+    expect(html.match(/<img/g)?.length).toBe(3);
+  });
+
+  test('the element is fed by the action, not by the browser', async ({ request }) => {
+    const response = await request.get(`${subject.origin}/_rsc?location=%2F&ids=cats-provider`);
+    const { serverData } = (await response.json()) as { serverData: Record<string, { records: unknown[] }> };
+
+    expect(response.status()).toBe(200);
+    expect(serverData['cats-provider'].records.length).toBeGreaterThan(0);
+    // The output step named `records` and `count`; the fetch also returned `status` and `ok`.
+    expect(Object.keys(serverData['cats-provider']).sort()).toEqual(['count', 'records']);
+  });
+});
+
+describeTarget('server-actions-no-server', subject => {
+  /** The example exists for one assertion, and this is it: with no server tier, the server-side halves of a page
+   *  do not TRY. Not a failed request that is handled quietly — no request at all. */
+  test('nothing is asked of a server that is not there', async ({ page, capture }) => {
+    const attempts: string[] = [];
+    page.on('request', request => {
+      const { pathname } = new URL(request.url());
+      if (pathname.includes('_action') || pathname.includes('_rsc')) {
+        attempts.push(request.url());
+      }
+    });
+
+    await page.goto(subject.origin);
+    await expect(page.getByRole('heading', { name: 'The same page, with nobody to ask' })).toBeVisible();
+
+    // The provider is a `runtime: 'server'` element with nowhere to resolve from, so it renders its mock.
+    await expect(page.locator('img.cat-photo')).toHaveCount(2);
+
+    await page.getByRole('button', { name: 'Fetch new cats' }).click();
+
+    // A skipped run is a RESULT: the flow carried on and the next step put the status on the page.
+    await expect(page.getByText('The step reported: skipped')).toBeVisible();
+    expect(attempts, 'a step called a server this page does not have').toEqual([]);
+
+    await capture('no-server-tier');
+  });
+});
+
 describeTarget('mcp-server', subject => {
   test('an agent can connect to it', async ({ request }) => {
     const response = await request.post(subject.origin, {

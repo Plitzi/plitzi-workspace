@@ -64,6 +64,21 @@ const catGallery: ActionEntry = {
           method: 'GET'
         },
         beforeNode: 'start',
+        afterNode: 'guard'
+      }),
+      /**
+       * The step that decides an answer is not worth having.
+       *
+       * `http.request` does not throw on a 4xx — the status is data, and plenty of flows want to read it — so
+       * without this a refusal from the provider would sail into the output as `records`, and the page would show
+       * an empty grid saying nothing went wrong. Failing here is what makes the run fail, which is what makes the
+       * element report itself unresolved and the page say so.
+       */
+      guard: node('guard', {
+        action: 'flow.fail',
+        params: { message: 'The cat API answered {{ fetch.status }}' },
+        when: { combinator: 'and', rules: [{ field: 'fetch.ok', operator: '=', value: 'false' }] },
+        beforeNode: 'fetch',
         afterNode: 'answer'
       }),
       /**
@@ -75,7 +90,7 @@ const catGallery: ActionEntry = {
       answer: node('answer', {
         action: 'flow.output',
         params: { values: '{"records": {{ fetch.data }}, "count": {{ fetch.data|length }}}' },
-        beforeNode: 'fetch'
+        beforeNode: 'guard'
       })
     }
   }

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createActionResolver } from './renderResolver';
 import { createActionsModule } from '../index';
 
+import type { RscElementResolver } from '../../rsc/resolveRscData';
 import type { ActionEntry, Element, ElementInteraction, SSRRequest } from '@plitzi/sdk-shared';
 
 const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementInteraction => ({
@@ -62,7 +63,7 @@ const element = (attributes: Record<string, unknown>): Element =>
 // which is how the "missing action" case quietly tested the opposite of what it says.
 const asked: { at?: { environment: string; revision: number } }[] = [];
 
-const resolve = (attributes: Record<string, unknown>, action: ActionEntry | null = entry) => {
+const resolverFor = (action: ActionEntry | null = entry) => {
   const found = action ?? undefined;
   const lookups = {
     getAction: (_spaceId: number, _actionId: string, at?: { environment: string; revision: number }) => {
@@ -71,10 +72,12 @@ const resolve = (attributes: Record<string, unknown>, action: ActionEntry | null
       return Promise.resolve(found);
     }
   };
-  const module = createActionsModule({ lookups });
-  const resolver = createActionResolver(lookups, module);
 
-  return resolver({
+  return createActionResolver(lookups, createActionsModule({ lookups }));
+};
+
+const render = (resolver: RscElementResolver, attributes: Record<string, unknown>) =>
+  resolver({
     element: element(attributes),
     flat: {},
     routeParams: { slug: 'hello-world' },
@@ -85,7 +88,9 @@ const resolve = (attributes: Record<string, unknown>, action: ActionEntry | null
     environment: 'main',
     user: undefined
   });
-};
+
+const resolve = (attributes: Record<string, unknown>, action: ActionEntry | null = entry) =>
+  render(resolverFor(action), attributes);
 
 describe('createActionResolver', () => {
   it('feeds the element with what the action answered', async () => {
@@ -117,6 +122,21 @@ describe('createActionResolver', () => {
 
     // Both halves from the deployment record, so they can never name a snapshot nobody published.
     expect(asked[0].at).toEqual({ environment: 'production', revision: 4 });
+  });
+
+  /** Two visitors of one URL are not one visitor clicking twice: single-flight keys on the caller and the input,
+   *  and every anonymous render shares both. Keyed that way, whichever render arrived second lost its section —
+   *  which needs ONE server to show up, hence the shared resolver. */
+  it('resolves concurrent renders of the same page', async () => {
+    const resolver = resolverFor();
+
+    const [first, second] = await Promise.all([
+      render(resolver, { action: 'post-page' }),
+      render(resolver, { action: 'post-page' })
+    ]);
+
+    expect(first).toEqual({ title: 'Hello', slug: 'hello-world' });
+    expect(second).toEqual(first);
   });
 
   it('leaves an element that names no action alone', async () => {

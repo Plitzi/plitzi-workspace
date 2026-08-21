@@ -3470,6 +3470,24 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@plitzi/example-server-actions-no-server@workspace:examples/05-with-server-actions/03-no-server":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/example-server-actions-no-server@workspace:examples/05-with-server-actions/03-no-server"
+  dependencies:
+    "@plitzi/example-space": "workspace:*"
+    "@plitzi/plitzi-sdk": "workspace:*"
+    "@plitzi/sdk-shared": "workspace:*"
+    "@types/react": "npm:^19.2.18"
+    "@types/react-dom": "npm:^19.2.4"
+    "@vitejs/plugin-react": "npm:^6.0.5"
+    react: "npm:^19.2.8"
+    react-dom: "npm:^19.2.8"
+    tailwindcss: "npm:^4.3.3"
+    typescript: "npm:^6.0.3"
+    vite: "npm:^8.2.1"
+  languageName: unknown
+  linkType: soft
+
 "@plitzi/example-server-actions-render@workspace:examples/05-with-server-actions/02-render":
   version: 0.0.0-use.local
   resolution: "@plitzi/example-server-actions-render@workspace:examples/05-with-server-actions/02-render"

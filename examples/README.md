@@ -42,6 +42,7 @@ these build on.
 |---|---|---|---|
 | 01 | [actions](./05-with-server-actions/01-actions) | A declarative flow the server runs, called from a page | 4009 + 4010 |
 | 02 | [render](./05-with-server-actions/02-render) | The server fetches an API while the page renders | 4011 |
+| 03 | [no-server](./05-with-server-actions/03-no-server) | The same page with no server tier: every server-side step inert | 4012 |
 
 Every example renders [`shared-space`](./shared-space), so the difference between any two is the wiring alone — bar
 the two that need a page of their own: `02-with-users`, because a space with people in it has somewhere to sign in,

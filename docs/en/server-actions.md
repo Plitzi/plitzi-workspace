@@ -243,7 +243,7 @@ callers to retry harder.
 | What you see | What it usually is |
 |---|---|
 | The step reports itself inert | The page has no server tier — a static export or an embed. Deploy the space with an SSR credential |
-| `duplicate` | The same call is already running. Give the step an idempotency key if the repeat is legitimate |
+| `duplicate` | The same call is already running. Give the step an idempotency key if the repeat is legitimate. A `render` never reports this: two visitors of one page are not one caller submitting twice |
 | `forbidden` | The action has no trigger step of that kind, or the caller does not meet that trigger's access rule |
 | `recursion` | The flow reached its own webhook |
 | A `{{ credential.… }}` that renders empty | The step did not name a credential — set its `credential` field |

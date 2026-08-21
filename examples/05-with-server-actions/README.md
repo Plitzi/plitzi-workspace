@@ -7,6 +7,7 @@ webhook from a provider.
 |---|---|---|---|
 | 01 | [actions](./01-actions) | A declarative flow the server runs, called from a page | 4009 + 4010 |
 | 02 | [render](./02-render) | The server fetches an API while the page renders, and the HTML arrives finished | 4011 |
+| 03 | [no-server](./03-no-server) | The same page in the browser alone: every server-side step declares itself inert | 4012 |
 
 The page names an action and hands it inputs. It never learns what happened in between — not the URL, not the
 credential, not the systems involved — because the flow is a **document the server holds**, not code the browser
@@ -18,6 +19,10 @@ published, and the same space as its author is editing it now.
 The second one turns it around: nobody clicks. A `render` trigger runs the action while the page is being built,
 so the fetch happens on the server and the browser is handed a finished page — the same mechanism, reached from
 the other end.
+
+The third takes the server away. The same page, rendered in the browser, where the step that would call an action
+and the element that would be fed by one both report themselves inert — without issuing a request. A page that
+learns this per click, from a 404, is the failure mode being avoided.
 
 ## Next
 

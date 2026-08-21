@@ -629,6 +629,11 @@ with TTL equal to the run's timeout, released on completion.
   differ: two identical writes racing is the bug in both shapes.
 - Attaching a second consumer to one live run (fan-out) is deliberately **not** in v1. It is the nicer UX and
   it is a second lifecycle to get wrong; a refusal is honest and reversible later.
+- A **render** opts out of the key entirely (it passes one of its own, per render). The rule above is about a
+  caller submitting the same thing twice; a page being rendered for two visitors at once is neither the same
+  caller nor a write. Keyed by the derivation, every anonymous render of one URL shared a key, and whichever
+  arrived second had its section refused as a duplicate — the more traffic, the more often. The caps still count
+  a render; only the dedupe, which means nothing for a read, does not apply.
 
 Caps sit above the key: max concurrent runs per space, and max live streams per process. Over either, the
 answer is 429 — degrading everyone's stream to keep one alive is the wrong trade.

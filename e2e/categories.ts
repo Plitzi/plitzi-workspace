@@ -39,7 +39,9 @@ const EXAMPLE_TARGETS = [
   'ssr-preview',
   'sessions',
   'mysql',
-  'server-actions'
+  'server-actions',
+  'server-actions-render',
+  'server-actions-no-server'
 ];
 
 export const categories: Category[] = [

@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { ActionRunError } from './errors';
 
 import type { RscElementResolver } from '../../rsc/resolveRscData';
@@ -44,11 +46,21 @@ export const createActionResolver =
       throw new Error(`Action "${actionId}" is not configured for space ${spaceId}`);
     }
 
+    /**
+     * A key of its own per render, so two visitors are never each other's duplicate.
+     *
+     * Single-flight exists for the caller who submits twice — a double-click, a retry — and keys on the caller and
+     * the input. A render has neither of those to go on: every anonymous visitor of one URL is `render` with the
+     * same input, so the derived key made concurrent page loads collide and one of them got its section refused as
+     * a duplicate. The busier the page, the more often. The caps below still count this run; only the dedupe,
+     * which means nothing for a read, is opted out of.
+     */
     const run = module.guards.begin({
       spaceId,
       actionId: entry.id,
       callerId: user ? `user:${user.id}` : 'render',
       input,
+      idempotencyKey: `render:${randomUUID()}`,
       ttlMs: module.limitsFor(entry.document).timeoutMs
     });
 

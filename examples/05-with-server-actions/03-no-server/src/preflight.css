@@ -1,0 +1,10 @@
+/* The page reset, and nothing else. `@plitzi/plitzi-sdk` ships no global CSS on purpose — dropping a space into
+   an existing site must not restyle that site — so clearing the browser's defaults is the host's job, and this
+   example is the host.
+
+   Only Tailwind's preflight: the utility generator would need a build step and this uses no utilities.
+
+   `layer(base)` matters. The file ships unlayered, and unlayered rules beat every layered one — it would win
+   against the SDK's own `plitzi-sdk-base`. Declared here first, `base` sorts below it, so the SDK keeps its
+   styling and this only clears what the browser added. */
+@import 'tailwindcss/preflight.css' layer(base);
