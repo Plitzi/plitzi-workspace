@@ -2,6 +2,7 @@ import InitQuery from './InitQuery';
 import PluginsQuery from './PluginsQuery';
 import SegmentQuery from './Segment/SegmentQuery';
 import SegmentsQuery from './Segment/SegmentsQuery';
+import SpaceActionEventsQuery from './Space/SpaceActionEventsQuery';
 import SpaceActionsQuery from './Space/SpaceActionsQuery';
 import SpaceActionTasksQuery from './Space/SpaceActionTasksQuery';
 import SpaceCdnsQuery from './Space/SpaceCdnsQuery';
@@ -15,6 +16,7 @@ import type { TInitQuery } from './InitQuery';
 import type { TPluginsQuery } from './PluginsQuery';
 import type { TSegmentQuery } from './Segment/SegmentQuery';
 import type { TSegmentsQuery } from './Segment/SegmentsQuery';
+import type { TSpaceActionEventsQuery } from './Space/SpaceActionEventsQuery';
 import type { TSpaceActionsQuery } from './Space/SpaceActionsQuery';
 import type { TSpaceActionTasksQuery } from './Space/SpaceActionTasksQuery';
 import type { TSpaceCdnsQuery } from './Space/SpaceCdnsQuery';
@@ -31,6 +33,7 @@ export type BuilderQueriesMap = {
   SpaceDeployments: TSpaceDeploymentsQuery;
   SpaceCdns: TSpaceCdnsQuery;
   SpaceActions: TSpaceActionsQuery;
+  SpaceActionEvents: TSpaceActionEventsQuery;
   SpaceActionTasks: TSpaceActionTasksQuery;
   SpaceConnectors: TSpaceConnectorsQuery;
   SpaceCredentials: TSpaceCredentialsQuery;
@@ -46,6 +49,7 @@ const BuilderQueries = {
   SpaceDeployments: SpaceDeploymentsQuery,
   SpaceCdns: SpaceCdnsQuery,
   SpaceActions: SpaceActionsQuery,
+  SpaceActionEvents: SpaceActionEventsQuery,
   SpaceActionTasks: SpaceActionTasksQuery,
   SpaceConnectors: SpaceConnectorsQuery,
   SpaceCredentials: SpaceCredentialsQuery,

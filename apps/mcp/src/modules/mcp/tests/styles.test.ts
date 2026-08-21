@@ -234,7 +234,7 @@ describe('mcp-ai style variants + element state', () => {
   });
 });
 
-describe('mcp-ai patchDefinition (RFC 0005 #2 — partial CSS merge)', () => {
+describe('mcp-ai patchDefinition (partial CSS merge)', () => {
   it('merges one declaration, preserving the rest of the definition', async () => {
     const cap = capturing(buildSpace());
     const res = await apply(

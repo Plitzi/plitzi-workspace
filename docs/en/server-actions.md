@@ -4,7 +4,8 @@ A practical guide to **server actions**: work a page cannot do in the browser, a
 `sdk-server`. Charging a card, sending mail, reading a system only the server can reach, joining two APIs before
 anyone sees the result.
 
-The design and the reasoning behind each rule are in [RFC 0012](../rfc/0012-server-actions.md); this is how to use
+The reasoning behind each rule lives beside the code that enforces it — the RFC this grew out of was deleted when
+it shipped, and is in the history (`git log -- docs/rfc`). This is how to use
 it.
 
 ---
@@ -78,7 +79,10 @@ single-flight — because a test path that skipped them would be rehearsing some
 
 ## 3. Calling one from a page
 
-Add a **Run Server Action** step to any element's flow. It takes the action, its input, and a mode:
+Add a **Run Server Action** step to any element's flow. It takes the action, its input, and a mode. The action is
+**picked from the ones this space has** — the editor knows them, so there is no identifier to go and look up — and
+the input control names the fields that action's `call` trigger declares. Typing an identifier still works: a page
+authored before the action it names is a legitimate order to work in.
 
 | Mode | The flow | Use it for |
 |---|---|---|
@@ -102,7 +106,13 @@ Three triggers fire on the element that launched the run:
 - **On Server Action Progress** — one per chunk a streaming run emitted
 
 `actionId` is a parameter, so one element can launch several actions and each trigger filters with its own `when`.
-A **Cancel Server Action** step stops a run by its id.
+
+A **Cancel Server Action** step stops a run by its id. Every mode gives you one to bind: `await` and `stream`
+return it from the step (a streaming run reports it as soon as the stream opens, which is what makes it
+cancellable at all), and a `detached` run carries it on the trigger that fires when it ends. The cancel reaches
+the run **whichever replica is holding it** — it is left in the shared store and read at the next step boundary —
+so a run started in one tab can be stopped from another. Without a shared `kv`, cancellation only works within one
+process, like everything else that has to be agreed across replicas.
 
 ---
 
@@ -166,6 +176,12 @@ comma-separated list of `k=v` pairs — so these fields cover a real webhook and
 > Slack's `v0:…` sign `<timestamp>.<body>` with the timestamp in the same header, and the check reads a timestamp
 > from a header of its own. Those two verify only if the sender is configured to sign the body alone.
 
+**A refused delivery is not silent any more.** A signature that does not verify, a caller over the rate limit, a
+body that is not JSON — each leaves an entry in the space's activity feed, with the reason and at most one a
+minute so a provider retrying for two days cannot bury everything else in it. The SENDER still learns nothing but
+"invalid signature": telling a caller which half of the check failed helps only the caller who should not be
+there. This is what "the webhook does nothing and I cannot tell why" was, and it is the first place to look.
+
 The credential is **named, not templated**. This check runs before the body is parsed and before a run exists, so
 there is no flow scope for a token to resolve against — and one that rendered to nothing would leave the endpoint
 verifying every request against an empty secret.
@@ -196,6 +212,11 @@ after an outage, which is worse than the one nobody got.
 
 An element with `runtime: 'server'` can name an action instead of a connector. It is fed the page's route and query
 params and its output lands in the server payload, so the page ships with the data already in it.
+
+Set it in the element's settings: **Data Source → Server action**, then pick the action. An element names ONE
+producer — choosing an action clears the connector and the other way round — because the server resolves a
+connector whenever one is named and would never look at the action. The action needs a **While a page renders**
+trigger; that is the way in this element uses.
 
 This is for the read a connector manifest cannot express: two calls that must be joined, a computed field, a shape
 that depends on who is looking. If the work is "fetch records to bind", a connector is still the right tool.
@@ -233,12 +254,25 @@ before. Publishing once puts them on their own version.
 | Wall clock | 10 s (120 s streaming) | a step that never answers holding a connection |
 | Steps per run | 50 | an authored loop |
 | Outbound requests per run | 20 | one run turning into a hundred calls |
+| Bytes per outbound response | 5 MB | a backend answering a gigabyte, which no timeout catches |
 | Concurrency | 10 per space | one space starving the rest |
 | Single-flight | per caller + input | a double click, a retry, a reconnect becoming several runs |
 | Lineage | — | an action whose HTTP step reaches its own webhook (answered **508 Loop Detected**) |
 
 A run is billed once, as a `server_action`. A run that was refused is not billed — billing a 409 only teaches
-callers to retry harder.
+callers to retry harder — and neither is one answered from an earlier run's result. A **test run from the builder
+is billed like any other**: it does the same work.
+
+### Retries, and the answer that is remembered
+
+Two different repeats, handled in two different places. A call that arrives **while** the first one is still
+running is refused as a `duplicate`. One that arrives **after** it finished is answered with what the first run
+returned, for as long as the deployment's replay window says (ten minutes on Plitzi) — which is how every webhook
+provider retries.
+
+Only ever for a key the CALLER named: an `idempotencyKey` on the step, or the delivery id a sender stamps on its
+webhook. A key derived from the input is not replayed, because two identical calls a minute apart are usually two
+things somebody meant to happen twice.
 
 ---
 
@@ -256,13 +290,35 @@ callers to retry harder.
 | A section showing data from before | The last refresh could not reach the server. The provider publishes `isStale` alongside its records — bind it and the page can say so instead of looking current |
 | A section that is always missing on a slow provider | The page's own ceiling for one section — `rsc.elementTimeoutMs`, 5 s by default — is tighter than what the action is allowed. Whichever is tighter wins, and being cut there now ends the run rather than leaving it to finish for nobody |
 | A section reporting it could not be reached | A `render` action did not complete; the reason is in the server log, and one slice failing never takes the page down. The element publishes `hasError` and `errorMessage` — bind them and the page says what a visitor can act on |
+| A webhook that appears to do nothing at all | Open the action and read **Recent activity**. A delivery refused for a signature that does not match is recorded there with the reason — it is the most common cause, and it never reaches a run |
 | A step that reports `failed` with no server answer behind it | The server was unreachable — down, restarting, or the connection dropped. A run that never left the browser is reported like a refusal, so the flow still gets a status to bind |
 
-For anything else, the **Test run** panel shows the trace step by step, with credential values redacted.
+The **Test run** panel shows the trace step by step, with credential values redacted and the message of whatever
+step stopped the run. Below it, **Recent activity** shows what happened when nobody was watching: the runs a
+webhook, a schedule or a page started, and the deliveries that were refused before anything ran.
 
 ---
 
-## 11. For a self-hosted deployment
+## 11. What is deliberately not here
+
+Four decisions that are open rather than forgotten, so nobody re-derives them from scratch:
+
+- **Actions are per SPACE, not per environment.** The live document is what the builder edits and what a webhook
+  or a schedule runs; publishing copies it into the revision a page ships with. There is no separate staging
+  action, so an action that points at a production database points at it from the draft too. Naming the
+  environment on the row is the change if that becomes a problem.
+- **A run costs a flat `server_action`.** A flow making twenty outbound calls is billed as one doing arithmetic.
+  Metering per outbound request or per second of wall clock is the refinement, and it would change what the
+  default limits should be.
+- **`email.send` and `storage.put` are not in the catalog.** A step whose only possible outcome is failure is
+  worse than no step: mail needs a transport, a sending domain and a bounce policy, and which bucket a flow may
+  write into is a product decision. A self-hosted deployment registers either of them today as its own task.
+- **One live stream has one consumer.** A second caller attaching to a run already in flight is the nicer
+  behaviour and a second lifecycle to get wrong; refusing the duplicate is honest and reversible.
+
+---
+
+## 12. For a self-hosted deployment
 
 Everything above is configuration; the two extension points are code you own:
 
@@ -272,10 +328,12 @@ Everything above is configuration; the two extension points are code you own:
 - **Your own triggers** — mount a stage (or a queue consumer, or a CLI) and call the runner. Every check lives in
   the runner, so a trigger you add cannot end up with a weaker set of rules than the built-in ones.
 
-Both, plus the lookups and the versioning rule above, are wired end to end and runnable in
-[`examples/05-with-server-actions/01-actions`](../../examples/05-with-server-actions/01-actions), and the render
-trigger — an action feeding a `runtime: 'server'` element while the page is built — in
-[`02-render`](../../examples/05-with-server-actions/02-render).
+Both are wired end to end and runnable: **your own tasks**, the lookups and the versioning rule in
+[`01-actions`](../../examples/05-with-server-actions/01-actions); the render trigger — an action feeding a
+`runtime: 'server'` element while the page is built — in
+[`02-render`](../../examples/05-with-server-actions/02-render); and **your own trigger**, over a shared `kv`
+adapter written out in full, in
+[`04-custom-trigger`](../../examples/05-with-server-actions/04-custom-trigger).
 
 Also yours: the key/value store behind `kv` (in-process by default, which counts only its own replica — a cluster
 supplies a shared one), the database drivers `db.query` may use, the per-run limits, and what a run costs.
@@ -287,11 +345,20 @@ is the mechanism around those seams and one thing that needs no store:
 | | What it is |
 |---|---|
 | `createRunLogger(logger)` | An `onRun` reporting each run on the log stream the server already uses. Without an `onRun` a deployment sees nothing: the request log says a call was answered, and a run started by a webhook or a schedule has no request to say anything about |
+| `createRejectLogger(logger)` | An `onReject` doing the same for the requests that never became runs. Its own hook because it answers a different question: runs are history, refusals are a fault report, and the one that matters most — a signature that does not verify — is otherwise indistinguishable from the sender never firing |
+
+`onReject` receives **every** refusal, including the polite ones (a provider retrying while the first delivery is
+still running). Which of them are worth keeping is yours to decide — Plitzi's own deployment writes the
+misconfigurations into the space's activity feed and throttles them to one a minute, and sends all of them to the
+log stream.
 
 ### The `kv` store
 
 `kv` falls back to an in-process Map, which is honest for one replica and a rate limit that multiplies by however
-many you run. A cluster passes an **adapter** over whatever it already runs — Redis, Memcached, a table:
+many you run. **Four things need it to be shared**, and each of them degrades silently without it: single-flight
+(the same double click on two replicas runs twice), cancellation (a `DELETE` never reaches the replica holding the
+run), replay (a redelivery runs the work again), and the webhook rate limit. A cluster passes an **adapter** over
+whatever it already runs — Redis, Memcached, a table:
 
 ```ts
 const kv: ActionKvAdapter = {
@@ -304,6 +371,9 @@ const kv: ActionKvAdapter = {
 
 createServer({ action: { lookups, kv } });
 ```
+
+`increment` must be **atomic** — it is the test-and-set the single-flight key is taken with, and a get-then-set
+version of it hands the same key to two replicas.
 
 Five operations over strings, and **no rule to remember**. How a counter behaves is the server's, the same for
 every deployment — the key prefixing, the JSON round trip, and the one that a rate limit lives or dies by: a

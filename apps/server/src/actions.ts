@@ -42,10 +42,14 @@ export { createMemoryKv } from './modules/actions/runtime/memoryKv';
 export { createKvStore } from './modules/actions/runtime/kvStore';
 
 /**
- * `onRun` for a deployment that wants to SEE its flows without building somewhere to keep them: a run becomes one
- * more event on the log stream the server already reports through.
+ * `onRun` and `onReject` for a deployment that wants to SEE its flows without building somewhere to keep them: a
+ * run — and a request that never became one — becomes one more event on the log stream the server already
+ * reports through.
+ *
+ * The two are separate hooks because they are separate questions. A deployment that keeps run history in a table
+ * and still wants refusals on the log stream wires one of each; that is the normal shape, not a workaround.
  */
-export { createRunLogger } from './modules/actions/runtime/runLogger';
+export { createRunLogger, createRejectLogger } from './modules/actions/runtime/runLogger';
 
 export type {
   ActionCredential,
@@ -53,6 +57,7 @@ export type {
   ActionKvAdapter,
   ActionKvStore,
   ActionLookups,
+  ActionRejectRecord,
   ActionRunRecord,
   ActionRunRequest,
   ActionRunResult,

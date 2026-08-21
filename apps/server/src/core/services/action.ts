@@ -91,7 +91,7 @@ export const actionStage: Stage<SSRContext> = async ctx => {
 
   if (actions && req.method === 'DELETE' && req.path.startsWith(`${actionPath}/run/`)) {
     ctx.operation = 'action:cancel';
-    handleActionCancel({
+    await handleActionCancel({
       res: ctx.res,
       module: actions,
       runId: req.path.slice(`${actionPath}/run/`.length),

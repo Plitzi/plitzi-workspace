@@ -5,7 +5,9 @@ export const DEFAULT_LIMITS: ResolvedActionLimits = {
   timeoutMs: 10_000,
   streamTimeoutMs: 120_000,
   maxNodes: 50,
-  maxRequests: 20
+  maxRequests: 20,
+  /** Generous for an API answer and nowhere near what it takes to hurt a process holding several runs at once. */
+  maxResponseBytes: 5_000_000
 };
 
 const tightest = (deployment: number, document: number | undefined): number =>
@@ -23,13 +25,15 @@ export const resolveLimits = (deployment: ActionLimits = {}, document: ActionLim
     timeoutMs: deployment.timeoutMs ?? DEFAULT_LIMITS.timeoutMs,
     streamTimeoutMs: deployment.streamTimeoutMs ?? DEFAULT_LIMITS.streamTimeoutMs,
     maxNodes: deployment.maxNodes ?? DEFAULT_LIMITS.maxNodes,
-    maxRequests: deployment.maxRequests ?? DEFAULT_LIMITS.maxRequests
+    maxRequests: deployment.maxRequests ?? DEFAULT_LIMITS.maxRequests,
+    maxResponseBytes: deployment.maxResponseBytes ?? DEFAULT_LIMITS.maxResponseBytes
   };
 
   return {
     timeoutMs: tightest(base.timeoutMs, document.timeoutMs),
     streamTimeoutMs: tightest(base.streamTimeoutMs, document.streamTimeoutMs),
     maxNodes: tightest(base.maxNodes, document.maxNodes),
-    maxRequests: tightest(base.maxRequests, document.maxRequests)
+    maxRequests: tightest(base.maxRequests, document.maxRequests),
+    maxResponseBytes: tightest(base.maxResponseBytes, document.maxResponseBytes)
   };
 };

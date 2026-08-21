@@ -757,6 +757,10 @@
       "types": "./dist/network/graphql/builder/Queries/Segment/SegmentsQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/Segment/SegmentsQuery.mjs"
     },
+    "./network/graphql/builder/Queries/Space/SpaceActionEventsQuery": {
+      "types": "./dist/network/graphql/builder/Queries/Space/SpaceActionEventsQuery.d.ts",
+      "import": "./dist/network/graphql/builder/Queries/Space/SpaceActionEventsQuery.mjs"
+    },
     "./network/graphql/builder/Queries/Space/SpaceActionTasksQuery": {
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceActionTasksQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/Space/SpaceActionTasksQuery.mjs"

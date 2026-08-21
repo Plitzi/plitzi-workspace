@@ -40,7 +40,7 @@ type HttpRequestParams = {
  * An outbound HTTP call with credentials resolved server-side.
  *
  * The successor to the `webHook` interaction utility, which runs this in the BROWSER with a token that — when it
- * is typed rather than bound — was persisted in the schema and shipped to every visitor (RFC 0008 §4.3.1).
+ * is typed rather than bound — was persisted in the schema and shipped to every visitor.
  *
  * Here the token never leaves the server, and it never leaves this STEP either: `credential` names it, and its
  * values are in scope only while these params render. Nothing else in the flow can see it.

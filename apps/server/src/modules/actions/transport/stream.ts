@@ -14,6 +14,15 @@ const HEARTBEAT_MS = 15_000;
  */
 const RETRY_MS = 86_400_000;
 
+/**
+ * How much unread body may pile up before the run is stopped.
+ *
+ * A `write` that answers `false` has been buffered rather than sent, which is normal for a moment and a leak
+ * forever: a peer that stopped reading — a phone that slept, a proxy that wedged — otherwise has the whole run's
+ * output accumulated for it in memory. The socket says nothing, so the only signal is this one.
+ */
+const MAX_BUFFERED_BYTES = 1_000_000;
+
 export type ActionStream = {
   /** Sends one frame. Silently drops once the socket is gone — a stream writing into a closed peer is not an error
    *  worth failing a run over. */
@@ -26,6 +35,14 @@ export type ActionStream = {
 
 const encode = (frame: ActionStreamFrame): string => `event: ${frame.event}\ndata: ${JSON.stringify(frame.data)}\n\n`;
 
+/** What the host has written but not yet handed to the socket. Node's own response reports it; the minimum raw
+ *  response this server accepts does not have to, and a host that cannot say simply never trips the cap. */
+const bufferedBytes = (raw: RawResponse): number => {
+  const { writableLength } = raw as RawResponse & { writableLength?: number };
+
+  return typeof writableLength === 'number' ? writableLength : 0;
+};
+
 /**
  * Opens a Server-Sent Events response.
  *
@@ -34,13 +51,21 @@ const encode = (frame: ActionStreamFrame): string => `event: ${frame.event}\ndat
  * thing to every proxy in between, and `X-Accel-Buffering: no` says it to nginx, which otherwise holds frames
  * until its buffer fills and turns a live stream into one late burst.
  */
-export const openStream = (raw: RawResponse, onAbort: () => void): ActionStream => {
+export const openStream = (raw: RawResponse, onAbort: () => void, runId: string): ActionStream => {
   let open = true;
   raw.writeHead(200, {
     'Content-Type': 'text/event-stream; charset=utf-8',
     'Cache-Control': 'no-cache, no-transform',
     Connection: 'keep-alive',
-    'X-Accel-Buffering': 'no'
+    'X-Accel-Buffering': 'no',
+    /**
+     * The run's id, on the response head rather than in a frame.
+     *
+     * A streaming step returns as soon as the stream OPENS — that is what makes it a stream — so anything it
+     * learns from a frame arrives after the flow has already carried on. The head is the one place a caller can
+     * read the id in time to cancel the run it just started.
+     */
+    'X-Plitzi-Run-Id': runId
   });
   raw.write(`retry: ${RETRY_MS}\n\n`);
 
@@ -82,6 +107,18 @@ export const openStream = (raw: RawResponse, onAbort: () => void): ActionStream 
 
       try {
         raw.write(encode(frame));
+        // Not an error and not a reason to stop on its own — one slow read is ordinary. Past the cap it is a peer
+        // that is not reading at all, and the run is producing output for nobody.
+        if (bufferedBytes(raw) > MAX_BUFFERED_BYTES) {
+          open = false;
+          clearInterval(heartbeat);
+          onAbort();
+          try {
+            raw.end();
+          } catch {
+            // Already gone, which is the case this branch exists for.
+          }
+        }
       } catch {
         open = false;
         clearInterval(heartbeat);

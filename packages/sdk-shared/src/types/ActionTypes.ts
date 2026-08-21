@@ -19,7 +19,7 @@ export type ActionField = {
 };
 
 /**
- * Who may start a run through ONE way in. Resolved against the auth kernel (RFC 0010) — never re-implemented here.
+ * Who may start a run through ONE way in. Resolved against the auth kernel — never re-implemented here.
  *
  * It belongs to the trigger and not to the action, because the two are different questions: a webhook is reachable
  * by anyone who learns its URL and is gated on its signature, while the same flow called from a page may well
@@ -136,6 +136,14 @@ export type ActionLimits = {
   streamTimeoutMs?: number;
   maxNodes?: number;
   maxRequests?: number;
+  /**
+   * Bytes one outbound response may carry back into a flow.
+   *
+   * A timeout does not cover this: a backend answering a gigabyte quickly is a fast way to take a process down,
+   * and every other ceiling here is about how LONG a run may take rather than how much it may hold. Counted per
+   * response rather than per run, because it exists to stop one answer from being unbounded.
+   */
+  maxResponseBytes?: number;
 };
 
 /**
@@ -245,6 +253,48 @@ export type ActionErrorReason =
   | 'failed';
 
 /**
+ * Why a request never became a run.
+ *
+ * A superset of {@link ActionErrorReason}: everything a run can be refused for, plus what only an inbound
+ * webhook can be refused for — the checks that happen before there is a document to run at all. They are named
+ * separately because they are the ones an author has to be able to SEE: a signature that does not match is a
+ * misconfiguration somebody has to fix, and it is indistinguishable from silence unless it is reported.
+ */
+export type ActionRejectReason =
+  | ActionErrorReason
+  /** The signature did not verify against the raw body. */
+  | 'invalid_signature'
+  /** This caller sent more deliveries this minute than the deployment allows. */
+  | 'rate_limited'
+  /** The body was not JSON. */
+  | 'malformed_body'
+  /** The trigger carries a signature check in a shape nothing reads, so the endpoint fails closed. */
+  | 'unverifiable';
+
+/**
+ * A request that was refused before it became a run.
+ *
+ * The counterpart to {@link ActionRunRecord}, and the reason it exists: `onRun` reports runs that STARTED, so a
+ * webhook rejected for a bad signature — the single most common way an integration is broken — produced nothing
+ * anybody could look at. Whether a refusal is worth keeping is the deployment's call: a duplicate delivery is a
+ * well-behaved sender retrying and is noise, while an invalid signature is somebody's afternoon. The mechanism
+ * reports all of them and filters none.
+ *
+ * Never carries the body or the signature. What went wrong is `detail`, in the server's own words.
+ */
+export type ActionRejectRecord = {
+  actionId: string;
+  spaceId: number;
+  environment: Environment;
+  trigger: ActionTriggerType;
+  reason: ActionRejectReason;
+  /** Why, for whoever has to fix it. Never the offending value itself. */
+  detail?: string;
+  /** Who asked, as the transport identifies them — a session subject or an address. */
+  callerId?: string;
+};
+
+/**
  * What one run was, for whoever keeps the record.
  *
  * Emitted for every run that STARTED — completed, failed or aborted — and never for one refused before it began:
@@ -267,6 +317,31 @@ export type ActionRunRecord = {
   nodes: { id: string; action: string; status: string }[];
   /** Present when the run ended badly. Already redacted of credential values. */
   error?: string;
+};
+
+/**
+ * One thing that happened to an action, as the builder reads it back.
+ *
+ * A run and a refusal in one shape, because the question an author asks is "what happened", and the most common
+ * answer for a webhook is that nothing ran: the signature did not verify. `status: 'refused'` is that answer, and
+ * `reason` says which check turned it away.
+ *
+ * Never the trace — that belongs to the test run the author asked for. A history is which steps ran and how each
+ * ended, not what they held.
+ */
+export type ActionEvent = {
+  id: number;
+  actionId: string;
+  runId?: string | null;
+  trigger: string;
+  status: ActionRunStatus | 'refused' | 'unknown';
+  refused: boolean;
+  reason?: ActionRejectReason | null;
+  durationMs?: number | null;
+  steps: string[];
+  /** What went wrong, already redacted of credential values. */
+  detail?: string | null;
+  createdAt: number;
 };
 
 /** Action-addressed call. The element-addressed connector write keeps its own shape on the same endpoint. */

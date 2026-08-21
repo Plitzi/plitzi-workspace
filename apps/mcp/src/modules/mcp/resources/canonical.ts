@@ -4,7 +4,7 @@ import type { Env } from '../types';
 
 // Style resources live at their own top-level roots (plitzi://definitions, plitzi://style-variables,
 // plitzi://schema-variables) but agents reach for them by analogy under plitzi://schema/{env}/… . Accept that
-// alias shape and fold it back to the canonical root, so both forms resolve (RFC 0005 I3).
+// alias shape and fold it back to the canonical root, so both forms resolve.
 export const canonicalUri = (env: Env, uri: string): string => {
   const rest = afterPrefix(uri, `plitzi://schema/${env}/`);
   if (rest === undefined) {
@@ -26,7 +26,7 @@ export const canonicalUri = (env: Env, uri: string): string => {
 
 /** Teachable message for a URI that read as null. Distinguishes a well-formed URI whose ref does not resolve (the
  *  resource may be stale/deleted) from a URI whose shape matches no template at all (malformed — echo the valid
- *  templates so the agent stops hand-building URIs). See RFC 0004 I2. */
+ *  templates so the agent stops hand-building URIs). */
 export const resourceErrorMessage = (env: Env, uri: string): string => {
   const canonical = canonicalUri(env, uri);
   const knownShape = itemTemplates(env).some(tpl => canonical.startsWith(tpl.slice(0, tpl.lastIndexOf('/') + 1)));

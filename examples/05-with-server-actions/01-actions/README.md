@@ -116,4 +116,4 @@ The same mechanism from the other end: [02-render](../02-render), where nobody c
 page is being rendered and the browser is handed a finished page.
 
 The mechanism is documented in [`server-actions.md`](../../../docs/en/server-actions.md), and the reasoning
-behind each rule in [RFC 0012](../../../docs/rfc/0012-server-actions.md).
+behind each rule sits beside the code that enforces it.

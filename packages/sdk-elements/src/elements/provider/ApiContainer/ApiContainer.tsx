@@ -42,6 +42,15 @@ export type ApiContainerProps = {
   credentials?: RequestCredentials;
   /** Identifier of the server-side connector that feeds this provider. Only meaningful with `runtime: 'server'`. */
   connector?: string;
+  /**
+   * Identifier of the server ACTION that feeds this provider instead of a connector, for the read a manifest
+   * cannot express — two calls joined, a computed field, a shape that depends on who is looking.
+   *
+   * An element names one producer: the server resolves a connector when the element declares one and looks at
+   * this only otherwise, so the panel clears whichever the author did not pick. The action is fed this page's
+   * route and query params, and answers whatever its output step returns.
+   */
+  action?: string;
   /** Which of the connector's read endpoints to execute. Defaults to `list`. */
   endpoint?: string;
   /** Content type / collection read through the connector. */

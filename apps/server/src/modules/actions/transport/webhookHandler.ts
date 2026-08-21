@@ -4,12 +4,14 @@ import { verifySignature } from './verifySignature';
 import { onAbort } from '../../../helpers/onAbort';
 import { ActionRunError } from '../runtime/errors';
 import { precheckRun } from '../runtime/precheck';
+import { reportReject } from '../runtime/report';
 import { findTriggerNode, triggerParams } from '../runtime/triggers';
 
 import type { ActionsModule } from '../index';
 import type { ActionCredential } from '../types';
 import type {
   ActionEntry,
+  ActionRejectReason,
   ActionWebhookVerification,
   SSRPageServerConfig,
   SSRRequest,
@@ -70,10 +72,30 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
   const { req, res, config, module, signal, actionId, callerId, lineage } = deps;
   const { environment = 'main', spaceId, revision = 0 } = req.ctx.spaceDeployment ?? {};
   if (typeof spaceId !== 'number') {
+    // Not reported: with no space there is nobody whose feed this belongs in, and a request that named no
+    // deployment never addressed an action in the first place.
     send(res, 404, { error: 'Not found' });
 
     return;
   }
+
+  /**
+   * Every way this ends without a run, told to whoever configured the endpoint.
+   *
+   * A rejected webhook is the single most common way an integration is broken, and until this existed it was
+   * indistinguishable from the sender never firing: the reason went to the process log, where the person setting
+   * up the integration cannot see it. The SENDER still learns nothing it should not — that answer is unchanged.
+   */
+  const reject = (reason: ActionRejectReason, detail?: string) =>
+    reportReject(config, {
+      actionId,
+      spaceId,
+      environment,
+      trigger: 'webhook',
+      reason,
+      callerId,
+      ...(detail === undefined ? {} : { detail })
+    });
 
   // The LIVE document, deliberately. A webhook URL belongs to the space, not to a published page: nothing about
   // the sender says which revision it means, and pinning one would leave a fixed flow answering an integration
@@ -82,6 +104,7 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
   // The step that declares this way in. No step, no webhook — an action reachable only from a page has no URL.
   const trigger = entry ? findTriggerNode(entry.document.nodes, 'webhook') : undefined;
   if (!entry || !trigger) {
+    await reject('not_found', entry ? 'The action declares no webhook trigger' : 'No action with this identifier');
     send(res, 404, { error: 'Not found' });
 
     return;
@@ -105,6 +128,10 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
       `[Actions] webhook "${actionId}" in space ${spaceId} carries a signature check in a format nothing reads any ` +
         'more, so it is refused. Name the signing credential on the trigger step.'
     );
+    await reject(
+      'unverifiable',
+      'The signature check is in a format nothing reads any more; name the signing credential on the trigger step'
+    );
     send(res, 503, { error: 'Unavailable' });
 
     return;
@@ -118,6 +145,7 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
     const hits = await module.kv(spaceId).increment(`hook:${actionId}:${callerId}:${window}`, 1, 120);
     if (hits > perMinute) {
       res.setHeader('Retry-After', '60');
+      await reject('rate_limited', `More than ${perMinute} deliveries in one minute from this caller`);
       send(res, 429, { error: 'Too many requests' });
 
       return;
@@ -125,6 +153,7 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
   } catch {
     // A store that cannot count cannot limit. Refusing is the safe half of a fail-closed rule: a public endpoint
     // with no rate limit is exactly what this protects.
+    await reject('unverifiable', 'The rate-limit store could not answer, so the endpoint failed closed');
     send(res, 503, { error: 'Unavailable' });
 
     return;
@@ -138,6 +167,7 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
       // The reason goes to the log, not the wire: telling a caller which half of the check failed helps only the
       // caller who should not be here.
       console.warn(`[Actions] webhook "${actionId}" rejected: ${check.reason}`);
+      await reject('invalid_signature', check.reason);
       send(res, 401, { error: 'Invalid signature' });
 
       return;
@@ -149,6 +179,7 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
     const parsed: unknown = rawBody ? JSON.parse(rawBody) : {};
     payload = parsed !== null && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
   } catch {
+    await reject('malformed_body', 'The body is not JSON');
     send(res, 400, { error: 'Body is not JSON' });
 
     return;
@@ -159,21 +190,33 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
   // dropped by the input contract either way.
   const input = { ...payload, payload };
   const limits = module.limitsFor(entry.document);
+  const begin = {
+    spaceId,
+    actionId: entry.id,
+    callerId,
+    input,
+    // A provider retrying the same delivery must not run the flow twice; a provider that sends no delivery id
+    // falls back to the derived key over the body, which is the same thing for an identical retry.
+    idempotencyKey: deliveryId(req),
+    ttlMs: limits.timeoutMs
+  };
+
+  // The retry that arrives AFTER the first delivery finished, which is how every provider retries. Single-flight
+  // covers the one that overlaps; without this, the one that follows runs the flow a second time.
+  const replayed = await module.guards.replay(begin);
+  if (replayed) {
+    send(res, 202, { accepted: true, runId: replayed.runId, status: replayed.status, replayed: true });
+
+    return;
+  }
+
   let run;
   try {
     precheckRun(entry, { trigger: 'webhook', input, lineage });
-    run = await module.guards.begin({
-      spaceId,
-      actionId: entry.id,
-      callerId,
-      input,
-      // A provider retrying the same delivery must not run the flow twice; a provider that sends no delivery id
-      // falls back to the derived key over the body, which is the same thing for an identical retry.
-      idempotencyKey: deliveryId(req),
-      ttlMs: limits.timeoutMs
-    });
+    run = await module.guards.begin(begin);
   } catch (error) {
     const reason = error instanceof ActionRunError ? error.reason : 'failed';
+    await reject(reason, error instanceof Error ? error.message : undefined);
     // A duplicate delivery is a SUCCESS from the sender's side: it asked for the work once and the work is
     // happening. Answering an error would make a well-behaved provider retry harder.
     send(res, reason === 'duplicate' ? 202 : 400, { accepted: reason === 'duplicate' });
@@ -186,6 +229,7 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
   const abortRun = () => run.controller.abort();
   const releaseAbort = onAbort(signal, abortRun);
 
+  let outcome;
   try {
     const result = await module.runAction({
       entry,
@@ -198,6 +242,7 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
       signal: run.controller.signal
     });
 
+    outcome = result;
     send(res, 200, { accepted: true, runId: result.runId, status: result.status });
   } catch (error) {
     console.error('[Actions] webhook run failed:', error);
@@ -206,7 +251,9 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
     send(res, 500, { accepted: false });
   } finally {
     releaseAbort();
-    await module.guards.end(run);
+    // The answer travels with the release, so a redelivery that arrives after this one finished is answered by it
+    // rather than running the flow again.
+    await module.guards.end(run, outcome);
   }
 };
 

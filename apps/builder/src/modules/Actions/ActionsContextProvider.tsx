@@ -1,12 +1,15 @@
 import { useCallback, use, useMemo } from 'react';
 
+import { actionTriggers, triggerInput } from '@plitzi/sdk-shared/actions';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { useCommonStoreSync } from '@plitzi/sdk-shared/store';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
 import ActionsContext from './ActionsContext';
 
 import type { ActionsContextValue } from './ActionsContext';
 import type {
+  ActionCatalogEntry,
   ActionDocument,
   ActionTaskDescriptor,
   BuilderMutationsMap,
@@ -64,12 +67,38 @@ const ActionsContextProvider = ({ children }: ActionsContextProviderProps) => {
   const { data: deployments } = useGraphQL('SpaceDeployments', data => data?.SpaceDeployments.edges);
 
   const actions = useMemo(() => byIdentifier(data), [data]);
+  /**
+   * What the space can run, published to the store the editor's own steps read.
+   *
+   * A `runServerAction` step used to ask for the identifier as free text — a value this panel already had, that
+   * the author had to go and look up. The step is registered by the SDK runtime, so this is how it learns: the
+   * same route `navigate` takes to the page list. Identifiers and names, plus what the `call` trigger declares it
+   * takes; never the flow, which is server-side state and stays on the server.
+   */
+  const catalog = useMemo<ActionCatalogEntry[]>(
+    () =>
+      data.map(action => {
+        const trigger = actionTriggers(action.document).find(node => node.action === 'call');
+
+        return {
+          identifier: action.identifier,
+          name: action.name,
+          input: trigger ? triggerInput(trigger.params) : {}
+        };
+      }),
+    [data]
+  );
   // Unknown counts as "has one": the deployments arrive a moment after the panel does, and a space that is set up
   // correctly should not flash a warning telling its owner it is broken.
   const hasServerRendering = useMemo(
     () => deployments === undefined || deployments.some(deployment => deployment.credential?.provider === 'ssr'),
     [deployments]
   );
+
+  // Both halves of what an editor needs to author a call: which actions exist, and whether anything will ever run
+  // them. The second is what lets a step say so while it is being authored rather than at the first click in
+  // production.
+  useCommonStoreSync(['actions.catalog', 'actions.available'], [catalog, hasServerRendering]);
 
   const addAction = useCallback(
     async (name: string, document: ActionDocument) => {

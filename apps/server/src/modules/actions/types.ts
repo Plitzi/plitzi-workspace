@@ -1,6 +1,7 @@
 import type {
   ActionEntry,
   ActionLimits,
+  ActionRejectRecord,
   ActionRunRecord,
   ActionRunStatus,
   ActionTriggerType,
@@ -177,12 +178,34 @@ export type ActionsConfig = {
    * action down, which is the same rule metering follows.
    */
   onRun?: (record: ActionRunRecord) => void | Promise<void>;
+  /**
+   * Called once per request that was REFUSED before it became a run.
+   *
+   * Its own hook rather than a status on `onRun`, because the two answer different questions and a deployment
+   * wants them in different places: runs are history, refusals are a fault report. Without it a webhook rejected
+   * for a bad signature is invisible to everyone but whoever reads the process log — which is nobody, on the
+   * afternoon the integration is being set up.
+   *
+   * Everything is reported, including the refusals that are somebody else retrying politely. Which of them are
+   * worth keeping is a policy the deployment owns; the mechanism does not decide it by staying quiet.
+   */
+  onReject?: (record: ActionRejectRecord) => void | Promise<void>;
+  /**
+   * How long a COMPLETED run's answer may be replayed to a caller that asks for it again by the same key.
+   *
+   * Off by default, and it only ever applies to an explicit key — an `idempotencyKey` on the call, or the
+   * delivery id a webhook sender stamps. A derived key is a hash of the input, and two identical calls a minute
+   * apart are usually two things somebody wants to happen twice.
+   *
+   * Needs a shared {@link ActionKvAdapter} to mean anything across replicas, exactly as single-flight does.
+   */
+  idempotency?: { replayTtlMs?: number };
   fetchImpl?: typeof fetch;
 };
 
-/** Re-exported so the module's own files import one place, and a deployment writing an `onRun` sees the same
- *  shape the runner emits. */
-export type { ActionRunRecord } from '@plitzi/sdk-shared';
+/** Re-exported so the module's own files import one place, and a deployment writing an `onRun` or an `onReject`
+ *  sees the same shapes the module emits. */
+export type { ActionRejectRecord, ActionRunRecord } from '@plitzi/sdk-shared';
 
 export type ResolvedActionLimits = Required<ActionLimits>;
 

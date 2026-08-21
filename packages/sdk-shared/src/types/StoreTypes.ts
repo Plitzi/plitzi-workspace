@@ -1,3 +1,4 @@
+import type { ActionField } from './ActionTypes';
 import type { SubscriptionCollaborator, SubscriptionCollaboratorPointer } from './BuilderTypes';
 import type { Environment, RenderMode } from './CommonTypes';
 import type { Source } from './DataSourceTypes';
@@ -84,6 +85,34 @@ export type RenderSettings = {
  *  inert instead of letting each click discover a 404. */
 export type ActionsState = {
   endpoint?: string;
+  /**
+   * What this space can run, for the editor that offers it.
+   *
+   * Authoring data, seeded by the builder from the space's own actions and empty everywhere else — a published
+   * page names one action and has no business holding a directory of the others. It is here rather than in
+   * `BuilderState` because the step that reads it is registered by the SDK runtime, in the same place a
+   * `navigate` step reads the page list: one vocabulary, and the options come from whoever knows them.
+   *
+   * A deployment answers it through `listActions`, so a self-hoster's own actions show up in their editor for the
+   * same reason their own tasks do.
+   */
+  catalog?: ActionCatalogEntry[];
+  /**
+   * Whether the target this space publishes to can run actions AT ALL.
+   *
+   * Seeded by the builder from the space's deployments, and absent everywhere else — a rendered page does not need
+   * to be told, it has an `endpoint` or it does not. It exists so a step can say "this space deploys nowhere that
+   * runs server code" while it is being authored, rather than at the first click in production.
+   */
+  available?: boolean;
+};
+
+/** One action as a picker needs it: what to store, what to show, and what it takes. Never the flow itself. */
+export type ActionCatalogEntry = {
+  identifier: string;
+  name: string;
+  /** The fields the `call` trigger declares, so an editor can say what an action expects before it is called. */
+  input: Record<string, ActionField>;
 };
 
 export type RscState = {
@@ -114,7 +143,7 @@ export type BuilderState = CommonState & {
   };
   // Connector manifests available to this space, keyed by identifier. Editor-only: the builder needs endpoints and
   // operator names to offer a connector picker and typed filters, and this store is never serialized into the
-  // published schema — which is what keeps the topology off the visitor's page (RFC 0008 §4.2).
+  // published schema — which is what keeps the topology off the visitor's page.
   connectors: Record<string, SpaceConnector>;
   // Whether the space deploys anywhere that can run server code. Connectors resolve before the page reaches the
   // browser, so on a client-rendered deployment they resolve nowhere — the element settings say so rather than

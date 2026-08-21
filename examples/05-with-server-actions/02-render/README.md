@@ -98,4 +98,4 @@ Take the server away: [03-no-server](../03-no-server) renders this same page in 
 action has nowhere to run — and nothing tries.
 
 The mechanism is documented in [`server-actions.md`](../../../docs/en/server-actions.md), and the reasoning
-behind each rule in [RFC 0012](../../../docs/rfc/0012-server-actions.md).
+behind each rule sits beside the code that enforces it.

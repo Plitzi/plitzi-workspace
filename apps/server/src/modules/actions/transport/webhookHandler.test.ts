@@ -154,6 +154,83 @@ describe('handleActionWebhook', () => {
     expect(sent.status, 'an endpoint that verifies nothing answered as though it had').toBe(503);
   });
 
+  /**
+   * The reason a refusal is reported at all.
+   *
+   * A webhook that does not verify is the most common way an integration is broken, and it is indistinguishable
+   * from the sender never firing: the caller is told nothing (deliberately) and the process log is not somewhere
+   * the person setting up the integration can look. Somebody has to be able to see it.
+   */
+  it('reports a refusal to the deployment while telling the sender nothing', async () => {
+    const onReject = vi.fn();
+    const body = '{"id":"evt_1"}';
+
+    const { sent, payload } = await post(config(entry(), { onReject }), body, { 'x-signature': sign(body, 'wrong') });
+
+    expect(sent.status).toBe(401);
+    expect(payload, 'the sender learned which check refused it').toEqual({ error: 'Invalid signature' });
+    expect(onReject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actionId: 'stripe-hook',
+        spaceId: 3,
+        trigger: 'webhook',
+        reason: 'invalid_signature',
+        callerId: 'ip:1.2.3.4'
+      })
+    );
+  });
+
+  it('reports the refusals that never reach a signature check either', async () => {
+    const onReject = vi.fn();
+
+    await post(config(undefined, { onReject }), '{}', {});
+
+    expect(onReject).toHaveBeenCalledWith(expect.objectContaining({ reason: 'not_found' }));
+
+    const malformed = vi.fn();
+    const body = 'not json at all';
+    await post(config(entry(), { onReject: malformed }), body, { 'x-signature': sign(body) });
+
+    expect(malformed).toHaveBeenCalledWith(expect.objectContaining({ reason: 'malformed_body' }));
+  });
+
+  /** Reporting must never become the failure it reports: the sender was refused either way, and a sink that
+   *  throws is the sink's problem. */
+  it('answers the sender even when reporting the refusal throws', async () => {
+    const body = '{"id":"evt_1"}';
+    const onReject = () => {
+      throw new Error('the log is down');
+    };
+
+    const { sent } = await post(config(entry(), { onReject }), body, { 'x-signature': sign(body, 'wrong') });
+
+    expect(sent.status).toBe(401);
+  });
+
+  /**
+   * Single-flight refuses the retry that OVERLAPS the first delivery. This is the one that arrives after it
+   * finished, which is how every provider actually retries — and without a replay window it runs the flow twice.
+   */
+  it('answers a redelivery from the first run rather than running the flow again', async () => {
+    const module = createActionsModule({
+      lookups: {
+        getAction: () => Promise.resolve(entry()),
+        getCredential: () => Promise.resolve({ hookSecret: SECRET })
+      },
+      idempotency: { replayTtlMs: 60_000 }
+    });
+    const body = '{"id":"evt_replay"}';
+    const headers = { 'x-signature': sign(body), 'x-github-delivery': 'delivery-1' };
+
+    const first = await post(config(entry()), body, headers, { module });
+    const second = await post(config(entry()), body, headers, { module });
+
+    expect(first.sent.status).toBe(200);
+    expect(second.sent.status, 'a redelivery is not an error to the sender').toBe(202);
+    expect(second.payload.replayed).toBe(true);
+    expect(second.payload.runId, 'the redelivery was answered by a different run').toBe(first.payload.runId);
+  });
+
   it('runs the action when the signature checks out', async () => {
     const body = '{"id":"evt_1","type":"payment"}';
 

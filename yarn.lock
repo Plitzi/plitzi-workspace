@@ -3470,6 +3470,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@plitzi/example-server-actions-custom-trigger@workspace:examples/05-with-server-actions/04-custom-trigger":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/example-server-actions-custom-trigger@workspace:examples/05-with-server-actions/04-custom-trigger"
+  dependencies:
+    "@plitzi/sdk-server": "workspace:*"
+    "@plitzi/sdk-shared": "workspace:*"
+    "@types/node": "npm:^26.2.0"
+    tsx: "npm:^4.23.12"
+    typescript: "npm:^6.0.3"
+  languageName: unknown
+  linkType: soft
+
 "@plitzi/example-server-actions-no-server@workspace:examples/05-with-server-actions/03-no-server":
   version: 0.0.0-use.local
   resolution: "@plitzi/example-server-actions-no-server@workspace:examples/05-with-server-actions/03-no-server"

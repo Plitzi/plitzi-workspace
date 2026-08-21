@@ -2,6 +2,7 @@ import { evaluateRuleGroup } from '@plitzi/sdk-shared/helpers/ruleEvaluator';
 import { hasValidToken, processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { ActionRunError } from './errors';
+import { runCancelKey } from './guards';
 import { createKvStore } from './kvStore';
 import { resolveLimits } from './limits';
 import { createMemoryKv } from './memoryKv';
@@ -11,6 +12,7 @@ import { createRedactor, projectUser } from './scope';
 import { onAbort } from '../../../helpers/onAbort';
 
 import type {
+  ActionKvAdapter,
   ActionRunRecord,
   ActionRunRequest,
   ActionRunResult,
@@ -24,6 +26,45 @@ import type { ElementInteraction, InteractionNode, InteractionNodeStatus } from 
 import type { RuleValue } from '@plitzi/sdk-shared/helpers/ruleEvaluator';
 
 const MAX_TWIG_RESOLUTION_PASSES = 5;
+
+/** How often a run asks the shared store whether it has been cancelled. Once a second is far finer than the
+ *  boundaries a flow actually has, and it keeps a long run to sixty reads a minute. */
+const CANCEL_POLL_MS = 1_000;
+
+/**
+ * Whether somebody has asked this run to stop, from wherever the request landed.
+ *
+ * The socket closing aborts a run in the process that is running it, and a `DELETE` that happens to reach that
+ * same process does too. Behind a load balancer it usually does not: a cancel arrives at a replica that has never
+ * heard of the run, and the flow it was meant to stop carries on charging cards. So the cancel is a FLAG in the
+ * store the deployment already shares, and this is the run reading it at every step boundary.
+ *
+ * Without a shared store it is a no-op rather than a lie — one process's local abort is the whole mechanism there,
+ * and it already works.
+ */
+const createCancelWatch = (store: ActionKvAdapter | undefined, runId: string): (() => Promise<boolean>) => {
+  if (!store) {
+    return () => Promise.resolve(false);
+  }
+
+  let checkedAt = 0;
+
+  return async () => {
+    const now = Date.now();
+    if (now - checkedAt < CANCEL_POLL_MS) {
+      return false;
+    }
+
+    checkedAt = now;
+    try {
+      return (await store.get(runCancelKey(runId))) !== undefined;
+    } catch {
+      // A store that cannot answer is not a cancellation. Failing the run over it would turn an outage in the
+      // cache into an outage in everybody's flows.
+      return false;
+    }
+  };
+};
 
 /**
  * Resolves twig in a node's params against the flow scope.
@@ -56,31 +97,78 @@ const resolveParams = (
 };
 
 /**
- * Counts outbound calls, refuses past the budget, and stamps the run's lineage on every one of them.
+ * Holds an answer to what the run is allowed to carry.
+ *
+ * Two checks rather than one, because a body arrives in two ways. `Content-Length` is refused before a byte is
+ * read, which is the cheap half; a chunked answer that declares nothing is counted AS it streams and errored the
+ * moment it goes over — so the ceiling holds for a backend that lies about its size or never states one.
+ *
+ * The cap is on one response and not on the run: it exists so that a single answer cannot be unbounded, which is
+ * a different failure from a flow that makes many small calls (that is `maxRequests`).
+ */
+const capped = (response: Response, maxBytes: number): Response => {
+  const declared = Number(response.headers.get('content-length') ?? '');
+  if (Number.isFinite(declared) && declared > maxBytes) {
+    throw new ActionRunError('over_capacity', `Response is larger than the ${maxBytes} byte budget`);
+  }
+
+  if (!response.body) {
+    return response;
+  }
+
+  let seen = 0;
+  const counted = response.body.pipeThrough(
+    new TransformStream<Uint8Array, Uint8Array>({
+      transform: (chunk, controller) => {
+        seen += chunk.byteLength;
+        if (seen > maxBytes) {
+          controller.error(new ActionRunError('over_capacity', `Response exceeded the ${maxBytes} byte budget`));
+
+          return;
+        }
+
+        controller.enqueue(chunk);
+      }
+    })
+  );
+
+  return new Response(counted, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers
+  });
+};
+
+/**
+ * Counts outbound calls, refuses past the budget, caps what one answer may carry back, and stamps the run's
+ * lineage on every one of them.
  *
  * The budget stops a loop from turning one run into a hundred requests. The lineage header is what makes the
  * OTHER loop detectable: an action whose HTTP step reaches its own space's webhook arrives carrying the chain
  * that led there, and the run it would start refuses itself. It names the space's own actions to a backend that
  * space configured, which is the cost of catching a cycle nothing else can see.
+ *
+ * Every ceiling lives HERE rather than in each task, because this is the only door a task has to the outside
+ * world — a task that had to remember to count its own bytes is a task that will forget.
  */
 const createRunFetch = (
   base: typeof fetch,
   signal: AbortSignal,
-  maxRequests: number,
+  limits: ResolvedActionLimits,
   lineage: string[]
 ): typeof fetch => {
   let issued = 0;
 
   return async (input, init) => {
     issued += 1;
-    if (issued > maxRequests) {
-      throw new ActionRunError('over_capacity', `Action exceeded its ${maxRequests} outbound request budget`);
+    if (issued > limits.maxRequests) {
+      throw new ActionRunError('over_capacity', `Action exceeded its ${limits.maxRequests} outbound request budget`);
     }
 
     const headers = new Headers(init?.headers);
     headers.set('X-Plitzi-Action-Lineage', lineage.join(','));
 
-    return base(input, { ...init, headers, signal: init?.signal ?? signal });
+    return capped(await base(input, { ...init, headers, signal: init?.signal ?? signal }), limits.maxResponseBytes);
   };
 };
 
@@ -184,10 +272,7 @@ export const createActionRunner = (
     const releaseOuter = onAbort(request.signal, () => controller.abort());
 
     const scopedKv = namespaceKv(kv, request.spaceId);
-    const runFetch = createRunFetch(baseFetch, controller.signal, limits.maxRequests, [
-      ...(request.lineage ?? []),
-      entry.id
-    ]);
+    const runFetch = createRunFetch(baseFetch, controller.signal, limits, [...(request.lineage ?? []), entry.id]);
     const buildContext = (scope: Record<string, unknown>): ActionTaskContext => ({
       runId,
       spaceId: request.spaceId,
@@ -259,12 +344,23 @@ export const createActionRunner = (
     let status: ActionRunResult['status'] = 'completed';
     let returned: unknown;
 
+    const isCancelled = createCancelWatch(config.kv, runId);
+
     try {
       let current = triggerNode;
       let executed = 0;
       let next = document.nodes[current.afterNode] as ElementInteraction | undefined;
       while (next) {
         if (controller.signal.aborted) {
+          status = 'aborted';
+          break;
+        }
+
+        // Between steps, never inside one: a node already in flight is signalled and awaited rather than
+        // abandoned mid-write, so an aborted run is one that stopped starting things — not one that left half a
+        // request behind it.
+        if (await isCancelled()) {
+          controller.abort();
           status = 'aborted';
           break;
         }

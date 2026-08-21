@@ -27,10 +27,19 @@ const renderRun = (event: Extract<ServerLogEvent, { kind: 'run' }>): string => {
   return `[Action] ${event.name} via ${event.trigger} space=${event.spaceId} ${event.status} ${Math.round(event.durationMs)}ms ${outcomeOf(event)}${steps}`;
 };
 
+/** A refusal reads as what refused it: `[Action] checkout via webhook space=1 REFUSED invalid_signature`. The
+ *  reason is the whole point of the line — "401" is what the request log already said. */
+const renderReject = (event: Extract<ServerLogEvent, { kind: 'reject' }>): string => {
+  const caller = event.callerId ? ` from ${event.callerId}` : '';
+
+  return `[Action] ${event.name} via ${event.trigger} space=${event.spaceId} REFUSED ${event.reason}${caller} ${outcomeOf(event)}`;
+};
+
 /** One line for any {@link ServerLogEvent}: an HTTP request reads as an access-log line
  *  (`[SSR] 203.0.113.7 GET /pricing 200 12ms ok`), the MCP events as what happened inside one
- *  (`[MCP] tools/call plitzi_apply {operations:[3]} 41ms ok`), and a server action as what its flow did
- *  (`[Action] shipping-quote via call space=1 completed 12ms ok`). Rendering is a pure format — the dispatcher
+ *  (`[MCP] tools/call plitzi_apply {operations:[3]} 41ms ok`), a server action as what its flow did
+ *  (`[Action] shipping-quote via call space=1 completed 12ms ok`) and a refused one as what turned it away
+ *  (`[Action] checkout via webhook space=1 REFUSED invalid_signature`). Rendering is a pure format — the dispatcher
  *  already stripped query values, collected no headers, cookies or tokens, summarised tool args by shape and
  *  reduced a run to its steps; the client IP it does carry is personal data, so a sink that persists these lines
  *  must say so. */
@@ -44,6 +53,8 @@ export const renderLogEvent = (event: ServerLogEvent): string => {
       return renderResource(event);
     case 'run':
       return renderRun(event);
+    case 'reject':
+      return renderReject(event);
   }
 };
 

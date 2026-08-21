@@ -55,14 +55,18 @@ const entry = (overrides: Partial<ActionDocument> = {}): ActionEntry => ({
 /** A raw response the streaming path can write into, recording the frames a caller would have received. */
 const buildRaw = () => {
   const written: string[] = [];
+  const head: Record<string, string> = {};
   const raw = {
     headersSent: false,
     statusCode: 200,
     setHeader: () => undefined,
     getHeaders: () => ({}),
-    writeHead(status: number) {
+    writeHead(status: number, headers?: Record<string, string | number | readonly string[]>) {
       this.statusCode = status;
       this.headersSent = true;
+      Object.entries(headers ?? {}).forEach(([name, value]) => {
+        head[name] = String(value);
+      });
 
       return undefined;
     },
@@ -74,7 +78,7 @@ const buildRaw = () => {
     end: () => undefined
   };
 
-  return { raw, written };
+  return { raw, written, head };
 };
 
 const buildRes = () => {
@@ -142,7 +146,7 @@ const call = async (
   } = {}
 ) => {
   const { res, sent } = buildRes();
-  const { raw, written } = buildRaw();
+  const { raw, written, head } = buildRaw();
   const module = options.module ?? createActionsModule({ lookups: { getAction: () => Promise.resolve(undefined) } });
   await handleActionCall({
     req: { ...request(body, options.authoring), headers: options.headers ?? {} },
@@ -155,7 +159,7 @@ const call = async (
     lineage: options.lineage ?? []
   });
 
-  return { sent, written, payload: JSON.parse(sent.body || '{}') as Record<string, unknown>, module };
+  return { sent, written, head, payload: JSON.parse(sent.body || '{}') as Record<string, unknown>, module };
 };
 
 describe('handleActionCall', () => {
@@ -327,6 +331,24 @@ describe('handleActionCall (streaming)', () => {
     const sent = frames(written);
     expect(sent.map(frame => frame.event)).toEqual(['node', 'done']);
     expect(sent[1].data).toMatchObject({ status: 'completed', output: { total: 7 } });
+  });
+
+  /**
+   * A streaming step returns the moment the stream OPENS — that is what makes it a stream — so anything it learns
+   * from a frame arrives after the flow has already carried on. The head is the only place the caller can read
+   * the run id in time to cancel the run it just started.
+   */
+  it('names the run on the response head, where a caller can still act on it', async () => {
+    const { head, written } = await call(
+      buildConfig(entry()),
+      { actionId: 'quote', input: { amount: 7 } },
+      { headers: streaming }
+    );
+
+    const done = /data: (.*)/.exec(written.join('').split('event: done')[1] ?? '')?.[1];
+
+    expect(head['X-Plitzi-Run-Id'], 'a streaming run could not be cancelled by the page that started it').toBeTruthy();
+    expect((JSON.parse(done ?? '{}') as { runId?: string }).runId).toBe(head['X-Plitzi-Run-Id']);
   });
 
   it('tells a hand-rolled EventSource to wait a day before reconnecting', async () => {

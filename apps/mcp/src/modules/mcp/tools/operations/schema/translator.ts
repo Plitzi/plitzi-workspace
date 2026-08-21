@@ -195,7 +195,7 @@ export const pageStylesToAI = (schema: Schema, style: Style, pageEl: Element): A
 // --- Detail (on demand): one element with its props and style. ---
 
 // Inline the CSS of every definition the element attaches (base + slots), so an edit that only needs to see the
-// current style does not have to follow up with a read of each definition (RFC 0005). Undefined when none resolve.
+// current style does not have to follow up with a read of each definition. Undefined when none resolve.
 const resolveDefinitions = (
   style: Style,
   base: string[],

@@ -18,9 +18,12 @@ export type ActionCancelDeps = {
  *
  * A run that is not there, or is not the caller's, answers 404 either way: distinguishing them would turn this
  * into an oracle for which run ids are live.
+ *
+ * Awaited because the run is usually somewhere else: behind a load balancer the tab asking to stop a checkout
+ * almost never reaches the replica running it, so the cancel is left in the shared store for the one that is.
  */
-export const handleActionCancel = ({ res, module, runId, callerId }: ActionCancelDeps): void => {
-  const cancelled = module.guards.cancel(runId, callerId);
+export const handleActionCancel = async ({ res, module, runId, callerId }: ActionCancelDeps): Promise<void> => {
+  const cancelled = await module.guards.cancel(runId, callerId);
   res.setStatus(cancelled ? 204 : 404);
   res.setHeader('Cache-Control', 'no-store');
   res.send('');

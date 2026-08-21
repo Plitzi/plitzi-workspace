@@ -1,6 +1,8 @@
 import type {
   ActionEntry,
   ActionLimits,
+  ActionRejectReason,
+  ActionRejectRecord,
   ActionRunRecord,
   ActionRunStatus,
   ActionTaskDescriptor,
@@ -493,9 +495,27 @@ export type SSRActionConfig = {
    * Called once per run that STARTED — completed, failed or aborted — for a deployment that keeps a record.
    * Shaped as `ActionRunRecord` in `@plitzi/sdk-server/actions`.
    *
-   * A refused run is not reported: a 409 is not a run, and logging one would bury the real ones under retries.
+   * A refused request is not a run and is not reported here; it goes to {@link SSRActionConfig.onReject}.
    */
   onRun?: (record: ActionRunRecord) => void | Promise<void>;
+  /**
+   * Called once per request that was REFUSED before it became a run — a webhook whose signature did not verify, a
+   * caller over the rate limit, an action nobody may start. Shaped as `ActionRejectRecord`.
+   *
+   * Its own hook because it answers a different question from `onRun`: runs are history, refusals are a fault
+   * report, and the one that matters most — a signature that does not match — is otherwise indistinguishable
+   * from the integration simply never firing. Everything is reported; which refusals are worth keeping (a
+   * duplicate delivery is a polite retry, not a fault) is the deployment's to decide.
+   */
+  onReject?: (record: ActionRejectRecord) => void | Promise<void>;
+  /**
+   * Replaying a finished run's answer to a caller that asks again with the same key, for this many milliseconds.
+   *
+   * Off unless set, and it only ever applies to a key the CALLER named — an `idempotencyKey` on the call or the
+   * delivery id a webhook sender stamps. Single-flight already refuses a retry that arrives while the first run
+   * is going; this is for the one that arrives after it finished, which is how every provider retries.
+   */
+  idempotency?: { replayTtlMs?: number };
   /**
    * Where the `kv` tasks keep things — shaped as `ActionKvAdapter` in `@plitzi/sdk-server/actions`.
    *
@@ -660,6 +680,27 @@ export type ActionRunLogEvent = ServerLogEventBase & {
   steps: string[];
 };
 
+/** One request that was REFUSED before it became a run — a webhook whose signature did not verify, a caller over
+ *  its rate limit, an action nobody may start.
+ *
+ *  Separate from {@link ActionRunLogEvent} because it is a different question: that one says what a flow did,
+ *  this one says why a flow never happened. It is the only place an integration that is failing at the door
+ *  shows up at all — the request log answers 401 and says nothing about which check refused it.
+ *
+ *  `durationMs` is 0 and `ok` is always false: nothing ran, and a refusal is not a success on anybody's dashboard. */
+export type ActionRejectLogEvent = ServerLogEventBase & {
+  kind: 'reject';
+  /** The action's identifier, as the request named it — it need not exist. */
+  name: string;
+  spaceId: number;
+  environment: Environment;
+  trigger: ActionTriggerType;
+  /** Which check refused it. */
+  reason: ActionRejectReason;
+  /** Who asked, as the transport identifies them — a session subject or an address. */
+  callerId?: string;
+};
+
 /** Everything a Plitzi server reports about the work it does, as ONE stream: the HTTP requests it answers, plus
  *  the MCP tool calls, resource reads and server-action runs that happen inside them. Wire a single sink via
  *  `SSRServerConfig.logger` and switch on `kind` — a consumer can render it, ship it to a dashboard or drop the
@@ -669,7 +710,12 @@ export type ActionRunLogEvent = ServerLogEventBase & {
  *  are stripped from paths, tool arguments are reduced to their shape and a run to its steps. Two fields are NOT
  *  anonymous and a consumer shipping these events must handle them accordingly: `clientIp` on a request event, and
  *  the request path, which is kept verbatim because it is what makes the log usable. */
-export type ServerLogEvent = ServerRequestLogEvent | McpToolLogEvent | McpResourceLogEvent | ActionRunLogEvent;
+export type ServerLogEvent =
+  | ServerRequestLogEvent
+  | McpToolLogEvent
+  | McpResourceLogEvent
+  | ActionRunLogEvent
+  | ActionRejectLogEvent;
 
 /** The sink a consumer provides to receive every {@link ServerLogEvent} (see `SSRServerConfig.logger`). */
 export type ServerLogger = (event: ServerLogEvent) => void;

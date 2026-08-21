@@ -3,10 +3,9 @@
 Guía práctica para entender y usar los **conectores** de Plitzi: la vía declarativa para leer (y opcionalmente
 escribir) en un CMS externo, más los elementos que convierten esos datos en páginas publicables.
 
-Cubre lo que se introdujo en los commits *"removed collections completely in favor to external CMS"* y
-*"added Space Connector and more changes"*, y lo desarrollado en los RFCs
-[0008](../../rfc/0008-data-providers-and-collections-removal.md) y
-[0009](../../rfc/0009-cms-presentation-elements.md).
+Es la referencia de esta parte del sistema: el diseño se discutió en los RFC 0008 y 0009, que se borraron al
+implementarse — el razonamiento sigue en el historial (`git log -- docs/rfc`) y las reglas viven aquí y en los
+comentarios del código que las aplica.
 
 ---
 
@@ -369,7 +368,7 @@ la resolución y el slice nuevo se **fusiona** en `rsc.data`.
 ### 7.4 Casos borde
 
 - **Post inexistente**: `singleRecord` sin registro → `isEmpty: true`, pero la respuesta es **HTTP 200** (el flag
-  `notFoundStatus` del RFC 0009 §3.4 aún no está implementado en el resolver). El autor puede bindear la visibilidad
+  `notFoundStatus` aún no está implementado en el resolver). El autor puede bindear la visibilidad
   de un bloque "no encontrado" a `{{apiContainer_<idRef>.isEmpty}}`.
 - **Filtro sin resolver**: si `{{routeParams.id}}` no resuelve, `resolveFilters` marca `unresolved` y se devuelve una
   ventana vacía — mejor que devolver la colección entera.

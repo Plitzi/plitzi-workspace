@@ -6,6 +6,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { triggerInput, validateActionDocument } from '@plitzi/sdk-shared/actions';
 
 import Workflow from '../../../Interactions/components/Workflow';
+import ActionEvents from '../ActionEvents';
 import ActionTestRun from '../ActionTestRun';
 
 import type {
@@ -325,6 +326,10 @@ const ActionForm = ({ action, tasks, credentials, onRun, onSubmit, onCancel }: A
           onRun={handleRun}
         />
       )}
+
+      {/* The other half of the same question: the test run says what happens when the author presses a button,
+          this says what happened when nobody was watching. */}
+      {action && <ActionEvents actionId={action.identifier} />}
 
       <div className="flex justify-end gap-2">
         <Button size="sm" intent="secondary" onClick={onCancel}>

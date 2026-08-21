@@ -2,6 +2,7 @@ import { openStream, wantsStream } from './stream';
 import { onAbort } from '../../../helpers/onAbort';
 import { ActionRunError } from '../runtime/errors';
 import { precheckRun } from '../runtime/precheck';
+import { reportReject } from '../runtime/report';
 
 import type { RawResponse } from '../../../helpers/buildResponseHelpers';
 import type { ActionsModule } from '../index';
@@ -10,6 +11,7 @@ import type {
   ActionCallRequest,
   ActionEntry,
   ActionErrorReason,
+  ActionRejectReason,
   SSRPageServerConfig,
   SSRRequest,
   SSRResponseHelpers
@@ -101,11 +103,30 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
     return;
   }
 
+  /**
+   * A call that never became a run, told to whoever keeps the deployment's records.
+   *
+   * The caller already learns the reason from the status and the payload — that is what makes a refusal
+   * actionable for them. This is the other half: an author watching their own space see that calls are arriving
+   * and being turned away, which is otherwise a thing only the browser's network tab knows.
+   */
+  const reject = (reason: ActionRejectReason, detail?: string) =>
+    reportReject(config, {
+      actionId: body.actionId,
+      spaceId,
+      environment,
+      trigger: 'call',
+      reason,
+      callerId,
+      ...(detail === undefined ? {} : { detail })
+    });
+
   // As of the revision this page was published at. A page and the flows it calls ship together, or a page shipped
   // yesterday runs whatever the action says today.
   const entry = (await config.action?.lookups?.getAction(spaceId, body.actionId, { environment, revision })) as
     ActionEntry | undefined;
   if (!entry) {
+    await reject('not_found', 'No action with this identifier at the revision being served');
     fail(res, 'not_found', 'Unknown action');
 
     return;
@@ -113,20 +134,37 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
 
   const limits = module.limitsFor(entry.document);
   const input = body.input ?? {};
+  const begin = {
+    spaceId,
+    actionId: entry.id,
+    callerId,
+    input,
+    ...(body.idempotencyKey ? { idempotencyKey: body.idempotencyKey } : {}),
+    ttlMs: limits.timeoutMs
+  };
+
+  /**
+   * The answer this key already produced, for a caller repeating itself after the first run finished.
+   *
+   * Only ever a key the caller NAMED: they told us which request this is, so answering the retry with what it
+   * answered the first time is what they asked for. Not metered and not counted — nothing ran.
+   */
+  const replayed = await module.guards.replay(begin);
+  if (replayed) {
+    res.setHeader('X-Plitzi-Replayed', 'true');
+    send(res, 200, { ...replayed, replayed: true }, replayed.runId);
+
+    return;
+  }
+
   let run;
   try {
     // Before anything is spent: a refusal here has taken no slot and no metering event.
     precheckRun(entry, { trigger: 'call', input, user: req.ctx.user, lineage });
-    run = await module.guards.begin({
-      spaceId,
-      actionId: entry.id,
-      callerId,
-      input,
-      idempotencyKey: body.idempotencyKey,
-      ttlMs: limits.timeoutMs
-    });
+    run = await module.guards.begin(begin);
   } catch (error) {
     const reason = error instanceof ActionRunError ? error.reason : 'failed';
+    await reject(reason, error instanceof Error ? error.message : undefined);
     fail(res, reason, error instanceof Error ? error.message : 'Action refused');
 
     return;
@@ -141,8 +179,9 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
 
   // Negotiated by the caller, and only for a run that is already allowed to start: everything above answers with a
   // status code, which a stream has already spent by the time it could say anything.
-  const stream = wantsStream(req.headers.accept) ? openStream(raw, abortRun) : undefined;
+  const stream = wantsStream(req.headers.accept) ? openStream(raw, abortRun, run.runId) : undefined;
 
+  let outcome;
   try {
     const result: ActionRunResult = await module.runAction({
       entry,
@@ -163,6 +202,7 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
         : {})
     });
 
+    outcome = result;
     if (stream) {
       stream.send({ event: 'done', data: { runId: result.runId, status: result.status, output: result.output } });
       stream.close();
@@ -199,6 +239,8 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
     fail(res, reason, message, run.runId);
   } finally {
     releaseAbort();
-    await module.guards.end(run);
+    // With the answer, so a caller that named its own key and asks again gets what it already got rather than a
+    // second run of the same intent.
+    await module.guards.end(run, outcome);
   }
 };

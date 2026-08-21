@@ -2,9 +2,12 @@ import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Input from '@plitzi/plitzi-ui/Input';
 import Label from '@plitzi/plitzi-ui/Label';
+import Switch from '@plitzi/plitzi-ui/Switch';
+import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, useState } from 'react';
 
 import type { ActionField, ActionRunReport } from '@plitzi/sdk-shared';
+import type { ChangeEvent } from 'react';
 
 export type ActionTestRunProps = {
   input: Record<string, ActionField>;
@@ -14,6 +17,23 @@ export type ActionTestRunProps = {
 };
 
 const statusIntent = (status: string) => (status === 'completed' ? 'success' : 'error');
+
+/**
+ * What a step left behind, when it is worth reading.
+ *
+ * Only for a step that did NOT succeed: on a run that worked the results are the flow's own data and belong in
+ * the output, while on one that did not this is the answer to the only question being asked — which step stopped
+ * it, and what it said. Already redacted of credential values before it left the server.
+ */
+const failureOf = (result: unknown): string => {
+  if (typeof result === 'string') {
+    return result;
+  }
+
+  const error = (result as { error?: unknown } | undefined)?.error;
+
+  return typeof error === 'string' ? error : '';
+};
 
 /**
  * Runs the saved action and shows what happened, step by step.
@@ -33,6 +53,14 @@ const ActionTestRun = ({ input, disabled, disabledReason, onRun }: ActionTestRun
 
   const handleChange = useCallback(
     (key: string) => (value: string) => setValues(current => ({ ...current, [key]: value })),
+    []
+  );
+
+  // Kept as the string every other control produces: the server coerces the declared type on the way in, and a
+  // panel that sent one field differently would be rehearsing a different request.
+  const handleChangeSwitch = useCallback(
+    (key: string) => (e: ChangeEvent<HTMLInputElement>) =>
+      setValues(current => ({ ...current, [key]: e.target.checked ? 'true' : 'false' })),
     []
   );
 
@@ -68,7 +96,28 @@ const ActionTestRun = ({ input, disabled, disabledReason, onRun }: ActionTestRun
                 {field.label ?? key}
                 {field.required ? ' *' : ''}
               </Label>
-              <Input value={values[key] ?? ''} size="xs" placeholder={field.type} onChange={handleChange(key)} />
+              {/* The control the field's own type asks for. A checkbox typed as the word "true" is a test that
+                  rehearses a different call from the one a page makes. */}
+              {field.type === 'boolean' && (
+                <Switch
+                  size="xs"
+                  checked={values[key] === 'true'}
+                  label={field.type}
+                  onChange={handleChangeSwitch(key)}
+                />
+              )}
+              {field.type === 'json' && (
+                <TextArea
+                  className="w-full font-mono"
+                  size="xs"
+                  value={values[key] ?? ''}
+                  placeholder="{ }"
+                  onChange={handleChange(key)}
+                />
+              )}
+              {field.type !== 'boolean' && field.type !== 'json' && (
+                <Input value={values[key] ?? ''} size="xs" placeholder={field.type} onChange={handleChange(key)} />
+              )}
             </div>
           ))}
         </div>
@@ -88,14 +137,19 @@ const ActionTestRun = ({ input, disabled, disabledReason, onRun }: ActionTestRun
           <div className="flex flex-col gap-1">
             {report.trace.map((step, index) => {
               const node = step.node as { title?: string; action?: string } | undefined;
+              const failure = step.status === 'success' ? '' : failureOf(step.result);
 
               return (
                 <div
                   key={`${String(node?.action)}-${index}`}
-                  className="flex items-center justify-between rounded-sm border border-gray-200 px-2 py-1 text-xs dark:border-zinc-700"
+                  className="flex flex-col rounded-sm border border-gray-200 px-2 py-1 text-xs dark:border-zinc-700"
                 >
-                  <span>{node?.title ?? node?.action ?? 'step'}</span>
-                  <span className="text-gray-500">{String(step.status)}</span>
+                  <div className="flex items-center justify-between">
+                    <span>{node?.title ?? node?.action ?? 'step'}</span>
+                    <span className="text-gray-500">{String(step.status)}</span>
+                  </div>
+                  {/* The whole point of showing a trace: a run that failed says WHERE, and this says why. */}
+                  {failure && <span className="mt-1 break-words text-red-600 dark:text-red-400">{failure}</span>}
                 </div>
               );
             })}

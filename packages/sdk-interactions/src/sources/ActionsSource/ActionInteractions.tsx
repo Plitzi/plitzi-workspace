@@ -52,11 +52,18 @@ const readStream = async (body: ReadableStream<Uint8Array>, onFrame: (frame: Str
     buffer = blocks.pop() ?? '';
     for (const block of blocks) {
       const event = /event: (\w+)/.exec(block)?.[1];
-      const data = /data: (.*)/.exec(block)?.[1];
       if (!event) {
         // A comment frame — the server's heartbeat. It carries nothing and exists to notice a dead peer.
         continue;
       }
+
+      // Every `data:` line of the frame, joined with the newlines SSE strips: one line is what our own server
+      // sends, several is what the format allows, and reading only the first would truncate anybody else's.
+      const data = block
+        .split('\n')
+        .filter(line => line.startsWith('data:'))
+        .map(line => line.slice('data:'.length).trimStart())
+        .join('\n');
 
       try {
         onFrame({ event, data: data ? (JSON.parse(data) as Record<string, unknown>) : {} });
@@ -114,6 +121,14 @@ const unreachable = { status: 'failed', reason: 'failed', runId: '', output: {} 
 const ActionInteractions = ({ children }: ActionInteractionsProps) => {
   const { useInteractions, interactionsManager } = use(InteractionsContext);
   const [endpoint] = useCommonStore('actions.endpoint');
+  /**
+   * What this space can run, when something knows — the builder seeds it, a published page has nothing here.
+   *
+   * The step used to ask for the identifier as free text, which is a value the editor knew and the author had to
+   * go and look up. This is the same move `navigate` makes with the page list: the options come from whoever
+   * holds them, and the control stays the one control.
+   */
+  const [[catalog, available]] = useCommonStore(['actions.catalog', 'actions.available']);
 
   /**
    * Reports a detached run back to the element that launched it.
@@ -274,27 +289,36 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
           return { status: 'failed', reason: payload.reason ?? 'failed', runId: '', output: {} };
         }
 
+        /**
+         * The run's id, off the response head.
+         *
+         * A streaming step returns the moment the stream opens, so a `done` frame arrives long after the flow
+         * carried on — and an id nobody has yet is an id nobody can cancel with. The head is sent when the stream
+         * opens, which is exactly when the step needs it.
+         */
+        const runId = response.headers.get('X-Plitzi-Run-Id') ?? '';
+
         // Frames are consumed in the background: the STEP returns as soon as the stream opens, so the flow carries
         // on and the page hears about progress through its triggers.
         void readStream(response.body, frame => {
           if (frame.event === 'data') {
-            reportFlow(context?.elementRef, 'onFlowProgress', { actionId, ...frame.data });
+            reportFlow(context?.elementRef, 'onFlowProgress', { actionId, runId, ...frame.data });
 
             return;
           }
 
           if (frame.event === 'error') {
-            reportFlow(context?.elementRef, 'onFlowError', { actionId, ...frame.data });
+            reportFlow(context?.elementRef, 'onFlowError', { actionId, runId, ...frame.data });
 
             return;
           }
 
           if (frame.event === 'done') {
-            reportFlow(context?.elementRef, 'onFlowEnd', { actionId, ...frame.data });
+            reportFlow(context?.elementRef, 'onFlowEnd', { actionId, runId, ...frame.data });
           }
         });
 
-        return { accepted: true, status: 'streaming', runId: '', output: {} };
+        return { accepted: true, status: 'streaming', runId, output: {} };
       }
 
       let response: Response;
@@ -373,6 +397,11 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
     [endpoint]
   );
 
+  const actionOptions = useMemo(
+    () => (catalog ?? []).map(action => ({ label: `${action.name} (${action.identifier})`, value: action.identifier })),
+    [catalog]
+  );
+
   const interactionCallbacks = useMemo(
     (): Record<string, InteractionCallback> => ({
       cancelServerAction: {
@@ -391,31 +420,68 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         type: 'globalCallback',
         callback: handleRunAction as InteractionCallback['callback'],
         preview: { runId: '', status: '', output: {} },
-        params: {
-          actionId: { type: 'text', canBind: true, defaultValue: '', label: 'Action' },
-          input: { type: 'codemirror-json', canBind: true, defaultValue: '{}', label: 'Input' },
-          mode: {
-            type: 'select',
-            defaultValue: 'await',
-            label: 'Mode',
-            options: [
-              { label: 'Wait for the result', value: 'await' },
-              { label: 'Send and continue', value: 'detached' },
-              { label: 'Stream progress', value: 'stream' }
-            ]
-          },
-          // Only meaningful when the flow waits: a detached step never sees the refusal a repeated key produces.
-          idempotencyKey: {
-            type: 'text',
-            canBind: true,
-            defaultValue: '',
-            label: 'Idempotency Key',
-            when: params => params.mode !== 'detached'
-          }
+        /**
+         * Read as a function of what the node already says, so the step can describe the action it names.
+         *
+         * The alternative is a fixed pair of boxes that ask for an identifier the editor knows and a JSON blob
+         * with nothing to say about which keys belong in it — which is how an author ends up guessing at both.
+         */
+        params: nodeParams => {
+          const selected = (catalog ?? []).find(action => action.identifier === nodeParams.actionId);
+          const declared = Object.entries(selected?.input ?? {});
+
+          return {
+            /**
+             * Picked from what the space actually has, and still typeable.
+             *
+             * A select the moment anything knows the list, and a plain text box when nothing does — a published
+             * page never edits, so there is nothing to offer there. Typing stays possible because a page authored
+             * before the action it names is a legitimate order to work in, and because a binding may produce the
+             * id at runtime.
+             */
+            actionId: {
+              type: () => (actionOptions.length > 0 ? 'select' : 'text'),
+              canBind: true,
+              defaultValue: '',
+              // Said where the step is authored, not at the first click in production: a space that deploys
+              // nowhere that runs server code will never run this, however correct the flow around it is.
+              label: available === false ? 'Action — this space has no server to run it' : 'Action',
+              options: actionOptions
+            },
+            // The declared contract, on the control that has to satisfy it: the server drops every key the action
+            // did not name, and an author reading `{}` has no way to know which ones those are.
+            input: {
+              type: 'codemirror-json',
+              canBind: true,
+              defaultValue: '{}',
+              label:
+                declared.length > 0
+                  ? `Input — ${declared.map(([key, field]) => `${key}${field.required ? '*' : ''}: ${field.type}`).join(', ')}`
+                  : 'Input'
+            },
+            mode: {
+              type: 'select',
+              defaultValue: 'await',
+              label: 'Mode',
+              options: [
+                { label: 'Wait for the result', value: 'await' },
+                { label: 'Send and continue', value: 'detached' },
+                { label: 'Stream progress', value: 'stream' }
+              ]
+            },
+            // Only meaningful when the flow waits: a detached step never sees the refusal a repeated key produces.
+            idempotencyKey: {
+              type: 'text',
+              canBind: true,
+              defaultValue: '',
+              label: 'Idempotency Key',
+              when: params => params.mode !== 'detached'
+            }
+          };
         }
       }
     }),
-    [handleRunAction, handleCancelAction]
+    [handleRunAction, handleCancelAction, actionOptions, catalog, available]
   );
 
   useInteractions({ id: 'actions', callbacks: interactionCallbacks });

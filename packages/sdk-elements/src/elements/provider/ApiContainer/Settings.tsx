@@ -9,7 +9,7 @@ import { useCallback, use, useMemo, useState } from 'react';
 
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
-import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import { useBuilderStore, useCommonStore } from '@plitzi/sdk-shared/store';
 import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
 
 import FiltersInput from './components/FiltersInput';
@@ -33,6 +33,7 @@ type SettingsProps = {
   credentials?: RequestCredentials;
   runtime?: ElementRuntime;
   connector?: string;
+  action?: string;
   endpoint?: string;
   resource?: string;
   limit?: string;
@@ -55,6 +56,7 @@ const Settings = ({
   credentials = 'same-origin',
   runtime = 'client',
   connector = '',
+  action = '',
   endpoint = '',
   resource = '',
   limit = '10',
@@ -68,9 +70,13 @@ const Settings = ({
   const { theme } = use(ThemeContext);
   const [pageDefinitions] = useBuilderStore('pageDefinitions');
   const [connectors] = useBuilderStore('connectors');
+  const [actionCatalog] = useCommonStore('actions.catalog');
   const [hasServerRendering] = useBuilderStore('hasServerRendering');
   const [advancedSettings, setAdvancedSettings] = useState(false);
   const serverMode = runtime === 'server';
+  // What the element already says, read back for the picker. A server element that names neither yet is being set
+  // up as a connector, which is the common case and the one the panel opened on before actions existed.
+  const source = !serverMode ? 'client' : action && !connector ? 'action' : 'connector';
   const [[routeParams, queryParams, currentPageId]] = useSdkStore([
     'navigation.routeParams',
     'navigation.queryParams',
@@ -95,7 +101,26 @@ const Settings = ({
     [onUpdate]
   );
 
-  const handleChangeRuntime = useCallback((value: string) => onUpdate?.('runtime', value, true), [onUpdate]);
+  /**
+   * Where this provider's data comes from — and the two server answers are mutually exclusive.
+   *
+   * An element names ONE producer. The server checks the connector first, so an element carrying both would keep
+   * resolving through the connector however the panel was set: clearing the other one is what makes the choice
+   * mean what it says.
+   */
+  const handleChangeSource = useCallback(
+    (value: string) => {
+      if (value === 'client') {
+        onUpdate?.('runtime', 'client', true);
+
+        return;
+      }
+
+      onUpdate?.('runtime', 'server', true);
+      onUpdate?.(value === 'action' ? 'connector' : 'action', '');
+    },
+    [onUpdate]
+  );
 
   const handleChangeSingleRecord = useCallback(
     (e: ChangeEvent) => onUpdate?.('singleRecord', (e.target as HTMLInputElement).checked),
@@ -141,24 +166,45 @@ const Settings = ({
 
   return (
     <div className="flex grow flex-col gap-4 py-2">
-      <Select value={runtime} label="Data Source" onChange={handleChangeRuntime} size="xs">
+      <Select value={source} label="Data Source" onChange={handleChangeSource} size="xs">
         <option value="client">Browser request</option>
-        <option value="server">Connector (server-side)</option>
+        <option value="connector">Connector (server-side)</option>
+        <option value="action">Server action (server-side)</option>
       </Select>
       <span className="text-xs text-gray-500 dark:text-zinc-400">
-        {serverMode
-          ? 'The server calls the API and hands the page its records. The endpoint and the credential never reach the browser, and the content is in the HTML search engines see.'
-          : 'The browser calls the URL directly. Anything it needs to authenticate with is visible to the visitor, and the content is not in the initial HTML.'}
+        {source === 'connector' &&
+          'The server calls the API and hands the page its records. The endpoint and the credential never reach the browser, and the content is in the HTML search engines see.'}
+        {source === 'action' &&
+          'A flow runs on the server and hands the page whatever its output step returns — for the read a connector cannot express: two calls joined, a computed field, a shape that depends on who is looking. It is fed this page’s route and query params.'}
+        {source === 'client' &&
+          'The browser calls the URL directly. Anything it needs to authenticate with is visible to the visitor, and the content is not in the initial HTML.'}
       </span>
-      {serverMode && (
+      {source === 'action' && (
         <>
-          {!hasServerRendering && (
-            <div className="rounded-sm border border-yellow-300 bg-yellow-50 p-2 text-xs text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950 dark:text-yellow-200">
-              This space has no server-rendered deployment. Connectors resolve here in the builder, but a published page
-              would have no server to resolve them — publish with a Plitzi SSR credential, or read the API from the
-              browser instead.
+          {actionCatalog?.length === 0 && (
+            <div className="rounded-sm border border-gray-300 p-2 text-xs text-gray-500 dark:border-zinc-600 dark:text-zinc-400">
+              No actions yet. Add one in the Actions panel and give it a “While a page renders” trigger — that is the
+              way in this element uses.
             </div>
           )}
+          <Select value={action} label="Action" onChange={handleChange('action')} size="xs">
+            <option value="">Select an action…</option>
+            {(actionCatalog ?? []).map(item => (
+              <option key={item.identifier} value={item.identifier}>
+                {item.name}
+              </option>
+            ))}
+          </Select>
+        </>
+      )}
+      {serverMode && !hasServerRendering && (
+        <div className="rounded-sm border border-yellow-300 bg-yellow-50 p-2 text-xs text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950 dark:text-yellow-200">
+          This space has no server-rendered deployment. It resolves here in the builder, but a published page would have
+          no server to resolve it — publish with a Plitzi SSR credential, or read the API from the browser instead.
+        </div>
+      )}
+      {source === 'connector' && (
+        <>
           {connectorOptions.length === 0 && (
             <div className="rounded-sm border border-gray-300 p-2 text-xs text-gray-500 dark:border-zinc-600 dark:text-zinc-400">
               No connectors yet. Add one in the Connectors panel — it holds the API endpoints, and the credential stays

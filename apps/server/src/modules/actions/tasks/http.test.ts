@@ -56,7 +56,9 @@ const run = (target: ActionEntry, fetchImpl: typeof fetch, credential?: Record<s
   });
 };
 
-const ok = () => Promise.resolve({ ok: true, status: 200, text: () => Promise.resolve('{"ok":true}') } as Response);
+/** A REAL `Response`, not a shape that resembles one: the run's fetch reads headers and streams the body to hold
+ *  it to the size budget, so a stand-in without either would be testing a path production never takes. */
+const ok = () => Promise.resolve(new Response('{"ok":true}', { status: 200 }));
 
 /** The calls a mock recorded, typed as what `fetch` actually receives. */
 const callsOf = (mock: { mock: { calls: unknown[] } }) => mock.mock.calls as unknown as [string, RequestInit][];
@@ -104,6 +106,38 @@ describe('http.request', () => {
 
     expect(result.status).toBe('failed');
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  /** Long before a timeout would notice: a backend answering a gigabyte quickly is how one flow takes a process
+   *  down, and every other ceiling here is about how LONG a run may take rather than how much it may hold. */
+  it('refuses an answer larger than the byte budget, declared or not', async () => {
+    const declared = vi.fn(() =>
+      Promise.resolve(new Response('x'.repeat(64), { status: 200, headers: { 'content-length': '64' } }))
+    );
+    const target = entry({ url: 'https://api.example.com/items', method: 'GET' });
+    target.document.limits = { maxResponseBytes: 32 };
+
+    // Refused like every other ceiling in this module — the step budget, the request budget — rather than as a
+    // step that merely failed: the run is over capacity, and the caller is told exactly that.
+    await expect(run(target, declared)).rejects.toThrow(/byte budget/);
+
+    // The same ceiling for a chunked answer that declares nothing, which is the one a cap on `Content-Length`
+    // alone would wave through.
+    const chunked = vi.fn(() =>
+      Promise.resolve(
+        new Response(
+          new ReadableStream<Uint8Array>({
+            start: controller => {
+              controller.enqueue(new TextEncoder().encode('x'.repeat(64)));
+              controller.close();
+            }
+          }),
+          { status: 200 }
+        )
+      )
+    );
+
+    await expect(run(target, chunked)).rejects.toThrow(/byte budget/);
   });
 
   it('refuses a request aimed inside the cluster', async () => {

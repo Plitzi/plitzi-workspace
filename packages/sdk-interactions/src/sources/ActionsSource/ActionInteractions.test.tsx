@@ -8,8 +8,19 @@ import type { InteractionsContextValue } from '../../InteractionsContext';
 import type { InteractionCallback } from '@plitzi/sdk-shared';
 
 const endpoint = vi.hoisted<{ value: string | undefined }>(() => ({ value: '/_action' }));
+/** What the builder seeds when it is the one mounting: the actions this space has, and whether anything will run
+ *  them. A rendered page has neither, which is the default here. */
+const authoring = vi.hoisted<{ catalog: unknown[]; available: boolean | undefined }>(() => ({
+  catalog: [],
+  available: undefined
+}));
 
-vi.mock('@plitzi/sdk-shared/store', () => ({ useCommonStore: () => [endpoint.value] }));
+vi.mock('@plitzi/sdk-shared/store', () => ({
+  // The real hook answers one value for a path and a tuple for a list of them. The component asks for both
+  // shapes, so the stand-in has to as well.
+  useCommonStore: (path: string | string[]) =>
+    Array.isArray(path) ? [[authoring.catalog, authoring.available]] : [endpoint.value]
+}));
 
 const warning = vi.hoisted(() => vi.fn());
 const info = vi.hoisted(() => vi.fn());
@@ -21,6 +32,13 @@ type RunCallback = (
   params: Record<string, unknown>,
   context?: { elementRef?: string }
 ) => Promise<Record<string, unknown>>;
+
+/** A param definition as this test reads it, across every branch of the union that describes one. */
+type ParamShape = {
+  label?: string;
+  type?: string | ((params: Record<string, unknown>) => string);
+  options?: { label: string; value: string }[];
+};
 
 const interactionTrigger = vi.fn();
 
@@ -41,7 +59,18 @@ const mount = () => {
 
   return {
     run: registered.runServerAction.callback as unknown as RunCallback,
-    cancel: registered.cancelServerAction.callback as unknown as RunCallback
+    cancel: registered.cancelServerAction.callback as unknown as RunCallback,
+    /**
+     * The step as the EDITOR sees it: params are read as a function of what the node already says.
+     *
+     * Typed loosely on purpose — the union that describes a param narrows `options` away for the text case, and
+     * this is the one place that reads across the whole shape rather than rendering one of them.
+     */
+    paramsFor: (nodeParams: Record<string, unknown>): Record<string, ParamShape> => {
+      const { params } = registered.runServerAction;
+
+      return (typeof params === 'function' ? params(nodeParams) : params) as unknown as Record<string, ParamShape>;
+    }
   };
 };
 
@@ -51,6 +80,8 @@ const jsonResponse = (status: number, payload: Record<string, unknown>) =>
 describe('ActionInteractions', () => {
   beforeEach(() => {
     endpoint.value = '/_action';
+    authoring.catalog = [];
+    authoring.available = undefined;
     warning.mockClear();
     info.mockClear();
     success.mockClear();
@@ -207,6 +238,62 @@ describe('ActionInteractions', () => {
       'onFlowError',
       expect.objectContaining({ actionId: 'quote', reason: 'failed' })
     );
+  });
+
+  /**
+   * The identifier used to be free text — a value the editor knew and the author had to go and look up. This is
+   * the same move `navigate` makes with the page list: the options come from whoever holds them.
+   */
+  it('offers the space’s own actions when the editor knows them, and stays typeable when it does not', () => {
+    authoring.catalog = [{ identifier: 'shipping-quote', name: 'Shipping quote', input: {} }];
+
+    const offered = mount().paramsFor({});
+
+    expect(offered.actionId.options).toEqual([{ label: 'Shipping quote (shipping-quote)', value: 'shipping-quote' }]);
+    expect(typeof offered.actionId.type === 'function' && offered.actionId.type({})).toBe('select');
+
+    // A rendered page knows nothing, and a control that offered an empty list there would be worse than a box.
+    authoring.catalog = [];
+
+    const bare = mount().paramsFor({});
+
+    expect(typeof bare.actionId.type === 'function' && bare.actionId.type({})).toBe('text');
+  });
+
+  /** The server drops every key the action did not declare. An author reading `{}` has no way to know which. */
+  it('names the fields the chosen action declares on the control that has to satisfy them', () => {
+    authoring.catalog = [
+      {
+        identifier: 'shipping-quote',
+        name: 'Shipping quote',
+        input: { city: { type: 'text', required: true }, weightKg: { type: 'number' } }
+      }
+    ];
+
+    const offered = mount().paramsFor({ actionId: 'shipping-quote' });
+
+    expect(offered.input.label).toBe('Input — city*: text, weightKg: number');
+  });
+
+  /**
+   * A streaming step returns the moment the stream opens, so an id that only arrives in the `done` frame is an id
+   * nobody can cancel with. The server puts it on the response head for exactly this.
+   */
+  it('reads a streaming run’s id off the response head, so it can be cancelled', async () => {
+    const body = new ReadableStream<Uint8Array>({
+      start: controller => {
+        controller.enqueue(new TextEncoder().encode('event: done\ndata: {"status":"completed"}\n\n'));
+        controller.close();
+      }
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(new Response(body, { status: 200, headers: { 'X-Plitzi-Run-Id': 'run-42' } })))
+    );
+
+    const result = await mount().run({ actionId: 'quote', input: '{}', mode: 'stream' }, { elementRef: 'button1' });
+
+    expect(result).toMatchObject({ status: 'streaming', runId: 'run-42' });
   });
 
   it('reports a stream it could not open the same way', async () => {

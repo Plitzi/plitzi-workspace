@@ -36,7 +36,7 @@ export const createActionsModule = (config: ActionsConfig): ActionsModule => {
    * runs — because per process it is not a guarantee: the same double-click behind a load balancer lands on two
    * replicas and both run. With none configured this is one process's Map, which is exactly right for one.
    */
-  const guards = createRunGuards(config.concurrency, config.kv);
+  const guards = createRunGuards(config.concurrency, config.kv, config.idempotency);
   const kv = createKvStore(config.kv ?? createMemoryKv());
 
   return {
@@ -54,6 +54,7 @@ export { DEFAULT_LIMITS, resolveLimits } from './runtime/limits';
 export { createRunGuards, deriveRunKey } from './runtime/guards';
 export { createScheduleRunner } from './runtime/schedule';
 export { createMemoryKv } from './runtime/memoryKv';
+export { createRunLogger, createRejectLogger } from './runtime/runLogger';
 export { createTaskRegistry, taskName } from './tasks/registry';
 export { describeCatalog, describeTask } from './taskCatalog';
 export { handleActionCall } from './transport/callHandler';
@@ -70,6 +71,7 @@ export type {
   ActionDbDriver,
   ActionKvStore,
   ActionLookups,
+  ActionRejectRecord,
   ActionRunRecord,
   ActionRunRequest,
   ActionRunResult,
