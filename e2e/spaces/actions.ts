@@ -17,11 +17,18 @@ export const ACTION_IDS = {
   title: 'action-title',
   who: 'action-who',
   orphan: 'action-orphan',
-  orphanText: 'action-orphan-text'
+  orphanText: 'action-orphan-text',
+  offline: 'action-offline',
+  offlineText: 'action-offline-text',
+  button: 'action-button',
+  status: 'action-status'
 };
 
 /** What the flow answers, so a spec asserts on a string it can point at rather than on a fixture's prose. */
 export const ACTION_OUTPUT = { title: 'resolved by an action', who: 'everyone' };
+
+/** What the provider element publishes when its slice never arrived. The page binds it; a spec reads it back. */
+export const PROVIDER_ERROR = 'The data provider could not be reached';
 
 /** `idRef` sits on the ELEMENT, never inside its definition: it is what a source is named after
  *  (`apiContainer_feed`), and an element without one publishes no source at all — so a binding pointed at it
@@ -54,6 +61,47 @@ const bound = (id: string, source: string, parentId: string): Element =>
     { parentId, bindings: { attributes: [{ id: `b-${id}`, source, to: 'content' }] } }
   );
 
+const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementInteraction => ({
+  id,
+  title: id,
+  type: 'task',
+  action: '',
+  params: {},
+  preview: {},
+  elementId: null,
+  beforeNode: '',
+  afterNode: '',
+  flowId: 'flow',
+  enabled: true,
+  ...overrides
+});
+
+/**
+ * The click path: run the action from the browser and put what the step answered on the page.
+ *
+ * `{{run.status}}` is the assertion surface. A run that completed, one the server refused and one that never
+ * reached a server at all all land here as a status — which is the whole contract being checked: the flow gets a
+ * RESULT it can bind, whatever happened to the request.
+ */
+const runFlow: Record<string, ElementInteraction> = {
+  trigger: node('trigger', { type: 'trigger', action: 'onClick', elementId: 'runButton', afterNode: 'run' }),
+  run: node('run', {
+    type: 'globalCallback',
+    action: 'runServerAction',
+    elementId: 'actions',
+    params: { actionId: 'e2e-feed', input: '{}', mode: 'await' },
+    beforeNode: 'trigger',
+    afterNode: 'show'
+  }),
+  show: node('show', {
+    type: 'globalCallback',
+    action: 'setState',
+    elementId: 'state',
+    params: { key: 'runStatus', type: 'text', value: '{{run.status}}' },
+    beforeNode: 'run'
+  })
+};
+
 export const actionSpace = (): OfflineDataRaw =>
   ({
     schema: {
@@ -69,7 +117,10 @@ export const actionSpace = (): OfflineDataRaw =>
           'page',
           { slug: '', default: true, name: 'Actions' },
           // A page has no parent; `minimal.ts` spells the same case out the same way.
-          { parentId: undefined, items: [ACTION_IDS.provider, ACTION_IDS.orphan] }
+          {
+            parentId: undefined,
+            items: [ACTION_IDS.provider, ACTION_IDS.orphan, ACTION_IDS.offline, ACTION_IDS.button, ACTION_IDS.status]
+          }
         ),
         [ACTION_IDS.provider]: element(
           ACTION_IDS.provider,
@@ -85,26 +136,30 @@ export const actionSpace = (): OfflineDataRaw =>
           { connector: 'not-configured-here', subType: 'section' },
           { idRef: 'orphan', runtime: 'server', items: [ACTION_IDS.orphanText] }
         ),
-        [ACTION_IDS.orphanText]: bound(ACTION_IDS.orphanText, 'apiContainer_orphan.title', ACTION_IDS.orphan)
+        [ACTION_IDS.orphanText]: bound(ACTION_IDS.orphanText, 'apiContainer_orphan.title', ACTION_IDS.orphan),
+        /** Fed by an action whose own outbound call cannot resolve — the server is up, the internet is not. */
+        [ACTION_IDS.offline]: element(
+          ACTION_IDS.offline,
+          'apiContainer',
+          { action: 'e2e-unreachable', subType: 'section' },
+          { idRef: 'offline', runtime: 'server', items: [ACTION_IDS.offlineText] }
+        ),
+        [ACTION_IDS.offlineText]: bound(
+          ACTION_IDS.offlineText,
+          'apiContainer_offline.errorMessage',
+          ACTION_IDS.offline
+        ),
+        [ACTION_IDS.button]: element(
+          ACTION_IDS.button,
+          'button',
+          { subType: 'button', content: 'Run it' },
+          { idRef: 'runButton', interactions: runFlow }
+        ),
+        [ACTION_IDS.status]: bound(ACTION_IDS.status, 'state.runStatus', PAGE_ID)
       }
     },
     style: { cache: '' }
   }) as unknown as OfflineDataRaw;
-
-const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementInteraction => ({
-  id,
-  title: id,
-  type: 'task',
-  action: '',
-  params: {},
-  preview: {},
-  elementId: null,
-  beforeNode: '',
-  afterNode: '',
-  flowId: 'flow',
-  enabled: true,
-  ...overrides
-});
 
 /**
  * The action behind the provider: a way in, a step that takes long enough to overlap another render, and a
@@ -125,11 +180,51 @@ export const FEED_ACTION = {
         params: { access: 'public', input: `{"who":{"type":"text","defaultValue":"${ACTION_OUTPUT.who}"}}` },
         afterNode: 'hold'
       }),
+      /** The second way in, for the button: a call is not a render, and each way in states its own rule. Both
+       *  head the same chain — one action, two doors. */
+      called: node('called', {
+        type: 'trigger',
+        action: 'call',
+        params: { access: 'public', input: `{"who":{"type":"text","defaultValue":"${ACTION_OUTPUT.who}"}}` },
+        afterNode: 'hold'
+      }),
       hold: node('hold', { action: 'flow.delay', params: { milliseconds: '250' }, afterNode: 'answer' }),
       answer: node('answer', {
         action: 'flow.output',
         params: { values: `{"title": "${ACTION_OUTPUT.title}", "who": "{{input.who}}"}` },
         beforeNode: 'hold'
+      })
+    }
+  }
+};
+
+/**
+ * The action whose own call cannot go anywhere: the server is up, the internet is not.
+ *
+ * `.invalid` is reserved by RFC 6761 and never resolves — for anybody, on any machine, connected or not — so this
+ * is the outage reproduced rather than simulated, and it costs no network to run.
+ */
+export const UNREACHABLE_ACTION = {
+  id: 'e2e-unreachable',
+  document: {
+    name: 'Unreachable feed',
+    nodes: {
+      start: node('start', {
+        type: 'trigger',
+        action: 'render',
+        params: { access: 'public' },
+        afterNode: 'fetch'
+      }),
+      fetch: node('fetch', {
+        action: 'http.request',
+        params: { url: 'https://offline.invalid/feed', method: 'GET' },
+        beforeNode: 'start',
+        afterNode: 'answer'
+      }),
+      answer: node('answer', {
+        action: 'flow.output',
+        params: { values: '{"title": "{{ fetch.data.title }}"}' },
+        beforeNode: 'fetch'
       })
     }
   }

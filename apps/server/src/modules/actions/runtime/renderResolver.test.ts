@@ -139,6 +139,24 @@ describe('createActionResolver', () => {
     expect(second).toEqual(first);
   });
 
+  /** The page's error state is reached by the slice being ABSENT — that is how `resolveRscData` reports a
+   *  provider that did not resolve. A failed run answers an empty output, and publishing that would tell the
+   *  element it resolved to nothing: an empty section where the truth is a failed fetch. */
+  it('publishes nothing for a run that did not complete', async () => {
+    const failing: ActionEntry = {
+      ...entry,
+      document: {
+        ...entry.document,
+        nodes: {
+          ...entry.document.nodes,
+          load: { ...entry.document.nodes.load, action: 'flow.fail', params: { message: 'no route to host' } }
+        }
+      }
+    };
+
+    await expect(resolve({ action: 'post-page' }, failing)).rejects.toThrow(/failed/);
+  });
+
   it('leaves an element that names no action alone', async () => {
     expect(await resolve({ connector: 'cms' })).toBeUndefined();
   });

@@ -245,9 +245,11 @@ callers to retry harder.
 | The step reports itself inert | The page has no server tier — a static export or an embed. Deploy the space with an SSR credential |
 | `duplicate` | The same call is already running. Give the step an idempotency key if the repeat is legitimate. A `render` never reports this: two visitors of one page are not one caller submitting twice |
 | `forbidden` | The action has no trigger step of that kind, or the caller does not meet that trigger's access rule |
+| `over_capacity` | Too many runs at once. Calls are capped per space (`concurrency.perSpace`) and renders per process (`concurrency.renderPerProcess`) — a busy page is never counted against the space's call budget |
 | `recursion` | The flow reached its own webhook |
 | A `{{ credential.… }}` that renders empty | The step did not name a credential — set its `credential` field |
-| An empty section on a rendered page | A `render` action failed; the reason is in the server log, and one slice failing never takes the page down |
+| A section reporting it could not be reached | A `render` action did not complete; the reason is in the server log, and one slice failing never takes the page down. The element publishes `hasError` and `errorMessage` — bind them and the page says what a visitor can act on |
+| A step that reports `failed` with no server answer behind it | The server was unreachable — down, restarting, or the connection dropped. A run that never left the browser is reported like a refusal, so the flow still gets a status to bind |
 
 For anything else, the **Test run** panel shows the trace step by step, with credential values redacted.
 

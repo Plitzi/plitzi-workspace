@@ -173,9 +173,13 @@ export const targets: Target[] = [
   {
     id: 'server-actions',
     workspace: '@plitzi/example-server-actions',
-    /** One command, two listeners: the example serves the PUBLISHED space here and its draft on the next port up,
-     *  which is the only way to see the versioning rule rather than read about it. The spec derives the second
-     *  origin from this one — Playwright only ever waits on the first. */
+    /** One command, TWO listeners: the example serves the PUBLISHED space on 5010 and its draft on 5011, which is
+     *  the only way to see the versioning rule rather than read about it. The spec derives the second origin from
+     *  this one — Playwright only ever waits on the first.
+     *
+     *  So this target owns 5010 AND 5011, and anything added below starts at 5012. Claiming a port it already
+     *  listens on is not a bind error anybody sees: Playwright's probe finds an open socket, calls the server
+     *  ready, and the specs run against the wrong site with no clue which one they hit. */
     command: 'PORT=5010 yarn workspace @plitzi/example-server-actions start',
     origin: 'http://127.0.0.1:5010',
     what: 'A declarative flow the server runs, called from a page'
@@ -183,8 +187,8 @@ export const targets: Target[] = [
   {
     id: 'server-actions-render',
     workspace: '@plitzi/example-server-actions-render',
-    command: 'PORT=5011 yarn workspace @plitzi/example-server-actions-render start',
-    origin: 'http://127.0.0.1:5011',
+    command: 'PORT=5012 yarn workspace @plitzi/example-server-actions-render start',
+    origin: 'http://127.0.0.1:5012',
     what: 'The server fetches an API while the page renders',
     gate: {
       open: catApiReachable,
@@ -194,9 +198,9 @@ export const targets: Target[] = [
   {
     id: 'server-actions-no-server',
     workspace: '@plitzi/example-server-actions-no-server',
-    command: 'yarn workspace @plitzi/example-server-actions-no-server start --port 5012',
+    command: 'yarn workspace @plitzi/example-server-actions-no-server start --port 5013',
     /** Vite binds the NAME localhost, which resolves to ::1 first on macOS — see the note on `origin` above. */
-    origin: 'http://localhost:5012',
+    origin: 'http://localhost:5013',
     what: 'The same space in the browser alone: every server-side step inert',
     warmUp: true
   },

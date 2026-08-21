@@ -189,6 +189,51 @@ describe('ActionInteractions', () => {
     expect(await mount().cancel({ runId: 'someone-elses' })).toEqual({ cancelled: false });
   });
 
+  /** A server that is down is not a server that refused: the fetch REJECTS rather than answering. Reported the
+   *  same way all the same — the flow carries on with a result it can bind, and the element that fired the step
+   *  hears about it — because to a page the two are one event: the run did not happen. */
+  it('reports a server it could not reach as a failed run, not as a thrown step', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new Error('Failed to fetch')))
+    );
+
+    const result = await mount().run({ actionId: 'quote', input: '{}', mode: 'await' }, { elementRef: 'button1' });
+
+    expect(result).toMatchObject({ status: 'failed', reason: 'failed', output: {} });
+    expect(warning).toHaveBeenCalled();
+    expect(interactionTrigger).toHaveBeenCalledWith(
+      'button1',
+      'onFlowError',
+      expect.objectContaining({ actionId: 'quote', reason: 'failed' })
+    );
+  });
+
+  it('reports a stream it could not open the same way', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new Error('Failed to fetch')))
+    );
+
+    const result = await mount().run({ actionId: 'quote', input: '{}', mode: 'stream' }, { elementRef: 'button1' });
+
+    expect(result).toMatchObject({ status: 'failed', reason: 'failed' });
+    expect(interactionTrigger).toHaveBeenCalledWith(
+      'button1',
+      'onFlowError',
+      expect.objectContaining({ reason: 'failed' })
+    );
+  });
+
+  it('answers a cancellation it could not deliver as not cancelled', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new Error('Failed to fetch')))
+    );
+
+    expect(await mount().cancel({ runId: 'run-7' })).toEqual({ cancelled: false });
+  });
+
   it('stays inert, and says so once, when the page has no server tier', async () => {
     endpoint.value = undefined;
     const fetchMock = vi.fn();

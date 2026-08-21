@@ -95,6 +95,16 @@ const parseInput = (input: string | Record<string, unknown>): Record<string, unk
 };
 
 /**
+ * What a step answers when the request never reached a server at all.
+ *
+ * The same SHAPE the server's own refusal produces, on purpose: to a flow, "the server said no" and "there was no
+ * server to ask" are the same event — the run did not happen — and an author binding `{{step.status}}` should not
+ * have to discover that one of them arrives as a result and the other as a thrown error. The message is where the
+ * two are told apart, because that is a question for whoever is debugging, not for the flow.
+ */
+const unreachable = { status: 'failed', reason: 'failed', runId: '', output: {} };
+
+/**
  * Running a server action from a client flow.
  *
  * The step names an action and hands it inputs — never a URL, a connector or a credential. Which one it can reach
@@ -231,12 +241,27 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
 
         // `fetch` + a reader, never `EventSource`: that reconnects whenever a stream ends — success included — and
         // each reconnect would start another run of the same action, forever.
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-          credentials: 'same-origin',
-          body
-        });
+        let response: Response;
+        try {
+          response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+            credentials: 'same-origin',
+            body
+          });
+        } catch (error: unknown) {
+          pConsole.warning(
+            'interactions',
+            <span>
+              Server action <b>{actionId}</b> could not be reached
+            </span>,
+            { actionId, error: error instanceof Error ? error.message : String(error) }
+          );
+          reportFlow(context?.elementRef, 'onFlowError', { actionId, runId: '', error: '', reason: 'failed' });
+
+          return unreachable;
+        }
+
         if (!response.ok || !response.body) {
           const payload = (await response.json().catch(() => ({}))) as ActionResponse;
           reportFlow(context?.elementRef, 'onFlowError', {
@@ -272,12 +297,29 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         return { accepted: true, status: 'streaming', runId: '', output: {} };
       }
 
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body
-      });
+      let response: Response;
+      try {
+        response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body
+        });
+      } catch (error: unknown) {
+        // A server that is down, a connection that dropped, a page kept open through a deploy. Reported like a
+        // refusal rather than thrown, so the rest of the flow — and the element that fired it — hear about it.
+        pConsole.warning(
+          'interactions',
+          <span>
+            Server action <b>{actionId}</b> could not be reached
+          </span>,
+          { actionId, error: error instanceof Error ? error.message : String(error) }
+        );
+        reportFlow(context?.elementRef, 'onFlowError', { actionId, runId: '', error: '', reason: 'failed' });
+
+        return unreachable;
+      }
+
       const payload = (await response.json().catch(() => ({}))) as ActionResponse;
       if (!response.ok) {
         // The reason is the server's own vocabulary — `duplicate`, `over_capacity`, `recursion` — and naming it is
@@ -315,12 +357,18 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         return { cancelled: false };
       }
 
-      const response = await fetch(`${endpoint}/run/${params.runId}`, {
-        method: 'DELETE',
-        credentials: 'same-origin'
-      });
+      try {
+        const response = await fetch(`${endpoint}/run/${params.runId}`, {
+          method: 'DELETE',
+          credentials: 'same-origin'
+        });
 
-      return { cancelled: response.status === 204 };
+        return { cancelled: response.status === 204 };
+      } catch {
+        // Unreachable is not cancelled, and it is not an exception either: the caller asked whether the run was
+        // stopped, and the honest answer to that is no.
+        return { cancelled: false };
+      }
     },
     [endpoint]
   );

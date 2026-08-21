@@ -61,6 +61,8 @@ export const createActionResolver =
       callerId: user ? `user:${user.id}` : 'render',
       input,
       idempotencyKey: `render:${randomUUID()}`,
+      // Counted as traffic rather than as somebody asking for work: a page's popularity must not be refused.
+      kind: 'render',
       ttlMs: module.limitsFor(entry.document).timeoutMs
     });
 
@@ -76,6 +78,19 @@ export const createActionResolver =
         at,
         signal: run.controller.signal
       });
+
+      /**
+       * A run that did not COMPLETE resolved nothing, and must not look like one that resolved to nothing.
+       *
+       * A step that throws — an outbound call with no internet behind it, a `flow.fail` guard, a timeout — ends
+       * the run with `status: 'failed'` and an empty output, which published as a slice is indistinguishable
+       * from a provider that legitimately returned no records. The element then renders its empty state instead
+       * of its error one, and the bindings meant for exactly this (`hasError`, `errorMessage`) never fire: the
+       * page says "nothing here" when the truth is "this could not be fetched".
+       */
+      if (result.status !== 'completed') {
+        throw new Error(`Action "${actionId}" ended as ${result.status}`);
+      }
 
       // The output alone: a render slice is serialized into the page, so anything beyond what the output step
       // named would be published to every visitor of that URL.

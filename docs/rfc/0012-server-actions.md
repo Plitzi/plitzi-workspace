@@ -638,6 +638,14 @@ with TTL equal to the run's timeout, released on completion.
 Caps sit above the key: max concurrent runs per space, and max live streams per process. Over either, the
 answer is 429 — degrading everyone's stream to keep one alive is the wrong trade.
 
+**Renders are counted separately, and never per space.** A call is somebody ASKING for work, and one space's
+callers hammering is that space's problem — which is what a per-space ceiling is for. A render arrives because
+somebody is READING the page: the number in flight is the number of visitors, so five hundred at once is a page
+doing well, not a space abusing anything. Counted in the same bucket, a popular page refused its own visitors'
+sections at ten (`perSpace`) and did it more often the better it did. Renders draw on `renderPerProcess` alone —
+sized for the machine, which is the only thing a render actually threatens — and every slot is held for at most
+one run's timeout.
+
 #### 4.6.3 Cancellation, from all four directions
 
 | Cause | Mechanism | Result |

@@ -1,6 +1,6 @@
 import { createServer } from '@plitzi/sdk-server';
 
-import { actionSpace, FEED_ACTION } from '../spaces';
+import { actionSpace, FEED_ACTION, UNREACHABLE_ACTION } from '../spaces';
 
 import type { ActionEntry } from '@plitzi/sdk-shared';
 
@@ -21,9 +21,11 @@ export const PORT = Number(process.env.PORT ?? 5202);
 
 const space = actionSpace();
 
+const actions = [FEED_ACTION, UNREACHABLE_ACTION] as ActionEntry[];
+
 const lookups = {
   getAction: (_spaceId: number, actionId: string): Promise<ActionEntry | undefined> =>
-    Promise.resolve(actionId === FEED_ACTION.id ? (FEED_ACTION as ActionEntry) : undefined)
+    Promise.resolve(actions.find(entry => entry.id === actionId))
 };
 
 const server = createServer({
@@ -39,6 +41,8 @@ const server = createServer({
    */
   cacheTtlMs: 0,
   rsc: { cacheTtlMs: 0 },
+  // Nothing raised here on purpose: the suite loads this page from every worker at once, and the defaults are
+  // expected to carry that. They did not until renders stopped drawing on the per-space CALL budget.
   action: { lookups }
 });
 

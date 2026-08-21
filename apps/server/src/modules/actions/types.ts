@@ -163,7 +163,7 @@ export type ActionsConfig = {
   /** Ceilings a per-action document may tighten but never exceed. */
   limits?: ActionLimits;
   /** How many runs may be in flight at once. Counted per space and for the process as a whole. */
-  concurrency?: { perSpace?: number; perProcess?: number };
+  concurrency?: { perSpace?: number; perProcess?: number; renderPerProcess?: number };
   /** Where the `kv` tasks keep things. Omitted → an in-process Map, which is per-replica by definition. */
   kv?: ActionKvAdapter;
   /** Inbound webhooks are public, so they are counted per caller per minute. Default 60. */

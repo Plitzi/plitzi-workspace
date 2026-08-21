@@ -471,8 +471,15 @@ export type SSRActionConfig = {
   tasks?: unknown[];
   /** Ceilings for every run this server accepts. A document may tighten them, never widen them. */
   limits?: ActionLimits;
-  /** Concurrency ceilings, counted per space. */
-  concurrency?: { perSpace?: number; perProcess?: number };
+  /**
+   * Concurrency ceilings.
+   *
+   * `perSpace`/`perProcess` count CALLS — a click, a webhook, a schedule — where one run is somebody asking for
+   * work and one space's callers must not starve another's. A `render` is counted only by `renderPerProcess`,
+   * because it arrives because people are reading the page: a ceiling per space there would refuse the five
+   * hundredth visitor of a page that is simply doing well.
+   */
+  concurrency?: { perSpace?: number; perProcess?: number; renderPerProcess?: number };
   /** Inbound webhooks are public by construction, so they are counted per caller per minute. Default 60. */
   rateLimit?: { webhookPerMinute?: number };
   /**

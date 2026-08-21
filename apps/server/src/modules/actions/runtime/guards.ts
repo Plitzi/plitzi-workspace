@@ -2,10 +2,20 @@ import { createHash, randomUUID } from 'node:crypto';
 
 import { ActionRunError } from './errors';
 
+/**
+ * Which budget a run draws on.
+ *
+ * `call` is somebody ASKING for work — a click, a webhook, a schedule — and one space's callers hammering is a
+ * problem that belongs to that space. `render` is somebody LOOKING at a page, which is traffic: it scales with
+ * how popular the space is, and a ceiling per space would cap a successful page rather than an abusive one.
+ */
+export type RunKind = 'call' | 'render';
+
 /** A run currently holding a slot, and the handle that can stop it. */
 export type ActiveRun = {
   runId: string;
   runKey: string;
+  kind: RunKind;
   spaceId: number;
   actionId: string;
   callerId: string;
@@ -14,8 +24,18 @@ export type ActiveRun = {
 };
 
 export type RunGuardsConfig = {
+  /** Concurrent CALLS one space may have in flight. Renders are not counted here — see {@link RunKind}. */
   perSpace?: number;
+  /** Concurrent calls this process will carry, across every space. */
   perProcess?: number;
+  /**
+   * Concurrent RENDERS this process will carry, across every space — the only ceiling renders have.
+   *
+   * What a render threatens is the box, never the space it belongs to: five hundred people reading one page at
+   * once is that page working. So this is sized for a machine, and it is the number a deployment tunes when it
+   * knows its own — the default is deliberately generous, and each slot is held for at most one run's timeout.
+   */
+  renderPerProcess?: number;
 };
 
 export type BeginRunParams = {
@@ -25,6 +45,8 @@ export type BeginRunParams = {
   input: Record<string, unknown>;
   idempotencyKey?: string;
   ttlMs: number;
+  /** Which budget this run draws on. Defaults to `call`: a trigger that says nothing is somebody asking. */
+  kind?: RunKind;
 };
 
 export type RunGuards = {
@@ -35,7 +57,7 @@ export type RunGuards = {
   active: () => number;
 };
 
-const DEFAULTS = { perSpace: 10, perProcess: 100 };
+const DEFAULTS = { perSpace: 10, perProcess: 100, renderPerProcess: 1000 };
 
 /** Stable regardless of key order, so the same call from the same caller derives the same key every time. */
 const canonical = (value: unknown): string => {
@@ -83,6 +105,7 @@ export const deriveRunKey = ({ spaceId, actionId, callerId, input, idempotencyKe
 export const createRunGuards = (config: RunGuardsConfig = {}): RunGuards => {
   const perSpace = config.perSpace ?? DEFAULTS.perSpace;
   const perProcess = config.perProcess ?? DEFAULTS.perProcess;
+  const renderPerProcess = config.renderPerProcess ?? DEFAULTS.renderPerProcess;
   const byKey = new Map<string, ActiveRun>();
   const byId = new Map<string, ActiveRun>();
 
@@ -98,15 +121,15 @@ export const createRunGuards = (config: RunGuardsConfig = {}): RunGuards => {
     });
   };
 
-  const countForSpace = (spaceId: number) => {
-    let count = 0;
+  const count = (matches: (run: ActiveRun) => boolean) => {
+    let total = 0;
     byKey.forEach(run => {
-      if (run.spaceId === spaceId) {
-        count += 1;
+      if (matches(run)) {
+        total += 1;
       }
     });
 
-    return count;
+    return total;
   };
 
   const begin = (params: BeginRunParams): ActiveRun => {
@@ -118,13 +141,27 @@ export const createRunGuards = (config: RunGuardsConfig = {}): RunGuards => {
       throw new ActionRunError('duplicate', `This action is already running as ${existing.runId}`);
     }
 
-    if (byKey.size >= perProcess || countForSpace(params.spaceId) >= perSpace) {
+    /**
+     * Two budgets, because they are two different risks.
+     *
+     * A call is counted against its space AND the process: one space's callers must not starve another's, and
+     * neither may take the box down. A render is counted against the PROCESS alone — it arrives because people
+     * are reading the page, so a per-space ceiling would refuse the visitor who made the space worth having.
+     */
+    const kind = params.kind ?? 'call';
+    const overCapacity =
+      kind === 'render'
+        ? count(run => run.kind === 'render') >= renderPerProcess
+        : count(run => run.kind === 'call') >= perProcess ||
+          count(run => run.kind === 'call' && run.spaceId === params.spaceId) >= perSpace;
+    if (overCapacity) {
       throw new ActionRunError('over_capacity', 'Too many actions are running right now');
     }
 
     const run: ActiveRun = {
       runId: randomUUID(),
       runKey,
+      kind,
       spaceId: params.spaceId,
       actionId: params.actionId,
       callerId: params.callerId,
