@@ -48,7 +48,7 @@ these build on.
 
 | | Example | What it is | Port |
 |---|---|---|---|
-| 01 | [blog](./06-full-examples/01-blog) | Posts, a home page, a post page, sessions, and who may publish | 4013 |
+| 01 | [blog](./06-full-examples/01-blog) | A front page, posts, a sidebar, sessions, and who may publish | 4013 |
 
 Everything above, assembled: this is the one to read when the question is not "how does X work" but "what does it
 take to build something".

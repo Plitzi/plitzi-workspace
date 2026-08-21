@@ -5,7 +5,7 @@ built out of those decisions, so you can see how they fit and how much of it you
 
 | | Example | What it is | Port |
 |---|---|---|---|
-| 01 | [blog](./01-blog) | Posts, a home page, a post page, sessions, and who may publish | 4013 |
+| 01 | [blog](./01-blog) | A front page, posts, a sidebar, sessions, and who may publish | 4013 |
 
 A full example is allowed to be opinionated where the others are not — it picks a route shape, a permission name,
 a place to keep its data — because a product has to. What it may not do is hide a step: everything it configures

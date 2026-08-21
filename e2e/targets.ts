@@ -209,7 +209,7 @@ export const targets: Target[] = [
     workspace: '@plitzi/example-blog',
     command: 'PORT=5014 yarn workspace @plitzi/example-blog start',
     origin: 'http://127.0.0.1:5014',
-    what: 'A whole small blog — posts, sessions, and who may publish'
+    what: 'A whole small blog — a front page, posts, sessions, and who may publish'
   },
   {
     id: 'builder',

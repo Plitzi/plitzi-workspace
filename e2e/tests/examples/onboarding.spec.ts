@@ -337,63 +337,68 @@ describeTarget('ssr-preview', subject => {
 
 describeTarget('blog', subject => {
   /** The one example that is a whole small product rather than a single wiring decision, so what is checked here
-   *  is the four things its README promises a reader will be able to do: read the blog, open a post, publish one,
-   *  and be refused when the account may not. */
+   *  is what its README promises a reader will be able to do: read the blog, open a post, publish one, be refused
+   *  when the account may not — and see a header that knows who is looking. */
 
   const signIn = async (page: import('@playwright/test').Page, username: string) => {
     await page.goto(`${subject.origin}/login`);
     await page.getByLabel('Username').fill(username);
     await page.getByLabel('Password').fill('password');
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByRole('heading', { name: username })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: username, level: 3 }).or(page.getByText(`${username}@example.test`))
+    ).toBeVisible();
   };
 
   test('the home page arrives with its posts already in it', async ({ request }) => {
     const html = await (await request.get(subject.origin)).text();
 
     // Rendered by the action while the page was built: no request from the browser, and nothing to load after it.
-    expect(html).toContain('Where the data comes from');
-    expect(html).toContain('Who may publish');
+    expect(html).toContain('A page that arrives finished');
+    expect(html).toContain('The button that does real work');
+    // The covers are drawn, not fetched — an example shown in a room with bad wifi is not a page of broken images.
+    expect(html).toContain('data:image/svg+xml');
   });
 
-  test('the pager moves through the posts', async ({ page, capture }) => {
+  test('the front page leads with a story and lists the rest', async ({ page, capture }) => {
     await page.goto(subject.origin);
-    await expect(page.getByRole('heading', { name: 'Where the data comes from' })).toBeVisible();
+
+    await expect(page.getByRole('heading', { name: 'A page that arrives finished', level: 1 })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Read the story' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'The button that does real work' })).toBeVisible();
+    // The sidebar is a second provider asking the same action a different question.
+    await expect(page.getByRole('heading', { name: 'Topics' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'From the archive' })).toBeVisible();
+
     await capture('home');
+  });
+
+  test('the pager moves through the posts', async ({ page }) => {
+    await page.goto(subject.origin);
+    await expect(page.getByRole('heading', { name: 'The button that does real work' })).toBeVisible();
 
     // The pager lives inside the server-rendered list and is still clickable, because the browser takes that
     // section over once hydration is done. It writes the page into the URL; the server resolves the window.
     await page.getByRole('button', { name: '2', exact: true }).click();
 
     await expect(page).toHaveURL(/[?&]page=2/);
-    await expect(page.getByRole('heading', { name: 'Hello, Plitzi' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Six files' })).toBeVisible();
 
     // And back, which is the round trip that used to come back empty: the payload for a location is re-fetched.
     await page.getByRole('button', { name: '1', exact: true }).click();
 
-    await expect(page.getByRole('heading', { name: 'Who may publish' })).toBeVisible();
-  });
-
-  /** Reading a post and going back to the list — all in the browser, with the sections resolved on the way. */
-  test('a post and the way back are both client-side', async ({ page }) => {
-    await page.goto(subject.origin);
-    await page.getByRole('heading', { name: 'Who may publish' }).click();
-
-    await expect(page).toHaveURL(`${subject.origin}/post/who-may-publish`);
-    await expect(page.getByRole('heading', { name: 'Who may publish', level: 1 })).toBeVisible();
-
-    await page.getByRole('heading', { name: 'The Plitzi Post' }).click();
-
-    await expect(page).toHaveURL(`${subject.origin}/`);
-    await expect(page.getByRole('heading', { name: 'Where the data comes from' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'The button that does real work' })).toBeVisible();
   });
 
   test('a post opens at its own URL, with its body rendered', async ({ page, capture }) => {
-    await page.goto(`${subject.origin}/post/hello-plitzi`);
+    await page.goto(`${subject.origin}/post/a-page-that-arrives-finished`);
 
-    await expect(page.getByRole('heading', { name: 'Hello, Plitzi', level: 1 })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'A blog, in four pages' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'A page that arrives finished', level: 1 })).toBeVisible();
+    // The markdown became real elements: a heading, a list, a quote.
+    await expect(page.getByRole('heading', { name: 'What that changes' })).toBeVisible();
     await expect(page.getByText('That post does not exist.')).toBeHidden();
+    // And the strip at the bottom, from the same flow that answered the post.
+    await expect(page.getByText('Keep reading')).toBeVisible();
 
     await capture('post');
   });
@@ -401,7 +406,48 @@ describeTarget('blog', subject => {
   test('a URL nobody wrote a post for says so', async ({ page }) => {
     await page.goto(`${subject.origin}/post/no-such-post`);
 
-    await expect(page.getByText('That post does not exist.')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'That post does not exist.' })).toBeVisible();
+    await expect(page.getByText('Keep reading')).toBeHidden();
+  });
+
+  /** Reading a post and going back to the list — all in the browser, with the sections resolved on the way. */
+  test('a post and the way back are both client-side', async ({ page }) => {
+    await page.goto(subject.origin);
+    await page.getByRole('heading', { name: 'The button that does real work' }).click();
+
+    await expect(page).toHaveURL(`${subject.origin}/post/the-button-that-does-real-work`);
+    await expect(page.getByRole('heading', { name: 'The button that does real work', level: 1 })).toBeVisible();
+
+    await page.getByRole('link', { name: 'Latest' }).click();
+
+    await expect(page).toHaveURL(`${subject.origin}/`);
+    await expect(page.getByRole('heading', { name: 'A page that arrives finished', level: 1 })).toBeVisible();
+  });
+
+  /**
+   * The header is an element fed by the server, so it answers for the session rather than for everybody: no
+   * editor link for a visitor who may not use it, and the account button carries a name once there is one.
+   */
+  test('the header knows who is looking', async ({ page }) => {
+    await page.goto(subject.origin);
+
+    await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Write', exact: true })).toBeHidden();
+
+    await signIn(page, 'ada');
+    await page.goto(subject.origin);
+
+    await expect(page.getByRole('link', { name: 'ada' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Write', exact: true })).toBeVisible();
+  });
+
+  /** Signed in and still not an author: the courtesy and the control are two different things. */
+  test('a reader gets no editor link, and the editor still refuses her', async ({ page }) => {
+    await signIn(page, 'grace');
+    await page.goto(subject.origin);
+
+    await expect(page.getByRole('link', { name: 'grace' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Write', exact: true })).toBeHidden();
   });
 
   test('one path answers with the sign-in or with the account, by session', async ({ page }) => {
@@ -428,14 +474,16 @@ describeTarget('blog', subject => {
 
     await page.goto(`${subject.origin}/write`);
     await page.getByLabel('Title').fill('Written in a browser');
+    await page.getByLabel('Standfirst').fill('A form, an action, and the page it produced.');
     await page.getByLabel('Body').fill('The **whole** trip: a form, an action, a page.');
     await capture('write');
     await page.getByRole('button', { name: 'Publish' }).click();
 
-    // The flow read the action's answer and navigated to the URL it returned.
-    await expect(page).toHaveURL(`${subject.origin}/post/written-in-a-browser`);
+    // The flow read the action's answer and navigated to the URL it returned. Matched loosely on purpose: the
+    // store is the running process, so a second run of this spec publishes a second post and gets `-2`.
+    await expect(page).toHaveURL(/\/post\/written-in-a-browser/);
     await expect(page.getByRole('heading', { name: 'Written in a browser', level: 1 })).toBeVisible();
-    await expect(page.getByText('ada ·')).toBeVisible();
+    await expect(page.getByText('ada', { exact: true }).first()).toBeVisible();
     await capture('published');
   });
 
@@ -447,7 +495,7 @@ describeTarget('blog', subject => {
   test.describe('refused', () => {
     test.use({ allowedConsoleErrors: [/403 \(Forbidden\)/] });
 
-    test('grace is signed in, reaches the editor, and is refused by the server', async ({ page, capture }) => {
+    test('grace reaches the editor by URL and is refused by the server', async ({ page, capture }) => {
       await signIn(page, 'grace');
 
       await page.goto(`${subject.origin}/write`);
