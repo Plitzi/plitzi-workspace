@@ -9,21 +9,25 @@ import type { ConnectorLookups } from '../connectors/resolver';
 import type { SSRAdapters } from '@plitzi/sdk-shared';
 
 /**
- * `getRscData`, built from the connector lookups the server was already given.
+ * `getRscData`, built from the producers the server was already given — connectors, actions, or both.
  *
  * Every deployment that served server-driven elements wrote this same adapter: await the render payload, check the
- * schema opted into RSC, then hand `resolveRscData` a `createConnectorResolver` over the lookups — both of which are
- * this package's own exports, assembled by the consumer only because nothing assembled them here. That made the
- * lookups a thing you passed twice, once as config and once folded into an adapter, and put a copy of the enabled
- * check in every deployment.
+ * schema opted into RSC, then hand `resolveRscData` a resolver over the lookups — all of which are this package's
+ * own exports, assembled by the consumer only because nothing assembled them here. That made the lookups a thing
+ * you passed twice, once as config and once folded into an adapter, and put a copy of the enabled check in every
+ * deployment.
+ *
+ * Either half may be absent: a space whose server elements all name actions configures no connectors, and an
+ * element naming a producer this deployment does not have resolves to nothing rather than to an error — the same
+ * answer it gets for a connector the space never created.
  *
  * A deployment that resolves server elements some other way still supplies its own `getRscData`, and that one wins.
  */
 export const connectorRscData = (
-  lookups: ConnectorLookups,
+  lookups?: ConnectorLookups,
   actions?: { lookups: ActionLookups; module: ActionsModule }
 ): NonNullable<SSRAdapters['getRscData']> => {
-  const resolveConnector = createConnectorResolver(lookups);
+  const resolveConnector = lookups ? createConnectorResolver(lookups) : undefined;
   const resolveAction = actions ? createActionResolver(actions.lookups, actions.module) : undefined;
 
   /**
@@ -36,7 +40,7 @@ export const connectorRscData = (
   const resolveElement: RscElementResolver = async context => {
     const attributes = context.element.attributes as { connector?: string; action?: string };
     if (attributes.connector) {
-      return resolveConnector(context);
+      return resolveConnector ? resolveConnector(context) : undefined;
     }
 
     return attributes.action && resolveAction ? resolveAction(context) : undefined;

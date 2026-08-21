@@ -44,16 +44,21 @@ export type ServerConfig = Omit<SSRServerConfig, 'adapters'> & {
  *  A dedicated MCP server is `createServer` from `@plitzi/sdk-mcp` — it builds none of the render template,
  *  caches or plugin manager this one does. */
 /**
- * Fills in `getRscData` from `connectors` when the deployment did not write one.
+ * Fills in `getRscData` from whatever can produce a server element's data — `connectors`, `action.lookups`, or
+ * both — when the deployment did not write one.
  *
- * The lookups are already here and the assembly is entirely this package's — `createConnectorResolver` over
- * `resolveRscData`. Leaving it out meant every deployment passed the same lookups twice: once as config, for the
- * write endpoint, and once folded by hand into an adapter, for the read.
+ * The lookups are already here and the assembly is entirely this package's — a resolver over `resolveRscData`.
+ * Leaving it out meant every deployment passed the same lookups twice: once as config, for the write endpoint,
+ * and once folded by hand into an adapter, for the read.
+ *
+ * Actions count on their own: a space whose server elements name actions rather than connectors has nothing to
+ * configure under `connectors`, and keying this on that alone left its `render` elements resolving to nothing
+ * with no configuration missing anywhere.
  */
 const withConnectorRsc = <T extends { adapters: SSRPageAdapters; connectors?: unknown; action?: SSRActionConfig }>(
   config: T
 ): T => {
-  if (config.adapters.getRscData || !config.connectors) {
+  if (config.adapters.getRscData || (!config.connectors && !config.action?.lookups)) {
     return config;
   }
 
@@ -67,7 +72,7 @@ const withConnectorRsc = <T extends { adapters: SSRPageAdapters; connectors?: un
     ...config,
     adapters: {
       ...config.adapters,
-      getRscData: connectorRscData(config.connectors as ConnectorLookups, actions)
+      getRscData: connectorRscData(config.connectors as ConnectorLookups | undefined, actions)
     }
   };
 };

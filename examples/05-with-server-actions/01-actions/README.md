@@ -112,6 +112,8 @@ shows. A deployment with it off answers the output alone.
 
 ## Next
 
-Nothing — this is the end of the tour. The mechanism is documented in
-[`server-actions.md`](../../../docs/en/server-actions.md), and the reasoning behind each rule in
-[RFC 0012](../../../docs/rfc/0012-server-actions.md).
+The same mechanism from the other end: [02-render](../02-render), where nobody clicks — the action runs while the
+page is being rendered and the browser is handed a finished page.
+
+The mechanism is documented in [`server-actions.md`](../../../docs/en/server-actions.md), and the reasoning
+behind each rule in [RFC 0012](../../../docs/rfc/0012-server-actions.md).
