@@ -14,7 +14,7 @@ import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
 import type { StyleVariableCategory } from '@plitzi/sdk-shared';
 
 const StyleAdvanceEditor = () => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = use(ThemeContext);
   const [[customCssProp = '', styleVariables = undefined]] = useCommonStore([
     'schema.settings.customCss',
     'style.variables'
@@ -75,7 +75,7 @@ const StyleAdvanceEditor = () => {
         className="h-full"
         value={customCss}
         autoComplete={variables}
-        theme={theme === 'dark' ? 'dark' : 'light'}
+        theme={resolvedTheme}
         lineWrapping
         onChange={handleChange}
       />

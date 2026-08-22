@@ -27,7 +27,7 @@ import type {
   Style,
   DropPosition,
   BuilderNetworkContextValue,
-  StyleThemeMode,
+  Theme,
   BuilderQueriesMap,
   BuilderMutationsMap
 } from '@plitzi/sdk-shared';
@@ -53,7 +53,7 @@ const BuilderProvider = ({
   const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
   const [baseContext, setBaseContext] = useStateMemo(() => ({ baseElementId: baseElementIdProp }), [baseElementIdProp]);
   const { componentDefinitions, getComponent } = use(ComponentContext);
-  const [theme, setTheme] = useStorage<StyleThemeMode>('builder-state.theme-builder', 'light', 'localStorage');
+  const [theme, setTheme] = useStorage<Theme>('builder-state.theme-builder', 'light', 'localStorage');
   const { baseElementId } = baseContext;
   const [multiPagesMode, setMultiPagesMode] = useState(false);
   const [[pages, elementHovered, elementSelected], , setElementHovered, setElementSelected] = useBuilderStore([

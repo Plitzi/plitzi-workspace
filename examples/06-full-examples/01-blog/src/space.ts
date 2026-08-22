@@ -86,10 +86,10 @@ const chrome = (ref: string, body: ElementSpec[]): ElementSpec => {
             className: 'headerInner',
             children: [
               link('/', 'brand', [
-                text('P', 'brandMark'),
+                text('F', 'brandMark'),
                 element('Container', {
                   className: 'stack',
-                  children: [text('The Plitzi Post', 'brandName'), text('Built with Plitzi', 'brandTag')]
+                  children: [text('Fieldnotes', 'brandName'), text('Wildlife, close up', 'brandTag')]
                 })
               ]),
               element('Container', {
@@ -172,12 +172,12 @@ const footer = (): ElementSpec =>
           element('Container', {
             className: 'brand',
             children: [
-              text('P', 'brandMark'),
+              text('F', 'brandMark'),
               element('Container', {
                 className: 'stack',
                 children: [
-                  text('The Plitzi Post', 'brandName'),
-                  text('A whole small blog, rendered by Plitzi.', 'meta')
+                  text('Fieldnotes', 'brandName'),
+                  text('Seven animals, and what is actually known about them.', 'meta')
                 ]
               })
             ]
@@ -185,8 +185,11 @@ const footer = (): ElementSpec =>
           element('Container', {
             className: 'footerEnd',
             children: [
-              text('Seven files', 'footerLabel'),
-              text('Posts, sessions and permissions — and no build step for the pages.', 'meta')
+              text('Built with Plitzi', 'footerLabel'),
+              text(
+                'Every page here is a layout, every read is a flow the server runs, and no page has a build step.',
+                'meta'
+              )
             ]
           })
         ]
@@ -228,8 +231,8 @@ const home: PageSpec = {
   name: 'Latest posts',
   slug: '',
   idRef: 'home',
-  seoTitle: 'The Plitzi Post',
-  seoDescription: 'A whole small blog — posts, sessions and permissions — rendered by Plitzi.',
+  seoTitle: 'Fieldnotes — wildlife, close up',
+  seoDescription: 'A wildlife magazine, rendered by Plitzi: posts, sessions and who may publish.',
   className: 'page',
   body: [
     chrome('chromeHome', [
@@ -255,23 +258,42 @@ const home: PageSpec = {
             },
             className: 'pageStack',
             children: [
-              element('Container', {
+              /**
+               * The lead story: one photograph, with the headline living inside it.
+               *
+               * The whole card is ONE link — the picture and the words are the same click, which is what a reader
+               * expects of a cover and what saves the page a second `boundLink` around the title. The layer of
+               * text sits over the image because `heroScrim` is positioned over it, and it carries the gradient
+               * that keeps a white headline readable on a photograph the layout has never seen.
+               */
+              element('Link', {
+                attributes: { mode: 'internal' },
                 className: 'hero',
-                bindings: [shownWhen('apiContainer_posts.hasFeatured')],
+                bindings: [
+                  { to: 'href', source: 'apiContainer_posts.featured.url' },
+                  // Without this the link is announced as every word inside the card — topic, headline,
+                  // standfirst, byline and button, in one breath. `label` is what it says instead.
+                  { to: 'label', source: 'apiContainer_posts.featured.title' },
+                  shownWhen('apiContainer_posts.hasFeatured')
+                ],
                 children: [
+                  image('apiContainer_posts.featured.cover', 'heroImage'),
                   element('Container', {
-                    className: 'heroText',
+                    className: 'heroScrim',
                     children: [
-                      bound('Text', 'apiContainer_posts.featured.topic', 'chip'),
+                      bound('Text', 'apiContainer_posts.featured.topic', 'chipOnPhoto'),
                       heading('apiContainer_posts.featured.title', 'heroTitle', 'h1'),
                       bound('Paragraph', 'apiContainer_posts.featured.standfirst', 'heroStandfirst'),
-                      byline('apiContainer_posts.featured'),
-                      boundLink('apiContainer_posts.featured.url', 'readLink', [label('Read the story')])
+                      element('Container', {
+                        className: 'metaRow',
+                        children: [
+                          avatar('apiContainer_posts.featured.initial', 'avatarSm'),
+                          bound('Text', 'apiContainer_posts.featured.byline', 'metaOnPhoto')
+                        ]
+                      }),
+                      element('Container', { className: 'readLink', children: [label('Read the story')] })
                     ]
-                  }),
-                  boundLink('apiContainer_posts.featured.url', 'frame', [
-                    image('apiContainer_posts.featured.cover', 'heroImage')
-                  ])
+                  })
                 ]
               }),
               element('Container', {
@@ -310,7 +332,7 @@ const home: PageSpec = {
                     children: [
                       panel('About', [
                         note(
-                          'A demonstration blog: every page here is a layout, every read is a flow the server runs, and publishing is a permission rather than a button.'
+                          'A field magazine about animals, and a demonstration of Plitzi: every page here is a layout, every read is a flow the server runs, and publishing is a permission rather than a button.'
                         ),
                         writeLink('chromeHome')
                       ]),
@@ -441,7 +463,7 @@ const post: PageSpec = {
                         children: [
                           bound('Text', 'apiContainer_post.record.author', 'bylineName'),
                           bound('Text', 'apiContainer_post.record.authorRole', 'meta'),
-                          note('Writes here about what it takes to put a page together.')
+                          note('Writes here about animals, and about the people who go out and count them.')
                         ]
                       })
                     ]
@@ -596,7 +618,7 @@ const write: PageSpec = {
                         placeholder: 'One line under the headline',
                         required: false
                       }),
-                      field('topic', 'Topic', 'text', { defaultValue: 'Notes', required: false }),
+                      field('topic', 'Topic', 'text', { defaultValue: 'Fieldnotes', required: false }),
                       field('body', 'Body', 'textarea', { placeholder: '## Markdown is fine' }, 'textarea'),
                       element('Button', { attributes: { subType: 'submit', content: 'Publish' }, className: 'button' })
                     ]
@@ -655,7 +677,9 @@ const signIn: PageSpec = {
                 className: 'cardSurface',
                 children: [
                   element('Heading', { attributes: { subType: 'h1', content: 'Sign in' }, className: 'formTitle' }),
-                  note('ada / password writes posts. grace / password may only read them — and is refused, politely.'),
+                  note(
+                    'ada / password is on the masthead and may publish. grace / password reads — and is refused, politely, if she tries.'
+                  ),
                   element('Form', {
                     idRef: 'loginForm',
                     className: 'form',
@@ -779,7 +803,7 @@ const account: PageSpec = {
 };
 
 const blog: SpaceSpec = {
-  name: 'The Plitzi Post',
+  name: 'Fieldnotes',
   permanentUrl: 'blog',
   variables,
   elements,

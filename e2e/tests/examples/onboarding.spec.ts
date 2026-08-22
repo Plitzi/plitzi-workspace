@@ -2,7 +2,7 @@ import { createHmac } from 'node:crypto';
 
 import { describeTarget, expect, test } from '../../fixtures';
 import { paintTrace, resetPaint, watchPaint } from '../../helpers/flicker';
-import { expectSampleSpaceContent, expectSpaceRendered } from '../../helpers/space';
+import { expectDevToolsAvailable, expectSampleSpaceContent, expectSpaceRendered } from '../../helpers/space';
 import { expectVisuallyHealthy } from '../../helpers/visualHealth';
 import { sampleSpace } from '../../spaces';
 
@@ -19,6 +19,7 @@ describeTarget('no-build', subject => {
 
     await expectSampleSpaceContent(page);
     await expectVisuallyHealthy(page);
+    await expectDevToolsAvailable(page);
 
     await capture('no-build');
   });
@@ -31,6 +32,7 @@ describeTarget('render', subject => {
     await expectSampleSpaceContent(page);
     await expectSpaceRendered(page, sampleSpace());
     await expectVisuallyHealthy(page);
+    await expectDevToolsAvailable(page);
 
     await capture('render');
   });
@@ -42,6 +44,7 @@ describeTarget('react-component', subject => {
 
     await expectSampleSpaceContent(page);
     await expectVisuallyHealthy(page);
+    await expectDevToolsAvailable(page);
 
     await capture('react-component');
   });
@@ -355,18 +358,25 @@ describeTarget('blog', subject => {
     const html = await (await request.get(subject.origin)).text();
 
     // Rendered by the action while the page was built: no request from the browser, and nothing to load after it.
-    expect(html).toContain('A page that arrives finished');
-    expect(html).toContain('The button that does real work');
-    // The covers are drawn, not fetched — an example shown in a room with bad wifi is not a page of broken images.
-    expect(html).toContain('data:image/svg+xml');
+    expect(html).toContain('The fox that learned the timetable');
+    expect(html).toContain('An arm that makes up its own mind');
+    // And so are the photographs: the URL is in the document the first request answered, so the browser starts
+    // fetching the cover of the lead story before it has run a line of the SDK.
+    expect(html).toContain('images.unsplash.com');
   });
 
   test('the front page leads with a story and lists the rest', async ({ page, capture }) => {
     await page.goto(subject.origin);
 
-    await expect(page.getByRole('heading', { name: 'A page that arrives finished', level: 1 })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Read the story' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'The button that does real work' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'The fox that learned the timetable', level: 1 })).toBeVisible();
+    await expect(page.getByText('Read the story')).toBeVisible();
+    /**
+     * The whole cover is one link, and it is announced by its headline rather than by everything printed on it.
+     * A card whose accessible name is "Cities The fox that learned the timetable City foxes are not country
+     * foxes… Ada Bell · August 19, 2026 · 1 min Read the story" is what you get for not saying so.
+     */
+    await expect(page.locator('a.hero')).toHaveAttribute('aria-label', 'The fox that learned the timetable');
+    await expect(page.getByRole('heading', { name: 'An arm that makes up its own mind' })).toBeVisible();
     // The sidebar is a second provider asking the same action a different question.
     await expect(page.getByRole('heading', { name: 'Topics' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'From the archive' })).toBeVisible();
@@ -376,27 +386,27 @@ describeTarget('blog', subject => {
 
   test('the pager moves through the posts', async ({ page }) => {
     await page.goto(subject.origin);
-    await expect(page.getByRole('heading', { name: 'The button that does real work' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'An arm that makes up its own mind' })).toBeVisible();
 
     // The pager lives inside the server-rendered list and is still clickable, because the browser takes that
     // section over once hydration is done. It writes the page into the URL; the server resolves the window.
     await page.getByRole('button', { name: '2', exact: true }).click();
 
     await expect(page).toHaveURL(/[?&]page=2/);
-    await expect(page.getByRole('heading', { name: 'Six files' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Born with the map already in her' })).toBeVisible();
 
     // And back, which is the round trip that used to come back empty: the payload for a location is re-fetched.
     await page.getByRole('button', { name: '1', exact: true }).click();
 
-    await expect(page.getByRole('heading', { name: 'The button that does real work' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'An arm that makes up its own mind' })).toBeVisible();
   });
 
   test('a post opens at its own URL, with its body rendered', async ({ page, capture }) => {
-    await page.goto(`${subject.origin}/post/a-page-that-arrives-finished`);
+    await page.goto(`${subject.origin}/post/the-fox-that-learned-the-timetable`);
 
-    await expect(page.getByRole('heading', { name: 'A page that arrives finished', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'The fox that learned the timetable', level: 1 })).toBeVisible();
     // The markdown became real elements: a heading, a list, a quote.
-    await expect(page.getByRole('heading', { name: 'What that changes' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'What the city gave them' })).toBeVisible();
     await expect(page.getByText('That post does not exist.')).toBeHidden();
     // And the strip at the bottom, from the same flow that answered the post.
     await expect(page.getByText('Keep reading')).toBeVisible();
@@ -434,11 +444,15 @@ describeTarget('blog', subject => {
 
     await watchPaint(page, PROBES);
     await page.goto(subject.origin);
-    await expect(page.getByRole('heading', { name: 'The button that does real work' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'An arm that makes up its own mind' })).toBeVisible();
 
     await resetPaint(page);
-    await page.getByRole('heading', { name: 'The button that does real work' }).click();
-    await expect(page.getByRole('heading', { name: 'What that changes' }).or(page.locator('.prose'))).toBeVisible();
+    await page.getByRole('heading', { name: 'An arm that makes up its own mind' }).click();
+    // Either is proof the destination arrived; `.first()` because on this post both match and a bare `or` is
+    // strict-mode ambiguous.
+    await expect(
+      page.getByRole('heading', { name: 'Why build a mind that way' }).or(page.locator('.prose')).first()
+    ).toBeVisible();
     await page.waitForTimeout(400);
 
     /**
@@ -461,7 +475,7 @@ describeTarget('blog', subject => {
      */
     await resetPaint(page);
     await page.goBack();
-    await expect(page.getByRole('heading', { name: 'The button that does real work' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'An arm that makes up its own mind' })).toBeVisible();
 
     expect(await offenders(), 'going back painted a state the server contradicts').toEqual([]);
   });
@@ -469,15 +483,15 @@ describeTarget('blog', subject => {
   /** Reading a post and going back to the list — all in the browser, with the sections resolved on the way. */
   test('a post and the way back are both client-side', async ({ page }) => {
     await page.goto(subject.origin);
-    await page.getByRole('heading', { name: 'The button that does real work' }).click();
+    await page.getByRole('heading', { name: 'An arm that makes up its own mind' }).click();
 
-    await expect(page).toHaveURL(`${subject.origin}/post/the-button-that-does-real-work`);
-    await expect(page.getByRole('heading', { name: 'The button that does real work', level: 1 })).toBeVisible();
+    await expect(page).toHaveURL(`${subject.origin}/post/an-arm-that-makes-up-its-own-mind`);
+    await expect(page.getByRole('heading', { name: 'An arm that makes up its own mind', level: 1 })).toBeVisible();
 
     await page.getByRole('link', { name: 'Latest' }).click();
 
     await expect(page).toHaveURL(`${subject.origin}/`);
-    await expect(page.getByRole('heading', { name: 'A page that arrives finished', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'The fox that learned the timetable', level: 1 })).toBeVisible();
   });
 
   /**
@@ -485,16 +499,20 @@ describeTarget('blog', subject => {
    * editor link for a visitor who may not use it, and the account button carries a name once there is one.
    */
   test('the header knows who is looking', async ({ page }) => {
+    // Scoped to the header: the account link is the subject, and an unscoped name match now also finds the
+    // by-line inside the lead story's card.
+    const header = page.locator('.headerInner');
+
     await page.goto(subject.origin);
 
-    await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Write', exact: true })).toBeHidden();
+    await expect(header.getByRole('link', { name: 'Sign in' })).toBeVisible();
+    await expect(header.getByRole('link', { name: 'Write', exact: true })).toBeHidden();
 
     await signIn(page, 'ada');
     await page.goto(subject.origin);
 
-    await expect(page.getByRole('link', { name: 'ada' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Write', exact: true })).toBeVisible();
+    await expect(header.getByRole('link', { name: 'ada' })).toBeVisible();
+    await expect(header.getByRole('link', { name: 'Write', exact: true })).toBeVisible();
   });
 
   /**
@@ -507,7 +525,7 @@ describeTarget('blog', subject => {
   test('the theme toggle overrules the machine, and is remembered', async ({ page, capture }) => {
     await page.emulateMedia({ colorScheme: 'light' });
     await page.goto(subject.origin);
-    await expect(page.getByRole('heading', { name: 'A page that arrives finished', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'The fox that learned the timetable', level: 1 })).toBeVisible();
 
     const root = page.locator('html');
     const background = () =>
@@ -528,18 +546,20 @@ describeTarget('blog', subject => {
     await capture('blog-dark');
 
     await page.reload();
-    await expect(page.getByRole('heading', { name: 'A page that arrives finished', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'The fox that learned the timetable', level: 1 })).toBeVisible();
 
     await expect(root, 'the choice did not survive the reload').toHaveClass(/dark/);
   });
 
   /** Signed in and still not an author: the courtesy and the control are two different things. */
   test('a reader gets no editor link, and the editor still refuses her', async ({ page }) => {
+    const header = page.locator('.headerInner');
+
     await signIn(page, 'grace');
     await page.goto(subject.origin);
 
-    await expect(page.getByRole('link', { name: 'grace' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Write', exact: true })).toBeHidden();
+    await expect(header.getByRole('link', { name: 'grace' })).toBeVisible();
+    await expect(header.getByRole('link', { name: 'Write', exact: true })).toBeHidden();
   });
 
   test('one path answers with the sign-in or with the account, by session', async ({ page }) => {

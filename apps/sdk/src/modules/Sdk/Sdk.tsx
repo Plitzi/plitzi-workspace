@@ -34,7 +34,7 @@ export type SdkProps = {
 };
 
 const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk.css', server }: SdkProps) => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = use(ThemeContext);
   const { assets } = use(PluginsContext);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const { rootRef } = use(ContainerRootContext);
@@ -81,7 +81,7 @@ const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk
         renderMode,
         environment,
         ...schemaSettings,
-        theme
+        theme: resolvedTheme
       },
       root: {
         baseElementId: currentPageId
@@ -109,7 +109,7 @@ const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk
       renderMode,
       environment,
       schemaSettings,
-      theme,
+      resolvedTheme,
       getWindow,
       rootRef
     ]

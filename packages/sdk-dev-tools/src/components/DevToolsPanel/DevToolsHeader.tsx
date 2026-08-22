@@ -1,6 +1,8 @@
 import clsx from 'clsx';
 import { useCallback } from 'react';
 
+import DevToolsButton from './DevToolsButton';
+import ThemeControl from './ThemeControl';
 import { useScopeSelector } from '../../scope/useScope';
 
 import type { Orientation } from '../../DevToolsContainer';
@@ -95,20 +97,13 @@ const DevToolsHeader = ({
             ))}
           </select>
         )}
-        <button
-          className="flex h-6 w-6 items-center justify-center rounded text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
+        <ThemeControl />
+        <DevToolsButton
+          iconClassName={clsx('fa-solid fa-table-columns', { 'rotate-90': orientation === 'vertical' })}
           title={orientation === 'horizontal' ? 'Switch to side panel' : 'Switch to bottom panel'}
           onClick={handleClickOrientation}
-        >
-          <i className={clsx('fa-solid fa-table-columns text-xs', { 'rotate-90': orientation === 'vertical' })} />
-        </button>
-        <button
-          className="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
-          title="Collapse to the indicator"
-          onClick={onCollapse}
-        >
-          <i className="fa-solid fa-xmark text-xs" />
-        </button>
+        />
+        <DevToolsButton iconClassName="fa-solid fa-xmark" title="Collapse to the indicator" onClick={onCollapse} />
       </div>
     </div>
   );

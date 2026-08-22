@@ -1,6 +1,6 @@
 import VariableValue from './VariableValue';
 
-import type { StyleThemeMode, StyleVariableValue } from '@plitzi/sdk-shared';
+import type { ColorScheme, StyleVariableValue } from '@plitzi/sdk-shared';
 
 export type VariablesListItemProps = {
   name?: string;
@@ -30,7 +30,7 @@ const VariablesListItem = ({ name, type, value = '' }: VariablesListItemProps) =
               key={i}
               type={type}
               preffix={`${valueKey}:`}
-              value={value[valueKey as Exclude<StyleThemeMode, 'system'> | 'default']}
+              value={value[valueKey as ColorScheme | 'default']}
             />
           ))}
       </div>

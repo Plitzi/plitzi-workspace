@@ -1,9 +1,9 @@
 # A blog
 
-WordPress, in the parts that matter: a front page that leads with a story, a page per post at its own URL, a
+**Fieldnotes**, a small wildlife magazine: a front page that leads with a story, a page per post at its own URL, a
 sidebar, an editor behind a sign-in, and an account that may publish while another may not. Nothing is stubbed —
-the sessions are real, the permission is checked on the server, and every page is rendered before the browser
-gets it.
+the photographs are real, the sessions are real, the permission is checked on the server, and every page is
+rendered before the browser gets it.
 
 ```bash
 yarn workspace @plitzi/example-blog start
@@ -13,15 +13,18 @@ yarn workspace @plitzi/example-blog start
 Sign in at [/login](http://127.0.0.1:4013/login) as **ada / password** and write one. Then sign in as **grace /
 password**: the editor link is not in her header, and if she reaches the page anyway the server refuses her.
 
+The dev tools are on — the badge in the corner, or **shift+alt+D**. Logs, the store, the elements, the variables,
+every server action this page ran, and the switch that puts the whole thing in light, dark or system.
+
 ## What it took
 
 Seven files, and only two of them are about blogging:
 
 | File | Lines | What it is |
 |---|---:|---|
-| [`src/space.ts`](./src/space.ts) | 632 | The five pages — a declaration, not code |
-| [`src/theme.ts`](./src/theme.ts) | 601 | The stylesheet, as data: ~50 classes, the palette, both schemes |
-| [`src/posts.ts`](./src/posts.ts) | 294 | The posts, in memory. The one file a real blog replaces |
+| [`src/space.ts`](./src/space.ts) | 646 | The five pages — a declaration, not code |
+| [`src/theme.ts`](./src/theme.ts) | 646 | The stylesheet, as data: ~50 classes, the palette, both schemes |
+| [`src/posts.ts`](./src/posts.ts) | 344 | Seven articles, in memory. The one file a real blog replaces |
 | [`src/tasks.ts`](./src/tasks.ts) | 102 | List, read, publish, and who is looking |
 | [`src/accounts.ts`](./src/accounts.ts) | 92 | Two people, their sessions, and the adapters over them |
 | [`src/actions.ts`](./src/actions.ts) | 89 | Four flows, as documents |
@@ -64,7 +67,7 @@ element('ApiContainer', {
 
 An action is a document, not code: a trigger and a chain of steps. The three reads are `render` triggers — nobody
 calls them, they run while the page is being built — and their input is the page's own route and query params
-plus whatever the element declared, which is the whole of how `/post/six-files` becomes `{{input.slug}}`:
+plus whatever the element declared, which is the whole of how `/post/counting-a-ghost` becomes `{{input.slug}}`:
 
 ```ts
 { id: 'start',  type: 'trigger', action: 'render',      params: { access: 'public', input: '…' } },
@@ -160,8 +163,15 @@ URL are composed on the server, because a binding names one field.
 ## The look
 
 [`src/theme.ts`](./src/theme.ts) is the whole of it: a palette with a light and a dark value for every colour, a
-few type defaults per element type, and about forty classes. Nothing in the pages is styled inline, so changing
+few type defaults per element type, and about fifty classes. Nothing in the pages is styled inline, so changing
 `--accent` re-themes every chip, link and button at once.
+
+The lead story is **one photograph with the headline inside it**, and that shape is worth reading before you copy
+it. The whole card is a single `Link` — picture and words are the same click — and the text sits over the image
+because `heroScrim` is positioned over it, carrying a gradient down to `--scrim`. Without that layer the design is
+a bet on every future cover being dark in the bottom third. The link also names a `label`, because a card link
+with nothing there is announced as every word printed on it: topic, headline, standfirst, byline and button, in
+one breath.
 
 Three things worth knowing before you write one of your own:
 
@@ -169,9 +179,13 @@ Three things worth knowing before you write one of your own:
   four corner radii but no `border-radius`, `outline-style` but no `outline`. A space authored with shorthands
   renders and then cannot be read back by the builder's style editor, so the helpers at the top of the file
   expand them at authoring time.
-- **The covers are drawn, not fetched.** Each is an SVG data URI with a hue derived from the post's slug, so the
-  example has real artwork with no media library, no external host, and nothing to go missing when the wifi in
-  the room is bad. A real blog puts its uploaded URL in exactly the same field.
+- **The covers are real photographs, and the cover field is just a URL.** Each post carries one served by
+  Unsplash with `auto=format` on it, so the same URL answers with AVIF, WebP or JPEG depending on who asked and
+  one field feeds a 16:9 hero and a 4:3 card without shipping two files. A real blog puts whatever its media
+  library produced in exactly this field.
+- **A post with no photograph gets a drawn one.** The editor on `/write` has no upload, so anything written in
+  the demo would otherwise land on the front page as a hole. `coverFor` draws an SVG data URI with a hue derived
+  from the slug — no media library, no network, and a new post has its own colours the moment it exists.
 - **An image element is a `140px` square until something says otherwise**, so that an unbound one can be seen and
   picked up in the builder. A class that gives it a `width` and an `aspect-ratio` and nothing else loses to that
   height, and every cover comes out a letterbox. `height: auto` is what hands the shape back to the ratio — the
@@ -198,6 +212,11 @@ this space answers it the same way, in four rules keyed on `data-theme-icon` at 
 the control is styling an ordinary element: one class on it, and `subType: 'segmented'` if you would rather offer
 the three answers, including handing the decision back to the machine.
 
+**A space only needs to author one of these if its VISITORS should have one.** While you are building, the dev
+tools carry the same switch in their toolbar, writing to the same place — so every example here can be seen in
+either scheme without a line of authoring, and the panel itself follows along rather than sitting there in white
+on top of a dark page.
+
 ## What is missing on purpose
 
 The posts live in an array, so restarting the server forgets what you wrote. That is the same choice every example
@@ -206,3 +225,7 @@ yours goes, and nothing else in this example changes when it does.
 
 Comments, drafts, media uploads, RSS and search are not here either — none of them would show a mechanism this does
 not already use.
+
+The photographs come from Unsplash over the network, which is the one thing here that needs the wifi to work. That
+is the honest trade for real pictures, and it is contained: swap the `photo()` helper in
+[`src/posts.ts`](./src/posts.ts) for your own paths and the example runs off a folder.

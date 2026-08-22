@@ -41,7 +41,7 @@ const DevToolsContainer = ({
   devToolsStyle = '',
   devToolsStyleLink = ''
 }: DevToolsContainerProps) => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = use(ThemeContext);
   const [orientation, setOrientation] = useStorage<Orientation>('plitzi-sdk.dev-tools.orientation', 'horizontal');
   const [collapsed, setCollapsed] = useStorage('plitzi-sdk.dev-tools.collapsed', true);
   const [tabSelected, setTabSelected] = useStorage('plitzi-sdk.dev-tools.tab', 'logs');
@@ -104,6 +104,7 @@ const DevToolsContainer = ({
         <DevToolsContextProvider>
           {renderMode === 'default' && (
             <DevToolsOverlay
+              className={clsx({ dark: resolvedTheme === 'dark' })}
               collapsed={collapsed}
               orientation={orientation}
               tabSelected={tabSelected}
@@ -120,7 +121,7 @@ const DevToolsContainer = ({
               <ContainerShadow.Content>
                 <style dangerouslySetInnerHTML={{ __html: devToolsStyle }} />
                 <DevToolsOverlay
-                  className={clsx({ dark: theme === 'dark' })}
+                  className={clsx({ dark: resolvedTheme === 'dark' })}
                   collapsed={collapsed}
                   orientation={orientation}
                   tabSelected={tabSelected}

@@ -114,7 +114,7 @@ export const publishPostTask: ActionTask<{ title: string; standfirst: string; bo
     title: { type: 'text', canBind: true, defaultValue: '', label: 'Title' },
     standfirst: { type: 'text', canBind: true, defaultValue: '', label: 'Standfirst' },
     body: { type: 'codemirror-text', canBind: true, defaultValue: '', label: 'Body (markdown)' },
-    topic: { type: 'text', canBind: true, defaultValue: 'Notes', label: 'Topic' }
+    topic: { type: 'text', canBind: true, defaultValue: 'Fieldnotes', label: 'Topic' }
   },
   run: ({ title, standfirst, body, topic }, ctx) => {
     /**
@@ -138,7 +138,7 @@ export const publishPostTask: ActionTask<{ title: string; standfirst: string; bo
       title: heading,
       standfirst: standfirst.trim(),
       body,
-      topic: topic.trim() || 'Notes',
+      topic: topic.trim() || 'Fieldnotes',
       authorId: user.id,
       author: user.username
     });

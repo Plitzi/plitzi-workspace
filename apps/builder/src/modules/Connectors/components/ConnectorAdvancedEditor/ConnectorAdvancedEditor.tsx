@@ -20,7 +20,7 @@ export type ConnectorAdvancedEditorProps = {
  * so switching modes is not a conversion.
  */
 const ConnectorAdvancedEditor = ({ value, error, onChange }: ConnectorAdvancedEditorProps) => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = use(ThemeContext);
   const autoComplete = useMemo<AutoComplete[]>(
     () => connectorTokens.map(token => ({ type: 'token', value: token.value, detail: token.description })),
     []
@@ -30,7 +30,7 @@ const ConnectorAdvancedEditor = ({ value, error, onChange }: ConnectorAdvancedEd
     <div className="flex min-h-80 grow flex-col gap-2">
       <CodeMirror
         value={value}
-        theme={theme === 'dark' ? 'dark' : 'light'}
+        theme={resolvedTheme}
         mode="json"
         lineWrapping
         autoComplete={autoComplete}

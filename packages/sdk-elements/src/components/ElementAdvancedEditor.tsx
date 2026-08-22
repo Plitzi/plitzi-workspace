@@ -18,7 +18,7 @@ export type ElementAdvancedEditorProps = {
 };
 
 const ElementAdvancedEditor = ({ className = '', value = '', mode = 'js', onChange }: ElementAdvancedEditorProps) => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = use(ThemeContext);
   const { componentDefinitions } = use(ComponentContext);
   const { server, webKey } = use(NetworkContext);
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
@@ -57,7 +57,7 @@ const ElementAdvancedEditor = ({ className = '', value = '', mode = 'js', onChan
     <div className={clsx('relative flex h-full flex-col', className)}>
       <CodeMirror
         value={value}
-        theme={theme === 'dark' ? 'dark' : 'light'}
+        theme={resolvedTheme}
         size="sm"
         className="h-full"
         lineWrapping

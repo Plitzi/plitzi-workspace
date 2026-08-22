@@ -86,14 +86,20 @@ const withDerivedAnalytics = (params: PlitziSdkProps): PlitziSdkProps => {
 export function render(
   widgetContainer: string,
   params = {} as PlitziSdkProps,
-  plugins: Record<
-    string,
-    { component: ComponentPlugin; props?: Record<string, unknown>; clientOnly?: boolean }
-  > = {},
+  plugins: Record<string, { component: ComponentPlugin; props?: Record<string, unknown>; clientOnly?: boolean }> = {},
   debugMode = false,
   ssrMode = false
 ) {
   const renderParams = withDerivedAnalytics(params);
+  /**
+   * Two ways to authorize the dev tools, and the params win.
+   *
+   * The positional argument is what the server-rendered bootstrap passes, because at that point the page's own
+   * data is one interpolated blob it cannot add a key to. Everybody else writes `debugMode` beside the rest of
+   * the options — it is on `PlitziSdkProps`, `<PlitziSdk debugMode />` honours it, and a `render()` that quietly
+   * dropped it would be the same option meaning two different things depending on which door you came through.
+   */
+  const debugAuthorized = renderParams.debugMode ?? debugMode;
 
   const Widget = ({ isHydrating = false }: { isHydrating?: boolean }) => {
     // A plugin the server did not render has no markup in the document being hydrated, so mounting it on the first
@@ -103,7 +109,7 @@ export function render(
     useEffect(() => setHydrated(true), []);
 
     const pluginKeys = Object.keys(plugins).filter(key => hydrated || !plugins[key].clientOnly);
-    if (process.env.NODE_ENV === 'production' && !debugMode) {
+    if (process.env.NODE_ENV === 'production' && !debugAuthorized) {
       disableReactDevTools();
     }
 
@@ -118,7 +124,7 @@ export function render(
     return (
       <App
         {...renderParams}
-        debugMode={debugMode}
+        debugMode={debugAuthorized}
         isHydrating={isHydrating}
         onInitStateManager={handleInitStateManager}
         onInitEventBridge={handleInitEventBridge}

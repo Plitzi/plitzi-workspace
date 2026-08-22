@@ -67,7 +67,7 @@ const Settings = ({
   renderWhileLoading = false,
   onUpdate
 }: SettingsProps) => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = use(ThemeContext);
   const [pageDefinitions] = useBuilderStore('pageDefinitions');
   const [connectors] = useBuilderStore('connectors');
   const [actionCatalog] = useCommonStore('actions.catalog');
@@ -271,7 +271,7 @@ const Settings = ({
             <CodeMirror
               className="font-rubik min-h-6.5 basis-auto rounded-sm border border-gray-300 px-1 text-xs"
               value={query}
-              theme={theme === 'dark' ? 'dark' : 'light'}
+              theme={resolvedTheme}
               mode="text"
               autoComplete={queryParamsAutoComplete}
               lineWrapping
@@ -336,7 +336,7 @@ const Settings = ({
             <label>Mock Data (Build Mode)</label>
             <CodeMirror
               value={mockData}
-              theme={theme === 'dark' ? 'dark' : 'light'}
+              theme={resolvedTheme}
               mode="json"
               lineWrapping
               onChange={handleChangeMockData}

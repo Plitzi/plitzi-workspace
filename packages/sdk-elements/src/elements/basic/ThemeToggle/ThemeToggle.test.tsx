@@ -24,7 +24,7 @@ const { toggleTheme, setTheme, interactionTrigger } = vi.hoisted(() => ({
 vi.mock('@plitzi/sdk-shared/theme/ThemeProvider', async () => {
   const { createContext } = await import('react');
 
-  return { ThemeContext: createContext({ theme: 'dark', setTheme, toggleTheme }) };
+  return { ThemeContext: createContext({ theme: 'dark', resolvedTheme: 'dark', setTheme, toggleTheme }) };
 });
 
 // `withElement` reaches the element catalogue, and importing that from Node is the TDZ cycle this package has a
@@ -67,7 +67,9 @@ vi.mock('../../../Element/RootElement', () => ({
 
 /** The provider the control reads, with the theme the test wants it to see. */
 const atTheme = (theme: Theme, children: ReactNode) => (
-  <ThemeContext value={{ theme, setTheme, toggleTheme }}>{children}</ThemeContext>
+  <ThemeContext value={{ theme, resolvedTheme: theme === 'system' ? 'light' : theme, setTheme, toggleTheme }}>
+    {children}
+  </ThemeContext>
 );
 
 describe('ThemeToggle', () => {

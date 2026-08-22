@@ -14,6 +14,7 @@ import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziService
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import { useResolvedScheme } from '@plitzi/sdk-shared/theme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
@@ -66,6 +67,8 @@ const BuilderArea = ({
     baseContext: { baseElementId },
     builderGetBaseElement
   } = use(BuilderContext);
+  // The canvas paints one scheme. `system` is the space asking for the machine's answer, not for light.
+  const resolvedTheme = useResolvedScheme(theme);
   const { displayBorderComponents, zoom } = use(AppContext);
   const css = useMemo(() => {
     const cssVariables = schemaVariablesToCss(variables as Record<string, string>);
@@ -104,7 +107,7 @@ const BuilderArea = ({
         debugMode,
         currentPageId,
         environment: 'main',
-        theme
+        theme: resolvedTheme
       },
       root: { baseElementId },
       utils: { displayBorderComponents, getWindow, rootRef },
@@ -120,7 +123,7 @@ const BuilderArea = ({
         BuilderContext
       }
     }),
-    [previewMode, debugMode, currentPageId, theme, baseElementId, displayBorderComponents, getWindow, rootRef]
+    [previewMode, debugMode, currentPageId, resolvedTheme, baseElementId, displayBorderComponents, getWindow, rootRef]
   );
 
   const baseElementValueMemo = useMemo(() => ({ id: baseElementId, rootId: baseElementId }), [baseElementId]);
@@ -170,7 +173,7 @@ const BuilderArea = ({
             css={css}
             assets={assets}
             className="absolute h-full w-full origin-top-left"
-            style={{ colorScheme: theme === 'system' ? 'light' : theme }}
+            style={{ colorScheme: resolvedTheme }}
           >
             {Plugin && (
               <>

@@ -19,6 +19,7 @@ import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziService
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { useBuilderStore, useRenderOverride } from '@plitzi/sdk-shared/store';
+import { useResolvedScheme } from '@plitzi/sdk-shared/theme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
@@ -41,6 +42,8 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
   const { rootRef } = use(ContainerRootContext);
   const { displayBorderComponents } = use(AppContext);
   const { theme } = use(BuilderContext);
+  // The canvas paints one scheme. `system` is the space asking for the machine's answer, not for light.
+  const resolvedTheme = useResolvedScheme(theme);
   const [
     [
       settings = undefined,
@@ -72,7 +75,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
 
   const plitziContextValue = useMemo(
     () => ({
-      settings: { ...settings, previewMode, theme },
+      settings: { ...settings, previewMode, theme: resolvedTheme },
       root: { baseElementId: id },
       utils: { getWindow, rootRef },
       customContexts: {},
@@ -85,7 +88,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
         EventBridgeContext
       }
     }),
-    [previewMode, settings, theme, id, getWindow, rootRef]
+    [previewMode, settings, resolvedTheme, id, getWindow, rootRef]
   );
 
   const whenData = useMemo(
@@ -138,7 +141,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
     <ContainerFrame
       className={clsx('builder-area flex', className)}
       css={css}
-      style={{ colorScheme: theme === 'system' ? 'light' : theme }}
+      style={{ colorScheme: resolvedTheme }}
     >
       <PlitziServiceProvider value={plitziContextValue}>
         {/* This surface IS the preview, whatever the builder's own toggle says: a scope carrying the surrounding

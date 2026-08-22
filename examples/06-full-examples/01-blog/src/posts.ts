@@ -15,6 +15,13 @@ export type Post = {
   standfirst: string;
   /** Markdown. The page renders it through `richText`, which strips scripts and handlers before it does. */
   body: string;
+  /**
+   * The photograph, as a URL — which is all a cover ever is.
+   *
+   * Optional, and that is the interesting half: a post written in this blog's own editor arrives without one, and
+   * gets a cover drawn from its slug instead. A real blog stores whatever its media library produced, here.
+   */
+  cover?: string;
   topic: string;
   authorId: number;
   author: string;
@@ -62,162 +69,243 @@ const PER_PAGE = 4;
 
 const DATE = new Intl.DateTimeFormat('en', { day: 'numeric', month: 'long', year: 'numeric' });
 
+/**
+ * A photograph, at the size a page actually shows one.
+ *
+ * Unsplash serves the resizing, so the field holds one URL and the layout is free to put it in a 5:4 hero or a
+ * 4:3 card without shipping four files. `auto=format` is the part worth copying: the same URL answers with AVIF,
+ * WebP or JPEG depending on who asked.
+ */
+const photo = (id: string): string => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1400&q=72`;
+
 const posts: Post[] = [
   {
     id: 1,
-    slug: 'a-page-that-arrives-finished',
-    title: 'A page that arrives finished',
-    standfirst: 'The list you are looking at was resolved before the browser saw a single byte of it.',
-    body: `Most sites are a shell and a promise. The HTML arrives, then JavaScript arrives, then a request goes out, then — if the network is kind — the content appears. Everybody has learned to read the grey rectangles.
+    slug: 'the-fox-that-learned-the-timetable',
+    title: 'The fox that learned the timetable',
+    standfirst: 'City foxes are not country foxes having a hard time. They are a different animal.',
+    cover: photo('photo-1746311189748-5cbe93eaebc0'),
+    body: `The vixen we have been following since March crosses the tram line at 04:12, give or take four minutes, six nights a week. Not because she can read the timetable, obviously. Because that is when the last tram has gone and the first one has not come, and she has been alive long enough to know it.
 
-This page is not that. The list of posts on the home page is produced by a **server action**: a flow the server runs while it is building the page, named by the element that displays the result.
+This is the thing that keeps surprising people about urban foxes: they are not refugees. They are residents.
 
-## What that changes
+## What the city gave them
 
-Three things, and none of them are performance tricks:
+A red fox in open country holds a territory of five square kilometres or more and spends most of its waking life covering it. The same animal in a European city holds forty hectares and knows every centimetre.
 
-- The browser makes **no request** for the content. It is in the document.
-- There is **no key, no endpoint and no query cost** in the page, because the fetch never happened there.
-- A crawler, a link preview and a reader on a train all see the same thing: the finished page.
+- **Food density.** A single street of bins outproduces a hectare of grassland, and it does it at the same hour every night.
+- **No wolves, no eagles, no lynx.** The only predator that matters is a car, and cars are learnable.
+- **Heat.** A city runs two to three degrees warmer. Cubs born in February survive that they would not survive in a hedgerow.
 
-> The element names an action. It never learns what the action reached, and it could not repeat it if it wanted to.
+> Give an intelligent generalist a reliable schedule and it will build its whole life around the schedule. That is not adaptation to hardship. That is an animal that has found a better job.
 
-## And the part people miss
+## The part that is genuinely new
 
-The section is still yours after that. Once the page hydrates, the browser takes it over — the pager below works, a post opens without a reload, and coming back to the list re-reads it. Server-rendered is about **where the data is resolved**, not about giving up the page.`,
-    topic: 'Rendering',
+Urban foxes are getting shorter snouts and stronger jaw muscles — measurably, across generations, in skulls collected over the last century. Not a big change. But it is the change you would predict for an animal that has stopped catching things and started opening them.
+
+They are not visiting. They have moved in, and the city is starting to show up in the bones.`,
+    topic: 'Cities',
     authorId: 1,
     author: 'Ada Bell',
-    authorRole: 'Editor',
+    authorRole: 'Field editor',
     publishedAt: '2026-08-19T09:00:00.000Z'
   },
   {
     id: 2,
-    slug: 'the-button-that-does-real-work',
-    title: 'The button that does real work',
-    standfirst: 'Pricing, charging, publishing — the things a browser must not be trusted with.',
-    body: `A form is easy. What is hard is everything on the other side of it: the price nobody may edit, the charge that must happen once, the record only some people may create.
+    slug: 'an-arm-that-makes-up-its-own-mind',
+    title: 'An arm that makes up its own mind',
+    standfirst: 'Two thirds of an octopus’s neurons are not in its head. They are in the arms, and the arms use them.',
+    cover: photo('photo-1628944681206-2ee8d63b0a6b'),
+    body: `Cut the nerve between an octopus's brain and one of its arms — this has been done, carefully, in laboratories — and the arm goes on solving problems. It reaches. It grips. Handed a piece of food, it passes it along its own length toward a mouth it can no longer be told about.
 
-A server action is a **document**, not code. It has a trigger — the way in — and a chain of steps. The page hands over a name and some values and gets back whatever the flow's last step chose to answer.
+Half a billion neurons, and only a third of them are central. The rest are distributed down eight limbs that are, functionally, eight semi-independent animals in a committee.
 
-## The whole of it
+## Why build a mind that way
 
-\`\`\`
-trigger  call     who may start this, and what they may send
-task     blog.publishPost
-output   { url, slug, message }
-\`\`\`
+Because of the body. A vertebrate limb has joints, and a joint means the brain only has to decide a handful of angles. An octopus arm has no joints at all: it can bend anywhere, twist anywhere, in any of an effectively infinite number of configurations.
 
-What the output step names is exactly what the caller receives. A field the page must never see is a field the **task** does not return — there is no second contract to keep in step, and nothing that can quietly disagree with the first.
+Nothing could centrally compute that. So nothing does.
 
-## Undeclared input is dropped
+The brain issues something closer to an intention than an instruction — *reach toward there* — and the arm works out the rest with its own hardware, running a travelling wave of contraction down its length until it arrives.
 
-Before a single step runs. That is what makes interpolating a caller's values into a later step safe at all, and it is why the author of a post cannot be smuggled in: the contract has no field for it.`,
-    topic: 'Engineering',
-    authorId: 1,
-    author: 'Ada Bell',
-    authorRole: 'Editor',
+## The strange consequence
+
+An octopus appears not to know precisely where its own arms are. There is no detailed body map in the central brain of the kind you and I carry.
+
+> It does not need one. Knowing where the arm is, is the arm's problem.
+
+Which raises the question people who work with these animals eventually stop being able to avoid: when an octopus solves a puzzle box, who exactly solved it?`,
+    topic: 'Ocean',
+    authorId: 2,
+    author: 'Grace Ward',
+    authorRole: 'Staff writer',
     publishedAt: '2026-08-18T09:00:00.000Z'
   },
   {
     id: 3,
-    slug: 'who-may-publish',
-    title: 'Who may publish',
-    standfirst: 'Signing in is one question. Being allowed to do a thing is another one entirely.',
-    body: `Grace has an account. She can sign in, read everything, and open the editor. She cannot publish, and the reason is worth being precise about: the action she would be starting declares the permission it needs, and hers is not on the list.
+    slug: 'the-herd-remembers-the-drought',
+    title: 'The herd remembers the drought',
+    standfirst: 'In 1993 the rain failed. The families that survived were the ones with an old enough matriarch.',
+    cover: photo('photo-1786982997935-af6db866a8c4'),
+    body: `Amboseli, southern Kenya. The drought of 1993 killed around a fifth of the elephants in the park, and it did not kill them evenly. Some family groups walked out of the basin early and lived. Others stayed, and did not.
 
-## Two facts that never meet in the page
+The difference was the age of the female leading them.
 
-- The **account** holds \`postPublish\`, or it does not. That is a property of the person, and it says nothing about any particular space.
-- The **action** names that permission on its trigger. The check runs before a single step does, so a refusal costs nothing.
+The groups that left were led by matriarchs old enough to have been alive during the drought of 1958–61, when the same thing happened and the survivors went east. The ones that stayed were led by females born after it. They had never seen the sky do this before, and there was nobody in the family who had.
 
-The page does not decide. It shows what came back — which is exactly why hiding a button is a courtesy and never a control:
+## Memory as infrastructure
 
-> A guard the browser enforces is a guard anybody can skip with a terminal open.
+An elephant matriarch is not the strongest animal in the group. She is the **archive**.
 
-## What it looks like from outside
+- Where water was, in a year nobody else present can remember.
+- Which lions are worth a defensive formation and which are not — playback experiments show older matriarchs bunch the family for male lion roars and ignore female ones. Younger ones get it wrong.
+- Which of the several hundred elephants in the wider population are relatives, from contact calls alone.
 
-\`\`\`bash
-curl -s -X POST /_action -d '{"actionId":"publish-post", ... }'
-# 403 {"reason":"forbidden"}
-\`\`\`
+## What poaching actually removes
 
-Same answer for a stranger, for a reader, and for a signed-in account without the permission. The nav above hides the editor link when you may not use it, because a dead end is bad manners — but the lock is the one on the server.`,
-    topic: 'Access',
-    authorId: 2,
-    author: 'Grace Ward',
-    authorRole: 'Contributor',
+Ivory is bigger in older animals. So the hunting pressure of the last century fell hardest on exactly the individuals carrying the group's memory, and a family that loses its matriarch does not simply promote the next one and carry on.
+
+> It loses the drought of 1958. And it will make the wrong decision the next time the rain fails.
+
+Population counts miss this entirely. You can have the same number of elephants and a great deal less elephant.`,
+    topic: 'Savanna',
+    authorId: 1,
+    author: 'Ada Bell',
+    authorRole: 'Field editor',
     publishedAt: '2026-08-17T09:00:00.000Z'
   },
   {
     id: 4,
-    slug: 'a-layout-is-not-a-template',
-    title: 'A layout is not a template',
-    standfirst: 'Every page here is a tree of elements with bindings. There is no template language anywhere.',
-    body: `The card you clicked has four fields in it: a title, a byline, a topic and an excerpt. None of them is written in the page. Each is a **binding** — an element attribute pointed at a field of a data source.
+    slug: 'eighty-wingbeats-a-second-and-a-nightly-death',
+    title: 'Eighty wingbeats a second, and a nightly death',
+    standfirst: 'A hummingbird cannot afford to sleep the way you do. So every night it does something else.',
+    cover: photo('photo-1633288515406-4cfbb8dec49d'),
+    body: `A hovering hummingbird runs the highest mass-specific metabolic rate of any vertebrate that is not a shrew. Its heart passes 1,200 beats a minute. It visits well over a thousand flowers a day and it is, at almost every moment, a few hours from starving.
 
-That has a consequence people find surprising at first: the byline is composed on the **server**, because a binding names one field, and "Ada Bell · 19 August 2026 · 3 min" is three. Build it where the data is and the page stays a layout.
+Then the sun goes down and it cannot feed.
 
-## What the page holds instead
+## Torpor
 
-- Elements, their attributes, and which class each one uses.
-- Bindings, by source and field.
-- Flows, as steps.
+So it switches itself off. Body temperature falls from around 40°C to as low as 18°C. The heart drops from twelve hundred beats a minute to fifty. Breathing becomes intermittent and can stop for minutes at a stretch. Metabolic rate falls by up to 95 per cent.
 
-That is a document. It can be edited in a visual builder, generated by an agent, reviewed in a pull request, or — as here — written by hand in a file that reads like the page it makes.
+A hummingbird in torpor is, to any reasonable observer, dead. It will hang upside down from a twig, cold and rigid, and not respond to being touched.
 
-## And the styling
+Waking costs it energy it can barely spare and takes twenty minutes of violent shivering. It does this every night of its life.
 
-Classes, written once and reused, in the space's own stylesheet. The blog you are reading defines about thirty of them and nothing anywhere is styled inline.`,
-    topic: 'Design',
-    authorId: 1,
-    author: 'Ada Bell',
-    authorRole: 'Editor',
+## The cost of the trick
+
+Torpor is not free sleep, and the birds treat it as a last resort:
+
+- A bird that went to roost with a full crop often does not enter torpor at all.
+- A bird that had a bad afternoon goes deeper and stays longer.
+- Breeding females are more reluctant than anyone — a cold egg is a dead egg, so a nesting female will burn through her reserves rather than let the clutch drop.
+
+> The bird is running an overnight energy budget with a decision in it, and it makes that decision every evening based on what it managed to eat.
+
+Andean species at 4,000 metres go furthest: measured body temperatures of 3.3°C, the lowest recorded in any bird or non-hibernating mammal. Cold enough that you would put it in the fridge, not the field notebook.`,
+    topic: 'Flight',
+    authorId: 2,
+    author: 'Grace Ward',
+    authorRole: 'Staff writer',
     publishedAt: '2026-08-15T09:00:00.000Z'
   },
   {
     id: 5,
-    slug: 'the-url-is-the-input',
-    title: 'The URL is the input',
-    standfirst: 'A detail page needs no wiring between its route and the flow that feeds it.',
-    body: `This post lives at \`/post/the-url-is-the-input\`, and the page that renders it is authored with the slug \`post/{{slug}}\`. The router turns that into a route parameter.
+    slug: 'there-is-no-alpha-wolf',
+    title: 'There is no alpha wolf',
+    standfirst: 'The man who put the phrase in every dictionary spent thirty years trying to take it back.',
+    cover: photo('photo-1517993037474-692208825419'),
+    body: `The idea comes from a study of captive wolves in the 1940s: unrelated adults, thrown into an enclosure together, forming a rank order by fighting. David Mech's 1970 book *The Wolf* carried it to a general audience, and from there into dog training, management seminars and a great deal of internet posturing.
 
-Here is the part that costs nothing: a render trigger's input **is** the page's own route and query parameters. So the action reads \`{{input.slug}}\` and there is nothing between the two to configure, forget, or get wrong.
+Mech has spent the decades since asking people to stop. He has requested that the book go out of print. It keeps being reprinted.
 
-## The same trick pages the list
+## What a wild pack actually is
 
-The pager writes \`?page=2\` into the address bar. The action reads \`{{input.page}}\`. Both halves name the same parameter and that is the whole of their agreement — which is why the window is shareable, indexable, and survives the back button.
+A family.
 
-## When there is nothing there
+A breeding pair and their offspring from the last two or three years. The "alphas" are the parents, and they lead the way any parents lead — not by winning fights, but by being the ones who have been doing this longer.
 
-A slug nobody wrote a post for answers with a page that says so, because the flow returns both the record and whether it found one. Two bindings, no branch.`,
-    topic: 'Rendering',
-    authorId: 2,
-    author: 'Grace Ward',
-    authorRole: 'Contributor',
-    publishedAt: '2026-08-12T09:00:00.000Z'
+Young wolves do not stay and compete for the top job. At one to three years old they leave, find a mate, and start a pack of their own, in which they are the "alpha" by the entirely undramatic method of having had children.
+
+> Calling a wolf parent an alpha is like calling a human parent an alpha. It is not that it is unkind. It is that it explains nothing.
+
+## Why the wrong version survived
+
+Because captive wolves really do behave that way, and because the story is useful to people who want a natural justification for hierarchy.
+
+Put unrelated adults of most social species in a cage and they will sort out a rank order too. What that tells you about the species in the wild is nothing at all — which is the actual lesson here, and it is a much more general one than wolves.`,
+    topic: 'Behaviour',
+    authorId: 1,
+    author: 'Ada Bell',
+    authorRole: 'Field editor',
+    publishedAt: '2026-08-13T09:00:00.000Z'
   },
   {
     id: 6,
-    slug: 'six-files',
-    title: 'Six files',
-    standfirst: 'What a whole blog costs when the routing, the sessions and the rendering are not yours to write.',
-    body: `This site is six files. One of them is the posts, one is the pages, and the other four are under two hundred lines put together.
+    slug: 'born-with-the-map-already-in-her',
+    title: 'Born with the map already in her',
+    standfirst: 'A hatchling that has never been in the sea knows which way to swim, and how far.',
+    cover: photo('photo-1709483095301-2d1f3e95b1d4'),
+    body: `A loggerhead breaks out of the sand on a Florida beach, crosses fifteen metres of it, and enters an ocean it has no experience of whatsoever. What it does next is a five-year, twelve-thousand-kilometre circuit of the North Atlantic gyre — and it does not drift it. It swims it, correcting whenever the current would carry it out of survivable water.
 
-There is no router in it. No controllers, no templates, no data-loading code, no session handling, no CSRF, no permission middleware, no client state and no build step for the pages. Those are not omissions — they are what \`createAuth\` and \`createServer\` already are.
+Nobody taught it. The parents left before it hatched.
 
-## The parts that are actually yours
+## What it is reading
 
-- **Where the posts live.** An array here; a table in yours.
-- **What the server can do.** Three tasks, forty-eight lines: list, read, publish.
-- **Who the people are.** An adapter over whatever you already keep them in.
+The Earth's magnetic field varies over the surface in two ways that happen to be usefully independent: **inclination**, the angle the field makes with the ground, and **intensity**. Take both together and you have something close to a coordinate pair.
 
-Everything else is configuration, and most of it is one line: an action's name on the element that shows its result.`,
-    topic: 'Product',
+\`\`\`
+Florida nesting beach      inclination 57°   intensity 47 µT
+North-east Atlantic        inclination 65°   intensity 44 µT
+Cape Verde                 inclination 32°   intensity 38 µT
+\`\`\`
+
+Put a hatchling in a tank inside a magnetic coil, reproduce the field of a location it has never been to, and it will orient in the direction that would keep it in the gyre *at that location*. Turn the field to the value found off Portugal and it swims south-west. Turn it to the value off the Cape Verde islands and it swims north-west.
+
+## And the long way home
+
+Twenty years later a female comes back to nest within a few dozen kilometres of the beach she hatched on.
+
+The current best explanation is that she imprinted on the magnetic signature of that stretch of coast as a hatchling and spends her adult life searching for the match. It has a testable and slightly unsettling consequence: the field drifts, so the signature moves — and the turtles move with it. When two stretches of Florida coast drifted magnetically closer together, nesting density between them converged.
+
+> They are not going back to a place. They are going back to a number, and the number has been quietly relocating.`,
+    topic: 'Ocean',
+    authorId: 2,
+    author: 'Grace Ward',
+    authorRole: 'Staff writer',
+    publishedAt: '2026-08-11T09:00:00.000Z'
+  },
+  {
+    id: 7,
+    slug: 'counting-a-ghost',
+    title: 'Counting a ghost',
+    standfirst:
+      'Nobody knows how many snow leopards there are. The honest answer is a range with a factor of two in it.',
+    cover: photo('photo-1698578153726-2114cac67753'),
+    body: `The published figure is four to seven thousand. It has been roughly that figure for thirty years, and for most of those years it rested on expert opinion rather than on anything counted.
+
+The animal is the problem. It lives above 3,000 metres across two million square kilometres of some of the least accessible terrain on Earth, in twelve countries, several of which do not agree about where the borders are. It is grey on grey rock. Less than two per cent of its range has been surveyed with methods that would satisfy a statistician.
+
+## What changed
+
+Camera traps and faecal DNA, and — more importantly — the arithmetic that goes with them.
+
+- A cat photographed twice at two stations is one cat, and the rosette pattern on the flank says so. Individual identification is what turns photographs into a population estimate rather than a count of photographs.
+- Spatial capture-recapture models estimate how much of the landscape each animal uses, so a survey no longer has to guess the size of the area it just sampled.
+- Scat gives you individuals, sex and diet from something you can pick up off a trail without ever seeing the animal.
+
+## Why the number still matters
+
+Because the species was moved from Endangered to Vulnerable in 2017, and that decision was made on population estimates most of the people who work on the animal did not consider solid.
+
+> A downgrade based on a number nobody can defend is not good news. It is the same ignorance, wearing a better label.
+
+The current work — a coordinated assessment across all twelve range states — is the first attempt to answer the question with fieldwork instead of consensus. The first results suggest the old figure was not wildly wrong. That is worth knowing, and it took thirty years to be able to say it.`,
+    topic: 'Conservation',
     authorId: 1,
     author: 'Ada Bell',
-    authorRole: 'Editor',
-    publishedAt: '2026-08-08T09:00:00.000Z'
+    authorRole: 'Field editor',
+    publishedAt: '2026-08-09T09:00:00.000Z'
   }
 ];
 
@@ -241,10 +329,20 @@ const freeSlug = (title: string): string => {
   return candidate;
 };
 
+/**
+ * Markdown with the marks taken off, for an excerpt and a word count.
+ *
+ * The list and heading markers are stripped where they MEAN something — at the start of a line — and nowhere
+ * else. Sweeping every `-` out of the text instead turns "mass-specific" into "massspecific" on the front page,
+ * which is the sort of thing nobody notices until it is printed.
+ */
 const plainText = (body: string): string =>
   body
     .replace(/```[\s\S]*?```/g, ' ')
-    .replace(/[#*_>`-]/g, '')
+    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
+    .replace(/^\s{0,3}[-*+]\s+/gm, '')
+    .replace(/^\s{0,3}>\s?/gm, '')
+    .replace(/[*_`]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 
@@ -257,12 +355,11 @@ const excerptOf = (body: string): string => {
 const readingTime = (body: string): string => `${Math.max(1, Math.round(plainText(body).split(' ').length / 220))} min`;
 
 /**
- * A cover, drawn from the post's own slug.
+ * A cover for a post that has no photograph.
  *
- * An SVG data URI rather than a photograph, and deliberately: an example that is shown in a room with bad wifi
- * must not be a page of broken images, and a demo blog should not need a media library before it has a post. The
- * hue comes from the slug, so a post always wears the same colours and a new one gets a cover the moment it is
- * written. A real blog stores the URL its editor produced, in exactly this field.
+ * Everything published here carries a real one, but the editor on `/write` has no upload field — so a post
+ * written in the demo would otherwise land on the front page as a hole. The hue comes from the slug, which means
+ * a new post gets its own colours the moment it is written and keeps them forever, with nothing to fetch.
  */
 const hue = (slug: string): number => {
   let acc = 0;
@@ -302,7 +399,7 @@ export const view = (post: Post): PostView => ({
   readingTime: readingTime(post.body),
   dateline: `${DATE.format(new Date(post.publishedAt))} · ${readingTime(post.body)}`,
   byline: `${post.author} · ${DATE.format(new Date(post.publishedAt))} · ${readingTime(post.body)}`,
-  cover: coverFor(post.slug),
+  cover: post.cover ?? coverFor(post.slug),
   excerpt: excerptOf(post.body),
   body: post.body
 });

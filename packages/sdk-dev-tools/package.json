@@ -66,6 +66,10 @@
       "types": "./dist/components/DevToolsPanel/DevToolsSubHeader.d.ts",
       "import": "./dist/components/DevToolsPanel/DevToolsSubHeader.mjs"
     },
+    "./components/DevToolsPanel/ThemeControl": {
+      "types": "./dist/components/DevToolsPanel/ThemeControl.d.ts",
+      "import": "./dist/components/DevToolsPanel/ThemeControl.mjs"
+    },
     "./components/DevToolsPanel/index": {
       "types": "./dist/components/DevToolsPanel/index.d.ts",
       "import": "./dist/components/DevToolsPanel/index.mjs"

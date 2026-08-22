@@ -14,7 +14,7 @@ export type StateManagerProps = {
 };
 
 const StateManager = ({ className = '' }: StateManagerProps) => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = use(ThemeContext);
   const [state = emptyObject, setState] = useBuilderStore('runtime.state');
   const [value, setValue] = useState(() => JSON.stringify(state, null, 2));
   const { addToast } = useToast();
@@ -43,7 +43,7 @@ const StateManager = ({ className = '' }: StateManagerProps) => {
       <CodeMirror
         className="h-full"
         value={value}
-        theme={theme === 'dark' ? 'dark' : 'light'}
+        theme={resolvedTheme}
         lineWrapping
         onChange={handleChange}
         mode="json"

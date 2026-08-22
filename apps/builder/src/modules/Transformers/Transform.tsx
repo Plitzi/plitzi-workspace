@@ -25,7 +25,7 @@ import type { Schema, Style } from '@plitzi/sdk-shared';
 import type { ClipboardEvent } from 'react';
 
 const Transform = () => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = use(ThemeContext);
   const editorRef = useRef<HTMLElement | null>(null);
   const { server, webKey } = use(NetworkContext);
   const { addToast } = useToast();
@@ -237,7 +237,7 @@ const Transform = () => {
                           'w-full': layoutMode === 'vertical'
                         })}
                         value={content}
-                        theme={theme === 'dark' ? 'dark' : 'light'}
+                        theme={resolvedTheme}
                         mode={cmMode}
                         lineWrapping
                         onChange={handleChangeContent}
@@ -255,7 +255,7 @@ const Transform = () => {
                           'w-full': layoutMode === 'vertical'
                         })}
                         value={customCss}
-                        theme={theme === 'dark' ? 'dark' : 'light'}
+                        theme={resolvedTheme}
                         lineWrapping
                         onChange={handleChangeCustomStyle}
                       />

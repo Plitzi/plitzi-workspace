@@ -120,7 +120,7 @@ const AIWireframePreview = ({
   mode,
   version
 }: AIWireframePreviewProps) => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = use(ThemeContext);
   const { existsPopup, addPopup } = usePopup();
   const { onSendMessage, elementSelected } = useAiChatContext();
   const [showHtml, setShowHtml] = useState(false);
@@ -200,7 +200,7 @@ const AIWireframePreview = ({
         {showHtml && html && (
           <CodeMirror
             value={html}
-            theme={theme === 'dark' ? 'dark' : 'light'}
+            theme={resolvedTheme}
             size="xs"
             className="max-h-72 overflow-auto"
             readOnly

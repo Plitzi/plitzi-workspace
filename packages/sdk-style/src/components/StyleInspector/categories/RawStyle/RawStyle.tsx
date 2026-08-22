@@ -16,7 +16,7 @@ export type VariablesProps = {
 };
 
 const RawStyle = ({ selectors, isCollapsed, onCollapse }: VariablesProps) => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = use(ThemeContext);
   const CMValue = useMemo(() => processSelectors(selectors ?? [], false).join('\n\n'), [selectors]);
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('rawStyle', isCollapsed), [onCollapse]);
@@ -32,7 +32,7 @@ const RawStyle = ({ selectors, isCollapsed, onCollapse }: VariablesProps) => {
       <CodeMirror
         value={CMValue}
         className="h-full"
-        theme={theme === 'dark' ? 'dark' : 'light'}
+        theme={resolvedTheme}
         lineWrapping
         readOnly
       />

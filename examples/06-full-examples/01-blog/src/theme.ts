@@ -323,48 +323,93 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
   stack: { desktop: column('2px', { 'align-items': 'flex-start' }) },
 
   // ── Hero ────────────────────────────────────────────────────────────────────────────────────────────────────
+  /**
+   * The lead story, as one photograph with the headline inside it.
+   *
+   * The whole card is the link, the image fills it, and everything readable sits in a layer on top — which only
+   * works because of the layer BETWEEN them: `heroScrim` is a gradient from transparent to `--scrim`, and it is
+   * what keeps a white headline legible over a photograph nobody has seen yet. Without it the design is a bet on
+   * every future cover being dark in the bottom third.
+   */
   hero: {
-    desktop: grid('minmax(0, 1.02fr) minmax(0, 0.98fr)', '56px', { 'align-items': 'center' }),
-    tablet: { 'grid-template-columns': 'minmax(0, 1fr)', ...gap('30px') },
-    mobile: { 'grid-template-columns': 'minmax(0, 1fr)', ...gap('26px') }
+    desktop: {
+      position: 'relative',
+      display: 'block',
+      width: '100%',
+      overflow: 'hidden',
+      'text-decoration': 'none',
+      ...radius('28px'),
+      'background-color': 'var(--surface-2)',
+      'box-shadow': '0 50px 90px -50px var(--shadow), 0 0 0 1px var(--line-soft)'
+    },
+    mobile: { ...radius('20px') }
   },
-  heroText: { desktop: column('20px', { 'align-items': 'flex-start' }) },
+  heroImage: {
+    desktop: {
+      ...media('16 / 9'),
+      transition: 'transform 900ms cubic-bezier(0.2, 0.7, 0.2, 1)'
+    },
+    tablet: { 'aspect-ratio': '4 / 3' },
+    mobile: { 'aspect-ratio': '4 / 5' }
+  },
+  heroScrim: {
+    desktop: column('18px', {
+      position: 'absolute',
+      left: '0px',
+      right: '0px',
+      bottom: '0px',
+      'align-items': 'flex-start',
+      ...padding('46px', '52px'),
+      'background-image': 'linear-gradient(to top, var(--scrim) 12%, rgba(8, 6, 12, 0.35) 52%, transparent 100%)'
+    }),
+    tablet: { ...padding('34px', '32px'), ...gap('14px') },
+    mobile: { ...padding('24px', '22px'), ...gap('12px') }
+  },
   heroTitle: {
-    desktop: displayText('62px'),
-    tablet: { 'font-size': '48px' },
-    mobile: { 'font-size': '36px' }
+    desktop: displayText('60px', {
+      color: 'var(--on-photo)',
+      'max-width': '18ch',
+      'text-shadow': '0 2px 30px rgba(0,0,0,0.35)'
+    }),
+    tablet: { 'font-size': '44px' },
+    mobile: { 'font-size': '31px', 'max-width': '100%' }
   },
   heroStandfirst: {
     desktop: {
-      color: 'var(--fg-muted)',
-      'font-size': '20px',
-      'line-height': '1.55',
-      'max-width': '44ch',
+      color: 'var(--on-photo-muted)',
+      'font-size': '19px',
+      'line-height': '1.5',
+      'max-width': '52ch',
       'letter-spacing': '-0.005em'
     },
-    mobile: { 'font-size': '17px' }
+    mobile: { 'font-size': '16px' }
   },
-  frame: {
+  /** The chip and the byline over a photograph: the same shapes, in the colours the scrim can carry. */
+  chipOnPhoto: {
     desktop: {
-      display: 'block',
-      overflow: 'hidden',
-      'text-decoration': 'none',
-      ...radius('22px'),
-      'background-color': 'var(--surface-2)',
-      'box-shadow': '0 40px 80px -48px var(--shadow), 0 0 0 1px var(--line-soft)'
+      display: 'inline-flex',
+      'align-self': 'flex-start',
+      ...padding('5px', '11px'),
+      ...radius('7px'),
+      'background-image': 'linear-gradient(140deg, var(--accent), var(--accent-2))',
+      color: 'var(--on-photo)',
+      'font-size': '10px',
+      'font-weight': '700',
+      'letter-spacing': '0.1em',
+      'text-transform': 'uppercase',
+      'text-decoration': 'none'
     }
   },
-  heroImage: { desktop: { ...media('5 / 4'), transition: 'transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1)' } },
+  metaOnPhoto: { desktop: { color: 'var(--on-photo-muted)', 'font-size': '13px', 'letter-spacing': '0.01em' } },
   readLink: {
     desktop: row('9px', {
       ...padding('12px', '22px'),
       ...radius('999px'),
-      'background-image': 'linear-gradient(140deg, var(--accent), var(--accent-2))',
-      color: '#ffffff',
+      'background-color': 'var(--on-photo)',
+      color: '#14131a',
       'font-size': '14px',
       'font-weight': '600',
       'text-decoration': 'none',
-      'box-shadow': '0 14px 30px -16px var(--accent-shadow)',
       transition: 'transform 200ms ease, box-shadow 200ms ease'
     })
   },
@@ -584,37 +629,51 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
  *
  * Every colour in the space is one of these, so the whole site follows one edit — and the second value is not an
  * afterthought: dark is a design, not an inversion, which is why the surfaces lift rather than the text dimming.
+ *
+ * A warm orange-to-magenta accent on cream, because the photographs are the colour here and an accent has to hold
+ * its own against green hummingbirds, teal water and a purple octopus without fighting any of them. The pair
+ * beyond the palette proper — `scrim` and `on-photo` — is for the one place text sits ON an image, where the
+ * background is whatever the photographer happened to shoot.
  */
 export const variables: SpaceSpec['variables'] = {
   color: {
-    fg: { light: '#16161d', dark: '#f5f5f7', default: '#16161d' },
-    'fg-muted': { light: '#5d5d6b', dark: '#a6a6b4', default: '#5d5d6b' },
-    'fg-faint': { light: '#84848f', dark: '#83838f', default: '#84848f' },
-    bg: { light: '#fcfbfa', dark: '#0b0b0f', default: '#fcfbfa' },
+    fg: { light: '#14131a', dark: '#f7f5f2', default: '#14131a' },
+    'fg-muted': { light: '#5b5768', dark: '#a9a4b6', default: '#5b5768' },
+    'fg-faint': { light: '#867f93', dark: '#847f91', default: '#867f93' },
+    bg: { light: '#fffcf7', dark: '#0b0a0f', default: '#fffcf7' },
     'bg-glass': {
-      light: 'rgba(252, 251, 250, 0.82)',
-      dark: 'rgba(11, 11, 15, 0.78)',
-      default: 'rgba(252, 251, 250, 0.82)'
+      light: 'rgba(255, 252, 247, 0.78)',
+      dark: 'rgba(11, 10, 15, 0.76)',
+      default: 'rgba(255, 252, 247, 0.78)'
     },
-    surface: { light: '#ffffff', dark: '#141419', default: '#ffffff' },
-    'surface-2': { light: '#f1efec', dark: '#1b1b22', default: '#f1efec' },
-    line: { light: '#e7e4df', dark: '#26262f', default: '#e7e4df' },
+    surface: { light: '#ffffff', dark: '#16141c', default: '#ffffff' },
+    'surface-2': { light: '#f7f1e8', dark: '#201d29', default: '#f7f1e8' },
+    line: { light: '#ece4d8', dark: '#2a2635', default: '#ece4d8' },
     'line-soft': {
-      light: 'rgba(20, 20, 30, 0.06)',
+      light: 'rgba(20, 19, 26, 0.06)',
       dark: 'rgba(255, 255, 255, 0.07)',
-      default: 'rgba(20, 20, 30, 0.06)'
+      default: 'rgba(20, 19, 26, 0.06)'
     },
-    'line-strong': { light: '#dcd8d2', dark: '#32323d', default: '#dcd8d2' },
-    accent: { light: '#5b3df5', dark: '#8b7bff', default: '#5b3df5' },
-    'accent-2': { light: '#8b3df5', dark: '#c07bff', default: '#8b3df5' },
-    'accent-ink': { light: '#5b3df5', dark: '#b3a6ff', default: '#5b3df5' },
-    'accent-soft': { light: '#efeaff', dark: '#221c46', default: '#efeaff' },
+    'line-strong': { light: '#ded3c3', dark: '#37324a', default: '#ded3c3' },
+    accent: { light: '#f4511e', dark: '#ff7a4d', default: '#f4511e' },
+    'accent-2': { light: '#e0158a', dark: '#ff5fb0', default: '#e0158a' },
+    /** The accent as TEXT. The paint version is too bright to read at 13px on cream, and too dark on near-black. */
+    'accent-ink': { light: '#cc3d10', dark: '#ffa183', default: '#cc3d10' },
+    'accent-soft': { light: '#ffeee5', dark: '#33161f', default: '#ffeee5' },
     'accent-shadow': {
-      light: 'rgba(91, 61, 245, 0.55)',
-      dark: 'rgba(139, 123, 255, 0.45)',
-      default: 'rgba(91, 61, 245, 0.55)'
+      light: 'rgba(244, 81, 30, 0.5)',
+      dark: 'rgba(255, 122, 77, 0.42)',
+      default: 'rgba(244, 81, 30, 0.5)'
     },
-    shadow: { light: 'rgba(20, 20, 35, 0.5)', dark: 'rgba(0, 0, 0, 0.85)', default: 'rgba(20, 20, 35, 0.5)' }
+    shadow: { light: 'rgba(40, 20, 10, 0.5)', dark: 'rgba(0, 0, 0, 0.85)', default: 'rgba(40, 20, 10, 0.5)' },
+    /** What a headline needs to stay readable on a photograph nobody has seen yet. */
+    scrim: { light: 'rgba(8, 6, 12, 0.62)', dark: 'rgba(4, 3, 8, 0.68)', default: 'rgba(8, 6, 12, 0.62)' },
+    'on-photo': { light: '#ffffff', dark: '#ffffff', default: '#ffffff' },
+    'on-photo-muted': {
+      light: 'rgba(255, 255, 255, 0.82)',
+      dark: 'rgba(255, 255, 255, 0.8)',
+      default: 'rgba(255, 255, 255, 0.82)'
+    }
   }
 };
 
@@ -659,10 +718,12 @@ export const customCss = `
 .navLink:hover { color: var(--fg); background-color: var(--surface-2); }
 .accountPill:hover, .chipQuiet:hover, .buttonQuiet:hover, .themeToggle:hover { border-color: var(--accent); color: var(--accent-ink); }
 .cardLink:hover .cardTitle, .quietItem:hover .quietTitle, .moreCard:hover .moreTitle { color: var(--accent-ink); }
-.frame:hover .heroImage, .cardLink:hover .cardImage, .moreCard:hover .moreImage { transform: scale(1.035); }
-.readLink:hover, .button:hover, .buttonWide:hover, .signInLink:hover {
+.hero:hover .heroImage { transform: scale(1.04); }
+.cardLink:hover .cardImage, .moreCard:hover .moreImage { transform: scale(1.05); }
+.button:hover, .buttonWide:hover, .signInLink:hover {
   transform: translateY(-1px); box-shadow: 0 18px 34px -16px var(--accent-shadow);
 }
+.hero:hover .readLink { transform: translateY(-1px); box-shadow: 0 14px 30px -14px rgba(0, 0, 0, 0.5); }
 .input:focus, .textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
 .card:last-child { border-bottom-width: 0px; padding-bottom: 0px; }
 
@@ -691,7 +752,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 /* Every transition in this space is decoration. Somebody who has asked their machine for less gets less. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
-  .frame:hover .heroImage, .cardLink:hover .cardImage, .moreCard:hover .moreImage,
+  .hero:hover .heroImage, .cardLink:hover .cardImage, .moreCard:hover .moreImage,
   .readLink:hover, .button:hover, .buttonWide:hover, .signInLink:hover { transform: none; }
 }
 

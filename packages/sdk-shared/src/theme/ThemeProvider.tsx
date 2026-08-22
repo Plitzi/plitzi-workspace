@@ -1,10 +1,17 @@
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { createContext, useCallback, useEffect, useMemo } from 'react';
 
+import useResolvedScheme from './useResolvedScheme';
+
 import type { Theme, ThemeContextValue } from '../types';
 import type { ReactNode } from 'react';
 
-const ThemeContext = createContext<ThemeContextValue>({ theme: 'system', setTheme: () => {}, toggleTheme: () => {} });
+const ThemeContext = createContext<ThemeContextValue>({
+  theme: 'system',
+  resolvedTheme: 'light',
+  setTheme: () => {},
+  toggleTheme: () => {}
+});
 ThemeContext.displayName = 'ThemeContext';
 
 export type ThemeProviderProps = {
@@ -14,10 +21,6 @@ export type ThemeProviderProps = {
   children?: ReactNode;
 };
 
-/** What the operating system is asking for, right now. */
-const systemTheme = (): Exclude<Theme, 'system'> =>
-  typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-
 const ThemeProvider = ({
   defaultTheme = 'dark',
   storageKey = 'theme',
@@ -25,6 +28,7 @@ const ThemeProvider = ({
   children
 }: ThemeProviderProps) => {
   const [themeMode, setThemeMode] = useStorage<Theme>(storageKey, defaultTheme, storageType);
+  const resolvedTheme = useResolvedScheme(themeMode);
 
   /**
    * The root carries the CHOICE, and only when there is one.
@@ -44,14 +48,15 @@ const ThemeProvider = ({
     root.classList.toggle('light', themeMode === 'light');
   }, [themeMode]);
 
-  /** From `system`, a toggle means "the opposite of what I am looking at" — the machine's answer, flipped. */
-  const toggleTheme = useCallback(() => {
-    setThemeMode(prev => ((prev === 'system' ? systemTheme() : prev) === 'dark' ? 'light' : 'dark'));
-  }, [setThemeMode]);
+  /** A toggle means "the opposite of what I am looking at", which from `system` is the machine's answer flipped. */
+  const toggleTheme = useCallback(
+    () => setThemeMode(resolvedTheme === 'dark' ? 'light' : 'dark'),
+    [resolvedTheme, setThemeMode]
+  );
 
   const themeValue = useMemo(
-    () => ({ theme: themeMode, setTheme: setThemeMode, toggleTheme }),
-    [themeMode, setThemeMode, toggleTheme]
+    () => ({ theme: themeMode, resolvedTheme, setTheme: setThemeMode, toggleTheme }),
+    [themeMode, resolvedTheme, setThemeMode, toggleTheme]
   );
 
   return <ThemeContext value={themeValue}>{children}</ThemeContext>;
