@@ -22,18 +22,18 @@ Eight files, and only two of them are about blogging:
 
 | File | Lines | What it is |
 |---|---:|---|
-| [`src/space.ts`](./src/space.ts) | 878 | The six pages — a declaration, not code |
-| [`src/theme.ts`](./src/theme.ts) | 689 | The stylesheet, as data: ~55 classes, the palette, both schemes |
-| [`src/posts.ts`](./src/posts.ts) | 444 | Seven articles and their subjects. The one file a real blog replaces |
-| [`src/tasks.ts`](./src/tasks.ts) | 146 | List, read, publish, edit, and who is looking |
-| [`src/actions.ts`](./src/actions.ts) | 131 | Five flows, as documents |
-| [`src/plugins/SpeciesStatus.tsx`](./src/plugins/SpeciesStatus.tsx) | 130 | The one element this space ships itself |
+| [`src/space.ts`](./src/space.ts) | 953 | The six pages — a declaration, not code |
+| [`src/theme.ts`](./src/theme.ts) | 721 | The stylesheet, as data: ~55 classes, the palette, both schemes |
+| [`src/posts.ts`](./src/posts.ts) | 491 | Seven articles and their subjects. The one file a real blog replaces |
+| [`src/tasks.ts`](./src/tasks.ts) | 180 | List, read, publish, edit, log a sighting, and who is looking |
+| [`src/actions.ts`](./src/actions.ts) | 157 | Six flows, as documents |
+| [`src/plugins/SpeciesStatus.tsx`](./src/plugins/SpeciesStatus.tsx) | 134 | The one element this space ships itself |
 | [`src/accounts.ts`](./src/accounts.ts) | 92 | Two people, their sessions, and the adapters over them |
 | [`src/main.ts`](./src/main.ts) | 44 | The server |
 
 Lines of code, without the comments — which outnumber them here, because an example is read more often than it is
 run. Two of those files are the pages and two more are content and paint. What is left is the **mechanism** —
-sessions, permissions, the five flows and the server — and it is under four hundred lines.
+sessions, permissions, the six flows and the server — and it is under four hundred and fifty lines.
 
 There is no router, no controller, no template, no data-loading code, no session handling, no CSRF, no permission
 middleware, no client-side state and no build step for the pages. Those are not omitted — they are what
@@ -44,6 +44,7 @@ middleware, no client-side state and no build step for the pages. Those are not 
 | Route | Who sees it | What feeds it |
 |---|---|---|
 | `/` | everybody | `list-posts`, twice: the feed and the sidebar |
+| `/?topic=Ocean` | everybody | the same page, the same action, one query param |
 | `/post/{{slug}}` | everybody | `get-post`, given the slug from the route |
 | `/write` | a signed-in visitor | nothing — it is a form |
 | `/edit/{{slug}}` | the post's own author | `get-post` again — one action, two pages |
@@ -87,6 +88,40 @@ second task. The topic chips beside it come out of the same answer.
 `blog.getPost` and its three siblings are this deployment's own tasks, registered in
 [`src/tasks.ts`](./src/tasks.ts) and offered to the builder's step catalog for free. Everything Plitzi had to be
 taught about blogging is in that file, and it is under a hundred lines of it.
+
+## Filtering is a query parameter
+
+The topic chips are not decoration. A render trigger's input is **the page's own route and query params** plus
+whatever the element declared, so `/?topic=Ocean` reaches `blog.listPosts` with nothing wired between the two —
+no router, no handler, no client-side filter, and the result is shareable, indexable and back-button-proof.
+
+Two details worth stealing:
+
+- **The chosen chip is decided on the server.** `topics()` returns every chip with `isActive` and its opposite
+  beside it, so the list authors *both* shapes and a binding picks. The page compares nothing. It is the same
+  either/or the header uses for signed in and signed out — a selected chip is a different shape, not a tint, and
+  the style vocabulary has no way to swap a class from data anyway.
+- **The sidebar declares `topic: ''` on purpose.** Without it the archive would be filtered by the URL too, and
+  "From the archive" would only ever show the topic you are already reading.
+
+A filtered list also drops the lead story: a hero above a list of five is a front page, and a hero above a list
+of two is a mistake.
+
+## Three ways in, and they are all decisions
+
+Every trigger states its access rule out loud — a trigger with none is refused, because an unstated rule is
+either a lock-out or a hole. This blog uses all three:
+
+| Action | Access | Who can run it |
+|---|---|---|
+| `record-sighting` | `public` | anybody at all — no session, no account |
+| `publish-post` | `role` + `postPublish` | `ada`, not `grace` |
+| `update-post` | `role` + `postPublish` **and** ownership | `ada`, on her own posts only |
+
+**Press the sighting button with the dev-tools Actions tab open** — the badge in the corner, or shift+alt+D. It
+is the quickest way to watch a server action go out and come back, and it needs no sign-in. The three READS on
+these pages will not appear there, and that is not a bug: they are `render` triggers resolved on the server while
+the page is built, so the browser never started them and a browser-side panel has nothing to record.
 
 ## Who may publish
 

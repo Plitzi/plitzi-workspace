@@ -1,4 +1,14 @@
-import { addPost, findPost, listPosts, otherPosts, topics, updatePost, view } from './posts';
+import {
+  addPost,
+  findPost,
+  listPosts,
+  otherPosts,
+  recordSighting,
+  sightingLabel,
+  topics,
+  updatePost,
+  view
+} from './posts';
 
 import type { ActionTask } from '@plitzi/sdk-server/actions';
 
@@ -28,24 +38,30 @@ export const listPostsTask: ActionTask<{
   page: string | number;
   perPage: string | number;
   featured: string | boolean;
+  topic: string;
 }> = {
   namespace: 'blog',
   action: 'listPosts',
   title: 'List Posts',
-  description: 'The published posts, newest first, one window at a time — with the lead story kept aside.',
+  description: 'The published posts, newest first, one window at a time — narrowed to a topic when asked.',
   params: {
     page: { type: 'text', canBind: true, defaultValue: '1', label: 'Page' },
     perPage: { type: 'text', canBind: true, defaultValue: '4', label: 'Per page' },
-    featured: { type: 'text', canBind: true, defaultValue: 'false', label: 'Lead with the newest' }
+    featured: { type: 'text', canBind: true, defaultValue: 'false', label: 'Lead with the newest' },
+    topic: { type: 'text', canBind: true, defaultValue: '', label: 'Topic' }
   },
-  run: ({ page, perPage, featured }) => ({
-    ...listPosts({
+  run: ({ page, perPage, featured, topic }) => {
+    const window = listPosts({
       page: toNumber(page, 1),
       perPage: toNumber(perPage, 4),
-      featured: toBoolean(featured, false)
-    }),
-    topics: topics()
-  })
+      featured: toBoolean(featured, false),
+      topic: topic ? String(topic) : ''
+    });
+
+    // The chips travel with the answer, and they know which one is chosen — so the page renders a state rather
+    // than working one out. Nothing on the page compares anything.
+    return { ...window, topics: topics(window.topic) };
+  }
 };
 
 export const getPostTask: ActionTask<{ slug: string }> = {
@@ -215,4 +231,37 @@ export const updatePostTask: ActionTask<{
   }
 };
 
-export const blogTasks = [listPostsTask, getPostTask, siteChromeTask, publishPostTask, updatePostTask];
+/**
+ * A write anybody may make.
+ *
+ * The third access level this blog demonstrates, and the one most sites actually need first: `publish-post` is a
+ * ROLE, `update-post` is a role plus ownership, and this is PUBLIC — no session, no permission, no account. It is
+ * still a server action, which is the point: the count lives on the server, the browser is told the new number
+ * rather than trusted with it, and there is nothing in the page to edit.
+ */
+export const recordSightingTask: ActionTask<{ slug: string }> = {
+  namespace: 'blog',
+  action: 'recordSighting',
+  title: 'Record Sighting',
+  description: 'One more reader who has seen this animal.',
+  params: { slug: { type: 'text', canBind: true, defaultValue: '', label: 'Slug' } },
+  run: ({ slug }) => {
+    // A slug nobody wrote a post for would otherwise open a counter for anything a caller cared to name.
+    if (!findPost(slug)) {
+      throw new Error('No such post');
+    }
+
+    const count = recordSighting(slug);
+
+    return { count, label: sightingLabel(count), message: `Logged. ${sightingLabel(count)}.` };
+  }
+};
+
+export const blogTasks = [
+  listPostsTask,
+  getPostTask,
+  siteChromeTask,
+  publishPostTask,
+  updatePostTask,
+  recordSightingTask
+];

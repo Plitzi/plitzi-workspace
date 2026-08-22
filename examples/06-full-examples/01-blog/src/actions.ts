@@ -5,14 +5,15 @@ import type { ActionLookups } from '@plitzi/sdk-server/actions';
 import type { ActionEntry } from '@plitzi/sdk-shared';
 
 /**
- * The five things this blog does on the server, as documents.
+ * The six things this blog does on the server, as documents.
  *
  * An action is not code: it is the same node map an element's interactions are, and `authorFlow` chains it — so
  * the flows the builder would draw and the flows written here are the same objects. Each of these is a way in, a
  * step, and the output that decides what leaves the server.
  *
  * The three READS are `render` triggers: nobody calls them, they run while the page is being built, and the page
- * they feed names them on an element. The two WRITES are `call` triggers, and the only ones a browser can reach.
+ * they feed names them on an element. The three WRITES are `call` triggers, and the only ones a browser can
+ * reach — one open to everybody, one behind a permission, one behind a permission AND ownership.
  */
 
 /**
@@ -64,9 +65,17 @@ const listPosts = read(
   {
     page: { type: 'number', defaultValue: 1, label: 'Page' },
     perPage: { type: 'number', defaultValue: 4, label: 'Per page' },
-    featured: { type: 'boolean', defaultValue: false, label: 'Lead with the newest' }
+    featured: { type: 'boolean', defaultValue: false, label: 'Lead with the newest' },
+    // Declared here and set by nobody: it arrives from the QUERY STRING, because a render trigger's input is the
+    // page's own route and query params. `/?topic=Ocean` is the whole of how a chip filters this list.
+    topic: { type: 'text', defaultValue: '', label: 'Topic' }
   },
-  { page: '{{input.page}}', perPage: '{{input.perPage}}', featured: '{{input.featured}}' }
+  {
+    page: '{{input.page}}',
+    perPage: '{{input.perPage}}',
+    featured: '{{input.featured}}',
+    topic: '{{input.topic}}'
+  }
 );
 
 /** The detail page. `{{input.slug}}` is the route parameter, with nothing wired between the URL and the flow. */
@@ -180,7 +189,40 @@ const updatePost: ActionEntry = {
   }
 };
 
-const actions = [listPosts, getPost, siteChrome, publishPost, updatePost];
+/**
+ * The write with no lock on it, and the one to run first when you want to SEE this working.
+ *
+ * `access: 'public'` is a decision stated out loud, not the absence of one — a trigger with no access rule at all
+ * is refused, because an unstated rule is either a lock-out or a hole. Anybody may call this: no session, no
+ * permission, no account. It is still a server action, so the count is the server's and the browser is told the
+ * answer rather than trusted with it.
+ *
+ * It is also what fills the dev-tools **Actions** tab. The three reads on these pages are `render` triggers —
+ * they run on the server while the page is being built, so the browser never started them and there is nothing
+ * for a browser-side panel to record. This one the page starts, and every press shows up.
+ */
+const recordSighting: ActionEntry = {
+  id: 'record-sighting',
+  document: {
+    name: 'Record a sighting',
+    description: 'One more reader who has seen this animal. Open to everybody.',
+    nodes: authorFlow('record-sighting', [
+      {
+        id: 'start',
+        type: 'trigger',
+        action: 'call',
+        params: {
+          access: 'public',
+          input: JSON.stringify({ slug: { type: 'text', required: true, label: 'Slug' } })
+        }
+      },
+      { id: 'logged', type: 'task', action: 'blog.recordSighting', params: { slug: '{{input.slug}}' } },
+      { id: 'answer', type: 'task', action: 'flow.output', params: { values: '{{ logged }}' } }
+    ] satisfies StepSpec[])
+  }
+};
+
+const actions = [listPosts, getPost, siteChrome, publishPost, updatePost, recordSighting];
 
 /**
  * How the server reaches an action.

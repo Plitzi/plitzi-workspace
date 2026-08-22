@@ -111,7 +111,14 @@ const SpeciesStatus = ({
         </div>
       </div>
 
-      {/* The scale. A list of buttons rather than a drawing, so it can be tabbed through and read aloud. */}
+      {/*
+        Say what the row IS before showing it.
+        
+        Without this caption the five buttons read as a filter — press one and expect the chart below to answer —
+        and the chart is a different fact entirely: the population over time, which does not depend on which
+        category you are asking about. One line removes the whole misunderstanding.
+      */}
+      <div className="species__legend">Red List category — press one to see what it means</div>
       <div className="species__scale" role="group" aria-label="IUCN Red List category">
         {SCALE.map((entry, index) => (
           <button
@@ -133,17 +140,22 @@ const SpeciesStatus = ({
 
       <p className="species__meaning">
         <strong>{explained.label}</strong> — {explained.meaning}
+        {/* Asked about a category that is not this animal's: say whose it is, so the panel never reads as if the
+            species had just changed. */}
+        {asked && asked !== status && (
+          <span className="species__aside">
+            {' '}
+            {name} is listed {SCALE[current]?.label ?? status}.
+          </span>
+        )}
       </p>
 
       {series.length > 1 && (
         <div className="species__chart">
+          <div className="species__legend">Population, indexed to {since} = 100</div>
           <svg viewBox="0 0 100 34" preserveAspectRatio="none" aria-hidden>
             {/* Drawn twice: a soft fill under the line, then the line, so it reads at 34 pixels tall. */}
-            <polygon
-              points={`0,34 ${polyline(series, 100, 30)} 100,34`}
-              fill="url(#speciesFade)"
-              opacity="0.35"
-            />
+            <polygon points={`0,34 ${polyline(series, 100, 30)} 100,34`} fill="url(#speciesFade)" opacity="0.35" />
             <polyline
               points={polyline(series, 100, 30)}
               fill="none"
@@ -161,7 +173,6 @@ const SpeciesStatus = ({
           </svg>
           <div className="species__axis">
             <span>{since}</span>
-            <span>population index</span>
             <span>now</span>
           </div>
         </div>

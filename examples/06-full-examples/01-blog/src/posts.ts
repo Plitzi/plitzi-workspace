@@ -87,6 +87,8 @@ export type PostView = {
   /** Present only when the article has a subject. The plugin binds to these four fields. */
   species: Species | Record<string, never>;
   hasSpecies: boolean;
+  /** How many readers have said they have seen this animal, as a sentence. */
+  sightings: string;
 };
 
 export type PageInfo = {
@@ -502,7 +504,8 @@ export const view = (post: Post): PostView => ({
   // An object either way: the flow's output step interpolates this whole result into JSON, and a missing value
   // would render as nothing at all — `{"species": }` is not a document.
   species: post.species ?? {},
-  hasSpecies: Boolean(post.species)
+  hasSpecies: Boolean(post.species),
+  sightings: sightingLabel(countSightings(post.slug))
 });
 
 export type PostWindow = {
@@ -511,23 +514,35 @@ export type PostWindow = {
   featured: PostView | Record<string, never>;
   hasFeatured: boolean;
   isEmpty: boolean;
+  /** What the list is currently narrowed to, and whether it is narrowed at all. */
+  topic: string;
+  filtered: boolean;
+  /** Its opposite, for the heading that shows when it is not — a binding has no "unless". */
+  unfiltered: boolean;
+  filterLabel: string;
   pageInfo: PageInfo;
 };
 
 /**
- * Newest first, one window at a time.
+ * Newest first, one window at a time, narrowed to a topic when one was asked for.
  *
  * `featured` is what the home page leads with, and it is taken OUT of the window when asked for — a lead story
- * repeated three inches below it is the sort of detail that makes a site look automated.
+ * repeated three inches below it is the sort of detail that makes a site look automated. **A filtered list never
+ * leads with one**: a hero above a list of five is a front page, and a hero above a list of two is a mistake.
  */
-export const listPosts = ({ page = 1, perPage = PER_PAGE, featured = false } = {}): PostWindow => {
-  const ordered = [...posts].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
-  const lead = featured && ordered.length > 0 ? ordered[0] : undefined;
+export const listPosts = ({ page = 1, perPage = PER_PAGE, featured = false, topic = '' } = {}): PostWindow => {
+  const wanted = topic.trim().toLowerCase();
+  const all = [...posts].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+  const ordered = wanted ? all.filter(post => post.topic.toLowerCase() === wanted) : all;
+  const lead = featured && !wanted && ordered.length > 0 ? ordered[0] : undefined;
   const rest = lead ? ordered.slice(1) : ordered;
   const pageCount = Math.max(Math.ceil(rest.length / perPage), 1);
   const current = Math.min(Math.max(page, 1), pageCount);
   const start = (current - 1) * perPage;
   const records = rest.slice(start, start + perPage).map(view);
+  // Whatever the reader typed, spelled the way the posts spell it — the chip and the heading say `Ocean`, not
+  // whatever case arrived in the URL.
+  const label = wanted ? (ordered[0]?.topic ?? topic.trim()) : '';
 
   return {
     records,
@@ -535,6 +550,10 @@ export const listPosts = ({ page = 1, perPage = PER_PAGE, featured = false } = {
     featured: lead && current === 1 ? view(lead) : {},
     hasFeatured: Boolean(lead) && current === 1,
     isEmpty: records.length === 0 && !lead,
+    topic: label,
+    filtered: Boolean(wanted),
+    unfiltered: !wanted,
+    filterLabel: label ? `${label} · ${ordered.length} ${ordered.length === 1 ? 'post' : 'posts'}` : '',
     pageInfo: {
       page: current,
       pageCount,
@@ -547,6 +566,36 @@ export const listPosts = ({ page = 1, perPage = PER_PAGE, featured = false } = {
 
 export const findPost = (slug: string): Post | undefined => posts.find(post => post.slug === slug);
 
+/**
+ * How many readers have said they have seen this animal.
+ *
+ * Kept beside the posts rather than on them because it is not the author's field: nobody edits it, and a post
+ * that gets rewritten keeps its count. In a real blog this is a table with a row per sighting; here it is a
+ * number, for the same reason everything else in this file is in memory.
+ */
+const sightings: Record<string, number> = {
+  'the-fox-that-learned-the-timetable': 41,
+  'an-arm-that-makes-up-its-own-mind': 7,
+  'the-herd-remembers-the-drought': 12,
+  'eighty-wingbeats-a-second-and-a-nightly-death': 63,
+  'there-is-no-alpha-wolf': 9,
+  'born-with-the-map-already-in-her': 18,
+  'counting-a-ghost': 2
+};
+
+export const countSightings = (slug: string): number => sightings[slug] ?? 0;
+
+/** One more, and the new total. The one write on this blog that anybody at all may make. */
+export const recordSighting = (slug: string): number => {
+  sightings[slug] = countSightings(slug) + 1;
+
+  return sightings[slug];
+};
+
+/** "41 readers have seen one" — composed here, because a binding names one field. */
+export const sightingLabel = (count: number): string =>
+  count === 1 ? '1 reader has seen one of these' : `${count} readers have seen one of these`;
+
 /** The posts around this one, for the "keep reading" strip. Never the one being read. */
 export const otherPosts = (slug: string, limit = 3): PostView[] =>
   [...posts]
@@ -555,16 +604,50 @@ export const otherPosts = (slug: string, limit = 3): PostView[] =>
     .slice(0, limit)
     .map(view);
 
-export const topics = (): { name: string; count: string; url: string }[] => {
+export type TopicView = {
+  name: string;
+  count: string;
+  /** Where the chip goes. `All` clears the filter by having no query at all rather than by carrying an empty one. */
+  url: string;
+  /**
+   * Which of the two chips this item renders.
+   *
+   * A field AND its opposite, because a binding shows an element when its field is true and the vocabulary has no
+   * "unless" — and because "selected" is a different shape, not a tint on the same one. The list authors both and
+   * the binding picks, exactly as the header does for signed in and signed out.
+   */
+  isActive: boolean;
+  isInactive: boolean;
+};
+
+/**
+ * Every topic, with `All` in front of them, and which one is currently chosen.
+ *
+ * The counts are computed over ALL the posts rather than over the filtered window: a chip that said `Ocean 2`
+ * while you were reading Ocean and `Ocean 0` while you were not would be counting the wrong thing.
+ */
+export const topics = (active = ''): TopicView[] => {
+  const chosen = active.trim().toLowerCase();
   const counted = posts.reduce<Record<string, number>>((acum, post) => {
     acum[post.topic] = (acum[post.topic] ?? 0) + 1;
 
     return acum;
   }, {});
 
-  return Object.entries(counted)
-    .sort((a, b) => b[1] - a[1])
-    .map(([name, count]) => ({ name, count: String(count), url: '/' }));
+  const entries = Object.entries(counted)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([name, count]) => ({
+      name,
+      count: String(count),
+      url: `/?topic=${encodeURIComponent(name)}`,
+      isActive: name.toLowerCase() === chosen,
+      isInactive: name.toLowerCase() !== chosen
+    }));
+
+  return [
+    { name: 'All', count: String(posts.length), url: '/', isActive: !chosen, isInactive: Boolean(chosen) },
+    ...entries
+  ];
 };
 
 /**

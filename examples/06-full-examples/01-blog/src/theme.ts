@@ -451,6 +451,22 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
   },
   panelText: { desktop: { color: 'var(--fg-muted)', 'font-size': '14px', 'line-height': '1.65' } },
   chipRow: { desktop: { display: 'flex', 'flex-wrap': 'wrap', ...gap('7px') } },
+  /** The chosen topic. A different shape rather than a tint: it should read as a state, not as a hover. */
+  chipActive: {
+    desktop: {
+      display: 'inline-flex',
+      'align-self': 'flex-start',
+      ...padding('6px', '12px'),
+      ...radius('999px'),
+      ...border('1px', 'transparent'),
+      'background-image': 'linear-gradient(140deg, var(--accent), var(--accent-2))',
+      color: 'var(--on-photo)',
+      'font-size': '12px',
+      'font-weight': '700',
+      'text-decoration': 'none',
+      'box-shadow': '0 8px 18px -12px var(--accent-shadow)'
+    }
+  },
   chipQuiet: {
     desktop: {
       display: 'inline-flex',
@@ -502,6 +518,18 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
   },
   metaEdited: { desktop: { color: 'var(--accent-ink)', 'font-size': '12px', 'font-weight': '600' } },
   prose: { desktop: { color: 'var(--fg)', 'font-size': '19px', 'line-height': '1.72', width: '100%' } },
+  /** The public write, given a box of its own so it reads as an invitation rather than as part of the article. */
+  sightingBox: {
+    desktop: row('16px', {
+      width: '100%',
+      'flex-wrap': 'wrap',
+      ...padding('18px', '22px'),
+      ...radius('18px'),
+      ...border('1px', 'var(--line)'),
+      'background-color': 'var(--surface-2)',
+      'justify-content': 'space-between'
+    })
+  },
   authorBox: {
     desktop: row('16px', {
       width: '100%',
@@ -761,7 +789,12 @@ export const customCss = `
   box-shadow: 0 8px 18px -10px var(--accent-shadow);
 }
 .species__step[data-asked='true'] { outline: 2px solid var(--accent); outline-offset: 2px; }
+.species__legend {
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-faint);
+}
+.species__chart .species__legend { padding-bottom: 6px; }
 .species__meaning { margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--fg-muted); }
+.species__aside { color: var(--fg-faint); }
 .species__meaning strong { color: var(--fg); font-weight: 650; }
 .species__chart { color: var(--accent); }
 .species__chart svg { display: block; width: 100%; height: 46px; }

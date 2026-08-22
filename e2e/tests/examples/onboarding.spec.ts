@@ -612,6 +612,68 @@ describeTarget('blog', subject => {
   });
 
   /**
+   * The topic chips, which are a filter rather than decoration.
+   *
+   * The whole of it is a query parameter: a render trigger's input is the page's own route and query params, so
+   * `/?topic=Ocean` reaches the action with nothing wired between the two. Which chip is CHOSEN is answered by
+   * the server as well — the page renders a state rather than working one out.
+   */
+  test('a topic narrows the list, and the chip that did it says so', async ({ page, capture }) => {
+    await page.goto(subject.origin);
+
+    // `:visible` because the list authors BOTH chips for every topic and hides one — which is the mechanism
+    // under test, not an accident of the markup.
+    const chosen = page.locator('.chipRow .chipActive:visible');
+    await expect(chosen).toHaveText('All');
+    await expect(page.locator('a.hero')).toBeVisible();
+
+    await page.getByRole('link', { name: 'Ocean', exact: true }).click();
+
+    await expect(page).toHaveURL(/[?&]topic=Ocean/);
+    await expect(chosen).toHaveText('Ocean');
+    await expect(page.getByText('Ocean · 2 posts')).toBeVisible();
+    await expect(page.locator('.cardTitle')).toHaveCount(2);
+    // A hero above a list of five is a front page; above a list of two it is a mistake.
+    await expect(page.locator('a.hero')).toBeHidden();
+    // The sidebar's archive declares `topic: ''`, so it stays the whole archive rather than a copy of the feed.
+    await expect(page.locator('.quietTitle')).toHaveCount(5);
+
+    await capture('topic-filtered');
+
+    await page.getByRole('link', { name: 'All', exact: true }).click();
+
+    await expect(page).toHaveURL(`${subject.origin}/`);
+    await expect(page.locator('a.hero')).toBeVisible();
+  });
+
+  /**
+   * The write anybody may make — and the one to press with the dev-tools Actions tab open.
+   *
+   * `access: 'public'` on the trigger: no session, no permission, no account. The three READS that build these
+   * pages are `render` triggers resolved on the server, so the browser never started them and a browser-side
+   * panel has nothing to record; this one the page starts.
+   */
+  test('a signed-out visitor can run a public action, and is told what the server counted', async ({ page }) => {
+    await page.goto(`${subject.origin}/post/there-is-no-alpha-wolf`);
+
+    const box = page.locator('.sightingBox');
+    await expect(box).toContainText('readers have seen one of these');
+    // Nobody is signed in: the header offers the invitation rather than a name.
+    await expect(page.locator('.headerInner').getByRole('link', { name: 'Sign in' })).toBeVisible();
+
+    await box.getByRole('button', { name: 'I have seen one' }).click();
+
+    // The count came back from the server. A number incremented in the browser is a number that disagrees with
+    // the next reader's.
+    await expect(box.locator('.notice')).toContainText('Logged.');
+    const first = await box.locator('.notice').innerText();
+
+    await box.getByRole('button', { name: 'I have seen one' }).click();
+
+    await expect(box.locator('.notice')).not.toHaveText(first);
+  });
+
+  /**
    * The species panel — the one element on this blog the SDK does not ship.
    *
    * It is registered in `main.ts`, compiled by the server, and authored on the page exactly like a heading. What

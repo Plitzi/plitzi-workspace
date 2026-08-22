@@ -329,7 +329,20 @@ const home: PageSpec = {
                   element('Container', {
                     className: 'feed',
                     children: [
-                      text('More stories', 'sectionLabel'),
+                      element('Text', {
+                        attributes: { content: 'More stories' },
+                        className: 'sectionLabel',
+                        bindings: [shownWhen('apiContainer_posts.unfiltered')]
+                      }),
+                      // The same slot, saying what the list was narrowed to. Two elements, one field, no branch.
+                      element('Text', {
+                        attributes: { content: '' },
+                        className: 'sectionLabel',
+                        bindings: [
+                          { to: 'content', source: 'apiContainer_posts.filterLabel' },
+                          shownWhen('apiContainer_posts.filtered')
+                        ]
+                      }),
                       /**
                        * The list renders its one child once per record, each row under its own scope — which is what
                        * `list_postList.item` is. One template, however many posts.
@@ -371,7 +384,13 @@ const home: PageSpec = {
                       element('ApiContainer', {
                         idRef: 'recent',
                         runtime: 'server',
-                        attributes: { action: 'list-posts', input: { page: 1, perPage: 5, featured: false } },
+                        // `topic: ''` is not noise: a render trigger's input is the page's own query params plus
+                        // whatever the element declares, so without saying so this provider would be filtered by
+                        // the URL too — and "From the archive" would only ever show the topic you are already in.
+                        attributes: {
+                          action: 'list-posts',
+                          input: { page: 1, perPage: 5, featured: false, topic: '' }
+                        },
                         className: 'sidebar',
                         children: [
                           panel('Topics', [
@@ -379,11 +398,38 @@ const home: PageSpec = {
                               idRef: 'topicList',
                               attributes: { source: 'controlled' },
                               className: 'chipRow',
-                              bindings: [{ to: 'items', source: 'apiContainer_recent.topics' }],
+                              /**
+                               * The MAIN provider's topics, not the sidebar's — it is the one that was told what
+                               * the URL asked for, so it is the one that knows which chip is chosen.
+                               */
+                              bindings: [{ to: 'items', source: 'apiContainer_posts.topics' }],
+                              /**
+                               * Two chips per topic, and the binding picks.
+                               *
+                               * "Selected" is a different shape rather than a tint on the same one, and the style
+                               * vocabulary has no way to swap a class from data anyway — so the list authors both
+                               * and each binds its visibility to a field the server answered. The same either/or
+                               * the header uses for signed in and signed out.
+                               */
                               children: [
-                                boundLink('list_topicList.item.url', 'chipQuiet', [
-                                  bound('Text', 'list_topicList.item.name', 'inlineLabel')
-                                ])
+                                element('Link', {
+                                  attributes: { mode: 'internal' },
+                                  className: 'chipActive',
+                                  bindings: [
+                                    { to: 'href', source: 'list_topicList.item.url' },
+                                    shownWhen('list_topicList.item.isActive')
+                                  ],
+                                  children: [bound('Text', 'list_topicList.item.name', 'inlineLabel')]
+                                }),
+                                element('Link', {
+                                  attributes: { mode: 'internal' },
+                                  className: 'chipQuiet',
+                                  bindings: [
+                                    { to: 'href', source: 'list_topicList.item.url' },
+                                    shownWhen('list_topicList.item.isInactive')
+                                  ],
+                                  children: [bound('Text', 'list_topicList.item.name', 'inlineLabel')]
+                                })
                               ]
                             })
                           ]),
@@ -505,6 +551,64 @@ const post: PageSpec = {
                     attributes: { format: 'markdown', content: '' },
                     className: 'prose',
                     bindings: [{ to: 'content', source: 'apiContainer_post.record.body' }]
+                  }),
+                  /**
+                   * The one write on this blog anybody may make — no session, no permission, no account.
+                   *
+                   * Worth putting on the page for more than charm: it is the button to press with the dev-tools
+                   * **Actions** tab open. The three reads that build these pages are `render` triggers resolved
+                   * on the server, so the browser never started them and a browser-side panel has nothing to
+                   * show. This one the page starts, and every press is a run with an input, an output and a
+                   * duration.
+                   */
+                  element('Container', {
+                    className: 'sightingBox',
+                    children: [
+                      element('Container', {
+                        className: 'stack',
+                        children: [
+                          text('Seen one yourself?', 'bylineName'),
+                          bound('Text', 'apiContainer_post.record.sightings', 'meta')
+                        ]
+                      }),
+                      element('Button', {
+                        idRef: 'sighting',
+                        attributes: { subType: 'button', content: 'I have seen one' },
+                        className: 'buttonQuiet',
+                        flows: [
+                          [
+                            { id: 'seen', type: 'trigger', action: 'onClick', on: 'sighting' },
+                            {
+                              id: 'log',
+                              type: 'globalCallback',
+                              action: 'runServerAction',
+                              on: 'actions',
+                              params: {
+                                actionId: 'record-sighting',
+                                // The slug the page was built for. The action checks it names a real post —
+                                // otherwise it opens a counter for anything a caller cares to type.
+                                input: { slug: '{{apiContainer_post.record.slug}}' },
+                                mode: 'await'
+                              }
+                            },
+                            {
+                              id: 'thanks',
+                              type: 'globalCallback',
+                              action: 'setState',
+                              on: 'state',
+                              // What the SERVER counted, not what the page guessed. A count incremented in the
+                              // browser is a count that disagrees with the next reader's.
+                              params: { key: 'sighting', type: 'text', value: '{{log.output.message}}' }
+                            }
+                          ]
+                        ]
+                      }),
+                      element('Paragraph', {
+                        attributes: { content: '' },
+                        className: 'notice',
+                        bindings: [{ to: 'content', source: 'state.sighting' }]
+                      })
+                    ]
                   }),
                   element('Container', {
                     className: 'authorBox',
