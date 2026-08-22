@@ -1,3 +1,6 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 import { createAuth } from '@plitzi/sdk-server/auth';
 
@@ -7,6 +10,19 @@ import { offlineData } from './space';
 import { blogTasks } from './tasks';
 
 const PORT = Number(process.env.PORT ?? 4013);
+const here = path.dirname(fileURLToPath(import.meta.url));
+
+/**
+ * The element this space ships itself.
+ *
+ * `speciesStatus` is not in the SDK and never will be — a Red List scale is this blog's business. A deployment
+ * hands the server the file and the type name, the server compiles it and renders it with everything else, and
+ * the page authors it exactly like a heading. Two halves, and forgetting either is quiet: name a plugin the
+ * server has no component for and the element resolves to nothing, on a page that renders perfectly.
+ */
+const plugins = {
+  speciesStatus: { js: path.resolve(here, 'plugins/SpeciesStatus.tsx'), action: 'compile' as const }
+};
 
 /**
  * A blog, in one server.
@@ -30,7 +46,12 @@ const server = createServer({
   port: PORT,
   devMode: true,
   logger: consoleLogger,
-  adapters: createJsonAdapters({ offlineData: offlineData() }),
+  adapters: createJsonAdapters({
+    offlineData: offlineData(),
+    // `pluginNames` is how the render knows to load them. Without it the file is compiled by nobody.
+    deployment: { spaceId: 1, environment: 'main', revision: 0, pluginNames: Object.keys(plugins) }
+  }),
+  plugins,
   auth,
   /**
    * What turns the server half on. `lookups` is how this deployment reaches an action — with no way to read one
@@ -53,4 +74,5 @@ const server = createServer({
 server.listen(PORT, '127.0.0.1');
 
 console.log(`[blog] the blog on http://127.0.0.1:${PORT}/`);
-console.log('[blog] sign in as ada / password to publish, or grace / password to be refused');
+console.log('[blog] sign in as ada / password to publish and edit, or grace / password to be refused');
+console.log('[blog] dev tools: the badge in the corner, or shift+alt+D');

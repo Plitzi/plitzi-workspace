@@ -19,6 +19,14 @@ import type {
 
 const MAX_TWIG_RESOLUTION_PASSES = 5;
 
+/**
+ * How deep into a param's own structure the resolver will go.
+ *
+ * A guard rather than a limit anybody should meet: it stops a value that somehow refers to itself from turning a
+ * step into an infinite walk, and five levels is deeper than any authored param has ever been.
+ */
+const MAX_PARAM_DEPTH = 5;
+
 const processParams = (
   type: InteractionCallback['type'],
   params: Record<string, unknown>,
@@ -30,26 +38,55 @@ const processParams = (
     return params;
   }
 
-  return Object.keys(params).reduce((acum, param) => {
-    let value = params[param];
-    if (type !== 'trigger') {
+  const scope = { ...flowValues, ...globalValues };
+
+  /**
+   * Resolve every STRING in the param, wherever it happens to sit.
+   *
+   * A param is not always a string. `input` on a server action is the case that matters: authored as one line of
+   * JSON text it resolves fine until a value contains a quotation mark or a newline — a post body, in other words
+   * — and then the interpolated result is not a document any more and the whole call is refused as invalid input.
+   * Written as an OBJECT instead, each value is its own string and nothing has to be escaped by hand; that only
+   * works if the resolver goes in after them, which is what this does.
+   */
+  const resolve = (value: unknown, param: string, depth: number): unknown => {
+    if (typeof value === 'string') {
+      let resolved: unknown = value;
       let passes = MAX_TWIG_RESOLUTION_PASSES;
-      while (typeof value === 'string' && hasValidToken(value) && passes > 0) {
-        value = processTwig(value, { ...flowValues, ...globalValues }, false, true);
+      while (typeof resolved === 'string' && hasValidToken(resolved) && passes > 0) {
+        resolved = processTwig(resolved, scope, false, true);
         passes--;
       }
 
-      if (typeof value === 'string' && hasValidToken(value)) {
+      if (typeof resolved === 'string' && hasValidToken(resolved)) {
         pConsole.warning(
           'interactions',
           <span>
             Twig token resolution exceeded {MAX_TWIG_RESOLUTION_PASSES} passes for <b>{param}</b>, leaving unresolved
             tokens
           </span>,
-          { param, value }
+          { param, value: resolved }
         );
       }
+
+      return resolved;
     }
+
+    if (depth >= MAX_PARAM_DEPTH || value === null || typeof value !== 'object') {
+      return value;
+    }
+
+    if (Array.isArray(value)) {
+      return value.map(entry => resolve(entry, param, depth + 1));
+    }
+
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, entry]) => [key, resolve(entry, param, depth + 1)])
+    );
+  };
+
+  return Object.keys(params).reduce((acum, param) => {
+    const value = type === 'trigger' ? params[param] : resolve(params[param], param, 0);
 
     return { ...acum, [param]: value };
   }, {});

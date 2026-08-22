@@ -1,4 +1,4 @@
-import { addPost, findPost, listPosts, otherPosts, topics, view } from './posts';
+import { addPost, findPost, listPosts, otherPosts, topics, updatePost, view } from './posts';
 
 import type { ActionTask } from '@plitzi/sdk-server/actions';
 
@@ -54,8 +54,17 @@ export const getPostTask: ActionTask<{ slug: string }> = {
   title: 'Get Post',
   description: 'One post, by the slug in the URL, with the ones to read next.',
   params: { slug: { type: 'text', canBind: true, defaultValue: '', label: 'Slug' } },
-  run: ({ slug }) => {
+  run: ({ slug }, ctx) => {
     const post = findPost(slug);
+    /**
+     * Two questions, and they are not the same one.
+     *
+     * `postPublish` is a permission and belongs to a PERSON; being the author belongs to a ROW. The action's
+     * trigger can only ask the first, before any step runs and without a record in hand — so the second is asked
+     * here, and the page binds an "Edit" link to the answer. The lock is still `blog.updatePost`, which asks it
+     * again with the record it is about to change.
+     */
+    const canEdit = Boolean(post && ctx.user?.permissions.includes('postPublish') && ctx.user.id === post.authorId);
 
     /**
      * Both answers, always — and `record` is an object either way.
@@ -69,6 +78,10 @@ export const getPostTask: ActionTask<{ slug: string }> = {
       record: post ? view(post) : {},
       found: Boolean(post),
       missing: !post,
+      canEdit,
+      // Its opposite, for the other half of the editor page: a binding shows an element when its field is true.
+      cannotEdit: Boolean(post) && !canEdit,
+      editUrl: post ? `/edit/${post.slug}` : '',
       more: otherPosts(slug)
     };
   }
@@ -105,7 +118,13 @@ export const siteChromeTask: ActionTask<Record<string, never>> = {
   }
 };
 
-export const publishPostTask: ActionTask<{ title: string; standfirst: string; body: string; topic: string }> = {
+export const publishPostTask: ActionTask<{
+  title: string;
+  standfirst: string;
+  body: string;
+  topic: string;
+  cover: string;
+}> = {
   namespace: 'blog',
   action: 'publishPost',
   title: 'Publish Post',
@@ -114,9 +133,10 @@ export const publishPostTask: ActionTask<{ title: string; standfirst: string; bo
     title: { type: 'text', canBind: true, defaultValue: '', label: 'Title' },
     standfirst: { type: 'text', canBind: true, defaultValue: '', label: 'Standfirst' },
     body: { type: 'codemirror-text', canBind: true, defaultValue: '', label: 'Body (markdown)' },
-    topic: { type: 'text', canBind: true, defaultValue: 'Fieldnotes', label: 'Topic' }
+    topic: { type: 'text', canBind: true, defaultValue: 'Fieldnotes', label: 'Topic' },
+    cover: { type: 'text', canBind: true, defaultValue: '', label: 'Cover image URL' }
   },
-  run: ({ title, standfirst, body, topic }, ctx) => {
+  run: ({ title, standfirst, body, topic, cover }, ctx) => {
     /**
      * The author is who the SESSION says, never what the browser sent.
      *
@@ -139,6 +159,7 @@ export const publishPostTask: ActionTask<{ title: string; standfirst: string; bo
       standfirst: standfirst.trim(),
       body,
       topic: topic.trim() || 'Fieldnotes',
+      cover: cover.trim(),
       authorId: user.id,
       author: user.username
     });
@@ -147,4 +168,51 @@ export const publishPostTask: ActionTask<{ title: string; standfirst: string; bo
   }
 };
 
-export const blogTasks = [listPostsTask, getPostTask, siteChromeTask, publishPostTask];
+/**
+ * Changing a post that is already published.
+ *
+ * The counterpart to publishing, and the one that shows the half a permission cannot cover. `access: 'role'` on
+ * the trigger already refused anybody without `postPublish` — but `ada` holding that permission does not make
+ * `grace`'s post hers to rewrite. So this step asks the second question, with the record in hand, and the store
+ * refuses on the author id rather than trusting anything that arrived in the input.
+ *
+ * A field left blank means "leave it alone", which is what makes the editor safe to open and close.
+ */
+export const updatePostTask: ActionTask<{
+  slug: string;
+  title: string;
+  standfirst: string;
+  body: string;
+  topic: string;
+  cover: string;
+}> = {
+  namespace: 'blog',
+  action: 'updatePost',
+  title: 'Update Post',
+  description: 'Rewrites a post the signed-in author already owns.',
+  params: {
+    slug: { type: 'text', canBind: true, defaultValue: '', label: 'Slug' },
+    title: { type: 'text', canBind: true, defaultValue: '', label: 'Title' },
+    standfirst: { type: 'text', canBind: true, defaultValue: '', label: 'Standfirst' },
+    body: { type: 'codemirror-text', canBind: true, defaultValue: '', label: 'Body (markdown)' },
+    topic: { type: 'text', canBind: true, defaultValue: '', label: 'Topic' },
+    cover: { type: 'text', canBind: true, defaultValue: '', label: 'Cover image URL' }
+  },
+  run: ({ slug, title, standfirst, body, topic, cover }, ctx) => {
+    const { user } = ctx;
+    if (!user) {
+      throw new Error('Editing needs a signed-in author');
+    }
+
+    const post = updatePost(slug, user.id, { title, standfirst, body, topic, cover });
+    if (!post) {
+      // The same answer for "no such post" and "not yours" ON PURPOSE: telling the difference apart is telling a
+      // stranger which slugs exist and who wrote them.
+      throw new Error('That post is not yours to edit');
+    }
+
+    return { url: `/post/${post.slug}`, slug: post.slug, message: `Updated “${post.title}”` };
+  }
+};
+
+export const blogTasks = [listPostsTask, getPostTask, siteChromeTask, publishPostTask, updatePostTask];

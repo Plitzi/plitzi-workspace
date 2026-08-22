@@ -7,6 +7,27 @@
  * and a database in front of it is a setup step between you and that.
  */
 
+/**
+ * The subject of an article, as facts rather than as prose.
+ *
+ * This is what the `speciesStatus` plugin renders: a Red List category, which way the population is going, and a
+ * series to draw. None of it can be expressed with a heading and a paragraph — a category is a POSITION on a
+ * scale, and a trend is a shape — which is exactly when a space stops arranging built-in elements and ships one
+ * of its own.
+ */
+export type Species = {
+  name: string;
+  latin: string;
+  /** IUCN Red List category. The scale the plugin draws runs LC · NT · VU · EN · CR. */
+  status: 'LC' | 'NT' | 'VU' | 'EN' | 'CR';
+  trend: 'increasing' | 'stable' | 'decreasing' | 'unknown';
+  /** A population index by decade, oldest first, 100 = the first reading. What the sparkline draws. */
+  history: number[];
+  /** The first year of the series, so the chart can label its own axis. */
+  since: number;
+  note: string;
+};
+
 export type Post = {
   id: number;
   slug: string;
@@ -18,15 +39,20 @@ export type Post = {
   /**
    * The photograph, as a URL — which is all a cover ever is.
    *
-   * Optional, and that is the interesting half: a post written in this blog's own editor arrives without one, and
-   * gets a cover drawn from its slug instead. A real blog stores whatever its media library produced, here.
+   * Optional, and that is the interesting half: a post left without one gets a cover drawn from its slug instead.
+   * A real blog stores whatever its media library produced, here — and so does the editor on `/write`, which
+   * has a field for it and nothing more clever than that.
    */
   cover?: string;
+  /** What the article is ABOUT, as data. The one thing on a post no built-in element can draw. */
+  species?: Species;
   topic: string;
   authorId: number;
   author: string;
   authorRole: string;
   publishedAt: string;
+  /** Set the first time somebody edits it. The post page shows it, so a correction is visible rather than silent. */
+  updatedAt?: string;
 };
 
 /**
@@ -51,10 +77,16 @@ export type PostView = {
   readingTime: string;
   /** Date and reading time, for the places that show the author separately. */
   dateline: string;
+  /** "Updated 22 August 2026", or empty. A blog that edits silently is a blog you cannot trust twice. */
+  updated: string;
+  wasUpdated: boolean;
   byline: string;
   cover: string;
   excerpt: string;
   body: string;
+  /** Present only when the article has a subject. The plugin binds to these four fields. */
+  species: Species | Record<string, never>;
+  hasSpecies: boolean;
 };
 
 export type PageInfo = {
@@ -104,6 +136,15 @@ A red fox in open country holds a territory of five square kilometres or more an
 Urban foxes are getting shorter snouts and stronger jaw muscles — measurably, across generations, in skulls collected over the last century. Not a big change. But it is the change you would predict for an animal that has stopped catching things and started opening them.
 
 They are not visiting. They have moved in, and the city is starting to show up in the bones.`,
+    species: {
+      name: 'Red fox',
+      latin: 'Vulpes vulpes',
+      status: 'LC',
+      trend: 'stable',
+      history: [100, 104, 112, 126, 138, 141],
+      since: 1970,
+      note: 'The most widely distributed wild carnivore on Earth, and one of the few getting commoner.'
+    },
     topic: 'Cities',
     authorId: 1,
     author: 'Ada Bell',
@@ -135,6 +176,15 @@ An octopus appears not to know precisely where its own arms are. There is no det
 > It does not need one. Knowing where the arm is, is the arm's problem.
 
 Which raises the question people who work with these animals eventually stop being able to avoid: when an octopus solves a puzzle box, who exactly solved it?`,
+    species: {
+      name: 'Common octopus',
+      latin: 'Octopus vulgaris',
+      status: 'LC',
+      trend: 'unknown',
+      history: [100, 96, 88, 97, 84, 79],
+      since: 1970,
+      note: 'Fished heavily and assessed thinly: the category says less here than the size of the error bars.'
+    },
     topic: 'Ocean',
     authorId: 2,
     author: 'Grace Ward',
@@ -168,6 +218,15 @@ Ivory is bigger in older animals. So the hunting pressure of the last century fe
 > It loses the drought of 1958. And it will make the wrong decision the next time the rain fails.
 
 Population counts miss this entirely. You can have the same number of elephants and a great deal less elephant.`,
+    species: {
+      name: 'African savanna elephant',
+      latin: 'Loxodonta africana',
+      status: 'EN',
+      trend: 'decreasing',
+      history: [100, 71, 44, 31, 26, 24],
+      since: 1970,
+      note: 'Split from the forest elephant as a species in 2021, and listed Endangered the same day.'
+    },
     topic: 'Savanna',
     authorId: 1,
     author: 'Ada Bell',
@@ -203,6 +262,15 @@ Torpor is not free sleep, and the birds treat it as a last resort:
 > The bird is running an overnight energy budget with a decision in it, and it makes that decision every evening based on what it managed to eat.
 
 Andean species at 4,000 metres go furthest: measured body temperatures of 3.3°C, the lowest recorded in any bird or non-hibernating mammal. Cold enough that you would put it in the fridge, not the field notebook.`,
+    species: {
+      name: 'Broad-tailed hummingbird',
+      latin: 'Selasphorus platycercus',
+      status: 'LC',
+      trend: 'decreasing',
+      history: [100, 94, 87, 79, 71, 64],
+      since: 1970,
+      note: 'Least Concern and down by a third: the category is about extinction risk, not about how it is going.'
+    },
     topic: 'Flight',
     authorId: 2,
     author: 'Grace Ward',
@@ -234,6 +302,15 @@ Young wolves do not stay and compete for the top job. At one to three years old 
 Because captive wolves really do behave that way, and because the story is useful to people who want a natural justification for hierarchy.
 
 Put unrelated adults of most social species in a cage and they will sort out a rank order too. What that tells you about the species in the wild is nothing at all — which is the actual lesson here, and it is a much more general one than wolves.`,
+    species: {
+      name: 'Grey wolf',
+      latin: 'Canis lupus',
+      status: 'LC',
+      trend: 'increasing',
+      history: [100, 92, 88, 103, 137, 178],
+      since: 1970,
+      note: 'A European recovery on top of a century of extermination — the line is a policy, drawn.'
+    },
     topic: 'Behaviour',
     authorId: 1,
     author: 'Ada Bell',
@@ -269,6 +346,15 @@ Twenty years later a female comes back to nest within a few dozen kilometres of 
 The current best explanation is that she imprinted on the magnetic signature of that stretch of coast as a hatchling and spends her adult life searching for the match. It has a testable and slightly unsettling consequence: the field drifts, so the signature moves — and the turtles move with it. When two stretches of Florida coast drifted magnetically closer together, nesting density between them converged.
 
 > They are not going back to a place. They are going back to a number, and the number has been quietly relocating.`,
+    species: {
+      name: 'Loggerhead turtle',
+      latin: 'Caretta caretta',
+      status: 'VU',
+      trend: 'unknown',
+      history: [100, 83, 61, 58, 72, 88],
+      since: 1970,
+      note: 'Nest counts are rising where beaches are protected and falling where they are not.'
+    },
     topic: 'Ocean',
     authorId: 2,
     author: 'Grace Ward',
@@ -301,6 +387,15 @@ Because the species was moved from Endangered to Vulnerable in 2017, and that de
 > A downgrade based on a number nobody can defend is not good news. It is the same ignorance, wearing a better label.
 
 The current work — a coordinated assessment across all twelve range states — is the first attempt to answer the question with fieldwork instead of consensus. The first results suggest the old figure was not wildly wrong. That is worth knowing, and it took thirty years to be able to say it.`,
+    species: {
+      name: 'Snow leopard',
+      latin: 'Panthera uncia',
+      status: 'VU',
+      trend: 'decreasing',
+      history: [100, 97, 91, 86, 82, 78],
+      since: 1970,
+      note: 'Every point on this line is an estimate of an estimate. That is the subject of the article.'
+    },
     topic: 'Conservation',
     authorId: 1,
     author: 'Ada Bell',
@@ -398,10 +493,16 @@ export const view = (post: Post): PostView => ({
   date: DATE.format(new Date(post.publishedAt)),
   readingTime: readingTime(post.body),
   dateline: `${DATE.format(new Date(post.publishedAt))} · ${readingTime(post.body)}`,
+  updated: post.updatedAt ? `Updated ${DATE.format(new Date(post.updatedAt))}` : '',
+  wasUpdated: Boolean(post.updatedAt),
   byline: `${post.author} · ${DATE.format(new Date(post.publishedAt))} · ${readingTime(post.body)}`,
   cover: post.cover ?? coverFor(post.slug),
   excerpt: excerptOf(post.body),
-  body: post.body
+  body: post.body,
+  // An object either way: the flow's output step interpolates this whole result into JSON, and a missing value
+  // would render as nothing at all — `{"species": }` is not a document.
+  species: post.species ?? {},
+  hasSpecies: Boolean(post.species)
 });
 
 export type PostWindow = {
@@ -466,11 +567,41 @@ export const topics = (): { name: string; count: string; url: string }[] => {
     .map(([name, count]) => ({ name, count: String(count), url: '/' }));
 };
 
+/**
+ * Changing a post that already exists.
+ *
+ * It takes the AUTHOR's id and refuses a post belonging to somebody else — and that is not the same question the
+ * action's trigger asked. The trigger asked "may you publish at all", once, before any step ran. This asks "is
+ * this yours", and only a step holding the record can: a permission is about a person, ownership is about a row.
+ *
+ * `undefined` for a field means "leave it alone", which is what lets one editor send only what changed.
+ */
+export const updatePost = (
+  slug: string,
+  authorId: number,
+  patch: { title?: string; standfirst?: string; body?: string; topic?: string; cover?: string }
+): Post | undefined => {
+  const post = posts.find(item => item.slug === slug);
+  if (!post || post.authorId !== authorId) {
+    return undefined;
+  }
+
+  const trimmed = Object.fromEntries(
+    Object.entries(patch).filter(([, value]) => typeof value === 'string' && value.trim() !== '')
+  ) as Record<string, string>;
+
+  Object.assign(post, trimmed);
+  post.updatedAt = new Date().toISOString();
+
+  return post;
+};
+
 export const addPost = (draft: {
   title: string;
   standfirst: string;
   body: string;
   topic: string;
+  cover: string;
   authorId: number;
   author: string;
 }): Post => {
@@ -480,6 +611,9 @@ export const addPost = (draft: {
     title: draft.title,
     standfirst: draft.standfirst,
     body: draft.body,
+    // Empty is a real answer: `view` falls back to a cover drawn from the slug, so a post without a photograph
+    // still has one rather than a hole where the front page expects an image.
+    cover: draft.cover ? draft.cover : undefined,
     topic: draft.topic,
     authorId: draft.authorId,
     author: draft.author,

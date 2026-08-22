@@ -481,6 +481,26 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
     mobile: { 'font-size': '18px' }
   },
   articleImage: { desktop: { ...media('2 / 1'), ...radius('20px') } },
+  /**
+   * The box around the space's own element.
+   *
+   * Written here and not in the plugin on purpose: the border, the padding and the radius are decisions of the
+   * PAGE, the same way they are for a heading. The plugin draws what only it can draw and stays out of the rest.
+   */
+  speciesPanel: {
+    desktop: column('14px', {
+      width: '100%',
+      ...padding('22px'),
+      ...radius('20px'),
+      ...border('1px', 'var(--line)'),
+      'background-color': 'var(--surface)',
+      'box-shadow': '0 24px 50px -44px var(--shadow)'
+    })
+  },
+  bylineRow: {
+    desktop: row('16px', { width: '100%', 'justify-content': 'space-between', 'flex-wrap': 'wrap' })
+  },
+  metaEdited: { desktop: { color: 'var(--accent-ink)', 'font-size': '12px', 'font-weight': '600' } },
   prose: { desktop: { color: 'var(--fg)', 'font-size': '19px', 'line-height': '1.72', width: '100%' } },
   authorBox: {
     desktop: row('16px', {
@@ -714,6 +734,46 @@ export const customCss = `
 .prose pre { background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px;
   padding: 18px 20px; overflow-x: auto; margin: 0 0 24px; }
 .prose pre code { background: none; color: var(--fg); padding: 0; font-size: 13.5px; line-height: 1.65; }
+
+/* ── The space's own element ─────────────────────────────────────────────────────────────────────────────────
+   speciesStatus renders markup nobody authored, so its parts are out of reach of a class the way a post's
+   markdown is. Everything here is written in the palette's variables, which is what makes a plugin that ships no
+   colours of its own look like it was designed with the site — in both schemes, for free. */
+.species__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.species__name { font-family: ${DISPLAY}; font-size: 21px; letter-spacing: -0.015em; color: var(--fg); }
+.species__latin { font-size: 13px; font-style: italic; color: var(--fg-faint); }
+.species__trend {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent-ink); font-size: 12px; font-weight: 700; white-space: nowrap;
+}
+.species__scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.species__step {
+  padding: 7px 0; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2);
+  color: var(--fg-faint); font: inherit; font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  cursor: pointer; transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+.species__step:hover { color: var(--fg); border-color: var(--line-strong); }
+/* Where this species actually sits. The steps before it are tinted, so the scale reads as a level rather than
+   as five buttons with one of them coloured in. */
+.species__step[data-state='below'] { background: var(--accent-soft); color: var(--accent-ink); border-color: transparent; }
+.species__step[data-state='current'] {
+  background: linear-gradient(140deg, var(--accent), var(--accent-2)); color: #ffffff; border-color: transparent;
+  box-shadow: 0 8px 18px -10px var(--accent-shadow);
+}
+.species__step[data-asked='true'] { outline: 2px solid var(--accent); outline-offset: 2px; }
+.species__meaning { margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--fg-muted); }
+.species__meaning strong { color: var(--fg); font-weight: 650; }
+.species__chart { color: var(--accent); }
+.species__chart svg { display: block; width: 100%; height: 46px; }
+.species__axis {
+  display: flex; justify-content: space-between; padding-top: 6px;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-faint);
+}
+.species__note { margin: 0; font-size: 13px; line-height: 1.6; color: var(--fg-faint); }
+
+/* The slug the editor carries is a value, not a control: it takes no room on a page a person is reading. The
+   builder still shows a placeholder for it, which is what makes it selectable there. */
+.plitzi-component__form-control-hidden { display: none; }
 
 .navLink:hover { color: var(--fg); background-color: var(--surface-2); }
 .accountPill:hover, .chipQuiet:hover, .buttonQuiet:hover, .themeToggle:hover { border-color: var(--accent); color: var(--accent-ink); }

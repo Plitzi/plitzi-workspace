@@ -18,21 +18,22 @@ every server action this page ran, and the switch that puts the whole thing in l
 
 ## What it took
 
-Seven files, and only two of them are about blogging:
+Eight files, and only two of them are about blogging:
 
 | File | Lines | What it is |
 |---|---:|---|
-| [`src/space.ts`](./src/space.ts) | 646 | The five pages — a declaration, not code |
-| [`src/theme.ts`](./src/theme.ts) | 646 | The stylesheet, as data: ~50 classes, the palette, both schemes |
-| [`src/posts.ts`](./src/posts.ts) | 344 | Seven articles, in memory. The one file a real blog replaces |
-| [`src/tasks.ts`](./src/tasks.ts) | 102 | List, read, publish, and who is looking |
+| [`src/space.ts`](./src/space.ts) | 878 | The six pages — a declaration, not code |
+| [`src/theme.ts`](./src/theme.ts) | 689 | The stylesheet, as data: ~55 classes, the palette, both schemes |
+| [`src/posts.ts`](./src/posts.ts) | 444 | Seven articles and their subjects. The one file a real blog replaces |
+| [`src/tasks.ts`](./src/tasks.ts) | 146 | List, read, publish, edit, and who is looking |
+| [`src/actions.ts`](./src/actions.ts) | 131 | Five flows, as documents |
+| [`src/plugins/SpeciesStatus.tsx`](./src/plugins/SpeciesStatus.tsx) | 130 | The one element this space ships itself |
 | [`src/accounts.ts`](./src/accounts.ts) | 92 | Two people, their sessions, and the adapters over them |
-| [`src/actions.ts`](./src/actions.ts) | 89 | Four flows, as documents |
-| [`src/main.ts`](./src/main.ts) | 33 | The server |
+| [`src/main.ts`](./src/main.ts) | 44 | The server |
 
 Lines of code, without the comments — which outnumber them here, because an example is read more often than it is
 run. Two of those files are the pages and two more are content and paint. What is left is the **mechanism** —
-sessions, permissions, the four flows and the server — and it is a little over three hundred lines.
+sessions, permissions, the five flows and the server — and it is under four hundred lines.
 
 There is no router, no controller, no template, no data-loading code, no session handling, no CSRF, no permission
 middleware, no client-side state and no build step for the pages. Those are not omitted — they are what
@@ -45,6 +46,7 @@ middleware, no client-side state and no build step for the pages. Those are not 
 | `/` | everybody | `list-posts`, twice: the feed and the sidebar |
 | `/post/{{slug}}` | everybody | `get-post`, given the slug from the route |
 | `/write` | a signed-in visitor | nothing — it is a form |
+| `/edit/{{slug}}` | the post's own author | `get-post` again — one action, two pages |
 | `/login` | signed out **and** signed in | two pages on one path |
 
 The last row is the pattern worth stealing. `accessLevel: 'public'` does not mean "for everybody" — it means
@@ -109,11 +111,70 @@ The page shows what came back and decides nothing:
 
 ```ts
 { id: 'publish', type: 'globalCallback', action: 'runServerAction', on: 'actions',
-  params: { actionId: 'publish-post', input: '{"title":"{{submitted.values.title}}", … }', mode: 'await' } },
+  params: { actionId: 'publish-post', input: { title: '{{submitted.values.title}}', … }, mode: 'await' } },
 { id: 'refused', type: 'globalCallback', action: 'setState', on: 'state',
   params: { key: 'notice', value: 'The server refused this: {{publish.reason}}' },
   when: { combinator: 'and', rules: [{ field: 'publish.status', operator: '!=', value: 'completed' }] } }
 ```
+
+**Write `input` as an object, not as a line of JSON text.** It is the same values either way until one of them
+contains a quotation mark or a newline — a post body, in other words — and then a JSON string with tokens
+interpolated into it stops being a document and the action refuses the whole call as invalid input. As an object
+each value is its own string and nothing has to be escaped by hand.
+
+## Who may edit
+
+Publishing is a permission. Editing is a permission **and** a question the permission cannot answer.
+
+`ada` holds `postPublish`, and that does not make `grace`'s post hers to rewrite. The `update-post` trigger asks
+the first half — before any step runs, with no record in hand, because at that moment there is no record. The
+second half is asked by the task, holding the row:
+
+```ts
+const post = updatePost(slug, user.id, patch);   // matches on the author id
+if (!post) {
+  // The same answer for "no such post" and "not yours" ON PURPOSE: telling them apart tells a stranger
+  // which slugs exist and who wrote them.
+  throw new Error('That post is not yours to edit');
+}
+```
+
+The page in front of it is the same shape as everything else here — two halves bound to one field. `get-post`
+already answers `canEdit`, so the editor and the "not yours to edit" card are both authored, unconditionally, and
+the binding picks. The "Edit this post" link on the article binds to the same field, which is why nobody is
+offered a door that will not open.
+
+**And the editor arrives filled in.** Every control binds its `defaultValue` to the record the page's own action
+returned, so the values are in the markup the server sent rather than painted in a frame later. A field left
+blank means *unchanged*, not *emptied* — which is what makes an editor safe to open and close.
+
+## An element the SDK does not ship
+
+Every post here has a subject, and a subject has facts that are not text in a box: a Red List category is a
+**position on a scale**, and a population trend is a **shape**. That is the line — arrange built-in elements until
+what you want to show stops being text, and then ship one of your own.
+
+[`src/plugins/SpeciesStatus.tsx`](./src/plugins/SpeciesStatus.tsx) is that element. Two halves, and forgetting
+either is quiet — a page that names a type the server has no component for renders perfectly, with a hole in it:
+
+```ts
+// src/main.ts — the server is handed the file and the type name
+const plugins = { speciesStatus: { js: path.resolve(here, 'plugins/SpeciesStatus.tsx'), action: 'compile' } };
+createServer({ plugins, adapters: createJsonAdapters({ deployment: { pluginNames: Object.keys(plugins) }, … }) });
+
+// src/space.ts — the page authors it exactly like a heading
+elementSpec({ type: 'speciesStatus' }, { bindings: [{ to: 'status', source: 'apiContainer_post.record.species.status' }, …] })
+```
+
+Three things about it are worth stealing:
+
+- **Attributes arrive as props.** So every value is a binding onto the answer the post's own action already
+  returned — the panel makes no request, holds no data, and cannot disagree with the page it sits on.
+- **It ships no colours.** Every rule is written in the space's own variables, which is what lets it follow the
+  blog into dark mode without knowing that dark mode exists. The box around it is a class in
+  [`theme.ts`](./src/theme.ts), because a border is a decision of the page.
+- **It is a real component, not a picture of one.** The scale is a row of buttons: press any category and it
+  tells you what that one means, while the species' own stays marked.
 
 ## The header knows who is looking
 
@@ -181,11 +242,11 @@ Three things worth knowing before you write one of your own:
   expand them at authoring time.
 - **The covers are real photographs, and the cover field is just a URL.** Each post carries one served by
   Unsplash with `auto=format` on it, so the same URL answers with AVIF, WebP or JPEG depending on who asked and
-  one field feeds a 16:9 hero and a 4:3 card without shipping two files. A real blog puts whatever its media
-  library produced in exactly this field.
-- **A post with no photograph gets a drawn one.** The editor on `/write` has no upload, so anything written in
-  the demo would otherwise land on the front page as a hole. `coverFor` draws an SVG data URI with a hue derived
-  from the slug — no media library, no network, and a new post has its own colours the moment it exists.
+  one field feeds a 16:9 hero and a 4:3 card without shipping two files. The editors on `/write` and `/edit` have
+  a **Cover image URL** field, and it is the same field a media library would fill in — there is no second one.
+- **A post with no photograph gets a drawn one.** `coverFor` draws an SVG data URI with a hue derived from the
+  slug, so a post published without a link has its own colours the moment it exists rather than leaving a hole
+  where the front page expects an image.
 - **An image element is a `140px` square until something says otherwise**, so that an unbound one can be seen and
   picked up in the builder. A class that gives it a `width` and an `aspect-ratio` and nothing else loses to that
   height, and every cover comes out a letterbox. `height: auto` is what hands the shape back to the ratio — the
@@ -223,8 +284,9 @@ The posts live in an array, so restarting the server forgets what you wrote. Tha
 here makes: a database in front of the thing being shown is a setup step between you and it. `posts.ts` is where
 yours goes, and nothing else in this example changes when it does.
 
-Comments, drafts, media uploads, RSS and search are not here either — none of them would show a mechanism this does
-not already use.
+Comments, drafts, file uploads, RSS and search are not here — none of them would show a mechanism this does not
+already use. A cover is a URL here for the same reason: storing bytes is a storage decision, and the field either
+way is the one on the form.
 
 The photographs come from Unsplash over the network, which is the one thing here that needs the wifi to work. That
 is the honest trade for real pictures, and it is contained: swap the `photo()` helper in

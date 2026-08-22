@@ -1,4 +1,4 @@
-import { element } from '@plitzi/sdk-elements/authoring';
+import { element, elementSpec } from '@plitzi/sdk-elements/authoring';
 import { authorSpace } from '@plitzi/sdk-schema';
 
 import { classes, customCss, elements, variables } from './theme';
@@ -42,6 +42,33 @@ const link = (href: string, className: string, children: ElementSpec[]): Element
  * one carries no type of its own; it inherits every bit of it from whatever it sits in.
  */
 const label = (content: string): ElementSpec => element('Text', { attributes: { content }, className: 'inlineLabel' });
+
+/**
+ * The element this space ships itself, authored exactly like a built-in one.
+ *
+ * `elementSpec` takes a declaration rather than a name, which is the whole of what a custom type needs: the SDK's
+ * catalogue has no `speciesStatus` in it and does not have to — the server was handed the component in `main.ts`
+ * and the page names the same type here. Every attribute is a binding onto the answer the post's own action
+ * already returned, so the panel costs no request and no second source of truth.
+ */
+const speciesPanel = (src: string): ElementSpec =>
+  elementSpec(
+    { type: 'speciesStatus', content: { definition: { label: 'Species Status' } } },
+    {
+      className: 'speciesPanel',
+      bindings: [
+        { to: 'name', source: `${src}.species.name` },
+        { to: 'latin', source: `${src}.species.latin` },
+        { to: 'status', source: `${src}.species.status` },
+        { to: 'trend', source: `${src}.species.trend` },
+        { to: 'history', source: `${src}.species.history` },
+        { to: 'since', source: `${src}.species.since` },
+        { to: 'note', source: `${src}.species.note` },
+        // An article about a place rather than an animal simply does not draw one.
+        shownWhen(`${src}.hasSpecies`)
+      ]
+    }
+  );
 
 /** A link whose destination is a field — a card, a headline, an item in a list of recent posts. */
 const boundLink = (source: string, className: string, children: ElementSpec[]): ElementSpec =>
@@ -430,21 +457,46 @@ const post: PageSpec = {
                   heading('apiContainer_post.record.title', 'articleTitle', 'h1'),
                   bound('Paragraph', 'apiContainer_post.record.standfirst', 'articleStandfirst'),
                   element('Container', {
-                    className: 'metaRow',
+                    className: 'bylineRow',
                     children: [
-                      avatar('apiContainer_post.record.initial'),
                       element('Container', {
-                        className: 'stack',
+                        className: 'metaRow',
                         children: [
-                          bound('Text', 'apiContainer_post.record.author', 'bylineName'),
-                          // The date and the reading time. The author is the line above it — a byline that repeats
-                          // the name is what you get for binding the composed field twice.
-                          bound('Text', 'apiContainer_post.record.dateline', 'meta')
+                          avatar('apiContainer_post.record.initial'),
+                          element('Container', {
+                            className: 'stack',
+                            children: [
+                              bound('Text', 'apiContainer_post.record.author', 'bylineName'),
+                              // The date and the reading time. The author is the line above it — a byline that
+                              // repeats the name is what you get for binding the composed field twice.
+                              bound('Text', 'apiContainer_post.record.dateline', 'meta'),
+                              // Only on a post somebody went back to. A blog that edits silently is a blog you
+                              // cannot trust twice.
+                              bound('Text', 'apiContainer_post.record.updated', 'metaEdited')
+                            ]
+                          })
                         ]
+                      }),
+                      /**
+                       * "Edit", and only for the person who wrote this one.
+                       *
+                       * `canEdit` is not the permission: `ada` holds `postPublish` and still may not rewrite
+                       * `grace`'s post. The action's trigger cannot decide that — at the moment it runs there is
+                       * no record — so the task answered it, and the link binds to what the task said.
+                       */
+                      element('Link', {
+                        attributes: { mode: 'internal' },
+                        className: 'chipQuiet',
+                        bindings: [
+                          { to: 'href', source: 'apiContainer_post.editUrl' },
+                          shownWhen('apiContainer_post.canEdit')
+                        ],
+                        children: [label('Edit this post')]
                       })
                     ]
                   }),
                   image('apiContainer_post.record.cover', 'articleImage'),
+                  speciesPanel('apiContainer_post.record'),
                   /**
                    * `richText` and not `blockHtml`: the second executes what it is given on purpose, which is right
                    * for an embed the site's own author pasted in and wrong for a body that came out of a store.
@@ -529,6 +581,28 @@ const field = (
   });
 
 /**
+ * The same control, starting from what the server already knows.
+ *
+ * An editor is a form with the record poured into it, and `defaultValue` is where the record goes — bound, like
+ * any other attribute. On a server-rendered page the value is in the markup before the browser has done anything,
+ * which is why the editor never flashes empty and then fills itself in.
+ */
+const boundField = (
+  name: string,
+  labelText: string,
+  subType: string,
+  source: string,
+  extra: Record<string, unknown> = {},
+  input = 'input'
+): ElementSpec =>
+  element('FormControl', {
+    attributes: { name, label: labelText, subType, required: true, defaultValue: '', ...extra },
+    className: 'fieldRow',
+    slots: { input, label: 'fieldLabel' },
+    bindings: [{ to: 'defaultValue', source }]
+  });
+
+/**
  * Write.
  *
  * `authenticated`, so the router only offers it to a visitor with a session — and that is a convenience, not the
@@ -577,10 +651,22 @@ const write: PageSpec = {
                           type: 'globalCallback',
                           action: 'runServerAction',
                           on: 'actions',
+                          /**
+                           * `input` as an OBJECT, one token per field — not as a line of JSON text with tokens
+                           * interpolated into it. The difference is not style: a post body has newlines and
+                           * quotation marks in it, and dropping those into a JSON string literal produces a
+                           * document that does not parse. The action then refuses the whole call as invalid
+                           * input, which reads on screen as the server rejecting a perfectly good post.
+                           */
                           params: {
                             actionId: 'publish-post',
-                            input:
-                              '{"title":"{{submitted.values.title}}","standfirst":"{{submitted.values.standfirst}}","topic":"{{submitted.values.topic}}","body":"{{submitted.values.body}}"}',
+                            input: {
+                              title: '{{submitted.values.title}}',
+                              standfirst: '{{submitted.values.standfirst}}',
+                              topic: '{{submitted.values.topic}}',
+                              cover: '{{submitted.values.cover}}',
+                              body: '{{submitted.values.body}}'
+                            },
                             // `await`, so the steps below have a result to read. `detached` would carry on at once.
                             mode: 'await'
                           }
@@ -619,6 +705,17 @@ const write: PageSpec = {
                         required: false
                       }),
                       field('topic', 'Topic', 'text', { defaultValue: 'Fieldnotes', required: false }),
+                      /**
+                       * The cover, as a URL — because that is all a cover ever is.
+                       *
+                       * No upload here, and it is not an omission: the field a media library fills in and the
+                       * field you paste a link into are the SAME field. Leave it empty and the post gets a cover
+                       * drawn from its own slug, so the front page never has a hole in it.
+                       */
+                      field('cover', 'Cover image URL', 'text', {
+                        placeholder: 'https://images.unsplash.com/photo-… — or leave it empty',
+                        required: false
+                      }),
                       field('body', 'Body', 'textarea', { placeholder: '## Markdown is fine' }, 'textarea'),
                       element('Button', { attributes: { subType: 'submit', content: 'Publish' }, className: 'button' })
                     ]
@@ -635,7 +732,7 @@ const write: PageSpec = {
                 children: [
                   panel('What happens on submit', [
                     note(
-                      'The page sends an action name and four values. The server checks the permission on the trigger, runs the flow, and answers the URL of what it wrote — which is where you land.'
+                      'The page sends an action name and five values. The server checks the permission on the trigger, runs the flow, and answers the URL of what it wrote — which is where you land.'
                     )
                   ]),
                   panel('The author is the session', [
@@ -643,6 +740,206 @@ const write: PageSpec = {
                       'There is no author field here and none in the action’s input contract, so there is nothing for a caller to put somebody else’s name in.'
                     )
                   ])
+                ]
+              })
+            ]
+          })
+        ]
+      })
+    ])
+  ]
+};
+
+/**
+ * Edit.
+ *
+ * The counterpart to `/write`, and the page that shows what a permission alone cannot decide. It reads the post
+ * with the SAME action the public page uses — one action, two pages, no second endpoint — and the answer already
+ * carries `canEdit`, so the editor and the refusal are two halves bound to one field rather than a branch.
+ *
+ * The refusal on screen is a courtesy. `blog.updatePost` asks the ownership question again, with the record in
+ * hand, and a caller who skips this page entirely gets the same no.
+ */
+const edit: PageSpec = {
+  name: 'Edit',
+  slug: 'edit/{{slug}}',
+  idRef: 'editPage',
+  accessLevel: 'authenticated',
+  unauthorizedRedirect: 'login',
+  className: 'page',
+  body: [
+    chrome('chromeEdit', [
+      element('Container', {
+        className: 'main',
+        children: [
+          element('ApiContainer', {
+            idRef: 'editPost',
+            runtime: 'server',
+            attributes: { action: 'get-post', singleRecord: true, subType: 'main' },
+            className: 'pageStack',
+            children: [
+              element('Container', {
+                className: 'editor',
+                bindings: [shownWhen('apiContainer_editPost.canEdit')],
+                children: [
+                  element('Container', {
+                    className: 'form',
+                    children: [
+                      element('Heading', {
+                        attributes: { subType: 'h1', content: 'Edit post' },
+                        className: 'articleTitle'
+                      }),
+                      bound('Paragraph', 'apiContainer_editPost.record.title', 'articleStandfirst'),
+                      element('Form', {
+                        idRef: 'editForm',
+                        className: 'form',
+                        attributes: { managedByInteractions: true, method: 'post' },
+                        flows: [
+                          [
+                            { id: 'edited', type: 'trigger', action: 'onSubmit', on: 'editForm' },
+                            {
+                              /**
+                               * The same global callback the editor on `/write` uses, naming a different action.
+                               * The page hands over a name and six values; which post is one of them, and WHO is
+                               * not — the session answers that, on the server, where it cannot be edited.
+                               */
+                              id: 'save',
+                              type: 'globalCallback',
+                              action: 'runServerAction',
+                              on: 'actions',
+                              params: {
+                                actionId: 'update-post',
+                                // An object, one token per field — see the note on `publish-post`. A body that
+                                // came out of a store is exactly the text that breaks the JSON-in-a-string form.
+                                input: {
+                                  slug: '{{edited.values.slug}}',
+                                  title: '{{edited.values.title}}',
+                                  standfirst: '{{edited.values.standfirst}}',
+                                  topic: '{{edited.values.topic}}',
+                                  cover: '{{edited.values.cover}}',
+                                  body: '{{edited.values.body}}'
+                                },
+                                mode: 'await'
+                              }
+                            },
+                            {
+                              id: 'refused',
+                              type: 'globalCallback',
+                              action: 'setState',
+                              on: 'state',
+                              params: {
+                                key: 'notice',
+                                type: 'text',
+                                value: 'The server refused this: {{save.reason}}'
+                              },
+                              when: {
+                                combinator: 'and',
+                                rules: [{ field: 'save.status', operator: '!=', value: 'completed' }]
+                              }
+                            },
+                            {
+                              id: 'saved',
+                              type: 'globalCallback',
+                              action: 'navigate',
+                              on: 'navigation',
+                              params: { urlType: 'internal', url: '{{save.output.url}}' },
+                              when: {
+                                combinator: 'and',
+                                rules: [{ field: 'save.status', operator: '=', value: 'completed' }]
+                              }
+                            }
+                          ]
+                        ],
+                        children: [
+                          /**
+                           * Which post this is, carried in a hidden field rather than read from the URL by the
+                           * flow: a form submits VALUES, and the slug is one of them. It is also the only field
+                           * the server does not take on trust — the store matches it against the session's own id
+                           * before it changes a thing.
+                           */
+                          boundField('slug', '', 'hidden', 'apiContainer_editPost.record.slug', {}, 'hidden'),
+                          boundField('title', 'Title', 'text', 'apiContainer_editPost.record.title'),
+                          boundField('standfirst', 'Standfirst', 'text', 'apiContainer_editPost.record.standfirst', {
+                            required: false
+                          }),
+                          boundField('topic', 'Topic', 'text', 'apiContainer_editPost.record.topic', {
+                            required: false
+                          }),
+                          boundField('cover', 'Cover image URL', 'text', 'apiContainer_editPost.record.cover', {
+                            placeholder: 'Leave it as it is, or paste another',
+                            required: false
+                          }),
+                          boundField('body', 'Body', 'textarea', 'apiContainer_editPost.record.body', {}, 'textarea'),
+                          element('Container', {
+                            className: 'actionRow',
+                            children: [
+                              element('Button', {
+                                attributes: { subType: 'submit', content: 'Save changes' },
+                                className: 'button'
+                              }),
+                              boundLink('apiContainer_editPost.record.url', 'buttonQuiet', [label('Cancel')])
+                            ]
+                          })
+                        ]
+                      }),
+                      element('Paragraph', {
+                        attributes: { content: '' },
+                        className: 'notice',
+                        bindings: [{ to: 'content', source: 'state.notice' }]
+                      })
+                    ]
+                  }),
+                  element('Container', {
+                    className: 'sidebar',
+                    children: [
+                      panel('A permission is not ownership', [
+                        note(
+                          'The trigger asks whether you may edit posts at all, once, before any step runs. Whether you may edit THIS one is a different question — there is no record yet when the trigger fires — so the task asks it, with the post in hand.'
+                        )
+                      ]),
+                      panel('Blank means unchanged', [
+                        note(
+                          'Every field here arrives filled in by the server. Clear one and it is left alone rather than emptied, which is what makes an editor safe to open and close.'
+                        )
+                      ]),
+                      speciesPanel('apiContainer_editPost.record')
+                    ]
+                  })
+                ]
+              }),
+              element('Container', {
+                className: 'centred',
+                bindings: [shownWhen('apiContainer_editPost.cannotEdit')],
+                children: [
+                  element('Container', {
+                    className: 'cardSurface',
+                    children: [
+                      element('Heading', {
+                        attributes: { subType: 'h1', content: 'Not yours to edit' },
+                        className: 'formTitle'
+                      }),
+                      note(
+                        'You are signed in, and this post belongs to somebody else. The server would refuse the change too — this page is only saying so first.'
+                      ),
+                      boundLink('apiContainer_editPost.record.url', 'buttonQuiet', [label('Back to the post')])
+                    ]
+                  })
+                ]
+              }),
+              element('Container', {
+                className: 'centred',
+                bindings: [shownWhen('apiContainer_editPost.missing')],
+                children: [
+                  element('Container', {
+                    className: 'cardSurface',
+                    children: [
+                      element('Heading', {
+                        attributes: { subType: 'h1', content: 'That post does not exist.' },
+                        className: 'formTitle'
+                      }),
+                      link('/', 'buttonQuiet', [label('Back to the latest')])
+                    ]
+                  })
                 ]
               })
             ]
@@ -827,7 +1124,7 @@ const blog: SpaceSpec = {
     logoutUrl: '/auth/logout',
     sessionHintCookie: 'blog_session_hint'
   },
-  pages: [home, post, write, signIn, account]
+  pages: [home, post, write, edit, signIn, account]
 };
 
 export const offlineData = (): OfflineDataRaw => authorSpace(blog);

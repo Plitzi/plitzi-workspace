@@ -587,7 +587,15 @@ describeTarget('blog', subject => {
     await page.goto(`${subject.origin}/write`);
     await page.getByLabel('Title').fill('Written in a browser');
     await page.getByLabel('Standfirst').fill('A form, an action, and the page it produced.');
-    await page.getByLabel('Body').fill('The **whole** trip: a form, an action, a page.');
+    await page.getByLabel('Cover image URL').fill('https://images.unsplash.com/photo-1517993037474-692208825419');
+    /**
+     * A body with the two characters that used to break this: a newline and a quotation mark.
+     *
+     * The action's `input` is authored as an object rather than as a line of JSON with tokens interpolated into
+     * it, so neither has to be escaped by hand. Written the other way this call is refused as invalid input —
+     * which is to say, refused for every real post.
+     */
+    await page.getByLabel('Body').fill('The **whole** trip: a form, an action, a page.\n\n> And a "quotation".');
     await capture('write');
     await page.getByRole('button', { name: 'Publish' }).click();
 
@@ -596,7 +604,80 @@ describeTarget('blog', subject => {
     await expect(page).toHaveURL(/\/post\/written-in-a-browser/);
     await expect(page.getByRole('heading', { name: 'Written in a browser', level: 1 })).toBeVisible();
     await expect(page.getByText('ada', { exact: true }).first()).toBeVisible();
+    // The markdown survived the trip whole: the quote is a blockquote, not a broken document.
+    await expect(page.locator('.prose blockquote')).toContainText('quotation');
+    // And the cover is the URL that was pasted, not the drawn fallback.
+    await expect(page.locator('.articleImage')).toHaveAttribute('src', /images\.unsplash\.com/);
     await capture('published');
+  });
+
+  /**
+   * The species panel — the one element on this blog the SDK does not ship.
+   *
+   * It is registered in `main.ts`, compiled by the server, and authored on the page exactly like a heading. What
+   * is checked here is the whole chain: the type resolved to a component, the bindings reached it, and the thing
+   * it draws is interactive once the browser has it.
+   */
+  test('the space renders an element of its own, fed by the same action as the page', async ({ page, capture }) => {
+    await page.goto(`${subject.origin}/post/the-herd-remembers-the-drought`);
+
+    const panel = page.locator('.speciesPanel');
+    await expect(panel).toBeVisible();
+    // Bound to the post's own answer, so the panel costs no second request.
+    await expect(panel).toContainText('Loxodonta africana');
+    // The species' real category, marked on the scale rather than merely printed.
+    await expect(panel.locator('[data-state="current"]')).toHaveText('EN');
+    await expect(panel).toContainText('A very high risk of extinction in the wild.');
+
+    await capture('species-panel');
+
+    // And it is a real component, not a picture of one: asking about another category answers.
+    await panel.getByRole('button', { name: 'LC' }).click();
+
+    await expect(panel).toContainText('Assessed, and not currently at risk of extinction.');
+    // The species' own category stays marked — the question was about a different one.
+    await expect(panel.locator('[data-state="current"]')).toHaveText('EN');
+  });
+
+  /**
+   * Editing, and the half a permission cannot decide.
+   *
+   * `ada` and `grace` both fail to be the other one's author, and `grace` fails twice over — she has no
+   * `postPublish` at all. The link, the page and the server each answer, and the last one is the lock.
+   */
+  test('an author edits her own post, and the page arrives already filled in', async ({ page, capture }) => {
+    await signIn(page, 'ada');
+    await page.goto(`${subject.origin}/post/the-fox-that-learned-the-timetable`);
+
+    const edit = page.getByRole('link', { name: 'Edit this post' });
+    await expect(edit).toBeVisible();
+    await edit.click();
+
+    await expect(page).toHaveURL(`${subject.origin}/edit/the-fox-that-learned-the-timetable`);
+    // Server-rendered, so the record is in the markup rather than painted in a frame later.
+    await expect(page.getByLabel('Title')).toHaveValue('The fox that learned the timetable');
+    await capture('edit');
+
+    await page.getByLabel('Standfirst').fill('Rewritten, and the page says so.');
+    await page.getByRole('button', { name: 'Save changes' }).click();
+
+    await expect(page).toHaveURL(`${subject.origin}/post/the-fox-that-learned-the-timetable`);
+    await expect(page.getByText('Rewritten, and the page says so.')).toBeVisible();
+    // A blog that edits silently is a blog you cannot trust twice.
+    await expect(page.locator('.metaEdited')).toContainText('Updated');
+  });
+
+  test('a post somebody else wrote offers no way in, and says so if you find one', async ({ page }) => {
+    await signIn(page, 'grace');
+    await page.goto(`${subject.origin}/post/counting-a-ghost`);
+
+    await expect(page.getByRole('link', { name: 'Edit this post' })).toBeHidden();
+
+    // The courtesy removed, the page still answers — and it is the same answer the server would give.
+    await page.goto(`${subject.origin}/edit/counting-a-ghost`);
+
+    await expect(page.getByRole('heading', { name: 'Not yours to edit' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Edit post' })).toBeHidden();
   });
 
   /** The point the example is built around: the account decides, the server decides with it, and the page only

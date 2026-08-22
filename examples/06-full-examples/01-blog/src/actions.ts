@@ -5,14 +5,14 @@ import type { ActionLookups } from '@plitzi/sdk-server/actions';
 import type { ActionEntry } from '@plitzi/sdk-shared';
 
 /**
- * The four things this blog does on the server, as documents.
+ * The five things this blog does on the server, as documents.
  *
  * An action is not code: it is the same node map an element's interactions are, and `authorFlow` chains it — so
  * the flows the builder would draw and the flows written here are the same objects. Each of these is a way in, a
  * step, and the output that decides what leaves the server.
  *
  * The three READS are `render` triggers: nobody calls them, they run while the page is being built, and the page
- * they feed names them on an element. The WRITE is a `call` trigger, and the only one a browser can reach.
+ * they feed names them on an element. The two WRITES are `call` triggers, and the only ones a browser can reach.
  */
 
 /**
@@ -106,7 +106,8 @@ const publishPost: ActionEntry = {
             title: { type: 'text', required: true, label: 'Title' },
             standfirst: { type: 'text', label: 'Standfirst' },
             body: { type: 'text', required: true, label: 'Body' },
-            topic: { type: 'text', label: 'Topic' }
+            topic: { type: 'text', label: 'Topic' },
+            cover: { type: 'text', label: 'Cover image URL' }
           })
         }
       },
@@ -118,7 +119,8 @@ const publishPost: ActionEntry = {
           title: '{{input.title}}',
           standfirst: '{{input.standfirst}}',
           body: '{{input.body}}',
-          topic: '{{input.topic}}'
+          topic: '{{input.topic}}',
+          cover: '{{input.cover}}'
         }
       },
       { id: 'answer', type: 'task', action: 'flow.output', params: { values: '{{ published }}' } }
@@ -126,7 +128,59 @@ const publishPost: ActionEntry = {
   }
 };
 
-const actions = [listPosts, getPost, siteChrome, publishPost];
+/**
+ * The second write, and the one that shows what a role CANNOT decide.
+ *
+ * Its trigger is the same shape as `publish-post` — `access: 'role'` with `postPublish`, checked before a step
+ * runs — and that is deliberately not the whole answer. A permission says whether you may edit posts; it cannot
+ * say whether you may edit THIS post, because at the moment it is checked there is no post yet. `blog.updatePost`
+ * asks the second question with the record in hand.
+ *
+ * `slug` is in the input contract and the author is not, which is the same rule as publishing: the caller says
+ * WHICH post, the session says WHO, and the store refuses any pair that does not match.
+ */
+const updatePost: ActionEntry = {
+  id: 'update-post',
+  document: {
+    name: 'Update a post',
+    description: 'Rewrites a post, if the session owns it.',
+    nodes: authorFlow('update-post', [
+      {
+        id: 'start',
+        type: 'trigger',
+        action: 'call',
+        params: {
+          access: 'role',
+          permissions: 'postPublish',
+          input: JSON.stringify({
+            slug: { type: 'text', required: true, label: 'Slug' },
+            title: { type: 'text', label: 'Title' },
+            standfirst: { type: 'text', label: 'Standfirst' },
+            body: { type: 'text', label: 'Body' },
+            topic: { type: 'text', label: 'Topic' },
+            cover: { type: 'text', label: 'Cover image URL' }
+          })
+        }
+      },
+      {
+        id: 'updated',
+        type: 'task',
+        action: 'blog.updatePost',
+        params: {
+          slug: '{{input.slug}}',
+          title: '{{input.title}}',
+          standfirst: '{{input.standfirst}}',
+          body: '{{input.body}}',
+          topic: '{{input.topic}}',
+          cover: '{{input.cover}}'
+        }
+      },
+      { id: 'answer', type: 'task', action: 'flow.output', params: { values: '{{ updated }}' } }
+    ] satisfies StepSpec[])
+  }
+};
+
+const actions = [listPosts, getPost, siteChrome, publishPost, updatePost];
 
 /**
  * How the server reaches an action.
