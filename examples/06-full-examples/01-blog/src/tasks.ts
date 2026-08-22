@@ -3,6 +3,7 @@ import {
   findPost,
   listPosts,
   otherPosts,
+  hasSeenSighting,
   recordSighting,
   sightingLabel,
   topics,
@@ -274,11 +275,37 @@ export const recordSightingTask: ActionTask<{ slug: string }> = {
   }
 };
 
+/**
+ * Whether THIS reader has already counted for this post, asked as the page loads.
+ *
+ * It is a read, and it is deliberately not part of `blog.getPost`. A `render` trigger's answer is built into the
+ * page and shared — one run answers the visitors arriving together, and the response caches hold one copy for
+ * everybody without a session — which is correct for everything else the post page shows and wrong for the one
+ * field that is about the reader. A `call` is per request and never cached, so this is where the question belongs.
+ *
+ * The cost is one small request after the page loads, and the button is briefly pressable while it is in flight.
+ * Pressing it then costs nothing: the write answers the same reader with the same total.
+ */
+export const hasSeenSightingTask: ActionTask<{ slug: string }> = {
+  namespace: 'blog',
+  action: 'hasSeenSighting',
+  title: 'Has Seen Sighting',
+  description: 'Whether the caller has already logged a sighting for this post.',
+  params: { slug: { type: 'text', canBind: true, defaultValue: '', label: 'Slug' } },
+  run: ({ slug }, ctx) => {
+    const hasSeen = hasSeenSighting(slug, ctx.callerId);
+
+    // Its opposite too: a binding shows an element when its field is true, and there is no "unless".
+    return { hasSeen, canLog: !hasSeen };
+  }
+};
+
 export const blogTasks = [
   listPostsTask,
   getPostTask,
   siteChromeTask,
   publishPostTask,
   updatePostTask,
-  recordSightingTask
+  recordSightingTask,
+  hasSeenSightingTask
 ];

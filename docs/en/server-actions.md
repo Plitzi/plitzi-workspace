@@ -181,9 +181,14 @@ A task written in code sees one thing the templates do not: `ctx.callerId`, who 
 started. It is what a write that asks for no account keys "once per person" on, and it is coarse by construction:
 a shared connection counts as one caller.
 
-Ask it in a **write**, not in a render. A `render` trigger's answer is shared between the visitors asking for it
-at the same moment, so a field that differs per anonymous caller would occasionally be handed to the wrong one; a
-call, a webhook and a schedule are never shared.
+Ask it in a **call**, not in a render. A `render` answer is built into the page and shared — one run answers the
+visitors arriving together, and a published deployment keeps one copy for everybody without a session — so a field
+that differs between two signed-out readers would sooner or later be handed to the wrong one. A call is per
+request and never cached.
+
+That is a page-load flow rather than one more field on the read the page already does: `onPageLoad` → the action →
+`setState`, which is what [the blog example](../../examples/06-full-examples/01-blog) does to arrive with its
+"I have seen one" button already switched off for a reader who has pressed it before.
 
 ---
 

@@ -598,6 +598,9 @@ export const countSightings = (slug: string): number => sightings[slug] ?? 0;
  */
 const seenBy: Record<string, Set<string>> = {};
 
+/** Whether this reader has already counted for this post. The question the post page asks as it loads. */
+export const hasSeenSighting = (slug: string, reader: string): boolean => Boolean(seenBy[slug]?.has(reader));
+
 /**
  * One more, from a reader who has not said so before.
  *

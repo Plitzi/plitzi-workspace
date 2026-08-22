@@ -22,12 +22,12 @@ Eight files, and only two of them are about blogging:
 
 | File | Lines | What it is |
 |---|---:|---|
-| [`src/space.ts`](./src/space.ts) | 953 | The six pages — a declaration, not code |
-| [`src/theme.ts`](./src/theme.ts) | 721 | The stylesheet, as data: ~55 classes, the palette, both schemes |
-| [`src/posts.ts`](./src/posts.ts) | 491 | Seven articles and their subjects. The one file a real blog replaces |
-| [`src/tasks.ts`](./src/tasks.ts) | 180 | List, read, publish, edit, log a sighting, and who is looking |
-| [`src/actions.ts`](./src/actions.ts) | 157 | Six flows, as documents |
-| [`src/plugins/SpeciesStatus.tsx`](./src/plugins/SpeciesStatus.tsx) | 134 | The one element this space ships itself |
+| [`src/space.ts`](./src/space.ts) | 980 | The six pages — a declaration, not code |
+| [`src/theme.ts`](./src/theme.ts) | 741 | The stylesheet, as data: ~55 classes, the palette, both schemes |
+| [`src/posts.ts`](./src/posts.ts) | 498 | Seven articles and their subjects. The one file a real blog replaces |
+| [`src/tasks.ts`](./src/tasks.ts) | 198 | List, read, publish, edit, log a sighting, and who is looking |
+| [`src/actions.ts`](./src/actions.ts) | 177 | Seven flows, as documents |
+| [`src/plugins/SpeciesStatus.tsx`](./src/plugins/SpeciesStatus.tsx) | 139 | The one element this space ships itself |
 | [`src/accounts.ts`](./src/accounts.ts) | 92 | Two people, their sessions, and the adapters over them |
 | [`src/main.ts`](./src/main.ts) | 44 | The server |
 
@@ -120,13 +120,19 @@ either a lock-out or a hole. This blog uses all three:
 
 `public` is about who may START it, not about how often. "Once per reader" is the task's own rule and it is kept
 on the SERVER (`ctx.callerId` — a session where there is one, an address where there is not): pressing the button
-a second time is answered with the total rather than added to it. The page switches the button off when the
-answer comes back, which is the courtesy half — a reload brings it back, and the count still does not move.
+a second time is answered with the total rather than added to it.
+
+The button knows it too, and that is a second action rather than a field on the one that builds the page. The post
+page runs `has-seen-sighting` on load (`onPageLoad` → the action → `setState`) and arrives switched off for a
+reader who has already counted. It has to be a `call`: a `render` answer is built into the page and shared between
+everyone reading it, so "have YOU already counted?" — which is true of one signed-out reader and false of the next
+— would sooner or later be handed to the wrong one.
 
 **Press the sighting button with the dev-tools Actions tab open** — the badge in the corner, or shift+alt+D. It
-is the quickest way to watch a server action go out and come back, and it needs no sign-in. The three READS on
-these pages will not appear there, and that is not a bug: they are `render` triggers resolved on the server while
-the page is built, so the browser never started them and a browser-side panel has nothing to record.
+is the quickest way to watch a server action go out and come back, and it needs no sign-in. The tab already has
+one run in it when you get there: `has-seen-sighting`, which the page sends as it loads. The three reads that BUILD
+these pages will not appear, and that is not a bug — they are `render` triggers resolved on the server while the
+page is put together, so the browser never started them and a browser-side panel has nothing to record.
 
 ## Who may publish
 

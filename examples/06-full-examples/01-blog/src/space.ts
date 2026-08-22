@@ -482,6 +482,36 @@ const post: PageSpec = {
   slug: 'post/{{slug}}',
   idRef: 'postPage',
   className: 'page',
+  /**
+   * The one thing this page asks about the READER rather than about the post.
+   *
+   * It is a page flow and not part of `get-post` because the two are answered differently: the post is built into
+   * the page and shared between everyone reading it, while "have you already counted?" is true of one visitor and
+   * false of the next. A `call` is per request and never cached, so this is the honest way to ask it — at the
+   * price of one small request once the page is up, which is why nothing else on the page is asked this way.
+   *
+   * `{{slug}}` is the route param, and this fires again on every page change — so walking from a post you have
+   * counted to one you have not answers the new question rather than carrying the old answer over.
+   */
+  flows: [
+    [
+      { id: 'entered', type: 'trigger', action: 'onPageLoad', on: 'postPage' },
+      {
+        id: 'seen',
+        type: 'globalCallback',
+        action: 'runServerAction',
+        on: 'actions',
+        params: { actionId: 'has-seen-sighting', input: { slug: '{{slug}}' }, mode: 'await' }
+      },
+      {
+        id: 'mark',
+        type: 'globalCallback',
+        action: 'setState',
+        on: 'state',
+        params: { key: 'sightingDone', type: 'boolean', value: '{{seen.output.hasSeen}}' }
+      }
+    ]
+  ],
   body: [
     chrome('chromePost', [
       element('Container', {

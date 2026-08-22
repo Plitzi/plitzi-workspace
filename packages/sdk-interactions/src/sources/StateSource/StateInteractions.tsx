@@ -20,7 +20,10 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
       const { key, type } = params;
       let { value } = params;
       if (type === 'boolean') {
-        value = value === 'true';
+        // The picker in the builder writes the WORD, and a bound or interpolated value arrives as whatever it
+        // already was — a step reading `{{ someAction.output.done }}` hands over a real boolean. Reading only the
+        // word turned every one of those into `false`, which is the answer that looks like it worked.
+        value = value === true || value === 'true';
       } else if (type === 'number') {
         value = parseInt(value as string, 10);
       }

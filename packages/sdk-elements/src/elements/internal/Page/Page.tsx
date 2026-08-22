@@ -76,8 +76,28 @@ const Page = ({
     []
   );
 
+  /**
+   * Announced once the commit that mounted this page has finished, not in the middle of it.
+   *
+   * The global sources — `actions`, `state`, the rest — register what they can do from effects of their own, and
+   * they sit ABOVE the page: React runs a parent's effect after its children's, so a page firing this synchronously
+   * announces itself to a manager that has not been told `actions.runServerAction` exists yet. The flow then ran,
+   * found nothing registered and did nothing, on the first load only — which is the load an `onPageLoad` flow is
+   * written for. A microtask lands after the whole effect flush, and on a navigation nothing has changed for it.
+   */
   useEffect(() => {
-    void interactionsManager.interactionTrigger(idRef, 'onPageLoad', { pageId: id, routeParams, queryParams });
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) {
+        return;
+      }
+
+      void interactionsManager.interactionTrigger(idRef, 'onPageLoad', { pageId: id, routeParams, queryParams });
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [id, idRef, interactionsManager, queryParams, routeParams]);
 
   return (
