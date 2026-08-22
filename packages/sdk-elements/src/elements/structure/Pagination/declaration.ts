@@ -52,7 +52,10 @@ const declaration = {
           default: {
             display: 'flex',
             'align-items': 'center',
-            gap: '8px'
+            // Longhands: the builder's style vocabulary holds no shorthands, so a `gap` here is a default the
+            // style editor cannot read back.
+            'row-gap': '8px',
+            'column-gap': '8px'
           }
         }
       },

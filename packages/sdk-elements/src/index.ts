@@ -28,6 +28,7 @@ export const defaultElements = {
   button: elements.Button,
   paragraph: elements.Paragraph,
   text: elements.Text,
+  themeToggle: elements.ThemeToggle,
   list: elements.List,
   link: elements.Link,
   markdown: elements.Markdown,

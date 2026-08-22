@@ -34,6 +34,15 @@ const image = (source: string, className: string): ElementSpec =>
 const link = (href: string, className: string, children: ElementSpec[]): ElementSpec =>
   element('Link', { attributes: { href, mode: 'internal' }, className, children });
 
+/**
+ * The text inside a pill, button or link.
+ *
+ * One class for all of them, and the reason is worth stating: the box — the border, the padding, the radius —
+ * belongs to the link, and giving the text the link's class draws the box a second time INSIDE the first. This
+ * one carries no type of its own; it inherits every bit of it from whatever it sits in.
+ */
+const label = (content: string): ElementSpec => element('Text', { attributes: { content }, className: 'inlineLabel' });
+
 /** A link whose destination is a field — a card, a headline, an item in a list of recent posts. */
 const boundLink = (source: string, className: string, children: ElementSpec[]): ElementSpec =>
   element('Link', { attributes: { mode: 'internal' }, className, bindings: [{ to: 'href', source }], children });
@@ -86,22 +95,45 @@ const chrome = (ref: string, body: ElementSpec[]): ElementSpec => {
               element('Container', {
                 className: 'nav',
                 children: [
-                  link('/', 'navLink', [text('Latest', 'navLink')]),
+                  link('/', 'navLink', [label('Latest')]),
                   // Hidden unless the session holds `postPublish` — a dead end is bad manners, and that is all
                   // this is: the action behind the link refuses the same people either way.
                   element('Link', {
                     attributes: { href: '/write', mode: 'internal' },
                     className: 'navLink',
                     bindings: [shownWhen(`${src}.canWrite`)],
-                    children: [text('Write', 'navLink')]
+                    children: [label('Write')]
+                  }),
+                  /**
+                   * Light and dark, as a control rather than as a setting of the visitor's machine.
+                   *
+                   * The element ships two icons and no colours: it writes the choice on the document root, and
+                   * this space's palette — every colour here is a variable with a value per scheme — follows it.
+                   * Which icon shows is a rule in `theme.ts`, answered the same way the palette is.
+                   */
+                  element('ThemeToggle', {
+                    idRef: `${ref}Theme`,
+                    attributes: { subType: 'switch', lightLabel: 'Light', darkLabel: 'Dark' },
+                    className: 'themeToggle'
+                  }),
+                  /**
+                   * Two controls, not one that changes its mind.
+                   *
+                   * A signed-out visitor gets an invitation and a signed-in one gets their own name — different
+                   * shapes, so neither is a compromise between the two. Each binds its visibility to a fact the
+                   * server answered, which is how a page says "either/or" without a condition in it.
+                   */
+                  element('Link', {
+                    attributes: { href: '/login', mode: 'internal' },
+                    className: 'signInLink',
+                    bindings: [shownWhen(`${src}.signedOut`)],
+                    children: [label('Sign in')]
                   }),
                   element('Link', {
                     attributes: { href: '/login', mode: 'internal' },
                     className: 'accountPill',
-                    children: [
-                      avatar(`${src}.initial`, 'avatarSm'),
-                      bound('Text', `${src}.accountLabel`, 'bylineName')
-                    ]
+                    bindings: [shownWhen(`${src}.signedIn`)],
+                    children: [avatar(`${src}.initial`, 'avatarSm'), bound('Text', `${src}.accountLabel`, 'bylineName')]
                   })
                 ]
               })
@@ -115,6 +147,21 @@ const chrome = (ref: string, body: ElementSpec[]): ElementSpec => {
   });
 };
 
+/**
+ * "Write a post", shown only to somebody who may.
+ *
+ * The same rule as the one in the header, and the same source: an invitation to a page that will refuse you is
+ * worse than no invitation. `ref` names the page's own chrome provider, since a source is read by the elements
+ * BELOW the provider that publishes it and each page carries its own.
+ */
+const writeLink = (ref: string): ElementSpec =>
+  element('Link', {
+    attributes: { href: '/write', mode: 'internal' },
+    className: 'chipQuiet',
+    bindings: [shownWhen(`apiContainer_${ref}.canWrite`)],
+    children: [label('Write a post')]
+  });
+
 const footer = (): ElementSpec =>
   element('Container', {
     className: 'footerBand',
@@ -122,8 +169,26 @@ const footer = (): ElementSpec =>
       element('Container', {
         className: 'footerInner',
         children: [
-          text('The Plitzi Post — a whole small blog, rendered by Plitzi.', 'meta'),
-          text('Posts, sessions and permissions in seven files.', 'meta')
+          element('Container', {
+            className: 'brand',
+            children: [
+              text('P', 'brandMark'),
+              element('Container', {
+                className: 'stack',
+                children: [
+                  text('The Plitzi Post', 'brandName'),
+                  text('A whole small blog, rendered by Plitzi.', 'meta')
+                ]
+              })
+            ]
+          }),
+          element('Container', {
+            className: 'footerEnd',
+            children: [
+              text('Seven files', 'footerLabel'),
+              text('Posts, sessions and permissions — and no build step for the pages.', 'meta')
+            ]
+          })
         ]
       })
     ]
@@ -150,10 +215,14 @@ const feedCard = (src: string): ElementSpec =>
 const panel = (title: string, children: ElementSpec[]): ElementSpec =>
   element('Container', {
     className: 'panel',
-    children: [element('Heading', { attributes: { subType: 'h3', content: title }, className: 'panelTitle' }), ...children]
+    children: [
+      element('Heading', { attributes: { subType: 'h3', content: title }, className: 'panelTitle' }),
+      ...children
+    ]
   });
 
-const note = (content: string): ElementSpec => element('Paragraph', { attributes: { content }, className: 'panelText' });
+const note = (content: string): ElementSpec =>
+  element('Paragraph', { attributes: { content }, className: 'panelText' });
 
 const home: PageSpec = {
   name: 'Latest posts',
@@ -197,10 +266,10 @@ const home: PageSpec = {
                       heading('apiContainer_posts.featured.title', 'heroTitle', 'h1'),
                       bound('Paragraph', 'apiContainer_posts.featured.standfirst', 'heroStandfirst'),
                       byline('apiContainer_posts.featured'),
-                      boundLink('apiContainer_posts.featured.url', 'readLink', [text('Read the story', 'readLink')])
+                      boundLink('apiContainer_posts.featured.url', 'readLink', [label('Read the story')])
                     ]
                   }),
-                  boundLink('apiContainer_posts.featured.url', 'cardLink', [
+                  boundLink('apiContainer_posts.featured.url', 'frame', [
                     image('apiContainer_posts.featured.cover', 'heroImage')
                   ])
                 ]
@@ -243,7 +312,7 @@ const home: PageSpec = {
                         note(
                           'A demonstration blog: every page here is a layout, every read is a flow the server runs, and publishing is a permission rather than a button.'
                         ),
-                        link('/write', 'chipQuiet', [text('Write a post', 'chipQuiet')])
+                        writeLink('chromeHome')
                       ]),
                       /**
                        * A second provider, nested inside the first, asking the SAME action a different question:
@@ -264,7 +333,7 @@ const home: PageSpec = {
                               bindings: [{ to: 'items', source: 'apiContainer_recent.topics' }],
                               children: [
                                 boundLink('list_topicList.item.url', 'chipQuiet', [
-                                  bound('Text', 'list_topicList.item.name', 'chipQuiet')
+                                  bound('Text', 'list_topicList.item.name', 'inlineLabel')
                                 ])
                               ]
                             })
@@ -409,7 +478,7 @@ const post: PageSpec = {
                     className: 'articleTitle'
                   }),
                   note('The link may be old, or the post may never have been published.'),
-                  link('/', 'buttonQuiet', [text('Back to the latest', 'buttonQuiet')])
+                  link('/', 'buttonQuiet', [label('Back to the latest')])
                 ]
               })
             ]
@@ -582,33 +651,41 @@ const signIn: PageSpec = {
           element('Container', {
             className: 'centred',
             children: [
-              element('Heading', { attributes: { subType: 'h1', content: 'Sign in' }, className: 'articleTitle' }),
-              note('ada / password writes posts. grace / password may only read them — and is refused, politely.'),
-              element('Form', {
-                idRef: 'loginForm',
-                className: 'form',
-                attributes: { managedByInteractions: true, method: 'post' },
-                flows: [
-                  [
-                    { id: 'signIn', type: 'trigger', action: 'onSubmit', on: 'loginForm' },
-                    {
-                      // `login` is the name the callback is REGISTERED under, on the module `auth` — not the label
-                      // the builder shows for it. A name that resolves to nothing fails the step in silence.
-                      type: 'globalCallback',
-                      action: 'login',
-                      on: 'auth',
-                      params: {
-                        mode: 'normal',
-                        username: '{{signIn.values.username}}',
-                        password: '{{signIn.values.password}}'
-                      }
-                    }
-                  ]
-                ],
+              element('Container', {
+                className: 'cardSurface',
                 children: [
-                  field('username', 'Username', 'text', { defaultValue: 'ada' }),
-                  field('password', 'Password', 'password', { defaultValue: 'password' }),
-                  element('Button', { attributes: { subType: 'submit', content: 'Sign in' }, className: 'button' })
+                  element('Heading', { attributes: { subType: 'h1', content: 'Sign in' }, className: 'formTitle' }),
+                  note('ada / password writes posts. grace / password may only read them — and is refused, politely.'),
+                  element('Form', {
+                    idRef: 'loginForm',
+                    className: 'form',
+                    attributes: { managedByInteractions: true, method: 'post' },
+                    flows: [
+                      [
+                        { id: 'signIn', type: 'trigger', action: 'onSubmit', on: 'loginForm' },
+                        {
+                          // `login` is the name the callback is REGISTERED under, on the module `auth` — not the label
+                          // the builder shows for it. A name that resolves to nothing fails the step in silence.
+                          type: 'globalCallback',
+                          action: 'login',
+                          on: 'auth',
+                          params: {
+                            mode: 'normal',
+                            username: '{{signIn.values.username}}',
+                            password: '{{signIn.values.password}}'
+                          }
+                        }
+                      ]
+                    ],
+                    children: [
+                      field('username', 'Username', 'text', { defaultValue: 'ada' }),
+                      field('password', 'Password', 'password', { defaultValue: 'password' }),
+                      element('Button', {
+                        attributes: { subType: 'submit', content: 'Sign in' },
+                        className: 'buttonWide'
+                      })
+                    ]
+                  })
                 ]
               })
             ]
@@ -634,7 +711,7 @@ const account: PageSpec = {
             className: 'centred',
             children: [
               element('Container', {
-                className: 'panel',
+                className: 'cardSurface',
                 children: [
                   element('Container', {
                     className: 'metaRow',
@@ -659,35 +736,40 @@ const account: PageSpec = {
                     ]
                   }),
                   element('Container', {
-                  className: 'chipRow',
-                  children: [
-                    element('Text', {
-                      attributes: { content: 'May publish' },
-                      className: 'chip',
-                      bindings: [shownWhen('apiContainer_chromeAccount.canWrite')]
-                    }),
-                    element('Text', {
-                      attributes: { content: 'Reader' },
-                      className: 'chipQuiet',
-                      bindings: [shownWhen('apiContainer_chromeAccount.readOnly')]
-                    })
-                  ]
-                }),
-                note('Signed in. The header above already knows it, because the server told it so.'),
-                  element('Button', {
-                    idRef: 'signOut',
-                    attributes: { subType: 'button', content: 'Sign out' },
-                    className: 'buttonQuiet',
-                    flows: [
-                      [
-                        { id: 'signOut', type: 'trigger', action: 'onClick', on: 'signOut' },
-                        { type: 'globalCallback', action: 'logout', on: 'auth' }
-                      ]
+                    className: 'chipRow',
+                    children: [
+                      element('Text', {
+                        attributes: { content: 'May publish' },
+                        className: 'chip',
+                        bindings: [shownWhen('apiContainer_chromeAccount.canWrite')]
+                      }),
+                      element('Text', {
+                        attributes: { content: 'Reader' },
+                        className: 'chipQuiet',
+                        bindings: [shownWhen('apiContainer_chromeAccount.readOnly')]
+                      })
+                    ]
+                  }),
+                  note('Signed in. The header above already knows it, because the server told it so.'),
+                  element('Container', {
+                    className: 'actionRow',
+                    children: [
+                      writeLink('chromeAccount'),
+                      element('Button', {
+                        idRef: 'signOut',
+                        attributes: { subType: 'button', content: 'Sign out' },
+                        className: 'buttonQuiet',
+                        flows: [
+                          [
+                            { id: 'signOut', type: 'trigger', action: 'onClick', on: 'signOut' },
+                            { type: 'globalCallback', action: 'logout', on: 'auth' }
+                          ]
+                        ]
+                      })
                     ]
                   })
                 ]
-              }),
-              link('/write', 'chipQuiet', [text('Write a post', 'chipQuiet')])
+              })
             ]
           })
         ]

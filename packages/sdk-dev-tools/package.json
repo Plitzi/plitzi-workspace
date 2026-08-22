@@ -70,6 +70,18 @@
       "types": "./dist/components/DevToolsPanel/index.d.ts",
       "import": "./dist/components/DevToolsPanel/index.mjs"
     },
+    "./components/DevToolsPanel/tabs/ActionsViewer": {
+      "types": "./dist/components/DevToolsPanel/tabs/ActionsViewer/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ActionsViewer/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ActionsViewer/ActionsViewer": {
+      "types": "./dist/components/DevToolsPanel/tabs/ActionsViewer/ActionsViewer.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ActionsViewer/ActionsViewer.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ActionsViewer/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/ActionsViewer/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ActionsViewer/index.mjs"
+    },
     "./components/DevToolsPanel/tabs/ElementsViewer": {
       "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/index.mjs"
@@ -181,6 +193,18 @@
     "./components/DevToolsPanel/tabs/Logs/LogsSummary/index": {
       "types": "./dist/components/DevToolsPanel/tabs/Logs/LogsSummary/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/Logs/LogsSummary/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/Logs/categories/LogAction": {
+      "types": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogAction/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogAction/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/Logs/categories/LogAction/LogAction": {
+      "types": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogAction/LogAction.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogAction/LogAction.mjs"
+    },
+    "./components/DevToolsPanel/tabs/Logs/categories/LogAction/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogAction/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogAction/index.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogInteraction": {
       "types": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/index.d.ts",

@@ -454,6 +454,22 @@
       "types": "./dist/elements/basic/Text/index.d.ts",
       "import": "./dist/elements/basic/Text/index.mjs"
     },
+    "./elements/basic/ThemeToggle": {
+      "types": "./dist/elements/basic/ThemeToggle/index.d.ts",
+      "import": "./dist/elements/basic/ThemeToggle/index.mjs"
+    },
+    "./elements/basic/ThemeToggle/ThemeToggle": {
+      "types": "./dist/elements/basic/ThemeToggle/ThemeToggle.d.ts",
+      "import": "./dist/elements/basic/ThemeToggle/ThemeToggle.mjs"
+    },
+    "./elements/basic/ThemeToggle/declaration": {
+      "types": "./dist/elements/basic/ThemeToggle/declaration.d.ts",
+      "import": "./dist/elements/basic/ThemeToggle/declaration.mjs"
+    },
+    "./elements/basic/ThemeToggle/index": {
+      "types": "./dist/elements/basic/ThemeToggle/index.d.ts",
+      "import": "./dist/elements/basic/ThemeToggle/index.mjs"
+    },
     "./elements/declarations": {
       "types": "./dist/elements/declarations.d.ts",
       "import": "./dist/elements/declarations.mjs"

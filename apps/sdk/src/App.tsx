@@ -204,7 +204,11 @@ const App = ({
           : [])
       ]}
     >
-      <ThemeProvider>
+      {/*
+        A rendered space follows the machine until a visitor says otherwise — which is what `system` means, and it
+        is the only honest default for somebody else's site. The builder is the one that opens in dark.
+      */}
+      <ThemeProvider defaultTheme="system">
         <Provider components={components}>
           <ContainerRoot className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
             <HelmetProvider>

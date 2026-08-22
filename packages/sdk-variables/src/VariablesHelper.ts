@@ -99,12 +99,31 @@ export const styleVariablesToCss = (
     css = `${name} {\n${root.join('\n')}\n}`;
   }
 
+  /**
+   * Two ways a scheme is decided, and they have to agree on which one wins.
+   *
+   * The operating system says one thing and the visitor may say another — a page with a light/dark switch on it —
+   * so the media queries answer only while nothing has been chosen (`:not(.light)` / `:not(.dark)` on the root),
+   * and the chosen class answers last. A space with no switch never sees a class and behaves exactly as before.
+   */
+  const scoped = (mode: 'light' | 'dark') => (name === ':root' ? `${name}.${mode}` : `.${mode} ${name}`);
+  const unless = (mode: 'light' | 'dark') =>
+    name === ':root' ? `${name}:not(.${mode})` : `:root:not(.${mode}) ${name}`;
+
   if (light.length) {
-    css += `\n\n@media (prefers-color-scheme: light) {\n${spacing}${name} {\n${light.join('\n')}\n  }\n}`;
+    css += `\n\n@media (prefers-color-scheme: light) {\n${spacing}${unless('dark')} {\n${light.join('\n')}\n  }\n}`;
   }
 
   if (dark.length) {
-    css += `\n\n@media (prefers-color-scheme: dark) {\n${spacing}${name} {\n${dark.join('\n')}\n  }\n}`;
+    css += `\n\n@media (prefers-color-scheme: dark) {\n${spacing}${unless('light')} {\n${dark.join('\n')}\n  }\n}`;
+  }
+
+  if (light.length) {
+    css += `\n\n${scoped('light')} {\n${light.join('\n')}\n}`;
+  }
+
+  if (dark.length) {
+    css += `\n\n${scoped('dark')} {\n${dark.join('\n')}\n}`;
   }
 
   return css;

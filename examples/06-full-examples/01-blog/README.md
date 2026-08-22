@@ -19,17 +19,17 @@ Seven files, and only two of them are about blogging:
 
 | File | Lines | What it is |
 |---|---:|---|
-| [`src/space.ts`](./src/space.ts) | 580 | The five pages — a declaration, not code |
-| [`src/theme.ts`](./src/theme.ts) | 440 | The stylesheet, as data: ~40 classes and the palette |
+| [`src/space.ts`](./src/space.ts) | 632 | The five pages — a declaration, not code |
+| [`src/theme.ts`](./src/theme.ts) | 601 | The stylesheet, as data: ~50 classes, the palette, both schemes |
 | [`src/posts.ts`](./src/posts.ts) | 294 | The posts, in memory. The one file a real blog replaces |
-| [`src/tasks.ts`](./src/tasks.ts) | 101 | List, read, publish, and who is looking |
+| [`src/tasks.ts`](./src/tasks.ts) | 102 | List, read, publish, and who is looking |
 | [`src/accounts.ts`](./src/accounts.ts) | 92 | Two people, their sessions, and the adapters over them |
 | [`src/actions.ts`](./src/actions.ts) | 89 | Four flows, as documents |
 | [`src/main.ts`](./src/main.ts) | 33 | The server |
 
 Lines of code, without the comments — which outnumber them here, because an example is read more often than it is
-run. Two of those files are content and paint: take the posts and the stylesheet out and the whole mechanism is
-under three hundred lines.
+run. Two of those files are the pages and two more are content and paint. What is left is the **mechanism** —
+sessions, permissions, the four flows and the server — and it is a little over three hundred lines.
 
 There is no router, no controller, no template, no data-loading code, no session handling, no CSRF, no permission
 middleware, no client-side state and no build step for the pages. Those are not omitted — they are what
@@ -120,14 +120,20 @@ the session, resolved on the server with the rest of the page:
 ```ts
 run: (_params, ctx) => ({
   signedIn: Boolean(ctx.user),
+  signedOut: !ctx.user,
   canWrite: Boolean(ctx.user?.permissions.includes('postPublish')),
-  accountLabel: ctx.user ? ctx.user.username : 'Sign in'
+  accountLabel: ctx.user?.username ?? ''
 })
 ```
 
 The editor link binds its **visibility** to `canWrite` and the account button binds its **text** to
-`accountLabel`. So a signed-out visitor gets "Sign in", `ada` gets her name and the editor, and `grace` gets her
-name and no editor — with no condition written into the page.
+`accountLabel`. So `ada` gets her name and the editor, and `grace` gets her name and no editor — with no condition
+written into the page.
+
+The account control is **two elements rather than one that changes its mind**: an invitation bound to `signedOut`
+and a name bound to `signedIn`. A field and its opposite, because a binding shows an element when its field is
+true and the vocabulary has no "unless" — and because an invitation and an identity want different shapes, not a
+compromise between the two.
 
 Hiding a link is a courtesy, though, and the README of this example would be lying if it stopped there: the lock
 is the `access: 'role'` above. `grace` can type the URL, reach the editor, fill it in, and still be refused.
@@ -157,7 +163,7 @@ URL are composed on the server, because a binding names one field.
 few type defaults per element type, and about forty classes. Nothing in the pages is styled inline, so changing
 `--accent` re-themes every chip, link and button at once.
 
-Two things worth knowing before you write one of your own:
+Three things worth knowing before you write one of your own:
 
 - **The style vocabulary is a closed list of properties and has no shorthands.** There is `row-gap` but no `gap`,
   four corner radii but no `border-radius`, `outline-style` but no `outline`. A space authored with shorthands
@@ -166,6 +172,31 @@ Two things worth knowing before you write one of your own:
 - **The covers are drawn, not fetched.** Each is an SVG data URI with a hue derived from the post's slug, so the
   example has real artwork with no media library, no external host, and nothing to go missing when the wifi in
   the room is bad. A real blog puts its uploaded URL in exactly the same field.
+- **An image element is a `140px` square until something says otherwise**, so that an unbound one can be seen and
+  picked up in the builder. A class that gives it a `width` and an `aspect-ratio` and nothing else loses to that
+  height, and every cover comes out a letterbox. `height: auto` is what hands the shape back to the ratio — the
+  `media()` helper at the top of the file is that, said once.
+
+## Light and dark
+
+Every colour in [`src/theme.ts`](./src/theme.ts) is declared twice, and dark is a design rather than an inversion:
+the surfaces lift instead of the text dimming. The machine picks between them — and the switch in the header is a
+visitor overruling their machine:
+
+```ts
+element('ThemeToggle', { attributes: { subType: 'switch', lightLabel: 'Light', darkLabel: 'Dark' } })
+```
+
+That is the whole of it, and the element ships **no colours of its own**. It writes the choice on the document
+root (`light` / `dark`, and nothing at all while the answer is still the machine's) and remembers it; the palette
+is already keyed on exactly that, because `styleVariablesToCss` emits both a `prefers-color-scheme` rule guarded
+on the absence of the class and a rule for the class itself. A space with no switch on it never sees a class and
+behaves as it always did.
+
+It ships two icons and no opinion about which one shows either — that is the same question the palette answers, so
+this space answers it the same way, in four rules keyed on `data-theme-icon` at the bottom of `theme.ts`. Styling
+the control is styling an ordinary element: one class on it, and `subType: 'segmented'` if you would rather offer
+the three answers, including handing the decision back to the machine.
 
 ## What is missing on purpose
 

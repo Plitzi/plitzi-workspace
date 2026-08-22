@@ -68,6 +68,21 @@ export const grid = (columns: string, value: string, extra: StyleRules = {}): St
   ...extra
 });
 
+/**
+ * A picture that fills its column at a fixed shape.
+ *
+ * `height: auto` is not decoration: the image element carries a `140px` square of its own so that an unbound one
+ * is visible in the builder, and a class that sets only `width` and `aspect-ratio` loses to it — the ratio is
+ * ignored and every cover comes out a letterbox. Saying `auto` is what hands the height back to the ratio.
+ */
+export const media = (ratio: string): StyleRules => ({
+  display: 'block',
+  width: '100%',
+  height: 'auto',
+  'aspect-ratio': ratio,
+  'object-fit': 'cover'
+});
+
 /** Cuts a paragraph off at a line count instead of at a character, which is what keeps a grid of cards even. */
 export const clamp = (lines: number): StyleRules => ({
   display: '-webkit-box',
@@ -76,48 +91,44 @@ export const clamp = (lines: number): StyleRules => ({
   overflow: 'hidden'
 });
 
-const DISPLAY = "'Iowan Old Style', 'Palatino Linotype', Palatino, 'Times New Roman', Georgia, serif";
-const UI = "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
+/**
+ * Two families and nothing else.
+ *
+ * A display serif for anything that is read at a glance and a text sans for everything that is read as interface,
+ * both from what the machine already has: a demonstration that waits on a font server is a demonstration with a
+ * blank first second in it. `ui-serif` resolves to New York on Apple platforms and to a decent Georgia elsewhere.
+ */
+const DISPLAY = "ui-serif, 'New York', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif";
+const UI = "ui-sans-serif, system-ui, -apple-system, 'Segoe UI Variable Text', 'Segoe UI', Roboto, sans-serif";
 const MONO = "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace";
 
-const shell = column('0px', {
-  'min-height': '100vh',
-  'background-color': 'var(--background)',
-  color: 'var(--foreground)',
-  'font-family': UI
-});
-
-const wrap = (maxWidth = '1120px'): StyleRules => ({
+const wrap = (maxWidth = '1180px'): StyleRules => ({
   width: '100%',
   'max-width': maxWidth,
   'margin-left': 'auto',
   'margin-right': 'auto'
 });
 
-const surface = (): StyleRules => ({
-  'background-color': 'var(--surface)',
-  ...border('1px', 'var(--border)'),
-  ...radius('18px')
-});
-
+/** Display type: tight, dark, and set at a size that reads as a headline rather than as large body text. */
 const displayText = (size: string, extra: StyleRules = {}): StyleRules => ({
   'font-family': DISPLAY,
   'font-size': size,
   'font-weight': '600',
-  'line-height': '1.12',
-  'letter-spacing': '-0.4px',
+  'line-height': '1.08',
+  'letter-spacing': '-0.022em',
   'margin-top': '0px',
   'margin-bottom': '0px',
-  color: 'var(--foreground)',
+  color: 'var(--fg)',
+  'text-wrap': 'balance',
   ...extra
 });
 
-const label = (extra: StyleRules = {}): StyleRules => ({
-  'font-size': '12px',
-  'font-weight': '600',
-  'letter-spacing': '1.4px',
+const eyebrow = (extra: StyleRules = {}): StyleRules => ({
+  'font-size': '11px',
+  'font-weight': '650',
+  'letter-spacing': '0.14em',
   'text-transform': 'uppercase',
-  color: 'var(--muted)',
+  color: 'var(--fg-faint)',
   ...extra
 });
 
@@ -125,87 +136,140 @@ const label = (extra: StyleRules = {}): StyleRules => ({
  * Every class the blog uses, written once.
  *
  * Two elements naming one class share one rule, which is the difference between a stylesheet and a pile of
- * one-off declarations — and it is what makes the space re-themable: change `--accent` here and every chip,
- * link and button follows.
+ * one-off declarations — and it is what makes the space re-themable: the colours are all variables, so the whole
+ * site follows one edit, in either scheme.
  */
 export const classes: NonNullable<SpaceSpec['classes']> = {
-  page: { desktop: shell },
-  /**
-   * The provider that wraps a whole page.
-   *
-   * A source is published to the elements BELOW the provider that owns it, so the header's answer — who is signed
-   * in, and whether they may write — reaches the rest of the page only if the page sits inside it. Being a flex
-   * column that grows is what keeps the footer at the bottom of a short page.
-   */
+  page: {
+    desktop: column('0px', {
+      'min-height': '100vh',
+      'background-color': 'var(--bg)',
+      color: 'var(--fg)',
+      'font-family': UI
+    })
+  },
   pageInner: { desktop: column('0px', { width: '100%', 'flex-grow': '1' }) },
 
   // ── Header ──────────────────────────────────────────────────────────────────────────────────────────────────
   headerBand: {
     desktop: {
       width: '100%',
-      'background-color': 'var(--surface)',
-      ...borderSide('bottom', '1px', 'var(--border)'),
       position: 'sticky',
       top: '0px',
-      'z-index': '20'
+      'z-index': '30',
+      'background-color': 'var(--bg-glass)',
+      'backdrop-filter': 'saturate(180%) blur(14px)',
+      ...borderSide('bottom', '1px', 'var(--line)')
     }
   },
   headerInner: {
-    desktop: row('24px', { ...wrap(), ...padding('16px', '24px'), 'justify-content': 'space-between' }),
-    mobile: { ...padding('14px', '16px'), ...gap('12px') }
+    desktop: row('20px', { ...wrap(), ...padding('14px', '28px'), 'justify-content': 'space-between' }),
+    mobile: { ...padding('12px', '18px'), ...gap('10px') }
   },
-  brand: { desktop: row('10px', { 'text-decoration': 'none', color: 'var(--foreground)' }) },
+  brand: { desktop: row('11px', { 'text-decoration': 'none', color: 'var(--fg)' }) },
   brandMark: {
     desktop: {
       display: 'flex',
       'align-items': 'center',
       'justify-content': 'center',
-      width: '34px',
-      height: '34px',
-      ...radius('10px'),
-      'background-color': 'var(--accent)',
+      width: '32px',
+      height: '32px',
+      ...radius('11px'),
+      'background-image': 'linear-gradient(140deg, var(--accent), var(--accent-2))',
       color: '#ffffff',
       'font-family': DISPLAY,
-      'font-size': '19px',
-      'font-weight': '600'
+      'font-size': '17px',
+      'font-weight': '600',
+      'box-shadow': '0 6px 16px -8px var(--accent-shadow)'
     }
   },
-  brandName: { desktop: displayText('20px', { 'letter-spacing': '-0.2px', 'white-space': 'nowrap' }) },
-  brandTag: { desktop: label({ 'font-size': '10px', 'letter-spacing': '1.8px' }), mobile: { display: 'none' } },
-  nav: { desktop: row('20px') },
+  brandName: {
+    desktop: displayText('19px', { 'letter-spacing': '-0.01em', 'white-space': 'nowrap', 'line-height': '1.15' })
+  },
+  brandTag: { desktop: eyebrow({ 'font-size': '9px' }), mobile: { display: 'none' } },
+  nav: { desktop: row('6px') },
   navLink: {
     desktop: {
-      color: 'var(--muted)',
+      ...padding('7px', '12px'),
+      ...radius('9px'),
+      color: 'var(--fg-muted)',
       'text-decoration': 'none',
       'font-size': '14px',
       'font-weight': '500',
-      transition: 'color 150ms ease'
+      transition: 'color 160ms ease, background-color 160ms ease'
     }
+  },
+  /**
+   * The text inside a pill, button or link, and nothing else.
+   *
+   * It states no type of its own on purpose: the box it sits in already carries the size, the weight and the
+   * colour, so the label inherits all three. Giving the text the box's class instead is what draws the border
+   * twice — once around the pill, once around the words inside it.
+   */
+  inlineLabel: {
+    desktop: {
+      color: 'inherit',
+      'font-size': 'inherit',
+      'font-weight': 'inherit',
+      'letter-spacing': 'inherit',
+      'white-space': 'nowrap'
+    }
+  },
+  signInLink: {
+    desktop: row('0px', {
+      ...padding('8px', '17px'),
+      ...radius('999px'),
+      'background-image': 'linear-gradient(140deg, var(--accent), var(--accent-2))',
+      color: '#ffffff',
+      'font-size': '13px',
+      'font-weight': '600',
+      'text-decoration': 'none',
+      'box-shadow': '0 10px 22px -14px var(--accent-shadow)',
+      transition: 'transform 200ms ease, box-shadow 200ms ease'
+    })
   },
   accountPill: {
     desktop: row('8px', {
-      ...padding('6px', '12px'),
+      ...padding('5px', '6px'),
+      'padding-right': '13px',
       ...radius('999px'),
-      ...border('1px', 'var(--border)'),
-      'background-color': 'var(--background)',
+      ...border('1px', 'var(--line)'),
+      'background-color': 'var(--surface)',
       'text-decoration': 'none',
-      color: 'var(--foreground)',
-      'font-size': '14px',
+      color: 'var(--fg)',
+      'font-size': '13px',
       'font-weight': '600',
-      'white-space': 'nowrap'
+      'white-space': 'nowrap',
+      transition: 'border-color 160ms ease, box-shadow 160ms ease'
     })
+  },
+  themeToggle: {
+    desktop: {
+      display: 'inline-flex',
+      'align-items': 'center',
+      'justify-content': 'center',
+      width: '34px',
+      height: '34px',
+      ...radius('999px'),
+      ...border('1px', 'var(--line)'),
+      'background-color': 'var(--surface)',
+      color: 'var(--fg-muted)',
+      cursor: 'pointer',
+      'font-size': '15px',
+      transition: 'color 160ms ease, border-color 160ms ease'
+    }
   },
   avatarSm: {
     desktop: {
       display: 'flex',
       'align-items': 'center',
       'justify-content': 'center',
-      width: '24px',
-      height: '24px',
+      width: '26px',
+      height: '26px',
       ...radius('999px'),
-      'background-color': 'var(--accentSoft)',
-      color: 'var(--accent)',
-      'font-size': '12px',
+      'background-image': 'linear-gradient(140deg, var(--accent), var(--accent-2))',
+      color: '#ffffff',
+      'font-size': '11px',
       'font-weight': '700'
     }
   },
@@ -214,38 +278,42 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
       display: 'flex',
       'align-items': 'center',
       'justify-content': 'center',
-      width: '42px',
-      height: '42px',
+      width: '44px',
+      height: '44px',
+      'min-width': '44px',
       ...radius('999px'),
-      'background-color': 'var(--accentSoft)',
-      color: 'var(--accent)',
+      'background-image': 'linear-gradient(140deg, var(--accent), var(--accent-2))',
+      color: '#ffffff',
       'font-family': DISPLAY,
-      'font-size': '18px',
+      'font-size': '19px',
       'font-weight': '600'
     }
   },
 
   // ── Shared furniture ────────────────────────────────────────────────────────────────────────────────────────
-  /** A provider is a plain box in the layout, so the rhythm between its sections has to be stated. */
-  pageStack: { desktop: column('56px'), mobile: { ...gap('36px') } },
-  main: { desktop: column('56px', { ...wrap(), ...padding('48px', '24px') }), mobile: { ...padding('28px', '16px') } },
-  sectionLabel: { desktop: label({ 'padding-bottom': '14px', ...borderSide('bottom', '1px', 'var(--border)') }) },
+  pageStack: { desktop: column('72px'), mobile: { ...gap('44px') } },
+  main: { desktop: column('72px', { ...wrap(), ...padding('64px', '28px') }), mobile: { ...padding('34px', '18px') } },
+  sectionLabel: {
+    desktop: eyebrow({ 'padding-bottom': '16px', ...borderSide('bottom', '1px', 'var(--line)'), width: '100%' })
+  },
   chip: {
     desktop: {
       display: 'inline-flex',
       'align-self': 'flex-start',
-      ...padding('5px', '11px'),
-      ...radius('999px'),
-      'background-color': 'var(--accentSoft)',
-      color: 'var(--accent)',
-      'font-size': '11px',
+      ...padding('4px', '10px'),
+      ...radius('7px'),
+      'background-color': 'var(--accent-soft)',
+      color: 'var(--accent-ink)',
+      'font-size': '10px',
       'font-weight': '700',
-      'letter-spacing': '0.8px',
+      'letter-spacing': '0.1em',
       'text-transform': 'uppercase',
       'text-decoration': 'none'
     }
   },
-  meta: { desktop: { color: 'var(--muted)', 'font-size': '13px' } },
+  meta: { desktop: { color: 'var(--fg-faint)', 'font-size': '13px', 'letter-spacing': '0.01em' } },
+  metaRow: { desktop: row('11px') },
+  bylineName: { desktop: { color: 'var(--fg)', 'font-size': '14px', 'font-weight': '600' } },
   /**
    * A column of text runs.
    *
@@ -253,260 +321,390 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
    * container sit on one line. A flex column blockifies them, which is what a name over a date needs.
    */
   stack: { desktop: column('2px', { 'align-items': 'flex-start' }) },
-  metaRow: { desktop: row('10px') },
-  bylineName: { desktop: { color: 'var(--foreground)', 'font-size': '14px', 'font-weight': '600' } },
 
   // ── Hero ────────────────────────────────────────────────────────────────────────────────────────────────────
   hero: {
-    desktop: grid('minmax(0, 1fr) minmax(0, 1fr)', '44px', { 'align-items': 'center' }),
-    mobile: { 'grid-template-columns': 'minmax(0, 1fr)', ...gap('24px') }
+    desktop: grid('minmax(0, 1.02fr) minmax(0, 0.98fr)', '56px', { 'align-items': 'center' }),
+    tablet: { 'grid-template-columns': 'minmax(0, 1fr)', ...gap('30px') },
+    mobile: { 'grid-template-columns': 'minmax(0, 1fr)', ...gap('26px') }
   },
-  heroText: { desktop: column('18px', { 'align-items': 'flex-start' }) },
+  heroText: { desktop: column('20px', { 'align-items': 'flex-start' }) },
   heroTitle: {
-    desktop: displayText('54px'),
-    tablet: { 'font-size': '44px' },
-    mobile: { 'font-size': '34px' }
+    desktop: displayText('62px'),
+    tablet: { 'font-size': '48px' },
+    mobile: { 'font-size': '36px' }
   },
   heroStandfirst: {
-    desktop: { color: 'var(--muted)', 'font-size': '19px', 'line-height': '1.6', 'max-width': '46ch' }
-  },
-  heroImage: {
     desktop: {
-      width: '100%',
-      'aspect-ratio': '4 / 3',
-      'object-fit': 'cover',
+      color: 'var(--fg-muted)',
+      'font-size': '20px',
+      'line-height': '1.55',
+      'max-width': '44ch',
+      'letter-spacing': '-0.005em'
+    },
+    mobile: { 'font-size': '17px' }
+  },
+  frame: {
+    desktop: {
+      display: 'block',
+      overflow: 'hidden',
+      'text-decoration': 'none',
       ...radius('22px'),
-      'box-shadow': '0 30px 60px -30px rgba(20, 20, 30, 0.45)'
+      'background-color': 'var(--surface-2)',
+      'box-shadow': '0 40px 80px -48px var(--shadow), 0 0 0 1px var(--line-soft)'
     }
   },
+  heroImage: { desktop: { ...media('5 / 4'), transition: 'transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1)' } },
   readLink: {
-    desktop: row('8px', {
-      ...padding('11px', '20px'),
+    desktop: row('9px', {
+      ...padding('12px', '22px'),
       ...radius('999px'),
-      'background-color': 'var(--accent)',
+      'background-image': 'linear-gradient(140deg, var(--accent), var(--accent-2))',
       color: '#ffffff',
       'font-size': '14px',
       'font-weight': '600',
-      'text-decoration': 'none'
+      'text-decoration': 'none',
+      'box-shadow': '0 14px 30px -16px var(--accent-shadow)',
+      transition: 'transform 200ms ease, box-shadow 200ms ease'
     })
   },
 
   // ── The list ────────────────────────────────────────────────────────────────────────────────────────────────
   layout: {
-    desktop: grid('minmax(0, 1fr) 300px', '48px', { 'align-items': 'flex-start' }),
-    tablet: { 'grid-template-columns': 'minmax(0, 1fr)' },
-    mobile: { 'grid-template-columns': 'minmax(0, 1fr)', ...gap('36px') }
+    desktop: grid('minmax(0, 1fr) 288px', '64px', { 'align-items': 'flex-start' }),
+    tablet: { 'grid-template-columns': 'minmax(0, 1fr)', ...gap('48px') },
+    mobile: { 'grid-template-columns': 'minmax(0, 1fr)', ...gap('40px') }
   },
-  feed: { desktop: column('30px') },
+  feed: { desktop: column('34px') },
   card: {
-    desktop: grid('220px minmax(0, 1fr)', '22px', {
+    desktop: grid('232px minmax(0, 1fr)', '26px', {
       'align-items': 'flex-start',
-      'padding-bottom': '30px',
-      ...borderSide('bottom', '1px', 'var(--border)')
+      'padding-bottom': '34px',
+      ...borderSide('bottom', '1px', 'var(--line)')
     }),
-    mobile: { 'grid-template-columns': 'minmax(0, 1fr)', ...gap('14px') }
+    mobile: { 'grid-template-columns': 'minmax(0, 1fr)', ...gap('16px') }
   },
   cardImage: {
-    desktop: { width: '100%', 'aspect-ratio': '4 / 3', 'object-fit': 'cover', ...radius('14px') }
+    desktop: { ...media('4 / 3'), ...radius('14px'), transition: 'transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1)' }
   },
-  cardBody: { desktop: column('10px', { 'align-items': 'flex-start' }) },
-  cardLink: { desktop: { 'text-decoration': 'none', color: 'var(--foreground)' } },
-  cardTitle: { desktop: displayText('25px', { 'line-height': '1.2' }), mobile: { 'font-size': '22px' } },
+  cardBody: { desktop: column('11px', { 'align-items': 'flex-start' }) },
+  cardLink: { desktop: { 'text-decoration': 'none', color: 'var(--fg)', display: 'block' } },
+  cardTitle: {
+    desktop: displayText('27px', { 'line-height': '1.18', transition: 'color 160ms ease' }),
+    mobile: { 'font-size': '23px' }
+  },
   cardExcerpt: {
-    desktop: { color: 'var(--muted)', 'font-size': '15px', 'line-height': '1.65', ...clamp(3) }
+    desktop: { color: 'var(--fg-muted)', 'font-size': '15px', 'line-height': '1.62', ...clamp(3) }
   },
-  pager: { desktop: row('8px', { 'padding-top': '10px', color: 'var(--muted)' }) },
+  pager: { desktop: row('6px', { 'padding-top': '6px', color: 'var(--fg-muted)' }) },
 
   // ── Sidebar ─────────────────────────────────────────────────────────────────────────────────────────────────
-  sidebar: { desktop: column('24px', { position: 'sticky', top: '90px' }), tablet: { position: 'static' } },
-  panel: { desktop: column('14px', { ...surface(), ...padding('20px') }) },
-  panelTitle: { desktop: displayText('18px') },
-  panelText: { desktop: { color: 'var(--muted)', 'font-size': '14px', 'line-height': '1.65' } },
-  chipRow: { desktop: { display: 'flex', 'flex-wrap': 'wrap', ...gap('8px') } },
+  sidebar: { desktop: column('34px', { position: 'sticky', top: '96px' }), tablet: { position: 'static' } },
+  panel: { desktop: column('14px', { 'align-items': 'flex-start' }) },
+  panelTitle: {
+    desktop: eyebrow({ 'padding-bottom': '12px', ...borderSide('bottom', '1px', 'var(--line)'), width: '100%' })
+  },
+  panelText: { desktop: { color: 'var(--fg-muted)', 'font-size': '14px', 'line-height': '1.65' } },
+  chipRow: { desktop: { display: 'flex', 'flex-wrap': 'wrap', ...gap('7px') } },
   chipQuiet: {
     desktop: {
       display: 'inline-flex',
       'align-self': 'flex-start',
-      ...padding('5px', '11px'),
+      ...padding('6px', '12px'),
       ...radius('999px'),
-      ...border('1px', 'var(--border)'),
-      color: 'var(--muted)',
+      ...border('1px', 'var(--line)'),
+      'background-color': 'var(--surface)',
+      color: 'var(--fg-muted)',
       'font-size': '12px',
       'font-weight': '600',
-      'text-decoration': 'none'
+      'text-decoration': 'none',
+      transition: 'color 160ms ease, border-color 160ms ease'
     }
   },
-  quietList: { desktop: column('12px', { 'padding-left': '0px', 'margin-top': '0px', 'margin-bottom': '0px' }) },
+  quietList: { desktop: column('16px', { 'padding-left': '0px', 'margin-top': '0px', 'margin-bottom': '0px' }) },
   quietItem: { desktop: column('3px', { 'text-decoration': 'none' }) },
-  quietTitle: { desktop: { color: 'var(--foreground)', 'font-size': '14px', 'font-weight': '600', ...clamp(2) } },
+  quietTitle: {
+    desktop: { color: 'var(--fg)', 'font-size': '14px', 'font-weight': '600', 'line-height': '1.4', ...clamp(2) }
+  },
 
   // ── Article ─────────────────────────────────────────────────────────────────────────────────────────────────
-  article: { desktop: column('26px', { ...wrap('760px'), 'align-items': 'flex-start' }) },
-  articleTitle: { desktop: displayText('46px'), mobile: { 'font-size': '32px' } },
-  articleStandfirst: { desktop: { color: 'var(--muted)', 'font-size': '20px', 'line-height': '1.6' } },
-  articleImage: {
-    desktop: {
-      width: '100%',
-      'aspect-ratio': '16 / 9',
-      'object-fit': 'cover',
-      ...radius('20px'),
-      'box-shadow': '0 30px 60px -34px rgba(20, 20, 30, 0.5)'
-    }
+  article: { desktop: column('28px', { ...wrap('720px'), 'align-items': 'flex-start' }) },
+  articleWide: { desktop: column('28px', { ...wrap('980px'), 'align-items': 'flex-start' }) },
+  articleTitle: { desktop: displayText('52px'), tablet: { 'font-size': '42px' }, mobile: { 'font-size': '33px' } },
+  articleStandfirst: {
+    desktop: { color: 'var(--fg-muted)', 'font-size': '21px', 'line-height': '1.55', 'letter-spacing': '-0.005em' },
+    mobile: { 'font-size': '18px' }
   },
-  prose: { desktop: { color: 'var(--foreground)', 'font-size': '18px', 'line-height': '1.75', width: '100%' } },
+  articleImage: { desktop: { ...media('2 / 1'), ...radius('20px') } },
+  prose: { desktop: { color: 'var(--fg)', 'font-size': '19px', 'line-height': '1.72', width: '100%' } },
   authorBox: {
-    desktop: row('16px', { ...surface(), ...padding('20px'), width: '100%', 'align-items': 'flex-start' })
+    desktop: row('16px', {
+      width: '100%',
+      'align-items': 'flex-start',
+      'padding-top': '26px',
+      ...borderSide('top', '1px', 'var(--line)')
+    })
   },
   moreGrid: {
-    desktop: grid('repeat(3, minmax(0, 1fr))', '22px', { 'align-items': 'flex-start' }),
+    desktop: grid('repeat(3, minmax(0, 1fr))', '26px', { 'align-items': 'flex-start' }),
     mobile: { 'grid-template-columns': 'minmax(0, 1fr)' }
   },
-  moreCard: { desktop: column('10px', { 'text-decoration': 'none', 'align-items': 'flex-start' }) },
-  moreImage: { desktop: { width: '100%', 'aspect-ratio': '16 / 10', 'object-fit': 'cover', ...radius('12px') } },
-  moreTitle: { desktop: displayText('19px', { 'line-height': '1.25', ...clamp(2) }) },
+  moreCard: { desktop: column('11px', { 'text-decoration': 'none', 'align-items': 'flex-start' }) },
+  moreImage: {
+    desktop: { ...media('16 / 10'), ...radius('16px'), transition: 'transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1)' }
+  },
+  moreTitle: { desktop: displayText('19px', { 'line-height': '1.28', ...clamp(2) }) },
 
   // ── Forms ───────────────────────────────────────────────────────────────────────────────────────────────────
   editor: {
-    desktop: grid('minmax(0, 1fr) 280px', '40px', { 'align-items': 'flex-start' }),
-    mobile: { 'grid-template-columns': 'minmax(0, 1fr)', ...gap('28px') }
+    desktop: grid('minmax(0, 1fr) 264px', '56px', { 'align-items': 'flex-start' }),
+    tablet: { 'grid-template-columns': 'minmax(0, 1fr)', ...gap('40px') },
+    mobile: { 'grid-template-columns': 'minmax(0, 1fr)', ...gap('32px') }
   },
-  form: { desktop: column('18px', { width: '100%' }) },
+  form: { desktop: column('20px', { width: '100%' }) },
   fieldRow: { desktop: column('7px') },
-  fieldLabel: {
-    desktop: { color: 'var(--foreground)', 'font-size': '13px', 'font-weight': '600', cursor: 'pointer' }
-  },
+  fieldLabel: { desktop: { color: 'var(--fg)', 'font-size': '13px', 'font-weight': '600', cursor: 'pointer' } },
   input: {
     desktop: {
       width: '100%',
-      ...padding('11px', '14px'),
-      ...border('1px', 'var(--border)'),
-      ...radius('12px'),
+      ...padding('12px', '15px'),
+      ...border('1px', 'var(--line-strong)'),
+      ...radius('13px'),
       'background-color': 'var(--surface)',
-      color: 'var(--foreground)',
+      color: 'var(--fg)',
       'font-size': '15px',
       'font-family': 'inherit',
       'line-height': '1.6',
-      'outline-style': 'none'
+      'outline-style': 'none',
+      transition: 'border-color 160ms ease, box-shadow 160ms ease'
     }
   },
   textarea: {
     desktop: {
       width: '100%',
-      'min-height': '260px',
-      ...padding('14px', '16px'),
-      ...border('1px', 'var(--border)'),
-      ...radius('12px'),
+      'min-height': '300px',
+      ...padding('15px', '17px'),
+      ...border('1px', 'var(--line-strong)'),
+      ...radius('13px'),
       'background-color': 'var(--surface)',
-      color: 'var(--foreground)',
+      color: 'var(--fg)',
       'font-family': MONO,
       'font-size': '14px',
       'line-height': '1.7',
-      'outline-style': 'none'
+      'outline-style': 'none',
+      transition: 'border-color 160ms ease, box-shadow 160ms ease'
     }
   },
+  formTitle: { desktop: displayText('30px', { 'line-height': '1.15' }) },
+  actionRow: { desktop: { display: 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', ...gap('10px') } },
   button: {
     desktop: {
-      ...padding('12px', '22px'),
+      ...padding('12px', '24px'),
       ...border('0px', 'transparent'),
       ...radius('999px'),
-      'background-color': 'var(--accent)',
+      'background-image': 'linear-gradient(140deg, var(--accent), var(--accent-2))',
       color: '#ffffff',
       'font-size': '15px',
       'font-weight': '600',
       'font-family': 'inherit',
       cursor: 'pointer',
-      'align-self': 'flex-start'
+      'align-self': 'flex-start',
+      'box-shadow': '0 14px 30px -16px var(--accent-shadow)',
+      transition: 'transform 200ms ease, box-shadow 200ms ease'
+    }
+  },
+  buttonWide: {
+    desktop: {
+      width: '100%',
+      ...padding('12px', '24px'),
+      ...border('0px', 'transparent'),
+      ...radius('999px'),
+      'background-image': 'linear-gradient(140deg, var(--accent), var(--accent-2))',
+      color: '#ffffff',
+      'font-size': '15px',
+      'font-weight': '600',
+      'font-family': 'inherit',
+      cursor: 'pointer',
+      'box-shadow': '0 14px 30px -16px var(--accent-shadow)',
+      transition: 'transform 200ms ease, box-shadow 200ms ease'
     }
   },
   buttonQuiet: {
     desktop: {
-      ...padding('10px', '18px'),
-      ...border('1px', 'var(--border)'),
+      ...padding('10px', '20px'),
+      ...border('1px', 'var(--line-strong)'),
       ...radius('999px'),
       'background-color': 'var(--surface)',
-      color: 'var(--foreground)',
+      color: 'var(--fg)',
       'font-size': '14px',
       'font-weight': '600',
       'font-family': 'inherit',
       cursor: 'pointer',
-      'align-self': 'flex-start'
+      'align-self': 'flex-start',
+      transition: 'border-color 160ms ease, color 160ms ease'
     }
   },
-  notice: {
-    desktop: {
-      color: 'var(--accent)',
-      'font-size': '14px',
-      'font-weight': '600',
-      'min-height': '20px'
-    }
+  notice: { desktop: { color: 'var(--accent-ink)', 'font-size': '14px', 'font-weight': '600', 'min-height': '20px' } },
+  centred: { desktop: column('26px', { ...wrap('430px'), 'align-items': 'stretch' }) },
+  cardSurface: {
+    desktop: column('18px', {
+      ...padding('26px'),
+      ...radius('20px'),
+      ...border('1px', 'var(--line)'),
+      'background-color': 'var(--surface)',
+      'box-shadow': '0 30px 60px -46px var(--shadow)',
+      'align-items': 'flex-start'
+    })
   },
-  centred: { desktop: column('22px', { ...wrap('420px'), 'align-items': 'stretch' }) },
 
   // ── Footer ──────────────────────────────────────────────────────────────────────────────────────────────────
   footerBand: {
-    desktop: {
-      width: '100%',
-      'margin-top': 'auto',
-      ...borderSide('top', '1px', 'var(--border)'),
-      'background-color': 'var(--surface)'
-    }
+    desktop: { width: '100%', 'margin-top': 'auto', ...borderSide('top', '1px', 'var(--line)') }
   },
   footerInner: {
-    // Room at the bottom for the SDK's own badge, which floats in the corner of every Plitzi page.
-    desktop: row('16px', {
+    desktop: row('28px', {
       ...wrap(),
-      ...padding('26px', '24px'),
-      'padding-bottom': '46px',
-      'justify-content': 'space-between'
+      ...padding('38px', '28px'),
+      'padding-bottom': '56px',
+      'justify-content': 'space-between',
+      'align-items': 'flex-start'
     }),
-    mobile: { 'flex-direction': 'column', 'align-items': 'flex-start', ...gap('10px') }
-  }
-};
-
-/** Light and dark, both stated: a theme that only names one is a page that reads as grey-on-grey in the other. */
-export const variables: SpaceSpec['variables'] = {
-  color: {
-    foreground: { light: '#14141a', dark: '#f4f4f6', default: '#14141a' },
-    muted: { light: '#6b6b78', dark: '#9c9caa', default: '#6b6b78' },
-    background: { light: '#fbfaf8', dark: '#0d0d10', default: '#fbfaf8' },
-    surface: { light: '#ffffff', dark: '#16161b', default: '#ffffff' },
-    border: { light: '#e9e6e0', dark: '#26262e', default: '#e9e6e0' },
-    accent: { light: '#5c3df5', dark: '#a394fb', default: '#5c3df5' },
-    accentSoft: { light: '#efeaff', dark: '#221c46', default: '#efeaff' }
-  }
+    mobile: { 'flex-direction': 'column', ...gap('20px') }
+  },
+  footerEnd: {
+    desktop: column('8px', { 'align-items': 'flex-end', 'max-width': '380px', 'text-align': 'right' }),
+    mobile: { 'align-items': 'flex-start', 'text-align': 'left' }
+  },
+  /** The same eyebrow the sections use, without the rule under it: nothing follows this one. */
+  footerLabel: { desktop: eyebrow() }
 };
 
 /**
- * Type defaults, so an element carries the blog's look before any class touches it — and the markdown a post is
- * written in, which arrives as tags nobody authored and therefore cannot reach with a class.
+ * The palette, stated for both schemes.
+ *
+ * Every colour in the space is one of these, so the whole site follows one edit — and the second value is not an
+ * afterthought: dark is a design, not an inversion, which is why the surfaces lift rather than the text dimming.
  */
+export const variables: SpaceSpec['variables'] = {
+  color: {
+    fg: { light: '#16161d', dark: '#f5f5f7', default: '#16161d' },
+    'fg-muted': { light: '#5d5d6b', dark: '#a6a6b4', default: '#5d5d6b' },
+    'fg-faint': { light: '#84848f', dark: '#83838f', default: '#84848f' },
+    bg: { light: '#fcfbfa', dark: '#0b0b0f', default: '#fcfbfa' },
+    'bg-glass': {
+      light: 'rgba(252, 251, 250, 0.82)',
+      dark: 'rgba(11, 11, 15, 0.78)',
+      default: 'rgba(252, 251, 250, 0.82)'
+    },
+    surface: { light: '#ffffff', dark: '#141419', default: '#ffffff' },
+    'surface-2': { light: '#f1efec', dark: '#1b1b22', default: '#f1efec' },
+    line: { light: '#e7e4df', dark: '#26262f', default: '#e7e4df' },
+    'line-soft': {
+      light: 'rgba(20, 20, 30, 0.06)',
+      dark: 'rgba(255, 255, 255, 0.07)',
+      default: 'rgba(20, 20, 30, 0.06)'
+    },
+    'line-strong': { light: '#dcd8d2', dark: '#32323d', default: '#dcd8d2' },
+    accent: { light: '#5b3df5', dark: '#8b7bff', default: '#5b3df5' },
+    'accent-2': { light: '#8b3df5', dark: '#c07bff', default: '#8b3df5' },
+    'accent-ink': { light: '#5b3df5', dark: '#b3a6ff', default: '#5b3df5' },
+    'accent-soft': { light: '#efeaff', dark: '#221c46', default: '#efeaff' },
+    'accent-shadow': {
+      light: 'rgba(91, 61, 245, 0.55)',
+      dark: 'rgba(139, 123, 255, 0.45)',
+      default: 'rgba(91, 61, 245, 0.55)'
+    },
+    shadow: { light: 'rgba(20, 20, 35, 0.5)', dark: 'rgba(0, 0, 0, 0.85)', default: 'rgba(20, 20, 35, 0.5)' }
+  }
+};
+
+/** Type defaults, so an element carries the blog's look before any class touches it. */
 export const elements: SpaceSpec['elements'] = {
-  heading: { base: { color: 'var(--foreground)', 'margin-top': '0px', 'margin-bottom': '0px' } },
-  paragraph: { base: { color: 'var(--foreground)', 'margin-top': '0px', 'margin-bottom': '0px' } },
-  text: { base: { color: 'var(--foreground)' } },
+  heading: { base: { color: 'var(--fg)', 'margin-top': '0px', 'margin-bottom': '0px' } },
+  paragraph: { base: { color: 'var(--fg)', 'margin-top': '0px', 'margin-bottom': '0px' } },
+  text: { base: { color: 'var(--fg)' } },
   image: { base: { display: 'block' } }
 };
 
+/**
+ * What a class cannot say.
+ *
+ * Three kinds of rule live here and nothing else does: **hover and focus**, which the style vocabulary has no
+ * place for; the **markdown a post is written in**, which arrives as tags nobody authored and so cannot be
+ * reached with a class; and the **theme toggle's two icons**, where the rule is not a colour but which of them
+ * the current scheme shows — answered exactly the way the palette answers it, so a chosen theme wins over the
+ * machine's.
+ */
 export const customCss = `
 .prose > * { max-width: 100%; }
-.prose h2 { font-family: ${DISPLAY}; font-size: 28px; line-height: 1.25; margin: 40px 0 14px; }
-.prose h3 { font-family: ${DISPLAY}; font-size: 22px; margin: 32px 0 10px; }
-.prose p { margin: 0 0 20px; }
-.prose ul, .prose ol { margin: 0 0 20px; padding-left: 22px; }
-.prose li { margin-bottom: 8px; }
-.prose a { color: var(--accent); }
+.prose > p:first-of-type { font-size: 1.06em; color: var(--fg); }
+.prose h2 { font-family: ${DISPLAY}; font-size: 30px; line-height: 1.2; letter-spacing: -0.02em; margin: 48px 0 16px; }
+.prose h3 { font-family: ${DISPLAY}; font-size: 23px; letter-spacing: -0.015em; margin: 36px 0 12px; }
+.prose p { margin: 0 0 22px; }
+.prose ul, .prose ol { margin: 0 0 22px; padding-left: 22px; }
+.prose li { margin-bottom: 10px; }
+.prose li::marker { color: var(--fg-faint); }
+.prose a { color: var(--accent-ink); text-underline-offset: 3px; }
 .prose strong { font-weight: 650; }
 .prose blockquote {
-  margin: 28px 0; padding: 4px 0 4px 22px; border-left: 3px solid var(--accent);
-  font-family: ${DISPLAY}; font-size: 21px; line-height: 1.5; color: var(--foreground);
+  margin: 34px 0; padding: 2px 0 2px 26px; border-left: 2px solid var(--accent);
+  font-family: ${DISPLAY}; font-size: 23px; line-height: 1.45; letter-spacing: -0.015em; color: var(--fg);
 }
-.prose code { font-family: ${MONO}; font-size: 0.88em; background: var(--accentSoft); color: var(--accent);
+.prose code { font-family: ${MONO}; font-size: 0.84em; background: var(--accent-soft); color: var(--accent-ink);
   padding: 2px 6px; border-radius: 6px; }
-.prose pre { background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
-  padding: 16px 18px; overflow-x: auto; margin: 0 0 22px; }
-.prose pre code { background: none; color: var(--foreground); padding: 0; font-size: 13px; line-height: 1.6; }
-.navLink:hover, .cardLink:hover .cardTitle, .quietItem:hover .quietTitle { color: var(--accent); }
-.readLink:hover, .button:hover { filter: brightness(1.08); }
+.prose pre { background: var(--surface-2); border: 1px solid var(--line); border-radius: 16px;
+  padding: 18px 20px; overflow-x: auto; margin: 0 0 24px; }
+.prose pre code { background: none; color: var(--fg); padding: 0; font-size: 13.5px; line-height: 1.65; }
+
+.navLink:hover { color: var(--fg); background-color: var(--surface-2); }
+.accountPill:hover, .chipQuiet:hover, .buttonQuiet:hover, .themeToggle:hover { border-color: var(--accent); color: var(--accent-ink); }
+.cardLink:hover .cardTitle, .quietItem:hover .quietTitle, .moreCard:hover .moreTitle { color: var(--accent-ink); }
+.frame:hover .heroImage, .cardLink:hover .cardImage, .moreCard:hover .moreImage { transform: scale(1.035); }
+.readLink:hover, .button:hover, .buttonWide:hover, .signInLink:hover {
+  transform: translateY(-1px); box-shadow: 0 18px 34px -16px var(--accent-shadow);
+}
+.input:focus, .textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
 .card:last-child { border-bottom-width: 0px; padding-bottom: 0px; }
-.input:focus, .textarea:focus { border-color: var(--accent); }
+
+/* The pager is one element with four parts and only a base class, so its buttons are reachable by the names it
+   renders them with and nowhere else. Same pills as everything else here, and a current page that looks it. */
+.pager button {
+  min-width: 34px; height: 34px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--surface); color: var(--fg-muted); font: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+.pager button:hover:not(:disabled) { color: var(--accent-ink); border-color: var(--accent); }
+.pager button:disabled { opacity: 0.45; cursor: default; }
+.plitzi-component__pagination-page--current {
+  background: linear-gradient(140deg, var(--accent), var(--accent-2)) !important;
+  border-color: transparent !important; color: #ffffff !important;
+}
+
+::selection { background: var(--accent-soft); color: var(--accent-ink); }
+
+/* One ring, for whoever is on a keyboard, and only for them — which is the whole of what :focus-visible says.
+   It lives here because the style vocabulary has outline-style but no outline, and no pseudo-classes at all. */
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px;
+}
+
+/* Every transition in this space is decoration. Somebody who has asked their machine for less gets less. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  .frame:hover .heroImage, .cardLink:hover .cardImage, .moreCard:hover .moreImage,
+  .readLink:hover, .button:hover, .buttonWide:hover, .signInLink:hover { transform: none; }
+}
+
+/* The toggle ships both icons and no opinion about either. Which one shows is the same question the palette
+   answers, so it is answered the same way: the machine decides until a class on the root says otherwise. */
+.plitzi-component__theme-toggle [data-theme-icon] { display: none; align-items: center; }
+.plitzi-component__theme-toggle [data-theme-icon='light'] { display: inline-flex; }
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .plitzi-component__theme-toggle [data-theme-icon='light'] { display: none; }
+  :root:not(.light) .plitzi-component__theme-toggle [data-theme-icon='dark'] { display: inline-flex; }
+}
+:root.dark .plitzi-component__theme-toggle [data-theme-icon='light'] { display: none; }
+:root.dark .plitzi-component__theme-toggle [data-theme-icon='dark'] { display: inline-flex; }
+:root.light .plitzi-component__theme-toggle [data-theme-icon='light'] { display: inline-flex; }
+:root.light .plitzi-component__theme-toggle [data-theme-icon='dark'] { display: none; }
 `;

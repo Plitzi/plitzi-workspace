@@ -497,6 +497,42 @@ describeTarget('blog', subject => {
     await expect(page.getByRole('link', { name: 'Write', exact: true })).toBeVisible();
   });
 
+  /**
+   * Light and dark, chosen rather than inherited.
+   *
+   * The space declares a value per scheme for every colour and the machine picks between them — until the toggle
+   * in the header writes a class on the document root, which is what the palette's own rules are keyed on. What
+   * is checked here is the whole chain: the class lands, the paint follows it, and the next visit remembers.
+   */
+  test('the theme toggle overrules the machine, and is remembered', async ({ page, capture }) => {
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.goto(subject.origin);
+    await expect(page.getByRole('heading', { name: 'A page that arrives finished', level: 1 })).toBeVisible();
+
+    const root = page.locator('html');
+    const background = () =>
+      page
+        .locator('.page')
+        .first()
+        .evaluate(node => getComputedStyle(node).backgroundColor);
+
+    // Nothing on the root while nobody has chosen: the media queries are what answer, and they are guarded on
+    // the absence of exactly this class.
+    await expect(root).not.toHaveClass(/dark/);
+    const light = await background();
+
+    await page.locator('.themeToggle').click();
+
+    await expect(root).toHaveClass(/dark/);
+    expect(await background(), 'the class landed but nothing repainted').not.toBe(light);
+    await capture('blog-dark');
+
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'A page that arrives finished', level: 1 })).toBeVisible();
+
+    await expect(root, 'the choice did not survive the reload').toHaveClass(/dark/);
+  });
+
   /** Signed in and still not an author: the courtesy and the control are two different things. */
   test('a reader gets no editor link, and the editor still refuses her', async ({ page }) => {
     await signIn(page, 'grace');

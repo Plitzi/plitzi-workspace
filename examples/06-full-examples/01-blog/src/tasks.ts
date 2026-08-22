@@ -94,11 +94,13 @@ export const siteChromeTask: ActionTask<Record<string, never>> = {
 
     return {
       signedIn: Boolean(user),
+      // Its opposite, because a binding shows an element when its field is true and there is no "unless" — and
+      // the header has two account controls rather than one that changes: a name to open, or an invitation.
+      signedOut: !user,
       canWrite,
-      // Its opposite, because a binding shows an element when its field is true and there is no "unless".
       readOnly: Boolean(user) && !canWrite,
-      accountLabel: user ? user.username : 'Sign in',
-      initial: user ? user.username.slice(0, 1).toUpperCase() : '·'
+      accountLabel: user?.username ?? '',
+      initial: user ? user.username.slice(0, 1).toUpperCase() : ''
     };
   }
 };
