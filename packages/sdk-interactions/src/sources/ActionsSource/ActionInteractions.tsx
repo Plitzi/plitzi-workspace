@@ -1,6 +1,5 @@
 import { useCallback, use, useMemo } from 'react';
 
-import { toBuilderParams, toInteractionCallback } from '@plitzi/sdk-shared/authoring';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 import {
   recordActionProgress,
@@ -12,6 +11,7 @@ import {
 } from '@plitzi/sdk-shared/store';
 
 import { actionsCallbacks } from './callbacks';
+import { toBuilderParams, toInteractionCallback } from '../../authoring/builder';
 import InteractionsContext from '../../InteractionsContext';
 
 import type { ActionCallMode, InteractionCallback, InteractionCallbackContext } from '@plitzi/sdk-shared';

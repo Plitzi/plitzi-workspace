@@ -6,7 +6,7 @@ import { authCallbacks } from '../sources/AuthSource/callbacks';
 import { navigationCallbacks } from '../sources/NavigationSource/callbacks';
 import { stateCallbacks } from '../sources/StateSource/callbacks';
 
-import type { BuiltinActionSpec } from '@plitzi/sdk-shared/authoring';
+import type { BuiltinActionSpec } from './builder';
 
 /**
  * Every built-in `globalCallback`, gathered from the sources that implement them.

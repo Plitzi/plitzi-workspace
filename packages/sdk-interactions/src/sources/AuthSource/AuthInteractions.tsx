@@ -1,9 +1,9 @@
 import { use, useCallback, useMemo } from 'react';
 
 import { AuthContext } from '@plitzi/sdk-auth';
-import { toInteractionCallback } from '@plitzi/sdk-shared/authoring';
 
 import { authCallbacks } from './callbacks';
+import { toInteractionCallback } from '../../authoring/builder';
 import InteractionsContext from '../../InteractionsContext';
 
 import type { InteractionCallback } from '@plitzi/sdk-shared';

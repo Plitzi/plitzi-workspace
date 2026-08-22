@@ -1,9 +1,8 @@
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback, use, useMemo } from 'react';
 
-import { spaceCallbacks } from '@plitzi/sdk-interactions/authoring';
+import { spaceCallbacks, toInteractionCallback } from '@plitzi/sdk-interactions/authoring';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import { toInteractionCallback } from '@plitzi/sdk-shared/authoring';
 
 import type { InteractionCallback } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';

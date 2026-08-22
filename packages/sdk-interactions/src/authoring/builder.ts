@@ -1,13 +1,18 @@
-import type { BuiltinParam, ParamSpec } from './paramSpec';
 import type {
   InteractionCallback,
   InteractionCallbackParam,
   InteractionCallbackPreviews,
   InteractionParamType
-} from '../types';
+} from '@plitzi/sdk-shared';
+import type { BuiltinParam, ParamSpec } from '@plitzi/sdk-shared/authoring';
 
 /**
  * The same declaration, read by the panel a person fills in.
+ *
+ * Here rather than beside the param shape it converts: what comes out is an `InteractionCallback`, which is what
+ * `useInteractions` — this package's own registration API — consumes. The SHAPE of a declared param is shared
+ * vocabulary and lives in `@plitzi/sdk-shared` because four catalogs in three packages are written against it;
+ * an adapter onto one package's registration API is not shared vocabulary, whatever the type it names.
  *
  * A source used to declare its params twice: once in the React component, for the editor, and once in a catalog
  * somewhere else, for whatever validates a step. The two drifted exactly as you would expect — a catalog claiming

@@ -1,4 +1,4 @@
-import { toBuilderParams } from '@plitzi/sdk-shared/authoring';
+import { toBuilderParams } from '@plitzi/sdk-interactions/authoring';
 
 import { BUILTIN_ELEMENT_CALLBACKS } from '../../authoring/elementCallbacks';
 

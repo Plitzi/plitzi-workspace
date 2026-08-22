@@ -6,6 +6,7 @@
  * validates a flow and by the step builders below.
  */
 
+export * from './builder';
 export * from './globalCallbacks';
 export * from './spaceCallbacks';
 export * from './steps';
