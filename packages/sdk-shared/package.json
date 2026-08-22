@@ -182,6 +182,10 @@
       "types": "./dist/devTools/DevToolsContext.d.ts",
       "import": "./dist/devTools/DevToolsContext.mjs"
     },
+    "./devTools/debugCookie": {
+      "types": "./dist/devTools/debugCookie.d.ts",
+      "import": "./dist/devTools/debugCookie.mjs"
+    },
     "./devTools/index": {
       "types": "./dist/devTools/index.d.ts",
       "import": "./dist/devTools/index.mjs"

@@ -1,3 +1,4 @@
+import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { hasServerElements } from '@plitzi/sdk-shared/schema/serverElements';
 
 import { loadPluginComponents } from './loadPluginComponents';
@@ -119,7 +120,8 @@ export const prepareRender = async (
 
   const debugMode = resolveDebugMode(
     config.debugMode ?? config.devMode,
-    readCookie(req.headers.cookie, 'plitzi_debug')
+    // Named for this origin, port included — the browser writes it under the same name. See `debugCookieName`.
+    readCookie(req.headers.cookie, debugCookieName(req.headers.host))
   );
 
   // What the metering adapter decided for this page (see SSRAdapters.pageView). `firstViewCounted` is forced on
