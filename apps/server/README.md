@@ -120,6 +120,22 @@ space with more declared in it. The full surface (element factories, bindings, f
 there are runnable versions of each step in
 [`examples/`](https://github.com/plitzi/plitzi-workspace/tree/main/examples).
 
+### Working with an agent
+
+This package ships an [Agent Skill](https://agentskills.io/) for authoring, because an agent in your project sees
+only what npm installed — not this repository. It teaches the declaration, the flat prop model, the binding and
+flow builders, and the mistakes the validator refuses, so an agent writes a space instead of reconstructing schema
+JSON from memory:
+
+```bash
+cp -R node_modules/@plitzi/sdk-server/skills/plitzi-authoring ~/.claude/skills/
+```
+
+It installs the same way into any agent that reads a `SKILL.md` (Claude Code, VS Code / Copilot, Codex, Gemini
+CLI, Cline, Goose). Everything it defers to is in the package too: every factory, spec field and step builder
+carries its documentation in the published `.d.ts`, so hovering a call or reading
+`node_modules/@plitzi/sdk-elements/dist/authoring/` answers what an attribute takes without leaving the project.
+
 ### Already have a space?
 
 An export from the builder is a `{ schema, style }` JSON and goes in the same door:

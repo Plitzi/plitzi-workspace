@@ -263,7 +263,22 @@ deployment is about to serve.
 
 ---
 
-## 8. Where to look
+## 8. Agents
+
+An agent working in a consumer's project sees only what npm installed — not this repository. Everything it needs
+is inside the packages:
+
+- **The types.** Every factory, spec field and step builder carries its documentation in the published `.d.ts`
+  (`node_modules/@plitzi/sdk-elements/dist/authoring/`, `.../sdk-schema/dist/authoring/types.d.ts`). Attribute
+  types come from each element's own component, so `subType: 'h7'` is a compile error in the consumer's project,
+  not a page that renders wrong.
+- **The skill.** `@plitzi/sdk-server` ships this guidance as an Agent Skill, so it installs with the package:
+
+  ```bash
+  cp -R node_modules/@plitzi/sdk-server/skills/plitzi-authoring ~/.claude/skills/
+  ```
+
+## 9. Where to look
 
 | Example | What it shows |
 | --- | --- |
