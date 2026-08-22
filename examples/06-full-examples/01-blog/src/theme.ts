@@ -420,7 +420,7 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
     tablet: { 'grid-template-columns': 'minmax(0, 1fr)', ...gap('48px') },
     mobile: { 'grid-template-columns': 'minmax(0, 1fr)', ...gap('40px') }
   },
-  feed: { desktop: column('34px') },
+  feed: { desktop: column('34px', { 'padding-left': '0px' }) },
   card: {
     desktop: grid('232px minmax(0, 1fr)', '26px', {
       'align-items': 'flex-start',
