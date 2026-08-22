@@ -1,5 +1,5 @@
 import { envelope, jsonContents } from './envelope';
-import { BUILTIN_COMPONENTS } from '../catalogs';
+import { elementCatalog } from '../catalogs';
 
 import type { McpLog } from '../helpers';
 import type { ResourceEnvelope } from '../types';
@@ -38,14 +38,14 @@ type RenderTypeInfo = { label?: string; category?: string; description?: string 
 
 const renderTypes = (): { note: string; types: Record<string, RenderTypeInfo> } => {
   const types: Record<string, RenderTypeInfo> = {};
-  for (const [name, info] of Object.entries(BUILTIN_COMPONENTS)) {
-    if (info && info.category && RENDER_TYPE_CATEGORIES.has(info.category)) {
+  for (const [name, info] of Object.entries(elementCatalog)) {
+    if (RENDER_TYPE_CATEGORIES.has(info.category)) {
       types[name] = { label: info.label, category: info.category, description: info.description };
     }
   }
 
-  const rawHtml = BUILTIN_COMPONENTS[RENDER_RAW_HTML_TYPE];
-  if (rawHtml) {
+  if (Object.hasOwn(elementCatalog, RENDER_RAW_HTML_TYPE)) {
+    const rawHtml = elementCatalog[RENDER_RAW_HTML_TYPE];
     types[RENDER_RAW_HTML_TYPE] = {
       label: rawHtml.label,
       category: rawHtml.category,

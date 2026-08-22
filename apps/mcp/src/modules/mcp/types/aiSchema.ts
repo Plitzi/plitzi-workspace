@@ -1,9 +1,11 @@
 import type { ElementRuntime, Environment } from '@plitzi/sdk-shared';
+import type { CssProps } from '@plitzi/sdk-style/authoring';
 
 export type Env = Environment;
 
-/** CSS declarations for one selector state. Keys are kebab-case CSS properties (see plitzi://css-properties). */
-export type CssProps = Record<string, string | number>;
+/** CSS declarations for one selector state. Keys are kebab-case CSS properties (see plitzi://css-properties).
+ *  Owned by the style engine, which is also what expands the shorthands an agent is allowed to write. */
+export type { CssProps };
 
 export interface DisplayModeCss {
   desktop?: CssProps;

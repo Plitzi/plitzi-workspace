@@ -60,10 +60,12 @@ somebody who follows the link with no session lands on the sign-in rather than o
 Each section of a page is an `apiContainer` with `runtime: 'server'` naming an **action**:
 
 ```ts
-element('ApiContainer', {
+apiContainer({
   idRef: 'posts',
   runtime: 'server',
-  attributes: { action: 'list-posts', input: { perPage: 4, featured: true }, pagination: 'url' },
+  action: 'list-posts',
+  input: { perPage: 4, featured: true },
+  pagination: 'url',
   children: [ /* the hero, the list, the pager — all bound to `apiContainer_posts.*` */ ]
 })
 ```
@@ -208,8 +210,9 @@ either is quiet — a page that names a type the server has no component for ren
 const plugins = { speciesStatus: { js: path.resolve(here, 'plugins/SpeciesStatus.tsx'), action: 'compile' } };
 createServer({ plugins, adapters: createJsonAdapters({ deployment: { pluginNames: Object.keys(plugins) }, … }) });
 
-// src/space.ts — the page authors it exactly like a heading
-elementSpec({ type: 'speciesStatus' }, { bindings: [{ to: 'status', source: 'apiContainer_post.record.species.status' }, …] })
+// src/space.ts — the page gets a factory as typed as any built-in one
+const speciesStatus = defineElement<SpeciesAttributes>({ type: 'speciesStatus', content: { … } });
+speciesStatus({ bind: { status: 'apiContainer_post.record.species.status' }, … })
 ```
 
 Three things about it are worth stealing:
@@ -305,7 +308,7 @@ the surfaces lift instead of the text dimming. The machine picks between them �
 visitor overruling their machine:
 
 ```ts
-element('ThemeToggle', { attributes: { subType: 'switch', lightLabel: 'Light', darkLabel: 'Dark' } })
+themeToggle({ subType: 'switch', lightLabel: 'Light', darkLabel: 'Dark' })
 ```
 
 That is the whole of it, and the element ships **no colours of its own**. It writes the choice on the document

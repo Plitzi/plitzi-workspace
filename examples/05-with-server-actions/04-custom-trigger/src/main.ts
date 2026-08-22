@@ -64,6 +64,8 @@ const consume = async (message: Message) => {
       entry: settlePayout,
       input: begin.input,
       spaceId: 1,
+      // The same caller the guard was claimed under: a run and its idempotency key must agree on who asked.
+      callerId: begin.callerId,
       environment: 'main',
       // The trigger STEP this run comes in through. Nothing about a queue names a published revision, so this
       // reads the live document — the same rule a webhook and a schedule follow.

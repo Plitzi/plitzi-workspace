@@ -1,0 +1,354 @@
+import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
+import { css } from '@plitzi/sdk-style/authoring';
+import { generateCache } from '@plitzi/sdk-style/StyleHelper';
+
+import { groupBindings } from './bindings';
+import { authorFlows } from './flows';
+import { authoringId, digest } from './ids';
+import { didYouMean } from './suggest';
+import { assertSpaceValid } from './validate';
+import FlatMap from '../helpers/FlatMap';
+
+import type { AuthoredSpace, CssSpec, ElementSpec, ElementStyleSpec, PageSpec, SpaceSpec } from './types';
+import type { DisplayMode, DropPosition, Element, Schema, Style, StyleItem } from '@plitzi/sdk-shared';
+import type { ResponsiveStyle, StyleRules } from '@plitzi/sdk-style/authoring';
+
+/**
+ * Authoring a space without the builder.
+ *
+ * The parts a person actually decides — a tree, some CSS, what happens on click — are declared as specs, and every
+ * id, selector name and back-reference is derived from them. Ids are hashes of the path that produced them, not
+ * random, so authoring the same space twice writes byte-identical documents and a seed can re-run without churning
+ * what it wrote last time.
+ *
+ * Insertion goes through `FlatMap`, so a tree built here is held to exactly the same validity and idRef rules as
+ * one built by dragging elements around the builder, and the finished pair is put through the document validator
+ * before it is handed back. This module is the only thing in the SDK that writes a schema document: every other
+ * authoring fragment produces specs, and specs are inert until they reach here.
+ */
+
+const BREAKPOINTS: DisplayMode[] = ['desktop', 'tablet', 'mobile'];
+
+const BREAKPOINT_SET = new Set<string>(BREAKPOINTS);
+
+/**
+ * One rule set for every breakpoint, or one per breakpoint.
+ *
+ * Told apart by the keys, which is unambiguous rather than clever: `desktop`, `tablet` and `mobile` are not CSS
+ * properties and never will be, so a rule set that mentions one is per-breakpoint and one that does not is the
+ * desktop rules. Everything goes through `css`, so shorthands expand and an unwritable property is refused here
+ * rather than discovered in the style editor.
+ */
+export const toResponsive = (spec: CssSpec | undefined): ResponsiveStyle => {
+  if (!spec) {
+    return {};
+  }
+
+  const keys = Object.keys(spec);
+  if (keys.length === 0) {
+    return {};
+  }
+
+  if (keys.every(key => BREAKPOINT_SET.has(key))) {
+    return Object.fromEntries(
+      Object.entries(spec as Record<string, Record<string, string | number>>).map(([breakpoint, rules]) => [
+        breakpoint,
+        css(rules)
+      ])
+    );
+  }
+
+  return { desktop: css(spec as Record<string, string | number>) };
+};
+
+const declarationsToCss = (rules: StyleRules): string =>
+  Object.entries(rules)
+    .map(([property, value]) => `${property}:${String(value)};`)
+    .join('');
+
+const classCss = (selector: string, rules: StyleRules): string => `.${selector}{${declarationsToCss(rules)}}`;
+
+const elementCss = (type: string, base: StyleRules, variants: Record<string, StyleRules>): string => {
+  const variantCss = Object.entries(variants)
+    .map(([name, rules]) => `&[data-variant="${name}"],&.${type}--${name}{${declarationsToCss(rules)}}`)
+    .join('');
+
+  return `.plitzi__${type}{${declarationsToCss(base)}${variantCss}}`;
+};
+
+class SpaceAuthor {
+  private readonly flatMap = new FlatMap({ flat: {}, variables: [] });
+
+  private readonly platform: Style['platform'] = { desktop: {}, tablet: {}, mobile: {} };
+
+  private readonly refCounters = new Map<string, number>();
+
+  private readonly pagePaths = new Set<string>();
+
+  constructor(private readonly spec: SpaceSpec) {}
+
+  author(): AuthoredSpace {
+    for (const [type, elementSpec] of Object.entries(this.spec.elements ?? {})) {
+      this.writeElementDefaults(type, elementSpec);
+    }
+
+    for (const [name, rules] of Object.entries(this.spec.classes ?? {})) {
+      this.writeSelector(name, toResponsive(rules));
+    }
+
+    const pages = this.spec.pages.map((page, index) => this.addPage(page, index));
+
+    const style: Style = {
+      ...EMPTY_STYLE_SCHEMA,
+      mode: this.spec.mode ?? EMPTY_STYLE_SCHEMA.mode,
+      theme: this.spec.theme ?? EMPTY_STYLE_SCHEMA.theme,
+      platform: this.platform,
+      variables: this.spec.variables ?? {},
+      cache: ''
+    };
+    style.cache = generateCache(style);
+
+    const schema: Schema = {
+      definition: { name: this.spec.name, permanentUrl: this.spec.permanentUrl },
+      flat: this.flatMap.flat,
+      variables: this.spec.schemaVariables ?? [],
+      settings: { ...this.spec.settings, customCss: this.spec.customCss ?? '' },
+      ...(this.spec.rsc ? { rsc: this.spec.rsc } : {}),
+      pages,
+      pageFolders: []
+    };
+
+    // The gate, and the same one anybody else's documents go through. An authored space that cannot pass it is a
+    // bug in the declaration, and finding out at seed time beats finding out at render time.
+    //
+    // `FlatMap.assertValid` is deliberately not also called here: it validates the flat map with no pages
+    // attached, which is a strictly weaker reading of the same document than the pair below.
+    const warnings = assertSpaceValid({ schema, style }, `authored space "${this.spec.permanentUrl}"`);
+
+    return { schema, style, warnings };
+  }
+
+  private writeElementDefaults(type: string, spec: ElementStyleSpec): void {
+    const base = css(spec.base ?? {});
+    const variants = Object.fromEntries(Object.entries(spec.variants ?? {}).map(([name, rules]) => [name, css(rules)]));
+
+    this.platform.desktop[type] = {
+      name: type,
+      type: 'element',
+      componentType: type,
+      attributes: {
+        base: {
+          default: base,
+          ...(spec.variants
+            ? {
+                variants: Object.fromEntries(
+                  Object.entries(variants).map(([name, rules]) => [name, { default: rules }])
+                )
+              }
+            : {})
+        }
+      },
+      cache: elementCss(type, base, variants)
+    };
+  }
+
+  /**
+   * A class an element names has to be one the space declared.
+   *
+   * The failure it removes is the quietest one in the whole surface: a mistyped class is a selector nothing
+   * defines, so the element renders unstyled and every layer below considers that perfectly valid — the class
+   * exists as a name, it simply has no rules.
+   */
+  private assertClass(name: string, where: string): void {
+    const classes = Object.keys(this.spec.classes ?? {});
+    if (classes.includes(name)) {
+      return;
+    }
+
+    throw new Error(
+      `${where} names the class "${name}", which this space does not declare${didYouMean(name, classes)}. Declare it in \`classes\`, or write the rules inline with \`css\`.`
+    );
+  }
+
+  private nextRef(type: string): string {
+    const next = (this.refCounters.get(type) ?? 0) + 1;
+    this.refCounters.set(type, next);
+
+    return `${type}-${next}`;
+  }
+
+  private writeSelector(name: string, responsive: ResponsiveStyle): void {
+    for (const breakpoint of BREAKPOINTS) {
+      const rules = responsive[breakpoint];
+      if (!rules || Object.keys(rules).length === 0) {
+        continue;
+      }
+
+      const item: StyleItem = {
+        name,
+        type: 'class',
+        attributes: { base: { default: rules } },
+        cache: classCss(name, rules)
+      };
+
+      this.platform[breakpoint][name] = item;
+    }
+  }
+
+  /**
+   * A shared class when one was named, otherwise a selector of this element's own, named after where it sits.
+   *
+   * The two are exclusive because an element has exactly one base selector: asking for a shared rule AND a rule of
+   * its own is a question with no answer, and the old behaviour — keep the class, drop the rules — is the kind of
+   * silence this whole surface exists to remove.
+   */
+  private selectorFor(path: string, spec: { type: string; class?: string; css?: CssSpec }): string {
+    if (spec.class) {
+      this.assertClass(spec.class, `Element "${spec.type}" at ${path}`);
+
+      if (spec.css) {
+        throw new Error(
+          `Element "${spec.type}" at ${path} declares both a shared class ("${spec.class}") and css of its own. An element has one base selector: either write the rules into the class, or drop the class and keep the css.`
+        );
+      }
+
+      return spec.class;
+    }
+
+    const selector = `${spec.type}-${digest(`plitzi:selector:${this.spec.permanentUrl}:${path}`, 4)}`;
+    this.writeSelector(selector, toResponsive(spec.css));
+
+    return selector;
+  }
+
+  /**
+   * Inserts through `FlatMap`, and refuses to carry on when it declines.
+   *
+   * It answers `false` rather than throwing — a builder dropping an element somewhere it may not go is not an
+   * exception — so an ignored return here is an element that never made it into the document while the page it
+   * belonged to authors perfectly well. The reason it is nearly always declined is an `idRef` two elements share,
+   * and a name written twice is worth hearing about at the line that wrote it.
+   */
+  private insert(element: Element, to: string, position: DropPosition): void {
+    if (!this.flatMap.addElement(element, to, position)) {
+      throw new Error(
+        `Could not author element "${element.idRef ?? element.id}" (${element.definition.type}): the schema refused it, which usually means another element already answers to that idRef`
+      );
+    }
+  }
+
+  /**
+   * Where a page's ids are derived from — its slug, unless another page already claimed it.
+   *
+   * Two pages SHARING one slug is a supported shape and the only way to put a sign-in and the page behind it on
+   * one path: they differ by `accessLevel`, and the router picks. Derived from the slug alone they also shared
+   * every id in their subtrees, and the second page's elements were refused one by one. Only the later page is
+   * disambiguated, so no space that has no duplicate moves an id.
+   */
+  private pathFor(page: PageSpec, index: number): string {
+    const base = `${this.spec.permanentUrl}/${page.slug || 'home'}`;
+    const path = this.pagePaths.has(base) ? `${base}#${index}` : base;
+    this.pagePaths.add(path);
+
+    return path;
+  }
+
+  private addPage(page: PageSpec, index: number): string {
+    const path = this.pathFor(page, index);
+    const id = authoringId(path);
+    const idRef = page.idRef ?? this.nextRef('page');
+
+    const element: Element = {
+      id,
+      idRef,
+      attributes: {
+        slug: page.slug,
+        default: page.isDefault ?? index === 0,
+        name: page.name,
+        ...(page.accessLevel ? { accessLevel: page.accessLevel } : {}),
+        ...(page.unauthorizedRedirect
+          ? { unauthorizedBehaviour: 'redirect', unauthorizedPageRedirect: page.unauthorizedRedirect }
+          : {}),
+        seoEnabled: Boolean(page.seoTitle ?? page.seoDescription),
+        ...(page.seoTitle ? { seoPageTitle: page.seoTitle } : {}),
+        ...(page.seoDescription ? { seoPageDescription: page.seoDescription } : {})
+      },
+      definition: {
+        label: 'Page',
+        type: 'page',
+        rootId: id,
+        items: [],
+        styleSelectors: { base: this.selectorFor(path, { type: 'page', css: page.css, class: page.class }) },
+        ...(page.flows ? { interactions: authorFlows(path, page.flows, idRef) } : {})
+      }
+    };
+
+    // `custom` is the one drop position that inserts without a parent, which is what a page is.
+    this.insert(element, '', 'custom');
+
+    page.body.forEach((child, childIndex) => this.addElement(child, `${path}/${childIndex}`, id, id));
+
+    return id;
+  }
+
+  private slotSelectors(spec: ElementSpec, path: string): Record<string, string> {
+    Object.entries(spec.slots ?? {}).forEach(([slot, name]) =>
+      this.assertClass(name, `Slot "${slot}" of element "${spec.type}" at ${path}`)
+    );
+
+    return spec.slots ?? {};
+  }
+
+  private addElement(spec: ElementSpec, path: string, rootId: string, parentId: string): string {
+    const id = authoringId(path);
+    const idRef = spec.idRef ?? this.nextRef(spec.type);
+
+    const element: Element = {
+      id,
+      idRef,
+      attributes: spec.attributes ?? {},
+      definition: {
+        label: spec.meta?.label ?? spec.type,
+        type: spec.type,
+        rootId,
+        parentId,
+        items: [],
+        // A slot names a class outright: it dresses a part of an element that already exists, and a selector of
+        // its own per control would write the same rule once per input on the page.
+        styleSelectors: { base: this.selectorFor(path, spec), ...this.slotSelectors(spec, path) },
+        initialState: {
+          visibility: true,
+          ...(spec.variant ? { styleVariant: { [spec.type]: { base: spec.variant } } } : {})
+        },
+        ...(spec.runtime ? { runtime: spec.runtime } : {}),
+        ...(spec.bind ? { bindings: groupBindings(path, spec.bind) } : {}),
+        ...(spec.flows ? { interactions: authorFlows(path, spec.flows, idRef) } : {})
+      }
+    };
+
+    this.insert(element, parentId, 'inside');
+
+    spec.children?.forEach((child, index) => this.addElement(child, `${path}/${index}`, rootId, id));
+
+    return id;
+  }
+}
+
+/**
+ * The document id of the element authored under a name.
+ *
+ * Ids are derived, which is what keeps a declaration readable — and some of them are still an external contract:
+ * RSC data is keyed by element id, so a server feeding a `runtime: 'server'` element has to know which id that
+ * is. It looks it up by the `idRef` the space gave the element, which is the one thing an author wrote down.
+ */
+export const elementIdOf = (schema: Schema, idRef: string): string => {
+  const element = Object.values(schema.flat).find(candidate => candidate.idRef === idRef);
+  if (!element) {
+    throw new Error(`No element in this space answers to the idRef "${idRef}"`);
+  }
+
+  return element.id;
+};
+
+/** Build a space's two documents from a declaration. Throws if the result would not be a valid space. */
+export const authorSpace = (spec: SpaceSpec): AuthoredSpace => new SpaceAuthor(spec).author();

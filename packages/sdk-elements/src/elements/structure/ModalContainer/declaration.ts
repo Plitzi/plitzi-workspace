@@ -1,5 +1,13 @@
 /** Static declaration for ModalContainer: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { ModalContainerProps } from './ModalContainer';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type ModalContainerAttributes = AuthorableAttributes<ModalContainerProps>;
+
+const declaration = elementDeclaration<ModalContainerAttributes>()({
   type: 'modalContainer',
   content: {
     attributes: {
@@ -9,7 +17,7 @@ const declaration = {
     definition: {
       label: 'Modal Container',
       type: 'modalContainer',
-      description: '',
+      description: 'A modal overlay container opened and closed through interactions; use for dialogs over the page.',
       items: [],
       bindings: {},
       styleSelectors: {
@@ -134,6 +142,6 @@ const declaration = {
     settings: {}
   },
   initialItems: ['container']
-};
+});
 
 export default declaration;

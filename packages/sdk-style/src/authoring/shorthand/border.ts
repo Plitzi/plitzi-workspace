@@ -1,6 +1,6 @@
 import { BORDER_STYLES, BORDER_WIDTH_KEYWORDS, expandTo4, LENGTH_RE, SIDES, splitTokens } from './helpers';
 
-import type { CssProps } from '../../types';
+import type { CssProps } from '../types';
 
 // The CSS initial value of each border/outline longhand, used when a shorthand omits it. Writing them explicitly
 // keeps the atomic form faithful to the shorthand: `border: none` must clear a width/color a previous definition

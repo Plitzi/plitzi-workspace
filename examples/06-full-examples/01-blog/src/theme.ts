@@ -1,72 +1,18 @@
-import type { SpaceSpec, StyleRules } from '@plitzi/sdk-schema';
+import { column, grid, row as flexRow } from '@plitzi/sdk-server/authoring';
+
+import type { CssProps, SpaceSpec, StyleRules } from '@plitzi/sdk-server/authoring';
 
 /**
  * The stylesheet, as data.
  *
- * Longhands, and no `padding` or `gap` shorthand anywhere: the builder's style vocabulary is a closed list of
- * properties and holds no shorthands, so a space authored with them renders and then cannot be read back by the
- * style editor. The shorthand stops here, at authoring time, and what reaches the document is what the editor
- * understands. These helpers are what make that bearable to write.
+ * Plain CSS, shorthands included: `authorSpace` expands every rule set it is given and refuses a property the
+ * style editor could not read back, so what reaches the document is atomic without any of this having to be
+ * written that way. What is left here is what this magazine decides — the palette, the two families, and the
+ * handful of shapes that repeat.
  */
 
-export const gap = (value: string): StyleRules => ({ 'row-gap': value, 'column-gap': value });
-
-export const padding = (value: string, horizontal = value): StyleRules => ({
-  'padding-top': value,
-  'padding-bottom': value,
-  'padding-left': horizontal,
-  'padding-right': horizontal
-});
-
-export const radius = (value: string): StyleRules => ({
-  'border-top-left-radius': value,
-  'border-top-right-radius': value,
-  'border-bottom-right-radius': value,
-  'border-bottom-left-radius': value
-});
-
-export const border = (width: string, color: string, style = 'solid'): StyleRules => ({
-  'border-top-width': width,
-  'border-right-width': width,
-  'border-bottom-width': width,
-  'border-left-width': width,
-  'border-top-style': style,
-  'border-right-style': style,
-  'border-bottom-style': style,
-  'border-left-style': style,
-  'border-top-color': color,
-  'border-right-color': color,
-  'border-bottom-color': color,
-  'border-left-color': color
-});
-
-export const borderSide = (side: 'top' | 'right' | 'bottom' | 'left', width: string, color: string): StyleRules => ({
-  [`border-${side}-width`]: width,
-  [`border-${side}-style`]: 'solid',
-  [`border-${side}-color`]: color
-});
-
-export const column = (value: string, extra: StyleRules = {}): StyleRules => ({
-  display: 'flex',
-  'flex-direction': 'column',
-  ...gap(value),
-  ...extra
-});
-
-export const row = (value: string, extra: StyleRules = {}): StyleRules => ({
-  display: 'flex',
-  'flex-direction': 'row',
-  'align-items': 'center',
-  ...gap(value),
-  ...extra
-});
-
-export const grid = (columns: string, value: string, extra: StyleRules = {}): StyleRules => ({
-  display: 'grid',
-  'grid-template-columns': columns,
-  ...gap(value),
-  ...extra
-});
+/** A row, centred — which is what every row in this design is. */
+const row = (gap: string, extra: CssProps = {}): StyleRules => flexRow(gap, { 'align-items': 'center', ...extra });
 
 /**
  * A picture that fills its column at a fixed shape.
@@ -75,7 +21,7 @@ export const grid = (columns: string, value: string, extra: StyleRules = {}): St
  * is visible in the builder, and a class that sets only `width` and `aspect-ratio` loses to it — the ratio is
  * ignored and every cover comes out a letterbox. Saying `auto` is what hands the height back to the ratio.
  */
-export const media = (ratio: string): StyleRules => ({
+export const media = (ratio: string): CssProps => ({
   display: 'block',
   width: '100%',
   height: 'auto',
@@ -84,7 +30,7 @@ export const media = (ratio: string): StyleRules => ({
 });
 
 /** Cuts a paragraph off at a line count instead of at a character, which is what keeps a grid of cards even. */
-export const clamp = (lines: number): StyleRules => ({
+export const clamp = (lines: number): CssProps => ({
   display: '-webkit-box',
   '-webkit-line-clamp': String(lines),
   '-webkit-box-orient': 'vertical',
@@ -102,7 +48,7 @@ const DISPLAY = "ui-serif, 'New York', 'Iowan Old Style', 'Palatino Linotype', P
 const UI = "ui-sans-serif, system-ui, -apple-system, 'Segoe UI Variable Text', 'Segoe UI', Roboto, sans-serif";
 const MONO = "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace";
 
-const wrap = (maxWidth = '1180px'): StyleRules => ({
+const wrap = (maxWidth = '1180px'): CssProps => ({
   width: '100%',
   'max-width': maxWidth,
   'margin-left': 'auto',
@@ -110,7 +56,7 @@ const wrap = (maxWidth = '1180px'): StyleRules => ({
 });
 
 /** Display type: tight, dark, and set at a size that reads as a headline rather than as large body text. */
-const displayText = (size: string, extra: StyleRules = {}): StyleRules => ({
+const displayText = (size: string, extra: CssProps = {}): CssProps => ({
   'font-family': DISPLAY,
   'font-size': size,
   'font-weight': '600',
@@ -123,7 +69,7 @@ const displayText = (size: string, extra: StyleRules = {}): StyleRules => ({
   ...extra
 });
 
-const eyebrow = (extra: StyleRules = {}): StyleRules => ({
+const eyebrow = (extra: CssProps = {}): CssProps => ({
   'font-size': '11px',
   'font-weight': '650',
   'letter-spacing': '0.14em',
@@ -159,12 +105,12 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
       'z-index': '30',
       'background-color': 'var(--bg-glass)',
       'backdrop-filter': 'saturate(180%) blur(14px)',
-      ...borderSide('bottom', '1px', 'var(--line)')
+      'border-bottom': '1px solid var(--line)'
     }
   },
   headerInner: {
-    desktop: row('20px', { ...wrap(), ...padding('14px', '28px'), 'justify-content': 'space-between' }),
-    mobile: { ...padding('12px', '18px'), ...gap('10px') }
+    desktop: row('20px', { ...wrap(), padding: '14px 28px', 'justify-content': 'space-between' }),
+    mobile: { padding: '12px 18px', gap: '10px' }
   },
   brand: { desktop: row('11px', { 'text-decoration': 'none', color: 'var(--fg)' }) },
   brandMark: {
@@ -174,7 +120,7 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
       'justify-content': 'center',
       width: '32px',
       height: '32px',
-      ...radius('11px'),
+      'border-radius': '11px',
       'background-image': 'linear-gradient(140deg, var(--accent), var(--accent-2))',
       color: '#ffffff',
       'font-family': DISPLAY,
@@ -190,8 +136,8 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
   nav: { desktop: row('6px') },
   navLink: {
     desktop: {
-      ...padding('7px', '12px'),
-      ...radius('9px'),
+      padding: '7px 12px',
+      'border-radius': '9px',
       color: 'var(--fg-muted)',
       'text-decoration': 'none',
       'font-size': '14px',
@@ -217,8 +163,8 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
   },
   signInLink: {
     desktop: row('0px', {
-      ...padding('8px', '17px'),
-      ...radius('999px'),
+      padding: '8px 17px',
+      'border-radius': '999px',
       'background-image': 'linear-gradient(140deg, var(--accent), var(--accent-2))',
       color: '#ffffff',
       'font-size': '13px',
@@ -230,10 +176,10 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
   },
   accountPill: {
     desktop: row('8px', {
-      ...padding('5px', '6px'),
+      padding: '5px 6px',
       'padding-right': '13px',
-      ...radius('999px'),
-      ...border('1px', 'var(--line)'),
+      'border-radius': '999px',
+      border: '1px solid var(--line)',
       'background-color': 'var(--surface)',
       'text-decoration': 'none',
       color: 'var(--fg)',
@@ -250,8 +196,8 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
       'justify-content': 'center',
       width: '34px',
       height: '34px',
-      ...radius('999px'),
-      ...border('1px', 'var(--line)'),
+      'border-radius': '999px',
+      border: '1px solid var(--line)',
       'background-color': 'var(--surface)',
       color: 'var(--fg-muted)',
       cursor: 'pointer',
@@ -266,7 +212,7 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
       'justify-content': 'center',
       width: '26px',
       height: '26px',
-      ...radius('999px'),
+      'border-radius': '999px',
       'background-image': 'linear-gradient(140deg, var(--accent), var(--accent-2))',
       color: '#ffffff',
       'font-size': '11px',
@@ -281,7 +227,7 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
       width: '44px',
       height: '44px',
       'min-width': '44px',
-      ...radius('999px'),
+      'border-radius': '999px',
       'background-image': 'linear-gradient(140deg, var(--accent), var(--accent-2))',
       color: '#ffffff',
       'font-family': DISPLAY,
@@ -291,17 +237,17 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
   },
 
   // ── Shared furniture ────────────────────────────────────────────────────────────────────────────────────────
-  pageStack: { desktop: column('72px'), mobile: { ...gap('44px') } },
-  main: { desktop: column('72px', { ...wrap(), ...padding('64px', '28px') }), mobile: { ...padding('34px', '18px') } },
+  pageStack: { desktop: column('72px'), mobile: { gap: '44px' } },
+  main: { desktop: column('72px', { ...wrap(), padding: '64px 28px' }), mobile: { padding: '34px 18px' } },
   sectionLabel: {
-    desktop: eyebrow({ 'padding-bottom': '16px', ...borderSide('bottom', '1px', 'var(--line)'), width: '100%' })
+    desktop: eyebrow({ 'padding-bottom': '16px', 'border-bottom': '1px solid var(--line)', width: '100%' })
   },
   chip: {
     desktop: {
       display: 'inline-flex',
       'align-self': 'flex-start',
-      ...padding('4px', '10px'),
-      ...radius('7px'),
+      padding: '4px 10px',
+      'border-radius': '7px',
       'background-color': 'var(--accent-soft)',
       color: 'var(--accent-ink)',
       'font-size': '10px',
@@ -338,11 +284,11 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
       width: '100%',
       overflow: 'hidden',
       'text-decoration': 'none',
-      ...radius('28px'),
+      'border-radius': '28px',
       'background-color': 'var(--surface-2)',
       'box-shadow': '0 50px 90px -50px var(--shadow), 0 0 0 1px var(--line-soft)'
     },
-    mobile: { ...radius('20px') }
+    mobile: { 'border-radius': '20px' }
   },
   heroImage: {
     desktop: {
@@ -359,11 +305,11 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
       right: '0px',
       bottom: '0px',
       'align-items': 'flex-start',
-      ...padding('46px', '52px'),
+      padding: '46px 52px',
       'background-image': 'linear-gradient(to top, var(--scrim) 12%, rgba(8, 6, 12, 0.35) 52%, transparent 100%)'
     }),
-    tablet: { ...padding('34px', '32px'), ...gap('14px') },
-    mobile: { ...padding('24px', '22px'), ...gap('12px') }
+    tablet: { padding: '34px 32px', gap: '14px' },
+    mobile: { padding: '24px 22px', gap: '12px' }
   },
   heroTitle: {
     desktop: displayText('60px', {
@@ -389,8 +335,8 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
     desktop: {
       display: 'inline-flex',
       'align-self': 'flex-start',
-      ...padding('5px', '11px'),
-      ...radius('7px'),
+      padding: '5px 11px',
+      'border-radius': '7px',
       'background-image': 'linear-gradient(140deg, var(--accent), var(--accent-2))',
       color: 'var(--on-photo)',
       'font-size': '10px',
@@ -403,8 +349,8 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
   metaOnPhoto: { desktop: { color: 'var(--on-photo-muted)', 'font-size': '13px', 'letter-spacing': '0.01em' } },
   readLink: {
     desktop: row('9px', {
-      ...padding('12px', '22px'),
-      ...radius('999px'),
+      padding: '12px 22px',
+      'border-radius': '999px',
       'background-color': 'var(--on-photo)',
       color: '#14131a',
       'font-size': '14px',
@@ -417,20 +363,20 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
   // ── The list ────────────────────────────────────────────────────────────────────────────────────────────────
   layout: {
     desktop: grid('minmax(0, 1fr) 288px', '64px', { 'align-items': 'flex-start' }),
-    tablet: { 'grid-template-columns': 'minmax(0, 1fr)', ...gap('48px') },
-    mobile: { 'grid-template-columns': 'minmax(0, 1fr)', ...gap('40px') }
+    tablet: { 'grid-template-columns': 'minmax(0, 1fr)', gap: '48px' },
+    mobile: { 'grid-template-columns': 'minmax(0, 1fr)', gap: '40px' }
   },
   feed: { desktop: column('34px', { 'padding-left': '0px' }) },
   card: {
     desktop: grid('232px minmax(0, 1fr)', '26px', {
       'align-items': 'flex-start',
       'padding-bottom': '34px',
-      ...borderSide('bottom', '1px', 'var(--line)')
+      'border-bottom': '1px solid var(--line)'
     }),
-    mobile: { 'grid-template-columns': 'minmax(0, 1fr)', ...gap('16px') }
+    mobile: { 'grid-template-columns': 'minmax(0, 1fr)', gap: '16px' }
   },
   cardImage: {
-    desktop: { ...media('4 / 3'), ...radius('14px'), transition: 'transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1)' }
+    desktop: { ...media('4 / 3'), 'border-radius': '14px', transition: 'transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1)' }
   },
   cardBody: { desktop: column('11px', { 'align-items': 'flex-start' }) },
   cardLink: { desktop: { 'text-decoration': 'none', color: 'var(--fg)', display: 'block' } },
@@ -447,7 +393,7 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
   sidebar: { desktop: column('34px', { position: 'sticky', top: '96px' }), tablet: { position: 'static' } },
   panel: { desktop: column('14px', { 'align-items': 'flex-start' }) },
   panelTitle: {
-    desktop: eyebrow({ 'padding-bottom': '12px', ...borderSide('bottom', '1px', 'var(--line)'), width: '100%' })
+    desktop: eyebrow({ 'padding-bottom': '12px', 'border-bottom': '1px solid var(--line)', width: '100%' })
   },
   panelText: { desktop: { color: 'var(--fg-muted)', 'font-size': '14px', 'line-height': '1.65' } },
   /**
@@ -462,7 +408,7 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
     desktop: {
       display: 'flex',
       'flex-wrap': 'wrap',
-      ...gap('8px'),
+      gap: '8px',
       'padding-left': '0px',
       'margin-top': '0px',
       'margin-bottom': '0px'
@@ -473,9 +419,9 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
     desktop: {
       display: 'inline-flex',
       'align-self': 'flex-start',
-      ...padding('6px', '12px'),
-      ...radius('999px'),
-      ...border('1px', 'transparent'),
+      padding: '6px 12px',
+      'border-radius': '999px',
+      border: '1px solid transparent',
       'background-image': 'linear-gradient(140deg, var(--accent), var(--accent-2))',
       color: 'var(--on-photo)',
       'font-size': '12px',
@@ -488,9 +434,9 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
     desktop: {
       display: 'inline-flex',
       'align-self': 'flex-start',
-      ...padding('6px', '12px'),
-      ...radius('999px'),
-      ...border('1px', 'var(--line)'),
+      padding: '6px 12px',
+      'border-radius': '999px',
+      border: '1px solid var(--line)',
       'background-color': 'var(--surface)',
       color: 'var(--fg-muted)',
       'font-size': '12px',
@@ -513,7 +459,7 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
     desktop: { color: 'var(--fg-muted)', 'font-size': '21px', 'line-height': '1.55', 'letter-spacing': '-0.005em' },
     mobile: { 'font-size': '18px' }
   },
-  articleImage: { desktop: { ...media('2 / 1'), ...radius('20px') } },
+  articleImage: { desktop: { ...media('2 / 1'), 'border-radius': '20px' } },
   /**
    * The box around the space's own element.
    *
@@ -523,9 +469,9 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
   speciesPanel: {
     desktop: column('14px', {
       width: '100%',
-      ...padding('22px'),
-      ...radius('20px'),
-      ...border('1px', 'var(--line)'),
+      padding: '22px',
+      'border-radius': '20px',
+      border: '1px solid var(--line)',
       'background-color': 'var(--surface)',
       'box-shadow': '0 24px 50px -44px var(--shadow)'
     })
@@ -540,9 +486,9 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
     desktop: row('16px', {
       width: '100%',
       'flex-wrap': 'wrap',
-      ...padding('18px', '22px'),
-      ...radius('18px'),
-      ...border('1px', 'var(--line)'),
+      padding: '18px 22px',
+      'border-radius': '18px',
+      border: '1px solid var(--line)',
       'background-color': 'var(--surface-2)',
       'justify-content': 'space-between'
     })
@@ -552,7 +498,7 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
       width: '100%',
       'align-items': 'flex-start',
       'padding-top': '26px',
-      ...borderSide('top', '1px', 'var(--line)')
+      'border-top': '1px solid var(--line)'
     })
   },
   moreGrid: {
@@ -561,15 +507,15 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
   },
   moreCard: { desktop: column('11px', { 'text-decoration': 'none', 'align-items': 'flex-start' }) },
   moreImage: {
-    desktop: { ...media('16 / 10'), ...radius('16px'), transition: 'transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1)' }
+    desktop: { ...media('16 / 10'), 'border-radius': '16px', transition: 'transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1)' }
   },
   moreTitle: { desktop: displayText('19px', { 'line-height': '1.28', ...clamp(2) }) },
 
   // ── Forms ───────────────────────────────────────────────────────────────────────────────────────────────────
   editor: {
     desktop: grid('minmax(0, 1fr) 264px', '56px', { 'align-items': 'flex-start' }),
-    tablet: { 'grid-template-columns': 'minmax(0, 1fr)', ...gap('40px') },
-    mobile: { 'grid-template-columns': 'minmax(0, 1fr)', ...gap('32px') }
+    tablet: { 'grid-template-columns': 'minmax(0, 1fr)', gap: '40px' },
+    mobile: { 'grid-template-columns': 'minmax(0, 1fr)', gap: '32px' }
   },
   form: { desktop: column('20px', { width: '100%' }) },
   fieldRow: { desktop: column('7px') },
@@ -577,9 +523,9 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
   input: {
     desktop: {
       width: '100%',
-      ...padding('12px', '15px'),
-      ...border('1px', 'var(--line-strong)'),
-      ...radius('13px'),
+      padding: '12px 15px',
+      border: '1px solid var(--line-strong)',
+      'border-radius': '13px',
       'background-color': 'var(--surface)',
       color: 'var(--fg)',
       'font-size': '15px',
@@ -593,9 +539,9 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
     desktop: {
       width: '100%',
       'min-height': '300px',
-      ...padding('15px', '17px'),
-      ...border('1px', 'var(--line-strong)'),
-      ...radius('13px'),
+      padding: '15px 17px',
+      border: '1px solid var(--line-strong)',
+      'border-radius': '13px',
       'background-color': 'var(--surface)',
       color: 'var(--fg)',
       'font-family': MONO,
@@ -606,12 +552,12 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
     }
   },
   formTitle: { desktop: displayText('30px', { 'line-height': '1.15' }) },
-  actionRow: { desktop: { display: 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', ...gap('10px') } },
+  actionRow: { desktop: { display: 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', gap: '10px' } },
   button: {
     desktop: {
-      ...padding('12px', '24px'),
-      ...border('0px', 'transparent'),
-      ...radius('999px'),
+      padding: '12px 24px',
+      border: '0px solid transparent',
+      'border-radius': '999px',
       'background-image': 'linear-gradient(140deg, var(--accent), var(--accent-2))',
       color: '#ffffff',
       'font-size': '15px',
@@ -626,9 +572,9 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
   buttonWide: {
     desktop: {
       width: '100%',
-      ...padding('12px', '24px'),
-      ...border('0px', 'transparent'),
-      ...radius('999px'),
+      padding: '12px 24px',
+      border: '0px solid transparent',
+      'border-radius': '999px',
       'background-image': 'linear-gradient(140deg, var(--accent), var(--accent-2))',
       color: '#ffffff',
       'font-size': '15px',
@@ -641,9 +587,9 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
   },
   buttonQuiet: {
     desktop: {
-      ...padding('10px', '20px'),
-      ...border('1px', 'var(--line-strong)'),
-      ...radius('999px'),
+      padding: '10px 20px',
+      border: '1px solid var(--line-strong)',
+      'border-radius': '999px',
       'background-color': 'var(--surface)',
       color: 'var(--fg)',
       'font-size': '14px',
@@ -658,9 +604,9 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
   centred: { desktop: column('26px', { ...wrap('430px'), 'align-items': 'stretch' }) },
   cardSurface: {
     desktop: column('18px', {
-      ...padding('26px'),
-      ...radius('20px'),
-      ...border('1px', 'var(--line)'),
+      padding: '26px',
+      'border-radius': '20px',
+      border: '1px solid var(--line)',
       'background-color': 'var(--surface)',
       'box-shadow': '0 30px 60px -46px var(--shadow)',
       'align-items': 'flex-start'
@@ -669,17 +615,17 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
 
   // ── Footer ──────────────────────────────────────────────────────────────────────────────────────────────────
   footerBand: {
-    desktop: { width: '100%', 'margin-top': 'auto', ...borderSide('top', '1px', 'var(--line)') }
+    desktop: { width: '100%', 'margin-top': 'auto', 'border-top': '1px solid var(--line)' }
   },
   footerInner: {
     desktop: row('28px', {
       ...wrap(),
-      ...padding('38px', '28px'),
+      padding: '38px 28px',
       'padding-bottom': '56px',
       'justify-content': 'space-between',
       'align-items': 'flex-start'
     }),
-    mobile: { 'flex-direction': 'column', ...gap('20px') }
+    mobile: { 'flex-direction': 'column', gap: '20px' }
   },
   footerEnd: {
     desktop: column('8px', { 'align-items': 'flex-end', 'max-width': '380px', 'text-align': 'right' }),

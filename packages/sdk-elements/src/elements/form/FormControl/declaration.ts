@@ -1,4 +1,15 @@
 /** Static declaration for FormControl: type, default attributes and builder metadata. Data only, no React. */
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { FormControlProps } from './FormControl';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type FormControlAttributes = AuthorableAttributes<
+  FormControlProps,
+  'value' | 'error' | 'handleChange' | 'handleValidate'
+> & { defaultValue?: string };
+
 const defaultInputStyle = {
   width: '100%',
   display: 'flex',
@@ -50,7 +61,7 @@ const defaultErrorStyle = {
   'margin-top': '4px'
 };
 
-const declaration = {
+const declaration = elementDeclaration<FormControlAttributes>()({
   type: 'formControl',
   content: {
     attributes: {
@@ -68,7 +79,9 @@ const declaration = {
     definition: {
       label: 'Form Control',
       type: 'formControl',
-      description: '',
+      description:
+        'A single labelled input (text/select/checkbox/… per its subType) inside a form; captures one field of user ' +
+        'input.',
       bindings: {},
       styleSelectors: {
         base: '',
@@ -195,6 +208,6 @@ const declaration = {
     },
     settings: {}
   }
-};
+});
 
 export default declaration;

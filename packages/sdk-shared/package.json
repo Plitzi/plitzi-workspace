@@ -54,6 +54,26 @@
       "types": "./dist/auth/index.d.ts",
       "import": "./dist/auth/index.mjs"
     },
+    "./authoring": {
+      "types": "./dist/authoring/index.d.ts",
+      "import": "./dist/authoring/index.mjs"
+    },
+    "./authoring/builder": {
+      "types": "./dist/authoring/builder.d.ts",
+      "import": "./dist/authoring/builder.mjs"
+    },
+    "./authoring/index": {
+      "types": "./dist/authoring/index.d.ts",
+      "import": "./dist/authoring/index.mjs"
+    },
+    "./authoring/paramSpec": {
+      "types": "./dist/authoring/paramSpec.d.ts",
+      "import": "./dist/authoring/paramSpec.mjs"
+    },
+    "./authoring/transformers": {
+      "types": "./dist/authoring/transformers.d.ts",
+      "import": "./dist/authoring/transformers.mjs"
+    },
     "./builder": {
       "types": "./dist/builder/index.d.ts",
       "import": "./dist/builder/index.mjs"

@@ -1,5 +1,13 @@
 /** Static declaration for Image: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { ImageProps } from './Image';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type ImageAttributes = AuthorableAttributes<ImageProps>;
+
+const declaration = elementDeclaration<ImageAttributes>()({
   type: 'image',
   content: {
     attributes: {
@@ -11,7 +19,7 @@ const declaration = {
     definition: {
       label: 'Image',
       type: 'image',
-      description: 'Use an URL to display an image.',
+      description: 'Displays an image from a URL.',
       bindings: {},
       styleSelectors: {
         base: ''
@@ -53,6 +61,6 @@ const declaration = {
     },
     settings: {}
   }
-};
+});
 
 export default declaration;

@@ -1,9 +1,27 @@
-import { element, elementSpec } from '@plitzi/sdk-elements/authoring';
-import { authorSpace } from '@plitzi/sdk-schema';
+import {
+  apiContainer,
+  authorSpace,
+  button,
+  container,
+  defineElement,
+  element,
+  form,
+  formControl,
+  heading,
+  image,
+  link,
+  list,
+  pagination,
+  paragraph,
+  richText,
+  text,
+  themeToggle,
+  visibleWhen
+} from '@plitzi/sdk-server/authoring';
 
 import { classes, customCss, elements, variables } from './theme';
 
-import type { BindingSpec, ElementSpec, PageSpec, SpaceSpec } from '@plitzi/sdk-schema';
+import type { Attributes, ElementSpec, PageSpec, SpaceSpec } from '@plitzi/sdk-server/authoring';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 /**
@@ -18,21 +36,18 @@ import type { OfflineDataRaw } from '@plitzi/sdk-shared';
  * later one reads.
  */
 
-const text = (content: string, className: string): ElementSpec =>
-  element('Text', { attributes: { content }, className });
+const bound = (type: 'text' | 'paragraph', source: string, className: string): ElementSpec =>
+  element(type, { content: '', class: className, bind: [{ to: 'content', source }] });
 
-const bound = (type: 'Text' | 'Paragraph', source: string, className: string): ElementSpec =>
-  element(type, { attributes: { content: '' }, className, bindings: [{ to: 'content', source }] });
+const boundHeading = (source: string, className: string, subType: Attributes<'heading'>['subType'] = 'h2'): ElementSpec =>
+  heading({ subType, content: '', class: className, bind: [{ to: 'content', source }] });
 
-const heading = (source: string, className: string, subType = 'h2'): ElementSpec =>
-  element('Heading', { attributes: { subType, content: '' }, className, bindings: [{ to: 'content', source }] });
-
-const image = (source: string, className: string): ElementSpec =>
-  element('Image', { attributes: { alt: '', loadMode: 'lazy' }, className, bindings: [{ to: 'src', source }] });
+const boundImage = (source: string, className: string): ElementSpec =>
+  image({ alt: '', loadMode: 'lazy', class: className, bind: [{ to: 'src', source }] });
 
 /** `internal` is a path this space serves; `page` would resolve a page id instead, and `external` leaves. */
-const link = (href: string, className: string, children: ElementSpec[]): ElementSpec =>
-  element('Link', { attributes: { href, mode: 'internal' }, className, children });
+const linkTo = (href: string, className: string, children: ElementSpec[]): ElementSpec =>
+  link({ href, mode: 'internal', class: className, children });
 
 /**
  * The text inside a pill, button or link.
@@ -41,22 +56,35 @@ const link = (href: string, className: string, children: ElementSpec[]): Element
  * belongs to the link, and giving the text the link's class draws the box a second time INSIDE the first. This
  * one carries no type of its own; it inherits every bit of it from whatever it sits in.
  */
-const label = (content: string): ElementSpec => element('Text', { attributes: { content }, className: 'inlineLabel' });
+const label = (content: string): ElementSpec => text({ content, class: 'inlineLabel' });
 
 /**
- * The element this space ships itself, authored exactly like a built-in one.
+ * The element this space ships itself, with a factory as typed as any built-in one.
  *
- * `elementSpec` takes a declaration rather than a name, which is the whole of what a custom type needs: the SDK's
- * catalogue has no `speciesStatus` in it and does not have to — the server was handed the component in `main.ts`
- * and the page names the same type here. Every attribute is a binding onto the answer the post's own action
- * already returned, so the panel costs no request and no second source of truth.
+ * `defineElement` takes a declaration rather than a name, which is the whole of what a custom type needs: the
+ * SDK's catalogue has no `speciesStatus` in it and does not have to — the server was handed the component in
+ * `main.ts` and the page names the same type here. The attributes are declared once, above, and from then on a
+ * misspelt one is a compile error rather than a panel that renders blank.
  */
+type SpeciesAttributes = {
+  name?: string;
+  latin?: string;
+  status?: string;
+  trend?: string;
+  history?: string;
+  since?: string;
+  note?: string;
+};
+
+const speciesStatus = defineElement<SpeciesAttributes>({
+  type: 'speciesStatus',
+  content: { definition: { label: 'Species Status' } }
+});
+
 const speciesPanel = (src: string): ElementSpec =>
-  elementSpec(
-    { type: 'speciesStatus', content: { definition: { label: 'Species Status' } } },
-    {
-      className: 'speciesPanel',
-      bindings: [
+  speciesStatus({
+      class: 'speciesPanel',
+      bind: [
         { to: 'name', source: `${src}.species.name` },
         { to: 'latin', source: `${src}.species.latin` },
         { to: 'status', source: `${src}.species.status` },
@@ -65,27 +93,23 @@ const speciesPanel = (src: string): ElementSpec =>
         { to: 'since', source: `${src}.species.since` },
         { to: 'note', source: `${src}.species.note` },
         // An article about a place rather than an animal simply does not draw one.
-        shownWhen(`${src}.hasSpecies`)
+        visibleWhen(`${src}.hasSpecies`)
       ]
-    }
-  );
+  });
 
 /** A link whose destination is a field — a card, a headline, an item in a list of recent posts. */
 const boundLink = (source: string, className: string, children: ElementSpec[]): ElementSpec =>
-  element('Link', { attributes: { mode: 'internal' }, className, bindings: [{ to: 'href', source }], children });
-
-/** Shows or hides an element from a boolean the server answered. Two halves of one page, no branch in either. */
-const shownWhen = (source: string): BindingSpec => ({ to: 'visibility', source, category: 'initialState' });
+  link({ mode: 'internal', class: className, bind: [{ to: 'href', source }], children });
 
 /** An initial in a circle: no image to load, nothing to go missing, and it works for any name. */
 const avatar = (source: string, className = 'avatar'): ElementSpec =>
-  element('Text', { attributes: { content: '' }, className, bindings: [{ to: 'content', source }] });
+  text({ content: '', class: className, bind: [{ to: 'content', source }] });
 
 /** Author, date and reading time in one line — composed on the server, because a binding names one field. */
 const byline = (src: string): ElementSpec =>
-  element('Container', {
-    className: 'metaRow',
-    children: [avatar(`${src}.initial`, 'avatarSm'), bound('Text', `${src}.byline`, 'meta')]
+  container({
+    class: 'metaRow',
+    children: [avatar(`${src}.initial`, 'avatarSm'), bound('text', `${src}.byline`, 'meta')]
   });
 
 /**
@@ -100,35 +124,35 @@ const byline = (src: string): ElementSpec =>
 const chrome = (ref: string, body: ElementSpec[]): ElementSpec => {
   const src = `apiContainer_${ref}`;
 
-  return element('ApiContainer', {
+  return apiContainer({
     idRef: ref,
     runtime: 'server',
-    attributes: { action: 'site-chrome' },
-    className: 'pageInner',
+    action: 'site-chrome',
+    class: 'pageInner',
     children: [
-      element('Container', {
-        className: 'headerBand',
+      container({
+        class: 'headerBand',
         children: [
-          element('Container', {
-            className: 'headerInner',
+          container({
+            class: 'headerInner',
             children: [
-              link('/', 'brand', [
-                text('F', 'brandMark'),
-                element('Container', {
-                  className: 'stack',
-                  children: [text('Fieldnotes', 'brandName'), text('Wildlife, close up', 'brandTag')]
+              linkTo('/', 'brand', [
+                text('F', { class: 'brandMark' }),
+                container({
+                  class: 'stack',
+                  children: [text('Fieldnotes', { class: 'brandName' }), text('Wildlife, close up', { class: 'brandTag' })]
                 })
               ]),
-              element('Container', {
-                className: 'nav',
+              container({
+                class: 'nav',
                 children: [
-                  link('/', 'navLink', [label('Latest')]),
+                  linkTo('/', 'navLink', [label('Latest')]),
                   // Hidden unless the session holds `postPublish` — a dead end is bad manners, and that is all
                   // this is: the action behind the link refuses the same people either way.
-                  element('Link', {
-                    attributes: { href: '/write', mode: 'internal' },
-                    className: 'navLink',
-                    bindings: [shownWhen(`${src}.canWrite`)],
+                  link({
+                    href: '/write', mode: 'internal',
+                    class: 'navLink',
+                    bind: [visibleWhen(`${src}.canWrite`)],
                     children: [label('Write')]
                   }),
                   /**
@@ -138,10 +162,10 @@ const chrome = (ref: string, body: ElementSpec[]): ElementSpec => {
                    * this space's palette — every colour here is a variable with a value per scheme — follows it.
                    * Which icon shows is a rule in `theme.ts`, answered the same way the palette is.
                    */
-                  element('ThemeToggle', {
+                  themeToggle({
                     idRef: `${ref}Theme`,
-                    attributes: { subType: 'switch', lightLabel: 'Light', darkLabel: 'Dark' },
-                    className: 'themeToggle'
+                    subType: 'switch', lightLabel: 'Light', darkLabel: 'Dark',
+                    class: 'themeToggle'
                   }),
                   /**
                    * Two controls, not one that changes its mind.
@@ -150,17 +174,17 @@ const chrome = (ref: string, body: ElementSpec[]): ElementSpec => {
                    * shapes, so neither is a compromise between the two. Each binds its visibility to a fact the
                    * server answered, which is how a page says "either/or" without a condition in it.
                    */
-                  element('Link', {
-                    attributes: { href: '/login', mode: 'internal' },
-                    className: 'signInLink',
-                    bindings: [shownWhen(`${src}.signedOut`)],
+                  link({
+                    href: '/login', mode: 'internal',
+                    class: 'signInLink',
+                    bind: [visibleWhen(`${src}.signedOut`)],
                     children: [label('Sign in')]
                   }),
-                  element('Link', {
-                    attributes: { href: '/login', mode: 'internal' },
-                    className: 'accountPill',
-                    bindings: [shownWhen(`${src}.signedIn`)],
-                    children: [avatar(`${src}.initial`, 'avatarSm'), bound('Text', `${src}.accountLabel`, 'bylineName')]
+                  link({
+                    href: '/login', mode: 'internal',
+                    class: 'accountPill',
+                    bind: [visibleWhen(`${src}.signedIn`)],
+                    children: [avatar(`${src}.initial`, 'avatarSm'), bound('text', `${src}.accountLabel`, 'bylineName')]
                   })
                 ]
               })
@@ -182,41 +206,41 @@ const chrome = (ref: string, body: ElementSpec[]): ElementSpec => {
  * BELOW the provider that publishes it and each page carries its own.
  */
 const writeLink = (ref: string): ElementSpec =>
-  element('Link', {
-    attributes: { href: '/write', mode: 'internal' },
-    className: 'chipQuiet',
-    bindings: [shownWhen(`apiContainer_${ref}.canWrite`)],
+  link({
+    href: '/write', mode: 'internal',
+    class: 'chipQuiet',
+    bind: [visibleWhen(`apiContainer_${ref}.canWrite`)],
     children: [label('Write a post')]
   });
 
 const footer = (): ElementSpec =>
-  element('Container', {
-    className: 'footerBand',
+  container({
+    class: 'footerBand',
     children: [
-      element('Container', {
-        className: 'footerInner',
+      container({
+        class: 'footerInner',
         children: [
-          element('Container', {
-            className: 'brand',
+          container({
+            class: 'brand',
             children: [
-              text('F', 'brandMark'),
-              element('Container', {
-                className: 'stack',
+              text('F', { class: 'brandMark' }),
+              container({
+                class: 'stack',
                 children: [
-                  text('Fieldnotes', 'brandName'),
-                  text('Seven animals, and what is actually known about them.', 'meta')
+                  text('Fieldnotes', { class: 'brandName' }),
+                  text('Seven animals, and what is actually known about them.', { class: 'meta' })
                 ]
               })
             ]
           }),
-          element('Container', {
-            className: 'footerEnd',
+          container({
+            class: 'footerEnd',
             children: [
-              text('Built with Plitzi', 'footerLabel'),
+              text('Built with Plitzi', { class: 'footerLabel' }),
               text(
                 'Every page here is a layout, every read is a flow the server runs, and no page has a build step.',
-                'meta'
-              )
+                { class: 'meta' }
+                )
             ]
           })
         ]
@@ -226,16 +250,16 @@ const footer = (): ElementSpec =>
 
 /** One story in the main column: cover, topic, headline, excerpt, byline. */
 const feedCard = (src: string): ElementSpec =>
-  element('Container', {
-    className: 'card',
+  container({
+    class: 'card',
     children: [
-      boundLink(`${src}.url`, 'cardLink', [image(`${src}.cover`, 'cardImage')]),
-      element('Container', {
-        className: 'cardBody',
+      boundLink(`${src}.url`, 'cardLink', [boundImage(`${src}.cover`, 'cardImage')]),
+      container({
+        class: 'cardBody',
         children: [
-          bound('Text', `${src}.topic`, 'chip'),
-          boundLink(`${src}.url`, 'cardLink', [heading(`${src}.title`, 'cardTitle')]),
-          bound('Paragraph', `${src}.excerpt`, 'cardExcerpt'),
+          bound('text', `${src}.topic`, 'chip'),
+          boundLink(`${src}.url`, 'cardLink', [boundHeading(`${src}.title`, 'cardTitle')]),
+          bound('paragraph', `${src}.excerpt`, 'cardExcerpt'),
           byline(src)
         ]
       })
@@ -243,16 +267,16 @@ const feedCard = (src: string): ElementSpec =>
   });
 
 const panel = (title: string, children: ElementSpec[]): ElementSpec =>
-  element('Container', {
-    className: 'panel',
+  container({
+    class: 'panel',
     children: [
-      element('Heading', { attributes: { subType: 'h3', content: title }, className: 'panelTitle' }),
+      heading({ subType: 'h3', content: title, class: 'panelTitle' }),
       ...children
     ]
   });
 
 const note = (content: string): ElementSpec =>
-  element('Paragraph', { attributes: { content }, className: 'panelText' });
+  paragraph({ content, class: 'panelText' });
 
 const home: PageSpec = {
   name: 'Latest posts',
@@ -260,11 +284,11 @@ const home: PageSpec = {
   idRef: 'home',
   seoTitle: 'Fieldnotes — wildlife, close up',
   seoDescription: 'A wildlife magazine, rendered by Plitzi: posts, sessions and who may publish.',
-  className: 'page',
+  class: 'page',
   body: [
     chrome('chromeHome', [
-      element('Container', {
-        className: 'main',
+      container({
+        class: 'main',
         children: [
           /**
            * Everything on this page comes out of one provider.
@@ -273,17 +297,15 @@ const home: PageSpec = {
            * first request answers. `pagination: 'url'` and the pager below name the same query parameter, and the
            * action reads it as its input — which is the whole of wiring the two together.
            */
-          element('ApiContainer', {
+          apiContainer({
             idRef: 'posts',
             runtime: 'server',
-            attributes: {
-              action: 'list-posts',
+            action: 'list-posts',
               // What this element asks of the action, on top of the page's own route and query params.
               input: { perPage: 4, featured: true },
               pagination: 'url',
-              pageParam: 'page'
-            },
-            className: 'pageStack',
+              pageParam: 'page',
+            class: 'pageStack',
             children: [
               /**
                * The lead story: one photograph, with the headline living inside it.
@@ -293,65 +315,65 @@ const home: PageSpec = {
                * text sits over the image because `heroScrim` is positioned over it, and it carries the gradient
                * that keeps a white headline readable on a photograph the layout has never seen.
                */
-              element('Link', {
-                attributes: { mode: 'internal' },
-                className: 'hero',
-                bindings: [
+              link({
+                mode: 'internal',
+                class: 'hero',
+                bind: [
                   { to: 'href', source: 'apiContainer_posts.featured.url' },
                   // Without this the link is announced as every word inside the card — topic, headline,
                   // standfirst, byline and button, in one breath. `label` is what it says instead.
                   { to: 'label', source: 'apiContainer_posts.featured.title' },
-                  shownWhen('apiContainer_posts.hasFeatured')
+                  visibleWhen('apiContainer_posts.hasFeatured')
                 ],
                 children: [
-                  image('apiContainer_posts.featured.cover', 'heroImage'),
-                  element('Container', {
-                    className: 'heroScrim',
+                  boundImage('apiContainer_posts.featured.cover', 'heroImage'),
+                  container({
+                    class: 'heroScrim',
                     children: [
-                      bound('Text', 'apiContainer_posts.featured.topic', 'chipOnPhoto'),
-                      heading('apiContainer_posts.featured.title', 'heroTitle', 'h1'),
-                      bound('Paragraph', 'apiContainer_posts.featured.standfirst', 'heroStandfirst'),
-                      element('Container', {
-                        className: 'metaRow',
+                      bound('text', 'apiContainer_posts.featured.topic', 'chipOnPhoto'),
+                      boundHeading('apiContainer_posts.featured.title', 'heroTitle', 'h1'),
+                      bound('paragraph', 'apiContainer_posts.featured.standfirst', 'heroStandfirst'),
+                      container({
+                        class: 'metaRow',
                         children: [
                           avatar('apiContainer_posts.featured.initial', 'avatarSm'),
-                          bound('Text', 'apiContainer_posts.featured.byline', 'metaOnPhoto')
+                          bound('text', 'apiContainer_posts.featured.byline', 'metaOnPhoto')
                         ]
                       }),
-                      element('Container', { className: 'readLink', children: [label('Read the story')] })
+                      container({ class: 'readLink', children: [label('Read the story')] })
                     ]
                   })
                 ]
               }),
-              element('Container', {
-                className: 'layout',
+              container({
+                class: 'layout',
                 children: [
-                  element('Container', {
-                    className: 'feed',
+                  container({
+                    class: 'feed',
                     children: [
-                      element('Text', {
-                        attributes: { content: 'More stories' },
-                        className: 'sectionLabel',
-                        bindings: [shownWhen('apiContainer_posts.unfiltered')]
+                      text({
+                        content: 'More stories',
+                        class: 'sectionLabel',
+                        bind: [visibleWhen('apiContainer_posts.unfiltered')]
                       }),
                       // The same slot, saying what the list was narrowed to. Two elements, one field, no branch.
-                      element('Text', {
-                        attributes: { content: '' },
-                        className: 'sectionLabel',
-                        bindings: [
+                      text({
+                        content: '',
+                        class: 'sectionLabel',
+                        bind: [
                           { to: 'content', source: 'apiContainer_posts.filterLabel' },
-                          shownWhen('apiContainer_posts.filtered')
+                          visibleWhen('apiContainer_posts.filtered')
                         ]
                       }),
                       /**
                        * The list renders its one child once per record, each row under its own scope — which is what
                        * `list_postList.item` is. One template, however many posts.
                        */
-                      element('List', {
+                      list({
                         idRef: 'postList',
-                        attributes: { source: 'controlled' },
-                        className: 'feed',
-                        bindings: [{ to: 'items', source: 'apiContainer_posts.records' }],
+                        source: 'controlled',
+                        class: 'feed',
+                        bind: [{ to: 'items', source: 'apiContainer_posts.records' }],
                         children: [feedCard('list_postList.item')]
                       }),
                       /**
@@ -359,16 +381,16 @@ const home: PageSpec = {
                        * URL mode it writes the page into the address bar and the server resolves the window that URL
                        * asks for — which keeps the result shareable, indexable and back-button-proof.
                        */
-                      element('Pagination', {
+                      pagination({
                         idRef: 'postPager',
-                        attributes: { mode: 'pages', target: 'url', pageParam: 'page' },
-                        className: 'pager',
-                        bindings: [{ to: 'pageInfo', source: 'apiContainer_posts.pageInfo' }]
+                        mode: 'pages', target: 'url', pageParam: 'page',
+                        class: 'pager',
+                        bind: [{ to: 'pageInfo', source: 'apiContainer_posts.pageInfo' }]
                       })
                     ]
                   }),
-                  element('Container', {
-                    className: 'sidebar',
+                  container({
+                    class: 'sidebar',
                     children: [
                       panel('About', [
                         note(
@@ -381,28 +403,26 @@ const home: PageSpec = {
                        * five posts, no lead story, always the first window. An element declares what it wants and the
                        * action answers it — there is no second endpoint here, and no second task.
                        */
-                      element('ApiContainer', {
+                      apiContainer({
                         idRef: 'recent',
                         runtime: 'server',
                         // `topic: ''` is not noise: a render trigger's input is the page's own query params plus
                         // whatever the element declares, so without saying so this provider would be filtered by
                         // the URL too — and "From the archive" would only ever show the topic you are already in.
-                        attributes: {
-                          action: 'list-posts',
-                          input: { page: 1, perPage: 5, featured: false, topic: '' }
-                        },
-                        className: 'sidebar',
+                        action: 'list-posts',
+                          input: { page: 1, perPage: 5, featured: false, topic: '' },
+                        class: 'sidebar',
                         children: [
                           panel('Topics', [
-                            element('List', {
+                            list({
                               idRef: 'topicList',
-                              attributes: { source: 'controlled' },
-                              className: 'chipRow',
+                              source: 'controlled',
+                              class: 'chipRow',
                               /**
                                * The MAIN provider's topics, not the sidebar's — it is the one that was told what
                                * the URL asked for, so it is the one that knows which chip is chosen.
                                */
-                              bindings: [{ to: 'items', source: 'apiContainer_posts.topics' }],
+                              bind: [{ to: 'items', source: 'apiContainer_posts.topics' }],
                               /**
                                * Two chips per topic, and the binding picks.
                                *
@@ -412,37 +432,37 @@ const home: PageSpec = {
                                * the header uses for signed in and signed out.
                                */
                               children: [
-                                element('Link', {
-                                  attributes: { mode: 'internal' },
-                                  className: 'chipActive',
-                                  bindings: [
+                                link({
+                                  mode: 'internal',
+                                  class: 'chipActive',
+                                  bind: [
                                     { to: 'href', source: 'list_topicList.item.url' },
-                                    shownWhen('list_topicList.item.isActive')
+                                    visibleWhen('list_topicList.item.isActive')
                                   ],
-                                  children: [bound('Text', 'list_topicList.item.name', 'inlineLabel')]
+                                  children: [bound('text', 'list_topicList.item.name', 'inlineLabel')]
                                 }),
-                                element('Link', {
-                                  attributes: { mode: 'internal' },
-                                  className: 'chipQuiet',
-                                  bindings: [
+                                link({
+                                  mode: 'internal',
+                                  class: 'chipQuiet',
+                                  bind: [
                                     { to: 'href', source: 'list_topicList.item.url' },
-                                    shownWhen('list_topicList.item.isInactive')
+                                    visibleWhen('list_topicList.item.isInactive')
                                   ],
-                                  children: [bound('Text', 'list_topicList.item.name', 'inlineLabel')]
+                                  children: [bound('text', 'list_topicList.item.name', 'inlineLabel')]
                                 })
                               ]
                             })
                           ]),
                           panel('From the archive', [
-                            element('List', {
+                            list({
                               idRef: 'recentList',
-                              attributes: { source: 'controlled' },
-                              className: 'quietList',
-                              bindings: [{ to: 'items', source: 'apiContainer_recent.records' }],
+                              source: 'controlled',
+                              class: 'quietList',
+                              bind: [{ to: 'items', source: 'apiContainer_recent.records' }],
                               children: [
                                 boundLink('list_recentList.item.url', 'quietItem', [
-                                  bound('Text', 'list_recentList.item.title', 'quietTitle'),
-                                  bound('Text', 'list_recentList.item.date', 'meta')
+                                  bound('text', 'list_recentList.item.title', 'quietTitle'),
+                                  bound('text', 'list_recentList.item.date', 'meta')
                                 ])
                               ]
                             })
@@ -457,10 +477,10 @@ const home: PageSpec = {
                * The empty state, which is a binding rather than a mechanism of its own: a provider publishes
                * `isEmpty` beside its records, so "nothing here" is authorable with the elements that already exist.
                */
-              element('Paragraph', {
-                attributes: { content: 'No posts yet. Sign in as ada and write the first one.' },
-                className: 'panelText',
-                bindings: [shownWhen('apiContainer_posts.isEmpty')]
+              paragraph({
+                content: 'No posts yet. Sign in as ada and write the first one.',
+                class: 'panelText',
+                bind: [visibleWhen('apiContainer_posts.isEmpty')]
               })
             ]
           })
@@ -481,7 +501,7 @@ const post: PageSpec = {
   name: 'Post',
   slug: 'post/{{slug}}',
   idRef: 'postPage',
-  className: 'page',
+  class: 'page',
   /**
    * The one thing this page asks about the READER rather than about the post.
    *
@@ -514,41 +534,41 @@ const post: PageSpec = {
   ],
   body: [
     chrome('chromePost', [
-      element('Container', {
-        className: 'main',
+      container({
+        class: 'main',
         children: [
-          element('ApiContainer', {
+          apiContainer({
             idRef: 'post',
             runtime: 'server',
-            attributes: { action: 'get-post', singleRecord: true, subType: 'main' },
-            className: 'pageStack',
+            action: 'get-post', singleRecord: true, subType: 'main',
+            class: 'pageStack',
             children: [
-              element('Container', {
-                className: 'article',
+              container({
+                class: 'article',
                 // Two halves of one answer, each bound to a flag the action returned. A page for a slug nobody wrote
                 // has to say so, and saying so is a binding rather than a branch.
-                bindings: [shownWhen('apiContainer_post.found')],
+                bind: [visibleWhen('apiContainer_post.found')],
                 children: [
-                  bound('Text', 'apiContainer_post.record.topic', 'chip'),
-                  heading('apiContainer_post.record.title', 'articleTitle', 'h1'),
-                  bound('Paragraph', 'apiContainer_post.record.standfirst', 'articleStandfirst'),
-                  element('Container', {
-                    className: 'bylineRow',
+                  bound('text', 'apiContainer_post.record.topic', 'chip'),
+                  boundHeading('apiContainer_post.record.title', 'articleTitle', 'h1'),
+                  bound('paragraph', 'apiContainer_post.record.standfirst', 'articleStandfirst'),
+                  container({
+                    class: 'bylineRow',
                     children: [
-                      element('Container', {
-                        className: 'metaRow',
+                      container({
+                        class: 'metaRow',
                         children: [
                           avatar('apiContainer_post.record.initial'),
-                          element('Container', {
-                            className: 'stack',
+                          container({
+                            class: 'stack',
                             children: [
-                              bound('Text', 'apiContainer_post.record.author', 'bylineName'),
+                              bound('text', 'apiContainer_post.record.author', 'bylineName'),
                               // The date and the reading time. The author is the line above it — a byline that
                               // repeats the name is what you get for binding the composed field twice.
-                              bound('Text', 'apiContainer_post.record.dateline', 'meta'),
+                              bound('text', 'apiContainer_post.record.dateline', 'meta'),
                               // Only on a post somebody went back to. A blog that edits silently is a blog you
                               // cannot trust twice.
-                              bound('Text', 'apiContainer_post.record.updated', 'metaEdited')
+                              bound('text', 'apiContainer_post.record.updated', 'metaEdited')
                             ]
                           })
                         ]
@@ -560,27 +580,27 @@ const post: PageSpec = {
                        * `grace`'s post. The action's trigger cannot decide that — at the moment it runs there is
                        * no record — so the task answered it, and the link binds to what the task said.
                        */
-                      element('Link', {
-                        attributes: { mode: 'internal' },
-                        className: 'chipQuiet',
-                        bindings: [
+                      link({
+                        mode: 'internal',
+                        class: 'chipQuiet',
+                        bind: [
                           { to: 'href', source: 'apiContainer_post.editUrl' },
-                          shownWhen('apiContainer_post.canEdit')
+                          visibleWhen('apiContainer_post.canEdit')
                         ],
                         children: [label('Edit this post')]
                       })
                     ]
                   }),
-                  image('apiContainer_post.record.cover', 'articleImage'),
+                  boundImage('apiContainer_post.record.cover', 'articleImage'),
                   speciesPanel('apiContainer_post.record'),
                   /**
                    * `richText` and not `blockHtml`: the second executes what it is given on purpose, which is right
                    * for an embed the site's own author pasted in and wrong for a body that came out of a store.
                    */
-                  element('RichText', {
-                    attributes: { format: 'markdown', content: '' },
-                    className: 'prose',
-                    bindings: [{ to: 'content', source: 'apiContainer_post.record.body' }]
+                  richText({
+                    format: 'markdown', content: '',
+                    class: 'prose',
+                    bind: [{ to: 'content', source: 'apiContainer_post.record.body' }]
                   }),
                   /**
                    * The one write on this blog anybody may make — no session, no permission, no account.
@@ -591,20 +611,20 @@ const post: PageSpec = {
                    * show. This one the page starts, and every press is a run with an input, an output and a
                    * duration.
                    */
-                  element('Container', {
-                    className: 'sightingBox',
+                  container({
+                    class: 'sightingBox',
                     children: [
-                      element('Container', {
-                        className: 'stack',
+                      container({
+                        class: 'stack',
                         children: [
-                          text('Seen one yourself?', 'bylineName'),
-                          bound('Text', 'apiContainer_post.record.sightings', 'meta')
+                          text('Seen one yourself?', { class: 'bylineName' }),
+                          bound('text', 'apiContainer_post.record.sightings', 'meta')
                         ]
                       }),
-                      element('Button', {
+                      button({
                         idRef: 'sighting',
-                        attributes: { subType: 'button', content: 'I have seen one' },
-                        className: 'buttonQuiet',
+                        subType: 'button', content: 'I have seen one',
+                        class: 'buttonQuiet',
                         /**
                          * Off once this reader has counted.
                          *
@@ -613,7 +633,7 @@ const post: PageSpec = {
                          * who has already counted and answers the second press with the total rather than adding
                          * to it — a rule about other readers is not something a browser can be asked to keep.
                          */
-                        bindings: [{ to: 'disabled', source: 'state.sightingDone' }],
+                        bind: [{ to: 'disabled', source: 'state.sightingDone' }],
                         flows: [
                           [
                             { id: 'seen', type: 'trigger', action: 'onClick', on: 'sighting' },
@@ -649,22 +669,22 @@ const post: PageSpec = {
                           ]
                         ]
                       }),
-                      element('Paragraph', {
-                        attributes: { content: '' },
-                        className: 'notice',
-                        bindings: [{ to: 'content', source: 'state.sighting' }]
+                      paragraph({
+                        content: '',
+                        class: 'notice',
+                        bind: [{ to: 'content', source: 'state.sighting' }]
                       })
                     ]
                   }),
-                  element('Container', {
-                    className: 'authorBox',
+                  container({
+                    class: 'authorBox',
                     children: [
                       avatar('apiContainer_post.record.initial'),
-                      element('Container', {
-                        className: 'stack',
+                      container({
+                        class: 'stack',
                         children: [
-                          bound('Text', 'apiContainer_post.record.author', 'bylineName'),
-                          bound('Text', 'apiContainer_post.record.authorRole', 'meta'),
+                          bound('text', 'apiContainer_post.record.author', 'bylineName'),
+                          bound('text', 'apiContainer_post.record.authorRole', 'meta'),
                           note('Writes here about animals, and about the people who go out and count them.')
                         ]
                       })
@@ -672,37 +692,37 @@ const post: PageSpec = {
                   })
                 ]
               }),
-              element('Container', {
-                className: 'article',
-                bindings: [shownWhen('apiContainer_post.found')],
+              container({
+                class: 'article',
+                bind: [visibleWhen('apiContainer_post.found')],
                 children: [
-                  text('Keep reading', 'sectionLabel'),
-                  element('List', {
+                  text('Keep reading', { class: 'sectionLabel' }),
+                  list({
                     idRef: 'moreList',
-                    attributes: { source: 'controlled' },
-                    className: 'moreGrid',
-                    bindings: [{ to: 'items', source: 'apiContainer_post.more' }],
+                    source: 'controlled',
+                    class: 'moreGrid',
+                    bind: [{ to: 'items', source: 'apiContainer_post.more' }],
                     children: [
                       boundLink('list_moreList.item.url', 'moreCard', [
-                        image('list_moreList.item.cover', 'moreImage'),
-                        bound('Text', 'list_moreList.item.topic', 'chip'),
-                        heading('list_moreList.item.title', 'moreTitle', 'h3'),
-                        bound('Text', 'list_moreList.item.date', 'meta')
+                        boundImage('list_moreList.item.cover', 'moreImage'),
+                        bound('text', 'list_moreList.item.topic', 'chip'),
+                        boundHeading('list_moreList.item.title', 'moreTitle', 'h3'),
+                        bound('text', 'list_moreList.item.date', 'meta')
                       ])
                     ]
                   })
                 ]
               }),
-              element('Container', {
-                className: 'centred',
-                bindings: [shownWhen('apiContainer_post.missing')],
+              container({
+                class: 'centred',
+                bind: [visibleWhen('apiContainer_post.missing')],
                 children: [
-                  element('Heading', {
-                    attributes: { subType: 'h1', content: 'That post does not exist.' },
-                    className: 'articleTitle'
+                  heading({
+                    subType: 'h1', content: 'That post does not exist.',
+                    class: 'articleTitle'
                   }),
                   note('The link may be old, or the post may never have been published.'),
-                  link('/', 'buttonQuiet', [label('Back to the latest')])
+                  linkTo('/', 'buttonQuiet', [label('Back to the latest')])
                 ]
               })
             ]
@@ -720,13 +740,13 @@ const post: PageSpec = {
 const field = (
   name: string,
   labelText: string,
-  subType: string,
+  subType: Attributes<'formControl'>['subType'],
   extra: Record<string, unknown> = {},
   input = 'input'
 ): ElementSpec =>
-  element('FormControl', {
-    attributes: { name, label: labelText, subType, required: true, ...extra },
-    className: 'fieldRow',
+  formControl({
+    name, label: labelText, subType, required: true, ...extra,
+    class: 'fieldRow',
     slots: { input, label: 'fieldLabel' }
   });
 
@@ -740,16 +760,16 @@ const field = (
 const boundField = (
   name: string,
   labelText: string,
-  subType: string,
+  subType: Attributes<'formControl'>['subType'],
   source: string,
   extra: Record<string, unknown> = {},
   input = 'input'
 ): ElementSpec =>
-  element('FormControl', {
-    attributes: { name, label: labelText, subType, required: true, defaultValue: '', ...extra },
-    className: 'fieldRow',
+  formControl({
+    name, label: labelText, subType, required: true, defaultValue: '', ...extra,
+    class: 'fieldRow',
     slots: { input, label: 'fieldLabel' },
-    bindings: [{ to: 'defaultValue', source }]
+    bind: [{ to: 'defaultValue', source }]
   });
 
 /**
@@ -767,24 +787,24 @@ const write: PageSpec = {
   // A visitor with no session lands on the sign-in rather than on a 403, which is the whole of "you must be
   // logged in to post" — stated on the page, not written into a guard somewhere.
   unauthorizedRedirect: 'login',
-  className: 'page',
+  class: 'page',
   body: [
     chrome('chromeWrite', [
-      element('Container', {
-        className: 'main',
+      container({
+        class: 'main',
         children: [
-          element('Container', {
-            className: 'editor',
+          container({
+            class: 'editor',
             children: [
-              element('Container', {
-                className: 'form',
+              container({
+                class: 'form',
                 children: [
-                  element('Heading', { attributes: { subType: 'h1', content: 'New post' }, className: 'articleTitle' }),
-                  element('Form', {
+                  heading({ subType: 'h1', content: 'New post', class: 'articleTitle' }),
+                  form({
                     idRef: 'postForm',
-                    className: 'form',
+                    class: 'form',
                     // Without this the browser submits the form itself and the page navigates away; the flow runs.
-                    attributes: { managedByInteractions: true, method: 'post' },
+                    managedByInteractions: true, method: 'post',
                     flows: [
                       [
                         { id: 'submitted', type: 'trigger', action: 'onSubmit', on: 'postForm' },
@@ -803,7 +823,7 @@ const write: PageSpec = {
                           on: 'actions',
                           /**
                            * `input` as an OBJECT, one token per field — not as a line of JSON text with tokens
-                           * interpolated into it. The difference is not style: a post body has newlines and
+                           * interpolated into it. The difference is not css: a post body has newlines and
                            * quotation marks in it, and dropping those into a JSON string literal produces a
                            * document that does not parse. The action then refuses the whole call as invalid
                            * input, which reads on screen as the server rejecting a perfectly good post.
@@ -867,18 +887,18 @@ const write: PageSpec = {
                         required: false
                       }),
                       field('body', 'Body', 'textarea', { placeholder: '## Markdown is fine' }, 'textarea'),
-                      element('Button', { attributes: { subType: 'submit', content: 'Publish' }, className: 'button' })
+                      button({ subType: 'submit', content: 'Publish', class: 'button' })
                     ]
                   }),
-                  element('Paragraph', {
-                    attributes: { content: '' },
-                    className: 'notice',
-                    bindings: [{ to: 'content', source: 'state.notice' }]
+                  paragraph({
+                    content: '',
+                    class: 'notice',
+                    bind: [{ to: 'content', source: 'state.notice' }]
                   })
                 ]
               }),
-              element('Container', {
-                className: 'sidebar',
+              container({
+                class: 'sidebar',
                 children: [
                   panel('What happens on submit', [
                     note(
@@ -916,34 +936,34 @@ const edit: PageSpec = {
   idRef: 'editPage',
   accessLevel: 'authenticated',
   unauthorizedRedirect: 'login',
-  className: 'page',
+  class: 'page',
   body: [
     chrome('chromeEdit', [
-      element('Container', {
-        className: 'main',
+      container({
+        class: 'main',
         children: [
-          element('ApiContainer', {
+          apiContainer({
             idRef: 'editPost',
             runtime: 'server',
-            attributes: { action: 'get-post', singleRecord: true, subType: 'main' },
-            className: 'pageStack',
+            action: 'get-post', singleRecord: true, subType: 'main',
+            class: 'pageStack',
             children: [
-              element('Container', {
-                className: 'editor',
-                bindings: [shownWhen('apiContainer_editPost.canEdit')],
+              container({
+                class: 'editor',
+                bind: [visibleWhen('apiContainer_editPost.canEdit')],
                 children: [
-                  element('Container', {
-                    className: 'form',
+                  container({
+                    class: 'form',
                     children: [
-                      element('Heading', {
-                        attributes: { subType: 'h1', content: 'Edit post' },
-                        className: 'articleTitle'
+                      heading({
+                        subType: 'h1', content: 'Edit post',
+                        class: 'articleTitle'
                       }),
-                      bound('Paragraph', 'apiContainer_editPost.record.title', 'articleStandfirst'),
-                      element('Form', {
+                      bound('paragraph', 'apiContainer_editPost.record.title', 'articleStandfirst'),
+                      form({
                         idRef: 'editForm',
-                        className: 'form',
-                        attributes: { managedByInteractions: true, method: 'post' },
+                        class: 'form',
+                        managedByInteractions: true, method: 'post',
                         flows: [
                           [
                             { id: 'edited', type: 'trigger', action: 'onSubmit', on: 'editForm' },
@@ -1007,7 +1027,7 @@ const edit: PageSpec = {
                            * the server does not take on trust — the store matches it against the session's own id
                            * before it changes a thing.
                            */
-                          boundField('slug', '', 'hidden', 'apiContainer_editPost.record.slug', {}, 'hidden'),
+                          boundField('slug', '', 'hidden', 'apiContainer_editPost.record.slug'),
                           boundField('title', 'Title', 'text', 'apiContainer_editPost.record.title'),
                           boundField('standfirst', 'Standfirst', 'text', 'apiContainer_editPost.record.standfirst', {
                             required: false
@@ -1020,27 +1040,27 @@ const edit: PageSpec = {
                             required: false
                           }),
                           boundField('body', 'Body', 'textarea', 'apiContainer_editPost.record.body', {}, 'textarea'),
-                          element('Container', {
-                            className: 'actionRow',
+                          container({
+                            class: 'actionRow',
                             children: [
-                              element('Button', {
-                                attributes: { subType: 'submit', content: 'Save changes' },
-                                className: 'button'
+                              button({
+                                subType: 'submit', content: 'Save changes',
+                                class: 'button'
                               }),
                               boundLink('apiContainer_editPost.record.url', 'buttonQuiet', [label('Cancel')])
                             ]
                           })
                         ]
                       }),
-                      element('Paragraph', {
-                        attributes: { content: '' },
-                        className: 'notice',
-                        bindings: [{ to: 'content', source: 'state.notice' }]
+                      paragraph({
+                        content: '',
+                        class: 'notice',
+                        bind: [{ to: 'content', source: 'state.notice' }]
                       })
                     ]
                   }),
-                  element('Container', {
-                    className: 'sidebar',
+                  container({
+                    class: 'sidebar',
                     children: [
                       panel('A permission is not ownership', [
                         note(
@@ -1057,16 +1077,16 @@ const edit: PageSpec = {
                   })
                 ]
               }),
-              element('Container', {
-                className: 'centred',
-                bindings: [shownWhen('apiContainer_editPost.cannotEdit')],
+              container({
+                class: 'centred',
+                bind: [visibleWhen('apiContainer_editPost.cannotEdit')],
                 children: [
-                  element('Container', {
-                    className: 'cardSurface',
+                  container({
+                    class: 'cardSurface',
                     children: [
-                      element('Heading', {
-                        attributes: { subType: 'h1', content: 'Not yours to edit' },
-                        className: 'formTitle'
+                      heading({
+                        subType: 'h1', content: 'Not yours to edit',
+                        class: 'formTitle'
                       }),
                       note(
                         'You are signed in, and this post belongs to somebody else. The server would refuse the change too — this page is only saying so first.'
@@ -1076,18 +1096,18 @@ const edit: PageSpec = {
                   })
                 ]
               }),
-              element('Container', {
-                className: 'centred',
-                bindings: [shownWhen('apiContainer_editPost.missing')],
+              container({
+                class: 'centred',
+                bind: [visibleWhen('apiContainer_editPost.missing')],
                 children: [
-                  element('Container', {
-                    className: 'cardSurface',
+                  container({
+                    class: 'cardSurface',
                     children: [
-                      element('Heading', {
-                        attributes: { subType: 'h1', content: 'That post does not exist.' },
-                        className: 'formTitle'
+                      heading({
+                        subType: 'h1', content: 'That post does not exist.',
+                        class: 'formTitle'
                       }),
-                      link('/', 'buttonQuiet', [label('Back to the latest')])
+                      linkTo('/', 'buttonQuiet', [label('Back to the latest')])
                     ]
                   })
                 ]
@@ -1111,26 +1131,26 @@ const signIn: PageSpec = {
   slug: 'login',
   idRef: 'signInPage',
   accessLevel: 'public',
-  className: 'page',
+  class: 'page',
   body: [
     chrome('chromeLogin', [
-      element('Container', {
-        className: 'main',
+      container({
+        class: 'main',
         children: [
-          element('Container', {
-            className: 'centred',
+          container({
+            class: 'centred',
             children: [
-              element('Container', {
-                className: 'cardSurface',
+              container({
+                class: 'cardSurface',
                 children: [
-                  element('Heading', { attributes: { subType: 'h1', content: 'Sign in' }, className: 'formTitle' }),
+                  heading({ subType: 'h1', content: 'Sign in', class: 'formTitle' }),
                   note(
                     'ada / password is on the masthead and may publish. grace / password reads — and is refused, politely, if she tries.'
                   ),
-                  element('Form', {
+                  form({
                     idRef: 'loginForm',
-                    className: 'form',
-                    attributes: { managedByInteractions: true, method: 'post' },
+                    class: 'form',
+                    managedByInteractions: true, method: 'post',
                     flows: [
                       [
                         { id: 'signIn', type: 'trigger', action: 'onSubmit', on: 'loginForm' },
@@ -1151,9 +1171,9 @@ const signIn: PageSpec = {
                     children: [
                       field('username', 'Username', 'text', { defaultValue: 'ada' }),
                       field('password', 'Password', 'password', { defaultValue: 'password' }),
-                      element('Button', {
-                        attributes: { subType: 'submit', content: 'Sign in' },
-                        className: 'buttonWide'
+                      button({
+                        subType: 'submit', content: 'Sign in',
+                        class: 'buttonWide'
                       })
                     ]
                   })
@@ -1172,64 +1192,64 @@ const account: PageSpec = {
   slug: 'login',
   idRef: 'accountPage',
   accessLevel: 'authenticated',
-  className: 'page',
+  class: 'page',
   body: [
     chrome('chromeAccount', [
-      element('Container', {
-        className: 'main',
+      container({
+        class: 'main',
         children: [
-          element('Container', {
-            className: 'centred',
+          container({
+            class: 'centred',
             children: [
-              element('Container', {
-                className: 'cardSurface',
+              container({
+                class: 'cardSurface',
                 children: [
-                  element('Container', {
-                    className: 'metaRow',
+                  container({
+                    class: 'metaRow',
                     children: [
                       /**
                        * The initial comes from the page's own chrome provider: the whole page sits inside it, and
                        * a source reaches every element below the provider that publishes it.
                        */
                       avatar('apiContainer_chromeAccount.initial'),
-                      element('Container', {
-                        className: 'stack',
+                      container({
+                        class: 'stack',
                         children: [
                           /**
                            * `auth` is the source the SDK publishes from whoever is signed in. On a server-rendered
                            * page it is already filled in when the HTML leaves the server — the name is in the
                            * markup, not painted in after.
                            */
-                          bound('Text', 'auth.details.username', 'bylineName'),
-                          bound('Text', 'auth.details.email', 'meta')
+                          bound('text', 'auth.details.username', 'bylineName'),
+                          bound('text', 'auth.details.email', 'meta')
                         ]
                       })
                     ]
                   }),
-                  element('Container', {
-                    className: 'chipRow',
+                  container({
+                    class: 'chipRow',
                     children: [
-                      element('Text', {
-                        attributes: { content: 'May publish' },
-                        className: 'chip',
-                        bindings: [shownWhen('apiContainer_chromeAccount.canWrite')]
+                      text({
+                        content: 'May publish',
+                        class: 'chip',
+                        bind: [visibleWhen('apiContainer_chromeAccount.canWrite')]
                       }),
-                      element('Text', {
-                        attributes: { content: 'Reader' },
-                        className: 'chipQuiet',
-                        bindings: [shownWhen('apiContainer_chromeAccount.readOnly')]
+                      text({
+                        content: 'Reader',
+                        class: 'chipQuiet',
+                        bind: [visibleWhen('apiContainer_chromeAccount.readOnly')]
                       })
                     ]
                   }),
                   note('Signed in. The header above already knows it, because the server told it so.'),
-                  element('Container', {
-                    className: 'actionRow',
+                  container({
+                    class: 'actionRow',
                     children: [
                       writeLink('chromeAccount'),
-                      element('Button', {
+                      button({
                         idRef: 'signOut',
-                        attributes: { subType: 'button', content: 'Sign out' },
-                        className: 'buttonQuiet',
+                        subType: 'button', content: 'Sign out',
+                        class: 'buttonQuiet',
                         flows: [
                           [
                             { id: 'signOut', type: 'trigger', action: 'onClick', on: 'signOut' },

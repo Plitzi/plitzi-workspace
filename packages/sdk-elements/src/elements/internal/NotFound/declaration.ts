@@ -1,12 +1,20 @@
 /** Static declaration for NotFound: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { NotFoundProps } from './NotFound';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type NotFoundAttributes = AuthorableAttributes<NotFoundProps>;
+
+const declaration = elementDeclaration<NotFoundAttributes>()({
   type: 'notFound',
   content: {
     attributes: {},
     definition: {
       label: 'Not Found',
       type: 'notFound',
-      description: '',
+      description: 'The 404 screen shown when no route matches.',
       bindings: {},
       styleSelectors: {
         base: ''
@@ -44,6 +52,6 @@ const declaration = {
     },
     settings: {}
   }
-};
+});
 
 export default declaration;

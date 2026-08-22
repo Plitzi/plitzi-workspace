@@ -1,5 +1,13 @@
 /** Static declaration for DialogContainer: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { DialogContainerProps } from './DialogContainer';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type DialogContainerAttributes = AuthorableAttributes<DialogContainerProps>;
+
+const declaration = elementDeclaration<DialogContainerAttributes>()({
   type: 'dialogContainer',
   content: {
     attributes: {
@@ -11,7 +19,7 @@ const declaration = {
     definition: {
       label: 'Dialog Container',
       type: 'dialogContainer',
-      description: '',
+      description: 'A native <dialog> container shown or hidden through interactions (e.g. an onClick open/close).',
       items: [],
       bindings: {},
       styleSelectors: {
@@ -140,6 +148,6 @@ const declaration = {
     settings: {}
   },
   initialItems: ['container']
-};
+});
 
 export default declaration;

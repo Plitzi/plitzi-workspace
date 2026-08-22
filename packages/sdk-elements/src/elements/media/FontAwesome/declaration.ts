@@ -1,5 +1,13 @@
 /** Static declaration for FontAwesome: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { FontAwesomeProps } from './FontAwesome';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type FontAwesomeAttributes = AuthorableAttributes<FontAwesomeProps>;
+
+const declaration = elementDeclaration<FontAwesomeAttributes>()({
   type: 'fontAwesome',
   content: {
     attributes: {
@@ -10,6 +18,7 @@ const declaration = {
     definition: {
       label: 'Font Awesome',
       type: 'fontAwesome',
+      description: 'Renders a Font Awesome icon by its icon name.',
       bindings: {},
       styleSelectors: {
         base: ''
@@ -50,6 +59,6 @@ const declaration = {
     },
     settings: {}
   }
-};
+});
 
 export default declaration;

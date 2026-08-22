@@ -1,6 +1,6 @@
 import type { BuiltinParam, ParamSpec } from './paramSpec';
 
-// Built-in data-binding transformers — a hand-maintained mirror of sdk-shared/dataSource/utility. A transformer
+// Built-in data-binding transformers, beside the implementations they describe (`../dataSource/utility`). A transformer
 // post-processes the value a binding pulls from its source before it reaches the element field:
 // `source → transformer₁ → transformer₂ → field`. The SSR runtime resolves each one by its `action` ALONE
 // (`utility[action]`), so an unknown action makes the runtime skip it and pass the value through UNCHANGED — the

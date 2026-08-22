@@ -1,5 +1,13 @@
 /** Static declaration for List: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { ListProps } from './List';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type ListAttributes = AuthorableAttributes<ListProps>;
+
+const declaration = elementDeclaration<ListAttributes>()({
   type: 'list',
   content: {
     attributes: {
@@ -11,7 +19,8 @@ const declaration = {
       label: 'List',
       type: 'list',
       description:
-        'A List gives you the ability to group elements or content (like links in a navigation menu, or steps in a recipe), to add helpful structure to your site.',
+        'Repeats a template (its listItem/link child) once per entry of a data array — the way to render a dynamic ' +
+        'collection. Bind its items to a data source (e.g. an apiContainer response).',
       items: [],
       bindings: {},
       styleSelectors: {
@@ -75,6 +84,6 @@ const declaration = {
     settings: {}
   },
   initialItems: ['listItem', 'listItem', 'listItem']
-};
+});
 
 export default declaration;

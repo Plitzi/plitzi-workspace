@@ -1,5 +1,3 @@
-import styleConstants from '@plitzi/sdk-shared/style/styleConstants';
-
 import { expandBorder, expandBorderGroup } from './border';
 import { expandBorderRadius, expandBox, expandGap } from './box';
 import { SIDES } from './helpers';
@@ -23,31 +21,15 @@ import {
   expandTransition
 } from './visual';
 
-import type { CssProps } from '../../types';
-
-/** Every kebab-case CSS property Plitzi's style engine understands. Values written to a definition
- *  must use these exact keys — camelCase or unknown keys are rejected by the validator. */
-export const cssProperties: string[] = Array.from(new Set(Object.values(styleConstants))).sort();
-
-const cssPropertySet = new Set(cssProperties);
-
-export const isCssProperty = (key: string): boolean => cssPropertySet.has(key);
-
-const toKebab = (key: string): string => key.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-
-/** If a camelCase key maps to a known kebab-case property, return it — used to teach the agent the correct key. */
-export const suggestCssProperty = (key: string): string | undefined => {
-  const kebab = toKebab(key);
-
-  return cssPropertySet.has(kebab) ? kebab : undefined;
-};
+import type { CssPatch, CssProps } from '../types';
 
 // --- Shorthand expansion ------------------------------------------------------------------------------
 
 type Expander = (key: string, value: string, out: CssProps) => void;
 
-// Every shorthand the MCP accepts, mapped to the expander that atomizes it. Plitzi stores one property per key so a
-// breakpoint/state/variant can override just that one, so nothing reaches persistence in shorthand form.
+// Every shorthand the authoring surface accepts, mapped to the expander that atomizes it. Plitzi stores one
+// property per key so a breakpoint/state/variant can override just that one, so nothing reaches persistence in
+// shorthand form.
 const EXPANDERS = new Map<string, Expander>([
   ['padding', expandBox],
   ['margin', expandBox],
@@ -83,7 +65,7 @@ for (const side of SIDES) {
   EXPANDERS.set(`border-${side}`, expandBorder);
 }
 
-/** Every shorthand the MCP accepts and atomizes — advertised to the agent so it knows it may write plain CSS. */
+/** Every shorthand that is accepted and atomized — advertised to an agent so it knows it may write plain CSS. */
 export const cssShorthands: string[] = Array.from(EXPANDERS.keys()).sort();
 
 const expandOne = (key: string, raw: string | number, out: CssProps): boolean => {
@@ -117,8 +99,6 @@ export const expandShorthand = (css: CssProps): CssProps => {
 };
 
 // --- Patch expansion ----------------------------------------------------------------------------------
-
-export type CssPatch = Record<string, string | number | null>;
 
 // A removal (`null`) names a shorthand but has no value to classify, so the keys it clears are taken from a probe
 // expansion of a value that exercises every longhand the shorthand controls.

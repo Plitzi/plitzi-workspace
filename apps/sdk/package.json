@@ -15,6 +15,11 @@
       "import": "./dist/plitzi-sdk.js",
       "default": "./dist/plitzi-sdk.js"
     },
+    "./authoring": {
+      "types": "./dist/authoring.d.ts",
+      "import": "./dist/plitzi-sdk-authoring.js",
+      "default": "./dist/plitzi-sdk-authoring.js"
+    },
     "./plitzi-sdk.css": "./dist/plitzi-sdk.css",
     "./plitzi-sdk-devtools.css": "./dist/plitzi-sdk-devtools.css",
     "./plitzi-sdk-vendor.js": "./dist/plitzi-sdk-vendor.js",
@@ -113,11 +118,11 @@
     "lint-style": "stylelint \"**/*.scss\" --custom-syntax postcss-scss",
     "lint-style:fix": "stylelint \"**/*.scss\" --custom-syntax postcss-scss --fix",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "build:dev": "tsc -p tsconfig.app.json --noEmit && vite build --mode development",
+    "build:dev": "tsc -p tsconfig.app.json --noEmit && vite build --mode development && vite build --config vite.authoring.config.ts --mode development",
     "build:dev-watch": "tsc -p tsconfig.app.json --noEmit && vite build --mode development --watch",
     "build:dev-gzip": "tsc -p tsconfig.app.json --noEmit && ONLY_GZIP=1 vite build --mode development",
     "build:dev-analyze": "tsc -p tsconfig.app.json --noEmit && ONLY_ANALYZE=1 vite build --mode development",
-    "build:prod": "tsc -p tsconfig.app.json --noEmit && vite build",
+    "build:prod": "tsc -p tsconfig.app.json --noEmit && vite build && vite build --config vite.authoring.config.ts",
     "build:prod-watch": "tsc -p tsconfig.app.json --noEmit && vite build --watch",
     "build:prod-gzip": "tsc -p tsconfig.app.json --noEmit && ONLY_GZIP=1 vite build",
     "build:prod-analyze": "tsc -p tsconfig.app.json --noEmit && ONLY_ANALYZE=1 vite build",

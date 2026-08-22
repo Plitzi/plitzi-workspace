@@ -1,5 +1,13 @@
 /** Static declaration for Form: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { FormProps } from './Form';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type FormAttributes = AuthorableAttributes<FormProps>;
+
+const declaration = elementDeclaration<FormAttributes>()({
   type: 'form',
   content: {
     attributes: {
@@ -12,7 +20,8 @@ const declaration = {
     definition: {
       label: 'Form',
       type: 'form',
-      description: '',
+      description:
+        'A <form> that groups form controls and handles submission; wire its submit through an interaction flow.',
       items: [],
       bindings: {},
       styleSelectors: {
@@ -50,6 +59,6 @@ const declaration = {
     },
     settings: {}
   }
-};
+});
 
 export default declaration;

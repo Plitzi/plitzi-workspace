@@ -1,5 +1,13 @@
 /** Static declaration for Reference: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { ReferenceProps } from './Reference';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type ReferenceAttributes = AuthorableAttributes<ReferenceProps>;
+
+const declaration = elementDeclaration<ReferenceAttributes>()({
   type: 'reference',
   content: {
     attributes: {
@@ -10,7 +18,7 @@ const declaration = {
     definition: {
       label: 'Reference',
       type: 'reference',
-      description: '',
+      description: 'Reuses another element or template by id, rendering it in place.',
       items: [],
       bindings: {},
       styleSelectors: {
@@ -49,6 +57,6 @@ const declaration = {
     },
     settings: {}
   }
-};
+});
 
 export default declaration;

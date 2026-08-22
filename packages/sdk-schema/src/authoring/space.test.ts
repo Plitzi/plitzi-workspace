@@ -1,27 +1,27 @@
 import { describe, expect, it } from 'vitest';
 
-import { authorBinding, authorFlow, authorSpace, authoringId } from './authoring';
+import { authorBinding, authorFlow, authorSpace, authoringId, validateSpace, visibleWhen } from './index';
 
-import type { ElementSpec } from './authoring';
-import type { SpaceSpec } from './authoring';
+import type { ElementSpec, SpaceSpec } from './index';
+import type { StyleObject } from '@plitzi/sdk-shared';
 
-const text = (content: string, style?: ElementSpec['style']): ElementSpec => ({
+const text = (content: string, css?: ElementSpec['css']): ElementSpec => ({
   type: 'text',
   attributes: { content },
-  ...(style ? { style } : {})
+  ...(css ? { css } : {})
 });
 
-const heading = (content: string, subType: string, style?: ElementSpec['style']): ElementSpec => ({
+const heading = (content: string, subType: string, css?: ElementSpec['css']): ElementSpec => ({
   type: 'heading',
   attributes: { subType, content },
-  ...(style ? { style } : {})
+  ...(css ? { css } : {})
 });
 
-const container = (children: ElementSpec[], style?: ElementSpec['style']): ElementSpec => ({
+const container = (children: ElementSpec[], css?: ElementSpec['css']): ElementSpec => ({
   type: 'container',
   attributes: { subType: 'div' },
   children,
-  ...(style ? { style } : {})
+  ...(css ? { css } : {})
 });
 
 const minimal = (overrides: Partial<SpaceSpec> = {}): SpaceSpec => ({
@@ -33,7 +33,7 @@ const minimal = (overrides: Partial<SpaceSpec> = {}): SpaceSpec => ({
       slug: '',
       seoTitle: 'Home — Test',
       seoDescription: 'A description.',
-      style: { desktop: { display: 'flex' } },
+      css: { desktop: { display: 'flex' } },
       body: [
         container([heading('Hello', 'h1', { desktop: { 'font-size': '48px' } })], { desktop: { 'row-gap': '10px' } })
       ]
@@ -144,7 +144,7 @@ describe('authorSpace', () => {
         {
           name: 'Home',
           slug: '',
-          className: 'field',
+          class: 'field',
           body: [{ type: 'formControl', slots: { input: 'field' }, attributes: { name: 'title' } }]
         }
       ]
@@ -266,8 +266,8 @@ describe('authorSpace / style', () => {
           name: 'Home',
           slug: '',
           body: [
-            { type: 'link', attributes: { href: '#a' }, className: 'btn' },
-            { type: 'link', attributes: { href: '#b' }, className: 'btn' }
+            { type: 'link', attributes: { href: '#a' }, class: 'btn' },
+            { type: 'link', attributes: { href: '#b' }, class: 'btn' }
           ]
         }
       ]
@@ -366,7 +366,7 @@ describe('authorBinding', () => {
             {
               type: 'list',
               attributes: { subType: 'ul', source: 'controlled' },
-              bindings: [
+              bind: [
                 { to: 'items', source: 'api-1.data' },
                 { to: 'visibility', source: 'api-1.ready', category: 'initialState' }
               ]
@@ -390,5 +390,241 @@ describe('authoringId', () => {
     expect(authoringId('a/b')).toBe(authoringId('a/b'));
     expect(authoringId('a/b')).not.toBe(authoringId('a/c'));
     expect(authoringId('a/b')).toMatch(/^[0-9a-f]{24}$/);
+  });
+});
+
+describe('authorSpace / what it refuses', () => {
+  it('expands the shorthands an author writes, so the style editor can read the result back', () => {
+    const { schema, style } = authorSpace({
+      name: 'Short',
+      permanentUrl: 'short',
+      pages: [{ name: 'Home', slug: '', body: [container([], { padding: '96px 24px', gap: '8px' })] }]
+    });
+
+    const boxId = schema.flat[schema.pages[0]].definition.items?.[0] as string;
+    const selector = schema.flat[boxId].definition.styleSelectors.base;
+
+    expect(style.platform.desktop[selector].attributes.base.default).toEqual({
+      'padding-top': '96px',
+      'padding-right': '24px',
+      'padding-bottom': '96px',
+      'padding-left': '24px',
+      'row-gap': '8px',
+      'column-gap': '8px'
+    });
+  });
+
+  it('reads a bare rule set as the desktop breakpoint', () => {
+    const { schema, style } = authorSpace({
+      name: 'Bare',
+      permanentUrl: 'bare-css',
+      pages: [{ name: 'Home', slug: '', body: [text('hi', { color: 'red' })] }]
+    });
+
+    const textId = schema.flat[schema.pages[0]].definition.items?.[0] as string;
+    const selector = schema.flat[textId].definition.styleSelectors.base;
+
+    expect(style.platform.desktop[selector].attributes.base.default).toEqual({ color: 'red' });
+    expect(style.platform.mobile[selector]).toBeUndefined();
+  });
+
+  it('refuses a property the style editor could not read back', () => {
+    expect(() =>
+      authorSpace({
+        name: 'Typo',
+        permanentUrl: 'typo',
+        pages: [{ name: 'Home', slug: '', body: [text('hi', { paddingTop: '8px' })] }]
+      })
+    ).toThrow(/paddingTop.*padding-top/);
+  });
+
+  it('refuses an element that asks for a shared class and rules of its own at once', () => {
+    // One base selector per element: keeping the class and dropping the rules is what it used to do, silently.
+    expect(() =>
+      authorSpace({
+        name: 'Both',
+        permanentUrl: 'both',
+        classes: { card: { padding: '8px' } },
+        pages: [{ name: 'Home', slug: '', body: [{ type: 'text', class: 'card', css: { color: 'red' } }] }]
+      })
+    ).toThrow(/one base selector/);
+  });
+
+  it('names the class an author probably meant when the one they wrote does not exist', () => {
+    expect(() =>
+      authorSpace({
+        name: 'Typo',
+        permanentUrl: 'class-typo',
+        classes: { card: { padding: '8px' } },
+        pages: [{ name: 'Home', slug: '', body: [{ type: 'text', class: 'crad' }] }]
+      })
+    ).toThrow(/"crad".*did you mean "card"/);
+  });
+
+  it('refuses a slot pointing at a class nothing declares', () => {
+    expect(() =>
+      authorSpace({
+        name: 'Slot',
+        permanentUrl: 'slot-typo',
+        classes: { field: { width: '100%' } },
+        pages: [{ name: 'Home', slug: '', body: [{ type: 'formControl', slots: { input: 'fields' } }] }]
+      })
+    ).toThrow(/Slot "input".*"fields"/);
+  });
+
+  it('refuses a binding whose source names an element that is not there', () => {
+    // The quietest failure a space can carry: the binding resolves to nothing, the element renders its
+    // placeholder, and every layer below considers the document perfectly valid.
+    expect(() =>
+      authorSpace({
+        name: 'Bound',
+        permanentUrl: 'bad-source',
+        pages: [
+          {
+            name: 'Home',
+            slug: '',
+            body: [
+              { type: 'apiContainer', idRef: 'posts', attributes: { action: 'list' } },
+              { type: 'text', bind: { content: 'apiContainer_post.title' } }
+            ]
+          }
+        ]
+      })
+    ).toThrow(/no element answers to the idRef/);
+  });
+
+  it('takes the short binding form, and lets a full one target element state', () => {
+    const { schema } = authorSpace({
+      name: 'Bound',
+      permanentUrl: 'bound-ok',
+      pages: [
+        {
+          name: 'Home',
+          slug: '',
+          body: [
+            { type: 'apiContainer', idRef: 'posts', attributes: { action: 'list' } },
+            { type: 'text', bind: { content: 'apiContainer_posts.title' } },
+            { type: 'text', bind: [visibleWhen('apiContainer_posts.hasPosts')] }
+          ]
+        }
+      ]
+    });
+
+    const [, short, state] = (schema.flat[schema.pages[0]].definition.items ?? []).map(id => schema.flat[id]);
+
+    expect(short.definition.bindings?.attributes?.[0]).toMatchObject({
+      to: 'content',
+      source: 'apiContainer_posts.title'
+    });
+    expect(state.definition.bindings?.initialState?.[0]).toMatchObject({ to: 'visibility' });
+  });
+
+  it('names the element in the builder tree, without shadowing an attribute called label', () => {
+    const { schema } = authorSpace({
+      name: 'Labelled',
+      permanentUrl: 'labelled',
+      pages: [
+        {
+          name: 'Home',
+          slug: '',
+          body: [{ type: 'link', attributes: { href: '/', label: 'Home' }, meta: { label: 'Brand link' } }]
+        }
+      ]
+    });
+
+    const link = schema.flat[(schema.flat[schema.pages[0]].definition.items ?? [])[0]];
+
+    expect(link.attributes.label).toBe('Home');
+    expect(link.definition.label).toBe('Brand link');
+  });
+
+  it('hands back what was survivable rather than swallowing it', () => {
+    const { warnings } = authorSpace(minimal());
+
+    expect(Array.isArray(warnings)).toBe(true);
+  });
+});
+
+describe('validateSpace', () => {
+  it('accepts what authorSpace produced', () => {
+    const authored = authorSpace(minimal());
+
+    expect(validateSpace(authored).valid).toBe(true);
+  });
+
+  it('reports a style rule nobody could edit, wherever in the style it sits', () => {
+    const authored = authorSpace(minimal());
+    authored.style.platform.desktop.rogue = {
+      name: 'rogue',
+      type: 'class',
+      // The cast is the test: a property outside the vocabulary is exactly what the compiler cannot catch in a
+      // document that arrived as JSON, and what the validator has to.
+      attributes: { base: { default: { 'font-smoothing': 'antialiased' } as StyleObject } },
+      cache: ''
+    };
+
+    const { valid, errors } = validateSpace(authored);
+
+    expect(valid).toBe(false);
+    expect(errors[0].code).toBe('UNKNOWN_CSS_PROPERTY');
+  });
+
+  it('reports a flow whose chain points at a node that is not there', () => {
+    const authored = authorSpace(minimal());
+    const page = authored.schema.flat[authored.schema.pages[0]];
+    page.definition.interactions = {
+      a: {
+        id: 'a',
+        title: 'onClick',
+        type: 'trigger',
+        action: 'onClick',
+        params: {},
+        preview: {},
+        elementId: null,
+        beforeNode: '',
+        afterNode: 'gone',
+        flowId: 'a',
+        enabled: true
+      }
+    };
+
+    expect(validateSpace(authored).errors.map(error => error.code)).toContain('BROKEN_FLOW_LINK');
+  });
+});
+
+describe('authorSpace / flows', () => {
+  it('fires a trigger on the element it was declared on, without being told twice', () => {
+    const { schema } = authorSpace({
+      name: 'Flowed',
+      permanentUrl: 'flowed',
+      pages: [
+        {
+          name: 'Home',
+          slug: '',
+          body: [
+            {
+              type: 'button',
+              idRef: 'cta',
+              attributes: { content: 'Go' },
+              flows: [
+                [
+                  { type: 'trigger', action: 'onClick' },
+                  { type: 'globalCallback', action: 'setState', on: 'state', params: { key: 'gone', value: true } },
+                  { type: 'utility', action: 'delayTime', params: { time: 200 } },
+                  { type: 'callback', action: 'setState', params: { category: 'attribute', key: 'content' } }
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    });
+
+    const button = schema.flat[(schema.flat[schema.pages[0]].definition.items ?? [])[0]];
+    const nodes = Object.values(button.definition.interactions ?? {});
+
+    // The trigger and the element callback run against this element; the global callback names its source module,
+    // and the utility runs against nothing at all.
+    expect(nodes.map(node => node.elementId)).toEqual(['cta', 'state', null, 'cta']);
   });
 });

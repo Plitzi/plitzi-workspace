@@ -9,7 +9,7 @@ import {
   splitTokens
 } from './helpers';
 
-import type { CssProps } from '../../types';
+import type { CssProps } from '../types';
 
 // overflow: 1 value → both axes, 2 values → x y
 export const expandOverflow = (value: string, out: CssProps): void => {

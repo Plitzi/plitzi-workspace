@@ -13,6 +13,7 @@ import NodeHtmlDeclaration from './advanced/NodeHtml/declaration';
 import ReferenceDeclaration from './advanced/Reference/declaration';
 import ButtonDeclaration from './basic/Button/declaration';
 import DropdownDeclaration from './basic/Dropdown/declaration';
+import DropdownPopupDeclaration from './basic/Dropdown/DropdownPopup/declaration';
 import HeadingDeclaration from './basic/Heading/declaration';
 import LinkDeclaration from './basic/Link/declaration';
 import MarkdownDeclaration from './basic/Markdown/declaration';
@@ -33,9 +34,13 @@ import ApiContainerDeclaration from './provider/ApiContainer/declaration';
 import ContainerDeclaration from './structure/Container/declaration';
 import DialogContainerDeclaration from './structure/DialogContainer/declaration';
 import ListDeclaration from './structure/List/declaration';
+import ListItemDeclaration from './structure/List/ListItem/declaration';
 import ModalContainerDeclaration from './structure/ModalContainer/declaration';
 import PaginationDeclaration from './structure/Pagination/declaration';
 import TabContainerDeclaration from './structure/TabContainer/declaration';
+import TabContainerBodyDeclaration from './structure/TabContainer/TabContainerBody/declaration';
+import TabContainerHeaderDeclaration from './structure/TabContainer/TabContainerHeader/declaration';
+import TabContainerItemDeclaration from './structure/TabContainer/TabContainerItem/declaration';
 
 export const elementDeclarations = {
   ApiContainer: ApiContainerDeclaration,
@@ -46,6 +51,7 @@ export const elementDeclarations = {
   Custom: CustomDeclaration,
   DialogContainer: DialogContainerDeclaration,
   Dropdown: DropdownDeclaration,
+  DropdownPopup: DropdownPopupDeclaration,
   FontAwesome: FontAwesomeDeclaration,
   Form: FormDeclaration,
   FormControl: FormControlDeclaration,
@@ -54,6 +60,7 @@ export const elementDeclarations = {
   LayoutContainer: LayoutContainerDeclaration,
   Link: LinkDeclaration,
   List: ListDeclaration,
+  ListItem: ListItemDeclaration,
   Loading: LoadingDeclaration,
   Markdown: MarkdownDeclaration,
   ModalContainer: ModalContainerDeclaration,
@@ -65,6 +72,9 @@ export const elementDeclarations = {
   Reference: ReferenceDeclaration,
   RichText: RichTextDeclaration,
   TabContainer: TabContainerDeclaration,
+  TabContainerBody: TabContainerBodyDeclaration,
+  TabContainerHeader: TabContainerHeaderDeclaration,
+  TabContainerItem: TabContainerItemDeclaration,
   Text: TextDeclaration,
   ThemeToggle: ThemeToggleDeclaration,
   Video: VideoDeclaration
@@ -81,6 +91,7 @@ export {
   CustomDeclaration,
   DialogContainerDeclaration,
   DropdownDeclaration,
+  DropdownPopupDeclaration,
   FontAwesomeDeclaration,
   FormControlDeclaration,
   FormDeclaration,
@@ -89,6 +100,7 @@ export {
   LayoutContainerDeclaration,
   LinkDeclaration,
   ListDeclaration,
+  ListItemDeclaration,
   LoadingDeclaration,
   MarkdownDeclaration,
   ModalContainerDeclaration,
@@ -99,7 +111,10 @@ export {
   ParagraphDeclaration,
   ReferenceDeclaration,
   RichTextDeclaration,
+  TabContainerBodyDeclaration,
   TabContainerDeclaration,
+  TabContainerHeaderDeclaration,
+  TabContainerItemDeclaration,
   TextDeclaration,
   ThemeToggleDeclaration,
   VideoDeclaration

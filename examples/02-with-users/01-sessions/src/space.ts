@@ -1,237 +1,172 @@
-import { readOfflineData } from '@plitzi/example-space';
+import { sampleSpace } from '@plitzi/example-space/space';
+import {
+  authLogin,
+  authLogout,
+  authorSpace,
+  button,
+  form,
+  formControl,
+  heading,
+  named,
+  onClick,
+  onSubmit,
+  paragraph
+} from '@plitzi/sdk-server/authoring';
 
-import type { Element, OfflineDataRaw } from '@plitzi/sdk-shared';
+import type { AuthoredSpace, PageSpec } from '@plitzi/sdk-server/authoring';
 
 /**
  * The sample space, plus what makes this example about people: a page to sign in on, and a page you only see once
  * you have.
  *
- * Built here rather than shipped as another JSON so the wiring is readable — this file *is* the explanation. The
- * mechanism is the product's own: **two pages share one path and differ by `accessLevel`**, and the router picks
- * between them from whether the visitor is signed in. Nothing conditional is written into either page.
+ * Declared here rather than shipped as another JSON so the wiring is readable — this file *is* the explanation.
+ * The mechanism is the product's own: **two pages share one path and differ by `accessLevel`**, and the router
+ * picks between them from whether the visitor is signed in. Nothing conditional is written into either page.
  */
-
-const el = (
-  id: string,
-  definition: Partial<Element['definition']> & { idRef?: string },
-  attributes: Record<string, unknown> = {}
-): Element => {
-  const { idRef, ...rest } = definition;
-
-  return {
-    id,
-    // Interactions are wired by `idRef`, never by the opaque id — an element without one is not registered at all.
-    ...(idRef ? { idRef } : {}),
-    attributes,
-    definition: { rootId: 'signed-out', styleSelectors: { base: '' }, ...rest }
-  } as Element;
-};
-
-/** A step in an interaction flow. The flow is an ordered list expressed as a linked list of nodes. */
-const step = (
-  id: string,
-  flowId: string,
-  type: 'trigger' | 'globalCallback',
-  action: string,
-  elementId: string,
-  params: Record<string, unknown> = {},
-  links: { beforeNode?: string; afterNode?: string } = {}
-) => ({
-  id,
-  flowId,
-  type,
-  action,
-  elementId,
-  params,
-  title: action,
-  preview: {},
-  enabled: true,
-  beforeNode: links.beforeNode ?? '',
-  afterNode: links.afterNode ?? ''
-});
 
 /**
  * Submitting the form runs auth's `login`. The credentials are read off the trigger's own payload — a form fires
  * `onSubmit` with `values`, keyed by each control's `name` — which is why the controls below are named `username`
  * and `password`.
  *
- * `action` is the name the callback is REGISTERED under (`login`, `logout`), not the label the builder shows for it
- * (`Auth Login`): a step is resolved as `callbacks[elementId][action]`, and a name that resolves to nothing fails
- * the step silently — the button appears to do nothing at all.
+ * Neither step says where it runs: a trigger fires on the element the flow is declared on, and `authLogin` names
+ * the module that registered it. Getting that pair wrong is what makes a button appear to do nothing at all, and
+ * it is exactly what these two builders take out of an author's hands.
  */
-const loginFlow = {
-  'login-trigger': step('login-trigger', 'login-flow', 'trigger', 'onSubmit', 'login-form', {}, {
-    afterNode: 'login-call'
-  }),
-  'login-call': step(
-    'login-call',
-    'login-flow',
-    'globalCallback',
-    'login',
-    // A global callback names the module that registered it, not an element: auth's callbacks live on `auth`.
-    'auth',
-    { mode: 'normal', username: '{{login-trigger.values.username}}', password: '{{login-trigger.values.password}}' },
-    { beforeNode: 'login-trigger' }
-  )
-};
-
-const logoutFlow = {
-  'logout-trigger': step('logout-trigger', 'logout-flow', 'trigger', 'onClick', 'logout-button', {}, {
-    afterNode: 'logout-call'
-  }),
-  'logout-call': step('logout-call', 'logout-flow', 'globalCallback', 'logout', 'auth', {}, {
-    beforeNode: 'logout-trigger'
+const loginFlow = [
+  named('login', onSubmit()),
+  authLogin({
+    mode: 'normal',
+    username: '{{login.values.username}}',
+    password: '{{login.values.password}}'
   })
-};
+];
 
-const signedOutPage: Record<string, Element> = {
-  'signed-out': el('signed-out', {
-    label: 'Sign in',
-    type: 'page',
-    styleSelectors: { base: 'auth-page' },
-    items: ['signed-out-title', 'login-form']
-  }, { slug: '', default: true, name: 'Sign in', accessLevel: 'public' }),
+const field = (name: string, label: string, subType: 'text' | 'password', defaultValue: string): PageSpec['body'][0] =>
+  formControl({ subType, name, label, defaultValue, required: true, slots: { input: 'authInput' } });
 
-  'signed-out-title': el('signed-out-title', {
-    label: 'Heading',
-    type: 'heading',
-    parentId: 'signed-out',
-    initialState: { visibility: true, styleVariant: { heading: { base: 'lg' } } }
-  }, { subType: 'h1', content: 'Sign in' }),
-
-  'login-form': el('login-form', {
-    label: 'Login form',
-    type: 'form',
-    idRef: 'login-form',
-    parentId: 'signed-out',
-    styleSelectors: { base: 'auth-form' },
-    items: ['login-username', 'login-password', 'login-submit'],
-    interactions: loginFlow
-  }, {
-    // Without this the browser submits the form itself and the page navigates away; the interaction is what runs.
-    managedByInteractions: true,
-    method: 'post'
-  }),
-
-  'login-username': el('login-username', {
-    label: 'Username',
-    type: 'formControl',
-    parentId: 'login-form',
-    styleSelectors: { base: '', label: '', input: 'auth-input', error: '' }
-  }, { subType: 'text', name: 'username', label: 'Username', defaultValue: 'ada', required: true }),
-
-  'login-password': el('login-password', {
-    label: 'Password',
-    type: 'formControl',
-    parentId: 'login-form',
-    styleSelectors: { base: '', label: '', input: 'auth-input', error: '' }
-  }, { subType: 'password', name: 'password', label: 'Password', defaultValue: 'password', required: true }),
-
-  'login-submit': el('login-submit', {
-    label: 'Sign in',
-    type: 'button',
-    parentId: 'login-form',
-    styleSelectors: { base: 'auth-button' }
-  }, { subType: 'submit', content: 'Sign in' })
-};
-
-const signedInPage: Record<string, Element> = {
-  'signed-in': el('signed-in', {
-    label: 'Signed in',
-    type: 'page',
-    rootId: 'signed-in',
-    styleSelectors: { base: 'auth-page' },
-    items: ['signed-in-title', 'signed-in-email', 'logout-button']
-  }, { slug: '', default: false, name: 'Signed in', accessLevel: 'authenticated' }),
-
-  /**
-   * The auth data source, published by the SDK from whoever is signed in. Its key is `auth` — the builder LABELS its
-   * fields `user.*`, which is what you pick in the UI, but a binding names the source itself. On a server-rendered
-   * page it is already filled in when the HTML leaves the server: the name is in the markup, not painted in after.
-   */
-  'signed-in-title': el('signed-in-title', {
-    label: 'Heading',
-    type: 'heading',
-    rootId: 'signed-in',
-    parentId: 'signed-in',
-    initialState: { visibility: true, styleVariant: { heading: { base: 'lg' } } },
-    bindings: {
-      attributes: [{ id: 'b-name', source: 'auth.details.username', to: 'content', enabled: true }]
-    }
-  }, { subType: 'h1', content: '' }),
-
-  'signed-in-email': el('signed-in-email', {
-    label: 'Email',
-    type: 'paragraph',
-    rootId: 'signed-in',
-    parentId: 'signed-in',
-    bindings: {
-      attributes: [{ id: 'b-email', source: 'auth.details.email', to: 'content', enabled: true }]
-    }
-  }, { content: '' }),
-
-  'logout-button': el('logout-button', {
-    label: 'Sign out',
-    type: 'button',
-    idRef: 'logout-button',
-    rootId: 'signed-in',
-    parentId: 'signed-in',
-    styleSelectors: { base: 'auth-button' },
-    interactions: logoutFlow
-  }, { subType: 'button', content: 'Sign out' })
+const signedOut: PageSpec = {
+  name: 'Sign in',
+  slug: '',
+  accessLevel: 'public',
+  class: 'authPage',
+  body: [
+    heading({ content: 'Sign in', subType: 'h1', variant: 'lg' }),
+    form({
+      idRef: 'login-form',
+      // Without this the browser submits the form itself and the page navigates away; the interaction is what runs.
+      managedByInteractions: true,
+      method: 'post',
+      class: 'authForm',
+      flows: [loginFlow],
+      children: [
+        field('username', 'Username', 'text', 'ada'),
+        field('password', 'Password', 'password', 'password'),
+        button({ subType: 'submit', content: 'Sign in', class: 'authButton' })
+      ]
+    })
+  ]
 };
 
 /**
- * The sample space defines `--foreground` and `--background-inner` and flips both per colour scheme. Using one
- * without the other is what makes a page unreadable in dark mode: near-white text on the browser's white default.
- * So the page paints its own background from the same pair the text colour comes from.
+ * The auth data source, published by the SDK from whoever is signed in. Its key is `auth` — the builder LABELS its
+ * fields `user.*`, which is what you pick in the UI, but a binding names the source itself. On a server-rendered
+ * page it is already filled in when the HTML leaves the server: the name is in the markup, not painted in after.
  */
-const CSS = `
-.auth-page{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;min-height:100vh;font-family:system-ui,sans-serif;background:var(--background-inner,#fff);color:var(--foreground,#17171c);}
-.auth-form{display:flex;flex-direction:column;gap:12px;min-width:280px;}
-.auth-form label{color:var(--foreground,#17171c);}
-.auth-input{width:100%;padding:8px 10px;border:1px solid #94a3b8;border-radius:6px;font-size:14px;background:var(--background-inner,#fff);color:var(--foreground,#17171c);}
-.auth-button{padding:8px 16px;border-radius:6px;border:0;background:#5c3df5;color:#fff;font-size:14px;cursor:pointer;}
-`;
+const signedIn: PageSpec = {
+  name: 'Signed in',
+  slug: '',
+  accessLevel: 'authenticated',
+  class: 'authPage',
+  body: [
+    heading({ content: '', subType: 'h1', variant: 'lg', bind: { content: 'auth.details.username' } }),
+    paragraph({ content: '', bind: { content: 'auth.details.email' } }),
+    button({
+      idRef: 'logout-button',
+      subType: 'button',
+      content: 'Sign out',
+      class: 'authButton',
+      flows: [[onClick(), authLogout()]]
+    })
+  ]
+};
 
 /**
- * The sample space with the two auth pages added, as the server's adapters want it.
+ * The two pages, on the sample space's own palette.
  *
- * `sessionHintCookie` is a parameter because it has to match the session cookie the server was configured with, and
- * that is the deployment's name for it — the sibling MySQL example renders these same two pages under its own.
+ * `--foreground` and `--background-inner` come from the space it is spread from, and the page paints its own
+ * background from the same pair the text colour comes from: using one without the other is what makes a page
+ * unreadable in dark mode.
+ *
+ * `sessionHintCookie` is a parameter because it has to match the session cookie the server was configured with,
+ * and that is the deployment's name for it — the sibling MySQL example renders these same two pages under its own.
  */
-export const offlineData = (options: { sessionHintCookie?: string } = {}): OfflineDataRaw => {
-  const data = readOfflineData() as OfflineDataRaw;
-
-  return {
-    ...data,
-    schema: {
-      ...data.schema,
-      flat: { ...data.schema.flat, ...signedOutPage, ...signedInPage },
-      /**
-       * These two REPLACE the sample page rather than joining it. All three would sit at `/`, and a page with no
-       * `accessLevel` matches whether or not anybody is signed in — so it competes with both of these for the same
-       * path, and which one wins comes down to sort order. Two pages at one path is the point here; three is an
-       * ambiguity nobody can read off the schema.
-       */
-      pages: ['signed-out', 'signed-in'],
-      /**
-       * What the browser half of auth needs to know. `basic` is the built-in provider — HTTP + JSON — and these are
-       * the endpoints it calls; same origin, because this server serves both the page and the API.
-       *
-       * `sessionHintCookie` is the one worth understanding: a readable cookie carrying only expiry timestamps, so a
-       * page can tell that nobody is signed in — the common case — without asking the server at all.
-       */
-      settings: {
-        ...data.schema.settings,
-        userProvider: 'basic',
-        loginUrl: '/auth/login',
-        userUrl: '/auth/session',
-        refreshUrl: '/auth/refresh',
-        logoutUrl: '/auth/logout',
-        sessionHintCookie: options.sessionHintCookie ?? 'example_session_hint'
+export const offlineData = (options: { sessionHintCookie?: string } = {}): AuthoredSpace =>
+  authorSpace({
+    ...sampleSpace,
+    name: 'Sessions example',
+    permanentUrl: 'sessions-example',
+    classes: {
+      ...sampleSpace.classes,
+      authPage: {
+        desktop: {
+          display: 'flex',
+          'flex-direction': 'column',
+          'align-items': 'center',
+          'justify-content': 'center',
+          gap: '16px',
+          'min-height': '100vh',
+          'font-family': 'system-ui, sans-serif',
+          'background-color': 'var(--background-inner)',
+          color: 'var(--foreground)'
+        }
+      },
+      authForm: {
+        desktop: { display: 'flex', 'flex-direction': 'column', gap: '12px', 'min-width': '280px' }
+      },
+      authInput: {
+        desktop: {
+          width: '100%',
+          padding: '8px 10px',
+          border: '1px solid #94a3b8',
+          'border-radius': '6px',
+          'font-size': '14px',
+          'background-color': 'var(--background-inner)',
+          color: 'var(--foreground)'
+        }
+      },
+      authButton: {
+        desktop: {
+          padding: '8px 16px',
+          'border-radius': '6px',
+          border: '0px solid transparent',
+          'background-color': '#5c3df5',
+          color: '#ffffff',
+          'font-size': '14px',
+          cursor: 'pointer'
+        }
       }
     },
-    style: { ...data.style, cache: `${data.style.cache ?? ''}${CSS}` }
-  };
-};
+    /**
+     * What the browser half of auth needs to know. `basic` is the built-in provider — HTTP + JSON — and these are
+     * the endpoints it calls; same origin, because this server serves both the page and the API.
+     *
+     * `sessionHintCookie` is the one worth understanding: a readable cookie carrying only expiry timestamps, so a
+     * page can tell that nobody is signed in — the common case — without asking the server at all.
+     */
+    settings: {
+      userProvider: 'basic',
+      loginUrl: '/auth/login',
+      userUrl: '/auth/session',
+      refreshUrl: '/auth/refresh',
+      logoutUrl: '/auth/logout',
+      sessionHintCookie: options.sessionHintCookie ?? 'example_session_hint'
+    },
+    /**
+     * These two REPLACE the sample page rather than joining it. All three would sit at `/`, and a page with no
+     * `accessLevel` matches whether or not anybody is signed in — so it competes with both of these for the same
+     * path, and which one wins comes down to sort order. Two pages at one path is the point here; three is an
+     * ambiguity nobody can read off the schema.
+     */
+    pages: [signedOut, signedIn]
+  });

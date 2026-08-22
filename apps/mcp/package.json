@@ -31,9 +31,12 @@
     "@modelcontextprotocol/ext-apps": "^1.7.5",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@plitzi/plitzi-sdk": "workspace:*",
+    "@plitzi/sdk-elements": "workspace:*",
+    "@plitzi/sdk-interactions": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-server": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
+    "@plitzi/sdk-style": "workspace:*",
     "ejs": "^6.0.1",
     "esbuild": "^0.28.2",
     "zod": "^4.4.3"

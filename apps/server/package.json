@@ -39,6 +39,11 @@
       "import": "./dist/ssr.js",
       "default": "./dist/ssr.js"
     },
+    "./authoring": {
+      "types": "./dist/authoring.d.ts",
+      "import": "./dist/authoring.js",
+      "default": "./dist/authoring.js"
+    },
     "./actions": {
       "types": "./dist/actions.d.ts",
       "import": "./dist/actions.js",

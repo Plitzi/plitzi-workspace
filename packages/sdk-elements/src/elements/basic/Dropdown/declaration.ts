@@ -1,5 +1,13 @@
 /** Static declaration for Dropdown: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { DropdownProps } from './Dropdown';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type DropdownAttributes = AuthorableAttributes<DropdownProps>;
+
+const declaration = elementDeclaration<DropdownAttributes>()({
   type: 'dropdown',
   content: {
     attributes: {
@@ -15,6 +23,7 @@ const declaration = {
     definition: {
       label: 'Dropdown',
       type: 'dropdown',
+      description: 'A trigger that toggles an attached popup panel (dropdownPopup) — menus, selects, flyouts.',
       items: [],
       bindings: {},
       styleSelectors: {
@@ -69,6 +78,6 @@ const declaration = {
     settings: {}
   },
   initialItems: ['dropdownPopup']
-};
+});
 
 export default declaration;

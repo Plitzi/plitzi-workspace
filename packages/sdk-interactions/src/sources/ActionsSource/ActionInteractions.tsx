@@ -1,5 +1,6 @@
 import { useCallback, use, useMemo } from 'react';
 
+import { toBuilderParams, toInteractionCallback } from '@plitzi/sdk-shared/authoring';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 import {
   recordActionProgress,
@@ -10,6 +11,7 @@ import {
   useCommonStore
 } from '@plitzi/sdk-shared/store';
 
+import { actionsCallbacks } from './callbacks';
 import InteractionsContext from '../../InteractionsContext';
 
 import type { ActionCallMode, InteractionCallback, InteractionCallbackContext } from '@plitzi/sdk-shared';
@@ -525,82 +527,62 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
 
   const interactionCallbacks = useMemo(
     (): Record<string, InteractionCallback> => ({
-      cancelServerAction: {
-        action: 'cancelServerAction',
-        title: 'Cancel Server Action',
-        type: 'globalCallback',
-        callback: handleCancelAction as InteractionCallback['callback'],
-        preview: { cancelled: '' },
-        params: {
-          runId: { type: 'text', canBind: true, defaultValue: '', label: 'Run id' }
-        }
-      },
-      runServerAction: {
-        action: 'runServerAction',
-        title: 'Run Server Action',
-        type: 'globalCallback',
-        callback: handleRunAction as InteractionCallback['callback'],
-        preview: { runId: '', status: '', output: {} },
-        /**
-         * Read as a function of what the node already says, so the step can describe the action it names.
-         *
-         * The alternative is a fixed pair of boxes that ask for an identifier the editor knows and a JSON blob
-         * with nothing to say about which keys belong in it — which is how an author ends up guessing at both.
-         */
-        params: nodeParams => {
-          const selected = (catalog ?? []).find(action => action.identifier === nodeParams.actionId);
-          const declared = Object.entries(selected?.input ?? {});
+      cancelServerAction: toInteractionCallback(
+        'cancelServerAction',
+        actionsCallbacks.cancelServerAction,
+        handleCancelAction as InteractionCallback['callback']
+      ),
+      runServerAction: toInteractionCallback(
+        'runServerAction',
+        actionsCallbacks.runServerAction,
+        handleRunAction as InteractionCallback['callback'],
+        {
+          /**
+           * Read as a function of what the node already says, so the step can describe the action it names.
+           *
+           * The alternative is a fixed pair of boxes that ask for an identifier the editor knows and a JSON blob
+           * with nothing to say about which keys belong in it — which is how an author ends up guessing at both.
+           * What varies is only what this editor knows about THIS space; the params themselves are declared once,
+           * in `./callbacks`.
+           */
+          params: nodeParams => {
+            const base = toBuilderParams(actionsCallbacks.runServerAction.params);
+            const selected = (catalog ?? []).find(action => action.identifier === nodeParams.actionId);
+            const declared = Object.entries(selected?.input ?? {});
 
-          return {
-            /**
-             * Picked from what the space actually has, and still typeable.
-             *
-             * A select the moment anything knows the list, and a plain text box when nothing does — a published
-             * page never edits, so there is nothing to offer there. Typing stays possible because a page authored
-             * before the action it names is a legitimate order to work in, and because a binding may produce the
-             * id at runtime.
-             */
-            actionId: {
-              type: () => (actionOptions.length > 0 ? 'select' : 'text'),
-              canBind: true,
-              defaultValue: '',
-              // Said where the step is authored, not at the first click in production: a space that deploys
-              // nowhere that runs server code will never run this, however correct the flow around it is.
-              label: available === false ? 'Action — this space has no server to run it' : 'Action',
-              options: actionOptions
-            },
-            // The declared contract, on the control that has to satisfy it: the server drops every key the action
-            // did not name, and an author reading `{}` has no way to know which ones those are.
-            input: {
-              type: 'codemirror-json',
-              canBind: true,
-              defaultValue: '{}',
-              label:
-                declared.length > 0
-                  ? `Input — ${declared.map(([key, field]) => `${key}${field.required ? '*' : ''}: ${field.type}`).join(', ')}`
-                  : 'Input'
-            },
-            mode: {
-              type: 'select',
-              defaultValue: 'await',
-              label: 'Mode',
-              options: [
-                { label: 'Wait for the result', value: 'await' },
-                { label: 'Send and continue', value: 'detached' },
-                { label: 'Stream progress', value: 'stream' }
-              ]
-            },
-            // Only meaningful when the flow waits: a detached step never sees the refusal a repeated key produces.
-            idempotencyKey: {
-              type: 'text',
-              canBind: true,
-              defaultValue: '',
-              label: 'Idempotency Key',
-              when: params => params.mode !== 'detached'
-            }
-          };
+            return {
+              ...base,
+              /**
+               * Picked from what the space actually has, and still typeable.
+               *
+               * A select the moment anything knows the list, and a plain text box when nothing does — a published
+               * page never edits, so there is nothing to offer there. Typing stays possible because a page authored
+               * before the action it names is a legitimate order to work in, and because a binding may produce the
+               * id at runtime.
+               */
+              actionId: {
+                ...base.actionId,
+                type: () => (actionOptions.length > 0 ? 'select' : 'text'),
+                canBind: true,
+                // Said where the step is authored, not at the first click in production: a space that deploys
+                // nowhere that runs server code will never run this, however correct the flow around it is.
+                label: available === false ? 'Action — this space has no server to run it' : 'Action',
+                options: actionOptions
+              },
+              // The declared contract, on the control that has to satisfy it: the server drops every key the action
+              // did not name, and an author reading `{}` has no way to know which ones those are.
+              input: {
+                ...base.input,
+                canBind: true,
+                label:
+                  declared.length > 0
+                    ? `Input — ${declared.map(([key, field]) => `${key}${field.required ? '*' : ''}: ${field.type}`).join(', ')}`
+                    : 'Input'
+              }
+            };
+          }
         }
-      }
+      )
     }),
     [handleRunAction, handleCancelAction, actionOptions, catalog, available]
   );

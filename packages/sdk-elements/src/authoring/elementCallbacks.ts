@@ -1,9 +1,9 @@
-import { reconcileParams } from './paramSpec';
+import { reconcileParams } from '@plitzi/sdk-shared/authoring';
 
-import type { ParamSpec } from './paramSpec';
+import type { ParamSpec } from '@plitzi/sdk-shared/authoring';
 
-// Built-in `callback`-type actions that EVERY element registers on itself (mirror of sdk-elements
-// Element/helpers/getInteractions — the default set shared by all element types). A specific element TYPE can add
+// Built-in `callback`-type actions that EVERY element registers on itself, beside the code that registers them
+// (`../Element/helpers/getInteractions` — the default set shared by all element types). A specific element TYPE can add
 // MORE callbacks of its own (plugin-provided), which the SSR runtime cannot enumerate here — so an unlisted
 // `callback` action is treated leniently (a warning against observed names, never a hard error), and only the
 // actions in this catalog are validated against a schema. Unlike a globalCallback — which is provided by a source
@@ -65,7 +65,8 @@ export const BUILTIN_ELEMENT_CALLBACKS: Record<string, BuiltinElementCallback> =
           'When true, this change is UNDONE automatically when the whole flow finishes. Use it for a TEMPORARY ' +
           'change (a "loading…" label, disabling a button while it works) instead of adding manual restore steps at ' +
           'the end of the flow.',
-        default: false
+        default: false,
+        label: 'Revert changes after interaction'
       }
     }
   }

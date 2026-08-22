@@ -1,12 +1,20 @@
 /** Static declaration for Loading: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { LoadingProps } from './Loading';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type LoadingAttributes = AuthorableAttributes<LoadingProps>;
+
+const declaration = elementDeclaration<LoadingAttributes>()({
   type: 'loading',
   content: {
     attributes: {},
     definition: {
       label: 'Loading',
       type: 'loading',
-      description: '',
+      description: 'A loading placeholder shown while data or a suspense boundary resolves.',
       bindings: {},
       styleSelectors: {
         base: ''
@@ -44,6 +52,6 @@ const declaration = {
     },
     settings: {}
   }
-};
+});
 
 export default declaration;

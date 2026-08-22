@@ -1,5 +1,13 @@
 /** Static declaration for BlockHtml: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { BlockHtmlProps } from './BlockHtml';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type BlockHtmlAttributes = AuthorableAttributes<BlockHtmlProps>;
+
+const declaration = elementDeclaration<BlockHtmlAttributes>()({
   type: 'blockHtml',
   content: {
     attributes: {
@@ -8,6 +16,7 @@ const declaration = {
     definition: {
       label: 'HTML Block',
       type: 'blockHtml',
+      description: 'Renders an arbitrary raw HTML string as a block. Escape hatch when no structured element fits.',
       bindings: {},
       styleSelectors: {
         base: ''
@@ -45,6 +54,6 @@ const declaration = {
     },
     settings: {}
   }
-};
+});
 
 export default declaration;

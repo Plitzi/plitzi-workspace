@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { cssShorthands, expandShorthand, expandShorthandPatch, isCssProperty, shorthandLonghands } from './index';
+import { isCssProperty } from '../properties';
+import { cssShorthands, expandShorthand, expandShorthandPatch, shorthandLonghands } from './index';
 
 describe('expandShorthand', () => {
   describe('overflow', () => {

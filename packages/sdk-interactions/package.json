@@ -30,6 +30,30 @@
       "types": "./dist/InteractionsSourcesProvider.d.ts",
       "import": "./dist/InteractionsSourcesProvider.mjs"
     },
+    "./authoring": {
+      "types": "./dist/authoring/index.d.ts",
+      "import": "./dist/authoring/index.mjs"
+    },
+    "./authoring/globalCallbacks": {
+      "types": "./dist/authoring/globalCallbacks.d.ts",
+      "import": "./dist/authoring/globalCallbacks.mjs"
+    },
+    "./authoring/index": {
+      "types": "./dist/authoring/index.d.ts",
+      "import": "./dist/authoring/index.mjs"
+    },
+    "./authoring/spaceCallbacks": {
+      "types": "./dist/authoring/spaceCallbacks.d.ts",
+      "import": "./dist/authoring/spaceCallbacks.mjs"
+    },
+    "./authoring/steps": {
+      "types": "./dist/authoring/steps.d.ts",
+      "import": "./dist/authoring/steps.mjs"
+    },
+    "./authoring/utilities": {
+      "types": "./dist/authoring/utilities.d.ts",
+      "import": "./dist/authoring/utilities.mjs"
+    },
     "./hooks/useInteractions": {
       "types": "./dist/hooks/useInteractions.d.ts",
       "import": "./dist/hooks/useInteractions.mjs"
@@ -50,6 +74,10 @@
       "types": "./dist/sources/ActionsSource/ActionInteractions.d.ts",
       "import": "./dist/sources/ActionsSource/ActionInteractions.mjs"
     },
+    "./sources/ActionsSource/callbacks": {
+      "types": "./dist/sources/ActionsSource/callbacks.d.ts",
+      "import": "./dist/sources/ActionsSource/callbacks.mjs"
+    },
     "./sources/ActionsSource/index": {
       "types": "./dist/sources/ActionsSource/index.d.ts",
       "import": "./dist/sources/ActionsSource/index.mjs"
@@ -61,6 +89,10 @@
     "./sources/AuthSource/AuthInteractions": {
       "types": "./dist/sources/AuthSource/AuthInteractions.d.ts",
       "import": "./dist/sources/AuthSource/AuthInteractions.mjs"
+    },
+    "./sources/AuthSource/callbacks": {
+      "types": "./dist/sources/AuthSource/callbacks.d.ts",
+      "import": "./dist/sources/AuthSource/callbacks.mjs"
     },
     "./sources/AuthSource/index": {
       "types": "./dist/sources/AuthSource/index.d.ts",
@@ -74,6 +106,10 @@
       "types": "./dist/sources/NavigationSource/NavigationInteractions.d.ts",
       "import": "./dist/sources/NavigationSource/NavigationInteractions.mjs"
     },
+    "./sources/NavigationSource/callbacks": {
+      "types": "./dist/sources/NavigationSource/callbacks.d.ts",
+      "import": "./dist/sources/NavigationSource/callbacks.mjs"
+    },
     "./sources/NavigationSource/index": {
       "types": "./dist/sources/NavigationSource/index.d.ts",
       "import": "./dist/sources/NavigationSource/index.mjs"
@@ -85,6 +121,10 @@
     "./sources/StateSource/StateInteractions": {
       "types": "./dist/sources/StateSource/StateInteractions.d.ts",
       "import": "./dist/sources/StateSource/StateInteractions.mjs"
+    },
+    "./sources/StateSource/callbacks": {
+      "types": "./dist/sources/StateSource/callbacks.d.ts",
+      "import": "./dist/sources/StateSource/callbacks.mjs"
     },
     "./sources/StateSource/index": {
       "types": "./dist/sources/StateSource/index.d.ts",
@@ -138,6 +178,7 @@
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
     "@plitzi/sdk-navigation": "workspace:*",
+    "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*"
   }
 }

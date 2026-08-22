@@ -1,6 +1,6 @@
 import { expandTo4, splitPair, splitTokens } from './helpers';
 
-import type { CssProps } from '../../types';
+import type { CssProps } from '../types';
 
 const CORNERS = ['top-left', 'top-right', 'bottom-right', 'bottom-left'] as const;
 

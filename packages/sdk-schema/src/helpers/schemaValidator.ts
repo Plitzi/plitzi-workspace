@@ -493,6 +493,117 @@ const createValidator = (schema: Schema) => {
     });
   };
 
+  /**
+   * Every data-source name a binding reads must name an element that exists.
+   *
+   * A source is `<type>_<idRef>` optionally followed by `.<field…>` — the convention `repointIdRefs` is built on.
+   * A typo in the idRef half is the most expensive silent failure a space can carry: the binding resolves to
+   * nothing, the element renders its placeholder, and no layer anywhere reports a missing name. Only heads whose
+   * type half is an element type actually present in this document are checked, so a `node_<hexId>` or a bare
+   * `form` is left alone.
+   */
+  const validateBindingSources = () => {
+    const refs = new Set<string>();
+    const types = new Set<string>();
+    Object.values(flat).forEach(element => {
+      if (!(element as Element | undefined)) {
+        return;
+      }
+
+      if (element.idRef) {
+        refs.add(element.idRef);
+      }
+
+      types.add(element.definition.type);
+    });
+
+    Object.values(flat).forEach(element => {
+      if (!(element as Element | undefined) || !element.definition.bindings) {
+        return;
+      }
+
+      Object.entries(element.definition.bindings).forEach(([category, bindings]) => {
+        (bindings ?? []).forEach(binding => {
+          const head = binding.source.split('.')[0];
+          const separator = head.indexOf('_');
+          if (separator === -1) {
+            return;
+          }
+
+          const type = head.slice(0, separator);
+          const ref = head.slice(separator + 1);
+          if (!types.has(type) || refs.has(ref)) {
+            return;
+          }
+
+          errors.push({
+            code: 'UNRESOLVED_BINDING_SOURCE',
+            message: `Element "${element.id}" binds ${category}.${binding.to} to "${binding.source}", but no element answers to the idRef "${ref}"`,
+            elementId: element.id,
+            details: { source: binding.source, idRef: ref }
+          });
+        });
+      });
+    });
+  };
+
+  /**
+   * The three fields that make a flow a flow.
+   *
+   * A flow is a linked list: each node names the one before and the one after, and every node carries the id of
+   * the first as its `flowId`. Any of the three pointing at a node that is not there produces a flow that half
+   * runs — the first steps fire, the rest never do — which reads exactly like an action that failed.
+   *
+   * An element-`callback` node also names the element it runs against, and that name is an idRef: a global
+   * callback names its source module instead (`space`, `state`, `auth`) and a utility names nothing at all, so
+   * neither is resolved here.
+   */
+  const validateInteractions = () => {
+    const refs = new Set<string>();
+    Object.values(flat).forEach(element => {
+      if ((element as Element | undefined)?.idRef) {
+        refs.add(element.idRef as string);
+      }
+    });
+
+    Object.values(flat).forEach(element => {
+      const interactions = (element as Element | undefined)?.definition.interactions;
+      if (!interactions) {
+        return;
+      }
+
+      const nodes = Object.keys(interactions);
+      Object.values(interactions).forEach(node => {
+        (['beforeNode', 'afterNode'] as const).forEach(link => {
+          const target = node[link];
+          if (target && !nodes.includes(target)) {
+            errors.push({
+              code: 'BROKEN_FLOW_LINK',
+              message: `Interaction "${node.id}" on element "${element.id}" names ${link} "${target}", which is not a node of this flow`,
+              elementId: element.id
+            });
+          }
+        });
+
+        if (node.flowId && !nodes.includes(node.flowId)) {
+          errors.push({
+            code: 'BROKEN_FLOW_ID',
+            message: `Interaction "${node.id}" on element "${element.id}" belongs to flow "${node.flowId}", which is not a node of this flow`,
+            elementId: element.id
+          });
+        }
+
+        if (node.type === 'callback' && node.elementId && !refs.has(node.elementId)) {
+          errors.push({
+            code: 'UNRESOLVED_INTERACTION_TARGET',
+            message: `Interaction "${node.id}" on element "${element.id}" runs against "${node.elementId}", but no element answers to that idRef`,
+            elementId: element.id
+          });
+        }
+      });
+    });
+  };
+
   // Run all validations
   const validate = (options?: SchemaValidationOptions): SchemaValidationResult => {
     const { baseElementId } = options ?? {};
@@ -509,6 +620,8 @@ const createValidator = (schema: Schema) => {
     validateOrphanedElements(baseElementId);
     validateVariables();
     validateIdRefs();
+    validateBindingSources();
+    validateInteractions();
 
     return {
       valid: errors.length === 0,

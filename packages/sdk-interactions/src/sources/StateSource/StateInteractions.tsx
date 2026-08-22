@@ -1,7 +1,9 @@
 import { useCallback, use, useMemo } from 'react';
 
+import { toInteractionCallback } from '@plitzi/sdk-shared/authoring';
 import { useCommonStoreSetter } from '@plitzi/sdk-shared/store';
 
+import { stateCallbacks } from './callbacks';
 import InteractionsContext from '../../InteractionsContext';
 
 import type { InteractionCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
@@ -39,50 +41,13 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
 
   const interactionCallbacks = useMemo(
     () => ({
-      setState: {
-        action: 'setState',
-        title: 'Set State',
-        type: 'globalCallback',
-        callback: handleSetState,
-        preview: {},
-        params: {
-          key: { defaultValue: '', type: 'text' },
-          type: {
-            defaultValue: undefined,
-            type: 'select',
-            options: [
-              { value: 'boolean', label: 'True / False' },
-              { value: 'number', label: 'Numeric' },
-              { value: 'text', label: 'Text' }
-            ]
-          },
-          value: {
-            defaultValue: undefined,
-            type: params => (params.type === 'boolean' ? 'select' : 'text'),
-            when: params => !!params.type,
-            options: [
-              { value: 'true', label: 'True' },
-              { value: 'false', label: 'False' }
-            ]
-          }
-        }
-      } satisfies InteractionCallback<{ key: string; type: string; value: string }>,
-      clearState: {
-        action: 'clearState',
-        title: 'Clear State',
-        type: 'globalCallback',
-        callback: handleClearState,
-        preview: {},
-        params: {}
-      }
+      setState: toInteractionCallback('setState', stateCallbacks.setState, handleSetState as InteractionCallback['callback']),
+      clearState: toInteractionCallback('clearState', stateCallbacks.clearState, handleClearState)
     }),
     [handleSetState, handleClearState]
   );
 
-  useInteractions({
-    id: 'state',
-    callbacks: interactionCallbacks as unknown as Record<string, InteractionCallback>
-  });
+  useInteractions({ id: 'state', callbacks: interactionCallbacks });
 
   return children;
 };

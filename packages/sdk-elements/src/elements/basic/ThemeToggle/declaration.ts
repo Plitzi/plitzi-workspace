@@ -1,5 +1,13 @@
 /** Static declaration for ThemeToggle: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { ThemeToggleProps } from './ThemeToggle';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type ThemeToggleAttributes = AuthorableAttributes<ThemeToggleProps>;
+
+const declaration = elementDeclaration<ThemeToggleAttributes>()({
   type: 'themeToggle',
   content: {
     attributes: {
@@ -59,6 +67,6 @@ const declaration = {
     },
     settings: {}
   }
-};
+});
 
 export default declaration;

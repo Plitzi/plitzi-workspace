@@ -1,9 +1,14 @@
-import { hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { hasValidToken } from '../helpers/twigWrapper';
 
-// Shared vocabulary for the three interaction catalogs (built-in globalCallbacks, built-in element callbacks and
-// built-in utilities). Each catalog is a hand-maintained mirror of what the sdk-interactions / sdk-elements sources
-// declare in the builder — the SSR runtime has no manifest of these, so the shapes and the reconcile rules live in
-// ONE place and every catalog validates/fills params the same way.
+import type { InteractionParamType } from '../types';
+
+// The shape a declared param has, and the rules for reconciling one against what somebody supplied.
+//
+// Four catalogs are written against it — global callbacks (sdk-interactions), element callbacks (sdk-elements),
+// utilities (sdk-interactions) and binding transformers (below) — and each of them lives with the code it
+// describes. This is what they share, so it sits in the package they all already depend on: an authoring helper
+// filling a step's params and an MCP tool validating one are doing the same arithmetic, and doing it twice is how
+// the two answers drift.
 
 // `scalar` is the polymorphic value type: the param legitimately holds a string, number OR boolean (e.g. a setState
 // `value`, whose data type follows the target attribute — booleans are stored as real booleans, numbers as numbers).
@@ -28,6 +33,25 @@ export interface BuiltinParam {
   // with no `category`/`key`). Validation flags a missing required param (when its `when` guard holds), even if a
   // `default` also exists (the builder always writes it; a silent default could pick the wrong value).
   required?: boolean;
+
+  // --- What the builder's editor needs on top of the above -----------------------------------------------------
+  //
+  // A declaration serves two readers: whatever is authoring or validating a step, and the panel a person fills in.
+  // The second one needs prose the first has no use for, and it is written here rather than in the component so
+  // that ONE declaration answers both. Everything in this group has a derivation — a label from the param name, an
+  // option label from its value — and is only written down where the derived text would be worse.
+
+  /** Overrides the label derived from the param name (`autoDismiss` → "Auto Dismiss"). */
+  label?: string;
+  /** Overrides the label derived from an option value (`top-right` → "Top Right"). */
+  optionLabels?: Record<string, string>;
+  /**
+   * The control the editor shows, when it is not the obvious one for `type` — including the case where it depends
+   * on what the author has already filled in (a value whose control follows the type they picked above it).
+   */
+  builderType?: InteractionParamType | ((params: Record<string, unknown>) => InteractionParamType);
+  /** Whether the editor offers to bind this param to a data source. Bindable unless a param says otherwise. */
+  canBind?: boolean;
 }
 
 export type ParamSpec = Record<string, BuiltinParam>;

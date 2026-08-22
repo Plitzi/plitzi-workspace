@@ -1,8 +1,8 @@
-import { reconcileParams } from './paramSpec';
+import { reconcileParams } from '@plitzi/sdk-shared/authoring';
 
-import type { ParamSpec } from './paramSpec';
+import type { ParamSpec } from '@plitzi/sdk-shared/authoring';
 
-// Built-in `utility`-type actions (mirror of sdk-interactions/utility). A utility is NOT provided by any element or
+// Built-in `utility`-type actions, beside the implementations they describe (`../utility`). A utility is NOT provided by any element or
 // source module — the runtime resolves it as `utility[action]`, so its node `elementId` is irrelevant. This catalog
 // is the authoritative list of valid utility actions and their EXACT param names — the class of mistake it guards
 // against is an invented param (e.g. `delay` on delayTime instead of `time`, which leaves the wait at 0ms).

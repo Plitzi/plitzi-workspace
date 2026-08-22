@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import utilities from '@plitzi/sdk-shared/dataSource/utility';
+import { BUILTIN_TRANSFORMERS, getTransformer, suggestTransformer, transformerCatalog } from './transformers';
+import utilities from '../dataSource/utility';
 
-import { BUILTIN_TRANSFORMERS, getTransformer, suggestTransformer, transformerCatalog } from './builtinTransformers';
-
-// The catalog is a hand-maintained mirror of sdk-shared's runtime transformers. This test fails the build if the two
-// drift — a new/renamed transformer action or param in sdk-shared that the MCP catalog does not reflect (which would
+// The catalog describes the runtime transformers next door. This test fails the build if the two drift — a
+// new/renamed transformer action or param the catalog does not reflect (which would
 // make the MCP validate against a stale vocabulary and mis-teach the agent).
 
 describe('builtinTransformers catalog stays in sync with the runtime', () => {

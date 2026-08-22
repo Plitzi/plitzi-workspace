@@ -19,7 +19,7 @@ import {
   TIME_RE
 } from './helpers';
 
-import type { CssProps } from '../../types';
+import type { CssProps } from '../types';
 
 // transition, animation and background are comma-separated LAYERS. Each layer expands on its own and the results
 // are re-joined per longhand, which is how CSS itself stores them (`transition-property: opacity, transform`) —

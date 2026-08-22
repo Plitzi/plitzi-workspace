@@ -1,6 +1,18 @@
-import { readOfflineData } from '@plitzi/example-space';
+import { sampleSpace } from '@plitzi/example-space/space';
+import {
+  authorSpace,
+  button,
+  form,
+  formControl,
+  heading,
+  named,
+  onSubmit,
+  paragraph,
+  runServerAction,
+  setState
+} from '@plitzi/sdk-server/authoring';
 
-import type { Element, OfflineDataRaw } from '@plitzi/sdk-shared';
+import type { AuthoredSpace, PageSpec } from '@plitzi/sdk-server/authoring';
 
 /**
  * The page that calls the action: a form, a button, and somewhere to put the answer.
@@ -10,198 +22,122 @@ import type { Element, OfflineDataRaw } from '@plitzi/sdk-shared';
  * the space's own documents. A page can only ever run what the space already declared.
  */
 
-const el = (
-  id: string,
-  definition: Partial<Element['definition']> & { idRef?: string },
-  attributes: Record<string, unknown> = {}
-): Element => {
-  const { idRef, ...rest } = definition;
-
-  return {
-    id,
-    // Interactions are wired by `idRef`, never by the opaque id — an element without one is not registered at all.
-    ...(idRef ? { idRef } : {}),
-    attributes,
-    definition: { rootId: 'quote-page', styleSelectors: { base: '' }, ...rest }
-  } as Element;
-};
-
-const step = (
-  id: string,
-  type: 'trigger' | 'globalCallback',
-  action: string,
-  elementId: string,
-  params: Record<string, unknown> = {},
-  links: { beforeNode?: string; afterNode?: string } = {}
-) => ({
-  id,
-  flowId: 'quote-flow',
-  type,
-  action,
-  elementId,
-  params,
-  title: action,
-  preview: {},
-  enabled: true,
-  beforeNode: links.beforeNode ?? '',
-  afterNode: links.afterNode ?? ''
-});
-
 /**
  * Submitting the form runs the action and shows what came back.
  *
  * Three steps, and the middle one is the whole feature. `runServerAction` is a GLOBAL callback, so it names the
- * module that registered it (`actions`) rather than an element, exactly as auth's `login` names `auth`.
+ * module that registered it (`actions`) rather than an element — which is what its builder fills in, along with
+ * the mode.
  *
  * `mode: 'await'` is what makes the next step able to read the result: the run's answer lands in the flow scope
- * under this node's id, so `{{quote-run.output.*}}` is whatever the action's output step named. `detached` would
- * carry on immediately and there would be nothing there to read.
+ * under this node's id, so `{{quote.output.*}}` is whatever the action's output step named. `detached` would
+ * carry on immediately and there would be nothing there to read. Both steps whose results are read are NAMED,
+ * because a derived id is unique and unwritable.
  */
-const quoteFlow = {
-  'quote-trigger': step('quote-trigger', 'trigger', 'onSubmit', 'quote-form', {}, { afterNode: 'quote-run' }),
-  'quote-run': step(
-    'quote-run',
-    'globalCallback',
-    'runServerAction',
-    'actions',
-    {
+const quoteFlow = [
+  named('submitted', onSubmit()),
+  named(
+    'quote',
+    runServerAction({
       actionId: 'shipping-quote',
-      input: '{"city":"{{quote-trigger.values.city}}","weightKg":"{{quote-trigger.values.weight}}"}',
+      input: '{"city":"{{submitted.values.city}}","weightKg":"{{submitted.values.weight}}"}',
       mode: 'await'
-    },
-    { beforeNode: 'quote-trigger', afterNode: 'quote-show' }
+    })
   ),
-  'quote-show': step(
-    'quote-show',
-    'globalCallback',
-    'setState',
-    'state',
-    { key: 'quote', type: 'text', value: '{{quote-run.output.summary}}' },
-    { beforeNode: 'quote-run' }
-  )
-};
+  setState({ key: 'quote', type: 'text', value: '{{quote.output.summary}}' })
+];
 
-const quotePage: Record<string, Element> = {
-  'quote-page': el(
-    'quote-page',
-    {
-      label: 'Shipping quote',
-      type: 'page',
-      styleSelectors: { base: 'action-page' },
-      items: ['quote-title', 'quote-intro', 'quote-form', 'quote-result']
-    },
-    { slug: '', default: true, name: 'Shipping quote', accessLevel: 'public' }
-  ),
+const field = (
+  name: string,
+  label: string,
+  subType: 'text' | 'number',
+  defaultValue: string
+): PageSpec['body'][0] => formControl({ subType, name, label, defaultValue, required: true, slots: { input: 'actionInput' } });
 
-  'quote-title': el(
-    'quote-title',
-    {
-      label: 'Heading',
-      type: 'heading',
-      parentId: 'quote-page',
-      initialState: { visibility: true, styleVariant: { heading: { base: 'lg' } } }
-    },
-    { subType: 'h1', content: 'Shipping quote' }
-  ),
-
-  'quote-intro': el(
-    'quote-intro',
-    { label: 'Intro', type: 'paragraph', parentId: 'quote-page' },
-    {
+const quotePage: PageSpec = {
+  name: 'Shipping quote',
+  slug: '',
+  accessLevel: 'public',
+  class: 'actionPage',
+  body: [
+    heading({ content: 'Shipping quote', subType: 'h1', variant: 'lg' }),
+    paragraph({
       content:
         'The price is worked out on the server. This page sends a city and a weight, and gets back a line of text.'
-    }
-  ),
-
-  'quote-form': el(
-    'quote-form',
-    {
-      label: 'Quote form',
-      type: 'form',
+    }),
+    form({
       idRef: 'quote-form',
-      parentId: 'quote-page',
-      styleSelectors: { base: 'action-form' },
-      items: ['quote-city', 'quote-weight', 'quote-submit'],
-      interactions: quoteFlow
-    },
-    // Without this the browser submits the form itself and the page navigates away; the interaction is what runs.
-    { managedByInteractions: true, method: 'post' }
-  ),
-
-  'quote-city': el(
-    'quote-city',
-    {
-      label: 'City',
-      type: 'formControl',
-      parentId: 'quote-form',
-      styleSelectors: { base: '', label: '', input: 'action-input', error: '' }
-    },
-    { subType: 'text', name: 'city', label: 'Destination city', defaultValue: 'Berlin', required: true }
-  ),
-
-  'quote-weight': el(
-    'quote-weight',
-    {
-      label: 'Weight',
-      type: 'formControl',
-      parentId: 'quote-form',
-      styleSelectors: { base: '', label: '', input: 'action-input', error: '' }
-    },
-    { subType: 'number', name: 'weight', label: 'Weight (kg)', defaultValue: '2', required: true }
-  ),
-
-  'quote-submit': el(
-    'quote-submit',
-    { label: 'Get a quote', type: 'button', parentId: 'quote-form', styleSelectors: { base: 'action-button' } },
-    { subType: 'submit', content: 'Get a quote' }
-  ),
-
-  /**
-   * Where the answer lands. `setState` writes `runtime.state.quote`, and a binding addresses it through the
-   * `state` source the SDK publishes — so nothing here knows an action was involved.
-   */
-  'quote-result': el(
-    'quote-result',
-    {
-      label: 'Result',
-      type: 'paragraph',
-      parentId: 'quote-page',
-      styleSelectors: { base: 'action-result' },
-      bindings: { attributes: [{ id: 'b-quote', source: 'state.quote', to: 'content', enabled: true }] }
-    },
-    { content: '' }
-  )
+      // Without this the browser submits the form itself and the page navigates away; the interaction is what runs.
+      managedByInteractions: true,
+      method: 'post',
+      class: 'actionForm',
+      flows: [quoteFlow],
+      children: [
+        field('city', 'Destination city', 'text', 'Berlin'),
+        field('weight', 'Weight (kg)', 'number', '2'),
+        button({ subType: 'submit', content: 'Get a quote', class: 'actionButton' })
+      ]
+    }),
+    /**
+     * Where the answer lands. `setState` writes `runtime.state.quote`, and a binding addresses it through the
+     * `state` source the SDK publishes — so nothing here knows an action was involved.
+     */
+    paragraph({ content: '', class: 'actionResult', bind: { content: 'state.quote' } })
+  ]
 };
-
-/**
- * The sample space defines `--foreground` and `--background-inner` and flips both per colour scheme. Using one
- * without the other is what makes a page unreadable in dark mode: near-white text on the browser's white default.
- */
-const CSS = `
-.action-page{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;min-height:100vh;padding:24px;font-family:system-ui,sans-serif;background:var(--background-inner,#fff);color:var(--foreground,#17171c);}
-.action-form{display:flex;flex-direction:column;gap:12px;min-width:280px;}
-.action-form label{color:var(--foreground,#17171c);}
-.action-input{width:100%;padding:8px 10px;border:1px solid #94a3b8;border-radius:6px;font-size:14px;background:var(--background-inner,#fff);color:var(--foreground,#17171c);}
-.action-button{padding:8px 16px;border-radius:6px;border:0;background:#5c3df5;color:#fff;font-size:14px;cursor:pointer;}
-.action-result{min-height:20px;font-size:16px;font-weight:600;}
-`;
 
 /**
  * The sample space with this one page in front of it.
  *
  * It REPLACES the sample page rather than joining it: both would sit at `/`, and which one won would come down to
- * sort order. The style stays, so the page inherits the space's own colours.
+ * sort order. The palette stays, so the page inherits the space's own colours — using `--foreground` without
+ * `--background-inner` is what makes a page unreadable in dark mode.
  */
-export const offlineData = (): OfflineDataRaw => {
-  const data = readOfflineData() as OfflineDataRaw;
-
-  return {
-    ...data,
-    schema: {
-      ...data.schema,
-      flat: { ...data.schema.flat, ...quotePage },
-      pages: ['quote-page']
+export const offlineData = (): AuthoredSpace =>
+  authorSpace({
+    ...sampleSpace,
+    name: 'Server actions example',
+    permanentUrl: 'server-actions-example',
+    classes: {
+      ...sampleSpace.classes,
+      actionPage: {
+        desktop: {
+          display: 'flex',
+          'flex-direction': 'column',
+          'align-items': 'center',
+          'justify-content': 'center',
+          gap: '16px',
+          'min-height': '100vh',
+          padding: '24px',
+          'font-family': 'system-ui, sans-serif',
+          'background-color': 'var(--background-inner)',
+          color: 'var(--foreground)'
+        }
+      },
+      actionForm: { desktop: { display: 'flex', 'flex-direction': 'column', gap: '12px', 'min-width': '280px' } },
+      actionInput: {
+        desktop: {
+          width: '100%',
+          padding: '8px 10px',
+          border: '1px solid #94a3b8',
+          'border-radius': '6px',
+          'font-size': '14px',
+          'background-color': 'var(--background-inner)',
+          color: 'var(--foreground)'
+        }
+      },
+      actionButton: {
+        desktop: {
+          padding: '8px 16px',
+          'border-radius': '6px',
+          border: '0px solid transparent',
+          'background-color': '#5c3df5',
+          color: '#ffffff',
+          'font-size': '14px',
+          cursor: 'pointer'
+        }
+      },
+      actionResult: { desktop: { 'min-height': '20px', 'font-size': '16px', 'font-weight': '600' } }
     },
-    style: { ...data.style, cache: `${data.style.cache ?? ''}${CSS}` }
-  };
-};
+    pages: [quotePage]
+  });

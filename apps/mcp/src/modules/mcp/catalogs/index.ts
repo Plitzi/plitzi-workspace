@@ -1,21 +1,51 @@
-// Catalogs — the static and observed VOCABULARIES the MCP validates and advertises against (not read projections,
-// which live beside the ops as translators). Grouped here so it is obvious which files are reference data:
-// - paramSpec              — shared param shapes + reconcile/unknown/hidden helpers for the three interaction catalogs
-// - builtinCallbacks       — built-in globalCallback actions → source module + param defaults (mirror sdk-interactions)
-// - builtinElementCallbacks — built-in `callback` actions every element registers (setState: category/key/value/revert)
-// - builtinUtilities       — built-in `utility` actions + their exact param schema (delayTime, twigTemplate, webHook)
-// - builtinTransformers    — built-in data-binding transformers (mirror sdk-shared/dataSource/utility) + their params
-// - builtinComponents      — curated metadata for built-in element types
-// - cssCatalog             — valid CSS property keys + shorthand expansion
+// Catalogs — the VOCABULARIES the MCP validates and advertises against (not read projections, which live beside
+// the ops as translators). Most of them are no longer the MCP's to keep: an agent authoring a flow and a seed
+// authoring one need the same list of actions and the same param shapes, so each vocabulary lives with the code it
+// describes and is re-exported here for the ops and validators that already read it from this barrel.
+//
+// From the SDK packages:
+// - paramSpec / transformers  — @plitzi/sdk-shared/authoring: the param shape every catalog shares, and the
+//                               binding transformers, beside the runtime implementations they describe
+// - global callbacks          — @plitzi/sdk-interactions/authoring: gathered from the sources that register them
+// - utilities                 — @plitzi/sdk-interactions/authoring: beside the utility implementations
+// - element callbacks         — @plitzi/sdk-elements/authoring: the `callback` actions every element registers
+// - the CSS vocabulary        — @plitzi/sdk-style/authoring: valid property keys + shorthand expansion
+//
+// - element semantics         — @plitzi/sdk-elements/authoring: what each built-in type is FOR, read off the
+//                               declarations (it was a curated table here, and had never heard of three of them)
+//
+// The MCP's own:
 // - observed               — interaction actions / data-source paths observed in a space (+ the built-in catalogs)
 // - registry               — the element-type registry (observed types enriched with builtin/plugin metadata)
 
-export * from './paramSpec';
-export * from './builtinCallbacks';
-export * from './builtinElementCallbacks';
-export * from './builtinUtilities';
-export * from './builtinTransformers';
-export * from './builtinComponents';
-export * from './cssCatalog';
+export * from '@plitzi/sdk-shared/authoring';
+export {
+  BUILTIN_GLOBAL_CALLBACKS,
+  BUILTIN_UTILITIES,
+  applyBuiltinCallback,
+  applyUtility,
+  getGlobalCallback,
+  getUtility
+} from '@plitzi/sdk-interactions/authoring';
+export type { BuiltinGlobalCallback, BuiltinUtility } from '@plitzi/sdk-interactions/authoring';
+export {
+  BUILTIN_ELEMENT_CALLBACKS,
+  applyElementCallback,
+  elementCatalog,
+  elementTypeNames,
+  getElementCallback
+} from '@plitzi/sdk-elements/authoring';
+export type { BuiltinElementCallback, ElementSemantics } from '@plitzi/sdk-elements/authoring';
+export {
+  cssProperties,
+  cssShorthands,
+  expandShorthand,
+  expandShorthandPatch,
+  isCssProperty,
+  shorthandLonghands,
+  suggestCssProperty
+} from '@plitzi/sdk-style/authoring';
+export type { CssPatch } from '@plitzi/sdk-style/authoring';
+
 export * from './observed';
 export * from './registry';
