@@ -54,7 +54,7 @@ const ActionsViewer = () => {
 
   return (
     <div className="flex h-full w-full flex-col overflow-auto">
-      <div className="flex items-center justify-between border-b border-gray-200 px-2 py-1 dark:border-zinc-700">
+      <div className="flex items-center justify-between border-b border-zinc-200 px-2 py-1 dark:border-zinc-700">
         <div className="flex items-center gap-2">
           {/* A run in flight is the one thing this panel has to say without being asked: a flow that never comes
               back looks exactly like a page that did nothing at all. */}
@@ -64,7 +64,7 @@ const ActionsViewer = () => {
               {live.length} running
             </span>
           )}
-          <span className="text-xs text-gray-500 dark:text-zinc-400">
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
             {endpoint
               ? `Server actions run at ${endpoint}`
               : 'This page is served without a Plitzi server: every action step is inert'}
@@ -75,27 +75,27 @@ const ActionsViewer = () => {
         </Button>
       </div>
       {runs.length === 0 && (
-        <div className="p-3 text-xs text-gray-500 dark:text-zinc-400">
+        <div className="p-3 text-xs text-zinc-500 dark:text-zinc-400">
           No server action has run on this page yet. A run appears the moment one is SENT — including the ones that
           never come back.
         </div>
       )}
       <div className="flex flex-col">
         {runs.map(run => (
-          <div key={run.id} className="border-b border-gray-100 dark:border-zinc-800">
+          <div key={run.id} className="border-b border-zinc-100 dark:border-zinc-800">
             {/* The row is a toggle and Cancel is a button of its own: one nested inside the other is invalid
                 markup, and a click that opened a run while stopping it is not what anybody meant. */}
-            <div className="flex w-full items-center gap-2 px-2 hover:bg-gray-50 dark:hover:bg-zinc-800">
+            <div className="flex w-full items-center gap-2 px-2 hover:bg-zinc-50 dark:hover:bg-zinc-800">
               <button
                 type="button"
                 className="flex grow items-center gap-2 py-1 text-left text-xs"
                 onClick={handleToggle(run.id)}
               >
-                <span className="text-gray-400">{at(run.startedAt)}</span>
+                <span className="text-zinc-400 dark:text-zinc-500">{at(run.startedAt)}</span>
                 <span className="font-medium">{run.actionId || '(no action named)'}</span>
-                <span className="rounded-sm bg-gray-100 px-1 text-[10px] uppercase dark:bg-zinc-800">{run.mode}</span>
+                <span className="rounded-sm bg-zinc-100 px-1 text-[10px] uppercase dark:bg-zinc-800">{run.mode}</span>
                 <span className={clsx('ml-auto', TONE[run.status] ?? '')}>{run.reason ?? run.status}</span>
-                <span className="text-gray-400">{took(run)}</span>
+                <span className="text-zinc-400 dark:text-zinc-500">{took(run)}</span>
               </button>
               {isLive(run) && run.cancellable && (
                 <Button size="xs" intent="secondary" onClick={handleCancel(run.id)}>
@@ -104,27 +104,27 @@ const ActionsViewer = () => {
               )}
             </div>
             {expanded === run.id && (
-              <div className="flex flex-col gap-2 bg-gray-50 px-3 py-2 text-xs dark:bg-zinc-800/50">
+              <div className="flex flex-col gap-2 bg-zinc-50 px-3 py-2 text-xs dark:bg-zinc-800/50">
                 {run.runId && (
                   <div>
-                    <span className="text-gray-500 dark:text-zinc-400">Run id: </span>
+                    <span className="text-zinc-500 dark:text-zinc-400">Run id: </span>
                     <span className="font-mono">{run.runId}</span>
                   </div>
                 )}
                 {run.error && <div className="break-words text-red-600 dark:text-red-400">{run.error}</div>}
                 <div>
-                  <div className="text-gray-500 dark:text-zinc-400">Input</div>
+                  <div className="text-zinc-500 dark:text-zinc-400">Input</div>
                   <pre className="overflow-auto whitespace-pre-wrap">{JSON.stringify(run.input ?? {}, null, 2)}</pre>
                 </div>
                 {run.output && (
                   <div>
-                    <div className="text-gray-500 dark:text-zinc-400">Output</div>
+                    <div className="text-zinc-500 dark:text-zinc-400">Output</div>
                     <pre className="overflow-auto whitespace-pre-wrap">{JSON.stringify(run.output, null, 2)}</pre>
                   </div>
                 )}
                 {run.progress.length > 0 && (
                   <div>
-                    <div className="text-gray-500 dark:text-zinc-400">Progress ({run.progress.length})</div>
+                    <div className="text-zinc-500 dark:text-zinc-400">Progress ({run.progress.length})</div>
                     <pre className="overflow-auto whitespace-pre-wrap">{JSON.stringify(run.progress, null, 2)}</pre>
                   </div>
                 )}
@@ -132,7 +132,7 @@ const ActionsViewer = () => {
                     carries it, and that is the point rather than a limitation. */}
                 {run.trace && (
                   <div className="flex flex-col gap-1">
-                    <div className="text-gray-500 dark:text-zinc-400">Server steps</div>
+                    <div className="text-zinc-500 dark:text-zinc-400">Server steps</div>
                     {run.trace.map((step, index) => {
                       const node = step.node as { title?: string; action?: string } | undefined;
                       const status = typeof step.status === 'string' ? step.status : '';
@@ -140,7 +140,7 @@ const ActionsViewer = () => {
                       return (
                         <div
                           key={`${String(node?.action)}-${index}`}
-                          className="flex items-center justify-between rounded-sm border border-gray-200 px-2 py-1 dark:border-zinc-700"
+                          className="flex items-center justify-between rounded-sm border border-zinc-200 px-2 py-1 dark:border-zinc-700"
                         >
                           <span>{node?.title ?? node?.action ?? 'step'}</span>
                           <span className={clsx(TONE[status === 'success' ? 'completed' : 'failed'])}>{status}</span>

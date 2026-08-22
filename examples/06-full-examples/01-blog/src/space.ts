@@ -575,6 +575,15 @@ const post: PageSpec = {
                         idRef: 'sighting',
                         attributes: { subType: 'button', content: 'I have seen one' },
                         className: 'buttonQuiet',
+                        /**
+                         * Off once this reader has counted.
+                         *
+                         * The page's half of "once each", and only its half: the state is this tab's, so a reload
+                         * brings the button back. What actually holds is `blog.recordSighting`, which remembers
+                         * who has already counted and answers the second press with the total rather than adding
+                         * to it — a rule about other readers is not something a browser can be asked to keep.
+                         */
+                        bindings: [{ to: 'disabled', source: 'state.sightingDone' }],
                         flows: [
                           [
                             { id: 'seen', type: 'trigger', action: 'onClick', on: 'sighting' },
@@ -599,6 +608,13 @@ const post: PageSpec = {
                               // What the SERVER counted, not what the page guessed. A count incremented in the
                               // browser is a count that disagrees with the next reader's.
                               params: { key: 'sighting', type: 'text', value: '{{log.output.message}}' }
+                            },
+                            {
+                              id: 'counted',
+                              type: 'globalCallback',
+                              action: 'setState',
+                              on: 'state',
+                              params: { key: 'sightingDone', type: 'boolean', value: 'true' }
                             }
                           ]
                         ]

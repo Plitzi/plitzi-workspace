@@ -41,7 +41,7 @@ const List = <T extends ListItem>({ items = [], className, value, onSelect }: Li
       </div>
       <div className="flex flex-col overflow-y-auto text-xs text-zinc-700 dark:text-zinc-300">
         {!itemsSorted.length && <div className="p-4 text-center text-zinc-400 dark:text-zinc-600">No items</div>}
-        {itemsSorted.length &&
+        {itemsSorted.length > 0 &&
           itemsSorted.map((item, i) => (
             <ListItem
               key={i}

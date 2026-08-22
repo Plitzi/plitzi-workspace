@@ -37,6 +37,7 @@ const run = (entry: ActionEntry, spaceId = 1) => {
       module.runAction({
         entry,
         input: {},
+        callerId: 'ip:198.51.100.7',
         spaceId: space,
         environment: 'main',
         trigger: 'call',

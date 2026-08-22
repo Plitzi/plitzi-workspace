@@ -1,8 +1,11 @@
+import { triggerAccess } from '@plitzi/sdk-shared/actions';
+
 import { openStream, wantsStream } from './stream';
 import { onAbort } from '../../../helpers/onAbort';
 import { ActionRunError } from '../runtime/errors';
 import { precheckRun } from '../runtime/precheck';
 import { reportReject } from '../runtime/report';
+import { triggerParams } from '../runtime/triggers';
 
 import type { RawResponse } from '../../../helpers/buildResponseHelpers';
 import type { ActionsModule } from '../index';
@@ -12,9 +15,11 @@ import type {
   ActionEntry,
   ActionErrorReason,
   ActionRejectReason,
+  ElementInteraction,
   SSRPageServerConfig,
   SSRRequest,
-  SSRResponseHelpers
+  SSRResponseHelpers,
+  SSRUser
 } from '@plitzi/sdk-shared';
 
 export type ActionCallDeps = {
@@ -79,6 +84,22 @@ const send = (res: SSRResponseHelpers, status: number, payload: Record<string, u
 
 const fail = (res: SSRResponseHelpers, reason: ActionErrorReason, error: string, runId?: string) =>
   send(res, STATUS_BY_REASON[reason], { error, reason }, runId);
+
+/**
+ * Whether the caller may be told what the flow DID, as opposed to what it answered.
+ *
+ * The dev-tools Actions tab reads the trace, so this is the rule that decides what it can show — and it is the
+ * action's own access rule, not the server's mode. An action open to everybody has already decided that starting
+ * it is anybody's business, so its steps are too; one that asks for a session owes its steps to a session and to
+ * nobody else. `devMode` on its own is not an answer to that question: it says this deployment is being built,
+ * not that whoever just posted to the endpoint is the person building it.
+ *
+ * It is deliberately a second lock on a door `precheckRun` already shut — an anonymous call to a `session` action
+ * never becomes a run. That is the point: the trace is the one part of the answer that carries the author's own
+ * data, and the day a deployment mounts a trigger of its own is the day it stops being covered by the first lock.
+ */
+const mayReadTrace = (trigger: ElementInteraction, user?: SSRUser): boolean =>
+  triggerAccess(triggerParams(trigger))?.mode === 'public' || user !== undefined;
 
 /**
  * Handles an action-addressed call.
@@ -158,9 +179,10 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
   }
 
   let run;
+  let entryPoint;
   try {
     // Before anything is spent: a refusal here has taken no slot and no metering event.
-    precheckRun(entry, { trigger: 'call', input, user: req.ctx.user, lineage });
+    entryPoint = precheckRun(entry, { trigger: 'call', input, user: req.ctx.user, lineage }).trigger;
     run = await module.guards.begin(begin);
   } catch (error) {
     const reason = error instanceof ActionRunError ? error.reason : 'failed';
@@ -190,6 +212,7 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
       environment,
       trigger: 'call',
       user: req.ctx.user,
+      callerId,
       runId: run.runId,
       lineage,
       at: { environment, revision },
@@ -213,7 +236,7 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
     // The trace names steps, and its results are the author's own data; a visitor gets the answer alone. Sending
     // it to an authoring request is what puts a SERVER run in the same Workflow debugger as a client one.
     const payload: Record<string, unknown> = { runId: result.runId, status: result.status, output: result.output };
-    if (authoring === true || config.devMode === true) {
+    if ((authoring === true || config.devMode === true) && mayReadTrace(entryPoint, req.ctx.user)) {
       payload.trace = result.trace;
     }
 

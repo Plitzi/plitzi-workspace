@@ -57,6 +57,7 @@ const disabledEntry = (): ActionEntry => {
 const request = (entry: ActionEntry, overrides: Partial<ActionRunRequest> = {}): ActionRunRequest => ({
   entry,
   input: { amount: 42 },
+  callerId: 'ip:198.51.100.7',
   spaceId: 1,
   environment: 'main',
   trigger: 'call',

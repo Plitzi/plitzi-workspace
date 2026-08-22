@@ -190,6 +190,43 @@ describe('handleActionCall', () => {
     expect(author.payload.trace).toHaveLength(1);
   });
 
+  // The steps of an action anybody may start are anybody's to read: what the trace would tell them about the flow
+  // they could learn by starting it. It is the one reading of `devMode` that does not depend on who is asking.
+  it('hands a public action\u2019s trace to a visitor while the deployment is in dev mode', async () => {
+    const { payload } = await call(buildConfig(entry(), { devMode: true }), {
+      actionId: 'quote',
+      input: { amount: 1 }
+    });
+
+    expect(payload.trace).toHaveLength(1);
+  });
+
+  /**
+   * The other half, and the reason the trace is gated on the ACTION rather than on the server's mode.
+   *
+   * A flow behind a session is refused before its first step, so an anonymous caller of one gets no answer, no
+   * steps and no run to read — in dev mode exactly as in production. This pins that: a dev server is still a
+   * server somebody can post to.
+   */
+  it('tells an anonymous caller of a session-gated action nothing about it, dev mode or not', async () => {
+    const gated = entry({
+      nodes: {
+        start: callTrigger({ access: 'session' }),
+        compute: node('compute', { action: 'flow.output', params: { values: '{"total": 1}' } })
+      }
+    });
+
+    const { sent, payload } = await call(buildConfig(gated, { devMode: true }), {
+      actionId: 'quote',
+      input: { amount: 1 }
+    });
+
+    expect(sent.status).toBe(403);
+    expect(payload.reason).toBe('forbidden');
+    expect(payload.trace).toBeUndefined();
+    expect(payload.output).toBeUndefined();
+  });
+
   it('answers 404 for an action this space does not have', async () => {
     const { sent, payload } = await call(buildConfig(undefined), { actionId: 'missing' });
 

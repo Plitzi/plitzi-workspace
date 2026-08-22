@@ -239,21 +239,38 @@ export const updatePostTask: ActionTask<{
  * still a server action, which is the point: the count lives on the server, the browser is told the new number
  * rather than trusted with it, and there is nothing in the page to edit.
  */
+/**
+ * The one write anybody may make, and the one that has to hold to "once each" without an account.
+ *
+ * `ctx.callerId` is who the server decided is asking — the same identity the endpoint keys single-flight and
+ * cancellation by. It is here rather than in `blog.getPost` on purpose: a `render` trigger's answer is SHARED
+ * between the visitors asking for it at the same moment, so a field that differs per anonymous reader would
+ * occasionally be handed to the wrong one. A write is never shared, which makes it the only honest place to ask
+ * who is writing.
+ */
 export const recordSightingTask: ActionTask<{ slug: string }> = {
   namespace: 'blog',
   action: 'recordSighting',
   title: 'Record Sighting',
-  description: 'One more reader who has seen this animal.',
+  description: 'One more reader who has seen this animal — once per reader.',
   params: { slug: { type: 'text', canBind: true, defaultValue: '', label: 'Slug' } },
-  run: ({ slug }) => {
+  run: ({ slug }, ctx) => {
     // A slug nobody wrote a post for would otherwise open a counter for anything a caller cared to name.
     if (!findPost(slug)) {
       throw new Error('No such post');
     }
 
-    const count = recordSighting(slug);
+    const { count, added } = recordSighting(slug, ctx.callerId);
 
-    return { count, label: sightingLabel(count), message: `Logged. ${sightingLabel(count)}.` };
+    return {
+      count,
+      label: sightingLabel(count),
+      logged: added,
+      // The second press is not an error — the reader did nothing wrong and the count is still the answer. It
+      // says which of the two happened, because a button that reads "Logged." again is a button people press a
+      // third time.
+      message: added ? `Logged. ${sightingLabel(count)}.` : `You have already logged this one. ${sightingLabel(count)}.`
+    };
   }
 };
 

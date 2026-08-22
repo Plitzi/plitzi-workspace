@@ -70,6 +70,8 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
     const ttlMs = trigger ? triggerCacheMs(triggerParams(trigger)) : 0;
     const key = shareKey([spaceId, at.environment, at.revision, entry.id, user?.id ?? null, values]);
 
+    const callerId = user ? `user:${user.id}` : 'render';
+
     const startRun = async (): Promise<unknown> => {
       /**
        * A key of its own per render, so two visitors are never each other's duplicate.
@@ -82,7 +84,7 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
       const run = await module.guards.begin({
         spaceId,
         actionId: entry.id,
-        callerId: user ? `user:${user.id}` : 'render',
+        callerId,
         input,
         idempotencyKey: `render:${randomUUID()}`,
         // Counted as traffic rather than as somebody asking for work: a page's popularity must not be refused.
@@ -106,6 +108,7 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
           environment,
           trigger: 'render',
           user,
+          callerId,
           runId: run.runId,
           at,
           signal: run.controller.signal

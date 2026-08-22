@@ -827,6 +827,12 @@ export const customCss = `
 
 .navLink:hover { color: var(--fg); background-color: var(--surface-2); }
 .accountPill:hover, .chipQuiet:hover, .buttonQuiet:hover, .themeToggle:hover { border-color: var(--accent); color: var(--accent-ink); }
+
+/* A button that no longer does anything has to look like one. The sighting button switches off once this reader
+   has counted, and without this it keeps its pointer and its hover — which reads as a page that stopped working
+   rather than as a thing already done. */
+.buttonQuiet:disabled { cursor: default; opacity: 0.55; }
+.buttonQuiet:disabled:hover { border-color: var(--line-strong); color: var(--fg); }
 .cardLink:hover .cardTitle, .quietItem:hover .quietTitle, .moreCard:hover .moreTitle { color: var(--accent-ink); }
 .hero:hover .heroImage { transform: scale(1.04); }
 .cardLink:hover .cardImage, .moreCard:hover .moreImage { transform: scale(1.05); }

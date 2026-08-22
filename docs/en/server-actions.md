@@ -176,6 +176,15 @@ Headers:    { "Authorization": "Bearer {{ credential.secretKey }}" }
 Written anywhere else, `{{ credential.… }}` resolves to nothing — the editor warns — because an ambient secret is
 interpolable by every step, including the one that answers the browser.
 
+A task written in code sees one thing the templates do not: `ctx.callerId`, who the server decided is asking —
+`user:<id>` for a session, `ip:<address>` for everyone else, and `render` or `schedule` for the runs no visitor
+started. It is what a write that asks for no account keys "once per person" on, and it is coarse by construction:
+a shared connection counts as one caller.
+
+Ask it in a **write**, not in a render. A `render` trigger's answer is shared between the visitors asking for it
+at the same moment, so a field that differs per anonymous caller would occasionally be handed to the wrong one; a
+call, a webhook and a schedule are never shared.
+
 ---
 
 ## 5. Webhooks

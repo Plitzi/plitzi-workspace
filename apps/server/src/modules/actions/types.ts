@@ -108,6 +108,15 @@ export type ActionTaskContext = {
   environment: Environment;
   trigger: ActionTriggerType;
   user?: SSRUser;
+  /**
+   * Who is asking, as the transport identified them: `user:<id>` for a session, `ip:<address>` for everyone else,
+   * and `render` or `schedule` for the runs no visitor started.
+   *
+   * A task that must happen once per PERSON has nothing else to key on — a `public` action has no session, and an
+   * identifier the caller sent is not an identity. Coarse by construction, since a shared address is one caller,
+   * and personal data when it is one: a task that stores it is storing that.
+   */
+  callerId: string;
   signal: AbortSignal;
   /**
    * The flow scope as the current node sees it: `input`, every previous node's result by id, `user`, and the
@@ -216,6 +225,8 @@ export type ActionRunRequest = {
   environment: Environment;
   trigger: ActionTriggerType;
   user?: SSRUser;
+  /** Who is asking. Stated by whatever started the run — see {@link ActionTaskContext.callerId}. */
+  callerId: string;
   runId: string;
   /** Chain of run ids that caused this one; a run naming its own action is refused before its first node. */
   lineage?: string[];

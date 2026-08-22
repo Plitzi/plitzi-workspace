@@ -79,6 +79,7 @@ export const createScheduleRunner = (lookups: ActionLookups, module: ActionsModu
           spaceId,
           environment,
           trigger: 'schedule',
+          callerId: 'schedule',
           runId: run.runId,
           signal: run.controller.signal
         });

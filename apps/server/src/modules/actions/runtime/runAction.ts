@@ -309,6 +309,7 @@ export const createActionRunner = (
       environment: request.environment,
       trigger: request.trigger,
       user: request.user,
+      callerId: request.callerId,
       signal: controller.signal,
       scope,
       /**

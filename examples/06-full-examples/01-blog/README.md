@@ -114,9 +114,14 @@ either a lock-out or a hole. This blog uses all three:
 
 | Action | Access | Who can run it |
 |---|---|---|
-| `record-sighting` | `public` | anybody at all — no session, no account |
+| `record-sighting` | `public` | anybody at all — no session, no account, and once each |
 | `publish-post` | `role` + `postPublish` | `ada`, not `grace` |
 | `update-post` | `role` + `postPublish` **and** ownership | `ada`, on her own posts only |
+
+`public` is about who may START it, not about how often. "Once per reader" is the task's own rule and it is kept
+on the SERVER (`ctx.callerId` — a session where there is one, an address where there is not): pressing the button
+a second time is answered with the total rather than added to it. The page switches the button off when the
+answer comes back, which is the courtesy half — a reload brings it back, and the count still does not move.
 
 **Press the sighting button with the dev-tools Actions tab open** — the badge in the corner, or shift+alt+D. It
 is the quickest way to watch a server action go out and come back, and it needs no sign-in. The three READS on

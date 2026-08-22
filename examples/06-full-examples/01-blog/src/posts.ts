@@ -585,11 +585,37 @@ const sightings: Record<string, number> = {
 
 export const countSightings = (slug: string): number => sightings[slug] ?? 0;
 
-/** One more, and the new total. The one write on this blog that anybody at all may make. */
-export const recordSighting = (slug: string): number => {
+/**
+ * Who has already counted, per post.
+ *
+ * A counter anybody may add to is a counter one person can be the whole of, and "one per reader" is not something
+ * the button can promise: a page that disables it has said nothing about the next tab, and a browser is not where
+ * a fact about other readers is kept. So the server remembers who, and the seeded numbers above are the readers
+ * it has no name for.
+ *
+ * In a real blog this is a row per sighting with a unique index on (post, reader). Here it is a Set, for the same
+ * reason everything else in this file is in memory.
+ */
+const seenBy: Record<string, Set<string>> = {};
+
+/**
+ * One more, from a reader who has not said so before.
+ *
+ * `reader` is the caller as the server identified them — `user:<id>` for a session, and their address for
+ * everybody else, which is the best answer there is for a write that asks for no account. It is coarse on
+ * purpose: a shared connection counts once, and that is the failure worth having when the alternative is
+ * trusting an identifier the browser sent.
+ */
+export const recordSighting = (slug: string, reader: string): { count: number; added: boolean } => {
+  const readers = (seenBy[slug] ??= new Set());
+  if (readers.has(reader)) {
+    return { count: countSightings(slug), added: false };
+  }
+
+  readers.add(reader);
   sightings[slug] = countSightings(slug) + 1;
 
-  return sightings[slug];
+  return { count: sightings[slug], added: true };
 };
 
 /** "41 readers have seen one" — composed here, because a binding names one field. */

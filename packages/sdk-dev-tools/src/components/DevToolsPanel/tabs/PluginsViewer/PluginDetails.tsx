@@ -2,14 +2,33 @@ import { useMemo } from 'react';
 
 import syntaxHighlight from '@plitzi/sdk-shared/helpers/syntaxHighlight';
 
-export type PluginDetailsProps = {
-  label?: string;
+import type { ComponentOrigin } from '@plitzi/sdk-shared';
+
+/** One element this page has that the SDK did not bring, however it got here. */
+export type PluginEntry = {
+  type: string;
+  origin: Exclude<ComponentOrigin, 'local'>;
+  /** Absent for a plugin nobody published: a file a deployment ships has no manifest to read a version off. */
   version?: string;
   author?: string;
   settings?: Record<string, unknown>;
 };
 
-const PluginDetails = ({ author, settings, label, version }: PluginDetailsProps) => {
+export type PluginDetailsProps = {
+  entry: PluginEntry;
+};
+
+const ORIGIN: Record<PluginEntry['origin'], { label: string; hint: string }> = {
+  'local-custom': {
+    label: 'Shipped with this space',
+    hint: 'A file this deployment hands the server, compiled and rendered with everything else.'
+  },
+  remote: { label: 'Installed', hint: 'A published bundle, described by the manifest it was published with.' }
+};
+
+const PluginDetails = ({ entry }: PluginDetailsProps) => {
+  const { type, origin, version, author, settings } = entry;
+
   const settingsParsed = useMemo(() => {
     if (!settings || Object.keys(settings).length === 0) {
       return null;
@@ -21,11 +40,17 @@ const PluginDetails = ({ author, settings, label, version }: PluginDetailsProps)
   return (
     <div className="flex h-full grow basis-0 flex-col overflow-y-auto p-4">
       <div className="mb-4 border-b border-zinc-200 pb-3 dark:border-zinc-700">
-        <div className="text-base font-semibold text-zinc-800 dark:text-zinc-200">{label}</div>
-        <div className="text-xs text-zinc-400 dark:text-zinc-500">Plugin</div>
+        <div className="text-base font-semibold text-zinc-800 dark:text-zinc-200">{type}</div>
+        <div className="text-xs text-zinc-400 dark:text-zinc-500">{ORIGIN[origin].label}</div>
       </div>
 
       <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs font-medium tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
+            Where it comes from
+          </span>
+          <span className="text-xs text-zinc-800 dark:text-zinc-200">{ORIGIN[origin].hint}</span>
+        </div>
         <div className="flex flex-col gap-0.5">
           <span className="text-xs font-medium tracking-wider text-zinc-400 uppercase dark:text-zinc-500">Version</span>
           <span className="font-mono text-xs text-zinc-800 dark:text-zinc-200">{version ?? '—'}</span>

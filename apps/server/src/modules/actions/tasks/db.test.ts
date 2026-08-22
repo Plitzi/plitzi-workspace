@@ -69,6 +69,7 @@ const run = (
   return runAction({
     entry: entry(params),
     input: { email: 'ana@example.com' },
+    callerId: 'ip:198.51.100.7',
     spaceId: 1,
     environment: 'main',
     trigger: 'call',

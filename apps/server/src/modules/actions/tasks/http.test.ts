@@ -49,6 +49,7 @@ const run = (target: ActionEntry, fetchImpl: typeof fetch, credential?: Record<s
   return runAction({
     entry: target,
     input: { id: '42' },
+    callerId: 'ip:198.51.100.7',
     spaceId: 1,
     environment: 'main',
     trigger: 'call',
