@@ -4,7 +4,7 @@ import { useCallback, use, useMemo } from 'react';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import { navigationCallbacks } from './callbacks';
-import { toBuilderParams, toInteractionCallback } from '../../authoring/builder';
+import { toBuilderParams, toInteractionCallbacks } from '../../authoring/builder';
 import InteractionsContext from '../../InteractionsContext';
 
 import type { InteractionCallbackParam } from '@plitzi/sdk-shared';
@@ -55,20 +55,24 @@ const NavigationInteractions = ({ children, previewMode = false }: NavigationInt
   const interactionCallbacks = useMemo(() => {
     const { urlType, url } = toBuilderParams(navigationCallbacks.navigate.params);
 
-    return {
-      navigate: toInteractionCallback('navigate', navigationCallbacks.navigate, handleNavigate, {
-        // The pages of the space being edited: a fact about this document rather than about navigating, so the
-        // declaration says the control is a picker and the editor says what is in it.
-        params: {
-          urlType,
-          url: {
-            ...url,
-            defaultValue: pageUrls.find(page => page.defaultPage)?.key ?? '',
-            options: pageUrls.map(page => ({ value: page.key, label: page.label }))
-          } as InteractionCallbackParam
+    return toInteractionCallbacks(
+      navigationCallbacks,
+      { navigate: handleNavigate },
+      {
+        navigate: {
+          // The pages of the space being edited: a fact about this document rather than about navigating, so the
+          // declaration says the control is a picker and the editor says what is in it.
+          params: {
+            urlType,
+            url: {
+              ...url,
+              defaultValue: pageUrls.find(page => page.defaultPage)?.key ?? '',
+              options: pageUrls.map(page => ({ value: page.key, label: page.label }))
+            } as InteractionCallbackParam
+          }
         }
-      })
-    };
+      }
+    );
   }, [handleNavigate, pageUrls]);
 
   useInteractions({ id: 'navigation', callbacks: interactionCallbacks });

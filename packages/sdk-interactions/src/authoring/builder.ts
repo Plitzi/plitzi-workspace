@@ -1,5 +1,6 @@
 import type {
   InteractionCallback,
+  InteractionCallbackContext,
   InteractionCallbackParam,
   InteractionCallbackPreviews,
   InteractionCallbackType,
@@ -17,7 +18,7 @@ import type { BuiltinParam, ParamSpec } from '@plitzi/sdk-shared/authoring';
  *
  * A source used to declare its params twice: once in the React component, for the editor, and once in a catalog
  * somewhere else, for whatever validates a step. The two drifted exactly as you would expect — a catalog claiming
- * `authLogin` takes no params while the source offered four, an action callback the catalog had never heard of —
+ * `login` takes no params while the source offered four, an action callback the catalog had never heard of —
  * and neither copy was wrong about itself, which is why nothing ever reported it. This is the one declaration, and
  * these are the two readings of it.
  */
@@ -91,3 +92,35 @@ export const toInteractionCallback = <T extends Record<string, unknown> = Record
     params: toBuilderParams(spec.params),
     ...overrides
   }) as InteractionCallback<T>;
+
+/**
+ * Every declared action of one source, ready for `useInteractions`.
+ *
+ * The reason to build the whole map rather than call {@link toInteractionCallback} per entry: the key a callback is
+ * registered under IS the name a document names it by, and writing that key by hand beside a catalog that also
+ * names it is two strings that have to agree with nothing checking. They stopped agreeing for all three of the auth
+ * callbacks — declared `authLogin`, registered `login` — and the only symptom was a sign-in button that did
+ * nothing at all.
+ *
+ * Here the key comes from the catalog, and `handlers` is checked against the same keys, so a renamed action is a
+ * compile error and an unimplemented one cannot be registered.
+ */
+export const toInteractionCallbacks = <C extends Record<string, BuiltinActionSpec>>(
+  catalog: C,
+  // `never` for the params so a source may type its own handler against the params it declared: the runtime hands
+  // every callback the node's values as a plain record, and each source knows the shape it asked for.
+  handlers: { [K in keyof C]: (params: never, context?: InteractionCallbackContext) => unknown },
+  overrides: { [K in keyof C]?: Partial<InteractionCallback> } = {}
+): Record<string, InteractionCallback> =>
+  Object.fromEntries(
+    Object.keys(catalog).map(action => [
+      action,
+      toInteractionCallback(
+        action,
+        catalog[action],
+        // The one cast this indirection costs, and it buys the removal of the same cast from every source.
+        handlers[action] as InteractionCallback['callback'],
+        overrides[action] ?? {}
+      )
+    ])
+  );

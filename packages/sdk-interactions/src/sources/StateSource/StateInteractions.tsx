@@ -3,10 +3,10 @@ import { useCallback, use, useMemo } from 'react';
 import { useCommonStoreSetter } from '@plitzi/sdk-shared/store';
 
 import { stateCallbacks } from './callbacks';
-import { toInteractionCallback } from '../../authoring/builder';
+import { toInteractionCallbacks } from '../../authoring/builder';
 import InteractionsContext from '../../InteractionsContext';
 
-import type { InteractionCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
+import type { InteractionCallbackParamValues } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type StateInteractionsProps = {
@@ -40,10 +40,11 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
   }, [setState]);
 
   const interactionCallbacks = useMemo(
-    () => ({
-      setState: toInteractionCallback('setState', stateCallbacks.setState, handleSetState as InteractionCallback['callback']),
-      clearState: toInteractionCallback('clearState', stateCallbacks.clearState, handleClearState)
-    }),
+    () =>
+      toInteractionCallbacks(stateCallbacks, {
+        setState: handleSetState,
+        clearState: handleClearState
+      }),
     [handleSetState, handleClearState]
   );
 

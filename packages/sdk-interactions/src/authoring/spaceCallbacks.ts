@@ -8,7 +8,7 @@ import type { BuiltinGlobalCallback } from './globalCallbacks';
  * shows — is the same knowledge every other source keeps here, and splitting it by which module happens to call
  * `useInteractions` is how a catalog ends up being copied.
  */
-export const spaceCallbacks: Record<string, BuiltinGlobalCallback> = {
+export const spaceCallbacks = {
   addNotification: {
     source: 'space',
     title: 'Add Notification',
@@ -49,4 +49,4 @@ export const spaceCallbacks: Record<string, BuiltinGlobalCallback> = {
       }
     }
   }
-};
+} satisfies Record<string, BuiltinGlobalCallback>;

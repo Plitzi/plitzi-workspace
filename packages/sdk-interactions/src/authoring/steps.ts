@@ -1,5 +1,6 @@
 import { BUILTIN_GLOBAL_CALLBACKS } from './globalCallbacks';
 
+import type { BuiltinGlobalCallback } from './globalCallbacks';
 import type { StepSpec } from '@plitzi/sdk-schema';
 
 /**
@@ -16,7 +17,14 @@ import type { StepSpec } from '@plitzi/sdk-schema';
  */
 
 const globalStep = (action: string, params: Record<string, unknown> = {}): StepSpec => {
-  const declared = BUILTIN_GLOBAL_CALLBACKS[action];
+  const declared = BUILTIN_GLOBAL_CALLBACKS[action] as BuiltinGlobalCallback | undefined;
+  // A builder naming an action no source declares would otherwise write a step that resolves to nothing at run
+  // time, which is the exact failure this module exists to remove — so it is refused where it is written.
+  if (!declared) {
+    throw new Error(
+      `No source declares the global callback "${action}". Declared: ${Object.keys(BUILTIN_GLOBAL_CALLBACKS).sort().join(', ')}.`
+    );
+  }
 
   return {
     type: 'globalCallback',
@@ -46,13 +54,20 @@ export const addNotification = (params: {
   autoDismissTimeout?: number;
 }): StepSpec => globalStep('addNotification', params);
 
+/**
+ * Signs in through whatever provider the space declared — `auth.login`, with no provider in the name.
+ *
+ * The action is `login` and not `authLogin`: the module is already `auth`, and the runtime registers these three
+ * under the bare names. The function keeps its prefix only because this surface is exported flat, where a `login`
+ * would be too vague to read at an import.
+ */
 export const authLogin = (
   params: { mode: 'normal'; username: string; password: string } | { mode: 'token'; token: string }
-): StepSpec => globalStep('authLogin', params);
+): StepSpec => globalStep('login', params);
 
-export const authLogout = (): StepSpec => globalStep('authLogout');
+export const authLogout = (): StepSpec => globalStep('logout');
 
-export const authRefreshDetails = (): StepSpec => globalStep('authRefreshDetails');
+export const authRefreshDetails = (): StepSpec => globalStep('refreshDetails');
 
 /**
  * Runs one of the space's server actions.

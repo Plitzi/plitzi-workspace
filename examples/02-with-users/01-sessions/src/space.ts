@@ -29,9 +29,9 @@ import type { AuthoredSpace, PageSpec } from '@plitzi/sdk-server/authoring';
  * `onSubmit` with `values`, keyed by each control's `name` — which is why the controls below are named `username`
  * and `password`.
  *
- * Neither step says where it runs: a trigger fires on the element the flow is declared on, and `authLogin` names
- * the module that registered it. Getting that pair wrong is what makes a button appear to do nothing at all, and
- * it is exactly what these two builders take out of an author's hands.
+ * Neither step says where it runs, and that is the point of the builders: a trigger fires on the element the flow
+ * is declared on, and `authLogin` writes the action `login` on the module `auth` — the pair the runtime resolves a
+ * step by. Getting either half wrong is what makes a button appear to do nothing at all.
  */
 const loginFlow = [
   named('login', onSubmit()),

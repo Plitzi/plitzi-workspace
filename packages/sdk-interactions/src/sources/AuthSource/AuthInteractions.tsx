@@ -3,7 +3,7 @@ import { use, useCallback, useMemo } from 'react';
 import { AuthContext } from '@plitzi/sdk-auth';
 
 import { authCallbacks } from './callbacks';
-import { toInteractionCallback } from '../../authoring/builder';
+import { toInteractionCallbacks } from '../../authoring/builder';
 import InteractionsContext from '../../InteractionsContext';
 
 import type { InteractionCallback } from '@plitzi/sdk-shared';
@@ -39,11 +39,12 @@ const AuthInteractions = ({ children, authProvider = 'basic' }: AuthInteractions
       return {};
     }
 
-    return {
-      login: toInteractionCallback('authLogin', authCallbacks.authLogin, handleLogin),
-      refreshDetails: toInteractionCallback('authRefreshDetails', authCallbacks.authRefreshDetails, handleRefresh),
-      logout: toInteractionCallback('authLogout', authCallbacks.authLogout, handleLogout)
-    };
+    // Keyed by the catalog, so the name a document writes and the name registered here cannot come apart.
+    return toInteractionCallbacks(authCallbacks, {
+      login: handleLogin,
+      refreshDetails: handleRefresh,
+      logout: handleLogout
+    });
   }, [handleLogin, handleLogout, handleRefresh, authProvider]);
 
   useInteractions({ id: 'auth', callbacks: interactionCallbacks });

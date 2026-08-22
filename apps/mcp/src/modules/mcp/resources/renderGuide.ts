@@ -426,7 +426,7 @@ connects that source to a descendant's field.
 \`upsertInteractionFlow\` attaches an ordered \`nodes\` list to an element; the FIRST node is a \`trigger\` (e.g.
 \`onClick\`), the rest run after it. Each following step is one of:
 - **\`globalCallback\`** (OMIT \`elementId\`) — a built-in app action: \`addNotification\` (\`params.content\`),
-  \`navigate\`, \`setState\` (\`key\`/\`type\`/\`value\`), \`authLogin\`/\`authLogout\`…
+  \`navigate\`, \`setState\` (\`key\`/\`type\`/\`value\`), \`login\`/\`logout\`…
 - **\`callback\`** (\`elementId\` = an element, defaults to the trigger's) — that ELEMENT's OWN callback: e.g. an
   \`apiContainer\` re-fetches, a \`form\` submits. Each type's own callback action names are in plitzi://guide.
 

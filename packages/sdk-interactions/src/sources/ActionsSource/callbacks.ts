@@ -10,7 +10,7 @@ import type { BuiltinGlobalCallback } from '../../authoring/globalCallbacks';
  * `mode` is the param a flow is usually got wrong on: only `await` puts the result in the flow scope, so a step
  * that reads `{{ <step>.output.* }}` after a detached run reads nothing at all.
  */
-export const actionsCallbacks: Record<string, BuiltinGlobalCallback> = {
+export const actionsCallbacks = {
   runServerAction: {
     source: 'actions',
     title: 'Run Server Action',
@@ -66,4 +66,4 @@ export const actionsCallbacks: Record<string, BuiltinGlobalCallback> = {
     },
     preview: { cancelled: '' }
   }
-};
+} satisfies Record<string, BuiltinGlobalCallback>;

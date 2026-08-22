@@ -7,7 +7,7 @@ import type { BuiltinGlobalCallback } from '../../authoring/globalCallbacks';
  * anything else is typed. The list of pages is the editor's to supply — it is a fact about the space being edited,
  * not about the action — so the source adds it to what is declared here.
  */
-export const navigationCallbacks: Record<string, BuiltinGlobalCallback> = {
+export const navigationCallbacks = {
   navigate: {
     source: 'navigation',
     title: 'Navigate',
@@ -27,4 +27,4 @@ export const navigationCallbacks: Record<string, BuiltinGlobalCallback> = {
       }
     }
   }
-};
+} satisfies Record<string, BuiltinGlobalCallback>;
