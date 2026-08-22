@@ -4,6 +4,7 @@ Elements that get their data from the server, both on the initial render and on 
 
 ```bash
 yarn start
+yarn start:dev   # the same, reloading on save, while you edit it
 curl -s 'http://127.0.0.1:4004/_rsc?location=%2F'                     # every slice
 curl -s 'http://127.0.0.1:4004/_rsc?location=%2F&ids=<id>'            # just one (the server prints the id)
 ```

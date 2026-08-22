@@ -9,11 +9,15 @@ import { ThemeContext } from '@plitzi/sdk-shared';
 import DevToolsOverlay from './components/DevToolsOverlay';
 import DevToolsContextProvider from './DevToolsContextProvider';
 import { useIsSelectedInstance } from './instanceRegistry';
+import useHydrated from './useHydrated';
 
 import type { LogType } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type Orientation = 'horizontal' | 'vertical';
+
+/** What the server renders with, because it is what a page with nothing remembered yet gets. */
+const DEFAULT_ORIENTATION: Orientation = 'horizontal';
 
 // Fallback identity for callers that don't pass an `instanceId` (e.g. the builder's single instance): a stable,
 // process-unique label so the instance dropdown still has something to show.
@@ -42,7 +46,10 @@ const DevToolsContainer = ({
   devToolsStyleLink = ''
 }: DevToolsContainerProps) => {
   const { resolvedTheme } = use(ThemeContext);
-  const [orientation, setOrientation] = useStorage<Orientation>('plitzi-sdk.dev-tools.orientation', 'horizontal');
+  const [orientation, setOrientation] = useStorage<Orientation>(
+    'plitzi-sdk.dev-tools.orientation',
+    DEFAULT_ORIENTATION
+  );
   const [collapsed, setCollapsed] = useStorage('plitzi-sdk.dev-tools.collapsed', true);
   const [tabSelected, setTabSelected] = useStorage('plitzi-sdk.dev-tools.tab', 'logs');
   // Which filter the Logs tab opens on. Lives here because the indicator — outside the panel — is what asks for it,
@@ -54,6 +61,15 @@ const DevToolsContainer = ({
   }
 
   const effectiveInstanceId = instanceId ? instanceId : fallbackIdRef.current;
+  /**
+   * Everything below that comes out of `localStorage` waits for hydration to finish.
+   *
+   * Where the panel is docked decides this container's own layout classes, so remembering it is the one piece of
+   * dev-tools state a hydrated page cannot read early: the client would lay the page out one way while the server
+   * laid it out the other, and React does not patch that up — it leaves the two disagreeing.
+   */
+  const hydrated = useHydrated();
+  const dockedAt = hydrated ? orientation : DEFAULT_ORIENTATION;
   // Only the selected instance renders the (single) panel; all enabled instances still register in the dropdown.
   const isSelected = useIsSelectedInstance(effectiveInstanceId, enabled);
 
@@ -92,7 +108,7 @@ const DevToolsContainer = ({
     <div
       className={clsx(
         'flex grow overflow-auto',
-        { 'flex-col': orientation === 'horizontal', 'h-screen': orientation === 'vertical' },
+        { 'flex-col': dockedAt === 'horizontal', 'h-screen': dockedAt === 'vertical' },
         className
       )}
     >
@@ -100,13 +116,13 @@ const DevToolsContainer = ({
       <DevStoreScopeContext value={effectiveInstanceId}>
         <div className={clsx('grow basis-0 flex-col overflow-auto', innerClassName)}>{children}</div>
       </DevStoreScopeContext>
-      {isSelected && (
+      {isSelected && hydrated && (
         <DevToolsContextProvider>
           {renderMode === 'default' && (
             <DevToolsOverlay
               className={clsx({ dark: resolvedTheme === 'dark' })}
               collapsed={collapsed}
-              orientation={orientation}
+              orientation={dockedAt}
               tabSelected={tabSelected}
               logTypeFilter={logTypeFilter}
               onOpen={handleOpen}
@@ -123,7 +139,7 @@ const DevToolsContainer = ({
                 <DevToolsOverlay
                   className={clsx({ dark: resolvedTheme === 'dark' })}
                   collapsed={collapsed}
-                  orientation={orientation}
+                  orientation={dockedAt}
                   tabSelected={tabSelected}
                   logTypeFilter={logTypeFilter}
                   onOpen={handleOpen}

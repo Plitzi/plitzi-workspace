@@ -5,7 +5,8 @@
   "description": "Render a Plitzi space from a plain HTML file — no bundler, no build step, no npm install.",
   "type": "module",
   "scripts": {
-    "start": "node serve.mjs"
+    "start": "node serve.mjs",
+    "start:dev": "node --watch serve.mjs"
   },
   "dependencies": {
     "tailwindcss": "^4.3.3"

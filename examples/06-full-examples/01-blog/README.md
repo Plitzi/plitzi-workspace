@@ -7,6 +7,7 @@ rendered before the browser gets it.
 
 ```bash
 yarn workspace @plitzi/example-blog start
+yarn workspace @plitzi/example-blog start:dev   # reloads on save, while you edit it
 # http://127.0.0.1:4013
 ```
 

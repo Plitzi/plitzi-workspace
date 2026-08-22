@@ -6,6 +6,7 @@ run**.
 
 ```bash
 yarn start
+yarn start:dev   # the same, reloading on save, while you edit it
 ```
 
 ```

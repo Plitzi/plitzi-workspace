@@ -59,6 +59,7 @@ By default, `yarn start` uses the shared **development servers** (see [Local set
 
 ## Next steps
 
+- [Authoring spaces](./authoring-spaces.md) — writing a space in code, which is where a self-hosted deployment starts
 - [Repository structure](./repository-structure.md)
 - [Development](./development.md)
 - [Releases](./releases.md)

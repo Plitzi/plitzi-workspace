@@ -4,6 +4,7 @@ The smallest thing that renders a Plitzi space: a Vite app, one file of code, no
 
 ```bash
 yarn start   # http://localhost:4001
+yarn start:dev   # the same, with Vite's HMR, while you edit it
 ```
 
 ## What matters

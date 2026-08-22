@@ -5,6 +5,7 @@ renew before the credential lapses, and sign out everywhere.
 
 ```bash
 yarn workspace @plitzi/example-with-users start
+yarn workspace @plitzi/example-with-users start:dev   # reloads on save, while you edit it
 # http://127.0.0.1:4007
 ```
 

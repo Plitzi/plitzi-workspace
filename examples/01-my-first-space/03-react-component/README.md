@@ -4,6 +4,7 @@ Plitzi mounted **inside your own React tree**, next to your own components — n
 
 ```bash
 yarn start   # http://localhost:4002
+yarn start:dev   # the same, with Vite's HMR, while you edit it
 ```
 
 ## What matters

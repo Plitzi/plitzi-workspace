@@ -9,6 +9,7 @@ does not try.**
 
 ```bash
 yarn start
+yarn start:dev   # the same, reloading on save, while you edit it
 ```
 
 Open <http://127.0.0.1:4012/> with the network tab recording, and press **Fetch new cats**:

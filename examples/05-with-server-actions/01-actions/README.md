@@ -5,6 +5,7 @@ server runs. The page hands over an action's **name** and its inputs, and gets b
 
 ```bash
 yarn start
+yarn start:dev   # the same, reloading on save, while you edit it
 
 # the published site: a page calling the action
 curl -s http://127.0.0.1:4009/_action \

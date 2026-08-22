@@ -78,6 +78,17 @@ yarn workspace @plitzi/example-with-users start
 cd examples/02-with-users/01-sessions && yarn start
 ```
 
+While you are editing one, `start:dev` is the same thing that reloads itself:
+
+```bash
+cd examples/02-with-users/01-sessions && yarn start:dev
+```
+
+Every example has it. What it means depends on what the example is: the browser ones (`01-my-first-space/02`,
+`03`, and `05-with-server-actions/03`) get Vite's HMR, so a change lands without losing the page's state; the
+server ones restart on save and the page picks it up on the next request; and `01-no-build` uses Node's own
+watcher, because an example whose whole point is that nothing is compiled should not need a bundler to develop.
+
 Every example takes `PORT` if the default collides. `yarn start` at the repo root does **not** boot the examples —
 it is the package dev loop, and eight extra servers fighting for ports would only get in the way.
 

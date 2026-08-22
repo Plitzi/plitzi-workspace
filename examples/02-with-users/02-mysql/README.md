@@ -5,6 +5,7 @@ from: not an array in a file, but a database you own — with the tables created
 
 ```bash
 yarn workspace @plitzi/example-with-users-mysql start
+yarn workspace @plitzi/example-with-users-mysql start:dev   # reloads on save
 # http://127.0.0.1:4008
 ```
 

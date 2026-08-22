@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "vite --port 4012",
+    "start:dev": "vite --port 4012",
     "build": "vite build",
     "preview": "vite preview --port 4012",
     "typecheck": "tsc -p tsconfig.json --noEmit"

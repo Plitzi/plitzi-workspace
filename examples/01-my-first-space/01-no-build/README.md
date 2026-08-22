@@ -5,6 +5,7 @@ the SDK's own `index.html` uses.
 
 ```bash
 yarn start   # http://127.0.0.1:4000
+yarn start:dev   # the same, reloading on save, while you edit it
 ```
 
 The server is [`serve.mjs`](./serve.mjs): thirty lines of `node:http` with no dependencies, because pulling in a

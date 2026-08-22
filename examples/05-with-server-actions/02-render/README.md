@@ -6,6 +6,7 @@ the page of where they came from.
 
 ```bash
 yarn start
+yarn start:dev   # the same, reloading on save, while you edit it
 ```
 
 Open <http://127.0.0.1:4011/>, then <http://127.0.0.1:4011/?limit=3>. The terminal prints a run per page load:
