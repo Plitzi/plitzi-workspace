@@ -25,6 +25,10 @@ export interface BuiltinGlobalCallback extends BuiltinActionSpec {
   source: string;
 }
 
+// `type` is left to its default on every entry below: a global callback IS the default kind, and saying so on
+// each of them would be noise. The element callbacks say `callback` and the utilities say `utility`, because for
+// those the kind is the whole difference.
+
 export const BUILTIN_GLOBAL_CALLBACKS: Record<string, BuiltinGlobalCallback> = {
   ...spaceCallbacks,
   ...stateCallbacks,

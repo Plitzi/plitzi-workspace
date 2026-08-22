@@ -1,6 +1,6 @@
 import { reconcileParams } from '@plitzi/sdk-shared/authoring';
 
-import type { ParamSpec } from '@plitzi/sdk-shared/authoring';
+import type { BuiltinActionSpec } from '@plitzi/sdk-interactions/authoring';
 
 // Built-in `callback`-type actions that EVERY element registers on itself, beside the code that registers them
 // (`../Element/helpers/getInteractions` — the default set shared by all element types). A specific element TYPE can add
@@ -18,16 +18,14 @@ import type { ParamSpec } from '@plitzi/sdk-shared/authoring';
 // finishes (a postCallback that runs in reverse) — the correct way to do a temporary change (a "loading…" label, a
 // disabled button) WITHOUT adding manual restore steps.
 
-export interface BuiltinElementCallback {
-  title: string;
-  // When true the param set is CLOSED: any key not listed is a mistake (dropped on apply, warned in validation).
-  strictParams: boolean;
-  params: ParamSpec;
-}
+export type BuiltinElementCallback = BuiltinActionSpec;
 
 export const BUILTIN_ELEMENT_CALLBACKS: Record<string, BuiltinElementCallback> = {
   setState: {
     title: 'Update Element (set attribute / state)',
+    // Runs against an ELEMENT, so its node carries an idRef rather than a source module — the one thing that
+    // tells this `setState` from the global one at the runtime's lookup.
+    type: 'callback',
     strictParams: true,
     params: {
       category: {

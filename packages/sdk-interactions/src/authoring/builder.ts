@@ -2,6 +2,7 @@ import type {
   InteractionCallback,
   InteractionCallbackParam,
   InteractionCallbackPreviews,
+  InteractionCallbackType,
   InteractionParamType
 } from '@plitzi/sdk-shared';
 import type { BuiltinParam, ParamSpec } from '@plitzi/sdk-shared/authoring';
@@ -58,6 +59,12 @@ export const toBuilderParams = (spec: ParamSpec): Record<string, InteractionCall
 /** What a declared action carries, whichever kind of action it is. */
 export interface BuiltinActionSpec {
   title: string;
+  /**
+   * What KIND of node this action produces, which is also how the runtime resolves it: a `globalCallback` is
+   * looked up under its source module, a `callback` under an element's idRef, a `utility` under nothing at all.
+   * A global callback is the common case and the default.
+   */
+  type?: InteractionCallbackType;
   /** When true the param set is CLOSED: a key not listed is a mistake, dropped on apply and warned in validation. */
   strictParams: boolean;
   params: ParamSpec;
@@ -78,7 +85,7 @@ export const toInteractionCallback = <T extends Record<string, unknown> = Record
   ({
     action,
     title: spec.title,
-    type: 'globalCallback',
+    type: spec.type ?? 'globalCallback',
     callback,
     preview: spec.preview ?? {},
     params: toBuilderParams(spec.params),

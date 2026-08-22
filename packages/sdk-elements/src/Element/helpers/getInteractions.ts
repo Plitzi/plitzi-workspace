@@ -1,4 +1,4 @@
-import { toBuilderParams } from '@plitzi/sdk-interactions/authoring';
+import { toBuilderParams, toInteractionCallback } from '@plitzi/sdk-interactions/authoring';
 
 import { BUILTIN_ELEMENT_CALLBACKS } from '../../authoring/elementCallbacks';
 
@@ -27,13 +27,11 @@ const getInteractions = (
   const params = toBuilderParams(declared.params);
 
   return {
-    setState: {
-      action: 'setState',
+    // Assembled by the same adapter every other declared action goes through. What is overridden is what only
+    // this call can know: the element it names, the machinery's own undo hook, and the pickers below.
+    setState: toInteractionCallback('setState', declared, callback, {
       title: `Update ${definition.label}`,
-      type: 'callback',
-      callback,
       postCallback,
-      preview: {},
       params: {
         ...params,
         key: {
@@ -75,9 +73,9 @@ const getInteractions = (
 
             return Object.keys(attributes).map(attribute => ({ value: attribute, label: attribute }));
           }
-        } as InteractionCallbackParam
+        }
       }
-    }
+    })
   };
 };
 
