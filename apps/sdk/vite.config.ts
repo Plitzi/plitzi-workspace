@@ -291,7 +291,18 @@ export default defineConfig(({ mode, command }) => {
       emptyOutDir: !devMode
     },
     define: {
-      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV ?? 'production'),
+      /**
+       * The MODE this build was asked for, not whatever the shell happened to export.
+       *
+       * `build:dev` passes `--mode development` and then this fell back to `'production'`, because nobody sets
+       * NODE_ENV before running turbo — so the "dev" bundle identified as production and every dev-only branch
+       * inside it was compiled away. The visible half of that: nexus registers its stores in a dev-only registry,
+       * so the dev-tools Store tab and its instance dropdown were permanently empty in any page loading this
+       * bundle, while the tabs that do not depend on it (Logs, History) worked fine and made it look deliberate.
+       */
+      // Vite sets `process.env.NODE_ENV` itself before the config is read, so consulting it here only ever
+      // echoed Vite back. The MODE the build was asked for is the intent, and the only thing that is.
+      'process.env.NODE_ENV': JSON.stringify(devMode ? 'development' : 'production'),
       VERSION: JSON.stringify(PACKAGE.version)
     },
     test: {

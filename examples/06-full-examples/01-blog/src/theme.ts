@@ -450,7 +450,24 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
     desktop: eyebrow({ 'padding-bottom': '12px', ...borderSide('bottom', '1px', 'var(--line)'), width: '100%' })
   },
   panelText: { desktop: { color: 'var(--fg-muted)', 'font-size': '14px', 'line-height': '1.65' } },
-  chipRow: { desktop: { display: 'flex', 'flex-wrap': 'wrap', ...gap('7px') } },
+  /**
+   * A row of chips, and the reset is not optional.
+   *
+   * A `list` in `controlled` mode renders a plain `div` — no bullets, no markers — and still inherits the `ul`
+   * subtype's own default style, because a component with subtypes and no subtype named falls back to the FIRST
+   * one. So every controlled list starts life indented forty pixels and carrying a bottom margin, which in a
+   * 288-pixel sidebar is a seventh of the width thrown away. `quietList` below says the same thing.
+   */
+  chipRow: {
+    desktop: {
+      display: 'flex',
+      'flex-wrap': 'wrap',
+      ...gap('8px'),
+      'padding-left': '0px',
+      'margin-top': '0px',
+      'margin-bottom': '0px'
+    }
+  },
   /** The chosen topic. A different shape rather than a tint: it should read as a state, not as a hover. */
   chipActive: {
     desktop: {

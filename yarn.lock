@@ -3624,8 +3624,8 @@ __metadata:
   linkType: soft
 
 "@plitzi/nexus@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "@plitzi/nexus@npm:1.1.0"
+  version: 1.1.1
+  resolution: "@plitzi/nexus@npm:1.1.1"
   peerDependencies:
     react: ^18.0.0 || ^19.0.0
     react-dom: ^18.0.0 || ^19.0.0
@@ -3637,7 +3637,7 @@ __metadata:
       optional: true
     vue:
       optional: true
-  checksum: 10c0/455fc2c9e9345a1a3763d4e1e41469d97e5380cf1d30d9fb42bb55dc0d3e50b1b952f6c8e9824d287629c20bfc9ac063a5f9aae6da03598bd8465e61c9433dbb
+  checksum: 10c0/c0cf229db5dcf7887b9d4484b3c08768dfefdc3e1d7f34a69bc017b450d02ab31a2fa72a61912e33d3af61139e668f03bea5177788529e8075cb9eaea580e705
   languageName: node
   linkType: hard
 

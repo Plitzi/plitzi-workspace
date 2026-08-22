@@ -612,6 +612,31 @@ describeTarget('blog', subject => {
   });
 
   /**
+   * The dev tools can actually SEE the app's stores.
+   *
+   * Worth a test of its own because the failure is silent and plausible. Nexus registers every store in a
+   * dev-only registry, and its dev/prod detection used to be defeated by its own guard in any browser bundle —
+   * so `isDev` was false everywhere, nothing registered, and the Store tab and the instance dropdown were
+   * permanently empty while Logs and History carried on working. Nothing errored. It just looked like a panel
+   * with two features nobody had finished.
+   */
+  test('the dev tools can enumerate the stores the page mounted', async ({ page }) => {
+    await page.goto(subject.origin);
+    await expect(page.getByRole('heading', { name: 'The fox that learned the timetable', level: 1 })).toBeVisible();
+
+    // The badge, not the "Made in Plitzi" branding link.
+    await page.locator('button:has-text("Plitzi")').first().click();
+    await page.getByRole('button', { name: 'Store' }).click();
+
+    const scope = page.locator('select');
+    // The root store at least, plus one per list row and provider on this page.
+    await expect(scope.locator('option')).not.toHaveCount(0);
+    await expect(scope.locator('option', { hasText: 'root' })).toHaveCount(1);
+    // Grouped by SDK instance, which is the other half of the dropdown.
+    await expect(page.locator('select optgroup')).not.toHaveCount(0);
+  });
+
+  /**
    * The topic chips, which are a filter rather than decoration.
    *
    * The whole of it is a query parameter: a render trigger's input is the page's own route and query params, so
@@ -625,6 +650,14 @@ describeTarget('blog', subject => {
     // under test, not an accident of the markup.
     const chosen = page.locator('.chipRow .chipActive:visible');
     await expect(chosen).toHaveText('All');
+    /**
+     * Flush with the panel it sits in.
+     *
+     * A `list` in `controlled` mode renders a plain div and still inherits the `ul` subtype's indent, because a
+     * component with subtypes and no subtype named falls back to the first one. Forty pixels of a 288-pixel
+     * sidebar is a seventh of it, thrown away — and it comes back the moment somebody drops the reset.
+     */
+    await expect(page.locator('.chipRow')).toHaveCSS('padding-left', '0px');
     await expect(page.locator('a.hero')).toBeVisible();
 
     await page.getByRole('link', { name: 'Ocean', exact: true }).click();
