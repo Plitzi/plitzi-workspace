@@ -21,7 +21,7 @@ type SettingsProps = {
 };
 
 const Settings = ({ content = '', props: componentProps = '{}', onUpdate }: SettingsProps) => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = use(ThemeContext);
   const {
     contexts: { NetworkContext }
   } = usePlitziServiceContext();
@@ -96,7 +96,7 @@ const Settings = ({ content = '', props: componentProps = '{}', onUpdate }: Sett
             size="sm"
             className="min-h-40 p-0"
             value={componentProps}
-            theme={theme === 'dark' ? 'dark' : 'light'}
+            theme={resolvedTheme}
             mode="json"
             lineWrapping
             onChange={handleChangeProps}

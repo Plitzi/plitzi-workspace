@@ -3411,6 +3411,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@plitzi/example-blog@workspace:examples/06-full-examples/01-blog":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/example-blog@workspace:examples/06-full-examples/01-blog"
+  dependencies:
+    "@plitzi/sdk-elements": "workspace:*"
+    "@plitzi/sdk-schema": "workspace:*"
+    "@plitzi/sdk-server": "workspace:*"
+    "@types/node": "npm:^26.2.0"
+    react: "npm:^19.2.8"
+    react-dom: "npm:^19.2.8"
+    tsx: "npm:^4.23.12"
+    typescript: "npm:^6.0.3"
+  languageName: unknown
+  linkType: soft
+
 "@plitzi/example-mcp-server@workspace:examples/04-with-an-agent/01-mcp-server":
   version: 0.0.0-use.local
   resolution: "@plitzi/example-mcp-server@workspace:examples/04-with-an-agent/01-mcp-server"
@@ -3467,6 +3482,64 @@ __metadata:
     tailwindcss: "npm:^4.3.3"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.2.1"
+  languageName: unknown
+  linkType: soft
+
+"@plitzi/example-server-actions-custom-trigger@workspace:examples/05-with-server-actions/04-custom-trigger":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/example-server-actions-custom-trigger@workspace:examples/05-with-server-actions/04-custom-trigger"
+  dependencies:
+    "@plitzi/sdk-server": "workspace:*"
+    "@plitzi/sdk-shared": "workspace:*"
+    "@types/node": "npm:^26.2.0"
+    tsx: "npm:^4.23.12"
+    typescript: "npm:^6.0.3"
+  languageName: unknown
+  linkType: soft
+
+"@plitzi/example-server-actions-no-server@workspace:examples/05-with-server-actions/03-no-server":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/example-server-actions-no-server@workspace:examples/05-with-server-actions/03-no-server"
+  dependencies:
+    "@plitzi/example-space": "workspace:*"
+    "@plitzi/plitzi-sdk": "workspace:*"
+    "@plitzi/sdk-shared": "workspace:*"
+    "@types/react": "npm:^19.2.18"
+    "@types/react-dom": "npm:^19.2.4"
+    "@vitejs/plugin-react": "npm:^6.0.5"
+    react: "npm:^19.2.8"
+    react-dom: "npm:^19.2.8"
+    tailwindcss: "npm:^4.3.3"
+    typescript: "npm:^6.0.3"
+    vite: "npm:^8.2.1"
+  languageName: unknown
+  linkType: soft
+
+"@plitzi/example-server-actions-render@workspace:examples/05-with-server-actions/02-render":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/example-server-actions-render@workspace:examples/05-with-server-actions/02-render"
+  dependencies:
+    "@plitzi/example-space": "workspace:*"
+    "@plitzi/sdk-server": "workspace:*"
+    "@types/node": "npm:^26.2.0"
+    react: "npm:^19.2.8"
+    react-dom: "npm:^19.2.8"
+    tsx: "npm:^4.23.12"
+    typescript: "npm:^6.0.3"
+  languageName: unknown
+  linkType: soft
+
+"@plitzi/example-server-actions@workspace:examples/05-with-server-actions/01-actions":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/example-server-actions@workspace:examples/05-with-server-actions/01-actions"
+  dependencies:
+    "@plitzi/example-space": "workspace:*"
+    "@plitzi/sdk-server": "workspace:*"
+    "@types/node": "npm:^26.2.0"
+    react: "npm:^19.2.8"
+    react-dom: "npm:^19.2.8"
+    tsx: "npm:^4.23.12"
+    typescript: "npm:^6.0.3"
   languageName: unknown
   linkType: soft
 
@@ -3551,8 +3624,8 @@ __metadata:
   linkType: soft
 
 "@plitzi/nexus@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "@plitzi/nexus@npm:1.1.0"
+  version: 1.1.1
+  resolution: "@plitzi/nexus@npm:1.1.1"
   peerDependencies:
     react: ^18.0.0 || ^19.0.0
     react-dom: ^18.0.0 || ^19.0.0
@@ -3564,7 +3637,7 @@ __metadata:
       optional: true
     vue:
       optional: true
-  checksum: 10c0/455fc2c9e9345a1a3763d4e1e41469d97e5380cf1d30d9fb42bb55dc0d3e50b1b952f6c8e9824d287629c20bfc9ac063a5f9aae6da03598bd8465e61c9433dbb
+  checksum: 10c0/c0cf229db5dcf7887b9d4484b3c08768dfefdc3e1d7f34a69bc017b450d02ab31a2fa72a61912e33d3af61139e668f03bea5177788529e8075cb9eaea580e705
   languageName: node
   linkType: hard
 

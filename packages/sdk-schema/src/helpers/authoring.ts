@@ -6,6 +6,7 @@ import FlatMap from './FlatMap';
 import type {
   BindingCategory,
   DisplayMode,
+  DropPosition,
   Element,
   ElementBinding,
   ElementInteraction,
@@ -41,6 +42,14 @@ export type ResponsiveStyle = Partial<Record<DisplayMode, StyleRules>>;
 
 /** A step in an interaction flow. The chaining, ids and flow id are derived; this is what the author decides. */
 export interface StepSpec {
+  /**
+   * What later steps call this one by.
+   *
+   * A flow's scope is keyed by node id, so `{{ publish.output.url }}` resolves only when the step that produced it
+   * is named `publish`. Left out, the id is derived from the step's position — unique, and nothing an author can
+   * write down, which is the same as saying a step's result is unreachable.
+   */
+  id?: string;
   type: ElementInteraction['type'];
   action: string;
   title?: string;
@@ -65,6 +74,15 @@ export interface BindingSpec {
 
 export interface ElementSpec {
   type: string;
+  /**
+   * The name the rest of the space calls this element by: a binding's source (`apiContainer_posts.records`), a
+   * step's `on`, an interaction target.
+   *
+   * Derived as `<type>-<n>` when left out, which is unique but POSITIONAL — adding an element above renumbers
+   * every one below it, and each binding that named one then points at a different element without changing.
+   * Name the ones something else refers to.
+   */
+  idRef?: string;
   label?: string;
   attributes?: Record<string, unknown>;
   /** Style variant of the element's own vocabulary, e.g. a heading's `title`. */
@@ -75,6 +93,15 @@ export interface ElementSpec {
    * share one rule, which is the difference between a stylesheet and a pile of one-off declarations.
    */
   className?: string;
+  /**
+   * A class for one of the element's OTHER style selectors, by selector name — a form control's `input`, `label`
+   * and `error`.
+   *
+   * `style` and `className` above are its `base`, and an element made of parts cannot be dressed through that one
+   * alone: a rule meant for the input lands on the wrapper instead, and the input keeps the browser's own look.
+   * The value names a class from {@link SpaceSpec.classes}, so one rule serves every control that wants it.
+   */
+  slots?: Record<string, string>;
   bindings?: BindingSpec[];
   /** One flow per entry. Steps are chained in order. */
   flows?: StepSpec[][];
@@ -84,6 +111,8 @@ export interface ElementSpec {
 
 export interface PageSpec {
   name: string;
+  /** As {@link ElementSpec.idRef} — a page is an element, and its flows are targeted the same way. */
+  idRef?: string;
   /** Route, without a leading slash. Empty is the home page. */
   slug: string;
   isDefault?: boolean;
@@ -98,7 +127,17 @@ export interface PageSpec {
    * space answers 403 to its own owner. Left undefined unless the author means it.
    */
   accessLevel?: 'public' | 'authenticated';
+  /**
+   * Where a visitor this page is not for is sent — a slug, e.g. `login`.
+   *
+   * Without it they are answered 403, which is correct and rarely what a site wants: somebody who followed a link
+   * to a members page should land on the sign-in, not on a refusal. One field rather than the router's two,
+   * because naming the destination and asking to be redirected are one decision.
+   */
+  unauthorizedRedirect?: string;
   style?: ResponsiveStyle;
+  /** As {@link ElementSpec.className} — a shared class instead of a selector of this page's own. */
+  className?: string;
   flows?: StepSpec[][];
   body: ElementSpec[];
 }
@@ -119,6 +158,18 @@ export interface SpaceSpec {
   elements?: Record<string, ElementStyleSpec>;
   schemaVariables?: SchemaVariable[];
   customCss?: string;
+  /**
+   * Everything else the schema's settings carry — where sign-in posts to, which cookie hints at a session, how
+   * state is kept. `customCss` above is the one field of that same object every space sets, and it stays named on
+   * its own for that reason; these are the rest, spread over it.
+   */
+  settings?: Partial<Omit<Schema['settings'], 'customCss'>>;
+  /**
+   * Server-resolved data for this space's `runtime: 'server'` elements. It is off unless a space says otherwise,
+   * so a space whose providers are fed by the server declares `{ enabled: true }` — without it those elements
+   * render from their mock data and nothing anywhere reports a missing switch.
+   */
+  rsc?: Schema['rsc'];
   mode?: Style['mode'];
   theme?: Style['theme'];
   pages: PageSpec[];
@@ -182,7 +233,7 @@ const elementCss = (type: string, spec: ElementStyleSpec): string => {
  * derived from the order the steps were written in rather than declared.
  */
 export const authorFlow = (path: string, steps: StepSpec[]): Record<string, ElementInteraction> => {
-  const ids = steps.map((_, index) => `node_${authoringId(`${path}/step/${index}`)}`);
+  const ids = steps.map((step, index) => step.id ?? `node_${authoringId(`${path}/step/${index}`)}`);
   const flowId = ids[0] ?? '';
 
   return steps.reduce<Record<string, ElementInteraction>>((flow, step, index) => {
@@ -230,6 +281,8 @@ class SpaceAuthor {
 
   private readonly refCounters = new Map<string, number>();
 
+  private readonly pagePaths = new Set<string>();
+
   constructor(private readonly spec: SpaceSpec) {}
 
   author(): AuthoredSpace {
@@ -274,7 +327,8 @@ class SpaceAuthor {
       definition: { name: this.spec.name, permanentUrl: this.spec.permanentUrl },
       flat: this.flatMap.flat,
       variables: this.spec.schemaVariables ?? [],
-      settings: { customCss: this.spec.customCss ?? '' },
+      settings: { ...this.spec.settings, customCss: this.spec.customCss ?? '' },
+      ...(this.spec.rsc ? { rsc: this.spec.rsc } : {}),
       pages,
       pageFolders: []
     };
@@ -323,18 +377,53 @@ class SpaceAuthor {
     return selector;
   }
 
+  /**
+   * Inserts through `FlatMap`, and refuses to carry on when it declines.
+   *
+   * It answers `false` rather than throwing — a builder dropping an element somewhere it may not go is not an
+   * exception — so an ignored return here is an element that never made it into the document while the page it
+   * belonged to authors perfectly well. The reason it is nearly always declined is an `idRef` two elements
+   * share, and a name written twice is worth hearing about at the line that wrote it.
+   */
+  private insert(element: Element, to: string, position: DropPosition): void {
+    if (!this.flatMap.addElement(element, to, position)) {
+      throw new Error(
+        `Could not author element "${element.idRef ?? element.id}" (${element.definition.type}): the schema refused it, which usually means another element already answers to that idRef`
+      );
+    }
+  }
+
+  /**
+   * Where a page's ids are derived from — its slug, unless another page already claimed it.
+   *
+   * Two pages SHARING one slug is a supported shape and the only way to put a sign-in and the page behind it on
+   * one path: they differ by `accessLevel`, and the router picks. Derived from the slug alone they also shared
+   * every id in their subtrees, and the second page's elements were refused one by one. Only the later page is
+   * disambiguated, so no space that has no duplicate moves an id.
+   */
+  private pathFor(page: PageSpec, index: number): string {
+    const base = `${this.spec.permanentUrl}/${page.slug || 'home'}`;
+    const path = this.pagePaths.has(base) ? `${base}#${index}` : base;
+    this.pagePaths.add(path);
+
+    return path;
+  }
+
   private addPage(page: PageSpec, index: number): string {
-    const path = `${this.spec.permanentUrl}/${page.slug || 'home'}`;
+    const path = this.pathFor(page, index);
     const id = authoringId(path);
 
     const element: Element = {
       id,
-      idRef: this.nextRef('page'),
+      idRef: page.idRef ?? this.nextRef('page'),
       attributes: {
         slug: page.slug,
         default: page.isDefault ?? index === 0,
         name: page.name,
         ...(page.accessLevel ? { accessLevel: page.accessLevel } : {}),
+        ...(page.unauthorizedRedirect
+          ? { unauthorizedBehaviour: 'redirect', unauthorizedPageRedirect: page.unauthorizedRedirect }
+          : {}),
         seoEnabled: Boolean(page.seoTitle ?? page.seoDescription),
         ...(page.seoTitle ? { seoPageTitle: page.seoTitle } : {}),
         ...(page.seoDescription ? { seoPageDescription: page.seoDescription } : {})
@@ -344,13 +433,15 @@ class SpaceAuthor {
         type: 'page',
         rootId: id,
         items: [],
-        styleSelectors: { base: this.selectorFor(path, { type: 'page', style: page.style }) },
+        styleSelectors: {
+          base: this.selectorFor(path, { type: 'page', style: page.style, className: page.className })
+        },
         ...(page.flows ? { interactions: this.authorFlows(path, page.flows) } : {})
       }
     };
 
     // `custom` is the one drop position that inserts without a parent, which is what a page is.
-    this.flatMap.addElement(element, '', 'custom');
+    this.insert(element, '', 'custom');
 
     page.body.forEach((child, childIndex) => this.addElement(child, `${path}/${childIndex}`, id, id));
 
@@ -369,7 +460,7 @@ class SpaceAuthor {
 
     const element: Element = {
       id,
-      idRef: this.nextRef(spec.type),
+      idRef: spec.idRef ?? this.nextRef(spec.type),
       attributes: spec.attributes ?? {},
       definition: {
         label: spec.label ?? spec.type,
@@ -377,7 +468,9 @@ class SpaceAuthor {
         rootId,
         parentId,
         items: [],
-        styleSelectors: { base: this.selectorFor(path, spec) },
+        // A slot names a class outright: it dresses a part of an element that already exists, and a selector of
+        // its own per control would write the same rule once per input on the page.
+        styleSelectors: { base: this.selectorFor(path, spec), ...spec.slots },
         initialState: {
           visibility: true,
           ...(spec.variant ? { styleVariant: { [spec.type]: { base: spec.variant } } } : {})
@@ -388,7 +481,7 @@ class SpaceAuthor {
       }
     };
 
-    this.flatMap.addElement(element, parentId, 'inside');
+    this.insert(element, parentId, 'inside');
 
     spec.children?.forEach((child, index) => this.addElement(child, `${path}/${index}`, rootId, id));
 

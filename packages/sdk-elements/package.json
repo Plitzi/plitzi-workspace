@@ -454,6 +454,22 @@
       "types": "./dist/elements/basic/Text/index.d.ts",
       "import": "./dist/elements/basic/Text/index.mjs"
     },
+    "./elements/basic/ThemeToggle": {
+      "types": "./dist/elements/basic/ThemeToggle/index.d.ts",
+      "import": "./dist/elements/basic/ThemeToggle/index.mjs"
+    },
+    "./elements/basic/ThemeToggle/ThemeToggle": {
+      "types": "./dist/elements/basic/ThemeToggle/ThemeToggle.d.ts",
+      "import": "./dist/elements/basic/ThemeToggle/ThemeToggle.mjs"
+    },
+    "./elements/basic/ThemeToggle/declaration": {
+      "types": "./dist/elements/basic/ThemeToggle/declaration.d.ts",
+      "import": "./dist/elements/basic/ThemeToggle/declaration.mjs"
+    },
+    "./elements/basic/ThemeToggle/index": {
+      "types": "./dist/elements/basic/ThemeToggle/index.d.ts",
+      "import": "./dist/elements/basic/ThemeToggle/index.mjs"
+    },
     "./elements/declarations": {
       "types": "./dist/elements/declarations.d.ts",
       "import": "./dist/elements/declarations.mjs"
@@ -469,6 +485,10 @@
     "./elements/form/Form/Settings": {
       "types": "./dist/elements/form/Form/Settings.d.ts",
       "import": "./dist/elements/form/Form/Settings.mjs"
+    },
+    "./elements/form/Form/declaration": {
+      "types": "./dist/elements/form/Form/declaration.d.ts",
+      "import": "./dist/elements/form/Form/declaration.mjs"
     },
     "./elements/form/Form/index": {
       "types": "./dist/elements/form/Form/index.d.ts",
@@ -489,6 +509,10 @@
     "./elements/form/FormControl/components/Label": {
       "types": "./dist/elements/form/FormControl/components/Label.d.ts",
       "import": "./dist/elements/form/FormControl/components/Label.mjs"
+    },
+    "./elements/form/FormControl/declaration": {
+      "types": "./dist/elements/form/FormControl/declaration.d.ts",
+      "import": "./dist/elements/form/FormControl/declaration.mjs"
     },
     "./elements/form/FormControl/hocs/withFieldValue": {
       "types": "./dist/elements/form/FormControl/hocs/withFieldValue.d.ts",

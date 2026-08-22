@@ -222,6 +222,18 @@ export const checkInteractionNode = (
   ctx: ValidationCtx,
   hostRef: string
 ): void => {
+  // A server task cannot run in a page flow: there is no browser on the server and no server in the browser. It is
+  // shaped like any other step, so nothing but this says so — and the mirror check lives in the action validator.
+  if (node.nodeType === 'task') {
+    ctx.errors.push({
+      path: `${base}.nodeType`,
+      message: `Step "${node.action}" is a server task, which cannot run in a page flow`,
+      hint: 'Put it in a server action (upsertAction) and call that action from this flow'
+    });
+
+    return;
+  }
+
   checkObservedName(
     node.action,
     ctx.observedActions,

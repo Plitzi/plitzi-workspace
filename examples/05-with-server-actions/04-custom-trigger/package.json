@@ -1,0 +1,20 @@
+{
+  "name": "@plitzi/example-server-actions-custom-trigger",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The other extension point: a trigger this deployment mounts itself, over a store it already runs.",
+  "type": "module",
+  "scripts": {
+    "start": "node --import tsx src/main.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@plitzi/sdk-server": "workspace:*",
+    "@plitzi/sdk-shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typescript": "^6.0.3"
+  }
+}

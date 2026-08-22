@@ -1,5 +1,8 @@
+import { createHmac } from 'node:crypto';
+
 import { describeTarget, expect, test } from '../../fixtures';
-import { expectSampleSpaceContent, expectSpaceRendered } from '../../helpers/space';
+import { paintTrace, resetPaint, watchPaint } from '../../helpers/flicker';
+import { expectDevToolsAvailable, expectSampleSpaceContent, expectSpaceRendered } from '../../helpers/space';
 import { expectVisuallyHealthy } from '../../helpers/visualHealth';
 import { sampleSpace } from '../../spaces';
 
@@ -16,6 +19,7 @@ describeTarget('no-build', subject => {
 
     await expectSampleSpaceContent(page);
     await expectVisuallyHealthy(page);
+    await expectDevToolsAvailable(page);
 
     await capture('no-build');
   });
@@ -28,6 +32,7 @@ describeTarget('render', subject => {
     await expectSampleSpaceContent(page);
     await expectSpaceRendered(page, sampleSpace());
     await expectVisuallyHealthy(page);
+    await expectDevToolsAvailable(page);
 
     await capture('render');
   });
@@ -39,6 +44,7 @@ describeTarget('react-component', subject => {
 
     await expectSampleSpaceContent(page);
     await expectVisuallyHealthy(page);
+    await expectDevToolsAvailable(page);
 
     await capture('react-component');
   });
@@ -130,6 +136,148 @@ describeTarget('mysql', subject => {
   });
 });
 
+describeTarget('server-actions', subject => {
+  /** The published site is the target's own origin; the draft is the next port up. Same process, same space, same
+   *  action store — the deployment record is the only thing that differs, which is what makes the pair a
+   *  demonstration rather than two servers. */
+  const draftOrigin = () => {
+    const url = new URL(subject.origin);
+    url.port = String(Number(url.port) + 1);
+
+    return url.origin;
+  };
+
+  const call = { actionId: 'shipping-quote', input: { city: 'Berlin', weightKg: 2 } };
+
+  test('a page runs the action and shows what came back', async ({ page, capture }) => {
+    await page.goto(subject.origin);
+
+    await expect(page.getByRole('heading', { name: 'Shipping quote' })).toBeVisible();
+    await capture('before-the-run');
+
+    await page.getByLabel('Destination city').fill('Berlin');
+    await page.getByRole('button', { name: 'Get a quote' }).click();
+
+    // The whole promise of the README: the browser sent a name and two values, and the answer is on the page.
+    await expect(page.getByText('quoted by the copy published at revision 2')).toBeVisible();
+    await capture('after-the-run');
+  });
+
+  test('the output step is the contract — what it did not name never leaves', async ({ request }) => {
+    const response = await request.post(`${subject.origin}/_action`, { data: call });
+    const { output } = (await response.json()) as { output: Record<string, unknown> };
+
+    expect(response.status()).toBe(200);
+    expect(Object.keys(output).sort()).toEqual(['currency', 'summary', 'total']);
+    // The task returned it; no step named it. That is the mechanism, not an omission in the example.
+    expect(output, 'the README says `band` stays on the server').not.toHaveProperty('band');
+  });
+
+  test('input the document did not declare is dropped', async ({ request }) => {
+    const response = await request.post(`${subject.origin}/_action`, {
+      data: { ...call, input: { ...call.input, discount: 'free' } }
+    });
+    const { output } = (await response.json()) as { output: { total: number } };
+
+    expect(output.total, 'an undeclared key reached a step').toBe(8);
+  });
+
+  /** The rule the example exists to show: a page reads the version it was published with, and the draft is what
+   *  its author is editing now. Both answers come from one action id and one process. */
+  test('the published site and the draft answer with their own version', async ({ request }) => {
+    const shipped = await request.post(`${subject.origin}/_action`, { data: call });
+    const editing = await request.post(`${draftOrigin()}/_action`, { data: call });
+
+    const shippedOutput = (await shipped.json()) as { output: { total: number; summary: string } };
+    const editingOutput = (await editing.json()) as { output: { total: number; summary: string } };
+
+    expect(shippedOutput.output.summary).toContain('published at revision 2');
+    expect(editingOutput.output.summary).toContain('draft');
+    expect(shippedOutput.output.total, 'both revisions quoted the same price').not.toBe(editingOutput.output.total);
+  });
+
+  test('the webhook takes a signed delivery and refuses an unsigned one', async ({ request }) => {
+    const body = JSON.stringify({ event: 'page_view' });
+    const signature = createHmac('sha256', 'example-webhook-secret').update(body).digest('hex');
+    const hook = `${subject.origin}/_action/hook/visit-digest`;
+    const headers = { 'content-type': 'application/json' };
+
+    const signed = await request.post(hook, { headers: { ...headers, 'x-example-signature': signature }, data: body });
+    const unsigned = await request.post(hook, { headers, data: body });
+
+    expect(signed.status()).toBe(200);
+    expect((await signed.json()) as { accepted: boolean }).toMatchObject({ accepted: true });
+    expect(unsigned.status(), 'an unsigned delivery ran the flow').toBe(401);
+  });
+});
+
+describeTarget('server-actions-render', subject => {
+  /** The claim on the box: the pictures are IN the document. Fetched with no JavaScript running, so what comes
+   *  back is what a crawler — or a visitor on a dead connection — would get. */
+  test('the HTML arrives with the cats already in it', async ({ request }) => {
+    const html = await (await request.get(subject.origin)).text();
+
+    expect(html).toContain('thecatapi.com/images/');
+    expect(html.match(/<img/g)?.length, 'the default is eight cats').toBe(8);
+  });
+
+  test('the page renders what the server fetched', async ({ page, capture }) => {
+    await page.goto(subject.origin);
+
+    await expect(page.getByRole('heading', { name: 'Cats, fetched on the server' })).toBeVisible();
+    await expect(page.locator('img.cat-photo').first()).toBeVisible();
+    await expect(page.getByText('8 cats came back')).toBeVisible();
+
+    await capture('server-fetched-cats');
+  });
+
+  /** The trigger's input contract, end to end: a query param the page never wired up reaches the action, coerced
+   *  to the type the step declared. */
+  test('a query param reaches the action through the render trigger', async ({ request }) => {
+    const html = await (await request.get(`${subject.origin}/?limit=3`)).text();
+
+    expect(html.match(/<img/g)?.length).toBe(3);
+  });
+
+  test('the element is fed by the action, not by the browser', async ({ request }) => {
+    const response = await request.get(`${subject.origin}/_rsc?location=%2F&ids=cats-provider`);
+    const { serverData } = (await response.json()) as { serverData: Record<string, { records: unknown[] }> };
+
+    expect(response.status()).toBe(200);
+    expect(serverData['cats-provider'].records.length).toBeGreaterThan(0);
+    // The output step named `records` and `count`; the fetch also returned `status` and `ok`.
+    expect(Object.keys(serverData['cats-provider']).sort()).toEqual(['count', 'records']);
+  });
+});
+
+describeTarget('server-actions-no-server', subject => {
+  /** The example exists for one assertion, and this is it: with no server tier, the server-side halves of a page
+   *  do not TRY. Not a failed request that is handled quietly — no request at all. */
+  test('nothing is asked of a server that is not there', async ({ page, capture }) => {
+    const attempts: string[] = [];
+    page.on('request', request => {
+      const { pathname } = new URL(request.url());
+      if (pathname.includes('_action') || pathname.includes('_rsc')) {
+        attempts.push(request.url());
+      }
+    });
+
+    await page.goto(subject.origin);
+    await expect(page.getByRole('heading', { name: 'The same page, with nobody to ask' })).toBeVisible();
+
+    // The provider is a `runtime: 'server'` element with nowhere to resolve from, so it renders its mock.
+    await expect(page.locator('img.cat-photo')).toHaveCount(2);
+
+    await page.getByRole('button', { name: 'Fetch new cats' }).click();
+
+    // A skipped run is a RESULT: the flow carried on and the next step put the status on the page.
+    await expect(page.getByText('The step reported: skipped')).toBeVisible();
+    expect(attempts, 'a step called a server this page does not have').toEqual([]);
+
+    await capture('no-server-tier');
+  });
+});
+
 describeTarget('mcp-server', subject => {
   test('an agent can connect to it', async ({ request }) => {
     const response = await request.post(subject.origin, {
@@ -188,5 +336,467 @@ describeTarget('ssr-preview', subject => {
 
     expect(drafted, 'the README says this render carries the draft').toContain('Draft title');
     expect(afterwards, 'the README says the token is one-shot').not.toContain('Draft title');
+  });
+});
+
+describeTarget('blog', subject => {
+  /** The one example that is a whole small product rather than a single wiring decision, so what is checked here
+   *  is what its README promises a reader will be able to do: read the blog, open a post, publish one, be refused
+   *  when the account may not — and see a header that knows who is looking. */
+
+  const signIn = async (page: import('@playwright/test').Page, username: string) => {
+    await page.goto(`${subject.origin}/login`);
+    await page.getByLabel('Username').fill(username);
+    await page.getByLabel('Password').fill('password');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(
+      page.getByRole('heading', { name: username, level: 3 }).or(page.getByText(`${username}@example.test`))
+    ).toBeVisible();
+  };
+
+  test('the home page arrives with its posts already in it', async ({ request }) => {
+    const html = await (await request.get(subject.origin)).text();
+
+    // Rendered by the action while the page was built: no request from the browser, and nothing to load after it.
+    expect(html).toContain('The fox that learned the timetable');
+    expect(html).toContain('An arm that makes up its own mind');
+    // And so are the photographs: the URL is in the document the first request answered, so the browser starts
+    // fetching the cover of the lead story before it has run a line of the SDK.
+    expect(html).toContain('images.unsplash.com');
+  });
+
+  test('the front page leads with a story and lists the rest', async ({ page, capture }) => {
+    await page.goto(subject.origin);
+
+    await expect(page.getByRole('heading', { name: 'The fox that learned the timetable', level: 1 })).toBeVisible();
+    await expect(page.getByText('Read the story')).toBeVisible();
+    /**
+     * The whole cover is one link, and it is announced by its headline rather than by everything printed on it.
+     * A card whose accessible name is "Cities The fox that learned the timetable City foxes are not country
+     * foxes… Ada Bell · August 19, 2026 · 1 min Read the story" is what you get for not saying so.
+     */
+    await expect(page.locator('a.hero')).toHaveAttribute('aria-label', 'The fox that learned the timetable');
+    await expect(page.getByRole('heading', { name: 'An arm that makes up its own mind' })).toBeVisible();
+    // The sidebar is a second provider asking the same action a different question.
+    await expect(page.getByRole('heading', { name: 'Topics' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'From the archive' })).toBeVisible();
+
+    await capture('home');
+  });
+
+  test('the pager moves through the posts', async ({ page }) => {
+    await page.goto(subject.origin);
+    await expect(page.getByRole('heading', { name: 'An arm that makes up its own mind' })).toBeVisible();
+
+    // The pager lives inside the server-rendered list and is still clickable, because the browser takes that
+    // section over once hydration is done. It writes the page into the URL; the server resolves the window.
+    await page.getByRole('button', { name: '2', exact: true }).click();
+
+    await expect(page).toHaveURL(/[?&]page=2/);
+    await expect(page.getByRole('heading', { name: 'Born with the map already in her' })).toBeVisible();
+
+    // And back, which is the round trip that used to come back empty: the payload for a location is re-fetched.
+    await page.getByRole('button', { name: '1', exact: true }).click();
+
+    await expect(page.getByRole('heading', { name: 'An arm that makes up its own mind' })).toBeVisible();
+  });
+
+  test('a post opens at its own URL, with its body rendered', async ({ page, capture }) => {
+    await page.goto(`${subject.origin}/post/the-fox-that-learned-the-timetable`);
+
+    await expect(page.getByRole('heading', { name: 'The fox that learned the timetable', level: 1 })).toBeVisible();
+    // The markdown became real elements: a heading, a list, a quote.
+    await expect(page.getByRole('heading', { name: 'What the city gave them' })).toBeVisible();
+    await expect(page.getByText('That post does not exist.')).toBeHidden();
+    // And the strip at the bottom, from the same flow that answered the post.
+    await expect(page.getByText('Keep reading')).toBeVisible();
+
+    await capture('post');
+  });
+
+  test('a URL nobody wrote a post for says so', async ({ page }) => {
+    await page.goto(`${subject.origin}/post/no-such-post`);
+
+    await expect(page.getByRole('heading', { name: 'That post does not exist.' })).toBeVisible();
+    await expect(page.getByText('Keep reading')).toBeHidden();
+  });
+
+  /**
+   * What a client-side navigation is allowed to PAINT.
+   *
+   * The sections of these pages are resolved on the server, so a route change has to fetch the new page's answer.
+   * Until it arrives the page knows nothing — and an element whose binding has no value keeps whatever it was
+   * authored with, which for a visibility binding means *visible*. That is how a signed-out visitor came to see
+   * an editor link for a tenth of a second, and an account button with no name in it.
+   *
+   * Sampled per animation frame, so this is about what the browser actually put on screen: a state React passed
+   * through between two commits was never seen by anybody and is not what is being guarded here.
+   */
+  test('a navigation paints no state the server contradicts', async ({ page }) => {
+    // Each of these is a state that contradicts what the server answers for this visitor: an editor link nobody
+    // signed in may use, an account button with no initial in it, a headline with no words, a strip of related
+    // posts with nothing in it. `.prose` is the control — the body of the post, which must be painted.
+    const WRITE_LINK = 'a[href="/write"].navLink';
+    const EMPTY_PILL = '.accountPill .avatarSm:empty';
+    const EMPTY_TITLE = '.articleTitle:empty';
+    const EMPTY_STRIP = '.moreGrid:empty';
+    const PROBES = [WRITE_LINK, EMPTY_PILL, EMPTY_TITLE, EMPTY_STRIP, '.prose'];
+
+    await watchPaint(page, PROBES);
+    await page.goto(subject.origin);
+    await expect(page.getByRole('heading', { name: 'An arm that makes up its own mind' })).toBeVisible();
+
+    await resetPaint(page);
+    await page.getByRole('heading', { name: 'An arm that makes up its own mind' }).click();
+    // Either is proof the destination arrived; `.first()` because on this post both match and a bare `or` is
+    // strict-mode ambiguous.
+    await expect(
+      page.getByRole('heading', { name: 'Why build a mind that way' }).or(page.locator('.prose')).first()
+    ).toBeVisible();
+    await page.waitForTimeout(400);
+
+    /**
+     * `.prose` is the control and is expected in both directions — on the way in it is the post that loaded, and
+     * on the way out it is the post still on screen while the route changes. Everything else in the list is a
+     * state the server contradicts, and none of it may reach a painted frame.
+     */
+    const offenders = async () =>
+      (await paintTrace(page, PROBES))
+        .filter(entry => entry.frames > 0 && entry.selector !== '.prose')
+        .map(entry => `${entry.selector} (${entry.frames} frames)`);
+
+    expect(await offenders(), 'the new page was painted before its own answer arrived').toEqual([]);
+    expect((await paintTrace(page, ['.prose']))[0].frames, 'the post never rendered at all').toBeGreaterThan(0);
+
+    /**
+     * And the way back, which is the half a prefetch cannot cover: the URL has already changed by the time
+     * anything hears about it. What holds there is the other half — a provider whose payload is for another page
+     * knows it has not been answered yet, and renders nothing rather than its authored defaults.
+     */
+    await resetPaint(page);
+    await page.goBack();
+    await expect(page.getByRole('heading', { name: 'An arm that makes up its own mind' })).toBeVisible();
+
+    expect(await offenders(), 'going back painted a state the server contradicts').toEqual([]);
+  });
+
+  /** Reading a post and going back to the list — all in the browser, with the sections resolved on the way. */
+  test('a post and the way back are both client-side', async ({ page }) => {
+    await page.goto(subject.origin);
+    await page.getByRole('heading', { name: 'An arm that makes up its own mind' }).click();
+
+    await expect(page).toHaveURL(`${subject.origin}/post/an-arm-that-makes-up-its-own-mind`);
+    await expect(page.getByRole('heading', { name: 'An arm that makes up its own mind', level: 1 })).toBeVisible();
+
+    await page.getByRole('link', { name: 'Latest' }).click();
+
+    await expect(page).toHaveURL(`${subject.origin}/`);
+    await expect(page.getByRole('heading', { name: 'The fox that learned the timetable', level: 1 })).toBeVisible();
+  });
+
+  /**
+   * The header is an element fed by the server, so it answers for the session rather than for everybody: no
+   * editor link for a visitor who may not use it, and the account button carries a name once there is one.
+   */
+  test('the header knows who is looking', async ({ page }) => {
+    // Scoped to the header: the account link is the subject, and an unscoped name match now also finds the
+    // by-line inside the lead story's card.
+    const header = page.locator('.headerInner');
+
+    await page.goto(subject.origin);
+
+    await expect(header.getByRole('link', { name: 'Sign in' })).toBeVisible();
+    await expect(header.getByRole('link', { name: 'Write', exact: true })).toBeHidden();
+
+    await signIn(page, 'ada');
+    await page.goto(subject.origin);
+
+    await expect(header.getByRole('link', { name: 'ada' })).toBeVisible();
+    await expect(header.getByRole('link', { name: 'Write', exact: true })).toBeVisible();
+  });
+
+  /**
+   * Light and dark, chosen rather than inherited.
+   *
+   * The space declares a value per scheme for every colour and the machine picks between them — until the toggle
+   * in the header writes a class on the document root, which is what the palette's own rules are keyed on. What
+   * is checked here is the whole chain: the class lands, the paint follows it, and the next visit remembers.
+   */
+  test('the theme toggle overrules the machine, and is remembered', async ({ page, capture }) => {
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.goto(subject.origin);
+    await expect(page.getByRole('heading', { name: 'The fox that learned the timetable', level: 1 })).toBeVisible();
+
+    const root = page.locator('html');
+    const background = () =>
+      page
+        .locator('.page')
+        .first()
+        .evaluate(node => getComputedStyle(node).backgroundColor);
+
+    // Nothing on the root while nobody has chosen: the media queries are what answer, and they are guarded on
+    // the absence of exactly this class.
+    await expect(root).not.toHaveClass(/dark/);
+    const light = await background();
+
+    await page.locator('.themeToggle').click();
+
+    await expect(root).toHaveClass(/dark/);
+    expect(await background(), 'the class landed but nothing repainted').not.toBe(light);
+    await capture('blog-dark');
+
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'The fox that learned the timetable', level: 1 })).toBeVisible();
+
+    await expect(root, 'the choice did not survive the reload').toHaveClass(/dark/);
+  });
+
+  /** Signed in and still not an author: the courtesy and the control are two different things. */
+  test('a reader gets no editor link, and the editor still refuses her', async ({ page }) => {
+    const header = page.locator('.headerInner');
+
+    await signIn(page, 'grace');
+    await page.goto(subject.origin);
+
+    await expect(header.getByRole('link', { name: 'grace' })).toBeVisible();
+    await expect(header.getByRole('link', { name: 'Write', exact: true })).toBeHidden();
+  });
+
+  test('one path answers with the sign-in or with the account, by session', async ({ page }) => {
+    await signIn(page, 'ada');
+
+    // Same URL, the other half of the pair: neither page contains a condition.
+    await expect(page).toHaveURL(`${subject.origin}/login`);
+    await expect(page.getByText('ada@example.test')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Sign out' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+  });
+
+  test('the editor is behind the sign-in, and sends whoever follows it there', async ({ page }) => {
+    await page.goto(`${subject.origin}/write`);
+
+    await expect(page).toHaveURL(`${subject.origin}/login`);
+    await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+  });
+
+  test('ada writes a post and lands on it', async ({ page, capture }) => {
+    await signIn(page, 'ada');
+
+    await page.goto(`${subject.origin}/write`);
+    await page.getByLabel('Title').fill('Written in a browser');
+    await page.getByLabel('Standfirst').fill('A form, an action, and the page it produced.');
+    await page.getByLabel('Cover image URL').fill('https://images.unsplash.com/photo-1517993037474-692208825419');
+    /**
+     * A body with the two characters that used to break this: a newline and a quotation mark.
+     *
+     * The action's `input` is authored as an object rather than as a line of JSON with tokens interpolated into
+     * it, so neither has to be escaped by hand. Written the other way this call is refused as invalid input —
+     * which is to say, refused for every real post.
+     */
+    await page.getByLabel('Body').fill('The **whole** trip: a form, an action, a page.\n\n> And a "quotation".');
+    await capture('write');
+    await page.getByRole('button', { name: 'Publish' }).click();
+
+    // The flow read the action's answer and navigated to the URL it returned. Matched loosely on purpose: the
+    // store is the running process, so a second run of this spec publishes a second post and gets `-2`.
+    await expect(page).toHaveURL(/\/post\/written-in-a-browser/);
+    await expect(page.getByRole('heading', { name: 'Written in a browser', level: 1 })).toBeVisible();
+    await expect(page.getByText('ada', { exact: true }).first()).toBeVisible();
+    // The markdown survived the trip whole: the quote is a blockquote, not a broken document.
+    await expect(page.locator('.prose blockquote')).toContainText('quotation');
+    // And the cover is the URL that was pasted, not the drawn fallback.
+    await expect(page.locator('.articleImage')).toHaveAttribute('src', /images\.unsplash\.com/);
+    await capture('published');
+  });
+
+  /**
+   * The dev tools can actually SEE the app's stores.
+   *
+   * Worth a test of its own because the failure is silent and plausible. Nexus registers every store in a
+   * dev-only registry, and its dev/prod detection used to be defeated by its own guard in any browser bundle —
+   * so `isDev` was false everywhere, nothing registered, and the Store tab and the instance dropdown were
+   * permanently empty while Logs and History carried on working. Nothing errored. It just looked like a panel
+   * with two features nobody had finished.
+   */
+  test('the dev tools can enumerate the stores the page mounted', async ({ page }) => {
+    await page.goto(subject.origin);
+    await expect(page.getByRole('heading', { name: 'The fox that learned the timetable', level: 1 })).toBeVisible();
+
+    // The badge, not the "Made in Plitzi" branding link.
+    await page.locator('button:has-text("Plitzi")').first().click();
+    await page.getByRole('button', { name: 'Store' }).click();
+
+    const scope = page.locator('select');
+    // The root store at least, plus one per list row and provider on this page.
+    await expect(scope.locator('option')).not.toHaveCount(0);
+    await expect(scope.locator('option', { hasText: 'root' })).toHaveCount(1);
+    // Grouped by SDK instance, which is the other half of the dropdown.
+    await expect(page.locator('select optgroup')).not.toHaveCount(0);
+  });
+
+  /**
+   * The topic chips, which are a filter rather than decoration.
+   *
+   * The whole of it is a query parameter: a render trigger's input is the page's own route and query params, so
+   * `/?topic=Ocean` reaches the action with nothing wired between the two. Which chip is CHOSEN is answered by
+   * the server as well — the page renders a state rather than working one out.
+   */
+  test('a topic narrows the list, and the chip that did it says so', async ({ page, capture }) => {
+    await page.goto(subject.origin);
+
+    // `:visible` because the list authors BOTH chips for every topic and hides one — which is the mechanism
+    // under test, not an accident of the markup.
+    const chosen = page.locator('.chipRow .chipActive:visible');
+    await expect(chosen).toHaveText('All');
+    /**
+     * Flush with the panel it sits in.
+     *
+     * A `list` in `controlled` mode renders a plain div and still inherits the `ul` subtype's indent, because a
+     * component with subtypes and no subtype named falls back to the first one. Forty pixels of a 288-pixel
+     * sidebar is a seventh of it, thrown away — and it comes back the moment somebody drops the reset.
+     */
+    await expect(page.locator('.chipRow')).toHaveCSS('padding-left', '0px');
+    await expect(page.locator('a.hero')).toBeVisible();
+
+    await page.getByRole('link', { name: 'Ocean', exact: true }).click();
+
+    await expect(page).toHaveURL(/[?&]topic=Ocean/);
+    await expect(chosen).toHaveText('Ocean');
+    await expect(page.getByText('Ocean · 2 posts')).toBeVisible();
+    await expect(page.locator('.cardTitle')).toHaveCount(2);
+    // A hero above a list of five is a front page; above a list of two it is a mistake.
+    await expect(page.locator('a.hero')).toBeHidden();
+    // The sidebar's archive declares `topic: ''`, so it stays the whole archive rather than a copy of the feed.
+    await expect(page.locator('.quietTitle')).toHaveCount(5);
+
+    await capture('topic-filtered');
+
+    await page.getByRole('link', { name: 'All', exact: true }).click();
+
+    await expect(page).toHaveURL(`${subject.origin}/`);
+    await expect(page.locator('a.hero')).toBeVisible();
+  });
+
+  /**
+   * The write anybody may make — and the one to press with the dev-tools Actions tab open.
+   *
+   * `access: 'public'` on the trigger: no session, no permission, no account. The three READS that build these
+   * pages are `render` triggers resolved on the server, so the browser never started them and a browser-side
+   * panel has nothing to record; this one the page starts.
+   */
+  test('a signed-out visitor can run a public action, and is told what the server counted', async ({ page }) => {
+    await page.goto(`${subject.origin}/post/there-is-no-alpha-wolf`);
+
+    const box = page.locator('.sightingBox');
+    await expect(box).toContainText('readers have seen one of these');
+    // Nobody is signed in: the header offers the invitation rather than a name.
+    await expect(page.locator('.headerInner').getByRole('link', { name: 'Sign in' })).toBeVisible();
+
+    await box.getByRole('button', { name: 'I have seen one' }).click();
+
+    // The count came back from the server. A number incremented in the browser is a number that disagrees with
+    // the next reader's.
+    await expect(box.locator('.notice')).toContainText('Logged.');
+    const first = await box.locator('.notice').innerText();
+
+    await box.getByRole('button', { name: 'I have seen one' }).click();
+
+    await expect(box.locator('.notice')).not.toHaveText(first);
+  });
+
+  /**
+   * The species panel — the one element on this blog the SDK does not ship.
+   *
+   * It is registered in `main.ts`, compiled by the server, and authored on the page exactly like a heading. What
+   * is checked here is the whole chain: the type resolved to a component, the bindings reached it, and the thing
+   * it draws is interactive once the browser has it.
+   */
+  test('the space renders an element of its own, fed by the same action as the page', async ({ page, capture }) => {
+    await page.goto(`${subject.origin}/post/the-herd-remembers-the-drought`);
+
+    const panel = page.locator('.speciesPanel');
+    await expect(panel).toBeVisible();
+    // Bound to the post's own answer, so the panel costs no second request.
+    await expect(panel).toContainText('Loxodonta africana');
+    // The species' real category, marked on the scale rather than merely printed.
+    await expect(panel.locator('[data-state="current"]')).toHaveText('EN');
+    await expect(panel).toContainText('A very high risk of extinction in the wild.');
+
+    await capture('species-panel');
+
+    // And it is a real component, not a picture of one: asking about another category answers.
+    await panel.getByRole('button', { name: 'LC' }).click();
+
+    await expect(panel).toContainText('Assessed, and not currently at risk of extinction.');
+    // The species' own category stays marked — the question was about a different one.
+    await expect(panel.locator('[data-state="current"]')).toHaveText('EN');
+  });
+
+  /**
+   * Editing, and the half a permission cannot decide.
+   *
+   * `ada` and `grace` both fail to be the other one's author, and `grace` fails twice over — she has no
+   * `postPublish` at all. The link, the page and the server each answer, and the last one is the lock.
+   */
+  test('an author edits her own post, and the page arrives already filled in', async ({ page, capture }) => {
+    await signIn(page, 'ada');
+    await page.goto(`${subject.origin}/post/the-fox-that-learned-the-timetable`);
+
+    const edit = page.getByRole('link', { name: 'Edit this post' });
+    await expect(edit).toBeVisible();
+    await edit.click();
+
+    await expect(page).toHaveURL(`${subject.origin}/edit/the-fox-that-learned-the-timetable`);
+    // Server-rendered, so the record is in the markup rather than painted in a frame later.
+    await expect(page.getByLabel('Title')).toHaveValue('The fox that learned the timetable');
+    await capture('edit');
+
+    await page.getByLabel('Standfirst').fill('Rewritten, and the page says so.');
+    await page.getByRole('button', { name: 'Save changes' }).click();
+
+    await expect(page).toHaveURL(`${subject.origin}/post/the-fox-that-learned-the-timetable`);
+    await expect(page.getByText('Rewritten, and the page says so.')).toBeVisible();
+    // A blog that edits silently is a blog you cannot trust twice.
+    await expect(page.locator('.metaEdited')).toContainText('Updated');
+  });
+
+  test('a post somebody else wrote offers no way in, and says so if you find one', async ({ page }) => {
+    await signIn(page, 'grace');
+    await page.goto(`${subject.origin}/post/counting-a-ghost`);
+
+    await expect(page.getByRole('link', { name: 'Edit this post' })).toBeHidden();
+
+    // The courtesy removed, the page still answers — and it is the same answer the server would give.
+    await page.goto(`${subject.origin}/edit/counting-a-ghost`);
+
+    await expect(page.getByRole('heading', { name: 'Not yours to edit' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Edit post' })).toBeHidden();
+  });
+
+  /** The point the example is built around: the account decides, the server decides with it, and the page only
+   *  shows what came back. `grace` is signed in and gets as far as the button.
+   *
+   *  Its own block for one reason: the refusal IS the assertion, and a browser logs every 403 it is answered — so
+   *  this is the one spec here that has read its console noise and allows it. */
+  test.describe('refused', () => {
+    test.use({ allowedConsoleErrors: [/403 \(Forbidden\)/] });
+
+    test('grace reaches the editor by URL and is refused by the server', async ({ page, capture }) => {
+      await signIn(page, 'grace');
+
+      await page.goto(`${subject.origin}/write`);
+      await page.getByLabel('Title').fill('Grace tries to publish');
+      await page.getByLabel('Body').fill('This should not appear.');
+      await page.getByRole('button', { name: 'Publish' }).click();
+
+      await expect(page.getByText('The server refused this: forbidden')).toBeVisible();
+      await expect(page).toHaveURL(`${subject.origin}/write`);
+      await capture('refused');
+
+      await page.goto(subject.origin);
+      await expect(page.getByRole('heading', { name: 'Grace tries to publish' })).toHaveCount(0);
+    });
   });
 });

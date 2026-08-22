@@ -26,7 +26,7 @@ export type TokenInputProps = {
  * what this position accepts, which is why these are CodeMirror fields rather than plain inputs.
  */
 const TokenInput = ({ label, title, value, placeholder, scope = 'request', onChange }: TokenInputProps) => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = use(ThemeContext);
   const autoComplete = useMemo<AutoComplete[]>(
     () => getConnectorTokens(scope).map(token => ({ type: 'token', value: token.value, detail: token.description })),
     [scope]
@@ -39,7 +39,7 @@ const TokenInput = ({ label, title, value, placeholder, scope = 'request', onCha
         value={value}
         mode="text"
         multiline={false}
-        theme={theme === 'dark' ? 'dark' : 'light'}
+        theme={resolvedTheme}
         placeholder={placeholder}
         autoComplete={autoComplete}
         size="xs"

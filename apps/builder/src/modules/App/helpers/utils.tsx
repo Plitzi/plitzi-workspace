@@ -111,6 +111,22 @@ export const getPopups = ({
       }
     },
     {
+      id: 'actions',
+      component: undefined,
+      active: activeIds.includes('actions'),
+      placementSettings: { left: { position: 6, multi: false } },
+      settings: {
+        icon: 'fa-solid fa-bolt',
+        title: 'Server Actions',
+        width: 350,
+        allowLeftSide: true,
+        allowRightSide: false,
+        allowFloatingSide: false,
+        allowClose: false,
+        resizeHandles: ['se']
+      }
+    },
+    {
       id: 'connectors',
       component: undefined,
       active: activeIds.includes('connectors'),

@@ -19,6 +19,9 @@ import MarkdownDeclaration from './basic/Markdown/declaration';
 import ParagraphDeclaration from './basic/Paragraph/declaration';
 import RichTextDeclaration from './basic/RichText/declaration';
 import TextDeclaration from './basic/Text/declaration';
+import ThemeToggleDeclaration from './basic/ThemeToggle/declaration';
+import FormDeclaration from './form/Form/declaration';
+import FormControlDeclaration from './form/FormControl/declaration';
 import LayoutContainerDeclaration from './internal/LayoutContainer/declaration';
 import LoadingDeclaration from './internal/Loading/declaration';
 import NotFoundDeclaration from './internal/NotFound/declaration';
@@ -44,6 +47,8 @@ export const elementDeclarations = {
   DialogContainer: DialogContainerDeclaration,
   Dropdown: DropdownDeclaration,
   FontAwesome: FontAwesomeDeclaration,
+  Form: FormDeclaration,
+  FormControl: FormControlDeclaration,
   Heading: HeadingDeclaration,
   Image: ImageDeclaration,
   LayoutContainer: LayoutContainerDeclaration,
@@ -61,6 +66,7 @@ export const elementDeclarations = {
   RichText: RichTextDeclaration,
   TabContainer: TabContainerDeclaration,
   Text: TextDeclaration,
+  ThemeToggle: ThemeToggleDeclaration,
   Video: VideoDeclaration
 } as const;
 
@@ -76,6 +82,8 @@ export {
   DialogContainerDeclaration,
   DropdownDeclaration,
   FontAwesomeDeclaration,
+  FormControlDeclaration,
+  FormDeclaration,
   HeadingDeclaration,
   ImageDeclaration,
   LayoutContainerDeclaration,
@@ -93,5 +101,6 @@ export {
   RichTextDeclaration,
   TabContainerDeclaration,
   TextDeclaration,
+  ThemeToggleDeclaration,
   VideoDeclaration
 };

@@ -7,6 +7,7 @@
   "scripts": {
     "start": "vite",
     "start:server": "node --import tsx server/main.ts",
+    "start:actions": "node --import tsx server/actionServer.ts",
     "lint": "TIMING=1 eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "start:auth": "node --import tsx server/authServer.ts"

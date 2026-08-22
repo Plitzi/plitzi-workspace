@@ -50,7 +50,7 @@ It is a setup project rather than a `globalSetup` for one reason: only the setup
 | Category | App | Sub-categories | Runs against |
 |---|---|---|---|
 | `sdk` | `@plitzi/plitzi-sdk` | `rendering`, `viewports` | harness |
-| `server` | `@plitzi/sdk-server` | `ssr`, `rsc`, `preview`, `auth` | e2e server + auth server |
+| `server` | `@plitzi/sdk-server` | `ssr`, `rsc`, `preview`, `auth`, `actions` | e2e server + auth server + action server |
 | `mcp` | `@plitzi/sdk-mcp` | `endpoint` | e2e server |
 | `builder` | `@plitzi/plitzi-builder` | `boot` | its own builder on 8080 (gated) |
 | `cross` | — more than one | `parity`, `agent`, `auth` | harness + both servers |
@@ -93,10 +93,17 @@ demonstrate.
   differ by `accessLevel`, and a protected `/account` that redirects a guest to `/login`.
   `yarn workspace @plitzi/e2e start:auth`.
 
+- **`server/actionServer.ts`** — a page server wired for **actions and nothing else**, on
+  <http://127.0.0.1:5202>: no connectors, no `getRscData` of its own, no plugins. Its own process precisely
+  because what it is about is what it does NOT have — the one above supplies its own RSC adapter, which is the
+  case where the server stops assembling one, so it can never show that a space with only actions still resolves
+  its server elements. `yarn workspace @plitzi/e2e start:actions`.
+
 `spaces/` holds what they render: `sampleSpace()` is the one the examples ship (so these specs and a reader see
 the same thing), `minimalSpace()` is two elements and a stylesheet for when a spec is about one thing and thirty
-elements around it would only add thirty possible causes to a failure, and `authSpace()` is the four-page space
-the `auth` category walks.
+elements around it would only add thirty possible causes to a failure, `authSpace()` is the four-page space the
+`auth` category walks, and `actionSpace()` is two server-driven providers — one fed by an action, one naming a
+producer the deployment does not have.
 
 > The account store keeps **one session per account**, as a real one does. That is why `tests/auth` runs serially:
 > two tests signing in as the same person in parallel would each quietly retire the other's session.

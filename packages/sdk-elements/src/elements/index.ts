@@ -13,6 +13,7 @@ import Markdown from './basic/Markdown';
 import Paragraph from './basic/Paragraph';
 import RichText from './basic/RichText';
 import Text from './basic/Text';
+import ThemeToggle from './basic/ThemeToggle';
 // Form
 import Form from './form/Form';
 import FormControl from './form/FormControl';
@@ -48,6 +49,7 @@ export * from './basic/Markdown';
 export * from './basic/Paragraph';
 export * from './basic/RichText';
 export * from './basic/Text';
+export * from './basic/ThemeToggle';
 export * from './form/Form';
 export * from './form/FormControl';
 export * from './internal/LayoutContainer';
@@ -87,6 +89,7 @@ export {
   Paragraph,
   RichText,
   Text,
+  ThemeToggle,
   List,
   Link,
   Markdown,

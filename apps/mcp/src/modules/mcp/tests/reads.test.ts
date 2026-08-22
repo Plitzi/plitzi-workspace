@@ -264,7 +264,7 @@ describe('mcp-ai slim primer (cold-start payload)', () => {
   });
 });
 
-describe('mcp-ai resolved style inlined in element detail (RFC 0005 #1)', () => {
+describe('mcp-ai resolved style inlined in element detail', () => {
   it('inlines the CSS of each attached definition under resolvedStyle', () => {
     const res = readResource(buildSpace(), 'main', 'plitzi://schema/main/elements/c1');
     const el = res?.data as AIElementDetail;
@@ -310,7 +310,7 @@ describe('mcp-ai resolved style inlined in element detail (RFC 0005 #1)', () => 
   });
 });
 
-describe('mcp-ai URI aliases under schema root (RFC 0005 #3/#4)', () => {
+describe('mcp-ai URI aliases under schema root', () => {
   it('resolves a definition through the plitzi://schema/{env}/definitions/{ref} alias', () => {
     const canonical = readResource(buildSpace(), 'main', 'plitzi://definitions/main/box');
     const alias = readResource(buildSpace(), 'main', 'plitzi://schema/main/definitions/box');

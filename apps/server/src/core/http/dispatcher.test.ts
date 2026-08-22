@@ -9,7 +9,7 @@ import type { ServerLogEvent, ServerRequestLogEvent } from '@plitzi/sdk-shared';
 import type { IncomingMessage } from 'node:http';
 
 const fakeRequest = (url: string, method = 'GET'): IncomingMessage =>
-  ({ url, method, headers: { host: 'example.test' }, socket: {} }) as unknown as IncomingMessage;
+  ({ url, method, headers: { host: 'example.test' }, socket: {}, once: () => undefined }) as unknown as IncomingMessage;
 
 // A request as it arrives through the proxy chain: forwarding headers plus the socket peer underneath them.
 const fakeClientRequest = (headers: Record<string, string>, remoteAddress?: string): IncomingMessage =>
@@ -17,7 +17,9 @@ const fakeClientRequest = (headers: Record<string, string>, remoteAddress?: stri
     url: '/',
     method: 'GET',
     headers: { host: 'example.test', ...headers },
-    socket: { remoteAddress }
+    socket: { remoteAddress },
+    // The dispatcher listens for the peer hanging up, so a fake request has to be able to carry a listener.
+    once: () => undefined
   }) as unknown as IncomingMessage;
 
 const fakeResponse = (): RawResponse => ({
@@ -72,6 +74,66 @@ const firstRequest = (events: ServerLogEvent[]): ServerRequestLogEvent => {
 
   return event;
 };
+
+/** A response that can report the two things a disconnect is told apart by. */
+const closableResponse = () => {
+  const listeners: (() => void)[] = [];
+  const response = {
+    ...fakeResponse(),
+    writableFinished: false,
+    once: (_event: 'close', listener: () => void) => listeners.push(listener)
+  } as RawResponse & { writableFinished: boolean };
+
+  return { response, close: () => listeners.forEach(listener => listener()) };
+};
+
+/**
+ * Which event means "the caller left".
+ *
+ * It was read off the REQUEST, and `IncomingMessage` emits `close` the moment its body has been read — so every
+ * POST cancelled itself milliseconds in, and the only reason actions kept working is that the listeners watching
+ * for it were attached after the event had already gone by.
+ */
+describe('dispatcher cancellation', () => {
+  const signalOf = async (rawRes: RawResponse) => {
+    let seen: AbortSignal | undefined;
+    const capture: Stage = ctx => {
+      seen = ctx.signal;
+      ctx.res.end();
+
+      return true;
+    };
+
+    await run(fakeRequest('/', 'POST'), [capture], rawRes);
+
+    return seen;
+  };
+
+  it('is not triggered by a request whose body has been read', async () => {
+    const { response } = closableResponse();
+
+    expect((await signalOf(response))?.aborted).toBe(false);
+  });
+
+  it('leaves the signal alone for a response that closed after being sent', async () => {
+    const { response, close } = closableResponse();
+    const signal = await signalOf(response);
+    response.writableFinished = true;
+
+    close();
+
+    expect(signal?.aborted).toBe(false);
+  });
+
+  it('aborts when the response closes before it was finished', async () => {
+    const { response, close } = closableResponse();
+    const signal = await signalOf(response);
+
+    close();
+
+    expect(signal?.aborted, 'a caller that hung up did not stop the work').toBe(true);
+  });
+});
 
 describe('dispatcher request log', () => {
   it('logs the request the answering stage served', async () => {

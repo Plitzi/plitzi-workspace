@@ -1,0 +1,28 @@
+{
+  "name": "@plitzi/example-server-actions-no-server",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The same space rendered in the browser alone: with no server tier, every server-side step declares itself inert instead of calling anything.",
+  "type": "module",
+  "scripts": {
+    "start": "vite --port 4012",
+    "build": "vite build",
+    "preview": "vite preview --port 4012",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@plitzi/example-space": "workspace:*",
+    "@plitzi/plitzi-sdk": "workspace:*",
+    "@plitzi/sdk-shared": "workspace:*",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3",
+    "vite": "^8.2.1"
+  }
+}

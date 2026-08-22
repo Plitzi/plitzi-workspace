@@ -12,7 +12,7 @@ export type NodePreviewProps = {
 };
 
 const NodePreview = ({ preview, defaultPreview, onChange }: NodePreviewProps) => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = use(ThemeContext);
   const previewStr = useMemo(() => JSON.stringify(preview, null, 2), [preview]);
   const defaultPreviewStr = useMemo(() => JSON.stringify(defaultPreview, null, 2), [defaultPreview]);
   const [previewState, setPreviewState] = useState(previewStr);
@@ -73,7 +73,7 @@ const NodePreview = ({ preview, defaultPreview, onChange }: NodePreviewProps) =>
           <CodeMirror
             className="min-h-20 pt-2"
             value={previewState}
-            theme={theme === 'dark' ? 'dark' : 'light'}
+            theme={resolvedTheme}
             mode="json"
             lineWrapping
             onChange={handleChange}

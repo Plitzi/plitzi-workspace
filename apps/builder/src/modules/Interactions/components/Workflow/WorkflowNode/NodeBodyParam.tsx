@@ -45,7 +45,7 @@ const NodeBodyParam = ({
   fields,
   onChange
 }: NodeBodyParamProps) => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = use(ThemeContext);
   const type = useMemo(() => (typeof typeProp === 'function' ? typeProp(params) : typeProp), [params, typeProp]);
   const options = useMemo(
     () => (type === 'select' && typeof optionsProp === 'function' ? optionsProp(params) : optionsProp),
@@ -150,7 +150,7 @@ const NodeBodyParam = ({
             label={finalLabel}
             className="min-h-20 w-full"
             value={value as string}
-            theme={theme === 'dark' ? 'dark' : 'light'}
+            theme={resolvedTheme}
             mode="json"
             autoComplete={fieldsKeys}
             lineWrapping
@@ -162,7 +162,7 @@ const NodeBodyParam = ({
             label={finalLabel}
             className="min-h-25 w-full"
             value={value as string}
-            theme={theme === 'dark' ? 'dark' : 'light'}
+            theme={resolvedTheme}
             mode="text"
             autoComplete={fieldsKeys}
             lineWrapping

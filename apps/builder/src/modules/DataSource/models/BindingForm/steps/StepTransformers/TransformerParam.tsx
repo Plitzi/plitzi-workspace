@@ -38,7 +38,7 @@ const TransformerParam = ({
   disabled = false,
   onChange
 }: TransformerParamProps) => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = use(ThemeContext);
 
   const handleChangeText = useCallback((value: string) => onChange?.(index, id, value), [onChange, index, id]);
 
@@ -138,7 +138,7 @@ const TransformerParam = ({
           disabled={disabled}
           value={value as string}
           label={label}
-          theme={theme === 'dark' ? 'dark' : 'light'}
+          theme={resolvedTheme}
           mode="text"
           autoComplete={fieldsDataSource}
           lineWrapping

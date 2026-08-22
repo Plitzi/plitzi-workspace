@@ -25,7 +25,7 @@ export type AITemplatePreviewProps = {
 };
 
 const AITemplatePreview = ({ baseElementId, schema, style, html, mode, version }: AITemplatePreviewProps) => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = use(ThemeContext);
   const { addPopup } = usePopup();
   const { onSendMessage, elementSelected } = useAiChatContext();
   const [displayMode, setDisplayMode] = useState<DisplayMode>('desktop');
@@ -92,7 +92,7 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode, version }
       {showHtml && html && (
         <CodeMirror
           value={html}
-          theme={theme === 'dark' ? 'dark' : 'light'}
+          theme={resolvedTheme}
           size="xs"
           className="h-full max-h-60 overflow-auto"
           readOnly

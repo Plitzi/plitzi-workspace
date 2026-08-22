@@ -1,5 +1,6 @@
 import { fail } from '../../helpers';
 import { isStyleOp } from '../operations';
+import * as actions from '../operations/actions';
 import * as connectors from '../operations/connectors';
 import * as schema from '../operations/schema';
 import * as style from '../operations/style';
@@ -75,6 +76,12 @@ const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
       return connectors.patchConnector(space, env, op);
     case 'deleteConnector':
       return connectors.deleteConnector(space, env, op);
+    case 'upsertAction':
+      return actions.upsertAction(space, env, op);
+    case 'patchAction':
+      return actions.patchAction(space, env, op);
+    case 'deleteAction':
+      return actions.deleteAction(space, env, op);
     default:
       return fail('type', `Unknown operation "${(op as { type: string }).type}"`, 'See the Operation union');
   }
@@ -93,12 +100,16 @@ export const applyOperations = (space: Space, env: Env, ops: Operation[]): Mutat
     changedSchema: false,
     changedStyle: false,
     changedConnectors: [],
-    deletedConnectors: []
+    deletedConnectors: [],
+    changedActions: [],
+    deletedActions: []
   };
   const stale = new Set<string>();
   const elements = new Set<string>();
   const savedConnectors = new Set<string>();
   const droppedConnectors = new Set<string>();
+  const savedActions = new Set<string>();
+  const droppedActions = new Set<string>();
 
   for (let i = 0; i < ops.length; i++) {
     const op = ops[i];
@@ -120,6 +131,15 @@ export const applyOperations = (space: Space, env: Env, ops: Operation[]): Mutat
       case 'deleteConnector':
         savedConnectors.delete(op.ref);
         droppedConnectors.add(op.ref);
+        break;
+      case 'upsertAction':
+      case 'patchAction':
+        droppedActions.delete(op.ref);
+        savedActions.add(op.ref);
+        break;
+      case 'deleteAction':
+        savedActions.delete(op.ref);
+        droppedActions.add(op.ref);
         break;
       default:
         if (isStyleOp(op.type)) {
@@ -150,6 +170,8 @@ export const applyOperations = (space: Space, env: Env, ops: Operation[]): Mutat
   outcome.elementRefs = Array.from(elements);
   outcome.changedConnectors = Array.from(savedConnectors);
   outcome.deletedConnectors = Array.from(droppedConnectors);
+  outcome.changedActions = Array.from(savedActions);
+  outcome.deletedActions = Array.from(droppedActions);
 
   return outcome;
 };

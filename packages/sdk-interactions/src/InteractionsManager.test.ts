@@ -197,3 +197,72 @@ describe('the status a flow reports', () => {
     danger.mockRestore();
   });
 });
+
+/**
+ * A step's params are not always strings, and the one that matters is `input` on a server action.
+ *
+ * Authored as a line of JSON text it resolves fine right up until a value contains a quotation mark or a newline
+ * — a post body, in other words — and the interpolated result stops being a document. Written as an object it is
+ * safe for any text at all, which is only true if the resolver goes in after the values.
+ */
+describe('a param that is not a string', () => {
+  const withParams = (params: Record<string, unknown>): Record<string, ElementInteraction> => ({
+    trig: {
+      id: 'trig',
+      title: 'Trigger',
+      type: 'trigger',
+      action: 'click',
+      params: {},
+      preview: {},
+      elementId: 'el1',
+      beforeNode: '',
+      afterNode: 'cb',
+      flowId: 'flow1',
+      enabled: true
+    },
+    cb: {
+      id: 'cb',
+      title: 'Callback',
+      type: 'callback',
+      action: 'spy',
+      params,
+      preview: {},
+      elementId: 'el1',
+      beforeNode: 'trig',
+      afterNode: '',
+      flowId: 'flow1',
+      enabled: true
+    }
+  });
+
+  const runWith = async (params: Record<string, unknown>) => {
+    const manager = new InteractionsManager('page1');
+    // Typed by its signature and not by its body, so the assertions below can read what the step was handed.
+    const spy = vi.fn<(context: Record<string, unknown>) => string>(() => 'ok');
+
+    manager.subscribe('el1', withParams(params), triggerDef, {
+      spy: { action: 'spy', title: 'Spy', type: 'callback', callback: spy, params: {} }
+    });
+
+    await manager.interactionTrigger('el1', 'click', { body: 'Line one\n"quoted"\nline three' });
+
+    return spy;
+  };
+
+  it('resolves the tokens inside an object, not only the ones at the top', async () => {
+    const spy = await runWith({ input: { body: '{{trig.body}}', fixed: 'no token here' } });
+
+    // Quotation marks and newlines survive intact, which is the whole reason to author `input` this way.
+    expect(spy.mock.calls[0]?.[0]).toMatchObject({
+      input: { body: 'Line one\n"quoted"\nline three', fixed: 'no token here' }
+    });
+  });
+
+  it('goes into arrays too', async () => {
+    const spy = await runWith({ input: { list: ['{{trig.body}}'] } });
+
+    const handed = spy.mock.calls[0]?.[0] as { input: { list: string[] } };
+
+    expect(handed.input.list[0]).toContain('Line one');
+  });
+});

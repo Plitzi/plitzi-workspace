@@ -6,6 +6,7 @@ const declaration = {
       href: '#',
       target: 'self',
       mode: 'page',
+      label: '',
       linkContext: undefined
     },
     definition: {

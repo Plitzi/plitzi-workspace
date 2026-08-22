@@ -45,8 +45,9 @@ const App = () => {
         <section style={styles.canvas}>
           {/* `renderMode="raw"` renders into this tree. The default is an iframe — the safe choice for a space
               dropped into an unknown page, but pointless when the page is yours and already styled. */}
+          {/* `debugMode` is this page authorizing the dev tools — the badge, and shift+alt+D for the panel. */}
           {visible && (
-            <PlitziSdk offlineMode offlineData={offlineData} environment={environment} renderMode="raw" />
+            <PlitziSdk offlineMode offlineData={offlineData} environment={environment} renderMode="raw" debugMode />
           )}
           {!visible && <p style={styles.asideText}>Plitzi is unmounted.</p>}
         </section>

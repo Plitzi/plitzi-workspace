@@ -8,13 +8,13 @@ import type {
   PluginBuilder,
   Schema,
   Style,
-  StyleThemeMode
+  Theme
 } from '../../types';
 import type { Dispatch, SetStateAction } from 'react';
 
 export type BuilderContextValue = {
-  theme: StyleThemeMode;
-  setTheme: Dispatch<SetStateAction<StyleThemeMode>>;
+  theme: Theme;
+  setTheme: Dispatch<SetStateAction<Theme>>;
   mode: 'normal' | 'template' | 'segment';
   schemaName: string;
   setMultiPagesMode: Dispatch<SetStateAction<boolean>>;

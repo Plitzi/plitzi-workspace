@@ -15,6 +15,14 @@ export type RscResolveContext = {
   spaceId: number;
   environment: Environment;
   user: SSRUser | undefined;
+  /**
+   * Aborted when this element's budget runs out, so a resolver can stop the work nobody is waiting for.
+   *
+   * The timeout below only ever decided when to STOP WAITING — the losing side of a race keeps running — so a
+   * provider that took longer than its budget went on holding a run slot and an outbound connection for a page
+   * that had already been sent. What is being cancelled is not the request, it is the work behind it.
+   */
+  signal: AbortSignal;
 };
 
 /** Produces the data slice for a single server element. Returning undefined leaves the element out of the payload. */
@@ -29,22 +37,39 @@ export type ResolveRscDataOptions = {
   /** Restricts resolution to these element ids (partial refresh). Undefined resolves every server element. */
   ids?: string[];
   resolveElement: RscElementResolver;
-  /** Per-element budget. One slow provider must not hold the whole payload. */
+  /**
+   * Per-element budget: one slow provider must not hold the whole payload, and must not go on working once it
+   * has. It is the PAGE's ceiling and it wins over the producer's own — an action allowed ten seconds of its own
+   * is still cut off here, because a section is worth waiting for only as long as the visitor is. Configurable
+   * per deployment as `rsc.elementTimeoutMs`.
+   */
   timeoutMs?: number;
 };
 
 const DEFAULT_ELEMENT_TIMEOUT_MS = 5000;
 
-const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> => {
+/**
+ * Runs one element's resolution against its budget, and CANCELS it when the budget is gone.
+ *
+ * The race decides what the payload waits for; the abort decides what the server keeps doing. Racing alone left
+ * the loser running to its own timeout — for actions, five more seconds of a held slot and an in-flight request
+ * per element, for a page that was answered without it.
+ */
+const withBudget = async <T>(
+  run: (signal: AbortSignal) => Promise<T>,
+  timeoutMs: number,
+  label: string
+): Promise<T> => {
+  const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([
-      promise,
+      run(controller.signal),
       new Promise<never>((_resolve, reject) => {
-        timer = setTimeout(
-          () => reject(new Error(`RSC resolution timed out after ${timeoutMs}ms for ${label}`)),
-          timeoutMs
-        );
+        timer = setTimeout(() => {
+          controller.abort();
+          reject(new Error(`RSC resolution timed out after ${timeoutMs}ms for ${label}`));
+        }, timeoutMs);
       })
     ]);
   } finally {
@@ -89,17 +114,19 @@ export const resolveRscData = async ({
   const settled = await Promise.allSettled(
     targets.map(async element => ({
       id: element.id,
-      data: await withTimeout(
-        resolveElement({
-          element,
-          flat: schema.flat,
-          routeParams,
-          queryParams: req.query,
-          req,
-          spaceId,
-          environment,
-          user
-        }),
+      data: await withBudget(
+        signal =>
+          resolveElement({
+            element,
+            flat: schema.flat,
+            routeParams,
+            queryParams: req.query,
+            req,
+            spaceId,
+            environment,
+            user,
+            signal
+          }),
         timeoutMs,
         `element ${element.id}`
       )

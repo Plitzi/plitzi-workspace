@@ -26,6 +26,7 @@ import { historyMiddleware as historyMw, loggerMiddleware as loggerMw } from '@p
 import { StoreProvider } from '@plitzi/nexus/react';
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
 import { createStoreDevToolsLogger, ThemeProvider, type SdkState } from '@plitzi/sdk-shared';
+import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 import { runtimeStatePersist } from '@plitzi/sdk-shared/state/runtimeStatePersist';
 import { DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
@@ -116,14 +117,20 @@ const App = ({
   /**
    * Two different things, and only one of them is trusted. The `debugMode` prop is the page's authorization —
    * whoever embedded the SDK decided this site may be inspected. The cookie is the visitor's preference *within*
-   * that, kept in a cookie so the SSR render matches what the client hydrates with (apps/server prepareRender reads
-   * 'plitzi_debug').
+   * that, kept in a cookie so the SSR render matches what the client hydrates with (apps/server prepareRender
+   * reads the same name back).
    *
    * A cookie can therefore turn debugging OFF, never ON: it is client-owned, and a published site whose visitors
    * could set it would hand any of them the panel, the element ids and the store. The shortcut below is only one of
    * the ways to write it.
+   *
+   * The name carries the port, because a cookie's scope does not — see `debugCookieName`.
    */
-  const [debugPreference, setDebugPreference] = useStorage('plitzi_debug', debugModeProp, 'cookie');
+  const debugCookie = useMemo(
+    () => debugCookieName(typeof window === 'undefined' ? undefined : window.location.host),
+    []
+  );
+  const [debugPreference, setDebugPreference] = useStorage(debugCookie, debugModeProp, 'cookie');
   const debugMode = debugModeProp && debugPreference;
   const finalServer = useMemo(() => getEnvironmentServer(server), [server]);
   const client = useMemo<ApolloClient>(() => initClient(finalServer, webKey), [finalServer, webKey]);
@@ -137,6 +144,21 @@ const App = ({
 
   const handleToggleDebug = useCallback(() => setDebugPreference(state => !state), [setDebugPreference]);
   useDebugShortcut({ authorized: debugModeProp, onToggle: handleToggleDebug });
+
+  /**
+   * The one state that is otherwise a dead end: the page allows debugging and the visitor has hidden it.
+   *
+   * There is nothing on screen at that point — no badge, no panel, nothing to click — so somebody who pressed
+   * the shortcut once, or arrived after somebody else did, sees a page that simply has no dev tools and no
+   * reason to think that is a preference rather than the truth. This line is the way back.
+   */
+  useEffect(() => {
+    if (debugModeProp && !debugPreference) {
+      console.info(
+        `[plitzi] The dev tools are available here and currently hidden. Press shift+alt+D (or shift+F12) to show them, or clear the "${debugCookie}" cookie.`
+      );
+    }
+  }, [debugModeProp, debugPreference, debugCookie]);
 
   // Tells the render profiler this app hydrated SSR output, so it can label the hydration commit (a pure client mount
   // looks identical at the React-phase level).
@@ -204,7 +226,11 @@ const App = ({
           : [])
       ]}
     >
-      <ThemeProvider>
+      {/*
+        A rendered space follows the machine until a visitor says otherwise — which is what `system` means, and it
+        is the only honest default for somebody else's site. The builder is the one that opens in dark.
+      */}
+      <ThemeProvider defaultTheme="system">
         <Provider components={components}>
           <ContainerRoot className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
             <HelmetProvider>

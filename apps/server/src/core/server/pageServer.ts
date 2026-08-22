@@ -1,6 +1,7 @@
 import { createHttpServer } from './baseServer';
 import { buildCacheManager, createServerCaches, DEFAULT_TTL_MS, destroyServerCaches } from '../../helpers/cache';
 import normalizePlugins, { normalizePluginSource } from '../../helpers/normalizePlugins';
+import { actionsModuleFor } from '../../modules/actions/moduleFor';
 import { invalidatePluginComponentCache } from '../../modules/ssr/loadPluginComponents';
 import { createMemoryDraftStore } from '../../modules/ssr/preview';
 import { compileTemplate } from '../../modules/ssr/template';
@@ -52,6 +53,10 @@ export const createPageServer = (
     }
   };
 
+  // Resolved here rather than on first use so a malformed task set fails at BOOT, where someone is watching,
+  // instead of on the first visitor's click. Shared with the RSC adapter, which needs the same one.
+  const actions = actionsModuleFor(config);
+
   const stages = buildPagePipeline(services, extensions);
   const makeHandlerForPort = (port: number) => {
     const buildContext: BuildContext<SSRContext> = (raw, rawRes, req, res) => ({
@@ -63,7 +68,8 @@ export const createPageServer = (
       port,
       renderFn,
       caches,
-      pluginManager
+      pluginManager,
+      actions
     });
 
     return makeHandler('SSR', buildContext, stages, config.compression);

@@ -80,6 +80,103 @@ describe('authorSpace', () => {
     expect(new Set(refs).size).toBe(refs.length);
   });
 
+  it('takes the idRef an element names, so a binding can address it by name', () => {
+    const { schema } = authorSpace({
+      name: 'Named',
+      permanentUrl: 'named',
+      pages: [
+        {
+          name: 'Home',
+          slug: '',
+          idRef: 'home',
+          body: [{ type: 'apiContainer', idRef: 'posts', attributes: {} }, text('hi')]
+        }
+      ]
+    });
+
+    // The named one keeps its name; the unnamed one is still numbered per type, and the two do not collide.
+    expect(Object.values(schema.flat).map(element => element.idRef)).toEqual(['home', 'posts', 'text-1']);
+  });
+
+  it('refuses two elements answering to one idRef instead of dropping the second', () => {
+    // FlatMap declines the insert and says so with `false`; ignoring that answer authored a page whose second
+    // element was simply not there, with nothing anywhere reporting it.
+    expect(() =>
+      authorSpace({
+        name: 'Clashing',
+        permanentUrl: 'clashing',
+        pages: [
+          {
+            name: 'Home',
+            slug: '',
+            body: [
+              { type: 'apiContainer', idRef: 'posts', attributes: {} },
+              { type: 'list', idRef: 'posts', attributes: {} }
+            ]
+          }
+        ]
+      })
+    ).toThrow(/posts/);
+  });
+
+  it('carries the schema settings and the RSC switch a space declared', () => {
+    const { schema } = authorSpace({
+      name: 'Served',
+      permanentUrl: 'served',
+      customCss: '.a{}',
+      settings: { userProvider: 'basic', loginUrl: '/auth/login' },
+      rsc: { enabled: true },
+      pages: [{ name: 'Home', slug: '', body: [text('hi')] }]
+    });
+
+    expect(schema.settings).toEqual({ customCss: '.a{}', userProvider: 'basic', loginUrl: '/auth/login' });
+    expect(schema.rsc).toEqual({ enabled: true });
+    // Absent unless asked for: an empty `rsc` key is a switch somebody has to read the default of.
+    expect(authorSpace(minimal()).schema.rsc).toBeUndefined();
+  });
+
+  it('dresses an element part through the class a slot names', () => {
+    const { schema } = authorSpace({
+      name: 'Slotted',
+      permanentUrl: 'slotted',
+      classes: { field: { desktop: { width: '100%' } } },
+      pages: [
+        {
+          name: 'Home',
+          slug: '',
+          className: 'field',
+          body: [{ type: 'formControl', slots: { input: 'field' }, attributes: { name: 'title' } }]
+        }
+      ]
+    });
+
+    const page = schema.flat[schema.pages[0]];
+    const control = schema.flat[(page.definition.items ?? [])[0]];
+
+    // The page took the shared class instead of minting one; the control kept a base of its own and named the
+    // shared class for its input, which is the selector the rule has to land on.
+    expect(page.definition.styleSelectors.base).toBe('field');
+    expect(control.definition.styleSelectors.input).toBe('field');
+    expect(control.definition.styleSelectors.base).not.toBe('field');
+  });
+
+  it('authors two pages that share a slug, which is how sign-in and the page behind it live on one path', () => {
+    const { schema } = authorSpace({
+      name: 'Paired',
+      permanentUrl: 'paired',
+      pages: [
+        { name: 'Sign in', slug: 'login', accessLevel: 'public', body: [text('sign in')] },
+        { name: 'Account', slug: 'login', accessLevel: 'authenticated', body: [text('hello')] }
+      ]
+    });
+
+    // Both pages, both their children: derived from the slug alone the second page duplicated every id in the
+    // first and was refused element by element.
+    expect(schema.pages).toHaveLength(2);
+    expect(new Set(schema.pages).size).toBe(2);
+    expect(Object.keys(schema.flat)).toHaveLength(4);
+  });
+
   it('leaves a page unrestricted unless an access level was asked for', () => {
     // `public` is not "for everyone" — it is the signed-out half of an access-controlled pair, so a lone public
     // page disappears from the route table for anyone with a session and the space answers 403 to its own owner.
@@ -93,6 +190,30 @@ describe('authorSpace', () => {
     });
 
     expect(gated.schema.flat[gated.schema.pages[0]].attributes.accessLevel).toBe('authenticated');
+  });
+
+  it('turns a redirect destination into the pair the router reads', () => {
+    const { schema } = authorSpace({
+      name: 'Gated',
+      permanentUrl: 'gated',
+      pages: [
+        {
+          name: 'Members',
+          slug: 'members',
+          accessLevel: 'authenticated',
+          unauthorizedRedirect: 'login',
+          body: [text('hi')]
+        },
+        { name: 'Sign in', slug: 'login', accessLevel: 'public', body: [text('in')] }
+      ]
+    });
+
+    const members = schema.flat[schema.pages[0]];
+
+    expect(members.attributes.unauthorizedBehaviour).toBe('redirect');
+    expect(members.attributes.unauthorizedPageRedirect).toBe('login');
+    // Absent unless asked for: a page with no destination is answered 403, which is a different behaviour.
+    expect(schema.flat[schema.pages[1]].attributes.unauthorizedBehaviour).toBeUndefined();
   });
 
   it('carries the page SEO fields, and marks SEO off when none were declared', () => {
@@ -200,6 +321,22 @@ describe('authorFlow', () => {
     expect(nodes[0].title).toBe('onClick');
     expect(nodes[0].enabled).toBe(true);
     expect(nodes[1].params).toEqual({ mode: 'token' });
+  });
+
+  it('takes the id a step names, so a later step can read its result', () => {
+    // The scope of a running flow is keyed by node id. A derived id is unique and unwritable, so a step whose
+    // result is interpolated further down has to be named.
+    const named = authorFlow('space/home/flow/1', [
+      { type: 'trigger', action: 'onSubmit', on: 'form-1' },
+      { id: 'publish', type: 'globalCallback', action: 'runServerAction', on: 'actions' },
+      { type: 'globalCallback', action: 'navigate', on: 'navigation', params: { url: '{{publish.output.url}}' } }
+    ]);
+    const nodes = Object.values(named);
+
+    expect(nodes[1].id).toBe('publish');
+    expect(nodes[0].afterNode).toBe('publish');
+    expect(nodes[2].beforeNode).toBe('publish');
+    expect(new Set(nodes.map(node => node.flowId))).toEqual(new Set([nodes[0].id]));
   });
 
   it('registers a utility on no element at all', () => {

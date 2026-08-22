@@ -1,10 +1,11 @@
+import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { hasServerElements } from '@plitzi/sdk-shared/schema/serverElements';
 
 import { loadPluginComponents } from './loadPluginComponents';
 import { registerExternalPlugins } from './registerExternalPlugins';
 import { resolvePageSeo } from './resolvePageSeo';
 import { sdkAssetVersion } from '../../core/sdkAssets';
-import { resolveRscEndpoint } from '../../core/services/resolve';
+import { resolveActionEndpoint, resolveRscEndpoint } from '../../core/services/resolve';
 import { buildServerInfo } from '../../helpers/buildServerInfo';
 import { buildOfflineDataCacheKey } from '../../helpers/cache';
 import { escapeJson } from '../../helpers/escapeJson';
@@ -106,7 +107,7 @@ export const prepareRender = async (
 
   const pageSeo = resolvePageSeo(schema, pageMatch?.pageId);
 
-  const server = buildServerInfo(req, config, { rscPath, rscData });
+  const server = buildServerInfo(req, config, { rscPath, rscData, actionPath: resolveActionEndpoint(config) });
 
   if (offlineDataOverride === undefined && !cachedOfflineStr && offlineCacheKey && offlineData !== undefined) {
     offlineDataCache?.set(offlineCacheKey, JSON.stringify(offlineData));
@@ -119,7 +120,8 @@ export const prepareRender = async (
 
   const debugMode = resolveDebugMode(
     config.debugMode ?? config.devMode,
-    readCookie(req.headers.cookie, 'plitzi_debug')
+    // Named for this origin, port included — the browser writes it under the same name. See `debugCookieName`.
+    readCookie(req.headers.cookie, debugCookieName(req.headers.host))
   );
 
   // What the metering adapter decided for this page (see SSRAdapters.pageView). `firstViewCounted` is forced on

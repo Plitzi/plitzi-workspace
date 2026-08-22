@@ -97,27 +97,31 @@ export const createMcpServer = async ({
     // The catalog is optional reference data (plugin type semantics); a failure to load it must never block the
     // space read, so it is fetched best-effort and degrades to built-in-only type descriptions. Connectors are
     // read the same way: a deployment that wires no connector adapter still edits pages and styles.
-    const [schema, style, catalog, connectors] = await Promise.all([
+    const [schema, style, catalog, connectors, actions, actionTasks] = await Promise.all([
       adapters.getSchema?.(id, MCP_ENV),
       adapters.getStyle?.(id, MCP_ENV),
       adapters.getComponentCatalog?.(id, MCP_ENV).catch(() => undefined),
-      adapters.getConnectors?.(id).catch(() => undefined)
+      adapters.getConnectors?.(id).catch(() => undefined),
+      adapters.getActions?.(id).catch(() => undefined),
+      adapters.getActionTasks?.(id).catch(() => undefined)
     ]);
     if (!schema || !style) {
       throw new Error(emptySpaceMessage);
     }
 
-    return { schema, style, catalog, connectors: connectors ?? [] };
+    return { schema, style, catalog, connectors: connectors ?? [], actions: actions ?? [], actionTasks };
   };
 
   // Every write in the server funnels through these four, which is why the check lives here rather than in each
   // tool: a tool that forgot to ask is the bug this arrangement makes impossible.
-  const { saveSchema, saveStyle, saveConnector, deleteConnector } = adapters;
+  const { saveSchema, saveStyle, saveConnector, deleteConnector, saveAction, deleteAction } = adapters;
   const persisters: Persisters = {
     schema: saveSchema ? schema => saveSchema(requireWritableSpaceId(), MCP_ENV, schema) : undefined,
     style: saveStyle ? style => saveStyle(requireWritableSpaceId(), MCP_ENV, style) : undefined,
     saveConnector: saveConnector ? entry => saveConnector(requireWritableSpaceId(), entry) : undefined,
-    deleteConnector: deleteConnector ? id => deleteConnector(requireWritableSpaceId(), id) : undefined
+    deleteConnector: deleteConnector ? id => deleteConnector(requireWritableSpaceId(), id) : undefined,
+    saveAction: saveAction ? entry => saveAction(requireWritableSpaceId(), entry) : undefined,
+    deleteAction: deleteAction ? id => deleteAction(requireWritableSpaceId(), id) : undefined
   };
 
   // Load the space at most once per request, and only on first read/write — never for the handshake.

@@ -17,5 +17,8 @@ render('plitzi-root', {
   // document, one stylesheet, no frame borders and no scroll traps.
   renderMode: 'raw',
   offlineData,
-  environment: 'main'
+  environment: 'main',
+  // The page AUTHORIZING the dev tools: the badge in the corner, and shift+alt+D (or shift+F12) for the panel —
+  // logs, the store, the elements, the variables. A published site leaves it out and no visitor can reach them.
+  debugMode: true
 });

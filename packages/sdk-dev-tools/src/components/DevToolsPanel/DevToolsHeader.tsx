@@ -1,6 +1,8 @@
 import clsx from 'clsx';
 import { useCallback } from 'react';
 
+import DevToolsButton from './DevToolsButton';
+import ThemeControl from './ThemeControl';
 import { useScopeSelector } from '../../scope/useScope';
 
 import type { Orientation } from '../../DevToolsContainer';
@@ -13,7 +15,10 @@ const TABS = [
   { id: 'elements', label: 'Elements', icon: 'fa-solid fa-layer-group' },
   { id: 'variables', label: 'Variables', icon: 'fa-solid fa-code' },
   { id: 'plugins', label: 'Plugins', icon: 'fa-solid fa-puzzle-piece' },
-  { id: 'tracing', label: 'Tracing', icon: 'fa-solid fa-gauge-high' }
+  { id: 'tracing', label: 'Tracing', icon: 'fa-solid fa-gauge-high' },
+  // Server actions started from this page. Its own tab rather than a Logs filter: a run has an input, an output,
+  // progress and — in development — the steps the server took, none of which is a log line.
+  { id: 'actions', label: 'Actions', icon: 'fa-solid fa-bolt' }
 ] as const;
 
 export type DevToolsHeaderProps = {
@@ -92,20 +97,13 @@ const DevToolsHeader = ({
             ))}
           </select>
         )}
-        <button
-          className="flex h-6 w-6 items-center justify-center rounded text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
+        <ThemeControl />
+        <DevToolsButton
+          iconClassName={clsx('fa-solid fa-table-columns', { 'rotate-90': orientation === 'vertical' })}
           title={orientation === 'horizontal' ? 'Switch to side panel' : 'Switch to bottom panel'}
           onClick={handleClickOrientation}
-        >
-          <i className={clsx('fa-solid fa-table-columns text-xs', { 'rotate-90': orientation === 'vertical' })} />
-        </button>
-        <button
-          className="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
-          title="Collapse to the indicator"
-          onClick={onCollapse}
-        >
-          <i className="fa-solid fa-xmark text-xs" />
-        </button>
+        />
+        <DevToolsButton iconClassName="fa-solid fa-xmark" title="Collapse to the indicator" onClick={onCollapse} />
       </div>
     </div>
   );

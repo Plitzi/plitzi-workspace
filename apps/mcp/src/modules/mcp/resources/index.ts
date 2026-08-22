@@ -1,4 +1,5 @@
 export { readPublicResource, readResource, resourceVersion } from './router';
+export { actionSummaries } from './actions';
 export { connectorSummaries } from './connectors';
 export { registerResources } from './register';
 export { resourceErrorMessage } from './canonical';
