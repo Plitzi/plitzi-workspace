@@ -51,6 +51,43 @@ There is no list of credentials or connectors to declare. A step **names** the o
 its own execution, which is the only boundary that ever mattered: a secret reaches the params of the step that
 asked for it and nothing else. A list the author could edit was never a boundary against the author.
 
+### Authoring one in code
+
+A deployment that keeps its actions in a repository rather than in the builder writes the same document from a
+declaration:
+
+```ts
+import { defineAction } from '@plitzi/sdk-server/authoring';
+
+defineAction({
+  id: 'update-post',
+  name: 'Update a post',
+  trigger: {
+    type: 'call',
+    access: { mode: 'role', permissions: ['postPublish'] },
+    input: {
+      slug: { type: 'text', required: true, label: 'Slug' },
+      title: { type: 'text', label: 'Title' }
+    }
+  },
+  steps: [{ id: 'updated', task: 'blog.updatePost' }]
+});
+```
+
+It writes exactly what the builder would, and three things stop being written twice:
+
+- **The chain.** `beforeNode`, `afterNode` and `flowId` are derived. Hand-written they are the classic
+  half-running flow: a chain pointing at a node that moved runs the steps it still reaches and drops the rest.
+- **The input contract.** A step naming no `params` takes the trigger's declared fields one for one. Written out
+  by hand, that list is the contract repeated — and a field added to one and not the other is invisible from both
+  ends: the caller's value passes validation, is dropped before the task, and the task sees nothing.
+- **The stringly params.** `access` is typed and `input` is a field map; the flat string shape the flow editor
+  stores is produced for you. A trigger with no access rule is a compile error rather than a `forbidden` at run
+  time.
+
+Write a step's `params` whenever it takes anything else — a constant, an earlier step's result, a value
+interpolated into a larger string.
+
 ### The output step
 
 End the flow with an **Output** step naming what the caller gets back. That step is the contract:

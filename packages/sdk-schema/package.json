@@ -18,6 +18,9 @@
       "types": "./dist/authoring/index.d.ts",
       "import": "./dist/authoring/index.mjs"
     },
+    "./authoring/actions": {
+      "import": "./dist/authoring/actions.mjs"
+    },
     "./authoring/bindings": {
       "types": "./dist/authoring/bindings.d.ts",
       "import": "./dist/authoring/bindings.mjs"

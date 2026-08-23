@@ -1,21 +1,7 @@
-import type { ActionLookups } from '@plitzi/sdk-server/actions';
-import type { ActionEntry, ElementInteraction } from '@plitzi/sdk-shared';
+import { defineAction } from '@plitzi/sdk-schema';
 
-const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementInteraction =>
-  ({
-    id,
-    title: id,
-    type: 'task',
-    action: '',
-    params: {},
-    preview: {},
-    elementId: null,
-    beforeNode: '',
-    afterNode: '',
-    flowId: 'flow',
-    enabled: true,
-    ...overrides
-  }) as ElementInteraction;
+import type { ActionLookups } from '@plitzi/sdk-server/actions';
+import type { ActionEntry } from '@plitzi/sdk-shared';
 
 /**
  * One action, reachable ONLY by a way in this deployment mounted itself.
@@ -28,41 +14,24 @@ const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementI
  * `access: 'public'` here says only that there is no VISITOR to authorize: a queue message is not a session. What
  * may put a message on the queue is the deployment's own business, upstream of this.
  */
-export const settlePayout: ActionEntry = {
+export const settlePayout: ActionEntry = defineAction({
   id: 'settle-payout',
-  document: {
-    name: 'Settle payout',
-    description: 'Runs once per queued payout, from the deployment’s own consumer.',
-    nodes: {
-      start: node('start', {
-        type: 'trigger',
-        action: 'custom',
-        params: {
-          name: 'queue',
-          access: 'public',
-          input: JSON.stringify({
-            payoutId: { type: 'text', required: true, label: 'Payout id' },
-            amount: { type: 'number', required: true, label: 'Amount' }
-          })
-        },
-        afterNode: 'total'
-      }),
-      // Anything a message carries that the contract did not declare was dropped before this ran, which is what
-      // makes interpolating `{{ input.* }}` into a step's params safe.
-      total: node('total', {
-        action: 'kv.increment',
-        params: { key: 'payouts:settled', amount: '{{input.amount}}' },
-        beforeNode: 'start',
-        afterNode: 'answer'
-      }),
-      answer: node('answer', {
-        action: 'flow.output',
-        params: { values: '{"payoutId": "{{input.payoutId}}", "settledTotal": {{ total.value }}}' },
-        beforeNode: 'total'
-      })
+  name: 'Settle payout',
+  description: 'Runs once per queued payout, from the deployment\u2019s own consumer.',
+  trigger: {
+    type: 'custom',
+    name: 'queue',
+    access: 'public',
+    input: {
+      payoutId: { type: 'text', required: true, label: 'Payout id' },
+      amount: { type: 'number', required: true, label: 'Amount' }
     }
-  }
-};
+  },
+  // Anything a message carries that the contract did not declare was dropped before this ran, which is what makes
+  // interpolating `{{ input.* }}` into a step's params safe.
+  steps: [{ id: 'total', task: 'kv.increment', params: { key: 'payouts:settled', amount: '{{input.amount}}' } }],
+  output: '{"payoutId": "{{input.payoutId}}", "settledTotal": {{ total.value }}}'
+});
 
 /** A real deployment reads these from its own store; the shape is the same either way. */
 export const lookups: ActionLookups = {

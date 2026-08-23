@@ -1,5 +1,7 @@
+import { defineAction } from '@plitzi/sdk-schema';
+
 import type { ActionLookups } from '@plitzi/sdk-server/actions';
-import type { ActionEntry, ElementInteraction, SpaceRevision } from '@plitzi/sdk-shared';
+import type { ActionEntry, SpaceRevision } from '@plitzi/sdk-shared';
 
 /**
  * Where this deployment keeps its actions, and what it answers when the server asks for one.
@@ -9,22 +11,6 @@ import type { ActionEntry, ElementInteraction, SpaceRevision } from '@plitzi/sdk
  * wiring is the part worth reading.
  */
 
-const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementInteraction =>
-  ({
-    id,
-    title: id,
-    type: 'task',
-    action: '',
-    params: {},
-    preview: {},
-    elementId: null,
-    beforeNode: '',
-    afterNode: '',
-    flowId: 'flow',
-    enabled: true,
-    ...overrides
-  }) as ElementInteraction;
-
 /**
  * The same action, priced two ways.
  *
@@ -32,59 +18,45 @@ const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementI
  * apart from outside — because everything else about them is identical. Publishing copied the flow as it read at
  * the time, so the published site keeps quoting the old rate until it is published again.
  */
-const shippingQuote = (ratePerKg: number, label: string): ActionEntry => ({
-  id: 'shipping-quote',
-  document: {
+const shippingQuote = (ratePerKg: number, label: string): ActionEntry =>
+  defineAction({
+    id: 'shipping-quote',
     name: 'Shipping quote',
     description: 'Prices a parcel for the visitor filling in the form.',
-    nodes: {
-      /**
-       * The way in, and everything about it: what starts the run, who may start it, what they may send — and,
-       * in the step's own `enabled`, whether it is open at all. There is no second switch beside the flow: an
-       * action is on when a way into it is.
-       *
-       * It is a STEP, exactly as an element's `onClick` is — which is why a second way in is a second trigger step
-       * rather than another field beside the flow. There is no default access: an unstated rule is either a
-       * lock-out or a hole, so the step states one.
-       *
-       * Anything a caller sends that `input` does not declare is DROPPED before a single step runs, which is what
-       * makes interpolating `{{ input.* }}` into a later step's params safe.
-       */
-      start: node('start', {
-        type: 'trigger',
-        action: 'call',
-        params: {
-          access: 'public',
-          input: JSON.stringify({
-            city: { type: 'text', required: true, label: 'Destination city' },
-            weightKg: { type: 'number', defaultValue: 1, label: 'Weight (kg)' }
-          })
-        },
-        afterNode: 'rate'
-      }),
-      rate: node('rate', {
-        action: 'example.shippingRate',
-        params: { city: '{{input.city}}', weightKg: '{{input.weightKg}}', ratePerKg },
-        beforeNode: 'start',
-        afterNode: 'answer'
-      }),
-      /**
-       * The contract. What this step names is exactly what the caller receives — `band`, which the task also
-       * returned, stays on the server because no step named it.
-       *
-       * An unquoted token keeps its type (`{{ rate.total }}` is a number); a quoted one is text. There is nothing
-       * else to declare and nothing that can disagree with it.
-       */
-      answer: node('answer', {
-        action: 'flow.output',
-        params: {
-          values: `{"total": {{ rate.total }}, "currency": "{{ rate.currency }}", "summary": "{{ rate.city }}: {{ rate.total }} {{ rate.currency }} — quoted by the ${label}"}`
-        },
-        beforeNode: 'rate'
-      })
-    }
-  }
-});
+    /**
+     * The way in, and everything about it: what starts the run, who may start it, what they may send — and, in
+     * `enabled`, whether it is open at all. There is no second switch beside the flow: an action is on when a way
+     * into it is.
+     *
+     * It becomes a trigger STEP, exactly as an element's `onClick` is — which is why a second way in is a second
+     * trigger rather than another field beside the flow. There is no default access: an unstated rule is either a
+     * lock-out or a hole, so the type demands one.
+     *
+     * Anything a caller sends that `input` does not declare is DROPPED before a single step runs, which is what
+     * makes interpolating `{{ input.* }}` into a later step's params safe.
+     */
+    trigger: {
+      type: 'call',
+      access: 'public',
+      input: {
+        city: { type: 'text', required: true, label: 'Destination city' },
+        weightKg: { type: 'number', defaultValue: 1, label: 'Weight (kg)' }
+      }
+    },
+    // Params written out because this step takes something the caller did not send: the rate, which belongs to the
+    // document rather than to the request. A step that names none takes the declared input one field at a time.
+    steps: [
+      { id: 'rate', task: 'example.shippingRate', params: { city: '{{input.city}}', weightKg: '{{input.weightKg}}', ratePerKg } }
+    ],
+    /**
+     * The contract. What this names is exactly what the caller receives — `band`, which the task also returned,
+     * stays on the server because nothing here names it.
+     *
+     * An unquoted token keeps its type (`{{ rate.total }}` is a number); a quoted one is text. There is nothing
+     * else to declare and nothing that can disagree with it.
+     */
+    output: `{"total": {{ rate.total }}, "currency": "{{ rate.currency }}", "summary": "{{ rate.city }}: {{ rate.total }} {{ rate.currency }} — quoted by the ${label}"}`
+  });
 
 /**
  * The other way in: a sender the space does not control, posting to a public URL.
@@ -93,43 +65,26 @@ const shippingQuote = (ratePerKg: number, label: string): ActionEntry => ({
  * body is parsed and before any work starts. The secret is a template resolved against the credentials this
  * document declared, and reaches nothing else.
  */
-const visitDigest: ActionEntry = {
+const visitDigest: ActionEntry = defineAction({
   id: 'visit-digest',
-  document: {
-    name: 'Visit digest',
-    nodes: {
-      start: node('start', {
-        type: 'trigger',
-        action: 'webhook',
-        params: {
-          access: 'public',
-          input: JSON.stringify({ event: { type: 'text', required: true, label: 'Event name' } }),
-          // The credential is NAMED here, not templated. This check runs before the body is parsed and before a
-          // run exists, so there is no flow scope for a token to resolve against — and one that rendered to
-          // nothing would leave the endpoint verifying every request against an empty secret.
-          //
-          // Naming it is also the whole of turning verification on: the rest of these fields have defaults, so
-          // there is no half-configured state where the endpoint looks protected and is not.
-          signatureCredential: 'example',
-          signatureSecretField: 'webhookSecret',
-          signatureHeader: 'x-example-signature'
-        },
-        afterNode: 'count'
-      }),
-      count: node('count', {
-        action: 'kv.increment',
-        params: { key: 'visits:{{input.event}}', amount: '1' },
-        beforeNode: 'start',
-        afterNode: 'answer'
-      }),
-      answer: node('answer', {
-        action: 'flow.output',
-        params: { values: '{"event": "{{input.event}}", "seen": {{ count.value }}}' },
-        beforeNode: 'count'
-      })
-    }
-  }
-};
+  name: 'Visit digest',
+  trigger: {
+    type: 'webhook',
+    access: 'public',
+    input: { event: { type: 'text', required: true, label: 'Event name' } },
+    /**
+     * The credential is NAMED, not templated. This check runs before the body is parsed and before a run exists,
+     * so there is no flow scope for a token to resolve against — and one that rendered to nothing would leave the
+     * endpoint verifying every request against an empty secret.
+     *
+     * Naming it is also the whole of turning verification on: everything else here has a default, so there is no
+     * half-configured state where the endpoint looks protected and is not.
+     */
+    verify: { credential: 'example', secretField: 'webhookSecret', header: 'x-example-signature' }
+  },
+  steps: [{ id: 'count', task: 'kv.increment', params: { key: 'visits:{{input.event}}', amount: '1' } }],
+  output: '{"event": "{{input.event}}", "seen": {{ count.value }}}'
+});
 
 /** The live documents — what the builder edits, and what a webhook or a schedule runs. */
 const draft: ActionEntry[] = [shippingQuote(5.5, 'draft'), visitDigest];

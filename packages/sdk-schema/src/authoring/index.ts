@@ -7,6 +7,7 @@
  * renderer can serve.
  */
 
+export * from './actions';
 export * from './bindings';
 export * from './flows';
 export * from './ids';
