@@ -6,17 +6,7 @@ export type ActionWebhookUrlProps = {
   deployments: { environment: string; domain: string; isDefault: boolean }[];
 };
 
-/**
- * The URL a sender has to be given, spelled out.
- *
- * It is not a property of the action: it is the space's own origin plus the action's identifier, which means an
- * author configuring Stripe or GitHub had to know a path nothing in the product told them. One per deployment,
- * because a sender is configured per environment — a single "the URL" is how a staging integration ends up
- * delivering into production.
- *
- * The path is `sdk-server`'s default (`/_action/hook/…`); a deployment that mounts the endpoint somewhere else
- * says so in its own config, and this is a builder that talks to Plitzi's.
- */
+/** The path mirrors sdk-server's webhook endpoint mount. */
 const ActionWebhookUrl = ({ identifier, deployments }: ActionWebhookUrlProps) => {
   const [copied, setCopied] = useState('');
 

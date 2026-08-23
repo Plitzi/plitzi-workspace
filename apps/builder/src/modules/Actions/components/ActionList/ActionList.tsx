@@ -14,8 +14,6 @@ export type ActionListProps = {
   onCreate: () => void;
 };
 
-/** What each action is reachable BY, at a glance: a flow nobody can trigger is the commonest way to lose an hour.
- *  Read off the trigger STEPS, which is where a way in is declared. */
 const triggerSummary = (action: SpaceAction) =>
   actionTriggers(action.document)
     .map(node => node.action)
@@ -56,8 +54,6 @@ const ActionList = ({ actions, onSelect, onRemove, onCreate }: ActionListProps) 
             <div className="flex flex-col">
               <span className="text-sm font-medium">
                 {action.name}
-                {/* An action is on when a way into it is, so this is read off the trigger steps rather than
-                    off a switch of its own that could say otherwise. */}
                 {!isActionEnabled(action.document) && <span className="ml-2 text-xs text-amber-600">disabled</span>}
               </span>
               <span className="text-xs text-gray-500">{triggerSummary(action)}</span>

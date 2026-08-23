@@ -10,7 +10,6 @@ export type ActionEventsProps = {
   actionId?: string;
 };
 
-/** Local time, to the minute. A run history is read against "when did I change that", which is a wall clock. */
 const when = (createdAt: number) => new Date(createdAt * 1000).toLocaleString();
 
 const toneOf = (event: ActionEvent) => {

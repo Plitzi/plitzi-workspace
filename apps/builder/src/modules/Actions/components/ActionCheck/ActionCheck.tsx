@@ -8,7 +8,7 @@ export type ActionCheckProps = {
   actionId?: string;
 };
 
-/** The step an issue is about, out of the `nodes.<id>.params.<field>` path. */
+/** The step id out of a `nodes.<id>.params.<field>` path. */
 const stepOf = (path: string) => path.split('.')[1] ?? '';
 
 const ActionCheck = ({ actionId = '' }: ActionCheckProps) => {
@@ -51,7 +51,6 @@ const ActionCheck = ({ actionId = '' }: ActionCheckProps) => {
         <Alert key={`${issue.path}-${issue.message}`} intent={issue.level === 'error' ? 'error' : 'warning'} size="sm">
           <div className="flex flex-col text-xs">
             <span>
-              {/* The step, not the path: an author reads the flow above, not a JSON pointer. */}
               {stepOf(issue.path) && <b>{stepOf(issue.path)}: </b>}
               {issue.message}
             </span>

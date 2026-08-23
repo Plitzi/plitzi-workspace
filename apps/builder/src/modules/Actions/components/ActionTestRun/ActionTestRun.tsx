@@ -13,7 +13,7 @@ import type { ActionDocument, ActionRunReport, ActionTriggerType } from '@plitzi
 import type { ChangeEvent } from 'react';
 
 export type ActionTestRunProps = {
-  /** The STORED document — the one a run would actually execute. */
+  /** The stored document — runs execute it, not unsaved form edits. */
   document: ActionDocument;
   disabled: boolean;
   disabledReason?: string;
@@ -30,13 +30,6 @@ const TRIGGER_TITLES: Record<string, string> = {
   custom: 'As the trigger this deployment mounts'
 };
 
-/**
- * What a step left behind, when it is worth reading.
- *
- * Only for a step that did NOT succeed: on a run that worked the results are the flow's own data and belong in
- * the output, while on one that did not this is the answer to the only question being asked — which step stopped
- * it, and what it said. Already redacted of credential values before it left the server.
- */
 const failureOf = (result: unknown): string => {
   if (typeof result === 'string') {
     return result;
@@ -47,17 +40,6 @@ const failureOf = (result: unknown): string => {
   return typeof error === 'string' ? error : '';
 };
 
-/**
- * Rehearses the action — through whichever way in the author wants to try.
- *
- * It runs the STORED document, not the form's draft, and says so: a rehearsal of unsaved edits would be a
- * rehearsal of something that does not exist yet. It goes through the same runner a visitor's call goes through,
- * so the trigger's own access rule, the input contract and every limit apply.
- *
- * Being able to pick the trigger is the point. A page call is the one an author can already try by clicking the
- * page; a **webhook** and a **schedule** are the ones nobody is watching, that fail at 3am on somebody else's
- * delivery — and until this existed the only way to find out that a credential was wrong was to wait for one.
- */
 const ActionTestRun = ({ document, disabled, disabledReason, onRun }: ActionTestRunProps) => {
   const triggers = useMemo(
     () => actionTriggers(document).filter(node => node.action) as { id: string; action: string; params: object }[],
@@ -70,7 +52,6 @@ const ActionTestRun = ({ document, disabled, disabledReason, onRun }: ActionTest
   const [error, setError] = useState('');
   const [isRunning, setIsRunning] = useState(false);
 
-  // Undefined when the action has no way in at all, which is a document somebody is still writing.
   const selected = useMemo<(typeof triggers)[number] | undefined>(
     () => triggers.find(node => node.action === trigger) ?? triggers[0],
     [triggers, trigger]
@@ -82,8 +63,7 @@ const ActionTestRun = ({ document, disabled, disabledReason, onRun }: ActionTest
     []
   );
 
-  // Kept as the string every other control produces: the server coerces the declared type on the way in, and a
-  // panel that sent one field differently would be rehearsing a different request.
+  // Values stay strings: the server coerces each to its declared type.
   const handleChangeSwitch = useCallback(
     (key: string) => (e: ChangeEvent<HTMLInputElement>) =>
       setValues(current => ({ ...current, [key]: e.target.checked ? 'true' : 'false' })),
@@ -100,13 +80,7 @@ const ActionTestRun = ({ document, disabled, disabledReason, onRun }: ActionTest
     setIsRunning(true);
     setError('');
     try {
-      /**
-       * A webhook is fed its BODY, exactly as the endpoint feeds it: the body's own keys, plus the whole thing
-       * under `payload`. Sending the declared fields instead would rehearse a shape no sender produces.
-       *
-       * What this cannot rehearse is the signature, because there is no sender to sign with — that is what the
-       * check above answers instead.
-       */
+      // Sent exactly as an endpoint delivers it: body keys plus the whole body under payload.
       if (trigger === 'webhook') {
         const parsed: unknown = JSON.parse(body || '{}');
         const payload = parsed !== null && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
@@ -168,8 +142,6 @@ const ActionTestRun = ({ document, disabled, disabledReason, onRun }: ActionTest
                 {field.label ?? key}
                 {field.required ? ' *' : ''}
               </Label>
-              {/* The control the field's own type asks for. A checkbox typed as the word "true" is a test that
-                  rehearses a different call from the one a page makes. */}
               {field.type === 'boolean' && (
                 <Switch
                   size="xs"
@@ -220,8 +192,7 @@ const ActionTestRun = ({ document, disabled, disabledReason, onRun }: ActionTest
                     <span>{node?.title ?? node?.action ?? 'step'}</span>
                     <span className="text-gray-500">{String(step.status)}</span>
                   </div>
-                  {/* The whole point of showing a trace: a run that failed says WHERE, and this says why. */}
-                  {failure && <span className="mt-1 break-words text-red-600 dark:text-red-400">{failure}</span>}
+                  {failure && <span className="mt-1 wrap-break-word text-red-600 dark:text-red-400">{failure}</span>}
                 </div>
               );
             })}

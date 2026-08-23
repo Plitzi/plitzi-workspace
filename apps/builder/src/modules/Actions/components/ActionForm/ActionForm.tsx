@@ -115,7 +115,6 @@ const signatureParams = (credentials: SpaceCredential[]): TriggerParams => ({
     canBind: false,
     when: params => Boolean(params.signatureCredential)
   },
-  // Only once there is a timestamp to compare against: without one, a signature never gets old.
   signatureToleranceSeconds: {
     type: 'text',
     defaultValue: '',
@@ -174,7 +173,7 @@ const deriveOutput = (nodes: Record<string, ElementInteraction>): Record<string,
   }
 
   try {
-    // Parsed with the tokens still in place: what matters here are the KEYS and whether each value was quoted.
+    // Tokens become literal numbers so JSON.parse yields the keys and each value's type.
     const parsed = JSON.parse(raw.replace(/\{\{[^}]*\}\}/g, '0')) as Record<string, unknown>;
 
     return Object.entries(parsed).reduce<Record<string, ActionField>>((acum, [key, value]) => {
@@ -194,7 +193,6 @@ const ActionForm = ({ action, tasks, credentials, deployments, onRun, onSubmit, 
 
   const nodeDefinitions = useMemo(() => asNodeDefinitions(tasks, credentials), [tasks, credentials]);
   const report = useMemo(() => validateActionDocument({ ...document, name: name || document.name }), [document, name]);
-  // Read off the flow as it is being edited: the URL is worth showing the moment somebody adds the way in.
   const hasWebhook = useMemo(
     () => Object.values(document.nodes).some(node => node.type === 'trigger' && node.action === 'webhook'),
     [document]
@@ -205,7 +203,6 @@ const ActionForm = ({ action, tasks, credentials, deployments, onRun, onSubmit, 
     []
   );
 
-  // The derived output travels with the flow, so the two can never disagree: one edit, one write.
   const handleChangeNodes = useCallback(
     (nodes: Record<string, ElementInteraction>) => patch({ nodes, output: deriveOutput(nodes) }),
     [patch]
@@ -271,12 +268,8 @@ const ActionForm = ({ action, tasks, credentials, deployments, onRun, onSubmit, 
         </Alert>
       )}
 
-      {/* A webhook has an address, and it is the one thing about it an author cannot work out from the flow. It
-          shows as soon as the trigger exists — before saving, because the identifier is what it is built from. */}
       {action && hasWebhook && <ActionWebhookUrl identifier={action.identifier} deployments={deployments} />}
 
-      {/* Before running anything: what this server can already tell is wrong. It is the half the editor cannot
-          see, and the half that otherwise surfaces on somebody else's first delivery. */}
       {action && <ActionCheck actionId={action.identifier} />}
 
       {action && (
@@ -288,16 +281,12 @@ const ActionForm = ({ action, tasks, credentials, deployments, onRun, onSubmit, 
         />
       )}
 
-      {/* The other half of the same question: the test run says what happens when the author presses a button,
-          this says what happened when nobody was watching. */}
       {action && <ActionEvents actionId={action.identifier} />}
 
       <div className="flex justify-end gap-2">
         <Button size="sm" intent="secondary" onClick={onCancel}>
           Cancel
         </Button>
-        {/* Saving an invalid document would store a flow the runner refuses at request time, which is a failure
-            nobody sees until a visitor clicks. */}
         <Button size="sm" disabled={isSaving || !report.valid || !name} onClick={handleSubmit}>
           {action ? 'Save' : 'Create'}
         </Button>

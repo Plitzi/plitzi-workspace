@@ -36,13 +36,6 @@ const byIdentifier = (actions: SpaceAction[]) =>
     return acum;
   }, {});
 
-/**
- * Loads the space's server actions and the catalog of steps they can be built from.
- *
- * The catalog comes from the SERVER, not from a list in this repo: registering a task in a deployment is what
- * publishes it, so a self-hoster's own step shows up in their editor with no fork. It also means a deployment
- * without, say, a mail transport never offers a step whose only possible outcome is failure.
- */
 const ActionsContextProvider = ({ children }: ActionsContextProviderProps) => {
   const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<
     BuilderQueriesMap,
@@ -55,27 +48,16 @@ const ActionsContextProvider = ({ children }: ActionsContextProviderProps) => {
     mutate
   } = useGraphQL('SpaceActions', data => data?.SpaceActions.edges, { pageSize: 100 });
   const { data: tasks = emptyTasks } = useGraphQL('SpaceActionTasks', data => data?.SpaceActionTasks);
-  // What a step can NAME, never what it holds: the panel offers the list so nobody has to remember an identifier,
-  // and the secret behind it stays where it always was. Asked for in one page, because a picker that silently
-  // stops at the server's default of ten is a credential an author cannot choose.
+  // Full page size: a picker silently capped at the server default would hide credentials.
   const { data: credentials = emptyCredentials } = useGraphQL(
     'SpaceCredentials',
     data => data?.SpaceCredentials.edges,
     { pageSize: 100 }
   );
-  // An action is worthless without a server to run it, and the space only has one when something it deploys to can
-  // run server code. Read off the deployments rather than a flag, so the panel cannot claim otherwise.
   const { data: deployments } = useGraphQL('SpaceDeployments', data => data?.SpaceDeployments.edges);
 
   const actions = useMemo(() => byIdentifier(data), [data]);
-  /**
-   * What the space can run, published to the store the editor's own steps read.
-   *
-   * A `runServerAction` step used to ask for the identifier as free text — a value this panel already had, that
-   * the author had to go and look up. The step is registered by the SDK runtime, so this is how it learns: the
-   * same route `navigate` takes to the page list. Identifiers and names, plus what the `call` trigger declares it
-   * takes; never the flow, which is server-side state and stays on the server.
-   */
+  /** Published for the SDK runtime's runServerAction steps; never includes the flow itself. */
   const catalog = useMemo<ActionCatalogEntry[]>(
     () =>
       data.map(action => {
@@ -89,19 +71,13 @@ const ActionsContextProvider = ({ children }: ActionsContextProviderProps) => {
       }),
     [data]
   );
-  // Unknown counts as "has one": the deployments arrive a moment after the panel does, and a space that is set up
-  // correctly should not flash a warning telling its owner it is broken.
+  // Unknown counts as true: deployments arrive after the panel mounts.
   const hasServerRendering = useMemo(
     () => deployments === undefined || deployments.some(deployment => deployment.credential?.provider === 'ssr'),
     [deployments]
   );
 
-  /**
-   * The origins this space answers on, for the one thing an author cannot derive: a webhook's URL.
-   *
-   * Every deployment gets its own, because a sender is configured per environment — the staging integration must
-   * not deliver into production, and a single "the URL" would invite exactly that.
-   */
+  /** One per deployment, for building webhook URLs. */
   const origins = useMemo(
     () =>
       (deployments ?? [])
@@ -114,16 +90,11 @@ const ActionsContextProvider = ({ children }: ActionsContextProviderProps) => {
     [deployments]
   );
 
-  // Both halves of what an editor needs to author a call: which actions exist, and whether anything will ever run
-  // them. The second is what lets a step say so while it is being authored rather than at the first click in
-  // production.
   useCommonStoreSync(['actions.catalog', 'actions.available'], [catalog, hasServerRendering]);
 
   const addAction = useCallback(
     async (name: string, document: ActionDocument) => {
       const response = await mutateNetwork('SpaceAddAction', { name, document });
-      // Revalidating rather than merging the payload in: the list is a query, and one owner for it means a create
-      // that succeeded server-side can never leave the panel showing something else.
       await mutate();
 
       return response.result;
