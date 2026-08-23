@@ -4,30 +4,13 @@ import { useCallback } from 'react';
 
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
-import type { ActionCheckIssue } from '@plitzi/sdk-shared';
-
 export type ActionCheckProps = {
-  /** Empty while an action is being created: there is nothing stored for the server to check yet. */
   actionId?: string;
 };
-
-const emptyIssues: ActionCheckIssue[] = [];
 
 /** The step an issue is about, out of the `nodes.<id>.params.<field>` path. */
 const stepOf = (path: string) => path.split('.')[1] ?? '';
 
-/**
- * What the SERVER can tell about this action without running it.
- *
- * The editor already validates the document as it is typed, and that catches a flow that contradicts itself. It
- * cannot catch the half that depends on the deployment: a task this server does not register, a credential the
- * space has not got, a key missing from the one it has, a connector that was deleted, a database engine with no
- * driver, a cron that would never fire.
- *
- * Those are the failures that show up on the first real delivery — which for a webhook or a schedule means at
- * 3am, in somebody else's timezone, with nothing in the browser to look at. This is how an author finds them at
- * the moment they are creating them.
- */
 const ActionCheck = ({ actionId = '' }: ActionCheckProps) => {
   const { data, isLoading, mutate } = useGraphQL(actionId ? 'SpaceCheckAction' : null, data => data?.SpaceCheckAction, {
     identifier: actionId
@@ -39,7 +22,7 @@ const ActionCheck = ({ actionId = '' }: ActionCheckProps) => {
     return null;
   }
 
-  const issues = data?.issues ?? emptyIssues;
+  const issues = data?.issues ?? [];
   const errors = issues.filter(issue => issue.level === 'error');
 
   return (

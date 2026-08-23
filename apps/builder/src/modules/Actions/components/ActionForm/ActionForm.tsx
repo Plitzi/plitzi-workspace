@@ -28,7 +28,6 @@ export type ActionFormProps = {
   action?: SpaceAction;
   tasks: ActionTaskDescriptor[];
   credentials: SpaceCredential[];
-  /** Where this space answers — what turns an action identifier into a URL a sender can be given. */
   deployments: { environment: string; domain: string; isDefault: boolean }[];
   onRun: (
     identifier: string,
@@ -54,20 +53,8 @@ const ACCESS_OPTIONS = [
   { label: 'Anyone, signed out included', value: 'public' }
 ];
 
-/**
- * The half of `InteractionCallback['params']` a trigger ever uses.
- *
- * That type is a record OR a function returning one — the function form is for a callback whose parameters
- * depend on what has been filled in so far, which no trigger needs. Naming the record half is what lets these be
- * composed with a spread.
- */
 type TriggerParams = Record<string, InteractionCallbackParam>;
 
-/**
- * What a way in carries, on the step that IS that way in.
- *
- * A schedule has none of it: a clock is not a caller, so there is nobody to authorize and nothing to send.
- */
 const callerParams: TriggerParams = {
   access: { type: 'select', defaultValue: 'session', label: 'Who may', canBind: false, options: ACCESS_OPTIONS },
   permissions: {
@@ -80,23 +67,10 @@ const callerParams: TriggerParams = {
   input: { type: 'codemirror-json', defaultValue: '{}', label: 'Input it accepts', canBind: false }
 };
 
-/**
- * How a webhook proves who is calling it: one question at a time, and the first one is a list.
- *
- * It was a single `codemirror-json` control holding the whole verification, offered with an empty `credential`
- * in it — a JSON object that explained nothing and refused to save. Even split into fields, the one that matters
- * asked for a credential IDENTIFIER, which is a value the panel knows and the author would have to go and look
- * up. So it is the space's own credentials, and nothing else appears until one is picked.
- *
- * `allowCreateOptions` on the select means an identifier can still be typed — an action authored before the
- * credential it names exists is a legitimate order to work in, and the validator says so rather than blocking it.
- */
 const signatureParams = (credentials: SpaceCredential[]): TriggerParams => ({
   signatureCredential: {
     type: 'select',
     defaultValue: '',
-    // The empty case is the one worth spelling out: an author with nothing to pick needs to be told where to go,
-    // and this label is the only place the panel can say it.
     label: credentials.length > 0 ? 'Signing secret' : 'Signing secret — add one in Credentials first',
     canBind: false,
     options: credentials.map(credential => ({
@@ -104,13 +78,6 @@ const signatureParams = (credentials: SpaceCredential[]): TriggerParams => ({
       value: credential.identifier
     }))
   },
-  /**
-   * The header names senders actually use, and still free to type.
-   *
-   * Not a "provider preset": picking one of these changes nothing else, because for these senders nothing else
-   * DOES change — a bare hex digest, a `sha256=` prefix and a base64 one are all read the same way. A list that
-   * quietly reconfigured the rest would be promising vendor knowledge this check does not have.
-   */
   signatureHeader: {
     type: 'select',
     defaultValue: 'x-signature',
@@ -158,15 +125,8 @@ const signatureParams = (credentials: SpaceCredential[]): TriggerParams => ({
   }
 });
 
-/** What each way in asks for. A function, because the webhook's first question is a list of THIS space's
- *  credentials — the panel knows them, so nobody should have to remember an identifier. */
 const triggerParamsFor = (credentials: SpaceCredential[]): Record<string, TriggerParams> => ({
   call: callerParams,
-  /**
-   * A render is a READ, repeated once per visitor — so it is the one way in that may answer twice from the same
-   * work. Everyone arriving while a run is in flight is served by it whatever this says; this is how long the
-   * answer may keep being served AFTER that, and it is the difference between one outbound call and ten thousand.
-   */
   render: {
     ...callerParams,
     cacheSeconds: {
@@ -183,17 +143,6 @@ const triggerParamsFor = (credentials: SpaceCredential[]): Record<string, Trigge
   }
 });
 
-/**
- * The catalog, in the shape the flow editor already draws.
- *
- * `Workflow` renders `InteractionCallback`s, which is what makes this reuse possible at all: a server task and a
- * client callback declare their parameters the same way, so the editor an author already knows is the editor they
- * get here — with a different set of steps in it.
- *
- * The TRIGGERS declare parameters too, and that is the whole of authoring a way in: pick one, say who may use it
- * and what it takes, chain the tasks. There is no panel above the flow repeating any of it — there was, and it
- * left the same trigger configurable in two places that could disagree.
- */
 const asNodeDefinitions = (tasks: ActionTaskDescriptor[], credentials: SpaceCredential[]): InteractionCallback[] => {
   const triggerParams = triggerParamsFor(credentials);
 
@@ -215,12 +164,6 @@ const asNodeDefinitions = (tasks: ActionTaskDescriptor[], credentials: SpaceCred
   ];
 };
 
-/**
- * The field list a binding editor offers on this action's result, read off the output step.
- *
- * Derived, never authored: the step is the contract, and a second list beside it is a second thing to keep in
- * step. Types are what the step's own JSON says — a token in quotes is text, an unquoted one keeps its type.
- */
 const deriveOutput = (nodes: Record<string, ElementInteraction>): Record<string, ActionField> => {
   const step = Object.values(nodes)
     .filter(node => node.action === 'flow.output')

@@ -56,8 +56,6 @@ const Actions = () => {
 
   const handleRemove = useCallback(
     async (identifier: string) => {
-      // Every step wired to this action stops working, on published pages included — the one destructive action
-      // in the panel.
       const confirmed = await showDialog(
         <Modal.Header>
           <h4>Remove Action</h4>
