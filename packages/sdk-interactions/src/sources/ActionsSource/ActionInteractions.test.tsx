@@ -344,11 +344,17 @@ describe('ActionInteractions', () => {
   });
 
   it('records a refusal with the server’s own reason', async () => {
-    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(jsonResponse(409, { reason: 'duplicate', runId: 'r1' }))));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(jsonResponse(409, { reason: 'duplicate', runId: 'r1' })))
+    );
 
     await mount().run({ actionId: 'quote', input: '{}', mode: 'await' });
 
-    expect(recorded.update).toHaveBeenCalledWith('run-1', expect.objectContaining({ status: 'failed', reason: 'duplicate' }));
+    expect(recorded.update).toHaveBeenCalledWith(
+      'run-1',
+      expect.objectContaining({ status: 'failed', reason: 'duplicate' })
+    );
   });
 
   /**

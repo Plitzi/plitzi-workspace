@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import { z } from 'zod';
 
 /**
@@ -69,7 +70,7 @@ export const actionNode = z
     params: z
       .record(z.string(), z.unknown())
       .default({})
-      .describe('A task: that task\'s params. A trigger: ActionTriggerParams — access, input, signature*, cron'),
+      .describe("A task: that task's params. A trigger: ActionTriggerParams — access, input, signature*, cron"),
     afterNode: z.string().default('').describe('Id of the next step; empty ends the chain'),
     beforeNode: z.string().default(''),
     enabled: z.boolean().default(true).describe('On a trigger: whether that way in is open. No trigger open, no run'),

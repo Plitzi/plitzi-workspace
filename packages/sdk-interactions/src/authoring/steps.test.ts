@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import { describe, expect, it } from 'vitest';
 
 import { BUILTIN_GLOBAL_CALLBACKS } from './globalCallbacks';
@@ -69,7 +70,7 @@ describe('runServerAction input', () => {
     expect(step.params).toMatchObject({ input: { title: '{{form.values.title}}' }, mode: 'await' });
   });
 
-  it('still takes the JSON text the builder\'s editor writes', () => {
+  it("still takes the JSON text the builder's editor writes", () => {
     expect(runServerAction({ actionId: 'publish', input: '{"a":1}' }).params).toMatchObject({ input: '{"a":1}' });
   });
 

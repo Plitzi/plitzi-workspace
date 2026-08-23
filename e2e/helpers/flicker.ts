@@ -69,7 +69,6 @@ export const paintTrace = async (page: Page, selectors: string[]): Promise<Paint
       throw new Error(`"${selector}" is not a selector the browser can parse — the sampler runs CSS, not Playwright`);
     }
 
-
     return {
       selector,
       frames: seen.length,

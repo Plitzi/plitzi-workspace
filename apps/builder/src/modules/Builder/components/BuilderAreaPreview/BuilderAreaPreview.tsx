@@ -138,11 +138,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
   }, [components, element, id]);
 
   return (
-    <ContainerFrame
-      className={clsx('builder-area flex', className)}
-      css={css}
-      style={{ colorScheme: resolvedTheme }}
-    >
+    <ContainerFrame className={clsx('builder-area flex', className)} css={css} style={{ colorScheme: resolvedTheme }}>
       <PlitziServiceProvider value={plitziContextValue}>
         {/* This surface IS the preview, whatever the builder's own toggle says: a scope carrying the surrounding
             settings with that one flag flipped beats threading it as a prop through every provider under here. */}

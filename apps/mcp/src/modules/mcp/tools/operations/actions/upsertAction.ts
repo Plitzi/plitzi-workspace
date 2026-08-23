@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import { z } from 'zod';
 
 import { validateActionDocument } from '@plitzi/sdk-shared/actions';
@@ -30,7 +31,7 @@ export const upsertActionOp = z
   })
   .describe(
     'Create a server action, or REPLACE one whole (use patchAction to change part). An action is a declarative ' +
-      'flow the SERVER runs — the same node map an element\'s interactions are, with tasks instead of callbacks. ' +
+      "flow the SERVER runs — the same node map an element's interactions are, with tasks instead of callbacks. " +
       'What starts it, who may, what they send and whether it runs at all live on its TRIGGER steps, not ' +
       'beside the flow.'
   );

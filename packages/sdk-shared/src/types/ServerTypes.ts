@@ -711,11 +711,7 @@ export type ActionRejectLogEvent = ServerLogEventBase & {
  *  anonymous and a consumer shipping these events must handle them accordingly: `clientIp` on a request event, and
  *  the request path, which is kept verbatim because it is what makes the log usable. */
 export type ServerLogEvent =
-  | ServerRequestLogEvent
-  | McpToolLogEvent
-  | McpResourceLogEvent
-  | ActionRunLogEvent
-  | ActionRejectLogEvent;
+  ServerRequestLogEvent | McpToolLogEvent | McpResourceLogEvent | ActionRunLogEvent | ActionRejectLogEvent;
 
 /** The sink a consumer provides to receive every {@link ServerLogEvent} (see `SSRServerConfig.logger`). */
 export type ServerLogger = (event: ServerLogEvent) => void;

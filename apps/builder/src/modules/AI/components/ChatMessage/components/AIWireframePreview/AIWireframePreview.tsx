@@ -198,13 +198,7 @@ const AIWireframePreview = ({
 
       <div className="min-h-32 overflow-hidden bg-white dark:bg-zinc-950">
         {showHtml && html && (
-          <CodeMirror
-            value={html}
-            theme={resolvedTheme}
-            size="xs"
-            className="max-h-72 overflow-auto"
-            readOnly
-          />
+          <CodeMirror value={html} theme={resolvedTheme} size="xs" className="max-h-72 overflow-auto" readOnly />
         )}
         {(!showHtml || !html) && <WireframeCanvas baseElementId={baseElementId} schema={schema} style={style} />}
       </div>

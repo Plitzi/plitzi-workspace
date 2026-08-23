@@ -90,13 +90,7 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode, version }
       />
 
       {showHtml && html && (
-        <CodeMirror
-          value={html}
-          theme={resolvedTheme}
-          size="xs"
-          className="h-full max-h-60 overflow-auto"
-          readOnly
-        />
+        <CodeMirror value={html} theme={resolvedTheme} size="xs" className="h-full max-h-60 overflow-auto" readOnly />
       )}
       {(!showHtml || !html) && (
         <div className="flex justify-center overflow-hidden bg-zinc-50 dark:bg-zinc-900">

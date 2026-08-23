@@ -50,7 +50,9 @@ const WorkflowContextProvider = ({
 
           const preset =
             nodeType === 'trigger' && defaultTrigger
-              ? nodeDefinitions?.find(definition => definition.type === 'trigger' && definition.action === defaultTrigger)
+              ? nodeDefinitions?.find(
+                  definition => definition.type === 'trigger' && definition.action === defaultTrigger
+                )
               : undefined;
           const presetParams = Object.keys(preset?.params ?? {}).reduce(
             (acum, key) => ({ ...acum, [key]: get(preset?.params, `${key}.defaultValue`, '') }),
@@ -111,7 +113,7 @@ const WorkflowContextProvider = ({
         true
       );
     },
-    [onChange, defaultTrigger, nodeDefinitions]
+    [onChange]
   );
 
   const removeNode = useCallback(

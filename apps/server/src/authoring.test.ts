@@ -34,9 +34,7 @@ describe('the authoring entry', () => {
         {
           name: 'Home',
           slug: '',
-          body: [
-            fromServer.container({ class: 'card', children: [fromServer.heading('Hello', { subType: 'h2' })] })
-          ]
+          body: [fromServer.container({ class: 'card', children: [fromServer.heading('Hello', { subType: 'h2' })] })]
         }
       ]
     });

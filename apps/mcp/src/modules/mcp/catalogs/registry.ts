@@ -1,8 +1,6 @@
 import { elementCatalog } from '@plitzi/sdk-elements/authoring';
 import { cssProperties } from '@plitzi/sdk-style/authoring';
 
-
-
 import type { ElementSemantics } from '@plitzi/sdk-elements/authoring';
 import type { ComponentCatalog, Schema } from '@plitzi/sdk-shared';
 
