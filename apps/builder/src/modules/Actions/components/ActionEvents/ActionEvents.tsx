@@ -7,11 +7,8 @@ import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 import type { ActionEvent } from '@plitzi/sdk-shared';
 
 export type ActionEventsProps = {
-  /** Empty while an action is being created: there is nothing to have a history yet. */
   actionId?: string;
 };
-
-const emptyEvents: ActionEvent[] = [];
 
 /** Local time, to the minute. A run history is read against "when did I change that", which is a wall clock. */
 const when = (createdAt: number) => new Date(createdAt * 1000).toLocaleString();
@@ -24,17 +21,9 @@ const toneOf = (event: ActionEvent) => {
   return event.status === 'completed' ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400';
 };
 
-/**
- * What has actually happened to this action.
- *
- * The test-run panel above answers "does it work when I press the button". This answers the question nobody could
- * ask before: what happened when NOBODY pressed anything — the webhook that arrived at 4am, the schedule that
- * fired, the delivery that was turned away for a signature that does not match. Those have no browser tab to
- * report into, and until they showed up here the honest answer to "is my integration working" was a shrug.
- */
 const ActionEvents = ({ actionId = '' }: ActionEventsProps) => {
   const {
-    data = emptyEvents,
+    data = [],
     isLoading,
     mutate
   } = useGraphQL(actionId ? 'SpaceActionEvents' : null, data => data?.SpaceActionEvents.edges, {
@@ -73,12 +62,12 @@ const ActionEvents = ({ actionId = '' }: ActionEventsProps) => {
             </span>
             <span className={clsx('font-medium', toneOf(event))}>{event.refused ? event.reason : event.status}</span>
           </div>
-          {/* The steps only when they say something a status does not: a run that worked is its output, a run
-              that stopped is the step it stopped at. */}
           {!event.refused && event.status !== 'completed' && event.steps.length > 0 && (
-            <span className="mt-1 break-words text-gray-500 dark:text-zinc-400">{event.steps.join(' → ')}</span>
+            <span className="mt-1 wrap-break-word text-gray-500 dark:text-zinc-400">{event.steps.join(' → ')}</span>
           )}
-          {event.detail && <span className="mt-1 break-words text-gray-600 dark:text-zinc-300">{event.detail}</span>}
+          {event.detail && (
+            <span className="mt-1 wrap-break-word text-gray-600 dark:text-zinc-300">{event.detail}</span>
+          )}
         </div>
       ))}
     </div>
