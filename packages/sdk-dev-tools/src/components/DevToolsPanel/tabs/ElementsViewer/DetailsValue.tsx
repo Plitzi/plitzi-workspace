@@ -14,21 +14,13 @@ export type DetailsValue = {
   onSelectElement?: (id: string) => void;
 };
 
-const DetailsValue = ({
-  attribute,
-  value,
-  isDefinition = false,
-  // isAttribute = false,
-  // isStyle = false,
-  onSelectElement
-}: DetailsValue) => {
+const DetailsValue = ({ attribute, value, isDefinition = false, onSelectElement }: DetailsValue) => {
   const [flat] = useCommonStore('schema.flat');
 
   const handleClickElement = useCallback((elementId: string) => () => onSelectElement?.(elementId), [onSelectElement]);
 
   const valueParsed = useMemo<ReactNode>(() => {
     if (attribute === 'items' && isDefinition && Array.isArray(value)) {
-      // childrens
       return (
         <div className="flex flex-col">
           {value.map((item: string, i) => (

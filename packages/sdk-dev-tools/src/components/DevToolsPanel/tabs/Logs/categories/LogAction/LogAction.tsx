@@ -10,14 +10,7 @@ export type LogActionProps = {
   params: TLogAction['params'];
 };
 
-/**
- * One server action, as a line.
- *
- * What it adds to the message is what an author needs to tell two of them apart and to act on a failure: which
- * way in, the server's run id — which is what a cancel and a support question are both addressed by — and the
- * REASON it was refused, in the server's own vocabulary. "It did not work" is not something anybody can act on;
- * `duplicate` and `forbidden` are.
- */
+/** Adds mode, server run id and refusal reason to the message line. */
 const LogAction = ({ className = '', time, message, params }: LogActionProps) => {
   const { actionId, mode, runId, status, reason, error } = params;
   const failed = Boolean(reason ?? error);

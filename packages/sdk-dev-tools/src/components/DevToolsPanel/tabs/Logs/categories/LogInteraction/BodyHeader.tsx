@@ -43,7 +43,6 @@ const BodyHeader = ({ triggerName, startTime, endTime, duration, elementId, elem
 
   return (
     <div className="flex justify-around gap-3">
-      {/* Times */}
       <div className="flex min-w-0 grow basis-0 flex-col">
         <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
           <i className="fa-regular fa-clock" />
@@ -67,7 +66,6 @@ const BodyHeader = ({ triggerName, startTime, endTime, duration, elementId, elem
 
       <div className="w-px shrink-0 bg-zinc-200 dark:bg-zinc-800" />
 
-      {/* Details */}
       <div className="flex min-w-0 grow basis-0 flex-col">
         <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
           <i className="fa-solid fa-circle-info" />
@@ -84,8 +82,7 @@ const BodyHeader = ({ triggerName, startTime, endTime, duration, elementId, elem
           </div>
           {elementRef && (
             <div className="flex min-w-0 gap-1">
-              {/* Which element fired it. `Element` below names the SOURCE for a global callback, so for those two
-                  it says `space` or `state` — this is the only row that tells two identical triggers apart. */}
+              {/* Tells identical triggers apart; for global callbacks `Element` below names only the source. */}
               <span className="shrink-0 text-zinc-400 dark:text-zinc-500">Fired on</span>
               <span className="truncate font-mono">{elementRef}</span>
             </div>

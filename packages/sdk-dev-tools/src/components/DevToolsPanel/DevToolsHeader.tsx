@@ -16,8 +16,7 @@ const TABS = [
   { id: 'variables', label: 'Variables', icon: 'fa-solid fa-code' },
   { id: 'plugins', label: 'Plugins', icon: 'fa-solid fa-puzzle-piece' },
   { id: 'tracing', label: 'Tracing', icon: 'fa-solid fa-gauge-high' },
-  // Server actions started from this page. Its own tab rather than a Logs filter: a run has an input, an output,
-  // progress and — in development — the steps the server took, none of which is a log line.
+  // Own tab rather than a Logs filter: a run has input, output, progress and server steps — none is a log line.
   { id: 'actions', label: 'Actions', icon: 'fa-solid fa-bolt' }
 ] as const;
 
@@ -52,7 +51,6 @@ const DevToolsHeader = ({
 
   return (
     <div className="flex shrink-0 items-stretch justify-between border-b border-zinc-200 bg-zinc-100 select-none dark:border-zinc-700 dark:bg-zinc-800">
-      {/* Tabs */}
       <div className="flex items-stretch overflow-x-auto">
         {TABS.map(tab => {
           const isActive = tabSelected === tab.id;
@@ -77,7 +75,6 @@ const DevToolsHeader = ({
         })}
       </div>
 
-      {/* Toolbar right */}
       <div className="flex shrink-0 items-center gap-1 border-l border-zinc-200 px-2 dark:border-zinc-700">
         {scopeOptions.length > 0 && (
           <select

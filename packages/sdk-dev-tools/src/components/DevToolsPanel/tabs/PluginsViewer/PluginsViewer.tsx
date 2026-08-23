@@ -19,19 +19,7 @@ const ORIGIN_LABEL: Record<PluginEntry['origin'], string> = {
   remote: 'Installed'
 };
 
-/**
- * The elements on this page that the SDK did not bring.
- *
- * Two registers, because a plugin arrives by two different roads and only one of them ends in a manifest. An
- * INSTALLED plugin is a published bundle with a manifest describing it, and it lands in `PluginsContext`. One a
- * deployment SHIPS — a file it hands the server, compiled and rendered with everything else — has no manifest to
- * describe: nobody published it, so it lands in the component registry as `local-custom` and nowhere else. Reading
- * only the first register is why a space's own element used to leave this tab saying "No items" on a page it was
- * plainly rendering.
- *
- * The SDK's own elements are not plugins and are deliberately not here — every page has all of them, which is a
- * list that answers no question anybody opened this tab with.
- */
+/** Plugins from both registers: installed bundles (PluginsContext) and space-shipped ones (component registry). */
 const PluginsViewer = ({ className }: PluginsViewerProps) => {
   const { plugins } = use(PluginsContext);
   const { components } = use(ComponentContext);
@@ -39,8 +27,7 @@ const PluginsViewer = ({ className }: PluginsViewerProps) => {
   const pluginsParsed = useMemo<ListItem<PluginEntry>[]>(() => {
     const entries = new Map<string, PluginEntry>();
     Object.entries(components.current).forEach(([type, component]) => {
-      // Named, rather than "everything that is not local": an element the SDK ships carries no origin at all, and
-      // reading the absence of one as "must be a plugin" is how this list ends up being every element type there is.
+      // Named origins only: an absent origin is an SDK element, not a plugin.
       const { origin } = component;
       if (origin !== 'local-custom' && origin !== 'remote') {
         return;

@@ -23,18 +23,7 @@ const took = (run: ActionRunEntry) => (run.endedAt ? `${run.endedAt - run.starte
 /** Still happening: no end time, and the step that started it still holds the handle. */
 const isLive = (run: ActionRunEntry) => run.endedAt === undefined;
 
-/**
- * The server actions this page has run.
- *
- * A page call that waits leaves its answer in the flow, so an author can bind it and see it. The other two modes
- * leave nothing: `detached` is not awaited and `stream` returns the moment the stream opens, so until this tab
- * existed the only evidence either of them happened was a line in the network tab — which says a POST was
- * answered and nothing about which action ran, what it was sent, or why it was refused.
- *
- * Where it can, it shows the SERVER's own steps: a dev server (and an authoring request) sends the trace back
- * with the answer, so the flow that ran on the other side is readable here, in the same panel as the client
- * flows that started it. A visitor's request never receives it, which is why it is only ever here in development.
- */
+/** Server action runs; `detached` and `stream` modes leave no other trace in the UI. */
 const ActionsViewer = () => {
   const { runs, clear } = useActionRuns();
   const [endpoint] = useCommonStore('actions.endpoint');
@@ -43,21 +32,12 @@ const ActionsViewer = () => {
 
   const handleToggle = useCallback((id: string) => () => setExpanded(current => (current === id ? undefined : id)), []);
 
-  /**
-   * Stops a run from here — which is the point of having it here at all.
-   *
-   * A long flow is otherwise something a developer can only wait out: the page has moved on, the trigger that
-   * would cancel it is not on any element yet, and the run id is on a server. `stopPropagation` because the row
-   * is a toggle and cancelling is not opening.
-   */
   const handleCancel = useCallback((id: string) => () => cancelActionRun(id), []);
 
   return (
     <div className="flex h-full w-full flex-col overflow-auto">
       <div className="flex items-center justify-between border-b border-zinc-200 px-2 py-1 dark:border-zinc-700">
         <div className="flex items-center gap-2">
-          {/* A run in flight is the one thing this panel has to say without being asked: a flow that never comes
-              back looks exactly like a page that did nothing at all. */}
           {live.length > 0 && (
             <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
               <i className="fa-solid fa-circle-notch fa-spin" />
@@ -83,8 +63,7 @@ const ActionsViewer = () => {
       <div className="flex flex-col">
         {runs.map(run => (
           <div key={run.id} className="border-b border-zinc-100 dark:border-zinc-800">
-            {/* The row is a toggle and Cancel is a button of its own: one nested inside the other is invalid
-                markup, and a click that opened a run while stopping it is not what anybody meant. */}
+            {/* Cancel sits beside the toggle row: nested buttons are invalid markup. */}
             <div className="flex w-full items-center gap-2 px-2 hover:bg-zinc-50 dark:hover:bg-zinc-800">
               <button
                 type="button"
@@ -128,8 +107,7 @@ const ActionsViewer = () => {
                     <pre className="overflow-auto whitespace-pre-wrap">{JSON.stringify(run.progress, null, 2)}</pre>
                   </div>
                 )}
-                {/* The flow as it ran on the SERVER. Present in development only — a visitor's answer never
-                    carries it, and that is the point rather than a limitation. */}
+                {/* Server-side steps; a visitor's answer never carries them, so this only appears in development. */}
                 {run.trace && (
                   <div className="flex flex-col gap-1">
                     <div className="text-zinc-500 dark:text-zinc-400">Server steps</div>
