@@ -1,5 +1,5 @@
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useStoreById } from '@plitzi/nexus/react';
 import { useCommonStore, useCommonStoreSetter } from '@plitzi/sdk-shared/store';
@@ -31,6 +31,7 @@ const useElementState = ({ id, bindings, previewMode }: UseElementStateProps) =>
   const { scopePath } = useStoreById<CommonState>();
   const path = useMemo(() => elementStatePath(id, scopePath), [id, scopePath]);
   const [stateValue] = useCommonStore(path);
+  const mounted = useRef(false);
   const state = (stateValue as Record<string, unknown> | undefined) ?? emptyState;
   const setState = useCommonStoreSetter();
 
@@ -42,7 +43,7 @@ const useElementState = ({ id, bindings, previewMode }: UseElementStateProps) =>
 
   const setElementState = useCallback(
     <T extends Record<string, unknown> = Record<string, unknown>>(value?: T | ((prev: T) => T)) => {
-      if (!previewMode) {
+      if (!previewMode || !mounted.current) {
         return false;
       }
 
@@ -70,12 +71,18 @@ const useElementState = ({ id, bindings, previewMode }: UseElementStateProps) =>
   // theirs on unmount to keep the shared store from accumulating stale entries. A plain element lives as long as its
   // page, so it skips the effect entirely and stays at the no-store floor.
   useEffect(() => {
+    mounted.current = true;
     if (!previewMode || !scopePath) {
+      mounted.current = false;
+
       return undefined;
     }
 
-    return () => setState(path, undefined);
-  }, [previewMode, scopePath, path, setState]);
+    return () => {
+      mounted.current = false;
+      setState(path, undefined);
+    };
+  }, [previewMode, scopePath, path, setState, id]);
 
   return { state, setElementState };
 };
