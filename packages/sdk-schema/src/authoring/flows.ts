@@ -1,6 +1,7 @@
 import { authoringId } from './ids';
 
 import type { StepSpec } from './types';
+import type { Rule, RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { ElementInteraction } from '@plitzi/sdk-shared';
 
 /**
@@ -52,6 +53,41 @@ export const authorFlow = (path: string, steps: StepSpec[], host?: string): Reco
  * and nothing an author can write down, which is the same as saying its result is unreachable.
  */
 export const named = (id: string, step: StepSpec): StepSpec => ({ ...step, id });
+
+/**
+ * Runs a step only when a rule holds.
+ *
+ * The pair to {@link named}: that one lets a later step READ what an earlier one produced, this one lets it decide
+ * whether to run at all. Both are about the same thing — a flow is a list, and everything conditional in it is
+ * expressed on the steps rather than by branching the list.
+ *
+ * Written out, a condition is a query-builder group: a combinator and a list of rules, four levels of nesting for
+ * "did that work?". Here it is the rule.
+ */
+export const when = (rules: Rule | Rule[], step: StepSpec, combinator: 'and' | 'or' = 'and'): StepSpec => {
+  const group: RuleGroup = { combinator, rules: Array.isArray(rules) ? rules : [rules] };
+
+  return { ...step, when: group };
+};
+
+/**
+ * Runs a step only if the named server action completed.
+ *
+ * `<id>.status` is the field, and it is only in the flow scope at all when that step ran with `mode: 'await'` and
+ * was {@link named} — the same two conditions that make `{{<id>.output.*}}` readable.
+ */
+export const whenSucceeded = (stepId: string, step: StepSpec): StepSpec =>
+  when({ field: `${stepId}.status`, operator: '=', value: 'completed' }, step);
+
+/**
+ * Runs a step only if the named server action did NOT complete.
+ *
+ * Every outcome that is not `completed`, which is deliberate: a run can come back `failed`, `skipped` or
+ * `aborted`, and to the page they are one event — it did not work, and the reason is in `{{<id>.reason}}`.
+ * Matching only `failed` is how the other two end up silently doing nothing.
+ */
+export const whenFailed = (stepId: string, step: StepSpec): StepSpec =>
+  when({ field: `${stepId}.status`, operator: '!=', value: 'completed' }, step);
 
 export const authorFlows = (path: string, flows: StepSpec[][], host?: string): Record<string, ElementInteraction> =>
   flows.reduce<Record<string, ElementInteraction>>(

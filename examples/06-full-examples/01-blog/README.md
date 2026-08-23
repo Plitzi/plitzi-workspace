@@ -23,8 +23,8 @@ Eight files, and only two of them are about blogging:
 
 | File | Lines | What it is |
 |---|---:|---|
-| [`src/space.ts`](./src/space.ts) | 980 | The six pages — a declaration, not code |
-| [`src/theme.ts`](./src/theme.ts) | 741 | The stylesheet, as data: ~55 classes, the palette, both schemes |
+| [`src/space.ts`](./src/space.ts) | 948 | The six pages — a declaration, not code |
+| [`src/theme.ts`](./src/theme.ts) | 683 | The stylesheet, as data: ~55 classes, the palette, both schemes |
 | [`src/posts.ts`](./src/posts.ts) | 498 | Seven articles and their subjects. The one file a real blog replaces |
 | [`src/tasks.ts`](./src/tasks.ts) | 198 | List, read, publish, edit, log a sighting, and who is looking |
 | [`src/actions.ts`](./src/actions.ts) | 177 | Seven flows, as documents |
@@ -159,16 +159,20 @@ no author key, so there is nothing for a caller to put somebody else's name in �
 The page shows what came back and decides nothing:
 
 ```ts
-{ id: 'publish', type: 'globalCallback', action: 'runServerAction', on: 'actions',
-  params: { actionId: 'publish-post', input: { title: '{{submitted.values.title}}', … }, mode: 'await' } },
-{ id: 'refused', type: 'globalCallback', action: 'setState', on: 'state',
-  params: { key: 'notice', value: 'The server refused this: {{publish.reason}}' },
-  when: { combinator: 'and', rules: [{ field: 'publish.status', operator: '!=', value: 'completed' }] } }
+named('publish', runServerAction({ actionId: 'publish-post', input: { title: '{{submitted.values.title}}', … } })),
+whenFailed('publish', setState({ key: 'notice', type: 'text', value: 'The server refused this: {{publish.reason}}' })),
+whenSucceeded('publish', navigate({ urlType: 'internal', url: '{{publish.output.url}}' }))
 ```
 
-**Write `input` as an object, not as a line of JSON text.** It is the same values either way until one of them
-contains a quotation mark or a newline — a post body, in other words — and then a JSON string with tokens
-interpolated into it stops being a document and the action refuses the whole call as invalid input. As an object
+Every step here is a builder rather than a literal, and each one answers something that fails in silence when it
+is written by hand. `runServerAction` fills in the module it is registered on — `actions`, never the form — and
+`mode: 'await'`, without which the two steps after it have no result to read. `named` is what makes `publish` a
+name the scope is keyed by. And `whenSucceeded` / `whenFailed` are the condition the document stores as a
+query-builder group, which is four levels of nesting to ask whether the step before this one worked.
+
+**Write `input` as an object, not as a line of JSON text.** Both are accepted, and they are the same values right
+up until one of them contains a quotation mark or a newline — a post body, in other words. Then the text stops
+being parseable JSON, and a run whose input will not parse posts nothing at all rather than refusing. As an object
 each value is its own string and nothing has to be escaped by hand.
 
 ## Who may edit

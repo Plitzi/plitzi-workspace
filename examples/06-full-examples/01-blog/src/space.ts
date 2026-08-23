@@ -1,5 +1,7 @@
 import {
   apiContainer,
+  authLogin,
+  authLogout,
   authorSpace,
   button,
   container,
@@ -11,12 +13,21 @@ import {
   image,
   link,
   list,
+  named,
+  navigate,
+  on,
+  onClick,
+  onSubmit,
   pagination,
   paragraph,
   richText,
+  runServerAction,
+  setState,
   text,
   themeToggle,
-  visibleWhen
+  visibleWhen,
+  whenFailed,
+  whenSucceeded
 } from '@plitzi/sdk-server/authoring';
 
 import { classes, customCss, elements, variables } from './theme';
@@ -515,21 +526,10 @@ const post: PageSpec = {
    */
   flows: [
     [
-      { id: 'entered', type: 'trigger', action: 'onPageLoad', on: 'postPage' },
-      {
-        id: 'seen',
-        type: 'globalCallback',
-        action: 'runServerAction',
-        on: 'actions',
-        params: { actionId: 'has-seen-sighting', input: { slug: '{{slug}}' }, mode: 'await' }
-      },
-      {
-        id: 'mark',
-        type: 'globalCallback',
-        action: 'setState',
-        on: 'state',
-        params: { key: 'sightingDone', type: 'boolean', value: '{{seen.output.hasSeen}}' }
-      }
+      // A trigger says nothing about where it runs: it fires on whatever declared the flow, and this one is the page.
+      named('entered', on('onPageLoad')),
+      named('seen', runServerAction({ actionId: 'has-seen-sighting', input: { slug: '{{slug}}' } })),
+      named('mark', setState({ key: 'sightingDone', type: 'boolean', value: '{{seen.output.hasSeen}}' }))
     ]
   ],
   body: [
@@ -636,36 +636,20 @@ const post: PageSpec = {
                         bind: [{ to: 'disabled', source: 'state.sightingDone' }],
                         flows: [
                           [
-                            { id: 'seen', type: 'trigger', action: 'onClick', on: 'sighting' },
-                            {
-                              id: 'log',
-                              type: 'globalCallback',
-                              action: 'runServerAction',
-                              on: 'actions',
-                              params: {
+                            named('seen', onClick()),
+                            named(
+                              'log',
+                              runServerAction({
                                 actionId: 'record-sighting',
                                 // The slug the page was built for. The action checks it names a real post —
                                 // otherwise it opens a counter for anything a caller cares to type.
-                                input: { slug: '{{apiContainer_post.record.slug}}' },
-                                mode: 'await'
-                              }
-                            },
-                            {
-                              id: 'thanks',
-                              type: 'globalCallback',
-                              action: 'setState',
-                              on: 'state',
-                              // What the SERVER counted, not what the page guessed. A count incremented in the
-                              // browser is a count that disagrees with the next reader's.
-                              params: { key: 'sighting', type: 'text', value: '{{log.output.message}}' }
-                            },
-                            {
-                              id: 'counted',
-                              type: 'globalCallback',
-                              action: 'setState',
-                              on: 'state',
-                              params: { key: 'sightingDone', type: 'boolean', value: 'true' }
-                            }
+                                input: { slug: '{{apiContainer_post.record.slug}}' }
+                              })
+                            ),
+                            // What the SERVER counted, not what the page guessed. A count incremented in the
+                            // browser is a count that disagrees with the next reader's.
+                            named('thanks', setState({ key: 'sighting', type: 'text', value: '{{log.output.message}}' })),
+                            named('counted', setState({ key: 'sightingDone', type: 'boolean', value: 'true' }))
                           ]
                         ]
                       }),
@@ -807,28 +791,24 @@ const write: PageSpec = {
                     managedByInteractions: true, method: 'post',
                     flows: [
                       [
-                        { id: 'submitted', type: 'trigger', action: 'onSubmit', on: 'postForm' },
-                        {
-                          /**
-                           * Named, because the two steps after it read what it answered. The flow's scope is keyed by
-                           * step id, so `{{publish.output.url}}` resolves only because this step is `publish`.
-                           *
-                           * `runServerAction` is a GLOBAL callback: it names the module that registered it, not an
-                           * element. The page hands over an action name and four values — never a URL, never a
-                           * credential, never a table.
-                           */
-                          id: 'publish',
-                          type: 'globalCallback',
-                          action: 'runServerAction',
-                          on: 'actions',
-                          /**
-                           * `input` as an OBJECT, one token per field — not as a line of JSON text with tokens
-                           * interpolated into it. The difference is not css: a post body has newlines and
-                           * quotation marks in it, and dropping those into a JSON string literal produces a
-                           * document that does not parse. The action then refuses the whole call as invalid
-                           * input, which reads on screen as the server rejecting a perfectly good post.
-                           */
-                          params: {
+                        named('submitted', onSubmit()),
+                        /**
+                         * Named, because the two steps after it read what it answered. The flow's scope is keyed by
+                         * step id, so `{{publish.output.url}}` resolves only because this step is `publish`.
+                         *
+                         * `runServerAction` is a GLOBAL callback: it names the module that registered it, not an
+                         * element — which is what its builder fills in, along with `mode: 'await'`, without which
+                         * the steps below would have no result to read. The page hands over an action name and five
+                         * values, never a URL, a credential or a table.
+                         *
+                         * `input` as an OBJECT, one token per field — not as a line of JSON text with tokens
+                         * interpolated into it. A post body has newlines and quotation marks in it, and dropping
+                         * those into a JSON string literal produces text that does not parse, which posts nothing
+                         * at all rather than refusing.
+                         */
+                        named(
+                          'publish',
+                          runServerAction({
                             actionId: 'publish-post',
                             input: {
                               title: '{{submitted.values.title}}',
@@ -836,36 +816,27 @@ const write: PageSpec = {
                               topic: '{{submitted.values.topic}}',
                               cover: '{{submitted.values.cover}}',
                               body: '{{submitted.values.body}}'
-                            },
-                            // `await`, so the steps below have a result to read. `detached` would carry on at once.
-                            mode: 'await'
-                          }
-                        },
-                        {
-                          id: 'refused',
-                          type: 'globalCallback',
-                          action: 'setState',
-                          on: 'state',
-                          params: { key: 'notice', type: 'text', value: 'The server refused this: {{publish.reason}}' },
-                          // The refusal the server decided, shown by the page rather than guessed at by it.
-                          when: {
-                            combinator: 'and',
-                            rules: [{ field: 'publish.status', operator: '!=', value: 'completed' }]
-                          }
-                        },
-                        {
-                          id: 'published',
-                          type: 'globalCallback',
-                          action: 'navigate',
-                          on: 'navigation',
-                          // The post it just wrote, addressed by what the action answered. The page it lands on
-                          // resolves its own section on the way in, so this is an ordinary route change.
-                          params: { urlType: 'internal', url: '{{publish.output.url}}' },
-                          when: {
-                            combinator: 'and',
-                            rules: [{ field: 'publish.status', operator: '=', value: 'completed' }]
-                          }
-                        }
+                            }
+                          })
+                        ),
+                        // The refusal the server decided, shown by the page rather than guessed at by it.
+                        whenFailed(
+                          'publish',
+                          named(
+                            'refused',
+                            setState({
+                              key: 'notice',
+                              type: 'text',
+                              value: 'The server refused this: {{publish.reason}}'
+                            })
+                          )
+                        ),
+                        // The post it just wrote, addressed by what the action answered. The page it lands on
+                        // resolves its own section on the way in, so this is an ordinary route change.
+                        whenSucceeded(
+                          'publish',
+                          named('published', navigate({ urlType: 'internal', url: '{{publish.output.url}}' }))
+                        )
                       ]
                     ],
                     children: [
@@ -966,18 +937,15 @@ const edit: PageSpec = {
                         managedByInteractions: true, method: 'post',
                         flows: [
                           [
-                            { id: 'edited', type: 'trigger', action: 'onSubmit', on: 'editForm' },
-                            {
-                              /**
-                               * The same global callback the editor on `/write` uses, naming a different action.
-                               * The page hands over a name and six values; which post is one of them, and WHO is
-                               * not — the session answers that, on the server, where it cannot be edited.
-                               */
-                              id: 'save',
-                              type: 'globalCallback',
-                              action: 'runServerAction',
-                              on: 'actions',
-                              params: {
+                            named('edited', onSubmit()),
+                            /**
+                             * The same global callback the editor on `/write` uses, naming a different action. The
+                             * page hands over a name and six values; which post is one of them, and WHO is not —
+                             * the session answers that, on the server, where it cannot be edited.
+                             */
+                            named(
+                              'save',
+                              runServerAction({
                                 actionId: 'update-post',
                                 // An object, one token per field — see the note on `publish-post`. A body that
                                 // came out of a store is exactly the text that breaks the JSON-in-a-string form.
@@ -988,36 +956,24 @@ const edit: PageSpec = {
                                   topic: '{{edited.values.topic}}',
                                   cover: '{{edited.values.cover}}',
                                   body: '{{edited.values.body}}'
-                                },
-                                mode: 'await'
-                              }
-                            },
-                            {
-                              id: 'refused',
-                              type: 'globalCallback',
-                              action: 'setState',
-                              on: 'state',
-                              params: {
-                                key: 'notice',
-                                type: 'text',
-                                value: 'The server refused this: {{save.reason}}'
-                              },
-                              when: {
-                                combinator: 'and',
-                                rules: [{ field: 'save.status', operator: '!=', value: 'completed' }]
-                              }
-                            },
-                            {
-                              id: 'saved',
-                              type: 'globalCallback',
-                              action: 'navigate',
-                              on: 'navigation',
-                              params: { urlType: 'internal', url: '{{save.output.url}}' },
-                              when: {
-                                combinator: 'and',
-                                rules: [{ field: 'save.status', operator: '=', value: 'completed' }]
-                              }
-                            }
+                                }
+                              })
+                            ),
+                            whenFailed(
+                              'save',
+                              named(
+                                'refused',
+                                setState({
+                                  key: 'notice',
+                                  type: 'text',
+                                  value: 'The server refused this: {{save.reason}}'
+                                })
+                              )
+                            ),
+                            whenSucceeded(
+                              'save',
+                              named('saved', navigate({ urlType: 'internal', url: '{{save.output.url}}' }))
+                            )
                           ]
                         ],
                         children: [
@@ -1153,19 +1109,14 @@ const signIn: PageSpec = {
                     managedByInteractions: true, method: 'post',
                     flows: [
                       [
-                        { id: 'signIn', type: 'trigger', action: 'onSubmit', on: 'loginForm' },
-                        {
-                          // `login` is the name the callback is REGISTERED under, on the module `auth` — not the label
-                          // the builder shows for it. A name that resolves to nothing fails the step in silence.
-                          type: 'globalCallback',
-                          action: 'login',
-                          on: 'auth',
-                          params: {
-                            mode: 'normal',
-                            username: '{{signIn.values.username}}',
-                            password: '{{signIn.values.password}}'
-                          }
-                        }
+                        named('signIn', onSubmit()),
+                        // Writes the action `login` on the module `auth` — the pair the runtime resolves a step by,
+                        // and the one nobody should have to remember. A name that resolves to nothing does nothing.
+                        authLogin({
+                          mode: 'normal',
+                          username: '{{signIn.values.username}}',
+                          password: '{{signIn.values.password}}'
+                        })
                       ]
                     ],
                     children: [
@@ -1250,12 +1201,7 @@ const account: PageSpec = {
                         idRef: 'signOut',
                         subType: 'button', content: 'Sign out',
                         class: 'buttonQuiet',
-                        flows: [
-                          [
-                            { id: 'signOut', type: 'trigger', action: 'onClick', on: 'signOut' },
-                            { type: 'globalCallback', action: 'logout', on: 'auth' }
-                          ]
-                        ]
+                        flows: [[named('signOut', onClick()), authLogout()]]
                       })
                     ]
                   })

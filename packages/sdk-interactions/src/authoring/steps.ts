@@ -78,10 +78,18 @@ export const authRefreshDetails = (): StepSpec => globalStep('refreshDetails');
  */
 export const runServerAction = (params: {
   actionId: string;
-  input?: string;
+  /**
+   * The values the action is given. **Write an object.**
+   *
+   * A string is accepted because the builder's editor is a JSON box, and it is the form that quietly breaks: the
+   * moment an interpolated value carries a quotation mark or a newline — a post body, a comment, an address — the
+   * text stops being JSON, and a run whose input will not parse posts `{}` rather than refusing. As an object each
+   * value is its own string and nothing has to be escaped by hand.
+   */
+  input?: string | Record<string, unknown>;
   mode?: 'await' | 'detached' | 'stream';
   idempotencyKey?: string;
-}): StepSpec => globalStep('runServerAction', { mode: 'await', input: '{}', ...params });
+}): StepSpec => globalStep('runServerAction', { mode: 'await', input: {}, ...params });
 
 export const cancelServerAction = (params: { runId: string }): StepSpec => globalStep('cancelServerAction', params);
 

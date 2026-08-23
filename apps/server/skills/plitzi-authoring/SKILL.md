@@ -133,7 +133,22 @@ Use the step builders — they answer the three things that go wrong silently:
 
 `named(id, step)` is how a later step reads an earlier one — the flow scope is keyed by node id, so
 `{{quote.output.summary}}` resolves only when that step is called `quote`. `mode: 'await'` is what puts a run's
-answer in the scope at all.
+answer in the scope at all, and it is the default.
+
+**Pass `input` as an object, not as a line of JSON text.** Both are accepted, and the text form fails silently: an
+interpolated value carrying a quotation mark or a newline — a post body, a comment — makes it unparseable, and
+unparseable input posts `{}` rather than refusing.
+
+A flow is a list and never a tree, so "only if" is expressed on the step:
+
+```ts
+whenSucceeded('quote', navigate({ urlType: 'internal', url: '{{quote.output.url}}' })),
+whenFailed('quote', setState({ key: 'notice', type: 'text', value: '{{quote.reason}}' })),
+when({ field: 'state.count', operator: '>', value: 3 }, addNotification({ content: 'Enough' }))
+```
+
+`whenFailed` matches every outcome that is not `completed` — a run also comes back `skipped` or `aborted`, and
+matching only `failed` is how those two end up doing nothing.
 
 ## What gets refused
 

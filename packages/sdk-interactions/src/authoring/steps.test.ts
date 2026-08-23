@@ -54,3 +54,27 @@ describe('global callback step builders', () => {
     expect(BUILTIN_GLOBAL_CALLBACKS).not.toHaveProperty('authLogin');
   });
 });
+
+/**
+ * The input of a server action, which is the one param with a trap in it.
+ *
+ * The runtime parses either form, and the string one fails silently: an interpolated value carrying a quote or a
+ * newline makes the text unparseable, and unparseable input posts `{}` rather than refusing. The type used to
+ * allow only that form.
+ */
+describe('runServerAction input', () => {
+  it('takes an object, one value per key', () => {
+    const step = runServerAction({ actionId: 'publish', input: { title: '{{form.values.title}}' } });
+
+    expect(step.params).toMatchObject({ input: { title: '{{form.values.title}}' }, mode: 'await' });
+  });
+
+  it('still takes the JSON text the builder\'s editor writes', () => {
+    expect(runServerAction({ actionId: 'publish', input: '{"a":1}' }).params).toMatchObject({ input: '{"a":1}' });
+  });
+
+  /** `await` is what puts the answer in the flow scope; without it a later `{{id.output.*}}` reads nothing. */
+  it('awaits by default, so the next step has something to read', () => {
+    expect(runServerAction({ actionId: 'publish' }).params).toMatchObject({ mode: 'await', input: {} });
+  });
+});
