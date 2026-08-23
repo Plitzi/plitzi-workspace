@@ -38,6 +38,10 @@
       "types": "./dist/authoring/space.d.ts",
       "import": "./dist/authoring/space.mjs"
     },
+    "./authoring/styles": {
+      "types": "./dist/authoring/styles.d.ts",
+      "import": "./dist/authoring/styles.mjs"
+    },
     "./authoring/suggest": {
       "types": "./dist/authoring/suggest.d.ts",
       "import": "./dist/authoring/suggest.mjs"

@@ -31,7 +31,7 @@ wanted:
 
 | Fragment | Owns |
 | --- | --- |
-| `@plitzi/sdk-style/authoring` | the CSS vocabulary: `css`, shorthand expansion, `column`/`row`/`grid` |
+| `@plitzi/sdk-style/authoring` | the CSS vocabulary: `css`, shorthand expansion, `column`/`row`/`grid`, `styles` |
 | `@plitzi/sdk-elements/authoring` | a factory per element, `element`, `defineElement`, triggers, `updateElement` |
 | `@plitzi/sdk-interactions/authoring` | what a step can do: `setState`, `navigate`, `runServerAction`, `delay`… |
 | `@plitzi/sdk-shared/authoring` | the shape a declared param has, and the binding transformers |
@@ -95,7 +95,7 @@ every element:
 | Field | What it does |
 | --- | --- |
 | `idRef` | the name the rest of the space calls this element by. Derived positionally when left out |
-| `class` | a shared class from `classes`. Exclusive with `css` |
+| `class` | a shared class: a name from `classes`, or a `styles()` declaration. Exclusive with `css` |
 | `css` | rules of this element's own — one set, or one per breakpoint |
 | `variant` | a style variant of the element's own vocabulary |
 | `slots` | a class for one of the element's OTHER selectors — a form control's `input`, `label`, `error` |
@@ -168,6 +168,29 @@ css: { 'font-size': '48px' }   // the same, for desktop only
 
 `column(gap, extra?)`, `row(gap, extra?)` and `grid(columns, gap, extra?)` are sugar over `css` for the three
 layouts every space writes over and over.
+
+### Sharing a rule: `styles()`
+
+There are two ways for two elements to share a rule, and only one of them shares it in the **document**. Writing
+the rule set once in a `const` and spreading it into each element's `css` shares the *source*: every element still
+gets a selector of its own, so four cards are four identical rules — and re-theming the card in the builder
+re-themes one of them. Across this SDK's five demo spaces that idiom accounted for 165 of 320 selectors.
+
+`styles(name, rules)` is the same declaration written where it is used, producing one selector:
+
+```ts
+const card = styles('card', { padding: '24px', 'border-radius': '12px', 'background-color': 'var(--surface)' });
+
+const post = (title: string) => container({ class: card, children: [heading(title, { subType: 'h3' })] });
+```
+
+It is accepted anywhere a class name is — an element's `class`, a `slot`, a page's `class` — and collected from
+wherever the tree names it, so a declaration nothing names writes nothing at all. Two declarations under one name
+are fine while they say the same thing and refused when they do not: a class means one rule set per space, never
+whichever module the bundler reached first.
+
+`classes` at the top of a space is the same mechanism with the rules gathered in one place, and stays the right
+home for what describes the space rather than one section of it. Both end up in the same stylesheet.
 
 ---
 
@@ -245,6 +268,7 @@ inert specs. That is what keeps every guarantee about the finished document in o
 - a CSS property the style editor could not read back
 - a `class` or a `slot` naming a class the space does not declare (with the name you probably meant)
 - an element asking for a shared class AND rules of its own — an element has one base selector
+- one class name declared twice with rules that disagree
 - a binding source, or a step target, naming an element that is not there
 - two elements answering to one idRef
 - a flow whose chain points at a node that is not there

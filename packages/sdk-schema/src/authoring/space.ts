@@ -1,5 +1,5 @@
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
-import { css } from '@plitzi/sdk-style/authoring';
+import { BREAKPOINTS, className, css, sameRules, toResponsive } from '@plitzi/sdk-style/authoring';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
 import { groupBindings } from './bindings';
@@ -12,7 +12,6 @@ import FlatMap from '../helpers/FlatMap';
 import type {
   AuthorSpaceOptions,
   AuthoredSpace,
-  CssSpec,
   ElementSpec,
   ElementStyleSpec,
   PageSpec,
@@ -21,8 +20,8 @@ import type {
   StepVocabulary
 } from './types';
 import type { SchemaValidationError } from '../helpers/schemaValidator';
-import type { DisplayMode, DropPosition, Element, Schema, Style, StyleItem } from '@plitzi/sdk-shared';
-import type { ResponsiveStyle, StyleRules } from '@plitzi/sdk-style/authoring';
+import type { DropPosition, Element, Schema, Style, StyleItem } from '@plitzi/sdk-shared';
+import type { CssSpec, ResponsiveStyle, StyleDeclaration, StyleRules } from '@plitzi/sdk-style/authoring';
 
 /**
  * Authoring a space without the builder.
@@ -37,40 +36,6 @@ import type { ResponsiveStyle, StyleRules } from '@plitzi/sdk-style/authoring';
  * before it is handed back. This module is the only thing in the SDK that writes a schema document: every other
  * authoring fragment produces specs, and specs are inert until they reach here.
  */
-
-const BREAKPOINTS: DisplayMode[] = ['desktop', 'tablet', 'mobile'];
-
-const BREAKPOINT_SET = new Set<string>(BREAKPOINTS);
-
-/**
- * One rule set for every breakpoint, or one per breakpoint.
- *
- * Told apart by the keys, which is unambiguous rather than clever: `desktop`, `tablet` and `mobile` are not CSS
- * properties and never will be, so a rule set that mentions one is per-breakpoint and one that does not is the
- * desktop rules. Everything goes through `css`, so shorthands expand and an unwritable property is refused here
- * rather than discovered in the style editor.
- */
-export const toResponsive = (spec: CssSpec | undefined): ResponsiveStyle => {
-  if (!spec) {
-    return {};
-  }
-
-  const keys = Object.keys(spec);
-  if (keys.length === 0) {
-    return {};
-  }
-
-  if (keys.every(key => BREAKPOINT_SET.has(key))) {
-    return Object.fromEntries(
-      Object.entries(spec as Record<string, Record<string, string | number>>).map(([breakpoint, rules]) => [
-        breakpoint,
-        css(rules)
-      ])
-    );
-  }
-
-  return { desktop: css(spec as Record<string, string | number>) };
-};
 
 const declarationsToCss = (rules: StyleRules): string =>
   Object.entries(rules)
@@ -96,6 +61,9 @@ class SpaceAuthor {
 
   private readonly pagePaths = new Set<string>();
 
+  /** Every class this space declares, whether from `classes` or from a `styles()` declaration found in the tree. */
+  private readonly classRules = new Map<string, ResponsiveStyle>();
+
   /** Steps this space names that the vocabulary could not vouch for. Handed back rather than thrown: a plugin is
    *  free to register a module of its own, and refusing what this process cannot see would make the check useless
    *  for exactly the spaces that need it most. */
@@ -112,7 +80,15 @@ class SpaceAuthor {
     }
 
     for (const [name, rules] of Object.entries(this.spec.classes ?? {})) {
-      this.writeSelector(name, toResponsive(rules));
+      this.declareClass(name, rules, 'The space-wide `classes`');
+    }
+
+    // Before the tree is written, so the stylesheet is whole by the time anything names a class and a name that
+    // means two different things is refused at the declaration rather than at whichever use happened to be second.
+    this.spec.pages.forEach(page => this.collectDeclarations(page));
+
+    for (const [name, responsive] of this.classRules) {
+      this.writeSelector(name, responsive);
     }
 
     const pages = this.spec.pages.map((page, index) => this.addPage(page, index));
@@ -246,6 +222,55 @@ class SpaceAuthor {
   }
 
   /**
+   * Adds a class to the space's stylesheet, or agrees it is already there.
+   *
+   * A `styles()` declaration is normally named in many places and often reached from more than one module, so
+   * arriving twice is the ordinary case and not an error. Arriving twice saying DIFFERENT things is: a class name
+   * that means one thing on one page and another somewhere else is a rule that silently depends on which file the
+   * bundler reached first, which is the shape of bug this whole surface exists to make impossible.
+   */
+  private declareClass(name: string, rules: CssSpec, where: string): void {
+    const responsive = toResponsive(rules);
+    const existing = this.classRules.get(name);
+    if (!existing) {
+      this.classRules.set(name, responsive);
+
+      return;
+    }
+
+    if (!sameRules(existing, responsive)) {
+      throw new Error(
+        `${where} declares the class "${name}" with different rules to a declaration already made for that name. A class is one rule set per space: rename one of them, or make them agree.`
+      );
+    }
+  }
+
+  /**
+   * Every `styles()` declaration the tree names, gathered before a line of it is written.
+   *
+   * A declaration is collected from where it is USED rather than from a list, which is the whole point of it — the
+   * rules stay next to the element they dress — and it means one declared and never named writes nothing at all.
+   */
+  private collectDeclarations(page: PageSpec): void {
+    const collect = (value: string | StyleDeclaration | undefined, where: string): void => {
+      if (value && typeof value !== 'string') {
+        this.declareClass(value.name, value.rules, where);
+      }
+    };
+
+    const walk = (spec: ElementSpec): void => {
+      collect(spec.class, `Element "${spec.type}"`);
+      Object.entries(spec.slots ?? {}).forEach(([slot, value]) =>
+        collect(value, `Slot "${slot}" of element "${spec.type}"`)
+      );
+      spec.children?.forEach(walk);
+    };
+
+    collect(page.class, `Page "${page.name}"`);
+    page.body.forEach(walk);
+  }
+
+  /**
    * A class an element names has to be one the space declared.
    *
    * The failure it removes is the quietest one in the whole surface: a mistyped class is a selector nothing
@@ -253,13 +278,14 @@ class SpaceAuthor {
    * exists as a name, it simply has no rules.
    */
   private assertClass(name: string, where: string): void {
-    const classes = Object.keys(this.spec.classes ?? {});
-    if (classes.includes(name)) {
+    if (this.classRules.has(name)) {
       return;
     }
 
+    const classes = [...this.classRules.keys()];
+
     throw new Error(
-      `${where} names the class "${name}", which this space does not declare${didYouMean(name, classes)}. Declare it in \`classes\`, or write the rules inline with \`css\`.`
+      `${where} names the class "${name}", which this space does not declare${didYouMean(name, classes)}. Declare it in \`classes\`, hand it a \`styles()\` declaration, or write the rules inline with \`css\`.`
     );
   }
 
@@ -295,17 +321,18 @@ class SpaceAuthor {
    * its own is a question with no answer, and the old behaviour — keep the class, drop the rules — is the kind of
    * silence this whole surface exists to remove.
    */
-  private selectorFor(path: string, spec: { type: string; class?: string; css?: CssSpec }): string {
+  private selectorFor(path: string, spec: { type: string; class?: string | StyleDeclaration; css?: CssSpec }): string {
     if (spec.class) {
-      this.assertClass(spec.class, `Element "${spec.type}" at ${path}`);
+      const name = className(spec.class);
+      this.assertClass(name, `Element "${spec.type}" at ${path}`);
 
       if (spec.css) {
         throw new Error(
-          `Element "${spec.type}" at ${path} declares both a shared class ("${spec.class}") and css of its own. An element has one base selector: either write the rules into the class, or drop the class and keep the css.`
+          `Element "${spec.type}" at ${path} declares both a shared class ("${name}") and css of its own. An element has one base selector: either write the rules into the class, or drop the class and keep the css.`
         );
       }
 
-      return spec.class;
+      return name;
     }
 
     const selector = `${spec.type}-${digest(`plitzi:selector:${this.spec.permanentUrl}:${path}`, 4)}`;
@@ -386,11 +413,14 @@ class SpaceAuthor {
   }
 
   private slotSelectors(spec: ElementSpec, path: string): Record<string, string> {
-    Object.entries(spec.slots ?? {}).forEach(([slot, name]) =>
-      this.assertClass(name, `Slot "${slot}" of element "${spec.type}" at ${path}`)
-    );
+    return Object.fromEntries(
+      Object.entries(spec.slots ?? {}).map(([slot, value]) => {
+        const name = className(value);
+        this.assertClass(name, `Slot "${slot}" of element "${spec.type}" at ${path}`);
 
-    return spec.slots ?? {};
+        return [slot, name];
+      })
+    );
   }
 
   private addElement(spec: ElementSpec, path: string, rootId: string, parentId: string): string {

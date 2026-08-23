@@ -57,7 +57,7 @@ container([hero, grid])         // an array is the children
 | Authoring field | What it does |
 | --- | --- |
 | `idRef` | the name the rest of the space calls this element by. **Name anything something else refers to** — derived refs are positional |
-| `class` | a shared class declared in the space's `classes`. Exclusive with `css` |
+| `class` | a shared class: a name from the space's `classes`, or a `styles()` declaration. Exclusive with `css` |
 | `css` | rules of this element's own: one set, or one per breakpoint (`{ desktop, tablet, mobile }`) |
 | `variant` | a style variant of the element's own vocabulary |
 | `slots` | a class for one of the element's OTHER selectors — a form control's `input`, `label`, `error` |
@@ -90,10 +90,25 @@ css({ padding: '96px 24px', border: '1px solid var(--line)', 'border-radius': '1
 You rarely call `css` yourself: `authorSpace` runs every rule set through it. What you get is the refusal — a
 property outside the vocabulary is an error naming the correct key (`paddingTop` → `padding-top`).
 
-- **Named classes over one-off rules.** Declare it once in `classes` and name it with `class`; that is the
-  difference between a stylesheet and a pile of declarations.
 - `column(gap, extra?)`, `row(gap, extra?)`, `grid(columns, gap, extra?)` for the three layouts every space repeats.
 - Per element TYPE defaults go in `elements: { heading: { base: …, variants: { … } } }`.
+
+**Share a rule as a class, never as a spread.** Writing a rule set once in a `const` and spreading it into each
+element's `css` shares the source and duplicates the document — one selector per element, so re-theming the card
+in the builder re-themes one card. `styles()` declares the class where it is used and writes it once:
+
+```ts
+const card = styles('card', { padding: '24px', 'border-radius': '12px', 'background-color': 'var(--surface)' });
+
+container({ class: card, children: [ … ] });
+```
+
+Accepted anywhere a class name is — `class`, a `slot`, a page's `class` — and collected from wherever the tree
+names it. One name declared twice with rules that disagree is refused. `classes` at the top of the space is the
+same mechanism for what describes the space rather than one section of it.
+
+An element has exactly ONE base selector, so a variant is its own class over a shared plain object
+(`styles('button-primary', { ...base, … })`), never two classes layered on top of each other.
 
 ## Data
 
@@ -157,6 +172,7 @@ matching only `failed` is how those two end up doing nothing.
 - a CSS property the style editor could not read back
 - a `class` or a `slot` naming a class the space does not declare (the error names the one you probably meant)
 - an element asking for a shared class AND rules of its own — an element has one base selector
+- one class name declared twice with rules that disagree
 - a binding source, or a step target, naming an element that is not there
 - two elements answering to one idRef, a broken flow chain, an orphan, a cycle
 - a global callback on the wrong module — or on none — and a utility given one. A global callback registers under

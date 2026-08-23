@@ -1,7 +1,8 @@
 import { isCssProperty, isCustomProperty, suggestCssProperty } from './properties';
 import { expandShorthand } from './shorthand';
 
-import type { CssProps, StyleRules } from './types';
+import type { CssProps, CssSpec, ResponsiveStyle, StyleRules } from './types';
+import type { DisplayMode } from '@plitzi/sdk-shared';
 
 /**
  * The one door CSS goes through while authoring.
@@ -31,3 +32,46 @@ export const css = (rules: CssProps): StyleRules => {
 
   return expanded;
 };
+
+/** The breakpoints a rule set can be written for, widest first — the order they cascade in. */
+export const BREAKPOINTS: DisplayMode[] = ['desktop', 'tablet', 'mobile'];
+
+const BREAKPOINT_SET = new Set<string>(BREAKPOINTS);
+
+/**
+ * The same door as {@link css}, for the shape that carries more than one breakpoint.
+ *
+ * A rule set whose keys are all breakpoint names is per-breakpoint; anything else is the desktop rules. Every
+ * branch ends in {@link css}, so shorthands expand and an unwritable property is refused here either way.
+ */
+export const toResponsive = (spec: CssSpec | undefined): ResponsiveStyle => {
+  if (!spec) {
+    return {};
+  }
+
+  const keys = Object.keys(spec);
+  if (keys.length === 0) {
+    return {};
+  }
+
+  if (keys.every(key => BREAKPOINT_SET.has(key))) {
+    return Object.fromEntries(
+      Object.entries(spec as Record<string, Record<string, string | number>>).map(([breakpoint, rules]) => [
+        breakpoint,
+        css(rules)
+      ])
+    );
+  }
+
+  return { desktop: css(spec as Record<string, string | number>) };
+};
+
+const fingerprint = (responsive: ResponsiveStyle): string =>
+  JSON.stringify(
+    Object.entries(responsive)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([breakpoint, rules]) => [breakpoint, Object.entries(rules).sort(([a], [b]) => a.localeCompare(b))])
+  );
+
+/** Whether two normalised rule sets say the same thing, whatever order they were written in. */
+export const sameRules = (a: ResponsiveStyle, b: ResponsiveStyle): boolean => fingerprint(a) === fingerprint(b);

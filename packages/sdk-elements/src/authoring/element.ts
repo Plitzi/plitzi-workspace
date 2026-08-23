@@ -1,8 +1,9 @@
 import { elementDeclarations } from '../elements/declarations';
 
 import type { AttributesOf, ElementAttributesBrand, ElementDeclarationData } from './declare';
-import type { BindingsSpec, CssSpec, ElementSpec, SpecMeta, StepSpec } from '@plitzi/sdk-schema';
+import type { BindingsSpec, ElementSpec, SpecMeta, StepSpec } from '@plitzi/sdk-schema';
 import type { ElementRuntime } from '@plitzi/sdk-shared';
+import type { CssSpec, StyleDeclaration } from '@plitzi/sdk-style/authoring';
 
 /**
  * Authoring an element.
@@ -24,14 +25,14 @@ export interface AuthoringProps {
    * out, positionally, so name the ones something else refers to.
    */
   idRef?: string;
-  /** A shared class declared in the space's `classes`. Exclusive with {@link AuthoringProps.css}. */
-  class?: string;
+  /** A shared class: a name from the space's `classes`, or a `styles()` declaration. Exclusive with {@link AuthoringProps.css}. */
+  class?: string | StyleDeclaration;
   /** Rules of this element's own: one set, or one per breakpoint. Shorthands are expanded when the space is written. */
   css?: CssSpec;
   /** Style variant of the element's own vocabulary, e.g. a heading's `title`. */
   variant?: string;
   /** A class for one of the element's other selectors — a form control's `input`, `label`, `error`. */
-  slots?: Record<string, string>;
+  slots?: Record<string, string | StyleDeclaration>;
   /** `{ content: 'apiContainer_posts.title' }`, or the full form for state, transformers and conditions. */
   bind?: BindingsSpec;
   /** One flow per entry; steps are chained in the order written. */

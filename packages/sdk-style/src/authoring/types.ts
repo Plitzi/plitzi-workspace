@@ -24,3 +24,26 @@ export type ResponsiveCss = Partial<Record<DisplayMode, CssProps>>;
 
 /** Per-breakpoint CSS as it reaches the document. */
 export type ResponsiveStyle = Partial<Record<DisplayMode, StyleRules>>;
+
+/**
+ * CSS for one element or class, in either of the two shapes an author writes it in.
+ *
+ * Told apart by the keys, which is unambiguous rather than clever: `desktop`, `tablet` and `mobile` are not CSS
+ * properties and never will be, so a rule set that mentions one is per-breakpoint and one that does not is the
+ * desktop rules.
+ */
+export type CssSpec = CssProps | ResponsiveCss;
+
+/**
+ * A named rule set — a class — as opposed to an anonymous one.
+ *
+ * `css` and the layout helpers produce rules that belong to whoever asked for them. This is the other kind: rules
+ * with a name, so more than one element can point at the same ones and a change to them is a change to all. The
+ * rules are normalised when the declaration is made, so an unwritable property is an error on the line that wrote
+ * it rather than wherever the class is later used.
+ */
+export interface StyleDeclaration {
+  readonly name: string;
+  readonly rules: ResponsiveStyle;
+  toString(): string;
+}

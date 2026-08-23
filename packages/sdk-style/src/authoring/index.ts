@@ -6,6 +6,7 @@
  * `@plitzi/sdk-schema`'s job, and it is the only thing that writes one.
  */
 
+export * from './classes';
 export * from './css';
 export * from './layout';
 export * from './properties';

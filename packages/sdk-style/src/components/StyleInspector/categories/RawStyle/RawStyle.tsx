@@ -29,13 +29,7 @@ const RawStyle = ({ selectors, isCollapsed, onCollapse }: VariablesProps) => {
       isCollapsed={isCollapsed}
       onCollapse={handleCollapse}
     >
-      <CodeMirror
-        value={CMValue}
-        className="h-full"
-        theme={resolvedTheme}
-        lineWrapping
-        readOnly
-      />
+      <CodeMirror value={CMValue} className="h-full" theme={resolvedTheme} lineWrapping readOnly />
     </CategoryContainer>
   );
 };

@@ -9,7 +9,7 @@ import type {
   Style,
   StyleVariables
 } from '@plitzi/sdk-shared';
-import type { CssProps, ResponsiveCss } from '@plitzi/sdk-style/authoring';
+import type { CssProps, CssSpec, StyleDeclaration } from '@plitzi/sdk-style/authoring';
 
 /**
  * What an author declares, as opposed to what a document stores.
@@ -61,9 +61,6 @@ export interface BindingSpec {
  */
 export type BindingsSpec = Record<string, string> | BindingSpec[];
 
-/** CSS for one element or class: one rule set for every breakpoint, or one per breakpoint. */
-export type CssSpec = CssProps | ResponsiveCss;
-
 /** Fields the builder shows but the runtime does not read. */
 export interface SpecMeta {
   /**
@@ -101,17 +98,21 @@ export interface ElementSpec {
    *
    * Exclusive with {@link ElementSpec.css}: an element has exactly one base selector, so declaring both is a
    * question with no answer and is refused rather than silently resolved.
+   *
+   * Either a name from {@link SpaceSpec.classes}, or a {@link StyleDeclaration} from `styles()` that brings its own
+   * rules along.
    */
-  class?: string;
+  class?: string | StyleDeclaration;
   /**
    * A class for one of the element's OTHER style selectors, by selector name — a form control's `input`, `label`
    * and `error`.
    *
    * `css` and `class` above are its `base`, and an element made of parts cannot be dressed through that one alone:
    * a rule meant for the input lands on the wrapper instead, and the input keeps the browser's own look. The value
-   * names a class from {@link SpaceSpec.classes}, so one rule serves every control that wants it.
+   * names a class from {@link SpaceSpec.classes} — or carries one, as a {@link StyleDeclaration} — so one rule
+   * serves every control that wants it.
    */
-  slots?: Record<string, string>;
+  slots?: Record<string, string | StyleDeclaration>;
   bind?: BindingsSpec;
   /** One flow per entry. Steps are chained in order. */
   flows?: StepSpec[][];
@@ -148,7 +149,7 @@ export interface PageSpec {
   unauthorizedRedirect?: string;
   css?: CssSpec;
   /** As {@link ElementSpec.class} — a shared class instead of a selector of this page's own. */
-  class?: string;
+  class?: string | StyleDeclaration;
   flows?: StepSpec[][];
   body: ElementSpec[];
 }
@@ -164,7 +165,12 @@ export interface SpaceSpec {
   permanentUrl: string;
   /** CSS custom properties, by category. `color` is the usual one. */
   variables?: Partial<StyleVariables>;
-  /** Named classes an element can reach with `class`, so a rule is written once. */
+  /**
+   * Named classes an element can reach with `class`, so a rule is written once.
+   *
+   * A space-wide stylesheet, and the right place for the rules that describe the space rather than one section of
+   * it. `styles()` is the same thing declared next to what it dresses; both end up here.
+   */
   classes?: Record<string, CssSpec>;
   elements?: Record<string, ElementStyleSpec>;
   schemaVariables?: SchemaVariable[];
