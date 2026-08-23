@@ -49,6 +49,7 @@ these build on.
 | | Example | What it is | Port |
 |---|---|---|---|
 | 01 | [blog](./06-full-examples/01-blog) | A front page, posts, a sidebar, sessions, and who may publish | 4013 |
+| 02 | [seismic](./06-full-examples/02-seismic) | One live screen: a world map of USGS earthquakes, refreshing itself | 4014 |
 
 Everything above, assembled: this is the one to read when the question is not "how does X work" but "what does it
 take to build something".

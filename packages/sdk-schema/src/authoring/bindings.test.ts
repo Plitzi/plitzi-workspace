@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { GLOBAL_SOURCES, resolveSource, withVisibility } from './index';
+import { authorSpace, GLOBAL_SOURCES, resolveSource, withVisibility } from './index';
 
 import type { SourceIndex } from './index';
 
@@ -81,5 +81,35 @@ describe('withVisibility', () => {
   it('leaves an element with no condition exactly as it was', () => {
     expect(withVisibility({ bind: { href: 'posts.url' } })).toEqual([{ to: 'href', source: 'posts.url' }]);
     expect(withVisibility({})).toBeUndefined();
+  });
+});
+
+describe('an element whose visibility is a condition', () => {
+  /**
+   * The failure this pins: a binding on a source that resolves to nothing writes nothing, and an absent
+   * `visibility` is read as VISIBLE. So a panel bound to a selection nobody has made was authored on screen with
+   * its placeholder text in it, and only disappeared once something happened.
+   */
+  it('is authored hidden, and left visible when it has no condition', () => {
+    const { schema } = authorSpace({
+      name: 'Conditional',
+      permanentUrl: 'conditional',
+      pages: [
+        {
+          name: 'Home',
+          slug: '',
+          body: [
+            { type: 'text', idRef: 'always' },
+            { type: 'text', idRef: 'waiting', visible: 'state.selected.id' }
+          ]
+        }
+      ]
+    });
+
+    const visibilityOf = (idRef: string) =>
+      Object.values(schema.flat).find(element => element.idRef === idRef)?.definition.initialState?.visibility;
+
+    expect(visibilityOf('always')).toBe(true);
+    expect(visibilityOf('waiting')).toBe(false);
   });
 });

@@ -12,6 +12,25 @@ const EXTERNAL = [
   '@plitzi/sdk-shared'
 ];
 
+/**
+ * Assets a stylesheet drags in with it, inlined.
+ *
+ * A plugin that imports a library's CSS — a map, a date picker, an editor — imports its images too, and without a
+ * loader for them the build fails on a file the author never wrote. Inlined as data URIs rather than emitted
+ * beside the bundle, because the plugin is served as exactly two files and a third that nothing routes to would
+ * be a stylesheet with broken references in it.
+ */
+const ASSET_LOADERS: Record<string, esbuild.Loader> = {
+  '.png': 'dataurl',
+  '.jpg': 'dataurl',
+  '.jpeg': 'dataurl',
+  '.gif': 'dataurl',
+  '.svg': 'dataurl',
+  '.webp': 'dataurl',
+  '.woff': 'dataurl',
+  '.woff2': 'dataurl'
+};
+
 export const compilePlugin = async (
   jsPath: string,
   outDir: string,
@@ -22,6 +41,7 @@ export const compilePlugin = async (
     bundle: true,
     format: 'esm',
     external: EXTERNAL,
+    loader: ASSET_LOADERS,
     outdir: outDir,
     entryNames: 'index',
     jsx: 'automatic',

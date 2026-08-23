@@ -19,6 +19,7 @@ import RootElement from '@plitzi/sdk-elements/Element/RootElement';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { disableReactDevTools } from '@plitzi/sdk-shared/helpers/security';
 import baseUsePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import useRscRefresh from '@plitzi/sdk-shared/server/rsc/useRscRefresh';
 import { useSdkStore, DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
 
 import App from './App';
@@ -237,7 +238,11 @@ export {
   PluginRemote,
   ReplicaProvider,
   useElement,
-  useRscData
+  useRscData,
+  // The other half of `useRscData`. An element whose data is resolved on the server could read the payload and had
+  // no way to ask for a fresh one — so anything that has to keep up with a feed had to fetch it itself from the
+  // browser, which is the whole thing a server-resolved element exists to avoid.
+  useRscRefresh
 };
 
 export type {

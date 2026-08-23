@@ -479,7 +479,15 @@ class SpaceAuthor {
         // its own per control would write the same rule once per input on the page.
         styleSelectors: { base: this.selectorFor(path, spec), ...this.slotSelectors(spec, path) },
         initialState: {
-          visibility: true,
+          /**
+           * An element with a CONDITION starts hidden, and one without starts on screen.
+           *
+           * "Visible when X" plainly means "not otherwise", and the binding cannot say so on its own: a source
+           * that resolves to nothing writes nothing, and an absent `visibility` is read as visible. So a panel
+           * waiting on a selection nobody has made yet, or on any state that only exists once the page is live,
+           * was authored on screen with placeholder text in it until something happened.
+           */
+          visibility: spec.visible === undefined,
           ...(spec.variant ? { styleVariant: { [spec.type]: { base: spec.variant } } } : {})
         },
         ...(spec.runtime ? { runtime: spec.runtime } : {}),
