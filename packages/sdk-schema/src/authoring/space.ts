@@ -2,13 +2,14 @@ import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import { BREAKPOINTS, className, css, sameRules, toResponsive } from '@plitzi/sdk-style/authoring';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
-import { groupBindings } from './bindings';
+import { GLOBAL_SOURCES, groupBindings } from './bindings';
 import { authorFlows } from './flows';
 import { authoringId, digest } from './ids';
 import { didYouMean } from './suggest';
 import { assertSpaceValid } from './validate';
 import FlatMap from '../helpers/FlatMap';
 
+import type { SourceIndex } from './bindings';
 import type {
   AuthorSpaceOptions,
   AuthoredSpace,
@@ -64,6 +65,9 @@ class SpaceAuthor {
   /** Every class this space declares, whether from `classes` or from a `styles()` declaration found in the tree. */
   private readonly classRules = new Map<string, ResponsiveStyle>();
 
+  /** Every idRef in this space that publishes a data source, and the name it publishes it under. */
+  private readonly sources: SourceIndex = new Map();
+
   /** Steps this space names that the vocabulary could not vouch for. Handed back rather than thrown: a plugin is
    *  free to register a module of its own, and refusing what this process cannot see would make the check useless
    *  for exactly the spaces that need it most. */
@@ -86,6 +90,10 @@ class SpaceAuthor {
     // Before the tree is written, so the stylesheet is whole by the time anything names a class and a name that
     // means two different things is refused at the declaration rather than at whichever use happened to be second.
     this.spec.pages.forEach(page => this.collectDeclarations(page));
+
+    // Same reason, for the other thing an element names by a name declared elsewhere: a binding may read a
+    // provider written further down the page than the element reading it.
+    this.spec.pages.forEach(page => page.body.forEach(child => this.collectSources(child)));
 
     for (const [name, responsive] of this.classRules) {
       this.writeSelector(name, responsive);
@@ -118,7 +126,9 @@ class SpaceAuthor {
     //
     // `FlatMap.assertValid` is deliberately not also called here: it validates the flat map with no pages
     // attached, which is a strictly weaker reading of the same document than the pair below.
-    const warnings = assertSpaceValid({ schema, style }, `authored space "${this.spec.permanentUrl}"`);
+    const warnings = assertSpaceValid({ schema, style }, `authored space "${this.spec.permanentUrl}"`, {
+      sourceTypes: this.options.sourceTypes
+    });
 
     return { schema, style, warnings: [...this.stepWarnings, ...warnings] };
   }
@@ -268,6 +278,30 @@ class SpaceAuthor {
 
     collect(page.class, `Page "${page.name}"`);
     page.body.forEach(walk);
+  }
+
+  /**
+   * Every element that publishes a data source, before anything binds to one.
+   *
+   * Only elements with an idRef the AUTHOR wrote: a derived ref is positional, so a binding naming one would move
+   * the moment an element was added above it — which is why nothing is meant to refer to one.
+   */
+  private collectSources(spec: ElementSpec): void {
+    const sourceTypes = this.options.sourceTypes;
+    const prefix = sourceTypes?.[spec.type];
+    if (prefix && spec.idRef) {
+      // The globals are registered for the whole space under bare names, so an element answering to one makes its
+      // own source unreachable AND shadows the global for every binding in the space that meant the other one.
+      if (GLOBAL_SOURCES.includes(spec.idRef)) {
+        throw new Error(
+          `Element "${spec.type}" answers to the idRef "${spec.idRef}", which is one of the global data sources (${GLOBAL_SOURCES.join(', ')}). Give it another name.`
+        );
+      }
+
+      this.sources.set(spec.idRef, prefix);
+    }
+
+    spec.children?.forEach(child => this.collectSources(child));
   }
 
   /**
@@ -446,7 +480,16 @@ class SpaceAuthor {
           ...(spec.variant ? { styleVariant: { [spec.type]: { base: spec.variant } } } : {})
         },
         ...(spec.runtime ? { runtime: spec.runtime } : {}),
-        ...(spec.bind ? { bindings: groupBindings(path, spec.bind) } : {}),
+        ...(spec.bind
+          ? {
+              bindings: groupBindings(
+                path,
+                spec.bind,
+                this.options.sourceTypes ? this.sources : undefined,
+                `Element "${spec.type}" (${idRef}) at ${path}`
+              )
+            }
+          : {}),
         ...(spec.flows ? { interactions: authorFlows(path, spec.flows, idRef) } : {})
       }
     };

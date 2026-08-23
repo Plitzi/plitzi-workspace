@@ -10,6 +10,7 @@ import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSo
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
+import declaration from './declaration';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
@@ -58,7 +59,7 @@ const Form = ({
     definition: { label = 'Form' },
     setElementState
   } = useElement();
-  const sourceName = getSourceName('apiContainer', { idRef });
+  const sourceName = getSourceName(declaration.sourceType, { idRef });
   const {
     settings: { previewMode },
     contexts: { InteractionsContext }

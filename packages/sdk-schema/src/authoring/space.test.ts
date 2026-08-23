@@ -472,6 +472,48 @@ describe('authorSpace / what it refuses', () => {
     ).toThrow(/Slot "input".*"fields"/);
   });
 
+  /**
+   * The resolution only happens when the caller supplied the catalog, which is what the composed entry does. A
+   * space authored straight from this package writes its sources as declared — the fragment has to stay usable on
+   * documents whose element library nobody here knows.
+   */
+  it('resolves a source that named the idRef alone, when it was told what publishes one', () => {
+    const { schema } = authorSpace(
+      {
+        name: 'Bound',
+        permanentUrl: 'relative-source',
+        pages: [
+          {
+            name: 'Home',
+            slug: '',
+            body: [
+              { type: 'apiContainer', idRef: 'posts', attributes: { action: 'list' } },
+              { type: 'text', bind: { content: 'posts.title' } }
+            ]
+          }
+        ]
+      },
+      { sourceTypes: { apiContainer: 'apiContainer' } }
+    );
+
+    const bound = Object.values(schema.flat).find(element => element.definition.bindings?.attributes);
+
+    expect(bound?.definition.bindings?.attributes?.[0].source).toBe('apiContainer_posts.title');
+  });
+
+  it('refuses an idRef that shadows a global data source', () => {
+    expect(() =>
+      authorSpace(
+        {
+          name: 'Shadow',
+          permanentUrl: 'shadow',
+          pages: [{ name: 'Home', slug: '', body: [{ type: 'apiContainer', idRef: 'state' }] }]
+        },
+        { sourceTypes: { apiContainer: 'apiContainer' } }
+      )
+    ).toThrow(/one of the global data sources/);
+  });
+
   it('refuses a binding whose source names an element that is not there', () => {
     // The quietest failure a space can carry: the binding resolves to nothing, the element renders its
     // placeholder, and every layer below considers the document perfectly valid.

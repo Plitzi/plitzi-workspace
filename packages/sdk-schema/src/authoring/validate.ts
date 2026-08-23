@@ -2,7 +2,11 @@ import { isCssProperty, isCustomProperty, suggestCssProperty } from '@plitzi/sdk
 
 import { validateSchema } from '../helpers/schemaValidator';
 
-import type { SchemaValidationError, SchemaValidationResult } from '../helpers/schemaValidator';
+import type {
+  SchemaValidationError,
+  SchemaValidationOptions,
+  SchemaValidationResult
+} from '../helpers/schemaValidator';
 import type { Schema, Style, StyleBlock } from '@plitzi/sdk-shared';
 
 /**
@@ -67,16 +71,23 @@ const validateStyle = (style: Style): SchemaValidationError[] => {
   return errors;
 };
 
-export const validateSpace = ({ schema, style }: SpaceDocuments): SchemaValidationResult => {
-  const schemaResult = validateSchema(schema);
+export const validateSpace = (
+  { schema, style }: SpaceDocuments,
+  options: SchemaValidationOptions = {}
+): SchemaValidationResult => {
+  const schemaResult = validateSchema(schema, options);
   const errors = [...schemaResult.errors, ...validateStyle(style)];
 
   return { valid: errors.length === 0, errors, warnings: schemaResult.warnings };
 };
 
 /** The throwing flavour. Returns what was survivable so a caller can decide what to do about it. */
-export const assertSpaceValid = (space: SpaceDocuments, context: string): SchemaValidationError[] => {
-  const { valid, errors, warnings } = validateSpace(space);
+export const assertSpaceValid = (
+  space: SpaceDocuments,
+  context: string,
+  options: SchemaValidationOptions = {}
+): SchemaValidationError[] => {
+  const { valid, errors, warnings } = validateSpace(space, options);
   if (!valid) {
     throw new Error(
       `Invalid space (${context}):\n${errors.map(error => `  - [${error.code}] ${error.message}`).join('\n')}`

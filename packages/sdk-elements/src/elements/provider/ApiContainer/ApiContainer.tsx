@@ -12,6 +12,7 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 import { currentRscLocation } from '@plitzi/sdk-shared/server/rsc/refreshRsc';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
+import declaration from './declaration';
 import useApi from './hooks/useApi';
 import useProviderPagination from './hooks/useProviderPagination';
 import useProviderWrite from './hooks/useProviderWrite';
@@ -110,7 +111,7 @@ const ApiContainer = ({
     elementData,
     refresh
   } = useRscData<Record<string, unknown>>();
-  const sourceName = getSourceName('apiContainer', { idRef });
+  const sourceName = getSourceName(declaration.sourceType, { idRef });
   const {
     settings: { previewMode },
     contexts: { InteractionsContext }

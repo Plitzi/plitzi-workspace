@@ -5,6 +5,14 @@ import type { Element, Schema } from '@plitzi/sdk-shared';
 
 export type SchemaValidationOptions = {
   baseElementId?: string;
+  /**
+   * Element type → the source name it publishes under.
+   *
+   * Without it a binding's source can only be half-checked: the type half is compared against the types that
+   * happen to be in this document, so a typo'd idRef is caught only when some element of that same type is
+   * present, and a prefix that is simply the wrong word for the element it names is never caught at all.
+   */
+  sourceTypes?: Record<string, string>;
 };
 
 export type SchemaValidationError = {
@@ -502,9 +510,11 @@ const createValidator = (schema: Schema) => {
    * type half is an element type actually present in this document are checked, so a `node_<hexId>` or a bare
    * `form` is left alone.
    */
-  const validateBindingSources = () => {
+  const validateBindingSources = (sourceTypes?: Record<string, string>) => {
     const refs = new Set<string>();
     const types = new Set<string>();
+    /** idRef → the source name that element actually publishes, when the caller supplied the catalog. */
+    const published = new Map<string, string>();
     Object.values(flat).forEach(element => {
       if (!(element as Element | undefined)) {
         return;
@@ -512,6 +522,10 @@ const createValidator = (schema: Schema) => {
 
       if (element.idRef) {
         refs.add(element.idRef);
+        const prefix = sourceTypes?.[element.definition.type];
+        if (prefix) {
+          published.set(element.idRef, prefix);
+        }
       }
 
       types.add(element.definition.type);
@@ -532,16 +546,34 @@ const createValidator = (schema: Schema) => {
 
           const type = head.slice(0, separator);
           const ref = head.slice(separator + 1);
-          if (!types.has(type) || refs.has(ref)) {
+          const where = `Element "${element.id}" binds ${category}.${binding.to} to "${binding.source}"`;
+
+          if (!refs.has(ref)) {
+            // Without the catalog the type half is only a hint — a `node_<hexId>` or a bare `form` is not a source
+            // at all — so an unknown ref is reported only when its type half is one this document actually holds.
+            if (sourceTypes || types.has(type)) {
+              errors.push({
+                code: 'UNRESOLVED_BINDING_SOURCE',
+                message: `${where}, but no element answers to the idRef "${ref}"`,
+                elementId: element.id,
+                details: { source: binding.source, idRef: ref }
+              });
+            }
+
             return;
           }
 
-          errors.push({
-            code: 'UNRESOLVED_BINDING_SOURCE',
-            message: `Element "${element.id}" binds ${category}.${binding.to} to "${binding.source}", but no element answers to the idRef "${ref}"`,
-            elementId: element.id,
-            details: { source: binding.source, idRef: ref }
-          });
+          // The half an author cannot see. A `form` publishes under `apiContainer`, so a name assembled from the
+          // element's own type is a source nothing ever registers — and the binding resolves to nothing.
+          const expected = published.get(ref);
+          if (expected && expected !== type) {
+            errors.push({
+              code: 'MISMATCHED_BINDING_SOURCE',
+              message: `${where}, but "${ref}" publishes its source as "${expected}_${ref}"`,
+              elementId: element.id,
+              details: { source: binding.source, idRef: ref, expected: `${expected}_${ref}` }
+            });
+          }
         });
       });
     });
@@ -620,7 +652,7 @@ const createValidator = (schema: Schema) => {
     validateOrphanedElements(baseElementId);
     validateVariables();
     validateIdRefs();
-    validateBindingSources();
+    validateBindingSources(options?.sourceTypes);
     validateInteractions();
 
     return {

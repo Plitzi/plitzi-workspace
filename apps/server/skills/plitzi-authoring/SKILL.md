@@ -113,12 +113,16 @@ An element has exactly ONE base selector, so a variant is its own class over a s
 ## Data
 
 ```ts
-heading({ bind: { content: 'apiContainer_posts.title' } })                    // short form: attributes
-paragraph({ bind: [visibleWhen('apiContainer_posts.hasPosts')] })             // full form: state, transformers, conditions
+heading({ bind: { content: 'posts.title' } })                                 // short form: attributes
+paragraph({ bind: [visibleWhen('posts.hasPosts')] })                          // full form: state, transformers, conditions
 ```
 
-A source is `<type>_<idRef>.<field>` — the idRef being the name YOU gave the element. A source naming an element
-that is not there is refused when the space is authored: it is the quietest failure a space can carry.
+**A source names the idRef you gave the element** — `'posts.title'`, `'postList.item.cover'` — and the prefix is
+filled in. Only half of a source name is yours: the other half is the kind of source the ELEMENT publishes, and it
+is not always the word you can see (a `form` publishes under `apiContainer`). The four globals — `variables`,
+`navigation`, `auth`, `state` — are named as themselves. A full name still works and is checked the same way: a
+prefix that does not match the element, or an idRef nothing answers to, is refused when the space is authored. It
+is the quietest failure a space can carry.
 
 Server-resolved sections are an `apiContainer` with `runtime: 'server'` naming a connector or an action, and a
 space that has any needs `rsc: { enabled: true }`.
@@ -179,7 +183,9 @@ matching only `failed` is how those two end up doing nothing.
 - a `class` or a `slot` naming a class the space does not declare (the error names the one you probably meant)
 - an element asking for a shared class AND rules of its own — an element has one base selector
 - one class name declared twice with rules that disagree
-- a binding source, or a step target, naming an element that is not there
+- a binding source naming an idRef nothing answers to, or one whose prefix is not what that element publishes
+- an idRef that shadows a global data source (`variables`, `navigation`, `auth`, `state`)
+- a step target naming an element that is not there
 - two elements answering to one idRef, a broken flow chain, an orphan, a cycle
 - a global callback on the wrong module — or on none — and a utility given one. A global callback registers under
   its SOURCE MODULE (`auth`, `state`, `actions`), and the pair is what the runtime resolves a step by, so naming

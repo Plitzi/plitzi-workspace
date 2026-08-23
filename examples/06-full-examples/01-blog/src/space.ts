@@ -134,7 +134,7 @@ const byline = (src: string): ElementSpec =>
  * One per page, because an idRef names one element in the whole space and the bindings below follow the ref.
  */
 const chrome = (ref: string, body: ElementSpec[]): ElementSpec => {
-  const src = `apiContainer_${ref}`;
+  const src = ref;
 
   return apiContainer({
     idRef: ref,
@@ -221,7 +221,7 @@ const writeLink = (ref: string): ElementSpec =>
   link({
     href: '/write', mode: 'internal',
     class: 'chipQuiet',
-    bind: [visibleWhen(`apiContainer_${ref}.canWrite`)],
+    bind: [visibleWhen(`${ref}.canWrite`)],
     children: [label('Write a post')]
   });
 
@@ -331,25 +331,25 @@ const home: PageSpec = {
                 mode: 'internal',
                 class: 'hero',
                 bind: [
-                  { to: 'href', source: 'apiContainer_posts.featured.url' },
+                  { to: 'href', source: 'posts.featured.url' },
                   // Without this the link is announced as every word inside the card — topic, headline,
                   // standfirst, byline and button, in one breath. `label` is what it says instead.
-                  { to: 'label', source: 'apiContainer_posts.featured.title' },
-                  visibleWhen('apiContainer_posts.hasFeatured')
+                  { to: 'label', source: 'posts.featured.title' },
+                  visibleWhen('posts.hasFeatured')
                 ],
                 children: [
-                  boundImage('apiContainer_posts.featured.cover', 'heroImage'),
+                  boundImage('posts.featured.cover', 'heroImage'),
                   container({
                     class: 'heroScrim',
                     children: [
-                      bound('text', 'apiContainer_posts.featured.topic', 'chipOnPhoto'),
-                      boundHeading('apiContainer_posts.featured.title', 'heroTitle', 'h1'),
-                      bound('paragraph', 'apiContainer_posts.featured.standfirst', 'heroStandfirst'),
+                      bound('text', 'posts.featured.topic', 'chipOnPhoto'),
+                      boundHeading('posts.featured.title', 'heroTitle', 'h1'),
+                      bound('paragraph', 'posts.featured.standfirst', 'heroStandfirst'),
                       container({
                         class: 'metaRow',
                         children: [
-                          avatar('apiContainer_posts.featured.initial', 'avatarSm'),
-                          bound('text', 'apiContainer_posts.featured.byline', 'metaOnPhoto')
+                          avatar('posts.featured.initial', 'avatarSm'),
+                          bound('text', 'posts.featured.byline', 'metaOnPhoto')
                         ]
                       }),
                       container({ class: 'readLink', children: [label('Read the story')] })
@@ -366,27 +366,27 @@ const home: PageSpec = {
                       text({
                         content: 'More stories',
                         class: 'sectionLabel',
-                        bind: [hiddenWhen('apiContainer_posts.filtered')]
+                        bind: [hiddenWhen('posts.filtered')]
                       }),
                       // The same slot, saying what the list was narrowed to. Two elements, one field, no branch.
                       text({
                         content: '',
                         class: 'sectionLabel',
                         bind: [
-                          { to: 'content', source: 'apiContainer_posts.filterLabel' },
-                          visibleWhen('apiContainer_posts.filtered')
+                          { to: 'content', source: 'posts.filterLabel' },
+                          visibleWhen('posts.filtered')
                         ]
                       }),
                       /**
                        * The list renders its one child once per record, each row under its own scope — which is what
-                       * `list_postList.item` is. One template, however many posts.
+                       * `postList.item` is. One template, however many posts.
                        */
                       list({
                         idRef: 'postList',
                         source: 'controlled',
                         class: 'feed',
-                        bind: [{ to: 'items', source: 'apiContainer_posts.records' }],
-                        children: [feedCard('list_postList.item')]
+                        bind: [{ to: 'items', source: 'posts.records' }],
+                        children: [feedCard('postList.item')]
                       }),
                       /**
                        * The pager reads the provider's own `pageInfo` and nothing else, so it never talks to it: in
@@ -397,7 +397,7 @@ const home: PageSpec = {
                         idRef: 'postPager',
                         mode: 'pages', target: 'url', pageParam: 'page',
                         class: 'pager',
-                        bind: [{ to: 'pageInfo', source: 'apiContainer_posts.pageInfo' }]
+                        bind: [{ to: 'pageInfo', source: 'posts.pageInfo' }]
                       })
                     ]
                   }),
@@ -434,7 +434,7 @@ const home: PageSpec = {
                                * The MAIN provider's topics, not the sidebar's — it is the one that was told what
                                * the URL asked for, so it is the one that knows which chip is chosen.
                                */
-                              bind: [{ to: 'items', source: 'apiContainer_posts.topics' }],
+                              bind: [{ to: 'items', source: 'posts.topics' }],
                               /**
                                * Two chips per topic, and the binding picks.
                                *
@@ -448,19 +448,19 @@ const home: PageSpec = {
                                   mode: 'internal',
                                   class: 'chipActive',
                                   bind: [
-                                    { to: 'href', source: 'list_topicList.item.url' },
-                                    visibleWhen('list_topicList.item.isActive')
+                                    { to: 'href', source: 'topicList.item.url' },
+                                    visibleWhen('topicList.item.isActive')
                                   ],
-                                  children: [bound('text', 'list_topicList.item.name', 'inlineLabel')]
+                                  children: [bound('text', 'topicList.item.name', 'inlineLabel')]
                                 }),
                                 link({
                                   mode: 'internal',
                                   class: 'chipQuiet',
                                   bind: [
-                                    { to: 'href', source: 'list_topicList.item.url' },
-                                    hiddenWhen('list_topicList.item.isActive')
+                                    { to: 'href', source: 'topicList.item.url' },
+                                    hiddenWhen('topicList.item.isActive')
                                   ],
-                                  children: [bound('text', 'list_topicList.item.name', 'inlineLabel')]
+                                  children: [bound('text', 'topicList.item.name', 'inlineLabel')]
                                 })
                               ]
                             })
@@ -470,11 +470,11 @@ const home: PageSpec = {
                               idRef: 'recentList',
                               source: 'controlled',
                               class: 'quietList',
-                              bind: [{ to: 'items', source: 'apiContainer_recent.records' }],
+                              bind: [{ to: 'items', source: 'recent.records' }],
                               children: [
-                                boundLink('list_recentList.item.url', 'quietItem', [
-                                  bound('text', 'list_recentList.item.title', 'quietTitle'),
-                                  bound('text', 'list_recentList.item.date', 'meta')
+                                boundLink('recentList.item.url', 'quietItem', [
+                                  bound('text', 'recentList.item.title', 'quietTitle'),
+                                  bound('text', 'recentList.item.date', 'meta')
                                 ])
                               ]
                             })
@@ -492,7 +492,7 @@ const home: PageSpec = {
               paragraph({
                 content: 'No posts yet. Sign in as ada and write the first one.',
                 class: 'panelText',
-                bind: [visibleWhen('apiContainer_posts.isEmpty')]
+                bind: [visibleWhen('posts.isEmpty')]
               })
             ]
           })
@@ -548,28 +548,28 @@ const post: PageSpec = {
                 class: 'article',
                 // Two halves of one answer, each bound to a flag the action returned. A page for a slug nobody wrote
                 // has to say so, and saying so is a binding rather than a branch.
-                bind: [visibleWhen('apiContainer_post.found')],
+                bind: [visibleWhen('post.found')],
                 children: [
-                  bound('text', 'apiContainer_post.record.topic', 'chip'),
-                  boundHeading('apiContainer_post.record.title', 'articleTitle', 'h1'),
-                  bound('paragraph', 'apiContainer_post.record.standfirst', 'articleStandfirst'),
+                  bound('text', 'post.record.topic', 'chip'),
+                  boundHeading('post.record.title', 'articleTitle', 'h1'),
+                  bound('paragraph', 'post.record.standfirst', 'articleStandfirst'),
                   container({
                     class: 'bylineRow',
                     children: [
                       container({
                         class: 'metaRow',
                         children: [
-                          avatar('apiContainer_post.record.initial'),
+                          avatar('post.record.initial'),
                           container({
                             class: 'stack',
                             children: [
-                              bound('text', 'apiContainer_post.record.author', 'bylineName'),
+                              bound('text', 'post.record.author', 'bylineName'),
                               // The date and the reading time. The author is the line above it — a byline that
                               // repeats the name is what you get for binding the composed field twice.
-                              bound('text', 'apiContainer_post.record.dateline', 'meta'),
+                              bound('text', 'post.record.dateline', 'meta'),
                               // Only on a post somebody went back to. A blog that edits silently is a blog you
                               // cannot trust twice.
-                              bound('text', 'apiContainer_post.record.updated', 'metaEdited')
+                              bound('text', 'post.record.updated', 'metaEdited')
                             ]
                           })
                         ]
@@ -585,15 +585,15 @@ const post: PageSpec = {
                         mode: 'internal',
                         class: 'chipQuiet',
                         bind: [
-                          { to: 'href', source: 'apiContainer_post.editUrl' },
-                          visibleWhen('apiContainer_post.canEdit')
+                          { to: 'href', source: 'post.editUrl' },
+                          visibleWhen('post.canEdit')
                         ],
                         children: [label('Edit this post')]
                       })
                     ]
                   }),
-                  boundImage('apiContainer_post.record.cover', 'articleImage'),
-                  speciesPanel('apiContainer_post.record'),
+                  boundImage('post.record.cover', 'articleImage'),
+                  speciesPanel('post.record'),
                   /**
                    * `richText` and not `blockHtml`: the second executes what it is given on purpose, which is right
                    * for an embed the site's own author pasted in and wrong for a body that came out of a store.
@@ -601,7 +601,7 @@ const post: PageSpec = {
                   richText({
                     format: 'markdown', content: '',
                     class: 'prose',
-                    bind: [{ to: 'content', source: 'apiContainer_post.record.body' }]
+                    bind: [{ to: 'content', source: 'post.record.body' }]
                   }),
                   /**
                    * The one write on this blog anybody may make — no session, no permission, no account.
@@ -619,7 +619,7 @@ const post: PageSpec = {
                         class: 'stack',
                         children: [
                           text('Seen one yourself?', { class: 'bylineName' }),
-                          bound('text', 'apiContainer_post.record.sightings', 'meta')
+                          bound('text', 'post.record.sightings', 'meta')
                         ]
                       }),
                       button({
@@ -664,12 +664,12 @@ const post: PageSpec = {
                   container({
                     class: 'authorBox',
                     children: [
-                      avatar('apiContainer_post.record.initial'),
+                      avatar('post.record.initial'),
                       container({
                         class: 'stack',
                         children: [
-                          bound('text', 'apiContainer_post.record.author', 'bylineName'),
-                          bound('text', 'apiContainer_post.record.authorRole', 'meta'),
+                          bound('text', 'post.record.author', 'bylineName'),
+                          bound('text', 'post.record.authorRole', 'meta'),
                           note('Writes here about animals, and about the people who go out and count them.')
                         ]
                       })
@@ -679,20 +679,20 @@ const post: PageSpec = {
               }),
               container({
                 class: 'article',
-                bind: [visibleWhen('apiContainer_post.found')],
+                bind: [visibleWhen('post.found')],
                 children: [
                   text('Keep reading', { class: 'sectionLabel' }),
                   list({
                     idRef: 'moreList',
                     source: 'controlled',
                     class: 'moreGrid',
-                    bind: [{ to: 'items', source: 'apiContainer_post.more' }],
+                    bind: [{ to: 'items', source: 'post.more' }],
                     children: [
-                      boundLink('list_moreList.item.url', 'moreCard', [
-                        boundImage('list_moreList.item.cover', 'moreImage'),
-                        bound('text', 'list_moreList.item.topic', 'chip'),
-                        boundHeading('list_moreList.item.title', 'moreTitle', 'h3'),
-                        bound('text', 'list_moreList.item.date', 'meta')
+                      boundLink('moreList.item.url', 'moreCard', [
+                        boundImage('moreList.item.cover', 'moreImage'),
+                        bound('text', 'moreList.item.topic', 'chip'),
+                        boundHeading('moreList.item.title', 'moreTitle', 'h3'),
+                        bound('text', 'moreList.item.date', 'meta')
                       ])
                     ]
                   })
@@ -700,7 +700,7 @@ const post: PageSpec = {
               }),
               container({
                 class: 'centred',
-                bind: [hiddenWhen('apiContainer_post.found')],
+                bind: [hiddenWhen('post.found')],
                 children: [
                   heading({
                     subType: 'h1', content: 'That post does not exist.',
@@ -922,7 +922,7 @@ const edit: PageSpec = {
             children: [
               container({
                 class: 'editor',
-                bind: [visibleWhen('apiContainer_editPost.canEdit')],
+                bind: [visibleWhen('editPost.canEdit')],
                 children: [
                   container({
                     class: 'form',
@@ -931,7 +931,7 @@ const edit: PageSpec = {
                         subType: 'h1', content: 'Edit post',
                         class: 'articleTitle'
                       }),
-                      bound('paragraph', 'apiContainer_editPost.record.title', 'articleStandfirst'),
+                      bound('paragraph', 'editPost.record.title', 'articleStandfirst'),
                       form({
                         idRef: 'editForm',
                         class: 'form',
@@ -984,19 +984,19 @@ const edit: PageSpec = {
                            * the server does not take on trust — the store matches it against the session's own id
                            * before it changes a thing.
                            */
-                          boundField('slug', '', 'hidden', 'apiContainer_editPost.record.slug'),
-                          boundField('title', 'Title', 'text', 'apiContainer_editPost.record.title'),
-                          boundField('standfirst', 'Standfirst', 'text', 'apiContainer_editPost.record.standfirst', {
+                          boundField('slug', '', 'hidden', 'editPost.record.slug'),
+                          boundField('title', 'Title', 'text', 'editPost.record.title'),
+                          boundField('standfirst', 'Standfirst', 'text', 'editPost.record.standfirst', {
                             required: false
                           }),
-                          boundField('topic', 'Topic', 'text', 'apiContainer_editPost.record.topic', {
+                          boundField('topic', 'Topic', 'text', 'editPost.record.topic', {
                             required: false
                           }),
-                          boundField('cover', 'Cover image URL', 'text', 'apiContainer_editPost.record.cover', {
+                          boundField('cover', 'Cover image URL', 'text', 'editPost.record.cover', {
                             placeholder: 'Leave it as it is, or paste another',
                             required: false
                           }),
-                          boundField('body', 'Body', 'textarea', 'apiContainer_editPost.record.body', {}, 'textarea'),
+                          boundField('body', 'Body', 'textarea', 'editPost.record.body', {}, 'textarea'),
                           container({
                             class: 'actionRow',
                             children: [
@@ -1004,7 +1004,7 @@ const edit: PageSpec = {
                                 subType: 'submit', content: 'Save changes',
                                 class: 'button'
                               }),
-                              boundLink('apiContainer_editPost.record.url', 'buttonQuiet', [label('Cancel')])
+                              boundLink('editPost.record.url', 'buttonQuiet', [label('Cancel')])
                             ]
                           })
                         ]
@@ -1029,14 +1029,14 @@ const edit: PageSpec = {
                           'Every field here arrives filled in by the server. Clear one and it is left alone rather than emptied, which is what makes an editor safe to open and close.'
                         )
                       ]),
-                      speciesPanel('apiContainer_editPost.record')
+                      speciesPanel('editPost.record')
                     ]
                   })
                 ]
               }),
               container({
                 class: 'centred',
-                bind: [visibleWhen('apiContainer_editPost.cannotEdit')],
+                bind: [visibleWhen('editPost.cannotEdit')],
                 children: [
                   container({
                     class: 'cardSurface',
@@ -1048,14 +1048,14 @@ const edit: PageSpec = {
                       note(
                         'You are signed in, and this post belongs to somebody else. The server would refuse the change too — this page is only saying so first.'
                       ),
-                      boundLink('apiContainer_editPost.record.url', 'buttonQuiet', [label('Back to the post')])
+                      boundLink('editPost.record.url', 'buttonQuiet', [label('Back to the post')])
                     ]
                   })
                 ]
               }),
               container({
                 class: 'centred',
-                bind: [hiddenWhen('apiContainer_editPost.found')],
+                bind: [hiddenWhen('editPost.found')],
                 children: [
                   container({
                     class: 'cardSurface',
@@ -1163,7 +1163,7 @@ const account: PageSpec = {
                        * The initial comes from the page's own chrome provider: the whole page sits inside it, and
                        * a source reaches every element below the provider that publishes it.
                        */
-                      avatar('apiContainer_chromeAccount.initial'),
+                      avatar('chromeAccount.initial'),
                       container({
                         class: 'stack',
                         children: [
@@ -1184,12 +1184,12 @@ const account: PageSpec = {
                       text({
                         content: 'May publish',
                         class: 'chip',
-                        bind: [visibleWhen('apiContainer_chromeAccount.canWrite')]
+                        bind: [visibleWhen('chromeAccount.canWrite')]
                       }),
                       text({
                         content: 'Reader',
                         class: 'chipQuiet',
-                        bind: [visibleWhen('apiContainer_chromeAccount.readOnly')]
+                        bind: [visibleWhen('chromeAccount.readOnly')]
                       })
                     ]
                   }),

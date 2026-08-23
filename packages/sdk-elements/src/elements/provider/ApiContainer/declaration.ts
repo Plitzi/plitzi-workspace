@@ -17,6 +17,7 @@ export type ApiContainerAttributes = AuthorableAttributes<ApiContainerProps> & {
 
 const declaration = elementDeclaration<ApiContainerAttributes>()({
   type: 'apiContainer',
+  sourceType: 'apiContainer',
   content: {
     attributes: {
       query: '',

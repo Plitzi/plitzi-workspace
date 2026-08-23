@@ -44,7 +44,7 @@ const catsPage: PageSpec = {
           bind: [
             {
               to: 'content',
-              source: 'apiContainer_cats.count',
+              source: 'cats.count',
               transformers: [{ action: 'twigTemplate', params: { template: '{{source}} cats came back.' } }]
             }
           ]
@@ -56,7 +56,7 @@ const catsPage: PageSpec = {
          * A failed slice is not a failed page — each server element resolves on its own — so the provider
          * publishes `hasError` and `errorMessage`, and this is an ordinary binding rather than a code path.
          */
-        paragraph({ content: '', class: 'catsError', bind: { content: 'apiContainer_cats.errorMessage' } }),
+        paragraph({ content: '', class: 'catsError', bind: { content: 'cats.errorMessage' } }),
 
         /**
          * The repeater. `source: 'controlled'` renders its children once per item, and `items` is bound to the
@@ -66,10 +66,10 @@ const catsPage: PageSpec = {
           idRef: 'catList',
           source: 'controlled',
           class: 'catsGrid',
-          bind: { items: 'apiContainer_cats.records' },
+          bind: { items: 'cats.records' },
           children: [
             /**
-             * One row's worth of template. Inside the list, `list_catList.item` is THIS record — the list
+             * One row's worth of template. Inside the list, `catList.item` is THIS record — the list
              * publishes a scope per row, so the same element renders eight times against eight different values.
              */
             image({
@@ -77,7 +77,7 @@ const catsPage: PageSpec = {
               alt: 'A cat',
               loadMode: 'lazy',
               class: 'catPhoto',
-              bind: { src: 'list_catList.item.url', alt: 'list_catList.item.id' }
+              bind: { src: 'catList.item.url', alt: 'catList.item.id' }
             })
           ]
         })

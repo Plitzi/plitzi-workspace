@@ -8,6 +8,7 @@ import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSo
 import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
+import declaration from './declaration';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
@@ -44,7 +45,7 @@ const DialogContainer = ({
     definition: { styleSelectors, label = 'Dialog' },
     elementState
   } = useElement();
-  const sourceName = getSourceName('dialogContainer', { idRef });
+  const sourceName = getSourceName(declaration.sourceType, { idRef });
   const {
     contexts: { InteractionsContext }
   } = usePlitziServiceContext();

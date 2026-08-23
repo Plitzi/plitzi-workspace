@@ -1,7 +1,18 @@
+import { elementSourceTypes } from '@plitzi/sdk-elements/authoring';
 import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from '@plitzi/sdk-interactions/authoring';
-import { authorSpace as authorSpaceUnchecked } from '@plitzi/sdk-schema/authoring';
+import {
+  authorSpace as authorSpaceUnchecked,
+  validateSpace as validateSpaceUnchecked
+} from '@plitzi/sdk-schema/authoring';
 
-import type { AuthorSpaceOptions, AuthoredSpace, SpaceSpec, StepVocabulary } from '@plitzi/sdk-schema/authoring';
+import type {
+  AuthorSpaceOptions,
+  AuthoredSpace,
+  SpaceDocuments,
+  SpaceSpec,
+  StepVocabulary
+} from '@plitzi/sdk-schema/authoring';
+import type { SchemaValidationOptions, SchemaValidationResult } from '@plitzi/sdk-schema/helpers/schemaValidator';
 
 /**
  * Authoring a space in code — the whole surface, from one import.
@@ -36,12 +47,26 @@ const STEP_VOCABULARY: StepVocabulary = {
 };
 
 /**
- * `authorSpace`, holding this SDK's own step vocabulary.
+ * `authorSpace`, holding this SDK's own vocabularies.
  *
  * Deliberately shadows the one re-exported above — an explicit export wins over a star — so that everybody who
- * imports from this entry, or from the `@plitzi/sdk-server/authoring` that re-exports it, gets a flow whose targets
- * are checked. A step naming a callback on the wrong module is refused here; one naming an action no built-in
- * source declares comes back in `warnings`, since a plugin is free to register a module this process cannot see.
+ * imports from this entry, or from the `@plitzi/sdk-server/authoring` that re-exports it, gets both checks that
+ * need to know what this SDK ships.
+ *
+ * **Flows.** A step naming a callback on the wrong module is refused; one naming an action no built-in source
+ * declares comes back in `warnings`, since a plugin is free to register a module this process cannot see.
+ *
+ * **Bindings.** A source may name the idRef alone and the prefix the element publishes under is filled in — which
+ * is the half an author cannot see, and is not always the element's own type.
  */
 export const authorSpace = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): AuthoredSpace =>
-  authorSpaceUnchecked(spec, { vocabulary: STEP_VOCABULARY, ...options });
+  authorSpaceUnchecked(spec, { vocabulary: STEP_VOCABULARY, sourceTypes: elementSourceTypes, ...options });
+
+/**
+ * `validateSpace`, holding this SDK's own source catalog — the same gate, for documents authored elsewhere.
+ *
+ * Which is where it matters most: a JSON edited by hand, or an export whose bindings were retyped. Without the
+ * catalog a source can only be half-checked, and the half it cannot see is the one nobody gets right.
+ */
+export const validateSpace = (space: SpaceDocuments, options: SchemaValidationOptions = {}): SchemaValidationResult =>
+  validateSpaceUnchecked(space, { sourceTypes: elementSourceTypes, ...options });

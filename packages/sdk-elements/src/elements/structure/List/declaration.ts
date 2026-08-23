@@ -9,6 +9,7 @@ export type ListAttributes = AuthorableAttributes<ListProps>;
 
 const declaration = elementDeclaration<ListAttributes>()({
   type: 'list',
+  sourceType: 'list',
   content: {
     attributes: {
       items: [],

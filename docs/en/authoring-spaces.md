@@ -200,7 +200,7 @@ A binding says where a value comes from. The short form targets attributes, whic
 does:
 
 ```ts
-heading({ bind: { content: 'apiContainer_posts.title' } })
+heading({ bind: { content: 'posts.title' } })
 ```
 
 The full form is for everything else — element state, a transformer, a condition:
@@ -208,20 +208,33 @@ The full form is for everything else — element state, a transformer, a conditi
 ```ts
 paragraph({
   bind: [
-    { to: 'content', source: 'apiContainer_cats.count',
+    { to: 'content', source: 'cats.count',
       transformers: [{ action: 'twigTemplate', params: { template: '{{source}} cats came back.' } }] },
-    visibleWhen('apiContainer_cats.hasRecords')
+    visibleWhen('cats.hasRecords')
   ]
 })
 ```
 
-A source is `<type>_<idRef>.<field>` — the idRef being the name YOU gave the element. **Name anything something
-else refers to**: derived idRefs are positional, so adding an element above renumbers every one below it and each
-binding that named one then points somewhere else without changing.
+A source names **the idRef you gave the element**, and the prefix is filled in:
 
-A source naming an element that is not there is refused when the space is authored. It is the quietest failure a
-space can carry — the binding resolves to nothing, the element renders its placeholder, and every layer below
-considers the document perfectly valid.
+```ts
+bind: { content: 'posts.title' }        // → apiContainer_posts.title
+bind: { src: 'postList.item.cover' }    // → list_postList.item.cover
+bind: { content: 'auth.username' }      // a global: variables, navigation, auth, state
+```
+
+Only half of a source name is yours. The other half is the kind of source the ELEMENT publishes, and it is not
+always the word you can see — **a `form` publishes under `apiContainer`**, because what it offers its descendants
+is a record like any other provider's. Assembled by hand from the type you wrote, `form_signup.values` names a
+source nothing registers.
+
+Written in full it still works, and is now checked against the same table: a prefix that does not match the
+element it names is refused, and so is an idRef nothing answers to. **Name anything something else refers to** —
+derived idRefs are positional, so adding an element above renumbers every one below it and each binding that named
+one then points somewhere else without changing.
+
+That is the quietest failure a space can carry — the binding resolves to nothing, the element renders its
+placeholder, and every layer below considers the document perfectly valid.
 
 ### Showing an element on the opposite of a condition
 
@@ -231,8 +244,8 @@ question whose only reason to exist is the missing word, and it puts "when is th
 produced the data rather than in the page that hides it.
 
 ```ts
-container({ bind: [visibleWhen('apiContainer_post.found')], children: [ … ] }),
-container({ bind: [hiddenWhen('apiContainer_post.found')], children: [text('No such post.')] })
+container({ bind: [visibleWhen('post.found')], children: [ … ] }),
+container({ bind: [hiddenWhen('post.found')], children: [text('No such post.')] })
 ```
 
 `hiddenWhen` is `visibleWhen` with the `not` transformer, which is available to any binding. It reads a boolean
@@ -288,7 +301,9 @@ inert specs. That is what keeps every guarantee about the finished document in o
 - a `class` or a `slot` naming a class the space does not declare (with the name you probably meant)
 - an element asking for a shared class AND rules of its own — an element has one base selector
 - one class name declared twice with rules that disagree
-- a binding source, or a step target, naming an element that is not there
+- a binding source naming an idRef nothing answers to, or one whose prefix is not what that element publishes
+- an idRef that shadows a global data source (`variables`, `navigation`, `auth`, `state`)
+- a step target naming an element that is not there
 - two elements answering to one idRef
 - a flow whose chain points at a node that is not there
 - everything `validateSchema` already checked: orphans, cycles, broken parent/root links, pages

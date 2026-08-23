@@ -1,7 +1,68 @@
 import { authoringId } from './ids';
+import { didYouMean } from './suggest';
 
 import type { BindingSpec, BindingsSpec } from './types';
 import type { BindingCategory, ElementBinding } from '@plitzi/sdk-shared';
+
+/**
+ * The sources that belong to nobody, registered once for the whole space.
+ *
+ * They are named as themselves rather than as `<type>_<idRef>`, which is what tells them apart from a source an
+ * element publishes — and is why an element may not answer to one of these names.
+ */
+export const GLOBAL_SOURCES = ['variables', 'navigation', 'auth', 'state'];
+
+/** What an element publishes: the source prefix its type registers under, by the idRef it was given. */
+export type SourceIndex = Map<string, string>;
+
+/**
+ * Turns what an author wrote into the name the runtime resolves.
+ *
+ * A source is `<sourceType>_<idRef>.<field>` and only the idRef half is a decision — the other half belongs to
+ * the element, and it is not always the word the author can see: a `form` publishes under `apiContainer`. So the
+ * short form names the idRef and the prefix is looked up, and a full one is checked against the same table.
+ *
+ * Both halves being wrong is the same failure and it is the quietest one this surface has: the binding resolves
+ * to nothing, the element renders its placeholder, and every layer below considers the document perfectly valid.
+ */
+export const resolveSource = (source: string, index: SourceIndex, where: string): string => {
+  const [head, ...rest] = source.split('.');
+  const field = rest.join('.');
+  const separator = head.indexOf('_');
+
+  if (separator === -1) {
+    if (GLOBAL_SOURCES.includes(head)) {
+      return source;
+    }
+
+    const prefix = index.get(head);
+    if (!prefix) {
+      throw new Error(
+        `${where} binds to "${source}", but nothing in this space answers to "${head}"${didYouMean(head, [...index.keys(), ...GLOBAL_SOURCES])}. A source names an element's idRef, or one of the globals: ${GLOBAL_SOURCES.join(', ')}.`
+      );
+    }
+
+    return field ? `${prefix}_${head}.${field}` : `${prefix}_${head}`;
+  }
+
+  const ref = head.slice(separator + 1);
+  const expected = index.get(ref);
+  if (!expected) {
+    throw new Error(
+      `${where} binds to "${source}", but no element answers to the idRef "${ref}"${didYouMean(ref, [...index.keys()])}.`
+    );
+  }
+
+  // The half an author cannot see. Written out from the element TYPE — which is the obvious guess and wrong for a
+  // form — it names a source nothing ever registers.
+  if (head.slice(0, separator) !== expected) {
+    throw new Error(
+      `${where} binds to "${source}", but "${ref}" publishes its source as "${expected}_${ref}". Name the idRef alone and the prefix is filled in.`
+    );
+  }
+
+  return source;
+};
 
 /** Both binding forms as one list. The map form targets attributes, which is what nearly every binding does. */
 export const toBindingSpecs = (bind: BindingsSpec): BindingSpec[] =>
@@ -43,10 +104,16 @@ export const authorBinding = (path: string, index: number, spec: BindingSpec): E
   ...(spec.enabled === undefined ? {} : { enabled: spec.enabled })
 });
 
-export const groupBindings = (path: string, bind: BindingsSpec): Partial<Record<BindingCategory, ElementBinding[]>> =>
+export const groupBindings = (
+  path: string,
+  bind: BindingsSpec,
+  sources?: SourceIndex,
+  where = path
+): Partial<Record<BindingCategory, ElementBinding[]>> =>
   toBindingSpecs(bind).reduce<Partial<Record<BindingCategory, ElementBinding[]>>>((groups, spec, index) => {
     const category = spec.category ?? 'attributes';
-    groups[category] = [...(groups[category] ?? []), authorBinding(path, index, spec)];
+    const resolved = sources ? { ...spec, source: resolveSource(spec.source, sources, where) } : spec;
+    groups[category] = [...(groups[category] ?? []), authorBinding(path, index, resolved)];
 
     return groups;
   }, {});

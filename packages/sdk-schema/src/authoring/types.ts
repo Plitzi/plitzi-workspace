@@ -44,7 +44,13 @@ export interface StepSpec {
 export interface BindingSpec {
   /** Attribute, style property or state key that receives the value. */
   to: string;
-  /** Where the value comes from, as `<idRef>.<path>` — e.g. `apiContainer_products-1.data`. */
+  /**
+   * Where the value comes from.
+   *
+   * Normally `<idRef>.<field>` — the name YOU gave the element, and the source prefix is looked up from what that
+   * element publishes. The four globals (`variables`, `navigation`, `auth`, `state`) are named as themselves, and
+   * a source written in full (`apiContainer_posts.data`) is left alone but checked.
+   */
   source: string;
   category?: BindingCategory;
   transformers?: ElementBinding['transformers'];
@@ -212,12 +218,25 @@ export interface StepVocabulary {
   utilities: Record<string, unknown>;
 }
 
+/**
+ * Which element types publish a data source, and under what name.
+ *
+ * Supplied for the same reason {@link StepVocabulary} is: the answer belongs to the elements, and this package is
+ * the one they depend on. Without it a binding source is written as declared and only its structure is checked.
+ */
+export type SourceTypes = Record<string, string>;
+
 export interface AuthorSpaceOptions {
   /**
    * The step vocabulary to hold this space's flows to. Left out, flows are written as declared and only their
    * structure is checked.
    */
   vocabulary?: StepVocabulary;
+  /**
+   * Element type → the source name it publishes under. Left out, a binding must name the source in full and a
+   * prefix that does not match the element it names goes unnoticed.
+   */
+  sourceTypes?: SourceTypes;
 }
 
 export interface AuthoredSpace {

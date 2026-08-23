@@ -83,13 +83,13 @@ const offlinePage: PageSpec = {
           idRef: 'catList',
           source: 'controlled',
           class: 'catsGrid',
-          bind: { items: 'apiContainer_cats.records' },
+          bind: { items: 'cats.records' },
           children: [
             image({
               src: '',
               alt: 'A cat',
               class: 'catPhoto',
-              bind: { src: 'list_catList.item.url', alt: 'list_catList.item.id' }
+              bind: { src: 'catList.item.url', alt: 'catList.item.id' }
             })
           ]
         })

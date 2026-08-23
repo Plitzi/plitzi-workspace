@@ -9,6 +9,7 @@ export type DialogContainerAttributes = AuthorableAttributes<DialogContainerProp
 
 const declaration = elementDeclaration<DialogContainerAttributes>()({
   type: 'dialogContainer',
+  sourceType: 'dialogContainer',
   content: {
     attributes: {
       headerLabel: 'Dialog Header',

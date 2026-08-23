@@ -19,6 +19,18 @@ export interface ElementAttributesBrand<A> {
 /** What every declaration is, whatever else it carries. */
 export interface ElementDeclarationData {
   type: string;
+  /**
+   * The kind of data source this element publishes, when it publishes one.
+   *
+   * A source is named `<sourceType>_<idRef>`, and the two halves come from different places: the idRef is the
+   * author's, and this is the ELEMENT'S. They are not always the same word — a `form` publishes under
+   * `apiContainer`, because what it offers descendants is a record like any other provider's — so an author who
+   * assembles the name from the type they can see writes one that resolves to nothing.
+   *
+   * Declared here so there is one answer: the component reads it to register under, and the authoring surface
+   * reads it to resolve a binding that named the idRef alone.
+   */
+  sourceType?: string;
   content?: {
     attributes?: Record<string, unknown>;
     definition?: { label?: string };

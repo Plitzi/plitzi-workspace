@@ -9,6 +9,7 @@ export type ModalContainerAttributes = AuthorableAttributes<ModalContainerProps>
 
 const declaration = elementDeclaration<ModalContainerAttributes>()({
   type: 'modalContainer',
+  sourceType: 'modalContainer',
   content: {
     attributes: {
       title: 'Modal Header',
