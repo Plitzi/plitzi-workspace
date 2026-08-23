@@ -94,6 +94,27 @@ export const hiddenWhen = (source: string): BindingSpec => ({
   transformers: [{ action: 'not', params: {} }]
 });
 
+/**
+ * The bindings an element declared, with its visibility condition among them.
+ *
+ * Appended rather than prepended so a `visible` written as a field lands where the same condition written into the
+ * list would have: a binding's id is derived from its position, and a space that moves to the field should not
+ * move its ids.
+ */
+export const withVisibility = (spec: { bind?: BindingsSpec; visible?: string }): BindingSpec[] | undefined => {
+  const bound = spec.bind === undefined ? undefined : toBindingSpecs(spec.bind);
+  if (spec.visible === undefined) {
+    return bound;
+  }
+
+  // `!source` is the inverse, and it is one field rather than a `hidden` beside it because `hidden` is a real HTML
+  // attribute — in this surface the attribute keeps a name it shares with anything else.
+  const negated = spec.visible.startsWith('!');
+  const source = negated ? spec.visible.slice(1).trim() : spec.visible;
+
+  return [...(bound ?? []), negated ? hiddenWhen(source) : visibleWhen(source)];
+};
+
 /** One binding, with the fields the runtime requires but nobody chooses filled in. */
 export const authorBinding = (path: string, index: number, spec: BindingSpec): ElementBinding => ({
   id: authoringId(`${path}/binding/${index}`),

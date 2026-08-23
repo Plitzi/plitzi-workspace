@@ -10,7 +10,6 @@ import {
   form,
   formControl,
   heading,
-  hiddenWhen,
   image,
   link,
   list,
@@ -26,7 +25,6 @@ import {
   setState,
   text,
   themeToggle,
-  visibleWhen,
   whenFailed,
   whenSucceeded
 } from '@plitzi/sdk-server/authoring';
@@ -49,13 +47,13 @@ import type { OfflineDataRaw } from '@plitzi/sdk-shared';
  */
 
 const bound = (type: 'text' | 'paragraph', source: string, className: string): ElementSpec =>
-  element(type, { content: '', class: className, bind: [{ to: 'content', source }] });
+  element(type, { content: '', class: className, bind: { content: source } });
 
 const boundHeading = (source: string, className: string, subType: Attributes<'heading'>['subType'] = 'h2'): ElementSpec =>
-  heading({ subType, content: '', class: className, bind: [{ to: 'content', source }] });
+  heading({ subType, content: '', class: className, bind: { content: source } });
 
 const boundImage = (source: string, className: string): ElementSpec =>
-  image({ alt: '', loadMode: 'lazy', class: className, bind: [{ to: 'src', source }] });
+  image({ alt: '', loadMode: 'lazy', class: className, bind: { src: source } });
 
 /** `internal` is a path this space serves; `page` would resolve a page id instead, and `external` leaves. */
 const linkTo = (href: string, className: string, children: ElementSpec[]): ElementSpec =>
@@ -95,27 +93,27 @@ const speciesStatus = defineElement<SpeciesAttributes>({
 
 const speciesPanel = (src: string): ElementSpec =>
   speciesStatus({
-      class: 'speciesPanel',
-      bind: [
-        { to: 'name', source: `${src}.species.name` },
-        { to: 'latin', source: `${src}.species.latin` },
-        { to: 'status', source: `${src}.species.status` },
-        { to: 'trend', source: `${src}.species.trend` },
-        { to: 'history', source: `${src}.species.history` },
-        { to: 'since', source: `${src}.species.since` },
-        { to: 'note', source: `${src}.species.note` },
-        // An article about a place rather than an animal simply does not draw one.
-        visibleWhen(`${src}.hasSpecies`)
-      ]
+    class: 'speciesPanel',
+    bind: {
+      name: `${src}.species.name`,
+      latin: `${src}.species.latin`,
+      status: `${src}.species.status`,
+      trend: `${src}.species.trend`,
+      history: `${src}.species.history`,
+      since: `${src}.species.since`,
+      note: `${src}.species.note`
+    },
+    // An article about a place rather than an animal simply does not draw one.
+    visible: `${src}.hasSpecies`
   });
 
 /** A link whose destination is a field — a card, a headline, an item in a list of recent posts. */
 const boundLink = (source: string, className: string, children: ElementSpec[]): ElementSpec =>
-  link({ mode: 'internal', class: className, bind: [{ to: 'href', source }], children });
+  link({ mode: 'internal', class: className, bind: { href: source }, children });
 
 /** An initial in a circle: no image to load, nothing to go missing, and it works for any name. */
 const avatar = (source: string, className = 'avatar'): ElementSpec =>
-  text({ content: '', class: className, bind: [{ to: 'content', source }] });
+  text({ content: '', class: className, bind: { content: source } });
 
 /** Author, date and reading time in one line — composed on the server, because a binding names one field. */
 const byline = (src: string): ElementSpec =>
@@ -164,7 +162,7 @@ const chrome = (ref: string, body: ElementSpec[]): ElementSpec => {
                   link({
                     href: '/write', mode: 'internal',
                     class: 'navLink',
-                    bind: [visibleWhen(`${src}.canWrite`)],
+                    visible: `${src}.canWrite`,
                     children: [label('Write')]
                   }),
                   /**
@@ -189,13 +187,13 @@ const chrome = (ref: string, body: ElementSpec[]): ElementSpec => {
                   link({
                     href: '/login', mode: 'internal',
                     class: 'signInLink',
-                    bind: [hiddenWhen(`${src}.signedIn`)],
+                    visible: `!${src}.signedIn`,
                     children: [label('Sign in')]
                   }),
                   link({
                     href: '/login', mode: 'internal',
                     class: 'accountPill',
-                    bind: [visibleWhen(`${src}.signedIn`)],
+                    visible: `${src}.signedIn`,
                     children: [avatar(`${src}.initial`, 'avatarSm'), bound('text', `${src}.accountLabel`, 'bylineName')]
                   })
                 ]
@@ -221,7 +219,7 @@ const writeLink = (ref: string): ElementSpec =>
   link({
     href: '/write', mode: 'internal',
     class: 'chipQuiet',
-    bind: [visibleWhen(`${ref}.canWrite`)],
+    visible: `${ref}.canWrite`,
     children: [label('Write a post')]
   });
 
@@ -330,13 +328,10 @@ const home: PageSpec = {
               link({
                 mode: 'internal',
                 class: 'hero',
-                bind: [
-                  { to: 'href', source: 'posts.featured.url' },
-                  // Without this the link is announced as every word inside the card — topic, headline,
-                  // standfirst, byline and button, in one breath. `label` is what it says instead.
-                  { to: 'label', source: 'posts.featured.title' },
-                  visibleWhen('posts.hasFeatured')
-                ],
+                // Without `label` the link is announced as every word inside the card — topic, headline,
+                // standfirst, byline and button, in one breath. It is what it says instead.
+                bind: { href: 'posts.featured.url', label: 'posts.featured.title' },
+                visible: 'posts.hasFeatured',
                 children: [
                   boundImage('posts.featured.cover', 'heroImage'),
                   container({
@@ -366,16 +361,14 @@ const home: PageSpec = {
                       text({
                         content: 'More stories',
                         class: 'sectionLabel',
-                        bind: [hiddenWhen('posts.filtered')]
+                        visible: '!posts.filtered'
                       }),
                       // The same slot, saying what the list was narrowed to. Two elements, one field, no branch.
                       text({
                         content: '',
                         class: 'sectionLabel',
-                        bind: [
-                          { to: 'content', source: 'posts.filterLabel' },
-                          visibleWhen('posts.filtered')
-                        ]
+                        bind: { content: 'posts.filterLabel' },
+                        visible: 'posts.filtered'
                       }),
                       /**
                        * The list renders its one child once per record, each row under its own scope — which is what
@@ -385,7 +378,7 @@ const home: PageSpec = {
                         idRef: 'postList',
                         source: 'controlled',
                         class: 'feed',
-                        bind: [{ to: 'items', source: 'posts.records' }],
+                        bind: { items: 'posts.records' },
                         children: [feedCard('postList.item')]
                       }),
                       /**
@@ -397,7 +390,7 @@ const home: PageSpec = {
                         idRef: 'postPager',
                         mode: 'pages', target: 'url', pageParam: 'page',
                         class: 'pager',
-                        bind: [{ to: 'pageInfo', source: 'posts.pageInfo' }]
+                        bind: { pageInfo: 'posts.pageInfo' }
                       })
                     ]
                   }),
@@ -434,7 +427,7 @@ const home: PageSpec = {
                                * The MAIN provider's topics, not the sidebar's — it is the one that was told what
                                * the URL asked for, so it is the one that knows which chip is chosen.
                                */
-                              bind: [{ to: 'items', source: 'posts.topics' }],
+                              bind: { items: 'posts.topics' },
                               /**
                                * Two chips per topic, and the binding picks.
                                *
@@ -447,19 +440,15 @@ const home: PageSpec = {
                                 link({
                                   mode: 'internal',
                                   class: 'chipActive',
-                                  bind: [
-                                    { to: 'href', source: 'topicList.item.url' },
-                                    visibleWhen('topicList.item.isActive')
-                                  ],
+                                  bind: { href: 'topicList.item.url' },
+                                  visible: 'topicList.item.isActive',
                                   children: [bound('text', 'topicList.item.name', 'inlineLabel')]
                                 }),
                                 link({
                                   mode: 'internal',
                                   class: 'chipQuiet',
-                                  bind: [
-                                    { to: 'href', source: 'topicList.item.url' },
-                                    hiddenWhen('topicList.item.isActive')
-                                  ],
+                                  bind: { href: 'topicList.item.url' },
+                                  visible: '!topicList.item.isActive',
                                   children: [bound('text', 'topicList.item.name', 'inlineLabel')]
                                 })
                               ]
@@ -470,7 +459,7 @@ const home: PageSpec = {
                               idRef: 'recentList',
                               source: 'controlled',
                               class: 'quietList',
-                              bind: [{ to: 'items', source: 'recent.records' }],
+                              bind: { items: 'recent.records' },
                               children: [
                                 boundLink('recentList.item.url', 'quietItem', [
                                   bound('text', 'recentList.item.title', 'quietTitle'),
@@ -492,7 +481,7 @@ const home: PageSpec = {
               paragraph({
                 content: 'No posts yet. Sign in as ada and write the first one.',
                 class: 'panelText',
-                bind: [visibleWhen('posts.isEmpty')]
+                visible: 'posts.isEmpty'
               })
             ]
           })
@@ -548,7 +537,7 @@ const post: PageSpec = {
                 class: 'article',
                 // Two halves of one answer, each bound to a flag the action returned. A page for a slug nobody wrote
                 // has to say so, and saying so is a binding rather than a branch.
-                bind: [visibleWhen('post.found')],
+                visible: 'post.found',
                 children: [
                   bound('text', 'post.record.topic', 'chip'),
                   boundHeading('post.record.title', 'articleTitle', 'h1'),
@@ -584,10 +573,8 @@ const post: PageSpec = {
                       link({
                         mode: 'internal',
                         class: 'chipQuiet',
-                        bind: [
-                          { to: 'href', source: 'post.editUrl' },
-                          visibleWhen('post.canEdit')
-                        ],
+                        bind: { href: 'post.editUrl' },
+                        visible: 'post.canEdit',
                         children: [label('Edit this post')]
                       })
                     ]
@@ -601,7 +588,7 @@ const post: PageSpec = {
                   richText({
                     format: 'markdown', content: '',
                     class: 'prose',
-                    bind: [{ to: 'content', source: 'post.record.body' }]
+                    bind: { content: 'post.record.body' }
                   }),
                   /**
                    * The one write on this blog anybody may make — no session, no permission, no account.
@@ -634,7 +621,7 @@ const post: PageSpec = {
                          * who has already counted and answers the second press with the total rather than adding
                          * to it — a rule about other readers is not something a browser can be asked to keep.
                          */
-                        bind: [{ to: 'disabled', source: 'state.sightingDone' }],
+                        bind: { disabled: 'state.sightingDone' },
                         flows: [
                           [
                             named('seen', onClick()),
@@ -657,7 +644,7 @@ const post: PageSpec = {
                       paragraph({
                         content: '',
                         class: 'notice',
-                        bind: [{ to: 'content', source: 'state.sighting' }]
+                        bind: { content: 'state.sighting' }
                       })
                     ]
                   }),
@@ -679,14 +666,14 @@ const post: PageSpec = {
               }),
               container({
                 class: 'article',
-                bind: [visibleWhen('post.found')],
+                visible: 'post.found',
                 children: [
                   text('Keep reading', { class: 'sectionLabel' }),
                   list({
                     idRef: 'moreList',
                     source: 'controlled',
                     class: 'moreGrid',
-                    bind: [{ to: 'items', source: 'post.more' }],
+                    bind: { items: 'post.more' },
                     children: [
                       boundLink('moreList.item.url', 'moreCard', [
                         boundImage('moreList.item.cover', 'moreImage'),
@@ -700,7 +687,7 @@ const post: PageSpec = {
               }),
               container({
                 class: 'centred',
-                bind: [hiddenWhen('post.found')],
+                visible: '!post.found',
                 children: [
                   heading({
                     subType: 'h1', content: 'That post does not exist.',
@@ -754,7 +741,7 @@ const boundField = (
     name, label: labelText, subType, required: true, defaultValue: '', ...extra,
     class: 'fieldRow',
     slots: { input, label: 'fieldLabel' },
-    bind: [{ to: 'defaultValue', source }]
+    bind: { defaultValue: source }
   });
 
 /**
@@ -865,7 +852,7 @@ const write: PageSpec = {
                   paragraph({
                     content: '',
                     class: 'notice',
-                    bind: [{ to: 'content', source: 'state.notice' }]
+                    bind: { content: 'state.notice' }
                   })
                 ]
               }),
@@ -922,7 +909,7 @@ const edit: PageSpec = {
             children: [
               container({
                 class: 'editor',
-                bind: [visibleWhen('editPost.canEdit')],
+                visible: 'editPost.canEdit',
                 children: [
                   container({
                     class: 'form',
@@ -1012,7 +999,7 @@ const edit: PageSpec = {
                       paragraph({
                         content: '',
                         class: 'notice',
-                        bind: [{ to: 'content', source: 'state.notice' }]
+                        bind: { content: 'state.notice' }
                       })
                     ]
                   }),
@@ -1036,7 +1023,7 @@ const edit: PageSpec = {
               }),
               container({
                 class: 'centred',
-                bind: [visibleWhen('editPost.cannotEdit')],
+                visible: 'editPost.cannotEdit',
                 children: [
                   container({
                     class: 'cardSurface',
@@ -1055,7 +1042,7 @@ const edit: PageSpec = {
               }),
               container({
                 class: 'centred',
-                bind: [hiddenWhen('editPost.found')],
+                visible: '!editPost.found',
                 children: [
                   container({
                     class: 'cardSurface',
@@ -1184,12 +1171,12 @@ const account: PageSpec = {
                       text({
                         content: 'May publish',
                         class: 'chip',
-                        bind: [visibleWhen('chromeAccount.canWrite')]
+                        visible: 'chromeAccount.canWrite'
                       }),
                       text({
                         content: 'Reader',
                         class: 'chipQuiet',
-                        bind: [visibleWhen('chromeAccount.readOnly')]
+                        visible: 'chromeAccount.readOnly'
                       })
                     ]
                   }),

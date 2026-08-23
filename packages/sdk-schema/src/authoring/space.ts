@@ -2,7 +2,7 @@ import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import { BREAKPOINTS, className, css, sameRules, toResponsive } from '@plitzi/sdk-style/authoring';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
-import { GLOBAL_SOURCES, groupBindings } from './bindings';
+import { GLOBAL_SOURCES, groupBindings, withVisibility } from './bindings';
 import { authorFlows } from './flows';
 import { authoringId, digest } from './ids';
 import { didYouMean } from './suggest';
@@ -460,7 +460,10 @@ class SpaceAuthor {
   private addElement(spec: ElementSpec, path: string, rootId: string, parentId: string): string {
     const id = authoringId(path);
     const idRef = spec.idRef ?? this.nextRef(spec.type);
-    this.assertStepsKnown(spec.flows, `Element "${spec.type}" (${idRef}) at ${path}`);
+    const where = `Element "${spec.type}" (${idRef}) at ${path}`;
+    this.assertStepsKnown(spec.flows, where);
+    const bindings = withVisibility(spec);
+    const sourceIndex = this.options.sourceTypes ? this.sources : undefined;
 
     const element: Element = {
       id,
@@ -480,16 +483,7 @@ class SpaceAuthor {
           ...(spec.variant ? { styleVariant: { [spec.type]: { base: spec.variant } } } : {})
         },
         ...(spec.runtime ? { runtime: spec.runtime } : {}),
-        ...(spec.bind
-          ? {
-              bindings: groupBindings(
-                path,
-                spec.bind,
-                this.options.sourceTypes ? this.sources : undefined,
-                `Element "${spec.type}" (${idRef}) at ${path}`
-              )
-            }
-          : {}),
+        ...(bindings ? { bindings: groupBindings(path, bindings, sourceIndex, where) } : {}),
         ...(spec.flows ? { interactions: authorFlows(path, spec.flows, idRef) } : {})
       }
     };

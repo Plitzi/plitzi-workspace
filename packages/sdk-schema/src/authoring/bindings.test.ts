@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { GLOBAL_SOURCES, resolveSource } from './index';
+import { GLOBAL_SOURCES, resolveSource, withVisibility } from './index';
 
 import type { SourceIndex } from './index';
 
@@ -49,5 +49,37 @@ describe('resolveSource', () => {
   it('refuses a name nothing answers to, and suggests the one meant', () => {
     expect(() => resolve('psots.title')).toThrow(/nothing in this space answers to "psots".*did you mean "posts"/);
     expect(() => resolve('apiContainer_psots.title')).toThrow(/no element answers to the idRef "psots"/);
+  });
+});
+
+describe('withVisibility', () => {
+  it('appends the condition after the bindings the element declared', () => {
+    const bindings = withVisibility({ bind: { href: 'posts.url' }, visible: 'posts.hasPosts' });
+
+    expect(bindings).toEqual([
+      { to: 'href', source: 'posts.url' },
+      { to: 'visibility', source: 'posts.hasPosts', category: 'initialState' }
+    ]);
+  });
+
+  /**
+   * One field with a `!` rather than a `visible`/`hidden` pair: `hidden` is a real HTML attribute (NodeHtml carries
+   * it), and in this surface the attribute keeps a name it shares with anything else. A type test fails the build
+   * if an authoring field ever collides with one — which is how this design was settled.
+   */
+  it('reads a leading ! as the inverse', () => {
+    expect(withVisibility({ visible: '!posts.hasPosts' })).toEqual([
+      {
+        to: 'visibility',
+        source: 'posts.hasPosts',
+        category: 'initialState',
+        transformers: [{ action: 'not', params: {} }]
+      }
+    ]);
+  });
+
+  it('leaves an element with no condition exactly as it was', () => {
+    expect(withVisibility({ bind: { href: 'posts.url' } })).toEqual([{ to: 'href', source: 'posts.url' }]);
+    expect(withVisibility({})).toBeUndefined();
   });
 });

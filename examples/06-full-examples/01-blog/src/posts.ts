@@ -637,7 +637,7 @@ export type TopicView = {
   url: string;
   /**
    * Which of the two chips this item renders — "selected" is a different shape, not a tint on the same one, so the
-   * list draws both and the bindings pick: one `visibleWhen` this is true, the other `hiddenWhen` it is.
+   * list draws both and the bindings pick: one `visible` on this field, the other `visible` on its negation.
    */
   isActive: boolean;
 };

@@ -89,7 +89,7 @@ export const getPostTask: ActionTask<{ slug: string }> = {
      * The flow's output step interpolates this whole result into JSON, and a missing value would render as
      * nothing at all: `{"record": }` is not a document, so a URL nobody wrote a post for would fail the run
      * rather than show a page that says so. `found` is what both halves of the page bind their visibility to —
-     * one with `visibleWhen`, the other with `hiddenWhen`.
+     * one on the field, the other on `!found`.
      */
     return {
       record: post ? view(post) : {},

@@ -100,6 +100,7 @@ every element:
 | `variant` | a style variant of the element's own vocabulary |
 | `slots` | a class for one of the element's OTHER selectors — a form control's `input`, `label`, `error` |
 | `bind` | where a value comes from |
+| `visible` | show it only while this source is true; `!source` for the inverse |
 | `flows` | what happens on click, on submit, on load |
 | `runtime` | `'server'` resolves this element's data on the server |
 | `children` | the tree |
@@ -209,11 +210,26 @@ The full form is for everything else — element state, a transformer, a conditi
 paragraph({
   bind: [
     { to: 'content', source: 'cats.count',
-      transformers: [{ action: 'twigTemplate', params: { template: '{{source}} cats came back.' } }] },
-    visibleWhen('cats.hasRecords')
+      transformers: [{ action: 'twigTemplate', params: { template: '{{source}} cats came back.' } }] }
   ]
 })
 ```
+
+**Whether an element is on screen is its own field, not a binding.** `visible` takes a source, and a leading `!`
+inverts it:
+
+```ts
+container({ visible: 'cats.hasRecords', children: [ … ] })
+container({ visible: '!cats.hasRecords', children: [text('No cats today.')] })
+```
+
+Visibility is element STATE rather than an attribute, which is the one binding nobody guesses the category of —
+written into `bind` as an attribute it lands on a `visibility` no element reads, so the element stays on screen and
+nothing reports it. As a field it cannot be got wrong, and it leaves `bind` free to stay in its short form: a
+condition is not an attribute, and pushing one into the list turned every binding beside it into the long one.
+
+It is one field with a `!` rather than a `visible`/`hidden` pair because **`hidden` is a real HTML attribute** —
+and in this surface an attribute keeps a name it shares with anything else.
 
 A source names **the idRef you gave the element**, and the prefix is filled in:
 
@@ -244,13 +260,14 @@ question whose only reason to exist is the missing word, and it puts "when is th
 produced the data rather than in the page that hides it.
 
 ```ts
-container({ bind: [visibleWhen('post.found')], children: [ … ] }),
-container({ bind: [hiddenWhen('post.found')], children: [text('No such post.')] })
+container({ visible: 'post.found', children: [ … ] }),
+container({ visible: '!post.found', children: [text('No such post.')] })
 ```
 
-`hiddenWhen` is `visibleWhen` with the `not` transformer, which is available to any binding. It reads a boolean
-that travelled as TEXT — `"false"` and `"0"`, which JavaScript calls true — and treats an empty array as false. An
-empty object is true, because a data source answers `{}` both for "no record" and for a record with no fields.
+The `!` is the `not` transformer, which is available to any binding (`transformers: [{ action: 'not', params: {} }]`).
+It reads a boolean that travelled as TEXT — `"false"` and `"0"`, which JavaScript calls true — and treats an empty
+array as false. An empty object is true, because a data source answers `{}` both for "no record" and for a record
+with no fields.
 
 Only for a real inverse. `cannotEdit: Boolean(post) && !canEdit` is three states, not two — the page shows nothing
 at all when there is no post — and a condition like that still belongs where the data is made.

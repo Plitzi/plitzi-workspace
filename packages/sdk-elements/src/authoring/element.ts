@@ -33,8 +33,10 @@ export interface AuthoringProps {
   variant?: string;
   /** A class for one of the element's other selectors — a form control's `input`, `label`, `error`. */
   slots?: Record<string, string | StyleDeclaration>;
-  /** `{ content: 'apiContainer_posts.title' }`, or the full form for state, transformers and conditions. */
+  /** `{ content: 'posts.title' }`, or the full form for state, transformers and conditions. */
   bind?: BindingsSpec;
+  /** Show this element only while the value at this source is true. `!source` shows it while the value is false. */
+  visible?: string;
   /** One flow per entry; steps are chained in the order written. */
   flows?: StepSpec[][];
   /** `server` resolves this element's data on the server rather than in the browser. */
@@ -67,7 +69,20 @@ const buildSpec = (
 ): ElementSpec => {
   // The authoring fields, named once. Everything left over is an attribute — including `label`, which is why it
   // is not in this list.
-  const { idRef, class: shared, css, variant, slots, bind, flows, runtime, children, meta, ...attributes } = props;
+  const {
+    idRef,
+    class: shared,
+    css,
+    variant,
+    slots,
+    bind,
+    visible,
+    flows,
+    runtime,
+    children,
+    meta,
+    ...attributes
+  } = props;
 
   return {
     type,
@@ -77,6 +92,7 @@ const buildSpec = (
     ...(variant === undefined ? {} : { variant }),
     ...(slots === undefined ? {} : { slots }),
     ...(bind === undefined ? {} : { bind }),
+    ...(visible === undefined ? {} : { visible }),
     ...(flows === undefined ? {} : { flows }),
     ...(runtime === undefined ? {} : { runtime }),
     ...(children === undefined ? {} : { children }),

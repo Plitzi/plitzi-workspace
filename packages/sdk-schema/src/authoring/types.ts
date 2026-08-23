@@ -120,6 +120,19 @@ export interface ElementSpec {
    */
   slots?: Record<string, string | StyleDeclaration>;
   bind?: BindingsSpec;
+  /**
+   * Show this element only while the value at this source is true. `!source` shows it while the value is false.
+   *
+   * Visibility is element STATE rather than an attribute, which is the one binding nobody guesses the category of
+   * — and getting it wrong writes a `visibility` attribute no element reads, so the element stays visible and
+   * nothing reports anything. As a field it cannot be got wrong, and it leaves {@link ElementSpec.bind} free to
+   * stay in its short form: a condition is not an attribute, and pushing one into the list turned every binding
+   * beside it into the long one.
+   *
+   * One field with a `!` rather than a `visible`/`hidden` pair, because `hidden` is a real HTML attribute — and in
+   * this surface the attribute keeps a name it shares with anything else.
+   */
+  visible?: string;
   /** One flow per entry. Steps are chained in order. */
   flows?: StepSpec[][];
   runtime?: ElementRuntime;

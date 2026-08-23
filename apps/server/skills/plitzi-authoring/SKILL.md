@@ -62,6 +62,7 @@ container([hero, grid])         // an array is the children
 | `variant` | a style variant of the element's own vocabulary |
 | `slots` | a class for one of the element's OTHER selectors — a form control's `input`, `label`, `error` |
 | `bind` | where a value comes from |
+| `visible` | show it only while this source is true; `!source` for the inverse |
 | `flows` | what happens on click, on submit, on load |
 | `runtime` | `'server'` resolves this element's data on the server |
 | `children` | the tree |
@@ -113,8 +114,10 @@ An element has exactly ONE base selector, so a variant is its own class over a s
 ## Data
 
 ```ts
-heading({ bind: { content: 'posts.title' } })                                 // short form: attributes
-paragraph({ bind: [visibleWhen('posts.hasPosts')] })                          // full form: state, transformers, conditions
+heading({ bind: { content: 'posts.title' } })            // short form: attributes
+paragraph({ visible: 'posts.hasPosts' })                // on screen only while this is true
+paragraph({ visible: '!posts.hasPosts' })               // …and its inverse
+container({ bind: [{ to: 'content', source: 'x.y', transformers: [ … ] }] })   // full form
 ```
 
 **A source names the idRef you gave the element** — `'posts.title'`, `'postList.item.cover'` — and the prefix is
@@ -127,11 +130,10 @@ is the quietest failure a space can carry.
 Server-resolved sections are an `apiContainer` with `runtime: 'server'` naming a connector or an action, and a
 space that has any needs `rsc: { enabled: true }`.
 
-**Never ask the data for a field's opposite.** A binding shows an element when its field is true, so both sides of
-one question are `visibleWhen(x)` and `hiddenWhen(x)` — not an `x` and a `notX` beside it in the server's answer.
-`hiddenWhen` is `visibleWhen` plus the `not` transformer, which reads a boolean that travelled as text (`"false"`,
-`"0"`) and treats an empty array as false; an empty object is true. Only for a real inverse — a three-state
-condition (`Boolean(post) && !canEdit`) still belongs where the data is made.
+**Never ask the data for a field's opposite.** Both sides of one question are `visible: 'x'` and `visible: '!x'` —
+not an `x` and a `notX` beside it in the server's answer. The `!` is the `not` transformer, which reads a boolean
+that travelled as text (`"false"`, `"0"`) and treats an empty array as false; an empty object is true. Only for a
+real inverse — a three-state condition (`Boolean(post) && !canEdit`) still belongs where the data is made.
 
 ## Flows
 
