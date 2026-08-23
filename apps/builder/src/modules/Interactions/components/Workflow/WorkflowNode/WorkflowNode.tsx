@@ -21,8 +21,7 @@ import type {
 export type WorkflowNodeProps = {
   id?: string;
   title?: string;
-  // Restated from `InteractionCallbackType` rather than narrowed by hand: a server action's steps are `task`
-  // nodes, and the editor draws them the same way it draws the client ones.
+  // Shared union: server-action steps are `task` nodes, drawn like client ones.
   type?: InteractionCallbackType;
   canDelete?: boolean;
   action?: string;

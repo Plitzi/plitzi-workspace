@@ -52,7 +52,6 @@ const ParamBinding = ({ nodeId: nodeIdProp = '', id, value = '', onChange }: Par
       if (!option?.value) {
         onChange?.(id, '');
       } else if (option.value && node && !option.value.includes(node.value)) {
-        // Custom Node
         onChange?.(id, `{{ ${node.value}.${option.value} }}`);
       } else {
         onChange?.(id, `{{ ${option.value} }}`);
@@ -90,7 +89,6 @@ const ParamBinding = ({ nodeId: nodeIdProp = '', id, value = '', onChange }: Par
 
     let paths: Promise<Exclude<Option, OptionGroup>[]> | Exclude<Option, OptionGroup>[] = [];
     if (!node.value.startsWith('node_') && (dataSource[node.value] as SourceMeta | undefined)) {
-      // Its Data Source
       paths = new Promise(async resolve => {
         let { fields } = dataSource[node.value];
         if (typeof fields === 'function') {
@@ -109,7 +107,6 @@ const ParamBinding = ({ nodeId: nodeIdProp = '', id, value = '', onChange }: Par
         resolve(finalFields);
       });
     } else if (previewData[node.value] as Record<string, unknown> | undefined) {
-      // Its Node
       paths = getPathsFromObeject(previewData[node.value]).reduce<Exclude<Option, OptionGroup>[]>(
         (acum, path) => [...acum, { value: `${node.value}.${path}`, label: path }],
         []

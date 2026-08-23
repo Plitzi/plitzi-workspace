@@ -18,13 +18,7 @@ export type WorkflowContextProviderProps = {
   direction: 'horizontal' | 'vertical';
   dataSource?: Record<string, Source['meta']>;
   nodeDefinitions?: InteractionCallback[];
-  /**
-   * What a new TRIGGER starts as, when there is an obvious answer.
-   *
-   * A server action is nearly always called by a page, so a new flow that opens on "Select a trigger" asks a
-   * question with one sensible answer. An element's interactions have no such default — an `onClick` is no more
-   * likely than an `onSubmit` — so this stays optional and they pass nothing.
-   */
+  /** Default action for a new trigger, when the flow kind has an obvious one. */
   defaultTrigger?: string;
   onChange: (nodes: Record<string, ElementInteraction>, debounced?: boolean) => void;
   setFlowId: (flowId: string) => void;
@@ -54,9 +48,6 @@ const WorkflowContextProvider = ({
             return;
           }
 
-          // A preset trigger comes ready to use: its action, its params at their declared defaults, and switched
-          // on — otherwise "new flow" leaves an author picking the only option and then flipping a toggle before
-          // anything can run.
           const preset =
             nodeType === 'trigger' && defaultTrigger
               ? nodeDefinitions?.find(definition => definition.type === 'trigger' && definition.action === defaultTrigger)
@@ -87,18 +78,14 @@ const WorkflowContextProvider = ({
             return;
           }
 
-          // Nodes
           const siblingNodeAfter = draft[siblingNodeBefore.afterNode];
 
-          // Update Before Node
           siblingNodeBefore.afterNode = id;
 
-          // Update After sibling
           if (siblingNodeAfter as ElementInteraction | undefined) {
             siblingNodeAfter.beforeNode = id;
           }
 
-          // Set Node relationship
           newNode.afterNode = (siblingNodeAfter as ElementInteraction | undefined)?.id ?? '';
           newNode.beforeNode = siblingNodeBefore.id;
 
@@ -138,11 +125,9 @@ const WorkflowContextProvider = ({
 
           const nodesToDelete: ElementInteraction[] = [];
           if (node.type === 'trigger') {
-            // Trigger
             const dependantNodes = Object.values(draft).filter(nodeAux => nodeAux.flowId === node.flowId);
             nodesToDelete.push(...dependantNodes);
           } else {
-            // Callback
             nodesToDelete.push(node);
             const beforeNode = draft[node.beforeNode];
             const afterNode = draft[node.afterNode];
@@ -219,13 +204,11 @@ const WorkflowContextProvider = ({
           const afterNode = draft[node.afterNode];
           switch (direction) {
             case 'up': {
-              // Relationships
               set(draft, `${beforeNode.beforeNode}.afterNode`, node.id);
               if (afterNode as ElementInteraction | undefined) {
                 set(draft, `${afterNode.id}.beforeNode`, beforeNode.id);
               }
 
-              // Swap
               set(draft, `${node.id}.beforeNode`, beforeNode.beforeNode);
               set(draft, `${node.id}.afterNode`, beforeNode.id);
               set(draft, `${beforeNode.id}.beforeNode`, node.id);
@@ -239,13 +222,11 @@ const WorkflowContextProvider = ({
             }
 
             case 'down': {
-              // Relationships
               set(draft, `${beforeNode.id}.afterNode`, afterNode.id);
               if (get(draft, `${afterNode.id}.afterNode`)) {
                 set(draft, `${afterNode.afterNode}.beforeNode`, node.id);
               }
 
-              // Swap
               set(draft, `${node.id}.beforeNode`, afterNode.id);
               set(draft, `${node.id}.afterNode`, afterNode.afterNode);
               set(draft, `${afterNode.id}.afterNode`, node.id);
@@ -278,7 +259,7 @@ const WorkflowContextProvider = ({
     const sourcesLoaded = await Object.keys(dataSource).reduce(async (acum, sourceKey) => {
       let fields = dataSource[sourceKey].fields;
       if (typeof fields === 'function') {
-        fields = await fields(); // {}
+        fields = await fields();
       }
 
       return { ...(await acum), [sourceKey]: fields };

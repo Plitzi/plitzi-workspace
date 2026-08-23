@@ -17,7 +17,7 @@ export type NodeHeaderProps = {
   className?: string;
   id?: string;
   title?: string;
-  // The shared union, not a hand-narrowed copy: server-action steps are `task` nodes and draw the same way.
+  // Shared union: server-action steps are `task` nodes and draw the same way.
   type?: InteractionCallbackType;
   action?: string;
   elementId?: string;
@@ -52,7 +52,6 @@ const NodeHeader = ({
   onClickRemove
 }: NodeHeaderProps) => {
   const { moveNode } = use(WorkflowContext);
-  // The node's target has no idRef when the element it points at is one of the flagged, unreferenced entries.
   const targetUnreferenced = isTargetUnreferenced({ elementId }, nodeDefinitions);
   const warnings = useMemo(
     () => getNodeWarnings({ type, action, elementId }, nodeDefinition, targetUnreferenced),
@@ -80,9 +79,7 @@ const NodeHeader = ({
         type: string;
         elementId?: string;
       };
-      // The option value is `${elementId}_${action}`; a utility definition has no elementId, so its value starts with
-      // an empty segment. Read the action from the value and take the target from the option itself (never the split
-      // string, which would stringify an absent elementId as the text "undefined").
+      // Option value is `${elementId}_${action}`; a utility's empty elementId would split into "undefined".
       const action = value.split('_').slice(1).join('_');
       if (!action) {
         return;
@@ -104,8 +101,7 @@ const NodeHeader = ({
         {}
       );
 
-      // A utility (any definition with no elementId) is registered on no element — store null, never the stringified
-      // "undefined" that the split value would carry.
+      // A utility registers on no element — store null, never a stringified "undefined".
       onChange?.({
         action,
         elementId: nodeDefinition.elementId ?? null,
@@ -199,8 +195,6 @@ const NodeHeader = ({
               'bg-blue-400 text-white': type === 'trigger',
               'bg-purple-400 text-white': type === 'callback' || type === 'globalCallback',
               'bg-orange-400 text-white': type === 'utility',
-              // A server-action step. It had no colour and no icon at all: the union grew a member and this list
-              // did not, so every task in an action drew as an empty box.
               'bg-emerald-500 text-white': type === 'task'
             }
           )}

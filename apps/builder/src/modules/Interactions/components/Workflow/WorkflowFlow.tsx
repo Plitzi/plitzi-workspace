@@ -13,8 +13,7 @@ export type WorkflowFlowProps = {
   nodes?: Record<string, ElementInteraction>;
   triggerTitle?: string;
   callbackTitle?: string;
-  /** What a new step is. `callback` in a page flow; a server action's steps are `task`, and adding the wrong kind
-   *  produces a node the runner refuses — which is what happened before this was a prop. */
+  /** `callback` in a page flow; server-action steps are `task`. */
   stepType?: ElementInteraction['type'];
 };
 

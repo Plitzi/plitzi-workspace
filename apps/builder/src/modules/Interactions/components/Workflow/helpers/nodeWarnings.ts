@@ -1,13 +1,11 @@
 import type { ElementInteraction, InteractionCallback } from '@plitzi/sdk-shared';
 
-// A node elementId that is really "no element" but serialized as text (the builder historically stored the string
-// "undefined" for a utility, which has no target). Treated as an absent target.
+// Legacy data stored "undefined"/"null" as text for a missing target; treat as absent.
 const NULLISH_ELEMENT_IDS = new Set(['undefined', 'null', '']);
 
 type NodeShape = Pick<ElementInteraction, 'type' | 'action' | 'elementId'>;
 
-// `danger` — the step is broken and will NOT run (no action, unrecognized action, a callback target that resolves to
-// nothing). `warning` — the step still runs but is misconfigured (a utility carrying a target, a harmless leftover).
+/** `danger`: the step will not run. `warning`: it runs but is misconfigured. */
 export type WarningLevel = 'warning' | 'danger';
 
 export interface NodeWarning {
@@ -15,14 +13,13 @@ export interface NodeWarning {
   message: string;
 }
 
-/** FontAwesome classes (icon + color) per level — shared by the node and flow indicators so they stay consistent. */
+/** Icon + color per level, shared by the node and flow indicators. */
 export const WARNING_ICON: Record<WarningLevel, string> = {
   danger: 'fa-solid fa-circle-exclamation text-red-500',
   warning: 'fa-solid fa-triangle-exclamation text-orange-400'
 };
 
-/** The definition a stored node resolves to, matched by type, action and (for element callbacks) target — mirrors
- *  how WorkflowNode renders it. Undefined means the node points at nothing the runtime knows. */
+/** Definition a stored node resolves to; undefined means nothing known matches it. */
 export const findNodeDefinition = (
   node: NodeShape,
   nodeDefinitions: InteractionCallback[] | undefined
@@ -34,8 +31,7 @@ export const findNodeDefinition = (
       definition.action === node.action
   );
 
-/** The node targets an element that exists but has no idRef (a flagged, unreferenced definition), so the runtime
- *  cannot wire it — surfaced separately from the generic "not recognized" case. */
+/** The target element exists but has no idRef, so the runtime cannot wire it. */
 export const isTargetUnreferenced = (
   node: Pick<ElementInteraction, 'elementId'>,
   nodeDefinitions: InteractionCallback[] | undefined
@@ -43,9 +39,7 @@ export const isTargetUnreferenced = (
   Boolean(node.elementId) &&
   Boolean(nodeDefinitions?.some(definition => definition.elementId === node.elementId && definition.unreferenced));
 
-// Problems with a stored interaction node, each tagged with a severity, surfaced in the builder so the user sees that
-// a step is malformed. Independent of the MCP validator — the builder checks against the real nodeDefinitions it
-// renders from.
+/** Malformations of a stored node, checked against the definitions the editor renders from. */
 export const getNodeWarnings = (
   node: NodeShape,
   nodeDefinition: InteractionCallback | undefined,
@@ -69,8 +63,6 @@ export const getNodeWarnings = (
   }
 
   if (elementId === 'undefined' || elementId === 'null') {
-    // A utility ignores its target, so a stray nullish string is harmless (warning); a callback resolves against it,
-    // so the step is broken (danger).
     warnings.push(
       type === 'utility'
         ? {
@@ -88,8 +80,7 @@ export const getNodeWarnings = (
     warnings.push({ level: 'warning', message: 'A utility runs on no element, so it should have no target element.' });
   }
 
-  // No matching definition: an unknown action, the wrong node type, or a target element that no longer exists.
-  // targetUnreferenced is a distinct, separately-flagged case (the target exists but has no idRef).
+  // No matching definition: unknown action, wrong node type, or a target that no longer exists.
   if (!nodeDefinition && !targetUnreferenced) {
     warnings.push({
       level: 'danger',
@@ -100,7 +91,6 @@ export const getNodeWarnings = (
   return warnings;
 };
 
-/** The most severe level among a node's warnings (danger wins), or undefined when there are none. */
 export const worstLevel = (warnings: NodeWarning[]): WarningLevel | undefined => {
   if (warnings.some(warning => warning.level === 'danger')) {
     return 'danger';
@@ -109,7 +99,7 @@ export const worstLevel = (warnings: NodeWarning[]): WarningLevel | undefined =>
   return warnings.length > 0 ? 'warning' : undefined;
 };
 
-/** Flow-level rollup: how many steps are malformed and the worst severity among them (drives the flow indicator). */
+/** Flow rollup for the flow indicator: malformed-step count and worst severity. */
 export const summarizeFlow = (
   nodes: Record<string, ElementInteraction>,
   nodeDefinitions: InteractionCallback[] | undefined
