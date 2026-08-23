@@ -238,7 +238,6 @@ the session, resolved on the server with the rest of the page:
 ```ts
 run: (_params, ctx) => ({
   signedIn: Boolean(ctx.user),
-  signedOut: !ctx.user,
   canWrite: Boolean(ctx.user?.permissions.includes('postPublish')),
   accountLabel: ctx.user?.username ?? ''
 })
@@ -248,10 +247,10 @@ The editor link binds its **visibility** to `canWrite` and the account button bi
 `accountLabel`. So `ada` gets her name and the editor, and `grace` gets her name and no editor — with no condition
 written into the page.
 
-The account control is **two elements rather than one that changes its mind**: an invitation bound to `signedOut`
-and a name bound to `signedIn`. A field and its opposite, because a binding shows an element when its field is
-true and the vocabulary has no "unless" — and because an invitation and an identity want different shapes, not a
-compromise between the two.
+The account control is **two elements rather than one that changes its mind**: a name bound with
+`visibleWhen('…signedIn')` and an invitation bound with `hiddenWhen` on the same field. An invitation and an
+identity want different shapes, not a compromise between the two — but that is one question, so the server answers
+it once and the page reads it from both sides.
 
 Hiding a link is a courtesy, though, and the README of this example would be lying if it stopped there: the lock
 is the `access: 'role'` above. `grace` can type the URL, reach the editor, fill it in, and still be refused.

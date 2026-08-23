@@ -10,6 +10,7 @@ import {
   form,
   formControl,
   heading,
+  hiddenWhen,
   image,
   link,
   list,
@@ -188,7 +189,7 @@ const chrome = (ref: string, body: ElementSpec[]): ElementSpec => {
                   link({
                     href: '/login', mode: 'internal',
                     class: 'signInLink',
-                    bind: [visibleWhen(`${src}.signedOut`)],
+                    bind: [hiddenWhen(`${src}.signedIn`)],
                     children: [label('Sign in')]
                   }),
                   link({
@@ -365,7 +366,7 @@ const home: PageSpec = {
                       text({
                         content: 'More stories',
                         class: 'sectionLabel',
-                        bind: [visibleWhen('apiContainer_posts.unfiltered')]
+                        bind: [hiddenWhen('apiContainer_posts.filtered')]
                       }),
                       // The same slot, saying what the list was narrowed to. Two elements, one field, no branch.
                       text({
@@ -457,7 +458,7 @@ const home: PageSpec = {
                                   class: 'chipQuiet',
                                   bind: [
                                     { to: 'href', source: 'list_topicList.item.url' },
-                                    visibleWhen('list_topicList.item.isInactive')
+                                    hiddenWhen('list_topicList.item.isActive')
                                   ],
                                   children: [bound('text', 'list_topicList.item.name', 'inlineLabel')]
                                 })
@@ -699,7 +700,7 @@ const post: PageSpec = {
               }),
               container({
                 class: 'centred',
-                bind: [visibleWhen('apiContainer_post.missing')],
+                bind: [hiddenWhen('apiContainer_post.found')],
                 children: [
                   heading({
                     subType: 'h1', content: 'That post does not exist.',
@@ -1054,7 +1055,7 @@ const edit: PageSpec = {
               }),
               container({
                 class: 'centred',
-                bind: [visibleWhen('apiContainer_editPost.missing')],
+                bind: [hiddenWhen('apiContainer_editPost.found')],
                 children: [
                   container({
                     class: 'cardSurface',

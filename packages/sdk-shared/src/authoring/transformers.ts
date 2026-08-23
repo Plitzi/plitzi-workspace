@@ -75,6 +75,16 @@ export const BUILTIN_TRANSFORMERS: Record<string, BuiltinTransformer> = {
     strictParams: true,
     params: {}
   },
+  not: {
+    title: 'Not',
+    description:
+      'Invert the value, as a boolean — the way to bind an element to the OPPOSITE of a condition the data ' +
+      'already answers, so a page can hide on `found` instead of asking the server for a `missing` beside it. ' +
+      'False is: false, 0, an empty string, null/undefined, an empty array, and the STRINGS "false"/"0" (a ' +
+      'boolean that travelled as text). An empty object is true. Takes no params.',
+    strictParams: true,
+    params: {}
+  },
   staticValue: {
     title: 'Static Value',
     description:

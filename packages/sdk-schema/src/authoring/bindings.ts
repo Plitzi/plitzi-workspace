@@ -20,6 +20,19 @@ export const visibleWhen = (source: string): BindingSpec => ({
   category: 'initialState'
 });
 
+/**
+ * The other half of {@link visibleWhen}, without asking the data for it.
+ *
+ * A binding shows an element when its field is true and there is no "unless", so a page that needs both sides of a
+ * question used to need both sides ANSWERED — `found` and a `missing` beside it, `signedIn` and a `signedOut`. That
+ * is a field per question whose only reason to exist is the missing word, and it puts "when is this hidden?" in
+ * whatever service produced the data rather than in the page that hides it. This inverts the value on the way in.
+ */
+export const hiddenWhen = (source: string): BindingSpec => ({
+  ...visibleWhen(source),
+  transformers: [{ action: 'not', params: {} }]
+});
+
 /** One binding, with the fields the runtime requires but nobody chooses filled in. */
 export const authorBinding = (path: string, index: number, spec: BindingSpec): ElementBinding => ({
   id: authoringId(`${path}/binding/${index}`),

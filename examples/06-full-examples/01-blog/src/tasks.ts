@@ -88,13 +88,12 @@ export const getPostTask: ActionTask<{ slug: string }> = {
      *
      * The flow's output step interpolates this whole result into JSON, and a missing value would render as
      * nothing at all: `{"record": }` is not a document, so a URL nobody wrote a post for would fail the run
-     * rather than show a page that says so. `found` and `missing` are what the two halves of the page bind their
-     * visibility to.
+     * rather than show a page that says so. `found` is what both halves of the page bind their visibility to —
+     * one with `visibleWhen`, the other with `hiddenWhen`.
      */
     return {
       record: post ? view(post) : {},
       found: Boolean(post),
-      missing: !post,
       canEdit,
       // Its opposite, for the other half of the editor page: a binding shows an element when its field is true.
       cannotEdit: Boolean(post) && !canEdit,
@@ -124,9 +123,6 @@ export const siteChromeTask: ActionTask<Record<string, never>> = {
 
     return {
       signedIn: Boolean(user),
-      // Its opposite, because a binding shows an element when its field is true and there is no "unless" — and
-      // the header has two account controls rather than one that changes: a name to open, or an invitation.
-      signedOut: !user,
       canWrite,
       readOnly: Boolean(user) && !canWrite,
       accountLabel: user?.username ?? '',

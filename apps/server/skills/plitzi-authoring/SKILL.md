@@ -123,6 +123,12 @@ that is not there is refused when the space is authored: it is the quietest fail
 Server-resolved sections are an `apiContainer` with `runtime: 'server'` naming a connector or an action, and a
 space that has any needs `rsc: { enabled: true }`.
 
+**Never ask the data for a field's opposite.** A binding shows an element when its field is true, so both sides of
+one question are `visibleWhen(x)` and `hiddenWhen(x)` — not an `x` and a `notX` beside it in the server's answer.
+`hiddenWhen` is `visibleWhen` plus the `not` transformer, which reads a boolean that travelled as text (`"false"`,
+`"0"`) and treats an empty array as false; an empty object is true. Only for a real inverse — a three-state
+condition (`Boolean(post) && !canEdit`) still belongs where the data is made.
+
 ## Flows
 
 ```ts

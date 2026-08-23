@@ -223,6 +223,25 @@ A source naming an element that is not there is refused when the space is author
 space can carry — the binding resolves to nothing, the element renders its placeholder, and every layer below
 considers the document perfectly valid.
 
+### Showing an element on the opposite of a condition
+
+A binding shows an element when its field is true, so a page that needs both sides of one question used to need
+both sides ANSWERED: a `found` and a `missing` beside it, a `signedIn` and a `signedOut`. That is a field per
+question whose only reason to exist is the missing word, and it puts "when is this hidden?" in whatever service
+produced the data rather than in the page that hides it.
+
+```ts
+container({ bind: [visibleWhen('apiContainer_post.found')], children: [ … ] }),
+container({ bind: [hiddenWhen('apiContainer_post.found')], children: [text('No such post.')] })
+```
+
+`hiddenWhen` is `visibleWhen` with the `not` transformer, which is available to any binding. It reads a boolean
+that travelled as TEXT — `"false"` and `"0"`, which JavaScript calls true — and treats an empty array as false. An
+empty object is true, because a data source answers `{}` both for "no record" and for a record with no fields.
+
+Only for a real inverse. `cannotEdit: Boolean(post) && !canEdit` is three states, not two — the page shows nothing
+at all when there is no post — and a condition like that still belongs where the data is made.
+
 ---
 
 ## 6. Flows

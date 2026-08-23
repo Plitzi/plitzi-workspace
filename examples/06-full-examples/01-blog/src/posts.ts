@@ -517,8 +517,6 @@ export type PostWindow = {
   /** What the list is currently narrowed to, and whether it is narrowed at all. */
   topic: string;
   filtered: boolean;
-  /** Its opposite, for the heading that shows when it is not — a binding has no "unless". */
-  unfiltered: boolean;
   filterLabel: string;
   pageInfo: PageInfo;
 };
@@ -552,7 +550,6 @@ export const listPosts = ({ page = 1, perPage = PER_PAGE, featured = false, topi
     isEmpty: records.length === 0 && !lead,
     topic: label,
     filtered: Boolean(wanted),
-    unfiltered: !wanted,
     filterLabel: label ? `${label} · ${ordered.length} ${ordered.length === 1 ? 'post' : 'posts'}` : '',
     pageInfo: {
       page: current,
@@ -639,14 +636,10 @@ export type TopicView = {
   /** Where the chip goes. `All` clears the filter by having no query at all rather than by carrying an empty one. */
   url: string;
   /**
-   * Which of the two chips this item renders.
-   *
-   * A field AND its opposite, because a binding shows an element when its field is true and the vocabulary has no
-   * "unless" — and because "selected" is a different shape, not a tint on the same one. The list authors both and
-   * the binding picks, exactly as the header does for signed in and signed out.
+   * Which of the two chips this item renders — "selected" is a different shape, not a tint on the same one, so the
+   * list draws both and the bindings pick: one `visibleWhen` this is true, the other `hiddenWhen` it is.
    */
   isActive: boolean;
-  isInactive: boolean;
 };
 
 /**
@@ -669,12 +662,11 @@ export const topics = (active = ''): TopicView[] => {
       name,
       count: String(count),
       url: `/?topic=${encodeURIComponent(name)}`,
-      isActive: name.toLowerCase() === chosen,
-      isInactive: name.toLowerCase() !== chosen
+      isActive: name.toLowerCase() === chosen
     }));
 
   return [
-    { name: 'All', count: String(posts.length), url: '/', isActive: !chosen, isInactive: Boolean(chosen) },
+    { name: 'All', count: String(posts.length), url: '/', isActive: !chosen },
     ...entries
   ];
 };
