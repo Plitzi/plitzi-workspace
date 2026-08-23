@@ -119,7 +119,26 @@ export class PluginManager {
     return modifiedAt > compiledAt;
   }
 
-  private toEntry(name: string, hasJS: boolean, cssUrl?: string, props: Record<string, unknown> = {}): PluginEntry {
+  /**
+   * The bundle's URL, stamped with when it was built.
+   *
+   * Plugin assets are served `immutable` for a year, which is right for a file whose URL identifies its contents
+   * and catastrophic for one whose URL never changes: a browser told a resource is immutable does not revalidate
+   * it at all — no conditional request, no ETag — so a rebuilt plugin never reaches anyone who had already loaded
+   * the old one. Not a stale render either: the page's own CSS is fresh while the plugin's is a year old, and the
+   * two disagree in ways nobody can read. The stamp is what makes the promise true.
+   */
+  private assetUrl(name: string, file: string, compiledAt: number): string {
+    return `${this.urlPrefix}/${name}/${file}?v=${compiledAt.toString(36)}`;
+  }
+
+  private toEntry(
+    name: string,
+    hasJS: boolean,
+    cssUrl?: string,
+    props: Record<string, unknown> = {},
+    compiledAt = 0
+  ): PluginEntry {
     const keyName = name.split('@')[0];
     const varName = keyName.split('-').join('_').split('.').join('_');
 
@@ -127,7 +146,7 @@ export class PluginManager {
       name,
       varName,
       keyName,
-      js: hasJS ? `${this.urlPrefix}/${name}/index.js` : undefined,
+      js: hasJS ? this.assetUrl(name, 'index.js', compiledAt) : undefined,
       filePath: hasJS ? path.join(this.outputDir, name, 'index.js') : undefined,
       css: cssUrl,
       props
@@ -217,12 +236,12 @@ export class PluginManager {
           const sourceCss = source.css;
           let cssUrl: string | undefined;
           if (await this.fileExists(path.join(this.pluginDir(key), 'index.css'))) {
-            cssUrl = `${this.urlPrefix}/${key}/index.css`;
+            cssUrl = this.assetUrl(key, 'index.css', meta.compiledAt);
           } else if (sourceCss && this.isWebUrl(sourceCss)) {
             cssUrl = sourceCss;
           }
 
-          const entry = this.toEntry(key, true, cssUrl, source.props);
+          const entry = this.toEntry(key, true, cssUrl, source.props, meta.compiledAt);
           this.mem.set(key, { compiledAt: meta.compiledAt, entry });
 
           return entry;
@@ -308,7 +327,13 @@ export class PluginManager {
       const compiledAt = Date.now();
       await this.writeMeta(name, { compiledAt, version: source.version });
 
-      const entry = this.toEntry(name, true, cssUrl, source.props);
+      // Stamped after the build, so a rebuild changes the URL the page asks for and the `immutable` the assets are
+      // served with becomes a promise this server can keep.
+      if (cssUrl?.startsWith(this.urlPrefix)) {
+        cssUrl = this.assetUrl(name, 'index.css', compiledAt);
+      }
+
+      const entry = this.toEntry(name, true, cssUrl, source.props, compiledAt);
       this.mem.set(name, { compiledAt, entry });
       console.log(`[SSR] Plugin "${name}" ready → ${entry.js}`);
       return entry;

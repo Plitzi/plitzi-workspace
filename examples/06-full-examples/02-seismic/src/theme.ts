@@ -65,9 +65,11 @@ html, body { background: var(--void); margin: 0; overscroll-behavior: none; }
 
 .seismic__canvas { position: absolute; inset: 0; width: 100%; height: 100%; background: var(--void); }
 
-/* The tiles are a photograph of the world and this is an instrument: knocked back and tinted, they read as the
-   display's own basemap rather than as a map with panels sitting on top of it. */
-.seismic__tiles { filter: grayscale(0.55) brightness(0.6) contrast(1.15) saturate(0.55); }
+/* The tiles are a photograph of the world and this is an instrument: tinted towards the trace colour so they read
+   as the display's own basemap rather than as a map with panels on top of it.
+   BRIGHTENED, not knocked back: CARTO's dark basemap is already nearly black, and darkening it further left the
+   coastlines below the point where a screen that is not in a dark room shows them at all. */
+.seismic__tiles { filter: brightness(1.45) contrast(1.1) saturate(0.4); opacity: 0.9; }
 
 .leaflet-container { background: var(--void); font-family: var(--mono); outline: none; }
 .leaflet-control-attribution {
@@ -92,16 +94,27 @@ html, body { background: var(--void); margin: 0; overscroll-behavior: none; }
 .seismic__quake:hover, .seismic__quake--active { fill-opacity: 0.95; }
 .seismic__quake--active { stroke: var(--phosphor); stroke-width: 2.5; }
 
-/* An event that arrived while somebody was watching. It breathes; everything else is still — a display where
-   everything pulses says nothing at all. */
-.seismic__quake--fresh {
-  animation: seismic-ping 2s ease-out infinite; transform-box: fill-box; transform-origin: center;
+/* An event that arrived while somebody was watching. The ring travels outward and fades; the dot underneath it
+   never moves — a marker that fades with its own pulse reads as a fault, not as news. */
+.seismic__ping {
+  fill: none; stroke: currentColor; pointer-events: none;
+  transform-box: fill-box; transform-origin: center;
+  animation: seismic-ping 2.4s ease-out infinite;
+}
+
+/* The same beat in the key, so the swatch and the thing it explains are recognisably one glyph. */
+.keyRing { animation: seismic-key-ping 2.4s ease-out infinite; }
+
+@keyframes seismic-key-ping {
+  0%   { transform: scale(0.6); opacity: 0.9; }
+  80%  { transform: scale(1.15); opacity: 0.15; }
+  100% { transform: scale(1.15); opacity: 0.15; }
 }
 
 @keyframes seismic-ping {
-  0%   { transform: scale(1);   stroke-opacity: 1; }
-  70%  { transform: scale(2.6); stroke-opacity: 0; }
-  100% { transform: scale(2.6); stroke-opacity: 0; }
+  0%   { transform: scale(1);   stroke-opacity: 0.85; }
+  80%  { transform: scale(3.4); stroke-opacity: 0; }
+  100% { transform: scale(3.4); stroke-opacity: 0; }
 }
 
 .seismic__tip {
@@ -153,6 +166,6 @@ html, body { background: var(--void); margin: 0; overscroll-behavior: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .seismic__quake--fresh, .screen::before { animation: none; }
+  .seismic__ping, .keyRing, .screen::before { animation: none; }
 }
 `;

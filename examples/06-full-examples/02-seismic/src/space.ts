@@ -175,8 +175,11 @@ const rangeRow = styles('rangeRow', { display: 'flex', gap: '1px' });
 
 const rangeBase = {
   flex: '1',
-  'text-align': 'center',
-  padding: '7px 4px',
+  display: 'flex',
+  'flex-direction': 'column',
+  'align-items': 'center',
+  gap: '2px',
+  padding: '6px 4px',
   'font-size': '10px',
   'letter-spacing': '0.18em',
   'text-transform': 'uppercase',
@@ -322,6 +325,27 @@ const keyRow = styles('keyRow', {
   color: 'var(--dim)'
 });
 
+/** The one glyph on the map that is not a fact about an event's position. */
+const keyNote = styles('keyNote', {
+  display: 'flex',
+  'align-items': 'center',
+  gap: '8px',
+  'margin-top': '4px',
+  'padding-top': '8px',
+  'border-top': '1px solid var(--edge-soft)',
+  'font-size': '10px',
+  'letter-spacing': '0.1em',
+  color: 'var(--dim)'
+});
+
+const keyRing = styles('keyRing', {
+  width: '12px',
+  height: '12px',
+  'border-radius': '999px',
+  border: '1px solid var(--phosphor)',
+  'flex-shrink': '0'
+});
+
 const emptyNotice = styles('emptyNotice', {
   'grid-column': '2',
   'grid-row': '2',
@@ -351,6 +375,16 @@ const keyEntry = (band: string, caption: string): ElementSpec =>
     children: [text({ content: '', class: swatchFor(band) }), text({ content: caption })]
   });
 
+/** The magnitude floor, in the chip. Smaller and quieter than the range: it qualifies it, it is not the choice. */
+const rangeFloorOn = styles('rangeFloorOn', { 'font-size': '8.5px', 'letter-spacing': '0.1em', opacity: '0.7' });
+
+const rangeFloor = styles('rangeFloor', {
+  'font-size': '8.5px',
+  'letter-spacing': '0.1em',
+  color: 'var(--dim)',
+  opacity: '0.8'
+});
+
 /**
  * Two chips per range, and the binding picks.
  *
@@ -358,21 +392,26 @@ const keyEntry = (band: string, caption: string): ElementSpec =>
  * position rather than as three links one of which happens to be brighter. Both are authored and the data decides
  * which is on screen — a binding shows an element when a field is true, and comparing two values is not something
  * it can do.
+ *
+ * **Each chip states its magnitude floor**, because these are three different datasets and not three lengths of
+ * the same one: a day of everything is a few hundred events and a month of everything is tens of thousands, so
+ * the longer ranges drop the small ones. Unlabelled, the control looks broken — a M3 in California is on the
+ * week and gone from the month, and nothing on screen says why.
  */
-const range = (slug: string, caption: string, flag: string): ElementSpec[] => [
+const range = (slug: string, caption: string, floor: string, flag: string): ElementSpec[] => [
   link({
     href: `/?window=${slug}`,
     mode: 'internal',
     class: rangeLinkOn,
     visible: `feed.${flag}`,
-    children: [text({ content: caption })]
+    children: [text({ content: caption }), text({ content: floor, class: rangeFloorOn })]
   }),
   link({
     href: `/?window=${slug}`,
     mode: 'internal',
     class: rangeLink,
     visible: `!feed.${flag}`,
-    children: [text({ content: caption })]
+    children: [text({ content: caption }), text({ content: floor, class: rangeFloor })]
   })
 ];
 
@@ -431,7 +470,11 @@ const monitor: ElementSpec = apiContainer({
                 }),
                 container({
                   class: rangeRow,
-                  children: [...range('day', '24h', 'isDay'), ...range('week', '7d', 'isWeek'), ...range('month', '30d', 'isMonth')]
+                  children: [
+                    ...range('day', '24h', 'all', 'isDay'),
+                    ...range('week', '7d', 'M2.5+', 'isWeek'),
+                    ...range('month', '30d', 'M4.5+', 'isMonth')
+                  ]
                 })
               ]
             }),
@@ -506,7 +549,11 @@ const monitor: ElementSpec = apiContainer({
             keyEntry('shallow', '0 – 33 km'),
             keyEntry('upper', '33 – 70 km'),
             keyEntry('mid', '70 – 300 km'),
-            keyEntry('deep', '300 km +')
+            keyEntry('deep', '300 km +'),
+            container({
+              class: keyNote,
+              children: [text({ content: '', class: keyRing }), text({ content: 'Ring: logged in the last 20 min' })]
+            })
           ]
         }),
 

@@ -290,12 +290,29 @@ const SeismicMap = ({
          * all — invisible, and with no surface for a click to land on. In a CSS rule the same custom property
          * resolves everywhere, and this file still ships no colours of its own.
          */
+        /**
+         * An event that arrived while somebody was watching gets a RING of its own, behind the dot.
+         *
+         * Animating the marker was the obvious way and the wrong one: the pulse fades to nothing, so the dot it
+         * was drawn on vanished twice a second — which does not read as "this is new", it reads as a display with
+         * a fault. A separate ring leaves the event solidly on screen and puts the movement around it.
+         */
+        if (fresh) {
+          group.addLayer(
+            L.circleMarker([quake.latitude, quake.longitude], {
+              radius: radiusFor(quake.magnitude),
+              className: `seismic__ping seismic__quake--${depthBand(quake.depthKm)}`,
+              interactive: false,
+              weight: 1.5
+            })
+          );
+        }
+
         const marker = L.circleMarker([quake.latitude, quake.longitude], {
           radius: radiusFor(quake.magnitude),
           className: [
             'seismic__quake',
             `seismic__quake--${depthBand(quake.depthKm)}`,
-            fresh ? 'seismic__quake--fresh' : '',
             quake.id === selectedId ? 'seismic__quake--active' : ''
           ]
             .filter(Boolean)

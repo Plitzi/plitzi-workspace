@@ -68,6 +68,10 @@ a column wants units — computed once on the server so every visitor reads the 
 And it answers `isDay` / `isWeek` / `isMonth`. A binding shows an element when a field is true; it cannot compare
 two values. So the range control is **two chips per range** and the data decides which one is on screen.
 
+Each chip also states its magnitude floor — `ALL`, `M2.5+`, `M4.5+` — because the three ranges are three different
+datasets rather than three lengths of the same one. Without that on the control, switching from the week to the
+month looks like a fault: a M3 in California is on one and gone from the other, and nothing says why.
+
 ---
 
 ## The map is an element, and it uses a map library
@@ -129,4 +133,8 @@ palette, and the internals of the map element, which renders markup no class in 
 [USGS Earthquake Hazards Program](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php) — public domain,
 no key, regenerated every minute. The threshold rises with the range on purpose: a day of everything is a few
 hundred events, a month of everything is tens of thousands, and a map of that is the same map with the coastlines
-buried. So a week drops what is under M2.5 and a month what is under M4.5.
+buried. So a week drops what is under M2.5 and a month what is under M4.5 — and each chip says so, because a
+control that quietly changes what it is counting is a control nobody can trust.
+
+A ring around a marker means the event was logged in the last twenty minutes. It is the only animation on the map
+that carries information, and the key says so.
