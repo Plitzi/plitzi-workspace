@@ -1,3 +1,8 @@
+import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from '@plitzi/sdk-interactions/authoring';
+import { authorSpace as authorSpaceUnchecked } from '@plitzi/sdk-schema/authoring';
+
+import type { AuthorSpaceOptions, AuthoredSpace, SpaceSpec, StepVocabulary } from '@plitzi/sdk-schema/authoring';
+
 /**
  * Authoring a space in code — the whole surface, from one import.
  *
@@ -17,3 +22,26 @@ export * from '@plitzi/sdk-interactions/authoring';
 export * from '@plitzi/sdk-schema/authoring';
 export * from '@plitzi/sdk-shared/authoring';
 export * from '@plitzi/sdk-style/authoring';
+
+/**
+ * What a step may name in a space authored here.
+ *
+ * The catalogs are declared beside the code that implements each action, and `@plitzi/sdk-schema` cannot read them:
+ * the interaction package depends on the schema package, so the import would close a cycle. This file is the one
+ * place that already holds both, which is why the check is composed here rather than there.
+ */
+const STEP_VOCABULARY: StepVocabulary = {
+  globalCallbacks: BUILTIN_GLOBAL_CALLBACKS,
+  utilities: BUILTIN_UTILITIES
+};
+
+/**
+ * `authorSpace`, holding this SDK's own step vocabulary.
+ *
+ * Deliberately shadows the one re-exported above — an explicit export wins over a star — so that everybody who
+ * imports from this entry, or from the `@plitzi/sdk-server/authoring` that re-exports it, gets a flow whose targets
+ * are checked. A step naming a callback on the wrong module is refused here; one naming an action no built-in
+ * source declares comes back in `warnings`, since a plugin is free to register a module this process cannot see.
+ */
+export const authorSpace = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): AuthoredSpace =>
+  authorSpaceUnchecked(spec, { vocabulary: STEP_VOCABULARY, ...options });

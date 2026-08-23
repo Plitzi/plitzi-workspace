@@ -91,7 +91,29 @@ describe('mcp-ai interactions', () => {
 
     const stored = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {});
     expect(stored).not.toHaveLength(0);
-    stored.forEach(node => expect(node.elementId).toBe(elementRefOf(cap.saved().schema.flat.c1)));
+
+    const trigger = stored.find(node => node.type === 'trigger');
+    expect(trigger?.elementId).toBe(elementRefOf(cap.saved().schema.flat.c1));
+  });
+
+  /**
+   * The other half of the same rule, and the half that used to be wrong.
+   *
+   * A global callback is registered by its SOURCE MODULE, so `login` resolves as `auth.login` and never as
+   * `<host element>.login`. It landed on the host for as long as the catalog declared the action under a name
+   * nothing registered — the step was written onto a page that renders perfectly and did nothing when pressed.
+   */
+  it('targets a global callback at its source module, never at the host element', async () => {
+    const space = buildSpace();
+    space.schema.flat.c1.idRef = 'hero-box';
+    const cap = capturing(space);
+
+    await apply({ operations: [{ ...flowOp, ref: 'hero-box' }] }, cap.saved(), cap.persisters);
+
+    const stored = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {});
+    const callback = stored.find(node => node.action === 'login');
+
+    expect(callback?.elementId).toBe('auth');
   });
 
   it('rewrites a node target given as a raw id onto the ref the runtime registers', async () => {

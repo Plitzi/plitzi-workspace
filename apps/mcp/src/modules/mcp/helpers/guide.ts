@@ -409,8 +409,8 @@ you — never wire them by hand. Each step also has an \`enabled\` flag (see dis
   own extra callbacks.
 - \`globalCallback\` — a callback provided by a **source module**, NOT by any element: \`addNotification\` (source
   \`space\`), \`setState\`/\`clearState\` (\`state\`), \`navigate\` (\`navigation\`), \`login\`/\`logout\`/
-  \`refreshDetails\` (\`auth\`), \`addCollectionRecord\`/\`updateCollectionRecord\`/\`removeCollectionRecord\`
-  (\`collection\`). Its \`elementId\` is the **source module id**, never the host element — a node that stored the host
+  \`refreshDetails\` (\`auth\`), \`runServerAction\`/\`cancelServerAction\` (\`actions\`). Its \`elementId\` is the
+  **source module id**, never the host element — a node that stored the host
   idRef here would resolve to nothing at runtime. **Omit \`elementId\`**: the MCP sets the correct source and fills the
   builder's **param defaults** (e.g. \`addNotification\` gets \`autoDismiss:true\`, \`autoDismissTimeout:5000\`,
   \`placement:"top-right"\`, \`appeareance:"success"\`) for any params you leave out. Use **only** the params each

@@ -9,7 +9,18 @@ import { didYouMean } from './suggest';
 import { assertSpaceValid } from './validate';
 import FlatMap from '../helpers/FlatMap';
 
-import type { AuthoredSpace, CssSpec, ElementSpec, ElementStyleSpec, PageSpec, SpaceSpec } from './types';
+import type {
+  AuthorSpaceOptions,
+  AuthoredSpace,
+  CssSpec,
+  ElementSpec,
+  ElementStyleSpec,
+  PageSpec,
+  SpaceSpec,
+  StepSpec,
+  StepVocabulary
+} from './types';
+import type { SchemaValidationError } from '../helpers/schemaValidator';
 import type { DisplayMode, DropPosition, Element, Schema, Style, StyleItem } from '@plitzi/sdk-shared';
 import type { ResponsiveStyle, StyleRules } from '@plitzi/sdk-style/authoring';
 
@@ -85,7 +96,15 @@ class SpaceAuthor {
 
   private readonly pagePaths = new Set<string>();
 
-  constructor(private readonly spec: SpaceSpec) {}
+  /** Steps this space names that the vocabulary could not vouch for. Handed back rather than thrown: a plugin is
+   *  free to register a module of its own, and refusing what this process cannot see would make the check useless
+   *  for exactly the spaces that need it most. */
+  private readonly stepWarnings: SchemaValidationError[] = [];
+
+  constructor(
+    private readonly spec: SpaceSpec,
+    private readonly options: AuthorSpaceOptions = {}
+  ) {}
 
   author(): AuthoredSpace {
     for (const [type, elementSpec] of Object.entries(this.spec.elements ?? {})) {
@@ -125,7 +144,81 @@ class SpaceAuthor {
     // attached, which is a strictly weaker reading of the same document than the pair below.
     const warnings = assertSpaceValid({ schema, style }, `authored space "${this.spec.permanentUrl}"`);
 
-    return { schema, style, warnings };
+    return { schema, style, warnings: [...this.stepWarnings, ...warnings] };
+  }
+
+  /**
+   * A step has to name something that exists, and this is the only place that can tell.
+   *
+   * The runtime resolves a global callback as `callbacksAvailables[<on>][<action>]`, and neither half is checkable
+   * by looking at the document: they are two strings. When they name nothing, the control they are attached to
+   * simply does nothing — no error, no warning, no failed request. That is how three auth builders shipped writing
+   * `authLogin` at a runtime that had registered `login`.
+   *
+   * Refused only when the vocabulary can PROVE it wrong — a known action on the wrong module, a known utility given
+   * one. An action the catalog has never heard of is a warning instead, because a plugin may register a module of
+   * its own and this process cannot see it.
+   *
+   * Triggers, element callbacks and tasks are left alone on purpose: an element type publishes its own triggers and
+   * callbacks, and a task belongs to whatever server runs the flow. None of them are knowable from here.
+   */
+  private assertStepsKnown(flows: StepSpec[][] | undefined, where: string): void {
+    const vocabulary = this.options.vocabulary;
+    if (!vocabulary || !flows) {
+      return;
+    }
+
+    for (const steps of flows) {
+      for (const step of steps) {
+        if (step.type === 'globalCallback') {
+          this.assertGlobalCallback(step, vocabulary, where);
+        }
+
+        if (step.type === 'utility') {
+          this.assertUtility(step, vocabulary, where);
+        }
+      }
+    }
+  }
+
+  private assertGlobalCallback(step: StepSpec, vocabulary: StepVocabulary, where: string): void {
+    const declared = vocabulary.globalCallbacks[step.action] as { source: string } | undefined;
+    if (!declared) {
+      this.stepWarnings.push({
+        code: 'unknown-global-callback',
+        message: `${where} runs the global callback "${step.action}", which no built-in source declares. It resolves at run time only if something registers it — a plugin, or a module this space brings itself.`,
+        details: { action: step.action, on: step.on }
+      });
+
+      return;
+    }
+
+    // A global callback registers under its source MODULE, never under the element hosting the flow — and a step
+    // with no target at all is written into the document as `elementId: null`, which resolves to nothing.
+    if (step.on !== declared.source) {
+      throw new Error(
+        `${where} runs the global callback "${step.action}" on ${step.on === undefined ? 'no module' : `"${step.on}"`}, but it is registered on "${declared.source}". A global callback names the module that registered it, never the element the flow sits on — the step builders fill this in.`
+      );
+    }
+  }
+
+  private assertUtility(step: StepSpec, vocabulary: StepVocabulary, where: string): void {
+    if (!Object.hasOwn(vocabulary.utilities, step.action)) {
+      this.stepWarnings.push({
+        code: 'unknown-utility',
+        message: `${where} runs the utility "${step.action}", which is not one of the built-in utilities.`,
+        details: { action: step.action }
+      });
+
+      return;
+    }
+
+    // The one kind of step where naming a target is the mistake: the runtime resolves a utility by action alone.
+    if (step.on !== undefined) {
+      throw new Error(
+        `${where} runs the utility "${step.action}" on "${step.on}". A utility is resolved by its action alone and takes no module — drop the \`on\`.`
+      );
+    }
   }
 
   private writeElementDefaults(type: string, spec: ElementStyleSpec): void {
@@ -255,6 +348,7 @@ class SpaceAuthor {
 
   private addPage(page: PageSpec, index: number): string {
     const path = this.pathFor(page, index);
+    this.assertStepsKnown(page.flows, `Page "${page.name}"`);
     const id = authoringId(path);
     const idRef = page.idRef ?? this.nextRef('page');
 
@@ -302,6 +396,7 @@ class SpaceAuthor {
   private addElement(spec: ElementSpec, path: string, rootId: string, parentId: string): string {
     const id = authoringId(path);
     const idRef = spec.idRef ?? this.nextRef(spec.type);
+    this.assertStepsKnown(spec.flows, `Element "${spec.type}" (${idRef}) at ${path}`);
 
     const element: Element = {
       id,
@@ -350,5 +445,12 @@ export const elementIdOf = (schema: Schema, idRef: string): string => {
   return element.id;
 };
 
-/** Build a space's two documents from a declaration. Throws if the result would not be a valid space. */
-export const authorSpace = (spec: SpaceSpec): AuthoredSpace => new SpaceAuthor(spec).author();
+/**
+ * Build a space's two documents from a declaration. Throws if the result would not be a valid space.
+ *
+ * `options.vocabulary` is what lets it check the flows as well as the tree. The composed entry
+ * (`@plitzi/plitzi-sdk/authoring`, and the `@plitzi/sdk-server/authoring` that re-exports it) supplies the real
+ * one, so importing from either is all it takes.
+ */
+export const authorSpace = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): AuthoredSpace =>
+  new SpaceAuthor(spec, options).author();

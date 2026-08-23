@@ -186,6 +186,34 @@ export interface SpaceSpec {
   pages: PageSpec[];
 }
 
+/**
+ * What a step is allowed to name, supplied by whoever owns the vocabulary.
+ *
+ * A step is two strings the document cannot check about itself: an `action` and the module it runs on. The runtime
+ * resolves one as `callbacksAvailables[<on>][<action>]`, so a pair that names nothing is a control that does
+ * nothing at all, with no error anywhere — the single quietest failure this surface has.
+ *
+ * It arrives as an option rather than as an import because the catalogs live in `@plitzi/sdk-interactions`, which
+ * already depends on this package. The composed entry — `@plitzi/plitzi-sdk/authoring`, and the
+ * `@plitzi/sdk-server/authoring` that re-exports it — passes the real one, so an author who imports from either
+ * gets the checks without asking. Authoring straight from this package skips them, which is what makes the
+ * fragment usable on documents whose vocabulary nobody here knows.
+ */
+export interface StepVocabulary {
+  /** Global callbacks by action name, each naming the module id it is registered on. */
+  globalCallbacks: Record<string, { source: string }>;
+  /** Utility actions. A utility is resolved by action alone and runs on no module at all. */
+  utilities: Record<string, unknown>;
+}
+
+export interface AuthorSpaceOptions {
+  /**
+   * The step vocabulary to hold this space's flows to. Left out, flows are written as declared and only their
+   * structure is checked.
+   */
+  vocabulary?: StepVocabulary;
+}
+
 export interface AuthoredSpace {
   schema: Schema;
   style: Style;

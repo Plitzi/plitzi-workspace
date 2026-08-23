@@ -144,6 +144,14 @@ answer in the scope at all.
 - an element asking for a shared class AND rules of its own — an element has one base selector
 - a binding source, or a step target, naming an element that is not there
 - two elements answering to one idRef, a broken flow chain, an orphan, a cycle
+- a global callback on the wrong module — or on none — and a utility given one. A global callback registers under
+  its SOURCE MODULE (`auth`, `state`, `actions`), and the pair is what the runtime resolves a step by, so naming
+  either half wrong is a control that does nothing at all with no error anywhere. An action no built-in source
+  declares comes back in `warnings` instead of throwing, because a plugin may register a module of its own.
+
+Those last checks need the vocabulary, which only the composed entry has. Import `authorSpace` from
+`@plitzi/sdk-server/authoring` or `@plitzi/plitzi-sdk/authoring` — not straight from `@plitzi/sdk-schema` — and
+you get them.
 
 For documents you did not author here — an export from the builder, a JSON edited by hand — run the same gate
 before serving it:
