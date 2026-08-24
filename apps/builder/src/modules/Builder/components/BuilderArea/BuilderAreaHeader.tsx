@@ -17,17 +17,22 @@ import Transform from '@pmodules/Transformers/Transform';
 
 import BuilderElementTools from '../BuilderElementTools';
 
-import type { Element } from '@plitzi/sdk-shared';
+import type { Element, Theme } from '@plitzi/sdk-shared';
+import type { Dispatch, SetStateAction } from 'react';
 
 export type BuilderAreaHeaderProps = {
+  themeArea: Theme;
   baseElementId: string;
   element?: Element;
   isActive?: boolean;
   headerTitle?: string;
   previewMode?: boolean;
+  setThemeArea: Dispatch<SetStateAction<Theme>>;
 };
 
 const BuilderAreaHeader = ({
+  themeArea,
+  setThemeArea,
   baseElementId,
   element,
   isActive = false,
@@ -42,16 +47,8 @@ const BuilderAreaHeader = ({
     'setSelected'
   ]);
   const { existsPopup, addPopup } = usePopup();
-  const {
-    theme,
-    setTheme,
-    multiPagesMode,
-    setMultiPagesMode,
-    hasMultiPages,
-    builderSetBaseContext,
-    baseElementIdOriginal,
-    mode
-  } = use(BuilderContext);
+  const { multiPagesMode, setMultiPagesMode, hasMultiPages, builderSetBaseContext, baseElementIdOriginal, mode } =
+    use(BuilderContext);
   const {
     server: { basePath }
   } = use(NetworkContext);
@@ -59,14 +56,8 @@ const BuilderAreaHeader = ({
   const handleClickBackToInstance = useCallback(() => builderSetBaseContext(), [builderSetBaseContext]);
 
   const handleClickTheme = useCallback(() => {
-    setTheme(state => {
-      if (state === 'light') {
-        return 'dark';
-      }
-
-      return 'light';
-    });
-  }, [setTheme]);
+    setThemeArea(state => (state === 'dark' ? 'light' : 'dark'));
+  }, [setThemeArea]);
 
   const handleClickTransform = useCallback(() => {
     if (!existsPopup('transform')) {
@@ -119,14 +110,9 @@ const BuilderAreaHeader = ({
   const defaultPage = get(element, 'attributes.default', false) as boolean;
 
   const domain = useMemo(() => {
-    let url = definition.permanentUrl
-      ? `https://${definition.permanentUrl}.plitzi.app`
-      : 'https://subdomain.plitzi.app';
-    if (!defaultPage) {
-      url = `${url}${fullpath.replaceAll('//', '/')}`;
-    }
+    const url = `https://${definition.permanentUrl ? definition.permanentUrl : 'subdomain'}.plitzi.app`;
 
-    return url;
+    return defaultPage ? url : `${url}${fullpath.replaceAll('//', '/')}`;
   }, [definition, defaultPage, fullpath]);
 
   const pageTitle = useMemo(() => {
@@ -195,9 +181,9 @@ const BuilderAreaHeader = ({
         />
       )}
       <div title="Theme" className="flex cursor-pointer" onClick={handleClickTheme}>
-        {theme === 'system' && <Icon icon="fa-solid fa-desktop" />}
-        {theme === 'dark' && <Icon icon="fa-solid fa-sun" />}
-        {theme === 'light' && <Icon icon="fa-solid fa-moon" />}
+        {themeArea === 'system' && <Icon icon="fa-solid fa-desktop" />}
+        {themeArea === 'dark' && <Icon icon="fa-solid fa-sun" />}
+        {themeArea === 'light' && <Icon icon="fa-solid fa-moon" />}
       </div>
       {!previewMode && (
         <Flex items="center" gap={3}>

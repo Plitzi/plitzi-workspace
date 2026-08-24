@@ -13,13 +13,12 @@ import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import InteractionsSourcesProvider from '@plitzi/sdk-interactions/InteractionsSourcesProvider';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { useBuilderStore, useRenderOverride } from '@plitzi/sdk-shared/store';
-import { useResolvedScheme } from '@plitzi/sdk-shared/theme';
+import { ThemeContext, useResolvedScheme } from '@plitzi/sdk-shared/theme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
@@ -41,7 +40,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
   const { environment } = use(NetworkContext);
   const { rootRef } = use(ContainerRootContext);
   const { displayBorderComponents } = use(AppContext);
-  const { theme } = use(BuilderContext);
+  const { theme } = use(ThemeContext);
   // The canvas paints one scheme. `system` is the space asking for the machine's answer, not for light.
   const resolvedTheme = useResolvedScheme(theme);
   const [

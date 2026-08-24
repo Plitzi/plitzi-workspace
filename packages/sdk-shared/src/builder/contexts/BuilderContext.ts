@@ -7,14 +7,11 @@ import type {
   EventBridgeEvent,
   PluginBuilder,
   Schema,
-  Style,
-  Theme
+  Style
 } from '../../types';
 import type { Dispatch, SetStateAction } from 'react';
 
 export type BuilderContextValue = {
-  theme: Theme;
-  setTheme: Dispatch<SetStateAction<Theme>>;
   mode: 'normal' | 'template' | 'segment';
   schemaName: string;
   setMultiPagesMode: Dispatch<SetStateAction<boolean>>;
