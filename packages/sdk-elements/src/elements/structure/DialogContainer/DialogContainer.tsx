@@ -208,7 +208,7 @@ const DialogContainer = ({
           <div className={clsx('dialog-container__header__title', styleSelectors.headerTitle)}>
             {headerLabel ? headerLabel : 'Dialog Header'}
           </div>
-          <i className="fa-solid fa-xmark" title="Close" onClick={void handleClickCancel} />
+          <i className="fa-solid fa-xmark" title="Close" onClick={handleClickCancel} />
         </div>
         <div className={clsx('dialog-container__body', styleSelectors.body)}>
           <StoreProvider inherit="live" name={`Dialog:${id}`} value={storeContext}>
@@ -218,7 +218,7 @@ const DialogContainer = ({
         <div className={clsx('dialog-container__footer', styleSelectors.footerContainer)}>
           <button
             className={clsx('footer__button button--accept', styleSelectors.acceptButton)}
-            onClick={void handleClickAccept}
+            onClick={handleClickAccept}
             disabled={processing}
           >
             {processing && (
@@ -231,7 +231,7 @@ const DialogContainer = ({
           </button>
           <button
             className={clsx('footer__button button--cancel', styleSelectors.cancelButton)}
-            onClick={void handleClickCancel}
+            onClick={handleClickCancel}
             disabled={processing}
           >
             {rejectButtonLabel}

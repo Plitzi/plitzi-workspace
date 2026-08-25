@@ -61,7 +61,7 @@ const delayTime: InteractionCallback<{
       });
 
       const fetchOptions: RequestInit = { method, headers, credentials };
-      if (!method || method.toLowerCase() !== 'get') {
+      if (method && !['get', 'delete'].includes(method.toLowerCase())) {
         if (headers['Content-Type'] === 'application/json') {
           fetchOptions.body = JSON.stringify(body);
         } else if (headers['Content-Type'] === 'multipart/form-data') {
