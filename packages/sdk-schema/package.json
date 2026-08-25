@@ -41,10 +41,6 @@
       "types": "./dist/authoring/space.d.ts",
       "import": "./dist/authoring/space.mjs"
     },
-    "./authoring/styles": {
-      "types": "./dist/authoring/styles.d.ts",
-      "import": "./dist/authoring/styles.mjs"
-    },
     "./authoring/suggest": {
       "types": "./dist/authoring/suggest.d.ts",
       "import": "./dist/authoring/suggest.mjs"
@@ -56,10 +52,6 @@
     "./helpers/FlatMap": {
       "types": "./dist/helpers/FlatMap.d.ts",
       "import": "./dist/helpers/FlatMap.mjs"
-    },
-    "./helpers/authoring": {
-      "types": "./dist/helpers/authoring.d.ts",
-      "import": "./dist/helpers/authoring.mjs"
     },
     "./helpers/idRef": {
       "types": "./dist/helpers/idRef.d.ts",
