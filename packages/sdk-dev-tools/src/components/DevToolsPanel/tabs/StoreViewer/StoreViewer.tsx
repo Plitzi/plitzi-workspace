@@ -4,6 +4,7 @@ import * as vscode from '@uiw/react-json-view/vscode';
 import clsx from 'clsx';
 import { use, useCallback, useMemo } from 'react';
 
+import { ThemeContext } from '@plitzi/sdk-shared';
 import DevToolsContext from '@plitzi/sdk-shared/devTools/DevToolsContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
@@ -36,6 +37,7 @@ export type StoreViewerProps = {
 };
 
 const StoreViewer = ({ elementSelected }: StoreViewerProps) => {
+  const { resolvedTheme } = use(ThemeContext);
   const { getData } = use(DevToolsContext);
   // The store picked in the header's scope dropdown (defaults to the active instance's root); its live state is shown.
   const selectedStore = useSelectedStore();
@@ -69,7 +71,7 @@ const StoreViewer = ({ elementSelected }: StoreViewerProps) => {
       )}
       <JsonView
         value={displayValue ?? emptyObject}
-        style={jsonViewStyle}
+        style={resolvedTheme === 'dark' ? jsonViewStyle : undefined}
         enableClipboard={false}
         indentWidth={15}
         collapsed={2}
