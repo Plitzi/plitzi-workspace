@@ -2,7 +2,7 @@
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { produce } from 'immer';
-import { useCallback, useMemo, useState, use } from 'react';
+import { useCallback, useMemo, useState, use, useEffect, useRef } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
@@ -53,6 +53,7 @@ const Form = ({
   values = emptyObject
 }: FormProps) => {
   const [fields, setFields] = useState<Record<string, SourceField>>({});
+  const unmounting = useRef(false);
   const {
     id,
     idRef,
@@ -71,8 +72,19 @@ const Form = ({
     [setFields]
   );
 
+  useEffect(() => {
+    unmounting.current = false;
+    return () => {
+      unmounting.current = true;
+    };
+  }, []);
+
   const unregisterField = useCallback(
     (name: string) => {
+      if (unmounting.current) {
+        return;
+      }
+
       setFields(state =>
         produce(state, draft => {
           if (!(draft[name] as SourceField | undefined)) {
