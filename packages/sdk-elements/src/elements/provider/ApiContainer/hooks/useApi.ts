@@ -61,6 +61,8 @@ const getApiRequest = async ({
 
     return { status: res.status, data: (await res.json()) as string };
   } catch (e: unknown) {
+    console.error((e as Error).message);
+
     return { status: 500, data: (e as Error).message };
   }
 };
