@@ -467,8 +467,12 @@
       "import": "./dist/elements/basic/ThemeToggle/index.mjs"
     },
     "./elements/declarations": {
-      "types": "./dist/elements/declarations.d.ts",
-      "import": "./dist/elements/declarations.mjs"
+      "types": "./dist/elements/declarations/index.d.ts",
+      "import": "./dist/elements/declarations/index.mjs"
+    },
+    "./elements/declarations/index": {
+      "types": "./dist/elements/declarations/index.d.ts",
+      "import": "./dist/elements/declarations/index.mjs"
     },
     "./elements/form/Form": {
       "types": "./dist/elements/form/Form/index.d.ts",
