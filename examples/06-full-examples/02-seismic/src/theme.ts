@@ -1,4 +1,4 @@
-import type { SpaceSpec } from '@plitzi/sdk-server/authoring';
+import type { SpaceSpec } from '@plitzi/sdk-authoring';
 
 /**
  * The palette, and the parts of the display nobody authored.

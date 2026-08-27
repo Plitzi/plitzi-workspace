@@ -134,41 +134,6 @@
       "types": "./dist/Element/hooks/useRscData.d.ts",
       "import": "./dist/Element/hooks/useRscData.mjs"
     },
-    "./authoring": {
-      "types": "./dist/authoring/index.d.ts",
-      "import": "./dist/authoring/index.mjs"
-    },
-    "./authoring/catalog": {
-      "types": "./dist/authoring/catalog.d.ts",
-      "import": "./dist/authoring/catalog.mjs"
-    },
-    "./authoring/declare": {
-      "types": "./dist/authoring/declare.d.ts",
-      "import": "./dist/authoring/declare.mjs"
-    },
-    "./authoring/element": {
-      "import": "./dist/authoring/element.mjs"
-    },
-    "./authoring/elementCallbacks": {
-      "types": "./dist/authoring/elementCallbacks.d.ts",
-      "import": "./dist/authoring/elementCallbacks.mjs"
-    },
-    "./authoring/elements": {
-      "types": "./dist/authoring/elements.d.ts",
-      "import": "./dist/authoring/elements.mjs"
-    },
-    "./authoring/index": {
-      "types": "./dist/authoring/index.d.ts",
-      "import": "./dist/authoring/index.mjs"
-    },
-    "./authoring/plugins": {
-      "types": "./dist/authoring/plugins.d.ts",
-      "import": "./dist/authoring/plugins.mjs"
-    },
-    "./authoring/steps": {
-      "types": "./dist/authoring/steps.d.ts",
-      "import": "./dist/authoring/steps.mjs"
-    },
     "./components/ElementAdvancedEditor": {
       "types": "./dist/components/ElementAdvancedEditor.d.ts",
       "import": "./dist/components/ElementAdvancedEditor.mjs"

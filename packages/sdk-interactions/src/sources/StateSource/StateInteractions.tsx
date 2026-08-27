@@ -1,9 +1,9 @@
 import { useCallback, use, useMemo } from 'react';
 
+import { toInteractionCallbacks } from '@plitzi/sdk-shared/authoring/builder';
 import { useCommonStoreSetter } from '@plitzi/sdk-shared/store';
 
 import { stateCallbacks } from './callbacks';
-import { toInteractionCallbacks } from '../../authoring/builder';
 import InteractionsContext from '../../InteractionsContext';
 
 import type { InteractionCallbackParamValues } from '@plitzi/sdk-shared';

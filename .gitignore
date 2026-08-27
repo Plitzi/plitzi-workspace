@@ -19,3 +19,7 @@ opencode.json
 
 # Playwright run output — screenshots and traces to look at, never baselines to compare against.
 e2e/.artifacts
+
+# `apps/server` ships the authoring skill too, copied from `packages/sdk-authoring` on prepack — one source, never
+# a second checked-in copy to keep in sync.
+apps/server/skills/

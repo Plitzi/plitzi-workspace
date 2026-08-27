@@ -1,7 +1,6 @@
-import { elementCatalog } from '@plitzi/sdk-elements/authoring';
-import { cssProperties } from '@plitzi/sdk-style/authoring';
+import { cssProperties, elementCatalog } from '@plitzi/sdk-authoring';
 
-import type { ElementSemantics } from '@plitzi/sdk-elements/authoring';
+import type { ElementSemantics } from '@plitzi/sdk-authoring';
 import type { ComponentCatalog, Schema } from '@plitzi/sdk-shared';
 
 export interface TypePropInfo {

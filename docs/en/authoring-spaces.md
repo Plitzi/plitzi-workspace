@@ -13,29 +13,35 @@ re-theme it.
 ## 1. One import
 
 ```ts
-import { authorSpace, container, css, heading, image, onClick, setState } from '@plitzi/sdk-server/authoring';
+import { authorSpace, container, css, heading, image, onClick, setState } from '@plitzi/sdk-authoring';
 ```
 
-The surface is assembled from the packages that own each piece of it, and re-exported whole from two places:
+One package, and it installs nothing else: `@plitzi/sdk-authoring` has an empty dependency tree, no React and
+nothing that touches a browser. A server, a seed, a migration, a build script, a browser bundle authoring its own
+space (see `05-with-server-actions/03-no-server`) and a project that only publishes templates all depend on that
+one name.
 
-| Import from | For |
+Everything it exports is inside it — there is no second place to look:
+
+| Part | What it is |
 | --- | --- |
-| `@plitzi/sdk-server/authoring` | a server, a seed, a migration, a build script — anything running in Node |
-| `@plitzi/plitzi-sdk/authoring` | a browser bundle authoring its own space (see `05-with-server-actions/03-no-server`) |
+| the CSS vocabulary | `css`, shorthand expansion, `column`/`row`/`grid`, `styles` |
+| the element factories | one per element, plus `element`, `defineElement`, `elementsFromManifest`, triggers |
+| the interaction vocabulary | what a step can do: `setState`, `navigate`, `runServerAction`, `delay`… |
+| the binding transformers | and the shape a declared param has |
+| assembly and validation | `authorSpace`, `authorTemplate`, `validateSpace`, `validateTemplate`, the spec types |
 
-Both export the same names, and a test in `sdk-server` fails if they ever stop doing so. Nothing in either one
-loads React, so importing it from a seed costs a few hundred kilobytes of data and no renderer.
+It used to be a `/authoring` fragment inside each of five packages, composed at the end. Each fragment read its own
+package's internals, which is what keeps a factory honest — but it also meant five places to look for one answer,
+and only the composition knew they belonged together. They now live here, and read those internals across a
+package boundary instead.
 
-Under those two entries the pieces live with what they describe, and can be imported directly when only one is
-wanted:
-
-| Fragment | Owns |
-| --- | --- |
-| `@plitzi/sdk-style/authoring` | the CSS vocabulary: `css`, shorthand expansion, `column`/`row`/`grid`, `styles` |
-| `@plitzi/sdk-elements/authoring` | a factory per element, `element`, `defineElement`, triggers, `updateElement` |
-| `@plitzi/sdk-interactions/authoring` | what a step can do: `setState`, `navigate`, `runServerAction`, `delay`… |
-| `@plitzi/sdk-shared/authoring` | the shape a declared param has, and the binding transformers |
-| `@plitzi/sdk-schema/authoring` | assembly and validation: `authorSpace`, `validateSpace`, the spec types |
+What did NOT come along is the vocabulary the **runtime** declares: an element's declaration primitive
+(`elementDeclaration`, `AuthorableAttributes`), the adapter that draws a declared param as a control
+(`toInteractionCallback`), the callbacks a source registers. A React component reads those while a page renders, so
+they live in `@plitzi/sdk-shared/authoring` — one folder of their own, in the package everything already depends
+on. `@plitzi/sdk-authoring` re-exports every one of them, so it is still one import; the dependency arrow points
+one way, which is what lets authoring be a package at all.
 
 ---
 
@@ -328,7 +334,7 @@ inert specs. That is what keeps every guarantee about the finished document in o
 Documents you did NOT author here go through the same door:
 
 ```ts
-import { validateSpace } from '@plitzi/sdk-server/authoring';
+import { validateSpace } from '@plitzi/sdk-authoring';
 
 const { valid, errors, warnings } = validateSpace({ schema, style });
 ```
@@ -343,17 +349,74 @@ deployment is about to serve.
 An agent working in a consumer's project sees only what npm installed — not this repository. Everything it needs
 is inside the packages:
 
-- **The types.** Every factory, spec field and step builder carries its documentation in the published `.d.ts`
-  (`node_modules/@plitzi/sdk-elements/dist/authoring/`, `.../sdk-schema/dist/authoring/types.d.ts`). Attribute
-  types come from each element's own component, so `subType: 'h7'` is a compile error in the consumer's project,
-  not a page that renders wrong.
-- **The skill.** `@plitzi/sdk-server` ships this guidance as an Agent Skill, so it installs with the package:
+- **The types.** Every factory, spec field and step builder carries its documentation in the published `.d.ts`,
+  and it is one file: `node_modules/@plitzi/sdk-authoring/dist/index.d.ts`. Attribute types come from each
+  element's own component, so `subType: 'h7'` is a compile error in the consumer's project, not a page that
+  renders wrong.
+- **The skill.** `@plitzi/sdk-authoring` ships this guidance as an Agent Skill, so it installs with the package —
+  and `@plitzi/sdk-server` ships the same file, so a self-hoster finds it without knowing the authoring package
+  exists:
 
   ```bash
-  cp -R node_modules/@plitzi/sdk-server/skills/plitzi-authoring ~/.claude/skills/
+  cp -R node_modules/@plitzi/sdk-authoring/skills/plitzi-authoring ~/.claude/skills/
   ```
 
-## 9. Where to look
+---
+
+## 9. Templates
+
+A **template** is the other artefact this surface produces, and it is not a space: one subtree, the style that
+dresses it and a name, published as a JSON. Somebody fetches it by URL, it appears in the builder's Resources
+panel, and dragging it onto a canvas instantiates a copy of the subtree in a space you never see.
+
+```ts
+import { authorTemplate } from '@plitzi/sdk-authoring';
+import { writeFile } from 'node:fs/promises';
+
+const { template, warnings } = authorTemplate({
+  name: 'Pricing card',
+  description: 'A price, a list of features and a call to action.',
+  classes: {
+    card: { display: 'flex', 'flex-direction': 'column', gap: '16px', padding: '24px', 'border-radius': '12px' },
+    price: { 'font-size': '40px', 'font-weight': '700' }
+  },
+  root: container({
+    class: 'card',
+    children: [heading('$19', { subType: 'h3', class: 'price' }), text('per month'), button({ content: 'Start' })]
+  })
+});
+
+await writeFile('pricing-card.json', JSON.stringify(template, null, 2));
+```
+
+That file is the whole deliverable. Host it anywhere, and add it to a space as an `application/json` resource —
+uploading it lands it in `templates/` on that space's CDN, and the Resources panel picks it up from there.
+
+`root` is a single element and its subtree: the root is the template's `baseElementId`, so nobody writes an id.
+Everything else — `classes`, `elements`, `variables`, `schemaVariables` — is declared exactly as a space declares
+it, and for the same reason it matters more here: **what the template names, the template has to carry**.
+
+Two checks exist only for templates, because a template leaves the space it was written in:
+
+| Refused / warned | Why |
+| --- | --- |
+| a binding whose source is outside the subtree | the element publishing it stays behind, so the binding resolves to nothing wherever the template lands — bring the provider into the template, or bind to a global (`variables`, `navigation`, `auth`, `state`) |
+| a class named but not carried (warning) | the element keeps the class, finds no rules in the space it was dropped into and renders unstyled |
+| a page inside a template | a template is a subtree dropped onto a canvas; a page has nowhere to go |
+| a base element with a parent | the base element is the root of what travels |
+
+For a manifest authored elsewhere — exported by the builder, edited by hand — the same gate runs on its own:
+
+```ts
+const { valid, errors, warnings } = validateTemplate(template);
+```
+
+The builder's own "save as template" is the other direction and does not go through `authorTemplate`: it starts
+from a live schema and cuts a subtree out of it (`FlatMap.flatAsTemplate`), which is a different question — which
+of a space's rules and variables belong to this subtree — from the one here, where the answer is simply everything
+the declaration carries. Both produce the same artefact, and `validateTemplate` reads either.
+
+## 10. Where to look
 
 | Example | What it shows |
 | --- | --- |
@@ -361,4 +424,5 @@ is inside the packages:
 | [`examples/02-with-users/01-sessions`](../../examples/02-with-users/01-sessions) | two pages on one path, and an auth flow |
 | [`examples/05-with-server-actions/01-actions`](../../examples/05-with-server-actions/01-actions) | a form that runs a server action and shows the answer |
 | [`examples/06-full-examples/01-blog`](../../examples/06-full-examples/01-blog) | six pages, a custom element, bindings throughout |
+| [`examples/07-templates/01-authoring`](../../examples/07-templates/01-authoring) | a template authored and written out, in a project with one dependency |
 | `plitzi-sdk-server/prisma/mongo/seeds/spaces` | five demo spaces, seeded on every deployment |

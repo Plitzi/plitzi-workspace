@@ -27,11 +27,11 @@ import {
   themeToggle,
   whenFailed,
   whenSucceeded
-} from '@plitzi/sdk-server/authoring';
+} from '@plitzi/sdk-authoring';
 
 import { classes, customCss, elements, variables } from './theme';
 
-import type { Attributes, ElementSpec, PageSpec, SpaceSpec } from '@plitzi/sdk-server/authoring';
+import type { Attributes, ElementSpec, PageSpec, SpaceSpec } from '@plitzi/sdk-authoring';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 /**

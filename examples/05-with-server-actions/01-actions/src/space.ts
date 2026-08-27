@@ -10,9 +10,9 @@ import {
   paragraph,
   runServerAction,
   setState
-} from '@plitzi/sdk-server/authoring';
+} from '@plitzi/sdk-authoring';
 
-import type { AuthoredSpace, PageSpec } from '@plitzi/sdk-server/authoring';
+import type { AuthoredSpace, PageSpec } from '@plitzi/sdk-authoring';
 
 /**
  * The page that calls the action: a form, a button, and somewhere to put the answer.

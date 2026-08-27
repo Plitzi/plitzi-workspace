@@ -1,4 +1,4 @@
-import { defineAction } from '@plitzi/sdk-schema';
+import { defineAction } from '@plitzi/sdk-authoring';
 
 import type { ActionLookups } from '@plitzi/sdk-server/actions';
 import type { ActionEntry, SpaceRevision } from '@plitzi/sdk-shared';

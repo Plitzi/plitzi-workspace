@@ -1,7 +1,7 @@
-import type { BuiltinGlobalCallback } from '../../authoring/globalCallbacks';
+import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring/builder';
 
 /** What this source's actions are, for the editor that fills them in and for anything authoring one offline. */
-export const stateCallbacks = {
+export const stateCallbacks: Record<string, BuiltinGlobalCallback> = {
   setState: {
     source: 'state',
     title: 'Set State',
@@ -35,4 +35,4 @@ export const stateCallbacks = {
     strictParams: true,
     params: {}
   }
-} satisfies Record<string, BuiltinGlobalCallback>;
+};

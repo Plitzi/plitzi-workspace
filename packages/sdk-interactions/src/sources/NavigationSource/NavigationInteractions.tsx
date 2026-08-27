@@ -1,10 +1,10 @@
 import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo } from 'react';
 
+import { toBuilderParams, toInteractionCallbacks } from '@plitzi/sdk-shared/authoring/builder';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import { navigationCallbacks } from './callbacks';
-import { toBuilderParams, toInteractionCallbacks } from '../../authoring/builder';
 import InteractionsContext from '../../InteractionsContext';
 
 import type { InteractionCallbackParam } from '@plitzi/sdk-shared';

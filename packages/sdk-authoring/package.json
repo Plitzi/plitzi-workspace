@@ -1,0 +1,57 @@
+{
+  "name": "@plitzi/sdk-authoring",
+  "version": "0.33.2",
+  "license": "AGPL-3.0",
+  "files": [
+    "dist/index.js",
+    "dist/index.d.ts",
+    "skills"
+  ],
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "repository": {
+    "type": "https",
+    "url": "https://github.com/plitzi/plitzi-workspace.git"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "scripts": {
+    "lint": "eslint ./src",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build:dev": "vite build --mode development",
+    "build:prod": "vite build"
+  },
+  "peerDependencies": {
+    "@types/react": "^19"
+  },
+  "peerDependenciesMeta": {
+    "@types/react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@microsoft/api-extractor": "^7.53.1",
+    "@plitzi/plitzi-ui": "^1.6.20",
+    "@plitzi/sdk-elements": "workspace:*",
+    "@plitzi/sdk-interactions": "workspace:*",
+    "@plitzi/sdk-schema": "workspace:*",
+    "@plitzi/sdk-shared": "workspace:*",
+    "@plitzi/sdk-style": "workspace:*",
+    "@types/react": "^19.2.18",
+    "eslint": "^9.39.5",
+    "typescript": "^6.0.3",
+    "vite": "^8.2.1",
+    "vite-plugin-dts": "^5.0.3",
+    "vitest": "^4.1.10"
+  }
+}

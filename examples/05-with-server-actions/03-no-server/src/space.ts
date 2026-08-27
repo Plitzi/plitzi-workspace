@@ -11,9 +11,9 @@ import {
   paragraph,
   runServerAction,
   setState
-} from '@plitzi/plitzi-sdk/authoring';
+} from '@plitzi/sdk-authoring';
 
-import type { AuthoredSpace, PageSpec } from '@plitzi/plitzi-sdk/authoring';
+import type { AuthoredSpace, PageSpec } from '@plitzi/sdk-authoring';
 
 /**
  * The cat page from `02-render`, wired for a browser with no server behind it.

@@ -1,9 +1,12 @@
-import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-elements/authoring';
-import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from '@plitzi/sdk-interactions/authoring';
-import { transformerCatalog } from '@plitzi/sdk-shared/authoring';
+import {
+  BUILTIN_ELEMENT_CALLBACKS,
+  BUILTIN_GLOBAL_CALLBACKS,
+  BUILTIN_UTILITIES,
+  transformerCatalog
+} from '@plitzi/sdk-authoring';
 
+import type { BuiltinParam, TransformerInfo } from '@plitzi/sdk-authoring';
 import type { Schema } from '@plitzi/sdk-shared';
-import type { BuiltinParam, TransformerInfo } from '@plitzi/sdk-shared/authoring';
 
 // Interaction actions and data-source paths are observed from what already exists in the space — the SSR runtime
 // has no plugin manifest of the available callbacks/sources (same constraint as observed element types). These

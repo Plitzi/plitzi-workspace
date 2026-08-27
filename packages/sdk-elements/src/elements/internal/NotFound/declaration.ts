@@ -1,8 +1,8 @@
 /** Static declaration for NotFound: type, default attributes and builder metadata. Data only, no React. */
-import { elementDeclaration } from '../../../authoring/declare';
+import { elementDeclaration } from '@plitzi/sdk-shared/authoring/declare';
 
 import type { NotFoundProps } from './NotFound';
-import type { AuthorableAttributes } from '../../../authoring/declare';
+import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare';
 
 /** What this element can be authored with — its component's own props, minus what the runtime supplies. */
 export type NotFoundAttributes = AuthorableAttributes<NotFoundProps>;

@@ -43,10 +43,14 @@ createServer({
 A page server needs a **space** to serve, and there are two ways to get one: export it from the Plitzi builder, or
 write it yourself. This is the second one, whole — one file, no account, no API key, no JSON:
 
+```bash
+yarn add @plitzi/sdk-authoring   # writing spaces is its own package, and it installs nothing else
+```
+
 ```ts
 // server.ts
+import { authorSpace, container, heading, link, text } from '@plitzi/sdk-authoring';
 import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
-import { authorSpace, container, heading, link, text } from '@plitzi/sdk-server/authoring';
 
 /** A space is a tree, some CSS and a palette. Ids, class names and the breakpoint maps are derived from it. */
 const space = authorSpace({
@@ -125,7 +129,8 @@ there are runnable versions of each step in
 This package ships an [Agent Skill](https://agentskills.io/) for authoring, because an agent in your project sees
 only what npm installed — not this repository. It teaches the declaration, the flat prop model, the binding and
 flow builders, and the mistakes the validator refuses, so an agent writes a space instead of reconstructing schema
-JSON from memory:
+JSON from memory. It is `@plitzi/sdk-authoring`'s file, shipped here as well so a server has it without installing
+anything else:
 
 ```bash
 cp -R node_modules/@plitzi/sdk-server/skills/plitzi-authoring ~/.claude/skills/
@@ -134,7 +139,7 @@ cp -R node_modules/@plitzi/sdk-server/skills/plitzi-authoring ~/.claude/skills/
 It installs the same way into any agent that reads a `SKILL.md` (Claude Code, VS Code / Copilot, Codex, Gemini
 CLI, Cline, Goose). Everything it defers to is in the package too: every factory, spec field and step builder
 carries its documentation in the published `.d.ts`, so hovering a call or reading
-`node_modules/@plitzi/sdk-elements/dist/authoring/` answers what an attribute takes without leaving the project.
+`node_modules/@plitzi/sdk-authoring/dist/index.d.ts` answers what an attribute takes without leaving the project.
 
 ### Already have a space?
 
@@ -144,7 +149,7 @@ An export from the builder is a `{ schema, style }` JSON and goes in the same do
 adapters: createJsonAdapters({ offlineData: './space.json' })
 ```
 
-`validateSpace({ schema, style })` from `@plitzi/sdk-server/authoring` answers whether one is servable before you
+`validateSpace({ schema, style })` from `@plitzi/sdk-authoring` answers whether one is servable before you
 serve it — worth running over anything that arrives as a file.
 
 ## Configuration

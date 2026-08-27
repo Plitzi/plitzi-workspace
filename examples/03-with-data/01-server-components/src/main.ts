@@ -1,10 +1,10 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { elementIdOf } from '@plitzi/sdk-authoring';
 import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 
 import { offlineDataPath, readOfflineData } from '@plitzi/example-space';
-import { elementIdOf } from '@plitzi/sdk-server/authoring';
 
 import type { SSRRscContext, SSRRscData, SSRUser } from '@plitzi/sdk-shared';
 

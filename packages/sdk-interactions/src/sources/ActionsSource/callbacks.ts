@@ -1,4 +1,4 @@
-import type { BuiltinGlobalCallback } from '../../authoring/globalCallbacks';
+import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring/builder';
 
 /**
  * Running a server action from a flow, and cancelling one.
@@ -10,7 +10,7 @@ import type { BuiltinGlobalCallback } from '../../authoring/globalCallbacks';
  * `mode` is the param a flow is usually got wrong on: only `await` puts the result in the flow scope, so a step
  * that reads `{{ <step>.output.* }}` after a detached run reads nothing at all.
  */
-export const actionsCallbacks = {
+export const actionsCallbacks: Record<string, BuiltinGlobalCallback> = {
   runServerAction: {
     source: 'actions',
     title: 'Run Server Action',
@@ -69,4 +69,4 @@ export const actionsCallbacks = {
     },
     preview: { cancelled: '' }
   }
-} satisfies Record<string, BuiltinGlobalCallback>;
+};

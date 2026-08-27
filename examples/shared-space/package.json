@@ -28,6 +28,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@plitzi/sdk-authoring": "workspace:*",
     "@plitzi/sdk-server": "workspace:*"
   }
 }

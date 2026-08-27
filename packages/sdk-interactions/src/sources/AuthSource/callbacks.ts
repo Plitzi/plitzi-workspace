@@ -1,4 +1,4 @@
-import type { BuiltinGlobalCallback } from '../../authoring/globalCallbacks';
+import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring/builder';
 
 /**
  * The auth source's three actions.
@@ -21,7 +21,7 @@ import type { BuiltinGlobalCallback } from '../../authoring/globalCallbacks';
  * The previews matter as much as the params: they are the shape of what lands in the flow scope, so a step written
  * after a login can read `{{ login.access_token }}` because this says the key exists.
  */
-export const authCallbacks = {
+export const authCallbacks: Record<string, BuiltinGlobalCallback> = {
   login: {
     source: 'auth',
     title: 'Auth Login',
@@ -71,4 +71,4 @@ export const authCallbacks = {
     strictParams: true,
     params: {}
   }
-} satisfies Record<string, BuiltinGlobalCallback>;
+};

@@ -57,6 +57,18 @@
       "types": "./dist/authoring/index.d.ts",
       "import": "./dist/authoring/index.mjs"
     },
+    "./authoring/builder": {
+      "types": "./dist/authoring/builder.d.ts",
+      "import": "./dist/authoring/builder.mjs"
+    },
+    "./authoring/declare": {
+      "types": "./dist/authoring/declare.d.ts",
+      "import": "./dist/authoring/declare.mjs"
+    },
+    "./authoring/elementCallbacks": {
+      "types": "./dist/authoring/elementCallbacks.d.ts",
+      "import": "./dist/authoring/elementCallbacks.mjs"
+    },
     "./authoring/index": {
       "types": "./dist/authoring/index.d.ts",
       "import": "./dist/authoring/index.mjs"
@@ -65,9 +77,9 @@
       "types": "./dist/authoring/paramSpec.d.ts",
       "import": "./dist/authoring/paramSpec.mjs"
     },
-    "./authoring/transformers": {
-      "types": "./dist/authoring/transformers.d.ts",
-      "import": "./dist/authoring/transformers.mjs"
+    "./authoring/spaceCallbacks": {
+      "types": "./dist/authoring/spaceCallbacks.d.ts",
+      "import": "./dist/authoring/spaceCallbacks.mjs"
     },
     "./builder": {
       "types": "./dist/builder/index.d.ts",
@@ -1121,6 +1133,9 @@
     "./types/StyleTypes": {
       "types": "./dist/types/StyleTypes.d.ts",
       "import": "./dist/types/StyleTypes.mjs"
+    },
+    "./types/TemplateTypes": {
+      "types": "./dist/types/TemplateTypes.d.ts"
     },
     "./types/ThemeTypes": {
       "types": "./dist/types/ThemeTypes.d.ts"

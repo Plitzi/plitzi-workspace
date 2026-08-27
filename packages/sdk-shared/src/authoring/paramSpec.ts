@@ -5,10 +5,14 @@ import type { InteractionParamType } from '../types';
 // The shape a declared param has, and the rules for reconciling one against what somebody supplied.
 //
 // Four catalogs are written against it — global callbacks (sdk-interactions), element callbacks (sdk-elements),
-// utilities (sdk-interactions) and binding transformers (below) — and each of them lives with the code it
-// describes. This is what they share, so it sits in the package they all already depend on: an authoring helper
-// filling a step's params and an MCP tool validating one are doing the same arithmetic, and doing it twice is how
-// the two answers drift.
+// utilities and binding transformers — and each lives with the code it describes. This is what they share, so it
+// sits in the package they all already depend on: an authoring helper filling a step's params, the builder drawing
+// the control for one and an MCP tool validating one are doing the same arithmetic, and doing it three times is how
+// the answers drift.
+//
+// Not in `@plitzi/sdk-authoring` with the rest of the authoring surface, and the reason is the dependency arrow: a
+// React source registering its callbacks reads this AT RUNTIME, so the authoring package importing it is fine and
+// the reverse would be a cycle.
 
 // `scalar` is the polymorphic value type: the param legitimately holds a string, number OR boolean (e.g. a setState
 // `value`, whose data type follows the target attribute — booleans are stored as real booleans, numbers as numbers).

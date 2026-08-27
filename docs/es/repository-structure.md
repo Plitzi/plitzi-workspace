@@ -10,7 +10,7 @@ plitzi-workspace/
 │   └── server/      # Servidor SSR / RSC / MCP (@plitzi/sdk-server)
 ├── packages/
 │   ├── sdk-auth/
-│   ├── sdk-collections/
+│   ├── sdk-authoring/   # Autoría offline de espacios y plantillas (@plitzi/sdk-authoring)
 │   ├── sdk-dev-tools/
 │   ├── sdk-elements/
 │   ├── sdk-event-bridge/

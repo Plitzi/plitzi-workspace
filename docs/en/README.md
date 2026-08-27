@@ -11,7 +11,7 @@ Guides for working with the `plitzi-workspace` monorepo.
 | [Development](./development.md) | Stack, commands, and contribution workflow |
 | [Testing](./testing.md) | Vitest for units, Playwright for what a browser opens |
 | [Releases](./releases.md) | Versioning and publishing with Changesets |
-| [Authoring spaces](./authoring-spaces.md) | Writing a space as TypeScript instead of exported JSON: elements, style, bindings and flows |
+| [Authoring spaces](./authoring-spaces.md) | Writing a space — or a publishable template — as TypeScript instead of exported JSON: elements, style, bindings and flows |
 | [Server actions](./server-actions.md) | Work a page cannot do in the browser: authoring flows the server runs, and calling them from a page |
 
 ## Package documentation

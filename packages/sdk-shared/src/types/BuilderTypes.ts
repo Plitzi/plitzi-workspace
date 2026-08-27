@@ -1,17 +1,3 @@
-import type { Schema } from './SchemaTypes';
-import type { Style } from './StyleTypes';
-
-export type Template = {
-  id?: string;
-  definition: {
-    name: string;
-    description: string;
-    baseElementId: Element['id'];
-  };
-  schema: Schema;
-  style: Style;
-};
-
 export type SubscriptionCollaboratorElement = { elementId: string; rootId: string };
 
 // Where a collaborator's cursor currently is, in canvas coordinates, mirrored into the store for the devtools

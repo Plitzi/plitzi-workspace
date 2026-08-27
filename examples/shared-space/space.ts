@@ -7,9 +7,9 @@ import {
   image,
   link,
   paragraph
-} from '@plitzi/sdk-server/authoring';
+} from '@plitzi/sdk-authoring';
 
-import type { AuthoredSpace, ElementSpec, SpaceSpec } from '@plitzi/sdk-server/authoring';
+import type { AuthoredSpace, ElementSpec, SpaceSpec } from '@plitzi/sdk-authoring';
 
 /**
  * The sample space every example renders, declared.

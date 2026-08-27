@@ -11,9 +11,9 @@ import {
   onClick,
   onSubmit,
   paragraph
-} from '@plitzi/sdk-server/authoring';
+} from '@plitzi/sdk-authoring';
 
-import type { AuthoredSpace, PageSpec } from '@plitzi/sdk-server/authoring';
+import type { AuthoredSpace, PageSpec } from '@plitzi/sdk-authoring';
 
 /**
  * The sample space, plus what makes this example about people: a page to sign in on, and a page you only see once

@@ -40,11 +40,6 @@
       "import": "./dist/ssr.js",
       "default": "./dist/ssr.js"
     },
-    "./authoring": {
-      "types": "./dist/authoring.d.ts",
-      "import": "./dist/authoring.js",
-      "default": "./dist/authoring.js"
-    },
     "./actions": {
       "types": "./dist/actions.d.ts",
       "import": "./dist/actions.js",
@@ -93,6 +88,7 @@
     "vitest": "^4.1.10"
   },
   "scripts": {
+    "prepack": "node scripts/copy-authoring-skill.mjs",
     "start:dev": "node --import ./dev/register-alias.mjs --watch dev/main.ts",
     "start": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx dev/main.ts",
     "start:watch": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx --watch dev/main.ts",

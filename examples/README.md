@@ -54,6 +54,14 @@ these build on.
 Everything above, assembled: this is the one to read when the question is not "how does X work" but "what does it
 take to build something".
 
+## [`07-templates`](./07-templates) — publishing a piece of one
+
+| | Example | What it is | Port |
+|---|---|---|---|
+| 01 | [authoring](./07-templates/01-authoring) | A template authored and written out as JSON — one dependency, no server | — |
+
+The odd one out on purpose: a template is a file, not a running thing, so this one builds and exits.
+
 Every example renders [`shared-space`](./shared-space), so the difference between any two is the wiring alone — bar
 the ones that need pages of their own: `02-with-users`, because a space with people in it has somewhere to sign in,
 `05-with-server-actions`, because something has to press the button, and `06-full-examples`, which is a space of

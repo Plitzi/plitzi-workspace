@@ -1,5 +1,5 @@
+import type { CssProps } from '@plitzi/sdk-authoring';
 import type { ElementRuntime, Environment } from '@plitzi/sdk-shared';
-import type { CssProps } from '@plitzi/sdk-style/authoring';
 
 export type Env = Environment;
 

@@ -1,0 +1,10 @@
+{
+  "extends": "../../../packages/sdk-shared/tsconfig.app.json",
+  "compilerOptions": {
+    "rootDir": "./",
+    "noEmit": true,
+    "types": ["node"],
+    "lib": ["ES2023"]
+  },
+  "include": ["src"]
+}

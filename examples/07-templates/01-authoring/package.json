@@ -1,0 +1,20 @@
+{
+  "name": "@plitzi/example-template-authoring",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A publishable template, authored in TypeScript and written out as JSON — one dependency, no server, no account.",
+  "type": "module",
+  "scripts": {
+    "start": "node --import tsx src/main.ts",
+    "start:dev": "tsx watch src/main.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@plitzi/sdk-authoring": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typescript": "^6.0.3"
+  }
+}

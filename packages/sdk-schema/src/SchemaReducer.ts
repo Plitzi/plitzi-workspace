@@ -2,6 +2,7 @@ import { get, set, has } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 
 import FlatMap from './helpers/FlatMap';
+import { remapClonedRefs, takenIdRefs } from './helpers/idRef';
 
 import type {
   Element,
@@ -12,6 +13,20 @@ import type {
   DropPosition,
   Style
 } from '@plitzi/sdk-shared';
+
+/** Variables a template brought with it, minus the ones this space already declares under the same name. */
+const appendVariables = (draft: Schema, variables: SchemaVariable[]): void => {
+  if (variables.length === 0) {
+    return;
+  }
+
+  const variablesToAppend = variables.filter(
+    variable =>
+      (draft.variables as SchemaVariable[] | undefined) && !draft.variables.find(v => v.name === variable.name)
+  );
+
+  set(draft, 'variables', [...((draft.variables as SchemaVariable[] | undefined) ?? []), ...variablesToAppend]);
+};
 
 export const SchemaActions = {
   SCHEMA_UPDATE: 'SCHEMA_UPDATE',
@@ -212,19 +227,33 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
       });
     }
 
-    case SchemaActions.SCHEMA_ADD_TEMPLATE:
     case SchemaActions.SCHEMA_ADD_ELEMENT: {
       const { to, data, dropPosition, initialItems, variables = [] } = action;
 
       return produce(state, draft => {
         FlatMap.addElement(draft.flat, data, to, dropPosition, initialItems);
-        if (variables.length > 0) {
-          const variablesToAppend = variables.filter(
-            variable =>
-              (draft.variables as SchemaVariable[] | undefined) && !draft.variables.find(v => v.name === variable.name)
-          );
-          set(draft, 'variables', [...((draft.variables as SchemaVariable[] | undefined) ?? []), ...variablesToAppend]);
-        }
+        appendVariables(draft, variables);
+      });
+    }
+
+    case SchemaActions.SCHEMA_ADD_TEMPLATE: {
+      const { to, data, dropPosition, initialItems, variables = [] } = action;
+
+      return produce(state, draft => {
+        // A template arrives from a document nobody here has seen, and the names it brought are not free: two
+        // elements sharing an idRef makes every binding onto it ambiguous, so `addElement` refuses the whole
+        // subtree — a drag that silently drops nothing, which is exactly what an authored template hits, since
+        // its refs are derived per type (`container-1`, `text-1`) in every space that ever authored one.
+        //
+        // Renamed against THIS document before it lands, with every binding source and step target that pointed at
+        // an old name repointed with it. Copied first: the payload belongs to whoever dispatched the action.
+        const arriving = structuredClone({ [data.id]: data, ...initialItems });
+        const taken = takenIdRefs(draft.flat);
+        remapClonedRefs(arriving, candidate => taken.has(candidate));
+        const { [data.id]: element, ...items } = arriving;
+
+        FlatMap.addElement(draft.flat, element, to, dropPosition, items);
+        appendVariables(draft, variables);
       });
     }
 

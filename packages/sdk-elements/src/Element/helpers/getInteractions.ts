@@ -1,6 +1,5 @@
-import { toBuilderParams, toInteractionCallback } from '@plitzi/sdk-interactions/authoring';
-
-import { BUILTIN_ELEMENT_CALLBACKS } from '../../authoring/elementCallbacks';
+import { toBuilderParams, toInteractionCallback } from '@plitzi/sdk-shared/authoring/builder';
+import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring/elementCallbacks';
 
 import type {
   Element,
@@ -13,7 +12,7 @@ import type {
  * The callbacks every element registers on itself.
  *
  * What the action IS — its params, their defaults, which ones only apply once another is set — is declared once, in
- * `authoring/elementCallbacks`, and read from there by the editor below and by anything authoring or validating a
+ * `@plitzi/sdk-shared/authoring/elementCallbacks`, and read from there by the editor below and by anything authoring or validating a
  * step. What this adds is the part that can only be known here: the keys and values are THIS element's attributes
  * and style selectors, so the pickers are filled from the element in hand.
  */

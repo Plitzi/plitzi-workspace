@@ -1,7 +1,7 @@
 import { sampleSpace } from '@plitzi/example-space/space';
-import { apiContainer, authorSpace, heading, image, list, paragraph } from '@plitzi/sdk-server/authoring';
+import { apiContainer, authorSpace, heading, image, list, paragraph } from '@plitzi/sdk-authoring';
 
-import type { AuthoredSpace, PageSpec } from '@plitzi/sdk-server/authoring';
+import type { AuthoredSpace, PageSpec } from '@plitzi/sdk-authoring';
 
 /**
  * A page whose content is fetched while it renders.

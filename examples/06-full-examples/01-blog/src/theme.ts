@@ -1,6 +1,6 @@
-import { column, grid, row as flexRow } from '@plitzi/sdk-server/authoring';
+import { column, grid, row as flexRow } from '@plitzi/sdk-authoring';
 
-import type { CssProps, SpaceSpec, StyleRules } from '@plitzi/sdk-server/authoring';
+import type { CssProps, SpaceSpec, StyleRules } from '@plitzi/sdk-authoring';
 
 /**
  * The stylesheet, as data.

@@ -1,8 +1,8 @@
 /** Static declaration for Pagination: type, default attributes and builder metadata. Data only, no React. */
-import { elementDeclaration } from '../../../authoring/declare';
+import { elementDeclaration } from '@plitzi/sdk-shared/authoring/declare';
 
 import type { PaginationProps } from './Pagination';
-import type { AuthorableAttributes } from '../../../authoring/declare';
+import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare';
 
 /** What this element can be authored with — its component's own props, minus what the runtime supplies. */
 export type PaginationAttributes = AuthorableAttributes<PaginationProps>;

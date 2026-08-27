@@ -8,11 +8,11 @@ import {
   list,
   styles,
   text
-} from '@plitzi/sdk-server/authoring';
+} from '@plitzi/sdk-authoring';
 
 import { customCss, variables } from './theme';
 
-import type { ElementSpec, SpaceSpec } from '@plitzi/sdk-server/authoring';
+import type { ElementSpec, SpaceSpec } from '@plitzi/sdk-authoring';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 /**

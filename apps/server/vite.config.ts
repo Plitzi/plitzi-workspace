@@ -88,10 +88,7 @@ export default defineConfig(({ mode }) => {
           actions: path.resolve(root, 'src/actions.ts'),
           // Ready-made request handlers for the auth flows. Depends on no framework — see src/handlers.ts —
           // but keeping it out of the barrels is what makes it opt-in rather than something a page server drags in.
-          handlers: path.resolve(root, 'src/handlers.ts'),
-          // Authoring spaces offline. Own entry, and free of everything else here: writing a page is what a seed
-          // or a migration does, and neither has a request to serve.
-          authoring: path.resolve(root, 'src/authoring.ts')
+          handlers: path.resolve(root, 'src/handlers.ts')
         },
         formats: ['es']
       },

@@ -61,7 +61,7 @@ A deployment that keeps its actions in a repository rather than in the builder w
 declaration:
 
 ```ts
-import { defineAction } from '@plitzi/sdk-server/authoring';
+import { defineAction } from '@plitzi/sdk-authoring';
 
 defineAction({
   id: 'update-post',
