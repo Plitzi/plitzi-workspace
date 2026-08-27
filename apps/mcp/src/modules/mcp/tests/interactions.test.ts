@@ -526,8 +526,8 @@ describe('mcp-ai interactions', () => {
   it('normalizes a stringified nullish elementId ("undefined") on a patched utility to null', async () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
-      node_u: {
-        id: 'node_u',
+      'delayTime-1': {
+        id: 'delayTime-1',
         title: 'Wait 2 seconds',
         type: 'utility',
         action: 'delayTime',
@@ -537,26 +537,26 @@ describe('mcp-ai interactions', () => {
         elementId: 'undefined',
         beforeNode: '',
         afterNode: '',
-        flowId: 'node_u',
+        flowId: 'delayTime-1',
         enabled: true
       }
     };
     const cap = capturing(space);
     await apply(
       {
-        operations: [{ type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'node_u', title: 'Wait' }]
+        operations: [{ type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'delayTime-1', title: 'Wait' }]
       },
       cap.saved(),
       cap.persisters
     );
-    expect(cap.saved().schema.flat.c1.definition.interactions?.node_u.elementId).toBeNull();
+    expect(cap.saved().schema.flat.c1.definition.interactions?.['delayTime-1'].elementId).toBeNull();
   });
 
   it('warns when an existing utility node carries a real (host) elementId, on patch', () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
-      node_u: {
-        id: 'node_u',
+      'delayTime-1': {
+        id: 'delayTime-1',
         title: 'Wait',
         type: 'utility',
         action: 'delayTime',
@@ -565,13 +565,13 @@ describe('mcp-ai interactions', () => {
         elementId: 'c1',
         beforeNode: '',
         afterNode: '',
-        flowId: 'node_u',
+        flowId: 'delayTime-1',
         enabled: true
       }
     };
     const res = validate(
       {
-        operations: [{ type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'node_u', title: 'Renamed' }]
+        operations: [{ type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'delayTime-1', title: 'Renamed' }]
       },
       space
     );
@@ -581,8 +581,8 @@ describe('mcp-ai interactions', () => {
   it('warns on a literal string "undefined" elementId (stringified nullish, a builder artifact)', () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
-      node_u: {
-        id: 'node_u',
+      'delayTime-1': {
+        id: 'delayTime-1',
         title: 'Wait',
         type: 'utility',
         action: 'delayTime',
@@ -591,13 +591,13 @@ describe('mcp-ai interactions', () => {
         elementId: 'undefined',
         beforeNode: '',
         afterNode: '',
-        flowId: 'node_u',
+        flowId: 'delayTime-1',
         enabled: true
       }
     };
     const res = validate(
       {
-        operations: [{ type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'node_u', title: 'Renamed' }]
+        operations: [{ type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'delayTime-1', title: 'Renamed' }]
       },
       space
     );
@@ -834,8 +834,8 @@ describe('mcp-ai interactions', () => {
   it('re-validates the whole merged node on patch, catching a malformed param the patch did not touch', () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
-      node_bad: {
-        id: 'node_bad',
+      'delayTime-bad': {
+        id: 'delayTime-bad',
         title: 'Notify',
         type: 'globalCallback',
         action: 'addNotification',
@@ -844,13 +844,13 @@ describe('mcp-ai interactions', () => {
         elementId: 'space',
         beforeNode: '',
         afterNode: '',
-        flowId: 'node_bad',
+        flowId: 'delayTime-bad',
         enabled: true
       }
     };
     const res = validate(
       {
-        operations: [{ type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'node_bad', title: 'Renamed' }]
+        operations: [{ type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'delayTime-bad', title: 'Renamed' }]
       },
       space
     );
@@ -861,8 +861,8 @@ describe('mcp-ai interactions', () => {
   it('surfaces leftover unknown params (delay/time) on the merged node when patching one field', () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
-      node_x: {
-        id: 'node_x',
+      'setState-1': {
+        id: 'setState-1',
         title: 'Set loading text',
         type: 'callback',
         action: 'setState',
@@ -871,14 +871,14 @@ describe('mcp-ai interactions', () => {
         elementId: 'c1',
         beforeNode: '',
         afterNode: '',
-        flowId: 'node_x',
+        flowId: 'setState-1',
         enabled: true
       }
     };
     const res = validate(
       {
         operations: [
-          { type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'node_x', params: { value: 'nuevo' } }
+          { type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'setState-1', params: { value: 'nuevo' } }
         ]
       },
       space
@@ -891,8 +891,8 @@ describe('mcp-ai interactions', () => {
   it('blocks the save when a valid patch lands on an already-malformed node, and persists nothing', async () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
-      node_bad: {
-        id: 'node_bad',
+      'delayTime-bad': {
+        id: 'delayTime-bad',
         title: 'Notify',
         type: 'globalCallback',
         action: 'addNotification',
@@ -901,7 +901,7 @@ describe('mcp-ai interactions', () => {
         elementId: 'space',
         beforeNode: '',
         afterNode: '',
-        flowId: 'node_bad',
+        flowId: 'delayTime-bad',
         enabled: true
       }
     };
@@ -913,7 +913,7 @@ describe('mcp-ai interactions', () => {
             type: 'patchInteractionNode',
             pageRef: 'home',
             ref: 'c1',
-            nodeId: 'node_bad',
+            nodeId: 'delayTime-bad',
             params: { content: 'Nuevo contenido' }
           }
         ]
@@ -925,14 +925,14 @@ describe('mcp-ai interactions', () => {
     expect(res.persisted).toBe(false);
     expect(res.errors?.some(e => e.message.includes('autoDismissTimeout') && e.message.includes('number'))).toBe(true);
     // The correct new field was NOT written, because the node as a whole is still malformed.
-    expect(cap.saved().schema.flat.c1.definition.interactions?.node_bad.params.content).toBe('Hi');
+    expect(cap.saved().schema.flat.c1.definition.interactions?.['delayTime-bad'].params.content).toBe('Hi');
   });
 
   it('lets the save through once the same patch ALSO corrects the malformation', async () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
-      node_bad: {
-        id: 'node_bad',
+      'delayTime-bad': {
+        id: 'delayTime-bad',
         title: 'Notify',
         type: 'globalCallback',
         action: 'addNotification',
@@ -941,7 +941,7 @@ describe('mcp-ai interactions', () => {
         elementId: 'space',
         beforeNode: '',
         afterNode: '',
-        flowId: 'node_bad',
+        flowId: 'delayTime-bad',
         enabled: true
       }
     };
@@ -953,7 +953,7 @@ describe('mcp-ai interactions', () => {
             type: 'patchInteractionNode',
             pageRef: 'home',
             ref: 'c1',
-            nodeId: 'node_bad',
+            nodeId: 'delayTime-bad',
             params: { content: 'Nuevo contenido', autoDismissTimeout: 3000 }
           }
         ]
@@ -962,7 +962,7 @@ describe('mcp-ai interactions', () => {
       cap.persisters
     );
     expect(res.applied).toBe(true);
-    const stored = cap.saved().schema.flat.c1.definition.interactions?.node_bad;
+    const stored = cap.saved().schema.flat.c1.definition.interactions?.['delayTime-bad'];
     expect(stored?.params.autoDismissTimeout).toBe(3000);
     expect(stored?.params.content).toBe('Nuevo contenido');
   });

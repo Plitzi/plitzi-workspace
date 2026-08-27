@@ -1,3 +1,5 @@
+import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
+
 import { batchDeclaredFolders, batchDeclaredPages, batchDeclaredVariants, batchDeclaredVars } from './batch';
 import { checkBindingSourceScope, checkBindingTarget, checkBindingTransformers } from './bindings';
 import { batchDeclaredConnectors, checkConnectorOp, checkProviderElement } from './connectors';
@@ -349,6 +351,35 @@ export const validateOperations = (
             path: `${base}.nodes[0].nodeType`,
             message: 'The first node of a flow must be a trigger',
             hint: 'Put the trigger first; the callbacks/utilities that run after it follow in order'
+          });
+        }
+
+        // A flow is stored as a MAP keyed by step id, so two steps named the same do not both land — the second
+        // replaces the first, and the flow that runs is shorter than the one that was written.
+        {
+          const named = new Set<string>();
+          op.nodes.forEach((node, n) => {
+            if (!node.id) {
+              return;
+            }
+
+            if (!isValidElementId(node.id)) {
+              ctx.errors.push({
+                path: `${base}.nodes[${n}].id`,
+                message: `"${node.id}" is not a valid step name`,
+                hint: 'Letters, numbers, hyphens and underscores, starting with a letter. A later step reads this one as {{ <id>.field }}, so a dot would split that path'
+              });
+            }
+
+            if (named.has(node.id)) {
+              ctx.errors.push({
+                path: `${base}.nodes[${n}].id`,
+                message: `Two steps of this flow are called "${node.id}"`,
+                hint: 'A flow is keyed by step id, so the second would replace the first. Name them apart'
+              });
+            }
+
+            named.add(node.id);
           });
         }
 

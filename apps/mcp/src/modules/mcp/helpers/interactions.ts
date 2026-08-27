@@ -111,14 +111,20 @@ export const flowsFromInteractions = (
 
 // --- Interactions (write): ordered flow → linked node map ---
 
-/** A readable id for an unnamed step: `node_<action>-<n>`, counted per action within the flow being written — which
- *  is the scope that resolves `{{node_<id>.output}}` from a later step. */
-export const newNodeId = (action: string, counters: Map<string, number>): string => {
+/** A readable id for an unnamed step: `<action>-<n>`, counted per action within the flow being written — which is
+ *  the scope that resolves `{{<id>.output}}` from a later step. `isTaken` covers the ids the agent named in the
+ *  same flow: a minted `navigate-1` landing on a step the caller already called `navigate-1` would not be a
+ *  duplicate, it would be the two steps collapsing into one entry of the record. */
+export const newNodeId = (action: string, counters: Map<string, number>, isTaken: (id: string) => boolean): string => {
   const base = action.replace(/[^A-Za-z0-9]/g, '') || 'step';
-  const next = (counters.get(base) ?? 0) + 1;
+  let next = (counters.get(base) ?? 0) + 1;
+  while (isTaken(`${base}-${next}`)) {
+    next += 1;
+  }
+
   counters.set(base, next);
 
-  return `node_${base}-${next}`;
+  return `${base}-${next}`;
 };
 
 /** Materialize an ordered list of nodes into the stored linked-node map for ONE flow: assign ids where missing,
@@ -129,7 +135,8 @@ export const materializeFlow = (
   ownerId: string
 ): { flowId: string; record: Record<string, ElementInteraction> } => {
   const counters = new Map<string, number>();
-  const ids = nodes.map(node => node.id || newNodeId(node.action, counters));
+  const named = new Set(nodes.map(node => node.id).filter(Boolean) as string[]);
+  const ids = nodes.map(node => node.id || newNodeId(node.action, counters, id => named.has(id)));
   const flowId = ids[0];
   const record: Record<string, ElementInteraction> = {};
 

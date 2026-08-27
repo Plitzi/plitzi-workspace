@@ -45,10 +45,10 @@ const WorkflowContextProvider = ({
         nodeType === 'trigger' && defaultTrigger
           ? nodeDefinitions?.find(definition => definition.type === 'trigger' && definition.action === defaultTrigger)
           : undefined;
-      // A step's output is addressed as `node_<id>` from every later step in the flow, so the id is worth reading:
-      // `node_navigate-1` beats a hex handle in a twig token. Unique within this flow, which is the scope that
+      // A step's output is addressed as `{{ <id>.field }}` from every later step in the flow, so the id is worth
+      // reading: `navigate-1` beats a hex handle in a twig token. Unique within this flow, which is the scope that
       // resolves it.
-      const id = `node_${positionalElementId(preset?.action ?? nodeType, candidate => `node_${candidate}` in nodesRef.current)}`;
+      const id = positionalElementId(preset?.action ?? nodeType, candidate => candidate in nodesRef.current);
       onChange(
         produce(nodesRef.current, draft => {
           if (siblingNodeId && !(draft[siblingNodeId] as ElementInteraction | undefined)) {

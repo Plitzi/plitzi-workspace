@@ -836,14 +836,14 @@ describe('Testing FlatMap', () => {
                 visibility: true
               },
               interactions: {
-                'node_open-modal': {
+                'openModal-1': {
                   action: 'onClick',
-                  afterNode: 'node_track-click',
+                  afterNode: 'trackClick-1',
                   beforeNode: '',
                   elementId: 'cta-2',
                   enabled: true,
-                  flowId: 'node_open-modal',
-                  id: 'node_open-modal',
+                  flowId: 'openModal-1',
+                  id: 'openModal-1',
                   params: {
                     propagateEvent: false
                   },
@@ -853,14 +853,14 @@ describe('Testing FlatMap', () => {
                   title: 'New Trigger',
                   type: 'trigger'
                 },
-                'node_track-click': {
+                'trackClick-1': {
                   action: 'setState',
                   afterNode: '',
-                  beforeNode: 'node_open-modal',
+                  beforeNode: 'openModal-1',
                   elementId: 'title-2',
                   enabled: true,
-                  flowId: 'node_open-modal',
-                  id: 'node_track-click',
+                  flowId: 'openModal-1',
+                  id: 'trackClick-1',
                   params: {
                     category: 'attribute',
                     key: 'content',

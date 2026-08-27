@@ -30,8 +30,8 @@ describe('Testing NavigationHelper', () => {
         },
         bindings: undefined,
         interactions: {
-          node_65bcebb6ba6a23b040bf4779: {
-            id: 'node_65bcebb6ba6a23b040bf4779',
+          'onPageLoad-1': {
+            id: 'onPageLoad-1',
             title: 'New Trigger',
             type: 'trigger',
             action: 'onPageLoad',
@@ -45,8 +45,8 @@ describe('Testing NavigationHelper', () => {
             },
             elementId: '64599fe5e07288d4094abbed',
             beforeNode: '',
-            afterNode: 'node_65bcebd45b7e990c363f45af',
-            flowId: 'node_65bcebb6ba6a23b040bf4779',
+            afterNode: 'login-1',
+            flowId: 'onPageLoad-1',
             enabled: true,
             when: {
               id: '92682254-d56a-4025-a626-04cfcf3c3744',
@@ -54,7 +54,7 @@ describe('Testing NavigationHelper', () => {
               rules: [
                 {
                   id: '46386c6e-a8b6-439d-9e8e-6f46c4c5b9fd',
-                  field: 'node_65bcebb6ba6a23b040bf4779.queryParams.access_token',
+                  field: 'onPageLoad-1.queryParams.access_token',
                   operator: 'notEmpty',
                   value: '',
                   enabled: true
@@ -62,8 +62,8 @@ describe('Testing NavigationHelper', () => {
               ]
             }
           },
-          node_65bcebd45b7e990c363f45af: {
-            id: 'node_65bcebd45b7e990c363f45af',
+          'login-1': {
+            id: 'login-1',
             title: 'Perform Login',
             type: 'globalCallback',
             action: 'login',
@@ -71,7 +71,7 @@ describe('Testing NavigationHelper', () => {
               mode: 'token',
               username: '',
               password: '',
-              token: '{{ node_65bcebb6ba6a23b040bf4779.queryParams.access_token }}'
+              token: '{{ onPageLoad-1.queryParams.access_token }}'
             },
             preview: {
               errors: {
@@ -92,9 +92,9 @@ describe('Testing NavigationHelper', () => {
               }
             },
             elementId: 'user',
-            beforeNode: 'node_65bcebb6ba6a23b040bf4779',
-            afterNode: 'node_65bd0fd3b00a3cf7f17a2775',
-            flowId: 'node_65bcebb6ba6a23b040bf4779',
+            beforeNode: 'onPageLoad-1',
+            afterNode: 'twigTemplate-1',
+            flowId: 'onPageLoad-1',
             enabled: true,
             when: {
               id: '80284c02-f38b-479f-af8d-c898065afe88',
@@ -102,7 +102,7 @@ describe('Testing NavigationHelper', () => {
               rules: [
                 {
                   id: '19e9a1ad-4bdd-4724-b55b-cc48fb3222c0',
-                  field: 'node_65bcebb6ba6a23b040bf4779.queryParams.access_token',
+                  field: 'onPageLoad-1.queryParams.access_token',
                   operator: 'notEmpty',
                   value: '',
                   enabled: true
@@ -110,32 +110,32 @@ describe('Testing NavigationHelper', () => {
               ]
             }
           },
-          node_65bd0fd3b00a3cf7f17a2775: {
-            id: 'node_65bd0fd3b00a3cf7f17a2775',
+          'twigTemplate-1': {
+            id: 'twigTemplate-1',
             title: 'New Callback',
             type: 'utility',
             action: 'twigTemplate',
             params: {
               returnMode: 'text',
-              template: 'Welcome back {{node_65bcebd45b7e990c363f45af.details.username}}!'
+              template: 'Welcome back {{login-1.details.username}}!'
             },
             preview: {
               template: '',
               content: ''
             },
             elementId: 'undefined',
-            beforeNode: 'node_65bcebd45b7e990c363f45af',
-            afterNode: 'node_65bd0fe646d20be75cccc616',
-            flowId: 'node_65bcebb6ba6a23b040bf4779',
+            beforeNode: 'login-1',
+            afterNode: 'addNotification-1',
+            flowId: 'onPageLoad-1',
             enabled: true
           },
-          node_65bd0fe646d20be75cccc616: {
-            id: 'node_65bd0fe646d20be75cccc616',
+          'addNotification-1': {
+            id: 'addNotification-1',
             title: 'New Callback',
             type: 'globalCallback',
             action: 'addNotification',
             params: {
-              content: '{{ node_65bd0fd3b00a3cf7f17a2775.content }}',
+              content: '{{ twigTemplate-1.content }}',
               placement: 'top-right',
               appeareance: 'success',
               autoDismiss: true,
@@ -143,9 +143,9 @@ describe('Testing NavigationHelper', () => {
             },
             preview: {},
             elementId: 'space',
-            beforeNode: 'node_65bd0fd3b00a3cf7f17a2775',
+            beforeNode: 'twigTemplate-1',
             afterNode: '',
-            flowId: 'node_65bcebb6ba6a23b040bf4779',
+            flowId: 'onPageLoad-1',
             enabled: true
           }
         },

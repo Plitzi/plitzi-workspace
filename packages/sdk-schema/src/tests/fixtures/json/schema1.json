@@ -38,8 +38,8 @@
         "styleSelectors": { "base": "button-rdGM"  },
         "bindings": {},
         "interactions": {
-          "node_open-modal": {
-            "id": "node_open-modal",
+          "openModal-1": {
+            "id": "openModal-1",
             "title": "New Trigger",
             "type": "trigger",
             "action": "onClick",
@@ -47,21 +47,21 @@
             "preview": { "propagateEvent": "" },
             "elementId": "cta",
             "beforeNode": "",
-            "afterNode": "node_track-click",
-            "flowId": "node_open-modal",
+            "afterNode": "trackClick-1",
+            "flowId": "openModal-1",
             "enabled": true
           },
-          "node_track-click": {
-            "id": "node_track-click",
+          "trackClick-1": {
+            "id": "trackClick-1",
             "title": "New Callback",
             "type": "callback",
             "action": "setState",
             "params": { "category": "attribute", "key": "content", "value": "Nice one", "revertOnFinish": false },
             "preview": {},
             "elementId": "title",
-            "beforeNode": "node_open-modal",
+            "beforeNode": "openModal-1",
             "afterNode": "",
-            "flowId": "node_open-modal",
+            "flowId": "openModal-1",
             "enabled": true
           }
         },

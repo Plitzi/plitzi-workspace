@@ -558,6 +558,79 @@ describe('schemaValidator', () => {
     });
   });
 
+  // A step id and a binding id are names too — read by a later step as `{{ <id>.field }}`, and used to address one
+  // rule of one element — so both are held to the same rules the element ids are.
+  describe('interaction and binding ids', () => {
+    const step = (overrides: Record<string, unknown>) =>
+      ({
+        id: 'onClick-1',
+        title: 'Click',
+        type: 'trigger',
+        action: 'onClick',
+        params: {},
+        preview: {},
+        elementId: null,
+        beforeNode: '',
+        afterNode: '',
+        flowId: 'onClick-1',
+        enabled: true,
+        ...overrides
+      }) as never;
+
+    const withElement = (definition: Partial<Element['definition']>): Schema => ({
+      ...EMPTY_SCHEMA.schema,
+      pages: ['page-1'],
+      flat: {
+        'page-1': {
+          ...createElement('page-1', 'page'),
+          definition: { ...createElement('page-1', 'page').definition, items: ['btn'] }
+        },
+        btn: {
+          ...createElement('btn', 'button'),
+          definition: { ...createElement('btn', 'button').definition, parentId: 'page-1', ...definition }
+        }
+      }
+    });
+
+    it('rejects a step name carrying the dot a later step would read as a path separator', () => {
+      const result = validateSchema(
+        withElement({ interactions: { 'on.click': step({ id: 'on.click', flowId: 'on.click' }) } })
+      );
+      expect(result.errors.some(e => e.code === 'INVALID_INTERACTION_ID')).toBe(true);
+    });
+
+    it('rejects a step whose stored id disagrees with the key the flow holds it under', () => {
+      const result = validateSchema(
+        withElement({ interactions: { 'onClick-1': step({ id: 'somewhere-else', flowId: 'onClick-1' }) } })
+      );
+      expect(result.errors.some(e => e.code === 'INTERACTION_ID_MISMATCH')).toBe(true);
+    });
+
+    it('rejects two bindings of one element sharing a name', () => {
+      const result = validateSchema(
+        withElement({
+          bindings: {
+            attributes: [
+              { id: 'attributes-1', to: 'content', source: 'variables.a' },
+              { id: 'attributes-1', to: 'title', source: 'variables.b' }
+            ]
+          }
+        })
+      );
+      expect(result.errors.some(e => e.code === 'DUPLICATE_BINDING_ID')).toBe(true);
+    });
+
+    it('accepts distinct, well-formed step and binding names', () => {
+      const result = validateSchema(
+        withElement({
+          interactions: { 'onClick-1': step({}) },
+          bindings: { attributes: [{ id: 'attributes-1', to: 'content', source: 'variables.a' }] }
+        })
+      );
+      expect(result.valid).toBe(true);
+    });
+  });
+
   // Tests for baseElementId (useful for AI templates/previews)
   describe('baseElementId option (AI templates/previews)', () => {
     it('should validate valid template without pages when baseElementId provided', () => {

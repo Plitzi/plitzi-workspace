@@ -42,7 +42,7 @@ describe('AST processTwig — hyphenated source tokens', () => {
   });
 
   it('resolves a hyphen in the first and in a later segment', () => {
-    expect(processTwig('{{ node_flow-1.my-field }}', { 'node_flow-1': { 'my-field': 'ok' } })).toBe('ok');
+    expect(processTwig('{{ list_flow-1.my-field }}', { 'list_flow-1': { 'my-field': 'ok' } })).toBe('ok');
   });
 });
 

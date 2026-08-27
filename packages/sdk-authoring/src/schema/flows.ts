@@ -1,3 +1,5 @@
+import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
+
 import type { StepSpec } from './types';
 import type { Rule, RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { ElementInteraction } from '@plitzi/sdk-shared';
@@ -13,6 +15,30 @@ const hostFor = (step: StepSpec, host?: string): string | null =>
   step.type === 'trigger' || step.type === 'callback' ? (host ?? null) : null;
 
 /**
+ * What a step may be called, and that no two are called the same.
+ *
+ * A flow is a MAP keyed by step id, so a repeat does not add a step — it replaces one, and the flow that runs is
+ * shorter than the one that was written with nothing saying so. The charset is the id charset: a later step reads
+ * an earlier one as `{{ <id>.field }}`, and a '.' would split that path into two segments.
+ */
+const assertStepIds = (ids: string[], where: string): void => {
+  const seen = new Set<string>();
+  for (const id of ids) {
+    if (!isValidElementId(id)) {
+      throw new Error(
+        `Step "${id}" in ${where} is not a valid name: start with a letter, then letters, numbers, hyphens and underscores. A later step reads this one as {{ ${id}.field }}.`
+      );
+    }
+
+    if (seen.has(id)) {
+      throw new Error(`${where} names the step "${id}" twice. A flow's steps are keyed by id, so the second wins.`);
+    }
+
+    seen.add(id);
+  }
+};
+
+/**
  * One interaction flow, chained.
  *
  * The nodes are a linked list — each knows the one before and the one after, and they all carry the id of the
@@ -26,19 +52,28 @@ export const authorFlow = (
   // would have the second flow's `navigate` overwrite the first one's.
   counters: Map<string, number> = new Map()
 ): Record<string, ElementInteraction> => {
-  // A step's output is addressed as `node_<id>` from every later step, so an unnamed one still gets a name worth
-  // reading — `node_navigate-2` — counted per action, which is what a person would have called it anyway.
+  // A step's output is addressed as `{{ <id>.field }}` from every later step, so an unnamed one still gets a name
+  // worth reading — `navigate-2` — counted per action, which is what a person would have called it anyway.
+  const named = new Set(steps.map(step => step.id).filter(Boolean) as string[]);
   const ids = steps.map(step => {
     if (step.id) {
       return step.id;
     }
 
     const base = step.action.replace(/[^A-Za-z0-9]/g, '') || step.type;
-    const next = (counters.get(base) ?? 0) + 1;
+    let next = (counters.get(base) ?? 0) + 1;
+    // Past anything the author named in the same flow: a minted `navigate-1` landing on a step already called
+    // `navigate-1` would not read as a duplicate, it would silently be the same entry of the record.
+    while (named.has(`${base}-${next}`)) {
+      next += 1;
+    }
+
     counters.set(base, next);
 
-    return `node_${base}-${next}`;
+    return `${base}-${next}`;
   });
+
+  assertStepIds(ids, host ? `the flow on "${host}"` : 'this flow');
   const flowId = ids[0] ?? '';
 
   return steps.reduce<Record<string, ElementInteraction>>((flow, step, index) => {
@@ -65,8 +100,8 @@ export const authorFlow = (
  * Names a step, so a later one can read what it produced.
  *
  * A running flow keeps its scope keyed by node id, which means `{{ login.values.username }}` resolves only when
- * the step that produced it is called `login`. Left unnamed, a step's id is derived from where it sits — unique,
- * and nothing an author can write down, which is the same as saying its result is unreachable.
+ * the step that produced it is called `login`. Left unnamed, a step is still named — `<action>-<n>` — so its result
+ * is reachable; naming it yourself is how it becomes readable.
  */
 export const named = (id: string, step: StepSpec): StepSpec => ({ ...step, id });
 

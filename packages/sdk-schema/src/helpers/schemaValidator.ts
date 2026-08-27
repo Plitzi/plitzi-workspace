@@ -569,7 +569,26 @@ const createValidator = (schema: Schema) => {
       }
 
       const nodes = Object.keys(interactions);
-      Object.values(interactions).forEach(node => {
+      Object.entries(interactions).forEach(([key, node]) => {
+        // A step id is a name too: the key of the flow map, what `beforeNode`/`afterNode`/`flowId` point at, and
+        // the scope key a later step reads as `{{ <id>.field }}` — so a '.' in it splits that path, and a key that
+        // disagrees with the node under it makes every link resolve to whichever half the reader happened to use.
+        if (!isValidElementId(key)) {
+          errors.push({
+            code: 'INVALID_INTERACTION_ID',
+            message: `Interaction "${key}" on element "${element.id}" has a name that must start with a letter, then letters, numbers, hyphens and underscores — a later step reads it as {{ ${key}.field }}`,
+            elementId: element.id
+          });
+        }
+
+        if (node.id !== key) {
+          errors.push({
+            code: 'INTERACTION_ID_MISMATCH',
+            message: `Interaction id "${node.id}" on element "${element.id}" doesn't match its key "${key}"`,
+            elementId: element.id
+          });
+        }
+
         (['beforeNode', 'afterNode'] as const).forEach(link => {
           const target = node[link];
           if (target && !nodes.includes(target)) {
@@ -600,6 +619,46 @@ const createValidator = (schema: Schema) => {
     });
   };
 
+  /**
+   * A binding's id, which is element-local but still has to be one thing.
+   *
+   * Two bindings of one element sharing an id is what makes `patchBinding`/`deleteBinding` hit whichever the
+   * search found first — an edit that appears to work and lands on the wrong rule.
+   */
+  const validateBindings = () => {
+    Object.values(flat).forEach(element => {
+      if (!(element as Element | undefined) || !element.definition.bindings) {
+        return;
+      }
+
+      const seen = new Set<string>();
+      Object.entries(element.definition.bindings).forEach(([category, bindings]) => {
+        (bindings ?? []).forEach(binding => {
+          if (!binding.id) {
+            errors.push({
+              code: 'MISSING_BINDING_ID',
+              message: `Element "${element.id}" has a ${category} binding to "${binding.to}" with no id`,
+              elementId: element.id
+            });
+
+            return;
+          }
+
+          if (seen.has(binding.id)) {
+            errors.push({
+              code: 'DUPLICATE_BINDING_ID',
+              message: `Element "${element.id}" has two bindings called "${binding.id}"`,
+              elementId: element.id,
+              details: { bindingId: binding.id }
+            });
+          }
+
+          seen.add(binding.id);
+        });
+      });
+    });
+  };
+
   // Run all validations
   const validate = (options?: SchemaValidationOptions): SchemaValidationResult => {
     const { baseElementId } = options ?? {};
@@ -617,6 +676,7 @@ const createValidator = (schema: Schema) => {
     validateVariables();
     validateElementIds();
     validateBindingSources(options?.sourceTypes);
+    validateBindings();
     validateInteractions();
 
     return {

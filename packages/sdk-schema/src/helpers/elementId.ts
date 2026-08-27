@@ -178,19 +178,13 @@ const remapSource = (source: string, map: Record<string, string>): string => {
 // never rewritten (that is the corruption this pass guards against: an id is short and readable, so replacing
 // "card-1" everywhere would corrupt any label containing it); only a full `<type>_<id>` token is. The regex splits
 // on the first `_` (element types are camelCase with no underscore), so an id's underscores are unambiguous.
+//
+// A flow step's output is addressed by its bare id (`{{ navigate-1.output }}`), which carries no `_` and so is
+// never touched here — the two namespaces stay apart by shape rather than by a reserved prefix.
 const SOURCE_TOKEN_RE = /([A-Za-z][A-Za-z0-9]*)_([A-Za-z][A-Za-z0-9_-]*)/g;
-
-// Source prefixes whose second half is NOT an element id. `node_<stepId>` addresses a step's output inside a flow's
-// own scope, and a flow node id lives in a different namespace from an element id — so an element renamed to the
-// same word must not drag every reference to that step along with it.
-const NON_ELEMENT_SOURCE_TYPES = new Set(['node']);
 
 const remapTokenString = (value: string, map: Record<string, string>): string =>
   value.replace(SOURCE_TOKEN_RE, (match, type: string, id: string) => {
-    if (NON_ELEMENT_SOURCE_TYPES.has(type)) {
-      return match;
-    }
-
     const next = map[id];
 
     return next ? `${type}_${next}` : match;
