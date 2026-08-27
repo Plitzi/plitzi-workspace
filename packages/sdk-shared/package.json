@@ -280,6 +280,9 @@
       "types": "./dist/helpers/twigWrapper/index.d.ts",
       "import": "./dist/helpers/twigWrapper/index.mjs"
     },
+    "./helpers/twigWrapper/AST": {
+      "types": "./dist/helpers/twigWrapper/AST.d.ts"
+    },
     "./helpers/twigWrapper/Evaluator": {
       "types": "./dist/helpers/twigWrapper/Evaluator/index.d.ts",
       "import": "./dist/helpers/twigWrapper/Evaluator/index.mjs"
@@ -335,6 +338,9 @@
     "./helpers/twigWrapper/Parser/index": {
       "types": "./dist/helpers/twigWrapper/Parser/index.d.ts",
       "import": "./dist/helpers/twigWrapper/Parser/index.mjs"
+    },
+    "./helpers/twigWrapper/Parser/types": {
+      "types": "./dist/helpers/twigWrapper/Parser/types.d.ts"
     },
     "./helpers/twigWrapper/TemplateCache": {
       "types": "./dist/helpers/twigWrapper/TemplateCache/index.d.ts",
