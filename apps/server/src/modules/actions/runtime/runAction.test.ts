@@ -230,7 +230,8 @@ describe('runAction', () => {
     });
     const { runAction } = createActionsModule({ lookups });
 
-    await expect(runAction(request(entry))).rejects.toMatchObject({ reason: 'forbidden' });
+    // Two different refusals: nobody signed in has a session to renew, somebody short a permission does not.
+    await expect(runAction(request(entry))).rejects.toMatchObject({ reason: 'unauthenticated' });
     await expect(runAction(request(entry, { user: user(['space.read']) }))).rejects.toMatchObject({
       reason: 'forbidden'
     });

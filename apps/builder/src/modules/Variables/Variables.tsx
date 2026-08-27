@@ -11,6 +11,8 @@ import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import SchemaVariables from '@plitzi/sdk-variables/components/SchemaVariables';
 import StyleVariables from '@plitzi/sdk-variables/components/StyleVariables';
 
+import UrlParams from './components/UrlParams';
+
 import type { SchemaVariable, StyleVariableCategory, StyleVariableGroup, StyleVariableValue } from '@plitzi/sdk-shared';
 
 const Variables = () => {
@@ -148,7 +150,7 @@ const Variables = () => {
     [builderHandler, showDialog]
   );
 
-  const tabs = [{ label: 'Schema Variables' }, { label: 'Style Variables' }];
+  const tabs = [{ label: 'Schema Variables' }, { label: 'Style Variables' }, { label: 'URL' }];
 
   return (
     <div className="flex h-full w-full flex-col gap-2 p-2">
@@ -177,6 +179,11 @@ const Variables = () => {
             onUpdate={handleUpdateStyleVariable}
             onRemove={handleRemoveStyleVariable}
           />
+        </ContainerTabs.TabContent>
+        <ContainerTabs.TabContent className="h-full">
+          {/* Beside the variables on purpose: the URL is what most `when` rules switch on, so the inputs and what
+              they decide are read in one place. */}
+          <UrlParams className="min-h-0 grow basis-0" />
         </ContainerTabs.TabContent>
       </ContainerTabs>
     </div>

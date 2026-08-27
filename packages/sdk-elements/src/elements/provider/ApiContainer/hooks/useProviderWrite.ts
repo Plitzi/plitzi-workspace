@@ -1,5 +1,7 @@
 import { useCallback } from 'react';
 
+import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth';
+
 /** Values a write callback receives from the interaction step, minus the keys the endpoint reads itself. */
 type WriteParams = Record<string, unknown> & { action?: unknown; recordId?: string };
 
@@ -36,6 +38,13 @@ const useProviderWrite = ({ elementId, enabled, actionPath = '/_action', onDone 
         body: JSON.stringify({ elementId, action, recordId, values })
       });
       if (!response.ok) {
+        // A write is where an expired session hurts most, so the refusal is passed to auth before it is thrown: it
+        // renews and the retry succeeds, or the visitor is signed out now instead of on the next timer.
+        const reason = authFailureFromResponse(response.status, await response.json().catch(() => undefined));
+        if (reason) {
+          reportAuthFailure({ reason, url: actionPath });
+        }
+
         throw new Error(`Write failed with status ${response.status}`);
       }
 

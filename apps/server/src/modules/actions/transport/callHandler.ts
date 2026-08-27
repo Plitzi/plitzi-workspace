@@ -46,6 +46,7 @@ export type ActionCallDeps = {
 const STATUS_BY_REASON: Record<ActionErrorReason, number> = {
   not_found: 404,
   disabled: 409,
+  unauthenticated: 401,
   forbidden: 403,
   invalid_input: 422,
   duplicate: 409,

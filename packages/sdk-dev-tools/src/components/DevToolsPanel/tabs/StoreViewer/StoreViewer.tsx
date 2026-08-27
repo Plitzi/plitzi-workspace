@@ -4,9 +4,9 @@ import * as vscode from '@uiw/react-json-view/vscode';
 import clsx from 'clsx';
 import { use, useCallback, useMemo } from 'react';
 
-import { ThemeContext } from '@plitzi/sdk-shared';
 import DevToolsContext from '@plitzi/sdk-shared/devTools/DevToolsContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import mapFunctionValues from './helpers/mapFunctionValues';
 import renderFunctionValue from './helpers/renderFunctionValue';
@@ -37,7 +37,7 @@ export type StoreViewerProps = {
 };
 
 const StoreViewer = ({ elementSelected }: StoreViewerProps) => {
-  const { resolvedTheme } = use(ThemeContext);
+  const { resolvedTheme } = useTheme();
   const { getData } = use(DevToolsContext);
   // The store picked in the header's scope dropdown (defaults to the active instance's root); its live state is shown.
   const selectedStore = useSelectedStore();

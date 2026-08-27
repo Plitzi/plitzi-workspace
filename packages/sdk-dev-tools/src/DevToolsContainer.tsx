@@ -1,10 +1,10 @@
 import ContainerShadow from '@plitzi/plitzi-ui/ContainerShadow';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import clsx from 'clsx';
-import { useCallback, use, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { DevStoreScopeContext } from '@plitzi/nexus/react';
-import { ThemeContext } from '@plitzi/sdk-shared';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import DevToolsOverlay from './components/DevToolsOverlay';
 import DevToolsContextProvider from './DevToolsContextProvider';
@@ -45,7 +45,7 @@ const DevToolsContainer = ({
   devToolsStyle = '',
   devToolsStyleLink = ''
 }: DevToolsContainerProps) => {
-  const { resolvedTheme } = use(ThemeContext);
+  const { resolvedTheme } = useTheme();
   const [orientation, setOrientation] = useStorage<Orientation>(
     'plitzi-sdk.dev-tools.orientation',
     DEFAULT_ORIENTATION

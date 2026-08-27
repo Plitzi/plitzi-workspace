@@ -240,6 +240,15 @@ export type ActionRunStatus = 'completed' | 'failed' | 'skipped' | 'aborted';
 export type ActionErrorReason =
   | 'not_found'
   | 'disabled'
+  /**
+   * Nobody was signed in and the trigger asked for somebody.
+   *
+   * Separate from `forbidden` because the two ask different things of the caller: this one says "sign in again",
+   * and it is usually a session that ended under a page that still believes it has one — so the client reports it
+   * to auth, which renews or signs the visitor out at once. `forbidden` says "not you", and reading that as a dead
+   * session would sign out somebody who is merely short a permission.
+   */
+  | 'unauthenticated'
   | 'forbidden'
   | 'invalid_input'
   /** Another run holds this action's single-flight key. */

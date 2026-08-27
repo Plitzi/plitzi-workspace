@@ -1,9 +1,9 @@
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import clsx from 'clsx';
-import { useCallback, useState, use } from 'react';
+import { useCallback, useState } from 'react';
 
-import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 
 import { PLACEHOLDER } from './helpers';
@@ -120,7 +120,7 @@ const AIWireframePreview = ({
   mode,
   version
 }: AIWireframePreviewProps) => {
-  const { resolvedTheme } = use(ThemeContext);
+  const { resolvedTheme } = useTheme();
   const { existsPopup, addPopup } = usePopup();
   const { onSendMessage, elementSelected } = useAiChatContext();
   const [showHtml, setShowHtml] = useState(false);

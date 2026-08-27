@@ -43,10 +43,11 @@ const Actions = () => {
 
   const handleSubmit = useCallback(
     async (name: string, document: ActionDocument) => {
-      if (action) {
-        await updateAction(action.identifier, name, document);
-      } else {
-        await addAction(name, document);
+      const saved = action ? await updateAction(action.identifier, name, document) : await addAction(name, document);
+      // A refused write answers nothing and reports itself with a toast — it never throws. Closing the editor on it
+      // anyway discards the edits behind a modal the author watched close, which reads exactly like a save.
+      if (!saved) {
+        return;
       }
 
       handleCancel();

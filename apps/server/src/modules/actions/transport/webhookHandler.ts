@@ -198,6 +198,10 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
     // A provider retrying the same delivery must not run the flow twice; a provider that sends no delivery id
     // falls back to the derived key over the body, which is the same thing for an identical retry.
     idempotencyKey: deliveryId(req),
+    // The delivery id is the SENDER's, vouched for by the signature that let this request in — so it names the
+    // delivery for everybody, not per caller. A provider that retries from a different address of its own is
+    // still retrying the same delivery, and scoping the key to `ip:…` would run the flow again for each.
+    sharedKey: true,
     ttlMs: limits.timeoutMs
   };
 

@@ -19,7 +19,6 @@
       "import": "./dist/actions/index.mjs"
     },
     "./actions/cron": {
-      "types": "./dist/actions/cron.d.ts",
       "import": "./dist/actions/cron.mjs"
     },
     "./actions/index": {
@@ -1041,9 +1040,13 @@
       "types": "./dist/theme/index.d.ts",
       "import": "./dist/theme/index.mjs"
     },
-    "./theme/useResolvedScheme": {
-      "types": "./dist/theme/useResolvedScheme.d.ts",
-      "import": "./dist/theme/useResolvedScheme.mjs"
+    "./theme/themeStore": {
+      "types": "./dist/theme/themeStore.d.ts",
+      "import": "./dist/theme/themeStore.mjs"
+    },
+    "./theme/useTheme": {
+      "types": "./dist/theme/useTheme.d.ts",
+      "import": "./dist/theme/useTheme.mjs"
     },
     "./types": {
       "types": "./dist/types/index.d.ts",

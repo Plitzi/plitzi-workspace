@@ -29,8 +29,11 @@ Three properties everything else follows from:
 
 ## 2. Authoring one
 
-**Server Actions** in the builder's left panel. An action is a **name and a flow**, and nothing else — the same
-node map an element's interactions are, with tasks where a page has callbacks.
+**Server Actions** in the builder's left panel. An action **is a flow**, and nothing else — the same node map an
+element's interactions are, with tasks where a page has callbacks. Its name is the **trigger step's own**: the
+editor already puts an editable title on every node, so rename the trigger and the action is renamed with it.
+There was a Name field above the editor once; it asked an author to name the same thing twice and left two names
+with no rule for which one anybody meant.
 
 Everything about how a run begins lives on the step that begins it:
 
@@ -40,8 +43,9 @@ Everything about how a run begins lives on the step that begins it:
 | Who may | Anyone / signed-in visitors / visitors holding named permissions. No default — an unstated rule is either a lock-out or a hole. A `schedule` has no caller, so it has no rule |
 | Input it accepts | What a caller may send **through that way in**, as a JSON field map. Anything undeclared is dropped before a single step runs |
 
-Which means authoring one is: **open the flow, pick a trigger, fill in its two fields, chain the tasks.** There is
-no form above the editor repeating any of it — the trigger step is the only place a way in is configured.
+Which means authoring one is: **open the flow, pick a trigger, name it, fill in its two fields, chain the tasks.**
+There is no form above the editor repeating any of it — the trigger step is the only place a way in is configured,
+and the only place the action is named.
 
 **One action can have several ways in**, exactly as one element has an `onClick` and an `onSubmit`: add a second
 trigger step and it heads its own chain. That is also what lets a signed webhook and a session-only page call live
@@ -152,7 +156,7 @@ that owns the work.
 Three triggers fire on the element that launched the run:
 
 - **On Server Action End** — `actionId`, `runId`, `status`, `output`
-- **On Server Action Error** — plus `reason`: `duplicate`, `over_capacity`, `recursion`, `forbidden`, `timeout`…
+- **On Server Action Error** — plus `reason`: `duplicate`, `over_capacity`, `recursion`, `unauthenticated`, `forbidden`, `timeout`…
 - **On Server Action Progress** — one per chunk a streaming run emitted
 
 **In the browser, the dev-tools panel has an `Actions` tab.** Every run this page starts is recorded there as it
@@ -281,8 +285,13 @@ Add a **schedule** trigger step with a five-field cron — `minute hour day-of-m
 lists, ranges and steps. An expression the server cannot read is refused at save time, because one that merely
 never matches would sit silent until somebody noticed the digest missing.
 
-Times are **UTC**. Missed ticks are **not** replayed: a scheduler that catches up fires an hour of digests at once
-after an outage, which is worse than the one nobody got.
+Times are **UTC** unless the trigger names a **timezone** — an IANA name like `America/Santiago` or
+`Europe/Madrid`. A zone is not a fixed offset: `0 9 * * 1-5` under `America/Santiago` means nine in the morning
+there in January and in July alike, and the schedule follows the change. A zone the server does not know is refused
+at save time, for the same reason an unreadable expression is.
+
+Missed ticks are **not** replayed: a scheduler that catches up fires an hour of digests at once after an outage,
+which is worse than the one nobody got.
 
 ---
 
@@ -370,7 +379,8 @@ things somebody meant to happen twice.
 |---|---|
 | The step reports itself inert | The page has no server tier — a static export or an embed. Deploy the space with an SSR credential |
 | `duplicate` | The same call is already running. Give the step an idempotency key if the repeat is legitimate. A `render` never reports this: two visitors of one page are not one caller submitting twice |
-| `forbidden` | The action has no trigger step of that kind, or the caller does not meet that trigger's access rule |
+| `unauthenticated` (401) | Nobody is signed in and the trigger asks for somebody. Usually a session that ended under a page that still believed it had one — the SDK reports it to auth, which renews it or signs the visitor out there and then |
+| `forbidden` (403) | The action has no trigger step of that kind, or a signed-in caller does not hold the permissions the trigger asks for. Never read as a dead session: there is nothing to renew |
 | `over_capacity` | Too many runs at once. Calls are capped per space (`concurrency.perSpace`) and renders per process (`concurrency.renderPerProcess`) — a busy page is never counted against the space's call budget |
 | `recursion` | The flow reached its own webhook |
 | A `{{ credential.… }}` that renders empty | The step did not name a credential — set its `credential` field |

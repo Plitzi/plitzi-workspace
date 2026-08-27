@@ -12,8 +12,32 @@ type Entry = { value: string; expiresAt?: number };
  * An adapter like any other: it stores strings and obeys no rules of its own. What a counter DOES lives in
  * `createKvStore`, so the in-process store and a deployment's own behave identically rather than nearly so.
  */
+/** How many writes go by before the map is swept. Cheap enough to be unnoticeable, often enough to bound it. */
+const SWEEP_EVERY = 256;
+
 export const createMemoryKv = (): ActionKvAdapter => {
   const entries = new Map<string, Entry>();
+  let writes = 0;
+
+  /**
+   * Expiry only ever happened on READ, which is fine for a counter that is read as often as it is written and
+   * unbounded for everything else: a rate-limit window keyed by caller, an idempotency key per delivery, anything
+   * whose key is used once and never asked for again. Those entries expire and stay, and the map is the process's
+   * memory. Redis sweeps its own; this is the same courtesy, amortised over the writes that cause the growth.
+   */
+  const sweep = () => {
+    writes += 1;
+    if (writes % SWEEP_EVERY !== 0) {
+      return;
+    }
+
+    const now = Date.now();
+    entries.forEach((entry, key) => {
+      if (entry.expiresAt !== undefined && entry.expiresAt <= now) {
+        entries.delete(key);
+      }
+    });
+  };
 
   const read = (key: string): Entry | undefined => {
     const entry = entries.get(key);
@@ -38,6 +62,7 @@ export const createMemoryKv = (): ActionKvAdapter => {
     get: key => Promise.resolve(read(key)?.value),
     set: (key, value, ttlSeconds) => {
       entries.set(key, { value, expiresAt: expiry(ttlSeconds) });
+      sweep();
 
       return Promise.resolve();
     },
@@ -51,6 +76,7 @@ export const createMemoryKv = (): ActionKvAdapter => {
       const base = Number(current?.value ?? 0);
       const next = (Number.isFinite(base) ? base : 0) + amount;
       entries.set(key, { value: String(next), expiresAt: current?.expiresAt });
+      sweep();
 
       return Promise.resolve(next);
     },

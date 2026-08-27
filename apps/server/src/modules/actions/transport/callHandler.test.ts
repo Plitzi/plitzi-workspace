@@ -124,14 +124,14 @@ const buildConfig = (action: ActionEntry | undefined, extra: Record<string, unkn
     ...extra
   }) as unknown as SSRPageServerConfig;
 
-const request = (body: unknown, authoring = false): SSRRequest =>
+const request = (body: unknown, authoring = false, user?: { id: number; permissions: string[] }): SSRRequest =>
   ({
     method: 'POST',
     path: '/_action',
     body: JSON.stringify(body),
     query: {},
     headers: {},
-    ctx: { spaceDeployment: { spaceId: 3, environment: 'production', revision: 1, authoring } }
+    ctx: { spaceDeployment: { spaceId: 3, environment: 'production', revision: 1, authoring }, user }
   }) as unknown as SSRRequest;
 
 const call = async (
@@ -143,13 +143,14 @@ const call = async (
     signal?: AbortSignal;
     lineage?: string[];
     headers?: Record<string, string>;
+    user?: { id: number; permissions: string[] };
   } = {}
 ) => {
   const { res, sent } = buildRes();
   const { raw, written, head } = buildRaw();
   const module = options.module ?? createActionsModule({ lookups: { getAction: () => Promise.resolve(undefined) } });
   await handleActionCall({
-    req: { ...request(body, options.authoring), headers: options.headers ?? {} },
+    req: { ...request(body, options.authoring, options.user), headers: options.headers ?? {} },
     res,
     raw: raw,
     config,
@@ -221,8 +222,11 @@ describe('handleActionCall', () => {
       input: { amount: 1 }
     });
 
-    expect(sent.status).toBe(403);
-    expect(payload.reason).toBe('forbidden');
+    // 401 and not 403: "sign in again" is what this refusal means, and it is the one a page can act on — the
+    // client reports it to auth, which renews the session or ends it there and then. It says no more than the 403
+    // did about the flow behind it.
+    expect(sent.status).toBe(401);
+    expect(payload.reason).toBe('unauthenticated');
     expect(payload.trace).toBeUndefined();
     expect(payload.output).toBeUndefined();
   });
@@ -241,7 +245,34 @@ describe('handleActionCall', () => {
     expect(payload.reason).toBe('invalid_input');
   });
 
-  it('answers 403 when the caller lacks the declared permissions', async () => {
+  /**
+   * The two halves of "not you", kept apart because they ask different things of the caller.
+   *
+   * A visitor who is signed in and short a permission has nothing to renew, so telling their session it expired
+   * would sign them out over a permission they were never going to have. One who is not signed in at all has
+   * exactly that to do.
+   */
+  it('answers 403 when a signed-in caller lacks the declared permissions', async () => {
+    const config = buildConfig(
+      entry({
+        nodes: {
+          start: callTrigger({ access: 'role', permissions: 'space.write' }),
+          compute: node('compute', { action: 'flow.output', params: { values: '{"total": 1}' } })
+        }
+      })
+    );
+
+    const { sent, payload } = await call(
+      config,
+      { actionId: 'quote', input: { amount: 1 } },
+      { user: { id: 7, permissions: ['space.read'] } }
+    );
+
+    expect(sent.status).toBe(403);
+    expect(payload.reason).toBe('forbidden');
+  });
+
+  it('answers 401 when nobody is signed in at all', async () => {
     const config = buildConfig(
       entry({
         nodes: {
@@ -253,8 +284,8 @@ describe('handleActionCall', () => {
 
     const { sent, payload } = await call(config, { actionId: 'quote', input: { amount: 1 } });
 
-    expect(sent.status).toBe(403);
-    expect(payload.reason).toBe('forbidden');
+    expect(sent.status).toBe(401);
+    expect(payload.reason).toBe('unauthenticated');
   });
 
   it('answers 508 when the lineage already names the action', async () => {

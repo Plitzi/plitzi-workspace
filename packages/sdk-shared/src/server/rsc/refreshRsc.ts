@@ -1,3 +1,4 @@
+import { authFailureFromResponse, reportAuthFailure } from '../../auth';
 import { getPaths, matchRoutePath } from '../../navigation';
 import { hasServerElements } from '../../schema/serverElements';
 
@@ -92,6 +93,15 @@ export const refreshRsc = async (
     Object.entries(params ?? {}).forEach(([key, value]) => search.set(key, value));
     const res = await fetch(`${endpoint}?${search.toString()}`, { headers: { Accept: 'application/json' } });
     if (!res.ok) {
+      // A refused credential is the earliest evidence a session ended, and this is the request a server-driven page
+      // makes most often — so it is usually the first thing to find out. Told here, auth renews or signs the visitor
+      // out at once instead of leaving it for the next revalidation timer. Refusals from a backend that is not its
+      // own are ignored on the other side.
+      const reason = authFailureFromResponse(res.status, await res.json().catch(() => undefined));
+      if (reason) {
+        reportAuthFailure({ reason, url: endpoint });
+      }
+
       store.set('rsc.stale', true);
 
       return;

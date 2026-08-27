@@ -1,9 +1,9 @@
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import Label from '@plitzi/plitzi-ui/Label';
-import { use, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { getConnectorTokens } from '@plitzi/sdk-shared/connectors';
-import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
 import type { ConnectorTokenScope } from '@plitzi/sdk-shared';
@@ -26,7 +26,7 @@ export type TokenInputProps = {
  * what this position accepts, which is why these are CodeMirror fields rather than plain inputs.
  */
 const TokenInput = ({ label, title, value, placeholder, scope = 'request', onChange }: TokenInputProps) => {
-  const { resolvedTheme } = use(ThemeContext);
+  const { resolvedTheme } = useTheme();
   const autoComplete = useMemo<AutoComplete[]>(
     () => getConnectorTokens(scope).map(token => ({ type: 'token', value: token.value, detail: token.description })),
     [scope]

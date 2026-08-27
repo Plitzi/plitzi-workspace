@@ -37,6 +37,7 @@ export const actionsModuleFor = (config: SSRServerConfig): ActionsModule | undef
     concurrency: config.action?.concurrency,
     kv: config.action?.kv,
     rateLimit: config.action?.rateLimit,
+    idempotency: config.action?.idempotency,
     dbDrivers: config.action?.dbDrivers as ActionsConfig['dbDrivers'],
     onRun: config.action?.onRun
   });

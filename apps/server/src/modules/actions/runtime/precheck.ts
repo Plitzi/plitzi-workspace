@@ -33,7 +33,7 @@ const authorize = (access: ActionAccess | undefined, kind: ActionTriggerType, us
   }
 
   if (!user) {
-    throw new ActionRunError('forbidden', 'This action requires a signed-in visitor');
+    throw new ActionRunError('unauthenticated', 'This action requires a signed-in visitor');
   }
 
   if (access.mode === 'role') {

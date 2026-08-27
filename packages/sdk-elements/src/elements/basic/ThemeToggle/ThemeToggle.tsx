@@ -1,9 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import { use, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useRef, use, useSyncExternalStore } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
@@ -72,7 +72,7 @@ const ThemeToggle = ({
   systemLabel = 'System',
   showSystem = false
 }: ThemeToggleProps) => {
-  const { theme, setTheme, toggleTheme } = use(ThemeContext);
+  const { theme, setTheme, toggleTheme } = useTheme();
   const {
     idRef,
     definition: { styleSelectors }

@@ -243,6 +243,43 @@ describe('createRunGuards', () => {
       await expect(second.replay(params({ idempotencyKey: 'delivery-4' }))).resolves.toEqual(answer);
     });
 
+    /**
+     * The key is a string the CALLER made up, so what it addresses is scoped to them. Without this, a visitor who
+     * watched another's request — or simply guessed a key — gets handed the output that run produced.
+     */
+    it('never replays the answer to a caller who was not the one that ran it', async () => {
+      const guards = createRunGuards({}, undefined, { replayTtlMs: 60_000 });
+      const run = await guards.begin(params({ idempotencyKey: 'shared-uuid' }));
+      await guards.end(run, answer);
+
+      await expect(guards.replay(params({ idempotencyKey: 'shared-uuid' }))).resolves.toEqual(answer);
+      await expect(
+        guards.replay(params({ idempotencyKey: 'shared-uuid', callerId: 'user:2' }))
+      ).resolves.toBeUndefined();
+    });
+
+    /** The other caller must not be blocked by it either: a stranger's key is not this caller's single-flight. */
+    it('does not let one caller hold the key another caller named', async () => {
+      const guards = createRunGuards({}, undefined);
+      await guards.begin(params({ idempotencyKey: 'shared-uuid' }));
+
+      await expect(guards.begin(params({ idempotencyKey: 'shared-uuid', callerId: 'user:2' }))).resolves.toBeDefined();
+    });
+
+    /**
+     * A webhook is the exception, and it is the reason `sharedKey` exists: the delivery id belongs to the sender
+     * and was vouched for by the signature, so a retry from another of the provider's addresses is the same
+     * delivery rather than a second one.
+     */
+    it('replays a webhook delivery whatever address it retries from', async () => {
+      const guards = createRunGuards({}, undefined, { replayTtlMs: 60_000 });
+      const delivery = { idempotencyKey: 'gh-delivery-9', sharedKey: true };
+      const run = await guards.begin(params({ ...delivery, callerId: 'ip:1.2.3.4' }));
+      await guards.end(run, answer);
+
+      await expect(guards.replay(params({ ...delivery, callerId: 'ip:5.6.7.8' }))).resolves.toEqual(answer);
+    });
+
     /** The trace is the author's own data and can be large; a replay owes the caller what the call returned. */
     it('keeps the answer and not the trace', async () => {
       const { store, values } = sharedStore();

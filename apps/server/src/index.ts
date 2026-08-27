@@ -2,6 +2,7 @@ export { createServer, resolveServices } from './core/createServer';
 export { registerHealthCheck, buildHealthPayload } from './core/health';
 export { consoleLogger, renderLogEvent } from './helpers/serverLog';
 export type { HealthCheckApp, HealthIdentity } from './core/health';
+export { createCloudAdapters } from './adapters/cloudAdapters';
 export { createJsonAdapters } from './adapters/jsonAdapters';
 export { createAuthAdapters } from './adapters/authAdapters';
 export {
@@ -26,6 +27,7 @@ export {
   createConnectorResolver
 } from './modules/connectors';
 
+export type { CloudAdaptersConfig } from './adapters/cloudAdapters';
 export type { JsonAdaptersConfig } from './adapters/jsonAdapters';
 export type { AuthAdapters, AuthAdaptersConfig } from './adapters/authAdapters';
 export type {

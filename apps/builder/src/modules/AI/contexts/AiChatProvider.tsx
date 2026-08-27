@@ -2,7 +2,7 @@ import { use, useCallback, useEffect, useMemo } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import AiChatContext from './AiChatContext';
 import { getPendingQuestion } from '../components/ChatInput/components/QuestionInput';
@@ -21,7 +21,7 @@ export type AiChatProviderProps = {
 
 const AiChatProvider = ({ children, providerSettings, prefillInput }: AiChatProviderProps) => {
   const [[elementSelected, currentPageId]] = useBuilderStore(['elementSelected', 'navigation.currentPageId']);
-  const { resolvedTheme } = use(ThemeContext);
+  const { resolvedTheme } = useTheme();
   const { environment } = use(NetworkContext) as BuilderNetworkContextValue;
 
   const {

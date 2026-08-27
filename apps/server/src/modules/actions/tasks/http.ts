@@ -100,7 +100,10 @@ const request: ActionTask<HttpRequestParams> = {
     );
 
     const hasBody = !BODYLESS.includes(method) && params.body !== '';
-    if (hasBody && !headers['Content-Type']) {
+    // Header names are case-insensitive but this is a plain object, so an author who wrote `content-type` would
+    // otherwise get a second one added beside theirs — and which of the two the peer honours is nobody's guess.
+    const declaresContentType = Object.keys(headers).some(name => name.toLowerCase() === 'content-type');
+    if (hasBody && !declaresContentType) {
       headers['Content-Type'] = 'application/json';
     }
 

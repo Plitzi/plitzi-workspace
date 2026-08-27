@@ -1,8 +1,6 @@
 import { render, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
-
 import { ThemeToggle } from './ThemeToggle';
 
 import type { Theme } from '@plitzi/sdk-shared';
@@ -15,17 +13,21 @@ import type { ReactNode } from 'react';
  */
 
 // Hoisted with the mock that uses it: a `vi.mock` factory runs before the module's own top-level statements.
-const { toggleTheme, setTheme, interactionTrigger } = vi.hoisted(() => ({
+const { toggleTheme, setTheme, interactionTrigger, currentTheme } = vi.hoisted(() => ({
   toggleTheme: vi.fn(),
   setTheme: vi.fn(),
-  interactionTrigger: vi.fn()
+  interactionTrigger: vi.fn(),
+  currentTheme: { value: 'dark' }
 }));
 
-vi.mock('@plitzi/sdk-shared/theme/ThemeProvider', async () => {
-  const { createContext } = await import('react');
-
-  return { ThemeContext: createContext({ theme: 'dark', resolvedTheme: 'dark', setTheme, toggleTheme }) };
-});
+vi.mock('@plitzi/sdk-shared/theme/useTheme', () => ({
+  default: () => ({
+    theme: currentTheme.value,
+    resolvedTheme: currentTheme.value === 'system' ? 'light' : currentTheme.value,
+    setTheme,
+    toggleTheme
+  })
+}));
 
 // `withElement` reaches the element catalogue, and importing that from Node is the TDZ cycle this package has a
 // note about. A component test wants the component, so the HOC is the identity here.
@@ -65,12 +67,12 @@ vi.mock('../../../Element/RootElement', () => ({
   }
 }));
 
-/** The provider the control reads, with the theme the test wants it to see. */
-const atTheme = (theme: Theme, children: ReactNode) => (
-  <ThemeContext value={{ theme, resolvedTheme: theme === 'system' ? 'light' : theme, setTheme, toggleTheme }}>
-    {children}
-  </ThemeContext>
-);
+/** Puts the store's answer where the test wants it before the control reads it. */
+const atTheme = (theme: Theme, children: ReactNode) => {
+  currentTheme.value = theme;
+
+  return children;
+};
 
 describe('ThemeToggle', () => {
   beforeEach(() => {

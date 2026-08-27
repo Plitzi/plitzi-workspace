@@ -207,6 +207,27 @@ const createRunFetch = (
  * value for it. Without this the task receives `undefined` for something its signature says is a string, which is
  * how tasks end up full of defensive conversions that hide the real gap.
  */
+/**
+ * The pseudo-step a failure is recorded as.
+ *
+ * A run that died has no node to blame — a ceiling it hit, a throw from outside any step — and the trace is a list
+ * of steps. Written out in full rather than cast into shape: a field added to a step becomes a compile error here
+ * instead of an `undefined` whoever reads the trace has to work out.
+ */
+const errorNode = (action: string): ElementInteraction => ({
+  id: 'error',
+  title: 'Error',
+  type: 'task',
+  action,
+  params: {},
+  preview: {},
+  elementId: null,
+  beforeNode: '',
+  afterNode: '',
+  flowId: '',
+  enabled: true
+});
+
 const withDefaults = (task: RegisteredTask, params: Record<string, unknown>): Record<string, unknown> =>
   Object.entries(task.params).reduce<Record<string, unknown>>(
     (acum, [key, param]) => {
@@ -451,7 +472,7 @@ export const createActionRunner = (
         fatal = error;
         failure = error.message;
         trace.push({
-          node: { id: 'error', title: 'Error', action: error.reason } as ElementInteraction,
+          node: errorNode(error.reason),
           status: 'failed',
           result: redact({ error: error.message, reason: error.reason }),
           postCallbacks: [],
@@ -461,7 +482,7 @@ export const createActionRunner = (
       } else {
         failure = error instanceof Error ? error.message : String(error);
         trace.push({
-          node: { id: 'error', title: 'Error', action: 'error' } as ElementInteraction,
+          node: errorNode('error'),
           status: 'failed',
           result: redact({ error: error instanceof Error ? error.message : String(error) }),
           postCallbacks: [],

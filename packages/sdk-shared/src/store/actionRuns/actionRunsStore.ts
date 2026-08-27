@@ -5,6 +5,9 @@ import type { ActionRunsState } from '../../types';
 /** Newest runs are kept; older ones drop off, so a page left open all day cannot grow unbounded. */
 export const MAX_RUNS = 100;
 
+/** Per run, and for the same reason: a long stream is a run whose progress array would otherwise never stop. */
+export const MAX_PROGRESS_CHUNKS = 500;
+
 export const createActionRunsState = (): ActionRunsState => ({ runs: [] });
 
 /**

@@ -352,4 +352,38 @@ describe('validateActionDocument', () => {
 
     expect(messages(report.warnings)).toContain('resolves to nothing');
   });
+
+  /**
+   * The two the runner used to discover instead of the validator: a chain that comes back on itself, and a step
+   * that takes a name the run has already published in the scope. Both are documents the editor accepted and the
+   * server then failed on, which is the worst place to find either.
+   */
+  it('refuses a chain that comes back on itself', () => {
+    const report = validateActionDocument(
+      document({
+        nodes: {
+          start: { ...callTrigger(), afterNode: 'a' },
+          a: { id: 'a', type: 'task', action: 'kv.set', params: {}, afterNode: 'b' },
+          b: { id: 'b', type: 'task', action: 'kv.set', params: {}, afterNode: 'a' }
+        }
+      })
+    );
+
+    expect(report.valid).toBe(false);
+    expect(messages(report.errors)).toContain('never ends');
+  });
+
+  it('refuses a step named after something the run itself publishes', () => {
+    const report = validateActionDocument(
+      document({
+        nodes: {
+          start: { ...callTrigger(), afterNode: 'input' },
+          input: { id: 'input', type: 'task', action: 'flow.output', params: { values: '{}' } }
+        }
+      })
+    );
+
+    expect(report.valid).toBe(false);
+    expect(messages(report.errors)).toContain('flow scope');
+  });
 });

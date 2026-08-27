@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 const getApiRequest = async ({
@@ -58,8 +59,16 @@ const getApiRequest = async ({
 
   try {
     const res = await fetch(url, fetchOptions);
+    const data = (await res.json()) as string;
+    // The request a page makes on its own behalf is often the first to learn that the session behind it ended.
+    // Reporting it renews or ends the session now rather than at the next revalidation; auth ignores refusals from
+    // backends that are not its own, so pointing this element at a third-party API costs nothing.
+    const reason = authFailureFromResponse(res.status, data);
+    if (reason) {
+      reportAuthFailure({ reason, url });
+    }
 
-    return { status: res.status, data: (await res.json()) as string };
+    return { status: res.status, data };
   } catch (e: unknown) {
     console.error((e as Error).message);
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { cronMatches, parseCron } from './cron';
+import { cronMatches, isKnownTimeZone, parseCron } from './cron';
 
 const at = (iso: string) => new Date(iso);
 
@@ -27,5 +27,41 @@ describe('cron', () => {
     expect(parseCron('0 0 * *')).toBeUndefined();
     expect(parseCron('99 * * * *')).toBeUndefined();
     expect(cronMatches('nonsense', at('2026-08-20T10:30:00Z'))).toBe(false);
+  });
+
+  /**
+   * A zone is not an offset. "Nine in the morning in Santiago" is 12:00 UTC in July and 13:00 UTC in January,
+   * because the zone moves and the schedule is supposed to follow it — which is the whole reason the trigger has
+   * a field for one.
+   */
+  describe('in a named time zone', () => {
+    const at = (iso: string) => new Date(iso);
+
+    it('matches the wall clock there, on both sides of a DST change', () => {
+      // 2026-07-15 is southern winter (UTC-4); 2026-01-15 is southern summer (UTC-3).
+      expect(cronMatches('0 9 * * *', at('2026-07-15T13:00:00Z'), 'America/Santiago')).toBe(true);
+      expect(cronMatches('0 9 * * *', at('2026-01-15T12:00:00Z'), 'America/Santiago')).toBe(true);
+
+      expect(cronMatches('0 9 * * *', at('2026-07-15T12:00:00Z'), 'America/Santiago')).toBe(false);
+      expect(cronMatches('0 9 * * *', at('2026-01-15T13:00:00Z'), 'America/Santiago')).toBe(false);
+    });
+
+    it('is UTC when no zone is named, exactly as before', () => {
+      expect(cronMatches('0 9 * * *', at('2026-07-15T09:00:00Z'))).toBe(true);
+      expect(cronMatches('0 9 * * *', at('2026-07-15T13:00:00Z'))).toBe(false);
+    });
+
+    /** The day and the weekday are the zone's too — an hour either side of midnight is a different date there. */
+    it('reads the date in the zone, not in UTC', () => {
+      // 23:30 on the 14th in Santiago is 03:30 on the 15th in UTC.
+      expect(cronMatches('30 23 14 * *', at('2026-07-15T03:30:00Z'), 'America/Santiago')).toBe(true);
+    });
+
+    /** Never fires, rather than firing in UTC — a schedule at the wrong hour that says nothing is the bug. */
+    it('matches nothing for a zone it does not know', () => {
+      expect(cronMatches('* * * * *', at('2026-07-15T13:00:00Z'), 'Mars/Olympus')).toBe(false);
+      expect(isKnownTimeZone('Mars/Olympus')).toBe(false);
+      expect(isKnownTimeZone('Europe/Madrid')).toBe(true);
+    });
   });
 });

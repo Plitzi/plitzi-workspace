@@ -1,8 +1,8 @@
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
-import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 export type NodePreviewProps = {
   preview?: Record<string, unknown>;
@@ -12,7 +12,7 @@ export type NodePreviewProps = {
 };
 
 const NodePreview = ({ preview, defaultPreview, onChange }: NodePreviewProps) => {
-  const { resolvedTheme } = use(ThemeContext);
+  const { resolvedTheme } = useTheme();
   const previewStr = useMemo(() => JSON.stringify(preview, null, 2), [preview]);
   const defaultPreviewStr = useMemo(() => JSON.stringify(defaultPreview, null, 2), [defaultPreview]);
   const [previewState, setPreviewState] = useState(previewStr);

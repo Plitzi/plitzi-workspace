@@ -1,11 +1,11 @@
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
-import { useCallback, useMemo, useState, use } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { loggerMiddleware as loggerMw } from '@plitzi/nexus';
 import { StoreProvider } from '@plitzi/nexus/react';
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
-import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
 
@@ -25,7 +25,7 @@ export type AITemplatePreviewProps = {
 };
 
 const AITemplatePreview = ({ baseElementId, schema, style, html, mode, version }: AITemplatePreviewProps) => {
-  const { resolvedTheme } = use(ThemeContext);
+  const { resolvedTheme } = useTheme();
   const { addPopup } = usePopup();
   const { onSendMessage, elementSelected } = useAiChatContext();
   const [displayMode, setDisplayMode] = useState<DisplayMode>('desktop');

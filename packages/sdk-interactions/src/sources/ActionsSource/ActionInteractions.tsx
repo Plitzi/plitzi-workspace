@@ -1,5 +1,6 @@
 import { useCallback, use, useMemo } from 'react';
 
+import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 import {
   recordActionProgress,
@@ -134,6 +135,28 @@ const aborted = (controller: AbortController, error: unknown) =>
     : ({ status: 'failed', error: error instanceof Error ? error.message : String(error) } as const);
 
 /**
+ * Tells auth that the server refused this call because of who was asking.
+ *
+ * A page whose session died finds out from whichever request happens to be refused next, and for a page built out
+ * of server actions that is a click on a button. Without this the refusal surfaces as one failed step and the
+ * session ends whenever the next revalidation gets round to it — a wait an author reads as the app hanging.
+ *
+ * Only the 401, which this endpoint answers for `unauthenticated` alone. Its 403 is `forbidden` — an action a
+ * signed-in visitor may not start — and reading that as a dead session would sign out somebody who is merely short
+ * one permission, which is the opposite of helpful.
+ */
+const reportRefusal = (status: number, payload: ActionResponse, url: string) => {
+  if (status !== 401) {
+    return;
+  }
+
+  const reason = authFailureFromResponse(status, payload);
+  if (reason) {
+    reportAuthFailure({ reason, url });
+  }
+};
+
+/**
  * Running a server action from a client flow.
  *
  * The step names an action and hands it inputs — never a URL, a connector or a credential. Which one it can reach
@@ -222,7 +245,11 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         controller.abort();
         updateActionRun(record, { status: 'aborted', endedAt: Date.now(), cancellable: false });
         if (serverRunId) {
-          void fetch(`${endpoint}/run/${serverRunId}`, { method: 'DELETE', credentials: 'same-origin' });
+          // The run is already marked aborted here; whether the server heard is not something the page can act on,
+          // and an unhandled rejection over it is noise in somebody else's console.
+          void fetch(`${endpoint}/run/${serverRunId}`, { method: 'DELETE', credentials: 'same-origin' }).catch(
+            () => undefined
+          );
         }
       });
       /** Settles the record and gives up the handle: a run that has ended is not one anybody can stop. */
@@ -257,6 +284,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
           .then(async response => {
             const payload = (await response.json().catch(() => ({}))) as ActionResponse;
             if (!response.ok) {
+              reportRefusal(response.status, payload, endpoint);
               settle({
                 status: 'failed',
                 ...(payload.runId ? { runId: payload.runId } : {}),
@@ -344,6 +372,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
 
         if (!response.ok || !response.body) {
           const payload = (await response.json().catch(() => ({}))) as ActionResponse;
+          reportRefusal(response.status, payload, endpoint);
           settle({
             status: 'failed',
             ...(payload.runId ? { runId: payload.runId } : {}),
@@ -399,6 +428,27 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
             });
             reportFlow(context?.elementRef, 'onFlowEnd', { actionId, runId, ...frame.data });
           }
+        }).catch((error: unknown) => {
+          /**
+           * Cancelling aborts the request, and an aborted reader REJECTS — so the normal use of the cancel button
+           * over a streaming run ends here. The canceller has already settled the record, which makes the abort the
+           * clean end of a stream rather than anything to report; without this catch it is an unhandled rejection
+           * in the visitor's console every time.
+           */
+          if (controller.signal.aborted) {
+            return;
+          }
+
+          const message = error instanceof Error ? error.message : String(error);
+          settle({ status: 'failed', error: message });
+          pConsole.warning(
+            'actions',
+            <span>
+              Server action <b>{actionId}</b> stopped mid-stream
+            </span>,
+            { actionId, mode, runId, error: message }
+          );
+          reportFlow(context?.elementRef, 'onFlowError', { actionId, runId, error: message, reason: 'failed' });
         });
 
         return { accepted: true, status: 'streaming', runId, output: {} };
@@ -431,6 +481,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
 
       const payload = (await response.json().catch(() => ({}))) as ActionResponse;
       if (!response.ok) {
+        reportRefusal(response.status, payload, endpoint);
         settle({
           status: 'failed',
           ...(payload.runId ? { runId: payload.runId } : {}),

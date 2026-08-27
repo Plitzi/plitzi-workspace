@@ -3426,6 +3426,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@plitzi/example-cloud-space@workspace:examples/01-my-first-space/05-from-the-cloud":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/example-cloud-space@workspace:examples/01-my-first-space/05-from-the-cloud"
+  dependencies:
+    "@plitzi/sdk-server": "workspace:*"
+    "@types/node": "npm:^26.2.0"
+    react: "npm:^19.2.8"
+    react-dom: "npm:^19.2.8"
+    tsx: "npm:^4.23.12"
+    typescript: "npm:^6.0.3"
+  languageName: unknown
+  linkType: soft
+
 "@plitzi/example-mcp-server@workspace:examples/04-with-an-agent/01-mcp-server":
   version: 0.0.0-use.local
   resolution: "@plitzi/example-mcp-server@workspace:examples/04-with-an-agent/01-mcp-server"

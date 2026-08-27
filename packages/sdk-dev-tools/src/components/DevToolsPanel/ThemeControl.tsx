@@ -1,6 +1,6 @@
-import { use, useCallback } from 'react';
+import { useCallback } from 'react';
 
-import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import DevToolsButton from './DevToolsButton';
 
@@ -19,7 +19,7 @@ const LABEL: Record<Theme, string> = { system: 'System', light: 'Light', dark: '
 
 // Writes the SDK's shared theme context, so the document root, the palette rules and this panel all follow one value.
 const ThemeControl = () => {
-  const { theme, setTheme } = use(ThemeContext);
+  const { theme, setTheme } = useTheme();
 
   const handleClick = useCallback(() => setTheme(NEXT[theme]), [theme, setTheme]);
 

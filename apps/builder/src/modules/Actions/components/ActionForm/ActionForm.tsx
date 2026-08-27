@@ -1,9 +1,8 @@
 import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
-import Input from '@plitzi/plitzi-ui/Input';
 import { useCallback, useMemo, useState } from 'react';
 
-import { validateActionDocument } from '@plitzi/sdk-shared/actions';
+import { actionName, validateActionDocument } from '@plitzi/sdk-shared/actions';
 
 import Workflow from '../../../Interactions/components/Workflow';
 import ActionCheck from '../ActionCheck';
@@ -137,8 +136,13 @@ const triggerParamsFor = (credentials: SpaceCredential[]): Record<string, Trigge
   },
   webhook: { ...callerParams, ...signatureParams(credentials) },
   schedule: {
-    cron: { type: 'text', defaultValue: '0 * * * *', label: 'Cron (UTC)', canBind: false },
-    timezone: { type: 'text', defaultValue: '', label: 'Timezone', canBind: false }
+    cron: { type: 'text', defaultValue: '0 * * * *', label: 'Cron', canBind: false },
+    timezone: {
+      type: 'text',
+      defaultValue: '',
+      label: 'Timezone — an IANA name like America/Santiago. Empty means UTC',
+      canBind: false
+    }
   }
 });
 
@@ -187,12 +191,13 @@ const deriveOutput = (nodes: Record<string, ElementInteraction>): Record<string,
 };
 
 const ActionForm = ({ action, tasks, credentials, deployments, onRun, onSubmit, onCancel }: ActionFormProps) => {
-  const [name, setName] = useState(action?.name ?? '');
   const [document, setDocument] = useState<ActionDocument>(() => action?.document ?? emptyDocument());
   const [isSaving, setIsSaving] = useState(false);
 
   const nodeDefinitions = useMemo(() => asNodeDefinitions(tasks, credentials), [tasks, credentials]);
-  const report = useMemo(() => validateActionDocument({ ...document, name: name || document.name }), [document, name]);
+  /** The trigger names the action — see `actionName`. There is no field for it, and nothing to keep in step. */
+  const name = useMemo(() => actionName(document), [document]);
+  const report = useMemo(() => validateActionDocument({ ...document, name }), [document, name]);
   const hasWebhook = useMemo(
     () => Object.values(document.nodes).some(node => node.type === 'trigger' && node.action === 'webhook'),
     [document]
@@ -224,8 +229,6 @@ const ActionForm = ({ action, tasks, credentials, deployments, onRun, onSubmit, 
 
   return (
     <div className="mx-auto flex w-full max-w-4xl grow basis-0 flex-col gap-4 overflow-auto p-4">
-      <Input value={name} label="Name" size="xs" placeholder="Send quote" onChange={setName} />
-
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium">The flow</span>
         <Workflow
@@ -238,8 +241,8 @@ const ActionForm = ({ action, tasks, credentials, deployments, onRun, onSubmit, 
           onChange={handleChangeNodes}
         />
         <span className="text-xs text-gray-500">
-          End with an <b>Output</b> step naming what the caller gets back — that step is the contract, and only the last
-          one that runs is answered.
+          The trigger&apos;s own name is the action&apos;s — open it to rename both at once. End with an <b>Output</b>{' '}
+          step naming what the caller gets back: that step is the contract, and only the last one that runs is answered.
         </span>
       </div>
 

@@ -1,6 +1,8 @@
 import ThemeProvider from './ThemeProvider';
+import useTheme from './useTheme';
 
 export * from './ThemeProvider';
-export * from './useResolvedScheme';
+export * from './themeStore';
+export { default as themeStore } from './themeStore';
 
-export { ThemeProvider };
+export { ThemeProvider, useTheme };

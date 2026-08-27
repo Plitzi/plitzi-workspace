@@ -13,7 +13,7 @@ import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import TransformActions from './TransformActions';
 import TransformLayout from './TransformLayout';
@@ -25,7 +25,7 @@ import type { Schema, Style } from '@plitzi/sdk-shared';
 import type { ClipboardEvent } from 'react';
 
 const Transform = () => {
-  const { resolvedTheme } = use(ThemeContext);
+  const { resolvedTheme } = useTheme();
   const editorRef = useRef<HTMLElement | null>(null);
   const { server, webKey } = use(NetworkContext);
   const { addToast } = useToast();

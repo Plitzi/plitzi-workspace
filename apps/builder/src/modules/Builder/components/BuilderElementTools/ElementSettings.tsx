@@ -16,7 +16,7 @@ import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziService
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import { ThemeContext } from '@plitzi/sdk-shared/theme';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import AppContext from '@pmodules/App/AppContext';
 
 import type { ComponentPlugin, ElementRuntime } from '@plitzi/sdk-shared';
@@ -42,7 +42,7 @@ const ElementSettings = ({
 }: ElementSettingsProps) => {
   const { previewMode, displayBorderComponents } = use(AppContext);
   const { getComponent } = use(ComponentContext);
-  const { resolvedTheme } = use(ThemeContext);
+  const { resolvedTheme } = useTheme();
   const Plugin = getComponent(type) as ComponentPlugin | undefined;
   const { pluginSettingsStyles } = use(PluginsContext);
   const [[variables = emptyObject, currentPageId]] = useBuilderStore([

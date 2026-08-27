@@ -13,26 +13,22 @@ import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import Transform from '@pmodules/Transformers/Transform';
 
 import BuilderElementTools from '../BuilderElementTools';
 
-import type { Element, Theme } from '@plitzi/sdk-shared';
-import type { Dispatch, SetStateAction } from 'react';
+import type { Element } from '@plitzi/sdk-shared';
 
 export type BuilderAreaHeaderProps = {
-  themeArea: Theme;
   baseElementId: string;
   element?: Element;
   isActive?: boolean;
   headerTitle?: string;
   previewMode?: boolean;
-  setThemeArea: Dispatch<SetStateAction<Theme>>;
 };
 
 const BuilderAreaHeader = ({
-  themeArea,
-  setThemeArea,
   baseElementId,
   element,
   isActive = false,
@@ -55,9 +51,8 @@ const BuilderAreaHeader = ({
 
   const handleClickBackToInstance = useCallback(() => builderSetBaseContext(), [builderSetBaseContext]);
 
-  const handleClickTheme = useCallback(() => {
-    setThemeArea(state => (state === 'dark' ? 'light' : 'dark'));
-  }, [setThemeArea]);
+  /** The canvas's own theme, not the editor's — and it goes back to following the editor's when that one moves. */
+  const { theme: themeArea, toggleTheme: handleClickTheme } = useTheme('builder');
 
   const handleClickTransform = useCallback(() => {
     if (!existsPopup('transform')) {

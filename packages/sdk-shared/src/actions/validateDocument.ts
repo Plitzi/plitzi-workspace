@@ -1,4 +1,4 @@
-import { parseCron } from './cron';
+import { isKnownTimeZone, parseCron } from './cron';
 import { triggerAccess, triggerHasStaleVerify, triggerVerify } from './triggerParams';
 
 import type { ActionTriggerParams } from '../types';
@@ -32,6 +32,9 @@ const FIELD_TYPES = ['text', 'number', 'boolean', 'date', 'json', 'file'];
 const ACCESS_MODES = ['public', 'session', 'role'];
 const TRIGGER_TYPES = ['call', 'webhook', 'schedule', 'render', 'custom'];
 const SIGNATURE_ALGORITHMS = ['sha256', 'sha1'];
+/** What the RUN publishes in the flow scope before any step does — see `runAction`. A step id may not shadow one. */
+const RESERVED_SCOPE_KEYS = new Set(['input', 'user', 'spaceId', 'environment', 'trigger', 'runId']);
+
 /** `<namespace>.<action>`, which is how the registry addresses a task. */
 const TASK_NAME = /^[a-z][a-zA-Z0-9]*\.[a-z][a-zA-Z0-9]*$/;
 
@@ -126,8 +129,10 @@ const validateTrigger = (
         message: 'must say who may start a run this way',
         hint: `one of ${ACCESS_MODES.join(', ')}`
       });
-    } else if (params.access === 'role' && triggerAccess(params)?.mode === 'role') {
+    } else if (params.access === 'role') {
       const access = triggerAccess(params);
+      // A `role` rule naming nothing lets everybody signed in through, which is the `session` rule wearing a
+      // stricter-looking name — the gap somebody finds by reading the flow rather than by being refused.
       if (access?.mode === 'role' && access.permissions.length === 0) {
         errors.push({ path: `${path}.params.permissions`, message: 'role access must name at least one permission' });
       }
@@ -144,6 +149,17 @@ const validateTrigger = (
         path: `${path}.params.cron`,
         message: `"${params.cron}" is not an expression this server can read, so it would never fire`,
         hint: 'five fields — minute hour day-of-month month day-of-week — with *, lists, ranges and steps'
+      });
+    }
+
+    // Checked against `Intl`, which is what the runner reads it with. A zone it does not know makes the schedule
+    // match no minute at all — the same silent nothing a malformed expression used to produce, and the reason
+    // both are caught here instead of in production.
+    if (isFilledString(params.timezone) && !isKnownTimeZone(params.timezone)) {
+      errors.push({
+        path: `${path}.params.timezone`,
+        message: `"${params.timezone}" is not a time zone this server knows, so the schedule would never fire`,
+        hint: 'an IANA name like America/Santiago or Europe/Madrid — leave it empty for UTC'
       });
     }
   }
@@ -307,16 +323,56 @@ const validateNodes = (
     }
   });
 
-  // A step nothing points at never runs, and looks exactly like one that does. Reachability is walked from every
-  // trigger rather than assumed, which is the only check that catches a chain left detached by an edit.
+  /**
+   * A step's result is published in the flow scope under its own id, beside what the run already put there.
+   *
+   * So a step called `input` overwrites the input every later step reads from, and one called `user` overwrites
+   * who is asking — silently, halfway through the flow, with nothing to say it happened. Refused here rather than
+   * defended against at write time, because the author can simply rename the step and the alternative is a scope
+   * whose keys mean different things depending on what a document called its steps.
+   */
+  entries.forEach(([key]) => {
+    if (RESERVED_SCOPE_KEYS.has(key)) {
+      errors.push({
+        path: `nodes.${key}`,
+        message: `"${key}" is what the run itself publishes in the flow scope, so a step may not take the name`,
+        hint: `rename the step — every later step reads {{ ${key} }} expecting the run's own value`
+      });
+    }
+  });
+
+  /**
+   * A step nothing points at never runs, and looks exactly like one that does. Reachability is walked from every
+   * trigger rather than assumed, which is the only check that catches a chain left detached by an edit.
+   *
+   * The walk also NAMES the cycle it stops at. It always had to stop at one — a chain that comes back on itself
+   * would otherwise walk forever — but stopping quietly let `A → B → A` validate, and the author found out in
+   * production, where the runner walks the same loop until it dies with `over_capacity`. A flow that cannot end is
+   * not a flow.
+   */
   const reachable = new Set<string>();
+  const looping = new Set<string>();
   triggers.forEach(([key]) => {
+    const walked = new Set<string>();
     let current = key;
-    while (current && !reachable.has(current)) {
+    while (current) {
+      if (walked.has(current)) {
+        looping.add(current);
+        break;
+      }
+
+      walked.add(current);
       reachable.add(current);
       const node = nodes[current] as NodeShape | undefined;
       current = isFilledString(node?.afterNode) ? node.afterNode : '';
     }
+  });
+  looping.forEach(key => {
+    errors.push({
+      path: `nodes.${key}`,
+      message: 'this step is reached again by its own chain, so the flow never ends',
+      hint: 'break the `afterNode` chain that comes back to it'
+    });
   });
   entries.forEach(([key]) => {
     if (!reachable.has(key)) {

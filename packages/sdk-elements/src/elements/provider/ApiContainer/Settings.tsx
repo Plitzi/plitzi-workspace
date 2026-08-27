@@ -5,12 +5,12 @@ import KVInput from '@plitzi/plitzi-ui/KVInput';
 import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 import Select from '@plitzi/plitzi-ui/Select';
 import Switch from '@plitzi/plitzi-ui/Switch';
-import { useCallback, use, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 import { useBuilderStore, useCommonStore } from '@plitzi/sdk-shared/store';
-import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import FiltersInput from './components/FiltersInput';
 
@@ -67,7 +67,7 @@ const Settings = ({
   renderWhileLoading = false,
   onUpdate
 }: SettingsProps) => {
-  const { resolvedTheme } = use(ThemeContext);
+  const { resolvedTheme } = useTheme();
   const [pageDefinitions] = useBuilderStore('pageDefinitions');
   const [connectors] = useBuilderStore('connectors');
   const [actionCatalog] = useCommonStore('actions.catalog');

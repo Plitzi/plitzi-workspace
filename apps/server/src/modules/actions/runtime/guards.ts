@@ -69,6 +69,18 @@ export type BeginRunParams = {
   callerId: string;
   input: Record<string, unknown>;
   idempotencyKey?: string;
+  /**
+   * The key names the WORK, not who asked.
+   *
+   * True only for a webhook, where the key is the SENDER's delivery id and the signature that let the request in
+   * is what authenticated it: the same delivery retried from another of a provider's addresses is the same
+   * delivery, and scoping it per caller would run it twice.
+   *
+   * Everywhere else the key is a string the caller made up, so it is scoped to them. Without that, a visitor who
+   * learns or guesses another's key collides with their single-flight and — where a deployment set a replay
+   * window — is handed the answer their run produced.
+   */
+  sharedKey?: boolean;
   ttlMs: number;
   /** Which budget this run draws on. Defaults to `call`: a trigger that says nothing is somebody asking. */
   kind?: RunKind;
@@ -138,9 +150,18 @@ const canonical = (value: unknown): string => {
   return JSON.stringify(value);
 };
 
-export const deriveRunKey = ({ spaceId, actionId, callerId, input, idempotencyKey }: BeginRunParams): string => {
+export const deriveRunKey = ({
+  spaceId,
+  actionId,
+  callerId,
+  input,
+  idempotencyKey,
+  sharedKey
+}: BeginRunParams): string => {
   if (idempotencyKey) {
-    return `${spaceId}:${actionId}:${idempotencyKey}`;
+    return sharedKey
+      ? `${spaceId}:${actionId}:${idempotencyKey}`
+      : `${spaceId}:${actionId}:${callerId}:${idempotencyKey}`;
   }
 
   const digest = createHash('sha256').update(canonical({ callerId, input })).digest('hex').slice(0, 32);

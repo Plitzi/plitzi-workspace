@@ -2,7 +2,6 @@ import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { get } from '@plitzi/plitzi-ui/helpers';
-import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import clsx from 'clsx';
 import { memo, useCallback, use, useMemo, useRef, useState } from 'react';
 
@@ -15,8 +14,7 @@ import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziService
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import { useResolvedScheme } from '@plitzi/sdk-shared/theme';
-import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
@@ -32,7 +30,7 @@ import BuilderAreaTracking from './BuilderAreaTracking';
 // @ts-ignore
 import styleFrame from '../../Assets/index-iframe.scss?inline';
 
-import type { ComponentPluginWithHOC, DisplayMode, Theme } from '@plitzi/sdk-shared';
+import type { ComponentPluginWithHOC, DisplayMode } from '@plitzi/sdk-shared';
 
 export type BuilderAreaProps = {
   className?: string;
@@ -68,11 +66,11 @@ const BuilderArea = ({
     baseContext: { baseElementId },
     builderGetBaseElement
   } = use(BuilderContext);
-  const { theme } = use(ThemeContext);
-  const [themeArea, setThemeArea] = useStorage<Theme>('builder-state.theme-builder', theme, 'localStorage');
-
-  // The canvas paints one scheme. `system` is the space asking for the machine's answer, not for light.
-  const resolvedTheme = useResolvedScheme(themeArea);
+  /**
+   * The canvas is its own area: darkening it to look at a page leaves the editor around it alone. It follows the
+   * editor's toggle again the moment that one moves — see `setThemeMode`.
+   */
+  const { resolvedTheme } = useTheme('builder');
   const { displayBorderComponents, zoom } = use(AppContext);
   const css = useMemo(() => {
     const cssVariables = schemaVariablesToCss(variables as Record<string, string>);
@@ -152,8 +150,6 @@ const BuilderArea = ({
       <div className="mx-auto mb-2 flex w-full grow basis-0 flex-col shadow">
         {mode === 'normal' && showHeader && (
           <BuilderAreaHeader
-            themeArea={themeArea}
-            setThemeArea={setThemeArea}
             baseElementId={baseElementId}
             element={baseElementData}
             isActive={iframeActive}

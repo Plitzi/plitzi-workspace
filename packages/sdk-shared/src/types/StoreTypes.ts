@@ -159,6 +159,18 @@ export type BuilderState = CommonState & {
   // browser, so on a client-rendered deployment they resolve nowhere — the element settings say so rather than
   // offering a picker that cannot work in production.
   hasServerRendering: boolean;
+  /**
+   * A URL the author is trying the page ON, instead of the one the editor itself is open at.
+   *
+   * The builder's own address is `/spaces/12/builder`, so a page whose route takes a `:slug`, a variable that
+   * switches on `?plan=pro`, or a binding that reads the hostname has nothing real to resolve against — the author
+   * had to publish to find out what any of it does. What is set here is laid over what the browser gives, in the
+   * one place that publishes `navigation.*`, so everything downstream of it — variable `when` rules, bindings,
+   * server-driven elements, an action's input — sees the URL being tested and not the editor's own.
+   *
+   * Editor-only and never published: `navigation` still holds the resolved values, which is what the page reads.
+   */
+  urlTest?: { routeParams: RouteParams; queryParams: QueryParams; hostname: string };
   displayMode: DisplayMode;
   selector?: string;
   styleSelector?: string;

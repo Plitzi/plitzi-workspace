@@ -1,4 +1,4 @@
-import actionRunsStore, { MAX_RUNS } from './actionRunsStore';
+import actionRunsStore, { MAX_PROGRESS_CHUNKS, MAX_RUNS } from './actionRunsStore';
 
 import type { ActionRunEntry } from '../../types';
 
@@ -68,13 +68,36 @@ export const updateActionRun = (id: string, patch: Partial<Omit<ActionRunEntry, 
   write(runs.map(run => (run.id === id ? { ...run, ...patch } : run)));
 };
 
-/** One chunk a streaming run emitted, kept in order beside the run it belongs to. */
+/**
+ * One chunk a streaming run emitted, kept in order beside the run it belongs to.
+ *
+ * Capped, and the OLDEST go. The server bounds its own SSE buffer at a megabyte for a peer that stopped reading;
+ * nothing bounded this side, so a stream that runs long — a model answering token by token, a job reporting every
+ * row — grew a panel's array without limit for as long as the tab stayed open. What a person scrolls back to is
+ * the end of a stream, so the end is what is kept.
+ */
 export const recordActionProgress = (id: string, chunk: unknown): void => {
   const { runs } = actionRunsStore.getState();
-  write(runs.map(run => (run.id === id ? { ...run, progress: [...run.progress, chunk] } : run)));
+  write(
+    runs.map(run => (run.id === id ? { ...run, progress: [...run.progress, chunk].slice(-MAX_PROGRESS_CHUNKS) } : run))
+  );
 };
 
+/**
+ * Empties the log. Live runs keep their cancellers: clearing the panel is tidying a VIEW, and taking away the only
+ * way to stop a run that is still going is not something a person asked for by pressing it.
+ */
 export const clearActionRuns = (): void => {
-  cancellers.clear();
+  const live = new Set(
+    actionRunsStore
+      .getState()
+      .runs.filter(run => run.cancellable)
+      .map(run => run.id)
+  );
+  [...cancellers.keys()].forEach(id => {
+    if (!live.has(id)) {
+      cancellers.delete(id);
+    }
+  });
   write([]);
 };

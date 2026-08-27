@@ -65,31 +65,90 @@ export const parseCron = (expression: string): CronExpression | undefined => {
   return parsed.every((set): set is Set<number> => set !== undefined) ? parsed : undefined;
 };
 
+/** The five numbers a cron expression is matched against — a wall clock, in whatever zone it was read in. */
+type WallClock = { minute: number; hour: number; day: number; month: number; weekday: number };
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const utcClock = (at: Date): WallClock => ({
+  minute: at.getUTCMinutes(),
+  hour: at.getUTCHours(),
+  day: at.getUTCDate(),
+  month: at.getUTCMonth() + 1,
+  weekday: at.getUTCDay()
+});
+
 /**
- * Whether an expression fires at this minute, in UTC.
+ * The same instant, as the clock on a wall in `timeZone` reads it.
+ *
+ * Through `Intl` rather than an offset table, because an offset is not a constant: "9am in Santiago" is a
+ * different instant in January and in July, and a schedule that means the working day has to follow the change.
+ * `hourCycle: 'h23'` matters — the other cycles render midnight as 24, which cron has no hour for.
+ *
+ * An unknown zone answers `undefined` rather than falling back to UTC. Falling back is what this whole change is
+ * about: a schedule that fires at the wrong hour and says nothing.
+ */
+export const zonedClock = (at: Date, timeZone: string): WallClock | undefined => {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hourCycle: 'h23',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      weekday: 'short'
+    }).formatToParts(at);
+
+    const value = (type: string) => parts.find(part => part.type === type)?.value ?? '';
+    const weekday = WEEKDAYS.indexOf(value('weekday'));
+    const clock = {
+      minute: Number(value('minute')),
+      hour: Number(value('hour')),
+      day: Number(value('day')),
+      month: Number(value('month')),
+      weekday
+    };
+
+    return weekday >= 0 && Object.values(clock).every(Number.isFinite) ? clock : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * Whether an expression fires at this minute — in `timeZone` when one is named, in UTC when none is.
  *
  * Day-of-month and day-of-week are OR'd when both are restricted, which is the rule every cron implementation
  * follows and the one that surprises people who expect AND — `0 0 1 * 1` fires on the first of the month AND on
  * every Monday.
  */
-export const cronMatches = (expression: string, at: Date): boolean => {
+export const cronMatches = (expression: string, at: Date, timeZone?: string): boolean => {
   const parsed = parseCron(expression);
   if (!parsed) {
     return false;
   }
 
+  const clock = timeZone ? zonedClock(at, timeZone) : utcClock(at);
+  if (!clock) {
+    return false;
+  }
+
   const [minutes, hours, days, months, weekdays] = parsed;
-  if (!minutes.has(at.getUTCMinutes()) || !hours.has(at.getUTCHours()) || !months.has(at.getUTCMonth() + 1)) {
+  if (!minutes.has(clock.minute) || !hours.has(clock.hour) || !months.has(clock.month)) {
     return false;
   }
 
   const dayRestricted = days.size !== 31;
   const weekdayRestricted = weekdays.size !== 7;
-  const dayMatch = days.has(at.getUTCDate());
-  const weekdayMatch = weekdays.has(at.getUTCDay());
+  const dayMatch = days.has(clock.day);
+  const weekdayMatch = weekdays.has(clock.weekday);
   if (dayRestricted && weekdayRestricted) {
     return dayMatch || weekdayMatch;
   }
 
   return dayMatch && weekdayMatch;
 };
+
+/** Whether `Intl` knows this zone. The validator asks so an author hears about a typo in the editor. */
+export const isKnownTimeZone = (timeZone: string): boolean => zonedClock(new Date(), timeZone) !== undefined;

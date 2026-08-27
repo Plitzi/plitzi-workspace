@@ -43,12 +43,16 @@ export const createScheduleRunner = (lookups: ActionLookups, module: ActionsModu
       // The step that declares the schedule. No step, no clock: an action reachable only from a page is never
       // swept, which is what makes this loop cheap over a space with many actions.
       const schedule = findTriggerNode(entry.document.nodes, 'schedule');
-      const cron = schedule ? triggerParams(schedule).cron : undefined;
+      const params = schedule ? triggerParams(schedule) : undefined;
+      const cron = params?.cron;
       if (!schedule?.enabled || !cron) {
         continue;
       }
 
-      if (!cronMatches(cron, at)) {
+      // The zone the author wrote the expression IN. `0 9 * * 1-5` under `America/Santiago` means nine in the
+      // morning there, in January and in July alike — the offset is not a constant and neither is the instant.
+      // Absent, it is UTC, which is what the builder's field says.
+      if (!cronMatches(cron, at, typeof params.timezone === 'string' ? params.timezone : undefined)) {
         continue;
       }
 
@@ -62,6 +66,9 @@ export const createScheduleRunner = (lookups: ActionLookups, module: ActionsModu
           callerId: 'schedule',
           input: {},
           idempotencyKey: `schedule:${at.toISOString().slice(0, 16)}`,
+          // A minute belongs to the cluster, not to a caller: the point of the key is that two replicas reaching
+          // the same tick run it once between them.
+          sharedKey: true,
           ttlMs: module.limitsFor(entry.document).timeoutMs
         });
       } catch (error) {
