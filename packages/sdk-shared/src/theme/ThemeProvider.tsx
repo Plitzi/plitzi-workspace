@@ -1,4 +1,6 @@
-import { useEffect, useRef, useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
+
+import { useIsomorphicLayoutEffect } from '@plitzi/nexus/react';
 
 import themeStore, { resolveScheme, setAreaTheme, setMachineScheme, setThemeMode } from './themeStore';
 import { useCommonStoreSync } from '../store';
@@ -71,18 +73,26 @@ const ThemeProvider = ({
   storageType = 'localStorage',
   children
 }: ThemeProviderProps) => {
-  const hydrated = useRef(false);
-  if (!hydrated.current && typeof window !== 'undefined') {
-    // Before the first paint rather than in an effect: an effect would render one frame in the default theme and
-    // then swap, which is the flash this reads storage to avoid.
-    hydrated.current = true;
+  /**
+   * What was remembered, read before the first paint — and in a LAYOUT effect rather than during the render.
+   *
+   * The store is a module-level singleton, so writing to it while rendering updates every component already
+   * subscribed to it, which is a setState from inside another component's render. React says so, and it is not
+   * pedantry: mount a second surface (the harness re-rendering a space under a new `key`, a preview pane opening
+   * beside an editor) and the provider coming up notifies the tree on its way out.
+   *
+   * A layout effect keeps what the render-phase version was for. It runs after the commit but BEFORE the browser
+   * paints, so the one frame in the default theme is never on screen — which is the flash this reads storage to
+   * avoid — and by then every subscriber is mounted and a wake is an ordinary update.
+   */
+  useIsomorphicLayoutEffect(() => {
     themeStore.batch(() => {
       setMachineScheme(machineScheme());
       // `setThemeMode` clears the areas by design, so what was remembered for them is restored after it, never before.
       setThemeMode(readStored(storageKey, storageType) ?? defaultTheme);
       Object.entries(readStoredAreas(storageKey, storageType)).forEach(([area, mode]) => setAreaTheme(area, mode));
     });
-  }
+  }, [defaultTheme, storageKey, storageType]);
 
   /**
    * Published into the app store, where everything else about this render already lives.

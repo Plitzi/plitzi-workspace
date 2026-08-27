@@ -2,6 +2,7 @@ import { createHmac } from 'node:crypto';
 
 import { describeTarget, expect, test } from '../../fixtures';
 import { paintTrace, resetPaint, watchPaint } from '../../helpers/flicker';
+import { RSC_IDS } from '../../helpers/space';
 import { expectDevToolsAvailable, expectSampleSpaceContent, expectSpaceRendered } from '../../helpers/space';
 import { expectVisuallyHealthy } from '../../helpers/visualHealth';
 import { sampleSpace } from '../../spaces';
@@ -97,10 +98,10 @@ describeTarget('server-components', subject => {
 
   test('the endpoint the README documents answers', async ({ request }) => {
     const all = await request.get(`${subject.origin}/_rsc?location=%2F`);
-    const one = await request.get(`${subject.origin}/_rsc?location=%2F&ids=rsc-server`);
+    const one = await request.get(`${subject.origin}/_rsc?location=%2F&ids=${RSC_IDS.server}`);
 
     expect(all.status()).toBe(200);
-    expect(Object.keys(((await one.json()) as { serverData: object }).serverData)).toEqual(['rsc-server']);
+    expect(Object.keys(((await one.json()) as { serverData: object }).serverData)).toEqual([RSC_IDS.server]);
   });
 });
 
@@ -225,7 +226,7 @@ describeTarget('server-actions-render', subject => {
     await page.goto(subject.origin);
 
     await expect(page.getByRole('heading', { name: 'Cats, fetched on the server' })).toBeVisible();
-    await expect(page.locator('img.cat-photo').first()).toBeVisible();
+    await expect(page.locator('img.catPhoto').first()).toBeVisible();
     await expect(page.getByText('8 cats came back')).toBeVisible();
 
     await capture('server-fetched-cats');
@@ -239,14 +240,19 @@ describeTarget('server-actions-render', subject => {
     expect(html.match(/<img/g)?.length).toBe(3);
   });
 
+  /** Asked for the whole page rather than for one id: the slices are keyed by ELEMENT ID, and an authored space
+   *  derives those — a spec that writes one down is asserting on a hash. The page has one server element, so the
+   *  single entry that comes back IS the provider's. */
   test('the element is fed by the action, not by the browser', async ({ request }) => {
-    const response = await request.get(`${subject.origin}/_rsc?location=%2F&ids=cats-provider`);
+    const response = await request.get(`${subject.origin}/_rsc?location=%2F`);
     const { serverData } = (await response.json()) as { serverData: Record<string, { records: unknown[] }> };
+    const [slice] = Object.values(serverData);
 
     expect(response.status()).toBe(200);
-    expect(serverData['cats-provider'].records.length).toBeGreaterThan(0);
+    expect(Object.keys(serverData)).toHaveLength(1);
+    expect(slice.records.length).toBeGreaterThan(0);
     // The output step named `records` and `count`; the fetch also returned `status` and `ok`.
-    expect(Object.keys(serverData['cats-provider']).sort()).toEqual(['count', 'records']);
+    expect(Object.keys(slice).sort()).toEqual(['count', 'records']);
   });
 });
 
@@ -266,7 +272,7 @@ describeTarget('server-actions-no-server', subject => {
     await expect(page.getByRole('heading', { name: 'The same page, with nobody to ask' })).toBeVisible();
 
     // The provider is a `runtime: 'server'` element with nowhere to resolve from, so it renders its mock.
-    await expect(page.locator('img.cat-photo')).toHaveCount(2);
+    await expect(page.locator('img.catPhoto')).toHaveCount(2);
 
     await page.getByRole('button', { name: 'Fetch new cats' }).click();
 
@@ -694,16 +700,17 @@ describeTarget('blog', subject => {
     // Nobody is signed in: the header offers the invitation rather than a name.
     await expect(page.locator('.headerInner').getByRole('link', { name: 'Sign in' })).toBeVisible();
 
-    await box.getByRole('button', { name: 'I have seen one' }).click();
+    const button = box.getByRole('button', { name: 'I have seen one' });
+    await button.click();
 
     // The count came back from the server. A number incremented in the browser is a number that disagrees with
     // the next reader's.
     await expect(box.locator('.notice')).toContainText('Logged.');
-    const first = await box.locator('.notice').innerText();
 
-    await box.getByRole('button', { name: 'I have seen one' }).click();
-
-    await expect(box.locator('.notice')).not.toHaveText(first);
+    // And one sighting is all a reader gets: the last step of the flow writes `sightingDone`, the button is bound
+    // to it, and the answer it was disabled by is the server's — which is the half a browser-side counter cannot
+    // do. Pressing it again is not a second reading, it is the same reader counted twice.
+    await expect(button).toBeDisabled();
   });
 
   /**

@@ -2,7 +2,7 @@ import { describeTarget, expect, test } from '../../fixtures';
 import { openHarness, renderSpace } from '../../helpers/harness';
 import { expectSampleSpaceContent, expectSpaceRendered } from '../../helpers/space';
 import { expectVisuallyHealthy } from '../../helpers/visualHealth';
-import { minimalSpace, MINIMAL_IDS, SAMPLE_IDS, sampleSpace, sampleSpaceWith } from '../../spaces';
+import { minimalSpace, MINIMAL_IDS, SAMPLE_REFS, sampleSpace, sampleSpaceWith } from '../../spaces';
 
 /** The SDK rendering in a browser, with no server anywhere in the picture. Everything here goes through the
  *  harness, which renders whatever schema it is handed — so a failure is the renderer's, never a server's. */
@@ -32,7 +32,7 @@ describeTarget('harness', () => {
     await openHarness(page);
     await expect(page.getByRole('heading', { name: 'Welcome To Plitzi' })).toBeVisible();
 
-    await renderSpace(page, sampleSpaceWith(SAMPLE_IDS.mainHeading, { content: 'Second render' }));
+    await renderSpace(page, sampleSpaceWith(SAMPLE_REFS.mainHeading, { content: 'Second render' }));
 
     await expect(page.getByRole('heading', { name: 'Second render' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Welcome To Plitzi' })).toBeHidden();

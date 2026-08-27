@@ -1,6 +1,6 @@
 import { expect, test } from '../../fixtures';
 import { mintPreview, previewUrl } from '../../helpers/preview';
-import { SAMPLE_IDS } from '../../spaces';
+import { SAMPLE_REFS } from '../../spaces';
 import { target } from '../../targets';
 
 /** The whole loop an agent works in, end to end and across three surfaces: it connects over MCP, proposes an edit,
@@ -32,8 +32,8 @@ test.describe('an agent edit reaching a page', () => {
     const token = await mintPreview(request, origin, [
       {
         type: 'patchElement',
-        pageRef: SAMPLE_IDS.page,
-        ref: SAMPLE_IDS.mainHeading,
+        pageRef: SAMPLE_REFS.page,
+        ref: SAMPLE_REFS.mainHeading,
         props: { content: 'What the agent proposed' }
       }
     ]);

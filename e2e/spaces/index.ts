@@ -29,13 +29,9 @@ export * from './plain';
 export const sampleSpace = (): OfflineDataRaw => readOfflineData();
 
 /** The sample space with one element's props overridden — the usual shape of "same page, one thing different". */
-export const sampleSpaceWith = (id: string, props: Record<string, unknown>): OfflineDataRaw => {
+export const sampleSpaceWith = (ref: string, props: Record<string, unknown>): OfflineDataRaw => {
   const data = sampleSpace();
-
-  if (!(id in data.schema.flat)) {
-    throw new Error(`No element "${id}" in the sample space`);
-  }
-
+  const id = sampleId(ref, data);
   const node = data.schema.flat[id];
 
   return {
@@ -47,11 +43,29 @@ export const sampleSpaceWith = (id: string, props: Record<string, unknown>): Off
   };
 };
 
-/** Ids worth naming, so a spec reads as intent rather than as a hex string. */
-export const SAMPLE_IDS = {
-  page: '655221a12565b83ac5060e20',
-  mainHeading: '65522cc49b57167ea7a2a076',
-  logo: '655226c2a62ab65a53302504'
+/**
+ * The elements a spec addresses, by the NAME the space gives them.
+ *
+ * Not their ids: those are derived from the declaration that authors the space, so a hex string written down here
+ * is a copy of a hash that changes whenever somebody adds an element above it — and it fails as "no such element"
+ * long after the edit that moved it. `examples/shared-space/space.ts` gives these three an `idRef` for exactly this
+ * reason, which is also the spelling the MCP takes (`pageRef`/`ref` are "ref or id").
+ */
+export const SAMPLE_REFS = {
+  page: 'home',
+  mainHeading: 'mainHeading',
+  logo: 'logo'
+};
+
+/** The document id of a named element, for the places that can only be given one. */
+export const sampleId = (ref: string, data: OfflineDataRaw = sampleSpace()): string => {
+  const found = Object.values(data.schema.flat).find(element => element.idRef === ref);
+
+  if (!found) {
+    throw new Error(`No element named "${ref}" in the sample space`);
+  }
+
+  return found.id;
 };
 
 export { actionSpace, minimalSpace, plainSpace };

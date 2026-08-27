@@ -1,5 +1,7 @@
 import { expect } from '@playwright/test';
 
+import { sampleId } from '../spaces';
+
 import type { Locator, Page } from '@playwright/test';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
@@ -11,9 +13,22 @@ import type { OfflineDataRaw } from '@plitzi/sdk-shared';
  *  hydration can find the nodes the server rendered, and a client-side render has no such need and emits none.
  *  Asserting on them means writing a check that can only ever pass against SSR. */
 
-/** React Server Component nodes. Whether they render at all depends on the deployment: they need `getRscData`
- *  AND a component for their type, so their absence is correct in a space that supplies neither. */
-export const RSC_NODE_IDS = ['rsc-server', 'rsc-client', 'rsc-shared'];
+/** React Server Component nodes, by the name the space gives them.
+ *
+ *  Whether they render at all depends on the deployment: they need `getRscData` AND a component for their type, so
+ *  their absence is correct in a space that supplies neither. */
+export const RSC_REFS = { server: 'rsc-server', client: 'rsc-client', shared: 'rsc-shared' } as const;
+
+/** …and their document ids, which is what everything RSC is actually keyed by: the payload in the store, the
+ *  `data-rsc-id` marker on the node, the `ids` a partial refresh sends. They are derived from the declaration that
+ *  authors the space, so they are looked up here rather than written down anywhere. */
+export const RSC_IDS = {
+  server: sampleId(RSC_REFS.server),
+  client: sampleId(RSC_REFS.client),
+  shared: sampleId(RSC_REFS.shared)
+};
+
+export const RSC_NODE_IDS = Object.values(RSC_IDS);
 
 /** Element types the SDK renders itself. Anything else is a plugin the deployment provides, which renders through
  *  `RootElement` and carries no `plitzi-component__` class of its own. */

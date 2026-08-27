@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { mcpExtensions } from '@plitzi/sdk-mcp';
 import { createServer } from '@plitzi/sdk-server';
 
-import { sampleSpace } from '../spaces';
+import { sampleId, sampleSpace } from '../spaces';
 
 import type { OfflineDataRaw, Schema, SSRPageAdapters, SSRRscContext, SSRRscData, Style } from '@plitzi/sdk-shared';
 
@@ -33,10 +33,13 @@ const plugins = {
   sharedInfo: { js: path.resolve(here, 'plugins/SharedProbe.tsx'), action: 'compile' as const }
 };
 
-/** Fixed values, not timestamps: a spec asserting on `renderedAt` would be asserting on the clock. */
+/** Fixed values, not timestamps: a spec asserting on `renderedAt` would be asserting on the clock.
+ *
+ *  Keyed by the ELEMENT ID, which is what the runtime looks a slice up by — an authored space derives those, so
+ *  they are resolved from the name the space gave the element rather than written down. */
 const SLICES: Record<string, unknown> = {
-  'rsc-server': { message: 'from the server', nodeVersion: process.version },
-  'rsc-shared': { message: 'from both' }
+  [sampleId('rsc-server')]: { message: 'from the server', nodeVersion: process.version },
+  [sampleId('rsc-shared')]: { message: 'from both' }
 };
 
 // eslint-disable-next-line @typescript-eslint/require-await

@@ -10,6 +10,7 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import type { AuthoredSpace, ElementSpec, SpaceSpec } from '@plitzi/sdk-authoring';
+import type { ElementRuntime } from '@plitzi/sdk-shared';
 
 /**
  * The sample space every example renders, declared.
@@ -29,9 +30,16 @@ import type { AuthoredSpace, ElementSpec, SpaceSpec } from '@plitzi/sdk-authorin
  * Named, because a server has to be able to find them. RSC data is keyed by element ID — the opaque one — and an
  * authored space derives those, so an example looks its own elements up by the name it gave them
  * (`elementIdOf(schema, 'rsc-server')`) instead of hard-coding a hash.
+ *
+ * The `runtime` is the whole subject of what they demonstrate, so it is declared and not defaulted: `server`
+ * renders on the server and is never mounted in the browser, `client` is skipped during SSR entirely, and `shared`
+ * does both. Left out, every one of them is `shared` — three elements that look identical and prove nothing.
  */
-const rscElement = (type: 'serverInfo' | 'clientInfo' | 'sharedInfo', idRef: string): ElementSpec =>
-  element(type, { idRef });
+const rscElement = (
+  type: 'serverInfo' | 'clientInfo' | 'sharedInfo',
+  idRef: string,
+  runtime: ElementRuntime
+): ElementSpec => element(type, { idRef, runtime });
 
 const card = (title: string, body: string): ElementSpec =>
   link({
@@ -162,18 +170,30 @@ export const sampleSpace: SpaceSpec = {
   pages: [
     {
       name: 'Home',
+      // Named for the same reason the RSC elements are: something outside this file addresses them. The e2e suite
+      // drafts an edit onto the heading and the MCP takes a `pageRef`/`ref`, and both are names an author wrote —
+      // a derived ref is positional, and the document id is a hash nothing should ever be written against.
+      idRef: 'home',
       slug: '',
       class: 'page',
       body: [
         container({ class: 'backdrop' }),
-        container({ class: 'logoFrame', children: [image({ src: 'https://cdn.plitzi.com/resources/img/favicon.svg', class: 'logo' })] }),
-        container({ class: 'headline', children: [heading({ content: 'Welcome To Plitzi', subType: 'h1', variant: 'lg' })] }),
+        container({
+          class: 'logoFrame',
+          children: [
+            image({ idRef: 'logo', src: 'https://cdn.plitzi.com/resources/img/favicon.svg', class: 'logo' })
+          ]
+        }),
+        container({
+          class: 'headline',
+          children: [heading({ idRef: 'mainHeading', content: 'Welcome To Plitzi', subType: 'h1', variant: 'lg' })]
+        }),
         container({
           class: 'rscSection',
           children: [
-            rscElement('serverInfo', 'rsc-server'),
-            rscElement('clientInfo', 'rsc-client'),
-            rscElement('sharedInfo', 'rsc-shared')
+            rscElement('serverInfo', 'rsc-server', 'server'),
+            rscElement('clientInfo', 'rsc-client', 'client'),
+            rscElement('sharedInfo', 'rsc-shared', 'shared')
           ]
         }),
         container({

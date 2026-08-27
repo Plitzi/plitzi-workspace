@@ -1,5 +1,5 @@
 import { describeTarget, expect, test } from '../../../fixtures';
-import { rscElement } from '../../../helpers/space';
+import { rscElement, RSC_IDS } from '../../../helpers/space';
 
 /** The three runtimes, told apart by where they appear.
  *
@@ -16,7 +16,7 @@ describeTarget('server', subject => {
 
     // Only a `server` runtime element carries the reattachment marker — it is the one the client has to find again
     // to refresh it in place. The other two are asserted through what they rendered.
-    await expect(rscElement(page, 'rsc-server')).toContainText('from the server');
+    await expect(rscElement(page, RSC_IDS.server)).toContainText('from the server');
     await expect(page.locator('[data-probe="shared"]')).toContainText('from both');
 
     await capture('three-runtimes');

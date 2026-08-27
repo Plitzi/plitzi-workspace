@@ -1,13 +1,13 @@
 import { describeTarget, expect, test } from '../../../fixtures';
 import { mintPreview, previewUrl, PREVIEW_SECRET } from '../../../helpers/preview';
-import { SAMPLE_IDS } from '../../../spaces';
+import { SAMPLE_REFS } from '../../../spaces';
 
 /** Draft preview closes the agent loop: edits are rendered WITHOUT being saved, and a normal page request carrying
  *  the token serves that render once. Asserting it on a visible element rather than on a settings field is the
  *  point — what has to be true is that a person looking at the page sees the draft. */
 describeTarget('server', subject => {
   const draftHeading = (content: string) => [
-    { type: 'patchElement', pageRef: SAMPLE_IDS.page, ref: SAMPLE_IDS.mainHeading, props: { content } }
+    { type: 'patchElement', pageRef: SAMPLE_REFS.page, ref: SAMPLE_REFS.mainHeading, props: { content } }
   ];
 
   test('renders an unsaved edit', async ({ page, request, capture }) => {
