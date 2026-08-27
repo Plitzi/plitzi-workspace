@@ -10,8 +10,8 @@ import type { ElementInteraction } from '@plitzi/sdk-shared';
 export const deleteInteractionOp = z
   .object({
     type: z.literal('deleteInteraction'),
-    pageRef: z.string().describe('Page ref or id'),
-    ref: z.string().describe('Element ref or id'),
+    pageRef: z.string().describe('The page, by name'),
+    ref: z.string().describe('The element, by name'),
     flowId: z.string().optional().describe('Remove the whole flow with this id (the trigger node id)'),
     nodeId: z
       .string()

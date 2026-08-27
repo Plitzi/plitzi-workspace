@@ -10,8 +10,8 @@ import type { Env } from '../../../../types';
 export const deleteBindingOp = z
   .object({
     type: z.literal('deleteBinding'),
-    pageRef: z.string().describe('Page ref or id'),
-    ref: z.string().describe('Element ref or id'),
+    pageRef: z.string().describe('The page, by name'),
+    ref: z.string().describe('The element, by name'),
     category: bindingCategory,
     to: z.string().describe('Target of the binding to remove'),
     id: z.string().optional().describe('Match by id instead of to')

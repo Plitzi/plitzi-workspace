@@ -165,7 +165,7 @@ export const resolveElement = (
   const el = resolveRef(space.schema, page, ref);
   if (!el || el.id === page.id) {
     return {
-      error: fail('ref', `Element "${ref}" not found in page "${pageRef}"`, 'Use an existing element ref or id')
+      error: fail('ref', `Element "${ref}" not found in page "${pageRef}"`, 'Name an element this page holds')
     };
   }
 

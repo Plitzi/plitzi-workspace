@@ -13,14 +13,15 @@ export const serverInstructions =
   'you need for the next edit. Use patchElement / patchDefinition to change only some props / CSS (the upsert ' +
   'variants replace them all). An element read (and search include:"detail") inlines the CSS of the definitions ' +
   'it attaches under resolvedStyle, so you rarely need a separate definition read. ' +
-  'Refs accept a semantic idRef ([A-Za-z0-9_-] starting with a letter, unique, chosen by you) or the raw id — the ' +
-  'idRef is ALSO the ' +
-  'runtime wiring key, so a provider source is `<type>_<idRef>.<field>`, visible to the provider’s DESCENDANTS only ' +
+  'Every element has ONE name and it IS its id ([A-Za-z0-9_-] starting with a letter, unique, chosen by you) — the ' +
+  'same name is the runtime wiring key, so a provider source is `<type>_<name>.<field>`, visible to the ' +
+  'provider’s DESCENDANTS only ' +
   '(bind inside its subtree). CSS is plain kebab-case — write shorthands freely (`border: 1px solid red`, ' +
   '`padding: 8px 16px`, `font: bold 16px/1.5 Arial`), they are expanded to longhands for you and STORED that way, ' +
   'so read-back shows the longhands; style vars are var(--name), schema vars are {{name}}. ' +
   'READERS — do not confuse them: MCP *resources* are the browsable catalog (list them, or open one by URI); ' +
-  'plitzi_search FINDS refs by label/type/attribute; plitzi_read BATCH-fetches URIs you already hold. Reach for ' +
+  'plitzi_search FINDS elements by label/type/attribute and hands you the name to write ops against; ' +
+  'plitzi_read BATCH-fetches URIs you already hold. Reach for ' +
   'search/read to work; browse resources to discover. ' +
   'CMS / API integrations (Strapi, WordPress, Contentful, any REST service) go through a CONNECTOR: a manifest ' +
   'you author declaring the base URL, endpoints and auth template, which the SERVER executes — read ' +
@@ -66,10 +67,11 @@ per-element read. (3) \`plitzi_apply\` with \`dryRun:true\` to preview. (4) \`pl
 \`expectedResourceVersions\` (uri → the stateVersion you read) for every resource you change — omitting it lets a
 concurrent edit be lost. Use \`patchElement\`/\`patchDefinition\` to change only some props/CSS (upsert replaces all).
 
-**Refs & wiring:** a ref is the semantic \`idRef\` (letters, numbers, hyphens and underscores, **starting with a
-letter — no dots**) or the raw id. The idRef is the runtime wiring key: a provider's source is \`<type>_<idRef>\`, and
-interactions target by it. A dot would split that path; an **underscore is fine** — the first \`_\` separates the type
-from the idRef (element types have none), so \`list_food_item\` reads unambiguously as type \`list\`, idRef \`food_item\`.
+**Names & wiring:** an element has ONE name and it is its id (letters, numbers, hyphens and underscores,
+**starting with a letter — no dots**). It is also the runtime wiring key: a provider's source is
+\`<type>_<name>\`, and interactions target by it. A dot would split that path; an **underscore is fine** — the first
+\`_\` separates the type from the name (element types have none), so \`list_food_item\` reads unambiguously as type
+\`list\`, name \`food_item\`.
 
 **Styling:** CSS keys are **kebab-case** (\`background-color\`); \`var(--token)\` for style vars, \`{{name}}\` for schema
 vars. **Write plain CSS** — shorthands (\`border\`, \`padding\`, \`margin\`, \`gap\`, \`overflow\`, \`flex\`, \`background\`,
@@ -80,7 +82,7 @@ still \`display: flex\` + \`flex-direction\`/\`align-items\`/…, not a \`flex\`
 (\`text\` is \`display: inline\`). Global styles (\`button {…}\`) and id styles (\`#id\`) have their own ops.
 
 **Data bindings** (\`upsertBinding\`, category attributes|style|initialState): connect a \`source\` to a \`to\` field.
-A source \`<type>_<idRef>\` is scoped to the provider's **DESCENDANTS only** — bind inside the provider's subtree
+A source \`<type>_<name>\` is scoped to the provider's **DESCENDANTS only** — bind inside the provider's subtree
 (module sources state/space/navigation/auth/collection are global). \`apiContainer.mockData\` is builder-only; set a
 real \`query\` for production. \`transformers: [{action, params}]\` post-process the value — use exact action names
 from \`plitzi://data-sources\`; \`twigTemplate\` formats it (the value is \`{{source}}\`, not \`{{value}}\`). \`when\` is
@@ -91,7 +93,7 @@ computed for you). Node types: \`callback\` (an element's own callback — \`ele
 (a source module — omit \`elementId\`, the MCP sets it), \`utility\` (no element). Element \`setState\`
 (category/key/value/revertOnFinish) ≠ global \`setState\` (source \`state\`, key/type/value). To turn a step off use
 \`patchInteractionNode {enabled:false}\` — \`deleteInteraction\` removes it (destructive; confirm first). Any param
-**value** can be a binding token \`{{ source }}\` (e.g. notification \`content: "{{ list_<idRef>.item.name }}"\`).
+**value** can be a binding token \`{{ source }}\` (e.g. notification \`content: "{{ list_<name>.item.name }}"\`).
 
 **CMS / API integrations** (\`upsertConnector\`): a **connector** is a manifest declaring a provider's base URL,
 endpoints, auth template and filter operators, executed by the **server** — so integrating Strapi, WordPress,
@@ -100,7 +102,7 @@ template token) and \`plitzi://connectors/{env}\` (this space's). **You never cr
 manifest with \`{{credential.token}}\` and no \`connection.credential\`; it saves, and the space owner attaches the
 secret in the builder. To consume one, an \`apiContainer\` needs **\`runtime: "server"\`** plus \`connector\`,
 \`resource\`, optional \`endpoint\`/\`filters\`/\`limit\`/\`singleRecord\`/\`pagination\`; it then publishes
-\`apiContainer_<idRef>.records\` (or \`.record\`) \`.pageInfo .isEmpty .hasError\` to its **descendants**. Full worked
+\`apiContainer_<name>.records\` (or \`.record\`) \`.pageInfo .isEmpty .hasError\` to its **descendants**. Full worked
 flow — list page, detail page, paging, writes — in \`plitzi://guide\`.
 
 **Pages & navigation:** \`upsertPage\` — always set a **relative** \`slug\` (no leading \`/\`; the runtime and folder
@@ -227,7 +229,7 @@ Three ways to read, each for a different moment — pick by what you have in han
   label/type/attribute and hands back the uri + stateVersion (and, with \`include:"detail"\`, the full element).
 - **\`plitzi_read\`** — you **already hold one or more uris** (from search or a write response) and want their
   content in one batch. It is the tool form of opening resources, for when you have the addresses.
-Rule of thumb: **discover → resources**, **find a ref → plitzi_search**, **fetch known uris → plitzi_read**. Never
+Rule of thumb: **discover → resources**, **find a name → plitzi_search**, **fetch known uris → plitzi_read**. Never
 hand-build a URI to guess your way to an element — search for it instead.
 
 Write tools return what **changed** (\`{ uri, stateVersion }\`) plus counts, and the **full detail of every element
@@ -237,34 +239,30 @@ uri+stateVersion — re-read them if you need their new content. The operation s
 schema (discriminated by \`type\`).
 
 ## Addressing
-Refs are the semantic \`idRef\` (e.g. \`"hero-cta"\`) or the element's **raw id** — both resolve. Creating an element
-stores the \`ref\` you chose as its **idRef**.
+Every element and page has **one name, and that name is its id**. You choose it, you address it by it, and the
+runtime wires by it — there is no second key and nothing to translate. Creating an element with
+\`"ref": "products-api"\` stores it under exactly that.
 
-The idRef is not just an alias — it is the **wiring key the runtime uses**. A provider registers its data source as
-\`<type>_<idRef>\`, so a \`source\` you write against a ref resolves to that element at runtime with no id translation.
-Rules for a **new** ref (both are enforced; a violation fails the batch):
-- Charset \`[A-Za-z0-9_-]\`, **starting with a letter** (e.g. \`"products-api"\`, \`"food_item"\`). A \`.\` would split the
-  \`<type>_<idRef>.<field>\` source path and the interaction target lookup, so **no dots**. An **underscore is
-  allowed**: the FIRST \`_\` separates \`<type>\` from \`<idRef>\` and element types are camelCase with none, so
-  underscores inside the idRef are unambiguous (\`list_food_item\` → type \`list\`, idRef \`food_item\`).
-- **Unique across the space**; creating a ref that is taken is rejected (address the existing element instead).
+That name is the **wiring key**: a provider registers its data source as \`<type>_<name>\`, so a \`source\` you write
+against a name resolves to that element at runtime. Rules for a **new** name (both enforced; a violation fails the
+batch):
+- Charset \`[A-Za-z0-9_-]\`, **starting with a letter** (e.g. \`"products-api"\`, \`"food_item"\`). A \`.\` would split
+  the \`<type>_<name>.<field>\` source path and the interaction target lookup, so **no dots**. An **underscore is
+  allowed**: the FIRST \`_\` separates \`<type>\` from the name and element types are camelCase with none, so
+  underscores inside a name are unambiguous (\`list_food_item\` → type \`list\`, name \`food_item\`).
+- **Unique across the space**; a name that is taken is rejected (address the existing element instead).
+
+**Never invent a name for something that already exists** — read it. Every read hands you the name back
+(\`plitzi_search\`, a page skeleton, a write response), and that is the string every op takes.
 
 **Where an element renders** is its \`runtime\`, settable on \`upsertElement\`/\`patchElement\`: \`"shared"\` (the
 default, both sides), \`"client"\` (browser only) or \`"server"\` (SSR only). It matters for one thing above all — an
 \`apiContainer\` reads through a **connector** only when it is \`"server"\` (see *Connectors*). An element read
 reports it only when it is set.
 
-An idRef is **optional** on an element — one built in the builder may not have it. The consequence is specific: an
-element without an idRef **publishes no data source** and **holds no interactions**, because the runtime keys
-everything by idRef and the raw id is never a fallback. You do not have to fix this by hand: writing an
-interaction **mints an idRef for you** — the element that hosts the flow, and any element a node targets, is given
-a free \`<type>-<n>\` ref if it lacks one, and the flow is wired to it. A node target you write may be a raw id; it
-is normalised to that element's idRef. (To make an element a data-source **provider** to bind against, give it an
-idRef explicitly with \`patchElement\`, or create it with the \`ref\` you want — a created element stores its ref as
-its idRef.)
-
-**Renaming** an idRef moves the wiring key: every binding source and interaction target across the space that
-pointed at the old name is repointed with it, so the element stays wired. You do not have to rewrite them.
+**Renaming** (\`patchElement\` with \`rename\`) moves the one key: the parent's child list, every binding source and
+every interaction target across the space that named the old one is repointed with it, so nothing comes unwired.
+You do not have to rewrite them.
 
 ## Styling (crosses both schemas)
 - **Mind the type's intrinsic default style.** A type renders with a base CSS *before* any class is attached — read
@@ -353,11 +351,11 @@ list into a list element:
   "binding": { "to": "items", "source": "apiContainer_x.data" } }\`.
 
 **Source scope — a source is visible to the provider's DESCENDANTS only.** An element source named
-\`<type>_<idRef>\` (e.g. \`apiContainer_products\`, \`list_food-list\`) is published by that element into the scope of
+\`<type>_<name>\` (e.g. \`apiContainer_products\`, \`list_food-list\`) is published by that element into the scope of
 its **subtree**, so **only elements INSIDE the provider can bind to it**. Binding a sibling or an unrelated element
 to it resolves to nothing at runtime. So to consume \`apiContainer_products.data\`, the bound element must live under
 that apiContainer; inside a \`list\`, the repeated \`listItem\` and its children read the per-row source
-(\`list_<idRef>.item.<field>\`). Module sources (no \`<type>_<idRef>\` head — \`state\`, \`space\`, \`navigation\`,
+(\`list_<name>.item.<field>\`). Module sources (no \`<type>_<name>\` head — \`state\`, \`space\`, \`navigation\`,
 \`auth\`, \`collection\`) are global and bindable anywhere. Binding an element to an element source outside its
 provider's subtree is schema-valid but **broken at runtime** (the source is not in scope), so
 \`plitzi_validate\`/\`plitzi_apply\` treat it as an **error and reject the batch** — move the element under the
@@ -397,8 +395,8 @@ you — never wire them by hand. Each step also has an \`enabled\` flag (see dis
 **Node types & \`elementId\`** — a step names which element (or module) provides the callback it runs. Picking the
 **wrong node type for an action** makes the runtime resolve it against nothing, so the step **silently does nothing**:
 - \`trigger\` — the event; belongs to the host element. \`elementId\` defaults to the host.
-- \`callback\` — a callback provided by a **specific element**. \`elementId\` is that element's ref (the flow host by
-  default, or another element to act on); give its ref or raw id and it is normalised to the idRef. Every element
+- \`callback\` — a callback provided by a **specific element**. \`elementId\` is that element's name (the flow host by
+  default, or another element to act on). Every element
   registers a built-in **\`setState\`** callback that changes **its own attribute or state**: params
   \`category\` (\`"attribute"\` — set a prop like \`content\`/\`disabled\` — or \`"state"\` — \`visibility\` or a style
   selector), \`key\`, \`value\` (a **scalar** whose type follows the target attribute — a real boolean \`true\`/\`false\`
@@ -410,8 +408,8 @@ you — never wire them by hand. Each step also has an \`enabled\` flag (see dis
 - \`globalCallback\` — a callback provided by a **source module**, NOT by any element: \`addNotification\` (source
   \`space\`), \`setState\`/\`clearState\` (\`state\`), \`navigate\` (\`navigation\`), \`login\`/\`logout\`/
   \`refreshDetails\` (\`auth\`), \`runServerAction\`/\`cancelServerAction\` (\`actions\`). Its \`elementId\` is the
-  **source module id**, never the host element — a node that stored the host
-  idRef here would resolve to nothing at runtime. **Omit \`elementId\`**: the MCP sets the correct source and fills the
+  **source module id**, never the host element — a node that stored the host element's name here would resolve to
+  nothing at runtime. **Omit \`elementId\`**: the MCP sets the correct source and fills the
   builder's **param defaults** (e.g. \`addNotification\` gets \`autoDismiss:true\`, \`autoDismissTimeout:5000\`,
   \`placement:"top-right"\`, \`appeareance:"success"\`) for any params you leave out. Use **only** the params each
   callback declares (exact spelling) — for \`addNotification\` the visible text goes in \`content\`; there is **no**
@@ -426,11 +424,11 @@ you — never wire them by hand. Each step also has an \`enabled\` flag (see dis
   \`webHook\` (\`url\`, \`method\`, …). See \`utilities\` in \`plitzi://interactions/{env}\`.
 
 **A param value can be a data binding.** Any interaction param may hold a \`{{ source }}\` token instead of a literal —
-it resolves at runtime exactly like a prop binding, using the same source grammar (\`<type>_<idRef>.<path>\`, or a
+it resolves at runtime exactly like a prop binding, using the same source grammar (\`<type>_<name>.<path>\`, or a
 module source like \`navigation\`/\`state\`). This is how a step reacts to *the data in context*: inside a \`listItem\`,
-a click on a row can show \`addNotification\` with \`content: "{{ list_<idRef>.item.name }}"\` — the clicked row's field.
+a click on a row can show \`addNotification\` with \`content: "{{ list_<name>.item.name }}"\` — the clicked row's field.
 The value follows the source's type, so a token is valid even where a param expects a boolean/number. Copy/paste of an
-element repoints these tokens to the new idRefs automatically, along with the element's bindings.
+element repoints these tokens to the copies' names automatically, along with the element's bindings.
 
 **Navigating between pages — prefer the \`Link\` element over an interaction.** For a plain "go to page X" the right
 tool is a \`link\` element (a container, see *Pages & folders*), not a \`navigate\` interaction step. Use the
@@ -553,7 +551,7 @@ The provider element is \`apiContainer\`, and it needs **both halves**:
    other than \`list\`), \`filters\`, \`limit\`, \`singleRecord\`, \`pagination\`, \`pageParam\`.
 
 It then publishes one source **to its descendants only** (like any provider — bind *inside* its subtree):
-\`apiContainer_<idRef>.records\` (an array), \`.pageInfo\` (\`page\`, \`pageCount\`, \`total\`, \`hasNextPage\`…),
+\`apiContainer_<name>.records\` (an array), \`.pageInfo\` (\`page\`, \`pageCount\`, \`total\`, \`hasNextPage\`…),
 \`.isEmpty\`, \`.hasError\`, \`.errorMessage\`, \`.isLoading\`. With \`singleRecord: true\` it publishes \`.record\`
 instead of \`.records\` — that is what a **detail page** uses. Bind an empty-state block's visibility to \`.isEmpty\`
 and an error block's to \`.hasError\`; they are ordinary bindings, no special mechanism.
@@ -620,7 +618,7 @@ discover it — the alternative is a browser-side \`query\`, which cannot keep a
   use \`link\`.
 
 Pages can be grouped into **folders** (the sidebar tree). A folder is \`{ ref, name, slug, parentId? }\`; its \`ref\`
-**is its id** (there is no separate idRef), and that id is what a page and a nested folder reference.
+**is its id**, and that id is what a page and a nested folder reference.
 - **Folder slugs PREPEND to the page URL — this is how nested URLs are built.** The full path is each ancestor
   folder's slug plus the page slug, joined by \`/\`: a page at slug \`"1-1-1"\` inside \`folder-1\` > \`folder-1-1\`
   resolves to \`/folder-1/folder-1-1/1-1-1\`. So a folder slug is part of the route; keep folder slugs relative too.

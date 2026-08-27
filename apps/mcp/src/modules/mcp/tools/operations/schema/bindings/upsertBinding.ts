@@ -13,8 +13,8 @@ import type { ElementBinding } from '@plitzi/sdk-shared';
 export const upsertBindingOp = z
   .object({
     type: z.literal('upsertBinding'),
-    pageRef: z.string().describe('Page ref or id'),
-    ref: z.string().describe('Element ref or id'),
+    pageRef: z.string().describe('The page, by name'),
+    ref: z.string().describe('The element, by name'),
     category: bindingCategory,
     binding: bindingInput
   })

@@ -13,8 +13,8 @@ import type { Env } from '../../../../types';
 export const patchElementOp = z
   .object({
     type: z.literal('patchElement'),
-    pageRef: z.string().describe('Page ref or id'),
-    ref: z.string().describe('Existing element ref or id'),
+    pageRef: z.string().describe('The page, by name'),
+    ref: z.string().describe('An existing element, by name'),
     rename: z
       .string()
       .optional()

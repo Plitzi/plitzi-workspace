@@ -37,13 +37,13 @@ describe('mcp-ai interactions', () => {
     const cap = capturing(buildSpace());
     const res = await apply({ operations: [{ ...flowOp, ref: 'c1' }] }, cap.saved(), cap.persisters);
     expect(res.applied).toBe(true);
-    // c1 had no idRef; the flow forces one, and the trigger is registered under it.
-    const idRef = cap.saved().schema.flat.c1.id;
-    expect(idRef).toBeTruthy();
+    // The trigger is registered under the element's one name.
+    const elementName = cap.saved().schema.flat.c1.id;
+    expect(elementName).toBe('c1');
     const trigger = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {}).find(
       n => n.type === 'trigger'
     );
-    expect(trigger?.elementId).toBe(idRef);
+    expect(trigger?.elementId).toBe(elementName);
   });
 
   it('patches one node and deletes a single step, re-linking the flow', async () => {
@@ -71,8 +71,8 @@ describe('mcp-ai interactions', () => {
     expect(el.interactions?.[0].nodes.map(n => n.action)).toEqual(['onClick']);
   });
 
-  // The runtime registers an element's callbacks under `idRef ?? id` and looks them up by that same key, so a node
-  // pinned to a raw id would resolve to nothing once the element has an idRef — the flow would silently do nothing.
+  // The runtime registers an element's callbacks under its name and looks them up by that same key — one key, so a
+  // node can only ever be pinned to the right one.
   it('targets a node at the element name, which is the key the runtime registers callbacks under', async () => {
     const space = buildSpace();
     const cap = capturing(space);
@@ -571,7 +571,9 @@ describe('mcp-ai interactions', () => {
     };
     const res = validate(
       {
-        operations: [{ type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'delayTime-1', title: 'Renamed' }]
+        operations: [
+          { type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'delayTime-1', title: 'Renamed' }
+        ]
       },
       space
     );
@@ -597,7 +599,9 @@ describe('mcp-ai interactions', () => {
     };
     const res = validate(
       {
-        operations: [{ type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'delayTime-1', title: 'Renamed' }]
+        operations: [
+          { type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'delayTime-1', title: 'Renamed' }
+        ]
       },
       space
     );
@@ -850,7 +854,9 @@ describe('mcp-ai interactions', () => {
     };
     const res = validate(
       {
-        operations: [{ type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'delayTime-bad', title: 'Renamed' }]
+        operations: [
+          { type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'delayTime-bad', title: 'Renamed' }
+        ]
       },
       space
     );

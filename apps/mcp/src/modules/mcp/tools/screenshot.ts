@@ -23,7 +23,7 @@ const resolveViewports = (choice: 'desktop' | 'mobile' | 'both' | undefined): Vi
 };
 
 export const screenshotShape = {
-  pageRef: z.string().optional().describe('Page ref or id to capture; defaults to the space default page'),
+  pageRef: z.string().optional().describe('The page to capture, by name; defaults to the space default page'),
   operations: z
     .array(operation)
     .max(100)

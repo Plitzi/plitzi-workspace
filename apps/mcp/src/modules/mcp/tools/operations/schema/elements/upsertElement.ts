@@ -11,7 +11,7 @@ import type { Env } from '../../../../types';
 export const upsertElementOp = z
   .object({
     type: z.literal('upsertElement'),
-    pageRef: z.string().describe('Page ref or id'),
+    pageRef: z.string().describe('The page, by name'),
     element: elementInput,
     parentRef: z.string().optional().describe('Anchor ref/id; defaults to page root'),
     position: position.optional()

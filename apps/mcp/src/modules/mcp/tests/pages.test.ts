@@ -351,7 +351,7 @@ describe('mcp-ai element names (the name IS the id, and the runtime wiring key)'
     const api = Object.values(saved.schema.flat).find(e => e.definition.type === 'apiContainer');
     const child = Object.values(saved.schema.flat).find(e => e.id === 'row-title');
     const storedSource = child?.definition.bindings?.attributes?.[0].source;
-    // What ApiContainer registers at runtime is `apiContainer_${idRef ?? id}` — the binding must target exactly that.
+    // What ApiContainer registers at runtime is `apiContainer_${id}` — the binding must target exactly that.
     const runtimeSourceName = api ? `apiContainer_${api.id}` : '';
     expect(storedSource?.startsWith(`${runtimeSourceName}.`)).toBe(true);
     expect(child?.definition.parentId).toBe(api?.id);

@@ -11,8 +11,8 @@ import type { ElementInteraction } from '@plitzi/sdk-shared';
 export const upsertInteractionFlowOp = z
   .object({
     type: z.literal('upsertInteractionFlow'),
-    pageRef: z.string().describe('Page ref or id'),
-    ref: z.string().describe('Element ref or id'),
+    pageRef: z.string().describe('The page, by name'),
+    ref: z.string().describe('The element, by name'),
     flowId: z.string().optional().describe('Existing flow to replace (the trigger node id). Omit to create a new flow'),
     nodes: z
       .array(interactionNode)

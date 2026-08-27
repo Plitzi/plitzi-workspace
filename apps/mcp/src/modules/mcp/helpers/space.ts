@@ -253,21 +253,21 @@ export const isPageElement = (schema: Schema, el: Element): boolean =>
 
 export const getPageElements = (schema: Schema): Element[] => spaceIndex(schema).pageElements;
 
-/** Finds a page by its semantic ref (idRef/slug/…) or its raw id, so legacy schemas without an idRef still resolve. */
+/** A page by the one name it answers to, which is also its key in `flat`. */
 export const findPageByRef = (schema: Schema, pageId: string): Element | undefined => {
   const el = schema.flat[pageId] as Element | undefined;
 
   return el && spaceIndex(schema).pageIds.has(el.id) ? el : undefined;
 };
 
-/** Find any non-page element by its semantic ref (idRef) or raw id, across the whole space. */
+/** A non-page element by the one name it answers to, anywhere in the space. */
 export const findElementByRef = (schema: Schema, id: string): Element | undefined => {
   const el = schema.flat[id] as Element | undefined;
 
   return el && !spaceIndex(schema).pageIds.has(el.id) ? el : undefined;
 };
 
-// --- Page folders (the sidebar tree). A folder has no idRef; its ref is its id. Pages reference a folder by that
+// --- Page folders (the sidebar tree). A folder's ref IS its id. Pages reference a folder by that
 // id (attributes.folder), and nested folders via parentId. ---
 
 // The Schema type declares pageFolders as always present, but a legacy/partial document may omit it — initialize
@@ -396,8 +396,8 @@ export const descendantIds = (schema: Schema, pageRootId: string): string[] => {
   return acc;
 };
 
-/** Resolve a ref to a concrete element within a page subtree (or the page root itself). Accepts either the
- *  semantic ref (idRef) or the raw element id, so schemas predating idRef keep working through their ids. */
+/** Resolve a name to a concrete element within a page subtree (or the page root itself). The name is the element's
+ *  key in `flat`; what this adds is the check that it really belongs to this page. */
 export const resolveRef = (schema: Schema, page: Element, ref: string): Element | undefined => {
   if (page.id === ref) {
     return page;

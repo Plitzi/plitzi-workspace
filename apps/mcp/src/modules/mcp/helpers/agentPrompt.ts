@@ -27,13 +27,14 @@ const EDITING_MODEL = [
 
 const TOOLS = [
   '━━ MCP TOOLS ━━',
-  '• plitzi_search — find refs by label/type/attribute (include:"detail" also returns each hit’s style + versions).',
+  '• plitzi_search — find elements by label/type/attribute; a hit carries the NAME every op takes (include:"detail"',
+  '  also returns its style + versions).',
   '• plitzi_read — batch-read one or more resource URIs you already hold (from search or a write response).',
   '• plitzi_validate — check a batch of operations without executing; returns teachable errors and warnings.',
   '• plitzi_apply — persist a batch of operations. Pass dryRun to preview the full diff without writing, and',
   '  expectedResourceVersions to guard against concurrent edits (apply and search hand back the versions you need).',
   '• plitzi_preview / plitzi_screenshot — render an element/page already in the schema (HTML / image).',
-  'Discover → browse resources. Find a ref → plitzi_search. Fetch known URIs → plitzi_read. Do not confuse them.'
+  'Discover → browse resources. Find a name → plitzi_search. Fetch known URIs → plitzi_read. Do not confuse them.'
 ].join('\n');
 
 const RESOURCES = [
@@ -95,7 +96,7 @@ const INTERACTIONS = (): string =>
     'deleteInteraction is destructive — confirm with the user first.',
     'Pick the RIGHT node type for an action: the wrong type resolves against nothing and the step silently no-ops.',
     'Any param VALUE can be a data-binding token {{ source }} — e.g. addNotification content',
-    '"{{ list_<idRef>.item.name }}" shows the clicked row’s field; it resolves at runtime just like a prop binding.',
+    '"{{ list_<name>.item.name }}" shows the clicked row’s field; it resolves at runtime just like a prop binding.',
     '',
     'globalCallback (nodeType "globalCallback") — provided by a SOURCE MODULE, not the host element: OMIT elementId',
     'and the MCP pins the right source and fills the builder’s param defaults. Use ONLY each callback’s declared',

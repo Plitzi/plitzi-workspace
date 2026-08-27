@@ -163,7 +163,7 @@ export const registerResources = (
       `plitzi://schema/${env}/pages/{ref}/styles`,
       'Every style a page uses in one read: class definitions its elements attach (with CSS) + global styles'
     ],
-    ['Element', `plitzi://schema/${env}/elements/{ref}`, 'One element in full detail (props, style) by ref or id'],
+    ['Element', `plitzi://schema/${env}/elements/{ref}`, 'One element in full detail (props, style), by name'],
     ['Folder', `plitzi://folders/${env}/{ref}`, 'One page folder (name, slug, parentId) by folder id'],
     [
       'Connector',
