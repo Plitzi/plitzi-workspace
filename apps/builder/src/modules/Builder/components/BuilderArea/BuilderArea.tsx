@@ -14,7 +14,7 @@ import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziService
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
@@ -66,11 +66,8 @@ const BuilderArea = ({
     baseContext: { baseElementId },
     builderGetBaseElement
   } = use(BuilderContext);
-  /**
-   * The canvas is its own area: darkening it to look at a page leaves the editor around it alone. It follows the
-   * editor's toggle again the moment that one moves — see `setThemeMode`.
-   */
-  const { resolvedTheme } = useTheme('builder');
+  // The scheme the SPACE is painted in — see the `canvas` area in `themeStore`. Not the editor's own.
+  const { resolvedTheme } = useTheme(SPACE_THEME_AREA);
   const { displayBorderComponents, zoom } = use(AppContext);
   const css = useMemo(() => {
     const cssVariables = schemaVariablesToCss(variables as Record<string, string>);

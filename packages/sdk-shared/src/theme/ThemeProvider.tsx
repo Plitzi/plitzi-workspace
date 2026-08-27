@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 
-import themeStore, { setAreaTheme, setMachineScheme, setThemeMode } from './themeStore';
+import themeStore, { resolveScheme, setAreaTheme, setMachineScheme, setThemeMode } from './themeStore';
+import { useCommonStoreSync } from '../store';
 
 import type { ColorScheme, Theme } from '../types';
 import type { ReactNode } from 'react';
@@ -82,6 +83,20 @@ const ThemeProvider = ({
       Object.entries(readStoredAreas(storageKey, storageType)).forEach(([area, mode]) => setAreaTheme(area, mode));
     });
   }
+
+  /**
+   * Published into the app store, where everything else about this render already lives.
+   *
+   * A MIRROR: `themeStore` stays the source, because a panel in a shadow root or an editor in a portal has to be
+   * able to read the theme without being under any provider, and no app store can serve that. What this buys is
+   * everything the app store is good at — `{{ theme.resolved }}` in a binding, a `when` rule that switches on the
+   * scheme, and one line in the devtools store viewer that answers "which theme is this" without opening code.
+   */
+  const state = useSyncExternalStore(themeStore.subscribe, themeStore.getState, themeStore.getState);
+  useCommonStoreSync(
+    ['theme.mode', 'theme.resolved', 'theme.areas'],
+    [state.mode, resolveScheme(state.mode, state.scheme), state.areas]
+  );
 
   useEffect(() => {
     const query = window.matchMedia(DARK_QUERY);

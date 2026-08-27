@@ -1,7 +1,6 @@
 import { consoleLogger, createCloudAdapters, createServer } from '@plitzi/sdk-server';
 
 const PORT = Number(process.env.PORT ?? 4005);
-const SERVER_URL = process.env.PLITZI_SERVER_URL ?? 'https://server.plitzi.com/graphql';
 const WEB_KEY = process.env.PLITZI_WEB_KEY ?? '';
 
 if (!WEB_KEY) {
@@ -17,13 +16,21 @@ if (!WEB_KEY) {
  * here, under this deployment's own domain, auth, actions and logs.
  */
 const adapters = createCloudAdapters({
-  serverUrl: SERVER_URL,
+  // `serverUrl` is not passed: it defaults to Plitzi's production server, which is where a self-hosted deployment
+  // reads from. Set it only to point at a staging Plitzi.
   webKey: WEB_KEY,
-  // `main` is the live document the builder edits. Point it at a published environment and a revision to serve a
-  // version that cannot change under the deployment.
-  environment: 'main',
-  // A minute, so an edit shows up without a restart and a burst of traffic is still one fetch.
-  cacheSeconds: 60
+  /**
+   * Which version this server serves — the one decision to be deliberate about:
+   *
+   * - `main` is the document the builder is editing. Read live on every request, never cached, because seeing the
+   *   edit is the reason to point at it. A development target.
+   * - A published environment with no `revision` serves the LATEST and releases itself: a cheap probe every
+   *   `cacheSeconds` asks which revision is current, and the space is refetched only when that answer moves.
+   * - A published environment WITH a `revision` serves exactly that version, fetched once and kept — for a
+   *   deployment that rolls forward on its own schedule.
+   */
+  environment: (process.env.PLITZI_ENVIRONMENT as 'main' | 'production') ?? 'main',
+  ...(process.env.PLITZI_REVISION ? { revision: Number(process.env.PLITZI_REVISION) } : {})
 });
 
 const server = createServer({

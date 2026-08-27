@@ -7,6 +7,7 @@ import type { Schema, Element } from './SchemaTypes';
 import type { Segment } from './SegmentTypes';
 import type { SpaceConnector } from './SpaceTypes';
 import type { DisplayMode, Style, StyleState } from './StyleTypes';
+import type { ColorScheme, Theme } from './ThemeTypes';
 
 // Real VALUES of the global data sources, published at runtime and read by element bindings. Grouped under
 // `runtime.sources` so all source data lives together, separate from the document state (schema/style/segments)
@@ -53,6 +54,20 @@ export type CommonState = {
   // How THIS render is happening. Seeded once at the root of whichever surface is mounting (the SDK, the builder) and
   // read from the store by everything below, instead of being threaded through every provider as five props.
   render?: RenderSettings;
+
+  /**
+   * The theme, mirrored from `themeStore` so it reads like everything else: `{{ theme.resolved }}` in a binding, a
+   * `when` rule that switches on it, and one line in the devtools store viewer that answers "which theme is this".
+   *
+   * A MIRROR and never the source. The theme has to be readable by things that are not under any provider — the
+   * dev-tools panel in its shadow root, an editor in a portal — which no app store can serve, so `themeStore` owns
+   * it and `ThemeProvider` publishes it here. Write through `useTheme`/`setThemeMode`; writing this copy changes
+   * the value nobody reads. Same contract `navigation` has below, for the same reason.
+   *
+   * Ephemeral: excluded from history (a toggle is not an edit) and not persisted here — `ThemeProvider` remembers
+   * it under its own `storageKey`.
+   */
+  theme?: { mode: Theme; resolved: ColorScheme; areas: Record<string, Theme> };
 
   // Navigation state, mirrored from the navigation provider so element bindings can read it as `navigation.*`. It is
   // ephemeral — excluded from persist and history — and exists so navigation state is uniformly observable in devtools.

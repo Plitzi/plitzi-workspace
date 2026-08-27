@@ -8,24 +8,75 @@ import type { Environment, OfflineDataRaw, SSRPageAdapters, SSRSpaceDeployment }
  * the builder — published, versioned, edited by whoever normally edits it — and this deployment reads it over the
  * same GraphQL query the browser-rendered SDK uses, with the same space key. What is served is the deployment's
  * own: its own domain, its own auth, its own actions, its own logs.
+ *
+ * **Plitzi is never in the critical path of a page.** A version is fetched once and then served from cache; the
+ * live document refreshes behind the request rather than in front of it, and a refresh that fails leaves the last
+ * good copy serving. A self-hosted site does not go down because somebody else's API did.
  */
+
+/**
+ * Plitzi's own server role, which serves GraphQL at its root — no `/graphql` path, exactly as the browser SDK
+ * addresses it. Production is the default because production is where a self-hosted deployment reads from; a
+ * staging Plitzi is the exception and says so.
+ */
+const PLITZI_SERVER_URL = 'https://server.plitzi.com';
+
+/**
+ * Where a fetched space is kept between requests. Five operations over strings, with no rule to obey — Redis, a
+ * table, a directory, whatever this deployment already runs.
+ *
+ * Omitted leaves an in-process Map, which is per replica: five replicas mean five copies and five refreshes per
+ * window. Sharing one costs the cloud a single fetch per version no matter how many of them there are, and it
+ * survives a restart — which is what keeps a cold deploy from asking Plitzi once per replica.
+ */
+export type CloudSpaceCache = {
+  get: (key: string) => Promise<string | undefined>;
+  set: (key: string, value: string) => Promise<void>;
+};
+
 export type CloudAdaptersConfig = {
-  /** The GraphQL endpoint of the Plitzi server role, e.g. `https://server.plitzi.com/graphql`. */
-  serverUrl: string;
+  /** The GraphQL endpoint of the Plitzi server role. Defaults to production. */
+  serverUrl?: string;
   /**
    * The space's web key, which is what says WHICH space: the token is minted for one, so no space id travels here
    * and none can be asked for by guessing a number.
    */
   webKey: string;
-  /** Which version to serve. `main` is the live document the builder edits; anything else is a published revision. */
+  /**
+   * Which environment to serve. `main` is the live document the builder is editing; anything else is published.
+   *
+   * This is the single switch between the two modes below, and it is worth being deliberate about: `main` is a
+   * development target and a published environment is a production one.
+   */
   environment?: Environment;
+  /**
+   * Which published revision to serve. **Ignored when `environment` is `main`** — the live document has no
+   * revisions, it has whatever the builder last saved.
+   *
+   * Pinned to a number, this deployment serves that exact version until somebody changes the config: a revision
+   * cannot change, so it is fetched once and kept for the life of the process. That is what a deployment wants
+   * when it rolls forward on its own schedule, or when it has to be able to say precisely what it is serving.
+   *
+   * Left out, it serves the **latest** revision of that environment and notices when a new one is published: a
+   * cheap probe every `cacheSeconds` asks which revision is current, and the space is refetched only when the
+   * answer changes. Publishing from the builder is then all it takes to release.
+   */
   revision?: number;
   /**
-   * How long a fetched space is reused before asking again. Zero fetches on every render, which is a round trip to
-   * Plitzi in the critical path of every page — the default is a minute, which keeps a published space effectively
-   * static while an edit still shows up without a restart.
+   * How often Plitzi is ASKED anything, in seconds. Default a minute. Ignored in both directions at the edges:
+   *
+   * - `main` **does not cache at all**. It is the document somebody is actively editing, and an edit that shows
+   *   up a minute later is worse than the round trip — every request reads it live. (Concurrent requests still
+   *   share one in-flight fetch: that is not caching, it is not asking the same question twice at once.)
+   * - A **pinned revision** never expires. Expiring an immutable document on a timer would be paying for a
+   *   question whose answer is already known.
+   *
+   * So this paces exactly one thing: the "which revision is current" probe, in latest mode. Even then it never
+   * sits in front of a visitor — the copy already held is served while the probe runs behind it.
    */
   cacheSeconds?: number;
+  /** Where fetched spaces are kept. Omitted, they are kept in this process only — see {@link CloudSpaceCache}. */
+  cache?: CloudSpaceCache;
   /**
    * What this server calls the space locally — the number every per-space thing here is keyed by (its actions, its
    * cache entries, its logs). It is NOT Plitzi's id and does not have to match one: the key already says which
@@ -66,6 +117,24 @@ const SPACE_QUERY = `query InitQuery($environment: String!, $revision: Int) {
   }
 }`;
 
+/**
+ * Which revision of an environment is current.
+ *
+ * A separate, tiny query on purpose: in latest mode this is what runs on a timer, and asking it is orders of
+ * magnitude cheaper — for this deployment and for Plitzi — than pulling a whole space down to discover it did not
+ * change. The space itself is fetched only when this answer moves.
+ */
+const LATEST_REVISION_QUERY = `query SpaceLatestRevisionQuery($environment: String!) {
+  SpaceLatestRevision(environment: $environment) {
+    snapshot { revision }
+  }
+}`;
+
+type LatestRevisionPayload = {
+  data?: { SpaceLatestRevision?: { snapshot?: { revision?: number } | null } | null };
+  errors?: { message: string }[];
+};
+
 type SpacePayload = {
   data?: { Space?: OfflineDataRaw & { segments?: unknown[] } };
   errors?: { message: string }[];
@@ -84,46 +153,59 @@ const byIdentifier = (segments: unknown[] | undefined): OfflineDataRaw['segments
 
 export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapters => {
   const {
-    serverUrl,
+    serverUrl = PLITZI_SERVER_URL,
     webKey,
     environment = 'main',
-    revision = 0,
+    revision,
     cacheSeconds = 60,
+    cache,
     spaceId = 1,
     deployment,
     fetchImpl = fetch
   } = config;
 
-  /**
-   * One entry per version, and the in-flight promise is what is cached — not the answer.
-   *
-   * A page server under load starts many renders before the first fetch returns, and caching only the result would
-   * send one request per render for the length of that first round trip. Cached this way the second render joins
-   * the first, which is the whole difference between one request and a hundred.
-   */
-  const inFlight = new Map<string, { expiresAt: number; data: Promise<OfflineDataRaw | undefined> }>();
+  /** `main` is the document somebody is editing right now. Nothing about it is worth remembering for a minute. */
+  const isLive = (env: string) => env === 'main';
 
-  const fetchSpace = async (env: string, rev: number): Promise<OfflineDataRaw | undefined> => {
-    const response = await fetchImpl(serverUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', authorization: `Bearer ${webKey}` },
-      body: JSON.stringify({ query: SPACE_QUERY, variables: { environment: env, revision: rev || null } })
-    });
+  /** A version somebody named: fetched once, kept for good, because a published revision cannot change. */
+  const isPinned = (env: string, rev?: number) => !isLive(env) && typeof rev === 'number' && rev > 0;
 
-    if (!response.ok) {
-      console.error(`[CloudAdapters] ${env}@${rev} answered ${response.status}`);
+  const post = async <T>(query: string, variables: Record<string, unknown>, what: string): Promise<T | undefined> => {
+    try {
+      const response = await fetchImpl(serverUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', authorization: `Bearer ${webKey}` },
+        body: JSON.stringify({ query, variables })
+      });
+
+      if (!response.ok) {
+        console.error(`[CloudAdapters] ${what} answered ${response.status}`);
+
+        return undefined;
+      }
+
+      const payload = (await response.json()) as { data?: T; errors?: { message: string }[] };
+      if (payload.errors?.length) {
+        console.error(`[CloudAdapters] ${what}: ${payload.errors.map(error => error.message).join('; ')}`);
+
+        return undefined;
+      }
+
+      return payload.data;
+    } catch (error: unknown) {
+      console.error(`[CloudAdapters] ${what} could not be reached:`, (error as Error).message);
 
       return undefined;
     }
+  };
 
-    const payload = (await response.json()) as SpacePayload;
-    if (payload.errors?.length) {
-      console.error(`[CloudAdapters] ${env}@${rev}: ${payload.errors.map(error => error.message).join('; ')}`);
-
-      return undefined;
-    }
-
-    const space = payload.data?.Space;
+  const fetchSpace = async (env: string, rev?: number): Promise<OfflineDataRaw | undefined> => {
+    const data = await post<SpacePayload['data']>(
+      SPACE_QUERY,
+      { environment: env, revision: rev ?? null },
+      `space ${env}@${rev ?? 'latest'}`
+    );
+    const space = data?.Space;
     if (!space) {
       return undefined;
     }
@@ -131,30 +213,128 @@ export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapter
     return { schema: space.schema, style: space.style, plugins: space.plugins, segments: byIdentifier(space.segments) };
   };
 
-  const getOfflineData = (
-    _spaceId: number,
-    env: string,
-    rev: number = revision
-  ): Promise<OfflineDataRaw | undefined> => {
-    const key = `${env}:${rev}`;
-    const now = Date.now();
-    const cached = inFlight.get(key);
-    if (cached && cached.expiresAt > now) {
-      return cached.data;
+  const fetchLatestRevision = async (env: string): Promise<number | undefined> => {
+    const data = await post<LatestRevisionPayload['data']>(
+      LATEST_REVISION_QUERY,
+      { environment: env },
+      `latest revision of ${env}`
+    );
+
+    return data?.SpaceLatestRevision?.snapshot?.revision;
+  };
+
+  const cacheKey = (env: string, rev: number) => `plitzi:space:${env}:${rev}`;
+
+  /** The last good copy per environment, which revision it is, and when the probe last ran. */
+  type Held = { revision: number; data: OfflineDataRaw; checkedAt: number };
+  const held = new Map<string, Held>();
+  /** One request per key at a time: a burst of renders on a cold cache joins the first, it does not multiply it. */
+  const inFlight = new Map<string, Promise<OfflineDataRaw | undefined>>();
+
+  const once = (key: string, run: () => Promise<OfflineDataRaw | undefined>): Promise<OfflineDataRaw | undefined> => {
+    const pending = inFlight.get(key);
+    if (pending) {
+      return pending;
     }
 
-    // A failed fetch is not cached: leaving `undefined` in for a minute turns one bad round trip into a minute of
-    // blank pages, and the retry costs one request.
-    const data = fetchSpace(env, rev).then(result => {
-      if (result === undefined) {
-        inFlight.delete(key);
+    const request = run().finally(() => inFlight.delete(key));
+    inFlight.set(key, request);
+
+    return request;
+  };
+
+  /** Reads a published revision through the shared cache, then the network, and writes back what it learned. */
+  const loadRevision = (env: string, rev: number): Promise<OfflineDataRaw | undefined> => {
+    const key = cacheKey(env, rev);
+
+    return once(key, async () => {
+      try {
+        const stored = await cache?.get(key);
+        if (stored) {
+          const data = JSON.parse(stored) as OfflineDataRaw;
+          held.set(env, { revision: rev, data, checkedAt: Date.now() });
+
+          return data;
+        }
+      } catch {
+        // A cache that cannot answer, or an entry that is not the shape it was written as. Asking Plitzi is the
+        // fallback the cache was an optimisation over.
       }
 
-      return result;
-    });
-    inFlight.set(key, { expiresAt: now + cacheSeconds * 1000, data });
+      const fetched = await fetchSpace(env, rev);
+      if (!fetched) {
+        return undefined;
+      }
 
-    return data;
+      held.set(env, { revision: rev, data: fetched, checkedAt: Date.now() });
+      await cache?.set(key, JSON.stringify(fetched)).catch(() => undefined);
+
+      return fetched;
+    });
+  };
+
+  /**
+   * Latest mode: find out which revision is current, and fetch the space only if that moved.
+   *
+   * The probe is the thing on the timer, not the space. A deployment that publishes once a week asks Plitzi for a
+   * revision number every minute and for a space once — and a publish is live within one window rather than
+   * whenever a blanket TTL happened to fall.
+   *
+   * A probe that fails leaves `checkedAt` alone so the next request tries again, and leaves the held copy serving.
+   */
+  const refreshLatest = async (env: string): Promise<OfflineDataRaw | undefined> => {
+    const current = await fetchLatestRevision(env);
+    const previous = held.get(env);
+    if (current === undefined) {
+      return previous?.data;
+    }
+
+    if (previous && previous.revision === current) {
+      previous.checkedAt = Date.now();
+
+      return previous.data;
+    }
+
+    const fetched = await loadRevision(env, current);
+
+    return fetched ?? previous?.data;
+  };
+
+  /**
+   * The space, and how hard this deployment leans on Plitzi to get it.
+   *
+   * - **`main`**: read live, every time. It is being edited; a cached answer is a wrong one.
+   * - **A pinned revision**: from cache forever after the first read. It cannot change.
+   * - **Latest**: the held copy is served immediately and a revision probe runs behind it once the window is up.
+   *   After the first render no page ever waits on Plitzi, and a failed probe or fetch changes nothing — the last
+   *   good copy keeps serving, because a self-hosted site going blank over somebody else's bad minute is not a
+   *   trade worth making.
+   */
+  const getOfflineData = async (_spaceId: number, env: string, rev?: number): Promise<OfflineDataRaw | undefined> => {
+    if (isLive(env)) {
+      return once(`live:${env}`, () => fetchSpace(env));
+    }
+
+    const pinned = rev ?? revision;
+    if (pinned !== undefined && isPinned(env, pinned)) {
+      const already = held.get(env);
+
+      return already?.revision === pinned ? already.data : loadRevision(env, pinned);
+    }
+
+    const current = held.get(env);
+    if (!current) {
+      return refreshLatest(env);
+    }
+
+    if (Date.now() - current.checkedAt >= cacheSeconds * 1000) {
+      // Behind the answer, not in front of it. Marked as checked before the probe returns so a burst of requests
+      // starts one, and rolled back on failure so the next one retries.
+      current.checkedAt = Date.now();
+      void refreshLatest(env).catch(() => undefined);
+    }
+
+    return current.data;
   };
 
   /**
@@ -163,9 +343,26 @@ export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapter
    * There is no host-to-space mapping to make: the key names the space, so a deployment that serves two of them
    * builds two servers or supplies its own resolver — which is more honest than a lookup table that silently
    * serves the wrong space when a domain is added and this is not.
+   *
+   * The revision it reports is the one actually being served, which in latest mode is whatever the last probe
+   * found: a deployment reading `at: { environment, revision }` must be told the version its page was built from,
+   * not the zero that means "whatever is live".
    */
-  const getSpaceDeployment = (): Promise<SSRSpaceDeployment> =>
-    Promise.resolve({ ...deployment, spaceId, environment, revision });
+  const getSpaceDeployment: NonNullable<SSRPageAdapters['getSpaceDeployment']> = async () => {
+    if (isLive(environment)) {
+      return { ...deployment, spaceId, environment, revision: 0 };
+    }
+
+    if (isPinned(environment, revision)) {
+      return { ...deployment, spaceId, environment, revision };
+    }
+
+    if (!held.has(environment)) {
+      await refreshLatest(environment);
+    }
+
+    return { ...deployment, spaceId, environment, revision: held.get(environment)?.revision ?? 0 };
+  };
 
   return { getOfflineData, getSpaceDeployment };
 };

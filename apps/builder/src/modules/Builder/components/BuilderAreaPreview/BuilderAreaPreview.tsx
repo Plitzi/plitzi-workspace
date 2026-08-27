@@ -18,7 +18,7 @@ import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziService
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { useBuilderStore, useRenderOverride } from '@plitzi/sdk-shared/store';
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
@@ -40,12 +40,8 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
   const { environment } = use(NetworkContext);
   const { rootRef } = use(ContainerRootContext);
   const { displayBorderComponents } = use(AppContext);
-  /**
-   * Its OWN area, separate from the canvas and from the editor: this pane exists to look at the page under one
-   * scheme while the rest of the builder stays where it was. It rejoins the editor's choice as soon as that one
-   * changes — see `setThemeMode`.
-   */
-  const { resolvedTheme } = useTheme('preview');
+  // The same area the canvas uses: a preview of the space is the space, so it is painted the way the space is.
+  const { resolvedTheme } = useTheme(SPACE_THEME_AREA);
   const [
     [
       settings = undefined,

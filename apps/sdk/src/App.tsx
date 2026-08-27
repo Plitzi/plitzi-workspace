@@ -217,10 +217,11 @@ const App = ({
         ...(debugMode
           ? [
               tracingMiddleware<SdkState>(),
-              // Neither element UI state nor the server payload is document state: time-travelling `rsc` would
-              // replay a stale server response as if it were an edit.
+              // None of these is document state: time-travelling `rsc` would replay a stale server response as if
+              // it were an edit, and the theme mirror would make Undo flip the lights.
               historyMw<SdkState>({
-                shouldRecord: p => !p?.startsWith('runtime.elements') && !p?.startsWith('rsc')
+                shouldRecord: p =>
+                  !p?.startsWith('runtime.elements') && !p?.startsWith('rsc') && !p?.startsWith('theme')
               })
             ]
           : [])

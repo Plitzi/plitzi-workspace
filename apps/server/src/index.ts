@@ -27,7 +27,7 @@ export {
   createConnectorResolver
 } from './modules/connectors';
 
-export type { CloudAdaptersConfig } from './adapters/cloudAdapters';
+export type { CloudAdaptersConfig, CloudSpaceCache } from './adapters/cloudAdapters';
 export type { JsonAdaptersConfig } from './adapters/jsonAdapters';
 export type { AuthAdapters, AuthAdaptersConfig } from './adapters/authAdapters';
 export type {

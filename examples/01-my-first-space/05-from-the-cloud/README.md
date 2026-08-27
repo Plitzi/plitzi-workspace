@@ -19,14 +19,40 @@ server, on your domain, with your auth, your server actions and your logs.
 
 ## The version being served
 
-| Config | Serves |
-|---|---|
-| `environment: 'main'` | the live document the builder is editing — an edit is visible after `cacheSeconds` |
-| `environment: 'production', revision: 12` | that published revision, which cannot change under the deployment |
+```bash
+PLITZI_WEB_KEY=<key> yarn start                              # the live document
+PLITZI_ENVIRONMENT=production PLITZI_WEB_KEY=<key> yarn start # latest published, releases itself
+PLITZI_ENVIRONMENT=production PLITZI_REVISION=12 …            # exactly revision 12
+```
 
-`cacheSeconds` (default 60) is how long a fetched space is reused. It caches the in-flight request, not just the
-answer, so a hundred renders that start before the first fetch returns make one request rather than a hundred. A
-failed fetch is never cached: one bad round trip costs one retry, not a minute of blank pages.
+| Config | Serves | Asks Plitzi |
+|---|---|---|
+| `environment: 'main'` | the document the builder is editing | **every request** — no cache |
+| `environment: 'production'` | the **latest** published revision | a revision NUMBER every `cacheSeconds`; the space only when that number moves |
+| `environment: 'production', revision: 12` | exactly that revision | **once**, ever |
+
+The three are deliberate, not three settings for one thing.
+
+`main` does not cache because a cached answer there is a wrong one: the point of pointing at `main` is to see the
+edit. (Concurrent requests still share one in-flight fetch — that is not caching, it is not asking the same
+question twice at once.)
+
+A **pinned** revision never expires. A published revision cannot change, so expiring it on a timer would be paying
+for a question whose answer is already known.
+
+**Latest** is the one `cacheSeconds` (default 60) applies to, and what it paces is the cheap "which revision is
+current" probe — not the space. A deployment that publishes once a week asks for a number every minute and for a
+space once. Publishing from the builder is then all it takes to release, and the release lands within one window
+rather than whenever a blanket TTL happened to fall.
+
+None of it sits in front of a visitor: the copy already held is served while the probe runs behind it. And a probe
+or fetch that fails changes nothing — the last good copy keeps serving, because a self-hosted site going blank
+over somebody else's bad minute is not a trade worth making.
+
+## Sharing the cache across replicas
+
+`cache: { get, set }` takes strings and obeys no rules of its own — Redis, a table, a directory. With one, a whole
+cluster costs a single fetch per version instead of one per replica, and it survives a restart.
 
 ## What it does not do
 

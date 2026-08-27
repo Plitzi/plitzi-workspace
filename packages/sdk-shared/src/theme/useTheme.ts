@@ -5,6 +5,20 @@ import themeStore, { resolveScheme, setAreaTheme, setThemeMode, themeFor } from 
 import type { ThemeValue } from '../types';
 
 /**
+ * The area every surface that paints the SPACE uses — the builder's canvas, and every `BuilderAreaPreview`: the
+ * page thumbnails, a template preview, what the agent renders in the chat.
+ *
+ * ONE area and not one per surface, on purpose. They are all showing the same thing, and a preview of a page that
+ * paints in a different scheme from the canvas beside it is not a preview of anything. What the split is actually
+ * for is the EDITOR versus the space it is editing: the panels, menus and dialogs follow the surface theme, and
+ * this follows whichever scheme the author wants to look at their page in.
+ *
+ * Named rather than typed at each call site so there is one string to change and nowhere for a typo to hide — a
+ * misspelled area does not fail, it silently makes a second one that follows the surface.
+ */
+export const SPACE_THEME_AREA = 'canvas';
+
+/**
  * The theme, for whoever is asking.
  *
  * Called bare it answers the surface's; called with an `area` it answers that area's, falling back to the surface

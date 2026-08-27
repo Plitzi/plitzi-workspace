@@ -13,7 +13,7 @@ import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
 import Transform from '@pmodules/Transformers/Transform';
 
 import BuilderElementTools from '../BuilderElementTools';
@@ -51,8 +51,11 @@ const BuilderAreaHeader = ({
 
   const handleClickBackToInstance = useCallback(() => builderSetBaseContext(), [builderSetBaseContext]);
 
-  /** The canvas's own theme, not the editor's — and it goes back to following the editor's when that one moves. */
-  const { theme: themeArea, toggleTheme: handleClickTheme } = useTheme('builder');
+  /**
+   * This control owns how the SPACE is painted, everywhere it is painted — the canvas under this header and every
+   * `BuilderAreaPreview` too. It is not the editor's own theme, and it goes back to following it when that moves.
+   */
+  const { theme: themeArea, toggleTheme: handleClickTheme } = useTheme(SPACE_THEME_AREA);
 
   const handleClickTransform = useCallback(() => {
     if (!existsPopup('transform')) {
