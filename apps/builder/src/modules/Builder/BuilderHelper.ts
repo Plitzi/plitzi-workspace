@@ -2,7 +2,7 @@
 import { get, set, pick } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 
-import { generateID } from '@plitzi/sdk-shared/helpers/utils';
+import { positionalElementId } from '@plitzi/sdk-schema/helpers/elementId';
 import generateStyleSelector from '@plitzi/sdk-style/helpers/generateStyleSelector';
 import { generateCache, makeSelector } from '@plitzi/sdk-style/StyleHelper';
 
@@ -139,8 +139,16 @@ export const getClipboardDataProcessed = async (clipboardData?: DataTransfer) =>
       };
 };
 
+/**
+ * A pasted element, named on the spot.
+ *
+ * `mintId` is positional and local to the payload being assembled: what comes out of here is a throwaway template
+ * document that `SCHEMA_ADD_TEMPLATE` drops into the real space, and that is where a name colliding with the space
+ * is renamed. All this has to guarantee is that the paste does not collide with itself.
+ */
 export const getElementDefinition = (
   componentDefinitions: Record<string, ComponentDefinition>,
+  mintId: (type: string) => string,
   type: string,
   attributes?: Element['attributes'],
   styleSelectors?: Element['definition']['styleSelectors'],
@@ -201,7 +209,7 @@ export const getElementDefinition = (
   });
 
   return {
-    id: generateID(),
+    id: mintId(type),
     ...(JSON.parse(JSON.stringify(elementDefinition)) as {
       definition: Element['definition'];
       attributes: Element['attributes'];
@@ -234,6 +242,14 @@ export const processPaste = async (
   }
 
   const { dataType, data } = details;
+  // One counter for the whole paste, so a container and its paragraphs cannot claim the same name.
+  const minted = new Set<string>();
+  const mintId = (type: string) => {
+    const id = positionalElementId(type, candidate => minted.has(candidate));
+    minted.add(id);
+
+    return id;
+  };
   let result = false;
   let templateData: {
     elements: Record<string, Element>;
@@ -258,7 +274,7 @@ export const processPaste = async (
     } = data;
     const type = file.type.split('/')[0];
     const selector = size ? makeSelector(type) : '';
-    const elementDefinition = getElementDefinition(componentDefinitions, type, {}, { base: selector });
+    const elementDefinition = getElementDefinition(componentDefinitions, mintId, type, {}, { base: selector });
     void mutate('SpaceAddResource', { resource: file, type }, false, false, { customFetch: true }).then(
       (result: unknown) => {
         if (result instanceof Error) {
@@ -293,10 +309,11 @@ export const processPaste = async (
     templateData = { elements: elements.acum, baseElement: elements.item, style, variables };
   } else if (Array.isArray(data) && data.length > 1) {
     // dataType is Text
-    const elementContainerDefinition = getElementDefinition(componentDefinitions, 'container');
+    const elementContainerDefinition = getElementDefinition(componentDefinitions, mintId, 'container');
     data.forEach(paragraph => {
       const elementDefinition = getElementDefinition(
         componentDefinitions,
+        mintId,
         'paragraph',
         { content: paragraph },
         { base: '' },
@@ -313,7 +330,7 @@ export const processPaste = async (
     set(templateData, 'baseElement', elementContainerDefinition);
   } else if (Array.isArray(data) && data.length === 1) {
     // dataType is Text
-    const elementDefinition = getElementDefinition(componentDefinitions, 'paragraph', { content: data[0] });
+    const elementDefinition = getElementDefinition(componentDefinitions, mintId, 'paragraph', { content: data[0] });
     set(templateData, 'baseElement', elementDefinition);
   }
 

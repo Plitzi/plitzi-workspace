@@ -2,41 +2,69 @@
 
 import { get, set } from '@plitzi/plitzi-ui/helpers';
 
-import { generateID } from '@plitzi/sdk-shared/helpers/utils';
 import { EMPTY_SCHEMA, VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import calculateInheriting from '@plitzi/sdk-style/helpers/calculateInheriting';
 
-import { idRefConflict, idRefsUsable, remapClonedRefs, repointIdRefs, takenIdRefs } from './idRef';
+import { elementIdConflict, elementIdsFree, randomElementId, repointIds, takenIds, uniqueElementId } from './elementId';
 import { validateSchema, type SchemaValidationResult } from './schemaValidator';
 
+import type { MintElementId } from './elementId';
 import type { Style, Element, Schema, DisplayMode, StyleItem, DropPosition, SchemaVariable } from '@plitzi/sdk-shared';
+
+/** An element on its way in. Its id is the name it will answer to, and leaving it out asks this map to mint one. */
+export type ElementInput = Omit<Element, 'id'> & { id?: Element['id'] };
 
 export type FlatMapProps = {
   flat?: Schema['flat'];
   variables?: Schema['variables'];
+  /**
+   * The document's page list. Given, a page rename rewrites it too — a page renamed without it is a page the space
+   * no longer lists. Left out for a map that holds no pages (a segment, a template being cut).
+   */
+  pages?: Schema['pages'];
+  /**
+   * How an id is minted for an element nobody named. Defaults to the random minter, which is what a live document
+   * wants: the builder and the MCP write concurrently, and a counter has two writers pick the same name. An
+   * offline author or a test passes a positional one and gets output it can diff.
+   */
+  mintId?: MintElementId;
 };
 
 class FlatMap {
   flat: Schema['flat'];
   variables: Schema['variables'];
+  pages: Schema['pages'];
+  mintId: MintElementId;
 
   constructor(props: FlatMapProps = {}) {
-    const { flat, variables } = props;
+    const { flat, variables, pages, mintId } = props;
     if (!flat) {
       throw new Error('Flat is required');
     }
 
     this.flat = flat;
     this.variables = variables ?? [];
+    this.pages = pages ?? [];
+    this.mintId = mintId ?? randomElementId;
   }
 
+  /** A free id for a new element of `type`, minted through this map's minter and unique against what it holds. */
+  nextId = (type: string, alsoTaken: (candidate: string) => boolean = () => false) => {
+    const taken = this.takenIds();
+
+    return this.mintId(type, candidate => taken.has(candidate) || alsoTaken(candidate));
+  };
+
+  /** Inserts an element, minting its id when the caller did not name it. Nothing else in the codebase mints an
+   *  element id: every writer goes through here, so "every element has a name" is true by construction. */
   addElement = (
-    data: Element,
+    input: ElementInput,
     to: Element['id'],
     dropPosition: DropPosition = 'inside',
     initialItems: Record<Element['id'], Element> = {}
   ) => {
+    const data: Element = input.id ? (input as Element) : { ...input, id: this.nextId(input.definition.type) };
     let parent;
     if (dropPosition !== 'custom') {
       if (dropPosition !== 'inside') {
@@ -57,10 +85,7 @@ class FlatMap {
       }
     }
 
-    if (
-      dropPosition !== 'custom' &&
-      ((this.flat[data.id] as Element | undefined) || !Array.isArray(get(parent, 'definition.items')))
-    ) {
+    if (dropPosition !== 'custom' && !Array.isArray(get(parent, 'definition.items'))) {
       return false;
     }
 
@@ -68,7 +93,10 @@ class FlatMap {
       return false;
     }
 
-    if (!idRefsUsable(this.flat, [data, ...Object.values(initialItems)])) {
+    // The name has to be well formed and free — of the document AND of the rest of this insert. Refused rather
+    // than uniquified: a caller that named an element meant that name, and silently storing it under another one
+    // is how a binding written against it resolves to nothing.
+    if (!elementIdsFree(this.flat, [data, ...Object.values(initialItems)])) {
       return false;
     }
 
@@ -139,38 +167,47 @@ class FlatMap {
     return true;
   };
 
-  /** Refuses a rename onto an unusable idRef: two elements answering to the same name make every binding and
-   *  interaction written against it resolve to whichever one is found first. Only a change is checked, so an
-   *  element already stored with a bad ref stays editable.
-   *
-   *  A rename that IS accepted carries its wiring with it: the idRef is the key bindings and interactions target,
-   *  so every reference to the old name across the space is repointed here. Doing it at the single point every
-   *  writer goes through is what keeps a rename from silently unwiring the element. */
+  /** Replaces a stored element with an edited copy of itself. The id is its identity, not a field an update may
+   *  carry a new value for — changing the name is `renameElement`, which is a document-wide operation. */
   updateElement = (element?: Element) => {
     if (!element || !(this.flat[element.id] as Element | undefined)) {
       return false;
-    }
-
-    const previous = this.flat[element.id].idRef;
-    const renamed = element.idRef !== previous;
-    if (renamed && !idRefsUsable(this.flat, [element])) {
-      return false;
-    }
-
-    if (renamed && previous && element.idRef) {
-      // The caller builds `element` from prior store state, so its nested bindings, transformers and params are
-      // still the deeply frozen references of that state. Repointing rewrites them in place, so the stored element
-      // has to be a writable copy — mutating the shared frozen object throws on a read-only property.
-      this.flat[element.id] = structuredClone(element);
-      repointIdRefs(this.flat, { [previous]: element.idRef });
-
-      return true;
     }
 
     this.flat[element.id] = element;
 
     return true;
   };
+
+  /**
+   * Renames an element, carrying its wiring with it.
+   *
+   * The id IS the name — the `flat` key, what the tree points at, the `<type>_<id>` a binding reads and the target
+   * an interaction fires on — so a rename that only rewrote the key would silently unwire the element and every
+   * reference to it. `repointIds` rewrites all of them in one pass; doing it at the single point every writer goes
+   * through is what makes a readable id safe to change.
+   *
+   * Returns the ids of every element the rename touched (under their new names), which a caller broadcasting the
+   * change has to publish: the one element it renamed is almost never the whole of what moved.
+   */
+  renameElement = (from: Element['id'], to: Element['id']): Element['id'][] | false => {
+    if (!(this.flat[from] as Element | undefined)) {
+      return false;
+    }
+
+    if (from === to) {
+      return [];
+    }
+
+    if (elementIdConflict(this.flat, to)) {
+      return false;
+    }
+
+    return repointIds(this.flat, { [from]: to }, this.pages);
+  };
+
+  /** Why this element cannot be renamed to `id` (charset or a clash), or null when the name is free. */
+  renameConflict = (from: Element['id'], id: string) => elementIdConflict(this.flat, id, from);
 
   moveElement = (
     from: Element['id'],
@@ -256,13 +293,23 @@ class FlatMap {
 
   getElement = (elementId: Element['id']) => get(this.flat, elementId);
 
-  /** Every idRef currently in use, so a newly minted one stays unique across the space. */
-  takenIdRefs = () => takenIdRefs(this.flat);
+  /** Every id currently in use, so a newly minted one stays unique across the document. */
+  takenIds = () => takenIds(this.flat);
 
-  /** Why an idRef cannot be used here (charset or a clash), or null when it is free. `ignoreElementId` exempts the
-   *  element being edited, so re-saving an element its own ref is not a conflict. */
-  idRefConflict = (idRef: string, ignoreElementId?: Element['id']) => idRefConflict(this.flat, idRef, ignoreElementId);
+  /** Why an id cannot be used here (charset or a clash), or null when it is free. `ignoreElementId` exempts the
+   *  element being edited, so re-saving an element its own name is not a conflict. */
+  elementIdConflict = (id: string, ignoreElementId?: Element['id']) =>
+    elementIdConflict(this.flat, id, ignoreElementId);
 
+  /**
+   * Copies a subtree onto fresh names.
+   *
+   * Every id in the copy is minted here and every reference inside it repointed structurally, field by field. It is
+   * emphatically NOT a string replace over the serialized tree, which is what this used to be: that only ever
+   * worked because an id was 24 improbable hex characters, and with an id that reads like `hero` it would rewrite
+   * the word inside labels, prose, class names and content. References pointing OUT of the subtree are left alone,
+   * so a copy keeps reading the data source it was cloned next to.
+   */
   cloneElements = (
     elementId: Element['id'],
     parentId: Element['id'] = '',
@@ -277,32 +324,33 @@ class FlatMap {
       return result;
     }
 
-    const taken = this.takenIdRefs();
-    const elements = [elementId, ...this.childTree(elementId)].reduce<Record<Element['id'], Element>>((acum, id) => {
-      const element = this.flat[id] as Element | undefined;
-      if (!element) {
-        return acum;
-      }
-
-      mapIds[element.id] = generateID(element.id);
-      if (!rootId) {
-        return { ...acum, [element.id]: element };
-      }
-
-      return { ...acum, [element.id]: { ...element, definition: { ...element.definition, rootId } } };
-    }, {});
-
-    try {
-      let dataStr = JSON.stringify(elements);
-      dataStr = Object.keys(mapIds).reduce((acum, id) => acum.replace(new RegExp(id, 'g'), mapIds[id]), dataStr);
-      result.acum = JSON.parse(dataStr) as Record<Element['id'], Element>;
-      result.item = result.acum[mapIds[elementId]];
-      remapClonedRefs(result.acum, candidate => taken.has(candidate));
-    } catch (e) {
-      console.error('Error parsing elements', e);
-
-      return { acum: {}, item: undefined };
+    const ids = [elementId, ...this.childTree(elementId)].filter(
+      id => (this.flat[id] as Element | undefined) !== undefined
+    );
+    const taken = this.takenIds();
+    for (const id of ids) {
+      // Derived from the name being copied, not minted from the type: a copy of `hero` is `hero-2`, which still
+      // says what it is.
+      const copyId = uniqueElementId(id, candidate => taken.has(candidate));
+      taken.add(copyId);
+      mapIds[id] = copyId;
     }
+
+    // `structuredClone` rather than a spread: the source elements are usually deeply frozen store state, and
+    // `repointIds` rewrites bindings, params and items in place.
+    const acum: Record<Element['id'], Element> = {};
+    for (const id of ids) {
+      const copy = structuredClone(this.flat[id]);
+      if (rootId) {
+        copy.definition.rootId = rootId;
+      }
+
+      acum[id] = copy;
+    }
+
+    repointIds(acum, mapIds);
+    result.acum = acum;
+    result.item = acum[mapIds[elementId]];
 
     if (excludeRoot) {
       delete result.acum[mapIds[elementId]];
@@ -581,13 +629,16 @@ class FlatMap {
 
   static addElement = (
     flat: Schema['flat'],
-    data: Element,
+    data: ElementInput,
     to: Element['id'],
     dropPosition: DropPosition = 'inside',
     initialItems: Record<Element['id'], Element> = {}
   ) => this.getInstance({ flat }).addElement(data, to, dropPosition, initialItems);
 
   static updateElement = (flat: Schema['flat'], element: Element) => this.getInstance({ flat }).updateElement(element);
+
+  static renameElement = (schema: Pick<Schema, 'flat' | 'pages'>, from: Element['id'], to: Element['id']) =>
+    this.getInstance({ flat: schema.flat, pages: schema.pages }).renameElement(from, to);
 
   static moveElement = (
     flat: Schema['flat'],
@@ -611,10 +662,10 @@ class FlatMap {
   static removeElement = (flat: Schema['flat'], elementId: Element['id'], removePage = false) =>
     this.getInstance({ flat }).removeElement(elementId, removePage);
 
-  static takenIdRefs = (flat: Schema['flat']) => this.getInstance({ flat }).takenIdRefs();
+  static takenIds = (flat: Schema['flat']) => this.getInstance({ flat }).takenIds();
 
-  static idRefConflict = (flat: Schema['flat'], idRef: string, ignoreElementId?: Element['id']) =>
-    this.getInstance({ flat }).idRefConflict(idRef, ignoreElementId);
+  static elementIdConflict = (flat: Schema['flat'], id: string, ignoreElementId?: Element['id']) =>
+    this.getInstance({ flat }).elementIdConflict(id, ignoreElementId);
 
   // Variables - Static
 

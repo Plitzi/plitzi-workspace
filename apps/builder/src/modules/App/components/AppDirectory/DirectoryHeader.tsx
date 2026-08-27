@@ -4,8 +4,9 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { generateID } from '@plitzi/sdk-shared';
+import { slugifyElementId, uniqueElementId } from '@plitzi/sdk-schema/helpers/elementId';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
 import LayoutForm from '@pmodules/App/models/LayoutForm';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
 import PageForm from '@pmodules/App/models/PageForm';
@@ -20,6 +21,7 @@ const DirectoryHeader = ({ pageFolders }: DirectoryHeaderProps) => {
   const { showModal } = useModal();
   const { eventBridge } = use(EventBridgeContext);
   const { componentDefinitions } = use(ComponentContext);
+  const getSchemaFlat = useBuilderStoreGetter('schema.flat');
 
   const handleClickAddPage = useCallback(async () => {
     const response = await showModal(
@@ -53,7 +55,9 @@ const DirectoryHeader = ({ pageFolders }: DirectoryHeaderProps) => {
     if (response) {
       const { name, pageFolder } = response;
       const { definition, attributes } = componentDefinitions.current.layoutContainer;
-      const id = generateID();
+      // Named after what the author called it, so the layout a page points at reads as that layout.
+      const flat = getSchemaFlat() as Record<string, unknown>;
+      const id = uniqueElementId(slugifyElementId(name) || 'layout', candidate => candidate in flat);
       const element = {
         id,
         attributes: { ...attributes, folder: pageFolder },
@@ -61,7 +65,7 @@ const DirectoryHeader = ({ pageFolders }: DirectoryHeaderProps) => {
       };
       void eventBridge.emit('main', 'schemaAddElement', '', element, 'custom');
     }
-  }, [showModal, componentDefinitions, eventBridge]);
+  }, [showModal, componentDefinitions, eventBridge, getSchemaFlat]);
 
   const handleClickAddPageFolder = useCallback(async () => {
     const response = await showModal(

@@ -14,7 +14,6 @@ import {
   folderAncestorIds,
   getPageElements,
   pageFoldersOf,
-  pageRefOf,
   resolveRef,
   routeParamNames
 } from '../../../helpers';
@@ -136,7 +135,7 @@ export const validateOperations = (
       op.pageRef
     ) {
       if (!findPageByRef(space.schema, op.pageRef) && !batchPages.has(op.pageRef)) {
-        const validRefs = getPageElements(space.schema).map(pageRefOf);
+        const validRefs = getPageElements(space.schema).map(page => page.id);
         ctx.errors.push({
           path: `${base}.pageRef`,
           message: `Page "${op.pageRef}" does not exist`,

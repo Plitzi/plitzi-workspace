@@ -1,5 +1,3 @@
-import { authoringId } from './ids';
-
 import type { StepSpec } from './types';
 import type { Rule, RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { ElementInteraction } from '@plitzi/sdk-shared';
@@ -21,8 +19,26 @@ const hostFor = (step: StepSpec, host?: string): string | null =>
  * first as their `flowId`. Getting one of those three wrong produces a flow that half runs, which is why this is
  * derived from the order the steps were written in rather than declared.
  */
-export const authorFlow = (path: string, steps: StepSpec[], host?: string): Record<string, ElementInteraction> => {
-  const ids = steps.map((step, index) => step.id ?? `node_${authoringId(`${path}/step/${index}`)}`);
+export const authorFlow = (
+  steps: StepSpec[],
+  host?: string,
+  // Shared by every flow on the same element: they all land in one `interactions` record, so a counter per flow
+  // would have the second flow's `navigate` overwrite the first one's.
+  counters: Map<string, number> = new Map()
+): Record<string, ElementInteraction> => {
+  // A step's output is addressed as `node_<id>` from every later step, so an unnamed one still gets a name worth
+  // reading — `node_navigate-2` — counted per action, which is what a person would have called it anyway.
+  const ids = steps.map(step => {
+    if (step.id) {
+      return step.id;
+    }
+
+    const base = step.action.replace(/[^A-Za-z0-9]/g, '') || step.type;
+    const next = (counters.get(base) ?? 0) + 1;
+    counters.set(base, next);
+
+    return `node_${base}-${next}`;
+  });
   const flowId = ids[0] ?? '';
 
   return steps.reduce<Record<string, ElementInteraction>>((flow, step, index) => {
@@ -89,8 +105,11 @@ export const whenSucceeded = (stepId: string, step: StepSpec): StepSpec =>
 export const whenFailed = (stepId: string, step: StepSpec): StepSpec =>
   when({ field: `${stepId}.status`, operator: '!=', value: 'completed' }, step);
 
-export const authorFlows = (path: string, flows: StepSpec[][], host?: string): Record<string, ElementInteraction> =>
-  flows.reduce<Record<string, ElementInteraction>>(
-    (all, steps, index) => ({ ...all, ...authorFlow(`${path}/flow/${index}`, steps, host) }),
+export const authorFlows = (flows: StepSpec[][], host?: string): Record<string, ElementInteraction> => {
+  const counters = new Map<string, number>();
+
+  return flows.reduce<Record<string, ElementInteraction>>(
+    (all, steps) => ({ ...all, ...authorFlow(steps, host, counters) }),
     {}
   );
+};

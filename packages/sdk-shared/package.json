@@ -492,6 +492,10 @@
       "types": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentRemoveElementMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentRemoveElementMutation.mjs"
     },
+    "./network/graphql/builder/Mutations/Segment/space/elements/SegmentRenameElementMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentRenameElementMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentRenameElementMutation.mjs"
+    },
     "./network/graphql/builder/Mutations/Segment/space/elements/SegmentUpdateElementMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentUpdateElementMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentUpdateElementMutation.mjs"
@@ -587,6 +591,10 @@
     "./network/graphql/builder/Mutations/Space/SpaceRemovePluginMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/SpaceRemovePluginMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/SpaceRemovePluginMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/SpaceRenameElementMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/SpaceRenameElementMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/SpaceRenameElementMutation.mjs"
     },
     "./network/graphql/builder/Mutations/Space/SpaceUpdateElementMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/SpaceUpdateElementMutation.d.ts",

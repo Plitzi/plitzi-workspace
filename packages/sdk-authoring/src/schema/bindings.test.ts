@@ -23,7 +23,7 @@ describe('resolveSource', () => {
     expect(resolve('signup.values')).toBe('apiContainer_signup.values');
   });
 
-  it('resolves a bare idRef with no field', () => {
+  it('resolves a bare element name with no field', () => {
     expect(resolve('posts')).toBe('apiContainer_posts');
   });
 
@@ -48,7 +48,7 @@ describe('resolveSource', () => {
 
   it('refuses a name nothing answers to, and suggests the one meant', () => {
     expect(() => resolve('psots.title')).toThrow(/nothing in this space answers to "psots".*did you mean "posts"/);
-    expect(() => resolve('apiContainer_psots.title')).toThrow(/no element answers to the idRef "psots"/);
+    expect(() => resolve('apiContainer_psots.title')).toThrow(/no element answers to the name "psots"/);
   });
 });
 
@@ -99,15 +99,14 @@ describe('an element whose visibility is a condition', () => {
           name: 'Home',
           slug: '',
           body: [
-            { type: 'text', idRef: 'always' },
-            { type: 'text', idRef: 'waiting', visible: 'state.selected.id' }
+            { type: 'text', id: 'always' },
+            { type: 'text', id: 'waiting', visible: 'state.selected.id' }
           ]
         }
       ]
     });
 
-    const visibilityOf = (idRef: string) =>
-      Object.values(schema.flat).find(element => element.idRef === idRef)?.definition.initialState?.visibility;
+    const visibilityOf = (id: string) => schema.flat[id].definition.initialState?.visibility;
 
     expect(visibilityOf('always')).toBe(true);
     expect(visibilityOf('waiting')).toBe(false);

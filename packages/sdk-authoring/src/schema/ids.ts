@@ -1,5 +1,6 @@
 /**
- * Deterministic hex digest, in plain TypeScript.
+ * Deterministic hex digest, in plain TypeScript. What names a style selector — never an element, a page or a step:
+ * those answer to names a person reads.
  *
  * FNV-1a over the string, re-run with a different offset basis per 8-hex block. Not `node:crypto`: this module is
  * exported from the package root, and the builder bundles that root for the browser — one `node:` import here is a
@@ -22,10 +23,3 @@ export const digest = (value: string, length: number): string => {
 
   return out.slice(0, length);
 };
-
-/**
- * Mongo-shaped, so an authored document is indistinguishable from an exported one — but derived from the path that
- * produced it, so authoring the same space twice writes byte-identical documents and a seed can re-run without
- * churning what it wrote last time.
- */
-export const authoringId = (path: string): string => digest(`plitzi:authoring:${path}`, 24);

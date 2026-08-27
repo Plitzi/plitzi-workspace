@@ -182,12 +182,12 @@ describe('mcp-ai page skeleton route params', () => {
     const sk = readResource(
       (() => {
         const s = buildSpace();
-        (s.schema.flat.page1.attributes as Record<string, unknown>).slug = ':spaceId';
+        (s.schema.flat.home.attributes as Record<string, unknown>).slug = ':spaceId';
 
         return s;
       })(),
       'main',
-      'plitzi://schema/main/pages/spaceid'
+      'plitzi://schema/main/pages/home'
     )?.data as AIPageSkeleton;
     expect(sk.routeParams).toEqual(['spaceId']);
   });

@@ -3,6 +3,7 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import Tree from '@plitzi/plitzi-ui/Tree';
 import { useCallback, use, useMemo } from 'react';
 
+import { elementIdConflict, slugifyElementId } from '@plitzi/sdk-schema/helpers/elementId';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
@@ -85,10 +86,13 @@ const BuilderTree = () => {
             break;
           }
 
-          builderHandler('schemaUpdateElement', {
-            ...element,
-            definition: { ...element.definition, label: item.label }
-          });
+          // Renaming in the tree renames the element: the label shown here is its id.
+          const id = slugifyElementId(item.label);
+          if (!id || id === element.id || elementIdConflict(getElement(), id, element.id)) {
+            break;
+          }
+
+          builderHandler('schemaRenameElement', element.id, id);
           break;
         }
 

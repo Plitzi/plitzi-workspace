@@ -40,12 +40,11 @@ const DialogContainer = ({
 }: DialogContainerProps) => {
   const {
     id,
-    idRef,
     setElementState,
     definition: { styleSelectors, label = 'Dialog' },
     elementState
   } = useElement();
-  const sourceName = getSourceName(declaration.sourceType, { idRef });
+  const sourceName = getSourceName(declaration.sourceType, id);
   const {
     contexts: { InteractionsContext }
   } = usePlitziServiceContext();
@@ -78,36 +77,36 @@ const DialogContainer = ({
   );
 
   const handleClickClose = useCallback(() => {
-    void interactionsManager.interactionTrigger(idRef, 'onDialogClose', { metadata: internalMetadata });
+    void interactionsManager.interactionTrigger(id, 'onDialogClose', { metadata: internalMetadata });
     setInternalMetadata({});
     setElementState(state => ({ ...state, visibility: false }));
-  }, [interactionsManager, setElementState, setInternalMetadata, internalMetadata, idRef]);
+  }, [interactionsManager, setElementState, setInternalMetadata, internalMetadata, id]);
 
   const handleClickBackground = useCallback(() => {
     if (!autoHideAfterClick) {
       return;
     }
 
-    void interactionsManager.interactionTrigger(idRef, 'onDialogClose', { metadata: internalMetadata });
+    void interactionsManager.interactionTrigger(id, 'onDialogClose', { metadata: internalMetadata });
     setInternalMetadata({});
     setElementState(state => ({ ...state, visibility: false }));
-  }, [interactionsManager, autoHideAfterClick, setElementState, setInternalMetadata, internalMetadata, idRef]);
+  }, [interactionsManager, autoHideAfterClick, setElementState, setInternalMetadata, internalMetadata, id]);
 
   // Dialog Methods
 
   const handleClickAccept = useCallback(async () => {
     setProcessing(true);
-    await interactionsManager.interactionTrigger(idRef, 'onDialogAccept', { metadata: internalMetadata });
+    await interactionsManager.interactionTrigger(id, 'onDialogAccept', { metadata: internalMetadata });
     setProcessing(false);
     setElementState(state => ({ ...state, visibility: false }));
-  }, [interactionsManager, idRef, internalMetadata, setElementState]);
+  }, [interactionsManager, id, internalMetadata, setElementState]);
 
   const handleClickCancel = useCallback(async () => {
     setProcessing(true);
-    await interactionsManager.interactionTrigger(idRef, 'onDialogReject', { metadata: internalMetadata });
+    await interactionsManager.interactionTrigger(id, 'onDialogReject', { metadata: internalMetadata });
     setProcessing(false);
     setElementState(state => ({ ...state, visibility: false }));
-  }, [interactionsManager, idRef, internalMetadata, setElementState]);
+  }, [interactionsManager, id, internalMetadata, setElementState]);
 
   const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
     () => ({
@@ -166,9 +165,9 @@ const DialogContainer = ({
 
   useEffect(() => {
     if (elementState.visibility !== false) {
-      void interactionsManager.interactionTrigger(idRef, 'onDialogOpen', { metadata: internalMetadata });
+      void interactionsManager.interactionTrigger(id, 'onDialogOpen', { metadata: internalMetadata });
     }
-  }, [idRef, interactionsManager, internalMetadata, elementState.visibility]);
+  }, [id, interactionsManager, internalMetadata, elementState.visibility]);
 
   const sourceFields = useCallback(() => {
     if (typeof internalMetadata !== 'object') {

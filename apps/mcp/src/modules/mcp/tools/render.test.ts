@@ -30,9 +30,9 @@ describe('plitzi_render', () => {
 
     expect(result.rootRef).toBe('render');
     expect(result.elementCount).toBe(1);
-    // Elements are keyed by generated id; the agent's `ref` lives on as the element's idRef.
-    const element = Object.values(result.offlineData.schema.flat).find(entry => entry.idRef === 'hero-cta');
-    expect(element?.definition.type).toBe('button');
+    // The name the agent chose IS the element's id, so the flat key is exactly what it asked for.
+    const element = result.offlineData.schema.flat['hero-cta'];
+    expect(element.definition.type).toBe('button');
     // The style cache is compiled into the payload, so the offline SDK can paint with no backend.
     expect(result.offlineData.style.cache).toContain('background-color');
   });
@@ -129,8 +129,8 @@ describe('plitzi_render', () => {
 
     // Warnings are what the model reads back, so a legitimate drawing must produce none.
     expect(result.warnings).toBeUndefined();
-    const element = Object.values(result.offlineData.schema.flat).find(entry => entry.idRef === 'trend');
-    expect(element?.attributes.content).toContain('<svg');
+    const element = result.offlineData.schema.flat['trend'];
+    expect(element.attributes.content).toContain('<svg');
   });
 
   // The markup is injected with dangerouslySetInnerHTML into a view running inside the host's chat UI: inert

@@ -78,7 +78,7 @@ const Pagination = ({
   nextLabel = 'Next',
   loadMoreLabel = 'Load more'
 }: PaginationProps) => {
-  const { idRef } = useElement();
+  const { id } = useElement();
   const {
     settings: { previewMode },
     contexts: { InteractionsContext }
@@ -96,15 +96,15 @@ const Pagination = ({
   const goToPage = useCallback(
     (target_: number) => {
       const next = Math.max(target_, 1);
-      if (idRef) {
-        void interactionsManager.interactionTrigger(idRef, 'onPageChange', { page: next });
+      if (id) {
+        void interactionsManager.interactionTrigger(id, 'onPageChange', { page: next });
       }
 
       if (target === 'url') {
         navigate(buildPageUrl(pageParam, next));
       }
     },
-    [idRef, interactionsManager, target, navigate, pageParam]
+    [id, interactionsManager, target, navigate, pageParam]
   );
 
   const handleClickPage = useCallback(

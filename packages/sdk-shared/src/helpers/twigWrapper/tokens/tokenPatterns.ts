@@ -1,5 +1,5 @@
-// Detection grammar for `hasValidToken`. A token segment allows internal hyphens (a source idRef is
-// `<type>_<idRef>` and an idRef may carry them), but never a leading or trailing one — the segment starts on
+// Detection grammar for `hasValidToken`. A token segment allows internal hyphens (a source is `<type>_<id>` and
+// an element name may carry them), but never a leading or trailing one — the segment starts on
 // `[a-zA-Z_]` and every '-' is followed by more word chars. Resolution reads each segment as a literal key,
 // so a hyphen is never arithmetic.
 const TOKEN_SEGMENT = '[a-zA-Z_][a-zA-Z0-9_]*(?:-[a-zA-Z0-9_]+)*';

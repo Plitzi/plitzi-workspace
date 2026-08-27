@@ -242,7 +242,7 @@ const rewriteSchema = (schema: Schema, proxy: ResourceProxy, warnings: string[])
     const blocked = unproxyableFetch(attributes);
     if (blocked) {
       warnings.push(
-        `The ${FETCHING_TYPE} "${element.idRef ?? element.id}" calls its endpoint directly because ${blocked}, so ` +
+        `The ${FETCHING_TYPE} "${element.id}" calls its endpoint directly because ${blocked}, so ` +
           'that request is subject to the network policy of the surface it renders in, and to the CORS headers ' +
           'of the API, and may not run. A plain GET with no headers is fetched by the widget server instead, ' +
           'which always works.'

@@ -1,4 +1,3 @@
-import { generateObjectId } from './space';
 import { applyBuiltinCallback, applyElementCallback, applyUtility } from '../catalogs';
 
 import type { AIBinding, AIBindings, AIInteractionFlow, AIInteractionNode, AIInteractionNodeType } from '../types';
@@ -112,7 +111,15 @@ export const flowsFromInteractions = (
 
 // --- Interactions (write): ordered flow → linked node map ---
 
-export const newNodeId = (): string => `node_${generateObjectId()}`;
+/** A readable id for an unnamed step: `node_<action>-<n>`, counted per action within the flow being written — which
+ *  is the scope that resolves `{{node_<id>.output}}` from a later step. */
+export const newNodeId = (action: string, counters: Map<string, number>): string => {
+  const base = action.replace(/[^A-Za-z0-9]/g, '') || 'step';
+  const next = (counters.get(base) ?? 0) + 1;
+  counters.set(base, next);
+
+  return `node_${base}-${next}`;
+};
 
 /** Materialize an ordered list of nodes into the stored linked-node map for ONE flow: assign ids where missing,
  *  set flowId to the trigger id, and recompute beforeNode/afterNode from the order. `ownerId` is the default
@@ -121,7 +128,8 @@ export const materializeFlow = (
   nodes: FlowNodeInput[],
   ownerId: string
 ): { flowId: string; record: Record<string, ElementInteraction> } => {
-  const ids = nodes.map(node => node.id || newNodeId());
+  const counters = new Map<string, number>();
+  const ids = nodes.map(node => node.id || newNodeId(node.action, counters));
   const flowId = ids[0];
   const record: Record<string, ElementInteraction> = {};
 

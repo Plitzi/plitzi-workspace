@@ -47,7 +47,7 @@ export const isIdentStart = (c: number): boolean =>
 // Valid subsequent identifier character: [a-zA-Z0-9_].
 export const isIdentPart = (c: number): boolean => isIdentStart(c) || (c >= Char.Zero && c <= Char.Nine);
 
-// Valid character inside a path/function segment: identifier chars plus internal hyphens (idRef segments).
+// Valid character inside a path/function segment: identifier chars plus internal hyphens (element names carry them).
 export const isPathPart = (c: number): boolean => isIdentPart(c) || c === Char.Minus;
 
 export const isDigit = (c: number): boolean => c >= Char.Zero && c <= Char.Nine;

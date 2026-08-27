@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
-import { empty, generateObjectId } from '../../../../helpers';
+import { positionalElementId } from '@plitzi/sdk-schema/helpers/elementId';
+
+import { empty } from '../../../../helpers';
 import { bindingCategory, bindingInput } from '../shared';
 import { pageUri, resolveElement } from '../write';
 
@@ -32,7 +34,11 @@ export const upsertBinding = (space: Space, env: Env, op: UpsertBinding): OpResu
   const bindings = (found.el.definition.bindings ??= {});
   const list = (bindings[op.category] ??= []);
   const index = list.findIndex(b => (op.binding.id ? b.id === op.binding.id : b.to === op.binding.to));
-  const id = op.binding.id ?? (index >= 0 ? list[index].id : generateObjectId());
+  // A binding id is element-local — nothing outside this element ever names one — so it says what it targets and
+  // only has to be free among this element's own bindings.
+  const id =
+    op.binding.id ??
+    (index >= 0 ? list[index].id : positionalElementId(op.category, candidate => list.some(b => b.id === candidate)));
 
   const binding: ElementBinding = { id, to: op.binding.to, source: op.binding.source };
   if (op.binding.transformers) {

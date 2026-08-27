@@ -130,11 +130,11 @@ const DATA_SOURCE_NOTE =
   'post-process its value through `transformers` (see below) and be gated by a `when` QueryBuilder guard.';
 
 const DATA_SOURCE_SCOPE_NOTE =
-  'SCOPE: an element source named `<type>_<idRef>` (e.g. `apiContainer_products`, `list_food-list`) is provided by ' +
+  'SCOPE: an element source named `<type>_<id>` (e.g. `apiContainer_products`, `list_food-list`) is provided by ' +
   'that element to its DESCENDANTS ONLY — the provider wraps its subtree in the source’s scope, so only elements ' +
   'INSIDE the provider can bind to it. Binding a sibling or unrelated element to it is schema-valid but broken at ' +
   'runtime (the source is not in scope), and validate/apply REJECT it as an error. To consume `apiContainer_x.data`, ' +
-  'the bound element must live under that apiContainer. Module sources (no `<type>_<idRef>` head — e.g. ' +
+  'the bound element must live under that apiContainer. Module sources (no `<type>_<id>` head — e.g. ' +
   'state/space/navigation/auth/collection) are global and bindable anywhere.';
 
 const TRANSFORMERS_NOTE =

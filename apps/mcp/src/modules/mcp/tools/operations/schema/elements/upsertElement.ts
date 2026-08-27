@@ -60,7 +60,7 @@ export const upsertElement = (space: Space, env: Env, op: UpsertElement): OpResu
     return { ...empty(), updated: 1, staleResources: [pageUri(env, op.pageRef)], elementRefs: [op.element.ref] };
   }
 
-  // Creating: every ref in the input tree becomes a new element's idRef, so each must pass the charset/uniqueness
+  // Creating: every name in the input tree becomes a new element's id, so each must pass the charset/uniqueness
   // guard before anything is written (duplicates *within* the batch are already rejected by the validator).
   for (const ref of collectInputRefs(op.element)) {
     const guard = guardNewRef(space, ref, 'element.ref');

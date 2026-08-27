@@ -53,7 +53,7 @@ const signedOut: PageSpec = {
   body: [
     heading({ content: 'Sign in', subType: 'h1', variant: 'lg' }),
     form({
-      idRef: 'login-form',
+      id: 'login-form',
       // Without this the browser submits the form itself and the page navigates away; the interaction is what runs.
       managedByInteractions: true,
       method: 'post',
@@ -82,7 +82,7 @@ const signedIn: PageSpec = {
     heading({ content: '', subType: 'h1', variant: 'lg', bind: { content: 'auth.details.username' } }),
     paragraph({ content: '', bind: { content: 'auth.details.email' } }),
     button({
-      idRef: 'logout-button',
+      id: 'logout-button',
       subType: 'button',
       content: 'Sign out',
       class: 'authButton',

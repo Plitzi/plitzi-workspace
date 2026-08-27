@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildSpace, capturing } from './helpers';
-import { elementRefOf } from '../helpers';
 import { readResource } from '../resources';
 import { apply, validate } from '../tools';
 
@@ -240,7 +239,7 @@ describe('mcp-ai page folders (create, nest, delete, move)', () => {
 
 describe('mcp-ai page.folder is always "" (root) or a valid id', () => {
   const folderOf = (space: Space, ref: string): unknown =>
-    Object.values(space.schema.flat).find(el => el.idRef === ref)?.attributes.folder;
+    Object.values(space.schema.flat).find(el => el.id === ref)?.attributes.folder;
 
   it('stores "" (not a missing key) for a new page with no folder', async () => {
     const cap = capturing(buildSpace());
@@ -306,8 +305,8 @@ describe('mcp-ai page.folder is always "" (root) or a valid id', () => {
   });
 });
 
-describe('mcp-ai idRef (the ref IS the runtime wiring key)', () => {
-  it('stores the chosen ref as the element idRef at the Element root', async () => {
+describe('mcp-ai element names (the name IS the id, and the runtime wiring key)', () => {
+  it('stores the chosen name as the element id, which is also its key in the document', async () => {
     const cap = capturing(buildSpace());
     await apply(
       {
@@ -317,9 +316,9 @@ describe('mcp-ai idRef (the ref IS the runtime wiring key)', () => {
       cap.persisters
     );
     const el = Object.values(cap.saved().schema.flat).find(e => e.definition.type === 'apiContainer');
-    expect(el?.idRef).toBe('products-api');
-    // The opaque id stays as the internal key and is NOT the ref.
-    expect(el?.id).not.toBe('products-api');
+    expect(el?.id).toBe('products-api');
+    // No translation anywhere: the name the agent wrote is the flat key.
+    expect(cap.saved().schema.flat['products-api']).toBeDefined();
   });
 
   it('a binding source written against the ref matches the key the runtime registers', async () => {
@@ -350,10 +349,10 @@ describe('mcp-ai idRef (the ref IS the runtime wiring key)', () => {
 
     const saved = cap.saved();
     const api = Object.values(saved.schema.flat).find(e => e.definition.type === 'apiContainer');
-    const child = Object.values(saved.schema.flat).find(e => e.idRef === 'row-title');
+    const child = Object.values(saved.schema.flat).find(e => e.id === 'row-title');
     const storedSource = child?.definition.bindings?.attributes?.[0].source;
     // What ApiContainer registers at runtime is `apiContainer_${idRef ?? id}` — the binding must target exactly that.
-    const runtimeSourceName = api ? `apiContainer_${elementRefOf(api)}` : '';
+    const runtimeSourceName = api ? `apiContainer_${api.id}` : '';
     expect(storedSource?.startsWith(`${runtimeSourceName}.`)).toBe(true);
     expect(child?.definition.parentId).toBe(api?.id);
   });
@@ -364,11 +363,11 @@ describe('mcp-ai idRef (the ref IS the runtime wiring key)', () => {
       buildSpace()
     );
     expect(res.applied).toBe(false);
-    expect(res.errors?.[0].message).toContain('not a valid idRef');
+    expect(res.errors?.[0].message).toContain('not a valid element name');
   });
 
-  it('rejects a new ref already used elsewhere in the space (idRef is a global wiring key)', async () => {
-    // "home" is the existing page's ref: reusing it for a new element would make the wiring key ambiguous.
+  it('rejects a new name already used elsewhere in the space (a name is a global wiring key)', async () => {
+    // "home" is the existing page's name: reusing it for a new element would make the wiring key ambiguous.
     const res = await apply(
       { operations: [{ type: 'upsertElement', pageRef: 'home', element: { ref: 'home', type: 'text' } }] },
       buildSpace()
@@ -409,25 +408,27 @@ describe('mcp-ai idRef (the ref IS the runtime wiring key)', () => {
     expect(cap.saved().schema.flat.c1.definition.label).toBe('Renamed');
   });
 
-  it('patchElement assigns an idRef to an element that has none, addressing it by its raw id', async () => {
+  it('patchElement renames an element, re-keying the document under the new name', async () => {
     const cap = capturing(buildSpace());
-    // c1 has no idRef, so it publishes no data source — this is how an agent makes it bindable.
     const res = await apply(
-      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', idRef: 'hero-box' }] },
+      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', rename: 'hero-box' }] },
       buildSpace(),
       cap.persisters
     );
     expect(res.applied).toBe(true);
-    expect(cap.saved().schema.flat.c1.idRef).toBe('hero-box');
+    expect(cap.saved().schema.flat.c1).toBeUndefined();
+    expect(cap.saved().schema.flat['hero-box'].id).toBe('hero-box');
+    // The parent's items moved with it — a rename that left the tree behind would orphan the element.
+    expect(cap.saved().schema.flat.home.definition.items).toContain('hero-box');
   });
 
-  it('patchElement rejects an idRef that is taken or malformed, leaving the element untouched', async () => {
-    for (const [idRef, message] of [
+  it('patchElement rejects a new name that is taken or malformed, leaving the element untouched', async () => {
+    for (const [rename, message] of [
       ['home', 'already used'],
-      ['hero.box', 'not a valid idRef']
+      ['hero.box', 'not a valid name']
     ]) {
       const res = await apply(
-        { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', idRef }] },
+        { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', rename }] },
         buildSpace()
       );
       expect(res.applied).toBe(false);
@@ -435,41 +436,29 @@ describe('mcp-ai idRef (the ref IS the runtime wiring key)', () => {
     }
   });
 
-  it('patchElement re-assigning an element its own idRef is a no-op, not a collision', async () => {
-    const withRef = (): Space => {
-      const space = buildSpace();
-      space.schema.flat.c1.idRef = 'my-box';
-
-      return space;
-    };
-
-    const cap = capturing(withRef());
+  it('patchElement renaming an element to its own name is a no-op, not a collision', async () => {
+    const cap = capturing(buildSpace());
     const res = await apply(
-      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'my-box', idRef: 'my-box', label: 'Renamed' }] },
-      withRef(),
+      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', rename: 'c1', label: 'Renamed' }] },
+      buildSpace(),
       cap.persisters
     );
     expect(res.applied).toBe(true);
-    expect(cap.saved().schema.flat.c1.idRef).toBe('my-box');
     expect(cap.saved().schema.flat.c1.definition.label).toBe('Renamed');
   });
 
-  it('patchElement renaming an idRef repoints the bindings and interactions that targeted it', async () => {
+  it('patchElement renaming repoints the bindings and interactions that named the old id', async () => {
     const space = buildSpace();
-    space.schema.flat.c1.idRef = 'products-api';
-    // The page hosts the interaction, so it needs an idRef of its own under the new contract. It matches the slug
-    // ref the page already addresses by, so `pageRef: 'home'` still resolves.
-    space.schema.flat.page1.idRef = 'home';
-    space.schema.flat.page1.definition.bindings = {
-      attributes: [{ id: 'b1', source: 'container_products-api.data', to: 'items' }]
+    space.schema.flat.home.definition.bindings = {
+      attributes: [{ id: 'b1', source: 'container_c1.data', to: 'items' }]
     };
-    space.schema.flat.page1.definition.interactions = {
+    space.schema.flat.home.definition.interactions = {
       n1: {
         id: 'n1',
         title: 'Hide',
         type: 'callback',
         action: 'setVisibility',
-        elementId: 'products-api',
+        elementId: 'c1',
         params: {},
         preview: {},
         beforeNode: '',
@@ -481,13 +470,13 @@ describe('mcp-ai idRef (the ref IS the runtime wiring key)', () => {
     const cap = capturing(space);
 
     const res = await apply(
-      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'products-api', idRef: 'catalog-api' }] },
+      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', rename: 'catalog-api' }] },
       cap.saved(),
       cap.persisters
     );
 
     expect(res.applied).toBe(true);
-    const page = cap.saved().schema.flat.page1.definition;
+    const page = cap.saved().schema.flat.home.definition;
     expect(page.bindings?.attributes?.[0].source).toBe('container_catalog-api.data');
     expect(page.interactions?.n1.elementId).toBe('catalog-api');
   });

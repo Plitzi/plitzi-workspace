@@ -18,6 +18,7 @@ export type EventBridgeEvent =
   | 'schemaUpdate'
   | 'schemaAddElement'
   | 'schemaUpdateElement'
+  | 'schemaRenameElement'
   | 'schemaUpdateElements'
   | 'schemaRemoveElement'
   | 'schemaMoveElement'

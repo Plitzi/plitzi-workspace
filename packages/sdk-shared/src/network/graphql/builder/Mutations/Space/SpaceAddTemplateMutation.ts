@@ -20,7 +20,6 @@ const SpaceAddTemplateMutation = gql`
       variables: $variables
     ) {
       id
-      idRef
       definition {
         label
         type

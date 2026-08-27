@@ -76,7 +76,7 @@ const STEP_VOCABULARY: StepVocabulary = {
  * **Flows.** A step naming a callback on the wrong module is refused; one naming an action no built-in source
  * declares comes back in `warnings`, since a plugin is free to register a module this process cannot see.
  *
- * **Bindings.** A source may name the idRef alone and the prefix the element publishes under is filled in — which
+ * **Bindings.** A source may name the element alone and the prefix it publishes under is filled in — which
  * is the half an author cannot see, and is not always the element's own type.
  */
 export const authorSpace = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): AuthoredSpace =>

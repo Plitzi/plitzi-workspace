@@ -37,9 +37,9 @@ import type { ElementRuntime } from '@plitzi/sdk-shared';
  */
 const rscElement = (
   type: 'serverInfo' | 'clientInfo' | 'sharedInfo',
-  idRef: string,
+  id: string,
   runtime: ElementRuntime
-): ElementSpec => element(type, { idRef, runtime });
+): ElementSpec => element(type, { id, runtime });
 
 const card = (title: string, body: string): ElementSpec =>
   link({
@@ -173,7 +173,7 @@ export const sampleSpace: SpaceSpec = {
       // Named for the same reason the RSC elements are: something outside this file addresses them. The e2e suite
       // drafts an edit onto the heading and the MCP takes a `pageRef`/`ref`, and both are names an author wrote —
       // a derived ref is positional, and the document id is a hash nothing should ever be written against.
-      idRef: 'home',
+      id: 'home',
       slug: '',
       class: 'page',
       body: [
@@ -181,12 +181,12 @@ export const sampleSpace: SpaceSpec = {
         container({
           class: 'logoFrame',
           children: [
-            image({ idRef: 'logo', src: 'https://cdn.plitzi.com/resources/img/favicon.svg', class: 'logo' })
+            image({ id: 'logo', src: 'https://cdn.plitzi.com/resources/img/favicon.svg', class: 'logo' })
           ]
         }),
         container({
           class: 'headline',
-          children: [heading({ idRef: 'mainHeading', content: 'Welcome To Plitzi', subType: 'h1', variant: 'lg' })]
+          children: [heading({ id: 'mainHeading', content: 'Welcome To Plitzi', subType: 'h1', variant: 'lg' })]
         }),
         container({
           class: 'rscSection',

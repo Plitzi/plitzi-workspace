@@ -66,7 +66,7 @@ const quotePage: PageSpec = {
         'The price is worked out on the server. This page sends a city and a weight, and gets back a line of text.'
     }),
     form({
-      idRef: 'quote-form',
+      id: 'quote-form',
       // Without this the browser submits the form itself and the page navigates away; the interaction is what runs.
       managedByInteractions: true,
       method: 'post',

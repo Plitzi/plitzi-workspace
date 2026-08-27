@@ -36,7 +36,7 @@ export interface StepSpec {
   title?: string;
   params?: Record<string, unknown>;
   preview?: Record<string, unknown>;
-  /** The idRef the step is registered on. Utilities are resolved by action alone and take none. */
+  /** The id of the element the step is registered on. Utilities are resolved by action alone and take none. */
   on?: string;
   when?: ElementInteraction['when'];
   enabled?: boolean;
@@ -48,7 +48,7 @@ export interface BindingSpec {
   /**
    * Where the value comes from.
    *
-   * Normally `<idRef>.<field>` — the name YOU gave the element, and the source prefix is looked up from what that
+   * Normally `<id>.<field>` — the name YOU gave the element, and the source prefix is looked up from what that
    * element publishes. The four globals (`variables`, `navigation`, `auth`, `state`) are named as themselves, and
    * a source written in full (`apiContainer_posts.data`) is left alone but checked.
    */
@@ -83,14 +83,14 @@ export interface SpecMeta {
 export interface ElementSpec {
   type: string;
   /**
-   * The name the rest of the space calls this element by: a binding's source (`apiContainer_posts.records`), a
-   * step's `on`, an interaction target.
+   * The one name this element answers to, everywhere: its key in the document, a binding's source
+   * (`apiContainer_posts.records`), a step's `on`, an interaction target.
    *
    * Derived as `<type>-<n>` when left out, which is unique but POSITIONAL — adding an element above renumbers
    * every one below it, and each binding that named one then points at a different element without changing.
-   * Name the ones something else refers to.
+   * Name the ones something else refers to; a derived name is deliberately not accepted as a binding source.
    */
-  idRef?: string;
+  id?: string;
   attributes?: Record<string, unknown>;
   /** Style variant of the element's own vocabulary, e.g. a heading's `title`. */
   variant?: string;
@@ -143,8 +143,8 @@ export interface ElementSpec {
 
 export interface PageSpec {
   name: string;
-  /** As {@link ElementSpec.idRef} — a page is an element, and its flows are targeted the same way. */
-  idRef?: string;
+  /** As {@link ElementSpec.id} — a page is an element, and its flows are targeted the same way. */
+  id?: string;
   /** Route, without a leading slash. Empty is the home page. */
   slug: string;
   isDefault?: boolean;

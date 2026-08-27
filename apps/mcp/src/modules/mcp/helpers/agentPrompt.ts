@@ -17,9 +17,10 @@ const EDITING_MODEL = [
   'To style an element: write a definition AND attach it via the element’s style.base in the same batch.',
   'style.base is a LIST — an element can attach several classes (plus non-base slots); ALL of them apply together',
   '(they cascade), so when a style looks wrong inspect EVERY attached class + its global/id styles, not just one.',
-  'Refs accept a semantic idRef ([A-Za-z0-9_-] starting with a letter, unique, chosen by you) or the raw id; the',
-  'idRef is ALSO the runtime wiring key (a provider source is `<type>_<idRef>.<field>` — a dot is not allowed in the',
-  'idRef, an underscore is). CSS is kebab-case; style vars are var(--name), schema',
+  'Every element and page has ONE name, which IS its id: you choose it ([A-Za-z0-9_-] starting with a letter,',
+  'unique in the space), you address it by it, and the runtime wires by it (a provider source is',
+  '`<type>_<id>.<field>` — a dot is not allowed in a name, an underscore is). Nothing hands out opaque ids, so',
+  'never invent one: name the thing. CSS is kebab-case; style vars are var(--name), schema',
   'vars are {{name}}. Use patchElement/patchDefinition to change SOME props/CSS; the upsert variants replace them all.',
   'Reads are cheap by design — list to navigate, read one item for detail; never fetch a whole tree you do not need.'
 ].join('\n');

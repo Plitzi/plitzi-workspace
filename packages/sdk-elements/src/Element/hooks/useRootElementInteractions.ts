@@ -48,7 +48,6 @@ const useRootElementInteractions = ({
 }: UseRootElementInteractionsProps): RootElementInteractions => {
   const {
     id,
-    idRef,
     className: classNameInternalProp,
     attributes,
     definition,
@@ -82,7 +81,7 @@ const useRootElementInteractions = ({
   );
 
   const events = useMemo(() => {
-    if (!previewMode || !interactions || !idRef) {
+    if (!previewMode || !interactions) {
       return {};
     }
 
@@ -94,10 +93,10 @@ const useRootElementInteractions = ({
         return {
           ...acum,
           [node.action]: (e: MouseEvent) =>
-            processEvent(e, idRef, node.action, otherProps[node.action] as (e: MouseEvent) => unknown, propagateEvent)
+            processEvent(e, id, node.action, otherProps[node.action] as (e: MouseEvent) => unknown, propagateEvent)
         };
       }, {});
-  }, [idRef, interactions, otherProps, previewMode, processEvent]);
+  }, [id, interactions, otherProps, previewMode, processEvent]);
 
   // Interactions can reference any source by name at runtime, so when present (or in debug) we hand the rule engine the
   // whole `runtime.sources` slice; otherwise the dataSource is unused, so we skip the subscription.
@@ -115,14 +114,14 @@ const useRootElementInteractions = ({
     [interactionCallbacks, basicCallbacks]
   );
 
-  useInteractions({ id: idRef, interactions, triggers, callbacks, getAdditionalParams });
+  useInteractions({ id, interactions, triggers, callbacks, getAdditionalParams });
 
   useEffect(() => {
-    if (!previewMode || !idRef || !interactions || !Object.keys(interactions).length) {
+    if (!previewMode || !interactions || !Object.keys(interactions).length) {
       return;
     }
 
-    void interactionsManager.interactionTrigger(idRef, 'onLoad', {});
+    void interactionsManager.interactionTrigger(id, 'onLoad', {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

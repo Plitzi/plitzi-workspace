@@ -520,49 +520,41 @@ describe('schemaValidator', () => {
     expect(result.valid).toBe(true);
   });
 
-  // An idRef is the key an element publishes its data source under, so the space must agree on who owns one.
-  describe('idRef', () => {
-    const withIdRefs = (...idRefs: (string | undefined)[]): Schema => ({
+  // An element's id is the key it publishes its data source under and the name every binding and interaction
+  // wires by, so the charset it is held to is load-bearing rather than cosmetic.
+  describe('element id', () => {
+    const withIds = (...ids: string[]): Schema => ({
       ...EMPTY_SCHEMA.schema,
       pages: ['page-1'],
       flat: {
         'page-1': {
           ...createElement('page-1', 'page'),
-          definition: { ...createElement('page-1', 'page').definition, items: idRefs.map((_, i) => `el-${i}`) }
+          definition: { ...createElement('page-1', 'page').definition, items: ids }
         },
         ...Object.fromEntries(
-          idRefs.map((idRef, i) => [
-            `el-${i}`,
+          ids.map(id => [
+            id,
             {
-              ...createElement(`el-${i}`, 'apiContainer'),
-              idRef,
-              definition: { ...createElement(`el-${i}`, 'apiContainer').definition, parentId: 'page-1' }
+              ...createElement(id, 'apiContainer'),
+              definition: { ...createElement(id, 'apiContainer').definition, parentId: 'page-1' }
             }
           ])
         )
       }
     });
 
-    it('accepts elements with no idRef at all (it is optional)', () => {
-      expect(validateSchema(withIdRefs(undefined, undefined)).valid).toBe(true);
+    it('accepts distinct, well-formed names', () => {
+      expect(validateSchema(withIds('products-api', 'orders-api')).valid).toBe(true);
     });
 
-    it('accepts distinct, well-formed idRefs', () => {
-      expect(validateSchema(withIdRefs('products-api', 'orders-api')).valid).toBe(true);
-    });
-
-    it('rejects two elements sharing one idRef, naming both owners', () => {
-      const result = validateSchema(withIdRefs('products-api', 'products-api'));
+    it('rejects a name carrying the dot the source grammar and the flat paths both split on', () => {
+      const result = validateSchema(withIds('products.api'));
       expect(result.valid).toBe(false);
-      const error = result.errors.find(e => e.code === 'DUPLICATE_ID_REF');
-      expect(error?.message).toContain('products-api');
-      expect(error?.details).toEqual({ idRef: 'products-api', otherElementId: 'el-0' });
+      expect(result.errors.some(e => e.code === 'INVALID_ELEMENT_ID')).toBe(true);
     });
 
-    it('rejects an idRef carrying a dot separator the source grammar uses', () => {
-      const result = validateSchema(withIdRefs('products.api'));
-      expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.code === 'INVALID_ID_REF')).toBe(true);
+    it('rejects a name that does not start with a letter', () => {
+      expect(validateSchema(withIds('2products')).errors.some(e => e.code === 'INVALID_ELEMENT_ID')).toBe(true);
     });
   });
 

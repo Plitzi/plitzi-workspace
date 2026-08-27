@@ -13,8 +13,8 @@ export type LogInteraction = {
   params: {
     /** The SOURCE a global callback or utility named — `space`, `state` — not the element it ran on. */
     elementId: string;
-    /** The idRef of the element the interaction fired on. What tells two identical-looking entries apart. */
-    elementRef?: string;
+    /** The id of the element the interaction fired on. What tells two identical-looking entries apart. */
+    hostElementId?: string;
     startTime: number;
     endTime: number;
     node: ElementInteraction;

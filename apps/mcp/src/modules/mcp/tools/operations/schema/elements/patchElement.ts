@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
-import { repointIdRefs } from '@plitzi/sdk-schema/helpers/idRef';
+import { repointIds } from '@plitzi/sdk-schema/helpers/elementId';
 
-import { empty, fail, findPageByRef, resolveRef } from '../../../../helpers';
+import { empty, fail, findPageByRef, invalidateIndex, resolveRef } from '../../../../helpers';
 import { elementRuntime, initialStateInput, styleRefs } from '../shared';
 import { guardNewRef, pageUri, writeInitialState } from '../write';
 
@@ -15,13 +15,14 @@ export const patchElementOp = z
     type: z.literal('patchElement'),
     pageRef: z.string().describe('Page ref or id'),
     ref: z.string().describe('Existing element ref or id'),
-    idRef: z
+    rename: z
       .string()
       .optional()
       .describe(
-        'Assign or rename this element idRef ([A-Za-z0-9_-], starting with a letter, unique in the space). ' +
-          'Without one an element publishes no data source, so it is not bindable. A rename moves the source name ' +
-          'with it: every binding and interaction that targeted the old one is repointed for you.'
+        'A new name for this element ([A-Za-z0-9_-], starting with a letter, unique in the space). The name IS the ' +
+          'id: the key everything addresses it by, the source name it publishes under, the target an interaction ' +
+          'fires on. A rename moves all of that with it — every binding and interaction that named the old one is ' +
+          'repointed for you.'
       ),
     label: z.string().optional(),
     subType: z.string().optional(),
@@ -57,22 +58,19 @@ export const patchElement = (space: Space, env: Env, op: PatchElement): OpResult
     );
   }
 
-  // Re-uses the create-time guard: an idRef assigned here is the same wiring key, so it faces the same charset and
-  // space-wide uniqueness rules. Setting an element's current idRef to itself is a no-op, not a conflict.
-  if (op.idRef !== undefined && op.idRef !== el.idRef) {
-    const guard = guardNewRef(space, op.idRef, 'idRef');
+  // Re-uses the create-time guard: a name assigned here is the same key an element was created under, so it faces
+  // the same charset and space-wide uniqueness rules. Renaming an element to its own name is a no-op.
+  if (op.rename !== undefined && op.rename !== el.id) {
+    const guard = guardNewRef(space, op.rename, 'rename');
     if (guard) {
       return guard;
     }
 
-    // A rename moves the wiring key, so every binding source and interaction target written against the old name
-    // has to move with it — across the whole space, since an element on another page may bind to this one. An
-    // element that had no idRef has nothing pointing at it yet, so only a true rename repoints.
-    const previous = el.idRef;
-    el.idRef = op.idRef;
-    if (previous) {
-      repointIdRefs(space.schema.flat, { [previous]: op.idRef });
-    }
+    // A rename moves the ONE key everything points at, so the `flat` key, the parent's `items`, every binding
+    // source and every interaction target written against the old name move with it — across the whole space,
+    // since an element on another page may bind to this one.
+    repointIds(space.schema.flat, { [el.id]: op.rename }, space.schema.pages);
+    invalidateIndex(space.schema);
   }
 
   if (op.label !== undefined) {

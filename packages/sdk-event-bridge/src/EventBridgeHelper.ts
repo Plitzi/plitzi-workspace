@@ -16,6 +16,7 @@ const EventBridgeTypesPerModule: Record<EventBridgeModule, EventBridgeEvent[]> =
     'schemaUpdate',
     'schemaAddElement',
     'schemaUpdateElement',
+    'schemaRenameElement',
     'schemaUpdateElements',
     'schemaRemoveElement',
     'schemaMoveElement',

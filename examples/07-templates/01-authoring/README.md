@@ -29,7 +29,7 @@ difference between a template and a screenshot of one: a class declared in the s
 travel, and the element that keeps the class renders unstyled wherever it lands. `authorTemplate` warns about a
 name the manifest does not carry.
 
-**A binding may not point outside the subtree.** A source names an element by idRef, so binding to a provider that
+**A binding may not point outside the subtree.** A source names an element by id, so binding to a provider that
 stayed behind resolves to nothing in every space the template is dropped into — refused at author time. Bring the
 `apiContainer` into the template, or bind to one of the globals (`variables`, `navigation`, `auth`, `state`).
 

@@ -1,15 +1,6 @@
 import { z } from 'zod';
 
-import {
-  empty,
-  fail,
-  findFolderByRef,
-  findPageByRef,
-  generateObjectId,
-  indexAddPage,
-  indexReRefPage,
-  pageRefOf
-} from '../../../../helpers';
+import { empty, fail, findFolderByRef, findPageByRef, indexAddPage } from '../../../../helpers';
 import { guardNewRef, pageUri, pagesUri } from '../write';
 
 import type { Space } from '../../../../helpers';
@@ -23,8 +14,8 @@ export const upsertPageOp = z
     ref: z
       .string()
       .describe(
-        'Page id/slug to update, or a new id you choose to create one. On a new page it is stored as its idRef: ' +
-          'starts with a letter, then letters, numbers, hyphens and underscores ("pricing"), unique across the space.'
+        'Page id to update, or a new id you choose to create one. The id IS the page name — starts with a letter, ' +
+          'then letters, numbers, hyphens and underscores ("pricing"), unique across the space.'
       ),
     label: z.string().optional(),
     slug: z
@@ -81,9 +72,7 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
 
   const existing = findPageByRef(space.schema, op.ref);
   if (existing) {
-    // slug/name/default feed pageRefOf, which the page ref index keys on; capture the ref BEFORE the change so the
-    // index can re-key itself if it moved.
-    const oldRef = pageRefOf(existing);
+    // A page is addressed by its id, which none of these attributes feeds — so an update touches no index key.
     existing.attributes = {
       ...existing.attributes,
       ...(slug !== undefined ? { slug } : {}),
@@ -92,18 +81,17 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
       ...(op.enabled !== undefined ? { enabled: op.enabled } : {}),
       ...(folderValue !== undefined ? { folder: folderValue } : {})
     };
-    indexReRefPage(space.schema, existing, oldRef);
 
     return { ...empty(), updated: 1, staleResources: [pageUri(env, op.ref), pagesUri(env)] };
   }
 
-  // Creating: the ref becomes this page's idRef, so it must pass the same charset/uniqueness guard as any element.
+  // Creating: the name becomes this page's id, so it must pass the same charset/uniqueness guard as any element.
   const guard = guardNewRef(space, op.ref, 'ref');
   if (guard) {
     return guard;
   }
 
-  const id = generateObjectId();
+  const id = op.ref;
   const attributes: Element['attributes'] = {
     slug: slug ?? op.ref,
     name: op.label ?? op.ref,
@@ -113,7 +101,6 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
   };
   const page: Element = {
     id,
-    idRef: op.ref,
     attributes,
     definition: {
       rootId: id,

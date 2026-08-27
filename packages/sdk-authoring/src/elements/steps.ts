@@ -6,7 +6,7 @@ import type { StepSpec } from '../schema';
  * How a flow starts, and how an element changes itself.
  *
  * These are the two halves of a flow that belong to elements rather than to a source module: a trigger fires on
- * the element it is declared on, and an element callback runs against an element by idRef. Neither takes a source
+ * the element it is declared on, and an element callback runs against an element by id. Neither takes a source
  * module, and giving one is how a flow ends up wired to nothing.
  *
  * A trigger's `on` is left out on purpose: `authorSpace` fills it with the element the flow was declared on, which

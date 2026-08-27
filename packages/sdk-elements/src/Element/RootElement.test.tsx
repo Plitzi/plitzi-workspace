@@ -26,7 +26,6 @@ const InteractionsContext = createContext({ interactionsManager, useInteractions
 
 const fullContext = (overrides: Partial<ElementContextValue> = {}): ElementContextValue => ({
   id: 'el1',
-  idRef: 'el-1',
   rootId: 'root',
   visible: true,
   className: 'ctxClass',
@@ -130,7 +129,7 @@ describe('RootElement', () => {
       const { container } = renderRoot(fullContext(), { className: 'rootCls' });
       const node = container.querySelector('div');
 
-      expect(useInteractions).toHaveBeenCalledWith(expect.objectContaining({ id: 'el-1', interactions: undefined }));
+      expect(useInteractions).toHaveBeenCalledWith(expect.objectContaining({ id: 'el1', interactions: undefined }));
       expect(node?.className).toContain('ctxClass');
       expect(node?.className).toContain('baseCls');
       expect(node?.className).toContain('rootCls');

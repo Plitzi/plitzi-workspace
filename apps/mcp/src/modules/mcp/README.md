@@ -14,8 +14,8 @@ A Plitzi space is **two independent schemas** edited together:
 - **Style schema** — reusable **definitions** (CSS classes), global/id styles, design tokens, theme.
 
 They persist separately, but a single `plitzi_apply` batch may touch **both atomically**. Everything is
-addressed by **`idRef`** — the semantic id that is *also* the runtime wiring key (a data source is
-`<type>_<idRef>`, an interaction targets an element by its idRef).
+addressed by **`id`** — the ONE name an element answers to, which is also its key in the document and the runtime
+wiring key (a data source is `<type>_<id>`, an interaction targets an element by its id).
 
 The server is **stateless**: every request resolves its own `spaceId` (from the request JWT) and reads the
 space fresh through SSR adapters. Public surface (handshake, tool/resource listing, the space-independent guide
@@ -149,7 +149,7 @@ Input validation was one dense file; it is now a folder whose `index.ts` is the 
 |---|---|
 | `index.ts` | orchestrator: build the `ValidationCtx`, run the per-op switch, the pageRef guard |
 | `context.ts` | `ValidationCtx`, `warnOnce`, `checkObservedName`, `{{name}}`/`var(--…)` ref checks |
-| `refs.ts` | `checkRef` / `checkIdRef` (charset + idRef rules) |
+| `refs.ts` | `checkRef` / `checkIdRef` (charset + element-name rules) |
 | `css.ts` | `checkCss` / `checkSlotCss` (property keys + var refs) |
 | `elements.ts` | element-input, type-prop and variant-application checks |
 | `batch.ts` | batch pre-scans (names an earlier op in the same batch declares) |
@@ -161,10 +161,10 @@ is a **warning**, never a hard error. Only structurally-wrong input fails the ba
 
 - **Read-then-write.** Reads follow a filesystem model (list cheap, read one on demand). The guide in
   [`helpers/guide.ts`](helpers/guide.ts) is the agent's manual — keep it in sync with tool behavior.
-- **Address by `idRef`.** Charset `[A-Za-z0-9_-]` starting with a letter, unique across the space; no dots (a dot
-  splits the `<type>_<idRef>.<field>` grammar). Underscores are allowed — the FIRST `_` separates `<type>` from
-  `<idRef>` and element types have none, so extra underscores are unambiguous. Writing an interaction/binding mints
-  an idRef when one is missing.
+- **Address by `id`.** Charset `[A-Za-z0-9_-]` starting with a letter, unique across the space; no dots (a dot
+  splits the `<type>_<id>.<field>` grammar). Underscores are allowed — the FIRST `_` separates `<type>` from
+  `<id>` and element types have none, so extra underscores are unambiguous. There is nothing to mint: an element
+  cannot exist without the name you gave it.
 - **`upsert` replaces, `patch` merges.** Upsert ops fully replace props/CSS; patch ops merge (a `null` value
   unsets a key). Mirror this in any new op pair.
 - **Atomic + optimistic concurrency.** `plitzi_apply` persists nothing if any op fails; callers pass

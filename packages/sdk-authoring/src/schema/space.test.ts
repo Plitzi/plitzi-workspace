@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { authorBinding, authorFlow, authorSpace, authoringId, validateSpace, visibleWhen } from './index';
+import { authorBinding, authorFlow, authorSpace, validateSpace, visibleWhen } from './index';
 
 import type { ElementSpec, SpaceSpec } from './index';
 import type { StyleObject } from '@plitzi/sdk-shared';
@@ -72,15 +72,15 @@ describe('authorSpace', () => {
     expect(JSON.stringify(authorSpace(minimal()))).toBe(JSON.stringify(authorSpace(minimal())));
   });
 
-  it('gives every element a unique idRef, numbered per type', () => {
+  it('gives every element a unique name, numbered per type', () => {
     const { schema } = authorSpace(minimal());
-    const refs = Object.values(schema.flat).map(element => element.idRef);
+    const refs = Object.values(schema.flat).map(element => element.id);
 
     expect(refs).toEqual(['page-1', 'container-1', 'heading-1']);
     expect(new Set(refs).size).toBe(refs.length);
   });
 
-  it('takes the idRef an element names, so a binding can address it by name', () => {
+  it('takes the name an element names, so a binding can address it by name', () => {
     const { schema } = authorSpace({
       name: 'Named',
       permanentUrl: 'named',
@@ -88,17 +88,17 @@ describe('authorSpace', () => {
         {
           name: 'Home',
           slug: '',
-          idRef: 'home',
-          body: [{ type: 'apiContainer', idRef: 'posts', attributes: {} }, text('hi')]
+          id: 'home',
+          body: [{ type: 'apiContainer', id: 'posts', attributes: {} }, text('hi')]
         }
       ]
     });
 
     // The named one keeps its name; the unnamed one is still numbered per type, and the two do not collide.
-    expect(Object.values(schema.flat).map(element => element.idRef)).toEqual(['home', 'posts', 'text-1']);
+    expect(Object.values(schema.flat).map(element => element.id)).toEqual(['home', 'posts', 'text-1']);
   });
 
-  it('refuses two elements answering to one idRef instead of dropping the second', () => {
+  it('refuses two elements answering to one name instead of dropping the second', () => {
     // FlatMap declines the insert and says so with `false`; ignoring that answer authored a page whose second
     // element was simply not there, with nothing anywhere reporting it.
     expect(() =>
@@ -110,8 +110,8 @@ describe('authorSpace', () => {
             name: 'Home',
             slug: '',
             body: [
-              { type: 'apiContainer', idRef: 'posts', attributes: {} },
-              { type: 'list', idRef: 'posts', attributes: {} }
+              { type: 'apiContainer', id: 'posts', attributes: {} },
+              { type: 'list', id: 'posts', attributes: {} }
             ]
           }
         ]
@@ -296,7 +296,7 @@ describe('authorSpace / style', () => {
 });
 
 describe('authorFlow', () => {
-  const steps = authorFlow('space/home/flow/0', [
+  const steps = authorFlow([
     { type: 'trigger', action: 'onClick', on: 'button-1' },
     { type: 'globalCallback', action: 'login', on: 'auth', params: { mode: 'token' } },
     { type: 'callback', action: 'setVisibility', on: 'container-1' }
@@ -316,7 +316,7 @@ describe('authorFlow', () => {
     expect(new Set(nodes.map(node => node.flowId))).toEqual(new Set([nodes[0].id]));
   });
 
-  it('registers each step on the idRef it names, and defaults the rest', () => {
+  it('registers each step on the name it names, and defaults the rest', () => {
     expect(nodes.map(node => node.elementId)).toEqual(['button-1', 'auth', 'container-1']);
     expect(nodes[0].title).toBe('onClick');
     expect(nodes[0].enabled).toBe(true);
@@ -326,7 +326,7 @@ describe('authorFlow', () => {
   it('takes the id a step names, so a later step can read its result', () => {
     // The scope of a running flow is keyed by node id. A derived id is unique and unwritable, so a step whose
     // result is interpolated further down has to be named.
-    const named = authorFlow('space/home/flow/1', [
+    const named = authorFlow([
       { type: 'trigger', action: 'onSubmit', on: 'form-1' },
       { id: 'publish', type: 'globalCallback', action: 'runServerAction', on: 'actions' },
       { type: 'globalCallback', action: 'navigate', on: 'navigation', params: { url: '{{publish.output.url}}' } }
@@ -340,7 +340,7 @@ describe('authorFlow', () => {
   });
 
   it('registers a utility on no element at all', () => {
-    const [utility] = Object.values(authorFlow('x', [{ type: 'utility', action: 'delay' }]));
+    const [utility] = Object.values(authorFlow([{ type: 'utility', action: 'delay' }]));
 
     expect(utility.elementId).toBeNull();
   });
@@ -348,10 +348,11 @@ describe('authorFlow', () => {
 
 describe('authorBinding', () => {
   it('fills the fields the runtime needs but nobody chooses', () => {
-    const binding = authorBinding('space/home/0', 0, { to: 'items', source: 'apiContainer_products-1.data' });
+    const binding = authorBinding(0, { to: 'items', source: 'apiContainer_products-1.data' });
 
     expect(binding).toMatchObject({ to: 'items', source: 'apiContainer_products-1.data', transformers: [] });
-    expect(binding.id).toHaveLength(24);
+    // Element-local, so it reads as what it targets and where it sits rather than as an opaque handle.
+    expect(binding.id).toBe('attributes-1');
   });
 
   it('groups bindings under the category they target', () => {
@@ -385,13 +386,6 @@ describe('authorBinding', () => {
   });
 });
 
-describe('authoringId', () => {
-  it('is stable, Mongo-shaped and path-dependent', () => {
-    expect(authoringId('a/b')).toBe(authoringId('a/b'));
-    expect(authoringId('a/b')).not.toBe(authoringId('a/c'));
-    expect(authoringId('a/b')).toMatch(/^[0-9a-f]{24}$/);
-  });
-});
 
 describe('authorSpace / what it refuses', () => {
   it('expands the shorthands an author writes, so the style editor can read the result back', () => {
@@ -477,7 +471,7 @@ describe('authorSpace / what it refuses', () => {
    * space authored straight from this package writes its sources as declared — the fragment has to stay usable on
    * documents whose element library nobody here knows.
    */
-  it('resolves a source that named the idRef alone, when it was told what publishes one', () => {
+  it('resolves a source that named the name alone, when it was told what publishes one', () => {
     const { schema } = authorSpace(
       {
         name: 'Bound',
@@ -487,7 +481,7 @@ describe('authorSpace / what it refuses', () => {
             name: 'Home',
             slug: '',
             body: [
-              { type: 'apiContainer', idRef: 'posts', attributes: { action: 'list' } },
+              { type: 'apiContainer', id: 'posts', attributes: { action: 'list' } },
               { type: 'text', bind: { content: 'posts.title' } }
             ]
           }
@@ -501,13 +495,13 @@ describe('authorSpace / what it refuses', () => {
     expect(bound?.definition.bindings?.attributes?.[0].source).toBe('apiContainer_posts.title');
   });
 
-  it('refuses an idRef that shadows a global data source', () => {
+  it('refuses a name that shadows a global data source', () => {
     expect(() =>
       authorSpace(
         {
           name: 'Shadow',
           permanentUrl: 'shadow',
-          pages: [{ name: 'Home', slug: '', body: [{ type: 'apiContainer', idRef: 'state' }] }]
+          pages: [{ name: 'Home', slug: '', body: [{ type: 'apiContainer', id: 'state' }] }]
         },
         { sourceTypes: { apiContainer: 'apiContainer' } }
       )
@@ -526,13 +520,13 @@ describe('authorSpace / what it refuses', () => {
             name: 'Home',
             slug: '',
             body: [
-              { type: 'apiContainer', idRef: 'posts', attributes: { action: 'list' } },
+              { type: 'apiContainer', id: 'posts', attributes: { action: 'list' } },
               { type: 'text', bind: { content: 'apiContainer_post.title' } }
             ]
           }
         ]
       })
-    ).toThrow(/no element answers to the idRef/);
+    ).toThrow(/no element answers to the name/);
   });
 
   it('takes the short binding form, and lets a full one target element state', () => {
@@ -544,7 +538,7 @@ describe('authorSpace / what it refuses', () => {
           name: 'Home',
           slug: '',
           body: [
-            { type: 'apiContainer', idRef: 'posts', attributes: { action: 'list' } },
+            { type: 'apiContainer', id: 'posts', attributes: { action: 'list' } },
             { type: 'text', bind: { content: 'apiContainer_posts.title' } },
             { type: 'text', bind: [visibleWhen('apiContainer_posts.hasPosts')] }
           ]
@@ -646,7 +640,7 @@ describe('authorSpace / flows', () => {
           body: [
             {
               type: 'button',
-              idRef: 'cta',
+              id: 'cta',
               attributes: { content: 'Go' },
               flows: [
                 [

@@ -75,7 +75,7 @@ describe('the step vocabulary', () => {
       {
         name: 'Home',
         slug: '',
-        body: [authoring.button({ idRef: 'go', content: 'Go', flows: [flow] })]
+        body: [authoring.button({ id: 'go', content: 'Go', flows: [flow] })]
       }
     ]
   });

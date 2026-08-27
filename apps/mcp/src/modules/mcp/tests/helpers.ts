@@ -5,17 +5,17 @@ import type { Persisters } from '../types';
 const buildSpace = (): Space => {
   const schema = {
     flat: {
-      page1: {
-        id: 'page1',
+      home: {
+        id: 'home',
         attributes: { slug: '', name: 'Home', default: true },
-        definition: { rootId: 'page1', label: 'Page', type: 'page', items: ['c1'], styleSelectors: { base: 'page-x' } }
+        definition: { rootId: 'home', label: 'Page', type: 'page', items: ['c1'], styleSelectors: { base: 'page-x' } }
       },
       c1: {
         id: 'c1',
         attributes: { subType: 'div', title: 'Box' },
         definition: {
-          rootId: 'page1',
-          parentId: 'page1',
+          rootId: 'home',
+          parentId: 'home',
           label: 'Container',
           type: 'container',
           items: [],
@@ -26,7 +26,7 @@ const buildSpace = (): Space => {
     definition: { name: 'Test', permanentUrl: '' },
     variables: [{ name: 'apiUrl', category: 'general', type: 'text', value: 'https://api', subValues: [] }],
     settings: { customCss: '' },
-    pages: ['page1'],
+    pages: ['home'],
     pageFolders: []
   };
 
@@ -87,7 +87,7 @@ const capturing = (space: Space): { persisters: Persisters; saved: () => Space }
 
 const spaceWithRoute = (): Space => {
   const space = buildSpace();
-  (space.schema.flat.page1.attributes as Record<string, unknown>).slug = ':spaceId';
+  (space.schema.flat.home.attributes as Record<string, unknown>).slug = ':spaceId';
 
   return space;
 };
@@ -101,50 +101,47 @@ const varOp = (pageRef: string, type: string, value: string): Operation => ({
 const scopeSpace = (): Space => ({
   schema: {
     flat: {
-      page1: {
-        id: 'page1',
+      home: {
+        id: 'home',
         attributes: { slug: '', name: 'Home', default: true },
         definition: {
-          rootId: 'page1',
+          rootId: 'home',
           label: 'Page',
           type: 'page',
-          items: ['api1', 'outsider'],
+          items: ['products', 'out-text'],
           styleSelectors: { base: 'p' }
         }
       },
-      api1: {
-        id: 'api1',
-        idRef: 'products',
+      products: {
+        id: 'products',
         attributes: {},
         definition: {
-          rootId: 'page1',
-          parentId: 'page1',
+          rootId: 'home',
+          parentId: 'home',
           label: 'Api',
           type: 'apiContainer',
-          items: ['inner'],
+          items: ['inner-text'],
           styleSelectors: { base: 'a' }
         }
       },
-      inner: {
-        id: 'inner',
-        idRef: 'inner-text',
+      'inner-text': {
+        id: 'inner-text',
         attributes: { content: '' },
         definition: {
-          rootId: 'page1',
-          parentId: 'api1',
+          rootId: 'home',
+          parentId: 'products',
           label: 'Inner',
           type: 'text',
           items: [],
           styleSelectors: { base: 't' }
         }
       },
-      outsider: {
-        id: 'outsider',
-        idRef: 'out-text',
+      'out-text': {
+        id: 'out-text',
         attributes: { content: '' },
         definition: {
-          rootId: 'page1',
-          parentId: 'page1',
+          rootId: 'home',
+          parentId: 'home',
           label: 'Out',
           type: 'text',
           items: [],
@@ -155,7 +152,7 @@ const scopeSpace = (): Space => ({
     definition: { name: 'T', permanentUrl: '' },
     variables: [],
     settings: { customCss: '' },
-    pages: ['page1'],
+    pages: ['home'],
     pageFolders: []
   },
   style: {
@@ -171,18 +168,17 @@ const scopeSpace = (): Space => ({
 const malformedSpace = (): Space => ({
   schema: {
     flat: {
-      page1: {
-        id: 'page1',
+      home: {
+        id: 'home',
         attributes: { slug: '', name: 'Home', default: true },
-        definition: { rootId: 'page1', label: 'Page', type: 'page', items: ['txt'], styleSelectors: { base: 'p' } }
+        definition: { rootId: 'home', label: 'Page', type: 'page', items: ['txt'], styleSelectors: { base: 'p' } }
       },
       txt: {
         id: 'txt',
-        idRef: 'txt',
         attributes: { content: '' },
         definition: {
-          rootId: 'page1',
-          parentId: 'page1',
+          rootId: 'home',
+          parentId: 'home',
           label: 'Text',
           type: 'text',
           items: [],
@@ -203,7 +199,7 @@ const malformedSpace = (): Space => ({
     definition: { name: 'T', permanentUrl: '' },
     variables: [],
     settings: { customCss: '' },
-    pages: ['page1'],
+    pages: ['home'],
     pageFolders: []
   },
   style: {

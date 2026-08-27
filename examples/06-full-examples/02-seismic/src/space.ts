@@ -418,7 +418,7 @@ const range = (slug: string, caption: string, floor: string, flag: string): Elem
 // ── The page ───────────────────────────────────────────────────────────────────────────────────────────────────
 
 const monitor: ElementSpec = apiContainer({
-  idRef: 'feed',
+  id: 'feed',
   /**
    * Resolved on the server while the page is built, so the finished HTML already carries the last day of
    * earthquakes: no request from the browser, nothing to load after the paint, and the USGS never learns who is
@@ -432,7 +432,7 @@ const monitor: ElementSpec = apiContainer({
   class: mapLayer,
   children: [
     seismicMap({
-      idRef: 'map',
+      id: 'map',
       /**
        * Rendered in the browser and nowhere else.
        *
@@ -518,7 +518,7 @@ const monitor: ElementSpec = apiContainer({
                  * `eventRows.item` is. One template, however many events.
                  */
                 list({
-                  idRef: 'eventRows',
+                  id: 'eventRows',
                   source: 'controlled',
                   class: feedList,
                   bind: { items: 'feed.records' },

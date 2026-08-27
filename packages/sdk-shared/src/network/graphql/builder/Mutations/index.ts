@@ -7,6 +7,7 @@ import SegmentAddElementMutation from './Segment/space/elements/SegmentAddElemen
 import SegmentCloneElementMutation from './Segment/space/elements/SegmentCloneElementMutation';
 import SegmentMoveElementMutation from './Segment/space/elements/SegmentMoveElementMutation';
 import SegmentRemoveElementMutation from './Segment/space/elements/SegmentRemoveElementMutation';
+import SegmentRenameElementMutation from './Segment/space/elements/SegmentRenameElementMutation';
 import SegmentUpdateElementMutation from './Segment/space/elements/SegmentUpdateElementMutation';
 import SegmentUpdateElementsMutation from './Segment/space/elements/SegmentUpdateElementsMutation';
 import SegmentSpaceAddVariableMutation from './Segment/space/variables/SegmentSpaceAddVariableMutation';
@@ -55,6 +56,7 @@ import SpaceMoveElementMutation from './Space/SpaceMoveElementMutation';
 import SpacePublishMutation from './Space/SpacePublishMutation';
 import SpaceRemoveElementMutation from './Space/SpaceRemoveElementMutation';
 import SpaceRemovePluginMutation from './Space/SpaceRemovePluginMutation';
+import SpaceRenameElementMutation from './Space/SpaceRenameElementMutation';
 import SpaceUpdateElementMutation from './Space/SpaceUpdateElementMutation';
 import SpaceUpdateElementsMutation from './Space/SpaceUpdateElementsMutation';
 import SpaceUpdateMutation from './Space/SpaceUpdateMutation';
@@ -80,6 +82,7 @@ import StyleUpdateVariableMutation from './Style/variables/StyleUpdateVariableMu
 import type { TSegmentAddMutation } from './Segment/SegmentAddMutation';
 import type { TSegmentPublishMutation } from './Segment/SegmentPublishMutation';
 import type { TSegmentUpdateMutation } from './Segment/SegmentUpdateMutation';
+import type { TSegmentRenameElementMutation } from './Segment/space/elements/SegmentRenameElementMutation';
 import type { TSpaceAddActionMutation } from './Space/actions/SpaceAddActionMutation';
 import type { TSpaceRemoveActionMutation } from './Space/actions/SpaceRemoveActionMutation';
 import type { TSpaceRunActionMutation } from './Space/actions/SpaceRunActionMutation';
@@ -104,6 +107,7 @@ import type { TSpaceRemoveResourceMutation } from './Space/resources/SpaceRemove
 import type { TSpaceAddPluginMutation } from './Space/SpaceAddPluginMutation';
 import type { TSpaceDeployMutation } from './Space/SpaceDeployMutation';
 import type { TSpacePublishMutation } from './Space/SpacePublishMutation';
+import type { TSpaceRenameElementMutation } from './Space/SpaceRenameElementMutation';
 import type { TSpaceUpdatePluginMutation } from './Space/SpaceUpdatePluginMutation';
 
 export type BuilderMutationsMap = {
@@ -121,6 +125,7 @@ export type BuilderMutationsMap = {
   SpaceRemoveVariable: unknown;
   SpaceAddElement: unknown;
   SpaceUpdateElement: unknown;
+  SpaceRenameElement: TSpaceRenameElementMutation;
   SpaceUpdateElements: unknown;
   SpaceRemoveElement: unknown;
   SpaceMoveElement: unknown;
@@ -168,6 +173,7 @@ export type BuilderMutationsMap = {
   SegmentRemove: unknown;
   SegmentAddElement: unknown;
   SegmentUpdateElement: unknown;
+  SegmentRenameElement: TSegmentRenameElementMutation;
   SegmentUpdateElements: unknown;
   SegmentRemoveElement: unknown;
   SegmentMoveElement: unknown;
@@ -204,6 +210,7 @@ const BuilderMutations = {
   SpaceRemoveVariable: SpaceRemoveVariableMutation,
   SpaceAddElement: SpaceAddElementMutation,
   SpaceUpdateElement: SpaceUpdateElementMutation,
+  SpaceRenameElement: SpaceRenameElementMutation,
   SpaceUpdateElements: SpaceUpdateElementsMutation,
   SpaceRemoveElement: SpaceRemoveElementMutation,
   SpaceMoveElement: SpaceMoveElementMutation,
@@ -251,6 +258,7 @@ const BuilderMutations = {
   SegmentRemove: SegmentRemoveMutation,
   SegmentAddElement: SegmentAddElementMutation,
   SegmentUpdateElement: SegmentUpdateElementMutation,
+  SegmentRenameElement: SegmentRenameElementMutation,
   SegmentUpdateElements: SegmentUpdateElementsMutation,
   SegmentRemoveElement: SegmentRemoveElementMutation,
   SegmentMoveElement: SegmentMoveElementMutation,

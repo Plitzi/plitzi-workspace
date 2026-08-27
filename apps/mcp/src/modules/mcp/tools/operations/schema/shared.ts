@@ -115,9 +115,9 @@ export const elementShape = {
   ref: z
     .string()
     .describe(
-      'Semantic id you choose, or an existing element ref/id. On a new element it becomes the idRef everything ' +
+      'Semantic name you choose, or an existing element name. On a new element it BECOMES its id — the key ' +
         'addresses it by: its data source is `<type>_<ref>`, and interactions target it by this ref. Letters, ' +
-        'digits, `-` and `_`, starting with a letter — a dot would break the `<type>_<idRef>.<field>` grammar. ' +
+        'everything addresses it by. Letters, digits, `-` and `_`, starting with a letter — a dot would break ' +
         'Unique across the space.'
     ),
   // Required on purpose. Defaulting it to `container` saves a little repetition, but an agent that simply FORGOT
@@ -187,7 +187,7 @@ export const interactionNode = z.object({
     .optional()
     .describe(
       'Element whose callback this step invokes; defaults to this element. Its ref or raw id — a raw id is ' +
-        'normalised to the idRef the runtime looks callbacks up by, and a target without one is given it.'
+        'the name the runtime looks callbacks up by, which is the element id.'
     ),
   preview: z.record(z.string(), z.unknown()).optional()
 });

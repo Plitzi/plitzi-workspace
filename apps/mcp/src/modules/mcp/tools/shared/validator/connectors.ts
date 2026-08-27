@@ -56,7 +56,7 @@ export const checkConnectorOp = (space: Space, op: Operation, base: string, ctx:
   // empty. Name the elements, so "confirm with the user" is a question they can actually answer.
   const inUse = Object.values(space.schema.flat)
     .filter(el => el.attributes.connector === op.ref)
-    .map(el => el.idRef ?? el.id);
+    .map(el => el.id);
   if (inUse.length > 0) {
     warnOnce(
       ctx,

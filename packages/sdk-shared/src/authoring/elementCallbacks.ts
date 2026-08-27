@@ -8,7 +8,7 @@ import type { BuiltinActionSpec } from './builder';
 // `callback` action is treated leniently (a warning against observed names, never a hard error), and only the
 // actions in this catalog are validated against a schema. Unlike a globalCallback — which is provided by a source
 // module and whose `elementId` is that module — an element callback runs against a real element, so its node
-// `elementId` is the element's own idRef (the flow host, or another element the step targets). The runtime resolves
+// `elementId` is the element's own id (the flow host, or another element the step targets). The runtime resolves
 // it as `callbacksAvailables[elementId][action]`.
 //
 // `setState` is the confusing one: there is ALSO a global `setState` (source `state`) with a DIFFERENT param schema
@@ -23,7 +23,7 @@ export type BuiltinElementCallback = BuiltinActionSpec;
 export const BUILTIN_ELEMENT_CALLBACKS: Record<string, BuiltinElementCallback> = {
   setState: {
     title: 'Update Element (set attribute / state)',
-    // Runs against an ELEMENT, so its node carries an idRef rather than a source module — the one thing that
+    // Runs against an ELEMENT, so its node carries an element id rather than a source module — the one thing that
     // tells this `setState` from the global one at the runtime's lookup.
     type: 'callback',
     strictParams: true,

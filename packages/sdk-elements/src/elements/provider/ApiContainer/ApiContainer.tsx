@@ -97,7 +97,6 @@ const ApiContainer = ({
 }: ApiContainerProps) => {
   const {
     id,
-    idRef,
     visible,
     definition: { label = 'Api Container', runtime }
   } = useElement();
@@ -111,7 +110,7 @@ const ApiContainer = ({
     elementData,
     refresh
   } = useRscData<Record<string, unknown>>();
-  const sourceName = getSourceName(declaration.sourceType, { idRef });
+  const sourceName = getSourceName(declaration.sourceType, id);
   const {
     settings: { previewMode },
     contexts: { InteractionsContext }
@@ -243,18 +242,18 @@ const ApiContainer = ({
   });
 
   useEffect(() => {
-    if (isLoading || !idRef) {
+    if (isLoading || !id) {
       return undefined;
     }
 
     if (isSuccess) {
-      void interactionsManager.interactionTrigger(idRef, 'onApiSuccess', { url: query, method, ...data });
+      void interactionsManager.interactionTrigger(id, 'onApiSuccess', { url: query, method, ...data });
     } else if (isError) {
-      void interactionsManager.interactionTrigger(idRef, 'onApiError', { url: query, method, ...data });
+      void interactionsManager.interactionTrigger(id, 'onApiError', { url: query, method, ...data });
     }
 
     return undefined;
-  }, [data, idRef, interactionsManager, isError, isLoading, isSuccess, method, query]);
+  }, [data, id, interactionsManager, isError, isLoading, isSuccess, method, query]);
   // The published slice, not the raw response: state travels with the data so an empty result, a failed provider
   // and an accumulated "load more" list are all readable through ordinary bindings, with no new slot mechanism.
   const publishedData = useMemo<Record<string, unknown>>(

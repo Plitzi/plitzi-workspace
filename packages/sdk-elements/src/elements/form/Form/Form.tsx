@@ -56,11 +56,10 @@ const Form = ({
   const unmounting = useRef(false);
   const {
     id,
-    idRef,
     definition: { label = 'Form' },
     setElementState
   } = useElement();
-  const sourceName = getSourceName(declaration.sourceType, { idRef });
+  const sourceName = getSourceName(declaration.sourceType, id);
   const {
     settings: { previewMode },
     contexts: { InteractionsContext }
@@ -208,9 +207,9 @@ const Form = ({
       }
 
       const valuesParsed = Object.values(fields).reduce((acum, { name }) => ({ ...acum, [name]: values[name] }), {});
-      void interactionsManager.interactionTrigger(idRef, 'onSubmit', { values: valuesParsed, actionUrl, method });
+      void interactionsManager.interactionTrigger(id, 'onSubmit', { values: valuesParsed, actionUrl, method });
     },
-    [setElementState, managedByInteractions, previewMode, fields, interactionsManager, idRef, actionUrl, method, values]
+    [setElementState, managedByInteractions, previewMode, fields, interactionsManager, id, actionUrl, method, values]
   );
 
   const handleReset = useCallback(

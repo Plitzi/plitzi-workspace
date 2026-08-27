@@ -36,7 +36,7 @@ const Page = ({
   layoutContainer = '',
   children
 }: PageProps) => {
-  const { id, idRef } = useElement();
+  const { id } = useElement();
   const {
     settings: { previewMode },
     contexts: { InteractionsContext }
@@ -92,13 +92,13 @@ const Page = ({
         return;
       }
 
-      void interactionsManager.interactionTrigger(idRef, 'onPageLoad', { pageId: id, routeParams, queryParams });
+      void interactionsManager.interactionTrigger(id, 'onPageLoad', { pageId: id, routeParams, queryParams });
     });
 
     return () => {
       cancelled = true;
     };
-  }, [id, idRef, interactionsManager, queryParams, routeParams]);
+  }, [id, interactionsManager, queryParams, routeParams]);
 
   return (
     <RootElement

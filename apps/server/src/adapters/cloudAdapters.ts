@@ -96,7 +96,7 @@ const SPACE_QUERY = `query InitQuery($environment: String!, $revision: Int) {
   Space(environment: $environment, revision: $revision) {
     schema {
       settings
-      flat { id idRef definition { label type initialState styleSelectors bindings interactions parentId rootId items } attributes }
+      flat { id definition { label type initialState styleSelectors bindings interactions parentId rootId items } attributes }
       pages
       pageFolders { id name slug parentId }
       variables { name type value subValues { when value } }
@@ -108,7 +108,7 @@ const SPACE_QUERY = `query InitQuery($environment: String!, $revision: Int) {
       schema {
         settings
         variables { name type value subValues { value when } }
-        flat { id idRef definition { label type initialState styleSelectors bindings interactions parentId rootId items } attributes }
+        flat { id definition { label type initialState styleSelectors bindings interactions parentId rootId items } attributes }
       }
       style { cache }
     }

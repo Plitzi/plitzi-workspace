@@ -4,14 +4,11 @@ import {
   descendantCount,
   descendantIds,
   elementById,
-  elementRefOf,
   flowsFromInteractions,
   getPageElements,
-  isPageElement,
   nameOf,
   orderedChildren,
   pageFoldersOf,
-  pageRefOf,
   pageRefOfElement,
   slugRouteParams,
   spaceIndex,
@@ -62,7 +59,7 @@ const slotClasses = (selectors: Record<string, string>): Record<string, string[]
 
 export const pageSummariesToAI = (schema: Schema): AIPageSummary[] =>
   getPageElements(schema).map(page => ({
-    ref: pageRefOf(page),
+    ref: page.id,
     label: nameOf(page),
     slug: strOr(page.attributes.slug) ?? '',
     default: page.attributes.default === true,
@@ -115,7 +112,7 @@ const skeletonNode = (schema: Schema, el: Element, style?: Style): AISkeletonNod
   const slots = slotClasses(el.definition.styleSelectors);
 
   return {
-    ref: elementRefOf(el),
+    ref: el.id,
     type: el.definition.type,
     label: el.definition.label,
     subType: strOr(el.attributes.subType),
@@ -131,7 +128,7 @@ export const pageSkeletonToAI = (schema: Schema, pageEl: Element, style?: Style)
   const slug = strOr(pageEl.attributes.slug) ?? '';
 
   return {
-    ref: pageRefOf(pageEl),
+    ref: pageEl.id,
     label: nameOf(pageEl),
     slug,
     default: pageEl.attributes.default === true,
@@ -189,7 +186,7 @@ export const pageStylesToAI = (schema: Schema, style: Style, pageEl: Element): A
     }
   }
 
-  return { ref: pageRefOf(pageEl), definitions, globalStyles };
+  return { ref: pageEl.id, definitions, globalStyles };
 };
 
 // --- Detail (on demand): one element with its props and style. ---
@@ -297,15 +294,15 @@ export const elementDetailToAI = (schema: Schema, el: Element, style?: Style): A
   const slots = slotClasses(el.definition.styleSelectors);
 
   const detail: AIElementDetail = {
-    ref: elementRefOf(el),
+    ref: el.id,
     type: el.definition.type,
     subType: strOr(el.attributes.subType),
     label: el.definition.label,
     pageRef: pageRefOfElement(schema, el),
-    parentRef: parent ? (isPageElement(schema, parent) ? pageRefOf(parent) : elementRefOf(parent)) : undefined,
+    parentRef: parent?.id,
     props: propsOf(el),
     style: { base, slots },
-    childRefs: children.length > 0 ? children.map(elementRefOf) : undefined
+    childRefs: children.length > 0 ? children.map(child => child.id) : undefined
   };
 
   // Only when it is set: an absent runtime IS 'shared', and reporting that on every element would bury the one

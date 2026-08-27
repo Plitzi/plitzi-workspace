@@ -8,7 +8,7 @@ import { produce } from 'immer';
 import { useCallback, useEffect, useMemo, useState, Fragment } from 'react';
 
 import getSourcesByElementId from '@plitzi/sdk-elements/dataSource/getSourcesByElementId';
-import { generateID } from '@plitzi/sdk-shared/helpers/utils';
+import { positionalElementId } from '@plitzi/sdk-schema/helpers/elementId';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { StyleBindingsAllowed } from '@plitzi/sdk-shared/style/styleConstants';
 
@@ -46,10 +46,13 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
 
   const handleClickAddBinding = useCallback(
     (category: BindingCategory) => () => {
+      // A binding id is element-local — nothing outside this element ever names one — so it is minted from its
+      // category and only has to dodge the bindings already on this element.
+      const taken = new Set(Object.values(bindings ?? {}).flatMap(list => list.map(binding => binding.id)));
       setBindingFormValues(state => ({
         ...state,
         [category]: {
-          id: generateID(),
+          id: positionalElementId(category, candidate => taken.has(candidate)),
           to: '',
           source: '',
           transformers: [],
@@ -58,7 +61,7 @@ const DataSourceBinding = ({ id = '', bindings, element, onChange }: DataSourceB
         }
       }));
     },
-    []
+    [bindings]
   );
 
   const handleClickUpdateBinding = useCallback(

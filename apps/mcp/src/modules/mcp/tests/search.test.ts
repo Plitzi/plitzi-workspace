@@ -61,8 +61,8 @@ describe('mcp-ai search pagination', () => {
         id: ref,
         attributes: { subType: 'div', title: 'Box' },
         definition: {
-          rootId: 'page1',
-          parentId: 'page1',
+          rootId: 'home',
+          parentId: 'home',
           label: 'Container',
           type: 'container',
           items: [],
@@ -71,7 +71,7 @@ describe('mcp-ai search pagination', () => {
       };
     }
 
-    (flat.page1 as { definition: { items: string[] } }).definition.items = items;
+    (flat.home as { definition: { items: string[] } }).definition.items = items;
 
     return space;
   };

@@ -33,7 +33,7 @@ describe('AST processTwig — asRaw', () => {
 });
 
 describe('AST processTwig — hyphenated source tokens', () => {
-  it('resolves a hyphenated <type>_<idRef> token', () => {
+  it('resolves a hyphenated <type>_<id> token', () => {
     expect(
       processTwig('X {{ apiContainer_products-api.data.name }} Y', {
         'apiContainer_products-api': { data: { name: 'hello' } }

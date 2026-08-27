@@ -12,7 +12,7 @@ import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring/builder
  *
  * A global callback registers under a fixed module id — `space`, `state`, `navigation`, `auth`, `actions` — and NOT
  * under the element hosting the flow: the runtime resolves one as `callbacksAvailables[elementId][action]` (see
- * `InteractionsHelper`), so a node that stored the host element's idRef here would resolve to nothing and the flow
+ * `InteractionsHelper`), so a node that stored the host element's id here would resolve to nothing and the flow
  * would silently do nothing. That is what `source` below is for.
  *
  * Gathered rather than mirrored. This file used to be a hand-kept copy of what the sources declared, in another

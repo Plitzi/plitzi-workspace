@@ -21,7 +21,7 @@ import type { Operation } from './operations';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
-// The idRef of the throwaway host page every render is authored into. Elements/definitions target it via
+// The id of the throwaway host page every render is authored into. Elements/definitions target it via
 // `pageRef: "render"`; it is the tree root the offline SDK mounts. Kept stable so the tool description can name it.
 const HOST_PAGE_REF = 'render';
 
@@ -32,7 +32,6 @@ const seedSpace = (): Space => {
   space.schema.definition.name = 'Widget';
   space.schema.flat[HOST_PAGE_REF] = {
     id: HOST_PAGE_REF,
-    idRef: HOST_PAGE_REF,
     attributes: { slug: '', name: 'Render', default: true },
     definition: { rootId: HOST_PAGE_REF, label: 'Page', type: 'page', items: [], styleSelectors: { base: '' } }
   };

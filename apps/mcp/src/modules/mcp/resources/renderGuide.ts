@@ -403,7 +403,7 @@ The widget runs the live SDK, so beyond static layout it can fetch data and resp
 \`ref\`, just like styling. (Full reference: **plitzi://guide** — sections Data bindings and Interactions.)
 
 ### Fetch data — a provider + a binding
-An \`apiContainer\` fetches at runtime and exposes the result as the source **\`apiContainer_<idRef>.data\`**, visible
+An \`apiContainer\` fetches at runtime and exposes the result as the source **\`apiContainer_<id>.data\`**, visible
 to its **DESCENDANTS only** — the bound element must live inside the container's subtree. \`upsertBinding\` then
 connects that source to a descendant's field.
 
@@ -419,7 +419,7 @@ connects that source to a descendant's field.
 }
 \`\`\`
 - \`category\`: \`"attributes"\` (a prop such as \`content\`/\`src\`), \`"style"\` (a CSS value) or \`"initialState"\`.
-- \`binding.to\` is the target field; \`binding.source\` is the \`<type>_<idRef>.path\` into the provider's data.
+- \`binding.to\` is the target field; \`binding.source\` is the \`<type>_<id>.path\` into the provider's data.
 - \`mockData\` on the provider is builder-only — set a real \`query\` for the widget to actually fetch.
 
 ### React to events — an interaction flow

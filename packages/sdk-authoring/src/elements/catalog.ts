@@ -50,10 +50,10 @@ export const elementTypeNames: string[] = Object.keys(elementCatalog);
 /**
  * Which types publish a data source, and under what name.
  *
- * A source is `<sourceType>_<idRef>`, and only the idRef half is the author's. The other half belongs to the
+ * A source is `<sourceType>_<id>`, and only the id half is the author's. The other half belongs to the
  * element and is not always the word the author can see: a `form` publishes under `apiContainer`. Assembled by
  * hand that is a binding that resolves to nothing with nothing reporting it, so the authoring surface resolves it
- * from here instead — an author names the idRef and the prefix is looked up.
+ * from here instead — an author names the element and the prefix is looked up.
  *
  * Derived from the declarations, which the components themselves register under, so there is no second list to
  * keep in step with the runtime.

@@ -8,7 +8,7 @@ import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring/builder
  *
  * Three things go wrong when a step is written as a literal, and all three are silent. The `type` and the `on`
  * have to agree — a global callback registers under its SOURCE MODULE (`state`, `auth`, `actions`), an element
- * callback under an element's idRef, and a utility under nothing at all — so a step that names the wrong one
+ * callback under an element's id, and a utility under nothing at all — so a step that names the wrong one
  * resolves to no function and the flow simply stops doing anything. There are two different `setState`s, one
  * global and one per element, with different params. And an invented param name is dropped on the way in.
  *

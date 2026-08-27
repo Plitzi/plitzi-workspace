@@ -4,7 +4,7 @@ import { get, set, omit, capitalize } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { generateID } from '@plitzi/sdk-shared/helpers/utils';
+import { positionalElementId } from '@plitzi/sdk-schema/helpers/elementId';
 
 import WorkflowContext from './WorkflowContext';
 
@@ -41,19 +41,20 @@ const WorkflowContextProvider = ({
 
   const addNode = useCallback(
     (nodeType: ElementInteraction['type'], siblingNodeId: string = '', flowId: string = '') => {
-      const id = `node_${generateID()}`;
+      const preset =
+        nodeType === 'trigger' && defaultTrigger
+          ? nodeDefinitions?.find(definition => definition.type === 'trigger' && definition.action === defaultTrigger)
+          : undefined;
+      // A step's output is addressed as `node_<id>` from every later step in the flow, so the id is worth reading:
+      // `node_navigate-1` beats a hex handle in a twig token. Unique within this flow, which is the scope that
+      // resolves it.
+      const id = `node_${positionalElementId(preset?.action ?? nodeType, candidate => `node_${candidate}` in nodesRef.current)}`;
       onChange(
         produce(nodesRef.current, draft => {
           if (siblingNodeId && !(draft[siblingNodeId] as ElementInteraction | undefined)) {
             return;
           }
 
-          const preset =
-            nodeType === 'trigger' && defaultTrigger
-              ? nodeDefinitions?.find(
-                  definition => definition.type === 'trigger' && definition.action === defaultTrigger
-                )
-              : undefined;
           const presetParams = Object.keys(preset?.params ?? {}).reduce(
             (acum, key) => ({ ...acum, [key]: get(preset?.params, `${key}.defaultValue`, '') }),
             {}
