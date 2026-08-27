@@ -1,0 +1,22 @@
+{
+  "name": "@plitzi/example-cloud-space",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Server-render a space that lives in Plitzi, from a server that is not Plitzi's.",
+  "type": "module",
+  "scripts": {
+    "start": "node --import tsx src/main.ts",
+    "start:dev": "tsx watch src/main.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@plitzi/sdk-server": "workspace:*",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typescript": "^6.0.3"
+  }
+}

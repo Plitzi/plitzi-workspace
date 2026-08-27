@@ -2,9 +2,11 @@ import { useCallback, use, useMemo } from 'react';
 
 import { useCommonStoreSetter } from '@plitzi/sdk-shared/store';
 
+import { stateCallbacks } from './callbacks';
+import { toInteractionCallbacks } from '../../authoring/builder';
 import InteractionsContext from '../../InteractionsContext';
 
-import type { InteractionCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
+import type { InteractionCallbackParamValues } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type StateInteractionsProps = {
@@ -20,7 +22,10 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
       const { key, type } = params;
       let { value } = params;
       if (type === 'boolean') {
-        value = value === 'true';
+        // The picker in the builder writes the WORD, and a bound or interpolated value arrives as whatever it
+        // already was — a step reading `{{ someAction.output.done }}` hands over a real boolean. Reading only the
+        // word turned every one of those into `false`, which is the answer that looks like it worked.
+        value = value === true || value === 'true';
       } else if (type === 'number') {
         value = parseInt(value as string, 10);
       }
@@ -35,51 +40,15 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
   }, [setState]);
 
   const interactionCallbacks = useMemo(
-    () => ({
-      setState: {
-        action: 'setState',
-        title: 'Set State',
-        type: 'globalCallback',
-        callback: handleSetState,
-        preview: {},
-        params: {
-          key: { defaultValue: '', type: 'text' },
-          type: {
-            defaultValue: undefined,
-            type: 'select',
-            options: [
-              { value: 'boolean', label: 'True / False' },
-              { value: 'number', label: 'Numeric' },
-              { value: 'text', label: 'Text' }
-            ]
-          },
-          value: {
-            defaultValue: undefined,
-            type: params => (params.type === 'boolean' ? 'select' : 'text'),
-            when: params => !!params.type,
-            options: [
-              { value: 'true', label: 'True' },
-              { value: 'false', label: 'False' }
-            ]
-          }
-        }
-      } satisfies InteractionCallback<{ key: string; type: string; value: string }>,
-      clearState: {
-        action: 'clearState',
-        title: 'Clear State',
-        type: 'globalCallback',
-        callback: handleClearState,
-        preview: {},
-        params: {}
-      }
-    }),
+    () =>
+      toInteractionCallbacks(stateCallbacks, {
+        setState: handleSetState,
+        clearState: handleClearState
+      }),
     [handleSetState, handleClearState]
   );
 
-  useInteractions({
-    id: 'state',
-    callbacks: interactionCallbacks as unknown as Record<string, InteractionCallback>
-  });
+  useInteractions({ id: 'state', callbacks: interactionCallbacks });
 
   return children;
 };

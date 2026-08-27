@@ -1,5 +1,13 @@
 /** Static declaration for Custom: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { CustomProps } from './Custom';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type CustomAttributes = AuthorableAttributes<CustomProps>;
+
+const declaration = elementDeclaration<CustomAttributes>()({
   type: 'custom',
   content: {
     attributes: {
@@ -13,7 +21,7 @@ const declaration = {
     definition: {
       label: 'Custom',
       type: 'custom',
-      description: '',
+      description: 'A custom element slot whose behaviour is supplied by a host/plugin component.',
       bindings: {},
       styleSelectors: {
         base: ''
@@ -51,6 +59,6 @@ const declaration = {
     },
     settings: {}
   }
-};
+});
 
 export default declaration;

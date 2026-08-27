@@ -134,7 +134,7 @@ Tres cosas que se llevan por delante a todo el mundo el primer día:
    diseño, no un fallo — ver la documentación de auth.
 
 El modelo completo — los cinco tipos de credencial, RBAC, binding por dominio, iframes, entornos y
-self-hosting — está en [RFC 0010](../rfc/0010-unified-auth-and-rbac.md) (en inglés) y, como lectura con
+self-hosting — está documentado en `docs/auth/` del repositorio del servidor y, como lectura con
 diagramas, en `docs/auth/ecosystem.html` del repo del servidor (ábrelo en el navegador; es autocontenido).
 
 ## Portales y la estructura hermana
@@ -172,13 +172,18 @@ Antes de abrir un PR: `yarn typecheck`, `yarn lint` y tests para el comportamien
 | Ejecutar algo | [Primeros pasos](./getting-started.md) · [Configuración local](./local-setup.md) |
 | La organización en detalle | [Estructura del repositorio](./repository-structure.md) |
 | Comandos y estilo | [Desarrollo](./development.md) |
-| Por qué la arquitectura es como es | [RFCs](../rfc/README.md) — los marcados *Implemented* describen el sistema tal como está hoy |
+| Por qué la arquitectura es como es | La guía del área, y los comentarios junto al código que la aplica. Los [RFC](../rfc/README.md) sólo guardan lo que TODAVÍA no se ha construido |
 | Publicar un cambio | [Publicaciones](./releases.md) |
 | Conectar un CMS externo | [Conectores y elementos de contenido](./connectors.md) |
 | La API del servidor de páginas | [apps/server/README.md](../../apps/server/README.md) |
 | La superficie de IA | [apps/mcp/README.md](../../apps/mcp/README.md) |
 
-Empieza por los RFC implementados. El [0008](../rfc/0008-data-providers-and-collections-removal.md) explica cómo
-llegan los datos a un space, el [0009](../rfc/0009-cms-presentation-elements.md) cómo se presentan, y el
-[0010](../rfc/0010-unified-auth-and-rbac.md) quién tiene permiso para hacer nada de eso. Entre los tres cubren
-casi todo lo que, si no, se aprende a base de sorpresas.
+Empieza por las guías, en este orden: [Conectores y elementos de contenido](./connectors.md) para saber cómo
+llegan los datos a un space y cómo se presentan, [Server actions](../en/server-actions.md) (en inglés) para el
+trabajo que una página no puede hacer en el navegador, y `docs/auth/` del repositorio del servidor para quién
+tiene permiso para hacer nada de eso. Entre las tres cubren casi todo lo que, si no, se aprende a base de
+sorpresas.
+
+Un RFC que ya se ha implementado se borra en vez de quedarse leyéndose como un plan — el porqué está en
+[docs/rfc/README.md](../rfc/README.md), y el razonamiento de una decisión que ya está en `main` se recupera con
+`git log -- docs/rfc`.

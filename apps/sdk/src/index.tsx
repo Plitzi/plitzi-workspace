@@ -19,6 +19,7 @@ import RootElement from '@plitzi/sdk-elements/Element/RootElement';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { disableReactDevTools } from '@plitzi/sdk-shared/helpers/security';
 import baseUsePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import useRscRefresh from '@plitzi/sdk-shared/server/rsc/useRscRefresh';
 import { useSdkStore, DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
 
 import App from './App';
@@ -86,14 +87,20 @@ const withDerivedAnalytics = (params: PlitziSdkProps): PlitziSdkProps => {
 export function render(
   widgetContainer: string,
   params = {} as PlitziSdkProps,
-  plugins: Record<
-    string,
-    { component: ComponentPlugin; props?: Record<string, unknown>; clientOnly?: boolean }
-  > = {},
+  plugins: Record<string, { component: ComponentPlugin; props?: Record<string, unknown>; clientOnly?: boolean }> = {},
   debugMode = false,
   ssrMode = false
 ) {
   const renderParams = withDerivedAnalytics(params);
+  /**
+   * Two ways to authorize the dev tools, and the params win.
+   *
+   * The positional argument is what the server-rendered bootstrap passes, because at that point the page's own
+   * data is one interpolated blob it cannot add a key to. Everybody else writes `debugMode` beside the rest of
+   * the options — it is on `PlitziSdkProps`, `<PlitziSdk debugMode />` honours it, and a `render()` that quietly
+   * dropped it would be the same option meaning two different things depending on which door you came through.
+   */
+  const debugAuthorized = renderParams.debugMode ?? debugMode;
 
   const Widget = ({ isHydrating = false }: { isHydrating?: boolean }) => {
     // A plugin the server did not render has no markup in the document being hydrated, so mounting it on the first
@@ -103,7 +110,7 @@ export function render(
     useEffect(() => setHydrated(true), []);
 
     const pluginKeys = Object.keys(plugins).filter(key => hydrated || !plugins[key].clientOnly);
-    if (process.env.NODE_ENV === 'production' && !debugMode) {
+    if (process.env.NODE_ENV === 'production' && !debugAuthorized) {
       disableReactDevTools();
     }
 
@@ -118,7 +125,7 @@ export function render(
     return (
       <App
         {...renderParams}
-        debugMode={debugMode}
+        debugMode={debugAuthorized}
         isHydrating={isHydrating}
         onInitStateManager={handleInitStateManager}
         onInitEventBridge={handleInitEventBridge}
@@ -231,7 +238,11 @@ export {
   PluginRemote,
   ReplicaProvider,
   useElement,
-  useRscData
+  useRscData,
+  // The other half of `useRscData`. An element whose data is resolved on the server could read the payload and had
+  // no way to ask for a fresh one — so anything that has to keep up with a feed had to fetch it itself from the
+  // browser, which is the whole thing a server-resolved element exists to avoid.
+  useRscRefresh
 };
 
 export type {

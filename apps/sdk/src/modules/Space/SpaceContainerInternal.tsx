@@ -1,6 +1,7 @@
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback, use, useMemo } from 'react';
 
+import { spaceCallbacks, toInteractionCallback } from '@plitzi/sdk-interactions/authoring';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 
 import type { ToastTypeOptions, ToastPosition } from '@plitzi/plitzi-ui/Toast';
@@ -42,64 +43,13 @@ const SpaceContainerInternal = ({ children }: SpaceContainerInternalProps) => {
     [addToast]
   );
 
-  const interactionCallbacks = useMemo(
+  const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(
     () => ({
-      addNotification: {
-        title: 'Add Notification',
-        action: 'addNotification',
-        type: 'globalCallback',
-        callback: handleAddNotification,
-        preview: {},
-        params: {
-          content: {
-            label: 'Content',
-            defaultValue: 'Content',
-            type: 'textarea'
-          },
-          placement: {
-            label: 'Placement',
-            defaultValue: 'top-right',
-            type: 'select',
-            options: [
-              { value: 'top-right', label: 'Top Right' },
-              { value: 'top-center', label: 'Top Center' },
-              { value: 'top-left', label: 'Top Left' },
-              { value: 'bottom-right', label: 'Bottom Right' },
-              { value: 'bottom-center', label: 'Bottom Center' },
-              { value: 'bottom-left', label: 'Bottom Left' }
-            ]
-          },
-          appeareance: {
-            label: 'Appeareance',
-            defaultValue: 'success',
-            type: 'select',
-            options: [
-              { value: 'success', label: 'Success' },
-              { value: 'danger', label: 'Danger' },
-              { value: 'warning', label: 'Warning' },
-              { value: 'info', label: 'Info' }
-            ]
-          },
-          autoDismiss: {
-            label: 'Auto Dismiss',
-            defaultValue: true,
-            canBind: false,
-            type: 'boolean'
-          },
-          autoDismissTimeout: {
-            label: 'Auto Dismiss Timeout',
-            defaultValue: 5000,
-            type: 'text',
-            when: params => params.autoDismiss
-          }
-        }
-      } satisfies InteractionCallback<{
-        content: string;
-        placement: string;
-        appeareance: string;
-        autoDismiss: boolean;
-        autoDismissTimeout?: number;
-      }>
+      addNotification: toInteractionCallback(
+        'addNotification',
+        spaceCallbacks.addNotification,
+        handleAddNotification as InteractionCallback['callback']
+      )
     }),
     [handleAddNotification]
   );

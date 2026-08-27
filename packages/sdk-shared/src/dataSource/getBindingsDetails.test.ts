@@ -58,6 +58,23 @@ describe('getBindingsDetails', () => {
     expect(result.definition.initialState?.visibility).toBe(true);
   });
 
+  /**
+   * The end of the chain `hiddenWhen` authors, and the part that is easy to get wrong twice over: the pipeline
+   * writes `false` only because it checks the TYPE before truthiness, and `isVisible` hides only on `false` or
+   * `"false"`. A transformer that returned the string "0", or a pipeline that dropped a falsy result, would leave
+   * the element on screen with nothing reporting it.
+   */
+  it('hides an element when a `not` transformer inverts a true source', () => {
+    const element = makeElement({
+      initialState: [
+        binding({ source: 'variables.found', to: 'visibility', transformers: [{ action: 'not', params: {} }] })
+      ]
+    });
+
+    expect(getBindingsDetails({ variables: { found: true } }, element).definition.initialState?.visibility).toBe(false);
+    expect(getBindingsDetails({ variables: { found: false } }, element).definition.initialState?.visibility).toBe(true);
+  });
+
   it('skips a binding whose `when` evaluates to false and applies it when true', () => {
     const when = {
       combinator: 'and',

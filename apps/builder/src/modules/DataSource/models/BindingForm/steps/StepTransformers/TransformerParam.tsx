@@ -4,9 +4,9 @@ import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import Input from '@plitzi/plitzi-ui/Input';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
-import { use, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
@@ -38,7 +38,7 @@ const TransformerParam = ({
   disabled = false,
   onChange
 }: TransformerParamProps) => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = useTheme();
 
   const handleChangeText = useCallback((value: string) => onChange?.(index, id, value), [onChange, index, id]);
 
@@ -138,7 +138,7 @@ const TransformerParam = ({
           disabled={disabled}
           value={value as string}
           label={label}
-          theme={theme === 'dark' ? 'dark' : 'light'}
+          theme={resolvedTheme}
           mode="text"
           autoComplete={fieldsDataSource}
           lineWrapping

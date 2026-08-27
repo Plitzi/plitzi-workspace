@@ -45,7 +45,20 @@
 
       // `renderMode: 'raw'` renders into this document. Without it the SDK uses its default, an iframe —
       // the safe choice when a space lands on a page it knows nothing about, but here the page is ours.
-      render('plitzi', { offlineMode: true, offlineData, environment: 'main', renderMode: 'raw' });
+      //
+      // `debugMode` is the page AUTHORIZING the dev tools — the badge in the corner, and shift+alt+D (or
+      // shift+F12) to open the panel: logs, the store, the elements, the variables, what the server rendered.
+      // A published site leaves it out, and then no visitor can reach any of it.
+      render('plitzi', {
+        offlineMode: true,
+        offlineData,
+        environment: 'main',
+        renderMode: 'raw',
+        debugMode: true,
+        // The panel lives in a shadow root, so it loads its own stylesheet rather than inheriting the page's.
+        // With no bundler to resolve that path, the host is the one who knows where the SDK's assets are served.
+        sdkDevToolsStylePath: '/sdk-assets/plitzi-sdk-devtools.css'
+      });
     </script>
   </body>
 </html>

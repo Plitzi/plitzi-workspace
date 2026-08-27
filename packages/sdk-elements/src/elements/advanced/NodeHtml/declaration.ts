@@ -1,5 +1,13 @@
 /** Static declaration for NodeHtml: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { NodeHtmlProps } from './NodeHtml';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type NodeHtmlAttributes = AuthorableAttributes<NodeHtmlProps>;
+
+const declaration = elementDeclaration<NodeHtmlAttributes>()({
   type: 'nodeHtml',
   content: {
     attributes: {
@@ -8,7 +16,7 @@ const declaration = {
     definition: {
       label: 'Html Node',
       type: 'nodeHtml',
-      description: '',
+      description: 'A single raw HTML tag with custom attributes.',
       items: [],
       bindings: {},
       styleSelectors: {
@@ -60,6 +68,6 @@ const declaration = {
     },
     settings: {}
   }
-};
+});
 
 export default declaration;

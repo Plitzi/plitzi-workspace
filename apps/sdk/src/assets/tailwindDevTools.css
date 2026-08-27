@@ -2,7 +2,16 @@
 
 @config '../../tailwind.devtools.config.js';
 
-@custom-variant dark (&:where(.dark, .dark *));
+/**
+ * `:is`, not the `:where` Tailwind's own snippet uses.
+ *
+ * This stylesheet is the dev-tools build followed by plitzi-ui's, and plitzi-ui ships the same plain utilities
+ * (`bg-white`, `bg-gray-50`, `text-zinc-800`) for its own components. `:where` contributes no specificity, so
+ * every one of those beat the dark rule sitting above it by source order alone — the panel kept its light
+ * background under a dark theme. `:is` puts the dark rules a class ahead, which is what plitzi-ui's own dark
+ * variant already does.
+ */
+@custom-variant dark (&:is(.dark, .dark *));
 
 @layer base {
   .dark {

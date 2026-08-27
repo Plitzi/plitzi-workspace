@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node --import tsx src/main.ts",
+    "start:dev": "tsx watch --exclude \".sdk-plugins/**\" src/main.ts",
     "inspector": "yarn dlx @modelcontextprotocol/inspector@latest",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

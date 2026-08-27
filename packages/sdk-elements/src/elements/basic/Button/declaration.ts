@@ -1,5 +1,13 @@
 /** Static declaration for Button: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { ButtonProps } from './Button';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type ButtonAttributes = AuthorableAttributes<ButtonProps>;
+
+const declaration = elementDeclaration<ButtonAttributes>()({
   type: 'button',
   content: {
     attributes: {
@@ -11,6 +19,9 @@ const declaration = {
     definition: {
       label: 'Button',
       type: 'button',
+      description:
+        'A clickable button. On its own it only renders; wire an interaction flow (trigger onClick → callbacks) to make ' +
+        'it DO something.',
       items: [],
       bindings: {},
       styleSelectors: {
@@ -110,6 +121,6 @@ const declaration = {
     },
     settings: {}
   }
-};
+});
 
 export default declaration;

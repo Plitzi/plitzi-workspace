@@ -59,6 +59,47 @@ const base = {
 };
 
 describe('resolveRscData', () => {
+  /**
+   * The budget stops the WORK, not only the wait for it.
+   *
+   * A race leaves its loser running: an action went on to its own timeout — holding a run slot and an outbound
+   * connection — for a page that had already been answered without it.
+   */
+  it('cancels an element that ran out of its budget', async () => {
+    let seen: AbortSignal | undefined;
+    const resolveElement = vi.fn<RscElementResolver>().mockImplementation(({ signal }) => {
+      seen = signal;
+
+      return new Promise(() => {
+        // Never settles: the budget is the only thing that can end this one.
+      });
+    });
+
+    const result = await resolveRscData({
+      ...base,
+      schema: buildSchema(),
+      req: request('/'),
+      resolveElement,
+      timeoutMs: 10
+    });
+
+    expect(seen?.aborted, 'the work was left running for a page nobody is waiting on').toBe(true);
+    expect(result.serverData).toEqual({});
+  });
+
+  it('leaves the signal alone for an element that answered in time', async () => {
+    let seen: AbortSignal | undefined;
+    const resolveElement = vi.fn<RscElementResolver>().mockImplementation(({ signal }) => {
+      seen = signal;
+
+      return Promise.resolve({ ok: true });
+    });
+
+    await resolveRscData({ ...base, schema: buildSchema(), req: request('/'), resolveElement });
+
+    expect(seen?.aborted).toBe(false);
+  });
+
   it('resolves only the server elements of the matched page', async () => {
     const resolveElement = vi
       .fn<RscElementResolver>()

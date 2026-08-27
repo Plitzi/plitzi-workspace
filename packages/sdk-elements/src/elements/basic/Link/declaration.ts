@@ -1,16 +1,27 @@
 /** Static declaration for Link: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { LinkProps } from './Link';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type LinkAttributes = AuthorableAttributes<LinkProps>;
+
+const declaration = elementDeclaration<LinkAttributes>()({
   type: 'link',
   content: {
     attributes: {
       href: '#',
       target: 'self',
       mode: 'page',
-      linkContext: undefined
+      label: ''
     },
     definition: {
       label: 'Link',
       type: 'link',
+      description:
+        'Navigation. Moves the user between pages of the site or to an external URL (its `mode`/`href` decide which). Use ' +
+        'this to go page-to-page rather than a button + interaction.',
       items: [],
       bindings: {},
       styleSelectors: {
@@ -53,6 +64,6 @@ const declaration = {
     },
     settings: {}
   }
-};
+});
 
 export default declaration;

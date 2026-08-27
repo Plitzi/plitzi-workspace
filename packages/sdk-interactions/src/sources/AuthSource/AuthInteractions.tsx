@@ -2,6 +2,8 @@ import { use, useCallback, useMemo } from 'react';
 
 import { AuthContext } from '@plitzi/sdk-auth';
 
+import { authCallbacks } from './callbacks';
+import { toInteractionCallbacks } from '../../authoring/builder';
 import InteractionsContext from '../../InteractionsContext';
 
 import type { InteractionCallback } from '@plitzi/sdk-shared';
@@ -32,87 +34,17 @@ const AuthInteractions = ({ children, authProvider = 'basic' }: AuthInteractions
   // every provider implements them. Gating on the name `basic` left spaces on a registered provider with no way to
   // sign in or out from an interaction.
   const interactionCallbacks = useMemo((): Record<string, InteractionCallback> => {
+    // A space with no auth provider offers no auth actions at all, rather than actions that cannot work.
     if (authProvider === '') {
       return {};
     }
 
-    return {
-      login: {
-        action: 'authLogin',
-        title: 'Auth Login',
-        type: 'globalCallback',
-        callback: handleLogin,
-        params: {
-          mode: {
-            label: 'Mode',
-            canBind: false,
-            type: 'select',
-            defaultValue: 'normal',
-            options: [
-              { label: 'Token', value: 'token' },
-              { label: 'User and Password', value: 'normal' }
-            ]
-          },
-          username: {
-            type: 'text',
-            defaultValue: '',
-            when: params => params.mode === 'normal'
-          },
-          password: {
-            type: 'text',
-            defaultValue: '',
-            when: params => params.mode === 'normal'
-          },
-          token: {
-            type: 'text',
-            defaultValue: '',
-            when: params => params.mode === 'token'
-          }
-        },
-        preview: {
-          errors: { username: '', password: '', token: '' },
-          success: '',
-          access_token: '',
-          expires_at: '',
-          details: {
-            id: '',
-            username: '',
-            email: '',
-            verified: '',
-            permissions: ''
-          }
-        }
-      },
-      refreshDetails: {
-        action: 'authRefreshDetails',
-        title: 'Auth Refresh Details',
-        type: 'globalCallback',
-        callback: handleRefresh,
-        params: {},
-        preview: {
-          errors: '',
-          success: '',
-          access_token: '',
-          expires_at: '',
-          details: {
-            id: '',
-            username: '',
-            email: '',
-            roles: '',
-            permissions: '',
-            verified: ''
-          }
-        }
-      },
-      logout: {
-        action: 'authLogout',
-        title: 'Auth Logout',
-        type: 'globalCallback',
-        callback: handleLogout,
-        preview: {},
-        params: {}
-      }
-    };
+    // Keyed by the catalog, so the name a document writes and the name registered here cannot come apart.
+    return toInteractionCallbacks(authCallbacks, {
+      login: handleLogin,
+      refreshDetails: handleRefresh,
+      logout: handleLogout
+    });
   }, [handleLogin, handleLogout, handleRefresh, authProvider]);
 
   useInteractions({ id: 'auth', callbacks: interactionCallbacks });

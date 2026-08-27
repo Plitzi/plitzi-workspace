@@ -47,7 +47,7 @@ const delayTime: InteractionCallback<{
 
     try {
       method = method.toUpperCase();
-      const headers: { [key: string]: string } = {};
+      const headers: { [key: string]: string } = { 'Content-Type': 'application/json' };
       if (authorizationToken) {
         headers.Authorization = `Bearer ${authorizationToken}`;
       }
@@ -60,14 +60,18 @@ const delayTime: InteractionCallback<{
         }
       });
 
-      const formData = new FormData() as FormData | undefined;
-      Object.entries(body).forEach(([key, value]) => {
-        formData?.append(key, value);
-      });
-
       const fetchOptions: RequestInit = { method, headers, credentials };
-      if (!method || method.toLowerCase() !== 'get') {
-        fetchOptions.body = formData;
+      if (method && !['get', 'delete'].includes(method.toLowerCase())) {
+        if (headers['Content-Type'] === 'application/json') {
+          fetchOptions.body = JSON.stringify(body);
+        } else if (headers['Content-Type'] === 'multipart/form-data') {
+          const formData = new FormData() as FormData | undefined;
+          Object.entries(body).forEach(([key, value]) => {
+            formData?.append(key, value);
+          });
+
+          fetchOptions.body = formData;
+        }
       }
 
       const res = await fetch(url, fetchOptions);

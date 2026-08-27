@@ -112,6 +112,23 @@ const emptyConnection = (typename: string) => ({
 const handlers: Record<string, ((space: OfflineDataRaw) => unknown) | undefined> = {
   InitQuery: initQuery,
   SpaceConnectorsQuery: () => ({ data: { SpaceConnectors: emptyConnection('SpaceConnectorListType') } }),
+  /** A space with no server actions still has to ANSWER: the builder reads `.edges` off whatever comes back, and
+   *  the fallback acknowledgement gives it `true`. That crashed the panel's provider on boot — which took the
+   *  whole app down, since it mounts above the canvas. */
+  SpaceActionsQuery: () => ({ data: { SpaceActions: emptyConnection('SpaceActionListType') } }),
+  /** Same rule as the actions above, and the panel reads this one at boot too: a space with no credentials still
+   *  has to answer with a connection, because `true` is not something `.edges` can be read off. */
+  SpaceCredentialsQuery: () => ({ data: { SpaceCredentials: emptyConnection('SpaceCredentialListType') } }),
+  /** What the server can tell about an action without running it. Nothing is wrong with an offline space's
+   *  nothing, and the panel reads `.issues` off whatever comes back. */
+  SpaceCheckActionQuery: () => ({
+    data: { SpaceCheckAction: { valid: true, issues: [], __typename: 'SpaceActionCheck' } }
+  }),
+  /** The action feed, read by the panel whenever one is open. Same rule again: `.edges` off `true` is a crash. */
+  SpaceActionEventsQuery: () => ({ data: { SpaceActionEvents: emptyConnection('SpaceActionEventListType') } }),
+  /** The step catalog, which is SERVED rather than compiled in — so a mocked backend serves an empty one. A
+   *  builder with no tasks offers no server steps, which is exactly right for a run with no server behind it. */
+  SpaceActionTasksQuery: () => ({ data: { SpaceActionTasks: [] } }),
   SpaceDeploymentsQuery: () => ({
     data: {
       SpaceDeployments: {

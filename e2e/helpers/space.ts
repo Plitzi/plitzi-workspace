@@ -96,3 +96,17 @@ export const expectSpaceRendered = async (page: Page, data: OfflineDataRaw): Pro
   await expectSchemaRendered(page, data);
   await expectSpaceVisible(page);
 };
+
+/**
+ * The dev tools were authorized by the page, and their panel actually mounted.
+ *
+ * Every example here turns them on, because a reader following the docs should be able to open the store and the
+ * logs of the thing in front of them without editing it first. The panel renders into a SHADOW ROOT — which is
+ * also what makes this worth asserting rather than eyeballing: a stylesheet path the host got wrong shows up as
+ * an unstyled panel, and a `debugMode` the entry point dropped shows up as no shadow root at all.
+ */
+export const expectDevToolsAvailable = async (page: Page): Promise<void> => {
+  await expect
+    .poll(() => page.evaluate(() => [...document.querySelectorAll('*')].filter(node => node.shadowRoot).length))
+    .toBeGreaterThan(0);
+};

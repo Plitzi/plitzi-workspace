@@ -1,5 +1,5 @@
 import { envelope, jsonContents } from './envelope';
-import { BUILTIN_COMPONENTS } from '../catalogs';
+import { elementCatalog } from '../catalogs';
 
 import type { McpLog } from '../helpers';
 import type { ResourceEnvelope } from '../types';
@@ -38,14 +38,14 @@ type RenderTypeInfo = { label?: string; category?: string; description?: string 
 
 const renderTypes = (): { note: string; types: Record<string, RenderTypeInfo> } => {
   const types: Record<string, RenderTypeInfo> = {};
-  for (const [name, info] of Object.entries(BUILTIN_COMPONENTS)) {
-    if (info && info.category && RENDER_TYPE_CATEGORIES.has(info.category)) {
+  for (const [name, info] of Object.entries(elementCatalog)) {
+    if (RENDER_TYPE_CATEGORIES.has(info.category)) {
       types[name] = { label: info.label, category: info.category, description: info.description };
     }
   }
 
-  const rawHtml = BUILTIN_COMPONENTS[RENDER_RAW_HTML_TYPE];
-  if (rawHtml) {
+  if (Object.hasOwn(elementCatalog, RENDER_RAW_HTML_TYPE)) {
+    const rawHtml = elementCatalog[RENDER_RAW_HTML_TYPE];
     types[RENDER_RAW_HTML_TYPE] = {
       label: rawHtml.label,
       category: rawHtml.category,
@@ -426,7 +426,7 @@ connects that source to a descendant's field.
 \`upsertInteractionFlow\` attaches an ordered \`nodes\` list to an element; the FIRST node is a \`trigger\` (e.g.
 \`onClick\`), the rest run after it. Each following step is one of:
 - **\`globalCallback\`** (OMIT \`elementId\`) — a built-in app action: \`addNotification\` (\`params.content\`),
-  \`navigate\`, \`setState\` (\`key\`/\`type\`/\`value\`), \`authLogin\`/\`authLogout\`…
+  \`navigate\`, \`setState\` (\`key\`/\`type\`/\`value\`), \`login\`/\`logout\`…
 - **\`callback\`** (\`elementId\` = an element, defaults to the trigger's) — that ELEMENT's OWN callback: e.g. an
   \`apiContainer\` re-fetches, a \`form\` submits. Each type's own callback action names are in plitzi://guide.
 

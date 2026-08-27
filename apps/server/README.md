@@ -38,6 +38,115 @@ createServer({
 });
 ```
 
+## Your first space
+
+A page server needs a **space** to serve, and there are two ways to get one: export it from the Plitzi builder, or
+write it yourself. This is the second one, whole — one file, no account, no API key, no JSON:
+
+```ts
+// server.ts
+import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
+import { authorSpace, container, heading, link, text } from '@plitzi/sdk-server/authoring';
+
+/** A space is a tree, some CSS and a palette. Ids, class names and the breakpoint maps are derived from it. */
+const space = authorSpace({
+  name: 'My space',
+  permanentUrl: 'my-space',
+
+  variables: { color: { ink: { light: '#17171c', dark: '#fafafa', default: '#17171c' } } },
+
+  // Rules written once and named. An element reaches one with `class`.
+  classes: {
+    page: {
+      desktop: {
+        display: 'flex',
+        'flex-direction': 'column',
+        'align-items': 'center',
+        gap: '16px',
+        padding: '96px 24px',
+        'font-family': 'system-ui, sans-serif',
+        color: 'var(--ink)'
+      }
+    },
+    card: { desktop: { 'border-radius': '12px', border: '1px solid #e4e4e7', padding: '24px' } }
+  },
+
+  pages: [
+    {
+      name: 'Home',
+      slug: '',
+      class: 'page',
+      body: [
+        heading('Hello from my own server', { subType: 'h1' }),
+        container({
+          class: 'card',
+          children: [text('This page is a document. Nothing here was compiled.'), link({ href: '/about' })]
+        })
+      ]
+    },
+    { name: 'About', slug: 'about', class: 'page', body: [heading('About', { subType: 'h1' })] }
+  ]
+});
+
+/** Where the server gets a space from. Hand it the documents and it fills in the reads a page server needs; a
+ *  real deployment swaps this for adapters that hit its own database, and the server never learns the difference. */
+const server = createServer({
+  port: 3001,
+  devMode: true,
+  adapters: createJsonAdapters({ offlineData: space }),
+  logger: consoleLogger
+});
+
+server.listen(3001, '127.0.0.1');
+```
+
+```bash
+yarn add @plitzi/sdk-server react react-dom
+yarn tsx server.ts     # http://127.0.0.1:3001/
+```
+
+Both pages render server-side, with the CSS the space declared. `authorSpace` refuses to hand back a space that
+would not render — a CSS property the style editor could not read back, a class nothing declares, a binding
+pointing at an element that is not there — so a mistake is an error at the line that made it rather than a blank
+section in production.
+
+**Shorthands are fine.** `padding: '96px 24px'` and `border: '1px solid #e4e4e7'` above are expanded into the
+atomic longhands Plitzi's style editor reads back, so a space written the way anyone writes CSS still opens in the
+builder.
+
+Everything else — data on the server, sessions, an agent editing the space, work the server runs — is the same
+space with more declared in it. The full surface (element factories, bindings, flows, validation) is in
+**[Authoring spaces](https://github.com/plitzi/plitzi-workspace/blob/main/docs/en/authoring-spaces.md)**, and
+there are runnable versions of each step in
+[`examples/`](https://github.com/plitzi/plitzi-workspace/tree/main/examples).
+
+### Working with an agent
+
+This package ships an [Agent Skill](https://agentskills.io/) for authoring, because an agent in your project sees
+only what npm installed — not this repository. It teaches the declaration, the flat prop model, the binding and
+flow builders, and the mistakes the validator refuses, so an agent writes a space instead of reconstructing schema
+JSON from memory:
+
+```bash
+cp -R node_modules/@plitzi/sdk-server/skills/plitzi-authoring ~/.claude/skills/
+```
+
+It installs the same way into any agent that reads a `SKILL.md` (Claude Code, VS Code / Copilot, Codex, Gemini
+CLI, Cline, Goose). Everything it defers to is in the package too: every factory, spec field and step builder
+carries its documentation in the published `.d.ts`, so hovering a call or reading
+`node_modules/@plitzi/sdk-elements/dist/authoring/` answers what an attribute takes without leaving the project.
+
+### Already have a space?
+
+An export from the builder is a `{ schema, style }` JSON and goes in the same door:
+
+```ts
+adapters: createJsonAdapters({ offlineData: './space.json' })
+```
+
+`validateSpace({ schema, style })` from `@plitzi/sdk-server/authoring` answers whether one is servable before you
+serve it — worth running over anything that arrives as a file.
+
 ## Configuration
 
 | Option | Type | Default | Description |

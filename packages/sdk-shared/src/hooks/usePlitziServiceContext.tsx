@@ -9,8 +9,8 @@ import type {
   EventBridgeContextValue,
   InteractionsContextValue,
   PluginsContextValue,
-  SegmentsContextValue,
-  Theme
+  ColorScheme,
+  SegmentsContextValue
 } from '../types';
 import type { Context, ReactNode, RefObject } from 'react';
 
@@ -20,7 +20,8 @@ export type PlitziServiceContextValue<TEventBridge = any, TInteractions = any> =
     previewMode?: boolean;
     environment?: string;
     [key: string]: unknown;
-    theme: Theme;
+    /** Already resolved: an element paints in one of two schemes and has no use for the word `system`. */
+    theme: ColorScheme;
   };
   root: { baseElementId: string };
   utils: {

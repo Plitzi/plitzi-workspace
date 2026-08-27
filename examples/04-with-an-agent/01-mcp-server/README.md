@@ -4,6 +4,7 @@ A [Model Context Protocol](https://modelcontextprotocol.io) server an agent uses
 
 ```bash
 yarn start        # http://127.0.0.1:4005
+yarn start:dev    # the same, reloading on save, while you edit it
 yarn inspector    # the official MCP Inspector, point it at the URL above
 ```
 

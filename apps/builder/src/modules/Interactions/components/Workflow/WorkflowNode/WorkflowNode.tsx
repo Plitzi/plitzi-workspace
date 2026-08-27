@@ -11,12 +11,18 @@ import NodePreview from './NodePreview';
 import NodeWhen from './NodeWhen';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { ElementInteraction, InteractionCallbackParam, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
+import type {
+  ElementInteraction,
+  InteractionCallbackParam,
+  InteractionCallbackParamValues,
+  InteractionCallbackType
+} from '@plitzi/sdk-shared';
 
 export type WorkflowNodeProps = {
   id?: string;
   title?: string;
-  type?: 'trigger' | 'callback' | 'utility' | 'globalCallback';
+  // Shared union: server-action steps are `task` nodes, drawn like client ones.
+  type?: InteractionCallbackType;
   canDelete?: boolean;
   action?: string;
   elementId?: string;

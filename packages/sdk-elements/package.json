@@ -138,9 +138,36 @@
       "types": "./dist/authoring/index.d.ts",
       "import": "./dist/authoring/index.mjs"
     },
+    "./authoring/catalog": {
+      "types": "./dist/authoring/catalog.d.ts",
+      "import": "./dist/authoring/catalog.mjs"
+    },
+    "./authoring/declare": {
+      "types": "./dist/authoring/declare.d.ts",
+      "import": "./dist/authoring/declare.mjs"
+    },
+    "./authoring/element": {
+      "import": "./dist/authoring/element.mjs"
+    },
+    "./authoring/elementCallbacks": {
+      "types": "./dist/authoring/elementCallbacks.d.ts",
+      "import": "./dist/authoring/elementCallbacks.mjs"
+    },
+    "./authoring/elements": {
+      "types": "./dist/authoring/elements.d.ts",
+      "import": "./dist/authoring/elements.mjs"
+    },
     "./authoring/index": {
       "types": "./dist/authoring/index.d.ts",
       "import": "./dist/authoring/index.mjs"
+    },
+    "./authoring/plugins": {
+      "types": "./dist/authoring/plugins.d.ts",
+      "import": "./dist/authoring/plugins.mjs"
+    },
+    "./authoring/steps": {
+      "types": "./dist/authoring/steps.d.ts",
+      "import": "./dist/authoring/steps.mjs"
     },
     "./components/ElementAdvancedEditor": {
       "types": "./dist/components/ElementAdvancedEditor.d.ts",
@@ -310,6 +337,10 @@
       "types": "./dist/elements/basic/Dropdown/DropdownPopup/DropdownPopup.d.ts",
       "import": "./dist/elements/basic/Dropdown/DropdownPopup/DropdownPopup.mjs"
     },
+    "./elements/basic/Dropdown/DropdownPopup/declaration": {
+      "types": "./dist/elements/basic/Dropdown/DropdownPopup/declaration.d.ts",
+      "import": "./dist/elements/basic/Dropdown/DropdownPopup/declaration.mjs"
+    },
     "./elements/basic/Dropdown/DropdownPopup/index": {
       "types": "./dist/elements/basic/Dropdown/DropdownPopup/index.d.ts",
       "import": "./dist/elements/basic/Dropdown/DropdownPopup/index.mjs"
@@ -454,6 +485,22 @@
       "types": "./dist/elements/basic/Text/index.d.ts",
       "import": "./dist/elements/basic/Text/index.mjs"
     },
+    "./elements/basic/ThemeToggle": {
+      "types": "./dist/elements/basic/ThemeToggle/index.d.ts",
+      "import": "./dist/elements/basic/ThemeToggle/index.mjs"
+    },
+    "./elements/basic/ThemeToggle/ThemeToggle": {
+      "types": "./dist/elements/basic/ThemeToggle/ThemeToggle.d.ts",
+      "import": "./dist/elements/basic/ThemeToggle/ThemeToggle.mjs"
+    },
+    "./elements/basic/ThemeToggle/declaration": {
+      "types": "./dist/elements/basic/ThemeToggle/declaration.d.ts",
+      "import": "./dist/elements/basic/ThemeToggle/declaration.mjs"
+    },
+    "./elements/basic/ThemeToggle/index": {
+      "types": "./dist/elements/basic/ThemeToggle/index.d.ts",
+      "import": "./dist/elements/basic/ThemeToggle/index.mjs"
+    },
     "./elements/declarations": {
       "types": "./dist/elements/declarations.d.ts",
       "import": "./dist/elements/declarations.mjs"
@@ -469,6 +516,10 @@
     "./elements/form/Form/Settings": {
       "types": "./dist/elements/form/Form/Settings.d.ts",
       "import": "./dist/elements/form/Form/Settings.mjs"
+    },
+    "./elements/form/Form/declaration": {
+      "types": "./dist/elements/form/Form/declaration.d.ts",
+      "import": "./dist/elements/form/Form/declaration.mjs"
     },
     "./elements/form/Form/index": {
       "types": "./dist/elements/form/Form/index.d.ts",
@@ -489,6 +540,10 @@
     "./elements/form/FormControl/components/Label": {
       "types": "./dist/elements/form/FormControl/components/Label.d.ts",
       "import": "./dist/elements/form/FormControl/components/Label.mjs"
+    },
+    "./elements/form/FormControl/declaration": {
+      "types": "./dist/elements/form/FormControl/declaration.d.ts",
+      "import": "./dist/elements/form/FormControl/declaration.mjs"
     },
     "./elements/form/FormControl/hocs/withFieldValue": {
       "types": "./dist/elements/form/FormControl/hocs/withFieldValue.d.ts",
@@ -766,6 +821,10 @@
       "types": "./dist/elements/structure/List/ListItem/Settings.d.ts",
       "import": "./dist/elements/structure/List/ListItem/Settings.mjs"
     },
+    "./elements/structure/List/ListItem/declaration": {
+      "types": "./dist/elements/structure/List/ListItem/declaration.d.ts",
+      "import": "./dist/elements/structure/List/ListItem/declaration.mjs"
+    },
     "./elements/structure/List/ListItem/index": {
       "types": "./dist/elements/structure/List/ListItem/index.d.ts",
       "import": "./dist/elements/structure/List/ListItem/index.mjs"
@@ -870,6 +929,10 @@
       "types": "./dist/elements/structure/TabContainer/TabContainerBody/TabContainerBody.d.ts",
       "import": "./dist/elements/structure/TabContainer/TabContainerBody/TabContainerBody.mjs"
     },
+    "./elements/structure/TabContainer/TabContainerBody/declaration": {
+      "types": "./dist/elements/structure/TabContainer/TabContainerBody/declaration.d.ts",
+      "import": "./dist/elements/structure/TabContainer/TabContainerBody/declaration.mjs"
+    },
     "./elements/structure/TabContainer/TabContainerBody/index": {
       "types": "./dist/elements/structure/TabContainer/TabContainerBody/index.d.ts",
       "import": "./dist/elements/structure/TabContainer/TabContainerBody/index.mjs"
@@ -890,6 +953,10 @@
       "types": "./dist/elements/structure/TabContainer/TabContainerHeader/TabContainerHeader.d.ts",
       "import": "./dist/elements/structure/TabContainer/TabContainerHeader/TabContainerHeader.mjs"
     },
+    "./elements/structure/TabContainer/TabContainerHeader/declaration": {
+      "types": "./dist/elements/structure/TabContainer/TabContainerHeader/declaration.d.ts",
+      "import": "./dist/elements/structure/TabContainer/TabContainerHeader/declaration.mjs"
+    },
     "./elements/structure/TabContainer/TabContainerHeader/index": {
       "types": "./dist/elements/structure/TabContainer/TabContainerHeader/index.d.ts",
       "import": "./dist/elements/structure/TabContainer/TabContainerHeader/index.mjs"
@@ -905,6 +972,10 @@
     "./elements/structure/TabContainer/TabContainerItem/TabContainerItem": {
       "types": "./dist/elements/structure/TabContainer/TabContainerItem/TabContainerItem.d.ts",
       "import": "./dist/elements/structure/TabContainer/TabContainerItem/TabContainerItem.mjs"
+    },
+    "./elements/structure/TabContainer/TabContainerItem/declaration": {
+      "types": "./dist/elements/structure/TabContainer/TabContainerItem/declaration.d.ts",
+      "import": "./dist/elements/structure/TabContainer/TabContainerItem/declaration.mjs"
     },
     "./elements/structure/TabContainer/TabContainerItem/index": {
       "types": "./dist/elements/structure/TabContainer/TabContainerItem/index.d.ts",

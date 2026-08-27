@@ -1,5 +1,14 @@
 import type { AIElementDetail } from '../types';
-import type { ComponentCatalog, ConnectorEntry, Element, PageFolder, Schema, Style } from '@plitzi/sdk-shared';
+import type {
+  ActionEntry,
+  ActionTaskDescriptor,
+  ComponentCatalog,
+  ConnectorEntry,
+  Element,
+  PageFolder,
+  Schema,
+  Style
+} from '@plitzi/sdk-shared';
 
 /** The working view the tools read and mutate: the two Plitzi schemas (elements + style), which the platform
  *  stores and persists as separate documents (Space model / Style model), plus the space's `connectors` — a third
@@ -9,6 +18,11 @@ export interface Space {
   schema: Schema;
   style: Style;
   connectors: ConnectorEntry[];
+  /** The space's server actions — a fourth store, one row each, addressed by the identifier a step names. */
+  actions: ActionEntry[];
+  /** The server tasks this deployment can run. Read-only reference data like `catalog`, not persisted: it is what
+   *  the server has, not what the space owns, and an action authored against a task it lacks cannot run. */
+  actionTasks?: ActionTaskDescriptor[];
   catalog?: ComponentCatalog;
 }
 
@@ -18,6 +32,8 @@ export const cloneSpace = (space: Space): Space => ({
   schema: structuredClone(space.schema),
   style: structuredClone(space.style),
   connectors: structuredClone(space.connectors),
+  actions: structuredClone(space.actions),
+  ...(space.actionTasks ? { actionTasks: space.actionTasks } : {}),
   ...(space.catalog ? { catalog: space.catalog } : {})
 });
 
@@ -38,12 +54,17 @@ export const emptySpace = (): Space => ({
     variables: {},
     cache: ''
   },
-  connectors: []
+  connectors: [],
+  actions: []
 });
 
 /** A connector by the identifier a provider element stores in its `connector` attribute. */
 export const findConnectorEntry = (space: Space, ref: string): ConnectorEntry | undefined =>
   space.connectors.find(entry => entry.id === ref);
+
+/** An action by the identifier a `runServerAction` step stores. */
+export const findActionEntry = (space: Space, ref: string): ActionEntry | undefined =>
+  space.actions.find(entry => entry.id === ref);
 
 export const slugify = (value: string): string =>
   value

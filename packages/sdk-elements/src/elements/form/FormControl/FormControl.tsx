@@ -85,6 +85,10 @@ const FormControl = ({
 
   const { registerField, unregisterField } = form as Partial<FormContextValue>;
   const isCheck = ['checkbox', 'switch'].includes(subType);
+  // A hidden input has nothing to label, and the default label is a word rather than an empty string — so
+  // authoring one without remembering to blank it puts "Label" and a box on the page above a field nobody can
+  // see. The control itself is `display: none` in a real render; only the builder shows a placeholder for it.
+  const isHidden = subType === 'hidden';
 
   useEffect(() => {
     if (registerField) {
@@ -107,7 +111,7 @@ const FormControl = ({
         className
       )}
     >
-      {!isCheck && label && (
+      {!isCheck && !isHidden && label && (
         <Label
           targetInput={`${rootId}_${id}`}
           previewMode={previewMode}

@@ -365,9 +365,10 @@ const App = (props: AppProps) => {
           ? [
               tracingMiddleware<BuilderState>(),
               historyMw<BuilderState>({
-                // Neither element UI state nor who else is connected is document state: time-travelling them
-                // would replay other people's presence as if it were an edit.
-                shouldRecord: p => !p?.startsWith('runtime.elements') && !p?.startsWith('collaboration')
+                // None of these is document state: time-travelling presence would replay other people's cursors
+                // as if they were edits, and the theme mirror would make Undo flip the lights.
+                shouldRecord: p =>
+                  !p?.startsWith('runtime.elements') && !p?.startsWith('collaboration') && !p?.startsWith('theme')
               })
             ]
           : [])

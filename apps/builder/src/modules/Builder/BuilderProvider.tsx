@@ -1,6 +1,5 @@
 import { get, pick, set } from '@plitzi/plitzi-ui/helpers';
 import useStateMemo from '@plitzi/plitzi-ui/hooks/useStateMemo';
-import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { produce } from 'immer';
 import { useCallback, use, useMemo, useState, useEffect } from 'react';
 
@@ -27,7 +26,6 @@ import type {
   Style,
   DropPosition,
   BuilderNetworkContextValue,
-  StyleThemeMode,
   BuilderQueriesMap,
   BuilderMutationsMap
 } from '@plitzi/sdk-shared';
@@ -53,7 +51,6 @@ const BuilderProvider = ({
   const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
   const [baseContext, setBaseContext] = useStateMemo(() => ({ baseElementId: baseElementIdProp }), [baseElementIdProp]);
   const { componentDefinitions, getComponent } = use(ComponentContext);
-  const [theme, setTheme] = useStorage<StyleThemeMode>('builder-state.theme-builder', 'light', 'localStorage');
   const { baseElementId } = baseContext;
   const [multiPagesMode, setMultiPagesMode] = useState(false);
   const [[pages, elementHovered, elementSelected], , setElementHovered, setElementSelected] = useBuilderStore([
@@ -478,8 +475,6 @@ const BuilderProvider = ({
 
   const builderValue = useMemo(
     () => ({
-      theme,
-      setTheme,
       mode,
       schemaName,
       setMultiPagesMode,
@@ -497,14 +492,12 @@ const BuilderProvider = ({
       builderSetElementVisibility: setVisibility
     }),
     [
-      theme,
       mode,
       schemaName,
       multiPagesMode,
       pages.length,
       baseContext,
       baseElementIdProp,
-      setTheme,
       builderSetBaseContext,
       builderElementPermissions,
       builderHandler,

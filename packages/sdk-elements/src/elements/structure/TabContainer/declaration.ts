@@ -1,12 +1,20 @@
 /** Static declaration for TabContainer: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { TabContainerProps } from './TabContainer';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type TabContainerAttributes = AuthorableAttributes<TabContainerProps>;
+
+const declaration = elementDeclaration<TabContainerAttributes>()({
   type: 'tabContainer',
   content: {
     attributes: {},
     definition: {
       label: 'Tab Container',
       type: 'tabContainer',
-      description: 'Group things together into groups, also nestable.',
+      description: 'A tabbed container that switches between panels; composed of header/body/item parts.',
       items: [],
       bindings: {},
       styleSelectors: {
@@ -47,6 +55,6 @@ const declaration = {
     settings: {}
   },
   initialItems: ['tabContainerHeader', 'tabContainerBody']
-};
+});
 
 export default declaration;

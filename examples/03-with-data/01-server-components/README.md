@@ -4,8 +4,9 @@ Elements that get their data from the server, both on the initial render and on 
 
 ```bash
 yarn start
+yarn start:dev   # the same, reloading on save, while you edit it
 curl -s 'http://127.0.0.1:4004/_rsc?location=%2F'                     # every slice
-curl -s 'http://127.0.0.1:4004/_rsc?location=%2F&ids=rsc-server'      # just one
+curl -s 'http://127.0.0.1:4004/_rsc?location=%2F&ids=<id>'            # just one (the server prints the id)
 ```
 
 ## What matters
@@ -16,8 +17,10 @@ One adapter, in [`src/main.ts`](./src/main.ts):
 adapters: { ...createJsonAdapters({ offlineData: offlineDataPath }), getRscData }
 ```
 
-`getRscData` returns `serverData` keyed by schema element id — the sample space carries `rsc-server`,
-`rsc-client` and `rsc-shared`, and each element reads its own slice. **RSC turns itself on because the adapter
+`getRscData` returns `serverData` keyed by schema element ID — the opaque one, not the name. The sample space
+names its three RSC elements `rsc-server`, `rsc-client` and `rsc-shared`, and this example turns those names into
+ids once with `elementIdOf(schema, 'rsc-server')`: a space authored in code derives its ids, and the name is the
+part a person wrote down. Each element then reads its own slice. **RSC turns itself on because the adapter
 exists**; there is no separate flag.
 
 **An RSC element has two halves.** `getRscData` is the data; a component still has to render it. `serverInfo`,

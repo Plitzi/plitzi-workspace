@@ -1,5 +1,13 @@
 /** Static declaration for Page: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { PageProps } from './Page';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type PageAttributes = AuthorableAttributes<PageProps>;
+
+const declaration = elementDeclaration<PageAttributes>()({
   type: 'page',
   content: {
     attributes: {
@@ -16,7 +24,9 @@ const declaration = {
     definition: {
       label: 'Page',
       type: 'page',
-      description: '',
+      description:
+        'The root of a routable screen. Managed through the page ops (upsertPage/deletePage), not added as a child ' +
+        'element.',
       items: [],
       bindings: {},
       styleSelectors: {
@@ -67,6 +77,6 @@ const declaration = {
     },
     settings: {}
   }
-};
+});
 
 export default declaration;

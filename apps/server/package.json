@@ -3,7 +3,8 @@
   "version": "0.33.2",
   "license": "AGPL-3.0",
   "files": [
-    "dist"
+    "dist",
+    "skills"
   ],
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -38,6 +39,16 @@
       "types": "./dist/ssr.d.ts",
       "import": "./dist/ssr.js",
       "default": "./dist/ssr.js"
+    },
+    "./authoring": {
+      "types": "./dist/authoring.d.ts",
+      "import": "./dist/authoring.js",
+      "default": "./dist/authoring.js"
+    },
+    "./actions": {
+      "types": "./dist/actions.d.ts",
+      "import": "./dist/actions.js",
+      "default": "./dist/actions.js"
     }
   },
   "repository": {

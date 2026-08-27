@@ -12,9 +12,22 @@
     "./browser": {
       "types": "./browser.d.ts",
       "default": "./browser.js"
-    }
+    },
+    "./space": "./space.ts"
   },
   "devDependencies": {
-    "@plitzi/sdk-shared": "workspace:*"
+    "@plitzi/sdk-shared": "workspace:*",
+    "@types/node": "^24.10.2",
+    "tsx": "^4.20.7",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  },
+  "scripts": {
+    "author": "node --import tsx ./author.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@plitzi/sdk-server": "workspace:*"
   }
 }

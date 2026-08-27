@@ -66,6 +66,58 @@
       "types": "./dist/StyleReducer.d.ts",
       "import": "./dist/StyleReducer.mjs"
     },
+    "./authoring": {
+      "types": "./dist/authoring/index.d.ts",
+      "import": "./dist/authoring/index.mjs"
+    },
+    "./authoring/classes": {
+      "types": "./dist/authoring/classes.d.ts",
+      "import": "./dist/authoring/classes.mjs"
+    },
+    "./authoring/css": {
+      "types": "./dist/authoring/css.d.ts",
+      "import": "./dist/authoring/css.mjs"
+    },
+    "./authoring/index": {
+      "types": "./dist/authoring/index.d.ts",
+      "import": "./dist/authoring/index.mjs"
+    },
+    "./authoring/layout": {
+      "types": "./dist/authoring/layout.d.ts",
+      "import": "./dist/authoring/layout.mjs"
+    },
+    "./authoring/properties": {
+      "types": "./dist/authoring/properties.d.ts",
+      "import": "./dist/authoring/properties.mjs"
+    },
+    "./authoring/shorthand": {
+      "types": "./dist/authoring/shorthand/index.d.ts",
+      "import": "./dist/authoring/shorthand/index.mjs"
+    },
+    "./authoring/shorthand/border": {
+      "types": "./dist/authoring/shorthand/border.d.ts",
+      "import": "./dist/authoring/shorthand/border.mjs"
+    },
+    "./authoring/shorthand/box": {
+      "types": "./dist/authoring/shorthand/box.d.ts",
+      "import": "./dist/authoring/shorthand/box.mjs"
+    },
+    "./authoring/shorthand/helpers": {
+      "types": "./dist/authoring/shorthand/helpers.d.ts",
+      "import": "./dist/authoring/shorthand/helpers.mjs"
+    },
+    "./authoring/shorthand/index": {
+      "types": "./dist/authoring/shorthand/index.d.ts",
+      "import": "./dist/authoring/shorthand/index.mjs"
+    },
+    "./authoring/shorthand/layout": {
+      "types": "./dist/authoring/shorthand/layout.d.ts",
+      "import": "./dist/authoring/shorthand/layout.mjs"
+    },
+    "./authoring/shorthand/visual": {
+      "types": "./dist/authoring/shorthand/visual.d.ts",
+      "import": "./dist/authoring/shorthand/visual.mjs"
+    },
     "./components": {
       "types": "./dist/components/index.d.ts",
       "import": "./dist/components/index.mjs"

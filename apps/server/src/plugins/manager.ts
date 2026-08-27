@@ -93,7 +93,52 @@ export class PluginManager {
     return Date.now() - compiledAt > this.ttlMs;
   }
 
-  private toEntry(name: string, hasJS: boolean, cssUrl?: string, props: Record<string, unknown> = {}): PluginEntry {
+  /**
+   * Whether the file on disk has moved on since the bundle was built. Dev mode only.
+   *
+   * The cache is keyed on time and version, neither of which changes when somebody edits a component: a versioned
+   * plugin never expires and an unversioned one lasts a week, so a change to the source showed up nowhere and the
+   * server kept serving the bundle it built the first time. In production that is exactly right — a deployment's
+   * plugins do not change under it — and while somebody is writing one it is a file that appears to do nothing.
+   */
+  private async isStale(compiledAt: number, source: PluginSource): Promise<boolean> {
+    // A remote bundle and an inline component are not files this server compiles, so neither can be behind one.
+    // Tested for a SCHEME rather than with `isWebUrl`, which also answers true to anything starting with `/` —
+    // correct for the site-relative URLs it was written for, and wrong for every absolute path on this machine.
+    if (!this.devMode || !source.js || /^https?:\/\//.test(source.js) || isComponentSource(source)) {
+      return false;
+    }
+
+    // A source that cannot be stat'd is not evidence of anything: the build below reports a missing file far
+    // better than a cache miss would.
+    const modifiedAt = await fs
+      .stat(source.js)
+      .then(stats => stats.mtimeMs)
+      .catch(() => 0);
+
+    return modifiedAt > compiledAt;
+  }
+
+  /**
+   * The bundle's URL, stamped with when it was built.
+   *
+   * Plugin assets are served `immutable` for a year, which is right for a file whose URL identifies its contents
+   * and catastrophic for one whose URL never changes: a browser told a resource is immutable does not revalidate
+   * it at all — no conditional request, no ETag — so a rebuilt plugin never reaches anyone who had already loaded
+   * the old one. Not a stale render either: the page's own CSS is fresh while the plugin's is a year old, and the
+   * two disagree in ways nobody can read. The stamp is what makes the promise true.
+   */
+  private assetUrl(name: string, file: string, compiledAt: number): string {
+    return `${this.urlPrefix}/${name}/${file}?v=${compiledAt.toString(36)}`;
+  }
+
+  private toEntry(
+    name: string,
+    hasJS: boolean,
+    cssUrl?: string,
+    props: Record<string, unknown> = {},
+    compiledAt = 0
+  ): PluginEntry {
     const keyName = name.split('@')[0];
     const varName = keyName.split('-').join('_').split('.').join('_');
 
@@ -101,7 +146,7 @@ export class PluginManager {
       name,
       varName,
       keyName,
-      js: hasJS ? `${this.urlPrefix}/${name}/index.js` : undefined,
+      js: hasJS ? this.assetUrl(name, 'index.js', compiledAt) : undefined,
       filePath: hasJS ? path.join(this.outputDir, name, 'index.js') : undefined,
       css: cssUrl,
       props
@@ -175,7 +220,10 @@ export class PluginManager {
     if (meta) {
       const sourceVersion = source.version;
 
-      if (sourceVersion && meta.version !== sourceVersion) {
+      if (await this.isStale(meta.compiledAt, source)) {
+        console.log(`[SSR] Plugin "${key}" source changed since it was built, rebuilding…`);
+        await fs.rm(this.pluginDir(key), { recursive: true, force: true });
+      } else if (sourceVersion && meta.version !== sourceVersion) {
         // Version changed — nuke disk cache so build() starts clean
         console.log(
           `[SSR] Plugin "${key}" version changed (${meta.version ?? 'none'} → ${sourceVersion}), rebuilding…`
@@ -188,12 +236,12 @@ export class PluginManager {
           const sourceCss = source.css;
           let cssUrl: string | undefined;
           if (await this.fileExists(path.join(this.pluginDir(key), 'index.css'))) {
-            cssUrl = `${this.urlPrefix}/${key}/index.css`;
+            cssUrl = this.assetUrl(key, 'index.css', meta.compiledAt);
           } else if (sourceCss && this.isWebUrl(sourceCss)) {
             cssUrl = sourceCss;
           }
 
-          const entry = this.toEntry(key, true, cssUrl, source.props);
+          const entry = this.toEntry(key, true, cssUrl, source.props, meta.compiledAt);
           this.mem.set(key, { compiledAt: meta.compiledAt, entry });
 
           return entry;
@@ -279,7 +327,13 @@ export class PluginManager {
       const compiledAt = Date.now();
       await this.writeMeta(name, { compiledAt, version: source.version });
 
-      const entry = this.toEntry(name, true, cssUrl, source.props);
+      // Stamped after the build, so a rebuild changes the URL the page asks for and the `immutable` the assets are
+      // served with becomes a promise this server can keep.
+      if (cssUrl?.startsWith(this.urlPrefix)) {
+        cssUrl = this.assetUrl(name, 'index.css', compiledAt);
+      }
+
+      const entry = this.toEntry(name, true, cssUrl, source.props, compiledAt);
       this.mem.set(name, { compiledAt, entry });
       console.log(`[SSR] Plugin "${name}" ready → ${entry.js}`);
       return entry;

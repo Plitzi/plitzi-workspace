@@ -75,7 +75,7 @@ const useElementState = ({ id, bindings, previewMode }: UseElementStateProps) =>
     }
 
     return () => setState(path, undefined);
-  }, [previewMode, scopePath, path, setState]);
+  }, [previewMode, scopePath, path, setState, id]);
 
   return { state, setElementState };
 };

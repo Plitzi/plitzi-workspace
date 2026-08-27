@@ -1,5 +1,13 @@
 /** Static declaration for Heading: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { HeadingProps } from './Heading';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type HeadingAttributes = AuthorableAttributes<HeadingProps>;
+
+const declaration = elementDeclaration<HeadingAttributes>()({
   type: 'heading',
   content: {
     attributes: {
@@ -9,6 +17,7 @@ const declaration = {
     definition: {
       label: 'Heading',
       type: 'heading',
+      description: 'A section heading (<h1>–<h6>) for titles and document hierarchy.',
       bindings: {},
       styleSelectors: {
         base: ''
@@ -134,6 +143,6 @@ const declaration = {
     },
     settings: {}
   }
-};
+});
 
 export default declaration;

@@ -3,18 +3,18 @@ import Button from '@plitzi/plitzi-ui/Button';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
-import { useCallback, use, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 export type StateManagerProps = {
   className?: string;
 };
 
 const StateManager = ({ className = '' }: StateManagerProps) => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = useTheme();
   const [state = emptyObject, setState] = useBuilderStore('runtime.state');
   const [value, setValue] = useState(() => JSON.stringify(state, null, 2));
   const { addToast } = useToast();
@@ -43,7 +43,7 @@ const StateManager = ({ className = '' }: StateManagerProps) => {
       <CodeMirror
         className="h-full"
         value={value}
-        theme={theme === 'dark' ? 'dark' : 'light'}
+        theme={resolvedTheme}
         lineWrapping
         onChange={handleChange}
         mode="json"

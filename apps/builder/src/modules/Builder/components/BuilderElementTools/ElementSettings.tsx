@@ -16,7 +16,7 @@ import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziService
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import { ThemeContext } from '@plitzi/sdk-shared/theme';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import AppContext from '@pmodules/App/AppContext';
 
 import type { ComponentPlugin, ElementRuntime } from '@plitzi/sdk-shared';
@@ -42,7 +42,7 @@ const ElementSettings = ({
 }: ElementSettingsProps) => {
   const { previewMode, displayBorderComponents } = use(AppContext);
   const { getComponent } = use(ComponentContext);
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = useTheme();
   const Plugin = getComponent(type) as ComponentPlugin | undefined;
   const { pluginSettingsStyles } = use(PluginsContext);
   const [[variables = emptyObject, currentPageId]] = useBuilderStore([
@@ -67,7 +67,7 @@ const ElementSettings = ({
       settings: {
         previewMode,
         currentPageId,
-        theme
+        theme: resolvedTheme
       },
       root: {
         baseElementId
@@ -87,7 +87,7 @@ const ElementSettings = ({
         InteractionsContext
       }
     }),
-    [previewMode, currentPageId, theme, baseElementId, displayBorderComponents, getWindow, rootRef]
+    [previewMode, currentPageId, resolvedTheme, baseElementId, displayBorderComponents, getWindow, rootRef]
   );
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -98,7 +98,7 @@ const ElementSettings = ({
       <PlitziServiceProvider value={plitziContextValue}>
         <ErrorBoundary>
           {Settings && (
-            <div className={clsx('flex h-full flex-col', { dark: theme === 'dark' })}>
+            <div className={clsx('flex h-full flex-col', { dark: resolvedTheme === 'dark' })}>
               <Heading as="h5" className="m-0">
                 Settings
               </Heading>
@@ -109,7 +109,7 @@ const ElementSettings = ({
         </ErrorBoundary>
       </PlitziServiceProvider>
     ),
-    [plitziContextValue, Settings, theme, attributes, id, runtime, variables, handleChange]
+    [plitziContextValue, Settings, resolvedTheme, attributes, id, runtime, variables, handleChange]
   );
 
   if (Plugin && pluginSettingsStyles?.[type] && pluginSettingsStyles[type].length > 0) {

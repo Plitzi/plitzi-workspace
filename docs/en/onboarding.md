@@ -131,9 +131,9 @@ Three things trip people up on day one:
 3. **A token minted in one environment is refused in another.** Each deployment signs under its own issuer.
    That is the design, not a bug — see the auth documentation.
 
-The full model — the five credential kinds, RBAC, domain binding, iframes, environments, and self-hosting —
-lives in [RFC 0010](../rfc/0010-unified-auth-and-rbac.md), and as a diagram-first read in
-`docs/auth/ecosystem.html` of the server repository (open it in a browser; it is self-contained).
+The full model — the five credential kinds, RBAC, domain binding, iframes, environments, and self-hosting — is
+documented in `docs/auth/` of the server repository, with `docs/auth/ecosystem.html` as a diagram-first read
+(open it in a browser; it is self-contained).
 
 ## Portals and the sibling layout
 
@@ -169,12 +169,15 @@ Before opening a PR: `yarn typecheck`, `yarn lint`, and tests for changed behavi
 | To run something | [Getting started](./getting-started.md) · [Local setup](./local-setup.md) |
 | The layout in detail | [Repository structure](./repository-structure.md) |
 | Commands and style | [Development](./development.md) |
-| Why the architecture is the way it is | [RFCs](../rfc/README.md) — those marked *Implemented* describe the system as it is today |
+| Why the architecture is the way it is | The guide for the area, and the comments next to the code that enforces it. [RFCs](../rfc/README.md) hold only what has NOT been built yet |
 | To publish a change | [Releases](./releases.md) |
 | The page server's API | [apps/server/README.md](../../apps/server/README.md) |
 | The AI surface | [apps/mcp/README.md](../../apps/mcp/README.md) |
 
-Start with the implemented RFCs. [0008](../rfc/0008-data-providers-and-collections-removal.md) explains how data
-reaches a space, [0009](../rfc/0009-cms-presentation-elements.md) how it is presented, and
-[0010](../rfc/0010-unified-auth-and-rbac.md) who is allowed to do any of it. Between them they cover most of
-what a new developer would otherwise learn by surprise.
+Start with the guides, in this order: how data reaches a space and how it is presented (the connector and CMS
+element docs, and `docs/es/connectors.md`), [Server actions](./server-actions.md) for the work a page cannot do in
+the browser, and `docs/auth/` in the server repository for who is allowed to do any of it. Between them they cover
+most of what a new developer would otherwise learn by surprise.
+
+An RFC that has shipped is deleted rather than left to read like a plan — see [docs/rfc/README.md](../rfc/README.md)
+for why, and `git log -- docs/rfc` when you want the reasoning behind a decision that is already in `main`.

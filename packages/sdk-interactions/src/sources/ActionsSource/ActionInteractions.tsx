@@ -1,0 +1,641 @@
+import { useCallback, use, useMemo } from 'react';
+
+import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth';
+import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
+import {
+  recordActionProgress,
+  recordActionRun,
+  registerActionCanceller,
+  releaseActionCanceller,
+  updateActionRun,
+  useCommonStore
+} from '@plitzi/sdk-shared/store';
+
+import { actionsCallbacks } from './callbacks';
+import { toBuilderParams, toInteractionCallbacks } from '../../authoring/builder';
+import InteractionsContext from '../../InteractionsContext';
+
+import type { ActionCallMode, InteractionCallback, InteractionCallbackContext } from '@plitzi/sdk-shared';
+import type { ReactNode } from 'react';
+
+export type ActionInteractionsProps = {
+  children?: ReactNode;
+};
+
+type RunParams = {
+  actionId: string;
+  /** Authored as JSON text, and arriving as an object whenever the flow engine already parsed it — see below. */
+  input: string | Record<string, unknown>;
+  mode: ActionCallMode;
+  idempotencyKey: string;
+};
+
+type ActionResponse = {
+  runId?: string;
+  status?: string;
+  output?: Record<string, unknown>;
+  error?: string;
+  reason?: string;
+  /** The server-side steps. Only ever sent to an authoring request or by a dev server. */
+  trace?: Record<string, unknown>[];
+};
+
+type StreamFrame = { event: string; data: Record<string, unknown> };
+
+/**
+ * Reads an SSE body frame by frame.
+ *
+ * Hand-parsed rather than delegated to `EventSource` for the reason above, and buffered because a frame can arrive
+ * split across chunks — reading each chunk as a whole message is the bug that shows up only under a slow network.
+ */
+const readStream = async (body: ReadableStream<Uint8Array>, onFrame: (frame: StreamFrame) => void) => {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) {
+      return;
+    }
+
+    buffer += decoder.decode(value, { stream: true });
+    const blocks = buffer.split('\n\n');
+    buffer = blocks.pop() ?? '';
+    for (const block of blocks) {
+      const event = /event: (\w+)/.exec(block)?.[1];
+      if (!event) {
+        // A comment frame — the server's heartbeat. It carries nothing and exists to notice a dead peer.
+        continue;
+      }
+
+      // Every `data:` line of the frame, joined with the newlines SSE strips: one line is what our own server
+      // sends, several is what the format allows, and reading only the first would truncate anybody else's.
+      const data = block
+        .split('\n')
+        .filter(line => line.startsWith('data:'))
+        .map(line => line.slice('data:'.length).trimStart())
+        .join('\n');
+
+      try {
+        onFrame({ event, data: data ? (JSON.parse(data) as Record<string, unknown>) : {} });
+      } catch {
+        // A frame that does not parse is dropped rather than ending the stream: the run is still going.
+      }
+    }
+  }
+};
+
+/**
+ * The step's `input`, however the engine happened to hand it over.
+ *
+ * It is authored as JSON text, but a param carrying twig is resolved before this callback sees it and the resolver
+ * returns the RESULT's own type — so an input with a binding in it (`{"city": "{{form.values.city}}"}`) arrives
+ * already parsed, while one with no token at all arrives as the string it was written as. Accepting only the
+ * string was a bound input silently posting nothing: the common case, and the one that looks like the server
+ * dropping the values.
+ */
+const parseInput = (input: string | Record<string, unknown>): Record<string, unknown> => {
+  if (!input) {
+    return {};
+  }
+
+  if (typeof input === 'object') {
+    return input;
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(input);
+
+    return parsed !== null && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+};
+
+/**
+ * What a step answers when the request never reached a server at all.
+ *
+ * The same SHAPE the server's own refusal produces, on purpose: to a flow, "the server said no" and "there was no
+ * server to ask" are the same event — the run did not happen — and an author binding `{{step.status}}` should not
+ * have to discover that one of them arrives as a result and the other as a thrown error. The message is where the
+ * two are told apart, because that is a question for whoever is debugging, not for the flow.
+ */
+const unreachable = { status: 'failed', reason: 'failed', runId: '', output: {} };
+
+/**
+ * A request that ended without an answer, told apart by WHO ended it.
+ *
+ * A cancel from the panel and a server that fell over both land in the same `catch`, and calling the first one a
+ * failure would be reporting the developer's own button as a fault.
+ */
+const aborted = (controller: AbortController, error: unknown) =>
+  controller.signal.aborted
+    ? ({ status: 'aborted', error: 'Cancelled' } as const)
+    : ({ status: 'failed', error: error instanceof Error ? error.message : String(error) } as const);
+
+/**
+ * Tells auth that the server refused this call because of who was asking.
+ *
+ * A page whose session died finds out from whichever request happens to be refused next, and for a page built out
+ * of server actions that is a click on a button. Without this the refusal surfaces as one failed step and the
+ * session ends whenever the next revalidation gets round to it — a wait an author reads as the app hanging.
+ *
+ * Only the 401, which this endpoint answers for `unauthenticated` alone. Its 403 is `forbidden` — an action a
+ * signed-in visitor may not start — and reading that as a dead session would sign out somebody who is merely short
+ * one permission, which is the opposite of helpful.
+ */
+const reportRefusal = (status: number, payload: ActionResponse, url: string) => {
+  if (status !== 401) {
+    return;
+  }
+
+  const reason = authFailureFromResponse(status, payload);
+  if (reason) {
+    reportAuthFailure({ reason, url });
+  }
+};
+
+/**
+ * Running a server action from a client flow.
+ *
+ * The step names an action and hands it inputs — never a URL, a connector or a credential. Which one it can reach
+ * is the server's to decide from the space's own documents, so a page can only ever run what that space already
+ * declared.
+ */
+const ActionInteractions = ({ children }: ActionInteractionsProps) => {
+  const { useInteractions, interactionsManager } = use(InteractionsContext);
+  const [endpoint] = useCommonStore('actions.endpoint');
+  /**
+   * What this space can run, when something knows — the builder seeds it, a published page has nothing here.
+   *
+   * The step used to ask for the identifier as free text, which is a value the editor knew and the author had to
+   * go and look up. This is the same move `navigate` makes with the page list: the options come from whoever
+   * holds them, and the control stays the one control.
+   */
+  const [[catalog, available]] = useCommonStore(['actions.catalog', 'actions.available']);
+
+  /**
+   * Reports a detached run back to the element that launched it.
+   *
+   * A detached step returns the moment the request is accepted, so the flow that started it is long gone by the
+   * time the server answers. Firing on the LAUNCHING element is what gives an author somewhere to say "when this
+   * button's action finishes, show the toast" — and a refusal fires too, with the server's own reason, because a
+   * guard nobody can observe is a guard they will work around.
+   */
+  const reportFlow = useCallback(
+    (
+      elementRef: string | undefined,
+      event: 'onFlowEnd' | 'onFlowError' | 'onFlowProgress',
+      params: Record<string, unknown>
+    ) => {
+      if (!elementRef) {
+        return;
+      }
+
+      void (
+        interactionsManager as { interactionTrigger: (id: string, name: string, params: object) => unknown }
+      ).interactionTrigger(elementRef, event, params);
+    },
+    [interactionsManager]
+  );
+
+  const handleRunAction = useCallback(
+    async (params: RunParams, context?: InteractionCallbackContext) => {
+      const { actionId, mode = 'await', idempotencyKey } = params;
+      if (!endpoint) {
+        // Said once, plainly: the step is not broken, this render simply has no server tier to run it on. A silent
+        // no-op here is a button that does nothing for a reason nobody can see.
+        pConsole.warning(
+          'actions',
+          <span>
+            Server action <b>{actionId}</b> was skipped: this page is served without a Plitzi server
+          </span>,
+          { actionId, status: 'skipped' }
+        );
+
+        return { status: 'skipped', runId: '', output: {} };
+      }
+
+      if (!actionId) {
+        return { status: 'skipped', runId: '', output: {} };
+      }
+
+      const input = parseInput(params.input);
+      const body = JSON.stringify({ actionId, input, ...(idempotencyKey ? { idempotencyKey } : {}) });
+      /**
+       * Recorded when the request is SENT, not when it answers.
+       *
+       * The runs worth looking at are the ones with no answer to look at: a detached run nobody awaits, a stream
+       * that returns before its frames arrive, a server that is not there. The dev-tools read this store.
+       */
+      const record = recordActionRun({ actionId, mode, input });
+      /**
+       * The handle that stops this run, for as long as stopping it means anything.
+       *
+       * Two halves, because a run lives in two places. Aborting the request is what this side can always do, and
+       * on a socket close the server stops the flow at its next step boundary — which is the only lever a run
+       * that has not answered yet gives anybody, since its id does not exist here until it does. Once the server
+       * HAS named it, the `DELETE` is what reaches a run that outlives this request: a detached one, or a stream
+       * running on another replica.
+       */
+      const controller = new AbortController();
+      let serverRunId = '';
+      registerActionCanceller(record, () => {
+        controller.abort();
+        updateActionRun(record, { status: 'aborted', endedAt: Date.now(), cancellable: false });
+        if (serverRunId) {
+          // The run is already marked aborted here; whether the server heard is not something the page can act on,
+          // and an unhandled rejection over it is noise in somebody else's console.
+          void fetch(`${endpoint}/run/${serverRunId}`, { method: 'DELETE', credentials: 'same-origin' }).catch(
+            () => undefined
+          );
+        }
+      });
+      /** Settles the record and gives up the handle: a run that has ended is not one anybody can stop. */
+      const settle = (patch: Parameters<typeof updateActionRun>[1]) => {
+        releaseActionCanceller(record);
+        updateActionRun(record, { endedAt: Date.now(), cancellable: false, ...patch });
+      };
+
+      if (mode === 'detached') {
+        // Announced as it starts, not only when it fails. A detached run is invisible by construction — the flow
+        // returned, the page moved on — so without this the honest answer to "did anything happen?" is a network
+        // tab. It lands in the dev-tools log beside the client flows, which is where an author already looks.
+        pConsole.info(
+          'actions',
+          <span>
+            Server action <b>{actionId}</b> sent
+          </span>,
+          { actionId, mode, status: 'accepted' }
+        );
+
+        // `keepalive` so a navigation right after "Send" does not kill the request: the flow is not waiting for
+        // the answer, which is exactly when the page is most likely to move on. It caps the body at ~64KB, which
+        // is a limit on INPUTS and generous for them.
+        void fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          keepalive: true,
+          signal: controller.signal,
+          body
+        })
+          .then(async response => {
+            const payload = (await response.json().catch(() => ({}))) as ActionResponse;
+            if (!response.ok) {
+              reportRefusal(response.status, payload, endpoint);
+              settle({
+                status: 'failed',
+                ...(payload.runId ? { runId: payload.runId } : {}),
+                ...(payload.reason ? { reason: payload.reason } : {}),
+                ...(payload.error ? { error: payload.error } : {})
+              });
+              reportFlow(context?.elementRef, 'onFlowError', {
+                actionId,
+                runId: payload.runId ?? '',
+                error: payload.error ?? '',
+                reason: payload.reason ?? 'failed'
+              });
+
+              return;
+            }
+
+            settle({
+              status: payload.status === 'completed' ? 'completed' : 'accepted',
+              ...(payload.runId ? { runId: payload.runId } : {}),
+              ...(payload.output ? { output: payload.output } : {}),
+              ...(payload.trace ? { trace: payload.trace } : {})
+            });
+            pConsole.success(
+              'actions',
+              <span>
+                Server action <b>{actionId}</b> finished
+              </span>,
+              { actionId, mode, runId: payload.runId, status: payload.status, output: payload.output }
+            );
+            reportFlow(context?.elementRef, 'onFlowEnd', {
+              actionId,
+              runId: payload.runId ?? '',
+              status: payload.status ?? 'completed',
+              output: payload.output ?? {}
+            });
+          })
+          .catch((error: unknown) => {
+            settle(aborted(controller, error));
+            pConsole.warning(
+              'actions',
+              <span>
+                Server action <b>{actionId}</b> could not be sent
+              </span>,
+              { actionId, mode, error: error instanceof Error ? error.message : String(error) }
+            );
+            reportFlow(context?.elementRef, 'onFlowError', { actionId, runId: '', error: '', reason: 'failed' });
+          });
+
+        return { accepted: true, status: 'accepted', runId: '', output: {} };
+      }
+
+      if (mode === 'stream') {
+        pConsole.info(
+          'actions',
+          <span>
+            Server action <b>{actionId}</b> streaming
+          </span>,
+          { actionId, mode, status: 'streaming' }
+        );
+
+        // `fetch` + a reader, never `EventSource`: that reconnects whenever a stream ends — success included — and
+        // each reconnect would start another run of the same action, forever.
+        let response: Response;
+        try {
+          response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+            credentials: 'same-origin',
+            signal: controller.signal,
+            body
+          });
+        } catch (error: unknown) {
+          settle(aborted(controller, error));
+          pConsole.warning(
+            'actions',
+            <span>
+              Server action <b>{actionId}</b> could not be reached
+            </span>,
+            { actionId, mode, error: error instanceof Error ? error.message : String(error) }
+          );
+          reportFlow(context?.elementRef, 'onFlowError', { actionId, runId: '', error: '', reason: 'failed' });
+
+          return unreachable;
+        }
+
+        if (!response.ok || !response.body) {
+          const payload = (await response.json().catch(() => ({}))) as ActionResponse;
+          reportRefusal(response.status, payload, endpoint);
+          settle({
+            status: 'failed',
+            ...(payload.runId ? { runId: payload.runId } : {}),
+            ...(payload.reason ? { reason: payload.reason } : {}),
+            ...(payload.error ? { error: payload.error } : {})
+          });
+          reportFlow(context?.elementRef, 'onFlowError', {
+            actionId,
+            runId: payload.runId ?? '',
+            error: payload.error ?? '',
+            reason: payload.reason ?? 'failed'
+          });
+
+          return { status: 'failed', reason: payload.reason ?? 'failed', runId: '', output: {} };
+        }
+
+        /**
+         * The run's id, off the response head.
+         *
+         * A streaming step returns the moment the stream opens, so a `done` frame arrives long after the flow
+         * carried on — and an id nobody has yet is an id nobody can cancel with. The head is sent when the stream
+         * opens, which is exactly when the step needs it.
+         */
+        const runId = response.headers.get('X-Plitzi-Run-Id') ?? '';
+        serverRunId = runId;
+        updateActionRun(record, { status: 'streaming', ...(runId ? { runId } : {}) });
+
+        // Frames are consumed in the background: the STEP returns as soon as the stream opens, so the flow carries
+        // on and the page hears about progress through its triggers.
+        void readStream(response.body, frame => {
+          if (frame.event === 'data') {
+            recordActionProgress(record, frame.data.chunk ?? frame.data);
+            reportFlow(context?.elementRef, 'onFlowProgress', { actionId, runId, ...frame.data });
+
+            return;
+          }
+
+          if (frame.event === 'error') {
+            settle({
+              status: 'failed',
+              ...(typeof frame.data.reason === 'string' ? { reason: frame.data.reason } : {}),
+              ...(typeof frame.data.error === 'string' ? { error: frame.data.error } : {})
+            });
+            reportFlow(context?.elementRef, 'onFlowError', { actionId, runId, ...frame.data });
+
+            return;
+          }
+
+          if (frame.event === 'done') {
+            settle({
+              status: frame.data.status === 'completed' ? 'completed' : 'failed',
+              ...(frame.data.output ? { output: frame.data.output as Record<string, unknown> } : {})
+            });
+            reportFlow(context?.elementRef, 'onFlowEnd', { actionId, runId, ...frame.data });
+          }
+        }).catch((error: unknown) => {
+          /**
+           * Cancelling aborts the request, and an aborted reader REJECTS — so the normal use of the cancel button
+           * over a streaming run ends here. The canceller has already settled the record, which makes the abort the
+           * clean end of a stream rather than anything to report; without this catch it is an unhandled rejection
+           * in the visitor's console every time.
+           */
+          if (controller.signal.aborted) {
+            return;
+          }
+
+          const message = error instanceof Error ? error.message : String(error);
+          settle({ status: 'failed', error: message });
+          pConsole.warning(
+            'actions',
+            <span>
+              Server action <b>{actionId}</b> stopped mid-stream
+            </span>,
+            { actionId, mode, runId, error: message }
+          );
+          reportFlow(context?.elementRef, 'onFlowError', { actionId, runId, error: message, reason: 'failed' });
+        });
+
+        return { accepted: true, status: 'streaming', runId, output: {} };
+      }
+
+      let response: Response;
+      try {
+        response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          signal: controller.signal,
+          body
+        });
+      } catch (error: unknown) {
+        settle(aborted(controller, error));
+        // A server that is down, a connection that dropped, a page kept open through a deploy. Reported like a
+        // refusal rather than thrown, so the rest of the flow — and the element that fired it — hear about it.
+        pConsole.warning(
+          'interactions',
+          <span>
+            Server action <b>{actionId}</b> could not be reached
+          </span>,
+          { actionId, error: error instanceof Error ? error.message : String(error) }
+        );
+        reportFlow(context?.elementRef, 'onFlowError', { actionId, runId: '', error: '', reason: 'failed' });
+
+        return unreachable;
+      }
+
+      const payload = (await response.json().catch(() => ({}))) as ActionResponse;
+      if (!response.ok) {
+        reportRefusal(response.status, payload, endpoint);
+        settle({
+          status: 'failed',
+          ...(payload.runId ? { runId: payload.runId } : {}),
+          ...(payload.reason ? { reason: payload.reason } : {}),
+          ...(payload.error ? { error: payload.error } : {})
+        });
+        // The reason is the server's own vocabulary — `duplicate`, `over_capacity`, `recursion` — and naming it is
+        // what lets an author tell "my flow is wrong" from "I clicked twice".
+        pConsole.warning(
+          'actions',
+          <span>
+            Server action <b>{actionId}</b> was refused
+          </span>,
+          {
+            actionId,
+            mode,
+            runId: payload.runId,
+            reason: payload.reason,
+            error: payload.error,
+            status: String(response.status)
+          }
+        );
+
+        return { status: 'failed', reason: payload.reason ?? 'failed', runId: payload.runId ?? '', output: {} };
+      }
+
+      /**
+       * The server's own steps, when it sent them.
+       *
+       * A dev server and an authoring request get the trace; a visitor's does not, and must not. Keeping it here
+       * is what puts a SERVER run in the dev-tools beside the client flows — the same trace the builder's test-run
+       * panel draws, for the run that actually happened on this page.
+       */
+      settle({
+        status: payload.status === 'completed' ? 'completed' : 'failed',
+        ...(payload.runId ? { runId: payload.runId } : {}),
+        ...(payload.output ? { output: payload.output } : {}),
+        ...(payload.trace ? { trace: payload.trace } : {})
+      });
+
+      return {
+        status: payload.status ?? 'completed',
+        runId: payload.runId ?? '',
+        output: payload.output ?? {}
+      };
+    },
+    [endpoint, reportFlow]
+  );
+
+  /**
+   * Stops a run this page started.
+   *
+   * The socket closing already aborts an awaited run, so this is for what that cannot cover: a `detached` or
+   * `stream` run the visitor wants to call off, and a run started in another tab. The server checks that the
+   * caller owns it — a run id travels to the browser, and holding one must not let anybody stop somebody else's.
+   */
+  const handleCancelAction = useCallback(
+    async (params: { runId: string }) => {
+      if (!endpoint || !params.runId) {
+        return { cancelled: false };
+      }
+
+      try {
+        const response = await fetch(`${endpoint}/run/${params.runId}`, {
+          method: 'DELETE',
+          credentials: 'same-origin'
+        });
+        const cancelled = response.status === 204;
+        // Said either way, because "nothing happened" is the same thing to look at as "it stopped": a cancel is
+        // refused when the run is over, was never this caller's, or lives on a replica with no shared store to
+        // read the flag from.
+        pConsole.info(
+          'actions',
+          <span>
+            Server action run <b>{params.runId}</b> {cancelled ? 'cancelled' : 'was not cancelled'}
+          </span>,
+          { actionId: '', mode: 'cancel', runId: params.runId, status: cancelled ? 'aborted' : 'failed' }
+        );
+
+        return { cancelled };
+      } catch {
+        // Unreachable is not cancelled, and it is not an exception either: the caller asked whether the run was
+        // stopped, and the honest answer to that is no.
+        return { cancelled: false };
+      }
+    },
+    [endpoint]
+  );
+
+  const actionOptions = useMemo(
+    () => (catalog ?? []).map(action => ({ label: `${action.name} (${action.identifier})`, value: action.identifier })),
+    [catalog]
+  );
+
+  const interactionCallbacks = useMemo(
+    (): Record<string, InteractionCallback> =>
+      toInteractionCallbacks(
+        actionsCallbacks,
+        { cancelServerAction: handleCancelAction, runServerAction: handleRunAction },
+        {
+          runServerAction: {
+            /**
+             * Read as a function of what the node already says, so the step can describe the action it names.
+             *
+             * The alternative is a fixed pair of boxes that ask for an identifier the editor knows and a JSON blob
+             * with nothing to say about which keys belong in it — which is how an author ends up guessing at both.
+             * What varies is only what this editor knows about THIS space; the params themselves are declared once,
+             * in `./callbacks`.
+             */
+            params: nodeParams => {
+              const base = toBuilderParams(actionsCallbacks.runServerAction.params);
+              const selected = (catalog ?? []).find(action => action.identifier === nodeParams.actionId);
+              const declared = Object.entries(selected?.input ?? {});
+
+              return {
+                ...base,
+                /**
+                 * Picked from what the space actually has, and still typeable.
+                 *
+                 * A select the moment anything knows the list, and a plain text box when nothing does — a published
+                 * page never edits, so there is nothing to offer there. Typing stays possible because a page authored
+                 * before the action it names is a legitimate order to work in, and because a binding may produce the
+                 * id at runtime.
+                 */
+                actionId: {
+                  ...base.actionId,
+                  type: () => (actionOptions.length > 0 ? 'select' : 'text'),
+                  canBind: true,
+                  // Said where the step is authored, not at the first click in production: a space that deploys
+                  // nowhere that runs server code will never run this, however correct the flow around it is.
+                  label: available === false ? 'Action — this space has no server to run it' : 'Action',
+                  options: actionOptions
+                },
+                // The declared contract, on the control that has to satisfy it: the server drops every key the action
+                // did not name, and an author reading `{}` has no way to know which ones those are.
+                input: {
+                  ...base.input,
+                  canBind: true,
+                  label:
+                    declared.length > 0
+                      ? `Input — ${declared.map(([key, field]) => `${key}${field.required ? '*' : ''}: ${field.type}`).join(', ')}`
+                      : 'Input'
+                }
+              };
+            }
+          }
+        }
+      ),
+    [handleRunAction, handleCancelAction, actionOptions, catalog, available]
+  );
+
+  useInteractions({ id: 'actions', callbacks: interactionCallbacks });
+
+  return children;
+};
+
+export default ActionInteractions;

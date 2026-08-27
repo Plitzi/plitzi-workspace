@@ -16,7 +16,11 @@ export type NavigationProviderProps = {
 };
 
 const NavigationProvider = ({ children }: NavigationProviderProps) => {
-  const [[pageFolders, pageDefinitions]] = useBuilderStore(['schema.pageFolders', 'pageDefinitions']);
+  const [[pageFolders, pageDefinitions, urlTest]] = useBuilderStore([
+    'schema.pageFolders',
+    'pageDefinitions',
+    'urlTest'
+  ]);
   const { previewMode } = useRenderSettings();
   const { server } = use(NetworkContext);
   const { authenticated } = use(AuthContext);
@@ -49,6 +53,34 @@ const NavigationProvider = ({ children }: NavigationProviderProps) => {
     };
   }, [paths, pathMatch, currentPageId]);
   const urlSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+
+  /**
+   * What the page is resolved against: the editor's own URL, with whatever the author is testing laid over it.
+   *
+   * Laid over rather than replacing, so a route param the author has not filled in still shows up empty (the page
+   * knows it takes one) and every reader downstream — `when` rules, bindings, RSC, an action's input — sees ONE
+   * answer. Publishing the override anywhere else would mean two, and the reader that picked the wrong one would
+   * be right about a URL nobody is looking at.
+   */
+  const testedRouteParams = useMemo<RouteParams>(
+    () => ({ ...routeParams, ...urlTest?.routeParams }),
+    [routeParams, urlTest?.routeParams]
+  );
+  const testedQueryParams = useMemo(
+    () => ({ ...queryParams, ...urlTest?.queryParams }),
+    [queryParams, urlTest?.queryParams]
+  );
+  const testedSearchParams = useMemo(() => {
+    if (!urlTest?.queryParams) {
+      return urlSearchParams;
+    }
+
+    const params = new URLSearchParams(urlSearchParams);
+    Object.entries(urlTest.queryParams).forEach(([key, value]) => params.set(key, String(value)));
+
+    return params;
+  }, [urlSearchParams, urlTest?.queryParams]);
+  const testedHostname = urlTest?.hostname || hostname;
 
   const handleNavigate = useCallback(
     (url: string, isExternal: boolean = false) => {
@@ -93,7 +125,7 @@ const NavigationProvider = ({ children }: NavigationProviderProps) => {
       'navigation.currentPageId',
       'navigation.navigate'
     ],
-    [urlSearchParams, routeParams, queryParams, hostname, currentPageId ?? '', handleNavigate],
+    [testedSearchParams, testedRouteParams, testedQueryParams, testedHostname, currentPageId ?? '', handleNavigate],
     { raw: true }
   );
 

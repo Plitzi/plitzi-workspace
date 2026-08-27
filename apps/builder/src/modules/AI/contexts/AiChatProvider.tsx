@@ -2,7 +2,7 @@ import { use, useCallback, useEffect, useMemo } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import AiChatContext from './AiChatContext';
 import { getPendingQuestion } from '../components/ChatInput/components/QuestionInput';
@@ -21,7 +21,7 @@ export type AiChatProviderProps = {
 
 const AiChatProvider = ({ children, providerSettings, prefillInput }: AiChatProviderProps) => {
   const [[elementSelected, currentPageId]] = useBuilderStore(['elementSelected', 'navigation.currentPageId']);
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = useTheme();
   const { environment } = use(NetworkContext) as BuilderNetworkContextValue;
 
   const {
@@ -78,16 +78,16 @@ const AiChatProvider = ({ children, providerSettings, prefillInput }: AiChatProv
 
   const onSend = useCallback(
     (msg: string, attachments: AiAttachment[], effort: AiEffort) => {
-      void sendMessage(msg, { currentPageId, elementSelected, environment, theme }, attachments, effort);
+      void sendMessage(msg, { currentPageId, elementSelected, environment, theme: resolvedTheme }, attachments, effort);
     },
-    [sendMessage, currentPageId, elementSelected, environment, theme]
+    [sendMessage, currentPageId, elementSelected, environment, resolvedTheme]
   );
 
   const onSendMessage = useCallback(
     (msg: string) => {
-      void sendMessage(msg, { currentPageId, elementSelected, environment, theme });
+      void sendMessage(msg, { currentPageId, elementSelected, environment, theme: resolvedTheme });
     },
-    [sendMessage, currentPageId, elementSelected, environment, theme]
+    [sendMessage, currentPageId, elementSelected, environment, resolvedTheme]
   );
 
   const conversationTitle = messages.find(m => m.role === 'user')?.content?.slice(0, 60);

@@ -1,5 +1,13 @@
 /** Static declaration for Markdown: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { MarkdownProps } from './Markdown';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type MarkdownAttributes = AuthorableAttributes<MarkdownProps>;
+
+const declaration = elementDeclaration<MarkdownAttributes>()({
   type: 'markdown',
   content: {
     attributes: {
@@ -8,6 +16,7 @@ const declaration = {
     definition: {
       label: 'Markdown',
       type: 'markdown',
+      description: 'Renders a Markdown source string as formatted HTML.',
       bindings: {},
       styleSelectors: {
         base: ''
@@ -48,6 +57,6 @@ const declaration = {
     },
     settings: {}
   }
-};
+});
 
 export default declaration;

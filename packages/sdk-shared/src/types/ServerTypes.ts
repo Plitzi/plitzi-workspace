@@ -1,3 +1,13 @@
+import type {
+  ActionEntry,
+  ActionLimits,
+  ActionRejectReason,
+  ActionRejectRecord,
+  ActionRunRecord,
+  ActionRunStatus,
+  ActionTaskDescriptor,
+  ActionTriggerType
+} from './ActionTypes';
 import type { Environment } from './CommonTypes';
 import type { ConnectorEntry } from './ConnectorTypes';
 import type { Schema } from './SchemaTypes';
@@ -291,6 +301,19 @@ export type SSRAdapters = {
   saveConnector?: (spaceId: number, entry: ConnectorEntry) => Promise<void>;
   /** Remove one connector by its identifier. Omitted alongside `saveConnector` for a read-only deployment. */
   deleteConnector?: (spaceId: number, connectorId: string) => Promise<void>;
+  /** Read every server action configured for the space, so the MCP can list them and author flows against them.
+   *  Space-level server-side state like connectors: the documents name credentials, connectors and steps, so this
+   *  must never feed a browser payload. When omitted, the MCP's action resource is empty. */
+  getActions?: (spaceId: number) => Promise<ActionEntry[] | undefined>;
+  /** The server tasks a flow can be built from — what THIS deployment can run, which is the SDK's built-ins plus
+   *  whatever tasks it registered. Shaped as `ActionTaskDescriptor` in `@plitzi/sdk-server/actions`. Without it an
+   *  agent authoring an action is guessing at the step vocabulary. */
+  getActionTasks?: (spaceId: number) => Promise<ActionTaskDescriptor[] | undefined>;
+  /** Create or replace one action, keyed by `entry.id`. When omitted, action ops apply in memory only and `apply`
+   *  reports `persisted: false`. */
+  saveAction?: (spaceId: number, entry: ActionEntry) => Promise<void>;
+  /** Remove one action by its identifier. Omitted alongside `saveAction` for a read-only deployment. */
+  deleteAction?: (spaceId: number, actionId: string) => Promise<void>;
   /** Persist the element schema mutated by the MCP `apply` tool. When omitted, `apply` reports `persisted: false`. */
   saveSchema?: (spaceId: number, environment: Environment, schema: Schema) => Promise<void>;
   /** Persist the style document mutated by the MCP `apply` tool — store it as given. `style.cache` arrives already
@@ -412,9 +435,104 @@ export interface SSRRscContext {
   loadOfflineData: () => Promise<OfflineDataRaw | undefined>;
 }
 
+/**
+ * Which published version of a space is asking.
+ *
+ * Absent means the live one — the document the builder edits. Present means a page PUBLISHED at that revision,
+ * which must read the private documents it was published against: a page shipped yesterday running whatever the
+ * action says today, or reading through a manifest since pointed at a different API, is the discrepancy
+ * versioning exists to remove.
+ *
+ * One type for actions and connectors, because it is one concept: a version of a space.
+ */
+export type SpaceRevision = { environment: Environment; revision: number };
+
+/**
+ * How the server reaches a space's actions, and what it may run.
+ *
+ * Typed loosely for the same reason `ConnectorLookupsConfig` is — the document is executed by
+ * `@plitzi/sdk-server`'s actions module and the shared types stay free of its internals. Shaped as `ActionLookups`
+ * there.
+ */
+export type ActionLookupsConfig = {
+  getAction: (spaceId: number, actionId: string, at?: SpaceRevision) => Promise<unknown>;
+  listActions?: (spaceId: number, at?: SpaceRevision) => Promise<unknown[]>;
+  getCredential?: (spaceId: number, identifier: string) => Promise<Record<string, string> | undefined>;
+  getConnector?: (spaceId: number, connectorId: string, at?: SpaceRevision) => Promise<unknown>;
+};
+
 export type SSRActionConfig = {
-  /** URL path for the write endpoint. Defaults to '/_action'. */
+  /** URL path for the write endpoint, and the base for the action-addressed routes. Defaults to '/_action'. */
   path?: string;
+  /**
+   * Supplying these is what turns server actions on: without a way to read a document there is nothing to run, and
+   * the endpoint keeps answering element-addressed connector writes alone.
+   */
+  lookups?: ActionLookupsConfig;
+  /** Deployment-owned tasks, shaped as `ActionTask` in `@plitzi/sdk-server/actions`. Validated at boot. */
+  tasks?: unknown[];
+  /** Ceilings for every run this server accepts. A document may tighten them, never widen them. */
+  limits?: ActionLimits;
+  /**
+   * Concurrency ceilings.
+   *
+   * `perSpace`/`perProcess` count CALLS — a click, a webhook, a schedule — where one run is somebody asking for
+   * work and one space's callers must not starve another's. A `render` is counted only by `renderPerProcess`,
+   * because it arrives because people are reading the page: a ceiling per space there would refuse the five
+   * hundredth visitor of a page that is simply doing well.
+   */
+  concurrency?: { perSpace?: number; perProcess?: number; renderPerProcess?: number };
+  /** Inbound webhooks are public by construction, so they are counted per caller per minute. Default 60. */
+  rateLimit?: { webhookPerMinute?: number };
+  /**
+   * Database engines a flow may reach, shaped as `ActionDbDriver` in `@plitzi/sdk-server/actions`.
+   *
+   * Omitted leaves the `db.query` task unregistered entirely. What a driver connects to is always a database the
+   * SPACE declared as a credential — never this deployment's own, which no credential a space holds can name.
+   */
+  dbDrivers?: unknown[];
+  /**
+   * Called once per run that STARTED — completed, failed or aborted — for a deployment that keeps a record.
+   * Shaped as `ActionRunRecord` in `@plitzi/sdk-server/actions`.
+   *
+   * A refused request is not a run and is not reported here; it goes to {@link SSRActionConfig.onReject}.
+   */
+  onRun?: (record: ActionRunRecord) => void | Promise<void>;
+  /**
+   * Called once per request that was REFUSED before it became a run — a webhook whose signature did not verify, a
+   * caller over the rate limit, an action nobody may start. Shaped as `ActionRejectRecord`.
+   *
+   * Its own hook because it answers a different question from `onRun`: runs are history, refusals are a fault
+   * report, and the one that matters most — a signature that does not match — is otherwise indistinguishable
+   * from the integration simply never firing. Everything is reported; which refusals are worth keeping (a
+   * duplicate delivery is a polite retry, not a fault) is the deployment's to decide.
+   */
+  onReject?: (record: ActionRejectRecord) => void | Promise<void>;
+  /**
+   * Replaying a finished run's answer to a caller that asks again with the same key, for this many milliseconds.
+   *
+   * Off unless set, and it only ever applies to a key the CALLER named — an `idempotencyKey` on the call or the
+   * delivery id a webhook sender stamps. Single-flight already refuses a retry that arrives while the first run
+   * is going; this is for the one that arrives after it finished, which is how every provider retries.
+   */
+  idempotency?: { replayTtlMs?: number };
+  /**
+   * Where the `kv` tasks keep things — shaped as `ActionKvAdapter` in `@plitzi/sdk-server/actions`.
+   *
+   * Five operations over strings, with no rule to obey: Redis, Memcached, a table, whatever this deployment
+   * already runs. How a counter BEHAVES — the key prefixing, the JSON round trip, and the rule that a window's
+   * lifetime is set once by whoever created it — belongs to the server, not to the thing it writes into.
+   *
+   * Omitted leaves an in-process Map, which counts only its own replica. That is fine for one; for a cluster it is
+   * a rate limit that multiplies by the number of them, so a multi-replica deployment supplies a shared one.
+   */
+  kv?: {
+    get: (key: string) => Promise<string | undefined>;
+    set: (key: string, value: string, ttlSeconds?: number) => Promise<void>;
+    delete: (key: string) => Promise<void>;
+    increment: (key: string, amount: number) => Promise<number>;
+    expire: (key: string, ttlSeconds: number) => Promise<void>;
+  };
 };
 
 /**
@@ -430,7 +548,7 @@ export type SSRActionConfig = {
  * second time.
  */
 export type ConnectorLookupsConfig = {
-  getConnector: (spaceId: number, connectorId: string) => Promise<unknown>;
+  getConnector: (spaceId: number, connectorId: string, at?: SpaceRevision) => Promise<unknown>;
   getCredential?: (spaceId: number, identifier: string) => Promise<Record<string, string> | undefined>;
   fetchImpl?: typeof fetch;
 };
@@ -476,6 +594,18 @@ export type SSRRscConfig = {
   path?: string;
   /** Server-side cache TTL for RSC responses in milliseconds. Defaults to 30 000. Set to 0 to disable. */
   cacheTtlMs?: number;
+  /**
+   * How long ONE server element may take before the page is answered without it. Defaults to 5 000.
+   *
+   * It is the page's ceiling, and it wins over the producer's own: an action may be allowed ten seconds of its
+   * own (`action.limits.timeoutMs`) and still be cut off here, because a section is worth waiting for only as
+   * long as the visitor is. Whichever is tighter decides, and now that the budget CANCELS what it stops waiting
+   * for, being cut here ends the run rather than leaving it to finish for nobody.
+   *
+   * Raise it for a deployment whose sections are genuinely slow and worth the wait; lower it to keep a page fast
+   * at the cost of showing more empty sections when a provider is having a bad day.
+   */
+  elementTimeoutMs?: number;
 };
 
 /** What every log event carries, whatever layer it came from. */
@@ -526,15 +656,62 @@ export type McpResourceLogEvent = ServerLogEventBase & {
   name: string;
 };
 
+/** One server action run that STARTED — completed, failed or aborted.
+ *
+ *  Its own event rather than a line on the request that triggered it, for the same reason a tool call is: the
+ *  request is answered either way, and a run started by a schedule or a webhook has a request that says nothing
+ *  about it. Where the request log answers "was this call served", this answers "what did the flow do".
+ *
+ *  Carries the SHAPE of the run and never its data: which steps ran and how each ended, never what they
+ *  returned. A refused run is absent by design — a 409 is not a run, and logging one buries the real ones under
+ *  retries. */
+export type ActionRunLogEvent = ServerLogEventBase & {
+  kind: 'run';
+  /** The action's identifier, as the space stores it. */
+  name: string;
+  spaceId: number;
+  environment: Environment;
+  /** What started it: a page call, a webhook, a schedule, a render, a trigger the deployment mounted. */
+  trigger: ActionTriggerType;
+  status: ActionRunStatus;
+  /** Who asked, when a session carried it. Absent for a webhook, a schedule or an anonymous visitor. */
+  userId?: number;
+  /** Each step as `action:status`, in order — enough to see where a flow stopped without keeping what it held. */
+  steps: string[];
+};
+
+/** One request that was REFUSED before it became a run — a webhook whose signature did not verify, a caller over
+ *  its rate limit, an action nobody may start.
+ *
+ *  Separate from {@link ActionRunLogEvent} because it is a different question: that one says what a flow did,
+ *  this one says why a flow never happened. It is the only place an integration that is failing at the door
+ *  shows up at all — the request log answers 401 and says nothing about which check refused it.
+ *
+ *  `durationMs` is 0 and `ok` is always false: nothing ran, and a refusal is not a success on anybody's dashboard. */
+export type ActionRejectLogEvent = ServerLogEventBase & {
+  kind: 'reject';
+  /** The action's identifier, as the request named it — it need not exist. */
+  name: string;
+  spaceId: number;
+  environment: Environment;
+  trigger: ActionTriggerType;
+  /** Which check refused it. */
+  reason: ActionRejectReason;
+  /** Who asked, as the transport identifies them — a session subject or an address. */
+  callerId?: string;
+};
+
 /** Everything a Plitzi server reports about the work it does, as ONE stream: the HTTP requests it answers, plus
- *  the MCP tool calls and resource reads that happen inside them. Wire a single sink via `SSRServerConfig.logger`
- *  and switch on `kind` — a consumer can render it, ship it to a dashboard or drop the kinds it does not want.
+ *  the MCP tool calls, resource reads and server-action runs that happen inside them. Wire a single sink via
+ *  `SSRServerConfig.logger` and switch on `kind` — a consumer can render it, ship it to a dashboard or drop the
+ *  kinds it does not want.
  *
  *  Payload-free by construction: no headers, cookies, tokens nor request body ever reach an event, query values
- *  are stripped from paths and tool arguments are reduced to their shape. Two fields are NOT anonymous and a
- *  consumer shipping these events must handle them accordingly: `clientIp` on a request event, and the request
- *  path, which is kept verbatim because it is what makes the log usable. */
-export type ServerLogEvent = ServerRequestLogEvent | McpToolLogEvent | McpResourceLogEvent;
+ *  are stripped from paths, tool arguments are reduced to their shape and a run to its steps. Two fields are NOT
+ *  anonymous and a consumer shipping these events must handle them accordingly: `clientIp` on a request event, and
+ *  the request path, which is kept verbatim because it is what makes the log usable. */
+export type ServerLogEvent =
+  ServerRequestLogEvent | McpToolLogEvent | McpResourceLogEvent | ActionRunLogEvent | ActionRejectLogEvent;
 
 /** The sink a consumer provides to receive every {@link ServerLogEvent} (see `SSRServerConfig.logger`). */
 export type ServerLogger = (event: ServerLogEvent) => void;

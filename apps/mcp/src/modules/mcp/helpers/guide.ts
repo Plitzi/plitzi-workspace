@@ -177,6 +177,8 @@ Never download a whole tree you do not need.
   Space-independent. Read it before writing a connector by hand.
 - \`plitzi://connectors/{env}\` — the **connectors this space has**: for each, its read/write endpoint names, its
   filter operators and its published fields. \`/{ref}\` opens one manifest in full. See *Connectors* below.
+- \`plitzi://actions/{env}\` — the **server actions this space has**: what starts each one, who may run it, and the
+  input/output contract a caller is held to. \`/{ref}\` opens one flow in full. See *Server actions* below.
 
 The style resources also answer under the \`plitzi://schema/{env}/…\` root as aliases — \`plitzi://schema/{env}/definitions/{ref}\`, \`plitzi://schema/{env}/style-variables/{category}\`, \`plitzi://schema/{env}/schema-variables\` — but prefer the ready-made \`uri\` from search / a write response over hand-building either form.
 
@@ -406,9 +408,9 @@ you — never wire them by hand. Each step also has an \`enabled\` flag (see dis
   \`setState\` has **no** \`type\` param (that belongs to the global one below). An element type may also register its
   own extra callbacks.
 - \`globalCallback\` — a callback provided by a **source module**, NOT by any element: \`addNotification\` (source
-  \`space\`), \`setState\`/\`clearState\` (\`state\`), \`navigate\` (\`navigation\`), \`authLogin\`/\`authLogout\`/
-  \`authRefreshDetails\` (\`auth\`), \`addCollectionRecord\`/\`updateCollectionRecord\`/\`removeCollectionRecord\`
-  (\`collection\`). Its \`elementId\` is the **source module id**, never the host element — a node that stored the host
+  \`space\`), \`setState\`/\`clearState\` (\`state\`), \`navigate\` (\`navigation\`), \`login\`/\`logout\`/
+  \`refreshDetails\` (\`auth\`), \`runServerAction\`/\`cancelServerAction\` (\`actions\`). Its \`elementId\` is the
+  **source module id**, never the host element — a node that stored the host
   idRef here would resolve to nothing at runtime. **Omit \`elementId\`**: the MCP sets the correct source and fills the
   builder's **param defaults** (e.g. \`addNotification\` gets \`autoDismiss:true\`, \`autoDismissTimeout:5000\`,
   \`placement:"top-right"\`, \`appeareance:"success"\`) for any params you leave out. Use **only** the params each
@@ -475,6 +477,26 @@ server-rendered ignores its connector entirely.
   Start from the preset for the user's provider and edit it; do not invent a shape from memory.
 - \`plitzi://connectors/{env}\` — the connectors **this space already has**, each with its read/write endpoint names,
   its filter operators and its published fields. \`plitzi://connectors/{env}/{ref}\` opens one manifest in full.
+
+### Server actions
+Work a page cannot do in the browser — charge a card, send mail, read a system only the server reaches. An action
+is a stored flow the SERVER runs; a page names it and never learns what it does. Write one with
+\`upsertAction\` / \`patchAction\`, then call it from a page flow with the \`runServerAction\` step (mode
+\`await\` to use the result, \`detached\` to fire and carry on).
+
+Four rules worth knowing before you write:
+
+- **Steps are server tasks.** \`plitzi://actions/{env}/tasks\` lists what this deployment can run — a browser step
+  (\`setState\`, \`navigate\`) has nothing to act on here, and the reverse is true too: a task cannot run in a page
+  flow.
+- **The contracts.** \`input\` is coerced and anything undeclared is DROPPED. The OUTPUT is whatever the final
+  \`flow.output\` step names — there is no separate list to keep in step with it — and that step must be LAST,
+  since only the last one that runs is answered. Everything else a step produced stays on the server.
+- **Whether it runs lives on its TRIGGERS.** Each trigger step carries \`enabled\`, and the action is on when any
+  way into it is — there is no switch beside the flow. So "pause this action" means disabling its trigger step(s),
+  never deleting them.
+- **A step names the credential it uses**, and sees no other. \`credentials\` on the document says which ones the
+  action may ask for at all; the secret itself is never yours to see, exactly as with a connector.
 
 ### Credentials are NOT yours to write
 You never create, see or transmit a secret. Author the manifest with the token in place

@@ -1,3 +1,4 @@
+import type { ColorScheme, Theme } from './ThemeTypes';
 import type styleConstants from '../style/styleConstants';
 
 export type TagType = 'class' | 'element' | 'id';
@@ -8,7 +9,6 @@ export type StyleValue = number | string;
 
 // ======== Themes/Variables ========
 
-export type StyleThemeMode = 'system' | 'light' | 'dark';
 export type StyleCategory = (typeof styleConstants)[keyof typeof styleConstants];
 export enum StyleVariableCategory {
   COLOR = 'color',
@@ -21,7 +21,7 @@ export enum StyleVariableCategory {
   // Z_INDEX = 'z-index',
 }
 
-export type StyleThemeValue = Partial<Record<Exclude<StyleThemeMode, 'system'> | 'default', string>>;
+export type StyleThemeValue = Partial<Record<ColorScheme | 'default', string>>;
 export type StyleVariableValue = string | number | StyleThemeValue;
 export type StyleVariableGroup = Record<string, StyleVariableValue>;
 export type StyleVariables = Record<StyleVariableCategory, StyleVariableGroup>;
@@ -55,7 +55,7 @@ export type StyleItem = {
 export type Style = {
   platform: Record<DisplayMode, Record<string, StyleItem>>;
   mode?: StyleMode;
-  theme: { default: StyleThemeMode; schemes: StyleThemeMode[] };
+  theme: { default: Theme; schemes: Theme[] };
   variables: Partial<StyleVariables>;
   cache: string;
 };

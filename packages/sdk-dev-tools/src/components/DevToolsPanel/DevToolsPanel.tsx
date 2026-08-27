@@ -56,9 +56,8 @@ const DevToolsPanel = ({
   );
 
   return (
+    // Lifts the docked panel above the fixed "Made in Plitzi" badge (z-index 999999).
     <ContainerResizable
-      // `relative z-[1000000]` lifts the docked panel above the page's fixed "Made in Plitzi" badge (z-index 999999),
-      // which would otherwise float over the panel's bottom-right corner.
       className={clsx('component__container-resizable-sidebar relative z-[1000000] text-xs', className, {
         'h-full': orientation === 'vertical'
       })}

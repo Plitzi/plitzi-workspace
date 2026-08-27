@@ -38,7 +38,11 @@ const EXAMPLE_TARGETS = [
   'mcp-server',
   'ssr-preview',
   'sessions',
-  'mysql'
+  'mysql',
+  'server-actions',
+  'server-actions-render',
+  'server-actions-no-server',
+  'blog'
 ];
 
 export const categories: Category[] = [
@@ -56,10 +60,11 @@ export const categories: Category[] = [
     name: 'server',
     app: '@plitzi/sdk-server',
     what: 'The page server: what it renders, and who it renders it for',
-    targets: ['server', 'auth-server'],
+    targets: ['server', 'auth-server', 'action-server'],
     subcategories: [
       { name: 'ssr', what: 'What arrives before a script runs, and what happens after' },
       { name: 'rsc', what: 'Per-element server data: the three runtimes, the slices, the partial refresh' },
+      { name: 'actions', what: 'Server elements fed by an action: the flow runs inside the render' },
       { name: 'preview', what: 'Draft renders that are never saved, and the one-shot token' },
       { name: 'auth', what: 'A visitor becoming a member and back: guest/member pages, sessions, bindings' }
     ]

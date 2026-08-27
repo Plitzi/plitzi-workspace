@@ -2,6 +2,7 @@ import { BODYLESS_METHODS, DEFAULT_READ_ENDPOINT, EMPTY_RESPONSE_METHODS } from 
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { getByPath } from './getByPath';
+import { assertOutboundAllowed } from '../../helpers/outboundGuard';
 
 import type {
   ConnectorCredential,
@@ -270,6 +271,10 @@ export const fetchConnectorRecords = async ({
     ...renderFilters(resolved, connection.operators, variables)
   }).forEach(([key, value]) => url.searchParams.set(key, value));
 
+  // The same rule the `http.request` task follows, and for the same reason: a manifest's `baseUrl` is typed by a
+  // customer, and this call goes out from inside the cluster.
+  await assertOutboundAllowed(url);
+
   const method = read.method ?? 'GET';
   const headers = { ...applyAuth(connection, variables, url), ...renderEntries(read.headers ?? {}, variables) };
   // A search endpoint reads through POST; the body is templated the same way the query string is.
@@ -343,6 +348,8 @@ export const writeConnectorRecord = async ({
   Object.entries(renderEntries(operation.query ?? {}, variables)).forEach(([key, value]) =>
     url.searchParams.set(key, value)
   );
+
+  await assertOutboundAllowed(url);
 
   const headers = { ...applyAuth(connection, variables, url), ...renderEntries(operation.headers ?? {}, variables) };
   headers['Content-Type'] = 'application/json';

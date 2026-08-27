@@ -1,22 +1,52 @@
+import { createActionResolver } from '../actions/runtime/renderResolver';
 import { createConnectorResolver } from '../connectors';
 import { resolveRscData } from './resolveRscData';
 
+import type { ActionsModule } from '../actions';
+import type { RscElementResolver } from './resolveRscData';
+import type { ActionLookups } from '../actions/types';
 import type { ConnectorLookups } from '../connectors/resolver';
 import type { SSRAdapters } from '@plitzi/sdk-shared';
 
 /**
- * `getRscData`, built from the connector lookups the server was already given.
+ * `getRscData`, built from the producers the server was already given — connectors, actions, or both.
  *
  * Every deployment that served server-driven elements wrote this same adapter: await the render payload, check the
- * schema opted into RSC, then hand `resolveRscData` a `createConnectorResolver` over the lookups — both of which are
- * this package's own exports, assembled by the consumer only because nothing assembled them here. That made the
- * lookups a thing you passed twice, once as config and once folded into an adapter, and put a copy of the enabled
- * check in every deployment.
+ * schema opted into RSC, then hand `resolveRscData` a resolver over the lookups — all of which are this package's
+ * own exports, assembled by the consumer only because nothing assembled them here. That made the lookups a thing
+ * you passed twice, once as config and once folded into an adapter, and put a copy of the enabled check in every
+ * deployment.
+ *
+ * Either half may be absent: a space whose server elements all name actions configures no connectors, and an
+ * element naming a producer this deployment does not have resolves to nothing rather than to an error — the same
+ * answer it gets for a connector the space never created.
  *
  * A deployment that resolves server elements some other way still supplies its own `getRscData`, and that one wins.
  */
-export const connectorRscData = (lookups: ConnectorLookups): NonNullable<SSRAdapters['getRscData']> => {
-  const resolveElement = createConnectorResolver(lookups);
+export const connectorRscData = (
+  lookups?: ConnectorLookups,
+  actions?: { lookups: ActionLookups; module: ActionsModule },
+  /** The deployment's per-element ceiling, when it set one. `resolveRscData` decides the default. */
+  elementTimeoutMs?: number
+): NonNullable<SSRAdapters['getRscData']> => {
+  const resolveConnector = lookups ? createConnectorResolver(lookups) : undefined;
+  const resolveAction = actions ? createActionResolver(actions.lookups, actions.module) : undefined;
+
+  /**
+   * An element names ONE producer, and which one decides how its data is fetched.
+   *
+   * A connector is the declarative read and stays the default; an action is the read a manifest cannot express.
+   * Checked in that order so an element carrying both — a connector element an author later pointed at an action —
+   * keeps resolving the way its page already renders, instead of silently changing under them.
+   */
+  const resolveElement: RscElementResolver = async context => {
+    const attributes = context.element.attributes as { connector?: string; action?: string };
+    if (attributes.connector) {
+      return resolveConnector ? resolveConnector(context) : undefined;
+    }
+
+    return attributes.action && resolveAction ? resolveAction(context) : undefined;
+  };
 
   return async ({ req, spaceId, environment, user, ids, loadOfflineData }) => {
     // Joins the read the page render already started rather than asking for the document a second time.
@@ -25,6 +55,15 @@ export const connectorRscData = (lookups: ConnectorLookups): NonNullable<SSRAdap
       return {};
     }
 
-    return resolveRscData({ schema: offlineData.schema, req, spaceId, environment, user, ids, resolveElement });
+    return resolveRscData({
+      schema: offlineData.schema,
+      req,
+      spaceId,
+      environment,
+      user,
+      ids,
+      resolveElement,
+      ...(elementTimeoutMs === undefined ? {} : { timeoutMs: elementTimeoutMs })
+    });
   };
 };

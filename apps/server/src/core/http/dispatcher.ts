@@ -17,7 +17,9 @@ export type BuildContext<C extends BaseContext> = (
   rawRes: RawResponse,
   req: SSRRequest,
   res: SSRResponseHelpers
-) => C;
+  // `signal` is the dispatcher's to supply: it owns the socket and therefore the only thing that knows when the
+  // request died. A builder that had to produce one would be inventing a lifecycle it cannot observe.
+) => Omit<C, 'signal'>;
 
 // Query-string VALUES are the part of a URL that routinely carries personal data (emails, tokens, search terms),
 // and the access log has no use for them: the KEYS already say which shape of request came in.
@@ -50,7 +52,27 @@ const runPipeline = async <C extends BaseContext>(
   const startedAt = Date.now();
   const req = parseRequest(raw);
   const res = buildResponseHelpers(rawRes, req.headers['accept-encoding'], compression);
-  const ctx = buildContext(raw, rawRes, req, res);
+  /**
+   * One controller per request, aborted when the PEER goes away.
+   *
+   * Watched on the RESPONSE, not on the request: `IncomingMessage` emits `close` as soon as its body has been
+   * read, so a POST aborted itself the millisecond the server finished parsing it — measurably, at 9ms of a
+   * 300ms request. Everything downstream either ignored that (a listener attached after the event never fires,
+   * which is what kept actions working at all) or acted on it and cancelled work nobody had abandoned.
+   *
+   * `writableFinished` is what tells the two apart: a response that closed after finishing was SERVED, and one
+   * that closed before is a caller who left. `once` so a request that ends normally leaves no listener on a
+   * socket the runtime may keep alive for the next one.
+   */
+  const controller = new AbortController();
+  rawRes.once?.('close', () => {
+    if (!rawRes.writableFinished) {
+      controller.abort();
+    }
+  });
+  // The cast is the price of assembling a generic context from its parts: TypeScript cannot see that adding the
+  // one omitted key back reconstructs `C`.
+  const ctx = { ...buildContext(raw, rawRes, req, res), signal: controller.signal } as C;
   const logger = ctx.config.logger;
   // Read while the socket is still attached: a request logged from the catch block can outlive its connection.
   const ip = logger ? clientIp(raw, req) : '';

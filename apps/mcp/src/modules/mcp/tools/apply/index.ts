@@ -180,6 +180,25 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
     }
   }
 
+  // Actions are rows too, and follow the connectors' rule exactly: only what this batch touched is written, a
+  // delete is its own call, and one created and then removed in the same batch is written nowhere.
+  for (const id of outcome.changedActions) {
+    const entry = draft.actions.find(item => item.id === id);
+    if (entry && persisters?.saveAction) {
+      await persisters.saveAction(entry);
+    } else {
+      persisted = false;
+    }
+  }
+
+  for (const id of outcome.deletedActions) {
+    if (persisters?.deleteAction) {
+      await persisters.deleteAction(id);
+    } else {
+      persisted = false;
+    }
+  }
+
   return {
     applied: true,
     persisted,

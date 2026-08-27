@@ -2,6 +2,7 @@ import { ModalProvider } from '@plitzi/plitzi-ui/Modal';
 
 import AuthContextProvider from '@plitzi/sdk-auth/AuthContextProvider';
 import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
+import ActionsContextProvider from '@pmodules/Actions/ActionsContextProvider';
 import ConnectorsContextProvider from '@pmodules/Connectors/ConnectorsContextProvider';
 import NavigationProvider from '@pmodules/Navigation/NavigationProvider';
 import NetworkContextProvider from '@pmodules/Network/NetworkContextProvider';
@@ -59,17 +60,19 @@ const AppProvider = ({
             <EventBridgeContextProvider debugMode={debugMode}>
               <SegmentsContextProvider>
                 <ConnectorsContextProvider>
-                  <PluginsContextProvider>
-                    <ModalProvider>
-                      <SchemaContextProvider includeSubscriptions={includeSubscriptions}>
-                        <StyleContextProvider includeSubscriptions={includeSubscriptions}>
-                          <AuthContextProvider server={server}>
-                            <NavigationProvider>{children}</NavigationProvider>
-                          </AuthContextProvider>
-                        </StyleContextProvider>
-                      </SchemaContextProvider>
-                    </ModalProvider>
-                  </PluginsContextProvider>
+                  <ActionsContextProvider>
+                    <PluginsContextProvider>
+                      <ModalProvider>
+                        <SchemaContextProvider includeSubscriptions={includeSubscriptions}>
+                          <StyleContextProvider includeSubscriptions={includeSubscriptions}>
+                            <AuthContextProvider server={server}>
+                              <NavigationProvider>{children}</NavigationProvider>
+                            </AuthContextProvider>
+                          </StyleContextProvider>
+                        </SchemaContextProvider>
+                      </ModalProvider>
+                    </PluginsContextProvider>
+                  </ActionsContextProvider>
                 </ConnectorsContextProvider>
               </SegmentsContextProvider>
             </EventBridgeContextProvider>

@@ -1,8 +1,8 @@
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
-import { use, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { connectorTokens } from '@plitzi/sdk-shared/connectors';
-import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
 
@@ -20,7 +20,7 @@ export type ConnectorAdvancedEditorProps = {
  * so switching modes is not a conversion.
  */
 const ConnectorAdvancedEditor = ({ value, error, onChange }: ConnectorAdvancedEditorProps) => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = useTheme();
   const autoComplete = useMemo<AutoComplete[]>(
     () => connectorTokens.map(token => ({ type: 'token', value: token.value, detail: token.description })),
     []
@@ -30,7 +30,7 @@ const ConnectorAdvancedEditor = ({ value, error, onChange }: ConnectorAdvancedEd
     <div className="flex min-h-80 grow flex-col gap-2">
       <CodeMirror
         value={value}
-        theme={theme === 'dark' ? 'dark' : 'light'}
+        theme={resolvedTheme}
         mode="json"
         lineWrapping
         autoComplete={autoComplete}

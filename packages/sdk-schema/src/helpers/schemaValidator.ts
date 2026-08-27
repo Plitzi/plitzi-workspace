@@ -5,6 +5,14 @@ import type { Element, Schema } from '@plitzi/sdk-shared';
 
 export type SchemaValidationOptions = {
   baseElementId?: string;
+  /**
+   * Element type → the source name it publishes under.
+   *
+   * Without it a binding's source can only be half-checked: the type half is compared against the types that
+   * happen to be in this document, so a typo'd idRef is caught only when some element of that same type is
+   * present, and a prefix that is simply the wrong word for the element it names is never caught at all.
+   */
+  sourceTypes?: Record<string, string>;
 };
 
 export type SchemaValidationError = {
@@ -493,6 +501,141 @@ const createValidator = (schema: Schema) => {
     });
   };
 
+  /**
+   * Every data-source name a binding reads must name an element that exists.
+   *
+   * A source is `<type>_<idRef>` optionally followed by `.<field…>` — the convention `repointIdRefs` is built on.
+   * A typo in the idRef half is the most expensive silent failure a space can carry: the binding resolves to
+   * nothing, the element renders its placeholder, and no layer anywhere reports a missing name. Only heads whose
+   * type half is an element type actually present in this document are checked, so a `node_<hexId>` or a bare
+   * `form` is left alone.
+   */
+  const validateBindingSources = (sourceTypes?: Record<string, string>) => {
+    const refs = new Set<string>();
+    const types = new Set<string>();
+    /** idRef → the source name that element actually publishes, when the caller supplied the catalog. */
+    const published = new Map<string, string>();
+    Object.values(flat).forEach(element => {
+      if (!(element as Element | undefined)) {
+        return;
+      }
+
+      if (element.idRef) {
+        refs.add(element.idRef);
+        const prefix = sourceTypes?.[element.definition.type];
+        if (prefix) {
+          published.set(element.idRef, prefix);
+        }
+      }
+
+      types.add(element.definition.type);
+    });
+
+    Object.values(flat).forEach(element => {
+      if (!(element as Element | undefined) || !element.definition.bindings) {
+        return;
+      }
+
+      Object.entries(element.definition.bindings).forEach(([category, bindings]) => {
+        (bindings ?? []).forEach(binding => {
+          const head = binding.source.split('.')[0];
+          const separator = head.indexOf('_');
+          if (separator === -1) {
+            return;
+          }
+
+          const type = head.slice(0, separator);
+          const ref = head.slice(separator + 1);
+          const where = `Element "${element.id}" binds ${category}.${binding.to} to "${binding.source}"`;
+
+          if (!refs.has(ref)) {
+            // Without the catalog the type half is only a hint — a `node_<hexId>` or a bare `form` is not a source
+            // at all — so an unknown ref is reported only when its type half is one this document actually holds.
+            if (sourceTypes || types.has(type)) {
+              errors.push({
+                code: 'UNRESOLVED_BINDING_SOURCE',
+                message: `${where}, but no element answers to the idRef "${ref}"`,
+                elementId: element.id,
+                details: { source: binding.source, idRef: ref }
+              });
+            }
+
+            return;
+          }
+
+          // The half an author cannot see. A `form` publishes under `apiContainer`, so a name assembled from the
+          // element's own type is a source nothing ever registers — and the binding resolves to nothing.
+          const expected = published.get(ref);
+          if (expected && expected !== type) {
+            errors.push({
+              code: 'MISMATCHED_BINDING_SOURCE',
+              message: `${where}, but "${ref}" publishes its source as "${expected}_${ref}"`,
+              elementId: element.id,
+              details: { source: binding.source, idRef: ref, expected: `${expected}_${ref}` }
+            });
+          }
+        });
+      });
+    });
+  };
+
+  /**
+   * The three fields that make a flow a flow.
+   *
+   * A flow is a linked list: each node names the one before and the one after, and every node carries the id of
+   * the first as its `flowId`. Any of the three pointing at a node that is not there produces a flow that half
+   * runs — the first steps fire, the rest never do — which reads exactly like an action that failed.
+   *
+   * An element-`callback` node also names the element it runs against, and that name is an idRef: a global
+   * callback names its source module instead (`space`, `state`, `auth`) and a utility names nothing at all, so
+   * neither is resolved here.
+   */
+  const validateInteractions = () => {
+    const refs = new Set<string>();
+    Object.values(flat).forEach(element => {
+      if ((element as Element | undefined)?.idRef) {
+        refs.add(element.idRef as string);
+      }
+    });
+
+    Object.values(flat).forEach(element => {
+      const interactions = (element as Element | undefined)?.definition.interactions;
+      if (!interactions) {
+        return;
+      }
+
+      const nodes = Object.keys(interactions);
+      Object.values(interactions).forEach(node => {
+        (['beforeNode', 'afterNode'] as const).forEach(link => {
+          const target = node[link];
+          if (target && !nodes.includes(target)) {
+            errors.push({
+              code: 'BROKEN_FLOW_LINK',
+              message: `Interaction "${node.id}" on element "${element.id}" names ${link} "${target}", which is not a node of this flow`,
+              elementId: element.id
+            });
+          }
+        });
+
+        if (node.flowId && !nodes.includes(node.flowId)) {
+          errors.push({
+            code: 'BROKEN_FLOW_ID',
+            message: `Interaction "${node.id}" on element "${element.id}" belongs to flow "${node.flowId}", which is not a node of this flow`,
+            elementId: element.id
+          });
+        }
+
+        if (node.type === 'callback' && node.elementId && !refs.has(node.elementId)) {
+          errors.push({
+            code: 'UNRESOLVED_INTERACTION_TARGET',
+            message: `Interaction "${node.id}" on element "${element.id}" runs against "${node.elementId}", but no element answers to that idRef`,
+            elementId: element.id
+          });
+        }
+      });
+    });
+  };
+
   // Run all validations
   const validate = (options?: SchemaValidationOptions): SchemaValidationResult => {
     const { baseElementId } = options ?? {};
@@ -509,6 +652,8 @@ const createValidator = (schema: Schema) => {
     validateOrphanedElements(baseElementId);
     validateVariables();
     validateIdRefs();
+    validateBindingSources(options?.sourceTypes);
+    validateInteractions();
 
     return {
       valid: errors.length === 0,

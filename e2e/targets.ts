@@ -10,6 +10,7 @@
  *  A target with a `gate` needs something this machine may not have — a database, an /etc/hosts entry — so it
  *  stays out of the default run instead of failing it. The gate's `hint` is what gets printed when a spec skips. */
 
+import { execSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
@@ -18,6 +19,25 @@ import { builderCredentials } from './credentials';
 
 /** The prebuilt bundle the no-build example loads straight from a script tag. */
 const VENDOR_BUNDLE = path.resolve(import.meta.dirname, '../apps/sdk/dist/plitzi-sdk-vendor.js');
+
+/** Whether the public API the render example fetches can be reached from this machine.
+ *
+ *  That example's whole subject is a server-side call to a third party, so there is nothing to assert about it
+ *  offline — and a suite that goes red on a train is one people learn to ignore. Asked once, like every other
+ *  gate, and answered by the same request the example makes. */
+let catApiUp: boolean | undefined;
+const catApiReachable = (): boolean => {
+  if (catApiUp === undefined) {
+    try {
+      execSync('curl -sfI --max-time 3 https://api.thecatapi.com/v1/images/search', { stdio: 'ignore' });
+      catApiUp = true;
+    } catch {
+      catApiUp = false;
+    }
+  }
+
+  return catApiUp;
+};
 
 export type TargetGate = {
   /** Whether this machine can run the target at all — asked, not declared, so there is no flag to remember. */
@@ -69,6 +89,13 @@ export const targets: Target[] = [
     command: 'yarn workspace @plitzi/e2e start:auth',
     origin: 'http://127.0.0.1:5201',
     what: 'The same server with people in it — guest and member pages, sessions, bindings onto the account'
+  },
+  {
+    id: 'action-server',
+    workspace: '@plitzi/e2e',
+    command: 'yarn workspace @plitzi/e2e start:actions',
+    origin: 'http://127.0.0.1:5202',
+    what: 'A page server wired for actions ALONE — no connectors, no RSC adapter of its own'
   },
   {
     id: 'no-build',
@@ -142,6 +169,47 @@ export const targets: Target[] = [
     origin: 'http://127.0.0.1:5008',
     what: 'The same sessions, over a MySQL account store',
     gate: { open: () => !!process.env.MYSQL_URL, hint: 'point MYSQL_URL at a reachable database' }
+  },
+  {
+    id: 'server-actions',
+    workspace: '@plitzi/example-server-actions',
+    /** One command, TWO listeners: the example serves the PUBLISHED space on 5010 and its draft on 5011, which is
+     *  the only way to see the versioning rule rather than read about it. The spec derives the second origin from
+     *  this one — Playwright only ever waits on the first.
+     *
+     *  So this target owns 5010 AND 5011, and anything added below starts at 5012. Claiming a port it already
+     *  listens on is not a bind error anybody sees: Playwright's probe finds an open socket, calls the server
+     *  ready, and the specs run against the wrong site with no clue which one they hit. */
+    command: 'PORT=5010 yarn workspace @plitzi/example-server-actions start',
+    origin: 'http://127.0.0.1:5010',
+    what: 'A declarative flow the server runs, called from a page'
+  },
+  {
+    id: 'server-actions-render',
+    workspace: '@plitzi/example-server-actions-render',
+    command: 'PORT=5012 yarn workspace @plitzi/example-server-actions-render start',
+    origin: 'http://127.0.0.1:5012',
+    what: 'The server fetches an API while the page renders',
+    gate: {
+      open: catApiReachable,
+      hint: 'this example fetches api.thecatapi.com while it renders — connect to the internet'
+    }
+  },
+  {
+    id: 'server-actions-no-server',
+    workspace: '@plitzi/example-server-actions-no-server',
+    command: 'yarn workspace @plitzi/example-server-actions-no-server start --port 5013',
+    /** Vite binds the NAME localhost, which resolves to ::1 first on macOS — see the note on `origin` above. */
+    origin: 'http://localhost:5013',
+    what: 'The same space in the browser alone: every server-side step inert',
+    warmUp: true
+  },
+  {
+    id: 'blog',
+    workspace: '@plitzi/example-blog',
+    command: 'PORT=5014 yarn workspace @plitzi/example-blog start',
+    origin: 'http://127.0.0.1:5014',
+    what: 'A whole small blog — a front page, posts, sessions, and who may publish'
   },
   {
     id: 'builder',

@@ -8,7 +8,7 @@ import { useCallback, use, useMemo } from 'react';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 export type ElementAdvancedEditorProps = {
   className?: string;
@@ -18,7 +18,7 @@ export type ElementAdvancedEditorProps = {
 };
 
 const ElementAdvancedEditor = ({ className = '', value = '', mode = 'js', onChange }: ElementAdvancedEditorProps) => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = useTheme();
   const { componentDefinitions } = use(ComponentContext);
   const { server, webKey } = use(NetworkContext);
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
@@ -57,7 +57,7 @@ const ElementAdvancedEditor = ({ className = '', value = '', mode = 'js', onChan
     <div className={clsx('relative flex h-full flex-col', className)}>
       <CodeMirror
         value={value}
-        theme={theme === 'dark' ? 'dark' : 'light'}
+        theme={resolvedTheme}
         size="sm"
         className="h-full"
         lineWrapping

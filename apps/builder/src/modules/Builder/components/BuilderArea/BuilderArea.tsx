@@ -14,6 +14,7 @@ import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziService
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
@@ -60,12 +61,13 @@ const BuilderArea = ({
   const trackingContainerRef = useRef<HTMLDivElement | null>(null);
   const { assets } = use(PluginsContext);
   const {
-    theme,
     multiPagesMode,
     mode,
     baseContext: { baseElementId },
     builderGetBaseElement
   } = use(BuilderContext);
+  // The scheme the SPACE is painted in — see the `canvas` area in `themeStore`. Not the editor's own.
+  const { resolvedTheme } = useTheme(SPACE_THEME_AREA);
   const { displayBorderComponents, zoom } = use(AppContext);
   const css = useMemo(() => {
     const cssVariables = schemaVariablesToCss(variables as Record<string, string>);
@@ -104,7 +106,7 @@ const BuilderArea = ({
         debugMode,
         currentPageId,
         environment: 'main',
-        theme
+        theme: resolvedTheme
       },
       root: { baseElementId },
       utils: { displayBorderComponents, getWindow, rootRef },
@@ -120,7 +122,7 @@ const BuilderArea = ({
         BuilderContext
       }
     }),
-    [previewMode, debugMode, currentPageId, theme, baseElementId, displayBorderComponents, getWindow, rootRef]
+    [previewMode, debugMode, currentPageId, resolvedTheme, baseElementId, displayBorderComponents, getWindow, rootRef]
   );
 
   const baseElementValueMemo = useMemo(() => ({ id: baseElementId, rootId: baseElementId }), [baseElementId]);
@@ -170,7 +172,7 @@ const BuilderArea = ({
             css={css}
             assets={assets}
             className="absolute h-full w-full origin-top-left"
-            style={{ colorScheme: theme === 'system' ? 'light' : theme }}
+            style={{ colorScheme: resolvedTheme }}
           >
             {Plugin && (
               <>

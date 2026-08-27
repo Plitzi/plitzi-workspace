@@ -4,7 +4,7 @@ import InteractionsContextProvider from './InteractionsContextProvider';
 import InteractionsHelper from './InteractionsHelper';
 import InteractionsManager from './InteractionsManager';
 import InteractionsSourcesProvider from './InteractionsSourcesProvider';
-import { AuthInteractions, NavigationInteractions, StateInteractions } from './sources';
+import { ActionInteractions, AuthInteractions, NavigationInteractions, StateInteractions } from './sources';
 import utility from './utility';
 
 export * from './utility';
@@ -24,6 +24,7 @@ export {
   InteractionsHelper,
   InteractionsSourcesProvider,
   useInteractions,
+  ActionInteractions,
   AuthInteractions,
   NavigationInteractions,
   StateInteractions

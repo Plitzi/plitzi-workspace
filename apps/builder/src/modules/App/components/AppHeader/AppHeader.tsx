@@ -7,7 +7,7 @@ import { use, useState, useCallback, useMemo, memo } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import { ThemeContext } from '@plitzi/sdk-shared/theme';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import CollaboratorAvatar from '@pmodules/Collaboration/components/CollaboratorAvatar';
 
 import BorderButton from './BorderButton';
@@ -23,7 +23,7 @@ import type { BuilderMutationsMap, BuilderQueriesMap } from '@plitzi/sdk-shared'
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 
 const AppHeader = () => {
-  const { theme, toggleTheme } = use(ThemeContext);
+  const { theme, toggleTheme } = useTheme();
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;

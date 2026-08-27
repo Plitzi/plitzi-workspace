@@ -112,7 +112,7 @@ describe('mcp-ai search pagination', () => {
   });
 });
 
-describe('mcp-ai search returns matching definitions (RFC 0005 #5)', () => {
+describe('mcp-ai search returns matching definitions', () => {
   it('returns definitions whose ref matches the query, with full CSS', () => {
     const res = search({ query: 'box' }, buildSpace(), 'main');
     expect(res.definitions?.find(d => d.ref === 'box')?.desktop).toEqual({ display: 'flex' });

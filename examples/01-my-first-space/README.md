@@ -1,7 +1,7 @@
 # My first space
 
-Getting a space onto a page, four ways. The first three render **in the browser** with `@plitzi/plitzi-sdk` alone —
-no server, no account, no API key. The fourth moves the render to the server.
+Getting a space onto a page, five ways. The first three render **in the browser** with `@plitzi/plitzi-sdk` alone —
+no server, no account, no API key. The last two move the render to the server.
 
 | | Example | What it is | Port |
 |---|---|---|---|
@@ -9,6 +9,7 @@ no server, no account, no API key. The fourth moves the render to the server.
 | 02 | [render](./02-render) | The same `render()` call from a bundled app | 4001 |
 | 03 | [react-component](./03-react-component) | `<PlitziSdk>` inside your own React tree | 4002 |
 | 04 | [server-rendered](./04-server-rendered) | The same space, rendered by the server | 4003 |
+| 05 | [from-the-cloud](./05-from-the-cloud) | Your server, serving a space that lives in Plitzi | 4005 |
 
 ## With or without a server
 
@@ -17,9 +18,12 @@ They render the same space, so the difference is the wiring and nothing else.
 **Without** (01–03) the browser is handed a `{ schema, style }` and renders it. There is nothing to deploy, nothing
 to keep running, and no request before the first paint.
 
-**With** (04) the HTML arrives already rendered: the page is meaningful before any JavaScript executes, which is what
+**With** (04, 05) the HTML arrives already rendered: the page is meaningful before any JavaScript executes, which is what
 search engines and slow connections see. It is also the only version that can do anything *per request* — know who
 the visitor is, resolve data server-side, keep a secret. The next three categories all build on that.
+
+Where the space itself comes from is a separate decision: 04 reads a file, 05 reads the live document out of the
+builder. Neither changes anything else about the server.
 
 ## Two things every browser-rendered host page must do
 

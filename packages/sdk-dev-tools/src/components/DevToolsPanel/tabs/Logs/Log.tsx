@@ -1,5 +1,6 @@
 import { memo } from 'react';
 
+import LogAction from './categories/LogAction';
 import LogInteraction from './categories/LogInteraction';
 import LogNavigation from './categories/LogNavigation';
 import LogNetwork from './categories/LogNetwork';
@@ -7,6 +8,7 @@ import LogStore from './categories/LogStore';
 
 import type {
   LogParams,
+  LogAction as TLogAction,
   LogInteraction as TLogInteraction,
   LogNavigation as TLogNavigation,
   LogNetwork as TLogNetwork,
@@ -33,6 +35,7 @@ const Log = ({ category, message, time, params }: LogProps) => {
       )}
       {category === 'store' && <LogStore message={message} params={params as TLogStore['params']} time={time} />}
       {category === 'network' && <LogNetwork message={message} params={params as TLogNetwork['params']} time={time} />}
+      {category === 'actions' && <LogAction message={message} params={params as TLogAction['params']} time={time} />}
     </>
   );
 };

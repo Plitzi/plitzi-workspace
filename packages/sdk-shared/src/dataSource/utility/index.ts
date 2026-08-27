@@ -3,6 +3,7 @@
 import arrayMap from './arrayMap';
 import capitalize from './capitalize';
 import dateConverter from './dateConverter';
+import not from './not';
 import staticValue from './staticValue';
 import stringToArray from './stringToArray';
 import styleSelector from './styleSelector';
@@ -18,6 +19,7 @@ const utilities = {
   capitalize,
   arrayMap,
   stringToArray,
+  not,
   styleSelector,
   styleVariant
 } as Record<string, DataSourceUtility<any, any, any>>;

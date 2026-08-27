@@ -18,6 +18,8 @@ export type WorkflowContextProviderProps = {
   direction: 'horizontal' | 'vertical';
   dataSource?: Record<string, Source['meta']>;
   nodeDefinitions?: InteractionCallback[];
+  /** Default action for a new trigger, when the flow kind has an obvious one. */
+  defaultTrigger?: string;
   onChange: (nodes: Record<string, ElementInteraction>, debounced?: boolean) => void;
   setFlowId: (flowId: string) => void;
 };
@@ -28,6 +30,7 @@ const WorkflowContextProvider = ({
   direction = 'horizontal',
   dataSource = {},
   nodeDefinitions,
+  defaultTrigger,
   setFlowId,
   onChange
 }: WorkflowContextProviderProps) => {
@@ -45,18 +48,29 @@ const WorkflowContextProvider = ({
             return;
           }
 
+          const preset =
+            nodeType === 'trigger' && defaultTrigger
+              ? nodeDefinitions?.find(
+                  definition => definition.type === 'trigger' && definition.action === defaultTrigger
+                )
+              : undefined;
+          const presetParams = Object.keys(preset?.params ?? {}).reduce(
+            (acum, key) => ({ ...acum, [key]: get(preset?.params, `${key}.defaultValue`, '') }),
+            {}
+          );
+
           const newNode = {
             id,
-            title: `New ${capitalize(nodeType)}`,
+            title: preset ? preset.title : `New ${capitalize(nodeType)}`,
             type: nodeType,
-            action: '',
-            params: {},
+            action: preset?.action ?? '',
+            params: presetParams,
             preview: {},
             elementId: '',
             beforeNode: '',
             afterNode: '',
             flowId: nodeType === 'trigger' ? id : flowId,
-            enabled: false
+            enabled: !!preset
           };
 
           const siblingNodeBefore = draft[siblingNodeId];
@@ -66,18 +80,14 @@ const WorkflowContextProvider = ({
             return;
           }
 
-          // Nodes
           const siblingNodeAfter = draft[siblingNodeBefore.afterNode];
 
-          // Update Before Node
           siblingNodeBefore.afterNode = id;
 
-          // Update After sibling
           if (siblingNodeAfter as ElementInteraction | undefined) {
             siblingNodeAfter.beforeNode = id;
           }
 
-          // Set Node relationship
           newNode.afterNode = (siblingNodeAfter as ElementInteraction | undefined)?.id ?? '';
           newNode.beforeNode = siblingNodeBefore.id;
 
@@ -89,7 +99,7 @@ const WorkflowContextProvider = ({
         setFlowId(id);
       }
     },
-    [onChange, setFlowId]
+    [onChange, setFlowId, defaultTrigger, nodeDefinitions]
   );
 
   const updateNode = useCallback(
@@ -117,11 +127,9 @@ const WorkflowContextProvider = ({
 
           const nodesToDelete: ElementInteraction[] = [];
           if (node.type === 'trigger') {
-            // Trigger
             const dependantNodes = Object.values(draft).filter(nodeAux => nodeAux.flowId === node.flowId);
             nodesToDelete.push(...dependantNodes);
           } else {
-            // Callback
             nodesToDelete.push(node);
             const beforeNode = draft[node.beforeNode];
             const afterNode = draft[node.afterNode];
@@ -198,13 +206,11 @@ const WorkflowContextProvider = ({
           const afterNode = draft[node.afterNode];
           switch (direction) {
             case 'up': {
-              // Relationships
               set(draft, `${beforeNode.beforeNode}.afterNode`, node.id);
               if (afterNode as ElementInteraction | undefined) {
                 set(draft, `${afterNode.id}.beforeNode`, beforeNode.id);
               }
 
-              // Swap
               set(draft, `${node.id}.beforeNode`, beforeNode.beforeNode);
               set(draft, `${node.id}.afterNode`, beforeNode.id);
               set(draft, `${beforeNode.id}.beforeNode`, node.id);
@@ -218,13 +224,11 @@ const WorkflowContextProvider = ({
             }
 
             case 'down': {
-              // Relationships
               set(draft, `${beforeNode.id}.afterNode`, afterNode.id);
               if (get(draft, `${afterNode.id}.afterNode`)) {
                 set(draft, `${afterNode.afterNode}.beforeNode`, node.id);
               }
 
-              // Swap
               set(draft, `${node.id}.beforeNode`, afterNode.id);
               set(draft, `${node.id}.afterNode`, afterNode.afterNode);
               set(draft, `${afterNode.id}.afterNode`, node.id);
@@ -257,7 +261,7 @@ const WorkflowContextProvider = ({
     const sourcesLoaded = await Object.keys(dataSource).reduce(async (acum, sourceKey) => {
       let fields = dataSource[sourceKey].fields;
       if (typeof fields === 'function') {
-        fields = await fields(); // {}
+        fields = await fields();
       }
 
       return { ...(await acum), [sourceKey]: fields };

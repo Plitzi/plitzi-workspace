@@ -8,9 +8,10 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
+import useActionsSync from '@plitzi/sdk-shared/server/actions/useActionsSync';
 import useRscSync from '@plitzi/sdk-shared/server/rsc/useRscSync';
 import { useRenderSettings, useSdkStore } from '@plitzi/sdk-shared/store';
-import { ThemeContext } from '@plitzi/sdk-shared/theme';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 
@@ -33,7 +34,7 @@ export type SdkProps = {
 };
 
 const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk.css', server }: SdkProps) => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = useTheme();
   const { assets } = use(PluginsContext);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const { rootRef } = use(ContainerRootContext);
@@ -46,6 +47,7 @@ const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk
   ]);
   const { renderMode, previewMode, debugMode, environment, isHydrating } = useRenderSettings();
   useRscSync(server?.ssr);
+  useActionsSync(server?.ssr);
 
   const css = useMemo(() => {
     const segmentsCss = Object.values(segments).map(segment => segment.style.cache);
@@ -79,7 +81,7 @@ const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk
         renderMode,
         environment,
         ...schemaSettings,
-        theme
+        theme: resolvedTheme
       },
       root: {
         baseElementId: currentPageId
@@ -107,7 +109,7 @@ const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk
       renderMode,
       environment,
       schemaSettings,
-      theme,
+      resolvedTheme,
       getWindow,
       rootRef
     ]

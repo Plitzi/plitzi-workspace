@@ -1,0 +1,254 @@
+import type {
+  ActionEntry,
+  ActionLimits,
+  ActionRejectRecord,
+  ActionRunRecord,
+  ActionRunStatus,
+  ActionTriggerType,
+  ConnectorManifest,
+  Environment,
+  InteractionCallbackParam,
+  InteractionNode,
+  InteractionNodeStatus,
+  SpaceRevision,
+  SSRUser
+} from '@plitzi/sdk-shared';
+
+/** Resolved secret material, as the connector engine already models it. */
+export type ActionCredential = Record<string, string>;
+
+/**
+ * A connector with its secret already resolved.
+ *
+ * Handed over as one thing because the engine needs both, and a task holding only the manifest would have to go
+ * looking for the credential itself — which is exactly the lookup that must not be open to a task. Authorizing
+ * the connector authorizes the credential it names: that is what the `/_action` write endpoint has always done.
+ */
+export type ResolvedConnector = {
+  manifest: ConnectorManifest;
+  credential?: ActionCredential;
+};
+
+/**
+ * A connection to a database that is NOT this deployment's.
+ *
+ * Registered by the deployment, one per engine it supports, and reached only through a credential the space
+ * declared — which is the whole security position of `db.query`: a flow queries a database its owner configured,
+ * never the one holding other tenants' spaces.
+ *
+ * `params` are BOUND, never interpolated. The task refuses a statement containing a template for exactly that
+ * reason, and a driver that pastes them into the SQL itself would undo the rule from the other end.
+ */
+export type ActionDbDriver = {
+  /** Engine name a credential names, e.g. `mysql`, `postgres`. */
+  engine: string;
+  query: (dsn: string, sql: string, params: unknown[], signal: AbortSignal) => Promise<unknown[]>;
+};
+
+/**
+ * Where a deployment keeps the `kv` tasks' data — Redis, Memcached, a table, whatever it already runs.
+ *
+ * Deliberately the DUMBEST possible surface: five operations over strings, with no rule to obey. Everything that
+ * decides how a counter behaves — the key prefixing, the JSON round trip, and the one rule a rate limit lives or
+ * dies by — is `createKvStore`'s, above this. An adapter that had to remember "extend the TTL only when the
+ * counter did not exist" would be an adapter each deployment gets to write that rule wrongly in.
+ *
+ * Making it a seam at all is what keeps rate limiting and idempotency across replicas a deployment's decision
+ * rather than a silent no-op: the in-process default counts only its own replica, and honestly says so.
+ */
+export type ActionKvAdapter = {
+  /** The stored string, or undefined when the key is absent OR has expired. */
+  get: (key: string) => Promise<string | undefined>;
+  set: (key: string, value: string, ttlSeconds?: number) => Promise<void>;
+  delete: (key: string) => Promise<void>;
+  /** Adds to a counter and answers the NEW total. Must be atomic — this is what get-then-set cannot be. */
+  increment: (key: string, amount: number) => Promise<number>;
+  /** Sets a lifetime on a key that already exists. When to call it is decided above, never here. */
+  expire: (key: string, ttlSeconds: number) => Promise<void>;
+};
+
+/**
+ * The `kv` tasks' own view: values rather than strings, and a TTL that means what a caller expects.
+ *
+ * Built by `createKvStore` over an {@link ActionKvAdapter}, and then narrowed to one space by `namespaceKv`. A
+ * task never sees an adapter.
+ */
+export type ActionKvStore = {
+  get: (key: string) => Promise<unknown>;
+  set: (key: string, value: unknown, ttlSeconds?: number) => Promise<void>;
+  delete: (key: string) => Promise<void>;
+  increment: (key: string, amount: number, ttlSeconds?: number) => Promise<number>;
+};
+
+/** Re-exported so the module's files import one place. One type for actions and connectors: it is one concept. */
+export type { SpaceRevision } from '@plitzi/sdk-shared';
+
+/**
+ * How the server reaches a space's actions. Structurally identical in spirit to `ConnectorLookups`: the module
+ * never learns where a deployment stores anything.
+ */
+export type ActionLookups = {
+  getAction: (spaceId: number, actionId: string, at?: SpaceRevision) => Promise<ActionEntry | undefined>;
+  /** Only the builder's catalog, the MCP and the scheduler need the list; a page call never asks for it. */
+  listActions?: (spaceId: number, at?: SpaceRevision) => Promise<ActionEntry[]>;
+  getCredential?: (spaceId: number, identifier: string) => Promise<ActionCredential | undefined>;
+  getConnector?: (spaceId: number, connectorId: string, at?: SpaceRevision) => Promise<ConnectorManifest | undefined>;
+};
+
+/**
+ * The only door a task has to the outside world.
+ *
+ * `credential` and `connector` answer solely for identifiers the running document declared, so a task cannot reach
+ * a secret the action did not ask for — the check lives here rather than in each task, where it would be optional.
+ * `fetch` is the run's own: abort-wired and counted against the request budget.
+ */
+export type ActionTaskContext = {
+  runId: string;
+  spaceId: number;
+  environment: Environment;
+  trigger: ActionTriggerType;
+  user?: SSRUser;
+  /**
+   * Who is asking, as the transport identified them: `user:<id>` for a session, `ip:<address>` for everyone else,
+   * and `render` or `schedule` for the runs no visitor started.
+   *
+   * A task that must happen once per PERSON has nothing else to key on — a `public` action has no session, and an
+   * identifier the caller sent is not an identity. Coarse by construction, since a shared address is one caller,
+   * and personal data when it is one: a task that stores it is storing that.
+   */
+  callerId: string;
+  signal: AbortSignal;
+  /**
+   * The flow scope as the current node sees it: `input`, every previous node's result by id, `user`, and the
+   * credentials the document declared. Read-only, and present because a `rawParams` task has to render templates
+   * against something.
+   */
+  scope: Readonly<Record<string, unknown>>;
+  credential: (identifier: string) => Promise<ActionCredential | undefined>;
+  connector: (connectorId: string) => Promise<ResolvedConnector | undefined>;
+  fetch: typeof fetch;
+  /** Key/value storage, namespaced to this space by the runner — a key one space writes is a key only it reads. */
+  kv: ActionKvStore;
+  /** The database engines this deployment registered, for the `db.query` task. */
+  dbDrivers: ActionDbDriver[];
+  /** Pushes a `data` frame to a streaming caller. A no-op when nobody negotiated a stream. */
+  emit: (chunk: unknown) => void;
+};
+
+/**
+ * One step a server action can take.
+ *
+ * `params` is the same `InteractionCallbackParam` map the builder's WorkflowNode already renders, which is what
+ * lets a deployment's own task appear in its editor without a single change there.
+ */
+export type ActionTask<T extends Record<string, unknown> = Record<string, unknown>> = {
+  /** Addressed in a node as `<namespace>.<action>`. */
+  namespace: string;
+  action: string;
+  title: string;
+  description?: string;
+  params: Record<keyof T, InteractionCallbackParam<T>>;
+  /**
+   * Receive params BEFORE twig resolution. Only for a task whose whole job is to render a template — resolving
+   * first would consume the very tokens it exists to interpret. The client engine special-cases `twigTemplate` by
+   * name for this; a flag is the same rule without the name check.
+   */
+  rawParams?: boolean;
+  run: (params: T, ctx: ActionTaskContext) => unknown;
+};
+
+/** A task with its addressable name resolved, as the registry stores and lists it. */
+export type RegisteredTask = ActionTask<Record<string, unknown>> & { name: string };
+
+export type ActionTaskRegistry = {
+  get: (name: string) => RegisteredTask | undefined;
+  list: () => RegisteredTask[];
+};
+
+/** What a deployment hands to `createServer` under `actions`. Absent → the module is never constructed. */
+export type ActionsConfig = {
+  lookups: ActionLookups;
+  /** Deployment-owned tasks, validated at boot against the built-ins. */
+  tasks?: ActionTask<never>[];
+  /** Ceilings a per-action document may tighten but never exceed. */
+  limits?: ActionLimits;
+  /** How many runs may be in flight at once. Counted per space and for the process as a whole. */
+  concurrency?: { perSpace?: number; perProcess?: number; renderPerProcess?: number };
+  /** Where the `kv` tasks keep things. Omitted → an in-process Map, which is per-replica by definition. */
+  kv?: ActionKvAdapter;
+  /** Inbound webhooks are public, so they are counted per caller per minute. Default 60. */
+  rateLimit?: { webhookPerMinute?: number };
+  /** Database engines this deployment lets a flow reach. Empty → the `db.query` task is not offered at all. */
+  dbDrivers?: ActionDbDriver[];
+  /**
+   * Called once per run that started, for a deployment that keeps a record.
+   *
+   * Best-effort by contract: it is awaited but never allowed to fail a run — a logging outage must not take an
+   * action down, which is the same rule metering follows.
+   */
+  onRun?: (record: ActionRunRecord) => void | Promise<void>;
+  /**
+   * Called once per request that was REFUSED before it became a run.
+   *
+   * Its own hook rather than a status on `onRun`, because the two answer different questions and a deployment
+   * wants them in different places: runs are history, refusals are a fault report. Without it a webhook rejected
+   * for a bad signature is invisible to everyone but whoever reads the process log — which is nobody, on the
+   * afternoon the integration is being set up.
+   *
+   * Everything is reported, including the refusals that are somebody else retrying politely. Which of them are
+   * worth keeping is a policy the deployment owns; the mechanism does not decide it by staying quiet.
+   */
+  onReject?: (record: ActionRejectRecord) => void | Promise<void>;
+  /**
+   * How long a COMPLETED run's answer may be replayed to a caller that asks for it again by the same key.
+   *
+   * Off by default, and it only ever applies to an explicit key — an `idempotencyKey` on the call, or the
+   * delivery id a webhook sender stamps. A derived key is a hash of the input, and two identical calls a minute
+   * apart are usually two things somebody wants to happen twice.
+   *
+   * Needs a shared {@link ActionKvAdapter} to mean anything across replicas, exactly as single-flight does.
+   */
+  idempotency?: { replayTtlMs?: number };
+  fetchImpl?: typeof fetch;
+};
+
+/** Re-exported so the module's own files import one place, and a deployment writing an `onRun` or an `onReject`
+ *  sees the same shapes the module emits. */
+export type { ActionRejectRecord, ActionRunRecord } from '@plitzi/sdk-shared';
+
+export type ResolvedActionLimits = Required<ActionLimits>;
+
+export type ActionRunRequest = {
+  entry: ActionEntry;
+  input: Record<string, unknown>;
+  spaceId: number;
+  environment: Environment;
+  trigger: ActionTriggerType;
+  user?: SSRUser;
+  /** Who is asking. Stated by whatever started the run — see {@link ActionTaskContext.callerId}. */
+  callerId: string;
+  runId: string;
+  /** Chain of run ids that caused this one; a run naming its own action is refused before its first node. */
+  lineage?: string[];
+  /**
+   * The published version this run belongs to, when a page started it.
+   *
+   * The action was read as of this revision, so the connectors it calls are read as of it too — a flow and the
+   * manifests it goes through are one published thing, and mixing versions inside one run is the discrepancy in
+   * miniature.
+   */
+  at?: SpaceRevision;
+  emit?: (chunk: unknown) => void;
+  /** Reports each step as it settles, for a caller watching the run happen. Absent for a plain request/response. */
+  onNode?: (id: string, status: InteractionNodeStatus) => void;
+  signal?: AbortSignal;
+};
+
+export type ActionRunResult = {
+  runId: string;
+  status: ActionRunStatus;
+  /** Projected down to the document's declared `output`. Never the raw flow scope. */
+  output: Record<string, unknown>;
+  /** The same shape the dev-tools Interactions panel renders. Redacted before it leaves the process. */
+  trace: InteractionNode[];
+};

@@ -1,5 +1,13 @@
 /** Static declaration for Pagination: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { PaginationProps } from './Pagination';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type PaginationAttributes = AuthorableAttributes<PaginationProps>;
+
+const declaration = elementDeclaration<PaginationAttributes>()({
   type: 'pagination',
   content: {
     attributes: {
@@ -52,7 +60,10 @@ const declaration = {
           default: {
             display: 'flex',
             'align-items': 'center',
-            gap: '8px'
+            // Longhands: the builder's style vocabulary holds no shorthands, so a `gap` here is a default the
+            // style editor cannot read back.
+            'row-gap': '8px',
+            'column-gap': '8px'
           }
         }
       },
@@ -60,6 +71,6 @@ const declaration = {
     },
     settings: {}
   }
-};
+});
 
 export default declaration;

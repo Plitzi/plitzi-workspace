@@ -3,7 +3,10 @@
 import type { ElementInteraction } from './SchemaTypes';
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 
-export type InteractionCallbackType = 'trigger' | 'globalCallback' | 'callback' | 'utility';
+// `task` is server-only: it runs inside a server action, never in the browser. It is not a `utility` — those are
+// resolved by action alone and offered in CLIENT flows, where a task has nothing to run on — and not a
+// `globalCallback`, which names a client source module.
+export type InteractionCallbackType = 'trigger' | 'globalCallback' | 'callback' | 'utility' | 'task';
 // `failed` means the flow ran to the end but at least one of its steps did: a flow does not abort on a failed step,
 // so the aggregate status reports the worst outcome rather than the fact that the traversal finished.
 export type InteractionStatus = 'completed' | 'skipped' | 'failed';
@@ -64,6 +67,18 @@ export type InteractionCallbackPreview = string | Record<string, unknown>;
 
 export type InteractionCallbackPreviews = Record<string, InteractionCallbackPreview>;
 
+/**
+ * What a callback learns about the flow running it.
+ *
+ * Only the element the flow fired on, and only because a step that starts something asynchronous has to be able to
+ * report back TO that element — a server action running detached finishes long after the flow that launched it
+ * returned, and `onFlowEnd` has to fire somewhere specific.
+ */
+export type InteractionCallbackContext = {
+  /** idRef of the element this flow fired on. Absent for a flow with no host element. */
+  elementRef?: string;
+};
+
 export type InteractionCallback<T extends Record<string, unknown> = Record<string, unknown>> = {
   elementId?: string; // When is globalCallback or utility, we just put the source as elementId
   action: string;
@@ -76,7 +91,7 @@ export type InteractionCallback<T extends Record<string, unknown> = Record<strin
   params:
     | Record<keyof T, InteractionCallbackParam<T>>
     | ((params: InteractionCallbackParamValues<T>) => Record<keyof T, InteractionCallbackParam<T>>);
-  callback?: (params: InteractionCallbackParamValues<T>) => unknown;
+  callback?: (params: InteractionCallbackParamValues<T>, context?: InteractionCallbackContext) => unknown;
   postCallback?: InteractionPostCallback<T>;
   preview?: InteractionCallbackPreviews | ((params: InteractionCallbackParamValues<T>) => InteractionCallbackPreviews);
 };

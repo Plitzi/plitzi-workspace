@@ -28,15 +28,33 @@ const loadDriver = async (): Promise<Driver> => {
   return driver;
 };
 
+/**
+ * The configured connection string, as the driver wants it.
+ *
+ * Parsed rather than handed to `createPool` as `uri`, and that is not a style choice: **that option is ignored** —
+ * only `createPool(uriString)` reads a URL, and that form takes no options. Passing both silently drops the URL and
+ * connects to the driver's own defaults, which on a machine that happens to run MySQL locally is a connection to
+ * the wrong database rather than an error. Anything unparseable is refused here, where the message can say so.
+ */
 const fromUrl = (url: string): PoolOptions => {
-  const parsed = new URL(url);
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error('@plitzi/sdk-server/mysql: `url` is not a valid database URL');
+  }
+
+  const database = parsed.pathname.replace(/^\//, '');
+  if (!parsed.hostname) {
+    throw new Error('@plitzi/sdk-server/mysql: `url` names no host');
+  }
 
   return {
     host: parsed.hostname,
     port: parsed.port ? Number(parsed.port) : 3306,
     user: decodeURIComponent(parsed.username),
     password: decodeURIComponent(parsed.password),
-    database: parsed.pathname.replace(/^\//, '')
+    database
   };
 };
 

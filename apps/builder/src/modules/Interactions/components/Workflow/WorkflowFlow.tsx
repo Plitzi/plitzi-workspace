@@ -13,21 +13,24 @@ export type WorkflowFlowProps = {
   nodes?: Record<string, ElementInteraction>;
   triggerTitle?: string;
   callbackTitle?: string;
+  /** `callback` in a page flow; server-action steps are `task`. */
+  stepType?: ElementInteraction['type'];
 };
 
 const WorkflowFlow = ({
   trigger,
   nodes = emptyObject,
   triggerTitle = 'When this happens...',
-  callbackTitle = 'Do this...'
+  callbackTitle = 'Do this...',
+  stepType = 'callback'
 }: WorkflowFlowProps) => {
   const { addNode, removeNode } = use(WorkflowContext);
   const callbacks = useMemo(() => Object.values(nodes).filter(node => node.type !== 'trigger'), [nodes]);
   const [nodesOpened, setNodesOpened] = useState<Record<string, boolean>>({});
 
   const handleClickAddCallback = useCallback(
-    (siblingNodeId: string) => addNode('callback', siblingNodeId, trigger.id),
-    [addNode, trigger]
+    (siblingNodeId: string) => addNode(stepType, siblingNodeId, trigger.id),
+    [addNode, stepType, trigger]
   );
 
   const handleNodeOpened = useCallback(

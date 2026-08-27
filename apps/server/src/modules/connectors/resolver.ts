@@ -5,10 +5,18 @@ import { collectBoundPaths, projectSlice } from './projection';
 
 import type { ConnectorCredential, ConnectorFilter, ConnectorManifest } from './types';
 import type { RscElementResolver } from '../rsc/resolveRscData';
+import type { SpaceRevision } from '@plitzi/sdk-shared';
 
 export type ConnectorLookups = {
-  /** Reads a manifest by id. Server-side state: manifests name endpoints and must never reach the browser. */
-  getConnector: (spaceId: number, connectorId: string) => Promise<ConnectorManifest | undefined>;
+  /**
+   * Reads a manifest by id, as of a published revision. Server-side state: manifests name endpoints and must never
+   * reach the browser.
+   *
+   * `at` absent means the live document, the one the builder edits. A page passes the revision it was published
+   * at, so it reads through the manifest it shipped with rather than whatever it says after somebody points that
+   * connector at a different API.
+   */
+  getConnector: (spaceId: number, connectorId: string, at?: SpaceRevision) => Promise<ConnectorManifest | undefined>;
   /** Resolves the secret referenced by `manifest.credential`. */
   getCredential?: (spaceId: number, identifier: string) => Promise<ConnectorCredential | undefined>;
   fetchImpl?: typeof fetch;
@@ -68,14 +76,18 @@ const toPage = (queryParams: Record<string, string>, attributes: ProviderAttribu
  */
 export const createConnectorResolver =
   ({ getConnector, getCredential, fetchImpl }: ConnectorLookups): RscElementResolver =>
-  async ({ element, flat, routeParams, queryParams, spaceId }) => {
+  async ({ element, flat, routeParams, queryParams, spaceId, environment, req }) => {
+    // Environment AND revision from the same record: read one from the deployment and the other from the resolve
+    // context and the pair can name a snapshot nobody published.
+    const deployment = req.ctx.spaceDeployment;
+    const at = { environment: deployment?.environment ?? environment, revision: deployment?.revision ?? 0 };
     const attributes = element.attributes as ProviderAttributes;
     const { connector: connectorId, endpoint, resource, limit, singleRecord = false, filters } = attributes;
     if (!connectorId) {
       return undefined;
     }
 
-    const manifest = await getConnector(spaceId, connectorId);
+    const manifest = await getConnector(spaceId, connectorId, at);
     if (!manifest) {
       throw new Error(`Connector "${connectorId}" is not configured for space ${spaceId}`);
     }

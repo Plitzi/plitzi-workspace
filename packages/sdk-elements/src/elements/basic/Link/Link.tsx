@@ -20,9 +20,16 @@ export type LinkProps = {
   href?: string;
   target?: 'self' | 'blank' | 'parent' | 'top';
   mode?: 'page' | 'internal' | 'external';
+  /**
+   * What a screen reader announces instead of the link's contents.
+   *
+   * Worth setting on a link that wraps a whole card: with nothing here, the announced name is every word inside
+   * it — the topic, the headline, the standfirst, the byline and the button — read out as one link.
+   */
+  label?: string;
 };
 
-const Link = ({ ref, children, className = '', href = '#', target = 'self', mode = 'page' }: LinkProps) => {
+const Link = ({ ref, children, className = '', href = '#', target = 'self', mode = 'page', label = '' }: LinkProps) => {
   const { style } = useElement();
   const {
     settings: { previewMode }
@@ -76,6 +83,8 @@ const Link = ({ ref, children, className = '', href = '#', target = 'self', mode
       ref,
       style,
       target: `_${target}`,
+      // Empty means "let the contents name it", which is right for an ordinary link and only wrong for a card.
+      'aria-label': label ? label : undefined,
       className: clsx('plitzi-component__link', className)
     };
     if (!previewMode) {
@@ -83,7 +92,7 @@ const Link = ({ ref, children, className = '', href = '#', target = 'self', mode
     }
 
     return { ...propsToReturn, href: url };
-  }, [ref, style, target, className, previewMode, url]);
+  }, [ref, style, target, label, className, previewMode, url]);
 
   return (
     <RootElement tag="a" {...propsMemo} onClick={handleClick}>

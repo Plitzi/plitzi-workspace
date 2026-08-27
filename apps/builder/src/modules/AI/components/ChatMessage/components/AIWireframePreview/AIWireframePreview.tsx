@@ -1,9 +1,9 @@
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import clsx from 'clsx';
-import { useCallback, useState, use } from 'react';
+import { useCallback, useState } from 'react';
 
-import { ThemeContext } from '@plitzi/sdk-shared/theme/ThemeProvider';
+import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 
 import { PLACEHOLDER } from './helpers';
@@ -120,7 +120,7 @@ const AIWireframePreview = ({
   mode,
   version
 }: AIWireframePreviewProps) => {
-  const { theme } = use(ThemeContext);
+  const { resolvedTheme } = useTheme();
   const { existsPopup, addPopup } = usePopup();
   const { onSendMessage, elementSelected } = useAiChatContext();
   const [showHtml, setShowHtml] = useState(false);
@@ -198,13 +198,7 @@ const AIWireframePreview = ({
 
       <div className="min-h-32 overflow-hidden bg-white dark:bg-zinc-950">
         {showHtml && html && (
-          <CodeMirror
-            value={html}
-            theme={theme === 'dark' ? 'dark' : 'light'}
-            size="xs"
-            className="max-h-72 overflow-auto"
-            readOnly
-          />
+          <CodeMirror value={html} theme={resolvedTheme} size="xs" className="max-h-72 overflow-auto" readOnly />
         )}
         {(!showHtml || !html) && <WireframeCanvas baseElementId={baseElementId} schema={schema} style={style} />}
       </div>

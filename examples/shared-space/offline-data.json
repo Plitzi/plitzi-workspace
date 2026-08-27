@@ -1,588 +1,138 @@
 {
   "schema": {
     "definition": {
-      "name": "",
-      "permanentUrl": ""
+      "name": "Plitzi Example",
+      "permanentUrl": "plitzi-example"
     },
     "flat": {
-      "655221a12565b83ac5060e20": {
-        "id": "655221a12565b83ac5060e20",
-        "definition": {
-          "label": "Page",
-          "type": "page",
-          "initialState": null,
-          "styleSelectors": {
-            "base": "page-Wvbn"
-          },
-          "bindings": null,
-          "interactions": null,
-          "parentId": null,
-          "rootId": "655221a12565b83ac5060e20",
-          "items": [
-            "6563055d8785677dc553a243",
-            "65522685a36203721330c610",
-            "65522c9aeb84a24efd5aa41e",
-            "rsc-section",
-            "655226d91b8fb407a49535d5"
-          ]
-        },
+      "bba177db5bde2fdc26480d89": {
+        "id": "bba177db5bde2fdc26480d89",
+        "idRef": "page-1",
         "attributes": {
           "slug": "",
           "default": true,
-          "name": "Home"
+          "name": "Home",
+          "seoEnabled": false
+        },
+        "definition": {
+          "label": "Page",
+          "type": "page",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "items": [
+            "204c944432e1c43bd95ace46",
+            "214c95d731e1c2a8da5acfd9",
+            "224c976a34e1c761d75acb20",
+            "234c98fd33e1c5ced85accb3",
+            "1c4c8df836e1ca87dd5ad492"
+          ],
+          "styleSelectors": {
+            "base": "page"
+          }
         }
       },
-      "65522685a36203721330c610": {
-        "id": "65522685a36203721330c610",
+      "204c944432e1c43bd95ace46": {
+        "id": "204c944432e1c43bd95ace46",
+        "idRef": "container-1",
         "attributes": {
           "subType": "div"
         },
         "definition": {
           "label": "Container",
           "type": "container",
-          "description": "Group things together into groups, also nestable.",
-          "items": [
-            "655226c2a62ab65a53302504"
-          ],
-          "bindings": [],
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "bba177db5bde2fdc26480d89",
+          "items": [],
           "styleSelectors": {
-            "base": "container-3H3f"
+            "base": "backdrop"
           },
           "initialState": {
             "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "655221a12565b83ac5060e20"
+          }
         }
       },
-      "655226c2a62ab65a53302504": {
-        "id": "655226c2a62ab65a53302504",
+      "214c95d731e1c2a8da5acfd9": {
+        "id": "214c95d731e1c2a8da5acfd9",
+        "idRef": "container-2",
+        "attributes": {
+          "subType": "div"
+        },
+        "definition": {
+          "label": "Container",
+          "type": "container",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "bba177db5bde2fdc26480d89",
+          "items": [
+            "13d19988cb5b6aef2a46d376"
+          ],
+          "styleSelectors": {
+            "base": "logoFrame"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "13d19988cb5b6aef2a46d376": {
+        "id": "13d19988cb5b6aef2a46d376",
+        "idRef": "image-1",
         "attributes": {
           "src": "https://cdn.plitzi.com/resources/img/favicon.svg",
-          "srcLink": "",
-          "linkTarget": "_blank"
+          "alt": "",
+          "fetchPriority": "auto",
+          "loadMode": "auto"
         },
         "definition": {
           "label": "Image",
           "type": "image",
-          "description": "Use an URL to display an image.",
-          "bindings": [],
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "214c95d731e1c2a8da5acfd9",
+          "items": [],
           "styleSelectors": {
-            "base": "image-x78X"
+            "base": "logo"
           },
           "initialState": {
             "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "65522685a36203721330c610"
+          }
         }
       },
-      "655226d91b8fb407a49535d5": {
-        "id": "655226d91b8fb407a49535d5",
+      "224c976a34e1c761d75acb20": {
+        "id": "224c976a34e1c761d75acb20",
+        "idRef": "container-3",
         "attributes": {
           "subType": "div"
         },
         "definition": {
           "label": "Container",
           "type": "container",
-          "description": "Group things together into groups, also nestable.",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "bba177db5bde2fdc26480d89",
           "items": [
-            "655226eb3909162e573e6821",
-            "6552289be0053d3e506eafe5",
-            "6552289ffb0656367911f756",
-            "655228a1dd69eab43000db88"
+            "0e0b067d9c32368e79208857"
           ],
-          "bindings": [],
           "styleSelectors": {
-            "base": "container-EiKe"
+            "base": "headline"
           },
           "initialState": {
             "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "655221a12565b83ac5060e20"
+          }
         }
       },
-      "655226eb3909162e573e6821": {
-        "id": "655226eb3909162e573e6821",
+      "0e0b067d9c32368e79208857": {
+        "id": "0e0b067d9c32368e79208857",
+        "idRef": "heading-1",
         "attributes": {
-          "href": "#"
+          "content": "Welcome To Plitzi",
+          "subType": "h1"
         },
-        "definition": {
-          "label": "Link",
-          "type": "link",
-          "items": [
-            "6552275b66777873650ec849",
-            "6552272b9a426b713fa71696"
-          ],
-          "bindings": [],
-          "styleSelectors": {
-            "base": "button-link"
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "655226d91b8fb407a49535d5"
-        }
-      },
-      "65522718eb21c10ef65bd282": {
-        "id": "65522718eb21c10ef65bd282",
         "definition": {
           "label": "Heading",
           "type": "heading",
-          "initialState": {
-            "visibility": true,
-            "styleVariant": {
-              "heading": {
-                "base": "title"
-              }
-            }
-          },
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "224c976a34e1c761d75acb20",
+          "items": [],
           "styleSelectors": {
-            "base": ""
+            "base": "heading-36d5"
           },
-          "bindings": [],
-          "interactions": null,
-          "parentId": "6552275b66777873650ec849",
-          "rootId": "655221a12565b83ac5060e20",
-          "items": null
-        },
-        "attributes": {
-          "subType": "h1",
-          "content": "Docs"
-        }
-      },
-      "6552272b9a426b713fa71696": {
-        "id": "6552272b9a426b713fa71696",
-        "attributes": {
-          "content": "Find in-depth information about Plitzi features and API."
-        },
-        "definition": {
-          "label": "Paragraph",
-          "type": "paragraph",
-          "bindings": [],
-          "styleSelectors": {
-            "base": ""
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "655226eb3909162e573e6821"
-        }
-      },
-      "6552275b66777873650ec849": {
-        "id": "6552275b66777873650ec849",
-        "attributes": {
-          "subType": "div"
-        },
-        "definition": {
-          "label": "Container",
-          "type": "container",
-          "description": "Group things together into groups, also nestable.",
-          "items": [
-            "65522718eb21c10ef65bd282",
-            "6552276ae96c8efa3e7448a5"
-          ],
-          "bindings": [],
-          "styleSelectors": {
-            "base": "title-container"
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "655226eb3909162e573e6821"
-        }
-      },
-      "6552276ae96c8efa3e7448a5": {
-        "id": "6552276ae96c8efa3e7448a5",
-        "attributes": {
-          "icon": "fas fa-arrow-right",
-          "size": "fa-2x"
-        },
-        "definition": {
-          "label": "Font Awesome",
-          "type": "fontAwesome",
-          "bindings": [],
-          "styleSelectors": {
-            "base": "title-icon"
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "6552275b66777873650ec849"
-        }
-      },
-      "6552289be0053d3e506eafe5": {
-        "id": "6552289be0053d3e506eafe5",
-        "attributes": {
-          "href": "#"
-        },
-        "definition": {
-          "label": "Link",
-          "type": "link",
-          "items": [
-            "6552289b4170c0af2a657c55",
-            "6552289ba69b22131cb4e70e"
-          ],
-          "bindings": [],
-          "styleSelectors": {
-            "base": "button-link"
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "655226d91b8fb407a49535d5"
-        }
-      },
-      "6552289b7c1376a6e0085b40": {
-        "id": "6552289b7c1376a6e0085b40",
-        "definition": {
-          "label": "Heading",
-          "type": "heading",
-          "initialState": {
-            "visibility": true,
-            "styleVariant": {
-              "heading": {
-                "base": "title"
-              }
-            }
-          },
-          "styleSelectors": {
-            "base": ""
-          },
-          "bindings": [],
-          "interactions": null,
-          "parentId": "6552289b4170c0af2a657c55",
-          "rootId": "655221a12565b83ac5060e20",
-          "items": null
-        },
-        "attributes": {
-          "subType": "h1",
-          "content": "Learn"
-        }
-      },
-      "6552289bf49da7291e190c67": {
-        "id": "6552289bf49da7291e190c67",
-        "attributes": {
-          "icon": "fas fa-arrow-right",
-          "size": "fa-2x"
-        },
-        "definition": {
-          "label": "Font Awesome",
-          "type": "fontAwesome",
-          "bindings": [],
-          "styleSelectors": {
-            "base": "title-icon"
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "6552289b4170c0af2a657c55"
-        }
-      },
-      "6552289b4170c0af2a657c55": {
-        "id": "6552289b4170c0af2a657c55",
-        "attributes": {
-          "subType": "div"
-        },
-        "definition": {
-          "label": "Container",
-          "type": "container",
-          "description": "Group things together into groups, also nestable.",
-          "items": [
-            "6552289b7c1376a6e0085b40",
-            "6552289bf49da7291e190c67"
-          ],
-          "bindings": [],
-          "styleSelectors": {
-            "base": "title-container"
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "6552289be0053d3e506eafe5"
-        }
-      },
-      "6552289ba69b22131cb4e70e": {
-        "id": "6552289ba69b22131cb4e70e",
-        "attributes": {
-          "content": "Learn about Plitzi in an interactive course with quizzes!"
-        },
-        "definition": {
-          "label": "Paragraph",
-          "type": "paragraph",
-          "bindings": [],
-          "styleSelectors": {
-            "base": ""
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "6552289be0053d3e506eafe5"
-        }
-      },
-      "6552289ffb0656367911f756": {
-        "id": "6552289ffb0656367911f756",
-        "attributes": {
-          "href": "#"
-        },
-        "definition": {
-          "label": "Link",
-          "type": "link",
-          "items": [
-            "6552289fd543865a0abaf18e",
-            "6552289f9894aa272c419962"
-          ],
-          "bindings": [],
-          "styleSelectors": {
-            "base": "button-link"
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "655226d91b8fb407a49535d5"
-        }
-      },
-      "6552289f2b58c9089bf4c934": {
-        "id": "6552289f2b58c9089bf4c934",
-        "definition": {
-          "label": "Heading",
-          "type": "heading",
-          "initialState": {
-            "visibility": true,
-            "styleVariant": {
-              "heading": {
-                "base": "title"
-              }
-            }
-          },
-          "styleSelectors": {
-            "base": ""
-          },
-          "bindings": [],
-          "interactions": null,
-          "parentId": "6552289fd543865a0abaf18e",
-          "rootId": "655221a12565b83ac5060e20",
-          "items": null
-        },
-        "attributes": {
-          "subType": "h1",
-          "content": "Templates"
-        }
-      },
-      "6552289f6a9310d5606e97f8": {
-        "id": "6552289f6a9310d5606e97f8",
-        "attributes": {
-          "icon": "fas fa-arrow-right",
-          "size": "fa-2x"
-        },
-        "definition": {
-          "label": "Font Awesome",
-          "type": "fontAwesome",
-          "bindings": [],
-          "styleSelectors": {
-            "base": "title-icon"
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "6552289fd543865a0abaf18e"
-        }
-      },
-      "6552289fd543865a0abaf18e": {
-        "id": "6552289fd543865a0abaf18e",
-        "attributes": {
-          "subType": "div"
-        },
-        "definition": {
-          "label": "Container",
-          "type": "container",
-          "description": "Group things together into groups, also nestable.",
-          "items": [
-            "6552289f2b58c9089bf4c934",
-            "6552289f6a9310d5606e97f8"
-          ],
-          "bindings": [],
-          "styleSelectors": {
-            "base": "title-container"
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "6552289ffb0656367911f756"
-        }
-      },
-      "6552289f9894aa272c419962": {
-        "id": "6552289f9894aa272c419962",
-        "attributes": {
-          "content": "Explore the Plitzi playground"
-        },
-        "definition": {
-          "label": "Paragraph",
-          "type": "paragraph",
-          "bindings": [],
-          "styleSelectors": {
-            "base": ""
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "6552289ffb0656367911f756"
-        }
-      },
-      "655228a1dd69eab43000db88": {
-        "id": "655228a1dd69eab43000db88",
-        "attributes": {
-          "href": "#"
-        },
-        "definition": {
-          "label": "Link",
-          "type": "link",
-          "items": [
-            "655228a1ce3a46086e21e631",
-            "655228a1dd9f2c8341b6b7da"
-          ],
-          "bindings": [],
-          "styleSelectors": {
-            "base": "button-link"
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "655226d91b8fb407a49535d5"
-        }
-      },
-      "655228a19a0517faa5539a2f": {
-        "id": "655228a19a0517faa5539a2f",
-        "definition": {
-          "label": "Heading",
-          "type": "heading",
-          "initialState": {
-            "visibility": true,
-            "styleVariant": {
-              "heading": {
-                "base": "title"
-              }
-            }
-          },
-          "styleSelectors": {
-            "base": ""
-          },
-          "bindings": [],
-          "interactions": null,
-          "parentId": "655228a1ce3a46086e21e631",
-          "rootId": "655221a12565b83ac5060e20",
-          "items": null
-        },
-        "attributes": {
-          "subType": "h1",
-          "content": "Deploy"
-        }
-      },
-      "655228a133cc8640cceec58f": {
-        "id": "655228a133cc8640cceec58f",
-        "attributes": {
-          "icon": "fas fa-arrow-right",
-          "size": "fa-2x"
-        },
-        "definition": {
-          "label": "Font Awesome",
-          "type": "fontAwesome",
-          "bindings": [],
-          "styleSelectors": {
-            "base": "title-icon"
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "655228a1ce3a46086e21e631"
-        }
-      },
-      "655228a1ce3a46086e21e631": {
-        "id": "655228a1ce3a46086e21e631",
-        "attributes": {
-          "subType": "div"
-        },
-        "definition": {
-          "label": "Container",
-          "type": "container",
-          "description": "Group things together into groups, also nestable.",
-          "items": [
-            "655228a19a0517faa5539a2f",
-            "655228a133cc8640cceec58f"
-          ],
-          "bindings": [],
-          "styleSelectors": {
-            "base": "title-container"
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "655228a1dd69eab43000db88"
-        }
-      },
-      "655228a1dd9f2c8341b6b7da": {
-        "id": "655228a1dd9f2c8341b6b7da",
-        "attributes": {
-          "content": "Instantly deploy your Plitzi Space"
-        },
-        "definition": {
-          "label": "Paragraph",
-          "type": "paragraph",
-          "bindings": [],
-          "styleSelectors": {
-            "base": ""
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "655228a1dd69eab43000db88"
-        }
-      },
-      "65522c9aeb84a24efd5aa41e": {
-        "id": "65522c9aeb84a24efd5aa41e",
-        "attributes": {
-          "subType": "div"
-        },
-        "definition": {
-          "label": "Container",
-          "type": "container",
-          "description": "Group things together into groups, also nestable.",
-          "items": [
-            "65522cc49b57167ea7a2a076"
-          ],
-          "bindings": [],
-          "styleSelectors": {
-            "base": "container-Ljsd"
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "655221a12565b83ac5060e20"
-        }
-      },
-      "65522cc49b57167ea7a2a076": {
-        "id": "65522cc49b57167ea7a2a076",
-        "definition": {
-          "label": "Heading",
-          "type": "heading",
           "initialState": {
             "visibility": true,
             "styleVariant": {
@@ -590,275 +140,600 @@
                 "base": "lg"
               }
             }
-          },
-          "styleSelectors": {
-            "base": ""
-          },
-          "bindings": [],
-          "interactions": null,
-          "parentId": "65522c9aeb84a24efd5aa41e",
-          "rootId": "655221a12565b83ac5060e20",
-          "items": null,
-          "runtime": "server"
-        },
-        "attributes": {
-          "subType": "h1",
-          "content": "Welcome To Plitzi"
+          }
         }
       },
-      "rsc-section": {
-        "id": "rsc-section",
+      "234c98fd33e1c5ced85accb3": {
+        "id": "234c98fd33e1c5ced85accb3",
+        "idRef": "container-4",
         "attributes": {
           "subType": "div"
         },
-        "definition": {
-          "label": "RSC Examples",
-          "type": "container",
-          "items": [
-            "rsc-server",
-            "rsc-client",
-            "rsc-shared"
-          ],
-          "bindings": [],
-          "styleSelectors": {
-            "base": "rsc-section"
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "655221a12565b83ac5060e20"
-        }
-      },
-      "rsc-server": {
-        "id": "rsc-server",
-        "attributes": {},
-        "definition": {
-          "label": "Server Info",
-          "type": "serverInfo",
-          "items": [],
-          "bindings": [],
-          "styleSelectors": {
-            "base": ""
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "rsc-section",
-          "runtime": "server",
-          "loadStrategy": "eager"
-        }
-      },
-      "rsc-client": {
-        "id": "rsc-client",
-        "attributes": {},
-        "definition": {
-          "label": "Client Info",
-          "type": "clientInfo",
-          "items": [],
-          "bindings": [],
-          "styleSelectors": {
-            "base": ""
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "rsc-section",
-          "runtime": "client",
-          "loadStrategy": "lazy"
-        }
-      },
-      "rsc-shared": {
-        "id": "rsc-shared",
-        "attributes": {},
-        "definition": {
-          "label": "Shared Info",
-          "type": "sharedInfo",
-          "items": [],
-          "bindings": [],
-          "styleSelectors": {
-            "base": ""
-          },
-          "initialState": {
-            "visibility": true
-          },
-          "rootId": "655221a12565b83ac5060e20",
-          "parentId": "rsc-section",
-          "runtime": "shared",
-          "loadStrategy": "visible"
-        }
-      },
-      "6563055d8785677dc553a243": {
-        "id": "6563055d8785677dc553a243",
         "definition": {
           "label": "Container",
           "type": "container",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "bba177db5bde2fdc26480d89",
+          "items": [
+            "68e2db52a1a917b9d3f85d2c",
+            "69e2dce5a0a91626d4f85ebf",
+            "66e2d82c9fa91493d5f86052"
+          ],
+          "styleSelectors": {
+            "base": "rscSection"
+          },
           "initialState": {
             "visibility": true
-          },
-          "styleSelectors": {
-            "base": "bg-rectangles"
-          },
-          "bindings": [],
-          "interactions": null,
-          "parentId": "655221a12565b83ac5060e20",
-          "rootId": "655221a12565b83ac5060e20",
+          }
+        }
+      },
+      "68e2db52a1a917b9d3f85d2c": {
+        "id": "68e2db52a1a917b9d3f85d2c",
+        "idRef": "rsc-server",
+        "attributes": {},
+        "definition": {
+          "label": "serverInfo",
+          "type": "serverInfo",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "234c98fd33e1c5ced85accb3",
           "items": [],
-          "runtime": "server"
-        },
+          "styleSelectors": {
+            "base": "serverInfo-bbfd"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "69e2dce5a0a91626d4f85ebf": {
+        "id": "69e2dce5a0a91626d4f85ebf",
+        "idRef": "rsc-client",
+        "attributes": {},
+        "definition": {
+          "label": "clientInfo",
+          "type": "clientInfo",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "234c98fd33e1c5ced85accb3",
+          "items": [],
+          "styleSelectors": {
+            "base": "clientInfo-bafd"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "66e2d82c9fa91493d5f86052": {
+        "id": "66e2d82c9fa91493d5f86052",
+        "idRef": "rsc-shared",
+        "attributes": {},
+        "definition": {
+          "label": "sharedInfo",
+          "type": "sharedInfo",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "234c98fd33e1c5ced85accb3",
+          "items": [],
+          "styleSelectors": {
+            "base": "sharedInfo-b9fd"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "1c4c8df836e1ca87dd5ad492": {
+        "id": "1c4c8df836e1ca87dd5ad492",
+        "idRef": "container-5",
         "attributes": {
           "subType": "div"
+        },
+        "definition": {
+          "label": "Container",
+          "type": "container",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "bba177db5bde2fdc26480d89",
+          "items": [
+            "ecac579f727fe358fb1d9f15",
+            "ebac560c737fe4ebfa1d9d82",
+            "eeac5ac5747fe67ef91d9bef",
+            "edac5932757fe811f81d9a5c"
+          ],
+          "styleSelectors": {
+            "base": "cards"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "ecac579f727fe358fb1d9f15": {
+        "id": "ecac579f727fe358fb1d9f15",
+        "idRef": "link-1",
+        "attributes": {
+          "href": "#",
+          "target": "self",
+          "mode": "page",
+          "label": ""
+        },
+        "definition": {
+          "label": "Link",
+          "type": "link",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "1c4c8df836e1ca87dd5ad492",
+          "items": [
+            "13d9f06069c91aff277c3e5a",
+            "14d9f1f368c9196c287c3fed"
+          ],
+          "styleSelectors": {
+            "base": "buttonLink"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "13d9f06069c91aff277c3e5a": {
+        "id": "13d9f06069c91aff277c3e5a",
+        "idRef": "container-6",
+        "attributes": {
+          "subType": "div"
+        },
+        "definition": {
+          "label": "Container",
+          "type": "container",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "ecac579f727fe358fb1d9f15",
+          "items": [
+            "ab874f971fe2d3c032a346cd",
+            "aa874e0420e2d55331a3453a"
+          ],
+          "styleSelectors": {
+            "base": "titleContainer"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "ab874f971fe2d3c032a346cd": {
+        "id": "ab874f971fe2d3c032a346cd",
+        "idRef": "heading-2",
+        "attributes": {
+          "content": "Docs",
+          "subType": "h1"
+        },
+        "definition": {
+          "label": "Heading",
+          "type": "heading",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "13d9f06069c91aff277c3e5a",
+          "items": [],
+          "styleSelectors": {
+            "base": "heading-4411"
+          },
+          "initialState": {
+            "visibility": true,
+            "styleVariant": {
+              "heading": {
+                "base": "title"
+              }
+            }
+          }
+        }
+      },
+      "aa874e0420e2d55331a3453a": {
+        "id": "aa874e0420e2d55331a3453a",
+        "idRef": "fontAwesome-1",
+        "attributes": {
+          "icon": "fas fa-arrow-right",
+          "size": "fa-2x",
+          "iconAnimation": ""
+        },
+        "definition": {
+          "label": "Font Awesome",
+          "type": "fontAwesome",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "13d9f06069c91aff277c3e5a",
+          "items": [],
+          "styleSelectors": {
+            "base": "titleIcon"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "14d9f1f368c9196c287c3fed": {
+        "id": "14d9f1f368c9196c287c3fed",
+        "idRef": "paragraph-1",
+        "attributes": {
+          "content": "Find in-depth information about Plitzi features and API."
+        },
+        "definition": {
+          "label": "Paragraph",
+          "type": "paragraph",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "ecac579f727fe358fb1d9f15",
+          "items": [],
+          "styleSelectors": {
+            "base": "paragraph-c3f9"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "ebac560c737fe4ebfa1d9d82": {
+        "id": "ebac560c737fe4ebfa1d9d82",
+        "idRef": "link-2",
+        "attributes": {
+          "href": "#",
+          "target": "self",
+          "mode": "page",
+          "label": ""
+        },
+        "definition": {
+          "label": "Link",
+          "type": "link",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "1c4c8df836e1ca87dd5ad492",
+          "items": [
+            "b9021b8b640287f4aca43725",
+            "b80219f865028987aba43592"
+          ],
+          "styleSelectors": {
+            "base": "buttonLink"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "b9021b8b640287f4aca43725": {
+        "id": "b9021b8b640287f4aca43725",
+        "idRef": "container-7",
+        "attributes": {
+          "subType": "div"
+        },
+        "definition": {
+          "label": "Container",
+          "type": "container",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "ebac560c737fe4ebfa1d9d82",
+          "items": [
+            "62516514fb7e6263cba90b8a",
+            "635166a7fa7e60d0cca90d1d"
+          ],
+          "styleSelectors": {
+            "base": "titleContainer"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "62516514fb7e6263cba90b8a": {
+        "id": "62516514fb7e6263cba90b8a",
+        "idRef": "heading-3",
+        "attributes": {
+          "content": "Learn",
+          "subType": "h1"
+        },
+        "definition": {
+          "label": "Heading",
+          "type": "heading",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "b9021b8b640287f4aca43725",
+          "items": [],
+          "styleSelectors": {
+            "base": "heading-9856"
+          },
+          "initialState": {
+            "visibility": true,
+            "styleVariant": {
+              "heading": {
+                "base": "title"
+              }
+            }
+          }
+        }
+      },
+      "635166a7fa7e60d0cca90d1d": {
+        "id": "635166a7fa7e60d0cca90d1d",
+        "idRef": "fontAwesome-2",
+        "attributes": {
+          "icon": "fas fa-arrow-right",
+          "size": "fa-2x",
+          "iconAnimation": ""
+        },
+        "definition": {
+          "label": "Font Awesome",
+          "type": "fontAwesome",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "b9021b8b640287f4aca43725",
+          "items": [],
+          "styleSelectors": {
+            "base": "titleIcon"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "b80219f865028987aba43592": {
+        "id": "b80219f865028987aba43592",
+        "idRef": "paragraph-2",
+        "attributes": {
+          "content": "Learn about Plitzi in an interactive course with quizzes!"
+        },
+        "definition": {
+          "label": "Paragraph",
+          "type": "paragraph",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "ebac560c737fe4ebfa1d9d82",
+          "items": [],
+          "styleSelectors": {
+            "base": "paragraph-a16f"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "eeac5ac5747fe67ef91d9bef": {
+        "id": "eeac5ac5747fe67ef91d9bef",
+        "idRef": "link-3",
+        "attributes": {
+          "href": "#",
+          "target": "self",
+          "mode": "page",
+          "label": ""
+        },
+        "definition": {
+          "label": "Link",
+          "type": "link",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "1c4c8df836e1ca87dd5ad492",
+          "items": [
+            "89d8e72abeda5cc930dead50",
+            "8ad8e8bdbdda5b3631deaee3"
+          ],
+          "styleSelectors": {
+            "base": "buttonLink"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "89d8e72abeda5cc930dead50": {
+        "id": "89d8e72abeda5cc930dead50",
+        "idRef": "container-8",
+        "attributes": {
+          "subType": "div"
+        },
+        "definition": {
+          "label": "Container",
+          "type": "container",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "eeac5ac5747fe67ef91d9bef",
+          "items": [
+            "84193c3d45a1cf864f0195e7",
+            "83193aaa46a1d1194e019454"
+          ],
+          "styleSelectors": {
+            "base": "titleContainer"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "84193c3d45a1cf864f0195e7": {
+        "id": "84193c3d45a1cf864f0195e7",
+        "idRef": "heading-4",
+        "attributes": {
+          "content": "Templates",
+          "subType": "h1"
+        },
+        "definition": {
+          "label": "Heading",
+          "type": "heading",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "89d8e72abeda5cc930dead50",
+          "items": [],
+          "styleSelectors": {
+            "base": "heading-001c"
+          },
+          "initialState": {
+            "visibility": true,
+            "styleVariant": {
+              "heading": {
+                "base": "title"
+              }
+            }
+          }
+        }
+      },
+      "83193aaa46a1d1194e019454": {
+        "id": "83193aaa46a1d1194e019454",
+        "idRef": "fontAwesome-3",
+        "attributes": {
+          "icon": "fas fa-arrow-right",
+          "size": "fa-2x",
+          "iconAnimation": ""
+        },
+        "definition": {
+          "label": "Font Awesome",
+          "type": "fontAwesome",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "89d8e72abeda5cc930dead50",
+          "items": [],
+          "styleSelectors": {
+            "base": "titleIcon"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "8ad8e8bdbdda5b3631deaee3": {
+        "id": "8ad8e8bdbdda5b3631deaee3",
+        "idRef": "paragraph-3",
+        "attributes": {
+          "content": "Explore the Plitzi playground"
+        },
+        "definition": {
+          "label": "Paragraph",
+          "type": "paragraph",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "eeac5ac5747fe67ef91d9bef",
+          "items": [],
+          "styleSelectors": {
+            "base": "paragraph-19f7"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "edac5932757fe811f81d9a5c": {
+        "id": "edac5932757fe811f81d9a5c",
+        "idRef": "link-4",
+        "attributes": {
+          "href": "#",
+          "target": "self",
+          "mode": "page",
+          "label": ""
+        },
+        "definition": {
+          "label": "Link",
+          "type": "link",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "1c4c8df836e1ca87dd5ad492",
+          "items": [
+            "8e6245b53a9fe69e56a572bb",
+            "8d6244223b9fe83155a57128"
+          ],
+          "styleSelectors": {
+            "base": "buttonLink"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "8e6245b53a9fe69e56a572bb": {
+        "id": "8e6245b53a9fe69e56a572bb",
+        "idRef": "container-9",
+        "attributes": {
+          "subType": "div"
+        },
+        "definition": {
+          "label": "Container",
+          "type": "container",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "edac5932757fe811f81d9a5c",
+          "items": [
+            "92add6fa42e7df690f9e3b24",
+            "93add88d41e7ddd6109e3cb7"
+          ],
+          "styleSelectors": {
+            "base": "titleContainer"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "92add6fa42e7df690f9e3b24": {
+        "id": "92add6fa42e7df690f9e3b24",
+        "idRef": "heading-5",
+        "attributes": {
+          "content": "Deploy",
+          "subType": "h1"
+        },
+        "definition": {
+          "label": "Heading",
+          "type": "heading",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "8e6245b53a9fe69e56a572bb",
+          "items": [],
+          "styleSelectors": {
+            "base": "heading-65d9"
+          },
+          "initialState": {
+            "visibility": true,
+            "styleVariant": {
+              "heading": {
+                "base": "title"
+              }
+            }
+          }
+        }
+      },
+      "93add88d41e7ddd6109e3cb7": {
+        "id": "93add88d41e7ddd6109e3cb7",
+        "idRef": "fontAwesome-4",
+        "attributes": {
+          "icon": "fas fa-arrow-right",
+          "size": "fa-2x",
+          "iconAnimation": ""
+        },
+        "definition": {
+          "label": "Font Awesome",
+          "type": "fontAwesome",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "8e6245b53a9fe69e56a572bb",
+          "items": [],
+          "styleSelectors": {
+            "base": "titleIcon"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "8d6244223b9fe83155a57128": {
+        "id": "8d6244223b9fe83155a57128",
+        "idRef": "paragraph-4",
+        "attributes": {
+          "content": "Instantly deploy your Plitzi Space"
+        },
+        "definition": {
+          "label": "Paragraph",
+          "type": "paragraph",
+          "rootId": "bba177db5bde2fdc26480d89",
+          "parentId": "edac5932757fe811f81d9a5c",
+          "items": [],
+          "styleSelectors": {
+            "base": "paragraph-96cf"
+          },
+          "initialState": {
+            "visibility": true
+          }
         }
       }
     },
     "variables": [],
     "settings": {
-      "customCss": ".button-link:hover .title-icon {\n  transform: translateX(10px);\n  transition-property: transform;\n  transition-timing-function: cubic-bezier(0.4, 0.2, 1);\n  transition-duration: 150ms;\n}\n"
+      "customCss": "\n.buttonLink:hover .titleIcon {\n  transform: translateX(10px);\n  transition-property: transform;\n  transition-timing-function: cubic-bezier(0.4, 0.2, 1);\n  transition-duration: 150ms;\n}\n"
     },
     "rsc": {
       "enabled": true
     },
     "pages": [
-      "655221a12565b83ac5060e20"
+      "bba177db5bde2fdc26480d89"
     ],
     "pageFolders": []
   },
   "style": {
-    "_id": "69dc22fc8336edc3e6080263",
-    "environment": "main",
-    "cache": ".plitzi__heading{color:var(--foreground);&[data-variant=\"lg\"],&.heading--lg{font-size:50px;}&[data-variant=\"title\"],&.heading--title{margin-bottom:0px;margin-top:0px;}}\n.plitzi__text{color:var(--foreground);}\n.plitzi__paragraph{color:var(--foreground);}\n.plitzi__fontAwesome{color:var(--foreground);}\n.page-Wvbn{flex-direction:column;align-items:center;justify-content:space-between;padding-left:100px;padding-right:100px;padding-bottom:100px;padding-top:100px;position:relative;min-width:100vw;min-height:100vh;background-image:radial-gradient(circle at 50% 50%,var(--background-inner) -30%,var(--background-outer) 100%);background-size:auto;background-position:0% 0%;background-repeat:no-repeat;background-attachment:scroll;background-clip:border-box;}\n.container-EiKe{display:flex;align-items:center;gap:40px;z-index:1;}\n.title-container{display:flex;align-items:center;}\n.title-icon{margin-left:10px;}\n.button-link{color:white;flex-basis:0px;flex-grow:1;flex-shrink:1;}\n.container-3H3f{width:75vw;height:75vh;position:absolute;}\n.image-x78X{width:100%;height:100%;opacity:0.45;}\n.container-Ljsd{z-index:1;color:white;margin-bottom:40px;}\n.bg-rectangles{top:0%;left:0%;bottom:0%;right:0%;position:fixed;background-image:linear-gradient(0deg,var(--grid-big) 1px, transparent 1px),linear-gradient(90deg,var(--grid-big) 1px, transparent 1px),linear-gradient(0deg,var(--grid-small) 1px, transparent 1px),linear-gradient(90deg,var(--grid-small) 1px, transparent 1px);background-size:100px 100px,100px 100px,10px 10px,10px 10px;background-position:0% 0%,0% 0%,0% 0%,0% 0%;background-repeat:repeat,repeat,repeat,repeat;background-attachment:scroll,scroll,scroll,scroll;background-clip:border-box,border-box,border-box,border-box;pointer-events:none;}.rsc-section{z-index:1;}\n@media (max-width: 64rem) and (min-width: 48rem) {.container-EiKe{flex-direction:column;min-height:auto;min-width:auto;flex-grow:1;flex-shrink:1;flex-basis:0%;align-items:flex-start;}\n.page-Wvbn{justify-content:flex-start;padding-top:60px;padding-bottom:60px;padding-right:60px;padding-left:60px;}\n.super-title{text-align:center;}}\n@media (max-width: 48rem) {.container-EiKe{flex-direction:column;min-height:auto;min-width:auto;align-items:stretch;gap:24px;}\n.page-Wvbn{justify-content:flex-start;padding-top:32px;padding-bottom:32px;padding-right:24px;padding-left:24px;}\n.container-3H3f{width:90vw;height:40vh;}}\n:root {\n    --foreground: #17171c;\n    --grid-big: #00000010;\n    --grid-small: #0000000A;\n    --background-outer: #dce6ff;\n    --background-inner: #ffffff;\n}\n\n@media (prefers-color-scheme: light) {\n  :root {\n    --foreground: #17171c;\n    --grid-big: #00000010;\n    --grid-small: #0000000A;\n    --background-outer: #dce6ff;\n    --background-inner: #ffffff;\n  }\n}\n\n@media (prefers-color-scheme: dark) {\n  :root {\n    --foreground: #fafafa;\n    --grid-big: #ffffff10;\n    --grid-small: #ffffff0A;\n    --background-outer: #000000;\n    --background-inner: #080866;\n  }\n}",
-    "spaceId": 14,
     "platform": {
       "desktop": {
-        "page-Wvbn": {
-          "name": "page-Wvbn",
-          "attributes": {
-            "base": {
-              "default": {
-                "flex-direction": "column",
-                "align-items": "center",
-                "justify-content": "space-between",
-                "padding-left": "100px",
-                "padding-right": "100px",
-                "padding-bottom": "100px",
-                "padding-top": "100px",
-                "position": "relative",
-                "min-width": "100vw",
-                "min-height": "100vh",
-                "background-image": "radial-gradient(circle at 50% 50%, var(--background-inner) -30%, var(--background-outer) 100%)",
-                "background-size": "auto",
-                "background-position": "0% 0%",
-                "background-repeat": "no-repeat",
-                "background-attachment": "scroll",
-                "background-clip": "border-box"
-              }
-            }
-          },
-          "cache": ".page-Wvbn{flex-direction:column;align-items:center;justify-content:space-between;padding-left:100px;padding-right:100px;padding-bottom:100px;padding-top:100px;position:relative;min-width:100vw;min-height:100vh;background-image:radial-gradient(circle at 50% 50%,var(--background-inner) -30%,var(--background-outer) 100%);background-size:auto;background-position:0% 0%;background-repeat:no-repeat;background-attachment:scroll;background-clip:border-box;}",
-          "type": "class"
-        },
-        "container-EiKe": {
-          "name": "container-EiKe",
-          "attributes": {
-            "base": {
-              "default": {
-                "display": "flex",
-                "align-items": "center",
-                "gap": "40px",
-                "z-index": "1"
-              }
-            }
-          },
-          "cache": ".container-EiKe{display:flex;align-items:center;gap:40px;z-index:1;}",
-          "type": "class"
-        },
-        "title-container": {
-          "name": "title-container",
-          "attributes": {
-            "base": {
-              "default": {
-                "display": "flex",
-                "align-items": "center"
-              }
-            }
-          },
-          "cache": ".title-container{display:flex;align-items:center;}",
-          "type": "class"
-        },
-        "title-icon": {
-          "name": "title-icon",
-          "attributes": {
-            "base": {
-              "default": {
-                "margin-left": "10px"
-              }
-            }
-          },
-          "cache": ".title-icon{margin-left:10px;}",
-          "type": "class"
-        },
-        "button-link": {
-          "name": "button-link",
-          "attributes": {
-            "base": {
-              "default": {
-                "color": "white",
-                "flex-basis": "0px",
-                "flex-grow": "1",
-                "flex-shrink": "1"
-              }
-            }
-          },
-          "cache": ".button-link{color:white;flex-basis:0px;flex-grow:1;flex-shrink:1;}",
-          "type": "class"
-        },
-        "container-3H3f": {
-          "name": "container-3H3f",
-          "attributes": {
-            "base": {
-              "default": {
-                "width": "75vw",
-                "height": "75vh",
-                "position": "absolute"
-              }
-            }
-          },
-          "cache": ".container-3H3f{width:75vw;height:75vh;position:absolute;}",
-          "type": "class"
-        },
-        "image-x78X": {
-          "name": "image-x78X",
-          "attributes": {
-            "base": {
-              "default": {
-                "width": "100%",
-                "height": "100%",
-                "opacity": "0.45"
-              }
-            }
-          },
-          "cache": ".image-x78X{width:100%;height:100%;opacity:0.45;}",
-          "type": "class"
-        },
-        "container-Ljsd": {
-          "name": "container-Ljsd",
-          "attributes": {
-            "base": {
-              "default": {
-                "z-index": "1",
-                "color": "white",
-                "margin-bottom": "40px"
-              }
-            }
-          },
-          "cache": ".container-Ljsd{z-index:1;color:white;margin-bottom:40px;}",
-          "type": "class"
-        },
         "heading": {
           "name": "heading",
           "type": "element",
+          "componentType": "heading",
           "attributes": {
             "base": {
               "default": {
@@ -872,19 +747,19 @@
                 },
                 "title": {
                   "default": {
-                    "margin-bottom": "0px",
-                    "margin-top": "0px"
+                    "margin-top": "0px",
+                    "margin-bottom": "0px"
                   }
                 }
               }
             }
           },
-          "componentType": "heading",
-          "cache": ".plitzi__heading{color:var(--foreground);&[data-variant=\"lg\"],&.heading--lg{font-size:50px;}&[data-variant=\"title\"],&.heading--title{margin-bottom:0px;margin-top:0px;}}"
+          "cache": ".plitzi__heading{color:var(--foreground);&[data-variant=\"lg\"],&.heading--lg{font-size:50px;}&[data-variant=\"title\"],&.heading--title{margin-top:0px;margin-bottom:0px;}}"
         },
         "text": {
           "name": "text",
           "type": "element",
+          "componentType": "text",
           "attributes": {
             "base": {
               "default": {
@@ -892,12 +767,12 @@
               }
             }
           },
-          "componentType": "text",
           "cache": ".plitzi__text{color:var(--foreground);}"
         },
         "paragraph": {
           "name": "paragraph",
           "type": "element",
+          "componentType": "paragraph",
           "attributes": {
             "base": {
               "default": {
@@ -905,12 +780,12 @@
               }
             }
           },
-          "componentType": "paragraph",
           "cache": ".plitzi__paragraph{color:var(--foreground);}"
         },
         "fontAwesome": {
           "name": "fontAwesome",
           "type": "element",
+          "componentType": "fontAwesome",
           "attributes": {
             "base": {
               "default": {
@@ -918,19 +793,46 @@
               }
             }
           },
-          "componentType": "fontAwesome",
           "cache": ".plitzi__fontAwesome{color:var(--foreground);}"
         },
-        "bg-rectangles": {
-          "name": "bg-rectangles",
+        "page": {
+          "name": "page",
+          "type": "class",
+          "attributes": {
+            "base": {
+              "default": {
+                "padding-top": "100px",
+                "padding-right": "100px",
+                "padding-bottom": "100px",
+                "padding-left": "100px",
+                "display": "flex",
+                "flex-direction": "column",
+                "align-items": "center",
+                "justify-content": "space-between",
+                "position": "relative",
+                "min-width": "100vw",
+                "min-height": "100vh",
+                "background-image": "radial-gradient(circle at 50% 50%, var(--background-inner) -30%, var(--background-outer) 100%)",
+                "background-size": "auto",
+                "background-position": "0% 0%",
+                "background-repeat": "no-repeat",
+                "background-attachment": "scroll",
+                "background-clip": "border-box"
+              }
+            }
+          },
+          "cache": ".page{padding-top:100px;padding-right:100px;padding-bottom:100px;padding-left:100px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;position:relative;min-width:100vw;min-height:100vh;background-image:radial-gradient(circle at 50% 50%, var(--background-inner) -30%, var(--background-outer) 100%);background-size:auto;background-position:0% 0%;background-repeat:no-repeat;background-attachment:scroll;background-clip:border-box;}"
+        },
+        "backdrop": {
+          "name": "backdrop",
           "type": "class",
           "attributes": {
             "base": {
               "default": {
                 "top": "0%",
-                "left": "0%",
-                "bottom": "0%",
                 "right": "0%",
+                "bottom": "0%",
+                "left": "0%",
                 "position": "fixed",
                 "background-image": "linear-gradient(0deg, var(--grid-big) 1px, transparent 1px), linear-gradient(90deg, var(--grid-big) 1px, transparent 1px), linear-gradient(0deg, var(--grid-small) 1px, transparent 1px), linear-gradient(90deg, var(--grid-small) 1px, transparent 1px)",
                 "background-size": "100px 100px, 100px 100px, 10px 10px, 10px 10px",
@@ -942,26 +844,139 @@
               }
             }
           },
-          "componentType": null,
-          "cache": ".bg-rectangles{top:0%;left:0%;bottom:0%;right:0%;position:fixed;background-image:linear-gradient(0deg, var(--grid-big) 1px, transparent 1px), linear-gradient(90deg, var(--grid-big) 1px, transparent 1px), linear-gradient(0deg, var(--grid-small) 1px, transparent 1px), linear-gradient(90deg, var(--grid-small) 1px, transparent 1px);background-size:100px 100px, 100px 100px, 10px 10px, 10px 10px;background-position:0% 0%, 0% 0%, 0% 0%, 0% 0%;background-repeat:repeat, repeat, repeat, repeat;background-attachment:scroll, scroll, scroll, scroll;background-clip:border-box, border-box, border-box, border-box;pointer-events:none;}"
+          "cache": ".backdrop{top:0%;right:0%;bottom:0%;left:0%;position:fixed;background-image:linear-gradient(0deg, var(--grid-big) 1px, transparent 1px), linear-gradient(90deg, var(--grid-big) 1px, transparent 1px), linear-gradient(0deg, var(--grid-small) 1px, transparent 1px), linear-gradient(90deg, var(--grid-small) 1px, transparent 1px);background-size:100px 100px, 100px 100px, 10px 10px, 10px 10px;background-position:0% 0%, 0% 0%, 0% 0%, 0% 0%;background-repeat:repeat, repeat, repeat, repeat;background-attachment:scroll, scroll, scroll, scroll;background-clip:border-box, border-box, border-box, border-box;pointer-events:none;}"
         },
-        "rsc-section": {
-          "name": "rsc-section",
+        "logoFrame": {
+          "name": "logoFrame",
           "type": "class",
           "attributes": {
             "base": {
               "default": {
-                "z-index": 1
+                "width": "75vw",
+                "height": "75vh",
+                "position": "absolute"
               }
             }
           },
-          "componentType": null,
-          "cache": ".rsc-section{z-index:1;}"
+          "cache": ".logoFrame{width:75vw;height:75vh;position:absolute;}"
+        },
+        "logo": {
+          "name": "logo",
+          "type": "class",
+          "attributes": {
+            "base": {
+              "default": {
+                "width": "100%",
+                "height": "100%",
+                "opacity": "0.45"
+              }
+            }
+          },
+          "cache": ".logo{width:100%;height:100%;opacity:0.45;}"
+        },
+        "headline": {
+          "name": "headline",
+          "type": "class",
+          "attributes": {
+            "base": {
+              "default": {
+                "z-index": "1",
+                "color": "white",
+                "margin-bottom": "40px"
+              }
+            }
+          },
+          "cache": ".headline{z-index:1;color:white;margin-bottom:40px;}"
+        },
+        "rscSection": {
+          "name": "rscSection",
+          "type": "class",
+          "attributes": {
+            "base": {
+              "default": {
+                "z-index": "1"
+              }
+            }
+          },
+          "cache": ".rscSection{z-index:1;}"
+        },
+        "cards": {
+          "name": "cards",
+          "type": "class",
+          "attributes": {
+            "base": {
+              "default": {
+                "row-gap": "40px",
+                "column-gap": "40px",
+                "display": "flex",
+                "align-items": "center",
+                "z-index": "1"
+              }
+            }
+          },
+          "cache": ".cards{row-gap:40px;column-gap:40px;display:flex;align-items:center;z-index:1;}"
+        },
+        "buttonLink": {
+          "name": "buttonLink",
+          "type": "class",
+          "attributes": {
+            "base": {
+              "default": {
+                "flex-grow": "1",
+                "flex-shrink": "1",
+                "flex-basis": "0px",
+                "color": "white"
+              }
+            }
+          },
+          "cache": ".buttonLink{flex-grow:1;flex-shrink:1;flex-basis:0px;color:white;}"
+        },
+        "titleContainer": {
+          "name": "titleContainer",
+          "type": "class",
+          "attributes": {
+            "base": {
+              "default": {
+                "display": "flex",
+                "align-items": "center"
+              }
+            }
+          },
+          "cache": ".titleContainer{display:flex;align-items:center;}"
+        },
+        "titleIcon": {
+          "name": "titleIcon",
+          "type": "class",
+          "attributes": {
+            "base": {
+              "default": {
+                "margin-left": "10px"
+              }
+            }
+          },
+          "cache": ".titleIcon{margin-left:10px;}"
         }
       },
       "tablet": {
-        "container-EiKe": {
-          "name": "container-EiKe",
+        "page": {
+          "name": "page",
+          "type": "class",
+          "attributes": {
+            "base": {
+              "default": {
+                "padding-top": "60px",
+                "padding-right": "60px",
+                "padding-bottom": "60px",
+                "padding-left": "60px",
+                "justify-content": "flex-start"
+              }
+            }
+          },
+          "cache": ".page{padding-top:60px;padding-right:60px;padding-bottom:60px;padding-left:60px;justify-content:flex-start;}"
+        },
+        "cards": {
+          "name": "cards",
+          "type": "class",
           "attributes": {
             "base": {
               "default": {
@@ -975,73 +990,29 @@
               }
             }
           },
-          "cache": ".container-EiKe{flex-direction:column;min-height:auto;min-width:auto;flex-grow:1;flex-shrink:1;flex-basis:0%;align-items:flex-start;}",
-          "type": "class"
-        },
-        "page-Wvbn": {
-          "name": "page-Wvbn",
-          "attributes": {
-            "base": {
-              "default": {
-                "justify-content": "flex-start",
-                "padding-top": "60px",
-                "padding-bottom": "60px",
-                "padding-right": "60px",
-                "padding-left": "60px"
-              }
-            }
-          },
-          "cache": ".page-Wvbn{justify-content:flex-start;padding-top:60px;padding-bottom:60px;padding-right:60px;padding-left:60px;}",
-          "type": "class"
-        },
-        "super-title": {
-          "name": "super-title",
-          "attributes": {
-            "base": {
-              "default": {
-                "text-align": "center"
-              }
-            }
-          },
-          "cache": ".super-title{text-align:center;}",
-          "type": "class"
+          "cache": ".cards{flex-direction:column;min-height:auto;min-width:auto;flex-grow:1;flex-shrink:1;flex-basis:0%;align-items:flex-start;}"
         }
       },
       "mobile": {
-        "container-EiKe": {
-          "name": "container-EiKe",
+        "page": {
+          "name": "page",
+          "type": "class",
           "attributes": {
             "base": {
               "default": {
-                "flex-direction": "column",
-                "min-height": "auto",
-                "min-width": "auto",
-                "align-items": "stretch",
-                "gap": "24px"
-              }
-            }
-          },
-          "cache": ".container-EiKe{flex-direction:column;min-height:auto;min-width:auto;align-items:stretch;gap:24px;}",
-          "type": "class"
-        },
-        "page-Wvbn": {
-          "name": "page-Wvbn",
-          "attributes": {
-            "base": {
-              "default": {
-                "justify-content": "flex-start",
                 "padding-top": "32px",
-                "padding-bottom": "32px",
                 "padding-right": "24px",
-                "padding-left": "24px"
+                "padding-bottom": "32px",
+                "padding-left": "24px",
+                "justify-content": "flex-start"
               }
             }
           },
-          "cache": ".page-Wvbn{justify-content:flex-start;padding-top:32px;padding-bottom:32px;padding-right:24px;padding-left:24px;}",
-          "type": "class"
+          "cache": ".page{padding-top:32px;padding-right:24px;padding-bottom:32px;padding-left:24px;justify-content:flex-start;}"
         },
-        "container-3H3f": {
-          "name": "container-3H3f",
+        "logoFrame": {
+          "name": "logoFrame",
+          "type": "class",
           "attributes": {
             "base": {
               "default": {
@@ -1050,12 +1021,27 @@
               }
             }
           },
-          "cache": ".container-3H3f{width:90vw;height:40vh;}",
-          "type": "class"
+          "cache": ".logoFrame{width:90vw;height:40vh;}"
+        },
+        "cards": {
+          "name": "cards",
+          "type": "class",
+          "attributes": {
+            "base": {
+              "default": {
+                "row-gap": "24px",
+                "column-gap": "24px",
+                "flex-direction": "column",
+                "min-height": "auto",
+                "min-width": "auto",
+                "align-items": "stretch"
+              }
+            }
+          },
+          "cache": ".cards{row-gap:24px;column-gap:24px;flex-direction:column;min-height:auto;min-width:auto;align-items:stretch;}"
         }
       }
     },
-    "createdAt": "2026-04-13T12:10:26.965+0000",
     "mode": "desktop-first",
     "theme": {
       "default": "system",
@@ -1064,7 +1050,6 @@
         "dark"
       ]
     },
-    "updatedAt": "2026-04-16T23:35:10.907+0000",
     "variables": {
       "color": {
         "foreground": {
@@ -1093,6 +1078,8 @@
           "default": "#ffffff"
         }
       }
-    }
-  }
+    },
+    "cache": ".plitzi__heading{color:var(--foreground);&[data-variant=\"lg\"],&.heading--lg{font-size:50px;}&[data-variant=\"title\"],&.heading--title{margin-top:0px;margin-bottom:0px;}}\n.plitzi__text{color:var(--foreground);}\n.plitzi__paragraph{color:var(--foreground);}\n.plitzi__fontAwesome{color:var(--foreground);}\n.page{padding-top:100px;padding-right:100px;padding-bottom:100px;padding-left:100px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;position:relative;min-width:100vw;min-height:100vh;background-image:radial-gradient(circle at 50% 50%, var(--background-inner) -30%, var(--background-outer) 100%);background-size:auto;background-position:0% 0%;background-repeat:no-repeat;background-attachment:scroll;background-clip:border-box;}\n.backdrop{top:0%;right:0%;bottom:0%;left:0%;position:fixed;background-image:linear-gradient(0deg, var(--grid-big) 1px, transparent 1px), linear-gradient(90deg, var(--grid-big) 1px, transparent 1px), linear-gradient(0deg, var(--grid-small) 1px, transparent 1px), linear-gradient(90deg, var(--grid-small) 1px, transparent 1px);background-size:100px 100px, 100px 100px, 10px 10px, 10px 10px;background-position:0% 0%, 0% 0%, 0% 0%, 0% 0%;background-repeat:repeat, repeat, repeat, repeat;background-attachment:scroll, scroll, scroll, scroll;background-clip:border-box, border-box, border-box, border-box;pointer-events:none;}\n.logoFrame{width:75vw;height:75vh;position:absolute;}\n.logo{width:100%;height:100%;opacity:0.45;}\n.headline{z-index:1;color:white;margin-bottom:40px;}\n.rscSection{z-index:1;}\n.cards{row-gap:40px;column-gap:40px;display:flex;align-items:center;z-index:1;}\n.buttonLink{flex-grow:1;flex-shrink:1;flex-basis:0px;color:white;}\n.titleContainer{display:flex;align-items:center;}\n.titleIcon{margin-left:10px;}\n@media (max-width: 64rem) and (min-width: 48rem) {.page{padding-top:60px;padding-right:60px;padding-bottom:60px;padding-left:60px;justify-content:flex-start;}\n.cards{flex-direction:column;min-height:auto;min-width:auto;flex-grow:1;flex-shrink:1;flex-basis:0%;align-items:flex-start;}}\n@media (max-width: 48rem) and (min-width: 0) {.page{padding-top:32px;padding-right:24px;padding-bottom:32px;padding-left:24px;justify-content:flex-start;}\n.logoFrame{width:90vw;height:40vh;}\n.cards{row-gap:24px;column-gap:24px;flex-direction:column;min-height:auto;min-width:auto;align-items:stretch;}}\n:root {\n    --foreground: #17171c;\n    --grid-big: #00000010;\n    --grid-small: #0000000A;\n    --background-outer: #dce6ff;\n    --background-inner: #ffffff;\n}\n\n@media (prefers-color-scheme: light) {\n  :root:not(.dark) {\n    --foreground: #17171c;\n    --grid-big: #00000010;\n    --grid-small: #0000000A;\n    --background-outer: #dce6ff;\n    --background-inner: #ffffff;\n  }\n}\n\n@media (prefers-color-scheme: dark) {\n  :root:not(.light) {\n    --foreground: #fafafa;\n    --grid-big: #ffffff10;\n    --grid-small: #ffffff0A;\n    --background-outer: #000000;\n    --background-inner: #080866;\n  }\n}\n\n:root.light {\n    --foreground: #17171c;\n    --grid-big: #00000010;\n    --grid-small: #0000000A;\n    --background-outer: #dce6ff;\n    --background-inner: #ffffff;\n}\n\n:root.dark {\n    --foreground: #fafafa;\n    --grid-big: #ffffff10;\n    --grid-small: #ffffff0A;\n    --background-outer: #000000;\n    --background-inner: #080866;\n}"
+  },
+  "warnings": []
 }

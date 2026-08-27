@@ -1,0 +1,23 @@
+{
+  "name": "@plitzi/example-server-actions",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Server actions: a declarative flow the server runs, called from a page that never learns what happened.",
+  "type": "module",
+  "scripts": {
+    "start": "node --import tsx src/main.ts",
+    "start:dev": "tsx watch --exclude \".sdk-plugins/**\" src/main.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@plitzi/example-space": "workspace:*",
+    "@plitzi/sdk-server": "workspace:*",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typescript": "^6.0.3"
+  }
+}

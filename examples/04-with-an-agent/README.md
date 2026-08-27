@@ -14,5 +14,4 @@ they render without being saved, and a normal page request serves that draft onc
 
 ## Next
 
-Nothing — this is the end of the tour. The packages are documented in
-[`@plitzi/sdk-server`](../../apps/server/README.md) and [`@plitzi/sdk-mcp`](../../apps/mcp/README.md).
+Have it do work on the server: [`05-with-server-actions`](../05-with-server-actions).

@@ -13,12 +13,12 @@ import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import InteractionsSourcesProvider from '@plitzi/sdk-interactions/InteractionsSourcesProvider';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { useBuilderStore, useRenderOverride } from '@plitzi/sdk-shared/store';
+import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
@@ -40,7 +40,8 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
   const { environment } = use(NetworkContext);
   const { rootRef } = use(ContainerRootContext);
   const { displayBorderComponents } = use(AppContext);
-  const { theme } = use(BuilderContext);
+  // The same area the canvas uses: a preview of the space is the space, so it is painted the way the space is.
+  const { resolvedTheme } = useTheme(SPACE_THEME_AREA);
   const [
     [
       settings = undefined,
@@ -72,7 +73,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
 
   const plitziContextValue = useMemo(
     () => ({
-      settings: { ...settings, previewMode, theme },
+      settings: { ...settings, previewMode, theme: resolvedTheme },
       root: { baseElementId: id },
       utils: { getWindow, rootRef },
       customContexts: {},
@@ -85,7 +86,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
         EventBridgeContext
       }
     }),
-    [previewMode, settings, theme, id, getWindow, rootRef]
+    [previewMode, settings, resolvedTheme, id, getWindow, rootRef]
   );
 
   const whenData = useMemo(
@@ -135,11 +136,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
   }, [components, element, id]);
 
   return (
-    <ContainerFrame
-      className={clsx('builder-area flex', className)}
-      css={css}
-      style={{ colorScheme: theme === 'system' ? 'light' : theme }}
-    >
+    <ContainerFrame className={clsx('builder-area flex', className)} css={css} style={{ colorScheme: resolvedTheme }}>
       <PlitziServiceProvider value={plitziContextValue}>
         {/* This surface IS the preview, whatever the builder's own toggle says: a scope carrying the surrounding
             settings with that one flag flipped beats threading it as a prop through every provider under here. */}

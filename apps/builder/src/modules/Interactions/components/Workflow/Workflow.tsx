@@ -17,6 +17,10 @@ export type WorkflowProps = {
   callbackTitle?: string;
   nodeDefinitions?: InteractionCallback[];
   direction?: 'horizontal' | 'vertical';
+  /** What a new step is: `callback` for a page flow, `task` for a server action. */
+  stepType?: ElementInteraction['type'];
+  /** What a new TRIGGER starts as. A server action defaults to `call`; an element's flows have no obvious one. */
+  defaultTrigger?: string;
   dataSource?: Record<string, Source['meta']>;
   onChange?: (nodes: Record<string, ElementInteraction>) => void;
 };
@@ -28,6 +32,8 @@ const Workflow = ({
   nodeDefinitions,
   direction = 'vertical',
   dataSource = {},
+  stepType = 'callback',
+  defaultTrigger,
   onChange
 }: WorkflowProps) => {
   const [nodes, setNodes] = useState(() => {
@@ -110,12 +116,14 @@ const Workflow = ({
         direction={direction}
         nodeDefinitions={nodeDefinitions}
         dataSource={dataSource}
+        defaultTrigger={defaultTrigger}
         setFlowId={setFlowId}
         onChange={handleChange}
       >
         <WorkflowHeader flows={flows} flowId={flowId} setFlowId={setFlowId} flowSummaries={flowSummaries} />
         {flow && (
           <WorkflowFlow
+            stepType={stepType}
             trigger={flow.trigger}
             nodes={flow.nodes}
             triggerTitle={triggerTitle}

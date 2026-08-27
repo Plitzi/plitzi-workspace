@@ -201,6 +201,15 @@ See the [GitHub Projects](https://github.com/plitzi/plitzi-workspace/projects) f
 
 Plitzi can be self-hosted using the open-source components provided in this repository.
 
+**Starting from nothing:** `yarn add @plitzi/sdk-server` is the whole install. A space is a document you can write
+in TypeScript — a tree, some CSS and a palette — and hand straight to the page server, with no builder, no account
+and no exported JSON involved:
+
+- [Your first space](https://github.com/plitzi/plitzi-workspace/blob/main/apps/server/README.md#your-first-space) — one file that serves two pages
+- [Authoring spaces](./docs/en/authoring-spaces.md) — the full surface: elements, style, data bindings, flows, validation
+- [`examples/`](./examples) — each step of the way, runnable: sessions, server data, an agent editing the space, server actions
+
+
 However, some features (such as advanced data management, cloud services, and certain backend capabilities) require additional services that are not included in this repository.
 
 The open-source version is fully functional for local development and customization, but production-grade deployments may require additional infrastructure.

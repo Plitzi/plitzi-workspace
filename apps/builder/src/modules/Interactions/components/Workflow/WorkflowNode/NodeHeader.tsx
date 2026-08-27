@@ -10,14 +10,15 @@ import { WARNING_ICON, getNodeWarnings, isTargetUnreferenced, worstLevel } from 
 import WorkflowContext from '../WorkflowContext';
 
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
-import type { ElementInteraction, InteractionCallback } from '@plitzi/sdk-shared';
+import type { ElementInteraction, InteractionCallback, InteractionCallbackType } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
 
 export type NodeHeaderProps = {
   className?: string;
   id?: string;
   title?: string;
-  type?: 'trigger' | 'callback' | 'utility' | 'globalCallback';
+  // Shared union: server-action steps are `task` nodes and draw the same way.
+  type?: InteractionCallbackType;
   action?: string;
   elementId?: string;
   canDelete?: boolean;
@@ -51,7 +52,6 @@ const NodeHeader = ({
   onClickRemove
 }: NodeHeaderProps) => {
   const { moveNode } = use(WorkflowContext);
-  // The node's target has no idRef when the element it points at is one of the flagged, unreferenced entries.
   const targetUnreferenced = isTargetUnreferenced({ elementId }, nodeDefinitions);
   const warnings = useMemo(
     () => getNodeWarnings({ type, action, elementId }, nodeDefinition, targetUnreferenced),
@@ -79,9 +79,7 @@ const NodeHeader = ({
         type: string;
         elementId?: string;
       };
-      // The option value is `${elementId}_${action}`; a utility definition has no elementId, so its value starts with
-      // an empty segment. Read the action from the value and take the target from the option itself (never the split
-      // string, which would stringify an absent elementId as the text "undefined").
+      // Option value is `${elementId}_${action}`; a utility's empty elementId would split into "undefined".
       const action = value.split('_').slice(1).join('_');
       if (!action) {
         return;
@@ -103,8 +101,7 @@ const NodeHeader = ({
         {}
       );
 
-      // A utility (any definition with no elementId) is registered on no element — store null, never the stringified
-      // "undefined" that the split value would carry.
+      // A utility registers on no element — store null, never a stringified "undefined".
       onChange?.({
         action,
         elementId: nodeDefinition.elementId ?? null,
@@ -197,7 +194,8 @@ const NodeHeader = ({
             {
               'bg-blue-400 text-white': type === 'trigger',
               'bg-purple-400 text-white': type === 'callback' || type === 'globalCallback',
-              'bg-orange-400 text-white': type === 'utility'
+              'bg-orange-400 text-white': type === 'utility',
+              'bg-emerald-500 text-white': type === 'task'
             }
           )}
           onClick={onClickOpen}
@@ -205,6 +203,7 @@ const NodeHeader = ({
           {type === 'trigger' && <i className="fa-solid fa-wand-magic-sparkles" />}
           {(type === 'callback' || type === 'globalCallback') && <i className="fa-solid fa-puzzle-piece" />}
           {type === 'utility' && <i className="fa-solid fa-screwdriver-wrench" />}
+          {type === 'task' && <i className="fa-solid fa-server" />}
         </div>
         <Switch
           checked={enabled}

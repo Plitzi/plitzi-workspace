@@ -1,0 +1,24 @@
+{
+  "name": "@plitzi/example-blog",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A whole small blog: posts, a home page, a post page, sessions, and who may publish.",
+  "type": "module",
+  "scripts": {
+    "start": "node --import tsx src/main.ts",
+    "start:dev": "tsx watch --exclude \".sdk-plugins/**\" src/main.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@plitzi/sdk-elements": "workspace:*",
+    "@plitzi/sdk-schema": "workspace:*",
+    "@plitzi/sdk-server": "workspace:*",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typescript": "^6.0.3"
+  }
+}

@@ -11,6 +11,7 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 import ListControlledItem from './ListControlledItem';
 import useElement from '../../../../../Element/hooks/useElement';
 import RootElement from '../../../../../Element/RootElement';
+import declaration from '../../declaration';
 
 import type { SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
@@ -28,7 +29,7 @@ const ListControlled = ({ ref, className = '', children, items = [] }: ListContr
     idRef,
     definition: { label }
   } = useElement();
-  const sourceName = getSourceName('list', { idRef });
+  const sourceName = getSourceName(declaration.sourceType, { idRef });
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();

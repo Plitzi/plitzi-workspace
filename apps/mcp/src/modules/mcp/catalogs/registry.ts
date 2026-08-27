@@ -1,6 +1,7 @@
-import { BUILTIN_COMPONENTS } from './builtinComponents';
-import { cssProperties } from './cssCatalog';
+import { elementCatalog } from '@plitzi/sdk-elements/authoring';
+import { cssProperties } from '@plitzi/sdk-style/authoring';
 
+import type { ElementSemantics } from '@plitzi/sdk-elements/authoring';
 import type { ComponentCatalog, Schema } from '@plitzi/sdk-shared';
 
 export interface TypePropInfo {
@@ -40,8 +41,8 @@ export interface TypeRegistry {
 // Layer semantic + machine-readable metadata onto a type. The per-space component catalog (default sdk-elements
 // types ∪ this space's plugin types) is authoritative and takes precedence: it carries the type's FULL attribute
 // set and style selectors — so a type is known even with zero instances placed, and `source` follows the catalog's
-// `custom` flag. The hand-curated BUILTIN_COMPONENTS is only a fallback for the no-adapter MCP role. Mutates in
-// place.
+// `custom` flag. The element catalogue read off the SDK's own declarations is the fallback for the no-adapter MCP
+// role. Mutates in place.
 const enrichType = (typeName: string, info: TypeInfo, catalog: ComponentCatalog | undefined): void => {
   const entry = catalog?.[typeName];
   if (entry) {
@@ -72,7 +73,7 @@ const enrichType = (typeName: string, info: TypeInfo, catalog: ComponentCatalog 
     return;
   }
 
-  const builtin = BUILTIN_COMPONENTS[typeName];
+  const builtin = elementCatalog[typeName] as ElementSemantics | undefined;
   if (builtin) {
     info.label = builtin.label;
     info.description = builtin.description;

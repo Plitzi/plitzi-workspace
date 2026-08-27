@@ -1,0 +1,276 @@
+import { triggerHasStaleVerify, triggerVerify } from '@plitzi/sdk-shared/actions';
+
+import { verifySignature } from './verifySignature';
+import { onAbort } from '../../../helpers/onAbort';
+import { ActionRunError } from '../runtime/errors';
+import { precheckRun } from '../runtime/precheck';
+import { reportReject } from '../runtime/report';
+import { findTriggerNode, triggerParams } from '../runtime/triggers';
+
+import type { ActionsModule } from '../index';
+import type { ActionCredential } from '../types';
+import type {
+  ActionEntry,
+  ActionRejectReason,
+  ActionWebhookVerification,
+  SSRPageServerConfig,
+  SSRRequest,
+  SSRResponseHelpers
+} from '@plitzi/sdk-shared';
+
+export type ActionWebhookDeps = {
+  req: SSRRequest;
+  res: SSRResponseHelpers;
+  config: SSRPageServerConfig;
+  module: ActionsModule;
+  signal: AbortSignal;
+  actionId: string;
+  /** The caller's address: a webhook has no session, so this is all there is to rate limit by. */
+  callerId: string;
+  lineage: string[];
+};
+
+const DEFAULT_PER_MINUTE = 60;
+
+const send = (res: SSRResponseHelpers, status: number, payload: Record<string, unknown>) => {
+  res.setStatus(status);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store');
+  res.send(JSON.stringify(payload));
+};
+
+/**
+ * The signing secret, from the credential the verification NAMES.
+ *
+ * Named outright rather than templated. This runs before anything else does — before the body is parsed, before a
+ * run exists — so there is no flow scope for a token to resolve against, and one that rendered to nothing would
+ * leave the endpoint verifying every request against an empty secret.
+ */
+const resolveSecret = async (
+  verification: ActionWebhookVerification,
+  spaceId: number,
+  getCredential?: (spaceId: number, identifier: string) => Promise<ActionCredential | undefined>
+): Promise<string> => {
+  const credential = await getCredential?.(spaceId, verification.credential);
+  const secret = credential?.[verification.secretField ?? 'secret'];
+
+  return typeof secret === 'string' ? secret : '';
+};
+
+/**
+ * Handles an inbound webhook.
+ *
+ * The public face of an action, and the one an attacker can reach without a session — so everything that costs
+ * anything happens after the signature is checked, in this order: the action must exist and declare the trigger,
+ * the rate limit must allow it, the signature must verify, and only then does a run start.
+ *
+ * The answer is deliberately thin. A sender needs to know it was accepted; it has no business learning whether an
+ * action exists, why a run failed, or what the flow did — and a 404 that distinguishes "no such action" from
+ * "wrong signature" is an oracle for both.
+ */
+export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void> => {
+  const { req, res, config, module, signal, actionId, callerId, lineage } = deps;
+  const { environment = 'main', spaceId, revision = 0 } = req.ctx.spaceDeployment ?? {};
+  if (typeof spaceId !== 'number') {
+    // Not reported: with no space there is nobody whose feed this belongs in, and a request that named no
+    // deployment never addressed an action in the first place.
+    send(res, 404, { error: 'Not found' });
+
+    return;
+  }
+
+  /**
+   * Every way this ends without a run, told to whoever configured the endpoint.
+   *
+   * A rejected webhook is the single most common way an integration is broken, and until this existed it was
+   * indistinguishable from the sender never firing: the reason went to the process log, where the person setting
+   * up the integration cannot see it. The SENDER still learns nothing it should not — that answer is unchanged.
+   */
+  const reject = (reason: ActionRejectReason, detail?: string) =>
+    reportReject(config, {
+      actionId,
+      spaceId,
+      environment,
+      trigger: 'webhook',
+      reason,
+      callerId,
+      ...(detail === undefined ? {} : { detail })
+    });
+
+  // The LIVE document, deliberately. A webhook URL belongs to the space, not to a published page: nothing about
+  // the sender says which revision it means, and pinning one would leave a fixed flow answering an integration
+  // its author has since corrected.
+  const entry = (await config.action?.lookups?.getAction(spaceId, actionId)) as ActionEntry | undefined;
+  // The step that declares this way in. No step, no webhook — an action reachable only from a page has no URL.
+  const trigger = entry ? findTriggerNode(entry.document.nodes, 'webhook') : undefined;
+  if (!entry || !trigger) {
+    await reject('not_found', entry ? 'The action declares no webhook trigger' : 'No action with this identifier');
+    send(res, 404, { error: 'Not found' });
+
+    return;
+  }
+
+  const stepParams = triggerParams(trigger);
+  const verify = triggerVerify(stepParams);
+
+  /**
+   * A verification nothing reads is not an unsigned webhook — it is a broken one, and it is refused.
+   *
+   * The check used to be a JSON blob and is now fields on the step. A document stored before that carries the
+   * blob and no signing credential, and reading it as "unsigned" would turn a protected endpoint into a public
+   * one without a single line of it changing. Fail closed, and say which document to fix.
+   */
+  if (triggerHasStaleVerify(stepParams)) {
+    // To the console, like a failed RSC slice, because no log event describes a document that cannot be run — and
+    // to the SENDER, nothing but "unavailable": telling a caller the signature check is misconfigured tells them
+    // the endpoint is currently unverified.
+    console.error(
+      `[Actions] webhook "${actionId}" in space ${spaceId} carries a signature check in a format nothing reads any ` +
+        'more, so it is refused. Name the signing credential on the trigger step.'
+    );
+    await reject(
+      'unverifiable',
+      'The signature check is in a format nothing reads any more; name the signing credential on the trigger step'
+    );
+    send(res, 503, { error: 'Unavailable' });
+
+    return;
+  }
+
+  // Counted before the signature is checked: verifying costs a hash over an attacker-supplied body, and a flood of
+  // unsigned requests must not be free just because none of them verifies.
+  const perMinute = config.action?.rateLimit?.webhookPerMinute ?? DEFAULT_PER_MINUTE;
+  const window = Math.floor(Date.now() / 60_000);
+  try {
+    const hits = await module.kv(spaceId).increment(`hook:${actionId}:${callerId}:${window}`, 1, 120);
+    if (hits > perMinute) {
+      res.setHeader('Retry-After', '60');
+      await reject('rate_limited', `More than ${perMinute} deliveries in one minute from this caller`);
+      send(res, 429, { error: 'Too many requests' });
+
+      return;
+    }
+  } catch {
+    // A store that cannot count cannot limit. Refusing is the safe half of a fail-closed rule: a public endpoint
+    // with no rate limit is exactly what this protects.
+    await reject('unverifiable', 'The rate-limit store could not answer, so the endpoint failed closed');
+    send(res, 503, { error: 'Unavailable' });
+
+    return;
+  }
+
+  const rawBody = req.body ?? '';
+  if (verify) {
+    const secret = await resolveSecret(verify, spaceId, config.action?.lookups?.getCredential);
+    const check = verifySignature(verify, secret, req.headers, rawBody);
+    if (!check.ok) {
+      // The reason goes to the log, not the wire: telling a caller which half of the check failed helps only the
+      // caller who should not be here.
+      console.warn(`[Actions] webhook "${actionId}" rejected: ${check.reason}`);
+      await reject('invalid_signature', check.reason);
+      send(res, 401, { error: 'Invalid signature' });
+
+      return;
+    }
+  }
+
+  let payload: Record<string, unknown> = {};
+  try {
+    const parsed: unknown = rawBody ? JSON.parse(rawBody) : {};
+    payload = parsed !== null && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+  } catch {
+    await reject('malformed_body', 'The body is not JSON');
+    send(res, 400, { error: 'Body is not JSON' });
+
+    return;
+  }
+
+  // The body's own keys, plus the whole body under `payload`: a document naming the two fields it cares about gets
+  // those, and one that needs the envelope declares `payload: json` and gets everything. Undeclared keys are
+  // dropped by the input contract either way.
+  const input = { ...payload, payload };
+  const limits = module.limitsFor(entry.document);
+  const begin = {
+    spaceId,
+    actionId: entry.id,
+    callerId,
+    input,
+    // A provider retrying the same delivery must not run the flow twice; a provider that sends no delivery id
+    // falls back to the derived key over the body, which is the same thing for an identical retry.
+    idempotencyKey: deliveryId(req),
+    // The delivery id is the SENDER's, vouched for by the signature that let this request in — so it names the
+    // delivery for everybody, not per caller. A provider that retries from a different address of its own is
+    // still retrying the same delivery, and scoping the key to `ip:…` would run the flow again for each.
+    sharedKey: true,
+    ttlMs: limits.timeoutMs
+  };
+
+  // The retry that arrives AFTER the first delivery finished, which is how every provider retries. Single-flight
+  // covers the one that overlaps; without this, the one that follows runs the flow a second time.
+  const replayed = await module.guards.replay(begin);
+  if (replayed) {
+    send(res, 202, { accepted: true, runId: replayed.runId, status: replayed.status, replayed: true });
+
+    return;
+  }
+
+  let run;
+  try {
+    precheckRun(entry, { trigger: 'webhook', input, lineage });
+    run = await module.guards.begin(begin);
+  } catch (error) {
+    const reason = error instanceof ActionRunError ? error.reason : 'failed';
+    await reject(reason, error instanceof Error ? error.message : undefined);
+    // A duplicate delivery is a SUCCESS from the sender's side: it asked for the work once and the work is
+    // happening. Answering an error would make a well-behaved provider retry harder.
+    send(res, reason === 'duplicate' ? 202 : 400, { accepted: reason === 'duplicate' });
+
+    return;
+  }
+
+  await config.adapters.meter?.({ kind: 'server_action', cached: false, req, spaceId, environment, revision });
+
+  const abortRun = () => run.controller.abort();
+  const releaseAbort = onAbort(signal, abortRun);
+
+  let outcome;
+  try {
+    const result = await module.runAction({
+      entry,
+      input,
+      spaceId,
+      environment,
+      trigger: 'webhook',
+      callerId,
+      runId: run.runId,
+      lineage,
+      signal: run.controller.signal
+    });
+
+    outcome = result;
+    send(res, 200, { accepted: true, runId: result.runId, status: result.status });
+  } catch (error) {
+    console.error('[Actions] webhook run failed:', error);
+    // 500 rather than a flat 200: most providers retry a 5xx, and a run that failed for a transient reason is
+    // exactly the one worth retrying.
+    send(res, 500, { accepted: false });
+  } finally {
+    releaseAbort();
+    // The answer travels with the release, so a redelivery that arrives after this one finished is answered by it
+    // rather than running the flow again.
+    await module.guards.end(run, outcome);
+  }
+};
+
+/** The delivery id a provider sends, under the header names the common ones use. */
+const deliveryId = (req: SSRRequest): string | undefined => {
+  for (const name of ['x-plitzi-delivery', 'x-github-delivery', 'x-request-id', 'idempotency-key']) {
+    const value = req.headers[name];
+    const single = Array.isArray(value) ? value[0] : value;
+    if (single) {
+      return single;
+    }
+  }
+
+  return undefined;
+};

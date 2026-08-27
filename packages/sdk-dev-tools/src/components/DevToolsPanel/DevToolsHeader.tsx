@@ -1,6 +1,8 @@
 import clsx from 'clsx';
 import { useCallback } from 'react';
 
+import DevToolsButton from './DevToolsButton';
+import ThemeControl from './ThemeControl';
 import { useScopeSelector } from '../../scope/useScope';
 
 import type { Orientation } from '../../DevToolsContainer';
@@ -13,7 +15,9 @@ const TABS = [
   { id: 'elements', label: 'Elements', icon: 'fa-solid fa-layer-group' },
   { id: 'variables', label: 'Variables', icon: 'fa-solid fa-code' },
   { id: 'plugins', label: 'Plugins', icon: 'fa-solid fa-puzzle-piece' },
-  { id: 'tracing', label: 'Tracing', icon: 'fa-solid fa-gauge-high' }
+  { id: 'tracing', label: 'Tracing', icon: 'fa-solid fa-gauge-high' },
+  // Own tab rather than a Logs filter: a run has input, output, progress and server steps — none is a log line.
+  { id: 'actions', label: 'Actions', icon: 'fa-solid fa-bolt' }
 ] as const;
 
 export type DevToolsHeaderProps = {
@@ -47,7 +51,6 @@ const DevToolsHeader = ({
 
   return (
     <div className="flex shrink-0 items-stretch justify-between border-b border-zinc-200 bg-zinc-100 select-none dark:border-zinc-700 dark:bg-zinc-800">
-      {/* Tabs */}
       <div className="flex items-stretch overflow-x-auto">
         {TABS.map(tab => {
           const isActive = tabSelected === tab.id;
@@ -72,7 +75,6 @@ const DevToolsHeader = ({
         })}
       </div>
 
-      {/* Toolbar right */}
       <div className="flex shrink-0 items-center gap-1 border-l border-zinc-200 px-2 dark:border-zinc-700">
         {scopeOptions.length > 0 && (
           <select
@@ -92,20 +94,13 @@ const DevToolsHeader = ({
             ))}
           </select>
         )}
-        <button
-          className="flex h-6 w-6 items-center justify-center rounded text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
+        <ThemeControl />
+        <DevToolsButton
+          iconClassName={clsx('fa-solid fa-table-columns', { 'rotate-90': orientation === 'vertical' })}
           title={orientation === 'horizontal' ? 'Switch to side panel' : 'Switch to bottom panel'}
           onClick={handleClickOrientation}
-        >
-          <i className={clsx('fa-solid fa-table-columns text-xs', { 'rotate-90': orientation === 'vertical' })} />
-        </button>
-        <button
-          className="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
-          title="Collapse to the indicator"
-          onClick={onCollapse}
-        >
-          <i className="fa-solid fa-xmark text-xs" />
-        </button>
+        />
+        <DevToolsButton iconClassName="fa-solid fa-xmark" title="Collapse to the indicator" onClick={onCollapse} />
       </div>
     </div>
   );

@@ -74,7 +74,8 @@ const scopeSpace = (): Space => ({
     variables: {},
     cache: ''
   } as unknown as Style,
-  connectors: []
+  connectors: [],
+  actions: []
 });
 
 describe('mcp-ai binding source scope (descendants only)', () => {

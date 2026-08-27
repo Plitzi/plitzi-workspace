@@ -4,6 +4,7 @@ The same space as the three browser examples beside it, rendered on the server a
 
 ```bash
 yarn start                       # http://127.0.0.1:4003
+yarn start:dev                   # the same, reloading on save, while you edit it
 curl -s http://127.0.0.1:4003/ | head -c 400
 ```
 

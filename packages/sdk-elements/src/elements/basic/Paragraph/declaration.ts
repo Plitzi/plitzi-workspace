@@ -1,5 +1,13 @@
 /** Static declaration for Paragraph: type, default attributes and builder metadata. Data only, no React. */
-const declaration = {
+import { elementDeclaration } from '../../../authoring/declare';
+
+import type { ParagraphProps } from './Paragraph';
+import type { AuthorableAttributes } from '../../../authoring/declare';
+
+/** What this element can be authored with — its component's own props, minus what the runtime supplies. */
+export type ParagraphAttributes = AuthorableAttributes<ParagraphProps>;
+
+const declaration = elementDeclaration<ParagraphAttributes>()({
   type: 'paragraph',
   content: {
     attributes: {
@@ -8,6 +16,7 @@ const declaration = {
     definition: {
       label: 'Paragraph',
       type: 'paragraph',
+      description: 'A block of body text (a <p>). Use for longer prose passages.',
       bindings: {},
       styleSelectors: {
         base: ''
@@ -48,6 +57,6 @@ const declaration = {
     },
     settings: {}
   }
-};
+});
 
 export default declaration;

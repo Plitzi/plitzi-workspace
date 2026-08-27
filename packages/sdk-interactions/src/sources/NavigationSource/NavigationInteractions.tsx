@@ -3,9 +3,11 @@ import { useCallback, use, useMemo } from 'react';
 
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
+import { navigationCallbacks } from './callbacks';
+import { toBuilderParams, toInteractionCallbacks } from '../../authoring/builder';
 import InteractionsContext from '../../InteractionsContext';
 
-import type { InteractionCallback } from '@plitzi/sdk-shared';
+import type { InteractionCallbackParam } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type NavigationInteractionsProps = {
@@ -50,36 +52,28 @@ const NavigationInteractions = ({ children, previewMode = false }: NavigationInt
     [navigate, previewMode]
   );
 
-  const interactionCallbacks = useMemo(
-    () => ({
-      navigate: {
-        action: 'navigate',
-        title: 'Navigate',
-        type: 'globalCallback',
-        callback: handleNavigate,
-        preview: {},
-        params: {
-          urlType: {
-            label: 'Url Type',
-            defaultValue: undefined,
-            type: 'select',
-            options: [
-              { value: 'page', label: 'Space Page' },
-              { value: 'internal', label: 'Inside Space' },
-              { value: 'external', label: 'Outside Space' }
-            ]
-          },
-          url: {
-            defaultValue: pageUrls.find(page => page.defaultPage)?.key ?? '',
-            type: params => (params.urlType === 'page' ? 'select' : 'text'),
-            when: params => !!params.urlType,
-            options: pageUrls.map(page => ({ value: page.key, label: page.label }))
+  const interactionCallbacks = useMemo(() => {
+    const { urlType, url } = toBuilderParams(navigationCallbacks.navigate.params);
+
+    return toInteractionCallbacks(
+      navigationCallbacks,
+      { navigate: handleNavigate },
+      {
+        navigate: {
+          // The pages of the space being edited: a fact about this document rather than about navigating, so the
+          // declaration says the control is a picker and the editor says what is in it.
+          params: {
+            urlType,
+            url: {
+              ...url,
+              defaultValue: pageUrls.find(page => page.defaultPage)?.key ?? '',
+              options: pageUrls.map(page => ({ value: page.key, label: page.label }))
+            } as InteractionCallbackParam
           }
         }
-      } as InteractionCallback<{ urlType: string; url: string }>
-    }),
-    [handleNavigate, pageUrls]
-  );
+      }
+    );
+  }, [handleNavigate, pageUrls]);
 
   useInteractions({ id: 'navigation', callbacks: interactionCallbacks });
 
