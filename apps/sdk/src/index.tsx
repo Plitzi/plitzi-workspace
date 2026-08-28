@@ -180,6 +180,9 @@ export type PlitziSdkProps = {
   /** Shows the "Made in Plitzi" link over the rendered space; off for embeds that are not a Plitzi site of their
    *  own (an MCP widget rendered inside a chat, a component mounted in a host app). */
   branding?: boolean;
+  /** Set by the server that metered this render: the account behind this space is over its quota, so the page says
+   *  so. Never authored — a space cannot turn it off from its own settings. */
+  overQuota?: boolean;
   externalStyle?: string;
   sdkDevToolsStylePath?: string;
   /** Where this render reports SPA navigations and interactions, and with what key. Injected by a server that

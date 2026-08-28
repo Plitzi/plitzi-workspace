@@ -12,7 +12,8 @@ export const DEFAULT_RENDER_SETTINGS: Required<RenderSettings> = {
   debugMode: false,
   renderMode: 'raw',
   environment: 'main',
-  isHydrating: false
+  isHydrating: false,
+  overQuota: false
 };
 
 /** Reads `render` from the nearest store, filled in. Returns every key defined, so call sites destructure without
@@ -21,12 +22,13 @@ export const DEFAULT_RENDER_SETTINGS: Required<RenderSettings> = {
  *  A nested scope that seeds `render` SHADOWS the whole slice — reads do not fall through key by key, whichever way
  *  they are written — so a subtree that overrides one flag must restate the rest ({@link useRenderOverride}). */
 const useRenderSettings = (): Required<RenderSettings> => {
-  const [[previewMode, debugMode, renderMode, environment, isHydrating]] = useCommonStore([
+  const [[previewMode, debugMode, renderMode, environment, isHydrating, overQuota]] = useCommonStore([
     'render.previewMode',
     'render.debugMode',
     'render.renderMode',
     'render.environment',
-    'render.isHydrating'
+    'render.isHydrating',
+    'render.overQuota'
   ]);
 
   return useMemo(
@@ -35,9 +37,10 @@ const useRenderSettings = (): Required<RenderSettings> => {
       debugMode: debugMode ?? DEFAULT_RENDER_SETTINGS.debugMode,
       renderMode: renderMode ?? DEFAULT_RENDER_SETTINGS.renderMode,
       environment: environment ?? DEFAULT_RENDER_SETTINGS.environment,
-      isHydrating: isHydrating ?? DEFAULT_RENDER_SETTINGS.isHydrating
+      isHydrating: isHydrating ?? DEFAULT_RENDER_SETTINGS.isHydrating,
+      overQuota: overQuota ?? DEFAULT_RENDER_SETTINGS.overQuota
     }),
-    [previewMode, debugMode, renderMode, environment, isHydrating]
+    [previewMode, debugMode, renderMode, environment, isHydrating, overQuota]
   );
 };
 

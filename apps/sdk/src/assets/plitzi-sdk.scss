@@ -55,6 +55,45 @@
     }
   }
 
+  /**
+   * The line a site shows while it is over its plan's quota — the counterpart of the badge, sitting beside it.
+   *
+   * Fixed to the bottom LEFT so it never covers the badge, and above everything for the same reason the badge is:
+   * a page that renders its own chrome on top of it would hide the one thing its owner needs to see.
+   */
+  .plitzi-over-quota {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    left: 12px;
+    bottom: 12px;
+    position: fixed;
+    z-index: 999999;
+    border: 1px solid rgb(253, 224, 71);
+    border-radius: 4px;
+    background-color: rgb(254, 252, 232);
+    color: rgb(113, 63, 18);
+    line-height: 16px;
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      'Helvetica Neue',
+      Arial,
+      sans-serif;
+    font-size: 12px;
+
+    .plitzi-over-quota__cta {
+      color: rgb(113, 63, 18);
+      font-weight: 700;
+      text-decoration: underline;
+    }
+  }
+
   .made-in-plitzi {
     padding: 6px 8px;
     right: 12px;

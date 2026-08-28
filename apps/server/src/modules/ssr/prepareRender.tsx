@@ -138,6 +138,9 @@ export const prepareRender = async (
   const { degrade, analytics } = req.ctx.meter ?? {};
   const clientAnalytics = analytics ? { ...analytics, firstViewCounted: true } : undefined;
   const branding = degrade ? true : undefined;
+  // The same state, said out loud. `branding` is forced on by it but is also on for every ordinary free space, so
+  // it cannot be what a notice reads — this is the fact that the ACCOUNT is over, and only the server can state it.
+  const overQuota = degrade ? true : undefined;
 
   const offlineDataStr = escapeJson(
     JSON.stringify({
@@ -148,7 +151,8 @@ export const prepareRender = async (
       server,
       sdkDevToolsStylePath,
       ...(clientAnalytics ? { analytics: clientAnalytics } : {}),
-      ...(branding ? { branding } : {})
+      ...(branding ? { branding } : {}),
+      ...(overQuota ? { overQuota } : {})
     })
   );
 
@@ -192,7 +196,8 @@ export const prepareRender = async (
       environment: req.ctx.spaceDeployment?.environment ?? environment,
       debugMode,
       sdkDevToolsStylePath,
-      branding
+      branding,
+      overQuota
     },
     entries,
     templateParams: {

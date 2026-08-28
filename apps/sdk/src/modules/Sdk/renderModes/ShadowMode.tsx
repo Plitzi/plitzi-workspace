@@ -6,6 +6,7 @@ import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziService
 
 import SpaceContainer from '../../Space/SpaceContainer';
 import MadeInPlitzi from '../components/MadeInPlitzi';
+import OverQuotaNotice from '../components/OverQuotaNotice';
 
 import type { Asset } from '@plitzi/plitzi-ui/ContainerFrame';
 import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -43,6 +44,7 @@ const ShadowMode = ({
             {pageId && <Page key={pageId} internalProps={pageValueMemo} />}
           </PlitziServiceProvider>
           {branding && <MadeInPlitzi pageId={pageId} />}
+          <OverQuotaNotice />
         </SpaceContainer>
       </ContainerShadow.Content>
     </ContainerShadow>

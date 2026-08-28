@@ -90,6 +90,14 @@ export type RenderSettings = {
   renderMode?: RenderMode;
   environment?: Environment;
   isHydrating?: boolean;
+  /**
+   * This space is over its plan's quota, as the SERVER decided when it metered the render.
+   *
+   * Not the visitor's business and not the page's either — it is a fact about the account behind the site, which is
+   * why it rides the render surface rather than the schema: nothing an author writes can set it, and nothing in the
+   * space's settings can turn it off. `branding` is forced on by the same state; this is what says WHY.
+   */
+  overQuota?: boolean;
 };
 
 // `enabled` is the single answer to "is RSC live in this render": the schema asking for it is not enough, a server

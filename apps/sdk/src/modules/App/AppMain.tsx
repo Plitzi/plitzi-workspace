@@ -50,6 +50,8 @@ export type AppMainProps = {
   previewMode?: boolean;
   debugMode?: boolean;
   branding?: boolean;
+  /** Set by the server that metered this render: the account behind this space is over its quota. */
+  overQuota?: boolean;
   analytics?: AnalyticsConfig;
   state?: Record<string, unknown>;
   onInitStateManager?: (instance: RuntimeStateInstance) => void;
@@ -76,6 +78,7 @@ const AppMain = ({
   sdkDevToolsStylePath,
   previewMode = true,
   debugMode = false,
+  overQuota = false,
   analytics,
   onInitEventBridge,
   onInitStateManager,
@@ -86,8 +89,15 @@ const AppMain = ({
   // The surface this render happens on, published once for the whole tree. Every provider below used to take these as
   // props — five flags threaded through nine components — and they are read from the store instead.
   useSdkStoreSync(
-    ['render.previewMode', 'render.debugMode', 'render.renderMode', 'render.environment', 'render.isHydrating'],
-    [previewMode, debugMode, renderMode, environment, isHydrating]
+    [
+      'render.previewMode',
+      'render.debugMode',
+      'render.renderMode',
+      'render.environment',
+      'render.isHydrating',
+      'render.overQuota'
+    ],
+    [previewMode, debugMode, renderMode, environment, isHydrating, overQuota]
   );
 
   // Expose the imperative runtime-state handle to the host (consumed by `getStateManager()`). A nexus base-path view

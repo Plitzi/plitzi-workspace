@@ -79,11 +79,13 @@ type Options = {
   /** What the deployment authorizes for debugging, and what the URL asks for. */
   debugMode?: boolean;
   query?: Record<string, string>;
+  /** What metering decided for this render. */
+  degrade?: boolean;
 };
 
 const render = async (
   path: string,
-  { rsc = { enabled: true }, configRsc, withAdapter = true, homeRuntime, debugMode, query }: Options = {}
+  { rsc = { enabled: true }, configRsc, withAdapter = true, homeRuntime, debugMode, query, degrade }: Options = {}
 ) => {
   const getRscData = vi.fn().mockResolvedValue({ serverData: { resolved: true } });
   const getOfflineData = vi.fn().mockResolvedValue(offlineData(rsc, homeRuntime));
@@ -101,8 +103,13 @@ const render = async (
     }
   } as unknown as SSRPageServerConfig;
 
+  const req = request(path, query);
+  if (degrade !== undefined) {
+    (req.ctx as { meter?: { degrade: boolean } }).meter = { degrade };
+  }
+
   const { componentProps, templateParams } = await prepareRender(
-    request(path, query),
+    req,
     config,
     42,
     'production',
@@ -242,5 +249,31 @@ describe('prepareRender / debugging in a render nobody is watching', () => {
 
     expect(componentProps.debugMode).toBe(false);
     expect(templateParams.debugMode).toBe(false);
+  });
+});
+
+/**
+ * What a render says when the account behind it is over quota.
+ *
+ * `branding` is forced on by the same state, but it is also on for every ordinary free space — so a notice that
+ * read it would appear on sites that are perfectly within their plan. The two facts travel separately for that
+ * reason, and only the server can state this one.
+ */
+describe('prepareRender / a degraded render', () => {
+  it('tells the client the account is over quota, and pins the badge on with it', async () => {
+    const { componentProps, templateParams } = await render('/', { degrade: true });
+
+    expect(componentProps.overQuota).toBe(true);
+    expect(componentProps.branding).toBe(true);
+    // The browser hydrates from the same fact, so the notice does not appear and then vanish.
+    expect(templateParams.offlineData).toContain('overQuota');
+  });
+
+  it('says nothing at all on a render that is within quota', async () => {
+    const { componentProps, templateParams } = await render('/', { degrade: false });
+
+    expect(componentProps.overQuota).toBeUndefined();
+    expect(componentProps.branding).toBeUndefined();
+    expect(templateParams.offlineData).not.toContain('overQuota');
   });
 });
