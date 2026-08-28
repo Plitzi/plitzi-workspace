@@ -153,7 +153,8 @@ const ApiContainer = ({
   }, [serverMode, visible, previewMode, query, when, routeParams, queryParams, mockData]);
 
   const {
-    isLoading: isApiLoading,
+    isLoading: isApiInitialLoad,
+    isFetching: isApiFetching,
     data: apiData,
     refetch: apiRefetch,
     isSuccess,
@@ -217,7 +218,18 @@ const ApiContainer = ({
    * its children only when it can render them truthfully. `renderWhileLoading` is the opt-out, for a provider
    * whose children draw a skeleton from `isLoading`.
    */
-  const isLoading = serverMode ? rscPending : isApiLoading;
+  const isLoading = serverMode ? rscPending : isApiFetching;
+
+  /**
+   * Nothing to render with YET — as opposed to a refresh of something already on screen.
+   *
+   * Only this gates the children. A `performQuery` used to unmount them for the length of the request: the
+   * provider's subtree collapsed to zero height, the browser clamped the scroll to the top of the shortened
+   * page, and everything came back a frame later. `isLoading` stays "a request is in flight" because that is
+   * what a bound spinner means, and it is still what a route change reports for a server provider — there the
+   * payload really is for another page, and rendering children would draw the previous visitor's content.
+   */
+  const isInitialLoad = serverMode ? rscPending : isApiInitialLoad;
 
   const refetch = useCallback(async () => {
     if (!serverMode) {
@@ -372,7 +384,7 @@ const ApiContainer = ({
       interactionTriggers={interactionTriggers}
       interactionCallbacks={interactionCallbacks}
     >
-      {(!isLoading || renderWhileLoading) && (
+      {(!isInitialLoad || renderWhileLoading) && (
         <StoreProvider inherit="live" name={`Api:${id}`} value={storeContext}>
           {children}
         </StoreProvider>
