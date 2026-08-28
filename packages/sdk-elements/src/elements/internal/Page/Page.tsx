@@ -112,7 +112,10 @@ const Page = ({
           {!!seoPageDescription && <meta name="description" content={seoPageDescription} />}
         </Helmet>
       )}
-      {layout && <LayoutContainer internalProps={layoutInternalProps} />}
+      {/* Keyed by the LAYOUT, not by the page: two pages naming the same shell keep it mounted across a
+          navigation (the body swaps under it), while switching to a different shell remounts it rather than
+          re-pointing the same node at another element id. */}
+      {layout && <LayoutContainer key={layoutContainer || layout} internalProps={layoutInternalProps} />}
       {!layout && children}
     </RootElement>
   );

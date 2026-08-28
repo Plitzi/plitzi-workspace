@@ -41,7 +41,12 @@ const ShadowMode = ({
         <SpaceContainer>
           <style dangerouslySetInnerHTML={{ __html: style }} />
           <PlitziServiceProvider value={plitziContextValue}>
-            {pageId && <Page key={pageId} internalProps={pageValueMemo} />}
+            {/* No key on the page: a key here remounts the WHOLE tree on every navigation, and the layout shell
+                (header, sidebar) is rendered inside the page — so two pages naming the same `layoutContainer` tore it
+                down and rebuilt it anyway, losing its element state and its scroll position for nothing. Reconciling
+                by position keeps the shell mounted across a navigation and swaps only the body: the page's own items
+                are keyed by element id and pages never share one, so nothing from the old page survives. */}
+            {pageId && <Page internalProps={pageValueMemo} />}
           </PlitziServiceProvider>
           {branding && <MadeInPlitzi pageId={pageId} />}
           <OverQuotaNotice />

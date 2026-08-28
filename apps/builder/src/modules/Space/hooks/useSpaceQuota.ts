@@ -15,8 +15,17 @@ export interface QuotaReading {
   metric: 'elements' | 'views';
   label: string;
   used: number;
+  /** The ceiling. 0 when the plan does not enforce one — see `unlimited`. */
   quota: number;
-  percent: number;
+  /**
+   * There is no ceiling on this plane.
+   *
+   * Kept as a reading rather than dropped, because the figure is still worth showing: someone on an unlimited plan
+   * still wants to know their space holds 588 elements. What `unlimited` decides is that it can never be `near` or
+   * `over`, so it never colours the meter and never raises a warning.
+   */
+  unlimited: boolean;
+  percent: number | null;
   level: QuotaLevel;
 }
 
@@ -39,20 +48,17 @@ const reading = (
   label: string,
   used: number,
   quota: number
-): QuotaReading | undefined =>
-  // A ceiling of 0 is "not enforced": there is nothing to be near, and a bar drawn against it would read as full.
-  quota > 0
-    ? {
-        id: `${scope}:${metric}`,
-        scope,
-        metric,
-        label,
-        used,
-        quota,
-        percent: (used / quota) * 100,
-        level: levelOf(used, quota)
-      }
-    : undefined;
+): QuotaReading => ({
+  id: `${scope}:${metric}`,
+  scope,
+  metric,
+  label,
+  used,
+  quota,
+  unlimited: quota <= 0,
+  percent: quota > 0 ? (used / quota) * 100 : null,
+  level: quota > 0 ? levelOf(used, quota) : 'ok'
+});
 
 export const readingsFor = (quota: TSpaceQuota, liveSpaceElements: number): QuotaReading[] => {
   const { space, account } = quota;
@@ -82,7 +88,7 @@ export const readingsFor = (quota: TSpaceQuota, liveSpaceElements: number): Quot
     return [
       reading(scope, 'elements', `Elements · ${where}`, elements, plane.elementsQuota),
       reading(scope, 'views', `Page views · ${where}`, views, plane.viewsQuota)
-    ].filter((entry): entry is QuotaReading => entry !== undefined);
+    ];
   });
 };
 
@@ -107,39 +113,45 @@ const useSpaceQuota = () => {
 
   const readings = useMemo(() => (quota ? readingsFor(quota, liveElements) : []), [quota, liveElements]);
 
+  /**
+   * The readings that can actually run out — the only ones that colour the meter or raise a warning.
+   *
+   * An unenforced ceiling is not "at 0%", it is absent: treating it as a bar to fill would put every unlimited plan
+   * permanently in the green and, worse, make "you are near your limit" a thing that could be said about a limit
+   * that does not exist.
+   */
+  const enforced = useMemo(() => readings.filter(entry => !entry.unlimited), [readings]);
+
   // Whatever is closest to biting. It colours the meter, so a green badge never sits next to an allowance that is
   // the one about to run out.
   const worst = useMemo(
     () =>
-      readings.reduce<QuotaReading | undefined>(
+      enforced.reduce<QuotaReading | undefined>(
         (top, entry) =>
           !top ||
           RANK[entry.level] > RANK[top.level] ||
-          (RANK[entry.level] === RANK[top.level] && entry.percent > top.percent)
+          (RANK[entry.level] === RANK[top.level] && (entry.percent ?? 0) > (top.percent ?? 0))
             ? entry
             : top,
         undefined
       ),
-    [readings]
+    [enforced]
   );
 
   /**
    * The figure the meter SHOWS, which is not the same question as which one is worst.
    *
-   * Elements are what the person at this screen is spending — one drag is one more — so that is the number they
-   * need permanently in view to know how much room is left. The space's own ceiling first, the account's when the
-   * plan does not set one; when neither is enforced there is no element budget to report and the meter falls back
-   * to whatever else is closest.
+   * Elements are what the person at this screen is spending — one drag is one more — so that is the number they need
+   * permanently in view. It is featured whether or not it has a ceiling: on an unlimited plan the count is still the
+   * thing someone wants to know, and hiding the meter there would mean the answer to "how big is this space" is
+   * available only to the accounts that are running out of room.
    */
   const featured = useMemo(
-    () =>
-      readings.find(entry => entry.metric === 'elements' && entry.scope === 'space') ??
-      readings.find(entry => entry.metric === 'elements') ??
-      worst,
-    [readings, worst]
+    () => readings.find(entry => entry.id === 'space:elements') ?? readings.find(entry => entry.metric === 'elements'),
+    [readings]
   );
 
-  return { quota, readings, worst, featured, liveElements, error };
+  return { quota, readings, enforced, worst, featured, liveElements, error };
 };
 
 export default useSpaceQuota;

@@ -187,7 +187,12 @@ const BuilderArea = ({
                   <SpaceContainer>
                     <PlitziServiceProvider value={plitziContextValue}>
                       <HelmetProvider>
-                        <Plugin key={baseElementId} internalProps={baseElementValueMemo} />
+                        {/* No key on the base element: a key here remounts the whole canvas on every page
+                            switch, and the layout shell is rendered inside the page — so two pages naming the
+                            same `layoutContainer` rebuilt it anyway. `Plugin` is resolved per base element, so
+                            switching to a root of a different KIND still changes the component type and remounts;
+                            page to page keeps the shell and swaps only the body. */}
+                        <Plugin internalProps={baseElementValueMemo} />
                       </HelmetProvider>
                     </PlitziServiceProvider>
                   </SpaceContainer>

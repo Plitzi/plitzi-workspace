@@ -62,11 +62,14 @@ describe('useSpaceQuota — what the meter reads', () => {
     expect(find(over, 'space:elements')?.level).toBe('over');
   });
 
-  it('reports nothing for a ceiling the plan does not enforce', () => {
-    // A quota of 0 is "unlimited". Drawing a bar against it reads as full, and warning about it is a lie.
+  it('keeps the figure for a ceiling the plan does not enforce, but never calls it near', () => {
+    // A quota of 0 is "unlimited". The COUNT still matters — someone on an unlimited plan wants to know their space
+    // holds 50 000 elements — but drawing a bar against it reads as full, and warning about it is a lie.
     const readings = readingsFor(quota({ elements: 0, elementsQuota: 0, viewsQuota: 0 }), 50_000);
+    const elements = find(readings, 'space:elements');
 
-    expect(readings).toEqual([]);
+    expect(elements).toMatchObject({ used: 50_000, unlimited: true, percent: null, level: 'ok' });
+    expect(readings.every(entry => entry.unlimited)).toBe(true);
   });
 
   it('keeps the two planes apart, each against its own ceiling', () => {
