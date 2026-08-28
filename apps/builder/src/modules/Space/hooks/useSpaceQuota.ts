@@ -5,6 +5,9 @@ import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
 import type { TQuotaPlane, TSpaceQuota } from '@plitzi/sdk-shared';
 
+/** A quota figure as it is shown: whole units, grouped. */
+export const format = (value: number): string => Math.round(value).toLocaleString();
+
 /** How close one ceiling is, as the three states a UI treats differently. */
 export type QuotaLevel = 'ok' | 'near' | 'over';
 
@@ -91,6 +94,17 @@ export const readingsFor = (quota: TSpaceQuota, liveSpaceElements: number): Quot
     ];
   });
 };
+
+/**
+ * Whether this plan has an allowance that comes back — the only case where a reset date says anything.
+ *
+ * The counters roll with the period on every plan, Lifetime included, so a date is always available; that is not the
+ * same as it being worth showing. With no ceiling on page views there is nothing to get back, and "resets 1 Sep"
+ * next to "Unlimited" reads as a limit that is not there. Elements never decide it: a schema is a stock, not a
+ * flow, and it does not empty when the month does.
+ */
+export const refillsPeriodically = (readings: QuotaReading[]): boolean =>
+  readings.some(entry => entry.metric === 'views' && !entry.unlimited);
 
 const RANK: Record<QuotaLevel, number> = { ok: 0, near: 1, over: 2 };
 

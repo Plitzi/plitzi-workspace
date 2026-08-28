@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { readingsFor } from './useSpaceQuota';
+import { readingsFor, refillsPeriodically } from './useSpaceQuota';
 
 import type { TQuotaPlane, TSpaceQuota } from '@plitzi/sdk-shared';
 
@@ -84,5 +84,25 @@ describe('useSpaceQuota — what the meter reads', () => {
     // The same 24 000 page views are 96% of what this space may spend and 24% of what the account may.
     expect(find(readings, 'space:views')).toMatchObject({ level: 'near' });
     expect(find(readings, 'account:views')).toMatchObject({ level: 'ok' });
+  });
+});
+
+describe('refillsPeriodically — whether a reset date says anything', () => {
+  it('is false on a plan with no ceiling on page views', () => {
+    // Lifetime: the counters still roll monthly, but nothing is being got back, so "resets 1 Sep" would read as a
+    // limit that is not there.
+    expect(refillsPeriodically(readingsFor(quota({}, {}), 100))).toBe(false);
+  });
+
+  it('is true as soon as either plane caps page views', () => {
+    expect(refillsPeriodically(readingsFor(quota({}, { viewsQuota: 50_000, viewsUnlimited: false }), 100))).toBe(true);
+    expect(refillsPeriodically(readingsFor(quota({ viewsQuota: 5_000, viewsUnlimited: false }), 100))).toBe(true);
+  });
+
+  // A schema is a stock, not a flow: it does not empty when the month does, so it never makes a date meaningful.
+  it('is not decided by the element ceiling', () => {
+    expect(refillsPeriodically(readingsFor(quota({ elementsQuota: 1_000, elementsUnlimited: false }), 100))).toBe(
+      false
+    );
   });
 });
