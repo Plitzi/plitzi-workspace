@@ -1,4 +1,14 @@
-import type { Environment, OfflineDataRaw, SSRPageAdapters, SSRSpaceDeployment } from '@plitzi/sdk-shared';
+import type {
+  Element,
+  Environment,
+  OfflineDataRaw,
+  PluginRaw,
+  Schema,
+  SchemaRaw,
+  SSRPageAdapters,
+  SSRSpaceDeployment,
+  Style
+} from '@plitzi/sdk-shared';
 
 /**
  * A space fetched from Plitzi, for a server that is not Plitzi's.
@@ -140,19 +150,48 @@ type LatestRevisionPayload = {
 };
 
 type SpacePayload = {
-  data?: { Space?: OfflineDataRaw & { segments?: unknown[] } };
+  data?: { Space?: { schema?: SchemaRaw; style?: Style; plugins?: PluginRaw[]; segments?: unknown[] } };
   errors?: { message: string }[];
 };
 
-/** Segments arrive as a list and are read by identifier, which is how every other reader of a space holds them. */
+/**
+ * GraphQL answers `flat` as a LIST; every reader of a schema indexes it BY ID (`schema.flat[pageId]`, and the same
+ * for `parentId`/`rootId`/`items`). The two are the `SchemaRaw` and `Schema` types, and the conversion is the wire
+ * format's whole difference from the runtime one.
+ *
+ * Without it nothing throws — an array is a perfectly good object — it just answers `undefined` to every lookup, so
+ * the page router matches no page and every URL is a 404 on a space that fetched and parsed correctly.
+ */
+const byElementId = (flat: Element[] | Record<string, Element> | undefined): Record<string, Element> => {
+  if (!Array.isArray(flat)) {
+    return flat ?? {};
+  }
+
+  return flat.reduce<Record<string, Element>>((acum, element) => {
+    if (element.id) {
+      acum[element.id] = element;
+    }
+
+    return acum;
+  }, {});
+};
+
+/** The runtime shape of a schema: the wire's `flat` list, keyed. */
+const toSchema = (schema: SchemaRaw): Schema => ({ ...schema, flat: byElementId(schema.flat) });
+
+/**
+ * Segments arrive as a list and are read by identifier, which is how every other reader of a space holds them. Each
+ * one carries a schema of its own, so its `flat` needs the same keying the space's does.
+ */
 const byIdentifier = (segments: unknown[] | undefined): OfflineDataRaw['segments'] =>
   (segments ?? []).reduce<Record<string, never>>((acum, segment) => {
-    const identifier = (segment as { identifier?: string }).identifier;
+    const entry = segment as { identifier?: string; schema?: SchemaRaw };
+    const identifier = entry.identifier;
     if (!identifier || identifier in acum) {
       return acum;
     }
 
-    return { ...acum, [identifier]: segment as never };
+    return { ...acum, [identifier]: { ...entry, ...(entry.schema && { schema: toSchema(entry.schema) }) } as never };
   }, {});
 
 /**
@@ -265,11 +304,18 @@ export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapter
       `space ${env}@${rev ?? 'latest'}`
     );
     const space = data?.Space;
-    if (!space) {
+    // A space with no schema is not a space this can serve, and answering a half-built one would surface as a blank
+    // page rather than as the failed fetch it is — the caller keeps the last good copy on `undefined`.
+    if (!space?.schema) {
       return undefined;
     }
 
-    return { schema: space.schema, style: space.style, plugins: space.plugins, segments: byIdentifier(space.segments) };
+    return {
+      schema: toSchema(space.schema),
+      style: space.style as Style,
+      plugins: space.plugins,
+      segments: byIdentifier(space.segments)
+    };
   };
 
   const fetchLatestRevision = async (env: string): Promise<number | undefined> => {
