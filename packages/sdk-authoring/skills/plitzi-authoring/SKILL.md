@@ -155,7 +155,11 @@ Use the step builders — they answer the three things that go wrong silently:
   element callback under an element's id, a utility under nothing. The builders fill it in; a trigger and an
   untargeted `updateElement` are filled with the element the flow was declared on.
 - **Which `setState`.** `setState(…)` writes `runtime.state.<key>`; `updateElement(…)` changes one element's own
-  attribute. Different params, different node kind.
+  attribute or state. Different params, different node kind. Each has a flip-it counterpart storing the opposite
+  of what is there, which is how expand/collapse is ONE step on ONE trigger: `toggleState({ key })` for app state,
+  and `toggleElement({ category: 'state', key: 'visibility' }, 'panel')` to show/hide an element (the second
+  argument is the element it acts on; omitted, it acts on the one the flow is declared on). Never two branches
+  under opposite `when` guards — those read the state as it was when the flow STARTED, so they run a click behind.
 - **What it takes.** Params are typed from the same declaration the builder's own panel is drawn from.
 
 `named(id, step)` is how a later step reads an earlier one — the flow scope is keyed by node id, so
