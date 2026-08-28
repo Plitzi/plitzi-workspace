@@ -4,6 +4,7 @@ import { hasServerElements } from '@plitzi/sdk-shared/schema/serverElements';
 import { loadPluginComponents } from './loadPluginComponents';
 import { registerExternalPlugins } from './registerExternalPlugins';
 import { resolvePageSeo } from './resolvePageSeo';
+import { PREVIEW_TOKEN_PARAM } from '../../core/previewToken';
 import { sdkAssetVersion } from '../../core/sdkAssets';
 import { resolveActionEndpoint, resolveRscEndpoint } from '../../core/services/resolve';
 import { buildServerInfo } from '../../helpers/buildServerInfo';
@@ -118,11 +119,17 @@ export const prepareRender = async (
   const v = version ? `?v=${version}` : '';
   const sdkDevToolsStylePath = `/sdk-assets/plitzi-sdk-devtools.css${v}`;
 
-  const debugMode = resolveDebugMode(
-    config.debugMode ?? config.devMode,
-    // Named for this origin, port included — the browser writes it under the same name. See `debugCookieName`.
-    readCookie(req.headers.cookie, debugCookieName(req.headers.host))
-  );
+  // A `__pt` render exists to be looked at as a picture — a thumbnail, the agent's screenshot, the builder's
+  // preview pane. Nobody is at that keyboard to dismiss the dev-tools badge, and it would be baked into the
+  // capture, so debugging is off for it however the deployment and the cookie are set.
+  const isPreviewRender = Boolean(req.query[PREVIEW_TOKEN_PARAM]);
+  const debugMode =
+    !isPreviewRender &&
+    resolveDebugMode(
+      config.debugMode ?? config.devMode,
+      // Named for this origin, port included — the browser writes it under the same name. See `debugCookieName`.
+      readCookie(req.headers.cookie, debugCookieName(req.headers.host))
+    );
 
   // What the metering adapter decided for this page (see SSRAdapters.pageView). `firstViewCounted` is forced on
   // whatever the adapter returned: this render was already counted server-side, so the browser reporting the

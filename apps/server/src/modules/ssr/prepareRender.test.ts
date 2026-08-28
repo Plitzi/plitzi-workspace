@@ -54,7 +54,7 @@ const offlineData = (
     style: { cache: '', variables: [] }
   }) as unknown as OfflineDataRaw;
 
-const request = (path: string): SSRRequest =>
+const request = (path: string, query: Record<string, string> = {}): SSRRequest =>
   ({
     method: 'GET',
     path,
@@ -63,7 +63,7 @@ const request = (path: string): SSRRequest =>
     protocol: 'https',
     hostname: 'x.test',
     headers: {},
-    query: {},
+    query,
     ctx: { spaceDeployment: { spaceId: 42, environment: 'production', revision: 0 } }
   }) as unknown as SSRRequest;
 
@@ -76,11 +76,14 @@ type Options = {
   configRsc?: { enabled?: boolean };
   withAdapter?: boolean;
   homeRuntime?: 'server' | 'client';
+  /** What the deployment authorizes for debugging, and what the URL asks for. */
+  debugMode?: boolean;
+  query?: Record<string, string>;
 };
 
 const render = async (
   path: string,
-  { rsc = { enabled: true }, configRsc, withAdapter = true, homeRuntime }: Options = {}
+  { rsc = { enabled: true }, configRsc, withAdapter = true, homeRuntime, debugMode, query }: Options = {}
 ) => {
   const getRscData = vi.fn().mockResolvedValue({ serverData: { resolved: true } });
   const getOfflineData = vi.fn().mockResolvedValue(offlineData(rsc, homeRuntime));
@@ -90,6 +93,7 @@ const render = async (
     assetVersion: '1',
     autoLoadSchemaPlugins: false,
     rsc: configRsc,
+    debugMode,
     adapters: {
       getOfflineData,
       getSpaceDeployment: () => Promise.resolve(undefined),
@@ -98,7 +102,7 @@ const render = async (
   } as unknown as SSRPageServerConfig;
 
   const { componentProps, templateParams } = await prepareRender(
-    request(path),
+    request(path, query),
     config,
     42,
     'production',
@@ -112,6 +116,7 @@ const render = async (
     getRscData,
     getOfflineData,
     templateParams,
+    componentProps,
     ssr: componentProps.server.ssr,
     timing: metrics.toServerTimingHeader()
   };
@@ -221,5 +226,21 @@ describe('prepareRender / the document the crawler reads', () => {
     const { templateParams } = await render('/nowhere');
 
     expect(templateParams.title).toBe('Plitzi App');
+  });
+});
+
+describe('prepareRender / debugging in a render nobody is watching', () => {
+  it('authorizes debugging on an ordinary render of a deployment that asked for it', async () => {
+    const { componentProps, templateParams } = await render('/', { debugMode: true });
+
+    expect(componentProps.debugMode).toBe(true);
+    expect(templateParams.debugMode).toBe(true);
+  });
+
+  it('refuses it on a preview render, which exists to be captured as a picture', async () => {
+    const { componentProps, templateParams } = await render('/', { debugMode: true, query: { __pt: 'tok' } });
+
+    expect(componentProps.debugMode).toBe(false);
+    expect(templateParams.debugMode).toBe(false);
   });
 });
